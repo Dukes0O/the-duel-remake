@@ -1387,3 +1387,46 @@ for (const inside of [true, false]) test('VECTOR REACH chosen decoy lateral ' + 
     'chosen decoy range must use its actual launch vector, never the previously considered real bearing');
   if (inside) near(Math.hypot(shot.vx, shot.vz), f.result.speed, 'actual selected decoy bolt uses its own immutable launch speed');
 });
+
+// Claude approved candidate-specific launch reach on 1 October. The resolver
+// must judge each genuine car or decoy using its own prospective launch vector.
+for (const inside of [true, false]) test('CANDIDATE REACH real and decoy ' + (inside ? 'inside' : 'outside'), () => {
+  const f = vectorDecoyBoundary(inside), {duel, origin, data} = f;
+  const numericRange = f.realResult.speed * 2.5;
+  ok(measuredReach(origin, f.target) < numericRange,
+    'native decoy lies inside the real-car scalar reach in this witness');
+  eq(targetFor(duel, duel.state, {origin, range: numericRange}), data,
+    'numeric callers keep the existing range and qualifying decoy behavior');
+  const before = structuredClone(duel.state);
+  const selected = targetFor(duel, duel.state, {origin, range: numericRange,
+    rangeForTarget: actor => resultantFor(duel, origin, point(duel, actor)).speed * 2.5});
+  eq(selected, inside ? data : duel.state.rival,
+    'each candidate is accepted only within its own resultant horizontal launch reach');
+  eq(duel.state, before, 'candidate reach selection leaves actual race state unchanged');
+});
+
+test('CANDIDATE REACH real target can leave physical reach despite an unlimited scalar context', () => {
+  const f = vectorBoundary(vectorModes[0], false), {duel, origin} = f;
+  eq(targetFor(duel, duel.state, {origin, range: Infinity,
+    rangeForTarget: actor => resultantFor(duel, origin, point(duel, actor)).speed * 2.5}), null,
+  'the optional candidate reach excludes the actual real car outside its vector boundary');
+});
+
+test('CANDIDATE REACH does not change numeric CPU acquisition or smoke eligibility', () => {
+  const duel = race(), cpu = duel.state.rival, real = duel.state;
+  place(cpu, 200);
+  const origin = point(duel, cpu);
+  nativeAtRange(duel, real, origin, T.cpu.attackRange - .05);
+  eq(targetFor(duel, cpu, {origin, range: T.cpu.attackRange}), real,
+    'the unchanged numeric CPU range still admits the native just-inside target');
+  nativeAtRange(duel, real, origin, T.cpu.attackRange + .05);
+  eq(targetFor(duel, cpu, {origin, range: T.cpu.attackRange}), null,
+    'the unchanged numeric CPU range still rejects the native just-outside target');
+  nativeAtRange(duel, real, origin, 40);
+  smoke(duel, origin);
+  eq(targetFor(duel, cpu, {origin, range: 1, rangeForTarget: () => 50}), null,
+    'candidate reach never bypasses smoke at the actual attack origin');
+  clearHazards(duel);
+  eq(targetFor(duel, cpu, {origin, range: 1, rangeForTarget: () => 50}), real,
+    'the optional candidate reach supplies this attack range while retaining genuine eligibility');
+});
