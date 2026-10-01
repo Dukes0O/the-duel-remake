@@ -703,9 +703,11 @@ tasks:
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
     source_commit: "43fc3eb864632d36869858e2e9a55d25daa405f7"
     guard_test_commit: "5e986cf"
-    review_commit: "edf527e"
+    review_commit: "646afc4"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
     note: "The approved fresh-folder fix and all original native checks pass; the costume stays byte-identical. The actual game comparison follows, then independent review and Claude's look verdict."
+    qa_commit: "677a4c9"
+    round_1_sheet: ".lanes/vesper/docs/board/looks/vesper/round-1.jpg"
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -1062,8 +1064,8 @@ tasks:
     size: L
     needs: [ART-SRC-SALTFLATS]
     status: building
-    review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
-    source_commit: "b9f99b728bab4befee07d35cbc81a70e24a0284c"
+    review_commit: "fb3267f"
+    source_commit: "8d36433629369f9dd2f565fe9f601f782c551d53"
     test_commit: "c18e814"
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
@@ -1077,9 +1079,10 @@ tasks:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
-    qa_commit: "439d006d33062b6e7f5f8d832ecaa8a6b4714d04"
+    qa_commit: "d07c6cd"
     note: "The fitted island, native renderer and sixteen actual game views pass, with equal frame results at both qualities. The pictures still show obvious photo repeats, so Kyle's settled generated-ground change comes next before Claude review."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
+    round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex

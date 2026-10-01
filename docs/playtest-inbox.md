@@ -20,10 +20,13 @@ waits for your answer; the target test and balance-tool import guard can finish.
 
 ## Director resume: 1 October afternoon
 
-Claude has answered the earlier holds; his directions below and the current
-board are authoritative. Shove is merged and awaits Kyle’s Preview check. Arsenal’s native and browser
-checks pass; its required balance run and merge gates follow. Tanker round three and the Salt island fitting
-are underway. Vesper resumes after the tanker without system changes.
+Shove is merged and awaits Kyle's Preview check. Arsenal's required balance
+and wreck-rate tuning await the two written design answers above. The final
+tanker sheet awaits Claude's choice. Salt's generated ground passes native
+and frame checks; its first sheet and Vesper's first game sheet are linked
+on their cards. The critics found faint salt crust and a flat dark costume,
+so the second material rounds strengthen the settled designs without new
+geometry or rules. Claude reviews those completed comparisons before merge.
 
 ## Answers carried into the current cards
 
