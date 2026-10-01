@@ -48,7 +48,7 @@ not move. From this run on:
 Kyle, 1 October 2026: the dome steering is kept, so ARENA-WRECK-RATE is
 ready (add it to track A after ARENA-SHOVE), and Sal is approved as she is
 (WAR-SAL-TUNE closed). The weapon sounds (AUD-ARSENAL-W1) need only ARS-CORE:
-the sound bank is already live. Kyle is re-hearing the crew voice takes.
+the sound bank is already live. Kyle keeps the nine crew and raider voice takes as they are.
 
 Then follow "Order: the rest of phase 3" below as cards open. Give every card
 explicit owned files before starting it; when two cards need one file, take
