@@ -1,6 +1,6 @@
 # HK-RUSTWALL-ATLAS-ISOLATION
 
-Status: tests-first red freeze. Implementation and review gates remain pending.
+Status: implementation and focused checks complete. Independent review and lane/build gates remain pending.
 
 ## Decision before implementation
 
@@ -9,6 +9,32 @@ own encoded bytes, explicitly pack those bytes and snapshot the same bytes.
 Publish complete canonical PNGs with atomic replacement. Keep the existing
 canonical paths, image names, output names and snapshot manifest fields.
 No runtime asset, simulation rule or signature change is authorized.
+
+## Failure and fix
+
+The final full tier at `2d1216f` passed 306/307 and stopped with one failure.
+The default wheel and relief
+probes ran together and wrote the same `art-build/rustwall/hulks-*.png` files.
+The relief snapshot and GLB contained identical corrupt embedded PNG bytes;
+the runtime wall images remained valid. A partially replaced PNG had a new
+prefix and stale trailing bytes. Even a complete competing PNG could be
+valid while belonging to the wrong invocation.
+
+`rustwall.py` now creates one unique `.atlas-*` directory per real invocation
+under its ignored Blender output folder. Every initial atlas, including
+emissive, and every relief update saves privately, reads its own bytes and
+packs those bytes explicitly. A separate private publication file is renamed
+onto the canonical PNG with `os.replace`. Relief snapshots and their hashes
+use the same captured bytes. Canonical paths are restored after packing for
+saved Blender file compatibility. Relief unpacking points at its own initial
+private PNG.
+
+Cleanup runs at process exit, after exports and Blender file saves. It checks
+the private directory's exact parent and resolved path, rejects links,
+Windows reparse points and nested files, then removes only direct regular
+files and that directory. Dry path plans return before creating the private
+directory. Output paths, image/material names, manifest fields, atlas math,
+geometry, shader settings and runtime files stay unchanged.
 
 ## Tests-first acceptance
 
@@ -38,7 +64,8 @@ ports, Preview build, integration scratch or licensed originals.
 
 ## Red evidence
 
-Source before implementation: `2aa254f`.
+Source before implementation: `2aa254f`. Independent red-test freeze:
+`0b172023145f8292326654f554a2b7b2994ca35b`.
 
 `node tools/test-rustwall-atlas-isolation.mjs`:
 **95 checks: 19 passed, 76 failed.** The native fixture completed successfully;
@@ -69,14 +96,60 @@ Protected SHA-256 values before and after native acceptance:
 | Source `banshee_muscle.glb` | `48d73686e101486514a4b4283d628d9a566a1df4afd04e12c1c356e1acff6f07` |
 
 
-ode tools/test-replays.mjs: **162 checks passed** across 18 cases, 16
+node tools/test-replays.mjs: **162 checks passed** across 18 cases, 16
 events, eight categories, three FPS values and three runs. Existing frozen
 fixtures remain unchanged; no simulation or replay fixture was changed. Lane/build, independent review,
 existing Rustwall suites and final integration full tier are required after
 the fix. This red freeze claims none of those gates.
 
+## Green evidence
+
+`node tools/test-rustwall-atlas-isolation.mjs`: **95 checks passed, 0 failed**.
+The unchanged frozen native suite verifies complete and interrupted competing
+publication, initial/emissive/relief save isolation, observed atomic
+replacement, own packed bytes, embedded GLB pixel ownership, relief
+snapshots, protected outside-relief pixels and canonical dry path plans.
+Its private synthetic root is removed after the run.
+
+Implementation SHA-256 for `tools/blender/rustwall.py`:
+`9be8b960e5e1a4d5b7fd43b8468227881cee7fb358b9f5da4980709fcedf19f6`.
+Both owned text files use LF. The new frozen test and every existing test,
+assertion and replay fixture remain untouched by the builder.
+
+The tracked runtime inventory before focused checks is 143 files,
+236,249,990 bytes, with name-and-content SHA-256
+`b2535c1d67b6b4c8c5dccccee10400dace44cea274dbb77e169637a720836db8`.
+Individual runtime and source-car hashes still match the table above.
+After all focused checks, the inventory hash, file count and bytes remain
+identical. Both runtime GLBs and both source-car GLBs retain the exact
+SHA-256 values above. No `.atlas-*` folder remains under either Rustwall
+art-build output tree. `git diff --check` passes.
+
+The unchanged seven Rustwall suites ran together:
+
+`node --test tools/test-rustwall-assets.mjs tools/test-rustwall-baseline.mjs tools/test-rustwall-frame.mjs tools/test-rustwall-p2.mjs tools/test-rustwall-p2-relief.mjs tools/test-rustwall-p2-sheet.mjs tools/test-rustwall-scene.mjs`
+
+**29 Node subtests passed, 0 failed**, including the default wheel and relief
+probes running together, isolated actual exports and existing frame evidence
+validators. The asset and scene suites report **9/9** and **23/23** internal
+checks respectively. These frame tests validate synthetic fixture handling;
+this task does not claim new browser frame measurements or an art verdict.
+
+`node tools/test-replays.mjs`: **162 checks passed** across 18 cases, 16
+events, eight categories, three FPS values and three runs. Every frozen
+fingerprint remains unchanged.
+
+No runtime rendering, art, gameplay, save or input change needs browser,
+visual, audio or save review for this recipe-only fix. No Preview or live
+build, port or player save was opened. The root will arrange independent
+review and the exact lane/build gate; final integration full-tier evidence
+remains required. This source handoff claims none of those pending gates.
+
 ## Removed
 
-No code, test, asset or existing assertion was replaced. The native fixture
-cleans its generated PNGs, GLBs and synthetic root after each run. The tiny
-save-hook feasibility scratch is also removed before this handoff.
+Removed the shared direct atlas save/read path, implicit initial image pack
+and second relief disk read. The single save helper replaces those paths in
+the same change. It removes its invocation's private PNGs at normal process
+exit. No old test or runtime asset was replaced. The native fixture cleans
+its generated PNGs, GLBs and synthetic root after each run. The tiny
+save-hook feasibility scratch was removed before the tests-first handoff.

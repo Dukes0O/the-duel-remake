@@ -5,11 +5,14 @@ Design coordinates are glTF X right, Y up, front -Z. Convert exactly once.
 Original reference guides silhouettes and palette; no image projection is used.
 """
 import argparse
+import atexit
 import hashlib
 import json
 import math
 import os
+import stat
 import sys
+import tempfile
 import time
 from datetime import date
 from pathlib import Path
@@ -119,7 +122,47 @@ from mathutils import Vector
 out.mkdir(parents=True, exist_ok=True)
 blend_dir.mkdir(parents=True, exist_ok=True)
 shots.mkdir(parents=True, exist_ok=True)
+atlas_parent = blend_dir.resolve()
+atlas_dir = Path(tempfile.mkdtemp(prefix='.atlas-', dir=atlas_parent))
+
+
+def remove_private_atlases():
+    """Remove only this invocation's direct files, never a linked directory."""
+    if (atlas_dir.parent != atlas_parent or atlas_parent != blend_dir.resolve()
+            or atlas_dir.resolve() != atlas_dir or not atlas_dir.name.startswith('.atlas-')):
+        raise ValueError('Private atlas cleanup path changed')
+    reparse = getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0)
+    directory = atlas_dir.lstat()
+    if not stat.S_ISDIR(directory.st_mode) or getattr(directory, 'st_file_attributes', 0) & reparse:
+        raise ValueError('Private atlas cleanup refuses linked directories')
+    files = list(atlas_dir.iterdir())
+    for path in files:
+        info = path.lstat()
+        if (path.parent != atlas_dir or not stat.S_ISREG(info.st_mode)
+                or getattr(info, 'st_file_attributes', 0) & reparse):
+            raise ValueError('Private atlas cleanup refuses linked or nested files')
+    for path in files:
+        path.unlink()
+    atlas_dir.rmdir()
+
+
+atexit.register(remove_private_atlases)
 started = time.perf_counter()
+
+
+def save_atlas(image, name, label):
+    """Pack our private save before publishing complete canonical bytes."""
+    canonical = texture_path(name, label)
+    private = atlas_dir / canonical.name
+    image.filepath_raw = str(private)
+    image.save()
+    encoded = private.read_bytes()
+    image.pack(data=encoded, data_len=len(encoded))
+    publication = private.with_suffix('.publish.png')
+    publication.write_bytes(encoded)
+    os.replace(publication, canonical)
+    image.filepath_raw = str(canonical)
+    return encoded
 
 
 def digest(path):
@@ -320,14 +363,15 @@ def material(name):
         image = bpy.data.images.new(f'{name}-{label}',atlas_size,atlas_size,alpha=True)
         if label != 'color': image.colorspace_settings.name = 'Non-Color'
         image.pixels.foreach_set(atlas.ravel())
-        image.filepath_raw = str(texture_path(name, label))
         image.file_format = 'PNG'
-        image.save(); image.pack(); images[label] = image
+        save_atlas(image, name, label)
+        images[label] = image
     if name == 'details':
         image = bpy.data.images.new('details-emissive',atlas_size,atlas_size,alpha=True)
         image.pixels.foreach_set(atlas_pixels(emissive).ravel())
-        image.filepath_raw = str(texture_path('details', 'emissive')); image.file_format = 'PNG'
-        image.save(); image.pack(); images['emissive'] = image
+        image.file_format = 'PNG'
+        save_atlas(image, 'details', 'emissive')
+        images['emissive'] = image
     mat = bpy.data.materials.new(name + ' authored padded atlas')
     mat.use_nodes = True
     nodes, links = mat.node_tree.nodes, mat.node_tree.links
@@ -1118,8 +1162,9 @@ def p2_prepare_relief_atlas(hulk_material, templates, proof_dir, snapshot_prefix
     snapshots={}
     for label in ('color','surface','normal'):
         image=bpy.data.images[f'hulks-{label}']
-        # material() packed the initial palette. Discard that pack before
-        # editing, or glTF embeds stale bytes despite the new disk PNG.
+        # Keep unpacking on our initial private save, then discard that pack
+        # before editing so glTF embeds the relief pixels instead of the palette.
+        image.filepath_raw = str(atlas_dir / texture_path('hulks', label).name)
         if image.packed_file:image.unpack(method='REMOVE')
         pixels=np.empty(512*512*4,dtype=np.float32);image.pixels.foreach_get(pixels)
         pixels=pixels.reshape(512,512,4)
@@ -1128,13 +1173,12 @@ def p2_prepare_relief_atlas(hulk_material, templates, proof_dir, snapshot_prefix
             pixels[132:380,260:508,1]=.83
             pixels[132:380,260:508,2]=.18
         else:pixels[132:380,260:508,:3]=vectors*.5+.5
-        image.pixels.foreach_set(pixels.ravel());image.update();image.save()
-        encoded=Path(image.filepath_raw).read_bytes()
+        image.pixels.foreach_set(pixels.ravel());image.update()
+        encoded=save_atlas(image, 'hulks', label)
         snapshot=proof_dir / f'{snapshot_prefix}-atlas-{label}.png'
         snapshot.write_bytes(encoded)
         snapshots[label]={'path':str(snapshot.relative_to(root)).replace('\\','/'),
-                          'sha256':digest(snapshot)}
-        image.pack(data=encoded,data_len=len(encoded))
+                          'sha256':hashlib.sha256(encoded).hexdigest()}
     for obj in set(bpy.data.objects)-preexisting:bpy.data.objects.remove(obj,do_unlink=True)
     scene.render.engine='CYCLES';scene.render.resolution_x=1280;scene.render.resolution_y=720
     return source_path,source_hash,snapshots
