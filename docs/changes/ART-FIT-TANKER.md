@@ -520,3 +520,103 @@ were replaced in the recipe. No prior runtime tanker or current game asset
 exists to retire. All original licensed files and current runtime assets stay.
 Generated candidates and probe logs remain ignored, used-once review evidence;
 the Integrator removes them after the independent verdict is committed.
+
+## Independent actual-yard comparison — 1 October 2026
+
+Frozen Source 2583c4de126629e7b673a136381ecb86b6e4aad0 remains unchanged.
+Round1 sheet/recipe/review live in docs/board/looks/convoy-tanker/.
+The sheet is 483090 bytes (below500KB), uses actual game renderer at both
+qualities, and awaits Claude. Private candidate regenerated with existing
+Blender4.5.13, frozen recipe/seed1989; exact SHA256
+0af1e450360a329cbc91bd9a90267ec68f1aa4628791f8bb857d431a107e75be,
+6328 triangles,16 meshes/draws,1063268 bytes. No public installation.
+
+### Actual browser result and limits
+
+Final owned convoy-tanker-art scenario completed exit0 on private port20762,
+memoryOnlySaves=true, issues=[], no console errors or failed requests.
+Two console warnings remain: Multiple instances of Three.js being imported.
+They originate in the existing private Vite virtual presentation bundle; no
+console suppression or runtime dependency change was attempted. Frame pacing
+was not measured; draw/triangle capture observations are not a frame gate.
+
+Actual App discovery visit, transition presentation, eight-second journey and
+yard-ready guards passed. Candidate and pinned donor GLTF scenes actually
+loaded and rendered in the yard. Existing final JSON simulation-state equality
+and all source palette/hash/self-contained GLB guards remain. Added loaded
+health captures verify two actual mesh lamp materials switch to emissive
+0xb32904/intensity2.2 for [0,0,0], return to0/0 for [1,0,0], and mutate neither
+supplied input nor simulation. These are read-only presentation inputs, not
+future Convoy Raid event/damage/reward behavior. No frame, sound or human feel
+clearance is claimed. Private camera state changes only; actual simulation
+state stays exact through comparison.
+
+All18 final images are on the sheet and inspected. Prefix tanker-, suffix
+-high or -performance; each named view below exists at both qualities:
+source-near (intact palette/body/tank), candidate-near (gritty armor/support),
+source-racing (distant intact silhouette), candidate-racing (distant dark
+silhouette), source-and-fit (source left, fitted right), all-three-broken
+(two loaded orange warning lamps), recovered (same lamps dark), opposite-valve
+(opposite mounting/seating concern), roof-plate (raised rigid roof plate).
+No missing texture or placeholder truck was seen. Valves/armor/plate are rigid.
+The opposite-valve view shows one valve apparently separated from tank
+silhouette: native exact seating/contact unresolved, returned to Director.
+Near-side two valves and roof plate read clearly; gritty details lose contrast
+at distance. Structural Source tests do not clear these art questions.
+Phone/HUD race layout and public Convoy Raid integration were not exercised.
+
+### Native review received from Director
+
+Independent frozen42/42 native rerun passed with complete raw log in integration
+.evidence/2026-10-01/ART-FIT-TANKER/director-source-review/native.log.
+Director provisionally cleared exact donor affine faces/tank support/zero bracket
+crossings, rights/hash guards, bounded seeded atlas, no simulation/storage/network
+or dependencies, loaded/late/fail exact-once disposal and all8 health states plus
+recovery/two lamps. This is native structural/presentation clearance only;
+valve envelope overlap does not prove exact contact and the new visual seating
+concern stays pending. Art/frame/credits/public install/lane gates remain separate.
+
+### Genuine private QA failures and corrections
+
+Full launcher stdout/stderr was preserved before filtering in integration
+.evidence/2026-10-01/ART-FIT-TANKER/browser-source2583/:
+launcher.log, launcher-run2.log through launcher-run8.log, launcher-final.log,
+and regeneration.log. Reports/captures remain in corresponding ignored lane
+browser-source2583[-runN|-final] directories. No failure was overwritten.
+First launcher rejected absolute output-dir; use required relative.evidence path.
+Second launcher cleared.qa-dist including the staged candidate, causing ENOENT.
+Director approved regeneration under.evidence; resulting GLB hash is exact.
+Third run proved visitWasteland refresh discarded unsaved private discovery:
+added actual memory-only _saveProfile guard before unchanged visit assertion.
+Fourth/fifth runs timed out: original stopped-App advance8 happened before
+visualReady, so App._simulate refused steps. The owned recipe now waits actual
+transition presentation, uses original advance8, then original yard readiness.
+Readiness invokes onFrame(state,0)/renderFrame, never advances physics to mask
+loading. No extra journey time or fabricated App return was added.
+Run6 assertions passed but racing/pair/health inspection cameras were occluded
+by real yard walls. Run7 camera repair exposed original worldAt road-height
+placement floating above yard floor and reversed paired positions. Run8 uses
+actual course.groundAt and source-left/fitted-right offsets. Final adds opposite
+and roof views without changing model bytes, palette or simulation inputs.
+Private QA details are collapsed; real world geometry/lighting remains intact.
+
+Changed assertions: no original assertion/predicate removed or relaxed.
+Existing journey advance moved after actual presentation readiness; the final
+state immutability guard is unchanged. New guards cover memory fixture save,
+loaded two-lamp material values, health-input equality and unchanged state.
+Source, fit settings, native tests, pins, catalog, public assets and runtime
+presentation module are untouched by this reviewer. Scenario geometry transforms
+only position private source/candidate objects and inspection camera.
+Opposite witness: groundAt(state.s,state.lateral+8), q.placement=[world.x,
+groundY+1.55,world.z-1], camera=[p.x-7,p.y+3.5,p.z-9] looking at p;
+candidate position reset to original x, health[1,0,0], unchanged scale/rotation.
+Original recipe did not serialize numeric world coordinates; none invented.
+
+### Removed — independent actual-yard QA
+
+Replaced faulty private save/readiness/camera/ground ordering, preserving old
+failure evidence until review. No runtime model, source input, licensed file,
+player data, catalog or current asset removed. Generated PNGs/logs stay ignored;
+only one compressed sheet is committed for round1. The Director removes used
+captures after Claude's verdict is committed. No live, Preview,.preview-dist,
+port5174, real saves, merge, release, push, force or history rewrite used.

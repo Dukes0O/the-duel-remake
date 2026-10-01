@@ -123,12 +123,17 @@ export async function run(context) {
     await context.waitFor('window.__qaApp.visualReady === true', 'real renderer ready', 60000);
     await context.evaluate(`(() => {
       const app=window.__qaApp;
+      document.querySelectorAll('details').forEach(panel=>panel.open=false);
       app.stop();app.audio.setMuted(true);app.setGraphicsQuality(${JSON.stringify(quality)});
       app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+      if(!app._saveProfile())throw Error('Memory-only discovery fixture save failed');
       if(!app.visitWasteland())throw Error('Actual yard visit failed');
-      app.advance(8);app.stop();
+      app.stop();
     })()`);
-    await context.waitFor("window.__qaApp.isYardHomeActive() && window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden",
+    await context.waitFor("(() => {const a=window.__qaApp;a.onFrame?.(a.duel.state,0);window.__render?.renderFrame();return a.visualReady && document.querySelector('#renderer-loading')?.hidden;})()",
+      quality+' actual yard transition presentation',60000);
+    await context.evaluate('window.__qaApp.advance(8);window.__qaApp.stop()');
+    await context.waitFor("(() => {const a=window.__qaApp;a.onFrame?.(a.duel.state,0);window.__render?.renderFrame();return a.isYardHomeActive() && a.visualReady && document.querySelector('#renderer-loading')?.hidden;})()",
       quality + ' actual game yard ready', 60000);
     await context.evaluate(bundle);
     await context.evaluate(`(async () => {
@@ -147,7 +152,7 @@ export async function run(context) {
       const candidate=api.createTankerModel({loadAsset:()=>parse(input.candidate)});
       const source=api.createTankerModel({loadAsset:async()=>({scene:baseline})});
       await Promise.all([candidate.ready,source.ready]);
-      const world=app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral+8);
+      const world=app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral+8);
       for(const model of [source,candidate]){
         model.group.position.set(world.x,world.y||0,world.z);
         view.scene.add(model.group);model.group.visible=false;
@@ -164,7 +169,7 @@ export async function run(context) {
           q.source.group.visible=${version === 'source'};
           q.candidate.group.visible=${version === 'candidate'};
           const p=q.placement,scale=${distance === 'near' ? 1 : 3.4};
-          app.inspectionCamera={position:[p.x+7*scale,p.y+3.5*scale,p.z-9*scale],target:[p.x,p.y,p.z]};
+          app.inspectionCamera={position:[p.x+(scale===1?7:-7*scale),p.y+3.5*scale,p.z+(scale===1?-9:9*scale)],target:[p.x,p.y,p.z]};
           for(let i=0;i<12;i++)view.renderFrame();
           return {gameYard:app.isYardHomeActive(),quality:app.graphicsQuality,
             triangles:view.renderer.info.render.triangles,draws:view.renderer.info.render.calls};
@@ -178,15 +183,53 @@ export async function run(context) {
     await context.evaluate(`(() => {
       const q=window.__tankerArt,p=q.placement;
       q.source.group.visible=true;q.candidate.group.visible=true;
-      q.source.group.position.x-=4;q.candidate.group.position.x+=4;
+      q.source.group.position.x+=4;q.candidate.group.position.x-=4;
       window.__qaApp.inspectionCamera={
-        position:[p.x+9,p.y+5,p.z-13],target:[p.x,p.y,p.z]};
+        position:[p.x+7,p.y+4,p.z-9],target:[p.x,p.y,p.z]};
       for(let i=0;i<12;i++)window.__render.renderFrame();
     })()`);
     const pairedName='tanker-source-and-fit-'+quality;
     await context.screenshot(pairedName);
     report.captures.push({name:pairedName,quality,version:'source-and-fit',
       limit:'Original main donors on left; fitted complete truck on right. Shared actual renderer, camera and lighting. No former runtime tanker.'});
+    // Loaded presentation health only; this is not future Convoy Raid gameplay.
+    for (const health of [[0, 0, 0], [1, 0, 0]]) {
+      const broken=health.every(value=>value<=0);
+      const detail=await context.evaluate(`(() => {
+        const q=window.__tankerArt,app=window.__qaApp,view=window.__render,p=q.placement;
+        q.source.group.visible=false;q.candidate.group.visible=true;
+        q.candidate.group.position.x=q.placement.x;
+        const input=${JSON.stringify(health)},before=JSON.stringify(input);
+        q.candidate.setValveHealth(input);
+        app.inspectionCamera={position:[p.x+7,p.y+3.5,p.z-9],target:[p.x,p.y,p.z]};
+        for(let i=0;i<12;i++)view.renderFrame();
+        const lamps=[];q.candidate.group.traverse(n=>{
+          if(n.isMesh&&n.name.startsWith('tanker-warning-lamp-')){
+            const materials=Array.isArray(n.material)?n.material:[n.material];
+            lamps.push({name:n.name,materials:materials.map(m=>({hex:m.emissive.getHex(),intensity:m.emissiveIntensity}))});
+          }
+        });
+        if(before!==JSON.stringify(input))throw Error('Presentation mutated supplied health');
+        if(lamps.length!==2||lamps.some(l=>l.materials.some(m=>m.hex!==${broken?0xb32904:0}||m.intensity!==${broken?2.2:0})))
+          throw Error('Actual loaded two-lamp health presentation failed');
+        return {lamps,stateUnchanged:q.state===JSON.stringify(app.duel.state),inputUnchanged:true};
+      })()`);
+      if(!detail.stateUnchanged)throw Error('Health capture changed simulation state');
+      const name='tanker-'+(broken?'all-three-broken':'recovered')+'-'+quality;
+      await context.screenshot(name);
+      report.captures.push({name,quality,version:'candidate',health,...detail,
+        limit:'Actual loaded read-only presentation health; no future Convoy Raid gameplay claim.'});
+    }
+    for(const angle of ['opposite-valve','roof-plate']) {
+      await context.evaluate(`(() => {
+        const q=window.__tankerArt,p=q.placement;
+        window.__qaApp.inspectionCamera={position:${angle==='roof-plate'?'[p.x+4,p.y+10,p.z-7]':'[p.x-7,p.y+3.5,p.z-9]'},target:[p.x,p.y,p.z]};
+        for(let i=0;i<12;i++)window.__render.renderFrame();
+      })()`);
+      const name='tanker-'+angle+'-'+quality;
+      await context.screenshot(name);report.captures.push({name,quality,version:'candidate',angle,
+        limit:'Supplemental actual-yard inspection of opposite valve or raised roof plate; no gameplay.'});
+    }
     const unchanged = await context.evaluate(`(() => {
       const q=window.__tankerArt,same=q.state===JSON.stringify(window.__qaApp.duel.state);
       q.source.dispose();q.candidate.dispose();
