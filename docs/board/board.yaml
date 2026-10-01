@@ -627,6 +627,7 @@ tasks:
       - "Fit the picked Quaternius Modular Men pack (docs/board/looks/crew-src) into five crew figures following docs/WASTELAND_ART.md 'Fitting existing models'. Each is recognizable from the crew sheets (public/assets/reference/wasteland-crew-1.png and -2.png) by silhouette, costume and accent colour; faces may stay simple."
       - "Reuse the pack's shared rig and 24 actions; map them to the game's existing on-foot actions (idle, walk, run, aim, fire, reload, repair, knockdown, get up, enter and exit the car). A missing action is adapted from the nearest pack action, never hand-animated from nothing."
       - "Near and distant versions within the budgets; the old Rook runtime model and its figure scripts are removed once all five pass; Kyle checks them in the Preview."
+    claude_review: "30 September 2026: agree with the critic; round 1 is worse than the current figures at every distance. Recommend Kyle keeps the current crew and this card closes (as he chose for the women). Correction: Cinder is a woman (crew sheet and current figure); she stays as she is either way."
   - id: ART-SRC-CREW-W
     title: "Crew figures for women: short list of existing starting models"
     owner: codex
@@ -887,13 +888,13 @@ tasks:
     flag: fuel-run
     owns: [src/arena/modes/fuel-run.js, src/arena/modes/fuel-run-view.js, tools/test-arena-fuel-run.mjs, tools/replays/arena-fuel-run-controls.json, tools/scenarios/arena-fuel-run.mjs, docs/changes/ARENA-03.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/app.js, src/game.js, src/feature-flags.js, src/screen-router.js, src/screen-hud.js, src/onfoot-transition.js, src/onfoot.js, src/combat-teams.js, src/render3d.js, src/audio.js, src/combat-ai.js, src/combat-weapons.js, src/combat-projectiles.js, tools/test-feature-flags.mjs]
-    waiting_on: claude
     review_note: "Clean96aaa2a adds factual narrow-review notes only to source53e6796. Focused68/68, code10checks/162assertions and SaveGuardian77/77 plus six actual memory-App probes clear stale durable launch and event-owned render cache. Whole-feature contact/browser/audio/look/floor still wait for Claude design merge. No final feature clearance."
-    design_question: "Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
+    design_question_answered: "Claude, 30 September 2026: see docs/CREW.md, Car weapons against fighters on foot. Original question: Actual on-foot Fuel carrier is currently immune to car projectiles. Claude must settle bolt damage, bomb splash and cargo-drop behavior before that contact code; chase and aim fixes follow the settled carrier rule now."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     sequencing: "Tests first in owned files now. Production App and screen-arena edits wait for WAR-PAY merge; held ARENA-STEER App demo hook is deferred until Fuel merges. No config, driving, pilot or crate-test ownership. Future Arsenal waits Fuel feature/render/audio hooks. Protected sound-bank/catalog/assets remain untouched: explicit fuel events reuse authored interface.bonus, vehicle.landing, interface.go cues. SPEC0.12 adds fuel-run:dev plus scrapdome/discovery/rank6 gates; Last Car Rolling unchanged."
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Fuel Run, exactly: canisters, depots, dropping, the collector brain, rank 6 unlock (hidden before), pay and hold once per event (Save Guardian). Headless tests and a private browser scenario."
+    claude_review: "30 September 2026: rules match SCRAPDOME.md Fuel Run. Settled the open question in docs/CREW.md (car bolt 35 health, splash up to 60 and knockdown inside half radius, cargo drops only on knockdown) and raised the depot pad to 4 m radius. Merge after these, the gates and a browser pass; Kyle checks it in the Preview behind fuel-run (dev)."
   - id: ARENA-04
     title: "Bounty Hunt"
     owner: codex
@@ -2752,7 +2753,6 @@ tasks:
     needs: []
     status: review
     review_commit: ae4c168bf6d8202f6d163e63e849298e6e3d1c4d
-    waiting_on: kyle
     claimed_by: codex-director-2026-09-30-resume
     flag: scrapdome
     owns: [tools/test-arena-steering.mjs, tools/replays/arena-steering-controls.json, tools/scenarios/arena-steering.mjs, docs/changes/ARENA-STEER.md]
@@ -2764,6 +2764,7 @@ tasks:
       - "Kyle, 30 September 2026: steering in the dome is very difficult whatever the car or speed. Measured: at full lock every car turns 53 to 66 degrees a second at 25 and 45 mph, the same in a warlord fight and Last Car Rolling; turning around takes more than 3 s in a ring."
       - "Settled rule: in an arena venue only, every car at full lock turns at least 100 degrees a second from 15 to 50 mph and at least 75 degrees a second at the floor's top speed, by raising both the steering limit and the tyre limit in steeringYawAuthority for arena courses (one arena factor, recorded). Computer cars use the same function, so it stays fair. Sal's window still halves her steering. Road courses, Muddy Hollow and the Titan's road handling are unchanged (replay fingerprints unchanged except arena replays, each named)."
       - "Re-run tools/arena-balance.mjs and the Sal tests and record the change; cars must not spin out or oscillate at full lock (check yaw settles within 0.3 s of releasing the stick). Kyle checks it in the Preview."
+    claude_review: "30 September 2026: the uniform 3.4 factor meets the floor but turns cars 205 to 300 degrees a second at 45 mph, likely twitchy. Added rule (Claude's gap: the first rule set no ceiling): at full lock no car turns faster than 150 degrees a second at any speed in the arena. Suggested shape: an arena floor on the low-speed rolling factor (as the Titan's lowSpeedSteer does) plus a smaller factor, rather than one large multiplier. Re-measure the same table, then Kyle checks it in the Preview."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex

@@ -40,6 +40,14 @@ No damage numbers, cargo-drop rules or four-metre depot change from that
 unmerged draft have been implemented. Anyone can recover dropped fuel; the
 withdrawn original-carrier delay remains absent.
 
+**Claude's answer (30 September 2026), settled in docs/CREW.md, "Car weapons
+against fighters on foot":** a car crossbow bolt deals 35 health to a fighter
+with no knockdown; car bomb splash uses the car falloff up to 60 health and
+knocks down inside half the radius; a carrying fighter drops cargo only on a
+knockdown. These apply to every fighter on foot, not only in Fuel Run. Also
+from the review: the depot pad is 4 m in radius, not 2 m (SCRAPDOME.md,
+Fuel Run).
+
 Held ARENA-03 is clean commit 96aaa2a, source commit 53e6796. The durable rank/discovery
 launch gate and event-owned render cache have independent code and save
 clearance only. Final contacts, fresh browser/gameplay/sound/look and the

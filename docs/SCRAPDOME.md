@@ -600,10 +600,13 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
 - **Canisters:** four sit on pads in the middle; a taken canister's pad
   refills after 5 s. Drive over one to carry it (one at a time, shown on the
   roof). A fighter on foot can carry one too, walking at 70% speed.
-- **Depots:** each car has a coloured pad near its spawn. Drive onto yours
-  with a canister: one point.
+- **Depots:** each car has a coloured pad, 4 m in radius, near its spawn.
+  Drive onto yours with a canister: one point. (Claude review, 30 September:
+  the built 2 m pad was too small a target at speed for a young player.)
 - **Dropping:** a wreck, or losing more than 25 armor in one hit, drops the
-  canister where the car is; anyone can take it.
+  canister where the car is; anyone can take it. A fighter carrying one drops
+  it only when knocked down (docs/CREW.md, "Car weapons against fighters on
+  foot").
 - **Computer:** collectors go for canisters and avoid fights; rammers and
   hunters go after whoever carries one. Each brain uses the same pilot limits.
 
