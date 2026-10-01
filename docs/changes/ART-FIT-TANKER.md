@@ -1202,3 +1202,90 @@ Tests-only freeze follows; whole-card, merge and push clearance remain pending.
 
 Removed: nothing. Seven real private-output acceptance checks are added; no
 existing assertion or current asset is removed or weakened.
+
+
+## Private tanker planning CLI Source fix — 1 October 2026
+
+Frozen tests-first ref **1c366f4ac3a92edea3eef7d254a49bc1bee54713** is reproduced
+unchanged: **41 checks, 34 passed, 7 real failures**, all seven caused by attempted
+`bpy` import before private planning/path rejection. The early standard-library
+entry now parses the agreed CLI and rejects public, outside, traversal, sibling
+and linked-directory escapes before importing bpy/mathutils/numpy. Valid
+`--paths-only` exits with one JSON object, absolute tanker.glb/manifest.json
+paths, empty blend/atlas lists and the real packed-atlas name
+`tanker-local-wear-and-hazard-atlas`. It reads no fit, catalog, licence, source
+cache or destination and creates no file, directory or bytecode cache.
+
+The planning root is the requested synthetic `--root`. Normal source-validation
+fixtures may provide a separate catalog root; normal export destinations keep
+the existing recipe-lane private boundary. This preserves intact copied-source
+validation and genuine damaged-source rejection. The complete original
+`import bpy`-to-end native body is byte-exact, including its normal CLI, fit/source
+validation, seeded atlas/materials, geometry, export and manifest code. Only the
+early private entry is added. No fit, presenter, native test or art change occurs.
+
+Actual strong suite after the fix is **41/41**, including two distinct synthetic
+roots, private evidence output, five unsafe-output audit guards and all original
+**34 coverage/placement controls**. The audit rejects forbidden imports/reads/
+writes before they happen. Actual normal Blender private regeneration gives
+**6,328 triangles, 26 native draws, 1,616,912 bytes**, exact SHA-256
+`a3ed6fa81dd493983a4b9e07f69216258e2ce048b9849acf9af291ef02823377`.
+The manifest is also byte-identical: **12,224 bytes**, SHA-256
+`6c7949a0e19e0b87cca33c5f8c05cca13eeb73a7b7014a1dc715d059a3c270d8`.
+Unchanged native acceptance passes **42/42 + 12/12 + 2/2 = 56/56**, preserving
+all genuine donor topology/affine/source controls, tank support/zero crossings,
+three native valve mounts, exact 11 m/3.5 m dimensions, two lamps and lifecycle.
+No new fitting round is used because all native output bytes stay exact.
+
+Complete RED/GREEN audit logs, normal export args/log/byte receipt, native56 log,
+original-body proof and all tracked-file protection receipts are in integration
+`.evidence/2026-10-01/ART-FIT-TANKER/private-planning-source/`. The mandatory fresh
+`node tools/run-tests.mjs --tier lane --changed --jobs 8` and `npm run build`
+follow this entry; their raw verdict is retained before the Source handoff.
+Round two remains Claude-held below the art bar. This CLI gate repair grants no
+art, whole-card, public installation, merge, push or release clearance. No browser
+or frame work is performed.
+
+Removed: the missing private planning entry and import-before-rejection failure
+are replaced by the early side-effect-free CLI branch. No old native body, asset,
+source/licence, fit/material, test/assertion, catalog/public file, comparison
+round/verdict, replay pin or shared file is removed, weakened or replaced.
+
+Recipe before SHA-256: `6483f1d7eb9970744f71db78cc06def007a39c066c2212d8c947de9ac018ce13`.
+Recipe after SHA-256: `28f091e0e7c4325bc0c0a86018380f71a5efd534ee77b07c62bc7cae370e86a4`.
+Original frozen Blender body: **24996 bytes**, SHA-256
+`7975324c58225b02a5a008cb95f9f73942b23685f368e589b20d8f04cbe07cd4`.
+The prior note prefix remains **73750 bytes**, SHA-256
+`42699f01a607380a35969246083e5e53adfc3dc2f89660521ff314cb193e2ac8`.
+
+
+### Mandatory lane result and bounded Source freeze
+
+Fresh exact command `node tools/run-tests.mjs --tier lane --changed --jobs 8`
+stopped at **118 passed, 1 failed, 199 not run in 241.70 seconds** out of the
+318-suite plan. The single failed suite is protected
+`tools/test-audio-crash-peak.mjs`: native browser setup reports
+**Runtime.evaluate timed out**. No audio acceptance check was reached; its 23
+cases share the failed setup hook. This is preserved as an infrastructure
+failure, without inferring a Source/audio cause or changing any audio/test file.
+The Root's concurrent Salt diagnosis browser has finished, but Shove's mandatory
+lane is still active. Per Director instruction, the complete lane is not retried
+concurrently. One unchanged failed audio suite and a fresh exact lane/build wait
+for the Director's quiet availability. This Source freeze has no passing lane gate.
+
+The separate required private `npm run build` passes (**479 ms**) with the
+existing large-chunk warning. Both direct **41/41** planning and **56/56** native
+checks remain green, and actual regenerated GLB/manifest bytes are exact.
+`lane.log`, `lane-result.json`, complete native audio failure report, `build.log`
+and `build-result.json` retain the actual results; no failure is excluded or
+converted to a pass. All unowned tracked hashes, including frozen placement/native
+assertions, fit, presenter, material/catalog/public assets, both comparison rounds
+and replay pins, remain exact. The complete prior note prefix is unchanged.
+Only tools/blender/convoy-tanker.py and this append-only note are committed.
+Source ownership returns for independent review; later successful exact gates
+and Claude's art clearance remain required before any applicable merge/install.
+
+Removed: only the original import-before-private-planning failure. No protected
+audio code, test, tolerance, native body, art round, current asset or failed
+evidence is removed or altered. No merge, push, release, art recapture or
+frame measurement occurs in this CLI repair.

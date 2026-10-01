@@ -13,6 +13,38 @@ import sys
 import zipfile
 from pathlib import Path
 
+def _private_cli_plan():
+    """Reject unsafe destinations and plan outputs without Blender or inputs."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", required=True, type=Path)
+    parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--fit-config", required=True, type=Path)
+    parser.add_argument("--seed", required=True, type=int)
+    parser.add_argument("--validate-sources", action="store_true")
+    parser.add_argument("--paths-only", action="store_true")
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+    # Source-validation fixtures may supply another catalogue root. Normal
+    # exports still use the original lane boundary; plans use their requested root.
+    root = (args.root if args.paths_only else Path(__file__).resolve().parents[2]).resolve()
+    output = args.output_dir.resolve()
+    if ".." in args.output_dir.parts or not any(
+            output.is_relative_to(root / private)
+            for private in (".qa-dist", ".evidence")):
+        raise ValueError("Private output must stay inside its planning root or recipe lane's "
+                         ".qa-dist or .evidence; outside and linked escapes are forbidden")
+    if args.paths_only:
+        # Native outputs are fixed by the approved recipe. No fit, catalogue,
+        # licence, cache or destination read is needed to describe these paths.
+        print(json.dumps({"blend": [], "glb": [str(output / "tanker.glb")],
+                          "json": [str(output / "manifest.json")], "atlas": [],
+                          "embeddedAtlas": ["tanker-local-wear-and-hazard-atlas"]}))
+        raise SystemExit(0)
+
+
+if __name__ == "__main__":
+    _private_cli_plan()
+
+
 import bpy
 import numpy as np
 from mathutils import Vector
