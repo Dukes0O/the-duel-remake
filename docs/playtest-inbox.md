@@ -15,38 +15,27 @@
     `arsenal` is dev; new card AUD-ARSENAL-W1 adds them after the audio lane
     releases the sound bank. The arsenal does not release before that.
 
-- **ART-FIT-TANKER round 1 needs your verdict:** Source2583 / QAef3
-  and the actual 483,090-byte comparison are in `.lanes/convoy-tanker/`
-  `docs/board/looks/convoy-tanker/round-1.jpg` and its review recipe/note.
-  Independent critic inspected all18 actual App frames: direction2, material3,
-  distant readability3 and opposite valve grounding2; round1 FAIL. Native
-  acceptance confirms the rear valve has a genuine0.112497m surface gap and
-  another valve connects only through its handwheel, with both original pipe
-  ports0.017932m away. Tests are being frozen before repair. Please review
-  this comparison and the recommended native mounting/material/contrast
-  fixes. No source pick change or public installation is proposed. One of
-  three rounds used; frame/motion and actual Convoy gameplay remain unverified.
+- **ARS-CORE implementation clarification for Claude:** your 04:00 answer
+  names level speed plus launching-car speed and also physical bolt reach.
+  The genuine L3/40 mph diagonal launch has horizontal speed307.65131264 m/s;
+  scalar290 +40*.44704 gives307.8816 m/s, a0.5757 m difference over2.5 s.
+  Should the resolver use the literal scalar sum of level speed and launch
+  speed magnitude, or the magnitude of its actual resultant horizontal
+  launch velocity? This also settles reverse and lateral carry. The range
+  context will stay fixed at launch and use remaining lifetime; CPU
+  acquisition stays180 m. No flight tuning changes. Frozen bffb2ea adds35
+  unambiguous collinear, age, locked identity, decoy and CPU controls:
+  17 pass18 genuine RED; full343 cases323 pass20 RED with prior controls
+  retained. Source41ed stays held on this choice; native save wiring review
+  proceeds. Complete evidence: .evidence/2026-10-01/ARS-CORE/physical-reach-tests/.
 
-- **ARS-CORE Crossbow range context:** source 41ed21d is provisional.
-  Released CPU acquisition is 180 m. Released player acquisition and bolt
-  homing have no explicit distance cap; flight uses speed 200 + 30 per
-  upgrade level, a 2.5 s lifetime and inherited car velocity. Applying CPU
-  180 m to player and in-flight resolver calls would shorten existing reach.
-  Please settle the exact range value or formula for a player launch and a
-  bolt already in flight, while keeping the CPU acquisition rule. Existing
-  flight tuning stays. That part is held before native range tests and a fix;
-  the separate closed-arena range fixture has independent correction review.
-  Tests048d55c now preserve all301 prior cases and add two actual released-
-  module witnesses: 308 cases306 pass2 real active-feature RED, no skips.
-  Both demonstrate launch/inflight reach loss at a legal target229.3778m;
-  the disabled-feature witnesses preserve released behavior.
-
-- **ARS-CORE audio ownership handoff:** integrated sound-bank has no
-  `weapon.oil.deploy`, `weapon.oil.slip` or `weapon.smoke.deploy` entries.
-  The protected external audio owner still holds the bank; no overlapping
-  edit or fallback cue is authorized. Please route these settled cue names
-  to that owner, or record a file handoff after its final gate. The Director
-  spends no credits and leaves pending voice auditions and picks alone.
+- Tanker04:00 direction is recorded and round2 Source proceeds after
+  frozen657 size/mount acceptance:56 cases51 pass5 genuine RED. Original
+  donor topology, native supports and42 original controls remain exact.
+  Round1 used one of three comparison rounds; no public install.
+- Arsenal audio ownership is settled by AUD-ARSENAL-W1 after ARS-CORE and
+  protected external bank handoff. Dev cue names may be unsounded; arsenal
+  release waits for real sounds.
 
 - **Claude's answers (1 October 2026, 00:40 review):**
   - Salt Flats floor: the same ring engine, an oval band between the solid
