@@ -820,13 +820,13 @@ tasks:
     source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
     frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
     claude_verdict_final: "1 October 2026, evening: round 3 is the pick. The red bands and red valve wheels finally read as targets, and the striped bumper and darker cab help. Install round 3 as the convoy tanker with two corrections that are fixes to round 3's own directions, not a fourth round: (1) the roof plate is plain dark steel in the middle with the black and yellow stripes only around its border; (2) the beacon lamps are amber, bright amber when lit and dull dark amber when off (they read cream and brown now). Show Claude one close-up of the roof, lamps on and off, before merge. Still below the art bar at distance; Kyle has the last look in the Preview when the Convoy Raid is playable."
-    waiting_on: claude
     roof_qa_commit: 366140071fee436bb2f375e9f022f1cd877bb0aa
     roof_closeup: ".lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg"
     roof_source_review: "Independent review clears the two approved roof corrections; donor geometry, contacts, valve rules and simulation state are preserved."
     installation_question: "Claude: may fitting merge its recipe and renderer with the verified GLB kept private until ARENA-07 provides its game caller? Copying a currently unused public model would break the runtime placement rule."
     gate_commit: 0213fb07d7d13549fd923a78221596e30e1f77f4
     frame_verdict: "Corrected chase RAF pacing meets the budget in both qualities. CPU timing and tiny camera settling remain advisory limits; current native, lane and build checks pass. Claude still decides the roof and private-to-runtime installation order."
+    claude_answer_0030: "2 October 2026, 00:30: the roof close-up is approved: plain dark plate, striped border only, amber lamps clearly on and off. Yes to the order: merge the recipe, presenter and tests now, keep the model out of public/ (it is rebuilt from the recipe), and ARENA-07 installs it in public/ when the Convoy Raid loads it. Kyle sees it in the Preview with the Convoy Raid."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -947,10 +947,10 @@ tasks:
     needs: [ARS-CORE]
     status: ready
     flag: arsenal
-    waiting_on: claude
     note: "The separate audio session still owns the sound bank and catalog. Claude must release those hooks or settle the order before this card starts; no audio files were inspected or changed."
     acceptance:
       - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), (the sound bank is merged and live since AUD-14; corrected by Claude 1 October 2026). The arsenal cannot release before these exist. No paid credits."
+    claude_answer_0030: "2 October 2026, 00:30: Claude releases the two hooks for this card only. Kyle's separate audio session has been idle since 25 September and this is a small addition: add the three cues to src/sound-bank.js and their CC0 library recipes to tools/audio/catalog.json, with no paid credits and no change to any existing entry, Kyle's voice takes or AUD-17's records. If the audio session resumes first, it keeps ownership and this card waits for it."
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
@@ -1058,10 +1058,10 @@ tasks:
     sequencing: "Wreck-rate and Arsenal are merged. Independent tests and the actual native/public hook map precede Source; other lanes retain their own files."
     note: "Bounty tests reproduce the missing dev, native, App and yard entry while current controls pass. Source waits for the hunter-cap and self-wreck rulings; existing projected marker behaviour is retained."
     hook_requests: [src/feature-flags.js, src/game.js, src/app.js, src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/screen-router.js, src/screen-hud.js, src/combat-hud.js, src/style.css, src/arena/arena-tell-view.js, src/audio.js]
-    waiting_on: claude
     design_question: "Does a marked player override the usual hunter cap? Does a self-wreck fallback recipient receive twenty points, and who receives the mark when the last hitter or current leader is also wrecking?"
     test_commit: f4afad3e83db2019eddae7bc90c575931844d94e
     test_verdict: "Bounded admission has twenty-eight passing checks and four genuine failures: missing dev switch, native entry, App entry and yard choice. Tests use the actual mode, clock, credit, brain and memory-only settlement paths; mechanics and browser checks remain unproved."
+    claude_answer_0030: "2 October 2026, 00:30: (1) When a computer car is marked, every other computer car hunts it. When the player is marked, the usual Easy and Medium hunter cap still holds, so the player is never mobbed on those levels; Hard has no cap as today. (2) A car that receives the mark from a self-wreck gets the mark but no 20 points; points come only from actually wrecking the marked car. (3) If the last hitter or the leader is itself wrecking, the mark goes to the nearest car that is still running, ties broken by the seeded order. The leader never means the marked car itself. (4) This card also makes Bounty Hunt playable on the Salt Flats once ARENA-06 merges. Docs: SCRAPDOME.md, Bounty Hunt."
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1075,6 +1075,7 @@ tasks:
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Ambush Alley, exactly: on foot inside the arena with the wall as the boundary, the fort, five waves, rank 12 unlock, pay by waves survived. Headless tests and a private browser scenario."
+    claude_note: "2 October 2026: also make Ambush Alley playable on the Salt Flats (ARENA-06 merges with Last Car Rolling and Fuel Run only)."
   - id: ART-SRC-SALTFLATS
     title: "Salt Flats Scrapyard: short list of existing starting models and ground"
     owner: codex
@@ -1118,9 +1119,9 @@ tasks:
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
     claude_verdict: "1 October 2026, evening: the generated salt meets Kyle's direction: real crust cells, a dusty driving band and no repeating pattern from the full view or the racing camera. Accept round 3 and finish the card: public entry, rank 9 unlock, the four modes, gates, then merge and Kyle's look in the Preview. For P3-POLISH, not this card: the inner island still reads sparse from the full view; add scrap there then."
-    waiting_on: claude
     design_question: "May Salt merge real Last Car Rolling and Fuel Run entry, with Bounty Hunt and Ambush Alley proving this venue in their own cards? Those modes are not built, and Ambush needs crew gear while Dune zoom waits for Salt to free the renderer."
     scope_note_commit: 4304028fb456395a64e257cd85813e35f241d875
+    claude_answer_0030: "2 October 2026, 00:30: yes. Merge the Salt Flats with Last Car Rolling and Fuel Run playable there. Bounty Hunt (ARENA-04) and Ambush Alley (ARENA-05) each add the Salt Flats as part of their own cards."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -1175,10 +1176,10 @@ tasks:
     sequencing: "Source waits for the two move rulings, Arsenal wave one to free combat armor, and Crew gear to make Tusk active. The move, native fight, early Tusk and existing Warlord kit are one complete card; an inactive saved Tusk ID does not finish the reward."
     hook_requests: [src/feature-flags.js, src/warlords.js, src/arena/warlord-event.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/sim-contacts.js, src/combat-armor.js, src/vehicle-contact-modifiers.js, src/arena/arena-tell-view.js, src/arena/warlord-settlement.js, src/crew.js, src/crew-ui.js, src/app.js, src/screen-territory.js, src/screen-yard-home.js, src/screen-router.js, src/screen-armory.js, src/audio.js]
     note: "Kingpin tests reproduce the missing dev switch and three native admission failures, with current controls passing. The actual crash solver and existing Titan Warlord kit meet those seams; Source waits for move rules and active Tusk."
-    waiting_on: claude
     design_question: "What triggers Kettle Drop, and what landing target and reach are committed? In phase two, does the two-and-a-half-second window follow only the second landing or both landings?"
     test_commit: 4f16f5313caebf59b3758365c1abcdd9c224203e
     test_verdict: "Bounded native admission has ten passing controls and four genuine missing-switch/fight failures. Downstream ring, damage, arc and reward checks remain unproved; the note records a three-second observation bound that needs independent review against the window ruling before Source."
+    claude_answer_0030: "2 October 2026, 00:30: (1) Trigger: when ready, while the player is on the floor between 12 and 40 m from him. (2) Target: committed when the tell starts (that is when the ring appears): the player's position predicted at the landing moment (current position plus current velocity times the tell plus the 1.2 s arc), kept on the floor and at most 40 m from his take-off point. (3) Phase two: the second ring is aimed the same way when he lands the first time; the 2.5 s stuck window follows only the second landing. Docs: SCRAPDOME.md, Kettle Kingpin."
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -3151,10 +3152,10 @@ tasks:
     acceptance:
       - "Build exactly 'Settled for build: The Dustmonger' in docs/SCRAPDOME.md section 5, on the arsenal's smoke and oil hazards (ARS-CORE, docs/ARSENAL.md). Dust Veil blocks computer aim through the cloud through targetFor; oil only on straight runs; the window and phase-two dust storm as settled. Reward: Smoke Screen unlocked early for this player."
       - "Tests first: every veil has its tell; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude: Claude plays it in the Preview before merge."
-    waiting_on: claude
     design_question: "What threshold means driving straight for the oil strip, how wide is the strip and where does it begin behind the cloud? Does its lifetime, owner grace and slip effect inherit ordinary Oil Slick?"
     test_commit: af3406dcfd7935c2b16719360b32d4e41d286c95
     test_verdict: "Bounded native admission has ten passing controls and three genuine missing-fight failures, one per difficulty. No Source, existing assertion or replay changed; downstream mechanics remain unreachable. The change note records the oil questions and actual rendering waits."
+    claude_answer_0030: "2 October 2026, 00:30: (1) Driving straight: his yaw rate stayed under 10 degrees a second for the last 0.5 s. (2) The oil strip is 4 m wide and 8 m long, centred on the line he drove, and begins at the far edge of the cloud (the cloud's centre distance behind him plus its radius) and runs 8 m further back. (3) It is an Oil Slick hazard in every other way: 6 s lifetime fading in the last second, owned by the Dustmonger with the same 1 s owner grace, and the same slip effect once per hazard (grip 0.35 for 0.7 s, 2.2 rad/s spin kick, speed times 0.85, no armor damage, a star shield ignores it). Docs: SCRAPDOME.md, Dustmonger."
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
     owner: codex
@@ -3172,13 +3173,12 @@ tasks:
     sequencing: "Independent native tests are committed; no runtime hooks are granted. The complete Drone waits for Arsenal weapon, armor and projectile hooks, and the real tyre-mark clue waits for Salt. Core targeting and scrap-burst rendering can stay read-only; ARS-03 will reuse the actual early Drone producer."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     note: "Six native controls pass and five admission checks fail genuinely. Source waits for the split-trigger answer and shared file owners; the complete earned Drone is required. Downstream mechanics remain unrun."
-    waiting_on: claude
     design_question: "Claude: what starts a split once its cooldown is ready, and is the first split ready immediately? The spacing orientation, shared tell, phase-two frequency and subsequent damage window need no new rule."
     test_commit: be3081e3122afba8521c6a2eb2943c52316b79f4
     acceptance:
       - "Build exactly 'Settled for build: Mother Mirage' in docs/SCRAPDOME.md section 5, including the decoy cars as arena participants with a decoy flag (they never score, fire or settle). Only the real car fires and leaves tyre marks; a copy bursts on its first hit; the window and phase two as settled. Reward: Decoy Drone unlocked early (ARS-03 reuses the decoy cars)."
       - "Tests first: every split has its tell; copies never score or settle; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude before merge."
-
+    claude_answer_0030: "2 October 2026, 00:30: (1) Once her cooldown is ready she starts a split when the player is within 40 m and she is not stunned or in a damage window. (2) The first split is not ready at the start: her cooldown runs from the start of the fight, so the player first sees the real car (12, 10 or 8 s in). Docs: SCRAPDOME.md, Mother Mirage."
   - id: AUD-17
     title: "Voice candidates and chosen crew/raider lines"
     lane: AUDIO
@@ -3218,9 +3218,9 @@ tasks:
     hook_requests: [src/sound-bank.js, src/audio.js]
     sequencing: "Independent tests cover settled native behavior first; Source waits for the two literal-rule answers. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. Audio remains with its separate owner."
     design_question: "Claude: how long is Caltrops harmless to its owner after deployment, and what input threshold counts as steering hard away from a Harpoon tether? Tests use full steering for the settled counter until those exact rules are answered; Source has not started."
-    waiting_on: claude
     test_commit: ed76a446244ccef96a4e3e322d7ad328ebbb0c07
     note: "Independent wave-one tests reproduce forty-six native weapon failures and four missing CPU-use accounting checks. Existing balance checks pass; Source waits for the two literal rules and the separate sound-bank owner."
+    claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO

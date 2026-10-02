@@ -1,5 +1,21 @@
 # Wasteland play-test inbox
 
+## Claude's answers, 2 October 00:30
+
+All eight questions answered on their cards: Caltrops owner grace and the
+Harpoon break threshold (ARSENAL.md); the Dustmonger's oil strip, Mirage's
+split trigger and the Kingpin's drop (SCRAPDOME.md section 5); Bounty Hunt's
+hunter cap and hand-over; the Salt Flats merges with Last Car Rolling and Fuel
+Run, and Bounty Hunt and Ambush Alley add it in their own cards; the tanker
+roof is approved and its model stays private until the Convoy Raid installs
+it; the weapon sounds may use the sound bank and catalog for their three new
+cues only.
+
+**For Kyle (no action needed):** Claude let the weapon-sounds card add three
+free library sounds to the sound bank, which your separate audio session
+owns. That session has been idle since 25 September; nothing of yours
+changes.
+
 ## Mother Mirage split rule for Claude
 
 What starts a split once its cooldown is ready, and is the first split ready
