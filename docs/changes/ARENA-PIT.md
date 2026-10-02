@@ -6,8 +6,9 @@ Future boss cards own Pit selection. No public picker or boss wiring is added.
 
 ## Settled design and implementation
 
-The centreline is an exact radius-40 circle. The released 32 m floor width gives
-an 8–72 m driving band, with the outer hulk wall at radius 75. The only fixed
+The centreline is an exact radius-40 circle. The settled Pit half-width of 32 m
+gives an 8–72 m driving band (the released ring half-width is 18 m), with the
+outer hulk wall at radius 75. The only fixed
 interior obstacle is the solid radius-8 centre pile. Eight native movable junk
 cars, two opposite ramps and eight safe opposed starts use existing arena rules.
 Pit-only frame/inverse projection handles its short final sample exactly.
@@ -18,6 +19,9 @@ released salvage parts form the circular wall, central pile and scrap outside
 the floor. Existing oval stands, roofs, lights and crowd are translated to the
 same centre; their frame does not become the circular collision boundary.
 Presentation reads native junk state and disposes its owned resources.
+Independent review found gaps between lower hulks at the original 64 stations.
+The Director added a genuine failing native-wall-span ray test first. The lower
+tier now uses 128 overlapping instances of the same kit; upper tiers remain 64.
 No assets, dependencies, simulation limits or pilot/brain overrides were added.
 Existing arena wall, contact, crushing and respawn sound cues are reused.
 
@@ -25,6 +29,7 @@ Existing arena wall, contact, crushing and respawn sound cues are reused.
 
 Geometry/admission/wall/ring-control selection: 7/7 pass. Renderer real-world
 entry, finite geometry, unchanged state/features/samples and disposal: 1/1 pass.
+The added bumper-height rays at native wall stations and span midpoints pass.
 Native ordinary junk/Titan crushing and Easy rammer recovery: 2/2 pass.
 New module/scenario syntax and diff whitespace checks pass.
 Ring geometry hash, native trace and ordinary replay control remain unchanged;

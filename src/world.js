@@ -137,10 +137,15 @@ function addPitSalvageScenery(world, course) {
   prototypeWorld.updateMatrixWorld(true);
   const poses=[];
   const wallRadius=course.def.pit.wallRadius;
-  for(let index=0;index<64;index++){
-    const angle=index/64*Math.PI*2;
-    for(let tier=0;tier<3;tier++)poses.push({x:Math.cos(angle)*wallRadius,z:Math.sin(angle)*wallRadius,
-      y:tier*1.1,heading:-angle,roll:tier%2?.04:-.03,flatten:.82});
+  for(let tier=0;tier<3;tier++){
+    // Overlap lower bodies across every physical wall span. Upper stacks can
+    // remain irregular without leaving an invisible bumper-height boundary.
+    const count=tier===0?128:64;
+    for(let index=0;index<count;index++){
+      const angle=index/count*Math.PI*2;
+      poses.push({x:Math.cos(angle)*wallRadius,z:Math.sin(angle)*wallRadius,
+        y:tier*1.1,heading:-angle,roll:tier%2?.04:-.03,flatten:.82});
+    }
   }
   for(let tier=0;tier<4;tier++){
     const count=tier===3?3:8,radius=tier===3?2:5-tier*.7;
