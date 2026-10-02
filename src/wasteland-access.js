@@ -17,7 +17,8 @@ export function raceFeatureFlags(flags, raceState) {
     base: flags,
     enabled(name) {
       if (!flags.enabled(name)) return false;
-      return name !== 'wasteland2' || raceState()?.wastelandGateDiscovered === true;
+      return !['wasteland2', 'arsenal'].includes(name) ||
+        raceState()?.wastelandGateDiscovered === true;
     },
   });
 }

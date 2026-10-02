@@ -1,3 +1,5 @@
+import {arsenalEnabled} from './combat-weapons.js';
+import {targetFor,targetIdentity} from './arsenal/targeting.js';
 import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
@@ -36,6 +38,7 @@ export function resetFootWeaponUser(duel) {
   const state = duel.state, weapons = state.footWeapons;
   if (!weapons || !state.fighter) return;
   weapons.lockTargetIndex = null;
+  if (arsenalEnabled(duel)) delete weapons.lockTargetId;
   weapons.lockSeconds = 0;
   weapons.fireHeld = false;
   weapons.repairing = false;
@@ -57,6 +60,7 @@ export function selectFootGear(duel, slot) {
   const repairWasInterrupted = weapons.repairBlockedUntilRelease;
   weapons.selected = selected;
   weapons.lockTargetIndex = null;
+  if (arsenalEnabled(duel)) delete weapons.lockTargetId;
   weapons.lockSeconds = 0;
   weapons.repairing = false;
   weapons.repairSeconds = weapons.repairAmount = 0;
@@ -101,7 +105,20 @@ function aimedCar(duel, fighter, direction) {
 }
 
 function advanceLock(duel, fighter, weapons, input, dt, direction) {
-  const target = input.aim ? aimedCar(duel, fighter, direction) : null;
+  let target = input.aim ? aimedCar(duel, fighter, direction) : null;
+  if (arsenalEnabled(duel)) {
+    const previousId=weapons.lockTargetId;
+    if(input.aim && (previousId || target !== null)){
+      const selected=targetFor(duel,duel.state,{
+        range:T.rpgLockRange*(crewPerks(fighter.crewId).lockRangeMultiplier||1),
+        origin:fighter,lockedTargetId:previousId ||
+          targetIdentity(duel,duel.state.opponents[target])});
+      target=selected ? duel.state.opponents.indexOf(selected) : null;
+      weapons.lockTargetId=selected ? targetIdentity(duel,selected) : null;
+      // A qualifying decoy redirects an existing lock without rebuilding its charge.
+      if(selected?.decoy && previousId && weapons.lockSeconds>0)weapons.lockTargetIndex=target;
+    }else weapons.lockTargetId=null;
+  }
   if (target === null) {
     weapons.lockTargetIndex = null;
     weapons.lockSeconds = 0;
@@ -137,6 +154,8 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
     splashRadius: T.rpgSplashRadius *
       (crewPerks(fighter.crewId).blastRadiusMultiplier || 1),
     targetIndex,
+    ...(arsenalEnabled(duel) && targetIndex !== null ? {targetId:weapons.lockTargetId,
+      attackerId:'player',lockRangeMultiplier} : {}),
     lifetimeSeconds: targetIndex === null ? T.rpgLifetimeSeconds
       : T.rpgLifetimeSeconds * lockRangeMultiplier,
   });

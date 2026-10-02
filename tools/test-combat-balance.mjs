@@ -4,6 +4,9 @@ import { fileURLToPath } from 'node:url';
 import { Duel } from '../src/game.js';
 import { App } from '../src/app.js';
 import { applyArmorDamage } from '../src/combat-armor.js';
+import { fireWeapon as nativeBalanceFire } from '../src/combat-weapons.js';
+import { stepCombatAI as nativeBalanceAI } from '../src/combat-ai.js';
+import { hazardsFor as nativeBalanceHazards } from '../src/arsenal/hazards.js';
 
 // BAL-01: no full campaigns in this suite. The builder runs both complete
 // --check reports once and records measured gaps and timings in the change note.
@@ -237,6 +240,129 @@ for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu
     });
   }
 }
+
+// ARS-CORE: use the existing calibrated report, with bounded native fixtures.
+const arsenalFlags = ['wasteland2', 'arsenal'];
+const nativeUsageRows = [];
+check('Arsenal CLI keeps both supported flags', () => {
+  for (const args of [['--check', '--flags', 'wasteland2,arsenal'],
+    ['--probe=hard,1989', '--flags', 'wasteland2,arsenal']]) {
+    assert.deepEqual(required('parseArgs')(args).flags, arsenalFlags,
+      'the existing report accepts both real gameplay switches');
+  }
+});
+check('Arsenal report starts a named discovered rank-six career through real App transactions', () => {
+  const originalStart = App.prototype.startCampaign;
+  const originalBuy = App.prototype.purchaseArsenalWeapon;
+  const originalEquip = App.prototype.equipCarWeapon;
+  const purchases = [], equipment = [], starts = [];
+  App.prototype.purchaseArsenalWeapon = function (id) {
+    const result = originalBuy.call(this, id);
+    purchases.push({id, ok: result.ok}); return result;
+  };
+  App.prototype.equipCarWeapon = function (slot, id) {
+    const result = originalEquip.call(this, slot, id);
+    equipment.push({id, ok: result.ok}); return result;
+  };
+  App.prototype.startCampaign = function (...args) {
+    const result = originalStart.apply(this, args);
+    assert.equal(this.duel.featureFlags.enabled('wasteland2'), true);
+    assert.equal(this.duel.featureFlags.enabled('arsenal'), true);
+    assert.equal(this.profile.wasteland.rank, 6, 'native report uses the settled wave-one career rank');
+    assert.equal(this.profile.wasteland.discoveredGate, true, 'native named career has discovered the gate');
+    assert.ok(this.player.name.trim(), 'the synthetic career belongs to a named player');
+    for (const id of ['oil', 'smoke']) assert.ok(this.profile.wasteland.weapons.unlocked.includes(id));
+    starts.push(this.duel.state.opponents.map(cpu => [...cpu.weaponLoadout]));
+    return result;
+  };
+  try {
+    for (let repeat = 0; repeat < 2; repeat++) {
+      const row = required('run')('none', 'hard', 1989, {flags: arsenalFlags, maxFrames: 1});
+      assert.deepEqual(row.flags, arsenalFlags);
+      assert.equal(row.completed, false, 'one frame never claims a complete sample');
+    }
+    assert.deepEqual(starts[0], starts[1], 'same seed reproduces real assigned CPU weapons');
+    for (const id of ['oil', 'smoke']) {
+      assert.equal(purchases.filter(row => row.id === id && row.ok).length, 2,
+        'every fresh report career really purchases ' + id);
+      assert.ok(equipment.some(row => row.id === id && row.ok), 'the real App equips ' + id);
+    }
+  } finally {
+    App.prototype.startCampaign = originalStart;
+    App.prototype.purchaseArsenalWeapon = originalBuy;
+    App.prototype.equipCarWeapon = originalEquip;
+  }
+});
+for (const weapon of ['oil', 'smoke', 'crossbow']) check('Arsenal counts actual native CPU ' + weapon + ' use', () => {
+  const original = App.prototype.advance;
+  let deployed = false, measured;
+  App.prototype.advance = function (...args) {
+    const duel = this.duel, state = duel.state;
+    const cpu = state.opponents.find(actor => actor.weaponLoadout?.includes(weapon));
+    if (!cpu) return original.apply(this, args);
+    deployed = true;
+    Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0, traffic: [],
+      s: weapon === 'crossbow' ? 260 : weapon === 'smoke' ? 165 : 180,
+      lateral: 0, headingError: 0, speedMph: 0});
+    Object.assign(cpu, {s: 200, prevS: 200, lateral: 0, prevLateral: 0,
+      headingError: 0, speedMph: 0, impactTimer: 0});
+    for (const other of state.opponents) other.finished = other !== cpu;
+    state.combat.aiTimer = 0;
+    if (weapon === 'smoke') assert.ok(applyArmorDamage(duel, cpu, 'crossbow', {owner: 'player'}) > 0,
+      'real positive damage supplies native defensive smoke eligibility');
+    if (weapon === 'crossbow') {
+      assert.equal(nativeBalanceFire(duel, weapon, true, cpu), true);
+      assert.equal(state.combat.projectiles.filter(shot => shot.kind === weapon && shot.enemy).length, 1,
+        'a real CPU bolt exists, rather than an inferred loadout use');
+    } else {
+      nativeBalanceAI(duel, 1 / 120);
+      assert.equal(nativeBalanceHazards(duel).filter(hazard => hazard.kind === weapon && hazard.owner === cpu).length, 1,
+        'the native CPU scheduler actually deploys its assigned rear weapon');
+    }
+    if (weapon === 'oil') assert.equal(duel.fireWeapon('oil'), true,
+      'one genuine player deployment also exercises ownership attribution');
+    state.combat.aiTimer = Infinity;
+    return original.apply(this, args);
+  };
+  try {
+    for (let seed = 1989; seed < 1995 && !deployed; seed++) {
+      measured = required('run')('none', 'hard', seed, {flags: arsenalFlags, maxFrames: 1});
+    }
+    assert.ok(deployed, 'the bounded seeded native field really assigns ' + weapon);
+    assert.equal(measured.weaponUses?.cpu?.[weapon], 1, 'report counts one actual CPU deployment, not cue plus fire twice');
+    assert.equal(measured.weaponUses?.player?.[weapon] ?? 0, weapon === 'oil' ? 1 : 0,
+      'report keeps real player and CPU uses separate');
+    nativeUsageRows.push(measured);
+  } finally { App.prototype.advance = original; }
+});
+check('Arsenal report aggregates the measured native per-weapon usage', () => {
+  assert.equal(nativeUsageRows.length, 3, 'three bounded native deployment rows supply the measured totals');
+  const input = fixture(arsenalFlags);
+  input.runs.push(...nativeUsageRows);
+  const report = required('buildReport')(input);
+  for (const weapon of ['oil', 'smoke', 'crossbow']) {
+    assert.equal(report.weaponUses?.cpu?.[weapon], 1, 'aggregate retains exactly the measured CPU ' + weapon + ' use');
+    assert.equal(report.weaponUses?.player?.[weapon] ?? 0, weapon === 'oil' ? 1 : 0);
+  }
+});
+
+
+check('Arsenal check requires measured CPU Oil and Smoke use without changing target bands', () => {
+  assert.equal(nativeUsageRows.length, 3, 'native deployment rows supply the usage evidence');
+  const input = fixture(arsenalFlags), report = required('buildReport')(input);
+  report.weaponUses = required('buildReport')({...input, runs: [...input.runs, ...nativeUsageRows]}).weaponUses;
+  const validate = required('reportFailures');
+  assert.deepEqual(validate(report, input.runs, input.baselineRuns), [],
+    'original target bands and genuine measured rear-weapon use pass together');
+  for (const weapon of ['oil', 'smoke']) {
+    const missing = structuredClone(report);
+    missing.weaponUses.cpu[weapon] = 0;
+    assert.match(validate(missing, input.runs, input.baselineRuns).join('\n'),
+      new RegExp('CPU.*' + weapon + '|' + weapon + '.*CPU', 'i'),
+      'Arsenal --check rejects zero measured native CPU ' + weapon + ' use');
+  }
+});
+
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`Combat balance acceptance: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;

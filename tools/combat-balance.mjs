@@ -6,6 +6,9 @@ import { Duel } from '../src/game.js';
 import { stepCombat, supportsCombat } from '../src/combat.js';
 import { COURSE, DRIVE } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
+import {createProfile, createPlayerRegistry, savePlayers} from '../src/progression.js';
+import {normalizeWasteland} from '../src/wasteland-progress.js';
+import {point} from '../src/combat-weapons.js';
 import { winRateFailures } from './balance-targets.mjs';
 
 // Headless runs use the production App, its standard scripted driving line,
@@ -21,12 +24,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
-const BALANCE_FLAGS = ['wasteland2'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2,arsenal] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
+const BALANCE_FLAGS = ['wasteland2', 'arsenal'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected wasteland2.');
+    throw Error('Unsupported flags; expected wasteland2 or arsenal.');
   return [...new Set(flags)];
 }
 
@@ -61,7 +64,7 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    overrides: { wasteland2: flags.includes('wasteland2') } });
+    overrides: { wasteland2: flags.includes('wasteland2'), arsenal: flags.includes('arsenal') } });
 }
 
 function emptyWrecks() {
@@ -81,6 +84,83 @@ function memoryStorage() {
     setItem(key, value) { rows.set(key, String(value)); },
     removeItem(key) { rows.delete(key); },
   };
+}
+
+function saveArsenalCareer(storage) {
+  const profile = createProfile();
+  profile.wasteland = normalizeWasteland({...profile.wasteland,
+    xp: 3500, scrap: 3000, discoveredGate: true});
+  const registry = createPlayerRegistry(profile);
+  registry.players[0].name = 'Arsenal Balance';
+  if (!savePlayers(registry, storage)) throw Error('Could not save the memory-only Arsenal career.');
+}
+
+function equipArsenalPolicy(app, policy) {
+  for (const [slot, id] of ['oil', 'smoke'].entries()) {
+    if (!app.purchaseArsenalWeapon(id).ok || !app.equipCarWeapon(slot, id).ok)
+      throw Error('Could not purchase and equip ' + id + ' through the native Armory.');
+  }
+  // Historical policies still request their original weapons. Rear weapons
+  // occupy unused slots; all/pursuit retain all four original starter slots.
+  const selected = policy === 'none' ? 'crossbow' : policy === 'ufo-max' ? 'ufo' : policy;
+  const loadout = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
+    ['oil', 'smoke', selected, selected === 'star' ? 'crossbow' : 'star'];
+  for (const [slot, id] of loadout.entries()) {
+    if (!app.equipCarWeapon(slot, id).ok) throw Error('Could not equip native policy weapon ' + id + '.');
+  }
+  if (policy === 'ufo-max') for (let level = 0; level < 3; level++) {
+    if (!app.purchaseWeapon('ufo').ok) throw Error('Could not buy the native maximum UFO level.');
+  }
+}
+
+function weaponUseCounter(duel) {
+  const uses = {player: {}, cpu: {}}, unattributed = {};
+  let serial = duel.state.combat?.serial || 0;
+  const count = (role, weapon) => { uses[role][weapon] = (uses[role][weapon] || 0) + 1; };
+  return {uses, unattributed, observe(event) {
+    const state = duel.state, combat = state.combat;
+    if (!combat) return;
+    const projectiles = combat.projectiles.filter(item => item.id > serial);
+    const bursts = combat.bursts.filter(item => item.id > serial);
+    serial = combat.serial;
+    const rear = ['oil', 'smoke'].find(id => event.arsenalCue === 'weapon.' + id + '.deploy');
+    if (rear) {
+      if (event.actor === state) count('player', rear);
+      else if (state.opponents.includes(event.actor)) count('cpu', rear);
+      return;
+    }
+    const weapon = event.weaponFired;
+    if (weapon === 'bomb' || weapon === 'crossbow') {
+      // A native Bomb batch is one use, irrespective of its pellet count.
+      const product = projectiles.find(item => item.kind === weapon);
+      if (product) count(product.enemy ? 'cpu' : 'player', weapon);
+    } else if (weapon === 'ufo') {
+      if (event.enemy === true && state.opponents[event.opponentIndex]) count('cpu', weapon);
+      else if (bursts.some(item => item.kind === weapon) && combat.lastUfo) count('player', weapon);
+    } else if (weapon === 'star') {
+      // Star has no actor in its event. Its new native burst and active shield
+      // identify the car; pickup bursts were already observed on their own event.
+      const product = bursts.find(item => item.kind === weapon);
+      if (!product) return;
+      const actors = [state, ...state.opponents].filter(actor => {
+        const shield = actor === state ? combat.shield : actor === state.rival ? combat.rivalShield : actor.combatShield;
+        if (!(shield > 0)) return false;
+        const at = point(duel, actor);
+        return at.x === product.x && at.y === product.y && at.z === product.z;
+      });
+      if (actors.length === 1) count(actors[0] === state ? 'player' : 'cpu', weapon);
+      else unattributed[weapon] = (unattributed[weapon] || 0) + 1;
+    }
+  }};
+}
+
+function sumWeaponUses(races) {
+  const total = {player: {}, cpu: {}};
+  for (const race of races) for (const role of ['player', 'cpu']) {
+    for (const [weapon, count] of Object.entries(race.weaponUses?.[role] || {}))
+      total[role][weapon] = (total[role][weapon] || 0) + count;
+  }
+  return total;
 }
 
 function eligibleWeapons(policy, duel) {
@@ -105,8 +185,10 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
   try {
     globalThis.localStorage = memoryStorage();
     globalThis.cancelAnimationFrame ??= () => {};
+    if (flags.includes('arsenal')) saveArsenalCareer(globalThis.localStorage);
     app = new App();
     app.duel.featureFlags = simulationFlags(flags);
+    if (flags.includes('arsenal')) equipArsenalPolicy(app, policy);
     if (!app.startCampaign({ startStage: 0, seed, mode: 'wasteland', car: 'falcone_f42',
       difficulty: 'casual', cpuDifficulty, driverId: DEFAULT_DRIVER })) {
       throw Error(`Could not start ${policy}/${cpuDifficulty}`);
@@ -130,13 +212,14 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
       };
     }
     const duel = app.duel;
-    if (policy === 'ufo-max') {
+    if (policy === 'ufo-max' && !flags.includes('arsenal')) {
       duel.state.combat.levels.ufo = 3;
       duel.state.weaponLevels.ufo = 3;
     }
     const shots = { ufo: 0, bomb: 0, crossbow: 0, star: 0 };
     let cpuHits = 0, unattributedEnemyHits = 0, playerOpponentWrecks = 0;
     const wrecks = emptyWrecks();
+    const weaponCounter = weaponUseCounter(duel);
     const wreckedTraffic = new WeakSet();
     const recordTrafficWreck = (actor, owner) => {
       if (actor && typeof actor === 'object') {
@@ -147,6 +230,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
       wrecks.byOwner[Object.hasOwn(wrecks.byOwner, owner) ? owner : 'unknown']++;
     };
     duel.onChange((_, event) => {
+      weaponCounter.observe(event);
       if (event.combatWreck) {
         const victim = event.victim === 'rival' ? 'opponent' : event.victim;
         if (['player', 'opponent', 'traffic'].includes(victim)) {
@@ -183,7 +267,8 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
       won: state.results?.won === true,
       timeSec: rounded(state.results?.timeSec ?? state.stageTimeSec),
       rivalTimeSec: state.rival?.finishTime == null ? null : rounded(state.rival.finishTime),
-      shots, rivalHits: state.combat?.hits ?? 0,
+      shots, weaponUses: weaponCounter.uses, unattributedWeaponUses: weaponCounter.unattributed,
+      rivalHits: state.combat?.hits ?? 0,
       cpuHits: unattributedEnemyHits ? null : cpuHits, unattributedEnemyHits,
       majorCrashes: state.stageCrashes,
     };
@@ -206,7 +291,8 @@ export function crossbowProbe({ flags = [] } = {}) {
   for (let index = 0; index < 26; index++) {
     const duel = new Duel({ seed: 1989 + index, featureFlags: simulationFlags(flags) });
     const event = combatStages[index % combatStages.length];
-    duel.startCampaign({ mode: 'wasteland', startStage: event.index, car: event.stage.requiredCar ?? 'falcone_f42' });
+    duel.startCampaign({ mode: 'wasteland', startStage: event.index, car: event.stage.requiredCar ?? 'falcone_f42',
+      ...(flags.includes('arsenal') ? {discoveredGate: true, arsenalRank: 6} : {}) });
     const state = duel.state, gap = 20 + index % 13 * 7, lateral = (index % 7 - 3) * .85;
     state.status = 'racing';
     state.s = state.prevS = 100 + (index * 379) % (duel.course.length - 300);
@@ -235,7 +321,8 @@ export function bombSpeedProbe({ flags = [] } = {}) {
   // Include the four speeds named for BUG-05 (roughly 48/97/193/320 km/h).
   for (const speedMph of [20, 30, 40, 60, 80, 100, 120, 130, 160, 200]) {
     const duel = new Duel({ seed: 1989, featureFlags: simulationFlags(flags) });
-    duel.startCampaign({ mode: 'wasteland', startStage: 0 });
+    duel.startCampaign({ mode: 'wasteland', startStage: 0,
+      ...(flags.includes('arsenal') ? {discoveredGate: true, arsenalRank: 6} : {}) });
     const state = duel.state;
     state.status = 'racing';
     state.s = state.prevS = 100;
@@ -307,12 +394,15 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
       winRateByDifficulty: 'No-weapon policy, thirty seeds 1989-2018 per difficulty; seed 1989 reused from policy runs.',
       cpuHitsByDifficulty: 'No-weapon policy, mean of all thirty seeds per difficulty.',
       ufoGainByDifficulty: 'UFO and UFO-max policies against no-weapon races, mean of seeds 1989-1994.',
-      hitsByDifficulty: 'All seven policies at seed 1989 plus nine additional no-weapon seeds per difficulty (16 unique races). CPU hits count enemy combatHit events whose victim is player; rivalHits uses the existing combat hit counter.',
-      wrecksByDifficulty: 'Same 16 races per difficulty; combatWreck events for player/opponents, trafficWrecked collisions and roadsideImpact traffic obliterations. Traffic victims count once; knocks are excluded. byOwner counts the attacker; current roadsideImpact events supply no attacker, so their owner is unknown. Legacy vehicleCrushed events are excluded.',
+      hitsByDifficulty: 'All policy samples and thirty-seed no-weapon baselines per difficulty. CPU hits count enemy combatHit events whose victim is player; rivalHits uses the existing combat hit counter.',
+      wrecksByDifficulty: 'Same policy and baseline samples per difficulty; combatWreck events for player/opponents, trafficWrecked collisions and roadsideImpact traffic obliterations. Traffic victims count once; knocks are excluded. byOwner counts the attacker; current roadsideImpact events supply no attacker, so their owner is unknown. Legacy vehicleCrushed events are excluded.',
       weaponProbes: 'Crossbow: 26 moving-target cases across combat courses. Own bombs: ten speeds from 20 to 200 mph.',
-      gainSec: 'Policy time compared with no-weapon time at seed 1989, averaged across three difficulties.'
+      gainSec: 'Policy time compared with no-weapon time at seed 1989, averaged across three difficulties.',
+      weaponUses: 'All historical policy and baseline races. Native actor deployment cues, projectile batches and shield/jump products identify each use; assignments alone never count. Arsenal uses a named, discovered rank-six career with real Armory purchases and policy-compatible equipment.'
     },
-    hitsByDifficulty, wrecksByDifficulty,
+    hitsByDifficulty, wrecksByDifficulty, weaponUses: sumWeaponUses(allRuns),
+    weaponUsesByDifficulty: Object.fromEntries(difficulties.map(difficulty =>
+      [difficulty, sumWeaponUses(allRuns.filter(race => race.cpuDifficulty === difficulty))])),
     firstTwelveSec, elapsedSec, winRateByDifficulty: baselineWins,
     gainSec, ufoGainByDifficulty, crossbowRace: { shots: crossbowShots, rivalHits: crossbowHits },
     crossbowAim: { shots: crossbowAim.shots, hits: crossbowAim.hits, hitRate: crossbowAim.hitRate },
@@ -338,6 +428,9 @@ export function reportFailures(report, runs, baselineRuns) {
     if (cpuHitsByDifficulty[difficulty] != null && (cpuHitsByDifficulty[difficulty] < low || cpuHitsByDifficulty[difficulty] > high)) {
       failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}–${high}`);
     }
+  }
+  if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke']) {
+    if (!(report.weaponUses?.cpu?.[weapon] > 0)) failures.push('CPU ' + weapon + ' has no measured native use');
   }
   return failures;
 }

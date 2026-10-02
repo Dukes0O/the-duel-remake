@@ -1,5 +1,34 @@
 # Wasteland play-test inbox
 
+## Kyle's lower wreck-rate choice, 1 October evening
+
+Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
+unchanged; fresh checks precede merge. This answers the earlier hold.
+
+## Tanker roof fixes for Claude
+
+Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
+The round-three corrections give the plate a plain dark middle and striped border,
+with the lamps shown off and on in the actual game. All sixty-one native checks,
+twenty-two game views, quiet frame pacing and current lane/build gates pass.
+The stricter CPU timing diagnostic and tiny camera settling are recorded limits.
+
+The fitted renderer currently receives its model from the private review loader;
+ARENA-07 supplies the game caller. May this fitting card merge its recipe and
+renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
+
+## Two weapon rules for Claude
+
+Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
+and what steering input counts as hard away from a Harpoon tether? The native
+file map is settled; independent tests can cover the other rules meanwhile.
+
+## Arsenal audio ownership for Claude
+
+Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
+but AUD-17 still names it as the separate audio session's hook. Please settle
+the order or release that hook before these cards edit it.
+
 ## Claude's answers, 1 October evening
 
 - Computer loadouts: at least one front attack, at most two defensive or
@@ -11,47 +40,6 @@
 - Salt Flats: the generated salt is accepted; finish the card. Inner island
   scrap goes to P3-POLISH.
 - Vesper: approved; merge after the shared registration and lane gate.
-
-## Completed comparisons and frame evidence for Claude
-
-Salt's final sheet and Vesper's second sheet reach four on every assessed
-visual item. Salt meets its paired arena frame limit; Vesper now meets its
-visible twelve-fighter frame limit at both qualities, with all native cases
-passing after the reviewed stale-baseline update. Please review their sheets.
-Public Salt hooks wait for Arsenal and wreck-rate; both recipes wait for the
-placement file held by Tanker. Whole-card gates and merges remain held.
-
-Tanker's final private chase samples keep the same frame pacing at both
-qualities. Its CPU timing and slight camera settling are explicit diagnostic
-limits, not a new acceptance rule. The below-bar final look still needs your
-choice for Kyle, with no fourth fitting round.
-
-## Arsenal balance and final tanker review for Claude
-
-Arsenal Medium wins eighty percent against the forty-five to sixty-five target.
-A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and
-Star making no computer weapon use. Should four-slot CPU loadouts guarantee
-a working front attack? Targets and gameplay stay held for your answer.
-
-The final tanker sheet is in the card's linked lane path. The critic prefers
-round three but its roof center still has stripes and its art match stays
-below the bar. Choose the better round for Kyle; there is no fourth round.
-
-## Wreck-rate armor question for Claude, 1 October
-
-Changing ordinary arena armor also changes Sal’s absolute armor because
-warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card
-preserve the current warlord health values or only the multiplier? Tuning
-waits for your answer; the target test and balance-tool import guard can finish.
-
-## Director resume: 1 October afternoon
-
-Shove is merged and awaits Kyle's Preview check. Arsenal and wreck-rate await
-the two written answers above. Tanker is capped at its final round for Claude's
-choice and Kyle's look; independent final Source review is clear. Salt and
-Vesper's completed native comparisons are ready for Claude, with public hooks
-and placement registration still holding their merges. No new art round is
-needed for either cleared look.
 
 ## Answers carried into the current cards
 

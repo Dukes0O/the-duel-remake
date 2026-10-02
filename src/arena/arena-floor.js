@@ -55,7 +55,7 @@ export function containInArena(duel, actor, dt) {
     actor.yawVelocity = 0;
   }
   // An already waiting wreck is contained quietly, without a second hit cue.
-  if (!actor.combatWrecking && normalMph > FLOOR_RULES.damageNormalMph && actor._arenaWallCooldown === 0) {
+  if (actor.kind !== 'junkCar' && !actor.combatWrecking && normalMph > FLOOR_RULES.damageNormalMph && actor._arenaWallCooldown === 0) {
     actor._arenaWallCooldown = FLOOR_RULES.damageCooldownSec;
     applySceneryArmorDamage(duel, actor);
     duel.emit({arenaWallHit: {id: actor === duel.state ? 'player' : actor.arenaId,
