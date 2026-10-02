@@ -5,11 +5,39 @@ import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
 import {arenaTargetOf, arenaTargetOutOfPlay, combatOwnerId} from './combat-teams.js';
 import {footMoveDirection} from './onfoot.js';
+import {carEffect} from './arsenal/car-effects.js';
+import {deployOil} from './arsenal/oil.js';
+import {deploySmoke} from './arsenal/smoke.js';
+import {targetFor, targetIdentity} from './arsenal/targeting.js';
+
+const cpuCooldowns = new WeakMap();
+const boltLaunchSpeeds = new WeakMap();
+
+// Keep launch reach out of serialized race state. Older live bolts enter this
+// cache before guidance; their horizontal speed is unchanged by native flight.
+export function boltLaunchSpeed(projectile) {
+  if (!boltLaunchSpeeds.has(projectile))
+    boltLaunchSpeeds.set(projectile, Math.hypot(projectile.vx, projectile.vz));
+  return boltLaunchSpeeds.get(projectile);
+}
+
+export function clearCpuWeaponCooldowns(actor) { cpuCooldowns.delete(actor); }
+export function stepCpuWeaponCooldowns(actor, dt) {
+  const timers = cpuCooldowns.get(actor);
+  if (timers) for (const id of Object.keys(timers))
+    timers[id] = Math.max(0, timers[id] - dt);
+}
 
 export {WEAPONS};
 const T = COMBAT_TUNING;
 
 export const supportsCombat = stage => !!stage?.hasRival && !stage.practice && !stage.stuntTrial;
+
+export function arsenalEnabled(duel) {
+  return duel.state.mode === 'wasteland' && duel.state.wastelandGateDiscovered === true &&
+    duel.featureFlags?.enabled('wasteland2') === true &&
+    duel.featureFlags?.enabled('arsenal') === true;
+}
 
 export function createCombat(levels) {
   return {
@@ -76,6 +104,25 @@ export function predictedPoint(duel, actor, seconds) {
     Math.max(T.predictionCurveFloor, 1 - frame.curvature * actor.lateral);
   const lateral = Math.sin(headingError) * speed + (actor.pushVelocity || 0);
   return duel.course.groundAt(actor.s + along * seconds, actor.lateral + lateral * seconds);
+}
+
+// Range checks and production share the native lead and launch direction.
+function crossbowAim(duel, actor, target, at, level, straightShot, lead) {
+  const goal = straightShot ? {x: at.x + Math.sin(at.heading + (actor.headingError || 0)) * 100,
+    y: at.y + T.crossbow.aimHeightOffset, z: at.z + Math.cos(at.heading + (actor.headingError || 0)) * 100}
+    : aimPoint(duel, target);
+  const speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
+  let aimX = goal.x, aimZ = goal.z;
+  if (!straightShot && lead) {
+    const travel = Math.min(T.crossbow.leadTime,
+      Math.hypot(goal.x - at.x, goal.z - at.z) / speed);
+    const predicted = predictedPoint(duel, target, travel);
+    aimX = predicted.x;
+    aimZ = predicted.z;
+  }
+  const dx = aimX - at.x, dz = aimZ - at.z;
+  const length = Math.hypot(dx, dz) || 1;
+  return {goal, speed, dx: dx / length, dz: dz / length, length};
 }
 
 export function burst(combat, at, kind = 'blast') {
@@ -222,7 +269,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
-  const target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
+  let target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
     ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
         !opponent.combatWrecking)
       .reduce((closest, opponent) =>
@@ -233,11 +280,40 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
       state.paused || !actor || actor.finished || actor.crushed || actor.combatWrecking ||
       actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
   if (!enemy && state.onFoot) return false;
-  if (!enemy && combat.cooldowns[weapon] > 0) return false;
+  const arsenal = arsenalEnabled(duel);
+  let straightShot = false;
+  const rearHazard = weapon === 'oil' || weapon === 'smoke';
+  if (rearHazard && !arsenal) return false;
+  if (arsenal && carEffect(actor, 'disabled')) return false;
+  if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
+  let cooldowns = combat.cooldowns;
+  if (arsenal && enemy) {
+    cooldowns = cpuCooldowns.get(actor);
+    if (!cooldowns) cpuCooldowns.set(actor, cooldowns = {});
+  }
+  if ((!enemy || arsenal) && cooldowns[weapon] > 0) return false;
+  if (arsenal && weapon === 'crossbow') {
+    const origin = point(duel, actor);
+    const level = enemy ? 0 : combat.levels.crossbow || 0;
+    const carry = enemy ? null : velocity(actor, origin);
+    target = targetFor(duel, actor, enemy ? {range: T.cpu.attackRange, origin} : {
+      origin,
+      rangeForTarget: candidate => {
+        const {dx, dz, speed} = crossbowAim(duel, actor, candidate, origin, level, false, true);
+        return Math.hypot(dx * speed + carry.x, dz * speed + carry.z) * T.crossbow.lifetime;
+      },
+    });
+    // A player may still fire straight through smoke; CPUs cannot aim blind.
+    if (!target && enemy) return false;
+    straightShot = !target;
+  }
 
   const at = point(duel, actor);
-  const level = enemy ? 0 : combat.levels[weapon];
-  if (weapon === 'ufo') {
+  const level = enemy ? 0 : combat.levels[weapon] || 0;
+  if (rearHazard) {
+    const hazard = weapon === 'oil' ? deployOil(duel, actor) : deploySmoke(duel, actor);
+    if (!hazard) return false;
+  } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);
     if (destination.kind === 'blocked') {
@@ -275,7 +351,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     }
     burst(combat, at, 'star');
   } else {
-    if (weapon === 'crossbow' && (!target || (enemy && state.arena?.mode === 'fuel-run'
+    if (weapon === 'crossbow' && !straightShot && (!target || (enemy && state.arena?.mode === 'fuel-run'
       ? arenaTargetOutOfPlay(duel, target)
       : target.finished || target.crushed || target.combatWrecking))) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
@@ -298,22 +374,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         dz = Math.cos(angle);
         speed = T.bomb.launchSpeed;
       } else {
-        const goal = aimPoint(duel, target);
-        speed = T.crossbow.baseSpeed + T.crossbow.speedPerLevel * level;
-        let aimX = goal.x;
-        let aimZ = goal.z;
-        if (enemy || modernProjectile) {
-          const travel = Math.min(T.crossbow.leadTime,
-            Math.hypot(goal.x - at.x, goal.z - at.z) / speed);
-          const predicted = predictedPoint(duel, target, travel);
-          aimX = predicted.x;
-          aimZ = predicted.z;
-        }
-        dx = aimX - at.x;
-        dz = aimZ - at.z;
-        const length = Math.hypot(dx, dz) || 1;
-        dx /= length;
-        dz /= length;
+        const aim = crossbowAim(duel, actor, target, at, level, straightShot, enemy || modernProjectile);
+        const {goal, length} = aim;
+        ({dx, dz, speed} = aim);
         if (enemy) {
           const baseSpread = CPU_COMBAT[state.cpuDifficulty]?.aimError ?? CPU_COMBAT.medium.aimError;
           const spread = state.cpuDifficulty === 'medium' && !duel.stageDef.arena &&
@@ -329,7 +392,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         }
         vy = (goal.y - at.y - T.crossbow.aimHeightOffset) / length * speed;
       }
-      combat.projectiles.push({
+      const projectile = {
         id: ++combat.serial, kind: weapon, enemy, level,
         x: at.x + dx * T.projectileSpawnOffset,
         y: at.y + T.projectileSpawnHeight,
@@ -337,19 +400,24 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
         vx: dx * speed + carryX,
         vz: dz * speed + carryZ,
         vy, age: 0,
-        ...(modernProjectile && weapon === 'crossbow' ? {
+        ...(modernProjectile && weapon === 'crossbow' && !straightShot ? {
           targetIndex: enemy ? (state.arena && target !== state ? state.opponents.indexOf(target) : -1)
             : state.opponents.indexOf(target),
+          ...(arsenal ? {targetId: targetIdentity(duel, target),
+            attackerId: targetIdentity(duel, actor)} : {}),
           launchBearing: Math.atan2(dx * speed + carryX, dz * speed + carryZ),
           ...(enemy ? {aimBias} : {}),
         } : {}),
         ...(enemy && actor !== state.rival ? {sourceIndex: state.opponents.indexOf(actor)} : {}),
         ...(state.arena ? {ownerId: combatOwnerId(duel, actor)} : {}),
-      });
+      };
+      if (modernProjectile && weapon === 'crossbow') boltLaunchSpeed(projectile);
+      combat.projectiles.push(projectile);
     }
   }
-  if (!enemy) combat.cooldowns[weapon] = WEAPONS[weapon].cooldown *
-    (1 - level * T.cooldownUpgradeDiscount);
+  if (!enemy || arsenal) cooldowns[weapon] = arsenal
+    ? WEAPONS[weapon].cooldown / 1.15 ** level
+    : WEAPONS[weapon].cooldown * (1 - level * T.cooldownUpgradeDiscount);
   duel.emit({weaponFired: weapon});
   return true;
 }

@@ -46,7 +46,14 @@ an oval junkyard bowl:
   can turn round inside the floor, so the bowl plays as fights, not laps.
   Without it, cars circled at 100 mph, 70 metres apart, and slammed the walls.
 - **Three jump ramps** across the ring give air and escape lines.
-- **Junk cars** scattered on the floor are breakable cover.
+- **Junk cars** scattered on the floor are cover you can shove (Kyle, 1
+  October 2026: "they are like completely unmovable objects"). Each is a heavy
+  hulk, 1.5 times an ordinary car's mass, that slides on the floor when rammed
+  through the crash solver, like a traffic hulk: a car at 40 mph moves it at
+  least 2 m, the Titan at least 5 m. It stays on the floor, never deals damage
+  by sliding, and settles where it stops for the rest of the round (it does
+  not reset). The Titan still crushes it flat. Computer drivers steer round
+  its current position.
 - **Eight spawn slots** around the ring, alternating inner and outer lanes,
   facing along the ring.
 

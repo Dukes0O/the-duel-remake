@@ -1,4 +1,4 @@
-import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
+import {getProfileWeapons, WEAPON_IDS} from './weapon-upgrades.js';
 import {normalizeGateDiscovery} from './hidden-road-discovery.js';
 import {rankForXp} from './notoriety.js';
 import {TERRITORIES} from './wasteland-career.js';
@@ -85,16 +85,9 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
   // An older build cannot interpret a newer schema. Keep every byte of the
   // nested object; the startup backup gate blocks writes to that career.
   if (Number.isSafeInteger(source.version) && source.version > 1) return {...source};
-  const previous = normalizeWeapons(legacyWeapons);
-  const nested = normalizeWeapons(source.weapons);
-  const weapons = {
-    ...nested,
-    levels: Object.fromEntries(WEAPON_IDS.map(id => [
-      id, Math.max(previous.levels[id], nested.levels[id]),
-    ])),
-  };
+  const weapons = getProfileWeapons({wasteland: {weapons: source.weapons}, weapons: legacyWeapons});
   const loadout = Array.isArray(source.loadout)
-    ? [...new Set(source.loadout.filter(id => WEAPON_IDS.includes(id)))].slice(0, 4)
+    ? [...new Set(source.loadout.filter(id => weapons.unlocked.includes(id)))].slice(0, 4)
     : [...WEAPON_IDS];
   const crewSource = record(source.crew) ? source.crew : {};
   const crewUnlocked = [...new Set(['rook', ...ids(crewSource.unlocked)])];

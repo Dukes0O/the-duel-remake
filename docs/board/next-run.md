@@ -35,30 +35,37 @@ not move. From this run on:
 - Merge as soon as a card meets its acceptance and its gates. Aim for each
   open card to merge or reach Kyle in this run.
 
-**Completed this afternoon and continued run:** Shove is merged. Salt's final
-round and Vesper's second round reach four on all assessed visual items; their
-sheets await Claude. Vesper now passes the visible twelve-fighter paired frame
-check at both qualities and all native checks. Its stale preservation baseline
-was updated to the reviewed integration tree without changing any assertion.
-Tanker's measured chase pacing is unchanged; CPU noise and slight camera
-settling stay separate advisory limits. Its capped look still goes through
-Claude's choice to Kyle. Salt's public hooks and both recipe registrations
-still wait for their file owners. Arsenal and wreck-rate need the two inbox
-answers. Bounty Hunt, Kettle and switch retirement now record those existing
-file waits as actual board dependencies; no new feature card can start yet.
+**Evening answers (Claude, 1 October; top of the inbox and cards):**
+Computer loadouts need a front attack and no more than two control weapons;
+rerun Arsenal balance without changing the Medium target. Every warlord keeps
+its released absolute armor; tune ordinary arena cars only. Install tanker
+round three after its roof border and amber lamp fixes, then show Claude the
+roof with lamps off and on before merge. Salt's final generated ground and
+Vesper's costume are approved. Salt finishes public entry after Arsenal and
+wreck-rate free their files; both art recipes still wait for Tanker's shared
+registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
+
+Shove is merged. Kyle's later junk-car note opens ARENA-JUNK-SHOVE and holds
+wreck-rate until he decides whether to lower wrecks at all.
+Arsenal is merged after its passing balance, lane and build gates. Junk-car tests
+now run against the fixed-box baseline before source work begins.
+The tested wreck-rate candidate stays unmerged for Kyle. Tanker's two fixes
+have native checks and the paired roof view ready for Claude.
+The exact evening integration checkpoint passed all 318 full suites and build,
+then pushed under D8; later commits need their own full check.
 
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
-| A. Dome feel | ARENA-SHOVE merge (trim its note), then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
-| B. Arsenal | ARS-CORE finish and merge, then ARS-01 | Unsounded cues while `arsenal` is dev |
+| A. Dome feel | ARENA-JUNK-SHOVE (Kyle: junk cars do not budge), then ARENA-04 Bounty Hunt. ARENA-WRECK-RATE is on hold for Kyle | Kyle checks the shove in the Preview |
+| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
 
-Kyle, 1 October 2026: the dome steering is kept, so ARENA-WRECK-RATE is
-ready (add it to track A after ARENA-SHOVE), and Sal is approved as she is
+Kyle, 1 October 2026: the dome steering is kept; his later note holds
+ARENA-WRECK-RATE while the parked junk-car fix proceeds. Sal is approved as she is
 (WAR-SAL-TUNE closed). The weapon sounds (AUD-ARSENAL-W1) need only ARS-CORE:
 the sound bank is already live. New card ARENA-PIT (the dome's open
 layout, SCRAPDOME.md section 2) follows ARENA-06 in track C. Kyle keeps the nine crew and raider voice takes as they are.
