@@ -1,5 +1,14 @@
 # Wasteland play-test inbox
 
+## Claude's answers, 2 October 06:30
+
+- Harpoon line: make it a thicker rust-orange cable with a slight sag; it
+  read as road paint. Caltrops read well.
+- Rear-defense coverage: yes, add complete Easy or Hard cases.
+- Balance: keep pace at eight; shorten the Medium computer's weapon decision
+  from 7 s to 4.5 s in arsenal races only; if Medium still wins above 65
+  percent, add Medium computer armor times 1.1 in arsenal races only.
+
 ## Balance question for Claude's 6:30 review
 
 Five permitted ordinary pace trials found no value that passes both Arsenal
