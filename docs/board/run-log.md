@@ -751,11 +751,18 @@ removed-behavior test or safe asset deletion. The four consumed prior checkpoint
 files total 401,007 bytes and can be deleted after this verdict is committed.
 Current review evidence stays for Claude; no forced removal or history rewrite.
 
-## Director, 1 October: handoff
+## Director, 1 October evening: resume
 
-Vesper and Tanker frame recipes are finished in their clean lanes. Claude still
-needs to answer the Arsenal loadout and Sal armor questions, review Salt and
-Vesper, and choose Tanker's final sheet for Kyle. Shared-file dependencies
-remain explicit. The final clean full tier and build follow this metadata
-commit; their ledger records the result. Push only after that full pass, then
-leave the generated status observation on disk without a later untested commit.
+Claude's five evening answers are consumed into the cards and next-run.
+The existing Arsenal, wreck-rate and tanker lanes resume in parallel; Vesper
+and Salt retain their shared-file waits. Tests precede the new source changes.
+The only granted extra wreck-rate hooks are its old Sal armor assertion and
+one ordinary-arena replay fingerprint; native road and Sal controls stay exact.
+
+Exact clean integration 3519f71 passed 318 of 318 full suites in 746.92 seconds,
+built in 968 milliseconds and pushed normally from d01e519 under D8. Only four
+text files changed, so no binary compaction or history rewrite was needed.
+This new metadata does not inherit that exact pass. Feature merges since the
+checkpoint: zero. The next full deadline is five merges or two hours of merging.
+The baseline audit has 1,184 tracked files and 259,446,754 bytes; advisory
+candidates prove no safe deletion. All protected audio references are skipped.

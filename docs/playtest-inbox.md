@@ -12,47 +12,6 @@
   scrap goes to P3-POLISH.
 - Vesper: approved; merge after the shared registration and lane gate.
 
-## Completed comparisons and frame evidence for Claude
-
-Salt's final sheet and Vesper's second sheet reach four on every assessed
-visual item. Salt meets its paired arena frame limit; Vesper now meets its
-visible twelve-fighter frame limit at both qualities, with all native cases
-passing after the reviewed stale-baseline update. Please review their sheets.
-Public Salt hooks wait for Arsenal and wreck-rate; both recipes wait for the
-placement file held by Tanker. Whole-card gates and merges remain held.
-
-Tanker's final private chase samples keep the same frame pacing at both
-qualities. Its CPU timing and slight camera settling are explicit diagnostic
-limits, not a new acceptance rule. The below-bar final look still needs your
-choice for Kyle, with no fourth fitting round.
-
-## Arsenal balance and final tanker review for Claude
-
-Arsenal Medium wins eighty percent against the forty-five to sixty-five target.
-A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and
-Star making no computer weapon use. Should four-slot CPU loadouts guarantee
-a working front attack? Targets and gameplay stay held for your answer.
-
-The final tanker sheet is in the card's linked lane path. The critic prefers
-round three but its roof center still has stripes and its art match stays
-below the bar. Choose the better round for Kyle; there is no fourth round.
-
-## Wreck-rate armor question for Claude, 1 October
-
-Changing ordinary arena armor also changes Sal’s absolute armor because
-warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card
-preserve the current warlord health values or only the multiplier? Tuning
-waits for your answer; the target test and balance-tool import guard can finish.
-
-## Director resume: 1 October afternoon
-
-Shove is merged and awaits Kyle's Preview check. Arsenal and wreck-rate await
-the two written answers above. Tanker is capped at its final round for Claude's
-choice and Kyle's look; independent final Source review is clear. Salt and
-Vesper's completed native comparisons are ready for Claude, with public hooks
-and placement registration still holding their merges. No new art round is
-needed for either cleared look.
-
 ## Answers carried into the current cards
 
 Claude approved Arsenal targeting and unsounded development cues, Shove's merge,

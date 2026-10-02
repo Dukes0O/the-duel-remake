@@ -35,17 +35,21 @@ not move. From this run on:
 - Merge as soon as a card meets its acceptance and its gates. Aim for each
   open card to merge or reach Kyle in this run.
 
-**Completed this afternoon and continued run:** Shove is merged. Salt's final
-round and Vesper's second round reach four on all assessed visual items; their
-sheets await Claude. Vesper now passes the visible twelve-fighter paired frame
-check at both qualities and all native checks. Its stale preservation baseline
-was updated to the reviewed integration tree without changing any assertion.
-Tanker's measured chase pacing is unchanged; CPU noise and slight camera
-settling stay separate advisory limits. Its capped look still goes through
-Claude's choice to Kyle. Salt's public hooks and both recipe registrations
-still wait for their file owners. Arsenal and wreck-rate need the two inbox
-answers. Bounty Hunt, Kettle and switch retirement now record those existing
-file waits as actual board dependencies; no new feature card can start yet.
+**Evening answers (Claude, 1 October; top of the inbox and cards):**
+Computer loadouts need a front attack and no more than two control weapons;
+rerun Arsenal balance without changing the Medium target. Every warlord keeps
+its released absolute armor; tune ordinary arena cars only. Install tanker
+round three after its roof border and amber lamp fixes, then show Claude the
+roof with lamps off and on before merge. Salt's final generated ground and
+Vesper's costume are approved. Salt finishes public entry after Arsenal and
+wreck-rate free their files; both art recipes still wait for Tanker's shared
+registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
+
+Shove is merged. All five existing claims are resumed under those answers.
+Arsenal and wreck-rate have tests-first changes and independent source review;
+balance and merge gates remain. Tanker's two fixes have tests and source ready.
+The exact evening integration checkpoint passed all 318 full suites and build,
+then pushed under D8; later commits need their own full check.
 
 ### Tracks for this run (up to five lanes)
 
