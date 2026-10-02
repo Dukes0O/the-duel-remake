@@ -29,7 +29,7 @@ Existing arena wall, contact, crushing and respawn sound cues are reused.
 
 Geometry/admission/wall/ring-control selection: 7/7 pass. Renderer real-world
 entry, finite geometry, unchanged state/features/samples and disposal: 1/1 pass.
-The added bumper-height rays at native wall stations and span midpoints pass.
+The added bumper-height rays at native wall span midpoints pass.
 Native ordinary junk/Titan crushing and Easy rammer recovery: 2/2 pass.
 New module/scenario syntax and diff whitespace checks pass.
 Ring geometry hash, native trace and ordinary replay control remain unchanged;
