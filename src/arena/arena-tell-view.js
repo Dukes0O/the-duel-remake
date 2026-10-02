@@ -75,3 +75,32 @@ export function updateArenaTells(entries, seconds, shimmerSec) {
   }
   return added;
 }
+
+// Floor markers an arena move announces (arena.markers): a red ring where a
+// warlord will land. Drawn only; the simulation owns the list.
+const MARKER_COLORS = Object.freeze({danger: 0xff3b21});
+export function updateArenaMarkers(group, markers, seconds) {
+  if (!group) return;
+  const list = Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'ring') : [];
+  group.userData.rings ??= [];
+  const rings = group.userData.rings;
+  while (rings.length < list.length) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.86, 1, 48),
+      new THREE.MeshBasicMaterial({color: MARKER_COLORS.danger, transparent: true,
+        depthWrite: false, side: THREE.DoubleSide, fog: false, toneMapped: false}));
+    ring.rotation.x = -Math.PI / 2;
+    ring.renderOrder = 4;
+    ring.name = 'Arena floor ring';
+    group.add(ring);
+    rings.push(ring);
+  }
+  rings.forEach((ring, index) => {
+    const marker = list[index];
+    ring.visible = !!marker;
+    if (!marker) return;
+    ring.position.set(marker.x, (marker.y || 0) + .06, marker.z);
+    ring.scale.setScalar(marker.radius);
+    ring.material.color.setHex(MARKER_COLORS[marker.color] ?? MARKER_COLORS.danger);
+    ring.material.opacity = .55 + .35 * Math.sin(seconds * Math.PI * 2 * 3) ** 2;
+  });
+}

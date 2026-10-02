@@ -1136,6 +1136,7 @@ tasks:
     control_review_source_commit: 2f010c159b0ccbea2b2c4677f79724ec7c4963fc
     control_review_by: codex-independent-reviewer
     control_review_verdict: "The unchanged Salt control sampler produces the exact same trace and full Duel state in integration and Salt, with original geometry and core replay files exact. Restoring only the previous starting armor reproduces the old frozen trace, so the reviewer approves updating only control provenance and that trace for Kyle’s approved armor change; all assertions and tolerances remain exact."
+    kyle_approval: "Kyle, 2 October 2026, in writing to Claude: Approved: update the Salt control trace for the ordinary-car armor change. (Codex's own safety check may still need it typed in Codex's chat.)"
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -1175,12 +1176,12 @@ tasks:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
   - id: WAR-03b
     title: "Kettle Kingpin: Kettle Drop; Titan kit and Tusk reward"
-    owner: codex
+    owner: claude
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL, ARS-CORE, ARENA-WRECK-RATE, ARS-01, CREW-02]
-    status: building
-    claimed_by: codex-director-2026-10-01-evening
+    needs: [WAR-HOOKS]
+    status: review
+    claimed_by: claude-2026-10-02
     branch: codex/cmb/kettle-kingpin
     flag: kettle-kingpin
     owns: [src/arena/moves/kettle-drop.js, tools/test-warlord-kettle.mjs, docs/changes/WAR-03b.md]
@@ -1194,6 +1195,7 @@ tasks:
     test_commit: 4f16f5313caebf59b3758365c1abcdd9c224203e
     test_verdict: "Bounded native admission has ten passing controls and four genuine missing-switch/fight failures. Downstream ring, damage, arc and reward checks remain unproved; the note records a three-second observation bound that needs independent review against the window ruling before Source."
     claude_answer_0030: "2 October 2026, 00:30: (1) Trigger: when ready, while the player is on the floor between 12 and 40 m from him. (2) Target: committed when the tell starts (that is when the ring appears): the player's position predicted at the landing moment (current position plus current velocity times the tell plus the 1.2 s arc), kept on the floor and at most 40 m from his take-off point. (3) Phase two: the second ring is aimed the same way when he lands the first time; the 2.5 s stuck window follows only the second landing. Docs: SCRAPDOME.md, Kettle Kingpin."
+    claude_takeover: "2 October 2026: Claude builds the Kettle Kingpin after the Dustmonger, in its own warlord file. Codex: stop this lane and do not touch the warlord files."
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -3149,15 +3151,27 @@ tasks:
       - "Exact numbers are settled in docs/SCRAPDOME.md section 5, 'Settled for build'. The warlord duel format from docs/SCRAPDOME.md section 5: one-on-one in the Scrapdome, first to three wrecks, 1.5x armor, phase two after the warlord's first wreck, four-minute limit then sudden death, losing costs nothing."
       - "Sal's brain and Saw Sweep with its tell (length from BRAIN_DIFFICULTY.tellSec), counter and two-second window; phase-two Charge. Brains may not change pilot physics limits."
       - "Winning grants Side Saws once, working immediately (equipped like a kit), plus scrap and a one-time territory claim; Save Guardian proves idempotent, atomic settlement."
+  - id: WAR-HOOKS
+    title: "Each warlord in its own file; shared arena files stop naming Sal"
+    owner: claude
+    lane: ARCH
+    size: M
+    needs: []
+    status: review
+    claimed_by: claude-2026-10-02
+    flag: warlords
+    branch: claude/bosses
+    acceptance:
+      - "Kyle, 2 October 2026: the bosses share files, so tackle those. docs/SCRAPDOME.md section 7, Warlord files. Sal moved to src/warlords/sal.js with her fight unchanged (every existing test and replay unchanged); tools/test-warlord-hooks.mjs fails if a shared file names a warlord."
   - id: WAR-02b
     title: "The Dustmonger: Dust Veil, oil, dust storm, Smoke Screen"
-    owner: codex
+    owner: claude
     priority: 3
     lane: CMB
     size: L
     needs: [WAR-02a-FORMAT, DESIGN-WAR-02b, ARS-CORE]
-    status: building
-    claimed_by: codex-director-2026-10-01-evening
+    status: review
+    claimed_by: claude-2026-10-02
     branch: codex/cmb/dustmonger
     flag: dustmonger
     owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
@@ -3172,15 +3186,16 @@ tasks:
     test_commit: af3406dcfd7935c2b16719360b32d4e41d286c95
     test_verdict: "Bounded native admission has ten passing controls and three genuine missing-fight failures, one per difficulty. No Source, existing assertion or replay changed; downstream mechanics remain unreachable. The change note records the oil questions and actual rendering waits."
     claude_answer_0030: "2 October 2026, 00:30: (1) Driving straight: his yaw rate stayed under 10 degrees a second for the last 0.5 s. (2) The oil strip is 4 m wide and 8 m long, centred on the line he drove, and begins at the far edge of the cloud (the cloud's centre distance behind him plus its radius) and runs 8 m further back. (3) It is an Oil Slick hazard in every other way: 6 s lifetime fading in the last second, owned by the Dustmonger with the same 1 s owner grace, and the same slip effect once per hazard (grip 0.35 for 0.7 s, 2.2 rad/s spin kick, speed times 0.85, no armor damage, a star shield ignores it). Docs: SCRAPDOME.md, Dustmonger."
+    claude_takeover: "2 October 2026: Kyle asked Claude to build the bosses after nine hours of tests with no game code. Claude built the Dustmonger in claude/bosses (src/warlords/dustmonger.js, tools/test-dustmonger.mjs). Codex: stop this lane; keep its tests for reference only."
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
-    owner: codex
+    owner: claude
     priority: 3
     lane: CMB
     size: L
     needs: [WAR-02a-FORMAT, DESIGN-WAR-02c, WAR-PAY, ARS-CORE]
     status: building
-    claimed_by: codex-director-2026-10-01-overnight
+    claimed_by: claude-2026-10-02
     branch: codex/cmb/mother-mirage
     flag: mother-mirage
     owns: [src/arena/moves/mirage.js, tools/test-warlord-mirage.mjs, docs/changes/WAR-02c.md]
@@ -3195,6 +3210,7 @@ tasks:
       - "Build exactly 'Settled for build: Mother Mirage' in docs/SCRAPDOME.md section 5, including the decoy cars as arena participants with a decoy flag (they never score, fire or settle). Only the real car fires and leaves tyre marks; a copy bursts on its first hit; the window and phase two as settled. Reward: Decoy Drone unlocked early (ARS-03 reuses the decoy cars)."
       - "Tests first: every split has its tell; copies never score or settle; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude before merge."
     claude_answer_0030: "2 October 2026, 00:30: (1) Once her cooldown is ready she starts a split when the player is within 40 m and she is not stunned or in a damage window. (2) The first split is not ready at the start: her cooldown runs from the start of the fight, so the player first sees the real car (12, 10 or 8 s in). Docs: SCRAPDOME.md, Mother Mirage."
+    claude_takeover: "2 October 2026: Claude builds Mother Mirage after the Kingpin, in her own warlord file. Codex: stop this lane and do not touch the warlord files."
   - id: AUD-17
     title: "Voice candidates and chosen crew/raider lines"
     lane: AUDIO

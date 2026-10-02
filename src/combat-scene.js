@@ -1,4 +1,4 @@
-import {arsenalEnabled} from './combat-weapons.js';
+import {hazardsActive} from './combat-weapons.js';
 import {hazardsFor} from './arsenal/hazards.js';
 import * as THREE from 'three';
 import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
@@ -37,14 +37,16 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   return {holder,oil,smoke,oilMaterial,smokeMaterial};
  });
  function updateHazards(duel,active){
-  const hazards=active&&arsenalEnabled(duel) ? hazardsFor(duel) : [];
+  const hazards=active&&hazardsActive(duel) ? hazardsFor(duel) : [];
   hazardViews.forEach((view,index)=>{
    const hazard=hazards[index];
    view.holder.visible=!!hazard && hazard.opacity>0 && hazard.age<hazard.lifetime;
    if(!view.holder.visible)return;
    view.holder.position.set(hazard.x,(hazard.y||0)+.025,hazard.z);
    const oil=hazard.kind==='oil';view.oil.visible=oil;view.smoke.visible=!oil;
-   view.oil.scale.setScalar(hazard.radius);
+   // A strip (the Dustmonger's oil) is an oval patch along its heading.
+   const strip=hazard.shape==='strip';view.holder.rotation.y=strip?hazard.heading||0:0;
+   if(strip)view.oil.scale.set(hazard.width/2,hazard.length/2,1);else view.oil.scale.setScalar(hazard.radius);
    view.smoke.scale.set(hazard.radius,2.1,hazard.radius);
    view.oilMaterial.opacity=.9*hazard.opacity;
    view.smokeMaterial.opacity=.65*hazard.opacity;

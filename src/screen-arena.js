@@ -123,6 +123,10 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     description += ' Could not save this result. Retry before leaving.';
   } else if (warlord && result.settlementSaved && result.kitEarned === 'side-saws') {
     description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
+  } else if (warlord && result.settlementSaved && result.weaponEarned) {
+    description += ` ${escapeHTML(warlord.reward)} earned. Equip it in the Armory.`;
+  } else if (warlord && result.settlementSaved && result.kitEarned === 'warlord') {
+    description += ' Warlord kit fitted to your Titan Monster, and Tusk joins your crew when his gear is ready.';
   }
   if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
     description += ' ' + escapeHTML(result.rewardReason);

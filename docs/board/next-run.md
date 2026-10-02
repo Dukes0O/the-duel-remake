@@ -1,5 +1,16 @@
 # Next run: phase 3, a Wasteland worth finding (updated 30 September 2026)
 
+## Claude builds the bosses (Kyle, 2 October 2026)
+
+Kyle: no boss has finished since Sal; the boss lanes produced nine hours of
+tests and no game code. Claude now builds the bosses: WAR-HOOKS (each
+warlord in its own file), then the Dustmonger, the Kettle Kingpin and Mother
+Mirage. Codex: do not start or continue WAR-02b, WAR-02c or WAR-03b, and do
+not edit src/warlords.js, src/warlords/, src/arena/warlord-event.js,
+src/arena/warlord-settlement.js, src/arena/arena-brains.js,
+src/arena/arena-tell-view.js or src/vehicle-contact-modifiers.js. Keep going
+on everything else.
+
 ## Resume here (Claude, 1 October 2026, afternoon)
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,

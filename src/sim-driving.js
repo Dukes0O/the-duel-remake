@@ -6,7 +6,7 @@ import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
-import {arsenalEnabled} from './combat-weapons.js';
+import {hazardsActive} from './combat-weapons.js';
 import {carEffect,carGrip} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
@@ -140,7 +140,7 @@ export function _drive(dt) {
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
-  s.boosting = !(arsenalEnabled(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
+  s.boosting = !(hazardsActive(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
   if (s.boosting) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);
@@ -175,7 +175,7 @@ export function _drive(dt) {
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
   s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (arsenalEnabled(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
+  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
   s.yawVelocity += (targetYaw - s.yawVelocity) * (1 - Math.exp(-DRIVE.yawResponse * dt));
   // The nose turns first while momentum carries the rear outward. A short
   // release or counter-steer settles the slide without steering toward the road.

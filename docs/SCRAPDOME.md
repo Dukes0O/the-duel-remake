@@ -347,7 +347,7 @@ Dusthawk Rally. A gunner who fires the crossbow and hides in his own dust.
 | Window | After a veil his engine coughs: 2 s at 70% speed, rear hits 1.5 times |
 | Oil strip detail (2 October 2026) | Driving straight means his yaw rate stayed under 10 degrees a second for the last 0.5 s. The strip is 4 m wide and 8 m long on the line he drove, starting at the cloud's far edge. In every other way it is an Oil Slick hazard (lifetime, 1 s owner grace, slip effect) |
 | Phase two | A dust storm: fog closes in (drawn only, never hides a tell), veils 20% more often, clouds 1.3 times wider |
-| Reward | Smoke Screen, unlocked early and working (built by ARS-CORE) |
+| Reward | Smoke Screen, unlocked early and working (built by ARS-CORE). Built 2 October 2026: the first win saves it as earned; it is equipped in the Armory with the arsenal |
 | Callouts | `DUST VEIL!`, `HE'S CHOKING. HIT HIM NOW!` |
 
 ### Settled for build: Mother Mirage (WAR-02c)
@@ -392,7 +392,7 @@ Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.
 | Window | He is stuck for 2.5 s after landing, wheels spinning |
 | Drop detail (2 October 2026) | Trigger: when ready, with the player on the floor 12 to 40 m away. The ring's spot is committed when the tell starts: the player's position predicted at landing, on the floor and at most 40 m from take-off. In phase two the second ring is aimed the same way at the first landing, and the 2.5 s window follows only the second landing |
 | Phase two | Two drops in a row, the second ring appearing as he lands |
-| Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early |
+| Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early. Built 2 October 2026: the first win fits the Warlord kit to the Titan Monster and saves Tusk as owned; CREW-02 makes him usable early |
 | Callouts | `KETTLE DROP!`, `HE'S STUCK. HIT HIM NOW!` |
 
 ### Settled for build: The Twin Vultures (WAR-03c)
@@ -496,6 +496,33 @@ The simulation stays deterministic, headless and independent of the renderer
    (a point to reach, a speed, boost or not) into motion within the car's
    limits. Brains (`src/arena/arena-brains.js`) choose goals and targets. A
    warlord is a brain plus a car plus a signature move.
+
+### Warlord files (WAR-HOOKS, Claude, 2 October 2026)
+
+Kyle: the bosses shared the same files, so tackle those. Every warlord's
+fight lives in its own file, `src/warlords/<id>.js`, and
+`src/warlords/index.js` lists them. Shared arena files never name a warlord
+(`tools/test-warlord-hooks.mjs` fails if one does); they look up the
+fighting warlord with `warlordFight(duel, actor)` and call these optional
+hooks:
+
+| Hook | Called from | Does |
+| --- | --- | --- |
+| `reset(duel, actor)` | fight start and respawn | clears the move state |
+| `think(duel, participant, actor, difficulty)` | arena-brains | a goal while a move runs, or nothing for the ordinary brain |
+| `tellShare(duel, actor)` | arena-brains | stretches or shortens the shared charge tell |
+| `attack(duel, attacker, victim, attackerFace, victimFace)` | vehicle-contact-modifiers | a move's damage multiplier on a ram |
+| `onMoveHit(duel, attacker)` | sim-contacts | what a landed move does (callout, state) |
+| `defense(duel, victim, victimFace)` | combat-armor | a window's or weak side's damage multiplier |
+| `motion(duel, actor, dt)` | arena-event | moves the warlord itself (the Kingpin's leap); the pilot sits out that step |
+
+Data lives in `src/warlords.js`: car, brain, reward (`rewardKit` or
+`rewardWeapon`), the ladder order and the built list. Settlement handles
+every built warlord the same way: defeated, territory claim, ladder pay and
+its reward. Road hazards and car effects also run in warlord fights with the
+arsenal switch off (`hazardsActive`), so a boss's smoke and oil work before
+the arsenal is released. An arena's `weather` (the dust storm) is drawn only. An arena's `markers` (the Kingpin's red ring) are drawn only. A car with `contactExempt` (a warlord mid-leap) touches nothing until its move lands.
+Adding a boss: its own file, one line in the list, its data, its tests.
 
 ### Files
 

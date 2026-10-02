@@ -1357,7 +1357,7 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
-    if (recordedAudio && this.flags.enabled('arsenal') && ARSENAL_CORE_CUES.has(ev.arsenalCue)) {
+    if (recordedAudio && (this.flags.enabled('arsenal') || ev.warlordMove === true) && ARSENAL_CORE_CUES.has(ev.arsenalCue)) {
       // Use the native hazard/contact point without adding a simulation hit.
       const output = this._spatialOutput(
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,

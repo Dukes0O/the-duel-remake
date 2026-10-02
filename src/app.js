@@ -710,6 +710,7 @@ export class App {
       hold: warlordHold(this.profile, state.arena.warlordId),
       settlementSaved: true, settlementRetryable: false,
       firstWin: settled.firstWin, rewardReason: settled.rewardReason, kitEarned: settled.kitEarned,
+      weaponEarned: settled.weaponEarned ?? null, crewEarned: settled.crewEarned ?? null,
       territoryClaimed: settled.territoryClaimed});
     this._warlordSettlementRetry = null;
   }

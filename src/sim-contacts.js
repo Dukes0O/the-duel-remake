@@ -131,14 +131,11 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
       const armorRemoved = applyRamArmorDamage(duel, victim, impactMph,
         {spiked, owner: combatOwnerId(duel, attacker), contactFace: victimFace,
           damageMultiplier: modifiers.multiplier, ...(dvDamage ? {dvMph: dvOf(victim)} : {})});
-      const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.salSweep);
+      const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.warlordMove);
       // This existing bounded spark pool is already drawn by combat effects.
       // Ordinary contacts never add a burst or a new simulation field.
       if (sawHit) burst(duel.state.combat, hitPosition, 'spark');
-      if (armorRemoved > 0 && modifiers.salSweep) {
-        attacker.salSaw.hit = true;
-        duel._callout('SAW SWEEP!', 1.6);
-      }
+      if (armorRemoved > 0 && modifiers.warlordMove) modifiers.warlordFight.onMoveHit?.(duel, attacker);
       duel.emit({combatRamHit: true, attacker: attackerIndex < 0 ? 'player' : 'rival',
         victim: victimIndex < 0 ? 'player' : 'rival', attackerIndex, victimIndex,
         armorRemoved, closingKph, spiked, hitPosition, ...(sawHit ? {sideSaws: true} : {})});
@@ -423,6 +420,8 @@ function solidTraffic(duel, actor) {
 
 export function _vehicleContact(a, b, reason) {
   const ghost = actor => (actor.wrecked || actor.roadsideMotion) && !solidTraffic(this, actor);
+  // A warlord mid-leap (the Kingpin) touches nothing until its landing move.
+  if (a.contactExempt || b.contactExempt) return false;
   if (a.crushed || b.crushed || ghost(a) || ghost(b) ||
       (!this.state.arena && (a.combatWrecking || b.combatWrecking)) || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);

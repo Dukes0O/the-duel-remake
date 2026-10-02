@@ -39,6 +39,13 @@ export function arsenalEnabled(duel) {
     duel.featureFlags?.enabled('arsenal') === true;
 }
 
+// Road hazards and car effects also run in warlord fights, whose moves use
+// them before the arsenal is released (docs/ARSENAL.md, Switch).
+export function hazardsActive(duel) {
+  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord' &&
+    duel.featureFlags?.enabled('warlords') === true;
+}
+
 export function createCombat(levels) {
   return {
     levels: normalizeWeapons({levels}).levels,

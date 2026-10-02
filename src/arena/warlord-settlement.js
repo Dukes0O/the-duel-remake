@@ -1,7 +1,7 @@
 import {CARS} from '../config.js';
 import {isCarUnlocked} from '../progression.js';
-import {hasEarnedSideSaws} from '../wasteland-progress.js';
-import {WARLORDS} from '../warlords.js';
+import {WARLORDS, BUILT_WARLORD_IDS, WARLORD_LADDER} from '../warlords.js';
+import {rewardArsenalWeapon} from '../weapon-upgrades.js';
 
 // Pure career transaction. App owns the starting player identity and the one
 // registry write; a failed write can retry this same immutable result.
@@ -11,12 +11,9 @@ const bounded = (value, maximum) => Number.isSafeInteger(value)
 const noAward = (profile, key) => ({profile, key, awarded: false, scrapEarned: 0});
 const COMPLETED_REASONS = new Set(['three-wrecks', 'sudden-death', 'damage']);
 const DIFFICULTY_FACTORS = Object.freeze({easy: 1, medium: 1.2, hard: 1.4});
-const WARLORD_LADDER = Object.freeze([
-  'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
-]);
 
-// The public ladder policy is ready for later fights. Settlement below still
-// accepts only the built Sal roster and its already-validated reward path.
+// The public ladder policy covers every fight. Settlement below accepts any
+// built warlord and pays its own reward: a kit or an early weapon.
 export function warlordPay({warlordId, won, firstWin, wrecksOnWarlord, cpuDifficulty} = {}) {
   const position = WARLORD_LADDER.indexOf(warlordId);
   if (position < 0 || !Object.hasOwn(DIFFICULTY_FACTORS, cpuDifficulty) ||
@@ -40,7 +37,7 @@ function payExplanation({warlordId, won, firstWin, wrecksOnWarlord, cpuDifficult
 
 function resultFacts(arena) {
   if (!record(arena) || arena.version !== 1 || arena.venueId !== 'scrapdome' ||
-      arena.mode !== 'warlord' || arena.warlordId !== 'sal' ||
+      arena.mode !== 'warlord' || !BUILT_WARLORD_IDS.includes(arena.warlordId) ||
       !WARLORDS[arena.warlordId] || arena.warlordBossId !== 'cpu-1' ||
       arena.phase !== 'over' || !record(arena.result) ||
       !COMPLETED_REASONS.has(arena.result?.reason) ||
@@ -74,8 +71,11 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
       !isCarUnlocked(profile, car) || !Array.isArray(career.settledResults) ||
       career.settledResults.includes(key)) return noAward(profile, key);
 
-  const previous = record(career.warlords?.sal) ? career.warlords.sal : {};
-  const defeated = hasEarnedSideSaws(career);
+  const id = arena.warlordId, warlord = WARLORDS[id];
+  const previous = record(career.warlords?.[id]) ? career.warlords[id] : {};
+  // Both supported saved shapes of a defeat count (wasteland-progress.js).
+  const defeated = previous.defeated === true ||
+    Array.isArray(career.warlords?.defeated) && career.warlords.defeated.includes(id);
   const firstWin = facts.won && !defeated;
   const payContext = {warlordId: arena.warlordId, won: facts.won, firstWin,
     wrecksOnWarlord: facts.wrecksOnWarlord, cpuDifficulty};
@@ -83,24 +83,41 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
   if (reward === null) return noAward(profile, key);
   const oldScrap = bounded(career.scrap, 1_000_000_000);
   const scrap = Math.min(1_000_000_000, oldScrap + reward);
-  const sal = {...previous, defeated: defeated || facts.won,
+  const entry = {...previous, defeated: defeated || facts.won,
     wins: Math.min(1_000_000, bounded(previous.wins, 1_000_000) + (facts.won ? 1 : 0)),
     losses: Math.min(1_000_000, bounded(previous.losses, 1_000_000) + (facts.won ? 0 : 1))};
   let territories = career.territories, kits = career.kits;
   if (facts.won) {
-    const territory = record(territories?.sal) ? territories.sal : {hold: 0};
-    territories = {...territories, sal: {...territory, claimed: true}};
+    const territory = record(territories?.[id]) ? territories[id] : {hold: 0};
+    territories = {...territories, [id]: {...territory, claimed: true}};
   }
-  if (firstWin) {
-    const installed = record(kits?.[car]) ? kits[car] : {};
+  if (firstWin && warlord.rewardKit) {
+    // A kit for one named car goes on that car; otherwise on the car that won.
+    const kitCar = warlord.rewardKitCar ?? car;
+    const installed = record(kits?.[kitCar]) ? kits[kitCar] : {};
     const owned = Array.isArray(installed.owned) ? installed.owned : [];
-    kits = {...kits, [car]: {...installed,
-      owned: [...new Set([...owned, 'side-saws'])], equipped: 'side-saws'}};
+    kits = {...kits, [kitCar]: {...installed,
+      owned: [...new Set([...owned, warlord.rewardKit])],
+      equipped: kitCar === car || !installed.equipped ? warlord.rewardKit : installed.equipped}};
   }
-  const wasteland = {...career, scrap, territories, kits,
-    warlords: {...career.warlords, sal},
+  let crew = career.crew;
+  if (firstWin && warlord.rewardCrew) {
+    // Saved as owned now; usable early once that crew member is active (CREW-02).
+    const current = record(crew) ? crew : {};
+    const unlocked = Array.isArray(current.unlocked) ? current.unlocked : [];
+    crew = {...current, unlocked: [...new Set([...unlocked, warlord.rewardCrew])]};
+  }
+  const wasteland = {...career, scrap, territories, kits, ...(crew === undefined ? {} : {crew}),
+    warlords: {...career.warlords, [id]: entry},
     settledResults: [...career.settledResults, key].slice(-1000)};
-  return {profile: {...profile, wasteland}, key, awarded: true,
+  let settledProfile = {...profile, wasteland}, weaponEarned = null;
+  if (firstWin && warlord.rewardWeapon) {
+    const unlocked = rewardArsenalWeapon(settledProfile, warlord.rewardWeapon, {warlordId: id});
+    if (unlocked.ok) { settledProfile = unlocked.profile; weaponEarned = warlord.rewardWeapon; }
+  }
+  return {profile: settledProfile, key, awarded: true,
     scrapEarned: scrap - oldScrap, firstWin, rewardReason: payExplanation(payContext),
-    kitEarned: firstWin ? 'side-saws' : null, territoryClaimed: facts.won};
+    kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned,
+    crewEarned: firstWin && warlord.rewardCrew ? warlord.rewardCrew : null,
+    territoryClaimed: facts.won};
 }

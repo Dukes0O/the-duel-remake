@@ -11,20 +11,23 @@ export function deployOil(duel, owner) {
   const oil = addHazard(duel, {kind: 'oil', shape: 'circle',
     x: at.x - Math.sin(heading) * 4, z: at.z - Math.cos(heading) * 4, y: at.y,
     radius: 3.5, lifetime: 6, fadeSec: 1, owner, ownerGraceSec: 1,
-    onTouch(actor) {
-      if (combatShielded(duel, actor)) return;
-      const body = carBodyPoint(duel, actor);
-      const side = (body.x - oil.x) * Math.cos(body.heading) - (body.z - oil.z) * Math.sin(body.heading);
-      setCarEffect(actor, 'slick', {duration: .7, grip: .35});
-      setCarEffect(actor, 'nitro', {duration: 0});
-      actor.yawVelocity = (actor.yawVelocity || 0) + (Math.sign(side) || 1) * 2.2;
-      actor.speedMph *= .85;
-      duel.emit({arsenalCue: 'weapon.oil.slip', actor, hazard: oil,
-        hitPosition: {x: body.x, y: body.y, z: body.z}});
-    }});
+    onTouch: actor => applyOilSlip(duel, oil, actor)});
   if (oil) duel.emit({arsenalCue: 'weapon.oil.deploy', actor: owner, hazard: oil,
     hitPosition: {x: oil.x, y: oil.y, z: oil.z}});
   return oil;
+}
+
+// One oil slip, shared by Oil Slick and the Dustmonger's oil strip.
+export function applyOilSlip(duel, oil, actor) {
+  if (combatShielded(duel, actor)) return;
+  const body = carBodyPoint(duel, actor);
+  const side = (body.x - oil.x) * Math.cos(body.heading) - (body.z - oil.z) * Math.sin(body.heading);
+  setCarEffect(actor, 'slick', {duration: .7, grip: .35});
+  setCarEffect(actor, 'nitro', {duration: 0});
+  actor.yawVelocity = (actor.yawVelocity || 0) + (Math.sign(side) || 1) * 2.2;
+  actor.speedMph *= .85;
+  duel.emit({arsenalCue: 'weapon.oil.slip', actor, hazard: oil,
+    hitPosition: {x: body.x, y: body.y, z: body.z}});
 }
 
 export function shouldUseOil(duel, owner) {

@@ -33,11 +33,12 @@ import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
 import {createFuelRunView} from './arena/modes/fuel-run-view.js';
-import { updateArenaTells } from './arena/arena-tell-view.js';
+import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
+const DUST_STORM_FOG = new THREE.Color(0x8a6a48);
 
 // Read-only projection for HUD markers. The positions come from rendered cars,
 // so slides, jumps and camera modes all use the same pose as the main view.
@@ -122,6 +123,9 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  const arenaMarkers = new THREE.Group();
+  arenaMarkers.name = 'Arena floor markers';
+  scene.add(arenaMarkers);
   const camera = new THREE.PerspectiveCamera(54, host.clientWidth / host.clientHeight, .15, 2400);
   const composer=new EffectComposer(renderer);
   composer.addPass(Object.assign(new RenderPass(scene,camera),{name:'Scene and shadows'}));
@@ -314,6 +318,9 @@ export function attachRenderer(host, app) {
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
+    // An arena event's weather (the Dustmonger's dust storm) only closes the fog in.
+    if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
+      scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
@@ -507,6 +514,7 @@ export function attachRenderer(host, app) {
     if (!menu && st.arena && updateArenaTells([{mesh: player, actor: st}, {mesh: rival, actor: st.rival},
       ...extraOpponents.map(({mesh}, index) => ({mesh, actor: opponents[index + 1]}))],
       performance.now() / 1000, ARENA_FEEL.shimmerSec)) ambientShading.refresh();
+    updateArenaMarkers(arenaMarkers, !menu ? st.arena?.markers : null, performance.now() / 1000);
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
