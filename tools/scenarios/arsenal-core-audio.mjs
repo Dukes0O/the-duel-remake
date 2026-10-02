@@ -30,12 +30,21 @@ async function capture(quality, side) {
   const place = (actor, s, lateral = 0, speedMph = 0) => Object.assign(actor, {
     s, prevS: s, lateral, prevLateral: lateral, speedMph, headingError: 0,
     yawVelocity: 0, pushVelocity: 0, airHeight: 0, prevAirHeight: 0, combatShield: 0});
-  function startCycle() {
-    app.stop();
+  async function startCycle() {
+    measuring = false; app.stop();
     if (app.duel.state.status !== 'menu') app.returnToMenu();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 1, seed: 1989, cpuDifficulty: 'easy'})) throw Error('Actual Arsenal campaign failed.');
-    app.stop(); state = app.duel.state;
+    state = app.duel.state;
+    const course = app.duel.course, deadline = performance.now() + 15000;
+    // Let the actual renderer load and present this new state/course. Input
+    // stays blocked by the real App until its existing readiness gate passes.
+    app.start();
+    while (!app.visualReady || app.duel.state !== state || app.duel.course !== course) {
+      if (performance.now() >= deadline) throw Error('Actual campaign visual readiness timed out.');
+      await sleep(16);
+    }
+    app.stop();
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,
       invulnerableSec: 0, traffic: []});
     state.combat.aiTimer = state.combat.pickupTimer = Infinity;
@@ -66,7 +75,7 @@ async function capture(quality, side) {
   const native = [], cues = [], frames = [];
   const original = {event: audio.event, play: audio._playCue, buffer: audio._cueBuffer,
     space: audio._spatialOutput, frame: app.onFrame};
-  let current = null, oil = null, cycle = 0, cycleBegan = ctx.currentTime;
+  let current = null, oil = null, cycle = 0, cycleBegan = ctx.currentTime, measuring = false;
   audio.event = function(event, st, course) {
     if (!ids.includes(event.arsenalCue)) return original.event.call(this, event, st, course);
     const before = JSON.stringify(st), position = JSON.stringify(event.hitPosition);
@@ -108,6 +117,7 @@ async function capture(quality, side) {
   let deployed = false, touched = false, smoked = false;
   app.onFrame = function(st) {
     original.frame?.(st);
+    if (!measuring) return;
     const elapsed = ctx.currentTime - cycleBegan;
     frames.push({cycle, time: ctx.currentTime - began, cycleTime: elapsed,
       throttle: st.input.throttle, revs: st.revs, speedMph: st.speedMph});
@@ -134,8 +144,8 @@ async function capture(quality, side) {
     // audio cue indices continue. Three repetitions exercise A, B and C.
     for (cycle = 0; cycle < 3; cycle++) {
       oil = null; deployed = touched = smoked = false;
-      startCycle(); cycleBegan = ctx.currentTime;
-      app.start(); await sleep(3900); app.stop();
+      await startCycle(); cycleBegan = ctx.currentTime; measuring = true;
+      app.start(); await sleep(3900); app.stop(); measuring = false;
       for (const id of ids) {
         if (native.filter(event => event.id === id && event.cycle === cycle).length !== 1 ||
             cues.filter(event => event.id === id && event.cycle === cycle && event.started).length !== 1)
@@ -151,7 +161,8 @@ async function capture(quality, side) {
     if (native.some(event => !event.spatial?.weaponsBus || !Object.values(event.position).every(Number.isFinite)))
       throw Error('Native cue lost physical position or weapons bus.');
     const drive = frames.filter(frame => frame.cycleTime >= .5 && frame.cycleTime <= 3.5);
-    if (!drive.length || drive.some(frame => frame.throttle !== 1)) throw Error('Mix was not driven at full throttle.');
+    if (!drive.length || drive.some(frame => frame.throttle !== 1))
+      throw Error('Mix was not driven at full throttle: ' + JSON.stringify(drive.find(frame => frame.throttle !== 1) || null));
     audio.setPaused(true); await sleep(250);
     cleanup = {paused: audio.paused, activeShots: audio.activeShots.size,
       mixerVoices: [...audio.mixer.voices.values()].reduce((sum, set) => sum + set.size, 0)};

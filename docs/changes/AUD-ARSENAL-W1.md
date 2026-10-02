@@ -56,9 +56,16 @@ Three actual campaign repetitions exercise the existing cue-buffer indices;
 each cue must play once per repetition, use different decoded ABC recordings,
 stay within six voices and leave race state unchanged. Old assertions remain.
 Full-throttle engine/weapons/final-output Float32 capture runs in both qualities.
-The corrected recipe is unrun. Recognition, onset, stereo placement, mixed
-peaks, pause cleanup and human listening still need AudioQA; no ratings are
-invented. No broad gate, build or protected-audio job ran for these fixes.
+AudioQA at 3813a74 reached the genuine native/ABC checks but stopped on the
+unchanged full-throttle assertion before writing WAVs: real App loading blocks
+input until the renderer presents the new campaign. The recipe now waits at
+most 15 seconds per cycle for actual visualReady on that same state/course,
+then stops, places the fixtures and restarts the measured clock and real App.
+It never forces readiness or input. A failed throttle check reports its first
+bad frame. All cue-count, variation, voice-bound and purity assertions remain.
+This readiness fix is unrun. Recognition, onset, stereo placement, mixed peaks,
+pause cleanup and human listening still need AudioQA; no ratings are invented.
+No broad gate, build or protected-audio job ran for these fixes.
 
 Automatic approval review rejected an optional preservation JSON as an
 unreviewed fingerprint baseline. It was never created or retried by this
