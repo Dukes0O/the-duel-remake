@@ -1,92 +1,69 @@
 # AUD-ARSENAL-W1: Oil Slick and Smoke Screen sounds
 
-The three released cues now play genuine recorded CC0 sounds through the real
-EngineAudio. Arsenal remains dev. Browser capture, independent audio review and
-current lane/build gates are still pending; this is a Source candidate.
+Three CC0 recorded cues now play through real EngineAudio. Independent runtime
+review and native AudioQA pass. Arsenal remains dev; fresh lane/build gates
+are pending on this final candidate. No release is claimed.
 
 ## Source and provenance
 
 - weapon.oil.deploy: lzmraul, Mud_1.wav, Freesound 389460.
 - weapon.oil.slip: barion, car2.WAV, Freesound 462117.
 - weapon.smoke.deploy: Sadiquecat, airy weighted-string whistle, Freesound 855733.
-- Each cached recording matches its existing catalog SHA-256 and CC0 record.
-  Three derivative recipe rows are appended; every old row stays semantically
-  exact. No downloaded source, paid generation, key or voice take changed.
-- tools/build-arsenal-core-audio.mjs commits the checked cuts, filters, recording
-  envelopes, bounded ABC repitch variants and distinct bright swept accents.
-  It verifies source hashes,
-  writes mono 48 kHz Vorbis q5 and measures codec headroom. Recordings remain
-  the main texture. Rebuilding in ignored scratch produces identical bytes.
-- Runtime holds three ABC recordings per cue, nine clips and 93,722 bytes
-  total. The original A paths and bytes stay exact; B/C are new current files.
-  All nine decode to different recordings and rebuild to identical bytes.
-- Native EngineAudio.event accepts only these three real arsenalCue values in
-  discovered Wasteland audio with wasteland2 and arsenal enabled. It uses the
-  actual hazard/contact position and the weapons bus. Spatial connections are
-  released when playback ends; other event mappings retain their old paths.
+- Cached bytes match the existing CC0 records and SHA-256 values. Three recipe
+  rows were appended; every previous catalog row, bank entry, other bank export
+  and voice record stays exact. No paid generation, key or new take was used.
+- tools/build-arsenal-core-audio.mjs rebuilds checked cuts, filters, fades and
+  bounded ABC pitch/tonal variants as mono 48 kHz Vorbis q5. Recorded texture
+  stays dominant. Nine distinct clips total 93,722 bytes and rebuild exactly.
+  Original A paths/bytes stay exact; B/C are additional current recordings.
+- Only the three native arsenalCue values play, with wasteland2 and arsenal
+  enabled in discovered Wasteland audio. Genuine hazard/contact positions use
+  the weapons bus. Six-voice pools and end cleanup use the existing mixer.
+- Only these cues' volumes rose to 3.375/3.9/3.915 after measured masking.
+  Engine, limiter, old cues and global mixing were not retuned.
 
-## Tests and measurements
+## Tests and review
 
-Independent tests first at 30103b4: 14 checks, 5 PASS and 9 genuine RED. Real
-Duel launches and a real rival body touching native Oil already emitted each
-cue once. Missing bank entries, catalog recipes and actual EngineAudio
-consumption caused the failures. No Source or assertions changed in that step.
+Independent tests first at 30103b4: 14 checks, 5 PASS and 9 genuine RED.
+Actual Duel Oil/Smoke launches and body contact already emitted each cue once;
+missing recordings, recipes and actual EngineAudio consumption caused RED.
 
-After Source: the same 14 checks pass. They decode only the nine new clips,
-use actual EngineAudio and SoundMixer, prove state purity and pin every old
-sound-bank entry, other bank export and catalog record. No existing assertion,
+The unchanged 14 native checks now pass. They decode the nine new clips,
+observe real EngineAudio/SoundMixer playback, prove state purity and pin all
+old sound-bank/catalog data. Syntax and git diff --check pass. No assertion,
 replay fingerprint or world signature changed.
 
-Decoded clip measurements from FFmpeg EBU R128:
+Independent review clears runtime correctness, ownership, state purity and
+recorder handling at 92aa902. Native AudioQA passes both qualities with 18
+actual cue events: real campaign repetitions, ABC variation, full throttle,
+actual positions/panning, once-only consumption, pause and voice cleanup.
+The recorder waits for real presentation/input and consecutive native stamped
+chunks, then uses one common epoch. Only pre-epoch setup samples are sliced;
+all measured samples and gaps, including between campaigns, remain checked.
+Partial metadata contains native events/input frames and explicit gap counts;
+it never contains PCM/base64. No fake event producer or forced input is used.
 
-| Cue | Duration | ABC LUFS range | Highest true peak dBTP |
-| --- | ---: | ---: | ---: |
-| Oil deploy | 0.70 s | -17.84 to -16.41 | -2.71 |
-| Oil slip | 0.80 s | -16.34 to -16.21 | -4.67 |
-| Smoke deploy | 0.52 s | -16.21 to -16.11 | -4.73 |
+| Final measured property | Result |
+| --- | --- |
+| 120 ms weapon-versus-engine contrast, all 18 cues | +6.15 to +8.50 dB |
+| Cue onset against native events | -3 to +3 ms |
+| Final High / Performance true peak | -2.56 / -2.63 dBTP |
+| Clipped samples, clicks, measured gaps | 0 |
+| Dense nine-cue mix loudness, High / Performance | -13.08 / -13.12 LUFS |
 
-Syntax checks for audio, bank, builder and scenario and git diff --check pass.
-No broad gate, build, browser or protected-audio job ran in this Source step.
+Dense-mix loudness is advisory under SPEC 0.9. A separate unchanged 14-second
+existing-race capture with six stems passed its preservation checks. Human
+recognition ratings and a new six-slip overlap stress capture were not done.
+The independent reviewer confirmed that new overlap stress is not a merge
+blocker for this card; no overlap or human listening result is invented.
 
-The private recorder uses actual App, native Oil hazard/contact events and
-native W key input. Each new campaign waits for real visual readiness and car
-context, then for genuine fixed steps to produce throttle 1 and positive revs.
-Three real campaign repetitions exercise each recorded ABC cue exactly once;
-strict full-throttle, variation, state-purity and six-voice bounds stay intact.
+Integration d156a59 was merged normally before final gates. Audio Source,
+assets, recipe, scenario and tests remain byte-exact from reviewed 92aa902.
+This note folds the temporary recorder/masking findings into the final verdict.
+Fresh lane/build evidence must be recorded by the Director before merge.
 
-Independent AudioQA passed High at 99a0e73: 14.379 seconds of Float32 audio,
--5.61 dBFS sample peak and -5.58 dBTP true peak, with no clipped samples or
-adjacent jumps above 0.5. The following recording failed its strict continuity
-guard. Fresh 11211b7 passed all genuine native/ABC/full-throttle/purity checks
-but exposed a common recorder startup gap: frame 35072 to 37632 instead of
-37120, missing 512 samples (10.667 ms), before the measured gameplay window.
-Actual pause cleared all voices. This was recorder setup, not a sound tune.
-
-The recipe now establishes one common native sample-frame epoch after real
-input and three consecutive post-input chunks have arrived on all three
-stems. It slices only pre-epoch setup samples consistently across stems and
-rebases event times to that epoch. All samples and gaps at/after the epoch,
-including between later campaigns, remain. An epoch-crossing gap also fails;
-no silence, sample replacement or measured-gap removal is used.
-
-Partial/completed native events, input frames and recording headers are saved
-before validation without PCM/base64 in JSON. Diagnostics retain total and
-measured gap counts, the first setup and measured gaps, and actual frame times.
-AudioQA at f22e5ff passed both qualities: all native/ABC/full-throttle,
-contiguity, state-purity and cleanup checks, cue onset within -3 ms, no clipping,
-clicks or measured gaps. Final mix measured -16.54/-16.51 LUFS and -5.38/-5.50
-dBTP. The new cues were masked: 120 ms weapon-versus-engine RMS contrasts
-were Oil deploy -0.63 to +0.58 dB, slip -2.83 to -1.95 and Smoke -2.68 to
-+2.80, below the +6 dB target. Only these cues' volumes now rise from
-1.35/1.3/1.35 to 3.375/3.9/3.915. Gain arithmetic predicts improvement,
-but actual full-throttle recapture and overlapping-voice headroom remain open.
-Engine, limiter, old bank records, recordings, recipes and assertions stay
-exact. Human recognition is unclaimed; no broad gate or build ran here.
-
-Automatic approval review rejected an optional preservation JSON as an
-unreviewed fingerprint baseline. It was never created or retried by this
-Source owner. Existing replay fixtures and inline sound-data checks supply the
-usable preservation controls without changing any replay pin.
+The optional preservation JSON rejected by automatic approval review was never
+created. Existing replay fixtures and inline sound-data pins provide controls.
 
 ## Removed
 
