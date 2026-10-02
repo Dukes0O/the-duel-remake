@@ -100,7 +100,7 @@ check('source controls use keyboard F and gamepad X, while keyboard X remains a 
     assert.equal(heldInput(context, 'interact', {KeyF: true}), true);
     assert.equal(heldInput(context, 'interact', {KeyX: true}), false);
   }
-  assert.equal(keyboardAction('car', 'KeyX'), 'camera:left');
+  assert.equal(keyboardAction('car', 'KeyX'), null, 'keyboard X is not the exit key and no longer a camera key');
   assert.equal(carGamepadDrive(pad, pressed).interact, true);
   assert.equal(footGamepadInput(pad, pressed).interact, true);
   assert.match(hint(race()), /\bF\b/);

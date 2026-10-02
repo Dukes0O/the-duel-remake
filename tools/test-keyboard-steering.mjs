@@ -46,7 +46,7 @@ const pose=state=>[state.status,state.stageTimeSec,state.s,state.lateral,state.h
 {
   const app=fixture();
   app.setCamera('front');key('keydown','KeyD');app._applyInput(dt);
-  equal(app.cameraMode,'chase','D resets the chase camera through the real key handler');
+  equal(app.cameraMode,'front','D no longer changes the camera; C steps through the views');
   equal(app.duel.state.input.steer,0,'D does not steer in the car');
   key('keyup','KeyD');key('keydown','KeyA');app._applyInput(dt);
   equal(app.duel.state.input.steer,0,'A does not steer in the car');

@@ -1,6 +1,6 @@
-import { CAMERA_KEYS } from './camera-views.js';
+import { CAMERA_CYCLE_KEY } from './camera-views.js';
 
-const cameras = Object.fromEntries(Object.entries(CAMERA_KEYS).map(([key, mode]) => [key, `camera:${mode}`]));
+const cameras = Object.freeze({ [CAMERA_CYCLE_KEY]: 'camera-cycle' });
 const carKeyboard = Object.freeze({
   Escape: 'pause', KeyP: 'pause', ...cameras,
   Digit1: 'weapon:ufo', Digit2: 'weapon:bomb', Digit3: 'weapon:crossbow', Digit4: 'weapon:star',
@@ -29,8 +29,10 @@ export const INPUT_CONTEXTS = Object.freeze({
     Space: 'jump', KeyC: 'foot-camera-cycle', Digit1: 'gear:1', Digit2: 'gear:2', Digit3: 'gear:3' }),
     gamepad: Object.freeze([[9, 'pause'], [2, 'enter-car'], [0, 'jump'], [7, 'fire'], [6, 'aim'],
       [12, 'gear:1'], [15, 'gear:2'], [13, 'gear:3']]),
-    held: Object.freeze({ forward: Object.freeze(['KeyW']), back: Object.freeze(['KeyS']),
-      left: Object.freeze(['KeyA']), right: Object.freeze(['KeyD']), sprint: Object.freeze(['ShiftLeft']),
+    // Arrows move on foot as they drive the car (Kyle, 1 October 2026); WASD
+    // stays for players who hold the mouse in their right hand.
+    held: Object.freeze({ forward: Object.freeze(['KeyW', 'ArrowUp']), back: Object.freeze(['KeyS', 'ArrowDown']),
+      left: Object.freeze(['KeyA', 'ArrowLeft']), right: Object.freeze(['KeyD', 'ArrowRight']), sprint: Object.freeze(['ShiftLeft']),
       interact: Object.freeze(['KeyF']) }) }),
   photo: Object.freeze({ keyboard: Object.freeze({ Escape: 'photo-exit', Space: 'photo-capture',
     ArrowUp: 'photo-forward', ArrowDown: 'photo-back', ArrowLeft: 'photo-left', ArrowRight: 'photo-right' }),

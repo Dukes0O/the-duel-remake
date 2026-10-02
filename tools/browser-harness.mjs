@@ -183,7 +183,11 @@ class CdpConnection {
   send(method, params = {}, sessionId) {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { this.pending.delete(id); reject(Error(`${method} timed out.`)); }, 20_000);
+      // Native promise evaluations include capture work and can exceed 20 s
+      // when the required parallel gate shares this laptop. Other CDP commands
+      // retain their shorter wait; every command remains bounded.
+      const timeoutMs = method === 'Runtime.evaluate' ? 60_000 : 20_000;
+      const timer = setTimeout(() => { this.pending.delete(id); reject(Error(`${method} timed out.`)); }, timeoutMs);
       this.pending.set(id, { resolve, reject, timer, method });
       this.socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
     });
