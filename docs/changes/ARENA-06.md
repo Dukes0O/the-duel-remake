@@ -1,6 +1,6 @@
 # ARENA-06: Salt Flats
 
-Status: review; final native look is clear, public hooks and Claude remain.
+Status: review; final generated round three is accepted. Public scope needs Claude's answer and final gates remain.
 
 ## Changed
 
@@ -30,8 +30,9 @@ The final candidate is 23,283,392 bytes, about 0.49 MB above round two because
 the irregular generated images use more PNG bytes. Atlas dimensions, native
 UVs, 172 draws and two shared native materials remain unchanged.
 
-Public entry still waits for Arsenal and the wreck-rate event hook. No
-visual approval, public install or passing final merge gate is claimed.
+The final generated round-three comparison is accepted. That private visual
+verdict does not establish public entry or a passing final merge gate.
+Public-mode scope needs Claude's answer below before the whole-card handoff.
 
 ## Tests and review
 
@@ -55,7 +56,8 @@ warnings; independent Source review finds no defect. Headless renderer and
 effects each pass eight cases. The critic scores every assessed visual item
 four in both qualities. Paired 180 actual animation frames per venue/quality
 give Scrapdome/Salt P95 of 16.8/16.8 ms throughout, within ten percent. All
-samples remain; motion and sound are unassessed. The final sheet goes to Claude.
+samples remain; motion and sound are unassessed. The final round-three
+comparison has been accepted; no comparison review remains pending.
 
 Earlier assertion migration: Kyle's written ground change removed the active
 photo binding, JPEG helper, mandatory photo input and embedded mirrored-photo
@@ -64,11 +66,29 @@ mirror sampler, and actual image-byte repeatability replace those checks.
 The external CC0 photo's licence/catalog provenance stays intact. Claude's
 removed pixel/counter look diagnostics remain removed.
 
-Next: Claude reviews the completed native comparison. Public switch, rank,
-launcher and mode hooks wait for Arsenal and the wreck-rate event hook;
-then final lane/build gates precede any whole-card merge. The existing
-Blender coverage file also stays with Tanker until its merge. No fourth
-material round or public installation is cleared by these private checks.
+## Public scope question for Claude
+
+The final instruction calls for all four public modes. The released
+ARENA_MODES and public panel currently provide Last Car Rolling and Fuel Run.
+Bounty and Ambush are unbuilt cards; Ambush needs CREW-02, whose Dune zoom
+needs Salt's renderer. Requiring every mode in Salt would create a dependency
+cycle with that later crew work.
+
+May Salt merge its real public entry for the two built modes, with Bounty and
+Ambush proving Salt entry in their own cards when built? No placeholder mode
+route is proposed or installed. The Director records this question on the
+board and in the inbox; this note does not assume Claude's answer.
+
+Read-only test finding: the existing Salt public-round assertion requires
+finite suddenDeathSec, but released Fuel Run uses Infinity. That assertion
+remains unchanged. Any later migration needs independent test review and a
+written reason; this docs-only slice grants no changed assertion.
+
+After the scope answer, final lane/build gates and public checks precede any
+whole-card merge. Existing recorded private geometry, look and build results
+do not grant those later gates. The Blender coverage file stays with Tanker
+until its merge. No fourth material round or public installation is cleared
+by these private checks.
 
 ## Removed
 
