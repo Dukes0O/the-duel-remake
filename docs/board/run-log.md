@@ -660,3 +660,5 @@ without weakening the full-throttle assertion. Claude's next question is the
 six wave-one sound hooks. Resume useful cards only when their file owners
 merge. Both overnight automations stay active for the remaining review
 continuations; final handoff begins at 8:30 and ends by 8:45 Vancouver time.
+
+Janitor sizes: the separate sweep folded consumed text from 262361522 bytes to 262354811 bytes; runtime assets stay at 236249990 bytes. Held and Kyle-owned lanes remain, and no uncertain asset was deleted.
