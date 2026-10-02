@@ -1,63 +1,80 @@
-# CREW-02 independent tests first
+# CREW-02: signature gear simulation built; shared wiring held
 
-Source has not started. This slice owns only test-crew-gear.mjs and this note.
-The suite uses existing Duel, App, profile, fighter, targeting, smoke, camera
-and crash-solver entrypoints. No future gear module or export is imported.
+Status: building. Native App acceptance is still incomplete. Production logic
+is implemented in the owned src/crew-gear/ modules. Tests were committed first
+at b85ce3 and remain unchanged; none of the held hooks or boss files was edited.
 
-## Coverage
+## Production Source
 
-- Real dev switch, discovery admission, slot 3 keyboard and D-pad dispatch.
-- Native admission for all eight crew and activation of Jax, Cinder and Tusk.
-- Rook's actual 0.6 s lock and 1.8 s reload, with flag-off timing controls.
-- Nell's stock, arc, reach, contact fuse, car damage, perk radius and raider hit.
-- Jax's line, car speed limits, roof result, recharge and actual salvage ledge.
-- Odessa's native nearest-car fire, hit amount, reach, cadence and lifetime.
-- Cinder's native cone, car/raider damage, self contact, fuel and refill.
-- Dune's stock, native bolt, damage, reach, reload, knockdown and camera zoom.
-- Wren's stock, throw and shared smoke dimensions, lifetime and sight block.
-- Tusk's native stock, reload, damage, equivalent released solver response,
-  parked-car passive and actual raider knockdown.
-- Actual car re-entry refill, named-player memory-only admission and current
-  movement judged through the production first-person camera.
+gear.js defines the settled catalog, discovery/switch admission and Rook's
+0.6 s lock / 1.8 s reload override. signature.js owns inventory, selection,
+refill, Cinder's cone/fuel, Odessa's turret and Jax's grapple product.
+contacts.js reuses native vehicle dimensions, continuous sweeps, armor/team/
+shield protection, fighter/raider damage and the released crash solver.
+projectiles.js owns actual gear shot records in combat.projectiles:
 
-## Hooks and incomplete checks
+- Nell: upward arc, first-contact attachment, zero velocity while stuck,
+  three-second contact fuse, beeps, 25 armor / 60 health and her 6 m radius.
+- Wren: bounded arc into the shared arsenal smoke list, 2.5 m radius, 6 s.
+- Dune: actual 90 m/s bolt, 150 m flight limit, 15 armor and native knockdown.
+- Tusk: shell contact, 20 armor and native 1,450 kg / 35 mph solver response.
 
-Dune zoom requires src/onfoot-camera.js and the narrow foot-camera branch in
-src/render3d.js (currently reads pose.fov). Neither is granted by the card;
-Salt owns render3d.js. Wait for that lane to merge before any renderer edit.
-The zoom test uses the existing production camera path, not a second camera.
+Odessa's real deployable has 60 health, nearest hostile target, 35 m reach,
+0.8 s cadence, 4 armor / 10 health, 20 s life and 30 s retirement recharge.
+Cinder uses the native contact path for the 6 m / 35 degree cone: 10 armor/s,
+30 health/s, four seconds of fuel, half-second-per-second idle refill and
+fire immunity admission. Tusk's walking contact starts existing free-body
+motion at 1 m/s. Stock refills and RPG refill are ready for the car-entry hook.
+Jax's ray rejects cars at 90 km/h or above and targets within 25 m; the pull
+produces real roof arrival or an actual salvage-ledge top. CREW-03 consumes
+the roof attachment for shake-off, charge and safe landing; none is invented
+here. Marksman aiming supplies a read-only 3x magnification field.
 
-Turret 60 health, destruction and 10 fighter damage remain unproved: no native
-deployable/contact record exists before Source. Add independent real contact
-checks after the builder exposes its actual simulation product. No invented
-health API or arbitrary projectile damage against a turret is assumed.
-Cinder's later car-Flamethrower immunity is a deferred reuse contract. Native
-Hand Flamer self contact is covered; allied crew fighters belong to CREW-04.
+## Tests and limits
 
-Grapple tests cover the settled roof and ledge results only. CREW-03 charges,
-shake-off and CREW-04 computer crews are outside this slice. Private browser
-checks per item, overhead controls, visual gear and audio listening remain
-builder/reviewer work. The sound bank and catalog are with a separate owner;
-this slice does not inspect their protected branch.
+The original native --admission-only run still reports 6 checks, 2 controls
+passed and 4 genuine failures: missing switch, App slot 3 stays on RPG,
+Nell selectFootGear(3) returns false and Rook's 0.6 s shot remains unlocked.
+The two controls preserve released RPG/wrench and undiscovered save refusal.
+No future module/export is imported by this independent acceptance suite.
 
-## Validation
+A bounded scratch check uses actual Duel campaign/exit entrypoints, then the
+owned production module entrypoints. Its feature-flags adapter admits the
+unregistered crew switch only to exercise these unintegrated modules. It
+proves code behavior, not native App admission or a finished feature:
+Nell/Dune/Tusk remove exactly 25/15/20 armor; Tusk creates native knock motion;
+Wren creates and retires the shared 2.5 m / 6 s smoke; Odessa deals 4 armor at
+0.8 s, has 60 health and is destructible; Cinder deals 10 armor/s and spends
+one fuel second; refill restores fuel; Jax reaches a real enemy roof.
+The check took 2.08 s. node --check for all four modules and git diff --check
+pass. No broad tests, builds or captures run while Root owns the heavy slot.
 
-node --check and git diff --check pass.
-The authorized native --admission-only run took 0.83 s on unchanged Source:
-6 checks, 2 passed, 4 genuine RED. Passing controls: flag-off RPG/wrench
-behavior and undiscovered memory-only crew-shop refusal with no saved change.
-Exact failures:
-- Production switch catalog: undefined !== dev.
-- Actual App slot dispatch: signature silently stays on RPG.
-- Native Nell selectFootGear(3): false !== true.
-- Rook actual rocket at 0.6 s: lock target null !== 0.
+All existing assertions, race fingerprints and world signatures are unchanged.
+The complete independent mechanics, real camera controls and memory-only
+named-player tests still await native wiring and their permitted test slot.
+Turret contact tests must use actual native incoming projectile products after
+wiring. Browser per-item, both camera modes, visual/audio and lane/build gates
+remain outstanding. No native App or gameplay acceptance is claimed green.
 
-The full suite has not run while Junk gates own the heavy slot. The authored
-downstream mechanics and Rook reload remain unproved at their native admission
-or lock precondition. No missing module/import/export failure occurred.
-All existing assertions and replay pins remain frozen. The established replay
-and camera suites remain builder gates; no fingerprint is regenerated.
+## Exact shared hooks requested from the Director
+
+- Card hooks: feature-flags.js and crew.js for admission/activation;
+  onfoot-weapons.js for initialize/select/fire dispatch and Rook timing;
+  onfoot-transition.js for refill and fixed-time grapple after movement;
+  combat-hud.js for actual inventory; sound-bank.js/audio.js for named cues.
+- Additional narrow hooks: combat-projectiles.js dispatches crewGearShot
+  records through stepGearProjectile and native incoming turret contact;
+  combat.js ticks deployables after car re-entry and shared hazards when
+  crew gear is active; combat-scene.js draws the actual shots/deployables/
+  flamer/grapple; onfoot-camera.js and render3d.js apply 3x Marksman fov.
+- Owned constants require no wasteland-tuning.js edit. No shared file is
+  granted to this builder yet. Root must audit owners and grant exact hooks.
+
+Named cues are crew.sticky.arm/beep/explode, crew.grapple.launch,
+crew.turret.deploy/fire/retire, crew.flamer.start/stop, crew.marksman.fire,
+crew.scrap-cannon.fire and weapon.smoke.deploy. Audio installation is held.
 
 ## Removed
 
-None. No runtime behavior or existing test is replaced in this slice.
+None. Released RPG, wrench, saves, assets and shared code are retained.
+No stub or placeholder is presented as a finished gear item.
