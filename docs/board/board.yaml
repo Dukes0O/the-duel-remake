@@ -3121,10 +3121,14 @@ tasks:
     lane: CMB
     size: L
     needs: [WAR-02a-FORMAT, DESIGN-WAR-02b, ARS-CORE]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-01-evening
+    branch: codex/cmb/dustmonger
     flag: scrapdome
     owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
-    hooks: [src/arena/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
+    hook_requests: [src/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
+    sequencing: "Claimed for tests first and a narrow map of existing smoke, oil, tells and rewards. No runtime hook is granted until the real files are mapped; held renderer and Arsenal files stay with their owners."
+    note: "The settled Dustmonger build is claimed. Independent native tests follow the hook map; no Source has started."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: The Dustmonger' in docs/SCRAPDOME.md section 5, on the arsenal's smoke and oil hazards (ARS-CORE, docs/ARSENAL.md). Dust Veil blocks computer aim through the cloud through targetFor; oil only on straight runs; the window and phase-two dust storm as settled. Reward: Smoke Screen unlocked early for this player."
