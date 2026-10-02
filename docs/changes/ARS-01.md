@@ -78,22 +78,22 @@ Independent Save Guardian approved byte preservation; fresh broad gates remain.
 
 ## Remaining acceptance
 
-The browser recipe runs original genuine Oil/Smoke counters, then actual
-Harpoon hit, accumulated steering and shield counters and Caltrops contact
-and steering around, in High and Performance with tab-local memory saves.
-It has syntax validation only and still needs the independent browser run.
-The prior thirty-race run had Medium 70 percent wins and zero CPU Oil/Smoke
-uses; diagnosis and a current passing report remain, without target changes.
-Audio belongs to its separate owner. Source emits weapon.harpoon.fire,
-.flight, .hit and .break and weapon.caltrops.deploy and .hit with actual
-actors/positions/projectiles. No bank, catalog, audio, Game, arena-event, Salt or protected file changed.
-Thirty-race balance, independent Source review and current lane/build gates
-remain mandatory before handoff for merge.
+The bundled browser recipe keeps original Oil/Smoke controls and uses real
+hits/breaks, CPU Harpoon/Star decisions, strip events and native grip/speed
+controls. High/Performance and phone HUD use tab-local memory saves.
+Syntax and 70 embedded expressions pass; independent browser run remains.
+Bounded native witnesses: CPU fire/hit once, shield contact at 28.583 m with
+zero armor loss, Caltrops grip 0.75 and ceiling 180.9 mph.
+Prior thirty-race Medium wins were 70 percent with zero CPU Oil/Smoke uses;
+a current passing report remains, preserving all historical targets.
+Claude approved the six native Harpoon/Caltrops sound hooks and labelled rear-defense races.
+All six cues carry actual actors, positions and products; audio stays with its owner.
+Independent Source review is clear; current balance and lane/build gates remain.
 
 ## Removed
 
 Replaced the two-user rear deployment branch with genuine four-user wave-one
 scheduling and extended native accounting. Unpacked combat presentation. Replaced
 level-blind backup, wrong-axis yank, airborne strip height, per-frame tether array
-and clipped forward wall contribution. No asset, starter id, target or replay pin
+clipped forward wall contribution and browser raw-Source imports. No asset or pin
 removed. Diagnostic output stays in ignored QA.
