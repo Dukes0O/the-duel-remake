@@ -30,10 +30,9 @@ complete balance coverage, Claude's cable picture and lane/build gates remain.
   All four real CPU uses count; Harpoon fire counts once, separately from flight.
 
 ## Tests first and independent review
-Independent weapon tests preceded Source at 37924a1; motion/contact regressions
-preceded each repair. All 77 native cases now pass, including twelve decision
-checks added before Source at 320ba2b. The real cable regression preceded its
-repair at 56a67d6. Independent Source review clears timing, geometry and lifecycle.
+Independent tests preceded the weapons, motion, contacts, twelve decision
+checks and real cable repair. All 77 native cases pass; independent Source
+review clears timing, geometry and lifecycle.
 Attachment error is at most 0.000012 m; measured midspan sag error is 0.000002 m.
 Current 35 projectile, 13 ram, 7 solid-contact and knock cases pass with old
 replay pins exact; prior accounting passed 33 cases. Every reset clears impulses.
@@ -57,10 +56,12 @@ Independent review reproduced and approved these narrow new-fixture corrections:
 - Two new timing assertions allow only Float64 roundoff: a native 0.025 s
   boundary evaluates as 0.025000000000000355. Independent review confirmed that
   one extra tick still fails; exact tick limits, counts and actor order remain.
-No settled rule, historical sample, balance target or replay pin changed.
+- Harpoon is now implemented. The old unimplemented-purchase control instead
+  uses Rocket Pods at eligible rank seven, as independently reviewed. Every
+  refusal, profile, registry and no-write assertion stays exact.
 
 ## Saves
-Backup regressions came first at f03c568. All 14 new cases pass with 88 reached
+Backup regressions came first. All 14 new cases pass with 88 reached
 checks; seven historical fixtures, quota and recovery checks pass unchanged.
 The real normalizer adds level zero only to earned future Harpoon/Caltrops.
 Verified backup retains original formatting, future fields and every career.
@@ -81,13 +82,15 @@ decisions or ending in wrecks; the next natural coverage direction goes to Claud
 Fresh actual High/Performance browser passes twenty checks with no errors,
 warnings or failed requests; QA panels are absent. The clear rust-orange cable
 picture goes to Claude. Frame pacing remains; old UI overlaps go to Phase 3 polish.
-Audio measurement regression 09cdeb6 failed before Source. Analysis-only silence
+The short-cue measurement regression failed before Source. Analysis-only silence
 makes short cues measurable without changing OGG bytes or playback; independent
 review clears it. All 18 private CC0 variants rebuild: true peak -4.72 to -2.43
-and 157061 bytes. Padding is labelled; mixed capture and listening remain.
+dBTP. Padding is labelled; mixed capture and listening remain.
 Audio tests pass 17 controls and fail the same 19 missing-runtime checks.
 Automatic review requires Kyle's shared bank, renderer and catalog permission;
 all remain unchanged. No silent cue or failed coverage trial is complete.
+The lane gate fails; build passes. Native Core now passes 208 of 209 cases;
+its remaining Crossbow-only CPU predicate joins the same Kyle approval hold.
 
 ## Removed
 Replaced two-user rear scheduling, level-blind backup, wrong-axis yank,
