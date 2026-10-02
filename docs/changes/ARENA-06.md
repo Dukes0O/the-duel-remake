@@ -51,9 +51,9 @@ round and Infinity sudden death. A separate 600 s observation watchdog never
 changes game limits, forces results or changes next-delivery rules. Fixtures
 explicitly enable the genuine Salt and Fuel flags. Both existing full-round
 assertions pass with exact seeded traces/results and native physical bounds.
-Earlier native acceptance: 63 checks, 62 PASS, 1 old-control failure;
-all 16 registered Course geometry cases passed. Expected negative-source guards
-reject altered licensed fixtures; genuine originals and runtime assets remain.
+Earlier native acceptance: 62 checks passed; only the approved trace was stale.
+All 16 Course geometry cases pass. Salt dev and catalog count ten have independent
+approval; all old assertions and negative art guards remain exact.
 
 Actual memory-only browser acceptance passes all four public entry cases:
 Last Car Rolling and Fuel Run in High and Performance. Uncovered physical UI
