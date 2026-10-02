@@ -1,6 +1,6 @@
 # ARENA-JUNK-SHOVE
 
-Status: building; first source candidate passes the frozen native checks.
+Status: building; source review fixes await the frozen native rerun.
 
 ## Changed
 
@@ -25,7 +25,12 @@ sound. Titan flattening keeps propCrushed and vehicle.crush. No new sound asset.
 
 Independent tests came first in 18aa344: 53 checks, with 37 real acceptance
 failures and 16 released solver/road controls passing. Their assertions and
-all existing fingerprints are frozen. The first source run passes all 53
+all existing fingerprints are frozen. Review found the venue's six search
+advances can leave a refreshed slot within clustered current cover. New
+regression daf0d3f ran first: six checks, four genuine RED failures across LCR
+and Fuel Run; slot IDs and copied depot controls passed. The leaf now continues
+the existing six-metre search for at most one course length, using the venue's
+authored 14-metre clearance. The one-tick native respawn probe passes all six. The first source run passes all 53
 checks with no changed assertion, pin or displacement tuning. Raw native
 impact velocities meet the settled movement floors. Independent source review,
 affected native regressions, browser checks and merge gates still follow.

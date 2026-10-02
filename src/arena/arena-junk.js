@@ -3,7 +3,7 @@ import {sweepObstacle} from '../collision.js';
 import {wrapHeading} from '../offroad-physics.js';
 import {actorBody, bodyHeading, resolveCarCrash, startKnock, stepKnock} from '../vehicle-knock.js';
 import {containInArena} from './arena-floor.js';
-import {spawnSlots} from './venues.js';
+import {junkNear, spawnSlots} from './venues.js';
 
 // Round-owned cover uses the same rigid-body bridge as cars. It has no
 // driver, armor, wreck timer or reward for sliding. Only Titan crush pays.
@@ -101,5 +101,15 @@ export function stepArenaJunk(duel, dt) {
   }
   // Use the existing venue chooser against current cover. Slot identities
   // remain stable; Fuel depots are independent copied positions from setup.
-  if (moved) duel.state.arena.spawnSlots = spawnSlots(duel.course);
+  if (moved) {
+    const course = duel.course, slots = spawnSlots(course);
+    // Continue the venue's existing search for current clusters. One full
+    // ring bounds it; the venue still owns spacing, ramps and clearance.
+    for (const slot of slots) {
+      for (let searched = 0; searched < course.length &&
+          junkNear(course, slot.s, slot.lateral, course.def.scrapdome.junkSpawnClearance); searched += 6)
+        slot.s = (slot.s + 6) % course.length;
+    }
+    duel.state.arena.spawnSlots = slots;
+  }
 }
