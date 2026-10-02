@@ -649,3 +649,19 @@ candidates and the intentionally private Tanker loader; nothing is proved safe
 to remove. No removed-behavior tests remain. Runtime grew from 236,343,712 to
 259,627,104 bytes for the accepted current Salt model; build is 263,925,553 bytes.
 Model/build targets remain advisory; accepted real venue growth is recorded.
+
+Salt runtime-check repair: the first full tier passed 330 suites and failed two
+because consumed private review inputs were still the renderer defaults. The
+reviewed fix reads the installed approved model, keeps every frozen assertion,
+and passes all sixteen focused checks, eight changed-lane suites and build.
+Bounty code now passes thirty-five of thirty-nine native cases, including all
+FPS and old replay controls; only Claude's four routing cases fail. Four private
+quality/venue UI and native reward journeys pass with no errors or warnings.
+
+Janitor sweep: removed the clean merged Salt repair lane and its consumed gate
+output with plain worktree removal. Seven unfinished lanes remain; three
+protected audio references were skipped. Audit counts stay at 48 uncertain
+assets, one intentional private module and 25 internal exports; no candidate
+was proved unused. Runtime stays 259,627,104 bytes and tracked files total
+287,445,693 bytes. Outgoing binaries are four current approved Salt assets,
+with no superseded version and no history rewrite needed. Full recovery follows.

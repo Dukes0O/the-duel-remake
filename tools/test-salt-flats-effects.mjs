@@ -18,10 +18,12 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 // from the browser companion in scenarios/salt-flats.mjs.
 const root = resolve(import.meta.dirname, '..');
 const candidate = resolve(process.env.SALT_FLATS_RENDER_ASSET ||
-  resolve(root, '.evidence/2026-10-01/ARENA-06/ground-round-3/candidate/venue.glb'));
+  resolve(root, 'public/assets/models/wasteland/salt-flats/venue.glb'));
 const local = relative(root, candidate);
-assert(!isAbsolute(local) && !local.startsWith('..') && /^(?:\.evidence|\.qa-dist)[\\/]/.test(local),
-  'effects checks read only the exact private native Salt candidate');
+assert(!isAbsolute(local) && !local.startsWith('..') &&
+  (local.replaceAll('\\', '/') === 'public/assets/models/wasteland/salt-flats/venue.glb' ||
+    /^(?:\.evidence|\.qa-dist)[\\/]/.test(local)),
+  'effects checks read the approved installed Salt asset or an exact private candidate');
 const bytes = readFileSync(candidate);
 const hash = value => createHash('sha256').update(value).digest('hex');
 assert.equal(hash(bytes), '87e30d6da263f189310077ce12328286835334fee218558817368b7bb50ea0cd');

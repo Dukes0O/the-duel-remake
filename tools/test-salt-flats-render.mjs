@@ -21,9 +21,11 @@ const originalDocument=globalThis.document,originalLoad=THREE.TextureLoader.prot
 globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>context})};
 THREE.TextureLoader.prototype.load=function(){return new THREE.Texture();};
 const root=resolve(import.meta.dirname,'..');
-const candidate=resolve(process.env.SALT_FLATS_RENDER_ASSET||resolve(root,'.evidence/2026-10-01/ARENA-06/ground-round-3/candidate/venue.glb'));
+const candidate=resolve(process.env.SALT_FLATS_RENDER_ASSET||resolve(root,'public/assets/models/wasteland/salt-flats/venue.glb'));
 const local=relative(root,candidate);
-assert(!isAbsolute(local)&&!local.startsWith('..')&&/^(?:\.evidence|\.qa-dist)[\\/]/.test(local),'private lane asset only');
+assert(!isAbsolute(local)&&!local.startsWith('..')&&
+  (local.replaceAll('\\','/')==='public/assets/models/wasteland/salt-flats/venue.glb'||
+    /^(?:\.evidence|\.qa-dist)[\\/]/.test(local)),'approved installed Salt asset or private candidate only');
 const bytes=readFileSync(candidate),sha=createHash('sha256').update(bytes).digest('hex');
 assert.equal(sha,'87e30d6da263f189310077ce12328286835334fee218558817368b7bb50ea0cd','approved native Source freeze');
 async function asset(){const loader=new GLTFLoader();loader.register(()=>({name:'PRIVATE_HEADLESS_IMAGES',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
