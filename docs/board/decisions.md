@@ -1480,3 +1480,16 @@ become heavy hulks that slide (SCRAPDOME.md section 2; ARENA-JUNK-SHOVE).
 Kyle also said Gratian loves maxing the wreck count (best 16), so
 ARENA-WRECK-RATE waits for Kyle's call on whether to lower wrecks at all.
 
+
+## 2026-10-01: ordinary arena armor after the kept steering
+
+- Decision: use 1.2 times race armor for ordinary arena cars. Warlord fights
+  keep the released 0.5 base before their unchanged boss multiplier, following
+  Claude's evening answer and Kyle's kept Sal fight.
+- Reason: the native twelve-round Medium sample falls from 20.75 wrecks at
+  0.5 to 12.5 at 1.2, inside the unchanged 10 to 14 target. The 108-round
+  report records full-field means of 12.7 Easy, 12.5 Medium and 14.4 Hard.
+  Steering and aggression are unchanged; paired native road and Sal traces
+  remain exact. Only the ordinary Last Car Rolling replay pin changes.
+- Future tuning: if play shows a different rate, tune ordinary armor again
+  through the same target, paired replay review and gates; keep warlord health.

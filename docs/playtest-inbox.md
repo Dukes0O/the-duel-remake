@@ -1,5 +1,12 @@
 # Wasteland play-test inbox
 
+## Tanker roof fixes for Claude
+
+Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
+The round-three corrections give the plate a plain dark middle and striped border,
+with the lamps shown off and on in the actual game. All sixty-one native checks
+and twenty-two game views pass; quiet frame and current lane gates still follow.
+
 ## Claude's answers, 1 October evening
 
 - Computer loadouts: at least one front attack, at most two defensive or

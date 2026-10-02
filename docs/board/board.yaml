@@ -794,7 +794,7 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: building
+    status: review
     review_commit: f2a0cfd
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
@@ -814,12 +814,15 @@ tasks:
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
-    note: "Claude picked round three and requested two material corrections. Their tests and source are committed; native checks, the roof close-up for Claude and current merge gates follow."
+    note: "The two roof and lamp corrections pass all native checks and twenty-two game views, preserving race state. The paired roof close-up is ready for Claude before merge; quiet frame and current lane gates remain."
     final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
     final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
     source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
     frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
     claude_verdict_final: "1 October 2026, evening: round 3 is the pick. The red bands and red valve wheels finally read as targets, and the striped bumper and darker cab help. Install round 3 as the convoy tanker with two corrections that are fixes to round 3's own directions, not a fourth round: (1) the roof plate is plain dark steel in the middle with the black and yellow stripes only around its border; (2) the beacon lamps are amber, bright amber when lit and dull dark amber when off (they read cream and brown now). Show Claude one close-up of the roof, lamps on and off, before merge. Still below the art bar at distance; Kyle has the last look in the Preview when the Convoy Raid is playable."
+    waiting_on: claude
+    roof_qa_commit: 366140071fee436bb2f375e9f022f1cd877bb0aa
+    roof_closeup: ".lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg"
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -928,7 +931,8 @@ tasks:
     design_question: "The required balance run puts Medium at 80 percent wins against 45 to 65. A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and Star making no CPU weapon use: should every four-slot CPU loadout guarantee a working front attack? Targets and gameplay stay held for your answer."
     claude_answer_4: "1 October 2026, evening: yes. Every computer four-slot loadout carries at least one weapon that damages a car in front of it (the crossbow, or an unlocked wave weapon that does), and at most two of the slots are defensive or control weapons (UFO Jump, Star Shield, Oil Slick, Smoke Screen). Fill the rest from the unlocked pool as ARSENAL.md says. Then rerun the balance; the 45 to 65 percent Medium target stands."
     cpu_test_commit: e008aafcab0308baee60bf12861f4d253ac6ac06
-    note: "Claude's CPU loadout rule now passes the new native cases, with independent source review clear. The required balance rerun and current merge gates follow; the earlier save, browser and physical-flight reviews remain clear."
+    note: "The CPU loadout fix passes the required balance at every difficulty, with native, save and replay checks clear. Current lane and build gates remain before merge; no target or gameplay number was tuned."
+    balance_review_commit: 9f1b65db42c79b04f6fa40d14113519b96dd6c09
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex
@@ -2947,9 +2951,9 @@ tasks:
     sequencing: "Shove is merged and frees the arena event. Use ordinary-car armor first; steering, Sal armor and Arsenal’s pilot files stay unchanged. If aggression needs changing, wait for Arsenal to free its pilot and brain hooks."
     helpers: [test_author, reviewer, balance_analyst]
     test_commit: d0e1a1f
-    source_commit: d9798c7
+    source_commit: 360192cb9225317a52dd92b28be63d783b6247e6
     review_commit: f1a1470
-    note: "The tests preserve every warlord's released health and reproduce excess ordinary wrecks. Independent review clears the armor separation and Sal assertion update; tuning, the full balance report and merge gates follow."
+    note: "Ordinary armor now brings Medium full-field wrecks to twelve and a half, within target, with every warlord's released health preserved. The complete three-difficulty report is recorded; native regressions and current merge gates follow."
     design_question: "Changing ordinary arena armor also changes Sal’s absolute armor because warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card preserve the current warlord health values or only the 1.5 multiplier? Tuning waits for that answer; the target test and import guard can finish."
     claude_answer: "1 October 2026, evening: keep every warlord's absolute armor exactly as it is today; Kyle approved Sal as she plays. The armor change applies to ordinary cars only (Last Car Rolling and the public modes). Compute warlord armor from today's arena scale times 1.5, or store it, so this card changes no warlord number."
     waiting_on: kyle
