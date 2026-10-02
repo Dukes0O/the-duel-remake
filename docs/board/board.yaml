@@ -2979,6 +2979,9 @@ tasks:
     acceptance:
       - "Kyle, 1 October 2026: the parked cars in the dome do not budge at any speed. These are the six junk cars (course.features.crushables, kind junkCar), fixed boxes that only the Titan crushes; ARENA-SHOVE covered participant cars only. Build docs/SCRAPDOME.md section 2, Junk cars: heavy hulks (1.5 times a car's mass) that slide through the crash solver, at least 2 m from a 40 mph hit by any car and 5 m by the Titan, contained on the floor, no sliding damage, settle and stay for the round; Titan crush unchanged."
       - "Tests first: every car and the Titan at 20, 40 and 60 mph; a junk car pushed into the wall or another junk car; the renderer shows its moved position and spin; computer drivers avoid its current position; spawns still keep clear. Arena replays that change are named. Kyle checks it in the Preview."
+    test_commit: 18aa34470731bcea742974804fad0aa63d07faf9
+    test_candidate_commit: ee81c8e4703d020188fd4c4a5c3e236d05e96b31
+    note: "Independent native tests reproduce the immovable hulks while released Titan, solver, road and actual App frame controls pass. Source work now uses the freed Game hook; held arena-event and Salt files remain untouched."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
@@ -3152,14 +3155,18 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-CORE]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-01-evening
+    branch: codex/cmb/arsenal-wave1
     flag: arsenal
     owns: [src/arsenal/harpoon.js, src/arsenal/caltrops.js, tools/test-arsenal-wave1.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
-    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build Harpoon and Caltrops exactly as docs/ARSENAL.md section 3, and computer use of all four wave 1 weapons (Oil Slick and Smoke Screen come from ARS-CORE). Every counter has a headless test."
       - "Section 4's tests pass: determinism at 30, 60 and 144 FPS; the thirty-race balance with wasteland2 and arsenal on, with the computer's use of each weapon counted; a private browser scenario showing each weapon and counter. Sounds from Freesound CC0 through the catalog."
+    hook_requests: [src/weapon-upgrades.js, src/combat-weapons.js, src/combat-scene.js, src/sound-bank.js, src/audio.js]
+    sequencing: "Independent tests start after Arsenal core. Runtime hooks follow an exact inventory; no Game, arena-event, Salt rendering or art edits. Sound bank and catalog edits wait for the separate audio owner to merge or Claude to settle the file split in writing."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO
