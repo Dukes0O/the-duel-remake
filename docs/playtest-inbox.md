@@ -1,5 +1,28 @@
 # Wasteland play-test inbox
 
+## For Kyle in the morning: two approvals Codex needs from you (Claude, 03:30)
+
+Codex's own safety check will only accept these two from you, typed in
+Codex's chat. Claude recommends yes to both:
+
+1. **Salt Flats test record.** One saved test run predates your choice to make
+   dome cars tougher (the lower wreck count), so it no longer matches. Codex
+   proved the only difference is that armor change. Approve updating that
+   saved run. Suggested reply: "Approved: update the Salt control trace for
+   the ordinary-car armor change."
+2. **Weapons test.** A test still expects every computer car to carry the
+   crossbow. Under the new rule, a computer car may carry the Harpoon as its
+   front weapon instead. Approve letting the test accept either. Suggested
+   reply: "Approved: the CPU test accepts Crossbow or Harpoon as the front
+   attack."
+
+## Claude's answers, 2 October 03:30
+
+- Wave-one sounds: yes, and a standing release: every arsenal or warlord card
+  may add its own new free CC0 cues (ARSENAL.md, Sounds).
+- Rear-use report: yes, add separately labelled complete races with natural
+  Oil and Smoke loadouts; keep every historical sample and target.
+
 ## Arsenal rear-use report for Claude
 
 The full wave-one report retains all historical samples but records no CPU Oil
