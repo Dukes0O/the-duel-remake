@@ -641,3 +641,11 @@ after its integration-only dependency junction was safely detached. Current
 assets and licensed records stay. Bounty receives free entry/pay/HUD/beacon
 hooks; Pit is claimed for disjoint tests-first geometry. Boss files stay with
 Claude, and Arsenal audio/tuning ownership remains. Full checkpoint follows.
+
+Janitor checkpoint: removed the merged Salt lane, dependency junction and used
+card gate evidence; preserved seven unfinished lanes and skipped three protected
+audio references. The audit flags 48 uncertain assets, 25 internal export
+candidates and the intentionally private Tanker loader; nothing is proved safe
+to remove. No removed-behavior tests remain. Runtime grew from 236,343,712 to
+259,627,104 bytes for the accepted current Salt model; build is 263,925,553 bytes.
+Model/build targets remain advisory; accepted real venue growth is recorded.
