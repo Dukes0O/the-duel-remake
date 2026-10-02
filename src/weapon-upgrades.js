@@ -9,6 +9,8 @@ export const ARSENAL_WEAPON_COST = 400;
 // Extend this catalog only when another weapon's core implementation is built.
 export const ARSENAL_WEAPONS = Object.freeze({
   oil: Object.freeze({rank: 2, wave: 1, cpuRole: 'control'}),
+  harpoon: Object.freeze({rank: 3, wave: 1, cpuRole: 'front'}),
+  caltrops: Object.freeze({rank: 5, wave: 1, cpuRole: 'rear'}),
   smoke: Object.freeze({rank: 6, wave: 1, cpuRole: 'control', warlordId: 'dustmonger'}),
 });
 

@@ -11,8 +11,10 @@ import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
 import { raceFeatureFlags } from './wasteland-access.js';
 const bank = (id) => SOUND_BANK[id];
-const ARSENAL_CORE_CUES = new Set([
+const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
+  'weapon.harpoon.fire', 'weapon.harpoon.hit', 'weapon.harpoon.break',
+  'weapon.caltrops.deploy', 'weapon.caltrops.hit',
 ]);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
@@ -704,7 +706,9 @@ export class EngineAudio {
     const live = new Set();
     for (const projectile of state.combat?.projectiles || []) {
       const id = 'weapon.' + projectile.kind + '.flight';
-      if (!bank(id) || !this.cueBuffers[id]) continue;
+      const cue = bank(id);
+      if (!cue || !this.cueBuffers[id] ||
+          (cue.flag && !this.flags.enabled(cue.flag))) continue;
       live.add(projectile.id);
       let voice = this.projectileVoices.get(projectile.id);
       if (!voice) {
@@ -713,6 +717,7 @@ export class EngineAudio {
           this._cueBuffer(id),
           projectile,
           listener,
+          {loop: !!cue.loop},
         );
         if (voice) this.projectileVoices.set(projectile.id, voice);
       }
@@ -1357,8 +1362,12 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
-    if (recordedAudio && this.flags.enabled('arsenal') && ARSENAL_CORE_CUES.has(ev.arsenalCue)) {
-      // Use the native hazard/contact point without adding a simulation hit.
+    if (recordedAudio && (
+      (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
+      (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue))
+    )) {
+      // One-shots use the native point; flight belongs to the moving voice map.
+      // The flight event never starts a second overlapping source.
       const output = this._spatialOutput(
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
       );
@@ -1400,7 +1409,9 @@ export class EngineAudio {
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won === false)
       this._playCue('interface.lose');
-    if (ev.weaponFired) {
+    // Wave-one launches already emit their own recorded native cue.
+    if (ev.weaponFired && ev.weaponFired !== 'harpoon' &&
+        ev.weaponFired !== 'caltrops') {
       if (wastelandAudio) this._weaponCue(ev.weaponFired);
       else {
         this._playCue(

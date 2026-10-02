@@ -6,8 +6,8 @@ import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
-import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect,carGrip} from './arsenal/car-effects.js';
+import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
+import {carEffect,carGrip,carTopSpeed,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -140,7 +140,7 @@ export function _drive(dt) {
   const nitro = s.upgrades.nitro, boostDrain = BOOST.drainPerSec / ((1 + nitro * .14) * car.boostCapacity);
   const boostTopSpeed = BOOST.topSpeedMult + nitro * .025 + (car.nitroSpeedBonus ?? 0);
   if(s.practice)s.boost=1;
-  s.boosting = !(arsenalEnabled(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
+  s.boosting = !(hazardsActive(this) && carEffect(s, 'disabled')) && !!s.input.boost && s.boost > 0 && s.gear>=0 && s.speedMph >= (s.practice?0:BOOST.minSpeedMph) && surface.boostAllowed && s.input.brake === 0;
   if (s.boosting) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);
@@ -175,7 +175,7 @@ export function _drive(dt) {
   s.roughness += (roughTarget - s.roughness) * (1 - Math.exp(-8 * dt));
   const traction = surface.traction;
   s.steerVisual += (s.input.steer - s.steerVisual) * (1 - Math.exp(-DRIVE.steerResponse * dt));
-  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (arsenalEnabled(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
+  const targetYaw = -s.steerVisual * steeringYawAuthority(Math.abs(s.speedMph), car.grip * (hazardsActive(this) ? carGrip(s) : 1), traction, car, this.course) * (s.speedMph < 0 ? -1 : 1);
   s.yawVelocity += (targetYaw - s.yawVelocity) * (1 - Math.exp(-DRIVE.yawResponse * dt));
   // The nose turns first while momentum carries the rear outward. A short
   // release or counter-steer settles the slide without steering toward the road.
@@ -192,16 +192,18 @@ export function _drive(dt) {
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
 
-  const speedCap = s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed;
+  const effectScale = arsenalEnabled(this) ? carTopSpeed(s) : 1;
+  const speedCap = (s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed) * effectScale;
   if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
-  s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
+  if (effectScale < 1) s.speedMph = Math.min(s.speedMph, speedCap);
+  s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed * effectScale, s.speedMph));
   if(waterDepth>0){
     const waterDrag=waterDepth*(.18+surfaceEntrySpeed*.008);
     const waterLoss=surfaceEntrySpeed*(1-Math.exp(-waterDrag*dt));
     s.speedMph=Math.sign(s.speedMph)*Math.max(0,Math.abs(s.speedMph)-waterLoss);
   }
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
-  const metresPerSec = s.speedMph * DRIVE.mphToWorld;
+  const metresPerSec = s.speedMph * DRIVE.mphToWorld, alongPush = carAlongPush(s);
   if (onHiddenRoad(this.course, s)) s.hiddenRoadDriving = true;
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
   // A returning road car may join the asphalt facing back along the circuit.
@@ -210,12 +212,12 @@ export function _drive(dt) {
   if (freeHeading) {
     const heading = frame.heading + s.headingError + s.yawVelocity * dt;
     const old = this.course.worldAt(s.s, s.lateral);
-    const pose = this._roadPosition({ x: old.x + Math.sin(heading) * metresPerSec * dt + Math.cos(frame.heading) * s.pushVelocity * dt,
-      z: old.z + Math.cos(heading) * metresPerSec * dt - Math.sin(frame.heading) * s.pushVelocity * dt }, s.s);
+    const pose = this._roadPosition({ x: old.x + Math.sin(heading) * metresPerSec * dt + Math.cos(frame.heading) * s.pushVelocity * dt + Math.sin(frame.heading) * alongPush * dt,
+      z: old.z + Math.cos(heading) * metresPerSec * dt - Math.sin(frame.heading) * s.pushVelocity * dt + Math.cos(frame.heading) * alongPush * dt }, s.s);
     s.s = pose.s; s.lateral = pose.lateral;
     s.headingError = wrapHeading(heading - this.course.at(s.s).heading);
   } else {
-    const forward = Math.max(0, Math.cos(s.headingError)) * metresPerSec * dt;
+    const forward = (Math.max(0, Math.cos(s.headingError)) * metresPerSec + alongPush) * dt;
     // Inside a bend, a metre of physical travel covers more centreline progress.
     // This makes a real dirt shortcut quicker without a scripted progress jump.
     const progress = forward / Math.max(.25, 1 - frame.curvature * s.lateral);
@@ -225,6 +227,7 @@ export function _drive(dt) {
     s.s += progress;
   }
   s.pushVelocity *= Math.exp(-2.4 * dt);
+  dampCarAlongPush(s, Math.exp(-2.4 * dt));
   this._offroadStep(dt, !surface.road);
   s.offRoad = !this._surface(s.s, s.lateral).mainRoad;
   // Dirt alone never consumes a life or structural hit. Only contact does.

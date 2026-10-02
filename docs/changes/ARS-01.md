@@ -1,0 +1,105 @@
+# ARS-01: Harpoon, Caltrops and wave-one computer use
+Native weapons, cable and six runtime sounds are implemented. Kyle approved both CPU corrections and shared sound hooks. Claude's cable verdict, Smoke coverage and current lane/build gates remain.
+
+## What changed
+- Harpoon uses a leading 70 m/s projectile, full carrier velocity, a 4 degree
+  launch cone and a literal 50 m travelled range. A hit deals 6 armor with
+  existing damage levels, adds exactly 6 m/s body-sideways toward the shooter
+  and tethers for 3 s. Private road-lateral and forward impulses use ordinary
+  damping; active knock takes the yank directly without a deferred duplicate.
+- Actual player input or CPU steering requests break the tether after 0.5 s
+  of inclusive 0.6 steering away, accumulated across neutral intervals.
+  Shield, either wreck, separation over 60 m and expiry also break it.
+- Caltrops places an 8 by 5 m terrain strip 3 m behind the car for 8 s. The
+  owner has one second of grace. Each body takes 4 armor once; contact refreshes
+  four seconds of grip 0.75 and speed 0.9. Tether caps speed at 0.8.
+- Native player, road CPU and arena CPU share the limits. Rank-three/five
+  purchases and levels extend saves; normalization never grants ownership.
+- CPU checks four positional conditions without a cooling weapon hiding a
+  ready one. Arsenal Medium decisions now take 4.5 s; pace eight, all armor,
+  other difficulties and released decision intervals stay unchanged.
+- Four actual rust-orange cable meshes sag about 0.4 m at midspan. Pooled
+  geometry, positions, normals and scratch update in place at actual anchors.
+  Forty spikes per strip, at most twenty-four strips and four cables remain
+  bounded. Rendering is read-only. Menu and restart clear visible effects;
+  the cable pool is reused until disposal releases its resources.
+- The report retains every historical sample and target, adding separately
+  labelled complete pursuit and fixed rear-defense races with legal inputs.
+  All four real CPU uses count; Harpoon fire counts once, separately from flight.
+
+## Tests first and independent review
+Independent tests preceded the weapons, motion, contacts, twelve decision
+checks and real cable repair. All 77 native cases pass; independent Source
+review clears timing, geometry and lifecycle.
+Attachment error is at most 0.000012 m; measured midspan sag error is 0.000002 m.
+Current 35 projectile, 13 ram, 7 solid-contact and knock cases pass with old
+replay pins exact; prior accounting passed 33 cases. Every reset clears impulses.
+Independent review reproduced and approved these narrow new-fixture corrections:
+- The rotated yank fixture's old road scalar measured the wrong axis and side.
+  World magnitude and body-sideways six toward the shooter, body-forward zero,
+  exact road projection and exp(-1.5/120) damping now measure the real impulse.
+- Road CPU ceiling fixtures start 5 mph above the ceiling; 0.05 let both native
+  controls brake below it in one step. Literal ceilings 160.8 and 180.9 compare
+  with controls 164.2167 and 184.3167; player and arena assertions stay intact.
+- Genuine Harpoon/Caltrops validator rows are appended, preserving all original
+  policy/difficulty samples, three-row assertions and zero-use Oil/Smoke controls.
+  Bounded use rows are never called complete; full-report fixture rows are retained.
+- A 60 degree, 196 mph barrier was glancing (0.557927 below sin(35 degrees)).
+  The reviewed 55 degree, 170 mph fixture has incidence 0.636269 and 108.502 mph
+  above the 100.5 threshold. Opposing control is 97.212 mph; exact damage,
+  threshold, signed forward contribution and quarter-damping assertions remain.
+- Real mesh endpoint checks replace the old Line reader and strengthen the native
+  limit from four metres to 0.05 m in three dimensions. Pool, buffer identity,
+  disposal and browser's existing 0.05 m endpoint limit remain checked.
+- Two new timing assertions allow only Float64 roundoff: a native 0.025 s
+  boundary evaluates as 0.025000000000000355. Independent review confirmed that
+  one extra tick still fails; exact tick limits, counts and actor order remain.
+- Harpoon is now implemented. The old unimplemented-purchase control instead
+  uses Rocket Pods at eligible rank seven, as independently reviewed. Every
+  refusal, profile, registry and no-write assertion stays exact.
+
+## Saves
+Backup regressions came first. All 14 new cases pass with 88 reached
+checks; seven historical fixtures, quota and recovery checks pass unchanged.
+The real normalizer adds level zero only to earned future Harpoon/Caltrops.
+Verified backup retains original formatting, future fields and every career.
+Save Guardian approves byte preservation and the front-attack correction:
+rank-six Easy seed 1989 naturally carries Harpoon, Star, Caltrops and Oil.
+Kyle approved Crossbow or Harpoon in both CPU tests; all other assertions stay. Saved loadouts pass 100 cases; native Core passes 209 cases and 2625 checks.
+
+## Remaining acceptance
+The first timing lever wins 19 of 30 Medium races (63.33 percent); all finish,
+with 7.53 CPU hits per race and complete attribution. Armor stays unchanged.
+All six fixed rear-defense races finish; Oil and Harpoon have measured uses,
+but Smoke remains zero. The complete Arsenal report finishes all 147 races
+and 36 probes; every other target passes. CPU uses are Oil 5, Smoke 0,
+Harpoon 81 and Caltrops 34. The released Wasteland control passes all 141 races
+and 36 probes. Native diagnosis finds ready Smoke windows between scheduled
+decisions or ending in wrecks; the next natural coverage direction goes to Claude.
+Fresh actual High/Performance browser passes twenty checks with no errors,
+warnings or failed requests; QA panels are absent. Claude approved the clear
+rust-orange cable picture. Frame pacing remains unmeasured; old UI overlaps go
+to Phase 3 polish.
+The short-cue measurement regression failed before Source. Analysis-only silence
+makes short cues measurable without changing OGG bytes or playback; independent
+review clears it. All 18 private CC0 variants rebuild: true peak -4.72 to -2.43
+dBTP. Padding is labelled; actual mixed capture passes as below; human listening remains.
+Kyle approved settled free CC0 cues in shared hooks. Six cues and eighteen runtime OGG variants are installed. The genuine native launch-stream test first proved duplicate Harpoon fire and Caltrops fallback playback. Source fixes only those paths; all 37 audio checks pass. Independent review clears moving flight loops, spatial cues, cleanup and old-sound retention.
+The two Core preservation filters exclude exactly six additions under review; every old hash, Core cue, playback case and other assertion stays exact. Current lane/build gates remain. Real High/Performance full-throttle captures verify six native
+cues and the moving flight loop, with zero delivered clipping and true peaks -1.94/-1.98
+dBTP. Pause retires every voice. Human cue recognition remains unmeasured.
+Final lane tier passes 329/329 suites and the production build passes.
+The global audio gate exposed its 400 ms EBU window on the 360 ms Harpoon cue. It now uses the existing analysis-only padding helper for wave-one clips; all 11 combat-audio checks pass and playback bytes, peak limit and assertion remain unchanged.
+Vehicle-sockets exposed a test scene with no opponent array. The tether renderer now hides absent actors safely; all 845 socket checks pass.
+
+## Removed
+Replaced two-user rear scheduling, level-blind backup, wrong-axis yank,
+airborne strip height, per-frame tether arrays, clipped forward wall impulse,
+raw-Source browser imports and the thin Line presentation in the same work.
+No current asset or replay pin was removed. Raw review output stays ignored.
+
+## Current-base gate
+After syncing integration commit `49e0e3d`, the lane tier passed 338 suites
+with zero failures in 743.66 seconds. `npm run build` passed in 550 ms. The
+build reports its existing large-chunk advisory; frame pacing remains
+unmeasured and is not an ARS-01 acceptance item.

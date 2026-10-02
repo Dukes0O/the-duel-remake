@@ -2,11 +2,12 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {initializeCombatScoring, recordCombatHit, recordCombatWreck} from './combat-scoring.js';
 import {armorKitBonus} from './armor-kits.js';
 import {arenaActor, arenaDamageBlocked, hostile, noteArenaDamage} from './combat-teams.js';
-import {salRearDamageMultiplier} from './vehicle-contact-modifiers.js';
+import {warlordDefenseMultiplier} from './vehicle-contact-modifiers.js';
 import {CARS} from './config.js';
 import {startWreckSlide} from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {noteSmokeHit, clearSmokeHistory} from './arsenal/smoke.js';
+import {clearCarAlongPush} from './arsenal/car-effects.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -19,12 +20,14 @@ export function maxArmorForMass(mass) {
 
 export function armorDamageFor(source, {
   level = 0, distanceFraction = 0, relativeKph = 0, dvMph = 0,
-  spiked = false, damageMultiplier = 1,
+  spiked = false, damageMultiplier = 1, amount = 0,
 } = {}) {
   const multiplier = Number.isFinite(damageMultiplier) && damageMultiplier > 0 ? damageMultiplier : 1;
   const upgrade = 1 + clamp(level, 0, T.maximumWeaponLevel) * T.upgradePerLevel;
   switch (source) {
     case 'crossbow': return T.crossbow * upgrade * multiplier;
+    case 'harpoon': return 6 * upgrade * multiplier;
+    case 'caltrops': return 4 * upgrade * multiplier;
     case 'bomb': return T.bomb * (1 - clamp(distanceFraction, 0, 1)) * upgrade * multiplier;
     case 'rocket': return T.rocket * upgrade * multiplier;
     case 'rpg-direct': return T.rpgDirect * upgrade * multiplier;
@@ -40,6 +43,8 @@ export function armorDamageFor(source, {
         T.ramDamagePerDvMph * (spiked ? T.spikedRamMultiplier : 1) * multiplier) * upgrade
       : 0;
     case 'scenery': return T.scenery;
+    // A warlord move with a settled armor loss (the Kingpin's landing).
+    case 'fixed': return Number.isFinite(amount) ? Math.max(0, amount) * multiplier : 0;
     default: return 0;
   }
 }
@@ -94,6 +99,7 @@ function startCombatWreck(duel, actor, source, owner) {
   // crash step exactly as a Rival Duel crash does.
   if (!slide) actor.speedMph = 0;
   actor.pushVelocity = 0;
+  clearCarAlongPush(actor);
   actor.boosting = false;
   if (player) {
     state.impactTimer = state.impactDuration = actor.combatWreckTimer;
@@ -123,7 +129,7 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   const multiplier = Number.isFinite(options.damageMultiplier) && options.damageMultiplier > 0
     ? options.damageMultiplier : 1;
   const base = armorDamageFor(source, {...options, damageMultiplier: multiplier *
-    salRearDamageMultiplier(duel, actor, options.contactFace)});
+    warlordDefenseMultiplier(duel, actor, options.contactFace)});
   const factor = options.self ? T.maximumSelfDamageFraction : 1;
   const damage = Math.min(T.maximumHitDamage, Math.max(0, base * factor));
   if (!(damage > 0)) return 0;

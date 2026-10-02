@@ -4,11 +4,11 @@ import { createFeatureFlags } from '../src/feature-flags.js';
 import { App } from '../src/app.js';
 import { Duel } from '../src/game.js';
 import { stepCombat, supportsCombat } from '../src/combat.js';
-import { COURSE, DRIVE } from '../src/config.js';
+import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {createProfile, createPlayerRegistry, savePlayers} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
-import {point} from '../src/combat-weapons.js';
+import {point, velocity} from '../src/combat-weapons.js';
 import { winRateFailures } from './balance-targets.mjs';
 
 // Headless runs use the production App, its standard scripted driving line,
@@ -102,7 +102,7 @@ function equipArsenalPolicy(app, policy) {
   }
   // Historical policies still request their original weapons. Rear weapons
   // occupy unused slots; all/pursuit retain all four original starter slots.
-  const selected = policy === 'none' ? 'crossbow' : policy === 'ufo-max' ? 'ufo' : policy;
+  const selected = ['none', 'rear-defense'].includes(policy) ? 'crossbow' : policy === 'ufo-max' ? 'ufo' : policy;
   const loadout = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
     ['oil', 'smoke', selected, selected === 'star' ? 'crossbow' : 'star'];
   for (const [slot, id] of loadout.entries()) {
@@ -123,14 +123,18 @@ function weaponUseCounter(duel) {
     const projectiles = combat.projectiles.filter(item => item.id > serial);
     const bursts = combat.bursts.filter(item => item.id > serial);
     serial = combat.serial;
-    const rear = ['oil', 'smoke'].find(id => event.arsenalCue === 'weapon.' + id + '.deploy');
+    const rear = ['oil', 'smoke', 'caltrops'].find(id => event.arsenalCue === 'weapon.' + id + '.deploy');
     if (rear) {
       if (event.actor === state) count('player', rear);
       else if (state.opponents.includes(event.actor)) count('cpu', rear);
       return;
     }
+    if (event.arsenalCue === 'weapon.harpoon.fire' && event.projectile?.kind === 'harpoon') {
+      count(event.projectile.enemy ? 'cpu' : 'player', 'harpoon');
+      return;
+    }
     const weapon = event.weaponFired;
-    if (weapon === 'bomb' || weapon === 'crossbow') {
+    if (weapon === 'bomb' || weapon === 'crossbow' || weapon === 'harpoon') {
       // A native Bomb batch is one use, irrespective of its pellet count.
       const product = projectiles.find(item => item.kind === weapon);
       if (product) count(product.enemy ? 'cpu' : 'player', weapon);
@@ -168,15 +172,65 @@ function eligibleWeapons(policy, duel) {
   const { state } = duel;
   if (state.status !== 'racing' || !state.combat || !state.rival) return [];
   const gap = duel.relativeS(state.rival.s, state.s) - state.s;
-  const keys = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] : [policy === 'ufo-max' ? 'ufo' : policy];
+  const keys = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
+    [policy === 'ufo-max' ? 'ufo' : policy === 'rear-defense' ? 'crossbow' : policy];
   return keys.filter(key => state.combat.cooldowns[key] <= 0 &&
     (key !== 'crossbow' || gap >= 0 && gap <= 120) &&
     (key !== 'star' || state.combat.shield <= 0));
 }
 
+function forwardSpeedMph(duel, actor) {
+  const at = point(duel, actor), motion = velocity(actor, at);
+  const along = motion.x * Math.sin(at.heading) + motion.z * Math.cos(at.heading);
+  const frame = duel.course.at(actor.s);
+  return Math.max(0, along / Math.max(.25, 1 - frame.curvature * actor.lateral) / DRIVE.mphToWorld);
+}
+
+function driveRearDefense(app) {
+  const drive = app._driveAutopilot.bind(app);
+  app._driveAutopilot = dt => {
+    drive(dt);
+    const duel = app.duel, state = duel.state;
+    if (state.status === 'countdown') {
+      duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+      return;
+    }
+    if (state.status !== 'racing' || state.impactTimer > 0 ||
+        !state.rival || state.rival.finished || state.offRoad || state.airborne ||
+        state.rival.offRoad || state.rival.knock || state.rival.combatWrecking) return;
+    const gap = duel.relativeS(state.rival.s, state.s) - state.s;
+    const halfWidth = duel.course.roadHalfWidthAt?.(state.s) ?? DRIVE.roadHalfWidth;
+    const targetLat = Math.max(-halfWidth + 1.8, Math.min(halfWidth - 1.8, state.rival.lateral));
+    const trafficConflict = state.traffic.some(actor => {
+      if (!actor.alive) return false;
+      const ahead = duel.relativeS(actor.s, state.s) - state.s;
+      const closing = Math.max(0, state.speedMph - actor.dir * actor.speedMph) * DRIVE.mphToWorld;
+      return ahead > -28 && ahead < 35 + closing * 1.15 && Math.abs(actor.lateral - targetLat) < 2.7;
+    });
+    if (trafficConflict) return;
+    const targetSpeed = Math.max(15, forwardSpeedMph(duel, state.rival) +
+      Math.max(-45, Math.min(35, (gap - 18) * .4)));
+    const speed = forwardSpeedMph(duel, state);
+    // Keep App's passing line while the CPU is behind. Shadow only a car
+    // genuinely ahead; aim through our own forward course lookahead.
+    let steer = state.input.steer;
+    if (gap >= 8 && gap <= 120) {
+      const metresPerSec = Math.max(0, state.speedMph) * DRIVE.mphToWorld;
+      const headingTarget = Math.atan((targetLat - state.lateral) * 2.5 / Math.max(15, metresPerSec));
+      const look = duel.course.at(state.s + metresPerSec * .18);
+      const desiredYaw = look.curvature * metresPerSec + (headingTarget - state.headingError) * 6;
+      const surface = duel._drivingSurface(state.s, state.lateral);
+      const authority = Math.max(.05, steeringYawAuthority(state.speedMph, duel.car.grip, surface.traction, duel.car));
+      steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
+    }
+    duel.setInput({throttle: speed < targetSpeed ? 1 : 0,
+      brake: speed > targetSpeed + 3 ? .45 : 0, steer, boost: false});
+  };
+}
+
 export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames = 30 * 600 } = {}) {
   flags = selectedFlags(flags);
-  if (!(policies.includes(policy) || policy === 'pursuit') || !difficulties.includes(cpuDifficulty) ||
+  if (!(policies.includes(policy) || ['pursuit', 'rear-defense'].includes(policy)) || !difficulties.includes(cpuDifficulty) ||
       !Number.isSafeInteger(seed) || !Number.isSafeInteger(maxFrames) || maxFrames < 0)
     throw Error('Invalid race policy, difficulty, seed or frame limit.');
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
@@ -211,6 +265,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
           brake: state.speedMph > targetSpeed + 3 ? .45 : 0, boost: false});
       };
     }
+    if (policy === 'rear-defense') driveRearDefense(app);
     const duel = app.duel;
     if (policy === 'ufo-max' && !flags.includes('arsenal')) {
       duel.state.combat.levels.ufo = 3;
@@ -344,7 +399,7 @@ export function bombSpeedProbe({ flags = [] } = {}) {
 }
 
 export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, elapsedSec,
-  crossbowAim, ownBombs }) {
+  crossbowAim, ownBombs, rearDefenseRuns = [] }) {
   flags = selectedFlags(flags);
   const by = (policy, difficulty) => runs.find(run => run.policy === policy && run.cpuDifficulty === difficulty);
   const baselineWins = Object.fromEntries(difficulties.map(difficulty => {
@@ -388,7 +443,7 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
       cpuHits: rows.some(row => row.cpuHits == null) ? null : rows.reduce((sum, row) => sum + row.cpuHits, 0),
       unattributedEnemyHits: rows.reduce((sum, row) => sum + row.unattributedEnemyHits, 0) }];
   }));
-  return { flags, policyRuns: runs.length,
+  const report = { flags, policyRuns: runs.length,
     baselineRaces: Object.values(baselineWins).reduce((sum, row) => sum + row.races, 0),
     sampleScope: {
       winRateByDifficulty: 'No-weapon policy, thirty seeds 1989-2018 per difficulty; seed 1989 reused from policy runs.',
@@ -408,17 +463,27 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
     crossbowAim: { shots: crossbowAim.shots, hits: crossbowAim.hits, hitRate: crossbowAim.hitRate },
     ownBombs: { maxSpeedLossPct: ownBombs.maxSpeedLossPct },
     cpuHitsByDifficulty };
+  if (rearDefenseRuns.length) report.rearDefense = {
+    scope: 'Separate supplemental rear-defense races with natural CPU loadouts, legal driving and native Crossbow damage; excluded from every historical sample and target.',
+    races: rearDefenseRuns,
+    weaponUses: sumWeaponUses(rearDefenseRuns),
+  };
+  return report;
 }
 
 export function reportFailures(report, runs, baselineRuns) {
   const { winRateByDifficulty: baselineWins, firstTwelveSec, ufoGainByDifficulty,
     crossbowAim, ownBombs, cpuHitsByDifficulty } = report;
   const failures = [];
+  const rearDefenseRuns = report.rearDefense?.races || [];
+  const observedRuns = [...runs, ...baselineRuns, ...rearDefenseRuns];
   failures.push(...winRateFailures(baselineWins));
   if (firstTwelveSec >= 120) failures.push(`12-run pace ${firstTwelveSec}s exceeds 120s`);
   if (runs.some(run => !run.completed)) failures.push('one or more policy races did not complete');
   if (baselineRuns.some(run => !run.completed)) failures.push('one or more baseline win-rate races did not complete');
-  if ([...runs, ...baselineRuns].some(run => run.unattributedEnemyHits)) failures.push('enemy hit events lack victim identity');
+  if (observedRuns.some(run => run.unattributedEnemyHits || run.cpuHits === null)) failures.push('enemy hit events lack victim identity');
+  if (observedRuns.some(run => Object.values(run.unattributedWeaponUses || {}).some(count => count > 0)))
+    failures.push('weapon use events lack actor attribution');
   for (const [policy, samples] of Object.entries(ufoGainByDifficulty)) for (const [difficulty, gain] of Object.entries(samples)) {
     if (gain > 4) failures.push(`${policy}/${difficulty} time gain ${gain}s exceeds 4s`);
   }
@@ -429,8 +494,11 @@ export function reportFailures(report, runs, baselineRuns) {
       failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}–${high}`);
     }
   }
-  if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke']) {
-    if (!(report.weaponUses?.cpu?.[weapon] > 0)) failures.push('CPU ' + weapon + ' has no measured native use');
+  if (rearDefenseRuns.some(race => !race.completed)) failures.push('one or more rear-defense supplemental races did not complete');
+  const measuredUses = sumWeaponUses([{weaponUses: report.weaponUses},
+    ...rearDefenseRuns.filter(race => race.completed)]);
+  if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke', 'harpoon', 'caltrops']) {
+    if (!(measuredUses.cpu[weapon] > 0)) failures.push('CPU ' + weapon + ' has no measured native use');
   }
   return failures;
 }
@@ -466,7 +534,10 @@ function main(args) {
     .map(seed => run('none', difficulty, seed, options)));
   const crossbowAim = crossbowProbe(options);
   const ownBombs = bombSpeedProbe(options);
-  const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec,
+  const rearDefenseRuns = flags.includes('arsenal')
+    ? ['medium', 'hard', 'easy'].flatMap(difficulty => [1991, 1992]
+      .map(seed => run('rear-defense', difficulty, seed, options))) : [];
+  const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec, rearDefenseRuns,
     elapsedSec: rounded((performance.now() - started) / 1000), crossbowAim, ownBombs });
   const pursuitRuns = flags.includes('wasteland2')
     ? difficulties.map(difficulty => run('pursuit', difficulty, 1989, options)) : [];

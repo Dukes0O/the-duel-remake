@@ -277,7 +277,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       // Keep the whole label on screen when the car reaches the camera edge.
       marker.style.left = `${(Math.max(.11, Math.min(.89, clamp(position.x))) * 100).toFixed(1)}%`;
       marker.style.top = `${(clamp(position.y) * 100).toFixed(1)}%`;
-      const opponentArmor = armorPresentation(opponent);
+      // A decoy copy shows its original's name and armor, so the HUD never gives it away.
+      const opponentArmor = armorPresentation(opponent.decoy ?
+        opponents.find(car => car.arenaId === opponent.ownerId) ?? opponent : opponent);
       // In the Scrapdome, cars carry names and a red tag when hunting you, and
       // distance is measured across the floor, not along the ring.
       const arena = arenaMarker(state, opponent);

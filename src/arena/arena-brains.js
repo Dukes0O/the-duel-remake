@@ -5,7 +5,7 @@ import {arenaActor, hostile, arenaTargetOutOfPlay} from '../combat-teams.js';
 import {predictedPoint} from '../combat-weapons.js';
 import {arenaFloorSpeed} from './venues.js';
 import {nearestRepairCrate} from './arena-pickups.js';
-import {thinkSalFight, isSalFight, SAL_RULES} from './sal-fight.js';
+import {warlordFight} from '../warlords/index.js';
 
 // What a computer car wants (docs/SCRAPDOME.md section 4). Difficulty changes
 // decisions only: reaction, pace, boost use and the hunter cap.
@@ -152,8 +152,7 @@ export function decideGoal(duel, participant, actor) {
     else if (!participant.chargeReady) {
       // The tell: announce the charge, ease off, then come in.
       if (!(participant.tellLeft > 0)) {
-        const seconds = difficulty.tellSec * (isSalFight(duel, actor) &&
-          duel.state.arena.warlordPhase === 2 ? SAL_RULES.phaseTwoTellShare : 1);
+        const seconds = difficulty.tellSec * (warlordFight(duel, actor)?.tellShare?.(duel, actor) ?? 1);
         participant.tellLeft = seconds;
         actor.arenaTellSec = seconds;
         duel.emit({arenaTell: {id: participant.id, targetId: participant.targetId,
@@ -196,8 +195,8 @@ export function thinkBrain(duel, participant, actor, dt) {
     }
     return participant.goal;
   }
-  const salGoal = thinkSalFight(duel, participant, actor, brainDifficulty(duel));
-  if (salGoal) return salGoal;
+  const warlordGoal = warlordFight(duel, actor)?.think?.(duel, participant, actor, brainDifficulty(duel));
+  if (warlordGoal) return warlordGoal;
   participant.targetHeldSec = (participant.targetHeldSec || 0) + dt;
   if ((participant.backoffSec || 0) > 0) {
     participant.backoffSec = Math.max(0, participant.backoffSec - dt);

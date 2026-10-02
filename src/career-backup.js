@@ -1,5 +1,6 @@
 import { TERRITORIES } from './wasteland-career.js';
 import {MUDDY_HOLLOW_HUBCAP_IDS} from './wasteland-progress.js';
+import {normalizeWeapons} from './weapon-upgrades.js';
 import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
 import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
 import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
@@ -19,6 +20,12 @@ const has = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 function sameEntries(left, right) {
   const keys = Object.keys(left);
   return keys.length === Object.keys(right).length && keys.every(key => has(right, key) && left[key] === right[key]);
+}
+// Recognizing an earned weapon can add or correct its saved level.
+// Compare the real normalizer's result before startup changes any save bytes.
+function weaponLevelsNeedMigration(weapons) {
+  return !isObject(weapons) || !isObject(weapons.levels) ||
+    !sameEntries(weapons.levels, normalizeWeapons(weapons).levels);
 }
 function preserved(raw, loaded) {
   if (Array.isArray(raw)) return Array.isArray(loaded) && raw.every(item => loaded.some(saved => preserved(item, saved)));
@@ -115,6 +122,7 @@ export function needsCareerMigration(storage) {
             warlord.wins > 1_000_000 || !Number.isSafeInteger(warlord.losses) ||
             warlord.losses < 0 || warlord.losses > 1_000_000;
         }) ||
+        weaponLevelsNeedMigration(player.profile.wasteland.weapons) ||
         has(player.profile, 'weapons')) ||
       loadPlayers(source).players.some(player => !player.profile.raceSettings);
   } catch { return true; }

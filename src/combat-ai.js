@@ -4,6 +4,8 @@ import {cpuPickupCharges} from './combat-pickups.js';
 import {targetFor} from './arsenal/targeting.js';
 import {shouldUseOil} from './arsenal/oil.js';
 import {shouldUseSmoke} from './arsenal/smoke.js';
+import {shouldUseHarpoon} from './arsenal/harpoon.js';
+import {shouldUseCaltrops} from './arsenal/caltrops.js';
 import {arenaTargetOf} from './combat-teams.js';
 
 const T = COMBAT_TUNING;
@@ -46,7 +48,7 @@ function useCpuPickupShield(duel) {
   const state = duel.state;
   const combat = state.combat;
   for (const opponent of state.opponents) {
-    if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
+    if (opponent.decoy || opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const charges = cpuPickupCharges(state, combat, opponent);
     if (charges.star && fireWeapon(duel, 'star', true, opponent)) {
@@ -59,7 +61,7 @@ function useCpuPickupShield(duel) {
 function useCpuPickupUfo(duel, cpu) {
   const {state} = duel;
   for (const opponent of state.opponents) {
-    if (cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
+    if (!opponent.decoy && cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
         incomingBolt(duel, cpu, opponent)) {
       // Hold the charge until the existing defensive reaction sees a threat.
       // UFO use has its own per-lap limit. It never spends or resets the
@@ -87,15 +89,18 @@ export function stepCombatAI(duel, dt) {
   // decisions across the cars instead of firing a synchronized volley.
   let liveOpponents = 0;
   if (modernField) for (const opponent of state.opponents) {
-    if (!opponent.finished && !opponent.crushed && !opponent.combatWrecking)
+    if (!opponent.decoy && !opponent.finished && !opponent.crushed && !opponent.combatWrecking)
       liveOpponents++;
   }
+  const decisionInterval = state.cpuDifficulty === 'medium' && arsenalEnabled(duel)
+    ? T.cpu.mediumArsenalDecisionInterval : cpu.interval;
   const attackInterval = modernField
-    ? cpu.interval / Math.max(1, liveOpponents) : cpu.interval;
+    ? decisionInterval / Math.max(1, liveOpponents) : decisionInterval;
   if (combat.aiTimer == null) combat.aiTimer = attackInterval;
   combat.aiTimer -= dt;
 
   for (const opponent of state.opponents) {
+    if (opponent.decoy) continue;
     const ready = opponent === state.rival
       ? combat.aiShieldCooldown <= 0
       : opponent.aiShieldCooldown <= 0;
@@ -112,14 +117,23 @@ export function stepCombatAI(duel, dt) {
   for (let offset = 0; offset < opponents.length; offset++) {
     const index = modernField ? (first + offset) % opponents.length : offset;
     const opponent = opponents[index];
-    if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
+    // Decoy cars never fire (docs/SCRAPDOME.md section 5).
+    if (opponent.decoy || opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
     if (arsenalEnabled(duel)) {
-      const rear = (opponent.weaponLoadout || []).find(id =>
-        id === 'oil' && shouldUseOil(duel, opponent) ||
-        id === 'smoke' && shouldUseSmoke(duel, opponent));
-      if (rear && fireWeapon(duel, rear, true, opponent)) {
+      let usedWaveOne = false;
+      for (const id of opponent.weaponLoadout || []) {
+        const eligible = id === 'oil' && shouldUseOil(duel, opponent) ||
+          id === 'smoke' && shouldUseSmoke(duel, opponent) ||
+          id === 'caltrops' && shouldUseCaltrops(duel, opponent) ||
+          id === 'harpoon' && shouldUseHarpoon(duel, opponent);
+        if (eligible && fireWeapon(duel, id, true, opponent)) {
+          usedWaveOne = true;
+          break;
+        }
+      }
+      if (usedWaveOne) {
         if (modernField) {combat.aiTurn = (index + 1) % opponents.length; break;}
         continue;
       }

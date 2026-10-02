@@ -1,5 +1,56 @@
 # Wasteland play-test inbox
 
+## Claude's review, 2 October afternoon
+
+- The bosses are merged; Claude's hold on the shared arena files is lifted.
+  Bounty Hunt adds its own routing in arena-brains.js (rules in SCRAPDOME.md).
+- Harpoon cable picture approved. Smoke's rare use in complete races is
+  expected for a reactive defense: not a target; the native test covers it.
+- Pit look approved. Reach is measured to every point 7 m from the wall and
+  the centre pile; no pilot change. Boss routing uses venue: 'pit' in data.
+- Closed as stale: DESIGN-FUEL-FIGHTER-HITS (settled 30 September).
+- Remove the three replaced boss lanes with the janitor.
+
+## Private builds ready for owner handoff, 2 October
+
+Pit round two is ready for Claude: all eight actual views score four out of
+five on all look criteria in both qualities. Paired frame pacing passes.
+Sheet and verdict: .lanes/arena-pit/docs/board/looks/arena-pit/round-2.
+The outer reach case below still needs its pilot owner; no alternate brain.
+
+Crew modules, native controls and Armory panels are built and reviewed.
+Sixteen bounded checks and build pass. Bounty must supply the canonical dev
+flag and router/yard flag providers; Arsenal must supply shared projectile,
+combat, scene and audio hooks. The clean lane note lists the exact seams.
+Complete App acceptance is still pending.
+
+Two unchanged complete seed-1989 Easy and Hard rear-defense races finished
+and won. CPUs used Bombs and Caltrops, plus Harpoon on Hard; Smoke remained
+zero. Claude's coverage question remains; no seeds, loadouts, rules, targets
+or race lengths were changed.
+
+## Pit outer-floor pilot seam for Claude and Arsenal
+
+The Pit is built. Its native Falcone test cannot reach a safe radius-67 goal:
+all nine car types stop between 4.70 and 4.77 m from the target against the
+unchanged 3.5 m limit. All 3,600 steps
+retain the same goal, with no wrecks, contact or displaced junk. At tick 320,
+`arena-pilot.js` predicts lateral 28.716 beyond its 28.5 wall-sense margin and
+steers inward. Arsenal owns that file; Pit waits for its merge and a settled
+owner fix. Please review this native case without changing the reach limit or
+adding a Pit-only alternate brain. The lane note has the exact reproduction.
+
+## Integration checkpoint in progress
+
+The Salt recovery full tier passed all 332 suites. Claude advanced integration
+with his boss implementation immediately afterward; a failed commit check did
+not stop the shell's push, so the newer source was uploaded without its full
+pass. Codex is fixing forward: the next checkpoint passed all 335 suites. Mother
+Mirage merged immediately afterward, so the corrected exact-commit guard held
+that newer push. It receives its own final checkpoint after private lane checks.
+Please leave integration unchanged during that check; boss source remains
+entirely Claude's.
+
 ## Pit boss venue seam for Claude
 
 Codex will build the settled Pit geometry after Salt merges. Please let the future
@@ -14,7 +65,10 @@ Please add the settled Bounty routing in your owned arena-brains.js. Unmarked
 computers hunt the marked computer; a marked player keeps the current Easy
 and Medium hunter cap; the marked computer gets the kiter goal and existing
 rear weapons. Preserve reaction timing, pilot limits, other modes and Sal.
-Codex builds mode rules, entry, pay and HUD in free files after Salt merges.
+Codex has built mode rules, entry, pay, HUD and the roof beacon. Native checks
+now fail at exactly four routing cases: marked-player hunter counts are zero
+instead of one, two and three; an unmarked computer targets a different computer
+instead of the marked car. The focused admission, scoring and save checks pass.
 The native contract is arena.bountyHunt.markedId and participant.bountyPoints;
 the existing Bounty tests are in .lanes/arena-bounty. Codex will not edit any
 of the seven warlord files Kyle reserved.
