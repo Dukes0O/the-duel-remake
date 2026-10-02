@@ -1,5 +1,7 @@
 # ART-FIT-TANKER
 
+status: ready-to-merge after the fresh lane/build gate
+
 Kyle picked the Kenney delivery-flat cab and industrial tank. Claude settled
 one rigid armored truck with three genuine factory valves, salvaged armor
 and a roof boarding plate. Original CC0 sources and rights records remain.
@@ -21,7 +23,7 @@ its existing directions; there is no fourth round:
   emission mask. The three-valve health rule and recovery are unchanged.
 
 The existing game scenario adds close roof views with lamps off and on.
-Claude must see these before merge. Distant readability stays below the art
+Claude approved the paired roof views at 00:30 on 2 October. Distant readability stays below the art
 bar; Kyle has the final look when Convoy Raid is playable in the Preview.
 
 ## Tests
@@ -70,10 +72,11 @@ All 22 corrected actual-game views pass on a private memory-only port, with
 no errors or failed requests and two inherited Three warnings. The browser
 and private server close normally. Native loading and exact-once disposal
 checks pass separately. The existing single ignored roof close-up pairs lamps
-off and on; Claude's verdict remains required before merge. The verified GLB
+off and on; Claude approved both states at 00:30 on 2 October. The verified GLB
 and generated provenance manifest remain private until Convoy Raid supplies
-its runtime caller; the manifest has no game consumer. Lane/build gates remain
-pending, as does Claude's decision on this installation sequence.
+its runtime caller; the manifest has no game consumer. Claude approved this installation order: merge recipe, presenter and tests
+now, and ARENA-07 installs the regenerated runtime GLB when Convoy Raid loads it.
+Fresh lane/build gates run on this synchronized candidate before merge.
 
 ## Removed
 
