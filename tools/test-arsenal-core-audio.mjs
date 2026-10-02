@@ -13,6 +13,10 @@ import {decodeAudioBytes} from './audio/codec.mjs';
 // Only the three new runtime files are decoded. No network, existing recordings,
 // player storage, private future helper or substitute arsenal event is used.
 const CUES = ['weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy'];
+// New wave-one additions are excluded only when pinning pre-Arsenal records.
+const NEW_ARSENAL_CUES = [...CUES,
+  'weapon.harpoon.fire', 'weapon.harpoon.flight', 'weapon.harpoon.hit',
+  'weapon.harpoon.break', 'weapon.caltrops.deploy', 'weapon.caltrops.hit'];
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];
@@ -118,13 +122,13 @@ function nativeEvents() {
   return {duel, events};
 }
 check('existing sound-bank entries and all other exports stay exact', () => {
-  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !CUES.includes(id)))),
+  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !NEW_ARSENAL_CUES.includes(id)))),
     'cc6d14d4b734baeff5104526ef4e3841fa24c6cc3051e59c37f488f5734afeb9');
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK'))),
     '8bed9e05cbd48321670c377483bc87c841b01eac228a6237889b8ce5602a2b38');
 });
 check('existing catalog records and metadata stay exact', () => {
-  assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row => !CUES.includes(row.cue))}),
+  assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row => !NEW_ARSENAL_CUES.includes(row.cue))}),
     '104e9dafe12aa861857d055e73685a315a6fb809ee56db2f25a60990a283f1c5');
 });
 for (const id of CUES) {

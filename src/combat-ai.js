@@ -4,6 +4,8 @@ import {cpuPickupCharges} from './combat-pickups.js';
 import {targetFor} from './arsenal/targeting.js';
 import {shouldUseOil} from './arsenal/oil.js';
 import {shouldUseSmoke} from './arsenal/smoke.js';
+import {shouldUseHarpoon} from './arsenal/harpoon.js';
+import {shouldUseCaltrops} from './arsenal/caltrops.js';
 import {arenaTargetOf} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
 
@@ -92,8 +94,10 @@ export function stepCombatAI(duel, dt) {
         !opponent.finished && !opponent.crushed && !opponent.combatWrecking)
       liveOpponents++;
   }
+  const decisionInterval = state.cpuDifficulty === 'medium' && arsenalEnabled(duel)
+    ? T.cpu.mediumArsenalDecisionInterval : cpu.interval;
   const attackInterval = modernField
-    ? cpu.interval / Math.max(1, liveOpponents) : cpu.interval;
+    ? decisionInterval / Math.max(1, liveOpponents) : decisionInterval;
   if (combat.aiTimer == null) combat.aiTimer = attackInterval;
   combat.aiTimer -= dt;
 
@@ -122,10 +126,18 @@ export function stepCombatAI(duel, dt) {
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
     if (arsenalEnabled(duel)) {
-      const rear = (opponent.weaponLoadout || []).find(id =>
-        id === 'oil' && shouldUseOil(duel, opponent) ||
-        id === 'smoke' && shouldUseSmoke(duel, opponent));
-      if (rear && fireWeapon(duel, rear, true, opponent)) {
+      let usedWaveOne = false;
+      for (const id of opponent.weaponLoadout || []) {
+        const eligible = id === 'oil' && shouldUseOil(duel, opponent) ||
+          id === 'smoke' && shouldUseSmoke(duel, opponent) ||
+          id === 'caltrops' && shouldUseCaltrops(duel, opponent) ||
+          id === 'harpoon' && shouldUseHarpoon(duel, opponent);
+        if (eligible && fireWeapon(duel, id, true, opponent)) {
+          usedWaveOne = true;
+          break;
+        }
+      }
+      if (usedWaveOne) {
         if (modernField) {combat.aiTurn = (index + 1) % opponents.length; break;}
         continue;
       }

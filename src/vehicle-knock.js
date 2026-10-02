@@ -2,6 +2,7 @@ import {DRIVE} from './config.js';
 import {sweepObstacle} from './collision.js';
 import {wrapHeading} from './offroad-physics.js';
 import {arenaWallNormal} from './arena/arena-floor.js';
+import {carAlongPush,clearCarAlongPush} from './arsenal/car-effects.js';
 import {CRASH_TUNING, yawInertia, solveVehicleImpact, solveWallConstrainedImpact, impactSeverity} from './vehicle-collision.js';
 
 // A struck computer car becomes a free body until its tyres bite again
@@ -76,8 +77,9 @@ export function actorBody(duel, actor, spinRate = 0) {
   if (actor.knock) { vx = actor.knock.vx; vz = actor.knock.vz; spin = actor.knock.spin; }
   else {
     const speed = (actor.speedMph || 0) * DRIVE.mphToWorld, push = actor.pushVelocity || 0;
-    vx = Math.sin(heading) * speed + Math.cos(frame.heading) * push;
-    vz = Math.cos(heading) * speed - Math.sin(frame.heading) * push;
+    const alongPush = carAlongPush(actor);
+    vx = Math.sin(heading) * speed + Math.cos(frame.heading) * push + Math.sin(frame.heading) * alongPush;
+    vz = Math.cos(heading) * speed - Math.sin(frame.heading) * push + Math.cos(frame.heading) * alongPush;
   }
   return {x: at.x, z: at.z, heading, vx, vz, spin, mass: spec.mass,
     halfLength: spec.halfLength, halfWidth: spec.halfWidth,
@@ -88,6 +90,7 @@ export function startKnock(actor, {vx, vz, spin, severity, hopMps = 0, heading =
   wreck = null, player = false, arenaShove = false}) {
   actor.knock = {vx, vz, spin, severity, age: 0, vy: hopMps,
     ...(wreck ? {wreck} : {}), ...(arenaShove ? {arenaShove: true} : {})};
+  clearCarAlongPush(actor);
   const forward = vx * Math.sin(heading) + vz * Math.cos(heading);
   // Only the player's car has a reverse gear; a car shoved backwards by a hit
   // slides as a free body but its speed never reads as reversing.
@@ -238,6 +241,7 @@ function applyDriving(duel, actor, before, after, {player}) {
   const speed = forward / DRIVE.mphToWorld;
   actor.speedMph = player ? Math.max(-DRIVE.reverseMaxMph, speed) : Math.max(0, Math.abs(speed));
   actor.pushVelocity = Math.max(-32, Math.min(32, lateral));
+  clearCarAlongPush(actor);
 }
 
 // Smashed or launched traffic becomes a roadside wreck, moving as the solver

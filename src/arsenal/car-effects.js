@@ -1,6 +1,26 @@
 const EFFECT_KINDS = new Set(['slick', 'grip', 'tether', 'disabled', 'burning', 'nitro']);
 const effectsByCar = new WeakMap();
+const steeringByCar = new WeakMap();
+const alongPushByCar = new WeakMap();
 const EPSILON = 1e-10;
+
+export function setCarSteering(car, input) {
+  steeringByCar.set(car, Number.isFinite(input) ? Math.max(-1, Math.min(1, input)) : 0);
+}
+export function carSteering(car) { return steeringByCar.get(car) || 0; }
+
+// The existing push scalar follows the road normal. A body-sideways yank
+// also has a road-forward component when the victim faces across the road.
+export function addCarSidewaysPush(car, speed, headingError) {
+  car.pushVelocity = (car.pushVelocity || 0) + speed * Math.cos(headingError);
+  alongPushByCar.set(car, carAlongPush(car) - speed * Math.sin(headingError));
+}
+export function carAlongPush(car) { return alongPushByCar.get(car) || 0; }
+export function dampCarAlongPush(car, factor) {
+  const push = alongPushByCar.get(car);
+  if (push !== undefined) alongPushByCar.set(car, push * factor);
+}
+export function clearCarAlongPush(car) { alongPushByCar.delete(car); }
 
 export function carEffect(car, kind) {
   return effectsByCar.get(car)?.get(kind) || null;
@@ -10,6 +30,14 @@ export function carGrip(car) {
   return Math.min(1, ...['slick','grip'].map(kind => {
     const effect=carEffect(car,kind);
     return effect && Number.isFinite(effect.grip) ? Math.max(0,effect.grip) : 1;
+  }));
+}
+
+// Timed penalties share one native ceiling; repeated strips refresh, never stack.
+export function carTopSpeed(car) {
+  return Math.min(1, ...['grip', 'tether'].map(kind => {
+    const effect = carEffect(car, kind);
+    return effect && Number.isFinite(effect.topSpeed) ? Math.max(0, effect.topSpeed) : 1;
   }));
 }
 
@@ -41,4 +69,6 @@ export function stepCarEffects(car, dt) {
 
 export function clearCarEffects(car) {
   effectsByCar.delete(car);
+  steeringByCar.delete(car);
+  clearCarAlongPush(car);
 }

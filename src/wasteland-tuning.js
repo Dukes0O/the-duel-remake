@@ -4,6 +4,8 @@ export const WEAPONS = Object.freeze({
   crossbow: {name: 'CROSSBOW', key: '3', cooldown: 4},
   star: {name: 'STAR SHIELD', key: '4', cooldown: 16},
   oil: {name: 'OIL SLICK', cooldown: 10},
+  harpoon: {name: 'HARPOON', cooldown: 12},
+  caltrops: {name: 'CALTROPS', cooldown: 9},
   smoke: {name: 'SMOKE SCREEN', cooldown: 14},
 });
 export const CPU_COMBAT=Object.freeze({
@@ -47,7 +49,8 @@ export const COMBAT_TUNING=Object.freeze({
   lifetime:24,retentionBehind:30,chargeLimit:1,calloutSeconds:2,
   maxSeededCrates:6,seedFractions:[.2,.48,.76],seedJitter:.035,roadEdgeMargin:1.5,
   stageSalt:0x632be5ab,lapSalt:0x7f4a7c15,armorRepair:25},
- cpu:{boltLookahead:.4,attackRange:180,bombRange:35,pickupBombRange:50,
+ cpu:{mediumArsenalDecisionInterval:4.5,
+  boltLookahead:.4,attackRange:180,bombRange:35,pickupBombRange:50,
   aimSeedStageSalt:0x51ed,aimSeedShotSalt:0x9e3779b9,
   ramApproachDistance:24,ramMinimumGap:7,ramLateralReach:3.5,
   ramMinimumSpeedMph:35,ramSpeedMarginMph:12,ramMaximumCurvature:.0015},
