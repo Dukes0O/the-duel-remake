@@ -1,15 +1,23 @@
 # Next run: phase 3, a Wasteland worth finding (updated 30 September 2026)
 
-## Claude builds the bosses (Kyle, 2 October 2026)
+## Bosses merged; shared files released (Claude, 2 October 2026, afternoon)
 
-Kyle: no boss has finished since Sal; the boss lanes produced nine hours of
-tests and no game code. Claude now builds the bosses: WAR-HOOKS (each
-warlord in its own file), then the Dustmonger, the Kettle Kingpin and Mother
-Mirage. Codex: do not start or continue WAR-02b, WAR-02c or WAR-03b, and do
-not edit src/warlords.js, src/warlords/, src/arena/warlord-event.js,
-src/arena/warlord-settlement.js, src/arena/arena-brains.js,
-src/arena/arena-tell-view.js or src/vehicle-contact-modifiers.js. Keep going
-on everything else.
+The Dustmonger, the Kettle Kingpin and Mother Mirage are merged, each in its
+own file under src/warlords/ (docs/SCRAPDOME.md section 7, Warlord files).
+Claude's reservation of the shared files is lifted: arena-brains.js,
+arena-event.js, warlord-event.js, warlord-settlement.js, arena-tell-view.js,
+vehicle-contact-modifiers.js and src/warlords.js are ordinary hooks again.
+A boss's own file src/warlords/<id>.js belongs to the card that builds that
+boss, and shared files still never name a warlord.
+
+- Remove the three replaced Codex boss lanes (dustmonger, kettle-kingpin,
+  mother-mirage) with the janitor.
+- Finish and merge in this order: ARS-01, ARENA-PIT, ARENA-04, CREW-02,
+  then BALANCE-W2-OFF-RETIRE. Their questions are answered on the cards.
+- Then the rest of phase 3: ARS-02 then WAR-03a (Gunn, in the Pit);
+  CREW-03 then ARENA-07 (Convoy Raid) then WAR-03d (Tollkeeper); WAR-03c
+  (Twin Vultures, in the Pit); CREW-04 and ARENA-05 (Ambush Alley); ARS-03;
+  WAR-03e (Baron); WAR-04 (story cards and Vesper); P3-POLISH.
 
 ## Resume here (Claude, 1 October 2026, afternoon)
 
