@@ -685,5 +685,36 @@ check('Harpoon motion contributes to native arena participant closing speed and 
   assert.ok(events.length > 0, 'actual ' + closingKph + ' km/h closing motion must emit armor hits');
   assert.ok(target.armor < armorA && other.armor < armorB, 'both participants take the settled native ram damage');
 });
+import {GLANCING_WALL_NORMAL_FRACTION} from '../src/sim-common.js';
+check('opposing native Harpoon yank keeps a below-threshold solid-face contact harmless', () => {
+  const duel = race(), shooter = duel.state, target = shooter.rival;
+  place(shooter, 500); place(target, 535, 2, Math.PI / 6);
+  assert.equal(duel.fireWeapon('harpoon'), true, 'real player projectile launches toward the stationary CPU');
+  for (let i = 0; i < 180 && !carEffect(target, 'tether'); i++) stepProjectiles(duel, DT);
+  assert.ok(carEffect(target, 'tether'), 'genuine hit supplies the opposing impulse');
+  assert.ok(carAlongPush(target) < 0, 'native yank opposes the victim course-forward travel');
+  target.speedMph = 120;
+  const at = point(duel, target), motion = velocity(target, at), phi = at.heading, spec = duel._vehicleSpec(target);
+  const reach = spec.halfLength * Math.cos(target.headingError) + spec.halfWidth * Math.sin(target.headingError);
+  const obstacle = {id: 'arsenal-opposing-solid-face', kind: 'barrier', barrier: true, s: target.s, off: target.lateral,
+    x: at.x + Math.sin(phi) * (reach + .22), z: at.z + Math.cos(phi) * (reach + .22),
+    heading: phi, halfX: 50, halfZ: .2};
+  duel._obstacles = () => [obstacle]; // Solid geometry fixture; production sweep and response remain real.
+  const moved = duel._roadPosition({x: at.x + motion.x * DT, z: at.z + motion.z * DT}, target.s);
+  target.s = moved.s; target.lateral = moved.lateral;
+  const hit = sweepObstacle({...at, y: undefined}, {...point(duel, target), y: undefined},
+    obstacle, at.heading + target.headingError, spec);
+  assert.ok(hit, 'actual victim displacement reaches the solid face');
+  const normalSpeed = -(motion.x * hit.nx + motion.z * hit.nz), normalMph = normalSpeed / DRIVE.mphToWorld;
+  const threshold = combatCrashThresholdMph(CARS[target.car] || duel.car);
+  assert.ok(normalMph > 0 && normalMph < threshold, 'signed actual ' + normalMph + ' mph impact stays below ' + threshold);
+  assert.ok(normalSpeed / Math.hypot(motion.x, motion.z) > GLANCING_WALL_NORMAL_FRACTION,
+    'actual incidence is nonglancing, so unchanged armor is explained by the physical speed threshold');
+  const armor = target.armor, along = carAlongPush(target), side = target.pushVelocity;
+  duel._staticContacts(target, false);
+  assert.equal(target.armor, armor, 'nonglancing actual ' + normalMph + ' mph below-threshold contact preserves armor');
+  near(carAlongPush(target), along * .25, 'opposing road-forward push receives ordinary wall damping');
+  near(target.pushVelocity, side * .25, 'existing road-side wall damping stays exact');
+});
 console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; settled owner-grace and hard-away boundaries included.');
 if (failures.length) {console.error(failures.join('\n')); process.exitCode = 1;}
