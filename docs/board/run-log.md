@@ -792,3 +792,7 @@ its Source waits for the shared file owners. No new gear rule was invented.
 Janitor after Junk: unlinked integration dependencies, used plain worktree
 removal and deleted the merged branch and consumed review evidence. Status
 was refreshed; runtime assets and all held lanes remain.
+
+Kyle confirmed tonight's Claude reviews at 12:30, 3:30 and 6:30 AM. The two
+existing thread automations now cover 2 October: continuation just after each
+review and handoff at 8:30, ending by 8:45. No new push approval is needed.
