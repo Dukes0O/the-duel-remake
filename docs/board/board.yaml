@@ -1061,13 +1061,13 @@ tasks:
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arena-bounty
     flag: bounty-hunt
-    owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, tools/scenarios/arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
+    owns: [src/arena/modes/bounty-hunt.js, src/arena/modes/bounty-hunt-view.js, tools/test-arena-bounty-hunt.mjs, tools/scenarios/arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
-    sequencing: "Mode rules build in their owned module first. Salt frees entry, settlement and HUD hooks at merge; Claude builds the brain seam and Arsenal retains audio hooks until its merge."
-    note: "The free Bounty mode module is being implemented after the settled answers. Shared entry and HUD hooks wait for Salt to merge; Claude receives the exact marked-car brain seam in writing. No reserved warlord or Arsenal audio file is edited."
-    hook_requests: [src/feature-flags.js, src/game.js, src/app.js, src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/screen-router.js, src/screen-hud.js, src/combat-hud.js, src/style.css, src/arena/arena-tell-view.js, src/audio.js]
+    sequencing: "Mode rules build in their owned module first. Salt merged and frees entry, settlement, HUD and the marked-car beacon hook; Claude builds the brain seam and Arsenal retains audio hooks until its merge."
+    note: "The scoring and transfer module is implemented with reviewed tests. Salt merged, so the builder now owns native entry, pay, HUD, arrow and the read-only vehicle beacon. Claude supplies brains and Arsenal retains audio hooks; no reserved file is edited."
+    hooks: [src/feature-flags.js, tools/test-feature-flags.mjs, start-preview.bat, src/game.js, src/app.js, src/arena/arena-event.js, src/arena/arena-settlement.js, src/screen-arena.js, src/screen-router.js, src/screen-hud.js, src/combat-hud.js, src/screen-arena.css, src/combat-hud.css, src/render3d.js]
     design_question: "Does a marked player override the usual hunter cap? Does a self-wreck fallback recipient receive twenty points, and who receives the mark when the last hitter or current leader is also wrecking?"
     test_commit: f4afad3e83db2019eddae7bc90c575931844d94e
     test_verdict: "Bounded admission has twenty-eight passing checks and four genuine failures: missing dev switch, native entry, App entry and yard choice. Tests use the actual mode, clock, credit, brain and memory-only settlement paths; mechanics and browser checks remain unproved."
@@ -1166,13 +1166,19 @@ tasks:
     lane: VIS
     size: M
     needs: [ARENA-06]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-02-resume
+    branch: codex/vis/arena-pit
     flag: warlords
-    sequencing: "Starts after ARENA-06 merges, because both use src/arena/venues.js and the venue registry."
+    owns: [src/arena/venues/pit.js, tools/test-arena-pit.mjs, tools/test-arena-pit-render.mjs, tools/scenarios/arena-pit.mjs, docs/changes/ARENA-PIT.md, docs/board/looks/arena-pit/]
+    hooks: [src/arena/venues.js, src/course.js, src/world.js, src/race-structures.js, src/generated-shortcut-presets.js]
+    helpers: [test_author, reviewer, art_critic, browser_qa]
+    sequencing: "Salt merged. Pit owns venue geometry and world composition while Bounty owns entry and the renderer beacon; future boss cards wire Pit selection in Claude's reserved entry. No public picker or alternate AI is added."
     acceptance:
       - "Kyle, 1 October 2026: some dome fights without the inside barrier. Build the layout in docs/SCRAPDOME.md section 2, The Pit: a round floor (centreline radius 40 m, floor 32 m either side, outer wall at 75 m), a solid centre pile 16 m across, eight junk cars, two ramps, the ring's floor rules, and the existing dome stands and kit."
       - "Tests first: the curvature check passes; every car can reach every part of the floor; computer cars do not stick on the centre pile or the round wall (all three brains, all three difficulties); containment, respawn and the shove rules hold on a round wall. Ring replays unchanged."
       - "Gunn, the Twin Vultures and the Baron use the Pit; their cards build on it. Comparison sheet to Claude; frame cost within 10% of the ring in High and Performance. Kyle checks it in the Preview."
+    note: "Claimed after Salt merge. Independent native tests come first, then the settled round geometry and reused dome art; any required pilot change waits for Arsenal ownership."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex

@@ -26,9 +26,8 @@ Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
 each arsenal or warlord card may add its own settled free CC0 cues. Existing
 sounds, voice takes and protected audio lanes remain exact. These are settled.
 
-Salt public entry and final art are approved. Its lane gate found shortcut
-freshness metadata drift from Salt-only branches; prove all saved routes and
-refresh only source metadata. Arsenal native save and Core suites pass, and
+Salt public entry and final art are merged after passing current gates. Its
+native rewards now pay once; legacy route metadata and strict audio checks pass. Arsenal native save and Core suites pass, and
 all thirty-seven runtime audio checks pass. Complete balance meets every
 target except measured Smoke use; Claude reviews that gap and the cable picture.
 Actual full-throttle audio passes in both qualities with no delivered clipping;

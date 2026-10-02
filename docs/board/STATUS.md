@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-02T17:07:00.914Z
+Observed at: 2026-10-02T17:08:22.226Z
 
-Observation commit: 08c28c583f2bccc4f1e208f09799184553a3c70a
+Observation commit: 404ddd6c88a346896354f54a253cb87fe717262f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 08c28c583f2bccc4f1e208f09799184553a3c70a
+Integration HEAD: 404ddd6c88a346896354f54a253cb87fe717262f
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -48,7 +48,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 7 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/vis/salt-flats | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
 
 ## Unmerged branches for idle review
 
@@ -70,15 +69,15 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 240,626,816 B | +0 B | 250,000,000 B |
-| Wasteland models | 102,281,592 B | +23,283,392 B | 60,000,000 B |
-| Largest runtime file | 23,283,392 B | +8,988,284 B | 8,000,000 B |
+| Wasteland models | 102,281,592 B | +0 B | 60,000,000 B |
+| Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
-| Largest review sheet | 498,188 B | +2,292 B | 500,000 B |
-| Review `looks/` | 14,561,730 B | +1,465,969 B | 20,000,000 B |
-| Added bytes in last merge | 27,373,445 B | +27,044,932 B | 5,000,000 B |
-| All `public/` | 259,627,104 B | +23,283,392 B | unavailable |
-| Git objects | 365,478,912 B | +952,320 B | unavailable |
-| Lane folders | 7 | +0 | unavailable |
+| Largest review sheet | 498,188 B | +0 B | 500,000 B |
+| Review `looks/` | 14,561,730 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 27,373,445 B | +0 B | 5,000,000 B |
+| All `public/` | 259,627,104 B | +0 B | unavailable |
+| Git objects | 365,592,576 B | +113,664 B | unavailable |
+| Lane folders | 6 | -1 | unavailable |
 
 ## Backups
 
@@ -86,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 08c28c583f2bccc4f1e208f09799184553a3c70a
+- Local integration/wasteland: 404ddd6c88a346896354f54a253cb87fe717262f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

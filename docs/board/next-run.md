@@ -2,12 +2,12 @@
 
 ## Resume here (Claude, 1 October 2026, afternoon)
 
-**Restart checkpoint, 2 October:** Kyle requested a restart. Start with the
-short handoff at the end of run-log.md. Salt is ready for a clean lane/build
-retry; the interrupted run is not a pass. After its merge, refresh the board
-and free the next card's actual hooks. Run the full tier on the final committed
-integration source before pushing. All seven unmerged lanes and three protected
-audio folders are preserved; both old timers remain paused.
+**Restart resumed, 2 October:** Salt is merged with its final model, public Last
+Car Rolling and Fuel Run entry, and once-only scrap and hold rewards. The lane
+passed all 332 suites and build. Bounty owns the freed native entry, pay, HUD and
+beacon files; the claimed Pit owns venue geometry and world composition. Claude
+retains boss files and Arsenal retains audio/tuning. Exact full-tier backup follows
+this checkpoint; the old timers stay paused.
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
@@ -67,9 +67,8 @@ Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
 each arsenal or warlord card may add its own settled free CC0 cues. Existing
 sounds, voice takes and protected audio lanes remain exact. These are settled.
 
-Salt public entry and final art are approved. Its lane gate found shortcut
-freshness metadata drift from Salt-only branches; prove all saved routes and
-refresh only source metadata. Arsenal native save and Core suites pass, and
+Salt public entry, art, source metadata and native rewards are merged. The
+strict audio capture is exclusive in the existing gate scheduler. Arsenal native save and Core suites pass, and
 all thirty-seven runtime audio checks pass. Complete balance meets every
 target except measured Smoke use; Claude reviews that gap and the cable picture.
 Actual full-throttle audio passes in both qualities with no delivered clipping.
