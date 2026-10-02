@@ -64,7 +64,8 @@ async function click(context, selector) {
     const rect = button.getBoundingClientRect();
     if (!rect.width || !rect.height) throw Error('Hidden yard control');
     const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
-    if (!button.contains(document.elementFromPoint(x,y))) throw Error('Covered yard control');
+    if (!button.contains(document.elementFromPoint(x,y)))
+      throw Error('Covered yard control '+${JSON.stringify(selector)}+' by '+document.elementFromPoint(x,y)?.outerHTML.slice(0,400));
     return {x,y};
   })()`);
   await context.command('Input.dispatchMouseEvent', {type:'mousePressed',button:'left',clickCount:1,...point});
@@ -86,6 +87,8 @@ async function runPublicEntry(context) {
       await context.evaluate('window.name=""');
       await context.navigate('/tools/menu-check.html?flags=salt-flats,fuel-run&harness=salt-public-'+quality);
       await context.waitFor('!!window.__qaApp&&!!window.__render',quality+' actual menu',60000);
+      await context.waitFor(`Array.from(document.querySelectorAll('details')).some(panel =>
+        panel.querySelector('summary')?.textContent.startsWith('MENU QA'))`, 'temporary QA overlay initialized');
       await context.evaluate(`(() => {
         const app = window.__qaApp;
         if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||
@@ -149,6 +152,9 @@ async function runPublicEntry(context) {
       }
     }
     report.passed=true;
-  } catch (error) {report.passed=false;report.failure=error.stack;throw error;}
-  finally {await persist();}
+  } catch (error) {
+    report.passed=false;report.failure=error.stack;
+    await context.screenshot('public-entry-failed');
+    throw error;
+  } finally {await persist();}
 }
