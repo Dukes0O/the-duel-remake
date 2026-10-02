@@ -25,7 +25,7 @@ export function arenaHud(state) {
   const ranking = arenaRanking(arena);
   const place = ranking.findIndex(participant => participant.id === 'player') + 1;
   const me = arena.participants.find(participant => participant.id === 'player');
-  const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && participant.targetId === 'player');
+  const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && !participant.decoy && participant.targetId === 'player');
   const leader = ranking[0], net = participant => bounty ? participant.bountyPoints : fuel ? participant.fuelDelivered : arena.mode === 'warlord' ?
     participant.wrecks : participant.wrecks - participant.wrecked;
   const tiedAtTop = ranking.length > 1 && net(ranking[0]) === net(ranking[1]) && (fuel || bounty || ranking[0].wrecks === ranking[1].wrecks);
@@ -37,7 +37,7 @@ export function arenaHud(state) {
     modeLabel: bounty ? 'BOUNTY HUNT · MOST POINTS' : fuel ? 'FUEL RUN · FIRST TO FIVE' : arena.mode === 'warlord' ? 'FIRST TO THREE WRECKS' : 'LAST CAR ROLLING',
     timeLabel: suddenDeath ? fuel ? 'SUDDEN DEATH · NEXT DELIVERY WINS' : 'SUDDEN DEATH · NEXT WRECK WINS' : 'TIME LEFT',
     remainingSec,
-    place, field: arena.participants.length,
+    place, field: ranking.length,
     placeText: ORDINALS[place - 1] || String(place),
     leaderText: tiedAtTop ? 'LEVEL AT THE TOP' : leader.id === 'player' ? 'YOU LEAD' : `${leader.name} LEADS`,
     scoreText: bounty ? `POINTS ${me.bountyPoints} · ${arena.bountyHunt.markedId === 'player' && !arena.bountyHunt.pendingVictimId ? 'YOU CARRY THE BOUNTY' : 'HUNT THE BEACON'}` : fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
@@ -157,11 +157,15 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     description += ' Could not save this result. Retry before leaving.';
   } else if (warlord && result.settlementSaved && result.kitEarned === 'side-saws') {
     description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
+  } else if (warlord && result.settlementSaved && result.weaponEarned) {
+    description += ` ${escapeHTML(warlord.reward)} earned. Equip it in the Armory.`;
+  } else if (warlord && result.settlementSaved && result.kitEarned === 'warlord') {
+    description += ' Warlord kit fitted to your Titan Monster, and Tusk joins your crew when his gear is ready.';
   }
   if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
     description += ' ' + escapeHTML(result.rewardReason);
   }
-  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
+  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arenaRanking(arena).length}`, true) +
     (bounty ? metric('BOUNTY POINTS', me.bountyPoints) : fuel ? metric('FUEL DELIVERED', me.fuelDelivered) : '') + metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
     (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :
       metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +

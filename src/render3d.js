@@ -35,11 +35,12 @@ import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
 import {createFuelRunView} from './arena/modes/fuel-run-view.js';
 import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
-import { updateArenaTells } from './arena/arena-tell-view.js';
+import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
+const DUST_STORM_FOG = new THREE.Color(0x8a6a48);
 
 // Read-only projection for HUD markers. The positions come from rendered cars,
 // so slides, jumps and camera modes all use the same pose as the main view.
@@ -124,6 +125,9 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  const arenaMarkers = new THREE.Group();
+  arenaMarkers.name = 'Arena floor markers';
+  scene.add(arenaMarkers);
   const camera = new THREE.PerspectiveCamera(54, host.clientWidth / host.clientHeight, .15, 2400);
   const composer=new EffectComposer(renderer);
   composer.addPass(Object.assign(new RenderPass(scene,camera),{name:'Scene and shadows'}));
@@ -277,13 +281,17 @@ export function attachRenderer(host, app) {
       const carKey=opponents[index].car||st.car,entry=extraOpponents[index-1];
       if(entry?.carKey===carKey)continue;
       if(entry)retireObject(entry.mesh);
-      const mesh=vehicleAssets.create(carKey,{color:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
+      // A copy wears its original's colours so the three cars match.
+      const mesh=vehicleAssets.create(carKey,{color:opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
       scene.add(mesh);extraOpponents[index-1]={mesh,carKey};sceneRevision++;ambientShading.refresh();
     }
+    // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
+    // the wreck-effect pool counts real cars only and is not rebuilt for them.
+    const wreckCars=opponents.filter(actor=>!actor.decoy).length;
     const armoredField=!menu && st.mode==='wasteland' && Number.isFinite(st.maxArmor);
     const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
-    if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==opponents.length)){
+    if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==wreckCars)){
       combatPlayerExplosion.dispose();combatPlayerExplosion=null;
       opponentExplosions.forEach(effect=>effect.dispose());
       opponentExplosions=null;sceneRevision++;
@@ -297,7 +305,7 @@ export function attachRenderer(host, app) {
       // the first player or CPU wreck can interrupt a driving frame.
       const buildStart=performance.now();
       combatPlayerExplosion=createExplosion({combat:true});scene.add(combatPlayerExplosion.group);
-      opponentExplosions=Array.from({length:opponents.length},()=>createExplosion({combat:true}));
+      opponentExplosions=Array.from({length:wreckCars},()=>createExplosion({combat:true}));
       for(const effect of opponentExplosions)scene.add(effect.group);
       sceneRevision++;
       host.dataset.opponentExplosionBuildMs=(performance.now()-buildStart).toFixed(2);
@@ -323,6 +331,9 @@ export function attachRenderer(host, app) {
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
+    // Arena event weather only closes the fog in.
+    if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
+      scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
@@ -516,6 +527,7 @@ export function attachRenderer(host, app) {
     if (!menu && st.arena && updateArenaTells([{mesh: player, actor: st}, {mesh: rival, actor: st.rival},
       ...extraOpponents.map(({mesh}, index) => ({mesh, actor: opponents[index + 1]}))],
       diagnosticTime?presentationSeconds:performance.now()/1000, ARENA_FEEL.shimmerSec)) ambientShading.refresh();
+    updateArenaMarkers(arenaMarkers, !menu ? st.arena?.markers : null, diagnosticTime?presentationSeconds:performance.now() / 1000);
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,

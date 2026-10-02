@@ -1357,7 +1357,7 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
-    if (recordedAudio && this.flags.enabled('arsenal') && ARSENAL_CORE_CUES.has(ev.arsenalCue)) {
+    if (recordedAudio && (this.flags.enabled('arsenal') || ev.warlordMove === true) && ARSENAL_CORE_CUES.has(ev.arsenalCue)) {
       // Use the native hazard/contact point without adding a simulation hit.
       const output = this._spatialOutput(
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
@@ -1468,6 +1468,8 @@ export class EngineAudio {
           onEnd: output.disconnect,
         });
       }
+      if (state?.arena?.mode === 'bounty-hunt' && this.flags.enabled('bounty-hunt') &&
+          (ev.arenaLoaded || ev.bountyMark)) this._playCue('arena.bounty-mark');
       if (state?.arena?.mode === 'fuel-run' && this.flags.enabled('fuel-run')) {
         if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
         if (ev.fuelPickup?.participantId === 'player') this._playCue('interface.bonus');

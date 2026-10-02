@@ -372,6 +372,15 @@ export const SOUND_BANK = {
       tone(660, 0.3, 0.03, 'triangle', 0.08, 1320),
     ],
   }),
+  'arena.bounty-mark': cue('interface', {
+    flag: 'bounty-hunt',
+    priority: 72,
+    limit: 1,
+    layers: [
+      tone(520, 0.14, 0.12, 'triangle', 0, 780),
+      tone(780, 0.22, 0.09, 'sine', 0.11, 1040),
+    ],
+  }),
   'arena.wreck-credit': cue('impacts', {
     flag: 'scrapdome',
     buffersFrom: 'combat.hit-confirm',

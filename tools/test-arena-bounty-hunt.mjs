@@ -4,7 +4,9 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
+import {EngineAudio} from '../src/audio.js';
 import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 import {COURSE} from '../src/config.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {worldPose} from '../src/arena/arena-floor.js';
@@ -145,6 +147,23 @@ test('real native admission accepts Bounty with its switch enabled', () => {
   const {duel, admitted} = started();
   eq(admitted, true, 'startArenaEvent must accept Bounty rather than rejecting an unregistered mode');
   eq(duel.state.arena.mode, 'bounty-hunt', 'native admission creates the requested event');
+});
+test('initial mark and handover use the bounded Bounty cue only with its switch on', () => {
+  const calls = [], state = {arena: {mode: 'bounty-hunt'}};
+  const audio = new EngineAudio({flags: {enabled: name => name === 'scrapdome' || name === 'bounty-hunt'}});
+  audio.context = {state: 'running', currentTime: 0}; audio._syncMixer = () => {};
+  audio._playCue = id => calls.push(id);
+  audio.event({arenaLoaded: 'scrapdome'}, state, null);
+  audio.event({bountyMark: {previousId: 'cpu-2', markedId: 'player'}}, state, null);
+  eq(calls, ['arena.bounty-mark', 'arena.bounty-mark'], 'entry and each transfer play the mark cue');
+  const cue = SOUND_BANK['arena.bounty-mark'];
+  ok(cue?.flag === 'bounty-hunt' && cue.limit === 1 && cue.layers?.length === 2,
+    'the mark cue is a bounded, two-layer procedural recipe behind the Bounty flag');
+  const quiet = new EngineAudio({flags: {enabled: name => name === 'scrapdome'}}), quietCalls = [];
+  quiet.context = {state: 'running', currentTime: 0}; quiet._syncMixer = () => {};
+  quiet._playCue = id => quietCalls.push(id);
+  quiet.event({bountyMark: {previousId: 'cpu-2', markedId: 'player'}}, state, null);
+  eq(quietCalls, [], 'Bounty transfer stays silent when its feature switch is off');
 });
 test('real native admission accepts Bounty on the Salt Flats', () => {
   const {duel, admitted} = started({venueId: 'salt-flats', flags: {...ON, 'salt-flats': true}});

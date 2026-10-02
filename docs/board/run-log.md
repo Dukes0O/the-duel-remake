@@ -641,3 +641,59 @@ after its integration-only dependency junction was safely detached. Current
 assets and licensed records stay. Bounty receives free entry/pay/HUD/beacon
 hooks; Pit is claimed for disjoint tests-first geometry. Boss files stay with
 Claude, and Arsenal audio/tuning ownership remains. Full checkpoint follows.
+
+Janitor checkpoint: removed the merged Salt lane, dependency junction and used
+card gate evidence; preserved seven unfinished lanes and skipped three protected
+audio references. The audit flags 48 uncertain assets, 25 internal export
+candidates and the intentionally private Tanker loader; nothing is proved safe
+to remove. No removed-behavior tests remain. Runtime grew from 236,343,712 to
+259,627,104 bytes for the accepted current Salt model; build is 263,925,553 bytes.
+Model/build targets remain advisory; accepted real venue growth is recorded.
+
+Salt runtime-check repair: the first full tier passed 330 suites and failed two
+because consumed private review inputs were still the renderer defaults. The
+reviewed fix reads the installed approved model, keeps every frozen assertion,
+and passes all sixteen focused checks, eight changed-lane suites and build.
+Bounty code now passes thirty-five of thirty-nine native cases, including all
+FPS and old replay controls; only Claude's four routing cases fail. Four private
+quality/venue UI and native reward journeys pass with no errors or warnings.
+
+Janitor sweep: removed the clean merged Salt repair lane and its consumed gate
+output with plain worktree removal. Seven unfinished lanes remain; three
+protected audio references were skipped. Audit counts stay at 48 uncertain
+assets, one intentional private module and 25 internal exports; no candidate
+was proved unused. Runtime stays 259,627,104 bytes and tracked files total
+287,445,693 bytes. Outgoing binaries are four current approved Salt assets,
+with no superseded version and no history rewrite needed. Full recovery follows.
+
+
+Recovery checkpoint: all 332 full-tier suites passed, none failed or unrun;
+build passed. Pit geometry and native world composition are built and reviewed;
+the visible wall-gap regression passes. Its unchanged outer-floor reach test
+needs Arsenal's owned pilot file after merge, and the precise case is in the
+inbox. Bounty still needs Claude's four brain cases and Arsenal's cue hook.
+
+Claude advanced integration with his boss source as the checkpoint finished.
+A failed exact-commit guard did not abort PowerShell, and the push uploaded the
+newer unverified head. Feature merges are stopped; the new committed source
+receives its own build and full tier. This is fixed forward without a history
+rewrite. Codex has not edited any reserved boss file.
+
+Private build checkpoint: Crew native controls and Armory panels are committed,
+with sixteen bounded checks, build and native, UI and save reviews clear.
+Pit round two scores four out of five in both qualities; native world checks,
+build, eight browser views and paired frame pacing pass. Both clean lanes stay
+unfinished: Crew needs shared catalog/router/combat/render/audio owners; Pit
+needs its pilot owner and final look approval. Bounty and Arsenal retain their
+written Claude questions. Boss source remains entirely Claude's.
+
+Janitor sweep: removed twelve consumed, reproducible crash-audio gate outputs,
+freeing 3,218,660,268 bytes of captures and copied QA builds. Current assets,
+licensed records and unfinished review evidence remain. Seven unfinished lanes
+stay; three protected audio references are skipped. No uncertain audit candidate
+was deleted. Runtime remains 259,627,104 bytes; accepted Salt growth is unchanged.
+
+Handoff: resume the clean Crew and Pit lanes when their actual owners answer
+or merge. No new long card is eligible without file overlap. Final integration
+receives build, full tier and the approved normal push after an exact-commit
+check; consult the evidence ledger for the outcome.

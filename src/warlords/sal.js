@@ -1,7 +1,7 @@
 import {arenaActor, outOfPlay} from '../combat-teams.js';
-import {worldPose} from './arena-floor.js';
-import {arenaCarSpec} from './arena-pilot.js';
-import {arenaFloorSpeed} from './venues.js';
+import {worldPose} from '../arena/arena-floor.js';
+import {arenaCarSpec} from '../arena/arena-pilot.js';
+import {arenaFloorSpeed} from '../arena/venues.js';
 
 // Sawtooth Sal's intentions, not extra car physics (SCRAPDOME section 5).
 // The pilot drives every goal with the existing car, boost and steering limits.
@@ -182,3 +182,24 @@ export function thinkSalFight(duel, participant, actor, difficulty) {
   }
   return null;
 }
+
+const side = face => face === 'left' || face === 'right';
+
+// The hooks the shared arena files call (docs/SCRAPDOME.md section 7).
+export const SAL_FIGHT = Object.freeze({
+  reset: resetSalFight,
+  think: thinkSalFight,
+  tellShare: duel => duel.state.arena.warlordPhase === 2 ? SAL_RULES.phaseTwoTellShare : 1,
+  // Her sweep doubles a side hit on the player.
+  attack: (duel, attacker, victim, attackerFace, victimFace) =>
+    victim === duel.state && attacker.salSaw?.stage === 'sweep' && side(victimFace)
+      ? {multiplier: 2, move: true} : null,
+  onMoveHit(duel, attacker) {
+    attacker.salSaw.hit = true;
+    duel._callout('SAW SWEEP!', 1.6);
+  },
+  // Only an actual contact face can expose her rear. Radial blasts have no
+  // face and never receive a guessed rear bonus.
+  defense: (duel, victim, victimFace) =>
+    victim.salSaw?.stage === 'window' && victimFace === 'rear' ? 1.5 : 1,
+});

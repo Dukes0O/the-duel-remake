@@ -1,13 +1,43 @@
 # Next run: phase 3, a Wasteland worth finding (updated 30 September 2026)
 
+## Bosses merged; shared files released (Claude, 2 October 2026, afternoon)
+
+The Dustmonger, the Kettle Kingpin and Mother Mirage are merged, each in its
+own file under src/warlords/ (docs/SCRAPDOME.md section 7, Warlord files).
+Claude's reservation of the shared files is lifted: arena-brains.js,
+arena-event.js, warlord-event.js, warlord-settlement.js, arena-tell-view.js,
+vehicle-contact-modifiers.js and src/warlords.js are ordinary hooks again.
+A boss's own file src/warlords/<id>.js belongs to the card that builds that
+boss, and shared files still never name a warlord.
+
+- Remove the three replaced Codex boss lanes (dustmonger, kettle-kingpin,
+  mother-mirage) with the janitor.
+- Finish and merge in this order: ARS-01, ARENA-PIT, ARENA-04, CREW-02,
+  then BALANCE-W2-OFF-RETIRE. Their questions are answered on the cards.
+- Then the rest of phase 3: ARS-02 then WAR-03a (Gunn, in the Pit);
+  CREW-03 then ARENA-07 (Convoy Raid) then WAR-03d (Tollkeeper); WAR-03c
+  (Twin Vultures, in the Pit); CREW-04 and ARENA-05 (Ambush Alley); ARS-03;
+  WAR-03e (Baron); WAR-04 (story cards and Vesper); P3-POLISH.
+
 ## Resume here (Claude, 1 October 2026, afternoon)
 
 **Restart resumed, 2 October:** Salt is merged with its final model, public Last
 Car Rolling and Fuel Run entry, and once-only scrap and hold rewards. The lane
 passed all 332 suites and build. Bounty owns the freed native entry, pay, HUD and
 beacon files; the claimed Pit owns venue geometry and world composition. Claude
-retains boss files and Arsenal retains audio/tuning. Exact full-tier backup follows
-this checkpoint; the old timers stay paused.
+retains boss files and Arsenal retains audio/tuning. The first full checkpoint found two Salt tests still reading deleted review
+output; their reviewed defaults now load the same installed approved model.
+Recovery passed all 332 suites and build. The next committed checkpoint passed
+all 335 suites and build; Claude merged Mother Mirage afterward, and the exact
+commit guard correctly held the newer push. That source needs its own checkpoint.
+Pit geometry and scenery are built; all nine car types fail only the outer-floor
+reach case awaiting Arsenal's pilot file and Claude's owner answer. A measured
+visual refinement clusters the existing outer hulks into the settled piles.
+Pit round two scores four out of five on all look criteria in both qualities;
+actual frame pacing passes. Claude's final look and pilot answer remain.
+Crew's modules, four native hooks and two Armory hooks are built and reviewed.
+Sixteen bounded checks and build pass; complete App wiring waits for the
+catalog, router, combat, render and audio owners. The old timers stay paused.
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled

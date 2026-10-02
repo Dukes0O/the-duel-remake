@@ -57,7 +57,7 @@ test('the display shows time left, placing, names and who is hunting the player'
   const hunted = arenaHud(s);
   assert.deepEqual(hunted.huntedBy, ['GASKET']);
   assert.equal(hunted.rows.find(row => row.name === 'GASKET').hunting, true);
-  assert.deepEqual(arenaMarker(s, s.opponents[0]), {heading: 'GASKET', style: 'RAMMER', hunting: true, protected: false});
+  assert.deepEqual(arenaMarker(s, s.opponents[0]), {heading: 'GASKET', style: 'RAMMER', marked: false, hunting: true, protected: false});
   s.arena.participants[1].wrecks = 2;
   assert.equal(arenaHud(s).leaderText, 'GASKET LEADS');
   assert.equal(arenaHud(s).place, 2);
