@@ -79,7 +79,11 @@ export function hitHarpoon(duel, target, projectile) {
   const headingError = target.headingError || 0, heading = at.heading + headingError;
   const side = (from.x - at.x) * Math.cos(heading) - (from.z - at.z) * Math.sin(heading);
   if (!target.combatWrecking) {
-    addCarSidewaysPush(target, (Math.sign(side) || 1) * 6, headingError);
+    const yank = (Math.sign(side) || 1) * 6;
+    if (target.knock) {
+      target.knock.vx += Math.cos(heading) * yank;
+      target.knock.vz -= Math.sin(heading) * yank;
+    } else addCarSidewaysPush(target, yank, headingError);
     setCarEffect(target, 'tether', {duration: 3, topSpeed: .8,
       shooterId: projectile.attackerId, awaySec: 0});
   }

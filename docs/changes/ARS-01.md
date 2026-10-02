@@ -12,36 +12,33 @@ lane/build gates remain; the save assertion still awaits Kyle's approval.
   adds exactly 6 m/s sideways in the victim's actual heading toward the
   shooter, and tethers for 3 s. Native movement, aiming and crash handoff
   read its road-lateral and private forward components with ordinary damping.
+  Active knock receives the yank directly, with no deferred road-field duplicate.
 - The tether reads actual player input or native CPU steering requests.
   Inclusive 0.6 steering away accumulates 0.5 s across neutral intervals.
   Shield, either wreck, separation over 60 m and expiry break the line.
 - Caltrops creates a native 8 by 5 m strip on terrain 3 m behind the car.
   It lasts 8 s, ignores its owner for the first second and touches each
   body once. It deals 4 armor and refreshes 4 s of grip and speed limits.
-- Player, road CPU and arena CPU read the shared speed ceiling. Tether
-  caps top speed at 0.8; Caltrops caps it at 0.9 and grip at 0.75.
-- Real rank-three and rank-five Armory purchases and levels extend the
-  existing save catalog. Normalization never grants earned ownership.
-- CPU scheduling checks all four wave-one positional conditions and
-  cannot let a cooling eligible weapon hide another ready equipped one.
+- Player, road CPU and arena CPU share speed caps: Tether 0.8; Caltrops 0.9 with grip 0.75.
+- Real rank-three/five purchases and levels extend saves; normalization grants no ownership.
+- CPU checks four positional conditions; a cooling weapon cannot hide another ready one.
 - Presentation reuses bounded pools: forty visible spike instances per
   strip, at most twenty-four strips and four actual per-car tether lines.
   Tethers read four slots and reuse scratch; resources are disposed; drawing is read-only.
-- The report counts native deployment products and all four CPU uses.
-  Use accounting counts Harpoon fire once; flight cannot consume its identity.
+- The report counts all four native CPU uses; Harpoon fire counts once, separate from flight.
 
 ## Tests first and current evidence
 
 Independent tests preceded Source at 37924a1. The settled owner grace is
 1 s; hard-away input is at least 0.6 and need not remain continuous.
-Independent motion and grounding regressions failed before Source; all 61
-native cases now pass, including exact real-hit world magnitude/direction,
-rotated world displacement and airborne Caltrops ground/spikes. Native knock
-integration, 35 projectile cases and 33 bounded accounting cases pass; old
-projectile replay pins stay exact. Relocation, wreck, knock, safe reset and
-lifecycle clear the private forward impulse. Browser, lane and build remain.
+Independent motion and contact regressions failed before Source; all 65
+native cases pass, including exact yank, active knock, ground/spikes, full
+participant closing speed, wall damping and the opposing-yank counter.
+Current 35 projectile, 13 ram, 7 solid-contact and knock integration cases
+pass with old replay pins exact; prior bounded accounting passed 33 cases.
+Relocation, wreck, knock, safe reset and lifecycle clear the private impulse.
 
-The independent reviewer approved four narrow fixture corrections and
+The independent reviewer approved five narrow fixture corrections and
 reproduced their native witnesses before those edits:
 - The hit fixture is rotated about nineteen degrees, so its old six-unit road
   scalar measured the wrong axis and shooter side. Independent review approves
@@ -56,15 +53,20 @@ reproduced their native witnesses before those edits:
   Bounded rows are never marked complete.
 - Append each genuine use row to the full report fixture rather than remove
   required policy/difficulty samples. Native and aggregate counts stay exact.
+- The new 60-degree/196-mph barrier was glancing: incidence 0.557927 is
+  below unchanged sin(35 degrees). Reviewed 55 degrees/170 mph gives
+  108.502 mph above 100.5, incidence 0.636269 above that glancing bar.
+  Damage, threshold and quarter-damping assertions remain exact.
+The opposing control's actual normal is 97.212 mph below 100.5; its signed
+forward term reduces the legacy subtotal before clamping the total at zero.
 No settled rule, balance target, old native use assertion or replay pin changed.
 
 ## Save Guardian follow-up
 
 Tests first at f03c568 reached 40 checks: four controls passed and ten
-backup cases failed. Recognizing already earned future Harpoon/Caltrops
-adds level zero without granting ownership. needsCareerMigration compares
-saved levels with the real normalizer. Verified backup keeps original
-formatting, future fields and all careers before normalization.
+backup cases failed. Earned future Harpoon/Caltrops gain level zero only.
+The real normalizer drives migration; verified backup retains original
+formatting, future fields and every career before normalization.
 All 14 new cases pass with 88 reached checks; seven historical fixtures,
 quota, validation and recovery checks pass unchanged. Arsenal save is 99/100.
 Save Guardian approved the front predicate's Crossbow-or-Harpoon correction:
@@ -84,15 +86,14 @@ The prior thirty-race run had Medium 70 percent wins and zero CPU Oil/Smoke
 uses; diagnosis and a current passing report remain, without target changes.
 Audio belongs to its separate owner. Source emits weapon.harpoon.fire,
 .flight, .hit and .break and weapon.caltrops.deploy and .hit with actual
-positions and actors; fire/flight include their native projectile. No bank,
-catalog, audio, Game, arena-event, Salt or protected lane file changed.
+actors/positions/projectiles. No bank, catalog, audio, Game, arena-event, Salt or protected file changed.
 Thirty-race balance, independent Source review and current lane/build gates
 remain mandatory before handoff for merge.
 
 ## Removed
 
 Replaced the two-user rear deployment branch with genuine four-user wave-one
-scheduling and extended real projectile accounting. Unpacked combat presentation.
-Removed no asset, starter id, target band or replay pin. Replaced the level-blind
-backup guard, wrong-axis Harpoon scalar-only motion, airborne strip height and
-per-frame tether actor-array allocation. Diagnostic output stays in ignored QA.
+scheduling and extended native accounting. Unpacked combat presentation. Replaced
+level-blind backup, wrong-axis yank, airborne strip height, per-frame tether array
+and clipped forward wall contribution. No asset, starter id, target or replay pin
+removed. Diagnostic output stays in ignored QA.

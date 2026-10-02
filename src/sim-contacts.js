@@ -20,6 +20,7 @@ import {upgradedCar} from './progression.js';
 import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
 import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
+import {carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 
 function roadsideTopSpeedMph(duel, actor) {
   if (actor === duel.state) return duel.car.topSpeed;
@@ -300,13 +301,16 @@ export function _staticContacts(car, player, journeyColliders = null) {
     const incoming = Math.max(0, -(Math.sin(travelHeading) * nx + Math.cos(travelHeading) * nz) * (car.speedMph < 0 ? -1 : 1));
     const roadHeading = this.course.at(car.s).heading;
     const pushNormal = Math.cos(roadHeading) * nx - Math.sin(roadHeading) * nz;
-    const impactMph = Math.abs(car.speedMph) * incoming + Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld;
+    const alongPush = carAlongPush(car), alongNormal = Math.sin(roadHeading) * nx + Math.cos(roadHeading) * nz;
+    const impactMph = Math.max(0, Math.abs(car.speedMph) * incoming +
+      Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld -
+      alongPush * alongNormal / DRIVE.mphToWorld);
     // A shallow hit on a continuous rail/lining is a sliding scrape, not a
     // crash. Measure incidence against the actual contacted face: striking
     // a rail end remains head-on. Signed reverse travel and sideways pushes
     // count too; body yaw alone cannot turn a sharp impact into a safe one.
-    const velocityX = Math.sin(travelHeading) * car.speedMph * DRIVE.mphToWorld + Math.cos(roadHeading) * (car.pushVelocity || 0);
-    const velocityZ = Math.cos(travelHeading) * car.speedMph * DRIVE.mphToWorld - Math.sin(roadHeading) * (car.pushVelocity || 0);
+    const velocityX = Math.sin(travelHeading) * car.speedMph * DRIVE.mphToWorld + Math.cos(roadHeading) * (car.pushVelocity || 0) + Math.sin(roadHeading) * alongPush;
+    const velocityZ = Math.cos(travelHeading) * car.speedMph * DRIVE.mphToWorld - Math.sin(roadHeading) * (car.pushVelocity || 0) + Math.cos(roadHeading) * alongPush;
     const normalFraction = Math.max(0, -(velocityX * nx + velocityZ * nz)) / Math.max(.000001, Math.hypot(velocityX, velocityZ));
     const glancingWall = !obstacle.arenaWall && (obstacle.tunnelWall || obstacle.barrier) && normalFraction < GLANCING_WALL_NORMAL_FRACTION - 1e-10;
     const zone = contactZone(nx, nz, heading);
@@ -387,6 +391,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
     const road = this._roadPosition(end, car.s);
     if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) { car.s = road.s; car.lateral = road.lateral; }
     car.pushVelocity = (car.pushVelocity || 0) * .25;
+    dampCarAlongPush(car, .25);
     if (journeyColliders) {
       car.speedMph *= Math.max(.08, 1 - incoming * .94);
       continue;
@@ -495,7 +500,8 @@ export function _vehicleContact(a, b, reason) {
   const { nx, nz } = hit;
   const vaX = Math.sin(a.headingError || 0) * a.speedMph * (a.dir || 1) * DRIVE.mphToWorld + (a.pushVelocity || 0);
   const vbX = Math.sin(b.headingError || 0) * b.speedMph * (b.dir || 1) * DRIVE.mphToWorld + (b.pushVelocity || 0);
-  const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1), vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1);
+  const vaZ = a.speedMph * Math.cos(a.headingError || 0) * (a.dir || 1) + carAlongPush(a) / DRIVE.mphToWorld;
+  const vbZ = b.speedMph * Math.cos(b.headingError || 0) * (b.dir || 1) + carAlongPush(b) / DRIVE.mphToWorld;
   const impactMph = Math.max(0, -(vaX - vbX) / DRIVE.mphToWorld * nx - (vaZ - vbZ) * nz);
   const zone = contactZone(nx, nz, angleA + (a.dir < 0 ? Math.PI : 0));
   const zoneB = contactZone(-nx, -nz, angleB + (b.dir < 0 ? Math.PI : 0));
