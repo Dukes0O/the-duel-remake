@@ -3,6 +3,13 @@ import {Vector3} from 'three';
 const EYE_HEIGHT_METERS = 1.62;
 const GROUND_CLEARANCE_METERS = .65;
 
+function gearFov(fighter, normal) {
+  // Native signature dispatch sets this only for admitted, selected, aimed
+  // Marksman gear. Reading the pose never changes fighter or race state.
+  return fighter.gearMagnification === 3 && !fighter.knockedDown
+    ? 360 / Math.PI * Math.atan(Math.tan(normal * Math.PI / 360) / 3) : normal;
+}
+
 // Read-only first-person pose. The fighter and terrain are simulation data;
 // this module changes neither, and the renderer can use the result directly.
 export function onFootCameraPose(course, fighter, mode = 'first-person') {
@@ -26,7 +33,7 @@ export function onFootCameraPose(course, fighter, mode = 'first-person') {
       y: eye.y + Math.sin(pitch) * reach,
       z: eye.z + Math.cos(yaw) * Math.cos(pitch) * reach,
     },
-    fov: 72,
+    fov: gearFov(fighter, 72),
   };
 }
 
@@ -53,7 +60,7 @@ function overheadPose(course, fighter) {
     position.y=Math.max(floor,Math.min(position.y,ceiling));
     if(floor<=ceiling)break;
   }
-  return {position,target:{x:fighter.x+forwardX*4,y:fighter.y+1.1,z:fighter.z+forwardZ*4},fov:60};
+  return {position,target:{x:fighter.x+forwardX*4,y:fighter.y+1.1,z:fighter.z+forwardZ*4},fov:gearFov(fighter,60)};
 }
 
 // Same origin and ray as the existing RPG; this is a visual distance, not a hit.

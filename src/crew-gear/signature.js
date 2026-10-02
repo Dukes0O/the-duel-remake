@@ -20,8 +20,32 @@ export function initializeCrewGear(duel) {
   duel.state.crewGear = {crewId: duel.state.crewId || 'rook', id: gear.id,
     ammo: gear.capacity, serial: 0, fireHeld: false, turret: null,
     turretReadyAt: 0, lastTurretFireAt: null, grapple: null,
+    nextFireAt: 0, lastFireAt: null,
+    rpgNextFireAt: duel.state.footWeapons?.nextFireAt || 0,
+    rpgLastFireAt: duel.state.footWeapons?.lastFireAt ?? null,
     lastX: duel.state.footWeapons?.lastX ?? null,
     lastZ: duel.state.footWeapons?.lastZ ?? null};
+}
+export function resetCrewGearUser(duel) {
+  const user = duel.state.crewGear, fighter = duel.state.fighter;
+  if (!crewGearEnabled(duel) || !user || !fighter) return;
+  user.lastX = fighter.x; user.lastZ = fighter.z;
+  user.fireHeld = !!duel.state.fighterInput.fire;
+  user.grapple = null;
+  fighter.gearMagnification = 1;
+}
+export function restoreRpgTiming(duel) {
+  const user = duel.state.crewGear, weapons = duel.state.footWeapons;
+  if (!crewGearEnabled(duel) || !user || !weapons || user.id === 'rpg') return;
+  weapons.nextFireAt = user.rpgNextFireAt;
+  if (user.rpgLastFireAt === null) delete weapons.lastFireAt;
+  else weapons.lastFireAt = user.rpgLastFireAt;
+}
+export function noteRpgTiming(duel) {
+  const user = duel.state.crewGear, weapons = duel.state.footWeapons;
+  if (!crewGearEnabled(duel) || !user || !weapons) return;
+  user.rpgNextFireAt = weapons.nextFireAt;
+  user.rpgLastFireAt = weapons.lastFireAt ?? null;
 }
 export function refillCrewGear(duel) {
   if (!crewGearEnabled(duel)) return;
@@ -36,17 +60,29 @@ export function refillCrewGear(duel) {
 export function showSignatureGear(duel) {
   const user = duel.state.crewGear;
   if (!user || !duel.state.footWeapons || duel.state.footWeapons.selected !== user.id) return;
-  const gear = signatureFor(user.crewId);
+  const gear = signatureFor(user.crewId), weapons = duel.state.footWeapons;
+  if (gear.id !== 'rpg') {
+    weapons.nextFireAt = gear.id === 'scrap-turret'
+      ? user.turret ? user.lastTurretFireAt + gear.lifetime + gear.recharge : user.turretReadyAt
+      : user.nextFireAt;
+    const last = gear.id === 'scrap-turret' ? user.lastTurretFireAt : user.lastFireAt;
+    if (last === null) delete weapons.lastFireAt;
+    else weapons.lastFireAt = last;
+  }
   duel.state.footGear = {name: gear.name,
     ammo: user.id === 'rpg' ? duel.state.footWeapons.ammo : user.ammo};
 }
 export function selectSignatureGear(duel) {
   const state = duel.state, user = state.crewGear, weapons = state.footWeapons;
   if (!ready(duel) || !state.onFoot || !state.fighter || !user || !weapons) return false;
+  if (weapons.selected === 'rpg') noteRpgTiming(duel);
+  const repairWasInterrupted = weapons.repairBlockedUntilRelease;
   weapons.selected = user.id;
   weapons.lockTargetIndex = null; delete weapons.lockTargetId;
   weapons.lockSeconds = 0;
   weapons.repairing = false; weapons.repairSeconds = weapons.repairAmount = 0;
+  weapons.repairBlockedUntilRelease = repairWasInterrupted && !!state.fighterInput.fire;
+  state.fighter.gearMagnification = 1;
   weapons.fireHeld = user.fireHeld = !!state.fighterInput.fire;
   showSignatureGear(duel);
   duel.emit({footGearChanged: user.id});
@@ -151,6 +187,7 @@ function retireTurret(duel) {
   if (!turret) return;
   user.turret = null;
   user.turretReadyAt = duel.state.stageTimeSec + signatureFor(user.crewId).recharge;
+  showSignatureGear(duel);
   duel.emit({crewGearCue: 'crew.turret.retire', hitPosition: {x: turret.x, y: turret.y, z: turret.z}});
 }
 export function stepGearDeployables(duel, dt) {
@@ -221,7 +258,7 @@ export function stepSignatureGear(duel, dt) {
     user.fireHeld = !!input.fire; return false;
   }
   const available = !fighter.knockedDown && !(fighter.bailTumbleSeconds > 0);
-  const nextFireAt = gear.id === 'scrap-turret' ? user.turretReadyAt : weapons.nextFireAt;
+  const nextFireAt = gear.id === 'scrap-turret' ? user.turretReadyAt : user.nextFireAt;
   if (gear.id === 'hand-flamer') {
     if (available && input.fire && user.ammo > 0) {
       const burn = Math.min(dt, user.ammo);
@@ -237,8 +274,8 @@ export function stepSignatureGear(duel, dt) {
     if (fired) {
       if (user.ammo !== null) user.ammo--;
       if (gear.id !== 'scrap-turret') {
-        weapons.lastFireAt = state.stageTimeSec;
-        weapons.nextFireAt = state.stageTimeSec + (gear.recharge || gear.reload || .3);
+        user.lastFireAt = state.stageTimeSec;
+        user.nextFireAt = state.stageTimeSec + (gear.recharge || gear.reload || .3);
       }
       duel.emit({footWeaponFired: gear.id, crewGearCue: `crew.${gear.id}.fire`, hitPosition: fighter});
     }

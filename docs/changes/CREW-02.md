@@ -1,97 +1,90 @@
-# CREW-02: signature gear simulation built; shared wiring held
+# CREW-02: signature simulation and four native hooks built
 
-Status: building. Native App acceptance is still incomplete. Production logic
-is implemented in the owned src/crew-gear/ modules. Tests were committed first
-at b85ce3 and remain unchanged; none of the held hooks or boss files was edited.
+Status: building. Full native App acceptance remains incomplete. Tests-first
+b85ce3 and the independent module regressions are retained. The Director's
+3101c87 grant releases crew.js, onfoot-weapons.js, onfoot-transition.js and
+onfoot-camera.js only. No other owner's shared file or boss file was edited.
 
 ## Production Source
 
-gear.js defines the settled catalog, discovery/switch admission and Rook's
-0.6 s lock / 1.8 s reload override. signature.js owns inventory, selection,
-refill, Cinder's cone/fuel, Odessa's turret and Jax's grapple product.
-contacts.js reuses native vehicle dimensions, continuous sweeps, armor/team/
-shield protection, fighter/raider damage and the released crash solver.
-projectiles.js owns actual gear shot records in combat.projectiles:
+The four src/crew-gear modules implement settled inventory, projectile flight,
+contacts, damage, grapple, deployable and passive mechanics from CREW.md:
 
-- Nell: upward arc, first-contact attachment, zero velocity while stuck,
-  three-second contact fuse, beeps, 25 armor / 60 health and her 6 m radius.
-- Wren: bounded arc into the shared arsenal smoke list, 2.5 m radius, 6 s.
+- Nell: upward arc, first car/ground attachment, three-second contact fuse,
+  beeps, 25 armor / 60 health and her 6 m radius. Native own-car armor cap.
+- Wren: bounded arc into the shared arsenal smoke, 2.5 m radius and 6 s life.
 - Dune: actual 90 m/s bolt, 150 m flight limit, 15 armor and native knockdown.
-- Tusk: shell contact, 20 armor and native 1,450 kg / 35 mph solver response.
+- Tusk: shell hit, 20 armor and native 1,450 kg / 35 mph solver response;
+  actual walking contact pushes a parked car through native free-body motion.
+- Odessa: real turret, 60 health, nearest hostile, 35 m reach, 0.8 s cadence,
+  4 armor / 10 health, 20 s life and 30 s recharge after expiry/destruction.
+- Cinder: native 6 m / 35 degree cone, 10 armor/s and 30 health/s, four fuel
+  seconds, half-second-per-second refill and fire-immunity admission.
+- Jax: 25 m ray, under-90-km/h enemy rejection, actual roof/ledge arrival.
+  CREW-03 still owns attachment shake-off, charge and safe landing.
 
-Odessa's real deployable has 60 health, nearest hostile target, 35 m reach,
-0.8 s cadence, 4 armor / 10 health, 20 s life and 30 s retirement recharge.
-Its own turretReadyAt survives refill/re-entry and does not block the RPG.
-Cinder uses the native contact path for the 6 m / 35 degree cone: 10 armor/s,
-30 health/s, four seconds of fuel, half-second-per-second idle refill and
-fire immunity admission. Tusk's walking contact starts existing free-body
-motion at 1 m/s. Stock refills and RPG refill are ready for the car-entry hook.
-Jax's ray rejects cars at 90 km/h or above and targets within 25 m; the pull
-produces real roof arrival or an actual salvage-ledge top. CREW-03 consumes
-the roof attachment for shake-off, charge and safe landing; none is invented
-here. Marksman aiming supplies a read-only 3x magnification field.
+Contacts reuse native dimensions, swept collision, shield/team protection,
+armor/wreck/scoring, fighter/raider damage and the released crash solver.
+Direct shots retire at native terrain contact before a later target; an
+actual earlier body/scenery hit wins. Launch adds observed native movement
+after contacts; stationary Dune/Nell controls remain 90/18 m/s.
 
-## Tests and limits
+The granted native hooks initialize and select slot 3, dispatch fire, update
+launch history every fixed foot step (including RPG/wrench), seed history
+from the actual new exit pose, follow the grapple and refill on real re-entry.
+Respawn/re-entry clear obsolete launch history, preserving turret recharge.
+Rook's actual RPG uses 0.6 s lock and 1.8 s reload only after dev/discovery
+admission. Canonical signature/RPG timers are separate; ordinary selected-gear
+timestamp assignments preserve existing assertions and restore RPG readiness.
+No hidden accessors or repeated-call history workaround is added.
 
-The original native --admission-only run still reports 6 checks, 2 controls
-passed and 4 genuine failures: missing switch, App slot 3 stays on RPG,
-Nell selectFootGear(3) returns false and Rook's 0.6 s shot remains unlocked.
-The two controls preserve released RPG/wrench and undiscovered save refusal.
-No future module/export is imported by this independent acceptance suite.
+Jax, Cinder and Tusk are active catalog entries. Earned Tusk in the existing
+version-1 crew.unlocked list bypasses his rank gate without paying again.
+Unearned Tusk stays rank-gated; future-schema refusal and all profile fields
+are preserved. Marksman aim supplies read-only 3x fov in both camera modes;
+changing back to RPG/wrench restores the normal view.
 
-A bounded scratch check uses actual Duel campaign/exit entrypoints, then the
-owned production module entrypoints. Its feature-flags adapter admits the
-unregistered crew switch only to exercise these unintegrated modules. It
-proves code behavior, not native App admission or a finished feature:
-Nell/Dune/Tusk remove exactly 25/15/20 armor; Tusk creates native knock motion;
-Wren creates and retires the shared 2.5 m / 6 s smoke; Odessa deals 4 armor at
-0.8 s, has 60 health and is destructible; Cinder deals 10 armor/s and spends
-one fuel second; refill restores fuel; Jax reaches a real enemy roof.
-The check took 2.08 s. node --check for all four modules and git diff --check
-pass. No broad tests, builds or captures run while Root owns the heavy slot.
+## Validation and current failures
 
-Independent RED tests d724db6 reproduced own-car blast armor 25 instead of
-the native 6.25 cap, plus deployment and retirement blocking a ready RPG.
-The first fixes passed seven bounded module tests: native self:true applies the
-existing armor cap; fighter self-splash stays unchanged; turret recharge starts
-on actual expiry/destruction and preserves RPG readiness through refill.
-The original native turret timestamp assertion is retained for a compatible
-selected-gear timer view in later shared wiring. Independent terrain RED tests
-9446a0f reproduced Dune 0.294 m and Tusk 0.135 m below native ground. Direct
-shots now retire at their first sampled/bisected native terrain crossing; an
-earlier actual body/scenery hit still wins. Tests-first 3ecefcd then reproduced
-missing 4.5 m/s walking inheritance for Dune and Nell. Launch now adds observed
-native fixed-step movement after contacts; stationary controls stay 90/18 m/s.
-Refill clears launch history, preserving turret recharge. All eleven bounded
-checks pass. Range, clock, damage and grenade handling remain unchanged.
+Independent tests reproduced and fixed the native own-car blast cap, turret
+blocking RPG, underground direct shots and missing 4.5 m/s walking inheritance.
+All eleven module checks passed before hooks. Tests-first b21e080 then proved
+earned-Tusk admission RED with unearned/future-schema controls before crew.js.
+After hooks, 13 module checks report 11 PASS / 2 expected fixture failures:
+the old module-only walking fixtures fire manually after the new native
+history has already advanced. Test author will move fire into the actual
+native step, preserving all literal stationary/walking assertions.
 
-All existing assertions, race fingerprints and world signatures are unchanged.
-The complete independent mechanics, real camera controls and memory-only
-named-player tests still await native wiring and their permitted test slot.
-Turret contact tests must use actual native incoming projectile products after
-wiring. Browser per-item, both camera modes, visual/audio and lane/build gates
-remain outstanding. No native App or gameplay acceptance is claimed green.
+Unmodified production --admission-only remains 6 checks, 2 controls PASS and
+4 held failures: catalog undefined, App/Nell slot 3 refused, Rook unlocked.
+These use the unregistered production switch; no App acceptance is claimed.
+Bounded actual-Duel probes with an explicit temporary catalog admission prove
+Rook's real locked 0.6 s shot / 1.8 s reload and pure 3x camera poses. Released
+weapons/transition regressions pass 13/13; camera-choice controls pass 8/8.
+Legacy crew tests pass 3/4: the obsolete UI assertion requiring an inactive
+PASSIVE HOOK · LATER CARD conflicts with the settled active roster. Tests and
+crew-ui.js are untouched; the Director owns its reviewed assertion migration.
+Syntax and whitespace pass. No race/world fingerprint was regenerated.
 
-## Exact shared hooks requested from the Director
+## Remaining owner hooks and gates
 
-- Card hooks: feature-flags.js and crew.js for admission/activation;
-  onfoot-weapons.js for initialize/select/fire dispatch and Rook timing;
-  onfoot-transition.js for refill and fixed-time grapple after movement;
-  combat-hud.js for actual inventory; sound-bank.js/audio.js for named cues.
-- Additional narrow hooks: combat-projectiles.js dispatches crewGearShot
-  records through stepGearProjectile and native incoming turret contact;
-  combat.js ticks deployables after car re-entry and shared hazards when
-  crew gear is active; combat-scene.js draws the actual shots/deployables/
-  flamer/grapple; onfoot-camera.js and render3d.js apply 3x Marksman fov.
-- Owned constants require no wasteland-tuning.js edit. No shared file is
-  granted to this builder yet. Root must audit owners and grant exact hooks.
+- feature-flags.js catalog stays with Bounty; no production crew switch yet.
+- combat-projectiles.js dispatches actual crewGearShot products and incoming
+  turret hits; combat.js ticks deployables after entry and shared hazards.
+- combat-scene.js/render3d.js must draw actual shots, turret, flamer and line,
+  and apply camera fov; combat-hud.js must expose actual signature inventory.
+- sound-bank.js/audio.js install named cues; tuning needs no constants edit.
+- crew-ui.js still says gear is in a later card; this additional UI seam is
+  ungranted. Save Guardian review is required for earned-Tusk selection.
+- Native complete per-item tests, browser per item, both camera modes, visual/
+  audio review, lane tier and build remain pending. Heavy slot is with Pit.
 
-Named cues are crew.sticky.arm/beep/explode, crew.grapple.launch,
+Cues: crew.sticky.arm/beep/explode, crew.grapple.launch,
 crew.turret.deploy/fire/retire, crew.flamer.start/stop, crew.marksman.fire,
 crew.scrap-cannon.fire and weapon.smoke.deploy. Audio installation is held.
 
 ## Removed
 
-Removed shared turret/RPG recharge and underground direct-shot travel. RPG, wrench,
-saves, assets and shared code are retained.
-No stub or placeholder is presented as a finished gear item.
+Removed shared turret/RPG recharge, underground direct-shot travel and inactive
+Jax/Cinder/Tusk catalog markers. Current assets, saves and released behavior
+are retained. No stub is presented as a finished gear item.

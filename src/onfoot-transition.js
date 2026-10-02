@@ -5,6 +5,7 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {strikeFighterFromVehicles} from './onfoot-race.js';
 import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
+import {refillCrewGear, resetCrewGearUser, stepGearGrapple} from './crew-gear/signature.js';
 
 const T = COMBAT_TUNING.foot;
 
@@ -55,9 +56,12 @@ function stepFighterInFixedTime(duel, dt) {
     stepFighter(duel.course, state, fighter,
       fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput,
       FIGHTER_STEP_SECONDS);
-    if (fighter.respawns !== previousRespawns) fighter.presentation = {
-      clip: 'get-up', startedAt: Math.max(0, state.stageTimeSec -
+    if (fighter.respawns !== previousRespawns) {
+      fighter.presentation = {clip: 'get-up', startedAt: Math.max(0, state.stageTimeSec -
         (transition.fighterStepRemainder - FIGHTER_STEP_SECONDS)), duration: .8};
+      resetCrewGearUser(duel);
+    }
+    stepGearGrapple(duel, FIGHTER_STEP_SECONDS);
     stepFootWeapons(duel, FIGHTER_STEP_SECONDS);
     state.fighterInput.lookX = state.fighterInput.lookY = 0;
     transition.fighterStepRemainder = Math.max(0,
@@ -87,6 +91,7 @@ export function stepFootTransition(duel, dt) {
     transition.heldSeconds += dt;
     if (transition.heldSeconds + 1e-9 < T.reentryHoldSeconds) return true;
     const departing = state.fighter;
+    refillCrewGear(duel);
     state.footPresentation = {fighter: {crewId: departing.crewId,
       x: departing.x, y: departing.y, z: departing.z, yaw: departing.yaw},
       presentation: {clip: 'enter', startedAt: state.stageTimeSec, duration: .65,
