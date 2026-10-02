@@ -420,6 +420,139 @@ for (const weapon of ['harpoon', 'caltrops']) check('ARS-01 check rejects zero m
     'Arsenal --check must reject missing native CPU ' + weapon + ' evidence');
 });
 
+
+// ARS-01, Claude 03:30: supplemental rear-defense races are a separate sample.
+// These builder rows are explicit validator fixtures, never native-use evidence.
+// Production completeness and use are measured by the builder's complete report.
+function rearDefenseFixture(completed = true) {
+  const input = fixture(arsenalFlags);
+  for (const row of input.runs) row.weaponUses = {
+    player: {}, cpu: {harpoon: 1, caltrops: 1},
+  };
+  const rearDefenseRuns = [{
+    ...structuredClone(input.runs.find(row => row.cpuDifficulty === 'medium')),
+    policy: 'rear-defense', seed: 1992, status: completed ? 'stage_result' : 'racing',
+    completed, won: false, timeSec: 400, cpuHits: 99, rivalHits: 75,
+    wrecks: wrecks(10, 20, 30),
+    weaponUses: {player: {crossbow: 3}, cpu: {oil: 2, smoke: 1}},
+  }];
+  return {...input, rearDefenseRuns};
+}
+check('ARS-01 empty supplemental input retains the released report contract', () => {
+  const input = fixture(arsenalFlags), build = required('buildReport');
+  assert.deepEqual(build({...input, rearDefenseRuns: []}), build(input),
+    'an absent or empty supplemental sample changes no historical output');
+});
+check('ARS-01 labelled rear-defense sample cannot alter historical measurements', () => {
+  const input = rearDefenseFixture(), build = required('buildReport');
+  const historical = build({...input, rearDefenseRuns: []});
+  const combined = build(input);
+  assert.ok(combined.rearDefense, 'report must expose a separate rearDefense sample');
+  assert.match(combined.rearDefense.scope, /rear.defense/i, 'scope names rear-defense races');
+  assert.match(combined.rearDefense.scope, /separate|supplement/i, 'scope states sample separation');
+  assert.deepEqual(combined.rearDefense.races, input.rearDefenseRuns,
+    'retain each supplemental policy, seed, native completion and result');
+  assert.deepEqual(combined.rearDefense.weaponUses, {player: {crossbow: 3}, cpu: {oil: 2, smoke: 1}},
+    'summarize actual row uses once, with player and CPU ownership separate');
+  const {rearDefense, ...withoutSupplement} = combined;
+  assert.deepEqual(withoutSupplement, historical,
+    'supplemental loss, 99 hits and 60 wrecks cannot enter any historical aggregate');
+  assert.deepEqual(input, rearDefenseFixture(), 'building the report must not rewrite input samples');
+});
+check('ARS-01 complete supplemental use satisfies the existing zero-use gates', () => {
+  const input = rearDefenseFixture(), report = required('buildReport')(input);
+  assert.ok(report.rearDefense, 'supplemental native-use sample is present');
+  assert.deepEqual(required('reportFailures')(report, input.runs, input.baselineRuns), [],
+    'historical Harpoon/Caltrops plus complete supplemental Oil/Smoke satisfy usage');
+  for (const weapon of ['oil', 'smoke']) {
+    const missing = rearDefenseFixture();
+    missing.rearDefenseRuns[0].weaponUses.cpu[weapon] = 0;
+    assert.match(required('reportFailures')(required('buildReport')(missing),
+      missing.runs, missing.baselineRuns).join('\n'),
+      new RegExp('CPU.*' + weapon + '|' + weapon + '.*CPU', 'i'),
+      'zero genuinely counted supplemental CPU ' + weapon + ' remains a failure');
+  }
+});
+check('ARS-01 incomplete rear-defense races cannot supply passing usage evidence', () => {
+  const input = rearDefenseFixture(false), report = required('buildReport')(input);
+  assert.ok(report.rearDefense, 'incomplete samples remain visible rather than silently disappear');
+  assert.match(required('reportFailures')(report, input.runs, input.baselineRuns).join('\n'),
+    /rear.defense.*(not complete|incomplete)|supplement.*(not complete|incomplete)/i,
+    'even positive deployments cannot make an incomplete supplemental race pass');
+});
+check('ARS-01 supplemental samples retain the Medium win target', () => {
+  const input = rearDefenseFixture(), report = required('buildReport')(input);
+  assert.ok(report.rearDefense, 'the added sample reaches the same production validator');
+  report.winRateByDifficulty.medium = {wins: 66, races: 100, winRate: .66};
+  assert.match(required('reportFailures')(report, input.runs, input.baselineRuns).join('\n'),
+    /medium win rate.*45.*65/i, 'rear-defense coverage cannot relax Medium 45 to 65 percent');
+});
+check('ARS-01 bounded rear-defense starts naturally and counts only native products', () => {
+  const run = required('run');
+  const originalStart = App.prototype.startCampaign, originalAdvance = App.prototype.advance;
+  const originalInput = Duel.prototype.setInput;
+  const starts = [], events = [], requested = [];
+  const beforeStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const beforeCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
+  let active = null;
+  App.prototype.startCampaign = function (...args) {
+    const result = originalStart.apply(this, args);
+    active = this.duel;
+    starts.push(this.duel.state.opponents.map(actor => ({
+      actor, loadout: [...actor.weaponLoadout],
+    })));
+    this.duel.onChange((_state, event) => {
+      if (['weapon.oil.deploy', 'weapon.smoke.deploy'].includes(event.arsenalCue)) {
+        assert.ok(event.hazard && event.hazard.owner === event.actor,
+          'counted deployment carries the actual native product and owner');
+        events.push({weapon: event.hazard.kind,
+          role: event.actor === this.duel.state ? 'player' : 'cpu'});
+      }
+    });
+    return result;
+  };
+  Duel.prototype.setInput = function (input) {
+    if (this === active) for (const key of ['throttle', 'brake', 'steer']) if (input[key] != null) {
+      assert.ok(Number.isFinite(input[key]) && input[key] >= (key === 'steer' ? -1 : 0) && input[key] <= 1,
+        'policy requests legal ' + key + ' before native clamping');
+      requested.push(key);
+    }
+    return originalInput.call(this, input);
+  };
+  App.prototype.advance = function (...args) {
+    const result = originalAdvance.apply(this, args);
+    for (const initial of starts.at(-1) || []) assert.deepEqual(initial.actor.weaponLoadout, initial.loadout,
+      'policy keeps each naturally assigned CPU loadout');
+    return result;
+  };
+  try {
+    const rows = [];
+    for (let repeat = 0; repeat < 2; repeat++)
+      rows.push(run('rear-defense', 'medium', 1992, {flags: arsenalFlags, maxFrames: 1}));
+    assert.equal(starts.length, 2, 'both bounded runs start actual campaigns');
+    assert.deepEqual(starts[0].map(row => row.loadout), starts[1].map(row => row.loadout),
+      'the same seed reproduces naturally assigned CPU weapons');
+    assert.ok(requested.length > 0, 'the real driver supplies legal inputs');
+    for (const row of rows) {
+      assert.equal(row.policy, 'rear-defense');
+      assert.deepEqual(row.flags, arsenalFlags);
+      assert.equal(row.completed, false, 'one frame is never a complete supplemental sample');
+      for (const role of ['player', 'cpu']) for (const weapon of ['oil', 'smoke'])
+        assert.equal(row.weaponUses?.[role]?.[weapon] ?? 0,
+          events.filter(event => event.role === role && event.weapon === weapon).length,
+          'counts reflect observed native products, never assigned slots or invented events');
+    }
+    assert.deepEqual(Object.getOwnPropertyDescriptor(globalThis, 'localStorage'), beforeStorage,
+      'bounded reporting restores the caller storage descriptor');
+    assert.deepEqual(Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame'), beforeCancel,
+      'bounded reporting restores the caller animation descriptor');
+  } finally {
+    App.prototype.startCampaign = originalStart;
+    App.prototype.advance = originalAdvance;
+    Duel.prototype.setInput = originalInput;
+  }
+});
+
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`Combat balance acceptance: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
