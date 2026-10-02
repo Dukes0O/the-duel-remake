@@ -1152,6 +1152,9 @@ tasks:
     audio_scheduling_source_commit: 10e7c02
     audio_scheduling_review: "Independent review clears exclusive native capture scheduling, unchanged failure handling and eight-job concurrency. All runner checks pass; the fresh lane gate and build remain required."
     settlement_hook: "Director grants the pure arena settlement validator for actual Salt Last Car Rolling and Fuel Run pay. Native tests first must prove normal once-only scrap and hold; ring awards and storage rules remain unchanged."
+    payment_test_commit: 14861fa
+    payment_source_commit: 7f3f22d
+    payment_review: "Save Guardian clears the exact Salt venue validator change. Native Salt wins now pay the existing scrap and hold once; original settlement and historical saves pass, with no storage or ordinary credit change."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
