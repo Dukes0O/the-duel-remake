@@ -136,6 +136,30 @@ check('destroyed Odessa turret starts its own full retirement recharge', () => {
   duel.state.stageTimeSec = retiredAt + 30; triggerSignature(duel);
   assert.ok(duel.state.crewGear.turret, 'destruction recharge ends after 30 seconds');
 });
+for (const crew of ['dune', 'tusk']) check(`${crew} direct shot retires at native terrain contact`, () => {
+  const duel = race(crew);
+  duel.state.fighter.pitch = -.7;
+  const shot = launchGearProjectile(duel, duel.state.fighter, signatureFor(crew), 1);
+  assert.ok(shot, 'actual production launch creates the direct shot');
+  let contactedGround = false;
+  for (let i = 0; i < 120; i++) {
+    // Direct shots travel at their actual launched velocity. Query the native
+    // course at the next endpoint before contact handling can clamp the shot.
+    const next = {x: shot.x + shot.vx * DT, y: shot.y + shot.vy * DT,
+      z: shot.z + shot.vz * DT};
+    const near = duel.course.nearest(next.x, next.z);
+    const floor = duel.course.groundAt(near.s, near.lateral).y;
+    const retained = stepGearProjectile(duel, shot, DT);
+    if (next.y <= floor + .05) {
+      contactedGround = true;
+      assert.equal(retained, false,
+        `${crew} projectile must retire on first terrain crossing; next endpoint is ${(floor - next.y).toFixed(3)} m below native ground`);
+      break;
+    }
+    assert.equal(retained, true, 'unobstructed direct shot remains live before terrain contact');
+  }
+  assert.equal(contactedGround, true, 'downward shot genuinely reaches native terrain');
+});
 for (const failure of failures) console.error(failure);
 console.log(`Crew gear owned modules: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
