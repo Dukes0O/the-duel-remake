@@ -19,6 +19,7 @@ import {CRASH_TUNING} from './vehicle-collision.js';
 import {upgradedCar} from './progression.js';
 import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
+import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 
 function roadsideTopSpeedMph(duel, actor) {
   if (actor === duel.state) return duel.car.topSpeed;
@@ -101,8 +102,8 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
   // ram response still sets the computer's recovery timing and ram cadence.
   // Armor keeps the player in control below a big hit: a lower bar on the
   // road in Mad Max (CRASH-04) than in the Scrapdome arena.
-  const crash = resolveCarCrash(duel, a, b, {playerKnockMinDvMph:
-    duel.state.mode !== 'wasteland' ? 0 : duel.state.arena ?
+  const crash = resolveCarCrash(duel, a, b, {arenaShoveMph: duel.state.arena ? impactMph : 0,
+    playerKnockMinDvMph: duel.state.mode !== 'wasteland' ? 0 : duel.state.arena ?
       CRASH_TUNING.armoredPlayerKnockDvMph : CRASH_TUNING.madMax.playerKnockDvMph});
   for (const actor of [a, b]) if (actor !== duel.state)
     actor.ramRecoverySec = Math.max(actor.ramRecoverySec || 0, response.recoverySeconds);
@@ -153,6 +154,7 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
 }
 
 export function _vehicleSpec(actor) {
+  if (this.state.arena && actor.kind === 'junkCar') return arenaJunkSpec(actor);
   // Upgrades change handling and power, never the collision shell. Armor-kit
   // plating adds its weight to the mass (Mad Max only; CRASH-04).
   const car = CARS[actor === this.state ? this.state.car : actor.car || (actor === this.state.rival ? this.state.car : null)] || {};
@@ -422,7 +424,7 @@ function solidTraffic(duel, actor) {
 export function _vehicleContact(a, b, reason) {
   const ghost = actor => (actor.wrecked || actor.roadsideMotion) && !solidTraffic(this, actor);
   if (a.crushed || b.crushed || ghost(a) || ghost(b) ||
-      a.combatWrecking || b.combatWrecking || a.tumble || b.tumble) return false;
+      (!this.state.arena && (a.combatWrecking || b.combatWrecking)) || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
   const armorContact = combatArmorEnabled(this);
   const armoredPair = armorContact &&
@@ -451,7 +453,8 @@ export function _vehicleContact(a, b, reason) {
   if (!hit) return false;
   const descendingCrush = a === this.state && a.airborne && a._verticalSpeed < -1 && (a.prevAirHeight || 0) > (a.airHeight || 0)
     && canCrushVehicle(this.car, specB, { descending: true });
-  const yieldNormal = a === this.state && !this.state.onFoot && !descendingCrush &&
+  // Road traffic yields to the player; hostile arena participants remain solid.
+  const yieldNormal = !this.state.arena && a === this.state && !this.state.onFoot && !descendingCrush &&
     !b.wrecked && !b.knock ?
     npcYieldContactNormal(a, b, hit, start.z) : null;
   if (yieldNormal) {
@@ -679,9 +682,13 @@ export function _crushProps(actor) {
   const heading = end.heading + (actor.headingError || 0) + (actor.slipAngle || 0);
   const previousBottom = start.y + (actor.prevAirHeight ?? actor.airHeight ?? 0), bottom = end.y + (actor.airHeight || 0);
   for (const prop of this.course.features.crushables || []) {
+    const movable = !!state.arena && prop.kind === 'junkCar';
     if (state.crushedProps.includes(prop.id)) continue;
     const hit = sweepObstacle(start, end, prop, heading, spec);
-    if (!hit) continue;
+    if (!hit) {
+      if (movable) contactArenaJunk(this, actor, prop, null);
+      continue;
+    }
     const top = prop.y + prop.height;
     let contactTime = hit.t;
     if (previousBottom + (bottom - previousBottom) * contactTime > top) {
@@ -691,6 +698,10 @@ export function _crushProps(actor) {
       contactTime = (previousBottom - top) / (previousBottom - bottom);
       const landing = { x: start.x + (end.x - start.x) * contactTime, z: start.z + (end.z - start.z) * contactTime };
       if (!sweepObstacle(landing, landing, prop, heading, spec)) continue;
+    }
+    if (movable) {
+      contactArenaJunk(this, actor, prop, {...hit, t: contactTime}, start, end);
+      if (spec.mass < (prop.crushMass || 3500)) continue;
     }
     if (spec.mass < (prop.crushMass || 3500)) {
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),

@@ -1438,3 +1438,59 @@ Last Car Rolling wrecks to 23.3 a round (target 10 to 14); steering feel
 comes first, and ARENA-WRECK-RATE restores the target with armor or
 aggression if Kyle keeps the steering.
 
+## 1 October 2026: keep the checking proportionate
+
+The overnight run merged little because most of its time went into its own
+checking (a 1568-line change note for a 150-line fix, link-safety test
+matrices, pixel-exact art tests) and its notes became unreadable. Claude set
+the "Keep it proportionate" rules in next-run.md: short plain notes, no
+unrequested guard machinery, looks judged from pictures, inherited
+conditions never hold a merge. Also: ARENA-SHOVE may merge, ARS-CORE's
+per-candidate range is approved, the tanker gets a final third round, and
+Vesper's export guard is settled without asking Kyle.
+
+## 1 October 2026: Kyle keeps the dome steering and approves Sal
+
+Kyle: the dome steering is good, and Sal is approved as she is. ARENA-STEER
+is kept, ARENA-WRECK-RATE starts, and WAR-SAL-TUNE closes with no tuning.
+
+## 1 October 2026: generated salt replaces the tiled salt photo
+
+Kyle: the mirrored salt photo "looks like a silly pattern"; a generated ground
+would be better. This replaces his 30 September approval of the tiled photo.
+The Salt Flats ground is generated from a seed with no visible repeat
+(SCRAPDOME.md, Salt Flats), and WASTELAND_ART.md rule 10 bars visible repeats
+on any large ground.
+
+## 1 October 2026: the Pit, an open dome layout
+
+Kyle asked for some dome fights without the inside barrier. Claude measured
+the dome: a round floor 150 m across with a 16 m centre pile has the same
+driving area as the ring, so it is not more crowded; it trades the Heap's
+cover for open sight lines. Kyle agreed to a second layout. Gunn, the Twin
+Vultures and the Baron fight there; the ring keeps Last Car Rolling, the
+public modes and the warlords whose moves use the Heap (SCRAPDOME.md section
+2, The Pit; card ARENA-PIT).
+
+## 1 October 2026: junk cars slide; wreck rate on hold
+
+Kyle: the dome's parked cars do not budge at any speed. They are the junk
+cars, fixed by design; ARENA-SHOVE only covered participant cars. Junk cars
+become heavy hulks that slide (SCRAPDOME.md section 2; ARENA-JUNK-SHOVE).
+Kyle then confirmed the wreck count should come down: ARENA-WRECK-RATE goes
+ahead to the 10 to 14 target.
+
+
+## 2026-10-01: tested ordinary arena armor candidate, held for Kyle
+
+- Tested candidate: 1.2 times race armor for ordinary arena cars. Warlord fights
+  keep the released 0.5 base before their unchanged boss multiplier, following
+  Claude's evening answer and Kyle's kept Sal fight.
+- Reason: the native twelve-round Medium sample falls from 20.75 wrecks at
+  0.5 to 12.5 at 1.2, inside the unchanged 10 to 14 target. The 108-round
+  report records full-field means of 12.7 Easy, 12.5 Medium and 14.4 Hard.
+  Steering and aggression are unchanged; paired native road and Sal traces
+  remain exact. Only the ordinary Last Car Rolling replay pin changes.
+- Hold: Kyle decides whether wrecks should be lowered at all. Do not merge
+  this candidate before his answer. If it is kept, future changes tune armor
+  through the same target, paired replay review and gates; keep warlord health.

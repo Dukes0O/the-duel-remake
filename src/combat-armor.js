@@ -5,6 +5,8 @@ import {arenaActor, arenaDamageBlocked, hostile, noteArenaDamage} from './combat
 import {salRearDamageMultiplier} from './vehicle-contact-modifiers.js';
 import {CARS} from './config.js';
 import {startWreckSlide} from './vehicle-knock.js';
+import {arsenalEnabled} from './combat-weapons.js';
+import {noteSmokeHit, clearSmokeHistory} from './arsenal/smoke.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -128,6 +130,7 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   const removed = Math.min(Math.max(0, actor.armor), damage);
   actor.armor = Math.max(0, actor.armor - damage);
   noteArenaDamage(duel, actor, removed, options.owner);
+  if (arsenalEnabled(duel)) noteSmokeHit(duel, actor, removed, options.owner);
   if (actor.armor === 0) startCombatWreck(duel, actor, source, options.owner);
   recordCombatHit(duel, actor, removed, options.owner);
   return removed;
@@ -145,6 +148,7 @@ export function applySceneryArmorDamage(duel, actor) {
 
 export function completeCombatRecovery(duel, actor, {alreadyReset = false} = {}) {
   if (!actor.combatWrecking) return false;
+  clearSmokeHistory(duel, actor);
   if (!alreadyReset) duel._safeReset(actor, actor.combatWreckSite);
   actor.armor = actor.maxArmor * T.recoveryArmorFraction;
   actor.combatWrecking = false;

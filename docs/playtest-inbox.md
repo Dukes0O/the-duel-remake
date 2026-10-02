@@ -1,133 +1,126 @@
 # Wasteland play-test inbox
 
-## Claude review questions from the resumed build, 30 September
+## Claude's answers, 2 October 00:30
 
-- **ARS-CORE audio ownership handoff:** integrated sound-bank has no
-  `weapon.oil.deploy`, `weapon.oil.slip` or `weapon.smoke.deploy` entries.
-  The protected external audio owner still holds the bank; no overlapping
-  edit or fallback cue is authorized. Please route these settled cue names
-  to that owner, or record a file handoff after its final gate. The Director
-  spends no credits and leaves pending voice auditions and picks alone.
+All eight questions answered on their cards: Caltrops owner grace and the
+Harpoon break threshold (ARSENAL.md); the Dustmonger's oil strip, Mirage's
+split trigger and the Kingpin's drop (SCRAPDOME.md section 5); Bounty Hunt's
+hunter cap and hand-over; the Salt Flats merges with Last Car Rolling and Fuel
+Run, and Bounty Hunt and Ambush Alley add it in their own cards; the tanker
+roof is approved and its model stays private until the Convoy Raid installs
+it; the weapon sounds may use the sound bank and catalog for their three new
+cues only.
 
-- **Claude's answers (1 October 2026, 00:40 review):**
-  - Salt Flats floor: the same ring engine, an oval band between the solid
-    outer tyres and containers and a solid inner island (scrap piles, crane,
-    bus); the rest of the bowl is scenery. Ramps: physics is the source of
-    truth and the visible ramp is built from it (SCRAPDOME.md, ARENA-06).
-  - Salt Flats modes: the four public modes; warlord fights stay where
-    section 5 places them (only the Tollkeeper's Convoy Raid is here).
-  - Arsenal targeting: yes to the optional attack context
-    `{range, origin, lockedTargetId}`; a locked shot only changes to a decoy
-    or breaks in smoke, never to another real car (ARSENAL.md).
-  - Arsenal upgrades: damage +15% per level for damaging weapons; recharge
-    15% faster per level for all; control effects never scale. Oil and Smoke
-    upgrade by recharge only (ARSENAL.md).
-  - Shove against the wall: minimums apply only where there is open floor;
-    a car rammed straight into the wall stays and takes the damage (card).
-  - Fuel's Last Car Rolling and Sal pin migration: approved; those two
-    changed through the accepted steering merge, with Fuel off and on
-    identical.
+**For Kyle (no action needed):** Claude let the weapon-sounds card add three
+free library sounds to the sound bank, which your separate audio session
+owns. That session has been idle since 25 September; nothing of yours
+changes.
 
-- Salt Flats physical-floor question: the genuine private model has a full
-  300 by 200 m bowl, perimeter tyres/containers and central cover/ramps.
-  Existing arena physics constrains cars to an annulus with an inner Heap
-  boundary. Please confirm how the Salt Flats drivable floor should consume
-  this bowl; no invisible inner boundary or altered venue design is inferred.
-  The builder also proved a 0.497 m quarter-ramp height mismatch and a 30 m
-  physical strip under an 8 m visible ramp. Independent native alignment
-  checks precede the course changes. Floor/collision hooks remain Shove's.
+## Mother Mirage split rule for Claude
 
-- ARS targeting context must also carry the actual origin and intended target
-  for inflight homing and RPG locks, so a routed consumer cannot silently use
-  the launch car’s old position or switch an already locked actor to the
-  nearest car. Native moved-fighter smoke exposed and fixes that origin for
-  the basic resolver; the optional attack-context question remains for the
-  consumer routes and decoy range. All existing geometry/save controls stay.
+What starts a split once its cooldown is ready, and is the first split ready
+immediately? The shared tell, eight-metre spacing, six-second copies, two-second
+window and phase-two frequency are settled.
 
-- Fuel Run and AUD-CRASH-PEAK merged at 66ce5d5 from reviewed clean
-  9964245 after exact lane/build gates. The final authored browser and
-  native save/contact/depot controls clear; measured audio peaks clear.
-  Claude also approved the steering-only pin migration in his 00:40 review.
-  Human listening, HUD observations and Kyle's Preview feel remain.
-  The completed lane was removed with plain worktree cleanup; no release.
-- ARENA-SHOVE question: a car exactly pinned to the outer solid wall and
-  rammed straight outward has no allowed displacement along that normal.
-  The universal1.5/4m minimum conflicts with containment there. Tests cover
-  real tangential shove with open physical space and separate outward
-  containment. Please settle the outward-pin interpretation; no teleport,
-  escape direction or relaxed containment is invented.
-- ARENA-06 tests public arena modes on Salt Flats. Dedicated warlord/story
-  fights currently hardcode Scrapdome; please settle whether "every mode"
-  also relocates those fights. No story fight moves by inference. New venue
-  follows SPEC0.12 with salt-flats:dev, discovery/rank9 and released scrapdome;
-  optional venue launch arguments cannot bypass real App/race guards.
+Independent native tests have six passing controls and five genuine missing
+admission checks. The complete early Drone needs Arsenal to free its weapon,
+armor and projectile files; Mirage's real tyre-mark clue needs Salt's renderer.
+Core targeting and the existing scrap burst can stay read-only. No Source has
+started, and the future Arsenal wave will reuse the same actual Drone producer.
 
-- ARS-CORE is claimed in a separate lane for independent tests and new
-  core modules only; existing hooks remain ungranted until their owners merge.
-  Two gaps need written clarification before those parts are built: required
-  targetFor(duel,attacker) must apply each attack's actual range when choosing
-  a decoy, but no weapon/range context is passed by that two-argument contract.
-  Recommend an optional attack-context argument carrying the already-settled
-  range, rather than a universal crossbow range for RPG and other weapons.
-  Oil and Smoke upgrades promise15% stronger or faster but do not identify
-  which dimension changes. Please settle the upgrade dimension; no radius,
-  lifetime or spin bonus is invented. Unambiguous level0 module tests continue.
-- **Claude's answers (30 September 2026, late):** Rustwall fit: closed; the
-  current wall and wash stay, with no new wash hook and no consumer migration;
-  no more refitting of art the game already has (docs/WASTELAND_ART.md rule
-  9). Steering: accept the higher wreck rate for now, merge and send it to
-  Kyle's Preview (waiting_on: kyle); ARENA-WRECK-RATE restores the wreck
-  target afterwards if he keeps the steering. Crate fixture correction:
-  approved as described.
+## Kingpin move rules for Claude
 
-- ARENA-STEER source c73ce03 retains the settled floors and 150 degree/s
-  ceiling. The complete 108-round report now measures 23.3 Medium full-field
-  wrecks against the 10–14 target (original baseline 15.7, prior factor 3.4
-  24.4). Proximity, wall-hit and reversing limits pass. Please review the
-  measured wreck gap before merge; no target or handling limit is relaxed.
-  Private lane freeze 0f57648 includes the independently reviewed crate
-  timer correction: every old assertion remains, finite protection isolates
-  timer phases, and a new unprotected moving-CPU control proves legal pickup.
-  This resolves the earlier fixture question without changing game rules.
-  Actual High/Performance clear-floor arcs keep cars and front attachments
-  clear of walls at 43.93 mph on release. Sal still halves steering. A body-
-  versus-authored-kit loading race was caught; bounded visible-node readiness
-  passes the fresh final browser. Clean0f57648 lane/build also pass. Kyle's
-  Preview feel remains; Claude accepts the higher wreck mean for now.
-- ART-FIT-RUSTWALL private freeze 14513ac has the actual round-1 sheet at
-  .lanes/rustwall-source-fit/docs/board/looks/rustwall-fit/round-1.jpg
-  (425,443 bytes), with its matching review. Independent art review rejects
-  it: candidate wall near 2/2/2/2, racing 2/3/2/2; candidate wash 2/3/2/2,
-  against current wall 3/3/3/3. Empty black bays, unsupported small parts,
-  sparse wreck layers and repeated pointed wash rocks need improvement.
-  Both sheet columns use the proposed wash hook, so the frozen pre-card
-  renderer still needs a true baseline. The builder imports the old wall GLB
-  for fixed structure and is not yet self-contained after replacement.
-  Seven unchanged scene controls still require procedural section layout;
-  please settle the consumer migration while retaining physical envelopes,
-  bank continuity, full native triangle/draw budgets, determinism and disposal.
-  Current runtime assets and old assertions remain unchanged. No install or
-  second fitting round proceeds before Claude's verdict on this comparison.
-- ARENA-03 contact/depot source 8871591 fixes the car-only false on-foot XP
-  and lost standing-carrier target. Save Guardian confirms actual car-only
-  settlement/reload pays no raider XP; native recovery then genuine F-exit/RPG
-  retains the first eligible 25 once. Independent review found another guard
-  regression: carrier-only CPU eligibility also blocks the player's crossbow
-  against healthy noncarriers and stops its guidance after cargo loss.
-  Independent RED42ffd63 and the reviewed clear8m fixture48ae971 prove the
-  missing player controls; final clean1b9628e fixes both guards without
-  changing any assertion. An unchanged ordinary full-state test found eager
-  false raider-counter fields; removing only that initialization restores its
-  original pin exactly. Lazy physical counting and on-foot XP stay intact.
-  Independent source and Save Guardian review now clear their subsets. Fresh
-  final browser, exact lane/build and whole-feature feel/audio follow.
-- Private steering and Fuel screenshots show HUD text overlaps: the hunting
-  badge with placing text at 1280 by 800, and Fuel markers with scoreboard
-  and minimap plus the centre re-entry hint crossing carried cargo. Fuel owns
-  the shared HUD until merge. These observations need a narrow follow-up
-  there; no parallel lane edits that hook. Fuel's first Performance foot
-  capture also caught asynchronous authored-fighter loading, so its scenario
-  needs actual crew readiness before the visual verdict.
+What triggers Kettle Drop, and what landing target and reach are committed?
+In phase two, does the two-and-a-half-second stuck window follow only the
+second landing or both? Full tells and the second ring at first landing
+are already settled.
+
+The actual footprints and crash solver, four-metre ring radius, native arc
+and existing Titan Warlord kit need no new rules. The complete card waits
+for Arsenal wave one to free combat armor and Crew gear to make Tusk active;
+a saved inactive Tusk ID does not finish the reward. Its new unrun double-drop
+test has a three-second observation bound that must be reviewed after the
+window ruling, before implementation.
+
+## Bounty Hunt rules for Claude
+
+Does a marked player override the usual Easy and Medium hunter cap so every
+computer hunts the mark? Does a self-wreck fallback recipient receive twenty
+points, and who receives the mark when the last hitter or current leader is
+also wrecking? The shared next-wreck sudden-death rule is already settled.
+
+Independent tests reproduce missing native, App and yard entry, with current
+controls passing. Source waits for these two rulings; no new rule was inferred.
+
+## Kyle's lower wreck-rate choice, 1 October evening
+
+Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
+unchanged; fresh checks precede merge. This answers the earlier hold.
+
+## Dustmonger oil rules for Claude
+
+Before Source: what threshold means driving straight, how wide is the eight-metre
+oil strip and where does it begin behind the cloud? Does it inherit ordinary
+Oil Slick's lifetime, owner grace and slip effect? Other move numbers are settled.
+
+The native Core APIs already support the cloud, strip and working earned Smoke
+with Arsenal enabled. Oil drawing remains with Arsenal wave one, and fight fog
+needs Salt's existing renderer boundary; those files stay with their owners.
+
+## Salt mode scope for Claude
+
+The final Salt direction names four public modes, but the actual event registry
+and panel have only Last Car Rolling and Fuel Run. Bounty Hunt and Ambush Alley
+are separate unbuilt cards. Ambush needs crew gear, while Dune's crew zoom needs
+Salt to free the renderer.
+
+May Salt merge real entry for the built modes, with Bounty and Ambush proving
+Salt in their own cards? No placeholder route or public-entry Source has started.
+Its existing public-round test also requires a finite sudden-death limit;
+released Fuel Run has no limit. That assertion stays frozen until independent
+review records the necessary migration.
+
+## Tanker roof fixes for Claude
+
+Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
+The round-three corrections give the plate a plain dark middle and striped border,
+with the lamps shown off and on in the actual game. All sixty-one native checks,
+twenty-two game views, quiet frame pacing and current lane/build gates pass.
+The stricter CPU timing diagnostic and tiny camera settling are recorded limits.
+
+The fitted renderer currently receives its model from the private review loader;
+ARENA-07 supplies the game caller. May this fitting card merge its recipe and
+renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
+
+## Two weapon rules for Claude
+
+Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
+and what steering input counts as hard away from a Harpoon tether? The native
+file map is settled; independent tests can cover the other rules meanwhile.
+
+## Arsenal audio ownership for Claude
+
+Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
+but AUD-17 still names it as the separate audio session's hook. Please settle
+the order or release that hook before these cards edit it.
+
+## Claude's answers, 1 October evening
+
+- Computer loadouts: at least one front attack, at most two defensive or
+  control weapons (ARSENAL.md); rerun the balance.
+- Wreck rate: every warlord keeps today's absolute armor; only ordinary cars
+  change.
+- Tanker: round 3, installed with two fixes (stripes only on the plate's
+  border, amber lamps); one roof close-up to Claude before merge.
+- Salt Flats: the generated salt is accepted; finish the card. Inner island
+  scrap goes to P3-POLISH.
+- Vesper: approved; merge after the shared registration and lane gate.
+
+## Answers carried into the current cards
+
+Claude approved Arsenal targeting and unsounded development cues, Shove's merge,
+the final tanker directions and Vesper's fresh-folder export. Those answers are
+on the cards and in the design pages. The old diagnostic questions are consumed.
 
 ## Settled for the resumed build, 30 September
 
@@ -244,3 +237,5 @@ Claude's answers (30 September 2026), settled in docs/SCRAPDOME.md section 5:
 ## Weekly summary
 
 The Director will add a short summary when work reaches its first checkpoint.
+
+- **ARENA-SHOVE final review question for Claude:** clean f409 actual private16495 completes the full High/Performance contact matrix. All8public native input streams, spawns, traces and runtime bytes match pre-card0f exactly. The negative-side38/54authored-body/kit rail crossings are inherited; positive-side controls have zero newcrossings. The exported diagnostic comparator still requests your classification. Can this pre-existing body versus center-boundary mismatch remain outside the bounded shove Sourcef703 fix, or does it need a separate card before merge? No global containment or model refit is inferred. Absolute119RAF samples per quality P9516.8ms; the old PUBLIC_ONLY baseline contains no timings, so no relative10% claim. Gates precede formal review; Kyle Preview feel remains.

@@ -31,7 +31,7 @@ numbers, look and sound.
 | --- | --- | --- |
 | Road hazards | `src/arsenal/hazards.js` | A bounded list (at most 24) of shapes on the course: circle or strip, owner, kind, age, lifetime. Each fixed step, a car whose body overlaps a hazard gets its effect **once per hazard**. Used by Oil Slick, Caltrops, Smoke Screen, the Dustmonger and Wren's smoke grenades. |
 | Car effects | `src/arsenal/car-effects.js` | Timed states on any car (player, rival, CPU, arena car): `slick`, `grip`, `tether`, `disabled`, `burning`, `nitro`. Each has a duration and is stepped in the fixed step. The driving and CPU code read them through one function, never by poking at fields. |
-| Targeting | `src/arsenal/targeting.js` | One function, `targetFor(duel, attacker)`, used by every aimed CPU shot, every homing projectile and every lock-on (including the RPG). It applies smoke (no target through or inside a cloud) and decoys (a decoy draws the aim while it lives). Existing CPU aim and homing code must route through it. Settled 1 October 2026: it takes an optional third argument, the attack context `{range, origin, lockedTargetId}`: `range` is that weapon's settled range (no shared default), `origin` is where the shot is now (the projectile for a shot in flight, the attacker's current position for a new shot). A shot or lock that already has a target changes only to a decoy within range or is broken by smoke; it never switches to a different real car. |
+| Targeting | `src/arsenal/targeting.js` | One function, `targetFor(duel, attacker)`, used by every aimed CPU shot, every homing projectile and every lock-on (including the RPG). It applies smoke (no target through or inside a cloud) and decoys (a decoy draws the aim while it lives). Existing CPU aim and homing code must route through it. Settled 1 October 2026: a weapon's range for targeting is its settled range; the crossbow's, for a player launch or a bolt in flight, is the bolt's physical reach (the magnitude of its actual horizontal launch velocity, its level speed plus the launching car's full velocity vector, fixed at launch, times remaining lifetime), and CPU crossbow acquisition stays 180 m. It takes an optional third argument, the attack context `{range, origin, lockedTargetId}`: `range` is that weapon's settled range (no shared default), `origin` is where the shot is now (the projectile for a shot in flight, the attacker's current position for a new shot). A shot or lock that already has a target changes only to a decoy within range or is broken by smoke; it never switches to a different real car. |
 | Projectiles | existing `src/combat-projectiles.js` | New kinds: `rocket`, `harpoon`, `mortar`. They start with the thrower's velocity and sweep between steps, as today. |
 | Unlocks and loadout | existing `src/weapon-upgrades.js`, `src/car-loadout.js`, armory | A weapon is offered when it is implemented, the `arsenal` switch is on and the player's rank reaches its unlock rank. Buying costs 400 scrap (existing new-weapon price). Warlord rewards unlock their weapon free, whatever the rank. Upgrades use the existing three levels (150, 300, 600 scrap), each 15% stronger or faster (settled 1 October 2026: a weapon that deals damage gets 15% more damage per level; every weapon also recharges 15% faster per level, recharge time divided by 1.15 per level; effects that take control from the victim, such as slick, tether, disable, spin kicks and smoke lifetime, never scale, so upgrades cannot break "never a lock-out". Oil Slick and Smoke Screen therefore upgrade by recharge only). |
 
@@ -44,7 +44,10 @@ isolation and the four-slot loadout are preserved.
 **Computer loadouts.** CPU cars carry four weapons from those unlocked at the
 player's current rank, so opponents grow with the player. Easy uses only the
 four starters and wave 1; Medium adds wave 2; Hard may use everything
-unlocked. Each weapon below says when the computer fires it.
+unlocked. Each weapon below says when the computer fires it. Settled 1 October
+2026: every computer loadout carries at least one weapon that damages a car in
+front of it, and at most two defensive or control weapons (UFO Jump, Star
+Shield, Oil Slick, Smoke Screen, and later ones of that kind).
 
 **Switch.** Everything here is behind a new `arsenal` switch (dev) in
 `src/feature-flags.js`, and applies only to a player who has found the gate
@@ -76,7 +79,8 @@ time its body touches that hazard, not every step.
   times 0.8, and at the hit it is yanked 6 m/s sideways toward the shooter's
   side. The line is drawn between the cars.
 - The tether breaks early if the target steers hard away from the shooter for
-  0.5 s in total, raises a star shield, either car wrecks, or they get more
+  0.5 s in total (at least 0.6 of full lock toward the side away from the
+  shooter, keyboard or stick; it need not be continuous), raises a star shield, either car wrecks, or they get more
   than 60 m apart.
 - Counter: shield, or steer hard the other way. Computer: fires at an enemy
   15 to 50 m ahead within 5 degrees.
@@ -84,7 +88,7 @@ time its body touches that hazard, not every step.
 
 **Caltrops** · rank 5 · recharge 9 s · rear
 - Scatters a strip 3 m behind: 8 m long, 5 m wide, lasts 8 s, drawn as
-  glinting spikes.
+  glinting spikes. Harmless to its owner for the first second.
 - A car that touches it (once per hazard): 4 armor, and for 4 s its grip is
   times 0.75 and its top speed times 0.9. A second strip refreshes the time,
   it never stacks.

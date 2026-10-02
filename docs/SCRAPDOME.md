@@ -46,7 +46,14 @@ an oval junkyard bowl:
   can turn round inside the floor, so the bowl plays as fights, not laps.
   Without it, cars circled at 100 mph, 70 metres apart, and slammed the walls.
 - **Three jump ramps** across the ring give air and escape lines.
-- **Junk cars** scattered on the floor are breakable cover.
+- **Junk cars** scattered on the floor are cover you can shove (Kyle, 1
+  October 2026: "they are like completely unmovable objects"). Each is a heavy
+  hulk, 1.5 times an ordinary car's mass, that slides on the floor when rammed
+  through the crash solver, like a traffic hulk: a car at 40 mph moves it at
+  least 2 m, the Titan at least 5 m. It stays on the floor, never deals damage
+  by sliding, and settles where it stops for the rest of the round (it does
+  not reset). The Titan still crushes it flat. Computer drivers steer round
+  its current position.
 - **Eight spawn slots** around the ring, alternating inner and outer lanes,
   facing along the ring.
 
@@ -54,6 +61,41 @@ Size: the centreline is 480 metres around, so the bowl is roughly 220 by 150
 metres. Two cars on opposite sides closing on each other meet in about five
 seconds. The venue is not a menu circuit: it never appears in the main menu's
 circuit list.
+
+### The Pit: the dome's open layout (Kyle, 1 October 2026)
+
+Kyle asked for some dome fights without the inside barrier. The Pit is a
+second layout of the same Scrapdome: same stands, lights, crowd and floor
+rules, with the Heap and its ring wall taken out.
+
+- **Shape:** a round floor. The centreline is a circle of radius 40 m (about
+  251 m around); the floor runs 32 m either side of it, so you can drive
+  anywhere from 8 m to 72 m from the centre, with the outer wall at 75 m (a
+  bowl 150 m across). The car-tracking system needs a pole in the middle, so
+  a small solid scrap pile 16 m across stays at the centre; it is the only
+  inside obstacle. Floor curvature check: 35 / 40 = 0.875, inside the limit.
+- **Same room:** the drivable area (about 17,500 square metres) matches the
+  ring's (about 17,300), so cars are no more crowded. What changes is open
+  sight lines, more head-on hits and no long wall to hide behind.
+- **Walls:** a round wall of stacked hulks inside the existing stands. The
+  gaps at the long ends between the round wall and the oval stands are
+  filled with scrap piles (scenery, not floor).
+- **Cover:** eight junk cars spread across the floor at mixed distances from
+  the centre (breakable, only the Titan crushes them), so there is something
+  to break a line of fire. Two ramps, placed opposite each other.
+- **Floor:** the same speed limit, traction and wall rules as the ring.
+- **Spawns:** eight slots as on the ring; in a warlord fight the player and
+  the warlord start on opposite sides of the centre pile.
+- **Which fights:** Gearhead Gunn (his barrage needs sight lines), the Twin
+  Vultures (their pincer needs room to come from two sides) and Baron
+  Blackiron (the final fight). Sal, the Dustmonger, Mother Mirage and the
+  Kettle Kingpin stay on the ring; their tricks use the Heap. Last Car Rolling
+  and the other public modes stay on the ring. No new menu or picker: the
+  warlord's fight sets the layout, and the fight intro names it "THE PIT".
+- **Art:** reuse the dome's existing stands, lights, hulk wall pieces and
+  crushed cars. No sourcing round. The comparison sheet (ring and Pit, full
+  view and racing camera, High and Performance) goes to Claude. Frame cost
+  within 10% of the ring.
 
 ## 3. Last Car Rolling
 
@@ -303,6 +345,7 @@ Dusthawk Rally. A gunner who fires the crossbow and hides in his own dust.
 | Dust Veil | When the player is within 40 m behind him: tell of brown exhaust puffs, then a smoke cloud (the arsenal's smoke, 7 m radius, 5 s) behind him, and, if he is driving straight, an 8 m oil strip behind the cloud. At most every 10, 8, 6 s (Easy, Medium, Hard) |
 | Counter | Go around the cloud, not through his line: the oil lies only where he drove straight |
 | Window | After a veil his engine coughs: 2 s at 70% speed, rear hits 1.5 times |
+| Oil strip detail (2 October 2026) | Driving straight means his yaw rate stayed under 10 degrees a second for the last 0.5 s. The strip is 4 m wide and 8 m long on the line he drove, starting at the cloud's far edge. In every other way it is an Oil Slick hazard (lifetime, 1 s owner grace, slip effect) |
 | Phase two | A dust storm: fog closes in (drawn only, never hides a tell), veils 20% more often, clouds 1.3 times wider |
 | Reward | Smoke Screen, unlocked early and working (built by ARS-CORE) |
 | Callouts | `DUST VEIL!`, `HE'S CHOKING. HIT HIM NOW!` |
@@ -317,6 +360,7 @@ Aurora GTR. An evasive gunner who splits into copies.
 | Mirage | Tell: a heat shimmer around her car. Then she splits into three matching cars that spread 8 m apart for 6 s. Only the real one fires and leaves tyre marks. A copy bursts into scrap on its first hit. At most every 12, 10, 8 s |
 | Counter | Watch who fires and whose tyres mark the floor |
 | Window | Hitting the real Mirage during the split ends it and stuns her for 2 s; hits then deal 1.5 times |
+| Split trigger (2 October 2026) | When ready, she splits once the player is within 40 m and she is not stunned or in a window. Her cooldown runs from the start of the fight, so there is no split at the start |
 | Phase two | Copies ram (rammer brain, half ram damage), splits 20% more often |
 | Reward | Decoy Drone, unlocked early and working (ARS-03 reuses these decoy cars) |
 | Build note | Decoy cars are `state.arena` participants with a `decoy` flag: they drive, can be hit and burst, but never score, fire or settle. `targetFor` (docs/ARSENAL.md) sends computer aim to them. |
@@ -346,6 +390,7 @@ Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.
 | Kettle Drop | Tell (1.4 times the usual): he revs and squats, and a red ring 8 m across appears on the floor where he will land. Then he leaps (1.2 s arc) and lands: every car in the ring is shoved outward as if hit at 25 mph and loses 20 armor; a car he lands on squarely loses 40. At most every 12, 10, 8 s |
 | Counter | Get out of the ring |
 | Window | He is stuck for 2.5 s after landing, wheels spinning |
+| Drop detail (2 October 2026) | Trigger: when ready, with the player on the floor 12 to 40 m away. The ring's spot is committed when the tell starts: the player's position predicted at landing, on the floor and at most 40 m from take-off. In phase two the second ring is aimed the same way at the first landing, and the 2.5 s window follows only the second landing |
 | Phase two | Two drops in a row, the second ring appearing as he lands |
 | Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early |
 | Callouts | `KETTLE DROP!`, `HE'S STUCK. HIT HIM NOW!` |
@@ -620,7 +665,13 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   wrecker. A marked car that wrecks itself passes the mark to the car that
   last hit it, or to the leader if nobody did.
 - **Computer:** everyone hunts the marked car; the marked car runs (kiter
-  brain) and uses its rear weapons.
+  brain) and uses its rear weapons. When the player is marked, the Easy and
+  Medium hunter cap still holds (2 October 2026).
+- **Hand-over details (2 October 2026):** a car that gets the mark from a
+  self-wreck scores nothing for it; only wrecking the marked car scores 20.
+  If the last hitter or the leader is itself wrecking, the mark goes to the
+  nearest running car (seeded order breaks ties). The leader never means the
+  marked car itself.
 
 ### Ambush Alley (ARENA-05)
 
@@ -666,6 +717,15 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   can be played here (the venue choice is on the SCRAPDOME panel once the
   Salt Flats is unlocked). Warlord fights stay where section 5 places them:
   the Scrapdome, except the Tollkeeper, whose fight is the Convoy Raid here.
+- **Salt ground (Kyle, 1 October 2026; replaces the tiled salt photo):** the
+  mirrored photo repeats as an obvious checker pattern ("looks like a silly
+  pattern"). The salt is generated instead, from a fixed seed, with no
+  visible repeat from the full view or the racing camera: a large-scale
+  tone that drifts across the whole bowl, the raised polygon crust ridges
+  that real salt pans have (a few metres across), and fine grain up close.
+  The drivable band is a little greyer and dustier from tyres. The salt photo
+  and its mirrored material are removed in the same card. Frame cost stays
+  within the venue's 10% limit.
 
 ### Convoy Raid (ARENA-07)
 

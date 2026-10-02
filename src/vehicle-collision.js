@@ -116,6 +116,64 @@ export function solveVehicleImpact(a, b, contact = boxContact(a, b)) {
   return finish(result, a, b);
 }
 
+// The arena's outer wall supplies the blocked normal reaction. A body pinned
+// there keeps its along-wall mobility. The wall supports its normal load and
+// contact torque; it does not turn it into an infinite-mass body in every direction. The released solver above
+// remains the default when neither contact impulse points into a solid wall.
+export function solveWallConstrainedImpact(a, b, walls, contact = boxContact(a, b)) {
+  const n = contact.normal, p = contact.point, T = CRASH_TUNING;
+  const wallA = walls.a && n.x * walls.a.x + n.z * walls.a.z > 1e-8 ? walls.a : null;
+  const wallB = walls.b && -n.x * walls.b.x - n.z * walls.b.z > 1e-8 ? walls.b : null;
+  if (!wallA && !wallB) return solveVehicleImpact(a, b, contact);
+  const ra = {x: p.x - a.x, z: p.z - a.z}, rb = {x: p.x - b.x, z: p.z - b.z};
+  const velocity = (body, r) => ({x: body.vx + body.spin * r.z, z: body.vz - body.spin * r.x});
+  const va = velocity(a, ra), vb = velocity(b, rb);
+  const closing = (va.x - vb.x) * n.x + (va.z - vb.z) * n.z;
+  const result = {
+    a: {vx: a.vx, vz: a.vz, spin: a.spin}, b: {vx: b.vx, vz: b.vz, spin: b.spin},
+    closingMps: Math.max(0, -closing), normal: n, point: p,
+    wallA: !!wallA, wallB: !!wallB,
+  };
+  if (closing >= 0) return finish(result, a, b);
+  const permitted = (vector, wall) => {
+    if (!wall) return vector;
+    const along = -vector.x * wall.z + vector.z * wall.x;
+    return {x: -wall.z * along, z: wall.x * along};
+  };
+  const inverse = u => {
+    const ua = permitted(u, wallA), ub = permitted(u, wallB);
+    return (u.x * ua.x + u.z * ua.z) / a.mass +
+      (u.x * ub.x + u.z * ub.z) / b.mass +
+      (wallA ? 0 : cross(ra, u) ** 2 / a.inertia) +
+      (wallB ? 0 : cross(rb, u) ** 2 / b.inertia);
+  };
+  const normalInverse = inverse(n);
+  if (!(normalInverse > 0)) return finish(result, a, b);
+  const j = -(1 + T.restitution) * closing / normalInverse;
+  const apply = impulse => {
+    const ia = permitted(impulse, wallA), ib = permitted(impulse, wallB);
+    result.a.vx += ia.x / a.mass; result.a.vz += ia.z / a.mass;
+    if (!wallA) result.a.spin += cross(ra, impulse) / a.inertia;
+    result.b.vx -= ib.x / b.mass; result.b.vz -= ib.z / b.mass;
+    if (!wallB) result.b.spin -= cross(rb, impulse) / b.inertia;
+  };
+  apply({x: n.x * j, z: n.z * j});
+  const va2 = velocity(result.a, ra), vb2 = velocity(result.b, rb);
+  const slide = {x: va2.x - vb2.x, z: va2.z - vb2.z};
+  const normal = slide.x * n.x + slide.z * n.z;
+  const tangent = {x: slide.x - n.x * normal, z: slide.z - n.z * normal};
+  const length = Math.hypot(tangent.x, tangent.z);
+  if (length > 1e-6) {
+    const t = {x: tangent.x / length, z: tangent.z / length};
+    const tangentInverse = inverse(t);
+    if (tangentInverse > 0) {
+      const jt = Math.max(-T.friction * j, Math.min(T.friction * j, -length / tangentInverse));
+      apply({x: t.x * jt, z: t.z * jt});
+    }
+  }
+  return finish(result, a, b);
+}
+
 function finish(result, a, b) {
   const mph = CRASH_TUNING.mphToMps;
   result.a.dvMph = Math.hypot(result.a.vx - a.vx, result.a.vz - a.vz) / mph;

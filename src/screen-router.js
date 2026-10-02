@@ -16,6 +16,7 @@ import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
+import {WEAPON_IDS} from './weapon-upgrades.js';
 import './screen-menu.css';
 import './screen-players.css';
 import './screen-leaderboard.css';
@@ -72,7 +73,7 @@ root.querySelector('.scene-line').insertAdjacentHTML('beforeend','<button type="
 const weaponHud=document.createElement('section');weaponHud.className='weapon-hud';weaponHud.hidden=true;weaponHud.setAttribute('aria-label','Combat weapons');
 const gamepadWeaponDirections={ufo:'↑',bomb:'→',crossbow:'↓',star:'←'};
 const gamepadWeaponNames={ufo:'Up',bomb:'Right',crossbow:'Down',star:'Left'};
-weaponHud.innerHTML=Object.entries(WEAPONS).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
+weaponHud.innerHTML=WEAPON_IDS.map(id=>[id,WEAPONS[id]]).map(([id,w])=>`<button type="button" data-weapon="${id}" title="${w.name} · Key ${w.key} · Gamepad D-pad ${gamepadWeaponNames[id]}" aria-label="${w.name}, keyboard ${w.key}, gamepad D-pad ${gamepadWeaponNames[id]}">${w.key} ${gamepadWeaponDirections[id]} · ${w.name}</button>`).join('')+'<span class="weapon-status"></span>';
 root.querySelector('#overlay').append(weaponHud);const weaponStatus=weaponHud.querySelector('.weapon-status');
 const weaponButtons=[...weaponHud.querySelectorAll('[data-weapon]')];
 weaponHud.addEventListener('click',e=>{const button=e.target.closest('[data-weapon]');if(button)app.duel.fireWeapon(button.dataset.weapon);});
@@ -104,6 +105,7 @@ const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getG
 const armoryScreen = createArmoryScreen({profile, credits, escapeHTML,
   getGarageMessage:()=>garageMessage, getArmoryCar:()=>armoryCar,
   kitsEnabled:()=>app.wastelandUnlocked(),
+  arsenalEnabled:()=>app._switches().enabled('arsenal')===true,
   warlordsEnabled:()=>app.warlordsAvailable?.()===true,
   loadoutsEnabled:()=>app.wastelandUnlocked(),
   crewEnabled:()=>app.wastelandUnlocked(),
@@ -161,6 +163,7 @@ root.addEventListener('click',e => {
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
   for (const key of ['car','difficulty','mode','cpuDifficulty']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
+  if(button.dataset.arsenalPurchase){const result=app.purchaseArsenalWeapon(button.dataset.arsenalPurchase);refreshGarage(result.ok?'Weapon purchased.':result.reason);return;}
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
   if(button.dataset.crewSelect){
     const result=app.selectCrewMember(button.dataset.crewSelect);
