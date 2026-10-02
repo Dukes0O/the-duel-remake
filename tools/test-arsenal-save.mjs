@@ -216,6 +216,15 @@ test('SAVE: CPU four-slot loadout uses seeded selection and only eligible implem
   }
 });
 
+for (const rank of [2, 6]) test('CPU SELECTION: rank ' + rank + ' carries front damage and at most two controls', () => {
+  const control = new Set(['ufo', 'star', 'oil', 'smoke']);
+  for (const difficulty of ['easy', 'medium', 'hard']) for (let seed = 1989; seed < 2019; seed++) {
+    const loadout = weapons.cpuArsenalLoadout(rank, difficulty, {rng: makeRng(seed)});
+    ok(loadout.includes('crossbow'), 'current implemented pool always has a working front attack');
+    ok(loadout.filter(id => control.has(id)).length <= 2, 'a four-slot CPU loadout has at most two defensive or control weapons');
+  }
+});
+
 after(() => console.log('Arsenal save: ' + checks + ' acceptance checks reached.'));
 
 

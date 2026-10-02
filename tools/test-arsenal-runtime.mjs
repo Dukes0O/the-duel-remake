@@ -266,6 +266,21 @@ for (const rank of [1, 2, 6]) for (const difficulty of ['easy', 'medium', 'hard'
     } finally {app.dispose?.();}
   });
 }
+test('NATIVE CPU: rank-six launch fixes the sampled all-control loadout without changing traffic', () => {
+  const app = appFixture({rank: 6}), control = new Duel({seed: 1989, featureFlags: flags(false)});
+  try {
+    app.startCampaign({mode: 'wasteland', seed: 1989, opponentCount: 3, cpuDifficulty: 'medium'});
+    control.startCampaign({mode: 'wasteland', seed: 1989, discoveredGate: true, opponentCount: 3,
+      cpuDifficulty: 'medium'});
+    for (const cpu of app.duel.state.opponents) {
+      ok(cpu.weaponLoadout.includes('crossbow'), 'native opponent carries the implemented forward damage weapon');
+      ok(cpu.weaponLoadout.filter(id => ['ufo', 'star', 'oil', 'smoke'].includes(id)).length <= 2,
+        'native opponent respects the settled defensive/control limit');
+    }
+    eq(app.duel.state.traffic, control.state.traffic, 'CPU choice consumes no road traffic randomness');
+  } finally {app.dispose?.();}
+});
+
 test('NATIVE CPU CONTROL: switch-off road launch preserves the existing starter-only simulation', () => {
   const app = appFixture({enabled: false});
   try {
