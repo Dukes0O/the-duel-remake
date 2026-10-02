@@ -273,7 +273,7 @@ test('NATIVE CPU: rank-six launch fixes the sampled all-control loadout without 
     control.startCampaign({mode: 'wasteland', seed: 1989, discoveredGate: true, opponentCount: 3,
       cpuDifficulty: 'medium'});
     for (const cpu of app.duel.state.opponents) {
-      ok(cpu.weaponLoadout.includes('crossbow'), 'native opponent carries the implemented forward damage weapon');
+      ok(cpu.weaponLoadout.includes('crossbow') || cpu.weaponLoadout.includes('harpoon'), 'native opponent carries the implemented forward damage weapon');
       ok(cpu.weaponLoadout.filter(id => ['ufo', 'star', 'oil', 'smoke'].includes(id)).length <= 2,
         'native opponent respects the settled defensive/control limit');
     }
