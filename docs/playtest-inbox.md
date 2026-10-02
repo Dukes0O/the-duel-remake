@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## Arsenal rear-use report for Claude
+
+The full wave-one report retains all historical samples but records no CPU Oil
+or Smoke use: its damaging-policy seed equips neither weapon, while the other
+races rarely meet their settled rear-defense conditions. May we add separately
+labelled complete races using naturally assigned Oil/Smoke loadouts, legal
+driving inputs and genuine damage, counting their real native events without
+changing historical samples or targets? Medium also wins too often and will
+receive ordinary tuning after the two native motion fixes.
+
 ## Salt control fixture for Kyle
 
 The public Salt checks pass. Its old eight-second Dome control trace predates
