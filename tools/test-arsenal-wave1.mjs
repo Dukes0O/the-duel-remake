@@ -485,32 +485,52 @@ check('genuine repeated Caltrops launches retain at most 24 native hazards', () 
   }
   assert.equal(hazardsFor(duel).length, 24, 'native registry evicts old products at its settled 24 cap');
 });
-check('native scene draws the tether between current cars and disposes its line resources', () => {
-  const r = hitHarpoon(), scene = createCombatScene(), resources = new Set();
+check('native scene draws the cable between current cars and disposes its pooled resources', () => {
+  const r = hitHarpoon(), scene = createCombatScene(), resources = new Set(), pooled = [];
   let disposed = 0;
   try {
     scene.update(r.duel); const ends = [];
     scene.group.traverse(node => {
-      if (!node.isLine || node.isLineLoop || !node.visible) return;
+      if (!node.isMesh || !node.userData.arsenalTether) return;
+      const geometry = node.geometry, positions = geometry?.attributes.position;
+      const {radialSegments: radial, tubularSegments: tubular, closed} = geometry?.parameters || {};
+      assert.equal(geometry?.type, 'TubeGeometry', 'the actual drawn cable has tube geometry');
+      assert.ok(Number.isInteger(radial) && radial >= 3 && Number.isInteger(tubular) && tubular > 0);
+      assert.equal(closed, false, 'the cable has two real attachment ends');
+      assert.equal(positions.count, (tubular + 1) * (radial + 1));
+      pooled.push({node, geometry, positions, array: positions.array});
+      resources.add(geometry); resources.add(node.material);
+      if (!node.visible) return;
       for (let parent = node.parent; parent; parent = parent.parent) if (!parent.visible) return;
-      const positions = node.geometry?.attributes.position;
-      if (!positions || positions.count < 2) return;
       node.updateWorldMatrix(true, false);
-      const transform = index => {
-        const x = positions.getX(index), y = positions.getY(index), z = positions.getZ(index), m = node.matrixWorld.elements;
-        return {x: m[0]*x+m[4]*y+m[8]*z+m[12], z: m[2]*x+m[6]*y+m[10]*z+m[14]};
+      const terminal = ring => {
+        let x = 0, y = 0, z = 0;
+        for (let vertex = 0; vertex < radial; vertex++) {
+          const index = ring * (radial + 1) + vertex;
+          x += positions.getX(index); y += positions.getY(index); z += positions.getZ(index);
+        }
+        x /= radial; y /= radial; z /= radial;
+        const m = node.matrixWorld.elements;
+        return {x: m[0]*x+m[4]*y+m[8]*z+m[12], y: m[1]*x+m[5]*y+m[9]*z+m[13],
+          z: m[2]*x+m[6]*y+m[10]*z+m[14]};
       };
-      ends.push([transform(0), transform(positions.count - 1)]);
-      resources.add(node.geometry); resources.add(node.material);
+      ends.push([terminal(0), terminal(tubular)]);
     });
     const a = point(r.duel, r.shooter), b = point(r.duel, r.target);
-    const close = (p, car) => Math.hypot(p.x - car.x, p.z - car.z) < 4;
+    const close = (p, car) => Math.hypot(p.x-car.x, p.y-car.y, p.z-car.z) < .05;
     assert.ok(ends.some(([p, q]) => close(p, a) && close(q, b) || close(q, a) && close(p, b)),
-      'visible native line connects the actual shooter and tethered car');
-    assert.ok(ends.length <= 4, 'one line per actual arena-sized car pool remains bounded');
+      'visible native cable centers connect the actual shooter and victim in world space');
+    assert.equal(pooled.length, 4, 'the actual four-car cable pool stays bounded');
+    assert.ok(ends.length <= 4, 'visible cables never exceed that pool');
+    for (let update = 0; update < 10; update++) scene.update(r.duel);
+    for (const row of pooled) {
+      assert.equal(row.node.geometry, row.geometry, 'drawing reuses the actual geometry');
+      assert.equal(row.geometry.attributes.position, row.positions, 'drawing reuses the position buffer');
+      assert.equal(row.positions.array, row.array, 'drawing reuses the actual vertex storage');
+    }
     for (const resource of resources) resource.addEventListener('dispose', () => disposed++);
   } finally {scene.dispose();}
-  assert.ok(resources.size > 0 && disposed === resources.size, 'native scene disposes the actual line geometry and material');
+  assert.ok(resources.size > 0 && disposed === resources.size, 'native scene disposes all pooled cable resources');
 });
 check('native rendering reuses bounded pools, draws both products and leaves simulation untouched', () => {
   const duel = race(); assert.equal(duel.fireWeapon('harpoon'), true); assert.equal(duel.fireWeapon('caltrops'), true);
