@@ -92,7 +92,7 @@ async function runPublicEntry(context) {
             !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only QA required');
         app.stop(); app.audio.setMuted(true); app.setGraphicsQuality(${JSON.stringify(quality)});
         for (const panel of document.querySelectorAll('details'))
-          if (panel.querySelector('summary')?.textContent.startsWith('MENU QA')) panel.open=false;
+          if (panel.querySelector('summary')?.textContent.startsWith('MENU QA')) panel.style.display='none';
         const rank=9,xp=Array.from({length:rank-1},(_,i)=>400+150*i).reduce((sum,n)=>sum+n,0);
         app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true,rank,xp}};
         if (!app._saveProfile()) throw Error('Memory fixture save failed');
