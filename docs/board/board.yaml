@@ -1015,14 +1015,16 @@ tasks:
     branch: codex/foot/crew-gear
     flag: crew-gear
     owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/test-crew-gear-modules.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
-    hooks: [src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-camera.js]
+    hooks: [src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-camera.js, src/crew-ui.js, src/screen-armory.js]
     hook_requests: [src/feature-flags.js, src/combat-hud.js, src/sound-bank.js, src/audio.js, src/render3d.js, src/combat-projectiles.js, src/combat.js, src/combat-scene.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
-    sequencing: "After independent module review, Crew may wire its four free roster, on-foot and camera hooks. Bounty retains the switch catalog, HUD and renderer; Arsenal retains projectile, combat-scene and audio hooks until merge. Settled constants stay in the owned gear module, so no tuning edit is needed."
+    sequencing: "The reviewed modules and four free roster, on-foot and camera hooks are built. Crew may add the two free Armory panel hooks after tests first, preserving the off-state panel and using the actual dev flag and discovery context. Bounty retains the switch catalog, HUD and renderer; Arsenal retains projectile, combat-scene and audio hooks until merge. Settled constants stay in the owned gear module, so no tuning edit is needed."
     note: "Signature simulation is built and eleven tests-first module regressions pass. Native admission still has four genuine wiring failures; review precedes wiring the four free hooks, while other hooks wait for their owners."
     module_source_commit: d22cfe4
     module_test_commit: 3ecefcd
     module_checks_passed: 11
+    native_hook_commit: 97c601f
+    earned_crew_test_commit: b21e080
     test_commit: b85ce3007e983e538f6e5c7dde3a051b522af619
     acceptance:
       - "Build docs/CREW.md section 1 exactly: the crew-gear switch (dev), all eight items on key 3 (gamepad D-pad down on foot), gear refilled on getting back in, Jax, Cinder and Tusk active. Wren's grenades and Tusk's shove use the arsenal's smoke and the crash solver."
