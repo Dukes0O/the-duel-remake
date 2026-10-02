@@ -92,6 +92,19 @@ function render(recipe, variant) {
       'loudnorm=I=-16:TP=-2.5:LRA=11', '-ar', String(RATE), '-f', 'f32le', 'pipe:1'], {input: pcm});
   return recipe.loop ? joinLoop(conditioned) : conditioned;
 }
+export function measureArsenalWaveOneCue(bytes) {
+  const decoded = ffmpeg(['-i', 'pipe:0', '-ac', '1', '-ar', String(RATE),
+    '-f', 'f32le', 'pipe:1'], {input: bytes});
+  const duration = decoded.length / 4 / RATE;
+  // EBU gating needs a 400 ms block. Padding is analysis-only: the OGG and
+  // its decoded playback stay exact, and true peak still reads the real signal.
+  const analysisDurationSec = duration < .4 ? 1 : duration;
+  const analysis = duration < .4 ? ffmpeg(['-f', 'f32le', '-ar', String(RATE),
+    '-ac', '1', '-i', 'pipe:0', '-af', 'apad=whole_dur=1',
+    '-c:a', 'pcm_f32le', '-f', 'wav', 'pipe:1'], {input: decoded}) : bytes;
+  return {...measureLoudness(analysis), analysisDurationSec,
+    analysisPaddingSec: analysisDurationSec - duration};
+}
 export function buildArsenalWaveOneAudio({
   out = join(ROOT, 'public/assets/audio/arsenal-wave1'),
   report = join(ROOT, '.qa-dist/arsenal-wave1-audio/build.json'),
@@ -106,7 +119,7 @@ export function buildArsenalWaveOneAudio({
       bytes = ffmpeg(['-f', 'f32le', '-ar', String(RATE), '-ac', '1', '-i', 'pipe:0',
         '-af', 'volume=' + attenuation + 'dB', '-fflags', '+bitexact', '-flags:a', '+bitexact',
         '-map_metadata', '-1', '-c:a', 'libvorbis', '-q:a', '5', '-f', 'ogg', 'pipe:1'], {input: pcm});
-      measured = measureLoudness(bytes);
+      measured = measureArsenalWaveOneCue(bytes);
       if (!measured.available) throw Error('Unmeasurable recording ' + recipe.cue);
       if (measured.truePeakDbtp <= -1.5) break;
       attenuation -= measured.truePeakDbtp + 1.65;

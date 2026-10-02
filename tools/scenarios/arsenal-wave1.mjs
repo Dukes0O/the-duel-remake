@@ -5,6 +5,10 @@ import {run as runCore} from './arsenal-core.mjs';
 const DT = 1 / 120;
 async function paint(context, name) {
   await context.evaluate(`window.__waveOnePaint()`);
+  await context.evaluate(`document.querySelectorAll('details').forEach(panel=>{
+      const title=panel.querySelector('summary')?.textContent||'';
+      if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.hidden=true;
+    })`);
   await context.screenshot(name);
 }
 async function start(context) {
@@ -124,10 +128,6 @@ export async function run(context) {
     await context.waitFor(`!!window.__qaApp && !!window.__render &&
       document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' &&
       !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'memory-only wave-one production page',60000);
-    await context.evaluate(`document.querySelectorAll('details').forEach(panel=>{
-      const title=panel.querySelector('summary')?.textContent||'';
-      if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.hidden=true;
-    })`);
     await context.evaluate(`(() => {
       const quality=document.querySelector('#graphics-quality');quality.value='${quality}';
       quality.dispatchEvent(new Event('change',{bubbles:true}));
