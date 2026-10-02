@@ -12,7 +12,7 @@ async function assets(){const source=privatePath(process.env.SALT_FLATS_RENDER_A
   // The harness has already built. Serve unchanged approved bytes from only its
   // disposable QA root at the native loader URL. No public asset is installed.
   const destination=privatePath(join(root,'.qa-dist/assets/models/wasteland/salt-flats/venue.glb'),'qa-dist');await mkdir(resolve(destination,'..'),{recursive:true});await copyFile(source,destination);return {source,destination,sha256:expected,bytes:bytes.length};}
-async function settled(context,label){await context.waitFor(`(()=>{const a=window.__qaApp,r=window.__render;if(!a||!r)return false;a.onFrame(a.duel.state,0);r.renderFrame();return document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&document.querySelector('#renderer-loading')?.hidden;})()`,label,60000);
+async function settled(context,label){await context.waitFor(`(()=>{const a=window.__qaApp,r=window.__render;if(!a||!r)return false;a.onFrame(a.duel.state,0);r.renderFrame();return a.visualReady&&document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&document.querySelector('#renderer-loading')?.hidden;})()`,label,60000);
   await context.evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))');}
 async function start(context,quality,venue){await context.evaluate(`(()=>{const a=window.__qaApp;if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only actual game required');a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});for(const d of document.querySelectorAll('details'))if(d.querySelector('summary')?.textContent.startsWith('MENU QA'))d.open=false;
   // Explicit low-level private Duel entry. This does not claim the held public
@@ -63,7 +63,9 @@ async function click(context, selector) {
     button.scrollIntoView({block:'center'});
     const rect = button.getBoundingClientRect();
     if (!rect.width || !rect.height) throw Error('Hidden yard control');
-    return {x:rect.x+rect.width/2,y:rect.y+rect.height/2};
+    const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+    if (!button.contains(document.elementFromPoint(x,y))) throw Error('Covered yard control');
+    return {x,y};
   })()`);
   await context.command('Input.dispatchMouseEvent', {type:'mousePressed',button:'left',clickCount:1,...point});
   await context.command('Input.dispatchMouseEvent', {type:'mouseReleased',button:'left',clickCount:1,...point});
@@ -95,9 +97,10 @@ async function runPublicEntry(context) {
         app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true,rank,xp}};
         if (!app._saveProfile()) throw Error('Memory fixture save failed');
         if (!app.visitWasteland()) throw Error('Actual yard visit refused');
-        app.advance(8);
-        if (!app.isYardHomeActive()) throw Error('Actual yard arrival failed');
       })()`);
+      await settled(context,quality+' actual yard transition');
+      await context.evaluate('window.__qaApp.advance(8)');
+      await context.waitFor('window.__qaApp.isYardHomeActive()',quality+' actual yard arrival');
       for (const mode of ['last-car-rolling','fuel-run']) {
         await click(context,'[data-action="yard-scrapdome"]');
         await context.waitFor(`!!document.querySelector('[data-arena-venue="salt-flats"]')`,'eligible Salt venue choice');
@@ -138,6 +141,7 @@ async function runPublicEntry(context) {
         await settled(context,quality+' '+mode+' rematch loading');
         await click(context,'#pause-button');
         await click(context,'[data-action="arena-yard"]');
+        await settled(context,quality+' actual return transition');
         await context.evaluate('window.__qaApp.advance(8)');
         await context.waitFor('window.__qaApp.isYardHomeActive()','actual return to yard');
       }
