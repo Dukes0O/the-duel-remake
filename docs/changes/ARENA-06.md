@@ -1,7 +1,7 @@
 # ARENA-06: Salt Flats
 
-Status: waiting_on: kyle. Public Source and browser acceptance are complete;
-final gates are blocked by automatic approval review of the old control fixture.
+Status: ready for current lane gates. Kyle explicitly approved the control
+fixture migration on 2 October; public Source and browser acceptance are complete.
 
 ## Changed
 
@@ -46,8 +46,8 @@ round and Infinity sudden death. A separate 600 s observation watchdog never
 changes game limits, forces results or changes next-delivery rules. Fixtures
 explicitly enable the genuine Salt and Fuel flags. Both existing full-round
 assertions pass with exact seeded traces/results and native physical bounds.
-Whole current native acceptance: 63 checks, 62 PASS, 1 old-control failure;
-all 16 registered Course geometry cases pass. Expected negative-source guards
+Earlier native acceptance: 63 checks, 62 PASS, 1 old-control failure;
+all 16 registered Course geometry cases passed. Expected negative-source guards
 reject altered licensed fixtures; genuine originals and runtime assets remain.
 
 Actual memory-only browser acceptance passes all four public entry cases:
@@ -58,19 +58,23 @@ zero warnings/errors, private port 15584. The temporary QA overlay initializes
 before hiding; stopped App transitions are presented before clicking.
 The muted check does not judge sound or claim a new art/frame measurement.
 
-## Approval blocker
+## Approved control migration
 
-The additive eight-second Scrapdome control predates Kyle's ordinary armor
-change from 50 to 120. An independent exact sampler review proves identical
-current integration and Salt traces/full state. Restoring only old initial
-armor reproduces the old frozen trace; physical geometry and main replay files
-stay exact. Formal review is committed on the card in integration 454700b.
-Automatic approval review rejected the original update and the one narrowed
-retry: it treats committed review and tool evidence as untrusted. No frozen
-fixture, sampler, assertion, tolerance or main replay pin was changed.
-Kyle must explicitly approve updating only this fixture's captured baseline,
-scope and trace hash. No workaround or further retry will run. Lane tier and
-build remain pending; the card cannot merge while this test is failing.
+Kyle explicitly approved all three overnight blockers on 2 October, including
+Salt's control trace migration for his ordinary-car armor change from 50 to 120.
+Prior independent exact review proved current integration and Salt traces/full
+state match, and old initial armor alone restores the old frozen trace.
+The unchanged native eight-second 120 Hz producer repeats current trace
+6817883b3be0567e9bb201581fa30726f1f35ffd0b2f3d50fb1c7178e90411bc exactly twice.
+Only capturedCommit, scope and this LCR trace hash change. Physical hash
+ed9d0c026108a96dc68e34f5fb56a7b3db4f7d667ba39a744f7762faa5ff2ec7 and ordinary
+replay file hash b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a stay exact.
+The sampler, capture-once guard, all assertions/tolerances and all three main
+replay files remain byte-exact. Storage is synthetic and has zero entries.
+Focused checks before migration: 3 checks, 2 PASS, 1 old-trace RED.
+Post-change focused controls pass 3/3, public native entry 32/32 and full
+seeded native rounds 2/2. Current lane tier and build await the Director's
+serialized gate slot; no broad gate or browser capture ran in this update.
 
 ## Accepted private evidence
 
@@ -86,4 +90,5 @@ Removed active photo loading/configuration, embedded photo, mirrored sampler,
 JPEG helper and photo-only assertions under Kyle's written ground decision.
 Removed the consumed mode-scope question and obsolete finite Fuel sudden-death
 assertion under independent review. Licensed provenance, current game assets,
-physical rules, frozen control fixture and existing main replay pins remain.
+physical rules and existing main replay pins remain. Removed the superseded
+50-point-armor LCR trace baseline under Kyle's explicit approval.
