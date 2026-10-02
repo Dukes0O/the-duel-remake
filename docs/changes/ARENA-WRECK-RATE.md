@@ -1,35 +1,66 @@
 # ARENA-WRECK-RATE
 
-Status: native acceptance is red; tuning waits for the Claude armor answer.
+Status: ready for lane gate and build; gameplay acceptance passes.
 
-## Changes
+## Changed
 
-Added two acceptance checks. The first plays the same 12 Medium full-field
-rounds used by the balance report: four seeds and three player cars. Their
-mean must be 10 to 14 wrecks. The second preserves the warlord armor
-multiplier of 1.5. No production code changed in this tests-first slice.
+Claude's evening answer keeps every warlord's absolute armor as released.
+Ordinary arena cars now use 1.2 of race armor for Last Car Rolling and the
+public modes. Warlord arena setup keeps its former
+0.5 base scale before the unchanged 1.5 boss multiplier. Steering, pilot,
+brains, damage, clocks and respawns are untouched.
+
+The balance tool's direct-execution guard lets native acceptance tests import
+playRound without starting the whole report. Its normal CLI remains unchanged.
 
 ## Tests
 
-The real twelve-round test fails as intended: Medium averages 20.75 wrecks,
-above the settled 10 to 14 target. The unchanged 1.5 warlord multiplier passes.
-The balance tool now uses a normal direct-execution guard so tests can import
-its native playRound without running the whole report. Syntax passes; the CLI
-report body is unchanged. The all-difficulty report remains required after tuning.
+Tests-first commit af9586b extends the existing target with all nine released
+warlord base armor values and actual Sal/player armor at all difficulties.
+The ordinary armor check genuinely failed at the old Falcone value of 50.
+The original twelve-round native target failed at 20.75 wrecks per Medium
+full-field round. The unchanged target is 10 to 14. At scale 0.8 the same twelve rounds gave
+17.333; at 1.2 they give 12.5. All five acceptance checks pass, including
+the actual released warlord armor values.
 
-## Design question
+The required arena-balance report finishes all 108 rounds, 36 per difficulty:
 
-The existing warlord-format test requires Sal's actual armor to equal the
-same car's ordinary arena armor times 1.5. Raising ordinary armor therefore
-raises Sal's absolute armor. If "Sal unchanged" means preserving absolute
-armor too, that conflicts with the existing assertion. Claude must settle
-this before tuning; no existing assertion is changed here.
+| Measure | Easy | Medium | Hard |
+| --- | --- | --- | --- |
+| Full-field wrecks per round | 12.7 | 12.5 | 14.4 |
+| Scripted player wins / 36 | 16 | 11 | 4 |
+| CPU near-target share | 0.65 | 0.65 | 0.63 |
+| CPU wall hits per round | 0.3 | 0.3 | 1.1 |
+| CPU reversing share | 0.073 | 0.103 | 0.095 |
+
+The Medium wreck target passes. Other difficulties are measured, not tuned
+against a new target. Focused native regressions pass all 263 subtests across
+seven files: warlord format, Sal, arena events, Fuel, shove, steering and its
+ceiling. No skips or cancelled cases. The unchanged steering checks include
+30/60/144 FPS repeats; all original assertions pass. Lane gate and build await
+their serialized window. Independent review of the armor separation and the
+approved Sal assertion change carries forward; final numbers are ready to review.
+
+Changed assertion: the former Sal format test tied boss and player armor to
+ordinary arena armor. Claude explicitly superseded that coupling on 1 October:
+the test now preserves the actual pre-tuning player 50 and Sal
+83.79469985707887, and retains its original full-armor assertion.
 
 ## Replays
 
-Existing steering checks and replay fingerprints are unchanged. This test
-does not add a steering rule.
+Only ordinary arena combat traces change because their armor increases.
+Paired native runs load the exact pre-tuning arena module in memory and the
+current module, with identical inputs. All ten old pins reproduce; all eight
+road/Sal controls remain exact with Fuel off and on. Only Last Car Rolling
+moves from db8e981 to 6584140: initial armor rises from 50 to 120, then the
+existing health-sensitive goals and combat diverge. The approved single pin
+changes; existing assertions, literal inputs and sample shape are unchanged.
+
+Headless fixed-step outcome runs share the approved window with Arsenal's
+balance report. Their elapsed times are advisory. No browser, frame, Blender,
+whole-lane or build run has started in this window.
 
 ## Removed
 
-Nothing. No existing tests or production code were replaced.
+Replaced the warlord-to-ordinary-armor coupling with the approved fixed
+warlord base scale. No old model, switch, steering rule or test was removed.
