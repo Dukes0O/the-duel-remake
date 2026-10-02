@@ -5,6 +5,20 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: SALT-RUNTIME-CHECKS
+    title: "Run Salt renderer acceptance against the installed asset"
+    owner: codex
+    lane: QA
+    size: S
+    needs: [ARENA-06]
+    status: building
+    claimed_by: codex-director-2026-10-02-resume
+    branch: codex/qa/salt-runtime-checks
+    owns: [tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, docs/changes/SALT-RUNTIME-CHECKS.md]
+    helpers: [reviewer]
+    acceptance:
+      - "Both native Salt renderer suites run after review evidence is deleted, loading the exact approved runtime model by default. Preserve the approved asset hash, every gameplay assertion and private candidate override. Lane/build and full tier pass before push."
+    note: "The full checkpoint found two missing private review files. Correct only the test input to the installed model; all native assertions and approved model bytes remain exact."
   - id: AUD-CRASH-PEAK
     title: "Existing car collision overload: measured sample and true-peak repair"
     owner: codex
