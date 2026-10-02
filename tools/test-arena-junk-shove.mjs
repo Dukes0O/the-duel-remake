@@ -107,7 +107,7 @@ function ram(car, mph, options = {}) {
 check('heavy junk uses 1.5 times the released ordinary-car mass in the native body spec', () => {
   const {duel, prop} = arena();
   assert.equal(duel._vehicleSpec(duel.state).mass, 1450, 'released unplated Falcone ordinary mass');
-  assert.equal(duel._vehicleSpec(prop).mass, 2175, 'junk solver mass must be 1.5 Ãƒâ€” 1450 kg');
+  assert.equal(duel._vehicleSpec(prop).mass, 2175, 'junk solver mass must be 1.5 times 1450 kg');
   assert.equal(actorBody(duel, prop).mass, 2175, 'released rigid-body bridge uses the same heavy mass');
 });
 for (const car of Object.keys(CARS)) for (const mph of [20, 40, 60]) {
