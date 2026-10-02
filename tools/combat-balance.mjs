@@ -535,7 +535,7 @@ function main(args) {
   const crossbowAim = crossbowProbe(options);
   const ownBombs = bombSpeedProbe(options);
   const rearDefenseRuns = flags.includes('arsenal')
-    ? ['medium', 'hard'].flatMap(difficulty => [1991, 1992]
+    ? ['medium', 'hard', 'easy'].flatMap(difficulty => [1991, 1992]
       .map(seed => run('rear-defense', difficulty, seed, options))) : [];
   const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec, rearDefenseRuns,
     elapsedSec: rounded((performance.now() - started) / 1000), crossbowAim, ownBombs });
