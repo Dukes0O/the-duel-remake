@@ -14,6 +14,7 @@ Bounded admission gives one genuine missing-venue failure and the exact ring
 control passes. Native cases also cover the solid centre pile, all nine cars
 reaching safe floor samples and real junk contact/crushing. Those mechanics
 remain unproved before Source. Actual renderer acceptance follows tests first.
+A separate real-world loading/purity/disposal test fails at missing native entry.
 No browser, frame, comparison or full gate pass is claimed. Future boss cards
 wire Pit selection in Claude's files; no public picker or replacement AI.
 
