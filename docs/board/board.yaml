@@ -690,7 +690,7 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-CREW-W]
-    status: review
+    status: merged
     claimed_by: codex-director-2026-10-01-afternoon
     branch: codex/art/vesper
     owns: [tools/blender/vesper-blackiron.py, tools/art/vesper-fit.json, tools/test-vesper-art.mjs, tools/scenarios/vesper-art.mjs, docs/changes/ART-FIT-CREW-W.md, docs/board/looks/vesper/]
@@ -705,7 +705,7 @@ tasks:
     guard_test_commit: "5e986cf"
     review_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
-    note: "Claude approved Vesper. Native and visible twelve-fighter frame checks pass; shared recipe registration waits for Tanker, then a fresh lane gate and build precede merge."
+    note: "The approved Vesper costume and private fitting recipe are merged after independent preservation review and current native, lane and build checks. WAR-04 installs the model when its real caller exists; no unused runtime model is added."
     qa_commit: "4044431d36f1eec2bbf59f01e361fac75dc3442a"
     round_1_sheet: ".lanes/vesper/docs/board/looks/vesper/round-1.jpg"
     hook_requests: [tools/test-blender-output.mjs]
@@ -713,6 +713,8 @@ tasks:
     lane_gate_commit: "3fe32b91137a8c1816b022567ca07f78162a4fcb"
     frame_qa_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
     claude_verdict: "1 October 2026, evening: approved. Vesper reads as her own person next to Nell, Odessa and Wren: dark steel and olive against their tan, with the dark red harness clear front and back, and gritty, not toy-like. Merge once the shared recipe registration and a green lane gate land; WAR-04 reveals and installs her."
+    merged_commit: d8c3e5062f7455e1f5216b873110e14209fe4239
+    gate_commit: 077259260d21be43bb876be54e56b627070f2efd
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -794,7 +796,7 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: review
+    status: merged
     review_commit: f2a0cfd
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
@@ -814,18 +816,17 @@ tasks:
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
-    note: "The two roof and lamp corrections pass all native checks and twenty-two game views, preserving race state. The paired roof close-up is ready for Claude before merge; quiet frame and current lane gates remain."
+    note: "Merged after Claude approved the roof and private installation order, with all fresh lane suites and build passing. The recipe and presenter are ready; ARENA-07 regenerates and installs the runtime model when Convoy Raid loads it."
     final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
-    final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
+    final_verdict: "Claude chose round three and approved its corrected roof close-up. The private recipe and presenter are accepted; distant readability remains for Kyle to judge with the playable Convoy Raid."
     source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
     frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
     claude_verdict_final: "1 October 2026, evening: round 3 is the pick. The red bands and red valve wheels finally read as targets, and the striped bumper and darker cab help. Install round 3 as the convoy tanker with two corrections that are fixes to round 3's own directions, not a fourth round: (1) the roof plate is plain dark steel in the middle with the black and yellow stripes only around its border; (2) the beacon lamps are amber, bright amber when lit and dull dark amber when off (they read cream and brown now). Show Claude one close-up of the roof, lamps on and off, before merge. Still below the art bar at distance; Kyle has the last look in the Preview when the Convoy Raid is playable."
     roof_qa_commit: 366140071fee436bb2f375e9f022f1cd877bb0aa
-    roof_closeup: ".lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg"
     roof_source_review: "Independent review clears the two approved roof corrections; donor geometry, contacts, valve rules and simulation state are preserved."
-    installation_question: "Claude: may fitting merge its recipe and renderer with the verified GLB kept private until ARENA-07 provides its game caller? Copying a currently unused public model would break the runtime placement rule."
-    gate_commit: 0213fb07d7d13549fd923a78221596e30e1f77f4
-    frame_verdict: "Corrected chase RAF pacing meets the budget in both qualities. CPU timing and tiny camera settling remain advisory limits; current native, lane and build checks pass. Claude still decides the roof and private-to-runtime installation order."
+    gate_commit: 1d16e6f03293fdeccb8c503ff206e05f94c349e8
+    merged_commit: ea9527746d2be12d61a99c736b10fd7ace807117
+    frame_verdict: "Corrected chase RAF pacing meets the budget in both qualities. CPU timing and tiny camera settling remain advisory limits; all native checks, twenty-two game views and fresh lane/build gates pass."
     claude_answer_0030: "2 October 2026, 00:30: the roof close-up is approved: plain dark plate, striped border only, amber lamps clearly on and off. Yes to the order: merge the recipe, presenter and tests now, keep the model out of public/ (it is rebuilt from the recipe), and ARENA-07 installs it in public/ when the Convoy Raid loads it. Kyle sees it in the Preview with the Convoy Raid."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
@@ -948,7 +949,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-02-overnight
     branch: codex/audio/arsenal-core-cues
-    owns: [tools/test-arsenal-core-audio.mjs, tools/scenarios/arsenal-core-audio.mjs, docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/]
+    owns: [tools/test-arsenal-core-audio.mjs, tools/build-arsenal-core-audio.mjs, tools/scenarios/arsenal-core-audio.mjs, docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/]
     hooks: [src/sound-bank.js, tools/audio/catalog.json, src/audio.js]
     helpers: [test_author, reviewer, audio_qa]
     flag: arsenal
@@ -1103,23 +1104,23 @@ tasks:
     size: L
     needs: [ART-SRC-SALTFLATS]
     status: review
+    waiting_on: kyle
     review_commit: "4bb0da063863e8a9450f9b419e817eff20c377f0"
     source_commit: "bac0d1c9c5465f953288d8d24ed2f84f62a8cbf9"
     test_commit: "c18e814"
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
     flag: salt-flats
-    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
-    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, tools/test-wasteland-beta.mjs]
-    hook_requests: [tools/test-blender-output.mjs]
-    sequencing: "Claude approved real public entry for Last Car Rolling and Fuel Run only. The independent review approves the released Fuel rule assertion and additive actual App coverage before Source. Salt owns the granted entry and renderer files; shared Blender registration waits for Tanker and then Vesper to merge."
+    owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-salt-flats-output.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
+    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, src/game.js, src/screen-router.js, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
+    sequencing: "Claude approved real public entry for Last Car Rolling and Fuel Run only. The independent review approves the released Fuel rule assertion and additive actual App coverage before Source. Salt owns the granted entry and renderer files; Tanker and Vesper are merged, so Salt now owns its shared Blender registration with independent tests first."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
-    note: "Claude approved the final art and the two built modes. Finish actual rank-nine yard selection and launch for both; Bounty and Ambush add this venue in their own cards. No new art round is needed."
+    note: "Both built modes pass their real public browser checks and the accepted art is unchanged. Automatic approval review requires Kyle’s explicit approval for the independently reviewed control-trace migration, so the fixture stays exact and Salt waits. Bounty and Ambush still add this venue in their own cards."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
@@ -1127,6 +1128,10 @@ tasks:
     design_question: "May Salt merge real Last Car Rolling and Fuel Run entry, with Bounty Hunt and Ambush Alley proving this venue in their own cards? Those modes are not built, and Ambush needs crew gear while Dune zoom waits for Salt to free the renderer."
     scope_note_commit: 4304028fb456395a64e257cd85813e35f241d875
     claude_answer_0030: "2 October 2026, 00:30: yes. Merge the Salt Flats with Last Car Rolling and Fuel Run playable there. Bounty Hunt (ARENA-04) and Ambush Alley (ARENA-05) each add the Salt Flats as part of their own cards."
+    control_review_baseline_commit: e8bb4ac631f5a9a9ccc38ed1aa40b0781cdfb9d8
+    control_review_source_commit: 2f010c159b0ccbea2b2c4677f79724ec7c4963fc
+    control_review_by: codex-independent-reviewer
+    control_review_verdict: "The unchanged Salt control sampler produces the exact same trace and full Duel state in integration and Salt, with original geometry and core replay files exact. Restoring only the previous starting armor reproduces the old frozen trace, so the reviewer approves updating only control provenance and that trace for Kyle’s approved armor change; all assertions and tolerances remain exact."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -3211,11 +3216,12 @@ tasks:
     size: M
     needs: [ARS-CORE]
     status: building
+    waiting_on: kyle
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arsenal-wave1
     flag: arsenal
     owns: [src/arsenal/harpoon.js, src/arsenal/caltrops.js, tools/test-arsenal-wave1.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
-    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/weapon-upgrades.js, src/combat-weapons.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, src/combat.js, src/combat-scene.js, tools/combat-balance.mjs, tools/test-combat-balance.mjs]
+    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/weapon-upgrades.js, src/combat-weapons.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, src/combat.js, src/combat-scene.js, tools/combat-balance.mjs, tools/test-combat-balance.mjs, src/career-backup.js, tools/test-career-backup.mjs, tools/test-arsenal-save.mjs]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build Harpoon and Caltrops exactly as docs/ARSENAL.md section 3, and computer use of all four wave 1 weapons (Oil Slick and Smoke Screen come from ARS-CORE). Every counter has a headless test."
@@ -3224,8 +3230,9 @@ tasks:
     sequencing: "Claude answered both literal rules, and native boundary tests are committed before Source. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. The audio card owns the three Oil and Smoke cues; further bank hooks need written release."
     design_question: "Claude: how long is Caltrops harmless to its owner after deployment, and what input threshold counts as steering hard away from a Harpoon tether? Tests use full steering for the settled counter until those exact rules are answered; Source has not started."
     test_commit: 37924a1cbce6cd3a1ec2a2953121208f7250b0ef
-    note: "Native tests now have fifty-two genuine failures and five preserved controls, including the settled owner grace and steering boundaries. Source proceeds within its named hooks; no other lane files are granted."
+    note: "The save-backup fix passes its new regressions. Automatic approval review requires Kyle to approve the reviewed Crossbow-or-Harpoon assertion change, so that assertion stays exact and the card waits. Further sound hooks still need Claude’s written release."
     claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
+    audio_release_question: "After the three Oil and Smoke cues merge, may wave one add its six settled Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer? Claude released the earlier card for three cues only; wave one needs its own written release. No existing sounds or voices would change."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO
@@ -3317,3 +3324,20 @@ tasks:
       - "Delete the two superseded preparation notes and their stale run-log pointer after independent fact review; retain decisions and existing gate verdicts."
       - "Docs-only lane tier and build pass; no runtime, save, asset or audio-folder change."
     note: "Merged after independent fact review, final clean576a76c lane6/6 in37.10s and build222modules421ms. Actor-specific protection is preserved in ARCHITECTURE; two superseded preparation notes and stale pointer removed. Runtime unchanged."
+  - id: ART-VESPER-PURITY-SCOPE
+    title: "Keep Vesper recipe preservation checks valid after later cards"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: [ART-FIT-CREW-W]
+    status: merged
+    claimed_by: codex-director-2026-10-02-overnight
+    branch: codex/tools/vesper-purity
+    owns: [tools/test-vesper-art.mjs, docs/changes/ART-VESPER-PURITY-SCOPE.md]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Independent tests first reproduce the existing historical-tree assertion failing on legitimate Salt entry before Vesper exports anything. Freeze the current source, public and replay file inventory before recipe execution, then keep the existing exact preservation checks afterward."
+      - "Keep static donor, recipe, reference and rights hashes and every native art, geometry, rig, action, material, lifecycle and repeatability assertion and tolerance unchanged. No new fingerprint file, asset, art round or guard matrix."
+    note: "Merged after independent tests-first reproduction, implementation review and current lane and build checks. Every recipe run now preserves its exact current game files, with all donor pins and native art assertions unchanged."
+    gate_commit: f12c822e6869be6a8ba372843379e2a24127e6f1
+    merged_commit: 700a947e52b450adba663853595a048180365ef2

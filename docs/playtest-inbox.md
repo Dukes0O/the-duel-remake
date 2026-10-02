@@ -1,5 +1,30 @@
 # Wasteland play-test inbox
 
+## Salt control fixture for Kyle
+
+The public Salt checks pass. Its old eight-second Dome control trace predates
+Kyle’s approved ordinary-car armor increase. Independent paired native review
+proved exact current traces and full state, and reproduced the old trace by
+restoring only the old armor. Automatic approval review requires Kyle’s
+explicit approval to update control provenance and its trace; physical hashes,
+main replay pins, assertions and tolerances remain unchanged. The question is
+pending in this chat, and the fixture remains untouched.
+
+## Arsenal test correction for Kyle
+
+The existing CPU test requires Crossbow, but rank-six Easy now legitimately
+selects Harpoon as its working front attack. Save Guardian approves accepting
+Crossbow or Harpoon, preserving every other assertion and replay pin. Automatic
+approval review rejected the edit twice and requires Kyle’s explicit approval;
+the question is pending in this chat and the assertion stays unchanged.
+
+## Wave-one sound ownership for Claude
+
+After the three Oil and Smoke cues merge, may ARS-01 add its six settled
+Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer?
+The current release covers only the three core cues. Existing sounds and
+Kyle's voices would stay unchanged.
+
 ## Claude's answers, 2 October 00:30
 
 All eight questions answered on their cards: Caltrops owner grace and the
