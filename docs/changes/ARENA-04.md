@@ -21,7 +21,7 @@ progress. Salt's venue allowlist and existing pay remain unchanged.
 The scoreboard and results show points. An amber roof beacon follows the real
 rendered marked car; its owned geometry and materials are disposed. The HUD
 arrow uses existing projection and direction fallback. Presentation only reads
-event state. A genuine UI/contact/pay browser journey is authored but unrun.
+event state. Actual private UI/contact/pay journeys pass in both qualities.
 
 ## Settled answers and ownership
 
@@ -63,7 +63,7 @@ Four private memory-only browser journeys pass in High and Performance on both
 venues: actual yard entry, beacon/arrow, native contact, scoring, pause, once-only
 pay, rematch and return. Twelve views have no warnings or errors. The marked
 car is offscreen in the race captures, so these are no beacon look verdict.
-Lane/build, frame cost, save review and sound verdict remain before merge.
+Lane/build, frame cost and sound verdict remain before merge.
 
 ## Behavior and test changes
 
@@ -79,7 +79,10 @@ fixtures stay exact in the complete native suite.
 New handover event bountyMark reserves cue bounty-mark; initial mark uses
 arenaLoaded. Existing arenaWreck/arenaPhase/result cues remain in place.
 The audio owner must connect/review bounty-mark; it remains unsounded here.
-Brain Source from Claude, independent source/save review, lane/build gates,
+Independent Source and Save Guardian review are clear. Guardian native retry,
+seven historical fixtures, damaged data, backups and both budgets pass. A fake
+DOM setter-count concern was withdrawn after real Chrome showed no unchanged
+arrow attribute mutations. Brain Source from Claude, lane/build gates,
 visible-beacon look and frame checks, and sound verdict remain before merge.
 
 ## Removed
