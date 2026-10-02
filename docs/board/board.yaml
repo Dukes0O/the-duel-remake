@@ -1127,7 +1127,7 @@ tasks:
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
-    note: "Kyle approved the reviewed armor control migration and native entry passes. The current gate found shortcut freshness metadata drift from Salt-only branches; prove all saved routes and refresh only source metadata before merge. Final art stays approved."
+    note: "All Salt source and static consumer corrections are reviewed. The complete gate passed all but one timing-sensitive audio batch; its unchanged isolated retry passes. Kyle requested a restart, so rerun the lane and build before merge; the interrupted gate is not a pass."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
@@ -1143,6 +1143,7 @@ tasks:
     kyle_control_approval: "Kyle, 2 October: approve the reviewed ordinary-car armor trace migration, preserving physical and main replay pins."
     catalog_review: "Independent review approves adding only Salt dev state and the exact catalog count of ten. All existing state, production and QA assertions stay unchanged."
     view_clock_review: "Independent review approves only the exact optional presentation parameter and ambient mirror clock in two frame guards; measurement defaults and CPU boundaries stay exact. The static launcher recipe adds Salt, without touching the running Preview or its output."
+    restart_source_commit: 6098efa
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex

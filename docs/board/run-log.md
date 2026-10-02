@@ -626,3 +626,37 @@ Actual Arsenal audio capture passes in both qualities with six native cues,
 moving flight and pause cleanup; delivered output does not clip. The Bounty
 mode module is now building in its free owned file. Its shared entry hooks
 wait for Salt and its brain seam is assigned to Claude in writing.
+
+## Restart checkpoint, 2 October 2026
+
+Kyle requested a restart. The active Salt lane gate was interrupted; it is
+not a pass. No feature merge or push happened in this continuation. All helpers
+finished and all unfinished lanes are retained. The old timers remain paused.
+
+Resume on integration/wasteland, never the live dev folder. Salt lane is clean
+at 6098efa. Its complete latest gate reached 331/332: one existing audio batch
+missed the strict ten-millisecond dispatch window while all six voices played.
+The unchanged isolated suite then passed 23/23. Do not loosen its assertion.
+Rerun the lane tier with --changed --jobs 8 --keep-going, then its build; merge
+only after both pass. Final art and public entry are approved; the control,
+shortcut metadata, flag catalog and view-clock guard corrections are reviewed.
+Outgoing binaries are only the current Salt model and three comparison sheets.
+
+Arsenal lane is clean at 941eb9b. Both CPU corrections, six runtime CC0 sounds
+and the old-record filters are approved and implemented. Native audio passes
+37 cases, Core audio 14; real mixed captures pass both qualities without
+clipping. Claude still reviews the cable picture and settles zero Smoke use.
+Current lane/build gates remain before its merge.
+
+Bounty lane is clean at 7da183d. The actual scoring and transfer module is
+implemented; two independent recovery regressions pass with review clear.
+After Salt merges, assign its free native entry, pay and HUD hooks explicitly.
+Claude supplies the requested brain seam; Arsenal retains audio hooks.
+WAR-02b, WAR-02c and WAR-03b belong to Claude. Their tests and lanes stay.
+Codex must not edit the seven warlord files Kyle named.
+
+Janitor interruption sweep: preserved seven unfinished lanes, licensed sources
+and current assets; skipped three protected audio folders. No uncertain asset
+or export was deleted. The same twenty-three export candidates and no removed
+feature tests remain; sizes are refreshed in STATUS. A full tier on the exact
+final committed integration source and build are required before the next push.

@@ -2,6 +2,13 @@
 
 ## Resume here (Claude, 1 October 2026, afternoon)
 
+**Restart checkpoint, 2 October:** Kyle requested a restart. Start with the
+short handoff at the end of run-log.md. Salt is ready for a clean lane/build
+retry; the interrupted run is not a pass. After its merge, refresh the board
+and free the next card's actual hooks. Run the full tier on the final committed
+integration source before pushing. All seven unmerged lanes and three protected
+audio folders are preserved; both old timers remain paused.
+
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
 warlord pay, and the damaged-save fix. Phase 3 is the last planned phase.
