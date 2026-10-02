@@ -26,7 +26,7 @@ export function initializeBountyHunt(duel) {
   const candidates = duel.state.cpuDifficulty === 'hard' ? order :
     order.filter(id => id !== 'player');
   for (const participant of arena.participants) participant.bountyPoints = 0;
-  arena.bountyHunt = {markedId: candidates[0] || null, heldSec: 0, order};
+  arena.bountyHunt = {markedId: candidates[0] || null, heldSec: 0, pendingVictimId: null, order};
 }
 
 // Bounty points decide regulation. Damage settles equal placings, while a
@@ -65,6 +65,7 @@ function transferMark(duel, participant, previousId) {
   if (!participant || participant.id === bounty.markedId) return;
   bounty.markedId = participant.id;
   bounty.heldSec = 0;
+  bounty.pendingVictimId = null;
   duel.emit({bountyMark: {previousId, markedId: participant.id}});
 }
 
@@ -73,16 +74,20 @@ function transferMark(duel, participant, previousId) {
 export function noteBountyWreck(duel, victim, credited, lastHitId = victim.lastHitBy) {
   const arena = duel.state.arena, bounty = arena?.bountyHunt;
   if (!bounty || arena.result) return null;
-  if (victim.id === bounty.markedId) {
+  if (victim.id === bounty.markedId && !bounty.pendingVictimId) {
     if (credited && credited.id !== victim.id) credited.bountyPoints += BOUNTY_RULES.markedWreckPoints;
     const hitter = arena.participants.find(participant => participant.id === lastHitId &&
       participant.id !== victim.id);
     const leader = bountyRanking(arena).find(participant => participant.id !== victim.id);
     const recipient = credited || hitter || leader;
     const next = running(duel, recipient) ? recipient : nearestRunning(duel, victim);
-    transferMark(duel, next, victim.id);
-    // If every car is wrecking there is no running recipient yet. Keeping the
-    // old mark preserves its origin; the next native step resolves the handover.
+    if (next) transferMark(duel, next, victim.id);
+    else {
+      // The victim no longer owns a scoring mark, even if it recovers before
+      // the others. Retain its id until another running car can take over.
+      bounty.pendingVictimId = victim.id;
+      bounty.heldSec = 0;
+    }
   }
   if (arena.phase === 'sudden-death' && credited && credited.id !== victim.id)
     return {reason: 'sudden-death', winnerId: credited.id};
@@ -92,14 +97,22 @@ export function noteBountyWreck(duel, victim, credited, lastHitId = victim.lastH
 export function stepBountyHunt(duel, dt) {
   const state = duel.state, arena = state.arena, bounty = arena?.bountyHunt;
   if (!bounty || arena.result || state.status !== 'racing' || state.paused ||
-      (arena.phase !== 'fight' && arena.phase !== 'countdown')) return;
+      !['fight', 'countdown', 'sudden-death'].includes(arena.phase)) return;
   let marked = arena.participants.find(participant => participant.id === bounty.markedId);
   if (!marked) return;
-  if (!running(duel, marked)) {
-    transferMark(duel, nearestRunning(duel, marked), marked.id);
-    marked = arena.participants.find(participant => participant.id === bounty.markedId);
+  if (!bounty.pendingVictimId && !running(duel, marked)) {
+    bounty.pendingVictimId = marked.id;
+    bounty.heldSec = 0;
   }
-  if (!running(duel, marked)) return;
+  if (bounty.pendingVictimId) {
+    const victim = arena.participants.find(participant => participant.id === bounty.pendingVictimId);
+    const next = victim && nearestRunning(duel, victim);
+    if (!next) return;
+    transferMark(duel, next, victim.id);
+    marked = next;
+  }
+  // Handover still happens during overtime; passive scoring does not.
+  if (arena.phase === 'sudden-death' || !running(duel, marked)) return;
   // Regulation alone earns passive points. Ignore overtime and time beyond
   // the whistle even when the enclosing fixed step crosses its boundary.
   const elapsed = Math.min(dt, Math.max(0, arena.timeLimitSec - arena.clockSec));
