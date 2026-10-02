@@ -553,6 +553,24 @@ check('ARS-01 bounded rear-defense starts naturally and counts only native produ
   }
 });
 
+check('ARS-01 supplemental races require known hit victims and weapon owners', () => {
+  const build = required('buildReport'), validate = required('reportFailures');
+  const valid = rearDefenseFixture();
+  assert.deepEqual(validate(build(valid), valid.runs, valid.baselineRuns), [],
+    'complete supplemental Oil/Smoke with known ownership and valid historical targets passes');
+  const unknownHit = rearDefenseFixture();
+  unknownHit.rearDefenseRuns[0].unattributedEnemyHits = 1;
+  unknownHit.rearDefenseRuns[0].cpuHits = null;
+  const hitFailures = validate(build(unknownHit), unknownHit.runs, unknownHit.baselineRuns);
+  const unknownUse = rearDefenseFixture();
+  unknownUse.rearDefenseRuns[0].unattributedWeaponUses = {star: 1};
+  const useFailures = validate(build(unknownUse), unknownUse.runs, unknownUse.baselineRuns);
+  assert.ok(hitFailures.some(message => /hit.*(identity|attribut)|victim.*identity/i.test(message)) &&
+    useFailures.some(message => /weapon.*(identity|attribut)|attribut.*weapon/i.test(message)),
+    'Unknown supplemental hit and weapon attribution must each fail; hit failures: ' +
+      JSON.stringify(hitFailures) + '; weapon failures: ' + JSON.stringify(useFailures));
+});
+
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`Combat balance acceptance: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
