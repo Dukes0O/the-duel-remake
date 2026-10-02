@@ -3329,7 +3329,9 @@ tasks:
     lane: TOOL
     size: S
     needs: [ART-FIT-CREW-W]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-02-overnight
+    branch: codex/tools/vesper-purity
     owns: [tools/test-vesper-art.mjs, docs/changes/ART-VESPER-PURITY-SCOPE.md]
     helpers: [test_author, reviewer, test_runner]
     acceptance:
