@@ -77,8 +77,9 @@ Harpoon 81 and Caltrops 34. The released Wasteland control passes all 141 races
 and 36 probes. Native diagnosis finds ready Smoke windows between scheduled
 decisions or ending in wrecks; the next natural coverage direction goes to Claude.
 Fresh actual High/Performance browser passes twenty checks with no errors,
-warnings or failed requests; QA panels are absent. The clear rust-orange cable
-picture goes to Claude. Frame pacing remains; old UI overlaps go to Phase 3 polish.
+warnings or failed requests; QA panels are absent. Claude approved the clear
+rust-orange cable picture. Frame pacing remains unmeasured; old UI overlaps go
+to Phase 3 polish.
 The short-cue measurement regression failed before Source. Analysis-only silence
 makes short cues measurable without changing OGG bytes or playback; independent
 review clears it. All 18 private CC0 variants rebuild: true peak -4.72 to -2.43
@@ -87,6 +88,9 @@ Kyle approved settled free CC0 cues in shared hooks. Six cues and eighteen runti
 The two Core preservation filters exclude exactly six additions under review; every old hash, Core cue, playback case and other assertion stays exact. Current lane/build gates remain. Real High/Performance full-throttle captures verify six native
 cues and the moving flight loop, with zero delivered clipping and true peaks -1.94/-1.98
 dBTP. Pause retires every voice. Human cue recognition remains unmeasured.
+Final lane tier passes 329/329 suites and the production build passes.
+The global audio gate exposed its 400 ms EBU window on the 360 ms Harpoon cue. It now uses the existing analysis-only padding helper for wave-one clips; all 11 combat-audio checks pass and playback bytes, peak limit and assertion remain unchanged.
+Vehicle-sockets exposed a test scene with no opponent array. The tether renderer now hides absent actors safely; all 845 socket checks pass.
 
 ## Removed
 Replaced two-user rear scheduling, level-blind backup, wrong-axis yank,

@@ -117,7 +117,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const enabled = active && arsenalEnabled(duel);
     for (let index = 0; index < tetherViews.length; index++) {
       const cable = tetherViews[index];
-      const actor = index === 0 ? duel.state : duel.state.opponents[index - 1];
+      const actor = index === 0 ? duel.state : duel.state.opponents?.[index - 1];
       const effect = enabled && actor && carEffect(actor, 'tether');
       const shooter = effect && actorForTarget(duel, effect.shooterId);
       cable.visible = !!shooter;
