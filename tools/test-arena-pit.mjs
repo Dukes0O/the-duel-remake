@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {Course} from '../src/course.js';
 import {Duel} from '../src/game.js';
-import {CARS, COURSE} from '../src/config.js';
+import {CARS, COURSE, DRIVE} from '../src/config.js';
 import {ARENA_VENUES, SCRAPDOME_VENUE, spawnSlots, venueCurvatureRatio} from '../src/arena/venues.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {worldPose, containInArena} from '../src/arena/arena-floor.js';
@@ -91,6 +91,60 @@ test('Pit geometry: eight junk cars, opposite ramps and safe opposed starting sl
   const vb = {x: poses[1].x - at.x, z: poses[1].z - at.z};
   assert.ok((va.x * vb.x + va.z * vb.z) / (Math.hypot(va.x, va.z) * Math.hypot(vb.x, vb.z)) < -.9,
     'a native one-on-one starts across the central pile');
+});
+test('Pit geometry: the only fixed interior obstacle is the solid eight-metre centre pile', () => {
+  const c = course(), at = centre(c);
+  const inside = c.features.obstacles.filter(item => Math.hypot(item.x - at.x, item.z - at.z) < 72);
+  assert.equal(inside.length, 1, 'no ring-shaped inner barrier or interior scenery collision remains');
+  const pile = inside[0];
+  near(Math.hypot(pile.x - at.x, pile.z - at.z), 0, .01);
+  near(pile.halfX, 8); near(pile.halfZ, 8);
+  assert.equal(pile.shape, 'ellipse', 'the physical centre pile is solid and round');
+});
+for (const car of Object.keys(CARS))
+  test(`Pit reachable floor: ${car} uses native physics to reach inner, middle and outer samples`, () => {
+    for (const lateral of [-27, 0, 27]) {
+      const duel = start({car, difficulty: 'easy'}), cpu = duel.state.opponents[0];
+      const s = duel.course.length * .3, goal = duel.course.worldAt(s, lateral);
+      placeActor(duel, cpu, {s: s - 20, lateral: 0});
+      placeActor(duel, duel.state, {s: duel.course.length * .8, lateral: 0});
+      Object.assign(duel.state.arena.participants[1], {targetId: null, reactionSec: Infinity,
+        goal: {...goal, speedMph: 30, boost: false}});
+      let closest = Infinity;
+      for (let tick = 0; tick < 30 * 120; tick++) {
+        duel.step(DT); finiteAndContained(duel);
+        const at = worldPose(duel, cpu);
+        closest = Math.min(closest, Math.hypot(at.x - goal.x, at.z - goal.z));
+        if (closest < 3.5) break;
+      }
+      assert.ok(closest < 3.5, 'the native car reaches the sampled safe floor without teleport or altered limits');
+    }
+  });
+test('Pit native junk: ordinary ram moves cover and Titan alone crushes it', () => {
+  for (const car of ['falcone_f42', 'titan_monster']) {
+    const duel = start({car}), actor = duel.state, props = duel.course.features.crushables;
+    const prop = props[0], at = duel.course.groundAt(duel.course.length * .3, 0);
+    Object.assign(prop, at, {s: duel.course.length * .3, lateral: 0, off: 0, headingError: 0,
+      prevS: duel.course.length * .3, prevLateral: 0, speedMph: 0, knock: null});
+    const spec = duel._vehicleSpec(actor), forward = {x: Math.sin(prop.heading), z: Math.cos(prop.heading)};
+    const gap = spec.halfLength + prop.halfZ + .025;
+    const before = {x: prop.x, z: prop.z};
+    const from = duel.course.nearest(prop.x - forward.x * gap, prop.z - forward.z * gap, prop.s);
+    const to = duel.course.nearest(prop.x - forward.x * gap + forward.x * 60 * DRIVE.mphToWorld * DT,
+      prop.z - forward.z * gap + forward.z * 60 * DRIVE.mphToWorld * DT, prop.s);
+    placeActor(duel, actor, {...to, headingError: prop.heading - duel.course.at(to.s).heading}, 60);
+    actor.prevS = from.s; actor.prevLateral = from.lateral;
+    duel._crushProps(actor);
+    if (car === 'titan_monster') assert.ok(duel.state.crushedProps.includes(prop.id), 'Titan native crushing keeps the released rule');
+    else {
+      assert.ok(prop.knock?.arenaShove, 'ordinary car dispatches the native contact shove');
+      assert.equal(duel.state.crushedProps.includes(prop.id), false, 'ordinary car cannot crush junk');
+      placeActor(duel, actor, {s: 20, lateral: 0});
+      for (let tick = 0; tick < 120; tick++) duel.step(DT);
+      assert.ok(Math.hypot(prop.x - before.x, prop.z - before.z) > .1, 'native time steps move the contacted cover');
+      assert.ok(Math.abs(prop.lateral) <= 32 + 1e-7, 'cover remains on the round floor');
+    }
+  }
 });
 for (const difficulty of ['easy', 'medium', 'hard'])
   for (const brain of ['rammer', 'gunner', 'brawler'])

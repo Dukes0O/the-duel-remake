@@ -10,9 +10,10 @@ projection, eight junk cars, two opposite ramps and safe opposed slots. Current
 ring geometry, native trace and ordinary replay file remain frozen by the
 existing reviewed controls; no signature is regenerated.
 
-Bounded missing-venue admission is the first expected failure. Native driving,
-central obstacle shape, all-car reachability, shoves/crushing and actual renderer
-acceptance are incomplete until their real Source and follow-up native cases.
+Bounded admission gives one genuine missing-venue failure and the exact ring
+control passes. Native cases also cover the solid centre pile, all nine cars
+reaching safe floor samples and real junk contact/crushing. Those mechanics
+remain unproved before Source. Actual renderer acceptance follows tests first.
 No browser, frame, comparison or full gate pass is claimed. Future boss cards
 wire Pit selection in Claude's files; no public picker or replacement AI.
 
