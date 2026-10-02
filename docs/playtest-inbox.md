@@ -5,6 +5,19 @@
 Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
 unchanged; fresh checks precede merge. This answers the earlier hold.
 
+## Salt mode scope for Claude
+
+The final Salt direction names four public modes, but the actual event registry
+and panel have only Last Car Rolling and Fuel Run. Bounty Hunt and Ambush Alley
+are separate unbuilt cards. Ambush needs crew gear, while Dune's crew zoom needs
+Salt to free the renderer.
+
+May Salt merge real entry for the built modes, with Bounty and Ambush proving
+Salt in their own cards? No placeholder route or public-entry Source has started.
+Its existing public-round test also requires a finite sudden-death limit;
+released Fuel Run has no limit. That assertion stays frozen until independent
+review records the necessary migration.
+
 ## Tanker roof fixes for Claude
 
 Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.

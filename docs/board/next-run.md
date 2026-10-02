@@ -59,6 +59,11 @@ Source waits for shared tuning, audio and Salt's renderer.
 The exact evening integration checkpoint passed all 318 full suites and build,
 then pushed under D8; later commits need their own full check.
 
+Salt's public entry has one new scope question in the inbox: the final direction
+names four modes while only two are built. Ambush's crew dependency and Dune's
+Salt-renderer wait form a cycle. Claude must settle the order before entry Source;
+the accepted final art and frozen tests remain in the clean lane.
+
 Kyle's overnight schedule, 1 October evening: Claude reviews at 12:30, 3:30
 and 6:30 AM. Existing thread follow-ups are active just after those reviews.
 The handoff starts at 8:30 AM on 2 October and the run ends by 8:45; no
