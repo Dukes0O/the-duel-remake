@@ -1,7 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect,carGrip,carTopSpeed,setCarSteering} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,setCarSteering,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
@@ -279,8 +279,10 @@ export function _rival(dt, opponent = this.state.rival) {
     r.yawVelocity *= Math.exp(-2*dt);
   }
   r.lateral += (Math.sin(r.headingError) * r.speedMph * DRIVE.mphToWorld + r.pushVelocity) * dt;
-  r.s += Math.cos(r.headingError) * r.speedMph * DRIVE.mphToWorld * dt / Math.max(.25, 1 - this.course.at(r.s).curvature * r.lateral);
-  r.pushVelocity *= Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
+  r.s += (Math.cos(r.headingError) * r.speedMph * DRIVE.mphToWorld + carAlongPush(r)) * dt / Math.max(.25, 1 - this.course.at(r.s).curvature * r.lateral);
+  const pushDamping = Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
+  r.pushVelocity *= pushDamping;
+  dampCarAlongPush(r, pushDamping);
   if (!this._ramFlight(r, dt)) this._jump(r, dt);
   this._staticContacts(r, false);
   if (r.combatWrecking) return;

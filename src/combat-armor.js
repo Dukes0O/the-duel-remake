@@ -7,6 +7,7 @@ import {CARS} from './config.js';
 import {startWreckSlide} from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {noteSmokeHit, clearSmokeHistory} from './arsenal/smoke.js';
+import {clearCarAlongPush} from './arsenal/car-effects.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -96,6 +97,7 @@ function startCombatWreck(duel, actor, source, owner) {
   // crash step exactly as a Rival Duel crash does.
   if (!slide) actor.speedMph = 0;
   actor.pushVelocity = 0;
+  clearCarAlongPush(actor);
   actor.boosting = false;
   if (player) {
     state.impactTimer = state.impactDuration = actor.combatWreckTimer;

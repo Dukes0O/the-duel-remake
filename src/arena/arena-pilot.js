@@ -1,5 +1,5 @@
 import {arsenalEnabled} from '../combat-weapons.js';
-import {carGrip,carTopSpeed,setCarSteering} from '../arsenal/car-effects.js';
+import {carGrip,carTopSpeed,setCarSteering,carAlongPush,dampCarAlongPush} from '../arsenal/car-effects.js';
 import {oilThreat} from '../arsenal/oil.js';
 import {CARS, DRIVE, BOOST, steeringYawAuthority} from '../config.js';
 import {wrapHeading} from '../offroad-physics.js';
@@ -186,12 +186,13 @@ export function pilotStep(duel, actor, goal, dt) {
   // Move in world space, then describe the result relative to the ring.
   const heading = pose.heading + actor.yawVelocity * dt;
   const frameHeading = course.at(actor.s).heading, step = actor.speedMph * DRIVE.mphToWorld * dt;
-  const push = actor.pushVelocity || 0;
-  const moved = duel._roadPosition({x: pose.x + Math.sin(heading) * step + Math.cos(frameHeading) * push * dt,
-    z: pose.z + Math.cos(heading) * step - Math.sin(frameHeading) * push * dt}, actor.s);
+  const push = actor.pushVelocity || 0, alongPush = carAlongPush(actor);
+  const moved = duel._roadPosition({x: pose.x + Math.sin(heading) * step + Math.cos(frameHeading) * push * dt + Math.sin(frameHeading) * alongPush * dt,
+    z: pose.z + Math.cos(heading) * step - Math.sin(frameHeading) * push * dt + Math.cos(frameHeading) * alongPush * dt}, actor.s);
   actor.s = moved.s; actor.lateral = moved.lateral;
   actor.headingError = wrapHeading(heading - course.at(actor.s).heading);
   actor.pushVelocity = push * Math.exp(-2.4 * dt);
+  dampCarAlongPush(actor, Math.exp(-2.4 * dt));
   actor.contactCooldown = Math.max(0, (actor.contactCooldown || 0) - dt);
   actor.ramRecoverySec = Math.max(0, (actor.ramRecoverySec || 0) - dt);
 }

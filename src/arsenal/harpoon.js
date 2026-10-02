@@ -2,7 +2,7 @@ import {point, predictedPoint, velocity} from '../combat-weapons.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {applyArmorDamage, combatShielded} from '../combat-armor.js';
 import {combatOwnerId, outOfPlay} from '../combat-teams.js';
-import {carEffect, setCarEffect, carSteering} from './car-effects.js';
+import {carEffect, setCarEffect, carSteering, addCarSidewaysPush} from './car-effects.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
 
 const RANGE = 50, SPEED = 70, CONE = 4 * Math.PI / 180;
@@ -76,9 +76,10 @@ export function hitHarpoon(duel, target, projectile) {
     {level: projectile.level, owner: projectile.ownerId});
   if (!(removed > 0)) return;
   const at = point(duel, target), from = point(duel, shooter);
-  const side = (from.x - at.x) * Math.cos(at.heading) - (from.z - at.z) * Math.sin(at.heading);
+  const headingError = target.headingError || 0, heading = at.heading + headingError;
+  const side = (from.x - at.x) * Math.cos(heading) - (from.z - at.z) * Math.sin(heading);
   if (!target.combatWrecking) {
-    target.pushVelocity = (target.pushVelocity || 0) + (Math.sign(side) || 1) * 6;
+    addCarSidewaysPush(target, (Math.sign(side) || 1) * 6, headingError);
     setCarEffect(target, 'tether', {duration: 3, topSpeed: .8,
       shooterId: projectile.attackerId, awaySec: 0});
   }

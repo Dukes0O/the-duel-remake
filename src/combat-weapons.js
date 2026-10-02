@@ -5,7 +5,7 @@ import {makeRng} from './rng.js';
 import {WEAPONS, CPU_COMBAT, COMBAT_TUNING} from './wasteland-tuning.js';
 import {arenaTargetOf, arenaTargetOutOfPlay, combatOwnerId} from './combat-teams.js';
 import {footMoveDirection} from './onfoot.js';
-import {carEffect} from './arsenal/car-effects.js';
+import {carEffect,carAlongPush,clearCarAlongPush} from './arsenal/car-effects.js';
 import {deployOil} from './arsenal/oil.js';
 import {deploySmoke} from './arsenal/smoke.js';
 import {deployCaltrops} from './arsenal/caltrops.js';
@@ -85,9 +85,10 @@ export function aimPoint(duel, actor) {
 export function velocity(actor, at) {
   const heading = at.heading + (actor.headingError || 0);
   const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
+  const alongPush = carAlongPush(actor);
   return {
-    x: Math.sin(heading) * speed + Math.cos(at.heading) * (actor.pushVelocity || 0),
-    z: Math.cos(heading) * speed - Math.sin(at.heading) * (actor.pushVelocity || 0),
+    x: Math.sin(heading) * speed + Math.cos(at.heading) * (actor.pushVelocity || 0) + Math.sin(at.heading) * alongPush,
+    z: Math.cos(heading) * speed - Math.sin(at.heading) * (actor.pushVelocity || 0) + Math.cos(at.heading) * alongPush,
   };
 }
 
@@ -102,7 +103,7 @@ export function predictedPoint(duel, actor, seconds) {
   const frame = duel.course.at(actor.s);
   const speed = (actor.speedMph || 0) * (actor.dir || 1) * DRIVE.mphToWorld;
   const headingError = actor.headingError || 0;
-  const along = Math.cos(headingError) * speed /
+  const along = (Math.cos(headingError) * speed + carAlongPush(actor)) /
     Math.max(T.predictionCurveFloor, 1 - frame.curvature * actor.lateral);
   const lateral = Math.sin(headingError) * speed + (actor.pushVelocity || 0);
   return duel.course.groundAt(actor.s + along * seconds, actor.lateral + lateral * seconds);
@@ -139,6 +140,7 @@ function relocate(actor, pose) {
   actor.headingError = pose.headingError || 0;
   actor.yawVelocity = 0;
   actor.pushVelocity = 0;
+  clearCarAlongPush(actor);
   actor.slipAngle = 0;
   actor.airborne = false;
   actor.airHeight = 0;

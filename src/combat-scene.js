@@ -91,18 +91,26 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     group.add(line);
     return line;
   });
+  const tetherPosition=new THREE.Vector3();
+  function tetherPoint(duel,actor){
+    const at=duel.course.groundAt(actor.s,actor.lateral);
+    return tetherPosition.set(at.x,at.y+COMBAT_TUNING.pointHeight+(actor.airHeight||0),at.z);
+  }
   function updateTethers(duel,active){
-    const actors=[duel.state,...duel.state.opponents];
-    tetherViews.forEach((line,index)=>{
-      const actor=actors[index],effect=active&&actor&&arsenalEnabled(duel)&&carEffect(actor,'tether');
+    const enabled=active&&arsenalEnabled(duel);
+    for(let index=0;index<tetherViews.length;index++){
+      const line=tetherViews[index],actor=index===0 ? duel.state : duel.state.opponents[index-1];
+      const effect=enabled&&actor&&carEffect(actor,'tether');
       const shooter=effect&&actorForTarget(duel,effect.shooterId);
       line.visible=!!shooter;
-      if(!shooter)return;
-      const from=point(duel,shooter),to=point(duel,actor),positions=line.geometry.attributes.position;
+      if(!shooter)continue;
+      const positions=line.geometry.attributes.position;
+      const from=tetherPoint(duel,shooter);
       positions.setXYZ(0,from.x,from.y,from.z);
+      const to=tetherPoint(duel,actor);
       positions.setXYZ(1,to.x,to.y,to.z);
       positions.needsUpdate=true;
-    });
+    }
   }
   const hazardViews=Array.from({
     length:24

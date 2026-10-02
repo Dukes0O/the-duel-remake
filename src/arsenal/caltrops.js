@@ -8,8 +8,11 @@ import {enemiesBehind} from './targeting.js';
 export function deployCaltrops(duel, owner, level = 0) {
   if (!owner || outOfPlay(duel, owner)) return null;
   const at = point(duel, owner), heading = at.heading + (owner.headingError || 0);
+  const x = at.x - Math.sin(heading) * 3, z = at.z - Math.cos(heading) * 3;
+  const rear = duel.course.nearest(x, z, owner.s);
+  const ground = point(duel, {s: rear.s, lateral: rear.lateral});
   const strip = addHazard(duel, {kind: 'caltrops', shape: 'strip',
-    x: at.x - Math.sin(heading) * 3, z: at.z - Math.cos(heading) * 3, y: at.y,
+    x, z, y: ground.y,
     heading, length: 8, width: 5, lifetime: 8, owner, ownerGraceSec: 1,
     onTouch(actor) {
       if (combatShielded(duel, actor)) return;
