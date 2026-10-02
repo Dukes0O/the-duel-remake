@@ -1,6 +1,11 @@
 # ARENA-PIT: round 1, actual private comparison
 
-Status: prepared for independent art review and Claude; no approval claimed.
+Independent verdict: readability 4/5, grounding 4/5, consistency 4/5, look 3/5.
+The Director agrees the outer fill reads as parking rows. Round 1 is held.
+Concrete fix: cluster, overlap and stack the same hulk kit outside the physical
+circle as scrap piles in the former oval ends. Keep floor, walls, stands and
+native physics unchanged. Round 2 must repeat world/build/view/frame checks;
+Claude's final presentation verdict is still required before merge.
 Source checkpoint 51db5aa plus official preset metadata refresh. No new assets.
 The comparison sheet uses eight actual 1280×720 native browser captures, reduced
 to 640×360 without cropping, in High and Performance, full and racing views.

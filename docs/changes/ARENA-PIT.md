@@ -78,7 +78,7 @@ Measured ring/Pit P95 is 16.9/16.8 ms High and 16.8/16.8 ms Performance,
 within 10%. High draw calls/triangles rise 546/556442 to 647/1861324;
 Performance rises 341/355450 to 361/986832. The extra scenery cost is retained
 explicitly; these RAF samples show observed frame pacing on this laptop.
-Fresh round 1 comparison is 308498 bytes; Claude look and Kyle feel are pending.
+Round 1 is 308498 bytes, look 3/5: outer parking rows need clustered scrap piles.
 
 Official generator refreshed only sourceFingerprint to
 45c75c657202115575b8535e7483d2b08db855c96689ebe30ac21500068494d8.
