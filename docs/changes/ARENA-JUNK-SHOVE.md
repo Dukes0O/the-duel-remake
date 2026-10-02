@@ -1,6 +1,6 @@
 # ARENA-JUNK-SHOVE
 
-Status: building; source review fixes await the frozen native rerun.
+Status: building; native review fixes pass; browser and merge gates pending.
 
 ## Changed
 
@@ -30,10 +30,19 @@ advances can leave a refreshed slot within clustered current cover. New
 regression daf0d3f ran first: six checks, four genuine RED failures across LCR
 and Fuel Run; slot IDs and copied depot controls passed. The leaf now continues
 the existing six-metre search for at most one course length, using the venue's
-authored 14-metre clearance. The one-tick native respawn probe passes all six. The first source run passes all 53
+authored 14-metre clearance. The one-tick native respawn probe passes all six.
+The first source run passes all 53
 checks with no changed assertion, pin or displacement tuning. Raw native
 impact velocities meet the settled movement floors. Independent source review,
 affected native regressions, browser checks and merge gates still follow.
+
+The full-round control found a late junk contact nudging CPU-3 outside the
+floor after the event had contained it. Paired native Medium runs at seed
+1989 show integration's maximum excess is zero; Junk's was 0.462277 metres.
+New check ec388ae came first: the original 53 pass and the added witness fails.
+The leaf now reapplies the released floor solver after that contact correction.
+All 54 Junk checks, six clustered respawn checks and 13 existing arena-event
+tests pass. No original assertion, geometry or replay pin changed.
 
 ## Replays
 

@@ -49,6 +49,9 @@ export function contactArenaJunk(duel, actor, prop, hit, start, end) {
   const incidents = duel._arenaJunkContacts;
   if (!hit) {incidents.delete(key); return;}
   stopAtContact(duel, actor, start, end, hit);
+  // This dispatcher follows the event's earlier containment. Its final
+  // contact correction must use the same native solid floor before solving.
+  containInArena(duel, actor, 0);
   if (incidents.has(key)) return;
   const before = actorBody(duel, actor);
   const crash = resolveCarCrash(duel, actor, prop, {forceKnock: true,
