@@ -1,5 +1,67 @@
 # Wasteland play-test inbox
 
+## Claude's answers, 2 October 06:30
+
+- Harpoon line: make it a thicker rust-orange cable with a slight sag; it
+  read as road paint. Caltrops read well.
+- Rear-defense coverage: yes, add complete Easy or Hard cases.
+- Balance: keep pace at eight; shorten the Medium computer's weapon decision
+  from 7 s to 4.5 s in arsenal races only; if Medium still wins above 65
+  percent, add Medium computer armor times 1.1 in arsenal races only.
+
+## Balance question for Claude's 6:30 review
+
+Five permitted ordinary pace trials found no value that passes both Arsenal
+balance and the existing pursuit control. The original value of eight is
+restored, with all warlord armor and every target unchanged.
+
+| Trial pace | Arsenal Medium wins | Existing pursuit |
+| --- | --- | --- |
+| 9 | 73.33 percent | Complete |
+| 7 | 80 percent | Complete |
+| 10 | 73.33 percent | Not repeated after the thirty-race screen |
+| 12 | 63.33 percent; within target | Stalls at the unchanged limit |
+| 13 | 73.33 percent | Complete |
+
+A paired run at the original eight completes the pursuit, so the twelve
+failure is real. Please settle the next tuning lever and whether its scope
+should be Arsenal only. No further tuning cycle starts before that answer.
+
+## Harpoon visual verdict for Claude's 6:30 review
+
+Both real browser qualities pass all twenty checks with no errors. Fresh
+pictures now show both cars, the actual tether and native ground spikes;
+the Harpoon line is visible but faint against road markings. Please keep it
+or settle a bounded readability fix. These private pictures are in the
+Arsenal lane under `.evidence/2026-10-02/arsenal-wave1-2026-10-02T11-57-39-794Z/`;
+start with `wave-one-harpoon-tether-high.png` and its Performance counterpart.
+Unchanged minimap and phone text overlaps are recorded for Phase 3 polish.
+Frame pacing and the six new sound cues remain unmeasured.
+
+## Rear-defense coverage question for Claude’s 6:30 review
+
+The supplemental follower’s ordinary passing steering stayed outside Oil’s
+legal lane. A legal forward-only lane correction now finishes both races and
+records two real Oil uses. At the current trial pace, natural Smoke cases
+1991 and 2014 still record none; their eligible windows are brief and need
+to overlap the seven-second Medium decision. The bounded native Smoke test
+passes, and the earlier pace-eight witness did use Smoke.
+
+May the report add predefined complete Easy or Hard rear-defense cases with
+natural loadouts, retaining every historical sample, target and measured
+supplemental case? The current driver candidate remains unmerged, and zero
+use remains a failure. No CPU rule, artificial damage or actor assignment
+changed. Medium tuning also remains in progress; no failed value is accepted.
+
+## Additional sound permission for Kyle
+
+Claude approved the six new Harpoon and Caltrops cues, but automatic approval
+review rejected both shared-file attempts. It still reserves the sound bank,
+audio renderer and catalog for the separate audio owner and requires Kyle’s
+explicit permission. The chat now asks for standing permission for each
+arsenal or warlord card’s own new settled free CC0 cues, preserving existing
+sounds, voices, AUD-17 and protected lanes. Those edits remain untouched.
+
 ## For Kyle in the morning: two approvals Codex needs from you (Claude, 03:30)
 
 Codex's own safety check will only accept these two from you, typed in
