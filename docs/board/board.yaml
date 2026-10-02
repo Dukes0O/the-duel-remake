@@ -1192,8 +1192,9 @@ tasks:
     owner: codex
     lane: VIS
     size: M
-    needs: [ARENA-06]
+    needs: [ARENA-06, ARS-01]
     status: building
+    waiting_on: claude
     claimed_by: codex-director-2026-10-02-resume
     branch: codex/vis/arena-pit
     flag: warlords
@@ -1205,7 +1206,9 @@ tasks:
       - "Kyle, 1 October 2026: some dome fights without the inside barrier. Build the layout in docs/SCRAPDOME.md section 2, The Pit: a round floor (centreline radius 40 m, floor 32 m either side, outer wall at 75 m), a solid centre pile 16 m across, eight junk cars, two ramps, the ring's floor rules, and the existing dome stands and kit."
       - "Tests first: the curvature check passes; every car can reach every part of the floor; computer cars do not stick on the centre pile or the round wall (all three brains, all three difficulties); containment, respawn and the shove rules hold on a round wall. Ring replays unchanged."
       - "Gunn, the Twin Vultures and the Baron use the Pit; their cards build on it. Comparison sheet to Claude; frame cost within 10% of the ring in High and Performance. Kyle checks it in the Preview."
-    note: "Claimed after Salt merge. Independent native tests come first, then the settled round geometry and reused dome art; any required pilot change waits for Arsenal ownership."
+    note: "The native round floor and reused dome scenery are built and independently reviewed. One genuine outer-floor reach failure needs Arsenal's pilot file after its merge and Claude's owner verdict; remaining pictures and gates follow."
+    native_source_commit: 674b11e
+    source_review: "Independent review clears circle projection, native world loading, state purity and disposal. A tests-first fix closes the visible wall gaps without changing physics or ring controls."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex

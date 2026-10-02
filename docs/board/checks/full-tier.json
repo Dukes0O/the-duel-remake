@@ -1,18 +1,15 @@
 {
   "schema": 1,
-  "commit": "14602785124d6bfdc8260ff54ca727b03b2a2102",
-  "time": "2026-10-02T17:22:56.866Z",
+  "commit": "ae2918122bc138f4f65db319c3d5a092036e21e9",
+  "time": "2026-10-02T19:20:08.137Z",
   "tier": "full",
-  "passed": false,
+  "passed": true,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "14602785124d6bfdc8260ff54ca727b03b2a2102",
+  "endCommit": "ae2918122bc138f4f65db319c3d5a092036e21e9",
   "complete": true,
   "total": 332,
   "completed": 332,
-  "failures": [
-    "tools/test-salt-flats-effects.mjs",
-    "tools/test-salt-flats-render.mjs"
-  ]
+  "failures": []
 }

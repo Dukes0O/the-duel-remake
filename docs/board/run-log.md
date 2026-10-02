@@ -665,3 +665,16 @@ assets, one intentional private module and 25 internal exports; no candidate
 was proved unused. Runtime stays 259,627,104 bytes and tracked files total
 287,445,693 bytes. Outgoing binaries are four current approved Salt assets,
 with no superseded version and no history rewrite needed. Full recovery follows.
+
+
+Recovery checkpoint: all 332 full-tier suites passed, none failed or unrun;
+build passed. Pit geometry and native world composition are built and reviewed;
+the visible wall-gap regression passes. Its unchanged outer-floor reach test
+needs Arsenal's owned pilot file after merge, and the precise case is in the
+inbox. Bounty still needs Claude's four brain cases and Arsenal's cue hook.
+
+Claude advanced integration with his boss source as the checkpoint finished.
+A failed exact-commit guard did not abort PowerShell, and the push uploaded the
+newer unverified head. Feature merges are stopped; the new committed source
+receives its own build and full tier. This is fixed forward without a history
+rewrite. Codex has not edited any reserved boss file.

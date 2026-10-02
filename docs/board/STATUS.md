@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-02T19:21:19.791Z
+Observed at: 2026-10-02T19:26:30.074Z
 
-Observation commit: 34c214eb7dce2096a47d1b5333c5e66a52d970a8
+Observation commit: 3272abf4dd66e98013137192f8ad533f7f61379c
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 34c214eb7dce2096a47d1b5333c5e66a52d970a8
+Integration HEAD: 3272abf4dd66e98013137192f8ad533f7f61379c
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -48,7 +48,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/vis/arena-pit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-pit |
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 7 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 7 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -76,9 +76,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 14,561,730 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 727,906 B | +704,754 B | 5,000,000 B |
+| Added bytes in last merge | 727,906 B | +0 B | 5,000,000 B |
 | All `public/` | 259,627,104 B | +0 B | unavailable |
-| Git objects | 366,928,896 B | +430,080 B | unavailable |
+| Git objects | 367,139,840 B | +210,944 B | unavailable |
 | Lane folders | 7 | +0 | unavailable |
 
 ## Backups
@@ -87,7 +87,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 34c214eb7dce2096a47d1b5333c5e66a52d970a8
+- Local integration/wasteland: 3272abf4dd66e98013137192f8ad533f7f61379c
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -95,4 +95,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit b65466f6652521ac6fbff7117706658f7f0b0ece.
+- Remote origin/integration/wasteland: matches local; cached commit 3272abf4dd66e98013137192f8ad533f7f61379c.
