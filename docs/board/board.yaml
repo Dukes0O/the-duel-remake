@@ -3330,7 +3330,7 @@ tasks:
     lane: TOOL
     size: S
     needs: [ART-FIT-CREW-W]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-02-overnight
     branch: codex/tools/vesper-purity
     owns: [tools/test-vesper-art.mjs, docs/changes/ART-VESPER-PURITY-SCOPE.md]
@@ -3338,4 +3338,6 @@ tasks:
     acceptance:
       - "Independent tests first reproduce the existing historical-tree assertion failing on legitimate Salt entry before Vesper exports anything. Freeze the current source, public and replay file inventory before recipe execution, then keep the existing exact preservation checks afterward."
       - "Keep static donor, recipe, reference and rights hashes and every native art, geometry, rig, action, material, lifecycle and repeatability assertion and tolerance unchanged. No new fingerprint file, asset, art round or guard matrix."
-    note: "Independent review found that the Vesper test binds unrelated game files forever to its old integration tree. The actual recipe is unchanged; this narrow correction checks that each run preserves its own current game files exactly."
+    note: "Merged after independent tests-first reproduction, implementation review and current lane and build checks. Every recipe run now preserves its exact current game files, with all donor pins and native art assertions unchanged."
+    gate_commit: f12c822e6869be6a8ba372843379e2a24127e6f1
+    merged_commit: 700a947e52b450adba663853595a048180365ef2
