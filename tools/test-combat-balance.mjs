@@ -363,6 +363,60 @@ check('Arsenal check requires measured CPU Oil and Smoke use without changing ta
   }
 });
 
+// ARS-01: append-only native accounting and two additional zero-use gates.
+// Existing measured rows, assertions and all numerical target bands stay frozen.
+for (const weapon of ['harpoon', 'caltrops']) check('ARS-01 counts actual native CPU and player ' + weapon + ' uses once', () => {
+  const originalStart = App.prototype.startCampaign, originalAdvance = App.prototype.advance;
+  let madeProduct = false;
+  App.prototype.startCampaign = function (...args) {
+    assert.equal(this.purchaseArsenalWeapon(weapon).ok, true,
+      'native memory-only report career purchases ' + weapon + ' before launch');
+    assert.equal(this.equipCarWeapon(1, weapon).ok, true,
+      'native memory-only report career equips its earned ' + weapon);
+    return originalStart.apply(this, args);
+  };
+  App.prototype.advance = function (...args) {
+    const duel = this.duel, state = duel.state, cpu = state.rival;
+    Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0, traffic: [],
+      s: weapon === 'harpoon' ? 230 : 170, prevS: weapon === 'harpoon' ? 230 : 170,
+      lateral: 0, prevLateral: 0, headingError: 0, speedMph: 0, impactTimer: 0});
+    Object.assign(cpu, {s: 200, prevS: 200, lateral: 0, prevLateral: 0,
+      headingError: 0, speedMph: 0, impactTimer: 0,
+      weaponLoadout: [weapon, 'crossbow', 'bomb', 'star']});
+    state.combat.aiTimer = Infinity;
+    assert.equal(nativeBalanceFire(duel, weapon, true, cpu), true,
+      'native CPU fire creates the actual new weapon product');
+    if (weapon === 'harpoon') assert.equal(state.combat.projectiles.filter(p => p.kind === weapon && p.enemy).length, 1);
+    else assert.equal(nativeBalanceHazards(duel).filter(h => h.kind === weapon && h.owner === cpu).length, 1);
+    madeProduct = true;
+    assert.equal(duel.fireWeapon(weapon), true, 'actual earned player fire supplies separate attribution');
+    assert.equal(nativeBalanceFire(duel, weapon, true, cpu), false,
+      'refused native repeated fire never becomes another measured use');
+    return originalAdvance.apply(this, args);
+  };
+  try {
+    const row = required('run')('none', 'hard', 1989, {flags: arsenalFlags, maxFrames: 1});
+    assert.equal(madeProduct, true, 'native product existence proves use, rather than loadout assignment');
+    assert.equal(row.weaponUses?.cpu?.[weapon], 1, 'cue plus flight/deploy event count as one real CPU use');
+    assert.equal(row.weaponUses?.player?.[weapon], 1, 'real player use stays separate from the CPU');
+    const report = required('buildReport')({...fixture(arsenalFlags), runs: [row]});
+    assert.equal(report.weaponUses?.cpu?.[weapon], 1, 'aggregate retains measured CPU use');
+    assert.equal(report.weaponUses?.player?.[weapon], 1, 'aggregate retains measured player use');
+  } finally {App.prototype.startCampaign = originalStart; App.prototype.advance = originalAdvance;}
+});
+for (const weapon of ['harpoon', 'caltrops']) check('ARS-01 check rejects zero measured native CPU ' + weapon + ' use', () => {
+  const input = fixture(arsenalFlags), report = required('buildReport')(input);
+  // Explicit validator fixture: these are totals, not claimed native products.
+  report.weaponUses = {player: {}, cpu: {oil: 1, smoke: 1, harpoon: 1, caltrops: 1}};
+  const validate = required('reportFailures');
+  assert.deepEqual(validate(report, input.runs, input.baselineRuns), [],
+    'positive four-weapon usage totals preserve all original target bands');
+  report.weaponUses.cpu[weapon] = 0;
+  assert.match(validate(report, input.runs, input.baselineRuns).join('\n'),
+    new RegExp('CPU.*' + weapon + '|' + weapon + '.*CPU', 'i'),
+    'Arsenal --check must reject missing native CPU ' + weapon + ' evidence');
+});
+
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`Combat balance acceptance: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;

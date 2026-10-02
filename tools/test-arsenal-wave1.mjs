@@ -1,0 +1,457 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {Duel} from '../src/game.js';
+import {App} from '../src/app.js';
+import {CARS, DRIVE} from '../src/config.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {point, velocity, predictedPoint, fireWeapon} from '../src/combat-weapons.js';
+import {stepCombatAI} from '../src/combat-ai.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
+import {applyArmorDamage} from '../src/combat-armor.js';
+import {hazardsFor, addHazard, stepHazards} from '../src/arsenal/hazards.js';
+import {carEffect, carGrip} from '../src/arsenal/car-effects.js';
+import {targetFor, targetIdentity} from '../src/arsenal/targeting.js';
+import {createCombatScene} from '../src/combat-scene.js';
+import {pilotStep, arenaCarSpec} from '../src/arena/arena-pilot.js';
+import {arenaFloorSpeed} from '../src/arena/venues.js';
+import {createProfile, createPlayerRegistry, createPlayer, savePlayers, loadPlayers, PLAYERS_KEY} from '../src/progression.js';
+import {normalizeWasteland} from '../src/wasteland-progress.js';
+import {WEAPON_IDS, ARSENAL_WEAPONS, getProfileWeapons, normalizeWeapons, implementedArsenalWeapons} from '../src/weapon-upgrades.js';
+import {normalizeCarLoadout} from '../src/car-loadout.js';
+
+// ARS-01 tests first. Existing native entry points expose the unknown-weapon
+// failure without importing future modules. Memory storage belongs to this process.
+// Pending Claude: Caltrops owner-grace duration and the hard-away threshold.
+// Full steering 1.0 is an unambiguous half-second break witness; no boundary
+// for either open value is invented. Browser/audio listening remain separate.
+const DT = 1 / 120, EPS = 1e-7, SEED = 1989;
+const failures = [];
+let checks = 0;
+function check(name, run) {checks++; try {run();} catch (error) {failures.push(name + ': ' + error.message);}}
+const near = (a, b, label) => assert.ok(Math.abs(a - b) < EPS, label + ': ' + a + ' versus ' + b);
+const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const flags = enabled => createFeatureFlags({storage: null, qa: true,
+  overrides: {wasteland2: true, scrapdome: true, arsenal: enabled !== false}});
+function place(actor, s, lateral = 0, headingError = 0, speedMph = 0) {
+  Object.assign(actor, {s, prevS: s, lateral, prevLateral: lateral, headingError,
+    speedMph, yawVelocity: 0, pushVelocity: 0, slipAngle: 0, impactTimer: 0,
+    airHeight: 0, prevAirHeight: 0, airborne: false, combatShield: 0, contactCooldown: 0});
+}
+function atRelative(duel, actor, owner, metres, degrees = 0) {
+  const from = point(duel, owner), heading = from.heading + (owner.headingError || 0) + degrees * Math.PI / 180;
+  const at = duel.course.nearest(from.x + Math.sin(heading) * metres,
+    from.z + Math.cos(heading) * metres, owner.s);
+  place(actor, at.s, at.lateral, from.heading - duel.course.at(at.s).heading);
+}
+function race({arena = false, enabled = true, discovered = true, difficulty = 'hard', levels = {}} = {}) {
+  const duel = new Duel({seed: SEED, featureFlags: flags(enabled)});
+  const options = {car: 'falcone_f42', driverId: 'club', seed: SEED, difficulty: 'casual',
+    cpuDifficulty: difficulty, arsenalRank: 6, weaponLevels: levels,
+    weaponLoadout: ['harpoon', 'caltrops', 'oil', 'smoke']};
+  if (arena) assert.equal(duel.startArenaEvent({...options,
+    opponents: [{car: 'dusthawk_rally', driverId: 'club', brain: 'gunner'}]}), true);
+  else duel.startCampaign({...options, mode: 'wasteland', discoveredGate: discovered, opponentCount: 1});
+  const state = duel.state;
+  Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0, traffic: []});
+  state.combat.aiTimer = state.combat.pickupTimer = Infinity;
+  place(state, arena ? 96 : 500);
+  atRelative(duel, state.rival, state, 35);
+  if (arena) {
+    state.arena.phase = 'fight';
+    for (const p of state.arena.participants) {
+      p.protectedSec = 0; p.reactionSec = Infinity; p.targetHeldSec = -100; p.targetId = null;
+      const actor = p.id === 'player' ? state : state.rival, at = point(duel, actor);
+      p.goal = {x: at.x + Math.sin(at.heading) * 20, z: at.z + Math.cos(at.heading) * 20, speedMph: 0, boost: false};
+    }
+  }
+  duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+  return duel;
+}
+function equipCpu(cpu, weapon) {
+  cpu.weaponLoadout = normalizeCarLoadout([weapon, 'crossbow', 'bomb', 'star'],
+    [...WEAPON_IDS, ...implementedArsenalWeapons()]);
+}
+function tick(duel, n, observe = () => {}) {for (let i = 0; i < n; i++) {duel.step(DT); observe(i);}}
+function freezePositions(duel, n) {
+  const poses = [duel.state, ...duel.state.opponents].map(actor =>
+    ({actor, s: actor.s, lateral: actor.lateral, headingError: actor.headingError}));
+  for (let i = 0; i < n; i++) {
+    duel.step(DT);
+    // A stationary range fixture isolates timers/counters from road steering.
+    // Armor, effects, cooldowns, steering requests and event clocks stay native.
+    for (const p of poses) Object.assign(p.actor, {s: p.s, prevS: p.s, lateral: p.lateral,
+      prevLateral: p.lateral, headingError: p.headingError, speedMph: 0, airHeight: 0, airborne: false});
+  }
+}
+function hitHarpoon({playerVictim = false, arena = false, level = 0} = {}) {
+  const duel = race({arena, levels: {harpoon: level}}), state = duel.state;
+  const shooter = playerVictim ? state.rival : state, target = playerVictim ? state : state.rival;
+  if (playerVictim) {
+    place(shooter, arena ? 96 : 500, 2);
+    atRelative(duel, target, shooter, 35, -3);
+    equipCpu(shooter, 'harpoon');
+  }
+  const beforeArmor = target.armor, beforePush = target.pushVelocity;
+  assert.equal(playerVictim ? fireWeapon(duel, 'harpoon', true, shooter) : duel.fireWeapon('harpoon'), true,
+    'native discovered Harpoon fire must succeed');
+  let hitTick = -1;
+  for (let i = 0; i < 180; i++) {duel.step(DT); if (carEffect(target, 'tether')) {hitTick = i; break;}}
+  assert.ok(hitTick >= 0, 'real swept Harpoon flight must hit and tether its live target');
+  return {duel, shooter, target, beforeArmor, beforePush, effect: carEffect(target, 'tether')};
+}
+function dropCaltrops({playerVictim = false, arena = false, level = 0} = {}) {
+  const duel = race({arena, levels: {caltrops: level}}), owner = playerVictim ? duel.state.rival : duel.state;
+  const target = playerVictim ? duel.state : duel.state.rival;
+  if (playerVictim) {place(owner, arena ? 96 : 500); equipCpu(owner, 'caltrops');}
+  atRelative(duel, target, owner, -3);
+  const armor = target.armor;
+  assert.equal(playerVictim ? fireWeapon(duel, 'caltrops', true, owner) : duel.fireWeapon('caltrops'), true,
+    'native discovered Caltrops fire must succeed');
+  const hazard = hazardsFor(duel).find(h => h.kind === 'caltrops');
+  assert.ok(hazard, 'native Caltrops creates a real registered strip');
+  place(owner, owner.s + 100, 0); // Remove the deployer body, never manufacture hazard motion.
+  stepHazards(duel, DT);
+  return {duel, owner, target, hazard, armor};
+}
+
+for (const weapon of ['harpoon', 'caltrops']) {
+  check('native discovered launch and gates: ' + weapon, () => {
+    const duel = race(); assert.equal(duel.fireWeapon(weapon), true, 'native new weapon launch succeeds');
+    assert.ok(duel.state.weaponLoadout.includes(weapon), 'actual campaign normalization retains the implemented equipped weapon');
+    assert.equal(duel.fireWeapon(weapon), false, 'native recharge prevents an immediate repeated use');
+    for (const options of [{enabled: false}, {discovered: false}])
+      assert.equal(race(options).fireWeapon(weapon), false, 'real discovery/switch gate blocks the new weapon');
+  });
+}
+check('Harpoon launch inherits the full thrower velocity and leads a moving car at 70 m/s', () => {
+  const duel = race(), owner = duel.state, target = owner.rival;
+  owner.speedMph = 30; owner.pushVelocity = 3;
+  target.speedMph = 20; target.headingError = Math.PI / 2;
+  const at = point(duel, owner), carry = velocity(owner, at), actual = point(duel, target);
+  assert.equal(duel.fireWeapon('harpoon'), true, 'native leading Harpoon launches');
+  const shot = owner.combat.projectiles.find(p => p.kind === 'harpoon'); assert.ok(shot, 'native launch creates its flight product');
+  const launch = {x: shot.vx - carry.x, z: shot.vz - carry.z};
+  near(Math.hypot(launch.x, launch.z), 70, 'relative launch speed is the literal 70 m/s');
+  const gap = Math.hypot(actual.x - at.x, actual.z - at.z), lead = predictedPoint(duel, target, gap / 70);
+  const bearing = Math.atan2(launch.x, launch.z), error = to => Math.abs(Math.atan2(
+    Math.sin(Math.atan2(to.x - at.x, to.z - at.z) - bearing), Math.cos(Math.atan2(to.x - at.x, to.z - at.z) - bearing)));
+  assert.ok(error(lead) < error(actual), 'launch aims toward native predicted motion rather than the old position');
+});
+check('Harpoon literal 50 m range stays50 m even with thrower velocity', () => {
+  const duel = race(), owner = duel.state, target = owner.rival;
+  owner.speedMph = 100; atRelative(duel, target, owner, 70);
+  const armor = target.armor, origin = point(duel, owner);
+  assert.equal(duel.fireWeapon('harpoon'), true, 'player can launch its real Harpoon');
+  const shot = owner.combat.projectiles.find(p => p.kind === 'harpoon'); assert.ok(shot, 'native flight product exists');
+  let farthest = 0;
+  for (let i = 0; i < 180 && owner.combat.projectiles.includes(shot); i++) {
+    stepProjectiles(duel, DT); farthest = Math.max(farthest, Math.hypot(shot.x - origin.x, shot.z - origin.z));
+  }
+  assert.ok(farthest <= 50 + Math.hypot(shot.vx, shot.vz) * DT + 3,
+    'native flight terminates at literal 50 m, allowing one swept tick and the existing muzzle offset');
+  assert.equal(target.armor, armor, 'inherited car speed never extends Harpoon damage to the 70 m victim');
+  assert.equal(owner.combat.projectiles.includes(shot), false, 'out-of-range native projectile is retired');
+});
+check('Harpoon guidance never steers outside its 4 degree launch cone', () => {
+  const duel = race(); assert.equal(duel.fireWeapon('harpoon'), true, 'native guided Harpoon launches');
+  const shot = duel.state.combat.projectiles.find(p => p.kind === 'harpoon'); assert.ok(shot, 'native projectile exists');
+  const initial = Math.atan2(shot.vx, shot.vz); place(duel.state.rival, duel.state.rival.s, 12);
+  let largest = 0;
+  for (let i = 0; i < 40 && duel.state.combat.projectiles.includes(shot); i++) {
+    stepProjectiles(duel, DT); const angle = Math.atan2(shot.vx, shot.vz);
+    largest = Math.max(largest, Math.abs(Math.atan2(Math.sin(angle - initial), Math.cos(angle - initial))));
+  }
+  assert.ok(largest > 0, 'genuine guidance turns toward a moving target');
+  assert.ok(largest <= 4 * Math.PI / 180 + EPS, 'guidance respects the settled 4 degree cone');
+});
+for (const level of [0, 3]) check('Harpoon native armor, sideways yank and fixed tether duration at level ' + level, () => {
+  const r = hitHarpoon({level});
+  near(r.beforeArmor - r.target.armor, 6 * (1 + .15 * level), 'named Harpoon armor source scales damage by existing 15% levels');
+  near(Math.abs(r.target.pushVelocity - r.beforePush), 6, 'hit produces the fixed 6 m/s sideways yank');
+  const shooter = point(r.duel, r.shooter), target = point(r.duel, r.target);
+  const side = (shooter.x - target.x) * Math.cos(target.heading) - (shooter.z - target.z) * Math.sin(target.heading);
+  assert.equal(Math.sign(r.target.pushVelocity - r.beforePush), Math.sign(side) || 1, 'yank points toward the shooter side');
+  assert.ok(r.effect.remainingSec <= 3 && r.effect.remainingSec >= 3 - DT - EPS, 'actual hit installs exactly 3 s of tether');
+  near(r.duel.state.combat.cooldowns.harpoon + (r.duel.state.stageTimeSec), 12 / 1.15 ** level,
+    'native upgraded recharge divides by 1.15 per level');
+});
+check('Harpoon lasts 3 s without a counter, then naturally expires', () => {
+  const r = hitHarpoon({playerVictim: true}), left = carEffect(r.target, 'tether').remainingSec;
+  freezePositions(r.duel, Math.floor((left - .05) / DT));
+  assert.ok(carEffect(r.target, 'tether'), 'native tether persists before its fixed deadline');
+  freezePositions(r.duel, 8); assert.equal(carEffect(r.target, 'tether'), null, 'native timed tether expires at 3 s');
+});
+for (const reason of ['shield', 'target-wreck', 'shooter-wreck', 'separation']) check('Harpoon real early-break counter: ' + reason, () => {
+  const r = hitHarpoon();
+  if (reason === 'shield') {
+    equipCpu(r.target, 'star'); assert.equal(fireWeapon(r.duel, 'star', true, r.target), true, 'actual Star Shield rises');
+  } else if (reason === 'separation') {
+    place(r.shooter, r.target.s - 100);
+    assert.ok(Math.hypot(point(r.duel, r.shooter).x - point(r.duel, r.target).x,
+      point(r.duel, r.shooter).z - point(r.duel, r.target).z) > 60, 'native current poses exceed 60 m');
+  } else {
+    const victim = reason === 'target-wreck' ? r.target : r.shooter; victim.armor = 1;
+    assert.equal(applyArmorDamage(r.duel, victim, 'crossbow', {owner: victim === r.shooter ? 'cpu' : 'player'}), 1,
+      'actual owned armor hit creates the relevant wreck');
+    assert.equal(victim.combatWrecking, true);
+  }
+  r.duel.step(DT); assert.equal(carEffect(r.target, 'tether'), null, 'real ' + reason + ' immediately breaks the tether');
+});
+check('Harpoon full steering away breaks after half a second accumulated', () => {
+  const r = hitHarpoon({playerVictim: true}), target = r.target;
+  const shooterAt = point(r.duel, r.shooter), at = point(r.duel, target);
+  const side = Math.sign((shooterAt.x - at.x) * Math.cos(at.heading) - (shooterAt.z - at.z) * Math.sin(at.heading));
+  assert.notEqual(side, 0, 'real shooter has a definite side');
+  target.steerVisual = side; r.duel.setInput({throttle: 0, brake: 0, steer: side, boost: false});
+  freezePositions(r.duel, 59); assert.ok(carEffect(target, 'tether'), '59 native 120 Hz ticks are less than half a second');
+  freezePositions(r.duel, 1); assert.equal(carEffect(target, 'tether'), null, '60 full-away native ticks break the tether');
+});
+check('Harpoon shield counter prevents both real armor loss and tether', () => {
+  const duel = race(), target = duel.state.rival, armor = target.armor;
+  equipCpu(target, 'star'); assert.equal(fireWeapon(duel, 'star', true, target), true, 'native target raises its actual shield');
+  assert.equal(duel.fireWeapon('harpoon'), true, 'native player launches toward the shield'); tick(duel, 150);
+  assert.equal(target.armor, armor, 'shield preserves target armor'); assert.equal(carEffect(target, 'tether'), null, 'shield blocks the tether');
+});
+check('real Smoke blocks Harpoon CPU acquisition and in-flight homing', () => {
+  const duel = race(), owner = duel.state, cpu = owner.rival; equipCpu(cpu, 'harpoon');
+  const a = point(duel, owner), b = point(duel, cpu);
+  assert.equal(duel.fireWeapon('harpoon'), true, 'native player launches before the cloud');
+  const shot = owner.combat.projectiles.find(p => p.kind === 'harpoon'); assert.ok(shot);
+  addHazard(duel, {kind: 'smoke', shape: 'circle', x: (a.x + b.x) / 2, z: (a.z + b.z) / 2,
+    radius: 6, lifetime: 5, owner});
+  place(cpu, cpu.s, 4); const initial = {vx: shot.vx, vz: shot.vz}; stepProjectiles(duel, DT);
+  near(shot.vx, initial.vx, 'smoke stops actual guided lateral velocity'); near(shot.vz, initial.vz, 'smoke stops actual guided forward velocity');
+  assert.equal(targetFor(duel, cpu, {range: 50}), null, 'native shared targeting sees the actual cloud');
+  assert.equal(fireWeapon(duel, 'harpoon', true, cpu), false, 'CPU never fires an aimed Harpoon blind');
+});
+check('native Harpoon guidance retains real identity and redirects only to live decoy DATA', () => {
+  const duel = race(), original = duel.state.rival;
+  assert.equal(duel.fireWeapon('harpoon'), true, 'real lock-on launch succeeds');
+  const shot = duel.state.combat.projectiles.find(p => p.kind === 'harpoon'); assert.ok(shot);
+  const lockedId = targetIdentity(duel, original);
+  const nearer = {...original, id: 'wave-one-nearer', decoy: false, s: duel.state.s + 15};
+  duel.state.opponents.push(nearer); stepProjectiles(duel, DT);
+  assert.equal(shot.targetId, lockedId, 'a launched shot never switches to a nearer real car');
+  // Shared transient DATA contract from ARS-CORE, not a playable Drone stub.
+  const decoy = {...original, id: 'wave-one-decoy-data', ownerId: lockedId, active: true,
+    decoy: true, expiresAt: duel.state.stageTimeSec + 5, s: duel.state.s + 25, lateral: 2};
+  duel.state.opponents.push(decoy); stepProjectiles(duel, DT);
+  assert.equal(shot.targetId, decoy.id, 'native flight uses the existing range-limited hostile decoy selector');
+});
+for (const level of [0, 3]) check('Caltrops real strip, once-per-body damage and fixed control at level ' + level, () => {
+  const r = dropCaltrops({level});
+  assert.equal(r.hazard.shape, 'strip'); near(r.hazard.length, 8, 'literal 8 m strip length'); near(r.hazard.width, 5, 'literal 5 m width'); near(r.hazard.lifetime, 8, 'literal 8 s lifetime');
+  near(r.armor - r.target.armor, 4 * (1 + .15 * level), 'named Caltrops armor source scales damage');
+  const effect = carEffect(r.target, 'grip'); assert.ok(effect, 'native strip contacts the full car body');
+  near(effect.remainingSec, 4, 'Caltrops control lasts exactly 4 s'); near(carGrip(r.target), .75, 'Caltrops multiplies grip by 0.75');
+  const armor = r.target.armor; stepHazards(r.duel, DT); assert.equal(r.target.armor, armor, 'remaining overlap never repeats damage');
+  place(r.target, r.target.s + 30); stepHazards(r.duel, DT); const at = r.duel.course.nearest(r.hazard.x, r.hazard.z, r.target.s);
+  place(r.target, at.s, at.lateral); stepHazards(r.duel, DT); assert.equal(r.target.armor, armor, 'exit and re-entry never repeats this strip');
+  near(r.duel.state.combat.cooldowns.caltrops, 9 / 1.15 ** level, 'actual recharge divides by 1.15 per level');
+});
+check('Caltrops drops 3 m behind its actual rotated owner', () => {
+  const duel = race(); duel.state.headingError = Math.PI / 3; const at = point(duel, duel.state), heading = at.heading + duel.state.headingError;
+  assert.equal(duel.fireWeapon('caltrops'), true, 'native rotated drop succeeds');
+  const strip = hazardsFor(duel).find(h => h.kind === 'caltrops'); assert.ok(strip);
+  near(strip.x, at.x - Math.sin(heading) * 3, 'rear 3 m x'); near(strip.z, at.z - Math.cos(heading) * 3, 'rear 3 m z'); near(strip.heading, heading, 'native strip follows owner heading');
+});
+check('Caltrops steering-around counter avoids actual body contact', () => {
+  const duel = race(), target = duel.state.rival; atRelative(duel, target, duel.state, -3);
+  target.lateral += 8; const armor = target.armor;
+  assert.equal(duel.fireWeapon('caltrops'), true, 'native strip drops next to the separate lane');
+  tick(duel, 3); assert.equal(target.armor, armor, 'going around the 5 m strip preserves armor'); assert.equal(carEffect(target, 'grip'), null, 'going around avoids grip loss');
+});
+check('a second genuine Caltrops strip refreshes 4 s rather than stacking control', () => {
+  const r = dropCaltrops(); freezePositions(r.duel, 120); assert.ok(carEffect(r.target, 'grip').remainingSec < 4);
+  const targetAt = point(r.duel, r.target), at = r.duel.course.nearest(targetAt.x + Math.sin(targetAt.heading) * 3,
+    targetAt.z + Math.cos(targetAt.heading) * 3, r.target.s);
+  place(r.duel.state, at.s, at.lateral); r.duel.state.combat.cooldowns.caltrops = 0; // Distinct-deployment fixture; recharge is tested separately.
+  assert.equal(r.duel.fireWeapon('caltrops'), true, 'second native launch creates a distinct strip');
+  const before = r.target.armor; stepHazards(r.duel, DT);
+  near(before - r.target.armor, 4, 'new strip gets its own single damage entitlement');
+  near(carEffect(r.target, 'grip').remainingSec, 4, 'new contact refreshes the authored 4 s'); near(carGrip(r.target), .75, 'two strips never multiply grip into a stacked penalty');
+});
+check('native Caltrops expires at 8 s and its grip recovers at 4 s', () => {
+  const r = dropCaltrops(); freezePositions(r.duel, 481);
+  assert.equal(carEffect(r.target, 'grip'), null, 'native car effect recovers after 4 s'); assert.equal(carGrip(r.target), 1);
+  freezePositions(r.duel, 480); assert.equal(hazardsFor(r.duel).includes(r.hazard), false, 'native strip expires after 8 s');
+});
+
+for (const weapon of ['harpoon', 'caltrops']) for (const role of ['player', 'road-cpu', 'arena-cpu']) check(weapon + ' top-speed cap is read by real ' + role + ' driving', () => {
+  const arena = role === 'arena-cpu', playerVictim = role === 'player';
+  const r = weapon === 'harpoon' ? hitHarpoon({playerVictim, arena}) : dropCaltrops({playerVictim, arena});
+  const actor = r.target, duel = r.duel, control = race({arena}), other = playerVictim ? control.state : control.state.rival;
+  const spec = arenaCarSpec(duel, actor), scale = weapon === 'harpoon' ? .8 : .9;
+  const baseCap = arena ? arenaFloorSpeed(duel.course.def.scrapdome, spec.topSpeed) : spec.topSpeed;
+  const initial = baseCap * scale + .05;
+  for (const [d, target] of [[duel, actor], [control, other]]) {
+    place(target, arena ? 96 : 500, 0, 0, initial);
+    target.gear = CARS[target.car].gears.length - 1;
+    if (role === 'player') {d.setInput({throttle: 1, brake: 0, steer: 0, boost: false}); d._drive(DT);}
+    else if (arena) {const at = point(d, target); pilotStep(d, target,
+      {x: at.x + Math.sin(at.heading) * 20, z: at.z + Math.cos(at.heading) * 20, speedMph: baseCap, boost: false}, DT);}
+    else d._rival(DT, target);
+  }
+  assert.ok(actor.speedMph < other.speedMph - 1e-6, 'live effect lowers the native speed ceiling response versus the identical unhit consumer');
+  if (arena) assert.ok(actor.speedMph <= baseCap * scale + EPS, 'arena pilot clamps at the literal scaled floor ceiling');
+});
+
+for (const [weapon, cases] of [
+  ['oil', [[-29, 0, true], [-31, 0, false], [20, 0, false], [-20, 30, false]]],
+  ['smoke', [[-49, 0, true], [-51, 0, false], [20, 0, false]]],
+  ['harpoon', [[15.5, 0, true], [49.5, 0, true], [14.5, 0, false], [50.5, 0, false], [30, 4.5, true], [30, 5.5, false], [30, -4.5, true], [30, -5.5, false]]],
+  ['caltrops', [[-39, 0, true], [-41, 0, false], [20, 0, false], [-20, 45, true]]],
+]) check('native CPU uses ' + weapon + ' only at its settled positional conditions', () => {
+  for (const [metres, angle, expected] of cases) {
+    const duel = race(), cpu = duel.state.rival; equipCpu(cpu, weapon);
+    place(cpu, 500); atRelative(duel, duel.state, cpu, metres, angle);
+    if (weapon === 'smoke') assert.ok(applyArmorDamage(duel, cpu, 'crossbow', {owner: 'player'}) > 0, 'real damage makes the recent-hit condition');
+    const events = []; duel.onChange((_, event) => events.push(event));
+    duel.state.combat.aiTimer = 0; duel.state.combat.aiTurn = 0; stepCombatAI(duel, DT);
+    const used = weapon === 'harpoon' ? duel.state.combat.projectiles.some(p => p.kind === weapon && p.enemy) :
+      hazardsFor(duel).some(h => h.kind === weapon && h.owner === cpu);
+    assert.equal(used, expected, weapon + ' native scheduled use at ' + metres + ' m/' + angle + ' degrees');
+    if (used) assert.ok(events.some(e => e.weaponFired === weapon || e.arsenalCue === 'weapon.' + weapon + '.deploy'), 'real use supplies an attributable event');
+  }
+});
+check('native Smoke computer condition requires a real hit in the last 5 s', () => {
+  for (const recent of [false, true]) {
+    const duel = race(), cpu = duel.state.rival; place(cpu, 500); atRelative(duel, duel.state, cpu, -30); equipCpu(cpu, 'smoke');
+    if (recent) {applyArmorDamage(duel, cpu, 'crossbow', {owner: 'player'}); duel.state.stageTimeSec += 5 + DT;}
+    duel.state.combat.aiTimer = 0; stepCombatAI(duel, DT);
+    assert.equal(hazardsFor(duel).some(h => h.kind === 'smoke'), false, 'missing or expired native damage never qualifies defensive smoke');
+  }
+});
+check('real seeded CPU loadouts admit both new wave-one weapons without extra control slots', () => {
+  const found = new Set();
+  for (const difficulty of ['easy', 'medium', 'hard']) for (let seed = SEED; seed < SEED + 8; seed++) {
+    const duel = race({difficulty}); duel.startCampaign({mode: 'wasteland', discoveredGate: true,
+      arsenalRank: 6, seed, cpuDifficulty: difficulty, opponentCount: 3});
+    for (const cpu of duel.state.opponents) {
+      const ids = cpu.weaponLoadout; assert.equal(ids.length, 4); assert.equal(new Set(ids).size, 4);
+      assert.ok(ids.some(id => id === 'crossbow' || ARSENAL_WEAPONS[id]?.cpuRole === 'front'), 'every real CPU retains front damage');
+      assert.ok(ids.filter(id => ['ufo', 'star', 'oil', 'smoke'].includes(id)).length <= 2, 'at most two settled defensive/control weapons');
+      ids.forEach(id => found.add(id));
+    }
+  }
+  assert.ok(found.has('harpoon') && found.has('caltrops'), 'bounded real rank-six fields actually assign both implemented wave-one weapons');
+});
+
+function withApp(options, run) {
+  const names = ['localStorage', 'cancelAnimationFrame'], previous = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name));
+  const rows = new Map();
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+    getItem: key => rows.get(String(key)) ?? null, setItem: (key, value) => rows.set(String(key), String(value)), removeItem: key => rows.delete(String(key))}});
+  Object.defineProperty(globalThis, 'cancelAnimationFrame', {configurable: true, value: () => {}});
+  const profile = createProfile(); profile.credits = 9000;
+  let xp = 0; for (let rank = 1; rank < (options.rank || 6); rank++) xp += 400 + 150 * (rank - 1);
+  profile.wasteland = normalizeWasteland({...profile.wasteland, discoveredGate: options.discovered !== false, xp, scrap: 4000,
+    weapons: {unlocked: [...WEAPON_IDS, ...(options.owned || []), 'future-wave'], levels: {'future-wave': 9}, extra: {keep: 7}},
+    loadout: ['future-wave', 'crossbow', 'bomb', 'star'], futureNote: {keep: true}});
+  let registry = createPlayerRegistry(profile); registry.players[0].id = 'wave-one'; registry.players[0].name = 'Wave One';
+  registry = createPlayer(registry, 'Wave Two').registry; registry.players[1].id = 'wave-two'; registry.activePlayerId = 'wave-one';
+  assert.equal(savePlayers(registry, globalThis.localStorage), true);
+  let app;
+  try {app = new App(); app.duel.featureFlags = flags(options.enabled); app.audio.unlock = () => {}; return run(app, rows);}
+  finally {app?.dispose(); names.forEach((name, i) => {if (previous[i]) Object.defineProperty(globalThis, name, previous[i]); else delete globalThis[name];});}
+}
+for (const [weapon, rank] of [['harpoon', 3], ['caltrops', 5]]) {
+  check('actual memory-only App purchase/equip/upgrade preserves ownership: ' + weapon, () => withApp({rank}, (app, rows) => {
+    const other = structuredClone(loadPlayers().players[1]), input = app.profile, before = structuredClone(input);
+    assert.equal(app.purchaseArsenalWeapon(weapon).ok, true, 'native Armory buys the implemented weapon at its settled rank');
+    assert.deepEqual(input, before, 'purchase leaves its raw input immutable'); assert.equal(app.profile.wasteland.scrap, 3600);
+    assert.equal(app.equipCarWeapon(1, weapon).ok, true); assert.equal(app.profile.wasteland.loadout[0], 'future-wave');
+    for (const [level, cost] of [[1, 150], [2, 300], [3, 600]]) {
+      const scrap = app.profile.wasteland.scrap; assert.equal(app.purchaseWeapon(weapon).ok, true);
+      assert.equal(getProfileWeapons(app.profile).levels[weapon], level); assert.equal(app.profile.wasteland.scrap, scrap - cost);
+    }
+    const saved = rows.get(PLAYERS_KEY); assert.equal(app.purchaseWeapon(weapon).ok, false); assert.equal(rows.get(PLAYERS_KEY), saved);
+    assert.deepEqual(loadPlayers().players[1], other); assert.equal(getProfileWeapons(app.profile).levels['future-wave'], 9);
+    assert.equal(app.profile.wasteland.weapons.extra.keep, 7); assert.equal(app.selectPlayer('wave-two'), true);
+    assert.equal(getProfileWeapons(app.profile).unlocked.includes(weapon), false); assert.equal(app.equipCarWeapon(1, weapon).ok, false);
+  }));
+  check('unearned/gated App purchase stays unavailable: ' + weapon, () => {
+    for (const options of [{rank: rank - 1}, {rank, discovered: false}, {rank, enabled: false}]) withApp(options, (app, rows) => {
+      const before = rows.get(PLAYERS_KEY); assert.equal(app.purchaseArsenalWeapon(weapon).ok, false); assert.equal(rows.get(PLAYERS_KEY), before);
+    });
+    assert.equal(normalizeWeapons({levels: {[weapon]: 3}}).unlocked.includes(weapon), false, 'normalization never grants a weapon from its level alone');
+  });
+}
+for (const weapon of ['harpoon', 'caltrops']) for (const fps of [30, 60, 144]) check('production App ' + weapon + ' replay repeats at ' + fps + ' frame cadence', () => {
+  const replay = cadence => withApp({owned: ['harpoon', 'caltrops']}, app => {
+    assert.equal(app.equipCarWeapon(1, weapon).ok, true, 'real owned loadout can equip the implemented weapon');
+    app.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: SEED, difficulty: 'casual', cpuDifficulty: 'hard', opponentCount: 1});
+    const duel = app.duel; Object.assign(duel.state, {status: 'racing', countdown: 0, invulnerableSec: 0, traffic: []});
+    duel.state.combat.aiTimer = duel.state.combat.pickupTimer = Infinity;
+    place(duel.state, 500); atRelative(duel, duel.state.rival, duel.state, weapon === 'harpoon' ? 35 : -3);
+    assert.equal(duel.fireWeapon(weapon), true, 'native implemented weapon starts the replay'); app.runId = 'wave-one-cadence';
+    app.advance(2, 1 / cadence); return digest({state: duel.state, hazards: hazardsFor(duel).map(({owner, onTouch, ...h}) => h),
+      effects: [duel.state, ...duel.state.opponents].map(actor => ['tether', 'grip'].map(id => carEffect(actor, id)))});
+  });
+  assert.equal(replay(fps), replay(60), 'actual App input/accumulator yields identical seeded simulation, hazards and effects');
+});
+for (const weapon of ['harpoon', 'caltrops']) for (const transition of ['stage', 'menu'])
+  check('real lifecycle clears active ' + weapon + ' transients: ' + transition, () => {
+    const r = weapon === 'harpoon' ? hitHarpoon() : dropCaltrops(), old = r.target;
+    const kind = weapon === 'harpoon' ? 'tether' : 'grip'; assert.ok(carEffect(old, kind));
+    if (transition === 'stage') r.duel.startCampaign({mode: 'wasteland', discoveredGate: true}); else r.duel.emit({menu: true});
+    assert.deepEqual(hazardsFor(r.duel), []); assert.equal(carEffect(old, kind), null, 'real stage/menu boundary retires the previous car effect');
+  });
+check('genuine repeated Caltrops launches retain at most 24 native hazards', () => {
+  const duel = race();
+  for (let i = 0; i < 27; i++) {
+    duel.state.combat.cooldowns.caltrops = 0; // Deployment fixture; native recharge has separate acceptance.
+    assert.equal(duel.fireWeapon('caltrops'), true, 'actual native launch creates each bounded hazard');
+  }
+  assert.equal(hazardsFor(duel).length, 24, 'native registry evicts old products at its settled 24 cap');
+});
+check('native scene draws the tether between current cars and disposes its line resources', () => {
+  const r = hitHarpoon(), scene = createCombatScene(), resources = new Set();
+  let disposed = 0;
+  try {
+    scene.update(r.duel); const ends = [];
+    scene.group.traverse(node => {
+      if (!node.isLine || node.isLineLoop || !node.visible) return;
+      for (let parent = node.parent; parent; parent = parent.parent) if (!parent.visible) return;
+      const positions = node.geometry?.attributes.position;
+      if (!positions || positions.count < 2) return;
+      node.updateWorldMatrix(true, false);
+      const transform = index => {
+        const x = positions.getX(index), y = positions.getY(index), z = positions.getZ(index), m = node.matrixWorld.elements;
+        return {x: m[0]*x+m[4]*y+m[8]*z+m[12], z: m[2]*x+m[6]*y+m[10]*z+m[14]};
+      };
+      ends.push([transform(0), transform(positions.count - 1)]);
+      resources.add(node.geometry); resources.add(node.material);
+    });
+    const a = point(r.duel, r.shooter), b = point(r.duel, r.target);
+    const close = (p, car) => Math.hypot(p.x - car.x, p.z - car.z) < 4;
+    assert.ok(ends.some(([p, q]) => close(p, a) && close(q, b) || close(q, a) && close(p, b)),
+      'visible native line connects the actual shooter and tethered car');
+    assert.ok(ends.length <= 4, 'one line per actual arena-sized car pool remains bounded');
+    for (const resource of resources) resource.addEventListener('dispose', () => disposed++);
+  } finally {scene.dispose();}
+  assert.ok(resources.size > 0 && disposed === resources.size, 'native scene disposes the actual line geometry and material');
+});
+check('native rendering reuses bounded pools, draws both products and leaves simulation untouched', () => {
+  const duel = race(); assert.equal(duel.fireWeapon('harpoon'), true); assert.equal(duel.fireWeapon('caltrops'), true);
+  const scene = createCombatScene();
+  try {
+    const before = digest({state: duel.state, hazards: hazardsFor(duel).map(({owner, onTouch, ...h}) => h)});
+    const counts = () => {const geometries = new Set(), materials = new Set(); scene.group.traverse(node => {
+      if (node.geometry) geometries.add(node.geometry); for (const m of Array.isArray(node.material) ? node.material : node.material ? [node.material] : []) materials.add(m);}); return [geometries.size, materials.size, scene.group.children.length];};
+    scene.update(duel); const initial = counts(); for (let i = 0; i < 25; i++) scene.update(duel);
+    assert.deepEqual(counts(), initial, 'repeated native updates allocate no additional geometry/material/pool nodes');
+    assert.equal(digest({state: duel.state, hazards: hazardsFor(duel).map(({owner, onTouch, ...h}) => h)}), before, 'renderer never mutates simulation or hazards');
+    let visibleProjectile = false, visibleStrip = false;
+    scene.group.traverse(node => {if (!node.isMesh || !node.visible) return; let shown = true;
+      for (let p = node.parent; p; p = p.parent) shown &&= p.visible;
+      if (!shown) return; const p = duel.state.combat.projectiles.find(p => p.kind === 'harpoon'), h = hazardsFor(duel).find(h => h.kind === 'caltrops');
+      node.updateWorldMatrix(true, false); const position = node.matrixWorld.elements;
+      visibleProjectile ||= Math.hypot(position[12] - p.x, position[14] - p.z) < 4;
+      visibleStrip ||= Math.hypot(position[12] - h.x, position[14] - h.z) < 5;
+    });
+    assert.ok(visibleProjectile, 'native scene draws the real Harpoon flight product'); assert.ok(visibleStrip, 'native scene draws the real Caltrops strip');
+  } finally {scene.dispose();}
+});
+console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; owner-grace and steering-threshold boundaries await Claude.');
+if (failures.length) {console.error(failures.join('\n')); process.exitCode = 1;}
