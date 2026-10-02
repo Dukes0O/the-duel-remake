@@ -1,5 +1,5 @@
 # ARS-01: Harpoon, Caltrops and wave-one computer use
-Native weapons, cable and six runtime sounds are implemented. Kyle approved both CPU corrections and shared sound hooks. Claude's cable verdict, Smoke coverage, actual mixed audio and current lane/build gates remain.
+Native weapons, cable and six runtime sounds are implemented. Kyle approved both CPU corrections and shared sound hooks. Claude's cable verdict, Smoke coverage and current lane/build gates remain.
 
 ## What changed
 - Harpoon uses a leading 70 m/s projectile, full carrier velocity, a 4 degree
@@ -82,9 +82,11 @@ picture goes to Claude. Frame pacing remains; old UI overlaps go to Phase 3 poli
 The short-cue measurement regression failed before Source. Analysis-only silence
 makes short cues measurable without changing OGG bytes or playback; independent
 review clears it. All 18 private CC0 variants rebuild: true peak -4.72 to -2.43
-dBTP. Padding is labelled; mixed capture and listening remain.
+dBTP. Padding is labelled; actual mixed capture passes as below; human listening remains.
 Kyle approved settled free CC0 cues in shared hooks. Six cues and eighteen runtime OGG variants are installed. The genuine native launch-stream test first proved duplicate Harpoon fire and Caltrops fallback playback. Source fixes only those paths; all 37 audio checks pass. Independent review clears moving flight loops, spatial cues, cleanup and old-sound retention.
-The two Core preservation filters exclude exactly six additions under review; every old hash, Core cue, playback case and other assertion stays exact. Current lane/build gates and actual mixed audio remain.
+The two Core preservation filters exclude exactly six additions under review; every old hash, Core cue, playback case and other assertion stays exact. Current lane/build gates remain. Real High/Performance full-throttle captures verify six native
+cues and the moving flight loop, with zero delivered clipping and true peaks -1.94/-1.98
+dBTP. Pause retires every voice. Human cue recognition remains unmeasured.
 
 ## Removed
 Replaced two-user rear scheduling, level-blind backup, wrong-axis yank,
