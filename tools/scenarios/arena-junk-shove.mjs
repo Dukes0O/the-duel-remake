@@ -104,6 +104,7 @@ export async function run(context) {
     await context.evaluate('window.__qaApp.advance(8)');
     await context.waitFor('window.__qaApp.isYardHomeActive()',quality+' actual yard',30000);
     for(const car of ['banshee_muscle','titan_monster']){
+      const captureCar=car.replaceAll('_','-');
       await context.evaluate(`(() => {
         const app=window.__qaApp;app.menuCar=${JSON.stringify(car)};
         if(!app.startArenaEvent({opponents:1}))throw Error('Production arena entry failed');
@@ -115,12 +116,12 @@ export async function run(context) {
       await ready(context,quality+' '+car+' actual arena readiness');
       const setup=await context.evaluate(`(${installFixture.toString()})(${DRIVE.mphToWorld})`);
       const before=await context.evaluate('window.__junkQA.frame()');
-      await context.screenshot(quality+'-'+car+'-before');
+      await context.screenshot(quality+'-'+captureCar+'-before');
       const impact=await context.evaluate('window.__junkQA.hit(40,'+(car==='titan_monster'?0:.7)+')');
       const moving=await context.evaluate('window.__junkQA.advance(12)');
-      await context.screenshot(quality+'-'+car+'-sliding');
+      await context.screenshot(quality+'-'+captureCar+'-sliding');
       const settled=await context.evaluate('window.__junkQA.advance(948)');
-      await context.screenshot(quality+'-'+car+'-settled');
+      await context.screenshot(quality+'-'+captureCar+'-settled');
       const later=await context.evaluate('window.__junkQA.advance(240)');
       assert.equal(impact.mass,2175);
       assert.ok(settled.moved>=(car==='titan_monster'?5:2),'native displacement meets the settled floor');
