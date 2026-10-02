@@ -55,10 +55,15 @@ mode override, warlord Source or audio/tuning file was edited here.
 - Feature switch suite: 32 checks pass. Syntax checks for beacon, renderer and
   browser scenario pass. git diff --check passes.
 
-No broad Bounty replay/FPS matrix, lane gate, build, browser, frame capture or
-audio capture was run during the Director's serialized integration full tier.
-No merge-ready, browser fidelity, frame cost, save review or audio verdict is
-claimed. Replay literal pins and existing acceptance assertions are unchanged.
+After the integration slot freed, the complete native suite passes 35 of 39
+cases in 8.49 seconds, with no skips. Only the four recorded brain cases fail.
+Actual Bounty inputs match at 30, 60 and 144 FPS; roads, Last Car Rolling and
+Sal match every existing literal control pin with Bounty disabled and enabled.
+Four private memory-only browser journeys pass in High and Performance on both
+venues: actual yard entry, beacon/arrow, native contact, scoring, pause, once-only
+pay, rematch and return. Twelve views have no warnings or errors. The marked
+car is offscreen in the race captures, so these are no beacon look verdict.
+Lane/build, frame cost, save review and sound verdict remain before merge.
 
 ## Behavior and test changes
 
@@ -67,16 +72,15 @@ exact count from ten to eleven. All old state assertions remain. This additive
 consumer change is within the Director's grant. The static Preview flag list
 adds Bounty; no launcher execution or Preview interaction occurred.
 Native Bounty behavior is new. Ordinary race, Last Car Rolling and Sal replay
-fixtures stay exact and await their full matrix run in the assigned gate slot.
+fixtures stay exact in the complete native suite.
 
 ## Sound and remaining work
 
 New handover event bountyMark reserves cue bounty-mark; initial mark uses
 arenaLoaded. Existing arenaWreck/arenaPhase/result cues remain in place.
 The audio owner must connect/review bounty-mark; it remains unsounded here.
-Brain Source from Claude, independent source/save review, full Bounty matrix,
-lane/build gates, actual High/Performance browser views, gameplay/frame checks
-and sound verdict remain before this card can be complete or merged.
+Brain Source from Claude, independent source/save review, lane/build gates,
+visible-beacon look and frame checks, and sound verdict remain before merge.
 
 ## Removed
 
