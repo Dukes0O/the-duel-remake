@@ -1065,13 +1065,17 @@ tasks:
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
-    sequencing: "Wreck-rate and Arsenal are merged. Independent tests and the actual native/public hook map precede Source; other lanes retain their own files."
-    note: "Bounty tests reproduce the missing dev, native, App and yard entry while current controls pass. Source waits for the hunter-cap and self-wreck rulings; existing projected marker behaviour is retained."
+    sequencing: "Mode rules build in their owned module first. Salt frees entry, settlement and HUD hooks at merge; Claude builds the brain seam and Arsenal retains audio hooks until its merge."
+    note: "The free Bounty mode module is being implemented after the settled answers. Shared entry and HUD hooks wait for Salt to merge; Claude receives the exact marked-car brain seam in writing. No reserved warlord or Arsenal audio file is edited."
     hook_requests: [src/feature-flags.js, src/game.js, src/app.js, src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/screen-router.js, src/screen-hud.js, src/combat-hud.js, src/style.css, src/arena/arena-tell-view.js, src/audio.js]
     design_question: "Does a marked player override the usual hunter cap? Does a self-wreck fallback recipient receive twenty points, and who receives the mark when the last hitter or current leader is also wrecking?"
     test_commit: f4afad3e83db2019eddae7bc90c575931844d94e
     test_verdict: "Bounded admission has twenty-eight passing checks and four genuine failures: missing dev switch, native entry, App entry and yard choice. Tests use the actual mode, clock, credit, brain and memory-only settlement paths; mechanics and browser checks remain unproved."
     claude_answer_0030: "2 October 2026, 00:30: (1) When a computer car is marked, every other computer car hunts it. When the player is marked, the usual Easy and Medium hunter cap still holds, so the player is never mobbed on those levels; Hard has no cap as today. (2) A car that receives the mark from a self-wreck gets the mark but no 20 points; points come only from actually wrecking the marked car. (3) If the last hitter or the leader is itself wrecking, the mark goes to the nearest car that is still running, ties broken by the seeded order. The leader never means the marked car itself. (4) This card also makes Bounty Hunt playable on the Salt Flats once ARENA-06 merges. Docs: SCRAPDOME.md, Bounty Hunt."
+    mode_source_commit: f12be4f
+    handover_test_commit: 30478ec
+    handover_source_commit: 7da183d
+    mode_review: "Independent review clears the actual scoring and transfer module after two genuine recovery regressions pass. Native entry, brain routing, pay, HUD and browser acceptance remain incomplete."
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1107,8 +1111,7 @@ tasks:
     lane: VIS
     size: L
     needs: [ART-SRC-SALTFLATS]
-    status: review
-    waiting_on: kyle
+    status: building
     review_commit: "4bb0da063863e8a9450f9b419e817eff20c377f0"
     source_commit: "bac0d1c9c5465f953288d8d24ed2f84f62a8cbf9"
     test_commit: "c18e814"
@@ -1116,7 +1119,7 @@ tasks:
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-salt-flats-output.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
-    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, src/game.js, src/screen-router.js, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
+    hooks: [tools/test-frame-metrics.mjs, start-preview.bat, tools/test-feature-flags.mjs, src/generated-shortcut-presets.js, tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, src/game.js, src/screen-router.js, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
     sequencing: "Claude approved real public entry for Last Car Rolling and Fuel Run only. The independent review approves the released Fuel rule assertion and additive actual App coverage before Source. Salt owns the granted entry and renderer files; Tanker and Vesper are merged, so Salt now owns its shared Blender registration with independent tests first."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
@@ -1124,7 +1127,7 @@ tasks:
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
-    note: "Both built modes pass their real public browser checks and the accepted art is unchanged. Automatic approval review requires Kyle’s explicit approval for the independently reviewed control-trace migration, so the fixture stays exact and Salt waits. Bounty and Ambush still add this venue in their own cards."
+    note: "Kyle approved the reviewed armor control migration and native entry passes. The current gate found shortcut freshness metadata drift from Salt-only branches; prove all saved routes and refresh only source metadata before merge. Final art stays approved."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
@@ -1137,6 +1140,10 @@ tasks:
     control_review_by: codex-independent-reviewer
     control_review_verdict: "The unchanged Salt control sampler produces the exact same trace and full Duel state in integration and Salt, with original geometry and core replay files exact. Restoring only the previous starting armor reproduces the old frozen trace, so the reviewer approves updating only control provenance and that trace for Kyle’s approved armor change; all assertions and tolerances remain exact."
     kyle_approval: "Kyle, 2 October 2026, in writing to Claude: Approved: update the Salt control trace for the ordinary-car armor change. (Codex's own safety check may still need it typed in Codex's chat.)"
+    control_fixture_commit: 0e6e01c
+    kyle_control_approval: "Kyle, 2 October: approve the reviewed ordinary-car armor trace migration, preserving physical and main replay pins."
+    catalog_review: "Independent review approves adding only Salt dev state and the exact catalog count of ten. All existing state, production and QA assertions stay unchanged."
+    view_clock_review: "Independent review approves only the exact optional presentation parameter and ambient mirror clock in two frame guards; measurement defaults and CPU boundaries stay exact. The static launcher recipe adds Salt, without touching the running Preview or its output."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -1196,6 +1203,7 @@ tasks:
     test_verdict: "Bounded native admission has ten passing controls and four genuine missing-switch/fight failures. Downstream ring, damage, arc and reward checks remain unproved; the note records a three-second observation bound that needs independent review against the window ruling before Source."
     claude_answer_0030: "2 October 2026, 00:30: (1) Trigger: when ready, while the player is on the floor between 12 and 40 m from him. (2) Target: committed when the tell starts (that is when the ring appears): the player's position predicted at the landing moment (current position plus current velocity times the tell plus the 1.2 s arc), kept on the floor and at most 40 m from his take-off point. (3) Phase two: the second ring is aimed the same way when he lands the first time; the 2.5 s stuck window follows only the second landing. Docs: SCRAPDOME.md, Kettle Kingpin."
     claude_takeover: "2 October 2026: Claude builds the Kettle Kingpin after the Dustmonger, in its own warlord file. Codex: stop this lane and do not touch the warlord files."
+    kyle_handover: "Kyle, 2 October: Claude builds this boss. Codex stops this card and all named warlord files; preserve its existing tests and lane."
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -3187,6 +3195,7 @@ tasks:
     test_verdict: "Bounded native admission has ten passing controls and three genuine missing-fight failures, one per difficulty. No Source, existing assertion or replay changed; downstream mechanics remain unreachable. The change note records the oil questions and actual rendering waits."
     claude_answer_0030: "2 October 2026, 00:30: (1) Driving straight: his yaw rate stayed under 10 degrees a second for the last 0.5 s. (2) The oil strip is 4 m wide and 8 m long, centred on the line he drove, and begins at the far edge of the cloud (the cloud's centre distance behind him plus its radius) and runs 8 m further back. (3) It is an Oil Slick hazard in every other way: 6 s lifetime fading in the last second, owned by the Dustmonger with the same 1 s owner grace, and the same slip effect once per hazard (grip 0.35 for 0.7 s, 2.2 rad/s spin kick, speed times 0.85, no armor damage, a star shield ignores it). Docs: SCRAPDOME.md, Dustmonger."
     claude_takeover: "2 October 2026: Kyle asked Claude to build the bosses after nine hours of tests with no game code. Claude built the Dustmonger in claude/bosses (src/warlords/dustmonger.js, tools/test-dustmonger.mjs). Codex: stop this lane; keep its tests for reference only."
+    kyle_handover: "Kyle, 2 October: Claude builds this boss. Codex stops this card and all named warlord files; preserve its existing tests and lane."
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
     owner: claude
@@ -3211,6 +3220,7 @@ tasks:
       - "Tests first: every split has its tell; copies never score or settle; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude before merge."
     claude_answer_0030: "2 October 2026, 00:30: (1) Once her cooldown is ready she starts a split when the player is within 40 m and she is not stunned or in a damage window. (2) The first split is not ready at the start: her cooldown runs from the start of the fight, so the player first sees the real car (12, 10 or 8 s in). Docs: SCRAPDOME.md, Mother Mirage."
     claude_takeover: "2 October 2026: Claude builds Mother Mirage after the Kingpin, in her own warlord file. Codex: stop this lane and do not touch the warlord files."
+    kyle_handover: "Kyle, 2 October: Claude builds this boss. Codex stops this card and all named warlord files; preserve its existing tests and lane."
   - id: AUD-17
     title: "Voice candidates and chosen crew/raider lines"
     lane: AUDIO
@@ -3238,35 +3248,58 @@ tasks:
     size: M
     needs: [ARS-CORE]
     status: building
-    waiting_on: kyle
+    waiting_on: claude
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arsenal-wave1
     flag: arsenal
     owns: [src/arsenal/harpoon.js, src/arsenal/caltrops.js, tools/test-arsenal-wave1.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
-    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/weapon-upgrades.js, src/combat-weapons.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, src/combat.js, src/combat-scene.js, tools/combat-balance.mjs, tools/test-combat-balance.mjs, src/career-backup.js, tools/test-career-backup.mjs, tools/test-arsenal-save.mjs, src/vehicle-knock.js, src/sim-crash.js, src/sim-contacts.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, tools/build-arsenal-wave1-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/scenarios/arsenal-wave1-audio.mjs, public/assets/audio/arsenal-wave1/]
+    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/weapon-upgrades.js, src/combat-weapons.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, src/combat.js, src/combat-scene.js, tools/combat-balance.mjs, tools/test-combat-balance.mjs, tools/test-arsenal-runtime.mjs, src/career-backup.js, tools/test-career-backup.mjs, tools/test-arsenal-save.mjs, src/vehicle-knock.js, src/sim-crash.js, src/sim-contacts.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, tools/build-arsenal-wave1-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/test-arsenal-core-audio.mjs, tools/scenarios/arsenal-wave1-audio.mjs, public/assets/audio/arsenal-wave1/]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build Harpoon and Caltrops exactly as docs/ARSENAL.md section 3, and computer use of all four wave 1 weapons (Oil Slick and Smoke Screen come from ARS-CORE). Every counter has a headless test."
       - "Section 4's tests pass: determinism at 30, 60 and 144 FPS; the thirty-race balance with wasteland2 and arsenal on, with the computer's use of each weapon counted; a private browser scenario showing each weapon and counter. Sounds from Freesound CC0 through the catalog."
     sequencing: "Claude answered both literal rules, and native boundary tests are committed before Source. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. The core audio card is merged. Claude releases six new Harpoon and Caltrops cues and separately labelled complete rear-defense report races; existing sounds, historical samples and targets stay unchanged."
     test_commit: 37924a1cbce6cd3a1ec2a2953121208f7250b0ef
-    note: "The save-backup fix passes its new regressions. Automatic approval review requires Kyle to approve the reviewed Crossbow-or-Harpoon assertion change, so that assertion stays exact and the card waits. Claude released the complete rear-defense sample. Automatic approval review also requires Kyle’s explicit standing permission for new shared sound edits, so bank, renderer and catalog remain unchanged."
+    note: "Kyle approved both CPU predicates and the standing free CC0 sound hooks. Save, native Core and thirty-seven audio checks pass. Claude still reviews the cable picture and settles the Smoke coverage gap before merge."
     claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
     motion_hook_grant: "The Harpoon motion fix may read and retire its private along-course impulse in existing crash and reset consumers. Native review also proves that static contact and ram classification need that same component; their thresholds and ordinary rules stay unchanged."
     motion_review_commit: 7fa0fc6fb946a2d92e6deae1993e3effb75f51a2
     motion_regression_commit: aa62ed604ca0e986ca6d6d32ad3d770af378d95a
     motion_verdict: "Independent Source review clears the motion, grounding and contact repairs, with all sixty-five native cases passing. Collision thresholds and ordinary replay pins stay exact. Balance, browser, sound hooks and the held save assertion still precede merge."
     claude_answer_0330: "2 October 2026, 03:30: (1) Sounds: yes. ARS-01 may add its six settled Harpoon and Caltrops cues and their free CC0 recipes to the sound bank, catalog and audio renderer. Standing release for the arsenal from now on: each arsenal or warlord card may add its own new settled cues the same way, with no paid credits and no change to any existing sound, Kyle's voice takes or AUD-17's records. (2) Balance report: yes. Add separately labelled complete races with naturally assigned Oil and Smoke loadouts, legal inputs and real damage; keep every historical sample and target. Then tune Medium toward 45 to 65 percent as planned. (3) The Crossbow-or-Harpoon test correction matches the settled loadout rule (any working front attack); it waits only for Kyle's approval in Codex's chat."
-    audio_permission_hold: "Automatic approval review rejected both narrow six-cue shared-file attempts because it still reserves the bank, renderer and catalog for the separate audio owner. Kyle’s explicit standing permission is now requested; those files and existing guards remain unchanged."
+    audio_permission_hold: "Resolved by Kyle on 2 October: each arsenal or warlord card may add its own settled free CC0 cues, preserving existing sounds, voices and protected lanes."
     rear_report_test_commit: 9c6855b02e06493fa2fc0039579f29534b18b320
     rear_report_review_commit: a7ecbe808370012d048a5f3bce91c83b648e2b76
     rear_report_driver_commit: cfbf602fadf90aea8b37fddf1b1c1273d9e77325
-    browser_review_commit: d1422b679ec3a47b40571eee3d918d675bd80d4a
-    browser_verdict: "All twenty actual browser checks pass in both qualities with no errors; QA panels are hidden and cars and spikes are visible. The Harpoon line is faint; Claude's visual verdict remains. Unchanged minimap and phone text overlaps are recorded for Phase 3 polish; frame pacing and six-cue audio remain unmeasured."
-    visual_question: "Please judge the visible but faint Harpoon line against road markings in the fresh private pictures. Keep it, or settle a bounded readability fix; the line still joins the actual cars and drawing remains read-only."
-    rear_report_question: "The legal lane correction finishes and measures Oil, but brief Smoke opportunities miss the Medium decision in two natural cases. May coverage add predefined complete Easy or Hard cases, keeping all historical samples, targets and measured supplemental cases? The candidate stays unmerged and zero use still fails."
-    balance_question: "Five permitted pace trials found no combined pass: twelve meets the Arsenal win band but stalls the existing pursuit, while thirteen finishes pursuit and misses the Arsenal band. The original eight is restored. Please settle the next tuning lever and whether it should apply only with Arsenal, preserving targets and warlord armor."
+    browser_review_commit: 58652f8
+    browser_verdict: "All twenty fresh actual browser checks pass in both qualities with no errors, and QA panels are absent. The rust-orange cable is clear and its fresh picture goes to Claude. Frame pacing and mixed six-cue audio remain unmeasured; old UI overlaps belong to Phase 3 polish."
     claude_answer_0630: "2 October 2026, 06:30: (1) Harpoon line: fix it. As drawn it is thin and pale and reads as another road marking. Make it a steel cable about twice as thick, rust orange so it never matches white or yellow road paint, with a slight sag (about 0.4 m at the middle of the span), still drawn only between the actual cars. One picture to Claude; no other visual change. Caltrops read well. (2) Rear-defense coverage: yes, add predefined complete Easy or Hard cases with natural loadouts; keep every historical sample, target and supplemental case; zero use still fails. (3) Balance: leave pace at eight. Next lever: the Medium computer's weapon decision interval in arsenal races, from 7 s to 4.5 s, so it uses its weapons, including rear ones, more often. Apply it only when the arsenal switch is on; released balance, targets and warlord armor stay. If Medium still wins above 65 percent, the second lever is Medium computer armor times 1.1 in arsenal races only."
+    timing_test_commit: 320ba2b
+    timing_source_commit: f08c448
+    cable_test_commit: 56a67d6
+    cable_source_commit: 092f8f0
+    private_audio_test_commit: 09cdeb6
+    private_audio_source_commit: 58652f8
+    evidence_note_commit: f5ab02f
+    future_purchase_fixture_commit: a97eb8a
+    lane_gate_commit: d8f8ddf
+    lane_gate_verdict: "Earlier failures are corrected; current lane and build gates remain after the reviewed old-record audio filter migration."
+    private_audio_bytes: 157061
+    visual_review_picture: ".lanes/arsenal-wave1/.evidence/2026-10-02/arsenal-wave1-2026-10-02T14-28-39-463Z/wave-one-harpoon-tether-high.png"
+    visual_question: "Please approve the fresh picture of the settled rust-orange cable between the actual cars before merge."
+    private_audio_verdict: "Actual native full-throttle mixed capture passes in both qualities: all six cues, moving flight and pause cleanup, with zero delivered clipping. Human cue recognition remains unmeasured. Current lane/build gates and Claude review remain."
+    timing_fixture_commit: 39bd1db
+    rear_case_commit: 6d3b01413e1462abb9ae6426664b81787877e661
+    review_0630: "Independent Source review clears the reusable cable meshes and scoped Medium decisions; all seventy-seven native cases pass. The complete report meets every win, hit, pursuit and completion target, with nineteen Medium wins in thirty and no armor change. Smoke has no measured use; Claude receives the remaining coverage question and fresh cable picture."
+    rear_report_question: "The complete report passes every other target, but all six complete natural rear-defense cases still record no Smoke. Its ready opportunities occur between decisions or end in wrecks. Please settle the next complete natural scenario or tuning direction, retaining every historical and measured supplemental case, pace eight, targets and warlord health."
+    future_purchase_fixture_review: "Independent review approves moving only the unimplemented-purchase fixture to Rocket Pods at its eligible rank seven. Every refusal, profile, registry and no-write assertion stays unchanged. Both Crossbow-only CPU predicates remain held for Kyle."
+    cpu_predicate_commit: 5f4e5a3
+    audio_stream_test_commit: b4ccf18
+    audio_runtime_commit: 9798bca
+    audio_preservation_review: "Independent review approves excluding exactly the six new wave-one IDs from two old-record filters. Expected hashes, Core playback and every other assertion stay exact."
+    mixed_audio_recipe_commit: f1a9738
+    mixed_audio_note_commit: 941eb9b
+    preservation_filter_commit: 933baa0
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO

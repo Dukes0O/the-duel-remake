@@ -66,51 +66,36 @@ models stay private until Convoy Raid and WAR-04 supply the runtime callers.
 Vesper's preservation tests now freeze each run's current game files, keeping
 all donor pins and native art assertions unchanged.
 
-Claude answered all eight midnight questions on the cards. Salt has real
-rank-nine public selection, launch, rematch and yard return in both built
-modes, passing all four private High/Performance browser cases. Bounty and
-Ambush add Salt in their own cards. Automatic approval review nevertheless
-requires Kyle's explicit approval for the independently reviewed control
-trace migration after his armor change; the fixture remains untouched.
+Kyle approved all three held changes on 2 October: both CPU tests accept
+Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
+each arsenal or warlord card may add its own settled free CC0 cues. Existing
+sounds, voice takes and protected audio lanes remain exact. These are settled.
 
-ARS-01's motion, grounding and collision repairs pass all sixty-five native
-cases and independent Source review. Save Guardian found and cleared the missing
-backup before a newly recognized earned weapon gains its default level.
-Automatic approval review requires Kyle to approve the reviewed Crossbow-or-
-Harpoon CPU assertion; that assertion remains exact. Claude approved its six new sound cues and separately labelled complete
-rear-defense balance races, retaining every historical sample and target. Automatic approval review now
-requires Kyle’s explicit standing permission for shared sound edits; the bank,
-audio renderer and catalog remain unchanged in this lane.
-The three core sounds are merged after native tests, independent review, real
-High/Performance mixed capture and current lane/build gates. They preserve all
-earlier sounds; human listening and simultaneous six-slip stress remain flagged.
+Salt public entry and final art are approved. Its lane gate found shortcut
+freshness metadata drift from Salt-only branches; prove all saved routes and
+refresh only source metadata. Arsenal native save and Core suites pass, and
+all thirty-seven runtime audio checks pass. Complete balance meets every
+target except measured Smoke use; Claude reviews that gap and the cable picture.
+Actual full-throttle audio passes in both qualities with no delivered clipping.
+Current gates and Claude review remain.
 
-Arsenal's twenty actual browser checks pass in both graphics modes. QA
-panels are hidden and cars and spikes are visible; Claude judges the faint
-Harpoon line from the fresh pictures. Five permitted pace trials found no
-combined balance and pursuit pass; the original eight is restored. Claude's
-next review has tuning direction and complete rear-defense coverage in the
-inbox. No failed trial is accepted. Unchanged minimap and phone text overlaps
-are recorded for Phase 3 polish; frame pacing and six-cue audio remain.
+Kyle transferred WAR-02b, WAR-02c and WAR-03b to Claude. Preserve their tests
+and lanes. Codex must not edit warlords.js, sal-fight.js, warlord-event.js,
+warlord-settlement.js, arena-brains.js, arena-tell-view.js or
+vehicle-contact-modifiers.js. Crew and Bounty wait for their actual file owners.
 
-Crew gear, Dustmonger, Mirage, Kingpin and Bounty retain their genuine tests
-first. Their move rules are settled; Source waits for the named Arsenal and
-Salt file owners to merge. No shared file is released from an unmerged lane.
-
-Kyle's overnight schedule, 1 October evening: Claude reviews at 12:30, 3:30
-and 6:30 AM. Existing thread follow-ups are active just after those reviews.
-The handoff starts at 8:30 AM on 2 October and the run ends by 8:45; no
-half-hour clock polling.
+Kyle lifted the morning deadline and instructed Codex to keep building.
+Both obsolete overnight timers are paused. Active work continues here.
 
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
 | A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE merged with Kyle's lower-rate choice; then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
-| B. Arsenal | ARS-CORE merged; then ARS-01 | Shared sound edits wait for Kyle’s explicit permission after automatic review |
+| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound permission is granted; Claude reviews the cable and coverage |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | Tanker and Vesper fitting merged | Runtime installation follows in Convoy Raid and WAR-04 |
-| E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
+| E. Clean-up | BALANCE-W2-OFF-RETIRE when its files are free | The three bosses belong to Claude |
 
 Kyle, 1 October 2026: the dome steering is kept; his evening reply chooses the
 lower ordinary-car wreck rate. The parked junk-car fix proceeds first. Sal is approved as she is
