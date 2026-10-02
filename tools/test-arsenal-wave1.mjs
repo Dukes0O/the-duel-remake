@@ -797,10 +797,18 @@ for (const count of [2, 3]) check('Medium Arsenal ' + count + '-car field shares
     field.shots.map(shot => shot.time).join(', '));
   assert.deepEqual(field.shots.map(shot => shot.source),
     Array.from({length: count * 2}, (_, index) => index % count), 'genuine projectiles rotate through each live actor');
-  field.shots.forEach((shot, index) => assert.ok(Math.abs(shot.time - (index + 1) * interval) <= (index + 1) * DT,
-    'one actual launch per divided interval, with no synchronized volley: ' + shot.time));
-  field.shots.slice(count).forEach((shot, index) => assert.ok(Math.abs(shot.time - field.shots[index].time - 4.5) <= count * DT,
-    'each actual actor retains the 4.5 s interval across its turns'));
+  field.shots.forEach((shot, index) => {
+    const expectedTime = (index + 1) * interval;
+    const roundoff = Number.EPSILON * Math.max(1, Math.abs(shot.time), Math.abs(expectedTime));
+    assert.ok(Math.abs(shot.time - expectedTime) <= (index + 1) * DT + roundoff,
+      'one actual launch per divided interval, with no synchronized volley: ' + shot.time);
+  });
+  field.shots.slice(count).forEach((shot, index) => {
+    const expectedTime = field.shots[index].time + 4.5;
+    const roundoff = Number.EPSILON * Math.max(1, Math.abs(shot.time), Math.abs(expectedTime));
+    assert.ok(Math.abs(shot.time - field.shots[index].time - 4.5) <= count * DT + roundoff,
+      'each actual actor retains the 4.5 s interval across its turns');
+  });
 });
 check('Medium Arsenal finished car loses its scheduled turn and two live cars share 4.5 s', () => {
   const field = timedCpuField({count: 3, retired: 0});
