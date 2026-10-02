@@ -6,6 +6,9 @@ import {initializeCrewGear, refillCrewGear, selectSignatureGear,
   stepSignatureGear, stepGearDeployables, damageGearTurret} from '../src/crew-gear/signature.js';
 import {launchGearProjectile, stepGearProjectile} from '../src/crew-gear/projectiles.js';
 import {signatureFor} from '../src/crew-gear/gear.js';
+import {availableCrew, selectedCrewId, selectCrew} from '../src/crew.js';
+import {createProfile} from '../src/progression.js';
+import {normalizeWasteland} from '../src/wasteland-progress.js';
 
 // Bounded regression checks for the owned production modules, not native
 // CREW-02 wiring acceptance. Only the missing catalog entry is adapted here.
@@ -188,6 +191,42 @@ for (const crew of ['dune', 'nell']) check(`${crew} launch inherits observed nat
     walking.shot.vz - stationary.shot.vz - walking.motion.z);
   assert.ok(error < EPS,
     `${crew} projectile must inherit actual planar thrower motion; velocity error ${error.toFixed(3)} m/s`);
+});
+check('earned Tusk remains selectable below rank 25 without paying again', () => {
+  const profile = {...createProfile(), futureProfile: {kept: true},
+    wasteland: normalizeWasteland({xp: 0, discoveredGate: true, scrap: 37,
+      futureCareer: {kept: ['value']}, crew: {selected: 'rook',
+        unlocked: ['rook', 'tusk', 'future-crew'], futureCrew: {kept: true}}})};
+  const other = {...createProfile(), wasteland: normalizeWasteland({xp: 0, scrap: 19})};
+  const before = structuredClone(profile), otherBefore = structuredClone(other);
+  assert.ok(availableCrew(profile).some(member => member.id === 'tusk'),
+    'the low-rank career can use its already earned Tusk');
+  assert.equal(selectedCrewId({...profile, wasteland: {...profile.wasteland,
+    crew: {...profile.wasteland.crew, selected: 'tusk'}}}), 'tusk',
+    'an earned Tusk selection survives the usual rank check');
+  const result = selectCrew(profile, 'tusk');
+  assert.equal(result.ok, true, 'already owned Tusk can be selected below rank 25');
+  assert.equal(result.profile.wasteland.scrap, 37, 'earned Tusk is never purchased again');
+  assert.equal(selectedCrewId(result.profile), 'tusk', 'selection is actually honored');
+  const expected = structuredClone(before);
+  expected.wasteland.crew.selected = 'tusk';
+  assert.deepEqual(result.profile, expected, 'only selection changes; future fields and unknown unlocks survive');
+  assert.deepEqual(profile, before, 'selection does not mutate its input profile');
+  assert.deepEqual(other, otherBefore, 'another named career remains unchanged');
+});
+check('unearned Tusk still requires rank 25 and a future schema cannot be changed', () => {
+  const profile = {...createProfile(), wasteland: normalizeWasteland({xp: 0,
+    discoveredGate: true, scrap: 1000, crew: {unlocked: ['rook'], selected: 'rook'}})};
+  const before = structuredClone(profile);
+  assert.equal(availableCrew(profile).some(member => member.id === 'tusk'), false,
+    'low rank does not grant an unearned Tusk');
+  assert.equal(selectCrew(profile, 'tusk').ok, false, 'unearned Tusk remains rank-gated');
+  assert.deepEqual(profile, before, 'rejection preserves the whole profile and scrap');
+  const future = {...profile, wasteland: {...profile.wasteland, version: 2,
+    crew: {selected: 'rook', unlocked: ['rook', 'tusk'], future: {kept: true}}}};
+  const futureBefore = structuredClone(future);
+  assert.equal(selectCrew(future, 'tusk').ok, false, 'owned crew cannot bypass a future-schema refusal');
+  assert.deepEqual(future, futureBefore, 'future-schema refusal preserves the supplied career');
 });
 for (const failure of failures) console.error(failure);
 console.log(`Crew gear owned modules: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
