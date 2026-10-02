@@ -5,9 +5,12 @@ import * as simPolice from './sim-police.js';
 import * as simLaps from './sim-laps.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
-import {normalizeWeapons} from './weapon-upgrades.js';
+import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
 import {normalizeCarLoadout} from './car-loadout.js';
-import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat} from './combat.js';
+import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat,clearArsenalState,initializeArsenalCombat} from './combat.js';
+import {arsenalEnabled} from './combat-weapons.js';
+import {clearSmokeHistory} from './arsenal/smoke.js';
+import {implementedArsenalWeapons} from './weapon-upgrades.js';
 import {initializeCombatArmor} from './combat-armor.js';
 import {initializeRaiders, stepRaiders} from './raiders.js';
 import {initializeFootTransition, stepFootTransition,
@@ -35,6 +38,7 @@ import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {ARENA_VENUES} from './arena/venues.js';
+import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -118,7 +122,11 @@ export class Duel {
   }
 
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
-  emit(ev) { for (const fn of this.listeners) fn(this.state, ev); }
+  emit(ev) {
+    if (ev.stageResult || ev.gameover || ev.arenaResult || ev.menu || ev.complete)
+      clearArsenalState(this);
+    for (const fn of this.listeners) fn(this.state, ev);
+  }
   destructionEnabled() {
     return true;
   }
@@ -155,7 +163,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this.state.arena = null;
@@ -173,9 +181,11 @@ export class Duel {
     this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
+    if (arsenalEnabled(this)) this.state.arsenalRank = arsenalRank;
+    else delete this.state.arsenalRank;
     this.state.weaponLoadout=this.state.mode==='wasteland'&&
       this.featureFlags.enabled('wasteland2')?
-      normalizeCarLoadout(weaponLoadout,Object.keys(WEAPONS)):null;
+      normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,...implementedArsenalWeapons()] : WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
@@ -204,6 +214,7 @@ export class Duel {
   }
 
   _loadStage(idx) {
+    clearArsenalState(this);
     const s = this.state;
     s.stageIndex = idx;
     this.course = new Course(COURSE[idx], this.seed, {
@@ -253,6 +264,7 @@ export class Duel {
     // pre-spawn deterministic two-way traffic
     s.traffic = this._spawnTraffic(idx);
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
+    initializeArsenalCombat(this);
     initializeCombatArmor(this);
     initializeRaiders(this);
     initializeFootTransition(this);
@@ -299,7 +311,7 @@ export class Duel {
   // player who has found the gate.
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
-    seed, opponents = [], weaponLevels, weaponLoadout, combatArmorKit = null, crewId = 'rook' } = {}) {
+    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook' } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const released = this.featureFlags.base || this.featureFlags;
     if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') ||
@@ -323,7 +335,10 @@ export class Duel {
     s.opponentCount = opponents.length;
     s.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[s.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     s.mode = 'wasteland';
-    s.weaponLoadout = normalizeCarLoadout(weaponLoadout, Object.keys(WEAPONS));
+    if (arsenalEnabled(this)) s.arsenalRank = arsenalRank;
+    else delete s.arsenalRank;
+    s.weaponLoadout = normalizeCarLoadout(weaponLoadout,
+      arsenalEnabled(this) ? [...WEAPON_IDS,...implementedArsenalWeapons()] : WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
     s.crewId = Object.hasOwn(CREW, crewId) ? crewId : 'rook';
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
@@ -334,6 +349,7 @@ export class Duel {
   }
 
   _loadArena(venue, mode, opponentSpecs) {
+    clearArsenalState(this);
     const s = this.state;
     // Keep a valid index for code that reads the course list; the arena
     // itself always reads `this.course` and `state.arena`.
@@ -367,8 +383,10 @@ export class Duel {
       placeActor(this, actor, slot);
       s.arena.participants[index].spawnSlot = slot.index;
     });
+    initializeArenaJunk(this);
     initializeFuelRun(this);
     s.combat = createCombat(s.weaponLevels);
+    initializeArsenalCombat(this);
     initializeCombatArmor(this);
     applyArenaArmor(this);
     initializeFootTransition(this);
@@ -402,7 +420,10 @@ export class Duel {
       return;
     }
     if (s.arena) {
-      if (s.status === 'racing') stepArenaEvent(this, dt);
+      if (s.status === 'racing') {
+        stepArenaJunk(this, dt);
+        stepArenaEvent(this, dt);
+      }
       return;
     }
     if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this) ||
@@ -531,7 +552,10 @@ export class Duel {
 
   _practiceRecoveryPose(...args) { return simCrash._practiceRecoveryPose.apply(this, args); }
 
-  _safeReset(...args) { return simCrash._safeReset.apply(this, args); }
+  _safeReset(...args) {
+    if (arsenalEnabled(this)) clearSmokeHistory(this, args[0] || this.state);
+    return simCrash._safeReset.apply(this, args);
+  }
 
   _flockBonuses(...args) { return simLaps._flockBonuses.apply(this, args); }
 

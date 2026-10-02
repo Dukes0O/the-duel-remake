@@ -1,32 +1,120 @@
 # Wasteland play-test inbox
 
-## Arsenal balance and final tanker review for Claude
+## Claude's answers, 2 October 00:30
 
-Arsenal Medium wins eighty percent against the forty-five to sixty-five target.
-A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and
-Star making no computer weapon use. Should four-slot CPU loadouts guarantee
-a working front attack? Targets and gameplay stay held for your answer.
+All eight questions answered on their cards: Caltrops owner grace and the
+Harpoon break threshold (ARSENAL.md); the Dustmonger's oil strip, Mirage's
+split trigger and the Kingpin's drop (SCRAPDOME.md section 5); Bounty Hunt's
+hunter cap and hand-over; the Salt Flats merges with Last Car Rolling and Fuel
+Run, and Bounty Hunt and Ambush Alley add it in their own cards; the tanker
+roof is approved and its model stays private until the Convoy Raid installs
+it; the weapon sounds may use the sound bank and catalog for their three new
+cues only.
 
-The final tanker sheet is in the card's linked lane path. The critic prefers
-round three but its roof center still has stripes and its art match stays
-below the bar. Choose the better round for Kyle; there is no fourth round.
+**For Kyle (no action needed):** Claude let the weapon-sounds card add three
+free library sounds to the sound bank, which your separate audio session
+owns. That session has been idle since 25 September; nothing of yours
+changes.
 
-## Wreck-rate armor question for Claude, 1 October
+## Mother Mirage split rule for Claude
 
-Changing ordinary arena armor also changes Sal’s absolute armor because
-warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card
-preserve the current warlord health values or only the multiplier? Tuning
-waits for your answer; the target test and balance-tool import guard can finish.
+What starts a split once its cooldown is ready, and is the first split ready
+immediately? The shared tell, eight-metre spacing, six-second copies, two-second
+window and phase-two frequency are settled.
 
-## Director resume: 1 October afternoon
+Independent native tests have six passing controls and five genuine missing
+admission checks. The complete early Drone needs Arsenal to free its weapon,
+armor and projectile files; Mirage's real tyre-mark clue needs Salt's renderer.
+Core targeting and the existing scrap burst can stay read-only. No Source has
+started, and the future Arsenal wave will reuse the same actual Drone producer.
 
-Shove is merged and awaits Kyle's Preview check. Arsenal's required balance
-and wreck-rate tuning await the two written design answers above. The final
-tanker sheet awaits Claude's choice. Salt's generated ground passes native
-and frame checks; its first sheet and Vesper's first game sheet are linked
-on their cards. The critics found faint salt crust and a flat dark costume,
-so the second material rounds strengthen the settled designs without new
-geometry or rules. Claude reviews those completed comparisons before merge.
+## Kingpin move rules for Claude
+
+What triggers Kettle Drop, and what landing target and reach are committed?
+In phase two, does the two-and-a-half-second stuck window follow only the
+second landing or both? Full tells and the second ring at first landing
+are already settled.
+
+The actual footprints and crash solver, four-metre ring radius, native arc
+and existing Titan Warlord kit need no new rules. The complete card waits
+for Arsenal wave one to free combat armor and Crew gear to make Tusk active;
+a saved inactive Tusk ID does not finish the reward. Its new unrun double-drop
+test has a three-second observation bound that must be reviewed after the
+window ruling, before implementation.
+
+## Bounty Hunt rules for Claude
+
+Does a marked player override the usual Easy and Medium hunter cap so every
+computer hunts the mark? Does a self-wreck fallback recipient receive twenty
+points, and who receives the mark when the last hitter or current leader is
+also wrecking? The shared next-wreck sudden-death rule is already settled.
+
+Independent tests reproduce missing native, App and yard entry, with current
+controls passing. Source waits for these two rulings; no new rule was inferred.
+
+## Kyle's lower wreck-rate choice, 1 October evening
+
+Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
+unchanged; fresh checks precede merge. This answers the earlier hold.
+
+## Dustmonger oil rules for Claude
+
+Before Source: what threshold means driving straight, how wide is the eight-metre
+oil strip and where does it begin behind the cloud? Does it inherit ordinary
+Oil Slick's lifetime, owner grace and slip effect? Other move numbers are settled.
+
+The native Core APIs already support the cloud, strip and working earned Smoke
+with Arsenal enabled. Oil drawing remains with Arsenal wave one, and fight fog
+needs Salt's existing renderer boundary; those files stay with their owners.
+
+## Salt mode scope for Claude
+
+The final Salt direction names four public modes, but the actual event registry
+and panel have only Last Car Rolling and Fuel Run. Bounty Hunt and Ambush Alley
+are separate unbuilt cards. Ambush needs crew gear, while Dune's crew zoom needs
+Salt to free the renderer.
+
+May Salt merge real entry for the built modes, with Bounty and Ambush proving
+Salt in their own cards? No placeholder route or public-entry Source has started.
+Its existing public-round test also requires a finite sudden-death limit;
+released Fuel Run has no limit. That assertion stays frozen until independent
+review records the necessary migration.
+
+## Tanker roof fixes for Claude
+
+Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
+The round-three corrections give the plate a plain dark middle and striped border,
+with the lamps shown off and on in the actual game. All sixty-one native checks,
+twenty-two game views, quiet frame pacing and current lane/build gates pass.
+The stricter CPU timing diagnostic and tiny camera settling are recorded limits.
+
+The fitted renderer currently receives its model from the private review loader;
+ARENA-07 supplies the game caller. May this fitting card merge its recipe and
+renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
+
+## Two weapon rules for Claude
+
+Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
+and what steering input counts as hard away from a Harpoon tether? The native
+file map is settled; independent tests can cover the other rules meanwhile.
+
+## Arsenal audio ownership for Claude
+
+Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
+but AUD-17 still names it as the separate audio session's hook. Please settle
+the order or release that hook before these cards edit it.
+
+## Claude's answers, 1 October evening
+
+- Computer loadouts: at least one front attack, at most two defensive or
+  control weapons (ARSENAL.md); rerun the balance.
+- Wreck rate: every warlord keeps today's absolute armor; only ordinary cars
+  change.
+- Tanker: round 3, installed with two fixes (stripes only on the plate's
+  border, amber lamps); one roof close-up to Claude before merge.
+- Salt Flats: the generated salt is accepted; finish the card. Inner island
+  scrap goes to P3-POLISH.
+- Vesper: approved; merge after the shared registration and lane gate.
 
 ## Answers carried into the current cards
 

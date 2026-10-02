@@ -1,6 +1,9 @@
 import {CPU_COMBAT, WEAPONS, COMBAT_TUNING} from './wasteland-tuning.js';
-import {point, aimPoint, velocity, fireWeapon} from './combat-weapons.js';
+import {point, aimPoint, velocity, fireWeapon, arsenalEnabled} from './combat-weapons.js';
 import {cpuPickupCharges} from './combat-pickups.js';
+import {targetFor} from './arsenal/targeting.js';
+import {shouldUseOil} from './arsenal/oil.js';
+import {shouldUseSmoke} from './arsenal/smoke.js';
 import {arenaTargetOf} from './combat-teams.js';
 
 const T = COMBAT_TUNING;
@@ -112,7 +115,18 @@ export function stepCombatAI(duel, dt) {
     if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
-    const quarry = state.arena ? arenaTargetOf(duel, opponent) : state;
+    if (arsenalEnabled(duel)) {
+      const rear = (opponent.weaponLoadout || []).find(id =>
+        id === 'oil' && shouldUseOil(duel, opponent) ||
+        id === 'smoke' && shouldUseSmoke(duel, opponent));
+      if (rear && fireWeapon(duel, rear, true, opponent)) {
+        if (modernField) {combat.aiTurn = (index + 1) % opponents.length; break;}
+        continue;
+      }
+    }
+    const quarry = arsenalEnabled(duel)
+      ? targetFor(duel, opponent, {range:T.cpu.attackRange, origin:attacker})
+      : state.arena ? arenaTargetOf(duel, opponent) : state;
     if (!quarry) continue;
     const player = aimPoint(duel, quarry);
     const gap = Math.hypot(attacker.x - player.x, attacker.z - player.z);
@@ -124,6 +138,10 @@ export function stepCombatAI(duel, dt) {
     if (state.cpuDifficulty !== 'easy' && gap >= T.cpu.bombRange &&
         gap < T.cpu.pickupBombRange && cpuPickupCharges(state, combat, opponent).bomb) {
       weapon = 'bomb';
+    }
+    if (arsenalEnabled(duel) && !opponent.weaponLoadout?.includes(weapon)) {
+      weapon = opponent.weaponLoadout?.find(id => id === 'bomb' || id === 'crossbow');
+      if (!weapon) continue;
     }
     combat.aiShot++;
     const charges = cpuPickupCharges(state, combat, opponent);

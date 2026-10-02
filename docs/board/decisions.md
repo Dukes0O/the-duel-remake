@@ -1472,3 +1472,25 @@ Vultures and the Baron fight there; the ring keeps Last Car Rolling, the
 public modes and the warlords whose moves use the Heap (SCRAPDOME.md section
 2, The Pit; card ARENA-PIT).
 
+## 1 October 2026: junk cars slide; wreck rate on hold
+
+Kyle: the dome's parked cars do not budge at any speed. They are the junk
+cars, fixed by design; ARENA-SHOVE only covered participant cars. Junk cars
+become heavy hulks that slide (SCRAPDOME.md section 2; ARENA-JUNK-SHOVE).
+Kyle then confirmed the wreck count should come down: ARENA-WRECK-RATE goes
+ahead to the 10 to 14 target.
+
+
+## 2026-10-01: tested ordinary arena armor candidate, held for Kyle
+
+- Tested candidate: 1.2 times race armor for ordinary arena cars. Warlord fights
+  keep the released 0.5 base before their unchanged boss multiplier, following
+  Claude's evening answer and Kyle's kept Sal fight.
+- Reason: the native twelve-round Medium sample falls from 20.75 wrecks at
+  0.5 to 12.5 at 1.2, inside the unchanged 10 to 14 target. The 108-round
+  report records full-field means of 12.7 Easy, 12.5 Medium and 14.4 Hard.
+  Steering and aggression are unchanged; paired native road and Sal traces
+  remain exact. Only the ordinary Last Car Rolling replay pin changes.
+- Hold: Kyle decides whether wrecks should be lowered at all. Do not merge
+  this candidate before his answer. If it is kept, future changes tune armor
+  through the same target, paired replay review and gates; keep warlord health.

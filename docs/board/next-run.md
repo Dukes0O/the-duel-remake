@@ -35,18 +35,63 @@ not move. From this run on:
 - Merge as soon as a card meets its acceptance and its gates. Aim for each
   open card to merge or reach Kyle in this run.
 
+**Evening answers (Claude, 1 October; top of the inbox and cards):**
+Computer loadouts need a front attack and no more than two control weapons;
+rerun Arsenal balance without changing the Medium target. Every warlord keeps
+its released absolute armor; tune ordinary arena cars only. Install tanker
+round three after its roof border and amber lamp fixes, then show Claude the
+roof with lamps off and on before merge. Salt's final generated ground and
+Vesper's costume are approved. Salt finishes public entry after Arsenal and
+wreck-rate free their files; both art recipes still wait for Tanker's shared
+registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
+
+Shove is merged. Kyle's junk-car note opens ARENA-JUNK-SHOVE; his later evening
+reply chooses the lower wreck rate, with Sal health unchanged.
+Arsenal and junk movement are merged after current lane/build gates. Junk has
+independent Source and four-case browser review, with clustered-cover respawns
+and late-contact containment fixed. Original road, LCR and Sal pins are unchanged.
+The approved lower wreck rate is merged: Medium averages 12.4 per round,
+with all warlord armor unchanged. Tanker's two fixes
+have passing native, frame, lane and build checks, with the roof view and
+installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use test failures;
+its two literal-rule questions and shared sound-bank wait are in the inbox.
+CREW-02 has four genuine native admission failures and two current controls;
+Source waits for shared tuning, audio and Salt's renderer.
+The later integration checkpoint passed all 324 full suites and build, then
+pushed normally under D8. Later commits need their own full check. Dustmonger
+and Bounty Hunt now have genuine native admission failures and preserved controls;
+Source waits for the written questions in the inbox. Kettle Kingpin is claimed
+for tests first and a real file map. Its controls pass and entry fails genuinely;
+its two move rules are in the inbox. The complete Kingpin card also needs
+active Tusk from Crew gear and Arsenal to free combat armor.
+
+Mother Mirage also has independent native tests first: six controls pass and
+five real admission checks fail. Its one split-trigger question is in the
+inbox. Source waits for the complete Drone's Arsenal hooks and Salt's real
+tyre-mark renderer; Core targeting needs no duplicate implementation.
+
+Salt's public entry has one new scope question in the inbox: the final direction
+names four modes while only two are built. Ambush's crew dependency and Dune's
+Salt-renderer wait form a cycle. Claude must settle the order before entry Source;
+the accepted final art and frozen tests remain in the clean lane.
+
+Kyle's overnight schedule, 1 October evening: Claude reviews at 12:30, 3:30
+and 6:30 AM. Existing thread follow-ups are active just after those reviews.
+The handoff starts at 8:30 AM on 2 October and the run ends by 8:45; no
+half-hour clock polling.
+
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
-| A. Dome feel | ARENA-SHOVE merge (trim its note), then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
-| B. Arsenal | ARS-CORE finish and merge, then ARS-01 | Unsounded cues while `arsenal` is dev |
+| A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE merged with Kyle's lower-rate choice; then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
+| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
 
-Kyle, 1 October 2026: the dome steering is kept, so ARENA-WRECK-RATE is
-ready (add it to track A after ARENA-SHOVE), and Sal is approved as she is
+Kyle, 1 October 2026: the dome steering is kept; his evening reply chooses the
+lower ordinary-car wreck rate. The parked junk-car fix proceeds first. Sal is approved as she is
 (WAR-SAL-TUNE closed). The weapon sounds (AUD-ARSENAL-W1) need only ARS-CORE:
 the sound bank is already live. New card ARENA-PIT (the dome's open
 layout, SCRAPDOME.md section 2) follows ARENA-06 in track C. Kyle keeps the nine crew and raider voice takes as they are.

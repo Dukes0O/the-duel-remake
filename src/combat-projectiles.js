@@ -1,5 +1,6 @@
+import {targetFor, targetIdentity, actorForTarget} from './arsenal/targeting.js';
 import {contactZone} from './collision.js';
-import {point, aimPoint, predictedPoint, burst} from './combat-weapons.js';
+import {point, aimPoint, predictedPoint, burst, arsenalEnabled, boltLaunchSpeed} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {tickCombatScoring} from './combat-scoring.js';
@@ -15,7 +16,19 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
   if (projectile.kind !== 'crossbow' || !Number.isInteger(projectile.targetIndex) ||
       !Number.isFinite(projectile.launchBearing) || !(dt > 0)) return;
   const state = duel.state;
-  const target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
+  const launchSpeed = boltLaunchSpeed(projectile);
+  let target = projectile.targetIndex < 0 ? state : state.opponents[projectile.targetIndex];
+  if (arsenalEnabled(duel) && !projectile.raid) {
+    const attacker = actorForTarget(duel, projectile.attackerId) ||
+      (projectile.enemy ? state.opponents[projectile.sourceIndex || 0] : state);
+    const remainingLife = Math.max(0, T.crossbow.lifetime - projectile.age);
+    target = targetFor(duel, attacker, {
+      range: launchSpeed * remainingLife, origin: projectile,
+      lockedTargetId: projectile.targetId || (target && targetIdentity(duel, target)),
+    });
+    if (target) projectile.targetId = targetIdentity(duel, target);
+    else projectile.targetIndex = null;
+  }
   if (!target || (projectile.enemy && state.arena?.mode === 'fuel-run'
     ? arenaTargetOutOfPlay(duel, target)
     : target.finished || target.crushed || target.combatWrecking)) return;
@@ -46,7 +59,13 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
 
 function steerRpg(duel, projectile, dt) {
   if (projectile.kind !== 'rpg' || !Number.isInteger(projectile.targetIndex)) return;
-  const actor = duel.state.opponents[projectile.targetIndex];
+  let actor = duel.state.opponents[projectile.targetIndex];
+  if (arsenalEnabled(duel)) {
+    actor=targetFor(duel,duel.state,{range:T.foot.rpgLockRange*(projectile.lockRangeMultiplier||1),
+      origin:projectile,lockedTargetId:projectile.targetId || (actor && targetIdentity(duel,actor))});
+    if(actor)projectile.targetId=targetIdentity(duel,actor);
+    else projectile.targetIndex=null;
+  }
   if (!actor || actor.finished || actor.crushed || actor.combatWrecking) return;
   const speed = Math.hypot(projectile.vx, projectile.vy, projectile.vz);
   if (!(speed > 0)) return;
