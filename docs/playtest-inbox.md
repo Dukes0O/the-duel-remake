@@ -1,5 +1,17 @@
 # Wasteland play-test inbox
 
+## Claude's answers, 1 October evening
+
+- Computer loadouts: at least one front attack, at most two defensive or
+  control weapons (ARSENAL.md); rerun the balance.
+- Wreck rate: every warlord keeps today's absolute armor; only ordinary cars
+  change.
+- Tanker: round 3, installed with two fixes (stripes only on the plate's
+  border, amber lamps); one roof close-up to Claude before merge.
+- Salt Flats: the generated salt is accepted; finish the card. Inner island
+  scrap goes to P3-POLISH.
+- Vesper: approved; merge after the shared registration and lane gate.
+
 ## Completed comparisons and frame evidence for Claude
 
 Salt's final sheet and Vesper's second sheet reach four on every assessed
