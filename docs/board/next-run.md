@@ -57,8 +57,11 @@ installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use 
 its two literal-rule questions and shared sound-bank wait are in the inbox.
 CREW-02 has four genuine native admission failures and two current controls;
 Source waits for shared tuning, audio and Salt's renderer.
-The exact evening integration checkpoint passed all 318 full suites and build,
-then pushed under D8; later commits need their own full check.
+The later integration checkpoint passed all 324 full suites and build, then
+pushed normally under D8. Later commits need their own full check. Dustmonger
+and Bounty Hunt now have genuine native admission failures and preserved controls;
+Source waits for the written questions in the inbox. Kettle Kingpin is claimed
+for tests first and a real file map.
 
 Salt's public entry has one new scope question in the inbox: the final direction
 names four modes while only two are built. Ambush's crew dependency and Dune's

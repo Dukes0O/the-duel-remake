@@ -1050,12 +1050,16 @@ tasks:
     branch: codex/cmb/arena-bounty
     flag: bounty-hunt
     owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, tools/scenarios/arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
-    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
     sequencing: "Wreck-rate and Arsenal are merged. Independent tests and the actual native/public hook map precede Source; other lanes retain their own files."
-    note: "Bounty Hunt is claimed after its dependencies merged. Tests first cover the settled mark, points, transfers, native brains, rank and one-time pay; no Source has started."
-    hook_requests: [src/arena/arena-event.js, src/app.js, src/screen-arena.js]
+    note: "Bounty tests reproduce the missing dev, native, App and yard entry while current controls pass. Source waits for the hunter-cap and self-wreck rulings; existing projected marker behaviour is retained."
+    hook_requests: [src/feature-flags.js, src/game.js, src/app.js, src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/arena-settlement.js, src/screen-arena.js, src/screen-router.js, src/screen-hud.js, src/combat-hud.js, src/style.css, src/arena/arena-tell-view.js, src/audio.js]
+    waiting_on: claude
+    design_question: "Does a marked player override the usual hunter cap? Does a self-wreck fallback recipient receive twenty points, and who receives the mark when the last hitter or current leader is also wrecking?"
+    test_commit: f4afad3e83db2019eddae7bc90c575931844d94e
+    test_verdict: "Bounded admission has twenty-eight passing checks and four genuine failures: missing dev switch, native entry, App entry and yard choice. Tests use the actual mode, clock, credit, brain and memory-only settlement paths; mechanics and browser checks remain unproved."
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1158,14 +1162,17 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-SAL, ARS-CORE, ARENA-WRECK-RATE]
-    status: ready
-    flag: scrapdome
+    status: building
+    claimed_by: codex-director-2026-10-01-evening
+    branch: codex/cmb/kettle-kingpin
+    flag: kettle-kingpin
     owns: [src/arena/moves/kettle-drop.js, tools/test-warlord-kettle.mjs, docs/changes/WAR-03b.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Kettle Kingpin' in docs/SCRAPDOME.md section 5. The ring is always drawn before he lands; the shove goes through the crash solver. Tusk unlocks early only once CREW-02 has made him active. When built, status review and waiting_on: claude before merge."
     sequencing: "Kettle waits for Arsenal progression and App hooks and the wreck-rate arena event hook to merge. The move, native fight, early Tusk and Titan kit reward are one complete card."
     hook_requests: [src/arena/warlord-event.js, src/arena/warlord-settlement.js, src/warlords.js, src/arena/arena-event.js, src/wasteland-progress.js, src/app.js]
+    note: "Kettle Kingpin is claimed for independent tests first and a real hook map. No Source hook is granted; other lanes retain their files, and Tusk requires active crew gear."
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -3129,17 +3136,19 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/dustmonger
-    flag: scrapdome
+    flag: dustmonger
     owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
-    hook_requests: [src/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
+    hook_requests: [src/feature-flags.js, src/warlords.js, src/arena/warlord-event.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/vehicle-contact-modifiers.js, src/arena/warlord-settlement.js, src/arena/arena-tell-view.js, src/app.js, src/combat-scene.js, src/render3d.js, src/scene-lighting.js]
     sequencing: "Claimed for tests first and a narrow map of existing smoke, oil, tells and rewards. No runtime hook is granted until the real files are mapped; held renderer and Arsenal files stay with their owners."
     note: "The native hook map can reuse Core smoke, oil and earned rewards with Arsenal enabled. Tests can cover settled rules; Source waits for the oil literals and the existing oil/fog renderer owners."
-    helpers: [test_author, reviewer, balance_analyst, browser_qa]
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: The Dustmonger' in docs/SCRAPDOME.md section 5, on the arsenal's smoke and oil hazards (ARS-CORE, docs/ARSENAL.md). Dust Veil blocks computer aim through the cloud through targetFor; oil only on straight runs; the window and phase-two dust storm as settled. Reward: Smoke Screen unlocked early for this player."
       - "Tests first: every veil has its tell; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude: Claude plays it in the Preview before merge."
     waiting_on: claude
     design_question: "What threshold means driving straight for the oil strip, how wide is the strip and where does it begin behind the cloud? Does its lifetime, owner grace and slip effect inherit ordinary Oil Slick?"
+    test_commit: af3406dcfd7935c2b16719360b32d4e41d286c95
+    test_verdict: "Bounded native admission has ten passing controls and three genuine missing-fight failures, one per difficulty. No Source, existing assertion or replay changed; downstream mechanics remain unreachable. The change note records the oil questions and actual rendering waits."
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
     owner: codex

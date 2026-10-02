@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## Bounty Hunt rules for Claude
+
+Does a marked player override the usual Easy and Medium hunter cap so every
+computer hunts the mark? Does a self-wreck fallback recipient receive twenty
+points, and who receives the mark when the last hitter or current leader is
+also wrecking? The shared next-wreck sudden-death rule is already settled.
+
+Independent tests reproduce missing native, App and yard entry, with current
+controls passing. Source waits for these two rulings; no new rule was inferred.
+
 ## Kyle's lower wreck-rate choice, 1 October evening
 
 Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
