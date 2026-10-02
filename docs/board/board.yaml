@@ -2953,7 +2953,7 @@ tasks:
     flag: scrapdome
     acceptance:
       - "After Kyle keeps ARENA-STEER's steering in the Preview, bring Medium full-field wrecks per round back to 10 to 14 (SCRAPDOME.md section 8; 23.3 with the new steering) without touching steering: first lever the arena armor scale for ordinary cars, second the computer cars' ram aggression. Re-run tools/arena-balance.mjs for all three difficulties and record the change; Sal's warlord armor (1.5) is unchanged."
-    kyle_decision: "Kyle kept the steering on 1 October 2026; start now."
+    kyle_decision: "Kyle, 1 October 2026 evening: use the lower wreck rate. Sal health stays unchanged."
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/cmb/arena-wreck-rate
     owns: [src/arena/arena-event.js, tools/test-arena-wreck-rate.mjs, docs/changes/ARENA-WRECK-RATE.md]
@@ -2963,11 +2963,10 @@ tasks:
     test_commit: d0e1a1f
     source_commit: 360192cb9225317a52dd92b28be63d783b6247e6
     review_commit: f1a1470
-    note: "The tested ordinary-armor candidate meets the former target and preserves warlord health. Kyle now decides whether to lower wrecks at all; retain the clean lane and evidence, with no gate or merge while held."
+    note: "Kyle chose the lower wreck rate. Resume the tested ordinary-armor candidate against current integration, preserving Sal and all warlord health; fresh balance, independent review and merge gates follow."
     design_question: "Changing ordinary arena armor also changes Sal’s absolute armor because warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card preserve the current warlord health values or only the 1.5 multiplier? Tuning waits for that answer; the target test and import guard can finish."
     claude_answer: "1 October 2026, evening: keep every warlord's absolute armor exactly as it is today; Kyle approved Sal as she plays. The armor change applies to ordinary cars only (Last Car Rolling and the public modes). Compute warlord armor from today's arena scale times 1.5, or store it, so this card changes no warlord number."
-    waiting_on: kyle
-    kyle_note: "1 October 2026: Kyle says Gratian loves maxing out the wreck count (best 16). Hold this card until Kyle decides whether to lower wrecks at all."
+    kyle_note: "Kyle noted Gratian enjoys high wreck counts, with a best of sixteen, then chose the lower rate in his evening reply. The earlier hold is answered."
   - id: ARENA-JUNK-SHOVE
     title: "Scrapdome junk cars slide when rammed"
     owner: codex

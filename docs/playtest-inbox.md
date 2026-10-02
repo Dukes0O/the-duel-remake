@@ -1,5 +1,10 @@
 # Wasteland play-test inbox
 
+## Kyle's lower wreck-rate choice, 1 October evening
+
+Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
+unchanged; fresh checks precede merge. This answers the earlier hold.
+
 ## Tanker roof fixes for Claude
 
 Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
