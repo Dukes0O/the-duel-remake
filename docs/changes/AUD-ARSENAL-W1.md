@@ -72,9 +72,16 @@ no silence, sample replacement or measured-gap removal is used.
 Partial/completed native events, input frames and recording headers are saved
 before validation without PCM/base64 in JSON. Diagnostics retain total and
 measured gap counts, the first setup and measured gaps, and actual frame times.
-The corrected epoch capture is unrun. Performance acceptance and human cue
-recognition remain open; no ratings are invented. Runtime audio, assets,
-assertions and replay pins stay exact. No broad gate or build ran here.
+AudioQA at f22e5ff passed both qualities: all native/ABC/full-throttle,
+contiguity, state-purity and cleanup checks, cue onset within -3 ms, no clipping,
+clicks or measured gaps. Final mix measured -16.54/-16.51 LUFS and -5.38/-5.50
+dBTP. The new cues were masked: 120 ms weapon-versus-engine RMS contrasts
+were Oil deploy -0.63 to +0.58 dB, slip -2.83 to -1.95 and Smoke -2.68 to
++2.80, below the +6 dB target. Only these cues' volumes now rise from
+1.35/1.3/1.35 to 3.375/3.9/3.915. Gain arithmetic predicts improvement,
+but actual full-throttle recapture and overlapping-voice headroom remain open.
+Engine, limiter, old bank records, recordings, recipes and assertions stay
+exact. Human recognition is unclaimed; no broad gate or build ran here.
 
 Automatic approval review rejected an optional preservation JSON as an
 unreviewed fingerprint baseline. It was never created or retried by this
