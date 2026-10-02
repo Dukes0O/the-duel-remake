@@ -41,12 +41,43 @@ caps, the salvaged windscreen sheet and beacon posts. The corrected export is
 6,788 triangles, 34 draws and 1.89 MB, below the advisory 8 MB file target.
 The actual complete native assembly remains 3 m wide, 3.5 m tall and 11 m long.
 Model, manifest and unchanged native logs are retained in private lane evidence.
-SPEC 0.3's arena frame budget at both qualities still needs actual renderer
-measurement; native counts are not a frame or look verdict.
+The opt-in final-round frame recipe measures the actual stopped production
+chase view at both qualities. Native counts are not a frame or look verdict.
 
 Earlier source and output-planning gates passed without changing the approved
 source bytes. The existing two duplicate-Three QA warnings remain unchanged.
 No replay, signature, physics, lamp-health policy or save assertion changes.
+
+## Frame measurement
+
+`TANKER_ART_FRAME_QA=1` keeps the native final-round candidate and uses the
+existing production chase view with the rig 30 m ahead. Each quality records
+A1 hidden / B visible / A2 hidden: 30 warm frames and all 600 ordered RAF and
+full `renderFrame` CPU samples per branch, at 1280 by 800, DPR and render ratio
+one. Only the private rig is hidden in world submissions, including mirrors;
+visibility is restored after each submission and both hooks restore in finally.
+The state hash and rig pose stay equal. High's camera stays equal; Performance's
+FOV finishes settling from 54.999969 to 55 degrees, so its strict camera control
+reports unequal. This stationary presentation does not measure moving Convoy
+Raid or GPU time.
+
+Real RAF p95 is 16.8 ms in every branch at both qualities, with no interval over
+33 ms. CPU mean / median / p95 / max, in milliseconds:
+
+| Quality | A1 | B | A2 |
+| --- | --- | --- | --- |
+| High | 3.040 / 3.0 / 3.7 / 5.2 | 3.136 / 3.1 / 3.8 / 4.6 | 2.878 / 2.8 / 3.5 / 4.7 |
+| Performance | 1.962 / 1.9 / 2.6 / 3.2 | 2.096 / 2.0 / 2.8 / 4.5 | 1.868 / 1.7 / 2.5 / 3.0 |
+
+The new advisory CPU/control check does not clear: High's median is 10.7%
+above A2; Performance's median is 17.6% above A2 and its baseline medians drift
+11.8%. This diagnostic does not show that SPEC's actual frame budget failed.
+These limits remain separate from the unchanged real RAF pacing. Claude
+must judge this limited frame evidence; it grants no whole-card clearance.
+All 3,600 samples, draw and triangle counts, mirror refreshes and snapshots are
+retained in private `frame-qa/tanker-comparison.json`. Actual QA repeats all
+twenty captures: zero errors or failed requests and the same two warnings.
+The existing comparison sheet and rejected art gaps stay unchanged.
 
 ## Removed
 

@@ -97,6 +97,7 @@ async function browserBundle() {
 
 export async function run(context) {
   const round=Number(process.env.TANKER_ART_ROUND||2);
+  const frameQa=process.env.TANKER_ART_FRAME_QA==='1';
   if(![2,3].includes(round))throw Error('Only approved tanker rounds 2 and 3 are supported');
   const directory = privateDirectory();
   const bytes = readFileSync(join(directory, 'tanker.glb'));
@@ -134,7 +135,7 @@ export async function run(context) {
     baseline: 'Original picked body/tank/three valves at fitted transforms; no previous runtime tanker exists.',
     setting: 'Actual production Scrapdome yard and renderer.',
     artVerdict: 'Pending independent comparison review.',
-    frameVerdict: 'Not measured by this screenshot scenario.',
+    frameVerdict: frameQa?'Pending same-chase A1/B/A2 measurement.':'Not measured by this screenshot scenario.',
     captures: [],
   };
   const saveReport = () => writeFileSync(join(context.outputDir, 'tanker-comparison.json'), JSON.stringify(report, null, 2) + '\n');
@@ -366,6 +367,14 @@ export async function run(context) {
       report.captures.push({name,quality,version:'candidate',distance:'normal-chase-30m',...detail,
         limit:'Actual production Scrapdome chase camera and car; the private art rig is 30 m ahead. No Convoy Raid gameplay.'});
       saveReport();
+      if(frameQa){
+        report.frameMeasurements ??= [];
+        report.frameMeasurements.push(await measureChaseFrames(context,quality));
+        report.frameVerdict=report.frameMeasurements.every(row=>row.budgetPassed)?
+          'Measured chase fixture within 10% at both qualities; CPU submission is not GPU time.':
+          'No frame clearance: budget excess or drifting baselines recorded.';
+        saveReport();
+      }
       const chaseUnchanged=await context.evaluate(`(() => {
         const q=window.__tankerChase,same=q.state===JSON.stringify(window.__qaApp.duel.state);
         q.model.dispose();delete window.__tankerChase;return same;
@@ -377,4 +386,99 @@ export async function run(context) {
   if(report.captures.length!==(round===3?20:18))throw Error('All matched art views, including the final-round chase views, are required');
   report.captureVerdict='All '+report.captures.length+' actual-game views, quality, native bounds, supplied health and simulation state checks passed';
   saveReport();
+}
+
+// Optional frame evidence for the existing final-round production chase pose.
+async function measureChaseFrames(context,quality) {
+  const fixed=await context.evaluate(`(async () => {
+    const q=window.__tankerChase,app=window.__qaApp,view=window.__render;
+    if(!q||app.cameraMode!=='chase'||app.inspectionCamera)throw Error('Production chase required');
+    const raf=window.requestAnimationFrame,originalRender=view.renderer.render;
+    q.frame={raf,originalRender,branch:'A',worldSubmissions:0};
+    window.requestAnimationFrame=()=>0;
+    view.renderer.render=function(scene,camera){
+      if(scene!==view.scene)return originalRender.call(this,scene,camera);
+      const visible=q.model.group.visible;
+      q.frame.worldSubmissions++;
+      q.model.group.visible=q.frame.branch==='B'?visible:false;
+      try{return originalRender.call(this,scene,camera);}
+      finally{q.model.group.visible=visible;}
+    };
+    q.frame.snapshot=()=>({state:JSON.stringify(app.duel.state),
+      camera:[...view.camera.position.toArray(),...view.camera.quaternion.toArray(),view.camera.fov,view.camera.aspect],
+      rig:[...q.model.group.position.toArray(),...q.model.group.quaternion.toArray(),...q.model.group.scale.toArray()],
+      canvas:[view.renderer.domElement.width,view.renderer.domElement.height],
+      pixelRatio:view.renderer.getPixelRatio(),dpr:devicePixelRatio,
+      quality:app.ambientOcclusionEnabled!==false?'high':'performance',
+      cameraMode:app.cameraMode,inspectionCamera:!!app.inspectionCamera});
+    try{
+      // Let the production camera converge before freezing its comparison pose.
+      for(let i=0;i<120;i++){await new Promise(resolve=>raf.call(window,resolve));view.renderFrame();}
+      return q.frame.snapshot();
+    }catch(error){
+      view.renderer.render=originalRender;window.requestAnimationFrame=raf;delete q.frame;throw error;
+    }
+  })()`);
+  const passes=[];
+  try{
+    for(const branch of ['A1','B','A2']){
+      const pass=await context.evaluate(`(async () => {
+        const q=window.__tankerChase,view=window.__render;
+        q.frame.branch=${JSON.stringify(branch==='B'?'B':'A')};
+        const raf=[],cpu=[],draw=[],triangles=[],mirror=[],worldSubmissions=[];
+        const start=q.frame.snapshot();let last=0;
+        for(let i=0;i<630;i++){
+          const now=await new Promise(resolve=>q.frame.raf.call(window,resolve));
+          q.frame.worldSubmissions=0;
+          const began=performance.now(),metrics=view.renderFrame(),elapsed=performance.now()-began;
+          if(i>=30){raf.push(now-last);cpu.push(elapsed);draw.push(metrics.drawCalls);
+            triangles.push(metrics.triangles);worldSubmissions.push(q.frame.worldSubmissions);
+            mirror.push(document.querySelector('[data-rear-view-refreshed]')?.dataset.rearViewRefreshed==='true');}
+          last=now;
+        }
+        const summary=values=>{const sorted=[...values].sort((a,b)=>a-b),at=p=>sorted[Math.ceil(sorted.length*p)-1]??null;
+          return{samples:sorted.length,mean:sorted.length?sorted.reduce((a,b)=>a+b,0)/sorted.length:null,
+            p50:at(.5),p95:at(.95),max:at(1),over33:sorted.filter(v=>v>33).length};};
+        return{branch:${JSON.stringify(branch)},start,end:q.frame.snapshot(),
+          raf:summary(raf),renderCpu:summary(cpu),drawCalls:summary(draw),triangles:summary(triangles),
+          renderCpuByMirror:{refreshed:summary(cpu.filter((_,i)=>mirror[i])),reused:summary(cpu.filter((_,i)=>!mirror[i]))},
+          rafSamplesMs:raf,renderCpuSamplesMs:cpu,drawCallSamples:draw,triangleSamples:triangles,
+          mirrorRefreshSamples:mirror,worldSubmissionSamples:worldSubmissions};
+      })()`);
+      if(pass.raf.samples!==600||pass.renderCpu.samples!==600)throw Error('Incomplete Tanker frame sample');
+      passes.push(pass);
+    }
+  }finally{
+    await context.evaluate(`(() => {
+      const q=window.__tankerChase,view=window.__render;
+      if(q?.frame){view.renderer.render=q.frame.originalRender;window.requestAnimationFrame=q.frame.raf;delete q.frame;}
+    })()`);
+  }
+  const same=snapshot=>snapshot.state===fixed.state&&snapshot.quality===quality&&
+    snapshot.cameraMode==='chase'&&!snapshot.inspectionCamera&&
+    snapshot.pixelRatio===fixed.pixelRatio&&snapshot.dpr===fixed.dpr&&
+    snapshot.canvas.every((value,i)=>value===fixed.canvas[i])&&
+    ['camera','rig'].every(key=>snapshot[key].every((value,i)=>Math.abs(value-fixed[key][i])<1e-6));
+  const matched=passes.every(pass=>same(pass.start)&&same(pass.end));
+  const stateSha256=digest(fixed.state);
+  for(const pass of passes)for(const snapshot of [pass.start,pass.end]){
+    snapshot.stateSha256=digest(snapshot.state);delete snapshot.state;
+  }
+  delete fixed.state;fixed.stateSha256=stateSha256;
+  const [a1,b,a2]=passes,ratios={},baselineDrift={};
+  for(const domain of ['raf','renderCpu']){
+    ratios[domain]={};baselineDrift[domain]={};
+    for(const metric of ['mean','p50','p95']){
+      ratios[domain][metric]={A1:b[domain][metric]/a1[domain][metric],A2:b[domain][metric]/a2[domain][metric]};
+      baselineDrift[domain][metric]=Math.max(a1[domain][metric],a2[domain][metric])/
+        Math.min(a1[domain][metric],a2[domain][metric]);
+    }
+  }
+  const stable=Object.values(baselineDrift).every(domain=>Object.values(domain).every(value=>value<=1.1));
+  const withinBudget=Object.values(ratios).every(domain=>Object.values(domain).every(row=>row.A1<=1.1&&row.A2<=1.1));
+  const result={quality,fixed,matched,passes,ratios,baselineDrift,baselineStable:stable,
+    budgetPassed:matched&&stable&&withinBudget,
+    scope:'Same stopped native arena and production chase camera, 30 m rig placement. A hides only the private rig during every world-scene submission, including mirrors; B shows it. Same wrapper and visibility restoration in all branches. 30 warm and 600 complete ordered RAF/renderFrame CPU samples per branch. No samples removed. Baseline mean/p50/p95 drift and B/A ratios must all stay within 10%. CPU submission is not GPU time or full moving Convoy Raid.'};
+  console.log(quality+' Tanker frame budget '+(result.budgetPassed?'passed':'not cleared')+' '+JSON.stringify({matched,stable,ratios,baselineDrift}));
+  return result;
 }
