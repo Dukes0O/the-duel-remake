@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "id": "vesper",
+  "source": {
+    "path": "public/assets/models/wasteland/crew/odessa.glb",
+    "sha256": "364de3fd43de474eb4ef0fd12b859940f067549b02f2922b432d3a0c422170ca"
+  },
+  "provenance": [
+    {
+      "path": "public/assets/models/wasteland/crew/odessa.glb",
+      "sha256": "364de3fd43de474eb4ef0fd12b859940f067549b02f2922b432d3a0c422170ca"
+    },
+    {
+      "path": "tools/blender/crew-fighters.py",
+      "sha256": "661eb808f94c338ba913b0fc8efdb9118d12984d0ba0669bc2e1de932d391857"
+    },
+    {
+      "path": "public/assets/reference/wasteland-crew-1.png",
+      "sha256": "af27e7925f95972c5ec842f5573640f2b8d36aece5429c0357325f7c28078058"
+    },
+    {
+      "path": "public/assets/reference/CREDITS.md",
+      "sha256": "1062f54070340b87c10ec40b1d528f17845d723ac313b446b9bd4d2ecae863ad"
+    }
+  ],
+  "costume": {
+    "direction": "Blackened steel on the existing mechanic bib and shoulders, charcoal cloth and boots, worn dark red diagonal harness and left sleeve band. Native body, UVs, skinning, rig and actions remain intact.",
+    "seed": 1989,
+    "palette": {
+      "blackenedSteel": [
+        0.25,
+        0.28,
+        0.31
+      ],
+      "darkRed": [
+        0.48,
+        0.065,
+        0.052
+      ],
+      "cloth": [
+        0.105,
+        0.095,
+        0.082
+      ],
+      "leather": [
+        0.078,
+        0.055,
+        0.037
+      ],
+      "wear": [
+        0.39,
+        0.38,
+        0.35
+      ]
+    },
+    "atlas": {
+      "size": [
+        1024,
+        1024
+      ],
+      "viewColumns": [
+        0,
+        341,
+        683,
+        1024
+      ],
+      "preserveFaceThroughRow": 185,
+      "steelTorsoRows": [
+        218,
+        434
+      ],
+      "beltRows": [
+        447,
+        505
+      ],
+      "kneesRows": [
+        670,
+        745
+      ],
+      "bootsStartRow": 875,
+      "redSleeveRows": [
+        325,
+        352
+      ],
+      "strapRows": [
+        236,
+        432
+      ],
+      "strapWidth": 17
+    }
+  }
+}
