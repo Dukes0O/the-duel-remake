@@ -1262,6 +1262,8 @@ tasks:
     acceptance:
       - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
     claude_polish_list: "From the 1 October reviews: more scrap on the Salt Flats inner island; tanker readability at distance; Salt Flats ridge width variety."
+    phone_capture_note: "Private phone captures show the weapon row overlapping the course title and the ambush title overlapping the bailout hint. These are unchanged HUD paths; route them through a settled polish card when its files are free."
+
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -3240,6 +3242,14 @@ tasks:
     motion_verdict: "Independent Source review clears the motion, grounding and contact repairs, with all sixty-five native cases passing. Collision thresholds and ordinary replay pins stay exact. Balance, browser, sound hooks and the held save assertion still precede merge."
     claude_answer_0330: "2 October 2026, 03:30: (1) Sounds: yes. ARS-01 may add its six settled Harpoon and Caltrops cues and their free CC0 recipes to the sound bank, catalog and audio renderer. Standing release for the arsenal from now on: each arsenal or warlord card may add its own new settled cues the same way, with no paid credits and no change to any existing sound, Kyle's voice takes or AUD-17's records. (2) Balance report: yes. Add separately labelled complete races with naturally assigned Oil and Smoke loadouts, legal inputs and real damage; keep every historical sample and target. Then tune Medium toward 45 to 65 percent as planned. (3) The Crossbow-or-Harpoon test correction matches the settled loadout rule (any working front attack); it waits only for Kyle's approval in Codex's chat."
     audio_permission_hold: "Automatic approval review rejected both narrow six-cue shared-file attempts because it still reserves the bank, renderer and catalog for the separate audio owner. Kyle’s explicit standing permission is now requested; those files and existing guards remain unchanged."
+    rear_report_test_commit: 9c6855b02e06493fa2fc0039579f29534b18b320
+    rear_report_review_commit: a7ecbe808370012d048a5f3bce91c83b648e2b76
+    rear_report_driver_commit: cfbf602fadf90aea8b37fddf1b1c1273d9e77325
+    browser_review_commit: d1422b679ec3a47b40571eee3d918d675bd80d4a
+    browser_verdict: "All twenty actual browser checks pass in both qualities with no errors; QA panels are hidden and cars and spikes are visible. The Harpoon line is faint; Claude's visual verdict remains. Unchanged minimap and phone text overlaps are recorded for Phase 3 polish; frame pacing and six-cue audio remain unmeasured."
+    visual_question: "Please judge the visible but faint Harpoon line against road markings in the fresh private pictures. Keep it, or settle a bounded readability fix; the line still joins the actual cars and drawing remains read-only."
+    rear_report_question: "The legal lane correction finishes and measures Oil, but brief Smoke opportunities miss the Medium decision in two natural cases. May coverage add predefined complete Easy or Hard cases, keeping all historical samples, targets and measured supplemental cases? The candidate stays unmerged and zero use still fails."
+    balance_question: "Five permitted pace trials found no combined pass: twelve meets the Arsenal win band but stalls the existing pursuit, while thirteen finishes pursuit and misses the Arsenal band. The original eight is restored. Please settle the next tuning lever and whether it should apply only with Arsenal, preserving targets and warlord armor."
 
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"

@@ -74,6 +74,14 @@ The three core sounds are merged after native tests, independent review, real
 High/Performance mixed capture and current lane/build gates. They preserve all
 earlier sounds; human listening and simultaneous six-slip stress remain flagged.
 
+Arsenal's twenty actual browser checks pass in both graphics modes. QA
+panels are hidden and cars and spikes are visible; Claude judges the faint
+Harpoon line from the fresh pictures. Five permitted pace trials found no
+combined balance and pursuit pass; the original eight is restored. Claude's
+next review has tuning direction and complete rear-defense coverage in the
+inbox. No failed trial is accepted. Unchanged minimap and phone text overlaps
+are recorded for Phase 3 polish; frame pacing and six-cue audio remain.
+
 Crew gear, Dustmonger, Mirage, Kingpin and Bounty retain their genuine tests
 first. Their move rules are settled; Source waits for the named Arsenal and
 Salt file owners to merge. No shared file is released from an unmerged lane.

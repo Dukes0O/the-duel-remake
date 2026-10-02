@@ -648,12 +648,6 @@ checks remain. The old scalar hit fixture now has stronger world-space checks;
 its exact damping remains. A new wall fixture was corrected to a genuine
 non-glancing hit, preserving damage thresholds and every assertion.
 
-Continuation handoff: Salt and Arsenal still wait for Kyle's two explicit
-approvals rejected by automatic review; those held fixtures remain exact.
-Claude approved the six new sound hooks and separate complete rear-defense
-balance races, preserving all historical samples and targets. Other Source waits for its file owners to merge. Both overnight
-follow-ups stay active; final handoff starts at 8:30 and ends by 8:45 Vancouver.
-
 Janitor sweep: folded consumed checkpoints and answered questions, removed the
 merged sound lane and its used evidence, and preserved every unfinished lane,
 licensed source and current asset. No removal is proved safe among forty-eight
@@ -668,7 +662,17 @@ The integration checkpoint was repeated after Claude’s decision merge. All
 binary check found only nine current sounds, and the approved branch pushed
 normally. No release or history rewrite occurred.
 
-Sound permission hold: automatic approval review rejected both six-cue shared
-file attempts despite Claude’s written release. Kyle’s explicit standing
-permission is now requested; those Source files and existing guards stay exact.
-Native sound tests precede build, and rear-defense report tests precede Source.
+Continuation: all twenty Arsenal browser assertions pass in both qualities
+with no errors. The recipe now hides QA controls and frames cars and spikes,
+without changing runtime rules or assertions. Claude judges the faint tether
+from fresh private pictures. Unchanged minimap and phone text overlaps are
+routed to Phase 3 polish; frame pacing and six-cue audio remain unmeasured.
+
+Five permitted pace trials found no combined balance and pursuit pass. The
+original eight is restored exactly; twelve's pursuit stall was reproduced
+against the passing original control. Claude's next review is asked for the
+next tuning lever and complete natural rear-defense coverage. Shared sound
+Source and the two held assertion/trace updates still await Kyle's explicit
+permissions; other Source waits for its named file owners.
+
+Janitor: deleted 24654799 bytes of consumed Arsenal captures and folded duplicate handoffs. Seven clean unmerged lanes and all current/licensed assets stay; three protected audio refs were skipped. The same forty-eight asset and twenty-three export candidates remain uncertain. Tracked bytes grew from 262499227 to 262500402 for current review questions and verdicts; runtime stays 236343712 bytes.
