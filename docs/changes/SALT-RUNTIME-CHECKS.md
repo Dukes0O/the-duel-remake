@@ -12,7 +12,11 @@ single installed Salt path, because the finished card must survive evidence clea
 
 ## Checks
 
-Focused renderer checks and current lane/build gates pending.
+All 16 native renderer and effects checks pass against the installed model.
+The first changed-lane run passes eight suites in 44.46 seconds; build passes.
+Independent read-only review clears the exact default and path-guard additions,
+with all frozen native assertions unchanged. This note is committed before the
+final lane gate and build; the Director records that exact result on the board.
 
 ## Removed
 
