@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "card": "ARENA-06",
+  "seed": 1989,
+  "targetSizeMetres": {
+    "width": 300,
+    "depth": 200
+  },
+  "ramps": 2,
+  "sourcePicks": [
+    {
+      "catalogId": "kenney-car-kit",
+      "model": "sedan",
+      "path": "unpacked/Models/GLB format/sedan.glb",
+      "sha256": "b532ea7d2c59f7f6b22b138cf1955218a2c1898f1cea932af4d3fd563c3959b7",
+      "triangles": 2032
+    },
+    {
+      "catalogId": "kenney-car-kit",
+      "model": "debris-door",
+      "path": "unpacked/Models/GLB format/debris-door.glb",
+      "sha256": "c62ab01c07be9be5dfc0f940dbc933fa836019ea1bc8fd0baa2d0e52cd764ea2",
+      "triangles": 68
+    },
+    {
+      "catalogId": "kenney-car-kit",
+      "model": "debris-drivetrain",
+      "path": "unpacked/Models/GLB format/debris-drivetrain.glb",
+      "sha256": "4a93bba25d3004b028f8494105d1774a91797d116dcb136fde00b4882bfec652",
+      "triangles": 412
+    },
+    {
+      "catalogId": "kenney-car-kit",
+      "model": "debris-tire",
+      "path": "unpacked/Models/GLB format/debris-tire.glb",
+      "sha256": "7c3f5968244e2c617c698820e943493b8480c7bef8535fbab04d4a501b3489e9",
+      "triangles": 288
+    },
+    {
+      "catalogId": "kenney-city-kit-industrial",
+      "model": "shipping-container-a",
+      "path": "unpacked/Models/GLB format/shipping-container-a.glb",
+      "sha256": "7b2d5ca874c8e659ee6cfd1614f0470b70410b2ddc7620ac83b8954dedeb861d",
+      "triangles": 402
+    },
+    {
+      "catalogId": "kenney-city-kit-industrial",
+      "model": "shipping-container-b",
+      "path": "unpacked/Models/GLB format/shipping-container-b.glb",
+      "sha256": "290b3808149f8a9456ee96ff682fcf6a99f76adeac8e3b7b38234be434ea455c",
+      "triangles": 402
+    },
+    {
+      "catalogId": "kenney-factory-kit",
+      "model": "crane",
+      "path": "unpacked/Models/GLB format/crane.glb",
+      "sha256": "ceaf20fb976ce0415d2b3d40e723b6ad377845818fa4fa68b55434108b1a6880",
+      "triangles": 564
+    },
+    {
+      "catalogId": "kenney-factory-kit",
+      "model": "crane-magnet",
+      "path": "unpacked/Models/GLB format/crane-magnet.glb",
+      "sha256": "9ed1d4690e03fd4cafcd30d182b2319cc6c743794a50108332cab9d76a083f6e",
+      "triangles": 172
+    },
+    {
+      "catalogId": "quaternius-public-transport",
+      "model": "Bus",
+      "path": "blend/Bus.blend",
+      "sha256": "b6603f556b73b0e9f4aa92d02f11d2a197fc8d55139c960788f0db36a679bbd8",
+      "triangles": 1530
+    }
+  ],
+  "islandSalvage": {
+    "node": "inner-island-salvage",
+    "placement": "scenery-inside-solid-island",
+    "stacks": [
+      {
+        "center": [
+          -70,
+          -7
+        ],
+        "headingDegrees": -12,
+        "paintTile": 4
+      },
+      {
+        "center": [
+          -25,
+          27
+        ],
+        "headingDegrees": 18,
+        "paintTile": 1
+      },
+      {
+        "center": [
+          6,
+          -23
+        ],
+        "headingDegrees": -22,
+        "paintTile": 3
+      },
+      {
+        "center": [
+          63,
+          7
+        ],
+        "headingDegrees": 31,
+        "paintTile": 0
+      }
+    ]
+  },
+  "saltGround": {
+    "generator": "seeded",
+    "seed": 1989,
+    "pixels": [
+      1536,
+      1024
+    ],
+    "crustSizeMetres": 4.2,
+    "atlasEdgeFadeMetres": 12,
+    "grainSizeMetres": 0.035,
+    "toneDriftWeights": [
+      0.24,
+      0.15
+    ],
+    "crustRidgeWidthMetres": 0.32,
+    "crustSeamWidthMetres": 0.7,
+    "crustReliefMetres": 0.1,
+    "crustColorWeights": [
+      0.09,
+      -0.085
+    ],
+    "drivingBandColor": [
+      0.53,
+      0.535,
+      0.525
+    ],
+    "drivingBandCrustScale": 0.25,
+    "grainContrast": 0.1,
+    "macroWarpMetres": 26,
+    "crustWarpMetres": 5,
+    "crustSiteJitter": 0.84,
+    "drivingBandReliefScale": 0.9,
+    "textureAnisotropy": 4
+  }
+}

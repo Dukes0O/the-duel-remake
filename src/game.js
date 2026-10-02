@@ -315,6 +315,7 @@ export class Duel {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const released = this.featureFlags.base || this.featureFlags;
     if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') ||
+        (venueId === 'salt-flats' && !this.featureFlags.enabled('salt-flats')) ||
         (mode === 'warlord' && !this.featureFlags.enabled('warlords')) ||
         (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) || !venue || !rules ||
         !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||

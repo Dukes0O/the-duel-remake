@@ -297,17 +297,23 @@ export async function runSuitesConcurrent(tasks,{cwd=PROJECT_ROOT,execPath=proce
   spawnChild=spawn,now=()=>performance.now(),jobs=1,keepGoing=false,onStart=()=>{},onResult=()=>{}}={}){
   const started=now(),results=new Array(tasks.length);
   if(!tasks.length)return {exitCode:2,passed:0,failed:null,failures:[],total:0,notRun:0,durationMs:0,results:[]};
-  let next=0,active=0,stopped=false,finished=false;
+  let next=0,active=0,stopped=false,finished=false,exclusiveActive=false;
   await new Promise(resolveDone=>{
     const finish=()=>{
       if(finished)return;
       finished=true;resolveDone();
     };
     const pump=()=>{
-      while(active<jobs&&next<tasks.length&&!stopped){
-        const index=next++,task=tasks[index];active++;onStart(task,index,tasks.length);
+      while(active<jobs&&next<tasks.length&&!stopped&&!exclusiveActive){
+        const task=tasks[next];
+        // Native audio timing must be measured without other suites competing.
+        const exclusive=task.suite==='tools/test-audio-crash-peak.mjs';
+        if(exclusive&&active>0)break;
+        const index=next++;active++;exclusiveActive=exclusive;onStart(task,index,tasks.length);
         captureSuite(task,{cwd,execPath,env,spawnChild,now}).then(result=>{
-          results[index]=result;active--;onResult(result,index,tasks.length);
+          results[index]=result;active--;
+          if(exclusive)exclusiveActive=false;
+          onResult(result,index,tasks.length);
           if(!result.passed&&!keepGoing)stopped=true;
           if(active===0&&(stopped||next===tasks.length))finish();
           else pump();

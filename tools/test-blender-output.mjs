@@ -29,7 +29,10 @@ const privateGenerators = [
     embeddedAtlas: ['tanker-local-wear-and-hazard-atlas', 'tanker-dark-roof-and-warning-border'] },
 ];
 // Vesper's original native suite covers its donor-validating private CLI.
-const nativeGenerators = [{script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'}];
+const nativeGenerators = [
+  {script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'},
+  {script: 'tools/blender/salt-flats.py', test: 'tools/test-salt-flats-output.mjs'},
+];
 const reviewHelpers = [
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},

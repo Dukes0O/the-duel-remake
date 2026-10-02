@@ -11,6 +11,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     warlords: 'on',
     'fuel-run': 'dev',
     arsenal: 'dev',
+    'salt-flats': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), true);
