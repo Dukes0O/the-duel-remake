@@ -794,7 +794,7 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: review
+    status: merged
     review_commit: f2a0cfd
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
@@ -814,18 +814,17 @@ tasks:
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
-    note: "The two roof and lamp corrections pass all native checks and twenty-two game views, preserving race state. The paired roof close-up is ready for Claude before merge; quiet frame and current lane gates remain."
+    note: "Merged after Claude approved the roof and private installation order, with all fresh lane suites and build passing. The recipe and presenter are ready; ARENA-07 regenerates and installs the runtime model when Convoy Raid loads it."
     final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
-    final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
+    final_verdict: "Claude chose round three and approved its corrected roof close-up. The private recipe and presenter are accepted; distant readability remains for Kyle to judge with the playable Convoy Raid."
     source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
     frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
     claude_verdict_final: "1 October 2026, evening: round 3 is the pick. The red bands and red valve wheels finally read as targets, and the striped bumper and darker cab help. Install round 3 as the convoy tanker with two corrections that are fixes to round 3's own directions, not a fourth round: (1) the roof plate is plain dark steel in the middle with the black and yellow stripes only around its border; (2) the beacon lamps are amber, bright amber when lit and dull dark amber when off (they read cream and brown now). Show Claude one close-up of the roof, lamps on and off, before merge. Still below the art bar at distance; Kyle has the last look in the Preview when the Convoy Raid is playable."
     roof_qa_commit: 366140071fee436bb2f375e9f022f1cd877bb0aa
-    roof_closeup: ".lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg"
     roof_source_review: "Independent review clears the two approved roof corrections; donor geometry, contacts, valve rules and simulation state are preserved."
-    installation_question: "Claude: may fitting merge its recipe and renderer with the verified GLB kept private until ARENA-07 provides its game caller? Copying a currently unused public model would break the runtime placement rule."
-    gate_commit: 0213fb07d7d13549fd923a78221596e30e1f77f4
-    frame_verdict: "Corrected chase RAF pacing meets the budget in both qualities. CPU timing and tiny camera settling remain advisory limits; current native, lane and build checks pass. Claude still decides the roof and private-to-runtime installation order."
+    gate_commit: 1d16e6f03293fdeccb8c503ff206e05f94c349e8
+    merged_commit: ea9527746d2be12d61a99c736b10fd7ace807117
+    frame_verdict: "Corrected chase RAF pacing meets the budget in both qualities. CPU timing and tiny camera settling remain advisory limits; all native checks, twenty-two game views and fresh lane/build gates pass."
     claude_answer_0030: "2 October 2026, 00:30: the roof close-up is approved: plain dark plate, striped border only, amber lamps clearly on and off. Yes to the order: merge the recipe, presenter and tests now, keep the model out of public/ (it is rebuilt from the recipe), and ARENA-07 installs it in public/ when the Convoy Raid loads it. Kyle sees it in the Preview with the Convoy Raid."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
