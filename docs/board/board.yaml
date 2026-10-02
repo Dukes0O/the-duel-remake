@@ -1161,7 +1161,7 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL, ARS-CORE, ARENA-WRECK-RATE]
+    needs: [WAR-02a-SAL, ARS-CORE, ARENA-WRECK-RATE, ARS-01, CREW-02]
     status: building
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/kettle-kingpin
@@ -1170,9 +1170,13 @@ tasks:
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Kettle Kingpin' in docs/SCRAPDOME.md section 5. The ring is always drawn before he lands; the shove goes through the crash solver. Tusk unlocks early only once CREW-02 has made him active. When built, status review and waiting_on: claude before merge."
-    sequencing: "Kettle waits for Arsenal progression and App hooks and the wreck-rate arena event hook to merge. The move, native fight, early Tusk and Titan kit reward are one complete card."
-    hook_requests: [src/arena/warlord-event.js, src/arena/warlord-settlement.js, src/warlords.js, src/arena/arena-event.js, src/wasteland-progress.js, src/app.js]
-    note: "Kettle Kingpin is claimed for independent tests first and a real hook map. No Source hook is granted; other lanes retain their files, and Tusk requires active crew gear."
+    sequencing: "Source waits for the two move rulings, Arsenal wave one to free combat armor, and Crew gear to make Tusk active. The move, native fight, early Tusk and existing Warlord kit are one complete card; an inactive saved Tusk ID does not finish the reward."
+    hook_requests: [src/feature-flags.js, src/warlords.js, src/arena/warlord-event.js, src/arena/arena-brains.js, src/arena/arena-event.js, src/sim-contacts.js, src/combat-armor.js, src/vehicle-contact-modifiers.js, src/arena/arena-tell-view.js, src/arena/warlord-settlement.js, src/crew.js, src/crew-ui.js, src/app.js, src/screen-territory.js, src/screen-yard-home.js, src/screen-router.js, src/screen-armory.js, src/audio.js]
+    note: "Kingpin tests reproduce the missing dev switch and three native admission failures, with current controls passing. The actual crash solver and existing Titan Warlord kit meet those seams; Source waits for move rules and active Tusk."
+    waiting_on: claude
+    design_question: "What triggers Kettle Drop, and what landing target and reach are committed? In phase two, does the two-and-a-half-second window follow only the second landing or both landings?"
+    test_commit: 4f16f5313caebf59b3758365c1abcdd9c224203e
+    test_verdict: "Bounded native admission has ten passing controls and four genuine missing-switch/fight failures. Downstream ring, damage, arc and reward checks remain unproved; the note records a three-second observation bound that needs independent review against the window ruling before Source."
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -3183,7 +3187,7 @@ tasks:
       - "Only the external audio owner may use ElevenLabs credits, within its current user-authorized budget and SPEC overnight ceiling of 1500. The Director spends none. Preserve Kyle's exact selected gatekeeper take."
       - "Candidates are marked for Kyle's choice; no agent keeps or promotes a take. Human ratings remain distinct from measurements. Keys stay in the environment, credit use is logged, and no generation is silently retried after an accounting failure."
       - "Any runtime voice wiring beyond the existing bank/credit hooks requires a named scope addition before implementation. Retain subtitles, attribution, one-version source placement and normal gates."
-    note: "Candidate preparation merged e1a2d63; full casting/runtime card remains in progress pending Kyle. Ten auditions used400 credits, none selected/rejected/kept. External owner preserves audition bytes/receipts and branch. No additional generation or audio runtime work tonight."
+    note: "Kyle kept the nine current crew and raider takes; no new takes are requested. The earlier ten auditions used 400 credits, and the separate audio owner keeps the receipts, files and bank hook for runtime wiring. No further voice selection from Kyle is needed."
     claude_note: "1 October 2026: Kyle kept all eight crew takes and Bill's raider take on 25 September (31ef0ba, in audio-src/voices). Claude sent him a listening page of those nine on 1 October; any he wants redone come back as a new batch for the audio session. Wiring the lines into the game is still to do."
     kyle_decision: "Kyle, 1 October 2026: the nine kept voice takes are fine for now; no new takes. Wiring them into the game remains."
   - id: ARS-01

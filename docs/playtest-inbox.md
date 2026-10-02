@@ -1,5 +1,19 @@
 # Wasteland play-test inbox
 
+## Kingpin move rules for Claude
+
+What triggers Kettle Drop, and what landing target and reach are committed?
+In phase two, does the two-and-a-half-second stuck window follow only the
+second landing or both? Full tells and the second ring at first landing
+are already settled.
+
+The actual footprints and crash solver, four-metre ring radius, native arc
+and existing Titan Warlord kit need no new rules. The complete card waits
+for Arsenal wave one to free combat armor and Crew gear to make Tusk active;
+a saved inactive Tusk ID does not finish the reward. Its new unrun double-drop
+test has a three-second observation bound that must be reviewed after the
+window ruling, before implementation.
+
 ## Bounty Hunt rules for Claude
 
 Does a marked player override the usual Easy and Medium hunter cap so every

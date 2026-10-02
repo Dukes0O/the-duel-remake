@@ -61,7 +61,9 @@ The later integration checkpoint passed all 324 full suites and build, then
 pushed normally under D8. Later commits need their own full check. Dustmonger
 and Bounty Hunt now have genuine native admission failures and preserved controls;
 Source waits for the written questions in the inbox. Kettle Kingpin is claimed
-for tests first and a real file map.
+for tests first and a real file map. Its controls pass and entry fails genuinely;
+its two move rules are in the inbox. The complete Kingpin card also needs
+active Tusk from Crew gear and Arsenal to free combat armor.
 
 Salt's public entry has one new scope question in the inbox: the final direction
 names four modes while only two are built. Ambush's crew dependency and Dune's
