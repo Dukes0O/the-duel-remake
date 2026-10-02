@@ -1114,9 +1114,9 @@ tasks:
     lane: VIS
     size: L
     needs: [ART-SRC-SALTFLATS]
-    status: building
+    status: merged
     review_commit: "4bb0da063863e8a9450f9b419e817eff20c377f0"
-    source_commit: "bac0d1c9c5465f953288d8d24ed2f84f62a8cbf9"
+    source_commit: "7f3f22d"
     test_commit: "c18e814"
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
@@ -1130,10 +1130,10 @@ tasks:
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
-    note: "The restarted gate again passes all but the existing audio timing capture, which passes unchanged alone. A bounded tests-first correction makes that capture exclusive in the existing gate scheduler; its strict assertion and all game code stay unchanged. Current lane and build must then pass."
+    note: "Merged after approved final art, public entry, native rewards, independent reviews and current lane/build gates. Strict audio capture now runs alone without changing its assertions. Last Car Rolling and Fuel Run are playable on Salt; later modes add it in their cards."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
-    round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
-    final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
+    round_1_sheet: "docs/board/looks/salt-flats/round-1.jpg"
+    final_comparison: "docs/board/looks/salt-flats/round-3.jpg"
     claude_verdict: "1 October 2026, evening: the generated salt meets Kyle's direction: real crust cells, a dusty driving band and no repeating pattern from the full view or the racing camera. Accept round 3 and finish the card: public entry, rank 9 unlock, the four modes, gates, then merge and Kyle's look in the Preview. For P3-POLISH, not this card: the inner island still reads sparse from the full view; add scrap there then."
     design_question: "May Salt merge real Last Car Rolling and Fuel Run entry, with Bounty Hunt and Ambush Alley proving this venue in their own cards? Those modes are not built, and Ambush needs crew gear while Dune zoom waits for Salt to free the renderer."
     scope_note_commit: 4304028fb456395a64e257cd85813e35f241d875
@@ -1155,6 +1155,11 @@ tasks:
     payment_test_commit: 14861fa
     payment_source_commit: 7f3f22d
     payment_review: "Save Guardian clears the exact Salt venue validator change. Native Salt wins now pay the existing scrap and hold once; original settlement and historical saves pass, with no storage or ordinary credit change."
+    merged_commit: 08c28c583f2bccc4f1e208f09799184553a3c70a
+    lane_gate_source: 7f3f22d
+    lane_gate_passed: 332
+    lane_gate_duration_seconds: 558.65
+    lane_build_passed: true
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex

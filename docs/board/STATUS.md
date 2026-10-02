@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-02T16:15:04.268Z
+Observed at: 2026-10-02T17:07:00.914Z
 
-Observation commit: 771ac68d83dd476ec8356d2a45b297f4bbeec836
+Observation commit: 08c28c583f2bccc4f1e208f09799184553a3c70a
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 771ac68d83dd476ec8356d2a45b297f4bbeec836
+Integration HEAD: 08c28c583f2bccc4f1e208f09799184553a3c70a
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -31,6 +31,7 @@ Last recorded full run: 2026-10-02T12:14:22.984Z; tested commit: b65466f6652521a
 | warlords | on |
 | fuel-run | dev |
 | arsenal | dev |
+| salt-flats | dev |
 
 ## Lane branches
 
@@ -47,7 +48,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 7 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
+| lane/vis/salt-flats | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
 
 ## Unmerged branches for idle review
 
@@ -55,13 +56,12 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/cmb/arena-bounty | unknown | 2026-10-02T08:49:43-07:00 | 0 | last commit 2026-10-02T08:49:43-07:00 | docs/changes/ARENA-04.md, src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs |
+| codex/cmb/arena-bounty | unknown | 2026-10-02T09:51:35-07:00 | 0 | last commit 2026-10-02T09:51:35-07:00 | docs/changes/ARENA-04.md, src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs |
 | codex/cmb/arsenal-wave1 | unknown | 2026-10-02T08:38:00-07:00 | 0 | last commit 2026-10-02T08:38:00-07:00 | docs/changes/ARS-01.md, public/assets/audio/arsenal-wave1/caltrops-deploy-a.ogg, public/assets/audio/arsenal-wave1/caltrops-deploy-b.ogg, public/assets/audio/arsenal-wave1/caltrops-deploy-c.ogg, public/assets/audio/arsenal-wave1/caltrops-hit-a.ogg |
 | codex/cmb/dustmonger | unknown | 2026-10-01T21:53:53-07:00 | 0 | last commit 2026-10-01T21:53:53-07:00 | docs/changes/WAR-02b.md, tools/test-warlord-dustmonger.mjs |
 | codex/cmb/kettle-kingpin | unknown | 2026-10-01T22:07:46-07:00 | 0 | last commit 2026-10-01T22:07:46-07:00 | docs/changes/WAR-03b.md, tools/test-warlord-kettle.mjs |
 | codex/cmb/mother-mirage | unknown | 2026-10-01T23:51:06-07:00 | 0 | last commit 2026-10-01T23:51:06-07:00 | docs/changes/WAR-02c.md, tools/test-warlord-mirage.mjs |
 | codex/foot/crew-gear | unknown | 2026-10-01T21:21:31-07:00 | 0 | last commit 2026-10-01T21:21:31-07:00 | docs/changes/CREW-02.md, tools/test-crew-gear.mjs |
-| lane/vis/salt-flats | unknown | 2026-10-02T08:53:09-07:00 | 0 | last commit 2026-10-02T08:53:09-07:00 | docs/board/looks/salt-flats/round-1-review.md, docs/board/looks/salt-flats/round-1-sheet.py, docs/board/looks/salt-flats/round-1.jpg, docs/board/looks/salt-flats/round-2-review.md, docs/board/looks/salt-flats/round-2-sheet.py |
 
 ## Size targets
 
@@ -70,14 +70,14 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 240,626,816 B | +0 B | 250,000,000 B |
-| Wasteland models | 78,998,200 B | +0 B | 60,000,000 B |
-| Largest runtime file | 14,295,108 B | +0 B | 8,000,000 B |
+| Wasteland models | 102,281,592 B | +23,283,392 B | 60,000,000 B |
+| Largest runtime file | 23,283,392 B | +8,988,284 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
-| Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 13,095,761 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 328,513 B | +0 B | 5,000,000 B |
-| All `public/` | 236,343,712 B | +0 B | unavailable |
-| Git objects | 364,526,592 B | +1,649,664 B | unavailable |
+| Largest review sheet | 498,188 B | +2,292 B | 500,000 B |
+| Review `looks/` | 14,561,730 B | +1,465,969 B | 20,000,000 B |
+| Added bytes in last merge | 27,373,445 B | +27,044,932 B | 5,000,000 B |
+| All `public/` | 259,627,104 B | +23,283,392 B | unavailable |
+| Git objects | 365,478,912 B | +952,320 B | unavailable |
 | Lane folders | 7 | +0 | unavailable |
 
 ## Backups
@@ -86,7 +86,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 771ac68d83dd476ec8356d2a45b297f4bbeec836
+- Local integration/wasteland: 08c28c583f2bccc4f1e208f09799184553a3c70a
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -95,8 +95,3 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
 - Remote origin/integration/wasteland: behind local; cached commit b65466f6652521ac6fbff7117706658f7f0b0ece.
-
-Restart checkpoint: all seven unfinished lanes are preserved. Salt awaits a
-clean gate retry; Arsenal awaits Claude review; Bounty has reviewed module
-Source and awaits free hooks. The three boss lanes belong to Claude. Full-tier
-evidence is stale for the current integration commit; no push is claimed.
