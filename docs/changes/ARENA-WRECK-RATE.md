@@ -1,10 +1,11 @@
 # ARENA-WRECK-RATE
 
-Status: ready for lane gate and build; gameplay acceptance passes.
+Status: resumed by Kyle; fresh checks await Junk's merge and the test slot.
 
 ## Changed
 
-Claude's evening answer keeps every warlord's absolute armor as released.
+Kyle, 1 October evening: use the lower wreck rate and keep Sal unchanged.
+Claude's written answer keeps every warlord's absolute armor as released.
 Ordinary arena cars now use 1.2 of race armor for Last Car Rolling and the
 public modes. Warlord arena setup keeps its former
 0.5 base scale before the unchanged 1.5 boss multiplier. Steering, pilot,
@@ -23,7 +24,7 @@ full-field round. The unchanged target is 10 to 14. At scale 0.8 the same twelve
 17.333; at 1.2 they give 12.5. All five acceptance checks pass, including
 the actual released warlord armor values.
 
-The required arena-balance report finishes all 108 rounds, 36 per difficulty:
+The prior pre-Junk report finished all 108 rounds, 36 per difficulty:
 
 | Measure | Easy | Medium | Hard |
 | --- | --- | --- | --- |
@@ -33,13 +34,15 @@ The required arena-balance report finishes all 108 rounds, 36 per difficulty:
 | CPU wall hits per round | 0.3 | 0.3 | 1.1 |
 | CPU reversing share | 0.073 | 0.103 | 0.095 |
 
-The Medium wreck target passes. Other difficulties are measured, not tuned
+That Medium wreck target passed. Other difficulties were measured, not tuned
 against a new target. Focused native regressions pass all 263 subtests across
 seven files: warlord format, Sal, arena events, Fuel, shove, steering and its
-ceiling. No skips or cancelled cases. The unchanged steering checks include
-30/60/144 FPS repeats; all original assertions pass. Lane gate and build await
-their serialized window. Independent review of the armor separation and the
-approved Sal assertion change carries forward; final numbers are ready to review.
+ceiling. This is prior evidence, before the Junk merge. No skips or cancelled
+cases. The unchanged steering checks include 30/60/144 FPS repeats; all original
+assertions passed. The earlier independent armor-separation and Sal assertion
+approvals carry forward. Fresh five-check acceptance, the full 108-round report,
+native controls, final independent review and exact lane/build gates still
+follow after synchronization with merged Junk.
 
 Changed assertion: the former Sal format test tied boss and player armor to
 ordinary arena armor. Claude explicitly superseded that coupling on 1 October:
@@ -56,9 +59,9 @@ moves from db8e981 to 6584140: initial armor rises from 50 to 120, then the
 existing health-sensitive goals and combat diverge. The approved single pin
 changes; existing assertions, literal inputs and sample shape are unchanged.
 
-Headless fixed-step outcome runs share the approved window with Arsenal's
-balance report. Their elapsed times are advisory. No browser, frame, Blender,
-whole-lane or build run has started in this window.
+The earlier fixed-step outcome report shared Arsenal's approved headless
+window; its elapsed time was advisory. No job has started in the resumed lane
+while Junk owns the test slot.
 
 ## Removed
 
