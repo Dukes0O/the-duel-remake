@@ -947,7 +947,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-02-overnight
     branch: codex/audio/arsenal-core-cues
-    owns: [tools/test-arsenal-core-audio.mjs, tools/scenarios/arsenal-core-audio.mjs, docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/]
+    owns: [tools/test-arsenal-core-audio.mjs, tools/build-arsenal-core-audio.mjs, tools/scenarios/arsenal-core-audio.mjs, docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/]
     hooks: [src/sound-bank.js, tools/audio/catalog.json, src/audio.js]
     helpers: [test_author, reviewer, audio_qa]
     flag: arsenal
@@ -1109,7 +1109,7 @@ tasks:
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
-    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, tools/test-wasteland-beta.mjs]
+    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, src/game.js, src/screen-router.js, tools/test-wasteland-beta.mjs]
     hook_requests: [tools/test-blender-output.mjs]
     sequencing: "Claude approved real public entry for Last Car Rolling and Fuel Run only. The independent review approves the released Fuel rule assertion and additive actual App coverage before Source. Salt owns the granted entry and renderer files; shared Blender registration waits for Tanker and then Vesper to merge."
     helpers: [test_author, reviewer, art_critic, browser_qa]
@@ -3225,6 +3225,7 @@ tasks:
     test_commit: 37924a1cbce6cd3a1ec2a2953121208f7250b0ef
     note: "Native tests now have fifty-two genuine failures and five preserved controls, including the settled owner grace and steering boundaries. Source proceeds within its named hooks; no other lane files are granted."
     claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
+    audio_release_question: "After the three Oil and Smoke cues merge, may wave one add its six settled Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer? Claude released the earlier card for three cues only; wave one needs its own written release. No existing sounds or voices would change."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO

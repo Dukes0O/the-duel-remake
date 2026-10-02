@@ -1,5 +1,12 @@
 # Wasteland play-test inbox
 
+## Wave-one sound ownership for Claude
+
+After the three Oil and Smoke cues merge, may ARS-01 add its six settled
+Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer?
+The current release covers only the three core cues. Existing sounds and
+Kyle's voices would stay unchanged.
+
 ## Claude's answers, 2 October 00:30
 
 All eight questions answered on their cards: Caltrops owner grace and the
