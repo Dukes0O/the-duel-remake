@@ -92,17 +92,26 @@ function hitHarpoon({playerVictim = false, arena = false, level = 0} = {}) {
     equipCpu(shooter, 'harpoon');
   }
   const beforeArmor = target.armor, beforePush = target.pushVelocity;
-  let hitPush = null;
+  let hitPush = null, hitMotion = null, beforeHitVelocity = null, beforeHitPush = 0;
   duel.onChange((_state, event) => {
-    if (event.arsenalCue === 'weapon.harpoon.hit' && event.actor === target)
+    if (event.arsenalCue === 'weapon.harpoon.hit' && event.actor === target) {
       hitPush = target.pushVelocity;
+      const at = point(duel, target), from = point(duel, shooter);
+      const heading = at.heading + (target.headingError || 0);
+      hitMotion = {before: beforeHitVelocity, after: velocity(target, at), beforePush: beforeHitPush,
+        heading, headingError: target.headingError || 0,
+        side: Math.sign((from.x - at.x) * Math.cos(heading) - (from.z - at.z) * Math.sin(heading)) || 1};
+    }
   });
   assert.equal(playerVictim ? fireWeapon(duel, 'harpoon', true, shooter) : duel.fireWeapon('harpoon'), true,
     'native discovered Harpoon fire must succeed');
   let hitTick = -1;
-  for (let i = 0; i < 180; i++) {duel.step(DT); if (carEffect(target, 'tether')) {hitTick = i; break;}}
+  for (let i = 0; i < 180; i++) {
+    beforeHitVelocity = velocity(target, point(duel, target)); beforeHitPush = target.pushVelocity;
+    duel.step(DT); if (carEffect(target, 'tether')) {hitTick = i; break;}
+  }
   assert.ok(hitTick >= 0, 'real swept Harpoon flight must hit and tether its live target');
-  return {duel, shooter, target, beforeArmor, beforePush, hitPush, effect: carEffect(target, 'tether')};
+  return {duel, shooter, target, beforeArmor, beforePush, hitPush, hitMotion, effect: carEffect(target, 'tether')};
 }
 function dropCaltrops({playerVictim = false, arena = false, level = 0} = {}) {
   const duel = race({arena, levels: {caltrops: level}}), owner = playerVictim ? duel.state.rival : duel.state;
@@ -173,12 +182,17 @@ for (const level of [0, 3]) check('Harpoon native armor, sideways yank and fixed
   const r = hitHarpoon({level});
   near(r.beforeArmor - r.target.armor, 6 * (1 + .15 * level), 'named Harpoon armor source scales damage by existing 15% levels');
   assert.notEqual(r.hitPush, null, 'actual hit event samples the native impulse before driving');
-  near(Math.abs(r.hitPush - r.beforePush), 6, 'hit produces the fixed 6 m/s sideways yank');
+  const impulse = {x: r.hitMotion.after.x - r.hitMotion.before.x,
+    z: r.hitMotion.after.z - r.hitMotion.before.z};
+  near(Math.hypot(impulse.x, impulse.z), 6, 'actual native world impulse has the literal 6 m/s magnitude');
+  near(impulse.x * Math.cos(r.hitMotion.heading) - impulse.z * Math.sin(r.hitMotion.heading),
+    r.hitMotion.side * 6, 'all six metres per second act sideways toward the actual shooter body side');
+  near(impulse.x * Math.sin(r.hitMotion.heading) + impulse.z * Math.cos(r.hitMotion.heading),
+    0, 'the native yank adds no velocity along the victim nose');
+  near(r.hitPush - r.hitMotion.beforePush, r.hitMotion.side * 6 * Math.cos(r.hitMotion.headingError),
+    'the ordinary road scalar is the exact projection of the body-sideways impulse');
   near(r.target.pushVelocity, r.hitPush * Math.exp(-1.5 * DT),
     'the full road tick retains ordinary physical damping after the exact hit');
-  const shooter = point(r.duel, r.shooter), target = point(r.duel, r.target);
-  const side = (shooter.x - target.x) * Math.cos(target.heading) - (shooter.z - target.z) * Math.sin(target.heading);
-  assert.equal(Math.sign(r.target.pushVelocity - r.beforePush), Math.sign(side) || 1, 'yank points toward the shooter side');
   assert.ok(r.effect.remainingSec <= 3 && r.effect.remainingSec >= 3 - DT - EPS, 'actual hit installs exactly 3 s of tether');
   near(r.duel.state.combat.cooldowns.harpoon + (r.duel.state.stageTimeSec), 12 / 1.15 ** level,
     'native upgraded recharge divides by 1.15 per level');

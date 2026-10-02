@@ -37,12 +37,14 @@ The original 57 native cases and 33 balance accounting cases pass. Source-review
 regressions now reach 61 native cases: 57 pass and four new cases fail. Rotated
 victims move 6 m/s along the nose instead of sideways; airborne Caltrops damage
 a ground car while their native anchor and visible spikes stay about 10 m high.
-Existing assertions, fixtures and replay pins are unchanged. Broad gates remain.
+Replay pins and all other assertions remain exact. Broad gates remain.
 
 The independent reviewer approved four narrow fixture corrections and
 reproduced their native witnesses before those edits:
-- Sample the exact 6 m/s yank at the actual hit event, then separately retain
-  the exact ordinary road damping of 6 times exp(-1.5/120).
+- The hit fixture is rotated about nineteen degrees, so its old six-unit road
+  scalar measured the wrong axis and shooter side. Independent review approves
+  exact world magnitude six, body-sideways six toward the shooter, body-forward
+  zero and the exact road projection; ordinary exp(-1.5/120) damping stays exact.
 - Start only road CPU ceiling comparisons 5 mph above the ceiling. The prior
   0.05 mph fixture let both native controls brake below the ceiling in one
   step. Literal ceilings of 160.8 and 180.9 now compare with actual controls
@@ -55,8 +57,6 @@ reproduced their native witnesses before those edits:
 No settled rule, balance target, old native use assertion or replay pin changed.
 The Source count observes Harpoon's native fire cue once, so its flight cue
 cannot consume the projectile identity before use attribution.
-Restored two range-message characters and one unchanged comment after an
-encoding error; all source writes now name UTF-8 explicitly.
 
 ## Save Guardian follow-up
 
