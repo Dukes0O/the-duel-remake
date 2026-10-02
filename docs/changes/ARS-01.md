@@ -3,7 +3,6 @@ Native Source and the private production browser recipe are implemented.
 The card is not ready to merge. Current balance, browser, sounds and
 lane/build gates remain; the save assertion still awaits Kyle's approval.
 ## What changed
-
 - Harpoon launches a native leading 70 m/s projectile with full carrier
   velocity, a 4 degree launch cone and a literal 50 m travelled range.
 - A native hit deals 6 armor per the existing 15 percent damage levels,
@@ -24,9 +23,7 @@ lane/build gates remain; the save assertion still awaits Kyle's approval.
   strip, at most twenty-four strips and four actual per-car tether lines.
   Tethers read four slots and reuse scratch; resources are disposed; drawing is read-only.
 - The report counts all four native CPU uses; Harpoon fire counts once, separate from flight.
-
 ## Tests first and current evidence
-
 Independent tests preceded Source at 37924a1. The settled owner grace is
 1 s; hard-away input is at least 0.6 and need not remain continuous.
 Independent motion and contact regressions failed before Source; all 65
@@ -35,7 +32,6 @@ participant closing speed, wall damping and the opposing-yank counter.
 Current 35 projectile, 13 ram, 7 solid-contact and knock integration cases
 pass with old replay pins exact; prior bounded accounting passed 33 cases.
 Relocation, wreck, knock, safe reset and lifecycle clear the private impulse.
-
 The independent reviewer approved five narrow fixture corrections and
 reproduced their native witnesses before those edits:
 - The hit fixture is rotated about nineteen degrees, so its old six-unit road
@@ -58,7 +54,6 @@ reproduced their native witnesses before those edits:
 The opposing control's actual normal is 97.212 mph below 100.5; its signed
 forward term reduces the legacy subtotal before clamping the total at zero.
 No settled rule, balance target, old native use assertion or replay pin changed.
-
 ## Save Guardian follow-up
 
 Tests first at f03c568 reached 40 checks: four controls passed and ten
@@ -75,20 +70,25 @@ It remains unchanged. No new storage, unknown-id grant or replay-pin edit.
 Independent Save Guardian approved byte preservation; fresh broad gates remain.
 
 ## Remaining acceptance
-
-The bundled browser recipe keeps original Oil/Smoke controls and uses real
-hits/breaks, CPU Harpoon/Star decisions, strip events and native grip/speed
-controls. High/Performance and phone HUD use tab-local memory saves.
-Syntax and 70 embedded expressions pass; independent browser run remains.
-Bounded native witnesses: CPU fire/hit once, shield contact at 28.583 m with
-zero armor loss, Caltrops grip 0.75 and ceiling 180.9 mph.
-Prior thirty-race Medium wins were 70 percent with zero CPU Oil/Smoke uses;
-a current passing report remains, preserving all historical targets.
-Six-cue tests pass 15 controls and fail 19 missing-audio checks; the rebuild recipe
-is prepared. Automatic review rejected shared sound edits twice despite Claude’s
-release; Kyle’s explicit standing permission is pending and those files stay exact.
-Native motion review is clear. Rear-report tests pass 34 controls and fail five
-new coverage cases before Source; current balance and lane/build gates remain.
+The bundled browser recipe preserves Oil/Smoke controls and uses real native
+hits, breaks, CPU fire and Star decisions, strip events and motion controls.
+Syntax and 70 expressions pass; actual High/Performance and phone checks remain.
+Native motion is independently clear with 65 passing cases. Rear-report tests
+pass 40 cases; independent review clears sample separation, attribution and
+legal forward steering. Historical samples and every target stay unchanged.
+At trial pace ten, the corrected follower finishes and measures Oil twice;
+natural Smoke cases 1991 and 2014 still measure none. Claude is asked about
+complete coverage in other difficulties; zero use remains a failure.
+Five pace trials (9, 7, 10, 12, 13) found no combined pass. Twelve reaches
+63.33 percent Arsenal Medium wins but stalls the existing pursuit; the
+original eight completes that control. Eight is restored exactly. Its
+70 percent Arsenal win rate still fails; Claude's next tuning direction waits.
+Six-cue audio tests pass 15 controls and fail 19 missing-audio checks; the
+rebuild script is prepared without output. Automatic review rejected shared
+sound edits twice despite Claude's release. Kyle's standing permission waits;
+bank, renderer, catalog and their existing guards remain unchanged.
+The saved CPU assertion remains 99/100 pending Kyle. Those failures and
+fresh lane/build gates block merge; no failed trial or silent cue is complete.
 
 ## Removed
 

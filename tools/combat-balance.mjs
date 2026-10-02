@@ -4,11 +4,11 @@ import { createFeatureFlags } from '../src/feature-flags.js';
 import { App } from '../src/app.js';
 import { Duel } from '../src/game.js';
 import { stepCombat, supportsCombat } from '../src/combat.js';
-import { COURSE, DRIVE } from '../src/config.js';
+import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
 import {createProfile, createPlayerRegistry, savePlayers} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
-import {point} from '../src/combat-weapons.js';
+import {point, velocity} from '../src/combat-weapons.js';
 import { winRateFailures } from './balance-targets.mjs';
 
 // Headless runs use the production App, its standard scripted driving line,
@@ -179,6 +179,13 @@ function eligibleWeapons(policy, duel) {
     (key !== 'star' || state.combat.shield <= 0));
 }
 
+function forwardSpeedMph(duel, actor) {
+  const at = point(duel, actor), motion = velocity(actor, at);
+  const along = motion.x * Math.sin(at.heading) + motion.z * Math.cos(at.heading);
+  const frame = duel.course.at(actor.s);
+  return Math.max(0, along / Math.max(.25, 1 - frame.curvature * actor.lateral) / DRIVE.mphToWorld);
+}
+
 function driveRearDefense(app) {
   const drive = app._driveAutopilot.bind(app);
   app._driveAutopilot = dt => {
@@ -189,14 +196,35 @@ function driveRearDefense(app) {
       return;
     }
     if (state.status !== 'racing' || state.impactTimer > 0 ||
-        !state.rival || state.rival.finished) return;
+        !state.rival || state.rival.finished || state.offRoad || state.airborne ||
+        state.rival.offRoad || state.rival.knock || state.rival.combatWrecking) return;
     const gap = duel.relativeS(state.rival.s, state.s) - state.s;
-    const targetSpeed = Math.max(15, state.rival.speedMph +
+    const halfWidth = duel.course.roadHalfWidthAt?.(state.s) ?? DRIVE.roadHalfWidth;
+    const targetLat = Math.max(-halfWidth + 1.8, Math.min(halfWidth - 1.8, state.rival.lateral));
+    const trafficConflict = state.traffic.some(actor => {
+      if (!actor.alive) return false;
+      const ahead = duel.relativeS(actor.s, state.s) - state.s;
+      const closing = Math.max(0, state.speedMph - actor.dir * actor.speedMph) * DRIVE.mphToWorld;
+      return ahead > -28 && ahead < 35 + closing * 1.15 && Math.abs(actor.lateral - targetLat) < 2.7;
+    });
+    if (trafficConflict) return;
+    const targetSpeed = Math.max(15, forwardSpeedMph(duel, state.rival) +
       Math.max(-45, Math.min(35, (gap - 18) * .4)));
-    // Keep App steering and native physics. Following within rear-weapon
-    // range and firing real bolts lets the CPU's own scheduler choose defense.
-    duel.setInput({throttle: state.speedMph < targetSpeed ? 1 : 0,
-      brake: state.speedMph > targetSpeed + 3 ? .45 : 0, boost: false});
+    const speed = forwardSpeedMph(duel, state);
+    // Keep App's passing line while the CPU is behind. Shadow only a car
+    // genuinely ahead; aim through our own forward course lookahead.
+    let steer = state.input.steer;
+    if (gap >= 8 && gap <= 120) {
+      const metresPerSec = Math.max(0, state.speedMph) * DRIVE.mphToWorld;
+      const headingTarget = Math.atan((targetLat - state.lateral) * 2.5 / Math.max(15, metresPerSec));
+      const look = duel.course.at(state.s + metresPerSec * .18);
+      const desiredYaw = look.curvature * metresPerSec + (headingTarget - state.headingError) * 6;
+      const surface = duel._drivingSurface(state.s, state.lateral);
+      const authority = Math.max(.05, steeringYawAuthority(state.speedMph, duel.car.grip, surface.traction, duel.car));
+      steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
+    }
+    duel.setInput({throttle: speed < targetSpeed ? 1 : 0,
+      brake: speed > targetSpeed + 3 ? .45 : 0, steer, boost: false});
   };
 }
 
