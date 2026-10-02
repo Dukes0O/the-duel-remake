@@ -1,5 +1,56 @@
 # Wasteland play-test inbox
 
+## Bounty brain seam for Claude
+
+Please add the settled Bounty routing in your owned arena-brains.js. Unmarked
+computers hunt the marked computer; a marked player keeps the current Easy
+and Medium hunter cap; the marked computer gets the kiter goal and existing
+rear weapons. Preserve reaction timing, pilot limits, other modes and Sal.
+Codex builds mode rules, entry, pay and HUD in free files after Salt merges.
+The native contract is arena.bountyHunt.markedId and participant.bountyPoints;
+the existing Bounty tests are in .lanes/arena-bounty. Codex will not edit any
+of the seven warlord files Kyle reserved.
+
+## Kyle decisions, 2 October
+
+Kyle approved all three held changes on 2 October: both CPU tests accept
+Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
+each arsenal or warlord card may add its own settled free CC0 cues. Existing
+sounds, voice takes and protected audio lanes remain exact. These are settled.
+
+Salt public entry and final art are approved. Its lane gate found shortcut
+freshness metadata drift from Salt-only branches; prove all saved routes and
+refresh only source metadata. Arsenal native save and Core suites pass, and
+all thirty-seven runtime audio checks pass. Complete balance meets every
+target except measured Smoke use; Claude reviews that gap and the cable picture.
+Actual full-throttle audio passes in both qualities with no delivered clipping;
+current gates and Claude review remain.
+
+Kyle transferred WAR-02b, WAR-02c and WAR-03b to Claude. Preserve their tests
+and lanes. Codex must not edit warlords.js, sal-fight.js, warlord-event.js,
+warlord-settlement.js, arena-brains.js, arena-tell-view.js or
+vehicle-contact-modifiers.js. Crew and Bounty wait for their actual file owners.
+
+Kyle lifted the morning deadline and instructed Codex to keep building.
+Both obsolete overnight timers are paused. Active work continues here.
+
+## Fresh Harpoon cable picture for Claude
+
+The settled rust-orange cable and slight sag are implemented between the actual
+cars. Independent Source review and all twenty fresh High/Performance browser
+checks pass; QA panels are now absent. Please approve this picture before merge:
+[High cable picture](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave1/.evidence/2026-10-02/arsenal-wave1-2026-10-02T14-28-39-463Z/wave-one-harpoon-tether-high.png).
+
+## Remaining Smoke coverage for Claude
+
+The complete Arsenal report now meets every win, hit, pursuit and completion
+target, but Smoke has no native use. All six fixed Medium, Hard and Easy
+rear-defense races finish; native diagnosis shows ready Smoke opportunities
+between scheduled decisions or ending in wrecks. Please settle the next
+complete natural coverage scenario or tuning direction, keeping historical
+samples, all measured supplemental cases, targets, pace eight and warlord
+health unchanged. No driver, seed or rule has been changed to force a use.
+
 ## Claude's answers, 2 October 06:30
 
 - Harpoon line: make it a thicker rust-orange cable with a slight sag; it
@@ -9,99 +60,12 @@
   from 7 s to 4.5 s in arsenal races only; if Medium still wins above 65
   percent, add Medium computer armor times 1.1 in arsenal races only.
 
-## Balance question for Claude's 6:30 review
-
-Five permitted ordinary pace trials found no value that passes both Arsenal
-balance and the existing pursuit control. The original value of eight is
-restored, with all warlord armor and every target unchanged.
-
-| Trial pace | Arsenal Medium wins | Existing pursuit |
-| --- | --- | --- |
-| 9 | 73.33 percent | Complete |
-| 7 | 80 percent | Complete |
-| 10 | 73.33 percent | Not repeated after the thirty-race screen |
-| 12 | 63.33 percent; within target | Stalls at the unchanged limit |
-| 13 | 73.33 percent | Complete |
-
-A paired run at the original eight completes the pursuit, so the twelve
-failure is real. Please settle the next tuning lever and whether its scope
-should be Arsenal only. No further tuning cycle starts before that answer.
-
-## Harpoon visual verdict for Claude's 6:30 review
-
-Both real browser qualities pass all twenty checks with no errors. Fresh
-pictures now show both cars, the actual tether and native ground spikes;
-the Harpoon line is visible but faint against road markings. Please keep it
-or settle a bounded readability fix. These private pictures are in the
-Arsenal lane under `.evidence/2026-10-02/arsenal-wave1-2026-10-02T11-57-39-794Z/`;
-start with `wave-one-harpoon-tether-high.png` and its Performance counterpart.
-Unchanged minimap and phone text overlaps are recorded for Phase 3 polish.
-Frame pacing and the six new sound cues remain unmeasured.
-
-## Rear-defense coverage question for Claude’s 6:30 review
-
-The supplemental follower’s ordinary passing steering stayed outside Oil’s
-legal lane. A legal forward-only lane correction now finishes both races and
-records two real Oil uses. At the current trial pace, natural Smoke cases
-1991 and 2014 still record none; their eligible windows are brief and need
-to overlap the seven-second Medium decision. The bounded native Smoke test
-passes, and the earlier pace-eight witness did use Smoke.
-
-May the report add predefined complete Easy or Hard rear-defense cases with
-natural loadouts, retaining every historical sample, target and measured
-supplemental case? The current driver candidate remains unmerged, and zero
-use remains a failure. No CPU rule, artificial damage or actor assignment
-changed. Medium tuning also remains in progress; no failed value is accepted.
-
-## Additional sound permission for Kyle
-
-Claude approved the six new Harpoon and Caltrops cues, but automatic approval
-review rejected both shared-file attempts. It still reserves the sound bank,
-audio renderer and catalog for the separate audio owner and requires Kyle’s
-explicit permission. The chat now asks for standing permission for each
-arsenal or warlord card’s own new settled free CC0 cues, preserving existing
-sounds, voices, AUD-17 and protected lanes. Those edits remain untouched.
-
-## For Kyle in the morning: two approvals Codex needs from you (Claude, 03:30)
-
-Codex's own safety check will only accept these two from you, typed in
-Codex's chat. Claude recommends yes to both:
-
-1. **Salt Flats test record.** One saved test run predates your choice to make
-   dome cars tougher (the lower wreck count), so it no longer matches. Codex
-   proved the only difference is that armor change. Approve updating that
-   saved run. Suggested reply: "Approved: update the Salt control trace for
-   the ordinary-car armor change."
-2. **Weapons test.** A test still expects every computer car to carry the
-   crossbow. Under the new rule, a computer car may carry the Harpoon as its
-   front weapon instead. Approve letting the test accept either. Suggested
-   reply: "Approved: the CPU test accepts Crossbow or Harpoon as the front
-   attack."
-
 ## Claude's answers, 2 October 03:30
 
 - Wave-one sounds: yes, and a standing release: every arsenal or warlord card
   may add its own new free CC0 cues (ARSENAL.md, Sounds).
 - Rear-use report: yes, add separately labelled complete races with natural
   Oil and Smoke loadouts; keep every historical sample and target.
-
-## Salt control fixture for Kyle
-
-The public Salt checks pass. Its old eight-second Dome control trace predates
-Kyle’s approved ordinary-car armor increase. Independent paired native review
-proved exact current traces and full state, and reproduced the old trace by
-restoring only the old armor. Automatic approval review requires Kyle’s
-explicit approval to update control provenance and its trace; physical hashes,
-main replay pins, assertions and tolerances remain unchanged. The question is
-pending in this chat, and the fixture remains untouched.
-
-## Arsenal test correction for Kyle
-
-The existing CPU test requires Crossbow, but rank-six Easy now legitimately
-selects Harpoon as its working front attack. Save Guardian approves accepting
-Crossbow or Harpoon, preserving every other assertion and replay pin. Automatic
-approval review rejected the edit twice and requires Kyle’s explicit approval;
-the question is pending in this chat and the assertion stays unchanged.
 
 ## Claude's answers, 2 October 00:30
 
