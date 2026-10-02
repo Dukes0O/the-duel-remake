@@ -979,11 +979,15 @@ tasks:
     lane: FOOT
     size: L
     needs: [ARS-CORE]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-01-evening
+    branch: codex/foot/crew-gear
     flag: crew-gear
     owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
     hooks: [src/feature-flags.js, src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/combat-hud.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
+    sequencing: "Independent acceptance tests start first. Runtime edits wait for Arsenal wave one to free tuning, and the separate audio owner to free the sound bank; shared files are not granted to two builders."
+    note: "Tests-first slice is claimed. The eight settled gear items, discovery gate, refill and camera controls are the acceptance; no runtime Source has started."
     acceptance:
       - "Build docs/CREW.md section 1 exactly: the crew-gear switch (dev), all eight items on key 3 (gamepad D-pad down on foot), gear refilled on getting back in, Jax, Cinder and Tusk active. Wren's grenades and Tusk's shove use the arsenal's smoke and the crash solver."
       - "Tests first for each item's numbers and counters; on-foot controls tested through the camera (a key that says right moves right on screen); a private browser scenario per item with no console errors."
@@ -2983,10 +2987,11 @@ tasks:
       - "Tests first: every car and the Titan at 20, 40 and 60 mph; a junk car pushed into the wall or another junk car; the renderer shows its moved position and spin; computer drivers avoid its current position; spawns still keep clear. Arena replays that change are named. Kyle checks it in the Preview."
     test_commit: 18aa34470731bcea742974804fad0aa63d07faf9
     test_candidate_commit: ee81c8e4703d020188fd4c4a5c3e236d05e96b31
-    note: "Independent review clears native movement and the clustered-cover respawn fix, with original assertions preserved. Current frozen checks, browser and merge gates follow; held arena-event and Salt files remain untouched."
-    source_commit: fa3db13b611a4aa471bbf5b2cc085c4a0910ad4b
-    review_commit: fa3db13b611a4aa471bbf5b2cc085c4a0910ad4b
+    note: "Independent review clears junk movement, clustered-cover respawns and the late-contact floor fix. All fourteen focused suites pass with original assertions and road, LCR and Sal fingerprints unchanged; browser and merge gates follow."
+    source_commit: 9e7c28624303bebe17cbe28e7220cdff4a7025db
+    review_commit: 9e7c28624303bebe17cbe28e7220cdff4a7025db
     respawn_test_commit: daf0d3fa6b79b715f7e332363abbcaf4d126b2b6
+    containment_test_commit: ec388ae
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
@@ -3174,6 +3179,8 @@ tasks:
     sequencing: "Independent tests cover settled native behavior first; Source waits for the two literal-rule answers. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. Audio remains with its separate owner."
     design_question: "Claude: how long is Caltrops harmless to its owner after deployment, and what input threshold counts as steering hard away from a Harpoon tether? Tests use full steering for the settled counter until those exact rules are answered; Source has not started."
     waiting_on: claude
+    test_commit: ed76a446244ccef96a4e3e322d7ad328ebbb0c07
+    note: "Independent wave-one tests reproduce forty-six native weapon failures and four missing CPU-use accounting checks. Existing balance checks pass; Source waits for the two literal rules and the separate sound-bank owner."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO
