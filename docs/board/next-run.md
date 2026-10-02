@@ -48,9 +48,12 @@ registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
 Shove is merged. Kyle's later junk-car note opens ARENA-JUNK-SHOVE and holds
 wreck-rate until he decides whether to lower wrecks at all.
 Arsenal is merged after its passing balance, lane and build gates. Junk-car tests
-now run against the fixed-box baseline before source work begins.
+reproduce the fixed-box baseline; native movement is implemented and independently
+reviewed after the clustered-cover respawn fix.
 The tested wreck-rate candidate stays unmerged for Kyle. Tanker's two fixes
-have native checks and the paired roof view ready for Claude.
+have passing native, frame, lane and build checks, with the roof view and
+installation sequence waiting for Claude. ARS-01 has independent tests in progress;
+its two literal-rule questions and shared sound-bank wait are in the inbox.
 The exact evening integration checkpoint passed all 318 full suites and build,
 then pushed under D8; later commits need their own full check.
 
