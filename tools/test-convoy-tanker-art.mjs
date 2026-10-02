@@ -806,6 +806,44 @@ check('round3 both native beacons occupy the boarding plate front corners',async
       'native beacon must sit toward the plate front edge, not its center');
   }
 });
+
+check('round3 roof paint uses one dedicated non-repeating plate texture',async()=>{
+  const data=await candidate(),node=data.model.json.nodes.find(row=>row.name==='tanker-boarding-plate');
+  const primitives=data.model.json.meshes[node.mesh].primitives;
+  assert.equal(primitives.length,1,'native roof stays one complete donor mesh and draw');
+  const material=data.model.json.materials[primitives[0].material];
+  const texture=data.model.json.textures[material.pbrMetallicRoughness.baseColorTexture.index];
+  assert.equal(data.model.json.images[texture.source].name,'tanker-dark-roof-and-warning-border',
+    'plate has its own continuous steel center and warning border mapping');
+  const plate=nativePart(data,'boarding-plate')[0].node;
+  for(const mesh of meshList(plate)){
+    const uv=mesh.geometry.attributes.uv;
+    const values=Array.from({length:uv.count},(_,i)=>[uv.getX(i),uv.getY(i)]);
+    assert.ok(values.every(([u,v])=>u>=0&&u<=1&&v>=0&&v<=1),'single plate texture stays inside its full UV square');
+    assert.ok(Math.max(...values.map(row=>row[1]))-Math.min(...values.map(row=>row[1]))>.99,
+      'plate border and middle use the full texture height, not one strip of a shared atlas');
+  }
+});
+check('round3 loaded lamps stay saturated amber when lit and turn fully off on recovery',async()=>{
+  const api=await moduleApi(),data=await candidate();
+  const result=api.createTankerModel({loadAsset:async()=>(await asset(join(data.output,config.outputs.model))).gltf});
+  await result.ready;
+  result.setValveHealth(Object.freeze([0,0,0]));
+  for(const {row} of nativePart(data,'warning-lamp')){
+    const node=result.group.getObjectByName(row.node);
+    for(const mesh of meshList(node))for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){
+      assert.ok(material.emissive.r>material.emissive.g&&material.emissive.g>material.emissive.b,
+        'lit glass retains amber hue');
+      assert.ok(material.emissiveIntensity>0&&material.emissiveIntensity<=2,
+        'amber emission does not clip into the former cream-white lamp');
+      assert.ok(material.emissiveMap,'native post mask keeps only beacon glass emissive');
+    }
+  }
+  result.setValveHealth(Object.freeze([75,75,75]));
+  assert.ok(lampValues(result.group,data.manifest).every(value=>value===0),'recovered lamps have no emission');
+  result.dispose();
+});
+
 const finalRoundVerdicts=[];
 for(const {name,run} of checks.slice(finalRoundStart))try{
   await run();finalRoundVerdicts.push({name,passed:true});
