@@ -358,6 +358,40 @@ check('ordinary longer native Arsenal cue retains direct measurement and encoded
   assert.deepEqual(bytes, before, 'long-cue analysis leaves encoded bytes unchanged');
   assert.deepEqual(decodedMeasurementPcm(bytes), decoded, 'long-cue analysis leaves playback unchanged');
 });
+check('complete native launch streams play wave-one cues once and keep released Crossbow audio', () => {
+  const actual = [];
+  for (const weapon of ['harpoon', 'caltrops', 'crossbow']) {
+    const released = weapon === 'crossbow';
+    const run = race({enabled: !released}), rig = audio({disabled: released ? ['arsenal'] : []});
+    const events = [];
+    // Capture every native event, including weaponFired; do not prefilter the consumer input.
+    run.duel.onChange((_state, event) => events.push(event));
+    assert.equal(run.duel.fireWeapon(weapon), true, 'genuine ' + weapon + ' launches');
+    assert.equal(events.filter(event => event.weaponFired === weapon).length, 1,
+      'complete ' + weapon + ' stream includes its native generic launch event');
+    const before = snapshot(run);
+    for (const event of events) dispatch(rig, run, event);
+    assert.equal(snapshot(run), before, 'complete launch playback leaves native state unchanged');
+    const played = sources(rig.context);
+    const tones = rig.context.nodes.filter(node => node.frequency && node.started != null);
+    const fireId = 'weapon.' + weapon + (weapon === 'caltrops' ? '.deploy' : '.fire');
+    const buffers = id => {
+      const value = rig.renderer.cueBuffers[id];
+      return Array.isArray(value) ? value : value ? [value] : [];
+    };
+    actual.push({weapon,
+      sources: played.length,
+      launchRecordings: played.filter(node => buffers(fireId).includes(node.buffer)).length,
+      flightRecordings: played.filter(node => buffers('weapon.harpoon.flight').includes(node.buffer)).length,
+      flightLoops: played.filter(node => node.loop === true).length,
+      tones: tones.map(node => node.frequency.value)});
+  }
+  assert.deepEqual(actual, [
+    {weapon: 'harpoon', sources: 2, launchRecordings: 1, flightRecordings: 1, flightLoops: 1, tones: []},
+    {weapon: 'caltrops', sources: 1, launchRecordings: 1, flightRecordings: 0, flightLoops: 0, tones: []},
+    {weapon: 'crossbow', sources: 1, launchRecordings: 0, flightRecordings: 0, flightLoops: 0, tones: [260, 175]},
+  ], 'whole native streams need one correct launch recording, one moving flight where applicable, no duplicate or fallback tone, and unchanged released Crossbow layers');
+});
 console.log('Arsenal wave-one audio: ' + checks + ' checks, ' + failures.length + ' failures.');
 for (const failure of failures) console.error(failure);
 if (failures.length) process.exitCode = 1;
