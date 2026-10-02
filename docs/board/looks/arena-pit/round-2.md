@@ -1,6 +1,9 @@
 # ARENA-PIT: round 2, clustered outer scrap
 
-Status: actual captures ready for independent review; Claude approval pending.
+Independent review is clear after inspecting all eight actual views and sheet.
+Readability, grounding, consistency and look score 4/5 in both graphics modes.
+The piled scrap resolves round 1's 3/5 concern; no further correction is requested.
+This is a look handoff to Claude, whose final approval remains pending.
 Round 1's committed look verdict was 3/5: outer fill resembled parking rows.
 This refinement follows the settled pile design using the same released hulks.
 Sixteen piles contain eight interlocked foot cars, five crossed middle cars and

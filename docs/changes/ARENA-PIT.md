@@ -79,7 +79,8 @@ within 10%. Round 2 High draw calls/triangles rise 546/556442 to 567/1516510;
 Performance is 378/424444 versus 361/1005424. The extra scenery cost is retained
 explicitly; these RAF samples show observed frame pacing on this laptop.
 Round 1 is 308498 bytes, look 3/5; round 2 piles replace its outer parking rows.
-Round 2 is 304366 bytes, independently reviewed next. Claude/Kyle remain pending.
+Round 2 is 304366 bytes; independent review is clear, all four scores 4/5 in both
+qualities. The piles resolve round 1's look concern. Claude/Kyle remain pending.
 
 Official generator refreshed only sourceFingerprint to
 45c75c657202115575b8535e7483d2b08db855c96689ebe30ac21500068494d8.
