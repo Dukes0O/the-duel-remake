@@ -72,13 +72,14 @@ original preservation assertion, source binding, donor hash and path inventory
 remains intact; source, public assets and replay bytes match integration exactly.
 All 21 original cases then pass with 105,041 checks. No signatures are regenerated.
 Motion feel, audio, moving gameplay and phone layout remain unmeasured.
-The existing Blender coverage guard is red because this new private recipe
-needs registration. Tanker owns that shared test file, so registration waits
-for its merge. The required lane floor on 3fe32b9 has 115 passes, one placement failure and
-203 unrun after fail-fast; campaign shards one and two pass, the rest remain
-unrun. Build passes. This is a red lane gate, not merge clearance. Claude's
-look verdict and a fresh passing floor after registration remain required.
-Nothing is installed or revealed by this private leaf.
+Claude approved round two and its costume. Tanker is merged, so Vesper's
+existing donor-validating native CLI suite is registered separately; the
+Tanker-only empty-root planner and every original CLI assertion stay intact.
+Independent review approves only the BASE snapshot update to current reviewed
+integration: all 379 protected files match it exactly; public assets, donors,
+rig and art Source are unchanged. No replay or world fingerprint is generated.
+A fresh current lane tier and build precede merge. WAR-04 still owns reveal
+and runtime installation; this recipe and private presenter install nothing.
 
 ## Removed
 

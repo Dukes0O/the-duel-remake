@@ -28,6 +28,8 @@ const privateGenerators = [
     glb: ['tanker.glb'], json: ['manifest.json'],
     embeddedAtlas: ['tanker-local-wear-and-hazard-atlas', 'tanker-dark-roof-and-warning-border'] },
 ];
+// Vesper's original native suite covers its donor-validating private CLI.
+const nativeGenerators = [{script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'}];
 const reviewHelpers = [
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
@@ -174,7 +176,11 @@ function rejectsPrivateOutput(generator, fixtureRoot, output) {
 check('all Blender asset generators are covered', () => {
   const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && name !== 'fidelity-sheet.py')
     .map(name => `tools/blender/${name}`);
-  assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators].map(item => item.script).sort());
+  assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators].map(item => item.script).sort());
+});
+
+for (const generator of nativeGenerators) check(`${generator.script} retains its native CLI suite`, () => {
+  assert.ok(existsSync(join(root, generator.test)), 'missing native CLI suite');
 });
 
 const fixtureRoots = [mkdtempSync(join(tmpdir(), 'duel-blender-paths-a-')), mkdtempSync(join(tmpdir(), 'duel-blender-paths-b-'))];
