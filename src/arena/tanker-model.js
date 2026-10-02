@@ -30,8 +30,8 @@ export function createTankerModel({loadAsset} = {}) {
 
   function updateLamps() {
     for (const material of lamps) {
-      material.emissive.setHex(broken ? 0xff6610 : 0);
-      material.emissiveIntensity = broken ? 6 : 0;
+      material.emissive.setHex(broken ? 0xff8c00 : 0);
+      material.emissiveIntensity = broken ? 1.2 : 0;
     }
   }
 

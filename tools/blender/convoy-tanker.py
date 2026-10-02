@@ -237,12 +237,9 @@ def wear_atlas(seed, tank_bands):
              (.71,.64,.45), (.34,.36,.34), (.57,.54,.36), (.16,.18,.17),
              (.055,.063,.046), (.105,.115,.11), (.47,.48,.44)]
     pixels = np.ones((height, width, 4), dtype=np.float32)
-    local_y = (y % 64)/63
     tank_red = np.zeros_like(x, dtype=bool)
     for center in tank_bands:
         tank_red |= abs(x/(width-1)-center) < .028
-    border = (x < width*.09) | (x > width*.91) | (local_y < .12) | (local_y > .88)
-    diagonal = ((x//48 + (local_y*7).astype(int)) % 2).astype(bool)
     for band, base in enumerate(bases):
         mask = y // 64 == band
         for channel, value in enumerate(base):
@@ -261,9 +258,6 @@ def wear_atlas(seed, tank_bands):
                 stripe = ((x+y*2)//48) % 2
                 colour = np.where(stripe, base[channel], [.025,.028,.026][channel])
                 colour = colour*(1-rust*.18)+scratch*.04+dust*.4
-            if band == 13:
-                warning = np.where(diagonal, [.68,.49,.055][channel], [.025,.028,.026][channel])
-                colour = np.where(border, warning, colour)
             pixels[:,:,channel][mask] = np.clip(colour[mask], .012, .88)
     image = bpy.data.images.new("tanker-local-wear-and-hazard-atlas", width=width, height=height)
     image.pixels.foreach_set(pixels.ravel()); image.pack()
@@ -272,6 +266,20 @@ def wear_atlas(seed, tank_bands):
              "hazard-red-controls", "black-yellow-hazard-paint", "bright-worn-flanges",
              "worn-steel-hubs", "dusty-headlight-glass", "dark-bumper-steel",
              "lower-cab-grime", "dark-boarding-steel-with-stripe-border", "tank-colour-port-caps"]
+    # A complete plate texture keeps warning paint at its outer border.
+    # The original native salvage faces and their affine fit stay unchanged.
+    roof_x, roof_y = np.meshgrid(np.arange(512), np.arange(1024))
+    roof_grain = rng.uniform(-1, 1, (1024, 512))
+    roof_border = ((roof_x < 512*.07) | (roof_x > 512*.93) |
+                   (roof_y < 1024*.045) | (roof_y > 1024*.955))
+    roof_diagonal = ((roof_x + roof_y)//42) % 2
+    roof_pixels = np.ones((1024, 512, 4), dtype=np.float32)
+    for channel, steel in enumerate((.036, .044, .045)):
+        middle = steel*(1+roof_grain*.08)
+        warning = np.where(roof_diagonal, (.68,.49,.025)[channel], (.018,.022,.02)[channel])
+        roof_pixels[:,:,channel] = np.where(roof_border, warning, middle)
+    roof_image = bpy.data.images.new("tanker-dark-roof-and-warning-border", width=512, height=1024)
+    roof_image.pixels.foreach_set(roof_pixels.ravel()); roof_image.pack()
     materials = []
     for band, name in enumerate(names):
         material = bpy.data.materials.new(name); material.use_nodes = True
@@ -279,7 +287,8 @@ def wear_atlas(seed, tank_bands):
         shader.inputs["Metallic"].default_value = 0 if band in (4,5,10) else .58
         shader.inputs["Roughness"].default_value = (.25 if band == 5 else .34 if band == 10
                                                   else .92 if band == 4 else .74)
-        texture = material.node_tree.nodes.new("ShaderNodeTexImage"); texture.image = image
+        texture = material.node_tree.nodes.new("ShaderNodeTexImage")
+        texture.image = roof_image if band == 13 else image
         material.node_tree.links.new(texture.outputs["Color"], shader.inputs["Base Color"])
         materials.append(material)
     return materials
@@ -385,7 +394,7 @@ def mesh_part(name, faces, matrix, materials, band):
             else:
                 u = (p[axes[0]]*.41) % 1
                 local_v = (p[axes[1]]*.53) % 1
-            v = (material_band + .03 + local_v*.94)/SURFACE_BANDS
+            v = local_v if name == "tanker-boarding-plate" else (material_band + .03 + local_v*.94)/SURFACE_BANDS
             uvs.append((u, v))
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(positions, [], triangles)
@@ -492,7 +501,7 @@ def build(output, fit, paths, seed):
     shader.inputs["Emission Color"].default_value = (1, .28, .025, 1)
     shader.inputs["Emission Strength"].default_value = 0
     for title, colours, socket in [
-            ("tanker-beacon-glass-and-post", [(.075,.08,.075,1),(.10,.045,.008,1)], "Base Color"),
+            ("tanker-beacon-glass-and-post", [(.075,.08,.075,1),(.18,.065,.004,1)], "Base Color"),
             ("tanker-beacon-glass-emission", [(0,0,0,1),(1,1,1,1)], "Emission Color")]:
         image = bpy.data.images.new(title,width=2,height=2)
         image.pixels.foreach_set([value for colour in colours for _ in range(2) for value in colour])

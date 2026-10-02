@@ -22,12 +22,24 @@ in High and Performance, including the normal chase view 30 m behind a car.
 There are no errors or failed requests and two inherited duplicate-Three
 warnings. The independent critic prefers round three, but its art match remains
 below four. The roof center still reads as a striped grille; distant valves,
-boarding readability and local wear remain weak. Claude chooses the better of
-rounds two and three for Kyle. There is no fourth round or installation pass.
+boarding readability and local wear remain weak. Claude picked round three on 1 October evening and cleared installation with
+two corrections to its existing directions. There is no fourth round.
+
+## Evening corrections
+
+- The same native salvage roof now uses a separate continuous texture: plain
+  dark steel in the middle, with diagonal warning stripes only around its border.
+- Off glass is dull dark amber. Lit glass uses saturated amber emission at 1.2
+  instead of six so it stays amber under the game tone mapping. The black post
+  emission mask, health combinations and recovery policy are unchanged.
+- The existing scenario now takes close roof views with the lamps off and on.
+  Those close-ups go to Claude before merge; the three comparison rounds stay.
 
 ## Tests
 
-Tests first: the original 56 native checks passed; three new checks failed on
+Tests first: two new evening checks fail against the old native roof mapping
+and loaded lamp intensity. They check actual UV/texture binding and amber
+emission plus recovery, not screenshot pixels. The original 56 native checks passed; three new checks failed on
 actual wheel size/orientation and beacon size/corner positions. Native acceptance
 first passed 58 of 59, including all three new checks. The remaining exact
 lineage failure was a Float32 vertex crossing a decimal rounding boundary.
@@ -73,16 +85,17 @@ The new advisory CPU/control check does not clear: High's median is 10.7%
 above A2; Performance's median is 17.6% above A2 and its baseline medians drift
 11.8%. This diagnostic does not show that SPEC's actual frame budget failed.
 These limits remain separate from the unchanged real RAF pacing. Claude
-must judge this limited frame evidence; it grants no whole-card clearance.
+has picked round three using this limited frame evidence. Whole-card gates
+still apply, and the repaired roof close-up needs his review before merge.
 All 3,600 samples, draw and triangle counts, mirror refreshes and snapshots are
 retained in private `frame-qa/tanker-comparison.json`. Actual QA repeats all
 twenty captures: zero errors or failed requests and the same two warnings.
-The existing comparison sheet and rejected art gaps stay unchanged.
+The existing comparison sheets and below-bar distant readability stay explicit.
 
 ## Removed
 
 Reworked the small sideways wheels, dark pipe openings, roof plate, lamps,
-cab wear and rear warning markings. The final review still finds stripes in
-the roof center; this gap stays explicit at the three-round cap.
+cab wear and rear warning markings. Removed the former shared-atlas roof warning mapping and clipping cream lamp
+setting in the evening correction. No native donor geometry is replaced.
 The long consumed testing transcript is folded into this note; its text history
 remains. Original donor files, licensed records and both comparison rounds stay.

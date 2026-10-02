@@ -286,7 +286,7 @@ export async function run(context) {
           }
         });
         if(before!==JSON.stringify(input))throw Error('Presentation mutated supplied health');
-        if(lamps.length!==2||lamps.some(l=>l.materials.some(m=>m.hex!==${broken?0xff6610:0}||m.intensity!==${broken?6:0})))
+        if(lamps.length!==2||lamps.some(l=>l.materials.some(m=>m.hex!==${broken?0xff8c00:0}||m.intensity!==${broken?1.2:0})))
           throw Error('Actual loaded two-lamp health presentation failed');
         return {...framing,lamps,stateUnchanged:q.state===JSON.stringify(app.duel.state),inputUnchanged:true};
       })()`);
@@ -297,10 +297,17 @@ export async function run(context) {
         limit:'Actual loaded read-only presentation health; no future Convoy Raid gameplay claim.'});
       saveReport();
     }
-    for(const angle of ['opposite-valve','roof-plate']) {
+    for(const angle of ['opposite-valve','roof-plate-off','roof-plate-on']) {
       const detail=await context.evaluate(`(() => {
         const q=window.__tankerArt;
-        return q.frame(q.truckBounds,${angle==='roof-plate'?'[4,10,-7]':'[-7,3.5,-9]'});
+        const roof=${JSON.stringify(angle.startsWith('roof-plate'))};
+        if(roof)q.candidate.setValveHealth(${JSON.stringify(angle.endsWith('-on')?[0,0,0]:[75,75,75])});
+        const bounds=roof?new TankerArtQa.Box3():q.truckBounds;
+        if(roof)q.candidate.group.traverse(node=>{
+          if(node.name==='tanker-boarding-plate'||node.name.startsWith('tanker-warning-lamp-'))
+            bounds.union(new TankerArtQa.Box3().setFromObject(node));
+        });
+        return q.frame(bounds,${angle.startsWith('roof-plate')?'[4,10,-7]':'[-7,3.5,-9]'});
       })()`);
       if(!detail.stateUnchanged)throw Error('Supplemental capture changed simulation state');
       const name='tanker-'+angle+'-'+quality;
@@ -383,7 +390,7 @@ export async function run(context) {
     }
 
   }
-  if(report.captures.length!==(round===3?20:18))throw Error('All matched art views, including the final-round chase views, are required');
+  if(report.captures.length!==(round===3?22:20))throw Error('All matched art views, including the final-round chase views, are required');
   report.captureVerdict='All '+report.captures.length+' actual-game views, quality, native bounds, supplied health and simulation state checks passed';
   saveReport();
 }
