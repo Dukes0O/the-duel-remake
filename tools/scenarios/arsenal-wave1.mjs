@@ -49,10 +49,58 @@ async function start(context) {
     };
     window.__waveOnePlace(state,500);window.__waveOnePlace(state.rival,535);
     duel.setInput({throttle:0,brake:0,steer:0,boost:false});
-    const at=duel.course.groundAt(518,0);
-    app.inspectionCamera={position:[at.x+20,at.y+19,at.z+12],target:[at.x,at.y+1,at.z]};
+    window.__waveOneFrame=()=>{
+      const host=document.querySelector('#view3d'),aspect=host.clientWidth/host.clientHeight;
+      const body=actor=>{
+        const at=duel.course.groundAt(actor.s,actor.lateral);
+        return {x:at.x,y:at.y+1+(actor.airHeight||0),z:at.z};
+      };
+      const player=body(state),victim=body(state.rival);
+      const strip=window.__waveOneCues('weapon.caltrops.deploy',state)[0]?.hazard;
+      const points=[victim];
+      // Desktop keeps the owner in view. A narrow phone shot shows the nearby
+      // victim and actual strip rather than shrinking the whole interaction.
+      if(!strip||aspect>=1)points.push(player);
+      if(strip)for(const side of [-1,1])for(const end of [-1,1]){
+        points.push({x:strip.x+Math.cos(strip.heading)*side*strip.width/2+
+          Math.sin(strip.heading)*end*strip.length/2,y:strip.y,
+          z:strip.z-Math.sin(strip.heading)*side*strip.width/2+
+          Math.cos(strip.heading)*end*strip.length/2});
+      }
+      const center={};
+      for(const axis of ['x','y','z'])center[axis]=
+        (Math.min(...points.map(p=>p[axis]))+Math.max(...points.map(p=>p[axis])))/2;
+      const origin=strip||player;
+      let dx=victim.x-origin.x,dz=victim.z-origin.z,length=Math.hypot(dx,dz);
+      if(length<1){
+        const heading=strip?.heading??
+          (duel.course.groundAt(state.s,state.lateral).heading+(state.headingError||0));
+        dx=Math.sin(heading);dz=Math.cos(heading);length=1;
+      }
+      const axisX=dx/length,axisZ=dz/length;
+      let sideX=axisZ+axisX*.18,sideZ=-axisX+axisZ*.18;
+      const horizontal=Math.hypot(sideX,sideZ);sideX/=horizontal;sideZ/=horizontal;
+      const cosine=1/Math.hypot(1,.9),sine=.9*cosine;
+      let halfWidth=0,halfHeight=0,depth=0;
+      for(const point of points){
+        const x=point.x-center.x,y=point.y-center.y,z=point.z-center.z;
+        const along=x*sideX+z*sideZ;
+        halfWidth=Math.max(halfWidth,Math.abs(x*sideZ-z*sideX));
+        halfHeight=Math.max(halfHeight,Math.abs(y*cosine-along*sine));
+        depth=Math.max(depth,Math.abs(along*cosine+y*sine));
+      }
+      // Inspection uses the renderer's existing 48-degree field of view.
+      // Fit physical car margins inside the central HUD-free portion.
+      const tangent=Math.tan(24*Math.PI/180);
+      const distance=Math.max((halfWidth+3)/(tangent*aspect*.78),
+        (halfHeight+3)/(tangent*.46),18)+depth+3;
+      app.inspectionCamera={position:[center.x+sideX*cosine*distance,
+        center.y+sine*distance,center.z+sideZ*cosine*distance],
+        target:[center.x,center.y,center.z]};
+    };
     window.__waveOnePaint=()=>{
-      const before=JSON.stringify(state);app.onFrame?.(state);window.__render.renderFrame();
+      const before=JSON.stringify(state);window.__waveOneFrame();
+      app.onFrame?.(state);window.__render.renderFrame();
       if(JSON.stringify(state)!==before)throw Error('Wave-one presentation mutated native state');
     };
   })()`);
@@ -66,6 +114,10 @@ export async function run(context) {
     await context.waitFor(`!!window.__qaApp && !!window.__render &&
       document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' &&
       !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'memory-only wave-one production page',60000);
+    await context.evaluate(`document.querySelectorAll('details').forEach(panel=>{
+      const title=panel.querySelector('summary')?.textContent||'';
+      if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.hidden=true;
+    })`);
     await context.evaluate(`(() => {
       const quality=document.querySelector('#graphics-quality');quality.value='${quality}';
       quality.dispatchEvent(new Event('change',{bubbles:true}));
