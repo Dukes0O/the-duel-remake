@@ -633,3 +633,7 @@ plus Claude's decision merge. The next full checkpoint follows now.
 Janitor after wreck-rate: integration dependency link removed, clean lane
 removed with plain git worktree remove, merged branch and used evidence deleted.
 Status refreshed; current assets, decisions and all unfinished lanes stay.
+
+Checkpoint sweep: consumed progress paragraphs were folded into current cards and notes; merged lanes were removed with plain worktree removal. The audit has no unused module or removed-test candidates; uncertain asset/export candidates remain assigned to discovery. Tracked size rose from 259,446,754 to 259,730,006 bytes for source, tests and notes; runtime assets stay at 236,249,990 bytes. Unfinished and Kyle-owned branches are preserved and listed on status.
+
+Overnight checkpoint: three feature merges and Claude's decision merge are ready for the next exact full tier and build, then the approved normal integration push. Bounty Hunt is claimed for tests first; Dustmonger has native tests in preparation while its literal oil questions wait for Claude. Continue eligible work after this checkpoint. Existing follow-ups run after Claude's three reviews; begin the final handoff at 8:30 AM and finish by 8:45.
