@@ -946,17 +946,21 @@ tasks:
     lane: AUDIO
     size: S
     needs: [ARS-CORE]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-02-overnight
     branch: codex/audio/arsenal-core-cues
     owns: [tools/test-arsenal-core-audio.mjs, tools/build-arsenal-core-audio.mjs, tools/scenarios/arsenal-core-audio.mjs, docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/]
     hooks: [src/sound-bank.js, tools/audio/catalog.json, src/audio.js]
     helpers: [test_author, reviewer, audio_qa]
     flag: arsenal
-    note: "Claude released only the three new Oil and Smoke cues and their library recipes. Native tests come first; the audio renderer hook is limited to consuming those real events. Existing sounds, voices and audio records stay exact."
+    note: "Three free Oil and Smoke cues are merged with varied recordings and real positional events. Both graphics modes pass measured contrast, timing and cleanup; human listening and simultaneous six-slip stress remain flagged. Lane tier and build pass."
     acceptance:
       - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), (the sound bank is merged and live since AUD-14; corrected by Claude 1 October 2026). The arsenal cannot release before these exist. No paid credits."
     claude_answer_0030: "2 October 2026, 00:30: Claude releases the two hooks for this card only. Kyle's separate audio session has been idle since 25 September and this is a small addition: add the three cues to src/sound-bank.js and their CC0 library recipes to tools/audio/catalog.json, with no paid credits and no change to any existing entry, Kyle's voice takes or AUD-17's records. If the audio session resumes first, it keeps ownership and this card waits for it."
+    merged_commit: 14886e0cc792a36ad46770eaf8a735150e0d7571
+    gate_commit: 01e09e107cf0545fba271ccaff1fc9eb998c80aa
+    audio_review_commit: 92aa902aa91ee892533dbd107542b996c91ec81c
+
   - id: ARS-02
     title: "Arsenal wave 2: Rocket Pods, Flamethrower, Scrap Magnet"
     owner: codex
@@ -3232,9 +3236,12 @@ tasks:
     test_commit: 37924a1cbce6cd3a1ec2a2953121208f7250b0ef
     note: "The save-backup fix passes its new regressions. Automatic approval review requires Kyle to approve the reviewed Crossbow-or-Harpoon assertion change, so that assertion stays exact and the card waits. Further sound hooks still need Claude’s written release."
     claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
-    audio_release_question: "After the three Oil and Smoke cues merge, may wave one add its six settled Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer? Claude released the earlier card for three cues only; wave one needs its own written release. No existing sounds or voices would change."
+    audio_release_question: "The three Oil and Smoke cues are merged. May wave one add its six settled Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer? Claude released the earlier card for three cues only; wave one needs its own written release. No existing sounds or voices would change."
     motion_hook_grant: "The Harpoon motion fix may read and retire its private along-course impulse in existing crash and reset consumers. Native review also proves that static contact and ram classification need that same component; their thresholds and ordinary rules stay unchanged."
     balance_coverage_question: "The historical balance sample records no Oil or Smoke use because its damaging policies use a CPU loadout containing neither. May the report add separately labelled complete rear-defense races with naturally assigned loadouts, legal inputs and real damage while retaining every historical sample and target? Medium currently wins too often and still needs ordinary tuning."
+    motion_review_commit: 7fa0fc6fb946a2d92e6deae1993e3effb75f51a2
+    motion_regression_commit: aa62ed604ca0e986ca6d6d32ad3d770af378d95a
+    motion_verdict: "Independent Source review clears the motion, grounding and contact repairs, with all sixty-five native cases passing. Collision thresholds and ordinary replay pins stay exact. Balance, browser, sound hooks and the held save assertion still precede merge."
 
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"

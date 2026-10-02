@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-02T09:12:19.831Z
+Observed at: 2026-10-02T10:26:46.707Z
 
-Observation commit: 8e890e0637bdbf657031449a87a190db495d8ece
+Observation commit: 14886e0cc792a36ad46770eaf8a735150e0d7571
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8e890e0637bdbf657031449a87a190db495d8ece
+Integration HEAD: 14886e0cc792a36ad46770eaf8a735150e0d7571
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-02T07:04:30.825Z; tested commit: e13f16b90808d86572daeec4777ba19e7e541761.
+Last recorded full run: 2026-10-02T09:22:15.110Z; tested commit: 815876c02578eb3a67de002790e8fad97a8d76d8.
 
 ## Feature switches
 
@@ -38,9 +38,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/audio/arsenal-core-cues | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core-audio |
 | codex/cmb/arena-bounty | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-bounty |
-| codex/cmb/arsenal-wave1 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave1 |
+| codex/cmb/arsenal-wave1 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave1 |
 | codex/cmb/dustmonger | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/dustmonger |
 | codex/cmb/kettle-kingpin | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/kettle-kingpin |
 | codex/cmb/mother-mirage | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/mother-mirage |
@@ -56,9 +55,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/audio/arsenal-core-cues | AUD-ARSENAL-W1 | 2026-10-02T02:08:02-07:00 | 0 | last commit 2026-10-02T02:08:02-07:00 | docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/oil-deploy-b.ogg, public/assets/audio/arsenal-core/oil-deploy-c.ogg, public/assets/audio/arsenal-core/oil-deploy.ogg, public/assets/audio/arsenal-core/oil-slip-b.ogg |
 | codex/cmb/arena-bounty | ARENA-04 | 2026-10-01T21:58:26-07:00 | 0 | last commit 2026-10-01T21:58:26-07:00 | docs/changes/ARENA-04.md, tools/test-arena-bounty-hunt.mjs |
-| codex/cmb/arsenal-wave1 | ARS-01 | 2026-10-02T01:32:03-07:00 | 0 | last commit 2026-10-02T01:32:03-07:00 | docs/changes/ARS-01.md, src/arena/arena-pilot.js, src/arsenal/caltrops.js, src/arsenal/car-effects.js, src/arsenal/harpoon.js |
+| codex/cmb/arsenal-wave1 | ARS-01 | 2026-10-02T03:22:29-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARS-01.md, src/arena/arena-pilot.js, src/arsenal/caltrops.js, src/arsenal/car-effects.js, src/arsenal/harpoon.js |
 | codex/cmb/dustmonger | WAR-02b | 2026-10-01T21:53:53-07:00 | 0 | last commit 2026-10-01T21:53:53-07:00 | docs/changes/WAR-02b.md, tools/test-warlord-dustmonger.mjs |
 | codex/cmb/kettle-kingpin | WAR-03b | 2026-10-01T22:07:46-07:00 | 0 | last commit 2026-10-01T22:07:46-07:00 | docs/changes/WAR-03b.md, tools/test-warlord-kettle.mjs |
 | codex/cmb/mother-mirage | WAR-02c | 2026-10-01T23:51:06-07:00 | 0 | last commit 2026-10-01T23:51:06-07:00 | docs/changes/WAR-02c.md, tools/test-warlord-mirage.mjs |
@@ -77,10 +75,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 13,095,761 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 30,584 B | +0 B | 5,000,000 B |
-| All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 360,569,856 B | +189,440 B | unavailable |
-| Lane folders | 8 | +0 | unavailable |
+| Added bytes in last merge | 425,541 B | +0 B | 5,000,000 B |
+| All `public/` | 236,343,712 B | +0 B | unavailable |
+| Git objects | 361,217,024 B | +61,440 B | unavailable |
+| Lane folders | 7 | +0 | unavailable |
 
 ## Backups
 
@@ -88,7 +86,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 8e890e0637bdbf657031449a87a190db495d8ece
+- Local integration/wasteland: 14886e0cc792a36ad46770eaf8a735150e0d7571
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -96,4 +94,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 4cd4a9608238d86a90a1335adacf526eb7f4a2d3.
 - Remote origin/main: local branch missing; cached commit 34d66fe6605c5b436523727d73c2f06e7ccfe1d7.
-- Remote origin/integration/wasteland: behind local; cached commit e13f16b90808d86572daeec4777ba19e7e541761.
+- Remote origin/integration/wasteland: behind local; cached commit 815876c02578eb3a67de002790e8fad97a8d76d8.

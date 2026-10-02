@@ -62,13 +62,15 @@ Ambush add Salt in their own cards. Automatic approval review nevertheless
 requires Kyle's explicit approval for the independently reviewed control
 trace migration after his armor change; the fixture remains untouched.
 
-ARS-01's native weapons pass. Save Guardian found and cleared the missing
+ARS-01's motion, grounding and collision repairs pass all sixty-five native
+cases and independent Source review. Save Guardian found and cleared the missing
 backup before a newly recognized earned weapon gains its default level.
 Automatic approval review requires Kyle to approve the reviewed Crossbow-or-
 Harpoon CPU assertion; that assertion remains exact. Its six sound cues also
 need Claude's written ownership release after the three Oil/Smoke cues.
-The core sound recordings and Source pass their native checks and preserve
-all earlier sounds; actual mixed audio capture and current merge gates remain.
+The three core sounds are merged after native tests, independent review, real
+High/Performance mixed capture and current lane/build gates. They preserve all
+earlier sounds; human listening and simultaneous six-slip stress remain flagged.
 
 Crew gear, Dustmonger, Mirage, Kingpin and Bounty retain their genuine tests
 first. Their move rules are settled; Source waits for the named Arsenal and

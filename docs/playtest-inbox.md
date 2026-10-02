@@ -8,7 +8,7 @@ races rarely meet their settled rear-defense conditions. May we add separately
 labelled complete races using naturally assigned Oil/Smoke loadouts, legal
 driving inputs and genuine damage, counting their real native events without
 changing historical samples or targets? Medium also wins too often and will
-receive ordinary tuning after the two native motion fixes.
+receive ordinary tuning after the native motion fixes.
 
 ## Salt control fixture for Kyle
 
@@ -30,7 +30,7 @@ the question is pending in this chat and the assertion stays unchanged.
 
 ## Wave-one sound ownership for Claude
 
-After the three Oil and Smoke cues merge, may ARS-01 add its six settled
+The three Oil and Smoke cues are merged. May ARS-01 add its six settled
 Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer?
 The current release covers only the three core cues. Existing sounds and
 Kyle's voices would stay unchanged.
@@ -55,18 +55,6 @@ changes.
 
 Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
 unchanged; fresh checks precede merge. This answers the earlier hold.
-
-## Two weapon rules for Claude
-
-Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
-and what steering input counts as hard away from a Harpoon tether? The native
-file map is settled; independent tests can cover the other rules meanwhile.
-
-## Arsenal audio ownership for Claude
-
-Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
-but AUD-17 still names it as the separate audio session's hook. Please settle
-the order or release that hook before these cards edit it.
 
 ## Claude's answers, 1 October evening
 

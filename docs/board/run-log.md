@@ -634,31 +634,32 @@ Janitor after wreck-rate: integration dependency link removed, clean lane
 removed with plain git worktree remove, merged branch and used evidence deleted.
 Status refreshed; current assets, decisions and all unfinished lanes stay.
 
-Overnight review checkpoint: the previous exact source passed 324 full suites
-and build, then pushed normally under D8. This continuation merged Claude's
-eight answers, Tanker, Vesper and the narrow Vesper preservation correction.
-Each card's native, review and current lane/build verdicts live on its card
-and change note. All three merged lanes were removed with plain worktree
-removal after unlinking their integration junctions. Merge count is four;
-the two-hour full checkpoint follows on the final committed source.
+Overnight checkpoint: the previous exact source passed 326 full suites and
+build and pushed normally. The three Oil and Smoke cues then merged after
+327 lane suites, build, native tests, independent review and real mixed capture
+in both graphics modes. Contrast and event timing pass; human recognition and
+simultaneous six-slip stress stay flagged. The used sound lane and its evidence
+were deleted with plain worktree removal after unlinking integration dependencies.
 
-Janitor sweep: folded consumed checkpoints and answered questions into the
-current cards and next-run, removed used gate logs and merged lanes, and
-preserved every unfinished lane and licensed/current asset. Tracked bytes
-were 259740877 before this wave and 262361522 at its initial audit; runtime
-assets stay at 236249990. No asset or test is proven unused. The single module
-candidate is the intentionally private Tanker presenter, used by its native
-fitting check and reserved for Convoy Raid; forty-eight asset and twenty-three
-export candidates remain uncertain and stay with discovery.
+Arsenal's native review found genuine rotated-yank, airborne-grounding and
+collision-consumer gaps. Independent regressions preceded each repair; all
+65 native checks and final independent Source review pass. Balance and browser
+checks remain. The old scalar hit fixture now has stronger world-space checks;
+its exact damping remains. A new wall fixture was corrected to a genuine
+non-glancing hit, preserving damage thresholds and every assertion.
 
-Overnight continuation handoff: Salt and Arsenal wait for Kyle's explicit
-approval of the two reviewed test/control migrations rejected by automatic
-approval review. Their fixtures/assertions remain untouched and their lanes
-stay clean. Core audio's nine free recorded variants and actual event Source
-are complete; finish the repaired genuine mixed capture and merge gates
-without weakening the full-throttle assertion. Claude's next question is the
-six wave-one sound hooks. Resume useful cards only when their file owners
-merge. Both overnight automations stay active for the remaining review
-continuations; final handoff begins at 8:30 and ends by 8:45 Vancouver time.
+Continuation handoff: Salt and Arsenal still wait for Kyle's two explicit
+approvals rejected by automatic review; those held fixtures remain exact.
+Claude has two written questions: the six remaining sound hooks and separate
+complete rear-defense balance races that preserve all historical samples and
+targets. Other Source waits for its file owners to merge. Both overnight
+follow-ups stay active; final handoff starts at 8:30 and ends by 8:45 Vancouver.
 
-Janitor sizes: the separate sweep folded consumed text from 262361522 bytes to 262354811 bytes; runtime assets stay at 236249990 bytes. Held and Kyle-owned lanes remain, and no uncertain asset was deleted.
+Janitor sweep: folded consumed checkpoints and answered questions, removed the
+merged sound lane and its used evidence, and preserved every unfinished lane,
+licensed source and current asset. No removal is proved safe among forty-eight
+asset and twenty-three export candidates; no removed-feature test remains.
+The private Tanker presenter remains needed for its native fitting check and
+future Convoy Raid. Audio added nine small current runtime recordings.
+
+Janitor sizes: tracked files were 262492924 bytes before this sweep and are 262492457 bytes after folding; runtime files grew from 236249990 to 236343712 bytes for the nine new cues. Held and Kyle-owned lanes stay.
