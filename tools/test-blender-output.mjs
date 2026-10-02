@@ -26,7 +26,7 @@ const generators = [
 const privateGenerators = [
   { script: 'tools/blender/convoy-tanker.py', fit: 'tools/art/tanker-fit.json',
     glb: ['tanker.glb'], json: ['manifest.json'],
-    embeddedAtlas: ['tanker-local-wear-and-hazard-atlas'] },
+    embeddedAtlas: ['tanker-local-wear-and-hazard-atlas', 'tanker-dark-roof-and-warning-border'] },
 ];
 const reviewHelpers = [
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},

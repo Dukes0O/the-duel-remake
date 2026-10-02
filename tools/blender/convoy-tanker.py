@@ -37,7 +37,7 @@ def _private_cli_plan():
         # licence, cache or destination read is needed to describe these paths.
         print(json.dumps({"blend": [], "glb": [str(output / "tanker.glb")],
                           "json": [str(output / "manifest.json")], "atlas": [],
-                          "embeddedAtlas": ["tanker-local-wear-and-hazard-atlas"]}))
+                          "embeddedAtlas": ["tanker-local-wear-and-hazard-atlas", "tanker-dark-roof-and-warning-border"]}))
         raise SystemExit(0)
 
 
