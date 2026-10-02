@@ -626,11 +626,11 @@ check('Harpoon hit immediately yanks an active native knock without a deferred d
 });
 check('Harpoon motion contributes to native solid-face armor damage and contact damping', () => {
   const duel = race(), target = duel.state, cpu = target.rival;
-  place(target, 500, 0, Math.PI / 3); place(cpu, 535, 2, Math.PI); equipCpu(cpu, 'harpoon');
+  place(target, 500, 0, 55 * Math.PI / 180); place(cpu, 535, 2, Math.PI); equipCpu(cpu, 'harpoon');
   assert.equal(fireWeapon(duel, 'harpoon', true, cpu), true);
   for (let i = 0; i < 180 && !carEffect(target, 'tether'); i++) stepProjectiles(duel, DT);
   assert.ok(carEffect(target, 'tether'), 'genuine CPU projectile supplies the victim impulse');
-  target.speedMph = 196;
+  target.speedMph = 170;
   const at = point(duel, target), motion = velocity(target, at), phi = at.heading, spec = duel._vehicleSpec(target);
   const reach = spec.halfLength * Math.cos(target.headingError) + spec.halfWidth * Math.sin(target.headingError);
   const obstacle = {id: 'arsenal-solid-face', kind: 'barrier', barrier: true, s: target.s, off: target.lateral,
