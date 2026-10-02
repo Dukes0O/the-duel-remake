@@ -52,12 +52,15 @@ pass. No broad tests, builds or captures run while Root owns the heavy slot.
 
 Independent RED tests d724db6 reproduced own-car blast armor 25 instead of
 the native 6.25 cap, plus deployment and retirement blocking a ready RPG.
-The fixes pass all seven bounded module tests: native self:true applies the
+The first fixes passed seven bounded module tests: native self:true applies the
 existing armor cap; fighter self-splash stays unchanged; turret recharge starts
 on actual expiry/destruction and preserves RPG readiness through refill.
 The original native turret timestamp assertion is retained for a compatible
-selected-gear timer view in later shared wiring. A separate reviewed terrain
-contact defect waits for its independent RED test before a Source fix.
+selected-gear timer view in later shared wiring. Independent terrain RED tests
+9446a0f reproduced Dune 0.294 m and Tusk 0.135 m below native ground. Direct
+shots now retire at their first sampled/bisected native terrain crossing; an
+earlier actual body/scenery hit still wins. All nine bounded checks pass.
+Range, clock, damage and grenade handling remain unchanged.
 
 All existing assertions, race fingerprints and world signatures are unchanged.
 The complete independent mechanics, real camera controls and memory-only
@@ -86,6 +89,6 @@ crew.scrap-cannon.fire and weapon.smoke.deploy. Audio installation is held.
 
 ## Removed
 
-Removed the turret's use of the shared RPG cooldown. Released RPG, wrench,
+Removed shared turret/RPG recharge and underground direct-shot travel. RPG, wrench,
 saves, assets and shared code are retained.
 No stub or placeholder is presented as a finished gear item.

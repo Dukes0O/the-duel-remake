@@ -82,6 +82,37 @@ function explodeSticky(duel, shot) {
     hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
 }
 
+// Compare native terrain along this direct flight segment with the earliest
+// body/scenery sweep. Sampling brackets the first crossing; bisection keeps
+// the impact on the course surface rather than at an underground endpoint.
+function directTerrainContact(duel, start, end, limit) {
+  const clearance = fraction => {
+    const x = start.x + (end.x - start.x) * fraction;
+    const z = start.z + (end.z - start.z) * fraction;
+    const near = duel.course.nearest(x, z);
+    return start.y + (end.y - start.y) * fraction -
+      duel.course.groundAt(near.s, near.lateral).y - .05;
+  };
+  if (clearance(0) <= 0) return {terrain: true, t: 0};
+  const length = Math.hypot(end.x - start.x, end.z - start.z) * limit;
+  const samples = Math.max(1, Math.min(32, Math.ceil(length / .5)));
+  let previous = 0;
+  for (let sample = 1; sample <= samples; sample++) {
+    const fraction = limit * sample / samples;
+    if (clearance(fraction) <= 0) {
+      let low = previous, high = fraction;
+      for (let iteration = 0; iteration < 20; iteration++) {
+        const middle = (low + high) / 2;
+        if (clearance(middle) <= 0) high = middle;
+        else low = middle;
+      }
+      return {terrain: true, t: high};
+    }
+    previous = fraction;
+  }
+  return null;
+}
+
 // Called from the native projectile loop only for crewGearShot records. Its
 // boolean result means retain this projectile; other shots use their old path.
 export function stepGearProjectile(duel, shot, dt) {
@@ -111,7 +142,11 @@ export function stepGearProjectile(duel, shot, dt) {
   const time = dt * fraction;
   const end = {x: old.x + shot.vx * time, y: old.y + shot.vy * time - (shot.thrown ? GRAVITY * time * time / 2 : 0),
     z: old.z + shot.vz * time};
-  const hit = gearContact(duel, old, end, owner, {fighters: !shot.thrown});
+  let hit = gearContact(duel, old, end, owner, {fighters: !shot.thrown});
+  if (!shot.thrown) {
+    const terrain = directTerrainContact(duel, old, end, hit?.t ?? 1);
+    if (terrain && (!hit || terrain.t < hit.t)) hit = terrain;
+  }
   const travelFraction = hit?.t ?? 1;
   shot.x = old.x + (end.x - old.x) * travelFraction;
   shot.y = old.y + (end.y - old.y) * travelFraction;
