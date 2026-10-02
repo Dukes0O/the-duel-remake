@@ -8,7 +8,7 @@ import {gearContact, gearDirection, enemyCars, fighterTargets,
 import {signatureFor, GEAR_EPSILON} from './gear.js';
 
 const GRAVITY = COMBAT_TUNING.bomb.gravity;
-export function launchGearProjectile(duel, fighter, gear, serial) {
+export function launchGearProjectile(duel, fighter, gear, serial, motion = {x: 0, z: 0}) {
   const combat = duel.state.combat;
   if (combat.projectiles.length >= COMBAT_TUNING.projectileLimit) return null;
   const direction = gearDirection(fighter), origin = {
@@ -31,6 +31,8 @@ export function launchGearProjectile(duel, fighter, gear, serial) {
     const speed = gear.speed || COMBAT_TUNING.foot.rpgSpeed;
     vx = direction.x * speed; vy = direction.y * speed; vz = direction.z * speed;
   }
+  // Inherit measured native movement after contacts, as the released RPG does.
+  vx += motion.x; vz += motion.z;
   const shot = {kind: gear.id, crewGearShot: true, crewId: fighter.crewId,
     owner: 'player', attackerId: 'player', id: `crew-${duel.state.stageIndex}-${serial}`,
     ...origin, launchX: origin.x, launchY: origin.y, launchZ: origin.z,

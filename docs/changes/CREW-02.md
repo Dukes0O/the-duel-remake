@@ -59,8 +59,11 @@ The original native turret timestamp assertion is retained for a compatible
 selected-gear timer view in later shared wiring. Independent terrain RED tests
 9446a0f reproduced Dune 0.294 m and Tusk 0.135 m below native ground. Direct
 shots now retire at their first sampled/bisected native terrain crossing; an
-earlier actual body/scenery hit still wins. All nine bounded checks pass.
-Range, clock, damage and grenade handling remain unchanged.
+earlier actual body/scenery hit still wins. Tests-first 3ecefcd then reproduced
+missing 4.5 m/s walking inheritance for Dune and Nell. Launch now adds observed
+native fixed-step movement after contacts; stationary controls stay 90/18 m/s.
+Refill clears launch history, preserving turret recharge. All eleven bounded
+checks pass. Range, clock, damage and grenade handling remain unchanged.
 
 All existing assertions, race fingerprints and world signatures are unchanged.
 The complete independent mechanics, real camera controls and memory-only

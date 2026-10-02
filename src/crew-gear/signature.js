@@ -19,7 +19,9 @@ export function initializeCrewGear(duel) {
   const gear = signatureFor(duel.state.crewId);
   duel.state.crewGear = {crewId: duel.state.crewId || 'rook', id: gear.id,
     ammo: gear.capacity, serial: 0, fireHeld: false, turret: null,
-    turretReadyAt: 0, lastTurretFireAt: null, grapple: null};
+    turretReadyAt: 0, lastTurretFireAt: null, grapple: null,
+    lastX: duel.state.footWeapons?.lastX ?? null,
+    lastZ: duel.state.footWeapons?.lastZ ?? null};
 }
 export function refillCrewGear(duel) {
   if (!crewGearEnabled(duel)) return;
@@ -28,6 +30,7 @@ export function refillCrewGear(duel) {
   user.ammo = signatureFor(user.crewId).capacity;
   user.grapple = null;
   user.fireHeld = false;
+  user.lastX = user.lastZ = null;
   if (duel.state.footWeapons) duel.state.footWeapons.ammo = COMBAT_TUNING.foot.rpgAmmo;
 }
 export function showSignatureGear(duel) {
@@ -202,6 +205,10 @@ export function stepSignatureGear(duel, dt) {
   const state = duel.state, user = state.crewGear, fighter = state.fighter, weapons = state.footWeapons;
   if (!ready(duel) || !state.onFoot || !user || !fighter || !weapons || !(dt > 0)) return false;
   const gear = signatureFor(user.crewId), input = state.fighterInput;
+  const motion = {x: user.lastX === null ? 0 : (fighter.x - user.lastX) / dt,
+    z: user.lastZ === null ? 0 : (fighter.z - user.lastZ) / dt};
+  // Retain actual fixed-step positions, not an intended input velocity.
+  user.lastX = fighter.x; user.lastZ = fighter.z;
   const wasFlaming = fighter.flaming === true;
   fighter.flaming = false;
   if (user.crewId === 'tusk' && !fighter.knockedDown) tuskPush(duel, fighter, input);
@@ -226,7 +233,7 @@ export function stepSignatureGear(duel, dt) {
     let fired;
     if (gear.id === 'grapple') fired = beginGrapple(duel, user, fighter, gear);
     else if (gear.id === 'scrap-turret') fired = deployTurret(duel, user, fighter, gear);
-    else fired = !!launchGearProjectile(duel, fighter, gear, ++user.serial);
+    else fired = !!launchGearProjectile(duel, fighter, gear, ++user.serial, motion);
     if (fired) {
       if (user.ammo !== null) user.ammo--;
       if (gear.id !== 'scrap-turret') {
