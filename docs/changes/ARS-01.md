@@ -1,9 +1,7 @@
 # ARS-01: Harpoon, Caltrops and wave-one computer use
-
 Native Source and the private production browser recipe are implemented.
 The card is not ready to merge. Current balance, browser, sounds and
 lane/build gates remain; the save assertion still awaits Kyle's approval.
-
 ## What changed
 
 - Harpoon launches a native leading 70 m/s projectile with full carrier
@@ -86,9 +84,11 @@ Bounded native witnesses: CPU fire/hit once, shield contact at 28.583 m with
 zero armor loss, Caltrops grip 0.75 and ceiling 180.9 mph.
 Prior thirty-race Medium wins were 70 percent with zero CPU Oil/Smoke uses;
 a current passing report remains, preserving all historical targets.
-Claude approved the six native Harpoon/Caltrops sound hooks and labelled rear-defense races.
-All six cues carry actual actors, positions and products; audio stays with its owner.
-Independent Source review is clear; current balance and lane/build gates remain.
+Six-cue tests pass 15 controls and fail 19 missing-audio checks; the rebuild recipe
+is prepared. Automatic review rejected shared sound edits twice despite Claude’s
+release; Kyle’s explicit standing permission is pending and those files stay exact.
+Native motion review is clear. Rear-report tests pass 34 controls and fail five
+new coverage cases before Source; current balance and lane/build gates remain.
 
 ## Removed
 
