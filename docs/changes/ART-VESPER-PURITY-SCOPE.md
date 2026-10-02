@@ -15,17 +15,33 @@ embedded materials, bones, actions, native view lifecycle and repeatable real
 exports pass. The Salt lane remains clean after the suite. Outputs stay in
 its ignored private QA folders. No game source or real saves changed.
 
-## Reviewed fix to build
+## Reviewed fix
 
-The independent reviewer approved capturing the current protected path and
-SHA inventory before private commands, then comparing every existing
-preservation call with that inventory. Preserve the four static donor pins
-and every native art, geometry, rig, material, action, lifecycle and
-repeatability assertion and tolerance. No new guard or replay pin is needed.
-The existing failures provide the tests-first baseline; this note changes
-no test assertion. The source builder and fresh gates remain pending.
+The independent reviewer approved replacing the historical integration tree
+with the current game's protected path and SHA inventory. Before any private
+recipe command, module initialization captures every file under src, public
+and tools/replays into one frozen in-memory object. The four existing
+preservation calls require the same exact paths and SHA-256 bytes afterward.
+Added, removed or changed files still fail. No generated baseline is saved.
+
+The four static donor, original recipe, reference and rights pins remain
+unchanged. A read-only comparison confirms every native art, geometry, rig,
+material, action, lifecycle and repeatability assertion and tolerance outside
+this reviewed preservation scope is byte exact, including all recipe calls.
+This fixes provenance after later legitimate cards; it does not approve any
+recipe mutation of the current game.
+
+## Current checks
+
+`node --check tools/test-vesper-art.mjs` and `git diff --check` pass.
+`node tools/test-vesper-art.mjs --fresh-output-only` passes all three genuine
+CLI cases with 19 reached acceptance checks. The full 21-case native suite,
+independent review and fresh lane/build gates await the Director's heavy slot.
+No Blender, browser, build, broad tier or live-game command ran for this fix.
 
 ## Removed
 
-Nothing removed in this tests-first handoff. The builder will replace the
-historical-tree assumption with preservation of the current source snapshot.
+Removed only the obsolete historical BASE constant and git ls-tree comparison.
+The current in-memory inventory replaces both its path and byte checks.
+No asset, static source pin, replay file, native art assertion or guard matrix
+was removed or added.
