@@ -9,6 +9,7 @@ import {COURSE} from '../src/config.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 import {arenaRanking} from '../src/arena/arena-event.js';
+import {initializeBountyHunt, noteBountyWreck, stepBountyHunt} from '../src/arena/modes/bounty-hunt.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from '../src/arena/warlord-event.js';
 import {arenaHud, arenaBoardMarkup, arenaYardPanel} from '../src/screen-arena.js';
@@ -435,4 +436,58 @@ rule('Bounty disabled and enabled preserve the exact reviewed roads, Last Car Ro
   const fixture = JSON.parse(readFileSync(new URL('./replays/arena-fuel-run-controls.json', import.meta.url), 'utf8'));
   for (const spec of fixture.cases) for (const enabled of [false, true])
     eq(controls(spec, enabled), spec.fingerprint, spec.kind + ': Bounty ' + enabled + ' preserves the exact current control pin');
+});
+
+// Module product regressions, not playable acceptance: Bounty admission and its
+// native hooks remain pending. Keep actual Duel participants, actors and course;
+// call the new module's public exports to isolate its pending handover rules.
+function pendingModuleHandover() {
+  const duel = new Duel({seed: 1989, featureFlags: ON});
+  eq(duel.startArenaEvent({mode: 'last-car-rolling', car: 'falcone_f42',
+    cpuDifficulty: 'medium', seed: 1989, opponents: FIELD}), true,
+  'the module regression starts from a genuine admitted native arena');
+  duel.state.countdown = 0; tick(duel);
+  eq(duel.state.status, 'racing', 'the genuine native countdown reaches racing');
+  duel.state.arena.mode = 'bounty-hunt';
+  duel.state.arena.timeLimitSec = 180;
+  initializeBountyHunt(duel);
+  const original = mark(duel), victim = member(duel, original);
+  victim.bountyPoints = 5;
+  member(duel, 'player').bountyPoints = 10;
+  for (const participant of duel.state.arena.participants)
+    actor(duel, participant.id).combatWrecking = true;
+  eq(noteBountyWreck(duel, victim, null, null), null,
+    'a marked self-wreck with no hitter neither credits a wreck nor ends the event');
+  return {duel, original, scores: duel.state.arena.participants.map(p => p.bountyPoints)};
+}
+
+rule('module product regression: pending handover excludes a victim who recovers first', () => {
+  const {duel, original, scores} = pendingModuleHandover();
+  stepBountyHunt(duel, 1);
+  eq(duel.state.arena.participants.map(p => p.bountyPoints), scores,
+    'while every recipient is wrecking, the pending mark earns no passive points or bonus');
+  actor(duel, original).combatWrecking = false;
+  stepBountyHunt(duel, 1);
+  eq(duel.state.arena.participants.map(p => p.bountyPoints), scores,
+    'recovering before all recipients cannot let the marked victim resume passive scoring');
+  actor(duel, 'player').combatWrecking = false;
+  stepBountyHunt(duel, DT);
+  eq(duel.state.arena.bountyHunt.markedId, 'player',
+    'the pending self-wreck handover transfers to the other car when it recovers');
+  eq(duel.state.arena.participants.map(p => p.bountyPoints), scores,
+    'the delayed self-wreck handover adds no twenty-point bonus or whole-second score');
+});
+
+rule('module product regression: pending handover resolves during sudden death without passive points', () => {
+  const {duel, scores} = pendingModuleHandover();
+  duel.state.arena.phase = 'sudden-death';
+  duel.state.arena.clockSec = 180;
+  actor(duel, 'player').combatWrecking = false;
+  stepBountyHunt(duel, 1);
+  eq(duel.state.arena.bountyHunt.markedId, 'player',
+    'sudden death still transfers the pending mark when another car recovers');
+  eq(duel.state.arena.participants.map(p => p.bountyPoints), scores,
+    'sudden-death handover awards neither passive survival points nor a self-wreck bonus');
+  eq(duel.state.arena.result, null,
+    'a recovery and mark transfer alone cannot finish next-credited-wreck sudden death');
 });
