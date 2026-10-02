@@ -160,6 +160,35 @@ for (const crew of ['dune', 'tusk']) check(`${crew} direct shot retires at nativ
   }
   assert.equal(contactedGround, true, 'downward shot genuinely reaches native terrain');
 });
+for (const crew of ['dune', 'nell']) check(`${crew} launch inherits observed native walking velocity`, () => {
+  function launch(walking) {
+    const duel = race(crew);
+    assert.equal(selectSignatureGear(duel), true, 'actual signature module selects this gear');
+    duel.setFighterInput({fire: false, right: walking});
+    stepSignatureGear(duel, DT);
+    const before = {x: duel.state.fighter.x, z: duel.state.fighter.z};
+    ticks(duel, 1); // Actual fixed-time fighter movement, including its contacts.
+    const fighter = duel.state.fighter;
+    const motion = {x: (fighter.x - before.x) / DT, z: (fighter.z - before.z) / DT};
+    duel.setFighterInput({fire: true});
+    stepSignatureGear(duel, DT);
+    const shot = duel.state.combat.projectiles.at(-1);
+    assert.equal(shot?.kind, signatureFor(crew).id, 'real production fire creates the signature projectile');
+    return {shot, motion};
+  }
+  const stationary = launch(false), walking = launch(true);
+  assert.ok(Math.hypot(stationary.motion.x, stationary.motion.z) < EPS,
+    'stationary control has no native movement');
+  const nominal = crew === 'dune' ? 90 : 18;
+  assert.ok(Math.abs(Math.hypot(stationary.shot.vx, stationary.shot.vz) - nominal) < EPS,
+    `stationary ${crew} keeps its literal ${nominal} m/s launch`);
+  assert.ok(Math.abs(Math.hypot(walking.motion.x, walking.motion.z) - 4.5) < EPS,
+    'actual native walking supplies the observed 4.5 m/s velocity');
+  const error = Math.hypot(walking.shot.vx - stationary.shot.vx - walking.motion.x,
+    walking.shot.vz - stationary.shot.vz - walking.motion.z);
+  assert.ok(error < EPS,
+    `${crew} projectile must inherit actual planar thrower motion; velocity error ${error.toFixed(3)} m/s`);
+});
 for (const failure of failures) console.error(failure);
 console.log(`Crew gear owned modules: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
