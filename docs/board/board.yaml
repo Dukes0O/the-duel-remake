@@ -3252,7 +3252,7 @@ tasks:
     lane: CMB
     size: L
     needs: [WAR-02a-FORMAT, DESIGN-WAR-02c, WAR-PAY, ARS-CORE]
-    status: building
+    status: review
     claimed_by: claude-2026-10-02
     branch: codex/cmb/mother-mirage
     flag: mother-mirage

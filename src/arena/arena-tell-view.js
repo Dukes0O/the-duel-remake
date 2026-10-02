@@ -82,6 +82,7 @@ const MARKER_COLORS = Object.freeze({danger: 0xff3b21});
 export function updateArenaMarkers(group, markers, seconds) {
   if (!group) return;
   const list = Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'ring') : [];
+  updateTyreMarks(group, Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'tyre') : []);
   group.userData.rings ??= [];
   const rings = group.userData.rings;
   while (rings.length < list.length) {
@@ -102,5 +103,32 @@ export function updateArenaMarkers(group, markers, seconds) {
     ring.scale.setScalar(marker.radius);
     ring.material.color.setHex(MARKER_COLORS[marker.color] ?? MARKER_COLORS.danger);
     ring.material.opacity = .55 + .35 * Math.sin(seconds * Math.PI * 2 * 3) ** 2;
+  });
+}
+
+// Tyre marks a car leaves on the floor (kind 'tyre'): two dark streaks a mark.
+const TYRE = Object.freeze({half: .85, length: 2.4, width: .34});
+function updateTyreMarks(group, list) {
+  group.userData.tyres ??= [];
+  const streaks = group.userData.tyres;
+  while (streaks.length < list.length * 2) {
+    const streak = new THREE.Mesh(new THREE.PlaneGeometry(TYRE.width, TYRE.length),
+      new THREE.MeshBasicMaterial({color: 0x0c0b0a, transparent: true, opacity: .6,
+        depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, fog: true, toneMapped: false}));
+    streak.rotation.order = 'YXZ';
+    streak.rotation.x = -Math.PI / 2;
+    streak.renderOrder = 3;
+    streak.name = 'Arena tyre mark';
+    group.add(streak);
+    streaks.push(streak);
+  }
+  streaks.forEach((streak, index) => {
+    const marker = list[index >> 1];
+    streak.visible = !!marker;
+    if (!marker) return;
+    const side = index & 1 ? 1 : -1, heading = marker.heading || 0;
+    streak.position.set(marker.x + Math.cos(heading) * TYRE.half * side, (marker.y || 0) + .07,
+      marker.z - Math.sin(heading) * TYRE.half * side);
+    streak.rotation.y = heading;
   });
 }

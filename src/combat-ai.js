@@ -46,7 +46,7 @@ function useCpuPickupShield(duel) {
   const state = duel.state;
   const combat = state.combat;
   for (const opponent of state.opponents) {
-    if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
+    if (opponent.decoy || opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const charges = cpuPickupCharges(state, combat, opponent);
     if (charges.star && fireWeapon(duel, 'star', true, opponent)) {
@@ -59,7 +59,7 @@ function useCpuPickupShield(duel) {
 function useCpuPickupUfo(duel, cpu) {
   const {state} = duel;
   for (const opponent of state.opponents) {
-    if (cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
+    if (!opponent.decoy && cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
         incomingBolt(duel, cpu, opponent)) {
       // Hold the charge until the existing defensive reaction sees a threat.
       // UFO use has its own per-lap limit. It never spends or resets the
@@ -87,7 +87,7 @@ export function stepCombatAI(duel, dt) {
   // decisions across the cars instead of firing a synchronized volley.
   let liveOpponents = 0;
   if (modernField) for (const opponent of state.opponents) {
-    if (!opponent.finished && !opponent.crushed && !opponent.combatWrecking)
+    if (!opponent.decoy && !opponent.finished && !opponent.crushed && !opponent.combatWrecking)
       liveOpponents++;
   }
   const attackInterval = modernField
@@ -96,6 +96,7 @@ export function stepCombatAI(duel, dt) {
   combat.aiTimer -= dt;
 
   for (const opponent of state.opponents) {
+    if (opponent.decoy) continue;
     const ready = opponent === state.rival
       ? combat.aiShieldCooldown <= 0
       : opponent.aiShieldCooldown <= 0;
@@ -112,7 +113,8 @@ export function stepCombatAI(duel, dt) {
   for (let offset = 0; offset < opponents.length; offset++) {
     const index = modernField ? (first + offset) % opponents.length : offset;
     const opponent = opponents[index];
-    if (opponent.finished || opponent.crushed || opponent.combatWrecking ||
+    // Decoy cars never fire (docs/SCRAPDOME.md section 5).
+    if (opponent.decoy || opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
     if (arsenalEnabled(duel)) {

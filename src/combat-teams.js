@@ -74,6 +74,9 @@ export function noteArenaDamage(duel, victim, removed, ownerId) {
   const state = duel.state, target = arenaParticipant(duel, victim);
   if (!state.arena || !target || !(removed > 0)) return;
   if (state.arena.mode === 'fuel-run') noteFuelDamage(duel, target, removed);
+  // A decoy never scores: its hits count for the car it copies.
+  const source = state.arena.participants.find(p => p.id === ownerId);
+  if (source?.decoy) ownerId = source.ownerId;
   if (ownerId && ownerId !== target.id) {
     target.lastHitBy = ownerId; target.lastHitAt = state.stageTimeSec;
     const owner = state.arena.participants.find(p => p.id === ownerId);

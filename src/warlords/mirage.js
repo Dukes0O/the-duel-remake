@@ -11,6 +11,8 @@ export const MIRAGE_RULES = Object.freeze({
   phaseTwoRate: 1.2, stunSec: 2, windowMultiplier: 1.5,
   // Copies never take armor; any damage bursts them into scrap.
   copyArmor: 1e6, phaseTwoRamScale: .5,
+  // Only the real car leaves tyre marks, one pair every 2.5 m, gone after 8 s.
+  markEveryMetres: 2.5, markLifeSec: 8, markLimit: 36,
 });
 const EPSILON = 1e-9;
 
@@ -19,9 +21,28 @@ function cooldown(duel) {
   return duel.state.arena.warlordPhase === 2 ? base / MIRAGE_RULES.phaseTwoRate : base;
 }
 
+function dropMarks(arena, all = false, now = 0) {
+  if (arena.markers) arena.markers = arena.markers.filter(marker =>
+    marker.owner !== 'mirage' || !all && marker.until > now);
+}
+
+// The real car's tyre marks: the clue the copies do not give.
+function leaveMark(duel, actor, pose) {
+  const move = actor.mirage, arena = duel.state.arena, last = move.lastMark;
+  if (last && Math.hypot(pose.x - last.x, pose.z - last.z) < MIRAGE_RULES.markEveryMetres) return;
+  move.lastMark = {x: pose.x, z: pose.z};
+  const marks = (arena.markers || []).filter(marker => marker.owner === 'mirage');
+  const others = (arena.markers || []).filter(marker => marker.owner !== 'mirage');
+  marks.push({owner: 'mirage', kind: 'tyre', x: pose.x, y: duel.course.groundAt(actor.s, actor.lateral).y ?? 0,
+    z: pose.z, heading: pose.heading,
+    until: duel.state.stageTimeSec + MIRAGE_RULES.markLifeSec});
+  arena.markers = [...others, ...marks.slice(-MIRAGE_RULES.markLimit)];
+}
+
 export function resetMirage(duel, actor) {
   const old = actor.mirage;
   removeCopies(duel, actor, false);
+  dropMarks(duel.state.arena, true);
   // Her cooldown runs from the start of the fight: no split at the start.
   actor.mirage = {stage: 'idle', sinceSec: duel.state.stageTimeSec,
     nextSplitSec: old?.nextSplitSec ?? duel.state.stageTimeSec + cooldown(duel),
@@ -86,6 +107,7 @@ function split(duel, participant, actor) {
 export function thinkMirage(duel, participant, actor, difficulty) {
   if (!actor.mirage) resetMirage(duel, actor);
   const move = actor.mirage, now = duel.state.stageTimeSec;
+  dropMarks(duel.state.arena, false, now);
   // Any copy that took damage bursts into scrap.
   for (const copy of copies(duel, actor)) {
     if (copy.armor < MIRAGE_RULES.copyArmor || now + EPSILON >= copy.expiresAt) {
@@ -104,6 +126,7 @@ export function thinkMirage(duel, participant, actor, difficulty) {
   }
   const me = worldPose(duel, actor);
   if (move.stage === 'split') {
+    leaveMark(duel, actor, me);
     if (actor.armor < move.armorSeen - EPSILON) {
       // The real one was hit: the copies burst and she is stunned.
       removeCopies(duel, actor);

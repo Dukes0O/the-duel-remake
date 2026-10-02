@@ -12,6 +12,7 @@ export function vehicleContactModifiers(duel, attacker, victim, attackerFace, vi
     attacker?.combatArmorKit === 'side-saws' && side(attackerFace);
   const fight = warlordFight(duel, attacker);
   const move = fight?.attack?.(duel, attacker, victim, attackerFace, victimFace) ?? null;
-  return {multiplier: (sideSaws ? 1.6 : 1) * (move?.multiplier ?? 1), sideSaws,
+  // A decoy car may ram for a fraction of the damage (ramDamageScale).
+  return {multiplier: (sideSaws ? 1.6 : 1) * (move?.multiplier ?? 1) * (attacker?.ramDamageScale ?? 1), sideSaws,
     warlordMove: move?.move === true, warlordFight: move ? fight : null};
 }

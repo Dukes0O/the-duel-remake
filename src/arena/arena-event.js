@@ -137,7 +137,7 @@ function creditWrecks(duel) {
   const state = duel.state, arena = state.arena;
   for (const participant of arena.participants) {
     const actor = arenaActor(duel, participant.id);
-    if (!actor?.combatWrecking || participant.wreckCounted) continue;
+    if (participant.decoy || !actor?.combatWrecking || participant.wreckCounted) continue;
     participant.wreckCounted = true;
     participant.wrecked++;
     const recent = participant.lastHitBy &&
@@ -154,10 +154,12 @@ function creditWrecks(duel) {
 }
 
 export function arenaRanking(arena) {
-  if (arena.mode === 'fuel-run') return [...arena.participants].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
+  // Decoy cars (a warlord's copies) never score or place.
+  const cars = arena.participants.filter(participant => !participant.decoy);
+  if (arena.mode === 'fuel-run') return [...cars].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
   const score = participant => arena.mode === 'warlord' ? participant.wrecks :
     participant.wrecks - participant.wrecked;
-  return arena.participants.map((participant, order) => ({participant, order})).sort((a, b) =>
+  return cars.map((participant, order) => ({participant, order})).sort((a, b) =>
     score(b.participant) - score(a.participant) ||
     b.participant.wrecks - a.participant.wrecks ||
     b.participant.damageDealt - a.participant.damageDealt || a.order - b.order).map(entry => entry.participant);
@@ -262,7 +264,9 @@ export function stepArenaEvent(duel, dt) {
     } else { state.prevS = state.s; state.prevLateral = state.lateral; }
     containInArena(duel, state, dt);
   }
-  for (const actor of state.opponents) {
+  // A warlord's think may add or burst decoy cars: step a snapshot and skip any that left.
+  for (const actor of [...state.opponents]) {
+    if (!state.opponents.includes(actor)) continue;
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {

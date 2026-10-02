@@ -1,5 +1,5 @@
-// Private, memory-only look at the Dustmonger's veil and the Kettle Kingpin's
-// drop in the production game. Positions are labelled fixtures; every move
+// Private, memory-only look at the Dustmonger's veil, Mother Mirage's split and
+// the Kettle Kingpin's drop in the production game. Positions are labelled fixtures; every move
 // transition runs through Duel.step.
 async function ready(context, label) {
   await context.evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))');
@@ -35,9 +35,9 @@ async function start(context, id) {
     const d=app.duel,s=d.state,a=s.opponents[0],site=s.arena.spawnSlots[0].s;
     for(const p of s.arena.participants)p.protectedSec=0;
     Object.assign(a,{s:site,prevS:site,lateral:0,prevLateral:0,headingError:0,speedMph:30});
-    Object.assign(s,{s:site+(${id === 'kettle' ? 22 : -18}),prevS:site+(${id === 'kettle' ? 22 : -18}),
-      lateral:0,prevLateral:0,headingError:0,speedMph:${id === 'kettle' ? 0 : 30}});
-    d.setInput({throttle:${id === 'kettle' ? 0 : .5},brake:0,steer:0,boost:false});})()`);
+    Object.assign(s,{s:site+(${id === 'kettle' ? 22 : id === 'mirage' ? -26 : -18}),prevS:site+(${id === 'kettle' ? 22 : id === 'mirage' ? -26 : -18}),
+      lateral:0,prevLateral:0,headingError:0,speedMph:${id === 'dustmonger' ? 30 : 0}});
+    d.setInput({throttle:${id === 'dustmonger' ? .5 : 0},brake:0,steer:0,boost:false});})()`);
 }
 
 async function until(context, test, seconds = 6) {
@@ -64,7 +64,17 @@ export async function run(context) {
     t=window.__qaApp.inspectionCamera.position;return Math.hypot(p.x-t[0],p.y-t[1],p.z-t[2])<.05;})()`, 'veil camera', 10000);
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot('dustmonger-veil');
-  // A fresh private tab for the second fight.
+  // A fresh private tab for each further fight.
+  await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-mirage');
+  await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
+  await ready(context, 'menu');
+  await start(context, 'mirage');
+  await context.evaluate('window.__qaApp.duel.state.opponents[0].mirage.nextSplitSec=0');
+  await until(context, "a.mirage?.stage==='tell'");
+  await look(context, 'mirage-shimmer', 18);
+  await until(context, "a.mirage?.stage==='split'");
+  for (let i = 0; i < 240; i++) await context.evaluate('window.__qaApp.duel.step(1/120)');
+  await look(context, 'mirage-split', 22);
   await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-kettle');
   await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
   await ready(context, 'menu');
@@ -75,5 +85,5 @@ export async function run(context) {
   await look(context, 'kettle-leap', 20);
   await until(context, "a.kettleDrop?.stage==='window'");
   await look(context, 'kettle-landed', 20);
-  console.log('New warlords look: dustmonger tell/veil and kettle ring/leap/landing captured.');
+  console.log('New warlords look: dustmonger tell/veil, mirage shimmer/split and kettle ring/leap/landing captured.');
 }
