@@ -64,7 +64,9 @@ Three checks give one PASS and two genuine RED: the early bpy import prevents
 both empty temporary roots from planning venue.glb, manifest.json and the three
 existing packed PNG outputs. Planning creates no files. The shared output guard
 passes 43/43 with Salt beside Vesper in its native-suite list; Tanker and Vesper
-assertions remain exact. Source must handle --paths-only before Blender imports.
+assertions remain exact. Source now plans those exact paths before Blender
+imports, without source reads, generated output or any art change. Its
+compact planning checks pass 3/3.
 
 ## Accepted private evidence
 

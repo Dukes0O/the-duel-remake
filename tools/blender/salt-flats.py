@@ -11,9 +11,6 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-import bpy
-import numpy as np
-from mathutils import Matrix, Vector
 
 
 def arguments():
@@ -24,7 +21,29 @@ def arguments():
     parser.add_argument('--seed',type=int,required=True)
     parser.add_argument('--source-library')
     parser.add_argument('--validate-sources',action='store_true')
+    parser.add_argument('--paths-only',action='store_true')
     return parser.parse_args(sys.argv[sys.argv.index('--')+1:])
+
+
+# Planning describes existing outputs without licensed reads or Blender imports.
+# Native builds below keep the accepted fitting recipe unchanged.
+if __name__ == '__main__' and '--paths-only' in sys.argv:
+    args = arguments()
+    root = Path(args.root).resolve()
+    output = Path(args.output_dir).resolve()
+    if (root / '.qa-dist') not in output.parents:
+        raise ValueError('Native candidate output must be inside the requested .qa-dist')
+    print(json.dumps({
+        'blend': [], 'glb': [str(output / 'venue.glb')],
+        'json': [str(output / 'manifest.json')],
+        'atlas': [str(output / name) for name in (
+            'salvage-wear.png', 'seeded-salt-color.png', 'seeded-salt-normal.png')],
+    }))
+    raise SystemExit(0)
+
+import bpy
+import numpy as np
+from mathutils import Matrix, Vector
 
 
 def digest(path):
