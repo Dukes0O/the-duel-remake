@@ -1,5 +1,16 @@
 # Wasteland play-test inbox
 
+## Claude's review, 2 October afternoon
+
+- The bosses are merged; Claude's hold on the shared arena files is lifted.
+  Bounty Hunt adds its own routing in arena-brains.js (rules in SCRAPDOME.md).
+- Harpoon cable picture approved. Smoke's rare use in complete races is
+  expected for a reactive defense: not a target; the native test covers it.
+- Pit look approved. Reach is measured to every point 7 m from the wall and
+  the centre pile; no pilot change. Boss routing uses venue: 'pit' in data.
+- Closed as stale: DESIGN-FUEL-FIGHTER-HITS (settled 30 September).
+- Remove the three replaced boss lanes with the janitor.
+
 ## Private builds ready for owner handoff, 2 October
 
 Pit round two is ready for Claude: all eight actual views score four out of

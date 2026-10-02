@@ -86,6 +86,10 @@ rules, with the Heap and its ring wall taken out.
 - **Floor:** the same speed limit, traction and wall rules as the ring.
 - **Spawns:** eight slots as on the ring; in a warlord fight the player and
   the warlord start on opposite sides of the centre pile.
+- **Reach (2 October 2026):** every car can reach every point at least 7 m
+  from the outer wall and from the centre pile, with the ordinary pilot.
+- **Boss routing:** a warlord's data in src/warlords.js names `venue: 'pit'`;
+  the warlord start uses it, defaulting to the Scrapdome ring.
 - **Which fights:** Gearhead Gunn (his barrage needs sight lines), the Twin
   Vultures (their pincer needs room to come from two sides) and Baron
   Blackiron (the final fight). Sal, the Dustmonger, Mother Mirage and the

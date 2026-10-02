@@ -912,9 +912,10 @@ tasks:
     lane: DESIGN
     size: S
     needs: []
-    status: ready
+    status: closed
     acceptance:
       - "Answer the measured ARENA-03 contact gap in docs/playtest-inbox.md: car crossbow damage to fighters, whether car bomb splash affects them and by how much, and cargo loss after a surviving fighter hit versus knockdown. Keep existing health, car knockdown and physical parked-car rules. Record the rules in docs/SCRAPDOME.md section 10 so Codex can write the remaining tests before contact code. No new source art or weapon design is requested."
+    claude_close: "2 October 2026: stale. Settled on 30 September in docs/CREW.md, Car weapons against fighters on foot, and built in ARENA-03."
   - id: DESIGN-WARLORDS-4-8
     title: "Settle warlords 4 to 8 and the ladder's end (WAR-03, WAR-04) for build"
     owner: claude
@@ -1086,7 +1087,6 @@ tasks:
     size: S
     needs: [ARENA-03, ARS-CORE, ARENA-WRECK-RATE]
     status: building
-    waiting_on: claude
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arena-bounty
     flag: bounty-hunt
@@ -1114,6 +1114,7 @@ tasks:
     native_matrix_failed: 4
     save_review: "Save Guardian clears native Bounty pay and retry: owners, newer progress, other players, old fixtures, backup gates and storage budgets are preserved. No save shape changes."
     source_review: "Independent review found no blocking Source defects. Native beacon transforms, disposal and state purity pass; real Chrome shows no unchanged arrow DOM mutations, so the fake setter-count concern was withdrawn."
+    claude_answer_1400: "2 October 2026, afternoon: the rules were answered at 00:30 and are in docs/SCRAPDOME.md, Bounty Hunt. The routing block was Claude's reservation of arena-brains.js, which is now lifted (next-run.md): add the settled Bounty routing there yourself (unmarked computers hunt the marked car; a marked player keeps the Easy and Medium hunter cap; the marked computer kites and uses rear weapons). Keep Sal, the boss files and other modes unchanged."
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1203,7 +1204,6 @@ tasks:
     size: M
     needs: [ARENA-06, ARS-01]
     status: building
-    waiting_on: claude
     claimed_by: codex-director-2026-10-02-resume
     branch: codex/vis/arena-pit
     flag: warlords
@@ -1225,6 +1225,7 @@ tasks:
     native_cases_failed: 9
     partial_build_passed: true
     source_review: "Independent review clears circle projection, native world loading, state purity and disposal. A tests-first fix closes the visible wall gaps without changing physics or ring controls."
+    claude_answer_1400: "2 October 2026, afternoon: (1) Round two look is approved (four on every item, frame pacing passes); no further art round. (2) Reach: refine the acceptance to every point at least 7 m from the outer wall and from the centre pile (the pilot's 3.5 m wall sense plus its 3.5 m arrival tolerance). Do not change the pilot or add a Pit-only brain; move the nine reach goals inside that band. (3) Boss routing: a warlord's data in src/warlords.js may name venue: 'pit'; warlord-event.js starts that venue, defaulting to the Scrapdome. Gunn, the Twin Vultures and the Baron set it in their own cards. Merge when gates pass."
   - id: ARENA-07
     title: "Convoy Raid"
     owner: codex
@@ -1255,7 +1256,7 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-HOOKS]
-    status: review
+    status: merged
     claimed_by: claude-2026-10-02
     branch: codex/cmb/kettle-kingpin
     flag: kettle-kingpin
@@ -1272,6 +1273,8 @@ tasks:
     claude_answer_0030: "2 October 2026, 00:30: (1) Trigger: when ready, while the player is on the floor between 12 and 40 m from him. (2) Target: committed when the tell starts (that is when the ring appears): the player's position predicted at the landing moment (current position plus current velocity times the tell plus the 1.2 s arc), kept on the floor and at most 40 m from his take-off point. (3) Phase two: the second ring is aimed the same way when he lands the first time; the 2.5 s stuck window follows only the second landing. Docs: SCRAPDOME.md, Kettle Kingpin."
     claude_takeover: "2 October 2026: Claude builds the Kettle Kingpin after the Dustmonger, in its own warlord file. Codex: stop this lane and do not touch the warlord files."
     kyle_handover: "Kyle, 2 October: Claude builds this boss. Codex stops this card and all named warlord files; preserve its existing tests and lane."
+    claude_merged: "2 October 2026: merged into integration (Claude and a Sonnet session). Kyle and Gratian play it in the Preview. Codex: remove your old lanes for the three boss cards (codex/cmb/dustmonger, codex/cmb/kettle-kingpin, codex/cmb/mother-mirage) with the janitor; they were replaced by this work."
+    waiting_on: kyle
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -3233,12 +3236,14 @@ tasks:
     lane: ARCH
     size: M
     needs: []
-    status: review
+    status: merged
     claimed_by: claude-2026-10-02
     flag: warlords
     branch: claude/bosses
     acceptance:
       - "Kyle, 2 October 2026: the bosses share files, so tackle those. docs/SCRAPDOME.md section 7, Warlord files. Sal moved to src/warlords/sal.js with her fight unchanged (every existing test and replay unchanged); tools/test-warlord-hooks.mjs fails if a shared file names a warlord."
+    claude_merged: "2 October 2026: merged into integration (Claude and a Sonnet session). Kyle and Gratian play it in the Preview. Codex: remove your old lanes for the three boss cards (codex/cmb/dustmonger, codex/cmb/kettle-kingpin, codex/cmb/mother-mirage) with the janitor; they were replaced by this work."
+    waiting_on: kyle
   - id: WAR-02b
     title: "The Dustmonger: Dust Veil, oil, dust storm, Smoke Screen"
     owner: claude
@@ -3246,7 +3251,7 @@ tasks:
     lane: CMB
     size: L
     needs: [WAR-02a-FORMAT, DESIGN-WAR-02b, ARS-CORE]
-    status: review
+    status: merged
     claimed_by: claude-2026-10-02
     branch: codex/cmb/dustmonger
     flag: dustmonger
@@ -3264,6 +3269,8 @@ tasks:
     claude_answer_0030: "2 October 2026, 00:30: (1) Driving straight: his yaw rate stayed under 10 degrees a second for the last 0.5 s. (2) The oil strip is 4 m wide and 8 m long, centred on the line he drove, and begins at the far edge of the cloud (the cloud's centre distance behind him plus its radius) and runs 8 m further back. (3) It is an Oil Slick hazard in every other way: 6 s lifetime fading in the last second, owned by the Dustmonger with the same 1 s owner grace, and the same slip effect once per hazard (grip 0.35 for 0.7 s, 2.2 rad/s spin kick, speed times 0.85, no armor damage, a star shield ignores it). Docs: SCRAPDOME.md, Dustmonger."
     claude_takeover: "2 October 2026: Kyle asked Claude to build the bosses after nine hours of tests with no game code. Claude built the Dustmonger in claude/bosses (src/warlords/dustmonger.js, tools/test-dustmonger.mjs). Codex: stop this lane; keep its tests for reference only."
     kyle_handover: "Kyle, 2 October: Claude builds this boss. Codex stops this card and all named warlord files; preserve its existing tests and lane."
+    claude_merged: "2 October 2026: merged into integration (Claude and a Sonnet session). Kyle and Gratian play it in the Preview. Codex: remove your old lanes for the three boss cards (codex/cmb/dustmonger, codex/cmb/kettle-kingpin, codex/cmb/mother-mirage) with the janitor; they were replaced by this work."
+    waiting_on: kyle
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
     owner: claude
@@ -3271,7 +3278,7 @@ tasks:
     lane: CMB
     size: L
     needs: [WAR-02a-FORMAT, DESIGN-WAR-02c, WAR-PAY, ARS-CORE]
-    status: review
+    status: merged
     claimed_by: claude-2026-10-02
     branch: codex/cmb/mother-mirage
     flag: mother-mirage
@@ -3289,6 +3296,8 @@ tasks:
     claude_answer_0030: "2 October 2026, 00:30: (1) Once her cooldown is ready she starts a split when the player is within 40 m and she is not stunned or in a damage window. (2) The first split is not ready at the start: her cooldown runs from the start of the fight, so the player first sees the real car (12, 10 or 8 s in). Docs: SCRAPDOME.md, Mother Mirage."
     claude_takeover: "2 October 2026: Claude builds Mother Mirage after the Kingpin, in her own warlord file. Codex: stop this lane and do not touch the warlord files."
     kyle_handover: "Kyle, 2 October: Claude builds this boss. Codex stops this card and all named warlord files; preserve its existing tests and lane."
+    claude_merged: "2 October 2026: merged into integration (Claude and a Sonnet session). Kyle and Gratian play it in the Preview. Codex: remove your old lanes for the three boss cards (codex/cmb/dustmonger, codex/cmb/kettle-kingpin, codex/cmb/mother-mirage) with the janitor; they were replaced by this work."
+    waiting_on: kyle
   - id: AUD-17
     title: "Voice candidates and chosen crew/raider lines"
     lane: AUDIO
@@ -3316,7 +3325,6 @@ tasks:
     size: M
     needs: [ARS-CORE]
     status: building
-    waiting_on: claude
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arsenal-wave1
     flag: arsenal
@@ -3368,6 +3376,7 @@ tasks:
     mixed_audio_recipe_commit: f1a9738
     mixed_audio_note_commit: 941eb9b
     preservation_filter_commit: 933baa0
+    claude_answer_1400: "2 October 2026, afternoon: (1) The rust-orange cable picture is approved; it no longer reads as road paint. (2) Smoke coverage: Smoke Screen is a reactive defense (used only within 5 s of being hit with an enemy close behind), so rare use in complete races is expected and is not a balance target. Its behavior is covered by the focused native Smoke test; the report records the Smoke count as information. Keep every historical and supplemental case, pace eight, targets and warlord health. Merge when the other gates pass."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO
