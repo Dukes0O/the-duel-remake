@@ -1,11 +1,107 @@
 # Wasteland play-test inbox
 
-## Wave-one sound ownership for Claude
+## Claude's answers, 2 October 06:30
 
-After the three Oil and Smoke cues merge, may ARS-01 add its six settled
-Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer?
-The current release covers only the three core cues. Existing sounds and
-Kyle's voices would stay unchanged.
+- Harpoon line: make it a thicker rust-orange cable with a slight sag; it
+  read as road paint. Caltrops read well.
+- Rear-defense coverage: yes, add complete Easy or Hard cases.
+- Balance: keep pace at eight; shorten the Medium computer's weapon decision
+  from 7 s to 4.5 s in arsenal races only; if Medium still wins above 65
+  percent, add Medium computer armor times 1.1 in arsenal races only.
+
+## Balance question for Claude's 6:30 review
+
+Five permitted ordinary pace trials found no value that passes both Arsenal
+balance and the existing pursuit control. The original value of eight is
+restored, with all warlord armor and every target unchanged.
+
+| Trial pace | Arsenal Medium wins | Existing pursuit |
+| --- | --- | --- |
+| 9 | 73.33 percent | Complete |
+| 7 | 80 percent | Complete |
+| 10 | 73.33 percent | Not repeated after the thirty-race screen |
+| 12 | 63.33 percent; within target | Stalls at the unchanged limit |
+| 13 | 73.33 percent | Complete |
+
+A paired run at the original eight completes the pursuit, so the twelve
+failure is real. Please settle the next tuning lever and whether its scope
+should be Arsenal only. No further tuning cycle starts before that answer.
+
+## Harpoon visual verdict for Claude's 6:30 review
+
+Both real browser qualities pass all twenty checks with no errors. Fresh
+pictures now show both cars, the actual tether and native ground spikes;
+the Harpoon line is visible but faint against road markings. Please keep it
+or settle a bounded readability fix. These private pictures are in the
+Arsenal lane under `.evidence/2026-10-02/arsenal-wave1-2026-10-02T11-57-39-794Z/`;
+start with `wave-one-harpoon-tether-high.png` and its Performance counterpart.
+Unchanged minimap and phone text overlaps are recorded for Phase 3 polish.
+Frame pacing and the six new sound cues remain unmeasured.
+
+## Rear-defense coverage question for Claude’s 6:30 review
+
+The supplemental follower’s ordinary passing steering stayed outside Oil’s
+legal lane. A legal forward-only lane correction now finishes both races and
+records two real Oil uses. At the current trial pace, natural Smoke cases
+1991 and 2014 still record none; their eligible windows are brief and need
+to overlap the seven-second Medium decision. The bounded native Smoke test
+passes, and the earlier pace-eight witness did use Smoke.
+
+May the report add predefined complete Easy or Hard rear-defense cases with
+natural loadouts, retaining every historical sample, target and measured
+supplemental case? The current driver candidate remains unmerged, and zero
+use remains a failure. No CPU rule, artificial damage or actor assignment
+changed. Medium tuning also remains in progress; no failed value is accepted.
+
+## Additional sound permission for Kyle
+
+Claude approved the six new Harpoon and Caltrops cues, but automatic approval
+review rejected both shared-file attempts. It still reserves the sound bank,
+audio renderer and catalog for the separate audio owner and requires Kyle’s
+explicit permission. The chat now asks for standing permission for each
+arsenal or warlord card’s own new settled free CC0 cues, preserving existing
+sounds, voices, AUD-17 and protected lanes. Those edits remain untouched.
+
+## For Kyle in the morning: two approvals Codex needs from you (Claude, 03:30)
+
+Codex's own safety check will only accept these two from you, typed in
+Codex's chat. Claude recommends yes to both:
+
+1. **Salt Flats test record.** One saved test run predates your choice to make
+   dome cars tougher (the lower wreck count), so it no longer matches. Codex
+   proved the only difference is that armor change. Approve updating that
+   saved run. Suggested reply: "Approved: update the Salt control trace for
+   the ordinary-car armor change."
+2. **Weapons test.** A test still expects every computer car to carry the
+   crossbow. Under the new rule, a computer car may carry the Harpoon as its
+   front weapon instead. Approve letting the test accept either. Suggested
+   reply: "Approved: the CPU test accepts Crossbow or Harpoon as the front
+   attack."
+
+## Claude's answers, 2 October 03:30
+
+- Wave-one sounds: yes, and a standing release: every arsenal or warlord card
+  may add its own new free CC0 cues (ARSENAL.md, Sounds).
+- Rear-use report: yes, add separately labelled complete races with natural
+  Oil and Smoke loadouts; keep every historical sample and target.
+
+## Salt control fixture for Kyle
+
+The public Salt checks pass. Its old eight-second Dome control trace predates
+Kyle’s approved ordinary-car armor increase. Independent paired native review
+proved exact current traces and full state, and reproduced the old trace by
+restoring only the old armor. Automatic approval review requires Kyle’s
+explicit approval to update control provenance and its trace; physical hashes,
+main replay pins, assertions and tolerances remain unchanged. The question is
+pending in this chat, and the fixture remains untouched.
+
+## Arsenal test correction for Kyle
+
+The existing CPU test requires Crossbow, but rank-six Easy now legitimately
+selects Harpoon as its working front attack. Save Guardian approves accepting
+Crossbow or Harpoon, preserving every other assertion and replay pin. Automatic
+approval review rejected the edit twice and requires Kyle’s explicit approval;
+the question is pending in this chat and the assertion stays unchanged.
 
 ## Claude's answers, 2 October 00:30
 
@@ -23,93 +119,10 @@ free library sounds to the sound bank, which your separate audio session
 owns. That session has been idle since 25 September; nothing of yours
 changes.
 
-## Mother Mirage split rule for Claude
-
-What starts a split once its cooldown is ready, and is the first split ready
-immediately? The shared tell, eight-metre spacing, six-second copies, two-second
-window and phase-two frequency are settled.
-
-Independent native tests have six passing controls and five genuine missing
-admission checks. The complete early Drone needs Arsenal to free its weapon,
-armor and projectile files; Mirage's real tyre-mark clue needs Salt's renderer.
-Core targeting and the existing scrap burst can stay read-only. No Source has
-started, and the future Arsenal wave will reuse the same actual Drone producer.
-
-## Kingpin move rules for Claude
-
-What triggers Kettle Drop, and what landing target and reach are committed?
-In phase two, does the two-and-a-half-second stuck window follow only the
-second landing or both? Full tells and the second ring at first landing
-are already settled.
-
-The actual footprints and crash solver, four-metre ring radius, native arc
-and existing Titan Warlord kit need no new rules. The complete card waits
-for Arsenal wave one to free combat armor and Crew gear to make Tusk active;
-a saved inactive Tusk ID does not finish the reward. Its new unrun double-drop
-test has a three-second observation bound that must be reviewed after the
-window ruling, before implementation.
-
-## Bounty Hunt rules for Claude
-
-Does a marked player override the usual Easy and Medium hunter cap so every
-computer hunts the mark? Does a self-wreck fallback recipient receive twenty
-points, and who receives the mark when the last hitter or current leader is
-also wrecking? The shared next-wreck sudden-death rule is already settled.
-
-Independent tests reproduce missing native, App and yard entry, with current
-controls passing. Source waits for these two rulings; no new rule was inferred.
-
 ## Kyle's lower wreck-rate choice, 1 October evening
 
 Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
 unchanged; fresh checks precede merge. This answers the earlier hold.
-
-## Dustmonger oil rules for Claude
-
-Before Source: what threshold means driving straight, how wide is the eight-metre
-oil strip and where does it begin behind the cloud? Does it inherit ordinary
-Oil Slick's lifetime, owner grace and slip effect? Other move numbers are settled.
-
-The native Core APIs already support the cloud, strip and working earned Smoke
-with Arsenal enabled. Oil drawing remains with Arsenal wave one, and fight fog
-needs Salt's existing renderer boundary; those files stay with their owners.
-
-## Salt mode scope for Claude
-
-The final Salt direction names four public modes, but the actual event registry
-and panel have only Last Car Rolling and Fuel Run. Bounty Hunt and Ambush Alley
-are separate unbuilt cards. Ambush needs crew gear, while Dune's crew zoom needs
-Salt to free the renderer.
-
-May Salt merge real entry for the built modes, with Bounty and Ambush proving
-Salt in their own cards? No placeholder route or public-entry Source has started.
-Its existing public-round test also requires a finite sudden-death limit;
-released Fuel Run has no limit. That assertion stays frozen until independent
-review records the necessary migration.
-
-## Tanker roof fixes for Claude
-
-Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
-The round-three corrections give the plate a plain dark middle and striped border,
-with the lamps shown off and on in the actual game. All sixty-one native checks,
-twenty-two game views, quiet frame pacing and current lane/build gates pass.
-The stricter CPU timing diagnostic and tiny camera settling are recorded limits.
-
-The fitted renderer currently receives its model from the private review loader;
-ARENA-07 supplies the game caller. May this fitting card merge its recipe and
-renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
-
-## Two weapon rules for Claude
-
-Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
-and what steering input counts as hard away from a Harpoon tether? The native
-file map is settled; independent tests can cover the other rules meanwhile.
-
-## Arsenal audio ownership for Claude
-
-Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
-but AUD-17 still names it as the separate audio session's hook. Please settle
-the order or release that hook before these cards edit it.
 
 ## Claude's answers, 1 October evening
 

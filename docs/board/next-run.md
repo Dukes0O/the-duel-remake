@@ -47,33 +47,44 @@ registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
 
 Shove is merged. Kyle's junk-car note opens ARENA-JUNK-SHOVE; his later evening
 reply chooses the lower wreck rate, with Sal health unchanged.
-Arsenal and junk movement are merged after current lane/build gates. Junk has
-independent Source and four-case browser review, with clustered-cover respawns
-and late-contact containment fixed. Original road, LCR and Sal pins are unchanged.
-The approved lower wreck rate is merged: Medium averages 12.4 per round,
-with all warlord armor unchanged. Tanker's two fixes
-have passing native, frame, lane and build checks, with the roof view and
-installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use test failures;
-its two literal-rule questions and shared sound-bank wait are in the inbox.
-CREW-02 has four genuine native admission failures and two current controls;
-Source waits for shared tuning, audio and Salt's renderer.
-The later integration checkpoint passed all 324 full suites and build, then
-pushed normally under D8. Later commits need their own full check. Dustmonger
-and Bounty Hunt now have genuine native admission failures and preserved controls;
-Source waits for the written questions in the inbox. Kettle Kingpin is claimed
-for tests first and a real file map. Its controls pass and entry fails genuinely;
-its two move rules are in the inbox. The complete Kingpin card also needs
-active Tusk from Crew gear and Arsenal to free combat armor.
+Arsenal core and junk movement are merged. The approved ordinary-car armor
+change averages 12.4 wrecks per Medium round and preserves every warlord's
+health. Tanker and Vesper fitting recipes are merged after Claude's final
+art approval, independent native review and current lane/build gates. Their
+models stay private until Convoy Raid and WAR-04 supply the runtime callers.
+Vesper's preservation tests now freeze each run's current game files, keeping
+all donor pins and native art assertions unchanged.
 
-Mother Mirage also has independent native tests first: six controls pass and
-five real admission checks fail. Its one split-trigger question is in the
-inbox. Source waits for the complete Drone's Arsenal hooks and Salt's real
-tyre-mark renderer; Core targeting needs no duplicate implementation.
+Claude answered all eight midnight questions on the cards. Salt has real
+rank-nine public selection, launch, rematch and yard return in both built
+modes, passing all four private High/Performance browser cases. Bounty and
+Ambush add Salt in their own cards. Automatic approval review nevertheless
+requires Kyle's explicit approval for the independently reviewed control
+trace migration after his armor change; the fixture remains untouched.
 
-Salt's public entry has one new scope question in the inbox: the final direction
-names four modes while only two are built. Ambush's crew dependency and Dune's
-Salt-renderer wait form a cycle. Claude must settle the order before entry Source;
-the accepted final art and frozen tests remain in the clean lane.
+ARS-01's motion, grounding and collision repairs pass all sixty-five native
+cases and independent Source review. Save Guardian found and cleared the missing
+backup before a newly recognized earned weapon gains its default level.
+Automatic approval review requires Kyle to approve the reviewed Crossbow-or-
+Harpoon CPU assertion; that assertion remains exact. Claude approved its six new sound cues and separately labelled complete
+rear-defense balance races, retaining every historical sample and target. Automatic approval review now
+requires Kyle’s explicit standing permission for shared sound edits; the bank,
+audio renderer and catalog remain unchanged in this lane.
+The three core sounds are merged after native tests, independent review, real
+High/Performance mixed capture and current lane/build gates. They preserve all
+earlier sounds; human listening and simultaneous six-slip stress remain flagged.
+
+Arsenal's twenty actual browser checks pass in both graphics modes. QA
+panels are hidden and cars and spikes are visible; Claude judges the faint
+Harpoon line from the fresh pictures. Five permitted pace trials found no
+combined balance and pursuit pass; the original eight is restored. Claude's
+next review has tuning direction and complete rear-defense coverage in the
+inbox. No failed trial is accepted. Unchanged minimap and phone text overlaps
+are recorded for Phase 3 polish; frame pacing and six-cue audio remain.
+
+Crew gear, Dustmonger, Mirage, Kingpin and Bounty retain their genuine tests
+first. Their move rules are settled; Source waits for the named Arsenal and
+Salt file owners to merge. No shared file is released from an unmerged lane.
 
 Kyle's overnight schedule, 1 October evening: Claude reviews at 12:30, 3:30
 and 6:30 AM. Existing thread follow-ups are active just after those reviews.
@@ -85,9 +96,9 @@ half-hour clock polling.
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
 | A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE merged with Kyle's lower-rate choice; then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
-| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
+| B. Arsenal | ARS-CORE merged; then ARS-01 | Shared sound edits wait for Kyle’s explicit permission after automatic review |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
-| D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
+| D. Art | Tanker and Vesper fitting merged | Runtime installation follows in Convoy Raid and WAR-04 |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
 
 Kyle, 1 October 2026: the dome steering is kept; his evening reply chooses the
