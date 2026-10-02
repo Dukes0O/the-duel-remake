@@ -33,13 +33,14 @@ The existing output-plan assertion now includes the new embedded roof image.
 The scenario's explicit lit intensity changes from six to 1.2 for the approved
 amber correction; all valve combinations and state checks are kept.
 
-Before these corrections, all 59 native checks passed: source/lifecycle,
-contacts, dimensions and final wheel/beacon geometry. One earlier Float32
+All 61 current native checks pass: the original 42 source/lifecycle checks,
+12 contacts, two dimensions and five final wheel/beacon/material checks. One earlier Float32
 lineage boundary was repaired with a one-micrometre tangential fit correction;
 the original affine donor mapping and contact tolerances are unchanged.
 
-The previous native export had 6,788 triangles and 34 draws. The corrections
-retain the same donor topology and fit. No replay, world signature, physics,
+The corrected native export keeps 6,788 triangles and 34 draws, with the same
+donor topology and fit. Its separate roof texture adds about 0.40 MB; the
+complete self-contained model is 2.29 MB, below the advisory 8 MB target. No replay, world signature, physics,
 save or health-policy assertion changes.
 
 ## Frame evidence
@@ -58,8 +59,8 @@ diagnostic limits separate from the unchanged real frame-time budget.
 All 3,600 samples stay in ignored evidence; the committed verdict is retained.
 
 All twenty previous actual-game views passed with no errors or failed requests
-and two inherited duplicate-Three warnings. New roof/native/whole-card gate
-results will be recorded after the serialized check window.
+and two inherited duplicate-Three warnings. Current native checks pass and their generated candidate is staged unchanged
+for the quiet browser window. Roof review and whole-card gates remain pending.
 
 ## Removed
 
