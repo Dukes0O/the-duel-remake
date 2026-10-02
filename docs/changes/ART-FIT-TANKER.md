@@ -58,9 +58,15 @@ Performance's FOV settles from 54.999969 to 55 degrees. These are explicit
 diagnostic limits separate from the unchanged real frame-time budget.
 All 3,600 samples stay in ignored evidence; the committed verdict is retained.
 
-All twenty previous actual-game views passed with no errors or failed requests
-and two inherited duplicate-Three warnings. Current native checks pass and their generated candidate is staged unchanged
-for the quiet browser window. Roof review and whole-card gates remain pending.
+The corrected look-only browser run passes all 22 actual-game views in High
+and Performance on a private memory-only port. Every captured simulation hash
+is unchanged; there are no errors or failed requests and two inherited
+Three warnings. Native loading and exact-once disposal checks pass separately.
+The single ignored roof close-up pairs lamps off and on under identical framing;
+Claude must review it before merge. Timing was disabled while headless work
+continued, so this run grants no new frame acceptance. Quiet frame evidence,
+public GLB installation and lane/build gates remain pending. The generated
+provenance manifest stays ignored; it has no current runtime consumer.
 
 ## Removed
 
