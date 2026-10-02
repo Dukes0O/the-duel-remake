@@ -65,25 +65,31 @@ export function contactArenaJunk(duel, actor, prop, hit, start, end) {
 
 export function stepArenaJunk(duel, dt) {
   const props = duel.course.features.crushables || [];
+  let moved = false;
   for (const prop of props) {
     if (prop.kind !== 'junkCar') continue;
     if (prop.knock) {
+      const fromS = prop.s, fromLateral = prop.lateral;
       stepKnock(duel, prop, dt);
       containInArena(duel, prop, dt);
       if (!prop.knock) prop.speedMph = prop.pushVelocity = 0;
       syncPose(duel, prop);
+      moved ||= prop.s !== fromS || prop.lateral !== fromLateral;
     } else {prop.prevS = prop.s; prop.prevLateral = prop.lateral;}
   }
   for (let i = 0; i < props.length; i++) for (let j = i + 1; j < props.length; j++) {
     const a = props[i], b = props[j];
-    if (a.kind !== 'junkCar' || b.kind !== 'junkCar') continue;
+    if (a.kind !== 'junkCar' || b.kind !== 'junkCar' ||
+        duel.state.crushedProps.includes(a.id) || duel.state.crushedProps.includes(b.id)) continue;
     const key = a.id + '/' + b.id;
     const start = duel.course.worldAt(a.prevS, a.prevLateral);
     const end = duel.course.worldAt(a.s, a.lateral);
     const hit = sweepObstacle(start, end, b, bodyHeading(duel, a), arenaJunkSpec(a));
     if (!hit) {duel._arenaJunkContacts.delete(key); continue;}
     if (!a.knock && !b.knock || duel._arenaJunkContacts.has(key)) continue;
+    const fromS = a.s, fromLateral = a.lateral;
     stopAtContact(duel, a, start, end, hit);
+    moved ||= a.s !== fromS || a.lateral !== fromLateral;
     const crash = resolveCarCrash(duel, a, b, {forceKnock: true});
     if (crash.result.closingMps > 0) {
       duel._arenaJunkContacts.add(key);
@@ -95,5 +101,5 @@ export function stepArenaJunk(duel, dt) {
   }
   // Use the existing venue chooser against current cover. Slot identities
   // remain stable; Fuel depots are independent copied positions from setup.
-  duel.state.arena.spawnSlots = spawnSlots(duel.course);
+  if (moved) duel.state.arena.spawnSlots = spawnSlots(duel.course);
 }

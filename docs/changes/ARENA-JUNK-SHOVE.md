@@ -12,8 +12,11 @@ renderer. The renderer only copies poses; it does not move simulation bodies.
 Junk settles on the floor and keeps its position. Native wall containment runs
 quietly for junk, without participant armor damage or wall-hit cues. The native
 Titan crush path still owns flattening, score, height checks and its cue.
-Current cover refreshes the existing spawn candidates before native respawns;
-slot indices and the copied Fuel depot positions are preserved.
+Moved cover refreshes the existing spawn candidates before native respawns;
+slot indices and the copied Fuel depot positions are preserved. Idle fixed ticks
+retain the last valid candidates. Crushed hulks keep their initial physical
+slide, then preserve the native transparent cover behavior; they do not become
+new solid obstacles for other cars or junk.
 
 A new actual ram reuses vehicleSmash and the existing vehicle.crash-impact
 sound. Titan flattening keeps propCrushed and vehicle.crush. No new sound asset.

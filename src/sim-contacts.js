@@ -683,8 +683,7 @@ export function _crushProps(actor) {
   const previousBottom = start.y + (actor.prevAirHeight ?? actor.airHeight ?? 0), bottom = end.y + (actor.airHeight || 0);
   for (const prop of this.course.features.crushables || []) {
     const movable = !!state.arena && prop.kind === 'junkCar';
-    const crushed = state.crushedProps.includes(prop.id);
-    if (crushed && !movable) continue;
+    if (state.crushedProps.includes(prop.id)) continue;
     const hit = sweepObstacle(start, end, prop, heading, spec);
     if (!hit) {
       if (movable) contactArenaJunk(this, actor, prop, null);
@@ -702,7 +701,7 @@ export function _crushProps(actor) {
     }
     if (movable) {
       contactArenaJunk(this, actor, prop, {...hit, t: contactTime}, start, end);
-      if (crushed || spec.mass < (prop.crushMass || 3500)) continue;
+      if (spec.mass < (prop.crushMass || 3500)) continue;
     }
     if (spec.mass < (prop.crushMass || 3500)) {
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),
