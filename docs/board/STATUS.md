@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-02T18:57:26.388Z
+Observed at: 2026-10-02T19:21:19.791Z
 
-Observation commit: 311c6648a954b3e6fd68f7ff97014b38d4daafe0
+Observation commit: 34c214eb7dce2096a47d1b5333c5e66a52d970a8
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 311c6648a954b3e6fd68f7ff97014b38d4daafe0
+Integration HEAD: 34c214eb7dce2096a47d1b5333c5e66a52d970a8
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-02T17:22:56.866Z; tested commit: 14602785124d6bfdc8260ff54ca727b03b2a2102.
+Last recorded full run: 2026-10-02T19:20:08.137Z; tested commit: ae2918122bc138f4f65db319c3d5a092036e21e9.
 
 ## Feature switches
 
@@ -45,10 +45,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/cmb/kettle-kingpin | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/kettle-kingpin |
 | codex/cmb/mother-mirage | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/mother-mirage |
 | codex/foot/crew-gear | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-gear |
-| codex/vis/arena-pit | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-pit |
+| codex/vis/arena-pit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-pit |
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 7 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 7 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -56,13 +56,13 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/cmb/arena-bounty | unknown | 2026-10-02T11:54:44-07:00 | 0 | last commit 2026-10-02T11:54:44-07:00 | docs/changes/ARENA-04.md, src/app.js, src/arena/arena-event.js, src/arena/arena-settlement.js, src/arena/modes/bounty-hunt-view.js |
+| codex/cmb/arena-bounty | unknown | 2026-10-02T12:04:20-07:00 | 0 | last commit 2026-10-02T12:04:20-07:00 | docs/changes/ARENA-04.md, src/app.js, src/arena/arena-event.js, src/arena/arena-settlement.js, src/arena/modes/bounty-hunt-view.js |
 | codex/cmb/arsenal-wave1 | unknown | 2026-10-02T08:38:00-07:00 | 0 | last commit 2026-10-02T08:38:00-07:00 | docs/changes/ARS-01.md, public/assets/audio/arsenal-wave1/caltrops-deploy-a.ogg, public/assets/audio/arsenal-wave1/caltrops-deploy-b.ogg, public/assets/audio/arsenal-wave1/caltrops-deploy-c.ogg, public/assets/audio/arsenal-wave1/caltrops-hit-a.ogg |
 | codex/cmb/dustmonger | unknown | 2026-10-01T21:53:53-07:00 | 0 | last commit 2026-10-01T21:53:53-07:00 | docs/changes/WAR-02b.md, tools/test-warlord-dustmonger.mjs |
 | codex/cmb/kettle-kingpin | unknown | 2026-10-01T22:07:46-07:00 | 0 | last commit 2026-10-01T22:07:46-07:00 | docs/changes/WAR-03b.md, tools/test-warlord-kettle.mjs |
 | codex/cmb/mother-mirage | unknown | 2026-10-01T23:51:06-07:00 | 0 | last commit 2026-10-01T23:51:06-07:00 | docs/changes/WAR-02c.md, tools/test-warlord-mirage.mjs |
 | codex/foot/crew-gear | unknown | 2026-10-01T21:21:31-07:00 | 0 | last commit 2026-10-01T21:21:31-07:00 | docs/changes/CREW-02.md, tools/test-crew-gear.mjs |
-| codex/vis/arena-pit | unknown | 2026-10-02T10:19:45-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARENA-PIT.md, tools/test-arena-pit-render.mjs, tools/test-arena-pit.mjs, src/arena/venues.js, src/course.js |
+| codex/vis/arena-pit | unknown | 2026-10-02T12:18:17-07:00 | 0 | last commit 2026-10-02T12:18:17-07:00 | docs/changes/ARENA-PIT.md, src/arena/venues.js, src/arena/venues/pit.js, src/course.js, src/race-structures.js |
 
 ## Size targets
 
@@ -76,9 +76,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 14,561,730 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 23,152 B | -27,350,293 B | 5,000,000 B |
+| Added bytes in last merge | 727,906 B | +704,754 B | 5,000,000 B |
 | All `public/` | 259,627,104 B | +0 B | unavailable |
-| Git objects | 366,498,816 B | +726,016 B | unavailable |
+| Git objects | 366,928,896 B | +430,080 B | unavailable |
 | Lane folders | 7 | +0 | unavailable |
 
 ## Backups
@@ -87,7 +87,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 311c6648a954b3e6fd68f7ff97014b38d4daafe0
+- Local integration/wasteland: 34c214eb7dce2096a47d1b5333c5e66a52d970a8
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
