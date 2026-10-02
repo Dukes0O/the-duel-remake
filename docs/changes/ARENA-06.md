@@ -79,6 +79,16 @@ rerun here; their downstream behavior is not passing evidence for this handoff.
 No broad lane/full tier, build, browser or performance job ran. Final card gates
 must pass after the public hooks. Blender coverage stays with Tanker until merge.
 
+## Additive panel/native-gate tests first
+
+Before panel/Game Source: --entry-only gives 32 checks, 26 PASS, 6 RED.
+Both modes lack eligible venue buttons and selected Salt's entry label; native
+Duel admits known Salt with its flag off. Four pure locked/off panel controls
+pass. The worker's earlier App changes pass the original 22 entry checks.
+Tests use actual arenaYardPanel/createProfile and Duel APIs, retain all earlier
+assertions, and do not inject future helpers or modify worker Source.
+This bounded follow-up ran no broad, build, browser, round or Blender job.
+
 ## Removed
 
 Removed active photo configuration/loading, embedded photo, mirrored sampler,

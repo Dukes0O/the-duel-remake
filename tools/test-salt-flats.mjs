@@ -14,6 +14,8 @@ import {ARENA_VENUES, SCRAPDOME_VENUE, spawnSlots, venueCurvatureRatio} from '..
 import {floorLimit, worldPose} from '../src/arena/arena-floor.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {rankForXp} from '../src/notoriety.js';
+import {arenaYardPanel} from '../src/screen-arena.js';
+import {createProfile} from '../src/progression.js';
 import {disposeTree} from '../src/world.js';
 
 // The default includes every source, native and runtime consumer check. Native
@@ -231,6 +233,57 @@ async function yard({rank=9,discovered=true,enabled=true,overrides={}}={}){
   return app;
 }
 const publicModes=['last-car-rolling','fuel-run']; // Claude's 2 October released Salt scope.
+// Additive tests first against the current pure yard-panel seam. venueId is
+// the settled selected-venue input; a returned Salt choice must be a real button.
+function panelProfile(rank=9,discovered=true){
+  const profile=createProfile();Object.assign(profile.wasteland,{rank,xp:xpAtRank(rank),discoveredGate:discovered});
+  return profile;
+}
+function venueButtons(markup){
+  return [...markup.matchAll(/<button\b[^>]*data-arena-venue="([^"]+)"[^>]*>[\s\S]*?<\/button>/g)]
+    .map(match=>({id:match[1],markup:match[0]}));
+}
+for(const mode of publicModes){
+  for(const options of [{rank:8,enabled:true},{rank:9,enabled:false}]){
+    check('runtime',`${mode}: pure yard panel hides locked Salt choice ${JSON.stringify(options)}`,()=>{
+      const profile=panelProfile(options.rank),featureFlags=flags(options.enabled),before=JSON.stringify(profile);
+      const markup=arenaYardPanel({profile,featureFlags,mode,venueId:'salt-flats'});
+      assert.equal(venueButtons(markup).some(button=>button.id==='salt-flats'),false,'locked Salt is absent from actual venue buttons');
+      assert.ok(markup.includes('ENTER THE SCRAPDOME'),'locked selection keeps the existing entry label');
+      assert.equal(markup.includes('ENTER THE SALT FLATS'),false,'locked Salt never advertises entry');
+      assert.equal(JSON.stringify(profile),before,'pure panel preserves the synthetic named profile');
+    });
+  }
+  check('runtime',`${mode}: pure rank-nine yard panel exposes both actual venue buttons`,()=>{
+    const profile=panelProfile(),before=JSON.stringify(profile);
+    const markup=arenaYardPanel({profile,featureFlags:flags(),mode});
+    const buttons=venueButtons(markup);
+    assert.deepEqual(buttons.map(button=>button.id).sort(),['salt-flats','scrapdome'],'eligible choice uses both real venue buttons');
+    assert.match(markup,/role="group"[^>]*aria-label="Arena venue"/,'venue selection is an accessible native group');
+    assert.match(buttons.find(button=>button.id==='scrapdome').markup,/aria-pressed="true"/,'default venue remains selected');
+    assert.match(buttons.find(button=>button.id==='salt-flats').markup,/aria-pressed="false"/,'Salt is not selected by default');
+    assert.ok(markup.includes('ENTER THE SCRAPDOME'),'default label stays exact');
+    assert.equal(JSON.stringify(profile),before,'pure panel never changes rank or discovery');
+  });
+  check('runtime',`${mode}: pure selected-Salt panel shows actual selection and entry label`,()=>{
+    const profile=panelProfile(),before=JSON.stringify(profile);
+    const markup=arenaYardPanel({profile,featureFlags:flags(),mode,venueId:'salt-flats'});
+    assert.ok(markup.includes('ENTER THE SALT FLATS'),'selected Salt has the actual entry label in both built modes');
+    const buttons=venueButtons(markup);
+    assert.match(buttons.find(button=>button.id==='salt-flats')?.markup||'',/aria-pressed="true"/,'selected Salt is pressed');
+    assert.match(buttons.find(button=>button.id==='salt-flats')?.markup||'',/class="[^"]*\bon\b/,'selected Salt has the native choice-on state');
+    assert.match(buttons.find(button=>button.id==='scrapdome')?.markup||'',/aria-pressed="false"/,'old venue is not selected');
+    assert.ok(markup.includes(mode==='fuel-run'?'FUEL RUN · FIRST TO FIVE':'LAST CAR ROLLING · EVERY CAR FOR ITSELF'),'venue selection keeps the real chosen mode');
+    assert.equal(JSON.stringify(profile),before,'selected venue rendering is pure');
+  });
+  check('runtime',`${mode}: native Duel rejects Salt with its dev flag off without mutation`,()=>{
+    const duel=new Duel({seed:1989,featureFlags:flags(false)}),before=JSON.stringify(duel.state);
+    assert.equal(duel.featureFlags.enabled('fuel-run'),true,'Fuel remains on for the native Salt-off control');
+    assert.equal(duel.startArenaEvent({venueId:'salt-flats',mode,car:'falcone_f42',seed:1989,
+      opponents:[{car:'dusthawk_rally'}]}),false,'native known Salt launch requires its actual dev switch');
+    assert.equal(JSON.stringify(duel.state),before,'rejected native launch preserves current state');
+  });
+}
 check('runtime','Salt Flats has its own dev switch and never appears as a racing circuit',()=>{
   assert.equal(FEATURE_STATES['salt-flats'],'dev','new venue remains dev before review/release');
   assert.equal(createFeatureFlags({storage:null,qa:false}).enabled('salt-flats'),false);
