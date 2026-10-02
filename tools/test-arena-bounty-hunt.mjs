@@ -341,14 +341,14 @@ rule('a wrecking fallback leader passes the self-wreck mark to the nearest runne
 
 rule('nearest-running distance ties follow the seeded order on repeat native events', () => {
   function tiedTransfer() {
-    const duel = start(), original = mark(duel);
+    const duel = start({seed: 1990}), original = mark(duel);
     const leader = duel.state.arena.participants.find(p => p.kind === 'cpu' && p.id !== original).id;
     const runners = duel.state.arena.participants.filter(p => p.id !== original && p.id !== leader);
     member(duel, leader).bountyPoints = 90;
     wreck(duel, leader, null);
-    place(duel, original, 0);
-    place(duel, runners[0].id, 0, -8);
-    place(duel, runners[1].id, 0, 8);
+    place(duel, original, 0, 8);
+    place(duel, runners[0].id, 0, 0);
+    place(duel, runners[1].id, 0, 16);
     const origin = worldPose(duel, actor(duel, original));
     const distance = id => {
       const at = worldPose(duel, actor(duel, id));
@@ -356,6 +356,7 @@ rule('nearest-running distance ties follow the seeded order on repeat native eve
     };
     eq(distance(runners[0].id), distance(runners[1].id), 'the real course provides exactly tied clear lateral slots');
     const expected = duel.state.arena.bountyHunt.order.find(id => runners.some(p => p.id === id));
+    ok(expected !== runners[0].id, 'the seeded recipient differs from the first participant');
     const scores = duel.state.arena.participants.map(p => p.bountyPoints);
     duel.state.invulnerableSec = 0;
     for (const p of duel.state.arena.participants) p.protectedSec = 0;
@@ -364,6 +365,7 @@ rule('nearest-running distance ties follow the seeded order on repeat native eve
     // A positive minimal native step processes wreck credit without rounding a
     // stationary tied pose into motion. Normal-speed hunting has separate tests.
     duel.step(Number.MIN_VALUE);
+    eq(distance(runners[0].id), distance(runners[1].id), 'the native credit step preserves an exact distance tie');
     eq(mark(duel), expected, 'the event seeded order settles the exact distance tie');
     eq(duel.state.arena.participants.map(p => p.bountyPoints), scores, 'a tied fallback adds no wreck bonus');
     return {markedId: mark(duel), order: duel.state.arena.bountyHunt.order};

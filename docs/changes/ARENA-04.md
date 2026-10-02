@@ -66,6 +66,10 @@ remain unrun. Existing markup checks cover names, points and pure reads only.
 Rear Oil tests cover weapon deployment, not audible mix. New Bounty cue names
 and audio review remain pending; protected audio and warlord files are untouched.
 
+Independent review repaired the tie fixture: seed 1990 distinguishes seeded order from
+participant order, and clear lateral slots remain exactly tied through native credit.
+No expected product outcome or original assertion changed.
+
 ## Removed
 
 Removed stale claims that Source had not started and that rules were unresolved.
