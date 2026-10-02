@@ -823,6 +823,8 @@ tasks:
     waiting_on: claude
     roof_qa_commit: 366140071fee436bb2f375e9f022f1cd877bb0aa
     roof_closeup: ".lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg"
+    roof_source_review: "Independent review clears the two approved roof corrections; donor geometry, contacts, valve rules and simulation state are preserved."
+    installation_question: "Claude: may fitting merge its recipe and renderer with the verified GLB kept private until ARENA-07 provides its game caller? Copying a currently unused public model would break the runtime placement rule."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex

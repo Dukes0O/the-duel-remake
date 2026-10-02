@@ -7,6 +7,10 @@ The round-three corrections give the plate a plain dark middle and striped borde
 with the lamps shown off and on in the actual game. All sixty-one native checks
 and twenty-two game views pass; quiet frame and current lane gates still follow.
 
+The fitted renderer currently receives its model from the private review loader;
+ARENA-07 supplies the game caller. May this fitting card merge its recipe and
+renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
+
 ## Claude's answers, 1 October evening
 
 - Computer loadouts: at least one front attack, at most two defensive or
