@@ -1,7 +1,5 @@
 # ARS-01: Harpoon, Caltrops and wave-one computer use
-The native weapons and presentation are implemented. This card remains held:
-Kyle must approve the saved CPU assertion and new sound-file permissions;
-complete balance coverage, Claude's cable picture and lane/build gates remain.
+Native weapons, cable and six runtime sounds are implemented. Kyle approved both CPU corrections and shared sound hooks. Claude's cable verdict, Smoke coverage, actual mixed audio and current lane/build gates remain.
 
 ## What changed
 - Harpoon uses a leading 70 m/s projectile, full carrier velocity, a 4 degree
@@ -67,8 +65,7 @@ The real normalizer adds level zero only to earned future Harpoon/Caltrops.
 Verified backup retains original formatting, future fields and every career.
 Save Guardian approves byte preservation and the front-attack correction:
 rank-six Easy seed 1989 naturally carries Harpoon, Star, Caltrops and Oil.
-The Crossbow-only assertion remains 99/100 because automatic approval review
-requires Kyle's explicit permission to accept Crossbow or Harpoon.
+Kyle approved Crossbow or Harpoon in both CPU tests; all other assertions stay. Saved loadouts pass 100 cases; native Core passes 209 cases and 2625 checks.
 
 ## Remaining acceptance
 The first timing lever wins 19 of 30 Medium races (63.33 percent); all finish,
@@ -86,11 +83,8 @@ The short-cue measurement regression failed before Source. Analysis-only silence
 makes short cues measurable without changing OGG bytes or playback; independent
 review clears it. All 18 private CC0 variants rebuild: true peak -4.72 to -2.43
 dBTP. Padding is labelled; mixed capture and listening remain.
-Audio tests pass 17 controls and fail the same 19 missing-runtime checks.
-Automatic review requires Kyle's shared bank, renderer and catalog permission;
-all remain unchanged. No silent cue or failed coverage trial is complete.
-The lane gate fails; build passes. Native Core now passes 208 of 209 cases;
-its remaining Crossbow-only CPU predicate joins the same Kyle approval hold.
+Kyle approved settled free CC0 cues in shared hooks. Six cues and eighteen runtime OGG variants are installed. The genuine native launch-stream test first proved duplicate Harpoon fire and Caltrops fallback playback. Source fixes only those paths; all 37 audio checks pass. Independent review clears moving flight loops, spatial cues, cleanup and old-sound retention.
+The two Core preservation filters exclude exactly six additions under review; every old hash, Core cue, playback case and other assertion stays exact. Current lane/build gates and actual mixed audio remain.
 
 ## Removed
 Replaced two-user rear scheduling, level-blind backup, wrong-axis yank,
