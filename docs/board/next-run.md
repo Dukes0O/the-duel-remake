@@ -67,7 +67,9 @@ cases and independent Source review. Save Guardian found and cleared the missing
 backup before a newly recognized earned weapon gains its default level.
 Automatic approval review requires Kyle to approve the reviewed Crossbow-or-
 Harpoon CPU assertion; that assertion remains exact. Claude approved its six new sound cues and separately labelled complete
-rear-defense balance races, retaining every historical sample and target.
+rear-defense balance races, retaining every historical sample and target. Automatic approval review now
+requires Kyle’s explicit standing permission for shared sound edits; the bank,
+audio renderer and catalog remain unchanged in this lane.
 The three core sounds are merged after native tests, independent review, real
 High/Performance mixed capture and current lane/build gates. They preserve all
 earlier sounds; human listening and simultaneous six-slip stress remain flagged.
@@ -86,7 +88,7 @@ half-hour clock polling.
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
 | A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE merged with Kyle's lower-rate choice; then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
-| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
+| B. Arsenal | ARS-CORE merged; then ARS-01 | Shared sound edits wait for Kyle’s explicit permission after automatic review |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | Tanker and Vesper fitting merged | Runtime installation follows in Convoy Raid and WAR-04 |
 | E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |

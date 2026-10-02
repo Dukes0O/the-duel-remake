@@ -1,5 +1,14 @@
 # Wasteland play-test inbox
 
+## Additional sound permission for Kyle
+
+Claude approved the six new Harpoon and Caltrops cues, but automatic approval
+review rejected both shared-file attempts. It still reserves the sound bank,
+audio renderer and catalog for the separate audio owner and requires Kyle’s
+explicit permission. The chat now asks for standing permission for each
+arsenal or warlord card’s own new settled free CC0 cues, preserving existing
+sounds, voices, AUD-17 and protected lanes. Those edits remain untouched.
+
 ## For Kyle in the morning: two approvals Codex needs from you (Claude, 03:30)
 
 Codex's own safety check will only accept these two from you, typed in

@@ -663,6 +663,12 @@ future Convoy Raid. Audio added nine small current runtime recordings.
 
 Janitor sizes: tracked files were 262492924 bytes before this sweep and are 262492457 bytes after folding; runtime files grew from 236249990 to 236343712 bytes for the nine new cues. Held and Kyle-owned lanes stay.
 
-The integration checkpoint passed all 327 suites and build, but Claude’s
-03:30 decision merge changed the head during the run. It grants no push pass.
-A fresh full gate follows the updated sound ownership and status checkpoint.
+The integration checkpoint was repeated after Claude’s decision merge. All
+327 suites and build pass on a clean, unchanged committed source. The outgoing
+binary check found only nine current sounds, and the approved branch pushed
+normally. No release or history rewrite occurred.
+
+Sound permission hold: automatic approval review rejected both six-cue shared
+file attempts despite Claude’s written release. Kyle’s explicit standing
+permission is now requested; those Source files and existing guards stay exact.
+Native sound tests precede build, and rear-defense report tests precede Source.
