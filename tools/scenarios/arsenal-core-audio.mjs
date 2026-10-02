@@ -79,7 +79,8 @@ async function capture(quality, side) {
     tap.port.onmessage = event => chunks.push(event.data); node.connect(tap);
     return {chunks, stop(){node.disconnect(tap);tap.disconnect();silent.disconnect();tap.port.close();}};
   }
-  const began = ctx.currentTime, tracks = {mix: meter(audio.output),
+  let began = ctx.currentTime, epochFrame = null;
+  const tracks = {mix: meter(audio.output),
     engine: meter(audio.buses.engine), weapons: meter(audio.buses.weapons)};
   const native = [], cues = [], frames = [];
   const original = {event: audio.event, play: audio._playCue, buffer: audio._cueBuffer,
@@ -171,7 +172,29 @@ async function capture(quality, side) {
       }
       if (app.duel.state !== armedState || app.duel.course !== armedCourse)
         throw Error('Actual campaign changed before arming the audio drive.');
-      cycleBegan = ctx.currentTime; measuring = true;
+      if (epochFrame === null) {
+        const warmedFrame = Math.ceil(ctx.currentTime * ctx.sampleRate), recorderDeadline = performance.now() + 5000;
+        const settled = track => {
+          const tail = track.chunks.slice(-3);
+          return tail.length === 3 && tail[0].frame >= warmedFrame &&
+            tail.every((chunk, i) => !i || chunk.frame === tail[i - 1].frame + 2048);
+        };
+        // Establish one common epoch only after all real meters have delivered
+        // three consecutive post-input chunks. Later cycles keep recording.
+        while (!Object.values(tracks).every(settled)) {
+          if (app.duel.state !== armedState || app.duel.course !== armedCourse)
+            throw Error('Actual campaign changed while settling the native recorder.');
+          if (performance.now() >= recorderDeadline) throw Error('Native recorder startup did not settle.');
+          await sleep(16);
+        }
+        if (app.duel.state !== armedState || app.duel.course !== armedCourse)
+          throw Error('Actual campaign changed before the native recording epoch.');
+        if (state.input.throttle !== 1 || !(Number.isFinite(state.revs) && state.revs > 0))
+          throw Error('Actual engine input was lost before the native recording epoch.');
+        epochFrame = Math.ceil(ctx.currentTime * ctx.sampleRate);
+        began = epochFrame / ctx.sampleRate;
+      }
+      cycleBegan = Math.max(began, ctx.currentTime); measuring = true;
       await sleep(3900); app.stop(); measuring = false;
       window.dispatchEvent(new KeyboardEvent('keyup', {code: 'KeyW', key: 'w', bubbles: true}));
       for (const id of ids) {
@@ -204,23 +227,43 @@ async function capture(quality, side) {
     for (const track of Object.values(tracks)) track.stop();
     await sleep(40);
   }
-  function encode(chunks) {
-    const pcm = new Float32Array(chunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0));
+  function encode(allChunks) {
+    const describeGap = (previous, actual, expected = previous + 2048) => ({
+      previousFrame: previous, expectedFrame: expected, actualFrame: actual});
+    const allGaps = allChunks.flatMap((chunk, i) => i && chunk.frame !== allChunks[i - 1].frame + 2048
+      ? [describeGap(allChunks[i - 1].frame, chunk.frame)] : []);
+    // Retain every sample at/after the common native frame epoch. Only setup
+    // samples are sliced; a gap crossing the epoch remains a strict failure.
+    const chunks = allChunks.filter(chunk => chunk.frame + chunk.pcm.length / 2 > epochFrame);
+    const first = chunks[0], beforeFirst = first ? allChunks[allChunks.indexOf(first) - 1] : null;
+    const leadingGap = first && first.frame > epochFrame
+      ? describeGap(beforeFirst?.frame ?? epochFrame, first.frame, epochFrame) : null;
+    const measuredGaps = chunks.flatMap((chunk, i) => i && chunk.frame !== chunks[i - 1].frame + 2048
+      ? [describeGap(chunks[i - 1].frame, chunk.frame)] : []);
+    if (leadingGap) measuredGaps.unshift(leadingGap);
+    const skip = first ? Math.max(0, epochFrame - first.frame) : 0;
+    const length = chunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0) - skip * 2;
+    const pcm = new Float32Array(Math.max(0, length));
     let at = 0;
-    for (const chunk of chunks) {pcm.set(chunk.pcm, at); at += chunk.pcm.length;}
+    for (const [i, chunk] of chunks.entries()) {
+      const samples = i ? chunk.pcm : chunk.pcm.subarray(skip * 2);
+      pcm.set(samples, at); at += samples.length;
+    }
     const bytes = new Uint8Array(pcm.buffer); let binary = '';
     for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
-    const gap = chunks.findIndex((chunk, i) => i > 0 && chunk.frame !== chunks[i - 1].frame + 2048);
+    const firstFrame = first ? Math.max(epochFrame, first.frame) : null;
     return {pcmBase64: btoa(binary), frames: pcm.length / 2, chunkCount: chunks.length,
-      firstFrame: chunks[0]?.frame ?? null, lastFrame: chunks.at(-1)?.frame ?? null,
-      firstGap: gap < 0 ? null : {chunk: gap, previousFrame: chunks[gap - 1].frame,
-        expectedFrame: chunks[gap - 1].frame + 2048, actualFrame: chunks[gap].frame},
-      audioStartSec: (chunks[0]?.frame ?? 0) / ctx.sampleRate - began,
-      contiguous: chunks.every((chunk, i) => !i || chunk.frame === chunks[i - 1].frame + 2048)};
+      epochFrame, firstFrame, lastFrame: chunks.at(-1)?.frame ?? null,
+      setupSamplesDiscarded: (allChunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0) - pcm.length) / 2,
+      totalGapCount: allGaps.length, measuredGapCount: measuredGaps.length,
+      firstSetupGap: allGaps.find(gap => gap.actualFrame <= epochFrame) || null,
+      firstGap: measuredGaps[0] || null,
+      audioStartSec: firstFrame == null ? null : firstFrame / ctx.sampleRate - began,
+      contiguous: !leadingGap && chunks.every((chunk, i) => !i || chunk.frame === chunks[i - 1].frame + 2048)};
   }
   return {quality, side, sampleRate: ctx.sampleRate, channels: 2, nativeContext: ctx instanceof AudioContext,
     native, cues, frames, cleanup, contextStateAtStop: ctx.state,
-    captureBeganAudioSec: began, captureEndedAudioSec: ctx.currentTime, memoryOnlySaves: true,
+    captureBeganAudioSec: began, epochFrame, captureEndedAudioSec: ctx.currentTime, memoryOnlySaves: true,
     tracks: Object.fromEntries(Object.entries(tracks).map(([key, track]) => [key, encode(track.chunks)]))};
 }
 export async function run(context) {
@@ -246,7 +289,9 @@ export async function run(context) {
       if (!track.contiguous || !track.frames) {
         const diagnostic = {quality, kind, frames: track.frames, chunkCount: track.chunkCount,
           audioStartSec: track.audioStartSec, firstFrame: track.firstFrame,
-          lastFrame: track.lastFrame, contiguous: track.contiguous, firstGap: track.firstGap};
+          lastFrame: track.lastFrame, epochFrame: track.epochFrame, contiguous: track.contiguous,
+          totalGapCount: track.totalGapCount, measuredGapCount: track.measuredGapCount,
+          firstSetupGap: track.firstSetupGap, firstGap: track.firstGap};
         row.validationStatus = 'failed'; row.failure = diagnostic;
         await persist('failed', quality);
         console.error('Native recording diagnostic: ' + JSON.stringify(diagnostic));
