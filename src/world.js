@@ -25,6 +25,9 @@ import { createRustwallScene } from './rustwall-scene.js';
 import { createScrapdomeYard } from './scrapdome-yard.js';
 import { createMuddyHollowScene, filterMuddyHollowMountains } from './muddy-hollow-scene.js';
 import { createSaltFlatsScene } from './arena/venues/salt-flats.js';
+import {Course} from './course.js';
+import {SCRAPDOME_VENUE} from './arena/venues.js';
+import {pitStadiumFrame} from './arena/venues/pit.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -34,6 +37,7 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 // shells, then their visual refinements and race markers. No new wrapper groups
 // are inserted, so material refinement, render order and batching stay stable.
 export function buildEnvironment(course, {saltFlats} = {}) {
+  if(course.def.pit)return createPitEnvironment(course);
   if(course.def.id==='salt-flats'){
     const group=new THREE.Group();
     const salt = createSaltFlatsScene(course,saltFlats);
@@ -106,6 +110,75 @@ export function buildEnvironment(course, {saltFlats} = {}) {
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
   return group;
+}
+
+function createPitEnvironment(course) {
+  const group = new THREE.Group();group.name = 'The Pit';
+  const dirt = new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),
+    bumpMap:surfaceTexture('gravel'),bumpScale:.035,color:0xb39372,roughness:1});
+  const outsideMaterial = new THREE.MeshStandardMaterial({color:0x6c5848,roughness:1});
+  const outside = new THREE.Mesh(new THREE.CircleGeometry(180,96),outsideMaterial);
+  outside.rotation.x=-Math.PI/2;outside.position.y=-.04;outside.receiveShadow=true;group.add(outside);
+  const floor = new THREE.Mesh(strip(course,-32,32,.035),dirt);
+  floor.name='Pit physical floor';floor.receiveShadow=true;group.add(floor);
+  const junk=addArenaCrushables(group,course);
+  registerSceneSystem(group,{sync:junk.userData.updateSimulation});
+  addRaceStructures(group,course);
+  addPitSalvageScenery(group,course);
+  return group;
+}
+
+function addPitSalvageScenery(world, course) {
+  // Reuse the released hulk kit as instanced scenery. Only the eight native
+  // floor cars move; this static assembly never writes physical features.
+  const prototypeWorld = new THREE.Group();
+  const feature = {...course.features.crushables[0],x:0,y:0,z:0,heading:0};
+  addArenaCrushables(prototypeWorld,{features:{crushables:[feature]}});
+  prototypeWorld.updateMatrixWorld(true);
+  const poses=[];
+  const wallRadius=course.def.pit.wallRadius;
+  for(let index=0;index<64;index++){
+    const angle=index/64*Math.PI*2;
+    for(let tier=0;tier<3;tier++)poses.push({x:Math.cos(angle)*wallRadius,z:Math.sin(angle)*wallRadius,
+      y:tier*1.1,heading:-angle,roll:tier%2?.04:-.03,flatten:.82});
+  }
+  for(let tier=0;tier<4;tier++){
+    const count=tier===3?3:8,radius=tier===3?2:5-tier*.7;
+    for(let index=0;index<count;index++){
+      const angle=index/count*Math.PI*2+tier*.4;
+      poses.push({x:Math.cos(angle)*radius,z:Math.sin(angle)*radius,y:tier*.95,
+        heading:angle+.6,roll:Math.sin(index)*.09,flatten:.75});
+    }
+  }
+  const stadium=pitStadiumFrame(new Course(SCRAPDOME_VENUE,course.seed));
+  for(let index=0;index<48;index++){
+    const point=stadium.worldAt((index+.5)/48*stadium.length,28);
+    const extent=Math.hypot(point.x,point.z),angle=Math.atan2(point.z,point.x);
+    for(let radius=80;radius<extent-3;radius+=6){
+      poses.push({x:Math.cos(angle)*radius,z:Math.sin(angle)*radius,y:0,heading:-angle,
+        roll:.05,flatten:.65});
+      if(index%3===0)poses.push({x:Math.cos(angle)*radius,z:Math.sin(angle)*radius,y:.85,
+        heading:-angle+.5,roll:-.08,flatten:.7});
+    }
+  }
+  const scenery=new THREE.Group();scenery.name='Pit hulk wall, centre pile and oval-end scrap';
+  const object=new THREE.Object3D(),matrix=new THREE.Matrix4();
+  prototypeWorld.traverse(part=>{
+    if(!part.isMesh)return;
+    const mesh=new THREE.InstancedMesh(part.geometry,part.material,poses.length);
+    mesh.name='Reused salvage kit';mesh.castShadow=mesh.receiveShadow=true;
+    for(let index=0;index<poses.length;index++){
+      const pose=poses[index];object.position.set(pose.x,pose.y,pose.z);
+      object.rotation.set(0,pose.heading,pose.roll);object.scale.set(1,pose.flatten,1);object.updateMatrix();
+      matrix.multiplyMatrices(object.matrix,part.matrixWorld);mesh.setMatrixAt(index,matrix);
+      mesh.setColorAt(index,new THREE.Color(index%3===0?0xa88c72:index%3===1?0x80938a:0xb38b73));
+    }
+    mesh.computeBoundingSphere();scenery.add(mesh);
+  });
+  // Every prototype geometry/material is now owned by the instanced meshes.
+  // DisposeTree deduplicates shared resources when this environment unloads.
+  prototypeWorld.clear();world.add(scenery);
+  scenery.userData.wallRadius=wallRadius;scenery.userData.pileRadius=course.def.pit.pileRadius;
 }
 
 // The prepared bed and collision-aligned greybox remain playable while local
