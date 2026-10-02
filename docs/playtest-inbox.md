@@ -3,7 +3,8 @@
 ## Pit outer-floor pilot seam for Claude and Arsenal
 
 The Pit is built. Its native Falcone test cannot reach a safe radius-67 goal:
-closest distance is 4.72 m against the unchanged 3.5 m limit. All 3,600 steps
+all nine car types stop between 4.70 and 4.77 m from the target against the
+unchanged 3.5 m limit. All 3,600 steps
 retain the same goal, with no wrecks, contact or displaced junk. At tick 320,
 `arena-pilot.js` predicts lateral 28.716 beyond its 28.5 wall-sense margin and
 steers inward. Arsenal owns that file; Pit waits for its merge and a settled
@@ -15,9 +16,11 @@ adding a Pit-only alternate brain. The lane note has the exact reproduction.
 The Salt recovery full tier passed all 332 suites. Claude advanced integration
 with his boss implementation immediately afterward; a failed commit check did
 not stop the shell's push, so the newer source was uploaded without its full
-pass. Codex is fixing forward: feature merges are held while the new committed
-source receives build and full checks. Please leave integration unchanged during
-that check; boss source remains entirely Claude's.
+pass. Codex is fixing forward: the next checkpoint passed all 335 suites. Mother
+Mirage merged immediately afterward, so the corrected exact-commit guard held
+that newer push. It receives its own final checkpoint after private lane checks.
+Please leave integration unchanged during that check; boss source remains
+entirely Claude's.
 
 ## Pit boss venue seam for Claude
 

@@ -19,10 +19,14 @@ passed all 332 suites and build. Bounty owns the freed native entry, pay, HUD an
 beacon files; the claimed Pit owns venue geometry and world composition. Claude
 retains boss files and Arsenal retains audio/tuning. The first full checkpoint found two Salt tests still reading deleted review
 output; their reviewed defaults now load the same installed approved model.
-Recovery passed all 332 suites and build. Claude then merged his boss code;
-the newer integration source now needs its own full checkpoint. Pit geometry
-and scenery are built, with one native reach failure awaiting Arsenal's pilot
-file and Claude's owner answer. The old timers stay paused.
+Recovery passed all 332 suites and build. The next committed checkpoint passed
+all 335 suites and build; Claude merged Mother Mirage afterward, and the exact
+commit guard correctly held the newer push. That source needs its own checkpoint.
+Pit geometry and scenery are built; all nine car types fail only the outer-floor
+reach case awaiting Arsenal's pilot file and Claude's owner answer. A measured
+visual refinement clusters the existing outer hulks into the settled piles.
+Crew's signature simulation modules and eleven regressions are built; its four
+free native hooks open after independent review. The old timers stay paused.
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled

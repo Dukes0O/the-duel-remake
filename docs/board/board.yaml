@@ -1014,11 +1014,15 @@ tasks:
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/foot/crew-gear
     flag: crew-gear
-    owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
-    hook_requests: [src/feature-flags.js, src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/combat-hud.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, src/onfoot-camera.js, src/render3d.js]
+    owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/test-crew-gear-modules.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
+    hooks: [src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-camera.js]
+    hook_requests: [src/feature-flags.js, src/combat-hud.js, src/sound-bank.js, src/audio.js, src/render3d.js, src/combat-projectiles.js, src/combat.js, src/combat-scene.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
-    sequencing: "Independent acceptance tests start first. Runtime edits wait for Arsenal wave one to free tuning, Salt to free the renderer and the separate audio owner to free the sound bank; shared files are not granted to two builders."
-    note: "Independent bounded admission tests reproduce four genuine failures; existing RPG/wrench and discovery controls pass. Source waits for shared tuning, audio and the Salt renderer; full gear mechanics remain unproved."
+    sequencing: "After independent module review, Crew may wire its four free roster, on-foot and camera hooks. Bounty retains the switch catalog, HUD and renderer; Arsenal retains projectile, combat-scene and audio hooks until merge. Settled constants stay in the owned gear module, so no tuning edit is needed."
+    note: "Signature simulation is built and eleven tests-first module regressions pass. Native admission still has four genuine wiring failures; review precedes wiring the four free hooks, while other hooks wait for their owners."
+    module_source_commit: d22cfe4
+    module_test_commit: 3ecefcd
+    module_checks_passed: 11
     test_commit: b85ce3007e983e538f6e5c7dde3a051b522af619
     acceptance:
       - "Build docs/CREW.md section 1 exactly: the crew-gear switch (dev), all eight items on key 3 (gamepad D-pad down on foot), gear refilled on getting back in, Jax, Cinder and Tusk active. Wren's grenades and Tusk's shove use the arsenal's smoke and the crash solver."
