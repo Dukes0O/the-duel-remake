@@ -1,89 +1,89 @@
 # ARENA-06: Salt Flats
 
-Status: accepted final art and public Source implemented. Final gates pending.
+Status: waiting_on: kyle. Public Source and browser acceptance are complete;
+final gates are blocked by automatic approval review of the old control fixture.
 
 ## Changed
 
 The real yard offers Scrapdome and Salt Flats once the named player has found
 Wasteland and reached rank nine, with Salt's own dev switch enabled. Last Car
 Rolling and Fuel Run launch the selected native Course. Their own mode flags
-and existing rank requirements still apply. Unknown or locked venue requests
-refuse before run creation; ordinary Scrapdome entry keeps its default.
-Rematch keeps the actual venue and mode. The clickable controls use the same
-pure eligibility as the public App launcher, which reads the current owner.
+and rank requirements still apply. Unknown or locked requests refuse before
+run creation. Default Scrapdome entry remains available below Salt rank.
+Rematch keeps the venue and mode. The controls share pure eligibility with the
+public App launcher, which checks the current durable owner before launch.
 
-The accepted final model is now installed at its production GLB loader URL.
-Its geometry, donor transforms, materials and embedded generated textures are
-unchanged from the accepted candidate. The model is 23,283,392 bytes,
-172 meshes and 184,340 triangles. No fourth art round or redesign was made.
+The accepted final model is installed at its actual production loader URL.
+Its geometry, donor transforms, materials and generated embedded textures
+remain byte-exact to the accepted candidate: 23,283,392 bytes, 172 meshes and
+184,340 triangles. No fourth art round or redesign was made.
 
-Kyle's generated ground replaces the repeating photograph. The fixed-seed
-1536 by 1024 atlas has broad tone drift, irregular salt polygons, a dusty
-Course-aligned driving band, independently preserved normal relief and close
-world grain. Four matching world-coordinate strips cover its edges.
-Distant heat remains view-only. All Bus, crane, ramp and collider geometry is
-unchanged; inner-island scrap belongs to P3-POLISH.
+Kyle's fixed-seed 1536 by 1024 generated salt replaces the repeating photo:
+broad tone drift, irregular salt polygons, a dusty Course-aligned band,
+independent normal relief and close world grain. Matching world-coordinate
+strips cover the atlas edges. Distant heat is view-only. Bus, crane, ramp and
+collider geometry stays unchanged; inner-island scrap belongs to P3-POLISH.
+Claude's 2 October 00:30 answer approves the two built modes here; Bounty Hunt
+and Ambush Alley add Salt in their own cards.
 
-Claude's 2 October 00:30 answer approves Last Car Rolling and Fuel Run here.
-Bounty Hunt and Ambush Alley add Salt in their own cards.
+The recipe's standard-library --paths-only branch now lists its existing
+model, manifest and three disposable packed PNG outputs before Blender imports.
+It reads no licensed inputs and creates no files; native art generation is
+unchanged. Shared registration preserves Tanker and Vesper coverage.
 
-## Tests first and Source checks
+## Tests and browser
 
-Independent public App tests first gave 22 checks, 13 PASS and 9 genuine RED:
-missing Salt declaration, ignored venue selection, rank/off gates and unknown
-venue fallback. Additive independent panel and native-gate checks then gave
-32 checks, 26 PASS and 6 genuine RED before their Source: missing venue buttons,
-wrong selected entry label and native disabled-Salt admission in both modes.
-No future API or stub was used. Current bounded entry checks pass 32/32;
-released arena UI controls pass 6/6 and Wasteland flag controls pass 8/8.
-The exact feature declaration assertion adds the new dev flag, without
-changing the states or production admission of released features.
+Independent App tests first gave 22 checks, 13 PASS and 9 genuine RED.
+Additive panel/native-gate tests gave 32 checks, 26 PASS and 6 genuine RED before
+Source. Current bounded entry checks pass 32/32, released arena UI 6/6, and
+Wasteland flag controls 8/8. The exact feature assertion adds Salt's dev state
+without changing other states or production admission.
+Independent output-plan tests first gave 3 checks, 1 PASS and 2 import-bpy RED.
+After Source they pass 3/3; the shared Blender output guard passes 43/43.
 
-Independent review approved the Fuel test migration to its real published
-180 s round and Infinity sudden death. A separate 600 s observation watchdog
-never changes the game limits, forces a result or changes next-delivery rules.
-Native fixtures explicitly enable the genuine Salt and Fuel dev flags.
+Independent review approved the Fuel assertion migration to the real 180 s
+round and Infinity sudden death. A separate 600 s observation watchdog never
+changes game limits, forces results or changes next-delivery rules. Fixtures
+explicitly enable the genuine Salt and Fuel flags. Both existing full-round
+assertions pass with exact seeded traces/results and native physical bounds.
+Whole current native acceptance: 63 checks, 62 PASS, 1 old-control failure;
+all 16 registered Course geometry cases pass. Expected negative-source guards
+reject altered licensed fixtures; genuine originals and runtime assets remain.
 
-The bounded generated-ground/control check passes two of three. The remaining
-frozen eight-second Scrapdome trace predates the merged lower ordinary-car
-wreck rate. Its physical geometry and ordinary replay-file hashes stay exact;
-its trace differs. Independent paired-baseline review is required before any
-fixture update. No fixture, main replay pin or physical tolerance was changed.
+Actual memory-only browser acceptance passes all four public entry cases:
+Last Car Rolling and Fuel Run in High and Performance. Uncovered physical UI
+clicks choose venue/mode, load the installed model, start the native round,
+rematch in the same mode/venue and return to the yard. Eight screenshots,
+zero warnings/errors, private port 15584. The temporary QA overlay initializes
+before hiding; stopped App transitions are presented before clicking.
+The muted check does not judge sound or claim a new art/frame measurement.
 
-The prepared memory-only browser recipe clicks real yard venue/mode controls,
-launches both native modes in High and Performance, checks the production GLB
-load, and clicks rematch and return. It has not run yet. Both existing native
-full-round assertions pass with seeded repeated traces and genuine results.
-The additive --rounds-only selection runs those two checks without Blender;
-default whole-card selection and every assertion are unchanged. Current
-Blender registration, lane tier and build remain pending.
+## Approval blocker
 
-Independent output-registration tests now cover the actual Salt CLI in plain
-Python, with its normal root, private output, fit config and seed arguments.
-Three checks give one PASS and two genuine RED: the early bpy import prevents
-both empty temporary roots from planning venue.glb, manifest.json and the three
-existing packed PNG outputs. Planning creates no files. The shared output guard
-passes 43/43 with Salt beside Vesper in its native-suite list; Tanker and Vesper
-assertions remain exact. Source now plans those exact paths before Blender
-imports, without source reads, generated output or any art change. Its
-compact planning checks pass 3/3.
+The additive eight-second Scrapdome control predates Kyle's ordinary armor
+change from 50 to 120. An independent exact sampler review proves identical
+current integration and Salt traces/full state. Restoring only old initial
+armor reproduces the old frozen trace; physical geometry and main replay files
+stay exact. Formal review is committed on the card in integration 454700b.
+Automatic approval review rejected the original update and the one narrowed
+retry: it treats committed review and tool evidence as untrusted. No frozen
+fixture, sampler, assertion, tolerance or main replay pin was changed.
+Kyle must explicitly approve updating only this fixture's captured baseline,
+scope and trace hash. No workaround or further retry will run. Lane tier and
+build remain pending; the card cannot merge while this test is failing.
 
 ## Accepted private evidence
 
-Earlier generated config and two controls passed. All 16 registered Course
-geometry and 29 native boundary/collision cases passed. Repeated exports retain
-native geometry and actual colour/normal bytes. All sixteen final game views
-pass without browser errors or warnings; independent Source review was clear.
-Headless renderer and effects pass eight cases each. The critic scored every
-assessed art item four in both qualities. Paired 180-frame Scrapdome/Salt
-captures had P95 16.8/16.8 ms in both qualities, within ten percent. This Source
-changes entry, not geometry or presentation; it does not claim new sound or
-motion judgments, or a current whole-card merge gate from that earlier proof.
+Earlier boundary acceptance passes 29 cases; renderer and effects pass eight
+each. Sixteen final game views have no errors or warnings, independent Source
+review was clear, and the critic scored every assessed item four in both
+qualities. Paired 180-frame captures give P95 16.8/16.8 ms in both qualities,
+within ten percent. Entry Source changes no accepted model or renderer bytes.
 
 ## Removed
 
-Removed active photo configuration/loading, embedded photo, mirrored sampler,
+Removed active photo loading/configuration, embedded photo, mirrored sampler,
 JPEG helper and photo-only assertions under Kyle's written ground decision.
 Removed the consumed mode-scope question and obsolete finite Fuel sudden-death
-assertion under independent review. Licensed donor/photo provenance, current
-game assets, physical rules and existing main replay pins remain intact.
+assertion under independent review. Licensed provenance, current game assets,
+physical rules, frozen control fixture and existing main replay pins remain.
