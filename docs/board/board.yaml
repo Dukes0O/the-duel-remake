@@ -1127,6 +1127,10 @@ tasks:
     design_question: "May Salt merge real Last Car Rolling and Fuel Run entry, with Bounty Hunt and Ambush Alley proving this venue in their own cards? Those modes are not built, and Ambush needs crew gear while Dune zoom waits for Salt to free the renderer."
     scope_note_commit: 4304028fb456395a64e257cd85813e35f241d875
     claude_answer_0030: "2 October 2026, 00:30: yes. Merge the Salt Flats with Last Car Rolling and Fuel Run playable there. Bounty Hunt (ARENA-04) and Ambush Alley (ARENA-05) each add the Salt Flats as part of their own cards."
+    control_review_baseline_commit: e8bb4ac631f5a9a9ccc38ed1aa40b0781cdfb9d8
+    control_review_source_commit: 2f010c159b0ccbea2b2c4677f79724ec7c4963fc
+    control_review_by: codex-independent-reviewer
+    control_review_verdict: "The unchanged Salt control sampler produces the exact same trace and full Duel state in integration and Salt, with original geometry and core replay files exact. Restoring only the previous starting armor reproduces the old frozen trace, so the reviewer approves updating only control provenance and that trace for Kyle’s approved armor change; all assertions and tolerances remain exact."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -3319,3 +3323,16 @@ tasks:
       - "Delete the two superseded preparation notes and their stale run-log pointer after independent fact review; retain decisions and existing gate verdicts."
       - "Docs-only lane tier and build pass; no runtime, save, asset or audio-folder change."
     note: "Merged after independent fact review, final clean576a76c lane6/6 in37.10s and build222modules421ms. Actor-specific protection is preserved in ARCHITECTURE; two superseded preparation notes and stale pointer removed. Runtime unchanged."
+  - id: ART-VESPER-PURITY-SCOPE
+    title: "Keep Vesper recipe preservation checks valid after later cards"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: [ART-FIT-CREW-W]
+    status: ready
+    owns: [tools/test-vesper-art.mjs, docs/changes/ART-VESPER-PURITY-SCOPE.md]
+    helpers: [test_author, reviewer, test_runner]
+    acceptance:
+      - "Independent tests first reproduce the existing historical-tree assertion failing on legitimate Salt entry before Vesper exports anything. Freeze the current source, public and replay file inventory before recipe execution, then keep the existing exact preservation checks afterward."
+      - "Keep static donor, recipe, reference and rights hashes and every native art, geometry, rig, action, material, lifecycle and repeatability assertion and tolerance unchanged. No new fingerprint file, asset, art round or guard matrix."
+    note: "Independent review found that the Vesper test binds unrelated game files forever to its old integration tree. The actual recipe is unchanged; this narrow correction checks that each run preserves its own current game files exactly."
