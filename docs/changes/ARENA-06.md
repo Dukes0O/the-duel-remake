@@ -54,9 +54,7 @@ assertions and negative art guards remain exact.
 Actual memory-only browser acceptance passes all four public entry cases: Last Car Rolling and
 Fuel Run in High and Performance. Uncovered physical UI clicks choose venue/mode, load the
 installed model, start the native round, rematch in the same mode/venue and return to the
-yard. Eight screenshots, zero warnings/errors, private port 15584. The temporary QA overlay
-initializes before hiding; stopped App transitions are presented before clicking. The muted
-check does not judge sound or claim a new art/frame measurement.
+yard. Eight screenshots, zero warnings/errors, private port 15584. The muted check judges no sound or new frame measurement.
 
 ## Approved control migration
 
@@ -71,14 +69,17 @@ b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a stay exact. The
 capture-once guard, all assertions/tolerances and all three main replay files remain byte-
 exact. Storage is synthetic and has zero entries. Focused checks before migration: 3 checks, 2
 PASS, 1 old-trace RED. Post-change focused controls pass 3/3, public native entry 32/32 and
-full seeded native rounds 2/2. Current lane tier and build await the Director's serialized
-gate slot; no broad gate or browser capture ran in this update.
+full seeded native rounds 2/2. Current lane tier and build remain required.
 
 Independent review approves two literal frame-guard additions: optional presentation={} and
 mirror now:ambientNow. Manual measure=false, RAF opt-in, main/mirror CPU timing and every
 other assertion remain exact; the accepted override changes only view clocks. The static
 launcher recipe adds Salt dev; the launcher is not run and Preview output, ports and real
 saves are untouched.
+
+Independent scheduling regression first failed because the native crash-peak capture shared
+its gate slot. The existing runner now drains other suites for that capture alone, then
+resumes eight jobs. All 126 runner checks pass; no audio assertion or game rule changed.
 
 ## Accepted private evidence
 
