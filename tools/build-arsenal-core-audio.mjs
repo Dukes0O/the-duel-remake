@@ -8,6 +8,11 @@ import {loadCatalog, libraryRoot, sha256} from './audio/sourcing.mjs';
 import {measureLoudness} from './audio/measurements.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RATE = 48000;
+const VARIANTS = [
+  {name: 'A', cut: 0, rate: 1, tone: 1},
+  {name: 'B', cut: .002, rate: .97, tone: .98},
+  {name: 'C', cut: .005, rate: .95, tone: 1.035},
+];
 export const ARSENAL_CORE_RECIPES = [
   {cue: 'weapon.oil.deploy', stem: 'oil-deploy', source: '389460',
     start: .55, length: .7, rate: 1.1, filters: 'highpass=f=350,lowpass=f=7000',
@@ -29,7 +34,7 @@ function addSweep(data, [from, to, duration, volume, delay]) {
     data[start + i] += Math.sin(phase) * volume * envelope;
   }
 }
-function render(recipe) {
+function render(recipe, variant) {
   const row = loadCatalog().sounds.find(row => row.cue === recipe.cue &&
     row.source === 'freesound' && row.key === recipe.source);
   if (!row || !/CC0/i.test(row.license)) throw Error('Missing CC0 recipe ' + recipe.cue);
@@ -39,18 +44,20 @@ function render(recipe) {
     '-af', recipe.filters, '-f', 'f32le', 'pipe:1'], {input: bytes});
   const input = Float32Array.from({length: raw.length / 4}, (_, i) => raw.readFloatLE(i * 4));
   const data = new Float32Array(Math.round(recipe.length * RATE));
-  const last = recipe.start * RATE + (data.length - 1) * recipe.rate;
+  const start = recipe.start + variant.cut, rate = recipe.rate * variant.rate;
+  const last = start * RATE + (data.length - 1) * rate;
   if (last >= input.length) throw Error('Source cut exceeds recording ' + recipe.cue);
   let peak = 0;
   for (let i = 0; i < data.length; i++) {
-    const at = recipe.start * RATE + i * recipe.rate, a = Math.floor(at), blend = at - a;
+    const at = start * RATE + i * rate, a = Math.floor(at), blend = at - a;
     data[i] = input[a] * (1 - blend) + input[a + 1] * blend;
     peak = Math.max(peak, Math.abs(data[i]));
   }
   if (peak < 1e-5) throw Error('Silent source cut ' + recipe.cue);
   // Keep the liquid/scrape/air recording dominant under its short arcade mark.
   for (let i = 0; i < data.length; i++) data[i] *= .65 / peak;
-  for (const sweep of recipe.tones) addSweep(data, sweep);
+  for (const [from, to, duration, volume, delay] of recipe.tones)
+    addSweep(data, [from * variant.tone, to * variant.tone, duration, volume, delay]);
   const pcm = Buffer.alloc(data.length * 4);
   for (let i = 0; i < data.length; i++) {
     const fade = Math.min(1, i / (RATE * .002), (data.length - 1 - i) / (RATE * .035));
@@ -67,8 +74,8 @@ export function buildArsenalCoreAudio({
   mkdirSync(out, {recursive: true});
   mkdirSync(dirname(report), {recursive: true});
   const rows = [];
-  for (const recipe of ARSENAL_CORE_RECIPES) {
-    const pcm = render(recipe);
+  for (const recipe of ARSENAL_CORE_RECIPES) for (const variant of VARIANTS) {
+    const pcm = render(recipe, variant);
     let attenuation = 0, bytes, measured;
     for (let attempt = 0; attempt < 3; attempt++) {
       bytes = ffmpeg(['-f', 'f32le', '-ar', String(RATE), '-ac', '1', '-i', 'pipe:0',
@@ -80,9 +87,10 @@ export function buildArsenalCoreAudio({
       attenuation -= measured.truePeakDbtp + 1.65;
     }
     if (measured.truePeakDbtp > -1.5) throw Error('Codec headroom failed ' + recipe.cue);
-    const file = recipe.stem + '.ogg';
+    // Keep the already-built A bytes at their original runtime paths.
+    const file = recipe.stem + (variant.name === 'A' ? '' : '-' + variant.name.toLowerCase()) + '.ogg';
     writeFileSync(join(out, file), bytes);
-    rows.push({cue: recipe.cue, file, bytes: bytes.length, sha256: sha256(bytes),
+    rows.push({cue: recipe.cue, variant: variant.name, file, bytes: bytes.length, sha256: sha256(bytes),
       duration: recipe.length, ...measured});
   }
   writeFileSync(report, JSON.stringify({sampleRate: RATE, channels: 1, rows}, null, 2) + '\n');

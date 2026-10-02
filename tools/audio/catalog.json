@@ -708,7 +708,7 @@
       "fetched": "2026-09-26",
       "processing": {
         "script": "tools/build-arsenal-core-audio.mjs",
-        "recipe": "ARSENAL_CORE_RECIPES.oil-deploy: verified source cut, filters, bright swept signature, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
+        "recipe": "ARSENAL_CORE_RECIPES.oil-deploy: verified source cuts, bounded ABC repitch and swept signature variants, filters, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
         "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
       },
       "creditsUsed": 0
@@ -731,7 +731,7 @@
       "fetched": "2026-09-26",
       "processing": {
         "script": "tools/build-arsenal-core-audio.mjs",
-        "recipe": "ARSENAL_CORE_RECIPES.oil-slip: verified source cut, filters, bright swept signature, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
+        "recipe": "ARSENAL_CORE_RECIPES.oil-slip: verified source cuts, bounded ABC repitch and swept signature variants, filters, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
         "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
       },
       "creditsUsed": 0
@@ -755,7 +755,7 @@
       "creditsUsed": 0,
       "processing": {
         "script": "tools/build-arsenal-core-audio.mjs",
-        "recipe": "ARSENAL_CORE_RECIPES.smoke-deploy: verified source cut, filters, bright swept signature, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
+        "recipe": "ARSENAL_CORE_RECIPES.smoke-deploy: verified source cuts, bounded ABC repitch and swept signature variants, filters, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
         "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
       }
     }
