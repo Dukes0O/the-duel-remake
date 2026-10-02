@@ -514,15 +514,82 @@ check('native','generated ground excludes the retired photo and mirrored sampler
   }
   // Tone, crust, grain, tyre dust and visible repeat are judged in game captures.
 });
+// ARENA-06 payment regression: native App entry, native result event and only
+// synthetic in-memory named profiles. The short controlled round keeps the
+// existing engine clock and wreck-credit rules, rather than making a result.
+function finishSaltPaymentRound(app,mode){
+  const duel=app.duel,state=duel.state,arena=state.arena,dt=1/120;
+  state.countdown=0;duel.step(dt);assert.equal(state.status,'racing');
+  for(const participant of arena.participants.filter(row=>row.kind==='cpu')){
+    const actor=state.opponents.find(row=>row.arenaId===participant.id);
+    Object.assign(actor,{combatWrecking:true,combatWreckTimer:1000});
+    Object.assign(participant,{lastHitBy:'player',lastHitAt:state.stageTimeSec});
+  }
+  duel.step(dt);
+  const player=arena.participants.find(row=>row.id==='player');
+  assert.equal(player.wrecks,2,'the actual engine credits two recent player wrecks');
+  if(mode==='fuel-run'){
+    const fuel=arena.fuelRun,pad=fuel.pads[0];
+    const place=pose=>Object.assign(state,{s:pose.s,prevS:pose.s,lateral:pose.lateral,
+      prevLateral:pose.lateral,speedMph:0,headingError:0,yawVelocity:0,
+      pushVelocity:0,airborne:false,airHeight:0,groundHeight:null});
+    duel.setInput({throttle:0,brake:0,steer:0,boost:false});
+    assert.ok(pad.canisterId,'a native fuel pad contains an actual canister');
+    place(pad);duel.step(dt);assert.ok(player.fuelCanisterId,'native step picks up fuel');
+    place(fuel.depots.find(row=>row.participantId==='player'));duel.step(dt);
+    assert.equal(player.fuelDelivered,1,'native step delivers one canister to the player depot');
+  }
+  arena.clockSec=arena.timeLimitSec-dt/2;duel.step(dt);
+  assert.equal(state.status,'arena_result','native clock emits the real completed result');
+  assert.equal(arena.result.reason,'time');assert.equal(arena.result.winnerId,'player');
+  assert.equal(arena.venueId,'salt-flats');return arena.result;
+}
+for(const mode of publicModes)check('runtime',`${mode}: Salt native result pays scrap and hold once to its saved owner`,async()=>{
+  const app=await yard(),storage=globalThis.localStorage,originalWrite=storage.setItem;
+  try{
+    const owner=app.player.id;
+    app.returnToMenu();assert.equal(app.addPlayer('Salt spectator').ok,true);
+    const spectator=app.player.id,spectatorBefore=structuredClone(app.profile);
+    assert.equal(app.selectPlayer(owner),true);
+    app.cpuDifficulty='medium';assert.equal(app.visitWasteland(),true);app.advance(8);
+    assert.equal(app.startArenaEvent({venueId:'salt-flats',mode,opponents:2}),true);
+    assert.equal(app.duel.state.playerId,owner,'native entry belongs to the saved selected player');
+    const before=structuredClone(app.profile),runId=app.runId;
+    let writes=0;storage.setItem=(key,value)=>{writes++;return originalWrite(key,value);};
+    const result=finishSaltPaymentRound(app,mode);
+    // Existing ring formula: (80 finish + 2*40 placing + 2*60 wrecks)*1.2.
+    assert.equal(result.scrapEarned,336,'a native Salt win pays the existing 336 scrap ring reward');
+    assert.equal(result.holdAdded,25,'a native Salt two-CPU win adds the existing 25 hold');
+    assert.equal(result.settlementSaved,true,'the award is shown only after a successful memory save');
+    assert.equal(result.scrapBalance,before.wasteland.scrap+336);
+    assert.equal(app.profile.wasteland.scrap,before.wasteland.scrap+336);
+    assert.equal(app.profile.wasteland.territories.kettle.hold,before.wasteland.territories.kettle.hold+25);
+    assert.equal(app.profile.credits,before.credits,'ordinary bank is unchanged');
+    assert.equal(app.profile.wasteland.settledResults.filter(key=>key===`arena:${runId}`).length,1);
+    assert.equal(writes,1,'one native completion makes one atomic registry write');
+    const {loadPlayers}=await import('../src/progression.js');
+    const saved=loadPlayers(storage);
+    assert.deepEqual(saved.players.find(row=>row.id===owner).profile,app.profile,'the named owner award is durable in memory');
+    assert.deepEqual(saved.players.find(row=>row.id===spectator).profile,spectatorBefore,'the other named player is unchanged');
+    const paid=structuredClone(app.profile),savedBytes=[...memory.entries()];
+    app.duel.emit({arenaResult:{result}});
+    assert.deepEqual(app.profile,paid,'repeated native result event cannot pay twice');
+    assert.deepEqual([...memory.entries()],savedBytes,'repeated result preserves the saved registry');
+    assert.equal(writes,1,'repeated result makes no extra registry write');
+    assert.equal(result.scrapEarned,336,'repeated event keeps the original earned display');
+    assert.equal(result.holdAdded,25);
+  }finally{storage.setItem=originalWrite;app.dispose?.();}
+});
 let failures=0;const nativeOnly=process.argv.includes('--native-only');
 const entryOnly=process.argv.includes('--entry-only');
 const roundsOnly=process.argv.includes('--rounds-only');
 const groundConfigOnly=process.argv.includes('--ground-config-only');
-const selected=checks.filter(row=>roundsOnly?row.group==='runtime'&&/a complete Salt Flats/.test(row.name):entryOnly?row.group==='runtime'&&!/a complete Salt Flats|actual game scene/.test(row.name):groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
+const paymentsOnly=process.argv.includes('--payments-only');
+const selected=checks.filter(row=>paymentsOnly?/Salt native result pays/.test(row.name):roundsOnly?row.group==='runtime'&&/a complete Salt Flats/.test(row.name):entryOnly?row.group==='runtime'&&!/a complete Salt Flats|actual game scene/.test(row.name):groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
 for(const {group,name,run}of selected)try{await run();}catch(error){failures++;console.error(`FAIL [${group}] ${name}: ${error.message}`);}
 console.log(`Salt Flats${nativeOnly?' native WIP':''}: ${selected.length} checks, ${selected.length-failures} passed, ${failures} failed.`);
 if(failures)process.exitCode=1;
-if(groundConfigOnly||entryOnly||roundsOnly)process.exit(failures?1:0);
+if(paymentsOnly||groundConfigOnly||entryOnly||roundsOnly)process.exit(failures?1:0);
 
 // Independent ARENA-06 geometry acceptance. Append only: preserve every byte
 // of the independent geometry checks; approved Fuel entry/rule additions above
