@@ -52,8 +52,11 @@ fixture update. No fixture, main replay pin or physical tolerance was changed.
 
 The prepared memory-only browser recipe clicks real yard venue/mode controls,
 launches both native modes in High and Performance, checks the production GLB
-load, and clicks rematch and return. It has not run yet. Full native rounds,
-current Blender registration, lane tier and build remain pending.
+load, and clicks rematch and return. It has not run yet. Both existing native
+full-round assertions pass with seeded repeated traces and genuine results.
+The additive --rounds-only selection runs those two checks without Blender;
+default whole-card selection and every assertion are unchanged. Current
+Blender registration, lane tier and build remain pending.
 
 ## Accepted private evidence
 

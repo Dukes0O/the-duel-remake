@@ -516,12 +516,13 @@ check('native','generated ground excludes the retired photo and mirrored sampler
 });
 let failures=0;const nativeOnly=process.argv.includes('--native-only');
 const entryOnly=process.argv.includes('--entry-only');
+const roundsOnly=process.argv.includes('--rounds-only');
 const groundConfigOnly=process.argv.includes('--ground-config-only');
-const selected=checks.filter(row=>entryOnly?row.group==='runtime'&&!/a complete Salt Flats|actual game scene/.test(row.name):groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
+const selected=checks.filter(row=>roundsOnly?row.group==='runtime'&&/a complete Salt Flats/.test(row.name):entryOnly?row.group==='runtime'&&!/a complete Salt Flats|actual game scene/.test(row.name):groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
 for(const {group,name,run}of selected)try{await run();}catch(error){failures++;console.error(`FAIL [${group}] ${name}: ${error.message}`);}
 console.log(`Salt Flats${nativeOnly?' native WIP':''}: ${selected.length} checks, ${selected.length-failures} passed, ${failures} failed.`);
 if(failures)process.exitCode=1;
-if(groundConfigOnly||entryOnly)process.exit(failures?1:0);
+if(groundConfigOnly||entryOnly||roundsOnly)process.exit(failures?1:0);
 
 // Independent ARENA-06 geometry acceptance. Append only: preserve every byte
 // of the independent geometry checks; approved Fuel entry/rule additions above
