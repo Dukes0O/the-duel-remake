@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## Arsenal rear-use report for Claude
+
+The full wave-one report retains all historical samples but records no CPU Oil
+or Smoke use: its damaging-policy seed equips neither weapon, while the other
+races rarely meet their settled rear-defense conditions. May we add separately
+labelled complete races using naturally assigned Oil/Smoke loadouts, legal
+driving inputs and genuine damage, counting their real native events without
+changing historical samples or targets? Medium also wins too often and will
+receive ordinary tuning after the two native motion fixes.
+
 ## Salt control fixture for Kyle
 
 The public Salt checks pass. Its old eight-second Dome control trace predates
@@ -41,81 +51,10 @@ free library sounds to the sound bank, which your separate audio session
 owns. That session has been idle since 25 September; nothing of yours
 changes.
 
-## Mother Mirage split rule for Claude
-
-What starts a split once its cooldown is ready, and is the first split ready
-immediately? The shared tell, eight-metre spacing, six-second copies, two-second
-window and phase-two frequency are settled.
-
-Independent native tests have six passing controls and five genuine missing
-admission checks. The complete early Drone needs Arsenal to free its weapon,
-armor and projectile files; Mirage's real tyre-mark clue needs Salt's renderer.
-Core targeting and the existing scrap burst can stay read-only. No Source has
-started, and the future Arsenal wave will reuse the same actual Drone producer.
-
-## Kingpin move rules for Claude
-
-What triggers Kettle Drop, and what landing target and reach are committed?
-In phase two, does the two-and-a-half-second stuck window follow only the
-second landing or both? Full tells and the second ring at first landing
-are already settled.
-
-The actual footprints and crash solver, four-metre ring radius, native arc
-and existing Titan Warlord kit need no new rules. The complete card waits
-for Arsenal wave one to free combat armor and Crew gear to make Tusk active;
-a saved inactive Tusk ID does not finish the reward. Its new unrun double-drop
-test has a three-second observation bound that must be reviewed after the
-window ruling, before implementation.
-
-## Bounty Hunt rules for Claude
-
-Does a marked player override the usual Easy and Medium hunter cap so every
-computer hunts the mark? Does a self-wreck fallback recipient receive twenty
-points, and who receives the mark when the last hitter or current leader is
-also wrecking? The shared next-wreck sudden-death rule is already settled.
-
-Independent tests reproduce missing native, App and yard entry, with current
-controls passing. Source waits for these two rulings; no new rule was inferred.
-
 ## Kyle's lower wreck-rate choice, 1 October evening
 
 Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
 unchanged; fresh checks precede merge. This answers the earlier hold.
-
-## Dustmonger oil rules for Claude
-
-Before Source: what threshold means driving straight, how wide is the eight-metre
-oil strip and where does it begin behind the cloud? Does it inherit ordinary
-Oil Slick's lifetime, owner grace and slip effect? Other move numbers are settled.
-
-The native Core APIs already support the cloud, strip and working earned Smoke
-with Arsenal enabled. Oil drawing remains with Arsenal wave one, and fight fog
-needs Salt's existing renderer boundary; those files stay with their owners.
-
-## Salt mode scope for Claude
-
-The final Salt direction names four public modes, but the actual event registry
-and panel have only Last Car Rolling and Fuel Run. Bounty Hunt and Ambush Alley
-are separate unbuilt cards. Ambush needs crew gear, while Dune's crew zoom needs
-Salt to free the renderer.
-
-May Salt merge real entry for the built modes, with Bounty and Ambush proving
-Salt in their own cards? No placeholder route or public-entry Source has started.
-Its existing public-round test also requires a finite sudden-death limit;
-released Fuel Run has no limit. That assertion stays frozen until independent
-review records the necessary migration.
-
-## Tanker roof fixes for Claude
-
-Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
-The round-three corrections give the plate a plain dark middle and striped border,
-with the lamps shown off and on in the actual game. All sixty-one native checks,
-twenty-two game views, quiet frame pacing and current lane/build gates pass.
-The stricter CPU timing diagnostic and tiny camera settling are recorded limits.
-
-The fitted renderer currently receives its model from the private review loader;
-ARENA-07 supplies the game caller. May this fitting card merge its recipe and
-renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
 
 ## Two weapon rules for Claude
 
