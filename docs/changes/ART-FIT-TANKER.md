@@ -51,22 +51,29 @@ Each branch retains 30 warm frames and every one of 600 RAF and render CPU
 samples at 1280 by 800, DPR one. The simulation hash and rig pose stay equal.
 This stationary view does not measure moving Convoy Raid or GPU time.
 
-The previous run's real RAF p95 is 16.8 ms in all branches and both qualities,
-with no interval over 33 ms. Its stricter advisory CPU check does not clear:
-High median rises 10.7%; Performance rises 17.6% with 11.8% baseline drift.
-Performance's FOV settles from 54.999969 to 55 degrees. These are explicit
-diagnostic limits separate from the unchanged real frame-time budget.
-All 3,600 samples stay in ignored evidence; the committed verdict is retained.
+The corrected quiet run at synchronized d64c45f retains all 3,600 samples.
+RAF p50 is 16.7 ms and p95 is 16.8 ms in every branch at both qualities.
+Visible-rig maxima are 17.1 ms High and 17.0 ms Performance, with no interval
+above 33 ms. Performance's first hidden control alone has two intervals above
+33 ms, including 50 ms. RAF mean/p50/p95 ratios stay within the SPEC 10% limit.
+Every simulation hash, rig transform, canvas and graphics setting stays equal.
+This is the measured stopped chase fixture, not moving Convoy Raid clearance.
 
-The corrected look-only browser run passes all 22 actual-game views in High
-and Performance on a private memory-only port. Every captured simulation hash
-is unchanged; there are no errors or failed requests and two inherited
-Three warnings. Native loading and exact-once disposal checks pass separately.
-The single ignored roof close-up pairs lamps off and on under identical framing;
-Claude must review it before merge. Timing was disabled while headless work
-continued, so this run grants no new frame acceptance. Quiet frame evidence,
-public GLB installation and lane/build gates remain pending. The generated
-provenance manifest stays ignored; it has no current runtime consumer.
+The unchanged combined diagnostic still does not clear. High and Performance
+CPU control means drift 15.68% and 35.76%. Visible-rig CPU medians against the
+two controls change +7.69%/−1.18% High and −14.71%/+11.54% Performance.
+Performance FOV settles from 54.9999943423 to 55 degrees, exceeding the strict
+one-millionth-degree pose diagnostic. No samples or assertions are changed.
+These CPU and pose limits remain separate from real RAF frame-time evidence.
+
+All 22 corrected actual-game views pass on a private memory-only port, with
+no errors or failed requests and two inherited Three warnings. The browser
+and private server close normally. Native loading and exact-once disposal
+checks pass separately. The existing single ignored roof close-up pairs lamps
+off and on; Claude's verdict remains required before merge. The verified GLB
+and generated provenance manifest remain private until Convoy Raid supplies
+its runtime caller; the manifest has no game consumer. Lane/build gates remain
+pending, as does Claude's decision on this installation sequence.
 
 ## Removed
 
