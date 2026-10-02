@@ -1277,16 +1277,18 @@ tasks:
     waiting_on: kyle
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
-    owner: codex
+    owner: claude
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL, CREW-02, ARENA-PIT]
-    status: ready
+    needs: [WAR-HOOKS]
+    status: building
+    claimed_by: claude-sonnet-2026-10-02
     flag: scrapdome
-    owns: [src/arena/moves/pincer.js, tools/test-warlord-vultures.mjs, docs/changes/WAR-03c.md]
+    owns: [src/warlords/vultures.js, tools/test-twin-vultures.mjs, docs/changes/WAR-03c.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: The Twin Vultures' in docs/SCRAPDOME.md section 5, including the two-car format and the collision stun through crash physics. When built, status review and waiting_on: claude before merge."
+    claude_scope_change: "2 October 2026: a Claude Sonnet session builds the Twin Vultures now, like the Kingpin: the fight on the ring first (move it to the Pit with venue: 'pit' once ARENA-PIT merges), and the Jax grapple reward saved as earned until CREW-02 makes it usable. Codex: do not start this card or edit src/warlords/vultures.js."
   - id: WAR-03d
     title: "The Tollkeeper: Toll Gate on the Convoy Raid"
     owner: codex
