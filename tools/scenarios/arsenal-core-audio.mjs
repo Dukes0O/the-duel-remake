@@ -158,8 +158,21 @@ async function capture(quality, side) {
     // audio cue indices continue. Three repetitions exercise A, B and C.
     for (cycle = 0; cycle < 3; cycle++) {
       oil = null; deployed = touched = smoked = false;
-      await startCycle(); cycleBegan = ctx.currentTime; measuring = true;
-      app.start(); await sleep(3900); app.stop(); measuring = false;
+      await startCycle();
+      const armedState = state, armedCourse = app.duel.course, inputDeadline = performance.now() + 5000;
+      app.start();
+      // The first production RAF has dt=0. Wait for genuine fixed steps to
+      // apply the held key and rev the engine before starting the cue clock.
+      while (state.input.throttle !== 1 || !(Number.isFinite(state.revs) && state.revs > 0)) {
+        if (app.duel.state !== armedState || app.duel.course !== armedCourse)
+          throw Error('Actual campaign changed while arming the audio drive.');
+        if (performance.now() >= inputDeadline) throw Error('Actual full-throttle engine input timed out.');
+        await sleep(16);
+      }
+      if (app.duel.state !== armedState || app.duel.course !== armedCourse)
+        throw Error('Actual campaign changed before arming the audio drive.');
+      cycleBegan = ctx.currentTime; measuring = true;
+      await sleep(3900); app.stop(); measuring = false;
       window.dispatchEvent(new KeyboardEvent('keyup', {code: 'KeyW', key: 'w', bubbles: true}));
       for (const id of ids) {
         if (native.filter(event => event.id === id && event.cycle === cycle).length !== 1 ||

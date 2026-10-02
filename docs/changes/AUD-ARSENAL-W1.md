@@ -75,9 +75,14 @@ Its cause is unproved. The recipe now persists each returned partial/completed
 row, native events and input frames before recording validation, without PCM
 or base64 in JSON. A failure retains the strict throw and prints sample count,
 start time, chunk count and first gap's previous/expected/actual frame numbers.
-This diagnostic change is unrun; Performance acceptance and human recognition
-remain open. No audio Source, assets, assertions or replay pins changed, and
-no broad gate, build or protected-audio job ran for these diagnostics.
+A fresh diagnostic capture exposed a delayed first production RAF with dt=0:
+W was held and readiness/car context were correct, but no native input step
+had run. The recipe now starts the real App and waits at most five seconds
+for genuine throttle 1 and positive revs on the same state/course before
+arming/resetting its clock. It assigns neither input nor revs, and the original
+strict measured checks and native cue timings remain. This arming fix is unrun;
+Performance acceptance and human recognition remain open. No runtime audio,
+assets, assertions or replay pins changed; no broad gate or build ran here.
 
 Automatic approval review rejected an optional preservation JSON as an
 unreviewed fingerprint baseline. It was never created or retried by this
