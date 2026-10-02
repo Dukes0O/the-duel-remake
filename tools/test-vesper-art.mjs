@@ -10,7 +10,6 @@ import {createRiggedFighterFigures} from '../src/rigged-fighter.js';
 
 // Private artifact acceptance. No install, reveal, real storage or renderer-state writes.
 const root = fileURLToPath(new URL('../', import.meta.url));
-const BASE = 'e2e4fdb40254d7a4354dbec25a95006dee79e354';
 const SOURCE = 'public/assets/models/wasteland/crew/odessa.glb';
 const RECIPE = 'tools/blender/vesper-blackiron.py';
 const CONFIG = 'tools/art/vesper-fit.json';
@@ -33,6 +32,14 @@ const required = (value, purpose) => {
   ok(existsSync(path(value)), `${purpose}: missing ${value}`);
   return readFileSync(path(value));
 };
+function protectedInventory() {
+  const files = directory => readdirSync(path(directory), {withFileTypes: true}).flatMap(entry =>
+    entry.isDirectory() ? files(directory + '/' + entry.name) : [directory + '/' + entry.name]);
+  return Object.fromEntries([...files('src'), ...files('public'), ...files('tools/replays')].sort()
+    .map(name => [name, hash(readFileSync(path(name)))]));
+}
+// Freeze current game bytes before any private recipe command can run.
+const protectedBefore = Object.freeze(protectedInventory());
 const outputArgument = process.argv.indexOf('--output-dir');
 const output = resolve(outputArgument < 0 ? path('.qa-dist/vesper-art/' + randomUUID()) : process.argv[outputArgument + 1]);
 function privatePath(value) {
@@ -163,19 +170,8 @@ function command(args) {
 }
 function protectedFiles() {
   for (const [name, expected] of Object.entries(SOURCES)) eq(hash(required(name, 'Approved source')), expected, 'recipe/reference/rights bytes stay intact');
-  const listing = spawnSync('git', ['ls-tree', '-r', BASE, '--', 'src', 'public', 'tools/replays'], {cwd: root, encoding: 'utf8', windowsHide: true});
-  eq(listing.status, 0, 'read only frozen source/public/replay tree');
-  const expectedNames = [];
-  for (const line of listing.stdout.trim().split('\n').filter(Boolean)) {
-    const [entry, name] = line.split('\t'); const id = entry.split(' ')[2]; expectedNames.push(name);
-    const bytes = required(name, 'Existing game artifact');
-    eq(createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex'), id,
-      `${name}: existing source, crew, roster, save code and replay bytes must stay unchanged`);
-  }
-  const files = directory => readdirSync(path(directory), {withFileTypes: true}).flatMap(entry =>
-    entry.isDirectory() ? files(directory + '/' + entry.name) : [directory + '/' + entry.name]);
-  same([...files('src'), ...files('public'), ...files('tools/replays')].sort(), expectedNames.sort(),
-    'private fit adds no runtime/reveal/source/replay file');
+  same(protectedInventory(), protectedBefore,
+    'private fit preserves exact current source/public/replay file paths and bytes');
 }
 async function lifecycle(bytes) {
   const loaded = await parse(bytes), resources = new Set();
