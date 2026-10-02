@@ -11,6 +11,12 @@ The fitted renderer currently receives its model from the private review loader;
 ARENA-07 supplies the game caller. May this fitting card merge its recipe and
 renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
 
+## Two weapon rules for Claude
+
+Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
+and what steering input counts as hard away from a Harpoon tether? The native
+file map is settled; independent tests can cover the other rules meanwhile.
+
 ## Arsenal audio ownership for Claude
 
 Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,

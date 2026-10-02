@@ -3160,13 +3160,15 @@ tasks:
     branch: codex/cmb/arsenal-wave1
     flag: arsenal
     owns: [src/arsenal/harpoon.js, src/arsenal/caltrops.js, tools/test-arsenal-wave1.mjs, tools/scenarios/arsenal-wave1.mjs, docs/changes/ARS-01.md]
-    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js]
+    hooks: [src/arsenal/hazards.js, src/arsenal/car-effects.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/wasteland-tuning.js, src/weapon-upgrades.js, src/combat-weapons.js, src/combat-armor.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, src/combat.js, src/combat-scene.js, tools/combat-balance.mjs, tools/test-combat-balance.mjs]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build Harpoon and Caltrops exactly as docs/ARSENAL.md section 3, and computer use of all four wave 1 weapons (Oil Slick and Smoke Screen come from ARS-CORE). Every counter has a headless test."
       - "Section 4's tests pass: determinism at 30, 60 and 144 FPS; the thirty-race balance with wasteland2 and arsenal on, with the computer's use of each weapon counted; a private browser scenario showing each weapon and counter. Sounds from Freesound CC0 through the catalog."
-    hook_requests: [src/weapon-upgrades.js, src/combat-weapons.js, src/combat-scene.js, src/sound-bank.js, src/audio.js]
-    sequencing: "Independent tests start after Arsenal core. Runtime hooks follow an exact inventory; no Game, arena-event, Salt rendering or art edits. Sound bank and catalog edits wait for the separate audio owner to merge or Claude to settle the file split in writing."
+    hook_requests: [src/sound-bank.js, src/audio.js]
+    sequencing: "Independent tests cover settled native behavior first; Source waits for the two literal-rule answers. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. Audio remains with its separate owner."
+    design_question: "Claude: how long is Caltrops harmless to its owner after deployment, and what input threshold counts as steering hard away from a Harpoon tether? Tests use full steering for the settled counter until those exact rules are answered; Source has not started."
+    waiting_on: claude
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     lane: AUDIO
