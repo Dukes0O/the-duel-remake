@@ -1,3 +1,5 @@
+import {arsenalEnabled} from './combat-weapons.js';
+import {hazardsFor} from './arsenal/hazards.js';
 import * as THREE from 'three';
 import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
 import { createArmorKitMeshes } from './armor-kit-meshes.js';
@@ -20,6 +22,34 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   shieldRim:new THREE.LineBasicMaterial({color:0xffd69b,transparent:true,opacity:.32,depthWrite:false}),
   tip:new THREE.MeshBasicMaterial({color:0xffdf89})};
  const sphere=new THREE.IcosahedronGeometry(1,1),ring=new THREE.TorusGeometry(1,.055,6,28),shaft=new THREE.CylinderGeometry(.07,.07,3,5),tip=new THREE.ConeGeometry(.35,.8,5);
+ // Preallocate the same bounded pool as the native hazard registry.
+ const oilGeometry=new THREE.CircleGeometry(1,32);
+ const hazardViews=Array.from({length:24},(_,index)=>{
+  const holder=new THREE.Group();holder.name='arsenal-hazard-'+index;holder.visible=false;
+  const oilMaterial=new THREE.MeshStandardMaterial({color:0x171512,metalness:.35,
+   roughness:.22,transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide});
+  const smokeMaterial=new THREE.MeshStandardMaterial({color:0x82786c,roughness:1,
+   transparent:true,opacity:.65,depthWrite:false});
+  const oil=new THREE.Mesh(oilGeometry,oilMaterial);oil.rotation.x=-Math.PI/2;
+  const smoke=new THREE.Mesh(sphere,smokeMaterial);
+  smoke.position.y=2.1;
+  holder.add(oil,smoke);group.add(holder);
+  return {holder,oil,smoke,oilMaterial,smokeMaterial};
+ });
+ function updateHazards(duel,active){
+  const hazards=active&&arsenalEnabled(duel) ? hazardsFor(duel) : [];
+  hazardViews.forEach((view,index)=>{
+   const hazard=hazards[index];
+   view.holder.visible=!!hazard && hazard.opacity>0 && hazard.age<hazard.lifetime;
+   if(!view.holder.visible)return;
+   view.holder.position.set(hazard.x,(hazard.y||0)+.025,hazard.z);
+   const oil=hazard.kind==='oil';view.oil.visible=oil;view.smoke.visible=!oil;
+   view.oil.scale.setScalar(hazard.radius);
+   view.smoke.scale.set(hazard.radius,2.1,hazard.radius);
+   view.oilMaterial.opacity=.9*hazard.opacity;
+   view.smokeMaterial.opacity=.65*hazard.opacity;
+  });
+ }
  const rocketBody=new THREE.CylinderGeometry(.16,.16,1.25,8),rocketNose=new THREE.ConeGeometry(.21,.38,8);
  const shieldShell=new THREE.IcosahedronGeometry(1,0);
  const shieldRim=new THREE.BufferGeometry().setFromPoints(Array.from({length:64},(_,i)=>new THREE.Vector3(Math.cos(i*Math.PI/32),0,Math.sin(i*Math.PI/32))));
@@ -139,6 +169,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const s = duel.state, c = s.combat;
   const active = !!c && s.status !== 'menu';
   group.visible = active;
+  updateHazards(duel,active);
   const departed = s.footPresentation;
   const showDeparted = !s.onFoot && departed &&
    s.stageTimeSec >= departed.presentation.startedAt &&
@@ -225,7 +256,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
    armorKits.dispose();
    for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
    rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
-   for(const geometry of [sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim])geometry.dispose();
+   for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim])geometry.dispose();
+   hazardViews.forEach(view=>{view.oilMaterial.dispose();view.smokeMaterial.dispose();});
    Object.values({...materials,...pickupMaterials}).forEach(material=>material.dispose());
   },
  };

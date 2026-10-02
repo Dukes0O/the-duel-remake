@@ -1,4 +1,11 @@
-export const WEAPONS=Object.freeze({ufo:{name:'UFO JUMP',key:'1',cooldown:18},bomb:{name:'BOMB STORM',key:'2',cooldown:9},crossbow:{name:'CROSSBOW',key:'3',cooldown:4},star:{name:'STAR SHIELD',key:'4',cooldown:16}});
+export const WEAPONS = Object.freeze({
+  ufo: {name: 'UFO JUMP', key: '1', cooldown: 18},
+  bomb: {name: 'BOMB STORM', key: '2', cooldown: 9},
+  crossbow: {name: 'CROSSBOW', key: '3', cooldown: 4},
+  star: {name: 'STAR SHIELD', key: '4', cooldown: 16},
+  oil: {name: 'OIL SLICK', cooldown: 10},
+  smoke: {name: 'SMOKE SCREEN', cooldown: 14},
+});
 export const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},
  medium:{interval:7,aimError:.055,shieldReaction:.13,visionCos:.26},
