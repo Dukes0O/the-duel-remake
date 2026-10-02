@@ -622,3 +622,14 @@ review and handoff at 8:30, ending by 8:45. No new push approval is needed.
 Janitor note folding: removed the consumed detailed overnight checkpoint
 paragraphs. Its still-needed Source and review facts live in the current cards,
 change notes and settled design pages; Kyle's decisions and release records stay.
+
+The approved lower wreck rate merged after independent review, 166 affected
+lane suites and build. All 108 native rounds finish; Medium averages 12.417
+within the unchanged ten-to-fourteen target. All nine warlord armor values
+stay exact. The sole ordinary arena replay change is paired and explained;
+road and Sal pins stay exact. Feature merges since the checkpoint: three,
+plus Claude's decision merge. The next full checkpoint follows now.
+
+Janitor after wreck-rate: integration dependency link removed, clean lane
+removed with plain git worktree remove, merged branch and used evidence deleted.
+Status refreshed; current assets, decisions and all unfinished lanes stay.

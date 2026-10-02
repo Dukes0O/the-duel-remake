@@ -50,7 +50,8 @@ reply chooses the lower wreck rate, with Sal health unchanged.
 Arsenal and junk movement are merged after current lane/build gates. Junk has
 independent Source and four-case browser review, with clustered-cover respawns
 and late-contact containment fixed. Original road, LCR and Sal pins are unchanged.
-The approved wreck-rate candidate now resumes current balance and merge gates. Tanker's two fixes
+The approved lower wreck rate is merged: Medium averages 12.4 per round,
+with all warlord armor unchanged. Tanker's two fixes
 have passing native, frame, lane and build checks, with the roof view and
 installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use test failures;
 its two literal-rule questions and shared sound-bank wait are in the inbox.
@@ -73,7 +74,7 @@ half-hour clock polling.
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
-| A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE resumes with Kyle's lower-rate choice, then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
+| A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE merged with Kyle's lower-rate choice; then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
 | B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
