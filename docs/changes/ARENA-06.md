@@ -58,6 +58,14 @@ The additive --rounds-only selection runs those two checks without Blender;
 default whole-card selection and every assertion are unchanged. Current
 Blender registration, lane tier and build remain pending.
 
+Independent output-registration tests now cover the actual Salt CLI in plain
+Python, with its normal root, private output, fit config and seed arguments.
+Three checks give one PASS and two genuine RED: the early bpy import prevents
+both empty temporary roots from planning venue.glb, manifest.json and the three
+existing packed PNG outputs. Planning creates no files. The shared output guard
+passes 43/43 with Salt beside Vesper in its native-suite list; Tanker and Vesper
+assertions remain exact. Source must handle --paths-only before Blender imports.
+
 ## Accepted private evidence
 
 Earlier generated config and two controls passed. All 16 registered Course
