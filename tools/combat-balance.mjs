@@ -447,11 +447,15 @@ export function reportFailures(report, runs, baselineRuns) {
   const { winRateByDifficulty: baselineWins, firstTwelveSec, ufoGainByDifficulty,
     crossbowAim, ownBombs, cpuHitsByDifficulty } = report;
   const failures = [];
+  const rearDefenseRuns = report.rearDefense?.races || [];
+  const observedRuns = [...runs, ...baselineRuns, ...rearDefenseRuns];
   failures.push(...winRateFailures(baselineWins));
   if (firstTwelveSec >= 120) failures.push(`12-run pace ${firstTwelveSec}s exceeds 120s`);
   if (runs.some(run => !run.completed)) failures.push('one or more policy races did not complete');
   if (baselineRuns.some(run => !run.completed)) failures.push('one or more baseline win-rate races did not complete');
-  if ([...runs, ...baselineRuns].some(run => run.unattributedEnemyHits)) failures.push('enemy hit events lack victim identity');
+  if (observedRuns.some(run => run.unattributedEnemyHits || run.cpuHits === null)) failures.push('enemy hit events lack victim identity');
+  if (observedRuns.some(run => Object.values(run.unattributedWeaponUses || {}).some(count => count > 0)))
+    failures.push('weapon use events lack actor attribution');
   for (const [policy, samples] of Object.entries(ufoGainByDifficulty)) for (const [difficulty, gain] of Object.entries(samples)) {
     if (gain > 4) failures.push(`${policy}/${difficulty} time gain ${gain}s exceeds 4s`);
   }
@@ -462,7 +466,6 @@ export function reportFailures(report, runs, baselineRuns) {
       failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}–${high}`);
     }
   }
-  const rearDefenseRuns = report.rearDefense?.races || [];
   if (rearDefenseRuns.some(race => !race.completed)) failures.push('one or more rear-defense supplemental races did not complete');
   const measuredUses = sumWeaponUses([{weaponUses: report.weaponUses},
     ...rearDefenseRuns.filter(race => race.completed)]);
