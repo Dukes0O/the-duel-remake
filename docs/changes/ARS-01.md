@@ -57,21 +57,23 @@ cannot consume the projectile identity before use attribution.
 Restored two range-message characters and one unchanged comment after an
 encoding error; all source writes now name UTF-8 explicitly.
 
-## Save Guardian follow-up: tests first
+## Save Guardian follow-up
 
-A canonical version-two registry can already own Harpoon or Caltrops as an
-old future id without a level. Actual load and direct raw save add level zero,
-but startup currently skips its verified backup. Memory-only regressions reach
-40 checks: four preservation controls pass and ten backup checks fail. They
-cover detection, exact pre-migration bytes, both normalization paths, failed
-and unverified recovery, other named careers, valid levels and future fields.
-All existing career-backup assertions pass unchanged; no replay pin changed.
-Source must recognize this shape change before startup can normalize it.
-The unchanged Arsenal save suite passes 99 of 100 cases. Save Guardian
-approved replacing its Crossbow-only front-attack predicate with Crossbow or
-Harpoon; seed 1989, rank-six Easy carries Harpoon, Star, Caltrops and Oil.
-The test-author role forbids editing existing assertions, so that narrow
-reviewed correction is handed to the builder; all 180 policy inputs remain.
+Tests first at f03c568 reached 40 checks: four controls passed and ten
+backup cases failed. Recognizing an already earned future Harpoon or
+Caltrops adds level zero without granting ownership.
+needsCareerMigration now compares saved levels with the real normalizer.
+The existing verified backup keeps every original registry byte before
+startup normalization, including formatting, future fields and other careers.
+All 14 new cases pass with 88 reached checks; seven historical fixtures,
+quota, validation and recovery checks pass unchanged.
+The native wave suite passes 57/57; Arsenal save remains 99/100.
+Save Guardian approved the front predicate's Crossbow-or-Harpoon correction:
+rank-six Easy seed 1989 carries Harpoon, Star, Caltrops and Oil, satisfying
+the settled front-damage rule. Automatic approval review rejected that exact
+existing-assertion edit twice and requires Kyle's explicit approval.
+It remains unchanged. No new storage, unknown-id grant or replay-pin edit.
+Independent Save Guardian re-review and fresh broad gates remain required.
 
 ## Remaining acceptance
 
@@ -92,4 +94,5 @@ lane/build gates remain mandatory before handoff for merge.
 Replaced the two-user rear deployment branch with genuine four-user wave-one
 scheduling and extended real projectile accounting. Unpacked the rewritten
 combat presentation file. Removed no asset, starter id, target band or replay
-pin. Diagnostic output stays in the ignored lane QA directory.
+pin. Replaced the level-blind backup guard with the actual normalizer check.
+Diagnostic output stays in the ignored lane QA directory.
