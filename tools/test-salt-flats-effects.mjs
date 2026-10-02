@@ -153,7 +153,7 @@ try {
   });
   await check('outside presentation updates preserve real Duel, physical queries and seeded RNG', async () => {
     const duel = new Duel({seed:1989, featureFlags:createFeatureFlags({storage:null, qa:true,
-      search:'?flags=scrapdome,wasteland2'})});
+      search:'?flags=scrapdome,wasteland2,salt-flats'})});
     assert(duel.startArenaEvent({venueId:'salt-flats', car:'falcone_f42', seed:1989,
       opponents:[{car:'dusthawk_rally'}]}));
     const before = JSON.stringify(duel.state), features = JSON.stringify(duel.course.features);

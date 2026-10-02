@@ -50,7 +50,7 @@ const model=await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.by
 model.scene.updateMatrixWorld(true);
 const course=new Course(ARENA_VENUES['salt-flats'],fit.seed);
 function arena(car='falcone_f42',venueId='salt-flats'){
-  const duel=new Duel({seed:fit.seed,featureFlags:createFeatureFlags({storage:null,qa:true,search:'?flags=scrapdome,wasteland2'})});
+  const duel=new Duel({seed:fit.seed,featureFlags:createFeatureFlags({storage:null,qa:true,search:'?flags=scrapdome,wasteland2,salt-flats'})});
   assert.equal(duel.startArenaEvent({venueId,car,seed:fit.seed,cpuDifficulty:'medium',
     opponents:[{car:'dusthawk_rally'}]}),true,'actual registered native arena starts');
   return duel;

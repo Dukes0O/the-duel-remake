@@ -32,9 +32,9 @@ async function capture(context, name) {
   return context.screenshot(name);
 }
 async function sample(context){assert.equal(process.env.SALT_FLATS_MEASURE_FRAMES,'1','frame samples require Director-agreed quiet window');return context.evaluate(`new Promise(resolve=>{const rows=[];let prior;function next(now){window.__qaApp.duel.step(1/120);window.__qaApp.onFrame(window.__qaApp.duel.state,0);if(prior!==undefined)rows.push(now-prior);prior=now;if(rows.length<180)return requestAnimationFrame(next);const sorted=[...rows].sort((a,b)=>a-b),r=window.__render;resolve({samples:rows.length,meanMs:rows.reduce((a,b)=>a+b,0)/rows.length,p95Ms:sorted[Math.ceil(sorted.length*.95)-1],drawCalls:r.renderer.info.render.calls,triangles:r.renderer.info.render.triangles,clock:'Actual requestAnimationFrame interval; real renderer active, no synthetic clock.'});}requestAnimationFrame(next);})`);}
-export async function run(context){const report={card:'ARENA-06',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),asset:await assets(),fixture:'Actual App/Duel/production renderer; native venue selection only, public entry held; memory-only storage.',captures:[],frames:[],issues:context.issues,warnings:context.warnings,limits:['Kyle/Claude art/heat/feel approval is not inferred from geometry presence.','Headless muted run does not establish sound approval.','Phone capture is not part of this laptop geometry fixture.']};
+export async function run(context){if(process.env.SALT_FLATS_PUBLIC_ENTRY==='1')return runPublicEntry(context);const report={card:'ARENA-06',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),asset:await assets(),fixture:'Actual App/Duel/production renderer; native venue selection only, public entry held; memory-only storage.',captures:[],frames:[],issues:context.issues,warnings:context.warnings,limits:['Kyle/Claude art/heat/feel approval is not inferred from geometry presence.','Headless muted run does not establish sound approval.','Phone capture is not part of this laptop geometry fixture.']};
   const persist=()=>writeFile(join(context.outputDir,'salt-flats-browser.json'),JSON.stringify(report,null,2)+'\n');
-  try{for(const quality of ['high','performance']){await context.navigate('/tools/menu-check.html?flags=scrapdome,wasteland2&harness=salt-flats-'+quality);await context.waitFor('!!window.__qaApp&&!!window.__render',quality+' actual menu',60000);
+  try{for(const quality of ['high','performance']){await context.navigate('/tools/menu-check.html?flags=scrapdome,wasteland2,salt-flats&harness=salt-flats-'+quality);await context.waitFor('!!window.__qaApp&&!!window.__render',quality+' actual menu',60000);
     for(const venue of ['scrapdome','salt-flats']){await start(context,quality,venue);for(const mode of ['near','racing','full']){const witness=await pose(context,mode);const path=await capture(context,quality+'-'+venue+'-'+mode);report.captures.push({quality,...witness,path});await persist();}
       if(venue==='salt-flats'){const witness=await context.evaluate(`(()=>{const r=window.__render,n=r.scene.getObjectByName('Salt Flats');let meshes=0,triangles=0;if(n)n.traverse(m=>{if(m.isMesh){meshes++;triangles+=(m.geometry.index?.count??m.geometry.attributes.position.count)/3;}});return {present:!!n,status:n?.userData.assetStatus,errors:n?.userData.loadErrors,ground:!!n?.getObjectByName('salt-flats-ground'),ramps:[1,2].map(i=>!!n?.getObjectByName('salt-ramp-'+i)),meshes,triangles};})()`);report.nativeWitness=witness;await persist();
         // Actual native scene views let Claude judge heat; no cloned silhouettes
@@ -52,3 +52,97 @@ export async function run(context){const report={card:'ARENA-06',sourceCommit:ex
     if(process.env.SALT_FLATS_MEASURE_FRAMES==='1'){const baseline=report.frames.find(f=>f.quality===quality&&f.venue==='scrapdome'),salt=report.frames.find(f=>f.quality===quality&&f.venue==='salt-flats');assert(salt.p95Ms<=baseline.p95Ms*1.10,quality+' Salt actual P95 exceeds settled Scrapdome +10%: '+JSON.stringify({baseline,salt}));}}
     assert.equal(process.env.SALT_FLATS_MEASURE_FRAMES,'1','actual matched frame gate is pending until agreed quiet measurement');report.passed=true;
   }catch(error){report.passed=false;report.failure=error.stack;throw error;}finally{await persist();}}
+
+
+// The accepted art proof above is separate from this real clickable yard path.
+// Rank and discovery below are explicit profile fixtures in the QA memory store.
+async function click(context, selector) {
+  const point = await context.evaluate(`(() => {
+    const button = document.querySelector(${JSON.stringify(selector)});
+    if (!button || button.disabled) throw Error('Missing usable yard control: '+${JSON.stringify(selector)});
+    button.scrollIntoView({block:'center'});
+    const rect = button.getBoundingClientRect();
+    if (!rect.width || !rect.height) throw Error('Hidden yard control');
+    return {x:rect.x+rect.width/2,y:rect.y+rect.height/2};
+  })()`);
+  await context.command('Input.dispatchMouseEvent', {type:'mousePressed',button:'left',clickCount:1,...point});
+  await context.command('Input.dispatchMouseEvent', {type:'mouseReleased',button:'left',clickCount:1,...point});
+}
+
+async function runPublicEntry(context) {
+  await context.command('Emulation.setDeviceMetricsOverride', {
+    width:1280,height:800,deviceScaleFactor:1,mobile:false,
+  });
+  const report = {card:'ARENA-06',kind:'public-entry',
+    sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+    fixture:'Actual App, yard router, native Duel and production GLB loader; named dev flags; rank/discovery profile fixtures only; memory-only storage.',
+    entries:[],issues:context.issues,warnings:context.warnings,
+    limits:['Muted entry checks do not judge sound or repeat the accepted art/frame verdict.']};
+  const persist = () => writeFile(join(context.outputDir,'salt-public-entry.json'),JSON.stringify(report,null,2)+'\n');
+  try {
+    for (const quality of ['high','performance']) {
+      await context.evaluate('window.name=""');
+      await context.navigate('/tools/menu-check.html?flags=salt-flats,fuel-run&harness=salt-public-'+quality);
+      await context.waitFor('!!window.__qaApp&&!!window.__render',quality+' actual menu',60000);
+      await context.evaluate(`(() => {
+        const app = window.__qaApp;
+        if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||
+            !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only QA required');
+        app.stop(); app.audio.setMuted(true); app.setGraphicsQuality(${JSON.stringify(quality)});
+        for (const panel of document.querySelectorAll('details'))
+          if (panel.querySelector('summary')?.textContent.startsWith('MENU QA')) panel.open=false;
+        const rank=9,xp=Array.from({length:rank-1},(_,i)=>400+150*i).reduce((sum,n)=>sum+n,0);
+        app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true,rank,xp}};
+        if (!app._saveProfile()) throw Error('Memory fixture save failed');
+        if (!app.visitWasteland()) throw Error('Actual yard visit refused');
+        app.advance(8);
+        if (!app.isYardHomeActive()) throw Error('Actual yard arrival failed');
+      })()`);
+      for (const mode of ['last-car-rolling','fuel-run']) {
+        await click(context,'[data-action="yard-scrapdome"]');
+        await context.waitFor(`!!document.querySelector('[data-arena-venue="salt-flats"]')`,'eligible Salt venue choice');
+        await click(context,'[data-arena-venue="salt-flats"]');
+        await click(context,'[data-arena-mode="'+mode+'"]');
+        const choices = await context.evaluate(`(() => ({
+          saltSelected:document.querySelector('[data-arena-venue="salt-flats"]')?.getAttribute('aria-pressed'),
+          modeSelected:document.querySelector('[data-arena-mode="${mode}"]')?.getAttribute('aria-pressed'),
+          label:document.querySelector('[data-action="arena-start"]')?.textContent.trim(),
+        }))()`);
+        assert.equal(choices.saltSelected,'true'); assert.equal(choices.modeSelected,'true');
+        assert.equal(choices.label,'ENTER THE SALT FLATS');
+        await context.screenshot(quality+'-'+mode+'-salt-yard');
+        await click(context,'[data-action="arena-start"]');
+        await context.waitFor(`window.__qaApp.duel.state.arena?.venueId==='salt-flats'&&
+          window.__qaApp.duel.state.arena?.mode===${JSON.stringify(mode)}`,'actual selected Salt event');
+        await settled(context,quality+' '+mode+' production cars');
+        await context.waitFor(`window.__render.scene.getObjectByName('Salt Flats')?.userData.assetStatus==='ready'`,'actual runtime Salt model');
+        const state = await context.evaluate(`(() => {
+          const app=window.__qaApp,world=window.__render.scene.getObjectByName('Salt Flats');
+          app.advance(4);app.onFrame(app.duel.state,0);window.__render.renderFrame();
+          return {venue:app.duel.state.arena.venueId,mode:app.duel.state.arena.mode,
+            course:app.duel.course.def.id,status:app.duel.state.status,
+            clock:app.duel.state.arena.clockSec,asset:world.userData.assetStatus,
+            errors:world.userData.loadErrors,activeRace:app.profile.activeRace,
+            ground:!!world.getObjectByName('salt-flats-ground')};
+        })()`);
+        assert.equal(state.venue,'salt-flats'); assert.equal(state.course,'salt-flats');
+        assert.equal(state.mode,mode); assert.equal(state.status,'racing');
+        assert(state.clock>0); assert.equal(state.asset,'ready'); assert.equal(state.ground,true);
+        assert.deepEqual(state.errors,[]); assert.equal(state.activeRace,null);
+        report.entries.push({quality,...choices,...state}); await persist();
+        await context.screenshot(quality+'-'+mode+'-salt-fight');
+        await click(context,'#pause-button');
+        await click(context,'[data-action="arena-rematch"]');
+        assert.equal(await context.evaluate('window.__qaApp.duel.state.arena.venueId'),'salt-flats','actual rematch keeps venue');
+        assert.equal(await context.evaluate('window.__qaApp.duel.state.arena.mode'),mode,'actual rematch keeps mode');
+        await settled(context,quality+' '+mode+' rematch loading');
+        await click(context,'#pause-button');
+        await click(context,'[data-action="arena-yard"]');
+        await context.evaluate('window.__qaApp.advance(8)');
+        await context.waitFor('window.__qaApp.isYardHomeActive()','actual return to yard');
+      }
+    }
+    report.passed=true;
+  } catch (error) {report.passed=false;report.failure=error.stack;throw error;}
+  finally {await persist();}
+}
