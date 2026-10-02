@@ -18,7 +18,7 @@ import {createProfile, createPlayerRegistry, savePlayers, PLAYERS_KEY} from '../
 import {normalizeWasteland} from '../src/wasteland-progress.js';
 
 // ARENA-04, SCRAPDOME 10 and shared 3/6. Only real engine and App entry paths.
-// The two disputed transfer/cap rules are deliberately absent until Claude rules.
+// Handover, hunter caps and Salt entry follow Claude's 2 October 00:30 answers.
 const DT = 1 / 120;
 const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true,
   warlords: true, 'fuel-run': true, 'bounty-hunt': true};
@@ -51,9 +51,9 @@ const rule = (name, fn) => {if (!admissionOnly) test(name, fn);};
 const tick = (duel, count = 1) => {for (let n = 0; n < count; n++) duel.step(DT);};
 const member = (duel, id) => duel.state.arena.participants.find(p => p.id === id);
 const actor = (duel, id) => id === 'player' ? duel.state : duel.state.opponents.find(a => a.arenaId === id);
-function started({flags = ON, difficulty = 'medium', seed = 1989, opponents = FIELD} = {}) {
+function started({flags = ON, difficulty = 'medium', seed = 1989, opponents = FIELD, venueId = 'scrapdome'} = {}) {
   const duel = new Duel({seed, featureFlags: flags});
-  const admitted = duel.startArenaEvent({mode: 'bounty-hunt', car: 'falcone_f42',
+  const admitted = duel.startArenaEvent({venueId, mode: 'bounty-hunt', car: 'falcone_f42',
     cpuDifficulty: difficulty, playerId: 'bounty-test', seed, opponents, arsenalRank: 9});
   return {duel, admitted};
 }
@@ -146,6 +146,33 @@ test('real native admission accepts Bounty with its switch enabled', () => {
   eq(admitted, true, 'startArenaEvent must accept Bounty rather than rejecting an unregistered mode');
   eq(duel.state.arena.mode, 'bounty-hunt', 'native admission creates the requested event');
 });
+test('real native admission accepts Bounty on the Salt Flats', () => {
+  const {duel, admitted} = started({venueId: 'salt-flats', flags: {...ON, 'salt-flats': true}});
+  eq(admitted, true, 'native Salt Flats admission must accept the real Bounty mode');
+  eq(duel.state.arena.venueId, 'salt-flats', 'native Bounty keeps the selected Salt venue');
+  eq(duel.course.def.id, 'salt-flats', 'native Bounty actually drives the Salt course');
+  ok(mark(duel).startsWith('cpu-'), 'native Medium Salt Bounty initializes an actual CPU mark');
+});
+
+test('rank-nine discovered App entry starts and settles Bounty on the actual Salt Flats', () => {
+  const app = yard({flags: {...ON, 'salt-flats': true}}), before = structuredClone(app.profile);
+  try {
+    eq(app.startArenaEvent({venueId: 'salt-flats', mode: 'bounty-hunt', opponents: 3}), true,
+      'rank-nine public App entry must admit Salt Flats Bounty');
+    eq(app.duel.state.arena.venueId, 'salt-flats', 'public Bounty selection retains Salt venue');
+    eq(app.duel.course.def.id, 'salt-flats', 'public Salt Bounty never silently launches Scrapdome');
+    app.duel.state.countdown = 0; tick(app.duel);
+    const result = finishPlayerWin(app), paid = values.get(PLAYERS_KEY), paidWrites = writes;
+    const reward = arenaReward(app.duel.state.arena, 'medium');
+    eq(result.scrapEarned, reward.total, 'the actual Salt Bounty result pays its arena reward');
+    eq(app.profile.wasteland.scrap, before.wasteland.scrap + reward.total, 'Salt Bounty banks scrap once');
+    eq(app.profile.credits, before.credits, 'Salt Bounty keeps racing credits unchanged');
+    eq(app._settleArenaResult({result}, app.duel.state), false, 'the same genuine Salt result cannot pay twice');
+    eq(values.get(PLAYERS_KEY), paid, 'duplicate Salt settlement preserves durable memory-only bytes');
+    eq(writes, paidWrites, 'duplicate Salt settlement makes no extra write');
+  } finally {app.dispose?.();}
+});
+
 test('switch-off and unknown-mode refusal preserve native state', () => {
   const duel = new Duel({seed: 1989, featureFlags: {...ON, 'bounty-hunt': false}});
   const before = JSON.stringify(duel.state);
@@ -256,8 +283,115 @@ rule('a self-wreck with no prior hit passes the mark to a living score leader', 
   member(duel, 'player').bountyPoints = 10;
   wreck(duel, original, null);
   eq(mark(duel), 'player', 'a no-attacker marked self-wreck passes to the living score leader');
-  // Whether that fallback receives twenty points is an open Claude question.
+  // The settled no-bonus and marked-victim exclusion have a separate native case below.
 });
+rule('a self-wreck excludes the marked score leader and gives its recipient no twenty-point bonus', () => {
+  const duel = start(), original = mark(duel);
+  member(duel, original).bountyPoints = 100;
+  member(duel, 'player').bountyPoints = 10;
+  const scores = duel.state.arena.participants.map(p => p.bountyPoints);
+  wreck(duel, original, null);
+  eq(mark(duel), 'player', 'the marked victim cannot be its own self-wreck fallback leader');
+  eq(duel.state.arena.participants.map(p => p.bountyPoints), scores,
+    'a no-attacker self-wreck awards nobody a twenty-point bonus');
+});
+
+function fallbackField(duel, original, unavailable) {
+  const runners = duel.state.arena.participants.filter(p => p.id !== original && p.id !== unavailable);
+  place(duel, original, 180);
+  place(duel, unavailable, 380);
+  place(duel, runners[0].id, 200);
+  place(duel, runners[1].id, 300);
+  return runners;
+}
+
+rule('a wrecking real last hitter passes the mark to the nearest running car', () => {
+  const duel = start(), original = mark(duel);
+  const hitter = duel.state.arena.participants.find(p => p.kind === 'cpu' && p.id !== original).id;
+  const runners = fallbackField(duel, original, hitter);
+  member(duel, runners[1].id).bountyPoints = 50;
+  duel.state.invulnerableSec = 0;
+  for (const p of duel.state.arena.participants) p.protectedSec = 0;
+  actor(duel, original).armor = 100;
+  ok(applyArmorDamage(duel, actor(duel, original), 'crossbow', {owner: hitter}) > 0,
+    'the actual hitter damages the marked car before being wrecked');
+  eq(member(duel, original).lastHitBy, hitter, 'native damage retains the actual last hitter');
+  wreck(duel, hitter, null);
+  ok(actor(duel, hitter).combatWrecking, 'the hitter is still recovering at handover');
+  wreck(duel, original, null);
+  eq(mark(duel), runners[0].id, 'a wrecking last hitter yields to distance, not the next score leader');
+  eq(member(duel, runners[0].id).bountyPoints, 0, 'the fallback runner gets the mark without a wreck bonus');
+});
+
+rule('a wrecking fallback leader passes the self-wreck mark to the nearest runner', () => {
+  const duel = start(), original = mark(duel);
+  const leader = duel.state.arena.participants.find(p => p.kind === 'cpu' && p.id !== original).id;
+  const runners = fallbackField(duel, original, leader);
+  member(duel, original).bountyPoints = 100;
+  member(duel, leader).bountyPoints = 90;
+  member(duel, runners[1].id).bountyPoints = 50;
+  const scores = duel.state.arena.participants.map(p => p.bountyPoints);
+  wreck(duel, leader, null);
+  ok(actor(duel, leader).combatWrecking, 'the otherwise eligible score leader is still wrecking');
+  wreck(duel, original, null);
+  eq(mark(duel), runners[0].id, 'a wrecking leader falls back to the nearest running car');
+  eq(duel.state.arena.participants.map(p => p.bountyPoints), scores,
+    'the native self-wreck handover preserves every score');
+});
+
+rule('nearest-running distance ties follow the seeded order on repeat native events', () => {
+  function tiedTransfer() {
+    const duel = start(), original = mark(duel);
+    const leader = duel.state.arena.participants.find(p => p.kind === 'cpu' && p.id !== original).id;
+    const runners = duel.state.arena.participants.filter(p => p.id !== original && p.id !== leader);
+    member(duel, leader).bountyPoints = 90;
+    wreck(duel, leader, null);
+    place(duel, original, 0);
+    place(duel, runners[0].id, 0, -8);
+    place(duel, runners[1].id, 0, 8);
+    const origin = worldPose(duel, actor(duel, original));
+    const distance = id => {
+      const at = worldPose(duel, actor(duel, id));
+      return Math.hypot(at.x - origin.x, at.z - origin.z);
+    };
+    eq(distance(runners[0].id), distance(runners[1].id), 'the real course provides exactly tied clear lateral slots');
+    const expected = duel.state.arena.bountyHunt.order.find(id => runners.some(p => p.id === id));
+    const scores = duel.state.arena.participants.map(p => p.bountyPoints);
+    duel.state.invulnerableSec = 0;
+    for (const p of duel.state.arena.participants) p.protectedSec = 0;
+    actor(duel, original).armor = 1;
+    ok(applyArmorDamage(duel, actor(duel, original), 'scenery') > 0, 'a native scenery hit wrecks the mark');
+    // A positive minimal native step processes wreck credit without rounding a
+    // stationary tied pose into motion. Normal-speed hunting has separate tests.
+    duel.step(Number.MIN_VALUE);
+    eq(mark(duel), expected, 'the event seeded order settles the exact distance tie');
+    eq(duel.state.arena.participants.map(p => p.bountyPoints), scores, 'a tied fallback adds no wreck bonus');
+    return {markedId: mark(duel), order: duel.state.arena.bountyHunt.order};
+  }
+  eq(tiedTransfer(), tiedTransfer(), 'the same native seed and tied handover reproduce the same recipient');
+});
+
+for (const [difficulty, expected] of [['easy', 1], ['medium', 2], ['hard', 3]])
+  rule('a genuinely marked player keeps the ' + difficulty + ' hunter limit', () => {
+    const duel = start({difficulty});
+    if (mark(duel) !== 'player') wreck(duel, mark(duel), 'player');
+    eq(mark(duel), 'player', 'the player owns the genuine seeded or credited mark');
+    for (const p of duel.state.arena.participants) {
+      p.protectedSec = 0;
+      if (actor(duel, p.id).combatWrecking) actor(duel, p.id).combatWreckTimer = DT / 2;
+    }
+    tick(duel);
+    for (const p of duel.state.arena.participants) {
+      p.protectedSec = 0; p.targetId = null; p.targetHeldSec = 0; p.reactionSec = 0; p.goal = null;
+      place(duel, p.id, p.kind === 'player' ? 180 : 240 + Number(p.id.slice(-1)) * 55);
+    }
+    tick(duel);
+    const hunters = duel.state.arena.participants.filter(p => p.kind === 'cpu' && p.targetId === 'player');
+    eq(hunters.length, expected, difficulty + ' applies its settled limit to the actual marked player');
+    for (const p of hunters) ok(p.goal && [p.goal.x, p.goal.z, p.goal.speedMph].every(Number.isFinite),
+      'each admitted hunter receives an actual native pilot goal');
+  });
+
 rule('unmarked computer cars hunt a marked CPU and the marked CPU steers away from a close pursuer', () => {
   const duel = start({difficulty: 'hard'}), id = mark(duel);
   // This fixture needs an initial CPU mark; choose a genuine eligible Hard seed.
