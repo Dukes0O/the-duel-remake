@@ -766,3 +766,14 @@ This new metadata does not inherit that exact pass. Feature merges since the
 checkpoint: zero. The next full deadline is five merges or two hours of merging.
 The baseline audit has 1,184 tracked files and 259,446,754 bytes; advisory
 candidates prove no safe deletion. All protected audio references are skipped.
+
+Arsenal core merged from its independently reviewed clean candidate after all
+321 lane suites passed in 968.49 seconds and the build passed in 597 ms.
+Medium balance wins are sixty percent; road and combat fingerprints stay exact.
+Arsenal stays dev pending sounds. Feature merges since the checkpoint: one,
+plus Claude's intervening junk-car decision merge.
+
+Janitor after Arsenal: unlinked the integration-only dependency junction,
+removed the clean lane with plain git worktree remove, deleted its merged
+branch and used evidence, and refreshed status. Runtime assets remain
+236,249,990 bytes. Wreck-rate and all other unmerged lanes remain.

@@ -909,7 +909,7 @@ tasks:
     lane: CMB
     size: L
     needs: [WAR-02a-REWARD]
-    status: building
+    status: merged
     balance_source_commit: 0943464
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "3d42f5b"
@@ -933,8 +933,10 @@ tasks:
     design_question: "The required balance run puts Medium at 80 percent wins against 45 to 65. A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and Star making no CPU weapon use: should every four-slot CPU loadout guarantee a working front attack? Targets and gameplay stay held for your answer."
     claude_answer_4: "1 October 2026, evening: yes. Every computer four-slot loadout carries at least one weapon that damages a car in front of it (the crossbow, or an unlocked wave weapon that does), and at most two of the slots are defensive or control weapons (UFO Jump, Star Shield, Oil Slick, Smoke Screen). Fill the rest from the unlocked pool as ARSENAL.md says. Then rerun the balance; the 45 to 65 percent Medium target stands."
     cpu_test_commit: e008aafcab0308baee60bf12861f4d253ac6ac06
-    note: "The CPU loadout fix passes the required balance at every difficulty, with native, save and replay checks clear. Current lane and build gates remain before merge; no target or gameplay number was tuned."
+    note: "Shared Arsenal systems and the settled computer loadout rule are merged after independent review, Save Guardian, browser, balance and current lane/build checks. Arsenal stays dev until its sounds are wired; road and combat replays are unchanged."
     balance_review_commit: 9f1b65db42c79b04f6fa40d14113519b96dd6c09
+    merged_commit: 529f5cc71f32683cd937a573070a2eee8e032f09
+    gate_commit: 9f1b65db42c79b04f6fa40d14113519b96dd6c09
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex

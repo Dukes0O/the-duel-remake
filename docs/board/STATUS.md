@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-02T03:19:54.429Z
+Observed at: 2026-10-02T03:43:44.022Z
 
-Observation commit: a95726a03d916f260f6644dfe3c40b476d6a6af1
+Observation commit: 529f5cc71f32683cd937a573070a2eee8e032f09
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a95726a03d916f260f6644dfe3c40b476d6a6af1
+Integration HEAD: 529f5cc71f32683cd937a573070a2eee8e032f09
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -30,6 +30,7 @@ Last recorded full run: 2026-10-02T03:07:37.851Z; tested commit: 3519f7157078361
 | muddy-hollow | on |
 | warlords | on |
 | fuel-run | dev |
+| arsenal | dev |
 
 ## Lane branches
 
@@ -41,9 +42,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | lane/art/convoy-tanker | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/convoy-tanker |
 | lane/audio/aud-10 | 6 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 6 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 6 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
-| lane/cmb/arena-wreck-rate | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-wreck-rate |
-| lane/cmb/arsenal-core | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-core |
+| lane/audio/aud-17-picks | 6 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/cmb/arena-junk-shove | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-junk-shove |
+| lane/cmb/arena-wreck-rate | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-wreck-rate |
 | lane/vis/salt-flats | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/salt-flats |
 
 ## Unmerged branches for idle review
@@ -53,9 +54,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/art/vesper | unknown | 2026-10-01T17:06:18-07:00 | 0 | last commit 2026-10-01T17:06:18-07:00 | docs/board/looks/vesper/round-1-review.md, docs/board/looks/vesper/round-1-sheet.py, docs/board/looks/vesper/round-1.jpg, docs/board/looks/vesper/round-2-review.md, docs/board/looks/vesper/round-2-sheet.py |
-| lane/art/convoy-tanker | unknown | 2026-10-01T20:17:57-07:00 | 0 | last commit 2026-10-01T20:17:57-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
-| lane/cmb/arena-wreck-rate | unknown | 2026-10-01T20:19:07-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARENA-WRECK-RATE.md, src/arena/arena-event.js, tools/arena-balance.mjs, tools/test-arena-wreck-rate.mjs, tools/test-warlord-format.mjs |
-| lane/cmb/arsenal-core | unknown | 2026-10-01T19:56:18-07:00 | 0 | last commit 2026-10-01T19:56:18-07:00 | docs/changes/ARS-CORE.md, src/app.js, src/arena/arena-pilot.js, src/arsenal/car-effects.js, src/arsenal/hazards.js |
+| lane/art/convoy-tanker | unknown | 2026-10-01T20:20:47-07:00 | 0 | last commit 2026-10-01T20:20:47-07:00 | docs/board/looks/convoy-tanker/round-1-review.md, docs/board/looks/convoy-tanker/round-1-sheet.py, docs/board/looks/convoy-tanker/round-1.jpg, docs/board/looks/convoy-tanker/round-2-review.md, docs/board/looks/convoy-tanker/round-2-sheet.py |
+| lane/cmb/arena-junk-shove | unknown | 2026-10-01T20:43:23-07:00 | 0 | last commit 2026-10-01T20:43:23-07:00 | tools/test-arena-junk-shove.mjs |
+| lane/cmb/arena-wreck-rate | unknown | 2026-10-01T20:24:18-07:00 | 0 | last commit 2026-10-01T20:24:18-07:00 | docs/changes/ARENA-WRECK-RATE.md, src/arena/arena-event.js, tools/arena-balance.mjs, tools/replays/arena-fuel-run-controls.json, tools/test-arena-wreck-rate.mjs |
 | lane/vis/salt-flats | unknown | 2026-10-01T16:34:41-07:00 | 0 | last commit 2026-10-01T16:34:41-07:00 | docs/board/looks/salt-flats/round-1-review.md, docs/board/looks/salt-flats/round-1-sheet.py, docs/board/looks/salt-flats/round-1.jpg, docs/board/looks/salt-flats/round-2-review.md, docs/board/looks/salt-flats/round-2-sheet.py |
 
 ## Size targets
@@ -70,9 +71,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 430,908 B | +0 B | 500,000 B |
 | Review `looks/` | 10,712,857 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 474,119 B | +173,279 B | 5,000,000 B |
+| Added bytes in last merge | 3,416,704 B | +2,942,585 B | 5,000,000 B |
 | All `public/` | 236,249,990 B | +0 B | unavailable |
-| Git objects | 346,078,208 B | +985,088 B | unavailable |
+| Git objects | 346,697,728 B | +619,520 B | unavailable |
 | Lane folders | 5 | +0 | unavailable |
 
 ## Backups
@@ -81,7 +82,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: a95726a03d916f260f6644dfe3c40b476d6a6af1
+- Local integration/wasteland: 529f5cc71f32683cd937a573070a2eee8e032f09
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

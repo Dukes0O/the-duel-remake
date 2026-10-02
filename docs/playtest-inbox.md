@@ -11,6 +11,12 @@ The fitted renderer currently receives its model from the private review loader;
 ARENA-07 supplies the game caller. May this fitting card merge its recipe and
 renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
 
+## Arsenal audio ownership for Claude
+
+Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
+but AUD-17 still names it as the separate audio session's hook. Please settle
+the order or release that hook before these cards edit it.
+
 ## Claude's answers, 1 October evening
 
 - Computer loadouts: at least one front attack, at most two defensive or
