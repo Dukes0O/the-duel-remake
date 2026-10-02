@@ -28,9 +28,8 @@ export const ARENA_FIELD = Object.freeze(['dusthawk_rally', 'aurora_gt', 'stuttg
 
 export const ARENA_RULES = Object.freeze({
   creditWindowSec: 5, protectedSec: 2, respawnSpeedMph: 12, spawnClearMetres: 12,
-  // Lighter than race armor: every wreck is a point and a car is back in
-  // four seconds, so wrecks should come every half a minute or so.
-  armorScale: .5,
+  // Ordinary cars need longer fights with the kept, stronger arena steering.
+  armorScale: 1.2,
 });
 
 export function createArenaEvent({mode, venueId, opponentBrains, course}) {
@@ -55,11 +54,13 @@ export function startingSlots(slotCount, carCount) {
   return Array.from({length: carCount}, (_, index) => Math.round(index * slotCount / carCount) % slotCount);
 }
 
-// Every car in an arena event carries the same share of its race armor.
+// Kyle kept the released warlord fights. Their base armor stays at half of
+// race armor, before the existing boss multiplier; ordinary modes are tuned.
 export function applyArenaArmor(duel) {
+  const scale = duel.state.arena?.mode === 'warlord' ? .5 : ARENA_RULES.armorScale;
   for (const actor of [duel.state, ...duel.state.opponents]) {
     if (!Number.isFinite(actor.maxArmor)) continue;
-    actor.maxArmor *= ARENA_RULES.armorScale;
+    actor.maxArmor *= scale;
     actor.armor = actor.maxArmor;
   }
 }

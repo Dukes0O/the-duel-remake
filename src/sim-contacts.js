@@ -19,6 +19,7 @@ import {CRASH_TUNING} from './vehicle-collision.js';
 import {upgradedCar} from './progression.js';
 import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
+import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 
 function roadsideTopSpeedMph(duel, actor) {
   if (actor === duel.state) return duel.car.topSpeed;
@@ -153,6 +154,7 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
 }
 
 export function _vehicleSpec(actor) {
+  if (this.state.arena && actor.kind === 'junkCar') return arenaJunkSpec(actor);
   // Upgrades change handling and power, never the collision shell. Armor-kit
   // plating adds its weight to the mass (Mad Max only; CRASH-04).
   const car = CARS[actor === this.state ? this.state.car : actor.car || (actor === this.state.rival ? this.state.car : null)] || {};
@@ -680,9 +682,13 @@ export function _crushProps(actor) {
   const heading = end.heading + (actor.headingError || 0) + (actor.slipAngle || 0);
   const previousBottom = start.y + (actor.prevAirHeight ?? actor.airHeight ?? 0), bottom = end.y + (actor.airHeight || 0);
   for (const prop of this.course.features.crushables || []) {
+    const movable = !!state.arena && prop.kind === 'junkCar';
     if (state.crushedProps.includes(prop.id)) continue;
     const hit = sweepObstacle(start, end, prop, heading, spec);
-    if (!hit) continue;
+    if (!hit) {
+      if (movable) contactArenaJunk(this, actor, prop, null);
+      continue;
+    }
     const top = prop.y + prop.height;
     let contactTime = hit.t;
     if (previousBottom + (bottom - previousBottom) * contactTime > top) {
@@ -692,6 +698,10 @@ export function _crushProps(actor) {
       contactTime = (previousBottom - top) / (previousBottom - bottom);
       const landing = { x: start.x + (end.x - start.x) * contactTime, z: start.z + (end.z - start.z) * contactTime };
       if (!sweepObstacle(landing, landing, prop, heading, spec)) continue;
+    }
+    if (movable) {
+      contactArenaJunk(this, actor, prop, {...hit, t: contactTime}, start, end);
+      if (spec.mass < (prop.crushMass || 3500)) continue;
     }
     if (spec.mass < (prop.crushMass || 3500)) {
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),

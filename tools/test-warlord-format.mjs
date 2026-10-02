@@ -98,13 +98,11 @@ test('Sal is a one-on-one rammer duel in the Scrapdome using the selected diffic
   }
 });
 
-test('Sal has exactly one and a half times the same car normal arena armor', async () => {
+test('Sal and the player keep their released absolute warlord armor', async () => {
   const duel = await fight();
-  const normal = new Duel({seed: 1989, featureFlags: ON});
-  normal.startArenaEvent({car: 'falcone_f42', cpuDifficulty: 'medium', seed: 1989,
-    opponents: [{car: 'banshee_muscle'}]});
-  equal(duel.state.maxArmor, normal.state.maxArmor, 'player armor keeps ordinary arena scale');
-  equal(duel.state.opponents[0].maxArmor, normal.state.opponents[0].maxArmor * 1.5, 'boss arena armor is 1.5 times');
+  // Claude, 1 October: ordinary armor tuning must not change Kyle's kept Sal duel.
+  equal(duel.state.maxArmor, 50, 'player warlord armor stays at the released value');
+  equal(duel.state.opponents[0].maxArmor, 83.79469985707887, 'Sal keeps her released armor');
   equal(duel.state.opponents[0].armor, duel.state.opponents[0].maxArmor, 'boss starts with full armor');
 });
 

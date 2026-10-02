@@ -345,6 +345,7 @@ Dusthawk Rally. A gunner who fires the crossbow and hides in his own dust.
 | Dust Veil | When the player is within 40 m behind him: tell of brown exhaust puffs, then a smoke cloud (the arsenal's smoke, 7 m radius, 5 s) behind him, and, if he is driving straight, an 8 m oil strip behind the cloud. At most every 10, 8, 6 s (Easy, Medium, Hard) |
 | Counter | Go around the cloud, not through his line: the oil lies only where he drove straight |
 | Window | After a veil his engine coughs: 2 s at 70% speed, rear hits 1.5 times |
+| Oil strip detail (2 October 2026) | Driving straight means his yaw rate stayed under 10 degrees a second for the last 0.5 s. The strip is 4 m wide and 8 m long on the line he drove, starting at the cloud's far edge. In every other way it is an Oil Slick hazard (lifetime, 1 s owner grace, slip effect) |
 | Phase two | A dust storm: fog closes in (drawn only, never hides a tell), veils 20% more often, clouds 1.3 times wider |
 | Reward | Smoke Screen, unlocked early and working (built by ARS-CORE) |
 | Callouts | `DUST VEIL!`, `HE'S CHOKING. HIT HIM NOW!` |
@@ -359,6 +360,7 @@ Aurora GTR. An evasive gunner who splits into copies.
 | Mirage | Tell: a heat shimmer around her car. Then she splits into three matching cars that spread 8 m apart for 6 s. Only the real one fires and leaves tyre marks. A copy bursts into scrap on its first hit. At most every 12, 10, 8 s |
 | Counter | Watch who fires and whose tyres mark the floor |
 | Window | Hitting the real Mirage during the split ends it and stuns her for 2 s; hits then deal 1.5 times |
+| Split trigger (2 October 2026) | When ready, she splits once the player is within 40 m and she is not stunned or in a window. Her cooldown runs from the start of the fight, so there is no split at the start |
 | Phase two | Copies ram (rammer brain, half ram damage), splits 20% more often |
 | Reward | Decoy Drone, unlocked early and working (ARS-03 reuses these decoy cars) |
 | Build note | Decoy cars are `state.arena` participants with a `decoy` flag: they drive, can be hit and burst, but never score, fire or settle. `targetFor` (docs/ARSENAL.md) sends computer aim to them. |
@@ -388,6 +390,7 @@ Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.
 | Kettle Drop | Tell (1.4 times the usual): he revs and squats, and a red ring 8 m across appears on the floor where he will land. Then he leaps (1.2 s arc) and lands: every car in the ring is shoved outward as if hit at 25 mph and loses 20 armor; a car he lands on squarely loses 40. At most every 12, 10, 8 s |
 | Counter | Get out of the ring |
 | Window | He is stuck for 2.5 s after landing, wheels spinning |
+| Drop detail (2 October 2026) | Trigger: when ready, with the player on the floor 12 to 40 m away. The ring's spot is committed when the tell starts: the player's position predicted at landing, on the floor and at most 40 m from take-off. In phase two the second ring is aimed the same way at the first landing, and the 2.5 s window follows only the second landing |
 | Phase two | Two drops in a row, the second ring appearing as he lands |
 | Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early |
 | Callouts | `KETTLE DROP!`, `HE'S STUCK. HIT HIM NOW!` |
@@ -662,7 +665,13 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   wrecker. A marked car that wrecks itself passes the mark to the car that
   last hit it, or to the leader if nobody did.
 - **Computer:** everyone hunts the marked car; the marked car runs (kiter
-  brain) and uses its rear weapons.
+  brain) and uses its rear weapons. When the player is marked, the Easy and
+  Medium hunter cap still holds (2 October 2026).
+- **Hand-over details (2 October 2026):** a car that gets the mark from a
+  self-wreck scores nothing for it; only wrecking the marked car scores 20.
+  If the last hitter or the leader is itself wrecking, the mark goes to the
+  nearest running car (seeded order breaks ties). The leader never means the
+  marked car itself.
 
 ### Ambush Alley (ARENA-05)
 
