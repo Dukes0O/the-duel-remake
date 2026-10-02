@@ -1,5 +1,5 @@
-// Private, memory-only look at the Dustmonger's veil, Mother Mirage's split and
-// the Kettle Kingpin's drop in the production game. Positions are labelled fixtures; every move
+// Private, memory-only look at the Dustmonger's veil, Mother Mirage's split, the
+// Twin Vultures' pincer and the Kettle Kingpin's drop in the production game. Positions are labelled fixtures; every move
 // transition runs through Duel.step.
 async function ready(context, label) {
   await context.evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))');
@@ -21,6 +21,19 @@ async function look(context, label, height = 14) {
   await context.screenshot(label);
 }
 
+// A camera over the player, wide enough to show both buggies of the pair.
+async function lookPlayer(context, label, height = 34) {
+  await context.evaluate(`(() => {const app=window.__qaApp,d=app.duel,s=d.state;
+    const at=d.course.worldAt(s.s,s.lateral),y=at.y||0;
+    app.inspectionCamera={position:[at.x+14,y+${height},at.z+14],target:[at.x,y,at.z]};})()`);
+  await ready(context, label);
+  await context.waitFor(`(() => {window.__render.renderFrame();const p=window.__render.camera.position,
+    t=window.__qaApp.inspectionCamera.position;return Math.hypot(p.x-t[0],p.y-t[1],p.z-t[2])<.05;})()`,
+    `${label} camera`, 10000);
+  await context.evaluate('window.__render.renderFrame()');
+  await context.screenshot(label);
+}
+
 async function start(context, id) {
   await context.evaluate(`(() => {const app=window.__qaApp;
     app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true,
@@ -34,6 +47,11 @@ async function start(context, id) {
     for(let i=0;i<362;i++)app.duel.step(1/120);
     const d=app.duel,s=d.state,a=s.opponents[0],site=s.arena.spawnSlots[0].s;
     for(const p of s.arena.participants)p.protectedSec=0;
+    if(${id === 'vultures'}){const b=s.opponents[1];
+      Object.assign(a,{s:site,prevS:site,lateral:-24,prevLateral:-24,headingError:0,speedMph:0});
+      Object.assign(b,{s:site,prevS:site,lateral:24,prevLateral:24,headingError:0,speedMph:0});
+      Object.assign(s,{s:site+30,prevS:site+30,lateral:0,prevLateral:0,headingError:0,speedMph:0});
+      d.setInput({throttle:0,brake:0,steer:0,boost:false});return;}
     Object.assign(a,{s:site,prevS:site,lateral:0,prevLateral:0,headingError:0,speedMph:30});
     Object.assign(s,{s:site+(${id === 'kettle' ? 22 : id === 'mirage' ? -26 : -18}),prevS:site+(${id === 'kettle' ? 22 : id === 'mirage' ? -26 : -18}),
       lateral:0,prevLateral:0,headingError:0,speedMph:${id === 'dustmonger' ? 30 : 0}});
@@ -75,6 +93,16 @@ export async function run(context) {
   await until(context, "a.mirage?.stage==='split'");
   for (let i = 0; i < 240; i++) await context.evaluate('window.__qaApp.duel.step(1/120)');
   await look(context, 'mirage-split', 22);
+  await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-vultures');
+  await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
+  await ready(context, 'menu');
+  await start(context, 'vultures');
+  await context.evaluate('window.__qaApp.duel.state.opponents[0].pincer.nextSec=0');
+  await until(context, "a.pincer?.stage==='tell'");
+  await lookPlayer(context, 'vultures-tell');
+  await until(context, "a.pincer?.stage==='charge'");
+  for (let i = 0; i < 90; i++) await context.evaluate('window.__qaApp.duel.step(1/120)');
+  await lookPlayer(context, 'vultures-charge');
   await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-kettle');
   await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
   await ready(context, 'menu');
@@ -85,5 +113,5 @@ export async function run(context) {
   await look(context, 'kettle-leap', 20);
   await until(context, "a.kettleDrop?.stage==='window'");
   await look(context, 'kettle-landed', 20);
-  console.log('New warlords look: dustmonger tell/veil, mirage shimmer/split and kettle ring/leap/landing captured.');
+  console.log('New warlords look: dustmonger tell/veil, mirage shimmer/split, vultures tell/charge and kettle ring/leap/landing captured.');
 }

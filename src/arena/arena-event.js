@@ -9,7 +9,7 @@ import {stepKnock, stepWreckSlide} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 import {warlordFight} from '../warlords/index.js';
-import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event.js';
+import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock, teamTotal} from './warlord-event.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
@@ -17,7 +17,7 @@ import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event
 export const ARENA_MODES = Object.freeze({
   'fuel-run': Object.freeze({timeLimitSec: FUEL_RULES.timeLimitSec, suddenDeathSec: Infinity, maxOpponents: 3}),
   warlord: Object.freeze({timeLimitSec: WARLORD_RULES.timeLimitSec,
-    suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 1}),
+    suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 2}),
   'last-car-rolling': Object.freeze({timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
 });
 
@@ -157,12 +157,23 @@ export function arenaRanking(arena) {
   // Decoy cars (a warlord's copies) never score or place.
   const cars = arena.participants.filter(participant => !participant.decoy);
   if (arena.mode === 'fuel-run') return [...cars].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
-  const score = participant => arena.mode === 'warlord' ? participant.wrecks :
+  // A warlord's side scores together: either car of a pair counts.
+  const score = participant => arena.mode === 'warlord' ? teamTotal(arena, participant, 'wrecks') :
     participant.wrecks - participant.wrecked;
   return cars.map((participant, order) => ({participant, order})).sort((a, b) =>
     score(b.participant) - score(a.participant) ||
     b.participant.wrecks - a.participant.wrecks ||
     b.participant.damageDealt - a.participant.damageDealt || a.order - b.order).map(entry => entry.participant);
+}
+
+// The ranking with each side once, for lines that show places and a field
+// size: a warlord's two cars are one side.
+export function arenaTeams(arena) {
+  const seen = new Set();
+  return arenaRanking(arena).filter(participant => {
+    const side = participant.team ?? participant.id;
+    return !seen.has(side) && seen.add(side);
+  });
 }
 
 function topTied(arena) {

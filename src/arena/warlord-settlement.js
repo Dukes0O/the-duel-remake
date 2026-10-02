@@ -36,27 +36,37 @@ function payExplanation({warlordId, won, firstWin, wrecksOnWarlord, cpuDifficult
 }
 
 function resultFacts(arena) {
+  const warlord = WARLORDS[arena?.warlordId], size = warlord?.team?.length ?? 1;
   if (!record(arena) || arena.version !== 1 || arena.venueId !== 'scrapdome' ||
       arena.mode !== 'warlord' || !BUILT_WARLORD_IDS.includes(arena.warlordId) ||
-      !WARLORDS[arena.warlordId] || arena.warlordBossId !== 'cpu-1' ||
+      !warlord || arena.warlordBossId !== 'cpu-1' ||
       arena.phase !== 'over' || !record(arena.result) ||
       !COMPLETED_REASONS.has(arena.result?.reason) ||
       !Array.isArray(arena.participants) || !arena.participants.every(record) ||
       !Array.isArray(arena.result?.placings)) return null;
-  // A warlord's decoy copies are not competitors and never settle.
+  // A warlord's decoy copies are not competitors and never settle. A team
+  // warlord fields its whole built team against the player.
   const cars = arena.participants.filter(item => item.decoy !== true);
-  if (cars.length !== 2) return null;
+  if (cars.length !== size + 1) return null;
   const player = cars.find(item => item?.id === 'player' && item.kind === 'player');
-  const boss = cars.find(item => item?.id === arena.warlordBossId && item.kind === 'cpu');
+  const ids = Array.from({length: size}, (_, index) => `cpu-${index + 1}`);
+  const side = cars.filter(item => item !== player && item.kind === 'cpu' && ids.includes(item.id));
   const placings = arena.result.placings;
-  if (!player || !boss || player === boss || player.team === boss.team ||
-      placings.length !== 2 || new Set(placings).size !== 2 ||
-      placings.some(id => id !== player.id && id !== boss.id) ||
+  if (!player || side.length !== size || new Set(side.map(item => item.id)).size !== size ||
+      side.some(item => item.team === player.team) ||
+      placings.length !== cars.length || new Set(placings).size !== cars.length ||
+      placings.some(id => !cars.some(item => item.id === id)) ||
       arena.result.winnerId !== placings[0]) return null;
+  const winner = cars.find(item => item.id === placings[0]);
+  const wrecksOf = group => group.reduce((sum, item) => sum + bounded(item.wrecks, 1_000_000), 0);
   if (arena.result.reason === 'three-wrecks' &&
-      bounded(cars.find(item => item.id === placings[0]).wrecks, 1_000_000) < 3)
-    return null;
-  return {won: arena.result.winnerId === player.id, wrecksOnWarlord: boss.wrecked};
+      wrecksOf(winner === player ? [player] : side) < 3) return null;
+  // One warlord reports its own count unchanged, so payout validation still
+  // sees bad data; a team's count is the sum of its cars' (invalid if any is).
+  const wrecked = side.map(item => item.wrecked);
+  return {won: arena.result.winnerId === player.id,
+    wrecksOnWarlord: wrecked.length === 1 ? wrecked[0] :
+      wrecked.every(Number.isSafeInteger) ? wrecked.reduce((sum, count) => sum + count, 0) : NaN};
 }
 
 export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayerId,
@@ -121,5 +131,6 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     scrapEarned: scrap - oldScrap, firstWin, rewardReason: payExplanation(payContext),
     kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned,
     crewEarned: firstWin && warlord.rewardCrew ? warlord.rewardCrew : null,
+    gearEarned: firstWin && warlord.rewardGear ? warlord.rewardGear.id : null,
     territoryClaimed: facts.won};
 }

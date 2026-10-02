@@ -12,20 +12,23 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) ||
       !duel.featureFlags?.enabled('scrapdome') || !duel.featureFlags?.enabled('warlords') ||
       !duel.featureFlags?.enabled('wasteland2')) return false;
+  // A warlord fights alone, or as a team of cars (`team`), each on its own.
+  const team = warlord.team ?? [{car: warlord.car, brain: warlord.brain}];
   if (!duel.startArenaEvent({...options, venueId: 'scrapdome', mode: 'warlord',
-      opponents: [{car: warlord.car, brain: warlord.brain}]})) return false;
+      opponents: team.map(({car, brain}) => ({car, brain}))})) return false;
   const state = duel.state, arena = state.arena;
   arena.warlordId = warlordId;
   arena.warlordPhase = 1;
   arena.warlordBossId = 'cpu-1';
+  arena.warlordTeamIds = team.map((_, index) => `cpu-${index + 1}`);
   arena.phase = 'intro';
-  arena.participants.slice(1).forEach(participant => {
+  arena.participants.slice(1).forEach((participant, index) => {
     participant.team = `warlord:${warlordId}`;
-    participant.name = warlord.name.toUpperCase();
+    participant.name = (team[index].name ?? warlord.name).toUpperCase();
   });
   for (const actor of state.opponents) {
     actor.warlordId = warlordId;
-    actor.maxArmor *= WARLORD_RULES.armorScale;
+    actor.maxArmor *= warlord.armorScale ?? WARLORD_RULES.armorScale;
     actor.armor = actor.maxArmor;
     warlordFight(duel, actor)?.reset?.(duel, actor);
   }
@@ -46,11 +49,20 @@ export function beginWarlordEvent(duel) {
   return true;
 }
 
+// The sum of a count over a car's whole team, decoy copies excluded.
+export function teamTotal(arena, participant, field) {
+  return arena.participants.filter(other => !other.decoy && (other.team ?? other.id) === (participant.team ?? participant.id))
+    .reduce((sum, other) => sum + (other[field] || 0), 0);
+}
+
 // Called once when the arena credits a wreck, before respawning anyone.
 export function noteWarlordWreck(duel, victim, credited) {
   const arena = duel.state.arena;
   if (arena.mode !== 'warlord') return null;
-  if (victim.id === arena.warlordBossId && arena.warlordPhase === 1) {
+  // Phase two starts once the warlord's side has been wrecked enough times
+  // (the first wreck by default; a team may need more).
+  if (arena.warlordTeamIds?.includes(victim.id) && arena.warlordPhase === 1 &&
+      teamTotal(arena, victim, 'wrecked') >= (WARLORDS[arena.warlordId]?.phaseTwoWrecks ?? 1)) {
     arena.warlordPhase = 2;
     duel.emit({warlordPhase: {warlordId: arena.warlordId, phase: 2}});
   }
@@ -59,7 +71,8 @@ export function noteWarlordWreck(duel, victim, credited) {
       participant.team !== victim.team);
     return {winnerId: winner.id, reason: 'sudden-death'};
   }
-  if (credited?.wrecks >= WARLORD_RULES.wrecksToWin)
+  // Wrecks count for the whole team: either of a pair may score the third.
+  if (credited && teamTotal(arena, credited, 'wrecks') >= WARLORD_RULES.wrecksToWin)
     return {winnerId: credited.id, reason: 'three-wrecks'};
   return null;
 }
@@ -86,7 +99,7 @@ export function stepWarlordClock(duel, dt) {
     if (arena.suddenDeathSec + 1e-9 >= arena.suddenDeathLimitSec) {
       arena.suddenDeathSec = arena.suddenDeathLimitSec;
       const winner = arena.participants.filter(participant => !participant.decoy).reduce((best, participant) =>
-        participant.damageDealt > best.damageDealt ? participant : best);
+        teamTotal(arena, participant, 'damageDealt') > teamTotal(arena, best, 'damageDealt') ? participant : best);
       return {winnerId: winner.id, reason: 'damage'};
     }
   }

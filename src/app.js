@@ -714,6 +714,7 @@ export class App {
       settlementSaved: true, settlementRetryable: false,
       firstWin: settled.firstWin, rewardReason: settled.rewardReason, kitEarned: settled.kitEarned,
       weaponEarned: settled.weaponEarned ?? null, crewEarned: settled.crewEarned ?? null,
+      gearEarned: settled.gearEarned ?? null,
       territoryClaimed: settled.territoryClaimed});
     this._warlordSettlementRetry = null;
   }
