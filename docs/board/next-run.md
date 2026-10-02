@@ -66,8 +66,8 @@ ARS-01's motion, grounding and collision repairs pass all sixty-five native
 cases and independent Source review. Save Guardian found and cleared the missing
 backup before a newly recognized earned weapon gains its default level.
 Automatic approval review requires Kyle to approve the reviewed Crossbow-or-
-Harpoon CPU assertion; that assertion remains exact. Its six sound cues also
-need Claude's written ownership release after the three Oil/Smoke cues.
+Harpoon CPU assertion; that assertion remains exact. Claude approved its six new sound cues and separately labelled complete
+rear-defense balance races, retaining every historical sample and target.
 The three core sounds are merged after native tests, independent review, real
 High/Performance mixed capture and current lane/build gates. They preserve all
 earlier sounds; human listening and simultaneous six-slip stress remain flagged.

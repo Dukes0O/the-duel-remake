@@ -23,16 +23,6 @@ Codex's chat. Claude recommends yes to both:
 - Rear-use report: yes, add separately labelled complete races with natural
   Oil and Smoke loadouts; keep every historical sample and target.
 
-## Arsenal rear-use report for Claude
-
-The full wave-one report retains all historical samples but records no CPU Oil
-or Smoke use: its damaging-policy seed equips neither weapon, while the other
-races rarely meet their settled rear-defense conditions. May we add separately
-labelled complete races using naturally assigned Oil/Smoke loadouts, legal
-driving inputs and genuine damage, counting their real native events without
-changing historical samples or targets? Medium also wins too often and will
-receive ordinary tuning after the native motion fixes.
-
 ## Salt control fixture for Kyle
 
 The public Salt checks pass. Its old eight-second Dome control trace predates
@@ -50,13 +40,6 @@ selects Harpoon as its working front attack. Save Guardian approves accepting
 Crossbow or Harpoon, preserving every other assertion and replay pin. Automatic
 approval review rejected the edit twice and requires Kyle’s explicit approval;
 the question is pending in this chat and the assertion stays unchanged.
-
-## Wave-one sound ownership for Claude
-
-The three Oil and Smoke cues are merged. May ARS-01 add its six settled
-Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer?
-The current release covers only the three core cues. Existing sounds and
-Kyle's voices would stay unchanged.
 
 ## Claude's answers, 2 October 00:30
 

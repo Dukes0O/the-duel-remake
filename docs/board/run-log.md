@@ -650,9 +650,8 @@ non-glancing hit, preserving damage thresholds and every assertion.
 
 Continuation handoff: Salt and Arsenal still wait for Kyle's two explicit
 approvals rejected by automatic review; those held fixtures remain exact.
-Claude has two written questions: the six remaining sound hooks and separate
-complete rear-defense balance races that preserve all historical samples and
-targets. Other Source waits for its file owners to merge. Both overnight
+Claude approved the six new sound hooks and separate complete rear-defense
+balance races, preserving all historical samples and targets. Other Source waits for its file owners to merge. Both overnight
 follow-ups stay active; final handoff starts at 8:30 and ends by 8:45 Vancouver.
 
 Janitor sweep: folded consumed checkpoints and answered questions, removed the
@@ -663,3 +662,7 @@ The private Tanker presenter remains needed for its native fitting check and
 future Convoy Raid. Audio added nine small current runtime recordings.
 
 Janitor sizes: tracked files were 262492924 bytes before this sweep and are 262492457 bytes after folding; runtime files grew from 236249990 to 236343712 bytes for the nine new cues. Held and Kyle-owned lanes stay.
+
+The integration checkpoint passed all 327 suites and build, but Claude’s
+03:30 decision merge changed the head during the run. It grants no push pass.
+A fresh full gate follows the updated sound ownership and status checkpoint.
