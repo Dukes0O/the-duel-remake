@@ -9,6 +9,8 @@ import {signatureFor} from '../src/crew-gear/gear.js';
 import {availableCrew, selectedCrewId, selectCrew} from '../src/crew.js';
 import {createProfile} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
+import {crewPanel} from '../src/crew-ui.js';
+import {CREW} from '../src/crew.js';
 
 // Bounded regression checks for the owned production modules, not native
 // CREW-02 wiring acceptance. Only the missing catalog entry is adapted here.
@@ -166,15 +168,14 @@ for (const crew of ['dune', 'tusk']) check(`${crew} direct shot retires at nativ
 for (const crew of ['dune', 'nell']) check(`${crew} launch inherits observed native walking velocity`, () => {
   function launch(walking) {
     const duel = race(crew);
-    assert.equal(selectSignatureGear(duel), true, 'actual signature module selects this gear');
+    assert.equal(duel.selectFootGear(3), true, 'native slot 3 selects this gear');
     duel.setFighterInput({fire: false, right: walking});
-    stepSignatureGear(duel, DT);
+    ticks(duel, 1);
     const before = {x: duel.state.fighter.x, z: duel.state.fighter.z};
-    ticks(duel, 1); // Actual fixed-time fighter movement, including its contacts.
+    duel.setFighterInput({fire: true});
+    ticks(duel, 1); // Native movement and native signature fire in the same step.
     const fighter = duel.state.fighter;
     const motion = {x: (fighter.x - before.x) / DT, z: (fighter.z - before.z) / DT};
-    duel.setFighterInput({fire: true});
-    stepSignatureGear(duel, DT);
     const shot = duel.state.combat.projectiles.at(-1);
     assert.equal(shot?.kind, signatureFor(crew).id, 'real production fire creates the signature projectile');
     return {shot, motion};
@@ -227,6 +228,55 @@ check('unearned Tusk still requires rank 25 and a future schema cannot be change
   const futureBefore = structuredClone(future);
   assert.equal(selectCrew(future, 'tusk').ok, false, 'owned crew cannot bypass a future-schema refusal');
   assert.deepEqual(future, futureBefore, 'future-schema refusal preserves the supplied career');
+});
+const escapeCrewHTML = value => String(value).replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+function crewArticle(html, id) {
+  const article = [...html.matchAll(/<article\b[\s\S]*?<\/article>/g)]
+    .map(match => match[0]).find(text => text.includes(`data-crew-select="${id}"`));
+  assert.ok(article, `actual crew panel contains ${id}'s card`);
+  return article;
+}
+check('enabled crew panel presents playable gear and the three active abilities', () => {
+  const profile = {...createProfile(), wasteland: normalizeWasteland({xp: 100000,
+    discoveredGate: true, scrap: 3000})};
+  const html = crewPanel(profile, escapeCrewHTML, {gearEnabled: true});
+  for (const id of Object.keys(CREW)) {
+    const article = crewArticle(html, id);
+    assert.ok(article.includes(escapeCrewHTML(CREW[id].gear)), `${id} retains its actual signature label`);
+    assert.doesNotMatch(article, /gear in a later card/i, `${id}'s playable gear is not labeled as future work`);
+  }
+  for (const id of ['jax', 'cinder', 'tusk']) {
+    const article = crewArticle(html, id);
+    assert.match(article, /PASSIVE READY/, `${id}'s enabled ability is presented as active`);
+    assert.doesNotMatch(article, /PASSIVE HOOK · LATER CARD/, `${id} has no stale later-card ability copy`);
+  }
+});
+check('default and disabled crew panel keep the released inactive labels', () => {
+  const profile = {...createProfile(), wasteland: normalizeWasteland({xp: 100000})};
+  const defaultHTML = crewPanel(profile, escapeCrewHTML);
+  assert.equal(crewPanel(profile, escapeCrewHTML, {gearEnabled: false}), defaultHTML,
+    'explicit gear-off context preserves the default panel');
+  for (const id of ['jax', 'cinder', 'tusk']) {
+    const article = crewArticle(defaultHTML, id);
+    assert.match(article, /PASSIVE HOOK · LATER CARD/, `${id}'s off-context ability remains inactive`);
+    assert.match(article, /gear in a later card/i, 'off-context gear retains its released future label');
+  }
+});
+check('early owned Tusk has an enabled choice while an unearned low-rank Tusk stays locked', () => {
+  function profile(owned) {
+    return {...createProfile(), wasteland: normalizeWasteland({xp: 0,
+      discoveredGate: true, scrap: 0, crew: {selected: 'rook',
+        unlocked: owned ? ['rook', 'tusk'] : ['rook']}})};
+  }
+  const owned = crewArticle(crewPanel(profile(true), escapeCrewHTML, {gearEnabled: true}), 'tusk');
+  const ownedButton = owned.match(/<button\b[\s\S]*?<\/button>/)[0];
+  assert.doesNotMatch(ownedButton, /\bdisabled\b/, 'earned low-rank Tusk can actually be selected');
+  assert.doesNotMatch(ownedButton, /UNLOCKS AT RANK 25|HIRE/, 'earned Tusk neither requires rank 25 nor repayment');
+  const unearned = crewArticle(crewPanel(profile(false), escapeCrewHTML, {gearEnabled: true}), 'tusk');
+  const unearnedButton = unearned.match(/<button\b[\s\S]*?<\/button>/)[0];
+  assert.match(unearnedButton, /\bdisabled\b/, 'unearned low-rank Tusk remains unavailable');
+  assert.match(unearnedButton, /UNLOCKS AT RANK 25/, 'unearned Tusk keeps his existing rank requirement');
 });
 for (const failure of failures) console.error(failure);
 console.log(`Crew gear owned modules: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
