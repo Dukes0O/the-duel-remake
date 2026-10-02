@@ -825,6 +825,8 @@ tasks:
     roof_closeup: ".lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg"
     roof_source_review: "Independent review clears the two approved roof corrections; donor geometry, contacts, valve rules and simulation state are preserved."
     installation_question: "Claude: may fitting merge its recipe and renderer with the verified GLB kept private until ARENA-07 provides its game caller? Copying a currently unused public model would break the runtime placement rule."
+    gate_commit: 0213fb07d7d13549fd923a78221596e30e1f77f4
+    frame_verdict: "Corrected chase RAF pacing meets the budget in both qualities. CPU timing and tiny camera settling remain advisory limits; current native, lane and build checks pass. Claude still decides the roof and private-to-runtime installation order."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -2971,7 +2973,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-01-evening
     branch: lane/cmb/arena-junk-shove
-    owns: [src/arena/arena-junk.js, tools/test-arena-junk-shove.mjs, tools/scenarios/arena-junk-shove.mjs, docs/changes/ARENA-JUNK-SHOVE.md]
+    owns: [src/arena/arena-junk.js, tools/test-arena-junk-shove.mjs, tools/test-arena-junk-respawn.mjs, tools/scenarios/arena-junk-shove.mjs, docs/changes/ARENA-JUNK-SHOVE.md]
     hooks: [src/game.js, src/sim-contacts.js, src/arena-props.js, src/arena/arena-floor.js, tools/browser-harness.mjs]
     helpers: [test_author, reviewer, browser_qa]
     sequencing: "Arsenal is merged. Grants cover arena lifecycle, junk-body contacts, pose sync, the floor damage/cue guard and one private scenario registration. Held arena-event/replays and Salt files stay with their owners; current poses feed existing pilot readers."
@@ -2981,7 +2983,10 @@ tasks:
       - "Tests first: every car and the Titan at 20, 40 and 60 mph; a junk car pushed into the wall or another junk car; the renderer shows its moved position and spin; computer drivers avoid its current position; spawns still keep clear. Arena replays that change are named. Kyle checks it in the Preview."
     test_commit: 18aa34470731bcea742974804fad0aa63d07faf9
     test_candidate_commit: ee81c8e4703d020188fd4c4a5c3e236d05e96b31
-    note: "Independent native tests reproduce the immovable hulks while released Titan, solver, road and actual App frame controls pass. Source work now uses the freed Game hook; held arena-event and Salt files remain untouched."
+    note: "Independent review clears native movement and the clustered-cover respawn fix, with original assertions preserved. Current frozen checks, browser and merge gates follow; held arena-event and Salt files remain untouched."
+    source_commit: fa3db13b611a4aa471bbf5b2cc085c4a0910ad4b
+    review_commit: fa3db13b611a4aa471bbf5b2cc085c4a0910ad4b
+    respawn_test_commit: daf0d3fa6b79b715f7e332363abbcaf4d126b2b6
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
