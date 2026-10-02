@@ -20,7 +20,8 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   arena.warlordId = warlordId;
   arena.warlordPhase = 1;
   arena.warlordBossId = 'cpu-1';
-  arena.warlordTeamIds = team.map((_, index) => `cpu-${index + 1}`);
+  // Only a team warlord records its cars; a lone warlord's arena state is unchanged.
+  if (warlord.team) arena.warlordTeamIds = team.map((_, index) => `cpu-${index + 1}`);
   arena.phase = 'intro';
   arena.participants.slice(1).forEach((participant, index) => {
     participant.team = `warlord:${warlordId}`;
@@ -61,7 +62,7 @@ export function noteWarlordWreck(duel, victim, credited) {
   if (arena.mode !== 'warlord') return null;
   // Phase two starts once the warlord's side has been wrecked enough times
   // (the first wreck by default; a team may need more).
-  if (arena.warlordTeamIds?.includes(victim.id) && arena.warlordPhase === 1 &&
+  if ((arena.warlordTeamIds ?? [arena.warlordBossId]).includes(victim.id) && arena.warlordPhase === 1 &&
       teamTotal(arena, victim, 'wrecked') >= (WARLORDS[arena.warlordId]?.phaseTwoWrecks ?? 1)) {
     arena.warlordPhase = 2;
     duel.emit({warlordPhase: {warlordId: arena.warlordId, phase: 2}});
