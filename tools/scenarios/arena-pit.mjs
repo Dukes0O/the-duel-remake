@@ -4,16 +4,18 @@ import {execFileSync} from 'node:child_process';
 
 // Keep the sheet recipe with the private scenario; preserve every capture's
 // complete view and labels. The only committed image is the compact comparison.
-export function buildComparisonSheet(python, evidence, output) {
+export function buildComparisonSheet(python, evidence, output, round = 1) {
+  if(!Number.isInteger(round)||round<1||round>3)throw Error('Pit review round must be 1–3');
   execFileSync(python, ['-c', String.raw`
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 import sys
-source, output = map(Path, sys.argv[1:])
+source, output = map(Path, sys.argv[1:3])
+round = int(sys.argv[3])
 sheet = Image.new('RGB', (1280, 1604), '#191b18')
 draw = ImageDraw.Draw(sheet)
 font = ImageFont.load_default(size=18)
-draw.text((15, 10), 'THE PIT / RELEASED RING - PRIVATE NATIVE COMPARISON - ROUND 1', fill='#f0dfba', font=font)
+draw.text((15, 10), f'THE PIT / RELEASED RING - PRIVATE NATIVE COMPARISON - ROUND {round}', fill='#f0dfba', font=font)
 for row, (quality, mode) in enumerate([('high', 'full'), ('high', 'racing'), ('performance', 'full'), ('performance', 'racing')]):
     top = 44 + row * 390
     for column, venue in enumerate(['scrapdome', 'pit']):
@@ -26,7 +28,7 @@ sheet.save(output, quality=75, optimize=True, progressive=True)
 if output.stat().st_size > 500_000:
     raise RuntimeError('Pit comparison exceeds 500 KB')
 print(str(output), output.stat().st_size)
-`, evidence, output], {stdio: 'inherit'});
+`, evidence, output, String(round)], {stdio: 'inherit'});
 }
 
 async function settled(context, label) {

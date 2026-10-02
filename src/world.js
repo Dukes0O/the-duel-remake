@@ -28,6 +28,7 @@ import { createSaltFlatsScene } from './arena/venues/salt-flats.js';
 import {Course} from './course.js';
 import {SCRAPDOME_VENUE} from './arena/venues.js';
 import {pitStadiumFrame} from './arena/venues/pit.js';
+import {makeRng} from './rng.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -156,14 +157,26 @@ function addPitSalvageScenery(world, course) {
     }
   }
   const stadium=pitStadiumFrame(new Course(SCRAPDOME_VENUE,course.seed));
-  for(let index=0;index<48;index++){
-    const point=stadium.worldAt((index+.5)/48*stadium.length,28);
+  const scrapRng=makeRng((course.seed ^ 0x504954) >>> 0);
+  for(let index=0;index<20;index++){
+    const point=stadium.worldAt((index+.5)/20*stadium.length,28);
     const extent=Math.hypot(point.x,point.z),angle=Math.atan2(point.z,point.x);
-    for(let radius=80;radius<extent-3;radius+=6){
-      poses.push({x:Math.cos(angle)*radius,z:Math.sin(angle)*radius,y:0,heading:-angle,
-        roll:.05,flatten:.65});
-      if(index%3===0)poses.push({x:Math.cos(angle)*radius,z:Math.sin(angle)*radius,y:.85,
-        heading:-angle+.5,roll:-.08,flatten:.7});
+    for(let radius=87;radius<extent-9;radius+=18){
+      const centreAngle=angle+scrapRng.range(-.025,.025);
+      const cx=Math.cos(centreAngle)*radius,cz=Math.sin(centreAngle)*radius;
+      // Broad interlocked feet support progressively smaller, crossed stacks.
+      // Pile placement stays outside the circular wall and consumes its own RNG.
+      for(const [tier,count,spread]of[[0,8,3.6],[1,5,2.3],[2,2,.8]]){
+        const turn=scrapRng.range(0,Math.PI*2);
+        for(let hulk=0;hulk<count;hulk++){
+          const around=turn+hulk/count*Math.PI*2;
+          const reach=spread+scrapRng.range(-.7,.7);
+          poses.push({x:cx+Math.cos(around)*reach,z:cz+Math.sin(around)*reach,
+            y:tier*.85+scrapRng.range(0,.1),heading:around+scrapRng.range(-.8,.8),
+            pitch:scrapRng.range(-.12,.12),roll:scrapRng.range(-.2,.2),
+            flatten:scrapRng.range(.65,.85)});
+        }
+      }
     }
   }
   const scenery=new THREE.Group();scenery.name='Pit hulk wall, centre pile and oval-end scrap';
@@ -174,7 +187,7 @@ function addPitSalvageScenery(world, course) {
     mesh.name='Reused salvage kit';mesh.castShadow=mesh.receiveShadow=true;
     for(let index=0;index<poses.length;index++){
       const pose=poses[index];object.position.set(pose.x,pose.y,pose.z);
-      object.rotation.set(0,pose.heading,pose.roll);object.scale.set(1,pose.flatten,1);object.updateMatrix();
+      object.rotation.set(pose.pitch||0,pose.heading,pose.roll);object.scale.set(1,pose.flatten,1);object.updateMatrix();
       matrix.multiplyMatrices(object.matrix,part.matrixWorld);mesh.setMatrixAt(index,matrix);
       mesh.setColorAt(index,new THREE.Color(index%3===0?0xa88c72:index%3===1?0x80938a:0xb38b73));
     }

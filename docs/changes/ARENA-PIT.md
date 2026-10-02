@@ -75,10 +75,11 @@ zero wreck ticks. ARS pilot ownership remains the genuine acceptance blocker.
 Production build passes. The actual memory-only private browser scenario passes
 both qualities: eight full/racing captures, zero errors/warnings, state purity.
 Measured ring/Pit P95 is 16.9/16.8 ms High and 16.8/16.8 ms Performance,
-within 10%. High draw calls/triangles rise 546/556442 to 647/1861324;
-Performance rises 341/355450 to 361/986832. The extra scenery cost is retained
+within 10%. Round 2 High draw calls/triangles rise 546/556442 to 567/1516510;
+Performance is 378/424444 versus 361/1005424. The extra scenery cost is retained
 explicitly; these RAF samples show observed frame pacing on this laptop.
-Round 1 is 308498 bytes, look 3/5: outer parking rows need clustered scrap piles.
+Round 1 is 308498 bytes, look 3/5; round 2 piles replace its outer parking rows.
+Round 2 is 304366 bytes, independently reviewed next. Claude/Kyle remain pending.
 
 Official generator refreshed only sourceFingerprint to
 45c75c657202115575b8535e7483d2b08db855c96689ebe30ac21500068494d8.
