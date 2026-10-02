@@ -1,6 +1,6 @@
 # ARENA-JUNK-SHOVE
 
-Status: native checks and Source review pass; browser rerun pending.
+Status: native checks, Source review and browser QA pass; lane/build gates pending.
 
 ## Changed
 
@@ -12,8 +12,8 @@ that pose without moving simulation bodies.
 Junk settles on the floor and keeps its position. Native wall containment runs
 quietly for junk, without sliding armor damage or wall-hit cues. Titan retains
 the released flattening, score, vertical checks and vehicle.crush cue. Crushed
-hulks finish their first slide, then remain transparent to later car contacts
-and solid junk-pair contacts, as before.
+hulks finish their first slide, then remain transparent to later car and
+junk-pair collisions.
 
 Moved cover refreshes spawn candidates before native respawns. Slot indices
 and copied Fuel depot coordinates stay intact. Idle ticks retain the valid
@@ -55,10 +55,21 @@ node tools/test-<name>.mjs for:
 - arena-ramp-side: 42 checks; roadside-destruction: 24 checks.
 
 Independent review cleared the native Source, including the contact correction,
-spawn continuation, crushed behavior and renderer purity. Browser evidence
-and mandatory lane/build gates are still pending. The first browser attempt
-stopped before its first screenshot: capture labels contained underscores.
-The recipe now uses hyphens in labels only; simulation inputs are unchanged.
+spawn continuation, crushed behavior and renderer purity.
+
+Independent browser QA passes four actual-App cases in high and performance
+quality, with 12 images and zero errors, warnings or failed requests. Banshee
+moves cover 4.82996 metres and turns it -0.53596 radians. Titan moves the
+flattened shell 13.59996 metres. Render state purity, floor containment,
+settling after eight seconds and persistence for two more seconds pass in
+both qualities. Capture labels use hyphens; no simulation input changed.
+
+The browser run did not measure phone layout, frame pacing, resource use or
+unloading. Three captures clipped HUD characters; no matched baseline was
+captured. An opponent contact reduced player armor in the fixture. These
+observations do not establish their cause, and no HUD or Source change was
+made for them. Mandatory lane/build evidence will be recorded on the card by
+the Director after the exact candidate passes; those gates are still pending.
 
 ## Replays
 
