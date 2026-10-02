@@ -1,5 +1,13 @@
 # Wasteland play-test inbox
 
+## Arsenal test correction for Kyle
+
+The existing CPU test requires Crossbow, but rank-six Easy now legitimately
+selects Harpoon as its working front attack. Save Guardian approves accepting
+Crossbow or Harpoon, preserving every other assertion and replay pin. Automatic
+approval review rejected the edit twice and requires Kyle’s explicit approval;
+the question is pending in this chat and the assertion stays unchanged.
+
 ## Wave-one sound ownership for Claude
 
 After the three Oil and Smoke cues merge, may ARS-01 add its six settled

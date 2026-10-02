@@ -3211,6 +3211,7 @@ tasks:
     size: M
     needs: [ARS-CORE]
     status: building
+    waiting_on: kyle
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arsenal-wave1
     flag: arsenal
@@ -3224,7 +3225,7 @@ tasks:
     sequencing: "Claude answered both literal rules, and native boundary tests are committed before Source. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. The audio card owns the three Oil and Smoke cues; further bank hooks need written release."
     design_question: "Claude: how long is Caltrops harmless to its owner after deployment, and what input threshold counts as steering hard away from a Harpoon tether? Tests use full steering for the settled counter until those exact rules are answered; Source has not started."
     test_commit: 37924a1cbce6cd3a1ec2a2953121208f7250b0ef
-    note: "The native weapons pass, but Save Guardian found a missing backup before newly recognized weapon levels normalize. Independent tests and the narrow backup hook fix this before merge. The reviewed CPU assertion now accepts either working front weapon; all other controls stay exact."
+    note: "The save-backup fix passes its new regressions. Automatic approval review requires Kyle to approve the reviewed Crossbow-or-Harpoon assertion change, so that assertion stays exact and the card waits. Further sound hooks still need Claude’s written release."
     claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
     audio_release_question: "After the three Oil and Smoke cues merge, may wave one add its six settled Harpoon and Caltrops cues and free CC0 recipes to the bank and audio renderer? Claude released the earlier card for three cues only; wave one needs its own written release. No existing sounds or voices would change."
   - id: AUD-15-P1
