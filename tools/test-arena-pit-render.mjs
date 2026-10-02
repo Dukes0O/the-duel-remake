@@ -23,6 +23,21 @@ test('Pit production world loads finite geometry, preserves race state and relea
     const before = JSON.stringify({state: duel.state, features: duel.course.features, samples: duel.course.samples});
     world = buildEnvironment(duel.course);
     assert.ok(world.isGroup && world.children.length, 'production environment creates actual scene geometry');
+    world.updateMatrixWorld(true);
+    const visibleBoundary = world.getObjectByName('Pit hulk wall, centre pile and oval-end scrap');
+    assert.ok(visibleBoundary, 'the native round boundary must have actual visible scenery');
+    const walls = duel.course.features.barriers.filter(wall => wall.arenaWall).sort((a, b) => a.s - b.s);
+    const ray = new THREE.Raycaster(); ray.far = 8;
+    for (let index = 0; index < walls.length; index++) {
+      const wall = walls[index], next = walls[(index + 1) % walls.length];
+      const station = wall.s + duel.course.phase(next.s - wall.s) / 2;
+      const from = duel.course.worldAt(station, wall.off - 5);
+      const to = duel.course.worldAt(station, wall.off + 3);
+      ray.set(new THREE.Vector3(from.x, .55, from.z),
+        new THREE.Vector3(to.x - from.x, 0, to.z - from.z).normalize());
+      assert.ok(ray.intersectObject(visibleBoundary, true).length,
+        'each continuous native wall span has a visible car-height boundary');
+    }
     const resources = new Map();
     world.traverse(node => {
       if (node.geometry) {
