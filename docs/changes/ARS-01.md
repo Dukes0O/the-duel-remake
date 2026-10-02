@@ -57,6 +57,22 @@ cannot consume the projectile identity before use attribution.
 Restored two range-message characters and one unchanged comment after an
 encoding error; all source writes now name UTF-8 explicitly.
 
+## Save Guardian follow-up: tests first
+
+A canonical version-two registry can already own Harpoon or Caltrops as an
+old future id without a level. Actual load and direct raw save add level zero,
+but startup currently skips its verified backup. Memory-only regressions reach
+40 checks: four preservation controls pass and ten backup checks fail. They
+cover detection, exact pre-migration bytes, both normalization paths, failed
+and unverified recovery, other named careers, valid levels and future fields.
+All existing career-backup assertions pass unchanged; no replay pin changed.
+Source must recognize this shape change before startup can normalize it.
+The unchanged Arsenal save suite passes 99 of 100 cases. Save Guardian
+approved replacing its Crossbow-only front-attack predicate with Crossbow or
+Harpoon; seed 1989, rank-six Easy carries Harpoon, Star, Caltrops and Oil.
+The test-author role forbids editing existing assertions, so that narrow
+reviewed correction is handed to the builder; all 180 policy inputs remain.
+
 ## Remaining acceptance
 
 The browser recipe runs the original genuine Oil/Smoke counters, then actual

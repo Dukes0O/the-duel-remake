@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
+import {test,after} from 'node:test';
 import {readFileSync,readdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {
   backupBeforeMigration,backupCareer,captureCareer,createCareerExport,
   importCareer,needsCareerMigration,parseCareerExport,restoreCareerBackup,
 } from '../src/career-backup.js';
-import {createProfile,loadPlayers} from '../src/progression.js';
+import {createProfile,createPlayerRegistry,loadPlayers,savePlayers,PLAYERS_KEY} from '../src/progression.js';
 import {loadLeaderboard} from '../src/leaderboard.js';
 import {loadGhosts} from '../src/ghost.js';
 
@@ -162,3 +163,117 @@ assert.deepEqual(captureCareer(current),original,'quota failure rolled back');
 await assert.rejects(backupCareer(current,{save:async()=>{},load:async()=>null}),/could not be verified/);
 assert.deepEqual(captureCareer(current),original,'unverified backup did not change the save');
 console.log('career backup: seven historical fixtures, migration gate, validation, recovery, and quota rollback passed');
+
+
+// ARS-01: an older registry could already preserve these future weapon ids.
+// Recognizing them now adds their missing level; back up the raw bytes first.
+let arsenalBackupChecks = 0;
+const arsenalEq = (actual, expected, message) => {
+  arsenalBackupChecks++; assert.deepEqual(actual, expected, message);
+};
+const arsenalOk = (value, message) => {
+  arsenalBackupChecks++; assert.ok(value, message);
+};
+function olderArsenalRegistry(id, level) {
+  const registry = createPlayerRegistry({...createProfile(),
+    raceSettings: {footCamera: 'first-person'}});
+  registry.players[0].name = 'Old Arsenal';
+  const profile = registry.players[0].profile;
+  profile.futureProfileData = {kept: ['profile', 1]};
+  profile.wasteland.futureCareerData = {kept: ['career', 2]};
+  const weapons = profile.wasteland.weapons;
+  weapons.unlocked.push('oil', id, 'future-cannon');
+  weapons.levels.crossbow = 2;
+  weapons.levels.oil = 1;
+  weapons.levels['future-cannon'] = 2;
+  if (level !== undefined) weapons.levels[id] = level;
+  weapons.futureWeaponData = {curve: [1, 2]};
+  const second = createPlayerRegistry({...createProfile(),
+    raceSettings: {footCamera: 'overhead'}}).players[0].profile;
+  registry.players.push({id: 'second-player', name: 'Second', profile: second});
+  return registry;
+}
+function olderArsenalStorage(registry) {
+  return memoryStorage({[PLAYERS_KEY]: JSON.stringify(registry, null, 2),
+    duel_future_save_v3: '{ "untouched": true }'});
+}
+for (const id of ['harpoon', 'caltrops']) {
+  test('ARS-01 backup: ' + id + ' level addition requires migration', () => {
+    const source = olderArsenalStorage(olderArsenalRegistry(id));
+    const before = captureCareer(source);
+    const needs = needsCareerMigration(source);
+    arsenalEq(captureCareer(source), before, id + ' migration inspection leaves every source byte unchanged');
+    arsenalEq(needs, true, id + ' missing owned level requires backup before registry normalization');
+  });
+  test('ARS-01 control: actual ' + id + ' registry normalization adds only its missing level', () => {
+    const registry = olderArsenalRegistry(id), before = structuredClone(registry);
+    const source = olderArsenalStorage(registry), raw = captureCareer(source);
+    const loaded = loadPlayers(source);
+    arsenalEq(captureCareer(source), raw, id + ' loading alone does not write raw storage');
+    arsenalEq(registry, before, id + ' loading leaves the fixture object untouched');
+    arsenalEq(loaded.players[0].profile.wasteland.weapons,
+      {...before.players[0].profile.wasteland.weapons,
+        levels: {...before.players[0].profile.wasteland.weapons.levels, [id]: 0}},
+      id + ' actual load keeps ownership, valid levels and unknown weapon fields');
+    arsenalEq(loaded.players[1], before.players[1], id + ' another named player is unchanged');
+    const directSource = olderArsenalStorage(registry);
+    arsenalEq(savePlayers(JSON.parse(directSource.getItem(PLAYERS_KEY)), directSource), true,
+      id + ' actual direct raw-registry save normalizes successfully');
+    const expected = structuredClone(before);
+    expected.players[0].profile.wasteland.weapons.levels[id] = 0;
+    arsenalEq(JSON.parse(directSource.getItem(PLAYERS_KEY)), expected,
+      id + ' actual direct save preserves both careers, valid levels and unknown fields');
+    arsenalEq(registry, before, id + ' direct raw save leaves the fixture object untouched');
+  });
+  for (const path of ['load then save', 'direct raw save']) {
+    test('ARS-01 backup: ' + id + ' exact bytes precede ' + path, async () => {
+      const registry = olderArsenalRegistry(id), source = olderArsenalStorage(registry);
+      const before = captureCareer(source), store = memoryBackups();
+      const backup = await backupBeforeMigration(source, store);
+      arsenalEq(captureCareer(source), before, id + ' backup preflight cannot normalize or write the source');
+      arsenalOk(backup, id + ' verified migration backup exists before ' + path);
+      arsenalEq(backup.reason, 'migration', id + ' backup records the migration reason');
+      arsenalEq(store.records.size, 1, id + ' preflight writes one verified recovery record');
+      arsenalEq((await store.load(backup.id)).entries, before,
+        id + ' verified recovery keeps exact pre-migration bytes including formatting and future keys');
+      const toSave = path === 'load then save' ? loadPlayers(source)
+        : JSON.parse(source.getItem(PLAYERS_KEY));
+      arsenalEq(captureCareer(source), before, id + ' source stays unchanged until the actual save');
+      arsenalEq(savePlayers(toSave, source), true, id + ' real registry normalization can now save');
+      const saved = JSON.parse(source.getItem(PLAYERS_KEY));
+      const expected = structuredClone(registry);
+      expected.players[0].profile.wasteland.weapons.levels[id] = 0;
+      arsenalEq(saved, expected, id + ' save adds only the missing level and preserves both named careers and unknown fields');
+      arsenalEq((await store.load(backup.id)).entries, before, id + ' original backup survives the normalized write');
+      arsenalEq(source.getItem('duel_future_save_v3'), before.duel_future_save_v3,
+        id + ' registry save does not touch another future career key');
+      arsenalEq(needsCareerMigration(source), false, id + ' completed normalization needs no second migration');
+      arsenalEq(await backupBeforeMigration(source, store), null, id + ' repeated preflight adds no duplicate backup');
+      arsenalEq(store.records.size, 1, id + ' repeated preflight leaves one recovery record');
+    });
+  }
+  for (const failure of ['unavailable', 'unverified']) {
+    test('ARS-01 backup: ' + id + ' ' + failure + ' recovery blocks migration', async () => {
+      const source = olderArsenalStorage(olderArsenalRegistry(id)), before = captureCareer(source);
+      const store = failure === 'unavailable'
+        ? {save: async () => {throw new Error('backup unavailable');}}
+        : {save: async () => {}, load: async () => null};
+      arsenalBackupChecks++;
+      await assert.rejects(backupBeforeMigration(source, store),
+        failure === 'unavailable' ? /backup unavailable/ : /could not be verified/,
+        id + ' missing owned level cannot bypass ' + failure + ' backup');
+      arsenalEq(captureCareer(source), before, id + ' failed backup leaves every source byte unchanged');
+    });
+  }
+  test('ARS-01 control: canonical owned ' + id + ' level requires no migration', async () => {
+    const registry = olderArsenalRegistry(id, 2), source = olderArsenalStorage(registry);
+    const before = captureCareer(source), store = memoryBackups();
+    arsenalEq(needsCareerMigration(source), false, id + ' valid owned level is already canonical');
+    arsenalEq(await backupBeforeMigration(source, store), null, id + ' unchanged arsenal needs no backup');
+    arsenalEq(store.records.size, 0, id + ' no backup record is written for unchanged data');
+    arsenalEq(captureCareer(source), before, id + ' canonical preflight leaves every byte unchanged');
+    arsenalEq(loadPlayers(source).players[0].profile.wasteland.weapons.levels[id], 2,
+      id + ' loading preserves the valid earned level');
+  });
+}
+after(() => console.log('ARS-01 career backup: ' + arsenalBackupChecks + ' acceptance checks reached.'));
