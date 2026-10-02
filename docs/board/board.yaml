@@ -2953,7 +2953,7 @@ tasks:
     test_commit: d0e1a1f
     source_commit: 360192cb9225317a52dd92b28be63d783b6247e6
     review_commit: f1a1470
-    note: "Ordinary armor now brings Medium full-field wrecks to twelve and a half, within target, with every warlord's released health preserved. The complete three-difficulty report is recorded; native regressions and current merge gates follow."
+    note: "The tested ordinary-armor candidate meets the former target and preserves warlord health. Kyle now decides whether to lower wrecks at all; retain the clean lane and evidence, with no gate or merge while held."
     design_question: "Changing ordinary arena armor also changes Sal’s absolute armor because warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card preserve the current warlord health values or only the 1.5 multiplier? Tuning waits for that answer; the target test and import guard can finish."
     claude_answer: "1 October 2026, evening: keep every warlord's absolute armor exactly as it is today; Kyle approved Sal as she plays. The armor change applies to ordinary cars only (Last Car Rolling and the public modes). Compute warlord armor from today's arena scale times 1.5, or store it, so this card changes no warlord number."
     waiting_on: kyle
@@ -2964,7 +2964,12 @@ tasks:
     lane: CMB
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-01-evening
+    branch: lane/cmb/arena-junk-shove
+    owns: [src/arena/arena-junk.js, tools/test-arena-junk-shove.mjs, tools/scenarios/arena-junk-shove.mjs, docs/changes/ARENA-JUNK-SHOVE.md]
+    hooks: []
+    sequencing: "Tests start in the new owned file. Source hooks follow the current-code inventory; Game and pilot edits wait for Arsenal to merge, and wreck-rate retains its held event file."
     flag: scrapdome
     acceptance:
       - "Kyle, 1 October 2026: the parked cars in the dome do not budge at any speed. These are the six junk cars (course.features.crushables, kind junkCar), fixed boxes that only the Titan crushes; ARENA-SHOVE covered participant cars only. Build docs/SCRAPDOME.md section 2, Junk cars: heavy hulks (1.5 times a car's mass) that slide through the crash solver, at least 2 m from a 40 mph hit by any car and 5 m by the Titan, contained on the floor, no sliding damage, settle and stay for the round; Titan crush unchanged."

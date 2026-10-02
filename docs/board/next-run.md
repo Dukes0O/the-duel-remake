@@ -45,7 +45,8 @@ Vesper's costume are approved. Salt finishes public entry after Arsenal and
 wreck-rate free their files; both art recipes still wait for Tanker's shared
 registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
 
-Shove is merged. All five existing claims are resumed under those answers.
+Shove is merged. Kyle's later junk-car note opens ARENA-JUNK-SHOVE and holds
+wreck-rate until he decides whether to lower wrecks at all.
 Arsenal and wreck-rate have tests-first changes and independent source review;
 balance and merge gates remain. Tanker's two fixes have tests and source ready.
 The exact evening integration checkpoint passed all 318 full suites and build,
