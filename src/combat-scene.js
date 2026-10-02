@@ -474,6 +474,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       hazardViews.forEach(view=>{
         view.oilMaterial.dispose();
         view.smokeMaterial.dispose();
+        view.caltrops.dispose();
       });
       caltropsGeometry.dispose();
       caltropsMaterial.dispose();
