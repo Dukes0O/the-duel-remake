@@ -41,6 +41,11 @@ without changing other states or production admission.
 Independent output-plan tests first gave 3 checks, 1 PASS and 2 import-bpy RED.
 After Source they pass 3/3; the shared Blender output guard passes 43/43.
 
+Shortcut metadata refreshed with the official generator after all fifteen
+legacy layouts matched 7,480 samples and every feature/shortcut to fresh solvers.
+Only sourceFingerprint changed; version, entries and all other bytes stay exact.
+Existing --verify-solvers passes 241 checks; no assertions or signatures changed.
+
 Independent review approved the Fuel assertion migration to the real 180 s
 round and Infinity sudden death. A separate 600 s observation watchdog never
 changes game limits, forces results or changes next-delivery rules. Fixtures
