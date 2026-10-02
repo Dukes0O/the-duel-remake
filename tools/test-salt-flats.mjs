@@ -219,7 +219,7 @@ check('native','the actual native layout repeats from seed and inputs',async()=>
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
 globalThis.cancelAnimationFrame=()=>{};
 const flags=(enabled=true,overrides={})=>createFeatureFlags({storage:null,qa:enabled,search:enabled?'?flags=salt-flats':'',
-  overrides:{wasteland2:true,'hidden-road':true,scrapdome:true,warlords:true,...overrides}});
+  overrides:{wasteland2:true,'hidden-road':true,scrapdome:true,warlords:true,'fuel-run':true,...overrides}});
 const xpAtRank=rank=>Array.from({length:rank-1},(_,i)=>400+150*i).reduce((sum,value)=>sum+value,0);
 async function yard({rank=9,discovered=true,enabled=true,overrides={}}={}){
   const {App}=await import('../src/app.js');memory.clear();const app=new App();app.duel.featureFlags=flags(enabled,overrides);
@@ -230,7 +230,7 @@ async function yard({rank=9,discovered=true,enabled=true,overrides={}}={}){
     app.duel.featureFlags=flags(enabled,overrides);}
   return app;
 }
-const publicModes=Object.keys(ARENA_MODES).filter(mode=>mode!=='warlord');
+const publicModes=['last-car-rolling','fuel-run']; // Claude's 2 October released Salt scope.
 check('runtime','Salt Flats has its own dev switch and never appears as a racing circuit',()=>{
   assert.equal(FEATURE_STATES['salt-flats'],'dev','new venue remains dev before review/release');
   assert.equal(createFeatureFlags({storage:null,qa:false}).enabled('salt-flats'),false);
@@ -267,6 +267,49 @@ for(const request of [{venueId:'not-a-venue',mode:'last-car-rolling'},{venueId:'
       assert.equal(JSON.stringify(app.duel.state),before,'invalid selection never falls back silently');
     }finally{app.dispose?.();}
   });
+check('runtime','Fuel Run uses its legitimate dev flag independently of Salt Flats',()=>{
+  assert.equal(FEATURE_STATES['fuel-run'],'dev','Fuel Run remains dev before review/release');
+  assert.equal(createFeatureFlags({storage:null,qa:false}).enabled('fuel-run'),false);
+  assert.equal(flags().enabled('fuel-run'),true,'private native fixtures explicitly enable the existing Fuel flag');
+  assert.equal(flags(false).enabled('salt-flats'),false,'Salt can be disabled independently');
+  assert.equal(flags(false).enabled('fuel-run'),true,'off-Salt rejection keeps Fuel enabled');
+});
+for(const options of [{rank:8},{discovered:false},{enabled:false},{overrides:{scrapdome:false}},
+  {overrides:{wasteland2:false}},{overrides:{'fuel-run':false}}])
+  check('runtime',`public Salt Flats Fuel Run rejects ${JSON.stringify(options)}`,async()=>{
+    const app=await yard(options);try{
+      if(options.enabled===false)assert.equal(app.duel.featureFlags.enabled('fuel-run'),true,'Fuel stays enabled in off-Salt control');
+      const before=JSON.parse(JSON.stringify({state:app.duel.state,profile:app.profile}));
+      assert.equal(app.startArenaEvent({venueId:'salt-flats',mode:'fuel-run'}),false,
+        'locked Salt Fuel entry cannot silently launch the default venue');
+      assert.deepEqual(JSON.parse(JSON.stringify({state:app.duel.state,profile:app.profile})),before,
+        'rejected Fuel launch preserves native state and named profile');
+    }finally{app.dispose?.();}
+  });
+check('runtime','rank nine and discovery launch Salt Fuel Run through the actual App',async()=>{
+  const app=await yard();try{
+    assert.equal(app.duel.featureFlags.enabled('fuel-run'),true,'genuine Fuel dev flag is enabled');
+    assert.equal(app.startArenaEvent({venueId:'salt-flats',mode:'fuel-run'}),true);
+    assert.equal(app.duel.state.arena.venueId,'salt-flats','public Fuel selection reaches the requested venue');
+    assert.equal(app.duel.state.arena.mode,'fuel-run','public Fuel selection reaches the implemented rules');
+    assert.equal(app.duel.course.def.id,'salt-flats');
+    assert.equal(app.profile.activeRace,null,'arena entry never becomes a race save');
+  }finally{app.dispose?.();}
+});
+for(const mode of publicModes)check('runtime',`${mode}: Salt rank-nine availability is independent of ordinary arena entry`,async()=>{
+  const app=await yard({rank:8});try{
+    assert.equal(app.startArenaEvent({venueId:'scrapdome',mode}),true,'existing venue still admits the same mode below Salt rank');
+    assert.equal(app.duel.state.arena.venueId,'scrapdome');
+    assert.equal(app.duel.state.arena.mode,mode);
+  }finally{app.dispose?.();}
+});
+for(const request of [{venueId:'not-a-venue',mode:'fuel-run'}])
+  check('runtime',`Fuel public launcher rejects unknown venue ${JSON.stringify(request)}`,async()=>{
+    const app=await yard();try{const before=JSON.stringify(app.duel.state);
+      assert.equal(app.startArenaEvent(request),false,'unknown Fuel venue never falls back silently');
+      assert.equal(JSON.stringify(app.duel.state),before);
+    }finally{app.dispose?.();}
+  });
 check('runtime','default Scrapdome launch remains available below Salt Flats rank and with its dev flag off',async()=>{
   const app=await yard({rank:1,enabled:false});try{assert.equal(app.startArenaEvent(),true);
     assert.equal(app.duel.state.arena.venueId,'scrapdome');assert.equal(app.duel.state.arena.mode,'last-car-rolling');
@@ -276,8 +319,16 @@ for(const mode of publicModes)check('runtime',`${mode}: a complete Salt Flats ro
   function play(){const duel=new Duel({seed:1989,featureFlags:flags()});
     assert.equal(duel.startArenaEvent({venueId:'salt-flats',mode,car:'falcone_f42',seed:1989,cpuDifficulty:'medium',
       opponents:[{car:'dusthawk_rally'}]}),true,`missing built ${mode} Salt Flats consumer`);
-    const rules=ARENA_MODES[mode];assert.ok(Number.isFinite(rules.timeLimitSec)&&Number.isFinite(rules.suddenDeathSec),'built mode has its published round limits');
-    const tickLimit=Math.ceil((duel.state.countdown+rules.timeLimitSec+rules.suddenDeathSec+1)*120);
+    const rules=ARENA_MODES[mode];
+    if(mode==='fuel-run'){
+      assert.equal(rules.timeLimitSec,180,'released Fuel Run uses its exact 180 s round');
+      assert.equal(rules.suddenDeathSec,Infinity,'released Fuel tie ends only on the next delivery');
+    }else assert.ok(Number.isFinite(rules.timeLimitSec)&&Number.isFinite(rules.suddenDeathSec),'built mode has its published round limits');
+    // Independently reviewed migration: Infinity is a genuine game rule.
+    // This finite observation watchdog fails a nonfinishing test; it never
+    // writes arena limits, forces a result or supplies a game time limit.
+    const observationSec=mode==='fuel-run'?600:rules.timeLimitSec+rules.suddenDeathSec;
+    const tickLimit=Math.ceil((duel.state.countdown+observationSec+1)*120);
     const trace=[],events=[];duel.onChange((_state,event)=>{if(event.arenaWreck||event.arenaResult)events.push(event);});
     for(let tick=0;tick<tickLimit&&duel.state.status!=='arena_result';tick++){
       duel.setInput({throttle:.75,brake:0,steer:.08,boost:false});duel.step(1/120);
@@ -411,15 +462,17 @@ check('native','generated ground excludes the retired photo and mirrored sampler
   // Tone, crust, grain, tyre dust and visible repeat are judged in game captures.
 });
 let failures=0;const nativeOnly=process.argv.includes('--native-only');
+const entryOnly=process.argv.includes('--entry-only');
 const groundConfigOnly=process.argv.includes('--ground-config-only');
-const selected=checks.filter(row=>groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
+const selected=checks.filter(row=>entryOnly?row.group==='runtime'&&!/a complete Salt Flats|actual game scene/.test(row.name):groundConfigOnly?['ground-config','control'].includes(row.group):!nativeOnly||row.group!=='runtime');
 for(const {group,name,run}of selected)try{await run();}catch(error){failures++;console.error(`FAIL [${group}] ${name}: ${error.message}`);}
 console.log(`Salt Flats${nativeOnly?' native WIP':''}: ${selected.length} checks, ${selected.length-failures} passed, ${failures} failed.`);
 if(failures)process.exitCode=1;
-if(groundConfigOnly)process.exit(failures?1:0);
+if(groundConfigOnly||entryOnly)process.exit(failures?1:0);
 
 // Independent ARENA-06 geometry acceptance. Append only: preserve every byte
-// of the original 41 checks and their selection/runner. Native triangles are
+// of the independent geometry checks; approved Fuel entry/rule additions above
+// are recorded in ARENA-06.md. Native triangles are
 // the oracle; no sine/sine-squared recipe or private Course helper is copied.
 const geometryCheckStart=checks.length;
 const physicalTolerance=.002; // two millimetres covers exported float precision.

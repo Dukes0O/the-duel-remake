@@ -1,99 +1,88 @@
 # ARENA-06: Salt Flats
 
-Status: review; final generated round three is accepted. Public scope needs Claude's answer and final gates remain.
+Status: final private art accepted. Public entry and final gates remain.
 
-## Changed
+## Changed and accepted
 
-Kyle's 1 October decision replaces the repeating photograph with seeded
-salt. One fixed-seed 1536 by 1024 colour atlas covers the 300 by 200 metre
-bowl with broad tone drift, four-metre salt polygons and a dustier driving
-band read from actual Course frames. A normal atlas gives crust relief;
-world-coordinate grain appears close to the camera.
+Kyle's 1 October decision replaces the repeating photograph with seeded salt.
+A fixed-seed 1536 by 1024 colour atlas covers the 300 by 200 metre bowl, with
+broad tone drift, four-metre salt polygons and a dustier driving band read from
+actual Course frames. A normal atlas supplies crust relief; world grain is
+visible close to the camera.
 
-The final correction follows inspection of the actual round-two colour and
-normal atlases. Colour wear was also reducing band relief to 25%, and the
-cells formed a regular lattice. Band colour and feathering remain intact;
-normal relief now keeps 90% independently. Seeded coordinate warping and
-less regular sites remove straight grid alignment, while a wider site search
-and screen-footprint filtering keep distant procedural ridges from aliasing.
-Anisotropic filtering preserves native atlas detail at oblique views.
+Final round three keeps band colour and feathering while preserving 90% normal
+relief independently. Warped coordinates and irregular sites remove the cell
+lattice; wider site search and screen filtering prevent distant ridges from
+aliasing. Anisotropic filtering preserves detail at oblique views. The unique
+atlas fades into four matching world-coordinate strips outside its edges.
+Distant heat is view-only; seeded simulation and race state stay unchanged.
 
-The unique atlas fades inside its edge into four adjoining strips with
-matching generated world-coordinate salt. No clamped bowl image stretches
-outside. Distant heat remains view-only; race state and seeded simulation
-randomness are unchanged.
+The accepted island keeps four salvage stacks behind its solid wreck boundary.
+All 172 native meshes, 184,340 triangles, donor faces and transforms, Bus, crane,
+ramps and 168 Course colliders remain exact. The candidate is 23,283,392 bytes,
+about 0.49 MB larger than round two due to the irregular generated PNGs.
+Atlas sizes, native UVs, 172 draws and two shared materials stay unchanged.
 
-The accepted island retains four genuine salvage stacks behind its solid
-wreck boundary. All 172 native meshes, 184,340 triangles, donor faces and
-transforms, the Bus, crane, ramps and 168 Course colliders remain exact.
-The final candidate is 23,283,392 bytes, about 0.49 MB above round two because
-the irregular generated images use more PNG bytes. Atlas dimensions, native
-UVs, 172 draws and two shared native materials remain unchanged.
+The final comparison is accepted. This private verdict does not prove passing
+public entry or final merge gates; no fourth art round is needed.
 
-The final generated round-three comparison is accepted. That private visual
-verdict does not establish public entry or a passing final merge gate.
-Public-mode scope needs Claude's answer below before the whole-card handoff.
+## Earlier private validation
 
-## Tests and review
+Generated-ground config and both old controls pass all three checks.
+All 16 registered Course geometry cases and 29 native boundary/collision cases
+pass. Earlier build passes; the whole-card gates still await public hooks.
+Repeated exports preserve actual colour and normal bytes. Native attributes,
+indices, UVs, transforms, features and donor lineage match round two exactly.
+No material-round tolerance or replay pin changed.
 
-The independent author's generated-ground config check was committed RED
-with both old controls passing before Source. Its three checks now pass.
-The final default suite passes every source/native check and retains exactly
-six known public switch, launcher and Fuel Run failures. All 16 registered
-Course geometry cases and 29 native boundary/collision cases pass. Build
-passes; the whole-card merge floor still awaits the held public hooks.
+Round one scored 3 near/racing and 2 full/heat; round two improved band separation
+to 4 and full art/materials to 3 while near/chase stayed 3. Final round three
+passes all sixteen actual game views without errors or warnings. Independent
+Source review found no defect. Headless renderer and effects pass eight cases
+each; the critic scores all assessed items four in both qualities. Paired
+180-frame Scrapdome/Salt captures show P95 16.8/16.8 ms in both qualities,
+within ten percent. Motion and sound remain unassessed.
 
-Repeated exports preserve the generated colour and normal image bytes.
-Comparison with round two proves every native attribute, index, UV,
-transform, physical feature and donor lineage unchanged. No assertion,
-tolerance or replay pin changes in either material tuning round. Donor,
-driving, ramp, state and lifecycle checks remain unchanged.
+## Settled public scope and approved test migration
 
-Round one removed visible photo repeats but scored 3 near/racing and 2 in
-full/heat views. Round two improved the worn-band separation to 4 and full
-art/materials to 3; near/chase remained 3. The final round passes all sixteen actual game views without errors or
-warnings; independent Source review finds no defect. Headless renderer and
-effects each pass eight cases. The critic scores every assessed visual item
-four in both qualities. Paired 180 actual animation frames per venue/quality
-give Scrapdome/Salt P95 of 16.8/16.8 ms throughout, within ten percent. All
-samples remain; motion and sound are unassessed. The final round-three
-comparison has been accepted; no comparison review remains pending.
+Claude answered at 00:30 on 2 October: merge Salt with Last Car Rolling and Fuel
+Run playable. Bounty Hunt and Ambush Alley add Salt in their own cards.
+The consumed four-mode dependency question is resolved and removed.
 
-Earlier assertion migration: Kyle's written ground change removed the active
-photo binding, JPEG helper, mandatory photo input and embedded mirrored-photo
-assertion. Seeded settings, genuine embedded textures, no retired photo or
-mirror sampler, and actual image-byte repeatability replace those checks.
-The external CC0 photo's licence/catalog provenance stays intact. Claude's
-removed pixel/counter look diagnostics remain removed.
+The Director's independent reviewer approved replacing the finite Fuel sudden
+death assertion with exact published Fuel limits: 180 s and Infinity. Last Car
+Rolling retains its finite-limit assertion. Fuel uses a separate 600 s test
+observation watchdog; it never writes game limits, forces completion or changes
+the next-delivery sudden-death rule. Actual arena_result, physical bounds,
+event trace and seeded repeated results remain required.
 
-## Public scope question for Claude
+Native fixtures explicitly enable the existing fuel-run dev flag. Salt-off
+controls keep Fuel enabled. Additive actual App tests cover rank-nine launch,
+rank-eight rejection, discovery and flags for both approved modes, unknown
+Fuel venue rejection and normal Scrapdome availability below Salt rank.
+No existing assertion was relaxed outside the independently approved Fuel
+limit migration. No Source, geometry rule, tolerance or replay pin was edited.
 
-The final instruction calls for all four public modes. The released
-ARENA_MODES and public panel currently provide Last Car Rolling and Fuel Run.
-Bounty and Ambush are unbuilt cards; Ambush needs CREW-02, whose Dune zoom
-needs Salt's renderer. Requiring every mode in Salt would create a dependency
-cycle with that later crew work.
+## Tests-first handoff, 2 October
 
-May Salt merge its real public entry for the two built modes, with Bounty and
-Ambush proving Salt entry in their own cards when built? No placeholder mode
-route is proposed or installed. The Director records this question on the
-board and in the inbox; this note does not assume Claude's answer.
-
-Read-only test finding: the existing Salt public-round assertion requires
-finite suddenDeathSec, but released Fuel Run uses Infinity. That assertion
-remains unchanged. Any later migration needs independent test review and a
-written reason; this docs-only slice grants no changed assertion.
-
-After the scope answer, final lane/build gates and public checks precede any
-whole-card merge. Existing recorded private geometry, look and build results
-do not grant those later gates. The Blender coverage file stays with Tanker
-until its merge. No fourth material round or public installation is cleared
-by these private checks.
+After an ordinary integration merge, syntax and git diff --check pass.
+node tools/test-salt-flats.mjs --entry-only: 22 checks, 13 PASS, 9 genuine RED.
+Failures are the missing Salt dev declaration; rank-eight and Salt-off entry
+falling back to Scrapdome in both modes; successful entry selecting Scrapdome
+in both modes; and unknown venue fallback in both modes.
+Discovery/other flag rejection controls, legitimate Fuel flag and both normal
+Scrapdome rank-eight launches pass. There is no missing-module or fake mode
+failure. Public Source is still held for the builder to implement these gates.
+The bounded selection excludes full rounds, scene/export, geometry and Blender.
+The migrated Fuel completion check and earlier private art checks were not
+rerun here; their downstream behavior is not passing evidence for this handoff.
+No broad lane/full tier, build, browser or performance job ran. Final card gates
+must pass after the public hooks. Blender coverage stays with Tanker until merge.
 
 ## Removed
 
-Removed active photo configuration, loading, embedded image, mirrored
-sampler rewrite and obsolete photo-only helpers/assertions. Final recipe
-settings replace the earlier regular cells and coupled colour/normal wear.
-No new runtime asset is installed here. Removed no licensed donor, current
-game asset, physical rule or replay pin.
+Removed active photo configuration/loading, embedded photo, mirrored sampler,
+JPEG helper and photo-only assertions under Kyle's written ground decision.
+Removed the consumed mode-scope question and obsolete finite Fuel sudden-death
+assertion under independent review. Licensed donor/photo provenance, current
+game assets, physical rules and existing replay pins remain intact.
