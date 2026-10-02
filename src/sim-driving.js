@@ -151,7 +151,7 @@ export function _drive(dt) {
   }
   if (s.boosting && !wasBoosting) this.emit({ boostStarted: true });
 
-  // engine blow if you ride the limiter on a Pro manual â€” the threshold sits
+  // engine blow if you ride the limiter on a Pro manual — the threshold sits
   // below the gear ceiling so holding throttle without upshifting gets there
   if (s.status === 'exploring' &&
       (s.hiddenRoadJourney?.departed || s.muddyHollowDeparture?.departed)) {

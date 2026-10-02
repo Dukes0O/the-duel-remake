@@ -92,12 +92,17 @@ function hitHarpoon({playerVictim = false, arena = false, level = 0} = {}) {
     equipCpu(shooter, 'harpoon');
   }
   const beforeArmor = target.armor, beforePush = target.pushVelocity;
+  let hitPush = null;
+  duel.onChange((_state, event) => {
+    if (event.arsenalCue === 'weapon.harpoon.hit' && event.actor === target)
+      hitPush = target.pushVelocity;
+  });
   assert.equal(playerVictim ? fireWeapon(duel, 'harpoon', true, shooter) : duel.fireWeapon('harpoon'), true,
     'native discovered Harpoon fire must succeed');
   let hitTick = -1;
   for (let i = 0; i < 180; i++) {duel.step(DT); if (carEffect(target, 'tether')) {hitTick = i; break;}}
   assert.ok(hitTick >= 0, 'real swept Harpoon flight must hit and tether its live target');
-  return {duel, shooter, target, beforeArmor, beforePush, effect: carEffect(target, 'tether')};
+  return {duel, shooter, target, beforeArmor, beforePush, hitPush, effect: carEffect(target, 'tether')};
 }
 function dropCaltrops({playerVictim = false, arena = false, level = 0} = {}) {
   const duel = race({arena, levels: {caltrops: level}}), owner = playerVictim ? duel.state.rival : duel.state;
@@ -167,7 +172,10 @@ check('Harpoon guidance never steers outside its 4 degree launch cone', () => {
 for (const level of [0, 3]) check('Harpoon native armor, sideways yank and fixed tether duration at level ' + level, () => {
   const r = hitHarpoon({level});
   near(r.beforeArmor - r.target.armor, 6 * (1 + .15 * level), 'named Harpoon armor source scales damage by existing 15% levels');
-  near(Math.abs(r.target.pushVelocity - r.beforePush), 6, 'hit produces the fixed 6 m/s sideways yank');
+  assert.notEqual(r.hitPush, null, 'actual hit event samples the native impulse before driving');
+  near(Math.abs(r.hitPush - r.beforePush), 6, 'hit produces the fixed 6 m/s sideways yank');
+  near(r.target.pushVelocity, r.hitPush * Math.exp(-1.5 * DT),
+    'the full road tick retains ordinary physical damping after the exact hit');
   const shooter = point(r.duel, r.shooter), target = point(r.duel, r.target);
   const side = (shooter.x - target.x) * Math.cos(target.heading) - (shooter.z - target.z) * Math.sin(target.heading);
   assert.equal(Math.sign(r.target.pushVelocity - r.beforePush), Math.sign(side) || 1, 'yank points toward the shooter side');
@@ -337,7 +345,9 @@ for (const weapon of ['harpoon', 'caltrops']) for (const role of ['player', 'roa
   const actor = r.target, duel = r.duel, control = race({arena}), other = playerVictim ? control.state : control.state.rival;
   const spec = arenaCarSpec(duel, actor), scale = weapon === 'harpoon' ? .8 : .9;
   const baseCap = arena ? arenaFloorSpeed(duel.course.def.scrapdome, spec.topSpeed) : spec.topSpeed;
-  const initial = baseCap * scale + .05;
+  // Independent review: .05 above the cap saturated both road brake branches.
+  // Five mph exposes the native literal ceiling after one ordinary brake tick.
+  const initial = baseCap * scale + (role === 'road-cpu' ? 5 : .05);
   for (const [d, target] of [[duel, actor], [control, other]]) {
     place(target, arena ? 96 : 500, 0, 0, initial);
     target.gear = CARS[target.car].gears.length - 1;
@@ -347,6 +357,8 @@ for (const weapon of ['harpoon', 'caltrops']) for (const role of ['player', 'roa
     else d._rival(DT, target);
   }
   assert.ok(actor.speedMph < other.speedMph - 1e-6, 'live effect lowers the native speed ceiling response versus the identical unhit consumer');
+  if (role === 'road-cpu') near(actor.speedMph, baseCap * scale,
+    'road CPU respects the literal effect ceiling while the control remains above it');
   if (arena) assert.ok(actor.speedMph <= baseCap * scale + EPS, 'arena pilot clamps at the literal scaled floor ceiling');
 });
 

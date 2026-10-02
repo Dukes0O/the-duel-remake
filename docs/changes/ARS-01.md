@@ -1,7 +1,7 @@
 # ARS-01: Harpoon, Caltrops and wave-one computer use
 
 Native Source and the private production browser recipe are implemented.
-The card is not ready to merge. Independent test fixture review, balance,
+The card is not ready to merge. Balance,
 browser, save review, sounds and lane/build gates remain.
 
 ## What changed
@@ -33,24 +33,29 @@ browser, save review, sounds and lane/build gates remain.
 
 Independent tests preceded Source at 37924a1. The settled owner grace is
 1 s; hard-away input is at least 0.6 and need not remain continuous.
-The first native Source runs pass 53 of 57 checks, including all six new
-literal boundaries, 30/60/144 App cadences, transactions, cleanup and draw
-purity. Four tests expose fixture sampling issues now under independent
-review; their existing assertions have not been changed.
+Current bounded acceptance passes all 57 native weapon checks and all 33
+combat-balance schema/native accounting checks. These include all six literal
+boundaries, 30/60/144 App cadences, real transactions, cleanup and draw purity.
+No thirty-race report, broad tier, build or browser capture has run yet.
 
-The two yank checks sample after native road damping rather than at the
-hit. The road CPU comparisons start only 0.05 mph above the effect cap;
-both controls can brake below that cap in the same step. The implementation
-keeps the exact hit impulse and actual speed ceilings instead of changing
-physics to satisfy saturated comparisons.
-
-Bounded combat-balance acceptance passes 30 of 33. Source fixes the real
-Harpoon count by observing its native fire cue once. Review also covers the
-old two-weapon positive fixture and a new one-row aggregate that removes
-required policy/difficulty samples. No assertion or target band was changed.
-These results preceded the final accounting and scheduling fixes; reruns
-are required. There has been no thirty-race report, broad tier, build or
-browser capture in this Source slice. No replay pin has been regenerated.
+The independent reviewer approved four narrow fixture corrections and
+reproduced their native witnesses before those edits:
+- Sample the exact 6 m/s yank at the actual hit event, then separately retain
+  the exact ordinary road damping of 6 times exp(-1.5/120).
+- Start only road CPU ceiling comparisons 5 mph above the ceiling. The prior
+  0.05 mph fixture let both native controls brake below the ceiling in one
+  step. Literal ceilings of 160.8 and 180.9 now compare with actual controls
+  at 164.2167 and 184.3167; original player and arena assertions stay intact.
+- Add separate genuinely measured Harpoon/Caltrops rows to the four-use
+  positive validator while preserving the original three-row assertions and
+  zero-use Oil/Smoke controls. Bounded rows are never marked complete.
+- Append each genuine use row to the full report fixture rather than remove
+  required policy/difficulty samples. Native and aggregate counts stay exact.
+No settled rule, balance target, old native use assertion or replay pin changed.
+The Source count observes Harpoon's native fire cue once, so its flight cue
+cannot consume the projectile identity before use attribution.
+Restored two range-message characters and one unchanged comment after an
+encoding error; all source writes now name UTF-8 explicitly.
 
 ## Remaining acceptance
 

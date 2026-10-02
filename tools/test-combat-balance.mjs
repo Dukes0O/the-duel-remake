@@ -347,24 +347,9 @@ check('Arsenal report aggregates the measured native per-weapon usage', () => {
 });
 
 
-check('Arsenal check requires measured CPU Oil and Smoke use without changing target bands', () => {
-  assert.equal(nativeUsageRows.length, 3, 'native deployment rows supply the usage evidence');
-  const input = fixture(arsenalFlags), report = required('buildReport')(input);
-  report.weaponUses = required('buildReport')({...input, runs: [...input.runs, ...nativeUsageRows]}).weaponUses;
-  const validate = required('reportFailures');
-  assert.deepEqual(validate(report, input.runs, input.baselineRuns), [],
-    'original target bands and genuine measured rear-weapon use pass together');
-  for (const weapon of ['oil', 'smoke']) {
-    const missing = structuredClone(report);
-    missing.weaponUses.cpu[weapon] = 0;
-    assert.match(validate(missing, input.runs, input.baselineRuns).join('\n'),
-      new RegExp('CPU.*' + weapon + '|' + weapon + '.*CPU', 'i'),
-      'Arsenal --check rejects zero measured native CPU ' + weapon + ' use');
-  }
-});
-
 // ARS-01: append-only native accounting and two additional zero-use gates.
 // Existing measured rows, assertions and all numerical target bands stay frozen.
+const waveOneUsageRows = [];
 for (const weapon of ['harpoon', 'caltrops']) check('ARS-01 counts actual native CPU and player ' + weapon + ' uses once', () => {
   const originalStart = App.prototype.startCampaign, originalAdvance = App.prototype.advance;
   let madeProduct = false;
@@ -399,11 +384,29 @@ for (const weapon of ['harpoon', 'caltrops']) check('ARS-01 counts actual native
     assert.equal(madeProduct, true, 'native product existence proves use, rather than loadout assignment');
     assert.equal(row.weaponUses?.cpu?.[weapon], 1, 'cue plus flight/deploy event count as one real CPU use');
     assert.equal(row.weaponUses?.player?.[weapon], 1, 'real player use stays separate from the CPU');
-    const report = required('buildReport')({...fixture(arsenalFlags), runs: [row]});
+    waveOneUsageRows.push(row);
+    const input = fixture(arsenalFlags);
+    const report = required('buildReport')({...input, runs: [...input.runs, row]});
     assert.equal(report.weaponUses?.cpu?.[weapon], 1, 'aggregate retains measured CPU use');
     assert.equal(report.weaponUses?.player?.[weapon], 1, 'aggregate retains measured player use');
   } finally {App.prototype.startCampaign = originalStart; App.prototype.advance = originalAdvance;}
 });
+check('Arsenal check requires measured CPU Oil and Smoke use without changing target bands', () => {
+  assert.equal(nativeUsageRows.length, 3, 'native deployment rows supply the usage evidence');
+  const input = fixture(arsenalFlags), report = required('buildReport')(input);
+  report.weaponUses = required('buildReport')({...input, runs: [...input.runs, ...nativeUsageRows, ...waveOneUsageRows]}).weaponUses;
+  const validate = required('reportFailures');
+  assert.deepEqual(validate(report, input.runs, input.baselineRuns), [],
+    'original target bands and genuine measured rear-weapon use pass together');
+  for (const weapon of ['oil', 'smoke']) {
+    const missing = structuredClone(report);
+    missing.weaponUses.cpu[weapon] = 0;
+    assert.match(validate(missing, input.runs, input.baselineRuns).join('\n'),
+      new RegExp('CPU.*' + weapon + '|' + weapon + '.*CPU', 'i'),
+      'Arsenal --check rejects zero measured native CPU ' + weapon + ' use');
+  }
+});
+
 for (const weapon of ['harpoon', 'caltrops']) check('ARS-01 check rejects zero measured native CPU ' + weapon + ' use', () => {
   const input = fixture(arsenalFlags), report = required('buildReport')(input);
   // Explicit validator fixture: these are totals, not claimed native products.

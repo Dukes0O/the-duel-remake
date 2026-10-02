@@ -426,11 +426,11 @@ export function reportFailures(report, runs, baselineRuns) {
   for (const [policy, samples] of Object.entries(ufoGainByDifficulty)) for (const [difficulty, gain] of Object.entries(samples)) {
     if (gain > 4) failures.push(`${policy}/${difficulty} time gain ${gain}s exceeds 4s`);
   }
-  if (crossbowAim.hitRate < .35 || crossbowAim.hitRate > .60) failures.push(`crossbow hit rate ${crossbowAim.hitRate} is outside 0.35â€“0.60`);
+  if (crossbowAim.hitRate < .35 || crossbowAim.hitRate > .60) failures.push(`crossbow hit rate ${crossbowAim.hitRate} is outside 0.35–0.60`);
   if (ownBombs.maxSpeedLossPct > 15) failures.push(`own bomb speed loss ${ownBombs.maxSpeedLossPct}% exceeds 15%`);
   for (const [difficulty, [low, high]] of Object.entries(CPU_HIT_BANDS)) {
     if (cpuHitsByDifficulty[difficulty] != null && (cpuHitsByDifficulty[difficulty] < low || cpuHitsByDifficulty[difficulty] > high)) {
-      failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}â€“${high}`);
+      failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}–${high}`);
     }
   }
   if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke', 'harpoon', 'caltrops']) {
