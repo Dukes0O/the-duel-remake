@@ -92,8 +92,10 @@ export function stepCombatAI(duel, dt) {
     if (!opponent.finished && !opponent.crushed && !opponent.combatWrecking)
       liveOpponents++;
   }
+  const decisionInterval = state.cpuDifficulty === 'medium' && arsenalEnabled(duel)
+    ? T.cpu.mediumArsenalDecisionInterval : cpu.interval;
   const attackInterval = modernField
-    ? cpu.interval / Math.max(1, liveOpponents) : cpu.interval;
+    ? decisionInterval / Math.max(1, liveOpponents) : decisionInterval;
   if (combat.aiTimer == null) combat.aiTimer = attackInterval;
   combat.aiTimer -= dt;
 
