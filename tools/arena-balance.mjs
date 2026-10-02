@@ -1,3 +1,5 @@
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 // Scrapdome balance measurement (docs/SCRAPDOME.md section 8).
 // Usage: node tools/arena-balance.mjs [--quick]
 // Plays full Last Car Rolling rounds headless with a plain scripted player
@@ -61,21 +63,23 @@ export function playRound({difficulty, seed, car, field}) {
   return out;
 }
 
-const report = {};
-for (const difficulty of ['easy', 'medium', 'hard']) {
-  const rows = [];
-  for (const seed of SEEDS) for (const car of PLAYER_CARS) for (const field of FIELDS)
-    rows.push({field, ...playRound({difficulty, seed, car, field})});
-  const full = rows.filter(row => row.field === 3);
-  const sum = (list, key) => list.reduce((total, row) => total + row[key], 0);
-  report[difficulty] = {
-    rounds: rows.length,
-    wrecksPerRoundFullField: +(sum(full, 'wrecks') / full.length).toFixed(1),
-    playerWins: rows.filter(row => row.place === 1).length,
-    playerMeanPlace: +(sum(rows, 'place') / rows.length).toFixed(2),
-    cpuNearShare: +(sum(rows, 'near') / sum(rows, 'samples')).toFixed(2),
-    cpuWallHitsPerRound: +(sum(rows, 'cpuWallHits') / rows.length).toFixed(1),
-    cpuReversingShare: +(sum(rows, 'reversing') / sum(rows, 'samples')).toFixed(3),
-  };
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const report = {};
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    const rows = [];
+    for (const seed of SEEDS) for (const car of PLAYER_CARS) for (const field of FIELDS)
+      rows.push({field, ...playRound({difficulty, seed, car, field})});
+    const full = rows.filter(row => row.field === 3);
+    const sum = (list, key) => list.reduce((total, row) => total + row[key], 0);
+    report[difficulty] = {
+      rounds: rows.length,
+      wrecksPerRoundFullField: +(sum(full, 'wrecks') / full.length).toFixed(1),
+      playerWins: rows.filter(row => row.place === 1).length,
+      playerMeanPlace: +(sum(rows, 'place') / rows.length).toFixed(2),
+      cpuNearShare: +(sum(rows, 'near') / sum(rows, 'samples')).toFixed(2),
+      cpuWallHitsPerRound: +(sum(rows, 'cpuWallHits') / rows.length).toFixed(1),
+      cpuReversingShare: +(sum(rows, 'reversing') / sum(rows, 'samples')).toFixed(3),
+    };
+  }
+  console.log(JSON.stringify(report, null, 2));
 }
-console.log(JSON.stringify(report, null, 2));
