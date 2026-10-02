@@ -49,6 +49,10 @@ unlocked. Each weapon below says when the computer fires it. Settled 1 October
 front of it, and at most two defensive or control weapons (UFO Jump, Star
 Shield, Oil Slick, Smoke Screen, and later ones of that kind).
 
+**Sounds (2 October 2026).** Each arsenal or warlord card adds its own new
+settled cues to the sound bank and catalog from free CC0 recipes. No paid
+credits, and no existing sound, voice take or AUD-17 record changes.
+
 **Switch.** Everything here is behind a new `arsenal` switch (dev) in
 `src/feature-flags.js`, and applies only to a player who has found the gate
 (SPEC 0.12). The warlord rewards that deliver a weapon early work in warlord
@@ -78,8 +82,11 @@ time its body touches that hazard, not every step.
 - On a hit: 6 armor, and the target is tethered for 3 s: its top speed is
   times 0.8, and at the hit it is yanked 6 m/s sideways toward the shooter's
   side. The line is drawn between the cars.
+- The line is a rust-orange steel cable about twice the old thickness with a
+  slight sag, so it never reads as road paint (2 October 2026).
 - The tether breaks early if the target steers hard away from the shooter for
-  0.5 s in total, raises a star shield, either car wrecks, or they get more
+  0.5 s in total (at least 0.6 of full lock toward the side away from the
+  shooter, keyboard or stick; it need not be continuous), raises a star shield, either car wrecks, or they get more
   than 60 m apart.
 - Counter: shield, or steer hard the other way. Computer: fires at an enemy
   15 to 50 m ahead within 5 degrees.
@@ -87,7 +94,7 @@ time its body touches that hazard, not every step.
 
 **Caltrops** · rank 5 · recharge 9 s · rear
 - Scatters a strip 3 m behind: 8 m long, 5 m wide, lasts 8 s, drawn as
-  glinting spikes.
+  glinting spikes. Harmless to its owner for the first second.
 - A car that touches it (once per hazard): 4 armor, and for 4 s its grip is
   times 0.75 and its top speed times 0.9. A second strip refreshes the time,
   it never stacks.

@@ -11,6 +11,9 @@ import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
 import { raceFeatureFlags } from './wasteland-access.js';
 const bank = (id) => SOUND_BANK[id];
+const ARSENAL_CORE_CUES = new Set([
+  'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
+]);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
 // retain the same tonal target, so switching recordings cannot reset the pitch.
@@ -395,7 +398,7 @@ export class EngineAudio {
     return voice;
   }
 
-  _spatialOutput(event, state, course) {
+  _spatialOutput(event, state, course, destination = null) {
     const ctx = this.context,
       space = combatAudioSpace(event, state, course);
     const level = ctx.createGain(),
@@ -405,7 +408,7 @@ export class EngineAudio {
     level.connect(panner);
     this._connect(
       panner,
-      this._cueOutput || this.buses?.impacts || this.master,
+      destination || this._cueOutput || this.buses?.impacts || this.master,
       level.gain,
     );
     return {
@@ -1354,6 +1357,13 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
+    if (recordedAudio && this.flags.enabled('arsenal') && ARSENAL_CORE_CUES.has(ev.arsenalCue)) {
+      // Use the native hazard/contact point without adding a simulation hit.
+      const output = this._spatialOutput(
+        {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
+      );
+      this._playCue(ev.arsenalCue, {destination: output.level, onEnd: output.disconnect});
+    }
     if (ev.countdown) this._playCue('interface.countdown');
     if (ev.go) this._playCue('interface.go');
     if (ev.shift != null) {

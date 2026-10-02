@@ -1,6 +1,7 @@
 import {arenaRanking} from './arena/arena-event.js';
 import {WARLORDS} from './warlords.js';
 import {CARS} from './config.js';
+import {arenaVenueAvailable} from './wasteland-access.js';
 
 // Screens for Scrapdome events (docs/SCRAPDOME.md sections 3 and 6). The
 // presentation functions are pure so they can be tested without a browser.
@@ -71,19 +72,24 @@ export function arenaBoardMarkup(hud, escapeHTML) {
 }
 
 // The SCRAPDOME panel inside the yard.
-export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'last-car-rolling', profile, featureFlags} = {}) {
+export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'last-car-rolling', venueId = 'scrapdome', profile, featureFlags} = {}) {
   const choice = count => `<button type="button" class="choice${count === opponents ? ' on' : ''}" data-arena-opponents="${count}" aria-pressed="${count === opponents}">${count} ${count === 1 ? 'CAR' : 'CARS'}</button>`;
   const available = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 6 &&
     featureFlags?.enabled('scrapdome') === true && featureFlags?.enabled('fuel-run') === true;
+  const saltAvailable = arenaVenueAvailable(featureFlags, profile, 'salt-flats');
+  const selectedVenue = saltAvailable && venueId === 'salt-flats' ? 'salt-flats' : 'scrapdome';
+  const venueChoice = saltAvailable ? '<div class="segmented" role="group" aria-label="Arena venue">' +
+    ['scrapdome', 'salt-flats'].map(id => `<button type="button" class="choice${id === selectedVenue ? ' on' : ''}" data-arena-venue="${id}" aria-pressed="${id === selectedVenue}">${id === 'salt-flats' ? 'SALT FLATS' : 'SCRAPDOME'}</button>`).join('') + '</div>' : '';
+  const enterLabel = selectedVenue === 'salt-flats' ? 'ENTER THE SALT FLATS' : 'ENTER THE SCRAPDOME';
   const fuel = available && mode === 'fuel-run';
   const modes = available ? '<div class="segmented" role="group" aria-label="Scrapdome mode">' +
     ['last-car-rolling', 'fuel-run'].map(id => `<button type="button" class="choice${(fuel ? 'fuel-run' : 'last-car-rolling') === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${(fuel ? 'fuel-run' : 'last-car-rolling') === id}">${id === 'fuel-run' ? 'FUEL RUN' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
-  if (fuel) return `<div class="yard-home-intro arena-yard">${modes}
+  if (fuel) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
     <p class="arena-yard-mode">FUEL RUN · FIRST TO FIVE · 3:00</p>
     <div class="arena-yard-setup"><span class="field-label">COMPUTER CARS</span>
     <div class="segmented" role="group" aria-label="Number of computer cars">${[1, 2, 3].map(choice).join('')}</div>
     <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()} · change it on the main menu</p></div>
-    <button type="button" class="start-button arena-start" data-action="arena-start"><span>ENTER THE SCRAPDOME</span></button>
+    <button type="button" class="start-button arena-start" data-action="arena-start"><span>${enterLabel}</span></button>
     <ul class="arena-yard-rules"><li>Drive over fuel on the four yellow pads. Carry one at a time.</li>
     <li>Bring it to your blue depot. First to five deliveries wins.</li>
     <li>A wreck or a heavy hit drops your fuel. Anyone can take it.</li>
@@ -91,11 +97,11 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
     <li>Most deliveries at 3:00 wins. A tie means next delivery wins.</li></ul></div>`;
   // The choice and the button come first, so nobody has to scroll to play.
   return `<div class="yard-home-intro arena-yard">
-    ${modes}<p class="arena-yard-mode">LAST CAR ROLLING · EVERY CAR FOR ITSELF · 2:30</p>
+    ${modes}${venueChoice}<p class="arena-yard-mode">LAST CAR ROLLING · EVERY CAR FOR ITSELF · 2:30</p>
     <div class="arena-yard-setup"><span class="field-label">COMPUTER CARS</span>
     <div class="segmented" role="group" aria-label="Number of computer cars">${[1, 2, 3].map(choice).join('')}</div>
     <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()} · change it on the main menu</p></div>
-    <button type="button" class="start-button arena-start" data-action="arena-start"><span>ENTER THE SCRAPDOME</span></button>
+    <button type="button" class="start-button arena-start" data-action="arena-start"><span>${enterLabel}</span></button>
     <ul class="arena-yard-rules"><li>Wreck the others. Every wreck you cause is a point.</li>
     <li>Get wrecked and you are back in the fight in four seconds.</li>
     <li>A red HUNTING YOU tag shows who is coming for you.</li>

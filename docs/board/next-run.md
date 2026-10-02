@@ -2,6 +2,13 @@
 
 ## Resume here (Claude, 1 October 2026, afternoon)
 
+**Restart resumed, 2 October:** Salt is merged with its final model, public Last
+Car Rolling and Fuel Run entry, and once-only scrap and hold rewards. The lane
+passed all 332 suites and build. Bounty owns the freed native entry, pay, HUD and
+beacon files; the claimed Pit owns venue geometry and world composition. Claude
+retains boss files and Arsenal retains audio/tuning. Exact full-tier backup follows
+this checkpoint; the old timers stay paused.
+
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
 warlord pay, and the damaged-save fix. Phase 3 is the last planned phase.
@@ -47,38 +54,43 @@ registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
 
 Shove is merged. Kyle's junk-car note opens ARENA-JUNK-SHOVE; his later evening
 reply chooses the lower wreck rate, with Sal health unchanged.
-Arsenal and junk movement are merged after current lane/build gates. Junk has
-independent Source and four-case browser review, with clustered-cover respawns
-and late-contact containment fixed. Original road, LCR and Sal pins are unchanged.
-The approved lower wreck rate is merged: Medium averages 12.4 per round,
-with all warlord armor unchanged. Tanker's two fixes
-have passing native, frame, lane and build checks, with the roof view and
-installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use test failures;
-its two literal-rule questions and shared sound-bank wait are in the inbox.
-CREW-02 has four genuine native admission failures and two current controls;
-Source waits for shared tuning, audio and Salt's renderer.
-The exact evening integration checkpoint passed all 318 full suites and build,
-then pushed under D8; later commits need their own full check.
+Arsenal core and junk movement are merged. The approved ordinary-car armor
+change averages 12.4 wrecks per Medium round and preserves every warlord's
+health. Tanker and Vesper fitting recipes are merged after Claude's final
+art approval, independent native review and current lane/build gates. Their
+models stay private until Convoy Raid and WAR-04 supply the runtime callers.
+Vesper's preservation tests now freeze each run's current game files, keeping
+all donor pins and native art assertions unchanged.
 
-Salt's public entry has one new scope question in the inbox: the final direction
-names four modes while only two are built. Ambush's crew dependency and Dune's
-Salt-renderer wait form a cycle. Claude must settle the order before entry Source;
-the accepted final art and frozen tests remain in the clean lane.
+Kyle approved all three held changes on 2 October: both CPU tests accept
+Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
+each arsenal or warlord card may add its own settled free CC0 cues. Existing
+sounds, voice takes and protected audio lanes remain exact. These are settled.
 
-Kyle's overnight schedule, 1 October evening: Claude reviews at 12:30, 3:30
-and 6:30 AM. Existing thread follow-ups are active just after those reviews.
-The handoff starts at 8:30 AM on 2 October and the run ends by 8:45; no
-half-hour clock polling.
+Salt public entry, art, source metadata and native rewards are merged. The
+strict audio capture is exclusive in the existing gate scheduler. Arsenal native save and Core suites pass, and
+all thirty-seven runtime audio checks pass. Complete balance meets every
+target except measured Smoke use; Claude reviews that gap and the cable picture.
+Actual full-throttle audio passes in both qualities with no delivered clipping.
+Current gates and Claude review remain.
+
+Kyle transferred WAR-02b, WAR-02c and WAR-03b to Claude. Preserve their tests
+and lanes. Codex must not edit warlords.js, sal-fight.js, warlord-event.js,
+warlord-settlement.js, arena-brains.js, arena-tell-view.js or
+vehicle-contact-modifiers.js. Crew and Bounty wait for their actual file owners.
+
+Kyle lifted the morning deadline and instructed Codex to keep building.
+Both obsolete overnight timers are paused. Active work continues here.
 
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
 | A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE merged with Kyle's lower-rate choice; then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
-| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
+| B. Arsenal | ARS-CORE merged; then ARS-01 | Sound permission is granted; Claude reviews the cable and coverage |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
-| D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |
-| E. Warlords and clean-up | WAR-02c (Mother Mirage) after ARS-CORE; BALANCE-W2-OFF-RETIRE when no other lane owns its files; WAR-03b when its files are free | |
+| D. Art | Tanker and Vesper fitting merged | Runtime installation follows in Convoy Raid and WAR-04 |
+| E. Clean-up | BALANCE-W2-OFF-RETIRE when its files are free | The three bosses belong to Claude |
 
 Kyle, 1 October 2026: the dome steering is kept; his evening reply chooses the
 lower ordinary-car wreck rate. The parked junk-car fix proceeds first. Sal is approved as she is

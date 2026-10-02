@@ -8,6 +8,14 @@ export function wastelandUnlocked(flags, profile) {
     profile.wasteland.discoveredGate === true;
 }
 
+// A venue choice uses the same eligibility in the yard and the public launcher.
+export function arenaVenueAvailable(flags, profile, venueId) {
+  if (!flags || !wastelandUnlocked(flags, profile) || flags.enabled('scrapdome') !== true) return false;
+  if (venueId === 'scrapdome') return true;
+  return venueId === 'salt-flats' && flags.enabled('salt-flats') === true &&
+    profile.wasteland.rank >= 9;
+}
+
 // A race reads the switch through this view. The answer is fixed when the race
 // starts (the Duel records `wastelandGateDiscovered`), so finding the gate part
 // way through a run never changes that run's rules.
