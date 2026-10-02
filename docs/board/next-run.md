@@ -49,11 +49,13 @@ Shove is merged. Kyle's later junk-car note opens ARENA-JUNK-SHOVE and holds
 wreck-rate until he decides whether to lower wrecks at all.
 Arsenal is merged after its passing balance, lane and build gates. Junk-car tests
 reproduce the fixed-box baseline; native movement is implemented and independently
-reviewed after the clustered-cover respawn fix.
+reviewed after clustered-cover respawn and late-contact floor fixes. All fourteen
+focused suites pass with released road, LCR and Sal fingerprints unchanged.
 The tested wreck-rate candidate stays unmerged for Kyle. Tanker's two fixes
 have passing native, frame, lane and build checks, with the roof view and
-installation sequence waiting for Claude. ARS-01 has independent tests in progress;
+installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use test failures;
 its two literal-rule questions and shared sound-bank wait are in the inbox.
+CREW-02 starts independent tests while its shared runtime files stay with their owners.
 The exact evening integration checkpoint passed all 318 full suites and build,
 then pushed under D8; later commits need their own full check.
 
