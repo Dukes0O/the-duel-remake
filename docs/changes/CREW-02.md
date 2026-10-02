@@ -21,6 +21,7 @@ projectiles.js owns actual gear shot records in combat.projectiles:
 
 Odessa's real deployable has 60 health, nearest hostile target, 35 m reach,
 0.8 s cadence, 4 armor / 10 health, 20 s life and 30 s retirement recharge.
+Its own turretReadyAt survives refill/re-entry and does not block the RPG.
 Cinder uses the native contact path for the 6 m / 35 degree cone: 10 armor/s,
 30 health/s, four seconds of fuel, half-second-per-second idle refill and
 fire immunity admission. Tusk's walking contact starts existing free-body
@@ -49,6 +50,15 @@ one fuel second; refill restores fuel; Jax reaches a real enemy roof.
 The check took 2.08 s. node --check for all four modules and git diff --check
 pass. No broad tests, builds or captures run while Root owns the heavy slot.
 
+Independent RED tests d724db6 reproduced own-car blast armor 25 instead of
+the native 6.25 cap, plus deployment and retirement blocking a ready RPG.
+The fixes pass all seven bounded module tests: native self:true applies the
+existing armor cap; fighter self-splash stays unchanged; turret recharge starts
+on actual expiry/destruction and preserves RPG readiness through refill.
+The original native turret timestamp assertion is retained for a compatible
+selected-gear timer view in later shared wiring. A separate reviewed terrain
+contact defect waits for its independent RED test before a Source fix.
+
 All existing assertions, race fingerprints and world signatures are unchanged.
 The complete independent mechanics, real camera controls and memory-only
 named-player tests still await native wiring and their permitted test slot.
@@ -76,5 +86,6 @@ crew.scrap-cannon.fire and weapon.smoke.deploy. Audio installation is held.
 
 ## Removed
 
-None. Released RPG, wrench, saves, assets and shared code are retained.
+Removed the turret's use of the shared RPG cooldown. Released RPG, wrench,
+saves, assets and shared code are retained.
 No stub or placeholder is presented as a finished gear item.

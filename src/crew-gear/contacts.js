@@ -34,7 +34,7 @@ export function damageGearCar(duel, actor, amount, owner, normal = null) {
   // The multiplier supplies the settled gear amount without a second damage path.
   const face = normal ? contactZone(normal.x, normal.z, carBodyPoint(duel, actor).heading) : null;
   const removed = applyArmorDamage(duel, actor, 'crossbow', {
-    owner: combatOwnerId(duel, owner), level: 0,
+    owner: combatOwnerId(duel, owner), level: 0, self: actor === owner,
     damageMultiplier: amount / armorDamageFor('crossbow'),
     ...(face ? {contactFace: face} : {}),
   });
