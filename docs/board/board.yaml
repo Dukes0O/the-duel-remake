@@ -1076,6 +1076,9 @@ tasks:
     handover_test_commit: 30478ec
     handover_source_commit: 7da183d
     mode_review: "Independent review clears the actual scoring and transfer module after two genuine recovery regressions pass. Native entry, brain routing, pay, HUD and browser acceptance remain incomplete."
+    settled_test_commit: fe8e73b
+    settled_test_fixture_commit: 0f80b31
+    settled_test_review: "Independent review repairs the exact native tie fixture and distinguishes seeded order from participant order. Other settled handover, hunter-cap and Salt entry cases match the design; native Source admission remains incomplete."
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1145,6 +1148,9 @@ tasks:
     view_clock_review: "Independent review approves only the exact optional presentation parameter and ambient mirror clock in two frame guards; measurement defaults and CPU boundaries stay exact. The static launcher recipe adds Salt, without touching the running Preview or its output."
     restart_source_commit: 6098efa
     gate_audio_hooks: "Director grants the existing test runner and its test for the measured exclusive native capture scheduling correction. No game rule, audio assertion or generic guard framework changes."
+    audio_scheduling_test_commit: 6225533
+    audio_scheduling_source_commit: 10e7c02
+    audio_scheduling_review: "Independent review clears exclusive native capture scheduling, unchanged failure handling and eight-job concurrency. All runner checks pass; the fresh lane gate and build remain required."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex

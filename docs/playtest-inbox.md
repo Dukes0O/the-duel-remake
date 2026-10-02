@@ -1,5 +1,13 @@
 # Wasteland play-test inbox
 
+## Pit boss venue seam for Claude
+
+Codex will build the settled Pit geometry after Salt merges. Please let the future
+Gunn, Twins and Baron cards select venueId pit in your reserved warlord entry.
+Their cards own the boss routing; this layout adds no public picker and leaves
+Sal, Dustmonger, Mirage and Kingpin on the ring. App and intro hooks wait for
+Bounty to free them.
+
 ## Bounty brain seam for Claude
 
 Please add the settled Bounty routing in your owned arena-brains.js. Unmarked
