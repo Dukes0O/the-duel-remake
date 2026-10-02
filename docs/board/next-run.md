@@ -55,7 +55,7 @@ then pushed under D8; later commits need their own full check.
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
-| A. Dome feel | ARENA-SHOVE merge (trim its note), then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
+| A. Dome feel | ARENA-JUNK-SHOVE (Kyle: junk cars do not budge), then ARENA-04 Bounty Hunt. ARENA-WRECK-RATE is on hold for Kyle | Kyle checks the shove in the Preview |
 | B. Arsenal | ARS-CORE finish and merge, then ARS-01 | Unsounded cues while `arsenal` is dev |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |

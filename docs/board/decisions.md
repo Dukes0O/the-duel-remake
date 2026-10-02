@@ -1472,3 +1472,11 @@ Vultures and the Baron fight there; the ring keeps Last Car Rolling, the
 public modes and the warlords whose moves use the Heap (SCRAPDOME.md section
 2, The Pit; card ARENA-PIT).
 
+## 1 October 2026: junk cars slide; wreck rate on hold
+
+Kyle: the dome's parked cars do not budge at any speed. They are the junk
+cars, fixed by design; ARENA-SHOVE only covered participant cars. Junk cars
+become heavy hulks that slide (SCRAPDOME.md section 2; ARENA-JUNK-SHOVE).
+Kyle also said Gratian loves maxing the wreck count (best 16), so
+ARENA-WRECK-RATE waits for Kyle's call on whether to lower wrecks at all.
+
