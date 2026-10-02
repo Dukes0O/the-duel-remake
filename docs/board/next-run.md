@@ -35,6 +35,18 @@ not move. From this run on:
 - Merge as soon as a card meets its acceptance and its gates. Aim for each
   open card to merge or reach Kyle in this run.
 
+**Completed this afternoon and continued run:** Shove is merged. Salt's final
+round and Vesper's second round reach four on all assessed visual items; their
+sheets await Claude. Vesper now passes the visible twelve-fighter paired frame
+check at both qualities and all native checks. Its stale preservation baseline
+was updated to the reviewed integration tree without changing any assertion.
+Tanker's measured chase pacing is unchanged; CPU noise and slight camera
+settling stay separate advisory limits. Its capped look still goes through
+Claude's choice to Kyle. Salt's public hooks and both recipe registrations
+still wait for their file owners. Arsenal and wreck-rate need the two inbox
+answers. Bounty Hunt, Kettle and switch retirement now record those existing
+file waits as actual board dependencies; no new feature card can start yet.
+
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
