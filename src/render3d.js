@@ -26,6 +26,7 @@ import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { renderMainView } from './scene-presentation.js';
 import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
+import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
@@ -232,8 +233,13 @@ export function attachRenderer(host, app) {
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
   let ready = false, lastMenu = null, previousT = performance.now();
-  function frame(now = performance.now(),measure=false) {
+  let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
+  function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
+    const diagnosticTime = Number.isFinite(presentation.presentationSeconds);
+    const presentationSeconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
+    const ambientNow = diagnosticTime ? presentationSeconds*1000 : now;
+    lastPresentationSeconds = presentationSeconds; lastSaltHeatEnabled = false;
     const phaseProbe=measure&&app.frameDiagnostics?.active?app.frameDiagnostics:null;
     const updateStarted=phaseProbe?phaseProbe.now():0;
     const capture=measure&&!document.hidden;
@@ -359,12 +365,12 @@ export function attachRenderer(host, app) {
     }
     const braking=st.gear===-1?st.input.throttle:st.input.brake;
     for (const lamp of player.userData.brakeLights || []) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
-    for (const flame of player.userData.boostFlames || []) { flame.visible = !!st.boosting && !menu; flame.scale.z = .7 + Math.sin(now * .052) * .3; }
+    for (const flame of player.userData.boostFlames || []) { flame.visible = !!st.boosting && !menu; flame.scale.z = .7 + Math.sin(ambientNow * .052) * .3; }
     for (const pivot of player.userData.wheelPivots || []) if (pivot.userData.front) pivot.rotation.y = -steering * .22;
     player.visible = menu || st.onFoot || app.cameraMode !== 'hood' || st.catastrophic;
     let firstPersonView=false;
     if (menu) {
-      const cp = worldAtExtended(course, distance + 6.4, lateral + 7.7 + Math.sin(now * .00009) * .6);
+      const cp = worldAtExtended(course, distance + 6.4, lateral + 7.7 + Math.sin(ambientNow * .00009) * .6);
       camTarget.set(cp.x, cp.y + (tall?4.35:2.85), cp.z);
       const composition = Math.min(1, camera.aspect / 1.7);
       const aim = worldAtExtended(course, distance + 2.6 * composition, lateral - 2.8 * composition);
@@ -436,7 +442,7 @@ export function attachRenderer(host, app) {
     if(!menu&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
-    lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,now/1000);
+    lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const ghostPose=!menu&&app.ghostPose?.car===carKey?app.ghostPose:null;
     if(!ghostPose&&ghost){
@@ -486,9 +492,9 @@ export function attachRenderer(host, app) {
       const slope=groundSlope(course,pursuit.s,pursuit.lateral,pursuit.headingError||0);police.rotation.x=slope.pitch;police.rotation.z=slope.roll;
       applyVehicleTerrainPose(police,course,pursuit);
       for(const lamp of police.userData.brakeLights||[])lamp.material.emissiveIntensity=pursuit.braking?4:1.4;
-      lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(now / 130) % 2 === i; });
+      lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(ambientNow / 130) % 2 === i; });
     }
-    effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now });
+    effects.update({ p: pp, course, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now:ambientNow });
     const effectDt = st.paused ? 0 : dt;
     explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
     crashPoseState=st;
@@ -513,8 +519,8 @@ export function attachRenderer(host, app) {
       {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);
     if (!menu && st.arena && updateArenaTells([{mesh: player, actor: st}, {mesh: rival, actor: st.rival},
       ...extraOpponents.map(({mesh}, index) => ({mesh, actor: opponents[index + 1]}))],
-      performance.now() / 1000, ARENA_FEEL.shimmerSec)) ambientShading.refresh();
-    updateArenaMarkers(arenaMarkers, !menu ? st.arena?.markers : null, performance.now() / 1000);
+      diagnosticTime?presentationSeconds:performance.now()/1000, ARENA_FEEL.shimmerSec)) ambientShading.refresh();
+    updateArenaMarkers(arenaMarkers, !menu ? st.arena?.markers : null, diagnosticTime?presentationSeconds:performance.now() / 1000);
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
@@ -539,10 +545,11 @@ export function attachRenderer(host, app) {
     firstPersonOptions.time=st.stageTimeSec;
     firstPersonGear.update(firstPersonEntry,firstPersonOptions);
     roadsideDebris.update(st);
-    if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?now/1000:st.totalTimeSec);
-    animateScene(world,now/1000);
+    if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?presentationSeconds:st.totalTimeSec);
+    lastSaltHeatEnabled = setSaltFlatsHeatEnabled(world,presentation.saltHeatEnabled !== false);
+    animateScene(world,presentationSeconds);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
-    lighting.updateVehicles({course,position:pp,player,police,distance,tall,now,high:app.ambientOcclusionEnabled!==false,menu});
+    lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
@@ -574,7 +581,7 @@ export function attachRenderer(host, app) {
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();renderMainView(renderer,composer,high);
-    rearView.render({state:st,player,course,now});
+    rearView.render({state:st,player,course,now:ambientNow});
     const cpuRenderMs=performance.now()-renderStarted;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
     if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
@@ -608,7 +615,16 @@ export function attachRenderer(host, app) {
   document.addEventListener('visibilitychange',visibility);
   if(warmupRequested){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
   host.dataset.rendererSetupMs=(performance.now()-rendererAttachedAt).toFixed(0);
-  const debugApi=window.__render = { renderer, scene, camera, composer, renderFrame() { frame(); return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }; }, sample() {
+  const debugApi=window.__render = { renderer, scene, camera, composer, renderFrame({presentationSeconds,saltHeatEnabled}={}) {
+    try {
+      frame(performance.now(),false,{presentationSeconds,saltHeatEnabled});
+      return {drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+        presentationSeconds:lastPresentationSeconds,saltHeatEnabled:lastSaltHeatEnabled};
+    } finally {
+      // An inspection draw cannot persist its override into the next RAF frame.
+      setSaltFlatsHeatEnabled(world,true);
+    }
+  }, sample() {
     frame();if(disposed||warmup&&!warmup.canDraw(warmupKey))return {warming:!disposed,distinctColors:0,drawCalls:0,triangles:0};const rt = new THREE.WebGLRenderTarget(64, 48); renderer.setRenderTarget(rt); renderer.render(scene, camera);
     const data = new Uint8Array(64 * 48 * 4); renderer.readRenderTargetPixels(rt, 0, 0, 64, 48, data); renderer.setRenderTarget(null); rt.dispose();
     const colors = new Set(); for (let i = 0; i < data.length; i += 4) colors.add(`${data[i] >> 4},${data[i + 1] >> 4},${data[i + 2] >> 4}`);

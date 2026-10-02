@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "capturedCommit": "ba53f81d46d632b1dc4a5f4e50216fce3c814986",
+  "scope": "Unmodified Scrapdome physical features/spawns and eight-second actual 120 Hz LCR trace with Kyle-approved 120-point ordinary-car armor; physical and main replay fingerprints remain unchanged.",
+  "scrapdome": {
+    "physicalSha256": "ed9d0c026108a96dc68e34f5fb56a7b3db4f7d667ba39a744f7762faa5ff2ec7",
+    "traceSha256": "6817883b3be0567e9bb201581fa30726f1f35ffd0b2f3d50fb1c7178e90411bc",
+    "ordinaryReplayFileSha256": "b55182cbc6d6121a205fa24ba9049aeefabd7943a6e12ebba5a7f868c068c77a"
+  }
+}

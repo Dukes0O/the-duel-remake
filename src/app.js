@@ -9,7 +9,8 @@ import {CAMERA_MODES} from './camera-views.js';
 
 import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import {featureFlags} from './feature-flags.js';
-import {raceFeatureFlags,wastelandUnlocked} from './wasteland-access.js';
+import {arenaVenueAvailable, raceFeatureFlags, wastelandUnlocked} from './wasteland-access.js';
+import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
@@ -350,7 +351,9 @@ export class App {
   restart() {
     if (this.duel.state.arena?.mode === 'warlord')
       return this.startWarlordFight(this.duel.state.arena.warlordId);
-    if (this.duel.state.arena) return this.startArenaEvent({mode: this.duel.state.arena.mode});
+    if (this.duel.state.arena) return this.startArenaEvent({
+      mode: this.duel.state.arena.mode, venueId: this.duel.state.arena.venueId,
+    });
     if (this.duel.state.hiddenRoadVisit) {
       this.returnToMenu();
       return this.visitWasteland();
@@ -804,6 +807,9 @@ export class App {
   arenaAvailable() {
     return this.wastelandUnlocked() && this._switches().enabled('scrapdome') === true;
   }
+  arenaVenueAvailable(venueId) {
+    return arenaVenueAvailable(this._switches(), this.profile, venueId);
+  }
   warlordsAvailable() {
     return this.arenaAvailable() && this._switches().enabled('warlords') === true;
   }
@@ -828,19 +834,19 @@ export class App {
     return this.arenaAvailable() && this._switches().enabled('fuel-run') === true &&
       this.profile.wasteland?.rank >= 6;
   }
-  startArenaEvent({mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
-    if (!['last-car-rolling', 'fuel-run'].includes(mode)) return false;
-    return this._startArenaFight({mode, opponents});
+  startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
+    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run'].includes(mode)) return false;
+    return this._startArenaFight({venueId, mode, opponents});
   }
-  _startArenaFight({opponents, warlordId = null, mode = 'last-car-rolling'}) {
+  _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling'}) {
     const state = this.duel.state;
-    // Fuel checks the current durable owner before creating any run state.
+    // Admission reads the current durable owner before creating any run state.
     // The existing failed-save guard keeps unsaved session progress intact.
-    if (mode === 'fuel-run') this._refreshPlayer();
+    this._refreshPlayer();
     const available = warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : this.arenaAvailable();
-    if (!available || !(this.isYardHomeActive() || state.arena)) return false;
-    if (mode !== 'fuel-run') this._refreshPlayer();
+    if (!available || !this.arenaVenueAvailable(venueId) ||
+        !(this.isYardHomeActive() || state.arena)) return false;
     const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
@@ -858,7 +864,7 @@ export class App {
     this._racePaint = getPaintAppearance(this.profile, car,
       {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
-    const options = {mode, car, driverId: getEquippedDriverId(this.profile),
+    const options = {mode, venueId, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
       cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,

@@ -626,3 +626,26 @@ Actual Arsenal audio capture passes in both qualities with six native cues,
 moving flight and pause cleanup; delivered output does not clip. The Bounty
 mode module is now building in its free owned file. Its shared entry hooks
 wait for Salt and its brain seam is assigned to Claude in writing.
+
+## Restart resumed, 2 October 2026
+
+Salt is merged with the approved final venue, public Last Car Rolling and Fuel
+Run entry, and native once-only rewards. Lane: 332 passed, none failed or unrun;
+build passed. Two native payment tests exposed zero awards and pass after the
+pure venue validator fix; original settlement and Save Guardian checks pass.
+The strict audio timing assertion passes after its capture runs alone in the
+existing concurrent runner. Independent tests and reviews clear both fixes.
+
+Salt's clean lane and merged branch were removed with plain worktree removal,
+after its integration-only dependency junction was safely detached. Current
+assets and licensed records stay. Bounty receives free entry/pay/HUD/beacon
+hooks; Pit is claimed for disjoint tests-first geometry. Boss files stay with
+Claude, and Arsenal audio/tuning ownership remains. Full checkpoint follows.
+
+Janitor checkpoint: removed the merged Salt lane, dependency junction and used
+card gate evidence; preserved seven unfinished lanes and skipped three protected
+audio references. The audit flags 48 uncertain assets, 25 internal export
+candidates and the intentionally private Tanker loader; nothing is proved safe
+to remove. No removed-behavior tests remain. Runtime grew from 236,343,712 to
+259,627,104 bytes for the accepted current Salt model; build is 263,925,553 bytes.
+Model/build targets remain advisory; accepted real venue growth is recorded.

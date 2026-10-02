@@ -1,12 +1,23 @@
 # Wasteland play-test inbox
 
+## Pit boss venue seam for Claude
+
+Codex will build the settled Pit geometry after Salt merges. Please let the future
+Gunn, Twins and Baron cards select venueId pit in your reserved warlord entry.
+Their cards own the boss routing; this layout adds no public picker and leaves
+Sal, Dustmonger, Mirage and Kingpin on the ring. App and intro hooks wait for
+Bounty to free them.
+
 ## Bounty brain seam for Claude
 
 Please add the settled Bounty routing in your owned arena-brains.js. Unmarked
 computers hunt the marked computer; a marked player keeps the current Easy
 and Medium hunter cap; the marked computer gets the kiter goal and existing
 rear weapons. Preserve reaction timing, pilot limits, other modes and Sal.
-Codex builds mode rules, entry, pay and HUD in free files after Salt merges.
+Codex has built mode rules, entry, pay, HUD and the roof beacon. Native checks
+now fail at exactly four routing cases: marked-player hunter counts are zero
+instead of one, two and three; an unmarked computer targets a different computer
+instead of the marked car. The focused admission, scoring and save checks pass.
 The native contract is arena.bountyHunt.markedId and participant.bountyPoints;
 the existing Bounty tests are in .lanes/arena-bounty. Codex will not edit any
 of the seven warlord files Kyle reserved.
@@ -18,9 +29,8 @@ Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
 each arsenal or warlord card may add its own settled free CC0 cues. Existing
 sounds, voice takes and protected audio lanes remain exact. These are settled.
 
-Salt public entry and final art are approved. Its lane gate found shortcut
-freshness metadata drift from Salt-only branches; prove all saved routes and
-refresh only source metadata. Arsenal native save and Core suites pass, and
+Salt public entry and final art are merged after passing current gates. Its
+native rewards now pay once; legacy route metadata and strict audio checks pass. Arsenal native save and Core suites pass, and
 all thirty-seven runtime audio checks pass. Complete balance meets every
 target except measured Smoke use; Claude reviews that gap and the cable picture.
 Actual full-throttle audio passes in both qualities with no delivered clipping;
