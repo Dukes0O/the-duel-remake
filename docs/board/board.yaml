@@ -590,7 +590,7 @@ tasks:
     owner: codex
     lane: OPS
     size: L
-    needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE]
+    needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE, ARS-CORE, ARENA-WRECK-RATE, ARENA-06]
     status: ready
     acceptance:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
@@ -598,6 +598,7 @@ tasks:
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
       - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
+    sequencing: "Retirement waits for Arsenal, Salt Flats and the wreck-rate card to free their shared runtime and test hooks. No parallel lane may remove a switch while another is implementing its consumers."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -689,22 +690,29 @@ tasks:
     lane: ART
     size: M
     needs: [ART-SRC-CREW-W]
-    status: building
+    status: review
     claimed_by: codex-director-2026-10-01-afternoon
     branch: codex/art/vesper
     owns: [tools/blender/vesper-blackiron.py, tools/art/vesper-fit.json, tools/test-vesper-art.mjs, tools/scenarios/vesper-art.mjs, docs/changes/ART-FIT-CREW-W.md, docs/board/looks/vesper/]
     hooks: []
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
-    sequencing: "After the tanker, resume Vesper using a fresh empty output folder and create-new files as Claude approved. No system settings or link matrix is needed. Run the actual game comparison and send the sheet to Claude."
+    sequencing: "Both material rounds are complete, with all assessed visual items at four. Claude reviews the finished pictures; the existing placement check needs recipe registration in Tanker's shared file after its merge. A fresh green lane and build gate precedes merge; WAR-04 owns the later reveal and installation."
     flag: wasteland2
     acceptance:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
-    source_commit: "15a11c5082e48c4d8cb775458b64c27614bf03e2"
-    guard_test_commit: "ad73790a336be3e406251bbdb838bf463881145b"
-    review_commit: "edf527e"
+    source_commit: "c0ca0e265433742c324e0a63443ba6f9db37e6c4"
+    guard_test_commit: "5e986cf"
+    review_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
-    note: "The fitted native rig, actions, topology and original crew checks pass. The export guard needs the approved small fix before comparison; Kyle does not need to answer the old question."
+    note: "The visible twelve-fighter comparison meets the paired frame limit at both qualities, and all native cases pass. Independent review approved updating the stale preservation baseline to the already-merged integration tree, with every original assertion retained. Claude still reviews the costume; shared recipe registration keeps the whole-card gate held."
+    qa_commit: "4044431d36f1eec2bbf59f01e361fac75dc3442a"
+    round_1_sheet: ".lanes/vesper/docs/board/looks/vesper/round-1.jpg"
+    hook_requests: [tools/test-blender-output.mjs]
+    round_2_sheet: ".lanes/vesper/docs/board/looks/vesper/round-2.jpg"
+    lane_gate_commit: "3fe32b91137a8c1816b022567ca07f78162a4fcb"
+    frame_qa_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
+    claude_verdict: "1 October 2026, evening: approved. Vesper reads as her own person next to Nell, Odessa and Wren: dark steel and olive against their tan, with the dark red harness clear front and back, and gritty, not toy-like. Merge once the shared recipe registration and a green lane gate land; WAR-04 reveals and installs her."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -786,26 +794,32 @@ tasks:
     lane: ART
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
-    status: building
+    status: review
+    review_commit: f2a0cfd
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
     owns: [tools/blender/convoy-tanker.py, tools/art/tanker-fit.json, src/arena/tanker-model.js, tools/test-convoy-tanker-art.mjs, tools/scenarios/convoy-tanker-art.mjs, docs/changes/ART-FIT-TANKER.md, docs/board/looks/convoy-tanker/, public/assets/models/wasteland/convoy-tanker/]
-    sequencing: "Build Claude’s five final-round directions using the approved donors. Compare in the actual game, including the normal chase view, then send the sheet to Claude. The better of rounds two and three goes to Kyle; there is no fourth round."
+    sequencing: "Build Claude's five final-round directions using the approved donors. Compare in the actual game, including the normal chase view, then send the sheet to Claude. The better of rounds two and three goes to Kyle; there is no fourth round."
     hooks: [tools/test-blender-output.mjs]
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     test_commit: 6572240cd07beb284a0f60d816ca212582ed7afc
-    source_commit: "a1ce674134dab9e71a0ac519f1322ecfbecc70b3"
+    source_commit: 2863a934eaea15c584109e6e16aeac802b7e8837
     flag: scrapdome
     acceptance:
       - "Build the tanker settled in docs/SCRAPDOME.md, Convoy Raid (30 September 2026): one rigid vehicle from Kyle's pick A (Kenney delivery-flat cab and bed with the City Kit Industrial detail-tank on the bed), three fuel valves from the verified factory pipe valve donor on the tank, scrap armor plating from the Salt Flats salvage parts, and a raised boarding plate on the tank roof with warning lamps that light when all three valves are broken. Nothing opens or articulates."
       - "Follow docs/WASTELAND_ART.md 'Fitting existing models' (no source palette, gritty, judged in the game renderer, three-round cap); send the comparison sheet to Claude, who shows Kyle."
     claude_review_round_1: "1 October 2026: right direction (the gritty version already beats the toy palette), round 2 needed. 1) Scale: it reads car-sized; a 12 tonne rig is about 11 m long and 3.5 m tall, roughly twice a car's length, and must look it next to the cars. 2) Readability: valves are the targets, so paint them hazard red with a bright collar that reads at racing distance; black and yellow hazard stripes on the bumper and boarding plate; a lighter weathered tank against a darker cab so the shape reads in the dark yard. 3) Approve the proposed native valve mounting fixes (no gaps; seat each valve on the tank with its flange). Keep pick A and everything else."
-    qa_commit: "05cfc387e91bb961dfb4d5811904aea5a5686d7b"
+    qa_commit: "79129fb"
 
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
-    note: "Round two made clear progress but stayed below the art bar. Native fitting, provenance, lamp lifecycle and output planning tests pass. Final-round tests precede Source changes."
+    note: "The final native checks and actual game views pass, with measured chase frame pacing unchanged at both qualities. CPU noise and small camera settling remain explicit advisory limits, separate from the real frame-time budget. The look remains below the bar, so Claude chooses the better final sheet for Kyle."
+    final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
+    final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
+    source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
+    frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
+    claude_verdict_final: "1 October 2026, evening: round 3 is the pick. The red bands and red valve wheels finally read as targets, and the striped bumper and darker cab help. Install round 3 as the convoy tanker with two corrections that are fixes to round 3's own directions, not a fourth round: (1) the roof plate is plain dark steel in the middle with the black and yellow stripes only around its border; (2) the beacon lamps are amber, bright amber when lit and dull dark amber when off (they read cream and brown now). Show Claude one close-up of the roof, lamps on and off, before merge. Still below the art bar at distance; Kyle has the last look in the Preview when the Convoy Raid is playable."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -891,6 +905,7 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
+    balance_source_commit: 0943464
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "3d42f5b"
     source_commit: fd29006ac20cbeed8236bdd45e60103aa0163274
@@ -910,6 +925,8 @@ tasks:
     claude_answer_2: "1 October 2026, 06:30: use the magnitude of the bolt's actual resultant horizontal launch velocity (level speed plus the car's full velocity vector), fixed at launch, times remaining lifetime. That is the physical reach and covers reverse and sideways carry; the scalar sum is not used."
     source_review: "Independent review cleared the per-candidate launch fix. All native cases pass with unchanged assertions. Browser, balance and merge gates remain."
     claude_answer_3: "1 October 2026, afternoon: approved. Add the optional context.rangeForTarget(actor), evaluated by the existing resolver for each candidate, returning that candidate's own launch reach (resultant horizontal launch speed toward it times lifetime). Numeric range stays for CPU acquisition (180 m) and every existing caller. No change to eligibility or flight."
+    design_question: "The required balance run puts Medium at 80 percent wins against 45 to 65. A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and Star making no CPU weapon use: should every four-slot CPU loadout guarantee a working front attack? Targets and gameplay stay held for your answer."
+    claude_answer_4: "1 October 2026, evening: yes. Every computer four-slot loadout carries at least one weapon that damages a car in front of it (the crossbow, or an unlocked wave weapon that does), and at most two of the slots are defensive or control weapons (UFO Jump, Star Shield, Oil Slick, Smoke Screen). Fill the rest from the unlocked pool as ARSENAL.md says. Then rerun the balance; the 45 to 65 percent Medium target stands."
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex
@@ -1010,13 +1027,15 @@ tasks:
     owner: codex
     lane: CMB
     size: S
-    needs: [ARENA-03]
+    needs: [ARENA-03, ARS-CORE, ARENA-WRECK-RATE]
     status: ready
     flag: scrapdome
     owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
+    sequencing: "Bounty Hunt waits for the wreck-rate event hook and Arsenal App hook to merge. Its mode leaf is separate, but the complete public mode requires both owners to finish first."
+    hook_requests: [src/arena/arena-event.js, src/app.js, src/screen-arena.js]
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
@@ -1051,25 +1070,28 @@ tasks:
     lane: VIS
     size: L
     needs: [ART-SRC-SALTFLATS]
-    status: building
-    review_commit: 2d6e5cc94ddd5c3a46316db411e20872b449f4ca
-    source_commit: "b9f99b728bab4befee07d35cbc81a70e24a0284c"
-    test_commit: "d5543db7adaa5b111a7164b6f7b91238f4443d4e"
+    status: review
+    review_commit: "4bb0da063863e8a9450f9b419e817eff20c377f0"
+    source_commit: "bac0d1c9c5465f953288d8d24ed2f84f62a8cbf9"
+    test_commit: "c18e814"
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
     hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js]
-    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs]
-    sequencing: "Improve the sparse inner island and judge the far ground and heat in actual pictures. Automated checks cover race state, loading, disposal, budgets and frame cost. Public entry hooks wait for Arsenal and Shove to merge."
+    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
+    sequencing: "The third and final material round reaches four and meets the frame limit. Claude reviews the completed venue pictures; public entry files wait for Arsenal and wreck-rate, while the placement check stays with Tanker. Finish those hooks and the mode unlocks before the final lane and build gate."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
-    qa_commit: "439d006d33062b6e7f5f8d832ecaa8a6b4714d04"
-    note: "The native venue, collision alignment and renderer route are built. The first actual views showed a sparse island and finite salt slab; outside ground and heat Source now need a normal visual comparison. Pixel and counter look tests do not hold this card."
+    qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
+    note: "All sixteen final game views and native checks pass, with every assessed visual item at four and matched frame cost within the limit. The six unfinished public-entry cases remain explicit. Claude reviews the final sheet; there is no fourth material round or whole-card merge pass."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
+    round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
+    final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
+    claude_verdict: "1 October 2026, evening: the generated salt meets Kyle's direction: real crust cells, a dusty driving band and no repeating pattern from the full view or the racing camera. Accept round 3 and finish the card: public entry, rank 9 unlock, the four modes, gates, then merge and Kyle's look in the Preview. For P3-POLISH, not this card: the inner island still reads sparse from the full view; add scrap there then."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -1112,13 +1134,15 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL]
+    needs: [WAR-02a-SAL, ARS-CORE, ARENA-WRECK-RATE]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/kettle-drop.js, tools/test-warlord-kettle.mjs, docs/changes/WAR-03b.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Kettle Kingpin' in docs/SCRAPDOME.md section 5. The ring is always drawn before he lands; the shove goes through the crash solver. Tusk unlocks early only once CREW-02 has made him active. When built, status review and waiting_on: claude before merge."
+    sequencing: "Kettle waits for Arsenal progression and App hooks and the wreck-rate arena event hook to merge. The move, native fight, early Tusk and Titan kit reward are one complete card."
+    hook_requests: [src/arena/warlord-event.js, src/arena/warlord-settlement.js, src/warlords.js, src/arena/arena-event.js, src/wasteland-progress.js, src/app.js]
   - id: WAR-03c
     title: "The Twin Vultures: the pair and Pincer; grapple upgrade"
     owner: codex
@@ -1186,6 +1210,7 @@ tasks:
     status: ready
     acceptance:
       - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
+    claude_polish_list: "From the 1 October reviews: more scrap on the Salt Flats inner island; tanker readability at distance; Salt Flats ridge width variety."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -1883,7 +1908,7 @@ tasks:
     status: building
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
-    janitor_follow_up: "1 October end sweep:1179tracked files,259431085B before final metadata,259436173B after operational facts; runtime236249990B unchanged. Removed10consumed gatefiles993386B across3passing checkpoint folders afterverdictcommit. Retain48literal asset candidates/26advisoryexports; no unusedmodule/removedtestproved. CLEAN-11 carries dynamic-reference proof; private destination child-alias guard proof belongs to explicit card ownership, no guessing or deleting currentlicensed/runtimeassets. Five cleanunmergedlanes retained andthreeprotectedaudio refs inspection skipped."
+    janitor_follow_up: "The resumed audit confirms all twenty-five flagged exports are used inside their modules. No unused module, removed-behavior test or safe asset deletion is proved; CLEAN-11 retains the dynamic-asset and future dirt-texture questions. Preserve the five unmerged lanes, licensed and current assets, and skip the three protected audio references."
     private_output_follow_up: "Claude approved fresh output folders and create-new files for Vesper. No additional alias matrix or system change is needed; the fitting card carries the small export fix."
   - id: RFX-01
     title: "Split main UI into screens"
@@ -2541,7 +2566,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "Current scoped sweep reports48 asset candidates after seven obsolete audio-source candidates were removed by the audio lane. The remaining47 have dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
+    note: "The current audit flags forty-eight assets; forty-seven retain dynamic runtime, source, rights, reference or QA uses, while the old dirt texture retains documented future arena use. All twenty-five flagged exports are used inside their modules, so no deletion is proved safe. Keep the dirt decision and dynamic reporting scope here; the legacy Rustwall generator still has test consumers and needs deliberate migration by its art owner."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
@@ -2919,8 +2944,12 @@ tasks:
     hooks: [tools/arena-balance.mjs]
     sequencing: "Shove is merged and frees the arena event. Use ordinary-car armor first; steering, Sal armor and Arsenal’s pilot files stay unchanged. If aggression needs changing, wait for Arsenal to free its pilot and brain hooks."
     helpers: [test_author, reviewer, balance_analyst]
-    waiting_on: claude
+    test_commit: d0e1a1f
+    source_commit: d9798c7
+    review_commit: f1a1470
+    note: "The native target test reproduces excess wrecks; the import guard is independently clear. Tuning waits for the written Sal armor answer, with no gameplay changes yet."
     design_question: "Changing ordinary arena armor also changes Sal’s absolute armor because warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card preserve the current warlord health values or only the 1.5 multiplier? Tuning waits for that answer; the target test and import guard can finish."
+    claude_answer: "1 October 2026, evening: keep every warlord's absolute armor exactly as it is today; Kyle approved Sal as she plays. The armor change applies to ordinary cars only (Last Car Rolling and the public modes). Compute warlord armor from today's arena scale times 1.5, or store it, so this card changes no warlord number."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex

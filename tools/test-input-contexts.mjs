@@ -6,9 +6,13 @@ import { App } from '../src/app.js';
 globalThis.cancelAnimationFrame ??= () => {};
 
 assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'photo']);
-assert.equal(keyboardAction('car', 'KeyD'), 'camera:chase');
+assert.equal(keyboardAction('car', 'KeyC'), 'camera-cycle');
+assert.equal(keyboardAction('menu', 'KeyC'), 'camera-cycle');
+for (const code of ['KeyD', 'KeyB', 'KeyV', 'KeyX']) assert.equal(keyboardAction('car', code), null, `${code} is not a camera key`);
 assert.equal(keyboardAction('foot', 'KeyD'), null, 'D strafes on foot and cannot change car camera');
 assert.equal(heldInput('foot', 'right', { KeyD: true }), true);
+for (const [name, code] of [['forward', 'ArrowUp'], ['back', 'ArrowDown'], ['left', 'ArrowLeft'], ['right', 'ArrowRight']])
+  assert.equal(heldInput('foot', name, { [code]: true }), true, `${code} moves the fighter ${name}`);
 assert.equal(keyboardAction('car', 'Digit1'), 'weapon:ufo');
 assert.equal(keyboardAction('foot', 'Digit1'), 'gear:1');
 assert.equal(keyboardAction('photo', 'Digit1'), null, 'photo mode cannot fire a car weapon');

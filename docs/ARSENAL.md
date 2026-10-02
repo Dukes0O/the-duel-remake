@@ -44,7 +44,10 @@ isolation and the four-slot loadout are preserved.
 **Computer loadouts.** CPU cars carry four weapons from those unlocked at the
 player's current rank, so opponents grow with the player. Easy uses only the
 four starters and wave 1; Medium adds wave 2; Hard may use everything
-unlocked. Each weapon below says when the computer fires it.
+unlocked. Each weapon below says when the computer fires it. Settled 1 October
+2026: every computer loadout carries at least one weapon that damages a car in
+front of it, and at most two defensive or control weapons (UFO Jump, Star
+Shield, Oil Slick, Smoke Screen, and later ones of that kind).
 
 **Switch.** Everything here is behind a new `arsenal` switch (dev) in
 `src/feature-flags.js`, and applies only to a player who has found the gate

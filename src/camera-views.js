@@ -1,9 +1,11 @@
-export const CAMERA_KEYS=Object.freeze({KeyD:'chase',KeyC:'front',KeyB:'back',KeyV:'right',KeyX:'left'});
+// One key steps through every view in this order (Kyle, 1 October 2026).
+export const CAMERA_CYCLE_KEY='KeyC';
 export const CAMERA_MODES=Object.freeze(['chase','hood','wide','front','back','right','left']);
+export const DIRECTIONAL_CAMERA_MODES=Object.freeze(['front','back','right','left']);
 
 // Directions follow the car's heading, even when it reverses or leaves the road.
 export function directionalCameraPose(mode,position,heading,tall=false){
-  if(!['front','back','right','left'].includes(mode))return null;
+  if(!DIRECTIONAL_CAMERA_MODES.includes(mode))return null;
   const reach=tall?13:10,side=mode==='right'?reach:mode==='left'?-reach:0;
   const forward=mode==='front'?reach:mode==='back'?-reach:0;
   const sin=Math.sin(heading),cos=Math.cos(heading),lookAhead=mode==='back'?3:0;
