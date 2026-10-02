@@ -7,7 +7,7 @@ import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect,carGrip} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -151,7 +151,7 @@ export function _drive(dt) {
   }
   if (s.boosting && !wasBoosting) this.emit({ boostStarted: true });
 
-  // engine blow if you ride the limiter on a Pro manual — the threshold sits
+  // engine blow if you ride the limiter on a Pro manual â€” the threshold sits
   // below the gear ceiling so holding throttle without upshifting gets there
   if (s.status === 'exploring' &&
       (s.hiddenRoadJourney?.departed || s.muddyHollowDeparture?.departed)) {
@@ -192,9 +192,11 @@ export function _drive(dt) {
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
 
-  const speedCap = s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed;
+  const effectScale = arsenalEnabled(this) ? carTopSpeed(s) : 1;
+  const speedCap = (s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed) * effectScale;
   if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
-  s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed, s.speedMph));
+  if (effectScale < 1) s.speedMph = Math.min(s.speedMph, speedCap);
+  s.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(car.topSpeed * boostTopSpeed * effectScale, s.speedMph));
   if(waterDepth>0){
     const waterDrag=waterDepth*(.18+surfaceEntrySpeed*.008);
     const waterLoss=surfaceEntrySpeed*(1-Math.exp(-waterDrag*dt));

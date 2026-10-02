@@ -1,64 +1,74 @@
-# ARS-01 tests-first slice
+# ARS-01: Harpoon, Caltrops and wave-one computer use
 
-Source has not started. This slice adds independent acceptance tests for
-Harpoon and Caltrops and four appended combat-balance counter checks.
-Existing assertions, balance bands and replay pins stay unchanged.
+Native Source and the private production browser recipe are implemented.
+The card is not ready to merge. Independent test fixture review, balance,
+browser, save review, sounds and lane/build gates remain.
 
-## Coverage
+## What changed
 
-- Native weapon admission, launch, recharge and upgrade transactions.
-- Harpoon leading flight, cone, literal range, damage, tether, yank and breaks.
-- Inclusive hard-away steering at 0.6, just below threshold, toward-shooter
-  input and half-second accumulation across a neutral interval.
-- Caltrops placement, dimensions, lifetime, once-per-car damage, refreshed
-  grip effect and top-speed cap; native owner grace in road and arena.
-- Actual player, road CPU and arena CPU speed consumers.
-- All four wave-one CPU triggers, generated loadouts and native use accounting.
-- Memory-only purchases, equipment, upgrades and rejected transaction controls.
-- Actual App.advance cadence at 30, 60 and 144 FPS.
-- Real stage/menu cleanup and bounded renderer state purity and disposal.
+- Harpoon launches a native leading 70 m/s projectile with full carrier
+  velocity, a 4 degree launch cone and a literal 50 m travelled range.
+- A native hit deals 6 armor per the existing 15 percent damage levels,
+  adds exactly 6 m/s sideways toward the shooter, and tethers for 3 s.
+  Ordinary driving still damps that physical impulse afterward.
+- The tether reads actual player input or native CPU steering requests.
+  Inclusive 0.6 steering away accumulates 0.5 s across neutral intervals.
+  Shield, either wreck, separation over 60 m and expiry break the line.
+- Caltrops creates a native 8 by 5 m oriented strip, 3 m behind the car.
+  It lasts 8 s, ignores its owner for the first second and touches each
+  body once. It deals 4 armor and refreshes 4 s of grip and speed limits.
+- Player, road CPU and arena CPU read the shared speed ceiling. Tether
+  caps top speed at 0.8; Caltrops caps it at 0.9 and grip at 0.75.
+- Real rank-three and rank-five Armory purchases and levels extend the
+  existing save catalog. Normalization never grants earned ownership.
+- CPU scheduling checks all four wave-one positional conditions and
+  cannot let a cooling eligible weapon hide another ready equipped one.
+- Presentation reuses bounded pools: forty visible spike instances per
+  strip, at most twenty-four strips and four actual per-car tether lines.
+  Geometries and materials are disposed; painting cannot change physics.
+- The report counts native deployment products and all four CPU uses.
+  Harpoon fire and travelling-flight cues are distinct from use accounting.
 
-## Settled rules
+## Tests first and current evidence
 
-Claude's answers are in docs/ARSENAL.md, integrated at 7e0e612:
-- Caltrops ignores its owner during the first second; contact becomes eligible
-  at exactly 1 s and still occurs only once for that body and strip.
-- Harpoon counts actual steering input with abs(steer) >= 0.6 toward the side
-  away from the shooter. The 0.5 s total need not be continuous.
-- Native driving maps positive steering input to negative yaw. Boundary tests
-  derive the away sign from actual car poses; they never inject effect counters.
+Independent tests preceded Source at 37924a1. The settled owner grace is
+1 s; hard-away input is at least 0.6 and need not remain continuous.
+The first native Source runs pass 53 of 57 checks, including all six new
+literal boundaries, 30/60/144 App cadences, transactions, cleanup and draw
+purity. Four tests expose fixture sampling issues now under independent
+review; their existing assertions have not been changed.
 
-There are no remaining literal-rule questions for these two weapons.
-Audio has a separate owner. Native sound cues, private High/Performance browser
-checks and the full 30-race balance gate remain builder work.
+The two yank checks sample after native road damping rather than at the
+hit. The road CPU comparisons start only 0.05 mph above the effect cap;
+both controls can brake below that cap in the same step. The implementation
+keeps the exact hit impulse and actual speed ceilings instead of changing
+physics to satisfy saturated comparisons.
 
-## Validation
+Bounded combat-balance acceptance passes 30 of 33. Source fixes the real
+Harpoon count by observing its native fire cue once. Review also covers the
+old two-weapon positive fixture and a new one-row aggregate that removes
+required policy/difficulty samples. No assertion or target band was changed.
+These results preceded the final accounting and scheduling fixes; reruns
+are required. There has been no thirty-race report, broad tier, build or
+browser capture in this Source slice. No replay pin has been regenerated.
 
-2 October 2026, after an ordinary merge of integration into this clean lane:
-- node --check tools/test-arsenal-wave1.mjs and git diff --check pass.
-- node tools/test-arsenal-wave1.mjs: 57 checks, 5 passed, 52 failed.
-- The six new checks are genuine RED at actual native launch: four Harpoon
-  boundaries report "native discovered Harpoon fire must succeed"; road and
-  arena owner grace report "native owner drops its actual Caltrops".
-- Each returns false where true is required. No missing import/export/module
-  error or fabricated weapon/effect supplies the failure.
-- The existing 46 failures remain missing native Harpoon/Caltrops admission,
-  purchase/equipment, CPU use, or the launch preconditions for later behavior.
-- Five controls still pass: Oil CPU positions, Smoke CPU positions, Smoke
-  recent-hit requirement and both rejected purchase/discovery/switch/
-  normalization transaction checks.
+## Remaining acceptance
 
-Earlier 1 October evidence, not rerun in this bounded handoff:
-- node tools/test-combat-balance.mjs: 33 checks, 29 passed, 4 failed.
-- Existing balance checks pass; new native accounting checks fail at purchase.
-  Zero-use validators accept missing Harpoon or Caltrops CPU evidence.
+The browser recipe runs the original genuine Oil/Smoke counters, then actual
+Harpoon hit, accumulated steering and shield counters and Caltrops contact
+and steering around, in High and Performance with tab-local memory saves.
+It has syntax validation only and still needs the independent browser run.
 
-Launch failures leave downstream flight, contact, timing, speed, cadence,
-cleanup and rendering assertions unreachable. These are not passing evidence.
-The builder must rerun the same tests after implementing the settled rules.
-No broad lane/full tier, build, browser or balance job ran for this handoff.
-No Source, replay pin or existing assertion changed.
+Audio belongs to its separate owner. Source emits weapon.harpoon.fire,
+.flight, .hit and .break and weapon.caltrops.deploy and .hit with actual
+positions and actors. The fire/flight events include their native projectile.
+No bank, catalog, audio, Game, arena-event, Salt or protected lane file changed.
+Save Guardian, thirty-race balance, independent Source review and current
+lane/build gates remain mandatory before handoff for merge.
 
 ## Removed
 
-None. This slice adds tests only and does not replace runtime behavior.
+Replaced the two-user rear deployment branch with genuine four-user wave-one
+scheduling and extended real projectile accounting. Unpacked the rewritten
+combat presentation file. Removed no asset, starter id, target band or replay
+pin. Diagnostic output stays in the ignored lane QA directory.

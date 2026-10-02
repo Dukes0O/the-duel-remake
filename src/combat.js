@@ -4,6 +4,7 @@ import {stepProjectiles, tickImpactCooldowns} from './combat-projectiles.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {arsenalEnabled, stepCpuWeaponCooldowns, clearCpuWeaponCooldowns} from './combat-weapons.js';
 import {clearSmokeHistory} from './arsenal/smoke.js';
+import {stepTether} from './arsenal/harpoon.js';
 import {cpuArsenalLoadout} from './weapon-upgrades.js';
 import {makeRng} from './rng.js';
 import {clearHazards, stepHazards} from './arsenal/hazards.js';
@@ -67,7 +68,7 @@ export function stepCombat(duel, dt) {
   stepProjectiles(duel, dt);
   if (arsenalEnabled(duel)) {
     for (const actor of [state, ...state.opponents, ...state.traffic, state.police?.pursuit]) {
-      if (actor) stepCarEffects(actor, dt);
+      if (actor) {stepTether(duel, actor, dt); stepCarEffects(actor, dt);}
     }
     stepHazards(duel, dt);
   }

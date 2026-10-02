@@ -1,5 +1,5 @@
 import {arsenalEnabled} from '../combat-weapons.js';
-import {carGrip} from '../arsenal/car-effects.js';
+import {carGrip,carTopSpeed,setCarSteering} from '../arsenal/car-effects.js';
 import {oilThreat} from '../arsenal/oil.js';
 import {CARS, DRIVE, BOOST, steeringYawAuthority} from '../config.js';
 import {wrapHeading} from '../offroad-physics.js';
@@ -146,6 +146,7 @@ export function pilotStep(duel, actor, goal, dt) {
 
   turn = wrapHeading(desired - pose.heading);
   const steer = Math.max(-1, Math.min(1, -turn * PILOT.steerGain)) * (reversing ? -1 : 1);
+  if (arsenalEnabled(duel)) setCarSteering(actor, steer);
   actor.steerVisual = (actor.steerVisual || 0) + (steer - (actor.steerVisual || 0)) * (1 - Math.exp(-DRIVE.steerResponse * dt));
   // A move may reduce steering, never raise the car's physical authority.
   const steeringScale = Number.isFinite(goal.steeringScale)
@@ -155,7 +156,8 @@ export function pilotStep(duel, actor, goal, dt) {
   actor.yawVelocity = (actor.yawVelocity || 0) + (targetYaw - (actor.yawVelocity || 0)) * (1 - Math.exp(-DRIVE.yawResponse * dt));
 
   // Speed: brake into tight turns, then accelerate as the player's car would.
-  const floorTop = arenaFloorSpeed(course.def.scrapdome, spec.topSpeed);
+  const floorTop = arenaFloorSpeed(course.def.scrapdome, spec.topSpeed) *
+    (arsenalEnabled(duel) ? carTopSpeed(actor) : 1);
   // A boosting car aims for the boost ceiling; otherwise braking would cancel it.
   let target = reversing ? -DRIVE.reverseMaxMph * .6 : actor._arenaUTurn ? floorTop * speedScale :
     (goal.boost ? floorTop * BOOST.topSpeedMult : goal.speedMph) * speedScale;

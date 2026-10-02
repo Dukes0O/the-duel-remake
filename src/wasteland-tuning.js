@@ -4,6 +4,8 @@ export const WEAPONS = Object.freeze({
   crossbow: {name: 'CROSSBOW', key: '3', cooldown: 4},
   star: {name: 'STAR SHIELD', key: '4', cooldown: 16},
   oil: {name: 'OIL SLICK', cooldown: 10},
+  harpoon: {name: 'HARPOON', cooldown: 12},
+  caltrops: {name: 'CALTROPS', cooldown: 9},
   smoke: {name: 'SMOKE SCREEN', cooldown: 14},
 });
 export const CPU_COMBAT=Object.freeze({

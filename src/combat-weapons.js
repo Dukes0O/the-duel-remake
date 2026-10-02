@@ -8,6 +8,8 @@ import {footMoveDirection} from './onfoot.js';
 import {carEffect} from './arsenal/car-effects.js';
 import {deployOil} from './arsenal/oil.js';
 import {deploySmoke} from './arsenal/smoke.js';
+import {deployCaltrops} from './arsenal/caltrops.js';
+import {launchHarpoon} from './arsenal/harpoon.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
 
 const cpuCooldowns = new WeakMap();
@@ -282,8 +284,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (!enemy && state.onFoot) return false;
   const arsenal = arsenalEnabled(duel);
   let straightShot = false;
-  const rearHazard = weapon === 'oil' || weapon === 'smoke';
-  if (rearHazard && !arsenal) return false;
+  const rearHazard = ['oil', 'smoke', 'caltrops'].includes(weapon);
+  if ((rearHazard || weapon === 'harpoon') && !arsenal) return false;
   if (arsenal && carEffect(actor, 'disabled')) return false;
   if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
   let cooldowns = combat.cooldowns;
@@ -311,8 +313,11 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   const at = point(duel, actor);
   const level = enemy ? 0 : combat.levels[weapon] || 0;
   if (rearHazard) {
-    const hazard = weapon === 'oil' ? deployOil(duel, actor) : deploySmoke(duel, actor);
+    const hazard = weapon === 'oil' ? deployOil(duel, actor) :
+      weapon === 'caltrops' ? deployCaltrops(duel, actor, level) : deploySmoke(duel, actor);
     if (!hazard) return false;
+  } else if (weapon === 'harpoon') {
+    if (!launchHarpoon(duel, actor, enemy, level)) return false;
   } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);

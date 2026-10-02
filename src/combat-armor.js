@@ -25,6 +25,8 @@ export function armorDamageFor(source, {
   const upgrade = 1 + clamp(level, 0, T.maximumWeaponLevel) * T.upgradePerLevel;
   switch (source) {
     case 'crossbow': return T.crossbow * upgrade * multiplier;
+    case 'harpoon': return 6 * upgrade * multiplier;
+    case 'caltrops': return 4 * upgrade * multiplier;
     case 'bomb': return T.bomb * (1 - clamp(distanceFraction, 0, 1)) * upgrade * multiplier;
     case 'rocket': return T.rocket * upgrade * multiplier;
     case 'rpg-direct': return T.rpgDirect * upgrade * multiplier;

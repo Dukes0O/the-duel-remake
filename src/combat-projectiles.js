@@ -1,4 +1,5 @@
 import {targetFor, targetIdentity, actorForTarget} from './arsenal/targeting.js';
+import {steerHarpoon, harpoonTravelStep, hitHarpoon} from './arsenal/harpoon.js';
 import {contactZone} from './collision.js';
 import {point, aimPoint, predictedPoint, burst, arsenalEnabled, boltLaunchSpeed} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
@@ -302,11 +303,13 @@ export function stepProjectiles(duel, dt) {
     if (modernProjectiles) {
       steerBolt(duel, projectile, biasedEnemyBolt ? dt / 2 : dt, dt / 2);
       steerRpg(duel, projectile, dt);
+      if (projectile.kind === 'harpoon') steerHarpoon(duel, projectile, dt);
     }
     projectile.age += dt;
-    projectile.x += projectile.vx * dt;
-    projectile.z += projectile.vz * dt;
-    projectile.y += projectile.vy * dt;
+    const travelStep = projectile.kind === 'harpoon' ? harpoonTravelStep(projectile, dt) : dt;
+    projectile.x += projectile.vx * travelStep;
+    projectile.z += projectile.vz * travelStep;
+    projectile.y += projectile.vy * travelStep;
     // Travel with the midpoint direction, then retain the endpoint direction
     // for the next step. Two half-turn budgets preserve the full-step cap.
     if (biasedEnemyBolt) steerBolt(duel, projectile, dt / 2, 0);
@@ -381,11 +384,16 @@ export function stepProjectiles(duel, dt) {
       ? clamp(projectile.lifetimeSeconds, T.foot.rpgLifetimeSeconds,
         T.foot.rpgLifetimeSeconds * 1.25)
       : T.foot.rpgLifetimeSeconds;
-    const expired = projectile.age > (projectile.kind === 'bomb'
+    const expired = projectile.kind === 'harpoon' ? projectile.travelled >= 50 - 1e-10 : projectile.age > (projectile.kind === 'bomb'
       ? T.bomb.lifetime : projectile.kind === 'rpg'
         ? rpgLifetime : T.crossbow.lifetime);
     if (!contact && projectile.y > floor + T.projectileFloorClearance && !expired) {
       live.push(projectile);
+      continue;
+    }
+
+    if (projectile.kind === 'harpoon') {
+      if (target) hitHarpoon(duel, target, projectile);
       continue;
     }
 

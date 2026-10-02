@@ -1,7 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect,carGrip} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,setCarSteering} from './arsenal/car-effects.js';
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
@@ -244,9 +244,14 @@ export function _rival(dt, opponent = this.state.rival) {
     r.yieldingToPlayer = true;
     r.braking = r.speedMph > target;
   }
+  if (arsenalEnabled(this)) target = Math.min(target, car.topSpeed *
+    (r.boosting ? BOOST.topSpeedMult + r.upgrades.nitro * .025 + (car.nitroSpeedBonus || 0) : 1) * carTopSpeed(r));
+  const effectScale = arsenalEnabled(this) ? carTopSpeed(r) : 1;
   target = Math.max(0, target);
   if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
   else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, (car.accel * DRIVE.accelScale * .85+(r.boosting?BOOST.accelMphPerSec*(1+r.upgrades.nitro*.15)*(car.nitroAcceleration||1):0)) * dt);
+  if (effectScale < 1) r.speedMph = Math.min(r.speedMph, car.topSpeed * effectScale *
+    (r.boosting ? BOOST.topSpeedMult + r.upgrades.nitro * .025 + (car.nitroSpeedBonus || 0) : 1));
   if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));
   if (r.ramRecoverySec > 0) {
     // Let the ram carry the car before the route planner tries to recenter it.
@@ -258,12 +263,15 @@ export function _rival(dt, opponent = this.state.rival) {
     const authority = steeringYawAuthority(r.speedMph, car.grip * grip, rivalSurface.traction, car);
     const error = Math.atan2(Math.sin((oil ? plannedHeading : route.headingTarget) - r.headingError), Math.cos((oil ? plannedHeading : route.headingTarget) - r.headingError));
     const yaw = clamp(route.curvature * speed + error * 6, -authority, authority);
+    if (arsenalEnabled(this)) setCarSteering(r, authority > 0 ? -yaw / authority : 0);
     const progress = Math.cos(r.headingError) * speed / Math.max(.25, 1 - frame.curvature * r.lateral);
     r.headingError += (yaw - frame.curvature * progress) * dt;
   } else {
     const desiredHeading = clamp((lane - r.lateral) * .095, -.55, .55);
     // Recovery is a steering manoeuvre with limited grip, never a lane snap.
     const rivalTurnRate = (rivalSurface.preparedGravel ? .95 * rivalSurface.traction : r.offRoad ? .48 : .95) * grip;
+    if (arsenalEnabled(this)) setCarSteering(r, rivalTurnRate > 0
+      ? -(desiredHeading - r.headingError) / (rivalTurnRate * dt) : 0);
     r.headingError += clamp(desiredHeading - r.headingError, -dt * rivalTurnRate, dt * rivalTurnRate);
   }
   if (arsenalEnabled(this) && carEffect(r,'slick')) {

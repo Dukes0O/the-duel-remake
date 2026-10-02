@@ -123,14 +123,18 @@ function weaponUseCounter(duel) {
     const projectiles = combat.projectiles.filter(item => item.id > serial);
     const bursts = combat.bursts.filter(item => item.id > serial);
     serial = combat.serial;
-    const rear = ['oil', 'smoke'].find(id => event.arsenalCue === 'weapon.' + id + '.deploy');
+    const rear = ['oil', 'smoke', 'caltrops'].find(id => event.arsenalCue === 'weapon.' + id + '.deploy');
     if (rear) {
       if (event.actor === state) count('player', rear);
       else if (state.opponents.includes(event.actor)) count('cpu', rear);
       return;
     }
+    if (event.arsenalCue === 'weapon.harpoon.fire' && event.projectile?.kind === 'harpoon') {
+      count(event.projectile.enemy ? 'cpu' : 'player', 'harpoon');
+      return;
+    }
     const weapon = event.weaponFired;
-    if (weapon === 'bomb' || weapon === 'crossbow') {
+    if (weapon === 'bomb' || weapon === 'crossbow' || weapon === 'harpoon') {
       // A native Bomb batch is one use, irrespective of its pellet count.
       const product = projectiles.find(item => item.kind === weapon);
       if (product) count(product.enemy ? 'cpu' : 'player', weapon);
@@ -422,14 +426,14 @@ export function reportFailures(report, runs, baselineRuns) {
   for (const [policy, samples] of Object.entries(ufoGainByDifficulty)) for (const [difficulty, gain] of Object.entries(samples)) {
     if (gain > 4) failures.push(`${policy}/${difficulty} time gain ${gain}s exceeds 4s`);
   }
-  if (crossbowAim.hitRate < .35 || crossbowAim.hitRate > .60) failures.push(`crossbow hit rate ${crossbowAim.hitRate} is outside 0.35–0.60`);
+  if (crossbowAim.hitRate < .35 || crossbowAim.hitRate > .60) failures.push(`crossbow hit rate ${crossbowAim.hitRate} is outside 0.35â€“0.60`);
   if (ownBombs.maxSpeedLossPct > 15) failures.push(`own bomb speed loss ${ownBombs.maxSpeedLossPct}% exceeds 15%`);
   for (const [difficulty, [low, high]] of Object.entries(CPU_HIT_BANDS)) {
     if (cpuHitsByDifficulty[difficulty] != null && (cpuHitsByDifficulty[difficulty] < low || cpuHitsByDifficulty[difficulty] > high)) {
-      failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}–${high}`);
+      failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}â€“${high}`);
     }
   }
-  if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke']) {
+  if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke', 'harpoon', 'caltrops']) {
     if (!(report.weaponUses?.cpu?.[weapon] > 0)) failures.push('CPU ' + weapon + ' has no measured native use');
   }
   return failures;

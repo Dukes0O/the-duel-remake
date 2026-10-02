@@ -1,6 +1,12 @@
 const EFFECT_KINDS = new Set(['slick', 'grip', 'tether', 'disabled', 'burning', 'nitro']);
 const effectsByCar = new WeakMap();
+const steeringByCar = new WeakMap();
 const EPSILON = 1e-10;
+
+export function setCarSteering(car, input) {
+  steeringByCar.set(car, Number.isFinite(input) ? Math.max(-1, Math.min(1, input)) : 0);
+}
+export function carSteering(car) { return steeringByCar.get(car) || 0; }
 
 export function carEffect(car, kind) {
   return effectsByCar.get(car)?.get(kind) || null;
@@ -10,6 +16,14 @@ export function carGrip(car) {
   return Math.min(1, ...['slick','grip'].map(kind => {
     const effect=carEffect(car,kind);
     return effect && Number.isFinite(effect.grip) ? Math.max(0,effect.grip) : 1;
+  }));
+}
+
+// Timed penalties share one native ceiling; repeated strips refresh, never stack.
+export function carTopSpeed(car) {
+  return Math.min(1, ...['grip', 'tether'].map(kind => {
+    const effect = carEffect(car, kind);
+    return effect && Number.isFinite(effect.topSpeed) ? Math.max(0, effect.topSpeed) : 1;
   }));
 }
 
@@ -41,4 +55,5 @@ export function stepCarEffects(car, dt) {
 
 export function clearCarEffects(car) {
   effectsByCar.delete(car);
+  steeringByCar.delete(car);
 }
