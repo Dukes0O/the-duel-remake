@@ -708,12 +708,11 @@ tasks:
     note: "The visible twelve-fighter comparison meets the paired frame limit at both qualities, and all native cases pass. Independent review approved updating the stale preservation baseline to the already-merged integration tree, with every original assertion retained. Claude still reviews the costume; shared recipe registration keeps the whole-card gate held."
     qa_commit: "4044431d36f1eec2bbf59f01e361fac75dc3442a"
     round_1_sheet: ".lanes/vesper/docs/board/looks/vesper/round-1.jpg"
-    waiting_on: claude
     hook_requests: [tools/test-blender-output.mjs]
     round_2_sheet: ".lanes/vesper/docs/board/looks/vesper/round-2.jpg"
     lane_gate_commit: "3fe32b91137a8c1816b022567ca07f78162a4fcb"
     frame_qa_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
-
+    claude_verdict: "1 October 2026, evening: approved. Vesper reads as her own person next to Nell, Odessa and Wren: dark steel and olive against their tan, with the dark red harness clear front and back, and gritty, not toy-like. Merge once the shared recipe registration and a green lane gate land; WAR-04 reveals and installs her."
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -796,7 +795,6 @@ tasks:
     size: M
     needs: [ART-KEEP-VALVE-DONOR]
     status: review
-    waiting_on: claude
     review_commit: f2a0cfd
     claimed_by: codex-director-2026-10-01-afternoon
     branch: lane/art/convoy-tanker
@@ -821,7 +819,7 @@ tasks:
     final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
     source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
     frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
-
+    claude_verdict_final: "1 October 2026, evening: round 3 is the pick. The red bands and red valve wheels finally read as targets, and the striped bumper and darker cab help. Install round 3 as the convoy tanker with two corrections that are fixes to round 3's own directions, not a fourth round: (1) the roof plate is plain dark steel in the middle with the black and yellow stripes only around its border; (2) the beacon lamps are amber, bright amber when lit and dull dark amber when off (they read cream and brown now). Show Claude one close-up of the roof, lamps on and off, before merge. Still below the art bar at distance; Kyle has the last look in the Preview when the Convoy Raid is playable."
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -907,7 +905,6 @@ tasks:
     size: L
     needs: [WAR-02a-REWARD]
     status: building
-    waiting_on: claude
     balance_source_commit: 0943464
     review_commit: 58116aec7e8eafd1308be8bc399b3c7a9624e269
     test_commit: "3d42f5b"
@@ -929,6 +926,7 @@ tasks:
     source_review: "Independent review cleared the per-candidate launch fix. All native cases pass with unchanged assertions. Browser, balance and merge gates remain."
     claude_answer_3: "1 October 2026, afternoon: approved. Add the optional context.rangeForTarget(actor), evaluated by the existing resolver for each candidate, returning that candidate's own launch reach (resultant horizontal launch speed toward it times lifetime). Numeric range stays for CPU acquisition (180 m) and every existing caller. No change to eligibility or flight."
     design_question: "The required balance run puts Medium at 80 percent wins against 45 to 65. A matched native control loses, while Arsenal wins with UFO, Oil, Smoke and Star making no CPU weapon use: should every four-slot CPU loadout guarantee a working front attack? Targets and gameplay stay held for your answer."
+    claude_answer_4: "1 October 2026, evening: yes. Every computer four-slot loadout carries at least one weapon that damages a car in front of it (the crossbow, or an unlocked wave weapon that does), and at most two of the slots are defensive or control weapons (UFO Jump, Star Shield, Oil Slick, Smoke Screen). Fill the rest from the unlocked pool as ARSENAL.md says. Then rerun the balance; the 45 to 65 percent Medium target stands."
   - id: AUD-ARSENAL-W1
     title: "Sounds for Oil Slick and Smoke Screen"
     owner: codex
@@ -1092,8 +1090,8 @@ tasks:
     note: "All sixteen final game views and native checks pass, with every assessed visual item at four and matched frame cost within the limit. The six unfinished public-entry cases remain explicit. Claude reviews the final sheet; there is no fourth material round or whole-card merge pass."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
-    waiting_on: claude
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
+    claude_verdict: "1 October 2026, evening: the generated salt meets Kyle's direction: real crust cells, a dusty driving band and no repeating pattern from the full view or the racing camera. Accept round 3 and finish the card: public entry, rank 9 unlock, the four modes, gates, then merge and Kyle's look in the Preview. For P3-POLISH, not this card: the inner island still reads sparse from the full view; add scrap there then."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
@@ -1212,6 +1210,7 @@ tasks:
     status: ready
     acceptance:
       - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
+    claude_polish_list: "From the 1 October reviews: more scrap on the Salt Flats inner island; tanker readability at distance; Salt Flats ridge width variety."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -2945,12 +2944,12 @@ tasks:
     hooks: [tools/arena-balance.mjs]
     sequencing: "Shove is merged and frees the arena event. Use ordinary-car armor first; steering, Sal armor and Arsenal’s pilot files stay unchanged. If aggression needs changing, wait for Arsenal to free its pilot and brain hooks."
     helpers: [test_author, reviewer, balance_analyst]
-    waiting_on: claude
     test_commit: d0e1a1f
     source_commit: d9798c7
     review_commit: f1a1470
     note: "The native target test reproduces excess wrecks; the import guard is independently clear. Tuning waits for the written Sal armor answer, with no gameplay changes yet."
     design_question: "Changing ordinary arena armor also changes Sal’s absolute armor because warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card preserve the current warlord health values or only the 1.5 multiplier? Tuning waits for that answer; the target test and import guard can finish."
+    claude_answer: "1 October 2026, evening: keep every warlord's absolute armor exactly as it is today; Kyle approved Sal as she plays. The armor change applies to ordinary cars only (Last Car Rolling and the public modes). Compute warlord armor from today's arena scale times 1.5, or store it, so this card changes no warlord number."
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
