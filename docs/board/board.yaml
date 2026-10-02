@@ -1104,6 +1104,7 @@ tasks:
     size: L
     needs: [ART-SRC-SALTFLATS]
     status: review
+    waiting_on: kyle
     review_commit: "4bb0da063863e8a9450f9b419e817eff20c377f0"
     source_commit: "bac0d1c9c5465f953288d8d24ed2f84f62a8cbf9"
     test_commit: "c18e814"
@@ -1119,7 +1120,7 @@ tasks:
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
-    note: "Claude approved the final art and the two built modes. Finish actual rank-nine yard selection and launch for both; Bounty and Ambush add this venue in their own cards. No new art round is needed."
+    note: "Both built modes pass their real public browser checks and the accepted art is unchanged. Automatic approval review requires Kyle’s explicit approval for the independently reviewed control-trace migration, so the fixture stays exact and Salt waits. Bounty and Ambush still add this venue in their own cards."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"

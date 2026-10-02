@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## Salt control fixture for Kyle
+
+The public Salt checks pass. Its old eight-second Dome control trace predates
+Kyle’s approved ordinary-car armor increase. Independent paired native review
+proved exact current traces and full state, and reproduced the old trace by
+restoring only the old armor. Automatic approval review requires Kyle’s
+explicit approval to update control provenance and its trace; physical hashes,
+main replay pins, assertions and tolerances remain unchanged. The question is
+pending in this chat, and the fixture remains untouched.
+
 ## Arsenal test correction for Kyle
 
 The existing CPU test requires Crossbow, but rank-six Easy now legitimately
