@@ -2967,6 +2967,7 @@ tasks:
     design_question: "Changing ordinary arena armor also changes Sal’s absolute armor because warlord setup multiplies it by 1.5. Kyle kept Sal unchanged: should this card preserve the current warlord health values or only the 1.5 multiplier? Tuning waits for that answer; the target test and import guard can finish."
     claude_answer: "1 October 2026, evening: keep every warlord's absolute armor exactly as it is today; Kyle approved Sal as she plays. The armor change applies to ordinary cars only (Last Car Rolling and the public modes). Compute warlord armor from today's arena scale times 1.5, or store it, so this card changes no warlord number."
     kyle_note: "Kyle noted Gratian enjoys high wreck counts, with a best of sixteen, then chose the lower rate in his evening reply. The earlier hold is answered."
+    kyle_decision: "Kyle, 1 October 2026: bring the wreck count down to the 10 to 14 target as this card says. Go ahead."
   - id: ARENA-JUNK-SHOVE
     title: "Scrapdome junk cars slide when rammed"
     owner: codex
