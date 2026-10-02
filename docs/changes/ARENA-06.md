@@ -46,10 +46,8 @@ checks; no assertions or signatures changed.
 Independent review approved the Fuel assertion migration to the real 180 s round and Infinity
 sudden death. A separate 600 s observation watchdog never changes game limits, forces results
 or changes next-delivery rules. Fixtures explicitly enable the genuine Salt and Fuel flags.
-Both existing full-round assertions pass with exact seeded traces/results and native physical
-bounds. Earlier native acceptance: 62 checks passed; only the approved trace was stale. All 16
-Course geometry cases pass. Salt dev and catalog count ten have independent approval; all old
-assertions and negative art guards remain exact.
+Both full-round assertions and sixteen geometry cases pass. Salt dev and catalog count ten
+have independent approval; old assertions and negative art guards remain exact.
 
 Actual memory-only browser acceptance passes all four public entry cases: Last Car Rolling and
 Fuel Run in High and Performance. Uncovered physical UI clicks choose venue/mode, load the
@@ -81,10 +79,13 @@ Independent scheduling regression first failed because the native crash-peak cap
 its gate slot. The existing runner now drains other suites for that capture alone, then
 resumes eight jobs. All 126 runner checks pass; no audio assertion or game rule changed.
 
+Native App payment tests first fail 0/2: Salt wins pay zero instead of the ring reward.
+The pure validator accepts Salt: both tests pass, with 336 scrap, 25 hold and no re-pay.
+All nine original settlement cases pass; storage rules and ordinary credits stay exact.
 ## Accepted private evidence
 
-Earlier boundary acceptance passes 29 cases; renderer and effects pass eight each. Sixteen
-final game views have no errors or warnings, independent Source review was clear, and the
+Earlier boundary acceptance passes 29 cases and renderer/effects eight each. Sixteen final
+game views have no errors or warnings, Source review was clear, and the
 critic scored every assessed item four in both qualities. Paired 180-frame captures give P95
 16.8/16.8 ms in both qualities, within ten percent. Entry Source changes no accepted model or
 renderer bytes.
