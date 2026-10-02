@@ -1122,7 +1122,7 @@ tasks:
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-salt-flats-output.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
-    hooks: [tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-frame-metrics.mjs, start-preview.bat, tools/test-feature-flags.mjs, src/generated-shortcut-presets.js, tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, src/game.js, src/screen-router.js, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
+    hooks: [src/arena/arena-settlement.js, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/test-frame-metrics.mjs, start-preview.bat, tools/test-feature-flags.mjs, src/generated-shortcut-presets.js, tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, src/game.js, src/screen-router.js, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
     sequencing: "Claude approved real public entry for Last Car Rolling and Fuel Run only. The independent review approves the released Fuel rule assertion and additive actual App coverage before Source. Salt owns the granted entry and renderer files; Tanker and Vesper are merged, so Salt now owns its shared Blender registration with independent tests first."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
@@ -1151,6 +1151,7 @@ tasks:
     audio_scheduling_test_commit: 6225533
     audio_scheduling_source_commit: 10e7c02
     audio_scheduling_review: "Independent review clears exclusive native capture scheduling, unchanged failure handling and eight-job concurrency. All runner checks pass; the fresh lane gate and build remain required."
+    settlement_hook: "Director grants the pure arena settlement validator for actual Salt Last Car Rolling and Fuel Run pay. Native tests first must prove normal once-only scrap and hold; ring awards and storage rules remain unchanged."
   - id: ARENA-PIT
     title: "The Pit: the Scrapdome's open layout for three warlord fights"
     owner: codex
