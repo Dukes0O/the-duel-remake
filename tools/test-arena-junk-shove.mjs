@@ -240,6 +240,22 @@ check('actual respawn timer keeps clear when a rammed hulk occupies an original 
   assert.ok(distance(worldPose(duel, duel.state), prop) >= clearance,
     'native respawn must clear the CURRENT hulk, not only the authored spawn cache');
 });
+check('late native junk contact keeps the participant on the floor before the tick ends', () => {
+  // Exact native Medium-round contact at seed 1989, tick 17259. The event
+  // already contained CPU-3 before its late crush dispatcher nudged it out.
+  const {duel, prop} = arena(), actor = duel.state.opponents[0];
+  actor.car = 'stuttgart_959s';
+  moveProp(duel, prop, 110.36801478390123, 14.436351344905729,
+    -.8482864801101722 - duel.course.at(110.36801478390123).heading);
+  placeActor(duel, actor, {s: 592.2810489907823, lateral: 18, headingError: Math.PI},
+    25.39847201879456);
+  actor.prevS = 592.3656429176233; actor.prevLateral = 17.933011695573217;
+  const beforeS = actor.s;
+  duel._crushProps(actor);
+  assert.notEqual(actor.s, beforeS, 'real native swept junk contact corrects the participant pose');
+  assert.ok(Math.abs(actor.lateral) <= floorLimit(duel),
+    'late contact must keep the final participant pose inside the native floor limit');
+});
 check('existing renderer callback copies native moved position and spin without mutating simulation', () => {
   const c = arena('banshee_muscle'), world = new THREE.Group();
   const group = addArenaCrushables(world, c.duel.course), root = group.children[0];
