@@ -21,9 +21,9 @@ import {normalizeCarLoadout} from '../src/car-loadout.js';
 
 // ARS-01 tests first. Existing native entry points expose the unknown-weapon
 // failure without importing future modules. Memory storage belongs to this process.
-// Pending Claude: Caltrops owner-grace duration and the hard-away threshold.
-// Full steering 1.0 is an unambiguous half-second break witness; no boundary
-// for either open value is invented. Browser/audio listening remain separate.
+// Claude settled owner grace at 1 s and hard-away input at abs(steer) >= .6.
+// Away steering accumulates .5 s even across pauses. Native launch preconditions
+// keep downstream results honest until Source lands. Browser/audio remain separate.
 const DT = 1 / 120, EPS = 1e-7, SEED = 1989;
 const failures = [];
 let checks = 0;
@@ -206,6 +206,60 @@ check('Harpoon full steering away breaks after half a second accumulated', () =>
   freezePositions(r.duel, 59); assert.ok(carEffect(target, 'tether'), '59 native 120 Hz ticks are less than half a second');
   freezePositions(r.duel, 1); assert.equal(carEffect(target, 'tether'), null, '60 full-away native ticks break the tether');
 });
+for (const boundary of ['inclusive', 'below', 'toward', 'noncontinuous']) {
+  check('Harpoon native hard-away steering boundary: ' + boundary, () => {
+    const r = hitHarpoon({playerVictim: true}), target = r.target;
+    const shooterAt = point(r.duel, r.shooter), at = point(r.duel, target);
+    const heading = at.heading + (target.headingError || 0);
+    const awayInputSign = Math.sign((shooterAt.x - at.x) * Math.cos(heading) -
+      (shooterAt.z - at.z) * Math.sin(heading));
+    assert.notEqual(awayInputSign, 0, 'native shooter occupies a definite side of the target');
+    // Native driving maps positive steering to negative yaw: this sign turns
+    // away from the shooter. Send actual inputs, never inject a tether counter.
+    const steer = value => r.duel.setInput({throttle: 0, brake: 0,
+      steer: awayInputSign * value, boost: false});
+    if (boundary === 'below' || boundary === 'toward') {
+      steer(boundary === 'below' ? .5999 : -.6);
+      freezePositions(r.duel, 60);
+      assert.ok(carEffect(target, 'tether'),
+        'below-threshold or toward-shooter input does not satisfy the half-second break');
+    } else if (boundary === 'inclusive') {
+      steer(.6); freezePositions(r.duel, 59);
+      assert.ok(carEffect(target, 'tether'), 'inclusive .6 input stays tethered before .5 s');
+      freezePositions(r.duel, 1);
+      assert.equal(carEffect(target, 'tether'), null, 'inclusive .6 input breaks at .5 s');
+    } else {
+      steer(.6); freezePositions(r.duel, 30);
+      steer(0); freezePositions(r.duel, 20);
+      assert.ok(carEffect(target, 'tether'), 'neutral interval does not complete the counter');
+      steer(.6); freezePositions(r.duel, 29);
+      assert.ok(carEffect(target, 'tether'), '59 total away ticks remain below .5 s');
+      freezePositions(r.duel, 1);
+      assert.equal(carEffect(target, 'tether'), null, 'separated away intervals accumulate to .5 s');
+    }
+  });
+}
+for (const arena of [false, true]) {
+  check('Caltrops native owner grace is the first second: ' + (arena ? 'arena' : 'road'), () => {
+    const duel = race({arena}), owner = duel.state, armor = owner.armor;
+    assert.equal(duel.fireWeapon('caltrops'), true, 'native owner drops its actual Caltrops');
+    const hazard = hazardsFor(duel).find(h => h.kind === 'caltrops');
+    assert.ok(hazard, 'native drop registers a real strip');
+    near(hazard.ownerGraceSec, 1, 'settled owner grace is exactly 1 s');
+    const at = duel.course.nearest(hazard.x, hazard.z, owner.s);
+    place(owner, at.s, at.lateral);
+    place(owner.rival, owner.s + 100);
+    stepHazards(duel, .99);
+    assert.equal(owner.armor, armor, 'overlapping owner loses no armor during its first second');
+    assert.equal(carEffect(owner, 'grip'), null, 'grace also prevents owner grip loss');
+    stepHazards(duel, .01);
+    near(armor - owner.armor, 4, 'owner contact at exactly 1 s applies ordinary Caltrops damage');
+    near(carGrip(owner), .75, 'owner receives ordinary Caltrops control after grace');
+    const hitArmor = owner.armor;
+    stepHazards(duel, DT);
+    assert.equal(owner.armor, hitArmor, 'grace never consumes or repeats the once-per-body contact');
+  });
+}
 check('Harpoon shield counter prevents both real armor loss and tether', () => {
   const duel = race(), target = duel.state.rival, armor = target.armor;
   equipCpu(target, 'star'); assert.equal(fireWeapon(duel, 'star', true, target), true, 'native target raises its actual shield');
@@ -453,5 +507,5 @@ check('native rendering reuses bounded pools, draws both products and leaves sim
     assert.ok(visibleProjectile, 'native scene draws the real Harpoon flight product'); assert.ok(visibleStrip, 'native scene draws the real Caltrops strip');
   } finally {scene.dispose();}
 });
-console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; owner-grace and steering-threshold boundaries await Claude.');
+console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; settled owner-grace and hard-away boundaries included.');
 if (failures.length) {console.error(failures.join('\n')); process.exitCode = 1;}
