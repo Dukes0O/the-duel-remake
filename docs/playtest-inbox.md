@@ -1,5 +1,17 @@
 # Wasteland play-test inbox
 
+## Mother Mirage split rule for Claude
+
+What starts a split once its cooldown is ready, and is the first split ready
+immediately? The shared tell, eight-metre spacing, six-second copies, two-second
+window and phase-two frequency are settled.
+
+Independent native tests have six passing controls and five genuine missing
+admission checks. The complete early Drone needs Arsenal to free its weapon,
+armor and projectile files; Mirage's real tyre-mark clue needs Salt's renderer.
+Core targeting and the existing scrap burst can stay read-only. No Source has
+started, and the future Arsenal wave will reuse the same actual Drone producer.
+
 ## Kingpin move rules for Claude
 
 What triggers Kettle Drop, and what landing target and reach are committed?

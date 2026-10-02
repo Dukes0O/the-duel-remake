@@ -65,6 +65,11 @@ for tests first and a real file map. Its controls pass and entry fails genuinely
 its two move rules are in the inbox. The complete Kingpin card also needs
 active Tusk from Crew gear and Arsenal to free combat armor.
 
+Mother Mirage also has independent native tests first: six controls pass and
+five real admission checks fail. Its one split-trigger question is in the
+inbox. Source waits for the complete Drone's Arsenal hooks and Salt's real
+tyre-mark renderer; Core targeting needs no duplicate implementation.
+
 Salt's public entry has one new scope question in the inbox: the final direction
 names four modes while only two are built. Ambush's crew dependency and Dune's
 Salt-renderer wait form a cycle. Claude must settle the order before entry Source;

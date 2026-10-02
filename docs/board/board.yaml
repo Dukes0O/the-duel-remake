@@ -947,6 +947,8 @@ tasks:
     needs: [ARS-CORE]
     status: ready
     flag: arsenal
+    waiting_on: claude
+    note: "The separate audio session still owns the sound bank and catalog. Claude must release those hooks or settle the order before this card starts; no audio files were inspected or changed."
     acceptance:
       - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), (the sound bank is merged and live since AUD-14; corrected by Claude 1 October 2026). The arsenal cannot release before these exist. No paid credits."
   - id: ARS-02
@@ -3166,10 +3168,13 @@ tasks:
     flag: mother-mirage
     owns: [src/arena/moves/mirage.js, tools/test-warlord-mirage.mjs, docs/changes/WAR-02c.md]
     hooks: []
-    hook_requests: [src/warlords.js, src/combat-teams.js, src/arena/arena-event.js]
-    sequencing: "Tests first and the native file map may proceed. Source waits for Arsenal to free shared targeting, weapons and combat-scene hooks; no runtime hooks are granted yet. Mirage supplies the working early Decoy Drone for ARS-03 to reuse, with a new development switch."
+    hook_requests: [src/arsenal/decoy-drone.js, src/feature-flags.js, src/warlords.js, src/combat-teams.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/arena/arena-brains.js, src/combat-armor.js, src/vehicle-contact-modifiers.js, src/wasteland-tuning.js, src/weapon-upgrades.js, src/combat-weapons.js, src/combat-ai.js, src/combat.js, src/sim-rival.js, src/combat-projectiles.js, src/combat-pickups.js, src/arena/arena-pickups.js, src/arena/warlord-settlement.js, src/app.js, src/screen-territory.js, src/screen-yard-home.js, src/screen-router.js, src/screen-arena.js, src/arena/arena-tell-view.js, src/render3d.js, src/audio.js, src/sound-bank.js]
+    sequencing: "Independent native tests are committed; no runtime hooks are granted. The complete Drone waits for Arsenal weapon, armor and projectile hooks, and the real tyre-mark clue waits for Salt. Core targeting and scrap-burst rendering can stay read-only; ARS-03 will reuse the actual early Drone producer."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
-    note: "Claimed for independent tests first and a native file map. Shared runtime files remain with their current owners; no Source has started."
+    note: "Six native controls pass and five admission checks fail genuinely. Source waits for the split-trigger answer and shared file owners; the complete earned Drone is required. Downstream mechanics remain unrun."
+    waiting_on: claude
+    design_question: "Claude: what starts a split once its cooldown is ready, and is the first split ready immediately? The spacing orientation, shared tell, phase-two frequency and subsequent damage window need no new rule."
+    test_commit: be3081e3122afba8521c6a2eb2943c52316b79f4
     acceptance:
       - "Build exactly 'Settled for build: Mother Mirage' in docs/SCRAPDOME.md section 5, including the decoy cars as arena participants with a decoy flag (they never score, fire or settle). Only the real car fires and leaves tyre marks; a copy bursts on its first hit; the window and phase two as settled. Reward: Decoy Drone unlocked early (ARS-03 reuses the decoy cars)."
       - "Tests first: every split has its tell; copies never score or settle; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude before merge."
