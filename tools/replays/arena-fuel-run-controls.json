@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "capturedCommit": "664a20726e981aac09ccf809fc26d54a6aeb29f9",
-  "scope": "ARENA-03 current pre-Fuel integration engine controls at 664a207, including reviewed ARENA-STEER 723ad61. Historical capture 60c20f0 predates steering; only Last Car Rolling and Sal hashes migrated after independent native review. Fixed 120 Hz, ten seconds, unchanged literal scripted input. Fuel switch off and on must preserve these traces.",
+  "capturedCommit": "360192cb9225317a52dd92b28be63d783b6247e6",
+  "scope": "ARENA-03 current pre-Fuel integration engine controls at 664a207, including reviewed ARENA-STEER 723ad61. Historical capture 60c20f0 predates steering; only Last Car Rolling and Sal hashes migrated after independent native review. Fixed 120 Hz, ten seconds, unchanged literal scripted input. Fuel switch off and on must preserve these traces. ARENA-WRECK-RATE: only the Last Car Rolling pin changes after approved ordinary armor tuning from 0.5 to 1.2; paired old/current native runs preserve all road and Sal traces, Fuel off and on. Inputs, sample shape and assertions are unchanged.",
   "cases": [
     {
       "kind": "road",
@@ -27,7 +27,7 @@
     {
       "kind": "last-car-rolling",
       "seed": 1989,
-      "fingerprint": "db8e981b60eb98aa80ba74acccb76fb49be0dc391c472454f7c1ea5b07fbe526"
+      "fingerprint": "6584140072fa4ad9703e80236493093929644110632d91cd53e972024b44a767"
     },
     {
       "kind": "sal",

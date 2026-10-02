@@ -16,8 +16,9 @@ check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 ===
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
   && FEATURE_STATES['titan-climb'] === 'on' && FEATURE_STATES['muddy-hollow'] === 'on'
   && FEATURE_STATES.warlords === 'on' && FEATURE_STATES['fuel-run'] === 'dev'
-  && FEATURE_STATES.arsenal === 'dev' && Object.keys(FEATURE_STATES).length === 9,
-  'career backup and Fuel Run stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
+  && FEATURE_STATES.arsenal === 'dev' && FEATURE_STATES['salt-flats'] === 'dev'
+  && Object.keys(FEATURE_STATES).length === 10,
+  'career backup, Fuel Run and Salt Flats stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),

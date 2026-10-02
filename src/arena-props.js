@@ -40,12 +40,14 @@ export function addArenaCrushables(world,course){
     box(body,[1.52,.08,1.45],[0,.75,-.11],steel);
     for(const side of[-1,1])box(body,[.48,.24,.59],[side*.4,.85,-.20],rubber,[-.12,0,side*.10]);
     for(const [x,z,width]of[[-.55,1.4,.30],[.25,-1.4,.42],[.59,.7,.24]])box(body,[width,.007,.38],[x,.827,z],rust,[0,x*.6,0]);
-    mergeParts(body);mergeParts(cabin);root.add(body,cabin);group.add(root);shells.push({id:feature.id,root,body,cabin,wheels,progress:0});
+    mergeParts(body);mergeParts(cabin);root.add(body,cabin);group.add(root);shells.push({id:feature.id,feature,root,body,cabin,wheels,progress:0});
   }
   const crushed=new Set();
   group.userData.updateSimulation=(state,dt)=>{
     crushed.clear();for(const id of state.crushedProps||[])crushed.add(id);
     for(const car of shells){
+      car.root.position.set(car.feature.x,car.feature.y+.025,car.feature.z);
+      car.root.rotation.y=car.feature.heading;
       const target=crushed.has(car.id)?1:0;
       car.progress=dt>0?THREE.MathUtils.damp(car.progress,target,15,dt):target;
       const t=car.progress;

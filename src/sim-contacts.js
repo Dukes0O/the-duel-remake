@@ -19,6 +19,7 @@ import {CRASH_TUNING} from './vehicle-collision.js';
 import {upgradedCar} from './progression.js';
 import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
+import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 
 function roadsideTopSpeedMph(duel, actor) {
   if (actor === duel.state) return duel.car.topSpeed;
@@ -130,14 +131,11 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
       const armorRemoved = applyRamArmorDamage(duel, victim, impactMph,
         {spiked, owner: combatOwnerId(duel, attacker), contactFace: victimFace,
           damageMultiplier: modifiers.multiplier, ...(dvDamage ? {dvMph: dvOf(victim)} : {})});
-      const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.salSweep);
+      const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.warlordMove);
       // This existing bounded spark pool is already drawn by combat effects.
       // Ordinary contacts never add a burst or a new simulation field.
       if (sawHit) burst(duel.state.combat, hitPosition, 'spark');
-      if (armorRemoved > 0 && modifiers.salSweep) {
-        attacker.salSaw.hit = true;
-        duel._callout('SAW SWEEP!', 1.6);
-      }
+      if (armorRemoved > 0 && modifiers.warlordMove) modifiers.warlordFight.onMoveHit?.(duel, attacker);
       duel.emit({combatRamHit: true, attacker: attackerIndex < 0 ? 'player' : 'rival',
         victim: victimIndex < 0 ? 'player' : 'rival', attackerIndex, victimIndex,
         armorRemoved, closingKph, spiked, hitPosition, ...(sawHit ? {sideSaws: true} : {})});
@@ -153,6 +151,7 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
 }
 
 export function _vehicleSpec(actor) {
+  if (this.state.arena && actor.kind === 'junkCar') return arenaJunkSpec(actor);
   // Upgrades change handling and power, never the collision shell. Armor-kit
   // plating adds its weight to the mass (Mad Max only; CRASH-04).
   const car = CARS[actor === this.state ? this.state.car : actor.car || (actor === this.state.rival ? this.state.car : null)] || {};
@@ -421,6 +420,8 @@ function solidTraffic(duel, actor) {
 
 export function _vehicleContact(a, b, reason) {
   const ghost = actor => (actor.wrecked || actor.roadsideMotion) && !solidTraffic(this, actor);
+  // A warlord mid-leap (the Kingpin) touches nothing until its landing move.
+  if (a.contactExempt || b.contactExempt) return false;
   if (a.crushed || b.crushed || ghost(a) || ghost(b) ||
       (!this.state.arena && (a.combatWrecking || b.combatWrecking)) || a.tumble || b.tumble) return false;
   if (b === this.state && a !== this.state) return this._vehicleContact(b, a, reason);
@@ -680,9 +681,13 @@ export function _crushProps(actor) {
   const heading = end.heading + (actor.headingError || 0) + (actor.slipAngle || 0);
   const previousBottom = start.y + (actor.prevAirHeight ?? actor.airHeight ?? 0), bottom = end.y + (actor.airHeight || 0);
   for (const prop of this.course.features.crushables || []) {
+    const movable = !!state.arena && prop.kind === 'junkCar';
     if (state.crushedProps.includes(prop.id)) continue;
     const hit = sweepObstacle(start, end, prop, heading, spec);
-    if (!hit) continue;
+    if (!hit) {
+      if (movable) contactArenaJunk(this, actor, prop, null);
+      continue;
+    }
     const top = prop.y + prop.height;
     let contactTime = hit.t;
     if (previousBottom + (bottom - previousBottom) * contactTime > top) {
@@ -692,6 +697,10 @@ export function _crushProps(actor) {
       contactTime = (previousBottom - top) / (previousBottom - bottom);
       const landing = { x: start.x + (end.x - start.x) * contactTime, z: start.z + (end.z - start.z) * contactTime };
       if (!sweepObstacle(landing, landing, prop, heading, spec)) continue;
+    }
+    if (movable) {
+      contactArenaJunk(this, actor, prop, {...hit, t: contactTime}, start, end);
+      if (spec.mass < (prop.crushMass || 3500)) continue;
     }
     if (spec.mass < (prop.crushMass || 3500)) {
       const stop = { x: start.x + (end.x - start.x) * hit.t + hit.nx * (hit.penetration + .04),

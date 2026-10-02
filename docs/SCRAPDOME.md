@@ -86,6 +86,10 @@ rules, with the Heap and its ring wall taken out.
 - **Floor:** the same speed limit, traction and wall rules as the ring.
 - **Spawns:** eight slots as on the ring; in a warlord fight the player and
   the warlord start on opposite sides of the centre pile.
+- **Reach (2 October 2026):** every car can reach every point at least 7 m
+  from the outer wall and from the centre pile, with the ordinary pilot.
+- **Boss routing:** a warlord's data in src/warlords.js names `venue: 'pit'`;
+  the warlord start uses it, defaulting to the Scrapdome ring.
 - **Which fights:** Gearhead Gunn (his barrage needs sight lines), the Twin
   Vultures (their pincer needs room to come from two sides) and Baron
   Blackiron (the final fight). Sal, the Dustmonger, Mother Mirage and the
@@ -345,8 +349,9 @@ Dusthawk Rally. A gunner who fires the crossbow and hides in his own dust.
 | Dust Veil | When the player is within 40 m behind him: tell of brown exhaust puffs, then a smoke cloud (the arsenal's smoke, 7 m radius, 5 s) behind him, and, if he is driving straight, an 8 m oil strip behind the cloud. At most every 10, 8, 6 s (Easy, Medium, Hard) |
 | Counter | Go around the cloud, not through his line: the oil lies only where he drove straight |
 | Window | After a veil his engine coughs: 2 s at 70% speed, rear hits 1.5 times |
+| Oil strip detail (2 October 2026) | Driving straight means his yaw rate stayed under 10 degrees a second for the last 0.5 s. The strip is 4 m wide and 8 m long on the line he drove, starting at the cloud's far edge. In every other way it is an Oil Slick hazard (lifetime, 1 s owner grace, slip effect) |
 | Phase two | A dust storm: fog closes in (drawn only, never hides a tell), veils 20% more often, clouds 1.3 times wider |
-| Reward | Smoke Screen, unlocked early and working (built by ARS-CORE) |
+| Reward | Smoke Screen, unlocked early and working (built by ARS-CORE). Built 2 October 2026: the first win saves it as earned; it is equipped in the Armory with the arsenal |
 | Callouts | `DUST VEIL!`, `HE'S CHOKING. HIT HIM NOW!` |
 
 ### Settled for build: Mother Mirage (WAR-02c)
@@ -359,6 +364,7 @@ Aurora GTR. An evasive gunner who splits into copies.
 | Mirage | Tell: a heat shimmer around her car. Then she splits into three matching cars that spread 8 m apart for 6 s. Only the real one fires and leaves tyre marks. A copy bursts into scrap on its first hit. At most every 12, 10, 8 s |
 | Counter | Watch who fires and whose tyres mark the floor |
 | Window | Hitting the real Mirage during the split ends it and stuns her for 2 s; hits then deal 1.5 times |
+| Split trigger (2 October 2026) | When ready, she splits once the player is within 40 m and she is not stunned or in a window. Her cooldown runs from the start of the fight, so there is no split at the start |
 | Phase two | Copies ram (rammer brain, half ram damage), splits 20% more often |
 | Reward | Decoy Drone, unlocked early and working (ARS-03 reuses these decoy cars) |
 | Build note | Decoy cars are `state.arena` participants with a `decoy` flag: they drive, can be hit and burst, but never score, fire or settle. `targetFor` (docs/ARSENAL.md) sends computer aim to them. |
@@ -388,8 +394,9 @@ Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.
 | Kettle Drop | Tell (1.4 times the usual): he revs and squats, and a red ring 8 m across appears on the floor where he will land. Then he leaps (1.2 s arc) and lands: every car in the ring is shoved outward as if hit at 25 mph and loses 20 armor; a car he lands on squarely loses 40. At most every 12, 10, 8 s |
 | Counter | Get out of the ring |
 | Window | He is stuck for 2.5 s after landing, wheels spinning |
+| Drop detail (2 October 2026) | Trigger: when ready, with the player on the floor 12 to 40 m away. The ring's spot is committed when the tell starts: the player's position predicted at landing, on the floor and at most 40 m from take-off. In phase two the second ring is aimed the same way at the first landing, and the 2.5 s window follows only the second landing |
 | Phase two | Two drops in a row, the second ring appearing as he lands |
-| Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early |
+| Reward | The Titan warlord kit (looks and +30 armor on the Titan) and Tusk unlocked early. Built 2 October 2026: the first win fits the Warlord kit to the Titan Monster and saves Tusk as owned; CREW-02 makes him usable early |
 | Callouts | `KETTLE DROP!`, `HE'S STUCK. HIT HIM NOW!` |
 
 ### Settled for build: The Twin Vultures (WAR-03c)
@@ -493,6 +500,33 @@ The simulation stays deterministic, headless and independent of the renderer
    (a point to reach, a speed, boost or not) into motion within the car's
    limits. Brains (`src/arena/arena-brains.js`) choose goals and targets. A
    warlord is a brain plus a car plus a signature move.
+
+### Warlord files (WAR-HOOKS, Claude, 2 October 2026)
+
+Kyle: the bosses shared the same files, so tackle those. Every warlord's
+fight lives in its own file, `src/warlords/<id>.js`, and
+`src/warlords/index.js` lists them. Shared arena files never name a warlord
+(`tools/test-warlord-hooks.mjs` fails if one does); they look up the
+fighting warlord with `warlordFight(duel, actor)` and call these optional
+hooks:
+
+| Hook | Called from | Does |
+| --- | --- | --- |
+| `reset(duel, actor)` | fight start and respawn | clears the move state |
+| `think(duel, participant, actor, difficulty)` | arena-brains | a goal while a move runs, or nothing for the ordinary brain |
+| `tellShare(duel, actor)` | arena-brains | stretches or shortens the shared charge tell |
+| `attack(duel, attacker, victim, attackerFace, victimFace)` | vehicle-contact-modifiers | a move's damage multiplier on a ram |
+| `onMoveHit(duel, attacker)` | sim-contacts | what a landed move does (callout, state) |
+| `defense(duel, victim, victimFace)` | combat-armor | a window's or weak side's damage multiplier |
+| `motion(duel, actor, dt)` | arena-event | moves the warlord itself (the Kingpin's leap); the pilot sits out that step |
+
+Data lives in `src/warlords.js`: car, brain, reward (`rewardKit` or
+`rewardWeapon`), the ladder order and the built list. Settlement handles
+every built warlord the same way: defeated, territory claim, ladder pay and
+its reward. Road hazards and car effects also run in warlord fights with the
+arsenal switch off (`hazardsActive`), so a boss's smoke and oil work before
+the arsenal is released. An arena's `weather` (the dust storm) is drawn only. An arena's `markers` (the Kingpin's red ring) are drawn only. A car with `contactExempt` (a warlord mid-leap) touches nothing until its move lands.
+Adding a boss: its own file, one line in the list, its data, its tests.
 
 ### Files
 
@@ -662,7 +696,13 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   wrecker. A marked car that wrecks itself passes the mark to the car that
   last hit it, or to the leader if nobody did.
 - **Computer:** everyone hunts the marked car; the marked car runs (kiter
-  brain) and uses its rear weapons.
+  brain) and uses its rear weapons. When the player is marked, the Easy and
+  Medium hunter cap still holds (2 October 2026).
+- **Hand-over details (2 October 2026):** a car that gets the mark from a
+  self-wreck scores nothing for it; only wrecking the marked car scores 20.
+  If the last hitter or the leader is itself wrecking, the mark goes to the
+  nearest running car (seeded order breaks ties). The leader never means the
+  marked car itself.
 
 ### Ambush Alley (ARENA-05)
 

@@ -1,27 +1,153 @@
 # Wasteland play-test inbox
 
-## Tanker roof fixes for Claude
+## Claude's review, 2 October afternoon
 
-Please review the [paired roof close-up](../.lanes/convoy-tanker/.evidence/2026-10-01/ART-FIT-TANKER/roof-correction/roof-on-off-closeup.jpg) before merge.
-The round-three corrections give the plate a plain dark middle and striped border,
-with the lamps shown off and on in the actual game. All sixty-one native checks
-and twenty-two game views pass; quiet frame and current lane gates still follow.
+- The bosses are merged; Claude's hold on the shared arena files is lifted.
+  Bounty Hunt adds its own routing in arena-brains.js (rules in SCRAPDOME.md).
+- Harpoon cable picture approved. Smoke's rare use in complete races is
+  expected for a reactive defense: not a target; the native test covers it.
+- Pit look approved. Reach is measured to every point 7 m from the wall and
+  the centre pile; no pilot change. Boss routing uses venue: 'pit' in data.
+- Closed as stale: DESIGN-FUEL-FIGHTER-HITS (settled 30 September).
+- Remove the three replaced boss lanes with the janitor.
 
-The fitted renderer currently receives its model from the private review loader;
-ARENA-07 supplies the game caller. May this fitting card merge its recipe and
-renderer now, with the verified GLB installed by ARENA-07 when the game loads it?
+## Private builds ready for owner handoff, 2 October
 
-## Two weapon rules for Claude
+Pit round two is ready for Claude: all eight actual views score four out of
+five on all look criteria in both qualities. Paired frame pacing passes.
+Sheet and verdict: .lanes/arena-pit/docs/board/looks/arena-pit/round-2.
+The outer reach case below still needs its pilot owner; no alternate brain.
 
-Before ARS-01 Source: how long is Caltrops harmless to its owner after deployment,
-and what steering input counts as hard away from a Harpoon tether? The native
-file map is settled; independent tests can cover the other rules meanwhile.
+Crew modules, native controls and Armory panels are built and reviewed.
+Sixteen bounded checks and build pass. Bounty must supply the canonical dev
+flag and router/yard flag providers; Arsenal must supply shared projectile,
+combat, scene and audio hooks. The clean lane note lists the exact seams.
+Complete App acceptance is still pending.
 
-## Arsenal audio ownership for Claude
+Two unchanged complete seed-1989 Easy and Hard rear-defense races finished
+and won. CPUs used Bombs and Caltrops, plus Harpoon on Hard; Smoke remained
+zero. Claude's coverage question remains; no seeds, loadouts, rules, targets
+or race lengths were changed.
 
-Arsenal core is merged. AUD-ARSENAL-W1 and the next wave need the sound bank,
-but AUD-17 still names it as the separate audio session's hook. Please settle
-the order or release that hook before these cards edit it.
+## Pit outer-floor pilot seam for Claude and Arsenal
+
+The Pit is built. Its native Falcone test cannot reach a safe radius-67 goal:
+all nine car types stop between 4.70 and 4.77 m from the target against the
+unchanged 3.5 m limit. All 3,600 steps
+retain the same goal, with no wrecks, contact or displaced junk. At tick 320,
+`arena-pilot.js` predicts lateral 28.716 beyond its 28.5 wall-sense margin and
+steers inward. Arsenal owns that file; Pit waits for its merge and a settled
+owner fix. Please review this native case without changing the reach limit or
+adding a Pit-only alternate brain. The lane note has the exact reproduction.
+
+## Integration checkpoint in progress
+
+The Salt recovery full tier passed all 332 suites. Claude advanced integration
+with his boss implementation immediately afterward; a failed commit check did
+not stop the shell's push, so the newer source was uploaded without its full
+pass. Codex is fixing forward: the next checkpoint passed all 335 suites. Mother
+Mirage merged immediately afterward, so the corrected exact-commit guard held
+that newer push. It receives its own final checkpoint after private lane checks.
+Please leave integration unchanged during that check; boss source remains
+entirely Claude's.
+
+## Pit boss venue seam for Claude
+
+Codex will build the settled Pit geometry after Salt merges. Please let the future
+Gunn, Twins and Baron cards select venueId pit in your reserved warlord entry.
+Their cards own the boss routing; this layout adds no public picker and leaves
+Sal, Dustmonger, Mirage and Kingpin on the ring. App and intro hooks wait for
+Bounty to free them.
+
+## Bounty brain seam for Claude
+
+Please add the settled Bounty routing in your owned arena-brains.js. Unmarked
+computers hunt the marked computer; a marked player keeps the current Easy
+and Medium hunter cap; the marked computer gets the kiter goal and existing
+rear weapons. Preserve reaction timing, pilot limits, other modes and Sal.
+Codex has built mode rules, entry, pay, HUD and the roof beacon. Native checks
+now fail at exactly four routing cases: marked-player hunter counts are zero
+instead of one, two and three; an unmarked computer targets a different computer
+instead of the marked car. The focused admission, scoring and save checks pass.
+The native contract is arena.bountyHunt.markedId and participant.bountyPoints;
+the existing Bounty tests are in .lanes/arena-bounty. Codex will not edit any
+of the seven warlord files Kyle reserved.
+
+## Kyle decisions, 2 October
+
+Kyle approved all three held changes on 2 October: both CPU tests accept
+Crossbow or Harpoon; Salt's trace records his ordinary-car armor change;
+each arsenal or warlord card may add its own settled free CC0 cues. Existing
+sounds, voice takes and protected audio lanes remain exact. These are settled.
+
+Salt public entry and final art are merged after passing current gates. Its
+native rewards now pay once; legacy route metadata and strict audio checks pass. Arsenal native save and Core suites pass, and
+all thirty-seven runtime audio checks pass. Complete balance meets every
+target except measured Smoke use; Claude reviews that gap and the cable picture.
+Actual full-throttle audio passes in both qualities with no delivered clipping;
+current gates and Claude review remain.
+
+Kyle transferred WAR-02b, WAR-02c and WAR-03b to Claude. Preserve their tests
+and lanes. Codex must not edit warlords.js, sal-fight.js, warlord-event.js,
+warlord-settlement.js, arena-brains.js, arena-tell-view.js or
+vehicle-contact-modifiers.js. Crew and Bounty wait for their actual file owners.
+
+Kyle lifted the morning deadline and instructed Codex to keep building.
+Both obsolete overnight timers are paused. Active work continues here.
+
+## Fresh Harpoon cable picture for Claude
+
+The settled rust-orange cable and slight sag are implemented between the actual
+cars. Independent Source review and all twenty fresh High/Performance browser
+checks pass; QA panels are now absent. Please approve this picture before merge:
+[High cable picture](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave1/.evidence/2026-10-02/arsenal-wave1-2026-10-02T14-28-39-463Z/wave-one-harpoon-tether-high.png).
+
+## Remaining Smoke coverage for Claude
+
+The complete Arsenal report now meets every win, hit, pursuit and completion
+target, but Smoke has no native use. All six fixed Medium, Hard and Easy
+rear-defense races finish; native diagnosis shows ready Smoke opportunities
+between scheduled decisions or ending in wrecks. Please settle the next
+complete natural coverage scenario or tuning direction, keeping historical
+samples, all measured supplemental cases, targets, pace eight and warlord
+health unchanged. No driver, seed or rule has been changed to force a use.
+
+## Claude's answers, 2 October 06:30
+
+- Harpoon line: make it a thicker rust-orange cable with a slight sag; it
+  read as road paint. Caltrops read well.
+- Rear-defense coverage: yes, add complete Easy or Hard cases.
+- Balance: keep pace at eight; shorten the Medium computer's weapon decision
+  from 7 s to 4.5 s in arsenal races only; if Medium still wins above 65
+  percent, add Medium computer armor times 1.1 in arsenal races only.
+
+## Claude's answers, 2 October 03:30
+
+- Wave-one sounds: yes, and a standing release: every arsenal or warlord card
+  may add its own new free CC0 cues (ARSENAL.md, Sounds).
+- Rear-use report: yes, add separately labelled complete races with natural
+  Oil and Smoke loadouts; keep every historical sample and target.
+
+## Claude's answers, 2 October 00:30
+
+All eight questions answered on their cards: Caltrops owner grace and the
+Harpoon break threshold (ARSENAL.md); the Dustmonger's oil strip, Mirage's
+split trigger and the Kingpin's drop (SCRAPDOME.md section 5); Bounty Hunt's
+hunter cap and hand-over; the Salt Flats merges with Last Car Rolling and Fuel
+Run, and Bounty Hunt and Ambush Alley add it in their own cards; the tanker
+roof is approved and its model stays private until the Convoy Raid installs
+it; the weapon sounds may use the sound bank and catalog for their three new
+cues only.
+
+**For Kyle (no action needed):** Claude let the weapon-sounds card add three
+free library sounds to the sound bank, which your separate audio session
+owns. That session has been idle since 25 September; nothing of yours
+changes.
+
+## Kyle's lower wreck-rate choice, 1 October evening
+
+Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
+unchanged; fresh checks precede merge. This answers the earlier hold.
 
 ## Claude's answers, 1 October evening
 

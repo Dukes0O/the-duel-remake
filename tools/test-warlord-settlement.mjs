@@ -557,9 +557,9 @@ test('an actual saved Sal win advertises earned working saws only for the built 
     const unbuilt = territoryPanel(saved, {builtWarlordIds: []});
     ok(!/SIDE SAWS EARNED|data-warlord="sal"/.test(unbuilt), 'explicit unbuilt ids suppress earned claims and rematch');
     const future = {...saved, wasteland: {...saved.wasteland,
-      warlords: {...saved.wasteland.warlords, dustmonger: {defeated: true, wins: 1, losses: 0}},
-      territories: {...saved.wasteland.territories, dustmonger: {hold: 100, claimed: true}}}};
-    ok(!/SMOKE SCREEN EARNED|data-warlord="dustmonger"/.test(territoryPanel(future)),
+      warlords: {...saved.wasteland.warlords, gunn: {defeated: true, wins: 1, losses: 0}},
+      territories: {...saved.wasteland.territories, gunn: {hold: 100, claimed: true}}}};
+    ok(!/ROCKET PODS EARNED|data-warlord="gunn"/.test(territoryPanel(future)),
       'a saved future defeat cannot claim an unbuilt reward or advertise its rematch');
     const armory = enabled => createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
       getGarageMessage: () => '', kitsEnabled: () => true, warlordsEnabled: () => enabled,

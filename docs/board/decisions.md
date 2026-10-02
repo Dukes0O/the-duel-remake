@@ -1477,8 +1477,8 @@ public modes and the warlords whose moves use the Heap (SCRAPDOME.md section
 Kyle: the dome's parked cars do not budge at any speed. They are the junk
 cars, fixed by design; ARENA-SHOVE only covered participant cars. Junk cars
 become heavy hulks that slide (SCRAPDOME.md section 2; ARENA-JUNK-SHOVE).
-Kyle also said Gratian loves maxing the wreck count (best 16), so
-ARENA-WRECK-RATE waits for Kyle's call on whether to lower wrecks at all.
+Kyle then confirmed the wreck count should come down: ARENA-WRECK-RATE goes
+ahead to the 10 to 14 target.
 
 
 ## 2026-10-01: tested ordinary arena armor candidate, held for Kyle

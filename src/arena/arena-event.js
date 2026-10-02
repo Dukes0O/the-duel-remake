@@ -8,7 +8,7 @@ import {pilotStep} from './arena-pilot.js';
 import {stepKnock, stepWreckSlide} from '../vehicle-knock.js';
 import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
-import {resetSalFight} from './sal-fight.js';
+import {warlordFight} from '../warlords/index.js';
 import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
@@ -28,9 +28,8 @@ export const ARENA_FIELD = Object.freeze(['dusthawk_rally', 'aurora_gt', 'stuttg
 
 export const ARENA_RULES = Object.freeze({
   creditWindowSec: 5, protectedSec: 2, respawnSpeedMph: 12, spawnClearMetres: 12,
-  // Lighter than race armor: every wreck is a point and a car is back in
-  // four seconds, so wrecks should come every half a minute or so.
-  armorScale: .5,
+  // Ordinary cars need longer fights with the kept, stronger arena steering.
+  armorScale: 1.2,
 });
 
 export function createArenaEvent({mode, venueId, opponentBrains, course}) {
@@ -55,11 +54,13 @@ export function startingSlots(slotCount, carCount) {
   return Array.from({length: carCount}, (_, index) => Math.round(index * slotCount / carCount) % slotCount);
 }
 
-// Every car in an arena event carries the same share of its race armor.
+// Kyle kept the released warlord fights. Their base armor stays at half of
+// race armor, before the existing boss multiplier; ordinary modes are tuned.
 export function applyArenaArmor(duel) {
+  const scale = duel.state.arena?.mode === 'warlord' ? .5 : ARENA_RULES.armorScale;
   for (const actor of [duel.state, ...duel.state.opponents]) {
     if (!Number.isFinite(actor.maxArmor)) continue;
-    actor.maxArmor *= ARENA_RULES.armorScale;
+    actor.maxArmor *= scale;
     actor.armor = actor.maxArmor;
   }
 }
@@ -123,7 +124,7 @@ function respawn(duel, participant, actor) {
   participant.goal = null; participant.reactionSec = 0;
   participant.tellLeft = 0; participant.chargeReady = false; actor.arenaTellSec = 0;
   actor.arenaShimmerSec = ARENA_FEEL.shimmerSec;
-  resetSalFight(duel, actor);
+  warlordFight(duel, actor)?.reset?.(duel, actor);
   if (actor === duel.state) {
     duel.state.invulnerableSec = Math.max(duel.state.invulnerableSec, ARENA_RULES.protectedSec);
     duel.state.impactTimer = 0; duel.state.crashFlash = 0;
@@ -136,7 +137,7 @@ function creditWrecks(duel) {
   const state = duel.state, arena = state.arena;
   for (const participant of arena.participants) {
     const actor = arenaActor(duel, participant.id);
-    if (!actor?.combatWrecking || participant.wreckCounted) continue;
+    if (participant.decoy || !actor?.combatWrecking || participant.wreckCounted) continue;
     participant.wreckCounted = true;
     participant.wrecked++;
     const recent = participant.lastHitBy &&
@@ -153,10 +154,12 @@ function creditWrecks(duel) {
 }
 
 export function arenaRanking(arena) {
-  if (arena.mode === 'fuel-run') return [...arena.participants].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
+  // Decoy cars (a warlord's copies) never score or place.
+  const cars = arena.participants.filter(participant => !participant.decoy);
+  if (arena.mode === 'fuel-run') return [...cars].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
   const score = participant => arena.mode === 'warlord' ? participant.wrecks :
     participant.wrecks - participant.wrecked;
-  return arena.participants.map((participant, order) => ({participant, order})).sort((a, b) =>
+  return cars.map((participant, order) => ({participant, order})).sort((a, b) =>
     score(b.participant) - score(a.participant) ||
     b.participant.wrecks - a.participant.wrecks ||
     b.participant.damageDealt - a.participant.damageDealt || a.order - b.order).map(entry => entry.participant);
@@ -261,7 +264,9 @@ export function stepArenaEvent(duel, dt) {
     } else { state.prevS = state.s; state.prevLateral = state.lateral; }
     containInArena(duel, state, dt);
   }
-  for (const actor of state.opponents) {
+  // A warlord's think may add or burst decoy cars: step a snapshot and skip any that left.
+  for (const actor of [...state.opponents]) {
+    if (!state.opponents.includes(actor)) continue;
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
@@ -269,7 +274,12 @@ export function stepArenaEvent(duel, dt) {
       containInArena(duel, actor, dt);
       continue;
     }
-    pilotStep(duel, actor, thinkBrain(duel, participant, actor, dt), dt);
+    const goal = thinkBrain(duel, participant, actor, dt);
+    if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
+      containInArena(duel, actor, dt);
+      continue;
+    }
+    pilotStep(duel, actor, goal, dt);
     if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
     containInArena(duel, actor, dt);
   }
