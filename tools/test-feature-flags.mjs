@@ -16,7 +16,7 @@ check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 ===
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
   && FEATURE_STATES['titan-climb'] === 'on' && FEATURE_STATES['muddy-hollow'] === 'on'
   && FEATURE_STATES.warlords === 'on' && FEATURE_STATES['fuel-run'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 8,
+  && FEATURE_STATES.arsenal === 'dev' && Object.keys(FEATURE_STATES).length === 9,
   'career backup and Fuel Run stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
@@ -64,5 +64,17 @@ check(!blocked.experimental(), 'blocked storage defaults off');
 check(blocked.setExperimental(true).saved === false && blocked.enabled('crew'), 'blocked storage still allows a session preview');
 assert.throws(() => createFeatureFlags({ catalog: { 'bad name': 'beta' } }), /Invalid feature switch/); checks++;
 assert.throws(() => createFeatureFlags({ catalog: { future: 'released' } }), /Invalid feature switch/); checks++;
+
+// ARS-CORE uses the real imported catalog, explicit QA and memory-only storage.
+check(!createFeatureFlags({storage:null, qa:false, search:''}).enabled('arsenal'),
+  'production keeps Arsenal off by default');
+check(!createFeatureFlags({storage:null, qa:false, search:'?flags=arsenal'}).enabled('arsenal'),
+  'production URL flags cannot enable unfinished Arsenal');
+check(!createFeatureFlags({storage:null, qa:true, search:''}).enabled('arsenal'),
+  'unnamed QA keeps unfinished Arsenal off');
+check(!createFeatureFlags({storage:null, qa:true, search:'?flags=fuel-run'}).enabled('arsenal'),
+  'requesting Fuel Run does not implicitly enable Arsenal');
+check(createFeatureFlags({storage:null, qa:true, search:'?flags=arsenal'}).enabled('arsenal'),
+  'explicit private QA enables the actual registered Arsenal dev flag');
 
 console.log(`Feature switches: ${checks} state, QA, persistence and override checks passed.`);

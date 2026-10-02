@@ -1,3 +1,6 @@
+import {arsenalEnabled} from '../combat-weapons.js';
+import {carGrip} from '../arsenal/car-effects.js';
+import {oilThreat} from '../arsenal/oil.js';
 import {CARS, DRIVE, BOOST, steeringYawAuthority} from '../config.js';
 import {wrapHeading} from '../offroad-physics.js';
 import {upgradedCar} from '../progression.js';
@@ -67,6 +70,12 @@ export function pilotStep(duel, actor, goal, dt) {
     const reach = Math.max(minimum, metres * seconds);
     return course.nearest(pose.x + Math.sin(heading) * reach, pose.z + Math.cos(heading) * reach, actor.s);
   };
+  const oil=arsenalEnabled(duel) ? oilThreat(duel,actor,duel.state.cpuDifficulty) : null;
+  if(oil){
+    const dx=oil.x-pose.x,dz=oil.z-pose.z;
+    const side=dx*Math.cos(pose.heading)-dz*Math.sin(pose.heading);
+    desired=pose.heading-(side>=0 ? 1 : -1)*.45;
+  }
   let turn = wrapHeading(desired - pose.heading);
   // A U-turn is a commitment: pick the side with more room once, then keep
   // turning that way, braking near walls, until the car faces its goal.
@@ -141,7 +150,7 @@ export function pilotStep(duel, actor, goal, dt) {
   // A move may reduce steering, never raise the car's physical authority.
   const steeringScale = Number.isFinite(goal.steeringScale)
     ? Math.max(0, Math.min(1, goal.steeringScale)) : 1;
-  const authority = steeringYawAuthority(Math.abs(speed), spec.grip, 1, spec, course) * steeringScale;
+  const authority = steeringYawAuthority(Math.abs(speed), spec.grip * (arsenalEnabled(duel) ? carGrip(actor) : 1), 1, spec, course) * steeringScale;
   const targetYaw = -actor.steerVisual * authority * (speed < 0 ? -1 : 1);
   actor.yawVelocity = (actor.yawVelocity || 0) + (targetYaw - (actor.yawVelocity || 0)) * (1 - Math.exp(-DRIVE.yawResponse * dt));
 

@@ -1,4 +1,4 @@
-import {purchaseWeaponUpgrade,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
+import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
 import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit} from './armor-kits.js';
@@ -307,7 +307,8 @@ export class App {
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
     this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
-      weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile):undefined,
+      arsenalRank:this.profile.wasteland?.rank||1,
+      weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
@@ -424,11 +425,20 @@ export class App {
   }
   _saveProfile(){
     // Preserve other local players if another tab added or updated one.
-    const fresh=this.profileSaved===false?this.players:loadPlayers(),players=new Map(this.players.players.map(p=>[p.id,p]));
-    for(const p of fresh.players)players.set(p.id,p);
+    const retrying = this.profileSaved === false;
+    const durable = retrying ? readWarlordRegistry() : null;
+    const fresh = retrying
+      ? durable.status === 'ready' ? durable.registry : this.players
+      : loadPlayers();
+    const players = new Map(this.players.players.map(player => [player.id, player]));
+    for (const player of fresh.players) {
+      if (!retrying || player.id !== this.player.id) players.set(player.id, player);
+    }
     this.players=replacePlayerProfile({...this.players,players:[...players.values()]},this.player.id,this.profile);
     this.player=activePlayer(this.players);this.profile=this.player.profile;
-    this.profileSaved=savePlayers(this.players);
+    // Keep session-only edits local, but never overwrite unproved durable data.
+    this.profileSaved = retrying && durable.status === 'invalid'
+      ? false : savePlayers(this.players);
     if(this.profileSaved)this._rememberWarlordOwner();
     this._syncHiddenRoadDiscovery();return this.profileSaved;
   }
@@ -851,7 +861,8 @@ export class App {
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
       cpuDifficulty: this.cpuDifficulty, seed: (1989 + this._arenaSerial * 7919) >>> 0,
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
-      weaponLoadout: getCarLoadout(this.profile), combatArmorKit: this._combatArmorKit(car),
+      arsenalRank:this.profile.wasteland?.rank||1,
+      weaponLoadout: getCarLoadout(this.profile,this._arsenalOptions()), combatArmorKit: this._combatArmorKit(car),
       crewId: selectedCrewId(this.profile)};
     return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
@@ -947,18 +958,34 @@ export class App {
     this._syncHiddenRoadDiscovery();
     return false;
   }
+  _arsenalOptions(){
+    return {wastelandEnabled:this.wastelandUnlocked(),
+      arsenalEnabled:this._switches().enabled('arsenal')===true};
+  }
+  purchaseArsenalWeapon(id){
+    if(!this._wastelandShopAccess())return {ok:false,reason:'Return to the Armory to buy weapons.'};
+    this._refreshPlayer();
+    if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
+    const previous=this.profile,result=buyArsenalWeapon(this.profile,id,this._arsenalOptions());
+    if(result.ok&&result.changed){
+      this.profile=result.profile;
+      if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};
+      this.duel.emit({garage:true});
+    }
+    return result;
+  }
   purchaseWeapon(id){
     if(!this._wastelandShopAccess())return {ok:false,reason:'Return to the Armory to upgrade weapons.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
     const previous=this.profile,result=purchaseWeaponUpgrade(this.profile,id,
-      {wastelandEnabled:this.wastelandUnlocked()});
+      this._arsenalOptions());
     if(result.ok){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this purchase.'};this.duel.emit({garage:true});}return result;
   }
   equipCarWeapon(slot,id){
     if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Wasteland Armory to change weapons.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
-    const previous=this.profile,result=equipCarWeaponSlot(this.profile,slot,id);
+    const previous=this.profile,result=equipCarWeaponSlot(this.profile,slot,id,this._arsenalOptions());
     if(result.ok&&result.changed){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this loadout.'};this.duel.emit({garage:true,loadoutChanged:true});}
     return result;
   }
