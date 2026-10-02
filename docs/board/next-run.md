@@ -59,6 +59,11 @@ Source waits for shared tuning, audio and Salt's renderer.
 The exact evening integration checkpoint passed all 318 full suites and build,
 then pushed under D8; later commits need their own full check.
 
+Kyle's overnight schedule, 1 October evening: Claude reviews at 12:30, 3:30
+and 6:30 AM. Existing thread follow-ups are active just after those reviews.
+The handoff starts at 8:30 AM on 2 October and the run ends by 8:45; no
+half-hour clock polling.
+
 ### Tracks for this run (up to five lanes)
 
 | Track | Cards, in order | Notes |
