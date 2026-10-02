@@ -1,76 +1,85 @@
-# ARENA-04: Bounty Hunt acceptance tests
+---
+task: ARENA-04
+status: building
+kind: feature
+flag: bounty-hunt
+player_facing: yes
+---
+# Bounty Hunt: native wiring, awaiting brains and review
 
-## State and settled answers
+## What changed
 
-Independent tests preceded Source (f4afad3). The free mode module now exists
-(f12be4f), with pending recovery/overtime fixes at 7da183d. Shared admission,
-settlement and HUD hooks await Salt; the marked-car brain seam belongs to Claude.
-Only this test suite and note change here. All saves use a private memory Map.
+Bounty is registered behind its dev switch, with discovered rank-nine App and
+yard admission in both the Scrapdome and Salt Flats. Native fixed steps own
+points, five-second wreck credit, seeded mark handovers, recovery and overtime.
+Regulation ends at three minutes; tied points open next-wreck overtime for
+thirty seconds, followed by damage dealt if nobody earns a wreck.
 
-Claude's 2 October 00:30 answers are recorded in the current board and
-SCRAPDOME section 10: Easy/Medium keep one/two hunters on a marked player;
-Hard permits all three. A marked CPU is hunted by every other CPU. A self-wreck
-recipient earns no twenty-point bonus. A wrecking hitter or leader falls back
-to the nearest running car, with seeded distance ties; the marked car cannot
-be its own fallback leader. This card also enables Bounty on the Salt Flats.
+The existing atomic Fuel save path also banks Bounty scrap and hold. It keeps
+the durable owner checks, one-write receipt, failed-save retry and unknown
+progress. Salt's venue allowlist and existing pay remain unchanged.
+The scoreboard and results show points. An amber roof beacon follows the real
+rendered marked car; its owned geometry and materials are disposed. The HUD
+arrow uses existing projection and direction fallback. Presentation only reads
+event state. A genuine UI/contact/pay browser journey is authored but unrun.
 
-## Tests first: added native cases
+## Settled answers and ownership
 
-- A self-wreck gives its other score leader the mark without changing scores,
-  even when the marked victim has the highest score.
-- A genuine last hitter that is wrecking falls back to the nearest running car.
-- A wrecking score leader falls back to the nearest runner, not another leader.
-- Equal-distance running recipients use the event's seeded order repeatably.
-- A genuinely credited player mark respects Easy/Medium caps and all three on
-  Hard, through real fixed steps and participant targets.
-- Real Duel and discovered rank-nine App entry admit Salt Bounty, with actual
-  course/event identity and initialized mark; App's native finish pays once.
+Tests preceded Source at f4afad3; the free module began at f12be4f with pending
+recovery/overtime fixes at 7da183d and the reviewed native tie fixture at 0f80b31.
+Salt merged at 08c28c5. The exact Director hooks were granted at 8ace154 and
+merged normally into this lane before shared Source edits.
+Claude's 2 October handover answers are retained: self-wreck earns no bonus,
+the marked victim cannot be its own fallback leader, and a wrecking recipient
+falls back to nearest running car with seeded distance ties.
 
-These cases begin at real native/public entry. They never install fabricated
-Bounty state or invoke the free module to bypass missing admission. Existing
-module-only recovery tests remain explicitly labelled product regressions.
+Claude owns arena-brains.js and the other six reserved warlord/contact files.
+The integration inbox asks for the bountyHunt.markedId / bountyPoints seam:
+unmarked CPUs hunt the mark, marked CPU runs with kiter behavior, and a marked
+player retains one/two/three hunters on Easy/Medium/Hard. No alternate brain,
+mode override, warlord Source or audio/tuning file was edited here.
 
-## Existing coverage
+## Evidence: bounded checks only
 
-Clock, seeded starts, integer passive scoring, pause, credited/unmarked wrecks,
-last-hit credit, CPU hunt/escape/rear Oil, shared overtime, HUD pure reads,
-rank/dev/discovery gates, atomic scrap/hold, failed saves and actual App FPS
-repeatability remain. Reviewed roads, Last Car Rolling and Sal replay fixtures,
-samplers and literal pins stay exact for the Bounty switch off/on.
+- Admission-only: 12/12 native/public cases, 57 assertions pass, including
+  rank-nine Salt entry and actual once-only pay; Node duration 493.0964 ms.
+- Selected mechanical/save/HUD subset: 15/15 cases, 169 assertions pass,
+  including handover, exact distance tie, overtime and failed storage;
+  Node duration 766.4036 ms.
+- Passive scoring and regulation subset: 2/2 cases, 17 assertions pass,
+  including pause and whole seconds; Node duration 448.6595 ms.
+- Brain/rear-Oil subset: 1/5 cases, 40 assertions reached. Rear Oil deployment
+  passes. Four genuine REDs remain at Claude's native seam: player hunter
+  counts are 0 versus 1/2/3, and an unmarked CPU targets cpu-2 instead of the
+  actual marked cpu-3; Node duration 320.0535 ms.
+- Feature switch suite: 32 checks pass. Syntax checks for beacon, renderer and
+  browser scenario pass. git diff --check passes.
 
-## Verification
+No broad Bounty replay/FPS matrix, lane gate, build, browser, frame capture or
+audio capture was run during the Director's serialized integration full tier.
+No merge-ready, browser fidelity, frame cost, save review or audio verdict is
+claimed. Replay literal pins and existing acceptance assertions are unchanged.
 
-node --check tools/test-arena-bounty-hunt.mjs passed.
-node tools/test-arena-bounty-hunt.mjs --admission-only reached 38 assertions:
-32 passed, six failed; twelve cases, six pass and six RED (232.9759 ms reported
-by Node). Exact failure messages:
-- Bounty Hunt must have its own dev switch under SPEC 0.12.
-- startArenaEvent must accept Bounty rather than rejecting an unregistered mode.
-- native Salt Flats admission must accept the real Bounty mode.
-- rank-nine public App entry must admit Salt Flats Bounty.
-- rank nine unlocks actual Bounty App entry.
-- rank-nine yard must expose a real Bounty mode choice.
+## Behavior and test changes
 
-Nine native cases were added (seven mechanics and two Salt cases). The new named
-mechanics cases remain blocked at missing native entry. Settlement, FPS and
-replay matrix remain unrun here. No broad gate, build, browser, capture or frame
-verdict is claimed. Shared admission is missing at this lane's 7da183d base.
-The seeded tie fixture uses a positive minimal Duel step after actual scenery
-damage to retain exactly tied stationary slots; independent review still assesses
-that fixture. Ordinary hunting and handover tests use the 1/120 native step.
+The existing feature catalog assertion adds bounty-hunt: dev and increases the
+exact count from ten to eleven. All old state assertions remain. This additive
+consumer change is within the Director's grant. The static Preview flag list
+adds Bounty; no launcher execution or Preview interaction occurred.
+Native Bounty behavior is new. Ordinary race, Last Car Rolling and Sal replay
+fixtures stay exact and await their full matrix run in the assigned gate slot.
 
-## Presentation and sound boundaries
+## Sound and remaining work
 
-Beacon, projected arrow, High/Performance browser views and frame measurements
-remain unrun. Existing markup checks cover names, points and pure reads only.
-Rear Oil tests cover weapon deployment, not audible mix. New Bounty cue names
-and audio review remain pending; protected audio and warlord files are untouched.
-
-Independent review repaired the tie fixture: seed 1990 distinguishes seeded order from
-participant order, and clear lateral slots remain exactly tied through native credit.
-No expected product outcome or original assertion changed.
+New handover event bountyMark reserves cue bounty-mark; initial mark uses
+arenaLoaded. Existing arenaWreck/arenaPhase/result cues remain in place.
+The audio owner must connect/review bounty-mark; it remains unsounded here.
+Brain Source from Claude, independent source/save review, full Bounty matrix,
+lane/build gates, actual High/Performance browser views, gameplay/frame checks
+and sound verdict remain before this card can be complete or merged.
 
 ## Removed
 
-Removed stale claims that Source had not started and that rules were unresolved.
-No existing assertion or replay pin is changed, and no Source file is edited.
+Removed the superseded tests-only note after keeping its useful rule and test
+facts here. No old asset or runtime path is replaced; no assertion or replay pin
+was weakened. The dev switch remains until its later approved release cleanup.

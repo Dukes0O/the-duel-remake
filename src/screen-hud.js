@@ -256,7 +256,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('lap-time',arena.scoreText);
       text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
       text('stage-objective',s.arena.mode === 'warlord' ?
-        'FIRST TO THREE WRECKS' : arena.fuel ? 'BRING FUEL TO YOUR BLUE DEPOT' : 'WRECK THEM MORE THAN THEY WRECK YOU');
+        'FIRST TO THREE WRECKS' : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
+          arena.fuel ? 'BRING FUEL TO YOUR BLUE DEPOT' : 'WRECK THEM MORE THAN THEY WRECK YOU');
       text('route-percent','');
       text('route-remaining',arena.scoreText);
       text('route-lap','ARENA');
@@ -278,7 +279,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
         text('callout-text','WRECKED');
         text('callout-kicker',`BACK IN THE FIGHT IN ${arena.respawnSec}`);
       }
-      if(s.status==='countdown')text('countdown-word',s.countdown>1?'SCRAPDOME':arena.fuel?'BRING IT HOME':'WRECK THEM');
+      if(s.status==='countdown')text('countdown-word',s.countdown>1?'SCRAPDOME':arena.bounty?'HUNT THE BEACON':arena.fuel?'BRING IT HOME':'WRECK THEM');
     }
   }
   return updateHud;

@@ -1,4 +1,6 @@
 import {FUEL_RULES, stepFuelRun} from './modes/fuel-run.js';
+import {BOUNTY_RULES, stepBountyHunt, noteBountyWreck, bountyRanking,
+  bountyTopTied, bountyDamageWinner} from './modes/bounty-hunt.js';
 import {stepFootTransition} from '../onfoot-transition.js';
 import {strikeFighterFromVehicles} from '../onfoot-race.js';
 import {stepCombat} from '../combat.js';
@@ -15,6 +17,8 @@ import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock} from './warlord-event
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
 
 export const ARENA_MODES = Object.freeze({
+  'bounty-hunt': Object.freeze({timeLimitSec: BOUNTY_RULES.timeLimitSec,
+    suddenDeathSec: BOUNTY_RULES.suddenDeathSec, maxOpponents: 3}),
   'fuel-run': Object.freeze({timeLimitSec: FUEL_RULES.timeLimitSec, suddenDeathSec: Infinity, maxOpponents: 3}),
   warlord: Object.freeze({timeLimitSec: WARLORD_RULES.timeLimitSec,
     suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 1}),
@@ -144,16 +148,18 @@ function creditWrecks(duel) {
       state.stageTimeSec - participant.lastHitAt <= ARENA_RULES.creditWindowSec;
     const credited = recent ? arena.participants.find(p => p.id === participant.lastHitBy) : null;
     if (credited) credited.wrecks++;
+    const bountyDecision = noteBountyWreck(duel, participant, credited);
     participant.lastHitBy = null; participant.lastHitAt = -Infinity;
     duel.emit({arenaWreck: {victimId: participant.id, creditedId: credited?.id || null}});
     if (credited?.id === 'player') duel._callout(`YOU WRECKED ${participant.name}`, 2);
     else if (participant.id === 'player' && credited) duel._callout(`WRECKED BY ${credited.name}`, 2);
-    const decision = noteWarlordWreck(duel, participant, credited);
+    const decision = bountyDecision || noteWarlordWreck(duel, participant, credited);
     if (decision) { finish(duel, decision.reason, decision.winnerId); return; }
   }
 }
 
 export function arenaRanking(arena) {
+  if (arena.mode === 'bounty-hunt') return bountyRanking(arena);
   if (arena.mode === 'fuel-run') return [...arena.participants].sort((a, b) => b.fuelDelivered - a.fuelDelivered);
   const score = participant => arena.mode === 'warlord' ? participant.wrecks :
     participant.wrecks - participant.wrecked;
@@ -164,6 +170,7 @@ export function arenaRanking(arena) {
 }
 
 function topTied(arena) {
+  if (arena.mode === 'bounty-hunt') return bountyTopTied(arena);
   const [first, second] = arenaRanking(arena);
   if (arena.mode === 'fuel-run') return !!second && first.fuelDelivered === second.fuelDelivered;
   return !!second && first.wrecks - first.wrecked === second.wrecks - second.wrecked &&
@@ -181,7 +188,8 @@ function finish(duel, reason, winnerId = null) {
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
   duel._callout(winner.id === 'player' ?
-    arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
+    arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
+      arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
     `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
@@ -209,8 +217,9 @@ function stepClock(duel, dt) {
   if (arena.phase === 'sudden-death') {
     if (arena.mode === 'fuel-run') { arena.suddenDeathSec += dt; return; }
     arena.suddenDeathSec = Math.min(arena.suddenDeathLimitSec, arena.suddenDeathSec + dt);
-    if (!topTied(arena)) return finish(duel, 'sudden-death');
-    if (arena.suddenDeathSec >= arena.suddenDeathLimitSec) finish(duel, 'damage');
+    if (arena.mode !== 'bounty-hunt' && !topTied(arena)) return finish(duel, 'sudden-death');
+    if (arena.suddenDeathSec >= arena.suddenDeathLimitSec)
+      finish(duel, 'damage', arena.mode === 'bounty-hunt' ? bountyDamageWinner(arena) : null);
   }
 }
 
@@ -289,6 +298,7 @@ export function stepArenaEvent(duel, dt) {
   const fuelDecision = arena.mode === 'fuel-run' ? stepFuelRun(duel, dt) : null;
   creditWrecks(duel);
   if (arena.result) return;
+  if (arena.mode === 'bounty-hunt') stepBountyHunt(duel, dt);
   if (fuelDecision) { finish(duel, fuelDecision.reason, fuelDecision.winnerId); return; }
   for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
   stepClock(duel, dt);

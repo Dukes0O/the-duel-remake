@@ -37,6 +37,7 @@ import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
+import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
 import {ARENA_VENUES} from './arena/venues.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
@@ -317,7 +318,8 @@ export class Duel {
     if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') ||
         (venueId === 'salt-flats' && !this.featureFlags.enabled('salt-flats')) ||
         (mode === 'warlord' && !this.featureFlags.enabled('warlords')) ||
-        (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) || !venue || !rules ||
+        (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) ||
+        (mode === 'bounty-hunt' && !this.featureFlags.enabled('bounty-hunt')) || !venue || !rules ||
         !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     const s = this.state;
@@ -386,6 +388,7 @@ export class Duel {
     });
     initializeArenaJunk(this);
     initializeFuelRun(this);
+    initializeBountyHunt(this);
     s.combat = createCombat(s.weaponLevels);
     initializeArsenalCombat(this);
     initializeCombatArmor(this);

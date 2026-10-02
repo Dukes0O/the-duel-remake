@@ -34,6 +34,7 @@ import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
 import {createFuelRunView} from './arena/modes/fuel-run-view.js';
+import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
 import { updateArenaTells } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 
@@ -171,6 +172,8 @@ export function attachRenderer(host, app) {
   const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
   const fuelView=createFuelRunView(app.duel);scene.add(fuelView.group);
   const fuelEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
+  const bountyView=createBountyHuntView();scene.add(bountyView.group);
+  const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
   const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
@@ -528,6 +531,16 @@ export function attachRenderer(host, app) {
       }
       fuelView.update(st,course,fuelEntries);
     }else fuelView.group.visible=false;
+    // Read-only Bounty beacon hook: use the exact rendered vehicle transforms.
+    if(st.arena?.mode==='bounty-hunt'){
+      bountyEntries[0].id='player';bountyEntries[0].mesh=player;bountyEntries[0].actor=st;
+      for(let index=1;index<bountyEntries.length;index++){
+        const entry=bountyEntries[index],actor=opponents[index-1];
+        entry.id=actor?.arenaId;entry.actor=actor;
+        entry.mesh=index===1?rival:extraOpponents[index-2]?.mesh;
+      }
+      bountyView.update(st,bountyEntries);
+    }else bountyView.group.visible=false;
     firstPersonEntry.fighter=st.fighter;
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
@@ -639,7 +652,7 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{fuelView.dispose();rearView.dispose();firstPersonGear.dispose();combatScene.dispose();combatEffects?.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release=()=>{bountyView.dispose();fuelView.dispose();rearView.dispose();firstPersonGear.dispose();combatScene.dispose();combatEffects?.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
     if(warmup)warmup.dispose(release);else release();
   } };
 }

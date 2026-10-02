@@ -12,6 +12,8 @@
 .arena-board-row strong,.arena-board-row i{text-align:right;font-size:14px;font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
 .arena-board-row i{color:#9fa89b;font-size:12px}
 .arena-board-row.is-you span,.arena-board-row.is-you strong{color:#ffd29a}
+.arena-board-row.is-marked{color:#ffd773;background:#9f690e26}
+.arena-board-row.is-marked i{color:#ffd773}
 .combat-opponent-marker.is-hunting{border-color:#ff6a4d;box-shadow:0 0 0 1px #ff6a4d}
 .combat-opponent-marker.is-hunting .combat-marker-heading{color:#ff8a6e}
 .combat-opponent-marker.is-protected{opacity:.6}
