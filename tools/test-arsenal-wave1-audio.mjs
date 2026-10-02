@@ -303,6 +303,61 @@ check('live Harpoon flight follows motion without duplicate playback and retires
   rig.renderer.update(run.duel.state, environment(run));
   assert.ok(Number.isFinite(source.stopAt), 'retired projectile stops its recorded flight');
 });
+// Synthetic recordings exercise native short-cue analysis without library files.
+import {ffmpeg} from './audio/codec.mjs';
+import {measureLoudness} from './audio/measurements.mjs';
+import * as waveOneBuilder from './build-arsenal-wave1-audio.mjs';
+function encodedMeasurementTone(seconds) {
+  const rate = 48000, pcm = Buffer.alloc(Math.round(seconds * rate) * 4);
+  for (let i = 0; i < pcm.length / 4; i++) {
+    const fade = Math.min(1, i / (rate * .003), (pcm.length / 4 - 1 - i) / (rate * .003));
+    pcm.writeFloatLE(.65 * Math.sin(i * 2 * Math.PI * 2100 / rate) * fade, i * 4);
+  }
+  return ffmpeg(['-f', 'f32le', '-ar', String(rate), '-ac', '1', '-i', 'pipe:0',
+    '-c:a', 'libvorbis', '-q:a', '5', '-f', 'ogg', 'pipe:1'], {input: pcm});
+}
+function decodedMeasurementPcm(bytes) {
+  return ffmpeg(['-i', 'pipe:0', '-ac', '1', '-ar', '48000', '-f', 'f32le', 'pipe:1'], {input: bytes});
+}
+check('short native Arsenal cue measurement pads analysis only and keeps real codec peak', () => {
+  for (const seconds of [.36, .16, .38]) {
+    const bytes = encodedMeasurementTone(seconds), before = Buffer.from(bytes);
+    const decoded = decodedMeasurementPcm(bytes);
+    assert.ok(decoded.some(value => value !== 0), 'synthetic short recording contains real decoded signal');
+    const duration = decoded.length / 4 / 48000;
+    assert.ok(duration < .4 && Math.abs(duration - seconds) < .02, 'encoded cue retains its short playback duration');
+    const referenceWave = ffmpeg(['-i', 'pipe:0', '-ac', '1', '-ar', '48000',
+      '-af', 'apad=whole_dur=1', '-c:a', 'pcm_f32le', '-f', 'wav', 'pipe:1'], {input: bytes});
+    const reference = measureLoudness(referenceWave);
+    assert.equal(reference.available, true, 'independently decoded, silence-padded native reference is measurable');
+    // Until Source exports the helper, this is the exact native path the builder uses now.
+    const measured = (waveOneBuilder.measureArsenalWaveOneCue ?? measureLoudness)(bytes);
+    assert.equal(measured.available, true, seconds + ' s non-silent encoded cue must be measurable');
+    assert.ok(Number.isFinite(measured.truePeakDbtp) && Math.abs(measured.truePeakDbtp - reference.truePeakDbtp) <= .12,
+      'analysis padding preserves actual decoded true peak: ' + measured.truePeakDbtp + ' versus ' + reference.truePeakDbtp);
+    assert.ok(measured.truePeakDbtp < -1.5 && measured.truePeakDbtp > -8,
+      'available peak retains the real synthetic signal headroom');
+    assert.ok(measured.analysisPaddingSec > 0 && measured.analysisDurationSec >= 1,
+      'measurement report clearly labels its analysis-only silence padding');
+    assert.ok(Math.abs(measured.analysisDurationSec - measured.analysisPaddingSec - duration) < .001,
+      'reported analysis duration excludes padding from the actual cue duration');
+    assert.deepEqual(bytes, before, 'measurement leaves every encoded runtime byte unchanged');
+    assert.deepEqual(decodedMeasurementPcm(bytes), decoded, 'measurement never lengthens or changes decoded playback');
+  }
+});
+check('ordinary longer native Arsenal cue retains direct measurement and encoded playback', () => {
+  const bytes = encodedMeasurementTone(1.2), before = Buffer.from(bytes), decoded = decodedMeasurementPcm(bytes);
+  const reference = measureLoudness(bytes);
+  assert.equal(reference.available, true, 'ordinary longer encoded control is measurable without padding');
+  const measured = (waveOneBuilder.measureArsenalWaveOneCue ?? measureLoudness)(bytes);
+  assert.equal(measured.available, true, 'long-cue control keeps its available native measurement');
+  assert.ok(Math.abs(measured.truePeakDbtp - reference.truePeakDbtp) <= .12,
+    'long-cue control keeps actual codec true peak');
+  assert.ok(Math.abs(measured.integratedLufs - reference.integratedLufs) <= .12,
+    'long-cue control keeps direct loudness without analysis padding');
+  assert.deepEqual(bytes, before, 'long-cue analysis leaves encoded bytes unchanged');
+  assert.deepEqual(decodedMeasurementPcm(bytes), decoded, 'long-cue analysis leaves playback unchanged');
+});
 console.log('Arsenal wave-one audio: ' + checks + ' checks, ' + failures.length + ' failures.');
 for (const failure of failures) console.error(failure);
 if (failures.length) process.exitCode = 1;
