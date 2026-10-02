@@ -1,67 +1,5 @@
 # Wasteland run log
 
-## Morning handoff — 25 September 2026
-
-Stopped after finishing the last active card and the final gates. BETA-01 is
-prepared on integration, with Kyle's explicit current-art exception. It is
-**not released**. Wasteland and Hidden Road are opt-in beta; Career Backup
-stays dev. The compact-menu Experimental control is fixed. Read the candidate
-What to try in docs/playtest-inbox.md.
-
-- Exact tested commit: 74646e8. Full 270/270, build, complete combat off/on,
-  private smoke, beta journey and save checks passed. The following commits
-  record verdicts/status/handoff only; a release still needs its own exact
-  final-commit gate and Kyle's written go-ahead.
-- Final reviewed validation logs and four smoke captures (6023313 bytes) were
-  consumed after the verdict commit; the disposable integration QA bundle was
-  removed too. Current integration build is 239924200 bytes, under250MB.
-  Public/runtime models are unchanged. End-run sweep complete, no owned lanes
-  left. Full and sweep counters zero; next full after five merges,16:48UTC,
-  or next session end.
-- Next phase-3 work: ARENA-01/02 in next-run order. First-three-warlord reward
-  mechanics remain the unanswered question in parked.md. Do not invent usable
-  rewards for unimplemented equipment.
-- Art remains unfinished. Rook body and hands are research closures at
-  likeness three; current runtime assets remain selected. GFX-01-P3 and
-  GFX-02-P3 carry changed construction and acceptance. Hand contact remains
-  unsupported; its idle frame pass is not active-action/GPU evidence.
-- Kyle's audio-direction and aud-12 branches are kept. Integrated audio
-  foundation/combat/gatekeeper work stays; all credit use remains external.
-  The external worktree is now registered on lane/audio/aud-17-picks at31ef0ba,
-  unmerged and uninspected by the final sweep. Coordinate through its session;
-  never enter that folder. Skip its current branch plus aud-10/aud-12 in status
-  and audit. JANITOR-LANE-PATH records the branch-change exclusion gap;
-  JANITOR-DIAGNOSTIC-NOTES records remaining uncertain old notes.
-- D8 ordinary integration push follows this handoff. No live-folder edit,
-  port5174 use, real-save work, history rewrite or release is part of closure.
-
-
-## Morning handoff — 26 September 2026
-
-Stopped at the morning budget after finishing CRASH-02's visual slice and the
-end-of-run gates. This run merged CRASH-01, TITAN-01, all six Muddy Hollow
-phases, ARENA-02-PAY, and CRASH-02 visuals. CRASH-02 remains active because its
-separate audio slice is not merged. No release was made.
-
-- Exact integration commit 3815ada4a8b66cadfc8cd5a5050ae228d6dfc8be
-  passed 283/283 full suites in 437.26 seconds with clean start and end. The
-  production build transformed 236 modules in 441 ms. The following ledger,
-  status and handoff commit records evidence only and does not inherit that
-  exact-commit result.
-- Janitor: the merged CRASH-02 lane was archived, its branch was deleted, and
-  empty ignored evidence directories were removed. The sweep found 1,018
-  tracked files at 242.9 MiB, no unused module or removed-test candidates, and
-  no deletion proved safe among the literal-reference asset, export or document
-  suggestions. Build size is 240,003,525 bytes; public remains 235,822,734 and
-  Wasteland models remain 78,930,708. Existing asset-size reasons still apply;
-  no target change is proposed. Full and sweep counters reset to zero.
-- Leave lane/audio/aud-17-picks and Kyle's aud-10/aud-12 branches in place.
-  They were excluded from inspection. Next work is the pending CRASH-02 audio
-  slice and ARENA-FEEL; do UX-ENTRY-HINTS early as next-run.md directs.
-- D8 push follows this handoff. The live folder, port 5174, real saves and
-  history were not touched.
-
-
 ## Claude session, 26 September 2026 (afternoon)
 
 Kyle reviewed the overnight build and asked Claude to fix what the review found.
@@ -104,36 +42,6 @@ rollback, assets copied, then index.html and build-version.json last. Live
 localhost:5174 serves build e61891 (26.09.27 01:50 UTC). master pushed to
 GitHub. All other features merged since the last release stay behind switches
 that are off in the live game.
-
-## Codex autonomous run handoff — 26 September 2026
-
-Completed INT-0926-MERGE, COMBAT-AUDIO-SCENARIO, PREVIEW-LAUNCHER and WAR-01.
-The three post-full feature merges each passed their exact lane tier and build;
-their worktrees, branches and disposable evidence were removed after merge.
-The Preview desktop shortcut now points at this integration worktree, uses a
-private port and memory-only saves, and stays `waiting_on: kyle` until Kyle
-opens it once.
-
-WAR-SAL-ART remains unmerged at `782558a` in
-`lane/art/war-sal-art`. Its third and final visual round passed independent
-review, its 1.200-second saw cue passed audio QA, and the exact lane handoff
-passed 293/293 suites plus the production build. The board now records
-`waiting_on: claude`; keep the lane and worktree until Claude gives the final
-look verdict. Do not start WAR-02a-FORMAT from this handoff: it was not in the
-run's original start set.
-
-Janitor sweep: removed the three merged lane worktrees, branches and consumed
-evidence; retained the unmerged Sal lane and Kyle's audio lanes; flagged 48
-literal-reference asset candidates, 27 export candidates and 111 unindexed
-docs for future proof, with no deletion proven safe. Tracked size changed from
-1,018 files / 242.9 MiB to 1,060 files / 244.0 MiB; public changed from
-235,822,734 to 236,164,408 bytes; Wasteland models stayed 78,930,708 bytes.
-The growth is the merged arena/audio, launcher and territory work. Current
-targets remain unchanged. Exact integration commit `8c5ff37` passed the final
-full tier, 292/292 suites in 460.27 seconds, with a clean start and end. Its
-production build transformed 239 modules in 479 ms. The following ledger,
-status and handoff commit records evidence only. D8 push follows; do not
-release.
 
 ## Claude review of the Codex run, 27 September 2026
 
@@ -384,7 +292,7 @@ No fabrication, adaptation, runtime edits or catalog ownership is granted;
 Hands retains catalog. Stop with explicit gaps/waitingKyle if tools/free
 sources cannot meet acceptance.
 
-## 30 September 2026, Director: end sweep and handoff
+## 30 September 2026, Director: end sweep
 
 Hands stops after two rounds without resemblance gain. Independent scores
 remain 1/5 for resemblance and grip for every crew, despite 70/70 mechanical
@@ -410,7 +318,7 @@ are unchanged. Existing Titan 14,295,108-byte and ordinary 2,288,190-byte
 files remain above advisory targets. Retained private recipes explain real
 growth; no new runtime asset is installed.
 
-Handoff: wait for Claude's design merge from protected 7e3bd200 before Fuel
+Earlier checkpoint: wait for Claude's design merge from protected 7e3bd200 before Fuel
 contact code. Fuel 96aaa2a/source 53e6796 has narrow launch/cache/save
 clearance only. Steering ae4c168/source 1c06417 keeps all crate assertions;
 retest them after the ceiling design lands. Its App hook waits Fuel. Crew
@@ -430,7 +338,7 @@ images decode; source remains clean apart from the full ledger. Feature
 merges stop. HK-RUSTWALL-ATLAS-ISOLATION is claimed tests first, with one
 active fix lane; the five prior checkouts remain held pending decisions.
 
-## 30 September 2026, Director: repair and final handoff
+## 30 September 2026, Director: repair verdict
 
 HK-RUSTWALL-ATLAS-ISOLATION merged cc6a7f9 from reviewed clean df3706c.
 Independent native red: 95 checks, 19 passed/76 failed. The fix passes
@@ -446,7 +354,7 @@ the earlier 1,550 files/1,450,065,875 bytes sweep. Current assets and original
 licensed sources stay. Five held lanes and Claude/Kyle/protected audio refs
 remain. Uncertain asset removals stay with DISC; no runtime growth.
 
-Handoff: the final full/build now runs on the clean final integration commit.
+That checkpoint ran full/build on its clean integration commit.
 Read the exact outcome in checks/full-tier.json; older passes never apply.
 Fuel/steering wait Claude's handed-off design merge; crew/hands/tanker wait
 Kyle's recorded choices. Current hands remain; Tanker A fitting still has
@@ -676,3 +584,116 @@ Source and the two held assertion/trace updates still await Kyle's explicit
 permissions; other Source waits for its named file owners.
 
 Janitor: deleted 24654799 bytes of consumed Arsenal captures and folded duplicate handoffs. Seven clean unmerged lanes and all current/licensed assets stay; three protected audio refs were skipped. The same forty-eight asset and twenty-three export candidates remain uncertain. Tracked bytes grew from 262499227 to 262500402 for current review questions and verdicts; runtime stays 236343712 bytes.
+
+## Director, 2 October: continuation after the 6:30 review
+
+Claude's scoped decision lever reaches nineteen Medium wins in thirty with
+pace eight, all armor and released rules unchanged. Every complete report race
+finishes: Arsenal meets every other target, but Smoke still has no measured
+use. The released control passes. Claude receives the next coverage question
+and one fresh rust-orange cable picture; all twenty browser checks pass in
+both qualities with QA panels removed. All seventy-seven native weapon cases
+and independent Source reviews pass.
+
+The private sound recipe now rebuilds eighteen free CC0 variants after a
+new regression proved its short-cue measurement failure. Analysis-only padding
+leaves the encoded sounds unchanged and labels its scope. Runtime bank,
+catalog, renderer and both Crossbow-only CPU predicates remain untouched for
+Kyle. Native Core's old unimplemented-Harpoon fixture moved to eligible
+rank-seven Rocket Pods after independent review; all refusal assertions stay.
+Native Core now passes 208 cases, with its sole CPU predicate still held.
+The earlier lane gate failed and build passed; no unmerged card is called done.
+
+Janitor: deleted 47762168 bytes of superseded Arsenal pictures after their
+verdicts were committed. The fresh Claude pictures, private listening candidates,
+seven clean unfinished lanes, licensed sources and current assets stay. Three
+protected audio references are excluded. Consumed September handoffs were folded into the current board, plan and
+spec; their obsolete next steps were removed. The same forty-eight asset,
+twenty-three export and one needed private-presenter candidates remain uncertain; no removed
+feature test exists. Runtime stays 236343712 bytes; model and build targets
+are unchanged. Source grows only for current review facts and recipes.
+
+Kyle has lifted the morning deadline; both obsolete timers are paused.
+Builds continue. Claude owns the three boss builds and their tests are kept.
+
+Kyle approved the two CPU corrections, Salt trace migration and standing CC0
+sound hooks. Both CPU suites and thirty-seven audio checks now pass. Old
+permission holds in this log are superseded. The reviewer clears the narrow
+audio filter scope; Salt shortcut metadata is being repaired with saved routes
+unchanged. No warlord files are edited by Codex.
+
+Actual Arsenal audio capture passes in both qualities with six native cues,
+moving flight and pause cleanup; delivered output does not clip. The Bounty
+mode module is now building in its free owned file. Its shared entry hooks
+wait for Salt and its brain seam is assigned to Claude in writing.
+
+## Restart resumed, 2 October 2026
+
+Salt is merged with the approved final venue, public Last Car Rolling and Fuel
+Run entry, and native once-only rewards. Lane: 332 passed, none failed or unrun;
+build passed. Two native payment tests exposed zero awards and pass after the
+pure venue validator fix; original settlement and Save Guardian checks pass.
+The strict audio timing assertion passes after its capture runs alone in the
+existing concurrent runner. Independent tests and reviews clear both fixes.
+
+Salt's clean lane and merged branch were removed with plain worktree removal,
+after its integration-only dependency junction was safely detached. Current
+assets and licensed records stay. Bounty receives free entry/pay/HUD/beacon
+hooks; Pit is claimed for disjoint tests-first geometry. Boss files stay with
+Claude, and Arsenal audio/tuning ownership remains. Full checkpoint follows.
+
+Janitor checkpoint: removed the merged Salt lane, dependency junction and used
+card gate evidence; preserved seven unfinished lanes and skipped three protected
+audio references. The audit flags 48 uncertain assets, 25 internal export
+candidates and the intentionally private Tanker loader; nothing is proved safe
+to remove. No removed-behavior tests remain. Runtime grew from 236,343,712 to
+259,627,104 bytes for the accepted current Salt model; build is 263,925,553 bytes.
+Model/build targets remain advisory; accepted real venue growth is recorded.
+
+Salt runtime-check repair: the first full tier passed 330 suites and failed two
+because consumed private review inputs were still the renderer defaults. The
+reviewed fix reads the installed approved model, keeps every frozen assertion,
+and passes all sixteen focused checks, eight changed-lane suites and build.
+Bounty code now passes thirty-five of thirty-nine native cases, including all
+FPS and old replay controls; only Claude's four routing cases fail. Four private
+quality/venue UI and native reward journeys pass with no errors or warnings.
+
+Janitor sweep: removed the clean merged Salt repair lane and its consumed gate
+output with plain worktree removal. Seven unfinished lanes remain; three
+protected audio references were skipped. Audit counts stay at 48 uncertain
+assets, one intentional private module and 25 internal exports; no candidate
+was proved unused. Runtime stays 259,627,104 bytes and tracked files total
+287,445,693 bytes. Outgoing binaries are four current approved Salt assets,
+with no superseded version and no history rewrite needed. Full recovery follows.
+
+
+Recovery checkpoint: all 332 full-tier suites passed, none failed or unrun;
+build passed. Pit geometry and native world composition are built and reviewed;
+the visible wall-gap regression passes. Its unchanged outer-floor reach test
+needs Arsenal's owned pilot file after merge, and the precise case is in the
+inbox. Bounty still needs Claude's four brain cases and Arsenal's cue hook.
+
+Claude advanced integration with his boss source as the checkpoint finished.
+A failed exact-commit guard did not abort PowerShell, and the push uploaded the
+newer unverified head. Feature merges are stopped; the new committed source
+receives its own build and full tier. This is fixed forward without a history
+rewrite. Codex has not edited any reserved boss file.
+
+Private build checkpoint: Crew native controls and Armory panels are committed,
+with sixteen bounded checks, build and native, UI and save reviews clear.
+Pit round two scores four out of five in both qualities; native world checks,
+build, eight browser views and paired frame pacing pass. Both clean lanes stay
+unfinished: Crew needs shared catalog/router/combat/render/audio owners; Pit
+needs its pilot owner and final look approval. Bounty and Arsenal retain their
+written Claude questions. Boss source remains entirely Claude's.
+
+Janitor sweep: removed twelve consumed, reproducible crash-audio gate outputs,
+freeing 3,218,660,268 bytes of captures and copied QA builds. Current assets,
+licensed records and unfinished review evidence remain. Seven unfinished lanes
+stay; three protected audio references are skipped. No uncertain audit candidate
+was deleted. Runtime remains 259,627,104 bytes; accepted Salt growth is unchanged.
+
+Handoff: resume the clean Crew and Pit lanes when their actual owners answer
+or merge. No new long card is eligible without file overlap. Final integration
+receives build, full tier and the approved normal push after an exact-commit
+check; consult the evidence ledger for the outcome.

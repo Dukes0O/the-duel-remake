@@ -30,7 +30,7 @@ function validFuelFinish(arena) {
 }
 
 function arenaFacts(arena) {
-  if (arena?.version !== 1 || arena.venueId !== 'scrapdome' ||
+  if (arena?.version !== 1 || !['scrapdome', 'salt-flats'].includes(arena.venueId) ||
       !['last-car-rolling', 'fuel-run'].includes(arena.mode) || arena.phase !== 'over' ||
       !arena.result || !Array.isArray(arena.participants) ||
       !Array.isArray(arena.result.placings)) return null;

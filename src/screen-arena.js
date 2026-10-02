@@ -1,6 +1,7 @@
 import {arenaRanking} from './arena/arena-event.js';
 import {WARLORDS} from './warlords.js';
 import {CARS} from './config.js';
+import {arenaVenueAvailable} from './wasteland-access.js';
 
 // Screens for Scrapdome events (docs/SCRAPDOME.md sections 3 and 6). The
 // presentation functions are pure so they can be tested without a browser.
@@ -23,7 +24,7 @@ export function arenaHud(state) {
   const ranking = arenaRanking(arena);
   const place = ranking.findIndex(participant => participant.id === 'player') + 1;
   const me = arena.participants.find(participant => participant.id === 'player');
-  const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && participant.targetId === 'player');
+  const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && !participant.decoy && participant.targetId === 'player');
   const leader = ranking[0], net = participant => fuel ? participant.fuelDelivered : arena.mode === 'warlord' ?
     participant.wrecks : participant.wrecks - participant.wrecked;
   const tiedAtTop = ranking.length > 1 && net(ranking[0]) === net(ranking[1]) && (fuel || ranking[0].wrecks === ranking[1].wrecks);
@@ -33,7 +34,7 @@ export function arenaHud(state) {
     modeLabel: fuel ? 'FUEL RUN · FIRST TO FIVE' : arena.mode === 'warlord' ? 'FIRST TO THREE WRECKS' : 'LAST CAR ROLLING',
     timeLabel: suddenDeath ? fuel ? 'SUDDEN DEATH · NEXT DELIVERY WINS' : 'SUDDEN DEATH · NEXT WRECK WINS' : 'TIME LEFT',
     remainingSec,
-    place, field: arena.participants.length,
+    place, field: ranking.length,
     placeText: ORDINALS[place - 1] || String(place),
     leaderText: tiedAtTop ? 'LEVEL AT THE TOP' : leader.id === 'player' ? 'YOU LEAD' : `${leader.name} LEADS`,
     scoreText: fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
@@ -71,19 +72,24 @@ export function arenaBoardMarkup(hud, escapeHTML) {
 }
 
 // The SCRAPDOME panel inside the yard.
-export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'last-car-rolling', profile, featureFlags} = {}) {
+export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'last-car-rolling', venueId = 'scrapdome', profile, featureFlags} = {}) {
   const choice = count => `<button type="button" class="choice${count === opponents ? ' on' : ''}" data-arena-opponents="${count}" aria-pressed="${count === opponents}">${count} ${count === 1 ? 'CAR' : 'CARS'}</button>`;
   const available = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 6 &&
     featureFlags?.enabled('scrapdome') === true && featureFlags?.enabled('fuel-run') === true;
+  const saltAvailable = arenaVenueAvailable(featureFlags, profile, 'salt-flats');
+  const selectedVenue = saltAvailable && venueId === 'salt-flats' ? 'salt-flats' : 'scrapdome';
+  const venueChoice = saltAvailable ? '<div class="segmented" role="group" aria-label="Arena venue">' +
+    ['scrapdome', 'salt-flats'].map(id => `<button type="button" class="choice${id === selectedVenue ? ' on' : ''}" data-arena-venue="${id}" aria-pressed="${id === selectedVenue}">${id === 'salt-flats' ? 'SALT FLATS' : 'SCRAPDOME'}</button>`).join('') + '</div>' : '';
+  const enterLabel = selectedVenue === 'salt-flats' ? 'ENTER THE SALT FLATS' : 'ENTER THE SCRAPDOME';
   const fuel = available && mode === 'fuel-run';
   const modes = available ? '<div class="segmented" role="group" aria-label="Scrapdome mode">' +
     ['last-car-rolling', 'fuel-run'].map(id => `<button type="button" class="choice${(fuel ? 'fuel-run' : 'last-car-rolling') === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${(fuel ? 'fuel-run' : 'last-car-rolling') === id}">${id === 'fuel-run' ? 'FUEL RUN' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
-  if (fuel) return `<div class="yard-home-intro arena-yard">${modes}
+  if (fuel) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
     <p class="arena-yard-mode">FUEL RUN · FIRST TO FIVE · 3:00</p>
     <div class="arena-yard-setup"><span class="field-label">COMPUTER CARS</span>
     <div class="segmented" role="group" aria-label="Number of computer cars">${[1, 2, 3].map(choice).join('')}</div>
     <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()} · change it on the main menu</p></div>
-    <button type="button" class="start-button arena-start" data-action="arena-start"><span>ENTER THE SCRAPDOME</span></button>
+    <button type="button" class="start-button arena-start" data-action="arena-start"><span>${enterLabel}</span></button>
     <ul class="arena-yard-rules"><li>Drive over fuel on the four yellow pads. Carry one at a time.</li>
     <li>Bring it to your blue depot. First to five deliveries wins.</li>
     <li>A wreck or a heavy hit drops your fuel. Anyone can take it.</li>
@@ -91,11 +97,11 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
     <li>Most deliveries at 3:00 wins. A tie means next delivery wins.</li></ul></div>`;
   // The choice and the button come first, so nobody has to scroll to play.
   return `<div class="yard-home-intro arena-yard">
-    ${modes}<p class="arena-yard-mode">LAST CAR ROLLING · EVERY CAR FOR ITSELF · 2:30</p>
+    ${modes}${venueChoice}<p class="arena-yard-mode">LAST CAR ROLLING · EVERY CAR FOR ITSELF · 2:30</p>
     <div class="arena-yard-setup"><span class="field-label">COMPUTER CARS</span>
     <div class="segmented" role="group" aria-label="Number of computer cars">${[1, 2, 3].map(choice).join('')}</div>
     <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()} · change it on the main menu</p></div>
-    <button type="button" class="start-button arena-start" data-action="arena-start"><span>ENTER THE SCRAPDOME</span></button>
+    <button type="button" class="start-button arena-start" data-action="arena-start"><span>${enterLabel}</span></button>
     <ul class="arena-yard-rules"><li>Wreck the others. Every wreck you cause is a point.</li>
     <li>Get wrecked and you are back in the fight in four seconds.</li>
     <li>A red HUNTING YOU tag shows who is coming for you.</li>
@@ -123,11 +129,15 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     description += ' Could not save this result. Retry before leaving.';
   } else if (warlord && result.settlementSaved && result.kitEarned === 'side-saws') {
     description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
+  } else if (warlord && result.settlementSaved && result.weaponEarned) {
+    description += ` ${escapeHTML(warlord.reward)} earned. Equip it in the Armory.`;
+  } else if (warlord && result.settlementSaved && result.kitEarned === 'warlord') {
+    description += ' Warlord kit fitted to your Titan Monster, and Tusk joins your crew when his gear is ready.';
   }
   if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
     description += ' ' + escapeHTML(result.rewardReason);
   }
-  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
+  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arenaRanking(arena).length}`, true) +
     (fuel ? metric('FUEL DELIVERED', me.fuelDelivered) : '') + metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
     (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :
       metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +

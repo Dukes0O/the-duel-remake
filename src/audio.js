@@ -1362,7 +1362,10 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
-    if (recordedAudio && this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) {
+    if (recordedAudio && (
+      (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
+      (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue))
+    )) {
       // One-shots use the native point; flight belongs to the moving voice map.
       // The flight event never starts a second overlapping source.
       const output = this._spatialOutput(

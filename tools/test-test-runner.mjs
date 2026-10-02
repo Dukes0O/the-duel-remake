@@ -171,6 +171,28 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'keep-going runs every suite and retains a failure summary');
 }
 {
+  const audio='tools/test-audio-crash-peak.mjs';
+  const ordinary=side=>Array.from({length:8},(_,index)=>'tools/test-'+side+'-'+index+'.mjs');
+  const before=ordinary('before'),after=ordinary('after'),suites=[...before,audio,...after];
+  const tasks=suites.map(suite=>({suite,label:suite,args:[]})),active=new Set(),starts=[];
+  const child=()=>{
+    const suite=suites[starts.length],handle=new EventEmitter();
+    active.add(suite);starts.push({suite,active:[...active]});
+    setImmediate(()=>{active.delete(suite);handle.emit('close',0,null);});
+    return handle;
+  };
+  const result=await runSuitesConcurrent(tasks,{jobs:8,keepGoing:true,spawnChild:child,now:()=>0});
+  same({
+    beforePeak:Math.max(...starts.filter(row=>before.includes(row.suite)).map(row=>row.active.length)),
+    audioCompanions:starts.find(row=>row.suite===audio).active.filter(suite=>suite!==audio),
+    laterOverlapsAudio:starts.some(row=>after.includes(row.suite)&&row.active.includes(audio)),
+    afterPeak:Math.max(...starts.filter(row=>after.includes(row.suite)).map(row=>row.active.length))
+  },{beforePeak:8,audioCompanions:[],laterOverlapsAudio:false,afterPeak:8},
+    'native audio crash-peak capture drains preceding suites and blocks later suites while ordinary work keeps eight concurrent jobs');
+  same([result.exitCode,result.passed,result.notRun,result.results.map(row=>row.suite)],
+    [0,suites.length,0,suites],'exclusive capture preserves every suite result and the original plan order');
+}
+{
   const listed=spawnSync(process.execPath,[runner,'--tier','merge','--list','--json'],
     {cwd:PROJECT_ROOT,encoding:'utf8',shell:false,windowsHide:true});
   same(listed.status,0,'JSON plan CLI succeeds');

@@ -1,5 +1,5 @@
 import {
-  arsenalEnabled, point
+  arsenalEnabled, hazardsActive, point
 } from './combat-weapons.js';
 import {
   carEffect
@@ -191,7 +191,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     };
   });
   function updateHazards(duel,active){
-    const hazards=active&&arsenalEnabled(duel) ? hazardsFor(duel) : [];
+    const hazards=active&&hazardsActive(duel) ? hazardsFor(duel) : [];
     hazardViews.forEach((view,index)=>{
       const hazard=hazards[index];
       view.holder.visible=!!hazard && hazard.opacity>0 && hazard.age<hazard.lifetime;

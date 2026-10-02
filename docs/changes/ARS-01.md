@@ -97,3 +97,9 @@ Replaced two-user rear scheduling, level-blind backup, wrong-axis yank,
 airborne strip height, per-frame tether arrays, clipped forward wall impulse,
 raw-Source browser imports and the thin Line presentation in the same work.
 No current asset or replay pin was removed. Raw review output stays ignored.
+
+## Current-base gate
+After syncing integration commit `49e0e3d`, the lane tier passed 338 suites
+with zero failures in 743.66 seconds. `npm run build` passed in 550 ms. The
+build reports its existing large-chunk advisory; frame pacing remains
+unmeasured and is not an ARS-01 acceptance item.

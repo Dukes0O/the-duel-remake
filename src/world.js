@@ -24,6 +24,7 @@ import { makeSignFallSystem } from './scenery-fall.js';
 import { createRustwallScene } from './rustwall-scene.js';
 import { createScrapdomeYard } from './scrapdome-yard.js';
 import { createMuddyHollowScene, filterMuddyHollowMountains } from './muddy-hollow-scene.js';
+import { createSaltFlatsScene } from './arena/venues/salt-flats.js';
 
 // Keep the established scene API for renderer and geometry-focused callers.
 export { worldAtExtended, strip, terrainGeometry, farTerrainGeometry } from './world-surfaces.js';
@@ -32,7 +33,14 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 // Composition order is deliberate: surfaces, biome detail, physical-feature
 // shells, then their visual refinements and race markers. No new wrapper groups
 // are inserted, so material refinement, render order and batching stay stable.
-export function buildEnvironment(course) {
+export function buildEnvironment(course, {saltFlats} = {}) {
+  if(course.def.id==='salt-flats'){
+    const group=new THREE.Group();
+    const salt = createSaltFlatsScene(course,saltFlats);
+    group.add(salt.group,salt.outside);
+    registerSceneSystem(group,{animate:salt.animate});
+    return group;
+  }
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night});
   const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
