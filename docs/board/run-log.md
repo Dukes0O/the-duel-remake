@@ -777,3 +777,18 @@ Janitor after Arsenal: unlinked the integration-only dependency junction,
 removed the clean lane with plain git worktree remove, deleted its merged
 branch and used evidence, and refreshed status. Runtime assets remain
 236,249,990 bytes. Wreck-rate and all other unmerged lanes remain.
+
+Junk movement merged from its reviewed clean candidate after 323 lane suites
+and the production build passed. Four actual-App browser cases pass in both
+qualities, including movement, spin, flattening, containment and settled poses.
+Original road, Last Car Rolling and Sal fingerprints remain unchanged.
+Feature merges since the full checkpoint: two, plus Claude's decision merge.
+
+Kyle then chose the lower ordinary-car wreck rate, keeping Sal unchanged.
+That existing lane resumes current balance and gates against merged Junk.
+Crew gear has four genuine native admission failures and two released controls;
+its Source waits for the shared file owners. No new gear rule was invented.
+
+Janitor after Junk: unlinked integration dependencies, used plain worktree
+removal and deleted the merged branch and consumed review evidence. Status
+was refreshed; runtime assets and all held lanes remain.

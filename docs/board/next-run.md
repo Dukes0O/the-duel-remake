@@ -47,15 +47,15 @@ registration file. Inner-island scrap belongs to P3-POLISH. No fourth art round.
 
 Shove is merged. Kyle's junk-car note opens ARENA-JUNK-SHOVE; his later evening
 reply chooses the lower wreck rate, with Sal health unchanged.
-Arsenal is merged after its passing balance, lane and build gates. Junk-car tests
-reproduce the fixed-box baseline; native movement is implemented and independently
-reviewed after clustered-cover respawn and late-contact floor fixes. All fourteen
-focused suites pass with released road, LCR and Sal fingerprints unchanged.
-The tested wreck-rate candidate resumes current balance and merge gates after Junk. Tanker's two fixes
+Arsenal and junk movement are merged after current lane/build gates. Junk has
+independent Source and four-case browser review, with clustered-cover respawns
+and late-contact containment fixed. Original road, LCR and Sal pins are unchanged.
+The approved wreck-rate candidate now resumes current balance and merge gates. Tanker's two fixes
 have passing native, frame, lane and build checks, with the roof view and
 installation sequence waiting for Claude. ARS-01 has genuine native and CPU-use test failures;
 its two literal-rule questions and shared sound-bank wait are in the inbox.
-CREW-02 starts independent tests while its shared runtime files stay with their owners.
+CREW-02 has four genuine native admission failures and two current controls;
+Source waits for shared tuning, audio and Salt's renderer.
 The exact evening integration checkpoint passed all 318 full suites and build,
 then pushed under D8; later commits need their own full check.
 
@@ -63,7 +63,7 @@ then pushed under D8; later commits need their own full check.
 
 | Track | Cards, in order | Notes |
 | --- | --- | --- |
-| A. Dome feel | ARENA-JUNK-SHOVE (Kyle: junk cars do not budge), then ARENA-04 Bounty Hunt. ARENA-WRECK-RATE resumes with Kyle's lower-rate choice after Junk | Kyle checks the shove in the Preview |
+| A. Dome feel | ARENA-JUNK-SHOVE merged; ARENA-WRECK-RATE resumes with Kyle's lower-rate choice, then ARENA-04 Bounty Hunt | Kyle checks the shove in the Preview |
 | B. Arsenal | ARS-CORE merged; then ARS-01 | Sound edits wait for the separate audio owner to free the bank |
 | C. Salt Flats, then the Pit | ARENA-06: generated salt ground first (Kyle), then the far edge, the sparse inner island, heat shimmer; then ARENA-PIT | Comparison sheets to Claude |
 | D. Art | ART-FIT-TANKER round 3, then ART-FIT-CREW-W (Vesper) | Final tanker round; sheets to Claude |

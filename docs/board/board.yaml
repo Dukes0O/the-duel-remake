@@ -984,10 +984,11 @@ tasks:
     branch: codex/foot/crew-gear
     flag: crew-gear
     owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
-    hooks: [src/feature-flags.js, src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/combat-hud.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js]
+    hook_requests: [src/feature-flags.js, src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/combat-hud.js, src/wasteland-tuning.js, src/sound-bank.js, src/audio.js, src/onfoot-camera.js, src/render3d.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
-    sequencing: "Independent acceptance tests start first. Runtime edits wait for Arsenal wave one to free tuning, and the separate audio owner to free the sound bank; shared files are not granted to two builders."
-    note: "Tests-first slice is claimed. The eight settled gear items, discovery gate, refill and camera controls are the acceptance; no runtime Source has started."
+    sequencing: "Independent acceptance tests start first. Runtime edits wait for Arsenal wave one to free tuning, Salt to free the renderer and the separate audio owner to free the sound bank; shared files are not granted to two builders."
+    note: "Independent bounded admission tests reproduce four genuine failures; existing RPG/wrench and discovery controls pass. Source waits for shared tuning, audio and the Salt renderer; full gear mechanics remain unproved."
+    test_commit: b85ce3007e983e538f6e5c7dde3a051b522af619
     acceptance:
       - "Build docs/CREW.md section 1 exactly: the crew-gear switch (dev), all eight items on key 3 (gamepad D-pad down on foot), gear refilled on getting back in, Jax, Cinder and Tusk active. Wren's grenades and Tusk's shove use the arsenal's smoke and the crash solver."
       - "Tests first for each item's numbers and counters; on-foot controls tested through the camera (a key that says right moves right on screen); a private browser scenario per item with no console errors."
@@ -2974,7 +2975,7 @@ tasks:
     lane: CMB
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-01-evening
     branch: lane/cmb/arena-junk-shove
     owns: [src/arena/arena-junk.js, tools/test-arena-junk-shove.mjs, tools/test-arena-junk-respawn.mjs, tools/scenarios/arena-junk-shove.mjs, docs/changes/ARENA-JUNK-SHOVE.md]
@@ -2987,11 +2988,14 @@ tasks:
       - "Tests first: every car and the Titan at 20, 40 and 60 mph; a junk car pushed into the wall or another junk car; the renderer shows its moved position and spin; computer drivers avoid its current position; spawns still keep clear. Arena replays that change are named. Kyle checks it in the Preview."
     test_commit: 18aa34470731bcea742974804fad0aa63d07faf9
     test_candidate_commit: ee81c8e4703d020188fd4c4a5c3e236d05e96b31
-    note: "Independent review clears junk movement, clustered-cover respawns and the late-contact floor fix. All fourteen focused suites pass with original assertions and road, LCR and Sal fingerprints unchanged; browser and merge gates follow."
+    note: "Junk movement is merged after independent Source and browser review, all focused controls and current lane/build gates. Original road, LCR and Sal fingerprints are unchanged; Kyle checks the Preview feel."
     source_commit: 9e7c28624303bebe17cbe28e7220cdff4a7025db
     review_commit: 9e7c28624303bebe17cbe28e7220cdff4a7025db
     respawn_test_commit: daf0d3fa6b79b715f7e332363abbcaf4d126b2b6
     containment_test_commit: ec388ae
+    gate_commit: 69c1589563d51136bf6d91cafa1d0b0daed910ed
+    merged_commit: 5984b6a583f1133849ed07c14829335abef6bd4e
+    waiting_on: kyle
   - id: ARENA-SHOVE
     title: "Every car can shove a sitting car in the Scrapdome"
     owner: codex
