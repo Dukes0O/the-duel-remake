@@ -68,7 +68,9 @@ Rook's real locked 0.6 s shot / 1.8 s reload and pure 3x camera poses. Released
 weapons/transition regressions pass 13/13; camera-choice controls pass 8/8.
 Original crew tests pass 4/4, including unchanged inactive-copy, rank, roster
 and model-color assertions. The off-state panel is preserved.
-Syntax and whitespace pass. No race/world fingerprint was regenerated.
+Native-hook/UI and Save Guardian reviews are clear on 97c601f/373f356.
+Production build passes: 256 modules, 483 ms. Syntax/whitespace pass; no
+race/world fingerprint was regenerated. This is reviewed partial Source.
 
 ## Remaining owner hooks and gates
 
@@ -83,7 +85,7 @@ Syntax and whitespace pass. No race/world fingerprint was regenerated.
   yard crewPanel call needs the same context. Both providers remain unedited.
 - Save Guardian review is required for earned-Tusk selection.
 - Native complete per-item tests, browser per item, both camera modes, visual/
-  audio review, lane tier and build remain pending. Heavy slot is with Pit.
+  audio review and lane tier remain pending; no merge-ready verdict is claimed.
 
 Cues: crew.sticky.arm/beep/explode, crew.grapple.launch,
 crew.turret.deploy/fire/retire, crew.flamer.start/stop, crew.marksman.fire,
