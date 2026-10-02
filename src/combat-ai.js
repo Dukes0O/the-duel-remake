@@ -7,6 +7,7 @@ import {shouldUseSmoke} from './arsenal/smoke.js';
 import {shouldUseHarpoon} from './arsenal/harpoon.js';
 import {shouldUseCaltrops} from './arsenal/caltrops.js';
 import {arenaTargetOf} from './combat-teams.js';
+import {warlordFight} from './warlords/index.js';
 
 const T = COMBAT_TUNING;
 
@@ -89,7 +90,8 @@ export function stepCombatAI(duel, dt) {
   // decisions across the cars instead of firing a synchronized volley.
   let liveOpponents = 0;
   if (modernField) for (const opponent of state.opponents) {
-    if (!opponent.decoy && !opponent.finished && !opponent.crushed && !opponent.combatWrecking)
+    if (!opponent.decoy && warlordFight(duel, opponent)?.mayFire?.(duel, opponent) !== false &&
+        !opponent.finished && !opponent.crushed && !opponent.combatWrecking)
       liveOpponents++;
   }
   const decisionInterval = state.cpuDifficulty === 'medium' && arsenalEnabled(duel)
@@ -117,8 +119,10 @@ export function stepCombatAI(duel, dt) {
   for (let offset = 0; offset < opponents.length; offset++) {
     const index = modernField ? (first + offset) % opponents.length : offset;
     const opponent = opponents[index];
-    // Decoy cars never fire (docs/SCRAPDOME.md section 5).
-    if (opponent.decoy || opponent.finished || opponent.crushed || opponent.combatWrecking ||
+    // Decoy cars never fire (docs/SCRAPDOME.md section 5), and a warlord's
+    // fight may hold a car's fire for a while.
+    if (opponent.decoy || warlordFight(duel, opponent)?.mayFire?.(duel, opponent) === false ||
+        opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
     if (arsenalEnabled(duel)) {

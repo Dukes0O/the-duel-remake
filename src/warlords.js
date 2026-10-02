@@ -12,7 +12,15 @@ const details = Object.freeze({
   kettle: {reward: 'Titan warlord kit and Tusk', rewardBuilt: true,
     rewardKit: 'warlord', rewardKitCar: 'titan_monster', rewardCrew: 'tusk',
     car: 'titan_monster', brain: 'rammer', taunt: 'Stand still. It hurts less.'},
-  vultures: {},
+  // Two buggies fighting as a pair (docs/SCRAPDOME.md section 5). The Dusthawk
+  // Rally is the lightest car with the right look until a buggy model exists.
+  // Armor is 0.9 times (not the usual 1.5); phase two follows their second wreck.
+  vultures: {reward: 'Jax grapple +10 m', rewardBuilt: true,
+    rewardGear: Object.freeze({crew: 'jax', id: 'grapple-reach', metres: 10}),
+    car: 'dusthawk_rally', brain: 'hunter', armorScale: .9, phaseTwoWrecks: 2,
+    team: Object.freeze([Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture One'}),
+      Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture Two'})]),
+    taunt: 'Two of us. One of you. Do the math.'},
   tollkeeper: {},
   blackiron: {},
 });
@@ -35,4 +43,11 @@ export const WARLORD_LADDER = Object.freeze([
   'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'kettle']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'kettle', 'vultures']);
+
+// Jax's grapple reaches this much farther once the Twin Vultures are beaten.
+// Earned means the saved defeat itself, as with the Side Saws; the crew
+// system (CREW-02) reads this when Jax becomes active.
+export function jaxGrappleBonusMetres(profile) {
+  return profile?.wasteland?.warlords?.vultures?.defeated === true ? WARLORDS.vultures.rewardGear.metres : 0;
+}
