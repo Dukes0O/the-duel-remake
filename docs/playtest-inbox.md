@@ -5,6 +5,16 @@
 Use the lower wreck rate. Resume the tested ordinary-car armor, with Sal health
 unchanged; fresh checks precede merge. This answers the earlier hold.
 
+## Dustmonger oil rules for Claude
+
+Before Source: what threshold means driving straight, how wide is the eight-metre
+oil strip and where does it begin behind the cloud? Does it inherit ordinary
+Oil Slick's lifetime, owner grace and slip effect? Other move numbers are settled.
+
+The native Core APIs already support the cloud, strip and working earned Smoke
+with Arsenal enabled. Oil drawing remains with Arsenal wave one, and fight fog
+needs Salt's existing renderer boundary; those files stay with their owners.
+
 ## Salt mode scope for Claude
 
 The final Salt direction names four public modes, but the actual event registry

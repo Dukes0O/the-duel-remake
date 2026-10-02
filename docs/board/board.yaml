@@ -1045,13 +1045,16 @@ tasks:
     lane: CMB
     size: S
     needs: [ARENA-03, ARS-CORE, ARENA-WRECK-RATE]
-    status: ready
-    flag: scrapdome
-    owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
+    status: building
+    claimed_by: codex-director-2026-10-01-evening
+    branch: codex/cmb/arena-bounty
+    flag: bounty-hunt
+    owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, tools/scenarios/arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
-    sequencing: "Bounty Hunt waits for the wreck-rate event hook and Arsenal App hook to merge. Its mode leaf is separate, but the complete public mode requires both owners to finish first."
+    sequencing: "Wreck-rate and Arsenal are merged. Independent tests and the actual native/public hook map precede Source; other lanes retain their own files."
+    note: "Bounty Hunt is claimed after its dependencies merged. Tests first cover the settled mark, points, transfers, native brains, rank and one-time pay; no Source has started."
     hook_requests: [src/arena/arena-event.js, src/app.js, src/screen-arena.js]
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
@@ -3130,11 +3133,13 @@ tasks:
     owns: [src/arena/moves/dust-veil.js, tools/test-warlord-dustmonger.mjs, docs/changes/WAR-02b.md]
     hook_requests: [src/warlords.js, src/combat-weapons.js, src/combat-projectiles.js, src/render3d.js]
     sequencing: "Claimed for tests first and a narrow map of existing smoke, oil, tells and rewards. No runtime hook is granted until the real files are mapped; held renderer and Arsenal files stay with their owners."
-    note: "The settled Dustmonger build is claimed. Independent native tests follow the hook map; no Source has started."
+    note: "The native hook map can reuse Core smoke, oil and earned rewards with Arsenal enabled. Tests can cover settled rules; Source waits for the oil literals and the existing oil/fog renderer owners."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: The Dustmonger' in docs/SCRAPDOME.md section 5, on the arsenal's smoke and oil hazards (ARS-CORE, docs/ARSENAL.md). Dust Veil blocks computer aim through the cloud through targetFor; oil only on straight runs; the window and phase-two dust storm as settled. Reward: Smoke Screen unlocked early for this player."
       - "Tests first: every veil has its tell; the window; phase two; one-time settlement (Save Guardian). When built, status review and waiting_on: claude: Claude plays it in the Preview before merge."
+    waiting_on: claude
+    design_question: "What threshold means driving straight for the oil strip, how wide is the strip and where does it begin behind the cloud? Does its lifetime, owner grace and slip effect inherit ordinary Oil Slick?"
   - id: WAR-02c
     title: "Mother Mirage: Mirage decoys, Decoy Drone"
     owner: codex
