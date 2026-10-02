@@ -101,6 +101,7 @@ async function runPublicEntry(context) {
       await settled(context,quality+' actual yard transition');
       await context.evaluate('window.__qaApp.advance(8)');
       await context.waitFor('window.__qaApp.isYardHomeActive()',quality+' actual yard arrival');
+      await settled(context,quality+' actual yard home');
       for (const mode of ['last-car-rolling','fuel-run']) {
         await click(context,'[data-action="yard-scrapdome"]');
         await context.waitFor(`!!document.querySelector('[data-arena-venue="salt-flats"]')`,'eligible Salt venue choice');
@@ -144,6 +145,7 @@ async function runPublicEntry(context) {
         await settled(context,quality+' actual return transition');
         await context.evaluate('window.__qaApp.advance(8)');
         await context.waitFor('window.__qaApp.isYardHomeActive()','actual return to yard');
+        await settled(context,quality+' actual returned yard home');
       }
     }
     report.passed=true;
