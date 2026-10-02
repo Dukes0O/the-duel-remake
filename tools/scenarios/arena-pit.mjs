@@ -1,5 +1,33 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+
+// Keep the sheet recipe with the private scenario; preserve every capture's
+// complete view and labels. The only committed image is the compact comparison.
+export function buildComparisonSheet(python, evidence, output) {
+  execFileSync(python, ['-c', String.raw`
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+import sys
+source, output = map(Path, sys.argv[1:])
+sheet = Image.new('RGB', (1280, 1604), '#191b18')
+draw = ImageDraw.Draw(sheet)
+font = ImageFont.load_default(size=18)
+draw.text((15, 10), 'THE PIT / RELEASED RING - PRIVATE NATIVE COMPARISON - ROUND 1', fill='#f0dfba', font=font)
+for row, (quality, mode) in enumerate([('high', 'full'), ('high', 'racing'), ('performance', 'full'), ('performance', 'racing')]):
+    top = 44 + row * 390
+    for column, venue in enumerate(['scrapdome', 'pit']):
+        draw.text((column * 640 + 12, top), f'{quality.upper()} / {mode.upper()} / {venue.upper()}', fill='#f0dfba', font=font)
+        image = Image.open(source / f'{quality}-{venue}-{mode}.png').convert('RGB')
+        image = image.resize((640, 360), Image.Resampling.LANCZOS)
+        sheet.paste(image, (column * 640, top + 25))
+output.parent.mkdir(parents=True, exist_ok=True)
+sheet.save(output, quality=75, optimize=True, progressive=True)
+if output.stat().st_size > 500_000:
+    raise RuntimeError('Pit comparison exceeds 500 KB')
+print(str(output), output.stat().st_size)
+`, evidence, output], {stdio: 'inherit'});
+}
 
 async function settled(context, label) {
   await context.waitFor(`(()=>{const a=window.__qaApp,r=window.__render;if(!a||!r)return false;
@@ -16,7 +44,9 @@ async function start(context, quality, venue) {
     for(const d of document.querySelectorAll('details'))if(d.querySelector('summary')?.textContent.startsWith('MENU QA'))d.open=false;
     if(!a.duel.startArenaEvent({venueId:${JSON.stringify(venue)},mode:'last-car-rolling',seed:1989,
       car:'falcone_f42',cpuDifficulty:'medium',opponents:[{car:'dusthawk_rally',brain:'rammer'}]}))
-      throw Error('Native private arena entry failed');a.duel.state.countdown=0;a.duel.step(1/120);
+      throw Error('Native private arena entry failed');a.duel.state.countdown=0;
+    // Let the native start callout expire before the unchanged scene fixtures.
+    for(let tick=0;tick<300;tick++)a.duel.step(1/120);
     a.onFrame?.(a.duel.state,0);})()`);
   await settled(context, quality+' '+venue+' actual world');
 }
@@ -43,6 +73,9 @@ async function pose(context, mode) {
     }
   })()`);
   await settled(context, mode+' camera assets');
+  // The first stage onFrame can recreate this QA disclosure after entry.
+  await context.evaluate(`(()=>{for(const details of document.querySelectorAll('details'))
+    if(details.querySelector('summary')?.textContent.startsWith('MENU QA'))details.open=false;})()`);
 }
 
 async function frames(context) {

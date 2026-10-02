@@ -55,13 +55,37 @@ No alternate AI or reach workaround is included in Pit Source.
 
 ## Remaining checks
 
-The private memory-only scenario prepares both qualities, full/racing views,
-actual Pit composition/purity and optional native ring/Pit frame comparison.
-It has not run. Browser captures, Claude look verdict, Kyle feel, frame budget,
-full native matrix, changed-lane gate and build await the serialized slot.
-The official shortcut source digest also needs generator refresh after proving
-all prior entries unchanged. No freshness assertion or preset was edited by hand.
-This checkpoint is not a merge or completion claim.
+Full native matrix: 17/26 pass; all nine failures are the outer reach sample.
+All nine inner/middle samples, all three brains × three difficulties, junk,
+wall/respawn and released ring controls pass. Outer closest distances in metres:
+
+| Car | Outer closest |
+| --- | ---: |
+| falcone_f42 / falcone_heritage | 4.722646 |
+| stuttgart_959s | 4.751284 |
+| aurora_gt | 4.732836 |
+| dusthawk_rally | 4.734717 |
+| banshee_muscle | 4.765455 |
+| viper_proto | 4.700915 |
+| titan_monster | 4.741996 |
+| koenigsegg_jesko | 4.701343 |
+
+All outer drives keep the exact cached goal/player target for 30 seconds with
+zero wreck ticks. ARS pilot ownership remains the genuine acceptance blocker.
+Production build passes. The actual memory-only private browser scenario passes
+both qualities: eight full/racing captures, zero errors/warnings, state purity.
+Measured ring/Pit P95 is 16.9/16.8 ms High and 16.8/16.8 ms Performance,
+within 10%. High draw calls/triangles rise 546/556442 to 647/1861324;
+Performance rises 341/355450 to 361/986832. The extra scenery cost is retained
+explicitly; these RAF samples show observed frame pacing on this laptop.
+Fresh round 1 comparison is 308498 bytes; Claude look and Kyle feel are pending.
+
+Official generator refreshed only sourceFingerprint to
+45c75c657202115575b8535e7483d2b08db855c96689ebe30ac21500068494d8.
+All 15 entries remain byte-identical, SHA256
+75814c8568c605503a62c9798198810ba78f9e8d84fe6ce9f471af3f9d46acc7.
+No freshness assertion or preset was edited by hand. Changed-lane gate remains
+held for the native pilot fix. This is not a merge or completion claim.
 
 ## Removed
 
