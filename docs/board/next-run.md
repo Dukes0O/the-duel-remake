@@ -6,8 +6,9 @@
 Car Rolling and Fuel Run entry, and once-only scrap and hold rewards. The lane
 passed all 332 suites and build. Bounty owns the freed native entry, pay, HUD and
 beacon files; the claimed Pit owns venue geometry and world composition. Claude
-retains boss files and Arsenal retains audio/tuning. Exact full-tier backup follows
-this checkpoint; the old timers stay paused.
+retains boss files and Arsenal retains audio/tuning. The first full checkpoint found two Salt tests still reading deleted review
+output; their reviewed defaults now load the same installed approved model.
+Recovery full tier follows; the old timers stay paused.
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
