@@ -8,8 +8,8 @@ export const ARSENAL_WEAPON_COST = 400;
 
 // Extend this catalog only when another weapon's core implementation is built.
 export const ARSENAL_WEAPONS = Object.freeze({
-  oil: Object.freeze({rank: 2, wave: 1}),
-  smoke: Object.freeze({rank: 6, wave: 1, warlordId: 'dustmonger'}),
+  oil: Object.freeze({rank: 2, wave: 1, cpuRole: 'control'}),
+  smoke: Object.freeze({rank: 6, wave: 1, cpuRole: 'control', warlordId: 'dustmonger'}),
 });
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -137,7 +137,20 @@ export function cpuArsenalLoadout(rank, difficulty, {implemented, rng = makeRng(
     const other = rng.int(0, index);
     [candidates[index], candidates[other]] = [candidates[other], candidates[index]];
   }
-  return candidates.slice(0, 4);
+  // A front weapon is mandatory. Later implemented wave weapons declare
+  // cpuRole here too, so they join the same rank/wave-filtered selection.
+  const role = id => ({crossbow: 'front', ufo: 'control', star: 'control'})[id] ||
+    ARSENAL_WEAPONS[id]?.cpuRole;
+  const front = candidates.find(id => role(id) === 'front');
+  const loadout = [front];
+  let controls = 0;
+  for (const id of candidates) {
+    if (id === front || role(id) === 'control' && controls === 2) continue;
+    loadout.push(id);
+    if (role(id) === 'control') controls++;
+    if (loadout.length === 4) break;
+  }
+  return loadout;
 }
 
 export function weaponSignature(result) {

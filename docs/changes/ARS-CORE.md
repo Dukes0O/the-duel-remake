@@ -26,7 +26,9 @@ whole-card merge or release pass.
   Numeric callers and the CPU's 180-metre acquisition range are unchanged.
 - Arsenal is a dev switch and requires gate discovery. Earned weapons retain
   rank, purchase, reward, upgrade and four-slot rules without adding starters
-  or granting ownership during normalization. CPU loadouts use seeded RNG.
+  or granting ownership during normalization. CPU loadouts keep the seeded
+  shuffle, guarantee a front damage weapon and allow at most two controls,
+  as Claude settled. Later wave weapons declare their role in the catalog.
 - Native App transactions preserve unknown fields, future IDs and named
   player isolation. A failed-write retry merges the durable other-player
   update once; future or unreadable durable registries refuse writes while
@@ -36,7 +38,9 @@ whole-card merge or release pass.
 
 Tests came before each implementation slice. Existing assertions remain
 unchanged. The focused range run first reproduced thirteen intended failures:
-ten player-launch cases and three new candidate-range cases.
+ten player-launch cases and three new candidate-range cases. The new CPU
+selection tests first reproduced three failures, including the native all-control
+loadout; all thirteen focused selection and native launch cases now pass.
 
 All 378 combined native core, save and runtime cases passed after the fix.
 They include diagonal, reverse and lateral car carry, actual decoy launch
@@ -71,9 +75,9 @@ A matched native seed kept course, traffic, car, driver, armor, rank and
 purchases exact. The Arsenal-off control lost; Arsenal won with the CPU
 loadout UFO, Oil, Smoke and Star, which made no weapon use. Independent
 analysis isolates loadout pressure on that seed; it does not prove the
-whole Medium gap. Claude must settle whether every four-slot CPU loadout
-should guarantee a working front attack. No band or gameplay number changes.
-Lane and build gates still follow once balance passes.
+whole Medium gap. Claude approved a guaranteed front attack and at most two
+control slots, now implemented. The full balance rerun, independent source
+review and lane/build gates remain. No target or gameplay number changes.
 
 The three settled cue names may be emitted without sound while Arsenal is
 in development. AUD-ARSENAL-W1 supplies sounds before release. Protected
