@@ -1,6 +1,6 @@
 # ARS-01: Harpoon, Caltrops and wave-one computer use
 Native Source and the private production browser recipe are implemented.
-The card is not ready to merge. Current balance, browser, sounds and
+The card is not ready to merge. Balance, visual review, sounds and
 lane/build gates remain; the save assertion still awaits Kyle's approval.
 ## What changed
 - Harpoon launches a native leading 70 m/s projectile with full carrier
@@ -55,7 +55,6 @@ The opposing control's actual normal is 97.212 mph below 100.5; its signed
 forward term reduces the legacy subtotal before clamping the total at zero.
 No settled rule, balance target, old native use assertion or replay pin changed.
 ## Save Guardian follow-up
-
 Tests first at f03c568 reached 40 checks: four controls passed and ten
 backup cases failed. Earned future Harpoon/Caltrops gain level zero only.
 The real normalizer drives migration; verified backup retains original
@@ -70,28 +69,28 @@ It remains unchanged. No new storage, unknown-id grant or replay-pin edit.
 Independent Save Guardian approved byte preservation; fresh broad gates remain.
 
 ## Remaining acceptance
-The bundled browser recipe preserves Oil/Smoke controls and uses real native
-hits, breaks, CPU fire and Star decisions, strip events and motion controls.
-Syntax and 70 expressions pass; actual High/Performance and phone checks remain.
-Native motion is independently clear with 65 passing cases. Rear-report tests
-pass 40 cases; independent review clears sample separation, attribution and
-legal forward steering. Historical samples and every target stay unchanged.
+Actual High/Performance browser passes all twenty captures and native checks,
+with zero errors, warnings or failed requests. Panels are hidden, desktop
+cars fit, and native ground spikes and the phone victim/strip are visible.
+The Harpoon line is visible but faint; Claude's visual verdict waits.
+Unchanged minimap and phone text overlaps are recorded for Phase 3 polish.
+Frame pacing and six-cue audio remain unmeasured; no visual pass is claimed.
+Rear-report tests pass 40 cases; independent review clears sample separation,
+attribution and legal forward steering. Historical samples and targets stay exact.
 At trial pace ten, the corrected follower finishes and measures Oil twice;
-natural Smoke cases 1991 and 2014 still measure none. Claude is asked about
-complete coverage in other difficulties; zero use remains a failure.
+natural Smoke cases 1991 and 2014 measure none. Complete coverage at other
+difficulties awaits Claude; zero use remains a failure.
 Five pace trials (9, 7, 10, 12, 13) found no combined pass. Twelve reaches
-63.33 percent Arsenal Medium wins but stalls the existing pursuit; the
-original eight completes that control. Eight is restored exactly. Its
-70 percent Arsenal win rate still fails; Claude's next tuning direction waits.
+63.33 percent Arsenal Medium wins but stalls pursuit; original eight completes
+that control. Eight is restored exactly, and its 70 percent still fails.
+Claude's next tuning direction waits; targets and warlord armor stay exact.
 Six-cue audio tests pass 15 controls and fail 19 missing-audio checks; the
-rebuild script is prepared without output. Automatic review rejected shared
-sound edits twice despite Claude's release. Kyle's standing permission waits;
-bank, renderer, catalog and their existing guards remain unchanged.
-The saved CPU assertion remains 99/100 pending Kyle. Those failures and
-fresh lane/build gates block merge; no failed trial or silent cue is complete.
+rebuild recipe has no output. Automatic review rejected shared sound edits
+twice despite Claude's release. Kyle's standing permission waits; bank,
+renderer, catalog and existing guards stay exact. The saved CPU assertion
+remains 99/100 pending Kyle; no failed trial or silent cue is complete.
 
 ## Removed
-
 Replaced the two-user rear deployment branch with genuine four-user wave-one
 scheduling and extended native accounting. Unpacked combat presentation. Replaced
 level-blind backup, wrong-axis yank, airborne strip height, per-frame tether array
