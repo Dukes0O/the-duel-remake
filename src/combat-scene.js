@@ -77,39 +77,85 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     color:0xd2d6d5,metalness:.95,roughness:.18
   });
   const spikeTransform=new THREE.Object3D();
-  const tetherMaterial=new THREE.LineBasicMaterial({
-    color:0xdcc398
+  const tetherSegments = 16;
+  const tetherSides = 6;
+  const tetherRadius = .06;
+  const tetherSag = .4;
+  const tetherMaterial = new THREE.MeshStandardMaterial({
+    color: 0xb8592c, metalness: .65, roughness: .55
   });
-  const tetherViews=Array.from({
-    length:4
-  },()=>{
-    const geometry=new THREE.BufferGeometry();
-    geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
-    const line=new THREE.Line(geometry,tetherMaterial);
-    line.frustumCulled=false;
-    line.visible=false;
-    group.add(line);
-    return line;
-  });
-  const tetherPosition=new THREE.Vector3();
-  function tetherPoint(duel,actor){
-    const at=duel.course.groundAt(actor.s,actor.lateral);
-    return tetherPosition.set(at.x,at.y+COMBAT_TUNING.pointHeight+(actor.airHeight||0),at.z);
+  const tetherRing = new Float32Array((tetherSides + 1) * 2);
+  for (let side = 0; side <= tetherSides; side++) {
+    const angle = side / tetherSides * Math.PI * 2;
+    tetherRing[side * 2] = -Math.cos(angle);
+    tetherRing[side * 2 + 1] = Math.sin(angle);
   }
-  function updateTethers(duel,active){
-    const enabled=active&&arsenalEnabled(duel);
-    for(let index=0;index<tetherViews.length;index++){
-      const line=tetherViews[index],actor=index===0 ? duel.state : duel.state.opponents[index-1];
-      const effect=enabled&&actor&&carEffect(actor,'tether');
-      const shooter=effect&&actorForTarget(duel,effect.shooterId);
-      line.visible=!!shooter;
-      if(!shooter)continue;
-      const positions=line.geometry.attributes.position;
-      const from=tetherPoint(duel,shooter);
-      positions.setXYZ(0,from.x,from.y,from.z);
-      const to=tetherPoint(duel,actor);
-      positions.setXYZ(1,to.x,to.y,to.z);
-      positions.needsUpdate=true;
+  const tetherViews = Array.from({length: 4}, () => {
+    const path = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(), new THREE.Vector3(0, -2 * tetherSag, .5),
+      new THREE.Vector3(0, 0, 1)
+    );
+    const geometry = new THREE.TubeGeometry(path, tetherSegments, tetherRadius, tetherSides, false);
+    geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+    geometry.attributes.normal.setUsage(THREE.DynamicDrawUsage);
+    const cable = new THREE.Mesh(geometry, tetherMaterial);
+    cable.userData.arsenalTether = true;
+    cable.frustumCulled = false;
+    cable.visible = false;
+    group.add(cable);
+    return cable;
+  });
+  const tetherPosition = new THREE.Vector3();
+  const tetherTangent = new THREE.Vector3();
+  const tetherNormal = new THREE.Vector3();
+  const tetherBinormal = new THREE.Vector3();
+  function tetherPoint(duel, actor, out) {
+    const at = duel.course.groundAt(actor.s, actor.lateral);
+    return out.set(at.x, at.y + COMBAT_TUNING.pointHeight + (actor.airHeight || 0), at.z);
+  }
+  function updateTethers(duel, active) {
+    const enabled = active && arsenalEnabled(duel);
+    for (let index = 0; index < tetherViews.length; index++) {
+      const cable = tetherViews[index];
+      const actor = index === 0 ? duel.state : duel.state.opponents[index - 1];
+      const effect = enabled && actor && carEffect(actor, 'tether');
+      const shooter = effect && actorForTarget(duel, effect.shooterId);
+      cable.visible = !!shooter;
+      if (!shooter) continue;
+      const geometry = cable.geometry;
+      const positions = geometry.attributes.position;
+      const normals = geometry.attributes.normal;
+      const path = geometry.parameters.path;
+      const from = tetherPoint(duel, shooter, path.v0);
+      const to = tetherPoint(duel, actor, path.v2);
+      // A quadratic's midpoint is half its control-point offset.
+      path.v1.addVectors(from, to).multiplyScalar(.5);
+      path.v1.y -= 2 * tetherSag;
+      path.needsUpdate = true;
+      const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
+      for (let segment = 0; segment <= tetherSegments; segment++) {
+        const fraction = segment / tetherSegments;
+        path.getPoint(fraction, tetherPosition);
+        tetherTangent.set(dx, dy - 4 * tetherSag * (1 - 2 * fraction), dz);
+        if (tetherTangent.lengthSq() === 0) tetherTangent.set(0, 0, 1);
+        tetherTangent.normalize();
+        if (Math.abs(tetherTangent.y) < .95) tetherNormal.set(-tetherTangent.z, 0, tetherTangent.x);
+        else tetherNormal.set(0, tetherTangent.z, -tetherTangent.y);
+        tetherNormal.normalize();
+        tetherBinormal.crossVectors(tetherTangent, tetherNormal);
+        for (let side = 0; side <= tetherSides; side++) {
+          const cosine = tetherRing[side * 2], sine = tetherRing[side * 2 + 1];
+          const nx = cosine * tetherNormal.x + sine * tetherBinormal.x;
+          const ny = cosine * tetherNormal.y + sine * tetherBinormal.y;
+          const nz = cosine * tetherNormal.z + sine * tetherBinormal.z;
+          const vertex = segment * (tetherSides + 1) + side;
+          normals.setXYZ(vertex, nx, ny, nz);
+          positions.setXYZ(vertex, tetherPosition.x + tetherRadius * nx,
+            tetherPosition.y + tetherRadius * ny, tetherPosition.z + tetherRadius * nz);
+        }
+      }
+      positions.needsUpdate = true;
+      normals.needsUpdate = true;
     }
   }
   const hazardViews=Array.from({
@@ -486,7 +532,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       });
       caltropsGeometry.dispose();
       caltropsMaterial.dispose();
-      tetherViews.forEach(line=>line.geometry.dispose());
+      tetherViews.forEach(cable=>cable.geometry.dispose());
       tetherMaterial.dispose();
       Object.values({
         ...materials,...pickupMaterials

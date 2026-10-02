@@ -33,16 +33,26 @@ async function start(context) {
       const to=duel.course.groundAt(target.s,target.lateral);
       let found=false;
       window.__render.scene.traverse(node=>{
-        if(!node.isLine||node.isLineLoop||!node.visible)return;
+        if(!node.isMesh||!node.userData.arsenalTether||!node.visible)return;
         for(let parent=node.parent;parent;parent=parent.parent)if(!parent.visible)return;
-        const points=node.geometry?.attributes.position;
-        if(!points||points.count!==2)return;
+        const geometry=node.geometry,points=geometry?.attributes.position;
+        const {radialSegments:radial,tubularSegments:tubular,closed}=geometry?.parameters||{};
+        if(geometry?.type!=='TubeGeometry'||!Number.isInteger(radial)||radial<3||
+          !Number.isInteger(tubular)||tubular<=0||closed!==false||
+          !points||points.count!==(tubular+1)*(radial+1))return;
         node.updateWorldMatrix(true,false);
-        const end=index=>{
-          const x=points.getX(index),y=points.getY(index),z=points.getZ(index),m=node.matrixWorld.elements;
+        const end=ring=>{
+          let x=0,y=0,z=0;
+          // The last radial vertex repeats the seam; count each side once.
+          for(let side=0;side<radial;side++){
+            const vertex=ring*(radial+1)+side;
+            x+=points.getX(vertex);y+=points.getY(vertex);z+=points.getZ(vertex);
+          }
+          x/=radial;y/=radial;z/=radial;
+          const m=node.matrixWorld.elements;
           return {x:m[0]*x+m[4]*y+m[8]*z+m[12],z:m[2]*x+m[6]*y+m[10]*z+m[14]};
         };
-        const a=end(0),b=end(1),near=(p,q)=>Math.hypot(p.x-q.x,p.z-q.z)<.05;
+        const a=end(0),b=end(tubular),near=(p,q)=>Math.hypot(p.x-q.x,p.z-q.z)<.05;
         if(near(a,from)&&near(b,to)||near(b,from)&&near(a,to))found=true;
       });
       return found;
