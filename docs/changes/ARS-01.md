@@ -33,10 +33,11 @@ browser, save review, sounds and lane/build gates remain.
 
 Independent tests preceded Source at 37924a1. The settled owner grace is
 1 s; hard-away input is at least 0.6 and need not remain continuous.
-Current bounded acceptance passes all 57 native weapon checks and all 33
-combat-balance schema/native accounting checks. These include all six literal
-boundaries, 30/60/144 App cadences, real transactions, cleanup and draw purity.
-No thirty-race report, broad tier, build or browser capture has run yet.
+The original 57 native cases and 33 balance accounting cases pass. Source-review
+regressions now reach 61 native cases: 57 pass and four new cases fail. Rotated
+victims move 6 m/s along the nose instead of sideways; airborne Caltrops damage
+a ground car while their native anchor and visible spikes stay about 10 m high.
+Existing assertions, fixtures and replay pins are unchanged. Broad gates remain.
 
 The independent reviewer approved four narrow fixture corrections and
 reproduced their native witnesses before those edits:

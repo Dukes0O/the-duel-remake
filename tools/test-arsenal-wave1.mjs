@@ -519,5 +519,63 @@ check('native rendering reuses bounded pools, draws both products and leaves sim
     assert.ok(visibleProjectile, 'native scene draws the real Harpoon flight product'); assert.ok(visibleStrip, 'native scene draws the real Caltrops strip');
   } finally {scene.dispose();}
 });
+// Source review: check the actual displacement in the rotated victim's frame,
+// not only the existing ring-relative scalar impulse at the hit event.
+for (const turn of [Math.PI / 2, -Math.PI / 2])
+  check('Harpoon native world yank is sideways for victim heading ' + turn, () => {
+    const duel = race({arena: true}), target = duel.state.rival;
+    place(target, 131, 2, turn);
+    const armor = target.armor;
+    assert.equal(duel.fireWeapon('harpoon'), true, 'genuine arena launch succeeds');
+    for (let i = 0; i < 180 && !carEffect(target, 'tether'); i++) stepProjectiles(duel, DT);
+    assert.ok(carEffect(target, 'tether'), 'native swept projectile hits the rotated live body');
+    near(armor - target.armor, 6, 'real hit removes the authored armor');
+    const before = point(duel, target), shooter = point(duel, duel.state);
+    const heading = before.heading + target.headingError;
+    const expectedSide = Math.sign((shooter.x - before.x) * Math.cos(heading) -
+      (shooter.z - before.z) * Math.sin(heading)) * 6;
+    assert.equal(Math.abs(expectedSide), 6, 'shooter has a definite side in the victim frame');
+    pilotStep(duel, target, {x: before.x + Math.sin(heading) * 20,
+      z: before.z + Math.cos(heading) * 20, speedMph: 0, boost: false}, DT);
+    const after = point(duel, target), vx = (after.x - before.x) / DT, vz = (after.z - before.z) / DT;
+    const sideways = vx * Math.cos(heading) - vz * Math.sin(heading);
+    const forward = vx * Math.sin(heading) + vz * Math.cos(heading);
+    assert.ok(Math.abs(sideways - expectedSide) < .02 && Math.abs(forward) < .02,
+      'actual first-step yank: sideways ' + sideways + ' m/s versus ' + expectedSide +
+      ', forward ' + forward + ' m/s versus zero');
+  });
+function airborneCaltrops() {
+  const duel = race(), owner = duel.state, target = duel.state.rival;
+  Object.assign(owner, {airHeight: 10, prevAirHeight: 10, airborne: true});
+  assert.equal(duel.fireWeapon('caltrops'), true, 'genuine airborne deployment succeeds');
+  const strip = hazardsFor(duel).find(h => h.kind === 'caltrops'); assert.ok(strip);
+  const at = duel.course.nearest(strip.x, strip.z, owner.s);
+  const ground = duel.course.groundAt(at.s, at.lateral);
+  place(target, at.s, at.lateral); const armor = target.armor;
+  stepHazards(duel, DT);
+  near(armor - target.armor, 4, 'ground car receives the actual strip contact');
+  near(carGrip(target), .75, 'ground contact applies the settled grip loss');
+  return {duel, strip, at, ground};
+}
+check('airborne Caltrops native anchor follows terrain at its rear deployment position', () => {
+  const {duel, strip, at} = airborneCaltrops();
+  near(strip.y, point(duel, {s: at.s, lateral: at.lateral, airHeight: 0}).y,
+    'native strip anchor excludes the deployer flight height and samples the rear terrain');
+});
+check('airborne Caltrops visible spikes sit on the same terrain as their contact', () => {
+  const {duel, strip, ground} = airborneCaltrops(), scene = createCombatScene();
+  try {
+    scene.update(duel); const bases = [];
+    scene.group.traverse(node => {
+      if (!node.isInstancedMesh || !node.visible) return;
+      for (let parent = node.parent; parent; parent = parent.parent) if (!parent.visible) return;
+      node.updateWorldMatrix(true, false); const m = node.matrixWorld.elements;
+      if (Math.hypot(m[12] - strip.x, m[14] - strip.z) < .1) bases.push(m[13]);
+    });
+    assert.equal(bases.length, 1, 'the native scene presents one actual spike strip');
+    assert.ok(Math.abs(bases[0] - ground.y) < .05,
+      'visible spike base is ' + (bases[0] - ground.y) + ' m above its contacted terrain');
+  } finally {scene.dispose();}
+});
 console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; settled owner-grace and hard-away boundaries included.');
 if (failures.length) {console.error(failures.join('\n')); process.exitCode = 1;}
