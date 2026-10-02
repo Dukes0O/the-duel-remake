@@ -590,7 +590,7 @@ tasks:
     owner: codex
     lane: OPS
     size: L
-    needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE]
+    needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE, ARS-CORE, ARENA-WRECK-RATE, ARENA-06]
     status: ready
     acceptance:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
@@ -703,15 +703,17 @@ tasks:
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
     source_commit: "c0ca0e265433742c324e0a63443ba6f9db37e6c4"
     guard_test_commit: "5e986cf"
-    review_commit: "bf2eccab2126b6b001f80d2cc3e6c099241255bc"
+    review_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
     claude_answer: "1 October 2026, afternoon (answered by Claude so Kyle need not): do not turn on Windows file-link permissions or change any system setting. Close the gap simply: each export run writes only into a new, empty folder it creates under .qa-dist, opens every output file as create-new (fail if anything already exists at that path), and copies into the lane only after the run. A pre-existing file or link then stops the run. That is enough for a game on one laptop; no further hardlink or link test matrix. Resume Source review and the in-game comparison."
-    note: "All ten current-control game pictures pass and the critic clears the costume. Build passes, but the lane gate fails only the unregistered recipe in Tanker's exclusive placement file. The comparison is ready for Claude; merge remains held."
+    note: "The visible twelve-fighter comparison meets the paired frame limit at both qualities, and all native cases pass. Independent review approved updating the stale preservation baseline to the already-merged integration tree, with every original assertion retained. Claude still reviews the costume; shared recipe registration keeps the whole-card gate held."
     qa_commit: "4044431d36f1eec2bbf59f01e361fac75dc3442a"
     round_1_sheet: ".lanes/vesper/docs/board/looks/vesper/round-1.jpg"
     waiting_on: claude
     hook_requests: [tools/test-blender-output.mjs]
     round_2_sheet: ".lanes/vesper/docs/board/looks/vesper/round-2.jpg"
     lane_gate_commit: "3fe32b91137a8c1816b022567ca07f78162a4fcb"
+    frame_qa_commit: "1b8e337d48d9135c6d96063577c89bf6c32e5ef7"
+
   - id: ART-FIT-HANDS
     title: "First-person hands, gloves and sleeves from the picked source"
     owner: codex
@@ -814,10 +816,12 @@ tasks:
     placement_test_commit: "1c366f4ac3a92edea3eef7d254a49bc1bee54713"
     planning_source_commit: "86d0d6dbe83f272980826c1b8eff57e98a5b38d8"
     claude_review_round_2: "1 October 2026, afternoon: clear progress (scale, light tank against dark cab, seated valves), still below the bar, so round 3 is the final round. 1) Valves read as dark pipe holes, not targets: cap the open pipe ports in the tank colour so no black holes show, and make each valve the brightest thing on its side: a red handwheel about 0.6 m across facing out, on a red-painted band around the tank at that valve. 2) Boarding plate reads as a yellow grille: make it a plain dark steel plate with a black and yellow diagonal stripe border only. Replace the two small lamp tips with two amber beacon lamps about 0.4 m tall on short posts at the plate's front corners; off is dull dark amber glass, on is bright. 3) Rear bumper: full-width black and yellow diagonal stripes that read from behind. 4) Cab: break the flat olive with rust patches, grime toward the bottom and a welded scrap plate over the lower windscreen, keeping it darker than the tank. 5) Add one view from the normal chase camera behind a car 30 m back so readability is judged from where the player sees it. After round 3 the better of rounds 2 and 3 goes to Kyle with Claude's pick; there is no round 4."
-    note: "The final round passes native fitting and twenty actual game captures. The critic prefers it but the roof center still has stripes and the look stays below the bar; Claude chooses the better final sheet for Kyle."
+    note: "The final native checks and actual game views pass, with measured chase frame pacing unchanged at both qualities. CPU noise and small camera settling remain explicit advisory limits, separate from the real frame-time budget. The look remains below the bar, so Claude chooses the better final sheet for Kyle."
     final_comparison: ".lanes/convoy-tanker/docs/board/looks/convoy-tanker/round-3.jpg"
     final_verdict: "All twenty actual-game views and native checks pass. The critic prefers round three but it stays below the art bar; the roof center still has stripes. Please choose the better round for Kyle; no fourth fitting round or installation is cleared."
-    source_review: "Independent final Source review finds no new defect; donor lineage, dimensions, glass-only lighting, state purity and disposal remain sound. The roof appearance gap, missing frame measurement and final merge gate remain explicit."
+    source_review: "Independent final Source review remains clear. The reviewed private frame recipe preserves all samples and separates actual frame pacing from its stricter CPU diagnostic. The capped look gap and final whole-card gates remain pending."
+    frame_qa_commit: "6e6f0718278c3348ba4964b216660958f09c5b32"
+
   - id: SAVE-DAMAGED-FIELDS
     title: "Damaged numeric profile fields cannot replace a named player with defaults"
     owner: codex
@@ -1025,7 +1029,7 @@ tasks:
     owner: codex
     lane: CMB
     size: S
-    needs: [ARENA-03]
+    needs: [ARENA-03, ARS-CORE, ARENA-WRECK-RATE]
     status: ready
     flag: scrapdome
     owns: [src/arena/modes/bounty-hunt.js, tools/test-arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
@@ -1132,7 +1136,7 @@ tasks:
     owner: codex
     lane: CMB
     size: M
-    needs: [WAR-02a-SAL]
+    needs: [WAR-02a-SAL, ARS-CORE, ARENA-WRECK-RATE]
     status: ready
     flag: scrapdome
     owns: [src/arena/moves/kettle-drop.js, tools/test-warlord-kettle.mjs, docs/changes/WAR-03b.md]
@@ -1905,7 +1909,7 @@ tasks:
     status: building
     note: "Renderer ghost lifecycle finding merged as 10645f2; 147-suite merge gate, build, private High/Performance smoke and focused ghost-lifecycle browser scenario pass. Discovery continues."
     spec: "SPEC.md, task DISC"
-    janitor_follow_up: "1 October end sweep:1179tracked files,259431085B before final metadata,259436173B after operational facts; runtime236249990B unchanged. Removed10consumed gatefiles993386B across3passing checkpoint folders afterverdictcommit. Retain48literal asset candidates/26advisoryexports; no unusedmodule/removedtestproved. CLEAN-11 carries dynamic-reference proof; private destination child-alias guard proof belongs to explicit card ownership, no guessing or deleting currentlicensed/runtimeassets. Five cleanunmergedlanes retained andthreeprotectedaudio refs inspection skipped."
+    janitor_follow_up: "The resumed audit confirms all twenty-five flagged exports are used inside their modules. No unused module, removed-behavior test or safe asset deletion is proved; CLEAN-11 retains the dynamic-asset and future dirt-texture questions. Preserve the five unmerged lanes, licensed and current assets, and skip the three protected audio references."
     private_output_follow_up: "Claude approved fresh output folders and create-new files for Vesper. No additional alias matrix or system change is needed; the fitting card carries the small export fix."
   - id: RFX-01
     title: "Split main UI into screens"
@@ -2563,7 +2567,7 @@ tasks:
     flag: none
     behavior_change: no
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
-    note: "Current scoped sweep reports48 asset candidates after seven obsolete audio-source candidates were removed by the audio lane. The remaining47 have dynamic runtime, source/license/provenance, reference or QA consumers; scrapyard-dirt retains documented future arena use but no current runtime load. All16 export candidates are internally used. No deletion is proven safe. Remaining scope is to resolve the dirt asset when arena work settles its use and improve reporting of known dynamic consumers if useful. Rustwall legacy generator still has concrete test consumers and must be migrated deliberately by its art owner before removal."
+    note: "The current audit flags forty-eight assets; forty-seven retain dynamic runtime, source, rights, reference or QA uses, while the old dirt texture retains documented future arena use. All twenty-five flagged exports are used inside their modules, so no deletion is proved safe. Keep the dirt decision and dynamic reporting scope here; the legacy Rustwall generator still has test consumers and needs deliberate migration by its art owner."
 
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"

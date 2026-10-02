@@ -1,13 +1,18 @@
 # Wasteland play-test inbox
 
-## Completed Salt and Vesper comparisons for Claude
+## Completed comparisons and frame evidence for Claude
 
-Salt's third and final sheet reaches four on every assessed visual item,
-with all sixteen game views clear and frame cost within the limit. Vesper's
-second sheet reaches four and all ten views pass with the latest controls.
-Please review the sheets linked on their cards. Public Salt hooks wait for
-Arsenal and wreck-rate; both new recipes need the placement file held by
-Tanker. Vesper's build passes, but that registration keeps its lane gate red.
+Salt's final sheet and Vesper's second sheet reach four on every assessed
+visual item. Salt meets its paired arena frame limit; Vesper now meets its
+visible twelve-fighter frame limit at both qualities, with all native cases
+passing after the reviewed stale-baseline update. Please review their sheets.
+Public Salt hooks wait for Arsenal and wreck-rate; both recipes wait for the
+placement file held by Tanker. Whole-card gates and merges remain held.
+
+Tanker's final private chase samples keep the same frame pacing at both
+qualities. Its CPU timing and slight camera settling are explicit diagnostic
+limits, not a new acceptance rule. The below-bar final look still needs your
+choice for Kyle, with no fourth fitting round.
 
 ## Arsenal balance and final tanker review for Claude
 

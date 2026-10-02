@@ -723,29 +723,39 @@ The answered overnight handoff is consumed. Current directions and questions liv
 
 Janitor: removed Shove's merged lane and about 174 MB of used evidence, folded 184 lines of answered inbox questions and the old overnight handoff. Audit proves no unused module or removed-feature test; 48 asset and 25 export candidates remain uncertain under DISC. Public assets remain 236,249,990 bytes before and after; Wasteland models remain 78,998,200 bytes against the 60 MB target because the current assets are still required. All unmerged lanes and the three protected audio references remain.
 
-## Director, 1 October afternoon: handoff
+## Director, 1 October: continued run
 
-Shove is merged after its green lane/build floor and independent review.
-Salt's final sheet and Vesper's second sheet reach four on every assessed
-visual item. Their private native checks and actual game views pass; Salt
-also meets paired frame limits. Both await Claude. Public Salt hooks and
-Tanker-owned placement registration keep the art cards unmerged; Vesper's
-required floor has one placement failure and its build passes.
+The prior exact integration checkpoint b9ea10d passed all 318 full suites in
+702.51 seconds, built and pushed normally to the approved branch. Its
+ledger is retained with this metadata; that pass does not cover a later commit.
 
-Arsenal's Medium win rate and wreck-rate armor await the written questions
-in the inbox. Tanker is capped: Claude chooses the better final sheet for
-Kyle; frame and merge gates are still required. Keep all five unmerged lanes.
-Ready Bounty Hunt, Kettle and switch retirement wait for their recorded files.
+Finished and independently reviewed the two missing art frame recipes in their
+existing lanes. Vesper's corrected visible twelve-fighter run retains all 1,080
+intervals and meets the paired limit in both qualities. Its old source baseline
+predated reviewed integration work; updating the fixed pin preserves every
+original assertion, with all 21 native cases passing. The first obscured
+pause-screen fixture remains recorded separately. Tanker retains all 3,600
+samples and unchanged chase pacing; CPU noise and slight camera settling remain
+advisory limits, with its capped look still awaiting Claude's choice for Kyle.
+No runtime, model, replay or game-rule change merged in this continued run.
 
-Janitor: consumed the September 24 logs outside the seven-day window; their
-cleanup, storage, push and branch decisions already live in SPEC 0.7-0.9,
-AGENTS and current operations. Earlier Shove cleanup freed about 174 MB.
-The final audit proves no unused module or removed-feature test; 48 asset
-and 25 export candidates stay with DISC. Public assets stay 236,249,990 bytes
-before and after; required Wasteland models stay above their advisory target.
-Protected audio references, licensed files and current assets remain intact.
+The board now represents the three existing shared-file waits as dependencies.
+All twenty-five export candidates are used internally; the asset questions
+remain with CLEAN-11. No feature card is free until the recorded answers and
+file owners finish. The two rule questions remain at the top of the inbox.
 
-The exact clean integration full tier and build follow this metadata commit;
-the runner's ledger records the result. Push the passing commit to the already
-approved repository and branch. Status generation after the pass is an
-observation on disk, not a later commit that inherits the earlier test pass.
+Janitor: public assets stay 236,249,990 bytes before and after; all five
+unmerged lanes, licensed sources and current game assets remain. The three
+protected audio references were skipped. The sweep proves no unused module,
+removed-behavior test or safe asset deletion. The four consumed prior checkpoint
+files total 401,007 bytes and can be deleted after this verdict is committed.
+Current review evidence stays for Claude; no forced removal or history rewrite.
+
+## Director, 1 October: handoff
+
+Vesper and Tanker frame recipes are finished in their clean lanes. Claude still
+needs to answer the Arsenal loadout and Sal armor questions, review Salt and
+Vesper, and choose Tanker's final sheet for Kyle. Shared-file dependencies
+remain explicit. The final clean full tier and build follow this metadata
+commit; their ledger records the result. Push only after that full pass, then
+leave the generated status observation on disk without a later untested commit.
