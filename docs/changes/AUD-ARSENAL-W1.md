@@ -60,10 +60,14 @@ AudioQA at 3813a74 reached the genuine native/ABC checks but stopped on the
 unchanged full-throttle assertion before writing WAVs: real App loading blocks
 input until the renderer presents the new campaign. The recipe now waits at
 most 15 seconds per cycle for actual visualReady on that same state/course,
-then stops, places the fixtures and restarts the measured clock and real App.
+then stops and places the fixtures. After changing countdown to racing, it
+runs the actual presentation and waits for real readiness and car context
+before dispatching native W keydown and restarting the measured clock/App.
+This avoids a presentation context transition clearing a prematurely held key.
 It never forces readiness or input. A failed throttle check reports its first
-bad frame. All cue-count, variation, voice-bound and purity assertions remain.
-This readiness fix is unrun. Recognition, onset, stereo placement, mixed peaks,
+bad frame with readiness, status, pause, actual context, held key, matching
+gate and native control-lock diagnostics. All prior assertions remain exact.
+This readiness/context fix is unrun. Recognition, onset, stereo placement, mixed peaks,
 pause cleanup and human listening still need AudioQA; no ratings are invented.
 No broad gate, build or protected-audio job ran for these fixes.
 

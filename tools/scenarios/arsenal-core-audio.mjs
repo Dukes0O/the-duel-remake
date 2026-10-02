@@ -49,8 +49,17 @@ async function capture(quality, side) {
       invulnerableSec: 0, traffic: []});
     state.combat.aiTimer = state.combat.pickupTimer = Infinity;
     place(state, 500, 0, 100); place(state.rival, 1000);
-    app.keys.KeyW = true; app.autopilot = false; app._scriptedCrashDone = true;
-    audio.setPaused(false);
+    app.autopilot = false; app._scriptedCrashDone = true;
+    // Resolve the actual racing presentation/input context before holding W.
+    // A context transition may legitimately clear the keys and neutralize input.
+    original.frame?.(state);
+    const inputDeadline = performance.now() + 5000;
+    while (!app.visualReady || app.activeInputContext() !== 'car' ||
+        app.duel.state !== state || app.duel.course !== course) {
+      if (performance.now() >= inputDeadline) throw Error('Actual racing car context timed out.');
+      await sleep(16); original.frame?.(state);
+    }
+    window.dispatchEvent(new KeyboardEvent('keydown', {code: 'KeyW', key: 'w', bubbles: true}));
   }
   const worklet = `class Meter extends AudioWorkletProcessor {
     constructor(){super();this.pcm=new Float32Array(4096);this.at=0;this.first=0;}
@@ -119,8 +128,13 @@ async function capture(quality, side) {
     original.frame?.(st);
     if (!measuring) return;
     const elapsed = ctx.currentTime - cycleBegan;
+    const gate = app._visualReadiness;
     frames.push({cycle, time: ctx.currentTime - began, cycleTime: elapsed,
-      throttle: st.input.throttle, revs: st.revs, speedMph: st.speedMph});
+      throttle: st.input.throttle, revs: st.revs, speedMph: st.speedMph,
+      visualReady: app.visualReady, status: st.status, paused: !!st.paused,
+      activeInputContext: app.activeInputContext(), keyHeld: !!app.keys.KeyW,
+      matchingReadinessGate: !gate || gate.state === st && gate.course === app.duel.course,
+      controlLock: !!st.hiddenRoadJourney?.controlsLocked});
     if (!deployed && elapsed >= .7) {
       deployed = true;
       if (!app.duel.fireWeapon('oil')) throw Error('Genuine Oil launch failed.');
@@ -146,6 +160,7 @@ async function capture(quality, side) {
       oil = null; deployed = touched = smoked = false;
       await startCycle(); cycleBegan = ctx.currentTime; measuring = true;
       app.start(); await sleep(3900); app.stop(); measuring = false;
+      window.dispatchEvent(new KeyboardEvent('keyup', {code: 'KeyW', key: 'w', bubbles: true}));
       for (const id of ids) {
         if (native.filter(event => event.id === id && event.cycle === cycle).length !== 1 ||
             cues.filter(event => event.id === id && event.cycle === cycle && event.started).length !== 1)
@@ -168,7 +183,9 @@ async function capture(quality, side) {
       mixerVoices: [...audio.mixer.voices.values()].reduce((sum, set) => sum + set.size, 0)};
     if (cleanup.activeShots || cleanup.mixerVoices) throw Error('Pause did not clear actual cue voices.');
   } finally {
-    app.stop(); app.keys.KeyW = false; audio.event = original.event;
+    app.stop();
+    window.dispatchEvent(new KeyboardEvent('keyup', {code: 'KeyW', key: 'w', bubbles: true}));
+    audio.event = original.event;
     audio._playCue = original.play; audio._cueBuffer = original.buffer;
     audio._spatialOutput = original.space; app.onFrame = original.frame;
     for (const track of Object.values(tracks)) track.stop();
