@@ -102,7 +102,7 @@ function equipArsenalPolicy(app, policy) {
   }
   // Historical policies still request their original weapons. Rear weapons
   // occupy unused slots; all/pursuit retain all four original starter slots.
-  const selected = policy === 'none' ? 'crossbow' : policy === 'ufo-max' ? 'ufo' : policy;
+  const selected = ['none', 'rear-defense'].includes(policy) ? 'crossbow' : policy === 'ufo-max' ? 'ufo' : policy;
   const loadout = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
     ['oil', 'smoke', selected, selected === 'star' ? 'crossbow' : 'star'];
   for (const [slot, id] of loadout.entries()) {
@@ -172,15 +172,37 @@ function eligibleWeapons(policy, duel) {
   const { state } = duel;
   if (state.status !== 'racing' || !state.combat || !state.rival) return [];
   const gap = duel.relativeS(state.rival.s, state.s) - state.s;
-  const keys = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] : [policy === 'ufo-max' ? 'ufo' : policy];
+  const keys = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
+    [policy === 'ufo-max' ? 'ufo' : policy === 'rear-defense' ? 'crossbow' : policy];
   return keys.filter(key => state.combat.cooldowns[key] <= 0 &&
     (key !== 'crossbow' || gap >= 0 && gap <= 120) &&
     (key !== 'star' || state.combat.shield <= 0));
 }
 
+function driveRearDefense(app) {
+  const drive = app._driveAutopilot.bind(app);
+  app._driveAutopilot = dt => {
+    drive(dt);
+    const duel = app.duel, state = duel.state;
+    if (state.status === 'countdown') {
+      duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+      return;
+    }
+    if (state.status !== 'racing' || state.impactTimer > 0 ||
+        !state.rival || state.rival.finished) return;
+    const gap = duel.relativeS(state.rival.s, state.s) - state.s;
+    const targetSpeed = Math.max(15, state.rival.speedMph +
+      Math.max(-45, Math.min(35, (gap - 18) * .4)));
+    // Keep App steering and native physics. Following within rear-weapon
+    // range and firing real bolts lets the CPU's own scheduler choose defense.
+    duel.setInput({throttle: state.speedMph < targetSpeed ? 1 : 0,
+      brake: state.speedMph > targetSpeed + 3 ? .45 : 0, boost: false});
+  };
+}
+
 export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames = 30 * 600 } = {}) {
   flags = selectedFlags(flags);
-  if (!(policies.includes(policy) || policy === 'pursuit') || !difficulties.includes(cpuDifficulty) ||
+  if (!(policies.includes(policy) || ['pursuit', 'rear-defense'].includes(policy)) || !difficulties.includes(cpuDifficulty) ||
       !Number.isSafeInteger(seed) || !Number.isSafeInteger(maxFrames) || maxFrames < 0)
     throw Error('Invalid race policy, difficulty, seed or frame limit.');
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
@@ -215,6 +237,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
           brake: state.speedMph > targetSpeed + 3 ? .45 : 0, boost: false});
       };
     }
+    if (policy === 'rear-defense') driveRearDefense(app);
     const duel = app.duel;
     if (policy === 'ufo-max' && !flags.includes('arsenal')) {
       duel.state.combat.levels.ufo = 3;
@@ -348,7 +371,7 @@ export function bombSpeedProbe({ flags = [] } = {}) {
 }
 
 export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, elapsedSec,
-  crossbowAim, ownBombs }) {
+  crossbowAim, ownBombs, rearDefenseRuns = [] }) {
   flags = selectedFlags(flags);
   const by = (policy, difficulty) => runs.find(run => run.policy === policy && run.cpuDifficulty === difficulty);
   const baselineWins = Object.fromEntries(difficulties.map(difficulty => {
@@ -392,7 +415,7 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
       cpuHits: rows.some(row => row.cpuHits == null) ? null : rows.reduce((sum, row) => sum + row.cpuHits, 0),
       unattributedEnemyHits: rows.reduce((sum, row) => sum + row.unattributedEnemyHits, 0) }];
   }));
-  return { flags, policyRuns: runs.length,
+  const report = { flags, policyRuns: runs.length,
     baselineRaces: Object.values(baselineWins).reduce((sum, row) => sum + row.races, 0),
     sampleScope: {
       winRateByDifficulty: 'No-weapon policy, thirty seeds 1989-2018 per difficulty; seed 1989 reused from policy runs.',
@@ -412,6 +435,12 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
     crossbowAim: { shots: crossbowAim.shots, hits: crossbowAim.hits, hitRate: crossbowAim.hitRate },
     ownBombs: { maxSpeedLossPct: ownBombs.maxSpeedLossPct },
     cpuHitsByDifficulty };
+  if (rearDefenseRuns.length) report.rearDefense = {
+    scope: 'Separate supplemental rear-defense races with natural CPU loadouts, legal driving and native Crossbow damage; excluded from every historical sample and target.',
+    races: rearDefenseRuns,
+    weaponUses: sumWeaponUses(rearDefenseRuns),
+  };
+  return report;
 }
 
 export function reportFailures(report, runs, baselineRuns) {
@@ -433,8 +462,12 @@ export function reportFailures(report, runs, baselineRuns) {
       failures.push(`${difficulty} CPU hits ${cpuHitsByDifficulty[difficulty]} is outside ${low}–${high}`);
     }
   }
+  const rearDefenseRuns = report.rearDefense?.races || [];
+  if (rearDefenseRuns.some(race => !race.completed)) failures.push('one or more rear-defense supplemental races did not complete');
+  const measuredUses = sumWeaponUses([{weaponUses: report.weaponUses},
+    ...rearDefenseRuns.filter(race => race.completed)]);
   if (report.flags.includes('arsenal')) for (const weapon of ['oil', 'smoke', 'harpoon', 'caltrops']) {
-    if (!(report.weaponUses?.cpu?.[weapon] > 0)) failures.push('CPU ' + weapon + ' has no measured native use');
+    if (!(measuredUses.cpu[weapon] > 0)) failures.push('CPU ' + weapon + ' has no measured native use');
   }
   return failures;
 }
@@ -470,7 +503,9 @@ function main(args) {
     .map(seed => run('none', difficulty, seed, options)));
   const crossbowAim = crossbowProbe(options);
   const ownBombs = bombSpeedProbe(options);
-  const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec,
+  const rearDefenseRuns = flags.includes('arsenal')
+    ? [1991, 1992].map(seed => run('rear-defense', 'medium', seed, options)) : [];
+  const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec, rearDefenseRuns,
     elapsedSec: rounded((performance.now() - started) / 1000), crossbowAim, ownBombs });
   const pursuitRuns = flags.includes('wasteland2')
     ? difficulties.map(difficulty => run('pursuit', difficulty, 1989, options)) : [];
