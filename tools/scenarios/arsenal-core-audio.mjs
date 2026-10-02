@@ -197,16 +197,29 @@ async function capture(quality, side) {
     for (const chunk of chunks) {pcm.set(chunk.pcm, at); at += chunk.pcm.length;}
     const bytes = new Uint8Array(pcm.buffer); let binary = '';
     for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
-    return {pcmBase64: btoa(binary), frames: pcm.length / 2,
+    const gap = chunks.findIndex((chunk, i) => i > 0 && chunk.frame !== chunks[i - 1].frame + 2048);
+    return {pcmBase64: btoa(binary), frames: pcm.length / 2, chunkCount: chunks.length,
+      firstFrame: chunks[0]?.frame ?? null, lastFrame: chunks.at(-1)?.frame ?? null,
+      firstGap: gap < 0 ? null : {chunk: gap, previousFrame: chunks[gap - 1].frame,
+        expectedFrame: chunks[gap - 1].frame + 2048, actualFrame: chunks[gap].frame},
       audioStartSec: (chunks[0]?.frame ?? 0) / ctx.sampleRate - began,
       contiguous: chunks.every((chunk, i) => !i || chunk.frame === chunks[i - 1].frame + 2048)};
   }
   return {quality, side, sampleRate: ctx.sampleRate, channels: 2, nativeContext: ctx instanceof AudioContext,
-    native, cues, frames, cleanup, memoryOnlySaves: true,
+    native, cues, frames, cleanup, contextStateAtStop: ctx.state,
+    captureBeganAudioSec: began, captureEndedAudioSec: ctx.currentTime, memoryOnlySaves: true,
     tracks: Object.fromEntries(Object.entries(tracks).map(([key, track]) => [key, encode(track.chunks)]))};
 }
 export async function run(context) {
   const rows = [];
+  async function persist(status, quality) {
+    // Preserve native events, input frames and diagnostic headers before any
+    // file validation. Never serialize large Float32/base64 payloads to JSON.
+    const metadata = rows.map(row => ({...row, tracks: Object.fromEntries(
+      Object.entries(row.tracks).map(([kind, {pcmBase64, ...track}]) => [kind, track]))}));
+    await writeFile(join(context.outputDir, 'capture.json'), JSON.stringify({status, quality, rows: metadata,
+      limitations: ['Human listening and cue recognition remain unmeasured', 'No release or live save access']}, null, 2) + '\n');
+  }
   for (const [quality, side] of [['high', -1], ['performance', 1]]) {
     await context.navigate('/tools/menu-check.html?flags=arsenal');
     await context.waitFor("!!window.__qaApp && !!window.__render && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
@@ -214,8 +227,18 @@ export async function run(context) {
     await context.evaluate(`(() => {const select=document.querySelector('#graphics-quality');
       select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
     const row = await context.evaluate('(' + capture.toString() + ')(' + JSON.stringify(quality) + ',' + side + ')');
+    row.validationStatus = 'partial'; rows.push(row);
+    await persist('validating', quality);
     for (const [kind, track] of Object.entries(row.tracks)) {
-      if (!track.contiguous || !track.frames) throw Error('Incomplete native ' + kind + ' recording.');
+      if (!track.contiguous || !track.frames) {
+        const diagnostic = {quality, kind, frames: track.frames, chunkCount: track.chunkCount,
+          audioStartSec: track.audioStartSec, firstFrame: track.firstFrame,
+          lastFrame: track.lastFrame, contiguous: track.contiguous, firstGap: track.firstGap};
+        row.validationStatus = 'failed'; row.failure = diagnostic;
+        await persist('failed', quality);
+        console.error('Native recording diagnostic: ' + JSON.stringify(diagnostic));
+        throw Error('Incomplete native ' + kind + ' recording. ' + JSON.stringify(diagnostic));
+      }
       const raw = Buffer.from(track.pcmBase64, 'base64');
       const wav = ffmpeg(['-f', 'f32le', '-ar', String(row.sampleRate), '-ac', '2', '-i', 'pipe:0',
         '-c:a', 'pcm_f32le', '-f', 'wav', 'pipe:1'], {input: raw});
@@ -227,10 +250,9 @@ export async function run(context) {
       track.samplePeakDbfs = 20 * Math.log10(Math.max(1e-12, peak));
       delete track.pcmBase64;
     }
-    rows.push(row);
+    row.validationStatus = 'complete'; await persist('capturing', quality);
     await context.screenshot('arsenal-native-audio-' + quality);
   }
-  await writeFile(join(context.outputDir, 'capture.json'), JSON.stringify({rows,
-    limitations: ['Human listening and cue recognition remain unmeasured', 'No release or live save access']}, null, 2) + '\n');
+  await persist('complete', null);
   console.log('Arsenal core native audio: two qualities, nine genuine cue events each, ABC repeats and full-throttle output captured.');
 }

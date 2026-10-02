@@ -67,9 +67,17 @@ This avoids a presentation context transition clearing a prematurely held key.
 It never forces readiness or input. A failed throttle check reports its first
 bad frame with readiness, status, pause, actual context, held key, matching
 gate and native control-lock diagnostics. All prior assertions remain exact.
-This readiness/context fix is unrun. Recognition, onset, stereo placement, mixed peaks,
-pause cleanup and human listening still need AudioQA; no ratings are invented.
-No broad gate, build or protected-audio job ran for these fixes.
+AudioQA at 99a0e73 passed High native/ABC, full throttle, purity and cleanup:
+14.379 seconds of Float32 audio, -5.61 dBFS sample peak and -5.58 dBTP true
+peak, with no clipped samples or adjacent jumps above 0.5. Performance then
+failed the unchanged nonempty/contiguous mix guard before final metadata.
+Its cause is unproved. The recipe now persists each returned partial/completed
+row, native events and input frames before recording validation, without PCM
+or base64 in JSON. A failure retains the strict throw and prints sample count,
+start time, chunk count and first gap's previous/expected/actual frame numbers.
+This diagnostic change is unrun; Performance acceptance and human recognition
+remain open. No audio Source, assets, assertions or replay pins changed, and
+no broad gate, build or protected-audio job ran for these diagnostics.
 
 Automatic approval review rejected an optional preservation JSON as an
 unreviewed fingerprint baseline. It was never created or retried by this
