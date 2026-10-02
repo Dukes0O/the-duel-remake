@@ -14,7 +14,10 @@ Please add the settled Bounty routing in your owned arena-brains.js. Unmarked
 computers hunt the marked computer; a marked player keeps the current Easy
 and Medium hunter cap; the marked computer gets the kiter goal and existing
 rear weapons. Preserve reaction timing, pilot limits, other modes and Sal.
-Codex builds mode rules, entry, pay and HUD in free files after Salt merges.
+Codex has built mode rules, entry, pay, HUD and the roof beacon. Native checks
+now fail at exactly four routing cases: marked-player hunter counts are zero
+instead of one, two and three; an unmarked computer targets a different computer
+instead of the marked car. The focused admission, scoring and save checks pass.
 The native contract is arena.bountyHunt.markedId and participant.bountyPoints;
 the existing Bounty tests are in .lanes/arena-bounty. Codex will not edit any
 of the seven warlord files Kyle reserved.

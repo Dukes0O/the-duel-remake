@@ -1072,6 +1072,7 @@ tasks:
     size: S
     needs: [ARENA-03, ARS-CORE, ARENA-WRECK-RATE]
     status: building
+    waiting_on: claude
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arena-bounty
     flag: bounty-hunt
@@ -1093,6 +1094,8 @@ tasks:
     settled_test_commit: fe8e73b
     settled_test_fixture_commit: 0f80b31
     settled_test_review: "Independent review repairs the exact native tie fixture and distinguishes seeded order from participant order. Other settled handover, hunter-cap and Salt entry cases match the design; native Source admission remains incomplete."
+    native_source_commit: 4df945b
+    native_verdict: "Entry, points, handovers, pay, HUD and beacon are implemented. Focused admission and mechanics pass; four native routing failures await Claude, and the handover cue waits for Arsenal audio ownership. Full card gates and browser checks remain."
   - id: ARENA-05
     title: "Ambush Alley: hold the scrap fort on foot"
     owner: codex
