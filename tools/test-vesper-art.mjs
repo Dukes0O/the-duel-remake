@@ -10,7 +10,7 @@ import {createRiggedFighterFigures} from '../src/rigged-fighter.js';
 
 // Private artifact acceptance. No install, reveal, real storage or renderer-state writes.
 const root = fileURLToPath(new URL('../', import.meta.url));
-const BASE = '20999f952259b21301d4a8de661b25f4c8da548d';
+const BASE = 'b9ea10d66a8af0abf34dd73037cd5ddbf9d443c2';
 const SOURCE = 'public/assets/models/wasteland/crew/odessa.glb';
 const RECIPE = 'tools/blender/vesper-blackiron.py';
 const CONFIG = 'tools/art/vesper-fit.json';

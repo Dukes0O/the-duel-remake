@@ -51,7 +51,27 @@ cleanup preserve the whole Duel state. The independent critic scores every
 assessed visual item four: steel, cloth and the dark red harness now read.
 Source review is clear. After syncing the latest integration camera/arrow
 controls, all ten actual game captures pass again with the same candidate.
-Frame timing, motion feel, audio and phone layout remain unmeasured.
+The optional VESPER_MEASURE_FRAMES=1 recipe uses fresh Odessa/Vesper/Odessa
+pages per quality with twelve native near-detail figures, a stopped App,
+fixed Duel state and camera, ninety warm RAFs and all 180 measured intervals.
+The first run rendered behind a blurred native pause screen; its complete
+samples remain in frame-qa/game. One fixture correction keeps the stopped Duel
+unpaused, and the visible run retains all 1,080 intervals in frame-qa/visible-game.
+Every series averages 16.666 ms, P95 is 16.8 ms, maximum is 17 ms and none exceeds
+33 ms. Both qualities meet paired baseline +10%; control drift rounds to zero.
+All six pages preserve the complete Duel state, camera, 1280 by 800 rendering,
+DPR one and twelve near skins at 4,876 triangles each. Actual High totals are
+542 draws and 1,717,738 triangles; Performance is 324 and 1,049,378.
+Separate render CPU submission P95 is High 4.0 / 4.2 / 4.1 ms and Performance
+2.6 / 2.6 / 2.5 ms. CPU submission is not GPU time. There are no browser errors
+or failed requests, with one inherited duplicate-Three warning per fresh page.
+The unchanged native run exposed four old-baseline preservation failures.
+Independent review verified integration's nine reviewed source changes and
+Shove replay, and approved only the static BASE pin update to b9ea10d. Every
+original preservation assertion, source binding, donor hash and path inventory
+remains intact; source, public assets and replay bytes match integration exactly.
+All 21 original cases then pass with 105,041 checks. No signatures are regenerated.
+Motion feel, audio, moving gameplay and phone layout remain unmeasured.
 The existing Blender coverage guard is red because this new private recipe
 needs registration. Tanker owns that shared test file, so registration waits
 for its merge. The required lane floor on 3fe32b9 has 115 passes, one placement failure and

@@ -13,13 +13,130 @@ const candidateSha = '29a3873ae936dcd80ca6593d46537ce77cccda206a645e8948c06ea89a
 async function nativeBundle() {
   const entry = join(root, '.qa-dist/vesper-comparison.virtual.js').replaceAll('\\', '/');
   const module = join(root, 'src/rigged-fighter.js').replaceAll('\\', '/');
+  const diagnostics = join(root, 'src/phase-diagnostics.js').replaceAll('\\', '/');
   const result = await build({root, configFile: false, logLevel: 'silent', plugins: [{
     name: 'private-production-crew-pool',
     resolveId(id) {if (id.replaceAll('\\', '/') === entry) return '\0vesper-comparison';},
-    load(id) {if (id === '\0vesper-comparison') return `export {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'; export {createRiggedFighterFigures} from ${JSON.stringify(module)};`;},
+    load(id) {if (id === '\0vesper-comparison') return `export {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'; export {createRiggedFighterFigures} from ${JSON.stringify(module)}; export {createPhaseDiagnostics} from ${JSON.stringify(diagnostics)};`;},
   }], build: {write: false, minify: false,
     lib: {entry, name: 'VesperComparison', formats: ['iife']}}});
   return (Array.isArray(result) ? result[0] : result).output.find(row => row.type === 'chunk').code;
+}
+async function measureFrames(context, candidateBytes, assets, bundle) {
+  const report = {card: 'ART-FIT-CREW-W', mode: 'stationary twelve-fighter paired frame measurement',
+    observationCommit: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(),
+    fixture: 'Fresh Odessa/Vesper/Odessa actual App/Duel pages per quality; eleven staged raiders plus the local fighter, fixed near-detail poses, production renderer/world/camera. Only the fetched Odessa model bytes differ.',
+    clock: 'All 180 consecutive real requestAnimationFrame intervals, with the production renderer RAF active. CPU submission is separate, not GPU time.',
+    frames: [], comparisons: [], limits: ['Stationary worst-case presentation only; moving gameplay, motion feel and sound are not assessed.',
+      'Frame evidence does not approve the art, install Vesper, reveal her or clear the held shared Blender registration.']};
+  const persist = () => writeFile(join(context.outputDir, 'vesper-frames.json'), JSON.stringify(report, null, 2) + '\n');
+  const originalBytes = await readFile(join(root, assets.odessa.path));
+  let stateHash;
+  try {
+    for (const quality of ['high', 'performance']) {
+      for (const phase of ['odessa-a1', 'vesper-b', 'odessa-a2']) {
+        const bytes = phase === 'vesper-b' ? candidateBytes : originalBytes;
+        await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
+        await context.navigate('/tools/menu-check.html?flags=wasteland2&vesper-frames=' + quality + '-' + phase);
+        await context.waitFor('window.__qaApp?.visualReady && !!window.__render', quality + ' ' + phase + ' actual game ready', 60000);
+        await context.evaluate(bundle);
+        await context.evaluate(`(() => {
+          const app=window.__qaApp,view=window.__render;
+          if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:'))
+            throw Error('Memory-only Vesper measurement required');
+          app.stop();app.audio.setMuted(true);app.setGraphicsQuality('${quality}');
+          const originalFetch=window.fetch.bind(window),bytes=Uint8Array.from(atob(${JSON.stringify(bytes.toString('base64'))}),c=>c.charCodeAt(0));
+          window.__vesperFrames={originalFetch,substitutions:0};
+          window.fetch=(input,init)=>{
+            const url=new URL(typeof input==='string'?input:input?.url||String(input),location.href);
+            if(url.origin===location.origin&&url.pathname==='/assets/models/wasteland/crew/odessa.glb'){
+              window.__vesperFrames.substitutions++;
+              return Promise.resolve(new Response(bytes,{status:200,headers:{'Content-Type':'model/gltf-binary'}}));
+            }
+            return originalFetch(input,init);
+          };
+          app.duel.startCampaign({mode:'wasteland',car:'banshee_muscle',seed:1989,discoveredGate:true,crewId:'odessa'});
+          const state=app.duel.state;
+          Object.assign(state,{status:'racing',countdown:0,paused:false,s:500,prevS:500,speedMph:0,traffic:[],opponents:[],stageTimeSec:10});
+          state.raids=null;state.combat.aiTimer=state.combat.pickupTimer=Infinity;state.input.interact=true;
+          for(let i=0;i<50&&!state.onFoot;i++)app.duel.step(1/120);
+          if(!state.onFoot||state.fighter.crewId!=='odessa')throw Error('Actual production exit failed');
+          state.input.interact=false;state.fighter.presentation=null;state.fighterInput={};state.stageTimeSec=10;
+          const at=app.duel.course.groundAt(500,8);
+          const poses=Array.from({length:12},(_,i)=>{
+            const x=at.x+(i%4-1.5)*2.1,z=at.z+(Math.floor(i/4)-1)*2.3;
+            const nearest=app.duel.course.nearest(x,z,500),ground=app.duel.course.groundAt(nearest.s,nearest.lateral);
+            return {x,y:ground.y,z,s:nearest.s,lateral:nearest.lateral,yaw:0,groundY:ground.y,speed:0,crewId:'odessa'};
+          });
+          Object.assign(state.fighter,poses[11]);
+          state.raids={zones:[{warning:{x:at.x+10000,y:at.y,z:at.z,heading:0},salvage:null,raiders:poses.slice(0,11)}]};
+          app._footCameraMode='overhead';app.inspectionCamera={position:[at.x,at.y+6,at.z+16],target:[at.x,at.y+1,at.z]};
+          app.onFrame?.(state);view.renderFrame();
+          for(const panel of document.querySelectorAll('details'))panel.hidden=true;
+        })()`);
+        await context.waitFor(`(() => {
+          const app=window.__qaApp,view=window.__render;app.onFrame?.(app.duel.state);view.renderFrame();
+          const pool=view.scene.getObjectByName('Rigged on-foot fighters');
+          return app.visualReady&&pool?.userData.crews.odessa==='ready'&&document.querySelector('#renderer-loading')?.hidden;
+        })()`, quality + ' ' + phase + ' model and production warmup ready', 60000);
+        // Asset decoding, cloning and first program compilation happen before samples.
+        await context.evaluate('new Promise(done=>{let frames=0;function warm(){if(++frames<90)requestAnimationFrame(warm);else done(true);}requestAnimationFrame(warm);})');
+        const result = await context.evaluate(`new Promise((resolve,reject)=>{
+          const app=window.__qaApp,view=window.__render,q=window.__vesperFrames;
+          const before=JSON.stringify(app.duel.state),rows=[];let prior;
+          const diagnostics=app.frameDiagnostics=VesperComparison.createPhaseDiagnostics({capacity:180});
+          const visible=node=>{for(let p=node;p;p=p.parent)if(!p.visible)return false;return true;};
+          function witness(){
+            const pool=view.scene.getObjectByName('Rigged on-foot fighters'),figures=[];
+            for(const figure of pool.children){
+              if(!figure.userData.crewId||!visible(figure))continue;
+              const skins=[];figure.traverse(mesh=>{if(mesh.isSkinnedMesh&&visible(mesh))skins.push(mesh);});
+              const screen=figure.position.clone();screen.y+=1;screen.project(view.camera);
+              figures.push({detail:figure.userData.detail,clip:figure.userData.clip,skins:skins.length,
+                triangles:skins.reduce((sum,mesh)=>sum+(mesh.geometry.index?.count??mesh.geometry.attributes.position.count)/3,0),
+                inCamera:Math.abs(screen.x)<1&&Math.abs(screen.y)<1&&screen.z>=-1&&screen.z<=1});
+            }
+            if(figures.length!==12||figures.some(f=>f.detail!=='near'||f.skins!==1||!f.inCamera)||q.substitutions!==1||pool.userData.loadErrors.length)
+              throw Error('Actual twelve near-detail fighter fixture/load failed');
+            return {figures,draws:view.renderer.info.render.calls,triangles:view.renderer.info.render.triangles,
+              renderSize:{width:view.renderer.domElement.width,height:view.renderer.domElement.height,pixelRatio:view.renderer.getPixelRatio()},
+              quality:app.ambientOcclusionEnabled?'high':'performance',dpr:devicePixelRatio,substitutions:q.substitutions,
+              camera:{position:view.camera.position.toArray(),target:app.inspectionCamera.target},hidden:document.hidden};
+          }
+          const first=witness();
+          function next(now){try{
+            if(document.hidden)throw Error('Frame measurement page became hidden');
+            if(prior===undefined)diagnostics.start({afterTimestamp:now});else rows.push(now-prior);
+            prior=now;
+            if(rows.length<180)return requestAnimationFrame(next);
+            diagnostics.stop();const last=witness();
+            if(JSON.stringify(app.duel.state)!==before)throw Error('RAF rendering changed whole Duel state');
+            if(JSON.stringify(first)!==JSON.stringify(last))throw Error('Measured fixture/counters/resolution changed during sample');
+            resolve({intervalsMs:rows,cpu:diagnostics.summary(),...last,stateJson:before,stateUnchanged:true});
+          }catch(error){diagnostics.stop();reject(error);}}
+          requestAnimationFrame(next);
+        })`);
+        const actualHash = sha(Buffer.from(result.stateJson));
+        stateHash ??= actualHash;
+        assert.equal(actualHash, stateHash, 'Every paired page must use the same complete Duel state');
+        delete result.stateJson;
+        const sorted = [...result.intervalsMs].sort((a,b)=>a-b);
+        const frame = {quality,phase,modelSha256:sha(bytes),modelBytes:bytes.length,stateSha256:actualHash,...result,
+          samples:sorted.length,meanMs:result.intervalsMs.reduce((sum,v)=>sum+v,0)/sorted.length,
+          p50Ms:sorted[Math.ceil(sorted.length*.5)-1],p95Ms:sorted[Math.ceil(sorted.length*.95)-1],maxMs:sorted.at(-1),
+          over33Ms:result.intervalsMs.filter(value=>value>33).length};
+        report.frames.push(frame);await persist();
+        await context.screenshot('vesper-frames-' + quality + '-' + phase);
+      }
+      const [a1,b,a2]=report.frames.filter(row=>row.quality===quality);
+      const comparison={quality,baselineMeanDrift:Math.abs(a2.meanMs/a1.meanMs-1),baselineP95Drift:Math.abs(a2.p95Ms/a1.p95Ms-1),
+        candidateMeanRatio:b.meanMs/Math.min(a1.meanMs,a2.meanMs),candidateP95Ratio:b.p95Ms/Math.min(a1.p95Ms,a2.p95Ms)};
+      report.comparisons.push(comparison);await persist();
+      assert(comparison.baselineMeanDrift<=.10&&comparison.baselineP95Drift<=.10,quality+' baseline drifts beyond 10%; frame result inconclusive');
+      assert(comparison.candidateMeanRatio<=1.10&&comparison.candidateP95Ratio<=1.10,quality+' candidate exceeds paired baseline +10%');
+    }
+    report.passed=true;
+  }catch(error){report.passed=false;report.failure=error.stack;throw error;}finally{await persist();}
 }
 export async function run(context) {
   const candidate = resolve(process.env.VESPER_ART_ASSET || join(root, '.evidence/vesper-round2/candidate/vesper.glb'));
@@ -33,6 +150,7 @@ export async function run(context) {
   };
   assert.equal(assets.odessa.sha256, '364de3fd43de474eb4ef0fd12b859940f067549b02f2922b432d3a0c422170ca');
   const bundle = await nativeBundle();
+  if (process.env.VESPER_MEASURE_FRAMES === '1') return measureFrames(context, bytes, assets, bundle);
   const report = {card: 'ART-FIT-CREW-W', subject: 'Private Vesper costume fit',
     observationCommit: execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding: 'utf8'}).trim(),
     candidate: {path: candidate, sha256: candidateSha, bytes: bytes.length}, assets,
