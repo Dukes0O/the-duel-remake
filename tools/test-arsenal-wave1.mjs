@@ -716,5 +716,79 @@ check('opposing native Harpoon yank keeps a below-threshold solid-face contact h
   near(carAlongPush(target), along * .25, 'opposing road-forward push receives ordinary wall damping');
   near(target.pushVelocity, side * .25, 'existing road-side wall damping stays exact');
 });
+// Claude's 06:30 answer changes Medium's native Arsenal decisions only.
+// Stationary range fixtures run the real combat update, recharge, shot creation,
+// turn rotation and projectile motion; no forced decision or cooldown reset.
+import {stepCombat} from '../src/combat.js';
+function timedCpuField({difficulty = 'medium', enabled = true, discovered = true,
+  count = 1, retired = -1} = {}) {
+  const duel = new Duel({seed: SEED, featureFlags: flags(enabled)});
+  duel.startCampaign({mode: 'wasteland', discoveredGate: discovered, arsenalRank: 6,
+    seed: SEED, cpuDifficulty: difficulty, car: 'falcone_f42', opponentCount: count});
+  const state = duel.state, shots = [];
+  Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: Infinity, traffic: []});
+  place(state, 500);
+  state.opponents.forEach((actor, index) => {
+    place(actor, 400 + index * 5);
+    actor.weaponLoadout = normalizeCarLoadout(['crossbow', 'bomb', 'star', 'ufo'], WEAPON_IDS);
+    if (index === retired) actor.finished = true;
+  });
+  state.combat.aiTimer = null;
+  state.combat.pickupTimer = Infinity;
+  let ticks = 0;
+  duel.onChange((_, event) => {
+    if (event.weaponFired !== 'crossbow') return;
+    const shot = state.combat.projectiles.filter(projectile => projectile.enemy && projectile.kind === 'crossbow').at(-1);
+    assert.ok(shot, 'scheduled launch creates an actual native enemy projectile');
+    shots.push({time: ticks * DT, source: shot.sourceIndex ?? 0});
+  });
+  return {duel, shots, advanceTo(seconds) {
+    const last = Math.ceil(seconds / DT);
+    while (ticks < last) {ticks++; stepCombat(duel, DT);}
+  }};
+}
+function assertNativeInterval(options, interval) {
+  const field = timedCpuField(options);
+  field.advanceTo(interval - 2 * DT);
+  assert.equal(field.shots.length, 0, 'native schedule never launches before its first interval');
+  field.advanceTo(2 * interval + 4 * DT);
+  assert.equal(field.shots.length, 2,
+    'expected two native launches at ' + interval + ' and ' + 2 * interval +
+    ' s; actual launch times: ' + field.shots.map(shot => shot.time).join(', '));
+  field.shots.forEach((shot, index) => assert.ok(Math.abs(shot.time - (index + 1) * interval) <= 2 * DT,
+    'actual native launch at ' + shot.time + ' s must follow the ' + interval + ' s decision interval'));
+  assert.deepEqual(field.shots.map(shot => shot.source), [0, 0], 'the actual rival fires both launches');
+}
+check('Medium discovered Arsenal launches natively every 4.5 s', () => assertNativeInterval({}, 4.5));
+for (const [label, options] of [
+  ['switch off', {enabled: false}], ['gate unfound', {discovered: false}],
+]) check('Medium ' + label + ' keeps released native 7 s launches', () => assertNativeInterval(options, 7));
+for (const [difficulty, interval] of [['easy', 10], ['hard', 6]])
+  for (const [label, options] of [['Arsenal on', {}], ['switch off', {enabled: false}], ['gate unfound', {discovered: false}]])
+    check(difficulty + ' ' + label + ' keeps native ' + interval + ' s launches', () =>
+      assertNativeInterval({difficulty, ...options}, interval));
+for (const count of [2, 3]) check('Medium Arsenal ' + count + '-car field shares the native 4.5 s schedule without volleys', () => {
+  const field = timedCpuField({count}), interval = 4.5 / count;
+  field.advanceTo(interval - 2 * DT);
+  assert.equal(field.shots.length, 0, 'multi-car scheduling waits its real divided interval');
+  field.advanceTo(9 + 8 * DT);
+  assert.equal(field.shots.length, count * 2,
+    'two native 4.5 s cycles must yield one attack per live car per cycle; actual times: ' +
+    field.shots.map(shot => shot.time).join(', '));
+  assert.deepEqual(field.shots.map(shot => shot.source),
+    Array.from({length: count * 2}, (_, index) => index % count), 'genuine projectiles rotate through each live actor');
+  field.shots.forEach((shot, index) => assert.ok(Math.abs(shot.time - (index + 1) * interval) <= (index + 1) * DT,
+    'one actual launch per divided interval, with no synchronized volley: ' + shot.time));
+  field.shots.slice(count).forEach((shot, index) => assert.ok(Math.abs(shot.time - field.shots[index].time - 4.5) <= count * DT,
+    'each actual actor retains the 4.5 s interval across its turns'));
+});
+check('Medium Arsenal finished car loses its scheduled turn and two live cars share 4.5 s', () => {
+  const field = timedCpuField({count: 3, retired: 0});
+  field.advanceTo(4.5 + 4 * DT);
+  assert.equal(field.shots.length, 2, 'both live cars launch during the native 4.5 s cycle');
+  assert.deepEqual(field.shots.map(shot => shot.source), [1, 2], 'finished actor neither fires nor consumes a turn');
+  field.shots.forEach((shot, index) => assert.ok(Math.abs(shot.time - (index + 1) * 2.25) <= 2 * DT,
+    'actual live-car launch follows the 4.5 / 2 schedule: ' + shot.time));
+});
 console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; settled owner-grace and hard-away boundaries included.');
 if (failures.length) {console.error(failures.join('\n')); process.exitCode = 1;}
