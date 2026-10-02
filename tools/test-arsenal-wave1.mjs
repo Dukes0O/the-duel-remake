@@ -591,5 +591,99 @@ check('airborne Caltrops visible spikes sit on the same terrain as their contact
       'visible spike base is ' + (bases[0] - ground.y) + ' m above its contacted terrain');
   } finally {scene.dispose();}
 });
+// Reviewed regressions use native hits and contact consumers, with no injected impulse.
+import {startKnock, actorBody} from '../src/vehicle-knock.js';
+import {carAlongPush} from '../src/arsenal/car-effects.js';
+import {vehicleContactEnvelope} from '../src/npc-yielding.js';
+import {sweepBox, sweepObstacle} from '../src/collision.js';
+import {combatCrashThresholdMph} from '../src/vehicle-impact.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+check('Harpoon hit immediately yanks an active native knock without a deferred duplicate', () => {
+  const duel = race(), shooter = duel.state, target = shooter.rival;
+  place(shooter, 500); place(target, 535, 2, Math.PI / 2);
+  startKnock(target, {vx: 0, vz: 0, spin: 8, severity: 'smashed',
+    heading: point(duel, target).heading + target.headingError});
+  const armor = target.armor; let before, hit;
+  duel.onChange((_, event) => {
+    if (event.arsenalCue !== 'weapon.harpoon.hit' || event.actor !== target) return;
+    const body = actorBody(duel, target), at = point(duel, target), from = point(duel, shooter);
+    const heading = at.heading + target.headingError;
+    hit = {active: !!target.knock, dx: body.vx - before.vx, dz: body.vz - before.vz, heading,
+      side: Math.sign((from.x - at.x) * Math.cos(heading) - (from.z - at.z) * Math.sin(heading)) || 1,
+      roadPush: target.pushVelocity, alongPush: carAlongPush(target)};
+  });
+  assert.equal(duel.fireWeapon('harpoon'), true);
+  for (let i = 0; i < 180 && !carEffect(target, 'tether'); i++) {
+    before = actorBody(duel, target); duel.step(DT);
+  }
+  assert.ok(hit?.active && carEffect(target, 'tether'), 'real hit occurs while the free body is active');
+  near(armor - target.armor, 6, 'genuine active-knock hit retains armor damage');
+  near(Math.hypot(hit.dx, hit.dz), 6, 'active knock receives the immediate native 6 m/s yank');
+  near(hit.dx * Math.cos(hit.heading) - hit.dz * Math.sin(hit.heading), hit.side * 6, 'knock yanks sideways toward shooter');
+  near(hit.dx * Math.sin(hit.heading) + hit.dz * Math.cos(hit.heading), 0, 'knock gets no body-forward yank');
+  near(hit.roadPush, 0, 'native free-body yank leaves no deferred road-side duplicate');
+  near(hit.alongPush, 0, 'native free-body yank leaves no deferred road-forward duplicate');
+});
+check('Harpoon motion contributes to native solid-face armor damage and contact damping', () => {
+  const duel = race(), target = duel.state, cpu = target.rival;
+  place(target, 500, 0, Math.PI / 3); place(cpu, 535, 2, Math.PI); equipCpu(cpu, 'harpoon');
+  assert.equal(fireWeapon(duel, 'harpoon', true, cpu), true);
+  for (let i = 0; i < 180 && !carEffect(target, 'tether'); i++) stepProjectiles(duel, DT);
+  assert.ok(carEffect(target, 'tether'), 'genuine CPU projectile supplies the victim impulse');
+  target.speedMph = 196;
+  const at = point(duel, target), motion = velocity(target, at), phi = at.heading, spec = duel._vehicleSpec(target);
+  const reach = spec.halfLength * Math.cos(target.headingError) + spec.halfWidth * Math.sin(target.headingError);
+  const obstacle = {id: 'arsenal-solid-face', kind: 'barrier', barrier: true, s: target.s, off: target.lateral,
+    x: at.x + Math.sin(phi) * (reach + .24), z: at.z + Math.cos(phi) * (reach + .24),
+    heading: phi, halfX: 50, halfZ: .2};
+  // A bounded solid-face fixture supplies geometry; the native sweep and response remain real.
+  duel._obstacles = () => [obstacle];
+  const moved = duel._roadPosition({x: at.x + motion.x * DT, z: at.z + motion.z * DT}, target.s);
+  target.s = moved.s; target.lateral = moved.lateral;
+  const hit = sweepObstacle({...at, y: undefined}, {...point(duel, target), y: undefined},
+    obstacle, at.heading + target.headingError, spec);
+  assert.ok(hit, 'actual physical displacement reaches the solid face');
+  const normalMph = -(motion.x * hit.nx + motion.z * hit.nz) / DRIVE.mphToWorld;
+  assert.ok(normalMph > combatCrashThresholdMph(duel.car), 'actual normal velocity exceeds the unchanged armor threshold');
+  const armor = target.armor, along = carAlongPush(target), side = target.pushVelocity;
+  duel._staticContacts(target, true);
+  assert.ok(target.armor < armor, 'actual ' + normalMph + ' mph solid-face hit must cost armor');
+  near(carAlongPush(target), along * .25, 'road-forward impulse receives existing contact damping');
+  near(target.pushVelocity, side * .25, 'existing road-side contact damping stays exact');
+});
+check('Harpoon motion contributes to native arena participant closing speed and ram damage', () => {
+  const duel = new Duel({seed: SEED, featureFlags: flags(true)});
+  assert.equal(duel.startArenaEvent({seed: SEED, car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'hard',
+    arsenalRank: 6, weaponLoadout: ['harpoon', 'caltrops', 'oil', 'smoke'], opponents: [
+      {car: 'dusthawk_rally', driverId: 'club', brain: 'gunner'}, {car: 'aurora_gt', driverId: 'club', brain: 'gunner'}]}), true);
+  const state = duel.state, target = state.rival, other = state.opponents[1];
+  Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0, traffic: []});
+  state.combat.aiTimer = state.combat.pickupTimer = Infinity; state.arena.phase = 'fight';
+  for (const participant of state.arena.participants) participant.protectedSec = 0;
+  place(state, 96); place(target, 131, 2, Math.PI / 2); place(other, 300);
+  assert.equal(duel.fireWeapon('harpoon'), true);
+  for (let i = 0; i < 180 && !carEffect(target, 'tether'); i++) stepProjectiles(duel, DT);
+  assert.ok(carEffect(target, 'tether'), 'native projectile hits the registered Dusthawk');
+  const shape = vehicleContactEnvelope(target, other, duel._vehicleSpec(target), duel._vehicleSpec(other));
+  place(other, target.s - shape.length - .02, target.lateral, 0, 15);
+  for (const [actor, speed] of [[target, 0], [other, 15]]) {
+    const at = point(duel, actor), heading = at.heading + actor.headingError;
+    pilotStep(duel, actor, {x: at.x + Math.sin(heading) * 20, z: at.z + Math.cos(heading) * 20,
+      speedMph: speed, boost: false}, DT);
+  }
+  const a = actorBody(duel, target), b = actorBody(duel, other), frame = duel.course.at(target.s).heading;
+  const phase = duel.relativeS(other.s, target.s) - other.s;
+  const hit = sweepBox({x: target.prevLateral - other.prevLateral, z: target.prevS - other.prevS - phase},
+    {x: target.lateral - other.lateral, z: target.s - other.s - phase}, shape.width, shape.length);
+  assert.ok(hit, 'genuine pilot motion sweeps into the other registered participant');
+  const nx = Math.cos(frame) * hit.nx + Math.sin(frame) * hit.nz, nz = -Math.sin(frame) * hit.nx + Math.cos(frame) * hit.nz;
+  const closingKph = -((a.vx - b.vx) * nx + (a.vz - b.vz) * nz) / DRIVE.mphToWorld * COMBAT_TUNING.armor.kphPerMph;
+  assert.ok(closingKph > COMBAT_TUNING.armor.ramThresholdKph, 'actual contact normal exceeds the unchanged ram threshold');
+  const armorA = target.armor, armorB = other.armor, events = [];
+  duel.onChange((_, event) => {if (event.combatRamHit) events.push(event);});
+  assert.equal(duel._vehicleContact(target, other, 'rival'), true, 'native rigid-body contact really occurs');
+  assert.ok(events.length > 0, 'actual ' + closingKph + ' km/h closing motion must emit armor hits');
+  assert.ok(target.armor < armorA && other.armor < armorB, 'both participants take the settled native ram damage');
+});
 console.log('Arsenal wave one: ' + checks + ' checks, ' + failures.length + ' failures; settled owner-grace and hard-away boundaries included.');
 if (failures.length) {console.error(failures.join('\n')); process.exitCode = 1;}
