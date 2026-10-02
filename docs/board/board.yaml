@@ -2972,9 +2972,9 @@ tasks:
     claimed_by: codex-director-2026-10-01-evening
     branch: lane/cmb/arena-junk-shove
     owns: [src/arena/arena-junk.js, tools/test-arena-junk-shove.mjs, tools/scenarios/arena-junk-shove.mjs, docs/changes/ARENA-JUNK-SHOVE.md]
-    hooks: [src/game.js, src/sim-contacts.js, src/arena-props.js, src/arena/arena-floor.js]
+    hooks: [src/game.js, src/sim-contacts.js, src/arena-props.js, src/arena/arena-floor.js, tools/browser-harness.mjs]
     helpers: [test_author, reviewer, browser_qa]
-    sequencing: "Tests start in the new owned file. Game lifecycle edits wait for Arsenal to merge; only junk-body specification and crush dispatch in sim-contacts, and pose sync in arena-props, are granted. Arena-floor gains only a junk-body damage and cue guard; its wall geometry and physics stay fixed. Wreck-rate keeps arena-event and its replay fixture; Salt keeps course, venues and world. Refresh spawn candidates in the new junk module and expose current round poses to existing pilot readers."
+    sequencing: "Arsenal is merged. Grants cover arena lifecycle, junk-body contacts, pose sync, the floor damage/cue guard and one private scenario registration. Held arena-event/replays and Salt files stay with their owners; current poses feed existing pilot readers."
     flag: scrapdome
     acceptance:
       - "Kyle, 1 October 2026: the parked cars in the dome do not budge at any speed. These are the six junk cars (course.features.crushables, kind junkCar), fixed boxes that only the Titan crushes; ARENA-SHOVE covered participant cars only. Build docs/SCRAPDOME.md section 2, Junk cars: heavy hulks (1.5 times a car's mass) that slide through the crash solver, at least 2 m from a 40 mph hit by any car and 5 m by the Titan, contained on the floor, no sliding damage, settle and stay for the round; Titan crush unchanged."
