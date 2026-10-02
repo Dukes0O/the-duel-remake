@@ -24,7 +24,7 @@ export function arenaHud(state) {
   const ranking = arenaRanking(arena);
   const place = ranking.findIndex(participant => participant.id === 'player') + 1;
   const me = arena.participants.find(participant => participant.id === 'player');
-  const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && participant.targetId === 'player');
+  const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && !participant.decoy && participant.targetId === 'player');
   const leader = ranking[0], net = participant => fuel ? participant.fuelDelivered : arena.mode === 'warlord' ?
     participant.wrecks : participant.wrecks - participant.wrecked;
   const tiedAtTop = ranking.length > 1 && net(ranking[0]) === net(ranking[1]) && (fuel || ranking[0].wrecks === ranking[1].wrecks);
@@ -34,7 +34,7 @@ export function arenaHud(state) {
     modeLabel: fuel ? 'FUEL RUN · FIRST TO FIVE' : arena.mode === 'warlord' ? 'FIRST TO THREE WRECKS' : 'LAST CAR ROLLING',
     timeLabel: suddenDeath ? fuel ? 'SUDDEN DEATH · NEXT DELIVERY WINS' : 'SUDDEN DEATH · NEXT WRECK WINS' : 'TIME LEFT',
     remainingSec,
-    place, field: arena.participants.length,
+    place, field: ranking.length,
     placeText: ORDINALS[place - 1] || String(place),
     leaderText: tiedAtTop ? 'LEVEL AT THE TOP' : leader.id === 'player' ? 'YOU LEAD' : `${leader.name} LEADS`,
     scoreText: fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
@@ -137,7 +137,7 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
     description += ' ' + escapeHTML(result.rewardReason);
   }
-  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arena.participants.length}`, true) +
+  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arenaRanking(arena).length}`, true) +
     (fuel ? metric('FUEL DELIVERED', me.fuelDelivered) : '') + metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
     (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :
       metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +

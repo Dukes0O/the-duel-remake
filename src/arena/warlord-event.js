@@ -55,7 +55,8 @@ export function noteWarlordWreck(duel, victim, credited) {
     duel.emit({warlordPhase: {warlordId: arena.warlordId, phase: 2}});
   }
   if (arena.phase === 'sudden-death') {
-    const winner = arena.participants.find(participant => participant.team !== victim.team);
+    const winner = arena.participants.find(participant => !participant.decoy &&
+      participant.team !== victim.team);
     return {winnerId: winner.id, reason: 'sudden-death'};
   }
   if (credited?.wrecks >= WARLORD_RULES.wrecksToWin)
@@ -84,7 +85,7 @@ export function stepWarlordClock(duel, dt) {
     arena.suddenDeathSec = Math.min(arena.suddenDeathLimitSec, arena.suddenDeathSec + dt);
     if (arena.suddenDeathSec + 1e-9 >= arena.suddenDeathLimitSec) {
       arena.suddenDeathSec = arena.suddenDeathLimitSec;
-      const winner = arena.participants.reduce((best, participant) =>
+      const winner = arena.participants.filter(participant => !participant.decoy).reduce((best, participant) =>
         participant.damageDealt > best.damageDealt ? participant : best);
       return {winnerId: winner.id, reason: 'damage'};
     }

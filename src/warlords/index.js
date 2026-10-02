@@ -1,5 +1,6 @@
 import {SAL_FIGHT} from './sal.js';
 import {DUSTMONGER_FIGHT} from './dustmonger.js';
+import {MIRAGE_FIGHT} from './mirage.js';
 import {KETTLE_FIGHT} from './kettle.js';
 
 // Every built warlord's fight, one file each (docs/SCRAPDOME.md section 7).
@@ -8,6 +9,7 @@ import {KETTLE_FIGHT} from './kettle.js';
 const FIGHTS = Object.freeze({
   sal: SAL_FIGHT,
   dustmonger: DUSTMONGER_FIGHT,
+  mirage: MIRAGE_FIGHT,
   kettle: KETTLE_FIGHT,
 });
 

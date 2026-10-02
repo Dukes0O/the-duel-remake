@@ -278,13 +278,17 @@ export function attachRenderer(host, app) {
       const carKey=opponents[index].car||st.car,entry=extraOpponents[index-1];
       if(entry?.carKey===carKey)continue;
       if(entry)retireObject(entry.mesh);
-      const mesh=vehicleAssets.create(carKey,{color:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
+      // A copy wears its original's colours so the three cars match.
+      const mesh=vehicleAssets.create(carKey,{color:opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
       scene.add(mesh);extraOpponents[index-1]={mesh,carKey};sceneRevision++;ambientShading.refresh();
     }
+    // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
+    // the wreck-effect pool counts real cars only and is not rebuilt for them.
+    const wreckCars=opponents.filter(actor=>!actor.decoy).length;
     const armoredField=!menu && st.mode==='wasteland' && Number.isFinite(st.maxArmor);
     const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
-    if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==opponents.length)){
+    if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==wreckCars)){
       combatPlayerExplosion.dispose();combatPlayerExplosion=null;
       opponentExplosions.forEach(effect=>effect.dispose());
       opponentExplosions=null;sceneRevision++;
@@ -298,7 +302,7 @@ export function attachRenderer(host, app) {
       // the first player or CPU wreck can interrupt a driving frame.
       const buildStart=performance.now();
       combatPlayerExplosion=createExplosion({combat:true});scene.add(combatPlayerExplosion.group);
-      opponentExplosions=Array.from({length:opponents.length},()=>createExplosion({combat:true}));
+      opponentExplosions=Array.from({length:wreckCars},()=>createExplosion({combat:true}));
       for(const effect of opponentExplosions)scene.add(effect.group);
       sceneRevision++;
       host.dataset.opponentExplosionBuildMs=(performance.now()-buildStart).toFixed(2);

@@ -5,7 +5,9 @@ const details = Object.freeze({
     brain: 'rammer', taunt: 'Let us see how long those doors last.'},
   dustmonger: {reward: 'Smoke Screen', rewardBuilt: true, rewardWeapon: 'smoke',
     car: 'dusthawk_rally', brain: 'gunner', taunt: 'Follow me into the dust. I dare you.'},
-  mirage: {reward: 'Decoy Drone'},
+  // The Decoy Drone weapon itself is ARS-03; until it lands the fight pays scrap only.
+  mirage: {reward: 'Decoy Drone', rewardBuilt: false, car: 'aurora_gt', brain: 'gunner',
+    taunt: 'Which one of me are you looking at?'},
   gunn: {},
   kettle: {reward: 'Titan warlord kit and Tusk', rewardBuilt: true,
     rewardKit: 'warlord', rewardKitCar: 'titan_monster', rewardCrew: 'tusk',
@@ -33,4 +35,4 @@ export const WARLORD_LADDER = Object.freeze([
   'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'kettle']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'kettle']);

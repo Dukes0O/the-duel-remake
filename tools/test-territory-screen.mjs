@@ -9,8 +9,8 @@ test('territory panel is scoped to discovered players and shows earned hold', ()
   const discovered = createProfile();
   discovered.wasteland.discoveredGate = true;
   discovered.wasteland.territories.sal.hold = 75;
-  // Mirage's fight is not built yet; the Dustmonger's is (WAR-02b).
-  discovered.wasteland.territories.mirage.hold = 100;
+  // Gunn's fight is not built yet; the Dustmonger's is (WAR-02b).
+  discovered.wasteland.territories.gunn.hold = 100;
   discovered.wasteland.territories.dustmonger.hold = 100;
   const panel = territoryPanel(discovered);
   assert.match(panel, /TERRITORY MAP/);

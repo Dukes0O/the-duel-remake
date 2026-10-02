@@ -41,18 +41,20 @@ function resultFacts(arena) {
       !WARLORDS[arena.warlordId] || arena.warlordBossId !== 'cpu-1' ||
       arena.phase !== 'over' || !record(arena.result) ||
       !COMPLETED_REASONS.has(arena.result?.reason) ||
-      !Array.isArray(arena.participants) || arena.participants.length !== 2 ||
-      !arena.participants.every(record) ||
+      !Array.isArray(arena.participants) || !arena.participants.every(record) ||
       !Array.isArray(arena.result?.placings)) return null;
-  const player = arena.participants.find(item => item?.id === 'player' && item.kind === 'player');
-  const boss = arena.participants.find(item => item?.id === arena.warlordBossId && item.kind === 'cpu');
+  // A warlord's decoy copies are not competitors and never settle.
+  const cars = arena.participants.filter(item => item.decoy !== true);
+  if (cars.length !== 2) return null;
+  const player = cars.find(item => item?.id === 'player' && item.kind === 'player');
+  const boss = cars.find(item => item?.id === arena.warlordBossId && item.kind === 'cpu');
   const placings = arena.result.placings;
   if (!player || !boss || player === boss || player.team === boss.team ||
       placings.length !== 2 || new Set(placings).size !== 2 ||
       placings.some(id => id !== player.id && id !== boss.id) ||
       arena.result.winnerId !== placings[0]) return null;
   if (arena.result.reason === 'three-wrecks' &&
-      bounded(arena.participants.find(item => item.id === placings[0]).wrecks, 1_000_000) < 3)
+      bounded(cars.find(item => item.id === placings[0]).wrecks, 1_000_000) < 3)
     return null;
   return {won: arena.result.winnerId === player.id, wrecksOnWarlord: boss.wrecked};
 }
