@@ -3,7 +3,8 @@
 Status: building. Full native App acceptance remains incomplete. Tests-first
 b85ce3 and the independent module regressions are retained. The Director's
 3101c87 grant releases crew.js, onfoot-weapons.js, onfoot-transition.js and
-onfoot-camera.js only. No other owner's shared file or boss file was edited.
+onfoot-camera.js. The dae2139 grant adds crew-ui.js and screen-armory.js.
+No other owner's shared file or boss file was edited.
 
 ## Production Source
 
@@ -42,7 +43,11 @@ Jax, Cinder and Tusk are active catalog entries. Earned Tusk in the existing
 version-1 crew.unlocked list bypasses his rank gate without paying again.
 Unearned Tusk stays rank-gated; future-schema refusal and all profile fields
 are preserved. Marksman aim supplies read-only 3x fov in both camera modes;
-changing back to RPG/wrench restores the normal view.
+changing back to RPG/wrench restores the normal view. Enabled crew panels show
+KEY 3 / D-PAD DOWN and ready abilities; default/off panels retain the released
+inactive copy. Earned Tusk is selectable in the panel without rank or repayment.
+Armory accepts an optional actual-flag provider, gated again by saved career
+version/discovery; it defaults off while its router provider is owner-held.
 
 ## Validation and current failures
 
@@ -50,10 +55,10 @@ Independent tests reproduced and fixed the native own-car blast cap, turret
 blocking RPG, underground direct shots and missing 4.5 m/s walking inheritance.
 All eleven module checks passed before hooks. Tests-first b21e080 then proved
 earned-Tusk admission RED with unearned/future-schema controls before crew.js.
-After hooks, 13 module checks report 11 PASS / 2 expected fixture failures:
-the old module-only walking fixtures fire manually after the new native
-history has already advanced. Test author will move fire into the actual
-native step, preserving all literal stationary/walking assertions.
+Test author 5f5361d migrated walking fire into the actual next native step,
+preserving every velocity assertion, and authored three genuine panel REDs:
+enabled gear labeled later, off-context Jax ready, earned Tusk button disabled.
+The panel fixes pass all 16 bounded module/native/UI/profile checks.
 
 Unmodified production --admission-only remains 6 checks, 2 controls PASS and
 4 held failures: catalog undefined, App/Nell slot 3 refused, Rook unlocked.
@@ -61,9 +66,8 @@ These use the unregistered production switch; no App acceptance is claimed.
 Bounded actual-Duel probes with an explicit temporary catalog admission prove
 Rook's real locked 0.6 s shot / 1.8 s reload and pure 3x camera poses. Released
 weapons/transition regressions pass 13/13; camera-choice controls pass 8/8.
-Legacy crew tests pass 3/4: the obsolete UI assertion requiring an inactive
-PASSIVE HOOK · LATER CARD conflicts with the settled active roster. Tests and
-crew-ui.js are untouched; the Director owns its reviewed assertion migration.
+Original crew tests pass 4/4, including unchanged inactive-copy, rank, roster
+and model-color assertions. The off-state panel is preserved.
 Syntax and whitespace pass. No race/world fingerprint was regenerated.
 
 ## Remaining owner hooks and gates
@@ -74,8 +78,10 @@ Syntax and whitespace pass. No race/world fingerprint was regenerated.
 - combat-scene.js/render3d.js must draw actual shots, turret, flamer and line,
   and apply camera fov; combat-hud.js must expose actual signature inventory.
 - sound-bank.js/audio.js install named cues; tuning needs no constants edit.
-- crew-ui.js still says gear is in a later card; this additional UI seam is
-  ungranted. Save Guardian review is required for earned-Tusk selection.
+- Bounty owns screen-router.js: createArmoryScreen needs the actual callback
+  crewGearEnabled:()=>app._switches().enabled('crew-gear')===true; the direct
+  yard crewPanel call needs the same context. Both providers remain unedited.
+- Save Guardian review is required for earned-Tusk selection.
 - Native complete per-item tests, browser per item, both camera modes, visual/
   audio review, lane tier and build remain pending. Heavy slot is with Pit.
 
