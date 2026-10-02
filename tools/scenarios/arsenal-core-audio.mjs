@@ -1,0 +1,164 @@
+// Real App/Duel/EngineAudio. QA poses and earned balances live only in memory.
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {ffmpeg} from '../audio/codec.mjs';
+import {measureLoudness} from '../audio/measurements.mjs';
+
+async function capture(quality, side) {
+  const sleep = ms => new Promise(done => setTimeout(done, ms));
+  const app = window.__qaApp, audio = app.audio;
+  const {hazardsFor} = await import('/src/arsenal/hazards.js');
+  if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value || !window.__qaMemoryBackupStore)
+    throw Error('Capture requires the isolated memory-only store.');
+  app.stop(); audio.unlock(); audio.setMuted(false); audio.setPaused(false);
+  await audio.context.resume();
+  await Promise.all([audio._samplesPromise, audio._ambiencePromise, audio._cueBuffersPromise]);
+  const ids = ['weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy'];
+  for (const id of ids) if (!audio.cueBuffers[id]?.duration) throw Error('Undecoded Arsenal recording: ' + id);
+  if (!app.addPlayer('Core Audio ' + quality).ok) throw Error('Memory-only owner fixture failed.');
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
+    discoveredGate: true, xp: 3500, scrap: 3000}};
+  if (!app._saveProfile()) throw Error('Memory-only earned career failed.');
+  for (const id of ['oil', 'smoke']) if (!app.purchaseArsenalWeapon(id).ok) throw Error('Actual purchase failed: ' + id);
+  app.profile.wasteland.loadout = ['oil', 'smoke', 'crossbow', 'bomb'];
+  if (!app._saveProfile() || !app.startCampaign({mode: 'wasteland', startStage: 0,
+    opponentCount: 1, seed: 1989, cpuDifficulty: 'easy'})) throw Error('Actual Arsenal campaign failed.');
+  app.stop();
+  const state = app.duel.state, ctx = audio.context;
+  const place = (actor, s, lateral = 0, speedMph = 0) => Object.assign(actor, {
+    s, prevS: s, lateral, prevLateral: lateral, speedMph, headingError: 0,
+    yawVelocity: 0, pushVelocity: 0, airHeight: 0, prevAirHeight: 0, combatShield: 0});
+  Object.assign(state, {status: 'racing', countdown: 0, paused: false,
+    invulnerableSec: 0, traffic: []});
+  state.combat.aiTimer = state.combat.pickupTimer = Infinity;
+  place(state, 500, 0, 100); place(state.rival, 1000);
+  app.keys.KeyW = true; app.autopilot = false; app._scriptedCrashDone = true;
+  const worklet = `class Meter extends AudioWorkletProcessor {
+    constructor(){super();this.pcm=new Float32Array(4096);this.at=0;this.first=0;}
+    process(inputs){const a=inputs[0]||[],l=a[0],r=a[1]||l;
+      for(let i=0;i<128;i++){if(!this.at)this.first=currentFrame+i;
+        this.pcm[this.at++]=l?.[i]||0;this.pcm[this.at++]=r?.[i]||0;
+        if(this.at===4096){this.port.postMessage({frame:this.first,pcm:this.pcm},[this.pcm.buffer]);
+          this.pcm=new Float32Array(4096);this.at=0;}}
+      return true;}}
+    registerProcessor('arsenal-native-meter',Meter);`;
+  const url = URL.createObjectURL(new Blob([worklet], {type: 'text/javascript'}));
+  try {await ctx.audioWorklet.addModule(url);} finally {URL.revokeObjectURL(url);}
+  function meter(node) {
+    const chunks = [], tap = new AudioWorkletNode(ctx, 'arsenal-native-meter',
+      {numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2]}), silent = ctx.createGain();
+    silent.gain.value = 0; tap.connect(silent); silent.connect(ctx.destination);
+    tap.port.onmessage = event => chunks.push(event.data); node.connect(tap);
+    return {chunks, stop(){node.disconnect(tap);tap.disconnect();silent.disconnect();tap.port.close();}};
+  }
+  const began = ctx.currentTime, tracks = {mix: meter(audio.output),
+    engine: meter(audio.buses.engine), weapons: meter(audio.buses.weapons)};
+  const native = [], cues = [], frames = [];
+  const original = {event: audio.event, play: audio._playCue, space: audio._spatialOutput, frame: app.onFrame};
+  let current = null;
+  audio.event = function(event, st, course) {
+    if (!ids.includes(event.arsenalCue)) return original.event.call(this, event, st, course);
+    const before = JSON.stringify(st), position = JSON.stringify(event.hitPosition);
+    current = {id: event.arsenalCue, time: ctx.currentTime - began, position: {...event.hitPosition},
+      actor: event.actor === st ? 'player' : 'rival', source: 'native-simulation'};
+    const result = original.event.call(this, event, st, course);
+    if (before !== JSON.stringify(st) || position !== JSON.stringify(event.hitPosition))
+      throw Error('Actual audio consumption changed native state or event position.');
+    native.push(current); current = null; return result;
+  };
+  audio._spatialOutput = function(...args) {
+    const result = original.space.apply(this, args);
+    if (current) current.spatial = {...result.space, weaponsBus: args[3] === this.buses.weapons};
+    return result;
+  };
+  audio._playCue = function(id, ...args) {
+    const result = original.play.call(this, id, ...args);
+    if (ids.includes(id)) cues.push({id, time: ctx.currentTime - began, started: !!result});
+    return result;
+  };
+  let deployed = false, touched = false, smoked = false;
+  app.onFrame = function(st) {
+    original.frame?.(st);
+    const elapsed = ctx.currentTime - began;
+    frames.push({time: elapsed, throttle: st.input.throttle, revs: st.revs, speedMph: st.speedMph});
+    if (!deployed && elapsed >= .7) {
+      deployed = true;
+      if (!app.duel.fireWeapon('oil')) throw Error('Genuine Oil launch failed.');
+    }
+    if (!touched && elapsed >= 1.5) {
+      touched = true;
+      const oil = hazardsFor(app.duel).find(hazard => hazard.kind === 'oil');
+      if (!oil) throw Error('Native Oil disappeared before contact.');
+      const at = app.duel.course.nearest(oil.x, oil.z, st.rival.s);
+      place(st.rival, at.s, at.lateral + side * 2.5);
+      // The next production Duel step resolves this actual body/hazard overlap.
+    }
+    if (!smoked && elapsed >= 2.5) {
+      smoked = true;
+      if (!app.duel.fireWeapon('smoke')) throw Error('Genuine Smoke launch failed.');
+    }
+  };
+  let cleanup;
+  try {
+    app.start(); await sleep(3900); app.stop();
+    for (const id of ids) {
+      if (native.filter(event => event.id === id).length !== 1 ||
+          cues.filter(event => event.id === id && event.started).length !== 1)
+        throw Error('Native cue/playback must occur exactly once: ' + id);
+    }
+    if (native.some(event => !event.spatial?.weaponsBus || !Object.values(event.position).every(Number.isFinite)))
+      throw Error('Native cue lost physical position or weapons bus.');
+    const drive = frames.filter(frame => frame.time >= .5 && frame.time <= 3.5);
+    if (!drive.length || drive.some(frame => frame.throttle !== 1)) throw Error('Mix was not driven at full throttle.');
+    audio.setPaused(true); await sleep(250);
+    cleanup = {paused: audio.paused, activeShots: audio.activeShots.size,
+      mixerVoices: [...audio.mixer.voices.values()].reduce((sum, set) => sum + set.size, 0)};
+  } finally {
+    app.stop(); app.keys.KeyW = false; audio.event = original.event;
+    audio._playCue = original.play; audio._spatialOutput = original.space; app.onFrame = original.frame;
+    for (const track of Object.values(tracks)) track.stop();
+    await sleep(40);
+  }
+  function encode(chunks) {
+    const pcm = new Float32Array(chunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0));
+    let at = 0;
+    for (const chunk of chunks) {pcm.set(chunk.pcm, at); at += chunk.pcm.length;}
+    const bytes = new Uint8Array(pcm.buffer); let binary = '';
+    for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
+    return {pcmBase64: btoa(binary), frames: pcm.length / 2,
+      audioStartSec: (chunks[0]?.frame ?? 0) / ctx.sampleRate - began,
+      contiguous: chunks.every((chunk, i) => !i || chunk.frame === chunks[i - 1].frame + 2048)};
+  }
+  return {quality, side, sampleRate: ctx.sampleRate, channels: 2, nativeContext: ctx instanceof AudioContext,
+    native, cues, frames, cleanup, memoryOnlySaves: true,
+    tracks: Object.fromEntries(Object.entries(tracks).map(([key, track]) => [key, encode(track.chunks)]))};
+}
+export async function run(context) {
+  const rows = [];
+  for (const [quality, side] of [['high', -1], ['performance', 1]]) {
+    await context.navigate('/tools/menu-check.html?flags=arsenal');
+    await context.waitFor("!!window.__qaApp && !!window.__render && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
+      'memory-only Arsenal audio App', 60_000);
+    await context.evaluate(`(() => {const select=document.querySelector('#graphics-quality');
+      select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+    const row = await context.evaluate('(' + capture.toString() + ')(' + JSON.stringify(quality) + ',' + side + ')');
+    for (const [kind, track] of Object.entries(row.tracks)) {
+      if (!track.contiguous || !track.frames) throw Error('Incomplete native ' + kind + ' recording.');
+      const raw = Buffer.from(track.pcmBase64, 'base64');
+      const wav = ffmpeg(['-f', 'f32le', '-ar', String(row.sampleRate), '-ac', '2', '-i', 'pipe:0',
+        '-c:a', 'pcm_f32le', '-f', 'wav', 'pipe:1'], {input: raw});
+      track.file = quality + '-' + kind + '.wav';
+      await writeFile(join(context.outputDir, track.file), wav);
+      track.measurement = measureLoudness(wav);
+      let peak = 0;
+      for (let i = 0; i < raw.length; i += 4) peak = Math.max(peak, Math.abs(raw.readFloatLE(i)));
+      track.samplePeakDbfs = 20 * Math.log10(Math.max(1e-12, peak));
+      delete track.pcmBase64;
+    }
+    rows.push(row);
+    await context.screenshot('arsenal-native-audio-' + quality);
+  }
+  await writeFile(join(context.outputDir, 'capture.json'), JSON.stringify({rows,
+    limitations: ['Human listening and cue recognition remain unmeasured', 'No release or live save access']}, null, 2) + '\n');
+  console.log('Arsenal core native audio: two qualities, three genuine cues each, full-throttle output captured.');
+}

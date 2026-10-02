@@ -36,6 +36,15 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  'weapon.oil.deploy': cue('weapons', {
+    flag: 'arsenal', file: 'arsenal-core/oil-deploy.ogg', volume: 1.35, priority: 60, limit: 6,
+  }),
+  'weapon.oil.slip': cue('weapons', {
+    flag: 'arsenal', file: 'arsenal-core/oil-slip.ogg', volume: 1.3, priority: 65, limit: 6,
+  }),
+  'weapon.smoke.deploy': cue('weapons', {
+    flag: 'arsenal', file: 'arsenal-core/smoke-deploy.ogg', volume: 1.35, priority: 60, limit: 6,
+  }),
   'gatekeeper.welcome': cue('voice', {
     file: 'gatekeeper-welcome.mp3',
     volume: 2.2,

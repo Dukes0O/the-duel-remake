@@ -689,6 +689,75 @@
       "page": "https://opengameart.org/content/car-tire-squeal-skid-loop",
       "decodedFile": "tire-squeal.wav",
       "processing": "node tools/prepare-audio.mjs"
+    },
+    {
+      "source": "freesound",
+      "key": "389460",
+      "cue": "weapon.oil.deploy",
+      "title": "Mud_1.wav",
+      "author": "lzmraul",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/lzmraul/sounds/389460/",
+      "download": "https://cdn.freesound.org/previews/389/389460_6060491-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.40533,
+      "file": "freesound/389460-mud-1-wav.ogg",
+      "sha256": "e59aded70fb476c055e750447b6254a391c01c6314e28da2052a15d351ea81f2",
+      "bytes": 49677,
+      "fetched": "2026-09-26",
+      "processing": {
+        "script": "tools/build-arsenal-core-audio.mjs",
+        "recipe": "ARSENAL_CORE_RECIPES.oil-deploy: verified source cut, filters, bright swept signature, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
+        "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
+      },
+      "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "462117",
+      "cue": "weapon.oil.slip",
+      "title": "car2.WAV",
+      "author": "barion",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/barion/sounds/462117/",
+      "download": "https://cdn.freesound.org/previews/462/462117_7108137-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 5.71537,
+      "file": "freesound/462117-car2-wav.ogg",
+      "sha256": "42b0071a45e40feff1738f22d1b585d17e6844467f1f9afba77fb52806a05a2e",
+      "bytes": 134208,
+      "fetched": "2026-09-26",
+      "processing": {
+        "script": "tools/build-arsenal-core-audio.mjs",
+        "recipe": "ARSENAL_CORE_RECIPES.oil-slip: verified source cut, filters, bright swept signature, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
+        "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
+      },
+      "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "855733",
+      "cue": "weapon.smoke.deploy",
+      "title": "Whoosh - Weighted string - Airy whistle",
+      "author": "Sadiquecat",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Sadiquecat/sounds/855733/",
+      "download": "https://cdn.freesound.org/previews/855/855733_5287430-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.465917,
+      "file": "freesound/855733-whoosh-weighted-string-airy-whistle.ogg",
+      "sha256": "d454233fe1ce68e45d4915e717c7fb3a9d2cde8a5417544ae84fad8523514cf5",
+      "bytes": 15917,
+      "fetched": "2026-09-25",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-core-audio.mjs",
+        "recipe": "ARSENAL_CORE_RECIPES.smoke-deploy: verified source cut, filters, bright swept signature, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
+        "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
+      }
     }
   ]
 }
