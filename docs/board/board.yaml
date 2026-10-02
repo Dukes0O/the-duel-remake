@@ -1018,12 +1018,15 @@ tasks:
     hooks: [src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-camera.js, src/crew-ui.js, src/screen-armory.js]
     hook_requests: [src/feature-flags.js, src/combat-hud.js, src/sound-bank.js, src/audio.js, src/render3d.js, src/combat-projectiles.js, src/combat.js, src/combat-scene.js]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
-    sequencing: "The reviewed modules and four free roster, on-foot and camera hooks are built. Crew may add the two free Armory panel hooks after tests first, preserving the off-state panel and using the actual dev flag and discovery context. Bounty retains the switch catalog, HUD and renderer; Arsenal retains projectile, combat-scene and audio hooks until merge. Settled constants stay in the owned gear module, so no tuning edit is needed."
-    note: "Signature simulation is built and eleven tests-first module regressions pass. Native admission still has four genuine wiring failures; review precedes wiring the four free hooks, while other hooks wait for their owners."
+    sequencing: "The modules, four native hooks and two Armory hooks are built and independently reviewed. Bounty retains the switch catalog, router, HUD and renderer; Arsenal retains projectile, combat-scene and audio hooks until merge."
+    note: "Signature simulation, native controls and Armory panels are built; sixteen bounded checks and build pass. Native, UI and save reviews are clear. Complete App acceptance waits for shared file owners."
     module_source_commit: d22cfe4
-    module_test_commit: 3ecefcd
-    module_checks_passed: 11
+    module_test_commit: 5f5361d
+    module_checks_passed: 16
     native_hook_commit: 97c601f
+    ui_hook_commit: 373f356
+    reviewed_lane_commit: 28aa96f
+    partial_build_passed: true
     earned_crew_test_commit: b21e080
     test_commit: b85ce3007e983e538f6e5c7dde3a051b522af619
     acceptance:
@@ -1212,8 +1215,15 @@ tasks:
       - "Kyle, 1 October 2026: some dome fights without the inside barrier. Build the layout in docs/SCRAPDOME.md section 2, The Pit: a round floor (centreline radius 40 m, floor 32 m either side, outer wall at 75 m), a solid centre pile 16 m across, eight junk cars, two ramps, the ring's floor rules, and the existing dome stands and kit."
       - "Tests first: the curvature check passes; every car can reach every part of the floor; computer cars do not stick on the centre pile or the round wall (all three brains, all three difficulties); containment, respawn and the shove rules hold on a round wall. Ring replays unchanged."
       - "Gunn, the Twin Vultures and the Baron use the Pit; their cards build on it. Comparison sheet to Claude; frame cost within 10% of the ring in High and Performance. Kyle checks it in the Preview."
-    note: "The native round floor and reused dome scenery are built and independently reviewed. One genuine outer-floor reach failure needs Arsenal's pilot file after its merge and Claude's owner verdict; remaining pictures and gates follow."
-    native_source_commit: 674b11e
+    note: "Floor and scenery are built; independent round-two review scores all look criteria four out of five in both qualities. Frame pacing passes. Nine outer-floor reach cases wait for the pilot owner; final Claude approval and gates remain."
+    native_source_commit: c88fc56
+    comparison_round: 2
+    independent_look_score: 4
+    browser_errors: 0
+    browser_warnings: 0
+    native_cases_passed: 17
+    native_cases_failed: 9
+    partial_build_passed: true
     source_review: "Independent review clears circle projection, native world loading, state purity and disposal. A tests-first fix closes the visible wall gaps without changing physics or ring controls."
   - id: ARENA-07
     title: "Convoy Raid"

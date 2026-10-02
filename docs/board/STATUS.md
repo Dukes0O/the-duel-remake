@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-02T19:42:55.106Z
+Observed at: 2026-10-02T20:10:41.907Z
 
-Observation commit: c51c4e8f680866be39cffb99d496e4dc7fa89a81
+Observation commit: dae2139f9c585f1e14ff3ae90bd11bae67d63688
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c51c4e8f680866be39cffb99d496e4dc7fa89a81
+Integration HEAD: dae2139f9c585f1e14ff3ae90bd11bae67d63688
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -48,7 +48,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/vis/arena-pit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-pit |
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 7 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 7 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -61,8 +61,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/cmb/dustmonger | unknown | 2026-10-01T21:53:53-07:00 | 0 | last commit 2026-10-01T21:53:53-07:00 | docs/changes/WAR-02b.md, tools/test-warlord-dustmonger.mjs |
 | codex/cmb/kettle-kingpin | unknown | 2026-10-01T22:07:46-07:00 | 0 | last commit 2026-10-01T22:07:46-07:00 | docs/changes/WAR-03b.md, tools/test-warlord-kettle.mjs |
 | codex/cmb/mother-mirage | unknown | 2026-10-01T23:51:06-07:00 | 0 | last commit 2026-10-01T23:51:06-07:00 | docs/changes/WAR-02c.md, tools/test-warlord-mirage.mjs |
-| codex/foot/crew-gear | unknown | 2026-10-02T12:35:50-07:00 | 0 | last commit 2026-10-02T12:35:50-07:00 | docs/changes/CREW-02.md, src/crew-gear/contacts.js, src/crew-gear/gear.js, src/crew-gear/projectiles.js, src/crew-gear/signature.js |
-| codex/vis/arena-pit | unknown | 2026-10-02T12:18:17-07:00 | 0 | last commit 2026-10-02T12:18:17-07:00 | docs/changes/ARENA-PIT.md, src/arena/venues.js, src/arena/venues/pit.js, src/course.js, src/race-structures.js |
+| codex/foot/crew-gear | unknown | 2026-10-02T13:07:38-07:00 | 0 | last commit 2026-10-02T13:07:38-07:00 | docs/changes/CREW-02.md, src/crew-gear/contacts.js, src/crew-gear/gear.js, src/crew-gear/projectiles.js, src/crew-gear/signature.js |
+| codex/vis/arena-pit | unknown | 2026-10-02T12:58:00-07:00 | 0 | last commit 2026-10-02T12:58:00-07:00 | docs/board/looks/arena-pit/round-1.jpg, docs/board/looks/arena-pit/round-1.md, docs/board/looks/arena-pit/round-2.jpg, docs/board/looks/arena-pit/round-2.md, docs/changes/ARENA-PIT.md |
 
 ## Size targets
 
@@ -70,15 +70,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 263,936,481 B | +10,928 B | 250,000,000 B |
+| Build `dist/` | 263,941,800 B | +5,319 B | 250,000,000 B |
 | Wasteland models | 102,281,592 B | +0 B | 60,000,000 B |
 | Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 14,561,730 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 798,368 B | +70,462 B | 5,000,000 B |
+| Added bytes in last merge | 798,368 B | +0 B | 5,000,000 B |
 | All `public/` | 259,627,104 B | +0 B | unavailable |
-| Git objects | 367,440,896 B | +301,056 B | unavailable |
+| Git objects | 368,623,616 B | +1,182,720 B | unavailable |
 | Lane folders | 7 | +0 | unavailable |
 
 ## Backups
@@ -87,7 +87,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: c51c4e8f680866be39cffb99d496e4dc7fa89a81
+- Local integration/wasteland: dae2139f9c585f1e14ff3ae90bd11bae67d63688
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

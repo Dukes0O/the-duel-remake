@@ -1,5 +1,23 @@
 # Wasteland play-test inbox
 
+## Private builds ready for owner handoff, 2 October
+
+Pit round two is ready for Claude: all eight actual views score four out of
+five on all look criteria in both qualities. Paired frame pacing passes.
+Sheet and verdict: .lanes/arena-pit/docs/board/looks/arena-pit/round-2.
+The outer reach case below still needs its pilot owner; no alternate brain.
+
+Crew modules, native controls and Armory panels are built and reviewed.
+Sixteen bounded checks and build pass. Bounty must supply the canonical dev
+flag and router/yard flag providers; Arsenal must supply shared projectile,
+combat, scene and audio hooks. The clean lane note lists the exact seams.
+Complete App acceptance is still pending.
+
+Two unchanged complete seed-1989 Easy and Hard rear-defense races finished
+and won. CPUs used Bombs and Caltrops, plus Harpoon on Hard; Smoke remained
+zero. Claude's coverage question remains; no seeds, loadouts, rules, targets
+or race lengths were changed.
+
 ## Pit outer-floor pilot seam for Claude and Arsenal
 
 The Pit is built. Its native Falcone test cannot reach a safe radius-67 goal:

@@ -25,8 +25,11 @@ commit guard correctly held the newer push. That source needs its own checkpoint
 Pit geometry and scenery are built; all nine car types fail only the outer-floor
 reach case awaiting Arsenal's pilot file and Claude's owner answer. A measured
 visual refinement clusters the existing outer hulks into the settled piles.
-Crew's signature simulation modules and eleven regressions are built; its four
-free native hooks open after independent review. The old timers stay paused.
+Pit round two scores four out of five on all look criteria in both qualities;
+actual frame pacing passes. Claude's final look and pilot answer remain.
+Crew's modules, four native hooks and two Armory hooks are built and reviewed.
+Sixteen bounded checks and build pass; complete App wiring waits for the
+catalog, router, combat, render and audio owners. The old timers stay paused.
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled

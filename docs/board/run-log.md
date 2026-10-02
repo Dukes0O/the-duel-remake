@@ -678,3 +678,22 @@ A failed exact-commit guard did not abort PowerShell, and the push uploaded the
 newer unverified head. Feature merges are stopped; the new committed source
 receives its own build and full tier. This is fixed forward without a history
 rewrite. Codex has not edited any reserved boss file.
+
+Private build checkpoint: Crew native controls and Armory panels are committed,
+with sixteen bounded checks, build and native, UI and save reviews clear.
+Pit round two scores four out of five in both qualities; native world checks,
+build, eight browser views and paired frame pacing pass. Both clean lanes stay
+unfinished: Crew needs shared catalog/router/combat/render/audio owners; Pit
+needs its pilot owner and final look approval. Bounty and Arsenal retain their
+written Claude questions. Boss source remains entirely Claude's.
+
+Janitor sweep: removed twelve consumed, reproducible crash-audio gate outputs,
+freeing 3,218,660,268 bytes of captures and copied QA builds. Current assets,
+licensed records and unfinished review evidence remain. Seven unfinished lanes
+stay; three protected audio references are skipped. No uncertain audit candidate
+was deleted. Runtime remains 259,627,104 bytes; accepted Salt growth is unchanged.
+
+Handoff: resume the clean Crew and Pit lanes when their actual owners answer
+or merge. No new long card is eligible without file overlap. Final integration
+receives build, full tier and the approved normal push after an exact-commit
+check; consult the evidence ledger for the outcome.
