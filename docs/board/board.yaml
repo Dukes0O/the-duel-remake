@@ -945,9 +945,14 @@ tasks:
     lane: AUDIO
     size: S
     needs: [ARS-CORE]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-02-overnight
+    branch: codex/audio/arsenal-core-cues
+    owns: [tools/test-arsenal-core-audio.mjs, tools/scenarios/arsenal-core-audio.mjs, docs/changes/AUD-ARSENAL-W1.md, public/assets/audio/arsenal-core/]
+    hooks: [src/sound-bank.js, tools/audio/catalog.json, src/audio.js]
+    helpers: [test_author, reviewer, audio_qa]
     flag: arsenal
-    note: "The separate audio session still owns the sound bank and catalog. Claude must release those hooks or settle the order before this card starts; no audio files were inspected or changed."
+    note: "Claude released only the three new Oil and Smoke cues and their library recipes. Native tests come first; the audio renderer hook is limited to consuming those real events. Existing sounds, voices and audio records stay exact."
     acceptance:
       - "Add weapon.oil.deploy, weapon.oil.slip and weapon.smoke.deploy to the sound bank from the CC0 library recipes (tools/audio/catalog.json), (the sound bank is merged and live since AUD-14; corrected by Claude 1 October 2026). The arsenal cannot release before these exist. No paid credits."
     claude_answer_0030: "2 October 2026, 00:30: Claude releases the two hooks for this card only. Kyle's separate audio session has been idle since 25 September and this is a small addition: add the three cues to src/sound-bank.js and their CC0 library recipes to tools/audio/catalog.json, with no paid credits and no change to any existing entry, Kyle's voice takes or AUD-17's records. If the audio session resumes first, it keeps ownership and this card waits for it."
@@ -1105,16 +1110,16 @@ tasks:
     branch: lane/vis/salt-flats
     flag: salt-flats
     owns: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, tools/test-salt-flats.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/scenarios/salt-flats.mjs, docs/board/looks/salt-flats/, docs/changes/ARENA-06.md, tools/art/salt-flats-fit.json, public/assets/models/wasteland/salt-flats/, tools/replays/salt-flats-controls.json]
-    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js]
-    hook_requests: [src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, start-preview.bat, tools/test-wasteland-beta.mjs, tools/test-blender-output.mjs]
-    sequencing: "Claude accepted the final generated salt. Public entry waits for Arsenal and wreck-rate to free their hooks; recipe registration waits for Tanker. Finish rank nine entry and venue selection for the public modes, then the final gate and build."
+    hooks: [tools/art/catalog.json, src/arena/venues.js, src/course.js, src/world.js, src/render3d.js, src/arena/arena-event.js, src/screen-arena.js, src/feature-flags.js, src/wasteland-access.js, src/style.css, src/app.js, tools/test-wasteland-beta.mjs]
+    hook_requests: [tools/test-blender-output.mjs]
+    sequencing: "Claude approved real public entry for Last Car Rolling and Fuel Run only. The independent review approves the released Fuel rule assertion and additive actual App coverage before Source. Salt owns the granted entry and renderer files; shared Blender registration waits for Tanker and then Vesper to merge."
     helpers: [test_author, reviewer, art_critic, browser_qa]
     acceptance:
       - "Starts after Kyle picks from the ART-SRC-SALTFLATS sheet. Build docs/SCRAPDOME.md section 10's venue from the picked assets (three art rounds at most, SPEC 0.11), rank 9 unlock, every arena mode playable there, frame cost within 10% of the Scrapdome in High and Performance."
     claude_note: "30 September: build the venue from Kyle's Salt Flats picks under docs/WASTELAND_ART.md, Fitting existing models (no source palette, wrecked hulks, judged in the game). Claude recommends all three groups and the plain Bus."
     kyle_pick: "Kyle, 30 September 2026: all three Salt Flats groups and the plain Bus."
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
-    note: "Final generated round three is accepted; native and frame checks pass. Claude must settle entry for built modes versus the four-mode instruction, which currently creates a crew/render dependency cycle; shared registration still waits for Tanker."
+    note: "Claude approved the final art and the two built modes. Finish actual rank-nine yard selection and launch for both; Bounty and Ambush add this venue in their own cards. No new art round is needed."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
     round_1_sheet: ".lanes/salt-flats/docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: ".lanes/salt-flats/docs/board/looks/salt-flats/round-3.jpg"
@@ -3216,10 +3221,10 @@ tasks:
       - "Build Harpoon and Caltrops exactly as docs/ARSENAL.md section 3, and computer use of all four wave 1 weapons (Oil Slick and Smoke Screen come from ARS-CORE). Every counter has a headless test."
       - "Section 4's tests pass: determinism at 30, 60 and 144 FPS; the thirty-race balance with wasteland2 and arsenal on, with the computer's use of each weapon counted; a private browser scenario showing each weapon and counter. Sounds from Freesound CC0 through the catalog."
     hook_requests: [src/sound-bank.js, src/audio.js]
-    sequencing: "Independent tests cover settled native behavior first; Source waits for the two literal-rule answers. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. Audio remains with its separate owner."
+    sequencing: "Claude answered both literal rules, and native boundary tests are committed before Source. Runtime grants cover registry, named damage, speed consumers, fixed-step tethers, combat-scene pools and measured CPU use only; no Game, arena-event, Salt or participant crash edits. The audio card owns the three Oil and Smoke cues; further bank hooks need written release."
     design_question: "Claude: how long is Caltrops harmless to its owner after deployment, and what input threshold counts as steering hard away from a Harpoon tether? Tests use full steering for the settled counter until those exact rules are answered; Source has not started."
-    test_commit: ed76a446244ccef96a4e3e322d7ad328ebbb0c07
-    note: "Independent wave-one tests reproduce forty-six native weapon failures and four missing CPU-use accounting checks. Existing balance checks pass; Source waits for the two literal rules and the separate sound-bank owner."
+    test_commit: 37924a1cbce6cd3a1ec2a2953121208f7250b0ef
+    note: "Native tests now have fifty-two genuine failures and five preserved controls, including the settled owner grace and steering boundaries. Source proceeds within its named hooks; no other lane files are granted."
     claude_answer_0030: "2 October 2026, 00:30: (1) Caltrops are harmless to their owner for the first 1 s, the same as Oil Slick. (2) Steering hard away from the shooter means a steering input of at least 0.6 of full lock toward the side away from the shooter (keyboard or stick), counted while tethered; 0.5 s in total breaks the tether, and it need not be continuous."
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
