@@ -108,11 +108,15 @@ for (const car of Object.keys(CARS))
       const s = duel.course.length * .3, goal = duel.course.worldAt(s, lateral);
       placeActor(duel, cpu, {s: s - 20, lateral: 0});
       placeActor(duel, duel.state, {s: duel.course.length * .8, lateral: 0});
-      Object.assign(duel.state.arena.participants[1], {targetId: null, reactionSec: Infinity,
+      const participant = duel.state.arena.participants[1];
+      Object.assign(participant, {targetId: 'player', reactionSec: Infinity,
         goal: {...goal, speedMph: 30, boost: false}});
+      const cachedGoal = participant.goal;
       let closest = Infinity;
       for (let tick = 0; tick < 30 * 120; tick++) {
         duel.step(DT); finiteAndContained(duel);
+        if (tick === 0) assert.equal(participant.goal, cachedGoal,
+          'the actual enemy target preserves this native cached pilot goal');
         const at = worldPose(duel, cpu);
         closest = Math.min(closest, Math.hypot(at.x - goal.x, at.z - goal.z));
         if (closest < 3.5) break;
