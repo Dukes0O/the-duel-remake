@@ -634,17 +634,35 @@ Janitor after wreck-rate: integration dependency link removed, clean lane
 removed with plain git worktree remove, merged branch and used evidence deleted.
 Status refreshed; current assets, decisions and all unfinished lanes stay.
 
-Checkpoint sweep: consumed progress paragraphs were folded into current cards and notes; merged lanes were removed with plain worktree removal. The audit has no unused module or removed-test candidates; uncertain asset/export candidates remain assigned to discovery. Tracked size rose from 259,446,754 to 259,730,006 bytes for source, tests and notes; runtime assets stay at 236,249,990 bytes. Unfinished and Kyle-owned branches are preserved and listed on status.
+Overnight checkpoint: the previous exact source passed 326 full suites and
+build and pushed normally. The three Oil and Smoke cues then merged after
+327 lane suites, build, native tests, independent review and real mixed capture
+in both graphics modes. Contrast and event timing pass; human recognition and
+simultaneous six-slip stress stay flagged. The used sound lane and its evidence
+were deleted with plain worktree removal after unlinking integration dependencies.
 
+Arsenal's native review found genuine rotated-yank, airborne-grounding and
+collision-consumer gaps. Independent regressions preceded each repair; all
+65 native checks and final independent Source review pass. Balance and browser
+checks remain. The old scalar hit fixture now has stronger world-space checks;
+its exact damping remains. A new wall fixture was corrected to a genuine
+non-glancing hit, preserving damage thresholds and every assertion.
 
-Exact checkpoint passed all 324 full suites in 480.84 seconds and build in 405 ms; the normal D8 push succeeded. Merge count reset to zero. Dustmonger tests first have ten passing controls and three native admission failures; Bounty has twenty-eight passing checks and four real dev/native/App/yard failures. Their Source questions are written on the cards, notes and inbox. Kingpin is now claimed for tests first and hook mapping; no shared Source files are granted.
+Continuation handoff: Salt and Arsenal still wait for Kyle's two explicit
+approvals rejected by automatic review; those held fixtures remain exact.
+Claude approved the six new sound hooks and separate complete rear-defense
+balance races, preserving all historical samples and targets. Other Source waits for its file owners to merge. Both overnight
+follow-ups stay active; final handoff starts at 8:30 and ends by 8:45 Vancouver.
 
-Kingpin tests first: ten controls pass and four genuine dev/native admission checks fail; the two move questions are in its note, card and inbox. The complete reward requires active Tusk and Arsenal to free combat armor. Current art branches have only one comparison binary per round, so their present work requires no history rewrite.
+Janitor sweep: folded consumed checkpoints and answered questions, removed the
+merged sound lane and its used evidence, and preserved every unfinished lane,
+licensed source and current asset. No removal is proved safe among forty-eight
+asset and twenty-three export candidates; no removed-feature test remains.
+The private Tanker presenter remains needed for its native fitting check and
+future Convoy Raid. Audio added nine small current runtime recordings.
 
-Janitor sweep: consumed progress was folded into current cards and notes, and used checkpoint logs are removed after their committed verdicts. No unused module or removed-test candidate is proven; uncertain asset/export candidates remain with discovery. Tracked size is 259,736,514 bytes at the end-audit observation, up from 259,446,754 for source, tests and notes; runtime assets remain 236,249,990. All unfinished and Kyle-owned branches stay, with cards and activity on status.
+Janitor sizes: tracked files were 262492924 bytes before this sweep and are 262492457 bytes after folding; runtime files grew from 236249990 to 236343712 bytes for the nine new cues. Held and Kyle-owned lanes stay.
 
-The previous exact checkpoint passed all 324 full suites in 476.39 seconds and build in 407 ms, then pushed normally. Its verdict is committed; the consumed raw gate logs are removed. Mother Mirage now has six passing native controls and five genuine admission failures, with the split-trigger question in the inbox and no Source changes.
-
-Janitor sweep: consumed checkpoint logs were removed after their committed verdict; the previous handoff is replaced by this one. No module or removed-test candidate is unused; uncertain asset/export candidates remain with discovery. Tracked size at this audit is 259,740,877 bytes, up from 259,736,514 for board and question text; runtime assets stay at 236,249,990. All nine clean unfinished lanes and Kyle-owned branches are retained.
-
-Overnight checkpoint handoff: no feature merged in this continuation and merge count remains zero. Run the exact full tier and build on this documentation candidate, then push normally under D8. Resume after Claude answers the inbox: Tanker frees the shared art guard, Salt frees public entry and renderer work, Arsenal frees weapons and crew. Mirage, Bounty, Dustmonger and Kingpin wait for their written move rules and named file owners. The corrected UTC schedules wake after the 12:30, 3:30 and 6:30 AM Vancouver reviews; final handoff starts at 8:30 and ends by 8:45. Both automations remain active until that final handoff.
+The integration checkpoint passed all 327 suites and build, but Claude’s
+03:30 decision merge changed the head during the run. It grants no push pass.
+A fresh full gate follows the updated sound ownership and status checkpoint.
