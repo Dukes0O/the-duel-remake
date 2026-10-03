@@ -326,4 +326,28 @@ check('rocket and flame fixed-step outcomes match at 30, 60 and 144 FPS', () => 
     assert.deepEqual(run(30, kind), run(144, kind));
   }
 });
+
+check('native star shield blocks a Rocket Pods blast', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 520;
+  state.combat.rivalShield = 3;
+  const shot = startRocketVolley(duel, state) && state.combat.projectiles[0];
+  const at = duel.course.groundAt(rival.s, rival.lateral);
+  const dx = at.x - shot.x, dz = at.z - shot.z, length = Math.hypot(dx, dz);
+  shot.y = at.y + 1; shot.vx = dx / length * 80; shot.vz = dz / length * 80;
+  for (let i = 0; i < 90 && !shot.dead; i++) stepRocketPod(duel, shot, DT);
+  assert.equal(shot.dead, true);
+  assert.equal(rival.armor, 100);
+});
+check('raising a native star shield after flame contact blocks the later burn', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 506;
+  startFlamethrower(duel, state);
+  stepFlamethrowers(duel, DT);
+  const armor = rival.armor;
+  rival.s = 520;
+  state.combat.rivalShield = 3;
+  for (let i = 0; i < 1.5 / DT; i++) stepFlamethrowers(duel, DT);
+  assert.ok(Math.abs(rival.armor - armor) < EPS);
+});
 if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');
