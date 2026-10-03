@@ -1,8 +1,8 @@
 # BALANCE-W2-OFF-RETIRE
 
-Status: building. On 3 October Kyle approved removing the seven remaining
+Status: review. On 3 October Kyle approved removing the seven remaining
 Muddy Hollow and Scrapdome cue flags and keeping the two-cue Warlord audio
-fix. The exact final lane gate and integration review remain.
+fix. The source lane gate and build pass; integration review remains.
 
 ## Decision
 
@@ -76,9 +76,11 @@ instruction or the protected Twin Vultures file.
   flag fields. Rebuilding only those old fields in test memory preserved the
   original SHA and all recipe checks. Focused Arsenal core audio 14/14 and
   wave-one audio 36/36 now pass; no pin or cue was changed.
+- The exact lane tier then passed 344/344 in 555.10 s, including the native
+  audio peak suite; npm run build passed in 424 ms. No SHA or audio assertion
+  was weakened. Recheck this evidence-only note edit before merge.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
-  browser journeys remain to be checked after the audio hook lands. Board
-  parsing and diff whitespace checks pass.
+  affected journeys above passed. Board parsing and diff checks pass.
 
 ## Changed assertions
 
@@ -160,4 +162,4 @@ instruction or the protected Twin Vultures file.
 ## Pending
 
 The root AGENTS.md release-evidence wording belongs to integration, not this
-lane. The exact lane tier, build, review, merge, status and full tier remain.
+lane. Review, merge, status and the integration full tier remain.
