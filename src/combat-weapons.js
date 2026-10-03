@@ -10,6 +10,9 @@ import {deployOil} from './arsenal/oil.js';
 import {deploySmoke} from './arsenal/smoke.js';
 import {deployCaltrops} from './arsenal/caltrops.js';
 import {launchHarpoon} from './arsenal/harpoon.js';
+import {startRocketVolley} from './arsenal/rockets.js';
+import {startFlamethrower} from './arsenal/flamethrower.js';
+import {startScrapMagnet} from './arsenal/magnet.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 
@@ -294,7 +297,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   const arsenal = arsenalEnabled(duel);
   let straightShot = false;
   const rearHazard = ['oil', 'smoke', 'caltrops'].includes(weapon);
-  if ((rearHazard || weapon === 'harpoon') && !arsenal) return false;
+  const waveTwo = ['rockets', 'flamethrower', 'magnet'].includes(weapon);
+  if ((rearHazard || weapon === 'harpoon' || waveTwo) && !arsenal) return false;
   if (arsenal && carEffect(actor, 'disabled')) return false;
   if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
   let cooldowns = combat.cooldowns;
@@ -327,6 +331,12 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     if (!hazard) return false;
   } else if (weapon === 'harpoon') {
     if (!launchHarpoon(duel, actor, enemy, level)) return false;
+  } else if (weapon === 'rockets') {
+    if (!startRocketVolley(duel, actor, level)) return false;
+  } else if (weapon === 'flamethrower') {
+    if (!startFlamethrower(duel, actor, level)) return false;
+  } else if (weapon === 'magnet') {
+    if (!startScrapMagnet(duel, actor)) return false;
   } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);

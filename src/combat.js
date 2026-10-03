@@ -5,6 +5,9 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {arsenalEnabled, hazardsActive, stepCpuWeaponCooldowns, clearCpuWeaponCooldowns} from './combat-weapons.js';
 import {clearSmokeHistory} from './arsenal/smoke.js';
 import {stepTether} from './arsenal/harpoon.js';
+import {stepRocketVolleys} from './arsenal/rockets.js';
+import {stepFlamethrowers} from './arsenal/flamethrower.js';
+import {stepScrapMagnets} from './arsenal/magnet.js';
 import {cpuArsenalLoadout} from './weapon-upgrades.js';
 import {makeRng} from './rng.js';
 import {clearHazards, stepHazards} from './arsenal/hazards.js';
@@ -24,6 +27,12 @@ export function initializeArsenalCombat(duel) {
 export function clearArsenalState(duel) {
   clearHazards(duel);
   clearSmokeHistory(duel);
+  if (duel.state.combat) {
+    duel.state.combat.rocketVolleys = [];
+    duel.state.combat.flameBursts = [];
+    duel.state.combat.flameBurns = {};
+    duel.state.combat.magnets = [];
+  }
   for (const actor of [duel.state, ...duel.state.opponents, ...duel.state.traffic,
     duel.state.police?.pursuit]) {
     if (actor) {
@@ -48,6 +57,7 @@ export function stepCombat(duel, dt) {
   if (!combat || state.status !== 'racing' || state.paused) return;
 
   tickImpactCooldowns(duel, dt);
+  if (arsenalEnabled(duel)) stepScrapMagnets(duel, dt);
   stepPickups(duel, dt);
 
   for (const weapon of Object.keys(combat.cooldowns)) {
@@ -67,6 +77,10 @@ export function stepCombat(duel, dt) {
     stepCpuWeaponCooldowns(actor, dt);
   stepCombatAI(duel, dt);
   stepGearDeployables(duel, dt);
+  if (arsenalEnabled(duel)) {
+    stepRocketVolleys(duel, dt);
+    stepFlamethrowers(duel, dt);
+  }
   stepProjectiles(duel, dt);
   if (hazardsActive(duel)) {
     for (const actor of [state, ...state.opponents, ...state.traffic, state.police?.pursuit]) {

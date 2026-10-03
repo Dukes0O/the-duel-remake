@@ -9,6 +9,7 @@ import {damageRaider} from './raiders.js';
 import {arenaActor, arenaDamageBlocked, arenaStrikeCandidates, arenaTargetOutOfPlay, hostile} from './combat-teams.js';
 import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
 import {stepGearProjectile} from './crew-gear/projectiles.js';
+import {stepRocketPod} from './arsenal/rockets.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 
 const T = COMBAT_TUNING;
@@ -300,6 +301,10 @@ export function stepProjectiles(duel, dt) {
   for (const projectile of combat.projectiles) {
     if (projectile.crewGearShot) {
       if (stepGearProjectile(duel, projectile, dt)) live.push(projectile);
+      continue;
+    }
+    if (projectile.kind === 'rocket-pod') {
+      if (stepRocketPod(duel, projectile, dt)) live.push(projectile);
       continue;
     }
     const old = {x: projectile.x, y: projectile.y, z: projectile.z};

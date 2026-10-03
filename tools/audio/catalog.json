@@ -1034,6 +1034,167 @@
         "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
       },
       "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "854473",
+      "cue": "weapon.rockets.fire",
+      "title": "M142 HIMARS Rocket Launch 5",
+      "author": "qubodup",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/qubodup/sounds/854473/",
+      "download": "https://cdn.freesound.org/previews/854/854473_71257-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 3.06525,
+      "file": "freesound/854473-m142-himars-rocket-launch-5.ogg",
+      "sha256": "4caa830989edf756f816e97a71509c4499fb07eac6848082f3223b7bdaf5b563",
+      "bytes": 34429,
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.rocket-fire: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      },
+      "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "855733",
+      "cue": "weapon.rockets.flight",
+      "title": "Whoosh - Weighted string - Airy whistle",
+      "author": "Sadiquecat",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Sadiquecat/sounds/855733/",
+      "download": "https://cdn.freesound.org/previews/855/855733_5287430-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.465917,
+      "file": "freesound/855733-whoosh-weighted-string-airy-whistle.ogg",
+      "sha256": "d454233fe1ce68e45d4915e717c7fb3a9d2cde8a5417544ae84fad8523514cf5",
+      "bytes": 15917,
+      "fetched": "2026-09-25",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.rocket-flight: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "397691",
+      "cue": "weapon.rockets.hit",
+      "title": "Explosion.wav",
+      "author": "morganpurkis",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/morganpurkis/sounds/397691/",
+      "download": "https://cdn.freesound.org/previews/397/397691_5937039-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 4.02551,
+      "file": "freesound/397691-explosion-wav.ogg",
+      "sha256": "63f26ecb72b3c4adcda7f915fcd373ad625752a6bce0fa43eeb673a33a381137",
+      "bytes": 49728,
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.rocket-hit: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      },
+      "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "395039",
+      "cue": "weapon.flame.start",
+      "title": "Flamethrower_Weapon_Long_Bursts.wav",
+      "author": "AslakHostaker",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/AslakHostaker/sounds/395039/",
+      "download": "https://cdn.freesound.org/previews/395/395039_7487276-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 28.28,
+      "file": "freesound/395039-flamethrower-weapon-long-bursts-wav.ogg",
+      "sha256": "49250fbce8d355e94eae9429037644840487068b10073f2b2adbea34e45e9fa6",
+      "bytes": 294072,
+      "fetched": "2026-10-03",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.flame-start: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "395039",
+      "cue": "weapon.flame.loop",
+      "title": "Flamethrower_Weapon_Long_Bursts.wav",
+      "author": "AslakHostaker",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/AslakHostaker/sounds/395039/",
+      "download": "https://cdn.freesound.org/previews/395/395039_7487276-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 28.28,
+      "file": "freesound/395039-flamethrower-weapon-long-bursts-wav.ogg",
+      "sha256": "49250fbce8d355e94eae9429037644840487068b10073f2b2adbea34e45e9fa6",
+      "bytes": 294072,
+      "fetched": "2026-10-03",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.flame-loop: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "395039",
+      "cue": "weapon.flame.end",
+      "title": "Flamethrower_Weapon_Long_Bursts.wav",
+      "author": "AslakHostaker",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/AslakHostaker/sounds/395039/",
+      "download": "https://cdn.freesound.org/previews/395/395039_7487276-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 28.28,
+      "file": "freesound/395039-flamethrower-weapon-long-bursts-wav.ogg",
+      "sha256": "49250fbce8d355e94eae9429037644840487068b10073f2b2adbea34e45e9fa6",
+      "bytes": 294072,
+      "fetched": "2026-10-03",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.flame-end: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "641335",
+      "cue": "weapon.magnet.hum",
+      "title": "electric hum.wav",
+      "author": "soundofsong",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/soundofsong/sounds/641335/",
+      "download": "https://cdn.freesound.org/previews/641/641335_9782868-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 7.99,
+      "file": "freesound/641335-electric-hum-wav.ogg",
+      "sha256": "17fadacde8ea5041adb317c7ec9f7c814c8aa8da0d85b84c5246eebd3ab48159",
+      "bytes": 118022,
+      "fetched": "2026-10-03",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave2-audio.mjs",
+        "recipe": "ARSENAL_WAVE_TWO_RECIPES.magnet-hum: verified source cut, fixed A/B/C rate offsets, filters, envelope, loop crossfade where applicable, mono 48 kHz Vorbis q5 and true peak measurement",
+        "approval": "Kyle ARS-02: finish seven CC0 Rocket, Flame and Magnet cues on 3 October 2026"
+      }
     }
   ]
 }

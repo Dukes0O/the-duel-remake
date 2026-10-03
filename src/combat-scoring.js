@@ -25,16 +25,17 @@ export function tickCombatScoring(duel) {
   if (scoring && duel.state.stageTimeSec >= scoring.comboUntil) scoring.combo = 0;
 }
 
-export function recordCombatHit(duel, victim, removed, owner) {
+export function recordCombatHit(duel, victim, removed, owner, styleHit = true) {
   const state = duel.state, scoring = state.combat?.scoring;
   if (!scoring || owner !== 'player' || !state.opponents.includes(victim) ||
       !(removed > 0)) return;
+  scoring.damageDealt += removed;
+  if (!styleHit) return;
   if (state.stageTimeSec >= scoring.comboUntil) scoring.combo = 0;
   scoring.combo = Math.min(T.maximumCombo, scoring.combo + 1);
   scoring.comboUntil = state.stageTimeSec + T.comboWindowSeconds;
   scoring.bestCombo = Math.max(scoring.bestCombo, scoring.combo);
   scoring.hitsLanded++;
-  scoring.damageDealt += removed;
   awardStyle(duel, T.hitStylePoints * scoring.combo);
 }
 
