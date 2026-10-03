@@ -2,7 +2,7 @@
 
 Status: review. On 3 October Kyle approved removing the seven remaining
 Muddy Hollow and Scrapdome cue flags and keeping the two-cue Warlord audio
-fix. The source lane gate and build pass; integration review remains.
+fix. The synced lane gate and build pass; integration review remains.
 
 ## Decision
 
@@ -79,6 +79,15 @@ instruction or the protected Twin Vultures file.
 - The exact lane tier then passed 344/344 in 555.10 s, including the native
   audio peak suite; npm run build passed in 424 ms. No SHA or audio assertion
   was weakened. Recheck this evidence-only note edit before merge.
+- The final note commit 6146a01 exposed a repeat of the native AudioWorklet
+  gap: the exact lane run stopped at 115 passed, one failed. The separate
+  AUD-CAPTURE-SCHEDULING tool card kept QA Chrome active; it passed three
+  focused native captures and a full 344/344 integration tier. Balance synced
+  that fix by normal merge at 0d8a143. Its exact lane gate passed 344/344 in
+  555.82 s, including all 23 native audio checks and continuous six-blast
+  mix, engine and impacts. The build passed in 433 ms. No audio assertion,
+  measured limit or game cue changed for the tool fix. Rerun on this note
+  commit before merge.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   affected journeys above passed. Board parsing and diff checks pass.
 
