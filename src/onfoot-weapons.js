@@ -3,14 +3,21 @@ import {targetFor,targetIdentity} from './arsenal/targeting.js';
 import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
+import {initializeCrewGear, crewGearEnabled, crewRpgTiming, selectSignatureGear,
+  showSignatureGear, resetCrewGearUser, stepSignatureGear, restoreRpgTiming,
+  noteRpgTiming} from './crew-gear/signature.js';
 
 const T = COMBAT_TUNING.foot;
 const EPSILON = 1e-8;
 const GEAR = Object.freeze({1: 'rpg', 2: 'wrench'});
 const length = (x, y, z) => Math.hypot(x, y, z);
 
-function showGear(state) {
-  const weapons = state.footWeapons;
+function showGear(duel) {
+  const state = duel.state, weapons = state.footWeapons;
+  if (crewGearEnabled(duel) && state.crewGear &&
+      weapons.selected === state.crewGear.id && weapons.selected !== 'rpg') {
+    showSignatureGear(duel); return;
+  }
   state.footGear = weapons.selected === 'wrench'
     ? {name: 'WRENCH', ammo: null}
     : {name: 'LONGHORN RPG', ammo: weapons.ammo};
@@ -21,6 +28,7 @@ export function initializeFootWeapons(duel) {
   if (!combatArmorEnabled(duel)) {
     delete state.footWeapons;
     delete state.footGear;
+    initializeCrewGear(duel);
     return;
   }
   state.footWeapons = {
@@ -31,7 +39,8 @@ export function initializeFootWeapons(duel) {
     lastHealth: null, lastArmor: state.armor,
     lastX: null, lastZ: null,
   };
-  showGear(state);
+  initializeCrewGear(duel);
+  showGear(duel);
 }
 
 export function resetFootWeaponUser(duel) {
@@ -48,16 +57,20 @@ export function resetFootWeaponUser(duel) {
   weapons.lastArmor = state.armor;
   weapons.lastX = state.fighter.x;
   weapons.lastZ = state.fighter.z;
-  showGear(state);
+  resetCrewGearUser(duel);
+  showGear(duel);
 }
 
 export function selectFootGear(duel, slot) {
   const state = duel.state, weapons = state.footWeapons;
+  if (slot === 3) return selectSignatureGear(duel);
   const selected = GEAR[slot];
   if (!state.onFoot || !weapons || !selected ||
       state.status !== 'racing' || state.paused) return false;
   if (weapons.selected === selected) return true;
   const repairWasInterrupted = weapons.repairBlockedUntilRelease;
+  if (weapons.selected !== 'rpg' && weapons.selected !== 'wrench') restoreRpgTiming(duel);
+  if (state.fighter && crewGearEnabled(duel)) state.fighter.gearMagnification = 1;
   weapons.selected = selected;
   weapons.lockTargetIndex = null;
   if (arsenalEnabled(duel)) delete weapons.lockTargetId;
@@ -67,7 +80,7 @@ export function selectFootGear(duel, slot) {
   weapons.repairBlockedUntilRelease = repairWasInterrupted &&
     !!state.fighterInput.fire;
   weapons.fireHeld = !!state.fighterInput.fire;
-  showGear(state);
+  showGear(duel);
   duel.emit({footGearChanged: selected});
   return true;
 }
@@ -119,14 +132,15 @@ function advanceLock(duel, fighter, weapons, input, dt, direction) {
       if(selected?.decoy && previousId && weapons.lockSeconds>0)weapons.lockTargetIndex=target;
     }else weapons.lockTargetId=null;
   }
+  const lockSeconds = crewRpgTiming(duel, fighter.crewId)?.lockSeconds ?? T.rpgLockSeconds;
   if (target === null) {
     weapons.lockTargetIndex = null;
     weapons.lockSeconds = 0;
   } else if (target === weapons.lockTargetIndex) {
-    weapons.lockSeconds = Math.min(T.rpgLockSeconds, weapons.lockSeconds + dt);
+    weapons.lockSeconds = Math.min(lockSeconds, weapons.lockSeconds + dt);
   } else {
     weapons.lockTargetIndex = target;
-    weapons.lockSeconds = Math.min(T.rpgLockSeconds, dt);
+    weapons.lockSeconds = Math.min(lockSeconds, dt);
   }
 }
 
@@ -137,7 +151,8 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
   const movingX = weapons.lastX == null ? 0 : (fighter.x - weapons.lastX) / dt;
   const movingZ = weapons.lastZ == null ? 0 : (fighter.z - weapons.lastZ) / dt;
   const serial = ++weapons.serial;
-  const targetIndex = weapons.lockSeconds + EPSILON >= T.rpgLockSeconds
+  const timing = crewRpgTiming(duel, fighter.crewId);
+  const targetIndex = weapons.lockSeconds + EPSILON >= (timing?.lockSeconds ?? T.rpgLockSeconds)
     ? weapons.lockTargetIndex : null;
   const lockRangeMultiplier = Math.min(1.25, Math.max(1,
     crewPerks(fighter.crewId).lockRangeMultiplier || 1));
@@ -161,8 +176,9 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
   });
   weapons.ammo--;
   weapons.lastFireAt = state.stageTimeSec;
-  weapons.nextFireAt = state.stageTimeSec + T.rpgReloadSeconds;
-  showGear(state);
+  weapons.nextFireAt = state.stageTimeSec + (timing?.reloadSeconds ?? T.rpgReloadSeconds);
+  noteRpgTiming(duel);
+  showGear(duel);
   duel.emit({weaponFired: 'rpg', footWeaponFired: 'rpg'});
   return true;
 }
@@ -223,7 +239,8 @@ export function stepFootWeapons(duel, dt) {
     weapons.lastHealth !== null && fighter.health < weapons.lastHealth - EPSILON ||
     state.armor < weapons.lastArmor - EPSILON;
   const direction = aimDirection(fighter);
-  if (weapons.selected === 'rpg' && !fighter.knockedDown &&
+  const signatureSelected = stepSignatureGear(duel, dt);
+  if (!signatureSelected && weapons.selected === 'rpg' && !fighter.knockedDown &&
       !(fighter.bailTumbleSeconds > 0)) {
     advanceLock(duel, fighter, weapons, input, dt, direction);
     if (input.fire && !weapons.fireHeld)

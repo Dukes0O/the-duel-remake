@@ -1373,6 +1373,12 @@ export class EngineAudio {
       );
       this._playCue(ev.arsenalCue, {destination: output.level, onEnd: output.disconnect});
     }
+    if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue) {
+      const output = this._spatialOutput(
+        {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
+      );
+      this._playCue(ev.crewGearCue, {destination: output.level, onEnd: output.disconnect});
+    }
     if (ev.countdown) this._playCue('interface.countdown');
     if (ev.go) this._playCue('interface.go');
     if (ev.shift != null) {
@@ -1479,6 +1485,8 @@ export class EngineAudio {
           onEnd: output.disconnect,
         });
       }
+      if (state?.arena?.mode === 'bounty-hunt' && this.flags.enabled('bounty-hunt') &&
+          (ev.arenaLoaded || ev.bountyMark)) this._playCue('arena.bounty-mark');
       if (state?.arena?.mode === 'fuel-run' && this.flags.enabled('fuel-run')) {
         if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
         if (ev.fuelPickup?.participantId === 'player') this._playCue('interface.bonus');

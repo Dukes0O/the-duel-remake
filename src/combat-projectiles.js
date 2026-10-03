@@ -8,6 +8,7 @@ import {tickCombatScoring} from './combat-scoring.js';
 import {damageRaider} from './raiders.js';
 import {arenaActor, arenaDamageBlocked, arenaStrikeCandidates, arenaTargetOutOfPlay, hostile} from './combat-teams.js';
 import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
+import {stepGearProjectile} from './crew-gear/projectiles.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -297,6 +298,10 @@ export function stepProjectiles(duel, dt) {
   const modernProjectiles = state.mode === 'wasteland' &&
     duel.featureFlags?.enabled('wasteland2') === true;
   for (const projectile of combat.projectiles) {
+    if (projectile.crewGearShot) {
+      if (stepGearProjectile(duel, projectile, dt)) live.push(projectile);
+      continue;
+    }
     const old = {x: projectile.x, y: projectile.y, z: projectile.z};
     const biasedEnemyBolt = modernProjectiles && projectile.kind === 'crossbow' &&
       projectile.enemy && Number.isFinite(projectile.aimBias);

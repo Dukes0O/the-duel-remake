@@ -5,13 +5,13 @@ import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
   assert.deepEqual(FEATURE_STATES, {
-    'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on', scrapdome: 'on',
+    'bounty-hunt': 'dev', 'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on', scrapdome: 'on',
     'titan-climb': 'on',
     'muddy-hollow': 'on',
     warlords: 'on',
     'fuel-run': 'dev',
     arsenal: 'dev',
-    'salt-flats': 'dev',
+    'salt-flats': 'dev', 'crew-gear': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), true);

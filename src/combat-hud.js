@@ -60,6 +60,22 @@ export function footCarDirection(course, state) {
     angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
 }
 
+export function bountyArrowPresentation(course, state, projected = []) {
+  const arena = state.arena, bounty = arena?.mode === 'bounty-hunt' && arena.bountyHunt;
+  if (!bounty || bounty.pendingVictimId) return null;
+  if (bounty.markedId === 'player') return {x: .5, y: .62, angle: 180, text: 'YOU CARRY THE BOUNTY'};
+  const index = state.opponents.findIndex(actor => actor.arenaId === bounty.markedId);
+  const actor = state.opponents[index];
+  if (!actor || actor.combatWrecking || actor.finished || actor.crushed) return null;
+  const projectedCar = projected.find(item => item.index === index);
+  const exact = projectedCar?.visible === true;
+  const position = exact ? projectedCar : fallbackOpponentPosition(course, state, actor, 0);
+  const name = arena.participants.find(p => p.id === bounty.markedId)?.name || 'MARKED CAR';
+  return {x: Math.max(.11, Math.min(.89, position.x)), y: Math.max(.14, Math.min(.72, position.y - (exact ? .1 : 0))),
+    angle: exact ? 180 : {AHEAD: 0, RIGHT: 90, BEHIND: 180, LEFT: -90}[position.direction],
+    text: `BOUNTY · ${name}${exact ? '' : ' · ' + position.direction}`};
+}
+
 export function footAmmoPresentation(state) {
   const gear = state?.footGear;
   if (!gear || typeof gear.name !== 'string')
@@ -84,6 +100,12 @@ export function footActionPresentation(state) {
       return {text: `REPAIRING ${Math.round(weapons.repairAmount || 0)} / 40`, locked: false};
     return {text: weapons.repairBlockedUntilRelease
       ? 'RELEASE FIRE TO REPAIR AGAIN' : 'HOLD FIRE NEAR YOUR CAR', locked: false};
+  }
+  if (gear.name !== 'LONGHORN RPG') {
+    if (gear.name === 'HAND FLAMER' && state.fighter?.flaming) return {text: 'FLAMING', locked: false};
+    if (gear.ammo === 0) return {text: 'OUT OF GEAR', locked: false};
+    const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
+    return {text: reload > 0 ? `READY IN ${reload.toFixed(1)}s` : 'FIRE TO USE', locked: false};
   }
   if (gear.ammo === 0) return {text: 'OUT OF ROCKETS', locked: false};
   const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
@@ -124,8 +146,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   host.hidden = true;
   host.setAttribute('aria-label', 'Combat information');
   host.innerHTML = `<div class="combat-opponent-layer" aria-label="Opponent armor and positions"></div>
+    <div class="bounty-screen-arrow" role="status" hidden><span aria-hidden="true">▲</span><b></b></div>
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
+    <div class="combat-edge-cue" data-side="left" aria-hidden="true"></div>
+    <div class="combat-edge-cue" data-side="right" aria-hidden="true"></div>
     <div class="combat-xp-toast" role="status" aria-live="polite"></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
@@ -147,11 +172,13 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   root.querySelector('.race-health').append(footHealth);
 
   const layer = host.querySelector('.combat-opponent-layer');
+  const bountyArrow = host.querySelector('.bounty-screen-arrow');
   const markers = [];
   const buttons = [...host.querySelectorAll('[data-combat-weapon]')];
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
   const xpToast = host.querySelector('.combat-xp-toast');
+  const edgeCues = [...host.querySelectorAll('.combat-edge-cue')];
   const armorValue = playerArmor.querySelector('strong');
   const armorFill = playerArmor.querySelector('i');
   const footHealthValue = footHealth.querySelector('strong');
@@ -260,6 +287,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
 
     const opponents = state.opponents || [];
     const projected = projectOpponents();
+    const bounty = bountyArrowPresentation(app.duel.course, state, projected);
+    bountyArrow.hidden = !bounty;
+    if (bounty) {
+      bountyArrow.style.left = `${(bounty.x * 100).toFixed(1)}%`;
+      bountyArrow.style.top = `${(bounty.y * 100).toFixed(1)}%`;
+      bountyArrow.querySelector('span').style.transform = `rotate(${bounty.angle}deg)`;
+      setText(bountyArrow.querySelector('b'), bounty.text);
+    }
     while (markers.length < opponents.length) {
       const marker = createOpponentMarker(markers.length);
       markers.push(marker);
@@ -291,6 +326,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       }
       setText(marker.querySelector('.combat-marker-heading'), arena ? `${arena.heading}${arena.hunting ? ' · HUNTING YOU' : ''}` : index ? `OPPONENT ${index + 1}` : 'RIVAL');
       marker.classList.toggle('is-hunting', !!arena?.hunting);
+      marker.classList.toggle('is-marked', !!arena?.marked);
       marker.classList.toggle('is-protected', !!arena?.protected);
       setText(marker.querySelector('.combat-marker-value'), exact ? `${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${opponentArmor.value} / ${opponentArmor.max}`);
       setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
@@ -301,6 +337,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);
     xpToast.classList.toggle('is-visible', xpUntil > state.stageTimeSec && !state.paused);
+    // A warlord move may light a screen edge for the side something comes from.
+    for (const cue of edgeCues) cue.classList.toggle('is-visible', !state.paused &&
+      !!state.arena?.edgeCues?.some(item => item.side === cue.dataset.side && item.untilSec > state.stageTimeSec));
     if (damageArrow.dataset.direction !== damageDirection) damageArrow.dataset.direction = damageDirection;
     previousZones = {...state.damageZones};
   }

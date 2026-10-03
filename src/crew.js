@@ -17,7 +17,7 @@ export const CREW=Object.freeze({
       shoulder:.9,pack:1.12,hood:false})}),
   jax:Object.freeze({id:'jax',name:'Jax Harrow',role:'Harpooner',
     perk:'Boards cars up to 90 km/h',gear:'Grapple',rank:8,
-    active:false,perks:Object.freeze({boardMaxKph:90}),
+    active:true,perks:Object.freeze({boardMaxKph:90}),
     appearance:Object.freeze({coat:0x343c3d,vest:0x544b42,armor:0x6e6b64,
       trousers:0x34383a,helmet:0x383c3a,skin:0xb88972,accent:0xb4a58d,
       shoulder:1.05,pack:1.05,hood:false})}),
@@ -29,7 +29,7 @@ export const CREW=Object.freeze({
       shoulder:.95,pack:1.2,hood:false})}),
   cinder:Object.freeze({id:'cinder',name:'Cinder Ruiz',role:'Flame specialist',
     perk:'Immune to fire',gear:'Hand Flamer',rank:12,
-    active:false,perks:Object.freeze({fireImmune:true}),
+    active:true,perks:Object.freeze({fireImmune:true}),
     appearance:Object.freeze({coat:0x333638,vest:0x444543,armor:0x775e4d,
       trousers:0x34383a,helmet:0x303436,skin:0xad7863,accent:0xd96b35,
       shoulder:.92,pack:1.1,hood:false})}),
@@ -47,7 +47,7 @@ export const CREW=Object.freeze({
       shoulder:.85,pack:.85,hood:false})}),
   tusk:Object.freeze({id:'tusk',name:'Tusk Brannigan',role:'Heavy',
     perk:'Can shove a parked car',gear:'Scrap Cannon',rank:25,
-    active:false,perks:Object.freeze({parkedCarShove:true}),
+    active:true,perks:Object.freeze({parkedCarShove:true}),
     appearance:Object.freeze({coat:0x5a4138,vest:0x493831,armor:0x876a58,
       trousers:0x563f35,helmet:0x473e37,skin:0xb38169,accent:0xb88969,
       shoulder:1.24,pack:1.12,hood:false})}),
@@ -56,21 +56,28 @@ export const CREW=Object.freeze({
 export function crewPerks(id){return Object.hasOwn(CREW,id)?CREW[id].perks:CREW.rook.perks;}
 export function crewAppearance(id){return Object.hasOwn(CREW,id)?CREW[id].appearance:CREW.rook.appearance;}
 export function crewRank(profile){return rankForXp(profile?.wasteland?.xp||0);}
+function crewAdmitted(profile, id) {
+  if (CREW[id].rank <= crewRank(profile)) return true;
+  // The Kettle Kingpin's earned Tusk reward is usable immediately. This
+  // existing entitlement never spends scrap or opens unearned rank-gated crew.
+  return id === 'tusk' && profile?.wasteland?.version === 1 &&
+    Array.isArray(profile.wasteland.crew?.unlocked) &&
+    profile.wasteland.crew.unlocked.includes(id);
+}
 export function availableCrew(profile){
-  const rank=crewRank(profile);
-  return Object.values(CREW).filter(member=>member.rank<=rank);
+  return Object.values(CREW).filter(member=>crewAdmitted(profile,member.id));
 }
 export function selectedCrewId(profile){
   const id=profile?.wasteland?.crew?.selected;
   return profile?.wasteland?.version===1 && Object.hasOwn(CREW,id) &&
-    CREW[id].rank<=crewRank(profile) ? id : 'rook';
+    crewAdmitted(profile,id) ? id : 'rook';
 }
 export function selectCrew(profile,id){
   if(profile?.wasteland?.version!==1)
     return {ok:false,profile,reason:'This career is not ready for Wasteland crew changes.'};
   if(!Object.hasOwn(CREW,id))
     return {ok:false,profile,reason:'Choose a known crew member.'};
-  if(CREW[id].rank>crewRank(profile))
+  if(!crewAdmitted(profile,id))
     return {ok:false,profile,reason:`Reach Notoriety rank ${CREW[id].rank} first.`};
   if(selectedCrewId(profile)===id)
     return {ok:true,changed:false,profile,id};

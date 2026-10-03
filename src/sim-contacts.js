@@ -11,6 +11,7 @@ import { breakableScenery, roadsideScenery, roadsideTrafficDecision, sceneryIden
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {combatOwnerId} from './combat-teams.js';
+import {warlordFight} from './warlords/index.js';
 import {vehicleContactModifiers} from './vehicle-contact-modifiers.js';
 import {burst} from './combat-weapons.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
@@ -93,6 +94,8 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
   b.offRoad = !duel._surface(b.s, b.lateral).mainRoad;
   if (!firstImpact) return true;
   incidents.add(pairKey);
+  // A warlord's fight may react to its own cars colliding (the Twin Vultures).
+  warlordFight(duel, a)?.contact?.(duel, a, b, impactMph);
 
   if (a !== duel.state) duel._dentVehicle(a, zoneA, impactMph);
   if (b !== duel.state) duel._dentVehicle(b, zoneB, impactMph);

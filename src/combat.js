@@ -9,6 +9,7 @@ import {cpuArsenalLoadout} from './weapon-upgrades.js';
 import {makeRng} from './rng.js';
 import {clearHazards, stepHazards} from './arsenal/hazards.js';
 import {clearCarEffects, stepCarEffects} from './arsenal/car-effects.js';
+import {stepGearDeployables} from './crew-gear/signature.js';
 
 export {WEAPONS, supportsCombat, createCombat, ufoDestination, fireWeapon} from './combat-weapons.js';
 
@@ -65,6 +66,7 @@ export function stepCombat(duel, dt) {
   if (arsenalEnabled(duel)) for (const actor of state.opponents)
     stepCpuWeaponCooldowns(actor, dt);
   stepCombatAI(duel, dt);
+  stepGearDeployables(duel, dt);
   stepProjectiles(duel, dt);
   if (hazardsActive(duel)) {
     for (const actor of [state, ...state.opponents, ...state.traffic, state.police?.pursuit]) {

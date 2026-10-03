@@ -32,7 +32,7 @@ test('every built warlord has its own fight file and a place on the ladder', () 
     ok(WARLORD_LADDER.includes(id), `${id} is on the ladder`);
     ok(WARLORDS[id].car && WARLORDS[id].brain, `${id} names its car and brain`);
     // The Decoy Drone weapon is ARS-03; until it lands its warlord names it unbuilt.
-    ok(WARLORDS[id].rewardKit || WARLORDS[id].rewardWeapon ||
+    ok(WARLORDS[id].rewardKit || WARLORDS[id].rewardWeapon || WARLORDS[id].rewardGear ||
       WARLORDS[id].rewardBuilt === false && WARLORDS[id].reward, `${id} names its reward`);
   }
 });

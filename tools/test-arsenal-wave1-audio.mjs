@@ -16,6 +16,10 @@ import {decodeAudioBytes} from './audio/codec.mjs';
 // Only the six new recordings are decoded; no network or player storage is used.
 const CUES = ['weapon.harpoon.fire', 'weapon.harpoon.flight', 'weapon.harpoon.hit',
   'weapon.harpoon.break', 'weapon.caltrops.deploy', 'weapon.caltrops.hit'];
+const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','crew.sticky.explode','crew.grapple.launch',
+  'crew.turret.deploy','crew.turret.fire','crew.turret.retire','crew.flamer.start','crew.flamer.stop',
+  'crew.marksman.fire','crew.scrap-cannon.fire'];
+const BANK_ADDITIONS = new Set([...CUES, 'arena.bounty-mark', ...CREW_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];
@@ -179,7 +183,7 @@ function reaches(node, target, visited = new Set()) {
   return node.connections.some(next => reaches(next, target, visited));
 }
 check('released sound-bank entries and other exports stay exact', () => {
-  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !CUES.includes(id)))),
+  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)))),
     'b63edbe579c7709c32af22b2467fa8706aee2585ed957c20fde8062064f7f2b4',
     'all released cues, including Oil and Smoke, remain exact');
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK'))),
