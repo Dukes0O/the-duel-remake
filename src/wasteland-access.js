@@ -27,8 +27,6 @@ export function raceFeatureFlags(flags, raceState) {
     ...flags,
     base: flags,
     enabled(name) {
-      if (name === 'wasteland2')
-        return raceState()?.wastelandGateDiscovered === true;
       if (!flags.enabled(name)) return false;
       return name !== 'arsenal' ||
         raceState()?.wastelandGateDiscovered === true;

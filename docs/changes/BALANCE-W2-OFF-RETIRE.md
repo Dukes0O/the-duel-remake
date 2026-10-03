@@ -1,8 +1,8 @@
 # BALANCE-W2-OFF-RETIRE
 
-Status: building. Source, balance-tool, test-fixture and scenario cleanup is
-prepared in this lane. AUD-17 still owns the sound-bank hook, so the audio
-catalog and final switch removal wait for that owner to release it.
+Status: building. Kyle released the idle AUD-17 sound-bank hook for this card
+on 3 October. The Wasteland cue flags and audio off paths are removed in this
+lane; the final catalog cleanup and gate are still pending.
 
 ## Decision
 
@@ -32,6 +32,10 @@ instruction or the protected Twin Vultures file.
   exactly for identical discovered inputs. Original historical pins remain;
   separate discovered-input pins were added. Combat replay pins still pass.
   The approved projectile-height trace and its SHA-256 stay unchanged.
+- After Kyle's audio hook release, combat audio passed 10/10; Arsenal core
+  audio passed 14/14; Arsenal wave-one audio passed 36/36. Feature checks
+  passed 32/32; Wasteland beta evidence passed 8/8. The build passed in
+  474 ms. These are focused checks, not a final lane gate.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   browser journeys remain to be checked after the audio hook lands. Board
   parsing and diff whitespace checks pass.
@@ -52,6 +56,10 @@ instruction or the protected Twin Vultures file.
   fields and physical/replay checks remain.
 - The Fuel Run blocked-launch loop lost only its retired Scrapdome entry.
   The rank, mode switch, discovery, ownership and menu refusals remain.
+- Audio tests now check the real discovery field for flight ownership and
+  retain positive recording, variant, spatial and peak checks. The two
+  Arsenal audio recipe pins remain exact by restoring only the removed cue
+  flag in test memory before hashing. No sound body or recipe is exempt.
 - One duplicate combat-armor test also asserted that the retired catalog
   switch was on. It was deleted; its ordinary and undiscovered armor checks
   remain in the next test. The enemy-aim control keeps its historical
@@ -75,14 +83,19 @@ instruction or the protected Twin Vultures file.
 - Removed the two Titan switch-off climb/slope tests in test-titan-climb and
   the switch-off traffic-shield test. Positive Titan, Rally, ordinary-car,
   impact, shield and replay cases remain.
+- Removed 12 `flag: 'wasteland2'` sound-bank fields, the audio legacy
+  fallback path, and the switch-off-only combat audio test. Original recorded
+  cue files, layers and recipes remain unchanged. Audio now uses saved gate
+  discovery for mixer and projectile ownership.
 - Removed retired switch settings from tests and 48 browser scenario URLs.
   Removed 52 obsolete Board flag fields. The Salt control trace was not
   regenerated.
 
 ## Pending
 
-AUD-17 must release src/sound-bank.js before this lane can remove its cue
-flags, the remaining src/audio.js gates, the feature catalog entries and the
-audio/catalog tests. The root AGENTS.md release-evidence wording belongs to
-integration, not this lane. Then run the exact required lane tier and build,
-review, merge, update status, run the full tier, and clean the lane.
+The released sound-bank hook covers only the Wasteland cue flags. Seven
+Muddy Hollow and Scrapdome cue fields still name retired switches; Kyle was
+asked whether to remove those fields as part of this card. Until then, keep
+those catalog switches and the seven fields so their sounds still play.
+The root AGENTS.md release-evidence wording belongs to integration, not this
+lane. The exact lane tier, build, review, merge, status and full tier remain.

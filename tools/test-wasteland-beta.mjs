@@ -5,7 +5,7 @@ import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
   assert.deepEqual(FEATURE_STATES, {
-    'bounty-hunt': 'dev', 'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on', scrapdome: 'on',
+    'bounty-hunt': 'dev', 'career-backup': 'dev', 'hidden-road': 'on', scrapdome: 'on',
     'titan-climb': 'on',
     'muddy-hollow': 'on',
     warlords: 'on',
@@ -14,7 +14,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'salt-flats': 'dev', 'crew-gear': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
-  assert.equal(flags.enabled('wasteland2'), true);
+  assert.equal(flags.enabled('wasteland2'), false);
   assert.equal(flags.enabled('hidden-road'), true);
   assert.equal(flags.enabled('career-backup'), false);
   assert.equal(flags.enabled('warlords'), true);
@@ -52,7 +52,7 @@ test('private beta journey evidence distinguishes fixtures from production actio
     storage: { memoryOnly: true, qaTab: true },
     flags: {
       urlOverride: false,
-      released: ['wasteland2', 'hidden-road'],
+      released: ['hidden-road'],
       menuSettings: [],
       preDiscovery: { mode: 'wasteland', hiddenRoad: true, newRules: false },
     },
@@ -81,7 +81,7 @@ test('private beta journey evidence distinguishes fixtures from production actio
   changed(copy => { copy.storage.memoryOnly = false; });
   changed(copy => { copy.storage.qaTab = false; });
   changed(copy => { copy.flags.urlOverride = true; });
-  changed(copy => { copy.flags.released = ['wasteland2']; });
+  changed(copy => { copy.flags.released = []; });
   changed(copy => { copy.flags.menuSettings = ['#experimental-open']; });
   changed(copy => { copy.flags.preDiscovery.mode = 'duel'; });
   changed(copy => { copy.flags.preDiscovery.newRules = true; });

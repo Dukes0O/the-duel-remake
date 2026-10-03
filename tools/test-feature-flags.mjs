@@ -10,7 +10,7 @@ const storage = {
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'on'
+check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES, 'wasteland2')
   && FEATURE_STATES['hidden-road'] === 'on' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
   && FEATURE_STATES.scrapdome === 'on' && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
@@ -18,12 +18,12 @@ check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 ===
   && FEATURE_STATES.warlords === 'on' && FEATURE_STATES['fuel-run'] === 'dev'
   && FEATURE_STATES.arsenal === 'dev' && FEATURE_STATES['salt-flats'] === 'dev'
   && FEATURE_STATES['bounty-hunt'] === 'dev' && FEATURE_STATES['crew-gear'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 12,
+  && Object.keys(FEATURE_STATES).length === 11,
   'career backup, Fuel Run and Salt Flats stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
-check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
-  'production has the released Wasteland switches on without any menu choice');
+check(!productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
+  'retired Wasteland rules switch is absent and Hidden Road is released');
 check(!productionFlags.enabled('career-backup'), 'production keeps career backup off');
 check(!productionFlags.enabled('fuel-run'), 'production keeps unfinished Fuel Run off');
 check(productionFlags.enabled('warlords'), 'production has the warlord fights on (WAR-SAL-RELEASE)');

@@ -21,6 +21,20 @@ const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','cre
   'crew.marksman.fire','crew.scrap-cannon.fire'];
 const BANK_ADDITIONS = new Set([...CUES, 'arena.bounty-mark', ...CREW_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+// Rebuild only the retired Wasteland flag field to check every cue recipe
+// against its original exact pin without accepting any other bank change.
+const OLD_WASTELAND_CUES = new Set([
+  'raider.shot', 'weapon.ufo.fire', 'weapon.bomb.fire',
+  'weapon.crossbow.fire', 'weapon.star.fire', 'weapon.rpg.fire',
+  'weapon.bomb.flight', 'weapon.rpg.flight', 'weapon.crossbow.flight',
+  'combat.hit-confirm', 'combat.blast.recorded', 'vehicle.crash.recorded',
+]);
+const oldFlagShape = ([id, cue]) => {
+  if (!OLD_WASTELAND_CUES.has(id)) return [id, cue];
+  assert.equal(Object.hasOwn(cue, 'flag'), false, id + ' retains retired flag');
+  const fields = Object.entries(cue);
+  return [id, Object.fromEntries([...fields.slice(0, 8), ['flag', 'wasteland2'], ...fields.slice(8)])];
+};
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];
 let checks = 0;
@@ -87,11 +101,11 @@ function recordedBuffer(context, file) {
 
 function audio({disabled = [], muted = false, paused = false} = {}) {
   const context = new Context(), flags = {enabled: name =>
-    ['wasteland2', 'arsenal'].includes(name) && !disabled.includes(name)};
+    name === 'arsenal' && !disabled.includes(name)};
   const renderer = new EngineAudio({flags});
   renderer.context = context; renderer.master = context.createGain(); renderer.muted = muted;
   renderer.paused = paused; renderer.vehicleBus = context.createGain();
-  renderer.mixer = new SoundMixer(context, renderer.master, {enabled: flags.enabled('wasteland2'),
+  renderer.mixer = new SoundMixer(context, renderer.master, {enabled: true,
     vehicle: renderer.vehicleBus});
   renderer.buses = renderer.mixer.buses;
   // Minimal Web Audio graph for public update(); engine and world recordings stay unloaded.
@@ -116,7 +130,7 @@ function place(actor, s, lateral = 0, headingError = 0) {
 }
 function race({cpu = false, enabled = true} = {}) {
   const flags = createFeatureFlags({storage: null, qa: true,
-    overrides: {wasteland2: true, arsenal: enabled}});
+    overrides: {arsenal: enabled}});
   const duel = new Duel({seed: 1989, featureFlags: flags});
   duel.startCampaign({mode: 'wasteland', discoveredGate: true, seed: 1989,
     car: 'falcone_f42', opponentCount: 1, arsenalRank: 6,
@@ -183,7 +197,7 @@ function reaches(node, target, visited = new Set()) {
   return node.connections.some(next => reaches(next, target, visited));
 }
 check('released sound-bank entries and other exports stay exact', () => {
-  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)))),
+  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)).map(oldFlagShape))),
     'b63edbe579c7709c32af22b2467fa8706aee2585ed957c20fde8062064f7f2b4',
     'all released cues, including Oil and Smoke, remain exact');
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK'))),
@@ -262,7 +276,7 @@ check('native computer weapon events retain their genuine source and victim', ()
   assert.equal(run.events[0].actor, run.duel.state.rival);
   assert.equal(run.events[2].actor, run.duel.state);
 });
-for (const control of ['arsenal off', 'wasteland2 off', 'muted', 'paused']) {
+for (const control of ['arsenal off', 'muted', 'paused']) {
   check(control + ' blocks all native wave-one audio', () => {
     const run = finish(launch()), flightRun = launch();
     const rig = audio({disabled: control.endsWith('off') ? [control.split(' ')[0]] : [],

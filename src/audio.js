@@ -9,7 +9,7 @@ import {
 import { SoundMixer } from './sound-mixer.js';
 import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
-import { raceFeatureFlags } from './wasteland-access.js';
+import { raceFeatureFlags, wastelandRulesActive } from './wasteland-access.js';
 const bank = (id) => SOUND_BANK[id];
 const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
@@ -122,7 +122,7 @@ export class EngineAudio {
     this.vehicleBus.connect(this.master);
     this.mixer = new SoundMixer(ctx, this.master, {
       vehicle: this.vehicleBus,
-      enabled: this.flags.enabled('wasteland2'),
+      enabled: this.wastelandAudioEnabled === true,
       voiceEnabled: this.flags.enabled('hidden-road'),
     });
     this.buses = this.mixer.buses;
@@ -529,7 +529,6 @@ export class EngineAudio {
   _raiderShot(event, state, course) {
     const output = this._spatialOutput(event, state, course);
     this._playCue('raider.shot', {
-      legacy: !this.flags.enabled('wasteland2'),
       destination: output.level,
       onEnd: output.disconnect,
     });
@@ -559,8 +558,7 @@ export class EngineAudio {
   // and a low churn under the tyres while moving through it.
   _updateMud(st, t, touching) {
     if (!this.mud) return;
-    const enabled = this.flags.enabled('muddy-hollow');
-    const mud = enabled && touching ? clamp(Number(st.surfaceMud) || 0, 0, 1) : 0;
+    const mud = touching ? clamp(Number(st.surfaceMud) || 0, 0, 1) : 0;
     const speed = clamp(Math.abs(Number(st.speedMph) || 0) / 60, 0, 1);
     const spin = clamp(Number(st.mudWheelSpin) || 0, 0, 1);
     this.mud.filter.frequency.setTargetAtTime(300 + speed * 380 + spin * 220, t, 0.1);
@@ -632,7 +630,6 @@ export class EngineAudio {
       bank('weapon.' + weapon + '.fire')
         ? 'weapon.' + weapon + '.fire'
         : 'weapon.default.fire',
-      { legacy: !this.flags.enabled('wasteland2') },
     );
   }
 
@@ -668,9 +665,10 @@ export class EngineAudio {
     node.disconnect();
   }
 
-  _syncMixer() {
+  _syncMixer(state) {
+    if (state) this.wastelandAudioEnabled = wastelandRulesActive(state);
     if (!this.mixer?.update) return;
-    this.mixer.enabled = this.flags.enabled('wasteland2');
+    this.mixer.enabled = this.wastelandAudioEnabled === true;
     this.mixer.voiceEnabled = this.flags.enabled('hidden-road');
     this.mixer.update();
   }
@@ -690,7 +688,7 @@ export class EngineAudio {
 
   _updateProjectiles(state, environment = {}) {
     if (
-      !this.flags.enabled('wasteland2') ||
+      !wastelandRulesActive(state) ||
       this.muted ||
       state.paused ||
       !['racing', 'exploring'].includes(state.status)
@@ -747,20 +745,15 @@ export class EngineAudio {
     });
   }
 
-  _playCue(id, { destination, scale = 1, onEnd = null, legacy = false } = {}) {
+  _playCue(id, { destination, scale = 1, onEnd = null } = {}) {
     this._syncMixer();
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
-    if (
-      def.flag &&
-      !this.flags.enabled(def.flag) &&
-      !(legacy && def.layers?.length)
-    )
-      return null;
+    if (def.flag && !this.flags.enabled(def.flag)) return null;
     return this._runCue(
       id,
       () => {
-        const buffer = legacy ? null : this._cueBuffer(id);
+        const buffer = this._cueBuffer(id);
         if (buffer) this._sample(buffer, def.volume * scale);
         else
           for (const layer of def.layers || [])
@@ -919,7 +912,7 @@ export class EngineAudio {
   }
 
   update(st, environment = {}) {
-    this._syncMixer();
+    this._syncMixer(st);
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
     const ctx = this.context;
@@ -1356,12 +1349,12 @@ export class EngineAudio {
       !ev
     )
       return;
-    this._syncMixer();
+    this._syncMixer(state);
     const wastelandAudio =
       state?.mode === 'wasteland' &&
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
-    const recordedAudio = wastelandAudio && this.flags.enabled('wasteland2');
+    const recordedAudio = wastelandAudio && wastelandRulesActive(state);
     if (recordedAudio && (
       (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
       (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue))
@@ -1462,41 +1455,39 @@ export class EngineAudio {
       !(this.context.currentTime - (this._lastCrashCueAt ?? -Infinity) < 0.15)
     )
       this._smashImpact(ev, state, course);
-    if (this.flags.enabled('scrapdome')) {
-      if (ev.salSaw?.position) {
-        const output = this._spatialOutput(
-          { hitPosition: ev.salSaw.position, combatHit: true },
-          state,
-          course,
-        );
-        this._playCue('arena.sal-saw', {
-          destination: output.level,
-          onEnd: output.disconnect,
-        });
-      }
-      if (ev.arenaTell) {
-        const output = this._spatialOutput(
-          { hitPosition: ev.arenaTell.position, combatHit: true },
-          state,
-          course,
-        );
-        this._playCue('arena.tell', {
-          destination: output.level,
-          onEnd: output.disconnect,
-        });
-      }
-      if (state?.arena?.mode === 'bounty-hunt' && this.flags.enabled('bounty-hunt') &&
-          (ev.arenaLoaded || ev.bountyMark)) this._playCue('arena.bounty-mark');
-      if (state?.arena?.mode === 'fuel-run' && this.flags.enabled('fuel-run')) {
-        if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
-        if (ev.fuelPickup?.participantId === 'player') this._playCue('interface.bonus');
-        if (ev.fuelDrop?.participantId === 'player') this._playCue('vehicle.landing');
-        if (ev.fuelDelivery?.participantId === 'player') this._playCue('interface.go');
-      }
-      if (ev.arenaRespawn) this._playCue('arena.respawn');
-      if (ev.arenaWreck?.creditedId === 'player')
-        this._playCue('arena.wreck-credit');
+    if (ev.salSaw?.position) {
+      const output = this._spatialOutput(
+        { hitPosition: ev.salSaw.position, combatHit: true },
+        state,
+        course,
+      );
+      this._playCue('arena.sal-saw', {
+        destination: output.level,
+        onEnd: output.disconnect,
+      });
     }
+    if (ev.arenaTell) {
+      const output = this._spatialOutput(
+        { hitPosition: ev.arenaTell.position, combatHit: true },
+        state,
+        course,
+      );
+      this._playCue('arena.tell', {
+        destination: output.level,
+        onEnd: output.disconnect,
+      });
+    }
+    if (state?.arena?.mode === 'bounty-hunt' && this.flags.enabled('bounty-hunt') &&
+        (ev.arenaLoaded || ev.bountyMark)) this._playCue('arena.bounty-mark');
+    if (state?.arena?.mode === 'fuel-run' && this.flags.enabled('fuel-run')) {
+      if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
+      if (ev.fuelPickup?.participantId === 'player') this._playCue('interface.bonus');
+      if (ev.fuelDrop?.participantId === 'player') this._playCue('vehicle.landing');
+      if (ev.fuelDelivery?.participantId === 'player') this._playCue('interface.go');
+    }
+    if (ev.arenaRespawn) this._playCue('arena.respawn');
+    if (ev.arenaWreck?.creditedId === 'player')
+      this._playCue('arena.wreck-credit');
     if (ev.muddyHollowSplash)
       this._playCue('world.muddy-hollow-splash', {
         scale: clamp(

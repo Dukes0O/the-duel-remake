@@ -44,7 +44,7 @@ test('approved combat recipes declare compressed variants and provenance', async
   ]) {
     const cue = SOUND_BANK[id];
     assert(cue?.files?.length === 3, id);
-    assert.equal(cue.flag, 'wasteland2');
+    assert.equal(Object.hasOwn(cue, 'flag'), false);
     for (const file of cue.files) {
       assert(file.endsWith('.ogg'));
       assert.equal(
@@ -54,7 +54,7 @@ test('approved combat recipes declare compressed variants and provenance', async
     }
   }
 });
-test('recorded variants rotate without immediate repetition and flag-off cannot play them', () => {
+test('recorded variants rotate without immediate repetition', () => {
   const a = new EngineAudio({ flags: { enabled: () => true } }),
     calls = [];
   a.cueBuffers['weapon.crossbow.fire'] = [{ v: 0 }, { v: 1 }, { v: 2 }];
@@ -67,9 +67,6 @@ test('recorded variants rotate without immediate repetition and flag-off cannot 
     assert.fail('loaded recording must replace placeholder layers');
   for (let i = 0; i < 7; i++) a._playCue('weapon.crossbow.fire');
   assert.deepEqual(calls, [0, 1, 2, 0, 1, 2, 0]);
-  a.flags = { enabled: () => false };
-  a._playCue('weapon.crossbow.fire');
-  assert.equal(calls.length, 7);
 });
 function moving() {
   const a = new EngineAudio({ flags: { enabled: () => true } }),
@@ -100,6 +97,7 @@ function moving() {
   const s = {
     status: 'racing',
     paused: false,
+    wastelandGateDiscovered: true,
     combat: {
       projectiles: [
         {
@@ -133,12 +131,12 @@ test('flight follows each projectile once, reads state only, and stops on remova
   assert.equal(calls[0].v.stops, 1);
   assert.equal(a.projectileVoices.size, 0);
 });
-test('pause/menu/mute/flag-off clear flight ownership and missing buffers stay silent', () => {
+test('pause/menu/mute/undiscovered gate clear flight ownership and missing buffers stay silent', () => {
   for (const change of [
     (s) => (s.paused = true),
     (s) => (s.status = 'menu'),
     (_, a) => (a.muted = true),
-    (_, a) => (a.flags = { enabled: () => false }),
+    (s) => (s.wastelandGateDiscovered = false),
   ]) {
     const { a, calls, s, ear } = moving();
     a._updateProjectiles(s, { listener: ear });
@@ -162,21 +160,9 @@ test('every driving weapon has an arcade signature and real projectiles have fli
     'weapon.bomb.flight',
     'weapon.rpg.flight',
   ]) {
-    assert.equal(SOUND_BANK[id]?.flag, 'wasteland2');
+    assert.equal(Object.hasOwn(SOUND_BANK[id], 'flag'), false);
     assert.equal(SOUND_BANK[id]?.files?.length, 3, id);
   }
-});
-
-test('wasteland2 off preserves pre-migration Wasteland weapon layers even when recordings are loaded', () => {
-  const a = new EngineAudio({ flags: { enabled: () => false } }),
-    layers = [];
-  a.cueBuffers['weapon.crossbow.fire'] = [{}];
-  a._runCue = (id, fn) => fn();
-  a._sample = () => assert.fail('off cannot play replacement recording');
-  a._layer = (layer, destination, scale) => layers.push({ layer, scale });
-  a._weaponCue('crossbow');
-  assert.equal(layers.length, 3);
-  assert(layers.every((row) => row.scale === 1));
 });
 
 test('procedural arcade variants rebuild deterministically without simulation randomness', async () => {

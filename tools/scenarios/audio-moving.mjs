@@ -9,7 +9,7 @@ export async function run(context) {
   );
   const transitions = await context.evaluate(`(async()=>{
     window.__qaApp.stop();
-    const flags={wasteland2:false,'hidden-road':false},Audio=window.__qaApp.audio.constructor;
+    const flags={'hidden-road':false},Audio=window.__qaApp.audio.constructor;
     const audio=new Audio({flags:{enabled:name=>flags[name]===true}});
     audio._loadSamples=()=>{};audio._loadAmbience=()=>{};audio._loadCueBuffers=()=>{};
     audio.muted=false;audio._build(new AudioContext());await audio.context.resume();
@@ -17,7 +17,7 @@ export async function run(context) {
     oscillator.frequency.value=440;gain.gain.value=.08;oscillator.connect(gain);audio.mixer.connect(gain,audio.buses.weapons);audio.output.connect(meter);meter.fftSize=2048;oscillator.start();
     const rows=[];
     for(const [label,combat,gate] of [['off',false,false],['on',true,false],['off-again',false,false],['gate-only',false,true]]){
-      flags.wasteland2=combat;flags['hidden-road']=gate;audio._syncMixer();await new Promise(r=>setTimeout(r,120));
+      flags['hidden-road']=gate;audio._syncMixer({wastelandGateDiscovered:combat});await new Promise(r=>setTimeout(r,120));
       const samples=new Float32Array(2048);meter.getFloatTimeDomainData(samples);
       rows.push({label,grouped:audio.mixer.grouped,rms:Math.sqrt(samples.reduce((n,x)=>n+x*x,0)/samples.length)});
     }

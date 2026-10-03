@@ -22,6 +22,20 @@ const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','cre
   'crew.marksman.fire','crew.scrap-cannon.fire'];
 const BANK_ADDITIONS = new Set([...NEW_ARSENAL_CUES, 'arena.bounty-mark', ...CREW_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+// Rebuild only the retired Wasteland flag field to check every cue recipe
+// against its original exact pin without accepting any other bank change.
+const OLD_WASTELAND_CUES = new Set([
+  'raider.shot', 'weapon.ufo.fire', 'weapon.bomb.fire',
+  'weapon.crossbow.fire', 'weapon.star.fire', 'weapon.rpg.fire',
+  'weapon.bomb.flight', 'weapon.rpg.flight', 'weapon.crossbow.flight',
+  'combat.hit-confirm', 'combat.blast.recorded', 'vehicle.crash.recorded',
+]);
+const oldFlagShape = ([id, cue]) => {
+  if (!OLD_WASTELAND_CUES.has(id)) return [id, cue];
+  assert.equal(Object.hasOwn(cue, 'flag'), false, id + ' retains retired flag');
+  const fields = Object.entries(cue);
+  return [id, Object.fromEntries([...fields.slice(0, 8), ['flag', 'wasteland2'], ...fields.slice(8)])];
+};
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];
 let checks = 0;
@@ -85,7 +99,7 @@ function recordedBuffer(context, file) {
   return buffer;
 }
 function audio() {
-  const context = new Context(), flags = {enabled: name => ['wasteland2', 'arsenal'].includes(name)};
+  const context = new Context(), flags = {enabled: name => name === 'arsenal'};
   const renderer = new EngineAudio({flags});
   renderer.context = context; renderer.master = context.createGain(); renderer.muted = false;
   renderer.vehicleBus = context.createGain();
@@ -106,7 +120,7 @@ function place(actor, s, lateral = 0) {
 }
 function nativeEvents() {
   const flags = createFeatureFlags({storage: null, qa: true,
-    overrides: {wasteland2: true, arsenal: true}});
+    overrides: {arsenal: true}});
   const duel = new Duel({seed: 1989, featureFlags: flags});
   duel.startCampaign({mode: 'wasteland', discoveredGate: true, seed: 1989,
     car: 'falcone_f42', opponentCount: 1, arsenalRank: 6, weaponLoadout: ['oil', 'smoke', 'crossbow', 'bomb']});
@@ -126,7 +140,7 @@ function nativeEvents() {
   return {duel, events};
 }
 check('existing sound-bank entries and all other exports stay exact', () => {
-  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)))),
+  assert.equal(hash(Object.fromEntries(Object.entries(bank.SOUND_BANK).filter(([id]) => !BANK_ADDITIONS.has(id)).map(oldFlagShape))),
     'cc6d14d4b734baeff5104526ef4e3841fa24c6cc3051e59c37f488f5734afeb9');
   assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK'))),
     '8bed9e05cbd48321670c377483bc87c841b01eac228a6237889b8ce5602a2b38');
