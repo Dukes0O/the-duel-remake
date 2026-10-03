@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {stepPickups} from '../src/combat-pickups.js';
+import {addHazard} from '../src/arsenal/hazards.js';
+import {point} from '../src/combat-weapons.js';
 import {startScrapMagnet, stepScrapMagnets, endScrapMagnet,
   shouldUseScrapMagnet} from '../src/arsenal/magnet.js';
-import {startFlamethrower, stepFlamethrowers, flameCpuAim}
+import {startFlamethrower, stepFlamethrowers, flameCpuAim, shouldUseFlamethrower}
   from '../src/arsenal/flamethrower.js';
 import {startRocketVolley, stepRocketVolleys, stepRocketPod,
-  rocketCpuAim} from '../src/arsenal/rockets.js';
+  rocketCpuAim, shouldUseRocketPods} from '../src/arsenal/rockets.js';
 
 const DT = 1 / 120, EPS = 1e-8;
 let checks = 0;
@@ -268,5 +270,25 @@ check('magnet moves a native armor crate; native pickup step grants the reward',
   stepPickups(duel, DT);
   assert.equal(state.combat.pickups.length, 0);
   assert.ok(state.armor > state.maxArmor - 30);
+});
+
+check('CPU Rocket Pods and flame aim use targetFor and smoke blocks both', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 500; state.s = 550;
+  const from = point(duel, rival), to = point(duel, state);
+  rival.headingError = Math.atan2(to.x - from.x, to.z - from.z) - from.heading;
+  assert.equal(shouldUseRocketPods(duel, rival), true);
+  assert.equal(shouldUseFlamethrower(duel, rival), false);
+  state.s = 506;
+  const close = point(duel, state);
+  rival.headingError = Math.atan2(close.x - from.x, close.z - from.z) - from.heading;
+  assert.equal(shouldUseFlamethrower(duel, rival), true);
+  addHazard(duel, {kind: 'smoke', shape: 'circle',
+    x: (from.x + close.x) / 2, z: (from.z + close.z) / 2,
+    y: from.y, radius: 2, lifetime: 5});
+  assert.equal(shouldUseFlamethrower(duel, rival), false);
+  state.s = 550;
+  rival.headingError = Math.atan2(to.x - from.x, to.z - from.z) - from.heading;
+  assert.equal(shouldUseRocketPods(duel, rival), false);
 });
 if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');
