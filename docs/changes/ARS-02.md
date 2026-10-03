@@ -124,9 +124,17 @@ The modules must not read renderer state or player storage.
   29427: 12 fresh captures, zero console warnings or errors. The current
   source build passed in 434 ms; Vite reported only its existing chunk-size
   advisory.
+- On committed source `cc94c56`, the exact changed lane tier passed 346/346
+  suites in 558.32 s, including the tanker integrity suite. The build on
+  that same commit passed in 449 ms. General replay fingerprints passed
+  162/162 with their released pins and assertions unchanged; the new Rocket
+  and Flame fixed-step outcomes matched at 30, 60 and 144 FPS.
+- After the seven recorded cues are added, rerun the exact lane tier and
+  build on the final commit before handoff. The current pass is a checkpoint,
+  not a merge gate for future audio changes.
 - Pending: seven real CC0 cue recipes, recorded runtime bank files, audio
-  recognition/resource review, current lane tier/build, and final race
-  fingerprints. No full integration gate applies to this lane commit yet.
+  recognition/resource review and a final lane tier/build after those files
+  land. No full integration gate applies to this lane commit yet.
 
 ## Audio source proposal for the reserved hook
 
