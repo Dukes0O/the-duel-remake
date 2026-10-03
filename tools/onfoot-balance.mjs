@@ -24,9 +24,9 @@ function aimAtRival(duel) {
 }
 
 function run(sample, policy, opportunity = null) {
-  const duel = new Duel({seed: sample.seed, featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: sample.seed});
   duel.startCampaign({mode: 'wasteland', startStage: sample.stage,
-    car: 'falcone_f42', seed: sample.seed, cpuDifficulty: sample.difficulty});
+    discoveredGate: true, car: 'falcone_f42', seed: sample.seed, cpuDifficulty: sample.difficulty});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;

@@ -2,6 +2,7 @@ import {makeRng} from './rng.js';
 import {point, predictedPoint} from './combat-weapons.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
 // Wasteland simulation state, so ordinary races retain their original route.
@@ -80,7 +81,7 @@ export function createRaidZones(course, seed) {
 export function initializeRaiders(duel) {
   const state = duel.state;
   if (state.mode !== 'wasteland' || !state.combat ||
-      duel.featureFlags?.enabled('wasteland2') !== true) {
+      !wastelandRulesActive(state)) {
     delete state.raids;
     return;
   }
@@ -152,8 +153,7 @@ function collectSalvage(duel, zone) {
     Math.max(0, COMBAT_TUNING.foot.rpgAmmo - weapons.ammo)) : 0;
   const armor = Math.min(T.salvageArmor,
     Math.max(0, state.maxArmor - state.armor));
-  const scrapCareer = state.wastelandGateDiscovered === true &&
-    duel.featureFlags?.enabled('wasteland2') === true;
+  const scrapCareer = wastelandRulesActive(state);
   if (!rockets && !armor && !scrapCareer) return;
   crate.collected = true;
   if (weapons && rockets) {

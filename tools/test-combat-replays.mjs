@@ -45,11 +45,10 @@ function place(actor, s, lateral = 0) {
 
 function makeRace(race) {
   // This fixture checks current Wasteland combat and roadside behavior.
-  const duel = new Duel({seed: fixture.seed,
-    featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: fixture.seed});
   duel.startCampaign({mode: 'wasteland', seed: fixture.seed, car: race.car,
     startStage: COURSE.findIndex(event => event.id === race.eventId),
-    opponentCount: 3, cpuDifficulty: 'hard'});
+    opponentCount: 3, cpuDifficulty: 'hard', discoveredGate: true});
   const state = duel.state;
   assert.equal(state.mode, 'wasteland');
   assert.equal(state.opponents.length, 3);

@@ -22,7 +22,7 @@ import {normalizeWasteland} from '../src/wasteland-progress.js';
 // ARENA-04, SCRAPDOME 10 and shared 3/6. Only real engine and App entry paths.
 // Handover, hunter caps and Salt entry follow Claude's 2 October 00:30 answers.
 const DT = 1 / 120;
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true,
+const ON = {'hidden-road': true,
   warlords: true, 'fuel-run': true, 'bounty-hunt': true};
 const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959s'}];
 const admissionOnly = process.argv.includes('--admission-only');
@@ -55,6 +55,7 @@ const member = (duel, id) => duel.state.arena.participants.find(p => p.id === id
 const actor = (duel, id) => id === 'player' ? duel.state : duel.state.opponents.find(a => a.arenaId === id);
 function started({flags = ON, difficulty = 'medium', seed = 1989, opponents = FIELD, venueId = 'scrapdome'} = {}) {
   const duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
   const admitted = duel.startArenaEvent({venueId, mode: 'bounty-hunt', car: 'falcone_f42',
     cpuDifficulty: difficulty, playerId: 'bounty-test', seed, opponents, arsenalRank: 9});
   return {duel, admitted};
@@ -150,7 +151,7 @@ test('real native admission accepts Bounty with its switch enabled', () => {
 });
 test('initial mark and handover use the bounded Bounty cue only with its switch on', () => {
   const calls = [], state = {arena: {mode: 'bounty-hunt'}};
-  const audio = new EngineAudio({flags: {enabled: name => name === 'scrapdome' || name === 'bounty-hunt'}});
+  const audio = new EngineAudio({flags: {enabled: name => name === 'bounty-hunt'}});
   audio.context = {state: 'running', currentTime: 0}; audio._syncMixer = () => {};
   audio._playCue = id => calls.push(id);
   audio.event({arenaLoaded: 'scrapdome'}, state, null);
@@ -159,7 +160,7 @@ test('initial mark and handover use the bounded Bounty cue only with its switch 
   const cue = SOUND_BANK['arena.bounty-mark'];
   ok(cue?.flag === 'bounty-hunt' && cue.limit === 1 && cue.layers?.length === 2,
     'the mark cue is a bounded, two-layer procedural recipe behind the Bounty flag');
-  const quiet = new EngineAudio({flags: {enabled: name => name === 'scrapdome'}}), quietCalls = [];
+  const quiet = new EngineAudio({flags: {enabled: () => false}}), quietCalls = [];
   quiet.context = {state: 'running', currentTime: 0}; quiet._syncMixer = () => {};
   quiet._playCue = id => quietCalls.push(id);
   quiet.event({bountyMark: {previousId: 'cpu-2', markedId: 'player'}}, state, null);
@@ -569,7 +570,8 @@ rule('the same real App Bounty inputs give identical points, transfers and resul
 function controls(spec, bountyEnabled) {
   const duel = new Duel({seed: spec.seed,
     featureFlags: {...ON, 'fuel-run': false, 'bounty-hunt': bountyEnabled}});
-  if (spec.kind === 'road') duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
+  duel.state.wastelandGateDiscovered = true;
+  if (spec.kind === 'road') duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42', discoveredGate: true,
     startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
   else if (spec.kind === 'sal') {
     startWarlordEvent(duel, {warlordId: 'sal', seed: spec.seed, car: 'falcone_f42', cpuDifficulty: 'medium'});
@@ -598,6 +600,7 @@ rule('Bounty disabled and enabled preserve the exact reviewed roads, Last Car Ro
 // call the new module's public exports to isolate its pending handover rules.
 function pendingModuleHandover() {
   const duel = new Duel({seed: 1989, featureFlags: ON});
+  duel.state.wastelandGateDiscovered = true;
   eq(duel.startArenaEvent({mode: 'last-car-rolling', car: 'falcone_f42',
     cpuDifficulty: 'medium', seed: 1989, opponents: FIELD}), true,
   'the module regression starts from a genuine admitted native arena');

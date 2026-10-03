@@ -4,7 +4,7 @@
 // close enough to inspect in the same frame.
 
 async function qualityPass(context, quality) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,

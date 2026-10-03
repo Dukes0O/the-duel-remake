@@ -8,7 +8,7 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
     width:1280,height:720,deviceScaleFactor:1,mobile:false,
   });
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor('window.__qaApp?.visualReady && !!window.__render', 'private hands menu', 60000);
   await context.evaluate(`(() => {
     if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||

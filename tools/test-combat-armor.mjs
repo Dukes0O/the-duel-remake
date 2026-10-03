@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {CARS} from '../src/config.js';
 import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
-import {FEATURE_STATES} from '../src/feature-flags.js';
 import {stepCombat} from '../src/combat.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {combatAudioSpace} from '../src/audio.js';
@@ -12,11 +11,10 @@ const close = (actual, expected, message, tolerance = 1e-6) =>
     `${message}: expected ${expected}, got ${actual}`);
 
 function race({mode = 'wasteland', car = 'falcone_f42', opponentCount = 3,
-  wasteland2 = true, startStage = 0} = {}) {
+  discoveredGate = true, startStage = 0} = {}) {
   // Legacy comparison stays in the test adapter; production roadside is on.
-  const duel = new LegacyRoadsideDuel({seed: 1989, car,
-    featureFlags: {wasteland2}});
-  duel.startCampaign({mode, car, startStage, opponentCount, cpuDifficulty: 'hard'});
+  const duel = new LegacyRoadsideDuel({seed: 1989, car});
+  duel.startCampaign({mode, car, startStage, opponentCount, cpuDifficulty: 'hard', discoveredGate: discoveredGate});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;
@@ -66,24 +64,9 @@ function seedArmor(state) {
   }
 }
 
-test('wasteland2 is released and flag-off races keep their current state', () => {
-  assert.equal(FEATURE_STATES.wasteland2, 'on');
+test('ordinary and pre-gate races have no armor before gate discovery', () => {
   for (const options of [
-    {mode: 'wasteland', wasteland2: false},
-    {mode: 'duel'},
-    {mode: 'timetrial'},
-    {mode: 'duel', startStage: 7},
-  ]) {
-    const {state} = race(options);
-    assert.equal(state.armor, undefined, `${options.mode} player has no new armor`);
-    assert.ok(state.opponents.every(actor => actor.armor === undefined),
-      `${options.mode} CPU cars have no new armor`);
-  }
-});
-
-test('ordinary and flag-off races have no armor before the new feature is enabled', () => {
-  for (const options of [
-    {mode: 'wasteland', wasteland2: false},
+    {mode: 'wasteland', discoveredGate: false},
     {mode: 'duel'},
     {mode: 'timetrial'},
     {mode: 'duel', startStage: 7},
@@ -136,7 +119,7 @@ test('damage table, upgrades, falloff and the ram threshold have exact values', 
   close(armorDamageFor('ram', {relativeKph: 50, spiked: true}), 15, 'future spiked bumper');
 });
 
-test('wasteland2 initializes independent armor for the player and three CPU cars', () => {
+test('discovered Wasteland initializes independent armor for the player and three CPU cars', () => {
   const {state} = race({car: 'viper_proto'});
   close(state.maxArmor, 80.51557998728975, 'player Viper maximum');
   close(state.armor, state.maxArmor, 'player starts full');
@@ -236,7 +219,7 @@ test('Titan rams a later armored CPU without making a permanent crush wreck', ()
   assert.ok(second.armor < second.maxArmor || second.combatWrecking,
     'Titan impact costs the second CPU armor or starts a combat wreck');
 
-  const legacy = race({car: 'titan_monster', wasteland2: false});
+  const legacy = race({car: 'titan_monster', discoveredGate: false});
   const traffic = {...legacy.state.opponents[1], alive: true, dir: 1};
   legacy.state.traffic.push(traffic);
   place(legacy.state, 102);
@@ -246,12 +229,12 @@ test('Titan rams a later armored CPU without making a permanent crush wreck', ()
   traffic.car = 'viper_proto';
   traffic.speedMph = 20;
   assert.equal(legacy.duel._vehicleContact(legacy.state, traffic, 'traffic'), true);
-  assert.equal(traffic.crushed, true, 'flag-off Titan still crushes traffic');
+  assert.equal(traffic.crushed, true, 'pre-gate Titan still crushes traffic');
 });
 
 test('one steep-face incident cannot drain Titan armor every 60 Hz step', () => {
-  function face(wasteland2) {
-    const {duel, state} = race({car: 'titan_monster', wasteland2});
+  function face(discoveredGate) {
+    const {duel, state} = race({car: 'titan_monster', discoveredGate});
     const point = (s, lateral = 0) => ({x: lateral,
       y: Math.max(0, s - 25) * 3, z: s, heading: 0, curvature: 0});
     duel.course = {def: {id: 'armor-face', practice: true, kind: 'arena', theme: 'desert'},
@@ -276,7 +259,7 @@ test('one steep-face incident cannot drain Titan armor every 60 Hz step', () => 
   for (let index = 0; index < 600 && !legacy.state.tumble; index++)
     legacy.duel.step(1 / 60);
   assert.equal(legacy.state.tumble?.reason, 'climb_limit',
-    'flag-off Titan reaches the real slope and retains its tumble');
+    'pre-gate Titan reaches the real slope and retains its tumble');
   assert.equal(legacy.state.armor, undefined);
 
   const armored = face(true);
@@ -432,8 +415,8 @@ test('ordinary racing still spends its original crash slot with the new switch o
   assert.equal(state.armor, undefined);
 });
 
-function hudFor(wasteland2, changes = {}, car = 'falcone_f42') {
-  const {duel, state} = race({wasteland2, car});
+function hudFor(discoveredGate, changes = {}, car = 'falcone_f42') {
+  const {duel, state} = race({discoveredGate, car});
   Object.assign(state, changes);
   const node = () => ({hidden: false, textContent: '', dataset: {}, style: {},
     classList: {toggle() {}}, setAttribute() {}});
@@ -447,13 +430,13 @@ function hudFor(wasteland2, changes = {}, car = 'falcone_f42') {
   return ui;
 }
 
-test('the active wreck HUD says WRECKED / RECOVERING while flag-off crash wording stays put', () => {
+test('the active wreck HUD says WRECKED / RECOVERING while pre-gate crash wording stays put', () => {
   assert.equal(hudFor(true, {combatWrecking: true, impactTimer: 3.5,
     crashFlash: 1.2, callout: 'WRECKED / RECOVERING', calloutTimer: 3.5})['callout-text'].textContent,
   'WRECKED / RECOVERING');
   assert.equal(hudFor(false, {impactTimer: 2, crashFlash: 1,
     lastCrashReason: 'rock', callout: 'WRECKED / RECOVERING', calloutTimer: 2})['callout-text'].textContent,
-  'ROCK IMPACT', 'flag-off Wasteland keeps its ordinary crash wording');
+  'ROCK IMPACT', 'pre-gate Wasteland keeps its ordinary crash wording');
 });
 
 test('armored Wasteland HUD shows current and maximum armor through wreck and refill', () => {
@@ -473,7 +456,7 @@ test('armored Wasteland HUD shows current and maximum armor through wreck and re
     'the 60% refill becomes visible');
   const legacy = hudFor(false, {}, 'titan_monster');
   assert.equal(legacy['damage-label'].textContent,
-    '0 MAJOR HITS · AUTO RECOVERY', 'flag-off HUD keeps its prior crash readout');
+    '0 MAJOR HITS · AUTO RECOVERY', 'pre-gate HUD keeps its prior crash readout');
 });
 
 test('wreck blast audio uses its hitPosition while legacy blasts still use the burst', () => {

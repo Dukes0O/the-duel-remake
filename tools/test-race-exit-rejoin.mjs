@@ -121,7 +121,7 @@ check('driving through the gate abandons the race once, preserving the bank', ()
 
 check('crossing back over the Muddy Hollow ridge rejoins the race', () => {
   const index = COURSE.findIndex(course => course.id === 'high-country');
-  const duel = new Duel({ seed: 1989, featureFlags: { 'muddy-hollow': true, 'titan-climb': true } });
+  const duel = new Duel({ seed: 1989 });
   duel.startCampaign({ car: 'titan_monster', startStage: index, discoveredGate: true,
     opponentCount: 0, mode: 'timetrial', difficulty: 'casual' });
   Object.assign(duel.state, { status: 'racing', countdown: 0, traffic: [], opponents: [],

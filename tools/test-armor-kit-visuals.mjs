@@ -21,10 +21,10 @@ function fixture() {
     s: 100, lateral: 0, armor: 100, maxArmor: 100, crushed: false,
   }));
   const vehicles = Array.from({length: 4}, () => vehicle());
-  const state = {...actors[0], mode: 'wasteland', status: 'racing',
+  const state = {...actors[0], mode: 'wasteland', wastelandGateDiscovered: true, status: 'racing',
     stageTimeSec: 1, opponents: actors.slice(1),
     combat: {bursts: [], projectiles: [], pickups: []}};
-  const duel = {state, course, featureFlags: {enabled: name => name === 'wasteland2'}};
+  const duel = {state, course};
   const meshes = {player: vehicles[0], rival: vehicles[1],
     extraOpponents: vehicles.slice(2).map(mesh => ({mesh}))};
   return {actors, vehicles, duel, meshes};
@@ -81,16 +81,16 @@ test('stock player has no kit plates while CPU cars keep their authored Scrapper
   }
 });
 
-test('flag-off and ordinary races leave kits unmounted', () => {
+test('undiscovered and ordinary races leave kits unmounted', () => {
   const registry = createVehicleAttachmentRegistry();
   const kits = createArmorKitMeshes(registry);
   const {vehicles, duel, meshes} = fixture();
   try {
-    duel.featureFlags.enabled = () => false;
+    duel.state.wastelandGateDiscovered = false;
     kits.update(duel, meshes, false);
     assert.equal(registry.size, 0);
     assert.equal(vehicles[0].getObjectByName('armor-kit-0-bull-bar'), undefined);
-    duel.featureFlags.enabled = () => true;
+    duel.state.wastelandGateDiscovered = true;
     duel.state.mode = 'duel';
     kits.update(duel, meshes, false);
     assert.equal(registry.size, 0);

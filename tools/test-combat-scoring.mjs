@@ -17,10 +17,10 @@ function place(actor, s, lateral = 0) {
     bombImpactCooldown: 0, airborne: false, airHeight: 0, prevAirHeight: 0});
 }
 
-function race({mode = 'wasteland', wasteland2 = true, difficulty = 'casual',
+function race({mode = 'wasteland', discoveredGate = true, difficulty = 'casual',
   opponentCount = 3} = {}) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode, difficulty, startStage: 0, opponentCount,
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode, difficulty, startStage: 0, opponentCount, discoveredGate: discoveredGate,
     cpuDifficulty: 'hard'});
   const state = duel.state;
   state.status = 'racing';
@@ -99,11 +99,11 @@ function resultMarkup(field) {
   return modal(field.state);
 }
 
-test('ordinary and flag-off results keep their score shape and no combat fields', () => {
+test('ordinary and pre-gate results keep their score shape and no combat fields', () => {
   for (const options of [
-    {mode: 'duel', wasteland2: false},
-    {mode: 'duel', wasteland2: true},
-    {mode: 'wasteland', wasteland2: false},
+    {mode: 'duel', discoveredGate: false},
+    {mode: 'duel', discoveredGate: true},
+    {mode: 'wasteland', discoveredGate: false},
   ]) {
     const field = race(options);
     const result = finish(field);
@@ -117,9 +117,9 @@ test('ordinary and flag-off results keep their score shape and no combat fields'
     assert.equal(result.creditReward, undefined,
       'CMB-03 does not settle credits in a bare Duel');
     for (const key of FIELDS) assert.equal(result[key], undefined,
-      `${options.mode}/${options.wasteland2} keeps the prior result shape`);
+      `${options.mode}/${options.discoveredGate} keeps the prior result shape`);
     assert.doesNotMatch(resultMarkup(field), /HITS LANDED|COMBAT STYLE|DAMAGE DEALT/,
-      'ordinary and flag-off results keep their existing layout');
+      'ordinary and pre-gate results keep their existing layout');
   }
 });
 
@@ -348,7 +348,7 @@ test('flagged results show each combat metric; ordinary results do not', () => {
     assert.ok(html.includes(label), `results panel must show ${label}`);
   }
   assert.ok(html.includes('result-metric'), 'stats use existing result markup');
-  const ordinary = race({mode: 'duel', wasteland2: true});
+  const ordinary = race({mode: 'duel', discoveredGate: true});
   finish(ordinary);
   assert.doesNotMatch(resultMarkup(ordinary), /HITS LANDED|COMBAT STYLE/);
 });

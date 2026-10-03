@@ -74,16 +74,16 @@ test('historical profiles, malformed kits and future versions cannot grant free 
 test('equipped tier adds only its armor to a flagged Wasteland player', () => {
   const base = maxArmorForMass(CARS.falcone_f42.mass);
   for (const [tier, bonus] of [[null, 0], ['scrapper', 10], ['raider', 20], ['warlord', 30]]) {
-    const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
-    duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', combatArmorKit: tier});
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', combatArmorKit: tier, discoveredGate: true});
     assert.equal(duel.state.maxArmor, base + bonus);
     assert.equal(duel.state.armor, base + bonus);
     assert.equal(duel.state.combatArmorKit, tier);
     assert.equal(duel.state.rival.maxArmor, base);
   }
-  for (const [mode, wasteland2] of [['duel', true], ['wasteland', false]]) {
-    const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-    duel.startCampaign({mode, car: 'falcone_f42', combatArmorKit: 'warlord'});
+  for (const [mode, discoveredGate] of [['duel', true], ['wasteland', false]]) {
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode, car: 'falcone_f42', combatArmorKit: 'warlord', discoveredGate: discoveredGate});
     assert.equal(duel.state.combatArmorKit, null);
     assert.equal(duel.state.maxArmor, undefined);
   }

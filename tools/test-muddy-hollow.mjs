@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { App } from '../src/app.js';
 import { Course } from '../src/course.js';
 import { COURSE, DRIVE } from '../src/config.js';
-import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
 import { Duel } from '../src/game.js';
 import { GhostRecorder, loadGhosts } from '../src/ghost.js';
 import { loadLeaderboard } from '../src/leaderboard.js';
@@ -128,12 +127,9 @@ function departureBoundary(zone, required = false) {
   return boundary;
 }
 
-function phaseThreeDuel({car = 'titan_monster', enabled = true,
+function phaseThreeDuel({car = 'titan_monster',
   discovered = true, difficulty = 'casual'} = {}) {
-  const duel = new Duel({seed, featureFlags: {
-    'muddy-hollow': enabled,
-    'titan-climb': true,
-  }});
+  const duel = new Duel({seed});
   duel.startCampaign({car, startStage: highCountryIndex, discoveredGate: discovered,
     opponentCount: 0, mode: 'timetrial', difficulty});
   Object.assign(duel.state, {status: 'racing', countdown: 0, traffic: [],
@@ -423,11 +419,8 @@ function queryPoint(course, point) {
   return { pose, surface: course.surfaceAt(pose.s, pose.lateral) };
 }
 
-function titanDuel(enabled = true) {
-  const duel = new Duel({seed, featureFlags: {
-    'muddy-hollow': enabled,
-    'titan-climb': true,
-  }});
+function titanDuel() {
+  const duel = new Duel({seed});
   duel.startCampaign({car: 'titan_monster', startStage: COURSE.indexOf(highCountry),
     discoveredGate: true, opponentCount: 0});
   Object.assign(duel.state, {status: 'racing', countdown: 0, traffic: [],
@@ -530,10 +523,6 @@ function seedRecordAndGhost(app) {
 function makeMuddyApp() {
   appMemory.clear();
   const app = new App();
-  app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
-    'muddy-hollow': true,
-    'titan-climb': true,
-  }});
   app.profile = {
     ...app.profile,
     credits: 2400,
@@ -580,13 +569,6 @@ function departMuddyApp(app) {
   return events[0];
 }
 
-check('muddy-hollow is released', () => {
-  assert.equal(FEATURE_STATES['muddy-hollow'], 'on',
-    'muddy-hollow is on (SCRAPDOME-RELEASE)');
-  assert.equal(createFeatureFlags({ storage: null, qa: false }).enabled('muddy-hollow'), true,
-    'production has the Hollow without any request');
-});
-
 check('installer affects High Country only', () => {
   const installMuddyHollow = api('installMuddyHollow');
   const high = courseFor(highCountry, false);
@@ -602,27 +584,22 @@ check('installer affects High Country only', () => {
     'an ignored install does not mutate another course');
 });
 
-check('course construction gates the zone explicitly', () => {
+check('course construction installs the zone only for a discovered run', () => {
   assert.equal(courseFor(highCountry, false).muddyHollow, undefined,
-    'flag-off High Country has no Hollow');
+    'the undiscovered course has no Hollow');
   zoneFor(courseFor(highCountry, true));
   assert.equal(courseFor(pacificCanyon, true).muddyHollow, undefined,
     'the enabled option cannot install the zone on another course');
 });
 
-check('race construction requires both discovery and the dev switch', () => {
+check('race construction requires discovery', () => {
   const options = {seed, car: 'titan_monster', startStage: COURSE.indexOf(highCountry)};
-  const undiscovered = new Duel({seed, featureFlags: {'muddy-hollow': true}});
+  const undiscovered = new Duel({seed});
   undiscovered.startCampaign({...options, discoveredGate: false});
   assert.equal(undiscovered.course.muddyHollow, undefined,
     'an undiscovered player cannot load the Hollow');
 
-  const disabled = new Duel({seed, featureFlags: {'muddy-hollow': false}});
-  disabled.startCampaign({...options, discoveredGate: true});
-  assert.equal(disabled.course.muddyHollow, undefined,
-    'discovery cannot bypass the development switch');
-
-  const discovered = new Duel({seed, featureFlags: {'muddy-hollow': true}});
+  const discovered = new Duel({seed});
   discovered.startCampaign({...options, discoveredGate: true});
   zoneFor(discovered.course);
 });
@@ -764,11 +741,11 @@ check('the intended ridge entry stays below the switched Titan grade limit', () 
   }
 });
 
-check('flag-on discovered road driving matches flag-off at 30, 60 and 144 FPS', () => {
-  function run(fps, enabled) {
-    const duel = new Duel({seed, featureFlags: {'muddy-hollow': enabled}});
+check('discovered road driving matches the ordinary road at 30, 60 and 144 FPS', () => {
+  function run(fps, discovered) {
+    const duel = new Duel({seed});
     duel.startCampaign({car: 'titan_monster', startStage: COURSE.indexOf(highCountry),
-      discoveredGate: true, opponentCount: 0});
+      discoveredGate: discovered, opponentCount: 0});
     Object.assign(duel.state, {status: 'racing', countdown: 0, s: 2200, prevS: 2200,
       lateral: 0, prevLateral: 0, speedMph: 55, traffic: [], opponents: [], rival: null});
     duel.setInput({throttle: .35, brake: 0, steer: 0, boost: false});
@@ -834,7 +811,7 @@ check('surface fields have smooth deterministic falloffs and consume no RNG', ()
   );
 });
 
-check('road, outside-zone and flag-off surface results stay exact', () => {
+check('road and outside-zone surfaces stay exact', () => {
   const enabled = courseFor(highCountry, true);
   const disabled = courseFor(highCountry, false);
   const zone = zoneFor(enabled);
@@ -844,17 +821,17 @@ check('road, outside-zone and flag-off surface results stay exact', () => {
       lateral: zone.bounds.lateralCenter + zone.bounds.lateralRadius + 20}],
   ]) assert.deepEqual(enabled.surfaceAt(pose.s, pose.lateral),
     disabled.surfaceAt(pose.s, pose.lateral),
-  `${label} surface keeps the complete flag-off result`);
+  `${label} surface keeps the ordinary result`);
 
   for (const feature of [...zone.landforms.pits, zone.landforms.pondBed]) {
     const {pose} = queryPoint(enabled, pointFor(feature, feature.id));
     assert.deepEqual(disabled.surfaceAt(pose.s, pose.lateral),
       new Course(highCountry, seed, {muddyHollow: false}).surfaceAt(pose.s, pose.lateral),
-    `flag-off ${feature.id} keeps the ordinary surface shape`);
+      `the undiscovered ${feature.id} keeps the ordinary surface shape`);
     assert.equal(Object.hasOwn(disabled.surfaceAt(pose.s, pose.lateral), 'mud'), false,
-      `flag-off ${feature.id} does not expose mud`);
+      `the undiscovered ${feature.id} does not expose mud`);
     assert.equal(Object.hasOwn(disabled.surfaceAt(pose.s, pose.lateral), 'waterDepth'), false,
-      `flag-off ${feature.id} does not expose water depth`);
+      `the undiscovered ${feature.id} does not expose water depth`);
   }
 });
 
@@ -1097,10 +1074,7 @@ check('ridge departure boundary is deterministic in the existing local frame', (
 });
 
 check('a normal discovered Titan launch reaches racing before any ridge history exists', () => {
-  const duel = new Duel({seed, featureFlags: {
-    'muddy-hollow': true,
-    'titan-climb': true,
-  }});
+  const duel = new Duel({seed});
   duel.startCampaign({car: 'titan_monster', startStage: highCountryIndex,
     discoveredGate: true, opponentCount: 0, mode: 'timetrial'});
   const events = [];
@@ -1113,7 +1087,7 @@ check('a normal discovered Titan launch reaches racing before any ridge history 
 });
 
 check('menu simulation before course creation cannot run a Hollow departure check', () => {
-  const duel = new Duel({seed, featureFlags: {'muddy-hollow': true}});
+  const duel = new Duel({seed});
   assert.equal(duel.course, undefined, 'fresh menu simulation has no course');
   assert.equal(api('checkMuddyHollowDeparture')(duel), false,
     'no-course menu simulation has no Hollow departure');
@@ -1159,13 +1133,12 @@ check('only a grounded racing Titan crossing the ridge departs once', () => {
     'remaining beyond the ridge cannot depart twice');
 });
 
-check('non-Titan, on-foot, airborne, road, flag-off and undiscovered states cannot depart', () => {
+check('non-Titan, on-foot, airborne, road and undiscovered states cannot depart', () => {
   const cases = [
     ['non-Titan', {car: 'dusthawk_rally'}],
     ['on foot', {onFoot: true}],
     ['airborne', {airborne: true}],
     ['racing line', {road: true}],
-    ['flag off', {enabled: false}],
     ['undiscovered', {discovered: false}],
   ];
   for (const [label, options] of cases) {
@@ -1522,68 +1495,54 @@ check('phase 5 hubcaps persist per player and derive the gold Titan finish', () 
   app.dispose();
 
   const reloaded = new App();
-  reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
-    wasteland2: true,
-    'hidden-road': true,
-    scrapdome: true,
-    'muddy-hollow': false,
-    'titan-climb': true,
-  }});
-  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true}), null,
-    'flag-off reload preserves but hides the selected reward');
+  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true})?.id, 'titan_gold',
+    'reload keeps the earned reward available');
   const renderGarage = car => createGarageScreen({app: reloaded,
     profile: () => reloaded.profile, credits: String, escapeHTML: String,
     getGarageCar: () => car, getGarageMessage: () => '', arrow: '',
     action: () => '', clamp: value => Math.max(0, Math.min(1, value))})();
-  assert.doesNotMatch(renderGarage('titan_monster'), /Hollow Gold/,
-    'flag-off garage does not list the reward');
-  assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
-    mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
-  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
-    'flag-off Titan race does not render the reward');
-  reloaded.returnToMenu();
-  reloaded.menuCar = 'titan_monster';
-  assert.equal(reloaded.visitWasteland(), true,
-    'flag-off earned Titan can visit the Wasteland yard');
-  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
-    'flag-off Wasteland visit does not render the reward');
-  reloaded.advance(8);
-  assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
-    'flag-off earned Titan can enter the arena');
-  assert.equal(reloaded.getPaintPreset('titan_monster'), null,
-    'flag-off arena does not render the reward');
-  reloaded.returnToMenu();
-  reloaded.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
-    wasteland2: true,
-    'hidden-road': true,
-    scrapdome: true,
-    'muddy-hollow': true,
-    'titan-climb': true,
-  }});
-  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true})?.id,
-    'titan_gold', 're-enabling the feature restores the saved selection');
   assert.match(renderGarage('titan_monster'), /Hollow Gold/,
-    'enabled Titan garage lists the earned reward');
+    'garage lists the earned reward');
+  assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
+    mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'Titan race renders the earned reward');
+  reloaded.returnToMenu();
   reloaded.menuCar = 'titan_monster';
   assert.equal(reloaded.visitWasteland(), true,
-    'enabled earned Titan can visit the Wasteland yard');
+    'earned Titan can visit the Wasteland yard');
   assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
-    'enabled Wasteland visit renders the selected reward');
+    'Wasteland visit renders the earned reward');
   reloaded.advance(8);
   assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
-    'enabled earned Titan can enter the arena');
+    'earned Titan can enter the arena');
   assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
-    'enabled arena renders the selected reward');
+    'arena renders the earned reward');
+  reloaded.returnToMenu();
+  assert.equal(reloaded.getPaintPreset('titan_monster', {menu: true})?.id,
+    'titan_gold', 'menu keeps the saved selection');
+  assert.match(renderGarage('titan_monster'), /Hollow Gold/,
+    'Titan garage lists the earned reward');
+  reloaded.menuCar = 'titan_monster';
+  assert.equal(reloaded.visitWasteland(), true,
+    'earned Titan can visit the Wasteland yard');
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'Wasteland visit renders the selected reward');
+  reloaded.advance(8);
+  assert.equal(reloaded.startArenaEvent({opponents: 1}), true,
+    'earned Titan can enter the arena');
+  assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
+    'arena renders the selected reward');
   reloaded.returnToMenu();
   assert.equal(reloaded.startCampaign({startStage: highCountryIndex,
     mode: 'timetrial', seed, car: 'titan_monster', difficulty: 'casual'}), true);
   assert.equal(reloaded.getPaintPreset('titan_monster')?.id, 'titan_gold',
-    'enabled Titan race renders the selected reward');
+    'Titan race renders the selected reward');
   reloaded.returnToMenu();
   assert.equal(reloaded.startCampaign({startStage: 0, mode: 'timetrial', seed,
     car: 'falcone_f42', difficulty: 'casual'}), true);
   assert.equal(reloaded.getPaintPreset('falcone_f42'), null,
-    'enabled feature never exposes the Titan reward to another car');
+    'the Titan reward remains limited to its earned car');
   reloaded.dispose();
 });
 
@@ -1617,15 +1576,12 @@ check('phase 5 garage hint counts only eligible completed Titan races', () => {
     ['other car', {car: 'falcone_f42'}],
     ['other course', {stageIndex: 0, laps: COURSE[0].laps || 2}],
     ['abandoned', {completed: false, abandoned: true}],
-    ['flag off', {muddyHollowEnabled: false}],
   ]) {
     const base = {...createProfile(), wasteland: {...createProfile().wasteland,
       discoveredGate: true}};
     assert.equal(finish(base, `excluded-${label}`, changes).profile.wasteland
       .muddyHollow.titanHighCountryFinishes, 0, `${label} does not count`);
   }
-  assert.equal(wastelandProgress.muddyHollowSnapshot(profile, 'player-a', false)
-    .garageTip, null, 'flag-off garage hides the hint');
   const discovered = {...profile, wasteland: {...profile.wasteland,
     muddyHollow: {...profile.wasteland.muddyHollow, discovered: true}}};
   assert.equal(wastelandProgress.muddyHollowSnapshot(discovered, 'player-a', true)
@@ -1803,7 +1759,7 @@ check('phase 4 playground traces agree under 30, 60 and 144 FPS scheduling', () 
   assert.deepEqual(result(144), at30, '144 FPS matches the 30 FPS fixed-step trace');
 });
 
-check('phase 4 content remains absent when the development switch is off', () => {
+check('undiscovered High Country keeps the phase 4 content absent', () => {
   const ordinary = courseFor(highCountry, false);
   assert.equal(ordinary.muddyHollow, undefined);
   assert.equal(ordinary.features.obstacles.some(obstacle =>

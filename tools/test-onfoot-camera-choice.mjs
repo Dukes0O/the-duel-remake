@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
 import {normalizeRaceSettings} from '../src/race-settings.js';
 import {createProfile, PLAYERS_KEY} from '../src/progression.js';
 import {needsCareerMigration, backupBeforeMigration, captureCareer} from '../src/career-backup.js';
@@ -16,7 +15,8 @@ const storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.se
 globalThis.localStorage=storage; globalThis.cancelAnimationFrame=()=>{};
 let checks=0;const failures=[];
 async function check(name,run){checks++;try{await run();}catch(error){failures.push(`${name}: ${error.message}`);}}
-function appFixture(){memory.clear();const app=new App();app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{wasteland2:true}});return app;}
+function appFixture(){memory.clear();const app=new App();app.profile.wasteland.discoveredGate=true;
+  assert.equal(app._saveProfile(),true);app.duel.state.wastelandGateDiscovered=true;return app;}
 
 await check('old and malformed preferences default first person without changing other choices',()=>{
   const profile=createProfile();
@@ -40,10 +40,10 @@ await check('named-player preference persists and remains separate from car came
   const first=app.player.id,choices=structuredClone(app.getRaceChoices());app.setCamera('wide');
   assert.equal(app.setFootCamera('overhead'),'overhead');assert.equal(app.cameraMode,'wide');assert.deepEqual(app.getRaceChoices(),choices);
   assert.equal(app.setFootCamera('invalid'),'overhead');
-  const reloaded=new App();reloaded.duel.featureFlags=createFeatureFlags({storage:null,overrides:{wasteland2:true}});
+  const reloaded=new App();assert.equal(reloaded.startCampaign({mode:'wasteland',startStage:0}),true);
   assert.equal(reloaded.footCameraMode,'overhead');reloaded.dispose();
   app.addPlayer('Second camera');assert.equal(app.footCameraMode,'first-person');app.selectPlayer(first);assert.equal(app.footCameraMode,'overhead');
-  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{wasteland2:false}});
+  app.duel.state.wastelandGateDiscovered=false;
   const before=JSON.stringify(app.profile);assert.equal(app.footCameraMode,'first-person');app.setFootCamera('first-person');assert.equal(JSON.stringify(app.profile),before);
   app.dispose();
 });

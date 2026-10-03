@@ -10,7 +10,7 @@ export async function run(context) {
   const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], {cwd:root, encoding:'utf8'}).trim();
   const worktreeDirty = !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'],
     {cwd:root, encoding:'utf8'}).trim();
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
     'memory-only offline weapon audio',30_000);
   const recordings = await context.evaluate(`(async () => {

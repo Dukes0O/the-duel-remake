@@ -23,9 +23,9 @@ function hint(duel) {
   assert.equal(typeof hints.onFootHint, 'function', 'onFootHint public presentation API exists');
   return hints.onFootHint(duel);
 }
-function race(mode = 'wasteland', wasteland2 = true) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode, seed: 1989, car: 'falcone_f42', startStage: 0});
+function race(mode = 'wasteland', discoveredGate = true) {
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode, seed: 1989, car: 'falcone_f42', startStage: 0, discoveredGate});
   Object.assign(duel.state, {status: 'racing', countdown: 0, s: 500, prevS: 500,
     lateral: 0, prevLateral: 0, traffic: [], opponents: []});
   if (duel.state.combat) {
@@ -194,7 +194,7 @@ check('seeded ordinary, time trial and Wasteland results retain recorded fingerp
   const fixture = JSON.parse(readFileSync(fixturePath, 'utf8'));
   assert.equal(fixture.version, 1); assert.equal(fixture.seed, 1989);
   for (const [mode, flag] of replayCases) assert.equal(replay(mode, flag, true),
-    fixture.fingerprints[`${mode}/${flag}`], `${mode}/${flag}: race fingerprint changed`);
+    fixture.discoveredFingerprints[`${mode}/${flag}`], `${mode}/${flag}: discovered race fingerprint changed`);
 });
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`On-foot hints: ${checks - failures.length}/${checks} checks passed; ${failures.length} failed.`);

@@ -24,7 +24,7 @@ async function ready(context, label) {
 }
 
 async function runQuality(context, quality) {
-  await context.navigate(`/tools/menu-check.html?flags=scrapdome,warlords&harness=${quality}`);
+  await context.navigate(`/tools/menu-check.html?harness=${quality}`);
   await context.waitFor(`document.readyState==='complete'&&!!window.__qaApp&&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, `${quality} isolated menu`, 60_000);
@@ -94,38 +94,40 @@ async function runQuality(context, quality) {
   console.log(`${quality}: territory FIGHT → frozen Sal intro → countdown/fight → free loss → Sal rematch → yard; unchanged wallet and racing records`);
 }
 
-async function runReleasedYard(context) {
-  await context.navigate('/tools/menu-check.html?harness=released-yard');
-  await context.waitFor(`!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'released memory-only menu', 60_000);
-  await ready(context, 'released menu presentation');
+async function runDiscoveredYard(context) {
+  await context.navigate('/tools/menu-check.html?harness=discovered-yard');
+  await context.waitFor(`!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'discovered memory-only menu', 60_000);
+  await ready(context, 'discovered menu presentation');
   await context.evaluate(`(()=>{const a=window.__qaApp;a.audio.setMuted(true);
     a.profile={...a.profile,wasteland:{...a.profile.wasteland,discoveredGate:true,
       territories:{...a.profile.wasteland.territories,sal:{hold:100,claimed:false}}}};
-    if(!a._saveProfile())throw Error('Temporary released-yard fixture failed');
+    if(!a._saveProfile())throw Error('Temporary discovered-yard fixture failed');
     a.onFrame?.(a.duel.state,0);return true;})()`);
   await click(context, '#armory-open');
   await context.waitFor('!!document.querySelector(".garage-panel .territory-map")||!!document.querySelector(".garage-panel")', 'released Armory');
   const armoryText = await context.evaluate('document.querySelector(".garage-panel")?.textContent||""');
-  if(/SAL IS WAITING|FIGHT FROM THE YARD/.test(armoryText)) throw Error('Released Armory advertises unfinished Sal');
+  if(!/SAL IS WAITING[^]*FIGHT FROM THE YARD/.test(armoryText) ||
+      await context.evaluate('!!document.querySelector(".garage-panel [data-warlord]")'))
+    throw Error('Discovered Armory must describe Sal but keep FIGHT in the yard');
   await click(context, '[data-action="armory-close"]');
   await click(context, '#wasteland-visit');
-  await context.waitFor('window.__qaApp.isYardHomeActive()', 'released yard', 30_000);
-  await ready(context, 'released yard presentation');
+  await context.waitFor('window.__qaApp.isYardHomeActive()', 'discovered yard', 30_000);
+  await ready(context, 'discovered yard presentation');
   await click(context, '[data-action="yard-territory"]');
   const verdict = await context.evaluate(`(()=>{const a=window.__qaApp;
-    const before=JSON.stringify(a.duel.state), rejected=a.startWarlordFight('sal')===false;
+    const before=JSON.stringify(a.duel.state);
     return{arena:a.arenaAvailable(),warlords:a.warlordsAvailable(),
-      launch:!!document.querySelector('[data-warlord]'),
+      launch:document.querySelector('[data-warlord="sal"]')?.textContent,
       ordinary:!!document.querySelector('[data-action="yard-scrapdome"]'),
-      rejected,unchanged:JSON.stringify(a.duel.state)===before};})()`);
-  if(!verdict.arena||verdict.warlords||verdict.launch||!verdict.ordinary||!verdict.rejected||!verdict.unchanged)
-    throw Error('Released yard dev isolation failed: '+JSON.stringify(verdict));
-  await context.screenshot('released-yard-warlords-off');
-  console.log('Released yard: Last Car Rolling available, no unfinished Sal launch, App rejects without state mutation');
+      unchanged:JSON.stringify(a.duel.state)===before};})()`);
+  if(!verdict.arena||!verdict.warlords||verdict.launch!=='FIGHT'||!verdict.ordinary||!verdict.unchanged)
+    throw Error('Discovered yard Sal entry failed: '+JSON.stringify(verdict));
+  await context.screenshot('discovered-yard-warlords-on');
+  console.log('Discovered yard: Last Car Rolling and Sal FIGHT available; reading the card did not change race state');
 }
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  await runReleasedYard(context);
+  await runDiscoveredYard(context);
   for (const quality of ['high', 'performance']) await runQuality(context, quality);
 }

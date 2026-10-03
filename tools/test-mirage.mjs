@@ -14,14 +14,15 @@ import {arenaHud} from '../src/screen-arena.js';
 // copies that burst on a hit, the stun window and phase two's ramming copies.
 // The real dome course and arena step; null flag storage; no browser or saves.
 const DT = 1 / 120;
-const FLAGS = {wasteland2: true, scrapdome: true, warlords: true};
+
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
 test.after(() => console.log('Mother Mirage: ' + checks + ' checks.'));
 
 function fight({phase = 1, gap = 30, difficulty = 'medium'} = {}) {
-  const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  const duel = new Duel({seed: 1989});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'mirage', car: 'falcone_f42', cpuDifficulty: difficulty}), true);
   assert.equal(beginWarlordEvent(duel), true);
   duel.state.countdown = 0;

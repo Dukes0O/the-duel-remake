@@ -27,7 +27,7 @@ let checks = 0;
 function check(name, run) {if(admissionOnly&&!briefNames.has(name))return;checks++; try {run();} catch (e) {failures.push(name + ': ' + e.message);}}
 function near(a, b, label, tolerance = EPS) {assert.ok(Math.abs(a-b) <= tolerance, label + ': expected ' + b + ', received ' + a);}
 const flags = (enabled = true) => createFeatureFlags({storage:null, qa:true,
-  overrides:{wasteland2:true, arsenal:true, 'crew-gear':enabled}});
+  overrides:{arsenal:true, 'crew-gear':enabled}});
 function placeCar(car, s, lateral = 0, speedMph = 0) {
   Object.assign(car,{s,prevS:s,lateral,prevLateral:lateral,speedMph,
     headingError:0,yawVelocity:0,pushVelocity:0,impactTimer:0,
@@ -54,7 +54,8 @@ function race(crew='rook',{enabled=true,discovered=true,opponents=1}={}) {
   placeCar(duel.state,500);
   duel.state.combat.aiTimer=duel.state.combat.pickupTimer=Infinity;
   duel.state.opponents.forEach((car,i)=>placeCar(car,650+i*30));
-  leave(duel);return duel;
+  if (discovered) leave(duel);
+  return duel;
 }
 function target(duel,metres,lateral=0,speedMph=0,index=0) {
   const f=duel.state.fighter,car=duel.state.opponents[index];

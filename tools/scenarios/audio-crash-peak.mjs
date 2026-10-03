@@ -57,11 +57,13 @@ async function captureNative(contactSource) {
   try {await context.audioWorklet.addModule(url);} finally {URL.revokeObjectURL(url);}
   function meter(node) {
     const chunks = [], tap = new AudioWorkletNode(context, 'duel-crash-peak-meter',
-      {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]}), silent=context.createGain();
-    silent.gain.value=0; tap.connect(silent);silent.connect(context.destination);
+      {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
+    // The processor writes no output. Keep its silent node on a live render
+    // path instead of allowing a zero-gain branch to be pruned under load.
+    tap.connect(context.destination);
     tap.port.onmessage = event => chunks.push(event.data);
     node.connect(tap);
-    return {chunks, stop(){node.disconnect(tap);tap.disconnect();silent.disconnect();tap.port.close();}};
+    return {chunks, stop(){node.disconnect(tap);tap.disconnect();tap.port.close();}};
   }
   function encode(chunks, began) {
     const first=chunks[0]?.frame ?? 0;
@@ -144,8 +146,8 @@ async function captureNative(contactSource) {
   const qctx=quiet.context,qurl=URL.createObjectURL(new Blob([worklet],{type:'text/javascript'}));
   try{await qctx.audioWorklet.addModule(qurl);}finally{URL.revokeObjectURL(qurl);}
   const qchunks=[],referenceChunks=[],tap=new AudioWorkletNode(qctx,'duel-crash-peak-meter',
-    {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]}),silent=qctx.createGain();
-  silent.gain.value=0;tap.connect(silent);silent.connect(qctx.destination);
+    {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
+  tap.connect(qctx.destination);
   tap.port.onmessage=e=>qchunks.push(e.data);quiet.output.connect(tap);
   const tone=qctx.createOscillator(),level=qctx.createGain();
   tone.frequency.value=997;level.gain.value=.01;tone.connect(level);level.connect(quiet.master);
@@ -157,10 +159,10 @@ async function captureNative(contactSource) {
   level.connect(referenceMaster);referenceMaster.connect(referenceOutput);
   const referenceTap=new AudioWorkletNode(qctx,'duel-crash-peak-meter',
     {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
-  referenceOutput.connect(referenceTap);referenceTap.connect(silent);
+  referenceOutput.connect(referenceTap);referenceTap.connect(qctx.destination);
   referenceTap.port.onmessage=e=>referenceChunks.push(e.data);
   const qbegan=qctx.currentTime;tone.start();await sleep(1100);tone.stop();
-  quiet.output.disconnect(tap);tap.disconnect();silent.disconnect();tap.port.close();await sleep(40);
+  quiet.output.disconnect(tap);tap.disconnect();tap.port.close();await sleep(40);
   referenceOutput.disconnect();referenceTap.disconnect();referenceTap.port.close();
   const quietTrack=encode(qchunks,qbegan),referenceTrack=encode(referenceChunks,qbegan);await qctx.close();
   // The actual pause API fades the complete output and clears owned voices.

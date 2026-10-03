@@ -219,7 +219,7 @@ test('automatic visit stage-loaded follows opening without discarding its pendin
   assert.equal(f.calls.length, 1);
 });
 
-test('hidden-road voice ducking works independently of wasteland2', async () => {
+test('hidden-road voice ducking works independently of gate discovery', async () => {
   const { SoundMixer } = await import('../src/sound-mixer.js');
   const gain = () => ({
     gain: {

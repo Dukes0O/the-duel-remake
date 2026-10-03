@@ -17,12 +17,11 @@ import { upgradedCar } from '../src/progression.js';
 const stageIndex = COURSE.findIndex(stage => !stage.kind && stage.hasRival);
 const zeroDamage = () => ({ front: 0, rear: 0, left: 0, right: 0 });
 
-function fixture({ mode = 'wasteland', legacy = false, wasteland2 = true } = {}) {
+function fixture({ mode = 'wasteland', legacy = false, discoveredGate = true } = {}) {
   const duel = new (legacy ? LegacyRoadsideDuel : Duel)({
     seed: 1989,
-    featureFlags: { wasteland2 },
   });
-  duel.startCampaign({ startStage: stageIndex, mode, car: 'falcone_f42' });
+  duel.startCampaign({ startStage: stageIndex, mode, car: 'falcone_f42', discoveredGate: discoveredGate });
   const point = (s, lateral = 0) => ({ x: lateral, y: 0, z: s, heading: 0, curvature: 0 });
   duel.course = {
     def: { theme: 'desert' }, length: 1000, closed: false,
@@ -81,13 +80,13 @@ function trafficHit(duel, playerMph, { targetMph = 0, direction = 1, touching = 
 }
 
 test('released roadside behavior is on in Wasteland and legacy isolation stays test-only', () => {
-  assert.equal(fixture({wasteland2: true}).destructionEnabled(), true,
+  assert.equal(fixture({discoveredGate: true}).destructionEnabled(), true,
     'Wasteland 2 uses released roadside destruction');
-  assert.equal(fixture({wasteland2: false}).roadsideKnockAwayEnabled(), true,
+  assert.equal(fixture({discoveredGate: false}).roadsideKnockAwayEnabled(), true,
     'released roadside destruction does not depend on Wasteland 2');
-  assert.equal(fixture({mode: 'duel', wasteland2: false}).roadsideKnockAwayEnabled(), false,
+  assert.equal(fixture({mode: 'duel', discoveredGate: false}).roadsideKnockAwayEnabled(), false,
     'ordinary races keep their old contact rules');
-  assert.equal(fixture({legacy: true, wasteland2: false}).roadsideKnockAwayEnabled(), false,
+  assert.equal(fixture({legacy: true, discoveredGate: false}).roadsideKnockAwayEnabled(), false,
     'historical contact isolation exists only in the test adapter');
 });
 
@@ -283,13 +282,13 @@ test('major fixed scenery still costs 20 armor and never enters the knock-away p
 });
 
 test('ordinary and test-only legacy Wasteland keep their established contacts', () => {
-  const ordinary = fixture({ mode: 'duel', wasteland2: false });
+  const ordinary = fixture({ mode: 'duel', discoveredGate: false });
   const old = staticHit(ordinary, cactus(), 25);
   assert.equal(old.state.fallenCacti.length, 1, 'ordinary cactus fall remains enabled');
   assert.equal(old.state.speedMph, 23, 'ordinary cactus retains its 8% speed loss');
-  const off = fixture({ legacy: true, wasteland2: false });
+  const off = fixture({ legacy: true, discoveredGate: false });
   const sign = staticHit(off, post(), 45);
-  assert.equal(sign.state.brokenScenery.length, 0, 'flag-off Wasteland sign stays solid');
+  assert.equal(sign.state.brokenScenery.length, 0, 'pre-gate Wasteland sign stays solid');
   assert.ok(sign.state.s < 110, 'old contact wall remains in place');
   assert.deepEqual([old.state.lives, off.state.lives], [LIVES.start, LIVES.start]);
 });

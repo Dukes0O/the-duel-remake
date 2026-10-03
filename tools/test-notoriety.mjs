@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {COURSE} from '../src/config.js';
 import {App} from '../src/app.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
 import {createProfile, normalizeProfile, settleRace} from '../src/progression.js';
 import {combatNotoriety, rankForXp, MAX_NOTORIETY_RANK} from '../src/notoriety.js';
 
@@ -131,7 +130,7 @@ test('malformed or extreme counters cannot overflow XP or bypass the rank cap', 
   assert.equal(capped.profile.wasteland.rank, 30);
 });
 
-test('the real App saves combat XP once when a flagged Mad Max race ends', () => {
+test('the real App saves combat XP once when a discovered Mad Max race ends', () => {
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const values = new Map();
   Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
@@ -140,9 +139,8 @@ test('the real App saves combat XP once when a flagged Mad Max race ends', () =>
   }});
   try {
     const app = new App();
-    app.duel.featureFlags = createFeatureFlags({
-      overrides: {wasteland2: true}, storage: null, qa: false,
-    });
+    app.profile.wasteland.discoveredGate = true;
+    assert.equal(app._saveProfile(), true, 'discovered profile saves only to memory');
     assert.equal(app.startCampaign({mode: 'wasteland', startStage: 0}), true);
     const state = app.duel.state;
     state.status = 'racing';

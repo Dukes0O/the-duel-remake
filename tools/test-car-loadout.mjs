@@ -42,8 +42,8 @@ test('unimplemented, locked and future-save weapons cannot enter the loadout',()
 
 test('car keys and D-pad use the selected slots only in Wasteland2',()=>{
   const selected=['star','crossbow','bomb','ufo'];
-  const duel=new Duel({seed:1989,featureFlags:{wasteland2:true}});
-  duel.startCampaign({mode:'wasteland',startStage:0,seed:1989,
+  const duel=new Duel({seed:1989});
+  duel.startCampaign({mode:'wasteland',startStage:0,seed:1989,discoveredGate:true,
     weaponLoadout:selected});
   assert.deepEqual(duel.state.weaponLoadout,selected);
   const fired=[];
@@ -57,7 +57,7 @@ test('car keys and D-pad use the selected slots only in Wasteland2',()=>{
   App.prototype._inputAction.call(app,action);
   assert.equal(fired.at(-1),'star');
 
-  const ordinary=new Duel({seed:1989,featureFlags:{wasteland2:false}});
+  const ordinary=new Duel({seed:1989});
   ordinary.startCampaign({mode:'wasteland',startStage:0,seed:1989,
     weaponLoadout:selected});
   assert.equal(ordinary.state.weaponLoadout,null);

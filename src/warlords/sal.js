@@ -18,8 +18,7 @@ const SIDE_PHASES = Object.freeze({idle: 'idle', tell: 'spin-up', sweep: 'sweepi
 export function isSalFight(duel, actor) {
   const arena = duel.state.arena;
   return arena?.mode === 'warlord' && arena.warlordId === 'sal' &&
-    actor?.warlordId === 'sal' && actor.arenaId === arena.warlordBossId &&
-    duel.featureFlags?.enabled('warlords') === true;
+    actor?.warlordId === 'sal' && actor.arenaId === arena.warlordBossId;
 }
 
 export function resetSalFight(duel, actor) {

@@ -4,7 +4,7 @@ const holdF = (context, type) => context.command('Input.dispatchKeyEvent',
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'",
     'private Wasteland figure scene',60_000);
   await context.evaluate(`(() => {

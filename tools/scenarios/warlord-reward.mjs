@@ -93,7 +93,7 @@ async function equip(context, car) {
 
 async function runQuality(context, quality) {
   await context.evaluate('window.name=""');
-  await context.navigate(`/tools/menu-check.html?flags=warlords&harness=reward-${quality}`);
+  await context.navigate(`/tools/menu-check.html?harness=reward-${quality}`);
   await context.waitFor(`!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`,quality+' memory-only menu',60_000);
   await ready(context,quality+' initial presentation');
   const baseline=await context.evaluate(`(()=>{const a=window.__qaApp;
@@ -183,7 +183,7 @@ async function runQuality(context, quality) {
       throw Error('Reward flow altered race records or paid wrong economy');
     return{scrap:p.wasteland.scrap,wins:2,losses:1,credits:p.credits,currentCar:'stuttgart_959s',futureCar:'banshee_muscle'};})()`);
   // Same-tab reload restores the disposable registry, never the real origin store.
-  await context.navigate('/tools/menu-check.html?flags=warlords&harness=reward-reload-'+quality);
+  await context.navigate('/tools/menu-check.html?harness=reward-reload-'+quality);
   await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===1032`,'saved reward reload',60_000);
   await ready(context,quality+' reload');
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio.setMuted(true);
@@ -192,13 +192,16 @@ async function runQuality(context, quality) {
       a.profile.wasteland.warlords.sal.defeated||a.profile.wasteland.scrap!==0||a.equipArmorKit('falcone_f42','side-saws').ok)
       throw Error('Second named player inherited reward');
     if(!a.selectPlayer(${JSON.stringify(baseline.owner)}))throw Error('Reward owner restore failed');})()`);
-  await context.navigate('/tools/menu-check.html?harness=reward-released-'+quality);
-  await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===1032`,'released reward owner',60_000);
-  await ready(context,quality+' released menu');await click(context,'#armory-open');
+  await context.navigate('/tools/menu-check.html?harness=reward-earned-'+quality);
+  await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===1032`,'earned reward owner',60_000);
+  await ready(context,quality+' earned menu');await click(context,'#armory-open');
   const released=await context.evaluate(`(()=>{const a=window.__qaApp,text=document.querySelector('.garage-panel').textContent;
-    if(a.warlordsAvailable()||document.querySelector('[data-kit-tier="side-saws"]')||(/SIDE SAWS/.test(text)||text.includes('1.6')))throw Error('Dev reward advertised in released Armory');
-    return{hidden:true,entitlementPreserved:a.profile.wasteland.warlords.sal.defeated};})()`);
-  console.log(`${quality}: real retry click saved one complete 720-scrap reward; rematch 312, loss 0; authored saws + real sparks; current/future free equip, reload and named-player/switch isolation`);
+    const tier=document.querySelector('[data-kit-tier="side-saws"]');
+    if(!a.warlordsAvailable()||!tier||!/SIDE SAWS/.test(text)||!text.includes('1.6')||
+        !a.profile.wasteland.warlords.sal.defeated)
+      throw Error('Earned Side Saws missing from the discovered Armory');
+    return{visible:true,entitlementPreserved:true};})()`);
+  console.log(`${quality}: real retry click saved one complete 720-scrap reward; rematch 312, loss 0; authored saws + real sparks; current/future free equip, reload and named-player isolation`);
   return{quality,failure,saved,hit,rematch:rematch.scrapEarned,loss:loss.scrapEarned,final,released};
 }
 

@@ -9,8 +9,7 @@ import {COMBAT_TUNING as T} from '../src/wasteland-tuning.js';
 // CREW.md: settled car weapons against current fighters, not future CREW-04 state.
 // Native Duel, real F hold, generated raiders and actual projectile sweeps.
 const DT = 1 / 120;
-const FLAGS = {wasteland2: true, 'hidden-road': true, scrapdome: true,
-  warlords: true, 'fuel-run': true, raiders: true};
+const FLAGS = {'hidden-road': true, 'fuel-run': true, raiders: true};
 let checks = 0;
 const eq = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
@@ -30,6 +29,7 @@ function moveFighter(duel, pose) {
 }
 function start(mode = 'fuel-run', crewId = 'nell') {
   const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
   if (mode === 'fuel-run') {
     eq(duel.startArenaEvent({mode, car: 'falcone_f42', seed: 1989,
       crewId, cpuDifficulty: 'hard', opponents: [

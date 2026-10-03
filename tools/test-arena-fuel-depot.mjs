@@ -6,7 +6,7 @@ import {createFuelRunView} from '../src/arena/modes/fuel-run-view.js';
 
 // Claude's 30 September 4 m depot review: native simulation and Three geometry.
 const DT = 1 / 120;
-const FLAGS = {wasteland2: true, 'hidden-road': true, scrapdome: true, warlords: true, 'fuel-run': true};
+const FLAGS = {'hidden-road': true, 'fuel-run': true};
 let checks = 0;
 const eq = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
@@ -14,6 +14,7 @@ const near = (a, b, message) => ok(Math.abs(a - b) < 1e-6,
   message + ': expected ' + b + ', received ' + a);
 function start() {
   const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
   eq(duel.startArenaEvent({mode: 'fuel-run', car: 'falcone_f42', seed: 1989,
     crewId: 'nell', opponents: [{car: 'dusthawk_rally', brain: 'collector'},
       {car: 'aurora_gt', brain: 'rammer'}, {car: 'stuttgart_959s', brain: 'hunter'}]}), true, 'actual Fuel event starts');

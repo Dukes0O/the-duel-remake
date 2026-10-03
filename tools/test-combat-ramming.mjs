@@ -18,12 +18,12 @@ function place(actor, s, lateral = 0) {
     airborne: false, airHeight: 0, prevAirHeight: 0});
 }
 
-function race({mode = 'wasteland', wasteland2 = true, crashPhysics = true,
+function race({mode = 'wasteland', discoveredGate = true, crashPhysics = true,
   car = 'falcone_f42', classicDestruction = false} = {}) {
   // Pin the legacy control even after roadside destruction is on by default.
   const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({seed: 1989, car,
-    featureFlags: {wasteland2, 'crash-physics': crashPhysics}});
-  duel.startCampaign({mode, car, startStage: 0, opponentCount: 3,
+    featureFlags: {'crash-physics': crashPhysics}});
+  duel.startCampaign({mode, car, startStage: 0, opponentCount: 3, discoveredGate: discoveredGate,
     cpuDifficulty: 'hard'});
   const state = duel.state;
   state.status = 'racing';
@@ -330,8 +330,8 @@ test('scripted contact incidents replay at 30, 60 and 144 FPS', () => {
   assert.ok(traces[0].events.length > 0, 'the fixture actually contains ram hits');
 });
 
-function legacyDigest(mode, wasteland2, crashPhysics = true) {
-  const field = race({mode, wasteland2, crashPhysics});
+function legacyDigest(mode, discoveredGate, crashPhysics = true) {
+  const field = race({mode, discoveredGate, crashPhysics});
   const target = field.state.opponents[0];
   field.state.input.steer = .75;
   rearContact(field, field.state, target, {attackerMph: 130,
@@ -355,13 +355,13 @@ test('released contact replays and obsolete false overrides have the same finger
     'ordinary race keeps its collision and vehicleRam result');
   assert.equal(legacyDigest('duel', true),
     '90ae44392f1e118f66f38b57677448c16d9f5db7e444585277c66cafc9e38ff5',
-    'wasteland2 does not change ordinary races');
+    'discoveredGate does not change ordinary races');
   assert.equal(legacyDigest('wasteland', false, false),
     legacyDigest('wasteland', false, true),
     'an obsolete false crash override cannot change Wasteland contact');
   assert.equal(legacyDigest('wasteland', false, true),
     '77e512edd147264c2da17858eca6ed4fb74f031500dba8ce95e891ea3676bb38',
-    'enabled crash physics governs Wasteland contact when Wasteland 2 is off');
+    'enabled crash physics governs Wasteland contact when the gate is undiscovered');
   assert.equal(legacyDigest('duel', false, false),
     legacyDigest('duel', false, true),
     'an obsolete false crash override cannot change ordinary contact');
@@ -369,7 +369,7 @@ test('released contact replays and obsolete false overrides have the same finger
 
 test('enabled crash physics lets smashed traffic stay wrecked in every mode', () => {
   for (const mode of ['duel', 'wasteland']) {
-    const field = race({mode, wasteland2: false, classicDestruction: true});
+    const field = race({mode, discoveredGate: false, classicDestruction: true});
     const traffic = {s: 105, prevS: 115, lateral: .6, prevLateral: .6,
       speedMph: 20, dir: -1, alive: true};
     field.state.traffic.push(traffic);

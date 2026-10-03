@@ -65,7 +65,7 @@ async function layout(context, label) {
 async function qualityRun(context, quality) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  await context.navigate('/tools/menu-check.html?flags=wasteland2,scrapdome,hidden-road');
+  await context.navigate('/tools/menu-check.html?flags=hidden-road');
   await context.waitFor('!!window.__qaApp && !!window.__render && window.__qaApp.visualReady',
     'private memory-only hint menu', 60_000);
   await context.evaluate('(() => {const a=window.__qaApp;' +
@@ -185,16 +185,16 @@ export async function run(context) {
   for (const quality of ['high', 'performance']) await qualityRun(context, quality);
   await context.navigate('/tools/menu-check.html?flags=');
   await context.waitFor('!!window.__qaApp && !!window.__render && window.__qaApp.visualReady', 'flag-off hint menu', 60_000);
-  // wasteland2 is released on; the real race view disables it before discovery.
+  // Saved gate discovery controls the real race rules.
   await context.evaluate('(() => {const a=window.__qaApp;' +
     'a.profile={...a.profile,wasteland:{...a.profile.wasteland,discoveredGate:false}};' +
     'if(!a._saveProfile())throw Error("Temporary undiscovered-player fixture failed");})()');
   await prepare(context);
-  if (await context.evaluate('window.__qaApp.duel.featureFlags.enabled("wasteland2")'))
+  if (await context.evaluate('window.__qaApp.duel.state.wastelandGateDiscovered'))
     throw Error('Undiscovered player did not disable the real race Wasteland rules');
-  await expectNoHint(context, 'wasteland2 off');
+  await expectNoHint(context, 'gate undiscovered');
   await interact(context, true);
   await advance(context, 132);
-  if ((await sample(context)).onFoot) throw Error('Flag-off Wasteland accepted car exit');
+  if ((await sample(context)).onFoot) throw Error('Undiscovered Wasteland accepted car exit');
   await interact(context, false);
 }

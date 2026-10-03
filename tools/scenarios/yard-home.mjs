@@ -75,7 +75,7 @@ async function framedCar(context,car,viewport){
 
 export async function run(context) {
   if(CAR_KEYS.length!==9)throw Error(`Expected nine production cars; found ${CAR_KEYS.length}`);
-  await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2');
+  await context.navigate('/tools/menu-check.html?flags=hidden-road');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated yard menu', 60000);
   await context.waitFor('window.__qaApp.visualReady === true', 'renderer ready for arrival', 60000);
   await context.waitFor("[...document.querySelectorAll('details')].some(panel => panel.querySelector('summary')?.textContent.includes('MENU QA'))", 'QA controls');

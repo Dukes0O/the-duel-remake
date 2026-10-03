@@ -34,7 +34,7 @@ import { DEFAULT_DRIVER, normalizeDriverId, applyDriverModifiers } from './drive
 import {normalizeRival} from './rival-settings.js';
 import {upgradedCar} from './progression.js';
 import {createFeatureFlags, featureFlags} from './feature-flags.js';
-import {hiddenRoadInRace, raceFeatureFlags} from './wasteland-access.js';
+import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
@@ -185,14 +185,14 @@ export class Duel {
     if (arsenalEnabled(this)) this.state.arsenalRank = arsenalRank;
     else delete this.state.arsenalRank;
     this.state.weaponLoadout=this.state.mode==='wasteland'&&
-      this.featureFlags.enabled('wasteland2')?
+      wastelandRulesActive(this.state)?
       normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,...implementedArsenalWeapons()] : WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
-      this.featureFlags.enabled('wasteland2') ? validArmorKit(combatArmorKit) : null;
+      wastelandRulesActive(this.state) ? validArmorKit(combatArmorKit) : null;
     this.state.crewId = this.state.mode === 'wasteland' &&
-      this.featureFlags.enabled('wasteland2') ?
+      wastelandRulesActive(this.state) ?
       (Object.hasOwn(CREW,crewId) ? crewId : 'rook') : null;
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
@@ -220,7 +220,7 @@ export class Duel {
     s.stageIndex = idx;
     this.course = new Course(COURSE[idx], this.seed, {
       hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
-      muddyHollow: s.wastelandGateDiscovered === true && this.featureFlags.enabled('muddy-hollow'),
+      muddyHollow: s.wastelandGateDiscovered === true,
     });
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
@@ -308,16 +308,14 @@ export class Duel {
 
   // ---- arena events (docs/SCRAPDOME.md) ----------------------------------
   // Reached only from the Scrapdome yard. Returns false for an invalid request
-  // or while the scrapdome switch is off; the caller must only offer it to a
-  // player who has found the gate.
+  // or while an unfinished mode is unavailable; the caller must only offer it
+  // to a player who has found the gate.
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
     seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook' } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
-    const released = this.featureFlags.base || this.featureFlags;
-    if (!this.featureFlags.enabled('scrapdome') || !released.enabled('wasteland2') ||
+    if (!wastelandRulesActive(this.state) ||
         (venueId === 'salt-flats' && !this.featureFlags.enabled('salt-flats')) ||
-        (mode === 'warlord' && !this.featureFlags.enabled('warlords')) ||
         (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) ||
         (mode === 'bounty-hunt' && !this.featureFlags.enabled('bounty-hunt')) || !venue || !rules ||
         !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||

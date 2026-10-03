@@ -19,7 +19,7 @@ const FIGHTS = Object.freeze({
 export function warlordFight(duel, actor) {
   const arena = duel.state.arena, id = arena?.warlordId;
   if (arena?.mode !== 'warlord' || !Object.hasOwn(FIGHTS, id) ||
-      duel.featureFlags?.enabled('warlords') !== true || !actor || actor === duel.state ||
+      !actor || actor === duel.state ||
       actor.warlordId !== id ||
       !(arena.warlordTeamIds ?? [arena.warlordBossId]).includes(actor.arenaId)) return null;
   return FIGHTS[id];

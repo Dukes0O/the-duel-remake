@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
-const FEATURES=['wasteland2','hidden-road'];
+const FEATURES=['hidden-road'];
 const REQUIRED_EVENTS=[
   ['departure','keyboard'],['invitation','production'],['enter-choice','ui'],
   ['arrived-yard','production'],['yard-menu','ui'],['wasteland-start','ui'],
@@ -15,8 +15,8 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 export function validateBetaJourneyEvidence(report){
   if(report?.storage?.memoryOnly!==true||report.storage.qaTab!==true)throw Error('Private memory-only QA storage was not proved.');
   if(report?.flags?.urlOverride!==false)throw Error('The Wasteland was enabled by a QA URL override.');
-  if(!Array.isArray(report.flags.released)||FEATURES.some(name=>!report.flags.released.includes(name))||report.flags.released.length!==2)
-    throw Error('Both Wasteland switches must be released on.');
+  if(!Array.isArray(report.flags.released)||FEATURES.some(name=>!report.flags.released.includes(name))||report.flags.released.length!==1)
+    throw Error('The Hidden Road switch must be released on.');
   if(!Array.isArray(report.flags.menuSettings)||report.flags.menuSettings.length!==0)
     throw Error('The main menu shows Wasteland settings: '+JSON.stringify(report.flags.menuSettings));
   if(report.flags.preDiscovery?.mode!=='wasteland'||report.flags.preDiscovery.hiddenRoad!==true||
@@ -119,7 +119,7 @@ export async function run(context){
   }`);
   report.flags.urlOverride=false;
   if(new URLSearchParams(await context.evaluate('location.search')).has('flags'))throw Error('QA URL flag override is forbidden.');
-  report.flags.released=await context.evaluate(`['wasteland2','hidden-road'].filter(name=>window.__qaApp._switches().enabled(name))`);
+  report.flags.released=await context.evaluate(`['hidden-road'].filter(name=>window.__qaApp._switches().enabled(name))`);
   // Kyle: the only Wasteland choice on the main menu is Mad Max Duel itself.
   report.flags.menuSettings=await context.evaluate(`['#experimental-open','#foot-camera','#foot-camera-control','#wasteland-visit']
     .filter(selector=>{const node=document.querySelector(selector);return !!node&&!node.hidden&&node.getBoundingClientRect().width>0;})`);
@@ -156,7 +156,7 @@ export async function run(context){
   await context.evaluate('window.__qaApp.stop()');
   report.flags.preDiscovery=await context.evaluate(`(()=>{const d=window.__qaApp.duel,s=d.state;
     return{mode:s.mode,hiddenRoad:!!d.course.hiddenRoad,
-      newRules:d.featureFlags.enabled('wasteland2')||!!s.crewId||!!s.combatArmorKit||!!s.weaponLoadout};})()`);
+      newRules:!!s.wastelandGateDiscovered||!!s.crewId||!!s.combatArmorKit||!!s.weaponLoadout};})()`);
   const playerId=await context.evaluate('window.__qaApp.player.id');
   await context.evaluate('window.__betaQa.advance(.5)');
   const departure=await context.evaluate(`window.__betaQa.place(149.9,35)`);

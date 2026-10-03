@@ -1,7 +1,7 @@
 // Inspect real scene objects and pooled debris in memory-only High and
 // Performance races. The renderer reads the scripted state without changing it.
 async function qualityPass(context, quality) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine').disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
     `${quality} memory-only roadside menu`, 60_000);
   await context.evaluate(`(() => {

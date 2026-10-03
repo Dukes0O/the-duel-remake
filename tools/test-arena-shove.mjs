@@ -44,7 +44,8 @@ function arena(attackingCar, targetCar, role) {
   const playerCar = role === 'player-attacker' ? attackingCar : role === 'player-target' ? targetCar : 'falcone_f42';
   const opponents = role === 'cpu-cpu' ? [attackingCar, targetCar] :
     [role === 'player-attacker' ? targetCar : attackingCar];
-  const duel = new Duel({seed: fixture.seed, featureFlags: {wasteland2: true, scrapdome: true}});
+  const duel = new Duel({seed: fixture.seed});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({car: playerCar, driverId: 'club', seed: fixture.seed,
     cpuDifficulty: 'medium', opponents: opponents.map(car => ({car, driverId: 'club', brain: 'gunner'}))}), true);
   const state = duel.state;
@@ -210,7 +211,7 @@ test('released solver conserves linear momentum and never adds energy', () => {
 });
 
 for (const spec of fixture.roadControls) test('released road full-state fingerprint: ' + spec.car + '/' + spec.course, () => {
-  const duel = new Duel({seed: fixture.seed, featureFlags: {wasteland2: true, scrapdome: true, warlords: true}});
+  const duel = new Duel({seed: fixture.seed});
   duel.startCampaign({car: spec.car, seed: fixture.seed, mode: 'duel', difficulty: 'casual',
     cpuDifficulty: 'medium', startStage: COURSE.findIndex(def => def.id === spec.course)});
   duel.state.status = 'racing'; duel.state.countdown = 0;
@@ -304,8 +305,8 @@ for (const kind of fixture.sittingStates) for (const side of [-1, 1])
     }
   });
 for (const mph of [20, 40]) test(`SETTLED WALL TRAFFIC CONTROL: genuine road traffic native contact at ${mph}mph`, () => {
-  const ordinary = new Duel({seed: fixture.seed, featureFlags: {wasteland2: true}});
-  ordinary.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: fixture.seed, startStage: 0});
+  const ordinary = new Duel({seed: fixture.seed});
+  ordinary.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: fixture.seed, startStage: 0, discoveredGate: true});
   const s = ordinary.state, traffic = s.traffic.find(actor => actor.alive && actor.dir === 1);
   ok(traffic, 'the actual seeded road spawner supplies the existing traffic shape');
   eq(s.arena, null, 'traffic contact is an ordinary-road control, never a fabricated arena participant');
@@ -374,7 +375,7 @@ test('native waiting-wreck timer counts one wreck and really respawns at its ori
 });
 
 for (const car of ['titan_monster', 'falcone_f42']) test('released road vehicle crush rule: ' + car, () => {
-  const duel = new Duel({seed: fixture.seed, featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: fixture.seed});
   duel.startCampaign({mode: 'duel', car, driverId: 'club', seed: fixture.seed, startStage: 0,
     opponentCount: 1, rival: {car: 'falcone_f42'}});
   const state = duel.state, target = state.rival;
@@ -542,7 +543,8 @@ for (const role of ['player-attacker', 'player-target']) {
 // A staged grounded QA pose must not keep ballistic integration from the CPU's
 // earlier real ramp while it waits for another car's actual arena respawn.
 function protectedCpuApproach(freshGroundedPose) {
-  const duel = new Duel({seed: 89098, featureFlags: {wasteland2: true, scrapdome: true}});
+  const duel = new Duel({seed: 89098});
+  duel.state.wastelandGateDiscovered = true;
   eq(duel.startArenaEvent({car: 'falcone_f42', driverId: 'club', seed: 89098,
     cpuDifficulty: 'easy', opponents: [{car: 'dusthawk_rally', upgradeLevel: 0}]}), true,
   'native seed/options match the independently captured protected CPU approach');
@@ -651,7 +653,8 @@ import {arenaWallNormal as actualWallNormal} from '../src/arena/arena-floor.js';
 // CPU throttle control. No source contact/guard/controller result is replaced.
 function scriptedNormalIncident(role, side, segment, coast) {
   const seed = role === 'player-attacker' ? (side < 0 ? 112855 : 120774) : (side < 0 ? 128693 : 136612);
-  const duel = new Duel({seed, featureFlags: {wasteland2: true, scrapdome: true}});
+  const duel = new Duel({seed});
+  duel.state.wastelandGateDiscovered = true;
   eq(duel.startArenaEvent({car: 'falcone_f42', driverId: 'club', seed, cpuDifficulty: 'easy',
     opponents: [{car: 'dusthawk_rally', upgradeLevel: 0}]}), true, 'real normal-wall fixture uses captured native actors/options');
   const s = duel.state, cpu = s.opponents[0], target = role === 'player-attacker' ? cpu : s,

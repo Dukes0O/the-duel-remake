@@ -3,7 +3,6 @@ import {test} from 'node:test';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {ARMOR_KITS, validArmorKit, armorKitBonus, armorKitMass, getEquippedArmorKit,
   equipArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
@@ -19,10 +18,7 @@ const ok = (value, message) => { checks++; assert.ok(value, message); };
 const near = (actual, expected, message) => { checks++; assert.ok(Math.abs(actual - expected) < 1e-7,
   message + ' (actual ' + actual + ', expected ' + expected + ')'); };
 test.after(() => console.log('Side Saws: ' + checks + ' acceptance checks executed.'));
-// Warlords is released (WAR-SAL-RELEASE); "disabled" forces the switch off so
-// the switch-off path stays tested until the switch is removed.
-const flags = (enabled = true) => createFeatureFlags({storage: null, qa: true,
-  overrides: {warlords: enabled}});
+const FLAGS = {enabled: () => true};
 function ownedProfile() {
   const p = createProfile();
   return normalizeProfile({...p, credits: 765, wasteland: {...p.wasteland, discoveredGate: true,
@@ -72,7 +68,9 @@ test('Side Saws are a valid kit with zero added armor or mass; paid plating stay
   equal(armorKitBonus('side-saws'), 0, 'saws add no armor');
   equal(armorKitMass('side-saws'), 0, 'saws add no mass');
   equal(Object.values(ARMOR_KITS).map(k => k.price), [350, 950, 2500], 'paid plating catalog remains unchanged');
-  const stock = new Duel({featureFlags: flags()}), saws = new Duel({featureFlags: flags()});
+  const stock = new Duel({featureFlags: FLAGS}), saws = new Duel({featureFlags: FLAGS});
+  stock.state.wastelandGateDiscovered = true;
+  saws.state.wastelandGateDiscovered = true;
   stock.startArenaEvent({car: 'falcone_f42', opponents: [{car: 'banshee_muscle'}]});
   saws.startArenaEvent({car: 'falcone_f42', combatArmorKit: 'side-saws', opponents: [{car: 'banshee_muscle'}]});
   equal(saws.state.combatArmorKit, 'side-saws', 'actual event start retains the earned equipped kit');
@@ -82,7 +80,7 @@ test('Side Saws are a valid kit with zero added armor or mass; paid plating stay
 test('the armory offers only an owned earned kit and uses equip without a price', () => {
   const htmlFor = saved => createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
     getGarageMessage: () => '', getArmoryCar: () => 'falcone_f42', kitsEnabled: () => true,
-    warlordsEnabled: () => true, action: (label) => label}).yardContent();
+    action: (label) => label}).yardContent();
   const owned = htmlFor(ownedProfile());
   ok(/data-kit-tier="side-saws"/.test(owned), 'owned Side Saws appear as a working armory item');
   ok(/data-kit-action="equip"[^>]*data-kit-tier="side-saws"/.test(owned), 'owned reward uses the kit equip action');
@@ -90,8 +88,9 @@ test('the armory offers only an owned earned kit and uses equip without a price'
   ok(!/data-kit-tier="side-saws"/.test(htmlFor(createProfile())), 'undefeated player is not offered an unowned reward');
 });
 
-function fixture({warlord = true, enabled = true} = {}) {
-  const duel = new Duel({seed: 1989, featureFlags: flags(enabled)});
+function fixture({warlord = true} = {}) {
+  const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
   if (warlord) assert.equal(startWarlordEvent(duel, {warlordId: 'sal', car: 'falcone_f42'}), true);
   else assert.equal(duel.startArenaEvent({car: 'falcone_f42', opponents: [{car: 'banshee_muscle'}]}), true);
   duel.state.status = 'racing'; duel.state.arena.phase = 'fight';
@@ -113,8 +112,8 @@ function fixture({warlord = true, enabled = true} = {}) {
   return {duel, player: duel.state, actor};
 }
 function contact({kit = false, stage = null, victimFace = 'side', attackerFace = 'side', side = 1,
-  protectedBy = null, speed = 35, warlord = true, enabled = true} = {}) {
-  const f = fixture({warlord, enabled}), hits = [];
+  protectedBy = null, speed = 35, warlord = true} = {}) {
+  const f = fixture({warlord}), hits = [];
   if (kit) f.player.combatArmorKit = 'side-saws';
   if (stage) { f.actor.warlordId = 'sal'; f.actor.salSaw = {stage, phase: stage === 'window' ? 'sparking' : 'sweeping', sinceSec: 0}; }
   if (victimFace === 'rear' || victimFace === 'front') {
@@ -220,12 +219,10 @@ test('continuous overlap cannot farm saw damage; clearing the pair allows a new 
   f.duel._vehicleContact(f.player, f.actor, 'rival');
   ok(f.actor.armor < first, 'a cleared pair can receive the next real saw impact');
 });
-test('Sal state fields outside an enabled warlord event cannot grant rear vulnerability', () => {
-  for (const enabled of [true, false]) {
-    const plain = contact({victimFace: 'rear', warlord: false, enabled});
-    const fake = contact({victimFace: 'rear', stage: 'window', warlord: false, enabled});
-    near(fake.removed, plain.removed, 'ordinary arena ignores stray signature state');
-  }
+test('Sal state fields outside a warlord event cannot grant rear vulnerability', () => {
+  const plain = contact({victimFace: 'rear', warlord: false});
+  const fake = contact({victimFace: 'rear', stage: 'window', warlord: false});
+  near(fake.removed, plain.removed, 'ordinary arena ignores stray signature state');
 });
 test('allied cars cannot receive earned saw damage or score a friendly hit', () => {
   const f = fixture(); f.player.combatArmorKit = 'side-saws';
@@ -238,7 +235,7 @@ test('allied cars cannot receive earned saw damage or score a friendly hit', () 
 test('ordinary races reuse the three existing reviewed fingerprint controls unchanged', () => {
   const fixture = JSON.parse(readFileSync(new URL('./replays/warlord-format-ordinary.json', import.meta.url), 'utf8'));
   for (const spec of fixture.cases) {
-    const duel = new Duel({seed: spec.seed, featureFlags: flags()});
+    const duel = new Duel({seed: spec.seed, featureFlags: FLAGS});
     duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
       startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
     const samples = [];
@@ -277,8 +274,9 @@ async function renderedSal() {
   vehicle.userData.size = {width: 2.6, length: 4.8, height: 1.55};
   const state = {s: 100, lateral: 0, armor: 100, maxArmor: 100, combatArmorKit: 'warlord',
     mode: 'wasteland', status: 'racing', stageTimeSec: 5, combat: {}, warlordId: 'sal',
+    wastelandGateDiscovered: true,
     salSaw: {stage: 'idle', phase: 'idle', sinceSec: 5}, opponents: []};
-  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}, featureFlags: flags()};
+  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}, featureFlags: FLAGS};
   const vehicles = {player: vehicle, rival: null, extraOpponents: []};
   kits.update(duel, vehicles, true);
   await new Promise(resolve => setImmediate(resolve)); await new Promise(resolve => setImmediate(resolve));
@@ -325,26 +323,6 @@ test('Sal tell sparks use a distinct effect while the old missed-window node sta
 });
 
 
-test('an earned saved kit cannot multiply a released arena contact with warlords off', () => {
-  const plain = contact({warlord: false, enabled: false});
-  const savedKit = contact({kit: true, warlord: false, enabled: false});
-  ok(plain.removed > 0, 'flag-off positive control reaches real damage');
-  near(savedKit.removed, plain.removed, 'dev reward has no flag-off damage effect');
-  ok(!savedKit.hits.some(hit => hit.sideSaws), 'flag-off contact emits no earned saw cue');
-});
-
-
-test('released Armory does not advertise an inactive saved Side Saws kit', () => {
-  const saved = equipArmorKit(ownedProfile(), 'falcone_f42', 'side-saws').profile;
-  const html = createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
-    getGarageMessage: () => '', getArmoryCar: () => 'falcone_f42', kitsEnabled: () => true,
-    warlordsEnabled: () => false, action: label => label}).yardContent();
-  ok(!/SIDE SAWS|1\.6|side-saws/i.test(html), 'dev reward is hidden with warlords off, including its equipped heading');
-  ok(/Scrapper/.test(html) && /Raider/.test(html) && /Warlord/.test(html), 'three paid plating choices remain visible');
-  equal(getEquippedArmorKit(saved, 'falcone_f42'), 'side-saws', 'presentation does not erase the saved equip');
-});
-
-
 // Parse the unchanged original geometry/transforms. Remove only material
 // references in an in-memory GLB copy because Node has no browser image decoder.
 async function originalEarnedKit() {
@@ -366,8 +344,9 @@ async function originalEarnedKit() {
   const vehicle = new THREE.Group(); vehicle.userData.vehicleKey = 'falcone_f42';
   vehicle.userData.size = {width: 2.6, length: 4.8, height: 1.55};
   const state = {s: 100, lateral: 0, armor: 100, maxArmor: 100, combatArmorKit: 'side-saws',
-    mode: 'wasteland', status: 'racing', stageTimeSec: 0, combat: {}, opponents: []};
-  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}, featureFlags: flags()};
+    mode: 'wasteland', status: 'racing', stageTimeSec: 0, combat: {}, opponents: [],
+    wastelandGateDiscovered: true};
+  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}, featureFlags: FLAGS};
   const vehicles = {player: vehicle, rival: null, extraOpponents: []};
   kits.update(duel, vehicles, true);
   await new Promise(resolve => setImmediate(resolve)); await new Promise(resolve => setImmediate(resolve));

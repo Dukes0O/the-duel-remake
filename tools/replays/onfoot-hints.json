@@ -8,5 +8,11 @@
     "timetrial/true": "482b33e9dec64ec5b9ee2f89528b14610266393858148fe74176d59577dd64c6",
     "wasteland/false": "c174f02745b327a694e810b5cfdf71ec6170d0dbecdcc3d45c58cd71c100b3e2",
     "wasteland/true": "c0317a1bac65cfc107254bf6696218cf2c49944ecb7124a8ec69874979318552"
+  },
+  "discoveredFingerprints": {
+    "duel/true": "c03db7495d3b9e8b2a51066d204da0550694aa8a0d0555ee2d0973bdfc80d11b",
+    "timetrial/true": "775c5115359d4a7c301d11b83bcdefb9a21d9aa391f19a344489e580f307e372",
+    "wasteland/false": "c174f02745b327a694e810b5cfdf71ec6170d0dbecdcc3d45c58cd71c100b3e2",
+    "wasteland/true": "bd67c75d3e9d32e44f6d8d98557e4820abd769ad8435735af1bfd43c9693d121"
   }
 }

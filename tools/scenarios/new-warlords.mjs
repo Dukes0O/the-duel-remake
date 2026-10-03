@@ -65,7 +65,7 @@ async function until(context, test, seconds = 6) {
 }
 
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords');
+  await context.navigate('/tools/menu-check.html?harness=new-warlords');
   await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
   await ready(context, 'menu');
   await start(context, 'dustmonger');
@@ -83,7 +83,7 @@ export async function run(context) {
   await context.evaluate('window.__render.renderFrame()');
   await context.screenshot('dustmonger-veil');
   // A fresh private tab for each further fight.
-  await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-mirage');
+  await context.navigate('/tools/menu-check.html?harness=new-warlords-mirage');
   await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
   await ready(context, 'menu');
   await start(context, 'mirage');
@@ -93,7 +93,7 @@ export async function run(context) {
   await until(context, "a.mirage?.stage==='split'");
   for (let i = 0; i < 240; i++) await context.evaluate('window.__qaApp.duel.step(1/120)');
   await look(context, 'mirage-split', 22);
-  await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-vultures');
+  await context.navigate('/tools/menu-check.html?harness=new-warlords-vultures');
   await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
   await ready(context, 'menu');
   await start(context, 'vultures');
@@ -103,7 +103,7 @@ export async function run(context) {
   await until(context, "a.pincer?.stage==='charge'");
   for (let i = 0; i < 90; i++) await context.evaluate('window.__qaApp.duel.step(1/120)');
   await lookPlayer(context, 'vultures-charge');
-  await context.navigate('/tools/menu-check.html?flags=warlords&harness=new-warlords-kettle');
+  await context.navigate('/tools/menu-check.html?harness=new-warlords-kettle');
   await context.waitFor('!!window.__qaApp&&!!window.__render', 'menu', 60000);
   await ready(context, 'menu');
   await start(context, 'kettle');
