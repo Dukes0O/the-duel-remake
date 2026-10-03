@@ -1091,10 +1091,10 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-03
     branch: codex/foot/boarding
-    note: "Boarding module and on-foot hooks are built. Balance merged as 18132fa, releasing crash-delta, weapon-disable, render and audio routing to CREW first. Boarding reuses finished spatial cues, so no sound-bank or audio-catalog hook is needed. A private browser check exposed the standard car-hit rule striking the roof rider; the Board grants CREW-03 the onfoot-race hook for a roof-only exemption. ARS waits for CREW's shared hooks."
+    note: "Boarding module and on-foot hooks are built. Balance merged as 18132fa, releasing crash-delta, weapon-disable, render and audio routing to CREW first. Boarding reuses finished spatial cues, so no sound-bank or audio-catalog hook is needed. A private browser check exposed the standard car-hit rule striking the roof rider; the Board grants CREW-03 the onfoot-race hook for a roof-only exemption. The card also needs the sim-rival hook to make a boarded computer driver swerve as specified. ARS waits for CREW's shared hooks."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
-    hooks: [src/onfoot-transition.js, src/onfoot.js, src/onfoot-race.js, src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js]
+    hooks: [src/onfoot-transition.js, src/onfoot.js, src/onfoot-race.js, src/sim-rival.js, src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js]
     hook_requests: []
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
