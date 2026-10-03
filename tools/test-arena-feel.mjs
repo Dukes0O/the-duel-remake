@@ -102,11 +102,4 @@ test('tell, respawn and wreck-credit sounds', () => {
   audio.event({arenaWreck: {victimId: 'cpu-2', creditedId: 'player'}}, {}, null);
   audio.event({arenaWreck: {victimId: 'cpu-2', creditedId: 'cpu-1'}}, {}, null);
   assert.deepEqual(played, ['arena.tell', 'arena.tell', 'arena.respawn', 'arena.wreck-credit']);
-  const off = new EngineAudio({flags: {enabled: () => false}});
-  Object.assign(off, {context: {state: 'running', currentTime: 1}, muted: false, paused: false});
-  off._syncMixer = () => {};
-  const offPlayed = [];
-  off._playCue = id => { offPlayed.push(id); return {}; };
-  off.event({arenaWreck: {victimId: 'cpu-2', creditedId: 'player'}}, {}, null);
-  assert.deepEqual(offPlayed, []);
 });

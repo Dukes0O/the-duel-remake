@@ -221,13 +221,6 @@ test('the future Sal event plays one positional scrapdome-gated saw scream', () 
   same(event, beforeEvent, 'audio must not mutate the future Sal event');
   same(state, beforeState, 'audio must not mutate race state');
 
-  const off = new EngineAudio({flags: {enabled: () => false}});
-  Object.assign(off, {context: {state: 'running', currentTime: 1}, muted: false, paused: false});
-  off._syncMixer = () => {};
-  const offPlayed = [];
-  off._playCue = id => { offPlayed.push(id); return {}; };
-  off.event(event, state, null);
-  same(offPlayed, [], 'scrapdome off must silence the Sal saw event');
 });
 
 test('the saw recording has a CC0 Freesound recipe, reproducible build and runtime Ogg', () => {

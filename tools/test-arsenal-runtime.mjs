@@ -282,13 +282,13 @@ test('NATIVE CPU: rank-six launch fixes the sampled all-control loadout without 
   } finally {app.dispose?.();}
 });
 
-test('NATIVE CPU CONTROL: switch-off road launch preserves the existing starter-only simulation', () => {
+test('NATIVE CPU CONTROL: Arsenal-off road launch preserves the existing starter-only simulation', () => {
   const app = appFixture({enabled: false});
   try {
     app.startCampaign({mode: 'wasteland', seed: 1989, opponentCount: 3});
     ok(app.duel.state.opponents.every(cpu => !cpu.weaponLoadout ||
-      cpu.weaponLoadout.every(id => WEAPON_IDS.includes(id))), 'switch-off opponents have no Arsenal weapons');
-    eq(hazardsFor(app.duel), [], 'switch-off launch creates no new hazards');
+      cpu.weaponLoadout.every(id => WEAPON_IDS.includes(id))), 'Arsenal-off opponents have no Arsenal weapons');
+    eq(hazardsFor(app.duel), [], 'Arsenal-off launch creates no new hazards');
   } finally {app.dispose?.();}
 });
 
@@ -824,6 +824,22 @@ function releasedCrossbowConsumers() {
   })();
   return releasedRangePromise;
 }
+// The exact retained modules predate switch retirement. Give only those
+// historical producers their old always-on Wasteland flag during comparison.
+function withRetainedWastelandFlag(duel, run) {
+  const current = duel.featureFlags;
+  duel.featureFlags = {...current, enabled(name) {
+    return name === 'wasteland2' || current.enabled(name);
+  }};
+  try { return run(); }
+  finally { duel.featureFlags = current; }
+}
+function fireRetainedCrossbow(released, duel) {
+  return withRetainedWastelandFlag(duel, () => released.weapons.fireWeapon(duel, 'crossbow'));
+}
+function stepRetainedCrossbow(released, duel, dt) {
+  return withRetainedWastelandFlag(duel, () => released.projectiles.stepProjectiles(duel, dt));
+}
 function longRoadCrossbow({enabled = false, level = 0, speedMph = 0} = {}) {
   const duel = race({enabled}); place(duel.state, 200); place(duel.state.rival, 430);
   place(duel.state.opponents[1], 900, 5);
@@ -841,25 +857,25 @@ function longRoadCrossbow({enabled = false, level = 0, speedMph = 0} = {}) {
 const nativeBoltVariables = shot => Object.fromEntries(
   ['x', 'y', 'z', 'vx', 'vy', 'vz', 'age', 'targetIndex', 'launchBearing'].map(key => [key, shot[key]]));
 for (const [level, speedMph] of [[0, 0], [3, 40]]) {
-  test('RELEASED RANGE CONTROL: native switch-off player bolt beyond180 level=' + level + ' carry=' + speedMph, async () => {
+  test('RELEASED RANGE CONTROL: native Arsenal-off player bolt beyond180 level=' + level + ' carry=' + speedMph, async () => {
     const released = await releasedCrossbowConsumers();
     const current = longRoadCrossbow({level, speedMph}), old = longRoadCrossbow({level, speedMph});
-    eq(fireWeapon(current.duel, 'crossbow'), true, 'actual switch-off player launches at a legal beyond180 target');
-    eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'genuine retained released player consumer launches at that same target');
+    eq(fireWeapon(current.duel, 'crossbow'), true, 'actual Arsenal-off player launches at a legal beyond180 target');
+    eq(fireRetainedCrossbow(released, old.duel), true, 'genuine retained released player consumer launches at that same target');
     const now = current.duel.state.combat.projectiles.at(-1), before = old.duel.state.combat.projectiles.at(-1);
-    eq(now.targetIndex, 0, 'native switch-off launch retains its real intended car identity beyond180');
-    eq(nativeBoltVariables(now), nativeBoltVariables(before), 'switch-off launch preserves every released native physical bolt variable');
+    eq(now.targetIndex, 0, 'native Arsenal-off launch retains its real intended car identity beyond180');
+    eq(nativeBoltVariables(now), nativeBoltVariables(before), 'Arsenal-off launch preserves every released native physical bolt variable');
     place(current.duel.state.rival, 430, 1); place(old.duel.state.rival, 430, 1);
     const launch = {vx: before.vx, vz: before.vz};
-    stepProjectiles(current.duel, DT); released.projectiles.stepProjectiles(old.duel, DT);
+    stepProjectiles(current.duel, DT); stepRetainedCrossbow(released, old.duel, DT);
     ok(Math.hypot(before.vx - launch.vx, before.vz - launch.vz) > 1e-5,
       'genuine released in-flight bolt actually homes beyond180 after the real target changes lane');
-    eq(nativeBoltVariables(now), nativeBoltVariables(before), 'switch-off current-origin guidance preserves the genuine released consumer output');
+    eq(nativeBoltVariables(now), nativeBoltVariables(before), 'Arsenal-off current-origin guidance preserves the genuine released consumer output');
   });
 }
 test('PENDING CLAUDE RANGE: active player launch preserves measured released beyond180 aim without a new cap formula', async () => {
   const released = await releasedCrossbowConsumers(), current = longRoadCrossbow({enabled: true}), old = longRoadCrossbow();
-  eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'genuine released clear-road player consumer launches beyond180');
+  eq(fireRetainedCrossbow(released, old.duel), true, 'genuine released clear-road player consumer launches beyond180');
   eq(fireWeapon(current.duel, 'crossbow'), true, 'actual active player launch runs on the same legal clear-road witness');
   const now = current.duel.state.combat.projectiles.at(-1), baseline = old.duel.state.combat.projectiles.at(-1);
   eq(nativeBoltVariables(now), nativeBoltVariables(baseline),
@@ -867,15 +883,15 @@ test('PENDING CLAUDE RANGE: active player launch preserves measured released bey
 });
 test('PENDING CLAUDE RANGE: actual in-flight player bolt beyond180 retains measured released guidance', async () => {
   const released = await releasedCrossbowConsumers(), current = longRoadCrossbow(), old = longRoadCrossbow();
-  eq(fireWeapon(current.duel, 'crossbow'), true, 'actual native switch-off launch first supplies its genuine real locked bolt');
-  eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'genuine released launch supplies the same real locked bolt');
+  eq(fireWeapon(current.duel, 'crossbow'), true, 'actual native Arsenal-off launch first supplies its genuine real locked bolt');
+  eq(fireRetainedCrossbow(released, old.duel), true, 'genuine released launch supplies the same real locked bolt');
   const now = current.duel.state.combat.projectiles.at(-1), baseline = old.duel.state.combat.projectiles.at(-1);
   eq(nativeBoltVariables(now), nativeBoltVariables(baseline), 'both genuine launched bolt inputs start byte-equivalent');
   // Activate the real view only after native launch, isolating the held flight
   // route from the separately held acquisition route. No projectile is mocked.
   current.duel.featureFlags = flags(true);
   place(current.duel.state.rival, 430, 1); place(old.duel.state.rival, 430, 1);
-  stepProjectiles(current.duel, DT); released.projectiles.stepProjectiles(old.duel, DT);
+  stepProjectiles(current.duel, DT); stepRetainedCrossbow(released, old.duel, DT);
   eq(nativeBoltVariables(now), nativeBoltVariables(baseline),
     'PENDING CLAUDE RANGE: active in-flight consumer must not discard measured released beyond180 real-target guidance at the CPU acquisition cap');
 });
@@ -1296,7 +1312,7 @@ function vectorBoundary(mode, inside) {
 for (const mode of vectorModes) for (const inside of [true, false]) {
   test('VECTOR REACH launch ' + mode.id + ' ' + (inside ? 'inside' : 'outside'), async () => {
     const released = await releasedCrossbowConsumers(), f = vectorBoundary(mode, inside), old = vectorBoundary(mode, inside);
-    eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'actual retained producer launches the chosen native target');
+    eq(fireRetainedCrossbow(released, old.duel), true, 'actual retained producer launches the chosen native target');
     const baseline = old.duel.state.combat.projectiles.at(-1), speed = Math.hypot(baseline.vx, baseline.vz);
     near(speed, f.result.speed, 'actual original launch vector independently verifies the resultant calculation');
     vectorReceipts.set(mode.id + '-launch', {mode: mode.id, producerVx: baseline.vx, producerVz: baseline.vz,
@@ -1318,7 +1334,7 @@ async function nativeVectorFlight(mode, guideFirst = false) {
   const released = await releasedCrossbowConsumers(), f = vectorScene(mode), {duel, origin} = f;
   const target = nativeAtRange(duel, duel.state.rival, origin, 230);
   duel.state.headingError = Math.atan2(target.x - origin.x, target.z - origin.z) - origin.heading + mode.angle;
-  eq(released.weapons.fireWeapon(duel, 'crossbow'), true, 'genuine retained producer supplies the actual locked vector bolt');
+  eq(fireRetainedCrossbow(released, duel), true, 'genuine retained producer supplies the actual locked vector bolt');
   const shot = duel.state.combat.projectiles.at(-1), launch = {vx: shot.vx, vz: shot.vz,
     speed: Math.hypot(shot.vx, shot.vz), level: shot.level};
   near(launch.speed, resultantFor(duel, origin, target).speed, 'real original producer uses full native car velocity vector');
@@ -1389,7 +1405,7 @@ for (const inside of [true, false]) test('VECTOR REACH chosen decoy lateral ' + 
   // is the only unfinished target. This separate scene measures actual launch
   // physics for that candidate; the active scene keeps the real owner live.
   old.duel.state.rival.finished = true;
-  eq(released.weapons.fireWeapon(old.duel, 'crossbow'), true, 'actual retained producer launches at the native chosen decoy candidate');
+  eq(fireRetainedCrossbow(released, old.duel), true, 'actual retained producer launches at the native chosen decoy candidate');
   const baseline = old.duel.state.combat.projectiles.at(-1);
   eq(baseline.targetIndex, old.duel.state.opponents.indexOf(old.data), 'actual original candidate launch selects the native decoy identity');
   near(Math.hypot(baseline.vx, baseline.vz), f.result.speed, 'actual candidate launch speed belongs to the decoy bearing');

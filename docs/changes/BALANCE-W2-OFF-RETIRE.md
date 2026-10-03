@@ -36,6 +36,12 @@ instruction or the protected Twin Vultures file.
   audio passed 14/14; Arsenal wave-one audio passed 36/36. Feature checks
   passed 32/32; Wasteland beta evidence passed 8/8. The build passed in
   474 ms. These are focused checks, not a final lane gate.
+- The first full diagnostic after audio cleanup passed 340/344 suites in
+  556.23 s. Its four failures were retired Scrapdome/Muddy Hollow audio-off
+  assertions and a historical Arsenal vector comparison that still needed
+  its original Wasteland flag. Focused reruns now pass: arena feel 5/5, Sal
+  art 9/9, Muddy Hollow audio 30/30 and Arsenal runtime 209/209. The exact
+  lane gate still needs a fresh run after the remaining cue decision.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   browser journeys remain to be checked after the audio hook lands. Board
   parsing and diff whitespace checks pass.
@@ -83,6 +89,11 @@ instruction or the protected Twin Vultures file.
 - Removed the two Titan switch-off climb/slope tests in test-titan-climb and
   the switch-off traffic-shield test. Positive Titan, Rally, ordinary-car,
   impact, shield and replay cases remain.
+- Removed only the retired off-state assertions in arena feel, Sal art
+  and Muddy Hollow audio. Their positive event, spatial, cue identity,
+  recipe, credit and sound checks remain. The retained Arsenal source
+  comparison receives its original always-on Wasteland flag only while
+  calling those exact historical modules; current source receives no flag.
 - Removed 12 `flag: 'wasteland2'` sound-bank fields, the audio legacy
   fallback path, and the switch-off-only combat audio test. Original recorded
   cue files, layers and recipes remain unchanged. Audio now uses saved gate

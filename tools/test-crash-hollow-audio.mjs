@@ -108,10 +108,6 @@ for (const name of ['qubodup', 'barion', 'lzmraul']) check(credits.includes(name
   st.surfaceMud = 0;
   audio._updateMud(st, 11.3, true);
   check(audio.mud.gain.gain.value === 0, 'leaving the mud stops the churn');
-  const off = makeAudio([]);
-  off.audio.mud = { filter: { frequency: param() }, gain: { gain: param() } };
-  off.audio._updateMud({ ...st, surfaceMud: 1 }, 10, true);
-  check(!off.calls.length && off.audio.mud.gain.gain.value === 0, 'switch off: no mud sound');
 }
 
 console.log(`Crash and Muddy Hollow audio: ${checks} checks passed.`);
