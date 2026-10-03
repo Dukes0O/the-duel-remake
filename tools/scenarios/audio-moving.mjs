@@ -46,7 +46,7 @@ export async function run(context) {
    let clock=0;
    const native=new OfflineAudioContext(2,88200,44100);
    const context=new Proxy(native,{get(target,key){if(key==='currentTime')return clock;const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;}});
-   const audio=new Audio({flags:{enabled:()=>true}});audio.muted=false;audio._build(context);
+   const audio=new Audio({flags:{enabled:()=>true}});audio.muted=false;audio._build(context);audio._syncMixer({wastelandGateDiscovered:true});
    await Promise.all([audio._samplesPromise,audio._ambiencePromise]);
    const buffer=native.createBuffer(1,44100,44100),samples=buffer.getChannelData(0);
    for(let i=0;i<samples.length;i++)samples[i]=Math.sin(i/44100*2*Math.PI*440);

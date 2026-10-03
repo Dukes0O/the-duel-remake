@@ -42,6 +42,17 @@ instruction or the protected Twin Vultures file.
   its original Wasteland flag. Focused reruns now pass: arena feel 5/5, Sal
   art 9/9, Muddy Hollow audio 30/30 and Arsenal runtime 209/209. The exact
   lane gate still needs a fresh run after the remaining cue decision.
+- The exact lane run stopped at 115/344 when the native browser peak
+  capture skipped an AudioWorklet timeline block in all three buses. Its
+  sample and true peaks stayed below -1 dB. The unchanged audio suite
+  passed 22/23 once alone and 23/23 on the next standalone run. No peak
+  assertion changed. A fresh full lane pass is still required.
+- Private browser checks passed with memory-only saves and zero console
+  errors or warnings: audio-moving (two motion cases), wasteland-beta
+  (six ordered events and six captures), and combat-audio (nine cue
+  families, three variants each, spatial motion and recorder levels).
+  The moving and combat probes first exposed missing discovered-gate state
+  in synthetic audio contexts; setting it made the unchanged checks pass.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   browser journeys remain to be checked after the audio hook lands. Board
   parsing and diff whitespace checks pass.

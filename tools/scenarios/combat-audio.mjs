@@ -37,7 +37,7 @@ export async function run(context) {
    const Audio=window.__qaApp.audio.constructor,buffers=window.__qaApp.audio.cueBuffers,rows=[];
    for(const label of ['near','far','approach','recede']){
     const native=new OfflineAudioContext(2,48000*2,48000),a=new Audio({flags:{enabled:()=>true}});
-    a._loadSamples=()=>{};a._loadAmbience=()=>{};a._loadCueBuffers=()=>{};a.muted=false;a._build(native);a.cueBuffers=buffers;
+    a._loadSamples=()=>{};a._loadAmbience=()=>{};a._loadCueBuffers=()=>{};a.muted=false;a._build(native);a._syncMixer({wastelandGateDiscovered:true});a.cueBuffers=buffers;
     if(label==='near'||label==='far')a._recordedImpact('combat.blast.recorded',{combatExplosion:true,qaDistance:label==='near'?15:400,qaSide:0},{},{});
     else a.mixer.playMoving('weapon.crossbow.flight',buffers['weapon.crossbow.flight'][0],{x:label==='approach'?30:-30,y:0,z:0,vx:-60},{x:0,y:0,z:0});
     const rendered=await native.startRendering(),channels=[rendered.getChannelData(0),rendered.getChannelData(1)],levels=channels.map(c=>Math.sqrt(c.slice(9600,33600).reduce((n,x)=>n+x*x,0)/24000));
@@ -60,7 +60,7 @@ export async function run(context) {
  let clock=0;const ctx=new Proxy(native,{get(target,key){if(key==='destination')return destination;if(key==='currentTime')return clock;if(key==='state')return 'running';const value=Reflect.get(target,key,target);if(key==='createBufferSource'){return()=>{const n=value.call(target),start=n.start.bind(n),stop=n.stop.bind(n);n.start=(t=clock,...a)=>start(t,...a);n.stop=(t=clock)=>stop(t);return n;};}return typeof value==='function'?value.bind(target):value;}});
  const audio=new Audio({flags:{enabled:()=>true}});audio.muted=false;audio._build(ctx);await Promise.all([audio._samplesPromise,audio._ambiencePromise,audio._cueBuffersPromise]);
  for(const [buses,index] of [[['engine'],2],[['weapons','impacts'],4]]){const gain=native.createGain(),ch=native.createChannelSplitter(2);gain.gain.value=.42;for(const bus of buses)audio.buses[bus].connect(gain);gain.connect(ch);ch.connect(merge,0,index);ch.connect(merge,1,index+1);}
- const state={car:'falcone_f42',status:'racing',paused:false,mode:'wasteland',maxArmor:100,speedMph:160,revs:.95,gear:3,input:{throttle:1,brake:0},slipAngle:0,steerVisual:0,offRoad:false,roughness:0,airborne:false,airHeight:0,impactTimer:0,police:{beep:0,pursuit:null}};
+ const state={car:'falcone_f42',status:'racing',paused:false,mode:'wasteland',wastelandGateDiscovered:true,maxArmor:100,speedMph:160,revs:.95,gear:3,input:{throttle:1,brake:0},slipAngle:0,steerVisual:0,offRoad:false,roughness:0,airborne:false,airHeight:0,impactTimer:0,police:{beep:0,pursuit:null}};
  for(let i=0;i<ids.length*3*2*60;i++){clock=i/60;audio.nextBeat=Infinity;audio.update(state,{});if(i%120===30){const n=Math.floor(i/120),id=ids[Math.floor(n/3)],variant=n%3;audio.cueIndices.set(id,variant);if(id==='vehicle.crash.recorded')audio.event({crash:true,strength:.7},state,{});else if(id==='combat.blast.recorded')audio.event({combatExplosion:true,qaDistance:15,qaSide:0},state,{});else audio._playCue(id);rows.push({id,variant:'ABC'[variant],at:clock});}}
  const buffer=await native.startRendering(),mix=buffer.getChannelData(0),engine=buffer.getChannelData(2),effects=buffer.getChannelData(4);
  for(const row of rows){let e=0,w=0;const start=Math.round(row.at*rate),end=start+Math.round(.25*rate);for(let i=start;i<end;i++){e+=engine[i]**2;w+=effects[i]**2;}row.overEngineDb=10*Math.log10(w/e);}
