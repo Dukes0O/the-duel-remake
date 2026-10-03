@@ -1011,7 +1011,7 @@ tasks:
     lane: FOOT
     size: L
     needs: [ARS-CORE]
-    status: building
+    status: ready-to-merge
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/foot/crew-gear
     flag: crew-gear
@@ -1090,14 +1090,14 @@ tasks:
     claimed_by: codex-director-2026-10-01-evening
     branch: codex/cmb/arena-bounty
     flag: bounty-hunt
-    owns: [src/arena/modes/bounty-hunt.js, src/arena/modes/bounty-hunt-view.js, src/arena/arena-brains.js, src/audio.js, src/sound-bank.js, tools/test-arena-bounty-hunt.mjs, tools/test-arena-ui.mjs, tools/test-wasteland-beta.mjs, tools/test-arsenal-core-audio.mjs, tools/scenarios/arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
+    owns: [src/arena/modes/bounty-hunt.js, src/arena/modes/bounty-hunt-view.js, src/arena/arena-brains.js, src/audio.js, src/sound-bank.js, tools/test-arena-bounty-hunt.mjs, tools/test-arena-ui.mjs, tools/test-wasteland-beta.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/scenarios/arena-bounty-hunt.mjs, docs/changes/ARENA-04.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Bounty Hunt, exactly, with rank 9 unlock, pay and hold once per event. Headless tests and a private browser scenario."
-    sequencing: "Salt merged and frees entry, settlement, HUD and beacon hooks. ARS-01 merged and frees audio routing: ARENA-04 adds only its Bounty mark cue in src/audio.js and src/sound-bank.js. Claude's 14:00 answer releases only the generic Bounty routing in arena-brains.js."
-    note: "The scoring and transfer module is implemented with reviewed tests. Salt merged, so the builder now owns native entry, pay, HUD, arrow and the read-only vehicle beacon. Claude supplies brains and Arsenal retains audio hooks; no reserved file is edited."
+    sequencing: "Salt merged and frees entry, settlement, HUD and beacon hooks. ARS-01 merged and frees audio routing: ARENA-04 adds only its Bounty mark cue in src/audio.js and src/sound-bank.js. Claude's 14:00 answer releases only the generic Bounty routing in arena-brains.js. During current-base sync, the lane also updates ARS-01's exact sound-bank baseline to exclude only the new Bounty cue; the native Bounty test checks its cue directly."
+    note: "Bounty source, routing, mark cue, save settlement, UI and browser journey are complete. Current integration sync is resolved; lane gate 340/340, build 425ms and private browser journey pass. The visible beacon, cue feel and frame cost remain for Kyle's Preview before release."
     hooks: [src/feature-flags.js, tools/test-feature-flags.mjs, start-preview.bat, src/game.js, src/app.js, src/arena/arena-event.js, src/arena/arena-settlement.js, src/screen-arena.js, src/screen-router.js, src/screen-hud.js, src/combat-hud.js, src/screen-arena.css, src/combat-hud.css, src/render3d.js]
-    design_question: "Does a marked player override the usual hunter cap? Does a self-wreck fallback recipient receive twenty points, and who receives the mark when the last hitter or current leader is also wrecking?"
+    design_question: null
     test_commit: f4afad3e83db2019eddae7bc90c575931844d94e
     test_verdict: "Bounded admission has twenty-eight passing checks and four genuine failures: missing dev switch, native entry, App entry and yard choice. Tests use the actual mode, clock, credit, brain and memory-only settlement paths; mechanics and browser checks remain unproved."
     claude_answer_0030: "2 October 2026, 00:30: (1) When a computer car is marked, every other computer car hunts it. When the player is marked, the usual Easy and Medium hunter cap still holds, so the player is never mobbed on those levels; Hard has no cap as today. (2) A car that receives the mark from a self-wreck gets the mark but no 20 points; points come only from actually wrecking the marked car. (3) If the last hitter or the leader is itself wrecking, the mark goes to the nearest car that is still running, ties broken by the seeded order. The leader never means the marked car itself. (4) This card also makes Bounty Hunt playable on the Salt Flats once ARENA-06 merges. Docs: SCRAPDOME.md, Bounty Hunt."

@@ -1,6 +1,6 @@
 ---
 task: ARENA-04
-status: building
+status: ready-to-merge
 kind: feature
 flag: bounty-hunt
 player_facing: yes
@@ -58,17 +58,20 @@ Bounty mode check. No warlord-specific rule or other mode changed.
 
 After resolving the integration conflicts and adding the approved CPU routing,
 the complete native suite passes **40/40 cases** with no skips (716 acceptance
-checks). The assertions now prove capped player hunting, pursuit of a marked
-CPU, kiting, rear Oil and mark-cue routing.
+checks). The assertions prove capped player hunting, pursuit of a marked CPU,
+kiting, rear Oil and mark-cue routing.
 Actual Bounty inputs match at 30, 60 and 144 FPS; roads, Last Car Rolling and
 Sal still match every existing literal control pin with Bounty disabled and
-enabled. A fresh private memory-only browser run passes four journeys in High
-and Performance on both venues: yard entry, beacon/arrow, native contact,
-scoring, pause, once-only pay, rematch and return. It uses private port 20704,
-captures twelve views and reports zero warnings or errors. The marked car is
-offscreen in the race captures, so those captures do not judge beacon appearance.
-The current-base lane gate and build remain before merge. Frame cost and the
-sound of the handover cue remain to review.
+enabled.
+
+After syncing with integration commit 041ebca, the lane gate passed **340/340**
+in **586.66 seconds**. The build passed in **425 ms**; Vite reported its existing
+large-chunk advisory. The current-base private browser run passed all four
+journeys in High and Performance on Scrapdome and Salt Flats, with memory-only
+saves, twelve screenshots, zero warnings and zero errors. It ran on private
+port 29695. The marked car stays offscreen in those race views, so they do not
+judge the roof beacon's appearance. Kyle should review the visible beacon, the
+handover cue and frame cost in Preview before release.
 
 ## Behavior and test changes
 
@@ -86,9 +89,11 @@ The native Bounty suite now also checks that initial entry and later handovers
 play the bounded procedural mark cue, and that the cue is silent when Bounty is
 off. The cue adds no recording or runtime asset.
 The Arsenal audio integrity test keeps its exact baseline hash for every other
-sound-bank entry and export; its exclusion list now names the one added Bounty
-cue. The separate Bounty assertion verifies that cue's flag, layer count and
-event routing.
+sound-bank entry and export. Its exclusion list names the six ARS-01 cues and
+the one added Bounty cue. The separate Bounty assertion verifies that cue's
+flag, layer count and event routing. The wave-one audio regression also excludes
+only the new Bounty cue from its pre-Bounty bank hash; its recorded Arsenal
+cues remain in their own native audio checks.
 Native Bounty behavior is new. Ordinary race, Last Car Rolling and Sal replay
 fixtures stay exact in the complete native suite.
 

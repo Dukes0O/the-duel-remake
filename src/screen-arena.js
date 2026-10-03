@@ -1,4 +1,5 @@
-import {arenaRanking} from './arena/arena-event.js';
+import {arenaTeams} from './arena/arena-event.js';
+import {teamTotal} from './arena/warlord-event.js';
 import {WARLORDS} from './warlords.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
@@ -22,13 +23,15 @@ export function arenaHud(state) {
   const suddenDeath = arena.phase === 'sudden-death';
   const remainingSec = fuel && suddenDeath ? 0 : Math.max(0, suddenDeath ? arena.suddenDeathLimitSec - arena.suddenDeathSec
     : arena.timeLimitSec - arena.clockSec);
-  const ranking = arenaRanking(arena);
+  // Places count sides, so a warlord's two cars are one.
+  const ranking = arenaTeams(arena);
   const place = ranking.findIndex(participant => participant.id === 'player') + 1;
   const me = arena.participants.find(participant => participant.id === 'player');
   const hunters = arena.participants.filter(participant => participant.kind === 'cpu' && !participant.decoy && participant.targetId === 'player');
   const leader = ranking[0], net = participant => bounty ? participant.bountyPoints : fuel ? participant.fuelDelivered : arena.mode === 'warlord' ?
-    participant.wrecks : participant.wrecks - participant.wrecked;
-  const tiedAtTop = ranking.length > 1 && net(ranking[0]) === net(ranking[1]) && (fuel || bounty || ranking[0].wrecks === ranking[1].wrecks);
+    teamTotal(arena, participant, 'wrecks') : participant.wrecks - participant.wrecked;
+  const tiedAtTop = ranking.length > 1 && net(ranking[0]) === net(ranking[1]) &&
+    (fuel || bounty || arena.mode === 'warlord' || ranking[0].wrecks === ranking[1].wrecks);
   return {
     phase: arena.phase,
     fuel,
@@ -43,16 +46,25 @@ export function arenaHud(state) {
     scoreText: bounty ? `POINTS ${me.bountyPoints} · ${arena.bountyHunt.markedId === 'player' && !arena.bountyHunt.pendingVictimId ? 'YOU CARRY THE BOUNTY' : 'HUNT THE BEACON'}` : fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
     huntedBy: hunters.map(participant => participant.name),
     respawnSec: state.combatWrecking ? Math.max(1, Math.ceil(state.combatWreckTimer || 0)) : 0,
-    rows: ranking.map((participant, index) => ({
-      id: participant.id, name: participant.name, style: arenaStyleLabel(participant),
-      delivered: participant.fuelDelivered, carrying: !!participant.fuelCanisterId,
-      points: participant.bountyPoints,
-      marked: bounty && arena.bountyHunt.markedId === participant.id && !arena.bountyHunt.pendingVictimId,
-      wrecks: participant.wrecks, wrecked: participant.wrecked, place: index + 1,
-      you: participant.id === 'player',
-      hunting: participant.kind === 'cpu' && participant.targetId === 'player',
-      protected: participant.protectedSec > 0,
-    })),
+    // A warlord's pair is one row: the warlord's name and the pair's totals.
+    rows: ranking.map((participant, index) => {
+      const pair = arena.mode === 'warlord' && WARLORDS[arena.warlordId]?.team &&
+        participant.team === `warlord:${arena.warlordId}`;
+      const side = arena.participants.filter(other => !other.decoy &&
+        (other.team ?? other.id) === (participant.team ?? participant.id));
+      return {
+        id: participant.id, name: pair ? WARLORDS[arena.warlordId].name.toUpperCase() : participant.name,
+        style: arenaStyleLabel(participant),
+        delivered: participant.fuelDelivered, carrying: !!participant.fuelCanisterId,
+        points: participant.bountyPoints,
+        marked: bounty && arena.bountyHunt.markedId === participant.id && !arena.bountyHunt.pendingVictimId,
+        wrecks: pair ? teamTotal(arena, participant, 'wrecks') : participant.wrecks,
+        wrecked: pair ? teamTotal(arena, participant, 'wrecked') : participant.wrecked, place: index + 1,
+        you: participant.id === 'player',
+        hunting: side.some(other => other.kind === 'cpu' && other.targetId === 'player'),
+        protected: participant.protectedSec > 0,
+      };
+    }),
   };
 }
 
@@ -141,7 +153,11 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const arena = state.arena, result = arena?.result;
   if (!result) return null;
   const byId = Object.fromEntries(arena.participants.map(p => [p.id, p]));
-  const place = result.placings.indexOf('player') + 1, me = byId.player, won = result.winnerId === 'player';
+  // The first car listed for each side sets that side's place.
+  const sideOf = id => byId[id]?.team ?? id;
+  const sides = result.placings.filter((id, index) => result.placings.findIndex(other =>
+    sideOf(other) === sideOf(id)) === index);
+  const place = sides.indexOf('player') + 1, me = byId.player, won = result.winnerId === 'player';
   const winner = byId[result.winnerId];
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
@@ -161,11 +177,13 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     description += ` ${escapeHTML(warlord.reward)} earned. Equip it in the Armory.`;
   } else if (warlord && result.settlementSaved && result.kitEarned === 'warlord') {
     description += ' Warlord kit fitted to your Titan Monster, and Tusk joins your crew when his gear is ready.';
+  } else if (warlord && result.settlementSaved && result.gearEarned === 'grapple-reach') {
+    description += " Jax's grapple will reach 10 m farther once he joins your crew.";
   }
   if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
     description += ' ' + escapeHTML(result.rewardReason);
   }
-  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arenaRanking(arena).length}`, true) +
+  const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arenaTeams(arena).length}`, true) +
     (bounty ? metric('BOUNTY POINTS', me.bountyPoints) : fuel ? metric('FUEL DELIVERED', me.fuelDelivered) : '') + metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
     (warlord && !Number.isSafeInteger(result.scrapEarned) ? '' :
       metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`) +

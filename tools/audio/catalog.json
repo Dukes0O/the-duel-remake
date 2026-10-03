@@ -758,6 +758,282 @@
         "recipe": "ARSENAL_CORE_RECIPES.smoke-deploy: verified source cuts, bounded ABC repitch and swept signature variants, filters, fixed envelope, mono 48 kHz Vorbis q5 with codec headroom measurement",
         "approval": "Claude released three Oil/Smoke CC0 cue recipes on 2 October 2026; listening remains a separate gate"
       }
+    },
+    {
+      "source": "freesound",
+      "key": "384905",
+      "cue": "weapon.harpoon.fire",
+      "title": "Crossbow Fire 2",
+      "author": "Ali_6868",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Ali_6868/sounds/384905/",
+      "download": "https://cdn.freesound.org/previews/384/384905_984733-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 1.5,
+      "file": "freesound/384905-crossbow-fire-2.ogg",
+      "sha256": "505f1fa1272d8a0f5e8dfbe32bc184ce370cdc85ff66ecb0543b38740c9cb820",
+      "bytes": 17015,
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/build-arsenal-wave1-audio.mjs",
+        "recipe": "ARSENAL_WAVE_ONE_RECIPES.harpoon-fire: verified source cuts and hashes, fixed ABC repitch and swept signature variants, filters, envelope, mono 48 kHz Vorbis q5 with decoded codec peak measurement",
+        "cutStartSec": 0,
+        "cutLengthSec": 0.36,
+        "cutRate": 0.85,
+        "variants": [
+          {
+            "name": "A",
+            "cutOffsetSec": 0,
+            "rate": 1,
+            "tone": 1
+          },
+          {
+            "name": "B",
+            "cutOffsetSec": 0.002,
+            "rate": 0.97,
+            "tone": 0.98
+          },
+          {
+            "name": "C",
+            "cutOffsetSec": 0.005,
+            "rate": 1.03,
+            "tone": 1.035
+          }
+        ],
+        "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
+      },
+      "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "391444",
+      "cue": "weapon.harpoon.flight",
+      "title": "Arrow Whoosh 2 .R.wav",
+      "author": "saturdaysoundguy",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/saturdaysoundguy/sounds/391444/",
+      "download": "https://cdn.freesound.org/previews/391/391444_7280678-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.80279,
+      "file": "freesound/391444-arrow-whoosh-2-r-wav.ogg",
+      "sha256": "ec5cd9d7814e896e0e0004bc97ce4c8412973796943f8f071902ec1aa467cc4f",
+      "bytes": 32950,
+      "fetched": "2026-09-25",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave1-audio.mjs",
+        "recipe": "ARSENAL_WAVE_ONE_RECIPES.harpoon-flight: verified source cuts and hashes, fixed ABC repitch and swept signature variants, filters, envelope, mono 48 kHz Vorbis q5 with decoded codec peak measurement, 35 ms circular overlap for travelling loop",
+        "cutStartSec": 0.18,
+        "cutLengthSec": 0.82,
+        "cutRate": 0.92,
+        "variants": [
+          {
+            "name": "A",
+            "cutOffsetSec": 0,
+            "rate": 1,
+            "tone": 1
+          },
+          {
+            "name": "B",
+            "cutOffsetSec": 0.002,
+            "rate": 0.97,
+            "tone": 0.98
+          },
+          {
+            "name": "C",
+            "cutOffsetSec": 0.005,
+            "rate": 1.03,
+            "tone": 1.035
+          }
+        ],
+        "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "592388",
+      "cue": "weapon.harpoon.hit",
+      "title": "Car Crash (with Glass)",
+      "author": "magnuswaker",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/magnuswaker/sounds/592388/",
+      "download": "https://cdn.freesound.org/previews/592/592388_11537497-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.56404,
+      "file": "freesound/592388-car-crash-with-glass.ogg",
+      "sha256": "c9725c20a95a6b89bca74d2865cbe315f9e118b37bb06343d4a73198c85039b8",
+      "bytes": 59407,
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/build-arsenal-wave1-audio.mjs",
+        "recipe": "ARSENAL_WAVE_ONE_RECIPES.harpoon-hit: verified source cuts and hashes, fixed ABC repitch and swept signature variants, filters, envelope, mono 48 kHz Vorbis q5 with decoded codec peak measurement",
+        "cutStartSec": 0.02,
+        "cutLengthSec": 0.38,
+        "cutRate": 1.1,
+        "variants": [
+          {
+            "name": "A",
+            "cutOffsetSec": 0,
+            "rate": 1,
+            "tone": 1
+          },
+          {
+            "name": "B",
+            "cutOffsetSec": 0.002,
+            "rate": 0.97,
+            "tone": 0.98
+          },
+          {
+            "name": "C",
+            "cutOffsetSec": 0.005,
+            "rate": 1.03,
+            "tone": 1.035
+          }
+        ],
+        "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
+      },
+      "creditsUsed": 0
+    },
+    {
+      "source": "freesound",
+      "key": "536068",
+      "cue": "weapon.harpoon.break",
+      "title": "Bow Release Hit",
+      "author": "EminYILDIRIM",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/EminYILDIRIM/sounds/536068/",
+      "download": "https://cdn.freesound.org/previews/536/536068_10912485-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 0.233333,
+      "file": "freesound/536068-bow-release-hit.ogg",
+      "sha256": "b519198b2b6159608bb3492572923aa89a5d20aa603818d7ff55de9573bf714f",
+      "bytes": 9715,
+      "fetched": "2026-09-25",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave1-audio.mjs",
+        "recipe": "ARSENAL_WAVE_ONE_RECIPES.harpoon-break: verified source cuts and hashes, fixed ABC repitch and swept signature variants, filters, envelope, mono 48 kHz Vorbis q5 with decoded codec peak measurement",
+        "cutStartSec": 0.015,
+        "cutLengthSec": 0.16,
+        "cutRate": 1.1,
+        "variants": [
+          {
+            "name": "A",
+            "cutOffsetSec": 0,
+            "rate": 1,
+            "tone": 1
+          },
+          {
+            "name": "B",
+            "cutOffsetSec": 0.002,
+            "rate": 0.97,
+            "tone": 0.98
+          },
+          {
+            "name": "C",
+            "cutOffsetSec": 0.005,
+            "rate": 1.03,
+            "tone": 1.035
+          }
+        ],
+        "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "249810",
+      "cue": "weapon.caltrops.deploy",
+      "title": "Crossbow Shot.wav",
+      "author": "spookymodem",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/spookymodem/sounds/249810/",
+      "download": "https://cdn.freesound.org/previews/249/249810_3756348-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.02601,
+      "file": "freesound/249810-crossbow-shot-wav.ogg",
+      "sha256": "5faaa951d35efa55072adab15d67c0fdda4d7065f11a2fad27579fcc6bebd4c1",
+      "bytes": 51084,
+      "fetched": "2026-09-25",
+      "creditsUsed": 0,
+      "processing": {
+        "script": "tools/build-arsenal-wave1-audio.mjs",
+        "recipe": "ARSENAL_WAVE_ONE_RECIPES.caltrops-deploy: verified source cuts and hashes, fixed ABC repitch and swept signature variants, filters, envelope, mono 48 kHz Vorbis q5 with decoded codec peak measurement",
+        "cutStartSec": 0.1,
+        "cutLengthSec": 0.58,
+        "cutRate": 1.18,
+        "variants": [
+          {
+            "name": "A",
+            "cutOffsetSec": 0,
+            "rate": 1,
+            "tone": 1
+          },
+          {
+            "name": "B",
+            "cutOffsetSec": 0.002,
+            "rate": 0.97,
+            "tone": 0.98
+          },
+          {
+            "name": "C",
+            "cutOffsetSec": 0.005,
+            "rate": 1.03,
+            "tone": 1.035
+          }
+        ],
+        "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
+      }
+    },
+    {
+      "source": "freesound",
+      "key": "592388",
+      "cue": "weapon.caltrops.hit",
+      "title": "Car Crash (with Glass)",
+      "author": "magnuswaker",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/magnuswaker/sounds/592388/",
+      "download": "https://cdn.freesound.org/previews/592/592388_11537497-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 2.56404,
+      "file": "freesound/592388-car-crash-with-glass.ogg",
+      "sha256": "c9725c20a95a6b89bca74d2865cbe315f9e118b37bb06343d4a73198c85039b8",
+      "bytes": 59407,
+      "fetched": "2026-09-25",
+      "processing": {
+        "script": "tools/build-arsenal-wave1-audio.mjs",
+        "recipe": "ARSENAL_WAVE_ONE_RECIPES.caltrops-hit: verified source cuts and hashes, fixed ABC repitch and swept signature variants, filters, envelope, mono 48 kHz Vorbis q5 with decoded codec peak measurement",
+        "cutStartSec": 0.48,
+        "cutLengthSec": 0.48,
+        "cutRate": 1.35,
+        "variants": [
+          {
+            "name": "A",
+            "cutOffsetSec": 0,
+            "rate": 1,
+            "tone": 1
+          },
+          {
+            "name": "B",
+            "cutOffsetSec": 0.002,
+            "rate": 0.97,
+            "tone": 0.98
+          },
+          {
+            "name": "C",
+            "cutOffsetSec": 0.005,
+            "rate": 1.03,
+            "tone": 1.035
+          }
+        ],
+        "approval": "Claude settled six wave-one cues; Kyle approved shared new free CC0 cue additions on 2 October 2026. Existing sounds and voice records remain exact."
+      },
+      "creditsUsed": 0
     }
   ]
 }

@@ -198,11 +198,16 @@ test('procedural arcade variants rebuild deterministically without simulation ra
 
 test('all compressed variants retain true-peak headroom and a valid runtime home', async () => {
   const { measureLoudness } = await import('./audio/measurements.mjs');
+  const { measureArsenalWaveOneCue } = await import('./build-arsenal-wave1-audio.mjs');
   for (const [id, cue] of Object.entries(SOUND_BANK))
     for (const file of cue.files || []) {
       const bytes = readFileSync('public/assets/audio/' + file);
       assert.equal(bytes.toString('ascii', 0, 4), 'OggS');
-      const measurement = measureLoudness(bytes);
+      // EBU R128 needs a 400 ms window; wave-one cues keep their real short
+      // playback and use analysis-only padding when the clip is shorter.
+      const measurement = file.startsWith('arsenal-wave1/')
+        ? measureArsenalWaveOneCue(bytes)
+        : measureLoudness(bytes);
       assert(measurement.available, id);
       assert(measurement.truePeakDbtp <= -1, id + ' codec true peak');
     }

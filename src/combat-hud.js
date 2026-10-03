@@ -143,6 +143,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="bounty-screen-arrow" role="status" hidden><span aria-hidden="true">▲</span><b></b></div>
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
+    <div class="combat-edge-cue" data-side="left" aria-hidden="true"></div>
+    <div class="combat-edge-cue" data-side="right" aria-hidden="true"></div>
     <div class="combat-xp-toast" role="status" aria-live="polite"></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
@@ -170,6 +172,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
   const xpToast = host.querySelector('.combat-xp-toast');
+  const edgeCues = [...host.querySelectorAll('.combat-edge-cue')];
   const armorValue = playerArmor.querySelector('strong');
   const armorFill = playerArmor.querySelector('i');
   const footHealthValue = footHealth.querySelector('strong');
@@ -328,6 +331,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);
     xpToast.classList.toggle('is-visible', xpUntil > state.stageTimeSec && !state.paused);
+    // A warlord move may light a screen edge for the side something comes from.
+    for (const cue of edgeCues) cue.classList.toggle('is-visible', !state.paused &&
+      !!state.arena?.edgeCues?.some(item => item.side === cue.dataset.side && item.untilSec > state.stageTimeSec));
     if (damageArrow.dataset.direction !== damageDirection) damageArrow.dataset.direction = damageDirection;
     previousZones = {...state.damageZones};
   }

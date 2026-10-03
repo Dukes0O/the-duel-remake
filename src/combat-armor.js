@@ -7,6 +7,7 @@ import {CARS} from './config.js';
 import {startWreckSlide} from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {noteSmokeHit, clearSmokeHistory} from './arsenal/smoke.js';
+import {clearCarAlongPush} from './arsenal/car-effects.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -25,6 +26,8 @@ export function armorDamageFor(source, {
   const upgrade = 1 + clamp(level, 0, T.maximumWeaponLevel) * T.upgradePerLevel;
   switch (source) {
     case 'crossbow': return T.crossbow * upgrade * multiplier;
+    case 'harpoon': return 6 * upgrade * multiplier;
+    case 'caltrops': return 4 * upgrade * multiplier;
     case 'bomb': return T.bomb * (1 - clamp(distanceFraction, 0, 1)) * upgrade * multiplier;
     case 'rocket': return T.rocket * upgrade * multiplier;
     case 'rpg-direct': return T.rpgDirect * upgrade * multiplier;
@@ -96,6 +99,7 @@ function startCombatWreck(duel, actor, source, owner) {
   // crash step exactly as a Rival Duel crash does.
   if (!slide) actor.speedMph = 0;
   actor.pushVelocity = 0;
+  clearCarAlongPush(actor);
   actor.boosting = false;
   if (player) {
     state.impactTimer = state.impactDuration = actor.combatWreckTimer;
