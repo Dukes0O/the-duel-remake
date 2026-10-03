@@ -3,7 +3,7 @@ import {Duel} from '../src/game.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {createFighter} from '../src/onfoot.js';
 import {stepFootTransition} from '../src/onfoot-transition.js';
-import {strikeFighterFromVehicles} from '../src/onfoot-race.js';
+import {strikeFighterFromVehicles, opponentFighterIntent} from '../src/onfoot-race.js';
 import {fireWeapon} from '../src/combat-weapons.js';
 import {createCombatScene} from '../src/combat-scene.js';
 import {EngineAudio} from '../src/audio.js';
@@ -346,6 +346,26 @@ check('roof rider skips ordinary vehicle hit but ground fighter remains vulnerab
   assert.equal(strikeFighterFromVehicles(duel), true,
     'the normal vehicle hit still knocks down an exposed ground fighter');
   assert.equal(state.fighter.knockedDown, true);
+});check('boarded driver swerves through native steering while ground intent ignores roof rider', () => {
+  const boarded = nativeRace(), ordinary = nativeRace();
+  for (const {duel, state, rival} of [boarded, ordinary]) {
+    rival.lateral = -3;
+    rival.prevLateral = -3;
+    state.fighter.lateral = -3;
+    state.fighter.x = duel.course.groundAt(rival.s, -3).x;
+  }
+  boarded.state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(boarded.duel, DT);
+  assert.equal(boarded.state.boarding?.phase, 'roof');
+  assert.equal(opponentFighterIntent(boarded.duel, boarded.rival, 30, -3), null,
+    'a roof rider must not trigger the ground-fighter attack plan');
+  for (let i = 0; i < 60; i++) {
+    boarded.duel._rival(DT, boarded.rival);
+    ordinary.duel._rival(DT, ordinary.rival);
+  }
+  assert.ok(boarded.rival.lateral > ordinary.rival.lateral + .5,
+    'the boarded driver must steer toward the opposite lane');
 });check('scene shows the roof fighter and a blinking planted charge from race state', () => {
   const {duel, state, rival} = nativeRace();
   state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',

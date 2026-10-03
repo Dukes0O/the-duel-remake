@@ -29,6 +29,7 @@ boundary and timing rules testable before implementation:
 - A computer may board the player's car only on Hard in Ambush Alley or
   Convoy Raid. This eligibility can be tested before those future events
   are built; no ordinary race gains that behavior.
+- A boarded computer driver aims for the opposite lane, then alternates sides every 0.75 fixed simulation seconds while a fighter remains on its roof. It uses the normal steering, grip and road limits, so this is a turn rather than a lane teleport. Ground-fighter attack and avoidance treat a roof rider as aboard. The shake timer decides whether any turn is hard enough to throw them.
 - A rider already on a target roof is exempt from the ordinary ground-fighter vehicle-hit sweep while boarding remains in the roof phase. The fixed boarding rules still throw the rider for a hard turn, crash delta-v or the six-second limit. Once the rider lands, the ordinary ground hit rule applies again.
 - The roof fighter and blinking charge are presentation of simulation state.
   They do not control boarding, timers or damage. The feature's sound cues

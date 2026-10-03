@@ -52,7 +52,7 @@ function distanceToSweep(point, from, to) {
 
 export function strikeFighterFromVehicles(duel) {
   const state = duel.state, fighter = state.onFoot && state.fighter;
-  if (!fighter || fighter.knockedDown) return false;
+  if (!fighter || fighter.knockedDown || state.boarding?.phase === 'roof') return false;
   for (const actor of [...state.opponents, ...state.traffic]) {
     if (!actor || actor.alive === false || actor.finished || actor.crushed ||
         actor.combatWrecking || actor.roadsideMotion || actor.wrecked) continue;

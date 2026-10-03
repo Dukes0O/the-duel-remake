@@ -36,7 +36,7 @@ export async function run(context) {
     const roofY = roof.y + duel._vehicleSpec(rival).height;
     if (Math.abs(s.fighter.y - roofY) > .02)
       throw Error('Boarded fighter did not follow the real roof height');
-    app.inspectionCamera = {position: [roof.x + 10, roofY + 8, roof.z + 17],
+    app.inspectionCamera = {position: [roof.x + 5, roofY + 4, roof.z + 9],
       target: [roof.x, roofY, roof.z]};
     app.onFrame?.(s, 0); window.__render.renderFrame();
     return {phase: s.boarding.phase, targetId: s.boarding.targetId,
@@ -78,6 +78,11 @@ export async function run(context) {
             crushed: s.opponents[0].crushed, finished: s.opponents[0].finished},events}));
     detach();
     duel.setFighterInput({fire: false});
+    const rival = s.opponents[0];
+    const roof = duel.course.groundAt(rival.s, rival.lateral);
+    const roofY = roof.y + duel._vehicleSpec(rival).height;
+    app.inspectionCamera = {position: [roof.x + 5, roofY + 4, roof.z + 9],
+      target: [roof.x, roofY, roof.z]};
     const before = JSON.stringify(s.boarding);
     app.onFrame?.(s, 0); window.__render.renderFrame();
     const charge = window.__render.scene.getObjectByName('crew-boarding-charge');
