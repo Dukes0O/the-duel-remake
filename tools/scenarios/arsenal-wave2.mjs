@@ -66,6 +66,11 @@ async function start(context) {
     window.__waveTwoAim();
     window.__waveTwoPaint();
   })()`);
+  await context.waitFor(`(() => {
+    window.__waveTwoPaint();
+    return window.__qaApp.visualReady &&
+      document.querySelector('#view3d canvas')?.style.visibility === 'visible';
+  })()`, 'painted wave-two race', 60_000);
 }
 
 export async function run(context) {
@@ -102,8 +107,6 @@ export async function run(context) {
       document.querySelector('[data-action="armory-close"]').click();
     })()`);
 
-    await start(context);
-    // The first race paint creates the course scene; restart for an in-flight capture.
     await start(context);
     const rockets = await context.evaluate(`(() => {
       const duel = window.__qaApp.duel, state = duel.state;
