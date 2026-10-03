@@ -1,10 +1,10 @@
 # ARS-02: Arsenal wave 2
 
-Status: review in the ARS-02 lane. Shared combat, save, renderer, audio-routing
+Status: merged into integration at `0beb6e5`. Shared combat, save, renderer, audio-routing
 and balance hooks were granted after Balance and CREW merged. Kyle directed
 completion of the seven sounds on 3 October, and the Board granted only their
 new entries and source recipes in the reserved sound files. The final lane
-gate and build remain before the integration merge.
+gate and build passed before the integration merge.
 
 ## Decision before code
 
@@ -181,9 +181,13 @@ The modules must not read renderer state or player storage.
   its existing chunk-size advisory. No test, tolerance or game source changed
   between the two gates. This note commit needs its own exact lane gate and
   build before merge.
-- Pending: exact gate and build on this evidence-note commit, then integration
-  merge, janitor, status and full tier. No full integration gate applies to
-  this lane commit yet.
+- The final exact lane gate on `a4b4fd2` passed 347/347 in 565.23 s. Its
+  matching build passed in 450 ms. The full combat balance check passed on
+  that commit, and the separate Wave 2 report completed 30/30 Medium races:
+  415 Rocket, 305 Flame and 222 Magnet player uses; CPU Rocket 32, Magnet 3,
+  and Flame 2 in a separately labelled close-range complete race. No use was
+  unattributed. These checks preceded the clean integration merge `0beb6e5`.
+  The final integration full tier remains the session-end gate.
 
 ## Audio source decision and retained records
 
@@ -194,7 +198,7 @@ voice take and AUD-17 record exact. Use three distinct rocket recordings and
 three cuts of the flamethrower recording for start, seamless loop and end;
 use the electric hum as the Magnet loop. Build three fixed variants per cue,
 measure decoded loudness, true peak, duration and loop seams, then check real
-  event routing and playback in a private browser. Older exact audio pins may
+event routing and playback in a private browser. Older exact audio pins may
 exclude only these seven new bank entries and seven new cue catalog rows; future
 weapon silence still applies to wave three.
 

@@ -1022,10 +1022,10 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-01]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-03
     branch: codex/cmb/arsenal-wave2
-    note: "Kyle directed Codex to finish this card's sounds on 3 October. ARS-02 may add only its seven CC0 cues and new source recipes to the reserved audio files, then update exact older audio pins to exclude only these new entries. Existing sounds, voice takes and AUD-17 records remain exact."
+    note: "Merged 0beb6e5 after exact final lane gate 347/347 on a4b4fd2, build 450 ms, full and Wave 2 combat balance checks, private High/Performance gameplay and 21 recorded sound checks. Existing sounds, voice takes and AUD-17 records stayed exact. Human listening remains a release feel review."
     flag: arsenal
     owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, tools/build-arsenal-wave2-audio.mjs, tools/test-arsenal-wave2-audio.mjs, tools/scenarios/arsenal-wave2-audio.mjs, public/assets/audio/arsenal-wave2/, docs/changes/ARS-02.md]
     hooks: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs]
