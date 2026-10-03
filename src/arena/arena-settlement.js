@@ -1,4 +1,5 @@
 import {FUEL_RULES} from './modes/fuel-run.js';
+import {BOUNTY_RULES, bountyRanking, bountyDamageWinner} from './modes/bounty-hunt.js';
 
 // Arena economy. This module is pure: App owns player identity and
 // the atomic storage write after it receives an arenaResult event.
@@ -29,9 +30,24 @@ function validFuelFinish(arena) {
     arena.participants.every(p => p.id === winnerId || p.fuelDelivered < FUEL_RULES.deliveriesToWin);
 }
 
+function validBountyFinish(arena) {
+  if (arena.participants.some(p => !Number.isSafeInteger(p.bountyPoints) ||
+      p.bountyPoints < 0 || !Number.isFinite(p.damageDealt) || p.damageDealt < 0) ||
+      !Number.isFinite(arena.clockSec) || arena.clockSec < BOUNTY_RULES.timeLimitSec) return false;
+  const {reason, winnerId, placings} = arena.result;
+  const ranking = bountyRanking(arena), winner = arena.participants.find(p => p.id === winnerId);
+  const others = ranking.filter(p => p.id !== winnerId).map(p => p.id);
+  if (placings.slice(1).some((id, index) => id !== others[index])) return false;
+  if (reason === 'time') return arena.participants.every(p => p === winner || p.bountyPoints < winner.bountyPoints);
+  if (reason === 'damage') return arena.suddenDeathSec >= BOUNTY_RULES.suddenDeathSec &&
+    winnerId === bountyDamageWinner(arena);
+  return reason === 'sudden-death' && winner.wrecks > 0 &&
+    Number.isFinite(arena.suddenDeathSec) && arena.suddenDeathSec <= BOUNTY_RULES.suddenDeathSec;
+}
+
 function arenaFacts(arena) {
   if (arena?.version !== 1 || !['scrapdome', 'salt-flats'].includes(arena.venueId) ||
-      !['last-car-rolling', 'fuel-run'].includes(arena.mode) || arena.phase !== 'over' ||
+      !['last-car-rolling', 'fuel-run', 'bounty-hunt'].includes(arena.mode) || arena.phase !== 'over' ||
       !arena.result || !Array.isArray(arena.participants) ||
       !Array.isArray(arena.result.placings)) return null;
   const player = arena.participants.filter(item => item?.id === 'player' && item.kind === 'player');
@@ -45,6 +61,7 @@ function arenaFacts(arena) {
       placings.some(id => !ids.includes(id)) || !placings.includes('player') ||
       arena.result.winnerId !== placings[0]) return null;
   if (arena.mode === 'fuel-run' && !validFuelFinish(arena)) return null;
+  if (arena.mode === 'bounty-hunt' && !validBountyFinish(arena)) return null;
   const placeIndex = placings.indexOf('player');
   return {player: player[0], computers: computers.length,
     behind: placings.slice(placeIndex + 1).filter(id => id !== 'player').length,

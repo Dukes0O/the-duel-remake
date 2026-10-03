@@ -413,6 +413,7 @@ Two raider buggies, fast and light. They fight as a pair.
 | Phase two | After their second wreck: pincers come 20% faster and the shadow also fires |
 | Reward | Grapple range +10 m for Jax (needs CREW-02) |
 | Callouts | `PINCER!`, `THEY HIT EACH OTHER. NOW!` |
+| Build notes (2 October 2026) | The pair is `team` data on the warlord (`src/warlords.js`); the shared format scores the pair together (wrecks, places, settlement). The first buggy (cpu-1) harasses, the second (cpu-2) shadows on the far side of the player and holds fire until phase two. The pincer's meeting point is fixed at the tell, where the player will be if he holds his speed and line: braking or turning away leaves him short of it, so the two meet there and the crash contact stuns both. Only a collision during the charge stuns. Phase two shortens the tell by 20% (as Sal's). Armor is 0.9 times (replacing the 1.5). The Jax reward is the saved defeat itself (`jaxGrappleBonusMetres` in `src/warlords.js`), read by CREW-02. The buggies are Dusthawk Rallys until a buggy model exists. The fight is on the ring until the Pit merges |
 
 ### Settled for build: The Tollkeeper (WAR-03d)
 

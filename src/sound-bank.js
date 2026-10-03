@@ -36,6 +36,43 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  'weapon.harpoon.fire': cue('weapons', {
+    flag: 'arsenal',
+    files: ['arsenal-wave1/harpoon-fire-a.ogg', 'arsenal-wave1/harpoon-fire-b.ogg',
+      'arsenal-wave1/harpoon-fire-c.ogg'],
+    volume: 1.8, priority: 60, limit: 6,
+  }),
+  'weapon.harpoon.flight': cue('weapons', {
+    flag: 'arsenal',
+    files: ['arsenal-wave1/harpoon-flight-a.ogg', 'arsenal-wave1/harpoon-flight-b.ogg',
+      'arsenal-wave1/harpoon-flight-c.ogg'],
+    volume: 1.4, priority: 55, limit: 4, loop: true,
+    spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
+  }),
+  'weapon.harpoon.hit': cue('weapons', {
+    flag: 'arsenal',
+    files: ['arsenal-wave1/harpoon-hit-a.ogg', 'arsenal-wave1/harpoon-hit-b.ogg',
+      'arsenal-wave1/harpoon-hit-c.ogg'],
+    volume: 1.8, priority: 75, limit: 6,
+  }),
+  'weapon.harpoon.break': cue('weapons', {
+    flag: 'arsenal',
+    files: ['arsenal-wave1/harpoon-break-a.ogg', 'arsenal-wave1/harpoon-break-b.ogg',
+      'arsenal-wave1/harpoon-break-c.ogg'],
+    volume: 1.8, priority: 65, limit: 6,
+  }),
+  'weapon.caltrops.deploy': cue('weapons', {
+    flag: 'arsenal',
+    files: ['arsenal-wave1/caltrops-deploy-a.ogg', 'arsenal-wave1/caltrops-deploy-b.ogg',
+      'arsenal-wave1/caltrops-deploy-c.ogg'],
+    volume: 1.8, priority: 60, limit: 6,
+  }),
+  'weapon.caltrops.hit': cue('weapons', {
+    flag: 'arsenal',
+    files: ['arsenal-wave1/caltrops-hit-a.ogg', 'arsenal-wave1/caltrops-hit-b.ogg',
+      'arsenal-wave1/caltrops-hit-c.ogg'],
+    volume: 1.8, priority: 75, limit: 6,
+  }),
   'weapon.oil.deploy': cue('weapons', {
     flag: 'arsenal', files: ['arsenal-core/oil-deploy.ogg',
       'arsenal-core/oil-deploy-b.ogg', 'arsenal-core/oil-deploy-c.ogg'], volume: 3.375, priority: 60, limit: 6,
@@ -370,6 +407,15 @@ export const SOUND_BANK = {
     layers: [
       tone(330, 0.35, 0.05, 'sine', 0, 990),
       tone(660, 0.3, 0.03, 'triangle', 0.08, 1320),
+    ],
+  }),
+  'arena.bounty-mark': cue('interface', {
+    flag: 'bounty-hunt',
+    priority: 72,
+    limit: 1,
+    layers: [
+      tone(520, 0.14, 0.12, 'triangle', 0, 780),
+      tone(780, 0.22, 0.09, 'sine', 0.11, 1040),
     ],
   }),
   'arena.wreck-credit': cue('impacts', {

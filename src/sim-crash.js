@@ -8,6 +8,7 @@ import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled,
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crashStyle} from './vehicle-knock.js';
 import { onHiddenRoad } from './hidden-road.js';
+import {clearCarAlongPush} from './arsenal/car-effects.js';
 
 const WASTELAND_CRASH_PENALTY_SEC = 2;
 
@@ -179,6 +180,7 @@ export function _safeReset(car, crashSite = null) {
   car.s = car.prevS = chosen.s; car.lateral = car.prevLateral = chosen.lateral;
   car.speedMph = Math.max(0, Math.min(28, car.speedMph * .4));
   car.headingError = local ? chosen.headingError : 0; car.yawVelocity = 0; car.pushVelocity = 0; car.slipAngle = 0; car.drifting = false;
+  clearCarAlongPush(car);
   car.offRoad = false; car.offRoadTime = 0; car.roughness = 0; car.boosting = false;
   car.steerVisual = 0;
   car.routeId = null; car.routeLap = null; this._npcRoutePlanner?.reset(car);

@@ -220,7 +220,7 @@ for (const rank of [2, 6]) test('CPU SELECTION: rank ' + rank + ' carries front 
   const control = new Set(['ufo', 'star', 'oil', 'smoke']);
   for (const difficulty of ['easy', 'medium', 'hard']) for (let seed = 1989; seed < 2019; seed++) {
     const loadout = weapons.cpuArsenalLoadout(rank, difficulty, {rng: makeRng(seed)});
-    ok(loadout.includes('crossbow'), 'current implemented pool always has a working front attack');
+    ok(loadout.includes('crossbow') || loadout.includes('harpoon'), 'current implemented pool always has a working front attack');
     ok(loadout.filter(id => control.has(id)).length <= 2, 'a four-slot CPU loadout has at most two defensive or control weapons');
   }
 });

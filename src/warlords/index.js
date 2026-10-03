@@ -2,6 +2,7 @@ import {SAL_FIGHT} from './sal.js';
 import {DUSTMONGER_FIGHT} from './dustmonger.js';
 import {MIRAGE_FIGHT} from './mirage.js';
 import {KETTLE_FIGHT} from './kettle.js';
+import {VULTURES_FIGHT} from './vultures.js';
 
 // Every built warlord's fight, one file each (docs/SCRAPDOME.md section 7).
 // Shared arena files call these hooks and never name a warlord. Adding a
@@ -11,6 +12,7 @@ const FIGHTS = Object.freeze({
   dustmonger: DUSTMONGER_FIGHT,
   mirage: MIRAGE_FIGHT,
   kettle: KETTLE_FIGHT,
+  vultures: VULTURES_FIGHT,
 });
 
 // The fight hooks for the warlord driving `actor`, or null for every other car.
@@ -18,7 +20,8 @@ export function warlordFight(duel, actor) {
   const arena = duel.state.arena, id = arena?.warlordId;
   if (arena?.mode !== 'warlord' || !Object.hasOwn(FIGHTS, id) ||
       duel.featureFlags?.enabled('warlords') !== true || !actor || actor === duel.state ||
-      actor.warlordId !== id || actor.arenaId !== arena.warlordBossId) return null;
+      actor.warlordId !== id ||
+      !(arena.warlordTeamIds ?? [arena.warlordBossId]).includes(actor.arenaId)) return null;
   return FIGHTS[id];
 }
 

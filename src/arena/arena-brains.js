@@ -61,6 +61,28 @@ export function chooseTarget(duel, participant) {
   const cap = brainDifficulty(duel).huntersOnPlayer;
   const huntersOnPlayer = arena.participants.filter(other =>
     other.kind === 'cpu' && other !== participant && other.targetId === 'player').length;
+  if (arena.mode === 'bounty-hunt') {
+    const markedId = arena.bountyHunt?.markedId;
+    const marked = arena.participants.find(other => other.id === markedId);
+    const markedActor = markedId ? arenaActor(duel, markedId) : null;
+    if (marked && markedActor && !arenaTargetOutOfPlay(duel, markedActor)) {
+      if (participant.id === markedId) {
+        // The marked computer faces its closest pursuer so it can keep space
+        // and use the existing rear-weapon aim path.
+        let nearest = null, nearestDistance = Infinity;
+        for (const other of arena.participants) {
+          if (other === participant) continue;
+          const actor = arenaActor(duel, other.id);
+          if (!actor || arenaTargetOutOfPlay(duel, actor) || !hostile(duel, self, actor)) continue;
+          const at = worldPose(duel, actor), distance = Math.hypot(at.x - me.x, at.z - me.z);
+          if (distance < nearestDistance) { nearest = other.id; nearestDistance = distance; }
+        }
+        return nearest;
+      }
+      if (markedId !== 'player' || participant.targetId === 'player' || huntersOnPlayer < cap)
+        return markedId;
+    }
+  }
   let best = null, bestScore = -Infinity;
   for (const other of arena.participants) {
     if (other === participant) continue;
@@ -117,6 +139,16 @@ export function decideGoal(duel, participant, actor) {
   if ((actor.armor ?? 1) < (actor.maxArmor ?? 1) * STYLES.repair.armorFraction && duel.state.cpuDifficulty !== 'easy') {
     const crate = nearestRepairCrate(duel, actor);
     if (crate && crate.distance < STYLES.repair.reachMetres) return {x: crate.x, z: crate.z, speedMph: top, boost: false};
+  }
+  if (duel.state.arena.mode === 'bounty-hunt' && participant.id === duel.state.arena.bountyHunt?.markedId) {
+    const pursuer = worldPose(duel, target), dx = me.x - pursuer.x, dz = me.z - pursuer.z;
+    const distance = Math.hypot(dx, dz), gap = 45;
+    const heading = Number.isFinite(actor.heading) ? actor.heading : 0;
+    const awayX = distance > 1e-6 ? dx / distance : Math.sin(heading);
+    const awayZ = distance > 1e-6 ? dz / distance : Math.cos(heading);
+    const correction = gap - distance;
+    return {x: me.x + awayX * correction, z: me.z + awayZ * correction,
+      speedMph: top, boost: difficulty.boost === 'always'};
   }
   const carrier = duel.state.arena.mode === 'fuel-run'
     ? duel.state.arena.participants.find(p => p.id === participant.targetId) : null;

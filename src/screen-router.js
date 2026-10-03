@@ -195,6 +195,7 @@ root.addEventListener('click',e => {
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
     case 'arena-start':
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
+      if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
       if (app.startArenaEvent({venueId: arenaVenue, mode: arenaMode, opponents: arenaOpponents})) {
         yardPanel = 'home'; lastScreen = null;
       }
@@ -311,6 +312,7 @@ function renderState(s) {
   ui.overlay.dataset.status=s.status; ui.overlay.dataset.paused=String(!!s.paused); ui.overlay.dataset.audioState=app.audio?.context?.state||'locked'; ui.overlay.dataset.muted=String(!!app.audio?.muted);
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
+  if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
   if (!app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
   const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;

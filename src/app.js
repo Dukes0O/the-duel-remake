@@ -533,7 +533,7 @@ export class App {
   }
   _settleArenaResult(event,state){
     if (state?.arena?.mode === 'warlord') return this._settleWarlordResult(event, state);
-    if (state?.arena?.mode === 'fuel-run') return this._settleFuelResult(event, state);
+    if (['fuel-run', 'bounty-hunt'].includes(state?.arena?.mode)) return this._settleFuelResult(event, state);
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
@@ -565,7 +565,7 @@ export class App {
     });
     if (!result || event?.result !== result || state !== this.duel.state ||
         !this.runId || !this._switches().enabled('scrapdome') ||
-        !this._switches().enabled('fuel-run') || result.settlementSaved ||
+        !this._switches().enabled(state.arena.mode) || result.settlementSaved ||
         this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId) return false;
     const durable = readWarlordRegistry();
     if (!result.settlementRetryable) {
@@ -714,6 +714,7 @@ export class App {
       settlementSaved: true, settlementRetryable: false,
       firstWin: settled.firstWin, rewardReason: settled.rewardReason, kitEarned: settled.kitEarned,
       weaponEarned: settled.weaponEarned ?? null, crewEarned: settled.crewEarned ?? null,
+      gearEarned: settled.gearEarned ?? null,
       territoryClaimed: settled.territoryClaimed});
     this._warlordSettlementRetry = null;
   }
@@ -834,8 +835,12 @@ export class App {
     return this.arenaAvailable() && this._switches().enabled('fuel-run') === true &&
       this.profile.wasteland?.rank >= 6;
   }
+  bountyHuntAvailable() {
+    return this.arenaAvailable() && this._switches().enabled('bounty-hunt') === true &&
+      this.profile.wasteland?.rank >= 9;
+  }
   startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
-    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run'].includes(mode)) return false;
+    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt'].includes(mode)) return false;
     return this._startArenaFight({venueId, mode, opponents});
   }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling'}) {
@@ -844,7 +849,7 @@ export class App {
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
     const available = warlordId ? this.warlordsAvailable() :
-      mode === 'fuel-run' ? this.fuelRunAvailable() : this.arenaAvailable();
+      mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() : this.arenaAvailable();
     if (!available || !this.arenaVenueAvailable(venueId) ||
         !(this.isYardHomeActive() || state.arena)) return false;
     const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
@@ -852,7 +857,7 @@ export class App {
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,
       ...(mode === 'fuel-run' ? {brain: ['collector', 'rammer', 'hunter'][index]} : {})}));
-    if (warlordId || mode === 'fuel-run') this._rememberWarlordOwner();
+    if (warlordId || ['fuel-run', 'bounty-hunt'].includes(mode)) this._rememberWarlordOwner();
     this._warlordSettlementRetry = null;
     this._fuelSettlementRetry = null;
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;

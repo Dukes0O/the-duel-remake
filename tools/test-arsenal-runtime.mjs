@@ -214,12 +214,12 @@ for (const [weapon, minimumRank] of [['oil', 2], ['smoke', 6]]) {
   });
   for (const gate of ['rank', 'dev', 'discovery', 'implementation', 'race']) {
     test('NATIVE APP CONTROL: ' + gate + ' denies bound ' + weapon + ' purchase without a write', () => {
-      const app = appFixture({rank: gate === 'rank' ? 1 : minimumRank,
+      const app = appFixture({rank: gate === 'rank' ? 1 : gate === 'implementation' ? 7 : minimumRank,
         enabled: gate !== 'dev', discovered: gate !== 'discovery'});
       try {
         if (gate === 'race') app.duel.state.status = 'racing';
         const before = values.get(PLAYERS_KEY), oldProfile = structuredClone(app.profile), writeCount = writes.length;
-        eq(purchase(app, gate === 'implementation' ? 'harpoon' : weapon).ok, false,
+        eq(purchase(app, gate === 'implementation' ? 'rockets' : weapon).ok, false,
           'actual bound action refuses inadmissible purchase');
         eq(app.profile, oldProfile, 'refusal preserves full owner profile');
         eq(values.get(PLAYERS_KEY), before, 'refusal preserves raw registry bytes');
@@ -273,7 +273,7 @@ test('NATIVE CPU: rank-six launch fixes the sampled all-control loadout without 
     control.startCampaign({mode: 'wasteland', seed: 1989, discoveredGate: true, opponentCount: 3,
       cpuDifficulty: 'medium'});
     for (const cpu of app.duel.state.opponents) {
-      ok(cpu.weaponLoadout.includes('crossbow'), 'native opponent carries the implemented forward damage weapon');
+      ok(cpu.weaponLoadout.includes('crossbow') || cpu.weaponLoadout.includes('harpoon'), 'native opponent carries the implemented forward damage weapon');
       ok(cpu.weaponLoadout.filter(id => ['ufo', 'star', 'oil', 'smoke'].includes(id)).length <= 2,
         'native opponent respects the settled defensive/control limit');
     }
