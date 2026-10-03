@@ -8,7 +8,7 @@ const FIGHTER_LANE_REACH = 2.5;
 
 function fighterAhead(duel, actor) {
   const fighter = duel.state.onFoot && duel.state.fighter;
-  if (!fighter || fighter.knockedDown) return null;
+  if (!fighter || fighter.knockedDown || duel.state.boarding?.phase === 'roof') return null;
   const ahead = (duel.relativeS(fighter.s, actor.s) - actor.s) * (actor.dir || 1);
   return {fighter, ahead};
 }
@@ -52,7 +52,7 @@ function distanceToSweep(point, from, to) {
 
 export function strikeFighterFromVehicles(duel) {
   const state = duel.state, fighter = state.onFoot && state.fighter;
-  if (!fighter || fighter.knockedDown) return false;
+  if (!fighter || fighter.knockedDown || state.boarding?.phase === 'roof') return false;
   for (const actor of [...state.opponents, ...state.traffic]) {
     if (!actor || actor.alive === false || actor.finished || actor.crushed ||
         actor.combatWrecking || actor.roadsideMotion || actor.wrecked) continue;

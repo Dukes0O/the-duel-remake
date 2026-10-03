@@ -47,8 +47,13 @@ function allowedGround(course, point, car, {arena = course.def?.arena === true} 
   if (arena) return Math.abs(point.lateral) <= (course.def?.venue === true
     ? course.def.scrapdome.wallOffset - T.radius : T.arenaLateralLimit);
   const anchor = carPoint(course, car);
-  return Math.hypot(point.x - anchor.x, point.z - anchor.z) <=
-    T.carRangeMeters + 1e-8;
+  if (Math.hypot(point.x - anchor.x, point.z - anchor.z) <=
+      T.carRangeMeters + 1e-8) return true;
+  // Boarding may carry the fighter beyond the parked car's walking range.
+  // The landing anchors a second bounded area that overlaps the route home.
+  const landing = car.fighter?.boardingAnchor;
+  return !!landing && Math.hypot(point.x - landing.x,
+    point.z - landing.z) <= T.carRangeMeters + 1e-8;
 }
 
 function besideCar(course, car) {
@@ -123,6 +128,7 @@ export function respawnFighter(course, car, fighter) {
     jumpHeld: false, health: fighter.maxHealth || T.maximumHealth,
     knockedDown: false,
     knockdownRemaining: 0, speed: 0});
+  delete fighter.boardingAnchor;
   fighter.respawns++;
   return fighter;
 }
