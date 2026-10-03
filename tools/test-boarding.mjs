@@ -273,4 +273,16 @@ check('a fighter thrown far from the parked car can walk back from the safe shou
   assert.ok(Math.hypot(fighter.x - before.x, fighter.z - before.z) > .2,
     'safe landing must leave a playable fighter who can walk toward the car');
 });
+
+check('native grapple releases safely if the target passes 90 km/h at arrival', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.speedMph = 91 / 1.609344;
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(duel, DT);
+  assert.equal(state.boarding, null);
+  assert.equal(state.crewGear.grapple, null,
+    'rejected arrival cannot leave a permanent grapple');
+  assert.ok(Math.abs(state.fighter.y - state.fighter.groundY) < EPS);
+});
 if (!process.exitCode) console.log('Boarding checks: ' + checks + ' passed.');

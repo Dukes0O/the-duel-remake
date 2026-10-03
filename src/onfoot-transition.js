@@ -7,7 +7,8 @@ import {strikeFighterFromVehicles} from './onfoot-race.js';
 import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
 import {refillCrewGear, resetCrewGearUser, stepGearGrapple} from './crew-gear/signature.js';
 import {actorForTarget} from './arsenal/targeting.js';
-import {startBoarding, stepBoarding} from './crew-gear/boarding.js';
+import {startBoarding, stepBoarding, releaseBoardingGrapple}
+  from './crew-gear/boarding.js';
 
 const T = COMBAT_TUNING.foot;
 
@@ -83,10 +84,15 @@ function stepFighterInFixedTime(duel, dt) {
         (transition.fighterStepRemainder - FIGHTER_STEP_SECONDS)), duration: .8};
       resetCrewGearUser(duel);
     }
+    const pullBefore = state.crewGear?.grapple;
     if (!wasOnRoof) stepGearGrapple(duel, FIGHTER_STEP_SECONDS);
-    if (!state.boarding && state.crewGear?.grapple?.arrived) {
-      const target = actorForTarget(duel, state.crewGear.grapple.targetId);
-      if (target) startBoarding(duel, target, {method: 'grapple'});
+    const pull = state.crewGear?.grapple;
+    if (!state.boarding && pull?.kind === 'car' && pull.arrived) {
+      const target = actorForTarget(duel, pull.targetId);
+      if (!target || !startBoarding(duel, target, {method: 'grapple'}))
+        releaseBoardingGrapple(duel, target);
+    } else if (!state.boarding && pullBefore?.kind === 'car' && !pull) {
+      releaseBoardingGrapple(duel, actorForTarget(duel, pullBefore.targetId));
     }
     if (!state.boarding && !state.crewGear?.grapple) {
       for (const target of state.opponents)

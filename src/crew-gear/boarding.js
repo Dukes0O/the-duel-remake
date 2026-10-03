@@ -119,6 +119,18 @@ function leaveRoof(duel, boarding, reason) {
     'crew.boarding.throw', targetId: boarding.targetId, reason,
     hitPosition: {x: landing.x, y: landing.y, z: landing.z}});
 }
+export function releaseBoardingGrapple(duel, actor = null) {
+  const fighter = duel.state.fighter;
+  if (!fighter) return false;
+  const landing = actor && safeLanding(duel, actor) ||
+    safeLanding(duel, duel.state);
+  if (!landing) return false;
+  landFighter(duel, landing);
+  if (duel.state.crewGear) duel.state.crewGear.grapple = null;
+  duel.emit({crewBoardingCue: 'crew.boarding.release',
+    hitPosition: {x: landing.x, y: landing.y, z: landing.z}});
+  return true;
+}
 export function stepBoarding(duel, dt, {sidewaysAcceleration = 0,
   crashDeltaMph = 0, damageCar = damageGearCar} = {}) {
   const state = duel.state, boarding = state.boarding;
