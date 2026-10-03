@@ -99,6 +99,16 @@ function chromeExecutable() {
   return found;
 }
 
+export function chromeLaunchArguments(profile) {
+  return [
+    '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
+    '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows',
+    '--disable-extensions', '--mute-audio', '--enable-unsafe-swiftshader',
+    '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank',
+  ];
+}
+
 function launch(executable, args, options = {}) {
   const child = spawn(executable, args, { cwd: PROJECT_ROOT, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], ...options });
   let output = '';
@@ -276,11 +286,7 @@ export async function main(args = process.argv.slice(2)) {
     preview = launch(process.execPath, [VITE_CLI, 'preview', '--config', 'tools/vite-qa.config.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort']);
     await waitForHttp(`${baseURL}/tools/menu-check.html`, preview.child, preview.output);
     const chromePath = chromeExecutable();
-    chrome = launch(chromePath, [
-      '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
-      '--disable-extensions', '--mute-audio', '--enable-unsafe-swiftshader',
-      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank',
-    ]);
+    chrome = launch(chromePath, chromeLaunchArguments(profile));
     const debugPort = await waitForChromePort(profile, chrome.child, chrome.output);
     cdp = await connectDevTools(debugPort);
     const page = await openPage(cdp, issues, warnings);
