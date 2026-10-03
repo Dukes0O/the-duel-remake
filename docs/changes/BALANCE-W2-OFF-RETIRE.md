@@ -1,8 +1,8 @@
 # BALANCE-W2-OFF-RETIRE
 
-Status: building. Kyle released the idle AUD-17 sound-bank hook for this card
-on 3 October. The Wasteland cue flags and audio off paths are removed in this
-lane; the final catalog cleanup and gate are still pending.
+Status: building. On 3 October Kyle approved removing the seven remaining
+Muddy Hollow and Scrapdome cue flags and keeping the two-cue Warlord audio
+fix. The exact final lane gate and integration review remain.
 
 ## Decision
 
@@ -47,12 +47,30 @@ instruction or the protected Twin Vultures file.
   sample and true peaks stayed below -1 dB. The unchanged audio suite
   passed 22/23 once alone and 23/23 on the next standalone run. No peak
   assertion changed. A fresh full lane pass is still required.
+- The next exact lane tier passed 344/344 in 554.04 s and build passed in
+  431 ms. A later repair to the Warlord pay Preview URL means both must run
+  again before merge.
 - Private browser checks passed with memory-only saves and zero console
   errors or warnings: audio-moving (two motion cases), wasteland-beta
   (six ordered events and six captures), and combat-audio (nine cue
   families, three variants each, spatial motion and recorder levels).
   The moving and combat probes first exposed missing discovered-gate state
   in synthetic audio contexts; setting it made the unchanged checks pass.
+- Muddy Hollow passed 12 visual frames plus departure, return and exit;
+  Scrapdome passed High and Performance fight, result and rematch;
+  new Warlords passed nine look captures; Sal fight and Warlord format passed
+  in both modes; Warlord reward, Preview payout and arena steering passed
+  in both modes. Sal art, Scrapdome review and Titan handling also passed
+  High and Performance checks.
+  All used private ports, memory-only saves and had zero console issues.
+  Vesper art could not start: its uncommitted candidate vesper.glb is absent.
+- After final catalog cleanup: feature flags 32/32, Wasteland beta 8/8,
+  Muddy Hollow 49/49, race exit 5/5, Titan handling 40/40, Warlord format
+  19/19, arena feel 5/5, Sal art 9/9, Bounty 40/40, crash/hollow audio
+  30/30 and sound-bank checks passed. Preview storage passed on a private
+  port with memory-only saves and zero browser issues. Muddy Hollow,
+  Scrapdome and Warlord format also passed again after catalog cleanup,
+  each with zero browser issues.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   browser journeys remain to be checked after the audio hook lands. Board
   parsing and diff whitespace checks pass.
@@ -77,6 +95,17 @@ instruction or the protected Twin Vultures file.
   retain positive recording, variant, spatial and peak checks. The two
   Arsenal audio recipe pins remain exact by restoring only the removed cue
   flag in test memory before hashing. No sound body or recipe is exempt.
+- A live Warlord look journey exposed an undefined core-cue set in audio.
+  A new native check failed first and now proves smoke and oil moves play
+  with Arsenal off. Cue names and files did not change.
+- The Warlord format browser control now asserts that a discovered Armory
+  describes Sal without a fight button and the yard offers FIGHT. Its
+  loss, rematch, wallet and record checks remain. The reward browser now
+  asserts earned Side Saws is visible after reload; its separate-player
+  and saved-reward checks remain.
+- Catalog checks now assert the four released switches are absent, while
+  live Warlord fights, Sal rewards, Muddy Hollow, Titan handling, arena
+  cues and Preview storage continue through their positive checks.
 - One duplicate combat-armor test also asserted that the retired catalog
   switch was on. It was deleted; its ordinary and undiscovered armor checks
   remain in the next test. The enemy-aim control keeps its historical
@@ -109,15 +138,18 @@ instruction or the protected Twin Vultures file.
   fallback path, and the switch-off-only combat audio test. Original recorded
   cue files, layers and recipes remain unchanged. Audio now uses saved gate
   discovery for mixer and projectile ownership.
+- Removed seven Muddy Hollow and Scrapdome cue flag fields and four
+  released catalog switches. All cue files, layers, recipes and voice takes
+  remain. Removed retired flag injections from three native test fixtures
+  and the Preview storage QA URL.
 - Removed retired switch settings from tests and 48 browser scenario URLs.
   Removed 52 obsolete Board flag fields. The Salt control trace was not
   regenerated.
+- Removed the Muddy Hollow flag-off browser branch and overview comparison;
+  its undiscovered ordinary view and discovered visuals remain. Repaired
+  seven owned QA scenario URLs left malformed after switch removal.
 
 ## Pending
 
-The released sound-bank hook covers only the Wasteland cue flags. Seven
-Muddy Hollow and Scrapdome cue fields still name retired switches; Kyle was
-asked whether to remove those fields as part of this card. Until then, keep
-those catalog switches and the seven fields so their sounds still play.
 The root AGENTS.md release-evidence wording belongs to integration, not this
 lane. The exact lane tier, build, review, merge, status and full tier remain.

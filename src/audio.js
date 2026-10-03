@@ -16,6 +16,7 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.harpoon.fire', 'weapon.harpoon.hit', 'weapon.harpoon.break',
   'weapon.caltrops.deploy', 'weapon.caltrops.hit',
 ]);
+const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy']);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
 // retain the same tonal target, so switching recordings cannot reset the pitch.

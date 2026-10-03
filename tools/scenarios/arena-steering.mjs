@@ -136,7 +136,7 @@ export async function run(context) {
     fixtures:'Memory-only discovery, all-car unlock and Sal hold; initial driving/approach poses and one window heading perturbation. Actual App entry, Duel inputs and fixed steps; production chase camera and HUD.',
     humanReview:'Kyle Preview steering feel and Claude standard-camera Sal feel remain pending.'};
   for(const quality of ['high','performance']){
-    await context.navigate('/tools/menu-check.html&harness=arena-steering-'+quality);
+    await context.navigate('/tools/menu-check.html?harness=arena-steering-'+quality);
     await context.waitFor('!!window.__qaApp&&!!window.__render',quality+' private menu',60000);
     await ready(context,quality+' menu');
     await context.evaluate(`(() => {const a=window.__qaApp;

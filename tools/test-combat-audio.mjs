@@ -68,6 +68,19 @@ test('recorded variants rotate without immediate repetition', () => {
   for (let i = 0; i < 7; i++) a._playCue('weapon.crossbow.fire');
   assert.deepEqual(calls, [0, 1, 2, 0, 1, 2, 0]);
 });
+test('a Warlord smoke or oil move plays its own cue with the Arsenal switch off', () => {
+  const audio = new EngineAudio({ flags: { enabled: () => false } });
+  const played = [];
+  audio.context = { state: 'running', currentTime: 0 };
+  audio.buses = { weapons: {} };
+  audio.muted = false;
+  audio._spatialOutput = () => ({ level: {}, disconnect() {} });
+  audio._playCue = (id) => played.push(id);
+  const state = { mode: 'wasteland', maxArmor: 100, wastelandGateDiscovered: true };
+  for (const id of ['weapon.smoke.deploy', 'weapon.oil.deploy'])
+    audio.event({ arsenalCue: id, warlordMove: true }, state, null);
+  assert.deepEqual(played, ['weapon.smoke.deploy', 'weapon.oil.deploy']);
+});
 function moving() {
   const a = new EngineAudio({ flags: { enabled: () => true } }),
     calls = [];

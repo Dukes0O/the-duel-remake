@@ -88,9 +88,9 @@ test('the tell is repeatable from seed and inputs', () => {
 
 test('tell, respawn and wreck-credit sounds', () => {
   for (const id of ['arena.tell', 'arena.respawn', 'arena.wreck-credit'])
-    assert.equal(SOUND_BANK[id]?.flag, 'scrapdome', `${id} is behind the scrapdome switch`);
+    assert.equal(SOUND_BANK[id]?.flag, undefined, `${id} plays without the retired switch`);
   const played = [];
-  const audio = new EngineAudio({flags: {enabled: name => name === 'scrapdome'}});
+  const audio = new EngineAudio({flags: {enabled: () => false}});
   audio.context = {state: 'running', currentTime: 1};
   audio.muted = false; audio.paused = false;
   audio._syncMixer = () => {};

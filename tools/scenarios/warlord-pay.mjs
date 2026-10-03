@@ -69,7 +69,7 @@ export async function run(context) {
   const reports = [];
   for (const quality of ['high', 'performance']) {
     await context.evaluate('window.name=""');
-    await context.navigate('/tools/preview.html&harness=war-pay-' + quality);
+    await context.navigate('/tools/preview.html?harness=war-pay-' + quality);
     await context.waitFor('window.__qaApp?.duel.state.status==="menu"', 'fresh private Preview menu', 60_000);
     const fresh = await context.evaluate('(()=>{const a=window.__qaApp;' +
       'if(!window.name.startsWith("__duel_qa_tab_v2:")||!Object.getOwnPropertyDescriptor(window,"localStorage")?.value)' +

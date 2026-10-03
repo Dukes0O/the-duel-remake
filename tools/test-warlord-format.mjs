@@ -325,10 +325,9 @@ test('launch controls stay inside the enabled yard and never appear in the main-
   } finally { app.dispose?.(); }
 });
 
-// Claude settled this separate dev gate after the Scrapdome release merge.
-test('the warlord fights are released alongside the Scrapdome (WAR-SAL-RELEASE)', () => {
-  equal(FEATURE_STATES.warlords, 'on', 'warlords keeps its own switch, now released');
+test('released Warlord fights and Scrapdome have no switches', () => {
+  equal(Object.hasOwn(FEATURE_STATES, 'warlords'), false, 'Warlords has no retired switch');
   const flags = createFeatureFlags({storage: null, qa: false});
-  equal(flags.enabled('scrapdome'), true, 'ordinary Scrapdome is released');
-  equal(flags.enabled('warlords'), true, 'production has the warlord fights without any request');
+  equal(flags.enabled('scrapdome'), false, 'Scrapdome has no retired switch');
+  equal(flags.enabled('warlords'), false, 'Warlords has no retired switch');
 });

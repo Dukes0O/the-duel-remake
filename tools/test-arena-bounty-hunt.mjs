@@ -151,7 +151,7 @@ test('real native admission accepts Bounty with its switch enabled', () => {
 });
 test('initial mark and handover use the bounded Bounty cue only with its switch on', () => {
   const calls = [], state = {arena: {mode: 'bounty-hunt'}};
-  const audio = new EngineAudio({flags: {enabled: name => name === 'scrapdome' || name === 'bounty-hunt'}});
+  const audio = new EngineAudio({flags: {enabled: name => name === 'bounty-hunt'}});
   audio.context = {state: 'running', currentTime: 0}; audio._syncMixer = () => {};
   audio._playCue = id => calls.push(id);
   audio.event({arenaLoaded: 'scrapdome'}, state, null);
@@ -160,7 +160,7 @@ test('initial mark and handover use the bounded Bounty cue only with its switch 
   const cue = SOUND_BANK['arena.bounty-mark'];
   ok(cue?.flag === 'bounty-hunt' && cue.limit === 1 && cue.layers?.length === 2,
     'the mark cue is a bounded, two-layer procedural recipe behind the Bounty flag');
-  const quiet = new EngineAudio({flags: {enabled: name => name === 'scrapdome'}}), quietCalls = [];
+  const quiet = new EngineAudio({flags: {enabled: () => false}}), quietCalls = [];
   quiet.context = {state: 'running', currentTime: 0}; quiet._syncMixer = () => {};
   quiet._playCue = id => quietCalls.push(id);
   quiet.event({bountyMark: {previousId: 'cpu-2', markedId: 'player'}}, state, null);

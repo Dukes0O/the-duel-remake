@@ -5,10 +5,7 @@ import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
   assert.deepEqual(FEATURE_STATES, {
-    'bounty-hunt': 'dev', 'career-backup': 'dev', 'hidden-road': 'on', scrapdome: 'on',
-    'titan-climb': 'on',
-    'muddy-hollow': 'on',
-    warlords: 'on',
+    'bounty-hunt': 'dev', 'career-backup': 'dev', 'hidden-road': 'on',
     'fuel-run': 'dev',
     arsenal: 'dev',
     'salt-flats': 'dev', 'crew-gear': 'dev',
@@ -17,7 +14,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   assert.equal(flags.enabled('wasteland2'), false);
   assert.equal(flags.enabled('hidden-road'), true);
   assert.equal(flags.enabled('career-backup'), false);
-  assert.equal(flags.enabled('warlords'), true);
+  assert.equal(flags.enabled('warlords'), false);
   assert.equal(flags.enabled('fuel-run'), false);
   assert.deepEqual(flags.betaFeatures(), []);
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);

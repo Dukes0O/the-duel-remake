@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { App } from '../src/app.js';
 import { Course } from '../src/course.js';
 import { COURSE, DRIVE } from '../src/config.js';
-import { createFeatureFlags } from '../src/feature-flags.js';
 import { Duel } from '../src/game.js';
 import { GhostRecorder, loadGhosts } from '../src/ghost.js';
 import { loadLeaderboard } from '../src/leaderboard.js';
@@ -128,12 +127,9 @@ function departureBoundary(zone, required = false) {
   return boundary;
 }
 
-function phaseThreeDuel({car = 'titan_monster', enabled = true,
+function phaseThreeDuel({car = 'titan_monster',
   discovered = true, difficulty = 'casual'} = {}) {
-  const duel = new Duel({seed, featureFlags: {
-    'muddy-hollow': enabled,
-    'titan-climb': true,
-  }});
+  const duel = new Duel({seed});
   duel.startCampaign({car, startStage: highCountryIndex, discoveredGate: discovered,
     opponentCount: 0, mode: 'timetrial', difficulty});
   Object.assign(duel.state, {status: 'racing', countdown: 0, traffic: [],
@@ -423,11 +419,8 @@ function queryPoint(course, point) {
   return { pose, surface: course.surfaceAt(pose.s, pose.lateral) };
 }
 
-function titanDuel(enabled = true) {
-  const duel = new Duel({seed, featureFlags: {
-    'muddy-hollow': enabled,
-    'titan-climb': true,
-  }});
+function titanDuel() {
+  const duel = new Duel({seed});
   duel.startCampaign({car: 'titan_monster', startStage: COURSE.indexOf(highCountry),
     discoveredGate: true, opponentCount: 0});
   Object.assign(duel.state, {status: 'racing', countdown: 0, traffic: [],
@@ -530,10 +523,6 @@ function seedRecordAndGhost(app) {
 function makeMuddyApp() {
   appMemory.clear();
   const app = new App();
-  app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {
-    'muddy-hollow': true,
-    'titan-climb': true,
-  }});
   app.profile = {
     ...app.profile,
     credits: 2400,
@@ -1085,10 +1074,7 @@ check('ridge departure boundary is deterministic in the existing local frame', (
 });
 
 check('a normal discovered Titan launch reaches racing before any ridge history exists', () => {
-  const duel = new Duel({seed, featureFlags: {
-    'muddy-hollow': true,
-    'titan-climb': true,
-  }});
+  const duel = new Duel({seed});
   duel.startCampaign({car: 'titan_monster', startStage: highCountryIndex,
     discoveredGate: true, opponentCount: 0, mode: 'timetrial'});
   const events = [];

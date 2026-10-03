@@ -373,28 +373,24 @@ export const SOUND_BANK = {
   }),
   // EGG-03 audio (tools/audio/build-hollow.mjs): pond entry and mud.
   'world.muddy-hollow-splash': cue('vehicle', {
-    flag: 'muddy-hollow',
     files: ['hollow-splash-a.ogg', 'hollow-splash-b.ogg', 'hollow-splash-c.ogg'],
     volume: 2.6,
     priority: 70,
     limit: 3,
   }),
   'world.muddy-hollow-mud': cue('vehicle', {
-    flag: 'muddy-hollow',
     files: ['hollow-mud-a.ogg', 'hollow-mud-b.ogg'],
     volume: 2.2,
     priority: 55,
     limit: 3,
   }),
   'world.muddy-hollow-churn': cue('vehicle', {
-    flag: 'muddy-hollow',
     filter: ['bandpass', 420],
     loop: true,
   }),
   // ARENA-FEEL: a computer car's charge tell (an engine roar rising), a
   // respawn shimmer, and the player's wreck credit.
   'arena.tell': cue('impacts', {
-    flag: 'scrapdome',
     priority: 68,
     limit: 3,
     layers: [
@@ -403,7 +399,6 @@ export const SOUND_BANK = {
     ],
   }),
   'arena.respawn': cue('interface', {
-    flag: 'scrapdome',
     layers: [
       tone(330, 0.35, 0.05, 'sine', 0, 990),
       tone(660, 0.3, 0.03, 'triangle', 0.08, 1320),
@@ -419,14 +414,12 @@ export const SOUND_BANK = {
     ],
   }),
   'arena.wreck-credit': cue('impacts', {
-    flag: 'scrapdome',
     buffersFrom: 'combat.hit-confirm',
     volume: 2.2,
     priority: 78,
     layers: [tone(70, 0.4, 0.2, 'sine', 0, 35)],
   }),
   'arena.sal-saw': cue('impacts', {
-    flag: 'scrapdome',
     file: 'sal-saw-scream.ogg',
     volume: 1.65,
     priority: 82,
