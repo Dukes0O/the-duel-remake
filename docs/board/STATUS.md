@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-03T03:48:30.732Z
+Observed at: 2026-10-03T06:05:48.866Z
 
-Observation commit: a4bd3f29867c7e290c05c56a3cc809f79bd358ea
+Observation commit: a705ba87ee24d9bb97a1a18645c5d40f464dad80
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a4bd3f29867c7e290c05c56a3cc809f79bd358ea
+Integration HEAD: a705ba87ee24d9bb97a1a18645c5d40f464dad80
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-02T20:33:26.539Z; tested commit: cbb4e8975fe23911b9940499e0ae1ee17660955b.
+Last recorded full run: 2026-10-03T05:55:45.576Z; tested commit: 879c0141218dfa8bd21c04bad05e7f805f81083d.
 
 ## Feature switches
 
@@ -41,10 +41,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/foot/crew-gear | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-gear |
+| codex/cmb/arsenal-wave2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave2 |
+| codex/foot/boarding | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/boarding |
 | codex/ops/balance-w2-off-retire | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/balance-w2-off-retire |
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 7 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 8 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
@@ -53,7 +54,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/ops/balance-w2-off-retire | unknown | 2026-10-02T19:50:13-07:00 | 0 | last commit 2026-10-02T19:50:13-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, src/app.js, src/arena/warlord-event.js |
+| codex/cmb/arsenal-wave2 | unknown | 2026-10-02T22:43:20-07:00 | 0 | last commit 2026-10-02T22:43:20-07:00 | docs/changes/ARS-02.md, src/arsenal/flamethrower.js, src/arsenal/magnet.js, src/arsenal/rockets.js, tools/test-arsenal-wave2.mjs |
+| codex/foot/boarding | unknown | 2026-10-02T22:44:38-07:00 | 0 | last commit 2026-10-02T22:44:38-07:00 | docs/changes/CREW-03.md, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot.js, tools/test-boarding.mjs |
+| codex/ops/balance-w2-off-retire | unknown | 2026-10-02T22:06:34-07:00 | 0 | last commit 2026-10-02T22:06:34-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, src/app.js, src/arena/warlord-event.js |
 
 ## Size targets
 
@@ -66,11 +69,11 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
-| Review `looks/` | 15,179,042 B | +617,312 B | 20,000,000 B |
-| Added bytes in last merge | 3,257,800 B | -1,770,865 B | 5,000,000 B |
+| Review `looks/` | 15,179,042 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 17,806 B | -3,239,994 B | 5,000,000 B |
 | All `public/` | 259,784,165 B | +0 B | unavailable |
-| Git objects | 371,833,856 B | +771,072 B | unavailable |
-| Lane folders | 2 | +0 | unavailable |
+| Git objects | 374,279,168 B | +2,445,312 B | unavailable |
+| Lane folders | 3 | +1 | unavailable |
 
 ## Backups
 
@@ -78,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: a4bd3f29867c7e290c05c56a3cc809f79bd358ea
+- Local integration/wasteland: a705ba87ee24d9bb97a1a18645c5d40f464dad80
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

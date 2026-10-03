@@ -29,7 +29,8 @@ The exact changed-file lane tier then passed 7/7 in 72.70 seconds, including
 a fourth native capture at 23/23. All three sample and true peaks stayed
 below -1 dB, and the build passed in 402 ms. The tests still require
 gap-free Float32 blocks and the same onset, contrast and cleanup limits.
-This note edit requires a fresh lane tier and build before merge.
+The final current-commit lane rerun passed 7/7 in 72.15 seconds, and its
+build passed in 448 ms. The lane merged as a705ba8.
 
 ## Removed
 

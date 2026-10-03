@@ -51,11 +51,15 @@ tasks:
     lane: AUDIO
     size: S
     needs: [AUD-CRASH-PEAK]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-03
     branch: codex/audio/capture-continuity
     owns: [tools/scenarios/audio-crash-peak.mjs, docs/changes/AUD-CAPTURE-CONTINUITY.md]
-    note: "Full tier on 879c014 failed only the native mix AudioWorklet continuity check; the same unchanged suite passed 23/23 alone. Preserve every peak, onset and continuity assertion. Fix the recorder path before another full-tier pass."
+    note: "The failed full tier exposed one missing native AudioWorklet block. The recorder now stays on a live silent render path; five native captures passed every original peak, onset, continuity and cleanup assertion. Full integration tier is next."
+    merged_commit: a705ba8
+    lane_gate_passed: 7
+    lane_gate_duration_seconds: 72.15
+    lane_build_ms: 448
     acceptance:
       - "Keep the actual final output AudioWorklet active throughout each capture. Preserve all measured sample and true-peak, event, onset, contrast, cleanup and memory-only assertions. Run focused native capture, exact lane tier and build, then rerun the full integration tier after merge."
   - id: ART-KEEP-VALVE-DONOR
