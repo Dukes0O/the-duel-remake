@@ -220,6 +220,17 @@ check('native fixed-step Jax grapple arrival mounts the rival roof', () => {
     duel._vehicleSpec(rival).height;
   assert.ok(Math.abs(state.fighter.y - roof) < EPS);
 });
+check('native jump mounts a slow enemy roof on a downward crossing', () => {
+  const {duel, state, rival} = nativeRace();
+  const car = duel.course.groundAt(rival.s, rival.lateral);
+  const roofY = car.y + duel._vehicleSpec(rival).height;
+  Object.assign(state.fighter, {x: car.x, z: car.z,
+    y: roofY + .02, groundY: car.y, airHeight: roofY - car.y + .02,
+    verticalSpeed: -3});
+  stepFootTransition(duel, DT);
+  assert.equal(state.boarding?.phase, 'roof');
+  assert.equal(state.boarding.method, 'roof');
+});
 check('native fire hold plants a charge without spending RPG ammo', () => {
   const {duel, state} = nativeRace();
   state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
