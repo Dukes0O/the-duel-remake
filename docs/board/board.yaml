@@ -45,6 +45,23 @@ tasks:
 
     test_verdict: "Native unchanged a6523ea output has six real sample/true-peak failures across nonFuel, Fuel and overlapping blasts. Actual final output, cue/event/onset, contrast, quiet reference and cleanup controls pass. Tests-only clean8494081; no source repair or gate clearance yet."
     source_verdict: "Output and final-recorder source independently clear at d96f1f2. Three native23/23 captures meet both peaks individually, with quiet/onset/contrast/cleanup unchanged. Final real-race engine correlation0.971/lag0 and measured sync/contrast/space/variety/stress clear; prior0.870/-50ms miss is retained as an observation, not reproduced. Human listening and absent cue coverage are flagged. Current integration sync, fresh Fuel browser and exact lane/build remain before merge; no later commit inherits old gates."
+  - id: AUD-CAPTURE-CONTINUITY
+    title: "Keep the native crash-peak capture continuous in the full gate"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: [AUD-CRASH-PEAK]
+    status: merged
+    claimed_by: codex-director-2026-10-03
+    branch: codex/audio/capture-continuity
+    owns: [tools/scenarios/audio-crash-peak.mjs, docs/changes/AUD-CAPTURE-CONTINUITY.md]
+    note: "The failed full tier exposed one missing native AudioWorklet block. The recorder now stays on a live silent render path; five native captures passed every original peak, onset, continuity and cleanup assertion. Full integration tier is next."
+    merged_commit: a705ba8
+    lane_gate_passed: 7
+    lane_gate_duration_seconds: 72.15
+    lane_build_ms: 448
+    acceptance:
+      - "Keep the actual final output AudioWorklet active throughout each capture. Preserve all measured sample and true-peak, event, onset, contrast, cleanup and memory-only assertions. Run focused native capture, exact lane tier and build, then rerun the full integration tier after merge."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
@@ -608,16 +625,16 @@ tasks:
     claimed_by: codex-director-2026-10-02-resume
     branch: codex/ops/balance-w2-off-retire
     owns: [docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, docs/OPERATIONS.md, src/app.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/armor-kit-meshes.js, src/audio.js, src/combat-ai.js, src/combat-armor.js, src/combat-hud.js, src/combat-projectiles.js, src/combat-scene.js, src/combat-weapons.js, src/crew-gear/gear.js, src/feature-flags.js, src/game.js, src/raiders.js, src/render3d.js, src/screen-arena.js, src/screen-armory.js, src/screen-garage.js, src/screen-hud.js, src/screen-router.js, src/sim-contacts.js, src/sim-driving.js, src/sim-rival.js, src/vehicle-contact-modifiers.js, src/warlords/index.js, src/warlords/sal.js, src/wasteland-access.js, tools/arena-balance.mjs, tools/combat-balance.mjs, tools/onfoot-balance.mjs, tools/replays/arena-steering-controls.json, tools/replays/onfoot-hints.json, tools/test-arena-bounty-hunt.mjs, tools/test-arena-event.mjs, tools/test-arena-feel.mjs, tools/test-arena-fuel-depot.mjs, tools/test-arena-fuel-run.mjs, tools/test-arena-junk-respawn.mjs, tools/test-arena-junk-shove.mjs, tools/test-arena-pit-render.mjs, tools/test-arena-pit.mjs, tools/test-arena-ramp-side.mjs, tools/test-arena-shove.mjs, tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/test-arena-ui.mjs, tools/test-arena-wreck-rate.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/test-armor-kits.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-arsenal-core.mjs, tools/test-arsenal-runtime.mjs, tools/test-arsenal-wave1.mjs, tools/test-audio-crash-peak.mjs, tools/test-car-loadout.mjs, tools/test-combat-armor-bomb-radius.mjs, tools/test-combat-armor-hud.mjs, tools/test-combat-armor-terrain.mjs, tools/test-combat-armor.mjs, tools/test-combat-balance.mjs, tools/test-combat-brain.mjs, tools/test-combat-credit-bonus.mjs, tools/test-combat-hud.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-payoff.mjs, tools/test-combat-pickups2.mjs, tools/test-combat-projectiles.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-combat-scoring.mjs, tools/test-cpu-ufo.mjs, tools/test-crash-switch-remove.mjs, tools/test-crew-gear.mjs, tools/test-crew.mjs, tools/test-dustmonger.mjs, tools/test-enemy-aim.mjs, tools/test-fighter-presentation.mjs, tools/test-fuel-standing-carrier.mjs, tools/test-kettle-kingpin.mjs, tools/test-madmax-crash.mjs, tools/test-mirage.mjs, tools/test-muddy-hollow.mjs, tools/test-notoriety.mjs, tools/test-onfoot-camera-choice.mjs, tools/test-onfoot-car-contacts.mjs, tools/test-onfoot-controls-camera.mjs, tools/test-onfoot-hints.mjs, tools/test-onfoot-transition.mjs, tools/test-onfoot-weapons.mjs, tools/test-preview-launcher.mjs, tools/test-raiders.mjs, tools/test-rigged-fighter.mjs, tools/test-sal-art.mjs, tools/test-sal-fight.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-effects.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats.mjs, tools/test-side-saws.mjs, tools/test-titan-climb.mjs, tools/test-traffic-shield.mjs, tools/test-twin-vultures.mjs, tools/test-warlord-format.mjs, tools/test-warlord-hooks.mjs, tools/test-warlord-pay.mjs, tools/test-warlord-settlement.mjs, tools/test-wasteland-easter-egg.mjs, tools/test-yard-home.mjs, tools/scenarios/arena-fuel-run.mjs, tools/scenarios/armor-kit-purchase.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/scenarios/art-source-current.mjs, tools/scenarios/art-source-hands.mjs, tools/scenarios/art-source-rustwall.mjs, tools/scenarios/audio-moving.mjs, tools/scenarios/car-loadout-armory.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-audio.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-hud.mjs, tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-pickups2.mjs, tools/scenarios/combat-ramming.mjs, tools/scenarios/combat-results.mjs, tools/scenarios/convoy-tanker-art.mjs, tools/scenarios/crash-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/scenarios/crew-gear.mjs, tools/scenarios/crew-selection.mjs, tools/scenarios/crew-w-source-current.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/scenarios/hidden-road-arrival.mjs, tools/scenarios/onfoot-camera-choice.mjs, tools/scenarios/onfoot-controls-camera.mjs, tools/scenarios/onfoot-figures.mjs, tools/scenarios/onfoot-hints.mjs, tools/scenarios/onfoot-rpg-wrench.mjs, tools/scenarios/raider-ambush.mjs, tools/scenarios/raider-salvage.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/sal-art.mjs, tools/scenarios/salt-flats.mjs, tools/scenarios/scrapdome-review.mjs, tools/scenarios/vesper-art.mjs, tools/scenarios/wasteland-beta.mjs, tools/scenarios/wasteland-career.mjs, tools/scenarios/weapon-audio.mjs, tools/scenarios/yard-home.mjs, tools/test-arena-settlement.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/test-combat-audio.mjs, tools/test-crash-slide.mjs, tools/test-crew-gear-modules.mjs, tools/test-feature-flags.mjs, tools/test-fuel-car-attribution.mjs, tools/test-gatekeeper-audio.mjs, tools/test-hidden-road-journey.mjs, tools/test-hidden-road.mjs, tools/test-madmax-solid.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-wasteland-beta.mjs, tools/test-wasteland-career.mjs, tools/scenarios/arena-feel.mjs, tools/scenarios/arena-steering.mjs, tools/scenarios/muddy-hollow.mjs, tools/scenarios/new-warlords.mjs, tools/scenarios/sal-fight.mjs, tools/scenarios/scrapdome.mjs, tools/scenarios/warlord-format.mjs, tools/scenarios/warlord-pay.mjs, tools/scenarios/warlord-reward.mjs]
-    hook_requests: [src/sound-bank.js]
+    hooks: [src/sound-bank.js]
     scope_reason: "Retired switch removal reaches test fixtures and browser scenarios. The lane owns each named tool before changing it; positive discovery, playback and save checks stay."
-    note: "Direct source guards and balance tools have a committed first slice. The audio sound-bank hook remains with AUD-17 pending release."
+    note: "Kyle released the idle AUD-17 sound-bank hook on 3 October for this card only. Remove the retired Wasteland cue flag fields and switch-off branches without changing sounds, recipes, voice takes or AUD-17's record. Keep the two existing Warlord gate deletions in this card."
     acceptance:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
       - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
-    sequencing: "Disjoint source, balance, test and scenario cleanup is prepared in this lane. AUD-17 still owns the sound-bank hook; the audio gates, feature catalog and final lane merge wait for its release."
+    sequencing: "The audio hook is released for this card. Finish the retired cue gates and catalog cleanup, then run the lane gate before merge."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -982,9 +999,13 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-01]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-03
+    branch: codex/cmb/arsenal-wave2
+    note: "Wave 2 starts in owned new modules; central combat, registry, renderer and audio hooks wait for Balance and AUD-17. A native flame scoring test is red (360 hits for one burst); grant its armor/scoring hooks during the final re-slice."
     flag: arsenal
     owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, docs/changes/ARS-02.md]
+    hook_requests: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json, tools/combat-balance.mjs]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build the three wave 2 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. Side Saws are Sal's kit, not a weapon here."
@@ -1044,9 +1065,14 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-03
+    branch: codex/foot/boarding
+    note: "Boarding module passed 12 focused checks. The Director granted the disjoint on-foot transition and range hooks after a red native 170 m landing test; crash-delta, weapon-disable, render and audio hooks wait for Balance and AUD-17. Grant CREW shared hooks first, then ARS, after those owners release them."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
+    hooks: [src/onfoot-transition.js, src/onfoot.js]
+    hook_requests: [src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json]
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 2 exactly, with its tests: speed limits at 49/51 and 89/91 km/h, shake-off rules, one charge, the safe landing, and determinism at 30, 60 and 144 FPS."
