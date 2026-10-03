@@ -1091,11 +1091,11 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-03
     branch: codex/foot/boarding
-    note: "Boarding module passed 12 focused checks. The Director granted the disjoint on-foot transition and range hooks after a red native 170 m landing test; crash-delta, weapon-disable, render and audio hooks wait for Balance and AUD-17. Grant CREW shared hooks first, then ARS, after those owners release them."
+    note: "Boarding module and on-foot hooks are built. Balance merged as 18132fa, releasing crash-delta, weapon-disable, render and audio routing to CREW first. AUD-17 still owns the sound bank and audio catalog; its narrow release applied only to Balance. ARS waits for CREW's shared hooks."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
-    hooks: [src/onfoot-transition.js, src/onfoot.js]
-    hook_requests: [src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json]
+    hooks: [src/onfoot-transition.js, src/onfoot.js, src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js]
+    hook_requests: [src/sound-bank.js, tools/audio/catalog.json]
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 2 exactly, with its tests: speed limits at 49/51 and 89/91 km/h, shake-off rules, one charge, the safe landing, and determinism at 30, 60 and 144 FPS."
