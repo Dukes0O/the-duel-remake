@@ -992,7 +992,10 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-01]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-03
+    branch: codex/cmb/arsenal-wave2
+    note: "Wave 2 starts in owned new modules; central combat, registry, renderer and audio hooks need a Director re-slice after Balance and AUD-17 release."
     flag: arsenal
     owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, docs/changes/ARS-02.md]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
@@ -1054,7 +1057,10 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-03
+    branch: codex/foot/boarding
+    note: "Boarding starts in the owned new module; on-foot, grapple, contact and rendering hooks need a Director re-slice after Balance."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
     helpers: [test_author, reviewer, browser_qa]
