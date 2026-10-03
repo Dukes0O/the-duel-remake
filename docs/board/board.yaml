@@ -1025,10 +1025,11 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-03
     branch: codex/cmb/arsenal-wave2
-    note: "Wave 2 starts in owned new modules; central combat, registry, renderer and audio hooks wait for Balance and AUD-17. A native flame scoring test is red (360 hits for one burst); grant its armor/scoring hooks during the final re-slice."
+    note: "Balance and CREW shared hooks have merged. The Board grants ARS-02 its central combat, save, render, audio routing and balance hooks, including the armor/scoring hook for the red 360-style-hit flame test. AUD-17 still owns sound-bank.js and the audio catalog; the prior narrow release applied only to Balance. Keep those two hook requests open and do not merge ARS-02 as finished until its seven new CC0 cues meet the sound acceptance."
     flag: arsenal
     owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, docs/changes/ARS-02.md]
-    hook_requests: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json, tools/combat-balance.mjs]
+    hooks: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
+    hook_requests: [src/sound-bank.js, tools/audio/catalog.json]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build the three wave 2 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. Side Saws are Sal's kit, not a weapon here."
