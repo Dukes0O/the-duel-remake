@@ -11,7 +11,7 @@ import {territoryPanel} from './screen-territory.js';
 
 export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessage,
   getArmoryCar = () => 'falcone_f42', kitsEnabled = () => false,
-  loadoutsEnabled = () => false, arsenalEnabled = () => false, crewEnabled = () => false, crewGearEnabled = () => false, warlordsEnabled = () => false, action}) {
+  loadoutsEnabled = () => false, arsenalEnabled = () => false, crewEnabled = () => false, crewGearEnabled = () => false, action}) {
   const arsenalOptions = () => ({wastelandEnabled:kitsEnabled(), arsenalEnabled:arsenalEnabled()});
   const crewContext = saved => ({gearEnabled: crewGearEnabled() === true &&
     saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true});
@@ -42,14 +42,14 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const car = Object.hasOwn(CARS, requested) ? requested : 'falcone_f42';
     const unlocked = isCarUnlocked(saved, car);
     const storedKit = getEquippedArmorKit(saved, car);
-    const equipped = storedKit === 'side-saws' && !warlordsEnabled() ? null : storedKit;
+    const equipped = storedKit;
     const equippedDetails = armorKitDetails(equipped);
     const rank = saved.wasteland?.rank || 1;
     const defeated = hasDefeatedWarlord(saved.wasteland?.warlords);
     const scrapCareer = saved.wasteland?.discoveredGate === true;
     const balance = scrapCareer ? saved.wasteland.scrap : saved.credits;
-    const earned = warlordsEnabled() ? Object.entries(EARNED_ARMOR_KITS)
-      .filter(([id]) => ownsArmorKit(saved, car, id)) : [];
+    const earned = Object.entries(EARNED_ARMOR_KITS)
+      .filter(([id]) => ownsArmorKit(saved, car, id));
     const equippedText = !equippedDetails ? 'STOCK ARMOR' :
       `${equippedDetails.name.toUpperCase()} EQUIPPED (${equipped === 'side-saws'
         ? '1.6× SIDE DAMAGE' : `+${equippedDetails.armor} ARMOR`})`;
@@ -74,7 +74,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
   function armoryScreen() {
     const garageMessage=getGarageMessage();
     const scrapCareer=kitsEnabled()&&profile().wasteland?.discoveredGate===true;
-    return `<section class="garage-panel" role="dialog" aria-modal="true" aria-labelledby="armory-title"><header class="shop-heading"><div><p class="eyebrow">THE ARMORY</p><h2 id="armory-title">UPGRADE YOUR WEAPONS${kitsEnabled()?' & ARMOR':''}.</h2></div><div class="shop-wallet"><span>${scrapCareer?'YOUR SCRAP':'YOUR CREDITS'}</span><b>${scrapCareer?profile().wasteland.scrap:credits(profile().credits)} ${scrapCareer?'SCRAP':'CR'}</b></div><button class="shop-close" data-action="armory-close" aria-label="Close armory">×</button></header>${scrapCareer?territoryPanel(profile(), warlordsEnabled() ? {canFight: false} : {canFight: false, builtWarlordIds: []}):''}${crewEnabled()?crewPanel(profile(),escapeHTML,crewContext(profile())):''}${loadoutsEnabled()?loadoutPanel(profile()):''}${arsenalOffers(profile())}${weaponUpgradePanel(profile(),kitsEnabled())}${kitsEnabled()?armorKitPanel(profile()):''}<p class="garage-message" role="status">${escapeHTML(garageMessage)||'Collect glowing road power-ups in Mad Max Duel to recharge a weapon instantly.'}</p><footer class="shop-footer">${action('BACK TO THE ROAD','armory-close')}</footer></section>`;
+    return `<section class="garage-panel" role="dialog" aria-modal="true" aria-labelledby="armory-title"><header class="shop-heading"><div><p class="eyebrow">THE ARMORY</p><h2 id="armory-title">UPGRADE YOUR WEAPONS${kitsEnabled()?' & ARMOR':''}.</h2></div><div class="shop-wallet"><span>${scrapCareer?'YOUR SCRAP':'YOUR CREDITS'}</span><b>${scrapCareer?profile().wasteland.scrap:credits(profile().credits)} ${scrapCareer?'SCRAP':'CR'}</b></div><button class="shop-close" data-action="armory-close" aria-label="Close armory">×</button></header>${scrapCareer?territoryPanel(profile(), {canFight: false}):''}${crewEnabled()?crewPanel(profile(),escapeHTML,crewContext(profile())):''}${loadoutsEnabled()?loadoutPanel(profile()):''}${arsenalOffers(profile())}${weaponUpgradePanel(profile(),kitsEnabled())}${kitsEnabled()?armorKitPanel(profile()):''}<p class="garage-message" role="status">${escapeHTML(garageMessage)||'Collect glowing road power-ups in Mad Max Duel to recharge a weapon instantly.'}</p><footer class="shop-footer">${action('BACK TO THE ROAD','armory-close')}</footer></section>`;
   }
   armoryScreen.yardContent = () =>
     `${loadoutsEnabled()?loadoutPanel(profile()):''}`+

@@ -98,9 +98,9 @@ export function arenaBoardMarkup(hud, escapeHTML) {
 export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'last-car-rolling', venueId = 'scrapdome', profile, featureFlags} = {}) {
   const choice = count => `<button type="button" class="choice${count === opponents ? ' on' : ''}" data-arena-opponents="${count}" aria-pressed="${count === opponents}">${count} ${count === 1 ? 'CAR' : 'CARS'}</button>`;
   const available = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 6 &&
-    featureFlags?.enabled('scrapdome') === true && featureFlags?.enabled('fuel-run') === true;
+    featureFlags?.enabled('fuel-run') === true;
   const bountyAvailable = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 9 &&
-    featureFlags?.enabled('scrapdome') === true && featureFlags?.enabled('bounty-hunt') === true;
+    featureFlags?.enabled('bounty-hunt') === true;
   const saltAvailable = arenaVenueAvailable(featureFlags, profile, 'salt-flats');
   const selectedVenue = saltAvailable && venueId === 'salt-flats' ? 'salt-flats' : 'scrapdome';
   const venueChoice = saltAvailable ? '<div class="segmented" role="group" aria-label="Arena venue">' +

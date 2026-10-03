@@ -610,7 +610,14 @@ tasks:
     lane: OPS
     size: L
     needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE, ARS-CORE, ARENA-WRECK-RATE, ARENA-06]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-02-resume
+    branch: codex/ops/balance-w2-off-retire
+    owns: [src/app.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/armor-kit-meshes.js, src/audio.js, src/combat-ai.js, src/combat-armor.js, src/combat-hud.js, src/combat-projectiles.js, src/combat-scene.js, src/combat-weapons.js, src/crew-gear/gear.js, src/feature-flags.js, src/game.js, src/raiders.js, src/render3d.js, src/screen-arena.js, src/screen-armory.js, src/screen-garage.js, src/screen-hud.js, src/screen-router.js, src/sim-contacts.js, src/sim-driving.js, src/sim-rival.js, src/vehicle-contact-modifiers.js, src/wasteland-access.js, src/warlords/index.js, src/warlords/sal.js, tools/arena-balance.mjs, tools/combat-balance.mjs, tools/onfoot-balance.mjs, tools/test-arena-event.mjs, tools/test-arena-ui.mjs, tools/test-combat-balance.mjs, tools/test-muddy-hollow.mjs, tools/test-side-saws.mjs, tools/test-wasteland-easter-egg.mjs, tools/test-warlord-hooks.mjs, tools/test-warlord-format.mjs, tools/test-warlord-settlement.mjs, tools/test-preview-launcher.mjs, docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md]
+    hook_requests: [src/sound-bank.js]
+    sequencing: "Remove direct off-path source guards first while preserving the released behavior; keep the catalog entries until AUD-17 releases the sound-bank hook. Then remove the retired balance modes, tests, scenario switches and board flag fields. The Vultures file remains untouched."
+    note: "Kyle approved the fixed-on behavior on 30 September. AUD-17 retains the sound-bank hook; do not edit it until released."
+    scope_reason: "The shared arena start guard must lose its retired Scrapdome/Wasteland checks, with its rejection test changed to preserve malformed-field checks."
     acceptance:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."

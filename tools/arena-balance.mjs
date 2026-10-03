@@ -15,7 +15,7 @@ const SEEDS = quick ? [1989, 7] : [1989, 7, 42, 2024];
 const PLAYER_CARS = quick ? ['banshee_muscle'] : ['banshee_muscle', 'viper_proto', 'falcone_f42'];
 const FIELDS = quick ? [3] : [1, 2, 3];
 const OPPONENTS = ['dusthawk_rally', 'aurora_gt', 'stuttgart_959s'];
-const FLAGS = {wasteland2: true, 'hidden-road': true, scrapdome: true};
+const FLAGS = {'hidden-road': true};
 
 function scriptedPlayer(duel, step) {
   const s = duel.state, me = worldPose(duel, s);
@@ -36,6 +36,7 @@ function scriptedPlayer(duel, step) {
 
 export function playRound({difficulty, seed, car, field}) {
   const duel = new Duel({seed, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
   if (!duel.startArenaEvent({car, cpuDifficulty: difficulty, seed,
     opponents: OPPONENTS.slice(0, field).map(car => ({car}))})) throw Error('arena refused');
   const s = duel.state, out = {wrecks: 0, cpuWallHits: 0, near: 0, samples: 0, reversing: 0};

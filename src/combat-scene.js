@@ -7,6 +7,7 @@ import {
 import {
   actorForTarget
 } from './arsenal/targeting.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 import {
   hazardsFor
 } from './arsenal/hazards.js';
@@ -412,7 +413,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     s.stageTimeSec >= departed.presentation.startedAt &&
     s.stageTimeSec < departed.presentation.startedAt + departed.presentation.duration;
     const showFighter=active&&s.mode==='wasteland'&&
-    duel.featureFlags?.enabled('wasteland2')&&((s.onFoot&&!!s.fighter)||showDeparted);
+    wastelandRulesActive(s)&&((s.onFoot&&!!s.fighter)||showDeparted);
     let fighterCount = 0;
     const fighterCapacity = showFighter ? 11 : 12;
     if (active && s.raids) {
@@ -434,7 +435,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     }
     for (let index = fighterCount; index < fighterRoster.length; index++) fighterRoster[index] = null;
     fighterOptions.active = fighterCount > 0;
-    fighterOptions.enabled = s.mode === 'wasteland' && !!duel.featureFlags?.enabled('wasteland2');
+    fighterOptions.enabled = s.mode === 'wasteland' && wastelandRulesActive(s);
     fighterOptions.time = s.stageTimeSec ?? 0;
     fighterOptions.cameraPosition = vehicles.camera?.position || null;
     onFootFigures.update(fighterRoster, fighterOptions);
@@ -448,7 +449,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       rig.bumper.visible = visible;
       // An explicit disabled bumper removes the spike advantage and its teeth
       // in the flagged combat rules. Existing Wasteland rigs remain unchanged.
-      const spikesVisible = !(s.mode === 'wasteland' && duel.featureFlags?.enabled('wasteland2') &&
+      const spikesVisible = !(s.mode === 'wasteland' && wastelandRulesActive(s) &&
       actor?.combatBumperSpikes === false);
       rig.spikes.forEach(spike => {
         spike.visible = spikesVisible;

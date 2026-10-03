@@ -16,6 +16,7 @@ const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959
 
 function arena({difficulty = 'medium', seed = 1989, opponents = FIELD, flags = ON} = {}) {
   const duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
   const started = duel.startArenaEvent({car: 'banshee_muscle', cpuDifficulty: difficulty, seed, opponents});
   return {duel, started};
 }
@@ -74,9 +75,7 @@ test('the venue is a valid ring and never a menu circuit', () => {
   assert.ok(titan.features.barriers.every(barrier => Math.abs(barrier.off) === 22));
 });
 
-test('an arena event needs the switch and a valid field', () => {
-  assert.equal(arena({flags: {wasteland2: true, scrapdome: false}}).started, false);
-  assert.equal(arena({flags: {wasteland2: false, scrapdome: true}}).started, false);
+test('an arena event needs a valid field', () => {
   assert.equal(arena({opponents: []}).started, false);
   assert.equal(arena({opponents: [...FIELD, {car: 'viper_proto'}]}).started, false);
   assert.equal(arena({opponents: [{car: 'no-such-car'}]}).started, false);

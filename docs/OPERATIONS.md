@@ -78,7 +78,8 @@ time. A failed merge check blocks further feature merges until it is fixed.
 Run the full check on the exact integration commit before a release. Record
 test results, browser scenarios, balance, frame pacing, art checks and save
 checks. A check marked not measured must be run before claiming that measure
-passed.
+passed. Combat balance uses one `node tools/combat-balance.mjs --check` run
+with the discovered, released Wasteland rules; it has no Wasteland on/off pair.
 
 ## Removing completed lanes on Windows
 

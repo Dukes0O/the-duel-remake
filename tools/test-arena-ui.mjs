@@ -26,6 +26,7 @@ const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959
 
 function fight() {
   const duel = new Duel({seed: 1989, featureFlags: ON});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({car: 'banshee_muscle', cpuDifficulty: 'medium', seed: 1989, opponents: FIELD}), true);
   duel.state.countdown = 0; duel.step(1 / 120);
   return duel;
@@ -76,7 +77,7 @@ test('the yard panel offers one to three computer cars and an entry button', () 
   assert.match(panel, /HARD/);
   const profile = {wasteland: {scrap: 10, territories: {}}};
   const without = yardHomeScreen({profile, playerName: 'A', escapeHTML});
-  assert.doesNotMatch(without, /yard-scrapdome/, 'no SCRAPDOME entry while the switch is off');
+  assert.doesNotMatch(without, /yard-scrapdome/, 'menu view does not expose the yard event entry');
   const withArena = yardHomeScreen({profile, playerName: 'A', escapeHTML, panel: 'scrapdome', arenaMarkup: panel});
   assert.match(withArena, /data-action="yard-scrapdome"/);
   assert.match(withArena, /ENTER THE SCRAPDOME/);
@@ -102,11 +103,7 @@ test('results and pause screens offer rematch and the way back to the yard', () 
   assert.match(pause.actions, /arena-yard/);
 });
 
-test('the app offers the Scrapdome only in the yard, to a player who found the gate, with the switch on', () => {
-  const off = appInYard({scrapdome: false});
-  assert.equal(off.arenaAvailable(), false);
-  assert.equal(off.startArenaEvent(), false);
-  off.dispose?.();
+test('the app offers the Scrapdome only in the yard, to a player who found the gate', () => {
   const stranger = appInYard({discovered: false});
   assert.equal(stranger.arenaAvailable(), false);
   assert.equal(stranger.startArenaEvent(), false, 'not from the main menu');

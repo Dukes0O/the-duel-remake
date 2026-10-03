@@ -48,6 +48,7 @@ function profile() {
 }
 function arena(winnerId = 'player') {
   const duel = new Duel({featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'sal', car: 'falcone_f42'}), true);
   const a = structuredClone(duel.state.arena);
   a.phase = 'over';
@@ -319,19 +320,16 @@ test('failed warlord settlement exposes RETRY SAVE without advertising the unpai
 });
 
 
-test('App keeps a saved Side Saws reward inactive while the warlords switch is off', () => {
+test('App keeps saved Side Saws reward active in the released build', () => {
   const app = appFight();
   try {
     finish(app); app.returnToMenu();
-    // Released on (WAR-SAL-RELEASE); the switch-off path stays tested until
-    // the switch is removed.
-    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true, overrides: {warlords: false}});
     equal(getEquippedArmorKit(app.profile, 'falcone_f42'), 'side-saws', 'saved reward remains owned and equipped');
-    equal(app.equipArmorKit('stuttgart_959s', 'side-saws').ok, false, 'released build cannot change the dev reward equip');
+    equal(app.equipArmorKit('stuttgart_959s', 'side-saws').ok, true, 'released reward equips another owned car');
     equal(app.visitWasteland(), true, 'released yard remains available'); app.advance(8);
     equal(app.startArenaEvent(), true, 'released Last Car Rolling remains available');
-    equal(app.duel.state.combatArmorKit, null, 'released event does not activate the saved dev kit');
-    equal(getEquippedArmorKit(app.profile, 'falcone_f42'), 'side-saws', 'switch isolation never deletes the saved entitlement');
+    equal(app.duel.state.combatArmorKit, 'side-saws', 'released event uses the saved earned kit');
+    equal(getEquippedArmorKit(app.profile, 'falcone_f42'), 'side-saws', 'the saved entitlement remains equipped');
   } finally { app.dispose?.(); }
 });
 
@@ -544,7 +542,7 @@ test('initial reward preserves genuine unsaved owner and freshly saved other pla
 });
 
 
-test('an actual saved Sal win advertises earned working saws only for the built enabled fight', () => {
+test('an actual saved Sal win advertises earned working saws for the built fight', () => {
   const app = appFight();
   try {
     const result = finish(app);
@@ -561,15 +559,14 @@ test('an actual saved Sal win advertises earned working saws only for the built 
       territories: {...saved.wasteland.territories, gunn: {hold: 100, claimed: true}}}};
     ok(!/ROCKET PODS EARNED|data-warlord="gunn"/.test(territoryPanel(future)),
       'a saved future defeat cannot claim an unbuilt reward or advertise its rematch');
-    const armory = enabled => createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
-      getGarageMessage: () => '', kitsEnabled: () => true, warlordsEnabled: () => enabled,
+    const armory = () => createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
+      getGarageMessage: () => '', kitsEnabled: () => true,
       action: label => label})();
-    ok(!/SIDE SAWS|side-saws/i.test(armory(false)), 'released Armory hides the reward and earned territory claim with warlords off');
     const panel = territoryPanel(saved);
     ok(/data-warlord="sal">REMATCH/.test(panel), 'the saved built fight remains replayable');
     equal(saved, snapshot, 'territory and Armory rendering do not change saved progress');
     ok(/DEFEATED · SIDE SAWS EARNED · CLAIMED/.test(panel),
       'actual durable Sal victory must advertise the reviewed working reward on its defeated territory');
-    ok(/SIDE SAWS EARNED/.test(armory(true)), 'enabled Armory also reports the actual earned territory reward');
+    ok(/SIDE SAWS EARNED/.test(armory()), 'Armory also reports the actual earned territory reward');
   } finally { app.dispose?.(); }
 });

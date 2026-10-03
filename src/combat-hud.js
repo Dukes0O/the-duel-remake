@@ -4,13 +4,14 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {NOTORIETY_XP} from './notoriety.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 import {CAR_SLOT_DIRECTIONS,CAR_SLOT_PAD} from './car-loadout.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 const zones = ['front', 'right', 'rear', 'left'];
 
 export function combatHudEnabled(duel, state) {
   return state.mode === 'wasteland' && !!state.combat &&
-    duel.featureFlags?.enabled('wasteland2') === true && state.status !== 'menu';
+    wastelandRulesActive(state) && state.status !== 'menu';
 }
 
 export function combatHudVisible(duel, state) {
