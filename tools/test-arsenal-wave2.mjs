@@ -223,7 +223,7 @@ check('active weapons keep serializable simulation state', () => {
 function nativeRace() {
   const flags = createFeatureFlags({storage: null, qa: true,
     catalog: {...FEATURE_STATES, arsenal: 'dev'},
-    overrides: {wasteland2: true, arsenal: true}});
+    overrides: {arsenal: true}});
   const duel = new Duel({seed: 202602, featureFlags: flags});
   duel.startCampaign({mode: 'wasteland', car: 'falcone_f42',
     driverId: 'club', crewId: 'rook', discoveredGate: true,
