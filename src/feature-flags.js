@@ -4,6 +4,7 @@ export const FEATURE_STATES = Object.freeze({
   'career-backup': 'dev', wasteland2: 'on', 'hidden-road': 'on', scrapdome: 'on',
   'titan-climb': 'on', 'muddy-hollow': 'on', warlords: 'on',
   'fuel-run': 'dev', 'bounty-hunt': 'dev', arsenal: 'dev', 'salt-flats': 'dev',
+  'crew-gear': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

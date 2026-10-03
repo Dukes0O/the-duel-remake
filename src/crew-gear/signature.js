@@ -100,16 +100,13 @@ function flamer(duel, fighter, gear, dt) {
       Math.abs(at.y - fighter.y - .85) < 2 &&
       (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2);
   };
-  const origin = {x: fighter.x, y: fighter.y + 1, z: fighter.z};
   for (const actor of enemyCars(duel)) {
     const at = carBodyPoint(duel, actor);
-    if (inside(at) && gearContact(duel, origin, at, duel.state, {fighters: false})?.actor === actor)
-      damageGearCar(duel, actor, gear.carDamage * dt, duel.state);
+    if (inside(at)) damageGearCar(duel, actor, gear.carDamage * dt, duel.state);
   }
   for (const target of fighterTargets(duel)) {
     const f = target.fighter, at = {x: f.x, y: f.y + .85, z: f.z};
-    if (!crewFireImmune(duel, f) && inside(at) &&
-        gearContact(duel, origin, at, duel.state)?.target?.fighter === f)
+    if (!crewFireImmune(duel, f) && inside(at))
       damageGearFighter(duel, target, gear.fighterDamage * dt, duel.state);
   }
   fighter.flaming = true;
@@ -230,7 +227,10 @@ function tuskPush(duel, fighter, input) {
     const along = Math.abs(dx * Math.sin(body.heading) + dz * Math.cos(body.heading));
     if (across > body.halfWidth + .5 || along > body.halfLength + .5 ||
         dx * direction.x + dz * direction.z > 0) continue;
-    startKnock(actor, {vx: Math.sin(fighter.yaw), vz: Math.cos(fighter.yaw), spin: 0,
+    const vx = Math.sin(fighter.yaw), vz = Math.cos(fighter.yaw);
+    actor.crewGearPush={stageIndex:duel.state.stageIndex,vx,vz,
+      expiresAt:duel.state.stageTimeSec+1};
+    startKnock(actor, {vx, vz, spin: 0,
       severity: 'nudge', heading: bodyHeading(duel, actor), player: actor === duel.state,
       arenaShove: !!duel.state.arena});
   }
@@ -277,7 +277,8 @@ export function stepSignatureGear(duel, dt) {
         user.lastFireAt = state.stageTimeSec;
         user.nextFireAt = state.stageTimeSec + (gear.recharge || gear.reload || .3);
       }
-      duel.emit({footWeaponFired: gear.id, crewGearCue: `crew.${gear.id}.fire`, hitPosition: fighter});
+      duel.emit({footWeaponFired: gear.id, hitPosition: fighter});
+      if (gear.id === 'marksman') duel.emit({crewGearCue: 'crew.marksman.fire', hitPosition: fighter});
     }
   }
   if (wasFlaming && !fighter.flaming)

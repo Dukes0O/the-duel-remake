@@ -36,6 +36,18 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  'crew.sticky.arm': cue('weapons', {flag: 'crew-gear', layers: [tone(105, .18, .11, 'triangle', 0, 65)]}),
+  'crew.sticky.throw': cue('weapons', {flag: 'crew-gear', layers: [noise(620, .11, .1), tone(220, .12, .08, 'triangle', 0, 110)]}),
+  'crew.sticky.beep': cue('weapons', {flag: 'crew-gear', layers: [tone(1180, .07, .07, 'square')]}),
+  'crew.sticky.explode': cue('impacts', {flag: 'crew-gear', layers: [noise(190, .24, .24), tone(68, .3, .18, 'triangle', 0, 28)]}),
+  'crew.grapple.launch': cue('weapons', {flag: 'crew-gear', layers: [tone(190, .14, .13, 'sawtooth', 0, 520)]}),
+  'crew.turret.deploy': cue('weapons', {flag: 'crew-gear', layers: [tone(130, .22, .14, 'triangle', 0, 52)]}),
+  'crew.turret.fire': cue('weapons', {flag: 'crew-gear', layers: [noise(760, .09, .09), tone(90, .08, .12, 'triangle', 0, 40)]}),
+  'crew.turret.retire': cue('weapons', {flag: 'crew-gear', layers: [tone(210, .18, .1, 'triangle', 0, 70)]}),
+  'crew.flamer.start': cue('weapons', {flag: 'crew-gear', layers: [noise(1100, .3, .11, 'lowpass'), tone(74, .3, .14, 'sawtooth')]}),
+  'crew.flamer.stop': cue('weapons', {flag: 'crew-gear', layers: [noise(700, .18, .07, 'lowpass')]}),
+  'crew.marksman.fire': cue('weapons', {flag: 'crew-gear', layers: [noise(1250, .1, .15), tone(180, .12, .1, 'triangle', 0, 48)]}),
+  'crew.scrap-cannon.fire': cue('weapons', {flag: 'crew-gear', layers: [noise(360, .2, .21), tone(62, .24, .2, 'triangle', 0, 25)]}),
   'weapon.harpoon.fire': cue('weapons', {
     flag: 'arsenal',
     files: ['arsenal-wave1/harpoon-fire-a.ogg', 'arsenal-wave1/harpoon-fire-b.ogg',

@@ -101,6 +101,12 @@ export function footActionPresentation(state) {
     return {text: weapons.repairBlockedUntilRelease
       ? 'RELEASE FIRE TO REPAIR AGAIN' : 'HOLD FIRE NEAR YOUR CAR', locked: false};
   }
+  if (gear.name !== 'LONGHORN RPG') {
+    if (gear.name === 'HAND FLAMER' && state.fighter?.flaming) return {text: 'FLAMING', locked: false};
+    if (gear.ammo === 0) return {text: 'OUT OF GEAR', locked: false};
+    const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
+    return {text: reload > 0 ? `READY IN ${reload.toFixed(1)}s` : 'FIRE TO USE', locked: false};
+  }
   if (gear.ammo === 0) return {text: 'OUT OF ROCKETS', locked: false};
   const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
   if (reload > 0) return {text: `RELOADING ${reload.toFixed(1)}s`, locked: false};

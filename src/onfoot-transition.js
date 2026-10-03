@@ -53,9 +53,8 @@ function stepFighterInFixedTime(duel, dt) {
         fighter.bailTumbleSeconds - FIGHTER_STEP_SECONDS);
     }
     const previousRespawns = fighter.respawns;
-    stepFighter(duel.course, state, fighter,
-      fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput,
-      FIGHTER_STEP_SECONDS);
+    if (!state.crewGear?.grapple) stepFighter(duel.course, state, fighter,
+      fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput, FIGHTER_STEP_SECONDS);
     if (fighter.respawns !== previousRespawns) {
       fighter.presentation = {clip: 'get-up', startedAt: Math.max(0, state.stageTimeSec -
         (transition.fighterStepRemainder - FIGHTER_STEP_SECONDS)), duration: .8};
@@ -184,7 +183,14 @@ export function stepParkedRace(duel, dt) {
     duel._jump(state, dt);
   }
   duel._traffic(dt);
-  for (const opponent of state.opponents) duel._rival(dt, opponent);
+  for (const opponent of state.opponents) {
+    duel._rival(dt, opponent);
+    const push=opponent.crewGearPush;
+    if(push&&push.stageIndex===state.stageIndex&&state.stageTimeSec<=push.expiresAt){
+      opponent.knock={vx:push.vx,vz:push.vz,spin:0,severity:'nudge',age:0,vy:0};
+      opponent.speedMph=Math.hypot(push.vx,push.vz)*3.6/COMBAT_TUNING.armor.kphPerMph;
+    }else if(push) delete opponent.crewGearPush;
+  }
   duel._collisions();
   strikeFighterFromVehicles(duel);
   duel._crushProps(state);

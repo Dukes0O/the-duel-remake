@@ -229,8 +229,8 @@ check('Wren throws two grenades within 20 m; native smoke is 5 m across and last
   near(cloud.radius,2.5,'5 m across means literal 2.5 m radius');near(cloud.lifetime,6,'native smoke lifetime');
   assert.ok(Math.hypot(cloud.x-origin.x,cloud.z-origin.z)<=20+.3,'native thrown smoke stays within 20 m');assert.equal(duel.state.footGear.ammo,1);
   const owner=duel.state,enemy=duel.state.rival;
-  const a=duel.course.nearest(cloud.x-10,cloud.z,owner.s),b=duel.course.nearest(cloud.x+10,cloud.z,enemy.s);
-  placeCar(owner,a.s,a.lateral);placeCar(enemy,b.s,b.lateral);
+  const across=duel.course.nearest(cloud.x,cloud.z,owner.s);
+  placeCar(owner,across.s-10,across.lateral);placeCar(enemy,across.s+10,across.lateral);
   assert.equal(targetFor(duel,owner,{range:50}),null,'real shared smoke blocks CPU sight and lock selection');
   holdTargets(duel,721);assert.equal(hazardsFor(duel).includes(cloud),false,'native cloud retires after six seconds');
 });

@@ -243,6 +243,15 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       g,bomb,arrow,rocket
     };
   });
+  const crewTurret = new THREE.Group();
+  const turretBase = new THREE.Mesh(new THREE.CylinderGeometry(.48,.62,.42,8), materials.iron);
+  const turretHead = new THREE.Mesh(new THREE.BoxGeometry(.8,.48,.62), materials.iron);
+  const turretBarrel = new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.82,6), materials.iron);
+  turretHead.position.y=.43; turretBarrel.position.set(0,.48,.62);
+  turretBarrel.rotation.x=Math.PI/2;
+  crewTurret.add(turretBase,turretHead,turretBarrel); crewTurret.visible=false; group.add(crewTurret);
+  const crewFlame = new THREE.Mesh(new THREE.ConeGeometry(1.75,6,16,1,true),materials.fire);
+  crewFlame.visible=false;group.add(crewFlame);
   const bursts=Array.from({
     length:32
   },()=>{
@@ -476,13 +485,29 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       g.visible=!!p;
       if(!p)return;
       g.position.set(p.x,p.y,p.z);
-      bomb.visible=p.kind==='bomb';
-      arrow.visible=p.kind==='crossbow'||p.kind==='harpoon';
+      bomb.visible=p.kind==='bomb'||(p.crewGearShot&&p.kind!=='marksman');
+      arrow.visible=p.kind==='crossbow'||p.kind==='harpoon'||p.kind==='marksman';
       rocket.visible=p.kind==='rpg';
       g.rotation.set(0,Math.atan2(p.vx,p.vz),0);
       rocket.rotation.x=Math.PI/2-Math.atan2(p.vy,Math.hypot(p.vx,p.vz));
       bomb.rotation.set(p.age*5,p.age*3,0);
     });
+    const turret=s.crewGear?.turret;
+    crewTurret.visible=active&&duel.featureFlags?.enabled('crew-gear')===true&&!!turret;
+    if(crewTurret.visible){
+      crewTurret.position.set(turret.x,turret.y,turret.z);
+      const target=turret.targetId?actorForTarget(duel,turret.targetId):null;
+      if(target){const at=point(duel,target);turretHead.rotation.y=Math.atan2(at.x-turret.x,at.z-turret.z);}
+      turretBase.rotation.y=s.stageTimeSec*.3;
+    }
+    const fighter=s.fighter;
+    crewFlame.visible=active&&duel.featureFlags?.enabled('crew-gear')===true&&
+      s.onFoot&&fighter?.flaming===true;
+    if(crewFlame.visible){
+      crewFlame.position.set(fighter.x+Math.sin(fighter.yaw)*3,fighter.y+.9,
+        fighter.z+Math.cos(fighter.yaw)*3);
+      crewFlame.rotation.set(Math.PI/2,fighter.yaw,0);
+    }
     bursts.forEach(({
       g,flame,smoke,wave,saucer,shards
     },i)=>{
@@ -524,7 +549,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       armorKits.dispose();
       for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
       rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
-      for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim])geometry.dispose();
+      for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim,
+        turretBase.geometry,turretHead.geometry,turretBarrel.geometry,crewFlame.geometry])geometry.dispose();
       hazardViews.forEach(view=>{
         view.oilMaterial.dispose();
         view.smokeMaterial.dispose();

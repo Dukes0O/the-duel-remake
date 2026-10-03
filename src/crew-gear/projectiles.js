@@ -38,6 +38,7 @@ export function launchGearProjectile(duel, fighter, gear, serial, motion = {x: 0
     ...origin, launchX: origin.x, launchY: origin.y, launchZ: origin.z,
     vx, vy, vz, age: 0, travelled: 0, thrown};
   combat.projectiles.push(shot);
+  if (gear.id === 'sticky-bomb') duel.emit({crewGearCue: 'crew.sticky.throw', hitPosition: origin});
   return shot;
 }
 function landGrenade(duel, shot, hit) {

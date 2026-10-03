@@ -16,7 +16,10 @@ import {decodeAudioBytes} from './audio/codec.mjs';
 // Only the six new recordings are decoded; no network or player storage is used.
 const CUES = ['weapon.harpoon.fire', 'weapon.harpoon.flight', 'weapon.harpoon.hit',
   'weapon.harpoon.break', 'weapon.caltrops.deploy', 'weapon.caltrops.hit'];
-const BANK_ADDITIONS = new Set([...CUES, 'arena.bounty-mark']);
+const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','crew.sticky.explode','crew.grapple.launch',
+  'crew.turret.deploy','crew.turret.fire','crew.turret.retire','crew.flamer.start','crew.flamer.stop',
+  'crew.marksman.fire','crew.scrap-cannon.fire'];
+const BANK_ADDITIONS = new Set([...CUES, 'arena.bounty-mark', ...CREW_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];

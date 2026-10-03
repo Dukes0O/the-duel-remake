@@ -1373,6 +1373,12 @@ export class EngineAudio {
       );
       this._playCue(ev.arsenalCue, {destination: output.level, onEnd: output.disconnect});
     }
+    if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue) {
+      const output = this._spatialOutput(
+        {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
+      );
+      this._playCue(ev.crewGearCue, {destination: output.level, onEnd: output.disconnect});
+    }
     if (ev.countdown) this._playCue('interface.countdown');
     if (ev.go) this._playCue('interface.go');
     if (ev.shift != null) {
