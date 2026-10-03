@@ -24,7 +24,7 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only';
 const BALANCE_FLAGS = ['arsenal'];
 
 function selectedFlags(flags = []) {
@@ -34,7 +34,8 @@ function selectedFlags(flags = []) {
 }
 
 export function parseArgs(args = []) {
-  const options = { flags: [], check: false, verbose: false, baselineOnly: false, probe: null };
+  const options = { flags: [], check: false, verbose: false, baselineOnly: false,
+    waveTwoOnly: false, probe: null };
   const seen = new Set();
   for (let index = 0; index < args.length; index++) {
     const argument = args[index];
@@ -48,6 +49,7 @@ export function parseArgs(args = []) {
     } else if (argument === '--check') options.check = true;
     else if (argument === '--verbose') options.verbose = true;
     else if (argument === '--baseline-only') options.baselineOnly = true;
+    else if (argument === '--wave-two-only') options.waveTwoOnly = true;
     else if (key === '--probe') {
       const parts = argument.slice('--probe='.length).split(',');
       const [cpuDifficulty, seedText] = parts;
@@ -58,7 +60,9 @@ export function parseArgs(args = []) {
     } else throw Error(usage);
   }
   if (options.baselineOnly && (options.check || options.verbose || options.probe) ||
-      options.probe && (options.check || options.verbose)) throw Error(usage);
+      options.probe && (options.check || options.verbose) ||
+      options.waveTwoOnly && (options.baselineOnly || options.probe || options.verbose))
+    throw Error(usage);
   return options;
 }
 
@@ -86,16 +90,26 @@ function memoryStorage() {
   };
 }
 
-function saveBalanceCareer(storage, arsenal) {
+function saveBalanceCareer(storage, arsenalRank) {
   const profile = createProfile();
+  const xp = arsenalRank > 1 ? Array.from({length: arsenalRank - 1}, (_, index) =>
+    400 + 150 * index).reduce((sum, amount) => sum + amount, 0) : 0;
   profile.wasteland = normalizeWasteland({...profile.wasteland,
-    xp: arsenal ? 3500 : 0, scrap: arsenal ? 3000 : 0, discoveredGate: true});
+    xp, scrap: arsenalRank >= 13 ? 4000 : arsenalRank > 1 ? 3000 : 0,
+    discoveredGate: true});
   const registry = createPlayerRegistry(profile);
   registry.players[0].name = 'Arsenal Balance';
   if (!savePlayers(registry, storage)) throw Error('Could not save the memory-only Arsenal career.');
 }
 
 function equipArsenalPolicy(app, policy) {
+  if (policy === 'wave-two' || policy === 'wave-two-close') {
+    for (const [slot, id] of ['rockets', 'flamethrower', 'magnet'].entries()) {
+      if (!app.purchaseArsenalWeapon(id).ok || !app.equipCarWeapon(slot, id).ok)
+        throw Error('Could not purchase and equip ' + id + ' through the native Armory.');
+    }
+    return;
+  }
   for (const [slot, id] of ['oil', 'smoke'].entries()) {
     if (!app.purchaseArsenalWeapon(id).ok || !app.equipCarWeapon(slot, id).ok)
       throw Error('Could not purchase and equip ' + id + ' through the native Armory.');
@@ -115,6 +129,7 @@ function equipArsenalPolicy(app, policy) {
 
 function weaponUseCounter(duel) {
   const uses = {player: {}, cpu: {}}, unattributed = {};
+  const countedRocketVolleys = new Set();
   let serial = duel.state.combat?.serial || 0;
   const count = (role, weapon) => { uses[role][weapon] = (uses[role][weapon] || 0) + 1; };
   return {uses, unattributed, observe(event) {
@@ -131,6 +146,19 @@ function weaponUseCounter(duel) {
     }
     if (event.arsenalCue === 'weapon.harpoon.fire' && event.projectile?.kind === 'harpoon') {
       count(event.projectile.enemy ? 'cpu' : 'player', 'harpoon');
+      return;
+    }
+    const waveTwoCue = { 'weapon.rockets.fire': 'rockets',
+      'weapon.flame.start': 'flamethrower', 'weapon.magnet.hum': 'magnet' }[event.arsenalCue];
+    if (waveTwoCue) {
+      if (waveTwoCue === 'rockets') {
+        const volleyId = event.projectile?.volleyId;
+        if (countedRocketVolleys.has(volleyId)) return;
+        countedRocketVolleys.add(volleyId);
+      }
+      if (event.actor === state) count('player', waveTwoCue);
+      else if (state.opponents.includes(event.actor)) count('cpu', waveTwoCue);
+      else unattributed[waveTwoCue] = (unattributed[waveTwoCue] || 0) + 1;
       return;
     }
     const weapon = event.weaponFired;
@@ -172,9 +200,11 @@ function eligibleWeapons(policy, duel) {
   const { state } = duel;
   if (state.status !== 'racing' || !state.combat || !state.rival) return [];
   const gap = duel.relativeS(state.rival.s, state.s) - state.s;
-  const keys = ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
+  const keys = ['wave-two', 'wave-two-close'].includes(policy) ?
+    ['rockets', 'flamethrower', 'magnet'] :
+    ['all', 'pursuit'].includes(policy) ? ['ufo', 'bomb', 'crossbow', 'star'] :
     [policy === 'ufo-max' ? 'ufo' : policy === 'rear-defense' ? 'crossbow' : policy];
-  return keys.filter(key => state.combat.cooldowns[key] <= 0 &&
+  return keys.filter(key => (state.combat.cooldowns[key] ?? 0) <= 0 &&
     (key !== 'crossbow' || gap >= 0 && gap <= 120) &&
     (key !== 'star' || state.combat.shield <= 0));
 }
@@ -186,7 +216,7 @@ function forwardSpeedMph(duel, actor) {
   return Math.max(0, along / Math.max(.25, 1 - frame.curvature * actor.lateral) / DRIVE.mphToWorld);
 }
 
-function driveRearDefense(app) {
+function driveRearDefense(app, goalGap = 18) {
   const drive = app._driveAutopilot.bind(app);
   app._driveAutopilot = dt => {
     drive(dt);
@@ -209,12 +239,12 @@ function driveRearDefense(app) {
     });
     if (trafficConflict) return;
     const targetSpeed = Math.max(15, forwardSpeedMph(duel, state.rival) +
-      Math.max(-45, Math.min(35, (gap - 18) * .4)));
+      Math.max(-45, Math.min(35, (gap - goalGap) * .4)));
     const speed = forwardSpeedMph(duel, state);
     // Keep App's passing line while the CPU is behind. Shadow only a car
     // genuinely ahead; aim through our own forward course lookahead.
     let steer = state.input.steer;
-    if (gap >= 8 && gap <= 120) {
+    if (gap >= Math.min(8, goalGap) && gap <= 120) {
       const metresPerSec = Math.max(0, state.speedMph) * DRIVE.mphToWorld;
       const headingTarget = Math.atan((targetLat - state.lateral) * 2.5 / Math.max(15, metresPerSec));
       const look = duel.course.at(state.s + metresPerSec * .18);
@@ -228,18 +258,23 @@ function driveRearDefense(app) {
   };
 }
 
-export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames = 30 * 600 } = {}) {
+export function run(policy, cpuDifficulty, seed = 1989,
+  { flags = [], maxFrames = 30 * 600, arsenalRank = 6 } = {}) {
   flags = selectedFlags(flags);
-  if (!(policies.includes(policy) || ['pursuit', 'rear-defense'].includes(policy)) || !difficulties.includes(cpuDifficulty) ||
+  if (!(policies.includes(policy) || ['pursuit', 'rear-defense', 'wave-two', 'wave-two-close'].includes(policy)) || !difficulties.includes(cpuDifficulty) ||
       !Number.isSafeInteger(seed) || !Number.isSafeInteger(maxFrames) || maxFrames < 0)
     throw Error('Invalid race policy, difficulty, seed or frame limit.');
+  if (!Number.isSafeInteger(arsenalRank) || arsenalRank < 1 || arsenalRank > 30 ||
+      ['wave-two', 'wave-two-close'].includes(policy) &&
+        (!flags.includes('arsenal') || arsenalRank < 13))
+    throw Error('Wave-two policy needs the arsenal switch and earned rank 13.');
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const previousCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
   let app;
   try {
     globalThis.localStorage = memoryStorage();
     globalThis.cancelAnimationFrame ??= () => {};
-    saveBalanceCareer(globalThis.localStorage, flags.includes('arsenal'));
+    saveBalanceCareer(globalThis.localStorage, flags.includes('arsenal') ? arsenalRank : 1);
     app = new App();
     app.duel.featureFlags = simulationFlags(flags);
     if (flags.includes('arsenal')) equipArsenalPolicy(app, policy);
@@ -266,12 +301,17 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
       };
     }
     if (policy === 'rear-defense') driveRearDefense(app);
+    if (policy === 'wave-two-close') driveRearDefense(app, 7);
     const duel = app.duel;
+    const cpuLoadout = ['wave-two', 'wave-two-close'].includes(policy)
+      ? [...(duel.state.rival?.weaponLoadout || [])] : null;
     if (policy === 'ufo-max' && !flags.includes('arsenal')) {
       duel.state.combat.levels.ufo = 3;
       duel.state.weaponLevels.ufo = 3;
     }
-    const shots = { ufo: 0, bomb: 0, crossbow: 0, star: 0 };
+    const shots = { ufo: 0, bomb: 0, crossbow: 0, star: 0,
+      ...(['wave-two', 'wave-two-close'].includes(policy)
+        ? {rockets: 0, flamethrower: 0, magnet: 0} : {}) };
     let cpuHits = 0, unattributedEnemyHits = 0, playerOpponentWrecks = 0;
     const wrecks = emptyWrecks();
     const weaponCounter = weaponUseCounter(duel);
@@ -318,6 +358,7 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
     const state = duel.state;
     const result = {
       policy, cpuDifficulty, seed, flags, wrecks, playerOpponentWrecks, status: state.status,
+      ...(cpuLoadout ? {cpuLoadout} : {}),
       completed: state.results?.completed === true,
       won: state.results?.won === true,
       timeSec: rounded(state.results?.timeSec ?? state.stageTimeSec),
@@ -505,8 +546,46 @@ export function reportFailures(report, runs, baselineRuns) {
 }
 
 function main(args) {
-  const { flags, check, verbose, baselineOnly, probe } = parseArgs(args);
+  const { flags, check, verbose, baselineOnly, waveTwoOnly, probe } = parseArgs(args);
   const options = { flags };
+  if (waveTwoOnly) {
+    if (!flags.includes('arsenal')) throw Error('Wave-two report needs --flags arsenal.');
+    const started = performance.now();
+    const races = baselineSeeds.map(seed => run('wave-two', 'medium', seed,
+      {flags, arsenalRank: 13}));
+    const closeRange = run('wave-two-close', 'medium', 1989,
+      {flags, arsenalRank: 13});
+    const uses = sumWeaponUses(races);
+    const measuredUses = sumWeaponUses([...races, closeRange]);
+    const report = { flags, scope: 'Separate thirty-seed Medium wave-two policy at earned rank 13 with native Armory purchases, legal trigger inputs and natural seeded CPU loadouts. One separately labelled complete close-range race uses legal vehicle inputs to exercise the CPU flamethrower. Win rate is descriptive. Historical samples and targets are unchanged.',
+      races: races.length, completed: races.filter(race => race.completed).length,
+      incomplete: races.filter(race => !race.completed).map(race =>
+        ({seed: race.seed, status: race.status, timeSec: race.timeSec})),
+      wins: races.filter(race => race.won).length,
+      winRate: rounded(average(races.map(race => Number(race.won)))),
+      meanTimeSec: rounded(average(races.map(race => race.timeSec))),
+      shots: Object.fromEntries(['rockets', 'flamethrower', 'magnet'].map(id =>
+        [id, races.reduce((sum, race) => sum + race.shots[id], 0)])),
+      cpuEquippedRaces: Object.fromEntries(['rockets', 'flamethrower', 'magnet'].map(id =>
+        [id, races.filter(race => race.cpuLoadout.includes(id)).length])),
+      weaponUses: uses, unattributedWeaponUses: races.reduce((sum, race) =>
+        sum + Object.values(race.unattributedWeaponUses).reduce((a, b) => a + b, 0), 0),
+      closeRange: {seed: closeRange.seed, completed: closeRange.completed,
+        cpuLoadout: closeRange.cpuLoadout, weaponUses: closeRange.weaponUses,
+        unattributedWeaponUses: closeRange.unattributedWeaponUses},
+      cpuHits: races.reduce((sum, race) => sum + (race.cpuHits || 0), 0),
+      rivalHits: races.reduce((sum, race) => sum + race.rivalHits, 0),
+      elapsedSec: rounded((performance.now() - started) / 1000) };
+    console.log(JSON.stringify(report, null, 2));
+    if (check && (report.completed !== 30 || !closeRange.completed ||
+        report.unattributedWeaponUses ||
+        Object.values(closeRange.unattributedWeaponUses).some(count => count > 0) ||
+        ['rockets', 'flamethrower', 'magnet'].some(id => !(measuredUses.cpu[id] > 0)))) {
+      console.error('Wave-two report requires thirty normal completions, a completed close-range race, actor-attributed uses and native CPU use of each weapon.');
+      process.exitCode = 1;
+    }
+    return;
+  }
   if (probe) {
     console.log(JSON.stringify(run('none', probe.cpuDifficulty, probe.seed, options), null, 2));
     return;
@@ -536,7 +615,8 @@ function main(args) {
   const crossbowAim = crossbowProbe(options);
   const ownBombs = bombSpeedProbe(options);
   const rearDefenseRuns = flags.includes('arsenal')
-    ? ['medium', 'hard', 'easy'].flatMap(difficulty => [1991, 1992]
+    ? ['medium', 'hard', 'easy'].flatMap(difficulty =>
+      [1991, 1992, ...(difficulty === 'medium' ? [1997] : [])]
       .map(seed => run('rear-defense', difficulty, seed, options))) : [];
   const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec, rearDefenseRuns,
     elapsedSec: rounded((performance.now() - started) / 1000), crossbowAim, ownBombs });

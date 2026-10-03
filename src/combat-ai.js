@@ -6,6 +6,9 @@ import {shouldUseOil} from './arsenal/oil.js';
 import {shouldUseSmoke} from './arsenal/smoke.js';
 import {shouldUseHarpoon} from './arsenal/harpoon.js';
 import {shouldUseCaltrops} from './arsenal/caltrops.js';
+import {shouldUseRocketPods} from './arsenal/rockets.js';
+import {shouldUseFlamethrower} from './arsenal/flamethrower.js';
+import {shouldUseScrapMagnet} from './arsenal/magnet.js';
 import {arenaTargetOf} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
 import {wastelandRulesActive} from './wasteland-access.js';
@@ -127,18 +130,21 @@ export function stepCombatAI(duel, dt) {
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
     if (arsenalEnabled(duel)) {
-      let usedWaveOne = false;
+      let usedArsenal = false;
       for (const id of opponent.weaponLoadout || []) {
         const eligible = id === 'oil' && shouldUseOil(duel, opponent) ||
           id === 'smoke' && shouldUseSmoke(duel, opponent) ||
           id === 'caltrops' && shouldUseCaltrops(duel, opponent) ||
-          id === 'harpoon' && shouldUseHarpoon(duel, opponent);
+          id === 'harpoon' && shouldUseHarpoon(duel, opponent) ||
+          id === 'rockets' && shouldUseRocketPods(duel, opponent) ||
+          id === 'flamethrower' && shouldUseFlamethrower(duel, opponent) ||
+          id === 'magnet' && shouldUseScrapMagnet(duel, opponent);
         if (eligible && fireWeapon(duel, id, true, opponent)) {
-          usedWaveOne = true;
+          usedArsenal = true;
           break;
         }
       }
-      if (usedWaveOne) {
+      if (usedArsenal) {
         if (modernField) {combat.aiTurn = (index + 1) % opponents.length; break;}
         continue;
       }

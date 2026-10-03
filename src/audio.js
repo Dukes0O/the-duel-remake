@@ -15,6 +15,9 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
   'weapon.harpoon.fire', 'weapon.harpoon.hit', 'weapon.harpoon.break',
   'weapon.caltrops.deploy', 'weapon.caltrops.hit',
+  'weapon.rockets.fire', 'weapon.rockets.hit',
+  'weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end',
+  'weapon.magnet.hum',
 ]);
 const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy']);
 const BOARDING_CUES = Object.freeze({
@@ -82,6 +85,7 @@ export class EngineAudio {
     this.cueBuffers = {};
     this.cueIndices = new Map();
     this.projectileVoices = new Map();
+    this.arsenalFieldVoices = new Map();
     this.pendingGatekeeper = null;
     this.sampleStatus = 'locked';
     this.ambience = {};
@@ -693,6 +697,26 @@ export class EngineAudio {
     for (const voice of this.projectileVoices.values()) voice.stop();
     this.projectileVoices.clear();
   }
+  _clearArsenalFields() {
+    for (const voice of this.arsenalFieldVoices.values()) voice.stop();
+    this.arsenalFieldVoices.clear();
+  }
+
+  _updateArsenalFields(state) {
+    if (!wastelandRulesActive(state) || !this.flags.enabled('arsenal') ||
+        this.muted || state.paused ||
+        !['racing', 'exploring'].includes(state.status)) {
+      this._clearArsenalFields();
+      return;
+    }
+    const active = new Set([...(state.combat?.flameBursts || []),
+      ...(state.combat?.magnets || [])]);
+    for (const [effect, voice] of this.arsenalFieldVoices)
+      if (!active.has(effect)) {
+        voice.stop();
+        this.arsenalFieldVoices.delete(effect);
+      }
+  }
 
   _updateProjectiles(state, environment = {}) {
     if (
@@ -711,7 +735,8 @@ export class EngineAudio {
     }
     const live = new Set();
     for (const projectile of state.combat?.projectiles || []) {
-      const id = 'weapon.' + projectile.kind + '.flight';
+      const id = projectile.kind === 'rocket-pod'
+        ? 'weapon.rockets.flight' : 'weapon.' + projectile.kind + '.flight';
       const cue = bank(id);
       if (!cue || !this.cueBuffers[id] ||
           (cue.flag && !this.flags.enabled(cue.flag))) continue;
@@ -888,6 +913,7 @@ export class EngineAudio {
     if (this.muted) {
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
+      this._clearArsenalFields();
       this.mixer?.stopAll();
     }
   }
@@ -907,6 +933,7 @@ export class EngineAudio {
     if (this.paused) {
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
+      this._clearArsenalFields();
       this.mixer?.stopAll();
     }
   }
@@ -923,6 +950,7 @@ export class EngineAudio {
     this._syncMixer(st);
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
+    this._updateArsenalFields(st);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     if (this.paused !== st.paused) this.setPaused(st.paused);
@@ -1334,6 +1362,7 @@ export class EngineAudio {
       this.pendingGatekeeper = ev.hiddenRoadPhase.journeyId;
     if (ev?.stageLoaded != null) {
       this._clearProjectiles();
+      this._clearArsenalFields();
       this.mixer?.stopAll();
       this._stopHiddenRoadVoices();
       this.hiddenRoadId = null;
@@ -1363,7 +1392,7 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && wastelandRulesActive(state);
-    if (recordedAudio && (
+    if (recordedAudio && bank(ev.arsenalCue) && (
       (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
       (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue))
     )) {
@@ -1372,7 +1401,22 @@ export class EngineAudio {
       const output = this._spatialOutput(
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
       );
-      this._playCue(ev.arsenalCue, {destination: output.level, onEnd: output.disconnect});
+      const voice = this._playCue(ev.arsenalCue,
+        {destination: output.level, onEnd: output.disconnect});
+      const field = ev.arsenalCue === 'weapon.flame.loop' ? ev.burst :
+        ev.arsenalCue === 'weapon.magnet.hum' ? ev.magnet : null;
+      if (field && voice) this.arsenalFieldVoices.set(field, voice);
+    }
+    if (ev.arsenalCue === 'weapon.flame.end' && ev.burst) {
+      this.arsenalFieldVoices.get(ev.burst)?.stop();
+      this.arsenalFieldVoices.delete(ev.burst);
+    }
+    if (ev.arsenalMagnetEnded) {
+      for (const [effect, voice] of this.arsenalFieldVoices)
+        if (effect.ownerId === ev.ownerId) {
+          voice.stop();
+          this.arsenalFieldVoices.delete(effect);
+        }
     }
     if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue) {
       const output = this._spatialOutput(
@@ -1426,8 +1470,8 @@ export class EngineAudio {
     if (ev.ticket || ev.gameover || ev.stageResult?.won === false)
       this._playCue('interface.lose');
     // Wave-one launches already emit their own recorded native cue.
-    if (ev.weaponFired && ev.weaponFired !== 'harpoon' &&
-        ev.weaponFired !== 'caltrops') {
+    if (ev.weaponFired && !['harpoon', 'caltrops', 'rockets',
+      'flamethrower', 'magnet'].includes(ev.weaponFired)) {
       if (wastelandAudio) this._weaponCue(ev.weaponFired);
       else {
         this._playCue(

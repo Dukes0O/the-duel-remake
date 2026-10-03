@@ -139,7 +139,7 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   noteArenaDamage(duel, actor, removed, options.owner);
   if (arsenalEnabled(duel)) noteSmokeHit(duel, actor, removed, options.owner);
   if (actor.armor === 0) startCombatWreck(duel, actor, source, options.owner);
-  recordCombatHit(duel, actor, removed, options.owner);
+  recordCombatHit(duel, actor, removed, options.owner, options.styleHit !== false);
   return removed;
 }
 

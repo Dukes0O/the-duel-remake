@@ -7,6 +7,9 @@ export const WEAPONS = Object.freeze({
   harpoon: {name: 'HARPOON', cooldown: 12},
   caltrops: {name: 'CALTROPS', cooldown: 9},
   smoke: {name: 'SMOKE SCREEN', cooldown: 14},
+  rockets: {name: 'ROCKET PODS', cooldown: 8},
+  flamethrower: {name: 'FLAMETHROWER', cooldown: 11},
+  magnet: {name: 'SCRAP MAGNET', cooldown: 15},
 });
 export const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},

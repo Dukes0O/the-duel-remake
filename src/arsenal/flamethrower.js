@@ -10,10 +10,10 @@ export const FLAME_RULES = Object.freeze({
   burnArmorPerSecond: 4,
 });
 const EPS = 1e-9;
-function defaultDamage(duel, actor, amount, owner) {
+function defaultDamage(duel, actor, amount, owner, {styleHit = true} = {}) {
   return applyArmorDamage(duel, actor, 'crossbow', {
     owner: combatOwnerId(duel, owner), level: 0,
-    damageMultiplier: amount / armorDamageFor('crossbow'),
+    damageMultiplier: amount / armorDamageFor('crossbow'), styleHit,
   });
 }
 export function flameCpuAim(distance, angleRadians) {
@@ -37,7 +37,7 @@ export function startFlamethrower(duel, owner, level = 0) {
   if (combat.flameBursts.some(burst => burst.ownerId === targetIdentity(duel, owner)))
     return null;
   const burst = {id: ++combat.serial, ownerId: targetIdentity(duel, owner),
-    level, age: 0};
+    level, age: 0, styledTargets: []};
   combat.flameBursts.push(burst);
   const at = point(duel, owner);
   duel.emit({arsenalCue: 'weapon.flame.start', actor: owner,
@@ -68,7 +68,11 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
           shielded(duel, actor)) continue;
       const id = targetIdentity(duel, actor);
       inside.add(id);
-      damageCar(duel, actor, FLAME_RULES.directArmorPerSecond * live, owner);
+      const removed = damageCar(duel, actor,
+        FLAME_RULES.directArmorPerSecond * live, owner,
+        {styleHit: !burst.styledTargets.includes(id)});
+      if (removed > 0 && !burst.styledTargets.includes(id))
+        burst.styledTargets.push(id);
       combat.flameBurns[id] = {remainingSec: FLAME_RULES.burnDuration,
         ownerId: burst.ownerId};
       setCarEffect(actor, 'burning', {duration: FLAME_RULES.burnDuration});
@@ -89,7 +93,7 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
     const live = Math.min(dt, burn.remainingSec);
     if (actor && !outOfPlay(duel, actor) && owner &&
         hostile(duel, owner, actor) && !shielded(duel, actor))
-      damageCar(duel, actor, FLAME_RULES.burnArmorPerSecond * live, owner);
+      damageCar(duel, actor, FLAME_RULES.burnArmorPerSecond * live, owner, {styleHit: false});
     burn.remainingSec -= dt;
     if (burn.remainingSec <= EPS) {
       delete combat.flameBurns[id];

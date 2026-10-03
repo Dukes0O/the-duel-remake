@@ -253,6 +253,32 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   crewTurret.add(turretBase,turretHead,turretBarrel); crewTurret.visible=false; group.add(crewTurret);
   const crewFlame = new THREE.Mesh(new THREE.ConeGeometry(1.75,6,16,1,true),materials.fire);
   crewFlame.visible=false;group.add(crewFlame);
+  // Fixed pools keep the three wave-two tells independent of frame rate.
+  const arsenalFlameGeometry = new THREE.ConeGeometry(9 * Math.tan(Math.PI / 12),
+    9, 12, 1, true);
+  const arsenalFlameMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff8c16, transparent: true, opacity: .38, depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const arsenalFlames = Array.from({length: 12}, (_, index) => {
+    const view = new THREE.Group();
+    view.name = `arsenal-flame-${index}`;
+    const plume = new THREE.Mesh(arsenalFlameGeometry, arsenalFlameMaterial);
+    plume.rotation.x = -Math.PI / 2;
+    plume.position.z = 4.5;
+    view.add(plume);
+    view.visible = false;
+    group.add(view);
+    return view;
+  });
+  const arsenalMagnets = Array.from({length: 12}, (_, index) => {
+    const view = new THREE.Mesh(ring, materials.neon);
+    view.name = `arsenal-magnet-${index}`;
+    view.rotation.x = Math.PI / 2;
+    view.visible = false;
+    group.add(view);
+    return view;
+  });
   const boardingCharge = new THREE.Group();
   boardingCharge.name = 'crew-boarding-charge';
   const chargeBase = new THREE.Mesh(new THREE.BoxGeometry(.55,.18,.65), materials.iron);
@@ -494,14 +520,33 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     },i)=>{
       const p=c.projectiles[i];
       g.visible=!!p;
-      if(!p)return;
+      if(!p){rocket.visible=false;return;}
       g.position.set(p.x,p.y,p.z);
       bomb.visible=p.kind==='bomb'||(p.crewGearShot&&p.kind!=='marksman');
       arrow.visible=p.kind==='crossbow'||p.kind==='harpoon'||p.kind==='marksman';
-      rocket.visible=p.kind==='rpg';
+      rocket.visible=p.kind==='rpg'||p.kind==='rocket-pod';
+      rocket.scale.setScalar(p.kind==='rocket-pod'?.65:1);
       g.rotation.set(0,Math.atan2(p.vx,p.vz),0);
       rocket.rotation.x=Math.PI/2-Math.atan2(p.vy,Math.hypot(p.vx,p.vz));
       bomb.rotation.set(p.age*5,p.age*3,0);
+    });
+    arsenalFlames.forEach((view, index) => {
+      const burst = arsenalEnabled(duel) && c.flameBursts?.[index];
+      const owner = burst && actorForTarget(duel, burst.ownerId);
+      view.visible = !!owner;
+      if (!owner) return;
+      const at = point(duel, owner);
+      view.position.set(at.x, at.y, at.z);
+      view.rotation.y = at.heading + (owner.headingError || 0);
+    });
+    arsenalMagnets.forEach((view, index) => {
+      const magnet = arsenalEnabled(duel) && c.magnets?.[index];
+      const owner = magnet && actorForTarget(duel, magnet.ownerId);
+      view.visible = !!owner;
+      if (!owner) return;
+      const at = point(duel, owner);
+      view.position.set(at.x, at.y + .25, at.z);
+      view.scale.setScalar(6 + Math.sin(magnet.age * 6) * .8);
     });
     const turret=s.crewGear?.turret;
     crewTurret.visible=active&&duel.featureFlags?.enabled('crew-gear')===true&&!!turret;
@@ -574,7 +619,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
       for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim,
         turretBase.geometry,turretHead.geometry,turretBarrel.geometry,crewFlame.geometry,
-        chargeBase.geometry])geometry.dispose();
+        chargeBase.geometry,arsenalFlameGeometry])geometry.dispose();
       hazardViews.forEach(view=>{
         view.oilMaterial.dispose();
         view.smokeMaterial.dispose();
@@ -587,6 +632,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       Object.values({
         ...materials,...pickupMaterials
       }).forEach(material=>material.dispose());
+      arsenalFlameMaterial.dispose();
     },
   };
 }

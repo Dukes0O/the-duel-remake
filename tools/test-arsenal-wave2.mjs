@@ -9,13 +9,18 @@ import {WEAPON_IDS, getProfileWeapons, normalizeWeapons,
   rewardArsenalWeapon} from '../src/weapon-upgrades.js';
 import {stepPickups} from '../src/combat-pickups.js';
 import {addHazard} from '../src/arsenal/hazards.js';
-import {point} from '../src/combat-weapons.js';
+import {point, fireWeapon} from '../src/combat-weapons.js';
+import {stepCombat} from '../src/combat.js';
+import {createCombatScene} from '../src/combat-scene.js';
+import {EngineAudio} from '../src/audio.js';
 import {startScrapMagnet, stepScrapMagnets, endScrapMagnet,
   shouldUseScrapMagnet} from '../src/arsenal/magnet.js';
 import {startFlamethrower, stepFlamethrowers, flameCpuAim, shouldUseFlamethrower}
   from '../src/arsenal/flamethrower.js';
 import {startRocketVolley, stepRocketVolleys, stepRocketPod,
   rocketCpuAim, shouldUseRocketPods} from '../src/arsenal/rockets.js';
+import {parseArgs as parseBalanceArgs, run as runBalanceRace}
+  from './combat-balance.mjs';
 
 const DT = 1 / 120, EPS = 1e-8;
 let checks = 0;
@@ -278,6 +283,37 @@ check('magnet moves a native armor crate; native pickup step grants the reward',
   assert.ok(state.armor > state.maxArmor - 30);
 });
 
+check('native weapon trigger and combat step run the full Rocket Pods volley', () => {
+  const {duel, state} = nativeRace();
+  const cues = [];
+  duel.onChange((_state, event) => {if (event.arsenalCue) cues.push(event.arsenalCue);});
+  assert.equal(fireWeapon(duel, 'rockets'), true);
+  assert.equal(state.combat.cooldowns.rockets, 8);
+  for (let i = 0; i < 46; i++) stepCombat(duel, DT);
+  assert.equal(cues.filter(id => id === 'weapon.rockets.fire').length, 4);
+  assert.equal(cues.filter(id => id === 'weapon.rockets.flight').length, 4);
+});
+check('native weapon trigger and combat step keep flame damage and style separate', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 506;
+  assert.equal(fireWeapon(duel, 'flamethrower'), true);
+  assert.equal(state.combat.cooldowns.flamethrower, 11);
+  for (let i = 0; i < 3 / DT; i++) stepCombat(duel, DT);
+  assert.ok(Math.abs(rival.armor - 76) < 1e-5);
+  assert.equal(state.combat.scoring.hitsLanded, 1);
+});
+check('native magnet trigger and combat step collect through the pickup path', () => {
+  const {duel, state} = nativeRace();
+  state.armor = state.maxArmor - 30;
+  state.combat.seededPickupPlan = [];
+  state.combat.pickups = [{id: 'native-magnet-trigger', lap: 0,
+    s: 530, lateral: 0, kind: 'armor', age: 0}];
+  assert.equal(fireWeapon(duel, 'magnet'), true);
+  assert.equal(state.combat.cooldowns.magnet, 15);
+  for (let i = 0; i < 3 / DT; i++) stepCombat(duel, DT);
+  assert.equal(state.combat.pickups.length, 0);
+  assert.ok(state.armor > state.maxArmor - 30);
+});
 check('CPU Rocket Pods and flame aim use targetFor and smoke blocks both', () => {
   const {duel, state, rival} = nativeRace();
   rival.s = 500; state.s = 550;
@@ -298,6 +334,23 @@ check('CPU Rocket Pods and flame aim use targetFor and smoke blocks both', () =>
   assert.equal(shouldUseRocketPods(duel, rival), false);
 });
 
+for (const [weapon, gap] of [['rockets', 50], ['flamethrower', 6], ['magnet', 80]])
+  check('Medium computer actually chooses wave-two ' + weapon, () => {
+    const {duel, state, rival} = nativeRace();
+    state.cpuDifficulty = 'medium';
+    rival.s = 500; state.s = 500 + gap;
+    rival.weaponLoadout = [weapon, 'crossbow'];
+    state.combat.aiTimer = 0;
+    if (weapon === 'magnet') state.combat.pickups = [10, 15].map((ds, index) =>
+      ({id: 'cpu-magnet-' + index, lap: 0, s: rival.s + ds,
+        lateral: rival.lateral, kind: 'armor', age: 0}));
+    const from = point(duel, rival), to = point(duel, state);
+    rival.headingError = Math.atan2(to.x - from.x, to.z - from.z) - from.heading;
+    const fired = [];
+    duel.onChange((_state, event) => {if (event.weaponFired) fired.push(event.weaponFired);});
+    stepCombat(duel, DT);
+    assert.ok(fired.includes(weapon), 'the native CPU should use ' + weapon);
+  });
 check('rocket and flame fixed-step outcomes match at 30, 60 and 144 FPS', () => {
   function run(fps, kind) {
     const {duel, state} = fixture();
@@ -333,6 +386,31 @@ check('rocket and flame fixed-step outcomes match at 30, 60 and 144 FPS', () => 
   }
 });
 
+check('pooled wave-two tells follow combat state without changing it', () => {
+  const {duel, state} = nativeRace();
+  startRocketVolley(duel, state);
+  startFlamethrower(duel, state);
+  startScrapMagnet(duel, state);
+  const before = JSON.stringify(state.combat);
+  const scene = createCombatScene();
+  scene.update(duel);
+  const pod = scene.group.getObjectByName('combat-rpg-0');
+  const flame = scene.group.getObjectByName('arsenal-flame-0');
+  const magnet = scene.group.getObjectByName('arsenal-magnet-0');
+  assert.equal(pod?.visible, true, 'the fired pod reuses the bounded rocket mesh');
+  assert.equal(flame?.visible, true, 'the active flame has a forward visual');
+  assert.equal(magnet?.visible, true, 'the active magnet has a field visual');
+  assert.equal(JSON.stringify(state.combat), before,
+    'the renderer cannot advance weapon simulation');
+  state.combat.projectiles = [];
+  state.combat.flameBursts = [];
+  state.combat.magnets = [];
+  scene.update(duel);
+  assert.equal(pod.visible, false);
+  assert.equal(flame.visible, false);
+  assert.equal(magnet.visible, false);
+  scene.dispose();
+});
 check('native star shield blocks a Rocket Pods blast', () => {
   const {duel, state, rival} = nativeRace();
   rival.s = 520;
@@ -457,5 +535,34 @@ check('Gearhead Gunn gives earned Rocket Pods at any rank', () => {
   assert.equal(result.ok, true);
   assert.deepEqual(profile, before, 'reward leaves input immutable');
   assert.equal(getProfileWeapons(result.profile).unlocked.includes('rockets'), true);
+});
+check('separate wave-two balance report keeps historical policy inputs unchanged', () => {
+  assert.equal(parseBalanceArgs(['--wave-two-only']).waveTwoOnly, true);
+  assert.throws(() => parseBalanceArgs(['--wave-two-only', '--baseline-only']));
+  const result = runBalanceRace('wave-two', 'medium', 1989,
+    {flags: ['arsenal'], arsenalRank: 13, maxFrames: 1});
+  assert.deepEqual(Object.keys(result.shots).filter(id =>
+    ['rockets', 'flamethrower', 'magnet'].includes(id)),
+    ['rockets', 'flamethrower', 'magnet']);
+});
+check('audio field ownership stops on effect expiry and arsenal switch-off', () => {
+  const {state} = nativeRace();
+  let enabled = true, stopped = 0;
+  const audio = new EngineAudio({flags: {enabled: id => id === 'arsenal' && enabled}});
+  const flame = {ownerId: 'player', age: 0};
+  state.combat.flameBursts = [flame];
+  audio.arsenalFieldVoices.set(flame, {stop: () => stopped++});
+  audio._updateArsenalFields(state);
+  assert.equal(stopped, 0);
+  state.combat.flameBursts = [];
+  audio._updateArsenalFields(state);
+  assert.equal(stopped, 1);
+  const magnet = {ownerId: 'player', age: 0};
+  state.combat.magnets = [magnet];
+  audio.arsenalFieldVoices.set(magnet, {stop: () => stopped++});
+  enabled = false;
+  audio._updateArsenalFields(state);
+  assert.equal(stopped, 2);
+  assert.equal(audio.arsenalFieldVoices.size, 0);
 });
 if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');

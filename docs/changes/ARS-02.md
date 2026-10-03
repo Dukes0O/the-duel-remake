@@ -1,8 +1,9 @@
 # ARS-02: Arsenal wave 2
 
-Status: building. This lane starts with the owned weapon modules and tests.
-Shared combat, save, renderer and audio hooks require a Director re-slice after
-Balance and AUD-17 release them. Nothing here is a finished player feature yet.
+Status: building in the ARS-02 lane. Shared combat, save, renderer, audio-routing
+and balance hooks were granted after Balance and CREW merged. The sound bank
+and CC0 catalog remain AUD-17-owned requests. Do not merge this as a finished
+player feature until all seven settled sounds and their audio checks pass.
 
 ## Decision before code
 
@@ -29,21 +30,95 @@ the implementation details left open by the short weapon descriptions:
   the car; the magnet never grants a reward directly. A future Tesla Coil
   calls an explicit end function. CPU use needs two eligible crates within
   40 m. Its 15 s recharge begins on activation.
+- Presentation uses bounded, pooled code geometry: the existing rocket mesh scaled for pod shots, an orange nine-metre forward cone while flame is active, and a cyan ring around an active magnet. The visuals follow combat state and stage time and never advance damage, pickups or cooldowns. No new binary art is needed.
 - Each accepted action emits the sound event named in the design:
   weapon.rockets.fire/flight/hit, weapon.flame.start/loop/end and
-  weapon.magnet.hum. Runtime audio wiring waits for the owned hook.
+  weapon.magnet.hum. The granted audio router plays one-shots, maps pod shots
+  to the moving Rocket flight voice, and stops active flame/magnet field samples
+  on effect end, pause, mute, stage change or switch-off. Recorded runtime
+  samples remain pending their reserved sound-bank/catalog hooks.
+- The balance report adds a separate thirty-race Medium wave-two policy at
+  earned rank 13. It buys and equips all three weapons through the memory-only
+  Armory and uses legal trigger inputs and the standard scripted driving line.
+  One separately labelled complete race uses legal throttle, brake and steering
+  to follow a naturally equipped CPU Flamethrower at about seven metres. The
+  computer keeps its native seeded loadouts and decisions in both cases. The
+  report records wins, completion, shots and actor-attributed uses; its win
+  rate is descriptive, not a replacement target. Historical policies,
+  baselines, samples and targets keep their exact definitions.
+- The existing full balance check still requires observed CPU Smoke use,
+  although the Board records that rare Smoke use is informational. Keep its
+  validator and every test assertion intact. Add one separately labelled
+  complete, natural-loadout rear-defense race at Medium seed 1997, where
+  the native reactive Smoke action is measured. Preserve all six existing
+  supplemental races and every historical sample.
 
 The simulation uses the seeded generator if randomness is later needed.
 The modules must not read renderer state or player storage.
 
 ## Checks
 
-Tests will be written before implementation for launch spacing, range,
-blast/shield, cone and burn timing, magnet motion and native collection,
-CPU use and counters, seed replay at 30/60/144 FPS, and cleanup. Section 4
-also requires balance, save, browser, audio and frame checks after wiring.
-Owned and native module test: 25/30 pass after failing on missing modules. It covers the rocket fan, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop and native collection; and repeatable 30/60/144 FPS results. New fixtures follow the 40-projectile cap and fixed 120 Hz step. Native Duel checks pass for armor, shield, pickup, CPU targeting and smoke. A native scoring acceptance is red: three seconds of flame gives the correct 24 armor but records 360 style hits. It must record one hit and all 24 damage. Four new save checks are red because the three weapons are absent from the central catalog: each native memory-only purchase fails and Gunn's earned Rocket Pods reward fails. Three rank, gate and switch rejection checks pass. The save checks also cover upgrades, four slots, unknown fields, future IDs and another named player's isolation after the catalog is wired. No released assertion changed. Shared firing, CPU, scoring, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
+- Native tests were red before shared wiring: 25/30 passed. The missing catalog
+  blocked real purchases and Gunn's reward; continuous flame gave 360 style
+  hits for 24 armor. Those checks now pass with one style hit and all 24
+  damage. Native trigger, CPU, visual and balance-tool checks followed red
+  before their implementation. The focused suite now passes 38/38.
+- The suite covers four fixed-spaced rockets, cap/range/blast/shield and moving
+  targets; cone, burn, shield and cue timing; magnet pull, native pickup and
+  future Tesla stop; Medium CPU use of each; per-player memory-only purchases,
+  upgrades, four slots, reward, rank and gate; replay at 30/60/144 FPS;
+  renderer read-only state and pooled show/hide. No released assertion changed.
+- Native regressions before audio routing: core 72, wave one 77, combat 66,
+  projectiles 35, scoring 15, armor 18, car loadout 3, Warlord pay 25 and
+  replay 162 all passed. After routing, wave-one audio 36/36 and combat audio
+  11/11 passed with ffmpeg access. A first sandbox run could not spawn ffmpeg;
+  the identical commands passed when run with codec access.
+- The private memory-only browser scenario purchased and equipped the three
+  weapons in the real Armory. High and Performance each showed an in-flight
+  Rocket, shielded blast, translucent Flame, shielded Flame, active Magnet and
+  expired Magnet. Twelve fresh screenshots, zero console warnings/errors.
+  The first course paint needed a warm-up start to make the rocket screenshot
+  usable. A visual review changed Flame opacity from .85 to .38 so both cars
+  remain readable. Rocket pods use the pooled RPG body at .65 scale; Magnet
+  uses the bounded cyan ring. No world signatures changed.
+- Separate wave-two balance check passed: 30/30 ordinary Medium races
+  completed, 21 wins (descriptive), 415 player Rocket volleys, 305 Flame
+  bursts, 222 Magnet activations. Native CPU use in those races: Rocket 32,
+  Magnet 3; 16 computer loadouts carried Flame but ordinary race spacing did
+  not trigger it. One separately labelled complete close-range race at seed
+  1989 recorded two CPU Flame activations from its natural loadout. No use
+  lacked actor attribution. Historical balance samples and targets were not
+  changed. The existing full combat balance check is still running.
+- The existing full combat balance check completed its 90 baseline races and
+  historical policy samples with the expected 28/30 Easy, 19/30 Medium and
+  6/30 Hard wins, but failed only because none of its original six
+  supplemental races happened to trigger reactive CPU Smoke. An independent
+  complete native rear-defense race at Medium seed 1997 emitted one Smoke
+  deployment and finished in 144.74 s. The added labelled case keeps the
+  current zero-use validator and all assertions unchanged; rerun pending.
+- Pending: seven real CC0 cue recipes, recorded runtime bank files, audio
+  recognition/resource review, current lane tier/build, and final race
+  fingerprints. No full integration gate applies to this lane commit yet.
+
+## Audio source proposal for the reserved hook
+
+The seven settled cues can use five CC0 sources without accounts, paid credits
+or changes to existing recordings. The first three are already pinned in the
+audio catalog: Freesound 854473 (Rocket Pods fire), 855733 (flight) and 397691
+(impact). For Flame start/loop/end, candidate Freesound 395039 is a 28 s CC0
+recording of real flamethrower bursts:
+https://freesound.org/people/AslakHostaker/sounds/395039/ . For Magnet hum,
+candidate Freesound 641335 is a 7.99 s CC0 electric hum:
+https://freesound.org/people/soundofsong/sounds/641335/ . These are source
+candidates, not accepted assets. Each needs catalog hash/provenance, measured
+cuts and loudness, audible review, a committed build recipe and one compressed
+current runtime version under `public/assets/audio/arsenal-wave2/`. The proposed
+write set is `src/sound-bank.js`, `tools/audio/catalog.json`,
+`tools/build-arsenal-wave2-audio.mjs`, `tools/test-arsenal-wave2-audio.mjs` and
+that runtime audio directory. AUD-17 owns the first two; ARS-02 needs a narrow
+Board grant before writing them.
 
 ## Removed
 
-None yet. These new modules do not replace a released path.
+The generic weapon-fire audio fallback no longer handles the three new
+weapons. No released asset or behavior was removed.
