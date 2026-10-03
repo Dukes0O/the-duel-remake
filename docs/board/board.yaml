@@ -1025,11 +1025,11 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-03
     branch: codex/cmb/arsenal-wave2
-    note: "Balance and CREW shared hooks have merged. The Board grants ARS-02 its central combat, save, render, audio routing and balance hooks, including the armor/scoring hook for the red 360-style-hit flame test. AUD-17 still owns sound-bank.js and the audio catalog; the prior narrow release applied only to Balance. Keep those two hook requests open and do not merge ARS-02 as finished until its seven new CC0 cues meet the sound acceptance."
+    note: "Kyle directed Codex to finish this card's sounds on 3 October. ARS-02 may add only its seven CC0 cues and new source recipes to the reserved audio files, then update exact older audio pins to exclude only these new entries. Existing sounds, voice takes and AUD-17 records remain exact."
     flag: arsenal
-    owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, docs/changes/ARS-02.md]
-    hooks: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
-    hook_requests: [src/sound-bank.js, tools/audio/catalog.json]
+    owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, tools/build-arsenal-wave2-audio.mjs, tools/test-arsenal-wave2-audio.mjs, tools/scenarios/arsenal-wave2-audio.mjs, public/assets/audio/arsenal-wave2/, docs/changes/ARS-02.md]
+    hooks: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs]
+    hook_requests: []
     runtime_fixture_grant: "The ARS-CORE native implementation-denial fixture still names Rocket Pods at rank seven. ARS-02 now implements that purchase, so this exact test becomes invalid. Change only its unimplemented-purchase input to rank-fourteen Mortar, keeping every refusal, profile, registry, no-write and other assertion unchanged. Record the changed input and review in ARS-02's note."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
