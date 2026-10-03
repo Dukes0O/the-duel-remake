@@ -33,7 +33,7 @@ export async function run(context) {
   for (const quality of evidence.qualities) {
     await context.command('Emulation.setDeviceMetricsOverride',
       {width:900,height:800,deviceScaleFactor:1,mobile:false});
-    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.navigate('/tools/menu-check.html');
     await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine')?.disabled",
       'private fighter scene', 60_000);
     await context.evaluate(`(() => {

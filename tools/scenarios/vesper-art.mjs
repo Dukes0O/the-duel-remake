@@ -37,7 +37,7 @@ async function measureFrames(context, candidateBytes, assets, bundle) {
       for (const phase of ['odessa-a1', 'vesper-b', 'odessa-a2']) {
         const bytes = phase === 'vesper-b' ? candidateBytes : originalBytes;
         await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
-        await context.navigate('/tools/menu-check.html?flags=wasteland2&vesper-frames=' + quality + '-' + phase);
+        await context.navigate('/tools/menu-check.html&vesper-frames=' + quality + '-' + phase);
         await context.waitFor('window.__qaApp?.visualReady && !!window.__render', quality + ' ' + phase + ' actual game ready', 60000);
         await context.evaluate(bundle);
         await context.evaluate(`(() => {
@@ -160,7 +160,7 @@ export async function run(context) {
   const persist = () => writeFile(join(context.outputDir, 'vesper-comparison.json'), JSON.stringify(report, null, 2) + '\n');
   for (const quality of ['high', 'performance']) {
     await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
-    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.navigate('/tools/menu-check.html');
     await context.waitFor('window.__qaApp?.visualReady && !!window.__render', 'private Vesper game ready', 60000);
     await context.evaluate(bundle);
     await context.evaluate(`(() => {
@@ -279,7 +279,7 @@ export async function run(context) {
       return {originalCrewRetired:true,resourcesDisposedOnce:resources.size,fetchRestored:true,stateUnchanged:true,
         candidateLifecycle:'Native tests cover resources; this game page is retired by normal navigation.'};
     })()`);
-    await context.navigate('/tools/menu-check.html?flags=wasteland2&vesper-page-retired=1');
+    await context.navigate('/tools/menu-check.html&vesper-page-retired=1');
     await context.waitFor('window.__qaApp?.visualReady && !window.__vesperReview', quality+' candidate page retired',60000);
     report.cleanup.push({quality,...cleanup,pageRetiredByNavigation:true});await persist();
   }

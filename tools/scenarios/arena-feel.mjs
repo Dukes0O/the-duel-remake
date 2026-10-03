@@ -42,7 +42,7 @@ async function captureMoment(context, eventName, label) {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  await context.navigate(`${entry}?flags=scrapdome`);
+  await context.navigate(`${entry}`);
   await context.waitFor(ready, 'QA menu', 60_000);
   await context.evaluate(`(() => {
     const app=window.__qaApp;app.audio.setMuted(true);

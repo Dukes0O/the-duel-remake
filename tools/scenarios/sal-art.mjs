@@ -67,7 +67,7 @@ async function frameCost(context, quality) {
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await context.navigate('/tools/menu-check.html?flags=scrapdome');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'memory-only QA menu', 60000);
   await context.evaluate(`(() => {
     const app=window.__qaApp;app.audio.setMuted(true);
@@ -92,7 +92,7 @@ export async function run(context) {
   await context.evaluate('window.__qaApp.stop()');
   const loaded=await context.evaluate(`(() => {const s=window.__qaApp.duel.state,r=window.__render.scene;
     const names=[];r.traverse(n=>{if(/armor|authored|kit-sal|banshee/i.test(n.name))names.push(n.name)});
-    return {names:names.slice(-80),mode:s.mode,status:s.status,combat:!!s.combat,flag:window.__qaApp.duel.featureFlags.enabled('wasteland2'),car:s.car,warlordId:s.warlordId,kit:s.combatArmorKit};})()`);
+    return {names:names.slice(-80),mode:s.mode,status:s.status,combat:!!s.combat,discovered:s.wastelandGateDiscovered,car:s.car,warlordId:s.warlordId,kit:s.combatArmorKit};})()`);
   if (!loaded.names.includes('kit-sal-saw-left')) throw Error('Banshee Sal rig did not load: '+JSON.stringify(loaded));
   const reports=[];
   const costs=[];

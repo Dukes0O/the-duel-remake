@@ -293,14 +293,14 @@ export async function run(context) {
   report.isolation.flagOff=await startHighCountry(context,true);
   if(report.isolation.flagOff.hasHollow)throw Error('Flag-off High Country exposed Muddy Hollow');
 
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+  await navigateReady(context,'/tools/menu-check.html',
     'undiscovered flagged memory-only menu');
   report.isolation.undiscovered=await startHighCountry(context,false);
   if(report.isolation.undiscovered.hasHollow)
     throw Error('Undiscovered High Country exposed Muddy Hollow');
   report.frames.push(await showOrdinaryOverview(context));
 
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+  await navigateReady(context,'/tools/menu-check.html',
     'discovered flagged memory-only menu');
   report.isolation.discovered=await startHighCountry(context,true);
   if(!report.isolation.discovered.hasHollow)
@@ -343,7 +343,7 @@ export async function run(context) {
 
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+  await navigateReady(context,'/tools/menu-check.html',
     'phase-3 non-Titan memory-only menu');
   const nonTitanStart=await startHighCountry(context,true,'dusthawk_rally','timetrial');
   report.isolation.nonTitan={...nonTitanStart,
@@ -352,7 +352,7 @@ export async function run(context) {
       report.isolation.nonTitan.crossing.historyAfter!==report.isolation.nonTitan.crossing.historyBefore)
     throw Error('Non-Titan crossing emitted or settled a Muddy Hollow departure');
 
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+  await navigateReady(context,'/tools/menu-check.html',
     'phase-3 Titan memory-only menu');
   const titanStart=await startHighCountry(context,true,'titan_monster','timetrial');
   report.phaseThree={start:titanStart,

@@ -15,7 +15,7 @@ import {worldPose} from '../src/arena/arena-floor.js';
 // reward. The real dome course and arena step; null flag storage; no browser
 // or saves.
 const DT = 1 / 120;
-const FLAGS = {wasteland2: true, scrapdome: true, warlords: true};
+const FLAGS = {};
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
@@ -23,6 +23,7 @@ test.after(() => console.log('Twin Vultures: ' + checks + ' checks.'));
 
 function fight({phase = 1, gap = 30, difficulty = 'medium', warlordId = 'vultures'} = {}) {
   const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId, car: 'falcone_f42', cpuDifficulty: difficulty}), true);
   assert.equal(beginWarlordEvent(duel), true);
   duel.state.countdown = 0;

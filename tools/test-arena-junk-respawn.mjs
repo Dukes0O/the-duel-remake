@@ -13,7 +13,8 @@ function check(name, run) {
   try {run();} catch (error) {failures.push(name + ': ' + error.message);}
 }
 for (const mode of ['last-car-rolling', 'fuel-run']) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true, scrapdome: true, 'fuel-run': true}});
+  const duel = new Duel({seed: 1989, featureFlags: {'fuel-run': true}});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({mode, car: 'banshee_muscle', seed: 1989,
     opponents: [{car: 'dusthawk_rally', driverId: 'club', brain: 'gunner'}]}), true);
   const state = duel.state, arena = state.arena, props = duel.course.features.crushables;

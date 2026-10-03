@@ -25,6 +25,7 @@ function arena(car, variant = 'stock', mode = 'last-car-rolling') {
   const upgrades = variant === 'engine-only' ? {engine: 3} : variant === 'max-specialist'
     ? {engine: 3, nitro: 3, handling: 3, tires: 3, brakes: 3, suspension: 3, tank: 3} : {};
   const duel = new Duel({seed: 1989, featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   if (mode === 'warlord') {
     assert.equal(startWarlordEvent(duel, {car, driverId, upgrades, warlordId: 'sal', seed: 1989,
       cpuDifficulty: 'medium'}), true);
@@ -192,11 +193,11 @@ check('Sal actual window halves the bounded shared authority', () => {
   }
 });
 
-// Consume the original full-state road fingerprints; never record new values.
+// Check discovered full-state road fingerprints against the unchanged integration baseline.
 const controls = JSON.parse(readFileSync(new URL('./replays/arena-steering-controls.json', import.meta.url), 'utf8'));
 for (const spec of controls.cases) check(spec.car + '/' + spec.course + ' original full-state road fingerprint', () => {
   const duel = new Duel({seed: controls.seed, featureFlags: flags()});
-  duel.startCampaign({car: spec.car, seed: controls.seed, mode: 'duel', difficulty: 'casual',
+  duel.startCampaign({car: spec.car, seed: controls.seed, mode: 'duel', difficulty: 'casual', discoveredGate: true,
     cpuDifficulty: 'medium', startStage: COURSE.findIndex(def => def.id === spec.course)});
   duel.state.status = 'racing'; duel.state.countdown = 0;
   const samples = [];
@@ -206,7 +207,7 @@ for (const spec of controls.cases) check(spec.car + '/' + spec.course + ' origin
     if (tick % 120 === 119) samples.push(structuredClone(duel.state));
   }
   assert.ok(duel.state.s > 20, 'fingerprint control must actually drive');
-  assert.equal(digest(samples), spec.fingerprint, 'released full-state road fingerprint must not change');
+  assert.equal(digest(samples), spec.discoveredFingerprint, 'discovered full-state road fingerprint must not change');
 });
 function arenaTrace(mode, fps) {
   const duel = arena('falcone_f42', 'stock', mode), samples = [];

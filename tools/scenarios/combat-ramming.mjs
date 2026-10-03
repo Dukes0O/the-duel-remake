@@ -3,7 +3,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
 async function pass(context, quality) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     document.querySelector('#view3d')?.dataset.vehicleAsset === 'ready' &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`, `${quality} memory-only menu`, 60_000);

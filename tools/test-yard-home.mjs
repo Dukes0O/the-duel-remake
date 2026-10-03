@@ -13,8 +13,8 @@ globalThis.localStorage = {
 };
 globalThis.cancelAnimationFrame = () => {};
 
-const flags = (hidden = true, wasteland = true) => createFeatureFlags({storage: null,
-  overrides: {'hidden-road': hidden, wasteland2: wasteland}});
+const flags = (hidden = true) => createFeatureFlags({storage: null,
+  overrides: {'hidden-road': hidden}});
 
 function appWithCareer() {
   values.clear();
@@ -123,7 +123,7 @@ test('yard scrap operations spend once, equip and persist without touching credi
   } finally { app.dispose(); }
 });
 
-test('yard guard rejects prearrival, wrong player, visit owner mismatch and either flag off', () => {
+test('yard guard rejects prearrival, wrong player, visit owner mismatch and hidden-road off', () => {
   const app = appWithCareer();
   try {
     const initial = wallet(app);
@@ -155,7 +155,7 @@ test('yard guard rejects prearrival, wrong player, visit owner mismatch and eith
     assert.equal(app.isYardHomeActive(), false);
     assert.equal(app.purchaseArmorKit('falcone_f42', 'scrapper').ok, false);
     app.duel.state.hiddenRoadVisit = visit;
-    for (const replacement of [flags(false, true), flags(true, false)]) {
+    for (const replacement of [flags(false)]) {
       app.duel.featureFlags = replacement;
       assert.equal(app.isYardHomeActive(), false);
       assert.equal(app.purchaseArmorKit('falcone_f42', 'scrapper').ok, false);

@@ -14,8 +14,7 @@ const STAGE = COURSE.findIndex(stage => !stage.kind && stage.hasRival);
 const BASE = 900;
 
 function start(playerMph, {car = 'falcone_f42'} = {}) {
-  const duel = new Duel({seed: 2709,
-    featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: 2709});
   duel.startCampaign({mode: 'wasteland', startStage: STAGE, car, opponentCount: 1});
   const s = duel.state;
   Object.assign(s, {status: 'racing', countdown: 0, invulnerableSec: 0,

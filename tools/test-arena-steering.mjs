@@ -22,6 +22,7 @@ function check(name, run) {
 function hash(value) { return createHash('sha256').update(JSON.stringify(value)).digest('hex'); }
 function arena(car = 'falcone_f42', mode = 'last-car-rolling') {
   const duel = new Duel({seed: 1989, featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   if (mode === 'warlord') {
     assert.equal(startWarlordEvent(duel, {warlordId: 'sal', car, seed: 1989, cpuDifficulty: 'medium'}), true);
     assert.equal(beginWarlordEvent(duel), true);
@@ -74,7 +75,7 @@ function releasedAuthority(speed, grip, traction, car) {
 }
 function roadReplay(car, course = 'pacific-canyon') {
   const duel = new Duel({seed: 1989, featureFlags: flags()});
-  duel.startCampaign({car, seed: 1989, mode: 'duel', difficulty: 'casual', cpuDifficulty: 'medium',
+  duel.startCampaign({car, seed: 1989, mode: 'duel', difficulty: 'casual', cpuDifficulty: 'medium', discoveredGate: true,
     startStage: COURSE.findIndex(def => def.id === course)});
   duel.state.status = 'racing'; duel.state.countdown = 0;
   const samples = [];
@@ -186,6 +187,7 @@ for (const car of Object.keys(CARS)) for (const variant of ['engine-only', 'max-
   const upgrades = variant === 'engine-only' ? {engine: 3} :
     {engine: 3, nitro: 3, handling: 3, tires: 3, brakes: 3, suspension: 3, tank: 3};
   const duel = new Duel({seed: 1989, featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({car, seed: 1989, driverId, upgrades,
     opponents: [{car, driverId, upgrades, brain: 'rammer'}]}), true);
   duel.state.status = 'racing'; duel.state.countdown = 0; duel.state.arena.phase = 'fighting';
@@ -248,7 +250,7 @@ check('Sal window physically halves the same arena steering authority', () => {
 });
 const controls = JSON.parse(readFileSync(fixturePath, 'utf8'));
 for (const spec of controls.cases) check(spec.car + '/' + spec.course + ' unchanged full-state road fingerprint', () => {
-  assert.equal(roadReplay(spec.car, spec.course), spec.fingerprint);
+  assert.equal(roadReplay(spec.car, spec.course), spec.discoveredFingerprint);
 });
 for (const mode of ['last-car-rolling', 'warlord']) check(mode + ' seeded replay repeats at 30/60/144 graphics fps', () => {
   const baseline = arenaReplay(mode, 60);

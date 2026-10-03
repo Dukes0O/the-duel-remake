@@ -34,7 +34,7 @@ async function sampleFrames(context) {
 }
 
 async function runQuality(context, quality) {
-  await context.navigate(`${entry}?flags=scrapdome&harness=${quality}`);
+  await context.navigate(`${entry}&harness=${quality}`);
   await context.waitFor(ready, `${quality} QA menu`, 60_000);
   await context.evaluate(`(() => {
     const app=window.__qaApp;app.audio.setMuted(true);

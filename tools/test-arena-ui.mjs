@@ -21,7 +21,7 @@ globalThis.cancelAnimationFrame = () => {};
 const escapeHTML = value => String(value).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 const views = {metric: screenMetric, action: (label, verb, primary) => screenAction(label, verb, primary),
   escapeHTML, time: seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`};
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true};
+const ON = {'hidden-road': true};
 const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959s'}];
 
 function fight() {

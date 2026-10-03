@@ -93,7 +93,7 @@ async function equip(context, car) {
 
 async function runQuality(context, quality) {
   await context.evaluate('window.name=""');
-  await context.navigate(`/tools/menu-check.html?flags=warlords&harness=reward-${quality}`);
+  await context.navigate(`/tools/menu-check.html&harness=reward-${quality}`);
   await context.waitFor(`!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`,quality+' memory-only menu',60_000);
   await ready(context,quality+' initial presentation');
   const baseline=await context.evaluate(`(()=>{const a=window.__qaApp;
@@ -183,7 +183,7 @@ async function runQuality(context, quality) {
       throw Error('Reward flow altered race records or paid wrong economy');
     return{scrap:p.wasteland.scrap,wins:2,losses:1,credits:p.credits,currentCar:'stuttgart_959s',futureCar:'banshee_muscle'};})()`);
   // Same-tab reload restores the disposable registry, never the real origin store.
-  await context.navigate('/tools/menu-check.html?flags=warlords&harness=reward-reload-'+quality);
+  await context.navigate('/tools/menu-check.html&harness=reward-reload-'+quality);
   await context.waitFor(`window.__qaApp?.profile?.wasteland?.scrap===1032`,'saved reward reload',60_000);
   await ready(context,quality+' reload');
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio.setMuted(true);

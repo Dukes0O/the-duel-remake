@@ -141,7 +141,7 @@ export async function run(context) {
   const saveReport = () => writeFileSync(join(context.outputDir, 'tanker-comparison.json'), JSON.stringify(report, null, 2) + '\n');
   saveReport();
   for (const quality of ['high', 'performance']) {
-    await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2,scrapdome');
+    await context.navigate('/tools/menu-check.html?flags=hidden-road');
     await context.waitFor("!!window.__qaApp && !!window.__render && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
       'memory-only tanker comparison menu', 60000);
     await context.waitFor('window.__qaApp.visualReady === true', 'real renderer ready', 60000);

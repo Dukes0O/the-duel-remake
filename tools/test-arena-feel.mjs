@@ -11,11 +11,12 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 // charge is announced by a tell of BRAIN_DIFFICULTY.tellSec (flashing lights
 // and an engine roar) before the car boosts in; respawns shimmer; wrecks are
 // called out and sounded.
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true};
+const ON = {'hidden-road': true};
 const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959s'}];
 
 function playRound(difficulty, seed = 1989, seconds = 90) {
   const duel = new Duel({seed, featureFlags: ON});
+  duel.state.wastelandGateDiscovered = true;
   duel.startArenaEvent({car: 'banshee_muscle', cpuDifficulty: difficulty, seed, opponents: FIELD});
   const events = [];
   duel.onChange((_state, event) => events.push({t: duel.state.stageTimeSec, event}));

@@ -4,8 +4,8 @@ import {Duel} from '../src/game.js';
 import {stepCombat} from '../src/combat.js';
 
 test('an upgraded bomb waits to arm across its full blast radius', () => {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
-  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', opponentCount: 3});
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', opponentCount: 3, discoveredGate: true});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;

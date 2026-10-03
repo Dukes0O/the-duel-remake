@@ -1,6 +1,6 @@
 // Production menu and result UI on the harness's private port and memory-only saves.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#stage.in-menu') && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value", 'isolated Wasteland menu', 60_000);
   await context.waitFor("[...document.querySelectorAll('details')].some(panel => panel.querySelector('summary')?.textContent.includes('MENU QA'))", 'QA control ready');
   const hideQaControl = () => context.evaluate("document.querySelectorAll('details').forEach(panel => { if (panel.querySelector('summary')?.textContent.includes('MENU QA')) panel.style.display = 'none'; })");

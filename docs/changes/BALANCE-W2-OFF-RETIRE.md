@@ -1,69 +1,88 @@
-# BALANCE-W2-OFF-RETIRE: remove retired switches
+# BALANCE-W2-OFF-RETIRE
 
-Status: building.
+Status: building. Source, balance-tool, test-fixture and scenario cleanup is
+prepared in this lane. AUD-17 still owns the sound-bank hook, so the audio
+catalog and final switch removal wait for that owner to release it.
 
 ## Decision
 
-Kyle approved on 30 September 2026: the released `wasteland2`, `scrapdome`,
-`titan-climb`, `muddy-hollow` and `warlords` paths stay on. Remove their
-switches and code that exists only to support turning them off. Preserve the
-released on behavior and race fingerprints. Combat balance uses one run with
-the released rules on.
-
-AUD-17 still owns `src/sound-bank.js`. Its cue gates and feature-catalog
-removal stay deferred until that hook is released. No retired-switch guard was
-found in `src/warlords/vultures.js`; that file remains untouched.
+Kyle approved retiring wasteland2, scrapdome, titan-climb, muddy-hollow and
+warlords on 30 September 2026. Saved gate discovery still decides when a
+player gets Wasteland rules. The released behavior and race fingerprints must
+stay the same. This lane does not edit src/warlords/ after Kyle's 2 October
+instruction or the protected Twin Vultures file.
 
 ## Checks
 
-Before code: combat-balance acceptance 40/40, feature-switch suite 32 checks,
-and Wasteland beta catalog suite 10/10 pass.
+- Before code: combat-balance acceptance 40/40, feature-switch checks 32/32,
+  Wasteland beta catalog suite 10/10.
+- Direct source and balance changes: arena/UI/discovery/Warlord/Side Saws/
+  launcher bundle 102/102; Muddy Hollow 49/49; combat-balance CLI 33/33.
+- The 3 October diagnostic lane tier ran all 344 suites: 343 passed. The sole
+  failure was one missing AudioWorklet block in the browser audio peak suite
+  under eight parallel jobs. That unchanged suite then passed 23/23 alone,
+  with measured final sample and true peaks below -1 dB. No assertion was
+  changed for it. The required lane gate then passed all 344 suites in 564.12 s;
+  npm run build passed in 422 ms. This is a partial slice, not merge evidence.
+- Focused fixture bundles after the diagnostic passed: arena, settlement and
+  career 302/302; combat and on-foot 80/80; Arsenal, crew, renderer and
+  Hidden Road 129/129; projectile body and replay 35/35; combat armor 18/18;
+  crash switch 17/17; steering and on-foot replay suites 3/3.
+- Ten steering and four on-foot full-state hashes match current integration
+  exactly for identical discovered inputs. Original historical pins remain;
+  separate discovered-input pins were added. Combat replay pins still pass.
+  The approved projectile-height trace and its SHA-256 stay unchanged.
+- Browser scenario URL overrides were removed in 48 owned scenarios. Their
+  browser journeys remain to be checked after the audio hook lands. Board
+  parsing and diff whitespace checks pass.
 
-Current focused evidence: the arena event/UI, Wasteland discovery, Warlord
-format/hooks/settlement, Side Saws, and preview-launcher suites pass 102/102.
-The Muddy Hollow suite passes 49/49 after removing its switch gates while
-keeping the discovery checks and unchanged race fingerprints. Full lane tier
-The combat-balance CLI suite passes 33/33 after removing its Wasteland on/off
-selection and running its default samples with the discovered released rules.
-Full lane tier and build are still required after the remaining source, tooling,
-and scenario changes.
+## Changed assertions
 
-The first current lane-tier run reached 8/342 tests, then stopped at the
-unchanged `tools/test-audio.mjs` check that expects eleven runtime recordings.
-That test also fails unchanged on integration. The production build passes;
-Vite reports its existing large-chunk advisory. Lane tier must pass before
-merge.
+- The real App reward fixture now starts a discovered career. Its four-hit,
+  one-wreck win pays exactly 320 scrap and zero credits on both integration
+  and this lane. The once-only save and result-screen checks remain; pure
+  credit-formula tests remain.
+- Renderer and on-foot negative fixtures use an undiscovered saved gate.
+  The camera preference is checked after a discovered career reload.
+  Pre-gate raider salvage stays absent; a discovered full-resource run
+  collects a real crate. No simulation assertion was relaxed.
+- The Salt Flats launcher no longer tests rejection through the retired
+  Wasteland and Scrapdome switches (two entries in each of two loops).
+  Rank, saved discovery, Salt and Fuel development switches, malformed
+  fields and physical/replay checks remain.
+- The Fuel Run blocked-launch loop lost only its retired Scrapdome entry.
+  The rank, mode switch, discovery, ownership and menu refusals remain.
+- One duplicate combat-armor test also asserted that the retired catalog
+  switch was on. It was deleted; its ordinary and undiscovered armor checks
+  remain in the next test. The enemy-aim control keeps its historical
+  metadata key and exact hash.
 
 ## Removed
 
-- Removed the `wasteland2` gate from discovered Wasteland access and the
-  `titan-climb` gate from the player's off-road capability. The released
-  behavior remains available; gate discovery still controls access to the
-  Hidden Road.
-- Removed off-switch rejection from warlord start, intro, fight-hook and
-  Side Saws paths. Deleted Warlord tests that only proved those switches could
-  close released features. Kept territory-hold, discovery, unknown-ID,
-  ordinary-race fingerprint, and positive fight checks.
-- Removed the arena event's Scrapdome and warlord switch gates. Unfinished Fuel
-  Run, Bounty Hunt, Salt Flats, invalid requests and undiscovered Wasteland
-  access remain gated.
-- Removed the inactive Side Saws visibility gates from the Armory and yard
-  router. Deleted off-only Side Saws and arena UI checks; kept positive
-  entitlement, discovery, damage, settlement, and yard-only launch checks.
-- Removed Muddy Hollow switch checks from course creation, paint, reward
-  settlement, exploration collection and garage hints. Discovery still decides
-  when a race can enter the Hollow. Removed tests that only proved the switch
-  could hide released content; undiscovered-course and ordinary-road checks
-  remain.
-- Removed the global flag argument from Wasteland unlock checks. Saved gate
-  discovery now controls access directly.
-- Removed the Wasteland on/off option and duplicate off samples from the
-  combat-balance runner. Arena and on-foot balance scripts also use the released
-  rules without setting a global Wasteland flag. Arsenal remains an optional
-  measurement.
-- Updated operations guidance to use one combat-balance report with discovered
-  Wasteland rules. The root `AGENTS.md` update stays for the integration owner;
-  lane rules forbid editing that file here.
-- The global feature catalog, audio hook, remaining tests and scenarios still
-  need retirement. `src/sound-bank.js` remains with AUD-17 until that lane
-  releases it.
+- Removed retired Wasteland, Scrapdome, Titan climb, Muddy Hollow and Warlord
+  off guards from their owned source paths. Gate discovery, unfinished
+  feature switches, malformed input and player ownership still gate entry.
+- Removed the Wasteland on/off option and duplicate off samples from combat
+  balance. Arena and on-foot balance use discovered released rules; Arsenal
+  remains an optional measurement. Operations now calls for one run.
+- Removed off-only Warlord launch, intro, yard, format and Side Saws tests in
+  test-warlord-format, test-warlord-hooks, test-warlord-settlement,
+  test-side-saws and test-arena-ui. Positive fights, ownership, discovery,
+  reward, ordinary-race and unknown-ID cases remain.
+- Removed off-only Muddy Hollow construction, surface, departure, content
+  and reward cases in test-muddy-hollow. Pre-discovery, ordinary-road and
+  on-path behavior remain.
+- Removed the two Titan switch-off climb/slope tests in test-titan-climb and
+  the switch-off traffic-shield test. Positive Titan, Rally, ordinary-car,
+  impact, shield and replay cases remain.
+- Removed retired switch settings from tests and 48 browser scenario URLs.
+  Removed 52 obsolete Board flag fields. The Salt control trace was not
+  regenerated.
+
+## Pending
+
+AUD-17 must release src/sound-bank.js before this lane can remove its cue
+flags, the remaining src/audio.js gates, the feature catalog entries and the
+audio/catalog tests. The root AGENTS.md release-evidence wording belongs to
+integration, not this lane. Then run the exact required lane tier and build,
+review, merge, update status, run the full tier, and clean the lane.

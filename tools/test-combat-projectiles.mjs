@@ -18,9 +18,9 @@ const close = (actual, expected, message, tolerance = 1e-6) =>
     `${message}: expected ${expected}, got ${actual}`);
 const round = value => Number.isFinite(value) ? +value.toFixed(5) : value ?? null;
 
-function field({mode = 'wasteland', wasteland2 = true} = {}) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode, startStage: 0, cpuDifficulty: 'hard', opponentCount: 3});
+function field({mode = 'wasteland', discoveredGate = true} = {}) {
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode, startStage: 0, cpuDifficulty: 'hard', opponentCount: 3, discoveredGate: discoveredGate});
   const state = duel.state;
   state.status = 'racing';
   state.s = state.prevS = 100;
@@ -197,7 +197,6 @@ test('a flagged bolt hits when its height crosses a later CPU car between frames
   const outcomes = [];
   for (const fps of [30, 60, 144]) {
     const {duel, state} = field();
-    duel.featureFlags = {enabled: name => name === 'wasteland2'};
     const target = state.opponents[1];
     place(target, 140);
     target.airHeight = target.prevAirHeight = 0;
@@ -233,7 +232,6 @@ test('a flagged bolt hits when its height crosses a later CPU car between frames
 
 test('ordinary races cannot fire or guide a stray bolt with the development switch enabled', () => {
   const {duel, state} = field({mode: 'duel'});
-  duel.featureFlags = {enabled: name => name === 'wasteland2'};
   state.combat = createCombat({});
   place(state.opponents[1], 350);
   assert.equal(fireWeapon(duel, 'crossbow'), false,
@@ -254,9 +252,9 @@ test('ordinary races cannot fire or guide a stray bolt with the development swit
   close(projectile.vz, before.vz, 'ordinary bolt z direction');
 });
 
-function replayDigest(mode, wasteland2) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode, startStage: 0, cpuDifficulty: 'hard'});
+function replayDigest(mode, discoveredGate) {
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode, startStage: 0, cpuDifficulty: 'hard', discoveredGate: discoveredGate});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;
@@ -291,21 +289,21 @@ function replayDigest(mode, wasteland2) {
   return createHash('sha256').update(JSON.stringify(samples)).digest('hex');
 }
 
-test('ordinary and flag-off Wasteland projectiles keep the approved replay fingerprints', () => {
+test('ordinary and pre-gate Wasteland projectiles keep the approved replay fingerprints', () => {
   assert.equal(replayDigest('duel', false), '1a7f0be659d29472a1ce36f2903dffdff8352f2b951c16a75df9bb7a7414c14e',
     'ordinary mode keeps the approved source behavior');
   assert.equal(replayDigest('duel', true), '1a7f0be659d29472a1ce36f2903dffdff8352f2b951c16a75df9bb7a7414c14e',
     'enabling combat rules cannot change ordinary races');
   assert.equal(replayDigest('wasteland', false), '9453a92c428b5194f5768392e2d1e76a0162de6f36429c39bd18bd02fc3bfd34',
-    'flag-off Wasteland keeps the approved source behavior');
+    'pre-gate Wasteland keeps the approved source behavior');
 });
 
 // BUG-06: exercise production projectile stepping on a flat, deterministic
 // course. Vehicle sizes, armor, hit events and damage still use Duel rules.
-function bodyContact({wasteland2 = true, kind = 'crossbow', enemy = false,
+function bodyContact({discoveredGate = true, kind = 'crossbow', enemy = false,
   car = 'falcone_f42', fps = 60, startAir = 0, endAir = startAir,
   height, endHeight = height, startZ = 130, endZ = 150} = {}) {
-  const {duel, state} = field({wasteland2});
+  const {duel, state} = field({discoveredGate});
   duel.course = {
     groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
     nearest: (x, z) => ({s: z, lateral: x}),
@@ -373,14 +371,13 @@ bodyCase('flagged bolt at 4 m clears the Titan roof',
 
 test('legacy bolts and other weapon outcomes keep the body-height control fingerprint', () => {
   bodyChecks++;
-  const controls = [
-    {wasteland2: false, height: 2},
-    {wasteland2: false, height: 2, enemy: true},
-    {kind: 'bomb', height: 2},
-    {kind: 'rpg', height: 2},
-  ].map(options => ({options, result: bodyContact(options)}));
   const expected = JSON.parse(readFileSync(new URL(
     './replays/projectile-height-controls.json', import.meta.url), 'utf8'));
+  // Read the approved historical options unchanged; map their old gate key to
+  // the current saved-discovery input without editing the control trace.
+  const controls = expected.outcomes.map(({options}) => ({
+    options, result: bodyContact({...options, discoveredGate: options.wasteland2 ?? true}),
+  }));
   assert.deepEqual(controls, expected.outcomes,
     'height correction must preserve legacy bolts and other weapons');
   assert.equal(createHash('sha256').update(JSON.stringify(controls)).digest('hex'),

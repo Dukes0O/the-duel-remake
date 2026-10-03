@@ -61,6 +61,7 @@ function place(actor, s, lateral = 0) {
 }
 function race({enabled = true, discovered = true, arena = false, difficulty = 'hard', seed = 1989} = {}) {
   const duel = new Duel({seed, featureFlags: flags(enabled)});
+  duel.state.wastelandGateDiscovered = discovered;
   if (arena) eq(duel.startArenaEvent({car: 'falcone_f42', seed, cpuDifficulty: difficulty,
     opponents: [{car: 'dusthawk_rally', brain: 'hunter'}, {car: 'aurora_gt', brain: 'collector'}]}),
   true, 'genuine native arena starts');

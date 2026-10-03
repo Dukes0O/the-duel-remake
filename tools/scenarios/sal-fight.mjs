@@ -110,7 +110,7 @@ async function advanceTo(context, stage, minimumAge = .05, maximumSeconds = 5) {
 }
 
 async function runQuality(context, quality) {
-  await context.navigate(`/tools/menu-check.html?flags=warlords&harness=sal-fight-${quality}`);
+  await context.navigate(`/tools/menu-check.html&harness=sal-fight-${quality}`);
   await context.waitFor('!!window.__qaApp&&!!window.__render', `${quality} private menu`, 60000);
   await ready(context, `${quality} menu`);
   await context.evaluate(`(() => {

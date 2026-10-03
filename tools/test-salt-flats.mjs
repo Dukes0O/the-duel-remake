@@ -221,15 +221,15 @@ check('native','the actual native layout repeats from seed and inputs',async()=>
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
 globalThis.cancelAnimationFrame=()=>{};
 const flags=(enabled=true,overrides={})=>createFeatureFlags({storage:null,qa:enabled,search:enabled?'?flags=salt-flats':'',
-  overrides:{wasteland2:true,'hidden-road':true,scrapdome:true,warlords:true,'fuel-run':true,...overrides}});
+  overrides:{'hidden-road':true,'fuel-run':true,...overrides}});
 const xpAtRank=rank=>Array.from({length:rank-1},(_,i)=>400+150*i).reduce((sum,value)=>sum+value,0);
 async function yard({rank=9,discovered=true,enabled=true,overrides={}}={}){
   const {App}=await import('../src/app.js');memory.clear();const app=new App();app.duel.featureFlags=flags(enabled,overrides);
   app.audio.unlock=()=>{};app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:discovered,rank,xp:xpAtRank(rank)}};
   assert.equal(rankForXp(app.profile.wasteland.xp),rank);assert.equal(app._saveProfile(),true,'synthetic profile only');
-  if(discovered){app.duel.featureFlags=flags(enabled,{...overrides,wasteland2:true});
+  if(discovered){
     assert.equal(app.visitWasteland(),true);app.advance(8);assert.equal(app.isYardHomeActive(),true);
-    app.duel.featureFlags=flags(enabled,overrides);}
+  }
   return app;
 }
 const publicModes=['last-car-rolling','fuel-run']; // Claude's 2 October released Salt scope.
@@ -277,7 +277,7 @@ for(const mode of publicModes){
     assert.equal(JSON.stringify(profile),before,'selected venue rendering is pure');
   });
   check('runtime',`${mode}: native Duel rejects Salt with its dev flag off without mutation`,()=>{
-    const duel=new Duel({seed:1989,featureFlags:flags(false)}),before=JSON.stringify(duel.state);
+    const duel=new Duel({seed:1989,featureFlags:flags(false)});duel.state.wastelandGateDiscovered=true;const before=JSON.stringify(duel.state);
     assert.equal(duel.featureFlags.enabled('fuel-run'),true,'Fuel remains on for the native Salt-off control');
     assert.equal(duel.startArenaEvent({venueId:'salt-flats',mode,car:'falcone_f42',seed:1989,
       opponents:[{car:'dusthawk_rally'}]}),false,'native known Salt launch requires its actual dev switch');
@@ -301,7 +301,7 @@ check('runtime','the registered second venue is physically seeded and has two us
     assert.ok(Math.hypot(a.x-b.x,a.z-b.z)>=ARENA_RULES.spawnClearMetres,'existing arena spawn-clearance rule');}
   assert.deepEqual(new Course(venue,1989).features,course.features,'actual physics repeats from seed');
 });
-for(const options of [{rank:8},{discovered:false},{enabled:false},{overrides:{scrapdome:false}},{overrides:{wasteland2:false}}])
+for(const options of [{rank:8},{discovered:false},{enabled:false}])
   check('runtime',`public Salt Flats launch rejects ${JSON.stringify(options)}`,async()=>{
     const app=await yard(options);try{const before=JSON.parse(JSON.stringify({state:app.duel.state,profile:app.profile}));
       assert.equal(app.startArenaEvent({venueId:'salt-flats',mode:'last-car-rolling'}),false,'locked venue cannot silently launch the default Scrapdome');
@@ -327,8 +327,7 @@ check('runtime','Fuel Run uses its legitimate dev flag independently of Salt Fla
   assert.equal(flags(false).enabled('salt-flats'),false,'Salt can be disabled independently');
   assert.equal(flags(false).enabled('fuel-run'),true,'off-Salt rejection keeps Fuel enabled');
 });
-for(const options of [{rank:8},{discovered:false},{enabled:false},{overrides:{scrapdome:false}},
-  {overrides:{wasteland2:false}},{overrides:{'fuel-run':false}}])
+for(const options of [{rank:8},{discovered:false},{enabled:false},{overrides:{'fuel-run':false}}])
   check('runtime',`public Salt Flats Fuel Run rejects ${JSON.stringify(options)}`,async()=>{
     const app=await yard(options);try{
       if(options.enabled===false)assert.equal(app.duel.featureFlags.enabled('fuel-run'),true,'Fuel stays enabled in off-Salt control');
@@ -369,7 +368,7 @@ check('runtime','default Scrapdome launch remains available below Salt Flats ran
   }finally{app.dispose?.();}
 });
 for(const mode of publicModes)check('runtime',`${mode}: a complete Salt Flats round stays physical and repeats its result`,()=>{
-  function play(){const duel=new Duel({seed:1989,featureFlags:flags()});
+  function play(){const duel=new Duel({seed:1989,featureFlags:flags()});duel.state.wastelandGateDiscovered=true;
     assert.equal(duel.startArenaEvent({venueId:'salt-flats',mode,car:'falcone_f42',seed:1989,cpuDifficulty:'medium',
       opponents:[{car:'dusthawk_rally'}]}),true,`missing built ${mode} Salt Flats consumer`);
     const rules=ARENA_MODES[mode];
@@ -414,6 +413,7 @@ function scrapdomeControls(){
   const physicalSha256=hash(JSON.stringify({venue:SCRAPDOME_VENUE,samples:course.samples,
     features:course.features,spawns:spawnSlots(course)}));
   const duel=new Duel({seed:1989,featureFlags:flags()});
+  duel.state.wastelandGateDiscovered=true;
   assert.equal(duel.startArenaEvent({car:'falcone_f42',seed:1989,cpuDifficulty:'medium',
     opponents:[{car:'dusthawk_rally'}]}),true);
   const trace=[];

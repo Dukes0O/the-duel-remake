@@ -11,14 +11,15 @@ import {worldPose} from '../src/arena/arena-floor.js';
 // leap and landing, the stuck window, phase two's double drop and his reward.
 // The real dome course and arena step; null flag storage; no browser or saves.
 const DT = 1 / 120;
-const FLAGS = {wasteland2: true, scrapdome: true, warlords: true};
+
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
 test.after(() => console.log('Kettle Kingpin: ' + checks + ' checks.'));
 
 function fight({phase = 1, gap = 25} = {}) {
-  const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  const duel = new Duel({seed: 1989});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'kettle', car: 'falcone_f42', cpuDifficulty: 'medium'}), true);
   assert.equal(beginWarlordEvent(duel), true);
   duel.state.countdown = 0;

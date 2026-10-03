@@ -1,5 +1,5 @@
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2,crew-gear,arsenal');
+  await context.navigate('/tools/menu-check.html?flags=crew-gear,arsenal');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     document.querySelector('#view3d')?.dataset.vehicleAsset === 'ready' &&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`,

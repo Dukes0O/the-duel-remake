@@ -23,7 +23,7 @@ globalThis.localStorage = {
   removeItem: key => values.delete(key),
 };
 globalThis.cancelAnimationFrame = () => {};
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true, warlords: true};
+const ON = {'hidden-road': true};
 const DT = 1 / 120;
 let checks = 0;
 const equal = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };

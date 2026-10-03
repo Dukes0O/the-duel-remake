@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { wavFromPcm } from './audio-race.mjs';
 import { measureLoudness } from '../audio/measurements.mjs';
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(
     "!!window.__qaApp && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
     'isolated combat audio',

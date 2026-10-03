@@ -9,9 +9,9 @@ import {createRaiderMarkers} from '../src/raider-markers.js';
 import {createSalvageMarkers} from '../src/salvage-markers.js';
 import {sweepObstacle} from '../src/collision.js';
 
-function race(stageIndex = 0, flagged = true, seed = 1989) {
-  const duel = new Duel({seed, featureFlags: {wasteland2: flagged}});
-  duel.startCampaign({mode: 'wasteland', startStage: stageIndex, opponentCount: 1});
+function race(stageIndex = 0, discovered = true, seed = 1989) {
+  const duel = new Duel({seed});
+  duel.startCampaign({mode: 'wasteland', startStage: stageIndex, opponentCount: 1, discoveredGate: discovered});
   duel.state.status = 'racing';
   duel.state.combat.pickupTimer = Infinity;
   duel.state.combat.aiTimer = Infinity;
@@ -116,6 +116,8 @@ test('ledge salvage is visible, foot-only, and collected at most once', () => {
 });
 
 test('full-resource salvage requires a discovered Wasteland career', () => {
+  const undiscovered = race(0, false);
+  assert.equal(undiscovered.state.raids, undefined, 'pre-gate play has no salvage crate');
   const duel = race(), state = duel.state, crate = state.raids.zones[0].salvage;
   state.onFoot = true;
   state.fighter = {x: crate.x, y: crate.y, z: crate.z,
@@ -123,18 +125,16 @@ test('full-resource salvage requires a discovered Wasteland career', () => {
   state.armor = state.maxArmor;
   state.footWeapons.ammo = 3;
   stepRaiders(duel, 1 / 120);
-  assert.equal(crate.collected, false, 'pre-gate pickup still needs missing resources');
+  assert.equal(crate.collected, true, 'discovered full-resource pickup collects its real crate');
   duel.startCampaign({mode: 'wasteland', discoveredGate: true});
   assert.equal(duel.state.wastelandGateDiscovered, true);
   duel.startCampaign({mode: 'wasteland', discoveredGate: false});
   assert.equal(duel.state.wastelandGateDiscovered, false,
     'a later player cannot inherit the previous gate snapshot');
-  const legacy = race(0, false);
-  assert.equal(legacy.state.raids, undefined,
-    'flag-off play retains no Wasteland salvage crates');
+
 });
 
-test('flag-off and ordinary races have no raiders or route change', () => {
+test('pre-gate and ordinary races have no raiders or route change', () => {
   const modern = race(), legacy = race(0, false);
   assert.equal(Object.hasOwn(legacy.state, 'raids'), false);
   assert.deepEqual(legacy.course.samples, modern.course.samples);
@@ -142,7 +142,7 @@ test('flag-off and ordinary races have no raiders or route change', () => {
   const original = JSON.stringify(legacy.state.combat.projectiles);
   stepRaiders(legacy);
   assert.equal(JSON.stringify(legacy.state.combat.projectiles), original);
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: 1989});
   duel.startCampaign({mode: 'duel', startStage: 0});
   assert.equal(Object.hasOwn(duel.state, 'raids'), false);
 });
@@ -192,7 +192,7 @@ test('warning precedes a bounded volley, and raider hits give no player credit',
   assert.equal(state.raids.shots, 4, 'second lap refreshes the camp');
 });
 
-test('raiders can aim at a passing opponent and pooled warnings stay hidden flag-off', () => {
+test('raiders can aim at a passing opponent and pooled warnings stay hidden pre-gate', () => {
   const duel = race(), state = duel.state, zone = state.raids.zones[0];
   state.s = 0;
   state.speedMph = 0;

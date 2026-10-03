@@ -14,14 +14,15 @@ import {hazardsActive} from '../src/combat-weapons.js';
 // line, the coughing-engine window, phase two and the Smoke Screen reward.
 // Synthetic straight course, null flag storage, no browser or real saves.
 const DT = .01;
-const FLAGS = {wasteland2: true, scrapdome: true, warlords: true};
+
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
 test.after(() => console.log('Dustmonger: ' + checks + ' checks.'));
 
 function fight(difficulty = 'medium') {
-  const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  const duel = new Duel({seed: 1989});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'dustmonger', car: 'falcone_f42', cpuDifficulty: difficulty}), true);
   assert.equal(beginWarlordEvent(duel), true);
   duel.state.countdown = 0; duel.step(DT); duel.step(DT);

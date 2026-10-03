@@ -3,7 +3,7 @@ const key = (context, type, code, keyName, virtual) => context.command(
     windowsVirtualKeyCode: virtual});
 
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     document.querySelector('#view3d')?.dataset.vehicleAsset === 'ready' &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,

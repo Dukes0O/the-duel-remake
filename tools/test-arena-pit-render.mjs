@@ -12,7 +12,8 @@ const context = new Proxy({measureText: text => ({width: String(text).length * 8
   createImageData: (w, h) => ({data: new Uint8ClampedArray(w * h * 4)})},
   {get: (target, key) => key in target ? target[key] : () => {}});
 test('Pit production world loads finite geometry, preserves race state and releases owned resources', () => {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true, scrapdome: true, warlords: true}});
+  const duel = new Duel({seed: 1989});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({venueId: 'pit', car: 'falcone_f42', seed: 1989,
     opponents: [{car: 'dusthawk_rally'}]}), true, 'actual native Pit must exist before its world can load');
   const originalDocument = globalThis.document, originalLoad = THREE.TextureLoader.prototype.load;

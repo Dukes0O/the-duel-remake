@@ -69,7 +69,7 @@ export async function run(context) {
   const reports = [];
   for (const quality of ['high', 'performance']) {
     await context.evaluate('window.name=""');
-    await context.navigate('/tools/preview.html?flags=warlords&harness=war-pay-' + quality);
+    await context.navigate('/tools/preview.html&harness=war-pay-' + quality);
     await context.waitFor('window.__qaApp?.duel.state.status==="menu"', 'fresh private Preview menu', 60_000);
     const fresh = await context.evaluate('(()=>{const a=window.__qaApp;' +
       'if(!window.name.startsWith("__duel_qa_tab_v2:")||!Object.getOwnPropertyDescriptor(window,"localStorage")?.value)' +
@@ -102,7 +102,7 @@ export async function run(context) {
     const afterReload = await finish(context); check(afterReload, 312, false, quality + ' after reload');
     await context.screenshot(quality + '-preview-reload-rematch');
     // A genuinely different browser tab receives a fresh Preview seed.
-    await context.evaluate('window.__payTab=window.open(' + JSON.stringify(context.baseURL + '/tools/preview.html?flags=warlords') + ',"_blank");true');
+    await context.evaluate('window.__payTab=window.open(' + JSON.stringify(context.baseURL + '/tools/preview.html') + ',"_blank");true');
     await context.waitFor('window.__payTab?.__qaApp?.visualReady&&window.__payTab.__render&&window.__payTab.__qaApp.duel.state.status==="menu"', 'new-tab private Preview', 60_000);
     const newSeed = await context.evaluate('(()=>{const w=window.__payTab,a=w.__qaApp;a.stop();a.audio.setMuted(true);a.cpuDifficulty="medium";' +
       'if(a.profile.wasteland.warlords.sal.defeated||a.profile.wasteland.warlords.sal.wins!==0||a.profile.wasteland.scrap!==0)' +

@@ -31,7 +31,7 @@ function check(name, run) {checks++; try {run();} catch (error) {failures.push(n
 const near = (a, b, label) => assert.ok(Math.abs(a - b) < EPS, label + ': ' + a + ' versus ' + b);
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const flags = enabled => createFeatureFlags({storage: null, qa: true,
-  overrides: {wasteland2: true, scrapdome: true, arsenal: enabled !== false}});
+  overrides: {arsenal: enabled !== false}});
 function place(actor, s, lateral = 0, headingError = 0, speedMph = 0) {
   Object.assign(actor, {s, prevS: s, lateral, prevLateral: lateral, headingError,
     speedMph, yawVelocity: 0, pushVelocity: 0, slipAngle: 0, impactTimer: 0,
@@ -45,6 +45,7 @@ function atRelative(duel, actor, owner, metres, degrees = 0) {
 }
 function race({arena = false, enabled = true, discovered = true, difficulty = 'hard', levels = {}} = {}) {
   const duel = new Duel({seed: SEED, featureFlags: flags(enabled)});
+  duel.state.wastelandGateDiscovered = discovered;
   const options = {car: 'falcone_f42', driverId: 'club', seed: SEED, difficulty: 'casual',
     cpuDifficulty: difficulty, arsenalRank: 6, weaponLevels: levels,
     weaponLoadout: ['harpoon', 'caltrops', 'oil', 'smoke']};
@@ -673,6 +674,7 @@ check('Harpoon motion contributes to native solid-face armor damage and contact 
 });
 check('Harpoon motion contributes to native arena participant closing speed and ram damage', () => {
   const duel = new Duel({seed: SEED, featureFlags: flags(true)});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({seed: SEED, car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'hard',
     arsenalRank: 6, weaponLoadout: ['harpoon', 'caltrops', 'oil', 'smoke'], opponents: [
       {car: 'dusthawk_rally', driverId: 'club', brain: 'gunner'}, {car: 'aurora_gt', driverId: 'club', brain: 'gunner'}]}), true);

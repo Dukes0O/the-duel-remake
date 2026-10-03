@@ -258,7 +258,7 @@ async function runMotionSupplement(context,round) {
   await context.waitFor(READY,'settled legacy scene',60000);
   await context.evaluate(`(()=>{const q=window.__arrivalQa;q.place(149.9,35);q.advance(.1);q.advance(1.3);})()`);
   await pause(600);
-  report.legacy=await context.evaluate(`(()=>{const a=window.__qaApp,strip=document.querySelector('.weapon-hud'),r={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),wasteland2:a.duel.featureFlags.enabled('wasteland2'),opacity:Number(getComputedStyle(strip).opacity)};if(!r.hiddenRoad||r.wasteland2||r.opacity>.01)throw Error('Legacy HUD fade failed');return r;})()`);
+  report.legacy=await context.evaluate(`(()=>{const a=window.__qaApp,strip=document.querySelector('.weapon-hud'),r={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),discovered:a.duel.state.wastelandGateDiscovered,opacity:Number(getComputedStyle(strip).opacity)};if(!r.hiddenRoad||r.discovered||r.opacity>.01)throw Error('Legacy HUD fade failed');return r;})()`);
   const shot=await context.screenshot('legacy-mad-max-departure-settled');
   report.legacyScreenshot=pathRelative(ROOT,shot).replaceAll('\\','/');
   await writeFile(join(directory,'motion-supplement.json'),JSON.stringify(report,null,2)+'\n');
@@ -368,7 +368,7 @@ export async function run(context) {
     if(round>=2&&quality==='high'){
       await context.evaluate(`(()=>{const a=window.__qaApp;a.startCampaign({mode:'wasteland',startStage:0,seed:1989,car:'falcone_f42',difficulty:'casual'});a.stop();Object.assign(a.duel.state,{status:'racing',paused:false,countdown:0,traffic:[],opponents:[],rival:null});a.onFrame?.(a.duel.state);window.__render.renderFrame();})()`);
       await context.waitFor(READY,'legacy Mad Max departure scene',60000);
-      const legacy=await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__arrivalQa;q.place(149.9,35);q.advance(.1);q.advance(1.3);a.onFrame?.(a.duel.state);window.__render.renderFrame();const strip=document.querySelector('.weapon-hud');const result={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),wasteland2:a.duel.featureFlags.enabled('wasteland2'),phase:a.duel.state.hiddenRoadJourney.phase,opacity:Number(getComputedStyle(strip).opacity)};if(!result.hiddenRoad||result.wasteland2||result.opacity>.01)throw Error('Legacy combat strip did not fade with departure');return result;})()`);
+      const legacy=await context.evaluate(`(()=>{const a=window.__qaApp,q=window.__arrivalQa;q.place(149.9,35);q.advance(.1);q.advance(1.3);a.onFrame?.(a.duel.state);window.__render.renderFrame();const strip=document.querySelector('.weapon-hud');const result={hiddenRoad:a.duel.featureFlags.enabled('hidden-road'),discovered:a.duel.state.wastelandGateDiscovered,phase:a.duel.state.hiddenRoadJourney.phase,opacity:Number(getComputedStyle(strip).opacity)};if(!result.hiddenRoad||result.discovered||result.opacity>.01)throw Error('Legacy combat strip did not fade with departure');return result;})()`);
       await capture('legacy-mad-max-departure','high');evidence.controls.push({legacyMadMax:legacy});
       await context.evaluate("window.__qaApp.requestNavigation('menu');window.__qaApp.onFrame?.(window.__qaApp.duel.state)");
     }

@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(
     "!!window.__qaApp && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
     'isolated moving audio',

@@ -11,7 +11,7 @@ import {applyArmorDamage} from '../src/combat-armor.js';
 import {combatOwnerId, combatTeam, hostile} from '../src/combat-teams.js';
 
 // The Scrapdome foundation (docs/SCRAPDOME.md). Headless, seeded, no graphics.
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true};
+const ON = {'hidden-road': true};
 const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959s'}];
 
 function arena({difficulty = 'medium', seed = 1989, opponents = FIELD, flags = ON} = {}) {
@@ -188,7 +188,7 @@ test('a tie at the whistle goes to sudden death, and the next credited wreck end
 });
 
 test('outside an arena the teams are exactly the player against the computer cars', () => {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: 1989});
   duel.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989, opponentCount: 2});
   const [a, b] = duel.state.opponents;
   assert.equal(combatOwnerId(duel, duel.state), 'player');

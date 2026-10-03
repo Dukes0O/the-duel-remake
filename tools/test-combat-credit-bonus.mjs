@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {App} from '../src/app.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
 import {createProfile, normalizeProfile, settleRace, CPU_REWARDS} from '../src/progression.js';
 import {createResultsScreen} from '../src/screen-results.js';
 
@@ -85,7 +84,7 @@ test('invalid stats pay zero; credits and bonus history survive normalization on
   assert.equal(repeat.profile.history.length, 1);
 });
 
-test('the real App passes the feature switch and displays the awarded bonus', () => {
+test('the real App uses saved gate discovery and displays the awarded bonus', () => {
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const values = new Map();
   Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
@@ -94,9 +93,8 @@ test('the real App passes the feature switch and displays the awarded bonus', ()
   }});
   try {
     const app = new App();
-    app.duel.featureFlags = createFeatureFlags({
-      overrides: {wasteland2: true}, storage: null, qa: false,
-    });
+    app.profile.wasteland.discoveredGate = true;
+    assert.equal(app._saveProfile(), true, 'discovered profile saves only to memory');
     assert.equal(app.startCampaign({mode: 'wasteland', startStage: 0}), true);
     const state = app.duel.state;
     state.status = 'racing';
@@ -109,10 +107,13 @@ test('the real App passes the feature switch and displays the awarded bonus', ()
     state.combat.scoring.wrecksCaused = 1;
     if (state.rival) state.rival.finishTime = null;
     assert.equal(app.duel._finishStage(), true);
-    assert.equal(state.results.creditBreakdown.combat, 140);
-    const creditsAfter = app.profile.credits;
+    assert.equal(state.results.scrapEarned, 320);
+    assert.equal(state.results.creditReward, 0);
+    const scrapAfter = app.profile.wasteland.scrap, creditsAfter = app.profile.credits;
     app.duel.emit({stageResult: state.results});
+    assert.equal(app.profile.wasteland.scrap, scrapAfter);
     assert.equal(app.profile.credits, creditsAfter);
+    assert.equal(new App().profile.wasteland.scrap, scrapAfter);
     assert.equal(new App().profile.credits, creditsAfter);
 
     const modal = createResultsScreen({
@@ -122,7 +123,9 @@ test('the real App passes the feature switch and displays the awarded bonus', ()
       time: value => Number(value || 0).toFixed(2),
       arrow: '',
     });
-    assert.ok(modal(state).includes('COMBAT BONUS +140'));
+    assert.ok(modal(state).includes('SCRAP EARNED'));
+    assert.ok(modal(state).includes('HITS LANDED'));
+    assert.ok(modal(state).includes('WRECKS CAUSED'));
     assert.ok(!modal(state).includes('undefined +'));
   } finally {
     if (previousStorage) Object.defineProperty(globalThis, 'localStorage', previousStorage);

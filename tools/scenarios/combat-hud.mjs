@@ -2,7 +2,7 @@
 async function pass(context, quality, width, height, mobile) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width, height, deviceScaleFactor: 1, mobile});
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine')?.disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
     'isolated combat HUD menu', 60_000);
   await context.evaluate(`(() => {

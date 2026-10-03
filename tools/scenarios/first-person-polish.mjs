@@ -287,7 +287,7 @@ export async function run(context) {
   for (const quality of ['high','performance']) {
     await context.command('Emulation.setDeviceMetricsOverride',
       {width:1280,height:720,deviceScaleFactor:1,mobile:false});
-    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.navigate('/tools/menu-check.html');
     // Page.navigate may return before the old quality's document is replaced.
     // Its visualReady flag is still true, so require the new document's unset
     // candidate marker before installing the second private fetch wrapper.
@@ -435,7 +435,7 @@ async function realInputMotion(context,quality,relativePath) {
     const app=window.__qaApp,s=app.duel.state;
     app.onFrame?.(s);window.__render.renderFrame();
     return{onFoot:s.onFoot,status:s.status,stage:s.stageTimeSec,
-      input:s.fighterInput,flag:app.flags?.wasteland2,
+      input:s.fighterInput,discovered:s.wastelandGateDiscovered,
       memory:window.__QA_MEMORY_STORAGE__,quality:document.querySelector('#graphics-quality')?.value};
   })()`);
   if (!exitState.onFoot) throw Error('Real exit input did not switch to on-foot: '+JSON.stringify(exitState));
@@ -545,7 +545,7 @@ async function measureProductionHandFrameCost({context,root,quality,branch,candi
   originPath,productionSha256,candidateSha256,candidatePath}) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor('!!window.__qaApp?.visualReady && !!window.__render && window.__qaP1CostPage===undefined',
     'fresh private first-person cost page',60000);
   const origin=await context.evaluate('window.location.origin');
