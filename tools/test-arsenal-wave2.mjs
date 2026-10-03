@@ -350,4 +350,16 @@ check('raising a native star shield after flame contact blocks the later burn', 
   for (let i = 0; i < 1.5 / DT; i++) stepFlamethrowers(duel, DT);
   assert.ok(Math.abs(rival.armor - armor) < EPS);
 });
+
+check('one continuous flame stream earns one style hit while recording all damage', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 506;
+  const before = state.combat.scoring.hitsLanded;
+  const dealt = state.combat.scoring.damageDealt;
+  startFlamethrower(duel, state);
+  for (let i = 0; i < 3 / DT; i++) stepFlamethrowers(duel, DT);
+  assert.ok(Math.abs(rival.armor - 76) < 1e-5);
+  assert.equal(state.combat.scoring.hitsLanded - before, 1);
+  assert.ok(Math.abs(state.combat.scoring.damageDealt - dealt - 24) < 1e-5);
+});
 if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');

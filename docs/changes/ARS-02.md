@@ -16,6 +16,7 @@ the implementation details left open by the short weapon descriptions:
   blocks the hit. CPU firing still needs a target 20-100 m ahead within three
   degrees. One accepted trigger starts one four-shot volley and one 8 s
   recharge; a rejected trigger spends nothing.
+- A continuous flame burst counts as one style hit per target, while its full armor loss still contributes to damage dealt. Leaving and re-entering refreshes burn without granting another style hit.
 - Flamethrower uses a 30-degree full cone, 15 degrees either side of the car,
   for three seconds and nine metres. A car inside takes 8 armor per second.
   Leaving it starts a 1.5 s burn at 4 armor per second. Re-entry refreshes
@@ -40,7 +41,7 @@ Tests will be written before implementation for launch spacing, range,
 blast/shield, cone and burn timing, magnet motion and native collection,
 CPU use and counters, seed replay at 30/60/144 FPS, and cleanup. Section 4
 also requires balance, save, browser, audio and frame checks after wiring.
-Owned and native module test: 22/22 pass after failing on missing modules. The test covers rocket fan, spacing, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop, CPU crate count and 30/60/144 FPS; and serializable active state. New test fixtures were aligned to the 40-projectile cap and fixed 120 Hz scheduling. No released assertion changed. Native Duel checks also pass for armor damage through the production path, native shield blocks for rocket and afterburn, magnet collection through the pickup step, CPU aim through targetFor, and smoke blocking both aimed weapons. Shared firing, CPU, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
+Owned and native module test: 22/23 pass after failing on missing modules. The test covers rocket fan, spacing, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop, CPU crate count and 30/60/144 FPS; and serializable active state. New test fixtures were aligned to the 40-projectile cap and fixed 120 Hz scheduling. No released assertion changed. Native Duel checks also pass for armor damage through the production path, native shield blocks for rocket and afterburn, magnet collection through the pickup step, CPU aim through targetFor, and smoke blocking both aimed weapons. A new native scoring acceptance is red: three seconds of flame gives the correct 24 armor but records 360 style hits. It must record one hit and all 24 damage. This needs a narrow src/combat-armor.js plus src/combat-scoring.js hook after Balance releases the former. Shared firing, CPU, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
 
 ## Removed
 
