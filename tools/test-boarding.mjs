@@ -215,6 +215,8 @@ function nativeRace() {
 }
 check('native fixed-step Jax grapple arrival mounts the rival roof', () => {
   const {duel, state, rival} = nativeRace();
+  const cues = [];
+  duel.onChange((_state, event) => {if (event.crewBoardingCue) cues.push(event);});
   state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
     arrived: true, launchDistance: 3};
   assert.equal(stepFootTransition(duel, DT), true);
@@ -223,6 +225,10 @@ check('native fixed-step Jax grapple arrival mounts the rival roof', () => {
   const roof = duel.course.groundAt(rival.s, rival.lateral).y +
     duel._vehicleSpec(rival).height;
   assert.ok(Math.abs(state.fighter.y - roof) < EPS);
+  assert.equal(cues[0]?.crewBoardingCue, 'crew.boarding.mount');
+  assert.deepEqual(cues[0]?.hitPosition, {x: state.fighter.x,
+    y: state.fighter.y, z: state.fighter.z},
+    'the mount sound must use the real roof position');
 });
 check('native jump mounts a slow enemy roof on a downward crossing', () => {
   const {duel, state, rival} = nativeRace();

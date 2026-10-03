@@ -104,10 +104,13 @@ export function startBoarding(duel, actor, {method = 'roof', previousY} = {}) {
   if (!landing) return false;
   duel.state.boarding = {phase: 'roof', targetId: targetIdentity(duel, actor),
     method, roofSeconds: 0, shakeSeconds: 0, fireSeconds: 0,
-    chargesPlanted: 0, landing};
+    chargesPlanted: 0, escapeSide: actor.lateral >= 0 ? -1 : 1, landing};
   if (method === 'grapple') duel.state.crewGear.grapple = null;
   mountFighter(duel, actor);
-  duel.emit({crewBoardingCue: 'crew.boarding.mount', targetId: duel.state.boarding.targetId});
+  duel.emit({crewBoardingCue: 'crew.boarding.mount',
+    targetId: duel.state.boarding.targetId,
+    hitPosition: {x: duel.state.fighter.x, y: duel.state.fighter.y,
+      z: duel.state.fighter.z}});
   return true;
 }
 function leaveRoof(duel, boarding, reason) {

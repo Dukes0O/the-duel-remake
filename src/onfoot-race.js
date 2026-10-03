@@ -8,7 +8,7 @@ const FIGHTER_LANE_REACH = 2.5;
 
 function fighterAhead(duel, actor) {
   const fighter = duel.state.onFoot && duel.state.fighter;
-  if (!fighter || fighter.knockedDown) return null;
+  if (!fighter || fighter.knockedDown || duel.state.boarding?.phase === 'roof') return null;
   const ahead = (duel.relativeS(fighter.s, actor.s) - actor.s) * (actor.dir || 1);
   return {fighter, ahead};
 }

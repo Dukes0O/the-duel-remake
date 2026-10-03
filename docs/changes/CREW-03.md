@@ -40,15 +40,23 @@ boundary and timing rules testable before implementation:
   actions. No new sound source, catalog entry or sound-bank hook is needed for
   Boarding. The event names remain distinct for tests and later sound design.
 
+## Changes
+
+- Added the Boarding rule module and native hooks for roof and grapple entry, fixed-step shake and fire timers, crash delta-v, safe landing, delayed armor damage, and the 0.8-second weapon lockout.
+- The ordinary vehicle-hit sweep skips a current roof rider. Ground fighters can still be hit. A boarded computer driver alternates lane goals through its normal steering solver; cars no longer treat a roof rider as a ground fighter.
+- Added a bounded roof charge mesh and used the existing finished spatial cues for the five named Boarding events. The mount cue now carries the roof position.
+- Added one private browser scenario with memory-only saves. It checks the real car exit and grapple arrival, the visible roof fighter, a one-second fire hold, the visible blinking charge, and read-only rendering.
+
 ## Checks
 
-Tests will be written before implementation for 49/51 and 89/91 km/h,
-25 m reach, target exclusion, the 0.3 s shake, 10 mph crash boundary,
-six-second limit, one charge, safe landing, delayed damage and weapon
-disable, and identical 30/60/144 FPS outcomes. Browser checks must show
-the roof fighter and charge without changing simulation state.
-Owned boarding test: 17/17 pass after failing first on the missing module and then on the native on-foot hook. It covers entry speeds, roof and grapple contact, excluded targets, shake, crash, time limit, one charge, safe shoulder, delayed damage, Hard event eligibility and 30/60/144 FPS. The module emits crew.boarding.mount, .throw, .plant, .blast and .release cues. The native fixed fighter step now mounts on Jax grapple arrival, holds fire without spending RPG ammo, and detonates through the armor path even after re-entry. Existing on-foot transition 8/8, Crew gear 33/33 and Crew module 16/16 pass. The native 170 m landing edge test was red, then passed after the Director granted src/onfoot.js: the fighter can walk within a bounded radius of either their landing or parked car, and respawn clears that temporary anchor. A native 91 km/h arrival test was red, then passed after rejected grapples began releasing Jax to a checked shoulder. The on-foot hint fingerprint test caught new boarding timers in races with Crew gear off. Those fields now exist only with the Crew gear switch: the exact hint pins pass 15/15, combat replay pins pass 12/12, and on-foot weapon/contact suites pass. Crash-delta wiring, weapon-disable enforcement, rendering, browser checks, and the final lane gate and build remain. The build after the replay fix passed in 441 ms. A diagnostic changed-file lane run passed 214/215; the only failure was a minimal fighter-presentation fixture without opponents. The roof scan now accepts that empty list; focused fighter presentation 12/12 and boarding 17/17 pass. The exact changed-file lane gate passed 215/215 in 352.21 seconds, and the build passed in 431 ms. These checks cover the partial slice before the new lockout test. That native test is red: a boarded victim can still fire during its 0.8-second lockout, so the combat weapon hook must enforce it. A new native jump-to-roof check passes. Boarding is now 18/19. The final gate will run again after the shared hooks are wired. No released assertion changed.
+Native Boarding checks were written red before the missing hooks and fixes. They now pass 24/24, including 49/51 and 89/91 km/h boundaries, 25 m grapple reach, shake and crash thresholds, six-second roof limit, one charge, safe landing, weapon lockout, 30/60/144 FPS equality, real crash delta-v, roof visual state, spatial cue routing, ground hit preservation, and boarded driver steering. The roof-hit and mount-position tests each failed before their fixes. The swerve test failed before the driver hook and roof-rider AI change.
+
+Focused regressions pass: on-foot race 3/3, on-foot car contacts 57/57, on-foot transition 8/8, on-foot hints 15/15, fighter presentation 12/12, Crew gear 33/33, combat replay pins 12/12 and general replay fingerprints 162/162. The replay pin files and assertions are unchanged. A mistaken attempt to run a nonexistent `tools/test-combat-weapons.mjs` found no such file; the native weapon lockout is covered by Boarding and the lane tier.
+
+Private `boarding` browser scenario passed on port 23599 with two review screenshots, zero warnings and zero errors. The review shows Jax standing on the rival roof and the planted orange charge on that roof. Earlier red browser runs exposed the roof-hit bug. The final camera follows the rival after planting so the charge stays visible. Browser captures are review evidence only.
+
+The exact changed-file lane gate and build are pending. No released assertion was changed or weakened. New checks and the camera-only browser fixture were added.
 
 ## Removed
 
-None yet. This new module does not replace a released path.
+No old runtime feature was replaced. The sound bank and audio catalog needed no new entry because Boarding reuses finished cues. Review captures and scratch builds will be removed after merge under the janitor rule.
