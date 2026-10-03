@@ -38,11 +38,10 @@ test('every built warlord has its own fight file and a place on the ladder', () 
 });
 
 test('hooks apply only to the fighting warlord', () => {
-  const duel = new Duel({seed: 7, featureFlags: {wasteland2: true, scrapdome: true, warlords: true}});
+  const duel = new Duel({seed: 7});
+  duel.state.wastelandGateDiscovered = true;
   ok(startWarlordEvent(duel, {warlordId: 'dustmonger', car: 'falcone_f42', cpuDifficulty: 'medium'}), 'fight starts');
   const boss = duel.state.opponents[0];
   ok(warlordFight(duel, boss) !== null, 'the boss has fight hooks');
   ok(warlordFight(duel, duel.state) === null, 'the player never does');
-  const off = new Duel({seed: 7, featureFlags: {wasteland2: true, scrapdome: true, warlords: false}});
-  ok(!startWarlordEvent(off, {warlordId: 'dustmonger', car: 'falcone_f42'}), 'the switch still gates the fight');
 });

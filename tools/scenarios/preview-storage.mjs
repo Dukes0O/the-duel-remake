@@ -1,5 +1,3 @@
-const flags='scrapdome,titan-climb,muddy-hollow';
-
 async function snapshot(context){
   return context.evaluate(`(async()=>{
     const players=JSON.parse(localStorage.getItem('the-duel-players-v2'));
@@ -35,7 +33,7 @@ export async function run(context){
       return nativeOpen.apply(this,args);
     };
   })();`});
-  await context.navigate(`/tools/preview.html?flags=${flags}`);
+  await context.navigate('/tools/preview.html');
   await context.waitFor("document.querySelector('#stage.in-menu')&&document.querySelector('[data-preview-badge]')",'preview menu');
   assertSnapshot(await snapshot(context),'first startup');
 

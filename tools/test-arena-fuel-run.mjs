@@ -21,8 +21,8 @@ import {createFuelRunView} from '../src/arena/modes/fuel-run-view.js';
 // ARENA-03: SCRAPDOME 10 Fuel Run, shared 3/6, SPEC 0.12.
 // All saves are fabricated in memory. Race rules run through the actual engine.
 const DT = 1 / 120;
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true,
-  warlords: true, 'fuel-run': true};
+const ON = {'hidden-road': true,
+  'fuel-run': true};
 const FIELD = [{car: 'dusthawk_rally', brain: 'collector'},
   {car: 'aurora_gt', brain: 'rammer'}, {car: 'stuttgart_959s', brain: 'hunter'}];
 const values = new Map();
@@ -51,6 +51,7 @@ const fuel = duel => {
 };
 function start({flags = ON, opponents = FIELD, seed = 1989, difficulty = 'medium'} = {}) {
   const duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
   equal(duel.startArenaEvent({mode: 'fuel-run', car: 'falcone_f42', seed,
     cpuDifficulty: difficulty, playerId: 'fuel-driver', opponents}), true,
   'the real Duel entry starts Fuel Run with its switch enabled');
@@ -496,7 +497,7 @@ test('rank 6 and the new dev switch govern the yard choice; locked choices stay 
   equal(FEATURE_STATES['fuel-run'], 'dev', 'the mode remains behind its new dev switch');
 });
 
-for (const blocked of ['rank', 'fuel-run', 'scrapdome', 'discovery', 'menu']) test(`${blocked} gate blocks a Fuel Run start atomically`, () => {
+for (const blocked of ['rank', 'fuel-run', 'discovery', 'menu']) test(`${blocked} gate blocks a Fuel Run start atomically`, () => {
   const options = blocked === 'rank' ? {rank: 5} : blocked === 'discovery' ? {discovered: false} :
     blocked === 'menu' ? {enter: false} : {flags: {...ON, [blocked]: false}};
   const app = yard(options), previous = [...values.entries()], state = app.duel.state;
@@ -627,6 +628,7 @@ test('stationary Fuel view has no repeated ground samples or new pose objects ov
 }));
 for (const event of ['creation', 'refill', 'drop']) test(`real Fuel ${event} prepares correct loose cargo pose outside rendering`, () => withFuelCanvas(() => {
   const duel = new Duel({seed: 1989, featureFlags: ON}), view = createFuelRunView(duel);
+  duel.state.wastelandGateDiscovered = true;
   let groundAt, samples = [];
   try {
     equal(duel.startArenaEvent({mode: 'fuel-run', car: 'falcone_f42', seed: 1989,
@@ -1010,6 +1012,7 @@ test('Fuel settlement rejects sudden death after a nonwinner already delivered f
 
 function controls(spec) {
   const duel = new Duel({seed: spec.seed, featureFlags: {...ON, 'fuel-run': spec.fuelEnabled}});
+  duel.state.wastelandGateDiscovered = true;
   if (spec.kind === 'road') duel.startCampaign({seed: spec.seed, mode: spec.mode, car: 'falcone_f42',
     startStage: COURSE.findIndex(c => c.id === spec.course), difficulty: 'casual', cpuDifficulty: 'medium'});
   else if (spec.kind === 'sal') {

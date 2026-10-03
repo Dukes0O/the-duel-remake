@@ -3,9 +3,9 @@ import test from 'node:test';
 import {Duel} from '../src/game.js';
 import {stepCombat} from '../src/combat.js';
 
-function fixture(wasteland2) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode: 'wasteland', startStage: 0});
+function fixture() {
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode: 'wasteland', startStage: 0, discoveredGate: true});
   const state = duel.state;
   state.status = 'racing';
   state.s = 500;
@@ -29,8 +29,8 @@ function bombTraffic({duel, state, traffic}) {
   return events;
 }
 
-test('Wasteland 2 rival shield does not protect traffic from blast or impact', () => {
-  const setup = fixture(true);
+test('released Wasteland rival shield does not protect traffic from blast or impact', () => {
+  const setup = fixture();
   const hits = bombTraffic(setup);
   assert.ok(setup.traffic.speedMph < 80);
   assert.equal(hits.filter(event => event.victim === 'traffic').length, 1);
@@ -43,12 +43,4 @@ test('Wasteland 2 rival shield does not protect traffic from blast or impact', (
   setup.state.rival.damageCooldown = 0;
   setup.duel._dentVehicle(setup.state.rival, 'front', 40);
   assert.equal(setup.state.rival.damageZones.front, 0);
-});
-
-test('flag-off Wasteland keeps its existing one-rival traffic shield rule', () => {
-  const setup = fixture(false);
-  assert.equal(bombTraffic(setup).filter(event => event.victim === 'traffic').length, 0);
-  assert.equal(setup.traffic.speedMph, 80);
-  setup.duel._dentVehicle(setup.traffic, 'front', 40);
-  assert.equal(setup.traffic.damageZones.front, 0);
 });

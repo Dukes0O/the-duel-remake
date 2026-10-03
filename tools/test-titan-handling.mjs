@@ -37,7 +37,7 @@ function titanAuthority(speed, grip, traction) {
   return Math.min(steeringLimit, tireLimit);
 }
 function straight(car, speed = 12, dirt = true, rival = false) {
-  const duel = new Duel({seed: 1989, featureFlags: {'titan-climb': true}});
+  const duel = new Duel({seed: 1989});
   duel.startCampaign({car, seed: 1989, startStage: rival ? 0 : COURSE.findIndex(def => def.practice),
     difficulty: 'casual', cpuDifficulty: 'medium', mode: rival ? 'duel' : 'timetrial'});
   const point = (s, lateral = 0) => ({x: lateral, y: 0, z: s, heading: 0, curvature: 0});

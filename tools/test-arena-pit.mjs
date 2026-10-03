@@ -15,8 +15,7 @@ import {warlordIntroScreen} from '../src/screen-arena.js';
 
 // SCRAPDOME 2: real Course and native Duel paths. No substitute working Pit.
 const DT = 1 / 120;
-const flags = () => createFeatureFlags({storage: null, qa: true, search: '?flags=salt-flats',
-  overrides: {wasteland2: true, 'hidden-road': true, scrapdome: true, warlords: true, 'fuel-run': true}});
+const flags = () => createFeatureFlags({storage: null, qa: true, search: '?flags=salt-flats'});
 const hash = value => createHash('sha256').update(value).digest('hex');
 const near = (a, b, tolerance = .001) => assert.ok(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
 function course() {
@@ -29,6 +28,7 @@ function centre(c) {
 }
 function start({car = 'falcone_f42', brain = 'rammer', difficulty = 'medium'} = {}) {
   const duel = new Duel({seed: 1989, featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({venueId: 'pit', mode: 'last-car-rolling', car,
     seed: 1989, cpuDifficulty: difficulty, opponents: [{car, brain}]}), true,
     'real Duel entry must admit the implemented Pit');
@@ -53,10 +53,12 @@ test('Twin Vultures start in the Pit, while the existing warlord stays on the ri
   const intro = duel => warlordIntroScreen(duel.state,
     {metric: () => '', action: () => '', escapeHTML: value => value});
   const pair = new Duel({seed: 1989, featureFlags: flags()});
+  pair.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(pair, {warlordId: 'vultures', car: 'falcone_f42', seed: 1989}), true);
   assert.equal(pair.state.arena.venueId, 'pit');
   assert.match(intro(pair).eyebrow, /THE PIT/);
   const ring = new Duel({seed: 1989, featureFlags: flags()});
+  ring.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(ring, {warlordId: 'sal', car: 'falcone_f42', seed: 1989}), true);
   assert.equal(ring.state.arena.venueId, 'scrapdome');
   assert.match(intro(ring).eyebrow, /SCRAPDOME/);
@@ -203,6 +205,7 @@ test('Pit control: released ring physical geometry and native eight-second trace
   assert.equal(hash(JSON.stringify({venue: SCRAPDOME_VENUE, samples: c.samples,
     features: c.features, spawns: spawnSlots(c)})), expected.physicalSha256);
   const duel = new Duel({seed: 1989, featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({car: 'falcone_f42', seed: 1989, cpuDifficulty: 'medium',
     opponents: [{car: 'dusthawk_rally'}]}), true);
   const trace = [];

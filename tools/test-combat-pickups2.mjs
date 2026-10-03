@@ -8,9 +8,9 @@ import * as pickups from '../src/combat-pickups.js';
 const {buildSeededPickupPlan, sweptPickupFraction, stepPickups} = pickups;
 
 function race({seed = 1989, startStage = 0, cpuDifficulty = 'hard',
-  wasteland2 = true, opponentCount = 3} = {}) {
-  const duel = new Duel({seed, featureFlags: {wasteland2}});
-  duel.startCampaign({mode: 'wasteland', seed, startStage, cpuDifficulty,
+  discoveredGate = true, opponentCount = 3} = {}) {
+  const duel = new Duel({seed});
+  duel.startCampaign({mode: 'wasteland', seed, startStage, cpuDifficulty, discoveredGate: discoveredGate,
     opponentCount});
   const state = duel.state;
   assert.equal(state.mode, 'wasteland', 'fixture must be a combat race');
@@ -299,8 +299,8 @@ test('30, 60 and 144 FPS all collect one crate on a swept crossing', () => {
   }
 });
 
-test('flag-off Wasteland keeps the timed center-lane legacy crate', () => {
-  const {duel, state, combat} = race({wasteland2: false, opponentCount: 1});
+test('pre-gate Wasteland keeps the timed center-lane legacy crate', () => {
+  const {duel, state, combat} = race({discoveredGate: false, opponentCount: 1});
   place(state, 100);
   combat.pickupTimer = 4;
   stepPickups(duel, 4);
@@ -320,6 +320,6 @@ test('flag-off Wasteland keeps the timed center-lane legacy crate', () => {
   cross(state, pickup.s - 10, pickup.s + 10, 0);
   stepPickups(duel, .05);
   assert.equal(combat.cooldowns.ufo, 0,
-    'flag-off collection retains the old recharge rule');
+    'pre-gate collection retains the old recharge rule');
   assert.equal(combat.pickups.length, 0);
 });

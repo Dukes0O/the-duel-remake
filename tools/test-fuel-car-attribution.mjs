@@ -20,7 +20,7 @@ const eq = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
 const ticks = (duel, n) => { for (let i = 0; i < n; i++) duel.step(DT); };
 function race() {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: 1989});
   duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', crewId: 'nell',
     startStage: 0, discoveredGate: true, opponentCount: 3, seed: 1989});
   const state = duel.state;
@@ -72,7 +72,7 @@ function payload(duel) {
   return {...combatResultSnapshot(duel), runId: 'fuel-attribution-fixture',
     stageIndex: state.stageIndex, car: state.car, mode: state.mode,
     cpuDifficulty: state.cpuDifficulty, difficulty: state.difficulty,
-    combatRewardsEnabled: duel.featureFlags.enabled('wasteland2'),
+    combatRewardsEnabled: duel.state.wastelandGateDiscovered,
     completed: true, won: true, timeSec: 180, laps: state.lapsTotal};
 }
 function finish(duel) {

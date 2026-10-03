@@ -4,13 +4,13 @@ import {LegacyRoadsideDuel, ClassicDestructionDuel} from './legacy-roadside-duel
 import { combatCrashThresholdMph } from '../src/vehicle-impact.js';
 
 const race = (mode = 'wasteland', car = 'banshee_muscle', classicDestruction = false,
-  wasteland2 = false) => {
+  discoveredGate = false) => {
   // This suite pins the earlier armored-contact rules; CMB-08 tests the
   // released roadside rule separately.
   const duel = new (classicDestruction ? ClassicDestructionDuel : LegacyRoadsideDuel)({
-    seed: 624, featureFlags: {wasteland2},
+    seed: 624,
   });
-  duel.startCampaign({ mode, car, startStage: 0 });
+  duel.startCampaign({ mode, car, startStage: 0, discoveredGate: discoveredGate });
   const player = duel.state;
   player.status = 'racing'; player.invulnerableSec = 0; player.traffic = [];
   player.s = 100; player.prevS = 80; player.lateral = player.prevLateral = 0;

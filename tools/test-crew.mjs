@@ -15,8 +15,8 @@ const profile=xp=>({credits:0,wasteland:normalizeWasteland({xp})});
 const STEP=1/120;
 const ticks=(duel,count)=>{for(let i=0;i<count;i++)duel.step(STEP);};
 function crewRace(id,startS=500){
-  const duel=new LegacyRoadsideDuel({seed:1989,featureFlags:{wasteland2:true}});
-  duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,
+  const duel=new LegacyRoadsideDuel({seed:1989});
+  duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,discoveredGate:true,
     seed:1989,crewId:id,opponentCount:1});
   const state=duel.state;
   Object.assign(state,{status:'racing',countdown:0,s:startS,prevS:startS,
@@ -53,8 +53,8 @@ test('eight exact roster entries, free Rook, rank gates and per-player save',()=
 
 test('Rook health and Wren sprint are real fixed-step perks; future hooks stay metadata',()=>{
   const make=id=>{
-    const duel=new LegacyRoadsideDuel({seed:1989,featureFlags:{wasteland2:true}});
-    duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,
+    const duel=new LegacyRoadsideDuel({seed:1989});
+    duel.startCampaign({mode:'wasteland',car:'falcone_f42',startStage:0,discoveredGate:true,
       seed:1989,crewId:id});
     const s=duel.state;
     Object.assign(s,{status:'racing',countdown:0,s:500,prevS:500,

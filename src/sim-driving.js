@@ -249,7 +249,7 @@ export function _terrainPose(actor = this.state) {
 }
 
 export function _offroadStep(dt, offPreparedRoute) {
-  const s = this.state, capability = offroadCapability(this.car, { titanClimb: this.featureFlags?.enabled('titan-climb') === true });
+  const s = this.state, capability = offroadCapability(this.car, { titanClimb: true });
   if (!capability || s.tumble) return;
   const before = this._supportAt(s.prevS, s.prevLateral), after = this._supportAt(s.s, s.lateral);
   if (![before.y, after.y, s.s, s.lateral].every(Number.isFinite)) {

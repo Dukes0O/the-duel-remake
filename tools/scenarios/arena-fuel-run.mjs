@@ -245,7 +245,8 @@ export async function measureFuelRounds({seeds = [1989, 77123]} = {}) {
   const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
   const rounds = [];
   for (const difficulty of ['easy', 'medium', 'hard']) for (const seed of seeds) {
-    const duel = new Duel({seed, featureFlags: {wasteland2:true, scrapdome:true, 'fuel-run':true}});
+    const duel = new Duel({seed, featureFlags: {'fuel-run':true}});
+    duel.state.wastelandGateDiscovered = true;
     if (!duel.startArenaEvent({mode:'fuel-run',seed,car:'falcone_f42',cpuDifficulty:difficulty,
       opponents:[{car:'dusthawk_rally',brain:'collector'},{car:'aurora_gt',brain:'rammer'},
         {car:'stuttgart_959s',brain:'hunter'}]})) throw Error('Fuel sample failed to launch');

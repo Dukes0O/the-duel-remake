@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const KIT_TIERS = Object.freeze({scrapper: 1, raider: 2, warlord: 3});
@@ -258,7 +259,7 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
   function update(duel, vehicles, useAtlas) {
     const state = duel.state;
     const enabled = state.mode === 'wasteland' && !!state.combat &&
-      state.status !== 'menu' && duel.featureFlags?.enabled('wasteland2') === true;
+      state.status !== 'menu' && wastelandRulesActive(state);
     if (enabled) ensurePlatingTexture();
     group.visible = enabled;
     rigs.forEach((rig, index) => {

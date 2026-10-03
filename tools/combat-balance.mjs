@@ -24,12 +24,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags wasteland2,arsenal] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
-const BALANCE_FLAGS = ['wasteland2', 'arsenal'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED';
+const BALANCE_FLAGS = ['arsenal'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected wasteland2 or arsenal.');
+    throw Error('Unsupported flags; expected arsenal.');
   return [...new Set(flags)];
 }
 
@@ -64,7 +64,7 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    overrides: { wasteland2: flags.includes('wasteland2'), arsenal: flags.includes('arsenal') } });
+    overrides: { arsenal: flags.includes('arsenal') } });
 }
 
 function emptyWrecks() {
@@ -86,10 +86,10 @@ function memoryStorage() {
   };
 }
 
-function saveArsenalCareer(storage) {
+function saveBalanceCareer(storage, arsenal) {
   const profile = createProfile();
   profile.wasteland = normalizeWasteland({...profile.wasteland,
-    xp: 3500, scrap: 3000, discoveredGate: true});
+    xp: arsenal ? 3500 : 0, scrap: arsenal ? 3000 : 0, discoveredGate: true});
   const registry = createPlayerRegistry(profile);
   registry.players[0].name = 'Arsenal Balance';
   if (!savePlayers(registry, storage)) throw Error('Could not save the memory-only Arsenal career.');
@@ -239,11 +239,11 @@ export function run(policy, cpuDifficulty, seed = 1989, { flags = [], maxFrames 
   try {
     globalThis.localStorage = memoryStorage();
     globalThis.cancelAnimationFrame ??= () => {};
-    if (flags.includes('arsenal')) saveArsenalCareer(globalThis.localStorage);
+    saveBalanceCareer(globalThis.localStorage, flags.includes('arsenal'));
     app = new App();
     app.duel.featureFlags = simulationFlags(flags);
     if (flags.includes('arsenal')) equipArsenalPolicy(app, policy);
-    if (!app.startCampaign({ startStage: 0, seed, mode: 'wasteland', car: 'falcone_f42',
+    if (!app.startCampaign({ startStage: 0, seed, mode: 'wasteland', discoveredGate: true, car: 'falcone_f42',
       difficulty: 'casual', cpuDifficulty, driverId: DEFAULT_DRIVER })) {
       throw Error(`Could not start ${policy}/${cpuDifficulty}`);
     }
@@ -346,8 +346,9 @@ export function crossbowProbe({ flags = [] } = {}) {
   for (let index = 0; index < 26; index++) {
     const duel = new Duel({ seed: 1989 + index, featureFlags: simulationFlags(flags) });
     const event = combatStages[index % combatStages.length];
-    duel.startCampaign({ mode: 'wasteland', startStage: event.index, car: event.stage.requiredCar ?? 'falcone_f42',
-      ...(flags.includes('arsenal') ? {discoveredGate: true, arsenalRank: 6} : {}) });
+    duel.startCampaign({ mode: 'wasteland', startStage: event.index, discoveredGate: true,
+      car: event.stage.requiredCar ?? 'falcone_f42',
+      ...(flags.includes('arsenal') ? {arsenalRank: 6} : {}) });
     const state = duel.state, gap = 20 + index % 13 * 7, lateral = (index % 7 - 3) * .85;
     state.status = 'racing';
     state.s = state.prevS = 100 + (index * 379) % (duel.course.length - 300);
@@ -376,8 +377,8 @@ export function bombSpeedProbe({ flags = [] } = {}) {
   // Include the four speeds named for BUG-05 (roughly 48/97/193/320 km/h).
   for (const speedMph of [20, 30, 40, 60, 80, 100, 120, 130, 160, 200]) {
     const duel = new Duel({ seed: 1989, featureFlags: simulationFlags(flags) });
-    duel.startCampaign({ mode: 'wasteland', startStage: 0,
-      ...(flags.includes('arsenal') ? {discoveredGate: true, arsenalRank: 6} : {}) });
+    duel.startCampaign({ mode: 'wasteland', startStage: 0, discoveredGate: true,
+      ...(flags.includes('arsenal') ? {arsenalRank: 6} : {}) });
     const state = duel.state;
     state.status = 'racing';
     state.s = state.prevS = 100;
@@ -539,8 +540,7 @@ function main(args) {
       .map(seed => run('rear-defense', difficulty, seed, options))) : [];
   const report = buildReport({ flags, runs, baselineRuns, firstTwelveSec, rearDefenseRuns,
     elapsedSec: rounded((performance.now() - started) / 1000), crossbowAim, ownBombs });
-  const pursuitRuns = flags.includes('wasteland2')
-    ? difficulties.map(difficulty => run('pursuit', difficulty, 1989, options)) : [];
+  const pursuitRuns = difficulties.map(difficulty => run('pursuit', difficulty, 1989, options));
   if (pursuitRuns.length) report.strongPolicy = {
     scope: 'Separate legal-input pursuit, seed 1989 per difficulty; does not replace historical win or hit samples.',
     races: pursuitRuns,

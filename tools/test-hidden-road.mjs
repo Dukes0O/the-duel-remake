@@ -34,10 +34,10 @@ function corridor(course) {
   assert.equal(typeof course.hiddenRoad.contains, 'function', 'corridor exposes physical containment');
   return course.hiddenRoad;
 }
-// The road exists only in Mad Max Duel (SPEC 0.12); wasteland2 off is the rule
+// The road exists only in Mad Max Duel (SPEC 0.12); undiscovered gate keeps the rule
 // set of a player who has not found the gate yet.
 function race(seed = 1989, car = 'falcone_f42', enabled = true, mode = 'wasteland') {
-  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled, wasteland2: false } });
+  const duel = new Duel({ seed, featureFlags: { 'hidden-road': enabled } });
   duel.startCampaign({ startStage: 0, seed, car, mode, difficulty: 'casual', cpuDifficulty: 'medium' });
   duel.state.status = 'racing';
   return duel;

@@ -4,6 +4,7 @@ import {createFirstPersonGear} from './first-person-gear.js';
 import * as THREE from 'three';
 import {directionalCameraPose} from './camera-views.js';
 import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
 import { createVehicle, updateVehicleDamage, updateNpcVehicleDamage, combatVehicleWear } from './vehicles.js';
@@ -343,7 +344,7 @@ export function attachRenderer(host, app) {
     host.dataset.paint=player.userData.paintAppearance?.id||'factory';
     const wreckAge=st.catastrophic ? Math.max(0,(st.impactDuration||0)-(st.impactTimer||0)) : 0;
     const combatWearEnabled=!menu&&st.mode==='wasteland'&&!!st.combat&&
-      app.duel.featureFlags?.enabled('wasteland2')===true;
+      wastelandRulesActive(st);
     updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,
       menu?null:st.damageZones,menu?0:st.crushDamage,combatVehicleWear(st,combatWearEnabled));
     const steering = menu ? 0 : st.steerVisual || 0;
@@ -384,7 +385,7 @@ export function attachRenderer(host, app) {
       const compact=host.clientHeight<850;
       lookTarget.set(aim.x, pp.y + (tall ? (compact ? .95 : 1.8) : compact ? -1.1 : .95), aim.z); camera.fov = 48;
     } else if(st.onFoot && st.fighter){
-      const footMode=app.duel.featureFlags?.enabled('wasteland2')?app.footCameraMode:'first-person';
+      const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       const pose=onFootCameraPose(course,st.fighter,footMode);
       camTarget.set(pose.position.x,pose.position.y,pose.position.z);

@@ -44,6 +44,7 @@ function profile(defeated = false) {
 }
 function completedArena({won = true, wrecksOnWarlord = 3, credited = wrecksOnWarlord} = {}) {
   const duel = new Duel({featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'sal', car: 'falcone_f42'}), true);
   const arena = structuredClone(duel.state.arena), [player, boss] = arena.participants;
   player.wrecks = credited; boss.wrecked = wrecksOnWarlord;

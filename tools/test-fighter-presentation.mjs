@@ -120,7 +120,7 @@ check('recovery presentation starts on the same fixed tick at 30, 60 and 144 Hz'
   for (const fps of [30, 60, 144]) {
     const course = {def: {}, obstaclesNear: () => [],
       groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0})};
-    const state = {mode: 'wasteland', combat: {}, status: 'racing', paused: false,
+    const state = {mode: 'wasteland', combat: {}, wastelandGateDiscovered: true, status: 'racing', paused: false,
       s: 0, lateral: 0, stageTimeSec: 0, onFoot: true, input: {}, fighterInput: {},
       footTransition: {heldSeconds: 0, needsRelease: false, fighterStepRemainder: 0}};
     state.fighter = createFighter(course, state);

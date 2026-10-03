@@ -36,9 +36,8 @@ function fixture() {
     {s: 103, lateral: 0, armor: 8, maxArmor: 100, combatArmorKit:'scrapper'},
   ];
   const state = {s:100,lateral:0,armor:100,maxArmor:100,combatArmorKit:'scrapper',
-    mode:'wasteland',status:'racing',stageTimeSec:1,combat:{},opponents};
-  const duel = {state,course:{groundAt:()=>({x:0,y:0,z:0})},
-    featureFlags:{enabled:key=>key==='wasteland2'}};
+    mode:'wasteland',wastelandGateDiscovered:true,status:'racing',stageTimeSec:1,combat:{},opponents};
+  const duel = {state,course:{groundAt:()=>({x:0,y:0,z:0})}};
   const vehicles = {player:cars[0],rival:cars[1],extraOpponents:cars.slice(2).map(mesh=>({mesh}))};
   return {cars,state,duel,vehicles};
 }
@@ -107,7 +106,7 @@ test('late kit loads cannot attach to a replaced vehicle or disposed scene', asy
   assert.equal(registry.size,0);
 });
 
-test('flag-off, ordinary race and unequipped player never show authored kits', async () => {
+test('undiscovered, ordinary race and unequipped player never show authored kits', async () => {
   const registry=createVehicleAttachmentRegistry();
   const kits=createArmorKitMeshes(registry,{loadKitAsset:async()=>({scene:authoredScene()})});
   const {cars,state,duel,vehicles}=fixture();
@@ -116,9 +115,9 @@ test('flag-off, ordinary race and unequipped player never show authored kits', a
     kits.update(duel,vehicles,true);await tick();await tick();kits.update(duel,vehicles,true);
     assert.equal(!!cars[0].getObjectByName('authored-kit')&&seen(cars[0].getObjectByName('authored-kit')),false);
     assert.equal(seen(cars[1].getObjectByName('kit-scrapper')),true);
-    duel.featureFlags.enabled=()=>false;kits.update(duel,vehicles,true);
+    state.wastelandGateDiscovered=false;kits.update(duel,vehicles,true);
     assert.equal(cars.some(car=>car.getObjectByName('authored-kit')&&seen(car.getObjectByName('authored-kit'))),false);
-    duel.featureFlags.enabled=()=>true;state.mode='duel';kits.update(duel,vehicles,true);
+    state.wastelandGateDiscovered=true;state.mode='duel';kits.update(duel,vehicles,true);
     assert.equal(cars.some(car=>car.getObjectByName('authored-kit')&&seen(car.getObjectByName('authored-kit'))),false);
   } finally {kits.dispose();}
 });

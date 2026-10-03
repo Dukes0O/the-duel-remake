@@ -8,6 +8,7 @@ import {startWreckSlide} from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {noteSmokeHit, clearSmokeHistory} from './arsenal/smoke.js';
 import {clearCarAlongPush} from './arsenal/car-effects.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -51,7 +52,7 @@ export function armorDamageFor(source, {
 
 export function combatArmorEnabled(duel) {
   return duel.state.mode === 'wasteland' && !!duel.state.combat &&
-    duel.featureFlags?.enabled('wasteland2') === true;
+    wastelandRulesActive(duel.state);
 }
 
 export function initializeCombatArmor(duel) {

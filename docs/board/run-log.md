@@ -697,3 +697,13 @@ Handoff: resume the clean Crew and Pit lanes when their actual owners answer
 or merge. No new long card is eligible without file overlap. Final integration
 receives build, full tier and the approved normal push after an exact-commit
 check; consult the evidence ledger for the outcome.
+
+Janitor sweep, 3 October 2026: removed the merged audio-capture lane and 108,646,737 bytes of used native audio evidence (evidence 108,646,737 B -> 0 B); public assets stayed 259,784,165 B and the build stayed 264,125,672 B. The audit flagged `src/arena/tanker-model.js` and 48 runtime assets as uncertain literal-reference candidates, so none were deleted. The three clean unmerged Balance, Arsenal and Boarding lanes remain listed with their cards on `STATUS.md`. Full tier passed 344/344 on integration commit 2ff0b14; no feature merge followed it.
+
+Janitor after AUD-CAPTURE-SCHEDULING merge, 3 October 2026: unlinked and removed its merged lane and branch, then deleted 21,728,084 bytes of used native capture evidence and 264,197,129 bytes of rebuildable capture scratch. The full tier passed 344/344 on f814adc before cleanup. Public assets stayed 259,784,165 B and the build stayed 264,125,672 B. Balance, Arsenal and Boarding remain unfinished lanes; no uncertain audit candidate was removed.
+
+BALANCE-W2-OFF-RETIRE merged as 18132fa on 3 October after its exact 344/344 lane gate and build. The janitor unlinked and removed its branch and lane, deleting 470,150,644 B of used evidence and 1,982,050,500 B of rebuildable QA/build output. Public assets remain 259,784,165 B and the integration build remains 264,125,672 B. Arsenal and Boarding are the two unfinished lanes; no uncertain audit candidate was removed. The post-merge full tier remains due.
+
+CREW-03 merged as 9efa9fc on 3 October after its final exact-commit lane gate passed 345/345 and the build passed. Native Boarding passed 24/24; the private browser review showed the roof rider and charge with zero console issues; replay pins stayed unchanged. The janitor removed the merged lane and branch without force, deleting 59,350,726 B of used evidence and 1,696,817,290 B of rebuildable QA, art and build output after unlinking its dependency junction. Integration public assets measure 259,783,576 B and its current build 264,155,845 B. Arsenal is the sole unfinished Codex lane; no uncertain audit candidate was removed. The full integration tier is due after this merge.
+
+Full integration tier after Balance and CREW merges passed 345/345 in 554.98 seconds on exact commit 149f23a on 3 October 2026. No feature failure; the integration build passed in 518 ms after the CREW merge. This verdict belongs to that commit; later Board and feature commits need their own full-tier evidence before release.

@@ -3,9 +3,9 @@ import test from 'node:test';
 import {Duel} from '../src/game.js';
 import {stepCombat} from '../src/combat.js';
 
-function field(wasteland2) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode: 'wasteland', startStage: 0,
+function field(discoveredGate) {
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode: 'wasteland', startStage: 0, discoveredGate: discoveredGate,
     cpuDifficulty: 'hard', opponentCount: 3});
   const state = duel.state;
   state.status = 'racing';
@@ -24,7 +24,7 @@ function field(wasteland2) {
   return {duel, state};
 }
 
-test('flagged CPU cars take separate, repeatable attack turns', () => {
+test('post-gate CPU cars take separate, repeatable attack turns', () => {
   const {duel, state} = field(true);
   const shots = [];
   for (let turn = 0; turn < 6; turn++) {
@@ -51,7 +51,7 @@ test('a finished opponent loses its turn without stopping later cars', () => {
     'the two remaining cars share the original total attack rate');
 });
 
-test('flag-off three-car attacks keep their former shared timer and volley', () => {
+test('pre-gate three-car attacks keep their former shared timer and volley', () => {
   const {duel, state} = field(false);
   stepCombat(duel, .01);
   assert.equal(state.combat.projectiles.filter(projectile => projectile.enemy).length, 3);
@@ -59,17 +59,17 @@ test('flag-off three-car attacks keep their former shared timer and volley', () 
   assert.equal(state.combat.aiTurn, undefined);
 });
 
-test('an infinite scripted timer still suppresses the flagged CPU', () => {
+test('an infinite scripted timer still suppresses the post-gate CPU', () => {
   const {duel, state} = field(true);
   state.combat.aiTimer = Infinity;
   stepCombat(duel, .01);
   assert.equal(state.combat.projectiles.length, 0);
 });
 
-test('a flagged Hard rival lines up a rear ram while the old rival yields', () => {
-  const sample = wasteland2 => {
-    const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-    duel.startCampaign({mode: 'wasteland', startStage: 0,
+test('a post-gate Hard rival lines up a rear ram while the old rival yields', () => {
+  const sample = discoveredGate => {
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode: 'wasteland', startStage: 0, discoveredGate: discoveredGate,
       cpuDifficulty: 'hard'});
     const state = duel.state;
     const rival = state.rival;

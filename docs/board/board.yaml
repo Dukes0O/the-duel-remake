@@ -45,6 +45,41 @@ tasks:
 
     test_verdict: "Native unchanged a6523ea output has six real sample/true-peak failures across nonFuel, Fuel and overlapping blasts. Actual final output, cue/event/onset, contrast, quiet reference and cleanup controls pass. Tests-only clean8494081; no source repair or gate clearance yet."
     source_verdict: "Output and final-recorder source independently clear at d96f1f2. Three native23/23 captures meet both peaks individually, with quiet/onset/contrast/cleanup unchanged. Final real-race engine correlation0.971/lag0 and measured sync/contrast/space/variety/stress clear; prior0.870/-50ms miss is retained as an observation, not reproduced. Human listening and absent cue coverage are flagged. Current integration sync, fresh Fuel browser and exact lane/build remain before merge; no later commit inherits old gates."
+  - id: AUD-CAPTURE-CONTINUITY
+    title: "Keep the native crash-peak capture continuous in the full gate"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: [AUD-CRASH-PEAK]
+    status: merged
+    claimed_by: codex-director-2026-10-03
+    branch: codex/audio/capture-continuity
+    owns: [tools/scenarios/audio-crash-peak.mjs, docs/changes/AUD-CAPTURE-CONTINUITY.md]
+    note: "The failed full tier exposed one missing native AudioWorklet block. The recorder now stays on a live silent render path; five native captures passed every original peak, onset, continuity and cleanup assertion. Full integration tier is next."
+    merged_commit: a705ba8
+    lane_gate_passed: 7
+    lane_gate_duration_seconds: 72.15
+    lane_build_ms: 448
+    acceptance:
+      - "Keep the actual final output AudioWorklet active throughout each capture. Preserve all measured sample and true-peak, event, onset, contrast, cleanup and memory-only assertions. Run focused native capture, exact lane tier and build, then rerun the full integration tier after merge."
+  - id: AUD-CAPTURE-SCHEDULING
+    title: "Keep private Chrome audio capture scheduled under load"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: [AUD-CAPTURE-CONTINUITY]
+    status: merged
+    merged_commit: f724944
+    source_commit: e524266
+    lane_gate_commit: 9b89203
+    lane_gate_passed: 8
+    lane_gate_duration_seconds: 39.14
+    lane_build_passed: true
+    claimed_by: codex-director-2026-10-03
+    branch: codex/tool/audio-capture-scheduling
+    owns: [tools/browser-harness.mjs, tools/test-browser-harness.mjs, docs/changes/AUD-CAPTURE-SCHEDULING.md]
+    acceptance:
+      - "Keep the private headless Chrome renderer and timer active during native audio capture without changing game audio or relaxing the existing peak, onset, continuity, contrast, cleanup, or memory-only assertions. Reproduce with repeated native captures, then pass exact lane tier and build before integration."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
@@ -299,7 +334,6 @@ tasks:
     owns: [tools/blender/test-fighter.py, public/assets/models/wasteland/test-fighter.blend, public/assets/models/wasteland/test-fighter.glb, src/rigged-fighter.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py, tools/test-rigged-fighter.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/onfoot-figures.mjs, docs/board/looks/test-fighter/]
     hooks: [src/combat-scene.js, src/onfoot.js]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
-    flag: wasteland2
     behavior_change: no
     acceptance:
       - "Headless Blender 4.5 script creates, rigs, animates and exports a test fighter GLB; retained blend and script regenerate it; the game loads it with existing Three addons. A tool builds matched reference, Blender and High/Performance game contact sheets."
@@ -363,7 +397,6 @@ tasks:
     owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, src/fighter-presentation.js, src/rigged-fighter.js, tools/test-crew-fighters.mjs, tools/test-fighter-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, docs/board/looks/crew/]
     hooks: [src/combat-scene.js, src/onfoot.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/render3d.js, tools/blender/fidelity-sheet.py, tools/scenarios/rigged-fighter.mjs, .gitattributes]
     helpers: [test_author, test_runner, reviewer, browser_qa, art_critic]
-    flag: wasteland2
     behavior_change: no
     acceptance:
       - "Eight rigged crew models and SPEC 0.3 animations undergo three matched reference/Blender/game rounds. Save every contact sheet and score; honor triangle, draw-call and texture budgets. Minimum beta score is four in every category."
@@ -382,7 +415,6 @@ tasks:
     size: M
     needs: [BAL-01]
     status: merged
-    flag: wasteland2
     owns: [src/combat-weapons.js, src/combat-projectiles.js, src/combat-ai.js, src/raiders.js, src/wasteland-tuning.js, tools/combat-balance.mjs, tools/test-combat-payoff.mjs, tools/test-combat-balance.mjs, tools/test-raiders.mjs, tools/test-enemy-aim.mjs]
     helpers: [test_author, balance_analyst, reviewer]
     acceptance:
@@ -397,7 +429,6 @@ tasks:
     status: merged
     owns: [tools/blender/crew-fighters.py, public/assets/models/wasteland/crew/, docs/board/looks/crew/, tools/test-crew-assets.mjs, tools/scenarios/crew-fighters.mjs]
     helpers: [reviewer, art_critic, browser_qa]
-    flag: wasteland2
     acceptance:
       - "Follow round-3-review.md. Replace the stalled primitive/projection approach with continuous anatomical meshes and authored padded UV/baked textures. Join necks to adjusted jaws, eliminate pale streaks/profile bands, and build distinct faces/hair and reference clothing silhouettes."
       - "Author tool/car actions around actual grip, sill, seat and support-foot contacts. Preserve simulation timing and all runtime lifecycle controls. Run further immutable fidelity rounds within SPEC 0.3 budgets; do not promote beta until every score is at least four."
@@ -410,7 +441,6 @@ tasks:
     status: merged
     owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p2/]
     hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/test-blender-output.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
-    flag: wasteland2
     helpers: [art_critic, reviewer, browser_qa]
     acceptance:
       - "Start from the negative round-10 trial verdict and its text recipe. Build a reference-matched head, hair, collar, thin vest and asymmetric clothing folds. Prove likeness at least four on Rook in both game qualities before converting any of the other seven. Keep the existing runtime until that gate passes."
@@ -426,7 +456,6 @@ tasks:
     owns: [tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, docs/board/looks/crew-p3/]
     hooks: [tools/test-rook-p2-source.mjs, tools/test-rook-p2-candidate.mjs, tools/test-rook-p2-review.mjs, tools/scenarios/crew-fighters.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    flag: wasteland2
     acceptance:
       - "Write the high-detail sculpt, low-poly retopology and texture-bake method before code; preserve verified original image inputs and current runtime baseline. Prove game-scale silhouette before detail."
       - "Address round10 hair cap, small plain face, rigid scarf/vest/pockets, flat side/back clothing, coarse trouser folds and simplified boots/hands. Measured contours support but never substitute for independent actual-game likeness."
@@ -610,19 +639,25 @@ tasks:
     lane: OPS
     size: L
     needs: [CRASH-SWITCH-REMOVE, SCRAPDOME-RELEASE, ARS-CORE, ARENA-WRECK-RATE, ARENA-06]
-    status: building
+    status: merged
+    merged_commit: 18132fa
+    source_commit: 3eb62c3
+    lane_gate_passed: 344
+    lane_gate_duration_seconds: 554.73
+    lane_build_passed: true
     claimed_by: codex-director-2026-10-02-resume
     branch: codex/ops/balance-w2-off-retire
-    owns: [src/app.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/armor-kit-meshes.js, src/audio.js, src/combat-ai.js, src/combat-armor.js, src/combat-hud.js, src/combat-projectiles.js, src/combat-scene.js, src/combat-weapons.js, src/crew-gear/gear.js, src/feature-flags.js, src/game.js, src/raiders.js, src/render3d.js, src/screen-arena.js, src/screen-armory.js, src/screen-garage.js, src/screen-hud.js, src/screen-router.js, src/sim-contacts.js, src/sim-driving.js, src/sim-rival.js, src/vehicle-contact-modifiers.js, src/wasteland-access.js, src/warlords/index.js, src/warlords/sal.js, tools/arena-balance.mjs, tools/combat-balance.mjs, tools/onfoot-balance.mjs, tools/test-arena-event.mjs, tools/test-arena-ui.mjs, tools/test-combat-balance.mjs, tools/test-muddy-hollow.mjs, tools/test-side-saws.mjs, tools/test-wasteland-easter-egg.mjs, tools/test-warlord-hooks.mjs, tools/test-warlord-format.mjs, tools/test-warlord-settlement.mjs, tools/test-preview-launcher.mjs, docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md]
-    hook_requests: [src/sound-bank.js]
-    note: "Direct source guards and balance tools have a committed first slice. The audio sound-bank hook remains with AUD-17 pending release."
+    owns: [docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, docs/OPERATIONS.md, src/app.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/armor-kit-meshes.js, src/audio.js, src/combat-ai.js, src/combat-armor.js, src/combat-hud.js, src/combat-projectiles.js, src/combat-scene.js, src/combat-weapons.js, src/crew-gear/gear.js, src/feature-flags.js, src/game.js, src/raiders.js, src/render3d.js, src/screen-arena.js, src/screen-armory.js, src/screen-garage.js, src/screen-hud.js, src/screen-router.js, src/sim-contacts.js, src/sim-driving.js, src/sim-rival.js, src/vehicle-contact-modifiers.js, src/warlords/index.js, src/warlords/sal.js, src/wasteland-access.js, tools/arena-balance.mjs, tools/combat-balance.mjs, tools/onfoot-balance.mjs, tools/replays/arena-steering-controls.json, tools/replays/onfoot-hints.json, tools/test-arena-bounty-hunt.mjs, tools/test-arena-event.mjs, tools/test-arena-feel.mjs, tools/test-arena-fuel-depot.mjs, tools/test-arena-fuel-run.mjs, tools/test-arena-junk-respawn.mjs, tools/test-arena-junk-shove.mjs, tools/test-arena-pit-render.mjs, tools/test-arena-pit.mjs, tools/test-arena-ramp-side.mjs, tools/test-arena-shove.mjs, tools/test-arena-steering-ceiling.mjs, tools/test-arena-steering.mjs, tools/test-arena-ui.mjs, tools/test-arena-wreck-rate.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-visuals.mjs, tools/test-armor-kits.mjs, tools/test-armored-vehicle-impact.mjs, tools/test-arsenal-core.mjs, tools/test-arsenal-runtime.mjs, tools/test-arsenal-wave1.mjs, tools/test-audio-crash-peak.mjs, tools/test-car-loadout.mjs, tools/test-combat-armor-bomb-radius.mjs, tools/test-combat-armor-hud.mjs, tools/test-combat-armor-terrain.mjs, tools/test-combat-armor.mjs, tools/test-combat-balance.mjs, tools/test-combat-brain.mjs, tools/test-combat-credit-bonus.mjs, tools/test-combat-hud.mjs, tools/test-combat-knockaway.mjs, tools/test-combat-payoff.mjs, tools/test-combat-pickups2.mjs, tools/test-combat-projectiles.mjs, tools/test-combat-ramming.mjs, tools/test-combat-replays.mjs, tools/test-combat-scoring.mjs, tools/test-cpu-ufo.mjs, tools/test-crash-switch-remove.mjs, tools/test-crew-gear.mjs, tools/test-crew.mjs, tools/test-dustmonger.mjs, tools/test-enemy-aim.mjs, tools/test-fighter-presentation.mjs, tools/test-fuel-standing-carrier.mjs, tools/test-kettle-kingpin.mjs, tools/test-madmax-crash.mjs, tools/test-mirage.mjs, tools/test-muddy-hollow.mjs, tools/test-notoriety.mjs, tools/test-onfoot-camera-choice.mjs, tools/test-onfoot-car-contacts.mjs, tools/test-onfoot-controls-camera.mjs, tools/test-onfoot-hints.mjs, tools/test-onfoot-transition.mjs, tools/test-onfoot-weapons.mjs, tools/test-preview-launcher.mjs, tools/test-raiders.mjs, tools/test-rigged-fighter.mjs, tools/test-sal-art.mjs, tools/test-sal-fight.mjs, tools/test-salt-flats-art.mjs, tools/test-salt-flats-effects.mjs, tools/test-salt-flats-render.mjs, tools/test-salt-flats.mjs, tools/test-side-saws.mjs, tools/test-titan-climb.mjs, tools/test-traffic-shield.mjs, tools/test-twin-vultures.mjs, tools/test-warlord-format.mjs, tools/test-warlord-hooks.mjs, tools/test-warlord-pay.mjs, tools/test-warlord-settlement.mjs, tools/test-wasteland-easter-egg.mjs, tools/test-yard-home.mjs, tools/scenarios/arena-fuel-run.mjs, tools/scenarios/armor-kit-purchase.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/scenarios/art-source-current.mjs, tools/scenarios/art-source-hands.mjs, tools/scenarios/art-source-rustwall.mjs, tools/scenarios/audio-moving.mjs, tools/scenarios/car-loadout-armory.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-audio.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/combat-hud.mjs, tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-pickups2.mjs, tools/scenarios/combat-ramming.mjs, tools/scenarios/combat-results.mjs, tools/scenarios/convoy-tanker-art.mjs, tools/scenarios/crash-presentation.mjs, tools/scenarios/crew-fighters.mjs, tools/scenarios/crew-gear.mjs, tools/scenarios/crew-selection.mjs, tools/scenarios/crew-w-source-current.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/scenarios/hidden-road-arrival.mjs, tools/scenarios/onfoot-camera-choice.mjs, tools/scenarios/onfoot-controls-camera.mjs, tools/scenarios/onfoot-figures.mjs, tools/scenarios/onfoot-hints.mjs, tools/scenarios/onfoot-rpg-wrench.mjs, tools/scenarios/raider-ambush.mjs, tools/scenarios/raider-salvage.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/sal-art.mjs, tools/scenarios/salt-flats.mjs, tools/scenarios/scrapdome-review.mjs, tools/scenarios/vesper-art.mjs, tools/scenarios/wasteland-beta.mjs, tools/scenarios/wasteland-career.mjs, tools/scenarios/weapon-audio.mjs, tools/scenarios/yard-home.mjs, tools/test-arena-settlement.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/test-combat-audio.mjs, tools/test-crash-slide.mjs, tools/test-crew-gear-modules.mjs, tools/test-feature-flags.mjs, tools/test-fuel-car-attribution.mjs, tools/test-gatekeeper-audio.mjs, tools/test-hidden-road-journey.mjs, tools/test-hidden-road.mjs, tools/test-madmax-solid.mjs, tools/test-vehicle-knock-integration.mjs, tools/test-wasteland-beta.mjs, tools/test-wasteland-career.mjs, tools/scenarios/arena-feel.mjs, tools/scenarios/arena-steering.mjs, tools/scenarios/muddy-hollow.mjs, tools/scenarios/new-warlords.mjs, tools/scenarios/sal-fight.mjs, tools/scenarios/scrapdome.mjs, tools/scenarios/warlord-format.mjs, tools/scenarios/warlord-pay.mjs, tools/scenarios/warlord-reward.mjs, tools/test-crash-hollow-audio.mjs, tools/scenarios/preview-storage.mjs, tools/test-race-exit-rejoin.mjs, tools/test-titan-handling.mjs]
+    hooks: [src/sound-bank.js]
+    scope_reason: "Retired switch removal reaches test fixtures, browser scenarios and a Muddy Hollow audio off-only assertion. The lane owns each named tool before changing it; positive discovery, playback and save checks stay."
+    note: "Kyle released the idle AUD-17 sound-bank hook on 3 October for this card only. Remove the retired Wasteland cue flag fields and switch-off branches without changing sounds, recipes, voice takes or AUD-17's record. Keep the two existing Warlord gate deletions in this card."
     acceptance:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
       - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
-    sequencing: "Direct source and balance-tool cleanup is committed in the lane. Finish tests and scenarios next. The sound-bank catalog waits for AUD-17 to release its hook; no parallel lane removes a switch while its consumer is being built."
+    sequencing: "Kyle released the audio hook. The retired cue gates and catalog cleanup passed the exact lane gate and merged. Shared Balance hooks are free for CREW-03, then ARS-02."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -631,7 +666,6 @@ tasks:
     needs: []
     status: merged
     claimed_by: "Codex autonomous Director, 30 September 2026"
-    flag: wasteland2
     owns: [tools/art/catalog.json, tools/art/crew-source-sheet.py, docs/board/looks/crew-src/round-1.jpg, docs/board/looks/crew-src/round-1-review.md, docs/changes/ART-SRC-CREW.md]
     hooks: [tools/scenarios/art-source-current.mjs]
     note: "Director 30 September: sourcing only; cache in external art-library. Shared catalog means HANDS and RUSTWALL catalog writes wait for this lane to merge. No adaptation."
@@ -649,7 +683,6 @@ tasks:
     owns: [tools/art/hands-source-sheet.py, tools/scenarios/art-source-hands.mjs, docs/board/looks/first-person-src/round-1.jpg, docs/board/looks/first-person-src/round-1-review.md, docs/changes/ART-SRC-HANDS.md]
     hooks: [tools/art/catalog.json]
     sequencing: "Catalog edits wait for ART-SRC-CREW to merge; source research and private capture may proceed."
-    flag: wasteland2
     acceptance:
       - "SPEC 0.11 sourcing step for the first-person hands, gloves and sleeves (replaces GFX-02-P3). Same rules as ART-SRC-CREW: two or three candidates, CC0 first, licences recorded in tools/art/catalog.json, files cached outside the repository."
       - "One comparison sheet, docs/board/looks/first-person-src/round-1.jpg, beside the current in-game hands holding the RPG, with a note per candidate. Then waiting_on: kyle. No adaptation before Kyle picks."
@@ -679,7 +712,6 @@ tasks:
     needs: [ART-SRC-CREW]
     status: closed
     claimed_by: codex-director-2026-09-30-resume
-    flag: wasteland2
     owns: [tools/blender/crew-source-fit.py, tools/blender/crew-source-fit.json, tools/test-crew-source-fit.mjs, tools/scenarios/crew-source-fit.mjs, tools/art/crew-fit-sheet.py, public/assets/models/wasteland/crew/rook.glb, public/assets/models/wasteland/crew/jax.glb, public/assets/models/wasteland/crew/cinder.glb, public/assets/models/wasteland/crew/dune.glb, public/assets/models/wasteland/crew/tusk.glb, docs/board/looks/crew-fit-m/, docs/changes/ART-FIT-CREW-M.md]
     hooks: [tools/blender/crew-fighters.py, tools/blender/rook-p2.py, tools/blender/rook-p2-source.json, tools/blender/rook-p2-landmarks.json, tools/blender/rook-p2-paint-calibration.json, tools/blender/rook-p2-garment-calibration.json, tools/test-rook-p2-source.mjs, tools/test-rook-p2-geometry.mjs, tools/test-crew-fighters.mjs, tools/test-blender-output.mjs, tools/test-review-evidence.mjs, tools/test-runtime-art-sources.mjs]
     helpers: [test_author, reviewer, browser_qa, art_critic]
@@ -721,7 +753,6 @@ tasks:
     hooks: []
     helpers: [test_author, art_director, reviewer, art_critic, browser_qa]
     sequencing: "Both material rounds are complete, with all assessed visual items at four. Claude reviews the finished pictures; the existing placement check needs recipe registration in Tanker's shared file after its merge. A fresh green lane and build gate precedes merge; WAR-04 owns the later reveal and installation."
-    flag: wasteland2
     acceptance:
       - "Kyle kept the current Nell, Odessa and Wren on 30 September 2026, so they are not refitted. Build only Vesper Blackiron, the Baron's daughter, by adapting the current women's figure (its rig, actions and topology) under docs/WASTELAND_ART.md 'Fitting existing models': her own costume in the Baron's blackened steel and a dark red accent, recognizable next to Nell, Odessa and Wren. Built but shown only once WAR-04 reveals her. Kyle has the last look in the Preview."
     test_commit: "e5811d8e0927bb6542d508968b9aac76068fd979"
@@ -749,7 +780,6 @@ tasks:
     review_commit: 34e914b482190114a575716d0fa107a818a4ef0c
     claimed_by: codex-director-2026-09-30-resume
     branch: lane/art/hands-fit
-    flag: wasteland2
     owns: [tools/blender/first-person-wrad.py, tools/blender/first-person-wrad-source.json, tools/art/hands-fit-sheet.py, tools/test-first-person-wrad.mjs, tools/scenarios/hands-fit-wrad.mjs, docs/board/looks/hands-fit/, docs/changes/ART-FIT-HANDS.md]
     hooks: [public/assets/models/wasteland/first-person/hands/, tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, tools/blender/first-person-p2-source.json, tools/test-first-person-gear.mjs, tools/test-first-person-cloth.mjs, tools/test-first-person-contact.mjs, tools/test-first-person-polish.mjs, tools/test-runtime-art-sources.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
@@ -995,9 +1025,11 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-03
     branch: codex/cmb/arsenal-wave2
-    note: "Wave 2 starts in owned new modules; central combat, registry, renderer and audio hooks need a Director re-slice after Balance and AUD-17 release."
+    note: "Balance and CREW shared hooks have merged. The Board grants ARS-02 its central combat, save, render, audio routing and balance hooks, including the armor/scoring hook for the red 360-style-hit flame test. AUD-17 still owns sound-bank.js and the audio catalog; the prior narrow release applied only to Balance. Keep those two hook requests open and do not merge ARS-02 as finished until its seven new CC0 cues meet the sound acceptance."
     flag: arsenal
     owns: [src/arsenal/rockets.js, src/arsenal/flamethrower.js, src/arsenal/magnet.js, tools/test-arsenal-wave2.mjs, tools/scenarios/arsenal-wave2.mjs, docs/changes/ARS-02.md]
+    hooks: [src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-ai.js, src/combat-armor.js, src/combat-scoring.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
+    hook_requests: [src/sound-bank.js, tools/audio/catalog.json]
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build the three wave 2 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. Side Saws are Sal's kit, not a weapon here."
@@ -1057,12 +1089,16 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-03
     branch: codex/foot/boarding
-    note: "Boarding starts in the owned new module; on-foot, grapple, contact and rendering hooks need a Director re-slice after Balance."
+    gate_commit: a49b2f6
+    merged_commit: 9efa9fc
+    note: "Boarding merged after exact final lane gate 345/345 in 557.32 s and build 442 ms. Native 24/24, private browser two views with zero console issues, and unchanged replay pins pass. The rider is protected from ground-car hits, the computer driver swerves through native steering, and five named events use finished spatial cues. Shared hooks are free for ARS-02; no sound-bank or audio-catalog change was needed."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
+    hooks: [src/onfoot-transition.js, src/onfoot.js, src/onfoot-race.js, src/sim-rival.js, src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js]
+    hook_requests: []
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 2 exactly, with its tests: speed limits at 49/51 and 89/91 km/h, shake-off rules, one charge, the safe landing, and determinism at 30, 60 and 144 FPS."
@@ -1434,7 +1470,6 @@ tasks:
     owns: [tools/blender/first-person-gear.py, public/assets/models/wasteland/first-person/, src/first-person-gear.js, src/first-person-presentation.js, tools/test-first-person-gear.mjs, tools/test-first-person-presentation.mjs, tools/scenarios/first-person-gear.mjs, docs/board/looks/first-person/]
     hooks: [src/render3d.js, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [test_author, reviewer, test_runner, browser_qa, art_critic]
-    flag: wasteland2
     behavior_change: no
     acceptance:
       - "Crew hands, gloves, sleeves, RPG and wrench animate aim, recoil, reload and repair. Three saved fidelity rounds meet SPEC 0.3 with High/Performance views."
@@ -1456,7 +1491,6 @@ tasks:
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p1-source.json, public/assets/models/wasteland/first-person/, docs/board/looks/first-person-p1/, docs/changes/GFX-02-P1.md]
     hooks: [tools/test-first-person-gear.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs, tools/blender/fidelity-sheet.py]
     helpers: [art_critic, reviewer, browser_qa]
-    flag: wasteland2
     acceptance:
       - "Continue from the three immutable initial rounds. Fix fingertip cap/normal artifacts, mitten-like palms, generic sleeve construction, simplified tool fittings and continuous grip/animation contact as recorded in round-3-review.md."
       - "Retain meaningful matched High/Performance comparisons, short motion evidence, at most 8000 visible triangles and three draws. Measure texture memory and evaluate shared crew materials before making a resource-budget claim."
@@ -1471,7 +1505,6 @@ tasks:
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p2-source.json, docs/ASSET_PIPELINE.md, docs/board/looks/first-person-p2/, docs/changes/GFX-02-P2.md]
     hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    flag: wasteland2
     acceptance:
       - "Preserve the written broad sleeve recipe, original image sources and independent actual-export geometry/material tests, including protected anatomy, skin, rig, clips and tool records."
       - "Record both matched High/Performance reviews, a quiet actual-public/candidate/public frame comparison and the remaining contact and construction limits. Keep one compressed sheet per round."
@@ -1487,7 +1520,6 @@ tasks:
     owns: [tools/blender/first-person-gear.py, tools/blender/first-person-p3-source.json, public/assets/models/wasteland/first-person/, docs/ASSET_PIPELINE.md, docs/board/looks/first-person-p3/, docs/changes/GFX-02-P3.md]
     hooks: [tools/test-first-person-cloth.mjs, tools/test-first-person-polish.mjs, tools/first-person-contact.mjs, tools/test-first-person-contact.mjs, tools/scenarios/first-person-polish.mjs, tools/fidelity-sheet.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    flag: wasteland2
     acceptance:
       - "Settle a changed construction method before tests and code: continuous sewn cuff coverage to the actual leather boundary, asymmetric sleeve folds and articulated glove surfaces. Preserve the fine cloth baseline. Proposed old marker endpoints are not approved coverage evidence."
       - "Calibrate a fixed actual facing palm patch inside the 15 mm region using clipped area and spatial spread, then independent deformation/gap tests. Record actual nearest tool component IDs; no farther closed target or proxy substitution."
@@ -1617,7 +1649,6 @@ tasks:
     owns: [src/onfoot-camera.js, tools/test-onfoot-camera-choice.mjs, tools/scenarios/onfoot-camera-choice.mjs, docs/board/looks/onfoot-camera-choice/]
     hooks: [src/app.js, src/input-contexts.js, src/render3d.js, src/screen-menu.js, src/screen-router.js, src/race-settings.js, src/career-backup.js, src/combat-hud.js, src/combat-hud.css, tools/test-race-settings.mjs, tools/test-career-backup.mjs]
     helpers: [test_author, reviewer, save_guardian, browser_qa]
-    flag: wasteland2
     acceptance:
       - "First person remains default; setting and key toggle an overhead behind-and-above view with ground-safe placement on all eleven combat courses."
       - "Use a separate validated on-foot preference, leaving existing car cameraMode and car key mappings unchanged. A visible setting and foot-only KeyC switch modes; an existing free gamepad button may mirror it. Re-entry restores the selected car view. Pause, menu and pointer-lock handling must not leave held actions or camera state behind."
@@ -1651,7 +1682,6 @@ tasks:
     owns: [tools/blender/armor-kits.py, tools/blender/kit-review.py, tools/blender/kit-sheet.py, public/assets/models/wasteland/kits/, src/armor-kit-meshes.js, docs/board/looks/kits/]
     hooks: [src/combat-scene.js, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-authored.mjs, tools/test-armor-kit-resource-lifecycle.mjs, tools/test-armor-kit-fit.mjs, tools/test-armor-kit-visuals.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/audit-armor-kit-fit.mjs, tools/test-blender-output.mjs, src/vehicles.js, src/render3d.js, tools/test-combat-vehicle-wear.mjs, tools/test-npc-vehicle-damage.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    flag: wasteland2
     note: "Merged31dfd13 after251/251 lane suites, build, independent fit/resource/wear review,44 all-car/state captures and600-frame four-car A/B/A. Final art3/4/4/3/frame4 remains dev; GFX-03-P1 owns distinct plate fidelity. Source family4,383,060B,3,440Ã¢â‚¬â€œ5,094 triangles/car and18 named primitives; measured p95 overhead<=6.8%."
     acceptance:
       - "All nine cars have intact, damaged, burning and wrecked kits; three matched saved fidelity rounds meet SPEC 0.3 and frame budgets."
@@ -1665,7 +1695,6 @@ tasks:
     owns: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/, docs/board/looks/kits/]
     hooks: [tools/blender/kit-review.py, tools/blender/kit-sheet.py, tools/audit-armor-kit-fit.mjs, tools/test-armor-kit-assets.mjs, tools/test-armor-kit-fit.mjs, tools/scenarios/armor-kit-visuals.mjs]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    flag: wasteland2
     note: "Round8 scores likeness3/readability4/grounding4/consistency3/frame4. Replace the continuous mottled wrap with distinct fitted steel plates and stronger edge wear at game distance. Settle the geometry trade in writing before code; preserve named breakable parts and resource ownership."
     acceptance:
       - "Reach all art scores of four, prove all nine cars and three tiers in game, and keep the four-car whole-scene cost within ten percent. Keep wheels, lamps and glass clear and existing purchases unchanged."
@@ -2174,7 +2203,6 @@ tasks:
     owns: [src/combat-armor.js, src/wasteland-tuning.js, src/combat-projectiles.js, tools/test-combat-armor.mjs, tools/scenarios/combat-armor-wreck.mjs]
     hooks: [src/combat.js, src/game.js, src/sim-contacts.js, src/sim-rival.js, src/sim-crash.js, src/feature-flags.js, src/render3d.js, src/explosion.js, src/combat-weapons.js, src/combat-ai.js, src/combat-pickups.js, src/screen-hud.js, src/audio.js, tools/test-feature-flags.mjs, tools/test-render-reuse.mjs]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
-    flag: wasteland2
     behavior_change: yes
     acceptance:
       - "Every combat car starts with max armor 100 Ãƒâ€” clamp(sqrt(mass/1450), 0.8, 1.6); all nine cars and both clamps have exact tests."
@@ -2195,7 +2223,6 @@ tasks:
     owns: [src/vehicle-impact.js, src/wasteland-tuning.js, tools/test-combat-ramming.mjs, tools/scenarios/combat-ramming.mjs]
     hooks: [src/sim-contacts.js, src/combat-armor.js, src/game.js, src/combat-scene.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
-    flag: wasteland2
     behavior_change: yes
     acceptance:
       - "An equipped front bumper applies 1.5x ram armor damage only to the struck car above 40 km/h closing speed; side and rear contacts have no spike bonus."
@@ -2217,7 +2244,6 @@ tasks:
     owns: [src/combat-pickups.js, src/wasteland-tuning.js, tools/test-combat-pickups2.mjs, tools/scenarios/combat-pickups2.mjs]
     hooks: [src/combat-weapons.js, src/combat-ai.js, src/combat-scene.js, src/screen-router.js, src/screen-hud.js]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
-    flag: wasteland2
     behavior_change: yes
     acceptance:
       - "Seed, stage and lap determine fixed pickup identities, kinds and drivable lateral positions, independent of speed, frame rate and CPU order."
@@ -2238,7 +2264,6 @@ tasks:
     owns: [src/combat-projectiles.js, src/wasteland-tuning.js, tools/test-combat-projectiles.mjs]
     hooks: [src/combat-weapons.js]
     helpers: [test_author, reviewer]
-    flag: wasteland2
     behavior_change: yes
     acceptance:
       - "Every fired projectile inherits its thrower's velocity."
@@ -2275,7 +2300,6 @@ tasks:
     owns: [src/combat-projectiles.js, tools/test-combat.mjs]
     hooks: [src/sim-contacts.js]
     helpers: [reviewer]
-    flag: wasteland2
     behavior_change: yes
     note: "Integrated at 32bf195. In Wasteland2, rival Star shields no longer block bomb or impact damage to traffic; flag-off Wasteland retains its old rule. Two focused cases and a production build passed."
     spec: "SPEC.md section 3.2: the star shield blocks damage to its own car"
@@ -2365,7 +2389,6 @@ tasks:
     branch: lane/audio/aud-10
     owns: [src/sound-bank.js, public/assets/audio/, tools/audio/, docs/audio/, docs/board/listening/, docs/changes/AUD-14.md]
     hooks: [.gitattributes, src/audio.js, src/app.js, tools/test-combat-audio.mjs, tools/scenarios/combat-audio.mjs]
-    flag: wasteland2
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
       - "Build approved blasts 523089/397691, crash 592388 and rocket launches 854476/854473 from catalog recipes."
@@ -2418,7 +2441,6 @@ tasks:
     owns: [src/combat-vfx-atlas.js, src/combat-effects.js, src/combat-scene.js, tools/test-combat-effects.mjs, tools/scenarios/combat-effects.mjs]
     hooks: [src/explosion.js, src/render3d.js, src/effects.js]
     helpers: [test_author, reviewer, browser_qa]
-    flag: wasteland2
     behavior_change: yes
     acceptance:
       - "Use the accepted fire, explosion, smoke and muzzle-dust sheets in shared fixed pools with correct frame order, alpha, pause and first-frame appearance."
@@ -2451,7 +2473,6 @@ tasks:
     owns: [src/combat-scoring.js, src/wasteland-tuning.js, tools/test-combat-scoring.mjs, tools/scenarios/combat-results.mjs]
     hooks: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/combat-weapons.js, src/game.js, src/sim-results.js, src/screen-results.js, src/screen-results.css]
     helpers: [test_author, reviewer, browser_qa, balance_analyst]
-    flag: wasteland2
     behavior_change: yes
     acceptance:
       - "Count hits and actual armor removed from player-owned weapon or ram impacts on any of three CPU cars; exclude shielded, traffic, self and CPU-owned damage."
@@ -2469,7 +2490,6 @@ tasks:
     needs: [CMB-03]
     status: integrated
     helpers: [test_author, save_guardian, reviewer]
-    flag: wasteland2
     behavior_change: yes
     note: "Completed combat wins and losses earn a capped positive hit/wreck bonus; neither debits saved credits. Abandonment and timeout earn no bonus. Owns progression, result normalization, idempotence, save fixtures and storage-budget checks after CMB-03 provides validated fields."
     spec: "SPEC.md section 3.2, task SAVE-01"
@@ -2480,7 +2500,6 @@ tasks:
     size: M
     needs: [CMB-01, CMB-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Separate seeded attack turns across the field and a short deliberate rear-ram approach are integrated at 47d5489. Five focused brain checks, nearby CPU/ram checks and production build pass. The older one-rival schedule is unchanged."
     spec: "SPEC.md sections 3.2, 3.13, task CMB-05"
@@ -2491,7 +2510,6 @@ tasks:
     size: S
     needs: [CMB-01, CMB-05]
     status: integrated
-    flag: wasteland2
     behavior_change: no
     note: "Four flagged combat encounters replay at 30, 60 and 144 FPS; 12/12 new checks and the 162 unchanged older fingerprints pass. Integrated at 695b221."
     spec: "SPEC.md section 12.2, task CMB-06"
@@ -2502,7 +2520,6 @@ tasks:
     size: M
     needs: [RFX-06, CMB-01, VIS-01]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Socket-mounted plates, pooled critical smoke/fire, and a read-only opponent projection hook integrated at 37850ad after focused checks, build and private High/Performance visual review. PRG-04 still owns kit purchases and armor bonuses."
     spec: "SPEC.md sections 3.6 and 12.2, task VIS-02"
@@ -2513,7 +2530,6 @@ tasks:
     size: M
     needs: [RFX-01, CMB-01, VIS-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Weapon cooldown rings, armor bars, projected opponent markers and directional hit feedback integrated at 43295ea. Focused HUD checks and private desktop/mobile High/Performance review passed."
     spec: "SPEC.md sections 3.12 and 12.2, task UI-01"
@@ -2524,7 +2540,6 @@ tasks:
     size: M
     needs: [FND-10, FND-11, RFX-07]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Versioned Wasteland profile and verified backup-before-migration integrated at bcca621. Historical save, purchase, budget and App checks passed. Release still requires migration review on the exact candidate."
     spec: "SPEC.md sections 3.8 and 12.2, task PRG-01"
@@ -2535,7 +2550,6 @@ tasks:
     size: S
     needs: [PRG-01, CMB-03]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Combat-only XP, rank thresholds and duplicate settlement protection integrated at 632b60b. Seven focused cases, historical saves and build passed. On-foot awards require future explicit player-owned events."
     spec: "SPEC.md sections 3.8 and 12.2, task PRG-02"
@@ -2546,7 +2560,6 @@ tasks:
     size: S
     needs: [PRG-01, PRG-02, VIS-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Per-car kit ownership, rank gates, 10/20/30 armor bonuses and equipped visual tier integrated at 8d5eb3b. Focused purchase/save/visual checks, private Armory scene and build passed."
     spec: "SPEC.md sections 3.6 and 12.2, task PRG-04"
@@ -2557,7 +2570,6 @@ tasks:
     size: L
     needs: [FOOT-00, RFX-04]
     status: integrated
-    flag: wasteland2
     behavior_change: no
     note: "Headless fixed-step movement, ground/scenery limits, health and knockdown integrated at b21b9b8. Nine focused cases and a production build passed. FOOT-02 owns player-facing attachment."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-01"
@@ -2568,7 +2580,6 @@ tasks:
     size: M
     needs: [FOOT-01, CMB-01]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Car exit/bail/re-entry and parked-car combat/recovery integrated at 7240e57. A reverse-gear parked-car drift was fixed at 39b5e85 after the FOOT-08 sample exposed it; focused transition checks and build passed. FOOT-03 owns walking controls and camera."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-02"
@@ -2579,7 +2590,6 @@ tasks:
     size: M
     needs: [RFX-05, FOOT-01, FOOT-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "WASD, mouse, gamepad and first-person camera integrated at e34f2cc. Focused controls/transition checks, private exit/walk/re-entry scene and build passed."
     spec: "SPEC.md sections 3.12 and 12.2, task FOOT-03"
@@ -2590,7 +2600,6 @@ tasks:
     size: S
     needs: [VIS-01, VIS-02]
     status: integrated
-    flag: wasteland2
     behavior_change: no
     note: "Precomputed dent bases and hidden fracture shader preparation integrated at 85ca3ef. Focused visual checks and one private frame sample passed; first-wreck max fell from 71 to 53 ms High and 89 to 72 ms Performance. Remaining two long frames and cache cost are documented."
     spec: "SPEC.md sections 2 and 12.2 frame budget; 2026-09-23 frame sample"
@@ -2601,7 +2610,6 @@ tasks:
     size: S
     needs: [UI-01, FOOT-01, FOOT-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Fighter health, reticle, car bearing/distance and unavailable-ammo state integrated at c8c20e5. Car gauges and the mirror are hidden while walking at 345838c after first-person visual review. Focused HUD/mirror checks and build passed."
     spec: "SPEC.md sections 3.12 and 12.2, task FOOT-06"
@@ -2612,7 +2620,6 @@ tasks:
     size: M
     needs: [RFX-06, FOOT-01, FOOT-03]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Four instanced meshes draw up to twelve fighters within the sixteen-call budget. Integrated at 45b586c after focused figure checks, private standing/knockdown screenshots and build."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-04"
@@ -2623,7 +2630,6 @@ tasks:
     size: M
     needs: [FOOT-02, FOOT-03]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Three-shot RPG with lock, reload, direct/splash damage, pooled rocket and a four-second +40 armor wrench integrated at 9911602. Focused 30-case check, one private exit/fire/repair interaction and build passed."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-05"
@@ -2634,7 +2640,6 @@ tasks:
     size: S
     needs: [FOOT-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Traffic slows for fighters; Easy avoids, Medium makes a seeded attack choice, and Hard aims. Swept hits above 30 km/h knock down. Integrated at 937926e. Hard pace no longer artificially slows to stay near the player while they are on foot (4121dfc). Focused checks and build passed."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-07"
@@ -2645,7 +2650,6 @@ tasks:
     size: M
     needs: [RFX-01, PRG-01]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Four per-player saved car weapon slots, Armory swap UI, HUD and key/D-pad routing integrated at 0cbdca0. Save guard at 77127bd requires verified version 1 migration. Focused checks, one private Armory flow and build passed."
     spec: "SPEC.md sections 3.8 and 12.2, task PRG-03"
@@ -2667,7 +2671,6 @@ tasks:
     size: S
     needs: [FOOT-05]
     status: integrated
-    flag: wasteland2
     behavior_change: no
     note: "One seed and three paired route/difficulty cases show routine RPG and wrench stops lose ground; constructed ambush and pre-wreck repair can repay the stop. Bounded report/check integrated at d38f37d after parked-car and Hard pace fixes, including RAID-01 camps. No numeric tuning justified; broader play balance remains open."
     spec: "SPEC.md sections 3.4 and 12.2, task FOOT-08"
@@ -2678,7 +2681,6 @@ tasks:
     size: S
     needs: [UI-01, PRG-02]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Player-owned rival wrecks show a pending +150 Notoriety cue; settled results show the exact earned XP and rank. Integrated at 31a571a with toast placement at e45b5fd. Focused feedback/HUD checks and build passed; joined visual check remains."
     spec: "SPEC.md sections 3.8 and 12.2, task UI-02"
@@ -2689,7 +2691,6 @@ tasks:
     size: M
     needs: [ART-C, FOOT-01, FOOT-04, PRG-02]
     status: backlog
-    flag: wasteland2
     behavior_change: yes
     note: "Roster, per-player selection, pooled figures and five perks integrated at 68bbb8a, ce12e38 and 0154121. RAID-02 connects Wren's crate reach at 0ced0a1. Jax boarding, Cinder fire immunity and Tusk shove await their mechanics; the residual slice is backlog. Focused checks, one private Armory/Garage/race scene and build passed."
     spec: "SPEC.md sections 3.5 and 12.2, task CREW-01"
@@ -2700,7 +2701,6 @@ tasks:
     size: M
     needs: [RFX-03]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Three seeded three-raider camps on each combat course, warning posts, capped bolts and separate raider ownership integrated at 9565ed5. Four focused cases, one private scene and build passed. Invulnerable stationary raiders and salvage are RAID-02 work; lap-shot allocation needs balance review."
     spec: "SPEC.md sections 3.4 and 12.2, task RAID-01"
@@ -2711,7 +2711,6 @@ tasks:
     size: M
     needs: [RAID-01, FOOT-05]
     status: integrated
-    flag: wasteland2
     behavior_change: yes
     note: "Player RPG direct/splash knocks down raiders with one 25-XP Notoriety award per raider per race. Each camp has one solid, foot-only salvage ledge for a rocket and armor. Integrated at 0ced0a1; focused 11 cases, private visual scene, build and joined FOOT-08 check passed. Frame pacing and broad balance remain unmeasured."
     spec: "SPEC.md sections 3.4 and 12.2, task RAID-02"
@@ -3222,7 +3221,6 @@ tasks:
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js, src/career-backup.js, src/armor-kits.js, src/screen-armory.js, tools/test-armor-kits.mjs, tools/scenarios/yard-home.mjs]
     note: "Director re-slices, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; the two existing armor-kit consumers plus their focused test; and the existing private yard-home scenario. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs, retain armor-kit unlocks, and prove the settled locked/available/defeated ladder in High and Performance modes including a phone-width map capture."
-    flag: wasteland2
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Design settled in docs/SCRAPDOME.md section 5, 'Settled for build' (Claude, 26 September 2026): a full territory hold opens that warlord; FIGHT, REMATCH and COMING LATER states; profile.wasteland.warlords. Earlier text kept for context: settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."
@@ -3239,7 +3237,6 @@ tasks:
     status: superseded
     owns: [src/warlord-encounters.js, src/warlord-settlement.js, tools/test-warlord-encounters.mjs, tools/test-warlord-settlement.mjs, tools/scenarios/warlords.mjs, docs/changes/WAR-02-P1.md]
     hooks: [src/game.js, src/app.js, src/screen-router.js, src/screen-territory.js, src/progression.js, src/wasteland-progress.js, src/wasteland-career.js]
-    flag: wasteland2
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "First settle Sal, Dustmonger and Mirage encounter formats, full-hold/rank/ladder eligibility, deterministic personalities and exact implemented rewards. Side Saws, Smoke Screen and Decoy Drone are absent and scheduled later; resolve this design conflict in writing before code or slicing further hooks."
@@ -3339,7 +3336,6 @@ tasks:
     branch: lane/audio/aud-10
     owns: [tools/audio/, docs/audio/, docs/board/listening/, audio-src/voices/, docs/changes/AUD-17.md]
     hooks: [tools/test-voice-candidates.mjs, src/sound-bank.js, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
-    flag: wasteland2
     helpers: [test_author, reviewer, audio_qa]
     acceptance:
       - "Write the stock-voice casting, short gritty nongory lines, candidate budget and repeat-safe generation plan before code or service calls. Independent fake-only tests cover budget exhaustion, no automatic keep, resume and accounting failures."
@@ -3421,7 +3417,6 @@ tasks:
     owner: "Future audio lane; not started tonight"
     owns: [src/sound-bank.js, src/audio.js, tools/test-audio-vehicles.mjs, tools/scenarios/audio-vehicles.mjs, docs/audio/briefs.md, docs/changes/AUD-15-P1.md]
     hooks: [src/app.js, src/sound-mixer.js]
-    flag: wasteland2
     acceptance:
       - "Before code, settle a bounded read-only actor snapshot, stable spawn identity, count/radius/priority limits and whether existing engine loops are suitable pending human listening. Proposal: at most three rivals and four nearest traffic cars within 250 metres; deterministic tie ordering and fade on leaving range."
       - "Use bank cues vehicle.rival-engine and vehicle.traffic-engine with per-car pitch data, 3D distance/direction and bounded doppler. A cap applies to real loop voices and graph resources; no silent duplicate loops on identity reuse or loading."

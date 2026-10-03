@@ -47,16 +47,16 @@ function fixture(flags = []) {
     crossbowAim: { shots: 26, hits: 13, hitRate: .5, cases: [] },
     ownBombs: { maxSpeedLossPct: 15, cases: [] } };
 }
-function observeStarts(action, enabled) {
+function observeStarts(action) {
   const original = Duel.prototype.startCampaign;
   let starts = 0;
   Duel.prototype.startCampaign = function (...args) {
     const result = original.apply(this, args);
     starts++;
-    assert.equal(this.featureFlags.enabled('wasteland2'), enabled, 'real Duel receives selected flag');
-    assert.equal(Number.isFinite(this.state.maxArmor) && this.state.maxArmor > 0, enabled,
-      'selected flag activates real armor rules at campaign start');
-    if (enabled) assert.equal(this.state.armor, this.state.maxArmor, 'real armor starts full');
+    assert.equal(this.state.wastelandGateDiscovered, true, 'balance runs use the released discovered rules');
+    assert.equal(Number.isFinite(this.state.maxArmor) && this.state.maxArmor > 0, true,
+      'released armor rules are active at campaign start');
+    assert.equal(this.state.armor, this.state.maxArmor, 'real armor starts full');
     return result;
   };
   try { action(); } finally { Duel.prototype.startCampaign = original; }
@@ -65,20 +65,20 @@ function observeStarts(action, enabled) {
 
 check('import is safe and fast', () => assert.ok(importReady,
   'importing combat-balance must not execute its full campaign or print a report'));
-check('CLI default and selected flags', () => {
+check('CLI defaults to the released rules and supports optional Arsenal', () => {
   const parse = required('parseArgs');
-  assert.deepEqual(parse([]).flags, [], 'default retains flag-off Wasteland');
-  for (const args of [['--flags', 'wasteland2'], ['--check', '--flags', 'wasteland2'],
-    ['--baseline-only', '--flags', 'wasteland2'], ['--probe=medium,1989', '--flags', 'wasteland2']]) {
-    assert.deepEqual(parse(args).flags, ['wasteland2'], `valid CLI: ${args.join(' ')}`);
+  assert.deepEqual(parse([]).flags, [], 'default reports no optional balance switches');
+  for (const args of [['--flags', 'arsenal'], ['--check', '--flags', 'arsenal'],
+    ['--baseline-only', '--flags', 'arsenal'], ['--probe=medium,1989', '--flags', 'arsenal']]) {
+    assert.deepEqual(parse(args).flags, ['arsenal'], `valid CLI: ${args.join(' ')}`);
   }
-  assert.throws(() => parse(['--check', '--flags', 'wasteland2,crash-physics']),
+  assert.throws(() => parse(['--check', '--flags', 'crash-physics']),
     /Unsupported flags/, 'retired crash physics needs no balance option');
 });
 check('CLI rejects unsupported flags and malformed values', () => {
   const parse = required('parseArgs');
   for (const args of [['--flags'], ['--flags', ''], ['--flags', 'unknown'],
-    ['--flags', 'wasteland2,unknown'], ['--flags', 'wasteland2,'], ['--flags', '--check'],
+    ['--flags', 'unknown,arsenal'], ['--flags', 'arsenal,'], ['--flags', '--check'],
     ['--probe=medium,'], ['--probe=medium,1.5'], ['--probe=medium,1989,extra'],
     ['--probe=unknown,1989'], ['--unknown'], ['--baseline-only', '--check']]) {
     assert.throws(() => parse(args), Error, `reject ${JSON.stringify(args)}`);
@@ -88,26 +88,26 @@ check('CLI rejects unsupported flags and malformed values', () => {
   assert.equal(child.error, undefined, 'invalid CLI exits promptly');
   assert.notEqual(child.status, 0, 'invalid CLI exits nonzero');
 });
-for (const flags of [[], ['wasteland2']]) {
-  const label = flags.length ? 'flag-on' : 'flag-off';
-  check(`${label} every policy reaches real simulation`, () => {
+{
+  const flags = [];
+  check('released rules reach real simulation for every policy', () => {
     const run = required('run');
     for (const policy of policies) observeStarts(() => {
       const row = run(policy, 'medium', 1989, { flags, maxFrames: 1 });
       assert.deepEqual(row.flags, flags, 'race reports flags actually selected');
       assert.equal(row.completed, false, 'bounded probe never claims a completed race');
-    }, flags.length > 0);
+    });
   });
   for (const name of ['crossbowProbe', 'bombSpeedProbe']) {
-    check(`${label} ${name} reaches real simulation`, () => observeStarts(() => {
+    check(`released ${name} probe reaches real simulation`, () => observeStarts(() => {
       const result = required(name)({ flags });
       assert.deepEqual(result.flags, flags, 'weapon probe reports selected flags');
       assert.equal(result.cases.length, name === 'crossbowProbe' ? 26 : 10,
         'all original probe cases remain');
-    }, flags.length > 0));
+    }));
   }
 }
-check('default keeps the same short flag-off result', () => {
+check('default and explicit empty options use the same released rules', () => {
   const run = required('run');
   assert.deepEqual(run('none', 'easy', 1989, { maxFrames: 1 }),
     run('none', 'easy', 1989, { flags: [], maxFrames: 1 }));
@@ -125,15 +125,15 @@ check('real combat wrecks retain victim and owner identity', () => {
     return original.apply(this, args);
   };
   try {
-    const row = run('none', 'medium', 1989, { flags: ['wasteland2'], maxFrames: 1 });
+    const row = run('none', 'medium', 1989, { flags: [], maxFrames: 1 });
     assert.deepEqual(row.wrecks, wrecks(1, 1, 0), 'two real wrecks count once with separate owners');
     assert.equal(row.playerOpponentWrecks, 1, 'the payoff count requires player ownership and opponent victim');
   } finally { App.prototype.advance = original; }
 });
 check('report includes flags and separate difficulty win, hit and wreck totals', () => {
-  const input = fixture(['wasteland2']);
+  const input = fixture([]);
   const report = required('buildReport')(input);
-  assert.deepEqual(report.flags, ['wasteland2']);
+  assert.deepEqual(report.flags, []);
   assert.equal(report.policyRuns, 21);
   assert.equal(report.baselineRaces, 30);
   for (const [difficulty, wins] of [['easy', 8], ['medium', 5], ['hard', 3]]) {
@@ -144,7 +144,7 @@ check('report includes flags and separate difficulty win, hit and wreck totals',
   }
 });
 check('single-race targets use the mean of the repeated seeds', () => {
-  const input = fixture(['wasteland2']);
+  const input = fixture([]);
   const race = (policy, cpuDifficulty, seed, timeSec, cpuHits) =>
     ({ ...input.runs.find(run => run.policy === policy && run.cpuDifficulty === cpuDifficulty),
       seed, timeSec, cpuHits });
@@ -162,7 +162,7 @@ check('single-race targets use the mean of the repeated seeds', () => {
 });
 check('both reports retain every existing target band and failure', () => {
   const build = required('buildReport'), validate = required('reportFailures');
-  for (const flags of [[], ['wasteland2']]) {
+  for (const flags of [[]]) {
     const input = fixture(flags), report = build(input);
     const errors = candidate => validate(candidate, input.runs, input.baselineRuns);
     assert.deepEqual(errors(report), [], 'valid measured report passes');
@@ -200,11 +200,11 @@ check('both reports retain every existing target band and failure', () => {
 // A current roadsideImpact carries the struck traffic actor, not the attacker.
 // Exercise production contacts so reporting cannot silently depend on the older
 // trafficWrecked event or label every traffic incident as player-owned.
-for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu']) {
+for (const flags of [[]]) for (const attacker of ['player', 'cpu']) {
   // CRASH-RELEASE: crash physics decides; a hard hit smashes traffic (a wreck)
   // and a light one knocks it clear. The cars start just touching.
   for (const outcome of ['knock', 'smash']) {
-    check(`${flags.length ? 'flag-on' : 'flag-off'} ${attacker} traffic ${outcome} accounting`, () => {
+      check(`released rules ${attacker} traffic ${outcome} accounting`, () => {
       const run = required('run');
       const original = App.prototype.advance;
       const impacts = [];
@@ -242,13 +242,13 @@ for (const flags of [[], ['wasteland2']]) for (const attacker of ['player', 'cpu
 }
 
 // ARS-CORE: use the existing calibrated report, with bounded native fixtures.
-const arsenalFlags = ['wasteland2', 'arsenal'];
+const arsenalFlags = ['arsenal'];
 const nativeUsageRows = [];
-check('Arsenal CLI keeps both supported flags', () => {
-  for (const args of [['--check', '--flags', 'wasteland2,arsenal'],
-    ['--probe=hard,1989', '--flags', 'wasteland2,arsenal']]) {
+check('Arsenal CLI keeps its optional balance flag', () => {
+  for (const args of [['--check', '--flags', 'arsenal'],
+    ['--probe=hard,1989', '--flags', 'arsenal']]) {
     assert.deepEqual(required('parseArgs')(args).flags, arsenalFlags,
-      'the existing report accepts both real gameplay switches');
+      'the existing report accepts optional Arsenal measurement');
   }
 });
 check('Arsenal report starts a named discovered rank-six career through real App transactions', () => {
@@ -266,7 +266,8 @@ check('Arsenal report starts a named discovered rank-six career through real App
   };
   App.prototype.startCampaign = function (...args) {
     const result = originalStart.apply(this, args);
-    assert.equal(this.duel.featureFlags.enabled('wasteland2'), true);
+    assert.equal(this.duel.state.wastelandGateDiscovered, true,
+      'Arsenal measurements always use the released Wasteland rules');
     assert.equal(this.duel.featureFlags.enabled('arsenal'), true);
     assert.equal(this.profile.wasteland.rank, 6, 'native report uses the settled wave-one career rank');
     assert.equal(this.profile.wasteland.discoveredGate, true, 'native named career has discovered the gate');

@@ -9,9 +9,11 @@ import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 import {stepKnock, stepPhysicalWreck, stepWreckSlide} from './vehicle-knock.js';
 import {explodeTrafficWreck} from './sim-contacts.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
+import {targetIdentity} from './arsenal/targeting.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -202,7 +204,7 @@ export function _rival(dt, opponent = this.state.rival) {
     }
   }
   const ramGap = this.relativeS(s.s, r.s) - r.s;
-  const ramAttack = this.featureFlags?.enabled('wasteland2') === true &&
+  const ramAttack = wastelandRulesActive(s) &&
     s.mode === 'wasteland' && s.cpuDifficulty !== 'easy' &&
     !s.onFoot &&
     !s.combatWrecking && r.ramRecoverySec <= 0 &&
@@ -222,6 +224,17 @@ export function _rival(dt, opponent = this.state.rival) {
     lane = fighterIntent.lane;
     target = fighterIntent.targetMph;
   }
+  const boarded = s.boarding?.phase === 'roof' &&
+    s.boarding.targetId === targetIdentity(this, r);
+  if (boarded) {
+    // Use the normal steering solver. Alternating lane goals makes the
+    // boarded driver turn; the fixed roof timer still decides any throw.
+    const side = Math.floor(s.boarding.roofSeconds / .75) % 2
+      ? -s.boarding.escapeSide : s.boarding.escapeSide;
+    const limit = Math.max(0, (rivalSurface.roadHalfWidth ||
+      DRIVE.roadHalfWidth) - this._vehicleSpec(r).halfWidth);
+    lane = clamp(side * DRIVE.laneOffset, -limit, limit);
+  }
   const oil=arsenalEnabled(this) ? oilThreat(this,r,s.cpuDifficulty) : null;
   if(oil){
     const pool=this.course.nearest(oil.x,oil.z,r.s);
@@ -232,7 +245,7 @@ export function _rival(dt, opponent = this.state.rival) {
     lane=clamp(pool.lateral+side*clearance,-limit,limit);
   }
   const grip=arsenalEnabled(this) ? carGrip(r) : 1;
-  const deliberateAttack = ramAttack || fighterIntent?.attack;
+  const deliberateAttack = ramAttack || fighterIntent?.attack || boarded;
   const plannedHeading = (deliberateAttack || oil) ? clamp((lane - r.lateral) * .095, -.55, .55)
     : route?.headingTarget ?? clamp((lane - r.lateral) * .095, -.55, .55);
   const yieldPlan = deliberateAttack

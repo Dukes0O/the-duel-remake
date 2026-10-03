@@ -8,6 +8,7 @@ import {shouldUseHarpoon} from './arsenal/harpoon.js';
 import {shouldUseCaltrops} from './arsenal/caltrops.js';
 import {arenaTargetOf} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 const T = COMBAT_TUNING;
 
@@ -76,7 +77,7 @@ export function stepCombatAI(duel, dt) {
   const state = duel.state;
   const combat = state.combat;
   const cpu = CPU_COMBAT[state.cpuDifficulty] ?? CPU_COMBAT.medium;
-  const modernField = duel.featureFlags?.enabled('wasteland2') === true;
+  const modernField = wastelandRulesActive(duel.state);
   for (let index = 1; index < state.opponents.length; index++) {
     const opponent = state.opponents[index];
     opponent.aiShieldCooldown = Math.max(0, (opponent.aiShieldCooldown || 0) - dt);

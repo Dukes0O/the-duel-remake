@@ -11,6 +11,7 @@ import {deploySmoke} from './arsenal/smoke.js';
 import {deployCaltrops} from './arsenal/caltrops.js';
 import {launchHarpoon} from './arsenal/harpoon.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 const cpuCooldowns = new WeakMap();
 const boltLaunchSpeeds = new WeakMap();
@@ -37,15 +38,13 @@ export const supportsCombat = stage => !!stage?.hasRival && !stage.practice && !
 
 export function arsenalEnabled(duel) {
   return duel.state.mode === 'wasteland' && duel.state.wastelandGateDiscovered === true &&
-    duel.featureFlags?.enabled('wasteland2') === true &&
     duel.featureFlags?.enabled('arsenal') === true;
 }
 
 // Road hazards and car effects also run in warlord fights, whose moves use
 // them before the arsenal is released (docs/ARSENAL.md, Switch).
 export function hazardsActive(duel) {
-  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord' &&
-    duel.featureFlags?.enabled('warlords') === true;
+  return arsenalEnabled(duel) || duel.state.arena?.mode === 'warlord';
 }
 
 export function createCombat(levels) {
@@ -289,7 +288,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     : state.rival;
   if (!combat || state.mode !== 'wasteland' || state.status !== 'racing' ||
       state.paused || !actor || actor.finished || actor.crushed || actor.combatWrecking ||
-      actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
+      actor.impactTimer > 0 || actor.weaponsDisabledUntil > state.stageTimeSec ||
+      !WEAPONS[weapon]) return false;
   if (!enemy && state.onFoot) return false;
   const arsenal = arsenalEnabled(duel);
   let straightShot = false;
@@ -370,8 +370,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
       : target.finished || target.crushed || target.combatWrecking))) return false;
     const count = weapon === 'bomb' ? T.bomb.baseCount + T.bomb.countPerLevel * level : 1;
     if (combat.projectiles.length + count > T.projectileLimit) return false;
-    const modernProjectile = state.mode === 'wasteland' &&
-      duel.featureFlags?.enabled('wasteland2') === true;
+    const modernProjectile = state.mode === 'wasteland' && wastelandRulesActive(state);
     // Preserve the old bolt launch when the switch is off. Bombs already
     // inherit the thrower's velocity; the new rule extends this to bolts.
     const carry = weapon === 'bomb' || modernProjectile ? velocity(actor, at) : null;

@@ -11,8 +11,9 @@ function check(name, run) {
 }
 
 check('Ordinary arena armor increases without changing warlord armor', () => {
-  const flags = {wasteland2: true, scrapdome: true, warlords: true};
+  const flags = {};
   const ordinary = new Duel({seed: 1989, featureFlags: flags});
+  ordinary.state.wastelandGateDiscovered = true;
   assert.ok(ordinary.startArenaEvent({car: 'falcone_f42', cpuDifficulty: 'medium', seed: 1989,
     opponents: [{car: 'banshee_muscle'}]}));
   assert.ok(ordinary.state.maxArmor > 50, 'ordinary cars need more than the released half-race armor');
@@ -25,7 +26,8 @@ check('Every car retains its released warlord arena armor', () => {
     viper_proto: 40.25778999364488, titan_monster: 80, koenigsegg_jesko: 48.954588386972794,
   };
   for (const [car, armor] of Object.entries(released)) {
-    const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true, scrapdome: true}});
+    const duel = new Duel({seed: 1989});
+    duel.state.wastelandGateDiscovered = true;
     assert.ok(duel.startArenaEvent({mode: 'warlord', car, cpuDifficulty: 'medium', seed: 1989,
       opponents: [{car}]}));
     assert.equal(duel.state.maxArmor, armor, car + ' player warlord armor');
@@ -37,8 +39,8 @@ check('Every car retains its released warlord arena armor', () => {
 
 check('Sal retains her released absolute armor at every difficulty', () => {
   for (const cpuDifficulty of ['easy', 'medium', 'hard']) {
-    const duel = new Duel({seed: 1989,
-      featureFlags: {wasteland2: true, scrapdome: true, warlords: true}});
+    const duel = new Duel({seed: 1989});
+    duel.state.wastelandGateDiscovered = true;
     assert.ok(startWarlordEvent(duel, {warlordId: 'sal', car: 'falcone_f42', cpuDifficulty, seed: 1989}));
     assert.equal(duel.state.maxArmor, 50, 'warlord player armor stays released');
     assert.equal(duel.state.opponents[0].maxArmor, 83.79469985707887, 'Sal armor stays released');

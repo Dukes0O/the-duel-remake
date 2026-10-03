@@ -1,7 +1,7 @@
 // One private browser pass through the real Armory and an equipped race.
 // menu-check installs disposable memory-only storage before importing the game.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,

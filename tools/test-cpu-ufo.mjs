@@ -21,10 +21,10 @@ const pose = actor => Object.fromEntries(['s', 'prevS', 'lateral', 'prevLateral'
   'speedMph', 'completedLaps', 'nextLapGate', 'lapTimes', 'assistedLap', 'assistedLaps',
   'routeId', 'routeLap'].map(key => [key, actor[key]]));
 
-function field(flagged = true, difficulty = 'medium') {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: flagged}});
+function field(discovered = true, difficulty = 'medium') {
+  const duel = new Duel({seed: 1989});
   duel.startCampaign({mode: 'wasteland', seed: 1989, car: 'falcone_f42',
-    cpuDifficulty: difficulty, opponentCount: 3});
+    cpuDifficulty: difficulty, opponentCount: 3, discoveredGate: discovered});
   const state = duel.state, combat = state.combat;
   Object.assign(state, {status: 'racing', countdown: 0, s: 0, prevS: 0,
     lateral: 0, prevLateral: 0, speedMph: 70, completedLaps: 0,
@@ -88,10 +88,10 @@ function jump(fixture, actor) {
   return fireWeapon(fixture.duel, 'ufo', true, actor);
 }
 
-for (const flagged of [false, true]) {
+for (const discovered of [false, true]) {
   for (const difficulty of ['medium', 'hard']) for (let index = 0; index < 3; index++) {
-    check(`${flagged}/${difficulty}/rival${index}: physical contact only`, () => {
-      const f = field(flagged, difficulty), actor = f.state.opponents[index];
+    check(`${discovered}/${difficulty}/rival${index}: physical contact only`, () => {
+      const f = field(discovered, difficulty), actor = f.state.opponents[index];
       pickup(f.duel, actor, {lateral: 6});
       assert.equal(f.combat.pickups.length, 1, 'wrong lane cannot collect');
       pickup(f.duel, actor, {airHeight: T.pickup.airClearance + .1});
@@ -106,9 +106,9 @@ for (const flagged of [false, true]) {
     });
   }
 
-  check(`${flagged}: Easy ignores UFOs and no rival starts with a free charge`, () => {
+  check(`${discovered}: Easy ignores UFOs and no rival starts with a free charge`, () => {
     for (const difficulty of ['easy', 'medium', 'hard']) {
-      const f = field(flagged, difficulty);
+      const f = field(discovered, difficulty);
       for (const actor of f.state.opponents) {
         const before = pose(actor);
         assert.equal(jump(f, actor), false, 'no collected charge means no jump');
@@ -123,8 +123,8 @@ for (const flagged of [false, true]) {
   });
 
   for (let index = 0; index < 3; index++) {
-    check(`${flagged}/rival${index}: stock jump isolates actor and player history`, () => {
-      const f = field(flagged), actor = charge(f, index);
+    check(`${discovered}/rival${index}: stock jump isolates actor and player history`, () => {
+      const f = field(discovered), actor = charge(f, index);
       f.state.nextLapGate = 0; // A CPU uses its own earned first checkpoint.
       f.combat.ufoUsedLaps[0] = true;
       f.state.assistedLaps = [false, true];
@@ -166,8 +166,8 @@ for (const flagged of [false, true]) {
     });
   }
 
-  check(`${flagged}: first checkpoint and once-per-own-lap limits`, () => {
-    const f = field(flagged), actor = charge(f, 1);
+  check(`${discovered}: first checkpoint and once-per-own-lap limits`, () => {
+    const f = field(discovered), actor = charge(f, 1);
     actor.nextLapGate = 0;
     const before = pose(actor);
     assert.equal(jump(f, actor), false, 'before own first checkpoint is blocked');
@@ -188,8 +188,8 @@ for (const flagged of [false, true]) {
     assert.deepEqual(f.combat.ufoUsedLaps, []);
   });
 
-  check(`${flagged}: one rival's lap use cannot consume another rival's charge`, () => {
-    const f = field(flagged), first = charge(f, 0), second = charge(f, 1);
+  check(`${discovered}: one rival's lap use cannot consume another rival's charge`, () => {
+    const f = field(discovered), first = charge(f, 0), second = charge(f, 1);
     assert.equal(jump(f, first), true);
     assert.equal(cpuPickupCharges(f.state, f.combat, second).ufo, 1);
     assert.equal(jump(f, second), true, 'another rival may jump during the same lap');
@@ -198,9 +198,9 @@ for (const flagged of [false, true]) {
     assert.deepEqual(f.combat.ufoUsedLaps, []);
   });
 
-  check(`${flagged}: occupied, solid and off-road landings do not spend charges`, () => {
+  check(`${discovered}: occupied, solid and off-road landings do not spend charges`, () => {
     for (const obstacle of ['player', 'rival', 'solid', 'off-road']) {
-      const f = field(flagged), actor = charge(f);
+      const f = field(discovered), actor = charge(f);
       f.duel.course.surfaceAt = (_, lateral) => ({road: obstacle !== 'off-road' &&
         lateral === 0, mainRoad: true, roadHalfWidth: 8});
       if (obstacle === 'player') f.state.s = f.state.prevS = actor.s + 7;
@@ -216,8 +216,8 @@ for (const flagged of [false, true]) {
     }
   });
 
-  check(`${flagged}: destination uses rival footprint and clears occupied lane`, () => {
-    const f = field(flagged), actor = charge(f, 2);
+  check(`${discovered}: destination uses rival footprint and clears occupied lane`, () => {
+    const f = field(discovered), actor = charge(f, 2);
     f.state.s = actor.s + T.ufo.baseDistance;
     const preview = ufoDestination(f.duel, actor);
     assert.equal(preview.kind, 'jump');
@@ -232,9 +232,9 @@ for (const flagged of [false, true]) {
     assert.equal(ufoDestination(f.duel, actor).kind, 'blocked', 'wide rival cannot use player footprint');
   });
 
-  check(`${flagged}: own gate and finish margins bound destination`, () => {
+  check(`${discovered}: own gate and finish margins bound destination`, () => {
     for (const finish of [false, true]) {
-      const f = field(flagged), actor = charge(f, 1);
+      const f = field(discovered), actor = charge(f, 1);
       Object.assign(actor, {completedLaps: finish ? 1 : 0,
         nextLapGate: finish ? f.duel._lapGates.length : 1,
         s: finish ? 1990 : 590, prevS: finish ? 1990 : 590});
@@ -248,8 +248,8 @@ for (const flagged of [false, true]) {
     }
   });
 
-  check(`${flagged}: actor vehicle speed and route metadata apply at landing`, () => {
-    const f = field(flagged), actor = charge(f, 1);
+  check(`${discovered}: actor vehicle speed and route metadata apply at landing`, () => {
+    const f = field(discovered), actor = charge(f, 1);
     const carId = Object.keys(CARS).find(id => id !== f.state.car && CARS[id].topSpeed);
     actor.car = carId;
     actor.speedMph = 1000;
@@ -266,9 +266,9 @@ for (const flagged of [false, true]) {
     assert.equal(f.state.routeId, null);
   });
 
-  check(`${flagged}: CPU holds UFO without a recognized player-bolt threat and preserves attack cadence`, () => {
+  check(`${discovered}: CPU holds UFO without a recognized player-bolt threat and preserves attack cadence`, () => {
     for (const difficulty of ['medium', 'hard']) {
-      const f = field(flagged, difficulty), actor = charge(f, 2);
+      const f = field(discovered, difficulty), actor = charge(f, 2);
       const start = actor.s;
       f.combat.aiTimer = 3;
       const shots = f.combat.aiShot;
@@ -309,18 +309,18 @@ for (const flagged of [false, true]) {
       assert.equal(f.events.filter(event => event.cpuPickupUsed === 'ufo').length, 1);
       stepCombatAI(f.duel, .01);
       assert.equal(actor.s, start + T.ufo.baseDistance, 'same threat cannot reuse the lap charge');
-      const control = field(flagged, difficulty);
+      const control = field(discovered, difficulty);
       control.combat.aiTimer = null;
       stepCombatAI(control.duel, .1);
-      near(control.combat.aiTimer, CPU_COMBAT[difficulty].interval / (flagged ? 3 : 1) - .1,
+      near(control.combat.aiTimer, CPU_COMBAT[difficulty].interval / (discovered ? 3 : 1) - .1,
         'existing attack interval remains');
     }
   });
 
-  check(`${flagged}: all rival identities hold then defend once at common time 30/60/144`, () => {
+  check(`${discovered}: all rival identities hold then defend once at common time 30/60/144`, () => {
     for (let index = 0; index < 3; index++) {
       const outcomes = [30, 60, 144].map(fps => {
-        const f = field(flagged), actor = charge(f, index), start = actor.s;
+        const f = field(discovered), actor = charge(f, index), start = actor.s;
         const advance = seconds => {
           let elapsed = 0;
           while (elapsed < seconds - 1e-10) {

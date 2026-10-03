@@ -23,7 +23,7 @@ globalThis.localStorage = {
   removeItem: key => values.delete(key),
 };
 globalThis.cancelAnimationFrame = () => {};
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true, warlords: true};
+const ON = {'hidden-road': true};
 const DT = 1 / 120;
 let checks = 0;
 const equal = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };
@@ -44,6 +44,7 @@ async function rules() {
 async function fight({difficulty = 'medium', seed = 1989, begin = true, flags = ON} = {}) {
   const api = await rules();
   const duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
   equal(api.startWarlordEvent(duel, {warlordId: 'sal', car: 'falcone_f42', cpuDifficulty: difficulty, seed}),
     true, 'Sal starts through the public event API');
   if (begin) {
@@ -200,16 +201,8 @@ test('boss and future escorts share a team and cannot target or strike one anoth
   equal(arenaStrikeCandidates(duel, 'player').map(a => a.arenaId), ['cpu-1', 'escort-1'], 'player shots may hit the boss team');
 });
 
-test('disabled switches and unknown warlords cannot start a duel', async () => {
+test('unknown warlords cannot start a duel', async () => {
   const api = await rules();
-  for (const flags of [{...ON, scrapdome: false}, {...ON, wasteland2: false}]) {
-    const duel = new Duel({featureFlags: flags});
-    const before = JSON.stringify(duel.state), arenaBefore = duel.state.arena, ownArena = Object.hasOwn(duel.state, 'arena');
-    equal(api.startWarlordEvent(duel, {warlordId: 'sal'}), false, 'both arena and Wasteland rules are required');
-    equal(JSON.stringify(duel.state), before, 'a rejected start preserves the complete state');
-    equal(duel.state.arena, arenaBefore, 'a rejected start preserves the arena value');
-    equal(Object.hasOwn(duel.state, 'arena'), ownArena, 'a rejected start preserves property presence');
-  }
   equal(api.startWarlordEvent(new Duel({featureFlags: ON}), {warlordId: 'unknown'}), false, 'unknown boss is rejected');
 });
 
@@ -229,8 +222,8 @@ test('a full territory advertises and launches FIGHT from the yard only', () => 
   } finally { app.dispose?.(); }
 });
 
-test('territory hold, discovery and switch access checks cannot be bypassed', () => {
-  for (const options of [{hold: 99}, {discovered: false}, {scrapdome: false}]) {
+test('territory hold and discovery access checks cannot be bypassed', () => {
+  for (const options of [{hold: 99}, {discovered: false}]) {
     const app = yard(options);
     try {
       requireAppEntry(app);
@@ -310,7 +303,7 @@ function ordinaryReplay(spec) {
   return createHash('sha256').update(JSON.stringify(samples)).digest('hex');
 }
 
-test('ordinary duel, time trial and objective race fingerprints stay unchanged with the arena switch on', () => {
+test('ordinary duel, time trial and objective race fingerprints stay unchanged with the released arena rules', () => {
   const fixture = JSON.parse(readFileSync(new URL('./replays/warlord-format-ordinary.json', import.meta.url), 'utf8'));
   for (const spec of fixture.cases) equal(ordinaryReplay(spec), spec.fingerprint, `${spec.mode} / ${spec.course}: ordinary rules stay unchanged`);
 });
@@ -322,7 +315,7 @@ test('launch controls stay inside the enabled yard and never appear in the main-
   try {
     const closed = yardHomeScreen({profile: app.profile, playerName: app.player.name,
       escapeHTML, panel: 'territory', arenaMarkup: ''});
-    ok(!/data-warlord=/.test(closed), 'disabled scrapdome shows no inert FIGHT button');
+    ok(!/data-warlord=/.test(closed), 'a yard without territory content shows no inert FIGHT button');
     const open = yardHomeScreen({profile: app.profile, playerName: app.player.name,
       escapeHTML, panel: 'territory', arenaMarkup: screens.arenaYardPanel(), warlordsAvailable: true});
     ok(/data-warlord="sal"/.test(open), 'the enabled yard exposes the territory entry');
@@ -332,61 +325,9 @@ test('launch controls stay inside the enabled yard and never appear in the main-
   } finally { app.dispose?.(); }
 });
 
-// Claude settled this separate dev gate after the Scrapdome release merge.
-test('the warlord fights are released alongside the Scrapdome (WAR-SAL-RELEASE)', () => {
-  equal(FEATURE_STATES.warlords, 'on', 'warlords keeps its own switch, now released');
+test('released Warlord fights and Scrapdome have no switches', () => {
+  equal(Object.hasOwn(FEATURE_STATES, 'warlords'), false, 'Warlords has no retired switch');
   const flags = createFeatureFlags({storage: null, qa: false});
-  equal(flags.enabled('scrapdome'), true, 'ordinary Scrapdome is released');
-  equal(flags.enabled('warlords'), true, 'production has the warlord fights without any request');
-});
-
-test('disabled warlords reject headless and App launch without changing state', async () => {
-  const api = await rules(), flags = {...ON, warlords: false};
-  const duel = new Duel({featureFlags: flags}), before = JSON.stringify(duel.state);
-  equal(api.startWarlordEvent(duel, {warlordId: 'sal'}), false, 'headless entry requires warlords');
-  equal(JSON.stringify(duel.state), before, 'disabled headless entry preserves complete state');
-  const app = yard({warlords: false});
-  try {
-    equal(app.arenaAvailable(), true, 'ordinary arena stays available');
-    equal(app.startWarlordFight('sal'), false, 'App refuses unfinished warlord entry');
-  } finally { app.dispose?.(); }
-});
-
-test('released yard shows no warlord launch or promise without the dev gate', () => {
-  const app = yard({warlords: false});
-  try {
-    const options = {profile: app.profile, playerName: app.player.name, escapeHTML,
-      arenaMarkup: screens.arenaYardPanel(), warlordsAvailable: false};
-    ok(!/data-warlord=/.test(yardHomeScreen({...options, panel: 'territory'})), 'released yard has no FIGHT or REMATCH action');
-    ok(!/Sal is waiting|fight her/.test(yardHomeScreen({...options, panel: 'career'})), 'released career promises no unfinished Sal');
-    ok(!/fight her/.test(yardHomeScreen({...options, panel: 'home'})), 'released home promises no unfinished Sal');
-    ok(/SCRAPDOME/.test(yardHomeScreen({...options, panel: 'home'})), 'released arena navigation stays present');
-  } finally { app.dispose?.(); }
-});
-
-test('the foundation warlord mode cannot bypass its development gate', () => {
-  const duel = new Duel({featureFlags: {...ON, warlords: false}}), before = JSON.stringify(duel.state);
-  equal(duel.startArenaEvent({mode: 'warlord', opponents: [{car: 'banshee_muscle'}]}), false, 'foundation entry also requires warlords');
-  equal(JSON.stringify(duel.state), before, 'foundation rejection preserves complete state');
-});
-
-test('intro acceptance cannot bypass a disabled warlord gate', async () => {
-  const api = await rules(), duel = await fight({begin: false});
-  duel.featureFlags = createFeatureFlags({storage: null, overrides: {...ON, warlords: false}});
-  const before = JSON.stringify(duel.state);
-  equal(api.beginWarlordEvent(duel), false, 'disabled dev gate prevents intro acceptance');
-  equal(JSON.stringify(duel.state), before, 'rejected intro acceptance preserves complete state');
-});
-
-test('main-menu Armory advertises a yard fight only when warlords are available', () => {
-  const app = yard({warlords: false});
-  try {
-    const base = {profile: () => app.profile, credits: String, escapeHTML,
-      getGarageMessage: () => '', kitsEnabled: () => true, action: screenAction};
-    const closed = createArmoryScreen({...base, warlordsEnabled: () => false})();
-    ok(!/SAL IS WAITING|FIGHT FROM THE YARD/.test(closed), 'off-gate Armory gives no unavailable fight instruction');
-    const open = createArmoryScreen({...base, warlordsEnabled: () => true})();
-    ok(/FIGHT FROM THE YARD/.test(open), 'available warlord retains read-only yard direction');
-    ok(!/data-warlord=/.test(open), 'Armory never launches a fight');
-  } finally { app.dispose?.(); }
+  equal(flags.enabled('scrapdome'), false, 'Scrapdome has no retired switch');
+  equal(flags.enabled('warlords'), false, 'Warlords has no retired switch');
 });

@@ -87,7 +87,7 @@ export async function run(context) {
     return {id,selected:selectedCrewId(choice.profile)};
   });
   for (const quality of evidence.qualities) {
-    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.navigate('/tools/menu-check.html');
     await context.waitFor("window.__qaApp?.visualReady && window.__render && !document.querySelector('#start-engine')?.disabled", 'ready private menu',60000);
     if (candidate) await context.evaluate(rookCandidateFetchInstallScript(candidate.bytes.toString('base64')));
     await context.evaluate(`(async () => {
@@ -286,7 +286,7 @@ export async function run(context) {
 
 async function courseContext(context,quality,root,relative) {
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor("window.__qaApp?.visualReady && !document.querySelector('#start-engine')?.disabled",'course context menu',60000);
   await context.evaluate(`(() => {
     const app=window.__qaApp,select=document.querySelector('#graphics-quality');

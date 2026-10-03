@@ -7,6 +7,7 @@ import {
 import {
   actorForTarget
 } from './arsenal/targeting.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 import {
   hazardsFor
 } from './arsenal/hazards.js';
@@ -252,6 +253,16 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   crewTurret.add(turretBase,turretHead,turretBarrel); crewTurret.visible=false; group.add(crewTurret);
   const crewFlame = new THREE.Mesh(new THREE.ConeGeometry(1.75,6,16,1,true),materials.fire);
   crewFlame.visible=false;group.add(crewFlame);
+  const boardingCharge = new THREE.Group();
+  boardingCharge.name = 'crew-boarding-charge';
+  const chargeBase = new THREE.Mesh(new THREE.BoxGeometry(.55,.18,.65), materials.iron);
+  const chargeLamp = new THREE.Mesh(sphere, materials.fire);
+  chargeLamp.name = 'crew-boarding-charge-lamp';
+  chargeLamp.position.y = .18;
+  chargeLamp.scale.setScalar(.14);
+  boardingCharge.add(chargeBase, chargeLamp);
+  boardingCharge.visible = false;
+  group.add(boardingCharge);
   const bursts=Array.from({
     length:32
   },()=>{
@@ -412,7 +423,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     s.stageTimeSec >= departed.presentation.startedAt &&
     s.stageTimeSec < departed.presentation.startedAt + departed.presentation.duration;
     const showFighter=active&&s.mode==='wasteland'&&
-    duel.featureFlags?.enabled('wasteland2')&&((s.onFoot&&!!s.fighter)||showDeparted);
+    wastelandRulesActive(s)&&((s.onFoot&&!!s.fighter)||showDeparted);
     let fighterCount = 0;
     const fighterCapacity = showFighter ? 11 : 12;
     if (active && s.raids) {
@@ -434,7 +445,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     }
     for (let index = fighterCount; index < fighterRoster.length; index++) fighterRoster[index] = null;
     fighterOptions.active = fighterCount > 0;
-    fighterOptions.enabled = s.mode === 'wasteland' && !!duel.featureFlags?.enabled('wasteland2');
+    fighterOptions.enabled = s.mode === 'wasteland' && wastelandRulesActive(s);
     fighterOptions.time = s.stageTimeSec ?? 0;
     fighterOptions.cameraPosition = vehicles.camera?.position || null;
     onFootFigures.update(fighterRoster, fighterOptions);
@@ -448,7 +459,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       rig.bumper.visible = visible;
       // An explicit disabled bumper removes the spike advantage and its teeth
       // in the flagged combat rules. Existing Wasteland rigs remain unchanged.
-      const spikesVisible = !(s.mode === 'wasteland' && duel.featureFlags?.enabled('wasteland2') &&
+      const spikesVisible = !(s.mode === 'wasteland' && wastelandRulesActive(s) &&
       actor?.combatBumperSpikes === false);
       rig.spikes.forEach(spike => {
         spike.visible = spikesVisible;
@@ -508,6 +519,18 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         fighter.z+Math.cos(fighter.yaw)*3);
       crewFlame.rotation.set(Math.PI/2,fighter.yaw,0);
     }
+    const boarding = s.boarding;
+    const chargeTarget = active && duel.featureFlags?.enabled('crew-gear') === true &&
+      boarding?.phase === 'charge' ? actorForTarget(duel, boarding.targetId) : null;
+    boardingCharge.visible = !!chargeTarget;
+    if (chargeTarget) {
+      const roof = duel.course.groundAt(chargeTarget.s, chargeTarget.lateral);
+      boardingCharge.position.set(roof.x,
+        roof.y + (chargeTarget.airHeight || 0) + duel._vehicleSpec(chargeTarget).height + .11,
+        roof.z);
+      boardingCharge.rotation.y = roof.heading + (chargeTarget.headingError || 0);
+      chargeLamp.visible = Math.floor((s.stageTimeSec || 0) * 10) % 2 === 0;
+    }
     bursts.forEach(({
       g,flame,smoke,wave,saucer,shards
     },i)=>{
@@ -550,7 +573,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
       rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
       for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim,
-        turretBase.geometry,turretHead.geometry,turretBarrel.geometry,crewFlame.geometry])geometry.dispose();
+        turretBase.geometry,turretHead.geometry,turretBarrel.geometry,crewFlame.geometry,
+        chargeBase.geometry])geometry.dispose();
       hazardViews.forEach(view=>{
         view.oilMaterial.dispose();
         view.smokeMaterial.dispose();

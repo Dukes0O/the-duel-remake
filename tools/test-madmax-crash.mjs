@@ -15,9 +15,9 @@ const MAX_DECEL = 10;
 
 function start({mode = 'wasteland', car = 'falcone_f42',
   playerMph = 100} = {}) {
-  const duel = new Duel({seed: 2709,
-    featureFlags: {wasteland2: true}});
-  duel.startCampaign({mode, startStage: STAGE, car, opponentCount: 1});
+  const duel = new Duel({seed: 2709});
+  duel.startCampaign({mode, startStage: STAGE, car, opponentCount: 1,
+    discoveredGate: mode === 'wasteland'});
   const s = duel.state;
   Object.assign(s, {status: 'racing', countdown: 0, invulnerableSec: 0,
     s: BASE, prevS: BASE, lateral: 0, prevLateral: 0, speedMph: playerMph,

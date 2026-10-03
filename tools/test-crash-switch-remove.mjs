@@ -24,12 +24,12 @@ const retired = ['crash-physics', 'crash-effects'];
 const stage = COURSE.findIndex(event => !event.kind && event.hasRival);
 const base = 900;
 const views = {
-  'false overrides': {wasteland2: true, 'crash-physics': false, 'crash-effects': false},
-  'custom flag view': {enabled: name => name === 'wasteland2'},
+  'false overrides': {'crash-physics': false, 'crash-effects': false},
+  'custom flag view': {enabled: () => false},
 };
 function race(featureFlags, car = 'falcone_f42', playerMph = 110) {
   const duel = new Duel({seed: 2709, featureFlags});
-  duel.startCampaign({mode: 'wasteland', startStage: stage, car, opponentCount: 1});
+  duel.startCampaign({mode: 'wasteland', startStage: stage, car, opponentCount: 1, discoveredGate: true});
   const state = duel.state;
   Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0,
     s: base, prevS: base, lateral: 0, prevLateral: 0, speedMph: playerMph,
@@ -73,7 +73,7 @@ for (const name of retired) check(`${name} leaves the switch registry`, () => {
   assert.equal(flags.state(name), null, 'retired flags have no lifecycle state');
   assert.equal(flags.enabled(name), false, 'retired names cannot be enabled through QA');
 });
-const released = trafficCrash({wasteland2: true, 'crash-physics': true});
+const released = trafficCrash({'crash-physics': true});
 for (const [name, flags] of Object.entries(views)) {
   check(`physical roadside wreck with ${name}`, () => {
     const actual = trafficCrash(flags);
