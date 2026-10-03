@@ -288,7 +288,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     : state.rival;
   if (!combat || state.mode !== 'wasteland' || state.status !== 'racing' ||
       state.paused || !actor || actor.finished || actor.crushed || actor.combatWrecking ||
-      actor.impactTimer > 0 || !WEAPONS[weapon]) return false;
+      actor.impactTimer > 0 || actor.weaponsDisabledUntil > state.stageTimeSec ||
+      !WEAPONS[weapon]) return false;
   if (!enemy && state.onFoot) return false;
   const arsenal = arsenalEnabled(duel);
   let straightShot = false;

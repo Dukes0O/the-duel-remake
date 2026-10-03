@@ -23,6 +23,17 @@ import {armorKitMass} from './armor-kits.js';
 import {applyDriverModifiers} from './drivers.js';
 import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 import {carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
+import {actorForTarget} from './arsenal/targeting.js';
+
+function recordBoardingCrash(duel, a, b, crash) {
+  const boarding = duel.state.boarding;
+  if (boarding?.phase !== 'roof' || !crash?.result) return;
+  const victim = actorForTarget(duel, boarding.targetId);
+  if (victim !== a && victim !== b) return;
+  const dvMph = victim === a ? crash.result.a.dvMph : crash.result.b.dvMph;
+  if (Number.isFinite(dvMph)) boarding.pendingCrashDvMph =
+    Math.max(boarding.pendingCrashDvMph || 0, dvMph);
+}
 
 function roadsideTopSpeedMph(duel, actor) {
   if (actor === duel.state) return duel.car.topSpeed;
@@ -109,6 +120,7 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
   const crash = resolveCarCrash(duel, a, b, {arenaShoveMph: duel.state.arena ? impactMph : 0,
     playerKnockMinDvMph: duel.state.mode !== 'wasteland' ? 0 : duel.state.arena ?
       CRASH_TUNING.armoredPlayerKnockDvMph : CRASH_TUNING.madMax.playerKnockDvMph});
+  recordBoardingCrash(duel, a, b, crash);
   for (const actor of [a, b]) if (actor !== duel.state)
     actor.ramRecoverySec = Math.max(actor.ramRecoverySec || 0, response.recoverySeconds);
   emitVehicleSmash(duel, {a, b, crash, zone: zoneB});
@@ -532,8 +544,9 @@ export function _vehicleContact(a, b, reason) {
     const M = CRASH_TUNING.madMax, now = this.state.stageTimeSec;
     const wasWreck = !!b.wrecked;
     if ((b.lastSmashAt ?? -Infinity) > now - M.rehitGapSec) return true;
-    resolveCarCrash(this, a, b, {forceKnock: true, playerKnockMinDvMph: Infinity,
-      attackerKeepsControl: true});
+    const crash = resolveCarCrash(this, a, b, {forceKnock: true,
+      playerKnockMinDvMph: Infinity, attackerKeepsControl: true});
+    recordBoardingCrash(this, a, b, crash);
     b.lastSmashAt = now;
     const outcome = wasWreck ? 'wreck' : b.wrecked ? 'smash' : 'knock';
     if (b.wrecked && !wasWreck &&
@@ -577,9 +590,13 @@ export function _vehicleContact(a, b, reason) {
   if (armoredPlayer && this.state.traffic.includes(b)) {
     const wreck = trafficDestruction({ enabled: this.destructionEnabled(), mode: this.state.mode,
       impactMph, playerTopSpeedMph: this.car.topSpeed, playerMass: specA.mass, targetMass: specB.mass });
-    const wreckStarted = wreck.wreck && !b.wrecked &&
-      (resolveCarCrash(this, a, b, {onlyB: true,
-        wreckTrafficAt: ['nudge', 'knocked', 'smashed', 'launched']}), b.wrecked);
+    let wreckStarted = false;
+    if (wreck.wreck && !b.wrecked) {
+      const crash = resolveCarCrash(this, a, b, {onlyB: true,
+        wreckTrafficAt: ['nudge', 'knocked', 'smashed', 'launched']});
+      recordBoardingCrash(this, a, b, crash);
+      wreckStarted = !!b.wrecked;
+    }
     if (wreckStarted) {
       // Wrecking the lighter car does not make an extreme head-on hit safe
       // for the attacker. Both outcomes use the same closing-speed measure.
@@ -620,6 +637,7 @@ export function _vehicleContact(a, b, reason) {
   // velocity, not closing speed alone; legacy Mad Max keeps its threshold.
   const crash = resolveCarCrash(this, a, b, {playerKnockMinDvMph:
     armoredPlayer ? CRASH_TUNING.armoredPlayerKnockDvMph : 0});
+  recordBoardingCrash(this, a, b, crash);
   if (rearRam) {
     b.ramRecoverySec = Math.max(b.ramRecoverySec || 0,
       clamp(.4 + impactMph / 230, .4, 1.2));

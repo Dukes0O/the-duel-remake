@@ -3,7 +3,11 @@ import {Duel} from '../src/game.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {createFighter} from '../src/onfoot.js';
 import {stepFootTransition} from '../src/onfoot-transition.js';
+import {strikeFighterFromVehicles} from '../src/onfoot-race.js';
 import {fireWeapon} from '../src/combat-weapons.js';
+import {createCombatScene} from '../src/combat-scene.js';
+import {EngineAudio} from '../src/audio.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 import {canBoardTarget, startBoarding, stepBoarding,
   computerBoardingAllowed} from '../src/crew-gear/boarding.js';
 
@@ -308,5 +312,89 @@ check('native victim cannot fire during the charge lockout and can fire after it
   state.stageTimeSec = rival.weaponsDisabledUntil;
   assert.equal(fireWeapon(duel, 'bomb', true, rival), true,
     'the victim can fire again at the end of the 0.8 s lockout');
+});
+check('a native car crash above 10 mph throws its roof fighter', () => {
+  const {duel, state, rival} = nativeRace();
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(duel, DT);
+  assert.equal(state.boarding?.phase, 'roof');
+  state.s = rival.s - 1; state.prevS = rival.s - 10;
+  state.lateral = rival.lateral; state.prevLateral = rival.lateral;
+  state.speedMph = 70; rival.speedMph = 0;
+  assert.equal(duel._vehicleContact(state, rival, 'boarding-crash'), true);
+  assert.ok(rival.knock, 'the real crash solver must move the victim');
+  assert.ok(state.boarding?.pendingCrashDvMph > 10,
+    'the actual contact solver must report the boarded victim change in speed');
+  state.stageTimeSec += DT / 2;
+  stepFootTransition(duel, DT / 2);
+  assert.equal(state.boarding?.phase, 'roof',
+    'a substep must retain the pending crash until the next fixed fighter step');
+  state.stageTimeSec += DT / 2;
+  stepFootTransition(duel, DT / 2);
+  assert.equal(state.boarding, null);
+});
+check('roof rider skips ordinary vehicle hit but ground fighter remains vulnerable', () => {
+  const {duel, state, rival} = fixture();
+  duel._callout = () => {};
+  assert.equal(roof(duel, rival), true);
+  assert.equal(strikeFighterFromVehicles(duel), false,
+    'the boarded rider is held by the target roof, not hit as a ground fighter');
+  assert.equal(state.fighter.knockedDown, undefined);
+  state.boarding = null;
+  state.fighter.y = state.fighter.groundY;
+  assert.equal(strikeFighterFromVehicles(duel), true,
+    'the normal vehicle hit still knocks down an exposed ground fighter');
+  assert.equal(state.fighter.knockedDown, true);
+});check('scene shows the roof fighter and a blinking planted charge from race state', () => {
+  const {duel, state, rival} = nativeRace();
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(duel, DT);
+  const scene = createCombatScene();
+  scene.update(duel);
+  assert.equal(scene.onFootFigures.group.visible, true);
+  const roofY = duel.course.groundAt(rival.s, rival.lateral).y +
+    duel._vehicleSpec(rival).height;
+  assert.ok(Math.abs(state.fighter.y - roofY) < EPS);
+  const charge = scene.group.getObjectByName('crew-boarding-charge');
+  assert.ok(charge, 'the scene must have a bounded charge mesh');
+  assert.equal(charge.visible, false);
+  state.boarding.phase = 'charge'; state.boarding.fuseSeconds = 2;
+  const before = JSON.stringify(state.boarding);
+  scene.update(duel);
+  assert.equal(charge.visible, true);
+  assert.ok(Math.abs(charge.position.y - roofY) < .4);
+  const lamp = charge.getObjectByName('crew-boarding-charge-lamp');
+  assert.ok(lamp);
+  const first = lamp.visible;
+  state.stageTimeSec += .1;
+  scene.update(duel);
+  assert.notEqual(lamp.visible, first, 'the charge light must blink');
+  assert.equal(JSON.stringify(state.boarding), before,
+    'rendering cannot advance the fuse or alter boarding state');
+  state.boarding = null;
+  scene.update(duel);
+  assert.equal(charge.visible, false);
+  scene.dispose();
+});
+check('five named boarding events play finished spatial cues', () => {
+  const audio = new EngineAudio({flags: {enabled: name => name === 'crew-gear'}});
+  const played = [];
+  audio.context = {state: 'running', currentTime: 0};
+  audio.buses = {weapons: {}};
+  audio.muted = false;
+  audio._spatialOutput = () => ({level: {}, disconnect() {}});
+  audio._playCue = id => {
+    assert.ok(SOUND_BANK[id], `the mapped ${id} cue must exist`);
+    played.push(id);
+  };
+  const state = {mode: 'wasteland', maxArmor: 100,
+    wastelandGateDiscovered: true};
+  for (const cue of ['mount', 'throw', 'plant', 'blast', 'release'])
+    audio.event({crewBoardingCue: `crew.boarding.${cue}`,
+      hitPosition: {x: 2, y: 1, z: 3}}, state, null);
+  assert.deepEqual(played, ['vehicle.landing', 'vehicle.landing',
+    'crew.sticky.arm', 'crew.sticky.explode', 'vehicle.landing']);
 });
 if (!process.exitCode) console.log('Boarding checks: ' + checks + ' passed.');

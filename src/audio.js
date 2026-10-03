@@ -17,6 +17,13 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.caltrops.deploy', 'weapon.caltrops.hit',
 ]);
 const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy']);
+const BOARDING_CUES = Object.freeze({
+  'crew.boarding.mount': 'vehicle.landing',
+  'crew.boarding.throw': 'vehicle.landing',
+  'crew.boarding.plant': 'crew.sticky.arm',
+  'crew.boarding.blast': 'crew.sticky.explode',
+  'crew.boarding.release': 'vehicle.landing',
+});
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 // A continuous 18.6-semitone sweep makes each gear audible. Texture crossfades
 // retain the same tonal target, so switching recordings cannot reset the pitch.
@@ -1372,6 +1379,15 @@ export class EngineAudio {
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
       );
       this._playCue(ev.crewGearCue, {destination: output.level, onEnd: output.disconnect});
+    }
+    const boardingCue = BOARDING_CUES[ev.crewBoardingCue];
+    if (recordedAudio && this.flags.enabled('crew-gear') && boardingCue) {
+      const bus = ev.crewBoardingCue === 'crew.boarding.blast'
+        ? this.buses.impacts || this.buses.weapons : this.buses.weapons;
+      const output = this._spatialOutput(
+        {hitPosition: ev.hitPosition, combatHit: true}, state, course, bus,
+      );
+      this._playCue(boardingCue, {destination: output.level, onEnd: output.disconnect});
     }
     if (ev.countdown) this._playCue('interface.countdown');
     if (ev.go) this._playCue('interface.go');

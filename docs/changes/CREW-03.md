@@ -29,9 +29,15 @@ boundary and timing rules testable before implementation:
 - A computer may board the player's car only on Hard in Ambush Alley or
   Convoy Raid. This eligibility can be tested before those future events
   are built; no ordinary race gains that behavior.
+- A rider already on a target roof is exempt from the ordinary ground-fighter vehicle-hit sweep while boarding remains in the roof phase. The fixed boarding rules still throw the rider for a hard turn, crash delta-v or the six-second limit. Once the rider lands, the ordinary ground hit rule applies again.
 - The roof fighter and blinking charge are presentation of simulation state.
   They do not control boarding, timers or damage. The feature's sound cues
   will be named before their shared audio hook is wired.
+- The five named boarding events reuse existing, finished game cues: mount,
+  throw and release use `vehicle.landing`; plant uses `crew.sticky.arm`; blast
+  uses `crew.sticky.explode`. These match the landing, charge arm and explosion
+  actions. No new sound source, catalog entry or sound-bank hook is needed for
+  Boarding. The event names remain distinct for tests and later sound design.
 
 ## Checks
 

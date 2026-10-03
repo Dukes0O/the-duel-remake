@@ -63,16 +63,19 @@ function boardingMotion(duel, dt) {
   boarding.lastHeading = heading;
   const change = Number.isFinite(previous)
     ? Math.atan2(Math.sin(heading - previous), Math.cos(heading - previous)) : 0;
-  const crashDeltaMph = boarding.pendingCrashDvMph || 0;
-  boarding.pendingCrashDvMph = 0;
+  boarding.pendingTurnRadians = (boarding.pendingTurnRadians || 0) + Math.abs(change);
+  boarding.pendingTurnSeconds = (boarding.pendingTurnSeconds || 0) + dt;
   return {sidewaysAcceleration: Math.abs(actor.speedMph || 0) * .44704 *
-    Math.abs(change) / dt, crashDeltaMph};
+    boarding.pendingTurnRadians / boarding.pendingTurnSeconds,
+    crashDeltaMph: boarding.pendingCrashDvMph || 0};
 }
 
 function stepFighterInFixedTime(duel, dt) {
   const state = duel.state, transition = state.footTransition;
+  const boardingAtStart = state.boarding;
   const motion = boardingMotion(duel, dt);
   transition.fighterStepRemainder += dt;
+  let steppedBoarding = false;
   while (transition.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
     const fighter = state.fighter, wasOnRoof = state.boarding?.phase === 'roof';
     if (fighter.bailTumbleSeconds > 0) {
@@ -102,7 +105,10 @@ function stepFighterInFixedTime(duel, dt) {
         if (startBoarding(duel, target, {method: 'roof', previousY})) break;
     }
     const boardingBefore = state.boarding?.phase;
-    if (state.boarding) stepBoarding(duel, FIGHTER_STEP_SECONDS, motion);
+    if (state.boarding) {
+      stepBoarding(duel, FIGHTER_STEP_SECONDS, motion);
+      steppedBoarding = true;
+    }
     if (boardingBefore === 'roof' && state.boarding?.phase === 'charge')
       transition.boardingNeedsFireRelease = true;
     if (!state.fighterInput.fire) transition.boardingNeedsFireRelease = false;
@@ -112,6 +118,11 @@ function stepFighterInFixedTime(duel, dt) {
     state.fighterInput.lookX = state.fighterInput.lookY = 0;
     transition.fighterStepRemainder = Math.max(0,
       transition.fighterStepRemainder - FIGHTER_STEP_SECONDS);
+  }
+  if (steppedBoarding && boardingAtStart) {
+    boardingAtStart.pendingCrashDvMph = 0;
+    boardingAtStart.pendingTurnRadians = 0;
+    boardingAtStart.pendingTurnSeconds = 0;
   }
 }
 
