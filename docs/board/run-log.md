@@ -697,3 +697,5 @@ Handoff: resume the clean Crew and Pit lanes when their actual owners answer
 or merge. No new long card is eligible without file overlap. Final integration
 receives build, full tier and the approved normal push after an exact-commit
 check; consult the evidence ledger for the outcome.
+
+Janitor sweep, 3 October 2026: removed the merged audio-capture lane and 108,646,737 bytes of used native audio evidence (evidence 108,646,737 B -> 0 B); public assets stayed 259,784,165 B and the build stayed 264,125,672 B. The audit flagged `src/arena/tanker-model.js` and 48 runtime assets as uncertain literal-reference candidates, so none were deleted. The three clean unmerged Balance, Arsenal and Boarding lanes remain listed with their cards on `STATUS.md`. Full tier passed 344/344 on integration commit 2ff0b14; no feature merge followed it.

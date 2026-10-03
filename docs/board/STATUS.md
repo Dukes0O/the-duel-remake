@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-10-03T06:05:48.866Z
+Observed at: 2026-10-03T06:16:04.067Z
 
-Observation commit: a705ba87ee24d9bb97a1a18645c5d40f464dad80
+Observation commit: 2ff0b143e22bf3aebf2d0269055b271aaf7fab1f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a705ba87ee24d9bb97a1a18645c5d40f464dad80
+Integration HEAD: 2ff0b143e22bf3aebf2d0269055b271aaf7fab1f
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: passed; exact HEAD passed: yes.
 
-Last recorded full run: 2026-10-03T05:55:45.576Z; tested commit: 879c0141218dfa8bd21c04bad05e7f805f81083d.
+Last recorded full run: 2026-10-03T06:15:27.731Z; tested commit: 2ff0b143e22bf3aebf2d0269055b271aaf7fab1f.
 
 ## Feature switches
 
@@ -54,9 +54,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/cmb/arsenal-wave2 | unknown | 2026-10-02T22:43:20-07:00 | 0 | last commit 2026-10-02T22:43:20-07:00 | docs/changes/ARS-02.md, src/arsenal/flamethrower.js, src/arsenal/magnet.js, src/arsenal/rockets.js, tools/test-arsenal-wave2.mjs |
-| codex/foot/boarding | unknown | 2026-10-02T22:44:38-07:00 | 0 | last commit 2026-10-02T22:44:38-07:00 | docs/changes/CREW-03.md, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot.js, tools/test-boarding.mjs |
-| codex/ops/balance-w2-off-retire | unknown | 2026-10-02T22:06:34-07:00 | 0 | last commit 2026-10-02T22:06:34-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, src/app.js, src/arena/warlord-event.js |
+| codex/cmb/arsenal-wave2 | ARS-02 | 2026-10-02T22:43:20-07:00 | 0 | last commit 2026-10-02T22:43:20-07:00 | docs/changes/ARS-02.md, src/arsenal/flamethrower.js, src/arsenal/magnet.js, src/arsenal/rockets.js, tools/test-arsenal-wave2.mjs |
+| codex/foot/boarding | CREW-03 | 2026-10-02T22:44:38-07:00 | 0 | last commit 2026-10-02T22:44:38-07:00 | docs/changes/CREW-03.md, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot.js, tools/test-boarding.mjs |
+| codex/ops/balance-w2-off-retire | BALANCE-W2-OFF-RETIRE | 2026-10-02T22:06:34-07:00 | 0 | last commit 2026-10-02T22:06:34-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, src/app.js, src/arena/warlord-event.js |
 
 ## Size targets
 
@@ -70,10 +70,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 15,179,042 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 17,806 B | -3,239,994 B | 5,000,000 B |
+| Added bytes in last merge | 17,806 B | +0 B | 5,000,000 B |
 | All `public/` | 259,784,165 B | +0 B | unavailable |
-| Git objects | 374,279,168 B | +2,445,312 B | unavailable |
-| Lane folders | 3 | +1 | unavailable |
+| Git objects | 374,400,000 B | +120,832 B | unavailable |
+| Lane folders | 3 | +0 | unavailable |
 
 ## Backups
 
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: a705ba87ee24d9bb97a1a18645c5d40f464dad80
+- Local integration/wasteland: 2ff0b143e22bf3aebf2d0269055b271aaf7fab1f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
