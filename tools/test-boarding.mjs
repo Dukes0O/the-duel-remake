@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import {Duel} from '../src/game.js';
+import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
+import {createFighter} from '../src/onfoot.js';
+import {stepFootTransition} from '../src/onfoot-transition.js';
 import {canBoardTarget, startBoarding, stepBoarding,
   computerBoardingAllowed} from '../src/crew-gear/boarding.js';
 
@@ -182,4 +186,74 @@ check('fixed 120 Hz stepping gives equal 30/60/144 presentation outcomes', () =>
   assert.deepEqual(run(30), run(60));
   assert.deepEqual(run(30), run(144));
 });
-if (!process.exitCode) console.log(`Boarding module: ${checks} checks passed.`);
+
+function nativeRace() {
+  const flags = createFeatureFlags({storage: null, qa: true,
+    catalog: {...FEATURE_STATES, 'crew-gear': 'dev'},
+    overrides: {wasteland2: true, 'crew-gear': true}});
+  const duel = new Duel({seed: 2903, featureFlags: flags});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42',
+    driverId: 'club', crewId: 'jax', discoveredGate: true,
+    arsenalRank: 30, opponentCount: 1, seed: 2903, cpuDifficulty: 'easy'});
+  const state = duel.state, rival = state.opponents[0];
+  Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0,
+    traffic: [], onFoot: true});
+  Object.assign(state, {s: 500, prevS: 500, lateral: 0, prevLateral: 0,
+    speedMph: 0, impactTimer: 0});
+  Object.assign(rival, {s: 510, prevS: 510, lateral: 0, prevLateral: 0,
+    speedMph: 30, impactTimer: 0, combatShield: 0});
+  state.fighter = createFighter(duel.course, state,
+    {s: rival.s, lateral: rival.lateral + 3});
+  state.fighter.crewId = 'jax';
+  state.fighterInput = {fire: false};
+  return {duel, state, rival};
+}
+check('native fixed-step Jax grapple arrival mounts the rival roof', () => {
+  const {duel, state, rival} = nativeRace();
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  assert.equal(stepFootTransition(duel, DT), true);
+  assert.equal(state.boarding?.phase, 'roof');
+  assert.equal(state.crewGear.grapple, null);
+  const roof = duel.course.groundAt(rival.s, rival.lateral).y +
+    duel._vehicleSpec(rival).height;
+  assert.ok(Math.abs(state.fighter.y - roof) < EPS);
+});
+check('native fire hold plants a charge without spending RPG ammo', () => {
+  const {duel, state} = nativeRace();
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(duel, DT);
+  const ammo = state.footWeapons.ammo;
+  state.fighterInput.fire = true;
+  for (let i = 0; i < 120; i++) {
+    state.stageTimeSec += DT;
+    stepFootTransition(duel, DT);
+  }
+  assert.equal(state.boarding?.phase, 'charge');
+  assert.equal(state.footWeapons.ammo, ammo);
+});
+
+check('native charge detonates after re-entry through the real armor path', () => {
+  const {duel, state, rival} = nativeRace();
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(duel, DT);
+  state.fighterInput.fire = true;
+  for (let i = 0; i < 120; i++) {
+    state.stageTimeSec += DT;
+    stepFootTransition(duel, DT);
+  }
+  assert.equal(state.boarding?.phase, 'charge');
+  const armor = rival.armor;
+  state.onFoot = false; state.fighter = null; state.fighterInput = {};
+  for (let i = 0; i < 240; i++) {
+    state.stageTimeSec += DT;
+    stepFootTransition(duel, DT);
+  }
+  assert.equal(state.boarding, null);
+  assert.ok(Math.abs(rival.armor - (armor - 35)) < EPS,
+    'native armor path removes exactly 35 armor once');
+  assert.ok(rival.weaponsDisabledUntil >= state.stageTimeSec + .8 - EPS);
+});
+if (!process.exitCode) console.log('Boarding checks: ' + checks + ' passed.');

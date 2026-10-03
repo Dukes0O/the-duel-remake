@@ -6,6 +6,8 @@ import {crewPerks} from './crew.js';
 import {strikeFighterFromVehicles} from './onfoot-race.js';
 import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
 import {refillCrewGear, resetCrewGearUser, stepGearGrapple} from './crew-gear/signature.js';
+import {actorForTarget} from './arsenal/targeting.js';
+import {startBoarding, stepBoarding} from './crew-gear/boarding.js';
 
 const T = COMBAT_TUNING.foot;
 
@@ -24,15 +26,18 @@ export function initializeFootTransition(duel) {
     delete state.fighterInput;
     delete state.footTransition;
     delete state.footPresentation;
+    delete state.boarding;
     return;
   }
   state.onFoot = false;
   state.fighter = null;
   state.footPresentation = null;
+  state.boarding = null;
   state.fighterInput = {};
   state.input.interact = false;
   state.footTransition = {heldSeconds: 0, needsRelease: false,
-    fighterStepRemainder: 0};
+    fighterStepRemainder: 0, boardingStepRemainder: 0,
+    boardingNeedsFireRelease: false};
 }
 
 export function fighterDistanceToCar(duel) {
@@ -43,36 +48,82 @@ export function fighterDistanceToCar(duel) {
     fighter.z - car.z);
 }
 
+function boardingMotion(duel, dt) {
+  const boarding = duel.state.boarding;
+  if (boarding?.phase !== 'roof' || !(dt > 0)) return {};
+  const actor = actorForTarget(duel, boarding.targetId);
+  if (!actor) return {};
+  const at = duel.course.groundAt(actor.s, actor.lateral);
+  const heading = at.heading + (actor.headingError || 0);
+  const previous = boarding.lastHeading;
+  boarding.lastHeading = heading;
+  const change = Number.isFinite(previous)
+    ? Math.atan2(Math.sin(heading - previous), Math.cos(heading - previous)) : 0;
+  const crashDeltaMph = boarding.pendingCrashDvMph || 0;
+  boarding.pendingCrashDvMph = 0;
+  return {sidewaysAcceleration: Math.abs(actor.speedMph || 0) * .44704 *
+    Math.abs(change) / dt, crashDeltaMph};
+}
+
 function stepFighterInFixedTime(duel, dt) {
   const state = duel.state, transition = state.footTransition;
+  const motion = boardingMotion(duel, dt);
   transition.fighterStepRemainder += dt;
   while (transition.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
-    const fighter = state.fighter;
+    const fighter = state.fighter, wasOnRoof = state.boarding?.phase === 'roof';
     if (fighter.bailTumbleSeconds > 0) {
       fighter.bailTumbleSeconds = Math.max(0,
         fighter.bailTumbleSeconds - FIGHTER_STEP_SECONDS);
     }
-    const previousRespawns = fighter.respawns;
-    if (!state.crewGear?.grapple) stepFighter(duel.course, state, fighter,
+    const previousRespawns = fighter.respawns, previousY = fighter.y;
+    if (!wasOnRoof && !state.crewGear?.grapple) stepFighter(duel.course, state, fighter,
       fighter.bailTumbleSeconds > 0 ? {} : state.fighterInput, FIGHTER_STEP_SECONDS);
     if (fighter.respawns !== previousRespawns) {
       fighter.presentation = {clip: 'get-up', startedAt: Math.max(0, state.stageTimeSec -
         (transition.fighterStepRemainder - FIGHTER_STEP_SECONDS)), duration: .8};
       resetCrewGearUser(duel);
     }
-    stepGearGrapple(duel, FIGHTER_STEP_SECONDS);
-    stepFootWeapons(duel, FIGHTER_STEP_SECONDS);
+    if (!wasOnRoof) stepGearGrapple(duel, FIGHTER_STEP_SECONDS);
+    if (!state.boarding && state.crewGear?.grapple?.arrived) {
+      const target = actorForTarget(duel, state.crewGear.grapple.targetId);
+      if (target) startBoarding(duel, target, {method: 'grapple'});
+    }
+    if (!state.boarding && !state.crewGear?.grapple) {
+      for (const target of state.opponents)
+        if (startBoarding(duel, target, {method: 'roof', previousY})) break;
+    }
+    const boardingBefore = state.boarding?.phase;
+    if (state.boarding) stepBoarding(duel, FIGHTER_STEP_SECONDS, motion);
+    if (boardingBefore === 'roof' && state.boarding?.phase === 'charge')
+      transition.boardingNeedsFireRelease = true;
+    if (!state.fighterInput.fire) transition.boardingNeedsFireRelease = false;
+    if (boardingBefore !== 'roof' &&
+        !(transition.boardingNeedsFireRelease && state.fighterInput.fire))
+      stepFootWeapons(duel, FIGHTER_STEP_SECONDS);
     state.fighterInput.lookX = state.fighterInput.lookY = 0;
     transition.fighterStepRemainder = Math.max(0,
       transition.fighterStepRemainder - FIGHTER_STEP_SECONDS);
   }
 }
 
+function stepChargeWhileDriving(duel, dt) {
+  const transition = duel.state.footTransition;
+  if (duel.state.boarding?.phase !== 'charge') return;
+  transition.boardingStepRemainder += dt;
+  while (transition.boardingStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS &&
+         duel.state.boarding?.phase === 'charge') {
+    stepBoarding(duel, FIGHTER_STEP_SECONDS);
+    transition.boardingStepRemainder = Math.max(0,
+      transition.boardingStepRemainder - FIGHTER_STEP_SECONDS);
+  }
+}
+
 export function stepFootTransition(duel, dt) {
   const state = duel.state;
-  if (!canLeaveCar(duel)) return false;
   const transition = state.footTransition;
   if (!transition) return false;
+  if (!state.onFoot) stepChargeWhileDriving(duel, dt);
+  if (!canLeaveCar(duel)) return false;
   const held = !!state.input.interact;
   if (!held) {
     transition.heldSeconds = 0;
@@ -81,6 +132,7 @@ export function stepFootTransition(duel, dt) {
 
   if (state.onFoot) {
     stepFighterInFixedTime(duel, dt);
+    if (state.boarding?.phase === 'roof') {transition.heldSeconds = 0; return true;}
     if (transition.needsRelease || !held || state.fighter.knockedDown ||
         state.fighter.bailTumbleSeconds > 0 ||
         state.combatWrecking || fighterDistanceToCar(duel) > T.reentryRangeMeters) {

@@ -40,7 +40,7 @@ Tests will be written before implementation for 49/51 and 89/91 km/h,
 six-second limit, one charge, safe landing, delayed damage and weapon
 disable, and identical 30/60/144 FPS outcomes. Browser checks must show
 the roof fighter and charge without changing simulation state.
-Owned module test: 12/12 pass after failing on the missing module. It covers entry speeds, roof and grapple contact, excluded targets, shake, crash, time limit, one charge, safe shoulder, delayed damage, Hard event eligibility and 30/60/144 FPS. The module emits crew.boarding.mount, .throw, .plant and .blast cues. Native controls, crash-delta wiring, weapon disable, rendering, browser checks, lane gate and build remain. No released assertion changed.
+Owned boarding test: 15/15 pass after failing first on the missing module and then on the native on-foot hook. It covers entry speeds, roof and grapple contact, excluded targets, shake, crash, time limit, one charge, safe shoulder, delayed damage, Hard event eligibility and 30/60/144 FPS. The module emits crew.boarding.mount, .throw, .plant and .blast cues. The native fixed fighter step now mounts on Jax grapple arrival, holds fire without spending RPG ammo, and detonates through the armor path even after re-entry. Existing on-foot transition 8/8, Crew gear 33/33 and Crew module 16/16 pass. Crash-delta wiring, weapon-disable enforcement, rendering, browser checks, lane gate and build remain. No released assertion changed.
 
 ## Removed
 
