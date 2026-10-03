@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import {Duel} from '../src/game.js';
+import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
+import {stepPickups} from '../src/combat-pickups.js';
 import {startScrapMagnet, stepScrapMagnets, endScrapMagnet,
   shouldUseScrapMagnet} from '../src/arsenal/magnet.js';
 import {startFlamethrower, stepFlamethrowers, flameCpuAim}
@@ -216,4 +219,54 @@ check('active weapons keep serializable simulation state', () => {
   startScrapMagnet(duel, state);
   assert.doesNotThrow(() => JSON.stringify(state.combat));
 });
-if (!process.exitCode) console.log('Arsenal wave 2 modules: ' + checks + ' checks passed.');
+
+function nativeRace() {
+  const flags = createFeatureFlags({storage: null, qa: true,
+    catalog: {...FEATURE_STATES, arsenal: 'dev'},
+    overrides: {wasteland2: true, arsenal: true}});
+  const duel = new Duel({seed: 202602, featureFlags: flags});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42',
+    driverId: 'club', crewId: 'rook', discoveredGate: true,
+    arsenalRank: 30, opponentCount: 1, seed: 202602, cpuDifficulty: 'easy'});
+  const state = duel.state, rival = state.opponents[0];
+  Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0,
+    s: 500, prevS: 500, lateral: 0, prevLateral: 0, speedMph: 0, traffic: []});
+  Object.assign(rival, {s: 540, prevS: 540, lateral: 0, prevLateral: 0,
+    speedMph: 0, armor: 100, maxArmor: 100, combatShield: 0});
+  state.combat.aiTimer = state.combat.pickupTimer = Infinity;
+  return {duel, state, rival};
+}
+check('native armor receives a Rocket Pods blast through production damage', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 520;
+  const shot = startRocketVolley(duel, state) && state.combat.projectiles[0];
+  const at = duel.course.groundAt(rival.s, rival.lateral);
+  const dx = at.x - shot.x, dz = at.z - shot.z, length = Math.hypot(dx, dz);
+  shot.y = at.y + 1; shot.vx = dx / length * 80; shot.vz = dz / length * 80;
+  for (let i = 0; i < 90 && !shot.dead; i++) stepRocketPod(duel, shot, DT);
+  assert.equal(shot.dead, true);
+  assert.ok(Math.abs(rival.armor - 90) < EPS);
+});
+check('native armor receives 8/s in the flame cone, then the single burn', () => {
+  const {duel, state, rival} = nativeRace();
+  rival.s = 506;
+  startFlamethrower(duel, state);
+  for (let i = 0; i < 4.5 / DT; i++) stepFlamethrowers(duel, DT);
+  assert.ok(Math.abs(rival.armor - 70) < 1e-5);
+});
+check('magnet moves a native armor crate; native pickup step grants the reward', () => {
+  const {duel, state} = nativeRace();
+  state.armor = state.maxArmor - 30;
+  const crate = {id: 'magnet-native', lap: 0, s: 530,
+    lateral: 0, kind: 'armor', age: 0};
+  state.combat.seededPickupPlan = [];
+  state.combat.pickups = [crate];
+  startScrapMagnet(duel, state);
+  for (let i = 0; i < 3 / DT; i++) stepScrapMagnets(duel, DT);
+  assert.equal(state.armor, state.maxArmor - 30,
+    'magnet itself does not grant armor');
+  stepPickups(duel, DT);
+  assert.equal(state.combat.pickups.length, 0);
+  assert.ok(state.armor > state.maxArmor - 30);
+});
+if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');
