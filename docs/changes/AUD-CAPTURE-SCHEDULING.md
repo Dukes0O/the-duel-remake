@@ -16,7 +16,7 @@ Run the harness test, repeated native peak captures, the exact changed-file lane
 
 The new launch assertion failed first because the argument builder was absent. After the harness change, its 6/6 tests passed. Three separate native Chrome captures passed 23/23 each, with all three real cases' mix, engine and impacts meters continuous and the original peak, onset, contrast and cleanup limits intact. An initial unprivileged invocation could not create the lane's ignored evidence directory; the same suite ran with the lane's normal write permission.
 
-On source commit e524266, the required changed-file lane tier passed 8/8 suites in 39.21 seconds. The production build passed in 396 ms. The native peak suite is not in the changed-file selection, so its three separate 23/23 runs are recorded above. On final note commit 9b89203, the lane gate passed 8/8 in 39.14 seconds and the build passed in 431 ms. The lane merged as f724944. The full integration tier is next.
+On source commit e524266, the required changed-file lane tier passed 8/8 suites in 39.21 seconds. The production build passed in 396 ms. The native peak suite is not in the changed-file selection, so its three separate 23/23 runs are recorded above. On final note commit 9b89203, the lane gate passed 8/8 in 39.14 seconds and the build passed in 431 ms. The lane merged as f724944. The full integration tier passed 344/344 on exact commit f814adc in 555.83 seconds; the native peak suite passed inside that run.
 
 ## Removed
 

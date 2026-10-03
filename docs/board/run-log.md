@@ -699,3 +699,5 @@ receives build, full tier and the approved normal push after an exact-commit
 check; consult the evidence ledger for the outcome.
 
 Janitor sweep, 3 October 2026: removed the merged audio-capture lane and 108,646,737 bytes of used native audio evidence (evidence 108,646,737 B -> 0 B); public assets stayed 259,784,165 B and the build stayed 264,125,672 B. The audit flagged `src/arena/tanker-model.js` and 48 runtime assets as uncertain literal-reference candidates, so none were deleted. The three clean unmerged Balance, Arsenal and Boarding lanes remain listed with their cards on `STATUS.md`. Full tier passed 344/344 on integration commit 2ff0b14; no feature merge followed it.
+
+Janitor after AUD-CAPTURE-SCHEDULING merge, 3 October 2026: unlinked and removed its merged lane and branch, then deleted 21,728,084 bytes of used native capture evidence and 264,197,129 bytes of rebuildable capture scratch. The full tier passed 344/344 on f814adc before cleanup. Public assets stayed 259,784,165 B and the build stayed 264,125,672 B. Balance, Arsenal and Boarding remain unfinished lanes; no uncertain audit candidate was removed.
