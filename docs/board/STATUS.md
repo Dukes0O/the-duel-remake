@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-03T08:39:20.144Z
+Observed at: 2026-10-03T09:21:23.508Z
 
-Observation commit: bb217e39c214205df13459fe30f7914919297ad7
+Observation commit: e19c796aa0be8a49ab143e0c0bfb694d54f93b02
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: bb217e39c214205df13459fe30f7914919297ad7
+Integration HEAD: e19c796aa0be8a49ab143e0c0bfb694d54f93b02
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -37,7 +37,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/cmb/arsenal-wave2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave2 |
-| codex/foot/boarding | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/boarding |
 | lane/audio/aud-10 | 8 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 8 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
@@ -48,8 +47,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/cmb/arsenal-wave2 | ARS-02 | 2026-10-02T22:43:20-07:00 | 0 | last commit 2026-10-02T22:43:20-07:00 | docs/changes/ARS-02.md, src/arsenal/flamethrower.js, src/arsenal/magnet.js, src/arsenal/rockets.js, tools/test-arsenal-wave2.mjs |
-| codex/foot/boarding | CREW-03 | 2026-10-02T22:44:38-07:00 | 0 | last commit 2026-10-02T22:44:38-07:00 | docs/changes/CREW-03.md, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot.js, tools/test-boarding.mjs |
+| codex/cmb/arsenal-wave2 | unknown | 2026-10-02T22:43:20-07:00 | 0 | last commit 2026-10-02T22:43:20-07:00 | docs/changes/ARS-02.md, src/arsenal/flamethrower.js, src/arsenal/magnet.js, src/arsenal/rockets.js, tools/test-arsenal-wave2.mjs |
 
 ## Size targets
 
@@ -57,16 +55,16 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 264,125,672 B | +0 B | 250,000,000 B |
+| Build `dist/` | 264,155,845 B | +30,173 B | 250,000,000 B |
 | Wasteland models | 102,281,592 B | +0 B | 60,000,000 B |
 | Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 15,179,042 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 5,895,236 B | +5,868,647 B | 5,000,000 B |
+| Added bytes in last merge | 491,321 B | +0 B | 5,000,000 B |
 | All `public/` | 259,784,165 B | +0 B | unavailable |
-| Git objects | 376,849,408 B | +272,384 B | unavailable |
-| Lane folders | 2 | -1 | unavailable |
+| Git objects | 377,568,256 B | +0 B | unavailable |
+| Lane folders | 1 | +0 | unavailable |
 
 ## Backups
 
@@ -74,7 +72,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: bb217e39c214205df13459fe30f7914919297ad7
+- Local integration/wasteland: e19c796aa0be8a49ab143e0c0bfb694d54f93b02
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
