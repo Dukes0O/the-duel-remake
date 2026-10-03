@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-03T08:15:55.610Z
+Observed at: 2026-10-03T08:39:20.144Z
 
-Observation commit: 9af4a695fed7267d18f12d2de2385a653a8d8e5c
+Observation commit: bb217e39c214205df13459fe30f7914919297ad7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9af4a695fed7267d18f12d2de2385a653a8d8e5c
+Integration HEAD: bb217e39c214205df13459fe30f7914919297ad7
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -23,12 +23,7 @@ Last recorded full run: 2026-10-03T08:14:37.177Z; tested commit: f814adc31a7c578
 | Switch | State |
 | --- | --- |
 | career-backup | dev |
-| wasteland2 | on |
 | hidden-road | on |
-| scrapdome | on |
-| titan-climb | on |
-| muddy-hollow | on |
-| warlords | on |
 | fuel-run | dev |
 | bounty-hunt | dev |
 | arsenal | dev |
@@ -43,8 +38,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/cmb/arsenal-wave2 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arsenal-wave2 |
 | codex/foot/boarding | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/boarding |
-| codex/ops/balance-w2-off-retire | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/balance-w2-off-retire |
-| lane/audio/aud-10 | 7 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 8 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 8 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
@@ -56,7 +50,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/cmb/arsenal-wave2 | ARS-02 | 2026-10-02T22:43:20-07:00 | 0 | last commit 2026-10-02T22:43:20-07:00 | docs/changes/ARS-02.md, src/arsenal/flamethrower.js, src/arsenal/magnet.js, src/arsenal/rockets.js, tools/test-arsenal-wave2.mjs |
 | codex/foot/boarding | CREW-03 | 2026-10-02T22:44:38-07:00 | 0 | last commit 2026-10-02T22:44:38-07:00 | docs/changes/CREW-03.md, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot.js, tools/test-boarding.mjs |
-| codex/ops/balance-w2-off-retire | BALANCE-W2-OFF-RETIRE | 2026-10-03T00:51:34-07:00 | 0 | last commit 2026-10-03T00:51:34-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, src/app.js, src/arena/warlord-event.js |
 
 ## Size targets
 
@@ -70,10 +63,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 15,179,042 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 26,589 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 5,895,236 B | +5,868,647 B | 5,000,000 B |
 | All `public/` | 259,784,165 B | +0 B | unavailable |
-| Git objects | 376,577,024 B | +34,816 B | unavailable |
-| Lane folders | 3 | +0 | unavailable |
+| Git objects | 376,849,408 B | +272,384 B | unavailable |
+| Lane folders | 2 | -1 | unavailable |
 
 ## Backups
 
@@ -81,7 +74,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 9af4a695fed7267d18f12d2de2385a653a8d8e5c
+- Local integration/wasteland: bb217e39c214205df13459fe30f7914919297ad7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
