@@ -1060,9 +1060,10 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-03
     branch: codex/foot/boarding
-    note: "Boarding starts in the owned new module; on-foot, grapple, contact and rendering hooks need a Director re-slice after Balance."
+    note: "Boarding module passed 12 focused checks. The Director granted only the disjoint on-foot transition hook now; crash-delta, weapon-disable, render and audio hooks wait for Balance and AUD-17."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
+    hooks: [src/onfoot-transition.js]
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 2 exactly, with its tests: speed limits at 49/51 and 89/91 km/h, shake-off rules, one charge, the safe landing, and determinism at 30, 60 and 144 FPS."
