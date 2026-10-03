@@ -40,7 +40,7 @@ Tests will be written before implementation for launch spacing, range,
 blast/shield, cone and burn timing, magnet motion and native collection,
 CPU use and counters, seed replay at 30/60/144 FPS, and cleanup. Section 4
 also requires balance, save, browser, audio and frame checks after wiring.
-Owned and native module test: 19/19 pass after failing on missing modules. The test covers rocket fan, spacing, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop, CPU crate count and 30/60/144 FPS; and serializable active state. New test fixtures were aligned to the 40-projectile cap and fixed 120 Hz scheduling. No released assertion changed. Native Duel checks also pass for armor damage through the production path, magnet collection through the native pickup step, CPU aim through targetFor, and smoke blocking both aimed weapons. Shared firing, CPU, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
+Owned and native module test: 20/20 pass after failing on missing modules. The test covers rocket fan, spacing, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop, CPU crate count and 30/60/144 FPS; and serializable active state. New test fixtures were aligned to the 40-projectile cap and fixed 120 Hz scheduling. No released assertion changed. Native Duel checks also pass for armor damage through the production path, magnet collection through the native pickup step, CPU aim through targetFor, and smoke blocking both aimed weapons. Shared firing, CPU, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
 
 ## Removed
 

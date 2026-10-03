@@ -291,4 +291,39 @@ check('CPU Rocket Pods and flame aim use targetFor and smoke blocks both', () =>
   rival.headingError = Math.atan2(to.x - from.x, to.z - from.z) - from.heading;
   assert.equal(shouldUseRocketPods(duel, rival), false);
 });
+
+check('rocket and flame fixed-step outcomes match at 30, 60 and 144 FPS', () => {
+  function run(fps, kind) {
+    const {duel, state} = fixture();
+    const target = {s: kind === 'rocket' ? 20 : 6,
+      lateral: 0, armor: 100, speedMph: 0};
+    state.opponents.push(target);
+    if (kind === 'rocket') startRocketVolley(duel, state);
+    else startFlamethrower(duel, state);
+    const damageCar = (_d, actor, amount) => {actor.armor -= amount; return amount;};
+    const seconds = kind === 'rocket' ? 1 : 4.5;
+    let remainder = 0;
+    for (let frame = 0; frame < fps * seconds; frame++) {
+      remainder += 1 / fps;
+      while (remainder + EPS >= DT) {
+        remainder = Math.max(0, remainder - DT);
+        if (kind === 'rocket') {
+          stepRocketVolleys(duel, DT);
+          for (const shot of state.combat.projectiles)
+            if (!shot.dead) stepRocketPod(duel, shot, DT,
+              {damageCar, shielded: () => false});
+        } else stepFlamethrowers(duel, DT,
+          {damageCar, shielded: () => false});
+      }
+    }
+    return {armor: Math.round(target.armor * 1e6) / 1e6,
+      shots: state.combat.projectiles.map(shot =>
+        [shot.id, shot.dead, Math.round(shot.travelled * 1e6) / 1e6]),
+      cues: duel.events.map(event => event.arsenalCue).filter(Boolean)};
+  }
+  for (const kind of ['rocket', 'flame']) {
+    assert.deepEqual(run(30, kind), run(60, kind));
+    assert.deepEqual(run(30, kind), run(144, kind));
+  }
+});
 if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');
