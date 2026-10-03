@@ -16,10 +16,12 @@ import {decodeAudioBytes} from './audio/codec.mjs';
 // Only the six new recordings are decoded; no network or player storage is used.
 const CUES = ['weapon.harpoon.fire', 'weapon.harpoon.flight', 'weapon.harpoon.hit',
   'weapon.harpoon.break', 'weapon.caltrops.deploy', 'weapon.caltrops.hit'];
+const WAVE_TWO_CUES = ['weapon.rockets.fire', 'weapon.rockets.flight', 'weapon.rockets.hit',
+  'weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end', 'weapon.magnet.hum'];
 const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','crew.sticky.explode','crew.grapple.launch',
   'crew.turret.deploy','crew.turret.fire','crew.turret.retire','crew.flamer.start','crew.flamer.stop',
   'crew.marksman.fire','crew.scrap-cannon.fire'];
-const BANK_ADDITIONS = new Set([...CUES, 'arena.bounty-mark', ...CREW_CUES]);
+const BANK_ADDITIONS = new Set([...CUES, ...WAVE_TWO_CUES, 'arena.bounty-mark', ...CREW_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 // Rebuild only retired flag fields in test memory so the original exact pin
 // still checks every cue recipe without accepting any other bank change.
@@ -212,7 +214,8 @@ check('released sound-bank entries and other exports stay exact', () => {
     'existing sound-bank exports remain exact');
 });
 check('released catalog records and metadata stay exact', () => {
-  assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row => !CUES.includes(row.cue))}),
+  assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row =>
+    !CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue))}),
     '48c3d4170b202ed4abf0c2dcaf268d6c1f2b98b162d62301702d94aa3da803d6',
     'all released source recipes and voice accounting remain exact');
 });
@@ -303,7 +306,7 @@ check('arsenal-off native producer emits no new cues', () => {
 });
 check('future arsenal cues remain silent', () => {
   const run = race(), rig = audio();
-  for (const id of ['weapon.rockets.fire', 'weapon.flame.start', 'weapon.mortar.fire',
+  for (const id of ['weapon.mortar.fire',
     'weapon.tesla.pulse', 'weapon.decoy.burst'])
     rig.renderer.event({arsenalCue: id}, run.duel.state, run.duel.course);
   assert.equal(sources(rig.context).length, 0, 'unsettled later-wave events do not start audio');

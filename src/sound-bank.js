@@ -97,6 +97,44 @@ export const SOUND_BANK = {
     flag: 'arsenal', files: ['arsenal-core/smoke-deploy.ogg',
       'arsenal-core/smoke-deploy-b.ogg', 'arsenal-core/smoke-deploy-c.ogg'], volume: 3.915, priority: 60, limit: 6,
   }),
+  'weapon.rockets.fire': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/rocket-fire-a.ogg',
+      'arsenal-wave2/rocket-fire-b.ogg', 'arsenal-wave2/rocket-fire-c.ogg'],
+    volume: 2.8, priority: 60, limit: 6,
+  }),
+  'weapon.rockets.flight': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/rocket-flight-a.ogg',
+      'arsenal-wave2/rocket-flight-b.ogg', 'arsenal-wave2/rocket-flight-c.ogg'],
+    volume: 2.25, priority: 55, limit: 4, loop: true,
+    spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
+  }),
+  'weapon.rockets.hit': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/rocket-hit-a.ogg',
+      'arsenal-wave2/rocket-hit-b.ogg', 'arsenal-wave2/rocket-hit-c.ogg'],
+    volume: 3, priority: 75, limit: 6,
+  }),
+  'weapon.flame.start': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/flame-start-a.ogg',
+      'arsenal-wave2/flame-start-b.ogg', 'arsenal-wave2/flame-start-c.ogg'],
+    volume: 4.2, priority: 60, limit: 6,
+  }),
+  'weapon.flame.loop': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/flame-loop-a.ogg',
+      'arsenal-wave2/flame-loop-b.ogg', 'arsenal-wave2/flame-loop-c.ogg'],
+    volume: 2.5, priority: 55, limit: 4, loop: true,
+    spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
+  }),
+  'weapon.flame.end': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/flame-end-a.ogg',
+      'arsenal-wave2/flame-end-b.ogg', 'arsenal-wave2/flame-end-c.ogg'],
+    volume: 2.5, priority: 55, limit: 6,
+  }),
+  'weapon.magnet.hum': cue('weapons', {
+    flag: 'arsenal', files: ['arsenal-wave2/magnet-hum-a.ogg',
+      'arsenal-wave2/magnet-hum-b.ogg', 'arsenal-wave2/magnet-hum-c.ogg'],
+    volume: 1.8, priority: 55, limit: 4, loop: true,
+    spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
+  }),
   'gatekeeper.welcome': cue('voice', {
     file: 'gatekeeper-welcome.mp3',
     volume: 2.2,

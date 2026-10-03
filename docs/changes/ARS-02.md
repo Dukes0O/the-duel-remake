@@ -1,9 +1,10 @@
 # ARS-02: Arsenal wave 2
 
-Status: building in the ARS-02 lane. Shared combat, save, renderer, audio-routing
-and balance hooks were granted after Balance and CREW merged. The sound bank
-and CC0 catalog remain AUD-17-owned requests. Do not merge this as a finished
-player feature until all seven settled sounds and their audio checks pass.
+Status: review in the ARS-02 lane. Shared combat, save, renderer, audio-routing
+and balance hooks were granted after Balance and CREW merged. Kyle directed
+completion of the seven sounds on 3 October, and the Board granted only their
+new entries and source recipes in the reserved sound files. The final lane
+gate and build remain before the integration merge.
 
 ## Decision before code
 
@@ -35,8 +36,8 @@ the implementation details left open by the short weapon descriptions:
   weapon.rockets.fire/flight/hit, weapon.flame.start/loop/end and
   weapon.magnet.hum. The granted audio router plays one-shots, maps pod shots
   to the moving Rocket flight voice, and stops active flame/magnet field samples
-  on effect end, pause, mute, stage change or switch-off. Recorded runtime
-  samples remain pending their reserved sound-bank/catalog hooks.
+  on effect end, pause, mute, stage change or switch-off. The seven recorded
+  cues now have three fixed variants each from pinned CC0 source cuts.
 - The balance report adds a separate thirty-race Medium wave-two policy at
   earned rank 13. It buys and equips all three weapons through the memory-only
   Armory and uses legal trigger inputs and the standard scripted driving line.
@@ -67,7 +68,7 @@ The modules must not read renderer state or player storage.
   blocked real purchases and Gunn's reward; continuous flame gave 360 style
   hits for 24 armor. Those checks now pass with one style hit and all 24
   damage. Native trigger, CPU, visual and balance-tool checks followed red
-  before their implementation. The focused suite now passes 38/38.
+  before their implementation. The focused suite now passes 39/39.
 - The suite covers four fixed-spaced rockets, cap/range/blast/shield and moving
   targets; cone, burn, shield and cue timing; magnet pull, native pickup and
   future Tesla stop; Medium CPU use of each; per-player memory-only purchases,
@@ -132,27 +133,72 @@ The modules must not read renderer state or player storage.
 - After the seven recorded cues are added, rerun the exact lane tier and
   build on the final commit before handoff. The current pass is a checkpoint,
   not a merge gate for future audio changes.
-- Pending: seven real CC0 cue recipes, recorded runtime bank files, audio
-  recognition/resource review and a final lane tier/build after those files
-  land. No full integration gate applies to this lane commit yet.
+- The seven approved catalog entries use five pinned CC0 Freesound sources:
+  854473, 855733, 397691, 395039 and 641335. Source 395039 is the 28.28 s
+  flamethrower recording (SHA-256 `49250fbce8d355e94eae9429037644840487068b10073f2b2adbea34e45e9fa6`);
+  source 641335 is the 7.99 s electric hum (SHA-256
+  `17fadacde8ea5041adb317c7ec9f7c814c8aa8da0d85b84c5246eebd3ab48159`).
+  The other three sources were already cached and cataloged. The builder
+  generated 21 mono 48 kHz OGG files totalling 230,454 bytes. Decoded
+  loudness spans -19.82 to -15.95 LUFS, true peak -8.58 to -2.40 dBTP,
+  and duration 0.412 to 1.245 s. The new audio test passes 21/21 checks,
+  including audible PCM, all three variants, loop seams, source recipes and
+  decoded headroom. Rebuilding into ignored scratch reproduced all 21 runtime
+  SHA-256 hashes exactly.
+- The two older audio checks still pin every released sound-bank record and
+  catalog row to their original hashes. Their filters now exclude exactly the
+  seven new ARS-02 cues, and the wave-one future-silent control still checks
+  Mortar, Tesla and Decoy. No released cue, voice take or assertion tolerance
+  changed. Arsenal Core audio passes 14/14, wave-one audio 36/36, sound-bank
+  acceptance passes and the new wave-two audio test passes 21/21.
+- A private memory-only browser decoded and played all 21 OGGs with zero
+  console errors or warnings. Real Rocket, Flame and Magnet actions started
+  their named voices; Rocket flight followed a live projectile, Flame and
+  Magnet loops stopped on effect end, and pause left zero voices. With the
+  recorded engine at full throttle, each new cue measured 7.06 to 7.74 dB
+  above the engine over its first quarter second; the combined mix peak stayed
+  below 0.80. An overlapping four-rocket, Flame and Magnet mix peaked at 0.801
+  with no clipping. The initial check found Flame start at only 0.28 dB over
+  the engine; tuning changed only the seven new bank levels, then the same
+  check passed. The unchanged legacy combat-audio test initially could not
+  measure the Rocket fire and flight clips because they were under its
+  400 ms EBU window. Automatic approval review rejected a Board change to
+  edit that test's path. The source cuts were extended within the real CC0
+  recordings to 0.412-0.417 s, preserving their quick action and loop seam;
+  the original headroom assertion now passes 11/11 with no test edit. The
+  High and Performance private gameplay review also passes: 12 captures,
+  zero console issues and the same native weapon outcomes. Human listening
+  remains a later release feel review under
+  SPEC 0.9; no listening verdict is invented here.
+- Pending: final exact lane tier and build on committed audio source, then
+  integration merge, janitor, status and full tier. No full integration gate
+  applies to this lane commit yet.
 
-## Audio source proposal for the reserved hook
+## Audio source decision and retained records
 
-The seven settled cues can use five CC0 sources without accounts, paid credits
+Kyle directed completion on 3 October; the Board now grants this card only
+the seven cue entries, two new verified CC0 source records, the audio recipe,
+tests and runtime files. Keep every existing catalog row, sound-bank entry,
+voice take and AUD-17 record exact. Use three distinct rocket recordings and
+three cuts of the flamethrower recording for start, seamless loop and end;
+use the electric hum as the Magnet loop. Build three fixed variants per cue,
+measure decoded loudness, true peak, duration and loop seams, then check real
+  event routing and playback in a private browser. Older exact audio pins may
+exclude only these seven new bank entries and seven new cue catalog rows; future
+weapon silence still applies to wave three.
+
+The seven settled cues use five CC0 sources without accounts, paid credits
 or changes to existing recordings. The first three are already pinned in the
 audio catalog: Freesound 854473 (Rocket Pods fire), 855733 (flight) and 397691
-(impact). For Flame start/loop/end, candidate Freesound 395039 is a 28 s CC0
+(impact). For Flame start/loop/end, Freesound 395039 is a 28 s CC0
 recording of real flamethrower bursts:
 https://freesound.org/people/AslakHostaker/sounds/395039/ . For Magnet hum,
-candidate Freesound 641335 is a 7.99 s CC0 electric hum:
-https://freesound.org/people/soundofsong/sounds/641335/ . These are source
-candidates, not accepted assets. Each needs catalog hash/provenance, measured
-cuts and loudness, audible review, a committed build recipe and one compressed
-current runtime version under `public/assets/audio/arsenal-wave2/`. The proposed
-write set is `src/sound-bank.js`, `tools/audio/catalog.json`,
-`tools/build-arsenal-wave2-audio.mjs`, `tools/test-arsenal-wave2-audio.mjs` and
-that runtime audio directory. AUD-17 owns the first two; ARS-02 needs a narrow
-Board grant before writing them.
+Freesound 641335 is a 7.99 s CC0 electric hum:
+https://freesound.org/people/soundofsong/sounds/641335/ . The catalog holds
+both source hashes, pages and cuts. The committed builder rebuilds one current
+compressed runtime version under `public/assets/audio/arsenal-wave2/`. The
+Director granted the narrow sound-bank and catalog additions while preserving
+the AUD-17 records.
 
 ## Removed
 
