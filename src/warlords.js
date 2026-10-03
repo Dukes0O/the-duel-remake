@@ -15,7 +15,7 @@ const details = Object.freeze({
   // Two buggies fighting as a pair (docs/SCRAPDOME.md section 5). The Dusthawk
   // Rally is the lightest car with the right look until a buggy model exists.
   // Armor is 0.9 times (not the usual 1.5); phase two follows their second wreck.
-  vultures: {reward: 'Jax grapple +10 m', rewardBuilt: true,
+  vultures: {venue: 'pit', reward: 'Jax grapple +10 m', rewardBuilt: true,
     rewardGear: Object.freeze({crew: 'jax', id: 'grapple-reach', metres: 10}),
     car: 'dusthawk_rally', brain: 'hunter', armorScale: .9, phaseTwoWrecks: 2,
     team: Object.freeze([Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture One'}),

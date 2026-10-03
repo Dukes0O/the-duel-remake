@@ -215,7 +215,7 @@ export function warlordIntroScreen(state, {metric, action, escapeHTML}) {
   const warlord = arena?.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
   if (!warlord || state.status !== 'warlord_intro') return null;
   return {
-    eyebrow: 'SCRAPDOME / WARLORD DUEL',
+    eyebrow: `${arena.venueId === 'pit' ? 'THE PIT' : 'SCRAPDOME'} / WARLORD DUEL`,
     title: escapeHTML(warlord.name.toUpperCase()),
     description: escapeHTML(warlord.taunt),
     metrics: metric('CAR', escapeHTML(CARS[warlord.car].name.toUpperCase()), true) +

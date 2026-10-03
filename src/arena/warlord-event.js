@@ -14,7 +14,7 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
       !duel.featureFlags?.enabled('wasteland2')) return false;
   // A warlord fights alone, or as a team of cars (`team`), each on its own.
   const team = warlord.team ?? [{car: warlord.car, brain: warlord.brain}];
-  if (!duel.startArenaEvent({...options, venueId: 'scrapdome', mode: 'warlord',
+  if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord',
       opponents: team.map(({car, brain}) => ({car, brain}))})) return false;
   const state = duel.state, arena = state.arena;
   arena.warlordId = warlordId;

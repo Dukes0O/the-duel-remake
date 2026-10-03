@@ -10,6 +10,8 @@ import {placeActor} from '../src/arena/arena-event.js';
 import {worldPose, containInArena} from '../src/arena/arena-floor.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
+import {startWarlordEvent} from '../src/arena/warlord-event.js';
+import {warlordIntroScreen} from '../src/screen-arena.js';
 
 // SCRAPDOME 2: real Course and native Duel paths. No substitute working Pit.
 const DT = 1 / 120;
@@ -46,6 +48,18 @@ test('Pit admission: registered native layout needs no public circuit or picker'
   assert.equal(COURSE.some(row => row.id === 'pit'), false);
   assert.equal(start().state.arena.venueId, 'pit');
   near(c.length, 2 * Math.PI * 40);
+});
+test('Twin Vultures start in the Pit, while the existing warlord stays on the ring', () => {
+  const intro = duel => warlordIntroScreen(duel.state,
+    {metric: () => '', action: () => '', escapeHTML: value => value});
+  const pair = new Duel({seed: 1989, featureFlags: flags()});
+  assert.equal(startWarlordEvent(pair, {warlordId: 'vultures', car: 'falcone_f42', seed: 1989}), true);
+  assert.equal(pair.state.arena.venueId, 'pit');
+  assert.match(intro(pair).eyebrow, /THE PIT/);
+  const ring = new Duel({seed: 1989, featureFlags: flags()});
+  assert.equal(startWarlordEvent(ring, {warlordId: 'sal', car: 'falcone_f42', seed: 1989}), true);
+  assert.equal(ring.state.arena.venueId, 'scrapdome');
+  assert.match(intro(ring).eyebrow, /SCRAPDOME/);
 });
 test('Pit geometry: round centreline, 8–72 m floor and curvature stay physical', () => {
   const c = course(), at = centre(c), layout = c.def.scrapdome;

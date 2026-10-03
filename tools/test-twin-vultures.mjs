@@ -103,7 +103,17 @@ test('PINCER! flashes both buggies, then they charge from opposite sides', () =>
 });
 
 test('no pincer when the player is far from the pair', () => {
-  const f = fight({gap: 150});
+  const f = fight(), player = f.duel.state;
+  // The Pit is shorter than the ring. Opposite outer floor is physically
+  // beyond the 80 m trigger from both buggies, even around its closing seam.
+  const farS = 100 + f.duel.course.length / 2;
+  Object.assign(player, {s: farS, prevS: farS, lateral: 25, prevLateral: 25});
+  const far = worldPose(f.duel, player);
+  for (const car of [f.a, f.b]) {
+    const near = worldPose(f.duel, car);
+    ok(Math.hypot(far.x - near.x, far.z - near.z) > VULTURE_RULES.triggerMetres,
+      'the Pit fixture is truly outside pincer reach');
+  }
   f.a.pincer.nextSec = 0;
   run(f, 1);
   equal(f.a.pincer.stage, 'idle', 'out of reach');
