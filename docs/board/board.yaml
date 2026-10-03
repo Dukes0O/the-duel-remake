@@ -45,6 +45,19 @@ tasks:
 
     test_verdict: "Native unchanged a6523ea output has six real sample/true-peak failures across nonFuel, Fuel and overlapping blasts. Actual final output, cue/event/onset, contrast, quiet reference and cleanup controls pass. Tests-only clean8494081; no source repair or gate clearance yet."
     source_verdict: "Output and final-recorder source independently clear at d96f1f2. Three native23/23 captures meet both peaks individually, with quiet/onset/contrast/cleanup unchanged. Final real-race engine correlation0.971/lag0 and measured sync/contrast/space/variety/stress clear; prior0.870/-50ms miss is retained as an observation, not reproduced. Human listening and absent cue coverage are flagged. Current integration sync, fresh Fuel browser and exact lane/build remain before merge; no later commit inherits old gates."
+  - id: AUD-CAPTURE-CONTINUITY
+    title: "Keep the native crash-peak capture continuous in the full gate"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: [AUD-CRASH-PEAK]
+    status: building
+    claimed_by: codex-director-2026-10-03
+    branch: codex/audio/capture-continuity
+    owns: [tools/scenarios/audio-crash-peak.mjs, docs/changes/AUD-CAPTURE-CONTINUITY.md]
+    note: "Full tier on 879c014 failed only the native mix AudioWorklet continuity check; the same unchanged suite passed 23/23 alone. Preserve every peak, onset and continuity assertion. Fix the recorder path before another full-tier pass."
+    acceptance:
+      - "Keep the actual final output AudioWorklet active throughout each capture. Preserve all measured sample and true-peak, event, onset, contrast, cleanup and memory-only assertions. Run focused native capture, exact lane tier and build, then rerun the full integration tier after merge."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
