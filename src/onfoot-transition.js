@@ -98,7 +98,7 @@ function stepFighterInFixedTime(duel, dt) {
       releaseBoardingGrapple(duel, actorForTarget(duel, pullBefore.targetId));
     }
     if (!state.boarding && !state.crewGear?.grapple) {
-      for (const target of state.opponents)
+      for (const target of state.opponents || [])
         if (startBoarding(duel, target, {method: 'roof', previousY})) break;
     }
     const boardingBefore = state.boarding?.phase;
