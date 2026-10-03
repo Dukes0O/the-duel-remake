@@ -25,9 +25,11 @@ the fix merges, rerun the full tier on the exact integration commit. Record
 the observed results here.
 
 The native capture passed 23/23 in three separate runs after the path change.
-The tests still require gap-free Float32 blocks and the same sample peak,
-true peak, onset, contrast and cleanup limits. The lane tier and build are
-pending.
+The exact changed-file lane tier then passed 7/7 in 72.70 seconds, including
+a fourth native capture at 23/23. All three sample and true peaks stayed
+below -1 dB, and the build passed in 402 ms. The tests still require
+gap-free Float32 blocks and the same onset, contrast and cleanup limits.
+This note edit requires a fresh lane tier and build before merge.
 
 ## Removed
 
