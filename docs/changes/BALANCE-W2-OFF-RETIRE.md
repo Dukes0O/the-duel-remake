@@ -71,6 +71,11 @@ instruction or the protected Twin Vultures file.
   port with memory-only saves and zero browser issues. Muddy Hollow,
   Scrapdome and Warlord format also passed again after catalog cleanup,
   each with zero browser issues.
+- The next exact lane attempt stopped at 106 passed, one failed, 237 not run:
+  Arsenal core audio's original sound-bank SHA included the seven removed
+  flag fields. Rebuilding only those old fields in test memory preserved the
+  original SHA and all recipe checks. Focused Arsenal core audio 14/14 and
+  wave-one audio 36/36 now pass; no pin or cue was changed.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   browser journeys remain to be checked after the audio hook lands. Board
   parsing and diff whitespace checks pass.
@@ -106,6 +111,9 @@ instruction or the protected Twin Vultures file.
 - Catalog checks now assert the four released switches are absent, while
   live Warlord fights, Sal rewards, Muddy Hollow, Titan handling, arena
   cues and Preview storage continue through their positive checks.
+- Both Arsenal audio catalog tests keep their original SHA pins by rebuilding
+  the seven removed flag fields only in test memory. Every live cue and
+  non-flag field remains subject to the exact historical comparison.
 - One duplicate combat-armor test also asserted that the retired catalog
   switch was on. It was deleted; its ordinary and undiscovered armor checks
   remain in the next test. The enemy-aim control keeps its historical

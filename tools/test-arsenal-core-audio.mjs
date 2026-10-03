@@ -22,19 +22,26 @@ const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','cre
   'crew.marksman.fire','crew.scrap-cannon.fire'];
 const BANK_ADDITIONS = new Set([...NEW_ARSENAL_CUES, 'arena.bounty-mark', ...CREW_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-// Rebuild only the retired Wasteland flag field to check every cue recipe
-// against its original exact pin without accepting any other bank change.
+// Rebuild only retired flag fields in test memory so the original exact pin
+// still checks every cue recipe without accepting any other bank change.
 const OLD_WASTELAND_CUES = new Set([
   'raider.shot', 'weapon.ufo.fire', 'weapon.bomb.fire',
   'weapon.crossbow.fire', 'weapon.star.fire', 'weapon.rpg.fire',
   'weapon.bomb.flight', 'weapon.rpg.flight', 'weapon.crossbow.flight',
   'combat.hit-confirm', 'combat.blast.recorded', 'vehicle.crash.recorded',
 ]);
+const OLD_RELEASED_CUES = new Map([
+  ...['world.muddy-hollow-splash', 'world.muddy-hollow-mud',
+    'world.muddy-hollow-churn'].map(id => [id, 'muddy-hollow']),
+  ...['arena.tell', 'arena.respawn', 'arena.wreck-credit',
+    'arena.sal-saw'].map(id => [id, 'scrapdome']),
+]);
 const oldFlagShape = ([id, cue]) => {
-  if (!OLD_WASTELAND_CUES.has(id)) return [id, cue];
+  const flag = OLD_WASTELAND_CUES.has(id) ? 'wasteland2' : OLD_RELEASED_CUES.get(id);
+  if (!flag) return [id, cue];
   assert.equal(Object.hasOwn(cue, 'flag'), false, id + ' retains retired flag');
   const fields = Object.entries(cue);
-  return [id, Object.fromEntries([...fields.slice(0, 8), ['flag', 'wasteland2'], ...fields.slice(8)])];
+  return [id, Object.fromEntries([...fields.slice(0, 8), ['flag', flag], ...fields.slice(8)])];
 };
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 const failures = [];
