@@ -1,9 +1,6 @@
 # CREW-03: boarding
 
-Status: building. This lane starts with the owned boarding module and tests.
-Native on-foot, grapple, damage and renderer hooks need a Director re-slice
-after Balance releases their shared files. Nothing here is a finished player
-feature yet.
+Status: ready for integration review. The Board granted the required shared hooks after Balance. The Boarding rule, native hooks, render tell, finished-cue mapping and private browser check are built.
 
 ## Decision before code
 
