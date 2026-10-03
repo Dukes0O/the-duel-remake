@@ -3,6 +3,7 @@ import {Duel} from '../src/game.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {createFighter} from '../src/onfoot.js';
 import {stepFootTransition} from '../src/onfoot-transition.js';
+import {fireWeapon} from '../src/combat-weapons.js';
 import {canBoardTarget, startBoarding, stepBoarding,
   computerBoardingAllowed} from '../src/crew-gear/boarding.js';
 
@@ -284,5 +285,17 @@ check('native grapple releases safely if the target passes 90 km/h at arrival', 
   assert.equal(state.crewGear.grapple, null,
     'rejected arrival cannot leave a permanent grapple');
   assert.ok(Math.abs(state.fighter.y - state.fighter.groundY) < EPS);
+});
+check('native victim cannot fire during the charge lockout and can fire after it', () => {
+  const clear = nativeRace();
+  assert.equal(fireWeapon(clear.duel, 'bomb', true, clear.rival), true,
+    'the same enemy and weapon must be able to fire before lockout');
+  const {duel, state, rival} = nativeRace();
+  rival.weaponsDisabledUntil = state.stageTimeSec + .8;
+  assert.equal(fireWeapon(duel, 'bomb', true, rival), false,
+    'the charge must stop a real enemy launch');
+  state.stageTimeSec = rival.weaponsDisabledUntil;
+  assert.equal(fireWeapon(duel, 'bomb', true, rival), true,
+    'the victim can fire again at the end of the 0.8 s lockout');
 });
 if (!process.exitCode) console.log('Boarding checks: ' + checks + ' passed.');
