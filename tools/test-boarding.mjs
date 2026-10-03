@@ -256,4 +256,21 @@ check('native charge detonates after re-entry through the real armor path', () =
     'native armor path removes exactly 35 armor once');
   assert.ok(rival.weaponsDisabledUntil >= state.stageTimeSec + .8 - EPS);
 });
+
+check('a fighter thrown far from the parked car can walk back from the safe shoulder', () => {
+  const {duel, state, rival} = nativeRace();
+  state.crewGear.grapple = {kind: 'car', targetId: 'cpu:0',
+    arrived: true, launchDistance: 3};
+  stepFootTransition(duel, DT);
+  rival.s = state.s + 170;
+  stepBoarding(duel, DT, {crashDeltaMph: 11});
+  assert.equal(state.boarding, null);
+  const fighter = state.fighter;
+  const before = {x: fighter.x, z: fighter.z};
+  fighter.yaw = duel.course.groundAt(fighter.s, fighter.lateral).heading + Math.PI;
+  state.fighterInput = {forward: true};
+  for (let i = 0; i < 12; i++) stepFootTransition(duel, DT);
+  assert.ok(Math.hypot(fighter.x - before.x, fighter.z - before.z) > .2,
+    'safe landing must leave a playable fighter who can walk toward the car');
+});
 if (!process.exitCode) console.log('Boarding checks: ' + checks + ' passed.');
