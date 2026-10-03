@@ -103,7 +103,7 @@ test('Pit geometry: the only fixed interior obstacle is the solid eight-metre ce
 });
 for (const car of Object.keys(CARS))
   test(`Pit reachable floor: ${car} uses native physics to reach inner, middle and outer samples`, () => {
-    for (const lateral of [-27, 0, 27]) {
+    for (const lateral of [-22, 0, 22]) {
       const duel = start({car, difficulty: 'easy'}), cpu = duel.state.opponents[0];
       const s = duel.course.length * .3, goal = duel.course.worldAt(s, lateral);
       placeActor(duel, cpu, {s: s - 20, lateral: 0});

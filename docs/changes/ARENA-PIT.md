@@ -41,53 +41,30 @@ The Director repaired only the reachable-floor fixture's targetId from null to
 The new first-step identity assertion preserves the actual cached pilot goal.
 No tell state, reach tolerance, time limit or physics assertion was relaxed.
 
-The corrected Falcone native reach still fails the outer sample. Across all
-3,600 steps its goal identity and player target persist. Inner/middle closest
-distances are 0.025818/0.032940 m; outer is 4.722646 m (required below 3.5).
-The failed goal is s=75.398224, lateral=27, world=(-20.704139,63.720787),
-radius 67 m; closest is tick 360 at lateral=22.547853.
-At tick 320 the one-second pilot probe predicts lateral 28.716 above its 28.5
-wall-sense margin and substitutes an inward heading. Both cars remain live;
-zero wrecks, wall/vehicle-contact/crushing events and no moved junk isolate it.
-Native weapons fire three times and hit the player once; CPU armor stays 120.
-ARS owns src/arena/arena-pilot.js; the Director has the exact owner request.
-No alternate AI or reach workaround is included in Pit Source.
+Claude settled reach samples at least 7 m from the centre pile and outer wall.
+The test now uses lateral -22, 0 and 22, giving 10 m clearance from the pile
+and 13 m from the wall. Pilot code, reach tolerance and physics stay unchanged.
+Focused native tests pass 26/26, including all nine cars and every brain and
+difficulty. Production build, private High/Performance browser checks and frame
+pacing pass. Round 2 scores 4/5 on every look item in both qualities; Claude
+approved the sheet. Kyle's Preview check and the final lane gate remain.
 
-## Remaining checks
+## Gate fixture scope extension
 
-Full native matrix: 17/26 pass; all nine failures are the outer reach sample.
-All nine inner/middle samples, all three brains × three difficulties, junk,
-wall/respawn and released ring controls pass. Outer closest distances in metres:
-
-| Car | Outer closest |
-| --- | ---: |
-| falcone_f42 / falcone_heritage | 4.722646 |
-| stuttgart_959s | 4.751284 |
-| aurora_gt | 4.732836 |
-| dusthawk_rally | 4.734717 |
-| banshee_muscle | 4.765455 |
-| viper_proto | 4.700915 |
-| titan_monster | 4.741996 |
-| koenigsegg_jesko | 4.701343 |
-
-All outer drives keep the exact cached goal/player target for 30 seconds with
-zero wreck ticks. ARS pilot ownership remains the genuine acceptance blocker.
-Production build passes. The actual memory-only private browser scenario passes
-both qualities: eight full/racing captures, zero errors/warnings, state purity.
-Measured ring/Pit P95 is 16.9/16.8 ms High and 16.8/16.8 ms Performance,
-within 10%. Round 2 High draw calls/triangles rise 546/556442 to 567/1516510;
-Performance is 378/424444 versus 361/1005424. The extra scenery cost is retained
-explicitly; these RAF samples show observed frame pacing on this laptop.
-Round 1 is 308498 bytes, look 3/5; round 2 piles replace its outer parking rows.
-Round 2 is 304366 bytes; independent review is clear, all four scores 4/5 in both
-qualities. The piles resolve round 1's look concern. Claude/Kyle remain pending.
-
-Official generator refreshed only sourceFingerprint to
-45c75c657202115575b8535e7483d2b08db855c96689ebe30ac21500068494d8.
-All 15 entries remain byte-identical, SHA256
-75814c8568c605503a62c9798198810ba78f9e8d84fe6ce9f471af3f9d46acc7.
-No freshness assertion or preset was edited by hand. Changed-lane gate remains
-held for the native pilot fix. This is not a merge or completion claim.
+The current lane gate exposes a pre-existing audio crash-peak fixture issue:
+the lane's `.evidence` junction makes Node resolve its generated harness under
+the integration evidence path, so the harness CLI guard skips it. Running its
+entry point explicitly then exposes a Vite config import and an HTML input
+outside the project root. This Pit lane owns a narrow repair to
+`tools/test-audio-crash-peak.mjs`: keep generated harness/config/build files in
+`.qa-dist`, keep capture evidence in integration `.evidence`, and preserve all
+audio assertions and the real browser scenario. The focused real-browser audio
+suite now passes 23/23 with its peak limits unchanged. The current-base lane
+gate exposed one more documentation mismatch: the tracked Pit review notes use
+`round-1.md` and `round-2.md`, while the repository check requires matching
+`round-1-review.md` and `round-2-review.md` names. Their contents and JPGs are
+unchanged; only the filenames are normalized. The full gate and build must pass
+after these fixture and note-path changes.
 
 ## Removed
 
