@@ -5,7 +5,8 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {strikeFighterFromVehicles} from './onfoot-race.js';
 import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
-import {refillCrewGear, resetCrewGearUser, stepGearGrapple} from './crew-gear/signature.js';
+import {crewGearEnabled, refillCrewGear, resetCrewGearUser, stepGearGrapple}
+  from './crew-gear/signature.js';
 import {actorForTarget} from './arsenal/targeting.js';
 import {startBoarding, stepBoarding, releaseBoardingGrapple}
   from './crew-gear/boarding.js';
@@ -33,12 +34,14 @@ export function initializeFootTransition(duel) {
   state.onFoot = false;
   state.fighter = null;
   state.footPresentation = null;
-  state.boarding = null;
+  if (crewGearEnabled(duel)) state.boarding = null;
+  else delete state.boarding;
   state.fighterInput = {};
   state.input.interact = false;
   state.footTransition = {heldSeconds: 0, needsRelease: false,
-    fighterStepRemainder: 0, boardingStepRemainder: 0,
-    boardingNeedsFireRelease: false};
+    fighterStepRemainder: 0};
+  if (crewGearEnabled(duel)) Object.assign(state.footTransition,
+    {boardingStepRemainder: 0, boardingNeedsFireRelease: false});
 }
 
 export function fighterDistanceToCar(duel) {
