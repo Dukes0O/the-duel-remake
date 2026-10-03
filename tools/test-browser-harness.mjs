@@ -26,6 +26,20 @@ test('QA ports stay above the reserved range', () => {
   }
 });
 
+test('private Chrome launch keeps native audio capture scheduled', () => {
+  const profile = 'C:/qa-private-profile';
+  const args = browserHarness.chromeLaunchArguments(profile);
+  for (const switchName of [
+    '--disable-background-timer-throttling',
+    '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows',
+    '--mute-audio',
+    '--headless=new',
+  ]) assert.ok(args.includes(switchName), `QA Chrome needs ${switchName}`);
+  assert.ok(args.includes(`--user-data-dir=${profile}`));
+  assert.ok(args.includes('--remote-debugging-port=0'));
+});
+
 test('console issues include errors and exceptions but not ordinary logs', () => {
   assert.deepEqual(consoleIssue({ method: 'Runtime.consoleAPICalled', params: { type: 'error', args: [{ value: 'failure' }] } }), { kind: 'console.error', text: 'failure' });
   assert.deepEqual(consoleIssue({ method: 'Runtime.exceptionThrown', params: { exceptionDetails: { text: 'Uncaught', exception: { description: 'boom' } } } }), { kind: 'exception', text: 'Uncaught: boom' });
