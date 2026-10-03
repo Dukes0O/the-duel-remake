@@ -615,16 +615,15 @@ tasks:
     branch: codex/ops/balance-w2-off-retire
     owns: [src/app.js, src/arena/arena-event.js, src/arena/warlord-event.js, src/armor-kit-meshes.js, src/audio.js, src/combat-ai.js, src/combat-armor.js, src/combat-hud.js, src/combat-projectiles.js, src/combat-scene.js, src/combat-weapons.js, src/crew-gear/gear.js, src/feature-flags.js, src/game.js, src/raiders.js, src/render3d.js, src/screen-arena.js, src/screen-armory.js, src/screen-garage.js, src/screen-hud.js, src/screen-router.js, src/sim-contacts.js, src/sim-driving.js, src/sim-rival.js, src/vehicle-contact-modifiers.js, src/wasteland-access.js, src/warlords/index.js, src/warlords/sal.js, tools/arena-balance.mjs, tools/combat-balance.mjs, tools/onfoot-balance.mjs, tools/test-arena-event.mjs, tools/test-arena-ui.mjs, tools/test-combat-balance.mjs, tools/test-muddy-hollow.mjs, tools/test-side-saws.mjs, tools/test-wasteland-easter-egg.mjs, tools/test-warlord-hooks.mjs, tools/test-warlord-format.mjs, tools/test-warlord-settlement.mjs, tools/test-preview-launcher.mjs, docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md]
     hook_requests: [src/sound-bank.js]
-    sequencing: "Remove direct off-path source guards first while preserving the released behavior; keep the catalog entries until AUD-17 releases the sound-bank hook. Then remove the retired balance modes, tests, scenario switches and board flag fields. The Vultures file remains untouched."
-    note: "Kyle approved the fixed-on behavior on 30 September. AUD-17 retains the sound-bank hook; do not edit it until released."
     scope_reason: "The shared arena start guard must lose its retired Scrapdome/Wasteland checks, with its rejection test changed to preserve malformed-field checks."
+    note: "Direct source guards and balance tools have a committed first slice. The audio sound-bank hook remains with AUD-17 pending release."
     acceptance:
       - "Kyle approved on 30 September 2026: retire and remove the rule set nobody can play. wasteland2 is on and cannot be turned off, so delete the switch from src/feature-flags.js and every switch-off branch in src/ (about 20 files), keeping exactly the switched-on behavior."
       - "Remove the off-balance gate: AGENTS.md and docs/OPERATIONS.md release evidence becomes one combat balance run; tools/combat-balance.mjs, tools/arena-balance.mjs and tools/onfoot-balance.mjs lose the off mode; scenarios and tests stop setting or toggling wasteland2. Delete tests that only prove the switched-off behavior; list each one in the change note's Removed section."
       - "Race fingerprints for the released rules stay unchanged (replay check). Cards that name flag: wasteland2 on the board lose the field."
       - "Also remove the scrapdome, titan-climb and muddy-hollow switches and their switch-off branches, released by SCRAPDOME-RELEASE on 30 September 2026, and warlords, released by WAR-SAL-RELEASE the same day, keeping the switched-on behavior."
       - "Touches many files: run it when no other lane owns any of them, in parts if needed (src first, then tools and scenarios), each part through the lane tier."
-    sequencing: "Retirement waits for Arsenal, Salt Flats and the wreck-rate card to free their shared runtime and test hooks. No parallel lane may remove a switch while another is implementing its consumers."
+    sequencing: "Direct source and balance-tool cleanup is committed in the lane. Finish tests and scenarios next. The sound-bank catalog waits for AUD-17 to release its hook; no parallel lane removes a switch while its consumer is being built."
   - id: ART-SRC-CREW
     title: "Crew figures: short list of existing starting models for Kyle"
     owner: codex
@@ -1018,16 +1017,16 @@ tasks:
     lane: FOOT
     size: L
     needs: [ARS-CORE]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-02-resume
     branch: codex/foot/crew-gear
     flag: crew-gear
-    owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/test-crew-gear-modules.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
+    owns: [src/crew-gear/, tools/test-crew-gear.mjs, tools/test-crew-gear-modules.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/scenarios/crew-gear.mjs, docs/changes/CREW-02.md]
     hooks: [src/crew.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-camera.js, src/crew-ui.js, src/screen-armory.js, src/app.js, src/game.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, src/screen-router.js, src/combat-hud.js, src/sound-bank.js, src/audio.js, src/render3d.js, src/combat-projectiles.js, src/combat.js, src/combat-scene.js]
     hook_requests: []
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
-    sequencing: "The modules, four native hooks and two Armory hooks are built and independently reviewed. Bounty and ARS-01 have merged, releasing the remaining app, switch, Preview, router, HUD, renderer, projectile, combat and audio hooks for full CREW-02 wiring."
-    note: "Signature simulation, native controls and Armory panels are built and reviewed. The Director released the former Bounty and Arsenal hooks after both merges; full App, switch, rendering, combat and audio acceptance now belongs to this card."
+    sequencing: "The modules, native controls and Armory panels are built. Bounty and ARS-01 merged and released the App, switch, Preview, router, HUD, renderer, projectile, combat and audio hooks to CREW-02. The card also owns the two released audio baseline tests it updates to pin the new Crew cues."
+    note: "Merged as 30339e0 after 342/342 lane checks, a passing build and eight memory-only browser captures with no warnings or errors."
     module_source_commit: d22cfe4
     module_test_commit: 5f5361d
     module_checks_passed: 16
@@ -1037,6 +1036,16 @@ tasks:
     partial_build_passed: true
     earned_crew_test_commit: b21e080
     test_commit: b85ce3007e983e538f6e5c7dde3a051b522af619
+    merged_commit: 30339e0
+    lane_gate_source: 30339e0
+    lane_gate_passed: 342
+    lane_gate_duration_seconds: 586.90
+    lane_build_passed: true
+    build_ms: 422
+    browser_scenarios_passed: 8
+    browser_screenshots: 8
+    browser_warnings: 0
+    browser_errors: 0
     acceptance:
       - "Build docs/CREW.md section 1 exactly: the crew-gear switch (dev), all eight items on key 3 (gamepad D-pad down on foot), gear refilled on getting back in, Jax, Cinder and Tusk active. Wren's grenades and Tusk's shove use the arsenal's smoke and the crash solver."
       - "Tests first for each item's numbers and counters; on-foot controls tested through the camera (a key that says right moves right on screen); a private browser scenario per item with no console errors."
@@ -1216,20 +1225,20 @@ tasks:
     lane: VIS
     size: M
     needs: [ARENA-06, ARS-01]
-    status: review
+    status: merged
     claimed_by: codex-director-2026-10-02-resume
-    waiting_on: kyle
     branch: codex/vis/arena-pit
     flag: warlords
-    owns: [src/arena/venues/pit.js, tools/test-arena-pit.mjs, tools/test-arena-pit-render.mjs, tools/test-audio-crash-peak.mjs, tools/scenarios/arena-pit.mjs, docs/changes/ARENA-PIT.md, docs/board/looks/arena-pit/]
+    owns: [src/arena/venues/pit.js, src/warlords.js, src/arena/warlord-event.js, src/arena/warlord-settlement.js, src/screen-arena.js, tools/test-arena-pit.mjs, tools/test-twin-vultures.mjs, tools/test-arena-pit-render.mjs, tools/test-audio-crash-peak.mjs, tools/scenarios/arena-pit.mjs, docs/SCRAPDOME.md, docs/changes/ARENA-PIT.md, docs/board/looks/arena-pit/]
     hooks: [src/arena/venues.js, src/course.js, src/world.js, src/race-structures.js, src/generated-shortcut-presets.js]
     helpers: [test_author, reviewer, art_critic, browser_qa]
-    sequencing: "Salt merged. Pit owns venue geometry and world composition while Bounty owns entry and the renderer beacon; future boss cards wire Pit selection in Claude's reserved entry. No public picker or alternate AI is added. Director adds a gate-only audio fixture repair to its owned files after reproducing the lane evidence-junction failure; its assertions stay exact."
+    sequencing: "Salt merged. Pit owns venue geometry and world composition. Kyle approved merging before Preview, so this lane also wires the already merged Twin Vultures to the Pit through central warlord data, shared start and settlement, and intro copy. The Vultures test uses real Pit distance for its out-of-range fixture. No public picker or alternate AI is added. The gate-only audio fixture repair keeps its assertions exact."
     acceptance:
       - "Kyle, 1 October 2026: some dome fights without the inside barrier. Build the layout in docs/SCRAPDOME.md section 2, The Pit: a round floor (centreline radius 40 m, floor 32 m either side, outer wall at 75 m), a solid centre pile 16 m across, eight junk cars, two ramps, the ring's floor rules, and the existing dome stands and kit."
       - "Tests first: check circle curvature; every car reaches the sampled floor points at least 7 m from the centre pile and outer wall; computer cars do not stick on the centre pile or round wall (all three brains and difficulties); containment, respawn and shove hold on a round wall. Ring replays stay unchanged."
       - "Gunn, the Twin Vultures and the Baron use the Pit; their cards build on it. Comparison sheet to Claude; frame cost within 10% of the ring in High and Performance. Kyle checks it in the Preview."
-    note: "Claude approved round two and the 7 m clear band. The 340-test lane gate and build pass; Kyle's Preview check remains."
+    note: "Merged after 344/344 lane checks and a passing build. The Twin Vultures now start in the Pit, where Kyle will first see it."
+    merged_commit: a4bd3f2
     native_source_commit: c88fc56
     comparison_round: 2
     independent_look_score: 4
@@ -1238,10 +1247,11 @@ tasks:
     native_cases_passed: 17
     native_cases_failed: 9
     partial_build_passed: true
-    lane_gate_source: f389586c27cbe46b8614092e9994d9955ca124ad
-    lane_gate_passed: 340
-    lane_gate_duration_seconds: 840.17
+    lane_gate_source: a4bd3f2
+    lane_gate_passed: 344
+    lane_gate_duration_seconds: 555.88
     lane_build_passed: true
+    build_ms: 433
     source_review: "Independent review clears circle projection, native world loading, state purity and disposal. A tests-first fix closes the visible wall gaps without changing physics or ring controls."
     claude_answer_1400: "2 October 2026, afternoon: (1) Round two look is approved (four on every item, frame pacing passes); no further art round. (2) Reach: refine the acceptance to every point at least 7 m from the outer wall and from the centre pile (the pilot's 3.5 m wall sense plus its 3.5 m arrival tolerance). Do not change the pilot or add a Pit-only brain; move the nine reach goals inside that band. (3) Boss routing: a warlord's data in src/warlords.js may name venue: 'pit'; warlord-event.js starts that venue, defaulting to the Scrapdome. Gunn, the Twin Vultures and the Baron set it in their own cards. Merge when gates pass."
   - id: ARENA-07
@@ -1297,8 +1307,10 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-HOOKS]
-    status: building
+    status: merged
     claimed_by: claude-sonnet-2026-10-02
+    waiting_on: kyle
+    merged_commit: 041ebca
     flag: scrapdome
     owns: [src/warlords/vultures.js, tools/test-twin-vultures.mjs, docs/changes/WAR-03c.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]

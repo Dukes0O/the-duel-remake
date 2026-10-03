@@ -2,6 +2,7 @@
 // the renderer, player, CPU and checkpoint validation.
 import { makeRng } from './rng.js';
 import { saltFlatsPhysicalGeometry, saltFlatsRampHeight } from './arena/venues.js';
+import {buildPitCourse, pitFrame, pitNearest, pitRampHeight, pitObstacles} from './arena/venues/pit.js';
 import { installHiddenRoad } from './hidden-road.js';
 import { installMuddyHollow } from './muddy-hollow.js';
 import { THEMES } from './config.js';
@@ -68,6 +69,10 @@ export class Course {
     return h;
   }
   _build(){
+    if(this.def.pit){
+      buildPitCourse(this);this._nearestIndex=createPolylineIndex(this.samples);
+      this.rivalStartS=-20;this._solidScenery();return;
+    }
     const rng=this.rng,arena=this.def.arena,randomPhase=rng.range(0,TAU),phase=Number.isFinite(this.def.layoutSeed)?makeRng((this.def.layoutSeed>>>0)^((this.def.stage+1)*0x9e37)).range(0,TAU):randomPhase,raw=[],count=2048;
     const cityLoop=this.def.kind==='chase'||this.def.layout==='city'?roundedCityLoop():null;
     // Distinct flowing layouts include gentle reverse bends and longer
@@ -138,10 +143,12 @@ export class Course {
     if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
     return surface;}
   tunnelAt(s){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end)||null;}
-  jumpAt(s){if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
+  jumpAt(s){if(this.def.pit)return pitRampHeight(this,s);
+    if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
     const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
     const t=(p-r.start)/(r.end-r.start);return r.height*Math.sin(Math.PI*t)**2;}
   _relief(s,off){
+    if(this.def.pit)return pitRampHeight(this,s,off);
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
@@ -174,6 +181,14 @@ export class Course {
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;
+    if(this.def.pit){
+      const {pile,walls}=pitObstacles(this);f.obstacles.push(pile,...walls);f.barriers.push(...walls);
+      this.obstacleBuckets=new Map();this.rockBuckets=new Map();this.bucketCount=Math.ceil(this.length/64);
+      // The central pole is reachable from every ring frame; outer sections
+      // are sparse and bounded, so world-space sweep filtering owns contact.
+      for(let bucket=0;bucket<this.bucketCount;bucket++)this.obstacleBuckets.set(bucket,[...f.obstacles]);
+      return;
+    }
     if(this.def.saltFlats){
       for(const solid of this.saltFlatsGeometry.solids){
         const {center,halfExtents,heading}=solid.collision;
@@ -311,10 +326,12 @@ export class Course {
   obstaclesNear(from,to=from){const found=new Set(),span=Math.min(this.length,Math.abs(to-from)+40),start=this.phase(Math.min(from,to)-20);
     for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}return [...found];}
   rocksNear(from,to=from){return this.obstaclesNear(from,to).filter(o=>o.kind==='rock').map(o=>o.source);}
-  at(s){const p=this.phase(s),idx=Math.min(this.samples.length-2,Math.floor(p/STEP)),a=this.samples[idx],b=this.samples[idx+1],t=(p-a.s)/STEP;
+  at(s){if(this.def.pit)return pitFrame(this,s);
+    const p=this.phase(s),idx=Math.min(this.samples.length-2,Math.floor(p/STEP)),a=this.samples[idx],b=this.samples[idx+1],t=(p-a.s)/STEP;
     return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
   worldAt(s,lat=0){const f=this.at(s);return{x:f.x+Math.cos(f.heading)*lat,y:f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
-  nearest(x,z,referenceS){const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*STEP;
+  nearest(x,z,referenceS){if(this.def.pit)return pitNearest(this,x,z,referenceS);
+    const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*STEP;
     if(this.def.saltFlats){
       // Solve the same sampled frame's normal projection, including scenery
       // coordinates inside and outside the driving band. No coordinate oracle.

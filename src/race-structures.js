@@ -4,6 +4,9 @@ import { addCityChaseDetail } from './city-chase-detail.js';
 import { addStadiumCrowd, STADIUM_SECTIONS, STADIUM_ROWS } from './stadium-crowd.js';
 import { tunnelCoverShape } from './road-furniture.js';
 import { createTunnelConcrete, tunnelDetailMaterials, buildTunnelWallDetails } from './tunnel-detail.js';
+import {Course} from './course.js';
+import {SCRAPDOME_VENUE} from './arena/venues.js';
+import {pitStadiumFrame} from './arena/venues/pit.js';
 
 // The road and all collision hulls remain owned by Course. Architecture follows
 // those frames, including road elevation inside tunnels and over arena jumps.
@@ -26,7 +29,10 @@ export function addRaceStructures(world, course) {
   };
   const batch = builder(group, materials);
   for (const tunnel of course.features.tunnels || []) addTunnel(group, batch, course, tunnel, materials);
-  if (course.def.arena) {addStadium(batch, course);addStadiumCrowd(group,course);}
+  if (course.def.arena) {
+    const stadium = course.def.pit ? pitStadiumFrame(new Course(SCRAPDOME_VENUE, course.seed)) : course;
+    addStadium(batch, course, stadium);addStadiumCrowd(group,stadium);
+  }
   batch.finish();
   group.userData.structures = { tunnels: course.features.tunnels?.length || 0, stadium: !!course.def.arena, ramps: course.features.ramps?.length || 0 };
   world.add(group); addCityChaseDetail(world, course); return group;
@@ -154,14 +160,16 @@ function addTunnel(group, batch, course, tunnel) {
   }
 }
 
-function addStadium(batch, course) {
-  for (const barrier of course.features.barriers.filter(v => v.arenaWall)) {
+function addStadium(batch, course, stadiumCourse = course) {
+  for (const barrier of course.features.barriers.filter(v => v.arenaWall && !course.def.pit)) {
     batch.add('concrete', [barrier.halfX * 2, 1.8, barrier.halfZ * 2], { x: barrier.x, y: barrier.y + .9, z: barrier.z }, [0, barrier.heading, 0]);
     const side = Math.sign(barrier.off), face = { x: barrier.x - Math.cos(barrier.heading) * side * .507, y: barrier.y + .95, z: barrier.z + Math.sin(barrier.heading) * side * .507 };
     batch.add(Math.floor(barrier.s / 8) % 2 ? 'yellow' : 'dark', [.025, .60, 7.8], face, [0, barrier.heading, 0]);
   }
   // The grandstand faces the outside of the oval. Its foot is 8 m beyond the
   // collision wall, keeping every seat, beam and floodlight out of the arena.
+  const floorCourse = course;
+  course = stadiumCourse;
   const sections = STADIUM_SECTIONS, sectionLength = course.length / sections;
   for (let i = 0; i < sections; i++) {
     const s = (i + .5) * sectionLength, standWidth = sectionLength * .86;
@@ -191,6 +199,7 @@ function addStadium(batch, course) {
       }
     }
   }
+  course = floorCourse;
   for (const ramp of course.features.ramps) {
     const wallRows = [[], []], segmentCount = 24;
     for (let j = 0; j <= segmentCount; j++) {

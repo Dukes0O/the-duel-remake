@@ -37,7 +37,7 @@ function payExplanation({warlordId, won, firstWin, wrecksOnWarlord, cpuDifficult
 
 function resultFacts(arena) {
   const warlord = WARLORDS[arena?.warlordId], size = warlord?.team?.length ?? 1;
-  if (!record(arena) || arena.version !== 1 || arena.venueId !== 'scrapdome' ||
+  if (!record(arena) || arena.version !== 1 || arena.venueId !== (warlord?.venue ?? 'scrapdome') ||
       arena.mode !== 'warlord' || !BUILT_WARLORD_IDS.includes(arena.warlordId) ||
       !warlord || arena.warlordBossId !== 'cpu-1' ||
       arena.phase !== 'over' || !record(arena.result) ||

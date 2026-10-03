@@ -12,6 +12,7 @@ import {nativeRecorderEntry} from './scenarios/audio-crash-peak.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const runDir=join(root,'.evidence',new Date().toISOString().slice(0,10),'AUD-CRASH-PEAK',
   'native-'+new Date().toISOString().replace(/[:.]/g,'-'));
+const scratchDir=join(root,'.qa-dist','audio-crash-peak-'+new Date().toISOString().replace(/[:.]/g,'-'));
 let capture,report,checks=0;
 const ok=(value,message)=>{checks++;assert.ok(value,message);};
 const eq=(actual,expected,message)=>{checks++;assert.deepEqual(actual,expected,message);};
@@ -58,29 +59,33 @@ function onset(item,eventTime,threshold){
 
 before(async()=>{
   await mkdir(runDir,{recursive:true});
+  await mkdir(scratchDir,{recursive:true});
   // Recipe only: preserve the existing harness while giving this suite its own
   // build, profile, port and logs. The standard test always runs native Chrome.
   let harness=await readFile(join(root,'tools/browser-harness.mjs'),'utf8');
   const substitutions=[
     ["resolve(fileURLToPath(new URL('../', import.meta.url)))",JSON.stringify(resolve(root))],
-    ["'tools/vite-qa.config.js'",JSON.stringify(join(runDir,'vite.config.mjs'))],
-    ["join(PROJECT_ROOT, '.qa-dist', 'tools', 'menu-check.html')","join("+JSON.stringify(runDir)+", 'build', 'tools', 'menu-check.html')"],
+    ["'tools/vite-qa.config.js'",JSON.stringify(join(scratchDir,'vite.config.mjs'))],
+    ["join(PROJECT_ROOT, '.qa-dist', 'tools', 'menu-check.html')","join("+JSON.stringify(scratchDir)+", 'build', 'tools', 'menu-check.html')"],
     ["!path.startsWith('/tools/')","(!path.startsWith('/tools/')&&!path.startsWith('/.evidence/'+"+JSON.stringify(runDir.replaceAll('\\','/').split('/.evidence/')[1]) + "+'/'))"],
+    ["await cdp.send('Page.navigate', { url: baseURL + path }, page.sessionId);",
+      "await cdp.send('Page.navigate', { url: baseURL + (path.endsWith('/recorder-probe.html') ? '/.qa-dist/"+
+      scratchDir.replaceAll('\\','/').split('/.qa-dist/')[1]+
+      "/recorder-probe.html' : path) }, page.sessionId);"],
   ];
   for(const [from,to]of substitutions){if(!harness.includes(from))throw Error('Private harness recipe anchor changed: '+from);harness=harness.replaceAll(from,to);}
-  await writeFile(join(runDir,'harness.mjs'),harness);
-  await writeFile(join(runDir,'recorder-probe.js'),nativeRecorderEntry());
-  await writeFile(join(runDir,'recorder-probe.html'),"<!doctype html><meta charset='utf-8'><link rel='icon' href='data:,'><script type='module' src='./recorder-probe.js'></script>");
+  await writeFile(join(scratchDir,'harness.mjs'),harness);
+  await writeFile(join(scratchDir,'recorder-probe.js'),nativeRecorderEntry());
+  await writeFile(join(scratchDir,'recorder-probe.html'),"<!doctype html><meta charset='utf-8'><link rel='icon' href='data:,'><script type='module' src='./recorder-probe.js'></script>");
   const plugin=new URL('./build-version-plugin.mjs',import.meta.url).href;
-  const config="import {defineConfig} from "+JSON.stringify(new URL('../node_modules/vite/dist/node/index.js',import.meta.url).href)+";\n"+
-    "import {buildVersionPlugin} from "+JSON.stringify(plugin)+";\n"+
-    "export default defineConfig({root:"+JSON.stringify(resolve(root))+
-    ",plugins:[buildVersionPlugin()],define:{__DUEL_QA__:'true'},build:{outDir:"+JSON.stringify(join(runDir,'build'))+
-    ",emptyOutDir:true,rollupOptions:{input:{menu:"+JSON.stringify(join(root,'tools/menu-check.html'))+",recorder:"+JSON.stringify(join(runDir,'recorder-probe.html'))+"}}},server:{hmr:false}});\n";
-  await writeFile(join(runDir,'vite.config.mjs'),config);
+  const config="import {buildVersionPlugin} from "+JSON.stringify(plugin)+";\n"+
+    "export default {root:"+JSON.stringify(resolve(root))+
+    ",plugins:[buildVersionPlugin()],define:{__DUEL_QA__:'true'},build:{outDir:"+JSON.stringify(join(scratchDir,'build'))+
+    ",emptyOutDir:true,rollupOptions:{input:{menu:"+JSON.stringify(join(root,'tools/menu-check.html'))+",recorder:"+JSON.stringify(join(scratchDir,'recorder-probe.html'))+"}}},server:{hmr:false}};\n";
+  await writeFile(join(scratchDir,'vite.config.mjs'),config);
   const log=[];
   const code=await new Promise((done,reject)=>{
-    const child=spawn(process.execPath,[join(runDir,'harness.mjs'),'scenario','audio-crash-peak','--output-dir',runDir],
+    const child=spawn(process.execPath,[join(scratchDir,'harness.mjs'),'scenario','audio-crash-peak','--output-dir',runDir],
       {cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe']});
     for(const stream of [child.stdout,child.stderr])stream.on('data',bytes=>log.push(bytes));
     child.once('error',reject);child.once('exit',done);
