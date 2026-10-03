@@ -1,6 +1,6 @@
 ---
 task: ARENA-04
-status: ready-to-merge
+status: merged
 kind: feature
 flag: bounty-hunt
 player_facing: yes
