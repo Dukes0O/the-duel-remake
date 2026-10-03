@@ -52,6 +52,11 @@ the implementation details left open by the short weapon descriptions:
   complete, natural-loadout rear-defense race at Medium seed 1997, where
   the native reactive Smoke action is measured. Preserve all six existing
   supplemental races and every historical sample.
+- The ARS-CORE native implementation-denial input names Rocket Pods at rank
+  seven, which this card now implements. Director grant 499551b permits only
+  migrating that future input to unimplemented Mortar at its eligible rank
+  fourteen. Every refusal, profile, registry, no-write and other assertion
+  stays byte-for-byte the same.
 
 The simulation uses the seeded generator if randomness is later needed.
 The modules must not read renderer state or player storage.
@@ -68,6 +73,11 @@ The modules must not read renderer state or player storage.
   future Tesla stop; Medium CPU use of each; per-player memory-only purchases,
   upgrades, four slots, reward, rank and gate; replay at 30/60/144 FPS;
   renderer read-only state and pooled show/hide. No released assertion changed.
+- The first lane tier failed only two ARS-CORE implementation-denial controls:
+  they expected Rocket Pods to remain unimplemented. With the narrow Board
+  grant, the same controls now ask for eligible but unimplemented Mortar; all
+  refusal, player-isolation and no-write assertions remain. No expected result
+  or numeric tolerance was changed. The fixture's purpose is still enforced.
 - Native regressions before audio routing: core 72, wave one 77, combat 66,
   projectiles 35, scoring 15, armor 18, car loadout 3, Warlord pay 25 and
   replay 162 all passed. After routing, wave-one audio 36/36 and combat audio
