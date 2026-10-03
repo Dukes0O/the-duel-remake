@@ -55,7 +55,7 @@ Focused regressions pass: on-foot race 3/3, on-foot car contacts 57/57, on-foot 
 
 Private `boarding` browser scenario passed on port 23599 with two review screenshots, zero warnings and zero errors. The review shows Jax standing on the rival roof and the planted orange charge on that roof. Earlier red browser runs exposed the roof-hit bug. The final camera follows the rival after planting so the charge stays visible. Browser captures are review evidence only.
 
-The exact changed-file lane gate and build are pending. No released assertion was changed or weakened. New checks and the camera-only browser fixture were added.
+The exact changed-file lane gate passed 345/345 in 556.67 seconds on source commit 2bf0e2f. The production build passed in 423 ms. Both will run again on the final note commit before merge. No released assertion was changed or weakened. New checks and the camera-only browser fixture were added.
 
 ## Removed
 
