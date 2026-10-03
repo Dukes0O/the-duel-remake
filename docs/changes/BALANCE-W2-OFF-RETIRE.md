@@ -1,8 +1,8 @@
 # BALANCE-W2-OFF-RETIRE
 
-Status: review. On 3 October Kyle approved removing the seven remaining
+Status: merged. On 3 October Kyle approved removing the seven remaining
 Muddy Hollow and Scrapdome cue flags and keeping the two-cue Warlord audio
-fix. The synced lane gate and build pass; integration review remains.
+fix. The final lane gate and build passed before merge.
 
 ## Decision
 
@@ -90,6 +90,11 @@ instruction or the protected Twin Vultures file.
   commit before merge.
 - Browser scenario URL overrides were removed in 48 owned scenarios. Their
   affected journeys above passed. Board parsing and diff checks pass.
+- Final note commit 3eb62c3 passed the exact lane gate 344/344 in 554.73 s
+  and the production build in 430 ms. The native 23/23 capture passed in that
+  run. Review found 183 changed paths, all owned or granted by the Board;
+  the two Warlord source diffs are exactly Kyle's retained gate deletions.
+  Balance merged into integration as 18132fa.
 
 ## Changed assertions
 
@@ -170,5 +175,6 @@ instruction or the protected Twin Vultures file.
 
 ## Pending
 
-The root AGENTS.md release-evidence wording belongs to integration, not this
-lane. Review, merge, status and the integration full tier remain.
+The full integration tier and post-merge status update remain. Automatic
+approval review rejected the planned AGENTS.md and playbook release-evidence
+wording change as a persistent gate change; explicit approval was requested.
