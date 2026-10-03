@@ -12,9 +12,10 @@ boss, and shared files still never name a warlord.
 
 - Remove the three replaced Codex boss lanes (dustmonger, kettle-kingpin,
   mother-mirage) with the janitor.
-- ARS-01 and ARENA-04 merged after their lane gates and builds passed. Finish
-  and merge in this order: ARENA-PIT, CREW-02, then BALANCE-W2-OFF-RETIRE.
-  Their questions are answered on the cards.
+- ARS-01, ARENA-04, CREW-02 and WAR-03c merged. Bring ARENA-PIT onto the
+  current integration commit, pass its lane gate and build, then merge it.
+  Kyle first sees the Pit in the Twin Vultures fight. Finish
+  BALANCE-W2-OFF-RETIRE, then start ARS-02 and CREW-03.
 - Then the rest of phase 3: ARS-02 then WAR-03a (Gunn, in the Pit);
   CREW-03 then ARENA-07 (Convoy Raid) then WAR-03d (Tollkeeper); WAR-03c
   (Twin Vultures, in the Pit); CREW-04 and ARENA-05 (Ambush Alley); ARS-03;
@@ -33,11 +34,10 @@ all 335 suites and build; Claude merged Mother Mirage afterward, and the exact
 commit guard correctly held the newer push. That source needs its own checkpoint.
 Pit geometry and scenery are built. Reach now follows Claude's 7 m clearance
 answer: the focused native matrix passes 26/26 without changing the pilot.
-Round-two look and frame checks pass, and Claude approved the sheet. Kyle's
-Preview check and the final lane/build gates remain.
-Crew's modules, four native hooks and two Armory hooks are built and reviewed.
-Bounty and Arsenal have merged, so the remaining app, switch, Preview, router,
-HUD, renderer, projectile, combat and audio hooks are released for CREW-02.
+Round-two look and frame checks pass, and Claude approved the sheet. The
+current integration lane gate and build remain before merge.
+CREW-02 is merged behind the dev-only `crew-gear` switch. All eight signature
+items are connected to the race, Armory, HUD, renderer, combat and audio paths.
 
 **Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
 Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled

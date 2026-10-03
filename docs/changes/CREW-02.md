@@ -1,6 +1,6 @@
 # CREW-02: signature gear
 
-Status: building. All eight settled gear items now run through the real
+Status: merged. All eight settled gear items now run through the real
 Wasteland race, combat, Armory, HUD, renderer and audio paths. The `crew-gear`
 switch is dev-only and starts off. Gear refills on car re-entry. Jax, Cinder
 and Tusk are active. No race fingerprint or save format changed.
@@ -26,8 +26,9 @@ sound recipes are procedural; no external assets or network access were added.
 - Marksman bolts now use the arrow model without also showing the generic
   bomb model.
 - `git diff --check` passes. No race or world signatures were regenerated.
-- Lane gate passed 342/342 in 590.67 s after the Marksman rendering fix; build
-  passed in 415 ms. Vite reported the existing large-chunk advisory.
+- Lane gate passed 342/342; build passed. The private scenario passed eight
+  captures with no warnings or errors. Vite reported the existing large-chunk
+  advisory.
 
 ## Removed
 
