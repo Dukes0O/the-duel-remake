@@ -170,9 +170,20 @@ The modules must not read renderer state or player storage.
   zero console issues and the same native weapon outcomes. Human listening
   remains a later release feel review under
   SPEC 0.9; no listening verdict is invented here.
-- Pending: final exact lane tier and build on committed audio source, then
-  integration merge, janitor, status and full tier. No full integration gate
-  applies to this lane commit yet.
+- The first exact audio-source lane gate on `62ea22a` stopped at 117 passed,
+  1 failed and 229 not run. The sole failure was the unchanged crash peak
+  test's first native capture: its non-Fuel audio blocks had a scheduling gap,
+  while all six sample/true-peak values were within their limits. A standalone
+  rerun of the same 23 assertions passed with three continuous captures.
+  The second exact lane gate on unchanged `62ea22a` passed 347/347 in
+  564.35 s, including the strict native capture and all 162 released replay
+  fingerprints. The build on `62ea22a` passed in 449 ms; Vite reported only
+  its existing chunk-size advisory. No test, tolerance or game source changed
+  between the two gates. This note commit needs its own exact lane gate and
+  build before merge.
+- Pending: exact gate and build on this evidence-note commit, then integration
+  merge, janitor, status and full tier. No full integration gate applies to
+  this lane commit yet.
 
 ## Audio source decision and retained records
 
