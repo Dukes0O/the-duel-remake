@@ -1088,10 +1088,12 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-03
     branch: codex/foot/boarding
-    note: "Boarding module and on-foot hooks are built. Balance merged as 18132fa, releasing crash-delta, weapon-disable, render and audio routing to CREW first. Boarding reuses finished spatial cues, so no sound-bank or audio-catalog hook is needed. A private browser check exposed the standard car-hit rule striking the roof rider; the Board grants CREW-03 the onfoot-race hook for a roof-only exemption. The card also needs the sim-rival hook to make a boarded computer driver swerve as specified. ARS waits for CREW's shared hooks."
+    gate_commit: a49b2f6
+    merged_commit: 9efa9fc
+    note: "Boarding merged after exact final lane gate 345/345 in 557.32 s and build 442 ms. Native 24/24, private browser two views with zero console issues, and unchanged replay pins pass. The rider is protected from ground-car hits, the computer driver swerves through native steering, and five named events use finished spatial cues. Shared hooks are free for ARS-02; no sound-bank or audio-catalog change was needed."
     flag: crew-gear
     owns: [src/crew-gear/boarding.js, tools/test-boarding.mjs, tools/scenarios/boarding.mjs, docs/changes/CREW-03.md]
     hooks: [src/onfoot-transition.js, src/onfoot.js, src/onfoot-race.js, src/sim-rival.js, src/sim-contacts.js, src/combat-weapons.js, src/combat-scene.js, src/render3d.js, src/audio.js]
