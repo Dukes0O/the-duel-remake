@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-03T01:46:28.282Z
+Observed at: 2026-10-03T03:48:30.732Z
 
-Observation commit: 30339e074d4a8b0fe89b7848c18f61112664cc70
+Observation commit: a4bd3f29867c7e290c05c56a3cc809f79bd358ea
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 30339e074d4a8b0fe89b7848c18f61112664cc70
+Integration HEAD: a4bd3f29867c7e290c05c56a3cc809f79bd358ea
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -42,7 +42,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/foot/crew-gear | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/crew-gear |
-| codex/vis/arena-pit | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/arena-pit |
+| codex/ops/balance-w2-off-retire | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/balance-w2-off-retire |
 | lane/audio/aud-10 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 7 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 7 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
@@ -53,7 +53,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/vis/arena-pit | unknown | 2026-10-02T15:01:31-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/arena-pit/round-1.jpg, docs/board/looks/arena-pit/round-1.md, docs/board/looks/arena-pit/round-2.jpg, docs/board/looks/arena-pit/round-2.md, docs/changes/ARENA-PIT.md |
+| codex/ops/balance-w2-off-retire | unknown | 2026-10-02T19:50:13-07:00 | 0 | last commit 2026-10-02T19:50:13-07:00 | docs/OPERATIONS.md, docs/board/board.yaml, docs/changes/BALANCE-W2-OFF-RETIRE.md, src/app.js, src/arena/warlord-event.js |
 
 ## Size targets
 
@@ -66,10 +66,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
-| Review `looks/` | 14,561,730 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 5,028,665 B | +1,756,563 B | 5,000,000 B |
+| Review `looks/` | 15,179,042 B | +617,312 B | 20,000,000 B |
+| Added bytes in last merge | 3,257,800 B | -1,770,865 B | 5,000,000 B |
 | All `public/` | 259,784,165 B | +0 B | unavailable |
-| Git objects | 371,062,784 B | +149,504 B | unavailable |
+| Git objects | 371,833,856 B | +771,072 B | unavailable |
 | Lane folders | 2 | +0 | unavailable |
 
 ## Backups
@@ -78,7 +78,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 30339e074d4a8b0fe89b7848c18f61112664cc70
+- Local integration/wasteland: a4bd3f29867c7e290c05c56a3cc809f79bd358ea
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

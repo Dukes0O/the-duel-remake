@@ -1219,7 +1219,7 @@ tasks:
     lane: VIS
     size: M
     needs: [ARENA-06, ARS-01]
-    status: review
+    status: merged
     claimed_by: codex-director-2026-10-02-resume
     branch: codex/vis/arena-pit
     flag: warlords
@@ -1231,7 +1231,8 @@ tasks:
       - "Kyle, 1 October 2026: some dome fights without the inside barrier. Build the layout in docs/SCRAPDOME.md section 2, The Pit: a round floor (centreline radius 40 m, floor 32 m either side, outer wall at 75 m), a solid centre pile 16 m across, eight junk cars, two ramps, the ring's floor rules, and the existing dome stands and kit."
       - "Tests first: check circle curvature; every car reaches the sampled floor points at least 7 m from the centre pile and outer wall; computer cars do not stick on the centre pile or round wall (all three brains and difficulties); containment, respawn and shove hold on a round wall. Ring replays stay unchanged."
       - "Gunn, the Twin Vultures and the Baron use the Pit; their cards build on it. Comparison sheet to Claude; frame cost within 10% of the ring in High and Performance. Kyle checks it in the Preview."
-    note: "Claude approved round two and the 7 m clear band. Kyle will first see the Pit in the Twin Vultures fight. Merge after the current lane gate and build pass."
+    note: "Merged after 344/344 lane checks and a passing build. The Twin Vultures now start in the Pit, where Kyle will first see it."
+    merged_commit: a4bd3f2
     native_source_commit: c88fc56
     comparison_round: 2
     independent_look_score: 4
@@ -1240,10 +1241,11 @@ tasks:
     native_cases_passed: 17
     native_cases_failed: 9
     partial_build_passed: true
-    lane_gate_source: f389586c27cbe46b8614092e9994d9955ca124ad
-    lane_gate_passed: 340
-    lane_gate_duration_seconds: 840.17
+    lane_gate_source: a4bd3f2
+    lane_gate_passed: 344
+    lane_gate_duration_seconds: 555.88
     lane_build_passed: true
+    build_ms: 433
     source_review: "Independent review clears circle projection, native world loading, state purity and disposal. A tests-first fix closes the visible wall gaps without changing physics or ring controls."
     claude_answer_1400: "2 October 2026, afternoon: (1) Round two look is approved (four on every item, frame pacing passes); no further art round. (2) Reach: refine the acceptance to every point at least 7 m from the outer wall and from the centre pile (the pilot's 3.5 m wall sense plus its 3.5 m arrival tolerance). Do not change the pilot or add a Pit-only brain; move the nine reach goals inside that band. (3) Boss routing: a warlord's data in src/warlords.js may name venue: 'pit'; warlord-event.js starts that venue, defaulting to the Scrapdome. Gunn, the Twin Vultures and the Baron set it in their own cards. Merge when gates pass."
   - id: ARENA-07

@@ -1,6 +1,6 @@
 # ARENA-PIT: actual layout checkpoint
 
-The private native Pit is built and ready for its final merge gate. The Director's
+The private native Pit is merged. The Director's
 independent tests preceded Source and retain their reach and containment limits.
 The merged Twin Vultures now select it through central warlord data. No public
 picker or Pit-only brain is added.
@@ -55,12 +55,13 @@ passed before final boss routing. The new routing keeps other warlords on the
 ring, names the Pit in the intro, and accepts the configured venue in settlement.
 Pit and Warlord focused suites pass 77/77. The Vultures out-of-reach fixture
 now places the player physically beyond the same 80 m trigger on the shorter
-Pit; the original idle assertion and combat rules are unchanged. Final lane
-gate and build follow this routing and note change.
+Pit; the original idle assertion and combat rules are unchanged. The final
+lane gate passed 344/344 in 555.88 s and the build passed in 433 ms after
+the routing and note change.
 
 ## Gate fixture scope extension
 
-The current lane gate exposes a pre-existing audio crash-peak fixture issue:
+The lane gate exposed a pre-existing audio crash-peak fixture issue:
 the lane's `.evidence` junction makes Node resolve its generated harness under
 the integration evidence path, so the harness CLI guard skips it. Running its
 entry point explicitly then exposes a Vite config import and an HTML input

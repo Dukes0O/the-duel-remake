@@ -12,10 +12,9 @@ boss, and shared files still never name a warlord.
 
 - Remove the three replaced Codex boss lanes (dustmonger, kettle-kingpin,
   mother-mirage) with the janitor.
-- ARS-01, ARENA-04, CREW-02 and WAR-03c merged. Bring ARENA-PIT onto the
-  current integration commit, pass its lane gate and build, then merge it.
-  Kyle first sees the Pit in the Twin Vultures fight. Finish
-  BALANCE-W2-OFF-RETIRE, then start ARS-02 and CREW-03.
+- ARS-01, ARENA-04, CREW-02, WAR-03c and ARENA-PIT merged. Kyle first sees
+  the Pit in the Twin Vultures fight. Finish BALANCE-W2-OFF-RETIRE, then
+  start ARS-02 and CREW-03.
 - Then the rest of phase 3: ARS-02 then WAR-03a (Gunn, in the Pit);
   CREW-03 then ARENA-07 (Convoy Raid) then WAR-03d (Tollkeeper); WAR-03c
   (Twin Vultures, in the Pit); CREW-04 and ARENA-05 (Ambush Alley); ARS-03;
@@ -32,10 +31,9 @@ output; their reviewed defaults now load the same installed approved model.
 Recovery passed all 332 suites and build. The next committed checkpoint passed
 all 335 suites and build; Claude merged Mother Mirage afterward, and the exact
 commit guard correctly held the newer push. That source needs its own checkpoint.
-Pit geometry and scenery are built. Reach now follows Claude's 7 m clearance
-answer: the focused native matrix passes 26/26 without changing the pilot.
-Round-two look and frame checks pass, and Claude approved the sheet. The
-current integration lane gate and build remain before merge.
+Pit geometry, scenery and Twin Vultures routing are merged. Reach follows
+Claude's 7 m clearance answer without changing the pilot. The final lane
+gate passed 344/344 and the build passed; Claude approved round two.
 CREW-02 is merged behind the dev-only `crew-gear` switch. All eight signature
 items are connected to the race, Armory, HUD, renderer, combat and audio paths.
 
