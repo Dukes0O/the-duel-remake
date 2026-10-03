@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
+import {App} from '../src/app.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
+import {createProfile, createPlayerRegistry, createPlayer, savePlayers,
+  loadPlayers, PLAYERS_KEY} from '../src/progression.js';
+import {normalizeWasteland} from '../src/wasteland-progress.js';
+import {WEAPON_IDS, getProfileWeapons, normalizeWeapons,
+  rewardArsenalWeapon} from '../src/weapon-upgrades.js';
 import {stepPickups} from '../src/combat-pickups.js';
 import {addHazard} from '../src/arsenal/hazards.js';
 import {point} from '../src/combat-weapons.js';
@@ -361,5 +367,95 @@ check('one continuous flame stream earns one style hit while recording all damag
   assert.ok(Math.abs(rival.armor - 76) < 1e-5);
   assert.equal(state.combat.scoring.hitsLanded - before, 1);
   assert.ok(Math.abs(state.combat.scoring.damageDealt - dealt - 24) < 1e-5);
+});
+
+function withWaveTwoApp({rank = 13, discovered = true, enabled = true} = {}, run) {
+  const names = ['localStorage', 'cancelAnimationFrame'];
+  const previous = names.map(name => Object.getOwnPropertyDescriptor(globalThis, name));
+  const rows = new Map();
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+    getItem: key => rows.get(String(key)) ?? null,
+    setItem: (key, value) => rows.set(String(key), String(value)),
+    removeItem: key => rows.delete(String(key))}});
+  Object.defineProperty(globalThis, 'cancelAnimationFrame',
+    {configurable: true, value: () => {}});
+  const profile = createProfile();
+  let xp = 0;
+  for (let level = 1; level < rank; level++) xp += 400 + 150 * (level - 1);
+  profile.wasteland = normalizeWasteland({...profile.wasteland,
+    discoveredGate: discovered, xp, scrap: 4000,
+    weapons: {unlocked: [...WEAPON_IDS, 'future-wave'],
+      levels: {'future-wave': 9}, extra: {keep: 7}},
+    loadout: ['future-wave', 'crossbow', 'bomb', 'star'],
+    futureNote: {keep: true}});
+  let registry = createPlayerRegistry(profile);
+  registry.players[0].id = 'wave-two-owner';
+  registry = createPlayer(registry, 'Other Driver').registry;
+  registry.players[1].id = 'other-driver';
+  registry.activePlayerId = 'wave-two-owner';
+  assert.equal(savePlayers(registry, globalThis.localStorage), true);
+  let app;
+  try {
+    app = new App();
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true,
+      catalog: {...FEATURE_STATES, arsenal: 'dev'},
+      overrides: {arsenal: enabled}});
+    app.audio.unlock = () => {};
+    return run(app, rows);
+  } finally {
+    app?.dispose();
+    names.forEach((name, index) => {
+      if (previous[index]) Object.defineProperty(globalThis, name, previous[index]);
+      else delete globalThis[name];
+    });
+  }
+}
+for (const [weapon, rank] of [['rockets', 7], ['flamethrower', 9], ['magnet', 13]]) {
+  check('memory-only purchase, upgrades, loadout and player isolation: ' + weapon, () =>
+    withWaveTwoApp({rank}, (app, rows) => {
+      const other = structuredClone(loadPlayers().players[1]);
+      const original = app.profile;
+      const before = structuredClone(original);
+      assert.equal(app.purchaseArsenalWeapon(weapon).ok, true);
+      assert.deepEqual(original, before, 'purchase leaves input immutable');
+      assert.equal(app.profile.wasteland.scrap, 3600);
+      assert.equal(app.equipCarWeapon(1, weapon).ok, true);
+      assert.equal(app.profile.wasteland.loadout[0], 'future-wave');
+      for (const [level, cost] of [[1, 150], [2, 300], [3, 600]]) {
+        const scrap = app.profile.wasteland.scrap;
+        assert.equal(app.purchaseWeapon(weapon).ok, true);
+        assert.equal(getProfileWeapons(app.profile).levels[weapon], level);
+        assert.equal(app.profile.wasteland.scrap, scrap - cost);
+      }
+      const saved = rows.get(PLAYERS_KEY);
+      assert.equal(app.purchaseWeapon(weapon).ok, false);
+      assert.equal(rows.get(PLAYERS_KEY), saved);
+      assert.deepEqual(loadPlayers().players[1], other);
+      assert.equal(getProfileWeapons(app.profile).levels['future-wave'], 9);
+      assert.equal(app.profile.wasteland.weapons.extra.keep, 7);
+      assert.equal(app.selectPlayer('other-driver'), true);
+      assert.equal(getProfileWeapons(app.profile).unlocked.includes(weapon), false);
+      assert.equal(app.equipCarWeapon(1, weapon).ok, false);
+    }));
+  check('rank, discovery and switch prevent unearned purchase: ' + weapon, () => {
+    for (const options of [{rank: rank - 1}, {rank, discovered: false},
+      {rank, enabled: false}]) withWaveTwoApp(options, (app, rows) => {
+      const before = rows.get(PLAYERS_KEY);
+      assert.equal(app.purchaseArsenalWeapon(weapon).ok, false);
+      assert.equal(rows.get(PLAYERS_KEY), before);
+    });
+    assert.equal(normalizeWeapons({levels: {[weapon]: 3}}).unlocked.includes(weapon),
+      false, 'a saved level alone never grants ownership');
+  });
+}
+check('Gearhead Gunn gives earned Rocket Pods at any rank', () => {
+  const profile = createProfile();
+  profile.wasteland = normalizeWasteland({...profile.wasteland,
+    discoveredGate: true, xp: 0, warlords: {gunn: {defeated: true}}});
+  const before = structuredClone(profile);
+  const result = rewardArsenalWeapon(profile, 'rockets', {warlordId: 'gunn'});
+  assert.equal(result.ok, true);
+  assert.deepEqual(profile, before, 'reward leaves input immutable');
+  assert.equal(getProfileWeapons(result.profile).unlocked.includes('rockets'), true);
 });
 if (!process.exitCode) console.log('Arsenal wave 2 checks: ' + checks + ' passed.');

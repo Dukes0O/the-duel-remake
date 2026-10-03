@@ -17,6 +17,7 @@ the implementation details left open by the short weapon descriptions:
   degrees. One accepted trigger starts one four-shot volley and one 8 s
   recharge; a rejected trigger spends nothing.
 - A continuous flame burst counts as one style hit per target, while its full armor loss still contributes to damage dealt. Leaving and re-entering refreshes burn without granting another style hit.
+- Save IDs are `rockets`, `flamethrower` and `magnet`. Gunn's early reward grants `rockets` after his recorded defeat.
 - Flamethrower uses a 30-degree full cone, 15 degrees either side of the car,
   for three seconds and nine metres. A car inside takes 8 armor per second.
   Leaving it starts a 1.5 s burn at 4 armor per second. Re-entry refreshes
@@ -41,7 +42,7 @@ Tests will be written before implementation for launch spacing, range,
 blast/shield, cone and burn timing, magnet motion and native collection,
 CPU use and counters, seed replay at 30/60/144 FPS, and cleanup. Section 4
 also requires balance, save, browser, audio and frame checks after wiring.
-Owned and native module test: 22/23 pass after failing on missing modules. The test covers rocket fan, spacing, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop, CPU crate count and 30/60/144 FPS; and serializable active state. New test fixtures were aligned to the 40-projectile cap and fixed 120 Hz scheduling. No released assertion changed. Native Duel checks also pass for armor damage through the production path, native shield blocks for rocket and afterburn, magnet collection through the pickup step, CPU aim through targetFor, and smoke blocking both aimed weapons. A new native scoring acceptance is red: three seconds of flame gives the correct 24 armor but records 360 style hits. It must record one hit and all 24 damage. This needs a narrow src/combat-armor.js plus src/combat-scoring.js hook after Balance releases the former. Shared firing, CPU, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
+Owned and native module test: 25/30 pass after failing on missing modules. It covers the rocket fan, blast, shield, range and CPU aim; flame cone, burn, shield and cues; magnet motion, stop and native collection; and repeatable 30/60/144 FPS results. New fixtures follow the 40-projectile cap and fixed 120 Hz step. Native Duel checks pass for armor, shield, pickup, CPU targeting and smoke. A native scoring acceptance is red: three seconds of flame gives the correct 24 armor but records 360 style hits. It must record one hit and all 24 damage. Four new save checks are red because the three weapons are absent from the central catalog: each native memory-only purchase fails and Gunn's earned Rocket Pods reward fails. Three rank, gate and switch rejection checks pass. The save checks also cover upgrades, four slots, unknown fields, future IDs and another named player's isolation after the catalog is wired. No released assertion changed. Shared firing, CPU, scoring, save, renderer and audio wiring, browser and balance checks, lane gate and build remain.
 
 ## Removed
 
