@@ -45,7 +45,8 @@ function moveProp(duel, prop, s, lateral = 0, headingError = 0) {
     airHeight: 0, prevAirHeight: 0, airborne: false, knock: null});
 }
 function arena(car = 'falcone_f42') {
-  const duel = new Duel({seed: SEED, featureFlags: {wasteland2: true, scrapdome: true}});
+  const duel = new Duel({seed: SEED});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({car, seed: SEED, driverId: 'club', cpuDifficulty: 'medium',
     opponents: [{car: 'dusthawk_rally', driverId: 'club', brain: 'gunner'}]}), true);
   Object.assign(duel.state, {status: 'racing', countdown: 0, invulnerableSec: 0});
@@ -323,7 +324,7 @@ check('released rigid-body solver fingerprint remains unchanged for every playab
   assert.equal(hash(results), controls.solverFingerprint, 'existing reviewed global crash-solver pin');
 });
 for (const spec of controls.roadControls) check('released road replay stays unchanged: ' + spec.car + '/' + spec.course, () => {
-  const duel = new Duel({seed: controls.seed, featureFlags: {wasteland2: true, scrapdome: true, warlords: true}});
+  const duel = new Duel({seed: controls.seed});
   duel.startCampaign({car: spec.car, seed: controls.seed, mode: 'duel', difficulty: 'casual',
     cpuDifficulty: 'medium', startStage: COURSE.findIndex(def => def.id === spec.course)});
   duel.state.status = 'racing'; duel.state.countdown = 0;

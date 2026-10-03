@@ -6,13 +6,14 @@ import { Duel } from '../src/game.js';
 // starts abruptly 15 m either side of its centre line, and that one-step rise
 // was read as a vertical ground speed of about 290 m/s. The ground may only
 // give a car the vertical speed the ramp's authored slope gives at its speed.
-const FLAGS = { wasteland2: true, 'hidden-road': true, scrapdome: true };
+const FLAGS = { 'hidden-road': true };
 const DT = 1 / 120;
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
 
 function fly(car, { ds, lateral, heading, mph }) {
   const d = new Duel({ seed: 1989, featureFlags: FLAGS });
+  d.state.wastelandGateDiscovered = true;
   assert.equal(d.startArenaEvent({ car, cpuDifficulty: 'easy', seed: 1989, opponents: [{ car: 'aurora_gt' }] }), true);
   const s = d.state;
   for (let guard = 0; s.status !== 'racing' && guard < 3000; guard++) d.step(DT);

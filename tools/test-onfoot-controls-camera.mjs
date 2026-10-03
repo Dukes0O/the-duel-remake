@@ -8,8 +8,8 @@ const STEP=1/120;
 const ticks=(duel,count)=>{for(let i=0;i<count;i++)duel.step(STEP);};
 
 test('WASD and gamepad feed fixed-step fighter movement and terrain-safe camera',()=>{
-  const duel=new LegacyRoadsideDuel({seed:1989,featureFlags:{wasteland2:true}});
-  duel.startCampaign({mode:'wasteland',car:'falcone_f42',seed:1989,
+  const duel=new LegacyRoadsideDuel({seed:1989});
+  duel.startCampaign({mode:'wasteland',car:'falcone_f42',seed:1989,discoveredGate:true,
     startStage:0});
   const state=duel.state;
   Object.assign(state,{status:'racing',countdown:0,s:500,prevS:500,

@@ -34,11 +34,11 @@ function actor(s, lateral = 0, speedMph = 0) {
 }
 
 function field({difficulty = 'easy', seed = 1989, stage = 0, lap = 1,
-  flagged = true} = {}) {
-  const duel = new Duel({seed, featureFlags: {wasteland2: flagged}});
+  discovered = true} = {}) {
+  const duel = new Duel({seed});
   const state = duel.state;
   Object.assign(state, actor(160), {mode: 'wasteland', status: 'racing',
-    cpuDifficulty: difficulty, stageIndex: stage, currentLap: lap,
+    cpuDifficulty: difficulty, stageIndex: stage, currentLap: lap, wastelandGateDiscovered: discovered,
     completedLaps: lap - 1, combat: createCombat(), traffic: []});
   const rival = actor(0);
   state.opponents = [rival];
@@ -302,15 +302,15 @@ check('CPU and raider body hits retain the existing armor damage', () => {
   }
 });
 
-check('flag-off field has no raider shots', () => {
-  const duel = field({flagged: false});
+check('pre-gate field has no raider shots', () => {
+  const duel = field({discovered: false});
   stepRaiders(duel, 1);
   assert.equal(duel.state.combat.projectiles.length, 0);
   assert.equal(duel.state.raids, undefined);
 });
 
-function trajectory({flagged, enemy, fps = 60}) {
-  const duel = field({flagged, difficulty: 'medium'});
+function trajectory({discovered, enemy, fps = 60}) {
+  const duel = field({discovered, difficulty: 'medium'});
   const state = duel.state;
   Object.assign(state, actor(enemy ? 160 : 0));
   Object.assign(state.rival, actor(enemy ? 0 : 160, 3));
@@ -328,12 +328,13 @@ function trajectory({flagged, enemy, fps = 60}) {
     if (frame === 0 || frame === fps / 2 - 1) result.push(
       ['x', 'y', 'z', 'vx', 'vy', 'vz', 'age'].map(key => round(bolt[key])));
   }
-  return {flagged, enemy, samples: result, live: state.combat.projectiles.includes(bolt)};
+  // The replay keeps its historical metadata key and exact hash.
+  return {flagged: discovered, enemy, samples: result, live: state.combat.projectiles.includes(bolt)};
 }
 
-check('player guidance and flag-off CPU/player trajectories preserve their fingerprints', () => {
-  const outcomes = [{flagged: true, enemy: false}, {flagged: false, enemy: false},
-    {flagged: false, enemy: true}].map(trajectory);
+check('player guidance and pre-gate CPU/player trajectories preserve their fingerprints', () => {
+  const outcomes = [{discovered: true, enemy: false}, {discovered: false, enemy: false},
+    {discovered: false, enemy: true}].map(trajectory);
   const expected = JSON.parse(readFileSync(new URL('./replays/enemy-aim-controls.json', import.meta.url), 'utf8'));
   assert.deepEqual(outcomes, expected.outcomes);
   assert.equal(createHash('sha256').update(JSON.stringify(outcomes)).digest('hex'), expected.sha256);

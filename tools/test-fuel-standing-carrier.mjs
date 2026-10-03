@@ -12,8 +12,7 @@ import {COMBAT_TUNING as T, CPU_COMBAT} from '../src/wasteland-tuning.js';
 // Fuel carrier identity follows the standing fighter, not its parked wreck.
 // Physical-car outOfPlay remains intact. Every carry and wreck below is real.
 const DT = 1 / 120;
-const FLAGS = {wasteland2: true, 'hidden-road': true, scrapdome: true,
-  warlords: true, 'fuel-run': true};
+const FLAGS = {'hidden-road': true, 'fuel-run': true};
 let checks = 0;
 const eq = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };
@@ -35,6 +34,7 @@ function placeFighter(duel, pose) {
 }
 function arena(mode = 'fuel-run', difficulty = 'hard', brain = 'hunter') {
   const duel = new Duel({seed: 1989, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
   eq(duel.startArenaEvent({mode, car: 'falcone_f42', crewId: 'nell', seed: 1989,
     cpuDifficulty: difficulty, opponents: [{car: 'dusthawk_rally', brain},
       {car: 'aurora_gt', brain: 'collector'}, {car: 'stuttgart_959s', brain: 'collector'}]}),

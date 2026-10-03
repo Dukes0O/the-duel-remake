@@ -1,5 +1,6 @@
 // Settled numbers from docs/CREW.md section 1. These are gear-local until
 // the tuning owner grants the shared catalog; released weapons stay unchanged.
+import {wastelandRulesActive} from '../wasteland-access.js';
 export const SIGNATURE_GEAR = Object.freeze({
   rook: Object.freeze({id: 'rpg', name: 'LONGHORN RPG', capacity: 3}),
   nell: Object.freeze({id: 'sticky-bomb', name: 'STICKY BOMBS', capacity: 3,
@@ -23,8 +24,7 @@ export const SIGNATURE_GEAR = Object.freeze({
 export const GEAR_EPSILON = 1e-8;
 export function crewGearEnabled(duel) {
   return duel.state.mode === 'wasteland' && !!duel.state.combat &&
-    duel.state.wastelandGateDiscovered === true &&
-    duel.featureFlags?.enabled('wasteland2') === true &&
+    wastelandRulesActive(duel.state) &&
     duel.featureFlags?.enabled('crew-gear') === true;
 }
 export function signatureFor(crewId) {

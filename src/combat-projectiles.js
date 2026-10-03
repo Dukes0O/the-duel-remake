@@ -9,6 +9,7 @@ import {damageRaider} from './raiders.js';
 import {arenaActor, arenaDamageBlocked, arenaStrikeCandidates, arenaTargetOutOfPlay, hostile} from './combat-teams.js';
 import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
 import {stepGearProjectile} from './crew-gear/projectiles.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -102,7 +103,7 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
   const combat = state.combat;
   if (!actor) return;
   const trafficInModernCombat = state.mode === 'wasteland' &&
-    duel.featureFlags?.enabled('wasteland2') === true && state.traffic.includes(actor);
+    wastelandRulesActive(state) && state.traffic.includes(actor);
   const shielded = trafficInModernCombat ? false : actor === state
     ? combat.shield > 0 || state.invulnerableSec > 0
     : state.opponents.length <= 1 || actor === state.rival
@@ -295,8 +296,7 @@ export function stepProjectiles(duel, dt) {
   const combat = state.combat;
   tickCombatScoring(duel);
   const live = [];
-  const modernProjectiles = state.mode === 'wasteland' &&
-    duel.featureFlags?.enabled('wasteland2') === true;
+  const modernProjectiles = state.mode === 'wasteland' && wastelandRulesActive(state);
   for (const projectile of combat.projectiles) {
     if (projectile.crewGearShot) {
       if (stepGearProjectile(duel, projectile, dt)) live.push(projectile);

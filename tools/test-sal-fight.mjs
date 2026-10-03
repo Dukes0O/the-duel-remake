@@ -22,6 +22,7 @@ test.after(() => console.log('Sal fight: ' + checks + ' acceptance checks execut
 
 function fight(difficulty = 'medium', {straight = true} = {}) {
   const duel = new Duel({seed: 1989, featureFlags: flags()});
+  duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'sal', car: 'falcone_f42', cpuDifficulty: difficulty}), true);
   assert.equal(beginWarlordEvent(duel), true);
   duel.state.countdown = 0; duel.step(DT); duel.step(DT);

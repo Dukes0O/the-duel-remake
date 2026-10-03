@@ -1,7 +1,7 @@
 // Private High/Performance inspection of accepted Wasteland flipbooks.
 // The QA entry installs in-memory saves before the game loads.
 async function pass(context, quality) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,

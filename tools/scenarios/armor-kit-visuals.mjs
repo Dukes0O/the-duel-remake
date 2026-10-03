@@ -2,7 +2,7 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 async function qualityPass(context, quality) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,
@@ -130,7 +130,7 @@ async function frameCostRun(context) {
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
   const reports=[];
   for(const quality of ['high','performance']){
-    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.navigate('/tools/menu-check.html');
     await context.waitFor(`!!window.__qaApp && !!window.__render &&
       !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value &&
       !document.querySelector('#start-engine')?.disabled`,`${quality} private kit timing menu`,60000);
@@ -255,7 +255,7 @@ async function fitMatrixPass(context) {
   const cars=['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt',
     'dusthawk_rally','banshee_muscle','viper_proto','titan_monster',
     'koenigsegg_jesko'];
-  await context.navigate('/tools/menu-check.html?flags=wasteland2');
+  await context.navigate('/tools/menu-check.html');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !document.querySelector('#start-engine')?.disabled &&
     !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`,

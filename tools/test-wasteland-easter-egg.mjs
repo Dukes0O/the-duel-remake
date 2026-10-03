@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {raceFeatureFlags, wastelandUnlocked, hiddenRoadInRace} from '../src/wasteland-access.js';
+import {raceFeatureFlags, wastelandUnlocked, wastelandRulesActive, hiddenRoadInRace} from '../src/wasteland-access.js';
 import {COURSE} from '../src/config.js';
 import {createProfile, settleRace, stageEventId} from '../src/progression.js';
 
@@ -22,22 +22,20 @@ function race(mode, discoveredGate, extra = {}) {
 }
 
 test('the unlock belongs to a player who found the gate', () => {
-  assert.equal(wastelandUnlocked(released, {wasteland: found}), true);
-  assert.equal(wastelandUnlocked(released, {wasteland: {version: 1, discoveredGate: false}}), false);
-  assert.equal(wastelandUnlocked(released, {}), false);
-  assert.equal(wastelandUnlocked(released, {wasteland: {version: 2, discoveredGate: true}}), false);
-  const off = createFeatureFlags({storage: null, overrides: {wasteland2: false}});
-  assert.equal(wastelandUnlocked(off, {wasteland: found}), false);
+  assert.equal(wastelandUnlocked({wasteland: found}), true);
+  assert.equal(wastelandUnlocked({wasteland: {version: 1, discoveredGate: false}}), false);
+  assert.equal(wastelandUnlocked({}), false);
+  assert.equal(wastelandUnlocked({wasteland: {version: 2, discoveredGate: true}}), false);
 });
 
 test('a race sees the new rules only when its player had found the gate at the start', () => {
   const state = {wastelandGateDiscovered: false};
   const flags = raceFeatureFlags(released, () => state);
-  assert.equal(flags.enabled('wasteland2'), false);
+  assert.equal(wastelandRulesActive(state), false);
   assert.equal(flags.enabled('hidden-road'), true, 'the road itself is how the gate is found');
   assert.equal(flags.base, released);
   state.wastelandGateDiscovered = true;
-  assert.equal(flags.enabled('wasteland2'), true);
+  assert.equal(wastelandRulesActive(state), true);
   assert.equal(flags.enabled('career-backup'), false);
 });
 

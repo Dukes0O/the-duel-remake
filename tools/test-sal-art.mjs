@@ -103,11 +103,10 @@ async function salRig({car = 'banshee_muscle', warlordId = 'sal'} = {}) {
   const player = vehicle(car);
   const state = {
     s: 100, lateral: 0, armor: 100, maxArmor: 100, combatArmorKit: 'warlord',
-    mode: 'wasteland', status: 'racing', stageTimeSec: 5, combat: {},
+    mode: 'wasteland', wastelandGateDiscovered: true, status: 'racing', stageTimeSec: 5, combat: {},
     warlordId, salSaw: {phase: 'idle', sinceSec: 5}, opponents: [],
   };
-  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})},
-    featureFlags: {enabled: key => key === 'wasteland2'}};
+  const duel = {state, course: {groundAt: () => ({x: 0, y: 0, z: 0})}};
   const vehicles = {player, rival: null, extraOpponents: []};
   kits.update(duel, vehicles, true);
   await tick(); await tick();
@@ -185,10 +184,9 @@ test('Sal asset resources and attachments are released cleanly', async () => {
   const kits = createArmorKitMeshes(registry, {loadKitAsset: async () => ({scene: asset.scene})});
   const player = vehicle();
   const state = {s: 0, lateral: 0, armor: 100, maxArmor: 100, combatArmorKit: 'warlord',
-    mode: 'wasteland', status: 'racing', stageTimeSec: 0, combat: {}, warlordId: 'sal',
+    mode: 'wasteland', wastelandGateDiscovered: true, status: 'racing', stageTimeSec: 0, combat: {}, warlordId: 'sal',
     salSaw: {phase: 'idle', sinceSec: 0}, opponents: []};
-  const duel = {state, course: {groundAt: () => ({y: 0})},
-    featureFlags: {enabled: key => key === 'wasteland2'}};
+  const duel = {state, course: {groundAt: () => ({y: 0})}};
   kits.update(duel, {player, rival: null, extraOpponents: []}, true);
   await tick(); await tick();
   kits.dispose();
@@ -199,16 +197,16 @@ test('Sal asset resources and attachments are released cleanly', async () => {
   equal(kits.group.children.length, 0, 'dispose must clear renderer-owned Sal objects');
 });
 
-test('the future Sal event plays one positional scrapdome-gated saw scream', () => {
+test('the Sal event plays one positional saw scream', () => {
   const cue = SOUND_BANK['arena.sal-saw'];
   check(cue, 'sound bank is missing arena.sal-saw');
-  equal(cue.flag, 'scrapdome', 'arena.sal-saw must stay behind the scrapdome switch');
+  equal(cue.flag, undefined, 'arena.sal-saw plays without the retired switch');
   equal(cue.file, 'sal-saw-scream.ogg', 'arena.sal-saw must use the reviewed runtime scream');
   const event = {salSaw: {position: {x: 8, y: 0.5, z: -3}}};
   const state = {mode: 'wasteland', maxArmor: 100, s: 2, lateral: 0};
   const beforeEvent = structuredClone(event), beforeState = structuredClone(state);
   const played = [], spatial = [];
-  const audio = new EngineAudio({flags: {enabled: name => name === 'scrapdome'}});
+  const audio = new EngineAudio({flags: {enabled: () => false}});
   Object.assign(audio, {context: {state: 'running', currentTime: 1}, muted: false, paused: false});
   audio._syncMixer = () => {};
   audio._spatialOutput = (request) => {
@@ -223,13 +221,6 @@ test('the future Sal event plays one positional scrapdome-gated saw scream', () 
   same(event, beforeEvent, 'audio must not mutate the future Sal event');
   same(state, beforeState, 'audio must not mutate race state');
 
-  const off = new EngineAudio({flags: {enabled: () => false}});
-  Object.assign(off, {context: {state: 'running', currentTime: 1}, muted: false, paused: false});
-  off._syncMixer = () => {};
-  const offPlayed = [];
-  off._playCue = id => { offPlayed.push(id); return {}; };
-  off.event(event, state, null);
-  same(offPlayed, [], 'scrapdome off must silence the Sal saw event');
 });
 
 test('the saw recording has a CC0 Freesound recipe, reproducible build and runtime Ogg', () => {

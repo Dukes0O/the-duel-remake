@@ -10,26 +10,26 @@ const storage = {
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-check(FEATURE_STATES['career-backup'] === 'dev' && FEATURE_STATES.wasteland2 === 'on'
+check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES, 'wasteland2')
   && FEATURE_STATES['hidden-road'] === 'on' && !Object.hasOwn(FEATURE_STATES, 'roadside-destruction')
-  && FEATURE_STATES.scrapdome === 'on' && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
+  && !Object.hasOwn(FEATURE_STATES, 'scrapdome') && !Object.hasOwn(FEATURE_STATES, 'crash-physics')
   && !Object.hasOwn(FEATURE_STATES, 'crash-effects')
-  && FEATURE_STATES['titan-climb'] === 'on' && FEATURE_STATES['muddy-hollow'] === 'on'
-  && FEATURE_STATES.warlords === 'on' && FEATURE_STATES['fuel-run'] === 'dev'
+  && !Object.hasOwn(FEATURE_STATES, 'titan-climb') && !Object.hasOwn(FEATURE_STATES, 'muddy-hollow')
+  && !Object.hasOwn(FEATURE_STATES, 'warlords') && FEATURE_STATES['fuel-run'] === 'dev'
   && FEATURE_STATES.arsenal === 'dev' && FEATURE_STATES['salt-flats'] === 'dev'
   && FEATURE_STATES['bounty-hunt'] === 'dev' && FEATURE_STATES['crew-gear'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 12,
-  'career backup, Fuel Run and Salt Flats stay in QA; Wasteland 2, Hidden Road, the Scrapdome, Titan climbing, Muddy Hollow (SCRAPDOME-RELEASE) and the warlord fights (WAR-SAL-RELEASE) are released; roadside destruction, crash physics and crash effects have no switches');
+  && Object.keys(FEATURE_STATES).length === 7,
+  'only unfinished features retain switches; Wasteland 2, Scrapdome, Titan climbing, Muddy Hollow and Warlords are released without switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
-check(productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
-  'production has the released Wasteland switches on without any menu choice');
+check(!productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
+  'retired Wasteland rules switch is absent and Hidden Road is released');
 check(!productionFlags.enabled('career-backup'), 'production keeps career backup off');
 check(!productionFlags.enabled('fuel-run'), 'production keeps unfinished Fuel Run off');
-check(productionFlags.enabled('warlords'), 'production has the warlord fights on (WAR-SAL-RELEASE)');
-check(productionFlags.enabled('scrapdome') && productionFlags.enabled('titan-climb') &&
-  productionFlags.enabled('muddy-hollow'),
-  'production has the Scrapdome, Titan climbing and Muddy Hollow on (SCRAPDOME-RELEASE)');
+check(!productionFlags.enabled('warlords'), 'retired Warlord switch is not recognized');
+check(!productionFlags.enabled('scrapdome') && !productionFlags.enabled('titan-climb') &&
+  !productionFlags.enabled('muddy-hollow'),
+  'retired Scrapdome, Titan and Muddy Hollow switches are not recognized');
 check(!productionFlags.enabled('crash-physics') && !productionFlags.enabled('crash-effects'),
   'retired crash switches are no longer recognized (CRASH-SWITCH-REMOVE)');
 const productionQuery = createFeatureFlags({ storage: null, qa: false, search: '?flags=career-backup' });

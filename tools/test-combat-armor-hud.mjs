@@ -3,13 +3,13 @@ import test from 'node:test';
 import {Duel} from '../src/game.js';
 import {createHudScreen} from '../src/screen-hud.js';
 
-function hudFor(wasteland2, armor = 40) {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42'});
+function hudFor(discoveredGate, armor = 40) {
+  const duel = new Duel({seed: 1989});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', discoveredGate: discoveredGate});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;
-  if (wasteland2) state.armor = armor;
+  if (discoveredGate) state.armor = armor;
   const node = () => ({hidden: false, textContent: '', dataset: {}, style: {},
     classList: {toggle() {}}, setAttribute() {}});
   const ui = new Proxy({}, {get: (target, key) => target[key] ??= node()});
@@ -35,7 +35,7 @@ test('armored Wasteland shows current and maximum armor in place of crash pips',
     `ARMOR 0 / ${Math.round(state.maxArmor)} · RECOVERING`);
 });
 
-test('flag-off Wasteland retains major-hit pips and wording', () => {
+test('pre-gate Wasteland retains major-hit pips and wording', () => {
   const {ui} = hudFor(false);
   assert.equal(ui['lives-display'].hidden, false);
   assert.equal(ui['damage-label'].textContent, '0 MAJOR HITS · AUTO RECOVERY');

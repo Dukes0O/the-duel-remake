@@ -9,7 +9,7 @@ import {CAMERA_MODES} from './camera-views.js';
 
 import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import {featureFlags} from './feature-flags.js';
-import {arenaVenueAvailable, raceFeatureFlags, wastelandUnlocked} from './wasteland-access.js';
+import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
@@ -289,8 +289,7 @@ export class App {
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
     const selectedSeed=isRouteVariant(options.routeVariant)?getRouteVariant(options.routeVariant).seed:explicitSeed??legacySeed??this.getMenuSeed(stageIndex);
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
-    this._racePaint=getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:this._switches().enabled('muddy-hollow')});this._racePaintCar=car;
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true});this._racePaintCar=car;
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
@@ -386,7 +385,7 @@ export class App {
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:this._switches().enabled('muddy-hollow')});
+      {muddyHollowEnabled:true});
     return car===this._racePaintCar?this._racePaint:null;
   }
   purchasePaint(car,id){return this._paintOperation(car,id,true);}
@@ -394,7 +393,7 @@ export class App {
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
     this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
-      {muddyHollowEnabled:this._switches().enabled('muddy-hollow')});
+      {muddyHollowEnabled:true});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
   setGhostEnabled(enabled){
@@ -508,9 +507,8 @@ export class App {
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
       upgrades:{...state.upgrades},rival:state.rivalSettings,weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
-      combatRewardsEnabled:state.mode==='wasteland'&&this.duel.featureFlags.enabled('wasteland2'),
-      muddyHollowEnabled:this.duel.featureFlags.enabled('muddy-hollow')&&
-        state.wastelandGateDiscovered===true,
+      combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
+      muddyHollowEnabled:state.wastelandGateDiscovered===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
@@ -537,7 +535,7 @@ export class App {
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
-      !this.runId||!this._switches().enabled('scrapdome')||
+      !this.runId||
       this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return false;
     this._refreshPlayer();
     if(this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return false;
@@ -564,8 +562,7 @@ export class App {
       hold: warlordHold(this.profile, 'kettle'),
     });
     if (!result || event?.result !== result || state !== this.duel.state ||
-        !this.runId || !this._switches().enabled('scrapdome') ||
-        !this._switches().enabled(state.arena.mode) || result.settlementSaved ||
+        !this.runId || result.settlementSaved ||
         this._runPlayerId !== this.player.id || state.playerId !== this._runPlayerId) return false;
     const durable = readWarlordRegistry();
     if (!result.settlementRetryable) {
@@ -761,7 +758,6 @@ export class App {
         !departure?.departed || event?.departureId !== departure.id ||
         !progress?.found?.includes(event?.id) ||
         !this.duel.course?.muddyHollow?.collectibles?.some(item => item.id === event.id) ||
-        !this.duel.featureFlags.enabled('muddy-hollow') ||
         state.playerId !== this._runPlayerId || this._runPlayerId !== this.player.id)
       return false;
     this._refreshPlayer();
@@ -772,8 +768,7 @@ export class App {
     return true;
   }
   getMuddyHollowProgress() {
-    return muddyHollowSnapshot(this.profile, this.player?.id,
-      this._switches().enabled('muddy-hollow'));
+    return muddyHollowSnapshot(this.profile, this.player?.id, true);
   }
   getHiddenRoadDiscovery() {
     const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;
@@ -804,15 +799,15 @@ export class App {
     return true;
   }
   // Scrapdome events (docs/SCRAPDOME.md 6): offered in the yard to a player who
-  // found the gate, only while the scrapdome switch is on. Never from the menu.
+  // found the gate. Never from the menu.
   arenaAvailable() {
-    return this.wastelandUnlocked() && this._switches().enabled('scrapdome') === true;
+    return this.wastelandUnlocked();
   }
   arenaVenueAvailable(venueId) {
     return arenaVenueAvailable(this._switches(), this.profile, venueId);
   }
   warlordsAvailable() {
-    return this.arenaAvailable() && this._switches().enabled('warlords') === true;
+    return this.arenaAvailable();
   }
   startWarlordFight(warlordId) {
     this._refreshPlayer();
@@ -867,7 +862,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
+      {muddyHollowEnabled:true}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
     const options = {mode, venueId, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
@@ -897,7 +892,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled: this._switches().enabled('muddy-hollow')}); this._racePaintCar = car;
+      {muddyHollowEnabled:true}); this._racePaintCar = car;
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),
@@ -953,7 +948,7 @@ export class App {
     return !visit||(visit.playerId===this.player.id&&visit.journeyId===journey.id);
   }
   wastelandUnlocked(){
-    return wastelandUnlocked(this._switches(),this.profile);
+    return wastelandUnlocked(this.profile);
   }
   // The released switch states, before the race view narrows the Wasteland rules.
   _switches(){
@@ -1020,11 +1015,9 @@ export class App {
   }
   _combatArmorKit(car) {
     const kit = getEquippedArmorKit(this.profile, car);
-    return kit === 'side-saws' && !this._switches().enabled('warlords') ? null : kit;
+    return kit;
   }
   equipArmorKit(car,id=null){
-    if(id==='side-saws'&&!this._switches().enabled('warlords'))
-      return {ok:false,reason:'Side Saws are not available in this build.'};
     if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Armory with Wasteland enabled.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
@@ -1096,12 +1089,12 @@ export class App {
     this.duel.emit({ menu: true });
   }
   get footCameraMode() {
-    return this.duel.featureFlags.enabled('wasteland2') && this._footCameraMode === 'overhead'
+    return wastelandRulesActive(this.duel.state) && this._footCameraMode === 'overhead'
       ? 'overhead' : 'first-person';
   }
   setFootCamera(mode) {
     if (!['first-person', 'overhead'].includes(mode) ||
-        !this.duel.featureFlags.enabled('wasteland2')) return this.footCameraMode;
+        !wastelandRulesActive(this.duel.state)) return this.footCameraMode;
     this._refreshPlayer();
     if (this.profile.wasteland?.version !== 1) return this.footCameraMode;
     if (mode === this._footCameraMode) return this.footCameraMode;

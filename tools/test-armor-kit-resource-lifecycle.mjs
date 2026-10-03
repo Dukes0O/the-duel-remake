@@ -25,7 +25,7 @@ test('cached authored resources release once, including textures and late loads'
       car.userData.size={width:2.6,length:4.8,height:1.55}; return car;
     });
     const actor={s:100,lateral:0,armor:100,maxArmor:100,combatArmorKit:'scrapper'};
-    const state={...actor,mode:'wasteland',status:'racing',stageTimeSec:1,combat:{},
+    const state={...actor,mode:'wasteland',wastelandGateDiscovered:true,status:'racing',stageTimeSec:1,combat:{},
       opponents:Array.from({length:3},()=>({...actor}))};
     const duel={state,featureFlags:{enabled:()=>true},course:{groundAt:()=>({x:0,y:0,z:0})}};
     const meshes={player:cars[0],rival:cars[1],extraOpponents:cars.slice(2).map(mesh=>({mesh}))};

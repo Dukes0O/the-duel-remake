@@ -152,7 +152,7 @@ if (existsSync(playerUrl)) {
       check('preview player has found the gate', () => {
         assert.equal(normalized.wasteland.discoveredGate, true,
           'preview player must start with the Wasteland gate found');
-        assert.equal(wastelandUnlocked(createFeatureFlags({storage: null, qa: false}), normalized), true,
+        assert.equal(wastelandUnlocked(normalized), true,
           'preview player must pass the real Wasteland access rule');
       });
       check("preview player has Sal's full hold", () => assert.equal(

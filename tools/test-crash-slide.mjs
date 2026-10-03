@@ -13,8 +13,7 @@ const BASE = 900;
 
 function crash({mode = 'duel', car = 'falcone_f42', playerMph, trafficMph,
   lateral = 0}) {
-  const duel = new Duel({seed: 2609,
-    featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: 2609});
   duel.startCampaign({mode, startStage: mode === 'duel' ? RIVAL_STAGE : 0, car,
     opponentCount: 1});
   const s = duel.state;

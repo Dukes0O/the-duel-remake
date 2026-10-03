@@ -6,7 +6,7 @@ import {UnsignedByteType} from 'three';
 export async function run(context) {
   await mkdir(context.outputDir,{recursive:true});
   for(const crew of ['nell','odessa','wren']) {
-    await context.navigate('/tools/menu-check.html?flags=wasteland2');
+    await context.navigate('/tools/menu-check.html');
     await context.waitFor('window.__qaApp?.visualReady && !!window.__render','private art menu',60000);
     await context.evaluate(`(() => {
       if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||

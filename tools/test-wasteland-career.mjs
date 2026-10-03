@@ -116,7 +116,7 @@ test('a second named career keeps its own scrap, gate and territory progress', (
 });
 
 test('real salvage collection pays only with a completed post-gate run', () => {
-  const duel = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
+  const duel = new Duel({seed: 1989});
   duel.startCampaign({mode: 'wasteland', startStage: 0, discoveredGate: true});
   const state = duel.state, crate = state.raids.zones[0].salvage;
   state.status = 'racing';

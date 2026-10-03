@@ -27,7 +27,7 @@ async function runTiming(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
   for(const quality of ['high','performance']){
-    await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2');
+    await context.navigate('/tools/menu-check.html?flags=hidden-road');
     await context.waitFor("!!window.__qaApp?.visualReady && !!window.__render && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value && window.name.startsWith('__duel_qa_tab_v2:')",
       'private timing menu',60000);
     await context.evaluate(`(() => {
@@ -109,7 +109,7 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
   for (const quality of ['high','performance']) {
-    await context.navigate('/tools/menu-check.html?flags=hidden-road,wasteland2');
+    await context.navigate('/tools/menu-check.html?flags=hidden-road');
     await context.waitFor("!!window.__qaApp?.visualReady && !!window.__render && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value && window.name.startsWith('__duel_qa_tab_v2:')",
       'private Scrapdome menu',60000);
     await context.evaluate(`(() => {

@@ -231,9 +231,9 @@ check('combat scene gates loading by mode and switch and passes simulation time'
     combat: {pickups: [], projectiles: [], bursts: []}, opponents: []}, featureFlags: {enabled: () => false}};
   scene.update(duel); await settle(); assert.equal(loads, 0);
   duel.featureFlags.enabled = () => true; scene.update(duel); await settle(); assert.equal(loads, 0, 'ordinary mode must not request a fighter asset');
-  duel.state.mode = 'wasteland'; duel.featureFlags.enabled = () => false;
-  scene.update(duel); await settle(); assert.equal(loads, 0, 'flag-off Wasteland must not request a fighter asset');
-  duel.featureFlags.enabled = () => true; const before = JSON.stringify(duel.state);
+  duel.state.mode = 'wasteland'; duel.state.wastelandGateDiscovered = false;
+  scene.update(duel); await settle(); assert.equal(loads, 0, 'undiscovered Wasteland must not request a fighter asset');
+  duel.state.wastelandGateDiscovered = true; const before = JSON.stringify(duel.state);
   scene.update(duel); await settle(); scene.update(duel);
   assert.equal(loads, 1, 'eligible combat scene must load the rigged fighter');
   const first = pose(scene.group); assert.ok(first.length);

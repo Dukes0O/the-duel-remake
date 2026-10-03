@@ -9,6 +9,7 @@ import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 import {stepKnock, stepPhysicalWreck, stepWreckSlide} from './vehicle-knock.js';
 import {explodeTrafficWreck} from './sim-contacts.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
@@ -202,7 +203,7 @@ export function _rival(dt, opponent = this.state.rival) {
     }
   }
   const ramGap = this.relativeS(s.s, r.s) - r.s;
-  const ramAttack = this.featureFlags?.enabled('wasteland2') === true &&
+  const ramAttack = wastelandRulesActive(s) &&
     s.mode === 'wasteland' && s.cpuDifficulty !== 'easy' &&
     !s.onFoot &&
     !s.combatWrecking && r.ramRecoverySec <= 0 &&

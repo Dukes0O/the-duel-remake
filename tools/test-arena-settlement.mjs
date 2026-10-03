@@ -22,7 +22,7 @@ globalThis.localStorage = {
 };
 globalThis.cancelAnimationFrame = () => {};
 
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true};
+const ON = {'hidden-road': true};
 const cpu = (id, wrecks = 0) => ({id, kind: 'cpu', wrecks, wrecked: 0, damageDealt: 0, name: id.toUpperCase()});
 const player = (wrecks = 0) => ({id: 'player', kind: 'player', wrecks, wrecked: 0, damageDealt: 100, name: 'YOU'});
 function arena({opponents = 3, place = 1, wrecks = 0} = {}) {

@@ -9,9 +9,7 @@ export const WARLORD_RULES = Object.freeze({
 
 export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   const warlord = WARLORDS[warlordId];
-  if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) ||
-      !duel.featureFlags?.enabled('scrapdome') || !duel.featureFlags?.enabled('warlords') ||
-      !duel.featureFlags?.enabled('wasteland2')) return false;
+  if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId)) return false;
   // A warlord fights alone, or as a team of cars (`team`), each on its own.
   const team = warlord.team ?? [{car: warlord.car, brain: warlord.brain}];
   if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord',
@@ -40,8 +38,7 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
 
 export function beginWarlordEvent(duel) {
   const state = duel.state, arena = state.arena;
-  if (!duel.featureFlags?.enabled('warlords') ||
-      state.status !== 'warlord_intro' || arena?.mode !== 'warlord' ||
+  if (state.status !== 'warlord_intro' || arena?.mode !== 'warlord' ||
       arena.phase !== 'intro') return false;
   arena.phase = 'countdown';
   state.countdown = 3;

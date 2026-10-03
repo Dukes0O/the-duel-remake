@@ -15,9 +15,9 @@ function ticks(duel, count) {
   for (let index = 0; index < count; index++) duel.step(STEP);
 }
 
-function race(mode = 'wasteland', wasteland2 = true, keepOpponent = false, crewId = 'rook') {
-  const duel = new LegacyRoadsideDuel({seed: 1989, featureFlags: {wasteland2}});
-  duel.startCampaign({mode, car: 'falcone_f42', startStage: 0,
+function race(mode = 'wasteland', discoveredGate = true, keepOpponent = false, crewId = 'rook') {
+  const duel = new LegacyRoadsideDuel({seed: 1989});
+  duel.startCampaign({mode, car: 'falcone_f42', startStage: 0, discoveredGate: discoveredGate,
     seed: 1989, crewId});
   const state = duel.state;
   state.status = 'racing';
@@ -172,7 +172,7 @@ test('an opponent can ram the unoccupied player car', () => {
     'the parked car takes an actual ram response');
 });
 
-test('ordinary, time trial, objective, and flag-off races cannot enter the fighter state', () => {
+test('ordinary, time trial, objective, and pre-gate races cannot enter the fighter state', () => {
   for (const [mode, flag] of [['duel', true], ['timetrial', true],
     ['wasteland', false]]) {
     const duel = race(mode, flag), state = duel.state;
@@ -181,7 +181,7 @@ test('ordinary, time trial, objective, and flag-off races cannot enter the fight
     assert.notEqual(state.onFoot, true, `${mode}/${flag} stayed in the car`);
     assert.equal(state.fighter, undefined);
   }
-  const objective = new Duel({seed: 1989, featureFlags: {wasteland2: true}});
+  const objective = new Duel({seed: 1989});
   objective.startCampaign({mode: 'wasteland', car: 'titan_monster',
     startStage: COURSE.findIndex(stage => stage.id === 'titan-stunt-trial'),
     seed: 1989});

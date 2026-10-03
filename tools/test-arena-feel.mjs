@@ -11,11 +11,12 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 // charge is announced by a tell of BRAIN_DIFFICULTY.tellSec (flashing lights
 // and an engine roar) before the car boosts in; respawns shimmer; wrecks are
 // called out and sounded.
-const ON = {wasteland2: true, 'hidden-road': true, scrapdome: true};
+const ON = {'hidden-road': true};
 const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959s'}];
 
 function playRound(difficulty, seed = 1989, seconds = 90) {
   const duel = new Duel({seed, featureFlags: ON});
+  duel.state.wastelandGateDiscovered = true;
   duel.startArenaEvent({car: 'banshee_muscle', cpuDifficulty: difficulty, seed, opponents: FIELD});
   const events = [];
   duel.onChange((_state, event) => events.push({t: duel.state.stageTimeSec, event}));
@@ -87,9 +88,9 @@ test('the tell is repeatable from seed and inputs', () => {
 
 test('tell, respawn and wreck-credit sounds', () => {
   for (const id of ['arena.tell', 'arena.respawn', 'arena.wreck-credit'])
-    assert.equal(SOUND_BANK[id]?.flag, 'scrapdome', `${id} is behind the scrapdome switch`);
+    assert.equal(SOUND_BANK[id]?.flag, undefined, `${id} plays without the retired switch`);
   const played = [];
-  const audio = new EngineAudio({flags: {enabled: name => name === 'scrapdome'}});
+  const audio = new EngineAudio({flags: {enabled: () => false}});
   audio.context = {state: 'running', currentTime: 1};
   audio.muted = false; audio.paused = false;
   audio._syncMixer = () => {};
@@ -101,11 +102,4 @@ test('tell, respawn and wreck-credit sounds', () => {
   audio.event({arenaWreck: {victimId: 'cpu-2', creditedId: 'player'}}, {}, null);
   audio.event({arenaWreck: {victimId: 'cpu-2', creditedId: 'cpu-1'}}, {}, null);
   assert.deepEqual(played, ['arena.tell', 'arena.tell', 'arena.respawn', 'arena.wreck-credit']);
-  const off = new EngineAudio({flags: {enabled: () => false}});
-  Object.assign(off, {context: {state: 'running', currentTime: 1}, muted: false, paused: false});
-  off._syncMixer = () => {};
-  const offPlayed = [];
-  off._playCue = id => { offPlayed.push(id); return {}; };
-  off.event({arenaWreck: {victimId: 'cpu-2', creditedId: 'player'}}, {}, null);
-  assert.deepEqual(offPlayed, []);
 });

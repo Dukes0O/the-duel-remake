@@ -10,6 +10,7 @@ import { breakableScenery, roadsideScenery, roadsideTrafficDecision, sceneryIden
   trafficDestruction } from './destructibles.js';
 import { GLANCING_WALL_NORMAL_FRACTION, clamp, freshDamageZones } from './sim-common.js';
 import {applyRamArmorDamage, applySceneryArmorDamage, combatArmorEnabled} from './combat-armor.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 import {combatOwnerId} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
 import {vehicleContactModifiers} from './vehicle-contact-modifiers.js';
@@ -70,9 +71,8 @@ function emitVehicleSmash(duel, {a, b, crash, zone}) {
 function combatShieldForActor(duel, actor) {
   const state = duel.state;
   if (actor === state) return state.combat?.shield;
-  // Only the actor wearing a shield gets protection in modern combat. Keep
-  // the older one-rival traffic behavior when Wasteland 2 is off.
-  if (state.mode === 'wasteland' && duel.featureFlags?.enabled('wasteland2') === true &&
+  // Only the actor wearing a shield gets protection in discovered Wasteland combat.
+  if (state.mode === 'wasteland' && wastelandRulesActive(state) &&
       state.traffic.includes(actor)) return 0;
   if (state.opponents.length <= 1 || actor === state.rival) return state.combat?.rivalShield;
   return state.opponents.includes(actor) ? actor.combatShield : 0;

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {Duel} from '../src/game.js';
 
-function makeRace(wasteland2) {
-  const duel = new Duel({seed: 1989, car: 'titan_monster', featureFlags: {wasteland2}});
-  duel.startCampaign({mode: 'wasteland', car: 'titan_monster', opponentCount: 3});
+function makeRace(discoveredGate) {
+  const duel = new Duel({seed: 1989, car: 'titan_monster'});
+  duel.startCampaign({mode: 'wasteland', car: 'titan_monster', opponentCount: 3, discoveredGate: discoveredGate});
   const state = duel.state;
   state.status = 'racing';
   state.countdown = 0;
@@ -41,7 +41,7 @@ test('repeated tips against one steep face cost one armor incident', () => {
   assert.equal(state.armor, full - 60);
 });
 
-test('flag-off terrain tips still enter the existing tumble path', () => {
+test('pre-gate terrain tips still enter the existing tumble path', () => {
   const {duel, state} = makeRace(false);
   state.speedMph = 55;
   duel._startTumble('climb_limit');

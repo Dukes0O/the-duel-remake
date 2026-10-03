@@ -2,6 +2,7 @@ import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
 import {onFootHint} from './onfoot-hints.js';
+import {wastelandRulesActive} from './wasteland-access.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden>
@@ -179,7 +180,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['position-total'].hidden=!s.rival;
     ui['rival-legend'].hidden=!s.rival;
     const hits=s.combat?s.majorCrashes||0:Math.max(0,LIVES.start-s.lives),limit=s.combat?DRIVE.majorCrashLimit:LIVES.start,persistent=!!app.duel.stageDef.persistentVehicle;
-    const armored=s.mode==='wasteland'&&!!s.combat&&app.duel.featureFlags?.enabled('wasteland2')===true&&Number.isFinite(s.armor)&&Number.isFinite(s.maxArmor);
+    const armored=s.mode==='wasteland'&&!!s.combat&&wastelandRulesActive(s)&&Number.isFinite(s.armor)&&Number.isFinite(s.maxArmor);
     ui['lives-display'].hidden=persistent||armored;
     const hitKey=`${s.combat?'combat':'race'}:${hits}`;
     if(ui['lives-display'].dataset.value!==hitKey){

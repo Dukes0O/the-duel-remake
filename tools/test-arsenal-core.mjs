@@ -40,8 +40,9 @@ function race({enabled = true, discovered = true, difficulty = 'hard', arena = f
   // Explicit private catalog lets independent core APIs be exercised before
   // the production dev switch hook is granted. It never touches browser storage.
   const base = createFeatureFlags({catalog: {...FEATURE_STATES, arsenal: 'dev'},
-    storage: null, overrides: {arsenal: enabled, wasteland2: true, scrapdome: true}});
+    storage: null, overrides: {arsenal: enabled}});
   const duel = new Duel({seed: 1989, featureFlags: base});
+  duel.state.wastelandGateDiscovered = discovered;
   if (arena) eq(duel.startArenaEvent({car: 'falcone_f42', seed: 1989,
     cpuDifficulty: difficulty, opponents: [{car: 'dusthawk_rally', brain: 'hunter'},
       {car: 'aurora_gt', brain: 'collector'}]}), true, 'native arena starts');

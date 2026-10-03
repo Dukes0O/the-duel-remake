@@ -233,7 +233,6 @@ export const SOUND_BANK = {
     ],
   }),
   'raider.shot': cue('weapons', {
-    flag: 'wasteland2',
     files: [
       'raider-arcade-a.ogg',
       'raider-arcade-b.ogg',
@@ -267,7 +266,6 @@ export const SOUND_BANK = {
     layers: [tone(240, 0.15, 0.055, 'triangle', 0, 110)],
   }),
   'weapon.ufo.fire': cue('weapons', {
-    flag: 'wasteland2',
     files: ['ufo-arcade-a.ogg', 'ufo-arcade-b.ogg', 'ufo-arcade-c.ogg'],
     volume: 2.1,
     layers: [
@@ -278,7 +276,6 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.bomb.fire': cue('weapons', {
-    flag: 'wasteland2',
     files: ['bomb-arcade-a.ogg', 'bomb-arcade-b.ogg', 'bomb-arcade-c.ogg'],
     volume: 1.8,
     layers: [
@@ -287,7 +284,6 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.crossbow.fire': cue('weapons', {
-    flag: 'wasteland2',
     files: ['crossbow-pew-a.ogg', 'crossbow-pew-b.ogg', 'crossbow-pew-c.ogg'],
     volume: 1.8,
     layers: [
@@ -297,7 +293,6 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.star.fire': cue('weapons', {
-    flag: 'wasteland2',
     files: ['star-arcade-a.ogg', 'star-arcade-b.ogg', 'star-arcade-c.ogg'],
     volume: 1.8,
     layers: [
@@ -312,7 +307,6 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.rpg.fire': cue('weapons', {
-    flag: 'wasteland2',
     files: [
       'rocket-launch-a.ogg',
       'rocket-launch-b.ogg',
@@ -326,21 +320,18 @@ export const SOUND_BANK = {
     ],
   }),
   'weapon.bomb.flight': cue('weapons', {
-    flag: 'wasteland2',
     files: ['bomb-flight-a.ogg', 'bomb-flight-b.ogg', 'bomb-flight-c.ogg'],
     volume: 0.6,
     limit: 12,
     spatial: { refDistance: 12, maxDistance: 600, rolloff: 1 },
   }),
   'weapon.rpg.flight': cue('weapons', {
-    flag: 'wasteland2',
     files: ['rpg-flight-a.ogg', 'rpg-flight-b.ogg', 'rpg-flight-c.ogg'],
     volume: 0.6,
     limit: 12,
     spatial: { refDistance: 12, maxDistance: 600, rolloff: 1 },
   }),
   'weapon.crossbow.flight': cue('weapons', {
-    flag: 'wasteland2',
     files: [
       'crossbow-whistle-a.ogg',
       'crossbow-whistle-b.ogg',
@@ -351,13 +342,11 @@ export const SOUND_BANK = {
     spatial: { refDistance: 12, maxDistance: 600, rolloff: 1 },
   }),
   'combat.hit-confirm': cue('impacts', {
-    flag: 'wasteland2',
     files: ['hit-confirm-a.ogg', 'hit-confirm-b.ogg', 'hit-confirm-c.ogg'],
     volume: 1.8,
     priority: 75,
   }),
   'combat.blast.recorded': cue('impacts', {
-    flag: 'wasteland2',
     files: ['blast-a.ogg', 'blast-b.ogg', 'blast-c.ogg'],
     volume: 3.7,
     priority: 80,
@@ -366,7 +355,6 @@ export const SOUND_BANK = {
     farCutoff: 1600,
   }),
   'vehicle.crash.recorded': cue('impacts', {
-    flag: 'wasteland2',
     files: ['crash-a.ogg', 'crash-b.ogg', 'crash-c.ogg'],
     volume: 4.2,
     priority: 75,
@@ -385,28 +373,24 @@ export const SOUND_BANK = {
   }),
   // EGG-03 audio (tools/audio/build-hollow.mjs): pond entry and mud.
   'world.muddy-hollow-splash': cue('vehicle', {
-    flag: 'muddy-hollow',
     files: ['hollow-splash-a.ogg', 'hollow-splash-b.ogg', 'hollow-splash-c.ogg'],
     volume: 2.6,
     priority: 70,
     limit: 3,
   }),
   'world.muddy-hollow-mud': cue('vehicle', {
-    flag: 'muddy-hollow',
     files: ['hollow-mud-a.ogg', 'hollow-mud-b.ogg'],
     volume: 2.2,
     priority: 55,
     limit: 3,
   }),
   'world.muddy-hollow-churn': cue('vehicle', {
-    flag: 'muddy-hollow',
     filter: ['bandpass', 420],
     loop: true,
   }),
   // ARENA-FEEL: a computer car's charge tell (an engine roar rising), a
   // respawn shimmer, and the player's wreck credit.
   'arena.tell': cue('impacts', {
-    flag: 'scrapdome',
     priority: 68,
     limit: 3,
     layers: [
@@ -415,7 +399,6 @@ export const SOUND_BANK = {
     ],
   }),
   'arena.respawn': cue('interface', {
-    flag: 'scrapdome',
     layers: [
       tone(330, 0.35, 0.05, 'sine', 0, 990),
       tone(660, 0.3, 0.03, 'triangle', 0.08, 1320),
@@ -431,14 +414,12 @@ export const SOUND_BANK = {
     ],
   }),
   'arena.wreck-credit': cue('impacts', {
-    flag: 'scrapdome',
     buffersFrom: 'combat.hit-confirm',
     volume: 2.2,
     priority: 78,
     layers: [tone(70, 0.4, 0.2, 'sine', 0, 35)],
   }),
   'arena.sal-saw': cue('impacts', {
-    flag: 'scrapdome',
     file: 'sal-saw-scream.ogg',
     volume: 1.65,
     priority: 82,

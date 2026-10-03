@@ -9,8 +9,8 @@ import { SOUND_BANK } from '../src/sound-bank.js';
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 
-function makeAudio(enabled = ['muddy-hollow']) {
-  const audio = new EngineAudio({ flags: { enabled: name => enabled.includes(name) } });
+function makeAudio() {
+  const audio = new EngineAudio({ flags: { enabled: () => false } });
   const calls = [];
   audio.context = { state: 'running', currentTime: 10 };
   audio.muted = false; audio.paused = false;
@@ -36,7 +36,7 @@ check(SOUND_BANK['vehicle.crash-impact'].flag === undefined &&
   SOUND_BANK['vehicle.crash-impact'].buffersFrom === 'vehicle.crash.recorded',
 'the permanent smash reuses the recorded crashes without a switch');
 for (const id of ['world.muddy-hollow-splash', 'world.muddy-hollow-mud']) {
-  check(SOUND_BANK[id].flag === 'muddy-hollow', `${id} is behind the muddy-hollow switch`);
+  check(SOUND_BANK[id].flag === undefined, `${id} plays without the retired switch`);
   for (const file of SOUND_BANK[id].files)
     check(existsSync(new URL(`../public/assets/audio/${file}`, import.meta.url)), `${file} exists`);
 }
@@ -64,7 +64,7 @@ for (const name of ['qubodup', 'barion', 'lzmraul']) check(credits.includes(name
   check(space.distance > 55 && space.pan > .3, 'the impact is placed at the hit, to the side');
 }
 {
-  const { audio, calls } = makeAudio([]);
+  const { audio, calls } = makeAudio();
   audio.event(smash(40), {}, null);
   check(calls.filter(call => call.id === 'vehicle.crash-impact').length === 1,
     'released smash sound plays with every development switch off');
@@ -108,10 +108,6 @@ for (const name of ['qubodup', 'barion', 'lzmraul']) check(credits.includes(name
   st.surfaceMud = 0;
   audio._updateMud(st, 11.3, true);
   check(audio.mud.gain.gain.value === 0, 'leaving the mud stops the churn');
-  const off = makeAudio([]);
-  off.audio.mud = { filter: { frequency: param() }, gain: { gain: param() } };
-  off.audio._updateMud({ ...st, surfaceMud: 1 }, 10, true);
-  check(!off.calls.length && off.audio.mud.gain.gain.value === 0, 'switch off: no mud sound');
 }
 
 console.log(`Crash and Muddy Hollow audio: ${checks} checks passed.`);

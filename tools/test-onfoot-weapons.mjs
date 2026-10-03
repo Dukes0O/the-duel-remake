@@ -10,8 +10,8 @@ const STEP = 1 / 120;
 const ticks = (duel, count) => {for (let index = 0; index < count; index++) duel.step(STEP);};
 
 function race({mode = 'wasteland', enabled = true, opponents = 1} = {}) {
-  const duel = new LegacyRoadsideDuel({seed: 1989, featureFlags: {wasteland2: enabled}});
-  duel.startCampaign({mode, car: 'falcone_f42', startStage: 0, seed: 1989,
+  const duel = new LegacyRoadsideDuel({seed: 1989});
+  duel.startCampaign({mode, car: 'falcone_f42', startStage: 0, seed: 1989, discoveredGate: enabled,
     opponentCount: opponents});
   const state = duel.state;
   Object.assign(state, {status: 'racing', countdown: 0,
@@ -98,7 +98,7 @@ test('RPG locks after 0.8 s, fires three 55 m/s rockets with a 2.2 s reload', ()
   ticks(duel, 1);
   assert.equal(state.footWeapons.ammo, 0);
   assert.equal(COMBAT_TUNING.foot.rpgReloadSeconds, 2.2);
-  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: 1989});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: 1989, discoveredGate: true});
   assert.equal(duel.state.footWeapons.ammo, 3, 'a fresh stage stocks three rockets');
 });
 

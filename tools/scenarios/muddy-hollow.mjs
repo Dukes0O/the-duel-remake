@@ -8,7 +8,6 @@ const OVERVIEW_CAMERA={
   position:[-1996.470066645934,197.67163466026466,249.6102283207227],
   target:[-2027.16194395827,69.6716346602651,46.92078935794765],
 };
-const OVERVIEW_CAMERA_TOLERANCE=1e-6;
 let navigationSerial=0;
 
 async function navigateReady(context, path, label) {
@@ -275,12 +274,12 @@ async function showOrdinaryOverview(context) {
     app.inspectionCamera=${JSON.stringify(OVERVIEW_CAMERA)};
     window.__render.camera.position.fromArray(app.inspectionCamera.position);
     const frame=window.__render.renderFrame();
-    return {quality:'high',label:'flag-off-overview',camera:app.inspectionCamera,
+    return {quality:'high',label:'ordinary-overview',camera:app.inspectionCamera,
       drawCalls:frame.drawCalls,triangles:frame.triangles,status:d.state.status};
   })()`);
   await context.evaluate(`(async()=>{await new Promise(requestAnimationFrame);
     await new Promise(requestAnimationFrame);window.__render.renderFrame();})()`);
-  await context.screenshot('high-flag-off-overview');
+  await context.screenshot('high-ordinary-overview');
   return result;
 }
 
@@ -289,22 +288,18 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
 
-  await navigateReady(context,'/tools/menu-check.html','flag-off memory-only menu');
-  report.isolation.flagOff=await startHighCountry(context,true);
-  if(report.isolation.flagOff.hasHollow)throw Error('Flag-off High Country exposed Muddy Hollow');
-
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
-    'undiscovered flagged memory-only menu');
+  await navigateReady(context,'/tools/menu-check.html',
+    'undiscovered memory-only menu');
   report.isolation.undiscovered=await startHighCountry(context,false);
   if(report.isolation.undiscovered.hasHollow)
     throw Error('Undiscovered High Country exposed Muddy Hollow');
   report.frames.push(await showOrdinaryOverview(context));
 
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
-    'discovered flagged memory-only menu');
+  await navigateReady(context,'/tools/menu-check.html',
+    'discovered memory-only menu');
   report.isolation.discovered=await startHighCountry(context,true);
   if(!report.isolation.discovered.hasHollow)
-    throw Error('Discovered flagged High Country did not expose Muddy Hollow');
+    throw Error('Discovered High Country did not expose Muddy Hollow');
   await context.waitFor(`(() => {
     const app=window.__qaApp,render=window.__render,host=document.querySelector('#view3d');
     const frame=render.renderFrame();app.onFrame?.(app.duel.state);
@@ -320,30 +315,13 @@ export async function run(context) {
   for(const [label,names] of [['logs',['logs']],['garden',['garden']]])
     report.frames.push(await show(context,'high',label,names));
 
-  const flagOffOverview=report.frames.find(frame=>frame.label==='flag-off-overview');
-  const flaggedOverview=report.frames.find(frame=>frame.quality==='high'&&frame.label==='overview');
-  const cameraValues=camera=>[...camera.position,...camera.target];
-  const deltas=cameraValues(flagOffOverview.camera).map((value,index)=>
-    Math.abs(value-cameraValues(flaggedOverview.camera)[index]));
-  report.overviewControl={
-    tolerance:OVERVIEW_CAMERA_TOLERANCE,
-    maximumDelta:Math.max(...deltas),
-    passed:deltas.every(delta=>delta<=OVERVIEW_CAMERA_TOLERANCE),
-    flagOffCamera:flagOffOverview.camera,
-    flaggedCamera:flaggedOverview.camera,
-  };
-  if(!report.overviewControl.passed) {
-    await writeFile(join(context.outputDir,'muddy-hollow-browser.json'),JSON.stringify(report,null,2)+'\n');
-    throw Error(`Flag-off and flagged overview cameras differ by ${report.overviewControl.maximumDelta}`);
-  }
-
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:390,height:844,deviceScaleFactor:1,mobile:true});
   report.frames.push(await show(context,'high','phone-overview',['bowl','hill','pond']));
 
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+  await navigateReady(context,'/tools/menu-check.html',
     'phase-3 non-Titan memory-only menu');
   const nonTitanStart=await startHighCountry(context,true,'dusthawk_rally','timetrial');
   report.isolation.nonTitan={...nonTitanStart,
@@ -352,7 +330,7 @@ export async function run(context) {
       report.isolation.nonTitan.crossing.historyAfter!==report.isolation.nonTitan.crossing.historyBefore)
     throw Error('Non-Titan crossing emitted or settled a Muddy Hollow departure');
 
-  await navigateReady(context,'/tools/menu-check.html?flags=muddy-hollow',
+  await navigateReady(context,'/tools/menu-check.html',
     'phase-3 Titan memory-only menu');
   const titanStart=await startHighCountry(context,true,'titan_monster','timetrial');
   report.phaseThree={start:titanStart,

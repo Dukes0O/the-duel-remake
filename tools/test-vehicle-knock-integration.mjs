@@ -4,8 +4,7 @@ import {sweepObstacle} from '../src/collision.js';
 import {Duel} from '../src/game.js';
 import {stepKnock} from '../src/vehicle-knock.js';
 
-const duel = new Duel({seed: 2609,
-  featureFlags: {wasteland2: true}});
+const duel = new Duel({seed: 2609});
 duel.startCampaign({mode: 'duel', startStage: COURSE.findIndex(stage =>
   !stage.kind && stage.hasRival), car: 'falcone_f42'});
 const state = duel.state;

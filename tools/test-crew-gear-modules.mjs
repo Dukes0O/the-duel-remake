@@ -35,7 +35,7 @@ function leave(duel) {
 function race(crew) {
   const featureFlags = createFeatureFlags({storage: null, qa: true,
     catalog: {...FEATURE_STATES, 'crew-gear': FEATURE_STATES['crew-gear'] || 'dev'},
-    overrides: {wasteland2: true, arsenal: true, 'crew-gear': true}});
+    overrides: {arsenal: true, 'crew-gear': true}});
   const duel = new Duel({seed: 1989, featureFlags});
   duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', driverId: 'club',
     crewId: crew, discoveredGate: true, arsenalRank: 30, seed: 1989,
