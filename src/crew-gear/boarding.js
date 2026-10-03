@@ -93,7 +93,8 @@ function landFighter(duel, landing) {
   Object.assign(fighter, {x: landing.x, y: landing.y, z: landing.z,
     s: landing.s, lateral: landing.lateral, groundY: landing.y,
     airHeight: 0, verticalSpeed: 0, yaw: landing.heading,
-    speed: 0, jumpHeld: false});
+    speed: 0, jumpHeld: false,
+    boardingAnchor: {x: landing.x, z: landing.z}});
 }
 export function startBoarding(duel, actor, {method = 'roof', previousY} = {}) {
   if (!canBoardTarget(duel, actor, method)) return false;
