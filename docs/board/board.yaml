@@ -62,6 +62,18 @@ tasks:
     lane_build_ms: 448
     acceptance:
       - "Keep the actual final output AudioWorklet active throughout each capture. Preserve all measured sample and true-peak, event, onset, contrast, cleanup and memory-only assertions. Run focused native capture, exact lane tier and build, then rerun the full integration tier after merge."
+  - id: AUD-CAPTURE-SCHEDULING
+    title: "Keep private Chrome audio capture scheduled under load"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: [AUD-CAPTURE-CONTINUITY]
+    status: building
+    claimed_by: codex-director-2026-10-03
+    branch: codex/tool/audio-capture-scheduling
+    owns: [tools/browser-harness.mjs, tools/test-browser-harness.mjs, docs/changes/AUD-CAPTURE-SCHEDULING.md]
+    acceptance:
+      - "Keep the private headless Chrome renderer and timer active during native audio capture without changing game audio or relaxing the existing peak, onset, continuity, contrast, cleanup, or memory-only assertions. Reproduce with repeated native captures, then pass exact lane tier and build before integration."
   - id: ART-KEEP-VALVE-DONOR
     title: "Keep the verified CC0 convoy valve donor after closing the trailer search"
     owner: codex
