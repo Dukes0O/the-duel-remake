@@ -68,7 +68,13 @@ tasks:
     lane: TOOL
     size: S
     needs: [AUD-CAPTURE-CONTINUITY]
-    status: building
+    status: merged
+    merged_commit: f724944
+    source_commit: e524266
+    lane_gate_commit: 9b89203
+    lane_gate_passed: 8
+    lane_gate_duration_seconds: 39.14
+    lane_build_passed: true
     claimed_by: codex-director-2026-10-03
     branch: codex/tool/audio-capture-scheduling
     owns: [tools/browser-harness.mjs, tools/test-browser-harness.mjs, docs/changes/AUD-CAPTURE-SCHEDULING.md]
