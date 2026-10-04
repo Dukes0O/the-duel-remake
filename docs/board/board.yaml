@@ -1356,9 +1356,9 @@ tasks:
     design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
     flag: gunn
     owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
-    hooks: [src/warlords/index.js, src/arena/arena-tell-view.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, tools/test-warlords.mjs]
-    hook_requests: [src/warlords.js, src/weapon-upgrades.js, src/screen-armory.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
-    sequencing: "Build the Gunn module, rocket hook and cosmetic reward first. Arsenal owns warlord data, weapon upgrades and Armory until handoff; Voice owns switch and Preview hooks until its reviewed handoff. Convoy owns arena mode entry. Preserve other boss files and existing rocket numbers."
+    hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/arsenal/rockets.js, src/arena/warlord-rules.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, tools/test-warlords.mjs]
+    hook_requests: [src/weapon-upgrades.js, src/screen-armory.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
+    sequencing: "Build Gunn's module, rockets and cosmetic reward first. Arsenal freezes warlord data for Gunn's separate data commit; weapon upgrades and Armory remain with Arsenal. Voice owns switch and Preview hooks until review. Convoy owns arena mode entry. Preserve other boss files and existing rocket numbers."
     test_grant: "Add Gunn to the built-boss list assertion when the native fight is implemented; keep every other expected boss and assertion, explain the changed list and obtain independent review."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
@@ -3397,7 +3397,8 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/audio/fight-voices
-    source_commit: 0228c74
+    source_commit: 23e625e
+    test_commit: d8df393
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
     hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]

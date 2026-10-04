@@ -29,7 +29,7 @@ any open game tab and reopen it.
 
 Kyle supplied Claude's answers for these cards, CREW-04 and ARENA-05 on
 4 October. They are recorded in SCRAPDOME.md, CREW.md and the cards; all four
-waits are cleared. The separate release remains with its owner.
+waits are cleared. The separate release has been made (see the top of this file).
 
 ## Claude's review, 2 October afternoon
 
