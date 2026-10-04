@@ -35,7 +35,7 @@ function actor(s, lateral = 0, speedMph = 0) {
 
 function field({difficulty = 'easy', seed = 1989, stage = 0, lap = 1,
   discovered = true} = {}) {
-  const duel = new Duel({seed});
+  const duel = new Duel({seed, featureFlags: {arsenal: false}});
   const state = duel.state;
   Object.assign(state, actor(160), {mode: 'wasteland', status: 'racing',
     cpuDifficulty: difficulty, stageIndex: stage, currentLap: lap, wastelandGateDiscovered: discovered,

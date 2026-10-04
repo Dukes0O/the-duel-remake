@@ -23,7 +23,7 @@ All 21 native cases and ten game captures pass. No errors or failed requests;
 two duplicate-Three warnings. Vesper is one visible skin, 4,876 triangles.
 The comparison pool releases 29 owned resources once in each quality.
 Candidate pages retire through navigation; native tests cover their resources.
-Frame timing, animation feel, phone layout and sound remain unmeasured.
+Frame timing, animation feel and sound remain unmeasured.
 
 Next material round: separate steel with restrained highlights and worn
 edges, strengthen the existing red harness and sleeve, and retain visible

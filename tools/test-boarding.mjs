@@ -194,7 +194,7 @@ check('fixed 120 Hz stepping gives equal 30/60/144 presentation outcomes', () =>
 
 function nativeRace() {
   const flags = createFeatureFlags({storage: null, qa: true,
-    catalog: {...FEATURE_STATES, 'crew-gear': 'dev'},
+    catalog: {...FEATURE_STATES, 'crew-gear': 'dev', arsenal: 'dev'},
     overrides: {'crew-gear': true}});
   const duel = new Duel({seed: 2903, featureFlags: flags});
   duel.startCampaign({mode: 'wasteland', car: 'falcone_f42',

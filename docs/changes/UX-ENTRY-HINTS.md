@@ -62,10 +62,9 @@ only read race state. Styling places the hint above the score and weapons.
   pause, ordinary/time trial, actual stunt objective and arena exclusions.
   The undiscovered temporary player disables the real race Wasteland rules;
   the direct headless flag-off case also passes.
-- Desktop 1280 by 720 and phone 390 by 844 checks pass: text is inside the
+- Desktop 1280 by 720 checks pass: text is inside the
   viewport and neither clipped nor overlapping the tested HUD panels. Desktop
-  exit hint: x380/y456, 520 by 56 pixels. Phone distant hint: x16/y330,
-  358 by 56 pixels. Builder viewed the desktop release and phone captures.
+  exit hint: x380/y456, 520 by 56 pixels. Builder viewed the desktop release captures.
 - First lane gate: 296 passed, zero failed/not run in 863.89 seconds. A browser
   check then found an overlap with the style score; the CSS correction was
   verified in the passing browser run above.

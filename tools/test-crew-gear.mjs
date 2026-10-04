@@ -96,9 +96,11 @@ function reenter(duel) {
 }
 
 check('crew-gear is a real dev switch, disabled in release and enabled only by QA opt-in',()=>{
-  assert.equal(FEATURE_STATES['crew-gear'],'dev','production catalog admits the settled dev switch');
-  assert.equal(createFeatureFlags({storage:null,qa:false,search:'?flags=crew-gear'}).enabled('crew-gear'),false);
-  assert.equal(createFeatureFlags({storage:null,qa:true,search:'?flags=crew-gear'}).enabled('crew-gear'),true);
+  // Released on 4 October 2026; the dev-switch rules are kept with it pinned to dev.
+  assert.equal(FEATURE_STATES['crew-gear'],'on','production catalog has crew gear released');
+  const dev=search=>qa=>createFeatureFlags({catalog:{...FEATURE_STATES,'crew-gear':'dev'},storage:null,qa,search});
+  assert.equal(dev('?flags=crew-gear')(false).enabled('crew-gear'),false);
+  assert.equal(dev('?flags=crew-gear')(true).enabled('crew-gear'),true);
 });
 check('keyboard 3 and D-pad down use the existing native foot action dispatch',()=>{
   assert.equal(keyboardAction('foot','Digit3'),'gear:3');
