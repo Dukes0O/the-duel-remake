@@ -1044,14 +1044,14 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
     test_commit: d220e948
-    source_commit: 2f094ee8
+    source_commit: 7ac1f37a
     preservation_test_commit: 87b436f2
     balance_test_commit: 0cd575fa
     source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
     balance_review: "All three complete balance reports pass, including native computer use of all four new weapons. No tuning or target changed."
     browser_review: "Both qualities pass weapon, counter, HUD and old Mirage reward checks. Armory reads preserve saved bytes. Matched driving frame time stays unchanged; active-weapon frame cost was not measured."
     audio_routing_test_commit: e19beaa9
-    audio_review: "Native audio QA found duplicate Mortar fire and a generic fire fallback on the other three actions. Eight player and computer regressions reproduce it; named cues, Voice ownership and state purity must stay exact. Final audio review and lane gates follow the narrow fix."
+    audio_review: "Eight native regressions exposed duplicate and fallback cues. The four-ID routing fix passes all ten routing cases and all audio checks; independent source review clears it. Final mixed audio and lane gates remain."
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1370,7 +1370,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
-    test_commit: c5f1536a
+    test_commit: fdda1811
     source_commit: 685877e1
     art_test_verdict: "Nine approved kit hashes and the original Gunn fight tests pass unchanged. The new tests fail for the missing finished turret and level rocket flight above a lower target; runtime geometry and lifecycle checks await the asset."
     note_commit: bcda842
