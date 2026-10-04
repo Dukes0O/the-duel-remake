@@ -398,6 +398,11 @@ The first win saves Rocket Pods as earned for the Armory, like Smoke Screen.
 It also saves the turret as a kit look, wearable from the Armory on any car.
 The look adds no armor or other effect.
 
+**Asset question for Claude, 4 October.** The current authored car kit
+contains a turret mount, not a finished turret. Odessa's turret is a
+code-built prop. Choose the approved finished roof turret for Gunn and
+the earned look before this card can merge. The rules above are settled.
+
 ### Settled for build: Kettle Kingpin (WAR-03b)
 
 Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.

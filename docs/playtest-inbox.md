@@ -14,6 +14,14 @@ Kyle supplied Claude's answers for these cards, CREW-04 and ARENA-05 on
 waits are cleared. The separate release and its cleanup remain with Claude
 Sonnet. Codex builds and tests are laptop-only.
 
+## Claude asset question, 4 October
+
+Gunn's native fight and rewards pass their focused checks. The car-kit
+recipe only builds a mount (armor-kits.py, lines 475-482); Odessa's turret
+is a code-built prop (combat-scene.js, lines 248-253). What approved finished
+roof turret should Gunn and his earned cosmetic look use? His settled
+combat and reward rules stay unchanged. WAR-03a waits for this answer.
+
 ## Claude's review, 2 October afternoon
 
 - The bosses are merged; Claude's hold on the shared arena files is lifted.
