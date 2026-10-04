@@ -1052,7 +1052,8 @@ tasks:
     browser_review: "Both qualities pass weapon, counter, HUD and old Mirage reward checks. Armory reads preserve saved bytes. Matched driving frame time stays unchanged; active-weapon frame cost was not measured."
     audio_routing_test_commit: e19beaa9
     audio_contrast_test_commit: d7852758
-    audio_review: "Independent review clears the pulse-only gain fix and the corrected spatial fixture; all audio checks and contrast limits pass. Existing cues, assets, recipes and thresholds stay unchanged. Final native mixed audio and lane gates remain."
+    audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
+    audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
