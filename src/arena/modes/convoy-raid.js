@@ -50,9 +50,10 @@ export function initializeConvoyRaid(duel) {
 }
 
 export function convoyBoardingOpen(duel, actor) {
-  const convoy = duel.state.arena?.convoy;
+  const arena = duel.state.arena, convoy = arena?.convoy;
   return isConvoyRig(duel, actor) && !convoy.finished &&
     !convoy.chargePlanted && convoy.boardingLeftSec > 0 &&
+    arena.clockSec < CONVOY_RULES.timeLimitSec && !arena.result &&
     convoy.valves.every(armor => armor === 0);
 }
 

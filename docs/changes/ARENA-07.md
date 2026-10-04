@@ -30,16 +30,16 @@ The native audio routing hook remains held for the sequential ARS handoff.
 ## Checks
 
 Independent tests: c5c3c72, written before source (15 cases, 1 pass, 14 red).
-Current owned source: 15 cases, 8 pass, 7 red at held shared hooks. Pay, immutable
-settlement, initial loop/state and repeatability pass. Existing arena event
-13 cases and settlement 9 cases pass. Build passes.
+First owned source db062fd5: 15 cases, 8 pass, 7 red at held shared hooks.
+Existing arena event 13 cases and settlement 9 cases pass. Its build passes.
 
-Independent follow-up on db062fd5: `node tools/test-arena-convoy.mjs` runs
-22 cases and 118 checks: 12 pass, 10 red. The old seven failures remain.
-Three new cases fail at the missing plate boarding hook: the actual downward
-plate landing and each legally planted deadline case. No source was edited.
-The full fuse and winning settlement checks remain unproven until that hook
-lands. Unplanted window reset and native event timeout settlement pass.
+Independent follow-up 02064cab was red before these boarding edits: 22 cases,
+12 pass, 10 red. Current source runs 22 cases and 139 checks: 13 pass, 9 red.
+Native plate admission, mounting and wrong-surface rejection pass. Both legal
+deadline plants retain the original hold and full fuse without early reset or
+timeout; their finish still needs the held central convoyCharge wreck hook.
+Unplanted window reset and native event timeout settlement pass.
+Existing ordinary boarding regression: 24 checks pass.
 
 Fixture correction: the old test landed at the rig centre at vehicle height.
 That 3.5 m envelope includes warning lamps, not a boardable roof. The approved
@@ -55,22 +55,25 @@ ticks. They do not assign valve, charge or result state. Existing central
 applyArmorDamage tests still require its real hit hook. Each deadline win
 checks one native result and one settlement; the unplanted event loss does too.
 
-Failure messages on this source:
+Remaining failures:
 - `a native projectile impact damages exactly its nearest fuel valve`
 - `native blasts break every valve inside their radius` (two cases)
-- `a real downward amber plate crossing boards the rig`
-- `the deadline fixture boards through the native plate path` (two cases)
+- `detonation after the full two seconds finishes the event` (two cases)
 - `one earned hold opens Convoy after Salt Flats unlock`
 - `the unfinished Convoy mode must have a dev switch`
 - `crash physics sees the twelve-tonne rig`
 - `Convoy cannot run on the Scrapdome`
 
-Focused laptop headless checks only. No broad gate or new build was run for
-this tests-only follow-up. Ordinary-race fingerprints were not changed.
+The Convoy-only landing search checks open floor beside the real body. Generic
+perimeter candidates hit Salt's walls. Both paths keep fixed candidate order
+and native obstacle tests. Other cars keep their existing landing recipe.
 
-Native damage/spec/admission/render hooks, actual plate boarding, laptop browser,
+Focused laptop headless checks only. Build, broad and browser checks are held
+for Voice's independent final gate. No authored assertion was edited here.
+
+Native damage/spec/admission/render hooks, laptop browser,
 audio, balance, save review, code review and the exact lane gate remain open.
-The whole tested base was received; Director's baseline full run is pending.
+Director's whole-base full checkpoint passed 348 suites.
 No release work or real player storage was touched. No merge is claimed.
 
 ## Removed
