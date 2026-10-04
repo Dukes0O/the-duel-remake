@@ -10,6 +10,7 @@ import { SoundMixer } from './sound-mixer.js';
 import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
 import { raceFeatureFlags, wastelandRulesActive } from './wasteland-access.js';
+import { createFightVoices } from './fight-voices.js';
 const bank = (id) => SOUND_BANK[id];
 const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
@@ -109,6 +110,12 @@ export class EngineAudio {
     this.hiddenRoadVoices = new Set();
     this.hiddenRoadCueKeys = new Set();
     this.hiddenRoadId = null;
+    this.fightVoices = createFightVoices({
+      enabled: () => this.flags.enabled('fight-voices'),
+      audible: () => !this.muted && !this.paused && this.context?.state === 'running',
+      play: id => this.cueBuffers[id] ? this._playCue(id) : null,
+      duration: id => this.cueBuffers[id]?.duration,
+    });
   }
 
   unlock() {
@@ -135,7 +142,7 @@ export class EngineAudio {
     this.mixer = new SoundMixer(ctx, this.master, {
       vehicle: this.vehicleBus,
       enabled: this.wastelandAudioEnabled === true,
-      voiceEnabled: this.flags.enabled('hidden-road'),
+      voiceEnabled: this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices'),
     });
     this.buses = this.mixer.buses;
     this.hiddenRoadBus = ctx.createGain();
@@ -236,7 +243,8 @@ export class EngineAudio {
     this._cueBuffersPromise = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
-          ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome,
+          ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
+            (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -681,7 +689,7 @@ export class EngineAudio {
     if (state) this.wastelandAudioEnabled = wastelandRulesActive(state);
     if (!this.mixer?.update) return;
     this.mixer.enabled = this.wastelandAudioEnabled === true;
-    this.mixer.voiceEnabled = this.flags.enabled('hidden-road');
+    this.mixer.voiceEnabled = this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices');
     this.mixer.update();
   }
 
@@ -911,6 +919,7 @@ export class EngineAudio {
     this._volume();
     if (this.muted) for (const voice of this.activeShots) this._stopShot(voice);
     if (this.muted) {
+      this.fightVoices.mute();
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
@@ -931,6 +940,7 @@ export class EngineAudio {
       this.shiftStarted = this.shiftUntil = 0;
     }
     if (this.paused) {
+      this.fightVoices.clear();
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
@@ -948,6 +958,7 @@ export class EngineAudio {
 
   update(st, environment = {}) {
     this._syncMixer(st);
+    this.updateFightVoices(st);
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
     this._updateArsenalFields(st);
@@ -1347,6 +1358,7 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
+    this.fightVoices.event(ev, state);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
     if (
@@ -1664,6 +1676,10 @@ export class EngineAudio {
       };
       this._layer(def.layers[0], this._cueOutput, force);
     });
+  }
+
+  updateFightVoices(state) {
+    this.fightVoices.update(state);
   }
 
   _stopHiddenRoadVoices() {
