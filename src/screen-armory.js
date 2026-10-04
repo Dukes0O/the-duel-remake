@@ -52,7 +52,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
       .filter(([id]) => ownsArmorKit(saved, car, id));
     const equippedText = !equippedDetails ? 'STOCK ARMOR' :
       `${equippedDetails.name.toUpperCase()} EQUIPPED (${equipped === 'side-saws'
-        ? '1.6× SIDE DAMAGE' : `+${equippedDetails.armor} ARMOR`})`;
+        ? '1.6× SIDE DAMAGE' : equipped === 'turret-look' ? 'LOOK ONLY' : `+${equippedDetails.armor} ARMOR`})`;
     const cars = Object.entries(CARS).map(([id, item]) =>
       `<option value="${id}" ${id === car ? 'selected' : ''}>${escapeHTML(item.name)}${isCarUnlocked(saved, id) ? '' : ' · LOCKED'}</option>`).join('');
     const choices = [...Object.entries(ARMOR_KITS), ...earned].map(([id, kit]) => {
@@ -64,10 +64,11 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
       const disabled = !unlocked || (!owned && (!!gate || balance < kit.price));
       const label = selected ? 'EQUIPPED' : owned ? 'EQUIP' : gate ||
         `BUY & EQUIP · ${scrapCareer ? kit.price : credits(kit.price)} ${scrapCareer ? 'SCRAP' : 'CR'}`;
-      const detail = reward ? 'Your side contacts deal 1.6 times ram damage. No added armor or mass.' :
+      const detail = id === 'turret-look' ? 'Earned turret look. No armor, mass or weapon effect.' :
+        reward ? 'Your side contacts deal 1.6 times ram damage. No added armor or mass.' :
         id === 'scrapper' ? 'Scrap plates and bull bar' :
           id === 'raider' ? 'Roof cage and saw housings' : 'Full plating and spike crown';
-      return `<article class="kit-card"><h3>${kit.name}</h3><b>${reward ? '1.6× SIDE DAMAGE' : `+${kit.armor} ARMOR`}</b><p>${detail}</p><button data-kit-action="${owned ? 'equip' : 'buy'}" data-kit-tier="${id}" ${selected || disabled ? 'disabled' : ''}>${label}</button></article>`;
+      return `<article class="kit-card"><h3>${kit.name}</h3><b>${id === 'turret-look' ? 'LOOK ONLY' : reward ? '1.6× SIDE DAMAGE' : `+${kit.armor} ARMOR`}</b><p>${detail}</p><button data-kit-action="${owned ? 'equip' : 'buy'}" data-kit-tier="${id}" ${selected || disabled ? 'disabled' : ''}>${label}</button></article>`;
     }).join('');
     return `<details class="weapon-shop kit-shop" open><summary>ARMOR KITS · PER CAR</summary><p>Choose a car. Equip an owned kit or buy plating. One kit is equipped at a time.</p><label class="kit-car-label" for="kit-car">CAR</label><select id="kit-car" data-kit-car>${cars}</select><p class="kit-equipped">${escapeHTML(CARS[car].name)} · ${equippedText}</p><div class="kit-grid">${choices}</div>${equipped ? '<button class="kit-remove" data-kit-action="unequip">REMOVE KIT · RETURN TO STOCK</button>' : ''}</details>`;
   }
