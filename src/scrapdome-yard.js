@@ -53,9 +53,8 @@ export function createScrapdomeYard(course, {
     homeActive = !retired && active === true;
   }
 
-  function homeCamera(aspect = 16 / 9) {
+  function homeCamera() {
     if (!homeActive || retired || group.userData.assetStatus !== 'ready') return null;
-    const portrait = Number.isFinite(aspect) && aspect < .85;
     const local = (x, y, z) => ({
       x: pose.x + x * Math.cos(pose.heading) + z * Math.sin(pose.heading),
       y: pose.y + y,
@@ -63,8 +62,8 @@ export function createScrapdomeYard(course, {
     });
     return {
       position: local(0, 4, 0),
-      target: portrait ? local(0, 10, 60) : local(8, 2, 60),
-      fov: portrait ? 80 : 55
+      target: local(8, 2, 60),
+      fov: 55
     };
   }
 

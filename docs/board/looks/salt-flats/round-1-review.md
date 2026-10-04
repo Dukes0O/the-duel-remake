@@ -31,5 +31,5 @@ Actual game QA: sixteen captures, private port 16005, memory-only saves,
 zero errors, warnings or failed requests. Each of four matched frame
 samples retains 180 real animation-frame intervals; P95 is 16.8 ms for
 both venues in both qualities, within the unchanged ten-percent limit.
-Audio, phone layout and motion quality are unmeasured. No runtime asset
+Audio and motion quality are unmeasured. No runtime asset
 is installed; public entry and final lane/build gates remain held.

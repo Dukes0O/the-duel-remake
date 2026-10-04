@@ -388,7 +388,7 @@ test('native CPU Nitro decisions require Hard, an enemy ahead within forty metre
 
 test('wave three is separately dev-gated without changing the existing arsenal switch', () => {
   equal(FEATURE_STATES['arsenal-wave3'], 'dev', 'the four new weapons have their own dev switch');
-  equal(FEATURE_STATES.arsenal, 'dev', 'the existing arsenal switch remains unchanged');
+  equal(FEATURE_STATES.arsenal, 'on', 'the existing released arsenal switch remains unchanged');
   const released = createFeatureFlags({qa: false, storage: {getItem: () => 'true'},
     search: '?flags=arsenal-wave3'});
   equal(released.enabled('arsenal-wave3'), false, 'the new wave is unavailable outside QA');

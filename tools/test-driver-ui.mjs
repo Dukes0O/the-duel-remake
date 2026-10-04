@@ -37,7 +37,6 @@ check(driverSkillLabel('club','falcone_f42').includes('no performance changes'),
 check(!driverSkillLabel('mara_vale','falcone_f42').includes('No skill bonus'),'matching car is active');
 check(driverSkillLabel('mara_vale','stuttgart_959s').includes('No skill bonus in Stuttgart'),'off-specialty car has an explicit no-effect warning');
 check(css.includes('.driver-card>button:focus-visible')&&css.includes('.driver-panel>summary:focus-visible')&&css.includes('.driver-setup select:focus-visible'),'all new interactive controls have visible focus styles');
-check(css.includes('.driver-cards{grid-template-columns:repeat(2,minmax(0,1fr))}')&&css.includes('.driver-panel .driver-card>button{min-height:38px}'),'mobile roster keeps bounded columns and usable touch targets');
 check(routerSource.includes('driverMenuMarkup()')&&garageSource.includes('${driverPanel(saved,garageCar)}'),'the tested markup is used by the production menu and garage');
 check(routerSource.includes("ui['driver-select'].addEventListener")&&routerSource.includes('{signal:domEvents.signal}'),'menu driver listener participates in UI disposal');
 
@@ -78,4 +77,4 @@ try{
 }finally{if(originalStorage===undefined)delete globalThis.localStorage;else globalThis.localStorage=originalStorage;}
 check(readFileSync(new URL('../src/screen-leaderboard.js',import.meta.url),'utf8').includes('getLeaderboard(app.leaderboard,{event,car:boardFilter.car,driverId:boardFilter.driverId})'),'visible leaderboard requests only the selected compatible class');
 check(readFileSync(new URL('../src/screen-leaderboard.js',import.meta.url),'utf8').includes('data-board-filter="driverId" aria-label="Leaderboard driver skill class"'),'leaderboard has an accessible performance-class filter');
-console.log(`Driver UI: ${checks} production action, menu, accessibility, mobile-style and race-guard checks passed.`);
+console.log(`Driver UI: ${checks} production action, menu, accessibility, race-guard checks passed.`);

@@ -1,15 +1,15 @@
 {
   "schema": 1,
-  "commit": "15f6f67766763d872a87a5ee7ef1a030723efa3b",
-  "time": "2026-10-03T17:35:08.192Z",
+  "commit": "f394bdf4c9a17c0ad3eebcbd9b4be78893d1a69a",
+  "time": "2026-10-04T19:17:19.792Z",
   "tier": "full",
-  "passed": true,
+  "passed": false,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "15f6f67766763d872a87a5ee7ef1a030723efa3b",
-  "complete": true,
+  "endCommit": "f394bdf4c9a17c0ad3eebcbd9b4be78893d1a69a",
+  "complete": false,
   "total": 347,
-  "completed": 347,
+  "completed": 0,
   "failures": []
 }

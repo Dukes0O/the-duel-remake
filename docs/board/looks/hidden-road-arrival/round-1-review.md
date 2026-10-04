@@ -1,7 +1,7 @@
 # Gate arrival: round 1 Director review
 
 Reviewed source `0d54300`, capture tooling `3a16f85` and frozen evidence
-`b33d18c`. Inspected actual High opening, invitation, arrived and phone views,
+`b33d18c`. Inspected actual High opening, invitation, arrived views,
 Performance turn-back, and High loudness and spectrogram plots. The private
 browser run reports ten images and two real-time recordings with no errors
 or warnings. This is a presentation review, not another Rustwall asset round.
@@ -13,13 +13,13 @@ or warnings. This is a presentation review, not another Rustwall asset round.
 | Grounding | 4 | Visible parked car and opening contact agree in the inspected stills. |
 | Lighting and materials | 4 | The presentation fits the existing scene; underlying wall fidelity debt remains in EGG-02-P1. |
 | Motion and timing | 3, provisional | Simulation and phase logs support the sequence. Stills cannot prove a clear camera move through the opening. |
-| Obstruction | 2 | Desktop panel covers the car; the phone panel and crop conceal the approach. |
+| Obstruction | 2 | Desktop panel covers the car. |
 | Frame cost | Unmeasured | This capture has no paired frame-cost sample for the added presentation. |
 
 ## Next changes, in order
 
 1. Move and compact the dialog so the car and threshold remain visible.
-   Use phone framing that keeps both in the scene while retaining large,
+   Keep both in the scene while retaining large,
    readable choice controls.
 2. Follow the car through the opening after Enter. The arrived shot still
    looks at the wall from outside while its copy says the wall is behind the

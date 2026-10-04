@@ -1043,12 +1043,14 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
-    flag: arsenal
-    owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, docs/changes/ARS-03.md]
-    hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/sim-driving.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
-    hook_requests: [src/audio.js, src/sound-bank.js, tools/audio/catalog.json]
-    sequencing: "ARS-03 owns weapon and renderer hooks; CREW-04 owns sim-rival and raiders. Audio hooks wait for a single assigned owner. Preserve Mirage's own boss file and reuse its generic decoy contract."
+    test_commit: 35e969c
+    flag: arsenal-wave3
+    owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
+    hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/sim-results.js, src/screen-hud.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/combat-hud.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, src/app.js, src/game.js, src/screen-router.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
+    hook_requests: []
+    sequencing: "Voice's reviewed hooks have transferred to Arsenal. Gunn commits its catalog, earned-look text and App availability hooks separately before returning them to Arsenal. CREW-04 waits for native combat hooks. Preserve Mirage's boss file and the released switch states."
     runtime_fixture_grant: "Mortar becomes implemented here. Replace only the existing unimplemented-purchase Mortar input with an unknown weapon ID; retain the refusal and no-write assertions and record independent review."
+    dev_gate: "The released arsenal switch stays unchanged. A new arsenal-wave3 dev switch gates these four weapons, offers, player and computer use. Saved Mirage ownership remains intact while the item is unavailable; independent off/on tests precede the guard. App, Game and router option hooks belong to Arsenal before Convoy."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build the four wave 3 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. The Decoy Drone reuses Mother Mirage's decoy cars; the Mortar's ring is always drawn before the shell lands."
@@ -1118,11 +1120,15 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
-    flag: crew-gear
-    owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, docs/changes/CREW-04.md]
-    hooks: [src/sim-rival.js, src/raiders.js]
-    hook_requests: [src/combat-ai.js]
-    sequencing: "ARS-03 owns combat-ai and renderer while CREW-04 starts in its crew module, sim-rival and raiders. ARENA-05 waits for these raider hooks. Request other hooks before editing."
+    test_commit: 11efc6e
+    note_commit: 2febf4e
+    claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
+    flag: cpu-crews
+    owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
+    hooks: [src/raiders.js]
+    hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, tools/combat-balance.mjs]
+    sequencing: "ARS-03 owns sim-rival, combat-ai, projectiles and balance first. CREW-04 builds its crew module and raiders while those hooks wait. ARENA-05 waits for raiders; no two cards edit a shared file at once."
+    dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
@@ -1198,7 +1204,10 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/ambush-alley
-    flag: scrapdome
+    test_commit: 6e2fa93
+    note_commit: ed46371
+    flag: ambush-alley
+    claude_answer_2026_10_04: "Pay is 60 per wave plus 150 for all five, times difficulty; hold is five per wave, settled once. A wave needs every fighter down and its buggy wrecked, with no return in that wave. Use the Pit fort eight metres from the centre pile or Salt's longest straight, never the Scrapdome ring; attackers start at least 60 metres away from two directions (SCRAPDOME section 10)."
     owns: [src/arena/modes/ambush-alley.js, tools/test-arena-ambush-alley.mjs, docs/changes/ARENA-05.md]
     hooks: [src/raiders.js, src/onfoot-race.js, src/arena/arena-event.js]
     sequencing: "Start tests and the mode module only. CREW-04 owns raiders until its handoff; arena hooks remain parked with Convoy and can be granted to this card while Convoy waits for Claude."
@@ -1318,9 +1327,12 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/convoy-raid
-    waiting_on: claude
+    test_commit: c5c3c72
+    note_commit: 11371c8
+    note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
+    claude_answer_2026_10_04: "Win pays 700 times difficulty and adds 25 Tollkeeper hold; loss pays 40 per valve the player broke, settled once. Unlock with Salt Flats and any Tollkeeper hold from races; hits choose valves by actual impact/contact points, blast reaches every valve in radius, and the body only shoves and never dies before the boarding charge (SCRAPDOME section 10)."
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
-    flag: scrapdome
+    flag: convoy-raid
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
     hook_requests: []
@@ -1337,13 +1349,19 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
+    test_commit: 99f6251
+    note_commit: bcda842
     waiting_on: claude
+    note: "The native fight and rewards pass their focused checks. Claude must settle the finished turret asset before the card can merge."
+    art_question: "The authored car kit has only a mount; Odessa's existing turret is a code-built prop. What approved finished roof turret should Gunn and the earned cosmetic look use? Keep the settled combat and reward rules."
+    claude_answer_2026_10_04: "Barrage needs ready cooldown, clear sight and player 25 to 90 metres away; aim tracks through the tell then commits the predicted first-arrival point, with rockets 0.25 seconds apart. Broken sight at lock fires nothing but earns overheat; single rockets fire every three seconds at 40 to 80 metres, outside tell/window and two seconds after barrage. First win earns Rocket Pods and an Armory turret kit look with no gameplay effect (SCRAPDOME Gunn)."
     design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
     flag: gunn
     owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
-    hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
-    hook_requests: []
-    sequencing: "Use the settled per-boss file architecture and the Pit. Convoy owns arena mode entry; Gunn owns boss registry and tell view. Request any other hook before editing it."
+    hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/arena/warlord-event.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-territory.js, src/app.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs]
+    hook_requests: [src/weapon-upgrades.js]
+    sequencing: "Gunn's separate data, catalog and earned-look text commits return their hooks to Arsenal. App is frozen for Gunn's narrow availability caller commit, then returns to Arsenal. Native defense uses the existing boss registry. The final turret art still waits for Claude."
+    test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
@@ -1442,7 +1460,6 @@ tasks:
     acceptance:
       - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
     claude_polish_list: "From the 1 October reviews: more scrap on the Salt Flats inner island; tanker readability at distance; Salt Flats ridge width variety."
-    phone_capture_note: "Private phone captures show the weapon row overlapping the course title and the ambush title overlapping the bailout hint. These are unchanged HUD paths; route them through a settled polish card when its files are free."
 
   - id: CRASH-02
     title: "Crash look and sound"
@@ -1663,7 +1680,7 @@ tasks:
       - "Reveal the hidden road as a dotted map path only after discovery, in the live map and course preview. Cache keys must include discovery so switching named players cannot leak the path. Flag-off and undiscovered map geometry stays identical to the recorded controls."
       - "After five completed Pacific races without discovery, show the garage tip about the dry wash. After ten, draw a bounded dust devil near the entrance during races using presentation time and no simulation RNG. Remove both hints after discovery. These hints do not change collision, race timing, NPC routes or outcomes."
       - "Independent save review loads every historical fixture, checks malformed/partial data and backup failure, and preserves credits, cars, upgrades, drivers, courses, paint, old weapon levels, records and ghosts. Test named-player isolation, duplicate discovery/finish events, reload, direct visit and interrupted navigation using memory-only storage."
-      - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints and a phone-size menu. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
+      - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
       - "R1 review authorizes a narrow screen-menu.css rule for the discovered WASTELAND action: full-column secondary button at least 44 pixels high. Move the five-race garage hint above the car list and label the revealed map path clearly, keeping undiscovered and flag-off presentation unchanged. R2 menu images must show settled loading state; do not hide a real loading overlay in the capture."
       - "The independent author may extend test-wasteland-profile's exact default key list with the two approved discovery fields and assert false/zero defaults. Retain every existing key and all legacy, malformed, backup and future-version checks. The Director reviews this precise expected-schema change before the mandatory gate rerun; record and retain the original failure."
     note: "Merged 81b268c after 231 passing lane suites and a passing build on clean fdcf7eb; c4edc08 changes evidence only. Three failed attempts and reviewed corrections are retained: existing update ordering, optional menu control, and exact approved discovery-field expectation. Runtime, Save Guardian and presentation reviews pass; two scored browser rounds are retained. Discovery persists by player; direct visits create no race settlement. Raw-field backup detection precedes writes, unknown Wasteland data is preserved, and the bounded counter's history initialization is only a lower bound. Hidden Road stays dev for separate wall/wash art debt."
@@ -1683,7 +1700,7 @@ tasks:
       - "Keep the camera selector pure and derived from the same fighter snapshot. Overhead follows behind and above the fighter, with terrain clearance at the actual camera position and a bounded boom/tunnel correction. Recheck final clearance after constraints so slopes and tunnel roofs cannot push the eye underground. Verify all eleven combat courses and common-time poses without changing simulation inputs or outcomes."
       - "Reuse existing rigged and fallback local fighter views in overhead; suppress first-person hands and tools there. First person retains its current body suppression and gear. Reticle placement must reflect the existing fighter aim direction in both cameras, including overhead parallax; change presentation only, never targeting, weapon rules or aim assistance. Include foot mode in presentation metrics invalidation."
       - "Store an additive validated footCamera preference in named-player raceSettings only if the existing normalization and pre-write backup seam can safely support it. Default old and malformed values to first person, preserve other settings and player isolation, and require independent Save Guardian review. Do not introduce a new storage key or version solely for this preference."
-      - "Independent focused red tests precede implementation. Retain ordinary camera/input controls, use one compact memory-only browser scenario for setting/key switching, aim/fire/repair, pause and re-entry in High and Performance, and keep scored desktop/phone contact sheets. Required lane/build gate precedes merge; do not repeat unrelated save suites unless their source changed."
+      - "Independent focused red tests precede implementation. Retain ordinary camera/input controls, use one compact memory-only browser scenario for setting/key switching, aim/fire/repair, pause and re-entry in High and Performance, and keep scored contact sheets. Required lane/build gate precedes merge; do not repeat unrelated save suites unless their source changed."
       - "Independent author may add only footCamera: first-person to the existing exact saved-preference expectation in test-race-settings, with all previous values retained. Record and review this approved additive-schema assertion change. Before the broad gate, run affected existing race-settings, input-context, on-foot camera and backup tests once to catch changed contracts early. No new gamepad mapping is needed in this card."
       - "The migrated current-format fixture in test-career-backup may receive only its new footCamera: first-person default. Preserve the existing no-migration/no-backup assertions and all historical/damaged fixtures. This fixture correction reflects the approved raw missing-field migration guard; it must not weaken that guard. Record and independently review the exact fixture diff."
     note: "Merged c1ff020 after 232 passing lane suites and a passing build on clean 45ec1e8; final 39c34e8 changes evidence only. Source and Save Guardian reviews pass; two scored browser rounds are retained. Eight focused groups cover preference isolation, unchanged first-person controls, all eleven combat courses, remote-tunnel clearance and projected aim. The approved saved-preference expectation and current-format backup fixture changes retain previous controls. No new assets or weapon behavior; first person remains default."
@@ -2143,7 +2160,7 @@ tasks:
     size: L
     needs: [BUG-01, BUG-10, BUG-11, FIX-03, FND-07, FND-08]
     status: released
-    note: "Released in 34d66fe. Merged as d9965cd; unchanged replays, build, High/Performance smoke and six narrow dialog checks pass."
+    note: "Released in 34d66fe. Merged as d9965cd; unchanged replays, build, and High/Performance smoke pass."
     spec: "SPEC.md, task RFX-01"
   - id: RFX-02
     title: "Split game simulation into systems"
@@ -2506,7 +2523,7 @@ tasks:
       - "Count hits and actual armor removed from player-owned weapon or ram impacts on any of three CPU cars; exclude shielded, traffic, self and CPU-owned damage."
       - "Count wrecks caused and taken once per incident; do not credit scenery or self wrecks as player-caused."
       - "Track a bounded combo and combat style score once, reset live counters per stage, and snapshot hitsLanded, wrecksCaused, wrecksTaken, knockdowns, damageDealt, bestCombo and combatStyleScore on finish or timeout."
-      - "Show combat stats on results at desktop and 390x844; ordinary and flag-off modes keep their result, score, credit and replay behavior."
+      - "Show combat stats on results; ordinary and flag-off modes keep their result, score, credit and replay behavior."
       - "Focused tests cover overkill, simultaneous bomb victims, all three opponents, ownership, frame-rate parity and one-time wreck recovery; private browser, balance and frame checks pass."
     note: "Read-only scope proposal completed. CMB-03 records and presents combat results; SAVE-01 owns credit bonus and persistence. Knockdowns stay zero until on-foot combat is implemented. Initial combat style tuning is a separate 5-second, maximum-5 combo, 100 points per positive hit times combo, plus 400 per caused wreck, all times the existing score multiplier."
     spec: "SPEC.md section 3.2, task CMB-03"
@@ -2559,7 +2576,7 @@ tasks:
     needs: [RFX-01, CMB-01, VIS-02]
     status: integrated
     behavior_change: yes
-    note: "Weapon cooldown rings, armor bars, projected opponent markers and directional hit feedback integrated at 43295ea. Focused HUD checks and private desktop/mobile High/Performance review passed."
+    note: "Weapon cooldown rings, armor bars, projected opponent markers and directional hit feedback integrated at 43295ea. Focused HUD checks and private High/Performance review passed."
     spec: "SPEC.md sections 3.12 and 12.2, task UI-01"
   - id: PRG-01
     title: "Versioned Wasteland save data and migration"
@@ -3248,7 +3265,7 @@ tasks:
     claimed_by: "Codex Warlord UI lane, 26 September 2026"
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js, src/career-backup.js, src/armor-kits.js, src/screen-armory.js, tools/test-armor-kits.mjs, tools/scenarios/yard-home.mjs]
-    note: "Director re-slices, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; the two existing armor-kit consumers plus their focused test; and the existing private yard-home scenario. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs, retain armor-kit unlocks, and prove the settled locked/available/defeated ladder in High and Performance modes including a phone-width map capture."
+    note: "Director re-slices, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; the two existing armor-kit consumers plus their focused test; and the existing private yard-home scenario. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs, retain armor-kit unlocks, and prove the settled locked/available/defeated ladder in High and Performance modes."
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Design settled in docs/SCRAPDOME.md section 5, 'Settled for build' (Claude, 26 September 2026): a full territory hold opens that warlord; FIGHT, REMATCH and COMING LATER states; profile.wasteland.warlords. Earlier text kept for context: settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."
@@ -3382,16 +3399,18 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/audio/fight-voices
+    source_commit: 23e625e
+    test_commit: d8df393
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
-    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, reviewer, browser_qa, audio_qa]
     acceptance:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
       - "Play crew callouts and raider warnings during real fights, with matching subtitles, repeat limits and pause/mute handling. Keep simulation and replay fingerprints unchanged."
       - "Tests first; private memory-only browser and recorded audio checks at High and Performance. Keep behind a new dev switch; record any human listening still due."
     note: "Kyle authorized runtime wiring on 4 October. Preserve the kept sources, receipts and the separate audio worktree."
-    sequencing: "Voice owns audio.js and sound-bank.js first; ARS-03 may prepare its new cues in private modules and receives those hooks after Voice. Crew callouts follow the first player combat action; the existing raiderWarning event plays the kept warning. Subtitles show the exact catalog text, including while muted. Presentation timers never change simulation."
+    sequencing: "Voice owns audio and combat HUD first; Arsenal receives its reviewed commit before editing those hooks. Arsenal freezes combat-weapons while Voice adds native actor attribution only. Crew callouts follow the first player combat action; the existing raiderWarning plays the kept warning. Exact subtitles remain visible while muted; presentation timers never change simulation."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
     owner: codex

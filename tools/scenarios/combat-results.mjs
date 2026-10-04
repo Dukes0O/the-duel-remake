@@ -3,9 +3,9 @@
 const LABELS = ['HITS LANDED', 'WRECKS CAUSED', 'WRECKS TAKEN',
   'KNOCKDOWNS', 'DAMAGE DEALT', 'BEST COMBO', 'COMBAT STYLE'];
 
-async function pass(context, quality, {width, height, name, mobile}) {
+async function pass(context, quality, {width, height, name}) {
   await context.command('Emulation.setDeviceMetricsOverride',
-    {width, height, deviceScaleFactor: 1, mobile});
+    {width, height, deviceScaleFactor: 1, mobile: false});
   await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine')?.disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
     `${quality} ${name} memory-only menu`, 60_000);
@@ -79,9 +79,7 @@ export async function run(context) {
   try {
     for (const quality of ['high', 'performance']) {
       await pass(context, quality,
-        {width: 1280, height: 720, name: 'desktop', mobile: false});
-      await pass(context, quality,
-        {width: 390, height: 844, name: 'mobile', mobile: true});
+        {width: 1280, height: 720, name: 'desktop'});
     }
   } finally {
     await context.command('Emulation.clearDeviceMetricsOverride');

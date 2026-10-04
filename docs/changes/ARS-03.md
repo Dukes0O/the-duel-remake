@@ -46,8 +46,22 @@ Mirage's existing boss file is reused through its generic decoy contract.
 - Pending: source/save/audio reviews, final full balance and frame checks,
   lane gate and build on the final integration base.
 
+Release-base merge checks (4 October, parents `07d6b45` and `3eb740d`):
+- Native wave three: 51 cases, 304 checks; Voice: 26 cases, 358 checks;
+  wave-three audio/native Voice: 31 checks; flags: 39; Preview: 22. All pass.
+- Production build passes in 535 ms (existing large-chunk warning).
+- Private port 23901, memory-only desktop scenario: 16 high/performance
+  captures, zero warnings or errors. Evidence: `.evidence/2026-10-04/ARS-03-release-base/`.
+- Full/lane tiers and final balance remain for the Director's serial gate.
+  Tesla HUD disable/recharge display and shield-plus-Magnet review are pending.
+
 The existing unimplemented purchase denial changes only its Mortar input to
 an unknown weapon ID. Its refusal and no-write assertions are unchanged.
+After merging the 4 October release base, the native wave-three gate test
+expects `FEATURE_STATES.arsenal` to be `on` instead of `dev`. The same invariant
+still protects the existing Arsenal state; the release changed that state.
+The catalog check keeps all five released features on and both new dev flags,
+with nine entries. Explicit dev isolation fixtures and gameplay checks remain.
 
 ## Removed
 

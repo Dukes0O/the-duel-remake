@@ -21,7 +21,7 @@ const ok = (value, message) => { checks++; assert.ok(value, message); };
 test.after(() => console.log('Dustmonger: ' + checks + ' checks.'));
 
 function fight(difficulty = 'medium') {
-  const duel = new Duel({seed: 1989});
+  const duel = new Duel({seed: 1989, featureFlags: {arsenal: false}});
   duel.state.wastelandGateDiscovered = true;
   assert.equal(startWarlordEvent(duel, {warlordId: 'dustmonger', car: 'falcone_f42', cpuDifficulty: difficulty}), true);
   assert.equal(beginWarlordEvent(duel), true);
