@@ -18,9 +18,15 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && !Object.hasOwn(FEATURE_STATES, 'warlords') && FEATURE_STATES['fuel-run'] === 'dev'
   && FEATURE_STATES.arsenal === 'dev' && FEATURE_STATES['salt-flats'] === 'dev'
   && FEATURE_STATES['bounty-hunt'] === 'dev' && FEATURE_STATES['crew-gear'] === 'dev'
-  && FEATURE_STATES['fight-voices'] === 'dev' && Object.keys(FEATURE_STATES).length === 8,
+  && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES.gunn === 'dev'
+  && Object.keys(FEATURE_STATES).length === 9,
   'only unfinished features retain switches; Wasteland 2, Scrapdome, Titan climbing, Muddy Hollow and Warlords are released without switches');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
+check(!productionFlags.enabled('gunn'), 'production keeps Gunn off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=gunn'}).enabled('gunn'),
+  'production URLs cannot enable unfinished Gunn');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=gunn'}).enabled('gunn'),
+  'explicit private QA enables Gunn');
 check(!productionFlags.enabled('fight-voices'), 'production keeps fight voices off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=fight-voices'}).enabled('fight-voices'),
   'production URLs cannot enable unfinished fight voices');
