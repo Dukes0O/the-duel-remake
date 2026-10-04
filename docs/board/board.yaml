@@ -1044,7 +1044,7 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
     test_commit: 24cc7ec2
-    source_commit: 23263d4
+    source_commit: 9cc4fa86
     waiting_on: claude
     design_question: "A player who beat Mirage before the Drone was built has no owned Drone; another win is not a first win and cannot grant it. How should that player claim the earned Drone without granting it during save normalization?"
     flag: arsenal-wave3
@@ -1125,11 +1125,12 @@ tasks:
     branch: codex/foot/cpu-crews
     test_commit: 11efc6e
     note_commit: 2febf4e
+    source_commit: 9ba52791
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
     hooks: [src/raiders.js]
-    hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, tools/combat-balance.mjs]
+    hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
     sequencing: "ARS-03 owns sim-rival, combat-ai, projectiles and balance first. CREW-04 builds its crew module and raiders while those hooks wait. ARENA-05 waits for raiders; no two cards edit a shared file at once."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
