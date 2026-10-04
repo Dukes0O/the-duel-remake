@@ -7,6 +7,9 @@ import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {createFighter} from '../src/onfoot.js';
 import {stepFootTransition} from '../src/onfoot-transition.js';
 import {App} from '../src/app.js';
+import {CONVOY_ROOF_PLATE, convoyPoint, damageConvoyValves} from '../src/arena/convoy.js';
+import {stepConvoyRaid} from '../src/arena/modes/convoy-raid.js';
+import {startBoarding} from '../src/crew-gear/boarding.js';
 
 // ARENA-07: native rules and the pure settlement contract settled on 4 October.
 const DT = 1 / 120;
@@ -46,6 +49,41 @@ function breakAll(f) {
   f.duel.step(DT);
 }
 
+// ART-FIT-TANKER's amber plate, not the 3.5 m lamp-inclusive body envelope.
+const PLATE = {x: -.0000006035, y: 3.02, z: -2.4441381118,
+  halfWidth: .69862524, halfLength: 1.24205031};
+function roofCrossing(f, local = PLATE) {
+  const state = f.duel.state, ground = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
+  const at = convoyPoint(f.duel, f.rig, [local.x, local.y, local.z]);
+  state.onFoot = true; state.crewId = 'rook';
+  state.fighter = createFighter(f.duel.course, state, {s: f.rig.s, lateral: f.rig.lateral});
+  Object.assign(state.fighter, {x: at.x, z: at.z, y: at.y + .02,
+    groundY: ground.y, airHeight: at.y - ground.y + .02, verticalSpeed: -3});
+  state.fighterInput = {fire: false};
+  return at;
+}
+function moduleWindow(f) {
+  // Use the real mode damage API while its central armor caller is held.
+  equal(damageConvoyValves(f.duel, f.rig, 450, 'bomb',
+    {owner: 'player', hitPosition: f.at, blastRadius: 20}), 450,
+  'native valve damage opens the isolated boarding fixture');
+  equal(f.duel.state.arena.convoy.valves, [0, 0, 0], 'all three real valves are broken');
+}
+function advance(duel, seconds) {
+  for (let n = 0; n < Math.round(seconds / DT); n++) duel.step(DT);
+}
+function settleNativeOnce(duel, expectedScrap, runId) {
+  const profile = {wasteland: {version: 1, discoveredGate: true,
+    scrap: 0, settledResults: [], territories: {tollkeeper: {hold: 0}}}};
+  const payload = {runId, ownerPlayerId: 'convoy-driver', activePlayerId: 'convoy-driver',
+    cpuDifficulty: 'medium', arena: duel.state.arena};
+  const first = settleArenaResult(profile, payload);
+  equal(first.awarded, true, 'the actual native result settles');
+  equal(first.scrapEarned, expectedScrap, 'the actual result pays the settled amount');
+  equal(settleArenaResult(first.profile, payload).awarded, false,
+    'the same native event cannot settle twice');
+}
+
 test('native projectile hits damage only the nearest valve and never destroy the rig body', () => {
   const f = exposedFight(), armor = f.rig.armor;
   applyArmorDamage(f.duel, f.rig, 'crossbow', {owner: 'player', hitPosition: f.at});
@@ -82,13 +120,8 @@ test('breaking all valves slows the real rig, opens a sixty-second boarding wind
 
 test('the real rooftop crossing, fire hold and fuse are required to win', () => {
   const f = exposedFight(); breakAll(f);
-  const state = f.duel.state, car = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
-  state.onFoot = true; state.crewId = 'rook';
-  state.fighter = createFighter(f.duel.course, state, {s: f.rig.s, lateral: f.rig.lateral});
-  const roofY = car.y + f.duel._vehicleSpec(f.rig).height;
-  Object.assign(state.fighter, {x: car.x, z: car.z, y: roofY + .02,
-    groundY: car.y, airHeight: roofY - car.y + .02, verticalSpeed: -3});
-  state.fighterInput = {fire: false};
+  const state = f.duel.state;
+  roofCrossing(f);
   stepFootTransition(f.duel, DT);
   equal(state.boarding?.phase, 'roof', 'an ordinary crew member boards the slow rig by a real roof crossing');
   state.fighterInput.fire = true;
@@ -101,6 +134,110 @@ test('the real rooftop crossing, fire hold and fuse are required to win', () => 
   f.duel.step(DT);
   equal(state.status, 'arena_result', 'the finishing boarding charge completes the native event');
   equal(state.arena.result.winnerId, 'player', 'the charge awards the player a Convoy win');
+});
+
+test('boarding fixtures use the approved amber plate plane and bounds', () => {
+  equal(CONVOY_ROOF_PLATE, PLATE, 'runtime boarding geometry matches the approved plate');
+  ok(PLATE.y < 3.5, 'warning lamps above the plate are not its landing plane');
+  ok(Math.abs(PLATE.z) > PLATE.halfLength, 'the plate does not include the rig centre');
+});
+
+test('a native downward plate crossing mounts at the plate rather than the body centre', () => {
+  const f = exposedFight(); moduleWindow(f);
+  const at = roofCrossing(f);
+  stepFootTransition(f.duel, DT);
+  equal(f.duel.state.boarding?.phase, 'roof', 'a real downward amber plate crossing boards the rig');
+  const fighter = f.duel.state.fighter;
+  ok(Math.hypot(fighter.x - at.x, fighter.y - at.y, fighter.z - at.z) < .01,
+    'the mounted fighter stays on the approved plate, not on lamp tops or cab centre');
+});
+
+test('native boarding rejects the cab, tank outside the plate, lamp tops and upward crossings', () => {
+  for (const local of [
+    {...PLATE, z: 3},
+    {...PLATE, x: PLATE.x + PLATE.halfWidth + .05},
+    {...PLATE, z: PLATE.z - PLATE.halfLength - .05},
+    {...PLATE, y: 3.5},
+  ]) {
+    const f = exposedFight(); moduleWindow(f);
+    const at = roofCrossing(f, local);
+    f.duel.state.fighter.y = at.y - .005;
+    equal(startBoarding(f.duel, f.rig, {previousY: at.y + .02}), false,
+      'a downward crossing of another tanker surface is not a plate landing');
+    equal(f.duel.state.boarding, null, 'a rejected surface creates no boarding or charge');
+  }
+  const f = exposedFight(); moduleWindow(f);
+  const at = roofCrossing(f);
+  f.duel.state.fighter.verticalSpeed = 3;
+  equal(startBoarding(f.duel, f.rig, {previousY: at.y - .02}), false,
+    'rising through the plate is not a landing');
+});
+
+for (const deadline of ['boarding window', 'event']) {
+  test(`a charge legally planted just before the ${deadline} deadline keeps its full fuse and settles once`, () => {
+    const f = exposedFight(), state = f.duel.state;
+    if (deadline === 'event') stepConvoyRaid(f.duel, 298.8 - state.arena.clockSec);
+    moduleWindow(f);
+    if (deadline === 'boarding window') stepConvoyRaid(f.duel, 58.8);
+    let results = 0;
+    f.duel.onChange((_state, event) => { if (event.arenaResult) results++; });
+    roofCrossing(f); f.duel.step(DT);
+    equal(state.boarding?.phase, 'roof', 'the deadline fixture boards through the native plate path');
+    state.fighterInput.fire = true;
+    advance(f.duel, 1 - DT);
+    equal(state.boarding?.phase, 'roof', 'one tick short of the one-second hold is still unplanted');
+    advance(f.duel, DT);
+    equal(state.boarding?.phase, 'charge', 'the complete native hold plants exactly one charge');
+    equal(state.boarding.chargesPlanted, 1, 'only one charge was planted');
+    equal(state.arena.convoy.chargePlanted, true, 'the actual mode records the legal plant');
+    ok(state.arena.clockSec < 300 && state.arena.convoy.boardingLeftSec > 0,
+      'planting completed before both relevant deadlines');
+    advance(f.duel, 2 - DT);
+    equal(state.status, 'racing', 'the original full fuse survives the crossed deadline');
+    equal(state.boarding?.phase, 'charge', 'the pending native charge is not discarded at timeout');
+    equal(state.arena.convoy.valves, [0, 0, 0], 'a planted charge prevents valve restoration');
+    equal(results, 0, 'neither deadline publishes an early result');
+    advance(f.duel, DT);
+    equal(state.status, 'arena_result', 'detonation after the full two seconds finishes the event');
+    equal(state.arena.result.reason, 'charge', 'the native result is a charge win, not a timeout loss');
+    equal(state.arena.result.winnerId, 'player', 'the player wins after the deadline');
+    equal(results, 1, 'the native event publishes exactly one result');
+    advance(f.duel, .5);
+    equal(results, 1, 'later game ticks cannot publish another result');
+    settleNativeOnce(f.duel, 840, `near-${deadline}`);
+  });
+}
+
+test('an unplanted window expires, restores valves and rejects later plate landings', () => {
+  const f = exposedFight(); moduleWindow(f);
+  stepConvoyRaid(f.duel, 60 - DT);
+  equal(f.duel.state.arena.convoy.valves, [0, 0, 0], 'valves stay broken one tick before the deadline');
+  advance(f.duel, 2 * DT);
+  equal(f.duel.state.arena.convoy.valves, [75, 75, 75], 'an unplanted deadline restores all valves');
+  equal(f.duel.state.arena.convoy.boardingLeftSec, 0, 'the unplanted window is closed');
+  equal(f.duel.state.arena.convoy.chargePlanted, false, 'timeout cannot invent a planted charge');
+  equal(f.duel.state.status, 'racing', 'window expiry alone does not finish the five-minute event');
+  const at = roofCrossing(f);
+  f.duel.state.fighter.y = at.y - .005;
+  equal(startBoarding(f.duel, f.rig, {previousY: at.y + .02}), false,
+    'a closed window cannot admit a late plate landing');
+});
+
+test('the five-minute deadline without a charge loses and settles only once', () => {
+  const f = exposedFight(); moduleWindow(f);
+  stepConvoyRaid(f.duel, 300 - f.duel.state.arena.clockSec - DT);
+  let results = 0;
+  f.duel.onChange((_state, event) => { if (event.arenaResult) results++; });
+  advance(f.duel, 2 * DT);
+  equal(f.duel.state.status, 'arena_result', 'an unplanted five-minute deadline ends the native event');
+  equal(f.duel.state.arena.result.reason, 'time', 'the loss comes from the event clock');
+  equal(f.duel.state.arena.result.winnerId, f.rig.arenaId, 'the convoy wins an unplanted timeout');
+  equal(f.duel.state.arena.convoy.finished, false, 'timeout does not claim a charge finish');
+  equal(f.duel.state.boarding, null, 'there is no pending charge after an unplanted timeout');
+  equal(results, 1, 'timeout publishes one result');
+  advance(f.duel, .5);
+  equal(results, 1, 'later ticks do not repeat the timeout result');
+  settleNativeOnce(f.duel, 144, 'unplanted-timeout');
 });
 
 // Result fixtures test the immutable settlement boundary, not the live charge path above.
