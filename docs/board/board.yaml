@@ -1319,12 +1319,12 @@ tasks:
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
     flag: scrapdome
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/arena/arena-world-view.js, src/arena/modes.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
     hook_requests: []
     sequencing: "Use the approved rigid tanker recipe, roof plate and lamps, not the superseded trailer or hatch. Convoy owns arena entry and mode hooks; request other shared files before editing."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
-      - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rig on its loop, escorts, three valves, the hatch and the boarding finish, the 60 s hatch rule, pay once per event. The rig and trailer art start from the ART-SRC-SALTFLATS pick. Headless tests and a private browser scenario."
+      - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rigid tanker on its loop, two escorts, three valves, the lit roof plate and boarding finish, the 60 s reset, pay once per event. Install the approved ART-FIT-TANKER recipe output when the mode loads it. Headless tests and a private browser scenario."
   - id: WAR-03a
     title: "Gearhead Gunn: Barrage; Rocket Pods reward"
     owner: codex
@@ -3378,8 +3378,8 @@ tasks:
     needs: [AUD-17]
     status: ready
     flag: fight-voices
-    owns: [src/fight-voices.js, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, docs/changes/AUD-18.md]
-    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
+    owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
+    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, reviewer, browser_qa, audio_qa]
     acceptance:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
