@@ -27,8 +27,10 @@ Turrets and flamers use native sight, contacts and armor damage. Dune uses
 the eight-bolt gear's 1.5-second reload; Rook uses the 0.6-second lock and
 1.8-second reload. The three-attack ambush cap remains separate from capacity.
 Repair events reuse footRepairStarted/Interrupted/Completed cues; attacks use
-the existing RPG and crew gear cues. Exit, return and respawn audio still need
-the native audio owner. No new sound file is added.
+the existing RPG and crew gear cues. CPU action events now carry their actual
+actor and enemy attribution, including turret and flamer lifecycle cues.
+Exit, return and respawn playback still need the native audio owner.
+No new sound file is added.
 
 ## Checks
 
@@ -37,17 +39,15 @@ The six positive native cases remain red because sim-rival has no caller yet.
 Existing raiders: 7/7 pass. Owned gear module checks: 16/16 pass.
 Combat replay fingerprints: 12/12 pass across four encounters, unchanged.
 
-Independent CPU cue regression: 23 cases / 37 executed checks, 14 pass / 9
-fail. Original 19 cases and every existing assertion remain exact: six native
-caller failures are still held. Three new failures each report that native
-crew.turret.deploy, crew.turret.fire or crew.flamer.start announces the player's
-Rook line; actual speech is [crew.rook.callout], expected []. Seed 3004 selects
-Odessa; 3013 selects Cinder. Real parked fighters and contact logic produce
-each cue into the merged EngineAudio/Voice consumer without fabricated emits.
-The real player Crossbow/Rook speech and exact caption control passes. New
-checks also require enemy true, the actual CPU actor, no queued caption and
-the player's next native action retaining its line. The controller opts in
-only for this bounded probe; the native caller remains incomplete.
+Independent CPU cue regression 0c02e806 first reproduced three attribution
+failures: turret deploy/fire and flamer start consumed the player's Rook line.
+After the owned producer fix: 23 cases / 64 executed checks, 17 pass / 6 fail.
+The original six native caller failures remain held; all assertions are exact.
+Native Odessa and Cinder actions enter the real EngineAudio/Voice consumer.
+Each now retains its actual CPU actor and enemy marker, creates no immediate
+or queued player caption, and leaves the next native player Crossbow action
+able to announce Rook once with the exact kept caption. The actual player
+positive control also passes. No Voice or other shared source was edited.
 
 Direct controller probes pass Odessa's 40-armor/two-second repair and the
 three-second knockdown/respawn through damageRaider. Eight seeded crew probes
@@ -71,7 +71,7 @@ gate, build, browser, audio and source review remain unmeasured. Not merge-ready
 - crew-gear/contacts.js and signature.js: CPU fighter/turret targeting.
 - onfoot-race.js: native vehicle sweeps against the stopped crew fighter.
 - combat-scene.js and render3d.js: CPU fighters and deployables, without
-  changing race state. audio.js: native CPU event attribution.
+  changing race state. audio.js: native exit/return playback and repair placement.
 - tools/combat-balance.mjs: switch-on thirty-race check.
 
 Arsenal owns its shared hooks until reviewed merge. No pending shared file
@@ -82,4 +82,4 @@ merge and were preserved as received.
 
 The obsolete unanswered rule question and source-not-started note were
 replaced by the settled answer and current evidence. No runtime path is
-replaced or removed in this partial source commit.
+replaced or removed. Unattributed CPU action cues were replaced in place.

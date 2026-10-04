@@ -46,11 +46,12 @@ function finishStop(duel, actor, {repairCompleted = false} = {}) {
   const crew = actor.cpuCrew;
   if (crew.fighter?.repairing) duel.emit({
     [repairCompleted ? 'footRepairCompleted' : 'footRepairInterrupted']: true,
-    ...(repairCompleted ? {armorRestored: crew.repairAmount} : {}), enemy: true,
+    ...(repairCompleted ? {armorRestored: crew.repairAmount} : {}), actor, enemy: true,
     actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});
-  if (crew.fighter?.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', hitPosition: crew.fighter});
+  if (crew.fighter?.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', actor,
+    enemy: true, hitPosition: crew.fighter});
   crew.phase = 'driving'; crew.fighter = null;
-  duel.emit({cpuCrewEntered: true, actorId: targetIdentity(duel, actor),
+  duel.emit({cpuCrewEntered: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
     crewId: crew.crewId, hitPosition: point(duel, actor)});
 }
 
@@ -71,12 +72,13 @@ export function damageCpuCrewFighter(duel, fighter, amount,
     owner, source, hitPosition: {x: fighter.x, y: fighter.y + 1, z: fighter.z}});
   if (fighter.knockedDown) {
     if (fighter.repairing) duel.emit({footRepairInterrupted: true,
-      enemy: true, actorId: targetIdentity(duel, actor), hitPosition: fighter});
+      actor, enemy: true, actorId: targetIdentity(duel, actor), hitPosition: fighter});
     fighter.repairing = false;
     crew.resumePhase = crew.phase; crew.phase = 'recovering';
     crew.respawnAt = duel.state.stageTimeSec + 3;
     fighter.knockdownRemaining = 3;
-    if (fighter.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', hitPosition: fighter});
+    if (fighter.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', actor,
+      enemy: true, hitPosition: fighter});
     fighter.flaming = false;
     duel.emit({fighterKnockdown: true, cpuCrew: true,
       actorId: targetIdentity(duel, actor), owner, source,
@@ -133,7 +135,7 @@ function pullOver(duel, actor, crew, dt) {
     actor.speedMph = 0; crew.phase = crew.stopKind;
     crew.fighter = besideCar(duel, actor, crew);
     crew.stopSeconds = 0;
-    duel.emit({cpuCrewExited: true, actorId: targetIdentity(duel, actor),
+    duel.emit({cpuCrewExited: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
       crewId: crew.crewId, reason: crew.stopKind, hitPosition: crew.fighter});
   } else if (crew.stopSeconds >= 8) finishStop(duel, actor);
 }
@@ -182,7 +184,7 @@ function launch(duel, actor, crew, kind, target) {
   else Object.assign(shot, {crewGearShot: true, thrown});
   combat.projectiles.push(shot);
   fighter.weapon = kind;
-  duel.emit({weaponFired: kind, footWeaponFired: kind, enemy: true,
+  duel.emit({weaponFired: kind, footWeaponFired: kind, actor, enemy: true,
     actorId: id, hitPosition: {x, y, z},
     ...(kind === 'sticky-bomb' ? {crewGearCue: 'crew.sticky.throw'} :
       kind === 'marksman' ? {crewGearCue: 'crew.marksman.fire'} : {})});
@@ -194,7 +196,8 @@ function deployTurret(duel, actor, crew) {
   crew.turret = {id: `cpu-turret-${targetIdentity(duel, actor)}-${++crew.serial}`,
     x: f.x, y: f.y, z: f.z, health: gear.health, maxHealth: gear.health,
     age: 0, shotSeconds: 0, ownerId: targetIdentity(duel, actor)};
-  duel.emit({crewGearCue: 'crew.turret.deploy', turret: crew.turret, hitPosition: f});
+  duel.emit({crewGearCue: 'crew.turret.deploy', actor, enemy: true,
+    turret: crew.turret, hitPosition: f});
   return true;
 }
 
@@ -215,11 +218,11 @@ function stepTurret(duel, actor, crew, dt) {
       damageGearFighter(duel, contact.target, gear.fighterDamage, actor);
     else if (contact?.actor === target) damageGearCar(duel, target, gear.carDamage, actor);
     else continue;
-    duel.emit({crewGearCue: 'crew.turret.fire', turret, hitPosition: turret});
+    duel.emit({crewGearCue: 'crew.turret.fire', actor, enemy: true, turret, hitPosition: turret});
   }
   if (turret.health <= 0 || turret.age + GEAR_EPSILON >= gear.lifetime) {
     crew.turret = null;
-    duel.emit({crewGearCue: 'crew.turret.retire', hitPosition: turret});
+    duel.emit({crewGearCue: 'crew.turret.retire', actor, enemy: true, hitPosition: turret});
   }
 }
 
@@ -260,7 +263,7 @@ function signatureAttack(duel, actor, crew, target, dt) {
   if (!burnFlamer(duel, actor, crew, target, dt)) return false;
   crew.flamerSeconds = gear.capacity - dt; fighter.flaming = true;
   fighter.weapon = gear.id;
-  duel.emit({crewGearCue: 'crew.flamer.start', hitPosition: fighter});
+  duel.emit({crewGearCue: 'crew.flamer.start', actor, enemy: true, hitPosition: fighter});
   return true;
 }
 
@@ -276,7 +279,7 @@ function ambush(duel, actor, crew, dt) {
     crew.flamerSeconds = Math.max(0, crew.flamerSeconds - dt);
     if (!burning || crew.flamerSeconds <= GEAR_EPSILON) {
       fighter.flaming = false;
-      duel.emit({crewGearCue: 'crew.flamer.stop', hitPosition: fighter});
+      duel.emit({crewGearCue: 'crew.flamer.stop', actor, enemy: true, hitPosition: fighter});
     } else return;
   }
   const passed = actor.s - duel.state.s < -80;
@@ -321,8 +324,9 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
     crew.resumePhase = crew.phase; crew.phase = 'recovering';
     crew.respawnAt = s.stageTimeSec + crew.fighter.knockdownRemaining;
     if (crew.fighter.repairing) duel.emit({footRepairInterrupted: true,
-      enemy: true, actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});
-    if (crew.fighter.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', hitPosition: crew.fighter});
+      actor, enemy: true, actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});
+    if (crew.fighter.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', actor,
+      enemy: true, hitPosition: crew.fighter});
     crew.fighter.repairing = crew.fighter.flaming = false;
   }
   actor.prevS = actor.s; actor.prevLateral = actor.lateral;
@@ -335,14 +339,14 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
       const replacement = besideCar(duel, actor, crew);
       Object.assign(crew.fighter, replacement, {respawns: crew.fighter.respawns + 1});
       crew.phase = crew.resumePhase;
-      duel.emit({cpuCrewRespawned: true, crewId: crew.crewId,
+      duel.emit({cpuCrewRespawned: true, actor, enemy: true, crewId: crew.crewId,
         actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});
     }
     return true;
   }
   if (crew.phase === 'repair') {
     const seconds = FOOT.wrenchRepairSeconds / (crewPerks(crew.crewId).repairRateMultiplier || 1);
-    if (!crew.fighter.repairing) duel.emit({footRepairStarted: true, enemy: true,
+    if (!crew.fighter.repairing) duel.emit({footRepairStarted: true, actor, enemy: true,
       actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});
     crew.fighter.repairing = true;
     const live = Math.min(dt, Math.max(0, seconds - crew.repairSeconds));
