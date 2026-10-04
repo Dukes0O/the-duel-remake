@@ -81,6 +81,14 @@ Status: independent lane/build gate pending. Lane: codex/audio/fight-voices.
   the next independent broad lane/build gate is still due.
 - Kyle's listening check remains a separate human gate; no listening approval
   is inferred from decoded bytes or waveform measurements.
+- Current broad lane gate: 337 passed, 1 failed, 11 not run. The beta catalog
+  expected seven entries and omitted the new Fight Voices dev entry.
+  Independent author proves that failure: 7/8 beta cases pass; all 13 focused
+  follow-up suites pass, including flags, Voice and the 11 previously not run.
+  Director grant 29c3328 permits adding only the literal Fight Voices dev key
+  to that exact expected catalog. Every old key, state and assertion stays.
+  Corrected beta test passes all 8 cases.
+  Independent review and a fresh final lane/build gate remain due.
 
 ## Removed
 
