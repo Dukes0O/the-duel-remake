@@ -8,7 +8,8 @@ import {applyArmorDamage} from '../src/combat-armor.js';
 import {settleWarlordResult} from '../src/arena/warlord-settlement.js';
 import {getProfileWeapons} from '../src/weapon-upgrades.js';
 import {thinkBrain} from '../src/arena/arena-brains.js';
-import {worldPose} from '../src/arena/arena-floor.js';
+import {worldPose, floorLimit} from '../src/arena/arena-floor.js';
+import {sweepObstacle} from '../src/collision.js';
 import {stepCombat} from '../src/combat.js';
 import {armorDamageFor} from '../src/combat-armor.js';
 import {equipArmorKit, armorKitBonus, armorKitMass} from '../src/armor-kits.js';
@@ -21,8 +22,9 @@ const ok = (actual, message) => { checks++; assert.ok(actual, message); };
 test.after(() => console.log(`Gearhead Gunn: ${checks} acceptance checks executed.`));
 
 function admitted({enabled = true, discovered = true, difficulty = 'medium'} = {}) {
+  // Gunn's card names gunn; warlords and scrapdome are not catalog switches.
   const flags = createFeatureFlags({storage: null, qa: true,
-    overrides: {warlords: enabled, scrapdome: true}});
+    overrides: {gunn: enabled}});
   const duel = new Duel({seed: 304, featureFlags: flags});
   duel.state.wastelandGateDiscovered = discovered;
   return {duel, started: startWarlordEvent(duel, {warlordId: 'gunn',
@@ -59,6 +61,44 @@ test('Gunn is built with the settled car, kiter brain and Pit venue', () => {
   equal(WARLORDS.gunn.venue, 'pit', 'Gunn fights in the Pit');
 });
 
+// The old 0/55 offsets placed Gunn beyond the 32 m Pit floor and behind its
+// real outer wall. These opposite offsets keep both bodies on valid floor.
+function clearPoses(duel, boss, range = 55) {
+  if (range <= 60) {
+    duel.state.s = duel.state.prevS = boss.s = boss.prevS = 100;
+    duel.state.lateral = duel.state.prevLateral = -27.5;
+    boss.lateral = boss.prevLateral = -27.5 + range;
+  } else {
+    const radius = duel.course.def.pit.radius + 27.5;
+    const arc = duel.course.def.pit.radius * 2 * Math.asin(range / (2 * radius));
+    duel.state.s = duel.state.prevS = 100 - arc / 2;
+    boss.s = boss.prevS = 100 + arc / 2;
+    duel.state.lateral = duel.state.prevLateral = boss.lateral = boss.prevLateral = 27.5;
+  }
+}
+function rayBlockers(duel, boss) {
+  const from = {...worldPose(duel, boss), y: duel.course.groundAt(boss.s, boss.lateral).y + 1};
+  const to = {...worldPose(duel, duel.state), y: duel.course.groundAt(duel.state.s, duel.state.lateral).y + 1};
+  const a = duel.course.nearest(from.x, from.z), b = duel.course.nearest(to.x, to.z, a.s);
+  return duel._obstacles(Math.min(a.s, b.s) - 100, Math.max(a.s, b.s) + 100)
+    .filter(obstacle => sweepObstacle(from, to, obstacle, 0, {halfWidth: 0, halfLength: 0, height: 0}));
+}
+test('the corrected Gunn fixture uses real Pit floor and has no native wall or pile intersection', () => {
+  const duel = new Duel({seed: 304}); duel.state.wastelandGateDiscovered = true;
+  equal(duel.startArenaEvent({venueId: 'pit', mode: 'last-car-rolling', car: 'falcone_f42',
+    opponents: [{car: 'stuttgart_959s'}]}), true, 'the fixture check enters the actual Pit');
+  const boss = duel.state.opponents[0];
+  for (const range of [24, 39, 55, 81, 91]) {
+    clearPoses(duel, boss, range);
+    for (const actor of [duel.state, boss])
+      ok(Math.abs(actor.lateral) + duel._vehicleSpec(actor).halfWidth < floorLimit(duel),
+        'both complete car bodies remain inside the native Pit floor');
+    const a = worldPose(duel, boss), b = worldPose(duel, duel.state);
+    ok(Math.abs(Math.hypot(a.x - b.x, a.z - b.z) - range) < 1e-7, 'native world poses retain the requested range');
+    equal(rayBlockers(duel, boss).map(obstacle => obstacle.id), [], 'actual Pit obstacles leave the fixture sight line clear');
+  }
+});
+
 function combatFixture(options = {}) {
   const duel = fight(options), boss = duel.state.opponents[0];
   const participant = duel.state.arena.participants.find(p => p.id === boss.arenaId);
@@ -70,8 +110,8 @@ function combatFixture(options = {}) {
   });
   for (const p of duel.state.arena.participants) p.protectedSec = 0;
   duel.state.invulnerableSec = 0; duel.state.combat.aiTimer = Infinity;
-  duel.state.s = duel.state.prevS = 100; duel.state.lateral = duel.state.prevLateral = 0;
-  boss.s = boss.prevS = 100; boss.lateral = boss.prevLateral = 55;
+  clearPoses(duel, boss);
+  equal(rayBlockers(duel, boss).length, 0, 'the native Pit ray is clear before Gunn combat');
   boss.speedMph = duel.state.speedMph = 0;
   participant.targetId = 'player';
   const advance = seconds => {
@@ -137,7 +177,7 @@ test('phase two shortens the tell and fires five rockets at one committed predic
 });
 
 for (const range of [24, 91]) test(`barrage rejects ${range} metres even after cooldown`, () => {
-  const f = combatFixture(); f.boss.lateral = f.boss.prevLateral = range;
+  const f = combatFixture(); clearPoses(f.duel, f.boss, range);
   f.advance(10);
   equal(f.tells.length, 0, 'barrage requires the settled inclusive 25 to 90 m range');
 });
@@ -145,10 +185,9 @@ for (const range of [24, 91]) test(`barrage rejects ${range} metres even after c
 test('breaking sight at lock time cancels the barrage and still earns a full window', () => {
   const f = combatFixture(); f.advance(7.1);
   equal(f.tells.length, 1, 'the clear sight line starts the tell');
-  const me = worldPose(f.duel, f.boss), at = worldPose(f.duel, f.duel.state);
-  const blocker = {x: (me.x + at.x) / 2, z: (me.z + at.z) / 2, y: -10,
-    halfX: 10, halfZ: 10, height: 30, shape: 'box'};
-  f.duel._obstacles = () => [blocker];
+  f.duel.state.s = f.duel.state.prevS = 100 + Math.PI * f.duel.course.def.pit.radius;
+  ok(rayBlockers(f.duel, f.boss).some(obstacle => obstacle.id === 'pit-centre-pile'),
+    'the real centre pile breaks the sight line at lock time');
   const count = f.launches.length;
   f.advance(.8);
   equal(f.launches.length, count, 'a wall between Gunn and player at lock time cancels all barrage rockets');
@@ -164,7 +203,7 @@ test('single rockets use their own three-second cadence and require clear 40 to 
     'single rockets fire every three seconds');
   for (const range of [39, 81]) {
     const outside = combatFixture({difficulty: 'easy'});
-    outside.boss.lateral = outside.boss.prevLateral = range; outside.advance(6.2);
+    clearPoses(outside.duel, outside.boss, range); outside.advance(6.2);
     equal(outside.launches.length, 0, 'single rockets never fire outside 40 to 80 metres');
   }
 });
