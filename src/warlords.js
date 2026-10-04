@@ -8,7 +8,9 @@ const details = Object.freeze({
   // The Decoy Drone weapon itself is ARS-03; until it lands the fight pays scrap only.
   mirage: {reward: 'Decoy Drone', rewardBuilt: false, car: 'aurora_gt', brain: 'gunner',
     taunt: 'Which one of me are you looking at?'},
-  gunn: {},
+  gunn: {venue: 'pit', reward: 'Rocket Pods and turret look', rewardBuilt: true,
+    rewardWeapon: 'rockets', rewardKit: 'turret-look',
+    car: 'stuttgart_959s', brain: 'kiter', taunt: 'Keep driving. My turret can keep up.'},
   kettle: {reward: 'Titan warlord kit and Tusk', rewardBuilt: true,
     rewardKit: 'warlord', rewardKitCar: 'titan_monster', rewardCrew: 'tusk',
     car: 'titan_monster', brain: 'rammer', taunt: 'Stand still. It hurts less.'},
@@ -43,7 +45,7 @@ export const WARLORD_LADDER = Object.freeze([
   'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'kettle', 'vultures']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures']);
 
 // Jax's grapple reaches this much farther once the Twin Vultures are beaten.
 // Earned means the saved defeat itself, as with the Side Saws; the crew
