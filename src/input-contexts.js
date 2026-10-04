@@ -4,10 +4,10 @@ const cameras = Object.freeze({ [CAMERA_CYCLE_KEY]: 'camera-cycle' });
 const carKeyboard = Object.freeze({
   Escape: 'pause', KeyP: 'pause', ...cameras,
   Digit1: 'weapon:ufo', Digit2: 'weapon:bomb', Digit3: 'weapon:crossbow', Digit4: 'weapon:star',
-  KeyM: 'mute', KeyE: 'shift-up', KeyQ: 'shift-down',
+  KeyM: 'mute', KeyE: 'shift-up', KeyQ: 'shift-down', KeyH: 'help',
 });
 const carGamepad = Object.freeze([
-  [9, 'pause'], [3, 'camera-cycle'], [5, 'shift-up'], [4, 'shift-down'],
+  [9, 'pause'], [8, 'help'], [3, 'camera-cycle'], [5, 'shift-up'], [4, 'shift-down'],
   [12, 'weapon:ufo'], [15, 'weapon:bomb'], [13, 'weapon:crossbow'], [14, 'weapon:star'],
 ]);
 const carHeld = Object.freeze({
@@ -25,9 +25,9 @@ export const INPUT_CONTEXTS = Object.freeze({
   car: Object.freeze({ keyboard: carKeyboard, gamepad: carGamepad, held: carHeld }),
   menu: Object.freeze({ keyboard: Object.freeze({ Escape: 'menu-back', KeyM: 'mute', ...cameras }),
     gamepad: Object.freeze([[1, 'menu-back'], [0, 'menu-confirm'], [3, 'camera-cycle']]), held: Object.freeze({}) }),
-  foot: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', KeyP: 'pause', KeyF: 'enter-car',
+  foot: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', KeyP: 'pause', KeyF: 'enter-car', KeyH: 'help',
     Space: 'jump', KeyC: 'foot-camera-cycle', Digit1: 'gear:1', Digit2: 'gear:2', Digit3: 'gear:3' }),
-    gamepad: Object.freeze([[9, 'pause'], [2, 'enter-car'], [0, 'jump'], [7, 'fire'], [6, 'aim'],
+    gamepad: Object.freeze([[9, 'pause'], [8, 'help'], [2, 'enter-car'], [0, 'jump'], [7, 'fire'], [6, 'aim'],
       [12, 'gear:1'], [15, 'gear:2'], [13, 'gear:3']]),
     // Arrows move on foot as they drive the car (Kyle, 1 October 2026); WASD
     // stays for players who hold the mouse in their right hand.

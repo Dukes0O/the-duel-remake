@@ -15,7 +15,7 @@ async function advance(context, ticks) {
   await refresh(context);
 }
 async function prepare(context, mode = 'wasteland', stage = 0, direct = false) {
-  await context.evaluate('(() => { const a = window.__qaApp; ' +
+  await context.evaluate('(() => { const a = window.__qaApp; a.helpVisible = false; ' +
     (direct ? 'a.duel.startCampaign' : 'a.startCampaign') +
     '({mode:' + JSON.stringify(mode) + ',startStage:' + stage + ',seed:1989,car:"falcone_f42"});' +
     'a.stop(); const s = a.duel.state;' +
@@ -25,6 +25,15 @@ async function prepare(context, mode = 'wasteland', stage = 0, direct = false) {
     'a.onFrame?.(s,0); window.__render.renderFrame(); })()');
   await context.waitFor('window.__qaApp.visualReady === true', 'hint race renderer', 60_000);
   await refresh(context);
+  // The controls are on request only (Kyle, 4 October 2026): hidden by default,
+  // shown by a real H key press, which is what the hint checks below read.
+  if (await context.evaluate('!document.querySelector("#controls-help").hidden'))
+    throw Error('The controls help must not show by itself');
+  await key(context, 'keyDown', 'KeyH', 'h', 72);
+  await key(context, 'keyUp', 'KeyH', 'h', 72);
+  await refresh(context);
+  if (mode === 'wasteland' && await context.evaluate('document.querySelector("#controls-help").hidden'))
+    throw Error('H did not show the controls help');
 }
 async function sample(context) {
   return context.evaluate('(() => {const a=window.__qaApp,s=a.duel.state,' +
@@ -130,10 +139,8 @@ async function qualityRun(context, quality) {
   await advance(context, 96);
   await key(context, 'keyUp', 'KeyW', 'w', 87);
   const distant = await expectHint(context, /Move closer.*0\.6.*3\.5/);
-  await context.command('Emulation.setDeviceMetricsOverride',
-    {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
   await refresh(context);
-  const phone = await layout(context, quality + '-reentry-hint-phone');
+  const reentry = await layout(context, quality + '-reentry-hint-desktop');
   await key(context, 'keyDown', 'Escape', 'Escape', 27);
   await key(context, 'keyUp', 'Escape', 'Escape', 27);
   await refresh(context);
@@ -178,7 +185,7 @@ async function qualityRun(context, quality) {
   await refresh(context);
   await expectNoHint(context, 'Scrapdome arena');
   console.log(quality + ': actual F exit/release/reentry, keyboard X camera, gamepad X exit/reentry, distant hint, exact bailout, pause/mode/objective/arena exclusions passed. ' +
-    JSON.stringify({initial:initial.text,exited:exited.text,distant:distant.text,health:bailed.health,desktop,phone}));
+    JSON.stringify({initial:initial.text,exited:exited.text,distant:distant.text,health:bailed.health,desktop,reentry}));
 }
 
 export async function run(context) {

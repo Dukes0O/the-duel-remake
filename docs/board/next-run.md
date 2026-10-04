@@ -60,9 +60,13 @@ gate passed 344/344 and the build passed; Claude approved round two.
 CREW-02 is merged behind the dev-only `crew-gear` switch. All eight signature
 items are connected to the race, Armory, HUD, renderer, combat and audio paths.
 
-**Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
-Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
-warlord pay, and the damaged-save fix. Phase 3 is the last planned phase.
+**Live (4 October 2026):** the Scrapdome (Last Car Rolling), Titan climbing and
+steering, Muddy Hollow, Sawtooth Sal and the settled warlord pay, the
+Dustmonger, Mother Mirage, the Kettle Kingpin and the Twin Vultures, the Pit,
+Fuel Run, Bounty Hunt, the Salt Flats, Arsenal waves one and two, the crew
+signature gear and boarding, and the H key for the controls. Switches for the
+five released features are `on` until a janitor card retires them. Phase 3 is
+the last planned phase.
 
 **Answered this afternoon (do not reopen):**
 - ARS-CORE: `rangeForTarget(actor)` per candidate is approved (card).

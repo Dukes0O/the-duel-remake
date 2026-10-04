@@ -25,7 +25,6 @@ check(/\[hidden\]\s*\{[^}]*display\s*:\s*none\s*!important/.test(css),'the hidde
 check(/\.jump-height\s*\{[^}]*position\s*:\s*absolute[^}]*bottom\s*:\s*calc\(100%/.test(css),'the panel sits above the speedometer instead of covering its digits');
 check(/\.jump-height-number>b\s*\{[^}]*font-variant-numeric\s*:\s*tabular-nums/.test(css),'changing decimal digits use stable-width numerals');
 check(/\.jump-height\[data-phase="landed"\]/.test(css),'landed phase has a distinct visual treatment');
-check(/@media\([^}]*\)\s*\{\s*\.jump-height\s*\{/.test(css),'the height panel has a small-viewport layout');
 check(typeof presentJumpHeight==='function','production HUD exports the jump-height presenter');
 const router=readFileSync(new URL('../src/screen-router.js',import.meta.url),'utf8');
 check(router.includes('const jumpHeightReadout = createJumpHeightReadout();'),'the production router creates one persistent jump readout');

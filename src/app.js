@@ -280,6 +280,7 @@ export class App {
     const stageIndex=Math.max(0,Math.min(COURSE.length-1,Math.floor(options.startStage??this.menuStage))),stage=COURSE[stageIndex];
     if(!isCourseUnlocked(this.profile,stage)){this.courseAccessMessage='Unlock this course with credits before starting.';return false;}
     this.courseAccessMessage='';
+    this.helpVisible=false;
     this._settleAbandoned();
     const selectedCar=options.car||this.duel.state.car;
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
@@ -1037,6 +1038,11 @@ export class App {
     const result=unlockCar(this.profile,car);
     if(result.ok){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true});}return result;
   }
+  // The controls help is on request only (the H key); it never appears by itself.
+  toggleHelp() {
+    if (!['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) return;
+    this.helpVisible = this.helpVisible !== true;
+  }
   togglePause() {
     const st = this.duel.state;
     if (!['racing', 'countdown', 'exploring'].includes(st.status)) return;
@@ -1066,6 +1072,7 @@ export class App {
   }
   resume() { if (this.duel.state.paused) this.togglePause(); }
   returnToMenu() {
+    this.helpVisible = false;
     this._settleAbandoned();
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
@@ -1143,6 +1150,7 @@ export class App {
   _inputAction(action) {
     if (!action) return;
     if (action === 'pause') this.togglePause();
+    else if (action === 'help') this.toggleHelp();
     else if (action === 'foot-camera-cycle') this.cycleFootCamera();
     else if (action === 'camera-cycle') this.cycleCamera();
     else if (action.startsWith('camera:')) this.setCamera(action.slice(7));

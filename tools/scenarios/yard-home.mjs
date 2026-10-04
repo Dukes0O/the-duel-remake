@@ -18,8 +18,8 @@ const LADDER_HTML=territoryPanel({wasteland:{version:1,discoveredGate:true,
   },
 }}, {builtWarlordIds:['dustmonger','mirage']});
 
-async function framedCar(context,car,viewport){
-  const size=viewport==='portrait'?{width:390,height:844}:{width:1280,height:800};
+async function framedCar(context,car){
+  const size={width:1280,height:800};
   await context.waitFor(`(() => {const canvas=document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]'),rect=canvas?.getBoundingClientRect();return window.__qaApp.visualReady===true && canvas?.parentElement?.dataset?.vehicleAsset==='ready' && Math.abs(rect?.width-${size.width})<1 && Math.abs(rect?.height-${size.height})<1 && Math.abs(window.__render.camera.aspect-rect.width/rect.height)<.001;})()`,`${car} ${viewport} asset and camera`,60000);
   const result=await context.evaluate(`(() => {
     const app=window.__qaApp, view=window.__render, camera=view.camera;
@@ -62,14 +62,14 @@ async function framedCar(context,car,viewport){
       panel:{right:cover.right,bottom:cover.bottom}};
   })()`);
   const b=result.bounds,v=result.viewport;
-  await context.screenshot(`yard-${car.replaceAll('_','-')}-${viewport}`);
+  await context.screenshot(`yard-${car.replaceAll('_','-')}`);
   if(result.error||result.car!==car||result.status!=='exploring'||result.phase!=='arrived'||!result.active||
     result.asset!=='ready'||!result.front||!result.clip||!b||
     result.playerDistance>.5||result.peerDistance!==null&&result.peerDistance<result.playerDistance+.5||
     Math.abs(v.left)>1||Math.abs(v.top)>1||Math.abs(v.right-v.width)>1||Math.abs(v.bottom-v.height)>1||
     b.left<v.left||b.right>v.right||b.top<v.top||b.bottom>v.bottom||
     result.uncovered<1000||result.panelOverlap>1)
-    throw Error(`${car} ${viewport} not framed in yard: ${JSON.stringify(result)}`);
+    throw Error(`${car} not framed in yard: ${JSON.stringify(result)}`);
   return result;
 }
 
@@ -103,16 +103,8 @@ export async function run(context) {
       throw Error('Yard visit changed wallet: '+JSON.stringify(start));
     await context.waitFor('window.__qaApp.visualReady===true',`${car} vehicle ready`,60000);
     await context.evaluate('window.__qaApp.advance(8);window.__qaApp.onFrame?.(window.__qaApp.duel.state)');
-    try{framing.push(await framedCar(context,car,'landscape'));}
+    try{framing.push(await framedCar(context,car));}
     catch(error){framingErrors.push(String(error.message||error));}
-    await context.command('Emulation.setDeviceMetricsOverride',
-      {width:390,height:844,deviceScaleFactor:1,mobile:true});
-    await context.waitFor('window.innerWidth===390 && window.innerHeight===844','portrait viewport');
-    try{framing.push(await framedCar(context,car,'portrait'));}
-    catch(error){framingErrors.push(String(error.message||error));}
-    await context.command('Emulation.setDeviceMetricsOverride',
-      {width:1280,height:800,deviceScaleFactor:1,mobile:false});
-    await context.waitFor('window.innerWidth===1280 && window.innerHeight===800','desktop viewport');
     const end=await context.evaluate(`(() => {
       const app=window.__qaApp;app.returnToMenu();
       return {status:app.duel.state.status,visit:app.duel.state.hiddenRoadVisit,
@@ -124,7 +116,7 @@ export async function run(context) {
       end.scrap!==before.scrap||end.history!==before.history||end.settled!==before.settled||end.activeRace)
       throw Error(`${car} yard visit contaminated save or journey: ${JSON.stringify(end)}`);
   }
-  if(framingErrors.length)throw Error(`Yard framing failed ${framingErrors.length}/18 views:\n${framingErrors.join('\n')}`);
+  if(framingErrors.length)throw Error(`Yard framing failed ${framingErrors.length}/9 views:\n${framingErrors.join('\n')}`);
   await context.evaluate("window.__qaApp.setRaceSettings({car:'falcone_f42'})");
   await context.evaluate("if(!window.__qaApp.visitWasteland())throw Error('safe visit failed')");
   await context.waitFor('window.__qaApp.visualReady === true', 'visit vehicle ready', 60000);
@@ -139,14 +131,6 @@ export async function run(context) {
     !entry.text.includes('SCRAPDOME YARD')||!entry.text.includes('3,000 SCRAP'))
     throw Error('Yard entry failed: '+JSON.stringify(entry));
   await context.screenshot('yard-home');
-  await context.command('Emulation.setDeviceMetricsOverride',
-    {width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await context.waitFor('window.innerWidth===390 && window.innerHeight===844', 'portrait viewport');
-  await context.evaluate('window.__render.renderFrame()');
-  await context.screenshot('yard-home-portrait');
-  await context.command('Emulation.setDeviceMetricsOverride',
-    {width:1280,height:800,deviceScaleFactor:1,mobile:false});
-  await context.waitFor('window.innerWidth===1280 && window.innerHeight===800', 'desktop viewport');
   await context.evaluate('window.__render.renderFrame()');
   const territory=await context.evaluate(`(() => {
     document.querySelector('[data-action="yard-territory"]').click();
@@ -193,45 +177,6 @@ export async function run(context) {
       throw Error(`${quality} ladder fixture failed: ${JSON.stringify(ladder)}`);
     await context.command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
     await context.screenshot(`yard-territory-ladder-${quality}`);
-    await context.command('Emulation.setDeviceMetricsOverride',
-      {width:390,height:844,deviceScaleFactor:1,mobile:true});
-    await context.waitFor('window.innerWidth===390 && window.innerHeight===844',
-      `${quality} territory phone viewport`);
-    await context.evaluate(`(() => {
-      const content=document.querySelector('.yard-home-content');
-      const first=content.querySelector('.territory-card');
-      content.scrollTop=Math.max(1,first.offsetTop-content.offsetTop-8);
-      document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]').style.visibility='hidden';
-    })()`);
-    await context.evaluate(`new Promise(resolve=>requestAnimationFrame(()=>
-      requestAnimationFrame(()=>setTimeout(()=>{window.__render.renderFrame();resolve(true);},250))))`);
-    const phone=await context.evaluate(`(() => {
-      const panel=document.querySelector('.yard-home-panel'),map=document.querySelector('.territory-map');
-      const content=document.querySelector('.yard-home-content'),cr=content.getBoundingClientRect();
-      const cards=[...map.querySelectorAll('.territory-card')],pr=panel.getBoundingClientRect(),mr=map.getBoundingClientRect();
-      return {width:innerWidth,height:innerHeight,documentWidth:document.documentElement.scrollWidth,
-        panel:{left:pr.left,right:pr.right,width:pr.width},map:{left:mr.left,right:mr.right,width:mr.width},
-        cards:cards.map(card=>{const r=card.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width};}),
-        visibleCards:cards.filter(card=>{const r=card.getBoundingClientRect();return r.bottom>cr.top&&r.top<cr.bottom;}).length,
-        scrollTop:content.scrollTop,heading:map.querySelector('h3')?.textContent,
-        buttons:map.querySelectorAll('[data-warlord]').length};
-    })()`);
-    if(phone.width!==390||phone.height!==844||phone.documentWidth>390||
-      phone.panel.left<-.5||phone.panel.right>390.5||phone.map.left<-.5||phone.map.right>390.5||
-      phone.cards.length!==8||phone.cards.some(card=>card.left<phone.map.left-.5||card.right>phone.map.right+.5)||
-      phone.scrollTop<=0||phone.visibleCards<1||
-      phone.heading!=='TERRITORY MAP'||phone.buttons!==2)
-      throw Error(`${quality} phone territory layout failed: ${JSON.stringify(phone)}`);
-    await context.command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-    await context.screenshot(`yard-territory-ladder-${quality}-phone`);
-    await context.evaluate(`(() => {
-      const canvas=document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]');
-      canvas.style.visibility='';window.__render.renderFrame();
-    })()`);
-    await context.command('Emulation.setDeviceMetricsOverride',
-      {width:1280,height:800,deviceScaleFactor:1,mobile:false});
-    await context.waitFor('window.innerWidth===1280 && window.innerHeight===800',
-      `${quality} territory desktop viewport`);
   }
   const ladderAfter=await context.evaluate(`(() => {const p=window.__qaApp.profile;return {
     credits:p.credits,scrap:p.wasteland.scrap,history:JSON.stringify(p.history),

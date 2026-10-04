@@ -9,6 +9,6 @@ saves screenshots to the scratch folder it prints.
 - Never use port 5174 and never open the live folder's server.
 - Report console errors and warnings, failed requests, scenario assertion results, and the
   screenshot paths. Describe what each screenshot shows in one line and flag anything that looks
-  wrong: floating parts, missing textures, clipped HUD, overlaps at 390x844 phone size.
+  wrong: floating parts, missing textures, clipped HUD, overlaps.
 - Do not edit source files.
 """

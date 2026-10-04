@@ -86,6 +86,23 @@ Scrapdome, driving onto a jump from the side is a bump, not a launch.
 Once the Scrapdome is found, Sawtooth Sal waits on the territory map: first
 to three wrecks wins, her saw sweep always warns first, and beating her earns
 her Side Saws and a big scrap payout.
+Four more warlords wait on the territory map, each with one move that always
+warns first, a counter and a window to hit back: the Dustmonger (a dust veil
+and an oil strip; he earns you Smoke Screen), Mother Mirage (she splits into
+three matching cars; only the real one fires and leaves tyre marks), the
+Kettle Kingpin (a giant leap onto a red ring; he earns you the Warlord kit for
+the Titan and Tusk) and the Twin Vultures (two buggies that pincer you from
+both sides; brake and they meet each other; they earn you Jax's longer
+grapple). They fight in the Scrapdome, the Twin Vultures in the new round
+Pit. Press H in a race to see the controls; they no longer sit on the screen.
+Fuel Run (rank 6) is a race to carry fuel canisters to your own depot, on foot
+or in the car; Bounty Hunt (rank 9) puts a bounty on one car, and wrecking it
+takes the bounty. The Salt Flats, a white salt bowl, is a second place to play
+Last Car Rolling, Fuel Run and Bounty Hunt from rank 9. Wasteland players now
+also have new car weapons (Oil Slick, Smoke Screen, Harpoon, Caltrops, Rocket
+Pods, Flamethrower and Scrap Magnet, bought in the Armory as their rank
+arrives) and eight crew members with signature gear, including boarding an
+enemy car from the roof.
 A saved career with a damaged number in it now loads with that one value
 reset, instead of losing the named player's whole career.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries

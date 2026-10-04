@@ -22,8 +22,9 @@ import {normalizeWasteland} from '../src/wasteland-progress.js';
 // ARENA-04, SCRAPDOME 10 and shared 3/6. Only real engine and App entry paths.
 // Handover, hunter caps and Salt entry follow Claude's 2 October 00:30 answers.
 const DT = 1 / 120;
+// Arsenal (released 4 October 2026) is pinned off: the controls below are the earlier traces.
 const ON = {'hidden-road': true,
-  warlords: true, 'fuel-run': true, 'bounty-hunt': true};
+  warlords: true, 'fuel-run': true, 'bounty-hunt': true, arsenal: false};
 const FIELD = [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}, {car: 'stuttgart_959s'}];
 const admissionOnly = process.argv.includes('--admission-only');
 const values = new Map(), savedGlobals = new Map(['localStorage', 'cancelAnimationFrame']
@@ -136,13 +137,15 @@ function finishPlayerWin(app) {
   return duel.state.arena.result;
 }
 
-test('the new Bounty switch starts in dev', () => {
-  eq(FEATURE_STATES['bounty-hunt'], 'dev', 'Bounty Hunt must have its own dev switch under SPEC 0.12');
+test('Bounty Hunt has its own switch, released on 4 October 2026', () => {
+  eq(FEATURE_STATES['bounty-hunt'], 'on', 'Bounty Hunt is released');
 });
-test('the released player cannot enable Bounty through Experimental or a URL', () => {
-  const flags = createFeatureFlags({storage: {getItem: () => 'true'}, qa: false,
-    search: '?flags=bounty-hunt'});
+test('a dev Bounty switch cannot be enabled through Experimental or a URL', () => {
+  // The dev rule is kept with the switch pinned to dev.
+  const flags = createFeatureFlags({catalog: {...FEATURE_STATES, 'bounty-hunt': 'dev'},
+    storage: {getItem: () => 'true'}, qa: false, search: '?flags=bounty-hunt'});
   eq(flags.enabled('bounty-hunt'), false, 'an unfinished dev mode stays absent from the released game');
+  eq(createFeatureFlags({storage: null, qa: false}).enabled('bounty-hunt'), true, 'the released switch is on');
 });
 test('real native admission accepts Bounty with its switch enabled', () => {
   const {duel, admitted} = started();
