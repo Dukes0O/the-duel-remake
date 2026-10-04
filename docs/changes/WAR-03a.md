@@ -1,8 +1,8 @@
 # WAR-03a: Gearhead Gunn
 
 4 October 2026. Native rules built; Claude's finished turret recipe is now
-settled in SCRAPDOME.md. Tests precede the asset and runtime work. The model
-and Claude's look approval are still required before merge.
+settled in SCRAPDOME.md. Tests preceded the asset and runtime work. The model
+is generated; Claude's look approval is still required before merge.
 
 ## Changed
 
@@ -22,7 +22,7 @@ and Claude's look approval are still required before merge.
   existing kit metal and wear. One JSON input defines mouths and mount tops.
 - Native origins and visible yaw/pitch share that numeric layout. Binding
   caches one asset, clones heat materials and hides cosmetic plating. A red
-  line follows the tell. The GLB has not yet been generated.
+  line follows the tell. The isolated recipe now exports gunn-turret.glb.
 
 ## Checks
 
@@ -40,10 +40,12 @@ and Claude's look approval are still required before merge.
   mount fit on Stuttgart and Falcone, shared geometry, separate live heat
   materials, cold cosmetic peer, source finish and state purity, and disposal.
   Native launch tests require an actual fitted mouth and a fixed tell-end aim.
-  These checks remain unproved while the asset is missing. No placeholder art.
-- No Blender, build, browser, audio, balance or broad tier ran for these tests.
-  The isolated --gunn-turret recipe build must still be checked after the
-  heavy slot is free. The nine old kit pins catch any unwanted regeneration.
+  All these checks now pass with the generated asset. No placeholder art.
+- Isolated Blender 4.5.13 export used --gunn-turret only. All nine old kit
+  hashes remain exact. The new GLB is 179,004 bytes and 740 triangles, inside
+  the combined 12,000-triangle kit ceiling. Local resources, named hierarchy,
+  mouth ray tests, mount fit, material isolation and double disposal pass.
+  No build, browser, audio, balance or broad tier ran this export checkpoint.
 - Before the mouth change: 14 cases, 143 independent checks passed after the author's valid
   Pit-floor correction. The previous 0/55 offsets crossed a real outer wall.
   The author kept move assertions and added a native clear-line witness.
@@ -59,20 +61,20 @@ and Claude's look approval are still required before merge.
   assertion. Five distinct-mouth trajectories must reach the captured
   tell-end world point in 3D after the player turns. Other move checks stay
   exact. The focused Gunn suite passes 14 cases and 144 checks (one more
-  check because the first trajectory is now checked too). Review is pending.
+  check because the first trajectory is now checked too). Independent review
+  cleared this correction before export.
 - Added a separate native five-shot witness: 29 checks pass for real JSON
   mouth origins, one fixed predictive world point after the player turns,
   the full tell, shot count and 0.25-second intervals. Together with the lower
   car flight case, the focused run passes two cases and 36 checks. The author
-  kept every art-suite assertion exact. Missing-GLB geometry, binding and
-  lifecycle checks remain unproved. Whole integration metadata 7584ba44 is
-  merged; no Blender, build, browser, audio or broad tier ran this checkpoint.
+  kept every art-suite assertion exact. After export the full native art/fight
+  run passes 22 cases and 393 checks (art 249, fight 144). Source and asset
+  review found the intended isolated output and approved material settings.
+  Whole integration metadata through 272823a7 is merged, not peer source.
 
 ## Remaining
 
-- Generate gunn-turret.glb once the heavy slot is free. Run the independent
-  geometry, native mouths, binding, heat and disposal checks. Nine kit hashes
-  must remain exact. Review one sheet of side, three-quarter and top views
+- Review one sheet of side, three-quarter and top views
   on Stuttgart and Falcone; at most three rounds. No finished art is claimed.
 - Rising whine needs audio.js and sound-bank.js handoff after Arsenal's fix.
   Native Rocket Pods fire/flight/hit cues already exist.
