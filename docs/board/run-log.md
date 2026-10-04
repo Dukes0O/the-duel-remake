@@ -737,3 +737,9 @@ and a passing full rerun. Arsenal and Voice have updated from the complete
 released base; Convoy's owned source is committed but shared hooks remain.
 Gunn waits for Claude's finished turret asset answer. No release work here.
 
+The unchanged native crash suite passed alone with continuous tracks. Its
+host-level interruption remains unproved; no assertion or source changed.
+The quiet full rerun passed all 348 suites in 600.65 seconds on clean
+3f5deb00; build passed in 449 ms. Feature merges can resume. Arsenal needs
+four native review fixes; Voice's released-base source review is clear.
+
