@@ -43,6 +43,43 @@ function spawnRocket(duel, volley, slot) {
     hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
   return shot;
 }
+// Boss turrets use the same native rocket body and flight, with a committed
+// world aim instead of the four-shot car volley's spread.
+export function rocketArrivalSeconds(dx, dz, vx = 0, vz = 0) {
+  const a = vx * vx + vz * vz - ROCKET_RULES.speed ** 2;
+  const b = 2 * (dx * vx + dz * vz), c = dx * dx + dz * dz;
+  const disc = b * b - 4 * a * c;
+  const roots = Math.abs(a) < EPS ? [-c / b] : disc >= 0
+    ? [(-b - Math.sqrt(disc)) / (2 * a), (-b + Math.sqrt(disc)) / (2 * a)] : [];
+  const arrival = Math.min(...roots.filter(time => Number.isFinite(time) && time > 0));
+  return Number.isFinite(arrival) ? arrival : Math.sqrt(c) / ROCKET_RULES.speed;
+}
+export function launchAimedRocket(duel, owner, aim, {launchedAt = duel.state.stageTimeSec, level = 0} = {}) {
+  const combat = duel.state.combat;
+  if (!combat || !owner || outOfPlay(duel, owner) ||
+      !Number.isFinite(aim?.x) || !Number.isFinite(aim?.z) ||
+      combat.projectiles.length + plannedShots(combat) >= COMBAT_TUNING.projectileLimit) return null;
+  const at = point(duel, owner), carry = velocity(owner, at);
+  const arrival = rocketArrivalSeconds(aim.x - at.x, aim.z - at.z, -carry.x, -carry.z);
+  const ax = aim.x - at.x - carry.x * arrival, az = aim.z - at.z - carry.z * arrival;
+  const distance = Math.hypot(ax, az);
+  if (!(distance > EPS)) return null;
+  const dx = ax / distance, dz = az / distance;
+  const shot = {id: ++combat.serial, kind: 'rocket-pod',
+    ownerId: combatOwnerId(duel, owner), attackerId: targetIdentity(duel, owner),
+    enemy: owner !== duel.state, level,
+    x: at.x + dx * COMBAT_TUNING.projectileSpawnOffset, y: at.y,
+    z: at.z + dz * COMBAT_TUNING.projectileSpawnOffset,
+    vx: dx * ROCKET_RULES.speed + carry.x, vy: 0,
+    vz: dz * ROCKET_RULES.speed + carry.z,
+    travelled: 0, age: 0, launchedAt};
+  combat.projectiles.push(shot);
+  duel.emit({arsenalCue: 'weapon.rockets.fire', actor: owner, projectile: shot,
+    hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
+  duel.emit({arsenalCue: 'weapon.rockets.flight', actor: owner, projectile: shot,
+    hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
+  return shot;
+}
 export function startRocketVolley(duel, owner, level = 0) {
   const combat = duel.state.combat;
   if (!combat || !owner || outOfPlay(duel, owner) ||

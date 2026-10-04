@@ -30,6 +30,12 @@ export function hasEarnedSideSaws(wasteland) {
     ids(wasteland.warlords?.defeated).includes('sal');
 }
 
+export function hasEarnedTurretLook(wasteland) {
+  if (wasteland?.version !== 1) return false;
+  return wasteland.warlords?.gunn?.defeated === true ||
+    ids(wasteland.warlords?.defeated).includes('gunn');
+}
+
 export const MUDDY_HOLLOW_HUBCAP_IDS = Object.freeze([
   'hilltop', 'pond', 'mega-landing', 'mud-pit', 'log-ramp',
 ]);
