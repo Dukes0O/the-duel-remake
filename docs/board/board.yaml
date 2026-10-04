@@ -1043,12 +1043,13 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
-    test_commit: 35e969c
+    test_commit: 0ecb47f
+    source_commit: 23263d4
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
     hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/sim-results.js, src/screen-hud.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/combat-hud.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, src/app.js, src/game.js, src/screen-router.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
     hook_requests: []
-    sequencing: "Voice's reviewed hooks have transferred to Arsenal. Gunn commits its catalog, earned-look text and App availability hooks separately before returning them to Arsenal. CREW-04 waits for native combat hooks. Preserve Mirage's boss file and the released switch states."
+    sequencing: "Voice's reviewed hooks have transferred to Arsenal. Partial Gunn hooks were removed; Gunn stays in its own lane. Convoy and CREW-04 receive shared combat hooks after Arsenal's reviewed merge. Preserve Mirage's boss file and the released switch states."
     runtime_fixture_grant: "Mortar becomes implemented here. Replace only the existing unimplemented-purchase Mortar input with an unknown weapon ID; retain the refusal and no-write assertions and record independent review."
     dev_gate: "The released arsenal switch stays unchanged. A new arsenal-wave3 dev switch gates these four weapons, offers, player and computer use. Saved Mirage ownership remains intact while the item is unavailable; independent off/on tests precede the guard. App, Game and router option hooks belong to Arsenal before Convoy."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
@@ -1329,6 +1330,7 @@ tasks:
     branch: codex/cmb/convoy-raid
     test_commit: c5c3c72
     note_commit: 11371c8
+    source_commit: db062fd5
     note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
     claude_answer_2026_10_04: "Win pays 700 times difficulty and adds 25 Tollkeeper hold; loss pays 40 per valve the player broke, settled once. Unlock with Salt Flats and any Tollkeeper hold from races; hits choose valves by actual impact/contact points, blast reaches every valve in radius, and the body only shoves and never dies before the boarding charge (SCRAPDOME section 10)."
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
@@ -3399,7 +3401,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/audio/fight-voices
-    source_commit: 23e625e
+    source_commit: bfa1aec
     test_commit: d8df393
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
