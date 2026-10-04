@@ -1518,9 +1518,9 @@ export class EngineAudio {
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won === false)
       this._playCue('interface.lose');
-    // Wave-one launches already emit their own recorded native cue.
+    // These Arsenal launches already emit their own recorded native cue.
     if (ev.weaponFired && !['harpoon', 'caltrops', 'rockets',
-      'flamethrower', 'magnet'].includes(ev.weaponFired)) {
+      'flamethrower', 'magnet', 'mortar', 'tesla', 'decoy', 'nitro'].includes(ev.weaponFired)) {
       if (wastelandAudio) this._weaponCue(ev.weaponFired);
       else {
         this._playCue(

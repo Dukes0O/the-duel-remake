@@ -49,24 +49,18 @@ first-win settlement still saves the explicit earned reward as before.
   Contrast is 6.56 to 9.95 dB over the engine; overlapping mix peak is 0.8202.
 - Pending: final reviews, balance, frames, lane gate and build.
 
-Independent reviewer regressions: original 51 pass, four new cases fail for
-Star/Magnet, Tesla slots, recharge angle and Mortar ground targeting. Source
-fixes cancel Magnet before Star, use native disabled/recharge rules and sort
-Mortar ground distance. CPU leader/range and ordinary rules remain exact.
+Four native regressions fixed: Star/Magnet, disabled slots, recharge angle and
+Mortar ground targeting. CPU leader/range and ordinary rules stay exact.
 
-Earned-reward red tests: 62/99 pass; 37 fail for Smoke/Rockets/Drone earned
-reads, slots, upgrades, repeat offers, native App equipment and Mirage rematch.
-Read purity and first-win controls pass. Source derives catalog rewards from
-saved defeats; saved-only reads handle normalization, first wins and upgrade
-writes. Normalization retains earned slots without adding ownership entries.
-Native 99/552 and six save/ownership/backup suites (56 TAP cases) pass;
-runtime 209/2,625 and combat replays 12 pass. Earlier build passed before hold.
+Earned-reward red is 62/99: reads, slots, upgrades, offers, App and Mirage fail.
+Source derives saved defeat rewards. First wins/upgrades use saved-only reads;
+normalization retains earned slots without adding ownership. Native 99/552 and
+six memory save/ownership/backup suites (56 TAP cases), runtime 209/2,625 and
+combat replay 12 pass. Earlier build passed before hold.
 
-Whole Voice base `3ee64bc5` and Director metadata `18072d80` transferred intact.
-Feature conflict: add only wave-three dev; nine entries, five released on,
-Voice dev and other states exact. Native 99/552, Voice 26/358, audio 31,
-flags 39 and Preview 22 pass. Earlier browser
-evidence stays at `.evidence/2026-10-04/ARS-03-release-base/`; final gates await.
+Whole `3ee64bc5`/`18072d80` transferred. Catalog conflict adds only wave-three
+dev: nine entries, five on, Voice dev, other values exact; flags 39/Preview 22 pass.
+Earlier browser evidence: `.evidence/2026-10-04/ARS-03-release-base/`; gates await.
 
 Unimplemented purchase denial replaces only the Mortar input with an unknown
 weapon ID; refusal and no-write assertions stay unchanged.
@@ -87,20 +81,19 @@ is off. Source forwards that requested boolean beside Arsenal; policies,
 targets and fixtures stay exact. Unchanged balance 34/34 and native 99/552 pass.
 Its one-frame native probe proves purchase/equipment/CPU slots, not full balance.
 
-Native audio routing tests before the fix: `--native-routing-only` is 2/10.
-Real player and CPU Mortar actions each dispatch fire twice. Tesla, Drone and
-Nitro each dispatch their named action plus weapon.default.fire. Voice and
-subtitle ownership and simulation purity pass before each routing failure;
-earlier native Crossbow and Harpoon controls pass. The real generic router is
-kept active. Existing 31 audio assertions are unchanged; decoder checks were
-not rerun during the exclusive full gate. No playback, source or build edits.
+Audio routing red `e19beaa9`: light native mode is 2/10. Mortar fire dispatches
+twice; Tesla, Drone and Nitro add weapon.default.fire. Voice ownership and
+purity already pass. Source adds only four IDs to the generic exclusion;
+named cues and Voice routing stay exact. Unchanged light mode passes 10/10,
+including Crossbow/Harpoon controls; source syntax and full audio 41/41 pass.
+Original 31 audio assertions stay exact. Playback and build checks await.
 
 ## Removed
 
-The old Mortar unimplemented-purchase fixture input is replaced; refusal
-assertions stay unchanged. Temporary Gunn admission/reward, dev/Preview and
-look-only Armory handoffs are excluded. Its separate lane is retained.
+The Mortar denial input is replaced; refusal assertions stay exact. Temporary
+Gunn handoffs are excluded; its separate lane is retained.
 The obsolete forward-gap Mortar ordering and Arsenal HUD linear recharge
 calculation are replaced; ordinary starter recharge retains its original rule.
 Stored-only entitlement reads are replaced by the catalog defeat rule.
 Old catalog-only views and dropped wave-three simulation requests are replaced.
+Generic replay/default launch audio is removed for the four native wave-three cues.
