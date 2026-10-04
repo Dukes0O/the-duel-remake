@@ -1,8 +1,8 @@
 # WAR-03a: Gearhead Gunn
 
-4 October 2026. Native rules built; waiting on Claude for a finished turret
-asset. Not ready to merge. The four move and reward answers are recorded in
-SCRAPDOME.md and the board.
+4 October 2026. Native rules built; Claude's finished turret recipe is now
+settled in SCRAPDOME.md. Tests precede the asset and runtime work. The model
+and Claude's look approval are still required before merge.
 
 ## Changed
 
@@ -20,6 +20,21 @@ SCRAPDOME.md and the board.
 
 ## Checks
 
+- Independent turret tests before source: seven cases, 23 executed checks,
+  one pass and six red. All nine approved kit hashes pass unchanged. Five
+  cases stop at the missing gunn-turret.glb. A separate native elevated Gunn
+  barrage launches horizontally instead of down toward the lower player car.
+- Authored checks use the actual GLB hierarchy and ray-tested hollow mouths,
+  the existing 12,000-triangle kit ceiling and local resources. File size is
+  reported against the existing soft target, not made a new merge blocker.
+- Runtime checks reuse loadKitAsset('gunn-turret') with real parsed geometry:
+  mount fit on Stuttgart and Falcone, shared geometry, separate live heat
+  materials, cold cosmetic peer, source finish and state purity, and disposal.
+  Native launch tests require an actual fitted mouth and a fixed tell-end aim.
+  These checks remain unproved while the asset is missing. No placeholder art.
+- No Blender, build, browser, audio, balance or broad tier ran for these tests.
+  The isolated --gunn-turret recipe build must still be checked after the
+  heavy slot is free. The nine old kit pins catch any unwanted regeneration.
 - Independent Gunn tests: 14 cases, 143 checks pass after the author's valid
   Pit-floor correction. The previous 0/55 offsets crossed a real outer wall.
   The author kept move assertions and added a native clear-line witness.
