@@ -50,6 +50,13 @@ Foot weapons 5 cases, crew gear 33 checks, gear modules 16 checks, projectiles
 35 cases and replay fingerprints 12 checks across 4 encounters pass unchanged.
 A native contact witness hits 1.074 m from the aimed car centre, not its centre.
 
+Independent native turret test before the narrow signature contact fix:
+19 checks, 18 pass, then real footGearHit/combatHit reports the aim centre
+instead of the swept surface contact. Actual Odessa exit, slot 3 and deploy,
+nearest-car 4 armor, untouched farther car and both 0.8 s intervals pass.
+Focused suite: 23 cases, 158 checks, 13 pass, 10 red (the nine existing held
+failures plus turret geometry). No existing assertions or source changed.
+
 Fixture correction: the old test landed at the rig centre at vehicle height.
 That 3.5 m envelope includes warning lamps, not a boardable roof. The approved
 amber plate is 3.02 m high and 2.444 m behind the rig centre, with half-width

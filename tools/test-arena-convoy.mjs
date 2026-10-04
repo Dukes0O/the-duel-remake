@@ -10,6 +10,8 @@ import {App} from '../src/app.js';
 import {CONVOY_ROOF_PLATE, convoyPoint, damageConvoyValves} from '../src/arena/convoy.js';
 import {stepConvoyRaid} from '../src/arena/modes/convoy-raid.js';
 import {startBoarding} from '../src/crew-gear/boarding.js';
+import {gearContact} from '../src/crew-gear/contacts.js';
+import {carBodyPoint} from '../src/arsenal/hazards.js';
 
 // ARENA-07: native rules and the pure settlement contract settled on 4 October.
 const DT = 1 / 120;
@@ -359,4 +361,73 @@ test('identical native entry seeds and inputs keep the convoy repeatable', () =>
       rig: duel.state.opponents.map(actor => [actor.s, actor.lateral, actor.speedMph, actor.armor])};
   }
   equal(run(), run(), 'a fixed seed and fixed inputs produce the same rig, escort and valve state');
+});
+
+test('native Odessa turret reports its swept body contact, with unchanged nearest-target damage and cadence', () => {
+  const duel = new Duel({seed: 1989, featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: {arsenal: true, 'crew-gear': true}})});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', crewId: 'odessa',
+    discoveredGate: true, arsenalRank: 30, seed: 1989, opponentCount: 2, cpuDifficulty: 'easy'});
+  const state = duel.state;
+  Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0, traffic: []});
+  const place = (actor, s, lateral = 0) => Object.assign(actor, {s, prevS: s,
+    lateral, prevLateral: lateral, speedMph: 0, headingError: 0, yawVelocity: 0,
+    pushVelocity: 0, impactTimer: 0, combatShield: 0, airHeight: 0,
+    prevAirHeight: 0, contactCooldown: 0});
+  place(state, 500);
+  state.combat.aiTimer = state.combat.pickupTimer = Infinity;
+  state.opponents.forEach((actor, n) => place(actor, 650 + n * 30));
+  duel.setInput({interact: true}); advance(duel, .4);
+  equal(state.onFoot, true, 'the real exit hold creates Odessa on foot');
+  equal(state.fighter.crewId, 'odessa', 'native exit retains the selected crew');
+  duel.setInput({interact: false}); duel.step(DT);
+  equal(duel.selectFootGear(3), true, 'native slot three selects Odessa signature gear');
+  equal(state.footWeapons.selected, 'scrap-turret', 'native slot three selects the actual turret');
+  const poses = state.opponents.map((actor, n) => {
+    const f = state.fighter, metres = n === 0 ? 20 : 30;
+    const at = duel.course.nearest(f.x + Math.sin(f.yaw) * metres,
+      f.z + Math.cos(f.yaw) * metres, f.s);
+    place(actor, at.s, at.lateral);
+    return {actor, s: at.s, lateral: at.lateral, armor: actor.armor};
+  });
+  const shots = [];
+  const stop = duel.onChange((_state, event) => {
+    if (!event.footGearHit || !event.combatHit) return;
+    const turret = state.crewGear.turret, aim = carBodyPoint(duel, poses[0].actor);
+    const contact = gearContact(duel, {x: turret.x, y: turret.y + .85, z: turret.z}, aim, state);
+    shots.push({time: state.stageTimeSec, hit: structuredClone(event.hitPosition),
+      point: contact?.point, actor: contact?.actor, aim});
+  });
+  try {
+    duel.setFighterInput({fire: true}); duel.step(DT);
+    const deployedAt = state.stageTimeSec;
+    ok(state.crewGear.turret, 'native signature fire deploys the real ground turret');
+    equal(shots.length, 0, 'deployment itself does not manufacture a hit');
+    duel.setFighterInput({fire: false});
+    const hold = ticks => {
+      for (let n = 0; n < ticks; n++) {
+        for (const pose of poses) place(pose.actor, pose.s, pose.lateral);
+        duel.step(DT);
+      }
+    };
+    hold(Math.round(.8 / DT) - 1);
+    equal(shots.length, 0, 'the turret cannot fire before its first 0.8-second interval');
+    hold(1);
+    equal(shots.length, 1, 'the first native interval produces exactly one real hit');
+    equal(poses[0].armor - poses[0].actor.armor, 4, 'the nearest native car loses exactly four armor');
+    equal(poses[1].actor.armor, poses[1].armor, 'the farther native car remains untouched');
+    ok(Math.abs(shots[0].time - deployedAt - .8) < DT + 1e-6, 'the first native shot arrives after 0.8 seconds');
+    hold(Math.round(.8 / DT));
+    equal(shots.length, 2, 'the second interval produces exactly one more hit');
+    equal(poses[0].armor - poses[0].actor.armor, 8, 'the second native shot removes another four armor');
+    equal(poses[1].actor.armor, poses[1].armor, 'the farther car is still untouched after two shots');
+    ok(Math.abs(shots[1].time - shots[0].time - .8) < 1e-6, 'the second real shot follows exactly 0.8 seconds later');
+    equal(shots[0].actor, poses[0].actor, 'the real swept ray first contacts the nearest car');
+    ok(shots[0].point, 'native collision supplies an actual body surface intersection');
+    ok(Math.hypot(shots[0].point.x - shots[0].aim.x, shots[0].point.y - shots[0].aim.y,
+      shots[0].point.z - shots[0].aim.z) > .5, 'the actual intersection is demonstrably not the aimed body centre');
+    ok(Math.hypot(shots[0].hit.x - shots[0].point.x, shots[0].hit.y - shots[0].point.y,
+      shots[0].hit.z - shots[0].point.z) < 1e-6,
+    'native turret footGearHit/combatHit must report the actual swept contact, not the aimed body centre');
+  } finally {stop();}
 });
