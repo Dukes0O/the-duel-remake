@@ -53,7 +53,8 @@ after(() => {
   console.log('Arsenal native runtime: ' + checks + ' acceptance checks reached.');
 });
 const flags = (enabled = true) => createFeatureFlags({storage: null, qa: true,
-  search: enabled ? '?flags=arsenal' : '', overrides: {arsenal: enabled}});
+  // Crew gear (released 4 October 2026) is pinned off: these runs measure the weapon rules alone.
+  search: enabled ? '?flags=arsenal' : '', overrides: {arsenal: enabled, 'crew-gear': false}});
 function place(actor, s, lateral = 0) {
   Object.assign(actor, {s, prevS: s, lateral, prevLateral: lateral, speedMph: 0,
     headingError: 0, yawVelocity: 0, pushVelocity: 0, impactTimer: 0,

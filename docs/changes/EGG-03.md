@@ -81,8 +81,7 @@ and distinct render cache keys.
 - Browser review: passed on a private port with memory-only saves. The switch
   and discovery checks passed, all 10 frames rendered, and the console had no
   errors, warnings, exceptions or failed requests. High and Performance show
-  a broad, smooth ridge with a grounded Titan and no crack. The phone frame
-  shows the mountain, bowl and pond without terrain-camera clipping. A matched
+  a broad, smooth ridge with a grounded Titan and no crack. A matched
   flag-off/on overview used identical camera coordinates (maximum difference
   0); it proved that a dark diagonal belongs to the ordinary terrain and is
   absent when the Hollow replaces that area.
@@ -634,7 +633,6 @@ because the coarse mesh had not yet been subdivided.
   remaining lower-right slab raycast to the ordinary `Circuit rock surface`
   and was identical flag-off. The overhead patch was ordinary near/far terrain;
   at its overlap sample the detailed Hollow ground was 3.25 metres nearer.
-  The phone HUD remained readable and unclipped.
 - Frame time across 120 browser frames was 17.7 ms median, 19.2 ms at the 95th
   percentile and 21.4 ms maximum; no frame exceeded 33 ms. A retained direct
   helper reports only its obsolete invented `lift > 0.25 m` assertion. The

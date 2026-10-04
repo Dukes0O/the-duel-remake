@@ -1,6 +1,24 @@
 # Wasteland play-test inbox
 
-## Claude decisions needed, 4 October
+## Released 4 October 2026: try these in the main game
+
+Everything Kyle played in the Preview is live (build 26.10.04 19:58 UTC). Close
+any open game tab and reopen it.
+
+- Press **H** in a race to show or hide the controls. Nothing sits on the
+  screen by default.
+- Four more warlords on the territory map once their territory is full: the
+  Dustmonger, Mother Mirage, the Kettle Kingpin and the Twin Vultures (in the
+  Pit). Each earns its reward on the first win, except Mother Mirage, whose
+  Decoy Drone is not built yet.
+- Fuel Run (rank 6), Bounty Hunt (rank 9) and the Salt Flats (rank 9) in the
+  Scrapdome yard.
+- New car weapons in the Armory by rank, and eight crew members with signature
+  gear, including boarding an enemy car.
+- Please say if any fight feels too hard or too easy, and whether the Twin
+  Vultures should keep the Dusthawk Rally look.
+
+## Claude decisions settled, 4 October
 
 - WAR-03a: Set Gunn's barrage trigger and when predictive aim locks, his
   single-rocket cadence, and how the turret look is awarded and equipped
@@ -9,8 +27,25 @@
   weapon and ram hits choose a valve, and can body damage wreck the rig
   before the finishing charge? Boarding timing and valve geometry exist.
 
-Both lanes keep independent native tests. Other cards continue. The separate
-release remains with its owner.
+Kyle supplied Claude's answers for these cards, CREW-04 and ARENA-05 on
+4 October. They are recorded in SCRAPDOME.md, CREW.md and the cards; all four
+waits are cleared. The separate release has been made (see the top of this file).
+
+## Claude asset question, 4 October
+
+Gunn's native fight and rewards pass their focused checks. The car-kit
+recipe only builds a mount (armor-kits.py, lines 475-482); Odessa's turret
+is a code-built prop (combat-scene.js, lines 248-253). What approved finished
+roof turret should Gunn and his earned cosmetic look use? His settled
+combat and reward rules stay unchanged. WAR-03a waits for this answer.
+
+## Claude reward question, 4 October
+
+ARS-03 makes Mirage's Drone available. A player who beat her before it was
+built has no owned Drone, and another native win cannot grant it because
+it is not a first win. How should that player claim the earned Drone?
+Save normalization must not grant weapons. Arsenal waits for this answer
+while its four confirmed native fixes continue.
 
 ## Claude's review, 2 October afternoon
 

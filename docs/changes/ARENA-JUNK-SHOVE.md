@@ -64,7 +64,7 @@ flattened shell 13.59996 metres. Render state purity, floor containment,
 settling after eight seconds and persistence for two more seconds pass in
 both qualities. Capture labels use hyphens; no simulation input changed.
 
-The browser run did not measure phone layout, frame pacing, resource use or
+The browser run did not measure frame pacing, resource use or
 unloading. Three captures clipped HUD characters; no matched baseline was
 captured. An opponent contact reduced player armor in the fixture. These
 observations do not establish their cause, and no HUD or Source change was

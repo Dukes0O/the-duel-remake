@@ -117,7 +117,7 @@ Started at 07:46 PDT. HK-RUSTWALL-BASELINE merged from f0adecb after independent
 
 Janitor: removed HK lane and merged branch after unlinking its integration-only dependency junction; discarded its used gate evidence. Current code, fixture and review verdict stay committed.
 
-UX-ENTRY-HINTS merged from 04a012c: independent review clean, focused15/15 and four frozen replay hashes unchanged; final lane296/296 in442.54s and build passed on exact clean04a012c. Private memory-only browser: six captures, High/Performance, desktop/phone, actual F/gamepad X/40kmh bailout/reentry and exclusions; zero warnings/errors. Feature merge count2; full deadline remains5 merges or10:32PDT. Janitor removed its clean lane/merged branch and used raw evidence after this verdict.
+UX-ENTRY-HINTS merged from 04a012c: independent review clean, focused15/15 and four frozen replay hashes unchanged; final lane296/296 in442.54s and build passed on exact clean04a012c. Private memory-only browser: six captures, High/Performance, actual F/gamepad X/40kmh bailout/reentry and exclusions; zero warnings/errors. Feature merge count2; full deadline remains5 merges or10:32PDT. Janitor removed its clean lane/merged branch and used raw evidence after this verdict.
 
 CRASH-SWITCH-REMOVE merged from6f77a23: independent review clean; final lane296/296 in433.93s and build passed on exact clean source. Private memory-only High/Performance crash-presentation passed4captures/zero warnings/errors. Released replay JSON and single-contact hashes stay unchanged; retired false overrides now prove the same released rules. Changed assertions/removals and setup-only fixes are explained in the card note and approved by independent review. Classic/wasteland2-off still remains pending the separately gated retirement. Feature merge count3. Janitor removed its clean lane/merged branch and used evidence after this verdict.
 
@@ -573,7 +573,7 @@ normally. No release or history rewrite occurred.
 Continuation: all twenty Arsenal browser assertions pass in both qualities
 with no errors. The recipe now hides QA controls and frames cars and spikes,
 without changing runtime rules or assertions. Claude judges the faint tether
-from fresh private pictures. Unchanged minimap and phone text overlaps are
+from fresh private pictures. Unchanged minimap text overlaps are
 routed to Phase 3 polish; frame pacing and six-cue audio remain unmeasured.
 
 Five permitted pace trials found no combined balance and pursuit pass. The
@@ -715,3 +715,31 @@ Janitor sweep, 3 October 2026: no files deleted. The audit again flagged 48 runt
 Janitor after ARS-02 merge, 3 October 2026: unlinked and removed the merged Arsenal lane and branch without force, then deleted its used review evidence and rebuildable scratch output after committing the verdict. Public assets grew from 259,784,165 B to 260,014,619 B (+230,454 B) for 21 current Rocket, Flame and Magnet recordings; the integration build grew from 264,155,845 B to 264,398,132 B (+242,287 B). The repo audit still lists 48 runtime assets, one dynamically loaded tanker module, 42 exports and the fully-on hidden-road switch as uncertain candidates; none was removed. The separate AUD-17 audio worktree remains with its owner. No release or push.
 
 Session-end integration full tier, 3 October 2026: 347/347 passed in 567.70 seconds on exact clean commit 15f6f67 after the ARS-02 merge. Rocket, Flame and Magnet audio, native gameplay, prior replay pins and the wider suite passed. Integration build passed in 438 ms after merge. One feature merge since the previous full run; no release or push. This verdict belongs to 15f6f67; later metadata commits need their own exact pass before release.
+
+## Claude session, 4 October 2026: release of the Wasteland's second wave
+
+Kyle approved everything in the Preview for the main game and asked for the
+controls to stop sitting on the screen. Fuel Run, Bounty Hunt, Arsenal, Salt
+Flats and Crew gear are on; HELP-KEY (H shows the controls) is in. Exact commit
+8cf7979 passed 348/348 full suites in 668 seconds and the build passed; combat
+balance is inside the full tier. Live folder was clean; master fast-forwarded
+from 4cd4a96 to 8cf7979. Build 20261004195849-f63d174e8b2d was checked on a
+private port (menu loads, no console errors), the previous build is kept in
+dist-previous, new hashed assets were copied first and index.html with the
+build manifest last; dist matches the staged build exactly and the staging
+folder is gone. master and main are both pushed to GitHub at 8cf7979. Port
+5174 was not started. No real saves were touched.
+
+Director checkpoint, 4 October 2026: the full tier on clean integration
+3eb740d finished in 621.51 seconds: 347 passed, one failed. The failure is
+the native crash-audio peak suite. Feature merges are held pending diagnosis
+and a passing full rerun. Arsenal and Voice have updated from the complete
+released base; Convoy's owned source is committed but shared hooks remain.
+Gunn waits for Claude's finished turret asset answer. No release work here.
+
+The unchanged native crash suite passed alone with continuous tracks. Its
+host-level interruption remains unproved; no assertion or source changed.
+The quiet full rerun passed all 348 suites in 600.65 seconds on clean
+3f5deb00; build passed in 449 ms. Feature merges can resume. Arsenal needs
+four native review fixes; Voice's released-base source review is clear.
+

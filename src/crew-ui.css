@@ -16,5 +16,3 @@
 .crew-card button{margin-top:auto;min-height:38px;border:1px solid var(--crew-accent);background:#101817;color:#f6e4cd;font-size:11px;font-weight:800}
 .crew-card button:disabled{opacity:.65;cursor:default}
 .crew-card button:not(:disabled):hover{background:#f3d2a51c}
-@media(max-width:1050px){.crew-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:580px){.crew-grid{grid-template-columns:1fr}}
