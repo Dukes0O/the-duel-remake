@@ -49,37 +49,25 @@ first-win settlement still saves the explicit earned reward as before.
   Contrast is 6.56 to 9.95 dB over the engine; overlapping mix peak is 0.8202.
 - Pending: final reviews, balance, frames, lane gate and build.
 
-Independent reviewer regressions on `23263d4`: 55 cases/338 checks;
-the original 51 pass and four new cases fail: Star retains Magnet, live Tesla
-slots remain enabled, upgraded recharge shows 2 degrees instead of 61,
-and player Mortar selects the farther ground target. Native Crossbow/boost
-denial, recovery, ordinary timing and CPU leader/range checks already pass.
-HUD uses an in-file semantic DOM fixture; combat and driving remain native.
+Independent reviewer regressions: original 51 pass, four new cases fail for
+Star/Magnet, Tesla slots, recharge angle and Mortar ground targeting. Source
+fixes cancel Magnet before Star, use native disabled/recharge rules and sort
+Mortar ground distance. CPU leader/range and ordinary rules remain exact.
+HUD uses a semantic DOM fixture; combat and driving checks remain native.
 
-Source fixes on test base `24cc7ec2`: Tesla cancels Magnet before consuming
-Star; HUD displays DISABLED until the real effect expires and uses native
-Arsenal recharge; player Mortar sorts ground distance. CPU leader stays exact.
-Focused pass: wave three 55/340, HUD 8, Voice 26/358, audio 31,
-Arsenal runtime 209/2,625, combat replays 12, build 568 ms. Assertions exact.
-
-Earned-reward red tests after metadata merge `bb713`: native suite has 99
-cases/438 executed checks, 62 pass and 37 expected failures; original 55 pass.
-Smoke/Rockets/Drone in both defeat shapes lack rank-one ownership, slots,
-upgrades, repeat-offer protection and native App equipment; Mirage rematch
-also lacks derived ownership. Read purity and first-win storage controls pass.
-Source on `d220e948`: shared weapon reads derive catalog rewards from saved
-defeats; a saved-only reader handles normalization, first wins and upgrade
+Earned-reward red tests: 62/99 pass; 37 fail for Smoke/Rockets/Drone earned
+reads, slots, upgrades, repeat offers, native App equipment and Mirage rematch.
+Read purity and first-win controls pass. Source derives catalog rewards from
+saved defeats; saved-only reads handle normalization, first wins and upgrade
 writes. Normalization retains earned slots without adding ownership entries.
-Unchanged native tests pass: 99 cases/552 checks, including pure reads,
-per-player isolation, default level zero, upgrades, durable slots and launch.
-Six focused save/ownership/backup suites pass (56 TAP cases); existing runtime
-209/2,625 and combat replay 12 pass. Build 768 ms passed before the gate hold.
-No new browser or broad tier; final independent reviews and gates remain.
+Native 99/552 and six save/ownership/backup suites (56 TAP cases) pass;
+runtime 209/2,625 and combat replays 12 pass. Earlier build passed before hold.
 
 Whole Voice base `3ee64bc5` and Director metadata `18072d80` transferred intact.
-Feature-test conflict: retain nine entries, five released on, Voice/wave three
-dev and all other prior values. Combined native 99/552, Voice 26/358, audio 31,
-flags 39 and Preview 22 pass. No new build/browser/broad run. Earlier desktop
+Feature-test conflict: eight entries become nine only by adding wave three
+dev; five released on, Voice dev and all other prior states stay exact.
+Combined native 99/552, Voice 26/358, audio 31,
+flags 39 and Preview 22 pass. No new build/browser/broad run. Earlier browser
 evidence stays at `.evidence/2026-10-04/ARS-03-release-base/`; final gates await.
 
 Unimplemented purchase denial replaces only the Mortar input with an unknown
@@ -88,6 +76,17 @@ After merging the 4 October release base, the native wave-three gate test
 expects `FEATURE_STATES.arsenal` to be `on` instead of `dev`. The same invariant
 still protects the existing Arsenal state; the release changed that state.
 Catalog: five released features on, both dev flags; isolation checks remain.
+
+Preservation red on `52ca6265`: Core 14 checks / 2 failures, Wave One 36 / 2.
+Bank views include nine new cues; catalog views include nine new recipes.
+Parsed comparison with whole `18072d80`: all 110 earlier cues, six exports,
+49 earlier recipes and metadata exact. Add only nine literal Wave Three IDs
+to each bank additions list; all existing assertions and hash pins stay exact.
+Bank-only result: Core 13/14 and Wave One 35/36; only catalog failures remain
+(407bd2c9 vs 104e9daf; 7ce837a8 vs 48c3d417). Native 99/552, Voice 26/358 and
+Wave Three audio 31/31 pass. No source, asset, catalog or replay edit.
+Catalog assertions and Beta remain unchanged for the source worker. Beta
+red is 7/8: its exact catalog omits only arsenal-wave3 dev.
 
 ## Removed
 

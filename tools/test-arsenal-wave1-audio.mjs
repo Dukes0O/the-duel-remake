@@ -26,8 +26,12 @@ const CREW_CUES = ['crew.sticky.arm','crew.sticky.throw','crew.sticky.beep','cre
 const FIGHT_VOICE_CUES = ['crew.cinder.callout', 'crew.dune.callout', 'crew.jax.callout',
   'crew.nell.callout', 'crew.odessa.callout', 'crew.rook.callout',
   'crew.tusk.callout', 'crew.wren.callout', 'raider.toll'];
+// ARS-03 adds only these nine bank cues; the earlier bank pin stays exact.
+const WAVE_THREE_CUES = ['weapon.mortar.fire', 'weapon.mortar.whistle', 'weapon.mortar.hit',
+  'weapon.tesla.charge', 'weapon.tesla.pulse', 'weapon.decoy.deploy',
+  'weapon.decoy.burst', 'weapon.nitro.start', 'weapon.nitro.loop'];
 const BANK_ADDITIONS = new Set([...CUES, ...WAVE_TWO_CUES, 'arena.bounty-mark',
-  ...CREW_CUES, ...FIGHT_VOICE_CUES]);
+  ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES]);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 // Rebuild only retired flag fields in test memory so the original exact pin
 // still checks every cue recipe without accepting any other bank change.
