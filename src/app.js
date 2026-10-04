@@ -16,6 +16,7 @@ import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
 import {BUILT_WARLORD_IDS} from './warlords.js';
+import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
 import { seedFromUrl } from './rng.js';
@@ -816,6 +817,7 @@ export class App {
       state.arena.warlordId === warlordId && this._runPlayerId === this.player.id &&
       state.playerId === this.player.id;
     if (!this.warlordsAvailable() || !BUILT_WARLORD_IDS.includes(warlordId) ||
+        !warlordEnabled(this.duel, warlordId) ||
         this.profile.wasteland?.territories?.[warlordId]?.hold !== 100 ||
         !(this.isYardHomeActive() || ownRematch)) return false;
     return this._startArenaFight({warlordId, opponents: 1});
