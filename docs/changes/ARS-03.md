@@ -61,7 +61,6 @@ Star; HUD displays DISABLED until the real effect expires and uses native
 Arsenal recharge; player Mortar sorts ground distance. CPU leader stays exact.
 Focused pass: wave three 55/340, HUD 8, Voice 26/358, audio 31,
 Arsenal runtime 209/2,625, combat replays 12, build 568 ms. Assertions exact.
-No new browser or broad tier; the two previously unreached checks now run.
 
 Earned-reward red tests after metadata merge `bb713`: native suite has 99
 cases/438 executed checks, 62 pass and 37 expected failures; original 55 pass.
@@ -77,10 +76,11 @@ Six focused save/ownership/backup suites pass (56 TAP cases); existing runtime
 209/2,625 and combat replay 12 pass. Build 768 ms passed before the gate hold.
 No new browser or broad tier; final independent reviews and gates remain.
 
-Release-base checks (4 October, parents `07d6b45`/`3eb740d`): wave three
-51 cases/304 checks; Voice 26/358; audio 31; flags 39; Preview 22; build 535 ms
-pass. Private port 23901, memory-only: 16 high/performance captures, zero
-issues; `.evidence/2026-10-04/ARS-03-release-base/`. Final gates remain pending.
+Whole Voice base `3ee64bc5` and Director metadata `18072d80` transferred intact.
+Feature-test conflict: retain nine entries, five released on, Voice/wave three
+dev and all other prior values. Combined native 99/552, Voice 26/358, audio 31,
+flags 39 and Preview 22 pass. No new build/browser/broad run. Earlier desktop
+evidence stays at `.evidence/2026-10-04/ARS-03-release-base/`; final gates await.
 
 Unimplemented purchase denial replaces only the Mortar input with an unknown
 weapon ID; refusal and no-write assertions stay unchanged.
