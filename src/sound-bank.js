@@ -1,4 +1,5 @@
 // Cue data is the single home for assets, routing and authored sound recipes.
+import {FIGHT_VOICE_LINES} from './fight-voices.js';
 export const BUS_NAMES = Object.freeze([
   'engine',
   'vehicle',
@@ -36,6 +37,9 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  ...Object.fromEntries(Object.entries(FIGHT_VOICE_LINES).map(([id, line]) =>
+    [id, cue('voice', {file: `voices/${line.file}`, flag: 'fight-voices',
+      volume: line.gain || 1, priority: 90, limit: 1, duck: 'voice'})])),
   'crew.sticky.arm': cue('weapons', {flag: 'crew-gear', layers: [tone(105, .18, .11, 'triangle', 0, 65)]}),
   'crew.sticky.throw': cue('weapons', {flag: 'crew-gear', layers: [noise(620, .11, .1), tone(220, .12, .08, 'triangle', 0, 110)]}),
   'crew.sticky.beep': cue('weapons', {flag: 'crew-gear', layers: [tone(1180, .07, .07, 'square')]}),

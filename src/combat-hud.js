@@ -5,6 +5,7 @@ import {NOTORIETY_XP} from './notoriety.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 import {CAR_SLOT_DIRECTIONS,CAR_SLOT_PAD} from './car-loadout.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {readFightSubtitle} from './fight-voices.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 const zones = ['front', 'right', 'rear', 'left'];
@@ -153,6 +154,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-edge-cue" data-side="left" aria-hidden="true"></div>
     <div class="combat-edge-cue" data-side="right" aria-hidden="true"></div>
     <div class="combat-xp-toast" role="status" aria-live="polite"></div>
+    <div class="combat-fight-subtitle" role="status" aria-live="polite" hidden></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
@@ -179,6 +181,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
   const xpToast = host.querySelector('.combat-xp-toast');
+  const fightSubtitle = host.querySelector('.combat-fight-subtitle');
   const edgeCues = [...host.querySelectorAll('.combat-edge-cue')];
   const armorValue = playerArmor.querySelector('strong');
   const armorFill = playerArmor.querySelector('i');
@@ -225,6 +228,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
 
   function update(state) {
     const active = combatHudVisible(app.duel, state);
+    const subtitle = active ? readFightSubtitle(state) : null;
+    if (fightSubtitle.hidden !== !subtitle) fightSubtitle.hidden = !subtitle;
+    setText(fightSubtitle, subtitle || '');
     const onFoot = active && state.onFoot && !!state.fighter;
     if (host.hidden === active) host.hidden = !active;
     if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;
