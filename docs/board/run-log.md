@@ -730,3 +730,16 @@ build manifest last; dist matches the staged build exactly and the staging
 folder is gone. master and main are both pushed to GitHub at 8cf7979. Port
 5174 was not started. No real saves were touched.
 
+Director checkpoint, 4 October 2026: the full tier on clean integration
+3eb740d finished in 621.51 seconds: 347 passed, one failed. The failure is
+the native crash-audio peak suite. Feature merges are held pending diagnosis
+and a passing full rerun. Arsenal and Voice have updated from the complete
+released base; Convoy's owned source is committed but shared hooks remain.
+Gunn waits for Claude's finished turret asset answer. No release work here.
+
+The unchanged native crash suite passed alone with continuous tracks. Its
+host-level interruption remains unproved; no assertion or source changed.
+The quiet full rerun passed all 348 suites in 600.65 seconds on clean
+3f5deb00; build passed in 449 ms. Feature merges can resume. Arsenal needs
+four native review fixes; Voice's released-base source review is clear.
+
