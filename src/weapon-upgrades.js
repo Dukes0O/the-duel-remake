@@ -41,7 +41,7 @@ export function normalizeWeapons(value) {
   return {...source, version: 1, unlocked, levels};
 }
 
-export function getProfileWeapons(profile) {
+export function getSavedProfileWeapons(profile) {
   const nested = normalizeWeapons(profile?.wasteland?.weapons);
   const legacy = normalizeWeapons(profile?.weapons);
   const levels = {...legacy.levels, ...nested.levels};
@@ -51,6 +51,19 @@ export function getProfileWeapons(profile) {
   }
   return {...legacy, ...nested,
     unlocked: [...new Set([...legacy.unlocked, ...nested.unlocked])], levels};
+}
+
+// Defeat entitlements belong to the read view; writes use saved ownership.
+export function getProfileWeapons(profile) {
+  const saved = getSavedProfileWeapons(profile);
+  if (profile?.wasteland?.version !== 1) return saved;
+  const warlords = profile.wasteland.warlords;
+  const rewards = Object.entries(ARSENAL_WEAPONS).filter(([, item]) =>
+    item.warlordId && (warlords?.[item.warlordId]?.defeated === true ||
+      validIds(warlords?.defeated).includes(item.warlordId))).map(([id]) => id);
+  const levels = {...saved.levels};
+  for (const id of rewards) if (!Object.hasOwn(levels, id)) levels[id] = 0;
+  return {...saved, unlocked: [...new Set([...saved.unlocked, ...rewards])], levels};
 }
 
 export function implementedArsenalWeapons({implemented = Object.keys(ARSENAL_WEAPONS),
@@ -81,7 +94,7 @@ function withWeapons(profile, weapons, careerFields = {}) {
 }
 
 function unlockWeapon(profile, id) {
-  const weapons = getProfileWeapons(profile);
+  const weapons = getSavedProfileWeapons(profile);
   if (weapons.unlocked.includes(id)) return {ok: true, profile, changed: false, cost: 0};
   return {ok: true, changed: true, cost: 0,
     profile: withWeapons(profile, {...weapons,
@@ -92,11 +105,11 @@ export function purchaseArsenalWeapon(profile, id, options = {}) {
   if (futureCareer(profile)) return {ok: false, profile, reason: 'This career needs a newer game build.'};
   if (!arsenalCareerAvailable(profile, options) || !implementedArsenalWeapons(options).includes(id))
     return {ok: false, profile, reason: 'That weapon is not available.'};
+  const weapons = getProfileWeapons(profile);
+  if (weapons.unlocked.includes(id)) return {ok: true, profile, changed: false, cost: 0};
   const rank = rankForXp(profile.wasteland.xp);
   if (rank < ARSENAL_WEAPONS[id].rank)
     return {ok: false, profile, reason: 'Reach rank ' + ARSENAL_WEAPONS[id].rank + ' to buy this weapon.'};
-  const weapons = getProfileWeapons(profile);
-  if (weapons.unlocked.includes(id)) return {ok: true, profile, changed: false, cost: 0};
   const balance = profile.wasteland.scrap;
   if (!Number.isSafeInteger(balance) || balance < ARSENAL_WEAPON_COST)
     return {ok: false, profile, reason: 'You need ' + ARSENAL_WEAPON_COST + ' scrap for this weapon.'};
@@ -131,7 +144,8 @@ export function purchaseWeaponUpgrade(profile, id, options = {}) {
   const balance = wastelandCareer ? profile.wasteland.scrap : profile.credits;
   if (!Number.isSafeInteger(balance) || balance < cost) return {ok: false, profile,
     reason: 'You need ' + cost + ' ' + (wastelandCareer ? 'scrap' : 'credits') + ' for this upgrade.'};
-  const updated = withWeapons(profile, {...weapons, levels: {...weapons.levels, [id]: level + 1}},
+  const saved = getSavedProfileWeapons(profile);
+  const updated = withWeapons(profile, {...saved, levels: {...saved.levels, [id]: level + 1}},
     wastelandCareer ? {scrap: balance - cost} : {});
   return {ok: true, profile: {...updated,
     credits: wastelandCareer ? profile.credits : profile.credits - cost}, cost};

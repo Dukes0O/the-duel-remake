@@ -35,9 +35,6 @@ first-win settlement still saves the explicit earned reward as before.
 
 ## Checks
 
-- Independent native acceptance: 51 cases, 304 checks pass. Includes real
-  Crossbow/RPG flights, reward guards, CPU decisions, both gates and levels.
-- Existing Arsenal runtime: 209 cases, 2,625 checks pass.
 - Laptop-only browser: 16 captures in high and performance modes pass;
   canvas pixels, renderer purity, native Oil counter, zero console issues.
   Drone's opponent HUD marker is excluded; Mirage's existing labels remain.
@@ -68,15 +65,17 @@ No new browser or broad tier; the two previously unreached checks now run.
 
 Earned-reward red tests after metadata merge `bb713`: native suite has 99
 cases/438 executed checks, 62 pass and 37 expected failures; original 55 pass.
-For each Smoke/Rockets/Drone reward in structured and supported legacy defeat
-shapes, failures report missing rank-one ownership, pure equip refusal, missing
-native Armory slot, repeat purchase offer, early upgrade refusal and native
-App equip refusal. The real Mirage rematch also lacks derived ownership.
-Six independent read-purity cases pass: memory save bytes and App profile
-stay exact, zero writes, no normalization grant, named-player isolation and
-gate-off equipment. Saved ownership alone and native first-win saved reward
-controls pass. App cases also check durable slots and arena launch once fixed.
-Existing assertions/replay pins stay exact; no source edits.
+Smoke/Rockets/Drone in both defeat shapes lack rank-one ownership, slots,
+upgrades, repeat-offer protection and native App equipment; Mirage rematch
+also lacks derived ownership. Read purity and first-win storage controls pass.
+Source on `d220e948`: shared weapon reads derive catalog rewards from saved
+defeats; a saved-only reader handles normalization, first wins and upgrade
+writes. Normalization retains earned slots without adding ownership entries.
+Unchanged native tests pass: 99 cases/552 checks, including pure reads,
+per-player isolation, default level zero, upgrades, durable slots and launch.
+Six focused save/ownership/backup suites pass (56 TAP cases); existing runtime
+209/2,625 and combat replay 12 pass. Build 768 ms passed before the gate hold.
+No new browser or broad tier; final independent reviews and gates remain.
 
 Release-base checks (4 October, parents `07d6b45`/`3eb740d`): wave three
 51 cases/304 checks; Voice 26/358; audio 31; flags 39; Preview 22; build 535 ms
@@ -97,3 +96,4 @@ assertions stay unchanged. Temporary Gunn admission/reward, dev/Preview and
 look-only Armory handoffs are excluded. Its separate lane is retained.
 The obsolete forward-gap Mortar ordering and Arsenal HUD linear recharge
 calculation are replaced; ordinary starter recharge retains its original rule.
+Stored-only entitlement reads are replaced by the catalog defeat rule.
