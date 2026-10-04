@@ -18,7 +18,7 @@ for (const recipe of ARSENAL_WAVE_THREE_RECIPES) {
     const cue = SOUND_BANK[recipe.cue];
     assert.ok(cue, 'missing bank cue');
     assert.equal(cue.bus, 'weapons');
-    assert.equal(cue.flag, 'arsenal');
+    assert.equal(cue.flag, 'arsenal-wave3');
     assert.equal(cue.loop === true, !!recipe.loop);
     assert.deepEqual(cue.files, ['a', 'b', 'c'].map(variant =>
       'arsenal-wave3/' + recipe.stem + '-' + variant + '.ogg'));

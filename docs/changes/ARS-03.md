@@ -35,9 +35,12 @@ Mirage's existing boss file is reused through its generic decoy contract.
   Drone's opponent HUD marker is pending the shared HUD hook transfer.
 - Balance: 30 of 30 main Hard races finish; 12 wins. Naturally seeded CPU
   loadouts use all four weapons. Zero unattributed new weapon cues.
-  One extra defensive-driving run stalls against scenery; investigation open.
+  One new defensive supplement stalled against scenery; legal brake/reverse
+  recovery now finishes it in 554.49 s, with a loss. Historical policies
+  are unchanged. The complete sample must be rerun on the final gated base.
 - Nine new sound recipes produce 27 cached CC0 recordings. Sound-bank,
   catalog and owned loop hooks await Voice's reviewed source transfer.
+  All nine recording checks pass after a Drone transient compression fix.
 - Pending: separate dev gate, source and save reviews, final audio and
   browser/frame checks, lane gate and build on the final base.
 

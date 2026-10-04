@@ -239,9 +239,21 @@ function forwardSpeedMph(duel, actor) {
 
 function driveRearDefense(app, goalGap = 18, shadowSec = Infinity) {
   const drive = app._driveAutopilot.bind(app);
+  let stallSec = 0, reverseSec = 0;
   app._driveAutopilot = dt => {
     drive(dt);
     const duel = app.duel, state = duel.state;
+    if (Number.isFinite(shadowSec) && state.status === 'racing' &&
+        state.impactTimer <= 0 && state.stageTimeSec > 10) {
+      stallSec = Math.abs(state.speedMph) < 3 ? stallSec + dt : 0;
+      if (stallSec >= 2) {reverseSec = 3; stallSec = 0;}
+      if (reverseSec > 0) {
+        reverseSec -= dt;
+        duel.setInput({throttle: 0, brake: 1,
+          steer: -Math.sign(state.headingError || 1) * .8, boost: false});
+        return;
+      }
+    }
     if (state.status === 'countdown') {
       duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
       return;
