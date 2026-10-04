@@ -1044,7 +1044,7 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
     test_commit: d220e948
-    source_commit: 7ac1f37a
+    source_commit: 68a08785
     preservation_test_commit: 87b436f2
     balance_test_commit: 0cd575fa
     source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
@@ -1052,7 +1052,7 @@ tasks:
     browser_review: "Both qualities pass weapon, counter, HUD and old Mirage reward checks. Armory reads preserve saved bytes. Matched driving frame time stays unchanged; active-weapon frame cost was not measured."
     audio_routing_test_commit: e19beaa9
     audio_contrast_test_commit: d7852758
-    audio_review: "Routing and lifecycle checks pass in both qualities. The close Tesla pulse is below the unchanged audibility target; its spatial regression is red. A pulse-only gain fix and final mixed audio review precede the lane gates."
+    audio_review: "Independent review clears the pulse-only gain fix and the corrected spatial fixture; all audio checks and contrast limits pass. Existing cues, assets, recipes and thresholds stay unchanged. Final native mixed audio and lane gates remain."
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1390,6 +1390,7 @@ tasks:
     sequencing: "Build the settled turret recipe and native fight while Arsenal holds shared callers and rendering. Do not regenerate the nine approved kit models. After Arsenal merges, grant the runtime turret hooks; send the finished comparison sheet to Claude before merge."
     test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
     trajectory_test_grant: "Independent author adds the convergence witness; the source worker replaces only the contradicted parallel-ray assertion after that proof. Four real mouths must reach Claude's one locked world point. Keep tell, five-shot count, lock, timing and player-turn checks; review the changed assertion before merge."
+    yard_hook_grant: "After the whole Arsenal merge, Gunn may forward injected flags through screen-router.js and screen-yard-home.js to the territory panel, including its Armory view. Tests first preserve released yard behavior. Convoy still owns central contacts, projectiles, entry, renderer and audio first; no unfinished peer hooks transfer."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, art_critic]
     acceptance:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
