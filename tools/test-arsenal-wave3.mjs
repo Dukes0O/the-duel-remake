@@ -12,6 +12,10 @@ import {createProfile} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
 import {getProfileWeapons, purchaseArsenalWeapon, purchaseWeaponUpgrade,
   rewardArsenalWeapon, normalizeWeapons} from '../src/weapon-upgrades.js';
+import {createFighter} from '../src/onfoot.js';
+import {stepFootWeapons} from '../src/onfoot-weapons.js';
+import {stepCombatAI} from '../src/combat-ai.js';
+import {combatTeam} from '../src/combat-teams.js';
 
 // ARS-03: production weapon dispatch, damage, counter and effect lifetimes.
 // A flat course isolates combat from road scenery; profiles remain in memory.
@@ -251,4 +255,130 @@ test('same wave-three inputs give identical fixed-step results at 30, 60 and 144
       nitro: carEffect(f.state, 'nitro'), disabled: carEffect(f.rival, 'disabled')};
   }
   for (const [id] of WEAPONS) {const base = run(30, id); for (const fps of [60, 144]) equal(run(fps, id), base, `${id} is repeatable at ${fps} FPS`);}
+});
+
+function payoff(f) {
+  return {scoring: structuredClone(f.state.combat.scoring), hits: f.state.combat.hits,
+    notorietyEvents: structuredClone(f.state.combat.notorietyEvents || []),
+    score: f.state.score, style: f.state.stageStyleScore};
+}
+
+test('a real enemy Crossbow flight redirects to the player Drone, bursts it and leaves its owner unharmed', () => {
+  const f = race({difficulty: 'hard'}); fire(f, 'decoy');
+  const drone = f.state.opponents.find(actor => actor.drone), armor = f.state.armor;
+  f.rival.headingError = Math.PI; f.rival.weaponLoadout = ['crossbow'];
+  const before = payoff(f);
+  equal(fireWeapon(f.duel, 'crossbow', true, f.rival), true, 'the native enemy Crossbow producer fires');
+  const shot = f.state.combat.projectiles.find(p => p.kind === 'crossbow');
+  ok(shot?.enemy, 'an actual enemy projectile exists before its flight');
+  equal(shot.targetId, targetIdentity(f.duel, drone), 'the launched enemy bolt locks onto the player copy');
+  tick(f, 2);
+  ok(!f.state.opponents.includes(drone) || !drone.active, 'native projectile flight bursts the copy on its first collision');
+  equal(f.state.armor, armor, 'the player body behind the copy takes no armor damage');
+  equal(payoff(f), before, 'a copy hit awards no hit, style, wreck or notoriety pay');
+});
+
+test('a real RPG lock and flight strike a CPU Drone without damaging its owner or paying for the copy', () => {
+  const f = race(); f.rival.weaponLoadout = ['decoy'];
+  equal(fireWeapon(f.duel, 'decoy', true, f.rival), true, 'the computer deploys an actual owner copy');
+  const drone = f.state.opponents.find(actor => actor.drone), armor = f.rival.armor;
+  f.state.onFoot = true;
+  f.state.fighter = createFighter(f.duel.course, f.state, {s: f.state.s, lateral: 0});
+  const fighter = f.state.fighter;
+  fighter.yaw = Math.atan2(drone.lateral - fighter.x, drone.s - fighter.z);
+  fighter.pitch = Math.atan2(1 - (fighter.y + 1.48), Math.hypot(drone.lateral - fighter.x, drone.s - fighter.z));
+  f.state.fighterInput = {aim: true, fire: false};
+  for (let n = 0; n < 120; n++) {
+    f.state.stageTimeSec += DT; stepFootWeapons(f.duel, DT);
+  }
+  equal(f.state.footWeapons.lockTargetId, targetIdentity(f.duel, drone), 'native on-foot lock selects the CPU-owned Drone');
+  const before = payoff(f);
+  f.state.fighterInput.fire = true; stepFootWeapons(f.duel, DT);
+  const shot = f.state.combat.projectiles.find(p => p.kind === 'rpg');
+  ok(shot, 'the native on-foot trigger creates a real RPG');
+  equal(shot.targetId, targetIdentity(f.duel, drone), 'the launched RPG retains the redirected lock');
+  tick(f, 2);
+  ok(!f.state.opponents.includes(drone) || !drone.active, 'the native RPG flight bursts its target copy');
+  equal(f.rival.armor, armor, 'the real CPU owner is outside the copy impact and remains unharmed');
+  equal(payoff(f), before, 'shooting a copy cannot earn a hit, combo, style or notoriety reward');
+});
+
+test('native arena player Drone keeps its owner team and never changes the real scoreboard', () => {
+  const duel = new Duel({seed: 3303, featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: {arsenal: true, scrapdome: true}})});
+  duel.state.wastelandGateDiscovered = true;
+  equal(duel.startArenaEvent({venueId: 'pit', mode: 'last-car-rolling', car: 'falcone_f42',
+    arsenalRank: 30, cpuDifficulty: 'hard', opponents: [{car: 'dusthawk_rally'}]}), true,
+    'the native arena entry succeeds before Drone combat');
+  duel.state.countdown = 0; duel.step(DT); duel.step(DT);
+  duel.state.invulnerableSec = 0;
+  for (const p of duel.state.arena.participants) p.protectedSec = 0;
+  equal(fireWeapon(duel, 'decoy'), true, 'the native arena player deploys Drone');
+  const drone = duel.state.opponents.find(actor => actor.drone);
+  equal(combatTeam(duel, drone), combatTeam(duel, duel.state), 'the copy shares the actual owner arena team');
+  const before = duel.state.arena.participants.filter(p => !p.decoy)
+    .map(p => [p.id, p.wrecks, p.wrecked, p.damageDealt]);
+  applyArmorDamage(duel, drone, 'crossbow', {owner: 'cpu-1'}); duel.step(DT);
+  equal(duel.state.arena.participants.filter(p => !p.decoy).map(p => [p.id, p.wrecks, p.wrecked, p.damageDealt]),
+    before, 'a Drone burst cannot alter any real participant score');
+  equal(duel.state.status, 'racing', 'a copy burst never settles or finishes the arena');
+});
+
+function cpuDecision(id, {distance = 50, lateral = 0, difficulty = 'hard', prepare} = {}) {
+  const f = race({gap: -distance, difficulty});
+  f.state.lateral = f.state.prevLateral = lateral;
+  f.rival.weaponLoadout = [id];
+  prepare?.(f); f.state.combat.aiTimer = 0;
+  stepCombatAI(f.duel, DT);
+  return {f, used: f.events.some(e => e.actor === f.rival && e.arsenalCue ===
+    {mortar: 'weapon.mortar.fire', tesla: 'weapon.tesla.charge', decoy: 'weapon.decoy.deploy', nitro: 'weapon.nitro.start'}[id])};
+}
+
+test('native CPU Mortar decisions admit the leader at 40 and 200 metres ahead but not outside or behind', () => {
+  for (const [distance, expected] of [[39, false], [40, true], [200, true], [201, false], [-50, false]])
+    equal(cpuDecision('mortar', {distance}).used, expected, `native Mortar decision at ${distance} m`);
+});
+
+test('native arena Mortar fires at the score leader instead of a closer nonleader', () => {
+  const duel = new Duel({seed: 3314, featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: {arsenal: true, scrapdome: true}})});
+  duel.state.wastelandGateDiscovered = true;
+  equal(duel.startArenaEvent({venueId: 'pit', mode: 'last-car-rolling', car: 'falcone_f42',
+    arsenalRank: 30, cpuDifficulty: 'hard', opponents: [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}]}), true,
+    'the actual three-car arena admits the Mortar leader fixture');
+  duel.state.countdown = 0; duel.step(DT); duel.step(DT);
+  const state = duel.state, owner = state.opponents[0], leader = state.opponents[1];
+  const point = (s, lateral = 0) => ({x: lateral, y: 0, z: s, heading: 0, curvature: 0});
+  duel.course = {...duel.course, at: point, groundAt: point, worldAt: point};
+  Object.assign(owner, {s: 500, lateral: 0, headingError: 0, speedMph: 0, weaponLoadout: ['mortar']});
+  Object.assign(state, {s: 550, lateral: 0}); Object.assign(leader, {s: 650, lateral: 0});
+  for (const p of state.arena.participants) p.protectedSec = 0;
+  state.arena.participants.find(p => p.id === leader.arenaId).wrecks = 2;
+  state.combat.aiTimer = 0; stepCombatAI(duel, DT);
+  equal(state.combat.mortarShells[0]?.targetId, leader.arenaId,
+    'the real CPU launch commits the score leader rather than the nearer player');
+});
+
+test('native CPU Tesla decisions use twelve metres, not the fifteen-metre blast radius', () => {
+  equal(cpuDecision('tesla', {distance: 12}).used, true, 'an enemy at twelve metres starts the native tell');
+  equal(cpuDecision('tesla', {distance: 12.1}).used, false, 'an enemy beyond twelve metres cannot trigger Tesla');
+});
+
+test('native CPU Drone decisions require two positive hostile hits inside six seconds', () => {
+  const hit = f => applyArmorDamage(f.duel, f.rival, 'crossbow', {owner: 'player'});
+  equal(cpuDecision('decoy', {prepare: hit}).used, false, 'one positive hit cannot deploy Drone');
+  equal(cpuDecision('decoy', {prepare: f => {hit(f); f.state.stageTimeSec += 5.9; hit(f);}}).used,
+    true, 'two positive hostile native hits inside six seconds deploy Drone');
+  equal(cpuDecision('decoy', {prepare: f => {hit(f); f.state.stageTimeSec += 6.1; hit(f);}}).used,
+    false, 'a stale first hit cannot qualify a new hit');
+  equal(cpuDecision('decoy', {prepare: f => {
+    f.state.combat.rivalShield = 3; hit(f); hit(f); f.state.combat.rivalShield = 0;
+  }}).used, false, 'fully shield-blocked hits cannot qualify Drone');
+});
+
+test('native CPU Nitro decisions require Hard, an enemy ahead within forty metres and the same lane', () => {
+  for (const [options, expected] of [[{distance: 40}, true], [{distance: 40.1}, false],
+    [{distance: -20}, false], [{distance: 20, lateral: 10}, false],
+    [{distance: 20, difficulty: 'medium'}, false], [{distance: 20, difficulty: 'easy'}, false]])
+    equal(cpuDecision('nitro', options).used, expected, `native Nitro decision ${JSON.stringify(options)}`);
 });
