@@ -802,3 +802,27 @@ converted now keeps the career, using that field's existing zero fallback;
 before, the conversion failure could discard the named player's career. No
 save schema or key changes. Release evidence is in docs/board/run-log.md.
 
+## Release 4 October 2026: the Wasteland's second wave
+
+Kyle played the Preview and asked for everything in it in the main game, and
+for the controls to stop sitting on the screen. `fuel-run`, `bounty-hunt`,
+`arsenal`, `salt-flats` and `crew-gear` are on (they stay in the switch list
+until retired). Also live: the Dustmonger, Mother Mirage, the Kettle Kingpin
+and the Twin Vultures (WAR-02b, WAR-02c, WAR-03b, WAR-03c on WAR-HOOKS), the
+Pit (ARENA-PIT), Fuel Run (ARENA-03), Bounty Hunt (ARENA-04), the Salt Flats
+(ARENA-06), Oil Slick, Smoke Screen, Harpoon, Caltrops, Rocket Pods, the
+Flamethrower and Scrap Magnet (ARS-CORE, ARS-01, ARS-02), the eight crew
+signature gear items and boarding (CREW-02, CREW-03), and the H key
+(HELP-KEY). Gearhead Gunn, the Tollkeeper, Baron Blackiron, Ambush Alley and
+the Convoy Raid are not built and stay out of the game. The Decoy Drone,
+Mother Mirage's reward, waits for ARS-03; her fight pays scrap only until
+then. The Twin Vultures' buggies are Dusthawk Rallys, and the two-tone horn
+in their design is not made.
+
+Tests that pinned the five switches as development switches were changed on
+purpose and are listed in docs/changes/RELEASE-2026-10-04.md. Tests that pin
+the earlier combat and arena rules (replay fingerprints, CPU cadence, the Pit
+and Salt controls, the on-foot weapons) now run with Arsenal and crew gear off
+explicitly, with every assertion unchanged. Release evidence is recorded in
+docs/board/run-log.md.
+
