@@ -1360,7 +1360,8 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
-    test_commit: 99f6251
+    test_commit: c5f1536a
+    art_test_verdict: "Nine approved kit hashes and the original Gunn fight tests pass unchanged. The new tests fail for the missing finished turret and level rocket flight above a lower target; runtime geometry and lifecycle checks await the asset."
     note_commit: bcda842
     note: "Claude's turret recipe is settled; resume the fight and art. Use the plain mount during building, but the finished look needs Claude's approval before merge."
     claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."
@@ -1370,7 +1371,8 @@ tasks:
     owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/test-warlord-gunn-art.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
     hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/arena/warlord-event.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-territory.js, src/app.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs]
     hook_requests: [src/weapon-upgrades.js]
-    art_hooks: [tools/blender/armor-kits.py, public/assets/models/wasteland/kits/gunn-turret.glb, docs/board/looks/gunn/]
+    art_hooks: [tools/blender/armor-kits.py, tools/blender/gunn-turret.json, public/assets/models/wasteland/kits/gunn-turret.glb, docs/board/looks/gunn/]
+    geometry_input: "One small JSON input holds head and tube-mouth positions and existing per-car mount centres. Blender and native Gunn consume it; renderer coordinates never change race state. Do not regenerate approved kits."
     art_contract: "Reuse loadKitAsset('gunn-turret'). Named nodes: gunn-turret-root, gunn-turret-base, gunn-turret-head, gunn-turret-heat-panel and gunn-turret-mouth-0 through -3. Mouth markers belong to the turning head at the real tube openings. Preserve old car loader keys and approved kit hashes; clone heat materials per actor."
     sequencing: "Build the settled turret recipe and native fight while Arsenal holds shared callers and rendering. Do not regenerate the nine approved kit models. After Arsenal merges, grant the runtime turret hooks; send the finished comparison sheet to Claude before merge."
     test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
