@@ -28,6 +28,10 @@ Mirage's existing boss file is reused through its generic decoy contract.
 Review fixes: Tesla ends Magnet even when Star prevents disable. HUD uses the
 native effect/recharge rule. Player Mortar compares ground distance among
 enemies ahead; CPU leader policy and authored tests stay exact.
+Claude via Kyle, 4 October: read every catalog warlord weapon as earned when
+its saved ownership OR its named warlord defeat exists. Armory, slots and
+upgrades use that entitlement. Reads and normalization never save a grant;
+first-win settlement still saves the explicit earned reward as before.
 
 ## Checks
 
@@ -46,49 +50,45 @@ enemies ahead; CPU leader policy and authored tests stay exact.
   including native CPU/player Voice ownership for all four new actions.
 - Browser audio: 27 decodes; all nine native cues; owned loops end and pause.
   Contrast is 6.56 to 9.95 dB over the engine; overlapping mix peak is 0.8202.
-- Pending: source/save/audio reviews, final full balance and frame checks,
-  lane gate and build on the final integration base.
+- Pending: final reviews, balance, frames, lane gate and build.
 
-Independent reviewer regressions on `23263d4`, before fixes:
-55 cases reach 338 checks: the original 51 pass; four new cases fail.
-- A real Star leaves its owner's Magnet active after Tesla (1 instead of 0).
-- All four HUD slots stay enabled at Tesla pulse and just before expiry.
-  Native Crossbow/boost denial and recovery already pass.
-- Level-three Tesla's two-second ring shows 2 degrees instead of 61 for
-  the real 18 / 1.15^3 recharge. Ordinary starter timing already passes.
-- Player Mortar picks a car 1 m ahead, 10 m aside over a nearer car 7 m ahead;
-  both are inside the legal 20 m half-width. CPU leader/range checks pass.
-The production HUD uses an in-file semantic DOM fixture; effects, triggers,
-recharge and driving remain native, including Tesla's first 120 Hz expiry tick.
-No dependency, helper file, existing assertion or replay pin changed.
+Independent reviewer regressions on `23263d4`: 55 cases/338 checks;
+the original 51 pass and four new cases fail: Star retains Magnet, live Tesla
+slots remain enabled, upgraded recharge shows 2 degrees instead of 61,
+and player Mortar selects the farther ground target. Native Crossbow/boost
+denial, recovery, ordinary timing and CPU leader/range checks already pass.
+HUD uses an in-file semantic DOM fixture; combat and driving remain native.
 
 Source fixes on test base `24cc7ec2`: Tesla cancels Magnet before consuming
 Star; HUD displays DISABLED until the real effect expires and uses native
 Arsenal recharge; player Mortar sorts ground distance. CPU leader stays exact.
-Focused checks pass: wave three 55 cases/340 checks (two previously unreached
-checks now run); HUD 8; Voice 26 cases/358 checks; audio/native Voice 31;
-Arsenal runtime 209 cases/2,625 checks; combat replays 12; build 568 ms.
-Authored tests stayed unchanged. No new browser or broad tier was run.
+Focused pass: wave three 55/340, HUD 8, Voice 26/358, audio 31,
+Arsenal runtime 209/2,625, combat replays 12, build 568 ms. Assertions exact.
+No new browser or broad tier; the two previously unreached checks now run.
 
-Save Guardian: earlier saved Mirage wins lack Drone; `firstWin: false` rematches
-never grant it. Other save checks pass. Claude decides; normalization grants none.
+Earned-reward red tests after metadata merge `bb713`: native suite has 99
+cases/438 executed checks, 62 pass and 37 expected failures; original 55 pass.
+For each Smoke/Rockets/Drone reward in structured and supported legacy defeat
+shapes, failures report missing rank-one ownership, pure equip refusal, missing
+native Armory slot, repeat purchase offer, early upgrade refusal and native
+App equip refusal. The real Mirage rematch also lacks derived ownership.
+Six independent read-purity cases pass: memory save bytes and App profile
+stay exact, zero writes, no normalization grant, named-player isolation and
+gate-off equipment. Saved ownership alone and native first-win saved reward
+controls pass. App cases also check durable slots and arena launch once fixed.
+Existing assertions/replay pins stay exact; no source edits.
 
-Release-base merge checks (4 October, parents `07d6b45` and `3eb740d`):
-- Native wave three: 51 cases, 304 checks; Voice: 26 cases, 358 checks;
-  wave-three audio/native Voice: 31 checks; flags: 39; Preview: 22. All pass.
-- Production build passes in 535 ms (existing large-chunk warning).
-- Private port 23901, memory-only desktop scenario: 16 high/performance
-  captures, zero warnings or errors. Evidence: `.evidence/2026-10-04/ARS-03-release-base/`.
-- Full/lane tiers and final balance remain for the Director's serial gate.
-  The later source fix clears the four authored native regressions above.
+Release-base checks (4 October, parents `07d6b45`/`3eb740d`): wave three
+51 cases/304 checks; Voice 26/358; audio 31; flags 39; Preview 22; build 535 ms
+pass. Private port 23901, memory-only: 16 high/performance captures, zero
+issues; `.evidence/2026-10-04/ARS-03-release-base/`. Final gates remain pending.
 
-The existing unimplemented purchase denial changes only its Mortar input to
-an unknown weapon ID. Its refusal and no-write assertions are unchanged.
+Unimplemented purchase denial replaces only the Mortar input with an unknown
+weapon ID; refusal and no-write assertions stay unchanged.
 After merging the 4 October release base, the native wave-three gate test
 expects `FEATURE_STATES.arsenal` to be `on` instead of `dev`. The same invariant
 still protects the existing Arsenal state; the release changed that state.
-The catalog check keeps all five released features on and both new dev flags,
-with nine entries. Explicit dev isolation fixtures and gameplay checks remain.
+Catalog: five released features on, both dev flags; isolation checks remain.
 
 ## Removed
 

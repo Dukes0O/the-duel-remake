@@ -9,12 +9,16 @@ import {carEffect, carTopSpeed} from '../src/arsenal/car-effects.js';
 import {targetFor, targetIdentity} from '../src/arsenal/targeting.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {vehicleContactModifiers} from '../src/vehicle-contact-modifiers.js';
-import {createProfile} from '../src/progression.js';
+import {createProfile, loadPlayers, savePlayers, PLAYERS_KEY} from '../src/progression.js';
+import {App} from '../src/app.js';
+import {createArmoryScreen} from '../src/screen-armory.js';
+import {startWarlordEvent} from '../src/arena/warlord-event.js';
+import {settleWarlordResult} from '../src/arena/warlord-settlement.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
 import {getProfileWeapons, purchaseArsenalWeapon, purchaseWeaponUpgrade,
   rewardArsenalWeapon, normalizeWeapons, offeredArsenalWeapons, cpuArsenalLoadout,
-  WEAPON_IDS} from '../src/weapon-upgrades.js';
-import {availableCarWeapons, getCarLoadout} from '../src/car-loadout.js';
+  WEAPON_IDS, ARSENAL_WEAPONS} from '../src/weapon-upgrades.js';
+import {availableCarWeapons, getCarLoadout, equipCarWeapon} from '../src/car-loadout.js';
 import {makeRng} from '../src/rng.js';
 import {createFighter} from '../src/onfoot.js';
 import {stepFootWeapons} from '../src/onfoot-weapons.js';
@@ -460,6 +464,180 @@ test('an earned Mirage Drone remains owned while gated and returns without a new
   equal(availableCarWeapons(earned.profile, {...options, arsenalWave3Enabled: true}).includes('decoy'), true,
     're-enabling the wave restores the earned rank-one Drone without buying it');
   equal(earned.profile, before, 'gate reads do not rewrite the saved earned reward');
+});
+
+const earnedOptions = {wastelandEnabled: true, arsenalEnabled: true, arsenalWave3Enabled: true};
+const warlordWeapons = Object.entries(ARSENAL_WEAPONS).filter(([, item]) => item.warlordId);
+function priorWinner(id, shape = 'record') {
+  const p = createProfile(), warlordId = ARSENAL_WEAPONS[id].warlordId;
+  p.wasteland.discoveredGate = true; p.wasteland.scrap = 1234;
+  p.wasteland.warlords = shape === 'legacy' ? {defeated: [warlordId]} :
+    {...p.wasteland.warlords, [warlordId]: {defeated: true, wins: 1, losses: 0}};
+  p.wasteland.territories[warlordId] = {hold: 100, claimed: true};
+  return p;
+}
+function earnedArmory(p, options = earnedOptions) {
+  return createArmoryScreen({profile: () => p, credits: String, escapeHTML: String,
+    getGarageMessage: () => '', kitsEnabled: () => options.wastelandEnabled,
+    loadoutsEnabled: () => true, arsenalEnabled: () => options.arsenalEnabled,
+    arsenalWave3Enabled: () => options.arsenalWave3Enabled, action: label => label})();
+}
+function withEarnedMemory(p, action) {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const previousCancel = globalThis.cancelAnimationFrame;
+  const values = new Map(), writes = [];
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+    getItem: key => values.get(String(key)) ?? null,
+    setItem(key, value) {values.set(String(key), String(value)); writes.push(String(key));},
+    removeItem: key => values.delete(String(key)),
+  }});
+  globalThis.cancelAnimationFrame = () => {};
+  let app;
+  try {
+    app = new App(); app.audio.unlock = () => {};
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true,
+      overrides: {arsenal: true, 'arsenal-wave3': true}});
+    const ownerId = app.player.id, other = createProfile();
+    other.wasteland.discoveredGate = true; other.wasteland.scrap = 777;
+    const registry = {...app.players, players: [
+      {...app.player, profile: {...p, raceSettings: app.profile.raceSettings}},
+      {id: 'other-driver', name: 'Other Driver', profile: {...other, raceSettings: app.profile.raceSettings}},
+    ]};
+    assert.equal(savePlayers(registry), true, 'synthetic registry must save in memory');
+    app.dispose(); app = new App(); app.audio.unlock = () => {};
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true,
+      overrides: {arsenal: true, 'arsenal-wave3': true}});
+    writes.length = 0;
+    return action({app, ownerId, values, writes});
+  } finally {
+    app?.dispose();
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+    else delete globalThis.localStorage;
+    if (previousCancel === undefined) delete globalThis.cancelAnimationFrame;
+    else globalThis.cancelAnimationFrame = previousCancel;
+  }
+}
+
+for (const [id, {warlordId}] of warlordWeapons) for (const shape of ['record', 'legacy']) {
+  const prefix = `${id}/${shape}`;
+  test(`${prefix}: saved defeat is read as earned without an unlocked entry`, () => {
+    const p = priorWinner(id, shape);
+    equal(getProfileWeapons(p).unlocked.includes(id), true,
+      `${prefix}: the ${warlordId} winner owns its reward at rank one`);
+  });
+  test(`${prefix}: prior winner can equip and use its reward at rank one`, () => {
+    const p = priorWinner(id, shape), before = JSON.stringify(p);
+    const equipped = equipCarWeapon(p, 0, id, earnedOptions);
+    equal(equipped.ok, true, `${prefix}: saved defeat admits the earned weapon to a car slot`);
+    equal(getCarLoadout(equipped.profile, earnedOptions)[0], id,
+      `${prefix}: the actual loadout reads the equipped earned weapon`);
+    equal(equipped.profile.wasteland.scrap, 1234, `${prefix}: equipping costs no scrap`);
+    equal(JSON.stringify(p), before, `${prefix}: equipping leaves its input unchanged`);
+    equal(equipped.profile.wasteland.weapons.unlocked.includes(id), false,
+      `${prefix}: a slot action does not create a second saved reward grant`);
+  });
+  test(`${prefix}: Armory displays the earned weapon as an available choice and upgrade`, () => {
+    const html = earnedArmory(priorWinner(id, shape));
+    ok(html.includes(`value="${id}"`), `${prefix}: native Armory offers the earned reward in its slots`);
+    ok(html.includes(`data-weapon-upgrade="${id}"`), `${prefix}: native Armory includes its earned upgrade`);
+    equal(html.includes(`data-arsenal-purchase="${id}"`), false,
+      `${prefix}: Armory never asks the winner to buy the earned reward`);
+  });
+  test(`${prefix}: an earned reward is never offered or charged again at the shop rank`, () => {
+    const p = priorWinner(id, shape); p.wasteland.xp = 1_000_000;
+    const before = JSON.stringify(p), bought = purchaseArsenalWeapon(p, id, earnedOptions);
+    equal(offeredArsenalWeapons(p, earnedOptions).includes(id), false,
+      `${prefix}: saved defeat suppresses a second purchase offer`);
+    equal([bought.ok, bought.changed, bought.cost], [true, false, 0],
+      `${prefix}: a repeated purchase request is a free unchanged result`);
+    equal(bought.profile, p, `${prefix}: the shop does not rewrite a prior winner`);
+    equal(JSON.stringify(p), before, `${prefix}: the prior winner keeps every saved field`);
+  });
+  test(`${prefix}: the earned rank-one reward upgrades without buying its identity`, () => {
+    const p = priorWinner(id, shape), before = JSON.stringify(p);
+    const upgraded = purchaseWeaponUpgrade(p, id, earnedOptions);
+    equal(upgraded.ok, true, `${prefix}: an early earned weapon can buy its first upgrade`);
+    equal(upgraded.profile.wasteland.scrap, 1084, `${prefix}: only the 150 scrap upgrade is charged`);
+    equal(getProfileWeapons(upgraded.profile).levels[id], 1, `${prefix}: the earned upgrade becomes level one`);
+    equal(upgraded.profile.wasteland.weapons.unlocked.includes(id), false,
+      `${prefix}: upgrading does not persist a second saved ownership grant`);
+    equal(JSON.stringify(p), before, `${prefix}: the upgrade preserves the original winner profile`);
+  });
+  test(`${prefix}: Armory and loadout reads preserve byte-exact memory saves and player isolation`, () => {
+    withEarnedMemory(priorWinner(id, shape), ({app, values, writes}) => {
+      const before = values.get(PLAYERS_KEY), profileBefore = JSON.stringify(app.profile);
+      const loaded = loadPlayers(), other = loaded.players.find(p => p.id === 'other-driver').profile;
+      earnedArmory(app.profile); getProfileWeapons(app.profile);
+      availableCarWeapons(app.profile, earnedOptions); getCarLoadout(app.profile, earnedOptions);
+      equal(values.get(PLAYERS_KEY), before, `${prefix}: read paths leave saved bytes exact`);
+      equal(writes, [], `${prefix}: read paths perform no memory storage writes`);
+      equal(JSON.stringify(app.profile), profileBefore, `${prefix}: read paths leave the native App profile exact`);
+      equal(getProfileWeapons(other).unlocked.includes(id), false, `${prefix}: another named player earns nothing`);
+      equal(normalizeWasteland(app.profile.wasteland).weapons.unlocked.includes(id), false,
+        `${prefix}: normalization does not persist the derived reward`);
+      const off = {...earnedOptions, arsenalEnabled: false};
+      equal(availableCarWeapons(app.profile, off).includes(id), false, `${prefix}: Arsenal off hides earned equipment`);
+      equal(getCarLoadout(app.profile, off).includes(id), false, `${prefix}: Arsenal off excludes earned slots`);
+      if (ARSENAL_WEAPONS[id].wave === 3) {
+        const waveOff = {...earnedOptions, arsenalWave3Enabled: false};
+        equal(availableCarWeapons(app.profile, waveOff).includes(id), false,
+          `${prefix}: wave three off hides the saved Mirage entitlement`);
+        equal(earnedArmory(app.profile, waveOff).includes(`value="${id}"`), false,
+          `${prefix}: wave three off hides the native Armory slot choice`);
+      }
+    });
+  });
+  test(`${prefix}: native App saves the equipped slot and launches the earned rank-one reward`, () => {
+    withEarnedMemory(priorWinner(id, shape), ({app, values}) => {
+      equal(app.visitWasteland(), true, `${prefix}: the native App enters the discovered yard`);
+      app.advance(8);
+      equal(app.equipCarWeapon(0, id).ok, true, `${prefix}: native App equips the saved defeat reward`);
+      const saved = JSON.parse(values.get(PLAYERS_KEY));
+      const owner = saved.players.find(p => p.id === app.player.id).profile;
+      equal(owner.wasteland.loadout[0], id, `${prefix}: the durable saved slot retains the earned identity`);
+      equal(owner.wasteland.weapons.unlocked.includes(id), false,
+        `${prefix}: native slot save does not write a new ownership grant`);
+      equal(owner.wasteland.scrap, 1234, `${prefix}: native App does not charge scrap for equipping`);
+      equal(app.startArenaEvent({opponents: 1}), true, `${prefix}: native App starts a real arena`);
+      equal(app.duel.state.weaponLoadout[0], id, `${prefix}: arena launch carries the durable earned slot`);
+      equal(saved.players.find(p => p.id === 'other-driver').profile.wasteland.scrap, 777,
+        `${prefix}: native slot save preserves the other named player's balance`);
+    });
+  });
+}
+
+test('saved weapon ownership alone still admits rewards without a warlord defeat', () => {
+  for (const [id] of warlordWeapons) {
+    const p = createProfile(); p.wasteland.discoveredGate = true;
+    p.wasteland.weapons.unlocked.push(id);
+    equal(availableCarWeapons(p, earnedOptions).includes(id), true,
+      `${id}: existing purchased or saved earned ownership remains enough`);
+  }
+});
+
+test('native Mirage first-win settlement still stores its reward once and rematches do not backfill it', () => {
+  const f = race(), p = createProfile(); p.wasteland.discoveredGate = true;
+  equal(startWarlordEvent(f.duel, {warlordId: 'mirage', car: 'falcone_f42'}), true,
+    'the real Mirage fight provides its native settlement format');
+  const arena = structuredClone(f.duel.state.arena); arena.phase = 'over';
+  arena.participants.find(p => p.id === 'player').wrecks = 3;
+  arena.participants.find(p => p.id === 'cpu-1').wrecked = 3;
+  arena.result = {winnerId: 'player', reason: 'three-wrecks', placings: ['player', 'cpu-1']};
+  const payload = {runId: 'ars-earned-first', ownerPlayerId: 'driver', activePlayerId: 'driver',
+    arena, car: 'falcone_f42', cpuDifficulty: 'medium'};
+  const first = settleWarlordResult(p, payload);
+  equal([first.awarded, first.firstWin, first.weaponEarned], [true, true, 'decoy'],
+    'first-win settlement still reports the saved Drone grant');
+  equal(first.profile.wasteland.weapons.unlocked.includes('decoy'), true,
+    'first-win settlement still stores the explicit earned Drone');
+  equal(settleWarlordResult(first.profile, payload).awarded, false, 'exact repeat remains unpaid');
+  const prior = priorWinner('decoy'), rematch = settleWarlordResult(prior, {...payload, runId: 'ars-earned-rematch'});
+  equal([rematch.awarded, rematch.firstWin, rematch.weaponEarned], [true, false, null],
+    'an old winner rematch remains a repeat win without a second saved grant');
+  equal(rematch.profile.wasteland.weapons.unlocked.includes('decoy'), false,
+    'a rematch does not backfill the old winner ownership list');
+  equal(getProfileWeapons(rematch.profile).unlocked.includes('decoy'), true,
+    'the actual settled rank-one rematch winner retains derived Drone ownership');
 });
 
 for (const level of [1, 2, 3]) {
