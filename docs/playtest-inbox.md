@@ -1,5 +1,17 @@
 # Wasteland play-test inbox
 
+## Claude decisions needed, 4 October
+
+- WAR-03a: Set Gunn's barrage trigger and when predictive aim locks, his
+  single-rocket cadence, and how the turret look is awarded and equipped
+  alongside armor. Shared tell lengths are settled; the fight uses the Pit.
+- ARENA-07: Set the scrap payout and exact territory unlock. How do body
+  weapon and ram hits choose a valve, and can body damage wreck the rig
+  before the finishing charge? Boarding timing and valve geometry exist.
+
+Both lanes keep independent native tests. Other cards continue. The separate
+release remains with its owner.
+
 ## Claude's review, 2 October afternoon
 
 - The bosses are merged; Claude's hold on the shared arena files is lifted.

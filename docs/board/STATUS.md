@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-10-03T17:35:49.002Z
+Observed at: 2026-10-04T19:16:23.809Z
 
-Observation commit: 15f6f67766763d872a87a5ee7ef1a030723efa3b
+Observation commit: 08a3e9d74938e5fb4e883db022213634e8c6da5d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 15f6f67766763d872a87a5ee7ef1a030723efa3b
+Integration HEAD: 08a3e9d74938e5fb4e883db022213634e8c6da5d
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: passed; exact HEAD passed: yes.
+Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-03T17:35:08.192Z; tested commit: 15f6f67766763d872a87a5ee7ef1a030723efa3b.
+Last recorded full run: 2026-10-03T17:45:45.489Z; tested commit: 7b909b4edd65cb5f51221ca6ee3de9b7887a7eda.
 
 ## Feature switches
 
@@ -36,9 +36,15 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| lane/audio/aud-10 | 8 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 8 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 8 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| codex/audio/fight-voices | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fight-voices |
+| codex/cmb/arsenal-wave3 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/arsenal-wave3 |
+| codex/cmb/convoy-raid | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/convoy |
+| codex/cmb/gunn | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gunn |
+| codex/foot/ambush-alley | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ambush-alley |
+| codex/foot/cpu-crews | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/cpu-crews |
+| lane/audio/aud-10 | 9 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 9 | unknown | true | false | unknown |
+| lane/audio/aud-17-picks | 9 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -46,6 +52,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/cmb/convoy-raid | unknown | 2026-10-04T12:13:43-07:00 | 0 | last commit 2026-10-04T12:13:43-07:00 | docs/changes/ARENA-07.md, tools/test-arena-convoy.mjs |
+| codex/cmb/gunn | unknown | 2026-10-04T12:13:15-07:00 | 0 | last commit 2026-10-04T12:13:15-07:00 | docs/changes/WAR-03a.md, tools/test-warlord-gunn.mjs |
 
 ## Size targets
 
@@ -61,7 +69,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 15,179,042 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 943,672 B | +0 B | 5,000,000 B |
 | All `public/` | 260,014,619 B | +0 B | unavailable |
-| Git objects | 378,713,088 B | +33,792 B | unavailable |
+| Git objects | 379,898,880 B | +1,152,000 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -70,7 +78,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 4cd4a9608238d86a90a1335adacf526eb7f4a2d3
 - Local main: missing
-- Local integration/wasteland: 15f6f67766763d872a87a5ee7ef1a030723efa3b
+- Local integration/wasteland: 08a3e9d74938e5fb4e883db022213634e8c6da5d
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

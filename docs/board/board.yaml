@@ -1040,9 +1040,15 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-02, WAR-02c]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-04
+    branch: codex/cmb/arsenal-wave3
     flag: arsenal
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, docs/changes/ARS-03.md]
+    hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
+    hook_requests: [src/audio.js, src/sound-bank.js, tools/audio/catalog.json]
+    sequencing: "ARS-03 owns weapon, sim-rival and renderer hooks first; CREW-04 starts its module and raiders while its native combat hooks wait. Voice owns audio first. Preserve Mirage's boss file; its reward data becomes working when Decoy is implemented."
+    runtime_fixture_grant: "Mortar becomes implemented here. Replace only the existing unimplemented-purchase Mortar input with an unknown weapon ID; retain the refusal and no-write assertions and record independent review."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build the four wave 3 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. The Decoy Drone reuses Mother Mirage's decoy cars; the Mortar's ring is always drawn before the shell lands."
@@ -1109,10 +1115,14 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-04
+    branch: codex/foot/cpu-crews
     flag: crew-gear
-    owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, docs/changes/CREW-04.md]
-    hooks: [src/sim-rival.js, src/combat-ai.js, src/raiders.js]
+    owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
+    hooks: [src/raiders.js]
+    hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, tools/combat-balance.mjs]
+    sequencing: "ARS-03 owns sim-rival, combat-ai, projectiles and balance first. CREW-04 builds its crew module and raiders while those hooks wait. ARENA-05 waits for raiders; no two cards edit a shared file at once."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
@@ -1185,10 +1195,13 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-04
+    branch: codex/foot/ambush-alley
     flag: scrapdome
     owns: [src/arena/modes/ambush-alley.js, tools/test-arena-ambush-alley.mjs, docs/changes/ARENA-05.md]
     hooks: [src/raiders.js, src/onfoot-race.js, src/arena/arena-event.js]
+    sequencing: "Start tests and the mode module only. CREW-04 owns raiders until its handoff; arena hooks remain parked with Convoy and can be granted to this card while Convoy waits for Claude."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Ambush Alley, exactly: on foot inside the arena with the wall as the boundary, the fort, five waves, rank 12 unlock, pay by waves survived. Headless tests and a private browser scenario."
@@ -1305,14 +1318,19 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/convoy-raid
+    waiting_on: claude
+    test_commit: a3647ac
+    note_commit: 11371c8
+    note: "Native admission tests are retained in the parked lane. Source waits for Claude's payout, unlock and valve-hit rules; no feature or merge gate is claimed."
+    design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
     flag: scrapdome
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/arena/arena-world-view.js, src/arena/modes.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
     hook_requests: []
     sequencing: "Use the approved rigid tanker recipe, roof plate and lamps, not the superseded trailer or hatch. Convoy owns arena entry and mode hooks; request other shared files before editing."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
-      - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rig on its loop, escorts, three valves, the hatch and the boarding finish, the 60 s hatch rule, pay once per event. The rig and trailer art start from the ART-SRC-SALTFLATS pick. Headless tests and a private browser scenario."
+      - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rigid tanker on its loop, two escorts, three valves, the lit roof plate and boarding finish, the 60 s reset, pay once per event. Install the approved ART-FIT-TANKER recipe output when the mode loads it. Headless tests and a private browser scenario."
   - id: WAR-03a
     title: "Gearhead Gunn: Barrage; Rocket Pods reward"
     owner: codex
@@ -1322,6 +1340,11 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
+    waiting_on: claude
+    test_commit: 4a0df6e
+    note_commit: bcda842
+    note: "Native admission tests are retained in the parked lane. Source waits for Claude's barrage and turret-reward rules; no feature or merge gate is claimed."
+    design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
     flag: gunn
     owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
     hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
@@ -3362,16 +3385,19 @@ tasks:
     lane: AUDIO
     size: M
     needs: [AUD-17]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-04
+    branch: codex/audio/fight-voices
     flag: fight-voices
-    owns: [src/fight-voices.js, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, docs/changes/AUD-18.md]
-    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
+    owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
+    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, reviewer, browser_qa, audio_qa]
     acceptance:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
       - "Play crew callouts and raider warnings during real fights, with matching subtitles, repeat limits and pause/mute handling. Keep simulation and replay fingerprints unchanged."
       - "Tests first; private memory-only browser and recorded audio checks at High and Performance. Keep behind a new dev switch; record any human listening still due."
     note: "Kyle authorized runtime wiring on 4 October. Preserve the kept sources, receipts and the separate audio worktree."
+    sequencing: "Voice owns audio.js and sound-bank.js first; ARS-03 may prepare its new cues in private modules and receives those hooks after Voice. Crew callouts follow the first player combat action; the existing raiderWarning event plays the kept warning. Subtitles show the exact catalog text, including while muted. Presentation timers never change simulation."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
     owner: codex
