@@ -3,7 +3,8 @@ import {test} from 'node:test';
 import {Duel} from '../src/game.js';
 import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {fireWeapon} from '../src/combat-weapons.js';
-import {stepCombat, clearArsenalState} from '../src/combat.js';
+import {stepCombat, clearArsenalState, WEAPONS as WEAPON_RULES} from '../src/combat.js';
+import {createCombatHud} from '../src/combat-hud.js';
 import {carEffect, carTopSpeed} from '../src/arsenal/car-effects.js';
 import {targetFor, targetIdentity} from '../src/arsenal/targeting.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
@@ -11,7 +12,8 @@ import {vehicleContactModifiers} from '../src/vehicle-contact-modifiers.js';
 import {createProfile} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
 import {getProfileWeapons, purchaseArsenalWeapon, purchaseWeaponUpgrade,
-  rewardArsenalWeapon, normalizeWeapons, offeredArsenalWeapons, cpuArsenalLoadout} from '../src/weapon-upgrades.js';
+  rewardArsenalWeapon, normalizeWeapons, offeredArsenalWeapons, cpuArsenalLoadout,
+  WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {availableCarWeapons, getCarLoadout} from '../src/car-loadout.js';
 import {makeRng} from '../src/rng.js';
 import {createFighter} from '../src/onfoot.js';
@@ -488,3 +490,134 @@ for (const level of [1, 2, 3]) {
     tick(upgraded.f, DT); equal(carEffect(upgraded.f.state, 'nitro'), null, 'upgrades never extend the three-second Nitro duration');
   });
 }
+
+// Small semantic DOM surface, as in the presentation suites. The production
+// HUD still reads real Duel state and owns every slot label and ready angle.
+function withNativeHud(f, action) {
+  function element() {
+    const children = new Map(), attributes = new Map(), styles = new Map(), classes = new Set();
+    return {dataset: {}, hidden: false, disabled: false, textContent: '', style: {
+      getPropertyValue: name => styles.get(name) || '',
+      setProperty: (name, value) => styles.set(name, String(value)),
+    }, classList: {toggle(name, force) {if (force) classes.add(name); else classes.delete(name);}},
+    append() {}, remove() {}, addEventListener() {},
+    setAttribute: (name, value) => attributes.set(name, String(value)),
+    getAttribute: name => attributes.get(name) ?? null,
+    querySelector(selector) {
+      if (!children.has(selector)) children.set(selector, element());
+      return children.get(selector);
+    }, querySelectorAll(selector) {
+      if (selector === '[data-combat-weapon]') {
+        if (!children.has(selector)) children.set(selector, WEAPON_IDS.map((id, slot) =>
+          Object.assign(element(), {dataset: {combatWeapon: id, combatSlot: String(slot)}})));
+        return children.get(selector);
+      }
+      if (selector === '.combat-edge-cue') {
+        if (!children.has(selector)) children.set(selector, ['left', 'right'].map(side =>
+          Object.assign(element(), {dataset: {side}})));
+        return children.get(selector);
+      }
+      return [];
+    }};
+  }
+  const previous = globalThis.document, root = element(), created = [];
+  globalThis.document = {createElement() {const node = element(); created.push(node); return node;}};
+  let hud;
+  try {
+    hud = createCombatHud({root, app: {duel: f.duel}});
+    return action(hud, created[0].querySelectorAll('[data-combat-weapon]'));
+  } finally {
+    hud?.dispose();
+    if (previous === undefined) delete globalThis.document; else globalThis.document = previous;
+  }
+}
+
+test('Tesla consumes a native enemy Star and also ends its active Scrap Magnet', () => {
+  const f = race({gap: 10}); f.rival.weaponLoadout = ['magnet', 'star'];
+  equal(fireWeapon(f.duel, 'magnet', true, f.rival), true, 'the real enemy Magnet starts');
+  equal(fireWeapon(f.duel, 'star', true, f.rival), true, 'the real enemy Star starts');
+  equal(f.state.combat.magnets.length, 1, 'the shielded victim has one active Magnet before Tesla');
+  ok(f.state.combat.rivalShield > 0, 'the victim shield was genuinely raised');
+  fire(f, 'tesla'); tick(f, .4);
+  equal(f.state.combat.rivalShield, 0, 'Tesla consumes the actual enemy shield');
+  equal(carEffect(f.rival, 'disabled'), null, 'Star still prevents the weapon and boost lockout');
+  equal(f.state.combat.magnets.length, 0, 'Star does not protect its Scrap Magnet from Tesla');
+  equal(f.events.filter(event => event.arsenalMagnetEnded && event.ownerId === targetIdentity(f.duel, f.rival)).length,
+    1, 'the native pulse ends the victim Magnet once');
+});
+
+test('native CPU Tesla locks HUD slots for three seconds and restores readiness at expiry', () => {
+  const f = race({gap: 10, flat: false, loadout: ['crossbow', 'tesla', 'decoy', 'nitro']});
+  f.rival.weaponLoadout = ['tesla'];
+  Object.assign(f.state, {speedMph: 50, gear: 3, boost: 1});
+  f.duel.setInput({throttle: 1, steer: 0, brake: 0, boost: true});
+  f.duel._drive(DT);
+  equal(f.state.boosting, true, 'the native player can boost before being pulsed');
+  withNativeHud(f, (hud, slots) => {
+    hud.update(f.state);
+    equal(slots[0].disabled, false, 'the native ready Crossbow slot starts enabled');
+    equal(fireWeapon(f.duel, 'tesla', true, f.rival), true, 'the real CPU Tesla charges');
+    tick(f, .4);
+    // The pulse's fixed step also ages its newly created effect by one tick.
+    near(carEffect(f.state, 'disabled')?.remainingSec, 3 - DT,
+      'the actual three-second pulse has consumed only its first native tick');
+    equal(fireWeapon(f.duel, 'crossbow'), false, 'the real Crossbow cannot fire while disabled');
+    f.duel._drive(DT); equal(f.state.boosting, false, 'the real driving path denies boost while disabled');
+    const blocked = [];
+    for (const seconds of [0, 3 - 2 * DT]) {
+      tick(f, seconds); hud.update(f.state);
+      ok(carEffect(f.state, 'disabled'), 'the native effect remains live until the full expiry');
+      blocked.push(slots.map(button => ({disabled: button.disabled,
+        label: button.querySelector('.combat-slot-state').textContent})));
+    }
+    tick(f, DT); hud.update(f.state);
+    equal(carEffect(f.state, 'disabled'), null, 'the real disable expires at three seconds');
+    equal(slots.map(button => button.disabled), [false, false, false, false],
+      'expiry restores the native ready slot controls');
+    equal(slots.map(button => button.querySelector('.combat-slot-state').textContent),
+      ['READY', 'READY', 'READY', 'READY'], 'expiry restores their visible ready state');
+    equal(fireWeapon(f.duel, 'crossbow'), true, 'the actual player can fire after expiry');
+    f.duel._drive(DT); equal(f.state.boosting, true, 'the actual player can boost after expiry');
+    equal(blocked.map(snapshot => snapshot.map(slot => slot.disabled)),
+      [[true, true, true, true], [true, true, true, true]], 'every live Tesla slot is disabled in the native HUD');
+    ok(blocked.every(snapshot => snapshot.every(slot => slot.label !== 'READY')),
+      'a live Tesla lockout never advertises a weapon as READY');
+  });
+});
+
+test('HUD recharge rings follow actual upgraded cooldowns without changing ordinary weapon timing', () => {
+  const ordinary = race({enabled: false, waveThree: false, levels: {crossbow: 3}});
+  fire(ordinary, 'crossbow');
+  const legacyFull = ordinary.state.combat.cooldowns.crossbow;
+  near(legacyFull, WEAPON_RULES.crossbow.cooldown * (1 - .15 * 3),
+    'ordinary starter recharge retains its existing rule');
+  withNativeHud(ordinary, (hud, slots) => {
+    tick(ordinary, 2); hud.update(ordinary.state);
+    equal(slots.find(button => button.dataset.combatWeapon === 'crossbow').style.getPropertyValue('--ready-angle'),
+      `${Math.round(360 * 2 / legacyFull)}deg`, 'ordinary HUD progress follows that unchanged recharge');
+  });
+  const f = race({levels: {tesla: 3}, loadout: ['tesla', 'crossbow', 'decoy', 'nitro']});
+  fire(f, 'tesla');
+  const full = 18 / 1.15 ** 3;
+  near(f.state.combat.cooldowns.tesla, full, 'native upgraded Tesla uses the divided recharge');
+  withNativeHud(f, (hud, slots) => {
+    const button = slots[0]; hud.update(f.state);
+    equal(button.style.getPropertyValue('--ready-angle'), '0deg', 'the newly fired ring starts empty');
+    tick(f, 2); hud.update(f.state);
+    equal(button.querySelector('.combat-slot-state').textContent,
+      `${Math.ceil(f.state.combat.cooldowns.tesla)}s`, 'the slot countdown uses its actual remaining cooldown');
+    equal(button.style.getPropertyValue('--ready-angle'), `${Math.round(360 * 2 / full)}deg`,
+      'the native level-three Tesla ring shows two seconds of its actual recharge');
+  });
+});
+
+test('player Mortar selects the nearest enemy ahead by ground distance, not forward gap alone', () => {
+  const f = race({gap: 1}); f.rival.lateral = f.rival.prevLateral = 10;
+  const nearer = {...f.rival, s: 507, prevS: 507, lateral: 0, prevLateral: 0};
+  f.state.opponents.push(nearer);
+  equal(f.duel.course.roadHalfWidthAt(500), 20, 'both candidates are inside the legal twenty-metre half-width');
+  ok(Math.hypot(1, 10) > 7, 'the one-metre-forward enemy is farther away across the ground');
+  fire(f, 'mortar');
+  equal(f.state.combat.mortarShells[0]?.targetId, targetIdentity(f.duel, nearer),
+    'the actual player Mortar commits the nearest ahead enemy across the ground');
+});

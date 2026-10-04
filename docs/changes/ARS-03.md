@@ -46,6 +46,30 @@ Mirage's existing boss file is reused through its generic decoy contract.
 - Pending: source/save/audio reviews, final full balance and frame checks,
   lane gate and build on the final integration base.
 
+Independent reviewer regressions on `23263d4`, before fixes:
+`node tools/test-arsenal-wave3.mjs` runs 55 cases and 338 checks. All original
+51 cases pass unchanged; four added cases fail for the reported behavior:
+- `Star does not protect its Scrap Magnet from Tesla`: the native enemy
+  Magnet remains active after its real Star is consumed (1 instead of 0).
+- `every live Tesla slot is disabled in the native HUD`: all four slots stay
+  enabled at the pulse and just before expiry. Native Crossbow and boost
+  denial, their recovery at expiry and visible READY restoration already pass.
+- `the native level-three Tesla ring shows two seconds of its actual recharge`:
+  the ring shows 2 degrees instead of 61 for the real 18 / 1.15^3 cooldown.
+  Ordinary starter recharge and its HUD progress pass unchanged.
+- `the actual player Mortar commits the nearest ahead enemy across the ground`:
+  it picks the enemy 1 m ahead and 10 m sideways instead of the nearer enemy
+  7 m straight ahead. Both are inside the legal 20 m half-width. Existing
+  computer leader and range checks remain green.
+
+HUD tests call production createCombatHud with a small in-file semantic DOM
+fixture. Only unavailable element/style methods are substituted; effects,
+weapon triggers, upgraded cooldowns and driving are native. No dependency or
+helper file was added. Tesla's creation step ages its effect by one 120 Hz tick;
+the expiry checks include that tick rather than substituting an effect.
+No existing assertions, source or replay fingerprints were changed. Focused
+laptop headless tests only; no build, browser or broad gate in this follow-up.
+
 Release-base merge checks (4 October, parents `07d6b45` and `3eb740d`):
 - Native wave three: 51 cases, 304 checks; Voice: 26 cases, 358 checks;
   wave-three audio/native Voice: 31 checks; flags: 39; Preview: 22. All pass.
