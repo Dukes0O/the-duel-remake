@@ -3,7 +3,7 @@
 export const FEATURE_STATES = Object.freeze({
   'career-backup': 'dev', 'hidden-road': 'on',
   'fuel-run': 'dev', 'bounty-hunt': 'dev', arsenal: 'dev', 'salt-flats': 'dev',
-  'crew-gear': 'dev',
+  'crew-gear': 'dev', 'fight-voices': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
