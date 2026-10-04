@@ -12,11 +12,15 @@ import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 import {warlordFight} from '../warlords/index.js';
 import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock, teamTotal} from './warlord-event.js';
+import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
+  stepConvoyRaid} from './modes/convoy-raid.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
 
 export const ARENA_MODES = Object.freeze({
+  'convoy-raid': Object.freeze({timeLimitSec: CONVOY_RULES.timeLimitSec,
+    suddenDeathSec: Infinity, maxOpponents: 3}),
   'bounty-hunt': Object.freeze({timeLimitSec: BOUNTY_RULES.timeLimitSec,
     suddenDeathSec: BOUNTY_RULES.suddenDeathSec, maxOpponents: 3}),
   'fuel-run': Object.freeze({timeLimitSec: FUEL_RULES.timeLimitSec, suddenDeathSec: Infinity, maxOpponents: 3}),
@@ -67,6 +71,7 @@ export function applyArenaArmor(duel) {
     actor.maxArmor *= scale;
     actor.armor = actor.maxArmor;
   }
+  initializeConvoyRaid(duel);
 }
 
 // Put a car at a pose with the kinematic state of a fresh start.
@@ -202,13 +207,19 @@ function finish(duel, reason, winnerId = null) {
   const winner = arena.participants.find(p => p.id === placings[0]);
   duel._callout(winner.id === 'player' ?
     arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
-      arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
+      arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' :
+      arena.mode === 'convoy-raid' ? 'CONVOY RAID / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
     `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
 
 function stepClock(duel, dt) {
   const arena = duel.state.arena;
+  if (arena.mode === 'convoy-raid') {
+    const decision = stepConvoyRaid(duel, dt);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   if (arena.mode === 'warlord') {
     const decision = stepWarlordClock(duel, dt);
     if (decision) finish(duel, decision.reason, decision.winnerId);
@@ -266,7 +277,7 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
-  const onFoot = arena.mode === 'fuel-run' && stepFootTransition(duel, dt);
+  const onFoot = ['fuel-run', 'convoy-raid'].includes(arena.mode) && stepFootTransition(duel, dt);
   const respawns = [];
   if (state.combatWrecking) { if (stepWreckedActor(duel, state, dt)) respawns.push(state); }
   else {
@@ -291,6 +302,10 @@ export function stepArenaEvent(duel, dt) {
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
       stepKnock(duel, actor, dt);
+      containInArena(duel, actor, dt);
+      continue;
+    }
+    if (stepConvoyRig(duel, actor, dt)) {
       containInArena(duel, actor, dt);
       continue;
     }

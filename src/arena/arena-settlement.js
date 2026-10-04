@@ -1,5 +1,6 @@
 import {FUEL_RULES} from './modes/fuel-run.js';
 import {BOUNTY_RULES, bountyRanking, bountyDamageWinner} from './modes/bounty-hunt.js';
+import {CONVOY_RULES} from './modes/convoy-raid.js';
 
 // Arena economy. This module is pure: App owns player identity and
 // the atomic storage write after it receives an arenaResult event.
@@ -45,9 +46,28 @@ function validBountyFinish(arena) {
     Number.isFinite(arena.suddenDeathSec) && arena.suddenDeathSec <= BOUNTY_RULES.suddenDeathSec;
 }
 
+function validConvoyFinish(arena) {
+  const convoy = arena.convoy;
+  if (arena.venueId !== 'salt-flats' || arena.participants.length !== 4 || !convoy ||
+      !Array.isArray(convoy.valves) || convoy.valves.length !== CONVOY_RULES.valveCount ||
+      convoy.valves.some(value => !Number.isFinite(value) || value < 0 || value > CONVOY_RULES.valveArmor) ||
+      !Number.isSafeInteger(convoy.playerValvesBroken) || convoy.playerValvesBroken < 0 ||
+      convoy.playerValvesBroken > CONVOY_RULES.valveCount || convoy.boardingLeftSec !== 0 ||
+      !Number.isFinite(arena.clockSec) || arena.clockSec < 0) return false;
+  const rig = arena.participants.find(p => p.id === convoy.rigId && p.kind === 'cpu');
+  const player = arena.participants.find(p => p.id === 'player');
+  if (!rig || !rig.team || rig.team === player.team ||
+      arena.participants.some(p => p.kind === 'cpu' && p.team !== rig.team)) return false;
+  const {reason, winnerId} = arena.result;
+  if (reason === 'charge') return winnerId === 'player' && convoy.finished === true &&
+    convoy.valves.every(value => value === 0) && arena.clockSec <= CONVOY_RULES.timeLimitSec;
+  return reason === 'time' && winnerId === rig.id && convoy.finished === false &&
+    arena.clockSec === CONVOY_RULES.timeLimitSec;
+}
+
 function arenaFacts(arena) {
   if (arena?.version !== 1 || !['scrapdome', 'salt-flats'].includes(arena.venueId) ||
-      !['last-car-rolling', 'fuel-run', 'bounty-hunt'].includes(arena.mode) || arena.phase !== 'over' ||
+      !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'convoy-raid'].includes(arena.mode) || arena.phase !== 'over' ||
       !arena.result || !Array.isArray(arena.participants) ||
       !Array.isArray(arena.result.placings)) return null;
   const player = arena.participants.filter(item => item?.id === 'player' && item.kind === 'player');
@@ -62,6 +82,7 @@ function arenaFacts(arena) {
       arena.result.winnerId !== placings[0]) return null;
   if (arena.mode === 'fuel-run' && !validFuelFinish(arena)) return null;
   if (arena.mode === 'bounty-hunt' && !validBountyFinish(arena)) return null;
+  if (arena.mode === 'convoy-raid' && !validConvoyFinish(arena)) return null;
   const placeIndex = placings.indexOf('player');
   return {player: player[0], computers: computers.length,
     behind: placings.slice(placeIndex + 1).filter(id => id !== 'player').length,
@@ -71,6 +92,11 @@ function arenaFacts(arena) {
 export function arenaReward(arena, cpuDifficulty) {
   const facts = arenaFacts(arena), factor = DIFFICULTY_FACTORS[cpuDifficulty];
   if (!facts || !factor) return {base: 0, placing: 0, wrecks: 0, factor: 0, total: 0};
+  if (arena.mode === 'convoy-raid') {
+    const base = facts.won ? CONVOY_RULES.winScrap :
+      CONVOY_RULES.valveScrap * arena.convoy.playerValvesBroken;
+    return {base, placing: 0, wrecks: 0, factor, total: Math.round(base * factor)};
+  }
   const base = 80, placing = facts.behind * 40,
     wrecks = bounded(facts.player.wrecks, 4) * 60;
   return {base, placing, wrecks, factor, total: Math.round((base + placing + wrecks) * factor)};
@@ -90,12 +116,13 @@ export function settleArenaResult(profile, {runId, ownerPlayerId, activePlayerId
   const reward = arenaReward(arena, cpuDifficulty);
   const oldScrap = bounded(career.scrap, 1_000_000_000);
   const scrap = Math.min(1_000_000_000, oldScrap + reward.total);
-  const previousTerritory = career.territories?.kettle || {hold: 0, claimed: false};
+  const territoryId = arena.mode === 'convoy-raid' ? 'tollkeeper' : 'kettle';
+  const previousTerritory = career.territories?.[territoryId] || {hold: 0, claimed: false};
   const oldHold = bounded(previousTerritory.hold, 100);
   const holdAdded = facts.won && facts.computers >= 2 ? Math.min(25, 100 - oldHold) : 0;
   const hold = oldHold + holdAdded;
   const territories = {...career.territories,
-    kettle: {...previousTerritory, hold}};
+    [territoryId]: {...previousTerritory, hold}};
   const wasteland = {...career, scrap, territories,
     settledResults: [...career.settledResults, key].slice(-1000)};
   return {profile: {...profile, wasteland}, key, awarded: true,
