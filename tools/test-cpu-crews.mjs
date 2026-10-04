@@ -4,6 +4,9 @@ import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {CREW} from '../src/crew.js';
 import {stepRaiders, damageRaider} from '../src/raiders.js';
+import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
+import {EngineAudio} from '../src/audio.js';
+import {FIGHT_VOICE_LINES, readFightSubtitle} from '../src/fight-voices.js';
 
 // CREW-04: native computer driving and raider-fighter damage, on the real
 // course. Fixtures set initial race conditions, never manufacture stop states.
@@ -147,4 +150,72 @@ test('knocking down a native stopped fighter holds its car for three seconds and
   tick(f);
   equal(fighter.knockedDown, false, 'the fighter respawns after three seconds');
   ok(fighter.health > 0, 'the respawned fighter has health');
+});
+
+// These controller probes isolate native cue attribution while the rival caller
+// is held. They do not replace the six positive native-caller acceptance cases.
+function controllerAmbush(member) {
+  const f = ambushRace({seed: member === 'odessa' ? 3004 : 3013});
+  stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  equal(f.rival.cpuCrew?.crewId, member, `the native seeded Hard field selects ${member}`);
+  for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'ambush'; n++) {
+    f.state.stageTimeSec += DT;
+    stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  }
+  equal(f.rival.cpuCrew.phase, 'ambush', 'the controller parks and creates its actual ambush fighter');
+  const fighter = f.rival.cpuCrew.fighter;
+  Object.assign(f.state, {crewId: 'rook', s: fighter.s, prevS: fighter.s,
+    lateral: fighter.lateral + 4, prevLateral: fighter.lateral + 4,
+    speedMph: 0, headingError: 0, armor: 100, maxArmor: 100, combatShield: 0});
+  const target = f.duel.course.groundAt(f.state.s, f.state.lateral);
+  ok(Math.hypot(target.x - fighter.x, target.z - fighter.z) <= 6,
+    'the real player is within the native turret/flamer reach');
+  return f;
+}
+function nativeVoiceListener(f, cpuCue = null) {
+  const calls = [], events = [];
+  const audio = new EngineAudio({flags: {enabled: name => name === 'fight-voices'}});
+  audio.context = {state: 'running', currentTime: 0}; audio.muted = false;
+  audio.cueBuffers = Object.fromEntries(Object.keys(FIGHT_VOICE_LINES).map(id => [id, {duration: 3}]));
+  audio._syncMixer = () => {};
+  audio._weaponCue = () => {};
+  audio._playCue = id => {calls.push(id); return {stop() {}};};
+  f.duel.onChange((state, event) => {
+    events.push(event);
+    if (event.weaponFired || event.crewGearCue && (!cpuCue || event.crewGearCue === cpuCue))
+      audio.event(event, state, f.duel.course);
+  });
+  return {audio, events, speech: () => calls.filter(id => Object.hasOwn(FIGHT_VOICE_LINES, id))};
+}
+for (const [member, cue] of [['odessa', 'crew.turret.deploy'],
+    ['odessa', 'crew.turret.fire'], ['cinder', 'crew.flamer.start']]) {
+  test(`native CPU ${cue} leaves the player Rook callout unused`, () => {
+    const f = controllerAmbush(member), voice = nativeVoiceListener(f, cue);
+    for (let n = 0; n < 240 && !voice.events.some(event => event.crewGearCue === cue); n++) {
+      f.state.stageTimeSec += DT;
+      stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+    }
+    const event = voice.events.find(event => event.crewGearCue === cue);
+    ok(event, `${cue} is produced by the real CPU signature/contact action`);
+    equal(voice.speech(), [], `${cue}: the native CPU cue must not announce the player's Rook line`);
+    equal(readFightSubtitle(f.state), null, 'the CPU cue creates no player caption');
+    equal(event.enemy, true, 'the native gear cue identifies an enemy action');
+    ok(event.actor === f.rival, 'the native gear cue retains the actual CPU actor');
+    equal(Object.hasOwn(f.state, 'playerActed'), false, 'CPU presentation adds no player action marker');
+    f.state.stageTimeSec += 6; voice.audio.updateFightVoices(f.state);
+    equal(voice.speech(), [], 'no player callout is queued behind the CPU action');
+    equal(readFightSubtitle(f.state), null, 'no delayed player caption follows the CPU action');
+    equal(f.duel.fireWeapon('crossbow'), true, 'the actual player can still fire the native Crossbow');
+    equal(voice.speech(), ['crew.rook.callout'], 'the first real player action still announces Rook exactly once');
+    equal(readFightSubtitle(f.state), FIGHT_VOICE_LINES['crew.rook.callout'].text,
+      'the player action presents the exact kept Rook caption');
+  });
+}
+test('a real player Crossbow action remains a positive Rook speech control', () => {
+  const f = race(); f.state.crewId = 'rook';
+  const voice = nativeVoiceListener(f);
+  equal(f.duel.fireWeapon('crossbow'), true, 'the genuine player weapon producer fires');
+  equal(voice.speech(), ['crew.rook.callout'], 'the genuine player action announces its selected crew');
+  equal(readFightSubtitle(f.state), FIGHT_VOICE_LINES['crew.rook.callout'].text,
+    'the real merged Voice consumer renders the approved exact player caption');
 });

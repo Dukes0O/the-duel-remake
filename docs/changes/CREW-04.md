@@ -37,6 +37,18 @@ The six positive native cases remain red because sim-rival has no caller yet.
 Existing raiders: 7/7 pass. Owned gear module checks: 16/16 pass.
 Combat replay fingerprints: 12/12 pass across four encounters, unchanged.
 
+Independent CPU cue regression: 23 cases / 37 executed checks, 14 pass / 9
+fail. Original 19 cases and every existing assertion remain exact: six native
+caller failures are still held. Three new failures each report that native
+crew.turret.deploy, crew.turret.fire or crew.flamer.start announces the player's
+Rook line; actual speech is [crew.rook.callout], expected []. Seed 3004 selects
+Odessa; 3013 selects Cinder. Real parked fighters and contact logic produce
+each cue into the merged EngineAudio/Voice consumer without fabricated emits.
+The real player Crossbow/Rook speech and exact caption control passes. New
+checks also require enemy true, the actual CPU actor, no queued caption and
+the player's next native action retaining its line. The controller opts in
+only for this bounded probe; the native caller remains incomplete.
+
 Direct controller probes pass Odessa's 40-armor/two-second repair and the
 three-second knockdown/respawn through damageRaider. Eight seeded crew probes
 use real stepProjectiles and finish with three attacks; Dune fires only bolts,
