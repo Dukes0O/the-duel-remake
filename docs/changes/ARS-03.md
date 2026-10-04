@@ -40,17 +40,17 @@ first-win settlement still saves the explicit earned reward as before.
   Drone's opponent HUD marker is excluded; Mirage's existing labels remain.
 - Balance: 30 of 30 main Hard races finish; 12 wins. Naturally seeded CPU
   loadouts use all four weapons. Zero unattributed new weapon cues.
-  One new defensive supplement stalled against scenery; legal brake/reverse
-  recovery now finishes it in 554.49 s, with a loss. Historical policies
-  are unchanged. The complete sample must be rerun on the final gated base.
+  One defensive supplement needs legal brake/reverse recovery and finishes
+  in 554.49 s with a loss. Historical policies stay exact; balance is cleared.
 - Nine sound recipes produce 27 cached CC0 recordings; 31 audio checks pass,
   including native CPU/player Voice ownership for all four new actions.
 - Browser audio: 27 decodes; all nine native cues; owned loops end and pause.
   Earlier direct-cue contrast bypassed the Tesla pulse's real stereo panner.
-  Tests-only spatial correction on 7ac1f37a: actual 1 m, centre pan, weapons
-  bus. Pulse is +3.55 dB, red at the unchanged 6 dB threshold; the other eight
-  remain +6.71 to +9.95 dB. All nine peaks stay below 1. No browser issues.
-- Pending: final reviews, balance, frames, lane gate and build.
+  Spatial red `d7852758`: actual 1 m, centre pan, weapons bus; pulse +3.55 dB.
+  Only pulse volume changes from 3.5 to 5.5. It now measures +7.48 dB; the
+  other eight remain +6.71 to +9.95 dB. Simultaneous peak 0.82069, no browser
+  issues. All 41 audio checks pass. The 6 dB target and headroom limits stay
+  exact; cue files, recipes, other bank values and assertions are unchanged.
 
 Four native regressions fixed: Star/Magnet, disabled slots, recharge angle and
 Mortar ground targeting. CPU leader/range and ordinary rules stay exact.
@@ -63,7 +63,6 @@ combat replay 12 pass. Earlier build passed before hold.
 
 Whole `3ee64bc5`/`18072d80` transferred. Catalog conflict adds only wave-three
 dev: nine entries, five on, Voice dev, other values exact; flags 39/Preview 22 pass.
-Earlier browser evidence: `.evidence/2026-10-04/ARS-03-release-base/`; gates await.
 
 Unimplemented purchase denial replaces only the Mortar input with an unknown
 weapon ID; refusal and no-write assertions stay unchanged.
@@ -97,3 +96,4 @@ calculation are replaced; ordinary starter recharge retains its original rule.
 Stored-only entitlement reads are replaced by the catalog defeat rule.
 Old catalog-only views and dropped wave-three simulation requests are replaced.
 Generic replay/default launch audio is removed for the four native wave-three cues.
+Tesla pulse's 3.5 volume is replaced by 5.5; independent live review is pending.

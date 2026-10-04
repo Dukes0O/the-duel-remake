@@ -163,7 +163,7 @@ export const SOUND_BANK = {
   'weapon.tesla.pulse': cue('weapons', {
     flag: 'arsenal-wave3', files: ['arsenal-wave3/tesla-pulse-a.ogg',
       'arsenal-wave3/tesla-pulse-b.ogg', 'arsenal-wave3/tesla-pulse-c.ogg'],
-    volume: 3.5, priority: 70, limit: 6,
+    volume: 5.5, priority: 70, limit: 6,
   }),
   'weapon.decoy.deploy': cue('weapons', {
     flag: 'arsenal-wave3', files: ['arsenal-wave3/decoy-deploy-a.ogg',
