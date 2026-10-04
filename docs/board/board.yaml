@@ -1050,6 +1050,8 @@ tasks:
     source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
     balance_review: "All three complete balance reports pass, including native computer use of all four new weapons. No tuning or target changed."
     browser_review: "Both qualities pass weapon, counter, HUD and old Mirage reward checks. Armory reads preserve saved bytes. Matched driving frame time stays unchanged; active-weapon frame cost was not measured."
+    audio_routing_test_commit: e19beaa9
+    audio_review: "Native audio QA found duplicate Mortar fire and a generic fire fallback on the other three actions. Eight player and computer regressions reproduce it; named cues, Voice ownership and state purity must stay exact. Final audio review and lane gates follow the narrow fix."
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1369,6 +1371,7 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
     test_commit: c5f1536a
+    source_commit: 685877e1
     art_test_verdict: "Nine approved kit hashes and the original Gunn fight tests pass unchanged. The new tests fail for the missing finished turret and level rocket flight above a lower target; runtime geometry and lifecycle checks await the asset."
     note_commit: bcda842
     note: "Claude's turret recipe is settled; resume the fight and art. Use the plain mount during building, but the finished look needs Claude's approval before merge."
@@ -1384,7 +1387,7 @@ tasks:
     art_contract: "Reuse loadKitAsset('gunn-turret'). Named nodes: gunn-turret-root, gunn-turret-base, gunn-turret-head, gunn-turret-heat-panel and gunn-turret-mouth-0 through -3. Mouth markers belong to the turning head at the real tube openings. Preserve old car loader keys and approved kit hashes; clone heat materials per actor."
     sequencing: "Build the settled turret recipe and native fight while Arsenal holds shared callers and rendering. Do not regenerate the nine approved kit models. After Arsenal merges, grant the runtime turret hooks; send the finished comparison sheet to Claude before merge."
     test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
-    trajectory_test_grant: "Independent author may replace the old parallel-ray assertion with trajectories reaching the same committed world point from the four real tube mouths. Claude's locked-point rule requires convergence. Retain tell, five-shot count, lock, timing and player-turn checks; review the changed assertion before merge."
+    trajectory_test_grant: "Independent author adds the convergence witness; the source worker replaces only the contradicted parallel-ray assertion after that proof. Four real mouths must reach Claude's one locked world point. Keep tell, five-shot count, lock, timing and player-turn checks; review the changed assertion before merge."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, art_critic]
     acceptance:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
