@@ -384,6 +384,20 @@ Stuttgart 959-S with a roof turret. A long-range shooter who keeps away.
 | Reward | Rocket Pods, unlocked early (ARS-02), and a turret look for your kit |
 | Callouts | `BARRAGE!`, `HIS GUN'S COOKED. GET HIM!` |
 
+**Claude's answers, 4 October 2026.** Barrage starts when its cooldown is
+ready, the player is 25 to 90 m away with clear sight (no scrap pile or wall
+between), and Gunn is not overheating. The turret tracks through the tell.
+At its end, he locks where the player will be when the first rocket arrives,
+using current speed and heading. Rockets fire 0.25 s apart at that point.
+If sight is broken at lock time he fires nothing but still overheats: the
+counter always earns the window.
+
+Single rockets fire every 3 s with clear sight at 40 to 80 m, using Rocket
+Pods numbers. None fire during a tell or window, or for 2 s after a barrage.
+The first win saves Rocket Pods as earned for the Armory, like Smoke Screen.
+It also saves the turret as a kit look, wearable from the Armory on any car.
+The look adds no armor or other effect.
+
 ### Settled for build: Kettle Kingpin (WAR-03b)
 
 Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.
@@ -726,6 +740,18 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
 - **Needs:** on foot inside the arena, with the arena wall as the boundary
   instead of the 150 m tether.
 
+**Claude's answers, 4 October 2026.** Pay is 60 scrap per completed wave,
+plus 150 for all five, times the difficulty factor (540 on Medium). Each
+completed wave adds 5 hold (25 for all five) to the same territory Last Car
+Rolling fills on that venue. Settle once per event.
+
+A wave ends only when all its raiders are knocked down and its buggy is
+wrecked. Neither returns within the wave. The fort is in the Pit, with scrap
+cover in a ring 8 m out from the centre pile and the player's car inside.
+On the Salt Flats it stands at the middle of the longest straight, across
+the drivable band. Raiders approach from at least two directions and start
+at least 60 m away. Ambush Alley is not on the Scrapdome ring.
+
 ### The Salt Flats Scrapyard (ARENA-06)
 
 - A second venue: a white salt bowl about 300 by 200 m with scrap-pile cover,
@@ -779,6 +805,17 @@ Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
   go out and the valves come back at half armor.
 - **Pay:** the largest arena payout, since it is the hardest.
 - **The Tollkeeper's fight** (section 5) is this mode with his tells added.
+
+**Claude's answers, 4 October 2026.** A win by planting the charge in time
+pays 700 scrap times the difficulty factor (840 on Medium). A loss pays 40
+per valve the player broke, times the factor. Settle once per event; a win
+adds 25 hold to the Tollkeeper's territory. The SCRAPDOME panel shows Convoy
+Raid once Salt Flats is unlocked and races have earned any Tollkeeper hold.
+
+A projectile damages the valve nearest its impact point. A ram damages the
+valve nearest the contact point only if it is within 3 m. A blast damages
+every valve inside its radius. Other hits strike the body, which cannot be
+destroyed: body hits only shove. Only the boarding charge destroys the rig.
 
 ### Cards
 

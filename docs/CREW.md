@@ -99,6 +99,15 @@ Boarding is the on-foot finishing move. It must feel daring but stay simple.
   the finish", and a full Hard race where an ambush really happens and the
   race still completes.
 
+**Claude's answers, 4 October 2026.** Repair stops use only the wrench;
+Odessa's 2 s repair is her perk. During an ambush the fighter uses signature
+gear once if it can reach the player: Nell throws one Sticky Bomb when a
+car passes within 18 m; Dune uses crossbow bolts instead of rockets;
+Odessa places her turret beside the road; Tusk fires one cannon shell;
+Cinder uses her flamer only within 6 m. Then the RPG fills the remaining
+shots, up to a three-shot total. Jax and Wren use only the RPG; Rook uses
+the RPG with his perk. No gear is used outside repair stops and ambushes.
+
 ## 4. Cards
 
 | Card | Scope | Needs |
