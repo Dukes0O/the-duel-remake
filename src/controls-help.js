@@ -1,0 +1,32 @@
+import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {canLeaveCar} from './onfoot-transition.js';
+
+const T = COMBAT_TUNING.foot;
+
+// The controls a player can look up on demand (the H key). Presentation only:
+// it reads the same tuning and availability rules the game itself uses, so the
+// numbers cannot drift from what the keys really do. Returns {title, rows}.
+export function controlsHelp(duel) {
+  const state = duel?.state;
+  if (state?.onFoot) {
+    return {title: 'ON FOOT', rows: [
+      ['ARROWS / WASD', 'Move'], ['MOUSE', 'Look'], ['L / R CLICK', 'Fire / aim'],
+      ['SHIFT', 'Sprint'], ['SPACE', 'Jump'], ['1  2  3', 'Choose your gear'],
+      ['HOLD F', 'Get back in your car'],
+      ['C', 'Change camera'], ['ESC / P', 'Pause'], ['H', 'Hide this help']]};
+  }
+  const rows = [['W / UP', 'Throttle'], ['S / DOWN', 'Brake, hold to reverse'],
+    ['LEFT / RIGHT', 'Steer'], ['SPACE', 'Boost'], ['Q / E', 'Shift (manual gearbox)']];
+  if (state?.mode === 'wasteland' && state.combat) rows.push(['1  2  3  4', 'Weapons']);
+  rows.push(['C', 'Change camera']);
+  if (duel && canLeaveCar(duel)) rows.push(['HOLD F',
+    'Step out or bail out']);
+  rows.push(['ESC / P', 'Pause'], ['M', 'Mute'], ['H', 'Hide this help']);
+  return {title: 'CONTROLS', rows};
+}
+
+export function controlsHelpMarkup(duel) {
+  const {title, rows} = controlsHelp(duel);
+  return `<h3>${title}</h3><dl>${rows.map(([keys, what]) =>
+    `<div><dt>${keys}</dt><dd>${what}</dd></div>`).join('')}</dl>`;
+}

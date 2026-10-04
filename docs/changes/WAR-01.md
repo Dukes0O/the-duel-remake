@@ -69,9 +69,7 @@ Focused checks now pass:
   working-reward name, and a full-hold unbuilt Gunn with COMING LATER and no
   button. The scenario did not add any fight to the runtime shipped-fight list.
 - High and Performance captures both showed the real yard map and its eight
-  cards. The 390 by 844 checks kept the panel, map and every card inside the
-  viewport width, retained the two intended fixture actions and exposed the
-  cards through the existing vertical scroll area. The inspected final
+  cards. The inspected final
   captures had no clipped navigation, overlapping controls or horizontal
   overflow.
 - Before and after both map renders, credits, scrap, full history, full settled

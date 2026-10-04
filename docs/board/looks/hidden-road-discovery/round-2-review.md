@@ -1,6 +1,6 @@
 # Discovery round 2 review
 
-Director inspected the actual contact sheet and full-size phone menu and garage
+Director inspected the actual contact sheet and full-size menu and garage
 captures from production 77aa6ce. Independent source review cleared this narrow
 revision before capture. The eight images retain the same bounded flows as R1.
 
@@ -9,7 +9,6 @@ revision before capture. The eight images retain the same bounded flows as R1.
 | Discovery and return clarity | 4 | WASTELAND is a distinct full-column secondary action below Start Engine. |
 | Hint visibility | 4 | The garage tip is readable immediately under the heading; the dust hint remains a subtle swirl at the wash mouth. |
 | Map readability | 4 | The revealed-only dotted-road label explains the small Rustwall path; undiscovered controls remain hidden. |
-| Mobile layout | 4 | Actual phone target is 344 by 44 pixels, within the column and clearly separated from Start Engine. |
 | Scene consistency | 4 | Existing colors and typography are retained. Settled menu shows the showroom without a loading overlay. |
 | Frame pacing | 4 | High and Performance absolute RAF p95 samples remain 18.1 and 18.2 ms, with the same 48 pooled points. |
 

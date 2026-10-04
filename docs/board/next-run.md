@@ -19,8 +19,9 @@ game alone. This checkpoint takes priority over the older resume below.
 Kyle supplied Claude's four answers on 4 October. Gunn, Convoy, computer
 crews and Ambush Alley resume with no Claude design wait; the named design
 docs and cards hold the answers. Ambush Alley uses the Pit and Salt, not the
-Scrapdome ring. Claude Sonnet owns phone cleanup. All Codex builds and QA
-are for the laptop; never run phone scenarios or add phone layouts.
+Scrapdome ring. Claude Sonnet owns the separate release and its cleanup.
+All Codex builds and QA are laptop-only. Update lanes from integration
+after Sonnet merges the whole tested release; do not extract its cleanup.
 
 ## Bosses merged; shared files released (Claude, 2 October 2026, afternoon)
 
@@ -59,9 +60,13 @@ gate passed 344/344 and the build passed; Claude approved round two.
 CREW-02 is merged behind the dev-only `crew-gear` switch. All eight signature
 items are connected to the race, Armory, HUD, renderer, combat and audio paths.
 
-**Live:** the Scrapdome (Last Car Rolling), Titan climbing and steering,
-Muddy Hollow, the ramp-side fix, Sawtooth Sal with her reward and the settled
-warlord pay, and the damaged-save fix. Phase 3 is the last planned phase.
+**Live (4 October 2026):** the Scrapdome (Last Car Rolling), Titan climbing and
+steering, Muddy Hollow, Sawtooth Sal and the settled warlord pay, the
+Dustmonger, Mother Mirage, the Kettle Kingpin and the Twin Vultures, the Pit,
+Fuel Run, Bounty Hunt, the Salt Flats, Arsenal waves one and two, the crew
+signature gear and boarding, and the H key for the controls. Switches for the
+five released features are `on` until a janitor card retires them. Phase 3 is
+the last planned phase.
 
 **Answered this afternoon (do not reopen):**
 - ARS-CORE: `rangeForTarget(actor)` per candidate is approved (card).

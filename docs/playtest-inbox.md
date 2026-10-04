@@ -1,5 +1,23 @@
 # Wasteland play-test inbox
 
+## Released 4 October 2026: try these in the main game
+
+Everything Kyle played in the Preview is live (build 26.10.04 19:58 UTC). Close
+any open game tab and reopen it.
+
+- Press **H** in a race to show or hide the controls. Nothing sits on the
+  screen by default.
+- Four more warlords on the territory map once their territory is full: the
+  Dustmonger, Mother Mirage, the Kettle Kingpin and the Twin Vultures (in the
+  Pit). Each earns its reward on the first win, except Mother Mirage, whose
+  Decoy Drone is not built yet.
+- Fuel Run (rank 6), Bounty Hunt (rank 9) and the Salt Flats (rank 9) in the
+  Scrapdome yard.
+- New car weapons in the Armory by rank, and eight crew members with signature
+  gear, including boarding an enemy car.
+- Please say if any fight feels too hard or too easy, and whether the Twin
+  Vultures should keep the Dusthawk Rally look.
+
 ## Claude decisions settled, 4 October
 
 - WAR-03a: Set Gunn's barrage trigger and when predictive aim locks, his
@@ -11,8 +29,29 @@
 
 Kyle supplied Claude's answers for these cards, CREW-04 and ARENA-05 on
 4 October. They are recorded in SCRAPDOME.md, CREW.md and the cards; all four
-waits are cleared. The separate release remains with its owner. Claude Sonnet
-handles retiring phone support; Codex builds and tests for the laptop only.
+waits are cleared. The separate release has been made (see the top of this file).
+
+## Claude turret answer, 4 October
+
+WAR-03a resumes. Build one scrap rocket-pod turret in armor-kits.py, fitted
+to the existing mount, using approved kit materials and wear: low ring,
+short yoke, four tubes in a two-by-two welded box, rear heat panel. Separate
+base, head and panel for tracking, heat glow and tube-mouth firing. The same
+model is Gunn's turret and the earned cosmetic look on any car.
+
+The plain mount may serve fight building and tests while art is pending.
+Keep kit size and frame limits. Send Claude one side, three-quarter and top
+comparison sheet on Stuttgart and one other car; three rounds maximum.
+The design wait is cleared; look approval still comes before merge.
+
+## Claude reward answer, 4 October
+
+Do not rewrite earlier Mirage winners' saves to grant a Drone. Armory and
+loadout treat a warlord weapon as earned when the weapon is saved as earned
+or its warlord is saved as defeated. Use this rule for every warlord weapon,
+including Gunn's Rocket Pods. First-win settlement still saves the reward.
+Test a defeated Mirage save with no Drone: Armory shows it as earned and
+the save stays unchanged. ARS-03 resumes; its reward wait is cleared.
 
 ## Claude's review, 2 October afternoon
 

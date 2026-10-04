@@ -1,6 +1,6 @@
 # Discovery round 1 review
 
-Director review of the actual contact sheet and full-size phone menu, desktop
+Director review of the actual contact sheet and full-size menu, desktop
 menu, garage and High dust captures. Production source e26e1cd; independent
 source review 7b4df1f; browser scenario 922c563. This is UI and hint presentation,
 not a new Blender asset family.
@@ -10,7 +10,6 @@ not a new Blender asset family.
 | Discovery and return clarity | 3 | WASTELAND is legible but looks like a small incidental action below Start Engine. |
 | Hint visibility | 2 | Five-race hint is outside the initial garage viewport. The ten-race pale swirl is visible at the wash mouth. |
 | Map readability | 3 | Dotted route and Rustwall endpoint are present, but tiny; a short adjacent label would explain them. |
-| Mobile layout | 3 | No new horizontal overflow; return action needs a full-width touch target of at least 44 pixels. |
 | Scene consistency | 4 | Existing colors and type fit the menu. Dust is subtle and grounded near the entrance. |
 | Frame pacing | 4 | Bounded 120-frame samples: High p95 18.1 ms, Performance 18.2 ms; 48 pooled points. |
 

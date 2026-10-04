@@ -4,18 +4,20 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
+  // Released on 4 October 2026: Fuel Run, Bounty Hunt, Arsenal, Salt Flats, Crew gear.
   assert.deepEqual(FEATURE_STATES, {
-    'bounty-hunt': 'dev', 'career-backup': 'dev', 'hidden-road': 'on',
-    'fuel-run': 'dev',
-    arsenal: 'dev',
-    'salt-flats': 'dev', 'crew-gear': 'dev',
+    'bounty-hunt': 'on', 'career-backup': 'dev', 'hidden-road': 'on',
+    'fuel-run': 'on',
+    arsenal: 'on',
+    'salt-flats': 'on', 'crew-gear': 'on',
+    'fight-voices': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
   assert.equal(flags.enabled('hidden-road'), true);
   assert.equal(flags.enabled('career-backup'), false);
   assert.equal(flags.enabled('warlords'), false);
-  assert.equal(flags.enabled('fuel-run'), false);
+  assert.equal(flags.enabled('fuel-run'), true);
   assert.deepEqual(flags.betaFeatures(), []);
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');
@@ -34,12 +36,15 @@ test('production URL requests cannot enable dev switches, while QA keeps named i
   assert.equal(createFeatureFlags({ storage: null, qa: true }).enabled('career-backup'), false);
 });
 
-test('Fuel development flag is isolated from production URLs and unnamed QA builds', () => {
-  const production = createFeatureFlags({storage:null, qa:false, search:'?flags=fuel-run'});
+// A development switch stays isolated from production URLs and unnamed QA
+// builds. Fuel Run is released now, so the rule is proved with it pinned to dev.
+test('a development switch is isolated from production URLs and unnamed QA builds', () => {
+  const catalog = {...FEATURE_STATES, 'fuel-run': 'dev'};
+  const production = createFeatureFlags({catalog, storage:null, qa:false, search:'?flags=fuel-run'});
   assert.equal(production.enabled('fuel-run'), false);
-  const qa = createFeatureFlags({storage:null, qa:true, search:'?flags=fuel-run'});
+  const qa = createFeatureFlags({catalog, storage:null, qa:true, search:'?flags=fuel-run'});
   assert.equal(qa.enabled('fuel-run'), true);
-  assert.equal(createFeatureFlags({storage:null, qa:true}).enabled('fuel-run'), false);
+  assert.equal(createFeatureFlags({catalog, storage:null, qa:true}).enabled('fuel-run'), false);
 });
 
 test('private beta journey evidence distinguishes fixtures from production actions', async () => {
@@ -92,22 +97,24 @@ test('private beta journey evidence distinguishes fixtures from production actio
   changed(copy => { copy.result.status = 'results'; });
 });
 
-// ARS-CORE: the actual production catalog controls admission; tests never
-// substitute a catalog or supply an override to invent the Arsenal switch.
-test('Arsenal development flag stays off in production by default', () => {
-  assert.equal(createFeatureFlags({storage:null, qa:false, search:''}).enabled('arsenal'), false);
+// ARS-CORE proved the Arsenal switch on the actual catalog while it was in
+// development. It is released now; the same isolation is kept with it pinned to dev.
+const arsenalDev = options => createFeatureFlags({catalog: {...FEATURE_STATES, arsenal: 'dev', 'fuel-run': 'dev'}, storage:null, ...options});
+test('released Arsenal is on in production; a dev Arsenal stays off by default', () => {
+  assert.equal(createFeatureFlags({storage:null, qa:false, search:''}).enabled('arsenal'), true);
+  assert.equal(arsenalDev({qa:false, search:''}).enabled('arsenal'), false);
 });
-test('production URLs cannot enable the Arsenal development flag', () => {
-  assert.equal(createFeatureFlags({storage:null, qa:false, search:'?flags=arsenal'}).enabled('arsenal'), false);
+test('production URLs cannot enable a dev Arsenal', () => {
+  assert.equal(arsenalDev({qa:false, search:'?flags=arsenal'}).enabled('arsenal'), false);
 });
-test('an explicit private QA URL can enable only the named Arsenal development flag', () => {
-  const qa = createFeatureFlags({storage:null, qa:true, search:'?flags=arsenal'});
-  assert.equal(qa.enabled('arsenal'), true, 'actual registered Arsenal is available only when explicitly requested in QA');
-  assert.equal(qa.enabled('fuel-run'), false, 'requesting Arsenal does not implicitly enable Fuel Run');
+test('an explicit private QA URL can enable only the named dev Arsenal flag', () => {
+  const qa = arsenalDev({qa:true, search:'?flags=arsenal'});
+  assert.equal(qa.enabled('arsenal'), true, 'a dev Arsenal is available only when explicitly requested in QA');
+  assert.equal(qa.enabled('fuel-run'), false, 'requesting Arsenal does not implicitly enable a dev Fuel Run');
 });
-test('unnamed QA and a different named QA request leave Arsenal off', () => {
-  assert.equal(createFeatureFlags({storage:null, qa:true, search:''}).enabled('arsenal'), false);
-  const other = createFeatureFlags({storage:null, qa:true, search:'?flags=fuel-run'});
-  assert.equal(other.enabled('fuel-run'), true, 'the other real dev flag remains explicitly available');
+test('unnamed QA and a different named QA request leave a dev Arsenal off', () => {
+  assert.equal(arsenalDev({qa:true, search:''}).enabled('arsenal'), false);
+  const other = arsenalDev({qa:true, search:'?flags=fuel-run'});
+  assert.equal(other.enabled('fuel-run'), true, 'the other dev flag remains explicitly available');
   assert.equal(other.enabled('arsenal'), false, 'a request for another feature does not enable Arsenal');
 });

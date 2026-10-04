@@ -1,13 +1,13 @@
 # Gate arrival: round 2 Director review
 
 Source: `a7f6aac`. Private capture port: 28790. Reviewed the contact sheet,
-full phone invitation, full inside-arrival image, loudness plot and paired
+full invitation, full inside-arrival image, loudness plot and paired
 frame data. Eleven images and two real-time PCM sets are retained.
 
 | Criterion | Score | Evidence |
 | --- | --- | --- |
 | Style | 4 | The smaller warm-metal dialog still fits the scene. |
-| Readability | 4 | Car, threshold and choices are now distinct on desktop and phone. |
+| Readability | 4 | Car, threshold and choices are now distinct on desktop. |
 | Grounding | 4 | Parked car and raised opening agree in the actual inspected views. |
 | Lighting and materials | 4 | No new presentation mismatch; underlying Rustwall polish debt remains separate. |
 | Motion and timing | 3, pending | The inside endpoint is clear and source review checks camera clearance, but the requested recording did not run. |
