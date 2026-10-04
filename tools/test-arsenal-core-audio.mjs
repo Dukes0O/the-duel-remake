@@ -166,7 +166,7 @@ check('existing sound-bank entries and all other exports stay exact', () => {
 });
 check('existing catalog records and metadata stay exact', () => {
   assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row =>
-    !NEW_ARSENAL_CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue))}),
+    !NEW_ARSENAL_CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue) && !WAVE_THREE_CUES.includes(row.cue))}),
     '104e9dafe12aa861857d055e73685a315a6fb809ee56db2f25a60990a283f1c5');
 });
 for (const id of CUES) {

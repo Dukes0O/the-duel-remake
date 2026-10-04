@@ -70,7 +70,8 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    overrides: { arsenal: flags.includes('arsenal') } });
+    overrides: { arsenal: flags.includes('arsenal'),
+      'arsenal-wave3': flags.includes('arsenal-wave3') } });
 }
 
 function emptyWrecks() {

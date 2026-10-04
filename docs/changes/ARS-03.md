@@ -53,7 +53,6 @@ Independent reviewer regressions: original 51 pass, four new cases fail for
 Star/Magnet, Tesla slots, recharge angle and Mortar ground targeting. Source
 fixes cancel Magnet before Star, use native disabled/recharge rules and sort
 Mortar ground distance. CPU leader/range and ordinary rules remain exact.
-HUD uses a semantic DOM fixture; combat and driving checks remain native.
 
 Earned-reward red tests: 62/99 pass; 37 fail for Smoke/Rockets/Drone earned
 reads, slots, upgrades, repeat offers, native App equipment and Mirage rematch.
@@ -64,10 +63,9 @@ Native 99/552 and six save/ownership/backup suites (56 TAP cases) pass;
 runtime 209/2,625 and combat replays 12 pass. Earlier build passed before hold.
 
 Whole Voice base `3ee64bc5` and Director metadata `18072d80` transferred intact.
-Feature-test conflict: eight entries become nine only by adding wave three
-dev; five released on, Voice dev and all other prior states stay exact.
-Combined native 99/552, Voice 26/358, audio 31,
-flags 39 and Preview 22 pass. No new build/browser/broad run. Earlier browser
+Feature conflict: add only wave-three dev; nine entries, five released on,
+Voice dev and other states exact. Native 99/552, Voice 26/358, audio 31,
+flags 39 and Preview 22 pass. Earlier browser
 evidence stays at `.evidence/2026-10-04/ARS-03-release-base/`; final gates await.
 
 Unimplemented purchase denial replaces only the Mortar input with an unknown
@@ -77,16 +75,17 @@ expects `FEATURE_STATES.arsenal` to be `on` instead of `dev`. The same invariant
 still protects the existing Arsenal state; the release changed that state.
 Catalog: five released features on, both dev flags; isolation checks remain.
 
-Preservation red on `52ca6265`: Core 14 checks / 2 failures, Wave One 36 / 2.
-Bank views include nine new cues; catalog views include nine new recipes.
-Parsed comparison with whole `18072d80`: all 110 earlier cues, six exports,
-49 earlier recipes and metadata exact. Add only nine literal Wave Three IDs
-to each bank additions list; all existing assertions and hash pins stay exact.
-Bank-only result: Core 13/14 and Wave One 35/36; only catalog failures remain
-(407bd2c9 vs 104e9daf; 7ce837a8 vs 48c3d417). Native 99/552, Voice 26/358 and
-Wave Three audio 31/31 pass. No source, asset, catalog or replay edit.
-Catalog assertions and Beta remain unchanged for the source worker. Beta
-red is 7/8: its exact catalog omits only arsenal-wave3 dev.
+Independent preservation against whole `18072d80`: all 110 earlier cues,
+six exports, 49 earlier recipes and metadata exact; only nine Wave Three cues
+and recipes are added. After bank whitelists, red `87b436f2` is Core 13/14,
+Wave One 35/36 and Beta 7/8. Whole grant `6b09fc55` permits only the author's
+nine literal IDs in catalog filters; original pins/other assertions stay exact.
+Beta adds only arsenal-wave3 dev. Core 14/14, Wave One 36/36, Beta 8/8 pass.
+
+Balance red `0cd575fa`: 33/34, real Mortar purchase refused because wave three
+is off. Source forwards that requested boolean beside Arsenal; policies,
+targets and fixtures stay exact. Unchanged balance 34/34 and native 99/552 pass.
+Its one-frame native probe proves purchase/equipment/CPU slots, not full balance.
 
 ## Removed
 
@@ -96,3 +95,4 @@ look-only Armory handoffs are excluded. Its separate lane is retained.
 The obsolete forward-gap Mortar ordering and Arsenal HUD linear recharge
 calculation are replaced; ordinary starter recharge retains its original rule.
 Stored-only entitlement reads are replaced by the catalog defeat rule.
+Old catalog-only views and dropped wave-three simulation requests are replaced.
