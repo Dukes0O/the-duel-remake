@@ -44,7 +44,8 @@ export function damageGearCar(duel, actor, amount, owner, normal = null,
   });
   if (removed > 0) duel.emit({combatHit: true, footGearHit: true,
     strength: removed / 60, victim: actor === duel.state ? 'player' : 'rival',
-    owner: combatOwnerId(duel, owner), hitPosition: carBodyPoint(duel, actor)});
+    owner: combatOwnerId(duel, owner),
+    hitPosition: hitPosition || contactPoint || carBodyPoint(duel, actor)});
   return removed;
 }
 export function damageGearFighter(duel, target, amount, owner, knockdown = false) {

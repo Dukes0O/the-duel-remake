@@ -206,7 +206,8 @@ export function stepGearDeployables(duel, dt) {
     if (chosen) {
       const contact = gearContact(duel, {x: turret.x, y: turret.y + .85, z: turret.z}, chosen.at, duel.state);
       if (chosen.actor && contact?.actor === chosen.actor)
-        damageGearCar(duel, chosen.actor, gear.carDamage, duel.state);
+        damageGearCar(duel, chosen.actor, gear.carDamage, duel.state, null,
+          {hitPosition: contact.point});
       else if (chosen.target && contact?.target?.fighter === chosen.target.fighter)
         damageGearFighter(duel, chosen.target, gear.fighterDamage, duel.state);
       turret.targetId = chosen.actor ? targetIdentity(duel, chosen.actor) : chosen.target.fighter.id;

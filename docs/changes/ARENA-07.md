@@ -29,12 +29,9 @@ The native audio routing hook remains held for the sequential ARS handoff.
 
 ## Checks
 
-Independent tests: c5c3c72, written before source (15 cases, 1 pass, 14 red).
-First owned source db062fd5: 15 cases, 8 pass, 7 red at held shared hooks.
-Existing arena event 13 cases and settlement 9 cases pass. Its build passes.
-
-Independent follow-up 02064cab was red before these boarding edits: 22 cases,
-12 pass, 10 red. Current source runs 22 cases and 139 checks: 13 pass, 9 red.
+Independent tests before source: c5c3c72 (15 cases, 14 red), plate/deadline
+02064cab (22 cases, 10 red), turret 16a014a3 (23 cases, 10 red).
+Current source runs 23 cases and 158 checks: 14 pass, 9 red at held hooks.
 Native plate admission, mounting and wrong-surface rejection pass. Both legal
 deadline plants retain the original hold and full fuse without early reset or
 timeout; their finish still needs the held central convoyCharge wreck hook.
@@ -45,17 +42,18 @@ Signature projectile hits now pass their real swept intersection point. Sticky
 blasts pass their actual explosion centre and existing radius. The shared gear
 damage helper forwards only those geometry fields, with unchanged damage maths.
 Native RPG shots carry the established arena player owner id and their existing
-splash radius. Its impact consumer, turret and flame producers remain held.
+splash radius. Its central impact consumer remains held. Flame keeps its
+existing cone/body-hit rule; no invented impact point.
 Foot weapons 5 cases, crew gear 33 checks, gear modules 16 checks, projectiles
 35 cases and replay fingerprints 12 checks across 4 encounters pass unchanged.
 A native contact witness hits 1.074 m from the aimed car centre, not its centre.
-
-Independent native turret test before the narrow signature contact fix:
-19 checks, 18 pass, then real footGearHit/combatHit reports the aim centre
-instead of the swept surface contact. Actual Odessa exit, slot 3 and deploy,
-nearest-car 4 armor, untouched farther car and both 0.8 s intervals pass.
-Focused suite: 23 cases, 158 checks, 13 pass, 10 red (the nine existing held
-failures plus turret geometry). No existing assertions or source changed.
+Turret forwards the actual gearContact.point. Its independently authored native
+19-check case now passes: real Odessa exit, slot 3, deployment, nearest-car
+4 armor, untouched farther car, both 0.8 s intervals and measured surface hit.
+Reviewer P2: hit events wrongly replaced supplied geometry with the body centre.
+Events now retain hitPosition or contactPoint; only unmeasured hits fall back.
+A native three-case witness checks impact, contact and body fallback. Crew gear
+33 checks and replay fingerprints 12 checks across 4 encounters pass again.
 
 Fixture correction: the old test landed at the rig centre at vehicle height.
 That 3.5 m envelope includes warning lamps, not a boardable roof. The approved
@@ -71,29 +69,26 @@ ticks. They do not assign valve, charge or result state. Existing central
 applyArmorDamage tests still require its real hit hook. Each deadline win
 checks one native result and one settlement; the unplanted event loss does too.
 
-Remaining failures:
-- `a native projectile impact damages exactly its nearest fuel valve`
-- `native blasts break every valve inside their radius` (two cases)
-- `detonation after the full two seconds finishes the event` (two cases)
-- `one earned hold opens Convoy after Salt Flats unlock`
-- `the unfinished Convoy mode must have a dev switch`
-- `crash physics sees the twelve-tonne rig`
-- `Convoy cannot run on the Scrapdome`
+Nine held failures: projectile valve hit, two blast/charge-entry cases, two
+deadline finishes, App unlock, dev flag, rig mass and wrong-venue admission.
 
 The Convoy-only landing search checks open floor beside the real body. Generic
 perimeter candidates hit Salt's walls. Both paths keep fixed candidate order
 and native obstacle tests. Other cars keep their existing landing recipe.
 
-Focused laptop headless checks only. Build, broad and browser checks are held
-for Voice's independent final gate. No authored assertion was edited here.
+Focused laptop headless checks only. Latest build, broad and browser checks
+await Director clearance. First owned-source db062fd5 build, existing arena
+event 13 cases and settlement 9 cases passed. No authored assertion was edited.
 
 Native damage/spec/admission/render hooks, laptop browser,
 audio, balance, save review, code review and the exact lane gate remain open.
 Held files include combat-armor/projectiles/AI, sim-contacts, Game/App/flags,
-renderer, arena screens/HUD, audio and crew-gear/signature.js.
+renderer, arena screens/HUD and audio. No unfinished peer source was received.
 Director's whole-base full checkpoint passed 348 suites.
 No release work or real player storage was touched. No merge is claimed.
 
 ## Removed
 
 The stale unanswered rule questions were replaced by the settled build rules.
+Superseded check summaries were folded into the current verdict. Measured hit
+events no longer use the old body-centre substitution.
