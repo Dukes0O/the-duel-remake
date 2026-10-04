@@ -3399,14 +3399,14 @@ tasks:
     source_commit: 0228c74
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
-    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, reviewer, browser_qa, audio_qa]
     acceptance:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
       - "Play crew callouts and raider warnings during real fights, with matching subtitles, repeat limits and pause/mute handling. Keep simulation and replay fingerprints unchanged."
       - "Tests first; private memory-only browser and recorded audio checks at High and Performance. Keep behind a new dev switch; record any human listening still due."
     note: "Kyle authorized runtime wiring on 4 October. Preserve the kept sources, receipts and the separate audio worktree."
-    sequencing: "Voice owns audio.js and sound-bank.js first; ARS-03 may prepare its new cues in private modules and receives those hooks after Voice. Crew callouts follow the first player combat action; the existing raiderWarning event plays the kept warning. Subtitles show the exact catalog text, including while muted. Presentation timers never change simulation."
+    sequencing: "Voice owns audio and combat HUD first; Arsenal receives its reviewed commit before editing those hooks. Arsenal freezes combat-weapons while Voice adds native actor attribution only. Crew callouts follow the first player combat action; the existing raiderWarning plays the kept warning. Exact subtitles remain visible while muted; presentation timers never change simulation."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
     owner: codex
