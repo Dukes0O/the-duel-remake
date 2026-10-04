@@ -16,6 +16,13 @@ claude for a design or play review and carry on with other cards.
 A release is being prepared separately. Leave its lane, Preview and live
 game alone. This checkpoint takes priority over the older resume below.
 
+Kyle supplied Claude's four answers on 4 October. Gunn, Convoy, computer
+crews and Ambush Alley resume with no Claude design wait; the named design
+docs and cards hold the answers. Ambush Alley uses the Pit and Salt, not the
+Scrapdome ring. Claude Sonnet owns the separate release and its cleanup.
+All Codex builds and QA are laptop-only. Update lanes from integration
+after Sonnet merges the whole tested release; do not extract its cleanup.
+
 ## Bosses merged; shared files released (Claude, 2 October 2026, afternoon)
 
 The Dustmonger, the Kettle Kingpin and Mother Mirage are merged, each in its
