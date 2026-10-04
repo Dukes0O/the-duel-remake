@@ -1052,6 +1052,8 @@ tasks:
     hook_requests: []
     sequencing: "Voice's reviewed hooks have transferred to Arsenal. Partial Gunn hooks were removed; Gunn stays in its own lane. Convoy and CREW-04 receive shared combat hooks after Arsenal's reviewed merge. Preserve Mirage's boss file and the released switch states."
     runtime_fixture_grant: "Mortar becomes implemented here. Replace only the existing unimplemented-purchase Mortar input with an unknown weapon ID; retain the refusal and no-write assertions and record independent review."
+    test_hooks: [tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/test-wasteland-beta.mjs]
+    preservation_test_grant: "After the whole Voice merge, exclude only the nine literal Wave Three cue IDs from the earlier Core and Wave One bank views. Keep all earlier bank, export and catalog pins and assertions. Add only arsenal-wave3 as dev to the exact beta catalog expectation; preserve every old entry and isolation check. Prove the red failures first and obtain independent review."
     dev_gate: "The released arsenal switch stays unchanged. A new arsenal-wave3 dev switch gates these four weapons, offers, player and computer use. Saved Mirage ownership remains intact while the item is unavailable; independent off/on tests precede the guard. App, Game and router option hooks belong to Arsenal before Convoy."
     reward_read_hook: "ARS-03 may update wasteland-progress.js only to retain a valid earned loadout slot from a saved warlord defeat. It must not grant weapons during normalization or rewrite saves. Independent reward-read tests and Save Guardian review are required."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
@@ -1210,6 +1212,7 @@ tasks:
     branch: codex/foot/ambush-alley
     test_commit: ea84602b
     note_commit: ea84602b
+    source_commit: 8f98d74a
     flag: ambush-alley
     claude_answer_2026_10_04: "Pay is 60 per wave plus 150 for all five, times difficulty; hold is five per wave, settled once. A wave needs every fighter down and its buggy wrecked, with no return in that wave. Use the Pit fort eight metres from the centre pile or Salt's longest straight, never the Scrapdome ring; attackers start at least 60 metres away from two directions (SCRAPDOME section 10)."
     owns: [src/arena/modes/ambush-alley.js, tools/test-arena-ambush-alley.mjs, docs/changes/ARENA-05.md]
@@ -1331,7 +1334,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/convoy-raid
-    test_commit: 02064cab
+    test_commit: 16a014a3
     note_commit: 11371c8
     source_commit: fef7b02e
     note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
