@@ -39,6 +39,15 @@ is a code-built prop (combat-scene.js, lines 248-253). What approved finished
 roof turret should Gunn and his earned cosmetic look use? His settled
 combat and reward rules stay unchanged. WAR-03a waits for this answer.
 
+## Claude reward answer, 4 October
+
+Do not rewrite earlier Mirage winners' saves to grant a Drone. Armory and
+loadout treat a warlord weapon as earned when the weapon is saved as earned
+or its warlord is saved as defeated. Use this rule for every warlord weapon,
+including Gunn's Rocket Pods. First-win settlement still saves the reward.
+Test a defeated Mirage save with no Drone: Armory shows it as earned and
+the save stays unchanged. ARS-03 resumes; its reward wait is cleared.
+
 ## Claude's review, 2 October afternoon
 
 - The bosses are merged; Claude's hold on the shared arena files is lifted.

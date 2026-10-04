@@ -64,6 +64,16 @@ ElevenLabs free-plan non-commercial and attribution terms. The runtime MP3
 is a byte-for-byte copy of the kept source; only game mixer gain is applied.
 Rebuild it with `node tools/audio/build-gatekeeper.mjs`.
 
+## Kept crew and raider voices
+
+Nine takes generated with [ElevenLabs](https://elevenlabs.io/) under the
+free-plan non-commercial and attribution terms recorded in the catalog.
+Kyle finalized these choices on 4 October 2026: Cinder/Jessica, Dune/George,
+Jax/Liam, Nell/Alice, Odessa/Matilda, Rook/Harry, Tusk/Bill, Wren/Lily,
+and Raiders/Bill. Runtime MP3s are exact copies of the kept source takes;
+only the game mixer changes gain. Rebuild them with
+`node tools/build-fight-voices.mjs`. No author endorsement is implied.
+
 ## Approved combat recordings
 
 Rebuilt by `tools/audio/build-combat.mjs`: trimmed, layered, varied, compressed,

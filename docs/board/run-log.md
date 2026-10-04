@@ -737,3 +737,20 @@ and a passing full rerun. Arsenal and Voice have updated from the complete
 released base; Convoy's owned source is committed but shared hooks remain.
 Gunn waits for Claude's finished turret asset answer. No release work here.
 
+The unchanged native crash suite passed alone with continuous tracks. Its
+host-level interruption remains unproved; no assertion or source changed.
+The quiet full rerun passed all 348 suites in 600.65 seconds on clean
+3f5deb00; build passed in 449 ms. Feature merges can resume. Arsenal needs
+four native review fixes; Voice's released-base source review is clear.
+
+AUD-18 merged on 4 October after all 349 lane suites passed in 570.11 seconds
+and the build passed in 455 ms. Independent source, laptop browser and audio
+reviews are clear. All nine kept takes and receipts stay exact; human listening
+is still unmeasured. One feature merge since the last full checkpoint.
+
+Janitor after AUD-18: unlinked and removed the merged lane and branch without
+force; deleted 160,160,659 bytes of used evidence. Public grew from
+260,014,568 to 260,395,847 bytes for the nine current voice clips and credits;
+the build grew from 264,375,843 to 264,760,521 bytes. Five unfinished feature
+lanes and the protected audio lane remain. No uncertain asset was removed.
+

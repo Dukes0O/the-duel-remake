@@ -273,7 +273,7 @@ function fireCpuUfo(duel, actor, departure) {
   burst(combat, point(duel, actor), 'ufo');
   duel.emit({cpuPickupUsed: 'ufo', opponentIndex: index, fromS: destination.fromS,
     toS: destination.toS, gainMeters: destination.gainMeters});
-  duel.emit({weaponFired: 'ufo', enemy: true, opponentIndex: index});
+  duel.emit({weaponFired: 'ufo', actor, enemy: true, opponentIndex: index});
   return true;
 }
 
@@ -441,6 +441,6 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (!enemy || arsenal) cooldowns[weapon] = arsenal
     ? WEAPONS[weapon].cooldown / 1.15 ** level
     : WEAPONS[weapon].cooldown * (1 - level * T.cooldownUpgradeDiscount);
-  duel.emit({weaponFired: weapon});
+  duel.emit({weaponFired: weapon, actor, enemy});
   return true;
 }
