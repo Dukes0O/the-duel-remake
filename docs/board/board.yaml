@@ -1043,8 +1043,10 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
-    test_commit: 0ecb47f
+    test_commit: 24cc7ec2
     source_commit: 23263d4
+    waiting_on: claude
+    design_question: "A player who beat Mirage before the Drone was built has no owned Drone; another win is not a first win and cannot grant it. How should that player claim the earned Drone without granting it during save normalization?"
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
     hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/sim-results.js, src/screen-hud.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/combat-hud.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, src/app.js, src/game.js, src/screen-router.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
@@ -1328,7 +1330,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/convoy-raid
-    test_commit: c5c3c72
+    test_commit: 02064cab
     note_commit: 11371c8
     source_commit: db062fd5
     note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
