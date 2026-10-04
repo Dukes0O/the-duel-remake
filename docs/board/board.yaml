@@ -1047,6 +1047,9 @@ tasks:
     source_commit: 2f094ee8
     preservation_test_commit: 87b436f2
     balance_test_commit: 0cd575fa
+    source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
+    balance_review: "All three complete balance reports pass, including native computer use of all four new weapons. No tuning or target changed."
+    browser_review: "Both qualities pass weapon, counter, HUD and old Mirage reward checks. Armory reads preserve saved bytes. Matched driving frame time stays unchanged; active-weapon frame cost was not measured."
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1138,6 +1141,7 @@ tasks:
     hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
     sequencing: "ARS-03 owns sim-rival, combat-ai, projectiles and balance first. CREW-04 builds its crew module and raiders while those hooks wait. ARENA-05 waits for raiders; no two cards edit a shared file at once."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
+    fixture_admission_grant: "Independent test author may request cpu-crews explicitly in the native crew fixture and add off/on controls before source admission. Keep all existing assertions; released crew-gear must not enable the new behavior implicitly."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
