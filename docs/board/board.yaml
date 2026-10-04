@@ -1046,8 +1046,8 @@ tasks:
     flag: arsenal
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
     hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/sim-results.js, src/screen-hud.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
-    hook_requests: [src/audio.js, src/sound-bank.js, tools/audio/catalog.json]
-    sequencing: "ARS-03 owns weapon, sim-rival and renderer hooks first; CREW-04 starts its module and raiders while its native combat hooks wait. Voice owns audio first. Preserve Mirage's boss file; its reward data becomes working when Decoy is implemented."
+    hook_requests: [src/audio.js, src/sound-bank.js, tools/audio/catalog.json, src/combat-hud.js]
+    sequencing: "ARS-03 owns weapon, sim-rival and renderer hooks first; CREW-04 starts its module and raiders while its native combat hooks wait. Voice owns audio and combat HUD first, then hands its reviewed commit to Arsenal. Preserve Mirage's boss file; its reward data becomes working when Decoy is implemented."
     runtime_fixture_grant: "Mortar becomes implemented here. Replace only the existing unimplemented-purchase Mortar input with an unknown weapon ID; retain the refusal and no-write assertions and record independent review."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
@@ -1353,9 +1353,10 @@ tasks:
     design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
     flag: gunn
     owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
-    hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
-    hook_requests: []
-    sequencing: "Use the settled per-boss file architecture and the Pit. Convoy owns arena mode entry; Gunn owns boss registry and tell view. Request any other hook before editing it."
+    hooks: [src/warlords/index.js, src/arena/arena-tell-view.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, tools/test-warlords.mjs]
+    hook_requests: [src/warlords.js, src/weapon-upgrades.js, src/screen-armory.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs]
+    sequencing: "Build the Gunn module, rocket hook and cosmetic reward first. Arsenal owns warlord data, weapon upgrades and Armory until handoff; Voice owns switch and Preview hooks until its reviewed handoff. Convoy owns arena mode entry. Preserve other boss files and existing rocket numbers."
+    test_grant: "Add Gunn to the built-boss list assertion when the native fight is implemented; keep every other expected boss and assertion, explain the changed list and obtain independent review."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
