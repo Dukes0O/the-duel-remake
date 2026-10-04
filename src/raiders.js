@@ -3,6 +3,7 @@ import {point, predictedPoint} from './combat-weapons.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
 // Wasteland simulation state, so ordinary races retain their original route.
@@ -110,6 +111,8 @@ export function initializeRaiders(duel) {
 }
 
 export function damageRaider(duel, raider, amount, {source = 'onFoot', owner = 'player'} = {}) {
+  if (cpuCrewActor(duel, raider))
+    return damageCpuCrewFighter(duel, raider, amount, {source, owner});
   const raids = duel.state.raids;
   if (!raids || !Number.isFinite(amount) || amount <= 0 ||
       raider.knockedDown || !raids.zones.some(zone =>

@@ -1,41 +1,73 @@
 # CREW-04: Computer crews
 
-status: waiting-on-claude
+status: partial-source
 
-## Rule needed
+## Settled Rules
 
-CREW.md section 1 says computer fighters use the same signature gear with
-the same numbers. Section 3 specifies only wrench repair and RPG ambushes.
-Must CREW-04 include active signature gear use? If so, what selects and
-triggers each item, including Jax's grapple and Odessa's turret?
+Claude answered on 4 October; the answer is recorded in CREW.md section 3.
+Repair uses the wrench only, with Odessa's two-second perk. An ambush uses
+reachable signature gear once and then RPG attacks, at most three attacks
+total. Dune uses bolts throughout; Jax and Wren use RPG only; Rook keeps his
+handling perk. These rules are implemented in the owned module.
 
-## Build choices
+## Source
 
-Use the existing crew, fighter, RPG, repair and raider contact rules.
-Each real computer car gets a stable crew choice from its own seeded stream.
-Normal races, Easy exits and arena events keep their current behavior.
+Each computer gets its own seeded crew stream. The stop controller checks
+difficulty, armor, enemies, finish distance, ambush zones and per-lap limits.
+It pulls toward the shoulder, parks, creates the native fighter, repairs or
+attacks, and resumes driving. Knockdown damage uses the native fighter health
+path; the car stays parked until a three-second respawn beside it.
 
-Pulling over uses the existing car motion solver toward a clear shoulder.
-The fighter exits only after the car stops. Stops count separately for repair
-and ambush, at most once each lap. Finish distance means the event's final
-finish, including remaining laps.
+The caller must opt in with `stepCpuCrew(..., {enabled: true})`. The default
+is disabled. Admission also requires discovered Wasteland racing and excludes
+arena events. The released crew-gear switch has no source change.
 
-The native fighter roster draws the crew's real appearance and actions.
-Temporary crew fighter entries reuse native player damage and knockdown
-contacts. They do not make another camp fire. A knockdown keeps the car
-parked through the existing three-second respawn.
-
-Ambush RPGs use the existing lock, reload, crew perks and Hard aim spread.
-Existing repair and RPG sound cues can carry the new events.
+CPU gear creates actual records for the existing gear projectile processor.
+Turrets and flamers use native sight, contacts and armor damage. Dune uses
+the eight-bolt gear's 1.5-second reload; Rook uses the 0.6-second lock and
+1.8-second reload. The three-attack ambush cap remains separate from capacity.
+Repair events reuse footRepairStarted/Interrupted/Completed cues; attacks use
+the existing RPG and crew gear cues. Exit, return and respawn audio still need
+the native audio owner. No new sound file is added.
 
 ## Checks
 
-Independent test commit: 11efc6e. Nineteen native cases give thirteen passes
-and six failures: crew assignment, repair stops and Hard ambushes are missing.
-Source has not started. Native timing, lap and knockdown checks await those
-entries. Browser, natural Hard race, thirty-race balance, lane and build
-checks remain unmeasured.
+Independent acceptance test 11efc6e is unchanged: 19 cases, 13 pass, 6 fail.
+The six positive native cases remain red because sim-rival has no caller yet.
+Existing raiders: 7/7 pass. Owned gear module checks: 16/16 pass.
+Combat replay fingerprints: 12/12 pass across four encounters, unchanged.
+
+Direct controller probes pass Odessa's 40-armor/two-second repair and the
+three-second knockdown/respawn through damageRaider. Eight seeded crew probes
+use real stepProjectiles and finish with three attacks; Dune fires only bolts,
+Jax/Wren only RPG, Nell/Tusk use one signature shot, Odessa deploys one turret
+and Cinder uses one flamer burst. These are focused source checks, not native
+race acceptance or independent review.
+
+The private laptop browser scenario is written but not run. It uses memory-only
+saves and requires actual native exits, attacks, visible fighters and a finish.
+Natural full Hard race, thirty-race balance, independent switch tests, lane
+gate, build, browser, audio and source review remain unmeasured. Not merge-ready.
+
+## Pending Hooks
+
+- sim-rival.js: call the controller behind cpu-crews, retaining native car
+  contacts, bounds and lap handling for stopped cars.
+- combat-ai.js: suppress a stopped car's own weapon fire.
+- combat-projectiles.js: enemy-owned RPG guidance and CPU fighter bodies.
+- feature-flags.js: cpu-crews dev switch; independent off/on tests first.
+- crew-gear/contacts.js and signature.js: CPU fighter/turret targeting.
+- onfoot-race.js: native vehicle sweeps against the stopped crew fighter.
+- combat-scene.js and render3d.js: CPU fighters and deployables, without
+  changing race state. audio.js: native CPU event attribution.
+- tools/combat-balance.mjs: switch-on thirty-race check.
+
+Arsenal owns its shared hooks until reviewed merge. No pending shared file
+was edited. Current integration release docs arrived through a whole-branch
+merge and were preserved as received.
 
 ## Removed
 
-None.
+The obsolete unanswered rule question and source-not-started note were
+replaced by the settled answer and current evidence. No runtime path is
+replaced or removed in this partial source commit.
