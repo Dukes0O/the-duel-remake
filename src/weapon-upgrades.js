@@ -15,6 +15,10 @@ export const ARSENAL_WEAPONS = Object.freeze({
   rockets: Object.freeze({rank: 7, wave: 2, cpuRole: 'front', warlordId: 'gunn'}),
   flamethrower: Object.freeze({rank: 9, wave: 2, cpuRole: 'front'}),
   magnet: Object.freeze({rank: 13, wave: 2, cpuRole: 'control'}),
+  mortar: Object.freeze({rank: 14, wave: 3, cpuRole: 'front'}),
+  tesla: Object.freeze({rank: 17, wave: 3, cpuRole: 'control'}),
+  decoy: Object.freeze({rank: 19, wave: 3, cpuRole: 'control', warlordId: 'mirage'}),
+  nitro: Object.freeze({rank: 21, wave: 3, cpuRole: 'front'}),
 });
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

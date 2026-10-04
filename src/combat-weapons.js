@@ -13,6 +13,10 @@ import {launchHarpoon} from './arsenal/harpoon.js';
 import {startRocketVolley} from './arsenal/rockets.js';
 import {startFlamethrower} from './arsenal/flamethrower.js';
 import {startScrapMagnet} from './arsenal/magnet.js';
+import {launchMortar} from './arsenal/mortar.js';
+import {startTeslaCharge} from './arsenal/tesla.js';
+import {deployDecoyDrone} from './arsenal/decoy-drone.js';
+import {startNitroRam} from './arsenal/nitro-ram.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 
@@ -298,7 +302,8 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   let straightShot = false;
   const rearHazard = ['oil', 'smoke', 'caltrops'].includes(weapon);
   const waveTwo = ['rockets', 'flamethrower', 'magnet'].includes(weapon);
-  if ((rearHazard || weapon === 'harpoon' || waveTwo) && !arsenal) return false;
+  const waveThree = ['mortar', 'tesla', 'decoy', 'nitro'].includes(weapon);
+  if ((rearHazard || weapon === 'harpoon' || waveTwo || waveThree) && !arsenal) return false;
   if (arsenal && carEffect(actor, 'disabled')) return false;
   if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
   let cooldowns = combat.cooldowns;
@@ -337,6 +342,14 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
     if (!startFlamethrower(duel, actor, level)) return false;
   } else if (weapon === 'magnet') {
     if (!startScrapMagnet(duel, actor)) return false;
+  } else if (weapon === 'mortar') {
+    if (!launchMortar(duel, actor, level)) return false;
+  } else if (weapon === 'tesla') {
+    if (!startTeslaCharge(duel, actor)) return false;
+  } else if (weapon === 'decoy') {
+    if (!deployDecoyDrone(duel, actor)) return false;
+  } else if (weapon === 'nitro') {
+    if (!startNitroRam(duel, actor)) return false;
   } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);

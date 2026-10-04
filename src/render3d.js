@@ -269,7 +269,7 @@ export function attachRenderer(host, app) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
       if (player) retireObject(player);
       if(rival){retireObject(rival);rival=null;}
-      for(const entry of extraOpponents)retireObject(entry.mesh);
+      for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
       player = vehicleAssets.create(carKey);
       scene.add(player); loadedCar = carKey;sceneRevision++;
@@ -277,14 +277,21 @@ export function attachRenderer(host, app) {
     }
     if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
     if (!rival) { rival = vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
-    while(extraOpponents.length>(menu?0:Math.max(0,opponents.length-1)))retireObject(extraOpponents.pop().mesh);
+    while(extraOpponents.length>(menu?0:Math.max(0,opponents.length-1))){
+      const entry=extraOpponents.pop();
+      retireObject(entry.mesh, () => entry.droneStyle?.restore());
+    }
     for(let index=1;!menu&&index<opponents.length;index++){
       const carKey=opponents[index].car||st.car,entry=extraOpponents[index-1];
-      if(entry?.carKey===carKey)continue;
-      if(entry)retireObject(entry.mesh);
+      const drone=opponents[index].drone===true;
+      if(entry?.carKey===carKey&&entry.drone===drone)continue;
+      if(entry)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       // A copy wears its original's colours so the three cars match.
       const mesh=vehicleAssets.create(carKey,{color:opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
-      scene.add(mesh);extraOpponents[index-1]={mesh,carKey};sceneRevision++;ambientShading.refresh();
+      const droneStyle=drone?styleGhostVehicle(mesh):null;
+      droneStyle?.opacity(.3);
+      if(drone)mesh.name='Arsenal Decoy Drone';
+      scene.add(mesh);extraOpponents[index-1]={mesh,carKey,drone,droneStyle};sceneRevision++;ambientShading.refresh();
     }
     // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
     // the wreck-effect pool counts real cars only and is not rebuilt for them.
@@ -665,7 +672,26 @@ export function attachRenderer(host, app) {
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
-    const release=()=>{bountyView.dispose();fuelView.dispose();rearView.dispose();firstPersonGear.dispose();combatScene.dispose();combatEffects?.dispose();vehicleAttachments.clear();effects.dispose();explosion.dispose();combatPlayerExplosion?.dispose();opponentExplosions?.forEach(effect=>effect.dispose());lighting.dispose();composer.passes.forEach(p=>p.dispose?.());composer.dispose();ghostStyle?.restore();disposeTree(scene);renderer.dispose();};
+    const release = () => {
+      bountyView.dispose();
+      fuelView.dispose();
+      rearView.dispose();
+      firstPersonGear.dispose();
+      combatScene.dispose();
+      combatEffects?.dispose();
+      vehicleAttachments.clear();
+      effects.dispose();
+      explosion.dispose();
+      combatPlayerExplosion?.dispose();
+      opponentExplosions?.forEach(effect => effect.dispose());
+      lighting.dispose();
+      composer.passes.forEach(pass => pass.dispose?.());
+      composer.dispose();
+      ghostStyle?.restore();
+      extraOpponents.forEach(entry => entry.droneStyle?.restore());
+      disposeTree(scene);
+      renderer.dispose();
+    };
     if(warmup)warmup.dispose(release);else release();
   } };
 }

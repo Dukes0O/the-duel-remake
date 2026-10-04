@@ -35,11 +35,14 @@ export function carGrip(car) {
 
 // Timed penalties share one native ceiling; repeated strips refresh, never stack.
 export function carTopSpeed(car) {
-  return Math.min(1, ...['grip', 'tether'].map(kind => {
+  const penalty = Math.min(1, ...['grip', 'tether'].map(kind => {
     const effect = carEffect(car, kind);
     return effect && Number.isFinite(effect.topSpeed) ? Math.max(0, effect.topSpeed) : 1;
   }));
+  return penalty * (carEffect(car, 'nitro')?.topSpeed || 1);
 }
+
+export function carAcceleration(car) { return carEffect(car, 'nitro')?.acceleration || 1; }
 
 export function setCarEffect(car, kind, {duration, ...data} = {}) {
   if (!car || !EFFECT_KINDS.has(kind) || !Number.isFinite(duration)) return null;

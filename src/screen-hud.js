@@ -152,7 +152,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     text('route-percent',`${Math.floor(progress*100)}%`);
     text('route-remaining',`${(Math.max(0,length-s.s)/1000).toFixed(1)} KM TO GO`);
     ui['progress-fill'].style.transform=`scaleX(${progress})`;
-    const opponents=s.opponents|| (s.rival?[s.rival]:[]);
+    const opponents=(s.opponents|| (s.rival?[s.rival]:[])).filter(opponent=>!opponent.decoy);
     if(opponents.length>1){
       const settled=s.status==='stage_result'||s.status==='complete';
       const ahead=opponents.filter(opponent=>opponent.finished||opponent.s>s.s);

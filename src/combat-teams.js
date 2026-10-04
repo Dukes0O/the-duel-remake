@@ -28,6 +28,7 @@ export function combatOwnerId(duel, actor) {
 export function combatTeam(duel, actor) {
   const participant = arenaParticipant(duel, actor);
   if (participant) return participant.team;
+  if (actor?.decoy && actor.ownerId === 'player') return 'player';
   return actor === duel.state ? 'player' : 'cpu';
 }
 

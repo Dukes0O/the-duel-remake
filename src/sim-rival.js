@@ -1,7 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect,carGrip,carTopSpeed,setCarSteering,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
@@ -114,7 +114,7 @@ export function _rival(dt, opponent = this.state.rival) {
     if (r.combatWreckTimer === 0) completeCombatRecovery(this, r);
     return;
   }
-  if (r.crushed) return;
+  if (r.crushed || r.drone) return;
   if (r.knock) {
     stepKnock(this, r, dt);
     this._staticContacts(r, false); this._boundary(r);
@@ -172,7 +172,7 @@ export function _rival(dt, opponent = this.state.rival) {
   }
   // Custom rivals spend their chosen nitro build on clear straights. The
   // legacy default rival keeps its original pace and does not gain boost.
-  r.boosting=!!s.rivalSettings&&r.boost>.05&&r.speedMph>=BOOST.minSpeedMph&&rivalSurface.boostAllowed&&r.contactCooldown<=0&&[0,40,80,120].every(ahead=>Math.abs(this.course.at(r.s+ahead).curvature)<.0012);
+  r.boosting=!(arsenalEnabled(this)&&carEffect(r,'disabled'))&&!!s.rivalSettings&&r.boost>.05&&r.speedMph>=BOOST.minSpeedMph&&rivalSurface.boostAllowed&&r.contactCooldown<=0&&[0,40,80,120].every(ahead=>Math.abs(this.course.at(r.s+ahead).curvature)<.0012);
   if(r.boosting){
     r.boost=Math.max(0,r.boost-BOOST.drainPerSec/((1+r.upgrades.nitro*.14)*car.boostCapacity)*dt);
     target*=BOOST.topSpeedMult+r.upgrades.nitro*.025+(car.nitroSpeedBonus||0);
@@ -257,12 +257,13 @@ export function _rival(dt, opponent = this.state.rival) {
     r.yieldingToPlayer = true;
     r.braking = r.speedMph > target;
   }
+  if (arsenalEnabled(this) && carEffect(r, 'nitro')) target *= carEffect(r, 'nitro').topSpeed;
   if (arsenalEnabled(this)) target = Math.min(target, car.topSpeed *
     (r.boosting ? BOOST.topSpeedMult + r.upgrades.nitro * .025 + (car.nitroSpeedBonus || 0) : 1) * carTopSpeed(r));
   const effectScale = arsenalEnabled(this) ? carTopSpeed(r) : 1;
   target = Math.max(0, target);
   if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
-  else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, (car.accel * DRIVE.accelScale * .85+(r.boosting?BOOST.accelMphPerSec*(1+r.upgrades.nitro*.15)*(car.nitroAcceleration||1):0)) * dt);
+  else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, (car.accel * DRIVE.accelScale * .85+(r.boosting?BOOST.accelMphPerSec*(1+r.upgrades.nitro*.15)*(car.nitroAcceleration||1):0)) * dt * (arsenalEnabled(this) ? carAcceleration(r) : 1));
   if (effectScale < 1) r.speedMph = Math.min(r.speedMph, car.topSpeed * effectScale *
     (r.boosting ? BOOST.topSpeedMult + r.upgrades.nitro * .025 + (car.nitroSpeedBonus || 0) : 1));
   if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));

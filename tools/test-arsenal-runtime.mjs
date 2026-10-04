@@ -220,7 +220,7 @@ for (const [weapon, minimumRank] of [['oil', 2], ['smoke', 6]]) {
       try {
         if (gate === 'race') app.duel.state.status = 'racing';
         const before = values.get(PLAYERS_KEY), oldProfile = structuredClone(app.profile), writeCount = writes.length;
-        eq(purchase(app, gate === 'implementation' ? 'mortar' : weapon).ok, false,
+        eq(purchase(app, gate === 'implementation' ? 'unknown-weapon' : weapon).ok, false,
           'actual bound action refuses inadmissible purchase');
         eq(app.profile, oldProfile, 'refusal preserves full owner profile');
         eq(values.get(PLAYERS_KEY), before, 'refusal preserves raw registry bytes');
