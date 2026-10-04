@@ -28,8 +28,17 @@ if '--paths-only' in sys.argv:
     dry.add_argument('--root', required=True)
     dry.add_argument('--cars', nargs='*', choices=SIZES.keys(), default=list(SIZES))
     dry.add_argument('--paths-only', action='store_true')
+    dry.add_argument('--gunn-turret', action='store_true')
     dry_args = dry.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else sys.argv[1:])
     dry_root = Path(dry_args.root).resolve()
+    if dry_args.gunn_turret:
+        print(json.dumps({
+            'blend': [str(dry_root/'.qa-dist/gunn-turret/gunn-turret.blend')],
+            'glb': [str(dry_root/'public/assets/models/wasteland/kits/gunn-turret.glb')],
+            'inputs': [str(dry_root/'tools/blender/gunn-turret.json')],
+            'textures': [str(dry_root/'public/assets/textures/scrap-plating.png')],
+        }))
+        raise SystemExit(0)
     print(json.dumps({
         'blend': [str(dry_root/'art-build/wasteland/kits'/f'{car}.blend')
                   for car in dry_args.cars],
@@ -42,7 +51,7 @@ if '--paths-only' in sys.argv:
 
 import bpy
 import bmesh
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 
 def weld_and_offset_shell(mesh, car, paint_rear_z=None):
@@ -612,12 +621,137 @@ def batch_component_meshes():
             siblings[0].name = f'{group.name}-painted-metal'
 
 
+def gunn_tube(parent, material, inner_material, mouth, index):
+    """Open annular front and two walls; the launch centre is not a cap."""
+    x, y, front = mouth
+    rear, sides, outer, inner = -.35, 12, .14, .105
+    verts = []
+    for z, radius in [(front, outer), (front, inner), (rear, outer), (rear, inner)]:
+        verts += [(x + math.cos(n*2*math.pi/sides)*radius,
+                   y + math.sin(n*2*math.pi/sides)*radius, z) for n in range(sides)]
+    faces, finishes = [], []
+    for n in range(sides):
+        j = (n+1) % sides
+        faces += [(n,j,sides+j,sides+n), (n,2*sides+n,2*sides+j,j),
+                  (sides+n,sides+j,3*sides+j,3*sides+n),
+                  (2*sides+n,3*sides+n,3*sides+j,2*sides+j)]
+        finishes += [0, 0, 1, 1]
+    mesh = bpy.data.meshes.new(f'gunn-tube-{index}')
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    uv = mesh.uv_layers.new(name='Painted metal')
+    for face, finish_id in zip(mesh.polygons, finishes):
+        face.material_index = finish_id
+        for loop in face.loop_indices:
+            p = mesh.vertices[mesh.loops[loop].vertex_index].co
+            uv.data[loop].uv = (.5+p.x*.3, .5+p.y*.4+p.z*.1)
+    obj = bpy.data.objects.new(f'gunn-tube-{index}', mesh)
+    bpy.context.collection.objects.link(obj)
+    finish(obj, obj.name, parent, material)
+    mesh.materials.append(inner_material)
+
+
+def build_gunn_turret(root_path):
+    layout = json.loads((root_path/'tools/blender/gunn-turret.json').read_text())
+    scratch = root_path/'.qa-dist/gunn-turret'
+    scratch.mkdir(parents=True, exist_ok=True)
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    image = bpy.data.images.load(str(root_path/'public/assets/textures/scrap-plating.png'))
+    image.scale(256, 256)
+    image.filepath_raw = str(scratch/'kit-metal-256.png')
+    image.file_format = 'PNG'
+    image.save()
+    metal = bpy.data.materials.new('Scuffed iron · painted')
+    metal.use_nodes = True
+    paint = metal.node_tree.nodes.new('ShaderNodeTexImage')
+    paint.image = image
+    bsdf = metal.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Metallic'].default_value = .58
+    bsdf.inputs['Roughness'].default_value = .76
+    metal.node_tree.links.new(paint.outputs['Color'], bsdf.inputs['Base Color'])
+    dark = metal.copy()
+    dark.name = 'Scuffed tube bore'
+    dark_bsdf = dark.node_tree.nodes.get('Principled BSDF')
+    for link in list(dark_bsdf.inputs['Base Color'].links):
+        dark.node_tree.links.remove(link)
+    dark_bsdf.inputs['Base Color'].default_value = (.022, .024, .022, 1)
+    panel_material = metal.copy()
+    panel_material.name = 'Battered heat panel'
+    panel_bsdf = panel_material.node_tree.nodes.get('Principled BSDF')
+    if 'Emission Color' in panel_bsdf.inputs:
+        panel_bsdf.inputs['Emission Color'].default_value = (0, 0, 0, 1)
+        panel_bsdf.inputs['Emission Strength'].default_value = 1
+    root = empty('gunn-turret-root')
+    base = empty('gunn-turret-base', root)
+    head = empty('gunn-turret-head', root)
+    head.location = layout['headPivot']
+    panel = empty('gunn-turret-heat-panel', head)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=.34, depth=.10, location=(0,.05,0))
+    bpy.context.object.rotation_euler.x = math.pi/2
+    finish(bpy.context.object, 'gunn-low-ring', base, metal)
+    for side in [-1, 1]:
+        plate('gunn-yoke', base, metal, (side*.36,.20,0), .075,.30,.28,
+              side*.016,.018)
+        rod('gunn-yoke-pin', base, dark, (side*.31,.35,0), (side*.42,.35,0), .07, 8)
+    plate('gunn-welded-box', head, metal, (0,0,-.1), .72,.58,.54, .014,.018)
+    for index, mouth in enumerate(layout['mouths']):
+        gunn_tube(head, metal, dark, mouth, index)
+        marker = empty(f'gunn-turret-mouth-{index}', head)
+        marker.location = mouth
+    for side in [-1, 1]:
+        rod('gunn-front-weld', head, metal, (side*.34,-.27,.17), (side*.34,.27,.17), .018, 6)
+        rod('gunn-box-weld', head, dark, (side*.33,.275,-.35), (side*.33,.275,.17), .016, 6)
+    plate('gunn-heat-surface', panel, panel_material, (0,.015,-.405), .50,.38,.035,.025,.025)
+    for n in range(4):
+        plate('gunn-heat-fin', panel, panel_material, ((n-1.5)*.105,.015,-.44),
+              .045,.28,.045,.006,.008)
+    # Join only this new asset's surfaces, preserving its named animation nodes.
+    for parent in [base, head, panel]:
+        meshes = [child for child in parent.children if child.type == 'MESH']
+        for mesh in meshes:
+            layers = mesh.data.uv_layers
+            if layers.active:
+                painted = layers.active
+                for layer in list(layers):
+                    if layer != painted:
+                        layers.remove(layer)
+                painted.name = 'Painted metal'
+                painted.active_render = True
+        if len(meshes) > 1:
+            bpy.ops.object.select_all(action='DESELECT')
+            for mesh in meshes:
+                mesh.select_set(True)
+            bpy.context.view_layer.objects.active = meshes[0]
+            bpy.ops.object.join()
+            meshes[0].name = f'{parent.name}-metal'
+    # Author in game-local metres, then convert the whole hierarchy to Blender
+    # coordinates. glTF export restores +Y up at every named pivot and mouth.
+    axis = Matrix.Rotation(math.pi/2, 4, 'X')
+    inverse = axis.inverted()
+    for obj in bpy.context.scene.objects:
+        obj.matrix_basis = axis @ obj.matrix_basis @ inverse
+        if obj.type == 'MESH':
+            obj.data.transform(axis)
+    bpy.ops.wm.save_as_mainfile(filepath=str(scratch/'gunn-turret.blend'))
+    bpy.ops.object.select_all(action='SELECT')
+    out = root_path/'public/assets/models/wasteland/kits/gunn-turret.glb'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=str(out), export_format='GLB',
+                              use_selection=True, export_apply=True, export_yup=True)
+    print(f'GUNN_TURRET {out}')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', required=True)
     parser.add_argument('--cars', nargs='*', choices=SIZES.keys(), default=list(SIZES))
+    parser.add_argument('--gunn-turret', action='store_true')
     args = parser.parse_args(__import__('sys').argv[__import__('sys').argv.index('--')+1:])
     root = Path(args.root)
+    if args.gunn_turret:
+        build_gunn_turret(root)
+        return
     fit_rows=json.loads(subprocess.check_output(['node','tools/audit-armor-kit-fit.mjs'],
                                                  cwd=root,text=True))
     fits={row['car']:row for row in fit_rows}

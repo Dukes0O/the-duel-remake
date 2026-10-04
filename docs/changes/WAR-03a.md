@@ -17,13 +17,22 @@ and Claude's look approval are still required before merge.
   Armory labels it as looks only. Settlement uses the existing one-write path.
 - Gunn has a dev switch. The registry checks entry. The territory panel also
   checks availability and accepts an explicit flag context.
+- The isolated --gunn-turret recipe prepares one shared model, never the nine
+  approved kit exports. Named base, head, panel and four hollow mouths use
+  existing kit metal and wear. One JSON input defines mouths and mount tops.
+- Native origins and visible yaw/pitch share that numeric layout. Binding
+  caches one asset, clones heat materials and hides cosmetic plating. A red
+  line follows the tell. The GLB has not yet been generated.
 
 ## Checks
 
 - Independent turret tests before source: seven cases, 23 executed checks,
   one pass and six red. All nine approved kit hashes pass unchanged. Five
   cases stop at the missing gunn-turret.glb. A separate native elevated Gunn
-  barrage launches horizontally instead of down toward the lower player car.
+  barrage originally launched horizontally instead of toward the lower car.
+  Prepared source now passes that focused native case: seven checks include
+  real lower-car contact and the unchanged ten-armor Rocket Pods damage.
+  JS and Blender recipe syntax pass without running Blender.
 - Authored checks use the actual GLB hierarchy and ray-tested hollow mouths,
   the existing 12,000-triangle kit ceiling and local resources. File size is
   reported against the existing soft target, not made a new merge blocker.
@@ -35,7 +44,7 @@ and Claude's look approval are still required before merge.
 - No Blender, build, browser, audio, balance or broad tier ran for these tests.
   The isolated --gunn-turret recipe build must still be checked after the
   heavy slot is free. The nine old kit pins catch any unwanted regeneration.
-- Independent Gunn tests: 14 cases, 143 checks pass after the author's valid
+- Before the mouth change: 14 cases, 143 independent checks passed after the author's valid
   Pit-floor correction. The previous 0/55 offsets crossed a real outer wall.
   The author kept move assertions and added a native clear-line witness.
 - Focused switch, Preview, Gunn, registry, settlement and metadata run:
@@ -46,15 +55,18 @@ and Claude's look approval are still required before merge.
   of these changed assertions is still required.
 - Lane tier, build, balance, browser, audio, save review and Claude play review
   remain required after final assets and the current integration base land.
+- The old parallel-ray assertion is unchanged. Its independent correction to
+  convergent mouth trajectories is approved and queued. No full art pass is
+  claimed before model generation and the current lane gates.
 
 ## Remaining
 
-- tools/blender/armor-kits.py lines 475-482 makes only a turret mount ring and
-  trusses. src/combat-scene.js lines 248-253 makes Odessa's primitive turret.
-  Neither is a finished approved roof turret asset. Do not ship either as
-  Gunn's completed look. Bind the approved asset on every car once supplied.
-- Add the tracked turret, red aiming line, red overheat glow and rising whine.
-  Native Rocket Pods cues exist; boss cues need the audio hook handoff.
+- Generate gunn-turret.glb once the heavy slot is free. Run the independent
+  geometry, native mouths, binding, heat and disposal checks. Nine kit hashes
+  must remain exact. Review one sheet of side, three-quarter and top views
+  on Stuttgart and Falcone; at most three rounds. No finished art is claimed.
+- Rising whine needs audio.js and sound-bank.js handoff after Arsenal's fix.
+  Native Rocket Pods fire/flight/hit cues already exist.
 - Forward injected flags through yard/router for memory-only UI checks.
 - Existing Rocket Pods flight considers cars, not the exited fighter. Direct
   fighter damage and aim need a settled rule before adding that behavior.

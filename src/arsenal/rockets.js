@@ -54,12 +54,14 @@ export function rocketArrivalSeconds(dx, dz, vx = 0, vz = 0) {
   const arrival = Math.min(...roots.filter(time => Number.isFinite(time) && time > 0));
   return Number.isFinite(arrival) ? arrival : Math.sqrt(c) / ROCKET_RULES.speed;
 }
-export function launchAimedRocket(duel, owner, aim, {launchedAt = duel.state.stageTimeSec, level = 0} = {}) {
+export function launchAimedRocket(duel, owner, aim, {launchedAt = duel.state.stageTimeSec,
+  level = 0, origin = null} = {}) {
   const combat = duel.state.combat;
   if (!combat || !owner || outOfPlay(duel, owner) ||
       !Number.isFinite(aim?.x) || !Number.isFinite(aim?.z) ||
+      origin && ![origin.x, origin.y, origin.z].every(Number.isFinite) ||
       combat.projectiles.length + plannedShots(combat) >= COMBAT_TUNING.projectileLimit) return null;
-  const at = point(duel, owner), carry = velocity(owner, at);
+  const carPoint = point(duel, owner), at = origin || carPoint, carry = velocity(owner, carPoint);
   const arrival = rocketArrivalSeconds(aim.x - at.x, aim.z - at.z, -carry.x, -carry.z);
   const ax = aim.x - at.x - carry.x * arrival, az = aim.z - at.z - carry.z * arrival;
   const distance = Math.hypot(ax, az);
@@ -68,9 +70,10 @@ export function launchAimedRocket(duel, owner, aim, {launchedAt = duel.state.sta
   const shot = {id: ++combat.serial, kind: 'rocket-pod',
     ownerId: combatOwnerId(duel, owner), attackerId: targetIdentity(duel, owner),
     enemy: owner !== duel.state, level,
-    x: at.x + dx * COMBAT_TUNING.projectileSpawnOffset, y: at.y,
-    z: at.z + dz * COMBAT_TUNING.projectileSpawnOffset,
-    vx: dx * ROCKET_RULES.speed + carry.x, vy: 0,
+    x: at.x + (origin ? 0 : dx * COMBAT_TUNING.projectileSpawnOffset), y: at.y,
+    z: at.z + (origin ? 0 : dz * COMBAT_TUNING.projectileSpawnOffset),
+    vx: dx * ROCKET_RULES.speed + carry.x,
+    vy: Number.isFinite(aim.y) && arrival > EPS ? (aim.y - at.y) / arrival : 0,
     vz: dz * ROCKET_RULES.speed + carry.z,
     travelled: 0, age: 0, launchedAt};
   combat.projectiles.push(shot);
