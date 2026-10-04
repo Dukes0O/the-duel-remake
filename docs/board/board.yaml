@@ -1147,6 +1147,8 @@ tasks:
     controller_handoff: "After Arsenal merges, Crew receives sim-rival and combat-ai for native stopped-crew movement and vehicle-fire suppression. Keep knock, wreck, lap, boundary and recovery paths. Convoy does not need these files; Crew's projectile, contact, flags and presentation hooks wait for Convoy's whole merge."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
     fixture_admission_grant: "Independent test author may request cpu-crews explicitly in the native crew fixture and add off/on controls before source admission. Keep all existing assertions; released crew-gear must not enable the new behavior implicitly."
+    car_fighter_handoff: "After Convoy's whole merge, Crew owns contacts.js, combat-projectiles.js and arsenal/rockets.js for real fighter interception and the existing car splash rule. Move the existing car helper implementation into contacts.js and reuse it; preserve car attribution, protection, falloff, recovery and replay rules. Independent native Rocket Pods tests precede source; Gunn receives the whole reviewed Crew merge before its final on-foot fight checks."
+    car_fighter_test_hook: tools/test-rocket-fighter-contacts.mjs
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
@@ -1392,6 +1394,7 @@ tasks:
     test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
     trajectory_test_grant: "Independent author adds the convergence witness; the source worker replaces only the contradicted parallel-ray assertion after that proof. Four real mouths must reach Claude's one locked world point. Keep tell, five-shot count, lock, timing and player-turn checks; review the changed assertion before merge."
     yard_hook_grant: "After the whole Arsenal merge, Gunn may forward injected flags through screen-router.js and screen-yard-home.js to the territory panel, including its Armory view. Tests first preserve released yard behavior. Convoy still owns central contacts, projectiles, entry, renderer and audio first; no unfinished peer hooks transfer."
+    fighter_hook_sequence: "Crew finishes the generic Rocket Pods fighter contact slice after Convoy merges, using the already settled car splash rule. Gunn receives that whole reviewed merge, then tests its real aimed rockets against fighters. Its existing car target policy stays unchanged; art review need not reserve the shared files."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, art_critic]
     acceptance:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
