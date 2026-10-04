@@ -754,3 +754,20 @@ force; deleted 160,160,659 bytes of used evidence. Public grew from
 the build grew from 264,375,843 to 264,760,521 bytes. Five unfinished feature
 lanes and the protected audio lane remain. No uncertain asset was removed.
 
+ARS-03 reads saved warlord defeats as earned rewards without granting them in
+saves. Save, source and both-quality browser reviews pass; all three complete
+balance reports pass. Final native audio found duplicate and generic launch
+cues; independent red tests precede a narrow routing fix. Convoy's real-contact
+fix and Crew's enemy-voice ownership fix pass independent review.
+
+The scheduled quiet integration full tier passed all 349 suites in 732.30 s
+on clean c7f8150d on 4 October. No feature merge followed that checkpoint.
+Gunn's settled turret recipe and native mouth flight are prepared; generation,
+the comparison sheet, final gates and Claude's look approval remain.
+
+Arsenal's final native audio passes in both qualities on clean 68a08785.
+The close Tesla pulse measures 7.48 dB and 6.80 dB above the engine; delivered
+true peak is -1.77 dBTP with no clipping. The pulse-only gain fix and spatial
+test correction passed independent review; targets and earlier cues stay exact.
+Gunn now owns the quiet turret export slot. Arsenal's synced final gates follow.
+
