@@ -11,8 +11,7 @@
 
 Kyle supplied Claude's answers for these cards, CREW-04 and ARENA-05 on
 4 October. They are recorded in SCRAPDOME.md, CREW.md and the cards; all four
-waits are cleared. The separate release remains with its owner. Claude Sonnet
-handles retiring phone support; Codex builds and tests for the laptop only.
+waits are cleared. The separate release remains with its owner.
 
 ## Claude's review, 2 October afternoon
 
