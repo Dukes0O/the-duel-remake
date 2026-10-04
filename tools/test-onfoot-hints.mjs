@@ -54,11 +54,11 @@ function mockHud(duel) {
       classList: {toggle() {}}, setAttribute() {}, firstChild: {textContent: ''},
       lastChild: {textContent: ''}, innerHTML: ''};
   }});
-  const app = {duel, player: {name: 'QA'}, cameraMode: 'chase'};
+  const app = {duel, player: {name: 'QA'}, cameraMode: 'chase', helpVisible: true};
   const update = createHudScreen({app, ui, text: (id, value) => {texts[id] = value;},
     time: String, clamp: value => Math.max(0, Math.min(1, value)), credits: String,
     routeMap: {update() {}}});
-  return {ui, texts, update};
+  return {ui, texts, update, app};
 }
 function replay(mode, flag, readHints) {
   const duel = race(mode, flag), samples = [];
@@ -183,6 +183,21 @@ check('the race HUD provides a hint element and uses the public hint text', () =
   const duel = race(), hud = mockHud(duel); hud.update(duel.state);
   assert.equal(hud.ui['onfoot-hint'].hidden, false);
   assert.equal(hud.texts['onfoot-hint'], hint(duel));
+});
+check('the controls never show by themselves: the help is hidden until the H key asks for it', () => {
+  const duel = race(), hud = mockHud(duel);
+  hud.app.helpVisible = false;
+  hud.update(duel.state);
+  assert.equal(hud.ui['controls-help'].hidden, true, 'hidden by default');
+  assert.equal(hud.ui['onfoot-hint'].hidden, true, 'no exit hint in the middle of the screen');
+  hud.app.helpVisible = true;
+  hud.update(duel.state);
+  assert.equal(hud.ui['controls-help'].hidden, false, 'shown on request');
+  assert.ok(hud.ui['controls-help-rows'].innerHTML.includes('HOLD F'), 'the list includes stepping out of the car');
+  hud.app.helpVisible = true;
+  duel.state.paused = true;
+  hud.update(duel.state);
+  assert.equal(hud.ui['controls-help'].hidden, true, 'the pause screen has its own controls line');
 });
 check('HUD hides and clears stale availability when ordinary racing replaces Wasteland', () => {
   const duel = race(), hud = mockHud(duel); hud.update(duel.state);
