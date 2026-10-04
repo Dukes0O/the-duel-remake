@@ -87,6 +87,14 @@ is off. Source forwards that requested boolean beside Arsenal; policies,
 targets and fixtures stay exact. Unchanged balance 34/34 and native 99/552 pass.
 Its one-frame native probe proves purchase/equipment/CPU slots, not full balance.
 
+Native audio routing tests before the fix: `--native-routing-only` is 2/10.
+Real player and CPU Mortar actions each dispatch fire twice. Tesla, Drone and
+Nitro each dispatch their named action plus weapon.default.fire. Voice and
+subtitle ownership and simulation purity pass before each routing failure;
+earlier native Crossbow and Harpoon controls pass. The real generic router is
+kept active. Existing 31 audio assertions are unchanged; decoder checks were
+not rerun during the exclusive full gate. No playback, source or build edits.
+
 ## Removed
 
 The old Mortar unimplemented-purchase fixture input is replaced; refusal

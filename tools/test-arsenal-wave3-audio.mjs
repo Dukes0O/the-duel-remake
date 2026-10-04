@@ -13,12 +13,13 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {readFightSubtitle, FIGHT_VOICE_LINES} from '../src/fight-voices.js';
 
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
+const nativeRoutingOnly = process.argv.includes('--native-routing-only');
 let passed = 0;
 const failures = [];
 function check(name, run) {
   try {run(); passed++;} catch (error) {failures.push(name + ': ' + error.message);}
 }
-for (const recipe of ARSENAL_WAVE_THREE_RECIPES) {
+if (!nativeRoutingOnly) for (const recipe of ARSENAL_WAVE_THREE_RECIPES) {
   check(recipe.cue + ' uses its own gated recorded variants', () => {
     const cue = SOUND_BANK[recipe.cue];
     assert.ok(cue, 'missing bank cue');
@@ -62,7 +63,7 @@ for (const recipe of ARSENAL_WAVE_THREE_RECIPES) {
     assert.equal(hashes.size, 3);
   });
 }
-for (const id of ['mortar', 'tesla', 'decoy', 'nitro']) {
+if (!nativeRoutingOnly) for (const id of ['mortar', 'tesla', 'decoy', 'nitro']) {
   check(id + ' native enemy action preserves the player crew announcement', () => {
     const flags = createFeatureFlags({storage: null, qa: false, search: '',
       overrides: {arsenal: true, 'arsenal-wave3': true, 'fight-voices': true}});
@@ -99,6 +100,56 @@ for (const id of ['mortar', 'tesla', 'decoy', 'nitro']) {
     off(); audio.setPaused(true);
   });
 }
+// Keep the generic production router live: stubbing _weaponCue hides a second
+// recorded launch or default fallback after the weapon's own native cue.
+const launchCues = {mortar: 'weapon.mortar.fire', tesla: 'weapon.tesla.charge',
+  decoy: 'weapon.decoy.deploy', nitro: 'weapon.nitro.start',
+  crossbow: 'weapon.crossbow.fire', harpoon: 'weapon.harpoon.fire'};
+for (const id of ['mortar', 'tesla', 'decoy', 'nitro', 'crossbow', 'harpoon'])
+  for (const enemy of ['mortar', 'tesla', 'decoy', 'nitro'].includes(id) ? [false, true] : [false]) {
+    check(`${id} native ${enemy ? 'CPU' : 'player'} action routes one named launch without generic replay`, () => {
+      const flags = createFeatureFlags({storage: null, qa: false, search: '',
+        overrides: {arsenal: true, 'arsenal-wave3': true, 'fight-voices': true}});
+      const duel = new Duel({seed: 202603, featureFlags: flags});
+      duel.startCampaign({mode: 'wasteland', discoveredGate: true, startStage: 0,
+        car: 'falcone_f42', crewId: 'rook', cpuDifficulty: 'hard', arsenalRank: 21,
+        weaponLoadout: [id, ...['crossbow', 'star', 'bomb', 'ufo'].filter(other => other !== id)].slice(0, 4)});
+      const state = duel.state, audio = new EngineAudio({flags}), calls = [];
+      Object.assign(state, {status: 'racing', countdown: 0, paused: false,
+        invulnerableSec: 0, s: 500, lateral: 0, speedMph: 0, headingError: 0});
+      Object.assign(state.rival, {s: enemy && id === 'mortar' ? 450 : 510,
+        lateral: 0, speedMph: 0, headingError: 0, weaponLoadout: [id]});
+      audio.context = {state: 'running', currentTime: 10};
+      audio.muted = false; audio.buses = {voice: {}, weapons: {}};
+      audio.cueBuffers['crew.rook.callout'] = {duration: 4};
+      audio._syncMixer = audio._volume = () => {};
+      audio._spatialOutput = () => ({level: {}, disconnect() {}});
+      audio._playCue = cue => {calls.push(cue); return {stop() {}};};
+      assert.equal(audio._weaponCue, EngineAudio.prototype._weaponCue,
+        'the generic weapon router is the real production method');
+      const off = duel.onChange((s, event) => {
+        const before = structuredClone(s);
+        audio.event(event, s, duel.course);
+        assert.deepEqual(s, before, 'real generic and named audio routes preserve simulation state');
+      });
+      try {
+        assert.equal(enemy ? fireWeapon(duel, id, true, state.rival) : duel.fireWeapon(id), true,
+          'the actual native owner produces its real weapon action');
+        assert.deepEqual(calls.filter(cue => cue.startsWith('crew.')),
+          enemy ? [] : ['crew.rook.callout'], 'CPU actions are silent; the real player announces exactly once');
+        assert.equal(readFightSubtitle(state), enemy ? null : FIGHT_VOICE_LINES['crew.rook.callout'].text,
+          'subtitle ownership follows the real native actor');
+        audio.updateFightVoices(state);
+        assert.equal(calls.filter(cue => cue.startsWith('crew.')).length, enemy ? 0 : 1,
+          'updating the presenter cannot duplicate the owned announcement');
+        const actions = calls.filter(cue => cue.startsWith('weapon.') && !/\.(?:flight|whistle|loop)$/.test(cue));
+        assert.deepEqual(actions, [launchCues[id]],
+          'one native action needs one named launch cue, with no duplicate or weapon.default.fire fallback');
+      } finally {off(); audio.setPaused(true);}
+    });
+  }
+
 for (const failure of failures) console.error('FAIL ' + failure);
 if (failures.length) process.exitCode = 1;
-console.log('Arsenal wave-three recorded audio: ' + passed + '/' + (passed + failures.length) + ' checks passed.');
+console.log((nativeRoutingOnly ? 'Arsenal wave-three native routing: ' : 'Arsenal wave-three recorded audio: ') +
+  passed + '/' + (passed + failures.length) + ' checks passed.');
