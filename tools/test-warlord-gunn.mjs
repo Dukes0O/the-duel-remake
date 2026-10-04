@@ -166,14 +166,19 @@ test('phase two shortens the tell and fires five rockets at one committed predic
   const dx = target.x - first.x, dz = target.z - first.z;
   ok(Math.abs(first.vx * dz - first.vz * dx) > 1,
     'the locked point leads the moving player rather than aiming at their current position');
+  const lock = {...f.boss.gunnBarrage.aim};
   f.duel.state.headingError += Math.PI / 2;
   f.advance(1.1);
   const shots = f.launches.filter(p => p.observedAt >= f.tells[0].at);
   equal(shots.length, 5, 'phase two launches five rockets');
-  const rays = shots.map(p => ({x: p.x, z: p.z, vx: p.vx, vz: p.vz}));
-  for (const ray of rays.slice(1))
-    ok(Math.abs(ray.vx * first.vz - ray.vz * first.vx) < 1e-6,
-      'turning after lock does not retarget later rockets from the stationary turret');
+  for (const shot of shots) {
+    const dx = lock.x - shot.x, dy = lock.y - shot.y, dz = lock.z - shot.z;
+    const speedSquared = shot.vx ** 2 + shot.vy ** 2 + shot.vz ** 2;
+    const arrival = (dx * shot.vx + dy * shot.vy + dz * shot.vz) / speedSquared;
+    ok(arrival > 0 && Math.hypot(shot.x + shot.vx * arrival - lock.x,
+      shot.y + shot.vy * arrival - lock.y, shot.z + shot.vz * arrival - lock.z) < 1e-5,
+    'turning after lock leaves every tube trajectory aimed at the same locked world point');
+  }
 });
 
 for (const range of [24, 91]) test(`barrage rejects ${range} metres even after cooldown`, () => {

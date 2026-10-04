@@ -55,17 +55,18 @@ and Claude's look approval are still required before merge.
   of these changed assertions is still required.
 - Lane tier, build, balance, browser, audio, save review and Claude play review
   remain required after final assets and the current integration base land.
-- The old parallel-ray assertion is unchanged. Its independent correction to
-  convergent mouth trajectories is approved and queued. No full art pass is
-  claimed before model generation and the current lane gates.
+- Director grant f5a25c7a/7584ba44 replaces only the obsolete parallel-ray
+  assertion. Five distinct-mouth trajectories must reach the captured
+  tell-end world point in 3D after the player turns. Other move checks stay
+  exact. The focused Gunn suite passes 14 cases and 144 checks (one more
+  check because the first trajectory is now checked too). Review is pending.
 - Added a separate native five-shot witness: 29 checks pass for real JSON
   mouth origins, one fixed predictive world point after the player turns,
   the full tell, shot count and 0.25-second intervals. Together with the lower
-  car flight case, the focused run passes two cases and 36 checks. The old
-  phase-two case still fails its parallel-ray assertion on 685877e1: distinct
-  mouths converge, so their directions cannot be parallel. Existing assertions
-  were not edited. The Director assigns that correction to the source owner.
-  Missing-GLB geometry, binding and lifecycle checks remain unproved.
+  car flight case, the focused run passes two cases and 36 checks. The author
+  kept every art-suite assertion exact. Missing-GLB geometry, binding and
+  lifecycle checks remain unproved. Whole integration metadata 7584ba44 is
+  merged; no Blender, build, browser, audio or broad tier ran this checkpoint.
 
 ## Remaining
 
@@ -76,10 +77,13 @@ and Claude's look approval are still required before merge.
 - Rising whine needs audio.js and sound-bank.js handoff after Arsenal's fix.
   Native Rocket Pods fire/flight/hit cues already exist.
 - Forward injected flags through yard/router for memory-only UI checks.
-- Existing Rocket Pods flight considers cars, not the exited fighter. Direct
-  fighter damage and aim need a settled rule before adding that behavior.
+- Rocket Pods sweep and blast only cars. Their early dispatch bypasses the
+  fighter contact path. CREW.md already settles splash at up to 60 health
+  with car falloff and knockdown inside half radius. A reviewed shared hook
+  is needed; Gunn's existing car target policy remains unchanged.
 
 ## Removed
 
 The unanswered move questions were replaced by four settled answers.
+The obsolete one-muzzle parallel-ray assertion is replaced, not retained.
 No assets were replaced. No existing Rocket Pods behavior was removed.
