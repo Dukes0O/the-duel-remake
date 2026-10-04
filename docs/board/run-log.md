@@ -748,3 +748,9 @@ and the build passed in 455 ms. Independent source, laptop browser and audio
 reviews are clear. All nine kept takes and receipts stay exact; human listening
 is still unmeasured. One feature merge since the last full checkpoint.
 
+Janitor after AUD-18: unlinked and removed the merged lane and branch without
+force; deleted 160,160,659 bytes of used evidence. Public grew from
+260,014,568 to 260,395,847 bytes for the nine current voice clips and credits;
+the build grew from 264,375,843 to 264,760,521 bytes. Five unfinished feature
+lanes and the protected audio lane remain. No uncertain asset was removed.
+
