@@ -4,7 +4,7 @@ import {Duel} from '../src/game.js';
 import {stepCombat} from '../src/combat.js';
 
 function field(discoveredGate) {
-  const duel = new Duel({seed: 1989});
+  const duel = new Duel({seed: 1989, featureFlags: {arsenal: false}});
   duel.startCampaign({mode: 'wasteland', startStage: 0, discoveredGate: discoveredGate,
     cpuDifficulty: 'hard', opponentCount: 3});
   const state = duel.state;
@@ -68,7 +68,7 @@ test('an infinite scripted timer still suppresses the post-gate CPU', () => {
 
 test('a post-gate Hard rival lines up a rear ram while the old rival yields', () => {
   const sample = discoveredGate => {
-    const duel = new Duel({seed: 1989});
+    const duel = new Duel({seed: 1989, featureFlags: {arsenal: false}});
     duel.startCampaign({mode: 'wasteland', startStage: 0, discoveredGate: discoveredGate,
       cpuDifficulty: 'hard'});
     const state = duel.state;

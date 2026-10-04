@@ -22,7 +22,7 @@ const pose = actor => Object.fromEntries(['s', 'prevS', 'lateral', 'prevLateral'
   'routeId', 'routeLap'].map(key => [key, actor[key]]));
 
 function field(discovered = true, difficulty = 'medium') {
-  const duel = new Duel({seed: 1989});
+  const duel = new Duel({seed: 1989, featureFlags: {arsenal: false}});
   duel.startCampaign({mode: 'wasteland', seed: 1989, car: 'falcone_f42',
     cpuDifficulty: difficulty, opponentCount: 3, discoveredGate: discovered});
   const state = duel.state, combat = state.combat;

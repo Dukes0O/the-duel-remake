@@ -15,7 +15,8 @@ import {warlordIntroScreen} from '../src/screen-arena.js';
 
 // SCRAPDOME 2: real Course and native Duel paths. No substitute working Pit.
 const DT = 1 / 120;
-const flags = () => createFeatureFlags({storage: null, qa: true, search: '?flags=salt-flats'});
+// Arsenal (released 4 October 2026) is pinned off: the Pit controls keep the earlier ring traces.
+const flags = () => createFeatureFlags({storage: null, qa: true, search: '?flags=salt-flats', overrides: {arsenal: false}});
 const hash = value => createHash('sha256').update(value).digest('hex');
 const near = (a, b, tolerance = .001) => assert.ok(Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
 function course() {

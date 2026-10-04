@@ -24,7 +24,8 @@ function hint(duel) {
   return hints.onFootHint(duel);
 }
 function race(mode = 'wasteland', discoveredGate = true) {
-  const duel = new Duel({seed: 1989});
+  // Arsenal and crew gear (released 4 October 2026) are pinned off: the recorded fingerprints are the earlier rules.
+  const duel = new Duel({seed: 1989, featureFlags: {arsenal: false, 'crew-gear': false}});
   duel.startCampaign({mode, seed: 1989, car: 'falcone_f42', startStage: 0, discoveredGate});
   Object.assign(duel.state, {status: 'racing', countdown: 0, s: 500, prevS: 500,
     lateral: 0, prevLateral: 0, traffic: [], opponents: []});
