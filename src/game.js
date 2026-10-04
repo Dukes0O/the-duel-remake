@@ -8,7 +8,7 @@ import * as simResults from './sim-results.js';
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
 import {normalizeCarLoadout} from './car-loadout.js';
 import {WEAPONS,createCombat,fireWeapon,stepCombat,supportsCombat,clearArsenalState,initializeArsenalCombat} from './combat.js';
-import {arsenalEnabled} from './combat-weapons.js';
+import {arsenalEnabled, arsenalWaveThreeEnabled} from './combat-weapons.js';
 import {clearSmokeHistory} from './arsenal/smoke.js';
 import {implementedArsenalWeapons} from './weapon-upgrades.js';
 import {initializeCombatArmor} from './combat-armor.js';
@@ -186,7 +186,8 @@ export class Duel {
     else delete this.state.arsenalRank;
     this.state.weaponLoadout=this.state.mode==='wasteland'&&
       wastelandRulesActive(this.state)?
-      normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,...implementedArsenalWeapons()] : WEAPON_IDS):null;
+      normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,
+        ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
@@ -339,7 +340,8 @@ export class Duel {
     if (arsenalEnabled(this)) s.arsenalRank = arsenalRank;
     else delete s.arsenalRank;
     s.weaponLoadout = normalizeCarLoadout(weaponLoadout,
-      arsenalEnabled(this) ? [...WEAPON_IDS,...implementedArsenalWeapons()] : WEAPON_IDS);
+      arsenalEnabled(this) ? [...WEAPON_IDS,
+        ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
     s.crewId = Object.hasOwn(CREW, crewId) ? crewId : 'rook';
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;

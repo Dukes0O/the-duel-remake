@@ -4,7 +4,7 @@ const IDS = ['weapon.mortar.fire', 'weapon.mortar.whistle', 'weapon.mortar.hit',
   'weapon.decoy.burst', 'weapon.nitro.start', 'weapon.nitro.loop'];
 
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=arsenal,arsenal-wave3');
+  await context.navigate('/tools/menu-check.html?flags=arsenal,arsenal-wave3,fight-voices');
   await context.waitFor(`!!window.__qaApp &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,
   'memory-only Arsenal audio page', 30_000);
@@ -107,6 +107,7 @@ export async function run(context) {
     tick(2.5, -40);
     if (state.opponents.some(actor => actor.drone)) throw Error('Real Crossbow did not burst Drone');
     if (!duel.fireWeapon('nitro')) throw Error('Native Nitro action failed');
+    app._updateAudio();
     const nitroVoice = app.audio.arsenalFieldVoices.size;
     if (!nitroVoice) throw Error('Nitro loop has no owned voice');
     tick(3.01);

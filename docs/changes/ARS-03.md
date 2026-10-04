@@ -1,11 +1,12 @@
 # ARS-03: Arsenal wave three
 
-4 October 2026. Work in progress; not ready to merge.
+4 October 2026. Source built; final reviews and gates pending.
 
 ## Decisions Before Code
 
 Use the native weapon trigger, cooldowns, damage, targeting and car effects.
-The arsenal switch and discovered career gate remain the entry rules.
+Both arsenal switches and the discovered career gate are entry rules.
+Wave three has its own dev switch. Earlier Arsenal weapons stay unchanged.
 
 - Mortar commits the predicted landing point when fired. Its 3 m radius
   red ring stays visible for the full 1.6 s flight. Damage falls linearly
@@ -27,27 +28,29 @@ Mirage's existing boss file is reused through its generic decoy contract.
 
 ## Checks
 
-- Independent native acceptance: 33 cases, 197 checks pass. Includes real
-  Crossbow and RPG flights into Drones, reward guards and CPU decisions.
+- Independent native acceptance: 51 cases, 304 checks pass. Includes real
+  Crossbow/RPG flights, reward guards, CPU decisions, both gates and levels.
 - Existing Arsenal runtime: 209 cases, 2,625 checks pass.
 - Laptop-only browser: 16 captures in high and performance modes pass;
   canvas pixels, renderer purity, native Oil counter, zero console issues.
-  Drone's opponent HUD marker is pending the shared HUD hook transfer.
+  Drone's opponent HUD marker is excluded; Mirage's existing labels remain.
 - Balance: 30 of 30 main Hard races finish; 12 wins. Naturally seeded CPU
   loadouts use all four weapons. Zero unattributed new weapon cues.
   One new defensive supplement stalled against scenery; legal brake/reverse
   recovery now finishes it in 554.49 s, with a loss. Historical policies
   are unchanged. The complete sample must be rerun on the final gated base.
-- Nine new sound recipes produce 27 cached CC0 recordings. Sound-bank,
-  catalog and owned loop hooks await Voice's reviewed source transfer.
-  All nine recording checks pass after a Drone transient compression fix.
-- Pending: separate dev gate, source and save reviews, final audio and
-  browser/frame checks, lane gate and build on the final base.
+- Nine sound recipes produce 27 cached CC0 recordings; 31 audio checks pass,
+  including native CPU/player Voice ownership for all four new actions.
+- Browser audio: 27 decodes; all nine native cues; owned loops end and pause.
+  Contrast is 6.56 to 9.95 dB over the engine; overlapping mix peak is 0.8202.
+- Pending: source/save/audio reviews, final full balance and frame checks,
+  lane gate and build on the final integration base.
 
 The existing unimplemented purchase denial changes only its Mortar input to
 an unknown weapon ID. Its refusal and no-write assertions are unchanged.
 
 ## Removed
 
-The old Mortar unimplemented-purchase fixture input is replaced. No game
-asset or assertion is removed.
+The old Mortar unimplemented-purchase fixture input is replaced; refusal
+assertions stay unchanged. Temporary Gunn admission/reward, dev/Preview and
+look-only Armory handoffs are excluded. Its separate lane is retained.

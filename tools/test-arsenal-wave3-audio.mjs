@@ -6,6 +6,11 @@ import {loopSeam} from './audio/measurements.mjs';
 import {sha256} from './audio/sourcing.mjs';
 import {ARSENAL_WAVE_THREE_RECIPES} from './build-arsenal-wave3-audio.mjs';
 import {measureArsenalWaveTwoCue} from './build-arsenal-wave2-audio.mjs';
+import {EngineAudio} from '../src/audio.js';
+import {Duel} from '../src/game.js';
+import {fireWeapon} from '../src/combat-weapons.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {readFightSubtitle, FIGHT_VOICE_LINES} from '../src/fight-voices.js';
 
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
 let passed = 0;
@@ -55,6 +60,43 @@ for (const recipe of ARSENAL_WAVE_THREE_RECIPES) {
       hashes.add(sha256(bytes));
     }
     assert.equal(hashes.size, 3);
+  });
+}
+for (const id of ['mortar', 'tesla', 'decoy', 'nitro']) {
+  check(id + ' native enemy action preserves the player crew announcement', () => {
+    const flags = createFeatureFlags({storage: null, qa: false, search: '',
+      overrides: {arsenal: true, 'arsenal-wave3': true, 'fight-voices': true}});
+    const duel = new Duel({seed: 202603, featureFlags: flags});
+    duel.startCampaign({mode: 'wasteland', discoveredGate: true, startStage: 0,
+      car: 'falcone_f42', cpuDifficulty: 'hard', arsenalRank: 21,
+      weaponLoadout: ['mortar', 'tesla', 'decoy', 'nitro']});
+    const state = duel.state, audio = new EngineAudio({flags}), calls = [];
+    Object.assign(state, {status: 'racing', countdown: 0, paused: false,
+      invulnerableSec: 0, crewId: 'rook', s: 500, lateral: 0, speedMph: 0});
+    Object.assign(state.rival, {s: id === 'tesla' ? 510 : 450,
+      lateral: 0, speedMph: 0, headingError: 0, weaponLoadout: [id]});
+    audio.context = {state: 'running', currentTime: 10};
+    audio.muted = false;
+    audio.buses = {voice: {}, weapons: {}};
+    audio.cueBuffers['crew.rook.callout'] = {duration: 4};
+    audio._syncMixer = audio._weaponCue = audio._volume = () => {};
+    audio._spatialOutput = () => ({level: {}, disconnect() {}});
+    audio._playCue = cue => {calls.push(cue); return {stop() {}};};
+    const off = duel.onChange((s, event) => {
+      const before = structuredClone(s);
+      audio.event(event, s, duel.course);
+      assert.deepEqual(s, before, 'audio events do not change native race state');
+    });
+    assert.equal(fireWeapon(duel, id, true, state.rival), true, 'real CPU producer fires');
+    assert.equal(calls.filter(cue => cue.startsWith('crew.')).length, 0);
+    assert.equal(readFightSubtitle(state), null);
+    state.rival.s = id === 'mortar' ? 560 : 510;
+    assert.equal(duel.fireWeapon(id), true, 'real player producer fires');
+    assert.deepEqual(calls.filter(cue => cue.startsWith('crew.')), ['crew.rook.callout']);
+    assert.equal(readFightSubtitle(state), FIGHT_VOICE_LINES['crew.rook.callout'].text);
+    audio.updateFightVoices(state);
+    assert.equal(calls.filter(cue => cue.startsWith('crew.')).length, 1);
+    off(); audio.setPaused(true);
   });
 }
 for (const failure of failures) console.error('FAIL ' + failure);

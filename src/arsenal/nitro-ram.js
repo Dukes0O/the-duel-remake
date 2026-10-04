@@ -2,6 +2,7 @@ import {point} from '../combat-weapons.js';
 import {hostile, outOfPlay} from '../combat-teams.js';
 import {targetIdentity, actorForTarget} from './targeting.js';
 import {setCarEffect, carEffect} from './car-effects.js';
+import {COMBAT_TUNING} from '../wasteland-tuning.js';
 
 export const NITRO_RULES = Object.freeze({duration: 3, topSpeed: 1.35,
   acceleration: 1.35, ramMultiplier: 3, cpuRange: 40});
@@ -17,12 +18,13 @@ export function shouldUseNitroRam(duel, owner) {
       Math.abs(across) <= duel._vehicleSpec(actor).halfWidth + duel._vehicleSpec(owner).halfWidth;
   });
 }
-export function startNitroRam(duel, owner) {
+export function startNitroRam(duel, owner, level = 0) {
   const combat = duel.state.combat;
   if (!combat || outOfPlay(duel, owner) || carEffect(owner, 'nitro')) return null;
   const effect = setCarEffect(owner, 'nitro', {duration: NITRO_RULES.duration,
     topSpeed: NITRO_RULES.topSpeed, acceleration: NITRO_RULES.acceleration,
-    ramMultiplier: NITRO_RULES.ramMultiplier});
+    ramMultiplier: NITRO_RULES.ramMultiplier *
+      (1 + Math.max(0, Math.min(3, level)) * COMBAT_TUNING.armor.upgradePerLevel)});
   const run = {ownerId: targetIdentity(duel, owner), effect, age: 0};
   (combat.nitroRuns ||= []).push(run);
   const at = point(duel, owner);

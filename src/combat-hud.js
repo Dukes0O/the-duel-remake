@@ -309,7 +309,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     }
     for (let index = 0; index < markers.length; index++) {
       const marker = markers[index], opponent = opponents[index];
-      if (!opponent) {marker.hidden = true; continue;}
+      if (!opponent || opponent.drone) {marker.hidden = true; continue;}
       const projection = projected.find(item => item.index === index);
       const exact = projection?.visible === true;
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course,

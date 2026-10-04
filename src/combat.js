@@ -2,7 +2,7 @@ import {stepPickups} from './combat-pickups.js';
 import {stepCombatAI} from './combat-ai.js';
 import {stepProjectiles, tickImpactCooldowns} from './combat-projectiles.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
-import {arsenalEnabled, hazardsActive, stepCpuWeaponCooldowns, clearCpuWeaponCooldowns} from './combat-weapons.js';
+import {arsenalEnabled, arsenalWaveThreeEnabled, hazardsActive, stepCpuWeaponCooldowns, clearCpuWeaponCooldowns} from './combat-weapons.js';
 import {clearSmokeHistory} from './arsenal/smoke.js';
 import {stepTether} from './arsenal/harpoon.js';
 import {stepRocketVolleys} from './arsenal/rockets.js';
@@ -24,7 +24,8 @@ export function initializeArsenalCombat(duel) {
   if (!arsenalEnabled(duel)) return;
   duel.state.opponents.forEach((actor, index) => {
     actor.weaponLoadout = cpuArsenalLoadout(duel.state.arsenalRank || 1,
-      duel.state.cpuDifficulty, {rng: makeRng(duel.seed ^ 0x415253 ^ (index + 1)*0x51ed)});
+      duel.state.cpuDifficulty, {arsenalWave3Enabled: arsenalWaveThreeEnabled(duel),
+        rng: makeRng(duel.seed ^ 0x415253 ^ (index + 1)*0x51ed)});
   });
 }
 
@@ -67,7 +68,7 @@ export function stepCombat(duel, dt) {
 
   tickImpactCooldowns(duel, dt);
   if (arsenalEnabled(duel)) stepScrapMagnets(duel, dt);
-  if (arsenalEnabled(duel)) stepDecoyDrones(duel);
+  if (arsenalWaveThreeEnabled(duel)) stepDecoyDrones(duel);
   stepPickups(duel, dt);
 
   for (const weapon of Object.keys(combat.cooldowns)) {
@@ -90,6 +91,8 @@ export function stepCombat(duel, dt) {
   if (arsenalEnabled(duel)) {
     stepRocketVolleys(duel, dt);
     stepFlamethrowers(duel, dt);
+  }
+  if (arsenalWaveThreeEnabled(duel)) {
     stepMortars(duel, dt);
     stepTeslaCharges(duel, dt);
   }
@@ -99,6 +102,6 @@ export function stepCombat(duel, dt) {
       if (actor) {stepTether(duel, actor, dt); stepCarEffects(actor, dt);}
     }
     stepHazards(duel, dt);
-    if (arsenalEnabled(duel)) stepNitroRuns(duel, dt);
+    if (arsenalWaveThreeEnabled(duel)) stepNitroRuns(duel, dt);
   }
 }

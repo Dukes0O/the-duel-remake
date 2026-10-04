@@ -24,12 +24,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
-const BALANCE_FLAGS = ['arsenal'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
+const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected arsenal.');
+    throw Error('Unsupported flags; expected arsenal or arsenal-wave3.');
   return [...new Set(flags)];
 }
 
@@ -302,8 +302,9 @@ export function run(policy, cpuDifficulty, seed = 1989,
       ['wave-two', 'wave-two-close'].includes(policy) &&
         (!flags.includes('arsenal') || arsenalRank < 13))
     throw Error('Wave-two policy needs the arsenal switch and earned rank 13.');
-  if (policy.startsWith('wave-three') && (!flags.includes('arsenal') || arsenalRank < 21))
-    throw Error('Wave-three policy needs the arsenal switch and earned rank 21.');
+  if (policy.startsWith('wave-three') && (!flags.includes('arsenal') ||
+      !flags.includes('arsenal-wave3') || arsenalRank < 21))
+    throw Error('Wave-three policy needs both Arsenal switches and earned rank 21.');
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const previousCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
   let app;
@@ -592,7 +593,8 @@ function main(args) {
   const { flags, check, verbose, baselineOnly, waveTwoOnly, waveThreeOnly, probe } = parseArgs(args);
   const options = { flags };
   if (waveThreeOnly) {
-    if (!flags.includes('arsenal')) throw Error('Wave-three report needs --flags arsenal.');
+    if (!flags.includes('arsenal') || !flags.includes('arsenal-wave3'))
+      throw Error('Wave-three report needs --flags arsenal,arsenal-wave3.');
     const started = performance.now();
     const races = baselineSeeds.map(seed => run('wave-three', 'hard', seed, {flags, arsenalRank: 21}));
     const supplements = ['wave-three-close', 'wave-three-decoy'].flatMap(policy =>

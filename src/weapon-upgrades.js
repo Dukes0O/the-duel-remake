@@ -53,8 +53,10 @@ export function getProfileWeapons(profile) {
     unlocked: [...new Set([...legacy.unlocked, ...nested.unlocked])], levels};
 }
 
-export function implementedArsenalWeapons({implemented = Object.keys(ARSENAL_WEAPONS)} = {}) {
-  return Object.keys(ARSENAL_WEAPONS).filter(id => Array.isArray(implemented) && implemented.includes(id));
+export function implementedArsenalWeapons({implemented = Object.keys(ARSENAL_WEAPONS),
+  arsenalWave3Enabled = false} = {}) {
+  return Object.keys(ARSENAL_WEAPONS).filter(id => Array.isArray(implemented) &&
+    implemented.includes(id) && (ARSENAL_WEAPONS[id].wave !== 3 || arsenalWave3Enabled === true));
 }
 
 export function arsenalCareerAvailable(profile, {wastelandEnabled = false, arsenalEnabled = false} = {}) {
@@ -135,10 +137,11 @@ export function purchaseWeaponUpgrade(profile, id, options = {}) {
     credits: wastelandCareer ? profile.credits : profile.credits - cost}, cost};
 }
 
-export function cpuArsenalLoadout(rank, difficulty, {implemented, rng = makeRng(1989)} = {}) {
+export function cpuArsenalLoadout(rank, difficulty, {implemented, arsenalWave3Enabled = false,
+  rng = makeRng(1989)} = {}) {
   const safeRank = Number.isSafeInteger(rank) ? Math.max(1, Math.min(30, rank)) : 1;
   const maximumWave = {easy: 1, medium: 2, hard: 3}[difficulty] ?? 1;
-  const candidates = [...WEAPON_IDS, ...implementedArsenalWeapons({implemented}).filter(id =>
+  const candidates = [...WEAPON_IDS, ...implementedArsenalWeapons({implemented, arsenalWave3Enabled}).filter(id =>
     ARSENAL_WEAPONS[id].rank <= safeRank && ARSENAL_WEAPONS[id].wave <= maximumWave)];
   // Fisher-Yates uses the supplied src/rng generator; native scheduling owns
   // when this function is called and how that generator is seeded per car.

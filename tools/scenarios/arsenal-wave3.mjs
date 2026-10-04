@@ -58,7 +58,7 @@ export async function run(context) {
   for(const quality of ['high','performance']) {
     await context.command('Emulation.setDeviceMetricsOverride',
       {width:1280,height:800,deviceScaleFactor:1,mobile:false});
-    await context.navigate('/tools/menu-check.html?flags=arsenal');
+  await context.navigate('/tools/menu-check.html?flags=arsenal,arsenal-wave3,fight-voices');
     await context.waitFor(`!!window.__qaApp&&!!window.__render&&
       document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'&&
       !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`,

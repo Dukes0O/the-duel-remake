@@ -252,6 +252,7 @@ export class App {
       vz: Math.cos(heading) * speed,
     };
     this.audio.update(state, {
+      course,
       listener,
       tunnel: tunnelMix,
       looseSurface: !!course?.def.offroad || !!course?.def.arena,
@@ -967,7 +968,8 @@ export class App {
   }
   _arsenalOptions(){
     return {wastelandEnabled:this.wastelandUnlocked(),
-      arsenalEnabled:this._switches().enabled('arsenal')===true};
+      arsenalEnabled:this._switches().enabled('arsenal')===true,
+      arsenalWave3Enabled:this._switches().enabled('arsenal-wave3')===true};
   }
   purchaseArsenalWeapon(id){
     if(!this._wastelandShopAccess())return {ok:false,reason:'Return to the Armory to buy weapons.'};

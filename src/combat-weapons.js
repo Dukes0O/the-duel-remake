@@ -47,6 +47,9 @@ export function arsenalEnabled(duel) {
   return duel.state.mode === 'wasteland' && duel.state.wastelandGateDiscovered === true &&
     duel.featureFlags?.enabled('arsenal') === true;
 }
+export function arsenalWaveThreeEnabled(duel) {
+  return arsenalEnabled(duel) && duel.featureFlags?.enabled('arsenal-wave3') === true;
+}
 
 // Road hazards and car effects also run in warlord fights, whose moves use
 // them before the arsenal is released (docs/ARSENAL.md, Switch).
@@ -304,6 +307,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   const waveTwo = ['rockets', 'flamethrower', 'magnet'].includes(weapon);
   const waveThree = ['mortar', 'tesla', 'decoy', 'nitro'].includes(weapon);
   if ((rearHazard || weapon === 'harpoon' || waveTwo || waveThree) && !arsenal) return false;
+  if (waveThree && !arsenalWaveThreeEnabled(duel)) return false;
   if (arsenal && carEffect(actor, 'disabled')) return false;
   if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
   let cooldowns = combat.cooldowns;
@@ -349,7 +353,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   } else if (weapon === 'decoy') {
     if (!deployDecoyDrone(duel, actor)) return false;
   } else if (weapon === 'nitro') {
-    if (!startNitroRam(duel, actor)) return false;
+    if (!startNitroRam(duel, actor, level)) return false;
   } else if (weapon === 'ufo') {
     if (enemy) return fireCpuUfo(duel, actor, at);
     const destination = ufoDestination(duel);
