@@ -1,5 +1,23 @@
 # Wasteland play-test inbox
 
+## Released 4 October 2026: try these in the main game
+
+Everything Kyle played in the Preview is live (build 26.10.04 19:58 UTC). Close
+any open game tab and reopen it.
+
+- Press **H** in a race to show or hide the controls. Nothing sits on the
+  screen by default.
+- Four more warlords on the territory map once their territory is full: the
+  Dustmonger, Mother Mirage, the Kettle Kingpin and the Twin Vultures (in the
+  Pit). Each earns its reward on the first win, except Mother Mirage, whose
+  Decoy Drone is not built yet.
+- Fuel Run (rank 6), Bounty Hunt (rank 9) and the Salt Flats (rank 9) in the
+  Scrapdome yard.
+- New car weapons in the Armory by rank, and eight crew members with signature
+  gear, including boarding an enemy car.
+- Please say if any fight feels too hard or too easy, and whether the Twin
+  Vultures should keep the Dusthawk Rally look.
+
 ## Claude decisions settled, 4 October
 
 - WAR-03a: Set Gunn's barrage trigger and when predictive aim locks, his
