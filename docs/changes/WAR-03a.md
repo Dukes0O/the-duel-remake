@@ -58,6 +58,14 @@ and Claude's look approval are still required before merge.
 - The old parallel-ray assertion is unchanged. Its independent correction to
   convergent mouth trajectories is approved and queued. No full art pass is
   claimed before model generation and the current lane gates.
+- Added a separate native five-shot witness: 29 checks pass for real JSON
+  mouth origins, one fixed predictive world point after the player turns,
+  the full tell, shot count and 0.25-second intervals. Together with the lower
+  car flight case, the focused run passes two cases and 36 checks. The old
+  phase-two case still fails its parallel-ray assertion on 685877e1: distinct
+  mouths converge, so their directions cannot be parallel. Existing assertions
+  were not edited. The Director assigns that correction to the source owner.
+  Missing-GLB geometry, binding and lifecycle checks remain unproved.
 
 ## Remaining
 

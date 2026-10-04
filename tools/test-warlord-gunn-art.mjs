@@ -277,6 +277,64 @@ test('a native Gunn barrage launches at a real fitted tube mouth and retains its
   } finally {stop(); p.kits.dispose();}
 });
 
+test('five native Gunn mouth trajectories converge on the unchanged tell-end world lock', () => {
+  const {duel, boss, participant} = nativeGunn();
+  const layout = JSON.parse(readFileSync(new URL('./blender/gunn-turret.json', import.meta.url), 'utf8'));
+  duel.state.arena.warlordPhase = 2; duel.state.speedMph = 20;
+  const shots = [], tells = [];
+  const stop = duel.onChange((_state, event) => {
+    if (event.arenaTell?.id === boss.arenaId) tells.push({...event.arenaTell, at: duel.state.stageTimeSec});
+    if (event.arsenalCue !== 'weapon.rockets.fire' || event.actor !== boss) return;
+    const lock = structuredClone(boss.gunnBarrage.aim), at = worldPose(duel, boss);
+    const body = new THREE.Vector3(at.x, duel.course.groundAt(boss.s, boss.lateral).y + (boss.airHeight || 0), at.z);
+    const mount = new THREE.Vector3(...layout.mounts[boss.car]).applyAxisAngle(new THREE.Vector3(0, 1, 0), at.heading).add(body);
+    const pivot = mount.clone().add(new THREE.Vector3(...layout.headPivot));
+    const yaw = Math.atan2(lock.x - mount.x, lock.z - mount.z);
+    const pitch = -Math.atan2(lock.y - pivot.y, Math.hypot(lock.x - mount.x, lock.z - mount.z));
+    const mouth = new THREE.Vector3(...layout.mouths[shots.length % layout.mouths.length])
+      .applyAxisAngle(new THREE.Vector3(1, 0, 0), pitch)
+      .applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw).add(pivot);
+    shots.push({shot: {...event.projectile}, lock, mouth});
+  });
+  const advance = seconds => {
+    for (let n = 0; n < Math.round(seconds / DT); n++) {
+      duel.state.stageTimeSec += DT; thinkBrain(duel, participant, boss, DT); stepCombat(duel, DT);
+    }
+  };
+  try {
+    advance(5.1);
+    equal(tells.length, 1, 'the native phase-two cooldown starts one tracked tell');
+    ok(Math.abs(tells[0].seconds - .4) < EPS, 'Hard phase two retains its full shortened tell');
+    equal(shots.length, 0, 'the mouth layout cannot fire before the tell ends');
+    advance(.45);
+    equal(shots.length, 1, 'only the first native rocket has fired when the tell locks');
+    const lock = structuredClone(shots[0].lock), target = worldPose(duel, duel.state);
+    ok(Math.hypot(lock.x - target.x, lock.z - target.z) > 1,
+      'the native tell commits a predictive arrival point, not the moving player current position');
+    duel.state.headingError += Math.PI / 2;
+    advance(1.1);
+    equal(shots.length, 5, 'the native phase-two barrage fires five actual rockets');
+    for (let n = 0; n < shots.length; n++) {
+      const {shot, mouth} = shots[n];
+      equal(shots[n].lock, lock, 'turning after the tell cannot change any later rocket world lock');
+      const origin = new THREE.Vector3(shot.x, shot.y, shot.z);
+      ok(origin.distanceTo(mouth) < EPS, `rocket ${n + 1} starts at its authored world-space tube mouth`);
+      const velocity = new THREE.Vector3(shot.vx, shot.vy, shot.vz);
+      const aim = new THREE.Vector3(lock.x, lock.y, lock.z), displacement = aim.clone().sub(origin);
+      const arrival = displacement.dot(velocity) / velocity.lengthSq();
+      ok(arrival > 0 && origin.clone().addScaledVector(velocity, arrival).distanceTo(aim) < EPS,
+        `rocket ${n + 1} reaches the same locked world point from its own mouth`);
+      if (n > 0) ok(Math.abs(shot.launchedAt - shots[n - 1].shot.launchedAt - .25) < DT,
+        'converging mouth trajectories retain the native 0.25-second launch interval');
+    }
+    equal(new Set(shots.map(({mouth}) => mouth.toArray().map(value => value.toFixed(5)).join(','))).size, 4,
+      'five rockets use all four real mouth origins, then reuse the first');
+    const first = shots[0].shot, second = shots[1].shot;
+    ok(Math.abs(second.vx * first.vz - second.vz * first.vx) > 1e-6,
+      'separate tube mouths require converging directions, not the obsolete parallel-ray assertion');
+  } finally {stop();}
+});
+
 test('real Gunn barrage flight aims down to a lower car and delivers native Rocket Pods damage', () => {
   const {duel, boss, participant} = nativeGunn();
   boss.airHeight = boss.prevAirHeight = 2;
