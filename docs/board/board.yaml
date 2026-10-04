@@ -1051,7 +1051,8 @@ tasks:
     balance_review: "All three complete balance reports pass, including native computer use of all four new weapons. No tuning or target changed."
     browser_review: "Both qualities pass weapon, counter, HUD and old Mirage reward checks. Armory reads preserve saved bytes. Matched driving frame time stays unchanged; active-weapon frame cost was not measured."
     audio_routing_test_commit: e19beaa9
-    audio_review: "Eight native regressions exposed duplicate and fallback cues. The four-ID routing fix passes all ten routing cases and all audio checks; independent source review clears it. Final mixed audio and lane gates remain."
+    audio_contrast_test_commit: d7852758
+    audio_review: "Routing and lifecycle checks pass in both qualities. The close Tesla pulse is below the unchanged audibility target; its spatial regression is red. A pulse-only gain fix and final mixed audio review precede the lane gates."
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1371,8 +1372,9 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
     test_commit: fdda1811
-    source_commit: 685877e1
-    art_test_verdict: "Nine approved kit hashes and the original Gunn fight tests pass unchanged. The new tests fail for the missing finished turret and level rocket flight above a lower target; runtime geometry and lifecycle checks await the asset."
+    source_commit: d068bffb
+    art_test_verdict: "Native fight and five-shot convergence checks pass. Independent review clears replacing the old parallel-ray assertion with arrival at one locked point. Approved kit hashes remain exact; finished geometry and lifecycle checks await the turret asset."
+    trajectory_review_commit: d068bffb
     note_commit: bcda842
     note: "Claude's turret recipe is settled; resume the fight and art. Use the plain mount during building, but the finished look needs Claude's approval before merge."
     claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."
