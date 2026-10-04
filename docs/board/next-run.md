@@ -1,4 +1,20 @@
-# Next run: phase 3, a Wasteland worth finding (updated 30 September 2026)
+# Next run: phase 3, a Wasteland worth finding (updated 4 October 2026)
+
+## Director resume, 4 October 2026
+
+ARS-02, CREW-03 and BALANCE-W2-OFF-RETIRE are merged. AUD-17 is complete:
+Kyle's nine kept voice choices are final. AUD-18 now owns playing those
+lines in fights with subtitles; the old engine-spike label is superseded.
+
+Start WAR-03a (Gunn, in the Pit), then ARENA-07 (Convoy Raid). Continue
+with WAR-03d when Convoy merges, ARS-03, CREW-04, ARENA-05 and AUD-18.
+Run independent cards in separate lanes. Shared hooks have one owner at
+a time; CREW-04 precedes ARENA-05 where they both need raiders.js.
+Merge when the current gates and required reviews pass. Set waiting_on:
+claude for a design or play review and carry on with other cards.
+
+A release is being prepared separately. Leave its lane, Preview and live
+game alone. This checkpoint takes priority over the older resume below.
 
 ## Bosses merged; shared files released (Claude, 2 October 2026, afternoon)
 
@@ -12,10 +28,9 @@ boss, and shared files still never name a warlord.
 
 - Remove the three replaced Codex boss lanes (dustmonger, kettle-kingpin,
   mother-mirage) with the janitor.
-- ARS-01, ARENA-04, CREW-02, WAR-03c and ARENA-PIT merged. Kyle first sees
-  the Pit in the Twin Vultures fight. The disjoint Balance cleanup is under
-  lane gate; its audio catalog waits for AUD-17's sound-bank hook. ARS-02 and
-  CREW-03 have started in their owned new modules while that hook is held.
+- ARS-01, ARENA-04, CREW-02, WAR-03c, ARENA-PIT, ARS-02, CREW-03 and
+  BALANCE-W2-OFF-RETIRE are merged. Kyle first sees the Pit in the Twin
+  Vultures fight. The shared hooks are free for the remaining cards.
 - Then the rest of phase 3: ARS-02 then WAR-03a (Gunn, in the Pit);
   CREW-03 then ARENA-07 (Convoy Raid) then WAR-03d (Tollkeeper); WAR-03c
   (Twin Vultures, in the Pit); CREW-04 and ARENA-05 (Ambush Alley); ARS-03;
@@ -223,9 +238,11 @@ adaptation work before Kyle picks. At most three rounds per art card per run.
 
 ### Audio, alongside
 
-AUD-17: wire Kyle's kept voice lines (in `audio-src/voices/`, cataloged) into
-crew callouts and raider warnings, with subtitles. Raiders use Bill; Rook's
-line is Harry. Then AUD-15, AUD-16 and AUD-18 in SPEC 0.9 order. The arcade
+AUD-17 recording and selection are done. AUD-18 wires Kyle's nine kept
+voice lines (in `audio-src/voices/`, cataloged) into crew callouts and raider
+warnings, with subtitles. Raiders use Bill; Rook's line is Harry. The old
+SPEC 0.9 engine-spike label is superseded by Kyle's 4 October instruction.
+Other audio work follows the board. The arcade
 rule for car weapons stands: bright transient above the engine band, tonal
 signature, a flight sound that travels with the projectile, a hit-confirm, and
 judged over the engine at full throttle. ElevenLabs: up to 1,500 credits per run
