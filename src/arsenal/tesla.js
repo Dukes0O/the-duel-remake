@@ -54,10 +54,10 @@ export function stepTeslaCharges(duel, dt) {
         if (!burstDrone(duel, actor)) actor.armor = Math.max(0, actor.armor - 1);
         continue;
       }
+      endScrapMagnet(duel, actor);
       if (consumeStar(duel, actor)) continue;
       setCarEffect(actor, 'disabled', {duration: TESLA_RULES.disabledSec});
       actor.boosting = false;
-      endScrapMagnet(duel, actor);
     }
     const pulse = {...at, ownerId: charge.ownerId, radius: TESLA_RULES.radius,
       age: 0, lifetime: TESLA_RULES.pulseSec};

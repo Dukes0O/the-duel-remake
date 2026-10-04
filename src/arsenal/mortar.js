@@ -24,7 +24,14 @@ function target(duel, owner, computer = false) {
       : (actor.completedLaps || 0) * duel.course.length + actor.s;
     return score(b) - score(a);
   });
-  else candidates.sort((a, b) => ahead(duel, owner, a) - ahead(duel, owner, b));
+  else {
+    const at = point(duel, owner);
+    const distance = actor => {
+      const to = point(duel, actor);
+      return Math.hypot(to.x - at.x, to.z - at.z);
+    };
+    candidates.sort((a, b) => distance(a) - distance(b));
+  }
   const chosen = computer ? candidates[0] : candidates.find(actor => ahead(duel, owner, actor) > 0);
   if (!chosen) return null;
   const gap = ahead(duel, owner, chosen);

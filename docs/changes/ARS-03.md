@@ -25,6 +25,9 @@ Wave three has its own dev switch. Earlier Arsenal weapons stay unchanged.
 Transient two-hit history stays outside serialized race and save data.
 Wave-three computer decisions use the ranges in docs/ARSENAL.md.
 Mirage's existing boss file is reused through its generic decoy contract.
+Review fixes: Tesla ends Magnet even when Star prevents disable. HUD uses the
+native effect/recharge rule. Player Mortar compares ground distance among
+enemies ahead; CPU leader policy and authored tests stay exact.
 
 ## Checks
 
@@ -47,28 +50,28 @@ Mirage's existing boss file is reused through its generic decoy contract.
   lane gate and build on the final integration base.
 
 Independent reviewer regressions on `23263d4`, before fixes:
-`node tools/test-arsenal-wave3.mjs` runs 55 cases and 338 checks. All original
-51 cases pass unchanged; four added cases fail for the reported behavior:
-- `Star does not protect its Scrap Magnet from Tesla`: the native enemy
-  Magnet remains active after its real Star is consumed (1 instead of 0).
-- `every live Tesla slot is disabled in the native HUD`: all four slots stay
-  enabled at the pulse and just before expiry. Native Crossbow and boost
-  denial, their recovery at expiry and visible READY restoration already pass.
-- `the native level-three Tesla ring shows two seconds of its actual recharge`:
-  the ring shows 2 degrees instead of 61 for the real 18 / 1.15^3 cooldown.
-  Ordinary starter recharge and its HUD progress pass unchanged.
-- `the actual player Mortar commits the nearest ahead enemy across the ground`:
-  it picks the enemy 1 m ahead and 10 m sideways instead of the nearer enemy
-  7 m straight ahead. Both are inside the legal 20 m half-width. Existing
-  computer leader and range checks remain green.
+55 cases reach 338 checks: the original 51 pass; four new cases fail.
+- A real Star leaves its owner's Magnet active after Tesla (1 instead of 0).
+- All four HUD slots stay enabled at Tesla pulse and just before expiry.
+  Native Crossbow/boost denial and recovery already pass.
+- Level-three Tesla's two-second ring shows 2 degrees instead of 61 for
+  the real 18 / 1.15^3 recharge. Ordinary starter timing already passes.
+- Player Mortar picks a car 1 m ahead, 10 m aside over a nearer car 7 m ahead;
+  both are inside the legal 20 m half-width. CPU leader/range checks pass.
+The production HUD uses an in-file semantic DOM fixture; effects, triggers,
+recharge and driving remain native, including Tesla's first 120 Hz expiry tick.
+No dependency, helper file, existing assertion or replay pin changed.
 
-HUD tests call production createCombatHud with a small in-file semantic DOM
-fixture. Only unavailable element/style methods are substituted; effects,
-weapon triggers, upgraded cooldowns and driving are native. No dependency or
-helper file was added. Tesla's creation step ages its effect by one 120 Hz tick;
-the expiry checks include that tick rather than substituting an effect.
-No existing assertions, source or replay fingerprints were changed. Focused
-laptop headless tests only; no build, browser or broad gate in this follow-up.
+Source fixes on test base `24cc7ec2`: Tesla cancels Magnet before consuming
+Star; HUD displays DISABLED until the real effect expires and uses native
+Arsenal recharge; player Mortar sorts ground distance. CPU leader stays exact.
+Focused checks pass: wave three 55 cases/340 checks (two previously unreached
+checks now run); HUD 8; Voice 26 cases/358 checks; audio/native Voice 31;
+Arsenal runtime 209 cases/2,625 checks; combat replays 12; build 568 ms.
+Authored tests stayed unchanged. No new browser or broad tier was run.
+
+Save Guardian: earlier saved Mirage wins lack Drone; `firstWin: false` rematches
+never grant it. Other save checks pass. Claude decides; normalization grants none.
 
 Release-base merge checks (4 October, parents `07d6b45` and `3eb740d`):
 - Native wave three: 51 cases, 304 checks; Voice: 26 cases, 358 checks;
@@ -77,7 +80,7 @@ Release-base merge checks (4 October, parents `07d6b45` and `3eb740d`):
 - Private port 23901, memory-only desktop scenario: 16 high/performance
   captures, zero warnings or errors. Evidence: `.evidence/2026-10-04/ARS-03-release-base/`.
 - Full/lane tiers and final balance remain for the Director's serial gate.
-  Tesla HUD disable/recharge display and shield-plus-Magnet review are pending.
+  The later source fix clears the four authored native regressions above.
 
 The existing unimplemented purchase denial changes only its Mortar input to
 an unknown weapon ID. Its refusal and no-write assertions are unchanged.
@@ -92,3 +95,5 @@ with nine entries. Explicit dev isolation fixtures and gameplay checks remain.
 The old Mortar unimplemented-purchase fixture input is replaced; refusal
 assertions stay unchanged. Temporary Gunn admission/reward, dev/Preview and
 look-only Armory handoffs are excluded. Its separate lane is retained.
+The obsolete forward-gap Mortar ordering and Arsenal HUD linear recharge
+calculation are replaced; ordinary starter recharge retains its original rule.
