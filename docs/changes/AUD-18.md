@@ -67,6 +67,18 @@ Status: independent lane/build gate pending. Lane: codex/audio/fight-voices.
   lane head. Earlier 107/1/240 run is not a pass.
 - Recipe: node tools/build-fight-voices.mjs copies and hash-checks all nine takes.
   Native scenario: tools/scenarios/fight-voices.mjs, High and Performance.
+- Core and Wave One preservation filters each fail only because the nine new
+  voice cues enter the earlier bank hashes. Core before: 14 checks / 1 failure
+  (7f295724 vs cc6d14d4); Wave One before: 36 checks / 1 failure
+  (2e9e0207 vs b63edbe5).
+  Independent parsed comparison with released 3eb740d proves all 101 earlier
+  cues, six other exports and the whole catalog exact. Exclude only the nine
+  literal kept cue IDs; keep the original bank, export and catalog hash pins,
+  every assertion and the protected gatekeeper entry unchanged.
+  Focused correction checks pass: Core 14/14, Wave One 36/36, Voice 26 cases /
+  358 checks, sound bank/mixer and gatekeeper 8/8. Ordinary replay pins stay
+  exact. Whole current integration metadata and both test hooks are merged;
+  the next independent broad lane/build gate is still due.
 - Kyle's listening check remains a separate human gate; no listening approval
   is inferred from decoded bytes or waveform measurements.
 
