@@ -1,6 +1,6 @@
 # ARENA-05: Ambush Alley
 
-status: tests-first; source not started
+status: partial mode source; native entry and shared hooks pending
 
 ## Settled rules
 
@@ -15,37 +15,62 @@ the midpoint of its longest low-curvature run. No world geometry changed.
 Pay is 60 per completed wave plus 150 for all five, times difficulty.
 Hold is five per completed wave in the existing venue territory, once.
 
+## Changed
+
+The new mode module owns fort health, passive wear, native raider wave
+rosters, seeded spawn poses, ten-second gaps and win/loss decisions. It
+reuses released createRaidZones records and createFighter. The selected
+fighter starts beside the parked car with the existing weapon state.
+
+Scrap cover uses real collision boxes registered only on the event's Course
+instance. The Pit car clears its solid centre pile; Salt uses sample 160,
+the midpoint of a longest low-curvature run. Both spawn approaches stay
+inside native walls, at least 60 metres from the fort. No world recipe or
+world signature changed. Renderer work remains pending.
+
+The module exposes AMBUSH_RULES, initializeAmbushAlley, ambushSpawnPlan,
+stepAmbushAlley, ambushBuggySpawn, ambushBuggyGoal, ambushFortTargets,
+damageAmbushFort and ambushRepairTarget. Native entry must initialize combat
+armor, foot transition and weapons before initializeAmbushAlley. Waves four
+and five cannot complete without a real buggy tagged arenaRole ambush-buggy
+and ambushWave equal to the current wave. No substitute vehicle was added.
+
+## Pending shared hooks
+
+- Game/flags/App: independent default-off dev flag, Pit/Salt admission,
+  rank 12, mode registration and initializer order; preallocate one real
+  buggy/participant and keep it inactive through the first three waves.
+- arena-event.js: tick raiders and on-foot rules, call stepAmbushAlley,
+  apply ambushBuggySpawn to the real actor with placeActor and existing
+  armor, disable its within-wave respawn and finish win/loss results. Fort
+  loss returns winnerId raiders, which needs a non-car result path.
+- raiders.js: native movement/hostile RPG production against the fort and
+  no within-wave fighter return, keyed by each native record's ambushWave.
+- onfoot-weapons.js/projectile/contact hooks: actual 40-over-4 fort wrench
+  action, rocket hits on ambushFortTargets and native buggy ram damage.
+- settlement/HUD/render/audio: once-only wave pay/hold, real cover and
+  fighter/buggy presentation. Wave cues use interface.go; wave completion
+  uses interface.bonus; fort impacts reuse existing combat impact cues.
+
+Existing onfoot.js already uses arena walls in place of the car tether.
+Its authored native movement acceptance still awaits real mode admission.
+
 ## Checks
 
-Merged the whole current integration branch automatically as c57ca423.
-Focused native suite: 25 cases, 33 executed checks, one pass and 24 expected
-failures. The off/invalid-entry control passes. Both venue admissions fail;
-the independent dev flag is missing; 18 rule cases stop at missing native
-entry; two geometry cases stop at entry; the real App rank-12 entry fails.
+The authored suite remains 25 cases, 33 checks, one pass and 24 failures at
+missing native entry, dev flag and App routing. No assertion changed.
+node --check passes. Focused module probes use real Duel/venue/armor/fighter
+initialization, then select the unregistered mode only at the module boundary.
+They pass native raider damage, all five counts, live/missing buggy guards,
+real armor wrecks, exact gaps, fort wear/loss and repair contact on both
+venues. Thirty seeds per venue give 300 repeatable spawn plans, all clear
+and at least 60 metres away. These are controller checks, not full gameplay.
 
-The blocked checks cover native wave counts, completion and no respawn,
-ten-second gaps, fort wear and hostile RPG flight, wrench timing, venue and
-spawn geometry, free foot movement inside walls, rank, partial/full pay,
-hold, owner/repeat protection, and seeded fixed-step results. No successful
-gameplay, browser or full-tier evidence is claimed.
-
-Existing admission assertions are unchanged. Their positive fixture flags
-now name the card's independent ambush-alley switch. The two-direction test
-requires distinct bearings, without adding an angle threshold.
-
-Minimal observable contract for the builder: arena.ambushAlley holds wave,
-completedWaves and fort (x/y/z, health/maxHealth, cover); real wave fighters
-use the existing raids roster; the actual buggy has arenaRole ambush-buggy.
-Tests progress through Duel.step, native damage and native settlement, not
-fixture-written wave results. Fort health tests measure distance to its
-defence point; its cover supplies the wrench contact position.
-
-Native entry, dev flag, App rank routing, arena progression, raider/buggy
-respawn rules, fort projectile and wrench hooks, foot boundary and settlement
-remain to build. The Director must grant shared files beyond the card's
-current hooks. No source, saves, dependencies or replay fingerprints changed.
+The Director reserved broad gates for the running integration check. No
+lane/build, browser, audio, balance, full-tier or merge-ready pass is claimed.
+No saves, dependencies, shared files or replay fingerprints were changed.
 
 ## Removed
 
-Removed obsolete unanswered-rule questions after Kyle settled them. No code
-or assets removed; no acceptance assertion weakened.
+Removed the obsolete source-not-started note and folded the current contract
+into this handoff. No code or assets replaced; no assertion weakened.
