@@ -143,6 +143,11 @@ export async function run(context) {
         const rect=caption.getBoundingClientRect(),slots=document.querySelector('.combat-slot-bar').getBoundingClientRect();
         if(caption.hidden||caption.textContent!==lines['crew.'+crewId+'.callout'].text)
           throw Error('Wrong or missing muted subtitle: '+crewId);
+        const observer=new MutationObserver(()=>{});
+        observer.observe(caption,{attributes:true,childList:true,characterData:true,subtree:true});
+        for(let repeat=0;repeat<5;repeat++)app.onFrame?.(s);
+        const writes=observer.takeRecords().length;observer.disconnect();
+        if(writes)throw Error('Unchanged laptop subtitle rewrote the DOM');
         if(rect.left<0||rect.right>innerWidth||rect.top<0||rect.bottom>slots.top||caption.scrollWidth>caption.clientWidth)
           throw Error('Laptop subtitle clips or overlaps weapon slots: '+crewId);
         for(const selector of ['#style-score-panel','#onfoot-hint']){

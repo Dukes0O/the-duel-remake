@@ -229,7 +229,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   function update(state) {
     const active = combatHudVisible(app.duel, state);
     const subtitle = active ? readFightSubtitle(state) : null;
-    fightSubtitle.hidden = !subtitle;
+    if (fightSubtitle.hidden !== !subtitle) fightSubtitle.hidden = !subtitle;
     setText(fightSubtitle, subtitle || '');
     const onFoot = active && state.onFoot && !!state.fighter;
     if (host.hidden === active) host.hidden = !active;

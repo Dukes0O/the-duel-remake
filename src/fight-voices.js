@@ -21,6 +21,7 @@ const playing = state => state && state.mode === 'wasteland' &&
 const playerAction = (event, state) => !event.enemy &&
   (!event.actor || event.actor === 'player' || event.actor === state) &&
   (event.weaponFired || event.footRepairStarted ||
+    event.arsenalCue === 'weapon.tesla.charge' ||
     /\.(fire|deploy|start)$/.test(event.arsenalCue || '') ||
     /\.(fire|throw|launch|deploy|start)$/.test(event.crewGearCue || ''));
 
