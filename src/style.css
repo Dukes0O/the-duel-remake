@@ -164,35 +164,39 @@
 .backup-blocked button:hover{background:#ffe0a5}
 .backup-blocked button:focus-visible{outline:3px solid #fff;outline-offset:4px}
 
-/* Transition controls stay above weapons and clear of the driving view. */
-.onfoot-hint {
+/* The controls help appears only when asked for (H) and stays clear of the
+   driving view: down the left side, above the route map. */
+.controls-help {
   position: absolute;
-  left: 50%;
-  bottom: 208px;
-  transform: translateX(-50%);
-  width: min(520px, calc(100% - 590px));
+  left: 20px;
+  top: 160px;
+  width: min(450px, 40vw);
   margin: 0;
-  padding: 9px 12px;
+  padding: 10px 12px;
   border: 1px solid #d3945b;
   border-radius: 3px;
   background: #142126ed;
   color: #ffe7bd;
-  font-size: 12px;
-  line-height: 1.5;
-  text-align: center;
-  text-shadow: none;
+  font-size: 11px;
+  line-height: 1.3;
   pointer-events: none;
+  z-index: 30;
 }
+.controls-help h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: 2px; color: #f0b27a; }
+.controls-help dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.controls-help dl > div { display: grid; grid-template-columns: 82px 1fr; gap: 6px; padding: 1px 0; }
+.controls-help dt { font-weight: 700; color: #fff3d6; }
+.controls-help dd { margin: 0; }
+.onfoot-hint { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #d3945b66; text-align: left; }
 @media (min-width: 601px) and (max-width: 850px) {
-  .onfoot-hint { top: 260px; bottom: auto; width: calc(100% - 48px); }
+  .controls-help { top: 150px; width: min(330px, 44vw); }
+  .controls-help dl { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
-  .onfoot-hint {
-    top: 330px;
-    bottom: auto;
-    width: calc(100% - 32px);
-  }
+  .controls-help { top: 252px; left: 16px; width: calc(100% - 32px); font-size: 11px; }
+  .controls-help dl { grid-template-columns: 1fr; }
+  .controls-help dl > div { grid-template-columns: 96px 1fr; }
 }
 @media (max-height: 500px) and (min-width: 601px) {
-  .onfoot-hint { top: 210px; bottom: auto; }
+  .controls-help { top: 150px; }
 }

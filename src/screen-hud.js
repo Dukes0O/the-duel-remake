@@ -2,6 +2,7 @@ import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
 import {onFootHint} from './onfoot-hints.js';
+import {controlsHelpMarkup} from './controls-help.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 export function hudMarkup() {
@@ -18,7 +19,10 @@ export function hudMarkup() {
     <div><span class="field-label" id="gap-label">RIVAL BEHIND</span><b id="rival-gap">0.0 SEC</b>
     </div>
     </div>
-  <p id="onfoot-hint" class="onfoot-hint" aria-label="Car exit and entry controls" hidden></p>
+  <section id="controls-help" class="controls-help" aria-label="Controls" hidden>
+    <div id="controls-help-rows"></div>
+    <p id="onfoot-hint" class="onfoot-hint" aria-label="Car exit and entry controls" hidden></p>
+  </section>
   <section id="arena-board" class="arena-board" aria-label="Scrapdome scoreboard" hidden><p class="arena-board-title"><span>SCRAPDOME</span><b id="arena-board-hunted"></b></p>
     <ol id="arena-board-rows"></ol>
     </section>
@@ -56,7 +60,7 @@ export function hudMarkup() {
     <div class="boost-track"><i id="boost-fill"></i>
     </div><kbd>SPACE</kbd>
     </div>
-    <div class="speed-footer"><span id="camera-label">CHASE CAM</span><span><kbd>ESC</kbd> PAUSE</span>
+    <div class="speed-footer"><span id="camera-label">CHASE CAM</span><span><kbd>ESC</kbd> PAUSE · <kbd>H</kbd> HELP</span>
     </div>
     </div>
     <div id="style-score-panel" class="style-score"><b id="style-score">0000</b><span class="field-label">STYLE POINTS</span><span id="combo-label"></span>
@@ -103,7 +107,18 @@ export function presentJumpHeight(readout, s, app, ui, text) {
 }
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
   function updateHud(s) {
-    const footHint = onFootHint(app.duel);
+    // Controls are shown only on request (the H key), never by themselves.
+    const helpShown = app.helpVisible === true && !s.paused &&
+      ['racing', 'countdown', 'exploring'].includes(s.status);
+    ui['controls-help'].hidden = !helpShown;
+    if (helpShown) {
+      const markup = controlsHelpMarkup(app.duel);
+      if (ui['controls-help-rows'].dataset.markup !== markup) {
+        ui['controls-help-rows'].innerHTML = markup;
+        ui['controls-help-rows'].dataset.markup = markup;
+      }
+    }
+    const footHint = helpShown ? onFootHint(app.duel) : null;
     ui['onfoot-hint'].hidden = footHint === null;
     text('onfoot-hint', footHint ?? '');
     text('race-time',time(s.stageTimeSec));

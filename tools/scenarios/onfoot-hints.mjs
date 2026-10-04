@@ -15,7 +15,7 @@ async function advance(context, ticks) {
   await refresh(context);
 }
 async function prepare(context, mode = 'wasteland', stage = 0, direct = false) {
-  await context.evaluate('(() => { const a = window.__qaApp; ' +
+  await context.evaluate('(() => { const a = window.__qaApp; a.helpVisible = false; ' +
     (direct ? 'a.duel.startCampaign' : 'a.startCampaign') +
     '({mode:' + JSON.stringify(mode) + ',startStage:' + stage + ',seed:1989,car:"falcone_f42"});' +
     'a.stop(); const s = a.duel.state;' +
@@ -25,6 +25,15 @@ async function prepare(context, mode = 'wasteland', stage = 0, direct = false) {
     'a.onFrame?.(s,0); window.__render.renderFrame(); })()');
   await context.waitFor('window.__qaApp.visualReady === true', 'hint race renderer', 60_000);
   await refresh(context);
+  // The controls are on request only (Kyle, 4 October 2026): hidden by default,
+  // shown by a real H key press, which is what the hint checks below read.
+  if (await context.evaluate('!document.querySelector("#controls-help").hidden'))
+    throw Error('The controls help must not show by itself');
+  await key(context, 'keyDown', 'KeyH', 'h', 72);
+  await key(context, 'keyUp', 'KeyH', 'h', 72);
+  await refresh(context);
+  if (mode === 'wasteland' && await context.evaluate('document.querySelector("#controls-help").hidden'))
+    throw Error('H did not show the controls help');
 }
 async function sample(context) {
   return context.evaluate('(() => {const a=window.__qaApp,s=a.duel.state,' +
