@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {Duel} from '../src/game.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
+import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {fireWeapon} from '../src/combat-weapons.js';
 import {stepCombat, clearArsenalState} from '../src/combat.js';
 import {carEffect, carTopSpeed} from '../src/arsenal/car-effects.js';
@@ -11,7 +11,9 @@ import {vehicleContactModifiers} from '../src/vehicle-contact-modifiers.js';
 import {createProfile} from '../src/progression.js';
 import {normalizeWasteland} from '../src/wasteland-progress.js';
 import {getProfileWeapons, purchaseArsenalWeapon, purchaseWeaponUpgrade,
-  rewardArsenalWeapon, normalizeWeapons} from '../src/weapon-upgrades.js';
+  rewardArsenalWeapon, normalizeWeapons, offeredArsenalWeapons, cpuArsenalLoadout} from '../src/weapon-upgrades.js';
+import {availableCarWeapons, getCarLoadout} from '../src/car-loadout.js';
+import {makeRng} from '../src/rng.js';
 import {createFighter} from '../src/onfoot.js';
 import {stepFootWeapons} from '../src/onfoot-weapons.js';
 import {stepCombatAI} from '../src/combat-ai.js';
@@ -28,12 +30,13 @@ const near = (actual, expected, message) => ok(Math.abs(actual - expected) < EPS
   `${message}: expected ${expected}, got ${actual}`);
 test.after(() => console.log(`Arsenal wave 3: ${checks} acceptance checks executed.`));
 
-function race({enabled = true, gap = 50, difficulty = 'easy', flat = true} = {}) {
+function race({enabled = true, waveThree = true, gap = 50, difficulty = 'easy', flat = true,
+  levels = {}, loadout} = {}) {
   const duel = new Duel({seed: 3003, featureFlags: createFeatureFlags({storage: null,
-    qa: true, overrides: {arsenal: enabled}})});
+    qa: true, overrides: {arsenal: enabled, 'arsenal-wave3': waveThree}})});
   duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', driverId: 'club',
     discoveredGate: true, arsenalRank: 30, opponentCount: 1,
-    seed: 3003, cpuDifficulty: difficulty});
+    seed: 3003, cpuDifficulty: difficulty, weaponLevels: levels, weaponLoadout: loadout});
   const state = duel.state, rival = state.opponents[0], events = [];
   Object.assign(state, {status: 'racing', countdown: 0, invulnerableSec: 0,
     s: 500, prevS: 500, lateral: 0, prevLateral: 0, speedMph: 0, traffic: []});
@@ -205,7 +208,7 @@ for (const [id, rank] of WEAPONS) test(`${id} purchase and upgrades are per-play
   p.wasteland = normalizeWasteland({...p.wasteland, discoveredGate: true, xp,
     scrap: 4000, weapons: {unlocked: ['future-id'], levels: {'future-id': 7}, extra: {keep: 9}}});
   const before = structuredClone(p), other = createProfile();
-  const options = {arsenalEnabled: true, wastelandEnabled: true};
+  const options = {arsenalEnabled: true, arsenalWave3Enabled: true, wastelandEnabled: true};
   const bought = purchaseArsenalWeapon(p, id, options);
   equal(bought.ok, true, `${id} is offered at the settled rank`);
   equal(bought.profile.wasteland.scrap, 3600, 'purchase costs 400 scrap');
@@ -305,7 +308,7 @@ test('a real RPG lock and flight strike a CPU Drone without damaging its owner o
 
 test('native arena player Drone keeps its owner team and never changes the real scoreboard', () => {
   const duel = new Duel({seed: 3303, featureFlags: createFeatureFlags({storage: null, qa: true,
-    overrides: {arsenal: true, scrapdome: true}})});
+    overrides: {arsenal: true, 'arsenal-wave3': true}})});
   duel.state.wastelandGateDiscovered = true;
   equal(duel.startArenaEvent({venueId: 'pit', mode: 'last-car-rolling', car: 'falcone_f42',
     arsenalRank: 30, cpuDifficulty: 'hard', opponents: [{car: 'dusthawk_rally'}]}), true,
@@ -341,7 +344,7 @@ test('native CPU Mortar decisions admit the leader at 40 and 200 metres ahead bu
 
 test('native arena Mortar fires at the score leader instead of a closer nonleader', () => {
   const duel = new Duel({seed: 3314, featureFlags: createFeatureFlags({storage: null, qa: true,
-    overrides: {arsenal: true, scrapdome: true}})});
+    overrides: {arsenal: true, 'arsenal-wave3': true}})});
   duel.state.wastelandGateDiscovered = true;
   equal(duel.startArenaEvent({venueId: 'pit', mode: 'last-car-rolling', car: 'falcone_f42',
     arsenalRank: 30, cpuDifficulty: 'hard', opponents: [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}]}), true,
@@ -382,3 +385,106 @@ test('native CPU Nitro decisions require Hard, an enemy ahead within forty metre
     [{distance: 20, difficulty: 'medium'}, false], [{distance: 20, difficulty: 'easy'}, false]])
     equal(cpuDecision('nitro', options).used, expected, `native Nitro decision ${JSON.stringify(options)}`);
 });
+
+test('wave three is separately dev-gated without changing the existing arsenal switch', () => {
+  equal(FEATURE_STATES['arsenal-wave3'], 'dev', 'the four new weapons have their own dev switch');
+  equal(FEATURE_STATES.arsenal, 'dev', 'the existing arsenal switch remains unchanged');
+  const released = createFeatureFlags({qa: false, storage: {getItem: () => 'true'},
+    search: '?flags=arsenal-wave3'});
+  equal(released.enabled('arsenal-wave3'), false, 'the new wave is unavailable outside QA');
+});
+
+for (const [id] of WEAPONS) for (const cpu of [false, true]) {
+  test(`${id}: native ${cpu ? 'CPU' : 'player'} trigger requires both Arsenal switches`, () => {
+    for (const options of [{waveThree: false}, {enabled: false}]) {
+      const f = race({...options, gap: cpu ? (id === 'tesla' ? -10 : -50) : 50, difficulty: 'hard'});
+      if (cpu) f.rival.weaponLoadout = [id];
+      equal(fireWeapon(f.duel, id, cpu, f.rival), false,
+        `${id}: an explicitly equipped ${cpu ? 'CPU' : 'player'} cannot bypass either disabled switch`);
+    }
+  });
+}
+
+test('wave-three offers, purchases and saved loadout reads require their separate gate', () => {
+  const p = createProfile(); p.wasteland = normalizeWasteland({...p.wasteland,
+    discoveredGate: true, xp: 1_000_000, scrap: 5000});
+  const on = {arsenalEnabled: true, arsenalWave3Enabled: true, wastelandEnabled: true};
+  for (const [id] of WEAPONS) ok(offeredArsenalWeapons(p, on).includes(id), `${id}: the enabled offer exists`);
+  for (const gate of [false, undefined]) {
+    const options = {...on, arsenalWave3Enabled: gate};
+    equal(offeredArsenalWeapons(p, options).filter(id => WEAPONS.some(row => row[0] === id)), [],
+      'false or omitted wave-three admission hides all four offers');
+    ok(offeredArsenalWeapons(p, options).includes('oil'), 'the earlier Arsenal offers remain available');
+    for (const [id] of WEAPONS) equal(purchaseArsenalWeapon(p, id, options).ok, false,
+      `${id}: buying cannot bypass the unavailable wave`);
+  }
+  const owned = {...p, wasteland: {...p.wasteland, weapons: {
+    unlocked: WEAPONS.map(row => row[0]), levels: {}}, loadout: WEAPONS.map(row => row[0])}};
+  const before = structuredClone(owned), off = {...on, arsenalWave3Enabled: false};
+  equal(availableCarWeapons(owned, off).filter(id => WEAPONS.some(row => row[0] === id)), [],
+    'gated saved weapons are not equip choices');
+  equal(getCarLoadout(owned, off).some(id => WEAPONS.some(row => row[0] === id)), false,
+    'a saved wave-three slot cannot enter the active loadout while gated');
+  equal(owned, before, 'reading the gated loadout preserves all saved ownership and slot identities');
+});
+
+test('native game loadouts and seeded computer loadouts cannot admit gated wave-three weapons', () => {
+  const ids = WEAPONS.map(row => row[0]);
+  const enabled = race({difficulty: 'hard', loadout: ids});
+  equal(enabled.state.weaponLoadout, ids, 'both enabled switches admit the saved player loadout');
+  const selected = new Set();
+  for (let seed = 0; seed < 12; seed++)
+    for (const id of cpuArsenalLoadout(30, 'hard', {rng: makeRng(seed), arsenalWave3Enabled: true})) selected.add(id);
+  for (const id of ids) ok(selected.has(id), `${id}: the enabled seeded CPU pool can select the built weapon`);
+  const f = race({waveThree: false, difficulty: 'hard', loadout: ids});
+  equal(f.state.weaponLoadout.some(id => ids.includes(id)), false,
+    'actual campaign entry filters saved wave-three player slots');
+  equal(f.state.opponents.some(actor => actor.weaponLoadout.some(id => ids.includes(id))), false,
+    'actual campaign initialization excludes wave three from computer slots');
+  for (let seed = 0; seed < 12; seed++)
+    equal(cpuArsenalLoadout(30, 'hard', {rng: makeRng(seed), arsenalWave3Enabled: false})
+      .some(id => ids.includes(id)), false, 'seeded CPU selection never draws gated wave-three weapons');
+});
+
+test('an earned Mirage Drone remains owned while gated and returns without a new purchase', () => {
+  const p = createProfile(); p.wasteland.discoveredGate = true; p.wasteland.warlords.mirage.defeated = true;
+  const earned = rewardArsenalWeapon(p, 'decoy', {warlordId: 'mirage'});
+  equal(earned.ok, true, 'pure first-win ownership is saved independently of the runtime switch');
+  const before = structuredClone(earned.profile);
+  const options = {arsenalEnabled: true, arsenalWave3Enabled: false, wastelandEnabled: true};
+  equal(availableCarWeapons(earned.profile, options).includes('decoy'), false,
+    'the unavailable wave hides the earned Drone from active equipment');
+  equal(getProfileWeapons(earned.profile).unlocked.includes('decoy'), true, 'gating never revokes the earned identity');
+  equal(availableCarWeapons(earned.profile, {...options, arsenalWave3Enabled: true}).includes('decoy'), true,
+    're-enabling the wave restores the earned rank-one Drone without buying it');
+  equal(earned.profile, before, 'gate reads do not rewrite the saved earned reward');
+});
+
+for (const level of [1, 2, 3]) {
+  test(`Mortar level ${level} scales native damage and recharge without extending its warning`, () => {
+    const f = race({levels: {mortar: level}}); fire(f, 'mortar');
+    near(f.state.combat.cooldowns.mortar, 14 / 1.15 ** level, 'native Mortar recharge follows the shared upgrade rule');
+    const shell = f.state.combat.mortarShells[0];
+    f.rival.s = shell.z; f.rival.lateral = shell.x;
+    tick(f, 1.6 - DT); equal(f.rival.armor, 100, 'upgrades do not shorten the full landing warning');
+    tick(f, DT);
+    near(100 - f.rival.armor, 25 * (1 + .15 * level), 'the actual landed shell gains fifteen percent damage per level');
+  });
+  test(`Nitro level ${level} scales actual crash damage and recharge without extending its effect`, () => {
+    function ram(rank) {
+      const f = race({gap: 4, levels: {nitro: rank}});
+      f.state.prevS = 490; f.state.speedMph = 20;
+      f.rival.prevS = f.rival.s; f.rival.speedMph = 0;
+      fire(f, 'nitro');
+      near(f.state.combat.cooldowns.nitro, 20 / 1.15 ** rank, 'native Nitro recharge follows the shared upgrade rule');
+      equal(f.duel._vehicleContact(f.state, f.rival, 'RIVAL'), true, 'the actual crash solver accepts the scripted rear impact');
+      const hit = f.events.find(e => e.combatRamHit && e.attackerIndex === -1 && e.victimIndex === 0);
+      ok(hit?.armorRemoved > 0 && hit.armorRemoved < 70, 'the native change-in-velocity hit is positive and not capped');
+      return {f, removed: hit.armorRemoved};
+    }
+    const base = ram(0), upgraded = ram(level);
+    near(upgraded.removed, base.removed * (1 + .15 * level), 'upgraded Nitro scales real crash armor loss');
+    tick(upgraded.f, 3 - DT); ok(carEffect(upgraded.f.state, 'nitro'), 'Nitro remains active until its unchanged boundary');
+    tick(upgraded.f, DT); equal(carEffect(upgraded.f.state, 'nitro'), null, 'upgrades never extend the three-second Nitro duration');
+  });
+}
