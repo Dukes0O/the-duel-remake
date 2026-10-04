@@ -31,13 +31,18 @@ Kyle supplied Claude's answers for these cards, CREW-04 and ARENA-05 on
 4 October. They are recorded in SCRAPDOME.md, CREW.md and the cards; all four
 waits are cleared. The separate release has been made (see the top of this file).
 
-## Claude asset question, 4 October
+## Claude turret answer, 4 October
 
-Gunn's native fight and rewards pass their focused checks. The car-kit
-recipe only builds a mount (armor-kits.py, lines 475-482); Odessa's turret
-is a code-built prop (combat-scene.js, lines 248-253). What approved finished
-roof turret should Gunn and his earned cosmetic look use? His settled
-combat and reward rules stay unchanged. WAR-03a waits for this answer.
+WAR-03a resumes. Build one scrap rocket-pod turret in armor-kits.py, fitted
+to the existing mount, using approved kit materials and wear: low ring,
+short yoke, four tubes in a two-by-two welded box, rear heat panel. Separate
+base, head and panel for tracking, heat glow and tube-mouth firing. The same
+model is Gunn's turret and the earned cosmetic look on any car.
+
+The plain mount may serve fight building and tests while art is pending.
+Keep kit size and frame limits. Send Claude one side, three-quarter and top
+comparison sheet on Stuttgart and one other car; three rounds maximum.
+The design wait is cleared; look approval still comes before merge.
 
 ## Claude reward answer, 4 October
 
