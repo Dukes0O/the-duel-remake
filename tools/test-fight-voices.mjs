@@ -4,9 +4,10 @@ import {readFileSync, existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {EngineAudio} from '../src/audio.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
-import {FEATURE_STATES} from '../src/feature-flags.js';
+import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
+import {fireWeapon} from '../src/combat-weapons.js';
 
 // AUD-18: approved takes stay exact. Native event routing and a pure caption
 // getter share presentation history without adding fields to the race state.
@@ -181,5 +182,77 @@ test('voice event presentation preserves the existing ordinary race replay finge
     }
     equal(hash(JSON.stringify(samples)), spec.fingerprint, `${spec.mode}/${spec.course}: the committed ordinary fingerprint stays exact`);
     equal(voiceCalls(f), [], 'ordinary replay emits no kept fight speech');
+  }
+});
+
+function nativeVoices({cuesOnly = false} = {}) {
+  const f = fixture(), events = [];
+  const duel = new Duel({seed: 3180, featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: {arsenal: true, 'fight-voices': true}})});
+  duel.startCampaign({mode: 'wasteland', discoveredGate: true, arsenalRank: 30,
+    crewId: 'rook', car: 'falcone_f42', cpuDifficulty: 'hard', opponentCount: 1, seed: 3180});
+  const s = duel.state, rival = s.opponents[0];
+  Object.assign(s, {status: 'racing', countdown: 0, invulnerableSec: 0, stageTimeSec: 10,
+    s: 500, prevS: 500, lateral: 0, prevLateral: 0, speedMph: 0, traffic: []});
+  Object.assign(rival, {s: 515, prevS: 515, lateral: 0, prevLateral: 0,
+    speedMph: 0, headingError: Math.PI, combatShield: 0});
+  s.combat.aiTimer = s.combat.pickupTimer = Infinity;
+  const point = (distance, lateral = 0) => ({x: lateral, y: 0, z: distance, heading: 0, curvature: 0});
+  duel.course = {...duel.course, at: point, worldAt: point, groundAt: point,
+    obstaclesNear: () => [], roadHalfWidthAt: () => 20};
+  duel._obstacles = () => [];
+  duel.onChange((next, event) => {
+    events.push(event);
+    if (!cuesOnly || event.arsenalCue) f.emit(event, next);
+  });
+  return {...f, duel, s, rival, events};
+}
+
+test('native CPU-only Star is silent and cannot consume the next real player crew callout', async () => {
+  const f = nativeVoices();
+  f.rival.weaponLoadout = ['star'];
+  equal(fireWeapon(f.duel, 'star', true, f.rival), true, 'the native CPU Star trigger really fires');
+  ok(f.s.combat.rivalShield > 0, 'the actual computer shield is active');
+  equal(voiceCalls(f), [], 'a real CPU-only Star must never play the selected player crew line');
+  equal(await subtitle(f.s), null, 'a CPU shield must not create a player subtitle');
+  equal(fireWeapon(f.duel, 'star'), true, 'the native player Star trigger really fires afterward');
+  equal(voiceCalls(f), ['crew.rook.callout'], 'the first real player action still announces Rook');
+  equal(await subtitle(f.s), records.find(row => row.key === 'crew.rook.callout').text,
+    'the actual player action presents the approved exact caption');
+  f.emit(f.events.findLast(event => event.weaponFired === 'star'), f.s);
+  equal(voiceCalls(f), ['crew.rook.callout'], 'repeated presentation cannot replay the player line');
+});
+
+const NATIVE_CUES = [['oil', 'weapon.oil.deploy'], ['smoke', 'weapon.smoke.deploy'],
+  ['harpoon', 'weapon.harpoon.fire'], ['rockets', 'weapon.rockets.fire']];
+
+for (const [weapon, cue] of NATIVE_CUES) test(`native ${weapon} actions announce only the real player`, async () => {
+  const f = nativeVoices(); f.rival.weaponLoadout = [weapon];
+  equal(fireWeapon(f.duel, weapon, true, f.rival), true, `the native enemy ${weapon} producer fires`);
+  ok(f.events.some(event => event.arsenalCue === cue && event.actor === f.rival),
+    'the native Arsenal cue names the actual enemy actor');
+  equal(voiceCalls(f), [], 'enemy Arsenal actions must neither speak nor consume the player callout');
+  equal(await subtitle(f.s), null, 'enemy Arsenal cues never create a player caption');
+  equal(fireWeapon(f.duel, weapon), true, `the native player ${weapon} producer fires`);
+  const action = f.events.find(event => event.arsenalCue === cue && event.actor === f.s);
+  ok(action, 'the native Arsenal cue names the actual player state actor');
+  equal(voiceCalls(f), ['crew.rook.callout'], 'the native player Arsenal action speaks exactly once');
+  equal(await subtitle(f.s), records.find(row => row.key === 'crew.rook.callout').text,
+    'native Arsenal actions use the selected crew caption');
+  f.emit(action, f.s); f.update(f.s);
+  equal(voiceCalls(f), ['crew.rook.callout'], 'cue and generic weapon event cannot duplicate speech');
+});
+
+test('four actual actor-attributed Arsenal cues can announce without any generic weapon event', async () => {
+  for (const [weapon, cue] of NATIVE_CUES) {
+    const f = nativeVoices({cuesOnly: true}); f.rival.weaponLoadout = [weapon];
+    equal(fireWeapon(f.duel, weapon, true, f.rival), true, 'the genuine enemy producer supplies its cue');
+    equal(voiceCalls(f), [], 'an actor-attributed enemy cue stays silent on its own');
+    equal(fireWeapon(f.duel, weapon), true, 'the genuine player producer supplies its cue');
+    ok(f.events.some(event => event.arsenalCue === cue && event.actor === f.s),
+      'the production cue carries the real player actor');
+    equal(voiceCalls(f), ['crew.rook.callout'], 'the actor-attributed player cue alone starts one crew line');
+    equal(await subtitle(f.s), records.find(row => row.key === 'crew.rook.callout').text,
+      'cue-only native action shows the exact subtitle');
   }
 });
