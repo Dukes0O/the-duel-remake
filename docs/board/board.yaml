@@ -1044,7 +1044,9 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
     test_commit: d220e948
-    source_commit: c6174c17
+    source_commit: 2f094ee8
+    preservation_test_commit: 87b436f2
+    balance_test_commit: 0cd575fa
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1126,7 +1128,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
-    test_commit: 11efc6e
+    test_commit: 0c02e806
     note_commit: 2febf4e
     source_commit: 9ba52791
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
@@ -1337,7 +1339,7 @@ tasks:
     branch: codex/cmb/convoy-raid
     test_commit: 16a014a3
     note_commit: 11371c8
-    source_commit: fef7b02e
+    source_commit: 4af67813
     note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
     claude_answer_2026_10_04: "Win pays 700 times difficulty and adds 25 Tollkeeper hold; loss pays 40 per valve the player broke, settled once. Unlock with Salt Flats and any Tollkeeper hold from races; hits choose valves by actual impact/contact points, blast reaches every valve in radius, and the body only shoves and never dies before the boarding charge (SCRAPDOME section 10)."
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."

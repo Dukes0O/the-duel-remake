@@ -754,3 +754,9 @@ force; deleted 160,160,659 bytes of used evidence. Public grew from
 the build grew from 264,375,843 to 264,760,521 bytes. Five unfinished feature
 lanes and the protected audio lane remain. No uncertain asset was removed.
 
+ARS-03 now reads saved warlord defeats as earned weapon rewards without a
+save grant; independent save and source reviews pass. Its native balance flag
+repair passes the authored regression. Complete balance and final card gates
+remain. Convoy's measured contact fix passes review; Crew's enemy voice cues
+are being fixed after native red tests.
+
