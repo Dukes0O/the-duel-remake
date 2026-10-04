@@ -41,6 +41,12 @@ starters. Purchased and rewarded weapons are added to
 weapon the player has not earned. Unknown fields, future ids, per-player
 isolation and the four-slot loadout are preserved.
 
+**Saved warlord rewards (Claude, 4 October 2026).** Armory and loadout treat
+a warlord weapon as earned when it is saved as earned or its warlord is
+saved as defeated. This is a read rule, not a save rewrite or normalization
+grant. First-win settlement still saves the earned weapon. It applies to
+every warlord weapon, including Mirage's Drone and Gunn's Rocket Pods.
+
 **Computer loadouts.** CPU cars carry four weapons from those unlocked at the
 player's current rank, so opponents grow with the player. Easy uses only the
 four starters and wave 1; Medium adds wave 2; Hard may use everything

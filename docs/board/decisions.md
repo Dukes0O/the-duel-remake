@@ -1494,3 +1494,11 @@ ahead to the 10 to 14 target.
 - Hold: Kyle decides whether wrecks should be lowered at all. Do not merge
   this candidate before his answer. If it is kept, future changes tune armor
   through the same target, paired replay review and gates; keep warlord health.
+
+## 4 October 2026: Ambush fort placement
+
+The Pit's cover stands eight metres clear of the centre pile's solid outer
+edge. Its native pile radius is eight metres, so cover is sixteen metres
+from the centre; the parked car uses clear ground inside that ring. Salt
+uses the midpoint of its authored longest straight or low-curvature run.
+Do not change the venue or add a pixel-perfect curvature gate for placement.
