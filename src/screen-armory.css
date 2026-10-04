@@ -20,7 +20,6 @@
 .armory-slot{display:grid;gap:7px;min-width:0;color:#f0c789;font-size:10px;font-weight:700;letter-spacing:.04em}
 .armory-slot select{width:100%;min-width:0;padding:10px 8px;background:#13211f;color:#f6edda;border:1px solid #d8b47e80;font:inherit;letter-spacing:0}
 .armory-slot select:focus-visible{outline:2px solid #ffab5c;outline-offset:2px}
-@media(max-width:720px){.armory-loadout-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kit-shop{margin-top:18px}
 .kit-car-label{display:block;margin:15px 0 6px;font-size:9px;letter-spacing:1.5px;color:#c8bc9a}
 .kit-shop select{width:min(100%,360px);padding:10px;background:#15201e;color:#f2eee2;border:1px solid #dccdb147}
@@ -32,4 +31,3 @@
 .kit-card button,.kit-remove{width:100%;padding:10px;background:#101a18a3;border:1px solid #dccdb147;font-size:9px;letter-spacing:.5px}
 .kit-card button:disabled{opacity:.55;cursor:default}.kit-card button:not(:disabled):hover,.kit-remove:hover{border-color:#ff8752;background:#df845015}
 .kit-remove{margin-top:10px;width:auto}
-@media(max-width:650px){.kit-grid{grid-template-columns:1fr}.kit-card p{min-height:0}}

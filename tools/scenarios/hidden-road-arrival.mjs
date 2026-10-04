@@ -338,9 +338,6 @@ export async function run(context) {
       if(await context.evaluate('window.__qaApp.duel.state.hiddenRoadJourney.elapsedSec')!==frozen)throw Error('Paused journey clock advanced');
       await capture('high-paused','high');await key(context,'Escape','Escape',27);
       await context.waitFor('!window.__qaApp.duel.state.paused','cinematic resume',3000);
-      await context.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await pause(120);
-      await capture('phone-choice','high');
-      await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
       await click(context,'Enter the Wasteland');
       await context.waitFor("window.__qaApp.duel.state.hiddenRoadJourney.phase==='arrived'&&window.__qaApp.duel.state.hiddenRoadJourney.phaseElapsedSec>1.4",'inside gate hold',8000);
       await capture('high-arrived','high');

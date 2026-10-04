@@ -117,7 +117,7 @@ Started at 07:46 PDT. HK-RUSTWALL-BASELINE merged from f0adecb after independent
 
 Janitor: removed HK lane and merged branch after unlinking its integration-only dependency junction; discarded its used gate evidence. Current code, fixture and review verdict stay committed.
 
-UX-ENTRY-HINTS merged from 04a012c: independent review clean, focused15/15 and four frozen replay hashes unchanged; final lane296/296 in442.54s and build passed on exact clean04a012c. Private memory-only browser: six captures, High/Performance, desktop/phone, actual F/gamepad X/40kmh bailout/reentry and exclusions; zero warnings/errors. Feature merge count2; full deadline remains5 merges or10:32PDT. Janitor removed its clean lane/merged branch and used raw evidence after this verdict.
+UX-ENTRY-HINTS merged from 04a012c: independent review clean, focused15/15 and four frozen replay hashes unchanged; final lane296/296 in442.54s and build passed on exact clean04a012c. Private memory-only browser: six captures, High/Performance, actual F/gamepad X/40kmh bailout/reentry and exclusions; zero warnings/errors. Feature merge count2; full deadline remains5 merges or10:32PDT. Janitor removed its clean lane/merged branch and used raw evidence after this verdict.
 
 CRASH-SWITCH-REMOVE merged from6f77a23: independent review clean; final lane296/296 in433.93s and build passed on exact clean source. Private memory-only High/Performance crash-presentation passed4captures/zero warnings/errors. Released replay JSON and single-contact hashes stay unchanged; retired false overrides now prove the same released rules. Changed assertions/removals and setup-only fixes are explained in the card note and approved by independent review. Classic/wasteland2-off still remains pending the separately gated retirement. Feature merge count3. Janitor removed its clean lane/merged branch and used evidence after this verdict.
 
@@ -573,7 +573,7 @@ normally. No release or history rewrite occurred.
 Continuation: all twenty Arsenal browser assertions pass in both qualities
 with no errors. The recipe now hides QA controls and frames cars and spikes,
 without changing runtime rules or assertions. Claude judges the faint tether
-from fresh private pictures. Unchanged minimap and phone text overlaps are
+from fresh private pictures. Unchanged minimap text overlaps are
 routed to Phase 3 polish; frame pacing and six-cue audio remain unmeasured.
 
 Five permitted pace trials found no combined balance and pursuit pass. The

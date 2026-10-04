@@ -11,4 +11,3 @@
 .course-access-card>button:disabled{opacity:.5;cursor:default}
 .course-store-button:focus-visible,.course-access-card>button:focus-visible{outline:2px solid #edc689;outline-offset:3px}
 .course-access-message{min-height:18px;color:#edc689!important}
-@media(max-width:700px){.course-access-grid{grid-template-columns:1fr}.course-store-button{font-size:8px;padding:7px 5px}.course-access-panel{width:94vw}.course-access-panel .shop-wallet b{font-size:18px}.course-access-panel .shop-heading h2{font-size:24px}}

@@ -315,12 +315,6 @@ export async function run(context) {
   for(const [label,names] of [['logs',['logs']],['garden',['garden']]])
     report.frames.push(await show(context,'high',label,names));
 
-  await context.command('Emulation.setDeviceMetricsOverride',
-    {width:390,height:844,deviceScaleFactor:1,mobile:true});
-  report.frames.push(await show(context,'high','phone-overview',['bowl','hill','pond']));
-
-  await context.command('Emulation.setDeviceMetricsOverride',
-    {width:1280,height:720,deviceScaleFactor:1,mobile:false});
   await navigateReady(context,'/tools/menu-check.html',
     'phase-3 non-Titan memory-only menu');
   const nonTitanStart=await startHighCountry(context,true,'dusthawk_rally','timetrial');

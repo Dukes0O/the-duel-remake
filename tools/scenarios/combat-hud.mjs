@@ -1,7 +1,7 @@
-// One private browser run covers desktop/mobile and both render quality modes.
-async function pass(context, quality, width, height, mobile) {
+// One private browser run covers both render quality modes.
+async function pass(context, quality, width, height) {
   await context.command('Emulation.setDeviceMetricsOverride',
-    {width, height, deviceScaleFactor: 1, mobile});
+    {width, height, deviceScaleFactor: 1, mobile: false});
   await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine')?.disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
     'isolated combat HUD menu', 60_000);
@@ -81,15 +81,14 @@ async function pass(context, quality, width, height, mobile) {
       !result.hit || !result.arrow || result.damage !== 'right' ||
       !result.oldBarHidden || result.repeatedTextWrites !== 0)
     throw Error(`Combat HUD incomplete: ${JSON.stringify(result)}`);
-  await context.screenshot(`combat-hud-${quality}-${mobile ? 'mobile' : 'desktop'}`);
+  await context.screenshot(`combat-hud-${quality}`);
   console.log(`${quality} ${width}x${height} combat HUD: ${JSON.stringify(result)}`);
 }
 
 export async function run(context) {
   try {
     for (const quality of ['high', 'performance']) {
-      await pass(context, quality, 1280, 720, false);
-      await pass(context, quality, 390, 844, true);
+      await pass(context, quality, 1280, 720);
     }
     await context.navigate('/tools/menu-check.html');
     await context.waitFor("!!window.__qaApp && !document.querySelector('#start-engine')?.disabled",

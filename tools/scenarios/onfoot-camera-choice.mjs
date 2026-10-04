@@ -38,7 +38,6 @@ export async function run(c){
     report.checks[quality].shot=await c.evaluate(`(()=>{const s=window.__qaApp.duel.state;if(s.footWeapons.ammo!==2||!s.combat.projectiles.some(p=>p.kind==='rpg'))throw Error('Overhead shot failed');return{ammo:s.footWeapons.ammo};})()`);await capture(`${quality}-overhead-fire`);await mouse('mouseReleased','right');
     await tap(c,'Digit2','2',50);await c.evaluate('window.__qaApp.duel.state.armor=40;window.__qaApp.duel.state.footWeapons.lastArmor=40');await mouse('mousePressed','left');await c.evaluate('window.__qaApp.advance(1)');await capture(`${quality}-overhead-repair`);await c.evaluate('window.__qaApp.advance(3.02)');await mouse('mouseReleased','left');
     if(!await c.evaluate('Math.abs(window.__qaApp.duel.state.armor-80)<.01'))throw Error('Overhead repair failed');
-    await c.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await capture(`${quality}-phone-overhead`);
     await tap(c,'Escape','Escape',27);await c.waitFor('window.__qaApp.duel.state.paused&&!document.pointerLockElement','pause cleanup',10000);
     await refresh(c);const resume=await c.evaluate(`(()=>{const b=document.querySelector('[data-action="resume"]');b.scrollIntoView({block:'center'});const r=b.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
     for(const type of ['mousePressed','mouseReleased'])await c.command('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...resume});

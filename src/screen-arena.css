@@ -25,7 +25,6 @@
 .arena-results li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;padding:6px 0;border-top:1px solid #d6c6a933}
 .arena-results li.is-you{color:#ffd29a}
 .arena-results strong{font-variant-numeric:tabular-nums}
-@media (max-width:850px){.arena-board{top:auto;bottom:210px;right:12px;width:220px}}
 .arena-board-head{font-size:7px;font-weight:800;letter-spacing:1px;color:#9fa89b;padding:0 0 3px}
 .arena-board-head strong,.arena-board-head i{text-align:right;font-size:7px;font-style:normal;letter-spacing:.6px}
 .arena-results-head{font-size:9px;font-weight:800;letter-spacing:1.2px;color:#9fa89b;border-top:0!important}

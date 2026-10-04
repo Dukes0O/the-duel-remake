@@ -95,7 +95,7 @@ export function hiddenRoadDrivingCamera(state, course, mode = 'chase') {
 export function hiddenRoadPresentation(
   state,
   course,
-  { aspect = 16 / 9, includeScene = true } = {},
+  { includeScene = true } = {},
 ) {
   const journey = state?.hiddenRoadJourney,
     road = course?.hiddenRoad;
@@ -123,12 +123,11 @@ export function hiddenRoadPresentation(
     z: gate.z - x * s + z * c,
   });
   const returning = phase === 'turned-back' && age < 0.8;
-  const narrow = aspect < 0.85;
   const camera =
     includeScene && (CINEMATIC.has(phase) || returning)
       ? {
-          position: world(narrow ? 6 : 8, narrow ? 3.4 : 2.2, -30),
-          target: world(0, narrow ? 2.6 : 10, narrow ? -2 : 0),
+          position: world(8, 2.2, -30),
+          target: world(0, 10, 0),
           fov: 64,
           blend:
             phase === 'arriving'

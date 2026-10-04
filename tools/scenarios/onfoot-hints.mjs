@@ -139,10 +139,8 @@ async function qualityRun(context, quality) {
   await advance(context, 96);
   await key(context, 'keyUp', 'KeyW', 'w', 87);
   const distant = await expectHint(context, /Move closer.*0\.6.*3\.5/);
-  await context.command('Emulation.setDeviceMetricsOverride',
-    {width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
   await refresh(context);
-  const phone = await layout(context, quality + '-reentry-hint-phone');
+  const reentry = await layout(context, quality + '-reentry-hint-desktop');
   await key(context, 'keyDown', 'Escape', 'Escape', 27);
   await key(context, 'keyUp', 'Escape', 'Escape', 27);
   await refresh(context);
@@ -187,7 +185,7 @@ async function qualityRun(context, quality) {
   await refresh(context);
   await expectNoHint(context, 'Scrapdome arena');
   console.log(quality + ': actual F exit/release/reentry, keyboard X camera, gamepad X exit/reentry, distant hint, exact bailout, pause/mode/objective/arena exclusions passed. ' +
-    JSON.stringify({initial:initial.text,exited:exited.text,distant:distant.text,health:bailed.health,desktop,phone}));
+    JSON.stringify({initial:initial.text,exited:exited.text,distant:distant.text,health:bailed.health,desktop,reentry}));
 }
 
 export async function run(context) {

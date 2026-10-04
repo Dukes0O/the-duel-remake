@@ -34,7 +34,7 @@ screen the whole time. They should be there on demand.
   gamepad map and now expects Back (button 8) to be help. test-onfoot-hints
   reads the hint with the help showing, since it no longer shows by default.
 - Browser: scenario onfoot-hints presses a real H key, checks the panel is
-  hidden by default and clear of the other HUD on desktop and phone.
+  hidden by default and clear of the other HUD.
 
 ## Removed
 

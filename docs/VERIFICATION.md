@@ -24,7 +24,7 @@ EGG-REL tree passed 271/271 suites and the production build. Private
 memory-only browser checks passed with no warnings or errors: smoke, the
 journey from a plain menu through a pre-discovery Mad Max Duel, the dirt road,
 gate, Enter, yard and back to a Mad Max Duel with Wasteland rules, and Hidden
-Road discovery (hints, Turn back, reload, phone layout, a second player who
+Road discovery (hints, Turn back, reload, a second player who
 sees nothing, and the direct visit). Earlier BETA-01 evidence at 74646e8: full
 270/270, combat balance off (wins 9/6/2) and on (8/5/3, Easy CPU hits 3), save
 checks and private smoke. Current wall, crew and first-person hand art are
@@ -97,7 +97,7 @@ finishable course; practice has no finish line. The renderer, route map, HUD,
 results, traffic contacts, and safe resets use the full field. The next combat
 refactor will extend shield and weapon effects beyond the first rival. Splitting
 the game simulation and menu screens preserved all 162 pinned one-rival replay
-fingerprints. Six narrow dialog and keyboard-focus browser checks passed.
+fingerprints.
 
 After a missed gate, a crowded reset searches nearby clear spaces before
 moving farther back. Focused checks include full 18- and 24-car traffic grids.
@@ -459,7 +459,7 @@ All 90 suites have passing results. The broad run used `DUEL_SKIP_CAMPAIGNS=1`: 
 
 New checks: 229,856 coast placement/geometry/lifecycle checks across Route A/B/C, 194 build/update checks, 121 frame-metric checks, 3,795 effect-equivalence checks and eight sample-summary checks. The nearest new rock vertex is 96.77 m from the road. Rock bases stay at least 5.03 m below rendered terrain, and the lighthouse stays inside its original 3.2 m radius. The shoreline adds at most 13,608 triangles and 18 spatial draws across tested seeds, with no new bitmap assets. Geometry tests cover actual terrain triangles, not just analytic height estimates.
 
-Build-notice browser checks use the actual production menu with memory-only QA saves: one version request after 20 focus events; notice hidden during racing; stale reload ignored; notice restored at menu; explicit double-click reload returns to the menu once; offline requests stay quiet. The narrow layout prevents flex sections shrinking into one another and keeps the menu scrollable. No real account or live race is used for these tests.
+Build-notice browser checks use the actual production menu with memory-only QA saves: one version request after 20 focus events; notice hidden during racing; stale reload ignored; notice restored at menu; explicit double-click reload returns to the menu once; offline requests stay quiet. No real account or live race is used for these tests.
 
 The effects optimization removes ten unnecessary ground samples during clean paved driving. Exact particle/mark/bound snapshots and RNG calls match the former path across 1,260 snapshots. Frame metrics separate steady frame intervals from first-draw time and synchronous render-submission time; the latter is not GPU time. No overall FPS or startup improvement is claimed. High and Performance presets and opt-in shader warmup behavior are unchanged.
 
@@ -706,7 +706,7 @@ Seven garage vehicles and nine two-lap events are implemented. Generated modelin
 
 The engine/tire files are real licensed recordings. Seven voices mix shared recordings; they are not seven independently recorded cars. Police wails, impacts, salvage-car crunches and several other cues are original synthesis.
 
-No new runtime dependency was installed. The game uses Three.js, Web Audio and the browser Gamepad API. GLBs were exported and reloaded, but no Blender render was performed. Blender was not found on PATH, in the checked registered installations or as a running process. Native release, Unreal migration, mobile controls and broad hardware testing are not claimed. Driving remains arcade drift and bounded visual damage, not soft-body simulation or an open-world GTA game.
+No new runtime dependency was installed. The game uses Three.js, Web Audio and the browser Gamepad API. GLBs were exported and reloaded, but no Blender render was performed. Blender was not found on PATH, in the checked registered installations or as a running process. Native release, Unreal migration and broad hardware testing are not claimed. Driving remains arcade drift and bounded visual damage, not soft-body simulation or an open-world GTA game.
 
 ## Audio depth continuation
 

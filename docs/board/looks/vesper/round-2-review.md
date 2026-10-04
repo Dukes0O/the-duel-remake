@@ -13,7 +13,7 @@ and the dark red harness reads in front and back. Performance keeps the gains.
 No assessed visual item is below four. No further costume round is needed.
 No new floating, clipping or obstruction is visible. Inherited HUD text covers
 part of the overhead view; it limits inspection and does not hold the costume.
-Motion feel, frame timing, audio and phone layout remain unmeasured.
+Motion feel, frame timing, audio remain unmeasured.
 
 Source: c0ca0e2. Browser observation: ce7fb95. Candidate SHA:
 29a3873ae936dcd80ca6593d46537ce77cccda206a645e8948c06ea89a9a4f46.
