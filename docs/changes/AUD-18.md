@@ -1,6 +1,6 @@
 # AUD-18: kept fight voices
 
-Status: base update review needed. Lane: codex/audio/fight-voices.
+Status: independent lane/build gate pending. Lane: codex/audio/fight-voices.
 
 ## Decisions
 
@@ -35,12 +35,20 @@ Status: base update review needed. Lane: codex/audio/fight-voices.
   Its production-off and explicit-QA checks and released explicit-off fixtures
   remain. No existing replay pin, refusal or isolation assertion is weakened.
 - Three ordinary replay fingerprints remain exact in the native event listener.
-- Laptop browser/native audio recheck passes: High and Performance, private port 17976,
-  memory-only saves, two screenshots, no warnings or errors. Eight crew HUD
-  captions and pause/menu/no-stale-resume checks pass. No HUD overlap or
-  caption DOM writes across five unchanged snapshots.
 - Independent source review clears 23e625e: native actor/enemy attribution
   and guarded subtitle DOM writes; all 26 cases / 358 checks pass.
+- Independent base source review clears bfa1aec: five released switches stay
+  on and Fight Voices stays dev; released explicit-off fixtures remain exact.
+- Final independent browser check: private port 19903, memory-only saves,
+  1366x768, High and Performance; zero errors, warnings or failed requests.
+  Eight native crew captions fit; pause, menu and no stale caption checks pass.
+  Nine native/offline cue starts pass; scenes and textures render nonblank.
+  Browser scene source is unchanged from 3eb740d. A stopped Crossbow
+  Performance close-projectile observation is not a Voice blocker;
+  persistence remains unmeasured.
+- Browser CPU, repeat, result and live audio resume were not separately
+  checked. Native 26/358 and independent actual live Rook/Bill audio checks
+  cover their stated scope; no wider browser or human approval is inferred.
 - Independent audio QA passes all nine native/offline takes and actual live
   Rook/Bill events in both qualities, at 1366x768 with memory-only saves.
   Native speech contrast: 6.289-13.492 dB; true peak: -2.58/-2.54 dBTP.
@@ -50,12 +58,13 @@ Status: base update review needed. Lane: codex/audio/fight-voices.
 - Human clarity and live onset within 30 ms remain unmeasured. Captions can
   linger when simulation slows. The separate old engine -50 ms boundary
   observation is not a Voice regression. No new voice or source choice.
-- Merge base: complete released integration 3eb740d, preserving automatic
-  incoming files, including README and VERIFICATION; five switches stay on.
+- Merge base: complete released integration 3eb740d, then current metadata
+  cd0b7c58. Automatic incoming files, including README and VERIFICATION,
+  stay exact; five switches stay on. No source changed in the metadata merge.
   Current checks pass: Voice 26 cases / 358 checks, sound bank/mixer,
   gatekeeper 8 cases, flags 36 checks, Preview 22 checks and HUD 8 cases.
-  Production build passes. Broad lane gate waits for the Director's baseline
-  full run. Earlier 107/1/240 run is not a pass.
+  Production build passes. Broad lane/build gate remains pending on the final
+  lane head. Earlier 107/1/240 run is not a pass.
 - Recipe: node tools/build-fight-voices.mjs copies and hash-checks all nine takes.
   Native scenario: tools/scenarios/fight-voices.mjs, High and Performance.
 - Kyle's listening check remains a separate human gate; no listening approval
