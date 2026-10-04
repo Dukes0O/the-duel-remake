@@ -220,7 +220,10 @@ check('native','the actual native layout repeats from seed and inputs',async()=>
 });
 const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
 globalThis.cancelAnimationFrame=()=>{};
-const flags=(enabled=true,overrides={})=>createFeatureFlags({storage:null,qa:enabled,search:enabled?'?flags=salt-flats':'',
+// Salt Flats, Fuel Run and Arsenal were released on 4 October 2026. These tests keep proving the
+// Salt rules with those three switches pinned to dev, so a locked Salt and the earlier traces stay testable.
+const DEV_PINNED={...FEATURE_STATES,'salt-flats':'dev','fuel-run':'dev',arsenal:'dev'};
+const flags=(enabled=true,overrides={})=>createFeatureFlags({catalog:DEV_PINNED,storage:null,qa:enabled,search:enabled?'?flags=salt-flats':'',
   overrides:{'hidden-road':true,'fuel-run':true,...overrides}});
 const xpAtRank=rank=>Array.from({length:rank-1},(_,i)=>400+150*i).reduce((sum,value)=>sum+value,0);
 async function yard({rank=9,discovered=true,enabled=true,overrides={}}={}){
@@ -285,8 +288,9 @@ for(const mode of publicModes){
   });
 }
 check('runtime','Salt Flats has its own dev switch and never appears as a racing circuit',()=>{
-  assert.equal(FEATURE_STATES['salt-flats'],'dev','new venue remains dev before review/release');
-  assert.equal(createFeatureFlags({storage:null,qa:false}).enabled('salt-flats'),false);
+  assert.equal(FEATURE_STATES['salt-flats'],'on','the venue is released (4 October 2026)');
+  assert.equal(createFeatureFlags({storage:null,qa:false}).enabled('salt-flats'),true);
+  assert.equal(createFeatureFlags({catalog:DEV_PINNED,storage:null,qa:false}).enabled('salt-flats'),false,'a dev Salt stays off in production');
   assert.equal(flags().enabled('salt-flats'),true,'private QA can enable the real dev flag');
   assert.equal(COURSE.some(row=>row.id==='salt-flats'),false,'venue is not a main-menu circuit');
 });
@@ -321,8 +325,8 @@ for(const request of [{venueId:'not-a-venue',mode:'last-car-rolling'},{venueId:'
     }finally{app.dispose?.();}
   });
 check('runtime','Fuel Run uses its legitimate dev flag independently of Salt Flats',()=>{
-  assert.equal(FEATURE_STATES['fuel-run'],'dev','Fuel Run remains dev before review/release');
-  assert.equal(createFeatureFlags({storage:null,qa:false}).enabled('fuel-run'),false);
+  assert.equal(FEATURE_STATES['fuel-run'],'on','Fuel Run is released (4 October 2026)');
+  assert.equal(createFeatureFlags({catalog:DEV_PINNED,storage:null,qa:false}).enabled('fuel-run'),false,'a dev Fuel Run stays off in production');
   assert.equal(flags().enabled('fuel-run'),true,'private native fixtures explicitly enable the existing Fuel flag');
   assert.equal(flags(false).enabled('salt-flats'),false,'Salt can be disabled independently');
   assert.equal(flags(false).enabled('fuel-run'),true,'off-Salt rejection keeps Fuel enabled');

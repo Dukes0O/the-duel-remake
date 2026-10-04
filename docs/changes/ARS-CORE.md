@@ -53,8 +53,7 @@ later headless wreck-rate report ran concurrently; seeded outcomes are exact.
 
 The native memory-only browser scenario passes in High and Performance with
 eight matched captures and no console or request failures. It shows real Armory
-transactions, Oil counters, Smoke occlusion/expiry and render purity. A crowded
-phone HUD is inherited. The three emitted cue names may stay silent while dev.
+transactions, Oil counters, Smoke occlusion/expiry and render purity. The three emitted cue names may stay silent while dev.
 Lane and build evidence is retained with the measurements under the ignored
 .evidence/2026-10-01/ARS-CORE/evening folder.
 

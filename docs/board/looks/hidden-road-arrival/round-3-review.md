@@ -13,7 +13,7 @@ All seven presentation look criteria score **4**, with the measurement
 limits below. This does not promote hidden-road to beta: the separate
 Rustwall/wash asset fidelity debt remains in EGG-02-P1.
 
-- The phone and desktop choices leave the car and doorway visible.
+- The choices leave the car and doorway visible.
 - The time-labeled frames from the continuous canvas recording show the
   panel lifting, the car passing through the opening, and a clear inside
   endpoint. The canvas recording excludes the DOM dialog; dialog layout has

@@ -267,10 +267,10 @@ for (const fps of [30, 60, 144]) test('CORE: hazard/effect results repeat at ' +
 });
 
 // Integration obligations deliberately stay RED until the Director grants hooks.
-test('INTEGRATION: arsenal is a production dev switch and discovery gates it', () => {
-  eq(FEATURE_STATES.arsenal, 'dev', 'INTEGRATION: arsenal must start in dev');
-  const base = createFeatureFlags({storage: null, qa: true, search: '?flags=arsenal'});
-  eq(base.enabled('arsenal'), true, 'private QA may enable the dev switch');
+test('INTEGRATION: arsenal is a released production switch and discovery gates it', () => {
+  eq(FEATURE_STATES.arsenal, 'on', 'INTEGRATION: arsenal is released (on, 4 October 2026)');
+  const base = createFeatureFlags({storage: null, qa: false});
+  eq(base.enabled('arsenal'), true, 'the released switch is on for everyone');
   let state = {wastelandGateDiscovered: false};
   const view = raceFeatureFlags(base, () => state);
   eq(view.enabled('arsenal'), false, 'an undiscovered named player cannot use arsenal');

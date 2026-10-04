@@ -10,8 +10,8 @@ for (const status of ['countdown', 'racing', 'crashed', 'ticket']) ok(rearViewAc
 for (const status of ['menu', 'results', 'gameover', 'finished', undefined]) ok(!rearViewActive({ status }), `${status}: mirror hidden`);
 ok(!rearViewActive({ status: 'racing', onFoot: true }), 'Walking hides the mirror and skips its render pass');
 equal(rearViewRect({ left: 20, top: 10, width: 1280, height: 720 }, { left: 1020, top: 110, width: 256, height: 80 }), { x: 1000, y: 540, width: 256, height: 80 }, 'Frame and canvas offsets align');
-equal(rearViewRect({ left: 0, top: 0, width: 100, height: 60 }, { left: -20, top: -10, width: 80, height: 40 }), { x: 0, y: 30, width: 60, height: 30 }, 'Small viewport safely clips negative edges');
-equal(rearViewRect({ left: 0, top: 0, width: 100, height: 60 }, { left: 80, top: 45, width: 80, height: 40 }), { x: 80, y: 0, width: 20, height: 15 }, 'Small viewport safely clips far edges');
+equal(rearViewRect({ left: 0, top: 0, width: 100, height: 60 }, { left: -20, top: -10, width: 80, height: 40 }), { x: 0, y: 30, width: 60, height: 30 }, 'Rear view safely clips negative edges');
+equal(rearViewRect({ left: 0, top: 0, width: 100, height: 60 }, { left: 80, top: 45, width: 80, height: 40 }), { x: 80, y: 0, width: 20, height: 15 }, 'Rear view safely clips far edges');
 const course = { features: { tunnels: [] } }, state = { status: 'racing', s: 30 }, player = new THREE.Group();
 player.userData.size = { height: 1.25 }; player.position.set(10, 3, 20); player.rotation.order = 'YXZ';
 const camera = new THREE.PerspectiveCamera(29, 3.2, .15, REAR_VIEW_FAR), direction = new THREE.Vector3();

@@ -1,6 +1,6 @@
 # Camera choice round 2 review
 
-Director inspected both matched contact sheets and the full-size phone image
+Director inspected both matched contact sheets and the full-size image
 from production/fixture 670f81f. The same eleven views were captured privately
 with memory-only saves, with zero reported browser warnings or errors.
 
@@ -10,7 +10,7 @@ with memory-only saves, with zero reported browser warnings or errors.
 | Camera and aiming clarity | 4 | Complete overhead fighter and nearby car remain visible; first-person tool view and projected aim marker work in both qualities. |
 | Grounding and clearance | 4 | Visible contact stays grounded; reviewed terrain/tunnel and remote-lateral regression checks remain unchanged. |
 | Interaction and motion | 4 | The repeated actual-input flow passes switching, aim/fire/repair, pause/resume and car re-entry in both qualities. |
-| View obstruction | 4 | Specific QA panels are gone, real controls remain, and the compact phone minimap clears the fighter. Health, gear and car direction are readable. |
+| View obstruction | 4 | Specific QA panels are gone, real controls remain, and the compact minimap clears the fighter. Health, gear and car direction are readable. |
 | Frame pacing | 4 | Both short absolute 120-frame RAF p95 samples are 18.2 ms. |
 
 These timing samples do not establish percentage overhead or worst-case combat

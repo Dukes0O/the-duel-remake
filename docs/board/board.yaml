@@ -1460,7 +1460,6 @@ tasks:
     acceptance:
       - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
     claude_polish_list: "From the 1 October reviews: more scrap on the Salt Flats inner island; tanker readability at distance; Salt Flats ridge width variety."
-    phone_capture_note: "Private phone captures show the weapon row overlapping the course title and the ambush title overlapping the bailout hint. These are unchanged HUD paths; route them through a settled polish card when its files are free."
 
   - id: CRASH-02
     title: "Crash look and sound"
@@ -1681,7 +1680,7 @@ tasks:
       - "Reveal the hidden road as a dotted map path only after discovery, in the live map and course preview. Cache keys must include discovery so switching named players cannot leak the path. Flag-off and undiscovered map geometry stays identical to the recorded controls."
       - "After five completed Pacific races without discovery, show the garage tip about the dry wash. After ten, draw a bounded dust devil near the entrance during races using presentation time and no simulation RNG. Remove both hints after discovery. These hints do not change collision, race timing, NPC routes or outcomes."
       - "Independent save review loads every historical fixture, checks malformed/partial data and backup failure, and preserves credits, cars, upgrades, drivers, courses, paint, old weapon levels, records and ghosts. Test named-player isolation, duplicate discovery/finish events, reload, direct visit and interrupted navigation using memory-only storage."
-      - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints and a phone-size menu. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
+      - "Retain two scored bounded browser rounds for hidden/discovered menu and map, Turn back persistence, automatic revisit, five/ten-race hints. Preserve ordinary and flag-off replay fingerprints. Required lane/build gate and evidence note precede integration."
       - "R1 review authorizes a narrow screen-menu.css rule for the discovered WASTELAND action: full-column secondary button at least 44 pixels high. Move the five-race garage hint above the car list and label the revealed map path clearly, keeping undiscovered and flag-off presentation unchanged. R2 menu images must show settled loading state; do not hide a real loading overlay in the capture."
       - "The independent author may extend test-wasteland-profile's exact default key list with the two approved discovery fields and assert false/zero defaults. Retain every existing key and all legacy, malformed, backup and future-version checks. The Director reviews this precise expected-schema change before the mandatory gate rerun; record and retain the original failure."
     note: "Merged 81b268c after 231 passing lane suites and a passing build on clean fdcf7eb; c4edc08 changes evidence only. Three failed attempts and reviewed corrections are retained: existing update ordering, optional menu control, and exact approved discovery-field expectation. Runtime, Save Guardian and presentation reviews pass; two scored browser rounds are retained. Discovery persists by player; direct visits create no race settlement. Raw-field backup detection precedes writes, unknown Wasteland data is preserved, and the bounded counter's history initialization is only a lower bound. Hidden Road stays dev for separate wall/wash art debt."
@@ -1701,7 +1700,7 @@ tasks:
       - "Keep the camera selector pure and derived from the same fighter snapshot. Overhead follows behind and above the fighter, with terrain clearance at the actual camera position and a bounded boom/tunnel correction. Recheck final clearance after constraints so slopes and tunnel roofs cannot push the eye underground. Verify all eleven combat courses and common-time poses without changing simulation inputs or outcomes."
       - "Reuse existing rigged and fallback local fighter views in overhead; suppress first-person hands and tools there. First person retains its current body suppression and gear. Reticle placement must reflect the existing fighter aim direction in both cameras, including overhead parallax; change presentation only, never targeting, weapon rules or aim assistance. Include foot mode in presentation metrics invalidation."
       - "Store an additive validated footCamera preference in named-player raceSettings only if the existing normalization and pre-write backup seam can safely support it. Default old and malformed values to first person, preserve other settings and player isolation, and require independent Save Guardian review. Do not introduce a new storage key or version solely for this preference."
-      - "Independent focused red tests precede implementation. Retain ordinary camera/input controls, use one compact memory-only browser scenario for setting/key switching, aim/fire/repair, pause and re-entry in High and Performance, and keep scored desktop/phone contact sheets. Required lane/build gate precedes merge; do not repeat unrelated save suites unless their source changed."
+      - "Independent focused red tests precede implementation. Retain ordinary camera/input controls, use one compact memory-only browser scenario for setting/key switching, aim/fire/repair, pause and re-entry in High and Performance, and keep scored contact sheets. Required lane/build gate precedes merge; do not repeat unrelated save suites unless their source changed."
       - "Independent author may add only footCamera: first-person to the existing exact saved-preference expectation in test-race-settings, with all previous values retained. Record and review this approved additive-schema assertion change. Before the broad gate, run affected existing race-settings, input-context, on-foot camera and backup tests once to catch changed contracts early. No new gamepad mapping is needed in this card."
       - "The migrated current-format fixture in test-career-backup may receive only its new footCamera: first-person default. Preserve the existing no-migration/no-backup assertions and all historical/damaged fixtures. This fixture correction reflects the approved raw missing-field migration guard; it must not weaken that guard. Record and independently review the exact fixture diff."
     note: "Merged c1ff020 after 232 passing lane suites and a passing build on clean 45ec1e8; final 39c34e8 changes evidence only. Source and Save Guardian reviews pass; two scored browser rounds are retained. Eight focused groups cover preference isolation, unchanged first-person controls, all eleven combat courses, remote-tunnel clearance and projected aim. The approved saved-preference expectation and current-format backup fixture changes retain previous controls. No new assets or weapon behavior; first person remains default."
@@ -2161,7 +2160,7 @@ tasks:
     size: L
     needs: [BUG-01, BUG-10, BUG-11, FIX-03, FND-07, FND-08]
     status: released
-    note: "Released in 34d66fe. Merged as d9965cd; unchanged replays, build, High/Performance smoke and six narrow dialog checks pass."
+    note: "Released in 34d66fe. Merged as d9965cd; unchanged replays, build, and High/Performance smoke pass."
     spec: "SPEC.md, task RFX-01"
   - id: RFX-02
     title: "Split game simulation into systems"
@@ -2524,7 +2523,7 @@ tasks:
       - "Count hits and actual armor removed from player-owned weapon or ram impacts on any of three CPU cars; exclude shielded, traffic, self and CPU-owned damage."
       - "Count wrecks caused and taken once per incident; do not credit scenery or self wrecks as player-caused."
       - "Track a bounded combo and combat style score once, reset live counters per stage, and snapshot hitsLanded, wrecksCaused, wrecksTaken, knockdowns, damageDealt, bestCombo and combatStyleScore on finish or timeout."
-      - "Show combat stats on results at desktop and 390x844; ordinary and flag-off modes keep their result, score, credit and replay behavior."
+      - "Show combat stats on results; ordinary and flag-off modes keep their result, score, credit and replay behavior."
       - "Focused tests cover overkill, simultaneous bomb victims, all three opponents, ownership, frame-rate parity and one-time wreck recovery; private browser, balance and frame checks pass."
     note: "Read-only scope proposal completed. CMB-03 records and presents combat results; SAVE-01 owns credit bonus and persistence. Knockdowns stay zero until on-foot combat is implemented. Initial combat style tuning is a separate 5-second, maximum-5 combo, 100 points per positive hit times combo, plus 400 per caused wreck, all times the existing score multiplier."
     spec: "SPEC.md section 3.2, task CMB-03"
@@ -2577,7 +2576,7 @@ tasks:
     needs: [RFX-01, CMB-01, VIS-02]
     status: integrated
     behavior_change: yes
-    note: "Weapon cooldown rings, armor bars, projected opponent markers and directional hit feedback integrated at 43295ea. Focused HUD checks and private desktop/mobile High/Performance review passed."
+    note: "Weapon cooldown rings, armor bars, projected opponent markers and directional hit feedback integrated at 43295ea. Focused HUD checks and private High/Performance review passed."
     spec: "SPEC.md sections 3.12 and 12.2, task UI-01"
   - id: PRG-01
     title: "Versioned Wasteland save data and migration"
@@ -3266,7 +3265,7 @@ tasks:
     claimed_by: "Codex Warlord UI lane, 26 September 2026"
     owns: [src/warlords.js, src/screen-territory.js, tools/test-warlords.mjs, tools/test-territory-ui.mjs, docs/changes/WAR-01.md]
     hooks: [src/screen-yard-home.js, src/wasteland-career.js, src/wasteland-progress.js, src/career-backup.js, src/armor-kits.js, src/screen-armory.js, tools/test-armor-kits.mjs, tools/scenarios/yard-home.mjs]
-    note: "Director re-slices, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; the two existing armor-kit consumers plus their focused test; and the existing private yard-home scenario. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs, retain armor-kit unlocks, and prove the settled locked/available/defeated ladder in High and Performance modes including a phone-width map capture."
+    note: "Director re-slices, 26 September 2026: WAR-01 may update only the existing warlords normalization in src/wasteland-progress.js; its matching migration/export guards in src/career-backup.js; the two existing armor-kit consumers plus their focused test; and the existing private yard-home scenario. This must give the save-shape change a verified backup, keep old exports valid, preserve unknown legacy IDs, retain armor-kit unlocks, and prove the settled locked/available/defeated ladder in High and Performance modes."
     helpers: [test_author, reviewer, browser_qa]
     acceptance:
       - "Design settled in docs/SCRAPDOME.md section 5, 'Settled for build' (Claude, 26 September 2026): a full territory hold opens that warlord; FIGHT, REMATCH and COMING LATER states; profile.wasteland.warlords. Earlier text kept for context: settle immutable eight-boss metadata, career territory mapping, hold/claimed/defeated display rules and which fights are actually available before code. Reuse the existing territory IDs and course assignments."

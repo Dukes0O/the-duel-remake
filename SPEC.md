@@ -1267,7 +1267,7 @@ export function weaponStats(id, level = 0) {
 | Behavior pinning | Recorded inputs replayed for every event and mode at 30, 60 and 144 FPS; fingerprints must match | `tools/replays/`, `tools/test-replays.mjs` |
 | Balance | Autopilot races per difficulty and weapon policy against the targets in section 13 | `tools/combat-balance.mjs`, `tools/test-combat-balance.mjs` |
 | Saves | Every historical save shape loads without loss; storage budget with maximum content | `tools/fixtures/saves/`, `tools/test-save-fixtures.mjs`, `tools/test-storage-budget.mjs` |
-| Browser | Smoke plus one scenario per feature switch: menus, races in both quality settings, rigs and kits on all nine cars, figures, effects, HUD at 390×844, photo capture, war paint, gallery with storage blocked | `tools/browser-harness.mjs`, `tools/scenarios/` |
+| Browser | Smoke plus one scenario per feature switch: menus, races in both quality settings, rigs and kits on all nine cars, figures, effects, HUD, photo capture, war paint, gallery with storage blocked | `tools/browser-harness.mjs`, `tools/scenarios/` |
 | Frame pacing | Combat race and arena fight compared with an ordinary race on the same route and settings | harness scenario plus `tools/menu-check.html` |
 | Whole game | Every existing suite, including the campaign runs, in every full check | full tier |
 
@@ -1287,7 +1287,7 @@ Tests prove things work. These loops make them good. Every card that changes som
 
 **Look loop (graphics)**
 
-1. browser_qa captures the card's shot list: fixed camera setups, for example close-up, chase camera at speed, a night course, High and Performance quality, and 390×844 phone size for screens. Same shots every round, so rounds compare side by side.
+1. browser_qa captures the card's shot list: fixed camera setups, for example close-up, chase camera at speed, a night course, High and Performance quality. Same shots every round, so rounds compare side by side.
 2. The `art_critic` helper scores each shot from 1 to 5 against this rubric:
    - Matches the art direction board and the existing game's style.
    - Reads clearly at racing speed: you can tell what it is in half a second.
@@ -1793,4 +1793,3 @@ Answers (23 September 2026): D1, D2, D3, D4, D5 and D7 agreed as recommended. D6
 - Gore or blood.
 - *(v3, Kyle declined on 23 September 2026)* War Paint Studio, photo mode, rewind, wanted posters, trophy card frames, the gallery and painted UI art.
 - Changing ordinary race, time trial or objective event rules, except as D6 decides.
-- Touch controls.

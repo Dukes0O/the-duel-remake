@@ -71,7 +71,7 @@ Shove replay, and approved only the static BASE pin update to b9ea10d. Every
 original preservation assertion, source binding, donor hash and path inventory
 remains intact; source, public assets and replay bytes match integration exactly.
 All 21 original cases then pass with 105,041 checks. No signatures are regenerated.
-Motion feel, audio, moving gameplay and phone layout remain unmeasured.
+Motion feel, audio and moving gameplay remain unmeasured.
 Claude approved round two and its costume. Tanker is merged, so Vesper's
 existing donor-validating native CLI suite is registered separately; the
 Tanker-only empty-root planner and every original CLI assertion stay intact.
