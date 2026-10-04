@@ -158,6 +158,7 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
     crewPerks(fighter.crewId).lockRangeMultiplier || 1));
   state.combat.projectiles.push({
     kind: 'rpg', owner: 'player', id: `rpg-${state.stageIndex}-${serial}`,
+    ...(state.arena ? {ownerId: 'player'} : {}),
     x: fighter.x + direction.x * T.rpgMuzzleOffset,
     y: fighter.y + T.rpgEyeHeight + direction.y * T.rpgMuzzleOffset,
     z: fighter.z + direction.z * T.rpgMuzzleOffset,

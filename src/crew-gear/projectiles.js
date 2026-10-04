@@ -72,7 +72,8 @@ function explodeSticky(duel, shot) {
     const at = carBodyPoint(duel, actor);
     if (shot.attachedId === targetIdentity(duel, actor) ||
         Math.hypot(at.x - shot.x, at.z - shot.z) < radius)
-      damageGearCar(duel, actor, gear.carDamage, owner);
+      damageGearCar(duel, actor, gear.carDamage, owner, null,
+        {hitPosition: {x: shot.x, y: shot.y, z: shot.z}, blastRadius: radius});
   }
   for (const target of fighterTargets(duel, owner, true)) {
     const f = target.fighter;
@@ -165,7 +166,7 @@ export function stepGearProjectile(duel, shot, dt) {
     }
     if (hit.actor) {
       const removed = damageGearCar(duel, hit.actor, gear.carDamage, owner,
-        {x: hit.nx, z: hit.nz});
+        {x: hit.nx, z: hit.nz}, {hitPosition: hit.point});
       if (gear.id === 'scrap-cannon' && removed > 0 && !hit.actor.combatWrecking)
         cannonShove(duel, hit.actor, {x: shot.launchX, z: shot.launchZ}, gear);
     } else if (hit.target) damageGearFighter(duel, hit.target,

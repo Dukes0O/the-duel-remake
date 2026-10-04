@@ -41,6 +41,15 @@ timeout; their finish still needs the held central convoyCharge wreck hook.
 Unplanted window reset and native event timeout settlement pass.
 Existing ordinary boarding regression: 24 checks pass.
 
+Signature projectile hits now pass their real swept intersection point. Sticky
+blasts pass their actual explosion centre and existing radius. The shared gear
+damage helper forwards only those geometry fields, with unchanged damage maths.
+Native RPG shots carry the established arena player owner id and their existing
+splash radius. Its impact consumer, turret and flame producers remain held.
+Foot weapons 5 cases, crew gear 33 checks, gear modules 16 checks, projectiles
+35 cases and replay fingerprints 12 checks across 4 encounters pass unchanged.
+A native contact witness hits 1.074 m from the aimed car centre, not its centre.
+
 Fixture correction: the old test landed at the rig centre at vehicle height.
 That 3.5 m envelope includes warning lamps, not a boardable roof. The approved
 amber plate is 3.02 m high and 2.444 m behind the rig centre, with half-width
@@ -73,6 +82,8 @@ for Voice's independent final gate. No authored assertion was edited here.
 
 Native damage/spec/admission/render hooks, laptop browser,
 audio, balance, save review, code review and the exact lane gate remain open.
+Held files include combat-armor/projectiles/AI, sim-contacts, Game/App/flags,
+renderer, arena screens/HUD, audio and crew-gear/signature.js.
 Director's whole-base full checkpoint passed 348 suites.
 No release work or real player storage was touched. No merge is claimed.
 
