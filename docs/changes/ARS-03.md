@@ -46,7 +46,10 @@ first-win settlement still saves the explicit earned reward as before.
 - Nine sound recipes produce 27 cached CC0 recordings; 31 audio checks pass,
   including native CPU/player Voice ownership for all four new actions.
 - Browser audio: 27 decodes; all nine native cues; owned loops end and pause.
-  Contrast is 6.56 to 9.95 dB over the engine; overlapping mix peak is 0.8202.
+  Earlier direct-cue contrast bypassed the Tesla pulse's real stereo panner.
+  Tests-only spatial correction on 7ac1f37a: actual 1 m, centre pan, weapons
+  bus. Pulse is +3.55 dB, red at the unchanged 6 dB threshold; the other eight
+  remain +6.71 to +9.95 dB. All nine peaks stay below 1. No browser issues.
 - Pending: final reviews, balance, frames, lane gate and build.
 
 Four native regressions fixed: Star/Magnet, disabled slots, recharge angle and
@@ -81,12 +84,9 @@ is off. Source forwards that requested boolean beside Arsenal; policies,
 targets and fixtures stay exact. Unchanged balance 34/34 and native 99/552 pass.
 Its one-frame native probe proves purchase/equipment/CPU slots, not full balance.
 
-Audio routing red `e19beaa9`: light native mode is 2/10. Mortar fire dispatches
-twice; Tesla, Drone and Nitro add weapon.default.fire. Voice ownership and
-purity already pass. Source adds only four IDs to the generic exclusion;
-named cues and Voice routing stay exact. Unchanged light mode passes 10/10,
-including Crossbow/Harpoon controls; source syntax and full audio 41/41 pass.
-Original 31 audio assertions stay exact. Playback and build checks await.
+Audio routing red `e19beaa9`: duplicate Mortar/default launches fixed by four
+generic exclusions. Native routing 10/10 and full audio 41/41 pass, including
+Crossbow/Harpoon, ownership and purity. Original assertions remain exact.
 
 ## Removed
 

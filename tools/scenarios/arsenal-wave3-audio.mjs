@@ -168,7 +168,13 @@ export async function run(context) {
         clock = frame / 60;
         audio.update(state, {});
       }
-      audio._playCue(id);
+      if (id === 'weapon.tesla.pulse') {
+        const course = app.duel.course, listener = course.groundAt(0, 0);
+        const output = audio._spatialOutput({combatHit: true,
+          hitPosition: {x: listener.x, y: listener.y + 1, z: listener.z}},
+        {...state, s: 0, lateral: 0}, course, audio.buses.weapons);
+        audio._playCue(id, {destination: output.level, onEnd: output.disconnect});
+      } else audio._playCue(id);
       const rendered = await native.startRendering();
       let engine = 0, weapon = 0, mixPeak = 0;
       const e = rendered.getChannelData(2), w = rendered.getChannelData(4);
