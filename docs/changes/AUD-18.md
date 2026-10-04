@@ -1,6 +1,6 @@
 # AUD-18: kept fight voices
 
-Status: independent lane/build gate pending. Lane: codex/audio/fight-voices.
+Status: merged. Lane: codex/audio/fight-voices.
 
 ## Decisions
 
@@ -88,7 +88,10 @@ Status: independent lane/build gate pending. Lane: codex/audio/fight-voices.
   Director grant 29c3328 permits adding only the literal Fight Voices dev key
   to that exact expected catalog. Every old key, state and assertion stays.
   Corrected beta test passes all 8 cases.
-  Independent review and a fresh final lane/build gate remain due.
+  Independent review clears the exact added dev entry and old assertions.
+- Final e6ad35a gate: 349/349 suites pass in 570.11 s, no skips or failures;
+  all eight campaign shards pass. Required build passes in 455 ms.
+  Source, browser and audio reviews are clear. Merged as f1e4ed0.
 
 ## Removed
 

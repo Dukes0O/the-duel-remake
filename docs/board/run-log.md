@@ -743,3 +743,8 @@ The quiet full rerun passed all 348 suites in 600.65 seconds on clean
 3f5deb00; build passed in 449 ms. Feature merges can resume. Arsenal needs
 four native review fixes; Voice's released-base source review is clear.
 
+AUD-18 merged on 4 October after all 349 lane suites passed in 570.11 seconds
+and the build passed in 455 ms. Independent source, laptop browser and audio
+reviews are clear. All nine kept takes and receipts stay exact; human listening
+is still unmeasured. One feature merge since the last full checkpoint.
+

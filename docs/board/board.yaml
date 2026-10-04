@@ -3401,10 +3401,15 @@ tasks:
     lane: AUDIO
     size: M
     needs: [AUD-17]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-04
     branch: codex/audio/fight-voices
-    source_commit: bfa1aec
+    source_commit: e6ad35a65c03b41bf553da2b410c57536687fdb3
+    merged_commit: f1e4ed0bd513efb1c3442f70dd5055281dac1554
+    lane_gate_passed: 349
+    lane_gate_duration_seconds: 570.1119268
+    lane_build_passed: true
+    build_ms: 455
     test_commit: d8df393
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
@@ -3414,7 +3419,7 @@ tasks:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
       - "Play crew callouts and raider warnings during real fights, with matching subtitles, repeat limits and pause/mute handling. Keep simulation and replay fingerprints unchanged."
       - "Tests first; private memory-only browser and recorded audio checks at High and Performance. Keep behind a new dev switch; record any human listening still due."
-    note: "Kyle authorized runtime wiring on 4 October. Preserve the kept sources, receipts and the separate audio worktree."
+    note: "Merged after all 349 lane suites, build and independent source, browser and audio checks passed. The nine kept sources and receipts are unchanged; human listening remains unmeasured."
     sequencing: "Voice owns audio and combat HUD first; Arsenal receives its reviewed commit before editing those hooks. Arsenal freezes combat-weapons while Voice adds native actor attribution only. Crew callouts follow the first player combat action; the existing raiderWarning plays the kept warning. Exact subtitles remain visible while muted; presentation timers never change simulation."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
