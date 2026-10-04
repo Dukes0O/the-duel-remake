@@ -3407,7 +3407,7 @@ tasks:
     test_commit: d8df393
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
-    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-arsenal-core-audio.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, reviewer, browser_qa, audio_qa]
     acceptance:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
