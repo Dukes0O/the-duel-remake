@@ -1,6 +1,6 @@
 # AUD-18: kept fight voices
 
-Status: review needed. Lane: codex/audio/fight-voices.
+Status: base update review needed. Lane: codex/audio/fight-voices.
 
 ## Decisions
 
@@ -27,22 +27,35 @@ Status: review needed. Lane: codex/audio/fight-voices.
   Arsenal cannot consume the player's crew line. HUD hidden writes are guarded.
 - Mortar fire, Tesla charge, Decoy deploy and Nitro start use their actor-owned
   Arsenal launch cues. New-producer native checks belong to the combined ARS lane.
-- Feature switches: 35 checks; Preview: 22; combat HUD: 8 cases pass.
+- Prior source checks: feature switches, Preview and 8 combat HUD cases pass.
 - Gatekeeper: 8 cases; combat audio: 11 cases; sound bank and file placement
   pass. Production build passes. No source receipt or hash changed.
-- Changed assertion: feature catalog grows from seven to eight switches;
-  new production-off and explicit-QA checks preserve the old assertions.
+- Changed assertion: feature catalog grows from seven to eight switches.
+  Released five-switch on values remain; Fight Voices alone is added as dev.
+  Its production-off and explicit-QA checks and released explicit-off fixtures
+  remain. No existing replay pin, refusal or isolation assertion is weakened.
 - Three ordinary replay fingerprints remain exact in the native event listener.
 - Laptop browser/native audio recheck passes: High and Performance, private port 17976,
   memory-only saves, two screenshots, no warnings or errors. Eight crew HUD
   captions and pause/menu/no-stale-resume checks pass. No HUD overlap or
   caption DOM writes across five unchanged snapshots.
-- All nine native-event recordings pass full-throttle speech contrast:
-  6.29-13.49 dB over the engine; maximum mix peak 0.71430, below clipping.
-  Only four quiet takes gain 1.1-1.5 in the bank; source bytes stay exact.
-- Broad lane gate is held for the external tested-base update. The earlier
-  run is not a pass: 107 passed, 1 failed, 240 not run.
-  This run predates final QA gain/placement fixes. Independent review pending.
+- Independent source review clears 23e625e: native actor/enemy attribution
+  and guarded subtitle DOM writes; all 26 cases / 358 checks pass.
+- Independent audio QA passes all nine native/offline takes and actual live
+  Rook/Bill events in both qualities, at 1366x768 with memory-only saves.
+  Native speech contrast: 6.289-13.492 dB; true peak: -2.58/-2.54 dBTP.
+  Live High: 11.792 dB contrast, -3.46 dBTP; Performance: 10.686 dB,
+  -3.57 dBTP. Zero clipping; take durations, captions, no speech overlap,
+  mute, pause and menu checks pass. Kept sources and receipts stay exact.
+- Human clarity and live onset within 30 ms remain unmeasured. Captions can
+  linger when simulation slows. The separate old engine -50 ms boundary
+  observation is not a Voice regression. No new voice or source choice.
+- Merge base: complete released integration 3eb740d, preserving automatic
+  incoming files, including README and VERIFICATION; five switches stay on.
+  Current checks pass: Voice 26 cases / 358 checks, sound bank/mixer,
+  gatekeeper 8 cases, flags 36 checks, Preview 22 checks and HUD 8 cases.
+  Production build passes. Broad lane gate waits for the Director's baseline
+  full run. Earlier 107/1/240 run is not a pass.
 - Recipe: node tools/build-fight-voices.mjs copies and hash-checks all nine takes.
   Native scenario: tools/scenarios/fight-voices.mjs, High and Performance.
 - Kyle's listening check remains a separate human gate; no listening approval

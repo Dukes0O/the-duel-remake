@@ -326,7 +326,7 @@ export function attachRenderer(host, app) {
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
     const pp = vehicleGroundPoint(course,distance,lateral);
-    const journeyView=hiddenRoadPresentation(st,course,{aspect:camera.aspect});
+    const journeyView=hiddenRoadPresentation(st,course);
     const spurCamera=!menu&&(!journeyView.camera||journeyView.camera.blend<1)?
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
@@ -431,7 +431,7 @@ export function attachRenderer(host, app) {
       if(blend>.15)player.visible=true;
       firstPersonView=false;
     }
-    const yardHomePose=yardPresentation?.homeCamera?.(camera.aspect);
+    const yardHomePose=yardPresentation?.homeCamera?.();
     if(yardHomePose){
       camTarget.set(yardHomePose.position.x,yardHomePose.position.y,yardHomePose.position.z);
       lookTarget.set(yardHomePose.target.x,yardHomePose.target.y,yardHomePose.target.z);

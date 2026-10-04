@@ -158,19 +158,15 @@ export async function run(context) {
       return {cooldown: state.combat.cooldowns.smoke, straightShot: true};
     })()`);
     await context.screenshot('arsenal-smoke-occlusion-' + quality);
-    await context.command('Emulation.setDeviceMetricsOverride', {
-      width: 390, height: 844, deviceScaleFactor: 1, mobile: true});
     await context.evaluate(`(async () => {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       window.__arsenalPaint();
       const actual = window.__qaApp.duel.state.weaponLoadout.join(',');
       const hud = [...document.querySelectorAll('[data-combat-slot]')]
         .map(button => button.dataset.combatWeapon).join(',');
-      if (hud !== actual) throw Error('Painted phone HUD differs from real four-slot loadout');
+      if (hud !== actual) throw Error('Painted HUD differs from real four-slot loadout');
     })()`);
-    await context.screenshot('arsenal-smoke-phone-' + quality);
-    await context.command('Emulation.setDeviceMetricsOverride', {
-      width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
+    await context.screenshot('arsenal-smoke-hud-' + quality);
     await context.evaluate(`(() => {
       const duel = window.__qaApp.duel, state = duel.state;
       for (let i = 0; i < 620; i++) duel.step(${DT});

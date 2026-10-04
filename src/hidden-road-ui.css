@@ -62,30 +62,6 @@
   opacity: var(--hidden-road-hud-opacity, 0);
   pointer-events: none;
 }
-@media (max-width: 520px) {
-  .hidden-road-dialog {
-    bottom: 3%;
-    left: 14px;
-    width: calc(100% - 28px);
-    padding: 16px;
-  }
-  .hidden-road-dialog h2 {
-    font-size: 25px;
-  }
-  .hidden-road-copy {
-    font-size: 14px;
-    margin-bottom: 15px;
-  }
-  .hidden-road-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .hidden-road-actions button {
-    width: 100%;
-    min-height: 42px;
-    padding: 10px 16px;
-  }
-}
 
 .hidden-road-subtitle {
   position: absolute;

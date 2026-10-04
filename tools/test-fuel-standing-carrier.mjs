@@ -12,7 +12,7 @@ import {COMBAT_TUNING as T, CPU_COMBAT} from '../src/wasteland-tuning.js';
 // Fuel carrier identity follows the standing fighter, not its parked wreck.
 // Physical-car outOfPlay remains intact. Every carry and wreck below is real.
 const DT = 1 / 120;
-const FLAGS = {'hidden-road': true, 'fuel-run': true};
+const FLAGS = {'hidden-road': true, 'fuel-run': true, arsenal: false};
 let checks = 0;
 const eq = (a, b, message) => { checks++; assert.deepEqual(a, b, message); };
 const ok = (value, message) => { checks++; assert.ok(value, message); };

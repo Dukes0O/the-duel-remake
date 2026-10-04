@@ -72,9 +72,7 @@ async function start(context) {
       const player=body(state),victim=body(state.rival);
       const strip=window.__waveOneCues('weapon.caltrops.deploy',state)[0]?.hazard;
       const points=[victim];
-      // Desktop keeps the owner in view. A narrow phone shot shows the nearby
-      // victim and actual strip rather than shrinking the whole interaction.
-      if(!strip||aspect>=1)points.push(player);
+      points.push(player);
       if(strip)for(const side of [-1,1])for(const end of [-1,1]){
         points.push({x:strip.x+Math.cos(strip.heading)*side*strip.width/2+
           Math.sin(strip.heading)*end*strip.length/2,y:strip.y,
@@ -270,15 +268,14 @@ export async function run(context) {
       window.__waveOnePlace(state,520);window.__waveOnePlace(target,at.s,at.lateral+8);
     })()`);
     await paint(context,'wave-one-caltrops-around-counter-'+quality);
-    await context.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
     await context.evaluate(`(async()=>{
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       window.__waveOnePaint();
       const actual=window.__qaApp.duel.state.weaponLoadout.join(',');
       const hud=[...document.querySelectorAll('[data-combat-slot]')].map(button=>button.dataset.combatWeapon).join(',');
-      if(actual!=='harpoon,caltrops,oil,smoke'||hud!==actual)throw Error('Wave-one phone HUD differs from actual equipped weapons');
+      if(actual!=='harpoon,caltrops,oil,smoke'||hud!==actual)throw Error('Wave-one HUD differs from actual equipped weapons');
     })()`);
-    await context.screenshot('wave-one-phone-hud-'+quality);
+    await context.screenshot('wave-one-hud-'+quality);
     console.log('Wave one '+quality+': actual four-weapon purchases, swept Harpoon hit/tether, noncontinuous .6 steering, shield, Caltrops contact/around and render purity passed.');
   }
 }

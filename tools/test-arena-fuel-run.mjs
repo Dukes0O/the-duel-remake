@@ -21,8 +21,9 @@ import {createFuelRunView} from '../src/arena/modes/fuel-run-view.js';
 // ARENA-03: SCRAPDOME 10 Fuel Run, shared 3/6, SPEC 0.12.
 // All saves are fabricated in memory. Race rules run through the actual engine.
 const DT = 1 / 120;
+// Arsenal (released 4 October 2026) is pinned off: the controls below are the earlier traces.
 const ON = {'hidden-road': true,
-  'fuel-run': true};
+  'fuel-run': true, arsenal: false};
 const FIELD = [{car: 'dusthawk_rally', brain: 'collector'},
   {car: 'aurora_gt', brain: 'rammer'}, {car: 'stuttgart_959s', brain: 'hunter'}];
 const values = new Map();
@@ -150,10 +151,12 @@ test('Fuel Run has its own headless mode module', async () => {
   }));
   ok(mode, 'ARENA-03 must supply the Fuel Run mode module');
 });
-test('the new Fuel switch starts in dev and is hidden from the released player', () => {
-  equal(FEATURE_STATES['fuel-run'], 'dev', 'Fuel Run starts in dev under SPEC 0.12');
-  equal(createFeatureFlags({storage: null, qa: false}).enabled('fuel-run'), false,
-    'the released player does not run unfinished Fuel rules');
+test('the Fuel switch is released (4 October 2026); a dev Fuel switch stays hidden from players', () => {
+  equal(FEATURE_STATES['fuel-run'], 'on', 'Fuel Run is released');
+  equal(createFeatureFlags({storage: null, qa: false}).enabled('fuel-run'), true,
+    'the released player runs Fuel Run');
+  equal(createFeatureFlags({catalog: {...FEATURE_STATES, 'fuel-run': 'dev'}, storage: null, qa: false}).enabled('fuel-run'), false,
+    'the dev rule is kept with the switch pinned to dev');
 });
 
 test('four distinct fuel pads in the middle and one coloured depot per starting team', () => {
@@ -493,8 +496,10 @@ test('rank 6 and the new dev switch govern the yard choice; locked choices stay 
   ok(/FUEL RUN/i.test(unlocked), 'rank 6 sees Fuel Run in the enabled yard panel');
   const released = arenaYardPanel({profile: {wasteland: {discoveredGate: true, rank: 6}},
     featureFlags: createFeatureFlags({storage: null, qa: false})});
-  equal(/FUEL RUN/i.test(released), false, 'the default released player does not see a dev mode');
-  equal(FEATURE_STATES['fuel-run'], 'dev', 'the mode remains behind its new dev switch');
+  ok(/FUEL RUN/i.test(released), 'the default released player at rank 6 sees the released mode');
+  const dev = arenaYardPanel({profile: {wasteland: {discoveredGate: true, rank: 6}},
+    featureFlags: createFeatureFlags({catalog: {...FEATURE_STATES, 'fuel-run': 'dev'}, storage: null, qa: false})});
+  equal(/FUEL RUN/i.test(dev), false, 'a dev Fuel switch hides the mode');
 });
 
 for (const blocked of ['rank', 'fuel-run', 'discovery', 'menu']) test(`${blocked} gate blocks a Fuel Run start atomically`, () => {

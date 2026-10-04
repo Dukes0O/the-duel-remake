@@ -48,7 +48,7 @@ for (const route of ROUTE_VARIANTS) test(`${route.id}: physical yard and parked 
   assert.ok(worldOrigin.distanceTo(new THREE.Vector3(gate.x, gate.y, gate.z)) < .001,
     'the model uses the same physical gate frame as Rustwall');
   yard.setHomeVisible(true);
-  for (const aspect of [16/9, 9/16]) {
+  for (const aspect of [16 / 9]) {
     const view = yard.homeCamera(aspect);
     assert.ok(view && view.fov > 20 && view.fov < 100);
     for (const vector of [view.position, view.target])
