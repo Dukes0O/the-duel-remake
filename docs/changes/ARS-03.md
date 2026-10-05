@@ -1,6 +1,6 @@
 # ARS-03: Arsenal wave three
 
-4 October 2026. Reviews and rechecks clear; fresh synced lane/build gates pending.
+4 October 2026. Gameplay reviews clear; measurement review and fresh gates pending.
 
 ## Decisions Before Code
 
@@ -21,7 +21,6 @@ Wave three has its own dev switch. Earlier Arsenal weapons stay unchanged.
   times 1.35, crash ram damage times 3. Existing damage ceilings still apply.
   Oil cancels it through the existing counter.
 
-Transient two-hit history stays outside serialized race and save data.
 Review fixes: Tesla ends Magnet even when Star prevents disable. HUD uses the
 native effect/recharge rule. Player Mortar compares ground distance among
 enemies ahead; CPU leader policy and authored tests stay exact.
@@ -52,8 +51,7 @@ first-win settlement still saves the explicit earned reward as before.
   All captures nonblank/textured, no new HUD overlap; existing QA overlay unchanged.
 - Nine CC0 recipes retain their 27 recordings. Native routing 10/10 and all
   41 audio checks pass, including earlier Crossbow/Harpoon and Voice ownership.
-  Spatial scenario: 27 decodes, nine cues, loop cleanup; pulse +7.48 dB,
-  other eight +6.71 to +9.95 dB, simultaneous peak 0.82069, no browser issues.
+  Prior scenario: 27 decodes, nine cues/loop cleanup, +6.71 to +9.95 dB, peak 0.82069.
   Independent continuous 0.25 s close-pulse windows at 1 m/gain 1/pan 0:
   High +7.479526 dB, Performance +6.804569 dB; delivered -1.77 dBTP in both,
   zero clips/issues. The 6 dB target and headroom limits stay unchanged.
@@ -66,7 +64,7 @@ all refusal/no-write assertions remain. The released Arsenal expectation is
 on instead of dev; its released-state invariant is unchanged. The catalog has
 nine entries: five released on, Voice/wave-three dev, other values exact.
 
-Whole Voice and integration bases transfer, ending at `63f2ef9a`; incoming
+Whole Voice and integration bases transfer, ending at `15b9c458`; incoming
 README/VERIFICATION remain byte-exact. Earlier simulation freeze is `2f094ee8`;
 audio routing is `7ac1f37a`, pulse-only volume 3.5 to 5.5 is `68a08785`.
 Independent preservation proves 110 earlier cues, six exports, 49 earlier
@@ -81,12 +79,14 @@ Balance forwards only wave-three (34/34 passes); four launch exclusions remove
 fallback duplicates. Named cues, Voice paths, assets, recipes and other bank
 values stay exact. No gameplay assertion, target or replay pin is weakened.
 
-Failed lane `d34cc540`: 91 pass/one fail/259 not run in 87.10 s; not a gate pass.
-Arena idle ram speed zero entered the Mortar path. A transient Mortar-only marker
-retains a real zero-speed apex and clears on landing/lifecycle; generic RAM stays.
-Unchanged ramp 42, wave-three 99/552, ramming 13, replay 162 and combat replay 12
-pass; 30/60/144 FPS hop/apex/cleanup probes pass. Independent fix review clears.
-Fresh quiet lane/build gates remain pending on the new synced freeze.
+Failed ramp gate `d34cc540`: 91 pass/one fail/259 not run, 87.10 s; not a pass.
+Mortar-only activity fixes idle-zero delegation; apex/landing/lifecycle stay exact.
+Reviewed `3309f22f`: ramp 42, native 99/552, ramming 13, replay 162/combat 12 pass;
+30/60/144 FPS hop/apex/cleanup probes pass. Generic released RAM stays unchanged.
+Failed audio gate `d6971001`: 149 pass/one fail/201 not run, 303.52 s; unavailable LUFS.
+Only Wave Three joins existing analysis padding: raw 22/27, padded 27/27; all peaks
+match, loudest -2.40 dBTP. Files/hashes, old paths, assertions and limits stay exact.
+Combat audio 11/11 passes; independent input review and fresh lane/build pending.
 
 ## Removed
 
@@ -96,3 +96,4 @@ Stored-only entitlement/catalog views and dropped wave-three requests are replac
 Generic replay/default launch audio is removed for the four native wave-three cues.
 Tesla pulse's 3.5 volume is replaced by 5.5; independent live review is clear.
 The broad player ram-flight delegation is replaced by Mortar-only activity.
+Raw Wave Three analysis input is replaced; runtime clips remain exact.
