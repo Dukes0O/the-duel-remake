@@ -846,3 +846,10 @@ proved. Independent review finds no repeated nearby PCM quantum but cannot
 prove input continuity. Add raw callback timestamps and input lengths only;
 keep PCM and assertions unchanged. Feature merges remain held.
 
+Claude's overnight direction parks callback diagnostics outside the main
+loop. The isolated full tier now uses four jobs and runs without other
+gates, builds or browser checks. A pass resumes feature merges; the
+crash-audio test, assertions and tolerances stay unchanged. Gunn round
+two uses darker steel, edge wear, black collars and seams, enlarged about
+15%; the next sheet needs Claude's approval. Retain the parked lane.
+
