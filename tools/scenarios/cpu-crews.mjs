@@ -16,7 +16,7 @@ export async function run(context) {
       cpuDifficulty: 'hard'});
     const s = duel.state, rival = s.opponents[0], zone = s.raids.zones[0];
     Object.assign(s, {status: 'racing', countdown: 0, paused: false,
-      s: zone.s - 250, prevS: zone.s - 250,
+      s: zone.s - 200, prevS: zone.s - 200,
       lateral: 0, prevLateral: 0, speedMph: 0});
     Object.assign(rival, {s: zone.s, prevS: zone.s, lateral: 0,
       prevLateral: 0, speedMph: 0, headingError: 0});
@@ -33,7 +33,8 @@ export async function run(context) {
     window.__cpuCrewScenarioDetach = duel.onChange((_state, event) => {
       if (event.cpuCrewEntered || event.footWeaponFired && event.enemy)
         window.__cpuCrewScenarioEvents.push({entered: !!event.cpuCrewEntered,
-          weapon: event.footWeaponFired, actorId: event.actorId});
+          weapon: event.footWeaponFired, actorId: event.actorId,
+          time: s.stageTimeSec, enteredS: event.cpuCrewEntered ? event.actor.s : null});
     });
     return {crewId: rival.cpuCrew.crewId, phase: rival.cpuCrew.phase,
       fighterId: fighter.id, parkedSpeed: rival.speedMph};
@@ -53,20 +54,26 @@ export async function run(context) {
   })()`);
   await context.screenshot(`cpu-crew-ambush-${quality}`);
   const completed = await context.evaluate(`(() => {
-    const app = window.__qaApp, duel = app.duel, s = duel.state;
+    const app = window.__qaApp, duel = app.duel, s = duel.state, rival = s.opponents[0];
     app.inspectionCamera = null; app.autopilot = true;
+    let pullAway = null;
     for (let tick = 0; tick < 120 * 900 && s.status === 'racing'; tick++) {
       app._driveAutopilot(1 / 120); duel.step(1 / 120);
+      const entered = window.__cpuCrewScenarioEvents.find(event => event.entered);
+      if (entered && !pullAway && rival.cpuCrew.phase === 'driving' &&
+          rival.s >= entered.enteredS + duel._vehicleSpec(rival).halfLength * 2 && rival.speedMph > 1)
+        pullAway = {elapsed: s.stageTimeSec - entered.time, speedMph: rival.speedMph};
     }
     window.__cpuCrewScenarioDetach();
     const events = window.__cpuCrewScenarioEvents;
     if (!events.some(event => event.weapon)) throw Error('The real ambusher never attacked');
     if (!events.some(event => event.entered)) throw Error('The ambusher never got back in');
+    if (!pullAway) throw Error('The returned native car never physically pulled away');
     if (s.status === 'racing') throw Error('The Hard race did not complete');
     if (s.completedLaps < s.lapsTotal) throw Error('The player did not reach the race finish');
     app.onFrame?.(s, 0); window.__render.renderFrame();
     return {status: s.status, completedLaps: s.completedLaps,
-      lapsTotal: s.lapsTotal, events};
+      lapsTotal: s.lapsTotal, pullAway, events};
   })()`);
   await context.screenshot(`cpu-crew-race-finish-${quality}`);
   console.log('Private computer crews: ' + JSON.stringify({stopped, completed}));
