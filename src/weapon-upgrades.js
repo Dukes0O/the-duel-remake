@@ -15,6 +15,10 @@ export const ARSENAL_WEAPONS = Object.freeze({
   rockets: Object.freeze({rank: 7, wave: 2, cpuRole: 'front', warlordId: 'gunn'}),
   flamethrower: Object.freeze({rank: 9, wave: 2, cpuRole: 'front'}),
   magnet: Object.freeze({rank: 13, wave: 2, cpuRole: 'control'}),
+  mortar: Object.freeze({rank: 14, wave: 3, cpuRole: 'front'}),
+  tesla: Object.freeze({rank: 17, wave: 3, cpuRole: 'control'}),
+  decoy: Object.freeze({rank: 19, wave: 3, cpuRole: 'control', warlordId: 'mirage'}),
+  nitro: Object.freeze({rank: 21, wave: 3, cpuRole: 'front'}),
 });
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -37,7 +41,7 @@ export function normalizeWeapons(value) {
   return {...source, version: 1, unlocked, levels};
 }
 
-export function getProfileWeapons(profile) {
+export function getSavedProfileWeapons(profile) {
   const nested = normalizeWeapons(profile?.wasteland?.weapons);
   const legacy = normalizeWeapons(profile?.weapons);
   const levels = {...legacy.levels, ...nested.levels};
@@ -49,8 +53,23 @@ export function getProfileWeapons(profile) {
     unlocked: [...new Set([...legacy.unlocked, ...nested.unlocked])], levels};
 }
 
-export function implementedArsenalWeapons({implemented = Object.keys(ARSENAL_WEAPONS)} = {}) {
-  return Object.keys(ARSENAL_WEAPONS).filter(id => Array.isArray(implemented) && implemented.includes(id));
+// Defeat entitlements belong to the read view; writes use saved ownership.
+export function getProfileWeapons(profile) {
+  const saved = getSavedProfileWeapons(profile);
+  if (profile?.wasteland?.version !== 1) return saved;
+  const warlords = profile.wasteland.warlords;
+  const rewards = Object.entries(ARSENAL_WEAPONS).filter(([, item]) =>
+    item.warlordId && (warlords?.[item.warlordId]?.defeated === true ||
+      validIds(warlords?.defeated).includes(item.warlordId))).map(([id]) => id);
+  const levels = {...saved.levels};
+  for (const id of rewards) if (!Object.hasOwn(levels, id)) levels[id] = 0;
+  return {...saved, unlocked: [...new Set([...saved.unlocked, ...rewards])], levels};
+}
+
+export function implementedArsenalWeapons({implemented = Object.keys(ARSENAL_WEAPONS),
+  arsenalWave3Enabled = false} = {}) {
+  return Object.keys(ARSENAL_WEAPONS).filter(id => Array.isArray(implemented) &&
+    implemented.includes(id) && (ARSENAL_WEAPONS[id].wave !== 3 || arsenalWave3Enabled === true));
 }
 
 export function arsenalCareerAvailable(profile, {wastelandEnabled = false, arsenalEnabled = false} = {}) {
@@ -75,7 +94,7 @@ function withWeapons(profile, weapons, careerFields = {}) {
 }
 
 function unlockWeapon(profile, id) {
-  const weapons = getProfileWeapons(profile);
+  const weapons = getSavedProfileWeapons(profile);
   if (weapons.unlocked.includes(id)) return {ok: true, profile, changed: false, cost: 0};
   return {ok: true, changed: true, cost: 0,
     profile: withWeapons(profile, {...weapons,
@@ -86,11 +105,11 @@ export function purchaseArsenalWeapon(profile, id, options = {}) {
   if (futureCareer(profile)) return {ok: false, profile, reason: 'This career needs a newer game build.'};
   if (!arsenalCareerAvailable(profile, options) || !implementedArsenalWeapons(options).includes(id))
     return {ok: false, profile, reason: 'That weapon is not available.'};
+  const weapons = getProfileWeapons(profile);
+  if (weapons.unlocked.includes(id)) return {ok: true, profile, changed: false, cost: 0};
   const rank = rankForXp(profile.wasteland.xp);
   if (rank < ARSENAL_WEAPONS[id].rank)
     return {ok: false, profile, reason: 'Reach rank ' + ARSENAL_WEAPONS[id].rank + ' to buy this weapon.'};
-  const weapons = getProfileWeapons(profile);
-  if (weapons.unlocked.includes(id)) return {ok: true, profile, changed: false, cost: 0};
   const balance = profile.wasteland.scrap;
   if (!Number.isSafeInteger(balance) || balance < ARSENAL_WEAPON_COST)
     return {ok: false, profile, reason: 'You need ' + ARSENAL_WEAPON_COST + ' scrap for this weapon.'};
@@ -125,16 +144,18 @@ export function purchaseWeaponUpgrade(profile, id, options = {}) {
   const balance = wastelandCareer ? profile.wasteland.scrap : profile.credits;
   if (!Number.isSafeInteger(balance) || balance < cost) return {ok: false, profile,
     reason: 'You need ' + cost + ' ' + (wastelandCareer ? 'scrap' : 'credits') + ' for this upgrade.'};
-  const updated = withWeapons(profile, {...weapons, levels: {...weapons.levels, [id]: level + 1}},
+  const saved = getSavedProfileWeapons(profile);
+  const updated = withWeapons(profile, {...saved, levels: {...saved.levels, [id]: level + 1}},
     wastelandCareer ? {scrap: balance - cost} : {});
   return {ok: true, profile: {...updated,
     credits: wastelandCareer ? profile.credits : profile.credits - cost}, cost};
 }
 
-export function cpuArsenalLoadout(rank, difficulty, {implemented, rng = makeRng(1989)} = {}) {
+export function cpuArsenalLoadout(rank, difficulty, {implemented, arsenalWave3Enabled = false,
+  rng = makeRng(1989)} = {}) {
   const safeRank = Number.isSafeInteger(rank) ? Math.max(1, Math.min(30, rank)) : 1;
   const maximumWave = {easy: 1, medium: 2, hard: 3}[difficulty] ?? 1;
-  const candidates = [...WEAPON_IDS, ...implementedArsenalWeapons({implemented}).filter(id =>
+  const candidates = [...WEAPON_IDS, ...implementedArsenalWeapons({implemented, arsenalWave3Enabled}).filter(id =>
     ARSENAL_WEAPONS[id].rank <= safeRank && ARSENAL_WEAPONS[id].wave <= maximumWave)];
   // Fisher-Yates uses the supplied src/rng generator; native scheduling owns
   // when this function is called and how that generator is seeded per car.

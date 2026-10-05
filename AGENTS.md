@@ -45,23 +45,47 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 - Record tests, browser checks, changed assertions and race fingerprints in
   `docs/changes/<task-id>.md` before a lane hands work to integration.
 
+## Build more, record less (Kyle, 4 October 2026)
+
+This is a game for two people on one laptop. These rules win over any older
+text in the playbook, SPEC or cards that asks for more checking or recording.
+
+1. Keep the lane tier and build before every merge, and the full tier on the
+   exact commit before every release. They protect the live game and saves.
+2. Run the full tier at the end of each session or overnight run and before a
+   release, not on a merge count or clock. Run it alone (no other gates,
+   browser checks or builds at the same time) with `--jobs 4`.
+3. A suite that fails with no game code changed since it last passed gets one
+   rerun of that suite on the same commit. If the rerun passes, carry on and
+   open a small card for the unreliable check; it never holds merges. Never
+   change a test's assertions or tolerances to make it pass.
+4. Spend at most 30 minutes investigating any one failure or tool problem.
+   Then write what is known in one short note, make a card if needed and go
+   back to building.
+5. Record less: one short `run-log.md` line per merge and per full run. No
+   commit whose only purpose is recording a result or a status; fold notes
+   and `STATUS.md` into the next real commit or the merge itself.
+6. Extra helpers (critic, second reviewer, save checker, balance analyst) only
+   for work that touches saves, releases, money and pay, or art rounds. Other
+   cards: the builder's tests, the lane gate and one review.
+
 ## Gates (SPEC 0.5)
 
 - Before **every** merge into integration, including docs-only, tuning-only
   and doc-plus-code changes: `node tools/run-tests.mjs --tier lane --changed --jobs 8`
   and `npm run build`. Run these in the lane before review and verify current
   passing evidence before merging; rerun after changes or conflict fixes.
-- Full tier: `node tools/run-tests.mjs --tier full --jobs 8 --keep-going`
-  after every 5 merges or 2 hours of merging, whichever comes first, and at
-  the end of every session and overnight run. A failed full run stops feature
-  merges until a fix lands and the full tier passes again.
+- Full tier: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`,
+  run alone, at the end of every session and overnight run and before every
+  release. A real failure stops feature merges until a fix lands; an
+  unreliable check follows rule 3 above.
 - Release: full tier must pass on the exact final integration commit before
   every release, including small and tuning-only changes. Keep the full
   release evidence: build, combat balance (with `wasteland2` off and on),
   browser scenarios, frame pacing, art and save budget checks as applicable.
   Card-specific visual, audio, gameplay and save checks still apply.
-- Run `node tools/build-status.mjs` after every merge and at every session end
-  to update `docs/board/STATUS.md`. A later commit needs its own full-tier pass;
+- Run `node tools/build-status.mjs` at every session end and include
+  `docs/board/STATUS.md` in that commit. A later commit needs its own full-tier pass;
   a status snapshot never grants a pass to another commit.
 - D8 approved by Kyle on 24 September 2026: after a passing full tier and
   compaction (SPEC 0.8), push `integration/wasteland`. D4 still covers `master`.

@@ -73,7 +73,8 @@ async function captureNative(contactSource) {
     const bytes=new Uint8Array(pcm.buffer);let binary='';
     for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
     return {pcmBase64:btoa(binary),frames:length/2,audioStartSec:first/context.sampleRate-began,
-      firstFrame:first,contiguous:chunks.every((c,i)=>!i||c.frame===chunks[i-1].frame+2048)};
+      firstFrame:first,chunkFrames:chunks.map(c=>c.frame),
+      contiguous:chunks.every((c,i)=>!i||c.frame===chunks[i-1].frame+2048)};
   }
   const events=[],cues=[];
   const originalPlay=audio._playCue;

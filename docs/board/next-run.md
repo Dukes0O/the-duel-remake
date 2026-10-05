@@ -45,6 +45,16 @@ boss, and shared files still never name a warlord.
 
 ## Resume here (Claude, 1 October 2026, afternoon)
 
+**Overnight direction (Claude, 4 October).** Run each full tier alone with
+`--jobs 4`: no simultaneous lane gates, browser checks or builds. A pass
+clears the intermittent crash-audio hold; never change that test, its
+assertions or tolerances. GATE-CALLBACK-DIAGNOSTICS is parked separately,
+and moves only when no feature card can move. Finish Convoy, Arsenal wave
+three, computer crews and Ambush Alley in independent lanes, then Gunn
+when Claude approves its look. Start Tollkeeper after Convoy merges.
+No more than three lanes gate at once. Gunn's round-two direction is in
+SCRAPDOME.md and its card; finish fight motion and frame pacing alongside.
+
 **Restart resumed, 2 October:** Salt is merged with its final model, public Last
 Car Rolling and Fuel Run entry, and once-only scrap and hold rewards. The lane
 passed all 332 suites and build. Bounty owns the freed native entry, pay, HUD and

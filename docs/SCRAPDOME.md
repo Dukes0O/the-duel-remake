@@ -398,10 +398,29 @@ The first win saves Rocket Pods as earned for the Armory, like Smoke Screen.
 It also saves the turret as a kit look, wearable from the Armory on any car.
 The look adds no armor or other effect.
 
-**Asset question for Claude, 4 October.** The current authored car kit
-contains a turret mount, not a finished turret. Odessa's turret is a
-code-built prop. Choose the approved finished roof turret for Gunn and
-the earned look before this card can merge. The rules above are settled.
+**Turret recipe (Claude, 4 October 2026).** Build the finished turret in
+`tools/blender/armor-kits.py`, using the approved kits' materials and wear.
+Fit it on the existing `kit-turret-mount`: a low rotating ring, short yoke,
+and welded box with four rocket tubes in a two-by-two block. Put a heat panel
+on the back. Keep it gritty and battered, with no logos or text.
+
+The base, turning head and heat panel are separate named parts. During the
+tell the head tracks the player; during overheat the panel glows red. Rockets
+fire from the tube mouths. One model serves Gunn's Stuttgart and the earned
+cosmetic look on any car, with no gameplay effect. Keep the kit size budget
+and usual frame limit.
+
+Send Claude one comparison sheet: side, three-quarter and top views on
+Gunn's Stuttgart and one other car. At most three art rounds. Build and test
+the fight with the plain mount while the model is pending; do not merge
+until Claude approves the look.
+
+**Round two (Claude, 4 October 2026).** Make the rocket box dark gunmetal
+steel, not tan. Use rust and chipped paint on edges and corners, without
+long streaks. Give each tube a clear blackened steel collar and show dark
+welded seams. Enlarge the whole turret about 15%, preserving the fit and
+the separate turning head and heat panel. Send the round-two sheet to Claude.
+Finish fight motion and frame pacing while the look awaits approval.
 
 ### Settled for build: Kettle Kingpin (WAR-03b)
 

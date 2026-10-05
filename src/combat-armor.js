@@ -8,6 +8,8 @@ import {startWreckSlide} from './vehicle-knock.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {noteSmokeHit, clearSmokeHistory} from './arsenal/smoke.js';
 import {clearCarAlongPush} from './arsenal/car-effects.js';
+import {burstDrone, noteDroneHit, clearDroneHistory} from './arsenal/decoy-drone.js';
+import {actorForTarget} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 
 const T = COMBAT_TUNING.armor;
@@ -127,6 +129,11 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   // reject a distinct allied participant; keep own bomb damage unchanged.
   const attacker = state.arena ? arenaActor(duel, options.owner) : null;
   if (attacker && attacker !== actor && !hostile(duel, attacker, actor)) return 0;
+  if (arsenalEnabled(duel) && actor.drone) {
+    const owner = state.arena ? attacker : options.owner === 'player' ? state :
+      options.owner === 'cpu' ? state.rival : actorForTarget(duel, options.owner);
+    return hostile(duel, owner, actor) && burstDrone(duel, actor) ? 1 : 0;
+  }
   const multiplier = Number.isFinite(options.damageMultiplier) && options.damageMultiplier > 0
     ? options.damageMultiplier : 1;
   const base = armorDamageFor(source, {...options, damageMultiplier: multiplier *
@@ -137,7 +144,10 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   const removed = Math.min(Math.max(0, actor.armor), damage);
   actor.armor = Math.max(0, actor.armor - damage);
   noteArenaDamage(duel, actor, removed, options.owner);
-  if (arsenalEnabled(duel)) noteSmokeHit(duel, actor, removed, options.owner);
+  if (arsenalEnabled(duel)) {
+    noteSmokeHit(duel, actor, removed, options.owner);
+    noteDroneHit(duel, actor, removed, options.owner);
+  }
   if (actor.armor === 0) startCombatWreck(duel, actor, source, options.owner);
   recordCombatHit(duel, actor, removed, options.owner, options.styleHit !== false);
   return removed;
@@ -156,6 +166,7 @@ export function applySceneryArmorDamage(duel, actor) {
 export function completeCombatRecovery(duel, actor, {alreadyReset = false} = {}) {
   if (!actor.combatWrecking) return false;
   clearSmokeHistory(duel, actor);
+  clearDroneHistory(duel, actor);
   if (!alreadyReset) duel._safeReset(actor, actor.combatWreckSite);
   actor.armor = actor.maxArmor * T.recoveryArmorFraction;
   actor.combatWrecking = false;

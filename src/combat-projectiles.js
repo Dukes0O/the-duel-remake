@@ -147,7 +147,7 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     state.crashFlash = T.hit.flashSeconds;
     state.impactStrength = power;
     duel._callout('INCOMING / ARMOR HIT', T.hit.calloutSeconds);
-  } else if (state.opponents.includes(actor) && !enemy) {
+  } else if (state.opponents.includes(actor) && !actor.decoy && !enemy) {
     combat.hits++;
     duel._callout('DIRECT HIT / RIVAL SHOVED', T.hit.calloutSeconds);
   }
@@ -333,7 +333,8 @@ export function stepProjectiles(duel, dt) {
     let firstContact = Infinity;
     for (const actor of projectile.raid ? [state, ...state.opponents]
       : state.arena ? arenaStrikeCandidates(duel, projectile.ownerId)
-        : projectile.enemy ? [state] : state.opponents) {
+        : projectile.enemy ? [state, ...(arsenalEnabled(duel) ? state.opponents.filter(actor =>
+          actor.drone && actor.ownerId === 'player') : [])] : state.opponents) {
       const at = point(duel, actor);
       const vehicle = duel._vehicleSpec(actor);
       const radius = vehicle.halfWidth + T.projectileRadiusPadding;
