@@ -1054,6 +1054,8 @@ tasks:
     audio_contrast_test_commit: d7852758
     audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
     audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
+    final_gate_commit: d34cc540bcb8ec3990a05e3b56ed533f8b336500
+    final_gate_verdict: "The final lane gate stops at an unchanged straight-jump height assertion. The new Mortar flight hook is being traced; pins and thresholds stay unchanged. Fresh review and gates follow the fix."
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1377,19 +1379,20 @@ tasks:
     branch: codex/cmb/gunn
     test_commit: fdda1811
     source_commit: dca01c50
-    art_test_verdict: "The isolated turret export passes geometry, mount fit, heat isolation, loading, disposal and native fight checks. Approved kit hashes remain exact. Independent source review and Claude's comparison-sheet approval remain."
+    art_test_verdict: "Export geometry, fit, heat isolation and native checks pass; approved kit hashes remain exact. Independent review finds fresh renderer imports fail through the Gunn fight graph. Import regressions and a pure geometry extraction precede the comparison sheet and Claude approval."
     trajectory_review_commit: d068bffb
     note_commit: bcda842
-    note: "Claude's turret recipe is settled; resume the fight and art. Use the plain mount during building, but the finished look needs Claude's approval before merge."
+    note: "The settled turret is exported. Fix the fresh-import cycle, then prepare its comparison sheet; the finished look needs Claude's approval before merge."
     claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."
     claude_answer_2026_10_04: "Barrage needs ready cooldown, clear sight and player 25 to 90 metres away; aim tracks through the tell then commits the predicted first-arrival point, with rockets 0.25 seconds apart. Broken sight at lock fires nothing but earns overheat; single rockets fire every three seconds at 40 to 80 metres, outside tell/window and two seconds after barrage. First win earns Rocket Pods and an Armory turret kit look with no gameplay effect (SCRAPDOME Gunn)."
     design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
     flag: gunn
-    owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/test-warlord-gunn-art.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
+    owns: [src/warlords/gunn.js, src/warlords/gunn-turret.js, tools/test-warlord-gunn.mjs, tools/test-warlord-gunn-art.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
     hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/arena/warlord-event.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-territory.js, src/app.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs]
     hook_requests: [src/weapon-upgrades.js]
     art_hooks: [tools/blender/armor-kits.py, tools/blender/gunn-turret.json, public/assets/models/wasteland/kits/gunn-turret.glb, docs/board/looks/gunn/]
     geometry_input: "One small JSON input holds head and tube-mouth positions and existing per-car mount centres. Blender and native Gunn consume it; renderer coordinates never change race state. Do not regenerate approved kits."
+    geometry_import_fix: "Tests first add fresh-process imports for both renderer entries and Gunn. Extract only pure turret layout and pose helpers into gunn-turret.js, consumed by fight and presentation without the fight dependency graph. Preserve geometry, asset bytes, native trajectories and registry behavior; no lazy registry workaround."
     art_contract: "Reuse loadKitAsset('gunn-turret'). Named nodes: gunn-turret-root, gunn-turret-base, gunn-turret-head, gunn-turret-heat-panel and gunn-turret-mouth-0 through -3. Mouth markers belong to the turning head at the real tube openings. Preserve old car loader keys and approved kit hashes; clone heat materials per actor."
     sequencing: "Build the settled turret recipe and native fight while Arsenal holds shared callers and rendering. Do not regenerate the nine approved kit models. After Arsenal merges, grant the runtime turret hooks; send the finished comparison sheet to Claude before merge."
     test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
