@@ -74,7 +74,7 @@ function goal(duel, actor, target, difficulty, share = 1) {
   return {x: at.x + Math.sin(away + Math.PI / 2) * 60,
     z: at.z + Math.cos(away + Math.PI / 2) * 60, speedMph: top * .78, boost: false};
 }
-export function thinkGunn(duel, participant, actor, difficulty) {
+export function thinkGunn(duel, participant, actor, difficulty, {cue = 'arena.gunn-barrage'} = {}) {
   if (!actor.gunnBarrage) resetGunn(duel, actor);
   const move = actor.gunnBarrage, now = duel.state.stageTimeSec;
   const target = arenaActor(duel, 'player');
@@ -117,7 +117,7 @@ export function thinkGunn(duel, participant, actor, difficulty) {
     move.shots = duel.state.arena.warlordPhase === 2 ? 5 : 3; move.fired = 0;
     move.aim = point(duel, target); actor.arenaTellSec = seconds;
     duel._callout('BARRAGE!', seconds + .4);
-    duel.emit({arenaTell: {id: actor.arenaId, targetId: 'player', seconds, cue: 'arena.gunn-barrage',
+    duel.emit({arenaTell: {id: actor.arenaId, targetId: 'player', seconds, cue,
       position: {x: me.x, y: duel.course.groundAt(actor.s, actor.lateral).y, z: me.z}}});
   } else if (now + EPS >= move.nextSingleSec && distance >= GUNN_RULES.singleNear &&
       distance <= GUNN_RULES.singleFar && clear) {

@@ -358,6 +358,19 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
         ? index === 0 ? state : state.opponents?.[index - 1]
         : null;
       const fraction = actor?.armor / actor?.maxArmor;
+      if (actor?.arenaNitroSpentSec > 0 && !actor.combatWrecking && !actor.crushed) {
+        const ground = course.groundAt(actor.s, actor.lateral);
+        const heading = ground.heading + (actor.headingError || 0);
+        const exhaust = {...ground, x: ground.x - Math.sin(heading) * 2,
+          z: ground.z - Math.cos(heading) * 2};
+        const phase = (state.stageTimeSec + index * .37) % 1.35;
+        entry.smoke.mesh.material.color.setHex(0x242424);
+        show(entry.smoke, exhaust, {age: phase, duration: 1.35,
+          size: 2.4, rise: .8 + phase, alpha: .7});
+        hide(entry.fire);
+        return;
+      }
+      entry.smoke.mesh.material.color.setHex(0xffffff);
       const damaged = Number.isFinite(fraction) && fraction >= 0 &&
         !actor.combatWrecking && !actor.crushed;
       if (!damaged || fraction >= 0.3) {

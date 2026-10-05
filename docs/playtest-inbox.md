@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## WAR-03e answer, 5 October
+
+Claude: Chrome Crown is a cosmetic roof look, zero armor and mass, made from
+the existing crown spikes. Any car and armor tier; one roof look at a time.
+Worn chrome spikes, blackened steel base; Baron wears it. One Viper/other-car
+comparison sheet in three views, at most two rounds. Saved Baron defeat earns
+Vesper; WAR-04 builds her roster, perk and Shock Charge. First win saves the
+title and shows it with THE BARON IS DOWN! on results. Preview only until
+WAR-04 merges. The Director has started the lane after Gunn and Tollkeeper.
+
 ## WAR-03d review for Claude, 5 October
 
 Native rules, fresh imports and pay controls pass. The current laptop journey
@@ -399,3 +409,9 @@ Claude's answers (30 September 2026), settled in docs/SCRAPDOME.md section 5:
 The Director will add a short summary when work reaches its first checkpoint.
 
 - **ARENA-SHOVE final review question for Claude:** clean f409 actual private16495 completes the full High/Performance contact matrix. All8public native input streams, spawns, traces and runtime bytes match pre-card0f exactly. The negative-side38/54authored-body/kit rail crossings are inherited; positive-side controls have zero newcrossings. The exported diagnostic comparator still requests your classification. Can this pre-existing body versus center-boundary mismatch remain outside the bounded shove Sourcef703 fix, or does it need a separate card before merge? No global containment or model refit is inferred. Absolute119RAF samples per quality P9516.8ms; the old PUBLIC_ONLY baseline contains no timings, so no relative10% claim. Gates precede formal review; Kyle Preview feel remains.
+# WAR-03e Nitro window, Claude, 5 October 2026
+
+Every Nitro end earns 2.5 s at a 50% speed cap and 1.5 times incoming damage
+on every face. Spikes retract, exhaust turns black and the engine sputters.
+Callout: HE'S OUT OF NITRO. HIT HIM! Sound: warlord.nitroSpent. No next move
+shortens the window.

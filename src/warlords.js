@@ -30,7 +30,10 @@ const details = Object.freeze({
       Object.freeze({car: 'dusthawk_rally', brain: 'guard', name: 'Escort One'}),
       Object.freeze({car: 'aurora_gt', brain: 'guard', name: 'Escort Two'})]),
     taunt: 'This road has a price.'},
-  blackiron: {},
+  blackiron: {venue: 'pit', car: 'viper_proto', brain: 'brawler',
+    reward: 'Chrome Crown', rewardBuilt: true, rewardKit: 'chrome-crown', rewardKitAnyCar: true,
+    rewardTitle: 'Warlord of the Wastes', victoryTitle: 'THE BARON IS DOWN!',
+    taunt: 'You have beaten my road. Now beat me.'},
 });
 
 export const WARLORDS = Object.freeze(Object.fromEntries(
@@ -51,7 +54,20 @@ export const WARLORD_LADDER = Object.freeze([
   'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron']);
+
+const defeated = (profile, id) => profile?.wasteland?.warlords?.[id]?.defeated === true ||
+  Array.isArray(profile?.wasteland?.warlords?.defeated) && profile.wasteland.warlords.defeated.includes(id);
+
+export function warlordUnlockSatisfied(profile, id) {
+  return Object.hasOwn(WARLORDS, id) && profile?.wasteland?.territories?.[id]?.hold === 100 &&
+    (id !== 'blackiron' || WARLORD_LADDER.slice(0, -1).every(other => defeated(profile, other)));
+}
+
+// WAR-04 reads this entitlement when the real roster place and gear are built.
+export function vesperEarned(profile) {
+  return profile?.wasteland?.version === 1 && defeated(profile, 'blackiron');
+}
 
 // Jax's grapple reaches this much farther once the Twin Vultures are beaten.
 // Earned means the saved defeat itself, as with the Side Saws; the crew

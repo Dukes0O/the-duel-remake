@@ -1442,6 +1442,66 @@
         "integratedLufs": -17.95,
         "truePeakDbtp": -10.59
       }
+    },
+    {
+      "source": "freesound-prepared",
+      "key": "blackiron-nitro-spent",
+      "title": "v8 engine rev.wav",
+      "author": "overmedium",
+      "page": "https://freesound.org/people/overmedium/sounds/651534/",
+      "download": "https://cdn.freesound.org/previews/651/651534_2396512-hq.mp3",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "quality": "preview-hq-mp3",
+      "file": "legacy/v8-rev-source.mp3",
+      "sha256": "65d7f1d60ecc276a48ea974a265bbee0715d6b2e0bd0081a45c57362a61a470c",
+      "bytes": 201292,
+      "processing": {
+        "recipe": "tools/audio/build-blackiron.mjs",
+        "cue": "warlord.nitroSpent",
+        "source": "651534",
+        "start": 2.7,
+        "length": 0.85,
+        "rate": 0.7,
+        "filters": "highpass=f=90,lowpass=f=2200,tremolo=f=13:d=.95",
+        "approval": "Claude and Director, 5 October 2026: reproducible Nitro sputter from cached CC0 engine."
+      },
+      "decode": {
+        "file": "v8-rev-source.wav",
+        "start": 0,
+        "duration": null,
+        "rate": 44100,
+        "channels": 1
+      },
+      "cue": "warlord.nitroSpent",
+      "runtime": {
+        "cue": "warlord.nitroSpent",
+        "file": "public/assets/audio/blackiron/nitro-spent.ogg",
+        "sha256": "44f9ac3e4b2074f788dd2c35ba257300056e2626e44a444a254834ade7eee644",
+        "bytes": 9934,
+        "sampleRate": 48000,
+        "channels": 1,
+        "sourceFile": "legacy/v8-rev-source.mp3",
+        "sourceSha256": "65d7f1d60ecc276a48ea974a265bbee0715d6b2e0bd0081a45c57362a61a470c",
+        "available": true,
+        "method": "FFmpeg loudnorm / EBU R128",
+        "integratedLufs": -21.66,
+        "truePeakDbtp": -3.18,
+        "loudnessRangeLu": 0,
+        "targets": {
+          "loudness": {
+            "advisory": true,
+            "targetLufs": -16,
+            "toleranceLu": 2,
+            "pass": false
+          },
+          "truePeak": {
+            "advisory": true,
+            "maximumDbtp": -1,
+            "pass": true
+          }
+        }
+      }
     }
   ]
 }

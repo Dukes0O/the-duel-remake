@@ -1643,10 +1643,21 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02b, WAR-02c, WAR-03a, WAR-03b, WAR-03c, WAR-03d, ARS-03, ARENA-PIT]
-    status: ready
+    status: review
+    waiting_on: claude
+    claimed_by: codex-director-2026-10-05
+    branch: codex/cmb/blackiron
     claude_answer_2026_10_05: "Build after Gunn and the Tollkeeper are merged. Earlier required bosses and Arsenal are already merged; reuse their settled moves unchanged."
-    flag: scrapdome
-    owns: [src/arena/moves/blackiron.js, tools/test-warlord-blackiron.mjs, docs/changes/WAR-03e.md]
+    reward_answer_2026_10_05: "Chrome Crown is the chrome-crown roof look, zero armor and mass, using existing crown spikes on any car and armor tier, mutually exclusive with Side Saws and Turret Look. Polished scratched chrome on a blackened steel base; Baron wears it. One Viper/other-car comparison sheet, side/three-quarter/top, at most two rounds. Saved defeat earns Vesper; WAR-04 builds her. First win saves Warlord of the Wastes and shows it with THE BARON IS DOWN! on results. Preview only until WAR-04 merges."
+    nitro_answer_2026_10_05: "After every Nitro end, hit/miss/oil: 2.5 s, speed cap 50%, all-face incoming damage 1.5x. Spikes retract, black exhaust, engine sputter; HE'S OUT OF NITRO. HIT HIM! Sound warlord.nitroSpent. Next phase-two move cannot shorten it."
+    design_question: null
+    flag: blackiron
+    owns: [src/warlords/blackiron.js, tools/test-warlord-blackiron.mjs, tools/scenarios/blackiron.mjs, docs/changes/WAR-03e.md, docs/board/looks/blackiron/, tools/audio/build-blackiron.mjs, public/assets/audio/blackiron/]
+    hooks: [src/warlords/index.js, src/warlords.js, src/armor-kits.js, src/armor-kit-meshes.js, src/arena/warlord-settlement.js, src/arena/arena-tell-view.js, src/screen-armory.js, src/screen-results.js, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs, src/warlords/sal.js, src/warlords/gunn.js, src/screen-territory.js, src/wasteland-progress.js, src/app.js, src/game.js, src/screen-arena.js, src/combat-weapons.js, src/arena/arena-pilot.js, src/combat-effects.js, src/audio.js, src/sound-bank.js, tools/audio/catalog.json, tools/audio/build-blackiron.mjs, public/assets/audio/blackiron/nitro-spent.ogg, docs/board/looks/blackiron/]
+    sequencing: "Source and acceptance-test writing may proceed while the end full tier runs. No tests, builds, browser checks or art captures until the Director releases that slot. Earlier boss modules retain their settled behavior; request a narrow reuse hook before changing one. Extra save/title fields need a named hook and save review."
+    release_hold: "Preview only until WAR-04 merges; Chrome Crown needs Claude's look verdict before this card merges."
+    art_review: "Round one prepared from twelve actual laptop High/Performance views, Viper stock and Falcone plated. At most two rounds. Claude review queued with Director, not yet sent."
+    build_note: "Native checks and High/Performance yard/projectile reward journeys pass. Save review, Nitro presentation/listening, signature frame check, Crown verdict, lane tier and build remain. Source handed to Director; no merge approval claimed."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Baron Blackiron' in docs/SCRAPDOME.md section 5, reusing the earlier warlords' moves unchanged. Unlocks only when the other seven are defeated. When built, status review and waiting_on: claude before merge."

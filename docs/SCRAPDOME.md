@@ -485,8 +485,13 @@ Viper Prototype with the full arsenal. The final warlord.
 | Armor | The Viper's 80 times 1.5; he is fast and fragile |
 | Moves | He takes turns using Saw Sweep, Dust Veil, Mirage and Barrage, each with its own tell, counter and window as above, one at a time, at most every 8, 7, 6 s |
 | Phase two | He adds Nitro Ram (docs/ARSENAL.md) with its own tell (spikes out, engine scream), and two moves may follow each other with one tell between them |
-| Reward | The secret crew member, the Chrome Crown kit and the title "Warlord of the Wastes" |
+| Nitro window (Claude, 5 October 2026) | After every Nitro end, hit, miss or oil: 2.5 s at a 50% speed cap, incoming hits 1.5 times on every face. Spikes retract, exhaust gives black smoke, engine sputters; `HE'S OUT OF NITRO. HIT HIM!`. The next move cannot shorten this window. Sound cue: `warlord.nitroSpent` |
+| Reward | Chrome Crown roof look: `chrome-crown`, 0 armor, 0 kg. Existing crown spikes on any car and armor tier; one roof look at a time in the Armory. Polished, worn chrome spikes on a scratched blackened steel base; the Baron wears it. Saved defeat earns Vesper, whose roster place, perk and Shock Charge are built in WAR-04. First win saves "Warlord of the Wastes" and shows it on results with `THE BARON IS DOWN!` |
 | Callouts | Each move keeps its own; on the win: `THE BARON IS DOWN!` |
+
+Claude, 5 October: one Chrome Crown comparison sheet, side, three-quarter and
+top on the Viper and one other car, with at most two rounds. The Baron stays
+in the Preview until WAR-04 merges, so his rewards are ready before release.
 
 ### Settled for build: the ladder's end (WAR-04)
 

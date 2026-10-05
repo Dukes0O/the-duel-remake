@@ -1,7 +1,7 @@
 import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offeredArsenalWeapons, ARSENAL_WEAPON_COST} from './weapon-upgrades.js';
 import {WEAPONS} from './combat.js';
 import {CARS} from './config.js';
-import {ARMOR_KITS, EARNED_ARMOR_KITS, armorKitDetails, ownsArmorKit, getEquippedArmorKit} from './armor-kits.js';
+import {ARMOR_KITS, EARNED_ARMOR_KITS, armorKitDetails, ownsArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
 import {hasDefeatedWarlord} from './wasteland-progress.js';
 import {isCarUnlocked} from './progression.js';
 import {availableCarWeapons,getCarLoadout,CAR_SLOT_DIRECTIONS,
@@ -45,6 +45,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const unlocked = isCarUnlocked(saved, car);
     const storedKit = getEquippedArmorKit(saved, car);
     const equipped = storedKit;
+    const roofLook = getEquippedRoofLook(saved, car);
     const equippedDetails = armorKitDetails(equipped);
     const rank = saved.wasteland?.rank || 1;
     const defeated = hasDefeatedWarlord(saved.wasteland?.warlords);
@@ -52,27 +53,30 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const balance = scrapCareer ? saved.wasteland.scrap : saved.credits;
     const earned = Object.entries(EARNED_ARMOR_KITS)
       .filter(([id]) => ownsArmorKit(saved, car, id));
-    const equippedText = !equippedDetails ? 'STOCK ARMOR' :
+    const kitText = !equippedDetails ? 'STOCK ARMOR' :
       `${equippedDetails.name.toUpperCase()} EQUIPPED (${equipped === 'side-saws'
         ? '1.6× SIDE DAMAGE' : equipped === 'turret-look' ? 'LOOK ONLY' : `+${equippedDetails.armor} ARMOR`})`;
+    const equippedText = kitText + (roofLook ? ' / CHROME CROWN' : '');
     const cars = Object.entries(CARS).map(([id, item]) =>
       `<option value="${id}" ${id === car ? 'selected' : ''}>${escapeHTML(item.name)}${isCarUnlocked(saved, id) ? '' : ' · LOCKED'}</option>`).join('');
     const choices = [...Object.entries(ARMOR_KITS), ...earned].map(([id, kit]) => {
       const owned = ownsArmorKit(saved, car, id);
-      const selected = equipped === id;
+      const selected = id === 'chrome-crown' ? roofLook === id : equipped === id;
       const reward = Object.hasOwn(EARNED_ARMOR_KITS, id);
       const gate = reward ? null : id === 'warlord' && !defeated
         ? 'Defeat a warlord to unlock' : rank < kit.rank ? `Notoriety rank ${kit.rank} required` : null;
       const disabled = !unlocked || (!owned && (!!gate || balance < kit.price));
       const label = selected ? 'EQUIPPED' : owned ? 'EQUIP' : gate ||
         `BUY & EQUIP · ${scrapCareer ? kit.price : credits(kit.price)} ${scrapCareer ? 'SCRAP' : 'CR'}`;
-      const detail = id === 'turret-look' ? 'Earned turret look. No armor, mass or weapon effect.' :
+      const cosmetic = id === 'turret-look' || id === 'chrome-crown';
+      const detail = id === 'chrome-crown' ? 'Chrome spikes on blackened steel. No armor or mass.' :
+        id === 'turret-look' ? 'Earned turret look. No armor, mass or weapon effect.' :
         reward ? 'Your side contacts deal 1.6 times ram damage. No added armor or mass.' :
         id === 'scrapper' ? 'Scrap plates and bull bar' :
           id === 'raider' ? 'Roof cage and saw housings' : 'Full plating and spike crown';
-      return `<article class="kit-card"><h3>${kit.name}</h3><b>${id === 'turret-look' ? 'LOOK ONLY' : reward ? '1.6× SIDE DAMAGE' : `+${kit.armor} ARMOR`}</b><p>${detail}</p><button data-kit-action="${owned ? 'equip' : 'buy'}" data-kit-tier="${id}" ${selected || disabled ? 'disabled' : ''}>${label}</button></article>`;
+      return `<article class="kit-card"><h3>${kit.name}</h3><b>${cosmetic ? 'LOOK ONLY' : reward ? '1.6× SIDE DAMAGE' : `+${kit.armor} ARMOR`}</b><p>${detail}</p><button data-kit-action="${owned ? 'equip' : 'buy'}" data-kit-tier="${id}" ${selected || disabled ? 'disabled' : ''}>${label}</button></article>`;
     }).join('');
-    return `<details class="weapon-shop kit-shop" open><summary>ARMOR KITS · PER CAR</summary><p>Choose a car. Equip an owned kit or buy plating. One kit is equipped at a time.</p><label class="kit-car-label" for="kit-car">CAR</label><select id="kit-car" data-kit-car>${cars}</select><p class="kit-equipped">${escapeHTML(CARS[car].name)} · ${equippedText}</p><div class="kit-grid">${choices}</div>${equipped ? '<button class="kit-remove" data-kit-action="unequip">REMOVE KIT · RETURN TO STOCK</button>' : ''}</details>`;
+    return `<details class="weapon-shop kit-shop" open><summary>ARMOR KITS · PER CAR</summary><p>Choose a car. Equip an owned kit or buy plating. One kit is equipped at a time.</p><label class="kit-car-label" for="kit-car">CAR</label><select id="kit-car" data-kit-car>${cars}</select><p class="kit-equipped">${escapeHTML(CARS[car].name)} · ${equippedText}</p><div class="kit-grid">${choices}</div>${equipped || roofLook ? '<button class="kit-remove" data-kit-action="unequip">REMOVE KIT · RETURN TO STOCK</button>' : ''}</details>`;
   }
   function armoryScreen() {
     const garageMessage=getGarageMessage();

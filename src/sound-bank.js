@@ -501,6 +501,10 @@ export const SOUND_BANK = {
       tone(840, .34, .045, 'sine', .02, 2300),
     ],
   }),
+  'warlord.nitroSpent': cue('weapons', {
+    flag: 'blackiron', files: ['blackiron/nitro-spent.ogg'],
+    volume: .65, priority: 75, limit: 1,
+  }),
   'arena.respawn': cue('interface', {
     layers: [
       tone(330, 0.35, 0.05, 'sine', 0, 990),
@@ -637,6 +641,14 @@ export const SOUND_BANK = {
     noise: true,
   }),
 };
+SOUND_BANK['arena.blackiron-barrage'] = cue('impacts', {
+  flag: 'blackiron', priority: 70, limit: 1,
+  layers: SOUND_BANK['arena.gunn-barrage'].layers,
+});
+SOUND_BANK['warlord.nitroTell'] = cue('weapons', {
+  flag: 'blackiron', files: SOUND_BANK['weapon.nitro.start'].files,
+  volume: .7, priority: 75, limit: 1,
+});
 export const ENGINE_BANDS = Object.values(SOUND_BANK)
   .filter((c) => c.rpm != null)
   .map((c) => ({ key: c.sample, rpm: c.rpm, toneHz: c.toneHz }));

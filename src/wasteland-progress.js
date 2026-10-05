@@ -101,7 +101,9 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
   const kits = Object.fromEntries(entries(source.kits).map(([car, item]) => {
     const owned = ids(item?.owned);
     return [car, {...(record(item) ? item : {}), owned,
-      equipped: owned.includes(item?.equipped) ? item.equipped : null}];
+      equipped: owned.includes(item?.equipped) ? item.equipped : null,
+      ...(Object.hasOwn(item ?? {}, 'roofLook') ? {roofLook:
+        item.roofLook === 'chrome-crown' && owned.includes(item.roofLook) ? item.roofLook : null} : {})}];
   }));
   const warPaint = Object.fromEntries(entries(source.warPaint).map(([car, item]) => [
     car, {layers: Array.isArray(item?.layers) ? item.layers.filter(record).slice(0, 32) : []},
@@ -147,6 +149,8 @@ export function normalizeWasteland(value, legacyWeapons, history = []) {
     // them. Known fields are validated so old or damaged saves remain playable.
     ...source,
     version: 1,
+    ...(Object.hasOwn(source, 'title') ? {title: typeof source.title === 'string' &&
+      source.title.length > 0 && source.title.length <= 128 ? source.title : undefined} : {}),
     ...normalizeGateDiscovery(source, history),
     muddyHollow: normalizeMuddyHollow(source.muddyHollow),
     xp,

@@ -161,6 +161,22 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         authored.updateMatrixWorld(true);
         authored.attach(turretMount);
       }
+      const crown = authored.getObjectByName('kit-crown');
+      const crossbar = authored.getObjectByName('warlord-crossbar');
+      if (crown && crossbar) {
+        authored.updateMatrixWorld(true);
+        const spikes = crown.clone(true);
+        spikes.name = 'chrome-crown-spikes';
+        const fitted = authored.matrixWorld.clone().invert().multiply(crown.matrixWorld);
+        fitted.decompose(spikes.position, spikes.quaternion, spikes.scale);
+        spikes.userData.crownBindScale = spikes.scale.toArray();
+        authored.add(spikes);
+        const base = crossbar.clone(true);
+        base.name = 'chrome-crown-base';
+        const matrix = authored.matrixWorld.clone().invert().multiply(crossbar.matrixWorld);
+        matrix.decompose(base.position, base.quaternion, base.scale);
+        authored.add(base);
+      }
       // Reuse the reviewed streak geometry in a distinct tell effect. The
       // original spark node remains reserved for the missed-sweep window.
       const sal = authored.getObjectByName('kit-sal-saws');
@@ -185,6 +201,20 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       rig.authoredMaterials = [...materialClones.values()];
       for (const material of rig.authoredMaterials)
         if (material.color) material.userData.kitBaseColor = material.color.clone();
+      const ownCrownFinish = (part, chrome) => part?.traverse(node => {
+        if (!node.isMesh || !node.material) return;
+        const clone = material => {
+          const own = material.clone();
+          own.userData.crownOriginal = {color: own.color.clone(), roughness: own.roughness,
+            metalness: own.metalness, map: own.map, roughnessMap: own.roughnessMap};
+          own.userData.crownChrome = chrome;
+          rig.authoredMaterials.push(own);
+          return own;
+        };
+        node.material = Array.isArray(node.material) ? node.material.map(clone) : clone(node.material);
+      });
+      ownCrownFinish(authored.getObjectByName('chrome-crown-spikes'), true);
+      ownCrownFinish(authored.getObjectByName('chrome-crown-base'), false);
       attachments.attach({owner:`armor-kit-authored-${rig.index}`, vehicle,
         socket:'roof', object:authored, fallback:group});
       // The GLB uses vehicle-local coordinates; undo the roof socket's offset.
@@ -314,10 +344,11 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       const tier = armorKitTier(actor, index > 0);
       const sideSaws = actor?.combatArmorKit === 'side-saws';
       const turretLook = actor?.combatArmorKit === 'turret-look';
+      const crownLook = actor?.combatRoofLook === 'chrome-crown' && !sideSaws && !turretLook;
       const gunn = actor?.warlordId === 'gunn' && !!actor.gunnBarrage;
       const hasTurret = turretLook || gunn;
       const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
-        Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws || turretLook);
+        Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws || turretLook || crownLook);
       if (visible && hasTurret) requestTurret(rig, vehicle);
       if (rig.turret) {
         rig.turret.visible = visible && hasTurret && !actor.combatWrecking;
@@ -393,17 +424,43 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         const scorch = wrecked ? 0.24 : condition < 0.1 ? 0.48 :
           condition < 0.3 ? 0.68 : condition < 0.6 ? 0.86 : 1;
         for (const material of rig.authoredMaterials || []) {
+          if (material.userData.crownOriginal) {
+            const map = material.map, roughnessMap = material.roughnessMap;
+            const old = material.userData.crownOriginal;
+            material.color.copy(old.color);
+            material.roughness = old.roughness; material.metalness = old.metalness;
+            material.map = old.map; material.roughnessMap = old.roughnessMap;
+            if (crownLook) {
+              material.color.setHex(material.userData.crownChrome ? 0xd8dde0 : 0x15191b);
+              material.roughness = material.userData.crownChrome ? .28 : .65;
+              material.metalness = .95;
+              if (material.userData.crownChrome) {
+                material.roughnessMap = old.roughnessMap || old.map;
+                material.map = null;
+              }
+            }
+            material.color.multiplyScalar(scorch);
+            if (!!map !== !!material.map || !!roughnessMap !== !!material.roughnessMap) material.needsUpdate = true;
+            continue;
+          }
           const base = material.userData.kitBaseColor;
           if (base) material.color.copy(base).multiplyScalar(scorch);
         }
         for (const name of ['kit-cage', 'kit-saw-0', 'kit-saw-1',
-          'kit-crown', 'kit-warlord-mount', 'kit-turret-mount']) {
+          'kit-crown', 'kit-warlord-mount', 'kit-turret-mount', 'chrome-crown-base', 'chrome-crown-spikes']) {
           const part = rig.authored.getObjectByName(name);
           if (part) {
             const saw = name === 'kit-saw-0' || name === 'kit-saw-1';
-            part.visible = !wrecked && visible && (name === 'kit-turret-mount' && hasTurret ? true :
+            const crown = name === 'kit-crown';
+            const base = name === 'chrome-crown-base';
+            const spikes = name === 'chrome-crown-spikes';
+            part.visible = !wrecked && visible && (base ? crownLook : spikes ?
+              crownLook && !(actor.arenaNitroSpentSec > 0) : crown && crownLook ? false :
+              name === 'kit-turret-mount' && hasTurret ? true :
               turretLook ? false : sideSaws ? saw :
               tier >= (name === 'kit-crown' || name === 'kit-warlord-mount' ? 3 : 2));
+            if (spikes) part.scale.fromArray(part.userData.crownBindScale)
+              .multiplyScalar(crownLook && actor.arenaNitroTellSec > 0 ? 1.12 : 1);
           }
         }
       }
