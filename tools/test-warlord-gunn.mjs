@@ -19,6 +19,8 @@ import {createArmoryScreen} from '../src/screen-armory.js';
 import {territoryPanel} from '../src/screen-territory.js';
 import {arenaYardPanel} from '../src/screen-arena.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {launchAimedRocket, ROCKET_RULES} from '../src/arsenal/rockets.js';
+import {FIGHTER_RULES} from '../src/onfoot.js';
 
 // WAR-03a: native entry, combat and rewards; Claude settled the move on 4 October.
 const DT = 1 / 120;
@@ -368,4 +370,131 @@ test('the first Gunn win earns a turret look usable on another car without chang
   equal(equipped.cost, 0, 'wearing an earned look spends nothing');
   equal(armorKitBonus(won.kitEarned), 0, 'the cosmetic turret adds no armor');
   equal(armorKitMass(won.kitEarned), 0, 'the cosmetic turret adds no crash mass');
+});
+
+function aimedFighterRace({exit = false} = {}) {
+  const flags = createFeatureFlags({storage: null, qa: true,
+    overrides: {arsenal: true}});
+  const duel = new Duel({seed: 1989, featureFlags: flags});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', startStage: 0,
+    discoveredGate: true, seed: 1989, crewId: 'rook'});
+  for (let tick = 0; duel.state.status === 'countdown' && tick < 600; tick++) duel.step(DT);
+  equal(duel.state.status, 'racing', 'the actual campaign countdown admits the Wasteland race');
+  equal(duel.state.wastelandGateDiscovered, true, 'native launch admits the discovered career');
+  ok(duel.state.raids?.zones.some(zone => zone.raiders.length), 'the native launch supplies seeded raiders');
+  const state = duel.state;
+  state.s = state.prevS = 500;
+  state.lateral = state.prevLateral = 0;
+  state.speedMph = 0;
+  state.traffic = [];
+  state.combat.aiTimer = state.combat.pickupTimer = Infinity;
+  const enemy = state.opponents[0];
+  enemy.s = enemy.prevS = state.s + 100;
+  enemy.lateral = enemy.prevLateral = 0;
+  enemy.speedMph = 0;
+  if (exit) {
+    duel.setInput({interact: true});
+    for (let tick = 0; tick < 48; tick++) duel.step(DT);
+    equal(state.onFoot, true, 'a native low-speed hold creates the real player fighter');
+    duel.setInput({interact: false});
+    equal(duel.setFighterInput({forward: true}), true, 'native fighter controls admit walking');
+    for (let tick = 0; tick < 240; tick++) duel.step(DT);
+    duel.setFighterInput({forward: false});
+    const car = duel.course.groundAt(state.s, state.lateral);
+    ok(Math.hypot(state.fighter.x - car.x, state.fighter.z - car.z) > 6,
+      'real walking separates the fighter body from the parked car body');
+  }
+  return {duel, state, enemy};
+}
+
+function placeAimedOwner(duel, owner, target, distance = 25) {
+  const nearest = duel.course.nearest(target.x, target.z);
+  owner.s = owner.prevS = duel.course.phase(nearest.s - distance);
+  owner.lateral = owner.prevLateral = nearest.lateral;
+  owner.speedMph = 0;
+  const at = duel.course.groundAt(owner.s, owner.lateral);
+  owner.headingError = Math.atan2(Math.sin(Math.atan2(target.x - at.x, target.z - at.z) - at.heading),
+    Math.cos(Math.atan2(target.x - at.x, target.z - at.z) - at.heading));
+}
+
+function fireNativeAimed(duel, owner, target) {
+  const events = [];
+  const stop = duel.onChange((_state, event) => events.push(event));
+  const shot = launchAimedRocket(duel, owner, target);
+  ok(shot, 'the same native aimed launch used by Gunn creates the rocket');
+  equal(shot.kind, 'rocket-pod', 'the aimed launch uses the generic Rocket Pods body');
+  equal(events.filter(event => event.arsenalCue === 'weapon.rockets.fire').length, 1,
+    'one actual launch emits one fire cue');
+  ok(events.some(event => event.arsenalCue === 'weapon.rockets.fire' && event.projectile === shot),
+    'the contact witness observes the actual emitted projectile, not a substitute');
+  for (let tick = 0; !shot.dead && tick < 240; tick++) {
+    duel.state.stageTimeSec += DT;
+    stepCombat(duel, DT);
+  }
+  ok(shot.dead, 'the real rocket completes its bounded native flight');
+  if (typeof stop === 'function') stop();
+  return {shot, events};
+}
+
+test('native aimed Rocket Pods hit the walked fighter body and apply settled splash once', () => {
+  const {duel, state, enemy} = aimedFighterRace({exit: true});
+  const fighter = state.fighter;
+  const body = {x: fighter.x, y: fighter.y + FIGHTER_RULES.height / 2, z: fighter.z};
+  placeAimedOwner(duel, enemy, body);
+  const armor = state.armor;
+  const {shot, events} = fireNativeAimed(duel, enemy, body);
+  const distance = Math.hypot(body.x - shot.x, body.y - shot.y, body.z - shot.z);
+  ok(distance < ROCKET_RULES.blastRadius / 2, 'the actual swept impact is inside the half-radius knockdown window');
+  equal(fighter.health, 0, 'the existing knockdown policy clears health inside half the blast radius');
+  equal(fighter.knockedDown, true, 'an actual close aimed rocket knocks down the native fighter');
+  equal(state.armor, armor, 'a separate fighter contact does not invent a parked-car hit');
+  equal(events.filter(event => event.combatHit && event.fighter).length, 1,
+    'one consumed aimed rocket delivers one fighter hit');
+  equal(events.find(event => event.combatHit && event.fighter).strength,
+    (60 * (1 - distance / ROCKET_RULES.blastRadius)) / 60,
+    'native hit feedback retains the settled sixty-health linear falloff at the actual blast point');
+  const after = fighter.health;
+  stepCombat(duel, DT);
+  equal(fighter.health, after, 'the consumed rocket cannot damage the fighter twice');
+});
+
+test('a player-owned aimed rocket cannot hit its own native exited fighter', () => {
+  const {duel, state} = aimedFighterRace({exit: true});
+  const fighter = state.fighter;
+  const body = {x: fighter.x, y: fighter.y + FIGHTER_RULES.height / 2, z: fighter.z};
+  const before = structuredClone(fighter);
+  const {events} = fireNativeAimed(duel, state, body);
+  equal(fighter.health, before.health, 'the actual owner fighter keeps its health');
+  equal(fighter.knockedDown, before.knockedDown, 'the owner fighter is not knocked down');
+  equal(events.filter(event => event.combatHit && event.fighter).length, 0,
+    'a player-owned rocket emits no self-hit credit');
+});
+
+test('a player-owned aimed rocket contacts an actual seeded raider without foot-reward credit', () => {
+  const {duel, state} = aimedFighterRace();
+  const raider = state.raids.zones[0].raiders[1];
+  const body = {x: raider.x, y: raider.y + .9, z: raider.z};
+  placeAimedOwner(duel, state, body);
+  const before = state.combat.notorietyEvents?.length || 0;
+  const {shot, events} = fireNativeAimed(duel, state, body);
+  ok(Math.hypot(body.x - shot.x, body.y - shot.y, body.z - shot.z) < ROCKET_RULES.blastRadius / 2,
+    'the native seeded raider body intercepts the actual aimed rocket');
+  equal(raider.knockedDown, true, 'the half-radius car blast knocks down the seeded raider');
+  ok(events.some(event => event.raiderKnockdown && event.raider === raider.id &&
+    event.owner === 'player' && event.source === 'car'), 'native down credit keeps its actual owner and car source');
+  equal(state.combat.notorietyEvents?.length || 0, before, 'a car rocket grants no on-foot raider reward');
+});
+
+test('an enemy-owned aimed rocket does not attack friendly seeded raiders', () => {
+  const {duel, state, enemy} = aimedFighterRace();
+  const raider = state.raids.zones[0].raiders[1];
+  const body = {x: raider.x, y: raider.y + .9, z: raider.z};
+  placeAimedOwner(duel, enemy, body);
+  const health = raider.health, downs = state.combat.scoring.knockdowns;
+  const {events} = fireNativeAimed(duel, enemy, body);
+  equal(raider.health, health, 'enemy fire preserves the seeded raider health');
+  equal(raider.knockedDown, false, 'enemy fire does not knock down its friendly raider');
+  equal(state.combat.scoring.knockdowns, downs, 'friendly raider passage earns no player down');
+  equal(events.filter(event => event.raiderHit || event.raiderKnockdown).length, 0,
+    'friendly seeded raiders receive no false owner or hit event');
 });
