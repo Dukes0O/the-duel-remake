@@ -783,3 +783,13 @@ limit failed. Review the established short-cue analysis path with runtime bytes
 and assertions unchanged, then rerun the gate. Gunn's native yard tests now
 expose the injected-flag loss while released and default controls pass.
 
+The quiet scheduled full tier on clean 15b9c458 finished in 579.89 seconds:
+348 passed, one failed, none skipped. The unchanged crash-audio overlap capture
+has a missing AudioWorklet input block; measured peaks and all other checks pass.
+Feature merges stop until diagnosis and a passing full rerun. No source or
+assertion changed. Arsenal's short-cue input migration passes independent review
+and all eleven bounded audio cases; its fresh gates wait for recovery.
+Crew's native Rocket Pods tests now expose missing fighter hits, with car and
+participant-protection controls passing. Gunn's comparison recipe clears source
+review; pictures and Claude's approval remain.
+
