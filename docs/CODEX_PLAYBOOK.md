@@ -15,9 +15,12 @@ rewrite or release. D4 permits pushing `master` after an approved release.
 
 ## 1. The short version
 
+**Kyle, 4 October 2026: "Build more, record less" in `AGENTS.md` wins over
+anything below that asks for more checking, helpers or recording.**
+
 - **One planner, several builders, independent checkers.** A Director thread plans and assigns. Up to four builder threads ("lanes") work at the same time, each in its own copy of the project. The agent that writes code never grades its own work: separate agents write the tests, review the change and check the game in a browser.
 - **Nobody works in the live folder.** `C:\Users\kyleb\dev\the-duel-remake` is what the desktop shortcut runs. Only the Release Manager touches it, and only to install a finished, tested build.
-- **Automatic checks replace phase sign-offs.** Every merge needs the lane tier and build. Full tests run after 5 merges or 2 hours of merging, whichever comes first, at session end, and on the exact release commit. Card-specific checks and the full release evidence in section 7 still apply. Unfinished features ship behind a feature switch.
+- **Automatic checks replace phase sign-offs.** Every merge needs the lane tier and build. Full tests run at every session and overnight-run end, and on the exact release commit. Card-specific checks and the full release evidence in section 7 still apply. Unfinished features ship behind a feature switch.
 - **You steer without blocking.** You answer the standing decisions once, play the "Experimental" builds when you like, and drop notes in the play-test inbox. Agents turn notes into tasks.
 
 ## 2. Words used here
@@ -53,7 +56,7 @@ rewrite or release. D4 permits pushing `master` after an approved release.
  Integrator thread (own worktree on integration/wasteland)
   merge queue, one change at a time, merge gate
   ▼
- Full tier (Integrator, 5 merges or 2 hours, session end, exact release commit)
+ Full tier (Integrator, session end, exact release commit)
   release also needs balance, browser, frame pacing, art and save evidence
   ▼
  Release Manager thread
@@ -120,7 +123,7 @@ rewrite or release. D4 permits pushing `master` after an approved release.
 | Gate | When | What must pass | Time target |
 | --- | --- | --- | --- |
 | Lane / merge floor | Before review and every merge, including docs-only, tuning-only and doc-plus-code changes | `node tools/run-tests.mjs --tier lane --changed --jobs 8` and `npm run build`; current evidence for the reviewed change | about 5 min |
-| Full tier | After every 5 merges or 2 hours of merging, whichever comes first; also at every session and overnight-run end | `node tools/run-tests.mjs --tier full --jobs 8 --keep-going`, with all suites including campaigns | about 6 min |
+| Full tier | At every session and overnight-run end | `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`, with all suites including campaigns | about 6 min |
 | Release gate | Before every release and before touching the live folder | Full tier green on the exact final integration commit, including small and tuning-only releases; full release evidence below; change notes compiled into `README.md` and `docs/VERIFICATION.md`; feature switch list reviewed | depends on checks |
 
 **Feature and release evidence.** The minimum merge floor does not replace
@@ -156,6 +159,9 @@ inspect the live checkout unless an explicit `--live-root` is supplied.
 **Stop the line.** A failing pre-merge gate blocks that merge. If integration
 itself is red or a full run fails, the Integrator puts a fix card first and
 stops feature merges. Only fixes merge until the full tier passes again.
+A suite that fails with no game code changed since it last passed gets one
+rerun on the same commit; if it passes, merges continue and the unreliable
+check becomes its own card (AGENTS.md, Build more, record less).
 Lanes may keep building on their own branches.
 
 **Fingerprint changes are behavior changes.** A card that changes how races behave must say so. The reviewer approves the new fingerprint with a written reason in the change note. A refactor card must leave every fingerprint unchanged.
@@ -227,9 +233,8 @@ Your task card is in docs/board/board.yaml. Stay inside its `owns` and `hooks` f
 ## Commands
 - Before every merge: node tools/run-tests.mjs --tier lane --changed --jobs 8
   and npm run build, including docs-only, tuning-only and doc-plus-code changes.
-- Full tier: node tools/run-tests.mjs --tier full --jobs 8 --keep-going
-  after 5 merges or 2 hours of merging, whichever comes first, and at every session
-  and overnight-run end. A failed full run stops feature merges until fixed and green.
+- Full tier: node tools/run-tests.mjs --tier full --jobs 4 --keep-going
+  at every session and overnight-run end. A failed full run stops feature merges until fixed and green.
 - Release: full tier on the exact final commit, plus the full release evidence in
   playbook section 7 (build, balance off/on, browser, frame pacing, art and save checks).
   Card-specific checks still apply.
@@ -515,8 +520,7 @@ Finish the cleanup cards in `docs/board/next-run.md` before SPEC 0.6 features;
 its listed existing cards may continue when a lane is free. Enforce section 7:
 before EVERY integration merge,
 node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
-Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges
-or 2 hours of merging, whichever comes first, and at every session and overnight-run end.
+Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end.
 Failed full runs stop feature merges until fixed and green. Release needs full on the exact
 final commit and the complete section 7 release evidence. Run node tools/build-status.mjs
 after every merge and at session end. D8 requires a passing full tier and
@@ -561,8 +565,7 @@ Loop:
 4. Commit the merge verdict, delete that card's used evidence, unlink its integration-only
    dependency junction, remove its clean lane worktree without force, and delete its merged
    lane branch. Run node tools/build-status.mjs and record sizes, merge count and full-run time.
-5. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours
-   of merging, whichever comes first, and at every session and overnight-run end.
+5. Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end.
    If integration or full is red, stop feature merges; only fixes merge until full is green.
 6. Before release, run full on the exact final integration commit and collect section 7's
    full release evidence. Refresh STATUS at session end. D8 permits an integration push
@@ -573,9 +576,9 @@ Loop:
 ### Full tier and release evidence (run by the Integrator)
 
 ```
-In integration/wasteland, run node tools/run-tests.mjs --tier full --jobs 8 --keep-going
-after 5 merges or 2 hours of merging, whichever comes first, and at every session and
-overnight-run end. Before every release run it on the exact final commit. Install locked
+In integration/wasteland, run node tools/run-tests.mjs --tier full --jobs 4 --keep-going
+at every session and overnight-run end, run alone.
+Before every release run it on the exact final commit. Install locked
 dependencies with npm ci if needed. Record the commit, timings and pass/fail; the runner
 writes docs/board/checks/full-tier.json. A failed full run stops feature merges until fixed
 and a full rerun passes.
@@ -592,7 +595,7 @@ Run node tools/build-status.mjs at session end. Later commits need their own ful
 You are the Release Manager, the only agent allowed in C:\Users\kyleb\dev\the-duel-remake.
 Follow the standing release rule in SPEC.md section 15 (D3).
 1. Summarize the current indexed docs, board, run log and exact gate evidence in README.md and docs/VERIFICATION.md on integration. Fold any still-present new task notes into those sources before the janitor deletes them, then commit.
-2. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going on that exact final
+2. Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going on that exact final
    integration commit. Confirm all section 7 release evidence is green; no exception for
    small or tuning-only releases. Refresh STATUS after merges and at session end.
 3. In the live folder: confirm a clean working tree and fast-forward master to that commit.
@@ -686,14 +689,14 @@ repeat until: no card is ready, the budget is nearly spent, or Kyle says stop
   5. Before EVERY merge, verify node tools/run-tests.mjs --tier lane --changed --jobs 8
      and npm run build, then merge one
      lane at a time. Run node tools/build-status.mjs after every merge
-  6. Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours of merging,
-     whichever comes first. Failed full stops feature merges until fixed and full is green
+  6. Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end,
+     run alone. Failed full stops feature merges until fixed and full is green
   7. Wave finish line met? Write docs/board/waves/<wave>.md; start its polish wave;
      move switches only under SPEC section 0 and section 8, then release only after the
      exact-final-commit full tier and all section 7 release evidence pass
   8. Append one line per event to run-log.md (card started, merged, parked, decision, release)
   9. Check the budget before taking a new card. At every session and overnight-run end,
-     run node tools/run-tests.mjs --tier full --jobs 8 --keep-going and node tools/build-status.mjs
+     run node tools/run-tests.mjs --tier full --jobs 4 --keep-going and node tools/build-status.mjs
 ```
 
 ### 14.4 Start prompt
@@ -710,8 +713,7 @@ an integration push only after a passing full tier and approved compaction;
 history rewrite or release still needs Kyle's written approval. Before EVERY
 merge require
 node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
-Run node tools/run-tests.mjs --tier full --jobs 8 --keep-going after 5 merges or 2 hours of merging, whichever
-comes first, and at every session and overnight-run end. Failed full stops feature merges
+Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end. Failed full stops feature merges
 until fixed and full is green. Run node tools/build-status.mjs after each merge and session end.
 When the spec has no answer, decide, log it in docs/board/decisions.md, and continue. Park only
 what SPEC.md 4.7 says to park, and keep going with other cards. Run helpers yourself, one lane

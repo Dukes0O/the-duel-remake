@@ -19,14 +19,19 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES.gunn === 'dev'
-  && Object.keys(FEATURE_STATES).length === 9,
-  'Fuel Run, Bounty Hunt, Arsenal, Salt Flats and Crew gear are released; career backup, Fight Voices and Gunn stay dev; released Warlords have no switch');
+  && FEATURE_STATES['arsenal-wave3'] === 'dev' && Object.keys(FEATURE_STATES).length === 10,
+  'the five released Wasteland features stay on; career backup, Fight Voices, Gunn and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('gunn'), 'production keeps Gunn off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=gunn'}).enabled('gunn'),
   'production URLs cannot enable unfinished Gunn');
 check(createFeatureFlags({storage: null, qa: true, search: '?flags=gunn'}).enabled('gunn'),
   'explicit private QA enables Gunn');
+check(!productionFlags.enabled('arsenal-wave3'), 'production keeps wave three off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
+  'production URLs cannot enable unfinished wave three');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
+  'explicit private QA enables wave three');
 check(!productionFlags.enabled('fight-voices'), 'production keeps fight voices off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=fight-voices'}).enabled('fight-voices'),
   'production URLs cannot enable unfinished fight voices');

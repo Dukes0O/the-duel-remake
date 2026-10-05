@@ -11,8 +11,10 @@ import {territoryPanel} from './screen-territory.js';
 
 export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessage,
   getArmoryCar = () => 'falcone_f42', kitsEnabled = () => false,
-  loadoutsEnabled = () => false, arsenalEnabled = () => false, crewEnabled = () => false, crewGearEnabled = () => false, action}) {
-  const arsenalOptions = () => ({wastelandEnabled:kitsEnabled(), arsenalEnabled:arsenalEnabled()});
+  loadoutsEnabled = () => false, arsenalEnabled = () => false,
+  arsenalWave3Enabled = () => false, crewEnabled = () => false, crewGearEnabled = () => false, action}) {
+  const arsenalOptions = () => ({wastelandEnabled:kitsEnabled(), arsenalEnabled:arsenalEnabled(),
+    arsenalWave3Enabled: arsenalWave3Enabled()});
   const crewContext = saved => ({gearEnabled: crewGearEnabled() === true &&
     saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true});
   function weaponUpgradePanel(saved, wastelandEnabled = false) {

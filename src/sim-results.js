@@ -26,6 +26,7 @@ export function _objectiveResult() {
 export function _deadline(atSec) {
   if (this.course.def.practice) return false;
   const s = this.state;
+  const opponents = s.opponents.filter(opponent => !opponent.decoy);
   if (!s.timeLimitSec || !['racing','ticket'].includes(s.status) || (atSec??s.stageTimeSec + s.racePenaltySec) < s.timeLimitSec) return false;
   if (s.drift) this._commitDrift(finishDrift(s.drift, { completed: false }));
   s.timeRemaining = 0;
@@ -36,8 +37,8 @@ export function _deadline(atSec) {
     jumpScore: s.jumpScore, jumps: s.jumps, bestJumpMeters: s.bestJumpMeters,
     crushCount: s.crushCount, crushScore: s.crushScore, ...this._objectiveResult(),
     ...combatResultSnapshot(this),
-    ...(s.opponents.length > 1 ? { opponentCount: s.opponents.length,
-      position: 1 + s.opponents.filter(opponent => opponent.finished || opponent.s > s.s).length } : {}) };
+    ...(opponents.length > 1 ? { opponentCount: opponents.length,
+      position: 1 + opponents.filter(opponent => opponent.finished || opponent.s > s.s).length } : {}) };
   this._callout(s.checkpointRush?'TIME UP  /  CHECKPOINT RUSH ENDED':s.objective ? `TIME UP  /  ${s.drift ? 'DRIFT' : 'STUNT'} TRIAL ENDED` : 'TIME UP  /  THE CAR LIVES TO RACE AGAIN', 3);
   this.emit({ stageResult: s.results });
   return true;
@@ -46,6 +47,7 @@ export function _deadline(atSec) {
 export function _finishStage() {
   if (this.course.def.practice) return false;
   const s = this.state;
+  const opponents = s.opponents.filter(opponent => !opponent.decoy);
   if (s.status !== 'racing' || s.completedLaps < s.lapsTotal || s.s < this.raceLength) return false;
   if (this._deadline()) return false;
   if (s.drift) this._commitDrift(finishDrift(s.drift, { completed: true }));
@@ -53,8 +55,8 @@ export function _finishStage() {
   const par = this._parTime();
   const timeBonus = Math.max(0, Math.round((par - timeSec) * SCORING.perSecondUnder));
   const beatRival = s.rival ? (s.rival.finishTime == null || s.stageTimeSec <= s.rival.finishTime) : null;
-  const beatAllOpponents = s.opponents.every(opponent => opponent.finishTime == null || s.stageTimeSec <= opponent.finishTime);
-  const position = 1 + s.opponents.filter(opponent => opponent.finishTime != null && opponent.finishTime < s.stageTimeSec).length;
+  const beatAllOpponents = opponents.every(opponent => opponent.finishTime == null || s.stageTimeSec <= opponent.finishTime);
+  const position = 1 + opponents.filter(opponent => opponent.finishTime != null && opponent.finishTime < s.stageTimeSec).length;
   const objective = this._objectiveResult();
   const won = s.objective ? objective.targetsMet && timeSec < s.timeLimitSec : this.stageDef.kind === 'chase' ? timeSec < s.timeLimitSec : s.mode !== 'timetrial' && s.rival ? beatAllOpponents : timeSec < par;
   const recordEligible = !s.objective || objective.targetsMet;
@@ -82,7 +84,7 @@ export function _finishStage() {
     cleanStage: s.stageCrashes === 0, stageCrashes: s.stageCrashes, majorCrashesBeforeRepair,
     crashesRepaired, livesRestored, policeEscapes: s.policeEscapes, scoreMultiplier: this.scoreMultiplier,
     lives: s.lives, timeBonus: timeBonus * this.scoreMultiplier, beatRival, score, styleScore: s.stageStyleScore, won,
-    ...(s.opponents.length > 1 ? { opponentCount: s.opponents.length, position, beatAllOpponents } : {}),
+    ...(opponents.length > 1 ? { opponentCount: opponents.length, position, beatAllOpponents } : {}),
     ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
     ...combatResultSnapshot(this),
   };

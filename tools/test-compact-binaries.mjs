@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +33,20 @@ function git(root, ...args) {
     encoding: 'utf8', shell: false, windowsHide: true,
     env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
   });
+  if (result.status !== 0) {
+    const metadata = Object.fromEntries(['.git', '.git/HEAD', '.git/config'].map(path => {
+      try {
+        const stat = lstatSync(join(root, path));
+        return [path, stat.isSymbolicLink() ? 'link' : stat.isDirectory() ? 'directory' : stat.isFile() ? 'file' : 'other'];
+      } catch (error) { return [path, error.code === 'ENOENT' ? 'missing' : `error:${error.code}`]; }
+    }));
+    const version = spawnSync('git', ['--version'], { encoding: 'utf8', shell: false, windowsHide: true });
+    const redirectEnvNames = Object.keys(process.env).filter(name =>
+      /^GIT_(?:DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM|CONFIG(?:_.*)?)$/i.test(name)).sort();
+    console.error('Fixture Git diagnostics: ' + JSON.stringify({ metadata,
+      gitVersion: version.status === 0 ? version.stdout.trim() : `unavailable:${version.status}`,
+      redirectEnvNames }));
+  }
   same(result.status, 0, `fixture git ${args.join(' ')}: ${result.stderr.trim()}`);
   return result.stdout.trim();
 }

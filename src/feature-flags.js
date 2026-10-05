@@ -1,6 +1,7 @@
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
+  'arsenal-wave3': 'dev',
   'career-backup': 'dev', 'hidden-road': 'on',
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',
   'crew-gear': 'on', 'fight-voices': 'dev', gunn: 'dev',
