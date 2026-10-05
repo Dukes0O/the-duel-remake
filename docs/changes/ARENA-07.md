@@ -8,6 +8,8 @@ nearest valve to the measured impact; rams use the solver contact within 3 m.
 Blasts reach every valve inside their radius. Other body hits only shove.
 Rocket Pods, Harpoon, RPG, Bomb, Sticky Bomb and Mortar keep real hit geometry.
 Ordinary car damage, Harpoon yank and tether remain unchanged.
+The rig's loop driver consumes and damps real lateral and forward hit shoves,
+then recovers its route. Its 12-tonne collision body stays unchanged.
 
 All broken valves slow the rig to 35 km/h and light both roof lamps. A native
 one-second roof hold plants one charge with a two-second fuse. A legal plant
@@ -31,12 +33,15 @@ writes retain one Retry without early scrap or a duplicate award.
 
 ## Checks
 
-Native Convoy: 41 cases, 379 checks pass. Includes actual entry, body immunity,
+Native Convoy: 42 cases, 390 checks pass. Includes actual entry, body immunity,
 measured impacts, native Mortar landing, deadline plants, real App win/loss
 and failed-write Retry. Different territory holds exposed and fixed the retry
 and already-paid adoption displays; both now retain Tollkeeper hold.
 Existing assertion thresholds were not changed. Eight focused existing
 suites pass: 86 tests, including ordinary projectile and settlement controls.
+Source review's missing rig shove was reproduced by a real Crossbow hit and
+fixed with existing push helpers. Native next-tick Crossbow and Harpoon
+checks now prove movement and damping, with no change to old assertions.
 The new nearby-car Rocket fixture moved only its escort from 1.8 m to 0.3 m
 outward from the valve: its measured blast then reaches a valve while the
 rig centre remains outside. All geometry and damage assertions stay exact.

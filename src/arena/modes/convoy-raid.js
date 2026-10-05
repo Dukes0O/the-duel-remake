@@ -1,4 +1,5 @@
 import {arenaActor} from '../../combat-teams.js';
+import {carAlongPush, dampCarAlongPush} from '../../arsenal/car-effects.js';
 
 export const CONVOY_RULES = Object.freeze({
   timeLimitSec: 300, cruiseKph: 55, boardingKph: 35, boardingSeconds: 60,
@@ -92,8 +93,13 @@ export function stepConvoyRig(duel, actor, dt) {
   // The -9 m loop clears both narrow ramps and the kept perimeter props.
   // Offset curves cover a different distance from their centreline.
   actor.lateral += (CONVOY_RULES.loopOffset - actor.lateral) * (1 - Math.exp(-dt));
+  actor.lateral += (actor.pushVelocity || 0) * dt;
   const frame = duel.course.at(actor.s);
-  actor.s += actor.speedMph * .44704 * dt / Math.max(.3, 1 - frame.curvature * actor.lateral);
+  actor.s += (actor.speedMph * .44704 + carAlongPush(actor)) * dt /
+    Math.max(.3, 1 - frame.curvature * actor.lateral);
+  const pushDamping = Math.exp(-(actor.offRoad ? .9 : 1.5) * dt);
+  actor.pushVelocity = (actor.pushVelocity || 0) * pushDamping;
+  dampCarAlongPush(actor, pushDamping);
   actor.headingError = 0; actor.yawVelocity = 0;
   actor.boosting = false; actor.drifting = false; actor.steerVisual = 0;
   return true;

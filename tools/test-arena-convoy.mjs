@@ -8,7 +8,7 @@ import {createFighter} from '../src/onfoot.js';
 import {stepFootTransition} from '../src/onfoot-transition.js';
 import {App} from '../src/app.js';
 import {CONVOY_ROOF_PLATE, convoyPoint, damageConvoyValves} from '../src/arena/convoy.js';
-import {stepConvoyRaid} from '../src/arena/modes/convoy-raid.js';
+import {stepConvoyRaid, CONVOY_RULES} from '../src/arena/modes/convoy-raid.js';
 import {startBoarding} from '../src/crew-gear/boarding.js';
 import {gearContact} from '../src/crew-gear/contacts.js';
 import {carBodyPoint} from '../src/arsenal/hazards.js';
@@ -418,6 +418,13 @@ test('an actual native Crossbow sweep routes its real impact to the nearest valv
   equal(rig.combatWrecking, false, 'a native bolt cannot cause an ordinary rig kill');
   ok(Math.hypot(hits[0].hitPosition.x - impact.x, hits[0].hitPosition.y - impact.y,
     hits[0].hitPosition.z - impact.z) < 1e-5, 'the native hit event retains the first swept intersection');
+  const lateral = rig.lateral, push = rig.pushVelocity;
+  ok(Math.abs(push) > 0, 'the actual native body impact supplies a side shove');
+  duel.step(DT);
+  const recovery = (CONVOY_RULES.loopOffset - lateral) * (1 - Math.exp(-DT));
+  ok(Math.abs(rig.lateral - lateral - recovery - push * DT) < 1e-9,
+    'the next native rig tick moves the body by its actual hit shove');
+  ok(Math.abs(rig.pushVelocity) < Math.abs(push), 'the native rig tick damps its body-hit shove');
 });
 
 test('a native solver side ram within three metres damages a valve but only shoves the rig body', () => {
@@ -796,6 +803,22 @@ test('geometry transfer: native Rocket Pods forwards its real blast point and ra
   equal(f.duel.state.arena.convoy.valves, distances.map(d => d <= ROCKET_RULES.blastRadius ? 140 : 150),
     'the native two-metre blast damages every reached valve by ten, with no centre substitution');
   equal(f.rig.armor, armor, 'the actual rocket blast leaves rigid body armor unchanged');
+});
+
+test('a native Harpoon body yank moves and damps both rig push components on its next tick', () => {
+  const f = exposedFight(); requireNativeTankerSpec(f); placeBesideValve(f); f.rig.headingError = Math.PI / 4;
+  const shot = launchHarpoon(f.duel, f.duel.state, false, 0);
+  ok(shot?.targetId === f.rig.arenaId, 'the real Harpoon targets the tanker');
+  resolveNativeProduct(f.duel, shot);
+  const {s, lateral, pushVelocity} = f.rig, along = carAlongPush(f.rig);
+  ok(Math.abs(pushVelocity) > 0 && Math.abs(along) > 0, 'the actual sideways yank has both road components');
+  const nextLateral = lateral + (CONVOY_RULES.loopOffset - lateral) * (1 - Math.exp(-DT)) + pushVelocity * DT;
+  const expectedS = s + (CONVOY_RULES.cruiseKph / 3.6 + along) * DT /
+    Math.max(.3, 1 - f.duel.course.at(s).curvature * nextLateral);
+  f.duel.step(DT);
+  ok(Math.abs(f.rig.s - expectedS) < 1e-9, 'the next native rig tick consumes its real forward yank');
+  ok(Math.abs(f.rig.lateral - nextLateral) < 1e-9, 'the next native rig tick consumes its real lateral yank');
+  ok(Math.abs(carAlongPush(f.rig)) < Math.abs(along), 'the native forward yank damps after moving');
 });
 
 test('geometry transfer: an ordinary-car Rocket blast reaches a valve with the tanker centre outside its radius', () => {
