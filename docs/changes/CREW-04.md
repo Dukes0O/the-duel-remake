@@ -1,102 +1,60 @@
 # CREW-04: Computer crews
 
-status: partial-source
+status: building
 
-## Settled Rules
+## Rules
 
-Claude answered on 4 October; the answer is recorded in CREW.md section 3.
-Repair uses the wrench only, with Odessa's two-second perk. An ambush uses
-reachable signature gear once and then RPG attacks, at most three attacks
-total. Dune uses bolts throughout; Jax and Wren use RPG only; Rook keeps his
-handling perk. These rules are implemented in the owned module.
+Claude's 4 October answer is in CREW.md section 3. Repairs use only the
+wrench, with Odessa's two-second perk. Reachable signature gear is used
+once in an ambush, then RPG attacks, at most three attacks total. Dune
+uses bolts; Jax and Wren use RPG only; Rook keeps his handling perk.
 
 ## Source
 
-Each computer gets its own seeded crew stream. The stop controller checks
-difficulty, armor, enemies, finish distance, ambush zones and per-lap limits.
-It pulls toward the shoulder, parks, creates the native fighter, repairs or
-attacks, and resumes driving. Knockdown damage uses the native fighter health
-path; the car stays parked until a three-second respawn beside it.
+The cpu-crews dev switch admits discovered Wasteland races only. Released
+crew gear remains unchanged. Every computer gets a seeded crew. Native
+drivers pull over, repair or ambush and return; their car cannot drive or
+fire while they are out. Native contacts, pushes, laps and recovery remain.
+Shoulder planning rejects blocked positions with the existing collision
+geometry. A knocked fighter holds its car until its three-second respawn.
 
-The caller must opt in with `stepCpuCrew(..., {enabled: true})`. The default
-is disabled. Admission also requires discovered Wasteland racing and excludes
-arena events. The released crew-gear switch has no source change.
+The existing car-fighter body, damage and splash helpers now live in
+contacts.js and include real computer fighters. Rocket Pods hit the earliest
+body and reuse 60-health splash, linear falloff and half-radius knockdown.
+Car armor, team and participant protection and car-hit attribution remain.
+Enemy RPG guidance uses its actual computer owner; native player RPG and
+signature gear can fight computer crews. Player car sweeps knock them down.
 
-CPU gear creates actual records for the existing gear projectile processor.
-Turrets and flamers use native sight, contacts and armor damage. Dune uses
-the eight-bolt gear's 1.5-second reload; Rook uses the 0.6-second lock and
-1.8-second reload. The three-attack ambush cap remains separate from capacity.
-Repair events reuse footRepairStarted/Interrupted/Completed cues; attacks use
-the existing RPG and crew gear cues. CPU action events now carry their actual
-actor and enemy attribution, including turret and flamer lifecycle cues.
-Exit, return and respawn playback still need the native audio owner.
-No new sound file is added.
+The bounded scene pool shows real fighters, repair, exit, return and get-up
+poses. Computer turrets and flamers share the existing geometry and materials.
+Rendering never writes race state. Enemy exit, return and respawn reuse a
+quiet vehicle.landing cue; repairs use spatial repair.start/complete/interrupted.
+Attacks reuse the existing RPG and crew gear cues. No sound file is added.
 
-The native rival now calls the stop controller behind the explicit cpu-crews
-switch and respects an already stopped crew. Contacts, pushes, jumps, bounds,
-lap progress and recovery remain native. The car settles against scenery
-before placing its fighter. Combat AI holds scheduled attacks, shields and
-UFO pickup use until the crew returns; the attack-rate count excludes it.
+The isolated switch prerequisite also registers ambush-alley as dev, without
+its mode code. Neither new switch admits the other; released states stay exact.
 
 ## Checks
 
-Controller slice: 28 cases / 89 checks, 21 pass and seven admission failures.
-The parked-motion and car-fire witnesses pass. One added native case verifies
-retained shield charges and resumed driving/fire after a real repair stop.
-All earlier assertions are unchanged. The dev registry remains held by
-Convoy; it is not bypassed. Raiders pass 7/7 and all twelve combat replay
-fingerprints remain unchanged across four encounters.
+Native crew checks pass, including real parked motion, car-fire suppression,
+repair timing, all eight members' reachable gear, the three-attack cap,
+enemy RPG guidance, car sweeps, recovery, presentation purity and spatial cues.
+Rocket fighter contacts pass 9 cases / 94 checks. Existing Fuel/car fighter
+contacts pass 57 cases / 397 checks unchanged. Flag, release and launcher
+checks pass. The balance-tool unit suite passes 34 checks.
 
-Independent CPU cue regression 0c02e806 first reproduced three attribution
-failures: turret deploy/fire and flamer start consumed the player's Rook line.
-After the owned producer fix: 23 cases / 64 executed checks, 17 pass / 6 fail.
-The original six native caller failures remain held; all assertions are exact.
-Native Odessa and Cinder actions enter the real EngineAudio/Voice consumer.
-Each now retains its actual CPU actor and enemy marker, creates no immediate
-or queued player caption, and leaves the next native player Crossbow action
-able to announce Rook once with the exact kept caption. The actual player
-positive control also passes. No Voice or other shared source was edited.
+Changed fixtures: the positive ambush starts 200 m behind and approaches
+within reach after the real exit; a 250 m control arms but cannot fire until
+the player approaches. No range or trigger boundary changed. The exact
+Rocket splash health expectation uses the independently measured native
+distance, not an ideal fraction; its equality and all other controls remain.
+The exact registry tests add only the two new dev entries.
 
-Rocket fighter tests: nine native cases/78 checks, two pass/seven red.
-Car damage/once-only and participant protection pass. Earlier player bodies,
-60-health falloff/half-radius, shield/wreck independence, real raiders and the
-real repair-module CPU fighter are missed. No fake shots; old tests are exact.
-
-An added real ambusher RPG witness loses its player lock in the native
-projectile step: guidance queries targets as the player instead of its
-computer owner. The shot's native owner and launch controls pass. The
-projectile hook remains held; no earlier assertion changed.
-
-Direct controller probes pass Odessa's 40-armor/two-second repair and the
-three-second knockdown/respawn through damageRaider. Eight seeded crew probes
-use real stepProjectiles and finish with three attacks; Dune fires only bolts,
-Jax/Wren only RPG, Nell/Tusk use one signature shot, Odessa deploys one turret
-and Cinder uses one flamer burst. These are focused source checks, not native
-race acceptance or independent review.
-
-The private laptop browser scenario is written but not run. It uses memory-only
-saves and requires actual native exits, attacks, visible fighters and a finish.
-Natural full Hard race, thirty-race balance, independent switch tests, lane
-gate, build, browser, audio and source review remain unmeasured. Not merge-ready.
-
-## Pending Hooks
-
-- combat-projectiles.js: enemy-owned RPG guidance and CPU fighter bodies.
-- feature-flags.js: cpu-crews dev switch; independent off/on tests first.
-- crew-gear/contacts.js and signature.js: CPU fighter/turret targeting.
-- onfoot-race.js: native vehicle sweeps against the stopped crew fighter.
-- combat-scene.js and render3d.js: CPU fighters and deployables, without
-  changing race state. audio.js: native exit/return playback and repair placement.
-- tools/combat-balance.mjs: switch-on thirty-race check.
-
-Arsenal's whole merge is synced. Remaining shared hooks wait for Convoy's
-whole merge. No pending shared file was edited; incoming release docs were
-preserved as received.
+Complete balance, private High/Performance browser, lane tier, build and
+the whole-source review remain in progress. No merge pass is claimed yet.
 
 ## Removed
 
-The obsolete unanswered rule question and source-not-started note were
-replaced by the settled answer and current evidence. No runtime path is
-replaced or removed. Unattributed CPU action cues were replaced in place.
-Ordinary drive and fire paths no longer run for a stopped crew; no duplicate
-vehicle solver or charge inventory was introduced.
+The old player-only car-fighter selection and duplicate body/damage/splash
+helpers were replaced by the shared native path. Obsolete held-hook notes
+were removed. No asset, licensed file or save format was changed.

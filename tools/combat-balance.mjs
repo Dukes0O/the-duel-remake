@@ -24,12 +24,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
-const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
+const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected arsenal or arsenal-wave3.');
+    throw Error('Unsupported flags; expected arsenal, arsenal-wave3 or cpu-crews.');
   return [...new Set(flags)];
 }
 
@@ -71,7 +71,7 @@ export function parseArgs(args = []) {
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
     overrides: { arsenal: flags.includes('arsenal'),
-      'arsenal-wave3': flags.includes('arsenal-wave3') } });
+      'arsenal-wave3': flags.includes('arsenal-wave3'), 'cpu-crews': flags.includes('cpu-crews') } });
 }
 
 function emptyWrecks() {
@@ -354,6 +354,7 @@ export function run(policy, cpuDifficulty, seed = 1989,
       ...(['wave-two', 'wave-two-close'].includes(policy)
         ? {rockets: 0, flamethrower: 0, magnet: 0} : {}) };
     let cpuHits = 0, unattributedEnemyHits = 0, playerOpponentWrecks = 0;
+    const cpuCrew = {repairs: 0, ambushes: 0, attacks: 0, returns: 0, respawns: 0};
     const wrecks = emptyWrecks();
     const weaponCounter = weaponUseCounter(duel);
     const wreckedTraffic = new WeakSet();
@@ -367,6 +368,11 @@ export function run(policy, cpuDifficulty, seed = 1989,
     };
     duel.onChange((_, event) => {
       weaponCounter.observe(event);
+      if (event.cpuCrewExited) cpuCrew[event.reason === 'repair' ? 'repairs' : 'ambushes']++;
+      if (event.cpuCrewEntered) cpuCrew.returns++;
+      if (event.cpuCrewRespawned) cpuCrew.respawns++;
+      if (event.enemy && (event.footWeaponFired ||
+          ['crew.turret.deploy', 'crew.flamer.start'].includes(event.crewGearCue))) cpuCrew.attacks++;
       if (event.combatWreck) {
         const victim = event.victim === 'rival' ? 'opponent' : event.victim;
         if (['player', 'opponent', 'traffic'].includes(victim)) {
@@ -399,6 +405,7 @@ export function run(policy, cpuDifficulty, seed = 1989,
     const state = duel.state;
     const result = {
       policy, cpuDifficulty, seed, flags, wrecks, playerOpponentWrecks, status: state.status,
+      ...(flags.includes('cpu-crews') ? {cpuCrew} : {}),
       ...(cpuLoadout ? {cpuLoadout} : {}),
       completed: state.results?.completed === true,
       ...(!state.results?.completed ? {unfinished: {s: state.s, speedMph: state.speedMph,
@@ -554,6 +561,16 @@ export function buildReport({ flags = [], runs, baselineRuns, firstTwelveSec, el
     scope: 'Separate supplemental rear-defense races with natural CPU loadouts, legal driving and native Crossbow damage; excluded from every historical sample and target.',
     races: rearDefenseRuns,
     weaponUses: sumWeaponUses(rearDefenseRuns),
+  };
+  if (flags.includes('cpu-crews')) report.cpuCrew = {
+    scope: 'Native exit, attack, return and respawn events across the unchanged complete-race samples.',
+    races: allRuns.filter(race => race.completed).length,
+    incomplete: allRuns.filter(race => !race.completed).map(({cpuDifficulty, seed}) => ({cpuDifficulty, seed})),
+    byDifficulty: Object.fromEntries(difficulties.map(difficulty => [difficulty,
+      allRuns.filter(race => race.cpuDifficulty === difficulty).reduce((total, race) => {
+        for (const key of Object.keys(total)) total[key] += race.cpuCrew?.[key] || 0;
+        return total;
+      }, {repairs: 0, ambushes: 0, attacks: 0, returns: 0, respawns: 0})])),
   };
   return report;
 }

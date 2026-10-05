@@ -9,7 +9,9 @@ import {targetFor, targetIdentity} from '../arsenal/targeting.js';
 import {combatOwnerId, hostile, outOfPlay} from '../combat-teams.js';
 import {carBodyPoint} from '../arsenal/hazards.js';
 import {gearContact, damageGearCar, damageGearFighter} from './contacts.js';
-import {signatureFor, GEAR_EPSILON} from './gear.js';
+import {signatureFor, crewGearEnabled, GEAR_EPSILON} from './gear.js';
+import {sweepObstacle} from '../collision.js';
+import {strikeCpuCrewFighterFromVehicles} from '../onfoot-race.js';
 
 const SALT = 0xc4e704;
 const MEMBERS = Object.keys(CREW);
@@ -18,7 +20,7 @@ const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 
 function admitted(duel, enabled) {
   const s = duel.state;
-  return enabled === true && s.mode === 'wasteland' && !!s.combat &&
+  return enabled === true && crewGearEnabled(duel) && s.mode === 'wasteland' && !!s.combat &&
     wastelandRulesActive(s) && !s.arena && !duel.course.def.arena;
 }
 
@@ -54,6 +56,8 @@ function finishStop(duel, actor, {repairCompleted = false} = {}) {
     actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});
   if (crew.fighter?.flaming) duel.emit({crewGearCue: 'crew.flamer.stop', actor,
     enemy: true, hitPosition: crew.fighter});
+  if (crew.fighter) crew.departed = {fighter: crew.fighter,
+    presentation: {clip: 'enter', startedAt: duel.state.stageTimeSec, duration: .65}};
   crew.phase = 'driving'; crew.fighter = null;
   duel.emit({cpuCrewEntered: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
     crewId: crew.crewId, hitPosition: point(duel, actor)});
@@ -114,12 +118,26 @@ function eligibleStop(duel, actor, crew) {
 
 function startStop(duel, actor, crew, stop) {
   const lap = actor.completedLaps || 0;
+  const width = duel.course.roadHalfWidthAt(actor.s), spec = duel._vehicleSpec(actor);
+  const preferred = stop.side * (width + spec.halfWidth + 1);
+  const candidates = [preferred, -preferred, stop.side * (width - .5), -stop.side * (width - .5)];
+  const stopLateral = candidates.find(lateral => {
+    for (let along = 0; along <= 40; along += 4) {
+      const at = duel.course.groundAt(actor.s + along, lateral);
+      if ([...duel._obstacles(actor.s + along - spec.halfLength,
+        actor.s + along + spec.halfLength)].some(obstacle =>
+        sweepObstacle(at, at, obstacle, at.heading, {...spec,
+          halfWidth: spec.halfWidth + .35}))) return false;
+    }
+    return true;
+  });
+  if (stopLateral === undefined) return false;
   crew[`${stop.kind}Lap`] = lap;
   Object.assign(crew, {phase: 'pulling-over', stopKind: stop.kind,
-    stopLateral: stop.side * (duel.course.roadHalfWidthAt(actor.s) +
-      duel._vehicleSpec(actor).halfWidth + 1),
+    stopLateral,
     stopSeconds: 0, repairSeconds: 0, repairAmount: 0,
     shots: 0, signatureUsed: false, lockSeconds: 0, lockTargetId: null, nextFireAt: 0});
+  return true;
 }
 
 function pullOver(duel, actor, crew, dt) {
@@ -148,6 +166,7 @@ function pullOver(duel, actor, crew, dt) {
     actor.prevS = actor.s; actor.prevLateral = actor.lateral;
     crew.phase = crew.stopKind;
     crew.fighter = besideCar(duel, actor, crew);
+    crew.fighter.presentation = {clip: 'exit', startedAt: duel.state.stageTimeSec, duration: .65};
     crew.stopSeconds = 0;
     duel.emit({cpuCrewExited: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
       crewId: crew.crewId, reason: crew.stopKind, hitPosition: crew.fighter});
@@ -198,10 +217,12 @@ function launch(duel, actor, crew, kind, target) {
   else Object.assign(shot, {crewGearShot: true, thrown});
   combat.projectiles.push(shot);
   fighter.weapon = kind;
-  duel.emit({weaponFired: kind, footWeaponFired: kind, actor, enemy: true,
+  crew.lastFireAt = duel.state.stageTimeSec;
+  duel.emit({...(kind === 'rpg' ? {weaponFired: kind} : {}), footWeaponFired: kind, actor, enemy: true,
     actorId: id, hitPosition: {x, y, z},
     ...(kind === 'sticky-bomb' ? {crewGearCue: 'crew.sticky.throw'} :
-      kind === 'marksman' ? {crewGearCue: 'crew.marksman.fire'} : {})});
+      kind === 'marksman' ? {crewGearCue: 'crew.marksman.fire'} :
+        kind === 'scrap-cannon' ? {crewGearCue: 'crew.scrap-cannon.fire'} : {})});
   return true;
 }
 
@@ -232,6 +253,7 @@ function stepTurret(duel, actor, crew, dt) {
       damageGearFighter(duel, contact.target, gear.fighterDamage, actor);
     else if (contact?.actor === target) damageGearCar(duel, target, gear.carDamage, actor);
     else continue;
+    turret.targetId = targetIdentity(duel, target);
     duel.emit({crewGearCue: 'crew.turret.fire', actor, enemy: true, turret, hitPosition: turret});
   }
   if (turret.health <= 0 || turret.age + GEAR_EPSILON >= gear.lifetime) {
@@ -323,6 +345,8 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
   if (!admitted(duel, enabled) || !duel.state.opponents.includes(actor)) return false;
   const crew = crewState(duel, actor), s = duel.state;
   if (!(dt > 0) || s.status !== 'racing' || s.paused) return false;
+  if (crew.departed && s.stageTimeSec >= crew.departed.presentation.startedAt +
+      crew.departed.presentation.duration) crew.departed = null;
   stepTurret(duel, actor, crew, dt);
   if (actor.combatWrecking || actor.crushed || actor.finished) {
     if (crew.phase !== 'driving') finishStop(duel, actor);
@@ -331,8 +355,9 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
   if (crew.phase === 'driving') {
     const stop = eligibleStop(duel, actor, crew);
     if (!stop) return false;
-    startStop(duel, actor, crew, stop);
+    if (!startStop(duel, actor, crew, stop)) return false;
   }
+  strikeCpuCrewFighterFromVehicles(duel, actor);
   // Native vehicle sweeps may knock a fighter down without dealing health damage.
   if (crew.fighter?.knockedDown && crew.phase !== 'recovering') {
     crew.resumePhase = crew.phase; crew.phase = 'recovering';
@@ -352,6 +377,7 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
     if (s.stageTimeSec + GEAR_EPSILON >= crew.respawnAt) {
       const replacement = besideCar(duel, actor, crew);
       Object.assign(crew.fighter, replacement, {respawns: crew.fighter.respawns + 1});
+      crew.fighter.presentation = {clip: 'get-up', startedAt: s.stageTimeSec, duration: .8};
       crew.phase = crew.resumePhase;
       duel.emit({cpuCrewRespawned: true, actor, enemy: true, crewId: crew.crewId,
         actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});

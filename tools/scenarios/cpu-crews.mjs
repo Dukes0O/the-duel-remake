@@ -1,6 +1,7 @@
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',
     {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
+  for (const quality of ['high', 'performance']) {
   await context.navigate('/tools/menu-check.html?flags=cpu-crews');
   await context.waitFor(`!!window.__qaApp && !!window.__render &&
     !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`,
@@ -9,6 +10,7 @@ export async function run(context) {
     const app = window.__qaApp, duel = app.duel;
     if (!app._switches().enabled('cpu-crews')) throw Error('Computer crews are off');
     app.stop(); app.audio.setMuted(true);
+    app.setGraphicsQuality('${quality}');
     duel.startCampaign({mode: 'wasteland', car: 'falcone_f42',
       seed: 3004, discoveredGate: true, opponentCount: 1,
       cpuDifficulty: 'hard'});
@@ -49,7 +51,7 @@ export async function run(context) {
     if (before !== JSON.stringify(app.duel.state.opponents.map(actor => actor.cpuCrew)))
       throw Error('Rendering changed the computer crew rules');
   })()`);
-  await context.screenshot('cpu-crew-ambush');
+  await context.screenshot('cpu-crew-ambush-${quality}');
   const completed = await context.evaluate(`(() => {
     const app = window.__qaApp, duel = app.duel, s = duel.state;
     app.inspectionCamera = null; app.autopilot = true;
@@ -66,6 +68,7 @@ export async function run(context) {
     return {status: s.status, completedLaps: s.completedLaps,
       lapsTotal: s.lapsTotal, events};
   })()`);
-  await context.screenshot('cpu-crew-race-finish');
+  await context.screenshot('cpu-crew-race-finish-${quality}');
   console.log('Private computer crews: ' + JSON.stringify({stopped, completed}));
+  }
 }

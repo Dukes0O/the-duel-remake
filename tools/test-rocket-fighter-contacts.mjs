@@ -172,7 +172,8 @@ for (const [fraction, down] of [[.75, false], [.49, true]]) {
     ok(event, 'the actual native car blast must emit fighter damage instead of ignoring the body');
     near(event?.strength * 60, 60 * (1 - fraction), 'fighter splash uses the existing 60-health maximum and linear falloff');
     equal(f.fighter.knockedDown, down, 'only a fighter strictly inside half radius is knocked down');
-    equal(f.fighter.health, down ? 0 : initial - 60 * (1 - fraction), 'native fighter health follows splash and existing knockdown');
+    equal(f.fighter.health, down ? 0 : initial - 60 * (1 - distance / ROCKET_RULES.blastRadius),
+      'native fighter health follows splash and existing knockdown');
     const health = f.fighter.health; stepProjectiles(f.duel, DT);
     equal(f.fighter.health, health, 'one resolved car rocket cannot damage the fighter twice');
     ok(!event.footGearHit && event.enemy, 'splash remains an enemy car hit, not foot gear');

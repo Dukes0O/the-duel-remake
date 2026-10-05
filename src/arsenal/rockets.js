@@ -4,6 +4,7 @@ import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.js';
 import {combatOwnerId, outOfPlay, hostile} from '../combat-teams.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
+import {carFighterTargets, fighterObstacle, splashCarFighter} from '../crew-gear/contacts.js';
 
 export const ROCKET_RULES = Object.freeze({
   count: 4, spacing: .12, bearings: [-1.5, -.5, .5, 1.5],
@@ -97,6 +98,8 @@ function blast(duel, shot, at, damageCar, shielded) {
       enemy: shot.enemy, victim: actor === duel.state ? 'player' : 'rival',
       hitPosition: at});
   }
+  for (const target of carFighterTargets(duel, shot))
+    splashCarFighter(duel, target.fighter, {...shot, ...at}, ROCKET_RULES.blastRadius, target.raider);
   duel.emit({arsenalCue: 'weapon.rockets.hit', projectile: shot, hitPosition: at});
 }
 export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
@@ -119,6 +122,7 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
   for (const actor of [duel.state, ...duel.state.opponents])
     if (actor !== owner && !outOfPlay(duel, actor) && hostile(duel, owner, actor))
       consider(body(duel, actor));
+  for (const target of carFighterTargets(duel, shot)) consider(fighterObstacle(target));
   if (duel._obstacles) {
     const a = duel.course.nearest(from.x, from.z), b = duel.course.nearest(to.x, to.z, a.s);
     for (const obstacle of duel._obstacles(Math.min(a.s, b.s) - 3,

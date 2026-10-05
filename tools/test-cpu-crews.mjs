@@ -8,6 +8,7 @@ import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
 import {stepCombatAI} from '../src/combat-ai.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {point} from '../src/combat-weapons.js';
+import {createCombatScene} from '../src/combat-scene.js';
 import {EngineAudio} from '../src/audio.js';
 import {FIGHT_VOICE_LINES, readFightSubtitle} from '../src/fight-voices.js';
 
@@ -57,7 +58,7 @@ function ambushRace(options = {}) {
   const f = race({difficulty: 'hard', ...options});
   const zone = f.state.raids.zones[0];
   f.rival.s = f.rival.prevS = zone.s;
-  f.state.s = f.state.prevS = zone.s - 250;
+  f.state.s = f.state.prevS = zone.s - 200;
   return f;
 }
 
@@ -92,6 +93,17 @@ function actualControllerRepair() {
     'a real parked fighter exists before probing the held native callers');
   return f;
 }
+test('the native player car sweep knocks down a real stopped computer fighter', () => {
+  const f = actualControllerRepair(), fighter = f.rival.cpuCrew.fighter;
+  Object.assign(f.state, {prevS: fighter.s - 8, s: fighter.s + 8,
+    prevLateral: fighter.lateral, lateral: fighter.lateral, speedMph: 35});
+  f.state.stageTimeSec += DT;
+  stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  equal(fighter.knockedDown, true, 'the real player car sweep reaches the exposed computer body');
+  equal(f.rival.cpuCrew.phase, 'recovering', 'the parked car waits for its knocked-down crew');
+  ok(f.rival.cpuCrew.respawnAt > f.state.stageTimeSec,
+    'the native stopped controller schedules the usual three-second recovery');
+});
 
 test('native rival motion cannot drive a real repairing computer away from its fighter', () => {
   const f = actualControllerRepair();
@@ -101,6 +113,39 @@ test('native rival motion cannot drive a real repairing computer away from its f
   equal({s: f.rival.s, lateral: f.rival.lateral}, at,
     'the native rival caller leaves the parked car beside its actual repair fighter');
   equal(f.rival.cpuCrew.phase, 'repair', 'the native stop remains in progress');
+});
+test('the real stopped fighter enters the bounded scene pool without changing simulation state', () => {
+  const f = actualControllerRepair(), requested = [];
+  f.state.stageTimeSec += 1;
+  stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  const scene = createCombatScene(undefined, {loadFighterAsset: async id => {
+    requested.push(id); throw Error('Native roster test does not load a browser asset');
+  }});
+  const before = JSON.stringify(f.rival.cpuCrew);
+  scene.update(f.duel); scene.update(f.duel);
+  const figures = scene.group.getObjectByName('Rigged on-foot fighters');
+  ok(figures.visible, 'the actual CPU repair fighter makes the scene fighter pool active');
+  equal(JSON.stringify(f.rival.cpuCrew), before, 'presentation never writes the computer stop state');
+  scene.dispose();
+});
+test('native CPU repair lifecycle uses spatial existing cues without player speech', () => {
+  const f = race(), calls = [], positions = [];
+  const audio = new EngineAudio({flags: {enabled: name => ['crew-gear', 'cpu-crews', 'fight-voices'].includes(name)}});
+  audio.context = {state: 'running', currentTime: 0}; audio.muted = false;
+  audio.buses = {vehicle: {}, weapons: {}};
+  audio._syncMixer = () => {}; audio._weaponCue = () => {};
+  audio._spatialOutput = event => {positions.push(event.hitPosition); return {level: {}, disconnect() {}};};
+  audio._playCue = id => {calls.push(id); return {stop() {}};};
+  f.duel.onChange((state, event) => {
+    if (event.cpuCrewExited || event.cpuCrewEntered || event.footRepairStarted || event.footRepairCompleted)
+      audio.event(event, state, f.duel.course);
+  });
+  repairStart(f); tick(f, 600);
+  equal(calls, ['vehicle.landing', 'repair.start', 'repair.complete', 'vehicle.landing'],
+    'the real exit, wrench repair and return reuse the existing native cues');
+  ok(positions.every(at => Number.isFinite(at?.x) && Number.isFinite(at?.z)),
+    'each CPU cue is placed at the actual stopped fighter or car');
+  equal(readFightSubtitle(f.state), null, 'enemy repair and return never announce the player crew');
 });
 
 test('native combat AI suppresses car weapons while its actual crew is repairing', () => {
@@ -209,9 +254,39 @@ test('Hard computer at an ambush zone starts a real fighter ambush when leading 
   equal(f.rival.cpuCrew.phase, 'ambush', 'the Hard computer actually stops for its ambush');
   ok(f.rival.cpuCrew.fighter, 'the ambush fighter is present on foot');
   ok(f.rival.speedMph <= 1, 'the ambusher car is parked');
+  f.state.s = f.state.prevS = f.rival.s - 100;
   tick(f, Math.round(12 / DT));
   ok(f.rival.cpuCrew.shots > 0 && f.rival.cpuCrew.shots <= 3, 'the native ambusher fires one to three RPG rockets');
   equal(f.rival.cpuCrew.phase, 'driving', 'the ambusher gets back in after firing');
+});
+test('a Hard ambush outside RPG reach arms but waits for the player to approach', () => {
+  const f = ambushRace();
+  f.state.s = f.state.prevS = f.rival.s - 250;
+  tick(f);
+  ok(stopped(f.rival), 'a 250-metre lead still triggers an eligible ambush');
+  for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'ambush'; n++) tick(f);
+  equal(f.rival.cpuCrew.phase, 'ambush', 'the actual fighter exits at the ambush zone');
+  tick(f, 120);
+  equal(f.rival.cpuCrew.shots, 0, 'the stationary player beyond RPG reach is not attacked');
+  f.state.s = f.state.prevS = f.rival.s - 100;
+  tick(f, 240);
+  ok(f.rival.cpuCrew.shots > 0, 'the same real ambusher attacks after the player enters reach');
+});
+for (const arsenal of [false, true]) test(`native weapon-disable deadline holds AI fire with Arsenal ${arsenal ? 'on' : 'off'}`, () => {
+  function shot({held}) {
+    const f = race({cpuEnabled: false}), events = [];
+    f.duel.featureFlags = createFeatureFlags({storage: null, qa: true, overrides: {arsenal}});
+    f.rival.weaponLoadout = ['crossbow'];
+    f.state.s = f.state.prevS = f.rival.s + 40;
+    f.state.lateral = f.state.prevLateral = f.rival.lateral;
+    f.state.combat.aiTimer = 0;
+    f.rival.weaponsDisabledUntil = held ? Infinity : 0;
+    f.duel.onChange((_state, event) => {if (event.weaponFired && event.enemy) events.push(event.weaponFired);});
+    stepCombatAI(f.duel, DT);
+    return events;
+  }
+  ok(shot({held: false}).length > 0, 'the same ready car can still fire through native AI');
+  equal(shot({held: true}), [], 'a held vehicle cannot fire through an alternate weapon path');
 });
 
 for (const [label, options, arrange] of [
@@ -333,4 +408,37 @@ test('a real player Crossbow action remains a positive Rook speech control', () 
   equal(voice.speech(), ['crew.rook.callout'], 'the genuine player action announces its selected crew');
   equal(readFightSubtitle(f.state), FIGHT_VOICE_LINES['crew.rook.callout'].text,
     'the real merged Voice consumer renders the approved exact player caption');
+});
+test('every seeded native crew uses only its settled ambush gear and the three-attack cap', () => {
+  const expected = {rook: null, nell: 'crew.sticky.throw', jax: null,
+    odessa: 'crew.turret.deploy', cinder: 'crew.flamer.start',
+    dune: 'crew.marksman.fire', wren: null, tusk: 'crew.scrap-cannon.fire'};
+  const selected = new Map();
+  for (let seed = 3004; seed < 3068 && selected.size < 8; seed++) {
+    const f = ambushRace({seed}); tick(f);
+    if (!selected.has(f.rival.cpuCrew.crewId)) selected.set(f.rival.cpuCrew.crewId, f);
+  }
+  equal(selected.size, 8, 'the actual seeded field supplies every settled crew member');
+  for (const [member, f] of selected) {
+    const events = [];
+    f.duel.onChange((_state, event) => events.push(event));
+    for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'ambush'; n++) tick(f);
+    equal(f.rival.cpuCrew.phase, 'ambush', `${member}: the native driver parks before using gear`);
+    const fighter = f.rival.cpuCrew.fighter;
+    Object.assign(f.state, {s: fighter.s, prevS: fighter.s, lateral: fighter.lateral + 4,
+      prevLateral: fighter.lateral + 4, speedMph: 0, combatShield: 0});
+    tick(f, 120);
+    if (expected[member]) equal(events.filter(event => event.crewGearCue === expected[member]).length, 1,
+      `${member}: its reachable signature gear fires once`);
+    else equal(events.filter(event => event.crewGearCue).length, 0,
+      `${member}: it uses RPG only, never signature gear`);
+    f.state.s = f.state.prevS = f.rival.s - 100;
+    tick(f, 1200);
+    equal(f.rival.cpuCrew.shots, 3, `${member}: the native stop never exceeds three attacks`);
+    equal(f.rival.cpuCrew.phase, 'driving', `${member}: the real fighter returns after attacking`);
+    const fired = events.filter(event => event.footWeaponFired).map(event => event.footWeaponFired);
+    ok(fired.every(kind => member === 'dune' ? kind === 'marksman' :
+      ['rpg', member === 'nell' ? 'sticky-bomb' : member === 'tusk' ? 'scrap-cannon' : null].includes(kind)),
+    `${member}: the emitted native weapon kinds follow the settled rule`);
+  }
 });
