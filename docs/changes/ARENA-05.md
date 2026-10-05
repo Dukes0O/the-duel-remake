@@ -1,6 +1,6 @@
 # ARENA-05: Ambush Alley
 
-status: native fight and presentation built; browser and merge gates pending
+status: native fight and presentation reviewed; final acceptance pending
 
 ## Settled rules
 
@@ -12,8 +12,7 @@ The Pit cover ring is eight metres clear of the solid pile: radius 16 with
 the native radius-8 pile. The parked car must also clear that pile. Salt uses
 the midpoint of its longest low-curvature run. No world geometry changed.
 
-Pay is 60 per completed wave plus 150 for all five, times difficulty.
-Hold is five per completed wave in the existing venue territory, once.
+Pay is 60/wave plus 150 for all five, times difficulty; hold is five/wave, once.
 
 ## Changed
 
@@ -87,9 +86,12 @@ Wrench/transition/UI checks also pass 19 cases unchanged. Diff check passes.
 Earlier module probes passed 300 repeatable clear spawn
 plans across both venues; no world signature changed.
 
-No lane/build, browser or merge-ready pass is claimed yet. Real saves,
-dependencies and unfinished peer runtime were not touched. Reviewed pay,
-entry and settlement files remain unchanged from a8ffe6aa.
+Source review is clear on 2a6c8438; sprint parity is clear on 1bb7e8a4.
+The laptop scenario checks both venues/qualities, loaded models, motion,
+pause, fort purity, buggy visibility, native waves, Medium 540 scrap/25 hold
+and cues: twelve captures, no warnings/errors, moving p95 18.2-18.3 ms.
+Current browser, lane and build are due. Pay/entry files stay at a8ffe6aa;
+real saves and unfinished peer runtime were not touched.
 
 ## Removed
 
