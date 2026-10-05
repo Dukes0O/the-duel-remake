@@ -793,3 +793,10 @@ Crew's native Rocket Pods tests now expose missing fighter hits, with car and
 participant-protection controls passing. Gunn's comparison recipe clears source
 review; pictures and Claude's approval remain.
 
+The unchanged crash-audio suite passes alone: 23 cases and 98 checks in
+22.55 seconds, with every mix, engine and impact track continuous. Its gate
+scheduler already excludes all other suites. The failed capture does not keep
+the chunk frame indices, so gap count, location and cause remain unproved.
+No runtime, test or asset differs from the prior passing checkpoint. Keep
+all assertions unchanged and run the full tier again before feature merges.
+
