@@ -4,6 +4,7 @@ import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
+import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
 // Wasteland simulation state, so ordinary races retain their original route.
@@ -224,10 +225,66 @@ function fire(duel, zone, raider, target) {
   return true;
 }
 
+function stepAmbushRaiders(duel, zone, dt) {
+  const state = duel.state, alley = state.arena?.ambushAlley;
+  if (state.arena?.mode !== 'ambush-alley' || !alley ||
+      zone.ambushWave !== alley.wave || alley.gapLeftSec > 0) return;
+  for (const raider of zone.raiders) {
+    if (raider.knockedDown) continue;
+    const fort = alley.fort;
+    const yaw = Math.atan2(fort.x - raider.x, fort.z - raider.z);
+    raider.yaw = yaw;
+    if (dt > 0) {
+      raider.fighterStepRemainder = (raider.fighterStepRemainder || 0) + dt;
+      while (raider.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
+        if (Math.hypot(raider.x - fort.x, raider.z - fort.z) > 9) {
+          raider.yaw = Math.atan2(fort.x - raider.x, fort.z - raider.z);
+          stepFighter(duel.course, state, raider, {forward: true}, FIGHTER_STEP_SECONDS);
+          if (raider.speed < .01) {
+            raider.yaw += (zone.side > 0 ? 1 : -1) * Math.PI / 2;
+            stepFighter(duel.course, state, raider, {forward: true}, FIGHTER_STEP_SECONDS);
+          }
+        }
+        raider.fighterStepRemainder = Math.max(0, raider.fighterStepRemainder - FIGHTER_STEP_SECONDS);
+      }
+    }
+  }
+  if (state.stageTimeSec < zone.nextShotAt) return;
+  const raider = zone.raiders.find(member => !member.knockedDown);
+  if (!raider || state.combat.projectiles.length >= COMBAT_TUNING.projectileLimit) return;
+  const cover = alley.fort.cover.reduce((best, candidate) =>
+    Math.hypot(candidate.x - raider.x, candidate.z - raider.z) <
+      Math.hypot(best.x - raider.x, best.z - raider.z) ? candidate : best);
+  const dx = cover.x - raider.x, dz = cover.z - raider.z;
+  const originY = raider.y + COMBAT_TUNING.foot.rpgEyeHeight;
+  const dy = cover.y + cover.height / 2 - originY;
+  const length = Math.hypot(dx, dy, dz);
+  if (length > COMBAT_TUNING.foot.rpgSpeed * COMBAT_TUNING.foot.rpgLifetimeSeconds) return;
+  for (let metre = 1; metre < length; metre += 2) {
+    const t = metre / length;
+    const at = duel.course.nearest(raider.x + dx * t, raider.z + dz * t);
+    if (originY + dy * t <= duel.course.groundAt(at.s, at.lateral).y +
+        COMBAT_TUNING.projectileFloorClearance) return;
+  }
+  const scale = COMBAT_TUNING.foot.rpgSpeed / Math.max(1, length);
+  state.combat.projectiles.push({id: ++state.combat.serial, kind: 'rpg',
+    enemy: true, raid: true, owner: 'raider', ownerId: 'raiders', raidZone: zone.id,
+    targetIndex: null, level: 0, age: 0, x: raider.x, y: originY, z: raider.z,
+    launchX: raider.x, launchZ: raider.z, vx: dx * scale, vy: dy * scale, vz: dz * scale});
+  zone.nextShotAt = state.stageTimeSec + COMBAT_TUNING.foot.rpgReloadSeconds;
+  zone.shotCount++; state.raids.shots++;
+  duel.emit({raiderShot: true, audioWeapon: 'rpg', zone: zone.id,
+    hitPosition: {x: raider.x, y: originY, z: raider.z}});
+}
+
 export function stepRaiders(duel, dt = 0) {
   const state = duel.state, raids = state.raids;
   if (!raids || state.status !== 'racing' || state.paused) return;
   for (const zone of raids.zones) {
+    if (zone.ambushWave && state.arena?.mode === 'ambush-alley') {
+      stepAmbushRaiders(duel, zone, dt);
+      continue;
+    }
     for (const raider of zone.raiders) {
       if (!raider.knockedDown || !(dt > 0)) continue;
       raider.knockdownRemaining = Math.max(0,

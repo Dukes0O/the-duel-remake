@@ -1,5 +1,6 @@
 import {FUEL_RULES} from './modes/fuel-run.js';
 import {BOUNTY_RULES, bountyRanking, bountyDamageWinner} from './modes/bounty-hunt.js';
+import {AMBUSH_RULES} from './modes/ambush-alley.js';
 
 // Arena economy. This module is pure: App owns player identity and
 // the atomic storage write after it receives an arenaResult event.
@@ -46,6 +47,26 @@ function validBountyFinish(arena) {
 }
 
 function arenaFacts(arena) {
+  if (arena?.mode === 'ambush-alley') {
+    const alley = arena.ambushAlley, result = arena.result;
+    if (arena.version !== 1 || !['pit', 'salt-flats'].includes(arena.venueId) ||
+        arena.phase !== 'over' || !alley || !result ||
+        !Number.isSafeInteger(alley.completedWaves) || alley.completedWaves < 0 ||
+        alley.completedWaves > 5 || !Number.isFinite(alley.fort?.health) ||
+        alley.fort.health < 0 || alley.fort.health > AMBUSH_RULES.fortHealth ||
+        !Array.isArray(arena.participants) || arena.participants.length !== 2 ||
+        arena.participants[0]?.id !== 'player' || arena.participants[0].kind !== 'player' ||
+        arena.participants[1]?.id !== 'cpu-1' || arena.participants[1].kind !== 'cpu' ||
+        !Array.isArray(result.placings)) return null;
+    const won = result.winnerId === 'player';
+    const expected = won ? ['player', 'cpu-1'] : ['raiders', 'player', 'cpu-1'];
+    if (result.placings.length !== expected.length ||
+        result.placings.some((id, index) => id !== expected[index]) ||
+        (won ? result.reason !== 'waves-survived' || alley.completedWaves !== 5 || alley.fort.health <= 0 :
+          result.winnerId !== 'raiders' || result.reason !== 'fort-fell' ||
+          alley.completedWaves >= 5 || alley.fort.health !== 0)) return null;
+    return {player: arena.participants[0], won, completedWaves: alley.completedWaves};
+  }
   if (arena?.version !== 1 || !['scrapdome', 'salt-flats'].includes(arena.venueId) ||
       !['last-car-rolling', 'fuel-run', 'bounty-hunt'].includes(arena.mode) || arena.phase !== 'over' ||
       !arena.result || !Array.isArray(arena.participants) ||
@@ -71,6 +92,11 @@ function arenaFacts(arena) {
 export function arenaReward(arena, cpuDifficulty) {
   const facts = arenaFacts(arena), factor = DIFFICULTY_FACTORS[cpuDifficulty];
   if (!facts || !factor) return {base: 0, placing: 0, wrecks: 0, factor: 0, total: 0};
+  if (arena.mode === 'ambush-alley') {
+    const base = facts.completedWaves * AMBUSH_RULES.scrapPerWave;
+    const placing = facts.won ? AMBUSH_RULES.fullWinScrap : 0;
+    return {base, placing, wrecks: 0, factor, total: Math.round((base + placing) * factor)};
+  }
   const base = 80, placing = facts.behind * 40,
     wrecks = bounded(facts.player.wrecks, 4) * 60;
   return {base, placing, wrecks, factor, total: Math.round((base + placing + wrecks) * factor)};
@@ -92,7 +118,9 @@ export function settleArenaResult(profile, {runId, ownerPlayerId, activePlayerId
   const scrap = Math.min(1_000_000_000, oldScrap + reward.total);
   const previousTerritory = career.territories?.kettle || {hold: 0, claimed: false};
   const oldHold = bounded(previousTerritory.hold, 100);
-  const holdAdded = facts.won && facts.computers >= 2 ? Math.min(25, 100 - oldHold) : 0;
+  const gain = arena.mode === 'ambush-alley' ? facts.completedWaves * AMBUSH_RULES.holdPerWave :
+    facts.won && facts.computers >= 2 ? 25 : 0;
+  const holdAdded = Math.min(gain, 100 - oldHold);
   const hold = oldHold + holdAdded;
   const territories = {...career.territories,
     kettle: {...previousTerritory, hold}};

@@ -33,10 +33,11 @@ export function createRaiderMarkers() {
   const root = new THREE.Object3D(), part = new THREE.Object3D(), matrix = new THREE.Matrix4();
   let previousZones = null;
   function update(duel) {
-    const zones = duel.state.raids?.zones || null;
-    group.visible = !!zones;
-    if (!zones || zones === previousZones) return;
-    previousZones = zones;
+    const roster = duel.state.raids?.zones || null;
+    group.visible = !!roster?.some(zone => zone.warning);
+    if (!roster || roster === previousZones) return;
+    previousZones = roster;
+    const zones = roster.filter(zone => zone.warning);
     zones.slice(0, capacity).forEach((zone, slot) => {
       const warning = zone.warning;
       root.position.set(warning.x, warning.y, warning.z);
