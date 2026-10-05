@@ -1,99 +1,60 @@
 # WAR-03a: Gearhead Gunn
 
-4 October 2026. Native rules built; Claude's finished turret recipe is now
-settled in SCRAPDOME.md. Tests preceded the asset and runtime work. The model
-is generated; Claude's look approval is still required before merge.
+Native Gunn rules and the round-two turret are built. Claude's look approval,
+remaining shared hooks and merge gates are still required.
 
 ## Changed
 
-- Gunn drives the Stuttgart in the Pit. His own module owns the kiter goals,
-  cooldowns, tracked tell, committed predictive aim, three/five rockets spaced
-  0.25 seconds apart, and the three-second overheat damage window.
-- Broken sight cancels shots but still earns the window. Singles use their
-  own three-second cadence and range. Native Rocket Pods flight and damage
-  numbers stay unchanged. Moving launches compensate inherited car speed.
-- First win earns Rocket Pods and turret-look. Its saved defeat lets any
-  unlocked car wear the look for free, with no armor, mass or weapon effect.
-  Armory labels it as looks only. Settlement uses the existing one-write path.
-- Gunn has a dev switch. The registry checks entry. The territory panel also
-  checks availability and accepts an explicit flag context.
-- The isolated --gunn-turret recipe prepares one shared model, never the nine
-  approved kit exports. Named base, head, panel and four hollow mouths use
-  existing kit metal and wear. One JSON input defines mouths and mount tops.
-- Native origins and visible yaw/pitch share that numeric layout. Binding
-  caches one asset, clones heat materials and hides cosmetic plating. A red
-  line follows the tell. The isolated recipe now exports gunn-turret.glb.
-- Pure gunn-turret.js owns layout and pose helpers, importing only JSON.
-  Renderer imports avoid the fight graph; gunn.js keeps public reexports.
+- Gunn drives the Stuttgart in the Pit with tracked tells, predictive locked
+  aim, spaced rockets and the earned overheat window. Rocket Pods numbers stay
+  unchanged; moving launches compensate inherited speed.
+- First win earns Rocket Pods and a free cosmetic turret look on any unlocked
+  car. It adds no armor, mass or weapon effect. Settlement saves once.
+- The dev switch gates registry/territory entry. Pure JSON layout and pose
+  helpers keep presentation outside the fight graph and race state.
+- Round two follows Claude's direction: dark gunmetal box, blackened steel
+  collars, dark welded seams and small edge/corner chips, without long bands.
+  New UVs keep square texture scale; approved textures are unchanged.
+- The whole turret grows 15%. Shared head/mouth numbers grow with it; mount
+  centres remain exact. Named base, head, heat panel and hollow mouths stay
+  separate. Per-actor heat materials and cold cosmetic looks are preserved.
+- Only --gunn-turret exports the replacement runtime GLB. Blender sources
+  stay in scratch; none of the nine approved kit recipes or models changed.
 
 ## Checks
 
-- Initial art tests: seven cases, 23 checks, one pass/six red before source.
-  Five stopped at the missing GLB; the native lower-car shot was horizontal.
-  Fixed flight passes seven checks, including contact and ten-armor damage.
-- Authored checks use the actual GLB hierarchy and ray-tested hollow mouths,
-  the existing 12,000-triangle kit ceiling and local resources. File size is
-  reported against the existing soft target, not made a new merge blocker.
-- Runtime checks reuse loadKitAsset('gunn-turret') with real parsed geometry:
-  mount fit on Stuttgart and Falcone, shared geometry, separate live heat
-  materials, cold cosmetic peer, source finish and state purity, and disposal.
-  Native launch tests require an actual fitted mouth and a fixed tell-end aim.
-  All these checks now pass with the generated asset. No placeholder art.
-- Isolated Blender 4.5.13 export used --gunn-turret only. All nine old kit
-  hashes remain exact. The new GLB is 179,004 bytes and 740 triangles, inside
-  the combined 12,000-triangle kit ceiling. Local resources, named hierarchy,
-  mouth ray tests, mount fit, material isolation and double disposal pass.
-  No build, browser, audio, balance or broad tier ran this export checkpoint.
-- Before the mouth change: 14 cases, 143 independent checks passed after the author's valid
-  Pit-floor correction. The previous 0/55 offsets crossed a real outer wall.
-  The author kept move assertions and added a native clear-line witness.
-- Focused switch, Preview, Gunn, registry, settlement and metadata run:
-  52 cases pass. Earlier armor-kit, Wave 2 rockets and shared warlord-format
-  checks pass, including unchanged ordinary replay fingerprints.
-- Built-list assertion adds Gunn only. Future-unbuilt settlement fixture now
-  uses the Tollkeeper, preserving reward and rematch denial. Independent review
-  of these changed assertions is still required.
-- Lane tier, build, balance, browser, audio, save review and Claude play review
-  remain required after final assets and the current integration base land.
-- Director grant f5a25c7a/7584ba44 replaces only the obsolete parallel-ray
-  assertion. Five distinct-mouth trajectories must reach the captured
-  tell-end world point in 3D after the player turns. Other move checks stay
-  exact. The focused Gunn suite passes 14 cases and 144 checks (one more
-  check because the first trajectory is now checked too). Independent review
-  cleared this correction before export.
-- Native five-shot/lower-car witnesses: two cases/36 checks. After export:
-  22 cases/393 checks (art 249, fight 144); assertions and asset pins unchanged.
-- Author 11a54f21 first proved both fresh renderer imports red: GUNN_FIGHT
-  before initialization. After helper extraction both pass four checks.
-  Existing art/fight assertions stay exact: 24 cases and 397 checks pass.
-  GLB bytes and all nine kit hashes remain exact. No export, build, browser,
-  audio, balance or broad tier ran. Metadata 6804ba59 merged byte-exact.
-- Browser setup reds: integration .evidence/2026-10-05/WAR-03a:
-  round-1-entry-failed/report.json (invalid equipped fixture), then
-  round-1-filename-failed/report.json (underscores). Native equip and first
-  side view checks now pass; filenames/loader use matched hyphens. No art
-  round spent; twelve-view checks exact, syntax passes, rerun/verdict pending.
-- Yard/Armory flag tests: three native cases/21 checks, one pass/two red.
-  Injected Gunn-on is lost in both paths; default/off and released Sal pass.
-  Read-only Armory and career purity pass; old assertions stay exact.
-  Real router coverage remains for browser QA after the flag hook lands.
+- Independent review cleared the round-two recipe and numeric scaling.
+- Blender 4.5.13 isolated export: 208,192 bytes, 1,052 triangles. Existing
+  art/native suite: ten cases, 259 checks, all pass. All nine kit hashes match.
+  Local resources, named parts, open-mouth rays, Stuttgart/Falcone fit,
+  material isolation, purity, disposal, fresh imports and real trajectories
+  pass. The combined kit remains within the existing 12,000-triangle ceiling.
+- Earlier tests preceded source: art seven cases/23 checks, one pass/six red;
+  fresh renderer imports also started red. Both import checks now pass.
+- Reviewed trajectory correction replaces the obsolete one-muzzle parallel
+  assertion with five distinct mouths reaching one locked world point after
+  the player turns. Other assertions stay exact: 14 cases/144 checks passed.
+- Round-one capture passed twelve real views, framing, pixels, cold heat and
+  state/profile purity, with zero browser errors. Two setup failures spent no
+  art round. Critic requested darker metal, corrected UVs and clearer collars.
+- Yard/Armory flag witnesses remain one pass/two red, three cases/21 checks:
+  injected Gunn-on is lost; default/off and released Sal pass. Hooks are held.
+- No browser, build, broad gate, audio, balance or pacing ran for round two.
+  No assertions, world signatures or race rules changed in this export.
 
 ## Remaining
 
-- Review one sheet of side, three-quarter and top views
-  on Stuttgart and Falcone; at most three rounds. No finished art is claimed.
-- Rising whine needs audio.js and sound-bank.js handoff after Arsenal's fix.
-  Native Rocket Pods fire/flight/hit cues already exist.
-- Forward injected flags through yard/router for memory-only UI checks.
-- Rocket Pods sweep and blast only cars. Their early dispatch bypasses the
-  fighter contact path. CREW.md already settles splash at up to 60 health
-  with car falloff and knockdown inside half radius. A reviewed shared hook
-  is needed; Gunn's existing car target policy remains unchanged.
+- Capture round-two side, three-quarter and top views on Stuttgart and
+  Falcone for Claude. Three-round cap applies; no finished look is claimed.
+- Receive shared yard/router flags, rising-whine audio and fighter contact
+  hooks from their owner. CREW.md already settles fighter splash numbers;
+  current Rocket Pods car-target policy remains unchanged meanwhile.
+- Complete motion/pacing and card checks, lane/build and required reviews
+  on the final integration base before merge.
 
 ## Removed
 
-The unanswered move questions were replaced by four settled answers.
-The obsolete one-muzzle parallel-ray assertion is replaced, not retained.
-Renderer imports of the native fight module were removed, not deferred.
-Invalid equipped fixture and rejected screenshot names were replaced.
-No assets were replaced. No existing Rocket Pods behavior was removed.
+Round-one GLB and broad texture bands are replaced, not retained. Approved
+textures and nine fitted kits stay exact. Old unanswered move questions,
+parallel-ray assertion, renderer fight imports and invalid capture fixtures
+were already removed. No existing Rocket Pods behavior was removed.
