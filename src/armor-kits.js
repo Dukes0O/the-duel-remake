@@ -1,7 +1,7 @@
 import {CARS} from './config.js';
 import {isCarUnlocked} from './progression.js';
 import {rankForXp} from './notoriety.js';
-import {hasDefeatedWarlord, hasEarnedSideSaws, normalizeWasteland} from './wasteland-progress.js';
+import {hasDefeatedWarlord, hasEarnedSideSaws, hasEarnedTurretLook, normalizeWasteland} from './wasteland-progress.js';
 import {WARLORDS} from './warlords.js';
 
 // Prices are per car. Later tiers cost more because they carry stronger plating.
@@ -15,6 +15,7 @@ export const ARMOR_KITS = Object.freeze({
 // Earned items stay separate from the three unchanged paid plating tiers.
 export const EARNED_ARMOR_KITS = Object.freeze({
   'side-saws': Object.freeze({name: 'Side Saws', armor: 0, massKg: 0}),
+  'turret-look': Object.freeze({name: 'Turret Look', armor: 0, massKg: 0}),
 });
 
 export function validArmorKit(id) {
@@ -29,6 +30,7 @@ export function ownsArmorKit(profile, car, id) {
   if (!Object.hasOwn(CARS, car) || !isCarUnlocked(profile, car) ||
       profile?.wasteland?.version !== 1 || !validArmorKit(id)) return false;
   if (id === 'side-saws') return hasEarnedSideSaws(profile.wasteland);
+  if (id === 'turret-look') return hasEarnedTurretLook(profile.wasteland);
   if (earnedOnAnyCar(profile, id)) return true;
   const owned = profile.wasteland.kits?.[car]?.owned;
   return Array.isArray(owned) && owned.includes(id);
@@ -105,7 +107,7 @@ export function equipArmorKit(profile, car, id = null) {
   if (installed.equipped === id) return result(profile, id ? 'This kit is already equipped.' : 'This car is already stock.');
   return {
     profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
-      [car]: {...installed, owned: id === 'side-saws' || earnedOnAnyCar(profile, id)
+      [car]: {...installed, owned: Object.hasOwn(EARNED_ARMOR_KITS, id) || earnedOnAnyCar(profile, id)
         ? [...new Set([...installed.owned, id])] : installed.owned, equipped: id}}}},
     ok: true, reason: '', cost: 0, equipped: id,
   };

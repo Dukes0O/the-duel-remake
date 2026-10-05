@@ -1,5 +1,5 @@
 import {WARLORDS, BUILT_WARLORD_IDS} from '../warlords.js';
-import {warlordFight} from '../warlords/index.js';
+import {warlordFight, warlordEnabled} from '../warlords/index.js';
 import {initializeConvoyRaid, CONVOY_RULES} from './modes/convoy-raid.js';
 
 // Shared warlord format (docs/SCRAPDOME.md section 5). All simulation
@@ -10,8 +10,7 @@ export const WARLORD_RULES = Object.freeze({
 
 export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   const warlord = WARLORDS[warlordId];
-  if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) ||
-      warlord.feature && !duel.featureFlags.enabled(warlord.feature)) return false;
+  if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) || !warlordEnabled(duel, warlordId)) return false;
   // A warlord fights alone, or as a team of cars (`team`), each on its own.
   const team = warlord.team ?? [{car: warlord.car, brain: warlord.brain}];
   if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord',

@@ -44,7 +44,7 @@ function tell(duel, actor) {
   duel._callout('TOLL GATE!', seconds + .4);
   const at = worldPose(duel, actor);
   duel.emit({arenaTell: {id: actor.arenaId, targetId: 'player', seconds,
-    soundCue: 'arena.toll-gate', position: {x: at.x, y: at.y, z: at.z}}});
+    cue: 'arena.toll-gate', position: {x: at.x, y: at.y, z: at.z}}});
 }
 
 function deployGate(duel, actor) {
@@ -106,6 +106,7 @@ export function tollkeeperValveMultiplier(duel, actor, index) {
 }
 
 export const TOLLKEEPER_FIGHT = Object.freeze({
+  featureFlag: 'tollkeeper',
   reset: resetTollkeeper, motion: moveTollkeeper, valveMultiplier: tollkeeperValveMultiplier,
   valvesDamaged: tollkeeperValvesDamaged,
 });

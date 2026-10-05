@@ -59,7 +59,7 @@ test('the eight immutable warlords use the existing territory ids and assignment
 
 test('the ladder marks only the built fights', async () => {
   const {BUILT_WARLORD_IDS} = await loadWarlords();
-  equal(BUILT_WARLORD_IDS, ['sal', 'dustmonger', 'mirage', 'kettle', 'vultures', 'tollkeeper'], 'The six built fights include the Tollkeeper behind his dev switch; Gunn and the Baron remain unavailable');
+  equal(BUILT_WARLORD_IDS, ['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper'], 'Seven native fights are built; Gunn and Tollkeeper retain their dev switches and Blackiron remains unavailable');
   ok(Object.isFrozen(BUILT_WARLORD_IDS), 'fight availability cannot be changed at runtime');
 });
 

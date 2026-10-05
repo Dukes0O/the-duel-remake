@@ -4,7 +4,7 @@ import {crewPanel} from './crew-ui.js';
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
 
 export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
-  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags = null}) {
+  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags}) {
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;

@@ -43,6 +43,46 @@ function spawnRocket(duel, volley, slot) {
     hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
   return shot;
 }
+// Boss turrets use the same native rocket body and flight, with a committed
+// world aim instead of the four-shot car volley's spread.
+export function rocketArrivalSeconds(dx, dz, vx = 0, vz = 0) {
+  const a = vx * vx + vz * vz - ROCKET_RULES.speed ** 2;
+  const b = 2 * (dx * vx + dz * vz), c = dx * dx + dz * dz;
+  const disc = b * b - 4 * a * c;
+  const roots = Math.abs(a) < EPS ? [-c / b] : disc >= 0
+    ? [(-b - Math.sqrt(disc)) / (2 * a), (-b + Math.sqrt(disc)) / (2 * a)] : [];
+  const arrival = Math.min(...roots.filter(time => Number.isFinite(time) && time > 0));
+  return Number.isFinite(arrival) ? arrival : Math.sqrt(c) / ROCKET_RULES.speed;
+}
+export function launchAimedRocket(duel, owner, aim, {launchedAt = duel.state.stageTimeSec,
+  level = 0, origin = null} = {}) {
+  const combat = duel.state.combat;
+  if (!combat || !owner || outOfPlay(duel, owner) ||
+      !Number.isFinite(aim?.x) || !Number.isFinite(aim?.z) ||
+      origin && ![origin.x, origin.y, origin.z].every(Number.isFinite) ||
+      combat.projectiles.length + plannedShots(combat) >= COMBAT_TUNING.projectileLimit) return null;
+  const carPoint = point(duel, owner), at = origin || carPoint, carry = velocity(owner, carPoint);
+  const arrival = rocketArrivalSeconds(aim.x - at.x, aim.z - at.z, -carry.x, -carry.z);
+  const ax = aim.x - at.x - carry.x * arrival, az = aim.z - at.z - carry.z * arrival;
+  const distance = Math.hypot(ax, az);
+  if (!(distance > EPS)) return null;
+  const dx = ax / distance, dz = az / distance;
+  const shot = {id: ++combat.serial, kind: 'rocket-pod',
+    ownerId: combatOwnerId(duel, owner), attackerId: targetIdentity(duel, owner),
+    enemy: owner !== duel.state, level,
+    x: at.x + (origin ? 0 : dx * COMBAT_TUNING.projectileSpawnOffset), y: at.y,
+    z: at.z + (origin ? 0 : dz * COMBAT_TUNING.projectileSpawnOffset),
+    vx: dx * ROCKET_RULES.speed + carry.x,
+    vy: Number.isFinite(aim.y) && arrival > EPS ? (aim.y - at.y) / arrival : 0,
+    vz: dz * ROCKET_RULES.speed + carry.z,
+    travelled: 0, age: 0, launchedAt};
+  combat.projectiles.push(shot);
+  duel.emit({arsenalCue: 'weapon.rockets.fire', actor: owner, projectile: shot,
+    hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
+  duel.emit({arsenalCue: 'weapon.rockets.flight', actor: owner, projectile: shot,
+    hitPosition: {x: shot.x, y: shot.y, z: shot.z}});
+  return shot;
+}
 export function startRocketVolley(duel, owner, level = 0) {
   const combat = duel.state.combat;
   if (!combat || !owner || outOfPlay(duel, owner) ||
@@ -83,7 +123,7 @@ function body(duel, actor) {
     halfX: spec.halfWidth, halfZ: spec.halfLength,
     height: spec.height, shape: 'box'};
 }
-function blast(duel, shot, at, damageCar, shielded) {
+function blast(duel, shot, at, damageCar, shielded, fighters, blastFighter) {
   const owner = [duel.state, ...duel.state.opponents].find(actor =>
     targetIdentity(duel, actor) === shot.attackerId);
   for (const actor of [duel.state, ...duel.state.opponents]) {
@@ -98,10 +138,11 @@ function blast(duel, shot, at, damageCar, shielded) {
       enemy: shot.enemy, victim: actor === duel.state ? 'player' : 'rival',
       hitPosition: at});
   }
+  for (const target of fighters) blastFighter(duel, target, shot, ROCKET_RULES.blastRadius);
   duel.emit({arsenalCue: 'weapon.rockets.hit', projectile: shot, hitPosition: at});
 }
 export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
-  shielded = combatShielded} = {}) {
+  shielded = combatShielded, fighters = [], blastFighter = () => {}} = {}) {
   if (!shot || shot.kind !== 'rocket-pod' || shot.dead || !(dt > 0)) return false;
   const speed = Math.hypot(shot.vx, shot.vz);
   if (!(speed > 0)) {shot.dead = true; return false;}
@@ -120,6 +161,7 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
   for (const actor of [duel.state, ...duel.state.opponents])
     if (actor !== owner && !outOfPlay(duel, actor) && hostile(duel, owner, actor))
       consider(body(duel, actor));
+  for (const target of fighters) consider(target.body);
   if (duel._obstacles) {
     const a = duel.course.nearest(from.x, from.z), b = duel.course.nearest(to.x, to.z, a.s);
     for (const obstacle of duel._obstacles(Math.min(a.s, b.s) - 3,
@@ -132,7 +174,8 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
     shot.travelled + travel * (first ? first.t : 1));
   shot.age += dt;
   if (first) {
-    blast(duel, shot, {x: shot.x, y: shot.y, z: shot.z}, damageCar, shielded);
+    blast(duel, shot, {x: shot.x, y: shot.y, z: shot.z}, damageCar, shielded,
+      fighters, blastFighter);
     shot.dead = true; return false;
   }
   if (shot.travelled + EPS >= ROCKET_RULES.range) {

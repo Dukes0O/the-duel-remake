@@ -124,7 +124,7 @@ test('each difficulty announces a seeded twelve-metre gate with a four-metre gap
     equal(move.nextGateSec - move.sinceSec, cooldown, 'gate cooldown starts at its tell and uses the settled difficulty');
     equal(f.duel.state.arena.markers.filter(marker => marker.kind === 'light').length, 2,
       'two native marker positions identify the gap edges');
-    ok(f.events.some(event => event.arenaTell?.soundCue === 'arena.toll-gate'),
+    ok(f.events.some(event => event.arenaTell?.cue === 'arena.toll-gate'),
       'the real tell names its klaxon cue');
   }
 });
@@ -199,7 +199,7 @@ test('the real five-minute deadline loses without a boarding charge', () => {
 
 test('the native tell reaches its named recorded klaxon without changing race state', () => {
   const f = fight(); gate(f);
-  const event = f.events.find(event => event.arenaTell?.soundCue === 'arena.toll-gate');
+  const event = f.events.find(event => event.arenaTell?.cue === 'arena.toll-gate');
   ok(event, 'the real native rig produces the named klaxon event');
   equal(SOUND_BANK['arena.toll-gate'].files, ['tollkeeper/gate-klaxon.ogg'],
     'the named cue uses its single derived runtime clip');

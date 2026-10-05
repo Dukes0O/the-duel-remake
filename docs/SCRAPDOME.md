@@ -469,9 +469,10 @@ Flats. The fight is the Convoy Raid with these additions.
 | Toll Gate | Tell: a klaxon and flashing rig lights. Then the rig drops a spike strip 12 m wide across his path (caltrops rules). Two lights mark a 4 m gap, whose centre is seeded between 3 and 9 m across the strip. At most every 14, 11, 9 s |
 | Counter | Drive through the lit gap |
 | Window | After each gate the rear valve's existing lamps flash for 3 s; hits on that valve deal 2 times damage. No doors open |
-| Phase two | After the first valve breaks: his escorts respawn once, gates 20% more often |
+| Phase two | First broken valve resets both escorts to full armor once, even if damaged or waiting to return. Ordinary 3.5 s escort returns then continue; gates 20% more often |
 | Win | Break the valves and plant the finishing charge by boarding (CREW-03), as in every Convoy Raid |
-| Reward | The convoy kit (plated look, +30 armor on any car) and his story card |
+| Pay | Escorts do not score. Loss: 40 per broken valve times difficulty. First win: ladder pay and territory claim. Rematch win: ordinary warlord pay. Existing warlord settlement pays once |
+| Reward | The convoy kit: the Warlord plated look, earned on any car, +30 armor and +270 kg; no new art. Also his story card |
 | Callouts | `TOLL GATE!`, `CORE LIT. HIT THE REAR VALVE!` |
 
 ### Settled for build: Baron Blackiron (WAR-03e)

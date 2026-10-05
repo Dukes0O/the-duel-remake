@@ -1190,20 +1190,26 @@ tasks:
     size: M
     needs: [CREW-02]
     status: building
-    source_frozen: false
-    held_source_commit: b6e5c3a7
+    source_frozen: true
+    held_source_commit: b1b7a419
+    waiting_on: claude
     claude_answer_2026_10_05: "Change only stop pacing. Braking, exit, re-entry and pulling away together add at most 2.5 s beyond repair or shots. After a stop use ordinary Hard catch-up. Keep triggers, ranges, weapons and the 20-40% target. If Hard remains above forty percent, cap Hard repair stops at one per race; then merge."
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
     test_commit: 045f18d6
     note_commit: 2febf4e
-    source_commit: 8932f6b7
+    source_commit: b1b7a419
+    native_cases_passed: 51
+    hard_player_win_percent: 60
+    claude_measurement_answer_2026_10_05: "On the same commit and seeds, compare thirty Hard races with crews off, crews on without stops, and everything on. Report wins and likely cause, then wait. Compare Medium seed 1989 before the turn with crews off/on; do not change its driver to hide a game fault. A general braking-policy card is allowed only if crews merely shift the race and the driver never brakes, with before/after replays."
+    design_question: "Report the three Hard measurements and the pre-turn seed 1989 comparison, then await Claude's next change."
+    note: "Claude requests measurements before further changes. Keep combat, catch-up and target unchanged; no pursuit-driver fix yet."
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
     hooks: [src/raiders.js, src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, start-preview.bat, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/onfoot-race.js, src/arsenal/rockets.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
     hook_requests: []
-    sequencing: "Resume the stop-pacing controller on whole integration. Other shared hooks stay frozen until Convoy and Gunn merge; reconcile their whole merges before final balance, browser and lane/build. Import no unfinished peer source."
+    sequencing: "Resume stop pacing on whole Convoy integration. Reconcile only contact conflicts, preserving both modes and reviewed fighter hits; run final balance, browser and lane/build there. Import no unfinished Gunn source. Gunn receives Crew's whole merge before its final merge if shared hooks change."
     pacing_hooks: [src/crew-gear/cpu-crews.js, src/sim-rival.js, src/combat-ai.js, tools/test-cpu-crews.mjs]
     controller_handoff: "After Arsenal merges, Crew receives sim-rival and combat-ai for native stopped-crew movement and vehicle-fire suppression. Keep knock, wreck, lap, boundary and recovery paths. Convoy does not need these files; Crew's projectile, contact, flags and presentation hooks wait for Convoy's whole merge."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
@@ -1461,11 +1467,14 @@ tasks:
     lane: VIS
     size: S
     needs: [ARENA-07]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-05
+    branch: codex/vis/convoy-frames
     flag: convoy-raid
     owns: [tools/scenarios/convoy-frames.mjs, docs/changes/CONVOY-FRAMES.md]
     hooks: [src/arena/tanker-model.js, tools/scenarios/convoy-raid.mjs]
     note: "Claude, 5 October: required before Convoy Raid release, not its development merge. Start after the named feature cards unless a lane is free."
+    sequencing: "A lane is free while the bosses wait for Claude. Prepare matched moving measurement; heavy checks follow Crew. Tanker-model changes wait for a measured excess and a Director handoff from Tollkeeper."
     acceptance:
       - "Measure moving frame cost on the Salt Flats with and without the tanker in matched laptop runs. If the tanker adds more than ten percent, simplify its distant view and measure again. Preserve native state, near appearance and disposal; no new tanker parts. Pass before Convoy Raid is released."
   - id: WAR-03a
@@ -1474,13 +1483,17 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02a-SAL, ARS-02, ARENA-PIT]
-    status: review
+    status: merged
+    lane_gate_passed: 355
+    lane_gate_duration_seconds: 1021.36
+    build_ms: 524
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
     test_commit: 11a54f21
-    source_commit: 37683f36d55cbf1c5f760aabe2f7aa30f0867314
-    source_frozen: false
-    source_review: "One whole-card review clears 37683f36: contacts, ownership, rewards, rendering, flags and assertion changes. Focused controls pass; look approval, whine listening and final lane/build remain."
+    source_commit: 38a16191
+    source_review_commit: 37683f36d55cbf1c5f760aabe2f7aa30f0867314
+    source_frozen: true
+    source_review: "Whole-card review clears 37683f36; current Convoy union and exact review-note renames clear. Round two and listening approved; current lane and build pass."
     art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
     geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
     comparison_scenario_commit: 5167ce32709d257d9b65947f65e8775672dd487e
@@ -1488,6 +1501,7 @@ tasks:
     comparison_fixture_review: "Independent review clears native kit equip and matching screenshot names. Existing capture assertions stay exact; no art round was spent on the two setup failures."
     art_round: 2
     art_sheet: docs/board/looks/gunn/round-2.jpg
+    review_note_hooks: [docs/board/looks/gunn/round-1-review.md, docs/board/looks/gunn/round-2-review.md]
     art_round_verdict: "Twelve actual views pass loading, framing and state checks. The critic finds clearer collars and fit, but scores clean panels and faint edge wear at three; Claude's verdict is needed. Native motion and actual frame samples now pass."
     comparison_source_review: "Independent source review clears the native twelve-view recipe and full-frame sheet builder. Captures, appearance and Claude's approval remain unproved."
     trajectory_review_commit: d068bffb
@@ -1496,7 +1510,13 @@ tasks:
     note_commit: bcda842
     claude_answer_2026_10_05: "Round two is approved; no third round. Finish whine listening and current lane/build, then merge."
     art_approved_round: 2
-    note: "Look approved. Finish whine listening, receive Convoy's whole merge and run final lane/build. Existing whole-source review stays clear unless reconciliation changes behavior."
+    listening_verdict_2026_10_05: "Kyle approved the native clip: it's fine."
+    note: "Merged from 38a16191 after all 355 lane tasks and build passed. Round two and whine listening are approved; no third round."
+    listening_source_commit: db3dc2fa
+    listening_capture_seconds: 9.13
+    listening_question: null
+    preservation_fixture_hooks: [tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs]
+    preservation_fixture_review: "The logged diagnostic repeat found the missing new-cue admission. Admit only Gunn's approved warning cue; historical hashes, old sound recipes and all other assertions stay exact."
     motion_review_commit: dad7bad75c800c894fc59e116bedb85f9d7bbaff
     motion_captures: 12
     moving_high_p95_ms: 19.0
@@ -1504,7 +1524,7 @@ tasks:
     claude_round2_direction_2026_10_04: "Dark gunmetal rocket box, with rust and chipped paint only at edges and corners, no long streaks. Four clear blackened steel collars and dark welded seams; enlarge the whole turret about fifteen percent. Preserve fit, turning head and separate heat panel; send the round-two sheet to Claude."
     claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."
     claude_answer_2026_10_04: "Barrage needs ready cooldown, clear sight and player 25 to 90 metres away; aim tracks through the tell then commits the predicted first-arrival point, with rockets 0.25 seconds apart. Broken sight at lock fires nothing but earns overheat; single rockets fire every three seconds at 40 to 80 metres, outside tell/window and two seconds after barrage. First win earns Rocket Pods and an Armory turret kit look with no gameplay effect (SCRAPDOME Gunn)."
-    design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
+    design_question: null
     flag: gunn
     owns: [src/warlords/gunn.js, src/warlords/gunn-turret.js, tools/test-warlord-gunn.mjs, tools/test-warlord-gunn-art.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
     hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/arena/warlord-event.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-territory.js, src/app.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs]
@@ -1577,13 +1597,28 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-05
     branch: codex/cmb/tollkeeper
+    design_question: null
+    claude_details_2026_10_05: "First broken valve resets both escorts to full armor once, then ordinary 3.5 s returns continue. Escort wrecks never score. Loss pays forty per broken valve times difficulty; first win uses ladder pay and territory claim, rematch win uses existing warlord pay, settled once. Convoy kit is the existing Warlord plated look earned on any car, plus thirty armor and 270 kg; no new art."
     claude_answer_2026_10_05: "No doors or new tanker parts. Rear valve is the core; after each gate its lamps flash for three seconds and hits deal twice damage. Gap is four metres wide, with its centre seeded between three and nine metres across the twelve-metre strip. Build after Convoy merges."
     flag: tollkeeper
     owns: [src/warlords/tollkeeper.js, tools/test-warlord-tollkeeper.mjs, tools/scenarios/tollkeeper.mjs, docs/changes/WAR-03d.md]
-    sequencing: "Design is settled. Start after Convoy's whole merge. Own the per-warlord move; request named shared hooks before changing them, preserving Crew's controller and Gunn's audio work."
+    hooks: [src/warlords.js, src/warlords/index.js, src/arena/warlord-event.js, src/arena/arena-event.js, src/arena/modes/convoy-raid.js, src/onfoot-transition.js, src/arena/convoy.js, src/arena/warlord-settlement.js, src/render3d.js, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-arena.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-warlord-hooks.mjs, tools/test-warlord-format.mjs, src/sound-bank.js, src/audio.js]
+    sequencing: "Convoy is merged and escort, pay and kit rules are settled. Finish from whole integration; no unfinished peer source. Shared code keeps generic hooks and existing behavior; Crew owns its controllers."
+    caltrops_hook: src/arsenal/caltrops.js
+    caltrops_grant: "Tests first add optional position and width for the two native gate halves. Preserve ordinary strip geometry, damage, grip, lifetime, ownership and sound. Native and rendered gaps share the same seeded values."
+    additional_hooks: [src/arsenal/caltrops.js, tools/test-warlords.mjs, tools/build-tollkeeper-audio.mjs, tools/audio/catalog.json, public/assets/audio/tollkeeper/gate-klaxon.ogg, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    sound_cue: arena.toll-gate
+    sound_source_grant: "Use the verified cached CC0 electric hum in one local derived-klaxon recipe. Preserve all current sounds and credits. Source approval is not a listening verdict."
+    admission_hooks: [src/screen-territory.js, src/app.js]
+    admission_grant: "Tests first use generic metadata dev-feature admission in the territory panel and native App entry. Preserve released fights, races, Convoy and injected flags; no shared boss names or unfinished peer imports."
+    admission_caller_hooks: [src/screen-yard-home.js, src/screen-router.js]
+    preservation_fixture_hooks: [tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: The Tollkeeper' in docs/SCRAPDOME.md section 5 on the Convoy Raid. When built, status review and waiting_on: claude before merge."
+    reward_hooks: [tools/test-warlord-settlement.mjs, src/armor-kits.js, src/wasteland-progress.js, src/screen-armory.js]
+    scoring_hook: src/combat-scoring.js
+    scoring_grant: "Tests first exclude escort wreck count and style points only in the Convoy-format warlord. Preserve ordinary hit/damage credit, normal Convoy and all other formats; generic participant metadata, no shared boss names."
   - id: WAR-03e
     title: "Baron Blackiron: the move cycle and Nitro Ram"
     owner: codex

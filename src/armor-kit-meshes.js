@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {gunnTurretMount, gunnTurretHeading, gunnTurretPitch} from './warlords/gunn-turret.js';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const KIT_TIERS = Object.freeze({scrapper: 1, raider: 2, warlord: 3});
@@ -127,9 +128,17 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
     });
     return {index, roots, plateMaterial, bullBar, centerGuard, sidePlates,
       hoodPlate, stacks, cage, saws, crown, smoke, fire, loose,
-      vehicle: null, lastCondition: 1, authored: null, bindVersion: 0};
+      vehicle: null, lastCondition: 1, authored: null, bindVersion: 0,
+      turret: null, turretMaterials: null, turretPending: false};
   });
+  function removeTurret(rig) {
+    attachments.detach(`gunn-turret-${rig.index}`);
+    rig.turret?.removeFromParent();
+    for (const material of rig.turretMaterials || []) material.dispose();
+    rig.turret = null; rig.turretMaterials = null; rig.turretPending = false;
+  }
   function removeAuthored(rig) {
+    removeTurret(rig);
     attachments.detach(`armor-kit-authored-${rig.index}`);
     rig.authored?.removeFromParent();
     for (const material of rig.authoredMaterials || []) material.dispose();
@@ -145,6 +154,13 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           !gltf?.scene?.isObject3D) return;
       const authored = gltf.scene.clone(true);
       authored.name = 'authored-kit';
+      // The mount remains visible with an earned look while its plating group
+      // stays hidden. Reparent only the live clone, preserving its fitted pose.
+      const turretMount = authored.getObjectByName('kit-turret-mount');
+      if (turretMount) {
+        authored.updateMatrixWorld(true);
+        authored.attach(turretMount);
+      }
       // Reuse the reviewed streak geometry in a distinct tell effect. The
       // original spark node remains reserved for the missed-sweep window.
       const sal = authored.getObjectByName('kit-sal-saws');
@@ -176,6 +192,33 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       rig.authored = authored;
       for (const root of Object.values(rig.roots)) root.visible = false;
     }).catch(() => { /* Keep the explicit loading/failure fallback. */ });
+  }
+  function requestTurret(rig, vehicle) {
+    if (rig.turret || rig.turretPending || !rig.authored) return;
+    const mount = gunnTurretMount(vehicle.userData.vehicleKey);
+    if (!mount || !rig.authored.getObjectByName('kit-turret-mount')) return;
+    const version = rig.bindVersion;
+    rig.turretPending = true;
+    assetFor('gunn-turret').then(gltf => {
+      if (disposed || rig.vehicle !== vehicle || rig.bindVersion !== version ||
+          !gltf?.scene?.isObject3D) return;
+      const turret = gltf.scene.clone(true), materials = new Map();
+      turret.traverse(node => {
+        if (!node.isMesh || !node.material) return;
+        const own = material => {
+          if (!materials.has(material)) materials.set(material, material.clone());
+          return materials.get(material);
+        };
+        node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material);
+      });
+      rig.turretMaterials = [...materials.values()];
+      attachments.attach({owner: `gunn-turret-${rig.index}`, vehicle,
+        socket: 'roof', object: turret, fallback: group});
+      turret.position.fromArray(mount).sub(turret.parent.position);
+      rig.turret = turret; rig.turretPending = false;
+    }).catch(() => {
+      // Failed requests are cached, like fitted kit loads, until the owner ends.
+    });
   }
   function ensurePlatingTexture() {
     if (textureRequested || typeof document === 'undefined') return;
@@ -270,20 +313,43 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       bind(rig, enabled ? vehicle : null);
       const tier = armorKitTier(actor, index > 0);
       const sideSaws = actor?.combatArmorKit === 'side-saws';
+      const turretLook = actor?.combatArmorKit === 'turret-look';
+      const gunn = actor?.warlordId === 'gunn' && !!actor.gunnBarrage;
+      const hasTurret = turretLook || gunn;
       const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
-        Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws);
+        Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws || turretLook);
+      if (visible && hasTurret) requestTurret(rig, vehicle);
+      if (rig.turret) {
+        rig.turret.visible = visible && hasTurret && !actor.combatWrecking;
+        const head = rig.turret.getObjectByName('gunn-turret-head');
+        if (head) {
+          head.rotation.order = 'YXZ';
+          head.rotation.y = gunn ? gunnTurretHeading(duel, actor) -
+            (duel.course.at(actor.s).heading + (actor.headingError || 0)) : 0;
+          head.rotation.x = gunn ? gunnTurretPitch(duel, actor) : 0;
+        }
+        const panel = rig.turret.getObjectByName('gunn-turret-heat-panel');
+        panel?.traverse(node => {
+          if (!node.isMesh) return;
+          for (const material of [].concat(node.material)) {
+            if (!material?.emissive) continue;
+            material.emissive.setHex(gunn && actor.gunnBarrage.stage === 'window' ? 0xff1605 : 0x000000);
+            material.emissiveIntensity = 1;
+          }
+        });
+      }
       for (const root of Object.values(rig.roots)) root.visible = visible && !rig.authored;
       if (rig.authored) {
         rig.authored.visible = visible;
         for (const [name, minimum] of [['kit-scrapper',1],['kit-raider',2],['kit-warlord',3]]) {
           const part = rig.authored.getObjectByName(name);
-          if (part) part.visible = visible && (sideSaws ? name === 'kit-raider' : tier >= minimum);
+          if (part) part.visible = visible && !turretLook && (sideSaws ? name === 'kit-raider' : tier >= minimum);
         }
         const raiderPlating = rig.authored.getObjectByName('kit-raider-painted-metal');
-        if (raiderPlating) raiderPlating.visible = visible && !sideSaws && tier >= 2;
+        if (raiderPlating) raiderPlating.visible = visible && !sideSaws && !turretLook && tier >= 2;
         for (let partIndex = 0; partIndex < 4; partIndex++) {
           const plate = rig.authored.getObjectByName(`kit-plate-${partIndex}`);
-          if (plate) plate.visible = visible && !sideSaws && !actor.combatWrecking &&
+          if (plate) plate.visible = visible && !sideSaws && !turretLook && !actor.combatWrecking &&
             armorCondition(actor) > BREAK_POINTS[partIndex];
         }
         const sal = rig.authored.getObjectByName('kit-sal-saws');
@@ -335,29 +401,30 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
           const part = rig.authored.getObjectByName(name);
           if (part) {
             const saw = name === 'kit-saw-0' || name === 'kit-saw-1';
-            part.visible = !wrecked && visible && (sideSaws ? saw :
+            part.visible = !wrecked && visible && (name === 'kit-turret-mount' && hasTurret ? true :
+              turretLook ? false : sideSaws ? saw :
               tier >= (name === 'kit-crown' || name === 'kit-warlord-mount' ? 3 : 2));
           }
         }
       }
       rig.plateMaterial.color.setHex(condition < 0.3 ? 0x383733 :
         condition < 0.6 ? 0x555047 : 0x69645a);
-      rig.bullBar.visible = !sideSaws;
-      rig.centerGuard.visible = !sideSaws && !wrecked && condition > 0.2;
-      rig.hoodPlate.visible = !sideSaws && !wrecked && condition > 0.35;
-      rig.stacks.forEach(stack => { stack.visible = !sideSaws && !wrecked; });
-      rig.cage.forEach(bar => { bar.visible = !sideSaws && tier >= 2 && !wrecked; });
-      rig.saws.forEach(saw => { saw.visible = (sideSaws || tier >= 2) && !wrecked; });
-      rig.crown.forEach(point => { point.visible = !sideSaws && tier >= 3 && !wrecked; });
+      rig.bullBar.visible = !sideSaws && !turretLook;
+      rig.centerGuard.visible = !sideSaws && !turretLook && !wrecked && condition > 0.2;
+      rig.hoodPlate.visible = !sideSaws && !turretLook && !wrecked && condition > 0.35;
+      rig.stacks.forEach(stack => { stack.visible = !sideSaws && !turretLook && !wrecked; });
+      rig.cage.forEach(bar => { bar.visible = !sideSaws && !turretLook && tier >= 2 && !wrecked; });
+      rig.saws.forEach(saw => { saw.visible = !turretLook && (sideSaws || tier >= 2) && !wrecked; });
+      rig.crown.forEach(point => { point.visible = !sideSaws && !turretLook && tier >= 3 && !wrecked; });
       rig.sidePlates.forEach((plate, partIndex) => {
-        plate.visible = !sideSaws && !wrecked && condition > BREAK_POINTS[partIndex];
+        plate.visible = !sideSaws && !turretLook && !wrecked && condition > BREAK_POINTS[partIndex];
         plate.rotation.z = (partIndex < 2 ? -1 : 1) *
           (0.04 + (1 - condition) * 0.12);
       });
       const time = state.stageTimeSec || 0;
       rig.loose.forEach((part, partIndex) => {
         const threshold = BREAK_POINTS[partIndex];
-        if (!sideSaws && rig.lastCondition > threshold && condition <= threshold && !wrecked) {
+        if (!sideSaws && !turretLook && rig.lastCondition > threshold && condition <= threshold && !wrecked) {
           const authoredPlate = rig.authored?.getObjectByName(`kit-plate-${partIndex}`);
           part.authoredCopy?.removeFromParent();
           part.authoredCopy = null;

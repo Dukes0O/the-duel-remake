@@ -309,7 +309,25 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
     if (projectile.kind === 'rocket-pod') {
-      if (stepRocketPod(duel, projectile, dt)) live.push(projectile);
+      const fighters = [];
+      if (modernProjectiles) {
+        const fighter = playerFighterTarget(duel, projectile);
+        if (fighter) fighters.push({fighter, raider: false});
+        if (!projectile.enemy && !projectile.raid)
+          for (const zone of state.raids?.zones || [])
+            for (const raider of zone.raiders)
+              if (!raider.knockedDown) fighters.push({fighter: raider, raider: true});
+      }
+      for (const target of fighters) {
+        const center = fighterBody(target.fighter, target.raider);
+        const radius = target.raider ? T.raider.hitRadius : FIGHTER_RULES.radius;
+        const halfHeight = target.raider ? T.raider.hitHeight : FIGHTER_RULES.height / 2;
+        target.body = {...center, y: center.y - halfHeight, halfX: radius,
+          halfZ: radius, height: halfHeight * 2, shape: 'box'};
+      }
+      if (stepRocketPod(duel, projectile, dt, {fighters,
+        blastFighter: (race, target, shot, radius) =>
+          splashCarFighter(race, target.fighter, shot, radius, target.raider)})) live.push(projectile);
       continue;
     }
     const old = {x: projectile.x, y: projectile.y, z: projectile.z};
