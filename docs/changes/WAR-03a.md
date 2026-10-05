@@ -72,6 +72,10 @@ remaining shared hooks and merge gates are still required.
   Both now pass 50 checks, including the exact old arena.tell recipe and
   native difficulty/phase timing. Full Gunn suite: 19 cases/215 checks,
   all pass after the yard fix. All earlier assertions are unchanged.
+- Motion browser reaches the real yard buttons/intro and tracks a moving
+  target without changing race/profile. First-shot mouth check proves a
+  0.045 m missing native ground lift (rendered x/z agree within 2e-9).
+  Failure now reports coordinates; no assertion changed or pacing measured.
 
 ## Remaining
 
@@ -82,6 +86,7 @@ remaining shared hooks and merge gates are still required.
   current Rocket Pods car-target policy remains unchanged meanwhile.
 - Complete motion/pacing and card checks, lane/build and required reviews
   on the final integration base before merge.
+  Native grounding and matching authored witnesses need a reviewed correction.
 
 ## Removed
 

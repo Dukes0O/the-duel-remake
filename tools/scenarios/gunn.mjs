@@ -298,7 +298,12 @@ async function runFight(context, asset) {
           q.paint();const car=q.car(),origin=car.position.clone().set(event.projectile.x,event.projectile.y,event.projectile.z);
           const error=Math.min(...Array.from({length:4},(_,n)=>origin.distanceTo(
             car.getObjectByName('gunn-turret-mouth-'+n).getWorldPosition(car.position.clone()))));
-          if(error>1e-5)throw Error('Actual native rocket did not leave a rendered mouth');
+          if(error>1e-5)throw Error('Actual native rocket did not leave a rendered mouth: '+JSON.stringify({
+            error,origin:origin.toArray(),mouths:Array.from({length:4},(_,n)=>
+              car.getObjectByName('gunn-turret-mouth-'+n).getWorldPosition(car.position.clone()).toArray()),
+            car:car.position.toArray(),rotation:car.rotation.toArray(),grounding:car.userData.grounding?.contactY,
+            actor:{s:a.s,lateral:a.lateral,headingError:a.headingError,airHeight:a.airHeight,
+              groundHeight:a.groundHeight,terrainPitch:a.terrainPitch,terrainRoll:a.terrainRoll}}));
           q.shots.push({id:event.projectile.id,launchedAt:event.projectile.launchedAt,
             origin:origin.toArray(),mouthError:error,aim:structuredClone(a.gunnBarrage.aim)});
         });
