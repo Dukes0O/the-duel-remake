@@ -5,6 +5,27 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: GATE-DIAGNOSTICS
+    title: "Retain failure details from native audio and temporary Git fixtures"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    claimed_by: codex-director-2026-10-04
+    branch: codex/tools/checkpoint-diagnostics
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-compact-binaries.mjs, docs/changes/GATE-DIAGNOSTICS.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Retain existing audio chunk frame indexes in each encoded track. Add concise failed-command context for the expendable Git fixture: repository metadata presence, Git version and redirect environment names only. No secret environment values."
+      - "Keep collection, simulation, saves, fixtures, assertions, thresholds and cleanup unchanged. No retry, skip, assertion migration, new framework or history operation. Independent review, current lane and build, then full integration checkpoint."
+    source_commit: 35af4b20f3fb75dc5bdc54028818e66db2bfa3af
+    gate_commit: 35af4b20f3fb75dc5bdc54028818e66db2bfa3af
+    merged_commit: 278615c47fc9da2872bc85069b2affb3bd32dd5b
+    lane_gate_passed: 8
+    lane_gate_duration_seconds: 204.81
+    lane_build_ms: 737
+    note: "The evidence-only change passed independent review, all eight lane suites and build. Earlier failure causes remain unproved; feature merges stay held until the full checkpoint passes."
   - id: SALT-RUNTIME-CHECKS
     title: "Run Salt renderer acceptance against the installed asset"
     owner: codex
@@ -1055,10 +1076,12 @@ tasks:
     audio_contrast_test_commit: d7852758
     audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
     audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
-    final_gate_commit: d6971001994b60878d205e32aa99e30d924dea67
-    final_gate_verdict: "The fresh gate failed the existing audio measurement availability check for the short Mortar whistle. Keep playback and headroom assertions unchanged; review the existing short-cue analysis path before rerunning gates."
+    final_gate_commit: abee63c12f9bd112d201df1997d5490070026a4c
+    final_gate_verdict: "The short-cue measurement input change passes independent review and the bounded audio suite. Fresh lane and build gates remain held while the failed integration full tier is diagnosed."
     short_audio_test_hook: tools/test-combat-audio.mjs
     short_audio_analysis_grant: "After the genuine gate failure, independently measure all new recordings. If their short duration is the cause, reuse the existing analysis-only padding for Wave Three files in the combat audio test. Keep every assertion, threshold, prior measurement path and runtime byte; independently review this input change before fresh gates."
+    short_audio_analysis_review_commit: abee63c12f9bd112d201df1997d5490070026a4c
+    short_audio_analysis_review: "Independent review clears the Wave Three-only analysis selector. All recordings retain their exact bytes and true peaks; every assertion, limit and earlier measurement path stays unchanged."
     flight_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
     flight_review: "The Mortar-only marker restores unchanged ramp flight without changing released ram behavior. Independent hop, zero-apex, landing and menu checks pass. All three balance reports and both-quality browser rechecks pass; final gates remain."
     balance_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
@@ -1158,6 +1181,8 @@ tasks:
     controller_test_verdict: "Native tests expose missing dev admission, movement while repairing and vehicle fire while the crew is out. Released driving and ready-car fire controls pass; earlier assertions and voice cases stay unchanged."
     car_fighter_handoff: "After Convoy's whole merge, Crew owns contacts.js, combat-projectiles.js and arsenal/rockets.js for real fighter interception and the existing car splash rule. Move the existing car helper implementation into contacts.js and reuse it; preserve car attribution, protection, falloff, recovery and replay rules. Independent native Rocket Pods tests precede source; Gunn receives the whole reviewed Crew merge before its final on-foot fight checks."
     car_fighter_test_hook: tools/test-rocket-fighter-contacts.mjs
+    car_fighter_test_commit: 9d2d1aafefce23512b7952cdb23fcabb4a7a5fa8
+    car_fighter_test_verdict: "Native Rocket Pods tests expose missing player, raider and real computer-crew interception and splash. Car damage and participant protection controls pass; parked shield or wreck must not protect an exposed fighter. Existing tests and the settled damage rule stay unchanged."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
@@ -1389,6 +1414,8 @@ tasks:
     source_commit: a714587f
     art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
     geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
+    comparison_scenario_commit: 5167ce32709d257d9b65947f65e8775672dd487e
+    comparison_source_review: "Independent source review clears the native twelve-view recipe and full-frame sheet builder. Captures, appearance and Claude's approval remain unproved."
     trajectory_review_commit: d068bffb
     yard_test_commit: 9139255fbf61c6cd26f109bc0984cebca404e751
     yard_test_verdict: "Native yard and Armory tests expose lost injected Gunn flags; released and default controls pass. Existing assertions stay unchanged. The real router check follows in the browser after the source hook lands."

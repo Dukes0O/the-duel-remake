@@ -783,3 +783,39 @@ limit failed. Review the established short-cue analysis path with runtime bytes
 and assertions unchanged, then rerun the gate. Gunn's native yard tests now
 expose the injected-flag loss while released and default controls pass.
 
+The quiet scheduled full tier on clean 15b9c458 finished in 579.89 seconds:
+348 passed, one failed, none skipped. The unchanged crash-audio overlap capture
+has a missing AudioWorklet input block; measured peaks and all other checks pass.
+Feature merges stop until diagnosis and a passing full rerun. No source or
+assertion changed. Arsenal's short-cue input migration passes independent review
+and all eleven bounded audio cases; its fresh gates wait for recovery.
+Crew's native Rocket Pods tests now expose missing fighter hits, with car and
+participant-protection controls passing. Gunn's comparison recipe clears source
+review; pictures and Claude's approval remain.
+
+The unchanged crash-audio suite passes alone: 23 cases and 98 checks in
+22.55 seconds, with every mix, engine and impact track continuous. Its gate
+scheduler already excludes all other suites. The failed capture does not keep
+the chunk frame indices, so gap count, location and cause remain unproved.
+No runtime, test or asset differs from the prior passing checkpoint. Keep
+all assertions unchanged and run the full tier again before feature merges.
+
+The quiet recovery full tier on clean 30d3e336 finished in 702.32 seconds:
+347 passed, two failed, none skipped. Crash audio again reports a missing
+input block, this time in the non-fuel row; peaks and other audio checks pass.
+The compaction test also failed while configuring its temporary Git fixture.
+Stop repeated full runs pending focused diagnosis of both existing paths.
+Feature merges remain held; runtime, assets and assertions stay unchanged.
+
+Focused gate diagnostics merged after independent review, eight passing lane
+suites and build. Existing crash audio and all 632 temporary Git checks pass;
+the new timestamps retain a quiet-context discontinuity without proving its
+cause. The full checkpoint still holds feature merges. Gunn's comparison
+fixture now uses native kit equip; a screenshot filename mismatch remains.
+
+Janitor: removed the merged diagnostic branch, lane and used evidence. The
+first junction check refused its target; normal Git cleanup left an unregistered
+remainder. After exact target verification, the junction and remainder were
+removed separately. Integration dependencies remain intact; runtime size is
+unchanged. No feature lane or protected audio folder was removed.
+
