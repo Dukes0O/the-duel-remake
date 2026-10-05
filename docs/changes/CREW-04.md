@@ -1,6 +1,6 @@
 # CREW-04: Computer crews
 
-status: building
+status: waiting_on claude
 
 ## Rules
 
@@ -12,6 +12,8 @@ Claude's 5 October answer changes only stop pacing: at most 2.5 s overhead
 beyond actual repair or weapon work. Native lock/reload is weapon work;
 the player's forced 3 s recovery stays unchanged and is not overhead.
 Idle range waiting is overhead. Ordinary Hard catch-up follows each stop.
+Hard remained above 40%, so Claude's permitted fallback limits Hard repair
+to once per race. Medium retains once per lap; no other trigger changes.
 
 ## Source
 
@@ -72,9 +74,21 @@ High/Performance browser, lane tier and build remain open.
 The corrected report finishes 138 races: Easy 28/30, Medium 19/30,
 Hard 21/30. Only Hard fails. Seven additive pacing controls then show six
 expected cap failures; the ordinary Hard driving control passes.
-Pacing source passes all seven new cases / 27 checks. Current balance,
-earlier controls, private browser, lane/build and delta review remain open.
-No merge pass is claimed yet.
+Pacing source passes all seven new cases / 27 checks. Current native Crew,
+contact, Convoy and Ambush controls pass, with twelve replay fingerprints
+unchanged. The current report finishes all 138 main races: Easy 28/30,
+Medium 19/30, Hard 18/30. Its separate Medium pursuit seed 1989 stalls.
+The fallback first fails its Hard next-lap control while Medium passes;
+the one-line Hard limit then passes all 51 Crew cases / 266 checks.
+The fallback review is clear. Its report still finishes all 138 main races
+with the same 28/19/18 wins and Hard event counts: six repairs, five ambushes,
+nine attacks. The repair cap does not change these samples. Medium pursuit
+seed 1989 still stalls at s 6266.54; the identical cpu-crews-off run finishes
+in 134.72 s. Native departure has no player collision or ejection. The later
+turn reaches 197 mph and hits turn-chevron-10 at 122.13 s before stalling.
+No pilot, contact, target or rescue change was made. Ask Claude for the next
+Hard lever and a separate pursuit turn-speed fix. Investigation stopped;
+private browser and lane/build stay closed. No merge pass is claimed.
 
 ## Removed
 

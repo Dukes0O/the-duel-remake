@@ -310,6 +310,28 @@ test('repair stops are at most once per lap', () => {
   equal(stopped(f.rival), false, 'the same computer cannot stop to repair twice on this lap');
 });
 
+for (const difficulty of ['hard', 'medium'])
+  test(`${difficulty} repair admission on the next real lap preserves its race limit`, () => {
+    const f = race({difficulty});
+    f.state.lapsTotal = 2;
+    f.rival.armor = 29;
+    completeMeasuredStop(f);
+    equal(f.rival.cpuCrew.repairLap, 0, 'the first native repair is recorded on lap zero');
+    const anchor = f.duel.course.length * 1.45;
+    Object.assign(f.rival, {s: anchor, prevS: anchor, completedLaps: 1,
+      lateral: 0, prevLateral: 0, speedMph: 0, armor: 29});
+    Object.assign(f.state, {s: anchor - 1000, prevS: anchor - 1000, completedLaps: 1});
+    tick(f);
+    equal(stopped(f.rival), difficulty === 'medium',
+      'Hard repairs once per race; Medium keeps its native once-per-lap repair');
+    if (difficulty === 'medium') {
+      const measured = completeMeasuredStop(f);
+      equal(f.rival.cpuCrew.repairLap, 1, 'Medium completes its actual next-lap repair');
+      ok(Math.abs(f.rival.armor - 69) < 1e-6, 'the second repair still restores forty armor');
+      ok(measured.elapsed - 2 <= 2.5 + 1e-8, 'the next-lap Odessa stop retains the overhead cap');
+    }
+  });
+
 for (const [label, options, arrange] of [
   ['Easy', {difficulty: 'easy'}, () => {}],
   ['disabled crew switch', {enabled: false}, () => {}],

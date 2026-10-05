@@ -120,6 +120,7 @@ function eligibleStop(duel, actor, crew) {
     if (zone) return {kind: 'ambush', side: zone.side};
   }
   if (remaining <= 400 || crew.repairLap === lap ||
+      (s.cpuDifficulty === 'hard' && crew.repairLap >= 0) ||
       !(actor.maxArmor > 0 && actor.armor / actor.maxArmor < .3)) return null;
   const origin = point(duel, actor);
   if ([s, ...s.opponents].some(enemy => hostile(duel, actor, enemy) &&
