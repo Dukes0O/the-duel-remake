@@ -5,6 +5,21 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: GATE-DIAGNOSTICS
+    title: "Retain failure details from native audio and temporary Git fixtures"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: in_progress
+    claimed_by: codex-director-2026-10-04
+    branch: codex/tools/checkpoint-diagnostics
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-compact-binaries.mjs, docs/changes/GATE-DIAGNOSTICS.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Retain existing audio chunk frame indexes in each encoded track. Add concise failed-command context for the expendable Git fixture: repository metadata presence, Git version and redirect environment names only. No secret environment values."
+      - "Keep collection, simulation, saves, fixtures, assertions, thresholds and cleanup unchanged. No retry, skip, assertion migration, new framework or history operation. Independent review, current lane and build, then full integration checkpoint."
+    note: "Two full runs failed without enough detail to identify the cause. Add only the missing evidence; feature merges stay held until the full checkpoint passes."
   - id: SALT-RUNTIME-CHECKS
     title: "Run Salt renderer acceptance against the installed asset"
     owner: codex
