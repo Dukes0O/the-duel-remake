@@ -324,7 +324,8 @@ function renderState(s) {
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
   if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
-  if (!app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
+  if (!(arenaMode === 'ambush-alley' && arenaVenue === 'pit' &&
+    app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
   const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {

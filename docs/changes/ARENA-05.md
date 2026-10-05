@@ -1,6 +1,6 @@
 # ARENA-05: Ambush Alley
 
-status: native entry, wrench and pay source; shared fighter hooks pending
+status: native fight and presentation built; browser and merge gates pending
 
 ## Settled rules
 
@@ -26,7 +26,8 @@ Scrap cover uses real collision boxes registered only on the event's Course
 instance. The Pit car clears its solid centre pile; Salt uses sample 160,
 the midpoint of a longest low-curvature run. Both spawn approaches stay
 inside native walls, at least 60 metres from the fort. No world recipe or
-world signature changed. Renderer work remains pending.
+world signature changed. The view reuses the released salvage-hulk kit at
+the actual physical cover poses, with read-only state and explicit disposal.
 
 Native Game entry now initializes armor, foot transition and gear before
 placing the fort and fighter. It allocates one real Dusthawk through the
@@ -50,31 +51,39 @@ it preserves normal car repair, hit interruption and release controls.
 The buggy targets the nearest solid cover rather than an empty gap in the
 ring. A real native drive/contact witness fails before that fix and passes.
 
-## Pending shared hooks
+## Fighter, contact and sound
 
-- raiders.js: native movement/hostile RPG production against the fort and
-  no within-wave fighter return, keyed by each native record's ambushWave.
-- Projectile/contact hooks: rocket hits on ambushFortTargets.
-- Render/audio: real cover and fighter/buggy presentation. Wave cues use
-  interface.go; wave completion
-  uses interface.bonus; fort impacts reuse existing combat impact cues.
-
-Existing onfoot.js already uses arena walls in place of the car tether.
-Its authored native movement acceptance still awaits real mode admission.
+Wave raiders use existing fixed-step fighter movement and collision, with
+a bounded sidestep at blocked terrain. They fire real RPGs through clear
+terrain approaches, cannot return within their wave, and use swept fort
+impacts. Raiders receive no friendly RPG damage or player RPG hit credit.
+Ordinary camps retain their original movement, shots and respawn rules.
+Wear measures native cover targets rather than only the centre pile.
+Wave/clear cues are interface.go/interface.bonus; RPG launch/impact reuse
+weapon.rpg.fire and combat.rpg-direct/splash. Ram hits use combat.hit.
+The Pit selector survives view refresh; warningless waves render no stale
+roadside warning posts. Released marker matrices and counts stay unchanged.
 
 ## Checks
 
 Crew's isolated registry/launcher prerequisite 2f02bff2 was inspected and
 picked as 74e62833: four wiring files only, no unfinished Crew runtime.
-The authored suite now runs native admission, five waves, pay/hold, loss,
-wrench repair, geometry, actual buggy fire and ram contact: 29 cases and
-598 checks, 27 passes. Two cases remain red at reserved Crew hooks: raiders
-return within a wave, and they do not yet fire RPGs at the fort.
+The authored suite covers native admission, five waves, pay/hold, loss,
+wrench, geometry, actual buggy fire/ram, hostile RPG flight and no return.
+Additive controls cover view purity, disposal and wear near outer cover.
+Current native result: 31 cases, 660 checks, all pass.
 
-Original assertions are unchanged. Director approved one fixture correction:
+Director approved these fixture corrections; no threshold was weakened:
 the buggy has 112.746282 armor and the unchanged per-hit cap is 80. Its wreck
 setup now makes at most four real hits, rather than assuming one uncapped
 hit. No armor or damage cap was reduced. The final wreck assertion is exact.
+The 9.9/10.1-metre wear fixture now measures actual outer cover; its rate,
+range, checks and tolerance are exact. An additive native case first failed
+at zero wear outside the centre, then passed after the cover fix. The RPG
+case retains its four-second flight bound and damage/range assertions, and
+now waits for a source=rpg impact so passive wear cannot supply its proof.
+The isolated buggy-ram witness downs its raiders through damageRaider, so
+cover wear cannot end the event before the unchanged 30-second ram bound.
 
 Released arena event, settlement, UI, Fuel and on-foot transition suites
 pass 103 cases unchanged, including their existing repeatability checks.
@@ -82,9 +91,9 @@ Wrench/transition/UI checks also pass 19 cases unchanged. Diff check passes.
 Earlier module probes passed 300 repeatable clear spawn
 plans across both venues; no world signature changed.
 
-No lane/build, browser, audio, balance, full-tier or merge-ready pass is
-claimed. Broad gates wait for the Director's slot. Real saves, dependencies
-and protected shared fighter sources were not touched.
+No lane/build, browser or merge-ready pass is claimed yet. Real saves,
+dependencies and unfinished peer runtime were not touched. Reviewed pay,
+entry and settlement files remain unchanged from a8ffe6aa.
 
 ## Removed
 

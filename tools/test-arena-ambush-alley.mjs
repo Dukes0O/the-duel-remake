@@ -11,6 +11,7 @@ import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {App} from '../src/app.js';
 import {canLeaveCar} from '../src/onfoot-transition.js';
 import {stepCombatAI} from '../src/combat-ai.js';
+import {createAmbushAlleyView} from '../src/arena/modes/ambush-alley-view.js';
 
 // ARENA-05: native acceptance. Kyle's 4 October answer replaces the
 // Scrapdome ring fixture with the Pit; Salt Flats remains supported.
@@ -20,6 +21,28 @@ const ok = (actual, message) => { checks++; assert.ok(actual, message); };
 const near = (actual, expected, message) => ok(Math.abs(actual - expected) < 1e-6,
   `${message}: expected ${expected}, got ${actual}`);
 const DT = 1 / 120, WAVE_COUNTS = [3, 4, 5, 6, 8];
+test('reused fort view follows native cover poses without writing simulation and disposes once', () => {
+  const f = fight(), before = structuredClone(f.state), removed = [];
+  const view = createAmbushAlleyView(object => removed.push(object));
+  view.update(f.state);
+  equal(view.group.visible, true, 'native fort has a real salvage view');
+  equal(view.group.userData.coverCount, alley(f).fort.cover.length, 'every solid cover has a salvage body');
+  const shells = view.group.children[0].children;
+  for (const [index, shell] of shells.entries()) {
+    const cover = alley(f).fort.cover[index];
+    near(shell.position.x, cover.x, 'cover x follows physical pose');
+    near(shell.position.z, cover.z, 'cover z follows physical pose');
+    near(shell.position.y, cover.y + .025, 'released salvage grounding is exact');
+    near(shell.rotation.y, cover.heading, 'cover heading follows physical pose');
+  }
+  view.update(f.state);
+  equal(f.state, before, 'fort rendering leaves all native state unchanged');
+  view.update({...f.state, status: 'menu'});
+  equal(view.group.visible, false, 'fort is hidden outside gameplay');
+  view.dispose(); view.dispose();
+  equal(removed.length, 1, 'the reusable salvage assembly is released once');
+  equal(view.group.children.length, 0, 'no retired cover remains attached');
+});
 test.after(() => console.log(`Ambush Alley: ${checks} acceptance checks executed.`));
 
 test('Ambush eligibility preserves released foot controls and denies other arenas', () => {
@@ -263,6 +286,7 @@ test('the real buggy weapon hold blocks normal CPU firing with Arsenal off and o
 
 test('the native wave buggy drives into solid fort cover and deals ram damage', () => {
   const f = fight(); reachWave(f, 4);
+  downRaiders(f);
   for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
   const hits = [];
   f.duel.onChange((_state, event) => {if (event.ambushFortHit?.source === 'ram') hits.push(event.ambushFortHit);});
@@ -288,17 +312,34 @@ test('each live raider within ten metres drains five fort health per second; out
   for (const distance of [10.1, 9.9]) {
     const f = fight(), fort = alley(f).fort;
     for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
-    for (const member of raiders(f)) moveRaider(f, member, {...fort, x: fort.x + distance});
+    const cover = fort.cover[0], radius = Math.hypot(cover.x - fort.x, cover.z - fort.z);
+    for (const member of raiders(f)) moveRaider(f, member, {...cover,
+      x: cover.x + (cover.x - fort.x) / radius * distance,
+      z: cover.z + (cover.z - fort.z) / radius * distance});
     const before = fort.health; advance(f, DT);
     near(before - fort.health, distance < 10 ? 3 * 5 * DT : 0,
       'the real first wave applies per-fighter fort wear at the distance boundary');
   }
 });
 
+test('a live raider near outside fort cover wears it down beyond ten metres from the centre', () => {
+  const f = fight(), fort = alley(f).fort, member = raiders(f)[0], cover = fort.cover[0];
+  for (const other of raiders(f).slice(1)) damageRaider(f.duel, other, other.health);
+  for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
+  const length = Math.hypot(cover.x - fort.x, cover.z - fort.z);
+  moveRaider(f, member, {...cover, x: cover.x + (cover.x - fort.x) / length * 8,
+    z: cover.z + (cover.z - fort.z) / length * 8});
+  ok(Math.hypot(member.x - fort.x, member.z - fort.z) > 10, 'the witness is beyond centre wear range');
+  const before = fort.health; advance(f, DT);
+  near(before - fort.health, 5 * DT, 'one actual raider near physical cover drains five health per second');
+});
+
 test('native raider RPG production and flight can damage the fort from outside wear range', () => {
   const f = fight(), fort = alley(f).fort, member = raiders(f)[0];
   for (const other of raiders(f).slice(1)) damageRaider(f.duel, other, other.health);
   moveRaider(f, member, {...fort, x: fort.x + 65});
+  const hits = [];
+  f.duel.onChange((_state, event) => {if (event.ambushFortHit?.source === 'rpg') hits.push(event.ambushFortHit);});
   let shot = null;
   for (let n = 0; n < Math.round(20 / DT) && f.state.status === 'racing' && !shot; n++) {
     f.duel.step(DT); shot = f.state.combat.projectiles.find(projectile => projectile.kind === 'rpg' && projectile.enemy);
@@ -307,8 +348,9 @@ test('native raider RPG production and flight can damage the fort from outside w
   ok(Math.hypot(member.x - fort.x, member.z - fort.z) > 10,
     'the native rocket producer is still outside passive fort-wear range');
   const before = fort.health;
-  for (let n = 0; n < Math.round(4 / DT) && f.state.status === 'racing' && fort.health >= before; n++) f.duel.step(DT);
+  for (let n = 0; n < Math.round(4 / DT) && f.state.status === 'racing' && !hits.length; n++) f.duel.step(DT);
   ok(fort.health < before, 'the native hostile rocket flight damages the fort');
+  ok(hits.length > 0, 'the fort emits an actual RPG impact rather than only passive wear');
   ok(Math.hypot(member.x - fort.x, member.z - fort.z) > 10,
     'the recorded damage is from the rocket rather than close-range fort wear');
 });

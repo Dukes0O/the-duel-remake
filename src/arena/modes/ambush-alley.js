@@ -150,7 +150,8 @@ function startWave(duel, wave) {
     raiders: [], salvage: null, warning: null, warnedLap: duel.state.currentLap,
     nextShotAt: duel.state.stageTimeSec, shotCount: 0, ambushWave: wave}));
   for (const [index, pose] of alley.waveSpawn.fighters.entries()) {
-    const raider = {...templates[index % templates.length], ...pose,
+    const raider = {...templates[index % templates.length],
+      ...createFighter(duel.course, duel.state, pose), ...pose,
       id: `ambush-${wave}-${index}`, ambushWave: wave, firedLap: 0,
       health: COMBAT_TUNING.raider.health, maxHealth: COMBAT_TUNING.raider.health,
       knockedDown: false, knockdownRemaining: 0, knockdownAwarded: false,
@@ -249,7 +250,9 @@ export function stepAmbushAlley(duel, dt) {
   const raiders = state.raids?.zones.flatMap(zone => zone.raiders)
     .filter(raider => raider.ambushWave === alley.wave) || [];
   const alive = raiders.filter(raider => !raider.knockedDown);
-  const nearby = alive.filter(raider => distance(raider, alley.fort) <= AMBUSH_RULES.wearRangeMetres);
+  const targets = ambushFortTargets(duel);
+  const nearby = alive.filter(raider => targets.some(cover =>
+    distance(raider, cover) <= AMBUSH_RULES.wearRangeMetres));
   damageAmbushFort(duel, nearby.length * AMBUSH_RULES.wearPerSecond * dt, {source: 'wear'});
   if (alley.fort.health <= 0) return {reason: 'fort-fell', winnerId: 'raiders'};
   const buggy = state.opponents.find(actor => actor.arenaRole === 'ambush-buggy' &&

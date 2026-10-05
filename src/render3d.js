@@ -36,6 +36,7 @@ import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
 import {createFuelRunView} from './arena/modes/fuel-run-view.js';
 import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
+import {createAmbushAlleyView} from './arena/modes/ambush-alley-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 
@@ -178,6 +179,7 @@ export function attachRenderer(host, app) {
   const fuelView=createFuelRunView(app.duel);scene.add(fuelView.group);
   const fuelEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
+  const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
@@ -561,6 +563,7 @@ export function attachRenderer(host, app) {
       }
       bountyView.update(st,bountyEntries);
     }else bountyView.group.visible=false;
+    ambushView.update(st);
     firstPersonEntry.fighter=st.fighter;
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
@@ -674,6 +677,7 @@ export function attachRenderer(host, app) {
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
     const release = () => {
       bountyView.dispose();
+      ambushView.dispose();
       fuelView.dispose();
       rearView.dispose();
       firstPersonGear.dispose();
