@@ -859,3 +859,16 @@ failure is the Director's unsupported parked board status; use the existing
 backlog status to leave that card inactive. No assertion changes. Run the
 full tier alone with four jobs again before feature merges.
 
+The corrected isolated full tier on clean d0d7f2c3 passes all 349 suites in
+695.57 seconds. Feature merges resume; callback diagnostics stay parked.
+Arsenal's synced lane then passes all 351 suites in 579.92 seconds and
+build in 492 ms. Its source, save, browser, audio and three balance reviews
+remain current; merge bb76fb38 installs wave three behind its dev switch.
+Convoy receives its named shared hooks; Crew receives only the two controller
+files until Convoy merges. Gunn's round-two recipe clears independent review.
+
+Janitor: verified and unlinked Arsenal's exact dependency junction before
+normal worktree removal; all 1,351 integration dependency files remain.
+Deleted only the merged lane and branch. Its used review evidence is next;
+all unmerged lanes and the protected audio lane stay.
+

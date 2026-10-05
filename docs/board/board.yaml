@@ -1081,12 +1081,12 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-02, WAR-02c]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
     test_commit: d220e948
     source_commit: 3309f22f
-    synced_lane_commit: 777847f45234c4877152978477c993d8c2b16287
+    synced_lane_commit: f0f3a4494aacfe34ef7e9ededbfc7ab5227aa7a3
     synced_note_commit: a7133f37d25751ca61c68f1c936e6a2153d7904a
     preservation_test_commit: 87b436f2
     balance_test_commit: 0cd575fa
@@ -1098,8 +1098,12 @@ tasks:
     audio_contrast_test_commit: d7852758
     audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
     audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
-    final_gate_commit: abee63c12f9bd112d201df1997d5490070026a4c
-    final_gate_verdict: "The short-cue measurement input change passes independent review and the bounded audio suite. Fresh lane and build gates remain held while the failed integration full tier is diagnosed."
+    final_gate_commit: f0f3a4494aacfe34ef7e9ededbfc7ab5227aa7a3
+    final_gate_verdict: "The isolated full tier recovered. Fresh Arsenal gates pass all 351 suites and build; the reviewed feature is merged and its lane is removed."
+    merged_commit: bb76fb38f3aafdd0b2688147c685059bb594442a
+    lane_gate_passed: 351
+    lane_gate_duration_seconds: 579.92
+    lane_build_ms: 492
     short_audio_test_hook: tools/test-combat-audio.mjs
     short_audio_analysis_grant: "After the genuine gate failure, independently measure all new recordings. If their short duration is the cause, reuse the existing analysis-only padding for Wave Three files in the combat audio test. Keep every assertion, threshold, prior measurement path and runtime byte; independently review this input change before fresh gates."
     short_audio_analysis_review_commit: abee63c12f9bd112d201df1997d5490070026a4c
@@ -1194,9 +1198,9 @@ tasks:
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
-    hooks: [src/raiders.js]
-    hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
-    sequencing: "ARS-03 owns sim-rival, combat-ai, projectiles and balance first. CREW-04 builds its crew module and raiders while those hooks wait. ARENA-05 waits for raiders; no two cards edit a shared file at once."
+    hooks: [src/raiders.js, src/sim-rival.js, src/combat-ai.js]
+    hook_requests: [src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
+    sequencing: "Arsenal is merged. Crew receives the two native controller files now; projectile, contact, admission and presentation hooks wait for Convoy's whole merge. ARENA-05 still waits for raiders; no shared file has two owners."
     controller_handoff: "After Arsenal merges, Crew receives sim-rival and combat-ai for native stopped-crew movement and vehicle-fire suppression. Keep knock, wreck, lap, boundary and recovery paths. Convoy does not need these files; Crew's projectile, contact, flags and presentation hooks wait for Convoy's whole merge."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
     fixture_admission_grant: "Independent test author may request cpu-crews explicitly in the native crew fixture and add off/on controls before source admission. Keep all existing assertions; released crew-gear must not enable the new behavior implicitly."
@@ -1412,9 +1416,9 @@ tasks:
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
     flag: convoy-raid
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/crew-gear/signature.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
-    hook_requests: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/render3d.js, src/audio.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, src/arsenal/rockets.js, src/arsenal/harpoon.js, src/arsenal/mortar.js]
-    sequencing: "Use the approved rigid tanker recipe, roof plate and lamps, not the superseded trailer or hatch. Convoy owns crew contacts before CREW-04; flame keeps its body-hit behavior. After Arsenal's whole merge, transfer the requested damage, entry and presentation hooks with tests first."
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/crew-gear/signature.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb, src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/render3d.js, src/audio.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, src/arsenal/rockets.js, src/arsenal/harpoon.js, src/arsenal/mortar.js]
+    hook_requests: []
+    sequencing: "Arsenal's whole merge releases the named damage, entry, weapon-geometry and presentation hooks to Convoy now. Crew alone owns sim-rival and combat-ai. Use the approved rigid tanker, roof plate and lamps; flame keeps body-hit behavior."
     native_handoff: "Central damage must use real swept projectile impacts, blast centres and solver ram contacts. Validate the due boarding charge before clearing boarding state; only that charge wrecks the rig. The native rig spec is twelve tonnes. No sim-rival or combat-ai change is needed."
     rig_fire_rule: "Use the existing weaponsDisabledUntil field in the owned mode through the event and a legal pending fuse. Test that attacks, Star and UFO cannot fire from the rig while escorts retain their normal behavior. Keep the existing field attack scheduling policy."
     caller_test_grant: "Add independent native caller tests for projectile sweeps, ram contacts, rig weapon suppression, escort response and durable App settlement. Keep existing direct-damage assertions. Admission adds only convoy-raid dev to current flag and launcher expectations; preserve released states and isolation checks."

@@ -1,17 +1,15 @@
 {
   "schema": 1,
-  "commit": "fef3ddbf41fa5fe6fc87276d0ab8d24a5c2c52bf",
-  "time": "2026-10-05T03:35:48.261Z",
+  "commit": "d0d7f2c3d00e585608970cd561755b45a248fc5a",
+  "time": "2026-10-05T03:49:18.276Z",
   "tier": "full",
-  "passed": false,
+  "passed": true,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "fef3ddbf41fa5fe6fc87276d0ab8d24a5c2c52bf",
+  "endCommit": "d0d7f2c3d00e585608970cd561755b45a248fc5a",
   "complete": true,
   "total": 349,
   "completed": 349,
-  "failures": [
-    "tools/test-board.mjs"
-  ]
+  "failures": []
 }
