@@ -61,14 +61,11 @@ is generated; Claude's look approval is still required before merge.
   exact. The focused Gunn suite passes 14 cases and 144 checks (one more
   check because the first trajectory is now checked too). Independent review
   cleared this correction before export.
-- Added a separate native five-shot witness: 29 checks pass for real JSON
-  mouth origins, one fixed predictive world point after the player turns,
-  the full tell, shot count and 0.25-second intervals. Together with the lower
-  car flight case, the focused run passes two cases and 36 checks. The author
-  kept every art-suite assertion exact. After export the full native art/fight
-  run passes 22 cases and 393 checks (art 249, fight 144). Source and asset
-  review found the intended isolated output and approved material settings.
-  Whole integration metadata through 272823a7 is merged, not peer source.
+- Native five-shot witness: 29 checks pass for JSON mouth origins, a fixed
+  predictive point after turns, full tell, count and 0.25-second intervals.
+  With lower-car flight: two cases/36 checks. After export: 22 cases/393 checks
+  (art 249, fight 144), unchanged assertions, reviewed output and materials.
+  Whole integration metadata through 272823a7 merged, not peer source.
 - Author 11a54f21 first proved both fresh renderer imports red: GUNN_FIGHT
   before initialization. After helper extraction both pass four checks.
   Existing art/fight assertions stay exact: 24 cases and 397 checks pass.
@@ -77,6 +74,10 @@ is generated; Claude's look approval is still required before merge.
 - Prepared scenario gunn: twelve full real-model views (two cars, three views,
   two quality modes), bounded sheet recipe and native-state/pixel checks.
   Syntax only passes; browser execution and Claude verdict are pending.
+- Yard/Armory flag tests: three native cases/21 checks, one pass/two red.
+  Injected Gunn-on is lost in both paths; default/off and released Sal pass.
+  Read-only Armory and career purity pass; old assertions stay exact.
+  Real router coverage remains for browser QA after the flag hook lands.
 
 ## Remaining
 

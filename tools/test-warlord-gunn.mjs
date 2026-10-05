@@ -13,6 +13,11 @@ import {sweepObstacle} from '../src/collision.js';
 import {stepCombat} from '../src/combat.js';
 import {armorDamageFor} from '../src/combat-armor.js';
 import {equipArmorKit, armorKitBonus, armorKitMass} from '../src/armor-kits.js';
+import {createProfile} from '../src/progression.js';
+import {yardHomeScreen} from '../src/screen-yard-home.js';
+import {createArmoryScreen} from '../src/screen-armory.js';
+import {territoryPanel} from '../src/screen-territory.js';
+import {arenaYardPanel} from '../src/screen-arena.js';
 
 // WAR-03a: native entry, combat and rewards; Claude settled the move on 4 October.
 const DT = 1 / 120;
@@ -20,6 +25,62 @@ let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
 const ok = (actual, message) => { checks++; assert.ok(actual, message); };
 test.after(() => console.log(`Gearhead Gunn: ${checks} acceptance checks executed.`));
+
+function yardFlagFixture() {
+  const profile = createProfile();
+  profile.wasteland.discoveredGate = true;
+  profile.wasteland.territories = {sal: {hold: 100}, gunn: {hold: 100}};
+  const escapeHTML = value => String(value ?? '');
+  const yard = flags => yardHomeScreen({profile, playerName: 'Gunn yard driver', escapeHTML,
+    panel: 'territory', arenaMarkup: arenaYardPanel({profile, featureFlags: flags}), warlordsAvailable: true,
+    ...(flags ? {featureFlags: flags} : {})});
+  const armory = flags => createArmoryScreen({profile: () => profile, credits: String, escapeHTML,
+    getGarageMessage: () => '', kitsEnabled: () => true,
+    action: (label, verb) => `<button data-action="${verb}">${label}</button>`,
+    ...(flags ? {featureFlags: flags} : {})})();
+  const gunnCard = markup => markup.match(/<article class="territory-card"><h4>Gearhead Gunn<\/h4>[\s\S]*?<\/article>/)?.[0];
+  return {profile, yard, armory, gunnCard};
+}
+
+test('native yard and Armory retain default/off Gunn and released Sal behavior', () => {
+  const f = yardFlagFixture(), before = structuredClone(f.profile);
+  const baseline = {yard: f.yard(), armory: f.armory()};
+  for (const flags of [createFeatureFlags({storage: null, qa: false}),
+    createFeatureFlags({storage: null, qa: true, overrides: {gunn: false}})]) {
+    const yard = f.yard(flags), armory = f.armory(flags);
+    equal(yard, baseline.yard, 'default/off injection preserves the native yard markup');
+    equal(armory, baseline.armory, 'default/off injection preserves the native Armory markup');
+    ok(yard.includes('data-warlord="sal"'), 'released Sal remains fightable from the enabled yard');
+    ok(!yard.includes('data-warlord="gunn"'), 'default/off Gunn has no yard launch control');
+    ok(f.gunnCard(armory)?.includes('WARLORD FIGHT COMING LATER'), 'default/off Armory keeps Gunn unavailable');
+    ok(!armory.includes('data-warlord='), 'main-menu Armory never contains a fight launch control');
+  }
+  equal(f.profile, before, 'both native presentation paths preserve the supplied career');
+});
+
+test('native yard forwards the injected Gunn-on flag to its territory launch control', () => {
+  const f = yardFlagFixture(), before = structuredClone(f.profile);
+  const flags = createFeatureFlags({storage: null, qa: true, overrides: {gunn: true}});
+  ok(territoryPanel(f.profile, {featureFlags: flags}).includes('data-warlord="gunn"'),
+    'the real territory panel admits Gunn with the same valid injected context');
+  const markup = f.yard(flags);
+  equal(f.profile, before, 'native yard presentation cannot mutate career state');
+  ok(markup.includes('data-warlord="sal"'), 'enabling Gunn does not remove released Sal');
+  ok(markup.includes('data-warlord="gunn"'), 'native yard must forward the injected flag instead of the default singleton');
+});
+
+test('native Armory forwards injected Gunn availability but keeps territory information read-only', () => {
+  const f = yardFlagFixture(), before = structuredClone(f.profile);
+  const flags = createFeatureFlags({storage: null, qa: true, overrides: {gunn: true}});
+  ok(territoryPanel(f.profile, {featureFlags: flags, canFight: false}).includes('GEARHEAD GUNN IS WAITING'),
+    'the real read-only territory panel admits the same injected Gunn context');
+  const markup = f.armory(flags);
+  equal(f.profile, before, 'native Armory presentation cannot mutate career state');
+  ok(!markup.includes('data-warlord='), 'even Gunn-on main-menu Armory cannot launch any warlord');
+  ok(f.gunnCard(markup)?.includes('GEARHEAD GUNN IS WAITING') &&
+    f.gunnCard(markup)?.includes('FIGHT FROM THE YARD'),
+  'native Armory must display injected Gunn availability and direct fighting to the yard');
+});
 
 function admitted({enabled = true, discovered = true, difficulty = 'medium'} = {}) {
   // Gunn's card names gunn; warlords and scrapdome are not catalog switches.
