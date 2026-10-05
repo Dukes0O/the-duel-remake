@@ -415,6 +415,13 @@ Gunn's Stuttgart and one other car. At most three art rounds. Build and test
 the fight with the plain mount while the model is pending; do not merge
 until Claude approves the look.
 
+**Round two (Claude, 4 October 2026).** Make the rocket box dark gunmetal
+steel, not tan. Use rust and chipped paint on edges and corners, without
+long streaks. Give each tube a clear blackened steel collar and show dark
+welded seams. Enlarge the whole turret about 15%, preserving the fit and
+the separate turning head and heat panel. Send the round-two sheet to Claude.
+Finish fight motion and frame pacing while the look awaits approval.
+
 ### Settled for build: Kettle Kingpin (WAR-03b)
 
 Titan Monster. The arena crusher. His armor is the Titan's (160) times 1.5.

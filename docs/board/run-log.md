@@ -838,3 +838,24 @@ requests less wood-like wear and clearer steel tubes. The one capped sheet
 and verdict are committed in the lane; Claude has the look question and
 the card waits on Claude. Motion and pacing remain unmeasured.
 
+The full tier on clean d0bb574c finished in 709.12 seconds: 348 passed,
+one failed, none skipped. Non-fuel and six-blast audio chunks show a
+128-frame early label followed by a correction; all chunks are full and
+their total span is normal. Earlier missing-block descriptions were not
+proved. Independent review finds no repeated nearby PCM quantum but cannot
+prove input continuity. Add raw callback timestamps and input lengths only;
+keep PCM and assertions unchanged. Feature merges remain held.
+
+Claude's overnight direction parks callback diagnostics outside the main
+loop. The isolated full tier now uses four jobs and runs without other
+gates, builds or browser checks. A pass resumes feature merges; the
+crash-audio test, assertions and tolerances stay unchanged. Gunn round
+two uses darker steel, edge wear, black collars and seams, enlarged about
+15%; the next sheet needs Claude's approval. Retain the parked lane.
+
+The isolated four-job full tier on clean fef3ddbf finished in 713.66 seconds:
+348 passed, one failed, none skipped. Crash audio passes unchanged. The only
+failure is the Director's unsupported parked board status; use the existing
+backlog status to leave that card inactive. No assertion changes. Run the
+full tier alone with four jobs again before feature merges.
+

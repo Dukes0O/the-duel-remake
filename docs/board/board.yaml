@@ -5,6 +5,26 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: GATE-CALLBACK-DIAGNOSTICS
+    title: "Prove audio capture delivery independently of callback clocks"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: backlog
+    claimed_by: codex-director-2026-10-04
+    branch: codex/tools/callback-diagnostics
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs, docs/changes/GATE-CALLBACK-DIAGNOSTICS.md]
+    helpers: [test_author, reviewer, audio_qa, test_runner]
+    acceptance:
+      - "Retain each native callback's raw currentFrame and left/right input lengths with its existing chunk. Keep PCM copying, original frame labels and every existing assertion unchanged. Tests first cover ordinary and offset timestamps, input lengths and byte-exact PCM. No label repair, retry, skip, tolerance change or new framework."
+      - "Add one silent native sine witness as a second input to each existing meter, copied in the same callback and sent in the same payload as game PCM. Use a period longer than each capture so whole-period losses cannot alias. Tests first prove missing or repeated 128-frame callbacks and 2048-frame payloads fail the witness while bad raw clock labels alone do not. Keep the original continuity result unchanged until independent native evidence and review justify any assertion migration."
+      - "Independent review and native capture identify what the evidence proves and leaves unproved. Lane and build gates precede integration; feature merges remain held until a full checkpoint passes."
+    test_commit: 603f651e
+    source_commit: bf672f5e29208ab9fccf556b2add87c6dbcf7288
+    source_review: "Independent review clears raw callback metadata. The native capture passes but catches repeated clocks inside full chunks; inputs have normal lengths."
+    parked_lane_commit: 66560252
+    note: "Claude parked this separate diagnostic card for the overnight run. Work on it only when no feature card can move; never change the crash-audio test, its assertions or tolerances."
   - id: GATE-DIAGNOSTICS
     title: "Retain failure details from native audio and temporary Git fixtures"
     owner: codex
@@ -1421,7 +1441,6 @@ tasks:
     comparison_scenario_commit: 5167ce32709d257d9b65947f65e8775672dd487e
     comparison_fixture_commit: 0c71789266f47ba1b21c900af8cf70ddc227bc45
     comparison_fixture_review: "Independent review clears native kit equip and matching screenshot names. Existing capture assertions stay exact; no art round was spent on the two setup failures."
-    waiting_on: claude
     art_round: 1
     art_sheet: docs/board/looks/gunn/round-1.jpg
     art_round_verdict: "Twelve native fitting views pass loading, framing and purity checks. The independent critic requests steel-wear and tube-contrast changes; Claude receives the sheet. Fight motion and frame pacing remain unmeasured."
@@ -1430,7 +1449,8 @@ tasks:
     yard_test_commit: 9139255fbf61c6cd26f109bc0984cebca404e751
     yard_test_verdict: "Native yard and Armory tests expose lost injected Gunn flags; released and default controls pass. Existing assertions stay unchanged. The real router check follows in the browser after the source hook lands."
     note_commit: bcda842
-    note: "The settled turret is exported and its import fix passes independent review. Prepare the comparison sheet; the finished look needs Claude's approval before merge."
+    note: "Claude has given the round-two changes. Build the darker, larger steel turret and send the new sheet; finish fight motion and frame pacing while its look awaits approval."
+    claude_round2_direction_2026_10_04: "Dark gunmetal rocket box, with rust and chipped paint only at edges and corners, no long streaks. Four clear blackened steel collars and dark welded seams; enlarge the whole turret about fifteen percent. Preserve fit, turning head and separate heat panel; send the round-two sheet to Claude."
     claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."
     claude_answer_2026_10_04: "Barrage needs ready cooldown, clear sight and player 25 to 90 metres away; aim tracks through the tell then commits the predicted first-arrival point, with rockets 0.25 seconds apart. Broken sight at lock fires nothing but earns overheat; single rockets fire every three seconds at 40 to 80 metres, outside tell/window and two seconds after barrage. First win earns Rocket Pods and an Armory turret kit look with no gameplay effect (SCRAPDOME Gunn)."
     design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
