@@ -51,7 +51,7 @@ export async function run(context) {
     if (before !== JSON.stringify(app.duel.state.opponents.map(actor => actor.cpuCrew)))
       throw Error('Rendering changed the computer crew rules');
   })()`);
-  await context.screenshot('cpu-crew-ambush-${quality}');
+  await context.screenshot(`cpu-crew-ambush-${quality}`);
   const completed = await context.evaluate(`(() => {
     const app = window.__qaApp, duel = app.duel, s = duel.state;
     app.inspectionCamera = null; app.autopilot = true;
@@ -68,7 +68,7 @@ export async function run(context) {
     return {status: s.status, completedLaps: s.completedLaps,
       lapsTotal: s.lapsTotal, events};
   })()`);
-  await context.screenshot('cpu-crew-race-finish-${quality}');
+  await context.screenshot(`cpu-crew-race-finish-${quality}`);
   console.log('Private computer crews: ' + JSON.stringify({stopped, completed}));
   }
 }

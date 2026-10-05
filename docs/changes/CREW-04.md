@@ -55,10 +55,12 @@ The exact registry tests add only the two new dev entries.
 Six additive review controls reproduce enemy direct/splash credit and live
 fighter aim faults before the fix, then pass with unchanged player positives.
 
-All 138 balance races finish. Easy wins 26/30, Medium 20/30 and Hard 21/30;
-Medium and Hard exceed the unchanged win bands. CPU hits meet their bands.
-Natural Hard ambushers exit eight times but fire no attacks. Its timing gap,
-private High/Performance browser, lane tier, build and review remain open.
+The first report forced released Arsenal off; all 138 races finished, but
+its win-band and ambush verdicts are not the intended released baseline.
+The correct command requests arsenal,cpu-crews. Its natural Hard seed-1989
+probe finishes in 104.70 s with five CPU hits; no eligible crew stop occurs.
+The source review clears both fixes. Current balance, private
+High/Performance browser, lane tier and build remain open.
 No merge pass is claimed yet.
 
 ## Removed
