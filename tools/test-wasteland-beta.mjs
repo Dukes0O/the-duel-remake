@@ -16,6 +16,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'cpu-crews': 'dev',
     'ambush-alley': 'dev',
     gunn: 'dev',
+    tollkeeper: 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
@@ -23,6 +24,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   assert.equal(flags.enabled('career-backup'), false);
   assert.equal(flags.enabled('warlords'), false);
   assert.equal(flags.enabled('fuel-run'), true);
+  assert.equal(flags.enabled('tollkeeper'), false);
   assert.deepEqual(flags.betaFeatures(), []);
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');

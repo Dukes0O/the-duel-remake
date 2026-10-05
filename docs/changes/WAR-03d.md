@@ -60,6 +60,10 @@ The lane exposed an old territory test still pinning the removed venue suffix.
 It now requires the current Salt venue label and rejects only that stale
 suffix. Discovery, hold, separate unavailable-fight and ordinary venue checks
 remain unchanged. The Director approved this expectation correction.
+The beta catalog fixture admits only the added `tollkeeper: 'dev'` entry and
+explicitly checks its production default is off. Its full-object pin and all
+thirteen old entries remain exact. The ten unrun fixtures have no matching
+flag or registry omission. No tolerance or runtime behavior changed.
 
 ## Removed
 
