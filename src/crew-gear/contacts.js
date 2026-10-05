@@ -85,7 +85,8 @@ export function splashCarFighter(duel, fighter, projectile, radius, raider = fal
   if (distance < radius) hitCarFighter(duel, fighter, projectile,
     60 * (1 - distance / radius), distance < radius / 2, raider);
 }
-export function damageGearCar(duel, actor, amount, owner, normal = null) {
+export function damageGearCar(duel, actor, amount, owner, normal = null,
+  {hitPosition, contactPoint, blastRadius} = {}) {
   if (!(amount > 0)) return 0;
   // Reuse native shield/team protection, armor, wrecking, score and attribution.
   // The multiplier supplies the settled gear amount without a second damage path.
@@ -94,10 +95,14 @@ export function damageGearCar(duel, actor, amount, owner, normal = null) {
     owner: combatOwnerId(duel, owner), level: 0, self: actor === owner,
     damageMultiplier: amount / armorDamageFor('crossbow'),
     ...(face ? {contactFace: face} : {}),
+    ...(hitPosition ? {hitPosition} : {}),
+    ...(contactPoint ? {contactPoint} : {}),
+    ...(Number.isFinite(blastRadius) && blastRadius > 0 ? {blastRadius} : {}),
   });
   if (removed > 0) duel.emit({combatHit: true, footGearHit: true,
     strength: removed / 60, victim: actor === duel.state ? 'player' : 'rival',
-    owner: combatOwnerId(duel, owner), hitPosition: carBodyPoint(duel, actor)});
+    owner: combatOwnerId(duel, owner),
+    hitPosition: hitPosition || contactPoint || carBodyPoint(duel, actor)});
   return removed;
 }
 export function damageGearFighter(duel, target, amount, owner, knockdown = false) {
@@ -120,7 +125,10 @@ export function gearContact(duel, start, end, owner, {fighters = true} = {}) {
   let first = null;
   function consider(obstacle, target, previous = start) {
     const hit = sweepObstacle(previous, end, obstacle, 0, SHOT_BODY);
-    if (hit && (!first || hit.t < first.t)) first = {...hit, ...target};
+    if (hit && (!first || hit.t < first.t)) first = {...hit, ...target,
+      point: {x: start.x + (end.x - start.x) * hit.t,
+        y: start.y + (end.y - start.y) * hit.t,
+        z: start.z + (end.z - start.z) * hit.t}};
   }
   for (const actor of enemyCars(duel, owner)) {
     const at = carBodyPoint(duel, actor), spec = duel._vehicleSpec(actor);

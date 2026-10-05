@@ -1190,10 +1190,9 @@ tasks:
     size: M
     needs: [CREW-02]
     status: building
-    waiting_on: claude
-    source_frozen: true
+    source_frozen: false
     held_source_commit: b6e5c3a7
-    balance_question: "The intended released baseline finishes all 138 races, but Hard wins twenty-one of thirty, above the unchanged target. Nine ambush exits produce two attacks. Claude must choose an allowed stopped-crew pacing or ambush-timing lever; the investigation limit is reached."
+    claude_answer_2026_10_05: "Change only stop pacing. Braking, exit, re-entry and pulling away together add at most 2.5 s beyond repair or shots. After a stop use ordinary Hard catch-up. Keep triggers, ranges, weapons and the 20-40% target. If Hard remains above forty percent, cap Hard repair stops at one per race; then merge."
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
     test_commit: 045f18d6
@@ -1204,7 +1203,8 @@ tasks:
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
     hooks: [src/raiders.js, src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, start-preview.bat, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/onfoot-race.js, src/arsenal/rockets.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
     hook_requests: []
-    sequencing: "Crew is frozen for Claude's balance answer. Ambush receives the remaining named hooks on integration without importing unfinished Crew source. Reconcile later whole merges and rerun the lane gate before Crew resumes."
+    sequencing: "Resume the stop-pacing controller on whole integration. Other shared hooks stay frozen until Convoy and Gunn merge; reconcile their whole merges before final balance, browser and lane/build. Import no unfinished peer source."
+    pacing_hooks: [src/crew-gear/cpu-crews.js, src/sim-rival.js, src/combat-ai.js, tools/test-cpu-crews.mjs]
     controller_handoff: "After Arsenal merges, Crew receives sim-rival and combat-ai for native stopped-crew movement and vehicle-fire suppression. Keep knock, wreck, lap, boundary and recovery paths. Convoy does not need these files; Crew's projectile, contact, flags and presentation hooks wait for Convoy's whole merge."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
     shared_flag_grant: "Crew also wires Ambush's single dev registry entry through its flag and launcher hooks. A clean, source-only prerequisite commit may go to Ambush; no unfinished Crew behavior transfers. Preserve released states and isolation assertions."
@@ -1292,6 +1292,7 @@ tasks:
     test_commit: ea84602b
     note_commit: ea84602b
     source_commit: 4aad99b3fe50fabe84f3223f838a2bd5f45f0d0a
+    merged_commit: 2e7862fb99386353bd983664e878a17243cf02b6
     note: "Merged after all 352 lane suites and build passed. The known audio check passed its only isolated retry. Native 35 cases/797 checks, both-venue laptop browser, source and pay reviews pass."
     flag: ambush-alley
     claude_answer_2026_10_04: "Pay is 60 per wave plus 150 for all five, times difficulty; hold is five per wave, settled once. A wave needs every fighter down and its buggy wrecked, with no return in that wave. Use the Pit fort eight metres from the centre pile or Salt's longest straight, never the Scrapdome ring; attackers start at least 60 metres away from two directions (SCRAPDOME section 10)."
@@ -1416,14 +1417,18 @@ tasks:
     lane: CMB
     size: L
     needs: [ARENA-06, CREW-03, ART-FIT-TANKER]
-    status: review
-    waiting_on: claude
+    status: merged
     source_frozen: true
-    frame_question: "Gameplay, pay, lane and build pass. The moving model's added frame cost remains unmeasured after the bounded profiler attempt; Claude must say whether approved stopped-view art evidence is enough for this dev merge."
-    note: "Frozen while Claude decides the frame-cost gap. Crew, Ambush and Gunn may build their reassigned hooks on integration; this lane imports no unfinished peer work."
-    lane_gate_source: be56cdd46e8d94ada72f2313e810d3065a6c79bd
-    lane_gate_passed: 352
+    claude_answer_2026_10_05: "The stopped-view art check is enough for this development merge. Merge when current lane/build pass. CONVOY-FRAMES measures moving Salt Flats cost with and without the tanker, simplifies its distant view if added cost exceeds ten percent, and must pass before release."
+    release_needs: [CONVOY-FRAMES]
+    note: "Development merge passes review and current lane/build. The delivery check passed its single isolated retry; no assertions changed. CONVOY-FRAMES still blocks release."
+    lane_gate_source: efde10ada5e9526b8e4be25c46b5e772db603934
+    lane_gate_passed: 353
+    lane_gate_initial_passed: 121
+    lane_gate_isolated_retry_passed: true
+    lane_gate_continuation_passed: 231
     lane_build_passed: true
+    build_ms: 451
     moving_high_p95_ms: 36.0
     moving_performance_p95_ms: 18.2
     moving_model_added_cost: not-measured
@@ -1431,7 +1436,7 @@ tasks:
     branch: codex/cmb/convoy-raid
     test_commit: 2815e973
     note_commit: 11371c8
-    source_commit: be56cdd4
+    source_commit: efde10ad
     claude_answer_2026_10_04: "Win pays 700 times difficulty and adds 25 Tollkeeper hold; loss pays 40 per valve the player broke, settled once. Unlock with Salt Flats and any Tollkeeper hold from races; hits choose valves by actual impact/contact points, blast reaches every valve in radius, and the body only shoves and never dies before the boarding charge (SCRAPDOME section 10)."
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
     flag: convoy-raid
@@ -1450,17 +1455,32 @@ tasks:
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rigid tanker on its loop, two escorts, three valves, the lit roof plate and boarding finish, the 60 s reset, pay once per event. Install the approved ART-FIT-TANKER recipe output when the mode loads it. Headless tests and a private browser scenario."
+  - id: CONVOY-FRAMES
+    title: "Convoy tanker moving frame cost and distant view"
+    owner: codex
+    lane: VIS
+    size: S
+    needs: [ARENA-07]
+    status: ready
+    flag: convoy-raid
+    owns: [tools/scenarios/convoy-frames.mjs, docs/changes/CONVOY-FRAMES.md]
+    hooks: [src/arena/tanker-model.js, tools/scenarios/convoy-raid.mjs]
+    note: "Claude, 5 October: required before Convoy Raid release, not its development merge. Start after the named feature cards unless a lane is free."
+    acceptance:
+      - "Measure moving frame cost on the Salt Flats with and without the tanker in matched laptop runs. If the tanker adds more than ten percent, simplify its distant view and measure again. Preserve native state, near appearance and disposal; no new tanker parts. Pass before Convoy Raid is released."
   - id: WAR-03a
     title: "Gearhead Gunn: Barrage; Rocket Pods reward"
     owner: codex
     lane: CMB
     size: M
     needs: [WAR-02a-SAL, ARS-02, ARENA-PIT]
-    status: building
+    status: review
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
     test_commit: 11a54f21
-    source_commit: a714587f
+    source_commit: 37683f36d55cbf1c5f760aabe2f7aa30f0867314
+    source_frozen: false
+    source_review: "One whole-card review clears 37683f36: contacts, ownership, rewards, rendering, flags and assertion changes. Focused controls pass; look approval, whine listening and final lane/build remain."
     art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
     geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
     comparison_scenario_commit: 5167ce32709d257d9b65947f65e8775672dd487e
@@ -1474,8 +1494,9 @@ tasks:
     yard_test_commit: 9139255fbf61c6cd26f109bc0984cebca404e751
     yard_test_verdict: "Native yard and Armory tests expose lost injected Gunn flags; released and default controls pass. Existing assertions stay unchanged. The real router check follows in the browser after the source hook lands."
     note_commit: bcda842
-    waiting_on: claude
-    note: "Round two waits for Claude's look verdict. Actual fight motion and frame samples pass in both qualities. Finish generic rocket fighter contacts and tell audio on the whole Ambush merge, without unfinished Crew runtime."
+    claude_answer_2026_10_05: "Round two is approved; no third round. Finish whine listening and current lane/build, then merge."
+    art_approved_round: 2
+    note: "Look approved. Finish whine listening, receive Convoy's whole merge and run final lane/build. Existing whole-source review stays clear unless reconciliation changes behavior."
     motion_review_commit: dad7bad75c800c894fc59e116bedb85f9d7bbaff
     motion_captures: 12
     moving_high_p95_ms: 19.0
@@ -1553,12 +1574,13 @@ tasks:
     lane: CMB
     size: M
     needs: [ARENA-07]
-    status: ready
-    waiting_on: claude
-    design_question: "The approved rigid tanker has no opening doors. What opens to reveal the core valve, which valve is the core, and how wide is the lit gap in the twelve-metre spike strip?"
+    status: building
+    claimed_by: codex-director-2026-10-05
+    branch: codex/cmb/tollkeeper
+    claude_answer_2026_10_05: "No doors or new tanker parts. Rear valve is the core; after each gate its lamps flash for three seconds and hits deal twice damage. Gap is four metres wide, with its centre seeded between three and nine metres across the twelve-metre strip. Build after Convoy merges."
     flag: tollkeeper
     owns: [src/warlords/tollkeeper.js, tools/test-warlord-tollkeeper.mjs, tools/scenarios/tollkeeper.mjs, docs/changes/WAR-03d.md]
-    sequencing: "Start after Convoy's whole merge and Claude's answer. Use the per-warlord file pattern; shared hooks need a Director grant and stay with Crew first."
+    sequencing: "Design is settled. Start after Convoy's whole merge. Own the per-warlord move; request named shared hooks before changing them, preserving Crew's controller and Gunn's audio work."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: The Tollkeeper' in docs/SCRAPDOME.md section 5 on the Convoy Raid. When built, status review and waiting_on: claude before merge."
@@ -1569,6 +1591,7 @@ tasks:
     size: M
     needs: [WAR-02b, WAR-02c, WAR-03a, WAR-03b, WAR-03c, WAR-03d, ARS-03, ARENA-PIT]
     status: ready
+    claude_answer_2026_10_05: "Build after Gunn and the Tollkeeper are merged. Earlier required bosses and Arsenal are already merged; reuse their settled moves unchanged."
     flag: scrapdome
     owns: [src/arena/moves/blackiron.js, tools/test-warlord-blackiron.mjs, docs/changes/WAR-03e.md]
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]

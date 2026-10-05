@@ -164,7 +164,8 @@ root.addEventListener('click',e => {
   }
   if(button.dataset.arenaMode){
     arenaMode=button.dataset.arenaMode;
-    if(arenaMode==='ambush-alley'&&arenaVenue!=='salt-flats')arenaVenue='pit';
+    if(arenaMode==='convoy-raid')arenaVenue='salt-flats';
+    else if(arenaMode==='ambush-alley'&&arenaVenue!=='salt-flats')arenaVenue='pit';
     else if(arenaMode!=='ambush-alley'&&arenaVenue==='pit')arenaVenue='scrapdome';
     lastScreen=null;renderState(app.duel.state);return;
   }
@@ -203,6 +204,7 @@ root.addEventListener('click',e => {
     case 'arena-start':
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
+      if (arenaMode === 'convoy-raid' && (!app.convoyRaidAvailable?.() || arenaVenue !== 'salt-flats')) arenaMode = 'last-car-rolling';
       if (arenaMode === 'ambush-alley' && !app.ambushAlleyAvailable?.()) {
         arenaMode = 'last-car-rolling';
         if (arenaVenue === 'pit') arenaVenue = 'scrapdome';
@@ -324,6 +326,7 @@ function renderState(s) {
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
   if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
+  if (arenaMode === 'convoy-raid' && (!app.convoyRaidAvailable?.() || arenaVenue !== 'salt-flats')) arenaMode = 'last-car-rolling';
   if (!(arenaMode === 'ambush-alley' && arenaVenue === 'pit' &&
     app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;

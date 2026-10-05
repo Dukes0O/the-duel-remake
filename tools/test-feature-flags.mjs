@@ -19,8 +19,9 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
+  && FEATURE_STATES['convoy-raid'] === 'dev'
   && FEATURE_STATES['cpu-crews'] === 'dev' && FEATURE_STATES['ambush-alley'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 11,
+  && Object.keys(FEATURE_STATES).length === 12,
   'the five released Wasteland features stay on; career backup, Fight Voices and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(FEATURE_STATES['cpu-crews'] === 'dev', 'computer crews start behind their own dev switch');

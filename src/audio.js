@@ -1491,6 +1491,10 @@ export class EngineAudio {
     }
     if (ev.countdown) this._playCue('interface.countdown');
     if (ev.go) this._playCue('interface.go');
+      if (state?.arena?.mode === 'convoy-raid' && this.flags.enabled('convoy-raid')) {
+        if (ev.convoyWindow) this._playCue(ev.convoyWindow.soundCue);
+        if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
+      }
     if (ev.shift != null) {
       this.shiftStarted = this.context.currentTime;
       this.shiftUntil = this.shiftStarted + 0.18;

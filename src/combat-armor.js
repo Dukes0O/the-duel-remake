@@ -11,6 +11,8 @@ import {clearCarAlongPush} from './arsenal/car-effects.js';
 import {burstDrone, noteDroneHit, clearDroneHistory} from './arsenal/decoy-drone.js';
 import {actorForTarget} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {damageConvoyValves} from './arena/convoy.js';
+import {isConvoyRig, completeConvoyCharge} from './arena/modes/convoy-raid.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -129,6 +131,12 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   // reject a distinct allied participant; keep own bomb damage unchanged.
   const attacker = state.arena ? arenaActor(duel, options.owner) : null;
   if (attacker && attacker !== actor && !hostile(duel, attacker, actor)) return 0;
+  if (isConvoyRig(duel, actor) && options.convoyCharge) {
+    if (!completeConvoyCharge(duel, actor)) return 0;
+    const removed = actor.armor;
+    startCombatWreck(duel, actor, source, options.owner);
+    return removed;
+  }
   if (arsenalEnabled(duel) && actor.drone) {
     const owner = state.arena ? attacker : options.owner === 'player' ? state :
       options.owner === 'cpu' ? state.rival : actorForTarget(duel, options.owner);
@@ -141,6 +149,13 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   const factor = options.self ? T.maximumSelfDamageFraction : 1;
   const damage = Math.min(T.maximumHitDamage, Math.max(0, base * factor));
   if (!(damage > 0)) return 0;
+  if (isConvoyRig(duel, actor)) {
+    const removed = damageConvoyValves(duel, actor, damage,
+      source === 'ram-dv' ? 'ram' : source, options);
+    noteArenaDamage(duel, actor, removed, options.owner);
+    recordCombatHit(duel, actor, removed, options.owner, options.styleHit !== false);
+    return removed;
+  }
   const removed = Math.min(Math.max(0, actor.armor), damage);
   actor.armor = Math.max(0, actor.armor - damage);
   noteArenaDamage(duel, actor, removed, options.owner);

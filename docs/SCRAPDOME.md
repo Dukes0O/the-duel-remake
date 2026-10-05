@@ -458,22 +458,21 @@ the other built warlords keep the ring unless their own cards choose a venue.
 
 ### Settled for build: The Tollkeeper (WAR-03d)
 
-Open build question, 4 October: the approved tanker is rigid and has no
-opening doors. Claude must name the opening part, identify the core valve,
-and set the lit gap's width before this move is built.
+Claude settled the remaining rules on 5 October: no doors or new tanker
+parts. The rear valve is the core; its existing lamps show the window.
 
 The Convoy Raid boss (section 10): he drives the armored tanker on the Salt
 Flats. The fight is the Convoy Raid with these additions.
 
 | Rule | Value |
 | --- | --- |
-| Toll Gate | Tell: a klaxon and flashing trailer lights. Then the trailer drops a spike strip 12 m wide across his path (caltrops rules), with a gap marked by two lights. At most every 14, 11, 9 s |
+| Toll Gate | Tell: a klaxon and flashing rig lights. Then the rig drops a spike strip 12 m wide across his path (caltrops rules). Two lights mark a 4 m gap, whose centre is seeded between 3 and 9 m across the strip. At most every 14, 11, 9 s |
 | Counter | Drive through the lit gap |
-| Window | After each gate the trailer doors open for 3 s, showing the core valve: hits on it deal 2 times damage |
+| Window | After each gate the rear valve's existing lamps flash for 3 s; hits on that valve deal 2 times damage. No doors open |
 | Phase two | After the first valve breaks: his escorts respawn once, gates 20% more often |
 | Win | Break the valves and plant the finishing charge by boarding (CREW-03), as in every Convoy Raid |
 | Reward | The convoy kit (plated look, +30 armor on any car) and his story card |
-| Callouts | `TOLL GATE!`, `DOORS OPEN. HIT THE CORE!` |
+| Callouts | `TOLL GATE!`, `CORE LIT. HIT THE REAR VALVE!` |
 
 ### Settled for build: Baron Blackiron (WAR-03e)
 
@@ -844,6 +843,11 @@ A projectile damages the valve nearest its impact point. A ram damages the
 valve nearest the contact point only if it is within 3 m. A blast damages
 every valve inside its radius. Other hits strike the body, which cannot be
 destroyed: body hits only shove. Only the boarding charge destroys the rig.
+
+**Claude, 5 October 2026:** the approved stopped-view art check is enough
+for the development merge. CONVOY-FRAMES must pass before release: compare
+moving Salt Flats frames with and without the tanker, and simplify its
+distant view if it adds more than 10%.
 
 ### Cards
 

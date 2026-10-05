@@ -40,3 +40,17 @@ from the **Ultimate Nature Pack** by **Quaternius**
 models were downloaded on 26 September 2026 and converted by
 `tools/blender/muddy-hollow-props.py`, which recolours them to the High
 Country palette. Source checksums are in `tools/art/catalog.json`.
+
+## Convoy tanker
+
+`wasteland/convoy-tanker.glb` uses models by **Kenney**, released under
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/):
+[Car Kit](https://kenney.nl/assets/car-kit) for the rigid cab and battered
+vehicle parts, [City Kit Industrial](https://kenney.nl/assets/city-kit-industrial)
+for the tank and steel panels, and [Factory Kit](https://kenney.nl/assets/factory-kit)
+for the three handwheel valves.
+
+`tools/blender/convoy-tanker.py` fits these parts into one rigid armored truck,
+adds the boarding plate and paired roof lamps, and supplies the approved wear
+and hazard markings. The kept donor choices and checksums are in
+`tools/art/tanker-fit.json` and `tools/art/catalog.json`.
