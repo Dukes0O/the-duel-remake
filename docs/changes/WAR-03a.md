@@ -39,13 +39,19 @@ remaining shared hooks and merge gates are still required.
   art round. Critic requested darker metal, corrected UVs and clearer collars.
 - Yard/Armory flag witnesses remain one pass/two red, three cases/21 checks:
   injected Gunn-on is lost; default/off and released Sal pass. Hooks are held.
-- No browser, build, broad gate, audio, balance or pacing ran for round two.
-  No assertions, world signatures or race rules changed in this export.
+- Whole integration 55f44edf is received; README/VERIFICATION stay byte-exact.
+  Two reviewed merge resolutions retain both Gunn and Arsenal Wave Three dev
+  checks/launcher requests, with actual catalog length ten. All 42 flag checks
+  pass; no other flag behavior changed. Native art suite remains 10/259 green.
+- Round-two existing capture passed twelve views with zero errors/warnings,
+  private port 58294 and memory-only saves. Sheet is 256,682 bytes; its short
+  look note records source and hashes. Only the harness's isolated QA build
+  ran; no broad gate, audio, balance or pacing. Assertions/race rules stay exact.
 
 ## Remaining
 
-- Capture round-two side, three-quarter and top views on Stuttgart and
-  Falcone for Claude. Three-round cap applies; no finished look is claimed.
+- Claude reviews round-two side, three-quarter and top views on Stuttgart
+  and Falcone. Three-round cap applies; no finished look is claimed.
 - Receive shared yard/router flags, rising-whine audio and fighter contact
   hooks from their owner. CREW.md already settles fighter splash numbers;
   current Rocket Pods car-target policy remains unchanged meanwhile.
