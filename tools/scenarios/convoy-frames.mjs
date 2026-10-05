@@ -5,6 +5,7 @@ async function click(context, selector) {
   const at = await context.evaluate(`(() => {
     const button = document.querySelector(${JSON.stringify(selector)});
     if (!button || button.disabled) throw Error('Missing Convoy frame control: ' + ${JSON.stringify(selector)});
+    button.scrollIntoView({block: 'center'});
     const rect = button.getBoundingClientRect();
     return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
   })()`);
@@ -53,6 +54,15 @@ async function measure(context, quality, distance, present, pair) {
   await click(context, '[data-action="yard-scrapdome"]');
   await click(context, '[data-arena-mode="convoy-raid"]');
   await click(context, '[data-action="arena-start"]');
+  await context.evaluate(`(() => {
+    const state = window.__qaApp.duel.state;
+    const entry = {mode: state.arena?.mode, venueId: state.arena?.venueId,
+      status: state.status, countdown: state.countdown};
+    if (entry.mode !== 'convoy-raid' || entry.venueId !== 'salt-flats' ||
+        entry.status !== 'countdown' || !(entry.countdown > 0)) {
+      throw Error('Native Convoy entry was not reached: ' + JSON.stringify(entry));
+    }
+  })()`);
   await ready(context);
   await context.evaluate(`(() => {
     const app = window.__qaApp;

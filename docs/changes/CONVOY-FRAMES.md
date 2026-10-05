@@ -25,6 +25,10 @@ Browser setup stopped before samples: yard presentation, then stopped asset
 readiness. Both now use the existing Convoy onFrame plus renderFrame recipe;
 the yard also waits for its real control. No paired guard or cost threshold changed.
 The harness's isolated build passed; no frame-cost verdict or runtime change.
+The latest ready check still timed out with no samples, warnings or errors.
+Actual admission was not captured. The click helper now has the existing Convoy
+scroll step; mode, venue and native countdown are checked before waiting for assets.
+No cost or release pass is claimed. All processes are closed; execution is held.
 
 ## Remaining
 
