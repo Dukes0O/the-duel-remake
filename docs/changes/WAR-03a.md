@@ -29,6 +29,9 @@ remaining shared hooks and merge gates are still required.
   the shared audio consumer still awaits its owner's handoff.
 - Main-menu Armory forwards injected flags to its read-only territory panel.
   Defaults, released Sal and the absence of fight launch buttons stay exact.
+- Router and yard now forward the same native flags. The motion scenario
+  uses real Territory Map and Gunn FIGHT buttons, verifies profile purity
+  and the actual intro, then preserves all earlier motion/pacing assertions.
 
 ## Checks
 
@@ -46,8 +49,8 @@ remaining shared hooks and merge gates are still required.
 - Round-one capture passed twelve real views, framing, pixels, cold heat and
   state/profile purity, with zero browser errors. Two setup failures spent no
   art round. Critic requested darker metal, corrected UVs and clearer collars.
-- Yard/Armory witnesses now pass two of three cases/21 checks. The Armory fix
-  passes; injected Gunn-on remains lost only in the held yard hook.
+- Yard/Armory witnesses all pass: three cases/21 checks. The existing yard
+  test reproduced the lost flag before source; defaults/released Sal stay exact.
 - Whole integration 55f44edf is received; README/VERIFICATION stay byte-exact.
   Two reviewed merge resolutions retain both Gunn and Arsenal Wave Three dev
   checks/launcher requests, with actual catalog length ten. All 42 flag checks
@@ -66,13 +69,13 @@ remaining shared hooks and merge gates are still required.
 - Sound probes preceded source: two cases red at missing recipe/event cue.
   Both now pass 50 checks, including the exact old arena.tell recipe and
   native difficulty/phase timing. Full Gunn suite: 19 cases/215 checks,
-  18 pass/one held-yard red. All earlier assertions are unchanged.
+  all pass after the yard fix. All earlier assertions are unchanged.
 
 ## Remaining
 
 - Claude reviews round-two side, three-quarter and top views on Stuttgart
   and Falcone. Three-round cap applies; no finished look is claimed.
-- Receive shared yard/router flags, event-cue audio dispatch and fighter contact
+- Receive event-cue audio dispatch and fighter contact
   hooks from their owner. CREW.md already settles fighter splash numbers;
   current Rocket Pods car-target policy remains unchanged meanwhile.
 - Complete motion/pacing and card checks, lane/build and required reviews

@@ -238,7 +238,17 @@ async function runFight(context, asset) {
       await context.waitFor('window.__qaApp.isYardHomeActive()',`${quality} native yard`,60000);
       await context.evaluate(`(() => {
         const app=window.__qaApp;
-        if(!app.startWarlordFight('gunn')||!app.beginWarlordFight())throw Error('Actual App Gunn entry failed');
+        const profile=JSON.stringify(app.profile),territory=document.querySelector('button[data-action="yard-territory"]');
+        if(!territory||territory.disabled)throw Error('Actual yard territory button missing');
+        territory.click();
+        if(JSON.stringify(app.profile)!==profile)throw Error('Actual yard territory route changed the career');
+        const fight=document.querySelector('button[data-warlord="gunn"]');
+        if(!fight||fight.disabled)throw Error('Actual yard Gunn FIGHT button missing');
+        fight.click();
+        if(app.duel.state.status!=='warlord_intro'||app.duel.state.arena?.warlordId!=='gunn')
+          throw Error('Actual yard Gunn button did not enter the native intro');
+        if(JSON.stringify(app.profile)!==profile)throw Error('Actual Gunn admission changed the career');
+        if(!app.beginWarlordFight())throw Error('Actual App Gunn countdown entry failed');
         for(let n=0;n<362;n++)app.duel.step(1/120);
         if(app.duel.state.status!=='racing')throw Error('Native Gunn countdown failed');
         (${placeGunnReview.toString()})(app.duel);
