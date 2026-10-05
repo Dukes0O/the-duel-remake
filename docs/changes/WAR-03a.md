@@ -1,7 +1,6 @@
 # WAR-03a: Gearhead Gunn
 
-Native Gunn rules and Claude's approved round-two turret are built. Listening,
-the final integration sync and merge gates are still required.
+Gunn's rules, approved turret and native recording are built; listening and final gates remain.
 
 ## Changed
 
@@ -23,8 +22,8 @@ the final integration sync and merge gates are still required.
 - Only --gunn-turret exports the replacement runtime GLB. Blender sources
   stay in scratch; none of the nine approved kit recipes or models changed.
 - Existing scenario keeps its motion/art modes; opt-in GUNN_AUDIO_REVIEW=1
-  prepares real-time native tell/lock/window capture at native rate, WAV stems
-  and a compressed final mix for listening. It has not run; no audio verdict.
+  records real-time native tell/lock/window capture at native rate, WAV stems
+  and a compressed final mix for listening. Recording passed; no ear verdict yet.
   Actual App entry and one approved clear pose precede real physics throughout.
 - Gunn's native tell names arena.gunn-barrage and keeps its settled seconds
   and position. A switched procedural rising whine fits the shortest tell;
@@ -65,29 +64,30 @@ the final integration sync and merge gates are still required.
   0.045 m missing native ground lift (rendered x/z agree within 2e-9).
   The corrected motion run passes both qualities with 12 captures, no errors or
   warnings; 120 advancing frames give High p95 19.0 ms and Performance 18.2 ms.
-- Real grounded-Stuttgart witness started red at the missing lift, then passes
-  all three mouths with unchanged 1e-5 tolerance. Its new fixture runs 6.1 s
-  to observe the complete barrage, not only the first shot at 5.6 s.
-  Reviewed raw-ground expectations now use actual surface plus clearance;
-  fit/geometry/trajectory assertions stay exact. Combined native/art 31/514
-  pass, including both fresh imports. Existing vehicle grounding passes 4,967
-  checks across nine actual models; moved point function is byte-exact.
-- Whole integration 2e7862fb is received. Narrow flag union retains every
-  released state and existing dev flag, adding Gunn dev only (catalog twelve).
-  Beta's exact catalog lacked Gunn; approved addition retains every old assertion.
-  Flags 51, Preview 22 and all eight beta cases pass; Arsenal core/wave-two pass.
+- Grounded-Stuttgart witness was red at missing lift, then passes three mouths
+  with unchanged 1e-5 tolerance over 6.1 s. Raw-ground expectations now use actual
+  surface plus clearance; fit/geometry/trajectory assertions stay exact.
+  Native/art 31/514 pass, including fresh imports; vehicle grounding passes
+  4,967 checks across nine models. Moved point function is byte-exact.
+- Lane 109/1/245 stopped; a logged diagnostic repeat identified the omitted
+  additive whine in Arsenal core audio's old-bank fixture (108/1/246). Director
+  approved only that cue's admission; both historical hashes and other pins stay.
+- Whole integration 872ea0b1 is received in db3dc2fa. Approved launcher/catalog
+  union keeps every released state and existing dev flag, adding Gunn to thirteen.
+  Current Gunn/art/flags/beta 45 cases, Convoy 42/390 and Ambush 35/797 pass;
+  launcher 22 checks pass. Existing assertions stay, with the required dev entry.
 - Four native aimed-rocket controls preceded contacts: two missing-hit failures,
   two friendly-fire passes. Real exit/walking and seeded raiders now pass via
   existing fighter body/splash helpers, with no invented state.
-  Native cue dispatch/default-spatial control passes. Gunn/art/car-contact/Ambush
-  focused run passes 128 cases: 279/299/397/797 checks; car rules remain exact.
+  Native cue dispatch/default-spatial control passes. Earlier focused controls
+  passed 128 cases: 279/299/397/797 checks; car rules remain exact.
 
 ## Remaining
 
-- Claude approved round two on 5 October 2026; no third round is needed.
-  Real-time listening waits for Convoy's whole merge and Director's QA slot.
-- Whole-source review and remaining sound/card checks, then lane/build on the
-  final integration base before merge. No broad gate while the look waits.
+- Claude approved round two on 5 October 2026; no third round. Whole source
+  review is clear. Real-time capture: private 31658, zero errors/warnings, 48 kHz
+  stereo, 9.13 s, final peak 0.799, unchanged memory career and zero paused voices.
+  Tell 5.0 s, rockets 5.5/5.75/6.0 s, cooled 9.042 s; ear verdict and lane/build remain.
 
 ## Removed
 
