@@ -18,6 +18,21 @@ export function arenaStyleLabel(participant) {
 export function arenaHud(state) {
   const arena = state?.arena;
   if (!arena) return null;
+  if (arena.mode === 'ambush-alley') {
+    const alley = arena.ambushAlley;
+    const living = (state.raids?.zones || []).flatMap(zone => zone.raiders)
+      .filter(raider => !raider.knockedDown).length;
+    const buggy = state.opponents.some(actor => actor.arenaRole === 'ambush-buggy' &&
+      actor.ambushWave === alley.wave && !actor.combatWrecking);
+    return {ambush: true, phase: arena.phase, modeLabel: 'AMBUSH ALLEY',
+      timeLabel: alley.gapLeftSec > 0 ? 'NEXT WAVE' : 'FORT HEALTH',
+      remainingSec: alley.gapLeftSec, fortHealth: Math.ceil(alley.fort.health),
+      progress: alley.fort.health / alley.fort.maxHealth,
+      place: alley.wave, field: 5, placeText: String(alley.wave),
+      leaderText: `SURVIVED ${alley.completedWaves} / 5`,
+      scoreText: `WAVE ${alley.wave} / 5`, huntedBy: [], respawnSec: 0,
+      enemyText: `${living} RAIDERS${buggy ? ' + BUGGY' : ''}`, rows: []};
+  }
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
   const suddenDeath = arena.phase === 'sudden-death';
@@ -80,6 +95,7 @@ export function arenaMarker(state, opponent) {
 
 export function arenaBoardMarkup(hud, escapeHTML) {
   if (!hud) return '';
+  if (hud.ambush) return `<li class="arena-board-head"><span>${escapeHTML(hud.enemyText)}</span></li>`;
   if (hud.bounty) return '<li class="arena-board-head"><b></b><span>DRIVER</span><em></em><strong>MARK</strong><i>POINTS</i></li>' +
     hud.rows.map(row => `<li class="arena-board-row${row.you ? ' is-you' : ''}${row.marked ? ' is-marked' : ''}">` +
       `<b>${row.place}</b><span>${escapeHTML(row.name)}</span><em>${row.hunting ? 'HUNTING YOU' : ''}</em>` +
@@ -101,17 +117,26 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
     featureFlags?.enabled('fuel-run') === true;
   const bountyAvailable = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 9 &&
     featureFlags?.enabled('bounty-hunt') === true;
+  const ambushAvailable = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 12 &&
+    featureFlags?.enabled('ambush-alley') === true;
   const saltAvailable = arenaVenueAvailable(featureFlags, profile, 'salt-flats');
-  const selectedVenue = saltAvailable && venueId === 'salt-flats' ? 'salt-flats' : 'scrapdome';
+  const ambush = ambushAvailable && mode === 'ambush-alley';
+  const venues = ambush ? ['pit', ...(saltAvailable ? ['salt-flats'] : [])] : ['scrapdome', 'salt-flats'];
+  const selectedVenue = saltAvailable && venueId === 'salt-flats' ? 'salt-flats' : ambush ? 'pit' : 'scrapdome';
   const venueChoice = saltAvailable ? '<div class="segmented" role="group" aria-label="Arena venue">' +
-    ['scrapdome', 'salt-flats'].map(id => `<button type="button" class="choice${id === selectedVenue ? ' on' : ''}" data-arena-venue="${id}" aria-pressed="${id === selectedVenue}">${id === 'salt-flats' ? 'SALT FLATS' : 'SCRAPDOME'}</button>`).join('') + '</div>' : '';
-  const enterLabel = selectedVenue === 'salt-flats' ? 'ENTER THE SALT FLATS' : 'ENTER THE SCRAPDOME';
+    venues.map(id => `<button type="button" class="choice${id === selectedVenue ? ' on' : ''}" data-arena-venue="${id}" aria-pressed="${id === selectedVenue}">${id === 'salt-flats' ? 'SALT FLATS' : id === 'pit' ? 'THE PIT' : 'SCRAPDOME'}</button>`).join('') + '</div>' : '';
+  const enterLabel = selectedVenue === 'salt-flats' ? 'ENTER THE SALT FLATS' : ambush ? 'ENTER THE PIT' : 'ENTER THE SCRAPDOME';
   const fuel = available && mode === 'fuel-run';
   const bounty = bountyAvailable && mode === 'bounty-hunt';
-  const selectedMode = bounty ? 'bounty-hunt' : fuel ? 'fuel-run' : 'last-car-rolling';
-  const choices = ['last-car-rolling', ...(available ? ['fuel-run'] : []), ...(bountyAvailable ? ['bounty-hunt'] : [])];
+  const selectedMode = ambush ? 'ambush-alley' : bounty ? 'bounty-hunt' : fuel ? 'fuel-run' : 'last-car-rolling';
+  const choices = ['last-car-rolling', ...(available ? ['fuel-run'] : []), ...(bountyAvailable ? ['bounty-hunt'] : []),
+    ...(ambushAvailable ? ['ambush-alley'] : [])];
   const modes = choices.length > 1 ? '<div class="segmented" role="group" aria-label="Scrapdome mode">' +
-    choices.map(id => `<button type="button" class="choice${selectedMode === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${selectedMode === id}">${id === 'fuel-run' ? 'FUEL RUN' : id === 'bounty-hunt' ? 'BOUNTY HUNT' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
+    choices.map(id => `<button type="button" class="choice${selectedMode === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${selectedMode === id}">${id === 'ambush-alley' ? 'AMBUSH ALLEY' : id === 'fuel-run' ? 'FUEL RUN' : id === 'bounty-hunt' ? 'BOUNTY HUNT' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
+  if (ambush) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
+    <p class="arena-yard-mode">AMBUSH ALLEY / FIVE WAVES</p>
+    <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()}</p>
+    <button type="button" class="start-button arena-start" data-action="arena-start"><span>${enterLabel}</span></button></div>`;
   if (bounty) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
     <p class="arena-yard-mode">BOUNTY HUNT · MOST POINTS · 3:00</p>
     <div class="arena-yard-setup"><span class="field-label">COMPUTER CARS</span>
@@ -152,6 +177,18 @@ const REASONS = Object.freeze({fuel: 'First to five deliveries.', 'three-wrecks'
 export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const arena = state.arena, result = arena?.result;
   if (!result) return null;
+  if (arena.mode === 'ambush-alley') {
+    const won = result.winnerId === 'player', waves = arena.ambushAlley.completedWaves;
+    return {eyebrow: `AMBUSH ALLEY / ${won ? 'VICTORY' : 'FORT LOST'}`,
+      title: won ? 'FORT<br>HELD.' : 'THE FORT<br>FELL.',
+      description: result.settlementRetryable ? 'Could not save this result. Retry before leaving.' :
+        `${waves} of 5 waves survived.`,
+      metrics: metric('WAVES SURVIVED', `${waves} / 5`, true) +
+        metric('SCRAP EARNED', `+${result.scrapEarned || 0}`) + metric('HOLD', `${result.hold || 0} / 100`),
+      extra: '', actions: (result.settlementRetryable ? action('RETRY SAVE', 'warlord-retry-save', true) : '') +
+        action('REMATCH', 'arena-rematch', !result.settlementRetryable) +
+        action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
+  }
   const byId = Object.fromEntries(arena.participants.map(p => [p.id, p]));
   // The first car listed for each side sets that side's place.
   const sideOf = id => byId[id]?.team ?? id;

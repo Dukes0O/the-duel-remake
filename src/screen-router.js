@@ -156,13 +156,19 @@ root.addEventListener('click',e => {
   if(courseActions.handle(button))return;
   if(button.dataset.warlord){if(app.startWarlordFight(button.dataset.warlord)){yardPanel='home';lastScreen=null;}return;}
   if (button.dataset.arenaVenue) {
-    if (!app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
+    if (!(arenaMode === 'ambush-alley' && button.dataset.arenaVenue === 'pit' &&
+      app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
     arenaVenue = button.dataset.arenaVenue; lastScreen = null;
     renderState(app.duel.state);
     root.querySelector(`[data-arena-venue="${arenaVenue}"]`)?.focus({preventScroll:true});
     return;
   }
-  if(button.dataset.arenaMode){arenaMode=button.dataset.arenaMode;lastScreen=null;renderState(app.duel.state);return;}
+  if(button.dataset.arenaMode){
+    arenaMode=button.dataset.arenaMode;
+    if(arenaMode==='ambush-alley'&&arenaVenue!=='salt-flats')arenaVenue='pit';
+    else if(arenaMode!=='ambush-alley'&&arenaVenue==='pit')arenaVenue='scrapdome';
+    lastScreen=null;renderState(app.duel.state);return;
+  }
   if(button.dataset.arenaOpponents){arenaOpponents=Math.max(1,Math.min(3,Number(button.dataset.arenaOpponents)||3));lastScreen=null;renderState(app.duel.state);root.querySelector(`[data-arena-opponents="${arenaOpponents}"]`)?.focus({preventScroll:true});return;}
   if(button.dataset.routeVariant){if(app.setRouteVariant(button.dataset.routeVariant))updateMenuScene();return;}
   if(button.dataset.challenge!=null){const stageIndex=Number(button.dataset.challenge);if(!isCourseUnlocked(profile(),stageIndex)){garageOpen=false;coursesOpen=true;courseMessage='Unlock the recommended course here, then select it.';lastScreen=null;renderState(app.duel.state);return;}choices.startStage=stageIndex;updateMenuScene();closeGarage();return;}
@@ -198,6 +204,10 @@ root.addEventListener('click',e => {
     case 'arena-start':
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
+      if (arenaMode === 'ambush-alley' && !app.ambushAlleyAvailable?.()) {
+        arenaMode = 'last-car-rolling';
+        if (arenaVenue === 'pit') arenaVenue = 'scrapdome';
+      }
       if (app.startArenaEvent({venueId: arenaVenue, mode: arenaMode, opponents: arenaOpponents})) {
         yardPanel = 'home'; lastScreen = null;
       }
@@ -315,7 +325,8 @@ function renderState(s) {
   ui.overlay.dataset.audioSamples=app.audio.sampleStatus;ui.overlay.dataset.majorCrashes=String(s.majorCrashes);ui.overlay.dataset.catastrophic=String(s.catastrophic);
   if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
   if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
-  if (!app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
+  if (!(arenaMode === 'ambush-alley' && arenaVenue === 'pit' &&
+    app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
   const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {

@@ -872,3 +872,5 @@ normal worktree removal; all 1,351 integration dependency files remain.
 Deleted only the merged lane and branch. Its used review evidence is next;
 all unmerged lanes and the protected audio lane stay.
 
+5 October: merged ARENA-05 from 4aad99b3; lane 352/352 (one audio-check retry), build, native, laptop browser, source and pay reviews pass; shared hooks released to Gunn.
+

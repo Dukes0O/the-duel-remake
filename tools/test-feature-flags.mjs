@@ -18,10 +18,26 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && !Object.hasOwn(FEATURE_STATES, 'warlords') && FEATURE_STATES['fuel-run'] === 'on'
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
-  && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES.gunn === 'dev'
-  && FEATURE_STATES['arsenal-wave3'] === 'dev' && Object.keys(FEATURE_STATES).length === 10,
-  'the five released Wasteland features stay on; career backup, Fight Voices, Gunn and Arsenal wave three stay dev; retired switches stay absent');
+  && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
+  && FEATURE_STATES['cpu-crews'] === 'dev' && FEATURE_STATES['ambush-alley'] === 'dev'
+  && FEATURE_STATES.gunn === 'dev' && Object.keys(FEATURE_STATES).length === 12,
+  'the five released Wasteland features stay on; career backup, Fight Voices, computer crews, Ambush Alley, Gunn and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
+check(FEATURE_STATES['cpu-crews'] === 'dev', 'computer crews start behind their own dev switch');
+check(!productionFlags.enabled('cpu-crews'), 'production keeps computer crews off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=cpu-crews'}).enabled('cpu-crews'),
+  'production URLs cannot enable computer crews');
+check(!createFeatureFlags({storage: null, qa: true, search: '?flags=crew-gear'}).enabled('cpu-crews'),
+  'requesting player gear does not admit computer crews');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=cpu-crews'}).enabled('cpu-crews'),
+  'private QA admits only an explicit computer crew request');
+check(!productionFlags.enabled('ambush-alley'), 'production keeps Ambush Alley off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=ambush-alley'}).enabled('ambush-alley'),
+  'production URLs cannot enable Ambush Alley');
+check(!createFeatureFlags({storage: null, qa: true, search: '?flags=cpu-crews'}).enabled('ambush-alley'),
+  'requesting computer crews does not admit Ambush Alley');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=ambush-alley'}).enabled('ambush-alley'),
+  'private QA admits only an explicit Ambush Alley request');
 check(!productionFlags.enabled('gunn'), 'production keeps Gunn off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=gunn'}).enabled('gunn'),
   'production URLs cannot enable unfinished Gunn');

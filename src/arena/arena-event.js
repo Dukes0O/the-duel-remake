@@ -12,11 +12,18 @@ import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 import {warlordFight} from '../warlords/index.js';
 import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock, teamTotal} from './warlord-event.js';
+import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
+  damageAmbushFort} from './modes/ambush-alley.js';
+import {stepRaiders} from '../raiders.js';
+import {sweepObstacle} from '../collision.js';
+import {armorDamageFor} from '../combat-armor.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
 
 export const ARENA_MODES = Object.freeze({
+  'ambush-alley': Object.freeze({timeLimitSec: AMBUSH_RULES.timeLimitSec,
+    suddenDeathSec: AMBUSH_RULES.suddenDeathSec, maxOpponents: AMBUSH_RULES.maxOpponents}),
   'bounty-hunt': Object.freeze({timeLimitSec: BOUNTY_RULES.timeLimitSec,
     suddenDeathSec: BOUNTY_RULES.suddenDeathSec, maxOpponents: 3}),
   'fuel-run': Object.freeze({timeLimitSec: FUEL_RULES.timeLimitSec, suddenDeathSec: Infinity, maxOpponents: 3}),
@@ -194,13 +201,16 @@ function finish(duel, reason, winnerId = null) {
   const state = duel.state, arena = state.arena;
   if (arena.result) return;
   const ranked = arenaRanking(arena).map(participant => participant.id);
-  const placings = winnerId ? [winnerId, ...ranked.filter(id => id !== winnerId)] : ranked;
+  const placings = arena.mode === 'ambush-alley' ?
+    winnerId === 'player' ? ['player', 'cpu-1'] : ['raiders', 'player', 'cpu-1'] :
+    winnerId ? [winnerId, ...ranked.filter(id => id !== winnerId)] : ranked;
   arena.phase = 'over';
   arena.result = {placings, winnerId: placings[0], reason};
   state.status = 'arena_result';
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
-  duel._callout(winner.id === 'player' ?
+  duel._callout(arena.mode === 'ambush-alley' ?
+    winnerId === 'player' ? 'AMBUSH ALLEY / YOU WIN' : 'THE FORT FELL' : winner.id === 'player' ?
     arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
       arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
     `${winner.name} WINS`, 3);
@@ -209,6 +219,11 @@ function finish(duel, reason, winnerId = null) {
 
 function stepClock(duel, dt) {
   const arena = duel.state.arena;
+  if (arena.mode === 'ambush-alley') {
+    arena.phase = 'fight';
+    arena.clockSec += dt;
+    return;
+  }
   if (arena.mode === 'warlord') {
     const decision = stepWarlordClock(duel, dt);
     if (decision) finish(duel, decision.reason, decision.winnerId);
@@ -252,6 +267,7 @@ function stepWreckedActor(duel, actor, dt) {
 // One fixed step of an arena event while status is 'racing'.
 export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
+  const ambush = arena.mode === 'ambush-alley';
   state.stageTimeSec += dt; state.totalTimeSec += dt;
   if (state.crashFlash > 0) state.crashFlash = Math.max(0, state.crashFlash - dt);
   state.invulnerableSec = Math.max(0, state.invulnerableSec - dt);
@@ -266,7 +282,19 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
-  const onFoot = arena.mode === 'fuel-run' && stepFootTransition(duel, dt);
+  const onFoot = (arena.mode === 'fuel-run' || ambush) && stepFootTransition(duel, dt);
+  if (ambush) {
+    const spawn = ambushBuggySpawn(duel);
+    if (spawn) {
+      const actor = state.opponents.find(candidate => candidate.arenaRole === 'ambush-buggy');
+      placeActor(duel, actor, spawn.pose);
+      Object.assign(actor, {ambushWave: spawn.wave, finished: false, armor: actor.maxArmor,
+        combatWrecking: false, combatWreckTimer: 0, combatWreckSite: null});
+      const participant = arenaParticipant(duel, actor);
+      participant.wreckCounted = false;
+      participant.protectedSec = 0;
+    }
+  }
   const respawns = [];
   if (state.combatWrecking) { if (stepWreckedActor(duel, state, dt)) respawns.push(state); }
   else {
@@ -286,7 +314,7 @@ export function stepArenaEvent(duel, dt) {
   }
   // A warlord's think may add or burst decoy cars: step a snapshot and skip any that left.
   for (const actor of [...state.opponents]) {
-    if (!state.opponents.includes(actor)) continue;
+    if (!state.opponents.includes(actor) || ambush && actor.finished) continue;
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
@@ -313,13 +341,32 @@ export function stepArenaEvent(duel, dt) {
   }
   duel._crushProps(state);
   for (const actor of state.opponents) duel._crushProps(actor);
+  if (ambush) {
+    for (const actor of state.opponents) {
+      if (actor.arenaRole !== 'ambush-buggy' || actor.finished || actor.combatWrecking ||
+          arena.ambushAlley.gapLeftSec > 0) continue;
+      actor.ambushRamCooldown = Math.max(0, (actor.ambushRamCooldown || 0) - dt);
+      const start = duel.course.groundAt(actor.prevS, actor.prevLateral);
+      const end = duel.course.groundAt(actor.s, actor.lateral);
+      const hit = ambushFortTargets(duel).find(target => sweepObstacle(start, end,
+        target, end.heading + actor.headingError, duel._vehicleSpec(actor)));
+      if (hit && actor.ambushRamCooldown === 0 && Math.abs(actor.speedMph) > 5) {
+        damageAmbushFort(duel, armorDamageFor('ram', {relativeKph: Math.abs(actor.speedMph) * 1.609344}),
+          {source: 'ram', owner: actor.arenaId, hitPosition: {x: hit.x, y: hit.y, z: hit.z}});
+        actor.ambushRamCooldown = 1;
+      }
+    }
+    stepRaiders(duel, dt);
+  }
 
   if (onFoot) strikeFighterFromVehicles(duel);
   const fuelDecision = arena.mode === 'fuel-run' ? stepFuelRun(duel, dt) : null;
+  const ambushDecision = ambush ? stepAmbushAlley(duel, dt) : null;
   creditWrecks(duel);
   if (arena.result) return;
   if (arena.mode === 'bounty-hunt') stepBountyHunt(duel, dt);
   if (fuelDecision) { finish(duel, fuelDecision.reason, fuelDecision.winnerId); return; }
-  for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
+  if (ambushDecision) { finish(duel, ambushDecision.reason, ambushDecision.winnerId); return; }
+  if (!ambush) for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
   stepClock(duel, dt);
 }

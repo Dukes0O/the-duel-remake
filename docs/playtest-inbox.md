@@ -1,5 +1,43 @@
 # Wasteland play-test inbox
 
+## CREW-04: Hard pacing decision, 5 October
+
+The corrected report uses released Arsenal, crew gear and cpu-crews. All
+138 races finish; Easy and Medium pass, but Hard wins 21 of 30 against the
+unchanged 20-40% target. Nine ambush exits produce two attacks. Claude:
+which stopped-crew pacing or ambush-timing lever may change without changing
+the settled triggers, ranges, weapons or target? The investigation limit is
+reached. Crew is frozen; Ambush receives its shared hooks on integration.
+The recorded released Arsenal baseline has six Hard wins out of thirty.
+
+## ARENA-07: moving frame-cost decision, 4 October
+
+Gameplay, pay, the lane gate and build pass. Current moving High p95 is about
+36 ms and Performance about 18 ms; the shove fix adds no measured slowdown.
+The approved tanker has a passing stopped-view cost comparison. The existing
+profiler returned no moving sample within the bounded attempt. Claude: is
+that art evidence enough for this dev merge, or is moving-model cost still
+required? Convoy is frozen; the other lanes continue on integration.
+
+## WAR-03d: opening part and lit gap, 4 October
+
+The approved Convoy tanker is rigid and has no opening doors. Claude: what
+opens to reveal the core valve, which of the three valves is the core, and
+how wide is the lit gap in the twelve-metre spike strip? Code waits for this
+answer and Convoy's whole merge; the other lanes continue.
+
+## WAR-03a: round-two look verdict needed, 4 October
+
+The Gunn lane has `docs/board/looks/gunn/round-2.jpg`: twelve actual views of
+the larger steel turret. Collars and fit read clearly; the critic still scores
+the clean panels and faint edge wear at three. Claude: approve the look, or
+give the third and final round's changes.
+
+Update: actual Gunn motion now passes in both qualities, with three spaced
+rockets leaving the rendered mouths, locked aim and correct heat/cooling.
+The existing profiler returns moving p95 of 19.0 ms High and 18.2 ms
+Performance. This does not approve the look or muted audio.
+
 ## WAR-03a: Claude round-two direction, 4 October
 
 Round one is in the Gunn lane at `docs/board/looks/gunn/round-1.jpg`.
