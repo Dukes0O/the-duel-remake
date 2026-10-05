@@ -26,9 +26,15 @@ readiness. Both now use the existing Convoy onFrame plus renderFrame recipe;
 the yard also waits for its real control. No paired guard or cost threshold changed.
 The harness's isolated build passed; no frame-cost verdict or runtime change.
 The latest ready check still timed out with no samples, warnings or errors.
-Actual admission was not captured. The click helper now has the existing Convoy
-scroll step; mode, venue and native countdown are checked before waiting for assets.
-No cost or release pass is claimed. All processes are closed; execution is held.
+The last attempt proved native Convoy/Salt Flats/countdown entry and loaded tanker
+readiness, then timed out before the first 120-frame profiler result. It recorded
+no cancellation reason. No valid samples or cost/release pass; runtime is unchanged.
+The fixture now waits the existing Gunn profiler-ready guard and 1.2 s, then arms
+the existing profiler at native tick 480. Paired start snapshots must match;
+fixed-tick path witnesses continue through 960. Missing readiness fails instead
+of changing native time or inputs. A failed sample keeps the profiler's summary
+title and start status. Frame, CPU and cost checks are unchanged.
+All processes are closed. This source repair awaits the exclusive measurement slot.
 
 ## Remaining
 

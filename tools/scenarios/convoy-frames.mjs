@@ -86,17 +86,30 @@ async function measure(context, quality, distance, present, pair) {
     const actor = value => ({s: value.s, lateral: value.lateral, speedMph: value.speedMph,
       headingError: value.headingError, armor: value.armor, maxArmor: value.maxArmor,
       airHeight: value.airHeight, finished: value.finished, combatWrecking: value.combatWrecking});
+    const snapshot = tick => ({tick, time: state.stageTimeSec,
+      player: actor(state), opponents: state.opponents.map(actor),
+      convoy: structuredClone(state.arena.convoy)});
     const review = window.__convoyFrames = {model, originalStep, originalDraw,
       profile: JSON.stringify(app.profile), ticks: 0, witnesses: [], drawCount: 0,
+      armed: false, startSnapshot: null, startError: null,
       startedAt: state.stageTimeSec, rigStartedAt: rig.s,
       seed: app.duel.seed, cameraStartedAt: window.__render.camera.position.toArray()};
     app.duel.step = function(dt) {
       const result = originalStep.call(this, dt);
       review.ticks++;
-      if (review.ticks % 120 === 0 && review.ticks <= 360) {
-        review.witnesses.push({tick: review.ticks, time: state.stageTimeSec,
-          player: actor(state), opponents: state.opponents.map(actor),
-          convoy: structuredClone(state.arena.convoy)});
+      if (review.ticks % 120 === 0 && review.ticks <= 960) {
+        review.witnesses.push(snapshot(review.ticks));
+      }
+      if (review.ticks === 480) {
+        const ready = app.running && app.visualReady && state.status === 'racing' &&
+          ['ready', 'fallback', 'off', 'unsupported-fallback'].includes(
+            document.querySelector('#view3d')?.dataset.warmupStatus);
+        if (!review.armed || !ready) review.startError = 'Profiler readiness missed native tick 480';
+        else {
+          review.startSnapshot = snapshot(review.ticks);
+          button.click();
+          if (!button.disabled) review.startError = 'Existing profiler rejected the fixed-tick start';
+        }
       }
       return result;
     };
@@ -115,10 +128,23 @@ async function measure(context, quality, distance, present, pair) {
       }
     };
     app.start();
-    button.click();
   })()`);
   try {
-    await context.waitFor(`document.querySelector('#performance-results')?.textContent.includes('"frames": 120')`,
+    await context.waitFor(`(() => {
+      if (window.__convoyFrames.startError) throw Error(window.__convoyFrames.startError);
+      return window.__qaApp.running && window.__qaApp.visualReady &&
+        ['ready','fallback','off','unsupported-fallback'].includes(document.querySelector('#view3d')?.dataset.warmupStatus);
+    })()`, label + ' native profiler warmup', 10000);
+    await new Promise(done => setTimeout(done, 1200));
+    await context.evaluate(`(() => {
+      const review = window.__convoyFrames;
+      if (review.startError || review.ticks >= 480) throw Error(review.startError || 'Profiler readiness missed native tick 480');
+      review.armed = true;
+    })()`);
+    await context.waitFor(`(() => {
+      if (window.__convoyFrames.startError) throw Error(window.__convoyFrames.startError);
+      return document.querySelector('#performance-results')?.textContent.includes('"frames": 120');
+    })()`,
       label + ' delivered native frames', 35000);
     const result = await context.evaluate(`(() => {
       const app = window.__qaApp, state = app.duel.state, review = window.__convoyFrames;
@@ -137,7 +163,9 @@ async function measure(context, quality, distance, present, pair) {
       projected.project(camera);
       if (Math.abs(projected.x) >= .95 || Math.abs(projected.y) >= .95 ||
           projected.z < -1 || projected.z > 1) throw Error('Moving tanker is outside the camera view');
-      return {seed: review.seed, witnesses: review.witnesses, ticks: review.ticks,
+      if (!review.startSnapshot) throw Error('Fixed-tick profiler start was not recorded');
+      return {seed: review.seed, startSnapshot: review.startSnapshot,
+        witnesses: review.witnesses, ticks: review.ticks,
         drawCount: review.drawCount, startedAt: review.startedAt, endedAt: state.stageTimeSec,
         profileUnchanged: true, tankerRestored: true,
         pacing: JSON.parse(document.querySelector('#performance-results').textContent).at(-1)};
@@ -151,6 +179,21 @@ async function measure(context, quality, distance, present, pair) {
     }
     result.capture = await context.screenshot(label);
     return {quality, distance, present, pair, ...result};
+  } catch (error) {
+    const diagnostic = await context.evaluate(`(() => {
+      const app = window.__qaApp, review = window.__convoyFrames;
+      const results = document.querySelector('#performance-results');
+      const button = [...document.querySelectorAll('button')].find(node =>
+        node.textContent.includes('frame') && node.textContent.includes('Measur'));
+      return {title: results?.closest('details')?.querySelector('summary')?.textContent,
+        startError: review.startError, ticks: review.ticks, startSnapshot: review.startSnapshot,
+        running: app.running, visualReady: app.visualReady, status: app.duel.state.status,
+        warmup: document.querySelector('#view3d')?.dataset.warmupStatus,
+        vehicleAsset: document.querySelector('#view3d')?.dataset.vehicleAsset,
+        button: button?.textContent, disabled: button?.disabled, audio: app.audio?.context?.state};
+    })()`);
+    error.message += ': ' + JSON.stringify(diagnostic);
+    throw error;
   } finally {
     await context.evaluate(`(() => {
       const app = window.__qaApp, review = window.__convoyFrames;
@@ -196,7 +239,8 @@ export async function run(context) {
               baseline.pacing.renderPixelRatio !== tanker.pacing.renderPixelRatio ||
               baseline.pacing.viewport !== tanker.pacing.viewport ||
               baseline.pacing.gpu !== tanker.pacing.gpu) throw Error('Matched renderer configurations differ');
-          if (baseline.seed !== tanker.seed || JSON.stringify(baseline.witnesses.slice(0, count)) !==
+          if (baseline.seed !== tanker.seed || JSON.stringify(baseline.startSnapshot) !==
+              JSON.stringify(tanker.startSnapshot) || JSON.stringify(baseline.witnesses.slice(0, count)) !==
               JSON.stringify(tanker.witnesses.slice(0, count))) throw Error('Matched native Convoy paths diverged');
           const a = cost(baseline), b = cost(tanker);
           report.comparisons.push({quality, distance, pair, matchedTicks: count * 120,
