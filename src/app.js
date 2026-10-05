@@ -857,7 +857,7 @@ export class App {
       venueId === 'salt-flats' && this.arenaVenueAvailable(venueId) : this.arenaVenueAvailable(venueId);
     if (!available || !venueAvailable ||
         !(this.isYardHomeActive() || state.arena)) return false;
-    const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
+    const count = ambush ? 0 : Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,

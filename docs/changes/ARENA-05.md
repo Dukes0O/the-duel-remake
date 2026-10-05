@@ -1,6 +1,6 @@
 # ARENA-05: Ambush Alley
 
-status: native entry and pay source; shared fighter hooks pending
+status: native entry, wrench and pay source; shared fighter hooks pending
 
 ## Settled rules
 
@@ -44,18 +44,17 @@ Pay uses the existing pure arena settlement and durable owner/retry write.
 It validates completed waves, fort health, winner and placings, then applies
 the settled wave pay and hold once. Input saves, credits and unknown fields
 stay unchanged. HUD/results show fort health, wave count and saved pay.
-Yard rendering offers the mode at rank 12 with only its two venues.
+Yard rendering and router offer the mode at rank 12 with only its two venues.
+The real wrench repairs fort cover at 10 health per second for four seconds;
+it preserves normal car repair, hit interruption and release controls.
+The buggy targets the nearest solid cover rather than an empty gap in the
+ring. A real native drive/contact witness fails before that fix and passes.
 
 ## Pending shared hooks
 
-- Flags/launcher: Crew owns the registry. Await its isolated default-off dev
-  prerequisite; no admission override or unfinished Crew import is used.
-- Router: selecting Ambush must select Pit rather than the old ring default;
-  its venue handler must accept the eligible Pit choice.
 - raiders.js: native movement/hostile RPG production against the fort and
   no within-wave fighter return, keyed by each native record's ambushWave.
-- onfoot-weapons.js/projectile/contact hooks: actual 40-over-4 fort wrench
-  action, rocket hits on ambushFortTargets and native buggy ram damage.
+- Projectile/contact hooks: rocket hits on ambushFortTargets.
 - Render/audio: real cover and fighter/buggy presentation. Wave cues use
   interface.go; wave completion
   uses interface.bonus; fort impacts reuse existing combat impact cues.
@@ -65,15 +64,22 @@ Its authored native movement acceptance still awaits real mode admission.
 
 ## Checks
 
-The authored suite is now 27 cases, 120 checks: three pass and 24 stay red
-at missing dev admission. Its original assertions are unchanged. The added
-foot eligibility witness failed for Ambush before the source edit, then
-passed nine checks. Pure pay/hold, invalid facts, owner and duplicate-pay
-checks pass: 87 focused checks total. These do not claim full gameplay.
+Crew's isolated registry/launcher prerequisite 2f02bff2 was inspected and
+picked as 74e62833: four wiring files only, no unfinished Crew runtime.
+The authored suite now runs native admission, five waves, pay/hold, loss,
+wrench repair, geometry, actual buggy fire and ram contact: 29 cases and
+598 checks, 27 passes. Two cases remain red at reserved Crew hooks: raiders
+return within a wave, and they do not yet fire RPGs at the fort.
+
+Original assertions are unchanged. Director approved one fixture correction:
+the buggy has 112.746282 armor and the unchanged per-hit cap is 80. Its wreck
+setup now makes at most four real hits, rather than assuming one uncapped
+hit. No armor or damage cap was reduced. The final wreck assertion is exact.
 
 Released arena event, settlement, UI, Fuel and on-foot transition suites
 pass 103 cases unchanged, including their existing repeatability checks.
-Diff check passes. Earlier module probes passed 300 repeatable clear spawn
+Wrench/transition/UI checks also pass 19 cases unchanged. Diff check passes.
+Earlier module probes passed 300 repeatable clear spawn
 plans across both venues; no world signature changed.
 
 No lane/build, browser, audio, balance, full-tier or merge-ready pass is

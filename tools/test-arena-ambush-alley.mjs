@@ -10,6 +10,7 @@ import {sweepObstacle} from '../src/collision.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {App} from '../src/app.js';
 import {canLeaveCar} from '../src/onfoot-transition.js';
+import {stepCombatAI} from '../src/combat-ai.js';
 
 // ARENA-05: native acceptance. Kyle's 4 October answer replaces the
 // Scrapdome ring fixture with the Pit; Salt Flats remains supported.
@@ -130,7 +131,8 @@ function wreckBuggy(f) {
   const actor = buggy(f); if (!actor) return;
   for (const participant of f.state.arena.participants) participant.protectedSec = 0;
   actor.combatShield = 0;
-  applyArmorDamage(f.duel, actor, 'fixed', {amount: actor.maxArmor + 1, owner: 'player'});
+  for (let hit = 0; hit < 4 && !actor.combatWrecking; hit++)
+    applyArmorDamage(f.duel, actor, 'fixed', {amount: actor.maxArmor + 1, owner: 'player'});
   equal(actor.combatWrecking, true, 'native armor damage wrecks the actual wave buggy');
 }
 function finishWave(f) {
@@ -235,6 +237,43 @@ test('wrecking the buggy alone cannot finish a wave with living raiders', () => 
   const f = fight(); reachWave(f, 4); wreckBuggy(f); advance(f, 4);
   equal(alley(f).completedWaves, 3, 'living fighters still prevent completion after a buggy wreck');
   ok(raiders(f).some(member => !member.knockedDown), 'real living raiders remain in the wave');
+});
+
+test('the real buggy weapon hold blocks normal CPU firing with Arsenal off and on', () => {
+  for (const arsenal of [false, true]) {
+    const f = fight(); reachWave(f, 4);
+    f.duel.featureFlags = createFeatureFlags({storage: null, qa: true,
+      overrides: {'ambush-alley': true, 'crew-gear': true, arsenal}});
+    const actor = buggy(f), participant = f.state.arena.participants.find(p => p.id === actor.arenaId);
+    actor.s = actor.prevS = f.state.s + 30;
+    actor.lateral = actor.prevLateral = f.state.lateral;
+    actor.headingError = 0; actor.impactTimer = 0;
+    actor.weaponLoadout = ['crossbow', 'bomb'];
+    participant.targetId = 'player';
+    const shots = [];
+    f.duel.onChange((_state, event) => {if (event.weaponFired && event.actor === actor) shots.push(event.weaponFired);});
+    const decide = () => {f.state.combat.aiTimer = 0; stepCombatAI(f.duel, DT);};
+    for (let n = 0; n < 20; n++) decide();
+    equal(shots.length, 0, `the native permanent hold prevents every attack with Arsenal ${arsenal}`);
+    actor.weaponsDisabledUntil = 0;
+    for (let n = 0; n < 20; n++) decide();
+    ok(shots.length > 0, 'removing only the hold allows the same actual CPU fire path');
+  }
+});
+
+test('the native wave buggy drives into solid fort cover and deals ram damage', () => {
+  const f = fight(); reachWave(f, 4);
+  for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
+  const hits = [];
+  f.duel.onChange((_state, event) => {if (event.ambushFortHit?.source === 'ram') hits.push(event.ambushFortHit);});
+  const actor = buggy(f), fort = alley(f).fort, before = fort.health;
+  for (let n = 0; n < Math.round(30 / DT) && !hits.length && f.state.status === 'racing'; n++) f.duel.step(DT);
+  const at = f.duel.course.groundAt(actor.s, actor.lateral);
+  ok(hits.length > 0, 'the actual native rammer reaches and contacts fort collision cover: ' +
+    JSON.stringify({at, speed: actor.speedMph, headingError: actor.headingError,
+      wrecked: actor.combatWrecking, health: fort.health, status: f.state.status}));
+  equal(hits[0].owner, actor.arenaId, 'the fort impact belongs to the real buggy participant');
+  ok(fort.health < before, 'real ram contact removes fort health');
 });
 
 test('ten-second gaps hold the next wave until the native deadline', () => {

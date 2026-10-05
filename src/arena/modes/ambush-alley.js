@@ -200,7 +200,10 @@ export function ambushBuggyGoal(duel, actor) {
   const alley = native(duel);
   if (!alley || actor.arenaRole !== 'ambush-buggy' || actor.ambushWave !== alley.wave ||
       actor.combatWrecking || actor.finished || alley.gapLeftSec > 0) return null;
-  return {x: alley.fort.x, z: alley.fort.z,
+  const at = duel.course.groundAt(actor.s, actor.lateral);
+  const target = alley.fort.cover.reduce((nearest, cover) =>
+    distance(at, cover) < distance(at, nearest) ? cover : nearest);
+  return {x: target.x, z: target.z,
     speedMph: duel.course.def.scrapdome.floorSpeedMph, boost: false};
 }
 
