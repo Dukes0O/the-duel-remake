@@ -17,6 +17,7 @@ async function ready(context) {
   await context.waitFor(`(() => {
     const app = window.__qaApp;
     app?.onFrame?.(app.duel.state, 0);
+    window.__render?.renderFrame();
     return app?.visualReady && document.querySelector('#renderer-loading')?.hidden &&
       window.__render?.scene.getObjectByName('convoy-tanker')?.children.length > 0;
   })()`, 'loaded native tanker and Salt Flats', 60000);
@@ -45,6 +46,7 @@ async function measure(context, quality, distance, present, pair) {
     document.head.insertAdjacentHTML('beforeend', '<style>details{display:none!important}</style>');
   })()`);
   await context.waitFor(`(() => {const app = window.__qaApp; app.onFrame?.(app.duel.state, 0);
+    window.__render?.renderFrame();
     return app.visualReady && document.querySelector('#renderer-loading')?.hidden;})()`, 'native yard', 60000);
   await context.evaluate('window.__qaApp.advance(8); window.__qaApp.onFrame?.(window.__qaApp.duel.state, 0)');
   await context.waitFor('!!document.querySelector(\'[data-action="yard-scrapdome"]\')', 'native yard control', 60000);
@@ -65,6 +67,7 @@ async function measure(context, quality, distance, present, pair) {
     app.keys = {};
     app.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
     app.onFrame?.(state, 0);
+    window.__render.renderFrame();
     const model = window.__render.scene.getObjectByName('convoy-tanker');
     if (!model?.visible || !model.children.length) throw Error('Approved tanker is not visible');
     const button = [...document.querySelectorAll('button')].find(node => node.textContent === 'Measure frame pacing');
