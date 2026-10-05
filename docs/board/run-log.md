@@ -816,6 +816,19 @@ fixture now uses native kit equip; a screenshot filename mismatch remains.
 Janitor: removed the merged diagnostic branch, lane and used evidence. The
 first junction check refused its target; normal Git cleanup left an unregistered
 remainder. After exact target verification, the junction and remainder were
-removed separately. Integration dependencies remain intact; runtime size is
-unchanged. No feature lane or protected audio folder was removed.
+removed separately. A later check found partial dependency deletion; the exact
+recovery is recorded below. No feature lane or protected audio folder was removed.
+
+The full tier on clean 68272483 finished in 717.01 seconds: 348 passed, one
+failed, none skipped. Crash audio reached zero checks: its QA build could not
+load the locked native binding. Director cleanup had run Git after a refused
+junction check; this damaged shared dependencies. The continuity cause is
+still unproved. Future cleanup stops immediately on a failed link check.
+
+The ordinary offline reinstall could not replace a binding held by Preview.
+Instead, the exact lock was installed offline in isolated scratch, and only
+missing files were copied back. All 1,351 files match byte for byte, with no
+extras. Build passes in 583 ms; Preview and live were not stopped or refreshed.
+Used recovery output was deleted. No package version, assertion or runtime
+source changed. Full recovery is still required before feature merges.
 

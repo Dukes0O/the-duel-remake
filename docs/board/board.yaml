@@ -1066,6 +1066,8 @@ tasks:
     branch: codex/cmb/arsenal-wave3
     test_commit: d220e948
     source_commit: 3309f22f
+    synced_lane_commit: 777847f45234c4877152978477c993d8c2b16287
+    synced_note_commit: a7133f37d25751ca61c68f1c936e6a2153d7904a
     preservation_test_commit: 87b436f2
     balance_test_commit: 0cd575fa
     source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
@@ -1397,6 +1399,8 @@ tasks:
     rig_fire_rule: "Use the existing weaponsDisabledUntil field in the owned mode through the event and a legal pending fuse. Test that attacks, Star and UFO cannot fire from the rig while escorts retain their normal behavior. Keep the existing field attack scheduling policy."
     caller_test_grant: "Add independent native caller tests for projectile sweeps, ram contacts, rig weapon suppression, escort response and durable App settlement. Keep existing direct-damage assertions. Admission adds only convoy-raid dev to current flag and launcher expectations; preserve released states and isolation checks."
     caller_test_verdict: "Native caller tests expose admission, sweep, ram, rig-fire, charge-fuse and retry gaps; escort response and once-only settlement controls pass. Earlier assertions stay unchanged."
+    geometry_test_commit: fde1946a9d43e559a23bda8a9eb18688594d1298
+    geometry_test_verdict: "Independent review clears the six new native cases and the player launch fixture correction. Rocket and Harpoon controls pass; the rig witnesses still require its actual tanker body. Earlier assertions stay exact."
     weapon_geometry_handoff: "After the whole Arsenal merge, Convoy also receives arsenal/rockets.js, arsenal/harpoon.js and arsenal/mortar.js for measured impact and blast geometry forwarding. Rig-only blast eligibility uses actual valve points when a car-centre cull would miss them; preserve existing damage, falloff, owners and the ordinary-car branches. Native bypass and valve-in-range/body-centre-out-of-range tests precede source; no new damage numbers or helper framework."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
@@ -1415,6 +1419,8 @@ tasks:
     art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
     geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
     comparison_scenario_commit: 5167ce32709d257d9b65947f65e8775672dd487e
+    comparison_fixture_commit: 0c71789266f47ba1b21c900af8cf70ddc227bc45
+    comparison_fixture_review: "Independent review clears native kit equip and matching screenshot names. Existing capture assertions stay exact; no art round was spent on the two setup failures."
     comparison_source_review: "Independent source review clears the native twelve-view recipe and full-frame sheet builder. Captures, appearance and Claude's approval remain unproved."
     trajectory_review_commit: d068bffb
     yard_test_commit: 9139255fbf61c6cd26f109bc0984cebca404e751
