@@ -1,7 +1,7 @@
 # WAR-03a: Gearhead Gunn
 
-Native Gunn rules and the round-two turret are built. Claude's look approval,
-remaining shared hooks and merge gates are still required.
+Native Gunn rules and Claude's approved round-two turret are built. Listening,
+the final integration sync and merge gates are still required.
 
 ## Changed
 
@@ -22,10 +22,10 @@ remaining shared hooks and merge gates are still required.
   separate. Per-actor heat materials and cold cosmetic looks are preserved.
 - Only --gunn-turret exports the replacement runtime GLB. Blender sources
   stay in scratch; none of the nine approved kit recipes or models changed.
-- Existing Gunn scenario gains opt-in GUNN_FIGHT_REVIEW=1: actual App entry,
-  native tell tracking, turned-player lock, rendered mouth/rocket alignment,
-  overheat/cooling and the existing 120-frame High/Performance profiler.
-  One tested pose fixture is followed by real physics; no fake move state.
+- Existing scenario keeps its motion/art modes; opt-in GUNN_AUDIO_REVIEW=1
+  prepares real-time native tell/lock/window capture at native rate, WAV stems
+  and a compressed final mix for listening. It has not run; no audio verdict.
+  Actual App entry and one approved clear pose precede real physics throughout.
 - Gunn's native tell names arena.gunn-barrage and keeps its settled seconds
   and position. A switched procedural rising whine fits the shortest tell;
   the generic audio consumer selects the event cue, retaining arena.tell as fallback.
@@ -84,8 +84,8 @@ remaining shared hooks and merge gates are still required.
 
 ## Remaining
 
-- Claude reviews round-two side, three-quarter and top views on Stuttgart
-  and Falcone. Three-round cap applies; no finished look is claimed.
+- Claude approved round two on 5 October 2026; no third round is needed.
+  Real-time listening waits for Convoy's whole merge and Director's QA slot.
 - Whole-source review and remaining sound/card checks, then lane/build on the
   final integration base before merge. No broad gate while the look waits.
 

@@ -2,6 +2,8 @@ import {readFile, writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
+import {wavFromPcm} from './audio-race.mjs';
+import {ffmpeg} from '../audio/codec.mjs';
 
 const cars = ['stuttgart_959s', 'falcone_f42'];
 const views = ['side', 'three-quarter', 'top'];
@@ -212,12 +214,118 @@ async function fightPacing(context, quality) {
   return result;
 }
 
-async function runFight(context, asset) {
-  const report={card:'WAR-03a',mode:'native Gunn motion and moving frame pacing',asset,rows:[],
+async function recordFightAudio(context) {
+  await context.evaluate(`(async () => {
+    const app=window.__qaApp,audio=app.audio,q=window.__gunnMotion;
+    audio.unlock();audio.setMuted(false);audio.setPaused(false);
+    await Promise.all([audio._samplesPromise,audio._ambiencePromise,audio._cueBuffersPromise]);
+    const ctx=audio.context;
+    if(ctx?.state!=='running'||ctx.sampleRate<44100)throw Error('Native-rate Gunn audio context required');
+    const silent=ctx.createGain();silent.gain.value=0;silent.connect(ctx.destination);
+    const recording=q.audio={sampleRate:ctx.sampleRate,startedAt:ctx.currentTime,
+      events:[],cues:[],tracks:{},sources:[],silent,sawWindow:false};
+    for(const [name,source] of [['mix',audio.output],['warning',audio.buses.impacts],['engine',audio.buses.engine]]) {
+      const processor=ctx.createScriptProcessor(2048,2,2),track={chunks:[],firstPlayback:null};
+      source.connect(processor);processor.connect(silent);
+      recording.tracks[name]=track;recording.sources.push({source,processor});
+      processor.onaudioprocess=event=>{
+        if(track.firstPlayback===null)track.firstPlayback=event.playbackTime;
+        const left=event.inputBuffer.getChannelData(0),right=event.inputBuffer.getChannelData(1);
+        const pcm=new Int16Array(left.length*2);
+        for(let i=0;i<left.length;i++){
+          pcm[i*2]=Math.round(Math.max(-1,Math.min(1,left[i]))*32767);
+          pcm[i*2+1]=Math.round(Math.max(-1,Math.min(1,right[i]))*32767);
+        }
+        track.chunks.push(pcm);
+      };
+    }
+    recording.originalPlayCue=audio._playCue;
+    audio._playCue=function(id,options){
+      const voice=recording.originalPlayCue.call(this,id,options);
+      if(voice)recording.cues.push({id,audioSec:ctx.currentTime-recording.startedAt,
+        simSec:app.duel.state.stageTimeSec});
+      return voice;
+    };
+    recording.unsubscribe=app.duel.onChange((state,event)=>{
+      const actor=state.opponents[0];
+      const kind=event.arenaTell?'tell':event.gunnOverheat?'overheat':
+        event.arsenalCue==='weapon.rockets.fire'&&event.actor===actor?
+          actor.gunnBarrage.stage==='barrage'?'rocket':'single':null;
+      if(!kind)return;
+      if(kind==='overheat')recording.sawWindow=true;
+      recording.events.push({kind,audioSec:ctx.currentTime-recording.startedAt,
+        simSec:state.stageTimeSec,stage:actor.gunnBarrage.stage,
+        seconds:event.arenaTell?.seconds||event.gunnOverheat?.seconds,
+        cue:event.arenaTell?.cue,launchedAt:event.projectile?.launchedAt,
+        aim:structuredClone(actor.gunnBarrage.aim)});
+    });
+    app.start();
+  })()`);
+  try {
+    await context.waitFor(`(() => {const q=window.__gunnMotion,a=window.__qaApp.duel.state.opponents[0];
+      return q.audio.sawWindow&&a.gunnBarrage.stage==='idle';})()`,
+    'real-time Gunn tell, lock, overheat and cooling',20000);
+  } finally {
+    await context.evaluate(`(() => {
+      const app=window.__qaApp,q=window.__gunnMotion,r=q.audio;
+      r.cooledAt={audioSec:app.audio.context.currentTime-r.startedAt,simSec:app.duel.state.stageTimeSec};
+      app.stop();r.unsubscribe();app.audio._playCue=r.originalPlayCue;
+      for(const {source,processor} of r.sources){source.disconnect(processor);processor.disconnect();processor.onaudioprocess=null;}
+      r.silent.disconnect();app.audio.setPaused(true);
+    })()`);
+  }
+  const result=await context.evaluate(`(() => {
+    const app=window.__qaApp,q=window.__gunnMotion,r=q.audio,tracks={};
+    if(JSON.stringify(app.profile)!==q.profile)throw Error('Listening changed the memory career');
+    if(app.duel.state.status!=='racing'||!r.sawWindow||app.duel.state.opponents[0].gunnBarrage.stage!=='idle')
+      throw Error('Listening did not complete the native overheat window');
+    for(const [name,track] of Object.entries(r.tracks)){
+      const pcm=new Int16Array(track.chunks.reduce((n,chunk)=>n+chunk.length,0));
+      let at=0;for(const chunk of track.chunks){pcm.set(chunk,at);at+=chunk.length;}
+      const bytes=new Uint8Array(pcm.buffer);let binary='';
+      for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+      let peak=0,energy=0;for(const sample of pcm){const value=sample/32768;peak=Math.max(peak,Math.abs(value));energy+=value*value;}
+      tracks[name]={pcmBase64:btoa(binary),frames:pcm.length/2,
+        audioStartSec:track.firstPlayback-r.startedAt,peak,rms:Math.sqrt(energy/pcm.length)};
+    }
+    const liveVoices=[...app.audio.mixer.voices.values()].reduce((n,set)=>n+set.size,0);
+    return {sampleRate:r.sampleRate,channels:2,tracks,events:r.events,cues:r.cues,cooledAt:r.cooledAt,liveVoices,
+      shots:q.shots,memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
+        window.name.startsWith('__duel_qa_tab_v2:'),profileUnchanged:true};
+  })()`);
+  const tells=result.events.filter(event=>event.kind==='tell'),shots=result.events.filter(event=>event.kind==='rocket'),
+    overheat=result.events.filter(event=>event.kind==='overheat');
+  if(!result.memoryOnly||result.liveVoices||tells.length!==1||shots.length!==3||
+    overheat.length!==1||
+    !result.cues.some(cue=>cue.id==='arena.gunn-barrage')||
+    shots.some((shot,n)=>n&&Math.abs(shot.launchedAt-shots[n-1].launchedAt-.25)>1/120)||
+    shots.some(shot=>JSON.stringify(shot.aim)!==JSON.stringify(shots[0].aim)))
+    throw Error('Native Gunn listening timing or lifecycle failed');
+  if(shots[0].launchedAt+1/120<tells[0].simSec+tells[0].seconds||
+    result.cooledAt.simSec+1/120<overheat[0].simSec+overheat[0].seconds)
+    throw Error('Listening truncated the actual tell or overheat window');
+  for(const [name,track] of Object.entries(result.tracks)) {
+    if(!(track.frames>result.sampleRate*5&&track.rms>.00001&&track.peak<1))
+      throw Error('Silent, clipped or short native Gunn '+name+' recording');
+    const bytes=wavFromPcm(Buffer.from(track.pcmBase64,'base64'),result.sampleRate,result.channels);
+    track.file='gunn-'+name+'.wav';await writeFile(join(context.outputDir,track.file),bytes);
+    if(name==='mix') {
+      const mp3=ffmpeg(['-i','pipe:0','-codec:a','libmp3lame','-b:a','128k','-f','mp3','pipe:1'],{input:bytes});
+      result.listeningFile='gunn-mix.mp3';await writeFile(join(context.outputDir,result.listeningFile),mp3);
+    }
+    delete track.pcmBase64;
+  }
+  return result;
+}
+
+async function runFight(context, asset, {audioReview=false}={}) {
+  const report={card:'WAR-03a',mode:audioReview?'native Gunn real-time audio listening':
+    'native Gunn motion and moving frame pacing',asset,rows:[],
     fixture:'Actual App yard admission and countdown; one tested clear Pit pose, then full native physics and player inputs.',
-    limits:['Motion evidence does not approve the look or audio.',
+    limits:[audioReview?'PCM and timing prove recording; the final mix still needs a listening verdict.':
+      'Motion evidence does not approve the look or audio.',
       'Existing 120-frame profiler measures delivered frames and separate CPU/GPU phases, not isolated turret overhead.']};
-  const persist=()=>writeFile(join(context.outputDir,'gunn-motion.json'),JSON.stringify(report,null,2)+'\n');
+  const persist=()=>writeFile(join(context.outputDir,audioReview?'gunn-audio.json':'gunn-motion.json'),JSON.stringify(report,null,2)+'\n');
   try {
     for(const quality of ['high','performance']) {
       await context.navigate('/tools/menu-check.html?flags=gunn');
@@ -309,6 +417,7 @@ async function runFight(context, asset) {
         });
       })()`);
       const row={quality,motion:[]};report.rows.push(row);
+      if(audioReview){row.audio=await recordFightAudio(context);await persist();break;}
       await advanceFight(context,"a.gunnBarrage.stage==='tell'");
       await context.evaluate('for(let n=0;n<8;n++)window.__qaApp.duel.step(1/120)');
       row.motion.push(await captureFight(context,quality,'tracking-start'));
@@ -343,6 +452,7 @@ export async function run(context) {
     sha256:createHash('sha256').update(bytes).digest('hex')};
   await context.command('Emulation.setDeviceMetricsOverride',
     {width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  if(process.env.GUNN_AUDIO_REVIEW==='1')return runFight(context,asset,{audioReview:true});
   if(process.env.GUNN_FIGHT_REVIEW==='1')return runFight(context,asset);
   const report={card:'WAR-03a',round,memoryOnly:true,paths,asset,captures:[],
     fixture:'Stopped seed-1989 native campaign; earned turret-look on real approved Stuttgart and Falcone models.',
