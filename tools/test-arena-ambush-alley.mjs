@@ -9,6 +9,7 @@ import {stepFighter} from '../src/onfoot.js';
 import {sweepObstacle} from '../src/collision.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {App} from '../src/app.js';
+import {canLeaveCar} from '../src/onfoot-transition.js';
 
 // ARENA-05: native acceptance. Kyle's 4 October answer replaces the
 // Scrapdome ring fixture with the Pit; Salt Flats remains supported.
@@ -19,6 +20,69 @@ const near = (actual, expected, message) => ok(Math.abs(actual - expected) < 1e-
   `${message}: expected ${expected}, got ${actual}`);
 const DT = 1 / 120, WAVE_COUNTS = [3, 4, 5, 6, 8];
 test.after(() => console.log(`Ambush Alley: ${checks} acceptance checks executed.`));
+
+test('Ambush eligibility preserves released foot controls and denies other arenas', () => {
+  const duel = new Duel({seed: 305});
+  duel.startCampaign({mode: 'wasteland', discoveredGate: true, car: 'falcone_f42'});
+  Object.assign(duel.state, {mode: 'wasteland', status: 'racing',
+    wastelandGateDiscovered: true, combat: {}, paused: false, objective: null});
+  const stage = duel.stageDef;
+  for (const [mode, allowed] of [['fuel-run', true], ['ambush-alley', true],
+    ['last-car-rolling', false], ['bounty-hunt', false], ['warlord', false]]) {
+    duel.state.arena = {mode};
+    equal(canLeaveCar(duel), allowed, `foot eligibility for ${mode} uses the native arena rule`);
+  }
+  duel.state.arena = null;
+  equal(canLeaveCar(duel), !stage?.practice && !stage?.stuntTrial &&
+    !['chase', 'drift', 'checkpoint'].includes(stage?.kind), 'ordinary foot admission is unchanged');
+  duel.state.arena = {mode: 'ambush-alley'};
+  for (const field of ['paused', 'objective']) {
+    duel.state[field] = true;
+    equal(canLeaveCar(duel), false, `${field} still forbids exit`);
+    duel.state[field] = false;
+  }
+  duel.state.wastelandGateDiscovered = false;
+  equal(canLeaveCar(duel), false, 'undiscovered careers cannot leave the car');
+});
+
+test('Ambush settlement validates full and partial pay without changing its input', () => {
+  const profile = {credits: 77, future: {kept: true}, wasteland: {version: 1,
+    discoveredGate: true, scrap: 10, settledResults: [], territories: {
+      kettle: {hold: 12, future: 'kept'}, tollkeeper: {hold: 9}}}};
+  for (const venueId of ['pit', 'salt-flats']) {
+    for (const [completedWaves, health, winnerId, reason, total, hold] of [
+      [5, 100, 'player', 'waves-survived', 540, 25],
+      [2, 0, 'raiders', 'fort-fell', 144, 10],
+      [0, 0, 'raiders', 'fort-fell', 0, 0],
+    ]) {
+      const arena = {version: 1, mode: 'ambush-alley', venueId, phase: 'over',
+        participants: [{id: 'player', kind: 'player'}, {id: 'cpu-1', kind: 'cpu'}],
+        ambushAlley: {completedWaves, fort: {health}},
+        result: {winnerId, reason, placings: winnerId === 'player' ?
+          ['player', 'cpu-1'] : ['raiders', 'player', 'cpu-1']}};
+      const payload = {arena, runId: `pure-${venueId}-${completedWaves}`,
+        ownerPlayerId: 'driver', activePlayerId: 'driver', cpuDifficulty: 'medium'};
+      const before = structuredClone(profile);
+      const paid = settleArenaResult(profile, payload);
+      equal(paid.awarded, true, 'completed Ambush facts settle');
+      equal(paid.scrapEarned, total, 'only completed waves and a full-win bonus pay');
+      equal(paid.holdAdded, hold, 'each completed wave adds five hold');
+      equal(profile, before, 'input save and unknown fields stay unchanged');
+      equal(paid.profile.credits, 77, 'race credits stay unchanged');
+      equal(paid.profile.wasteland.territories.tollkeeper.hold, 9, 'other territory stays unchanged');
+      equal(settleArenaResult(paid.profile, payload).awarded, false, 'journal blocks a second payment');
+      equal(settleArenaResult(profile, {...payload, activePlayerId: 'other'}).awarded, false,
+        'another owner cannot settle');
+      for (const bad of [NaN, -1, 6, 1.5]) {
+        const invalid = {...arena, ambushAlley: {...arena.ambushAlley, completedWaves: bad}};
+        equal(arenaReward(invalid, 'medium').total, 0, 'invalid completed-wave facts never pay');
+      }
+      const forged = {...arena, result: {...arena.result, winnerId: 'cpu-1'}};
+      equal(settleArenaResult(profile, {...payload, arena: forged}).awarded, false,
+        'an inconsistent winner cannot settle');
+    }
+  }
+});
 
 for (const venueId of ['pit', 'salt-flats']) test(`native Ambush Alley entry admits ${venueId}`, () => {
   const duel = new Duel({seed: 305, featureFlags: createFeatureFlags({storage: null,

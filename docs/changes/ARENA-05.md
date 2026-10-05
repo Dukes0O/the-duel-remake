@@ -1,6 +1,6 @@
 # ARENA-05: Ambush Alley
 
-status: partial mode source; native entry and shared hooks pending
+status: native entry and pay source; shared fighter hooks pending
 
 ## Settled rules
 
@@ -28,28 +28,36 @@ the midpoint of a longest low-curvature run. Both spawn approaches stay
 inside native walls, at least 60 metres from the fort. No world recipe or
 world signature changed. Renderer work remains pending.
 
-The module exposes AMBUSH_RULES, initializeAmbushAlley, ambushSpawnPlan,
-stepAmbushAlley, ambushBuggySpawn, ambushBuggyGoal, ambushFortTargets,
-damageAmbushFort and ambushRepairTarget. Native entry must initialize combat
-armor, foot transition and weapons before initializeAmbushAlley. Waves four
-and five cannot complete without a real buggy tagged arenaRole ambush-buggy
-and ambushWave equal to the current wave. No substitute vehicle was added.
+Native Game entry now initializes armor, foot transition and gear before
+placing the fort and fighter. It allocates one real Dusthawk through the
+existing arena factory. That actor stays inactive for waves one to three;
+later waves place it at the seeded clear pose. Its weapon hold is permanent,
+its arena brain rams the fort, and it cannot respawn within a wave. Ram
+damage uses the existing armor ram formula and real swept body contact.
+
+The arena ticks waves and normal raider/foot hooks. The new mode cannot
+enter without its own dev switch, a discovered career, rank 12 and Pit or
+Salt admission. Foot exit/re-entry allows Ambush and released Fuel only;
+other arenas remain denied. No substitute participant was added.
+
+Pay uses the existing pure arena settlement and durable owner/retry write.
+It validates completed waves, fort health, winner and placings, then applies
+the settled wave pay and hold once. Input saves, credits and unknown fields
+stay unchanged. HUD/results show fort health, wave count and saved pay.
+Yard rendering offers the mode at rank 12 with only its two venues.
 
 ## Pending shared hooks
 
-- Game/flags/App: independent default-off dev flag, Pit/Salt admission,
-  rank 12, mode registration and initializer order; preallocate one real
-  buggy/participant and keep it inactive through the first three waves.
-- arena-event.js: tick raiders and on-foot rules, call stepAmbushAlley,
-  apply ambushBuggySpawn to the real actor with placeActor and existing
-  armor, disable its within-wave respawn and finish win/loss results. Fort
-  loss returns winnerId raiders, which needs a non-car result path.
+- Flags/launcher: Crew owns the registry. Await its isolated default-off dev
+  prerequisite; no admission override or unfinished Crew import is used.
+- Router: selecting Ambush must select Pit rather than the old ring default;
+  its venue handler must accept the eligible Pit choice.
 - raiders.js: native movement/hostile RPG production against the fort and
   no within-wave fighter return, keyed by each native record's ambushWave.
 - onfoot-weapons.js/projectile/contact hooks: actual 40-over-4 fort wrench
   action, rocket hits on ambushFortTargets and native buggy ram damage.
-- settlement/HUD/render/audio: once-only wave pay/hold, real cover and
-  fighter/buggy presentation. Wave cues use interface.go; wave completion
+- Render/audio: real cover and fighter/buggy presentation. Wave cues use
+  interface.go; wave completion
   uses interface.bonus; fort impacts reuse existing combat impact cues.
 
 Existing onfoot.js already uses arena walls in place of the car tether.
@@ -57,18 +65,20 @@ Its authored native movement acceptance still awaits real mode admission.
 
 ## Checks
 
-The authored suite remains 25 cases, 33 checks, one pass and 24 failures at
-missing native entry, dev flag and App routing. No assertion changed.
-node --check passes. Focused module probes use real Duel/venue/armor/fighter
-initialization, then select the unregistered mode only at the module boundary.
-They pass native raider damage, all five counts, live/missing buggy guards,
-real armor wrecks, exact gaps, fort wear/loss and repair contact on both
-venues. Thirty seeds per venue give 300 repeatable spawn plans, all clear
-and at least 60 metres away. These are controller checks, not full gameplay.
+The authored suite is now 27 cases, 120 checks: three pass and 24 stay red
+at missing dev admission. Its original assertions are unchanged. The added
+foot eligibility witness failed for Ambush before the source edit, then
+passed nine checks. Pure pay/hold, invalid facts, owner and duplicate-pay
+checks pass: 87 focused checks total. These do not claim full gameplay.
 
-The Director reserved broad gates for the running integration check. No
-lane/build, browser, audio, balance, full-tier or merge-ready pass is claimed.
-No saves, dependencies, shared files or replay fingerprints were changed.
+Released arena event, settlement, UI, Fuel and on-foot transition suites
+pass 103 cases unchanged, including their existing repeatability checks.
+Diff check passes. Earlier module probes passed 300 repeatable clear spawn
+plans across both venues; no world signature changed.
+
+No lane/build, browser, audio, balance, full-tier or merge-ready pass is
+claimed. Broad gates wait for the Director's slot. Real saves, dependencies
+and protected shared fighter sources were not touched.
 
 ## Removed
 
