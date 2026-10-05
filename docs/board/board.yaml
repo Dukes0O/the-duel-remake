@@ -1056,7 +1056,9 @@ tasks:
     audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
     audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
     final_gate_commit: d6971001994b60878d205e32aa99e30d924dea67
-    final_gate_verdict: "The earlier lane gate failed an unchanged ramp assertion. The reviewed correction and current balance and browser rechecks pass; a fresh clean lane gate is running, with build to follow."
+    final_gate_verdict: "The fresh gate failed the existing audio measurement availability check for the short Mortar whistle. Keep playback and headroom assertions unchanged; review the existing short-cue analysis path before rerunning gates."
+    short_audio_test_hook: tools/test-combat-audio.mjs
+    short_audio_analysis_grant: "After the genuine gate failure, independently measure all new recordings. If their short duration is the cause, reuse the existing analysis-only padding for Wave Three files in the combat audio test. Keep every assertion, threshold, prior measurement path and runtime byte; independently review this input change before fresh gates."
     flight_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
     flight_review: "The Mortar-only marker restores unchanged ramp flight without changing released ram behavior. Independent hop, zero-apex, landing and menu checks pass. All three balance reports and both-quality browser rechecks pass; final gates remain."
     balance_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
@@ -1388,6 +1390,8 @@ tasks:
     art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
     geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
     trajectory_review_commit: d068bffb
+    yard_test_commit: 9139255fbf61c6cd26f109bc0984cebca404e751
+    yard_test_verdict: "Native yard and Armory tests expose lost injected Gunn flags; released and default controls pass. Existing assertions stay unchanged. The real router check follows in the browser after the source hook lands."
     note_commit: bcda842
     note: "The settled turret is exported and its import fix passes independent review. Prepare the comparison sheet; the finished look needs Claude's approval before merge."
     claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."

@@ -777,3 +777,9 @@ control remains exact. Its fresh clean lane gate is running; build follows.
 Gunn's turret is exported and its fresh renderer imports pass. The native
 comparison scenario and yard tests are being prepared; Claude's look review remains.
 
+Arsenal's fresh gate failed after 149 suites passed: the short Mortar whistle
+has no integrated loudness result in the existing unpadded analysis. No peak
+limit failed. Review the established short-cue analysis path with runtime bytes
+and assertions unchanged, then rerun the gate. Gunn's native yard tests now
+expose the injected-flag loss while released and default controls pass.
+
