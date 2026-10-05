@@ -57,6 +57,11 @@ while that actual crew is outside. Default/off driving and ready-car fire
 controls pass. Whole focused suite: 27 cases, 78 checks, 18 pass and nine red;
 the six original caller failures remain. No fake crew records or source edits.
 
+Rocket fighter tests: nine native cases/78 checks, two pass/seven red.
+Car damage/once-only and participant protection pass. Earlier player bodies,
+60-health falloff/half-radius, shield/wreck independence, real raiders and the
+real repair-module CPU fighter are missed. No fake shots; old tests are exact.
+
 Direct controller probes pass Odessa's 40-armor/two-second repair and the
 three-second knockdown/respawn through damageRaider. Eight seeded crew probes
 use real stepProjectiles and finish with three attacks; Dune fires only bolts,
