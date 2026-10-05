@@ -31,7 +31,7 @@ const WAVE_THREE_CUES = ['weapon.mortar.fire', 'weapon.mortar.whistle', 'weapon.
   'weapon.tesla.charge', 'weapon.tesla.pulse', 'weapon.decoy.deploy',
   'weapon.decoy.burst', 'weapon.nitro.start', 'weapon.nitro.loop'];
 const BANK_ADDITIONS = new Set([...CUES, ...WAVE_TWO_CUES, 'arena.bounty-mark',
-  ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES]);
+  ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage']);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 // Rebuild only retired flag fields in test memory so the original exact pin
 // still checks every cue recipe without accepting any other bank change.

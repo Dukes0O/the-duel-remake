@@ -69,9 +69,9 @@ Gunn's rules, approved turret and native recording are built; listening and fina
   surface plus clearance; fit/geometry/trajectory assertions stay exact.
   Native/art 31/514 pass, including fresh imports; vehicle grounding passes
   4,967 checks across nine models. Moved point function is byte-exact.
-- Lane 109/1/245 stopped; a logged diagnostic repeat identified the omitted
-  additive whine in Arsenal core audio's old-bank fixture (108/1/246). Director
-  approved only that cue's admission; both historical hashes and other pins stay.
+- Lanes stopped at 109/1/245, logged 108/1/246, then 114/1/240. Core and wave-one
+  audio preservation fixtures omitted the additive whine. Director approved
+  only that cue's admission in both; historical hashes and other pins stay.
 - Whole integration 872ea0b1 is received in db3dc2fa. Approved launcher/catalog
   union keeps every released state and existing dev flag, adding Gunn to thirteen.
   Current Gunn/art/flags/beta 45 cases, Convoy 42/390 and Ambush 35/797 pass;
