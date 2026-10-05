@@ -20,8 +20,13 @@ cause; the additions preserve the missing evidence for the next run.
 Source review: collection, PCM encoding, continuity assertion, fixture
 commands, assertions, thresholds, cleanup and runtime code are unchanged.
 Both changed scripts pass `node --check`; `git diff --check` also passes.
-Native capture, lane/build and the full checkpoint remain pending with the
-Director. No dependency link was needed, and no heavy checks were run.
+Independent review clears the exact tools-only change. The clean source
+commit passed all eight lane suites in 204.81 seconds and built in 737 ms.
+Crash audio passed 23 cases and 98 checks; all nine required race tracks have
+75 consecutive chunks. Temporary Git fixtures passed all 632 checks.
+Quiet and reference taps both show an early 512-frame timestamp excess;
+this does not identify the cause of the older failed race captures.
+Full integration recovery remains required. Assertions and runtime stay exact.
 
 ## Removed
 

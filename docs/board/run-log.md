@@ -807,3 +807,15 @@ The compaction test also failed while configuring its temporary Git fixture.
 Stop repeated full runs pending focused diagnosis of both existing paths.
 Feature merges remain held; runtime, assets and assertions stay unchanged.
 
+Focused gate diagnostics merged after independent review, eight passing lane
+suites and build. Existing crash audio and all 632 temporary Git checks pass;
+the new timestamps retain a quiet-context discontinuity without proving its
+cause. The full checkpoint still holds feature merges. Gunn's comparison
+fixture now uses native kit equip; a screenshot filename mismatch remains.
+
+Janitor: removed the merged diagnostic branch, lane and used evidence. The
+first junction check refused its target; normal Git cleanup left an unregistered
+remainder. After exact target verification, the junction and remainder were
+removed separately. Integration dependencies remain intact; runtime size is
+unchanged. No feature lane or protected audio folder was removed.
+

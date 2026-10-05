@@ -11,7 +11,7 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: in_progress
+    status: merged
     claimed_by: codex-director-2026-10-04
     branch: codex/tools/checkpoint-diagnostics
     owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-compact-binaries.mjs, docs/changes/GATE-DIAGNOSTICS.md]
@@ -19,7 +19,13 @@ tasks:
     acceptance:
       - "Retain existing audio chunk frame indexes in each encoded track. Add concise failed-command context for the expendable Git fixture: repository metadata presence, Git version and redirect environment names only. No secret environment values."
       - "Keep collection, simulation, saves, fixtures, assertions, thresholds and cleanup unchanged. No retry, skip, assertion migration, new framework or history operation. Independent review, current lane and build, then full integration checkpoint."
-    note: "Two full runs failed without enough detail to identify the cause. Add only the missing evidence; feature merges stay held until the full checkpoint passes."
+    source_commit: 35af4b20f3fb75dc5bdc54028818e66db2bfa3af
+    gate_commit: 35af4b20f3fb75dc5bdc54028818e66db2bfa3af
+    merged_commit: 278615c47fc9da2872bc85069b2affb3bd32dd5b
+    lane_gate_passed: 8
+    lane_gate_duration_seconds: 204.81
+    lane_build_ms: 737
+    note: "The evidence-only change passed independent review, all eight lane suites and build. Earlier failure causes remain unproved; feature merges stay held until the full checkpoint passes."
   - id: SALT-RUNTIME-CHECKS
     title: "Run Salt renderer acceptance against the installed asset"
     owner: codex
