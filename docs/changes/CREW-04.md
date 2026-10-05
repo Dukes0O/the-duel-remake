@@ -32,12 +32,20 @@ actor and enemy attribution, including turret and flamer lifecycle cues.
 Exit, return and respawn playback still need the native audio owner.
 No new sound file is added.
 
+The native rival now calls the stop controller behind the explicit cpu-crews
+switch and respects an already stopped crew. Contacts, pushes, jumps, bounds,
+lap progress and recovery remain native. The car settles against scenery
+before placing its fighter. Combat AI holds scheduled attacks, shields and
+UFO pickup use until the crew returns; the attack-rate count excludes it.
+
 ## Checks
 
-Independent acceptance test 11efc6e is unchanged: 19 cases, 13 pass, 6 fail.
-The six positive native cases remain red because sim-rival has no caller yet.
-Existing raiders: 7/7 pass. Owned gear module checks: 16/16 pass.
-Combat replay fingerprints: 12/12 pass across four encounters, unchanged.
+Controller slice: 28 cases / 89 checks, 21 pass and seven admission failures.
+The parked-motion and car-fire witnesses pass. One added native case verifies
+retained shield charges and resumed driving/fire after a real repair stop.
+All earlier assertions are unchanged. The dev registry remains held by
+Convoy; it is not bypassed. Raiders pass 7/7 and all twelve combat replay
+fingerprints remain unchanged across four encounters.
 
 Independent CPU cue regression 0c02e806 first reproduced three attribution
 failures: turret deploy/fire and flamer start consumed the player's Rook line.
@@ -48,14 +56,6 @@ Each now retains its actual CPU actor and enemy marker, creates no immediate
 or queued player caption, and leaves the next native player Crossbow action
 able to announce Rook once with the exact kept caption. The actual player
 positive control also passes. No Voice or other shared source was edited.
-
-Controller preparation on 8932f6b7 adds only an explicit cpu-crews fixture
-request under the board grant; all old assertions remain exact. Four new
-native cases give one pass and three reds: missing dev admission, a real
-repair stop driven away by sim-rival, and native combat AI firing Crossbow
-while that actual crew is outside. Default/off driving and ready-car fire
-controls pass. Whole focused suite: 27 cases, 78 checks, 18 pass and nine red;
-the six original caller failures remain. No fake crew records or source edits.
 
 Rocket fighter tests: nine native cases/78 checks, two pass/seven red.
 Car damage/once-only and participant protection pass. Earlier player bodies,
@@ -76,9 +76,6 @@ gate, build, browser, audio and source review remain unmeasured. Not merge-ready
 
 ## Pending Hooks
 
-- sim-rival.js: call the controller behind cpu-crews, retaining native car
-  contacts, bounds and lap handling for stopped cars.
-- combat-ai.js: suppress a stopped car's own weapon fire.
 - combat-projectiles.js: enemy-owned RPG guidance and CPU fighter bodies.
 - feature-flags.js: cpu-crews dev switch; independent off/on tests first.
 - crew-gear/contacts.js and signature.js: CPU fighter/turret targeting.
@@ -87,12 +84,14 @@ gate, build, browser, audio and source review remain unmeasured. Not merge-ready
   changing race state. audio.js: native exit/return playback and repair placement.
 - tools/combat-balance.mjs: switch-on thirty-race check.
 
-Arsenal owns its shared hooks until reviewed merge. No pending shared file
-was edited. Current integration release docs arrived through a whole-branch
-merge and were preserved as received.
+Arsenal's whole merge is synced. Remaining shared hooks wait for Convoy's
+whole merge. No pending shared file was edited; incoming release docs were
+preserved as received.
 
 ## Removed
 
 The obsolete unanswered rule question and source-not-started note were
 replaced by the settled answer and current evidence. No runtime path is
 replaced or removed. Unattributed CPU action cues were replaced in place.
+Ordinary drive and fire paths no longer run for a stopped crew; no duplicate
+vehicle solver or charge inventory was introduced.

@@ -14,6 +14,7 @@ import {stepKnock, stepPhysicalWreck, stepWreckSlide} from './vehicle-knock.js';
 import {explodeTrafficWreck} from './sim-contacts.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 import {targetIdentity} from './arsenal/targeting.js';
+import {stepCpuCrew, cpuCrewStopped} from './crew-gear/cpu-crews.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -136,6 +137,28 @@ export function _rival(dt, opponent = this.state.rival) {
   r.contactCooldown = Math.max(0, (r.contactCooldown || 0) - dt);
   r.ramRecoverySec = Math.max(0, (r.ramRecoverySec || 0) - dt);
   r.braking = false; r.yieldingToPlayer = false;
+  const crewControlled = stepCpuCrew(this, r, dt,
+    {enabled: this.featureFlags?.enabled('cpu-crews') === true});
+  if (crewControlled || cpuCrewStopped(r)) {
+    // The stop owns powered motion; contacts and recovery still own the car.
+    if (!crewControlled) {r.speedMph = 0; r.braking = true; r.boosting = false;}
+    r.lateral += r.pushVelocity * dt;
+    r.s += carAlongPush(r) * dt /
+      Math.max(.25, 1 - this.course.at(r.s).curvature * r.lateral);
+    const pushDamping = Math.exp(-1.5 * dt);
+    r.pushVelocity *= pushDamping;
+    dampCarAlongPush(r, pushDamping);
+    if (!this._ramFlight(r, dt)) this._jump(r, dt);
+    this._staticContacts(r, false);
+    if (r.combatWrecking) return;
+    this._boundary(r); this._crushProps(r); this._advanceLaps(r, dt);
+    if (r.completedLaps >= s.lapsTotal) {
+      r.finished = true; r.finishTime = s.stageTimeSec;
+      const index = s.opponents.indexOf(r);
+      this.emit(index <= 0 ? {rivalFinished: true} : {opponentFinished: index});
+    }
+    return;
+  }
   // CPU pace is independent of the player's manual/automatic gearbox.
   const skill = CPU_DIFFICULTY[s.cpuDifficulty], car = this.rivalSpec || CARS[s.car];
   // On Wasteland's long circuit, Easy needs enough road speed to stay in

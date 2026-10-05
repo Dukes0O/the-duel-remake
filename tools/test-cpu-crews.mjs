@@ -119,6 +119,33 @@ test('native combat AI suppresses car weapons while its actual crew is repairing
   equal(f.rival.cpuCrew.phase, 'repair', 'moving the enemy into weapon range does not fabricate a completed stop');
 });
 
+test('native stopped crew holds defensive pickup charges until returning to the car', () => {
+  const ready = race({cpuEnabled: false});
+  ready.state.combat.cpuPickupCharges.star = 1;
+  stepCombatAI(ready.duel, DT);
+  equal(ready.state.combat.cpuPickupCharges.star, 0,
+    'a ready native car still spends its collected shield normally');
+
+  const f = actualControllerRepair(), shots = [];
+  f.state.combat.cpuPickupCharges.star = 1;
+  f.duel.onChange((_state, event) => {if (event.weaponFired && event.enemy) shots.push(event.weaponFired);});
+  stepCombatAI(f.duel, DT);
+  equal(f.state.combat.cpuPickupCharges.star, 1,
+    'the parked car cannot spend a defensive pickup while its fighter is outside');
+  equal(shots, [], 'the defensive path creates no vehicle weapon event');
+
+  for (let n = 0; n < 600 && f.rival.cpuCrew.phase !== 'driving'; n++) {
+    f.state.stageTimeSec += DT;
+    stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  }
+  equal(f.rival.cpuCrew.phase, 'driving', 'the real repair controller returns its fighter to the car');
+  const before = f.rival.s;
+  f.duel._rival(.25, f.rival);
+  ok(f.rival.s > before && f.rival.speedMph > 0, 'native driving resumes after the fighter returns');
+  stepCombatAI(f.duel, DT);
+  equal(f.state.combat.cpuPickupCharges.star, 0, 'the returned driver can use its retained shield');
+});
+
 test('all native computer cars receive valid repeatable seeded crews', () => {
   function selected() {
     const f = race({opponents: 3}); tick(f);

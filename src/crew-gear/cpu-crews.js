@@ -42,6 +42,10 @@ export function cpuCrewFighters(duel) {
     ? [{actor, fighter: actor.cpuCrew.fighter}] : []);
 }
 
+export function cpuCrewStopped(actor) {
+  return !!actor.cpuCrew && actor.cpuCrew.phase !== 'driving';
+}
+
 function finishStop(duel, actor, {repairCompleted = false} = {}) {
   const crew = actor.cpuCrew;
   if (crew.fighter?.repairing) duel.emit({
@@ -132,7 +136,17 @@ function pullOver(duel, actor, crew, dt) {
     Math.max(.25, 1 - duel.course.at(actor.s).curvature * actor.lateral);
   crew.stopSeconds += dt;
   if (Math.abs(delta) <= .25 && actor.speedMph <= 1) {
-    actor.speedMph = 0; crew.phase = crew.stopKind;
+    actor.speedMph = 0;
+    // Contact correction can also rotate the shell. Finish settling before
+    // placing its fighter so the next stationary step cannot move it away.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const s = actor.s, lateral = actor.lateral, heading = actor.headingError;
+      actor.prevS = actor.s; actor.prevLateral = actor.lateral;
+      duel._staticContacts(actor, false); duel._boundary(actor);
+      if (actor.s === s && actor.lateral === lateral && actor.headingError === heading) break;
+    }
+    actor.prevS = actor.s; actor.prevLateral = actor.lateral;
+    crew.phase = crew.stopKind;
     crew.fighter = besideCar(duel, actor, crew);
     crew.stopSeconds = 0;
     duel.emit({cpuCrewExited: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
