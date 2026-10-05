@@ -5,6 +5,7 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {CREW} from '../src/crew.js';
 import {stepRaiders, damageRaider} from '../src/raiders.js';
 import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
+import {stepCombatAI} from '../src/combat-ai.js';
 import {EngineAudio} from '../src/audio.js';
 import {FIGHT_VOICE_LINES, readFightSubtitle} from '../src/fight-voices.js';
 
@@ -16,10 +17,10 @@ const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual
 const ok = (actual, message) => { checks++; assert.ok(actual, message); };
 test.after(() => console.log(`Computer crews: ${checks} acceptance checks executed.`));
 
-function race({difficulty = 'medium', enabled = true, discovered = true,
+function race({difficulty = 'medium', enabled = true, cpuEnabled = true, discovered = true,
     seed = 3004, opponents = 1, mode = 'wasteland'} = {}) {
   const duel = new Duel({seed, featureFlags: createFeatureFlags({storage: null,
-    qa: true, overrides: {'crew-gear': enabled}})});
+    qa: true, overrides: {'crew-gear': enabled, 'cpu-crews': cpuEnabled}})});
   duel.startCampaign({mode, car: 'falcone_f42', driverId: 'club',
     discoveredGate: discovered, opponentCount: opponents, seed, cpuDifficulty: difficulty});
   const state = duel.state, rival = state.opponents[0];
@@ -57,6 +58,66 @@ function ambushRace(options = {}) {
   f.state.s = f.state.prevS = zone.s - 250;
   return f;
 }
+
+test('released crew gear does not implicitly admit computer crews', () => {
+  const defaults = createFeatureFlags({storage: null, qa: false});
+  equal(defaults.enabled('crew-gear'), true, 'the existing released crew gear remains enabled');
+  equal(defaults.enabled('cpu-crews'), false, 'new computer behavior is off without its own request');
+  const f = race({cpuEnabled: false}); f.rival.armor = 29;
+  tick(f, 120);
+  equal(f.duel.featureFlags.enabled('crew-gear'), true, 'the CPU-only off control retains released player gear');
+  equal(f.duel.featureFlags.enabled('cpu-crews'), false, 'the explicit off control does not admit computer crews');
+  equal(f.rival.cpuCrew, undefined, 'an off native race creates no computer crew controller');
+  ok(f.rival.speedMph > 1, 'the off native computer continues ordinary driving');
+});
+
+test('computer crews have their own explicitly requested dev admission', () => {
+  const f = race();
+  equal(f.duel.featureFlags.state('cpu-crews'), 'dev', 'computer behavior has its own dev switch, not released crew gear');
+  equal(f.duel.featureFlags.enabled('cpu-crews'), true, 'the native acceptance fixture explicitly requests computer crews');
+  f.rival.armor = 29; tick(f);
+  ok(stopped(f.rival), 'the explicitly admitted native computer begins its eligible repair stop');
+});
+
+function actualControllerRepair() {
+  const f = race(); f.rival.armor = 29;
+  for (let n = 0; n < 1200 && f.rival.cpuCrew?.phase !== 'repair'; n++) {
+    f.state.stageTimeSec += DT;
+    stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  }
+  equal(f.rival.cpuCrew?.phase, 'repair', 'the actual controller pulls over and creates its repair stop');
+  ok(f.rival.cpuCrew.fighter && f.rival.speedMph <= 1,
+    'a real parked fighter exists before probing the held native callers');
+  return f;
+}
+
+test('native rival motion cannot drive a real repairing computer away from its fighter', () => {
+  const f = actualControllerRepair();
+  const at = {s: f.rival.s, lateral: f.rival.lateral};
+  f.duel._rival(.25, f.rival);
+  ok(f.rival.speedMph <= 1, 'the native rival caller keeps the repairing car parked');
+  equal({s: f.rival.s, lateral: f.rival.lateral}, at,
+    'the native rival caller leaves the parked car beside its actual repair fighter');
+  equal(f.rival.cpuCrew.phase, 'repair', 'the native stop remains in progress');
+});
+
+test('native combat AI suppresses car weapons while its actual crew is repairing', () => {
+  function carShots(f) {
+    const shots = [];
+    f.rival.weaponLoadout = ['crossbow'];
+    f.state.s = f.state.prevS = f.rival.s + 40;
+    f.state.lateral = f.state.prevLateral = f.rival.lateral;
+    f.state.combat.aiTimer = 0;
+    f.duel.onChange((_state, event) => {if (event.weaponFired && event.enemy) shots.push(event.weaponFired);});
+    stepCombatAI(f.duel, DT);
+    return shots;
+  }
+  equal(carShots(race({cpuEnabled: false})), ['crossbow'],
+    'the same ready native car can fire normally when no crew stop exists');
+  const f = actualControllerRepair();
+  equal(carShots(f), [], 'native combat AI cannot fire the parked car weapons while its crew is outside');
+  equal(f.rival.cpuCrew.phase, 'repair', 'moving the enemy into weapon range does not fabricate a completed stop');
+});
 
 test('all native computer cars receive valid repeatable seeded crews', () => {
   function selected() {

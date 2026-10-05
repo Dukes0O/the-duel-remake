@@ -49,6 +49,14 @@ or queued player caption, and leaves the next native player Crossbow action
 able to announce Rook once with the exact kept caption. The actual player
 positive control also passes. No Voice or other shared source was edited.
 
+Controller preparation on 8932f6b7 adds only an explicit cpu-crews fixture
+request under the board grant; all old assertions remain exact. Four new
+native cases give one pass and three reds: missing dev admission, a real
+repair stop driven away by sim-rival, and native combat AI firing Crossbow
+while that actual crew is outside. Default/off driving and ready-car fire
+controls pass. Whole focused suite: 27 cases, 78 checks, 18 pass and nine red;
+the six original caller failures remain. No fake crew records or source edits.
+
 Direct controller probes pass Odessa's 40-armor/two-second repair and the
 three-second knockdown/respawn through damageRaider. Eight seeded crew probes
 use real stepProjectiles and finish with three attacks; Dune fires only bolts,
