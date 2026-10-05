@@ -1,6 +1,6 @@
 # WAR-03a: Gearhead Gunn
 
-Gunn's rules, approved turret and native recording are built; listening and final gates remain.
+Gunn's rules, approved turret and native recording are built; final gates remain.
 
 ## Changed
 
@@ -23,7 +23,7 @@ Gunn's rules, approved turret and native recording are built; listening and fina
   stay in scratch; none of the nine approved kit recipes or models changed.
 - Existing scenario keeps its motion/art modes; opt-in GUNN_AUDIO_REVIEW=1
   records real-time native tell/lock/window capture at native rate, WAV stems
-  and a compressed final mix for listening. Recording passed; no ear verdict yet.
+  and a compressed final mix for listening. Kyle approved it on 5 October 2026.
   Actual App entry and one approved clear pose precede real physics throughout.
 - Gunn's native tell names arena.gunn-barrage and keeps its settled seconds
   and position. A switched procedural rising whine fits the shortest tell;
@@ -69,9 +69,10 @@ Gunn's rules, approved turret and native recording are built; listening and fina
   surface plus clearance; fit/geometry/trajectory assertions stay exact.
   Native/art 31/514 pass, including fresh imports; vehicle grounding passes
   4,967 checks across nine models. Moved point function is byte-exact.
-- Lanes stopped at 109/1/245, logged 108/1/246, then 114/1/240. Core and wave-one
-  audio preservation fixtures omitted the additive whine. Director approved
-  only that cue's admission in both; historical hashes and other pins stay.
+- Core and wave-one old-bank fixtures now admit only the new cue; exact old hashes stay.
+  Earlier lanes stopped at 109/1/245, logged 108/1/246, then 114/1/240. Targeted
+  core 14/14 and wave-one 36/36 pass. Review-evidence then stopped at 291/1/63:
+  both existing review notes now use required -review.md names, with exact contents.
 - Whole integration 872ea0b1 is received in db3dc2fa. Approved launcher/catalog
   union keeps every released state and existing dev flag, adding Gunn to thirteen.
   Current Gunn/art/flags/beta 45 cases, Convoy 42/390 and Ambush 35/797 pass;
@@ -87,14 +88,12 @@ Gunn's rules, approved turret and native recording are built; listening and fina
 - Claude approved round two on 5 October 2026; no third round. Whole source
   review is clear. Real-time capture: private 31658, zero errors/warnings, 48 kHz
   stereo, 9.13 s, final peak 0.799, unchanged memory career and zero paused voices.
-  Tell 5.0 s, rockets 5.5/5.75/6.0 s, cooled 9.042 s; ear verdict and lane/build remain.
+  Tell 5.0 s, rockets 5.5/5.75/6.0 s, cooled 9.042 s; lane/build remain.
 
 ## Removed
 
-Round-one GLB and broad texture bands are replaced, not retained. Approved
-textures and nine fitted kits stay exact. Old unanswered move questions,
-parallel-ray assertion, renderer fight imports and invalid capture fixtures
-were already removed. No existing Rocket Pods behavior was removed.
-The new cue is additive; prior sound recipes and runtime assets stay exact.
-The duplicate surface policy was removed from vehicle-grounding; its public
-exports remain. Raw-ground mouth expectations are replaced by established lift.
+Round-one GLB and broad bands are replaced. Approved textures/nine kits stay exact.
+Old unanswered questions, parallel-ray assertion, renderer fight imports and invalid
+fixtures were removed. Rocket Pods behavior, prior cues and assets stay exact.
+Duplicate surface policy is replaced by shared exports; mouths use established lift.
+Old review-note filenames are removed; renamed notes retain exact contents.
