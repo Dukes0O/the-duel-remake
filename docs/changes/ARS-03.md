@@ -64,7 +64,7 @@ all refusal/no-write assertions remain. The released Arsenal expectation is
 on instead of dev; its released-state invariant is unchanged. The catalog has
 nine entries: five released on, Voice/wave-three dev, other values exact.
 
-Whole Voice and integration bases transfer, ending at `15b9c458`; incoming
+Whole Voice and integration bases transfer, ending at `68272483`; incoming
 README/VERIFICATION remain byte-exact. Earlier simulation freeze is `2f094ee8`;
 audio routing is `7ac1f37a`, pulse-only volume 3.5 to 5.5 is `68a08785`.
 Independent preservation proves 110 earlier cues, six exports, 49 earlier
@@ -86,7 +86,7 @@ Reviewed `3309f22f`: ramp 42, native 99/552, ramming 13, replay 162/combat 12 pa
 Failed audio gate `d6971001`: 149 pass/one fail/201 not run, 303.52 s; unavailable LUFS.
 Only Wave Three joins existing analysis padding: raw 22/27, padded 27/27; all peaks
 match, loudest -2.40 dBTP. Files/hashes, old paths, assertions and limits stay exact.
-Combat audio 11/11 passes; independent input review and fresh lane/build pending.
+Combat audio 11/11 passes; input review CLEAR `abee63c`; fresh lane/build pending.
 
 ## Removed
 
