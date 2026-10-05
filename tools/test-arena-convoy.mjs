@@ -21,6 +21,12 @@ import {convoyValvePoints} from '../src/arena/convoy.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {PLAYERS_KEY} from '../src/progression.js';
 import {thinkBrain} from '../src/arena/arena-brains.js';
+import {CONVOY_BODY} from '../src/arena/modes/convoy-raid.js';
+import {startRocketVolley, ROCKET_RULES} from '../src/arsenal/rockets.js';
+import {launchHarpoon} from '../src/arsenal/harpoon.js';
+import {carEffect, carAlongPush, stepCarEffects} from '../src/arsenal/car-effects.js';
+import {point} from '../src/combat-weapons.js';
+import {sweepObstacle} from '../src/collision.js';
 
 // ARENA-07: native rules and the pure settlement contract settled on 4 October.
 const DT = 1 / 120;
@@ -631,4 +637,154 @@ test('native Odessa turret reports its swept body contact, with unchanged neares
       shots[0].hit.z - shots[0].point.z) < 1e-6,
     'native turret footGearHit/combatHit must report the actual swept contact, not the aimed body centre');
   } finally {stop();}
+});
+
+function ordinaryProjectileFight() {
+  const duel = new Duel({seed: 307, featureFlags: createFeatureFlags({storage: null, qa: true})});
+  duel.state.wastelandGateDiscovered = true;
+  equal(duel.startArenaEvent({venueId: 'salt-flats', mode: 'last-car-rolling',
+    car: 'falcone_f42', opponents: [{car: 'dusthawk_rally'}]}), true,
+  'the ordinary-car control enters the released native Salt fight');
+  duel.state.countdown = 0; duel.step(DT); duel.step(DT);
+  for (const p of duel.state.arena.participants) p.protectedSec = 0;
+  duel.state.invulnerableSec = duel.state.combat.shield = duel.state.combat.rivalShield = 0;
+  duel.state.combat.aiTimer = Infinity;
+  const car = duel.state.opponents[0], at = duel.course.groundAt(car.s, car.lateral);
+  placeActor(duel, car, {s: car.s, lateral: car.lateral}, 0);
+  car.pushVelocity = 0; car.combatShield = 0;
+  placeActor(duel, duel.state, duel.course.nearest(at.x - Math.cos(at.heading) * 20,
+    at.z + Math.sin(at.heading) * 20, car.s), 0);
+  return {duel, car};
+}
+function nativeRocketAt(duel, target) {
+  const at = point(duel, duel.state);
+  duel.state.headingError = Math.atan2(target.x - at.x, target.z - at.z) - at.heading -
+    ROCKET_RULES.bearings[0] * Math.PI / 180;
+  const volley = startRocketVolley(duel, duel.state);
+  ok(volley, 'the actual native player Rocket Pods producer creates a volley');
+  const shot = duel.state.combat.projectiles.find(p => p.id === volley.shotIds[0]);
+  ok(shot, 'the tested rocket is the real first native volley shot');
+  return shot;
+}
+function resolveNativeProduct(duel, shot) {
+  const events = [], stop = duel.onChange((_state, event) => events.push(event));
+  try {
+    for (let n = 0; n < 240 && duel.state.combat.projectiles.includes(shot); n++) stepProjectiles(duel, DT);
+    ok(!duel.state.combat.projectiles.includes(shot), 'the native projectile path consumes the actual product once');
+    return events;
+  } finally {stop();}
+}
+function requireNativeTankerSpec(f) {
+  const spec = f.duel._vehicleSpec(f.rig);
+  equal({mass: spec.mass, halfWidth: spec.halfWidth, halfLength: spec.halfLength, height: spec.height},
+    CONVOY_BODY, 'geometry witnesses require the real native tanker spec, never an overridden Stuttgart box');
+  f.rig.speedMph = 0;
+  f.duel.state.opponents.slice(1).forEach((car, i) => placeActor(f.duel, car,
+    {s: f.rig.s - 100 - i * 40, lateral: f.rig.lateral}, 0));
+}
+function placeBesideValve(f, index = 0, distance = 20) {
+  const valve = convoyValvePoints(f.duel, f.rig)[index];
+  const at = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
+  placeActor(f.duel, f.duel.state, f.duel.course.nearest(valve.x + Math.cos(at.heading) * distance,
+    valve.z - Math.sin(at.heading) * distance, f.rig.s), 0);
+  return valve;
+}
+function measuredRocketBodyContact(duel, shot, car) {
+  const ground = duel.course.groundAt(car.s, car.lateral), spec = duel._vehicleSpec(car);
+  const from = {x: shot.x, y: shot.y, z: shot.z};
+  const to = {x: shot.x + shot.vx, y: shot.y + shot.vy, z: shot.z + shot.vz};
+  const hit = sweepObstacle(from, to, {...ground, y: ground.y + (car.airHeight || 0),
+    halfX: spec.halfWidth, halfZ: spec.halfLength, height: spec.height, shape: 'box'},
+  0, {halfWidth: .08, halfLength: .08, height: .16});
+  ok(hit, 'the unmodified native rocket ray crosses the actual actor body');
+  return {x: from.x + (to.x - from.x) * hit.t, y: from.y + (to.y - from.y) * hit.t,
+    z: from.z + (to.z - from.z) * hit.t};
+}
+
+test('geometry transfer: ordinary car native Rocket Pods still removes ten armor once', () => {
+  const {duel, car} = ordinaryProjectileFight(), armor = car.armor;
+  const shot = nativeRocketAt(duel, point(duel, car)), events = resolveNativeProduct(duel, shot);
+  equal(car.armor, armor - 10, 'ordinary-car Rocket Pods damage remains exactly ten armor');
+  equal(events.filter(e => e.arsenalCue === 'weapon.rockets.hit').length, 1, 'one real rocket emits one ordinary blast');
+  stepProjectiles(duel, DT);
+  equal(car.armor, armor - 10, 'retired ordinary rocket cannot apply damage twice');
+});
+
+test('geometry transfer: ordinary car native Harpoon keeps six armor, sideways yank and three-second tether', () => {
+  const {duel, car} = ordinaryProjectileFight(), armor = car.armor;
+  const shot = launchHarpoon(duel, duel.state, false, 0);
+  ok(shot, 'the real ordinary player Harpoon producer launches');
+  const events = resolveNativeProduct(duel, shot), effect = carEffect(car, 'tether');
+  equal(car.armor, armor - 6, 'ordinary Harpoon damage remains six armor');
+  ok(Math.abs(Math.hypot(car.pushVelocity, carAlongPush(car)) - 6) < 1e-6,
+    'the native ordinary target receives its unchanged six-metres-per-second sideways yank');
+  equal(effect?.remainingSec, 3, 'the actual ordinary hit installs the unchanged three-second tether');
+  equal(effect?.topSpeed, .8, 'the actual tether retains its 80-percent speed ceiling');
+  equal(events.filter(e => e.arsenalCue === 'weapon.harpoon.hit').length, 1, 'one real Harpoon emits one ordinary hit');
+  stepProjectiles(duel, DT); equal(car.armor, armor - 6, 'consumed ordinary Harpoon cannot hit twice');
+  stepCarEffects(car, 3 - DT); ok(carEffect(car, 'tether'), 'native effect aging preserves the tether before its deadline');
+  stepCarEffects(car, DT); equal(carEffect(car, 'tether'), null, 'native effect aging removes the tether at three seconds');
+});
+
+test('geometry transfer: native rig size is the prerequisite for real tanker projectile witnesses', () => {
+  requireNativeTankerSpec(exposedFight());
+});
+
+test('geometry transfer: native Harpoon routes its measured impact to the nearest actual valve', () => {
+  const f = exposedFight(); requireNativeTankerSpec(f); placeBesideValve(f);
+  const shot = launchHarpoon(f.duel, f.duel.state, false, 0), armor = f.rig.armor;
+  ok(shot && shot.targetId === f.rig.arenaId, 'the actual Harpoon acquires the real native tanker participant');
+  const at = point(f.duel, f.rig), radius = f.duel._vehicleSpec(f.rig).halfWidth + COMBAT_TUNING.projectileRadiusPadding;
+  const dx = shot.x - at.x, dz = shot.z - at.z, speedSquared = shot.vx ** 2 + shot.vz ** 2;
+  const b = 2 * (dx * shot.vx + dz * shot.vz);
+  const arrival = (-b - Math.sqrt(b * b - 4 * speedSquared * (dx * dx + dz * dz - radius ** 2))) / (2 * speedSquared);
+  ok(Number.isFinite(arrival) && arrival > 0, 'the real Harpoon crosses the native stationary vehicle contact envelope');
+  const expected = {x: shot.x + shot.vx * arrival, y: shot.y + shot.vy * arrival, z: shot.z + shot.vz * arrival};
+  const events = resolveNativeProduct(f.duel, shot);
+  const hit = events.find(e => e.arsenalCue === 'weapon.harpoon.hit' && e.projectile === shot)?.hitPosition;
+  ok(hit && Math.hypot(hit.x - f.at.x, hit.z - f.at.z) > .5,
+    'native Harpoon reports a measured surface impact rather than the aimed rig centre');
+  ok(Math.hypot(hit.x - expected.x, hit.y - expected.y, hit.z - expected.z) < 1e-5,
+    'native Harpoon retains the actual first swept contact, not an arbitrary off-centre point');
+  const distances = convoyValvePoints(f.duel, f.rig).map(p => Math.hypot(p.x - hit.x, p.y - hit.y, p.z - hit.z));
+  const nearest = distances.indexOf(Math.min(...distances));
+  equal(f.duel.state.arena.convoy.valves, [150, 150, 150].map((hp, i) => i === nearest ? hp - 6 : hp),
+    'the six native Harpoon damage reaches only the valve nearest its actual impact');
+  equal(f.rig.armor, armor, 'Harpoon cannot drain the rigid tanker body');
+  equal(f.rig.combatWrecking, false, 'the actual Harpoon cannot cause an ordinary tanker wreck');
+});
+
+test('geometry transfer: native Rocket Pods forwards its real blast point and radius to every reached valve', () => {
+  const f = exposedFight(); requireNativeTankerSpec(f); const valve = placeBesideValve(f);
+  const shot = nativeRocketAt(f.duel, valve), expected = measuredRocketBodyContact(f.duel, shot, f.rig);
+  const distances = convoyValvePoints(f.duel, f.rig).map(p => Math.hypot(p.x - expected.x, p.y - expected.y, p.z - expected.z));
+  ok(distances.some(d => d <= ROCKET_RULES.blastRadius), 'the real first-contact blast physically reaches an authored valve');
+  const armor = f.rig.armor, events = resolveNativeProduct(f.duel, shot);
+  const impact = events.find(e => e.arsenalCue === 'weapon.rockets.hit' && e.projectile === shot)?.hitPosition;
+  ok(impact && Math.hypot(impact.x - expected.x, impact.y - expected.y, impact.z - expected.z) < 1e-5,
+    'the actual Rocket Pods blast retains its independently measured first swept body contact');
+  equal(f.duel.state.arena.convoy.valves, distances.map(d => d <= ROCKET_RULES.blastRadius ? 140 : 150),
+    'the native two-metre blast damages every reached valve by ten, with no centre substitution');
+  equal(f.rig.armor, armor, 'the actual rocket blast leaves rigid body armor unchanged');
+});
+
+test('geometry transfer: an ordinary-car Rocket blast reaches a valve with the tanker centre outside its radius', () => {
+  const f = exposedFight(); requireNativeTankerSpec(f); const valve = placeBesideValve(f);
+  const escort = f.duel.state.opponents[1], at = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
+  placeActor(f.duel, escort, f.duel.course.nearest(valve.x + Math.cos(at.heading) * 1.8,
+    valve.z - Math.sin(at.heading) * 1.8, f.rig.s), 0);
+  const shot = nativeRocketAt(f.duel, point(f.duel, escort));
+  const impact = measuredRocketBodyContact(f.duel, shot, escort), armor = f.rig.armor, escortArmor = escort.armor;
+  const centre = point(f.duel, f.rig), distances = convoyValvePoints(f.duel, f.rig)
+    .map(p => Math.hypot(p.x - impact.x, p.y - impact.y, p.z - impact.z));
+  ok(Math.hypot(centre.x - impact.x, centre.y - impact.y, centre.z - impact.z) > ROCKET_RULES.blastRadius,
+    'the genuine primary-car blast is outside the tanker centre radius');
+  ok(distances.some(d => d <= ROCKET_RULES.blastRadius), 'at least one real valve is still inside that actual blast');
+  const events = resolveNativeProduct(f.duel, shot), hit = events.find(e => e.arsenalCue === 'weapon.rockets.hit')?.hitPosition;
+  ok(hit && Math.hypot(hit.x - impact.x, hit.y - impact.y, hit.z - impact.z) < 1e-5,
+    'the native first impact is the nearby ordinary car, not the tanker centre');
+  equal(f.duel.state.arena.convoy.valves, distances.map(d => d <= ROCKET_RULES.blastRadius ? 140 : 150),
+    'rig eligibility follows real valve distances even when its centre is outside the blast');
+  equal(f.rig.armor, armor, 'nearby native splash cannot drain rigid tanker body armor');
+  equal(escort.armor, escortArmor - 10, 'the primary ordinary escort still receives the established ten armor damage');
 });

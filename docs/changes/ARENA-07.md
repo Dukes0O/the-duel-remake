@@ -29,9 +29,7 @@ The native audio routing hook remains held for the sequential ARS handoff.
 
 ## Checks
 
-Independent tests before source: c5c3c72 (15 cases, 14 red), plate/deadline
-02064cab (22 cases, 10 red), turret 16a014a3 (23 cases, 10 red).
-Before caller additions: 23 cases and 158 checks, 14 pass and 9 held reds.
+Tests-first c5c3c72, 02064cab, 16a014a3: before callers, 23/158, 14 pass/9 red.
 Native plate admission, mounting and wrong-surface rejection pass. Both legal
 deadline plants retain the original hold and full fuse without early reset or
 timeout; their finish still needs the held central convoyCharge wreck hook.
@@ -55,10 +53,9 @@ Events now retain hitPosition or contactPoint; only unmeasured hits fall back.
 A native three-case witness checks impact, contact and body fallback. Crew gear
 33 checks and replay fingerprints 12 checks across 4 encounters pass again.
 
-Fixture correction: 3.5 m at the rig centre was the lamp envelope, not roof.
-The approved amber plate is 3.02 m high, 2.444 m behind centre, half-width
-0.699 m and half-length 1.242 m. Native hold/fuse assertions stay unchanged;
-new checks reject cab, both plate edges, lamps and upward crossings.
+Fixture correction: centre height 3.5 m was lamps, not roof. The real plate is
+3.02 m high, 2.444 m back, half-width 0.699 m, half-length 1.242 m. Native hold/fuse
+stays exact; new checks reject cab, both plate edges, lamps and upward crossings.
 
 The added deadline fixtures open valves through production damageConvoyValves
 and advance the clock through production stepConvoyRaid before native game
@@ -69,14 +66,17 @@ checks one native result and one settlement; the unplanted event loss does too.
 Nine held failures: projectile valve hit, two blast/charge-entry cases, two
 deadline finishes, App unlock, dev flag, rig mass and wrong-venue admission.
 
-Caller tests on 4af67813: nine cases, 68 checks, two pass and seven red.
-Reds prove ungated entry, native bolt leaving valves intact, solver ram
-draining body armor, rig Bomb/Star/UFO during fight and real pending fuse,
-early charge damage and missing App Retry. Actual seeded crate collection,
-guard response and escort weapons pass. Native App timeout pays 144 once;
-failed writes preserve memory bytes and expose no early pay. The production
-App fight initializer bypasses only the held public allow-list. Original
-23-case assertions remain exact; no source or heavy work in this checkpoint.
+Caller tests on 4af67813: nine cases/68 checks, two pass/seven red: entry,
+bolt valves, ram body damage, rig fight/fuse weapons, early charge and Retry.
+Seeded pickups, guard response/escort weapons and App timeout paying 144 once
+pass; failed writes keep bytes/no early pay. The real App initializer bypasses
+only the held allow-list. Original 23 cases stay exact; no source/heavy work.
+
+Geometry slice before repair: 38 cases/250 checks, 17 pass/21 red. Rocket
+spawn at lateral 29 hit container-boundary-37 at t=0, not the unshielded car.
+Only its new fixture moved inward to lateral -11; ten-armor/once checks stay
+exact. Rerun: 38 cases/252 checks, 18 pass/20 red. Rocket and Harpoon controls
+pass; spec plus three rig cases stay red at native 1450 kg/2.35/1.02/1.35.
 
 The Convoy-only landing search checks open floor beside the real body. Generic
 perimeter candidates hit Salt's walls. Both paths keep fixed candidate order
@@ -86,14 +86,14 @@ Focused laptop headless checks only. Latest build, broad and browser checks
 await Director clearance. First owned-source db062fd5 build, existing arena
 event 13 cases and settlement 9 cases passed. No authored assertion was edited.
 
-Native damage/spec/admission/render hooks, laptop browser,
-audio, balance, save review, code review and the exact lane gate remain open.
-Held files include combat-armor/projectiles/AI, sim-contacts, Game/App/flags,
-renderer, arena screens/HUD and audio. No unfinished peer source was received.
-Whole-base full passed 348 suites. No release or real storage work; no merge.
+Native damage/spec/entry/render hooks and all final reviews/gates remain open.
+Held: combat armor/projectiles/AI, sim contacts, Game/App/flags, renderer,
+arena screens/HUD and audio. No unfinished peer source was received.
+Whole-base full passed 348 suites. No release, real storage work or merge.
 
 ## Removed
 
 The stale unanswered rule questions were replaced by the settled build rules.
 Superseded check summaries were folded into the current verdict. Measured hit
 events no longer use the old body-centre substitution.
+The new control's wall-blocked launch fixture was replaced, not bypassed.
