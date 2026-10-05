@@ -538,14 +538,16 @@ test('the nine-metre attack stop is decided on each native fixed tick at every f
   }
 });
 
-test('every initial Ambush fighter has the same health perk as their normal native exit', () => {
+test('every initial Ambush fighter has the same crew stats as their normal native exit', () => {
   for (const crewId of Object.keys(CREW)) {
-    const f = fight({crewId}), initial = {health: f.state.fighter.health, maximum: f.state.fighter.maxHealth};
+    const f = fight({crewId}), initial = {health: f.state.fighter.health,
+      maximum: f.state.fighter.maxHealth, sprint: f.state.fighter.sprintMultiplier || 1};
     initializeFootTransition(f.duel); f.state.input.interact = true;
     for (let n = 0; n < 50; n++) stepFootTransition(f.duel, DT);
     equal(f.state.onFoot, true, `${crewId} exits through the real normal transition`);
-    equal(initial, {health: f.state.fighter.health, maximum: f.state.fighter.maxHealth},
-      `${crewId} initial admission preserves their existing health perk`);
+    equal(initial, {health: f.state.fighter.health, maximum: f.state.fighter.maxHealth,
+      sprint: f.state.fighter.sprintMultiplier || 1},
+      `${crewId} initial admission preserves their existing crew stats`);
   }
 });
 

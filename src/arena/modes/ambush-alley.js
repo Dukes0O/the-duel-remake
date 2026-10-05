@@ -186,6 +186,7 @@ export function initializeAmbushAlley(duel) {
   state.fighter.maxHealth = Math.round(state.fighter.health *
     (crewPerks(state.fighter.crewId).healthMultiplier || 1));
   state.fighter.health = state.fighter.maxHealth;
+  state.fighter.sprintMultiplier = crewPerks(state.fighter.crewId).sprintMultiplier || 1;
   state.onFoot = true;
   startWave(duel, 1);
   return true;
