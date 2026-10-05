@@ -15,9 +15,9 @@ The reward is existing Warlord plating on any unlocked car, +30 armor and +270 k
 
 ## Checks
 
-Native controls are written first for entry, gate geometry, repeatability,
-core-only damage, valve phase trigger and real boarding charge victory.
-Execution is queued behind the Director's exclusive heavy slot.
+Native controls were written first. After the native entry fix, four focused
+fight/pay suites pass 117 cases and 1,095 checks on `f395b140`; ten preservation
+suites pass 61 cases. The added fresh-import fix awaits its focused check.
 
 The two old audio preservation fixtures admit only the new `arena.toll-gate`
 cue and catalog row. Their old hashes, metadata and runtime files stay exact.
@@ -45,6 +45,11 @@ or tolerance changed. The new local klaxon is encoded; listening is not approved
 A fresh native boss-module import exposed a registry cycle. Its immutable
 entry now reads the hook lazily; the additive fresh-process control preserves
 the exact hook and most-rear valve. No simulation rule changed.
+The owned browser recipe now uses the agreed 1280 by 720 laptop view. Its
+optional listening path records one real-time native tell, gate and cooled
+window with engine, then pauses. The six-to-nine-second mix and event/callout
+checks follow Gunn's existing PCM recipe. Browser execution and listening
+verdict remain pending; measurements alone do not approve the sound.
 
 ## Removed
 

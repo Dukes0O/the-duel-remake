@@ -1,6 +1,9 @@
 import {build} from 'vite';
-import {resolve} from 'node:path';
+import {resolve, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {writeFile} from 'node:fs/promises';
+import {wavFromPcm} from './audio-race.mjs';
+import {ffmpeg} from '../audio/codec.mjs';
 
 const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
 async function helpers() {
@@ -53,10 +56,91 @@ async function inspection(context, name) {
   await context.evaluate('delete window.__qaApp.inspectionCamera;window.__render.renderFrame();');
 }
 
+async function recordGateAudio(context) {
+  await context.evaluate(`(async()=>{
+    const app=window.__qaApp,audio=app.audio;
+    audio.unlock();audio.setMuted(false);audio.setPaused(false);
+    await Promise.all([audio._samplesPromise,audio._ambiencePromise,audio._cueBuffersPromise]);
+    const ctx=audio.context;
+    if(ctx?.state!=='running'||ctx.sampleRate<44100)throw Error('Native-rate Tollkeeper audio required');
+    const silent=ctx.createGain();silent.gain.value=0;silent.connect(ctx.destination);
+    const r=window.__tollkeeperAudio={sampleRate:ctx.sampleRate,startedAt:ctx.currentTime,
+      profile:JSON.stringify(app.profile),events:[],cues:[],tracks:{},sources:[],silent,sawWindow:false};
+    for(const [name,source] of [['mix',audio.output],['warning',audio.buses.impacts],['engine',audio.buses.engine]]){
+      const processor=ctx.createScriptProcessor(2048,2,2),track={chunks:[],firstPlayback:null};
+      source.connect(processor);processor.connect(silent);r.tracks[name]=track;r.sources.push({source,processor});
+      processor.onaudioprocess=event=>{
+        if(track.firstPlayback===null)track.firstPlayback=event.playbackTime;
+        const left=event.inputBuffer.getChannelData(0),right=event.inputBuffer.getChannelData(1),pcm=new Int16Array(left.length*2);
+        for(let i=0;i<left.length;i++){
+          pcm[i*2]=Math.round(Math.max(-1,Math.min(1,left[i]))*32767);
+          pcm[i*2+1]=Math.round(Math.max(-1,Math.min(1,right[i]))*32767);
+        }track.chunks.push(pcm);
+      };
+    }
+    r.originalPlayCue=audio._playCue;
+    audio._playCue=function(id,options){const voice=r.originalPlayCue.call(this,id,options);
+      if(voice)r.cues.push({id,audioSec:ctx.currentTime-r.startedAt,simSec:app.duel.state.stageTimeSec});return voice;};
+    r.unsubscribe=app.duel.onChange((s,event)=>{
+      const kind=event.arenaTell?'tell':event.warlordWindow?event.warlordWindow.open?'window':'cooled':null;
+      if(!kind)return;if(kind==='window')r.sawWindow=true;
+      r.events.push({kind,audioSec:ctx.currentTime-r.startedAt,simSec:s.stageTimeSec,
+        seconds:event.arenaTell?.seconds,cue:event.arenaTell?.cue,callout:s.callout,
+        gap:s.opponents[0].tollGate.gapCentre,markers:s.arena.markers.filter(m=>m.kind==='light').length});
+    });app.start();
+  })()`);
+  try{
+    await context.waitFor(`(()=>{const a=window.__qaApp,r=window.__tollkeeperAudio;
+      return r.sawWindow&&a.duel.state.opponents[0].tollGate.stage==='idle'&&
+        a.audio.context.currentTime-r.startedAt>=6.5;})()`, 'native gate tell, gap and cooled window', 12000);
+  }finally{
+    await context.evaluate(`(()=>{const a=window.__qaApp,r=window.__tollkeeperAudio;
+      a.stop();r.unsubscribe();a.audio._playCue=r.originalPlayCue;
+      for(const {source,processor} of r.sources){source.disconnect(processor);processor.disconnect();processor.onaudioprocess=null;}
+      r.silent.disconnect();a.audio.setPaused(true);})()`);
+  }
+  const result=await context.evaluate(`(()=>{const a=window.__qaApp,r=window.__tollkeeperAudio,tracks={};
+    if(JSON.stringify(a.profile)!==r.profile)throw Error('Gate listening changed the memory career');
+    if(a.duel.state.status!=='racing'||!r.sawWindow||a.duel.state.opponents[0].tollGate.stage!=='idle')
+      throw Error('Gate listening did not complete the native window');
+    for(const [name,track] of Object.entries(r.tracks)){
+      const pcm=new Int16Array(track.chunks.reduce((n,c)=>n+c.length,0));let at=0;
+      for(const chunk of track.chunks){pcm.set(chunk,at);at+=chunk.length;}
+      const bytes=new Uint8Array(pcm.buffer);let binary='';
+      for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+      let peak=0,energy=0;for(const sample of pcm){const v=sample/32768;peak=Math.max(peak,Math.abs(v));energy+=v*v;}
+      tracks[name]={pcmBase64:btoa(binary),frames:pcm.length/2,audioStartSec:track.firstPlayback-r.startedAt,
+        peak,rms:Math.sqrt(energy/pcm.length)};
+    }
+    return{sampleRate:r.sampleRate,channels:2,tracks,events:r.events,cues:r.cues,
+      liveVoices:[...a.audio.mixer.voices.values()].reduce((n,set)=>n+set.size,0),
+      memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&window.name.startsWith('__duel_qa_tab_v2:'),
+      profileUnchanged:true,listeningApproved:false};})()`);
+  const tells=result.events.filter(e=>e.kind==='tell'),windows=result.events.filter(e=>e.kind==='window'),cooled=result.events.filter(e=>e.kind==='cooled');
+  if(!result.memoryOnly||result.liveVoices||tells.length!==1||windows.length!==1||cooled.length!==1||
+    tells[0].cue!=='arena.toll-gate'||tells[0].callout!=='TOLL GATE!'||
+    windows[0].callout!=='CORE LIT. HIT THE REAR VALVE!'||windows[0].markers!==2||
+    !(windows[0].gap>=3&&windows[0].gap<=9)||!result.cues.some(c=>c.id==='arena.toll-gate')||
+    windows[0].simSec+1/120<tells[0].simSec+tells[0].seconds||cooled[0].simSec+1/120<windows[0].simSec+3)
+    throw Error('Native Tollkeeper listening timing, gap, callout or lifecycle failed');
+  for(const [name,track] of Object.entries(result.tracks)){
+    if(!(track.frames>result.sampleRate*6&&track.frames<result.sampleRate*9&&track.rms>.00001&&track.peak<1))
+      throw Error('Silent, clipped or wrong-length native Tollkeeper '+name+' recording');
+    const wav=wavFromPcm(Buffer.from(track.pcmBase64,'base64'),result.sampleRate,result.channels);
+    track.file='tollkeeper-'+name+'.wav';await writeFile(join(context.outputDir,track.file),wav);
+    if(name==='mix'){
+      const mp3=ffmpeg(['-i','pipe:0','-codec:a','libmp3lame','-b:a','128k','-f','mp3','pipe:1'],{input:wav});
+      result.listeningFile='tollkeeper-mix.mp3';await writeFile(join(context.outputDir,result.listeningFile),mp3);
+    }delete track.pcmBase64;
+  }
+  await writeFile(join(context.outputDir,'tollkeeper-audio.json'),JSON.stringify(result,null,2)+'\n');
+  return result;
+}
+
 export async function run(context) {
   const native = await helpers();
   await context.command('Emulation.setDeviceMetricsOverride',
-    {width: 1280, height: 800, deviceScaleFactor: 1, mobile: false});
+    {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   await yard(context, 'salt-flats,crew-gear', 'high');
   await context.evaluate(`(()=>{const a=window.__qaApp;
     if(document.querySelector('[data-warlord="tollkeeper"]')||a.startWarlordFight('tollkeeper'))
@@ -71,6 +155,10 @@ export async function run(context) {
         throw Error('Actual territory action did not start the Warlord charge format');})()`);
     await context.screenshot(quality + '-tollkeeper-intro');
     await click(context, '[data-action="warlord-begin"]'); await ready(context);
+    if(process.env.TOLLKEEPER_AUDIO_REVIEW==='1'){
+      await context.evaluate(`(()=>{const a=window.__qaApp;a.advance(2.5);a.duel.state.combat.aiTimer=Infinity;})()`);
+      return recordGateAudio(context);
+    }
     await context.evaluate(`(()=>{const a=window.__qaApp;a.advance(3.1);const s=a.duel.state,r=s.opponents[0];
       s.combat.aiTimer=Infinity;for(const p of s.arena.participants)p.protectedSec=0;
       s.s=s.prevS=r.s-28;s.lateral=s.prevLateral=r.lateral;s.headingError=0;s.invulnerableSec=0;
