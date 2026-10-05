@@ -1135,7 +1135,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
-    test_commit: 0c02e806
+    test_commit: 045f18d6
     note_commit: 2febf4e
     source_commit: 8932f6b7
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
@@ -1147,6 +1147,7 @@ tasks:
     controller_handoff: "After Arsenal merges, Crew receives sim-rival and combat-ai for native stopped-crew movement and vehicle-fire suppression. Keep knock, wreck, lap, boundary and recovery paths. Convoy does not need these files; Crew's projectile, contact, flags and presentation hooks wait for Convoy's whole merge."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
     fixture_admission_grant: "Independent test author may request cpu-crews explicitly in the native crew fixture and add off/on controls before source admission. Keep all existing assertions; released crew-gear must not enable the new behavior implicitly."
+    controller_test_verdict: "Native tests expose missing dev admission, movement while repairing and vehicle fire while the crew is out. Released driving and ready-car fire controls pass; earlier assertions and voice cases stay unchanged."
     car_fighter_handoff: "After Convoy's whole merge, Crew owns contacts.js, combat-projectiles.js and arsenal/rockets.js for real fighter interception and the existing car splash rule. Move the existing car helper implementation into contacts.js and reuse it; preserve car attribution, protection, falloff, recovery and replay rules. Independent native Rocket Pods tests precede source; Gunn receives the whole reviewed Crew merge before its final on-foot fight checks."
     car_fighter_test_hook: tools/test-rocket-fighter-contacts.mjs
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
@@ -1375,8 +1376,8 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
     test_commit: fdda1811
-    source_commit: d068bffb
-    art_test_verdict: "Native fight and five-shot convergence checks pass. Independent review clears replacing the old parallel-ray assertion with arrival at one locked point. Approved kit hashes remain exact; finished geometry and lifecycle checks await the turret asset."
+    source_commit: dca01c50
+    art_test_verdict: "The isolated turret export passes geometry, mount fit, heat isolation, loading, disposal and native fight checks. Approved kit hashes remain exact. Independent source review and Claude's comparison-sheet approval remain."
     trajectory_review_commit: d068bffb
     note_commit: bcda842
     note: "Claude's turret recipe is settled; resume the fight and art. Use the plain mount during building, but the finished look needs Claude's approval before merge."
