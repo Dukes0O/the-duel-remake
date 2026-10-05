@@ -68,11 +68,11 @@ is generated; Claude's look approval is still required before merge.
   Existing art/fight assertions stay exact: 24 cases and 397 checks pass.
   GLB bytes and all nine kit hashes remain exact. No export, build, browser,
   audio, balance or broad tier ran. Metadata 6804ba59 merged byte-exact.
-- Browser red: integration .evidence/2026-10-05/WAR-03a/
-  round-1-entry-failed/report.json, memory-only, no issues/warnings/captures.
-  Save normalization cleared the invalid equipped look. Fixture now calls
-  native equipArmorKit before campaign entry. All twelve views and existing
-  frame/state/asset checks stay exact. Syntax passes; rerun/verdict pending.
+- Browser setup reds: integration .evidence/2026-10-05/WAR-03a:
+  round-1-entry-failed/report.json (invalid equipped fixture), then
+  round-1-filename-failed/report.json (underscores). Native equip and first
+  side view checks now pass; filenames/loader use matched hyphens. No art
+  round spent; twelve-view checks exact, syntax passes, rerun/verdict pending.
 - Yard/Armory flag tests: three native cases/21 checks, one pass/two red.
   Injected Gunn-on is lost in both paths; default/off and released Sal pass.
   Read-only Armory and career purity pass; old assertions stay exact.
@@ -95,5 +95,5 @@ is generated; Claude's look approval is still required before merge.
 The unanswered move questions were replaced by four settled answers.
 The obsolete one-muzzle parallel-ray assertion is replaced, not retained.
 Renderer imports of the native fight module were removed, not deferred.
-Invalid direct equipped-look assignment was replaced by native equip.
+Invalid equipped fixture and rejected screenshot names were replaced.
 No assets were replaced. No existing Rocket Pods behavior was removed.

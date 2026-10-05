@@ -28,7 +28,7 @@ draw.text((12, 10), f'GUNN TURRET / REAL EARNED LOOK / ROUND {round}', fill='#e9
 for row, (quality, car) in enumerate([(q, c) for q in ['high', 'performance'] for c in ['stuttgart_959s', 'falcone_f42']]):
     top = 44 + row * 399
     for col, view in enumerate(['side', 'three-quarter', 'top']):
-        image = Image.open(source / f'{quality}-{car}-{view}.png').convert('RGB')
+        image = Image.open(source / f"{quality}-{car.replace('_', '-')}-{view}.png").convert('RGB')
         if max(hi-lo for lo, hi in image.getextrema()) < 20:
             raise RuntimeError('Blank or flat Gunn capture')
         draw.text((col*426+10, top), f'{quality} / {car} / {view}', fill='#e9ece7', font=font)
@@ -140,7 +140,7 @@ async function capture(context, quality, carKey, mode) {
       camera:app.inspectionCamera,vertices:q.points.length,heat,
       drawCalls:r.renderer.info.render.calls,pixelRange:high-low,stateUnchanged:true};
   })()`);
-  result.capture=await context.screenshot(`${quality}-${carKey}-${mode}`);
+  result.capture=await context.screenshot(`${quality}-${carKey.replaceAll('_','-')}-${mode}`);
   return result;
 }
 
