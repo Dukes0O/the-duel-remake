@@ -3,6 +3,7 @@ import {hostile, outOfPlay, combatOwnerId} from '../combat-teams.js';
 import {applyArmorDamage} from '../combat-armor.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
+import {setCarMortarHop} from './car-effects.js';
 
 export const MORTAR_RULES = Object.freeze({
   flightSec: 1.6, radius: 3, damage: 25, hopMps: 3,
@@ -72,6 +73,7 @@ export function stepMortars(duel, dt) {
         damageMultiplier: 1 + Math.max(0, Math.min(3, shell.level)) * COMBAT_TUNING.armor.upgradePerLevel});
       if (removed > 0 && !actor.drone && !actor.combatWrecking) {
         actor._ramVerticalSpeed = Math.max(actor._ramVerticalSpeed || 0, MORTAR_RULES.hopMps * share);
+        setCarMortarHop(actor, true);
         actor.airborne = true;
         actor.airHeight = Math.max(actor.airHeight || 0, .02);
         duel.emit({combatHit: true, strength: removed / 60, enemy: owner !== duel.state,

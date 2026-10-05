@@ -2,6 +2,7 @@ const EFFECT_KINDS = new Set(['slick', 'grip', 'tether', 'disabled', 'burning', 
 const effectsByCar = new WeakMap();
 const steeringByCar = new WeakMap();
 const alongPushByCar = new WeakMap();
+const mortarHopsByCar = new WeakSet();
 const EPSILON = 1e-10;
 
 export function setCarSteering(car, input) {
@@ -21,6 +22,12 @@ export function dampCarAlongPush(car, factor) {
   if (push !== undefined) alongPushByCar.set(car, push * factor);
 }
 export function clearCarAlongPush(car) { alongPushByCar.delete(car); }
+
+export function setCarMortarHop(car, active) {
+  if (active) mortarHopsByCar.add(car);
+  else mortarHopsByCar.delete(car);
+}
+export function carMortarHop(car) { return mortarHopsByCar.has(car); }
 
 export function carEffect(car, kind) {
   return effectsByCar.get(car)?.get(kind) || null;
@@ -74,4 +81,5 @@ export function clearCarEffects(car) {
   effectsByCar.delete(car);
   steeringByCar.delete(car);
   clearCarAlongPush(car);
+  mortarHopsByCar.delete(car);
 }

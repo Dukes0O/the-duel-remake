@@ -7,7 +7,7 @@ import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
-import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -309,9 +309,13 @@ function rampLaunchGrade(course) {
 }
 
 export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
-  if (actor._ramVerticalSpeed > 0 || actor.airHeight > 0 && actor._ramVerticalSpeed != null) {
-    this._ramFlight(actor, dt);
-    return;
+  // Idle ram speed can be zero on arena cars; only Mortar owns this delegation.
+  if (carMortarHop(actor)) {
+    if (actor._ramVerticalSpeed != null && (actor._ramVerticalSpeed > 0 || actor.airHeight > 0)) {
+      this._ramFlight(actor, dt);
+      return;
+    }
+    setCarMortarHop(actor, false);
   }
   const arena = this.course.def.kind === 'arena';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);

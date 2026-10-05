@@ -1,7 +1,7 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import {arsenalEnabled} from './combat-weapons.js';
-import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPush,dampCarAlongPush,setCarMortarHop} from './arsenal/car-effects.js';
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
@@ -318,6 +318,7 @@ export function _ramFlight(actor, dt) {
   if (!actor.airborne && actor._ramVerticalSpeed < 0) {
     actor._ramVerticalSpeed = null; actor.airHeight = 0;
     actor._jumpY = null; actor._verticalSpeed = 0;
+    setCarMortarHop(actor, false);
   }
   return true;
 }

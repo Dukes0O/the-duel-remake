@@ -1,6 +1,6 @@
 # ARS-03: Arsenal wave three
 
-4 October 2026. Independent reviews clear; final synced lane/build gates pending.
+4 October 2026. Prior reviews clear; Mortar flight correction awaits rechecks.
 
 ## Decisions Before Code
 
@@ -24,7 +24,6 @@ Wave three has its own dev switch. Earlier Arsenal weapons stay unchanged.
 
 Transient two-hit history stays outside serialized race and save data.
 Wave-three computer decisions use the ranges in docs/ARSENAL.md.
-Mirage's existing boss file is reused through its generic decoy contract.
 Review fixes: Tesla ends Magnet even when Star prevents disable. HUD uses the
 native effect/recharge rule. Player Mortar compares ground distance among
 enemies ahead; CPU leader policy and authored tests stay exact.
@@ -35,16 +34,16 @@ first-win settlement still saves the explicit earned reward as before.
 
 ## Checks
 
-- Independent source and Save Guardian reviews clear the native hooks and
+- Prior independent source and Save Guardian reviews clear the native hooks and
   derived reward rule. Reads preserve saved bytes; normalization never grants.
   Native 99 cases/552 checks, six memory save suites (56 TAP cases), runtime
   209/2,625, combat replay 12 and Voice 26/358 pass. Replay pins stay unchanged.
-- Three complete balance reports pass: historical 138 races plus seven rear
+- Three complete balance reports passed before the ramp fix: 138 historical races, seven rear
   defense and three pursuit cases; wave two 30 plus one supplement; wave three
   30 plus 12 supplements. Historical policies, fixtures and targets stay exact;
   new supplements are separately labelled. Main wave-three Hard wins: 12/30.
   Actual CPU uses: Mortar 31, Tesla 7, Drone 2, Nitro 2; no unattributed cues.
-- Independent memory-only browser checks pass in High and Performance:
+- Prior independent memory-only browser checks pass in High and Performance:
   weapons, counters, disabled HUD recovery and old Mirage reward access.
   Armory preserves save bytes; renderer purity and console checks pass.
   Matched driving frame time is unchanged. Active-weapon cost is unmeasured.
@@ -63,10 +62,9 @@ Mortar is implemented: the old purchase-denial input becomes an unknown ID;
 all refusal/no-write assertions remain. The released Arsenal expectation is
 on instead of dev; its released-state invariant is unchanged. The catalog has
 nine entries: five released on, Voice/wave-three dev, other values exact.
-Flags 39 and earlier Preview 22 pass; no Preview work in this final preparation.
 
 Whole Voice and integration bases transfer, ending at `41bc2499`; incoming
-README/VERIFICATION remain byte-exact. Simulation is unchanged since `2f094ee8`;
+README/VERIFICATION remain byte-exact. Earlier simulation freeze is `2f094ee8`;
 audio routing is `7ac1f37a`, pulse-only volume 3.5 to 5.5 is `68a08785`.
 Independent preservation proves 110 earlier cues, six exports, 49 earlier
 recipes and metadata exact. Only nine literal new IDs leave earlier bank and
@@ -82,13 +80,20 @@ the requested wave-three flag (34/34 passes); four launch exclusions remove
 fallback duplicates. Named cues, Voice paths, assets, recipes and all other
 bank values remain exact. No gameplay assertion, target or replay pin weakened.
 
+Final lane red `d34cc540`: 91 pass/one fail/259 not run; pinned ramp flight fails.
+Arena idle ram speed zero entered the Mortar path. A transient Mortar-only marker
+retains a real zero-speed apex and clears on landing/lifecycle; generic RAM stays.
+Unchanged ramp 42, wave-three 99/552, ramming 13, replay 162 and combat replay 12
+pass; 30/60/144 FPS hop/apex/cleanup probes pass. Flight review, balance/browser
+rechecks and fresh quiet lane/build gates await.
+
 ## Removed
 
 The Mortar denial input is replaced; refusal assertions stay exact. Temporary
 Gunn handoffs are excluded; its separate lane is retained.
 The obsolete forward-gap Mortar ordering and Arsenal HUD linear recharge
 calculation are replaced; ordinary starter recharge retains its original rule.
-Stored-only entitlement reads are replaced by the catalog defeat rule.
-Old catalog-only views and dropped wave-three simulation requests are replaced.
+Stored-only entitlement/catalog views and dropped wave-three requests are replaced.
 Generic replay/default launch audio is removed for the four native wave-three cues.
 Tesla pulse's 3.5 volume is replaced by 5.5; independent live review is clear.
+The broad player ram-flight delegation is replaced by Mortar-only activity.
