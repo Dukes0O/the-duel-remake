@@ -458,6 +458,10 @@ the other built warlords keep the ring unless their own cards choose a venue.
 
 ### Settled for build: The Tollkeeper (WAR-03d)
 
+Open build question, 4 October: the approved tanker is rigid and has no
+opening doors. Claude must name the opening part, identify the core valve,
+and set the lit gap's width before this move is built.
+
 The Convoy Raid boss (section 10): he drives the armored tanker on the Salt
 Flats. The fight is the Convoy Raid with these additions.
 

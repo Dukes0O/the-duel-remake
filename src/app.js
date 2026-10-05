@@ -533,7 +533,7 @@ export class App {
   }
   _settleArenaResult(event,state){
     if (state?.arena?.mode === 'warlord') return this._settleWarlordResult(event, state);
-    if (['fuel-run', 'bounty-hunt'].includes(state?.arena?.mode)) return this._settleFuelResult(event, state);
+    if (['fuel-run', 'bounty-hunt', 'ambush-alley'].includes(state?.arena?.mode)) return this._settleFuelResult(event, state);
     const result=state?.arena?.result,currentHold=Number.isSafeInteger(this.profile?.wasteland?.territories?.kettle?.hold)?this.profile.wasteland.territories.kettle.hold:0;
     if(result&&result.scrapEarned==null){Object.assign(result,{scrapEarned:0,holdAdded:0,hold:currentHold,settlementSaved:false});}
     if(!result||event?.result!==result||state!==this.duel.state||
@@ -836,8 +836,12 @@ export class App {
     return this.arenaAvailable() && this._switches().enabled('bounty-hunt') === true &&
       this.profile.wasteland?.rank >= 9;
   }
+  ambushAlleyAvailable() {
+    return this.arenaAvailable() && this._switches().enabled('ambush-alley') === true &&
+      this.profile.wasteland?.rank >= 12;
+  }
   startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
-    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt'].includes(mode)) return false;
+    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'ambush-alley'].includes(mode)) return false;
     return this._startArenaFight({venueId, mode, opponents});
   }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling'}) {
@@ -846,15 +850,19 @@ export class App {
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
     const available = warlordId ? this.warlordsAvailable() :
-      mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() : this.arenaAvailable();
-    if (!available || !this.arenaVenueAvailable(venueId) ||
+      mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
+        mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();
+    const ambush = mode === 'ambush-alley';
+    const venueAvailable = ambush ? venueId === 'pit' ||
+      venueId === 'salt-flats' && this.arenaVenueAvailable(venueId) : this.arenaVenueAvailable(venueId);
+    if (!available || !venueAvailable ||
         !(this.isYardHomeActive() || state.arena)) return false;
-    const count = Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
+    const count = ambush ? 0 : Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,
       ...(mode === 'fuel-run' ? {brain: ['collector', 'rammer', 'hunter'][index]} : {})}));
-    if (warlordId || ['fuel-run', 'bounty-hunt'].includes(mode)) this._rememberWarlordOwner();
+    if (warlordId || ['fuel-run', 'bounty-hunt', 'ambush-alley'].includes(mode)) this._rememberWarlordOwner();
     this._warlordSettlementRetry = null;
     this._fuelSettlementRetry = null;
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;

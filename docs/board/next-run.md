@@ -2,6 +2,16 @@
 
 ## Director resume, 4 October 2026
 
+Kyle's "Build more, record less" rule in AGENTS.md controls this run.
+ARS-03, AUD-18 and ARENA-05 are merged. Finish Convoy and computer crews,
+then Gunn when Claude approves its look. Tollkeeper follows Convoy and its
+remaining design answer. Keep shared files with one owner at a time.
+Convoy waits for Claude's frame-cost decision; Crew waits for its Hard pacing
+answer. Gunn now owns shared tell audio and generic rocket contacts on the
+whole Ambush merge, without importing either unfinished lane.
+Run the full tier only at the end, alone with `--jobs 4`. Keep one short log
+line per merge; fold notes into the next feature commit or merge.
+
 ARS-02, CREW-03 and BALANCE-W2-OFF-RETIRE are merged. AUD-17 is complete:
 Kyle's nine kept voice choices are final. AUD-18 now owns playing those
 lines in fights with subtitles; the old engine-spike label is superseded.

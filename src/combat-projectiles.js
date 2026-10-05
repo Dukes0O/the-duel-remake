@@ -1,6 +1,6 @@
 import {targetFor, targetIdentity, actorForTarget} from './arsenal/targeting.js';
 import {steerHarpoon, harpoonTravelStep, hitHarpoon} from './arsenal/harpoon.js';
-import {contactZone} from './collision.js';
+import {contactZone, sweepObstacle} from './collision.js';
 import {point, aimPoint, predictedPoint, burst, arsenalEnabled, boltLaunchSpeed} from './combat-weapons.js';
 import {applyArmorDamage, combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
@@ -11,6 +11,7 @@ import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
 import {stepGearProjectile} from './crew-gear/projectiles.js';
 import {stepRocketPod} from './arsenal/rockets.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {ambushFortTargets, damageAmbushFort} from './arena/modes/ambush-alley.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -330,6 +331,7 @@ export function stepProjectiles(duel, dt) {
     let target = null;
     let raiderTarget = null;
     let fighterTarget = null;
+    let fortTarget = null;
     let firstContact = Infinity;
     for (const actor of projectile.raid ? [state, ...state.opponents]
       : state.arena ? arenaStrikeCandidates(duel, projectile.ownerId)
@@ -372,7 +374,8 @@ export function stepProjectiles(duel, dt) {
         }
       }
     }
-    if (modernProjectiles && (projectile.kind === 'rpg' ||
+    if (modernProjectiles && (projectile.kind === 'rpg' &&
+        !(projectile.raid && state.arena?.mode === 'ambush-alley') ||
         projectile.kind === 'crossbow' && !projectile.enemy && !projectile.raid)) {
       for (const zone of state.raids?.zones || []) {
         for (const raider of zone.raiders) {
@@ -389,7 +392,18 @@ export function stepProjectiles(duel, dt) {
         }
       }
     }
-    const contact = !!target || !!raiderTarget || !!fighterTarget;
+    if (projectile.kind === 'rpg' && projectile.raid &&
+        state.arena?.mode === 'ambush-alley') {
+      for (const cover of ambushFortTargets(duel)) {
+        const approach = sweepObstacle(old, projectile, cover, 0,
+          {halfWidth: .08, halfLength: .08, height: .16});
+        if (approach && approach.t < firstContact) {
+          firstContact = approach.t; fortTarget = cover;
+          target = null; raiderTarget = null; fighterTarget = null;
+        }
+      }
+    }
+    const contact = !!target || !!raiderTarget || !!fighterTarget || !!fortTarget;
     const rpgLifetime = Number.isInteger(projectile.targetIndex) &&
       Number.isFinite(projectile.lifetimeSeconds)
       ? clamp(projectile.lifetimeSeconds, T.foot.rpgLifetimeSeconds,
@@ -435,7 +449,7 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
 
-    if (raiderTarget || fighterTarget) {
+    if (raiderTarget || fighterTarget || fortTarget) {
       projectile.x = old.x + (projectile.x - old.x) * firstContact;
       projectile.y = old.y + (projectile.y - old.y) * firstContact;
       projectile.z = old.z + (projectile.z - old.z) * firstContact;
@@ -485,10 +499,19 @@ export function stepProjectiles(duel, dt) {
         }
       }
     } else if (projectile.kind === 'rpg') {
+      if (projectile.raid && state.arena?.mode === 'ambush-alley') {
+        const distance = ambushFortTargets(duel).reduce((best, cover) =>
+          Math.min(best, Math.hypot(cover.x - projectile.x,
+            cover.y + cover.height / 2 - projectile.y, cover.z - projectile.z)), Infinity);
+        if (fortTarget || distance < rpgSplashRadius)
+          damageAmbushFort(duel, fortTarget ? T.armor.rpgDirect :
+            T.armor.rpgSplash * (1 - distance / rpgSplashRadius),
+          {source: 'rpg', owner: 'raiders', hitPosition: {x: projectile.x, y: projectile.y, z: projectile.z}});
+      }
       if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage);
       if (contact) {
-        const removed = target && hit(duel, target, projectile, 1.35, false);
-        if (removed > 0 && state.opponents.includes(target)) {
+        const removed = target && hit(duel, target, projectile, 1.35, !!projectile.enemy);
+        if (removed > 0 && !projectile.enemy && !projectile.raid && state.opponents.includes(target)) {
           combat.notorietyEvents ??= [];
           if (combat.notorietyEvents.length < 256) combat.notorietyEvents.push({
             id: projectile.id, type: 'rpgDirectHit', owner: 'player', source: 'onFoot',
@@ -501,10 +524,11 @@ export function stepProjectiles(duel, dt) {
         const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
           at.z - projectile.z);
         if (distance < rpgSplashRadius) hit(duel, actor, projectile,
-          1 - distance / rpgSplashRadius, false,
-          {splash: true, self: actor === state});
+          1 - distance / rpgSplashRadius, !!projectile.enemy,
+          {splash: true, self: !projectile.enemy && !projectile.raid && actor === state});
       }
-      for (const zone of state.raids?.zones || []) {
+      for (const zone of projectile.raid && state.arena?.mode === 'ambush-alley'
+        ? [] : state.raids?.zones || []) {
         for (const raider of zone.raiders) {
           if (raider === raiderTarget || raider.knockedDown) continue;
           const distance = Math.hypot(raider.x - projectile.x,
