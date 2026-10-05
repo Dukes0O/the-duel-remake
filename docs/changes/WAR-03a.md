@@ -24,6 +24,11 @@ remaining shared hooks and merge gates are still required.
   native tell tracking, turned-player lock, rendered mouth/rocket alignment,
   overheat/cooling and the existing 120-frame High/Performance profiler.
   One tested pose fixture is followed by real physics; no fake move state.
+- Gunn's native tell names arena.gunn-barrage and keeps its settled seconds
+  and position. A switched procedural rising whine fits the shortest tell;
+  the shared audio consumer still awaits its owner's handoff.
+- Main-menu Armory forwards injected flags to its read-only territory panel.
+  Defaults, released Sal and the absence of fight launch buttons stay exact.
 
 ## Checks
 
@@ -41,8 +46,8 @@ remaining shared hooks and merge gates are still required.
 - Round-one capture passed twelve real views, framing, pixels, cold heat and
   state/profile purity, with zero browser errors. Two setup failures spent no
   art round. Critic requested darker metal, corrected UVs and clearer collars.
-- Yard/Armory flag witnesses remain one pass/two red, three cases/21 checks:
-  injected Gunn-on is lost; default/off and released Sal pass. Hooks are held.
+- Yard/Armory witnesses now pass two of three cases/21 checks. The Armory fix
+  passes; injected Gunn-on remains lost only in the held yard hook.
 - Whole integration 55f44edf is received; README/VERIFICATION stay byte-exact.
   Two reviewed merge resolutions retain both Gunn and Arsenal Wave Three dev
   checks/launcher requests, with actual catalog length ten. All 42 flag checks
@@ -58,12 +63,16 @@ remaining shared hooks and merge gates are still required.
 - Round-two critic: art/material 3; readability, grounding and visibility 4.
   Cleaner metal/collars/fit, but broad panels and distant chips/welds need
   Claude's judgment. No art was changed or new round requested.
+- Sound probes preceded source: two cases red at missing recipe/event cue.
+  Both now pass 50 checks, including the exact old arena.tell recipe and
+  native difficulty/phase timing. Full Gunn suite: 19 cases/215 checks,
+  18 pass/one held-yard red. All earlier assertions are unchanged.
 
 ## Remaining
 
 - Claude reviews round-two side, three-quarter and top views on Stuttgart
   and Falcone. Three-round cap applies; no finished look is claimed.
-- Receive shared yard/router flags, rising-whine audio and fighter contact
+- Receive shared yard/router flags, event-cue audio dispatch and fighter contact
   hooks from their owner. CREW.md already settles fighter splash numbers;
   current Rocket Pods car-target policy remains unchanged meanwhile.
 - Complete motion/pacing and card checks, lane/build and required reviews
@@ -75,3 +84,4 @@ Round-one GLB and broad texture bands are replaced, not retained. Approved
 textures and nine fitted kits stay exact. Old unanswered move questions,
 parallel-ray assertion, renderer fight imports and invalid capture fixtures
 were already removed. No existing Rocket Pods behavior was removed.
+The new cue is additive; prior sound recipes and runtime assets stay exact.

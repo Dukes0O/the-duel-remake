@@ -18,6 +18,7 @@ import {yardHomeScreen} from '../src/screen-yard-home.js';
 import {createArmoryScreen} from '../src/screen-armory.js';
 import {territoryPanel} from '../src/screen-territory.js';
 import {arenaYardPanel} from '../src/screen-arena.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 
 // WAR-03a: native entry, combat and rewards; Claude settled the move on 4 October.
 const DT = 1 / 120;
@@ -185,6 +186,50 @@ function combatFixture(options = {}) {
   };
   return {duel, boss, participant, launches, tells, advance};
 }
+
+test('Gunn has a switched rising-whine recipe without changing the default charge tell', () => {
+  equal(SOUND_BANK['arena.tell'], {bus: 'impacts', volume: 1, pitchRange: [1, 1],
+    volumeRange: [1, 1], priority: 68, limit: 3, spatial: null, duck: null,
+    layers: [
+      {kind: 'tone', frequency: 92, duration: .7, volume: .15, type: 'sawtooth', delay: 0, endFrequency: 185},
+      {kind: 'tone', frequency: 184, duration: .55, volume: .06, type: 'square', delay: .06, endFrequency: 370},
+    ]}, 'the existing engine-roar default remains exact');
+  const cue = SOUND_BANK['arena.gunn-barrage'];
+  ok(cue, 'the native barrage cue has a named sound-bank recipe');
+  equal(cue.flag, 'gunn', 'the new sound shares Gunn\'s dev switch');
+  equal(cue.bus, 'impacts', 'the positional warning uses the existing tell bus');
+  ok(!cue.file && !cue.files && !cue.loop, 'the whine needs no new asset or persistent loop');
+  ok(cue.layers.length >= 1, 'the recipe contains audible layers');
+  for (const layer of cue.layers) {
+    equal(layer.kind, 'tone', 'the existing tone API produces the whine');
+    ok(layer.frequency >= 400 && layer.endFrequency > layer.frequency,
+      'the warning rises above the default low engine roar');
+    ok([layer.frequency, layer.endFrequency, layer.volume, layer.duration, layer.delay].every(Number.isFinite) &&
+      layer.volume > 0 && layer.duration > 0 && layer.delay >= 0,
+      'each layer has a positive finite envelope');
+    ok(layer.delay + layer.duration + .02 <= .4,
+      'including the oscillator tail, the whine fits the shortest native tell');
+  }
+});
+
+test('native Gunn tells name the barrage whine and preserve their settled timing and position', () => {
+  for (const [difficulty, phase, cooldown, seconds] of [
+    ['easy', 1, 9, 1.2], ['medium', 1, 7, .8], ['hard', 1, 5, .5], ['hard', 2, 5, .4],
+  ]) {
+    const f = combatFixture({difficulty});
+    f.duel.state.arena.warlordPhase = phase;
+    f.advance(cooldown + .05);
+    equal(f.tells.length, 1, 'one ready barrage emits one native tell');
+    const tell = f.tells[0], me = worldPose(f.duel, f.boss);
+    equal(tell.cue, 'arena.gunn-barrage', 'the native event selects the named whine');
+    equal(tell.targetId, 'player', 'the warning still names its native target');
+    ok(Math.abs(tell.seconds - seconds) < 1e-9, 'the event retains the full difficulty/phase tell');
+    equal(tell.position, {x: me.x, y: f.duel.course.groundAt(f.boss.s, f.boss.lateral).y, z: me.z},
+      'the warning retains the actual boss ground position');
+    equal(f.launches.filter(shot => shot.observedAt >= tell.at).length, 0,
+      'adding sound metadata cannot fire a rocket during the tell');
+  }
+});
 
 for (const [difficulty, cooldown, tell] of [['easy', 9, 1.2], ['medium', 7, .8], ['hard', 5, .5]]) {
   test(`${difficulty}: native barrage waits its cooldown, tells fully and launches three spaced rockets`, () => {

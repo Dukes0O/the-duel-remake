@@ -117,7 +117,7 @@ export function thinkGunn(duel, participant, actor, difficulty) {
     move.shots = duel.state.arena.warlordPhase === 2 ? 5 : 3; move.fired = 0;
     move.aim = point(duel, target); actor.arenaTellSec = seconds;
     duel._callout('BARRAGE!', seconds + .4);
-    duel.emit({arenaTell: {id: actor.arenaId, targetId: 'player', seconds,
+    duel.emit({arenaTell: {id: actor.arenaId, targetId: 'player', seconds, cue: 'arena.gunn-barrage',
       position: {x: me.x, y: duel.course.groundAt(actor.s, actor.lateral).y, z: me.z}}});
   } else if (now + EPS >= move.nextSingleSec && distance >= GUNN_RULES.singleNear &&
       distance <= GUNN_RULES.singleFar && clear) {
