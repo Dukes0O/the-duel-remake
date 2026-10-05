@@ -20,6 +20,10 @@ remaining shared hooks and merge gates are still required.
   separate. Per-actor heat materials and cold cosmetic looks are preserved.
 - Only --gunn-turret exports the replacement runtime GLB. Blender sources
   stay in scratch; none of the nine approved kit recipes or models changed.
+- Existing Gunn scenario gains opt-in GUNN_FIGHT_REVIEW=1: actual App entry,
+  native tell tracking, turned-player lock, rendered mouth/rocket alignment,
+  overheat/cooling and the existing 120-frame High/Performance profiler.
+  One tested pose fixture is followed by real physics; no fake move state.
 
 ## Checks
 
@@ -46,7 +50,14 @@ remaining shared hooks and merge gates are still required.
 - Round-two existing capture passed twelve views with zero errors/warnings,
   private port 58294 and memory-only saves. Sheet is 256,682 bytes; its short
   look note records source and hashes. Only the harness's isolated QA build
-  ran; no broad gate, audio, balance or pacing. Assertions/race rules stay exact.
+  ran; no broad gate, audio, balance or pacing. Existing assertions stay exact.
+- Motion fixture started red at its missing helper, then passed sixteen new
+  native checks. Art/native suite now passes eleven cases/275 checks; prior
+  259 checks, approved kit hashes and current GLB remain unchanged. Scenario
+  syntax and diff checks pass. Motion browser/pacing await the heavy slot.
+- Round-two critic: art/material 3; readability, grounding and visibility 4.
+  Cleaner metal/collars/fit, but broad panels and distant chips/welds need
+  Claude's judgment. No art was changed or new round requested.
 
 ## Remaining
 

@@ -15,6 +15,7 @@ import {worldPose} from '../src/arena/arena-floor.js';
 import {sweepObstacle} from '../src/collision.js';
 import {createVehicleAttachmentRegistry} from '../src/vehicle-attachments.js';
 import {createArmorKitMeshes} from '../src/armor-kit-meshes.js';
+import * as reviewScenario from './scenarios/gunn.mjs';
 
 // These pins are the approved nine kits, before the isolated Gunn recipe.
 const OLD_KITS = {
@@ -377,4 +378,44 @@ test('real Gunn barrage flight aims down to a lower car and delivers native Rock
   }
   ok(hits.length > 0 && duel.state.armor < armor, 'native swept rocket flight actually damages the lower car');
   equal(hits[0].strength * 60, 10, 'the vertical shot keeps Rocket Pods ten-armor damage');
+});
+
+test('the browser motion fixture reaches tracking, lock and heat through full native physics', () => {
+  equal(typeof reviewScenario.placeGunnReview, 'function', 'the browser reuses this tested native pose fixture');
+  const duel = new Duel({seed: 9908, featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: {gunn: true}})});
+  duel.state.wastelandGateDiscovered = true;
+  equal(startWarlordEvent(duel, {seed: 9908, warlordId: 'gunn', car: 'falcone_f42',
+    cpuDifficulty: 'hard'}), true, 'the fixture uses the real admitted fight');
+  equal(beginWarlordEvent(duel), true, 'native intro starts its countdown');
+  for (let n = 0; n < 362; n++) duel.step(DT);
+  const boss = duel.state.opponents[0], move = structuredClone(boss.gunnBarrage);
+  reviewScenario.placeGunnReview(duel);
+  equal(boss.gunnBarrage, move, 'placement cannot assign a fake move, aim or timer');
+  const advance = (condition, seconds = 15) => {
+    for (let n = 0; n < seconds / DT && !condition(); n++) duel.step(DT);
+    ok(condition(), 'the native stage must arrive within the bounded fixture');
+  };
+  const shots = [];
+  duel.onChange((_state, event) => {
+    if (event.arsenalCue === 'weapon.rockets.fire' && event.actor === boss &&
+        boss.gunnBarrage.stage === 'barrage') shots.push({shot: {...event.projectile},
+      aim: structuredClone(boss.gunnBarrage.aim)});
+  });
+  advance(() => boss.gunnBarrage.stage === 'tell');
+  for (let n = 0; n < 8; n++) duel.step(DT);
+  const firstAim = structuredClone(boss.gunnBarrage.aim);
+  duel.setInput({throttle: .5, brake: 0, steer: .3, boost: false});
+  for (let n = 0; n < 18; n++) duel.step(DT);
+  equal(boss.gunnBarrage.stage, 'tell', 'moving input stays inside the full native tell');
+  ok(Math.hypot(boss.gunnBarrage.aim.x - firstAim.x, boss.gunnBarrage.aim.z - firstAim.z) > .001,
+    'the real moving player changes the tracked point');
+  advance(() => shots.length > 0);
+  duel.setInput({throttle: .5, brake: 0, steer: 1, boost: false});
+  advance(() => boss.gunnBarrage.stage === 'window');
+  equal(shots.length, 3, 'the same browser fixture emits the native phase-one barrage');
+  for (const shot of shots) equal(shot.aim, shots[0].aim, 'player turning cannot move the tell-end lock');
+  for (let n = 1; n < shots.length; n++) ok(Math.abs(shots[n].shot.launchedAt -
+    shots[n - 1].shot.launchedAt - .25) < DT, 'the fixture retains native launch spacing');
+  advance(() => boss.gunnBarrage.stage === 'idle', 4);
 });

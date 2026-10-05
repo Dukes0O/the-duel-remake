@@ -25,6 +25,14 @@ Raw evidence: integration .evidence/2026-10-05/WAR-03a/round-2.
 These stationary fitting views do not measure fight motion, audio or pacing.
 Draw counts are not a pacing verdict. No look or merge approval is claimed.
 
+## Independent Critic
+
+Round two is better: long streaks are gone, four black collars read clearly,
+and the larger head fits both cars. Broad side/top panels still look clean;
+corner chips and welds disappear at this distance. Art/material 3;
+readability, grounding and visibility 4 in all twelve views. Motion and cost
+were not measured. Claude approval remains pending; no new round requested.
+
 ## Removed
 
 Round-one runtime GLB is replaced by round two. Approved kits/textures remain
