@@ -14,7 +14,7 @@ import {stepKnock, stepPhysicalWreck, stepWreckSlide} from './vehicle-knock.js';
 import {explodeTrafficWreck} from './sim-contacts.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 import {targetIdentity} from './arsenal/targeting.js';
-import {stepCpuCrew, cpuCrewStopped} from './crew-gear/cpu-crews.js';
+import {stepCpuCrew, cpuCrewStopped, cpuCrewPullAwayAcceleration} from './crew-gear/cpu-crews.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -286,7 +286,14 @@ export function _rival(dt, opponent = this.state.rival) {
   const effectScale = arsenalEnabled(this) ? carTopSpeed(r) : 1;
   target = Math.max(0, target);
   if (r.braking) r.speedMph = Math.max(target, r.speedMph - yieldPlan.braking * dt);
-  else r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt, (car.accel * DRIVE.accelScale * .85+(r.boosting?BOOST.accelMphPerSec*(1+r.upgrades.nitro*.15)*(car.nitroAcceleration||1):0)) * dt * (arsenalEnabled(this) ? carAcceleration(r) : 1));
+  else {
+    const acceleration = car.accel * DRIVE.accelScale * .85 +
+      (r.boosting ? BOOST.accelMphPerSec * (1 + r.upgrades.nitro * .15) *
+        (car.nitroAcceleration || 1) : 0);
+    r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt,
+      Math.max(acceleration, cpuCrewPullAwayAcceleration(this, r)) * dt *
+        (arsenalEnabled(this) ? carAcceleration(r) : 1));
+  }
   if (effectScale < 1) r.speedMph = Math.min(r.speedMph, car.topSpeed * effectScale *
     (r.boosting ? BOOST.topSpeedMult + r.upgrades.nitro * .025 + (car.nitroSpeedBonus || 0) : 1));
   if (r.offRoad) r.speedMph *= Math.exp(-rivalSurface.scrub * dt * (rivalSurface.preparedGravel ? .25 : 1));

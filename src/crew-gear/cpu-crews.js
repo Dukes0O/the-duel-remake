@@ -16,6 +16,8 @@ import {strikeCpuCrewFighterFromVehicles} from '../onfoot-race.js';
 const SALT = 0xc4e704;
 const MEMBERS = Object.keys(CREW);
 const FOOT = COMBAT_TUNING.foot;
+const STOP_PACING = Object.freeze({overhead: 2.5, pullAway: .6,
+  maneuverMph: 55, acceleration: 300, braking: 300, turnRate: 6});
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 
 function admitted(duel, enabled) {
@@ -48,6 +50,14 @@ export function cpuCrewStopped(actor) {
   return !!actor.cpuCrew && actor.cpuCrew.phase !== 'driving';
 }
 
+export function cpuCrewPullAwayAcceleration(duel, actor) {
+  return admitted(duel, duel.featureFlags?.enabled('cpu-crews')) &&
+    actor.cpuCrew?.phase === 'driving' &&
+    duel.state.stageTimeSec < actor.cpuCrew.pullAwayUntil &&
+    actor.s - actor.cpuCrew.pullAwayFrom < duel._vehicleSpec(actor).halfLength * 2
+    ? STOP_PACING.acceleration : 0;
+}
+
 function finishStop(duel, actor, {repairCompleted = false} = {}) {
   const crew = actor.cpuCrew;
   if (crew.fighter?.repairing) duel.emit({
@@ -59,6 +69,8 @@ function finishStop(duel, actor, {repairCompleted = false} = {}) {
   if (crew.fighter) crew.departed = {fighter: crew.fighter,
     presentation: {clip: 'enter', startedAt: duel.state.stageTimeSec, duration: .65}};
   crew.phase = 'driving'; crew.fighter = null;
+  crew.pullAwayUntil = duel.state.stageTimeSec + STOP_PACING.pullAway;
+  crew.pullAwayFrom = actor.s;
   duel.emit({cpuCrewEntered: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
     crewId: crew.crewId, hitPosition: point(duel, actor)});
 }
@@ -135,19 +147,23 @@ function startStop(duel, actor, crew, stop) {
   crew[`${stop.kind}Lap`] = lap;
   Object.assign(crew, {phase: 'pulling-over', stopKind: stop.kind,
     stopLateral,
-    stopSeconds: 0, repairSeconds: 0, repairAmount: 0,
+    stopSeconds: 0, overheadSeconds: 0, repairSeconds: 0, repairAmount: 0,
     shots: 0, signatureUsed: false, lockSeconds: 0, lockTargetId: null, nextFireAt: 0});
   return true;
 }
 
 function pullOver(duel, actor, crew, dt) {
   const delta = crew.stopLateral - actor.lateral;
-  const pace = Math.abs(delta) > .25 ? 12 : 0;
+  const stoppingPace = Math.sqrt(2 * STOP_PACING.braking *
+    Math.max(0, Math.abs(delta) - .2) / DRIVE.mphToWorld);
+  const pace = Math.abs(delta) > .25 ? Math.min(STOP_PACING.maneuverMph, stoppingPace) : 0;
   actor.braking = actor.speedMph > pace; actor.boosting = false;
-  actor.speedMph += clamp(pace - actor.speedMph, -DRIVE.brakeAccel * dt, 12 * dt);
-  const desired = clamp(delta * .16, -.55, .55);
+  actor.speedMph += clamp(pace - actor.speedMph, -STOP_PACING.braking * dt,
+    STOP_PACING.acceleration * dt);
+  const desired = clamp(delta * 1.2, -1.1, 1.1);
   actor.headingError = (actor.headingError || 0) +
-    clamp(desired - (actor.headingError || 0), -.95 * dt, .95 * dt);
+    clamp(desired - (actor.headingError || 0),
+      -STOP_PACING.turnRate * dt, STOP_PACING.turnRate * dt);
   const speed = actor.speedMph * DRIVE.mphToWorld;
   actor.lateral += Math.sin(actor.headingError) * speed * dt;
   actor.s += Math.cos(actor.headingError) * speed * dt /
@@ -170,7 +186,8 @@ function pullOver(duel, actor, crew, dt) {
     crew.stopSeconds = 0;
     duel.emit({cpuCrewExited: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
       crewId: crew.crewId, reason: crew.stopKind, hitPosition: crew.fighter});
-  } else if (crew.stopSeconds >= 8) finishStop(duel, actor);
+  } else if (crew.overheadSeconds + GEAR_EPSILON >=
+      STOP_PACING.overhead - STOP_PACING.pullAway) finishStop(duel, actor);
 }
 
 export function cpuCrewAimPoint(duel, target, seconds = 0) {
@@ -312,6 +329,8 @@ function signatureAttack(duel, actor, crew, target, dt) {
 function ambush(duel, actor, crew, dt) {
   crew.stopSeconds += dt;
   const fighter = crew.fighter, gear = signatureFor(crew.crewId);
+  let work = crew.shots < 3 ? Math.min(dt, Math.max(0,
+    crew.nextFireAt - (duel.state.stageTimeSec - dt))) : 0;
   const target = targetFor(duel, actor, {origin: fighter,
     range: Math.max(gear.range || 0, FOOT.rpgLockRange)});
   if (fighter.flaming) {
@@ -322,27 +341,34 @@ function ambush(duel, actor, crew, dt) {
     if (!burning || crew.flamerSeconds <= GEAR_EPSILON) {
       fighter.flaming = false;
       duel.emit({crewGearCue: 'crew.flamer.stop', actor, enemy: true, hitPosition: fighter});
-    } else return;
+    } else return Math.max(work, burn);
   }
   const passed = actor.s - duel.state.s < -80;
-  if (crew.shots >= 3 || passed || crew.stopSeconds >= 12) {finishStop(duel, actor); return;}
-  if (!target) {crew.lockSeconds = 0; crew.lockTargetId = null; return;}
+  if (crew.shots >= 3 || passed || crew.stopSeconds >= 12) {finishStop(duel, actor); return work;}
+  if (!target) {crew.lockSeconds = 0; crew.lockTargetId = null; return work;}
   const targetId = targetIdentity(duel, target);
   if (crew.lockTargetId !== targetId) {crew.lockTargetId = targetId; crew.lockSeconds = 0;}
+  const lockBefore = crew.lockSeconds;
   crew.lockSeconds += dt;
-  if (duel.state.stageTimeSec + GEAR_EPSILON < crew.nextFireAt) return;
+  if (duel.state.stageTimeSec + GEAR_EPSILON < crew.nextFireAt) return work;
   const signature = signatureAttack(duel, actor, crew, target, dt);
-  if (signature) {crew.signatureUsed = true; crew.shots++;}
+  if (signature) {
+    crew.signatureUsed = true; crew.shots++;
+    if (fighter.flaming) work = Math.max(work, dt);
+  }
   else {
     const dune = crew.crewId === 'dune';
     if (dune && Math.hypot(cpuCrewAimPoint(duel, target).x - fighter.x,
-      cpuCrewAimPoint(duel, target).z - fighter.z) > gear.range) return;
-    if (crew.lockSeconds + GEAR_EPSILON < (crew.crewId === 'rook' ? .6 : FOOT.rpgLockSeconds)) return;
-    if (!launch(duel, actor, crew, dune ? 'marksman' : 'rpg', target)) return;
+      cpuCrewAimPoint(duel, target).z - fighter.z) > gear.range) return work;
+    const lock = crew.crewId === 'rook' ? .6 : FOOT.rpgLockSeconds;
+    work = Math.max(work, Math.min(dt, Math.max(0, lock - lockBefore)));
+    if (crew.lockSeconds + GEAR_EPSILON < lock) return work;
+    if (!launch(duel, actor, crew, dune ? 'marksman' : 'rpg', target)) return work;
     crew.shots++;
   }
   crew.nextFireAt = duel.state.stageTimeSec + (crew.crewId === 'rook'
     ? 1.8 : crew.crewId === 'dune' ? gear.reload : FOOT.rpgReloadSeconds);
+  return work;
 }
 
 // The native rival caller opts in and retains collision/boundary/lap handling.
@@ -376,7 +402,10 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
   }
   actor.prevS = actor.s; actor.prevLateral = actor.lateral;
   actor.boosting = false;
-  if (crew.phase === 'pulling-over') {pullOver(duel, actor, crew, dt); return true;}
+  if (crew.phase === 'pulling-over') {
+    crew.overheadSeconds += dt;
+    pullOver(duel, actor, crew, dt); return true;
+  }
   actor.speedMph = 0; actor.braking = true;
   if (crew.phase === 'recovering') {
     crew.fighter.knockdownRemaining = Math.max(0, crew.respawnAt - s.stageTimeSec);
@@ -400,6 +429,12 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
     actor.armor = Math.min(actor.maxArmor, actor.armor + amount);
     crew.repairSeconds += live; crew.repairAmount += amount;
     if (crew.repairSeconds + GEAR_EPSILON >= seconds) finishStop(duel, actor, {repairCompleted: true});
-  } else if (crew.phase === 'ambush') ambush(duel, actor, crew, dt);
+  } else if (crew.phase === 'ambush') {
+    // Only native lock, reload and active flame are weapon work. Range waiting
+    // spends the overhead cap; the player's forced recovery stays three seconds.
+    crew.overheadSeconds += dt - ambush(duel, actor, crew, dt);
+    if (crew.phase === 'ambush' && crew.overheadSeconds + GEAR_EPSILON >=
+        STOP_PACING.overhead - STOP_PACING.pullAway) finishStop(duel, actor);
+  }
   return true;
 }

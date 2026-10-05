@@ -9,6 +9,7 @@ import {stepCombatAI} from '../src/combat-ai.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {point} from '../src/combat-weapons.js';
 import {createFighter} from '../src/onfoot.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {createCombatScene} from '../src/combat-scene.js';
 import {EngineAudio} from '../src/audio.js';
 import {FIGHT_VOICE_LINES, readFightSubtitle} from '../src/fight-voices.js';
@@ -62,6 +63,80 @@ function ambushRace(options = {}) {
   f.state.s = f.state.prevS = zone.s - 200;
   return f;
 }
+
+function completeMeasuredStop(f) {
+  const start = f.state.stageTimeSec, events = [];
+  let armed = false, enteredAt = null, parkedS = null;
+  f.duel.onChange((_state, event) => {
+    if (event.cpuCrewExited) parkedS = f.rival.s;
+    if (event.cpuCrewEntered) {enteredAt = f.state.stageTimeSec; parkedS ??= f.rival.s;}
+    if (event.actor === f.rival) events.push({event, time: f.state.stageTimeSec});
+  });
+  for (let n = 0; n < 3600; n++) {
+    tick(f);
+    armed ||= stopped(f.rival);
+    if (enteredAt !== null && f.rival.cpuCrew.phase === 'driving' &&
+        f.rival.s >= parkedS + f.duel._vehicleSpec(f.rival).halfLength * 2 &&
+        f.rival.speedMph > 1)
+      return {elapsed: f.state.stageTimeSec - start, events, enteredAt, parkedS};
+  }
+  ok(armed, 'the initial native conditions arm a real crew stop');
+  assert.fail('The actual crew stop did not return and pull away by one car length');
+}
+
+for (const seed of [3004, 3013]) for (const speedMph of [0, 90])
+  test(`native repair overhead includes braking and pull-away at seed ${seed}, ${speedMph} mph`, () => {
+    const f = race({seed});
+    f.rival.armor = 29; f.rival.speedMph = speedMph;
+    const measured = completeMeasuredStop(f), crew = f.rival.cpuCrew;
+    const seconds = crew.crewId === 'odessa' ? 2 : COMBAT_TUNING.foot.wrenchRepairSeconds;
+    equal(measured.events.filter(({event}) => event.footRepairStarted).length, 1, 'the actual fighter begins wrench repair');
+    equal(measured.events.filter(({event}) => event.footRepairCompleted).length, 1, 'the actual fighter completes wrench repair');
+    ok(Math.abs(f.rival.armor - 69) < 1e-6, 'the settled forty-armor repair is unchanged');
+    ok(measured.elapsed - seconds <= 2.5 + 1e-8,
+      'braking, exit, return and one-car-length pull-away together cost at most 2.5 seconds beyond repair');
+    equal(measured.events.filter(({event}) => event.footWeaponFired || event.crewGearCue), [],
+      'repair pacing does not spend signature gear or fire any weapon');
+  });
+
+test('native ambush overhead excludes only real RPG lock and reload work', () => {
+  const f = ambushRace();
+  f.state.s = f.state.prevS = f.rival.s - 160;
+  const measured = completeMeasuredStop(f);
+  const shots = measured.events.filter(({event}) => event.footWeaponFired);
+  equal(shots.map(({event}) => event.footWeaponFired), ['rpg', 'rpg', 'rpg'],
+    'the real Odessa ambusher fires its three native RPGs outside turret reach');
+  for (let n = 1; n < shots.length; n++) ok(Math.abs(shots[n].time - shots[n - 1].time -
+    COMBAT_TUNING.foot.rpgReloadSeconds) < 1e-6, 'the native RPG reload time stays exact');
+  const work = COMBAT_TUNING.foot.rpgLockSeconds + shots.at(-1).time - shots[0].time;
+  ok(measured.elapsed - work <= 2.5 + 1e-8,
+    'the full actual stop has at most 2.5 seconds beyond its real lock and reload work');
+});
+
+test('an actual ambush outside all weapon reach cannot spend its cap idling', () => {
+  const f = ambushRace();
+  f.state.s = f.state.prevS = f.rival.s - 350;
+  const measured = completeMeasuredStop(f);
+  equal(measured.events.filter(({event}) => event.footWeaponFired || event.crewGearCue), [],
+    'the genuinely unreachable player produces no signature gear, RPG shot or reload work');
+  ok(measured.elapsed <= 2.5 + 1e-8,
+    'a no-shot stop returns and physically pulls away within the full 2.5-second overhead cap');
+});
+
+test('a returned Hard crew uses the same ordinary catch-up driving as the off control', () => {
+  const f = race({difficulty: 'hard'});
+  f.rival.armor = 29; completeMeasuredStop(f);
+  const control = race({difficulty: 'hard', cpuEnabled: false});
+  Object.assign(control.state, {s: f.state.s, prevS: f.state.prevS,
+    lateral: f.state.lateral, prevLateral: f.state.prevLateral, stageTimeSec: f.state.stageTimeSec});
+  Object.assign(control.rival, structuredClone(f.rival));
+  delete control.rival.cpuCrew;
+  const motion = actor => ({s: actor.s, lateral: actor.lateral, speedMph: actor.speedMph,
+    headingError: actor.headingError, boosting: actor.boosting, braking: actor.braking});
+  f.duel._rival(DT, f.rival); control.duel._rival(DT, control.rival);
+  equal(motion(f.rival), motion(control.rival),
+    'the returned crew does not replace ordinary Hard driving or add a catch-up multiplier');
+});
 
 test('released crew gear does not implicitly admit computer crews', () => {
   const defaults = createFeatureFlags({storage: null, qa: false});

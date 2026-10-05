@@ -8,6 +8,10 @@ Claude's 4 October answer is in CREW.md section 3. Repairs use only the
 wrench, with Odessa's two-second perk. Reachable signature gear is used
 once in an ambush, then RPG attacks, at most three attacks total. Dune
 uses bolts; Jax and Wren use RPG only; Rook keeps his handling perk.
+Claude's 5 October answer changes only stop pacing: at most 2.5 s overhead
+beyond actual repair or weapon work. Native lock/reload is weapon work;
+the player's forced 3 s recovery stays unchanged and is not overhead.
+Idle range waiting is overhead. Ordinary Hard catch-up follows each stop.
 
 ## Source
 
@@ -17,6 +21,10 @@ drivers pull over, repair or ambush and return; their car cannot drive or
 fire while they are out. Native contacts, pushes, laps and recovery remain.
 Shoulder planning rejects blocked positions with the existing collision
 geometry. A knocked fighter holds its car until its three-second respawn.
+The pacing delta speeds only the local maneuver and brief pull-away, with
+an idle-time budget. Native contacts and ordinary route/Hard targets remain.
+Whole Ambush synchronization retains fort RPGs and moving crew raiders
+alongside Crew's reviewed fighter contacts, ownership and guidance.
 
 The existing car-fighter body, damage and splash helpers now live in
 contacts.js and include real computer fighters. Rocket Pods hit the earliest
@@ -61,6 +69,11 @@ The correct command requests arsenal,cpu-crews. Its natural Hard seed-1989
 probe finishes in 104.70 s with five CPU hits; no eligible crew stop occurs.
 The source review clears both fixes. Current balance, private
 High/Performance browser, lane tier and build remain open.
+The corrected report finishes 138 races: Easy 28/30, Medium 19/30,
+Hard 21/30. Only Hard fails. Seven additive pacing controls then show six
+expected cap failures; the ordinary Hard driving control passes.
+Pacing source passes all seven new cases / 27 checks. Current balance,
+earlier controls, private browser, lane/build and delta review remain open.
 No merge pass is claimed yet.
 
 ## Removed
