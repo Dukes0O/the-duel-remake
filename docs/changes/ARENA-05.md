@@ -62,9 +62,9 @@ picked as 74e62833: four wiring files only, no unfinished Crew runtime.
 The authored suite covers native admission, five waves, pay/hold, loss,
 wrench, geometry, actual buggy fire/ram, hostile RPG flight and no return.
 Additive controls cover view purity, disposal and wear near outer cover.
-Current native result: 34 cases, 775 checks, all pass.
+Current native result: 35 cases, 797 checks, all pass.
 Four primary review defects had additive red controls before fixes:
-native 144 FPS movement retains fixed-step time; initial health matches
+Native movement retains fixed time and consumes stopped ticks; health matches
 normal exit for all eight crews; the reserve buggy stays hidden until
 placement (wrecks stay visible); enemy RPG hits retain enemy attribution.
 

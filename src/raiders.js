@@ -231,14 +231,16 @@ function stepAmbushRaiders(duel, zone, dt) {
     const fort = alley.fort;
     const yaw = Math.atan2(fort.x - raider.x, fort.z - raider.z);
     raider.yaw = yaw;
-    if (dt > 0 && Math.hypot(raider.x - fort.x, raider.z - fort.z) > 9) {
+    if (dt > 0) {
       raider.fighterStepRemainder = (raider.fighterStepRemainder || 0) + dt;
       while (raider.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
-        raider.yaw = Math.atan2(fort.x - raider.x, fort.z - raider.z);
-        stepFighter(duel.course, state, raider, {forward: true}, FIGHTER_STEP_SECONDS);
-        if (raider.speed < .01) {
-          raider.yaw += (zone.side > 0 ? 1 : -1) * Math.PI / 2;
+        if (Math.hypot(raider.x - fort.x, raider.z - fort.z) > 9) {
+          raider.yaw = Math.atan2(fort.x - raider.x, fort.z - raider.z);
           stepFighter(duel.course, state, raider, {forward: true}, FIGHTER_STEP_SECONDS);
+          if (raider.speed < .01) {
+            raider.yaw += (zone.side > 0 ? 1 : -1) * Math.PI / 2;
+            stepFighter(duel.course, state, raider, {forward: true}, FIGHTER_STEP_SECONDS);
+          }
         }
         raider.fighterStepRemainder = Math.max(0, raider.fighterStepRemainder - FIGHTER_STEP_SECONDS);
       }

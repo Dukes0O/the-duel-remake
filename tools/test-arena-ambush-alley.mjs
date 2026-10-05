@@ -518,6 +518,26 @@ test('actual raider movement retains elapsed time at native 30, 60 and 144 FPS d
   }
 });
 
+test('the nine-metre attack stop is decided on each native fixed tick at every frame rate', () => {
+  function run(fps) {
+    const f = fight(), member = raiders(f)[0];
+    moveRaider(f, member, {x: 0, y: 0, z: 9.1});
+    for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
+    for (let frame = 0; frame < fps; frame++) stepRaiders(f.duel, 1 / fps);
+    const stopped = {x: member.x, z: member.z};
+    near(member.fighterStepRemainder, 0, 'stopped fixed ticks consume all elapsed time');
+    moveRaider(f, member, {x: 0, y: 0, z: 15}); stepRaiders(f.duel, DT);
+    near(15 - member.z, 4.5 * DT, 'a later shove cannot release a banked movement burst');
+    return stopped;
+  }
+  const base = run(30);
+  for (const fps of [60, 144]) {
+    const at = run(fps);
+    near(at.x, base.x, `${fps} FPS preserves the native stop x`);
+    near(at.z, base.z, `${fps} FPS preserves the native stop z`);
+  }
+});
+
 test('every initial Ambush fighter has the same health perk as their normal native exit', () => {
   for (const crewId of Object.keys(CREW)) {
     const f = fight({crewId}), initial = {health: f.state.fighter.health, maximum: f.state.fighter.maxHealth};
