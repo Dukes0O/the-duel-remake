@@ -64,8 +64,8 @@ all refusal/no-write assertions remain. The released Arsenal expectation is
 on instead of dev; its released-state invariant is unchanged. The catalog has
 nine entries: five released on, Voice/wave-three dev, other values exact.
 
-Whole Voice and integration bases transfer, ending at `68272483`; incoming
-README/VERIFICATION remain byte-exact. Earlier simulation freeze is `2f094ee8`;
+Whole Voice and integration bases received; current sync is on the card.
+Incoming README/VERIFICATION stay byte-exact. Simulation freeze is `2f094ee8`;
 audio routing is `7ac1f37a`, pulse-only volume 3.5 to 5.5 is `68a08785`.
 Independent preservation proves 110 earlier cues, six exports, 49 earlier
 recipes and metadata exact. Only nine literal new IDs leave earlier bank and
