@@ -1,17 +1,17 @@
 {
   "schema": 1,
-  "commit": "d0bb574cc18106d50033a22bcd626da5d53ee0c2",
-  "time": "2026-10-05T02:45:50.885Z",
+  "commit": "fef3ddbf41fa5fe6fc87276d0ab8d24a5c2c52bf",
+  "time": "2026-10-05T03:35:48.261Z",
   "tier": "full",
   "passed": false,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "d0bb574cc18106d50033a22bcd626da5d53ee0c2",
+  "endCommit": "fef3ddbf41fa5fe6fc87276d0ab8d24a5c2c52bf",
   "complete": true,
   "total": 349,
   "completed": 349,
   "failures": [
-    "tools/test-audio-crash-peak.mjs"
+    "tools/test-board.mjs"
   ]
 }

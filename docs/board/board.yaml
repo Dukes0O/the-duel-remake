@@ -11,7 +11,7 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: parked
+    status: backlog
     claimed_by: codex-director-2026-10-04
     branch: codex/tools/callback-diagnostics
     owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs, docs/changes/GATE-CALLBACK-DIAGNOSTICS.md]

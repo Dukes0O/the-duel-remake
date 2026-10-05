@@ -853,3 +853,9 @@ crash-audio test, assertions and tolerances stay unchanged. Gunn round
 two uses darker steel, edge wear, black collars and seams, enlarged about
 15%; the next sheet needs Claude's approval. Retain the parked lane.
 
+The isolated four-job full tier on clean fef3ddbf finished in 713.66 seconds:
+348 passed, one failed, none skipped. Crash audio passes unchanged. The only
+failure is the Director's unsupported parked board status; use the existing
+backlog status to leave that card inactive. No assertion changes. Run the
+full tier alone with four jobs again before feature merges.
+
