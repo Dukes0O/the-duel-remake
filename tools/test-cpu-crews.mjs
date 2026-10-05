@@ -8,6 +8,7 @@ import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
 import {stepCombatAI} from '../src/combat-ai.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {point} from '../src/combat-weapons.js';
+import {createFighter} from '../src/onfoot.js';
 import {createCombatScene} from '../src/combat-scene.js';
 import {EngineAudio} from '../src/audio.js';
 import {FIGHT_VOICE_LINES, readFightSubtitle} from '../src/fight-voices.js';
@@ -376,6 +377,78 @@ test('a real computer crew RPG keeps its enemy owner while guiding toward the pl
   stepProjectiles(f.duel, .01);
   equal(shot.targetIndex, -1, 'native enemy guidance keeps the hostile player lock');
   ok(error() < before, 'the native RPG turns toward the player instead of querying targets as the player');
+});
+for (const enemy of [true, false]) for (const splash of [false, true])
+  test(`${enemy ? 'CPU' : 'player'} RPG ${splash ? 'splash' : 'direct'} respects roadside raider hostility and credit`, () => {
+    const f = race({difficulty: 'hard'}), raider = f.state.raids.zones[0].raiders[0];
+    f.state.raids.zones = [{...f.state.raids.zones[0], raiders: [raider]}];
+    Object.assign(f.state, {s: 0, prevS: 0});
+    Object.assign(f.rival, {s: 0, prevS: 0});
+    const before = raider.health;
+    if (splash) raider.health = 1;
+    const shot = {kind: 'rpg', enemy, sourceIndex: 0, attackerId: enemy ? 'cpu:0' : 'player',
+      owner: enemy ? 'cpu' : 'player', id: 'native-raider-regression',
+      x: raider.x + (splash ? 2 : -2), y: raider.y + .9, z: raider.z,
+      vx: splash ? 0 : 55, vy: 0, vz: 0, age: splash ? 20 : 1, level: 0,
+      launchX: raider.x - 100, launchZ: raider.z};
+    f.state.combat.projectiles = [shot];
+    const events = [];
+    f.duel.onChange((_state, event) => events.push(event));
+    stepProjectiles(f.duel, .05);
+    equal(raider.knockedDown, !enemy, 'only the hostile player RPG can knock down the roadside raider');
+    equal(f.state.combat.scoring.knockdowns, enemy ? 0 : 1, 'only a player knockdown earns player score');
+    equal(f.state.combat.notorietyEvents?.filter(event => event.type === 'raiderKnockdown').length || 0,
+      enemy ? 0 : 1, 'enemy fire never earns player notoriety');
+    if (enemy) {
+      equal(raider.health, splash ? 1 : before, 'a friendly enemy rocket cannot damage this raider');
+      equal(events.filter(event => event.raiderHit || event.raiderKnockdown), [], 'friendly fire emits no raider damage credit');
+      if (!splash) equal(f.state.combat.projectiles, [shot], 'a friendly raider does not consume the live rocket');
+    } else equal(events.find(event => event.raiderKnockdown)?.owner, 'player', 'the positive hit records the actual player owner');
+  });
+test('a native Cinder ambusher aims its reachable flamer at the on-foot player, not the parked car', () => {
+  const f = controllerAmbush('cinder'), fighter = f.rival.cpuCrew.fighter;
+  const car = point(f.duel, f.state), distance = Math.hypot(car.x - fighter.x, car.z - fighter.z);
+  f.state.onFoot = true;
+  f.state.fighter = createFighter(f.duel.course, f.state);
+  Object.assign(f.state.fighter, {x: fighter.x - 3 * (car.x - fighter.x) / distance,
+    z: fighter.z - 3 * (car.z - fighter.z) / distance, y: fighter.y, crewId: 'rook'});
+  const before = f.state.fighter.health, events = [];
+  f.duel.onChange((_state, event) => events.push(event));
+  f.state.stageTimeSec += DT;
+  stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  equal(f.rival.cpuCrew.signatureUsed, true, 'Cinder uses the reachable signature before any RPG');
+  equal(events.filter(event => event.crewGearCue === 'crew.flamer.start').length, 1, 'the native flamer starts once');
+  ok(f.state.fighter.health < before, 'the flame reaches the live fighter on the opposite side of its parked car');
+  equal(f.state.combat.projectiles.filter(shot => shot.kind === 'rpg'), [], 'reachable flamer does not spend an RPG');
+});
+test('a real CPU crew RPG guides toward a moved on-foot player while the parked car stays put', () => {
+  const f = controllerAmbush('odessa'), fighter = f.rival.cpuCrew.fighter;
+  Object.assign(f.state, {s: fighter.s + 40, prevS: fighter.s + 40,
+    lateral: fighter.lateral, prevLateral: fighter.lateral});
+  for (let n = 0; n < 240 && !f.state.combat.projectiles.some(shot => shot.kind === 'rpg'); n++) {
+    f.state.stageTimeSec += DT; stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  }
+  const shot = f.state.combat.projectiles.find(projectile => projectile.kind === 'rpg');
+  ok(shot, 'the actual native crew emits the projectile');
+  const car = point(f.duel, f.state);
+  f.state.onFoot = true; f.state.fighter = createFighter(f.duel.course, f.state);
+  const launchBearing = Math.atan2(shot.vx, shot.vz), carBearing = Math.atan2(car.x - shot.x, car.z - shot.z);
+  const carTurn = Math.atan2(Math.sin(carBearing - launchBearing), Math.cos(carBearing - launchBearing));
+  const fighterBearing = launchBearing - (Math.sign(carTurn) || 1) * .7;
+  Object.assign(f.state.fighter, {x: shot.x + Math.sin(fighterBearing) * 50,
+    z: shot.z + Math.cos(fighterBearing) * 50, y: car.y - 1});
+  const wanted = Math.atan2(f.state.fighter.x - shot.x, f.state.fighter.z - shot.z);
+  const error = () => Math.abs(Math.atan2(Math.sin(wanted - Math.atan2(shot.vx, shot.vz)),
+    Math.cos(wanted - Math.atan2(shot.vx, shot.vz))));
+  const before = error();
+  const carError = () => Math.abs(Math.atan2(Math.sin(carBearing - Math.atan2(shot.vx, shot.vz)),
+    Math.cos(carBearing - Math.atan2(shot.vx, shot.vz))));
+  const beforeCar = carError();
+  stepProjectiles(f.duel, .01);
+  equal(point(f.duel, f.state), car, 'the parked car has not moved');
+  equal(shot.targetId, 'player', 'the actual player lock remains valid');
+  ok(error() < before, 'the CPU crew RPG turns toward the live fighter instead of the parked car');
+  ok(carError() > beforeCar, 'following the live fighter moves the rocket away from the parked-car bearing');
 });
 for (const [member, cue] of [['odessa', 'crew.turret.deploy'],
     ['odessa', 'crew.turret.fire'], ['cinder', 'crew.flamer.start']]) {

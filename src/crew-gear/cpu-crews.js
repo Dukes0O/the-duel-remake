@@ -173,10 +173,16 @@ function pullOver(duel, actor, crew, dt) {
   } else if (crew.stopSeconds >= 8) finishStop(duel, actor);
 }
 
+export function cpuCrewAimPoint(duel, target, seconds = 0) {
+  if (target === duel.state && duel.state.onFoot && duel.state.fighter)
+    return duel.state.fighter;
+  return seconds > 0 ? predictedPoint(duel, target, seconds) : point(duel, target);
+}
+
 function aimAt(duel, actor, crew, target, speed) {
-  const fighter = crew.fighter, at = point(duel, target);
+  const fighter = crew.fighter, at = cpuCrewAimPoint(duel, target);
   const distance = Math.hypot(at.x - fighter.x, at.z - fighter.z);
-  const future = predictedPoint(duel, target, Math.min(1, distance / speed));
+  const future = cpuCrewAimPoint(duel, target, Math.min(1, distance / speed));
   const identity = `${duel.seed}:${duel.state.stageIndex}:${targetIdentity(duel, actor)}:${actor.completedLaps || 0}:${crew.shots}`;
   let seed = SALT;
   for (let n = 0; n < identity.length; n++) seed = Math.imul(seed ^ identity.charCodeAt(n), 16777619);
@@ -198,7 +204,7 @@ function launch(duel, actor, crew, kind, target) {
     y: Math.sin(fighter.pitch), z: Math.cos(fighter.yaw) * Math.cos(fighter.pitch)};
   let vx = direction.x * speed, vy = direction.y * speed, vz = direction.z * speed;
   if (thrown) {
-    const at = point(duel, target), distance = Math.min(gear.range, Math.hypot(at.x - x, at.z - z));
+    const at = cpuCrewAimPoint(duel, target), distance = Math.min(gear.range, Math.hypot(at.x - x, at.z - z));
     vx = Math.sin(fighter.yaw) * distance; vz = Math.cos(fighter.yaw) * distance;
     const near = duel.course.nearest(x + vx, z + vz, fighter.s);
     vy = Math.max(.5, duel.course.groundAt(near.s, near.lateral).y - y + COMBAT_TUNING.bomb.gravity / 2);
@@ -329,8 +335,8 @@ function ambush(duel, actor, crew, dt) {
   if (signature) {crew.signatureUsed = true; crew.shots++;}
   else {
     const dune = crew.crewId === 'dune';
-    if (dune && Math.hypot(point(duel, target).x - fighter.x,
-      point(duel, target).z - fighter.z) > gear.range) return;
+    if (dune && Math.hypot(cpuCrewAimPoint(duel, target).x - fighter.x,
+      cpuCrewAimPoint(duel, target).z - fighter.z) > gear.range) return;
     if (crew.lockSeconds + GEAR_EPSILON < (crew.crewId === 'rook' ? .6 : FOOT.rpgLockSeconds)) return;
     if (!launch(duel, actor, crew, dune ? 'marksman' : 'rpg', target)) return;
     crew.shots++;

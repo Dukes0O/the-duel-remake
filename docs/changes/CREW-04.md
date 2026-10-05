@@ -24,6 +24,9 @@ body and reuse 60-health splash, linear falloff and half-radius knockdown.
 Car armor, team and participant protection and car-hit attribution remain.
 Enemy RPG guidance uses its actual computer owner; native player RPG and
 signature gear can fight computer crews. Player car sweeps knock them down.
+Review fixes exclude friendly roadside raiders from enemy RPG contact and
+splash, and record the actual projectile owner on player raider hits.
+CPU crew aim and guidance follow the live on-foot player, not its parked car.
 
 The bounded scene pool shows real fighters, repair, exit, return and get-up
 poses. Computer turrets and flamers share the existing geometry and materials.
@@ -49,9 +52,14 @@ the player approaches. No range or trigger boundary changed. The exact
 Rocket splash health expectation uses the independently measured native
 distance, not an ideal fraction; its equality and all other controls remain.
 The exact registry tests add only the two new dev entries.
+Six additive review controls reproduce enemy direct/splash credit and live
+fighter aim faults before the fix, then pass with unchanged player positives.
 
-Complete balance, private High/Performance browser, lane tier, build and
-the whole-source review remain in progress. No merge pass is claimed yet.
+All 138 balance races finish. Easy wins 26/30, Medium 20/30 and Hard 21/30;
+Medium and Hard exceed the unchanged win bands. CPU hits meet their bands.
+Natural Hard ambushers exit eight times but fire no attacks. Its timing gap,
+private High/Performance browser, lane tier, build and review remain open.
+No merge pass is claimed yet.
 
 ## Removed
 

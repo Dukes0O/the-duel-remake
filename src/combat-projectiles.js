@@ -12,6 +12,7 @@ import {stepGearProjectile} from './crew-gear/projectiles.js';
 import {stepRocketPod} from './arsenal/rockets.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {carFighterTargets, fighterBody, hitCarFighter, splashCarFighter} from './crew-gear/contacts.js';
+import {cpuCrewAimPoint} from './crew-gear/cpu-crews.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -65,9 +66,9 @@ function steerBolt(duel, projectile, dt, sampleSeconds = dt * .5) {
 function steerRpg(duel, projectile, dt) {
   if (projectile.kind !== 'rpg' || !Number.isInteger(projectile.targetIndex)) return;
   let actor = projectile.targetIndex < 0 ? duel.state : duel.state.opponents[projectile.targetIndex];
+  const attacker = actorForTarget(duel, projectile.attackerId) ||
+    (projectile.enemy ? duel.state.opponents[projectile.sourceIndex || 0] : duel.state);
   if (arsenalEnabled(duel)) {
-    const attacker = actorForTarget(duel, projectile.attackerId) ||
-      (projectile.enemy ? duel.state.opponents[projectile.sourceIndex || 0] : duel.state);
     actor=targetFor(duel,attacker,{range:T.foot.rpgLockRange*(projectile.lockRangeMultiplier||1),
       origin:projectile,lockedTargetId:projectile.targetId || (actor && targetIdentity(duel,actor))});
     if(actor)projectile.targetId=targetIdentity(duel,actor);
@@ -76,9 +77,10 @@ function steerRpg(duel, projectile, dt) {
   if (!actor || actor.finished || actor.crushed || actor.combatWrecking) return;
   const speed = Math.hypot(projectile.vx, projectile.vy, projectile.vz);
   if (!(speed > 0)) return;
-  const at = point(duel, actor);
+  const crewShot = projectile.enemy && projectile.crewId && attacker?.cpuCrew;
+  const at = crewShot ? cpuCrewAimPoint(duel, actor) : point(duel, actor);
   const travel = Math.min(1, Math.hypot(at.x - projectile.x, at.z - projectile.z) / speed);
-  const future = predictedPoint(duel, actor, travel);
+  const future = crewShot ? cpuCrewAimPoint(duel, actor, travel) : predictedPoint(duel, actor, travel);
   const dx = future.x - projectile.x, dy = future.y + T.pointHeight - projectile.y,
     dz = future.z - projectile.z;
   const distance = Math.hypot(dx, dy, dz);
@@ -326,8 +328,8 @@ export function stepProjectiles(duel, dt) {
         }
       }
     }
-    if (modernProjectiles && (projectile.kind === 'rpg' ||
-        projectile.kind === 'crossbow' && !projectile.enemy && !projectile.raid)) {
+    if (modernProjectiles && !projectile.enemy && !projectile.raid &&
+        ['rpg', 'crossbow'].includes(projectile.kind)) {
       for (const zone of state.raids?.zones || []) {
         for (const raider of zone.raiders) {
           if (raider.knockedDown) continue;
@@ -434,7 +436,8 @@ export function stepProjectiles(duel, dt) {
           splashCarFighter(duel, candidate.fighter, projectile, bombRadius, candidate.raider);
       }
     } else if (projectile.kind === 'rpg') {
-      if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage);
+      const owner = projectile.raid ? 'raider' : projectile.owner || (projectile.enemy ? 'cpu' : 'player');
+      if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage, {owner, source: 'onFoot'});
       if (contact) {
         const removed = target && hit(duel, target, projectile, 1.35, !!projectile.enemy);
         if (removed > 0 && !projectile.enemy && state.opponents.includes(target)) {
@@ -462,13 +465,13 @@ export function stepProjectiles(duel, dt) {
         if (distance < rpgSplashRadius) hitCarFighter(duel, candidate.fighter, projectile,
           T.raider.splashDamage * (1 - distance / rpgSplashRadius), false, false, {source: 'onFoot'});
       }
-      for (const zone of state.raids?.zones || []) {
+      for (const zone of !projectile.enemy && !projectile.raid ? state.raids?.zones || [] : []) {
         for (const raider of zone.raiders) {
           if (raider === raiderTarget || raider.knockedDown) continue;
           const distance = Math.hypot(raider.x - projectile.x,
             raider.y + .9 - projectile.y, raider.z - projectile.z);
           if (distance < rpgSplashRadius) damageRaider(duel, raider,
-            T.raider.splashDamage * (1 - distance / rpgSplashRadius));
+            T.raider.splashDamage * (1 - distance / rpgSplashRadius), {owner, source: 'onFoot'});
         }
       }
     } else if (fighterTarget) {
