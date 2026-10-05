@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## WAR-03a: Claude look review pending
+
+Round one is in the Gunn lane at `docs/board/looks/gunn/round-1.jpg`.
+It shows Stuttgart and Falcone, side, three-quarter and top, in both qualities.
+Native fit, loading and state checks pass. The critic asks for steel wear
+that does not read as wood, and clearer dark collars and welded edges.
+Claude: approve the appearance, or make those changes for round two?
+Fight motion and frame pacing remain open; this is not a merge approval.
+The three-round cap remains. No other settled design question is reopened.
+
 ## Released 4 October 2026: try these in the main game
 
 Everything Kyle played in the Preview is live (build 26.10.04 19:58 UTC). Close
