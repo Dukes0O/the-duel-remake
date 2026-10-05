@@ -31,7 +31,7 @@ The native audio routing hook remains held for the sequential ARS handoff.
 
 Independent tests before source: c5c3c72 (15 cases, 14 red), plate/deadline
 02064cab (22 cases, 10 red), turret 16a014a3 (23 cases, 10 red).
-Current source runs 23 cases and 158 checks: 14 pass, 9 red at held hooks.
+Before caller additions: 23 cases and 158 checks, 14 pass and 9 held reds.
 Native plate admission, mounting and wrong-surface rejection pass. Both legal
 deadline plants retain the original hold and full fuse without early reset or
 timeout; their finish still needs the held central convoyCharge wreck hook.
@@ -55,13 +55,10 @@ Events now retain hitPosition or contactPoint; only unmeasured hits fall back.
 A native three-case witness checks impact, contact and body fallback. Crew gear
 33 checks and replay fingerprints 12 checks across 4 encounters pass again.
 
-Fixture correction: the old test landed at the rig centre at vehicle height.
-That 3.5 m envelope includes warning lamps, not a boardable roof. The approved
-amber plate is 3.02 m high and 2.444 m behind the rig centre, with half-width
-0.699 m and half-length 1.242 m. The downward landing now uses this actual
-plane and footprint. Existing assertions, including the one-second fire hold
-and two-second fuse, are unchanged. Added checks reject the cab, the tank
-outside either plate edge, lamp tops and an upward crossing.
+Fixture correction: 3.5 m at the rig centre was the lamp envelope, not roof.
+The approved amber plate is 3.02 m high, 2.444 m behind centre, half-width
+0.699 m and half-length 1.242 m. Native hold/fuse assertions stay unchanged;
+new checks reject cab, both plate edges, lamps and upward crossings.
 
 The added deadline fixtures open valves through production damageConvoyValves
 and advance the clock through production stepConvoyRaid before native game
@@ -71,6 +68,15 @@ checks one native result and one settlement; the unplanted event loss does too.
 
 Nine held failures: projectile valve hit, two blast/charge-entry cases, two
 deadline finishes, App unlock, dev flag, rig mass and wrong-venue admission.
+
+Caller tests on 4af67813: nine cases, 68 checks, two pass and seven red.
+Reds prove ungated entry, native bolt leaving valves intact, solver ram
+draining body armor, rig Bomb/Star/UFO during fight and real pending fuse,
+early charge damage and missing App Retry. Actual seeded crate collection,
+guard response and escort weapons pass. Native App timeout pays 144 once;
+failed writes preserve memory bytes and expose no early pay. The production
+App fight initializer bypasses only the held public allow-list. Original
+23-case assertions remain exact; no source or heavy work in this checkpoint.
 
 The Convoy-only landing search checks open floor beside the real body. Generic
 perimeter candidates hit Salt's walls. Both paths keep fixed candidate order
@@ -84,8 +90,7 @@ Native damage/spec/admission/render hooks, laptop browser,
 audio, balance, save review, code review and the exact lane gate remain open.
 Held files include combat-armor/projectiles/AI, sim-contacts, Game/App/flags,
 renderer, arena screens/HUD and audio. No unfinished peer source was received.
-Director's whole-base full checkpoint passed 348 suites.
-No release work or real player storage was touched. No merge is claimed.
+Whole-base full passed 348 suites. No release or real storage work; no merge.
 
 ## Removed
 

@@ -12,6 +12,15 @@ import {stepConvoyRaid} from '../src/arena/modes/convoy-raid.js';
 import {startBoarding} from '../src/crew-gear/boarding.js';
 import {gearContact} from '../src/crew-gear/contacts.js';
 import {carBodyPoint} from '../src/arsenal/hazards.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
+import {fireWeapon} from '../src/combat-weapons.js';
+import {stepArenaPickups} from '../src/arena/arena-pickups.js';
+import {cpuPickupCharges} from '../src/combat-pickups.js';
+import {placeActor} from '../src/arena/arena-event.js';
+import {convoyValvePoints} from '../src/arena/convoy.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+import {PLAYERS_KEY} from '../src/progression.js';
+import {thinkBrain} from '../src/arena/arena-brains.js';
 
 // ARENA-07: native rules and the pure settlement contract settled on 4 October.
 const DT = 1 / 120;
@@ -21,10 +30,10 @@ const ok = (actual, message) => { checks++; assert.ok(actual, message); };
 test.after(() => console.log(`Convoy Raid: ${checks} acceptance checks executed.`));
 const FIELD = [{car: 'stuttgart_959s'}, {car: 'dusthawk_rally'}, {car: 'aurora_gt'}];
 
-function admitted({venueId = 'salt-flats', discovered = true, enabled = true, difficulty = 'medium'} = {}) {
+function admitted({venueId = 'salt-flats', discovered = true, enabled = true, difficulty = 'medium', seed = 307} = {}) {
   const flags = createFeatureFlags({storage: null, qa: true,
     overrides: {'convoy-raid': enabled, 'salt-flats': true, 'crew-gear': true}});
-  const duel = new Duel({seed: 307, featureFlags: flags});
+  const duel = new Duel({seed, featureFlags: flags});
   duel.state.wastelandGateDiscovered = discovered;
   return {duel, started: duel.startArenaEvent({venueId, mode: 'convoy-raid',
     car: 'falcone_f42', cpuDifficulty: difficulty, playerId: 'convoy-driver', opponents: FIELD})};
@@ -36,8 +45,8 @@ function fight(options) {
   return duel;
 }
 
-function exposedFight() {
-  const duel = fight(), rig = duel.state.opponents[0];
+function exposedFight(options) {
+  const duel = fight(options), rig = duel.state.opponents[0];
   for (const p of duel.state.arena.participants) p.protectedSec = 0;
   duel.state.invulnerableSec = 0; duel.state.combat.aiTimer = Infinity;
   rig.combatShield = 0;
@@ -362,6 +371,198 @@ test('identical native entry seeds and inputs keep the convoy repeatable', () =>
   }
   equal(run(), run(), 'a fixed seed and fixed inputs produce the same rig, escort and valve state');
 });
+
+test('native Convoy admission is independently default-off, explicit-off and explicit-on', () => {
+  const outcomes = [];
+  for (const request of [null, false, true]) {
+    const flags = createFeatureFlags({storage: null, qa: request !== null,
+      overrides: {'salt-flats': true, ...(request === null ? {} : {'convoy-raid': request})}});
+    const duel = new Duel({seed: 307, featureFlags: flags});
+    duel.state.wastelandGateDiscovered = true;
+    outcomes.push(duel.startArenaEvent({venueId: 'salt-flats', mode: 'convoy-raid', opponents: FIELD}));
+  }
+  equal(outcomes, [false, false, true], 'native Convoy entry requires its own explicit request, not released Salt access');
+});
+
+test('an actual native Crossbow sweep routes its real impact to the nearest valve, not rig armor', () => {
+  const f = exposedFight(), {duel, rig} = f, at = duel.course.groundAt(rig.s, rig.lateral);
+  const pose = duel.course.nearest(at.x + Math.cos(at.heading) * 20,
+    at.z - Math.sin(at.heading) * 20, rig.s);
+  placeActor(duel, duel.state, pose); rig.speedMph = 0;
+  const armor = rig.armor, hits = [];
+  duel.onChange((_state, event) => {if (event.combatHit && event.victim === 'rival') hits.push(event);});
+  equal(duel.fireWeapon('crossbow'), true, 'the real player producer launches its native Crossbow');
+  const shot = duel.state.combat.projectiles.find(p => p.kind === 'crossbow' && !p.enemy);
+  ok(shot, 'a real native bolt exists before the sweep');
+  const start = {x: shot.x, y: shot.y, z: shot.z}, radius = duel._vehicleSpec(rig).halfWidth + COMBAT_TUNING.projectileRadiusPadding;
+  const dx = start.x - at.x, dz = start.z - at.z;
+  const a = shot.vx ** 2 + shot.vz ** 2, b = 2 * (dx * shot.vx + dz * shot.vz);
+  const arrival = (-b - Math.sqrt(b * b - 4 * a * (dx * dx + dz * dz - radius ** 2))) / (2 * a);
+  const impact = {x: start.x + shot.vx * arrival, y: start.y + shot.vy * arrival, z: start.z + shot.vz * arrival};
+  ok(Number.isFinite(arrival) && arrival > 0, 'the actual bolt ray crosses the native vehicle sweep envelope');
+  for (let n = 0; n < 240 && !hits.length; n++) stepProjectiles(duel, DT);
+  equal(hits.length, 1, 'native stepProjectiles produces one actual body hit');
+  const gaps = convoyValvePoints(duel, rig).map(p => Math.hypot(p.x - impact.x, p.y - impact.y, p.z - impact.z));
+  const nearest = gaps.indexOf(Math.min(...gaps));
+  equal(duel.state.arena.convoy.valves.filter(hp => hp < 150).length, 1,
+    'the actual native projectile consumer damages exactly one fuel valve');
+  ok(duel.state.arena.convoy.valves[nearest] < 150, 'the damaged valve is nearest the actual swept impact');
+  equal(rig.armor, armor, 'real projectile damage leaves the invulnerable tanker body unchanged');
+  equal(rig.combatWrecking, false, 'a native bolt cannot cause an ordinary rig kill');
+  ok(Math.hypot(hits[0].hitPosition.x - impact.x, hits[0].hitPosition.y - impact.y,
+    hits[0].hitPosition.z - impact.z) < 1e-5, 'the native hit event retains the first swept intersection');
+});
+
+test('a native solver side ram within three metres damages a valve but only shoves the rig body', () => {
+  const f = exposedFight(), {duel, rig} = f, state = duel.state;
+  const s = rig.s - .7320454717;
+  placeActor(duel, state, {s, lateral: rig.lateral + 2, headingError: -Math.PI / 2}, 80);
+  state.prevLateral = rig.lateral + 10; rig.speedMph = 0;
+  const armor = rig.armor, before = {s: rig.s, lateral: rig.lateral}, events = [];
+  duel.onChange((_state, event) => {if (event.combatRamHit && event.attacker === 'player') events.push(event);});
+  equal(duel._vehicleContact(state, rig, 'convoy native ram'), true, 'the actual swept car solver detects the side impact');
+  equal(events.length, 1, 'the real solver emits one credited ram incident');
+  const contact = events[0].hitPosition;
+  ok(Math.min(...convoyValvePoints(duel, rig).map(p => Math.hypot(p.x - contact.x,
+    p.y - contact.y, p.z - contact.z))) <= 3, 'the real native ram contact is within the settled valve reach');
+  ok(rig.s !== before.s || rig.lateral !== before.lateral || Math.abs(rig.pushVelocity || 0) > 0,
+    'the real rigid-body response still shoves the tanker');
+  equal(rig.armor, armor, 'the solver ram cannot drain rigid tanker body armor');
+  equal(rig.combatWrecking, false, 'the solver ram cannot wreck the tanker as an ordinary car');
+  equal(duel.state.arena.convoy.valves.filter(hp => hp < 150).length, 1,
+    'the native ram consumer forwards its contact to exactly one nearby valve');
+});
+
+function collectedDefenses(f, actor) {
+  const {duel} = f, pose = {s: actor.s, lateral: actor.lateral, headingError: actor.headingError}, speed = actor.speedMph;
+  stepArenaPickups(duel, 3);
+  for (const weapon of ['star', 'ufo']) {
+    const crate = duel.state.combat.pickups.find(p => p.weapon === weapon);
+    ok(crate, `the actual seeded arena field contains ${weapon}`);
+    placeActor(duel, actor, crate); stepArenaPickups(duel, DT);
+    equal(cpuPickupCharges(duel.state, duel.state.combat, actor)[weapon], 1,
+      `the native pickup caller actually gives this actor one ${weapon}, not a fake inventory`);
+  }
+  placeActor(duel, actor, pose, speed);
+  actor.weaponLoadout = ['bomb', 'crossbow', 'star', 'ufo'];
+}
+for (const phase of ['whole event', 'pending fuse']) test(`the rig has no native offense, Star or UFO during the ${phase}`, () => {
+  const f = exposedFight({seed: 310}); collectedDefenses(f, f.rig);
+  if (phase === 'pending fuse') {
+    moduleWindow(f); roofCrossing(f); stepFootTransition(f.duel, DT);
+    f.duel.state.fighterInput.fire = true;
+    for (let n = 0; n < 120; n++) stepFootTransition(f.duel, DT);
+    equal(f.duel.state.boarding?.phase, 'charge', 'a real roof hold creates the pending fuse');
+  }
+  const {s, lateral} = f.rig, armor = f.rig.armor;
+  const actions = ['bomb', 'star', 'ufo'].map(id => fireWeapon(f.duel, id, true, f.rig));
+  equal(actions, [false, false, false], 'the native rig weapon producer refuses offense, shield and relocation throughout Convoy');
+  equal({s: f.rig.s, lateral: f.rig.lateral}, {s, lateral}, 'the UFO attempt cannot move the fixed-loop rig');
+  equal(f.rig.armor, armor, 'weapon attempts do not change tanker body armor');
+  equal(f.duel.state.combat.rivalShield, 0, 'the rig never raises a Star shield');
+});
+
+test('the native escort responds to a real valve attack and retains car weapons, Star and collected UFO', () => {
+  const f = exposedFight({seed: 310}), escort = f.duel.state.opponents[1];
+  collectedDefenses(f, escort);
+  const at = f.duel.course.groundAt(escort.s, escort.lateral), pose = f.duel.course.nearest(
+    at.x + Math.sin(at.heading) * 30, at.z + Math.cos(at.heading) * 30, escort.s);
+  placeActor(f.duel, f.duel.state, pose);
+  damageConvoyValves(f.duel, f.rig, 1, 'crossbow', {owner: 'player', hitPosition: convoyValvePoints(f.duel, f.rig)[0]});
+  const participant = f.duel.state.arena.participants.find(p => p.id === escort.arenaId);
+  thinkBrain(f.duel, participant, escort, DT);
+  equal(participant.targetId, 'player', 'the actual guard brain responds to the real player valve attack');
+  equal(fireWeapon(f.duel, 'crossbow', true, escort), true, 'the reacting native escort retains its actual Crossbow offense');
+  equal(['bomb', 'star', 'ufo'].map(id => fireWeapon(f.duel, id, true, escort)),
+    [true, true, true], 'rig-only suppression leaves the ordinary native escort actions working');
+});
+
+test('a legal planted charge cannot finish early and its due record is still present at the central hit', () => {
+  const f = exposedFight(); moduleWindow(f); roofCrossing(f); stepFootTransition(f.duel, DT);
+  f.duel.state.fighterInput.fire = true;
+  for (let n = 0; n < 120; n++) stepFootTransition(f.duel, DT);
+  equal(f.duel.state.boarding?.phase, 'charge', 'the native one-second hold creates one actual pending charge');
+  const armor = f.rig.armor;
+  equal(applyArmorDamage(f.duel, f.rig, 'fixed', {owner: 'player', amount: 35, convoyCharge: true}), 0,
+    'a premature central charge request cannot bypass the actual two-second fuse');
+  equal(f.rig.armor, armor, 'an early charge request cannot drain invulnerable rig body armor');
+  equal(f.duel.state.arena.convoy.finished, false, 'an early charge request does not finish the mode');
+  for (let n = 0; n < 240; n++) stepFootTransition(f.duel, DT);
+  equal(f.duel.state.arena.convoy.finished, true, 'the due native fuse completes before boarding is cleared');
+  equal(f.duel.state.boarding, null, 'only the completed native charge clears the pending boarding record');
+});
+
+function memoryAppConvoy(run) {
+  const previousStorage = globalThis.localStorage, previousCancel = globalThis.cancelAnimationFrame;
+  const values = new Map(), storage = {fail: false, writes: 0,
+    getItem: key => values.get(key) ?? null,
+    setItem(key, value) {
+      if (key === PLAYERS_KEY) {
+        this.writes++;
+        if (this.fail) throw Error('Convoy synthetic registry write failure');
+      }
+      values.set(key, String(value));
+    }, removeItem: key => values.delete(key)};
+  globalThis.localStorage = storage; globalThis.cancelAnimationFrame = () => {};
+  const app = new App();
+  try {
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: true,
+      overrides: {'convoy-raid': true, 'salt-flats': true, 'hidden-road': true, 'crew-gear': true}});
+    app.audio.unlock = () => {}; app.cpuDifficulty = 'medium';
+    app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
+      discoveredGate: true, xp: 1_000_000, scrap: 23,
+      territories: {...app.profile.wasteland.territories, tollkeeper: {hold: 10}}}};
+    equal(app._saveProfile(), true, 'the starting real App owner is saved only in memory');
+    equal(app.visitWasteland(), true, 'the actual App visits its discovered yard'); app.advance(8);
+    // This production owner/run path bypasses only the held public mode allow-list.
+    equal(app._startArenaFight({venueId: 'salt-flats', mode: 'convoy-raid', opponents: 3}), true,
+      'the production App fight initializer creates a real Convoy run for its starting owner');
+    app.duel.state.countdown = 0; app.duel.step(DT); app.duel.step(DT);
+    const rig = app.duel.state.opponents[0];
+    moduleWindow({duel: app.duel, rig, at: app.duel.course.groundAt(rig.s, rig.lateral)});
+    return run({app, storage, values});
+  } finally {
+    app.dispose?.(); globalThis.localStorage = previousStorage; globalThis.cancelAnimationFrame = previousCancel;
+  }
+}
+function timeoutAppConvoy(app) {
+  stepConvoyRaid(app.duel, 300 - app.duel.state.arena.clockSec);
+  app.duel.step(DT);
+  equal(app.duel.state.status, 'arena_result', 'the real event clock emits an actual native timeout result');
+  equal(app.duel.state.arena.result.reason, 'time', 'App settlement uses the genuine Convoy timeout, not a synthetic result');
+  return app.duel.state.arena.result;
+}
+test('the real App durably pays its native Convoy loss once to the starting owner', () => memoryAppConvoy(({app, storage, values}) => {
+  const before = structuredClone(app.profile), ownerId = app.player.id;
+  const result = timeoutAppConvoy(app);
+  equal(result.settlementSaved, true, 'the real App exposes a saved native Convoy settlement');
+  equal(result.scrapEarned, 144, 'three actually broken valves pay forty times Medium on a native loss');
+  const paid = values.get(PLAYERS_KEY), registry = JSON.parse(paid);
+  const owner = registry.players.find(player => player.id === ownerId);
+  equal(owner.profile.wasteland.scrap, before.wasteland.scrap + 144, 'the durable memory registry pays the actual starting owner');
+  equal(owner.profile.wasteland.territories.tollkeeper.hold, 10, 'a genuine loss adds no Tollkeeper hold');
+  equal(owner.profile.credits, before.credits, 'the native Convoy loss does not change ordinary credits');
+  const writes = storage.writes;
+  equal(app._settleArenaResult({result}, app.duel.state), false, 'replaying the same actual App result cannot award again');
+  equal(app.retryArenaSettlement(), false, 'a saved actual Convoy result cannot be retried for extra pay');
+  equal(values.get(PLAYERS_KEY), paid, 'duplicates preserve every durable paid registry byte');
+  equal(storage.writes, writes, 'duplicates make no additional registry write');
+}));
+test('an actual failed App Convoy result write retains one retry and banks no early pay', () => memoryAppConvoy(({app, storage, values}) => {
+  const durable = values.get(PLAYERS_KEY), before = structuredClone(app.profile);
+  storage.fail = true;
+  const result = timeoutAppConvoy(app); storage.fail = false;
+  equal(values.get(PLAYERS_KEY), durable, 'the actual failed settlement leaves durable owner bytes unchanged');
+  equal(app.profile.wasteland.scrap, before.wasteland.scrap, 'failed native settlement exposes no early scrap');
+  equal(result.settlementSaved, false, 'the actual failed result cannot claim a successful save');
+  equal(result.settlementRetryable, true, 'the same actual Convoy completion retains a public Retry');
+  equal(app.retryArenaSettlement(), true, 'public Retry durably saves that genuine completed Convoy event');
+  equal(app.profile.wasteland.scrap, before.wasteland.scrap + 144, 'retry pays the native loss exactly once');
+  const paid = values.get(PLAYERS_KEY), writes = storage.writes;
+  equal(app.retryArenaSettlement(), false, 'a second public Retry cannot pay the event again');
+  equal(values.get(PLAYERS_KEY), paid, 'repeat Retry keeps the exact durable paid bytes');
+  equal(storage.writes, writes, 'repeat Retry does not write again');
+}));
 
 test('native Odessa turret reports its swept body contact, with unchanged nearest-target damage and cadence', () => {
   const duel = new Duel({seed: 1989, featureFlags: createFeatureFlags({storage: null, qa: true,
