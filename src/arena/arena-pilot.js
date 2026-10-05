@@ -1,5 +1,5 @@
 import {arsenalEnabled} from '../combat-weapons.js';
-import {carGrip,carTopSpeed,setCarSteering,carAlongPush,dampCarAlongPush} from '../arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPush,dampCarAlongPush} from '../arsenal/car-effects.js';
 import {oilThreat} from '../arsenal/oil.js';
 import {CARS, DRIVE, BOOST, steeringYawAuthority} from '../config.js';
 import {wrapHeading} from '../offroad-physics.js';
@@ -51,6 +51,7 @@ function ringHeading(duel, actor, goalS, goalLateral) {
 
 // goal: {x, z, speedMph, boost}
 export function pilotStep(duel, actor, goal, dt) {
+  if (actor.drone) return;
   const spec = arenaCarSpec(duel, actor), course = duel.course;
   actor.prevS = actor.s; actor.prevLateral = actor.lateral;
   actor.prevAirHeight = actor.airHeight || 0;
@@ -159,23 +160,26 @@ export function pilotStep(duel, actor, goal, dt) {
   const floorTop = arenaFloorSpeed(course.def.scrapdome, spec.topSpeed) *
     (arsenalEnabled(duel) ? carTopSpeed(actor) : 1);
   // A boosting car aims for the boost ceiling; otherwise braking would cancel it.
+  const boostWanted = !!goal.boost && !(arsenalEnabled(duel) && carEffect(actor, 'disabled'));
+  const accelerationShare = arsenalEnabled(duel) ? carAcceleration(actor) : 1;
+  const nitroSpeedShare = arsenalEnabled(duel) ? carEffect(actor, 'nitro')?.topSpeed || 1 : 1;
   let target = reversing ? -DRIVE.reverseMaxMph * .6 : actor._arenaUTurn ? floorTop * speedScale :
-    (goal.boost ? floorTop * BOOST.topSpeedMult : goal.speedMph) * speedScale;
+    (boostWanted ? floorTop * BOOST.topSpeedMult : goal.speedMph * nitroSpeedShare) * speedScale;
   if (!reversing && Math.abs(turn) > PILOT.tightTurnRadians)
     target = Math.min(target, Math.max(PILOT.minimumTightMph, floorTop * PILOT.tightTurnShare));
   let next = speed;
   if (next < target) {
     const revs = Math.max(0, next) / Math.max(1, spec.topSpeed);
     const factor = Math.max(.15, 1 - Math.max(0, revs - .5));
-    next = Math.min(target, next + (reversing ? DRIVE.reverseAccel : spec.accel * factor * DRIVE.accelScale) * dt);
+    next = Math.min(target, next + (reversing ? DRIVE.reverseAccel : spec.accel * factor * DRIVE.accelScale * accelerationShare) * dt);
   } else {
     next = Math.max(target, next - DRIVE.brakeAccel * (spec.braking || 1) * dt);
   }
   actor.boost ??= 1;
-  actor.boosting = !reversing && !!goal.boost && actor.boost > 0 && next > BOOST.minSpeedMph;
+  actor.boosting = !reversing && boostWanted && actor.boost > 0 && next > BOOST.minSpeedMph;
   if (actor.boosting) {
     actor.boost = Math.max(0, actor.boost - BOOST.drainPerSec / Math.max(.1, spec.boostCapacity ?? 1) * dt);
-    next = Math.min(floorTop * BOOST.topSpeedMult, next + BOOST.accelMphPerSec * dt);
+    next = Math.min(floorTop * BOOST.topSpeedMult, next + BOOST.accelMphPerSec * dt * accelerationShare);
   } else if (!goal.boost) {
     actor.boost = Math.min(1, actor.boost + BOOST.refillPerSec * dt);
   }

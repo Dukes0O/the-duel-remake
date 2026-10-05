@@ -2,6 +2,7 @@ const EFFECT_KINDS = new Set(['slick', 'grip', 'tether', 'disabled', 'burning', 
 const effectsByCar = new WeakMap();
 const steeringByCar = new WeakMap();
 const alongPushByCar = new WeakMap();
+const mortarHopsByCar = new WeakSet();
 const EPSILON = 1e-10;
 
 export function setCarSteering(car, input) {
@@ -22,6 +23,12 @@ export function dampCarAlongPush(car, factor) {
 }
 export function clearCarAlongPush(car) { alongPushByCar.delete(car); }
 
+export function setCarMortarHop(car, active) {
+  if (active) mortarHopsByCar.add(car);
+  else mortarHopsByCar.delete(car);
+}
+export function carMortarHop(car) { return mortarHopsByCar.has(car); }
+
 export function carEffect(car, kind) {
   return effectsByCar.get(car)?.get(kind) || null;
 }
@@ -35,11 +42,14 @@ export function carGrip(car) {
 
 // Timed penalties share one native ceiling; repeated strips refresh, never stack.
 export function carTopSpeed(car) {
-  return Math.min(1, ...['grip', 'tether'].map(kind => {
+  const penalty = Math.min(1, ...['grip', 'tether'].map(kind => {
     const effect = carEffect(car, kind);
     return effect && Number.isFinite(effect.topSpeed) ? Math.max(0, effect.topSpeed) : 1;
   }));
+  return penalty * (carEffect(car, 'nitro')?.topSpeed || 1);
 }
+
+export function carAcceleration(car) { return carEffect(car, 'nitro')?.acceleration || 1; }
 
 export function setCarEffect(car, kind, {duration, ...data} = {}) {
   if (!car || !EFFECT_KINDS.has(kind) || !Number.isFinite(duration)) return null;
@@ -71,4 +81,5 @@ export function clearCarEffects(car) {
   effectsByCar.delete(car);
   steeringByCar.delete(car);
   clearCarAlongPush(car);
+  mortarHopsByCar.delete(car);
 }

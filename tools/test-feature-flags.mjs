@@ -18,9 +18,15 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && !Object.hasOwn(FEATURE_STATES, 'warlords') && FEATURE_STATES['fuel-run'] === 'on'
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
-  && FEATURE_STATES['fight-voices'] === 'dev' && Object.keys(FEATURE_STATES).length === 8,
-  'Fuel Run, Bounty Hunt, Arsenal, Salt Flats and Crew gear are released (on, 4 October 2026); career backup and Fight Voices stay dev; Wasteland 2, Scrapdome, Titan climbing, Muddy Hollow and Warlords are released without switches');
+  && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
+  && Object.keys(FEATURE_STATES).length === 9,
+  'the five released Wasteland features stay on; career backup, Fight Voices and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
+check(!productionFlags.enabled('arsenal-wave3'), 'production keeps wave three off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
+  'production URLs cannot enable unfinished wave three');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
+  'explicit private QA enables wave three');
 check(!productionFlags.enabled('fight-voices'), 'production keeps fight voices off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=fight-voices'}).enabled('fight-voices'),
   'production URLs cannot enable unfinished fight voices');

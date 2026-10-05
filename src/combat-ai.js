@@ -9,6 +9,10 @@ import {shouldUseCaltrops} from './arsenal/caltrops.js';
 import {shouldUseRocketPods} from './arsenal/rockets.js';
 import {shouldUseFlamethrower} from './arsenal/flamethrower.js';
 import {shouldUseScrapMagnet} from './arsenal/magnet.js';
+import {shouldUseMortar} from './arsenal/mortar.js';
+import {shouldUseTesla} from './arsenal/tesla.js';
+import {shouldUseDecoyDrone} from './arsenal/decoy-drone.js';
+import {shouldUseNitroRam} from './arsenal/nitro-ram.js';
 import {arenaTargetOf} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
 import {wastelandRulesActive} from './wasteland-access.js';
@@ -138,7 +142,11 @@ export function stepCombatAI(duel, dt) {
           id === 'harpoon' && shouldUseHarpoon(duel, opponent) ||
           id === 'rockets' && shouldUseRocketPods(duel, opponent) ||
           id === 'flamethrower' && shouldUseFlamethrower(duel, opponent) ||
-          id === 'magnet' && shouldUseScrapMagnet(duel, opponent);
+          id === 'magnet' && shouldUseScrapMagnet(duel, opponent) ||
+          id === 'mortar' && shouldUseMortar(duel, opponent) ||
+          id === 'tesla' && shouldUseTesla(duel, opponent) ||
+          id === 'decoy' && shouldUseDecoyDrone(duel, opponent) ||
+          id === 'nitro' && shouldUseNitroRam(duel, opponent);
         if (eligible && fireWeapon(duel, id, true, opponent)) {
           usedArsenal = true;
           break;

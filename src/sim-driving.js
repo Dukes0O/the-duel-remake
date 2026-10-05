@@ -7,7 +7,7 @@ import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
-import {carEffect,carGrip,carTopSpeed,carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
+import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -65,6 +65,8 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
+  const accelerationShare = arsenalEnabled(this) ? carAcceleration(s) : 1;
+  const nitroSpeedShare = arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1;
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
@@ -91,7 +93,7 @@ export function _drive(dt) {
     if (s.reverseHoldSec + 1e-9 >= DRIVE.reverseHoldSec) s.gear = -1;
   } else s.reverseHoldSec = 0;
   const reversing = s.gear < 0;
-  const gmax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear];
+  const gmax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   s.revs = gmax ? Math.abs(s.speedMph) / gmax : 0;
   if (!reversing && d.autoShift) {
     if (s.revs > 0.96 && s.gear < car.gears.length - 1) s.gear++;
@@ -103,7 +105,7 @@ export function _drive(dt) {
   s.input.shiftUp = s.input.shiftDown = false;
 
   // acceleration limited by the current gear's max speed
-  const gearMax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear];
+  const gearMax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
   if (reversing) {
     if (s.input.throttle > 0) {
@@ -113,8 +115,8 @@ export function _drive(dt) {
     s.speedMph = Math.min(0, s.speedMph + DRIVE.dragCoeff * dt * (s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1));
   } else {
     if (s.input.throttle > 0) {
-      const ceil = Math.min(car.topSpeed, gearMax * DRIVE.gearCeilFrac);
-      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale;
+      const ceil = Math.min(car.topSpeed * nitroSpeedShare, gearMax * DRIVE.gearCeilFrac);
+      if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale * accelerationShare;
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
@@ -125,6 +127,7 @@ export function _drive(dt) {
   // Terrain can be below an airborne vehicle without touching it. Delay mud,
   // water and their entry latch until the tyres have ground contact.
   const surface = this._drivingSurface(s.s, s.lateral, car, !s.airborne);
+  if (nitroSpeedShare > 1) surface.speedLimit *= nitroSpeedShare;
   const mud = surface.mud || 0, waterDepth = surface.waterDepth || 0;
   const surfaceEntrySpeed = Math.abs(s.speedMph);
   const wasInWater = (s.waterDepth || 0) >= .05;
@@ -144,8 +147,8 @@ export function _drive(dt) {
   if (s.boosting) {
     const available = Math.min(1, s.boost / (boostDrain * dt));
     s.boost = s.practice?1:Math.max(0, s.boost - boostDrain * dt);
-    const boostCeiling = d.autoShift ? car.topSpeed * boostTopSpeed : Math.min(car.topSpeed * boostTopSpeed, gearMax * DRIVE.gearCeilFrac);
-    s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * (car.nitroAcceleration ?? 1) * dt * available));
+    const boostCeiling = d.autoShift ? car.topSpeed * boostTopSpeed * nitroSpeedShare : Math.min(car.topSpeed * boostTopSpeed * nitroSpeedShare, gearMax * DRIVE.gearCeilFrac);
+    s.speedMph += Math.max(0, Math.min(boostCeiling - s.speedMph, BOOST.accelMphPerSec * (1 + nitro * .15) * (car.nitroAcceleration ?? 1) * dt * available * accelerationShare));
   } else if (!s.input.boost) {
     s.boost = Math.min(1, s.boost + BOOST.refillPerSec * dt);
   }
@@ -306,6 +309,14 @@ function rampLaunchGrade(course) {
 }
 
 export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
+  // Idle ram speed can be zero on arena cars; only Mortar owns this delegation.
+  if (carMortarHop(actor)) {
+    if (actor._ramVerticalSpeed != null && (actor._ramVerticalSpeed > 0 || actor.airHeight > 0)) {
+      this._ramFlight(actor, dt);
+      return;
+    }
+    setCarMortarHop(actor, false);
+  }
   const arena = this.course.def.kind === 'arena';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
   if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain) || !Number.isFinite(dt) || dt <= 0) return;

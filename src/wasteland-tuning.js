@@ -10,6 +10,10 @@ export const WEAPONS = Object.freeze({
   rockets: {name: 'ROCKET PODS', cooldown: 8},
   flamethrower: {name: 'FLAMETHROWER', cooldown: 11},
   magnet: {name: 'SCRAP MAGNET', cooldown: 15},
+  mortar: {name: 'MORTAR', cooldown: 14},
+  tesla: {name: 'TESLA COIL', cooldown: 18},
+  decoy: {name: 'DECOY DRONE', cooldown: 16},
+  nitro: {name: 'NITRO RAM', cooldown: 20},
 });
 export const CPU_COMBAT=Object.freeze({
  easy:{interval:10,aimError:Math.PI/18,shieldReaction:.20,visionCos:.5},
