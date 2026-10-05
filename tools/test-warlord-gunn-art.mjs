@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync, existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {Duel} from '../src/game.js';
@@ -32,6 +34,22 @@ let checks = 0;
 const ok = (value, message) => {checks++; assert.ok(value, message);};
 const equal = (value, expected, message) => {checks++; assert.deepEqual(value, expected, message);};
 test.after(() => console.log(`Gunn turret art: ${checks} checks executed.`));
+
+for (const [entry, api] of [['armor-kit-meshes.js', 'createArmorKitMeshes'],
+  ['arena/arena-tell-view.js', 'updateArenaTells']]) {
+  test(`fresh renderer import ${entry} does not require Duel initialization first`, () => {
+    const url = new URL(`../src/${entry}`, import.meta.url);
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e',
+      `import assert from 'node:assert/strict';
+       const renderer = await import(${JSON.stringify(url.href)});
+       assert.equal(typeof renderer[${JSON.stringify(api)}], 'function');
+       console.log('GUNN_RENDERER_READY');`],
+    {cwd: fileURLToPath(new URL('../', import.meta.url)), encoding: 'utf8',
+      timeout: 4000, windowsHide: true});
+    equal(child.status, 0, `${entry}: a fresh renderer import must initialize successfully\n${child.error?.message || child.stderr}`);
+    equal(child.stdout.trim(), 'GUNN_RENDERER_READY', 'the actual renderer export is ready without prior fight imports');
+  });
+}
 
 function readGLB(url = assetURL) {
   ok(existsSync(url), 'the finished Gunn turret GLB must exist, not only the plain kit mount');

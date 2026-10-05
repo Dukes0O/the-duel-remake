@@ -71,6 +71,11 @@ is generated; Claude's look approval is still required before merge.
   run passes 22 cases and 393 checks (art 249, fight 144). Source and asset
   review found the intended isolated output and approved material settings.
   Whole integration metadata through 272823a7 is merged, not peer source.
+- Fresh-process renderer regressions precede the pure turret helper extraction.
+  Both armor-kit-meshes and arena-tell-view fail before their exports are ready:
+  GUNN_FIGHT is read before initialization through the fight import graph.
+  The focused two-case probe executes two checks, both red. Existing Duel-first
+  art, geometry and trajectory assertions stay exact; no source or heavy work.
 
 ## Remaining
 
