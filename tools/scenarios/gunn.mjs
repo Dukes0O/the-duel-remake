@@ -238,6 +238,7 @@ async function runFight(context, asset) {
       await context.waitFor('window.__qaApp.isYardHomeActive()',`${quality} native yard`,60000);
       await context.evaluate(`(() => {
         const app=window.__qaApp;
+        app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
         const profile=JSON.stringify(app.profile),territory=document.querySelector('button[data-action="yard-territory"]');
         if(!territory||territory.disabled)throw Error('Actual yard territory button missing');
         territory.click();

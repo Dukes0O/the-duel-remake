@@ -32,6 +32,8 @@ remaining shared hooks and merge gates are still required.
 - Router and yard now forward the same native flags. The motion scenario
   uses real Territory Map and Gunn FIGHT buttons, verifies profile purity
   and the actual intro, then preserves all earlier motion/pacing assertions.
+  Stopped-App advance now presents the actual yard before clicking its UI;
+  the first browser attempt exposed stale approach markup, not changed state.
 
 ## Checks
 
