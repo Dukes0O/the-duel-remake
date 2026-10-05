@@ -15,6 +15,8 @@ import {worldPose} from '../src/arena/arena-floor.js';
 import {sweepObstacle} from '../src/collision.js';
 import {createVehicleAttachmentRegistry} from '../src/vehicle-attachments.js';
 import {createArmorKitMeshes} from '../src/armor-kit-meshes.js';
+import {createVehicleAssets} from '../src/vehicle-assets.js';
+import {placeGroundedVehicle, vehicleGroundPoint, TIRE_CLEARANCE} from '../src/vehicle-grounding.js';
 import * as reviewScenario from './scenarios/gunn.mjs';
 
 // These pins are the approved nine kits, before the isolated Gunn recipe.
@@ -190,14 +192,14 @@ function nativeGunn() {
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function vehicleFor(duel, actor) {
-  const car = new THREE.Group(), spec = duel._vehicleSpec(actor), at = duel.course.groundAt(actor.s, actor.lateral);
+  const car = new THREE.Group(), spec = duel._vehicleSpec(actor), at = vehicleGroundPoint(duel.course, actor.s, actor.lateral);
   car.userData.vehicleKey = actor.car;
   car.userData.size = {width: spec.halfWidth * 2, length: spec.halfLength * 2, height: spec.height};
-  car.position.set(at.x, at.y + (actor.airHeight || 0), at.z);
+  car.position.set(at.x, at.y + TIRE_CLEARANCE + (actor.airHeight || 0), at.z);
   car.rotation.y = at.heading + (actor.headingError || 0);
   return car;
 }
-async function presentation(f) {
+async function presentation(f, rival = vehicleFor(f.duel, f.boss)) {
   const cachedTurret = await loadGeometry(), assets = new Map(), requests = [];
   const registry = createVehicleAttachmentRegistry();
   const kits = createArmorKitMeshes(registry, {loadKitAsset: async key => {
@@ -207,12 +209,40 @@ async function presentation(f) {
       `../public/assets/models/wasteland/kits/${key}.glb`, import.meta.url)));
     return {scene: assets.get(key)};
   }});
-  const vehicles = {player: vehicleFor(f.duel, f.duel.state), rival: vehicleFor(f.duel, f.boss), extraOpponents: []};
+  const vehicles = {player: vehicleFor(f.duel, f.duel.state), rival, extraOpponents: []};
   kits.update(f.duel, vehicles, true); await tick(); await tick();
   kits.update(f.duel, vehicles, true); await tick(); await tick();
   kits.update(f.duel, vehicles, true);
   return {kits, registry, vehicles, cachedTurret, requests};
 }
+
+test('native barrage mouths agree with the real grounded Stuttgart runtime model', async () => {
+  const f = nativeGunn(), car = createVehicleAssets().create('stuttgart_959s');
+  equal(car.userData.vehicleKey, 'stuttgart_959s', 'the witness uses the actual runtime car router');
+  const place = () => placeGroundedVehicle(car,
+    vehicleGroundPoint(f.duel.course, f.boss.s, f.boss.lateral), f.boss.headingError);
+  place();
+  equal(car.userData.grounding.wheels.length, 4, 'the runtime grounding measures all four actual tires');
+  ok(Math.abs(car.userData.grounding.contactY) < EPS, 'Stuttgart tire-plane origin agrees within the existing tolerance');
+  const p = await presentation(f, car), shots = [];
+  const stop = f.duel.onChange((_state, event) => {
+    if (event.arsenalCue !== 'weapon.rockets.fire' || event.actor !== f.boss ||
+        f.boss.gunnBarrage.stage !== 'barrage') return;
+    place(); p.kits.update(f.duel, p.vehicles, true); car.updateMatrixWorld(true);
+    const origin = new THREE.Vector3(event.projectile.x, event.projectile.y, event.projectile.z);
+    const mouths = Array.from({length: 4}, (_, n) =>
+      car.getObjectByName(`gunn-turret-mouth-${n}`).getWorldPosition(new THREE.Vector3()));
+    ok(mouths.some(mouth => mouth.distanceTo(origin) < EPS),
+      'an actual native rocket leaves the real surface-grounded car mouth');
+    shots.push(event.projectile.id);
+  });
+  try {
+    for (let n = 0; n < Math.round(6.1 / DT); n++) {
+      f.duel.state.stageTimeSec += DT; thinkBrain(f.duel, f.participant, f.boss, DT); stepCombat(f.duel, DT);
+    }
+    equal(shots.length, 3, 'the grounded witness observes all three native barrage rockets');
+  } finally {stop(); p.kits.dispose();}
+});
 
 test('actual fitted Gunn and earned-look clones share geometry, isolate heat and never change race state', async () => {
   const f = nativeGunn(), before = structuredClone(f.duel.state), p = await presentation(f);
@@ -305,7 +335,8 @@ test('five native Gunn mouth trajectories converge on the unchanged tell-end wor
     if (event.arenaTell?.id === boss.arenaId) tells.push({...event.arenaTell, at: duel.state.stageTimeSec});
     if (event.arsenalCue !== 'weapon.rockets.fire' || event.actor !== boss) return;
     const lock = structuredClone(boss.gunnBarrage.aim), at = worldPose(duel, boss);
-    const body = new THREE.Vector3(at.x, duel.course.groundAt(boss.s, boss.lateral).y + (boss.airHeight || 0), at.z);
+    const body = new THREE.Vector3(at.x, vehicleGroundPoint(duel.course, boss.s, boss.lateral).y +
+      TIRE_CLEARANCE + (boss.airHeight || 0), at.z);
     const mount = new THREE.Vector3(...layout.mounts[boss.car]).applyAxisAngle(new THREE.Vector3(0, 1, 0), at.heading).add(body);
     const pivot = mount.clone().add(new THREE.Vector3(...layout.headPivot));
     const yaw = Math.atan2(lock.x - mount.x, lock.z - mount.z);

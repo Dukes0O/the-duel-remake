@@ -1,4 +1,5 @@
 import turretLayout from '../../tools/blender/gunn-turret.json' with {type: 'json'};
+import {vehicleGroundPoint, TIRE_CLEARANCE} from '../vehicle-surface.js';
 
 Object.freeze(turretLayout.headPivot);
 turretLayout.mouths.forEach(Object.freeze); Object.freeze(turretLayout.mouths);
@@ -16,7 +17,7 @@ export function gunnTurretPose(duel, actor) {
   const heading = frame.heading + (actor.headingError || 0);
   const c = Math.cos(heading), s = Math.sin(heading);
   return {x: at.x + mount[0] * c + mount[2] * s,
-    y: duel.course.groundAt(actor.s, actor.lateral).y + (actor.airHeight || 0) + mount[1],
+    y: vehicleGroundPoint(duel.course, actor.s, actor.lateral).y + TIRE_CLEARANCE + (actor.airHeight || 0) + mount[1],
     z: at.z - mount[0] * s + mount[2] * c, heading};
 }
 

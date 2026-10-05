@@ -12,6 +12,8 @@ remaining shared hooks and merge gates are still required.
   car. It adds no armor, mass or weapon effect. Settlement saves once.
 - The dev switch gates registry/territory entry. Pure JSON layout and pose
   helpers keep presentation outside the fight graph and race state.
+- Native mouths reuse the established surface lift and tire clearance from
+  pure vehicle-surface exports; renderer imports/re-exports retain exact policy.
 - Round two follows Claude's direction: dark gunmetal box, blackened steel
   collars, dark welded seams and small edge/corner chips, without long bands.
   New UVs keep square texture scale; approved textures are unchanged.
@@ -39,43 +41,41 @@ remaining shared hooks and merge gates are still required.
 
 - Independent review cleared the round-two recipe and numeric scaling.
 - Blender 4.5.13 isolated export: 208,192 bytes, 1,052 triangles. Existing
-  art/native suite: ten cases, 259 checks, all pass. All nine kit hashes match.
+  art/native suite: twelve cases, 299 checks, all pass. All nine kit hashes match.
   Local resources, named parts, open-mouth rays, Stuttgart/Falcone fit,
   material isolation, purity, disposal, fresh imports and real trajectories
   pass. The combined kit remains within the existing 12,000-triangle ceiling.
-- Earlier tests preceded source: art seven cases/23 checks, one pass/six red;
-  fresh renderer imports also started red. Both import checks now pass.
-- Reviewed trajectory correction replaces the obsolete one-muzzle parallel
-  assertion with five distinct mouths reaching one locked world point after
-  the player turns. Other assertions stay exact: 14 cases/144 checks passed.
-- Round-one capture passed twelve real views, framing, pixels, cold heat and
-  state/profile purity, with zero browser errors. Two setup failures spent no
-  art round. Critic requested darker metal, corrected UVs and clearer collars.
+- Tests preceded source: art 7/23, one pass/six red; fresh imports also started red.
+- Reviewed trajectory correction tests five real mouths reaching one world lock
+  after the player turns. The reviewed native fight baseline passed 14/144.
+- Round one passed twelve pure real views; critic requested the current round two.
 - Yard/Armory witnesses all pass: three cases/21 checks. The existing yard
   test reproduced the lost flag before source; defaults/released Sal stay exact.
 - Whole integration 55f44edf is received; README/VERIFICATION stay byte-exact.
-  Two reviewed merge resolutions retain both Gunn and Arsenal Wave Three dev
-  checks/launcher requests, with actual catalog length ten. All 42 flag checks
-  pass; no other flag behavior changed. Native art suite remains 10/259 green.
+  Reviewed merge resolutions retain Gunn and Arsenal Wave Three dev requests,
+  catalog length ten and all 42 flag checks; no other flag behavior changed.
 - Round-two existing capture passed twelve views with zero errors/warnings,
   private port 58294 and memory-only saves. Sheet is 256,682 bytes; its short
   look note records source and hashes. Only the harness's isolated QA build
   ran; no broad gate, audio, balance or pacing. Existing assertions stay exact.
-- Motion fixture started red at its missing helper, then passed sixteen new
-  native checks. Art/native suite now passes eleven cases/275 checks; prior
-  259 checks, approved kit hashes and current GLB remain unchanged. Scenario
-  syntax and diff checks pass. Motion browser/pacing await the heavy slot.
+- Motion fixture started red, then passed sixteen new native checks; syntax/diff pass.
 - Round-two critic: art/material 3; readability, grounding and visibility 4.
   Cleaner metal/collars/fit, but broad panels and distant chips/welds need
   Claude's judgment. No art was changed or new round requested.
 - Sound probes preceded source: two cases red at missing recipe/event cue.
   Both now pass 50 checks, including the exact old arena.tell recipe and
-  native difficulty/phase timing. Full Gunn suite: 19 cases/215 checks,
-  all pass after the yard fix. All earlier assertions are unchanged.
+  native timing. Full Gunn suite: 19 cases/215 checks, all pass after the yard fix.
 - Motion browser reaches the real yard buttons/intro and tracks a moving
   target without changing race/profile. First-shot mouth check proves a
   0.045 m missing native ground lift (rendered x/z agree within 2e-9).
-  Failure now reports coordinates; no assertion changed or pacing measured.
+  Failure reports coordinates; pacing remains unmeasured until browser rerun.
+- Real grounded-Stuttgart witness started red at the missing lift, then passes
+  all three mouths with unchanged 1e-5 tolerance. Its new fixture runs 6.1 s
+  to observe the complete barrage, not only the first shot at 5.6 s.
+  Reviewed raw-ground expectations now use actual surface plus clearance;
+  fit/geometry/trajectory assertions stay exact. Combined native/art 31/514
+  pass, including both fresh imports. Existing vehicle grounding passes 4,967
+  checks across nine actual models; moved point function is byte-exact.
 
 ## Remaining
 
@@ -86,7 +86,6 @@ remaining shared hooks and merge gates are still required.
   current Rocket Pods car-target policy remains unchanged meanwhile.
 - Complete motion/pacing and card checks, lane/build and required reviews
   on the final integration base before merge.
-  Native grounding and matching authored witnesses need a reviewed correction.
 
 ## Removed
 
@@ -95,3 +94,5 @@ textures and nine fitted kits stay exact. Old unanswered move questions,
 parallel-ray assertion, renderer fight imports and invalid capture fixtures
 were already removed. No existing Rocket Pods behavior was removed.
 The new cue is additive; prior sound recipes and runtime assets stay exact.
+The duplicate surface policy was removed from vehicle-grounding; its public
+exports remain. Raw-ground mouth expectations are replaced by established lift.
