@@ -214,10 +214,10 @@ on:
 - **Before every merge into integration:** the lane tier
   (`node tools/run-tests.mjs --tier lane --changed --jobs 8`, about 5 minutes)
   and `npm run build`. Always, including tuning-only and doc-plus-code changes.
-- **Full tier** (`--tier full --jobs 8 --keep-going`, about 6 minutes on this
-  PC): after every 5 merges or every 2 hours of merging, whichever comes first,
-  and at the end of every session and overnight run. A failing full run stops
-  feature merges until a fix lands (4.5).
+- **Full tier** (`--tier full --jobs 4 --keep-going`, run alone): at the end
+  of every session and overnight run and before every release. A real failure
+  stops feature merges until a fix lands (4.5); an unreliable check gets one
+  rerun (AGENTS.md, Build more, record less, 4 October 2026).
 - **Before every release:** the full tier on the exact commit being released.
   No exception for small or tuning-only changes.
 - **One status page.** `tools/build-status.mjs` writes `docs/board/STATUS.md`:
@@ -1075,7 +1075,7 @@ Each lane uses its own port (see the playbook), so its browser saves can never t
 | --- | --- | --- |
 | Lane gate | Before review | lane tier, production build |
 | Merge gate | Before each merge into integration | merge tier, build, browser smoke with zero console errors, fingerprints unchanged unless the card says behavior changes |
-| Full check | Before every release, and after every five merges into integration | full tier, balance targets, browser scenarios for every feature switch, frame pacing compared with the last release, art check, storage budget |
+| Full check | Before every release, and at the end of every session | full tier, balance targets, browser scenarios for every feature switch, frame pacing compared with the last release, art check, storage budget |
 | Release gate | Before touching the live folder | full check green on that exact commit, change notes compiled, feature switch list reviewed |
 
 There is no overnight schedule. The Integrator starts the full check itself, while you're working, and it takes about 15–45 minutes. It runs in its own folder, so the live game isn't touched. It uses at most half the computer's processor threads so a game being played stays smooth. The frame-rate part measures a scripted race in a hidden browser. If the computer is busy (for example, someone is playing), that part is marked "not measured" rather than failed, and runs again next time.
