@@ -56,8 +56,10 @@ async function prepare(context, quality, car) {
       unlockedCars:[...new Set([...app.profile.unlockedCars,${JSON.stringify(car)}])],
       wasteland:{...app.profile.wasteland,version:1,discoveredGate:true,
         warlords:{...app.profile.wasteland?.warlords,gunn:{defeated:true,wins:1}},
-        kits:{...app.profile.wasteland?.kits,${JSON.stringify(car)}:{owned:[],equipped:'turret-look'}}}};
+        kits:{...app.profile.wasteland?.kits,${JSON.stringify(car)}:{owned:[],equipped:null}}}};
     if(!app._saveProfile())throw Error('Memory-only earned-look fixture save failed');
+    const worn=app.equipArmorKit(${JSON.stringify(car)},'turret-look');
+    if(!worn.ok)throw Error('Native earned-look equip failed: '+worn.reason);
     if(!app.startCampaign({mode:'wasteland',car:${JSON.stringify(car)},startStage:0,
       seed:1989,difficulty:'medium',opponentCount:0}))throw Error('Native comparison field failed');
     app.stop();

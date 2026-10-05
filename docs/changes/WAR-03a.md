@@ -61,19 +61,18 @@ is generated; Claude's look approval is still required before merge.
   exact. The focused Gunn suite passes 14 cases and 144 checks (one more
   check because the first trajectory is now checked too). Independent review
   cleared this correction before export.
-- Native five-shot witness: 29 checks pass for JSON mouth origins, a fixed
-  predictive point after turns, full tell, count and 0.25-second intervals.
-  With lower-car flight: two cases/36 checks. After export: 22 cases/393 checks
-  (art 249, fight 144), unchanged assertions, reviewed output and materials.
-  Whole integration metadata through 272823a7 merged, not peer source.
+- Native five-shot/lower-car witnesses: two cases/36 checks. After export:
+  22 cases/393 checks (art 249, fight 144); assertions and asset pins unchanged.
 - Author 11a54f21 first proved both fresh renderer imports red: GUNN_FIGHT
   before initialization. After helper extraction both pass four checks.
   Existing art/fight assertions stay exact: 24 cases and 397 checks pass.
   GLB bytes and all nine kit hashes remain exact. No export, build, browser,
   audio, balance or broad tier ran. Metadata 6804ba59 merged byte-exact.
-- Prepared scenario gunn: twelve full real-model views (two cars, three views,
-  two quality modes), bounded sheet recipe and native-state/pixel checks.
-  Syntax only passes; browser execution and Claude verdict are pending.
+- Browser red: integration .evidence/2026-10-05/WAR-03a/
+  round-1-entry-failed/report.json, memory-only, no issues/warnings/captures.
+  Save normalization cleared the invalid equipped look. Fixture now calls
+  native equipArmorKit before campaign entry. All twelve views and existing
+  frame/state/asset checks stay exact. Syntax passes; rerun/verdict pending.
 - Yard/Armory flag tests: three native cases/21 checks, one pass/two red.
   Injected Gunn-on is lost in both paths; default/off and released Sal pass.
   Read-only Armory and career purity pass; old assertions stay exact.
@@ -96,4 +95,5 @@ is generated; Claude's look approval is still required before merge.
 The unanswered move questions were replaced by four settled answers.
 The obsolete one-muzzle parallel-ray assertion is replaced, not retained.
 Renderer imports of the native fight module were removed, not deferred.
+Invalid direct equipped-look assignment was replaced by native equip.
 No assets were replaced. No existing Rocket Pods behavior was removed.
