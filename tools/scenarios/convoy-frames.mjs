@@ -131,7 +131,8 @@ async function measure(context, quality, distance, present, pair) {
     const pacing = result.pacing, cpu = pacing.phaseTiming?.cpuMs;
     if (pacing.frames !== 120 || pacing.quality !== (quality === 'high' ? 'High' : 'Performance') ||
         pacing.startScale !== pacing.endScale || !Number.isFinite(pacing.p95) || pacing.p95 <= 0 ||
-        cpu?.renderSubmit?.samples < 110 || !result.witnesses.length) {
+        !cpu?.renderSubmit || !(cpu.renderSubmit.samples >= 110) ||
+        !Number.isFinite(cpu.renderSubmit.p95Ms) || cpu.renderSubmit.p95Ms <= 0 || !result.witnesses.length) {
       throw Error('Invalid or changing-scale frame sample');
     }
     result.capture = await context.screenshot(label);

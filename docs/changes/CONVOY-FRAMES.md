@@ -20,6 +20,8 @@ Matched moving-frame scenario is prepared. No measurement has run.
 ## Checks
 
 No tests, builds or browser runs yet. Crew has the heavy-check slot.
+Source review found that missing CPU timing could evade a comparison. The sample
+now requires the record, sufficient frames and finite positive CPU cost.
 
 ## Remaining
 
