@@ -172,10 +172,10 @@ export async function run(context) {
     await context.screenshot(quality + '-tollkeeper-gap');
     await inspection(context, quality + '-tollkeeper-core-lamps');
     await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=s.opponents[0],n=window.__tollkeeperNative;
-      n.applyArmorDamage(a.duel,r,'fixed',{owner:'player',amount:1000,hitPosition:n.convoyValvePoints(a.duel,r)[2]});
+      for(let i=0;i<2;i++)n.applyArmorDamage(a.duel,r,'fixed',{owner:'player',amount:1000,hitPosition:n.convoyValvePoints(a.duel,r)[2]});
       a.advance(1/120);if(s.arena.warlordPhase!==2||s.status!=='racing')throw Error('Real broken valve did not start phase two');
       r.tollGate.nextGateSec=Infinity;
-      n.applyArmorDamage(a.duel,r,'bomb',{owner:'player',damageMultiplier:100,hitPosition:n.convoyValvePoints(a.duel,r)[0],blastRadius:20});
+      for(let i=0;i<2;i++)n.applyArmorDamage(a.duel,r,'bomb',{owner:'player',damageMultiplier:100,hitPosition:n.convoyValvePoints(a.duel,r)[0],blastRadius:20});
       a.advance(1/120);if(s.arena.convoy.valves.some(v=>v!==0))throw Error('Real valves did not open boarding');
       a.onFrame?.(s,0);window.__render.renderFrame();})()`);
     await context.screenshot(quality + '-tollkeeper-boarding-window');

@@ -50,6 +50,9 @@ optional listening path records one real-time native tell, gate and cooled
 window with engine, then pauses. The six-to-nine-second mix and event/callout
 checks follow Gunn's existing PCM recipe. Browser execution and listening
 verdict remain pending; measurements alone do not approve the sound.
+The browser's first hit incorrectly assumed damage above the released 80 cap.
+Its corrected recipe uses two real capped hits and two real capped blasts.
+Every phase, charge and once-only payment assertion remains unchanged.
 
 ## Removed
 
