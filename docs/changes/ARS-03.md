@@ -1,6 +1,6 @@
 # ARS-03: Arsenal wave three
 
-4 October 2026. Prior reviews clear; Mortar flight correction awaits rechecks.
+4 October 2026. Reviews and rechecks clear; fresh synced lane/build gates pending.
 
 ## Decisions Before Code
 
@@ -8,10 +8,9 @@ Use the native weapon trigger, cooldowns, damage, targeting and car effects.
 Both arsenal switches and the discovered career gate are entry rules.
 Wave three has its own dev switch. Earlier Arsenal weapons stay unchanged.
 
-- Mortar commits the predicted landing point when fired. Its 3 m radius
-  red ring stays visible for the full 1.6 s flight. Damage falls linearly
-  from 25 at the centre to zero at the edge. The small hop uses the existing
-  vertical flight with a 3 m/s launch, scaled by the same falloff.
+- Mortar commits its predicted landing point; the 3 m radius red ring lasts
+  the full 1.6 s flight. Damage falls linearly from 25 at centre to zero at edge.
+  The hop uses existing vertical flight at 3 m/s, scaled by the same falloff.
 - Tesla follows its owner's current position during the 0.4 s charge.
   Its 15 m pulse consumes a star shield instead of disabling that car.
   Other hostile cars receive the native disabled effect for 3 s.
@@ -23,7 +22,6 @@ Wave three has its own dev switch. Earlier Arsenal weapons stay unchanged.
   Oil cancels it through the existing counter.
 
 Transient two-hit history stays outside serialized race and save data.
-Wave-three computer decisions use the ranges in docs/ARSENAL.md.
 Review fixes: Tesla ends Magnet even when Star prevents disable. HUD uses the
 native effect/recharge rule. Player Mortar compares ground distance among
 enemies ahead; CPU leader policy and authored tests stay exact.
@@ -34,19 +32,24 @@ first-win settlement still saves the explicit earned reward as before.
 
 ## Checks
 
-- Prior independent source and Save Guardian reviews clear the native hooks and
-  derived reward rule. Reads preserve saved bytes; normalization never grants.
+- Independent source/flight review clears `3309f22f`. Prior unaffected save
+  review remains clear: reads preserve saved bytes; normalization never grants.
   Native 99 cases/552 checks, six memory save suites (56 TAP cases), runtime
   209/2,625, combat replay 12 and Voice 26/358 pass. Replay pins stay unchanged.
-- Three complete balance reports passed before the ramp fix: 138 historical races, seven rear
-  defense and three pursuit cases; wave two 30 plus one supplement; wave three
-  30 plus 12 supplements. Historical policies, fixtures and targets stay exact;
-  new supplements are separately labelled. Main wave-three Hard wins: 12/30.
-  Actual CPU uses: Mortar 31, Tesla 7, Drone 2, Nitro 2; no unattributed cues.
-- Prior independent memory-only browser checks pass in High and Performance:
-  weapons, counters, disabled HUD recovery and old Mirage reward access.
-  Armory preserves save bytes; renderer purity and console checks pass.
-  Matched driving frame time is unchanged. Active-weapon cost is unmeasured.
+- All three complete balance rechecks on `3309f22f` pass. Historical: 251.30 s,
+  138 distinct main/extra races; Easy/Medium/Hard wins 28/19/6, CPU hits
+  2.47/7.53/5.63; first 12 take 17.11 s. Seven rear and three pursuit finish.
+  Wave two: 74.74 s, 30 plus one complete, 21 wins; CPU Rockets 32/Magnet 3/Flamer 2.
+  Wave three: 105.39 s, 30 plus 12 complete, 12 main wins; actual CPU Mortar 31,
+  Tesla 7/Drone 2/Nitro 2. All have zero attribution issues. Historical policies,
+  fixtures and targets stay exact; new supplements are separately labelled.
+- Current memory-only browser recheck clears High/Performance at 1280x800:
+  32 captures; zero errors, warnings or failed requests. Mortar ring 1.591667 s,
+  impact 1.6 s, peak 0.270 m, landing after 40 additional 120 Hz steps; menu clears.
+  Ordinary Banshee is exactly 2.610052 m/28.9 m. Native Tesla, Drone, old Mirage
+  save bytes and Nitro controls pass. Prior matched driving frame review stays;
+  active-weapon frame cost remains unmeasured. All owned QA processes are closed.
+  All captures nonblank/textured, no new HUD overlap; existing QA overlay unchanged.
 - Nine CC0 recipes retain their 27 recordings. Native routing 10/10 and all
   41 audio checks pass, including earlier Crossbow/Harpoon and Voice ownership.
   Spatial scenario: 27 decodes, nine cues, loop cleanup; pulse +7.48 dB,
@@ -63,7 +66,7 @@ all refusal/no-write assertions remain. The released Arsenal expectation is
 on instead of dev; its released-state invariant is unchanged. The catalog has
 nine entries: five released on, Voice/wave-three dev, other values exact.
 
-Whole Voice and integration bases transfer, ending at `41bc2499`; incoming
+Whole Voice and integration bases transfer, ending at `63f2ef9a`; incoming
 README/VERIFICATION remain byte-exact. Earlier simulation freeze is `2f094ee8`;
 audio routing is `7ac1f37a`, pulse-only volume 3.5 to 5.5 is `68a08785`.
 Independent preservation proves 110 earlier cues, six exports, 49 earlier
@@ -73,26 +76,22 @@ Beta 8/8 pass. Original catalog pins remain:
 Core: `104e9dafe12aa861857d055e73685a315a6fb809ee56db2f25a60990a283f1c5`
 Wave One: `48c3d4170b202ed4abf0c2dcaf268d6c1f2b98b162d62301702d94aa3da803d6`
 
-Independent reds precede fixes: native Star/Magnet, HUD, recharge and targeting;
-reward 62/99; preservation `87b436f2`; native balance `0cd575fa` at 33/34;
-routing `e19beaa9`; spatial pulse `d7852758` at +3.55 dB. Balance forwards only
-the requested wave-three flag (34/34 passes); four launch exclusions remove
-fallback duplicates. Named cues, Voice paths, assets, recipes and all other
-bank values remain exact. No gameplay assertion, target or replay pin weakened.
+Independent reds precede native, reward, preservation, flag and audio fixes.
+Balance forwards only wave-three (34/34 passes); four launch exclusions remove
+fallback duplicates. Named cues, Voice paths, assets, recipes and other bank
+values stay exact. No gameplay assertion, target or replay pin is weakened.
 
-Final lane red `d34cc540`: 91 pass/one fail/259 not run; pinned ramp flight fails.
+Failed lane `d34cc540`: 91 pass/one fail/259 not run in 87.10 s; not a gate pass.
 Arena idle ram speed zero entered the Mortar path. A transient Mortar-only marker
 retains a real zero-speed apex and clears on landing/lifecycle; generic RAM stays.
 Unchanged ramp 42, wave-three 99/552, ramming 13, replay 162 and combat replay 12
-pass; 30/60/144 FPS hop/apex/cleanup probes pass. Flight review, balance/browser
-rechecks and fresh quiet lane/build gates await.
+pass; 30/60/144 FPS hop/apex/cleanup probes pass. Independent fix review clears.
+Fresh quiet lane/build gates remain pending on the new synced freeze.
 
 ## Removed
 
-The Mortar denial input is replaced; refusal assertions stay exact. Temporary
-Gunn handoffs are excluded; its separate lane is retained.
-The obsolete forward-gap Mortar ordering and Arsenal HUD linear recharge
-calculation are replaced; ordinary starter recharge retains its original rule.
+Mortar denial uses an unknown ID; assertions stay. Temporary Gunn handoffs excluded.
+Forward-gap targeting and linear Arsenal recharge are replaced; starter timing stays.
 Stored-only entitlement/catalog views and dropped wave-three requests are replaced.
 Generic replay/default launch audio is removed for the four native wave-three cues.
 Tesla pulse's 3.5 volume is replaced by 5.5; independent live review is clear.
