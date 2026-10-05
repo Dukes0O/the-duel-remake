@@ -59,7 +59,7 @@ test('the eight immutable warlords use the existing territory ids and assignment
 
 test('the ladder marks only the built fights', async () => {
   const {BUILT_WARLORD_IDS} = await loadWarlords();
-  equal(BUILT_WARLORD_IDS, ['sal', 'dustmonger', 'mirage', 'kettle', 'vultures'], 'Sal, the Dustmonger, Mother Mirage, the Kettle Kingpin and the Twin Vultures are built; the other three remain unavailable');
+  equal(BUILT_WARLORD_IDS, ['sal', 'dustmonger', 'mirage', 'kettle', 'vultures', 'tollkeeper'], 'The six built fights include the Tollkeeper behind his dev switch; Gunn and the Baron remain unavailable');
   ok(Object.isFrozen(BUILT_WARLORD_IDS), 'fight availability cannot be changed at runtime');
 });
 

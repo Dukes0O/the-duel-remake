@@ -274,7 +274,7 @@ export function attachRenderer(host, app) {
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const opponents = st.opponents || (st.rival ? [st.rival] : []);
-    const convoy=!menu&&st.arena?.mode==='convoy-raid';
+    const convoy=!menu&&(st.arena?.mode==='convoy-raid'||st.arena?.format==='convoy-raid');
     const rivalCarKey=convoy?'convoy-tanker':!menu&&st.rival?.car||carKey;
     if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
@@ -298,7 +298,10 @@ export function attachRenderer(host, app) {
     }
     if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
     if (!rival) { rival = convoy?tanker.group:vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
-    if(convoy)tanker.setValveHealth(st.arena.convoy.valves);
+    if(convoy){
+      tanker.setValveHealth(st.arena.convoy.valves);
+      tanker.setLampSignal(st.rival?.convoyLampSignal,st.stageTimeSec);
+    }
     while(extraOpponents.length>(menu?0:Math.max(0,opponents.length-1))){
       const entry=extraOpponents.pop();
       retireObject(entry.mesh, () => entry.droneStyle?.restore());

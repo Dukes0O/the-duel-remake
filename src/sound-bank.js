@@ -487,6 +487,12 @@ export const SOUND_BANK = {
       tone(184, 0.55, 0.06, 'square', 0.06, 370),
     ],
   }),
+  'arena.toll-gate': cue('impacts', {
+    priority: 85,
+    limit: 1,
+    files: ['tollkeeper/gate-klaxon.ogg'],
+    volume: .5,
+  }),
   'arena.respawn': cue('interface', {
     layers: [
       tone(330, 0.35, 0.05, 'sine', 0, 990),

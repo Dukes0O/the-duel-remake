@@ -4,7 +4,7 @@ import {crewPanel} from './crew-ui.js';
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
 
 export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
-  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false}) {
+  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags = null}) {
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
@@ -16,7 +16,8 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const careerContent = `<div class="yard-home-intro"><h3>YOUR WASTELAND CAREER</h3><p>Notoriety rank ${career?.rank || 1} · ${Math.floor(career?.xp || 0).toLocaleString()} XP · ${claimed} territories claimed</p>${intro}<p>Win four events in a territory to fill its hold. ${fightCopy}</p></div>`;
   let content;
   if (panel === 'scrapdome' && arenaMarkup) content = arenaMarkup;
-  else if (panel === 'territory') content = territoryPanel(profile, canFight ? {} : {builtWarlordIds: []});
+  else if (panel === 'territory') content = territoryPanel(profile,
+    canFight ? {featureFlags} : {builtWarlordIds: [], featureFlags});
   else if (panel === 'crew') content = crewPanel(profile, escapeHTML);
   else if (panel === 'armory') content = armoryMarkup;
   else if (panel === 'career') content = careerContent;

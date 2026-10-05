@@ -5,17 +5,18 @@ import {BUILT_WARLORD_IDS, WARLORDS} from './warlords.js';
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
 const venueNames = Object.freeze({
   scrapdome: 'Scrapdome',
-  'salt-flats': 'Salt Flats Convoy Raid (coming later)',
+  'salt-flats': 'Salt Flats Convoy Raid',
 });
 
-export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, canFight = true} = {}) {
+export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, canFight = true, featureFlags = null} = {}) {
   const career = profile?.wasteland;
   if (career?.version !== 1 || career.discoveredGate !== true) return '';
   const cards = Object.entries(TERRITORIES).map(([id, territory]) => {
     const progress = career.territories?.[id] || {hold: 0, claimed: false};
     const warlord = WARLORDS[id];
     const warlordProgress = career.warlords?.[id] || {};
-    const fightBuilt = builtWarlordIds.includes(id);
+    const fightBuilt = builtWarlordIds.includes(id) &&
+      (!warlord.feature || featureFlags?.enabled(warlord.feature) === true);
     const hold = Number.isSafeInteger(progress.hold)
       ? Math.max(0, Math.min(100, progress.hold)) : 0;
     const courses = territory.courses.map(course => courseNames.get(course)).join(' · ');

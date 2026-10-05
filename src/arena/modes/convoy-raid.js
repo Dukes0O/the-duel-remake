@@ -17,13 +17,13 @@ export function convoyRig(duel) {
 }
 
 export function isConvoyRig(duel, actor) {
-  return duel.state.arena?.mode === 'convoy-raid' &&
+  return (duel.state.arena?.mode === 'convoy-raid' || duel.state.arena?.format === 'convoy-raid') &&
     !!actor && actor.arenaId === duel.state.arena.convoy?.rigId;
 }
 
 export function initializeConvoyRaid(duel) {
   const arena = duel.state.arena;
-  if (arena?.mode !== 'convoy-raid') return;
+  if (arena?.mode !== 'convoy-raid' && arena?.format !== 'convoy-raid') return;
   const computers = arena.participants.filter(p => p.kind === 'cpu');
   const rig = arenaActor(duel, computers[0].id);
   arena.convoy = {rigId: computers[0].id,

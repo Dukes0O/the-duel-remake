@@ -57,6 +57,55 @@ function arena(winnerId = 'player') {
   a.result = {winnerId, reason: 'three-wrecks', placings: winnerId === 'player' ? ['player', 'cpu-1'] : ['cpu-1', 'player']};
   return a;
 }
+
+function chargeArena({won = true, valves = 3, escortWrecks = 7} = {}) {
+  const duel = new Duel({featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: {tollkeeper: true, 'salt-flats': true}})});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(startWarlordEvent(duel, {warlordId: 'tollkeeper', car: 'falcone_f42'}), true);
+  const a = structuredClone(duel.state.arena);
+  a.phase = 'over'; a.clockSec = won ? 30 : 300;
+  a.convoy.valves = Array.from({length: 3}, (_, n) => n < valves ? 0 : 150);
+  a.convoy.playerBroken = Array.from({length: 3}, (_, n) => n < valves);
+  a.convoy.playerValvesBroken = valves;
+  a.convoy.chargePlanted = won; a.convoy.finished = won;
+  a.participants[1].wrecked = won ? 1 : 0;
+  a.participants[2].wrecked = escortWrecks; a.participants[3].wrecked = escortWrecks;
+  a.result = {winnerId: won ? 'player' : 'cpu-1', reason: won ? 'charge' : 'time',
+    placings: won ? ['player', 'cpu-1', 'cpu-2', 'cpu-3'] : ['cpu-1', 'player', 'cpu-2', 'cpu-3']};
+  return a;
+}
+
+test('charge-format Warlord pay settles once, ignores escorts and preserves unknown saves', async () => {
+  const settle = await settlement(), original = profile();
+  const win = payload({arena: chargeArena(), runId: 'toll-first'});
+  const first = settle(original, win);
+  equal(first.awarded, true, 'the built real charge format accepts a completed charge result');
+  equal(first.scrapEarned, 1440, 'first Medium win follows the public ladder first-win pay');
+  equal(first.kitEarned, 'warlord', 'the first result saves the existing plated look');
+  equal(first.profile.wasteland.territories.tollkeeper.claimed, true, 'the first win claims its territory');
+  equal(settle(first.profile, win).awarded, false, 'the same charge event can settle only once');
+  equal(first.profile.unknownProfile, original.unknownProfile, 'unknown root data survives charge settlement');
+  equal(first.profile.wasteland.unknownWasteland, original.wasteland.unknownWasteland, 'unknown career data survives charge settlement');
+  const rematch = settle(first.profile, {...win, runId: 'toll-rematch'});
+  equal(rematch.scrapEarned, 168, 'Medium rematch pays 80 plus one rig wreck, never escort wrecks');
+  for (const valves of [0, 1, 2, 3]) {
+    const loss = settle(original, payload({arena: chargeArena({won: false, valves}), runId: 'toll-loss-' + valves}));
+    equal(loss.awarded, true, 'each actual timeout format is a settleable loss');
+    equal(loss.scrapEarned, valves * 48, 'Medium loss pays forty per player-broken valve only');
+    equal(loss.profile.wasteland.warlords.tollkeeper.defeated, false, 'a loss cannot save an earned defeat');
+  }
+});
+
+test('charge settlement refuses wrong-owner, unfinished and inconsistent charge facts', async () => {
+  const settle = await settlement(), p = profile(), a = chargeArena();
+  equal(settle(p, payload({arena: a, activePlayerId: 'other-driver'})).awarded, false, 'another active player cannot claim this charge');
+  for (const edit of [a => a.convoy.finished = false, a => a.convoy.chargePlanted = false,
+    a => a.convoy.valves[0] = 150, a => a.format = 'ordinary', a => a.result.reason = 'three-wrecks']) {
+    const bad = structuredClone(a); edit(bad);
+    equal(settle(p, payload({arena: bad})).awarded, false, 'inconsistent charge evidence never settles');
+  }
+});
 const payload = (changes = {}) => ({runId: 'sal-run-1', ownerPlayerId: 'driver-a',
   activePlayerId: 'driver-a', arena: arena(), car: 'falcone_f42', cpuDifficulty: 'medium', ...changes});
 

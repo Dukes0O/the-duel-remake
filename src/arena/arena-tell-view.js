@@ -82,6 +82,7 @@ const MARKER_COLORS = Object.freeze({danger: 0xff3b21});
 export function updateArenaMarkers(group, markers, seconds) {
   if (!group) return;
   const list = Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'ring') : [];
+  updateGapLights(group, Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'light') : [], seconds);
   updateTyreMarks(group, Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'tyre') : []);
   group.userData.rings ??= [];
   const rings = group.userData.rings;
@@ -103,6 +104,24 @@ export function updateArenaMarkers(group, markers, seconds) {
     ring.scale.setScalar(marker.radius);
     ring.material.color.setHex(MARKER_COLORS[marker.color] ?? MARKER_COLORS.danger);
     ring.material.opacity = .55 + .35 * Math.sin(seconds * Math.PI * 2 * 3) ** 2;
+  });
+}
+
+function updateGapLights(group, list, seconds) {
+  group.userData.gapLights ??= [];
+  const lights = group.userData.gapLights;
+  while (lights.length < list.length) {
+    const light = sprite(0xa8ffb0);
+    light.name = 'Arena safe gap light';
+    group.add(light);
+    lights.push(light);
+  }
+  lights.forEach((light, index) => {
+    const marker = list[index];
+    light.visible = !!marker;
+    if (!marker) return;
+    light.position.set(marker.x, (marker.y || 0) + .35, marker.z);
+    light.scale.setScalar(marker.radius * (1.8 + .2 * Math.sin(seconds * 12) ** 2));
   });
 }
 
