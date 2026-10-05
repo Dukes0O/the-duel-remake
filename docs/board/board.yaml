@@ -1044,7 +1044,7 @@ tasks:
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
     test_commit: d220e948
-    source_commit: 68a08785
+    source_commit: 3309f22f
     preservation_test_commit: 87b436f2
     balance_test_commit: 0cd575fa
     source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
@@ -1055,7 +1055,10 @@ tasks:
     audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
     audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
     final_gate_commit: d34cc540bcb8ec3990a05e3b56ed533f8b336500
-    final_gate_verdict: "The final lane gate stops at an unchanged straight-jump height assertion. The new Mortar flight hook is being traced; pins and thresholds stay unchanged. Fresh review and gates follow the fix."
+    final_gate_verdict: "The earlier frozen lane gate failed an unchanged straight-jump height assertion. The Mortar-only flight correction now passes independent review; fresh gates follow the current balance and browser checks."
+    flight_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
+    flight_review: "The Mortar-only transient marker restores the unchanged ramp pins without changing released ram flight. Independent hop, zero-apex, landing and menu checks pass. All three complete balance reports pass again; current browser and final gates remain."
+    balance_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
     claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
@@ -1351,7 +1354,7 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/convoy-raid
-    test_commit: 16a014a3
+    test_commit: 2815e973
     note_commit: 11371c8
     source_commit: 4af67813
     note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
@@ -1360,11 +1363,13 @@ tasks:
     flag: convoy-raid
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
     hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/crew-gear/signature.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
-    hook_requests: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/render3d.js, src/audio.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs]
+    hook_requests: [src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/render3d.js, src/audio.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, src/arsenal/rockets.js, src/arsenal/harpoon.js, src/arsenal/mortar.js]
     sequencing: "Use the approved rigid tanker recipe, roof plate and lamps, not the superseded trailer or hatch. Convoy owns crew contacts before CREW-04; flame keeps its body-hit behavior. After Arsenal's whole merge, transfer the requested damage, entry and presentation hooks with tests first."
     native_handoff: "Central damage must use real swept projectile impacts, blast centres and solver ram contacts. Validate the due boarding charge before clearing boarding state; only that charge wrecks the rig. The native rig spec is twelve tonnes. No sim-rival or combat-ai change is needed."
     rig_fire_rule: "Use the existing weaponsDisabledUntil field in the owned mode through the event and a legal pending fuse. Test that attacks, Star and UFO cannot fire from the rig while escorts retain their normal behavior. Keep the existing field attack scheduling policy."
     caller_test_grant: "Add independent native caller tests for projectile sweeps, ram contacts, rig weapon suppression, escort response and durable App settlement. Keep existing direct-damage assertions. Admission adds only convoy-raid dev to current flag and launcher expectations; preserve released states and isolation checks."
+    caller_test_verdict: "Native caller tests expose admission, sweep, ram, rig-fire, charge-fuse and retry gaps; escort response and once-only settlement controls pass. Earlier assertions stay unchanged."
+    weapon_geometry_handoff: "After the whole Arsenal merge, Convoy also receives arsenal/rockets.js, arsenal/harpoon.js and arsenal/mortar.js for measured impact and blast geometry forwarding. Rig-only blast eligibility uses actual valve points when a car-centre cull would miss them; preserve existing damage, falloff, owners and the ordinary-car branches. Native bypass and valve-in-range/body-centre-out-of-range tests precede source; no new damage numbers or helper framework."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rigid tanker on its loop, two escorts, three valves, the lit roof plate and boarding finish, the 60 s reset, pay once per event. Install the approved ART-FIT-TANKER recipe output when the mode loads it. Headless tests and a private browser scenario."
@@ -1377,9 +1382,10 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
-    test_commit: fdda1811
-    source_commit: dca01c50
-    art_test_verdict: "Export geometry, fit, heat isolation and native checks pass; approved kit hashes remain exact. Independent review finds fresh renderer imports fail through the Gunn fight graph. Import regressions and a pure geometry extraction precede the comparison sheet and Claude approval."
+    test_commit: 11a54f21
+    source_commit: a714587f
+    art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
+    geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
     trajectory_review_commit: d068bffb
     note_commit: bcda842
     note: "The settled turret is exported. Fix the fresh-import cycle, then prepare its comparison sheet; the finished look needs Claude's approval before merge."
