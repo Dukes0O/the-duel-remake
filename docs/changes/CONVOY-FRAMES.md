@@ -1,6 +1,6 @@
 # CONVOY-FRAMES: moving tanker cost
 
-Matched moving-frame scenario is prepared. No measurement has run.
+Matched moving-frame scenario is prepared. Valid measurements are still pending.
 
 ## Changed
 
@@ -19,9 +19,11 @@ Matched moving-frame scenario is prepared. No measurement has run.
 
 ## Checks
 
-No tests, builds or browser runs yet. Crew has the heavy-check slot.
 Source review found that missing CPU timing could evade a comparison. The sample
 now requires the record, sufficient frames and finite positive CPU cost.
+First browser setup stopped before a sample: the yard was not presented after
+advance. It now uses existing native presentation and waits for its real control.
+The harness's isolated build passed; no frame-cost verdict or runtime change.
 
 ## Remaining
 

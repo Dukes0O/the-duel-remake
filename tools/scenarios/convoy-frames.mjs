@@ -4,7 +4,7 @@ import {join} from 'node:path';
 async function click(context, selector) {
   const at = await context.evaluate(`(() => {
     const button = document.querySelector(${JSON.stringify(selector)});
-    if (!button || button.disabled) throw Error('Missing Convoy frame control');
+    if (!button || button.disabled) throw Error('Missing Convoy frame control: ' + ${JSON.stringify(selector)});
     const rect = button.getBoundingClientRect();
     return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
   })()`);
@@ -46,7 +46,8 @@ async function measure(context, quality, distance, present, pair) {
   })()`);
   await context.waitFor(`(() => {const app = window.__qaApp; app.onFrame?.(app.duel.state, 0);
     return app.visualReady && document.querySelector('#renderer-loading')?.hidden;})()`, 'native yard', 60000);
-  await context.evaluate('window.__qaApp.advance(8)');
+  await context.evaluate('window.__qaApp.advance(8); window.__qaApp.onFrame?.(window.__qaApp.duel.state, 0)');
+  await context.waitFor('!!document.querySelector(\'[data-action="yard-scrapdome"]\')', 'native yard control', 60000);
   await click(context, '[data-action="yard-scrapdome"]');
   await click(context, '[data-arena-mode="convoy-raid"]');
   await click(context, '[data-action="arena-start"]');
