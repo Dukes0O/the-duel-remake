@@ -21,8 +21,8 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
   && FEATURE_STATES['convoy-raid'] === 'dev'
   && FEATURE_STATES['cpu-crews'] === 'dev' && FEATURE_STATES['ambush-alley'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 12,
-  'the five released Wasteland features stay on; career backup, Fight Voices and Arsenal wave three stay dev; retired switches stay absent');
+  && FEATURE_STATES.gunn === 'dev' && Object.keys(FEATURE_STATES).length === 13,
+  'the five released Wasteland features stay on; career backup, Fight Voices, computer crews, Ambush Alley, Convoy Raid, Gunn and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(FEATURE_STATES['cpu-crews'] === 'dev', 'computer crews start behind their own dev switch');
 check(!productionFlags.enabled('cpu-crews'), 'production keeps computer crews off');
@@ -39,6 +39,11 @@ check(!createFeatureFlags({storage: null, qa: true, search: '?flags=cpu-crews'})
   'requesting computer crews does not admit Ambush Alley');
 check(createFeatureFlags({storage: null, qa: true, search: '?flags=ambush-alley'}).enabled('ambush-alley'),
   'private QA admits only an explicit Ambush Alley request');
+check(!productionFlags.enabled('gunn'), 'production keeps Gunn off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=gunn'}).enabled('gunn'),
+  'production URLs cannot enable unfinished Gunn');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=gunn'}).enabled('gunn'),
+  'explicit private QA enables Gunn');
 check(!productionFlags.enabled('arsenal-wave3'), 'production keeps wave three off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
   'production URLs cannot enable unfinished wave three');

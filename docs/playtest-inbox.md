@@ -1,5 +1,22 @@
 # Wasteland play-test inbox
 
+## Further answers, 5 October
+
+- WAR-03a: Kyle approved the nine-second native whine clip: "it's fine".
+  Finish the current gate and build, then merge. No further art round.
+- CREW-04: Claude requests the same thirty Hard seeds on the same commit
+  with crews off, crews on without repairs or ambushes, and everything on.
+  Report the three win counts and likely cause, then wait for his answer.
+  Keep rules, catch-up and target unchanged. Compare Medium seed 1989 off/on
+  before the turn. Fix a proven game fault in Crew; do not hide it with the
+  driver. Only if crews merely shift the race and the driver never brakes
+  may a separate general braking-policy card proceed, with replay results.
+- WAR-03d: the first broken valve resets both escorts to full armor once;
+  ordinary 3.5 s returns continue. Escorts never score. Loss pays 40 per
+  broken valve times difficulty. First and rematch wins use existing warlord
+  settlement, once. The convoy kit reuses the Warlord plated look on any
+  car, with +30 armor and +270 kg. No new art.
+
 ## Claude's answers, 5 October 2026
 
 - WAR-03a: round two approved, no third round. Finish whine listening and
@@ -16,8 +33,8 @@
   is seeded between 3 and 9 m across the 12 m strip. Build after Convoy merges.
 - WAR-03e: build the Baron once Gunn and the Tollkeeper are merged.
 
-All four Claude waits are cleared. Existing Gunn motion evidence remains
-19.0 ms High and 18.2 ms Performance; listening is still due.
+Existing Gunn motion evidence remains 19.0 ms High and 18.2 ms Performance.
+Gunn listening and Tollkeeper details are approved; Crew awaits measurements.
 
 ## Released 4 October 2026: try these in the main game
 
