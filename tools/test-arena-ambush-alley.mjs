@@ -2,16 +2,18 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
-import {damageRaider} from '../src/raiders.js';
+import {damageRaider, stepRaiders} from '../src/raiders.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {selectFootGear, stepFootWeapons} from '../src/onfoot-weapons.js';
 import {stepFighter} from '../src/onfoot.js';
 import {sweepObstacle} from '../src/collision.js';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {App} from '../src/app.js';
-import {canLeaveCar} from '../src/onfoot-transition.js';
+import {canLeaveCar, initializeFootTransition, stepFootTransition} from '../src/onfoot-transition.js';
 import {stepCombatAI} from '../src/combat-ai.js';
 import {createAmbushAlleyView} from '../src/arena/modes/ambush-alley-view.js';
+import {CREW} from '../src/crew.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
 
 // ARENA-05: native acceptance. Kyle's 4 October answer replaces the
 // Scrapdome ring fixture with the Pit; Salt Flats remains supported.
@@ -121,13 +123,13 @@ for (const venueId of ['pit', 'salt-flats']) test(`native Ambush Alley entry adm
 });
 
 function enter({venueId = 'pit', enabled = true, discovered = true, seed = 305,
-  difficulty = 'medium'} = {}) {
+  difficulty = 'medium', crewId = 'rook'} = {}) {
   const duel = new Duel({seed, featureFlags: createFeatureFlags({storage: null, qa: true,
     overrides: {'salt-flats': true, 'crew-gear': true, 'ambush-alley': enabled}})});
   duel.state.wastelandGateDiscovered = discovered;
   const before = structuredClone(duel.state);
   const started = duel.startArenaEvent({venueId, mode: 'ambush-alley', car: 'falcone_f42',
-    crewId: 'rook', arsenalRank: 30, cpuDifficulty: difficulty, opponents: []});
+    crewId, arsenalRank: 30, cpuDifficulty: difficulty, opponents: []});
   return {duel, state: duel.state, started, before};
 }
 function fight(options) {
@@ -497,4 +499,68 @@ test('the same seed and native input script repeat at 30, 60 and 144 frames per 
   }
   const base = run(30); equal(run(60), base, 'the same seed/input gives the same native result at sixty FPS');
   equal(run(144), base, 'the same seed/input gives the same native result at 144 FPS');
+});
+
+test('actual raider movement retains elapsed time at native 30, 60 and 144 FPS deltas', () => {
+  function run(fps) {
+    const f = fight(), member = raiders(f)[0], start = {x: member.x, z: member.z};
+    for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
+    for (let frame = 0; frame < fps; frame++) stepRaiders(f.duel, 1 / fps);
+    return {x: member.x, z: member.z, moved: Math.hypot(member.x - start.x, member.z - start.z)};
+  }
+  const base = run(30);
+  near(base.moved, 4.5, 'one native second advances at the existing fighter walking rate');
+  for (const fps of [60, 144]) {
+    const at = run(fps);
+    near(at.x, base.x, `${fps} FPS reaches the same native x without pre-converting dt`);
+    near(at.z, base.z, `${fps} FPS reaches the same native z without pre-converting dt`);
+    near(at.moved, base.moved, `${fps} FPS retains the full movement time`);
+  }
+});
+
+test('every initial Ambush fighter has the same health perk as their normal native exit', () => {
+  for (const crewId of Object.keys(CREW)) {
+    const f = fight({crewId}), initial = {health: f.state.fighter.health, maximum: f.state.fighter.maxHealth};
+    initializeFootTransition(f.duel); f.state.input.interact = true;
+    for (let n = 0; n < 50; n++) stepFootTransition(f.duel, DT);
+    equal(f.state.onFoot, true, `${crewId} exits through the real normal transition`);
+    equal(initial, {health: f.state.fighter.health, maximum: f.state.fighter.maxHealth},
+      `${crewId} initial admission preserves their existing health perk`);
+  }
+});
+
+test('real enemy raid RPG hits never credit the player; real player RPG hits still do', () => {
+  for (const enemy of [true, false]) {
+    const f = fight(); reachWave(f, 4);
+    const actor = buggy(f), member = raiders(f)[0], events = [];
+    f.duel.onChange((_state, event) => {if (event.combatHit) events.push(event);});
+    for (const other of raiders(f).slice(enemy ? 1 : 0)) damageRaider(f.duel, other, other.health);
+    for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
+    f.state.combat.projectiles.length = 0;
+    let shot;
+    if (enemy) {
+      moveRaider(f, member, {...alley(f).fort, x: 0, z: 65});
+      const zone = f.state.raids.zones.find(z => z.raiders.includes(member));
+      zone.nextShotAt = 0; stepRaiders(f.duel, 0);
+      shot = f.state.combat.projectiles.find(p => p.kind === 'rpg' && p.enemy);
+    } else {
+      const fighter = f.state.fighter;
+      fighter.pitch = 0; f.state.footWeapons.selected = 'rpg';
+      f.duel.setFighterInput({fire: true}); stepFootWeapons(f.duel, DT);
+      f.duel.setFighterInput({fire: false});
+      shot = f.state.combat.projectiles.find(p => p.kind === 'rpg' && !p.enemy);
+    }
+    ok(shot, 'the native producer creates the actual RPG for this owner');
+    const speed = Math.hypot(shot.vx, shot.vz), x = shot.x + shot.vx / speed * 24,
+      z = shot.z + shot.vz / speed * 24, at = f.duel.course.nearest(x, z);
+    Object.assign(actor, {s: at.s, prevS: at.s, lateral: at.lateral, prevLateral: at.lateral,
+      airHeight: 0, prevAirHeight: 0, armor: actor.maxArmor, combatShield: 0});
+    f.state.combat.rivalShield = 0;
+    for (const participant of f.state.arena.participants) participant.protectedSec = 0;
+    const before = f.state.combat.hits;
+    for (let n = 0; n < 120 && !events.length; n++) stepProjectiles(f.duel, DT);
+    ok(events.length > 0, 'the actual RPG crosses the real wave buggy body');
+    equal(events[0].enemy, enemy, 'the native hit event retains its actual owner');
+    equal(f.state.combat.hits - before, enemy ? 0 : 1, 'only the actual player earns a direct hit');
+  }
 });

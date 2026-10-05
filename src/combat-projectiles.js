@@ -510,7 +510,7 @@ export function stepProjectiles(duel, dt) {
       }
       if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage);
       if (contact) {
-        const removed = target && hit(duel, target, projectile, 1.35, false);
+        const removed = target && hit(duel, target, projectile, 1.35, !!projectile.enemy);
         if (removed > 0 && !projectile.enemy && !projectile.raid && state.opponents.includes(target)) {
           combat.notorietyEvents ??= [];
           if (combat.notorietyEvents.length < 256) combat.notorietyEvents.push({
@@ -524,8 +524,8 @@ export function stepProjectiles(duel, dt) {
         const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
           at.z - projectile.z);
         if (distance < rpgSplashRadius) hit(duel, actor, projectile,
-          1 - distance / rpgSplashRadius, false,
-          {splash: true, self: actor === state});
+          1 - distance / rpgSplashRadius, !!projectile.enemy,
+          {splash: true, self: !projectile.enemy && !projectile.raid && actor === state});
       }
       for (const zone of projectile.raid && state.arena?.mode === 'ambush-alley'
         ? [] : state.raids?.zones || []) {

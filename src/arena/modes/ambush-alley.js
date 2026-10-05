@@ -3,6 +3,7 @@ import {createRaidZones} from '../../raiders.js';
 import {createFighter, FIGHTER_RULES} from '../../onfoot.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {sweepObstacle} from '../../collision.js';
+import {crewPerks} from '../../crew.js';
 
 export const AMBUSH_RULES = Object.freeze({
   rank: 12, timeLimitSec: Infinity, suddenDeathSec: 0, maxOpponents: 1,
@@ -182,6 +183,9 @@ export function initializeAmbushAlley(duel) {
     revs: 0, yawVelocity: 0, pushVelocity: 0, boost: 1, boosting: false});
   state.fighter = {...createFighter(duel.course, state,
     {s: fighter.s, lateral: fighter.lateral}), crewId: state.crewId};
+  state.fighter.maxHealth = Math.round(state.fighter.health *
+    (crewPerks(state.fighter.crewId).healthMultiplier || 1));
+  state.fighter.health = state.fighter.maxHealth;
   state.onFoot = true;
   startWave(duel, 1);
   return true;

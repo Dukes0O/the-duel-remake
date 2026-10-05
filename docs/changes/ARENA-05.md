@@ -17,10 +17,8 @@ Hold is five per completed wave in the existing venue territory, once.
 
 ## Changed
 
-The new mode module owns fort health, passive wear, native raider wave
-rosters, seeded spawn poses, ten-second gaps and win/loss decisions. It
-reuses released createRaidZones records and createFighter. The selected
-fighter starts beside the parked car with the existing weapon state.
+The mode owns fort health/wear, seeded native waves, ten-second gaps and
+win/loss. It reuses createRaidZones/createFighter and existing player gear.
 
 Scrap cover uses real collision boxes registered only on the event's Course
 instance. The Pit car clears its solid centre pile; Salt uses sample 160,
@@ -29,27 +27,20 @@ inside native walls, at least 60 metres from the fort. No world recipe or
 world signature changed. The view reuses the released salvage-hulk kit at
 the actual physical cover poses, with read-only state and explicit disposal.
 
-Native Game entry now initializes armor, foot transition and gear before
-placing the fort and fighter. It allocates one real Dusthawk through the
-existing arena factory. That actor stays inactive for waves one to three;
-later waves place it at the seeded clear pose. Its weapon hold is permanent,
-its arena brain rams the fort, and it cannot respawn within a wave. Ram
-damage uses the existing armor ram formula and real swept body contact.
+Native entry initializes armor, foot transition and gear. A real Dusthawk
+stays inactive until waves four/five, then rams solid cover with normal
+armor/contact rules. Its weapons stay held; it cannot return in its wave.
 
 The arena ticks waves and normal raider/foot hooks. The new mode cannot
 enter without its own dev switch, a discovered career, rank 12 and Pit or
 Salt admission. Foot exit/re-entry allows Ambush and released Fuel only;
 other arenas remain denied. No substitute participant was added.
 
-Pay uses the existing pure arena settlement and durable owner/retry write.
-It validates completed waves, fort health, winner and placings, then applies
-the settled wave pay and hold once. Input saves, credits and unknown fields
-stay unchanged. HUD/results show fort health, wave count and saved pay.
-Yard rendering and router offer the mode at rank 12 with only its two venues.
-The real wrench repairs fort cover at 10 health per second for four seconds;
-it preserves normal car repair, hit interruption and release controls.
-The buggy targets the nearest solid cover rather than an empty gap in the
-ring. A real native drive/contact witness fails before that fix and passes.
+Existing pure settlement and durable owner/retry write pay verified waves
+once. Saves, credits and unknown fields stay unchanged. Yard/HUD/results
+offer two venues and show fort health, waves and saved pay. The real wrench
+repairs forty fort health over four seconds; normal car repair is unchanged.
+The buggy targets solid cover; its actual drive/contact witness passes.
 
 ## Fighter, contact and sound
 
@@ -71,7 +62,11 @@ picked as 74e62833: four wiring files only, no unfinished Crew runtime.
 The authored suite covers native admission, five waves, pay/hold, loss,
 wrench, geometry, actual buggy fire/ram, hostile RPG flight and no return.
 Additive controls cover view purity, disposal and wear near outer cover.
-Current native result: 31 cases, 660 checks, all pass.
+Current native result: 34 cases, 775 checks, all pass.
+Four primary review defects had additive red controls before fixes:
+native 144 FPS movement retains fixed-step time; initial health matches
+normal exit for all eight crews; the reserve buggy stays hidden until
+placement (wrecks stay visible); enemy RPG hits retain enemy attribution.
 
 Director approved these fixture corrections; no threshold was weakened:
 the buggy has 112.746282 armor and the unchanged per-hit cap is 80. Its wreck
