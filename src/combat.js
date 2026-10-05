@@ -2,12 +2,16 @@ import {stepPickups} from './combat-pickups.js';
 import {stepCombatAI} from './combat-ai.js';
 import {stepProjectiles, tickImpactCooldowns} from './combat-projectiles.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
-import {arsenalEnabled, hazardsActive, stepCpuWeaponCooldowns, clearCpuWeaponCooldowns} from './combat-weapons.js';
+import {arsenalEnabled, arsenalWaveThreeEnabled, hazardsActive, stepCpuWeaponCooldowns, clearCpuWeaponCooldowns} from './combat-weapons.js';
 import {clearSmokeHistory} from './arsenal/smoke.js';
 import {stepTether} from './arsenal/harpoon.js';
 import {stepRocketVolleys} from './arsenal/rockets.js';
 import {stepFlamethrowers} from './arsenal/flamethrower.js';
 import {stepScrapMagnets} from './arsenal/magnet.js';
+import {stepMortars} from './arsenal/mortar.js';
+import {stepTeslaCharges} from './arsenal/tesla.js';
+import {stepDecoyDrones, clearDroneHistory} from './arsenal/decoy-drone.js';
+import {stepNitroRuns} from './arsenal/nitro-ram.js';
 import {cpuArsenalLoadout} from './weapon-upgrades.js';
 import {makeRng} from './rng.js';
 import {clearHazards, stepHazards} from './arsenal/hazards.js';
@@ -20,18 +24,24 @@ export function initializeArsenalCombat(duel) {
   if (!arsenalEnabled(duel)) return;
   duel.state.opponents.forEach((actor, index) => {
     actor.weaponLoadout = cpuArsenalLoadout(duel.state.arsenalRank || 1,
-      duel.state.cpuDifficulty, {rng: makeRng(duel.seed ^ 0x415253 ^ (index + 1)*0x51ed)});
+      duel.state.cpuDifficulty, {arsenalWave3Enabled: arsenalWaveThreeEnabled(duel),
+        rng: makeRng(duel.seed ^ 0x415253 ^ (index + 1)*0x51ed)});
   });
 }
 
 export function clearArsenalState(duel) {
   clearHazards(duel);
   clearSmokeHistory(duel);
+  clearDroneHistory(duel);
   if (duel.state.combat) {
     duel.state.combat.rocketVolleys = [];
     duel.state.combat.flameBursts = [];
     duel.state.combat.flameBurns = {};
     duel.state.combat.magnets = [];
+    duel.state.combat.mortarShells = [];
+    duel.state.combat.teslaCharges = [];
+    duel.state.combat.teslaPulses = [];
+    duel.state.combat.nitroRuns = [];
   }
   for (const actor of [duel.state, ...duel.state.opponents, ...duel.state.traffic,
     duel.state.police?.pursuit]) {
@@ -58,6 +68,7 @@ export function stepCombat(duel, dt) {
 
   tickImpactCooldowns(duel, dt);
   if (arsenalEnabled(duel)) stepScrapMagnets(duel, dt);
+  if (arsenalWaveThreeEnabled(duel)) stepDecoyDrones(duel);
   stepPickups(duel, dt);
 
   for (const weapon of Object.keys(combat.cooldowns)) {
@@ -81,11 +92,16 @@ export function stepCombat(duel, dt) {
     stepRocketVolleys(duel, dt);
     stepFlamethrowers(duel, dt);
   }
+  if (arsenalWaveThreeEnabled(duel)) {
+    stepMortars(duel, dt);
+    stepTeslaCharges(duel, dt);
+  }
   stepProjectiles(duel, dt);
   if (hazardsActive(duel)) {
     for (const actor of [state, ...state.opponents, ...state.traffic, state.police?.pursuit]) {
       if (actor) {stepTether(duel, actor, dt); stepCarEffects(actor, dt);}
     }
     stepHazards(duel, dt);
+    if (arsenalWaveThreeEnabled(duel)) stepNitroRuns(duel, dt);
   }
 }

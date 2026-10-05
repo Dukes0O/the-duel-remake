@@ -5,6 +5,9 @@ import {NOTORIETY_XP} from './notoriety.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 import {CAR_SLOT_DIRECTIONS,CAR_SLOT_PAD} from './car-loadout.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {readFightSubtitle} from './fight-voices.js';
+import {arsenalEnabled} from './combat-weapons.js';
+import {carEffect} from './arsenal/car-effects.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 const zones = ['front', 'right', 'rear', 'left'];
@@ -153,6 +156,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     <div class="combat-edge-cue" data-side="left" aria-hidden="true"></div>
     <div class="combat-edge-cue" data-side="right" aria-hidden="true"></div>
     <div class="combat-xp-toast" role="status" aria-live="polite"></div>
+    <div class="combat-fight-subtitle" role="status" aria-live="polite" hidden></div>
     <div class="combat-foot-reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-foot-action"></div>
     <div class="combat-foot-car" role="status" aria-label="Direction and distance to your car"><span class="combat-foot-car-arrow" aria-hidden="true">▲</span><b>YOUR CAR</b><strong></strong></div>
@@ -179,6 +183,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
   const xpToast = host.querySelector('.combat-xp-toast');
+  const fightSubtitle = host.querySelector('.combat-fight-subtitle');
   const edgeCues = [...host.querySelectorAll('.combat-edge-cue')];
   const armorValue = playerArmor.querySelector('strong');
   const armorFill = playerArmor.querySelector('i');
@@ -225,6 +230,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
 
   function update(state) {
     const active = combatHudVisible(app.duel, state);
+    const subtitle = active ? readFightSubtitle(state) : null;
+    if (fightSubtitle.hidden !== !subtitle) fightSubtitle.hidden = !subtitle;
+    setText(fightSubtitle, subtitle || '');
     const onFoot = active && state.onFoot && !!state.fighter;
     if (host.hidden === active) host.hidden = !active;
     if (playerArmor.hidden === (active && !onFoot)) playerArmor.hidden = !active || onFoot;
@@ -267,6 +275,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     playerArmor.classList.toggle('is-wrecked', !!state.combatWrecking);
 
     const ufo = combat.cooldowns.ufo <= 0 && state.status === 'racing' ? ufoDestination(app.duel) : null;
+    const arsenal = arsenalEnabled(app.duel);
+    const lockout = arsenal ? carEffect(state, 'disabled') : null;
     for (const button of buttons) {
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
@@ -276,12 +286,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       setAttribute(button,'title',`${weapon.name} · Key ${slot+1} · Gamepad D-pad ${CAR_SLOT_PAD[slot]}`);
       const left = Math.max(0, combat.cooldowns[id] || 0);
       const blocked = id === 'ufo' && ufo?.kind === 'blocked';
-      const disabled = onFoot || state.status !== 'racing' || state.paused || left > 0 || blocked;
-      const full = weapon.cooldown * (1 - (combat.levels[id] || 0) * COMBAT_TUNING.cooldownUpgradeDiscount);
+      const disabled = onFoot || state.status !== 'racing' || state.paused || left > 0 || blocked || !!lockout;
+      const level = combat.levels[id] || 0;
+      const full = arsenal ? weapon.cooldown / 1.15 ** level
+        : weapon.cooldown * (1 - level * COMBAT_TUNING.cooldownUpgradeDiscount);
       const angle = `${Math.round(360 * (1 - clamp(left / Math.max(.01, full))))}deg`;
       if (button.style.getPropertyValue('--ready-angle') !== angle) button.style.setProperty('--ready-angle', angle);
       if (button.disabled !== disabled) button.disabled = disabled;
-      const label = left > 0 ? `${Math.ceil(left)}s` : blocked ? ufo.reason === 'lap-used' ? 'LAP USED' : ufo.reason === 'landing' ? 'NO ROOM' : 'CHARGING' : 'READY';
+      const label = lockout ? `DISABLED ${Math.ceil(lockout.remainingSec)}s` : left > 0 ? `${Math.ceil(left)}s` : blocked ? ufo.reason === 'lap-used' ? 'LAP USED' : ufo.reason === 'landing' ? 'NO ROOM' : 'CHARGING' : 'READY';
       setText(button.querySelector('.combat-slot-state'), label);
       setAttribute(button, 'aria-label', `${weapon.name}, level ${combat.levels[id] || 0}, keyboard ${slot+1}, gamepad D-pad ${CAR_SLOT_PAD[slot]}, ${label.toLowerCase()}`);
     }
@@ -303,7 +315,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     }
     for (let index = 0; index < markers.length; index++) {
       const marker = markers[index], opponent = opponents[index];
-      if (!opponent) {marker.hidden = true; continue;}
+      if (!opponent || opponent.drone) {marker.hidden = true; continue;}
       const projection = projected.find(item => item.index === index);
       const exact = projection?.visible === true;
       const position = exact ? projection : fallbackOpponentPosition(app.duel.course,

@@ -572,6 +572,77 @@ check('ARS-01 supplemental races require known hit victims and weapon owners', (
       JSON.stringify(hitFailures) + '; weapon failures: ' + JSON.stringify(useFailures));
 });
 
+check('ARS-03 requested balance switches reach native Armory, campaign and CPU loadouts', () => {
+  const waveThree = ['mortar', 'tesla', 'decoy', 'nitro'];
+  const originalBuy = App.prototype.purchaseArsenalWeapon;
+  const originalEquip = App.prototype.equipCarWeapon;
+  const originalStart = App.prototype.startCampaign;
+  const purchases = [], equipment = [], starts = [];
+  App.prototype.purchaseArsenalWeapon = function (id) {
+    const result = originalBuy.call(this, id);
+    purchases.push({id, ok: result.ok, waveThree: this.duel.featureFlags.enabled('arsenal-wave3'),
+      reason: result.reason});
+    return result;
+  };
+  App.prototype.equipCarWeapon = function (slot, id) {
+    const result = originalEquip.call(this, slot, id);
+    equipment.push({slot, id, ok: result.ok});
+    return result;
+  };
+  App.prototype.startCampaign = function (...args) {
+    const result = originalStart.apply(this, args);
+    starts.push({started: result, waveThree: this.duel.featureFlags.enabled('arsenal-wave3'),
+      rank: this.profile.wasteland.rank, discovered: this.duel.state.wastelandGateDiscovered,
+      owned: [...this.profile.wasteland.weapons.unlocked],
+      player: [...(this.duel.state.weaponLoadout || [])],
+      computers: this.duel.state.opponents.map(actor => [...(actor.weaponLoadout || [])])});
+    return result;
+  };
+  try {
+    const run = required('run');
+    for (const flags of [[], ['arsenal']]) {
+      const row = run('none', 'hard', 1993, {flags, arsenalRank: 21, maxFrames: 1});
+      const start = starts.at(-1);
+      assert.equal(start.started, true, 'each off control starts a real native campaign');
+      assert.equal(start.waveThree, false, 'default and Arsenal-only runs keep the dev wave-three switch off');
+      assert.ok(![start.player, ...start.computers].flat().some(id => waveThree.includes(id)),
+        'off controls cannot admit wave-three player or CPU slots');
+      assert.deepEqual(row.flags, flags, 'off controls report their actual requested switches');
+      assert.equal(row.completed, false, 'one frame is never a completed balance sample');
+    }
+    purchases.length = equipment.length = starts.length = 0;
+    const flags = required('parseArgs')(['--flags', 'arsenal,arsenal-wave3']).flags;
+    assert.deepEqual(flags, ['arsenal', 'arsenal-wave3'], 'the real CLI accepts both requested switches');
+    let row, runError;
+    try {row = run('wave-three', 'hard', 1993, {flags, arsenalRank: 21, maxFrames: 1});}
+    catch (error) {runError = error;}
+    assert.equal(purchases[0]?.waveThree, true,
+      'both requested balance switches must enable native wave three before the real Armory purchase' +
+      (purchases[0]?.reason ? ': ' + purchases[0].reason : ''));
+    assert.ifError(runError);
+    assert.deepEqual(purchases.map(({id, ok}) => ({id, ok})), waveThree.map(id => ({id, ok: true})),
+      'the balance career purchases all four weapons through the actual Armory');
+    assert.deepEqual(equipment.map(({slot, id, ok}) => ({slot, id, ok})),
+      waveThree.map((id, slot) => ({slot, id, ok: true})), 'actual App equipment admits all four new slots');
+    assert.equal(starts.length, 1, 'the positive probe starts one real campaign');
+    const start = starts[0];
+    assert.equal(start.waveThree, true, 'the dev switch survives native campaign initialization');
+    assert.equal(start.discovered, true, 'the synthetic career has actually discovered the gate');
+    assert.equal(start.rank, 21, 'the synthetic career earned the final wave-three unlock rank');
+    assert.ok(waveThree.every(id => start.owned.includes(id)), 'native purchases are owned at campaign start');
+    assert.deepEqual(start.player, waveThree, 'the native player receives the four truly equipped weapons');
+    assert.ok(start.computers.flat().some(id => waveThree.includes(id)),
+      'the seeded Hard field naturally admits native wave-three CPU weapons');
+    assert.deepEqual(row.cpuLoadout, start.computers[0], 'the report retains the actual native CPU loadout');
+    assert.deepEqual(row.flags, flags, 'the positive report retains both switches');
+    assert.equal(row.completed, false, 'the one-frame positive probe cannot claim a full balance result');
+  } finally {
+    App.prototype.purchaseArsenalWeapon = originalBuy;
+    App.prototype.equipCarWeapon = originalEquip;
+    App.prototype.startCampaign = originalStart;
+  }
+});
+
 for (const failure of failures) console.error(`FAIL ${failure}`);
 console.log(`Combat balance acceptance: ${checks} checks, ${checks - failures.length} passed, ${failures.length} failed.`);
 if (failures.length) process.exitCode = 1;
