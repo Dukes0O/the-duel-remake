@@ -28,7 +28,7 @@ remaining shared hooks and merge gates are still required.
   One tested pose fixture is followed by real physics; no fake move state.
 - Gunn's native tell names arena.gunn-barrage and keeps its settled seconds
   and position. A switched procedural rising whine fits the shortest tell;
-  the shared audio consumer still awaits its owner's handoff.
+  the generic audio consumer selects the event cue, retaining arena.tell as fallback.
 - Main-menu Armory forwards injected flags to its read-only territory panel.
   Defaults, released Sal and the absence of fight launch buttons stay exact.
 - Router and yard now forward the same native flags. The motion scenario
@@ -45,20 +45,15 @@ remaining shared hooks and merge gates are still required.
   Local resources, named parts, open-mouth rays, Stuttgart/Falcone fit,
   material isolation, purity, disposal, fresh imports and real trajectories
   pass. The combined kit remains within the existing 12,000-triangle ceiling.
-- Tests preceded source: art 7/23, one pass/six red; fresh imports also started red.
-- Reviewed trajectory correction tests five real mouths reaching one world lock
-  after the player turns. The reviewed native fight baseline passed 14/144.
-- Round one passed twelve pure real views; critic requested the current round two.
+- Art/fresh-import tests preceded source (art 7/23, one pass/six red).
+  Reviewed trajectory witness keeps five mouths at one lock after a player turn.
 - Yard/Armory witnesses all pass: three cases/21 checks. The existing yard
   test reproduced the lost flag before source; defaults/released Sal stay exact.
-- Whole integration 55f44edf is received; README/VERIFICATION stay byte-exact.
-  Reviewed merge resolutions retain Gunn and Arsenal Wave Three dev requests,
-  catalog length ten and all 42 flag checks; no other flag behavior changed.
+- README/VERIFICATION stay byte-exact; no released flag behavior changes.
 - Round-two existing capture passed twelve views with zero errors/warnings,
   private port 58294 and memory-only saves. Sheet is 256,682 bytes; its short
   look note records source and hashes. Only the harness's isolated QA build
   ran; no broad gate, audio, balance or pacing. Existing assertions stay exact.
-- Motion fixture started red, then passed sixteen new native checks; syntax/diff pass.
 - Round-two critic: art/material 3; readability, grounding and visibility 4.
   Cleaner metal/collars/fit, but broad panels and distant chips/welds need
   Claude's judgment. No art was changed or new round requested.
@@ -68,7 +63,8 @@ remaining shared hooks and merge gates are still required.
 - Motion browser reaches the real yard buttons/intro and tracks a moving
   target without changing race/profile. First-shot mouth check proves a
   0.045 m missing native ground lift (rendered x/z agree within 2e-9).
-  Failure reports coordinates; pacing remains unmeasured until browser rerun.
+  The corrected motion run passes both qualities with 12 captures, no errors or
+  warnings; 120 advancing frames give High p95 19.0 ms and Performance 18.2 ms.
 - Real grounded-Stuttgart witness started red at the missing lift, then passes
   all three mouths with unchanged 1e-5 tolerance. Its new fixture runs 6.1 s
   to observe the complete barrage, not only the first shot at 5.6 s.
@@ -76,16 +72,22 @@ remaining shared hooks and merge gates are still required.
   fit/geometry/trajectory assertions stay exact. Combined native/art 31/514
   pass, including both fresh imports. Existing vehicle grounding passes 4,967
   checks across nine actual models; moved point function is byte-exact.
+- Whole integration 2e7862fb is received. Narrow flag union retains every
+  released state and existing dev flag, adding Gunn dev only (catalog twelve).
+  Beta's exact catalog lacked Gunn; approved addition retains every old assertion.
+  Flags 51, Preview 22 and all eight beta cases pass; Arsenal core/wave-two pass.
+- Four native aimed-rocket controls preceded contacts: two missing-hit failures,
+  two friendly-fire passes. Real exit/walking and seeded raiders now pass via
+  existing fighter body/splash helpers, with no invented state.
+  Native cue dispatch/default-spatial control passes. Gunn/art/car-contact/Ambush
+  focused run passes 128 cases: 279/299/397/797 checks; car rules remain exact.
 
 ## Remaining
 
 - Claude reviews round-two side, three-quarter and top views on Stuttgart
   and Falcone. Three-round cap applies; no finished look is claimed.
-- Receive event-cue audio dispatch and fighter contact
-  hooks from their owner. CREW.md already settles fighter splash numbers;
-  current Rocket Pods car-target policy remains unchanged meanwhile.
-- Complete motion/pacing and card checks, lane/build and required reviews
-  on the final integration base before merge.
+- Whole-source review and remaining sound/card checks, then lane/build on the
+  final integration base before merge. No broad gate while the look waits.
 
 ## Removed
 

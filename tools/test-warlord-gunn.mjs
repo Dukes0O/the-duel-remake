@@ -21,6 +21,7 @@ import {arenaYardPanel} from '../src/screen-arena.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {launchAimedRocket, ROCKET_RULES} from '../src/arsenal/rockets.js';
 import {FIGHTER_RULES} from '../src/onfoot.js';
+import {EngineAudio} from '../src/audio.js';
 
 // WAR-03a: native entry, combat and rewards; Claude settled the move on 4 October.
 const DT = 1 / 120;
@@ -231,6 +232,33 @@ test('native Gunn tells name the barrage whine and preserve their settled timing
     equal(f.launches.filter(shot => shot.observedAt >= tell.at).length, 0,
       'adding sound metadata cannot fire a rocket during the tell');
   }
+});
+
+test('native EngineAudio dispatches the emitted tell cue and preserves the default spatial tell', () => {
+  const f = combatFixture({difficulty: 'hard'});
+  f.advance(5.05);
+  equal(f.tells.length, 1, 'the real fight emits its first ready tell');
+  const audio = new EngineAudio({flags: f.duel.featureFlags});
+  const played = [], spatial = [], destination = {}, disconnect = () => {};
+  audio.context = {state: 'running'};
+  audio._syncMixer = () => {};
+  audio._spatialOutput = event => {
+    spatial.push(event);
+    return {level: destination, disconnect};
+  };
+  audio._playCue = (id, options) => {played.push({id, options});};
+  audio.event({arenaTell: f.tells[0]}, f.duel.state, f.duel.course);
+  equal(played, [{id: 'arena.gunn-barrage', options: {destination, onEnd: disconnect}}],
+    'the native consumer selects the emitted cue and keeps its spatial output cleanup');
+  equal(spatial, [{hitPosition: f.tells[0].position, combatHit: true}],
+    'the emitted warning position reaches the existing spatial output');
+  played.length = spatial.length = 0;
+  const position = {x: 12, y: 3, z: 8};
+  audio.event({arenaTell: {position}}, f.duel.state, f.duel.course);
+  equal(played, [{id: 'arena.tell', options: {destination, onEnd: disconnect}}],
+    'a tell without a cue retains the exact default charge sound and cleanup');
+  equal(spatial, [{hitPosition: position, combatHit: true}],
+    'the default tell keeps the same spatial output contract');
 });
 
 for (const [difficulty, cooldown, tell] of [['easy', 9, 1.2], ['medium', 7, .8], ['hard', 5, .5]]) {

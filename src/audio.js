@@ -1582,7 +1582,7 @@ export class EngineAudio {
         state,
         course,
       );
-      this._playCue('arena.tell', {
+      this._playCue(ev.arenaTell.cue || 'arena.tell', {
         destination: output.level,
         onEnd: output.disconnect,
       });

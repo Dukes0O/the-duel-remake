@@ -122,7 +122,7 @@ function body(duel, actor) {
     halfX: spec.halfWidth, halfZ: spec.halfLength,
     height: spec.height, shape: 'box'};
 }
-function blast(duel, shot, at, damageCar, shielded) {
+function blast(duel, shot, at, damageCar, shielded, fighters, blastFighter) {
   const owner = [duel.state, ...duel.state.opponents].find(actor =>
     targetIdentity(duel, actor) === shot.attackerId);
   for (const actor of [duel.state, ...duel.state.opponents]) {
@@ -137,10 +137,11 @@ function blast(duel, shot, at, damageCar, shielded) {
       enemy: shot.enemy, victim: actor === duel.state ? 'player' : 'rival',
       hitPosition: at});
   }
+  for (const target of fighters) blastFighter(duel, target, shot, ROCKET_RULES.blastRadius);
   duel.emit({arsenalCue: 'weapon.rockets.hit', projectile: shot, hitPosition: at});
 }
 export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
-  shielded = combatShielded} = {}) {
+  shielded = combatShielded, fighters = [], blastFighter = () => {}} = {}) {
   if (!shot || shot.kind !== 'rocket-pod' || shot.dead || !(dt > 0)) return false;
   const speed = Math.hypot(shot.vx, shot.vz);
   if (!(speed > 0)) {shot.dead = true; return false;}
@@ -159,6 +160,7 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
   for (const actor of [duel.state, ...duel.state.opponents])
     if (actor !== owner && !outOfPlay(duel, actor) && hostile(duel, owner, actor))
       consider(body(duel, actor));
+  for (const target of fighters) consider(target.body);
   if (duel._obstacles) {
     const a = duel.course.nearest(from.x, from.z), b = duel.course.nearest(to.x, to.z, a.s);
     for (const obstacle of duel._obstacles(Math.min(a.s, b.s) - 3,
@@ -171,7 +173,8 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
     shot.travelled + travel * (first ? first.t : 1));
   shot.age += dt;
   if (first) {
-    blast(duel, shot, {x: shot.x, y: shot.y, z: shot.z}, damageCar, shielded);
+    blast(duel, shot, {x: shot.x, y: shot.y, z: shot.z}, damageCar, shielded,
+      fighters, blastFighter);
     shot.dead = true; return false;
   }
   if (shot.travelled + EPS >= ROCKET_RULES.range) {
