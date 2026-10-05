@@ -743,3 +743,132 @@ The quiet full rerun passed all 348 suites in 600.65 seconds on clean
 3f5deb00; build passed in 449 ms. Feature merges can resume. Arsenal needs
 four native review fixes; Voice's released-base source review is clear.
 
+AUD-18 merged on 4 October after all 349 lane suites passed in 570.11 seconds
+and the build passed in 455 ms. Independent source, laptop browser and audio
+reviews are clear. All nine kept takes and receipts stay exact; human listening
+is still unmeasured. One feature merge since the last full checkpoint.
+
+Janitor after AUD-18: unlinked and removed the merged lane and branch without
+force; deleted 160,160,659 bytes of used evidence. Public grew from
+260,014,568 to 260,395,847 bytes for the nine current voice clips and credits;
+the build grew from 264,375,843 to 264,760,521 bytes. Five unfinished feature
+lanes and the protected audio lane remain. No uncertain asset was removed.
+
+ARS-03 reads saved warlord defeats as earned rewards without granting them in
+saves. Save, source and both-quality browser reviews pass; all three complete
+balance reports pass. Final native audio found duplicate and generic launch
+cues; independent red tests precede a narrow routing fix. Convoy's real-contact
+fix and Crew's enemy-voice ownership fix pass independent review.
+
+The scheduled quiet integration full tier passed all 349 suites in 732.30 s
+on clean c7f8150d on 4 October. No feature merge followed that checkpoint.
+Gunn's settled turret recipe and native mouth flight are prepared; generation,
+the comparison sheet, final gates and Claude's look approval remain.
+
+Arsenal's final native audio passes in both qualities on clean 68a08785.
+The close Tesla pulse measures 7.48 dB and 6.80 dB above the engine; delivered
+true peak is -1.77 dBTP with no clipping. The pulse-only gain fix and spatial
+test correction passed independent review; targets and earlier cues stay exact.
+Gunn now owns the quiet turret export slot. Arsenal's synced final gates follow.
+
+Arsenal's Mortar-only flight fix passes independent review, all three complete
+balance reports and both-quality browser rechecks. The ordinary Banshee ramp
+control remains exact. Its fresh clean lane gate is running; build follows.
+Gunn's turret is exported and its fresh renderer imports pass. The native
+comparison scenario and yard tests are being prepared; Claude's look review remains.
+
+Arsenal's fresh gate failed after 149 suites passed: the short Mortar whistle
+has no integrated loudness result in the existing unpadded analysis. No peak
+limit failed. Review the established short-cue analysis path with runtime bytes
+and assertions unchanged, then rerun the gate. Gunn's native yard tests now
+expose the injected-flag loss while released and default controls pass.
+
+The quiet scheduled full tier on clean 15b9c458 finished in 579.89 seconds:
+348 passed, one failed, none skipped. The unchanged crash-audio overlap capture
+has a missing AudioWorklet input block; measured peaks and all other checks pass.
+Feature merges stop until diagnosis and a passing full rerun. No source or
+assertion changed. Arsenal's short-cue input migration passes independent review
+and all eleven bounded audio cases; its fresh gates wait for recovery.
+Crew's native Rocket Pods tests now expose missing fighter hits, with car and
+participant-protection controls passing. Gunn's comparison recipe clears source
+review; pictures and Claude's approval remain.
+
+The unchanged crash-audio suite passes alone: 23 cases and 98 checks in
+22.55 seconds, with every mix, engine and impact track continuous. Its gate
+scheduler already excludes all other suites. The failed capture does not keep
+the chunk frame indices, so gap count, location and cause remain unproved.
+No runtime, test or asset differs from the prior passing checkpoint. Keep
+all assertions unchanged and run the full tier again before feature merges.
+
+The quiet recovery full tier on clean 30d3e336 finished in 702.32 seconds:
+347 passed, two failed, none skipped. Crash audio again reports a missing
+input block, this time in the non-fuel row; peaks and other audio checks pass.
+The compaction test also failed while configuring its temporary Git fixture.
+Stop repeated full runs pending focused diagnosis of both existing paths.
+Feature merges remain held; runtime, assets and assertions stay unchanged.
+
+Focused gate diagnostics merged after independent review, eight passing lane
+suites and build. Existing crash audio and all 632 temporary Git checks pass;
+the new timestamps retain a quiet-context discontinuity without proving its
+cause. The full checkpoint still holds feature merges. Gunn's comparison
+fixture now uses native kit equip; a screenshot filename mismatch remains.
+
+Janitor: removed the merged diagnostic branch, lane and used evidence. The
+first junction check refused its target; normal Git cleanup left an unregistered
+remainder. After exact target verification, the junction and remainder were
+removed separately. A later check found partial dependency deletion; the exact
+recovery is recorded below. No feature lane or protected audio folder was removed.
+
+The full tier on clean 68272483 finished in 717.01 seconds: 348 passed, one
+failed, none skipped. Crash audio reached zero checks: its QA build could not
+load the locked native binding. Director cleanup had run Git after a refused
+junction check; this damaged shared dependencies. The continuity cause is
+still unproved. Future cleanup stops immediately on a failed link check.
+
+The ordinary offline reinstall could not replace a binding held by Preview.
+Instead, the exact lock was installed offline in isolated scratch, and only
+missing files were copied back. All 1,351 files match byte for byte, with no
+extras. Build passes in 583 ms; Preview and live were not stopped or refreshed.
+Used recovery output was deleted. No package version, assertion or runtime
+source changed. Full recovery is still required before feature merges.
+
+Gunn's first actual comparison round has twelve complete fitting views in
+both qualities, with loading, pixels and state purity passing. The critic
+requests less wood-like wear and clearer steel tubes. The one capped sheet
+and verdict are committed in the lane; Claude has the look question and
+the card waits on Claude. Motion and pacing remain unmeasured.
+
+The full tier on clean d0bb574c finished in 709.12 seconds: 348 passed,
+one failed, none skipped. Non-fuel and six-blast audio chunks show a
+128-frame early label followed by a correction; all chunks are full and
+their total span is normal. Earlier missing-block descriptions were not
+proved. Independent review finds no repeated nearby PCM quantum but cannot
+prove input continuity. Add raw callback timestamps and input lengths only;
+keep PCM and assertions unchanged. Feature merges remain held.
+
+Claude's overnight direction parks callback diagnostics outside the main
+loop. The isolated full tier now uses four jobs and runs without other
+gates, builds or browser checks. A pass resumes feature merges; the
+crash-audio test, assertions and tolerances stay unchanged. Gunn round
+two uses darker steel, edge wear, black collars and seams, enlarged about
+15%; the next sheet needs Claude's approval. Retain the parked lane.
+
+The isolated four-job full tier on clean fef3ddbf finished in 713.66 seconds:
+348 passed, one failed, none skipped. Crash audio passes unchanged. The only
+failure is the Director's unsupported parked board status; use the existing
+backlog status to leave that card inactive. No assertion changes. Run the
+full tier alone with four jobs again before feature merges.
+
+The corrected isolated full tier on clean d0d7f2c3 passes all 349 suites in
+695.57 seconds. Feature merges resume; callback diagnostics stay parked.
+Arsenal's synced lane then passes all 351 suites in 579.92 seconds and
+build in 492 ms. Its source, save, browser, audio and three balance reviews
+remain current; merge bb76fb38 installs wave three behind its dev switch.
+Convoy receives its named shared hooks; Crew receives only the two controller
+files until Convoy merges. Gunn's round-two recipe clears independent review.
+
+Janitor: verified and unlinked Arsenal's exact dependency junction before
+normal worktree removal; all 1,351 integration dependency files remain.
+Deleted only the merged lane and branch. Its used review evidence is next;
+all unmerged lanes and the protected audio lane stay.
+

@@ -202,9 +202,9 @@ test('all compressed variants retain true-peak headroom and a valid runtime home
     for (const file of cue.files || []) {
       const bytes = readFileSync('public/assets/audio/' + file);
       assert.equal(bytes.toString('ascii', 0, 4), 'OggS');
-      // EBU R128 needs a 400 ms window; wave-one cues keep their real short
-      // playback and use analysis-only padding when the clip is shorter.
-      const measurement = file.startsWith('arsenal-wave1/')
+      // EBU R128 needs 400 ms; short wave-one/three clips keep their playback
+      // and use existing analysis-only padding, without changing the peak limit.
+      const measurement = file.startsWith('arsenal-wave1/') || file.startsWith('arsenal-wave3/')
         ? measureArsenalWaveOneCue(bytes)
         : measureLoudness(bytes);
       assert(measurement.available, id);

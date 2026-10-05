@@ -279,6 +279,80 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     group.add(view);
     return view;
   });
+  const mortarRingGeometry = new THREE.RingGeometry(.86, 1, 48);
+  const mortarRingMaterial = new THREE.MeshBasicMaterial({color: 0xff3020,
+    transparent: true, opacity: .85, depthWrite: false, side: THREE.DoubleSide,
+    toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2});
+  const mortarViews = Array.from({length: 24}, (_, index) => {
+    const marker = new THREE.Mesh(mortarRingGeometry, mortarRingMaterial);
+    marker.name = `arsenal-mortar-ring-${index}`;
+    marker.rotation.x = -Math.PI / 2;
+    marker.visible = false;
+    const shell = new THREE.Mesh(rocketBody, materials.iron);
+    shell.name = `arsenal-mortar-shell-${index}`;
+    shell.visible = false;
+    group.add(marker, shell);
+    return {marker, shell};
+  });
+  const teslaMaterial = new THREE.LineBasicMaterial({color: 0xa8ebff,
+    transparent: true, opacity: .9, depthWrite: false, toneMapped: false});
+  const teslaPulseMaterial = new THREE.MeshBasicMaterial({color: 0x76dfff,
+    transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide,
+    toneMapped: false});
+  const teslaViews = Array.from({length: 12}, (_, index) => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12 * 6), 3));
+    geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+    const arcs = new THREE.LineSegments(geometry, teslaMaterial);
+    arcs.name = `arsenal-tesla-charge-${index}`;
+    arcs.frustumCulled = false;
+    const pulse = new THREE.Mesh(mortarRingGeometry, teslaPulseMaterial);
+    pulse.name = `arsenal-tesla-pulse-${index}`;
+    pulse.rotation.x = -Math.PI / 2;
+    arcs.visible = pulse.visible = false;
+    group.add(arcs, pulse);
+    return {arcs, pulse};
+  });
+  function updateWaveThree(duel, active) {
+    const combat = duel.state.combat, enabled = active && arsenalEnabled(duel);
+    mortarViews.forEach((view, index) => {
+      const shell = enabled && combat.mortarShells?.[index];
+      view.marker.visible = view.shell.visible = !!shell;
+      if (!shell) return;
+      view.marker.position.set(shell.x, shell.y + .08, shell.z);
+      view.marker.scale.setScalar(shell.radius);
+      const part = Math.min(1, shell.age / shell.lifetime);
+      view.shell.position.set(shell.from.x + (shell.x - shell.from.x) * part,
+        shell.from.y + (shell.y - shell.from.y) * part + 16 * part * (1 - part),
+        shell.from.z + (shell.z - shell.from.z) * part);
+      view.shell.rotation.set(0, Math.atan2(shell.x - shell.from.x, shell.z - shell.from.z),
+        Math.PI / 2 - Math.atan2(16 * (1 - 2 * part) + shell.y - shell.from.y,
+          Math.hypot(shell.x - shell.from.x, shell.z - shell.from.z)));
+    });
+    teslaViews.forEach((view, index) => {
+      const charge = enabled && combat.teslaCharges?.[index];
+      const owner = charge && actorForTarget(duel, charge.ownerId);
+      view.arcs.visible = !!owner;
+      if (owner) {
+        const at = point(duel, owner), positions = view.arcs.geometry.attributes.position;
+        view.arcs.position.set(at.x, at.y + .5, at.z);
+        for (let arc = 0; arc < 12; arc++) {
+          const angle = arc * Math.PI / 6 + charge.age * 11;
+          const length = 2.1 + .8 * Math.sin(charge.age * 80 + arc * 3);
+          positions.setXYZ(arc * 2, Math.sin(angle) * .6, 0, Math.cos(angle) * .6);
+          positions.setXYZ(arc * 2 + 1, Math.sin(angle) * length,
+            .5 * Math.sin(charge.age * 55 + arc), Math.cos(angle) * length);
+        }
+        positions.needsUpdate = true;
+      }
+      const pulse = enabled && combat.teslaPulses?.[index];
+      view.pulse.visible = !!pulse;
+      if (pulse) {
+        view.pulse.position.set(pulse.x, pulse.y - COMBAT_TUNING.pointHeight + .1, pulse.z);
+        view.pulse.scale.setScalar(pulse.radius * Math.min(1, .15 + pulse.age / pulse.lifetime));
+      }
+    });
+  }
   const boardingCharge = new THREE.Group();
   boardingCharge.name = 'crew-boarding-charge';
   const chargeBase = new THREE.Mesh(new THREE.BoxGeometry(.55,.18,.65), materials.iron);
@@ -444,6 +518,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     group.visible = active;
     updateHazards(duel,active);
     updateTethers(duel,active);
+    updateWaveThree(duel, active);
     const departed = s.footPresentation;
     const showDeparted = !s.onFoot && departed &&
     s.stageTimeSec >= departed.presentation.startedAt &&
@@ -488,7 +563,9 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const spikesVisible = !(s.mode === 'wasteland' && wastelandRulesActive(s) &&
       actor?.combatBumperSpikes === false);
       rig.spikes.forEach(spike => {
-        spike.visible = spikesVisible;
+        const nitro = active && arsenalEnabled(duel) && carEffect(actor, 'nitro');
+        spike.visible = spikesVisible || !!nitro;
+        spike.scale.y = nitro ? 2.4 : 1;
       });
       rig.bow.visible = visible;
       rig.shield.visible = visible && (index ? index === 1 ? c.rivalShield : actor.combatShield : c.shield) > 0;
@@ -633,6 +710,11 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         ...materials,...pickupMaterials
       }).forEach(material=>material.dispose());
       arsenalFlameMaterial.dispose();
+      mortarRingGeometry.dispose();
+      mortarRingMaterial.dispose();
+      teslaViews.forEach(view => view.arcs.geometry.dispose());
+      teslaMaterial.dispose();
+      teslaPulseMaterial.dispose();
     },
   };
 }

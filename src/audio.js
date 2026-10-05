@@ -10,6 +10,9 @@ import { SoundMixer } from './sound-mixer.js';
 import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
 import { raceFeatureFlags, wastelandRulesActive } from './wasteland-access.js';
+import { createFightVoices } from './fight-voices.js';
+import {point, velocity} from './combat-weapons.js';
+import {actorForTarget} from './arsenal/targeting.js';
 const bank = (id) => SOUND_BANK[id];
 const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
@@ -20,6 +23,10 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.magnet.hum',
 ]);
 const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy']);
+const ARSENAL_WAVE_THREE_CUES = new Set([
+  'weapon.mortar.fire', 'weapon.mortar.hit', 'weapon.tesla.charge',
+  'weapon.tesla.pulse', 'weapon.decoy.deploy', 'weapon.decoy.burst', 'weapon.nitro.start',
+]);
 const BOARDING_CUES = Object.freeze({
   'crew.boarding.mount': 'vehicle.landing',
   'crew.boarding.throw': 'vehicle.landing',
@@ -109,6 +116,12 @@ export class EngineAudio {
     this.hiddenRoadVoices = new Set();
     this.hiddenRoadCueKeys = new Set();
     this.hiddenRoadId = null;
+    this.fightVoices = createFightVoices({
+      enabled: () => this.flags.enabled('fight-voices'),
+      audible: () => !this.muted && !this.paused && this.context?.state === 'running',
+      play: id => this.cueBuffers[id] ? this._playCue(id) : null,
+      duration: id => this.cueBuffers[id]?.duration,
+    });
   }
 
   unlock() {
@@ -135,7 +148,7 @@ export class EngineAudio {
     this.mixer = new SoundMixer(ctx, this.master, {
       vehicle: this.vehicleBus,
       enabled: this.wastelandAudioEnabled === true,
-      voiceEnabled: this.flags.enabled('hidden-road'),
+      voiceEnabled: this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices'),
     });
     this.buses = this.mixer.buses;
     this.hiddenRoadBus = ctx.createGain();
@@ -236,7 +249,8 @@ export class EngineAudio {
     this._cueBuffersPromise = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
-          ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome,
+          ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
+            (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -681,7 +695,7 @@ export class EngineAudio {
     if (state) this.wastelandAudioEnabled = wastelandRulesActive(state);
     if (!this.mixer?.update) return;
     this.mixer.enabled = this.wastelandAudioEnabled === true;
-    this.mixer.voiceEnabled = this.flags.enabled('hidden-road');
+    this.mixer.voiceEnabled = this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices');
     this.mixer.update();
   }
 
@@ -702,20 +716,37 @@ export class EngineAudio {
     this.arsenalFieldVoices.clear();
   }
 
-  _updateArsenalFields(state) {
+  _updateArsenalFields(state, environment = {}) {
     if (!wastelandRulesActive(state) || !this.flags.enabled('arsenal') ||
         this.muted || state.paused ||
         !['racing', 'exploring'].includes(state.status)) {
       this._clearArsenalFields();
       return;
     }
+    const nitroRuns = this.flags.enabled('arsenal-wave3') ? state.combat?.nitroRuns || [] : [];
     const active = new Set([...(state.combat?.flameBursts || []),
-      ...(state.combat?.magnets || [])]);
+      ...(state.combat?.magnets || []), ...nitroRuns]);
     for (const [effect, voice] of this.arsenalFieldVoices)
       if (!active.has(effect)) {
         voice.stop();
         this.arsenalFieldVoices.delete(effect);
       }
+    const listener = environment.listener, course = environment.course;
+    if (!listener || !course || !this.context || this.context.state !== 'running') return;
+    for (const run of nitroRuns) {
+      const owner = actorForTarget({state}, run.ownerId);
+      if (!owner) continue;
+      const at = point({state, course}, owner), motion = velocity(owner, at);
+      const position = {...at, vx: motion.x, vy: 0, vz: motion.z};
+      let voice = this.arsenalFieldVoices.get(run);
+      if (!voice) {
+        const buffer = this._cueBuffer('weapon.nitro.loop');
+        if (buffer) voice = this.mixer.playMoving('weapon.nitro.loop', buffer,
+          position, listener, {loop: true});
+        if (voice) this.arsenalFieldVoices.set(run, voice);
+      }
+      voice?.update(position, listener);
+    }
   }
 
   _updateProjectiles(state, environment = {}) {
@@ -734,8 +765,19 @@ export class EngineAudio {
       return;
     }
     const live = new Set();
-    for (const projectile of state.combat?.projectiles || []) {
-      const id = projectile.kind === 'rocket-pod'
+    const mortarFlights = this.flags.enabled('arsenal') && this.flags.enabled('arsenal-wave3')
+      ? (state.combat?.mortarShells || []).map(shell => {
+        const t = clamp(shell.age / shell.lifetime, 0, 1);
+        return {...shell, kind: 'mortar',
+          x: shell.from.x + (shell.x - shell.from.x) * t,
+          y: shell.from.y + (shell.y - shell.from.y) * t + 16 * t * (1 - t),
+          z: shell.from.z + (shell.z - shell.from.z) * t,
+          vx: (shell.x - shell.from.x) / shell.lifetime,
+          vy: (shell.y - shell.from.y + 16 * (1 - 2 * t)) / shell.lifetime,
+          vz: (shell.z - shell.from.z) / shell.lifetime};
+      }) : [];
+    for (const projectile of [...(state.combat?.projectiles || []), ...mortarFlights]) {
+      const id = projectile.kind === 'mortar' ? 'weapon.mortar.whistle' : projectile.kind === 'rocket-pod'
         ? 'weapon.rockets.flight' : 'weapon.' + projectile.kind + '.flight';
       const cue = bank(id);
       if (!cue || !this.cueBuffers[id] ||
@@ -783,6 +825,7 @@ export class EngineAudio {
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
     if (def.flag && !this.flags.enabled(def.flag)) return null;
+    if (def.flag === 'arsenal-wave3' && !this.flags.enabled('arsenal')) return null;
     return this._runCue(
       id,
       () => {
@@ -911,6 +954,7 @@ export class EngineAudio {
     this._volume();
     if (this.muted) for (const voice of this.activeShots) this._stopShot(voice);
     if (this.muted) {
+      this.fightVoices.mute();
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
@@ -931,6 +975,7 @@ export class EngineAudio {
       this.shiftStarted = this.shiftUntil = 0;
     }
     if (this.paused) {
+      this.fightVoices.clear();
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
       this._clearArsenalFields();
@@ -948,9 +993,10 @@ export class EngineAudio {
 
   update(st, environment = {}) {
     this._syncMixer(st);
+    this.updateFightVoices(st);
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
-    this._updateArsenalFields(st);
+    this._updateArsenalFields(st, environment);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     if (this.paused !== st.paused) this.setPaused(st.paused);
@@ -1347,6 +1393,7 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
+    this.fightVoices.event(ev, state);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
     if (
@@ -1394,6 +1441,8 @@ export class EngineAudio {
     const recordedAudio = wastelandAudio && wastelandRulesActive(state);
     if (recordedAudio && bank(ev.arsenalCue) && (
       (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
+      (this.flags.enabled('arsenal') && this.flags.enabled('arsenal-wave3') &&
+        ARSENAL_WAVE_THREE_CUES.has(ev.arsenalCue)) ||
       (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue))
     )) {
       // One-shots use the native point; flight belongs to the moving voice map.
@@ -1469,9 +1518,9 @@ export class EngineAudio {
     }
     if (ev.ticket || ev.gameover || ev.stageResult?.won === false)
       this._playCue('interface.lose');
-    // Wave-one launches already emit their own recorded native cue.
+    // These Arsenal launches already emit their own recorded native cue.
     if (ev.weaponFired && !['harpoon', 'caltrops', 'rockets',
-      'flamethrower', 'magnet'].includes(ev.weaponFired)) {
+      'flamethrower', 'magnet', 'mortar', 'tesla', 'decoy', 'nitro'].includes(ev.weaponFired)) {
       if (wastelandAudio) this._weaponCue(ev.weaponFired);
       else {
         this._playCue(
@@ -1664,6 +1713,10 @@ export class EngineAudio {
       };
       this._layer(def.layers[0], this._cueOutput, force);
     });
+  }
+
+  updateFightVoices(state) {
+    this.fightVoices.update(state);
   }
 
   _stopHiddenRoadVoices() {

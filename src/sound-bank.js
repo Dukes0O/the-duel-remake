@@ -1,4 +1,5 @@
 // Cue data is the single home for assets, routing and authored sound recipes.
+import {FIGHT_VOICE_LINES} from './fight-voices.js';
 export const BUS_NAMES = Object.freeze([
   'engine',
   'vehicle',
@@ -36,6 +37,9 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  ...Object.fromEntries(Object.entries(FIGHT_VOICE_LINES).map(([id, line]) =>
+    [id, cue('voice', {file: `voices/${line.file}`, flag: 'fight-voices',
+      volume: line.gain || 1, priority: 90, limit: 1, duck: 'voice'})])),
   'crew.sticky.arm': cue('weapons', {flag: 'crew-gear', layers: [tone(105, .18, .11, 'triangle', 0, 65)]}),
   'crew.sticky.throw': cue('weapons', {flag: 'crew-gear', layers: [noise(620, .11, .1), tone(220, .12, .08, 'triangle', 0, 110)]}),
   'crew.sticky.beep': cue('weapons', {flag: 'crew-gear', layers: [tone(1180, .07, .07, 'square')]}),
@@ -133,6 +137,53 @@ export const SOUND_BANK = {
     flag: 'arsenal', files: ['arsenal-wave2/magnet-hum-a.ogg',
       'arsenal-wave2/magnet-hum-b.ogg', 'arsenal-wave2/magnet-hum-c.ogg'],
     volume: 1.8, priority: 55, limit: 4, loop: true,
+    spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
+  }),
+  'weapon.mortar.fire': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/mortar-fire-a.ogg',
+      'arsenal-wave3/mortar-fire-b.ogg', 'arsenal-wave3/mortar-fire-c.ogg'],
+    volume: 3, priority: 60, limit: 6,
+  }),
+  'weapon.mortar.whistle': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/mortar-whistle-a.ogg',
+      'arsenal-wave3/mortar-whistle-b.ogg', 'arsenal-wave3/mortar-whistle-c.ogg'],
+    volume: 2.5, priority: 55, limit: 4, loop: true,
+    spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
+  }),
+  'weapon.mortar.hit': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/mortar-hit-a.ogg',
+      'arsenal-wave3/mortar-hit-b.ogg', 'arsenal-wave3/mortar-hit-c.ogg'],
+    volume: 3, priority: 75, limit: 6,
+  }),
+  'weapon.tesla.charge': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/tesla-charge-a.ogg',
+      'arsenal-wave3/tesla-charge-b.ogg', 'arsenal-wave3/tesla-charge-c.ogg'],
+    volume: 3.5, priority: 60, limit: 6,
+  }),
+  'weapon.tesla.pulse': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/tesla-pulse-a.ogg',
+      'arsenal-wave3/tesla-pulse-b.ogg', 'arsenal-wave3/tesla-pulse-c.ogg'],
+    volume: 5.5, priority: 70, limit: 6,
+  }),
+  'weapon.decoy.deploy': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/decoy-deploy-a.ogg',
+      'arsenal-wave3/decoy-deploy-b.ogg', 'arsenal-wave3/decoy-deploy-c.ogg'],
+    volume: 4, priority: 60, limit: 6,
+  }),
+  'weapon.decoy.burst': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/decoy-burst-a.ogg',
+      'arsenal-wave3/decoy-burst-b.ogg', 'arsenal-wave3/decoy-burst-c.ogg'],
+    volume: 3, priority: 65, limit: 6,
+  }),
+  'weapon.nitro.start': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/nitro-start-a.ogg',
+      'arsenal-wave3/nitro-start-b.ogg', 'arsenal-wave3/nitro-start-c.ogg'],
+    volume: 6.5, priority: 60, limit: 6,
+  }),
+  'weapon.nitro.loop': cue('weapons', {
+    flag: 'arsenal-wave3', files: ['arsenal-wave3/nitro-loop-a.ogg',
+      'arsenal-wave3/nitro-loop-b.ogg', 'arsenal-wave3/nitro-loop-c.ogg'],
+    volume: 3, priority: 55, limit: 4, loop: true,
     spatial: {refDistance: 12, maxDistance: 600, rolloff: 1},
   }),
   'gatekeeper.welcome': cue('voice', {

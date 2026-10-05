@@ -5,6 +5,47 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: GATE-CALLBACK-DIAGNOSTICS
+    title: "Prove audio capture delivery independently of callback clocks"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: backlog
+    claimed_by: codex-director-2026-10-04
+    branch: codex/tools/callback-diagnostics
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs, docs/changes/GATE-CALLBACK-DIAGNOSTICS.md]
+    helpers: [test_author, reviewer, audio_qa, test_runner]
+    acceptance:
+      - "Retain each native callback's raw currentFrame and left/right input lengths with its existing chunk. Keep PCM copying, original frame labels and every existing assertion unchanged. Tests first cover ordinary and offset timestamps, input lengths and byte-exact PCM. No label repair, retry, skip, tolerance change or new framework."
+      - "Add one silent native sine witness as a second input to each existing meter, copied in the same callback and sent in the same payload as game PCM. Use a period longer than each capture so whole-period losses cannot alias. Tests first prove missing or repeated 128-frame callbacks and 2048-frame payloads fail the witness while bad raw clock labels alone do not. Keep the original continuity result unchanged until independent native evidence and review justify any assertion migration."
+      - "Independent review and native capture identify what the evidence proves and leaves unproved. Lane and build gates precede integration; feature merges remain held until a full checkpoint passes."
+    test_commit: 603f651e
+    source_commit: bf672f5e29208ab9fccf556b2add87c6dbcf7288
+    source_review: "Independent review clears raw callback metadata. The native capture passes but catches repeated clocks inside full chunks; inputs have normal lengths."
+    parked_lane_commit: 66560252
+    note: "Claude parked this separate diagnostic card for the overnight run. Work on it only when no feature card can move; never change the crash-audio test, its assertions or tolerances."
+  - id: GATE-DIAGNOSTICS
+    title: "Retain failure details from native audio and temporary Git fixtures"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    claimed_by: codex-director-2026-10-04
+    branch: codex/tools/checkpoint-diagnostics
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-compact-binaries.mjs, docs/changes/GATE-DIAGNOSTICS.md]
+    helpers: [reviewer, test_runner]
+    acceptance:
+      - "Retain existing audio chunk frame indexes in each encoded track. Add concise failed-command context for the expendable Git fixture: repository metadata presence, Git version and redirect environment names only. No secret environment values."
+      - "Keep collection, simulation, saves, fixtures, assertions, thresholds and cleanup unchanged. No retry, skip, assertion migration, new framework or history operation. Independent review, current lane and build, then full integration checkpoint."
+    source_commit: 35af4b20f3fb75dc5bdc54028818e66db2bfa3af
+    gate_commit: 35af4b20f3fb75dc5bdc54028818e66db2bfa3af
+    merged_commit: 278615c47fc9da2872bc85069b2affb3bd32dd5b
+    lane_gate_passed: 8
+    lane_gate_duration_seconds: 204.81
+    lane_build_ms: 737
+    note: "The evidence-only change passed independent review, all eight lane suites and build. Earlier failure causes remain unproved; feature merges stay held until the full checkpoint passes."
   - id: SALT-RUNTIME-CHECKS
     title: "Run Salt renderer acceptance against the installed asset"
     owner: codex
@@ -1040,20 +1081,48 @@ tasks:
     lane: CMB
     size: M
     needs: [ARS-02, WAR-02c]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/arsenal-wave3
-    test_commit: 24cc7ec2
-    source_commit: 9cc4fa86
-    waiting_on: claude
-    design_question: "A player who beat Mirage before the Drone was built has no owned Drone; another win is not a first win and cannot grant it. How should that player claim the earned Drone without granting it during save normalization?"
+    test_commit: d220e948
+    source_commit: 3309f22f
+    synced_lane_commit: f0f3a4494aacfe34ef7e9ededbfc7ab5227aa7a3
+    synced_note_commit: a7133f37d25751ca61c68f1c936e6a2153d7904a
+    preservation_test_commit: 87b436f2
+    balance_test_commit: 0cd575fa
+    source_review: "Independent source and save reviews clear. All earlier audio pins and released feature states are preserved."
+    balance_review: "All three complete balance reports pass, including native computer use of all four new weapons. No tuning or target changed."
+    browser_review: "Both qualities pass the final weapon, counter, HUD and old Mirage reward checks. Mortar lands and clears its hop; ordinary ramp flight remains exact. Armory reads preserve saved bytes; active-weapon frame cost was not measured."
+    browser_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
+    audio_routing_test_commit: e19beaa9
+    audio_contrast_test_commit: d7852758
+    audio_review: "Independent source and both-quality native audio reviews clear the final pulse fix. Close pulse contrast and delivered headroom pass; existing cues, assets, recipes and thresholds stay unchanged. Final synced lane and build gates remain."
+    audio_review_commit: 68a08785943d4644e762a36a039ba9e83a0cefa3
+    final_gate_commit: f0f3a4494aacfe34ef7e9ededbfc7ab5227aa7a3
+    final_gate_verdict: "The isolated full tier recovered. Fresh Arsenal gates pass all 351 suites and build; the reviewed feature is merged and its lane is removed."
+    merged_commit: bb76fb38f3aafdd0b2688147c685059bb594442a
+    lane_gate_passed: 351
+    lane_gate_duration_seconds: 579.92
+    lane_build_ms: 492
+    short_audio_test_hook: tools/test-combat-audio.mjs
+    short_audio_analysis_grant: "After the genuine gate failure, independently measure all new recordings. If their short duration is the cause, reuse the existing analysis-only padding for Wave Three files in the combat audio test. Keep every assertion, threshold, prior measurement path and runtime byte; independently review this input change before fresh gates."
+    short_audio_analysis_review_commit: abee63c12f9bd112d201df1997d5490070026a4c
+    short_audio_analysis_review: "Independent review clears the Wave Three-only analysis selector. All recordings retain their exact bytes and true peaks; every assertion, limit and earlier measurement path stays unchanged."
+    flight_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
+    flight_review: "The Mortar-only marker restores unchanged ramp flight without changing released ram behavior. Independent hop, zero-apex, landing and menu checks pass. All three balance reports and both-quality browser rechecks pass; final gates remain."
+    balance_review_commit: 3309f22fe51f7f795a636c61a26344342019db01
+    claude_answer_reward_2026_10_04: "A warlord weapon is earned when its earned entry or that warlord's defeat is saved. Armory and loadout read that rule without changing the save; first-win settlement still saves it. Test earlier Mirage winners and use the same rule for Gunn's Rocket Pods and every warlord weapon."
     flag: arsenal-wave3
     owns: [src/arsenal/mortar.js, src/arsenal/tesla.js, src/arsenal/decoy-drone.js, src/arsenal/nitro-ram.js, tools/test-arsenal-wave3.mjs, tools/scenarios/arsenal-wave3.mjs, tools/build-arsenal-wave3-audio.mjs, tools/test-arsenal-wave3-audio.mjs, tools/scenarios/arsenal-wave3-audio.mjs, public/assets/audio/arsenal-wave3/, docs/changes/ARS-03.md]
-    hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/sim-results.js, src/screen-hud.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/combat-hud.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, src/app.js, src/game.js, src/screen-router.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
+    hooks: [src/arsenal/targeting.js, src/arsenal/car-effects.js, src/arsenal/hazards.js, src/combat-weapons.js, src/combat-projectiles.js, src/combat.js, src/combat-armor.js, src/combat-scoring.js, src/combat-ai.js, src/combat-teams.js, src/sim-driving.js, src/sim-rival.js, src/sim-results.js, src/screen-hud.js, src/arena/arena-pilot.js, src/warlords.js, src/sim-contacts.js, src/vehicle-contact-modifiers.js, src/weapon-upgrades.js, src/car-loadout.js, src/wasteland-progress.js, src/wasteland-tuning.js, src/screen-armory.js, src/combat-scene.js, src/render3d.js, src/audio.js, src/sound-bank.js, src/combat-hud.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, src/app.js, src/game.js, src/screen-router.js, tools/combat-balance.mjs, tools/test-arsenal-runtime.mjs]
     hook_requests: []
     sequencing: "Voice's reviewed hooks have transferred to Arsenal. Partial Gunn hooks were removed; Gunn stays in its own lane. Convoy and CREW-04 receive shared combat hooks after Arsenal's reviewed merge. Preserve Mirage's boss file and the released switch states."
     runtime_fixture_grant: "Mortar becomes implemented here. Replace only the existing unimplemented-purchase Mortar input with an unknown weapon ID; retain the refusal and no-write assertions and record independent review."
+    test_hooks: [tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/test-wasteland-beta.mjs, tools/test-combat-balance.mjs]
+    preservation_test_grant: "After the whole Voice merge, exclude only the nine literal Wave Three cue and recipe IDs from the earlier Core and Wave One bank and catalog views. Keep all earlier bank, export and catalog pins and assertions. Add only arsenal-wave3 as dev to the exact beta catalog expectation; preserve every old entry and isolation check. Prove the red failures first and obtain independent review."
+    balance_flag_fix: "The tool accepts Wave Three but does not enable its dev switch in native App races. Add a native red regression, then forward that named flag in simulationFlags. Keep every historical policy and target. The released thirty-race hit bands follow Kyle's 27 September decision, not the older one-race bands in SPEC 13."
     dev_gate: "The released arsenal switch stays unchanged. A new arsenal-wave3 dev switch gates these four weapons, offers, player and computer use. Saved Mirage ownership remains intact while the item is unavailable; independent off/on tests precede the guard. App, Game and router option hooks belong to Arsenal before Convoy."
+    reward_read_hook: "ARS-03 may update wasteland-progress.js only to retain a valid earned loadout slot from a saved warlord defeat. It must not grant weapons during normalization or rewrite saves. Independent reward-read tests and Save Guardian review are required."
     helpers: [test_author, reviewer, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build the four wave 3 weapons exactly as docs/ARSENAL.md section 3 says, with section 4's tests, balance and browser scenario. The Decoy Drone reuses Mother Mirage's decoy cars; the Mortar's ring is always drawn before the shell lands."
@@ -1123,16 +1192,23 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
-    test_commit: 11efc6e
+    test_commit: 045f18d6
     note_commit: 2febf4e
-    source_commit: 9ba52791
+    source_commit: 8932f6b7
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
-    hooks: [src/raiders.js]
-    hook_requests: [src/sim-rival.js, src/combat-ai.js, src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
-    sequencing: "ARS-03 owns sim-rival, combat-ai, projectiles and balance first. CREW-04 builds its crew module and raiders while those hooks wait. ARENA-05 waits for raiders; no two cards edit a shared file at once."
+    hooks: [src/raiders.js, src/sim-rival.js, src/combat-ai.js]
+    hook_requests: [src/combat-projectiles.js, src/feature-flags.js, tools/test-feature-flags.mjs, src/crew-gear/contacts.js, src/crew-gear/signature.js, src/combat-scene.js, src/render3d.js, src/audio.js, tools/combat-balance.mjs]
+    sequencing: "Arsenal is merged. Crew receives the two native controller files now; projectile, contact, admission and presentation hooks wait for Convoy's whole merge. ARENA-05 still waits for raiders; no shared file has two owners."
+    controller_handoff: "After Arsenal merges, Crew receives sim-rival and combat-ai for native stopped-crew movement and vehicle-fire suppression. Keep knock, wreck, lap, boundary and recovery paths. Convoy does not need these files; Crew's projectile, contact, flags and presentation hooks wait for Convoy's whole merge."
     dev_gate: "The released crew-gear switch stays unchanged. Add a cpu-crews dev switch for the new computer behavior, with independent off/on tests before code. Switch hooks wait for Arsenal's handoff."
+    fixture_admission_grant: "Independent test author may request cpu-crews explicitly in the native crew fixture and add off/on controls before source admission. Keep all existing assertions; released crew-gear must not enable the new behavior implicitly."
+    controller_test_verdict: "Native tests expose missing dev admission, movement while repairing and vehicle fire while the crew is out. Released driving and ready-car fire controls pass; earlier assertions and voice cases stay unchanged."
+    car_fighter_handoff: "After Convoy's whole merge, Crew owns contacts.js, combat-projectiles.js and arsenal/rockets.js for real fighter interception and the existing car splash rule. Move the existing car helper implementation into contacts.js and reuse it; preserve car attribution, protection, falloff, recovery and replay rules. Independent native Rocket Pods tests precede source; Gunn receives the whole reviewed Crew merge before its final on-foot fight checks."
+    car_fighter_test_hook: tools/test-rocket-fighter-contacts.mjs
+    car_fighter_test_commit: 9d2d1aafefce23512b7952cdb23fcabb4a7a5fa8
+    car_fighter_test_verdict: "Native Rocket Pods tests expose missing player, raider and real computer-crew interception and splash. Car damage and participant protection controls pass; parked shield or wreck must not protect an exposed fighter. Existing tests and the settled damage rule stay unchanged."
     helpers: [test_author, reviewer, balance_analyst, browser_qa]
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
@@ -1208,8 +1284,9 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/ambush-alley
-    test_commit: 6e2fa93
-    note_commit: ed46371
+    test_commit: ea84602b
+    note_commit: ea84602b
+    source_commit: 8f98d74a
     flag: ambush-alley
     claude_answer_2026_10_04: "Pay is 60 per wave plus 150 for all five, times difficulty; hold is five per wave, settled once. A wave needs every fighter down and its buggy wrecked, with no return in that wave. Use the Pit fort eight metres from the centre pile or Salt's longest straight, never the Scrapdome ring; attackers start at least 60 metres away from two directions (SCRAPDOME section 10)."
     owns: [src/arena/modes/ambush-alley.js, tools/test-arena-ambush-alley.mjs, docs/changes/ARENA-05.md]
@@ -1331,17 +1408,24 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/convoy-raid
-    test_commit: 02064cab
+    test_commit: 2815e973
     note_commit: 11371c8
-    source_commit: db062fd5
+    source_commit: 4af67813
     note: "Claude's answers are recorded; resume from the retained native tests. The approved rigid tanker and roof plate remain the runtime art."
     claude_answer_2026_10_04: "Win pays 700 times difficulty and adds 25 Tollkeeper hold; loss pays 40 per valve the player broke, settled once. Unlock with Salt Flats and any Tollkeeper hold from races; hits choose valves by actual impact/contact points, blast reaches every valve in radius, and the body only shoves and never dies before the boarding charge (SCRAPDOME section 10)."
     design_question: "Set the scrap payout and exact territory unlock. How do body weapon and ram hits choose a valve, and can body damage wreck the rig before the finishing charge? Existing boarding timing and approved valve geometry are available."
     flag: convoy-raid
     owns: [src/arena/modes/convoy-raid.js, src/arena/convoy.js, tools/test-arena-convoy.mjs, tools/scenarios/convoy-raid.mjs, docs/changes/ARENA-07.md]
-    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb]
+    hooks: [src/arena/arena-event.js, src/arena/arena-brains.js, src/arena/venues.js, src/arena/arena-pilot.js, src/arena/tanker-model.js, src/app.js, src/screen-arena.js, src/screen-hud.js, src/game.js, src/crew-gear/boarding.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/crew-gear/signature.js, src/onfoot-weapons.js, src/onfoot-transition.js, src/onfoot-race.js, src/arena/arena-settlement.js, public/assets/models/wasteland/convoy-tanker.glb, src/combat-armor.js, src/combat-projectiles.js, src/sim-contacts.js, src/render3d.js, src/audio.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, src/arsenal/rockets.js, src/arsenal/harpoon.js, src/arsenal/mortar.js]
     hook_requests: []
-    sequencing: "Use the approved rigid tanker recipe, roof plate and lamps, not the superseded trailer or hatch. Convoy owns arena entry and mode hooks; request other shared files before editing."
+    sequencing: "Arsenal's whole merge releases the named damage, entry, weapon-geometry and presentation hooks to Convoy now. Crew alone owns sim-rival and combat-ai. Use the approved rigid tanker, roof plate and lamps; flame keeps body-hit behavior."
+    native_handoff: "Central damage must use real swept projectile impacts, blast centres and solver ram contacts. Validate the due boarding charge before clearing boarding state; only that charge wrecks the rig. The native rig spec is twelve tonnes. No sim-rival or combat-ai change is needed."
+    rig_fire_rule: "Use the existing weaponsDisabledUntil field in the owned mode through the event and a legal pending fuse. Test that attacks, Star and UFO cannot fire from the rig while escorts retain their normal behavior. Keep the existing field attack scheduling policy."
+    caller_test_grant: "Add independent native caller tests for projectile sweeps, ram contacts, rig weapon suppression, escort response and durable App settlement. Keep existing direct-damage assertions. Admission adds only convoy-raid dev to current flag and launcher expectations; preserve released states and isolation checks."
+    caller_test_verdict: "Native caller tests expose admission, sweep, ram, rig-fire, charge-fuse and retry gaps; escort response and once-only settlement controls pass. Earlier assertions stay unchanged."
+    geometry_test_commit: fde1946a9d43e559a23bda8a9eb18688594d1298
+    geometry_test_verdict: "Independent review clears the six new native cases and the player launch fixture correction. Rocket and Harpoon controls pass; the rig witnesses still require its actual tanker body. Earlier assertions stay exact."
+    weapon_geometry_handoff: "After the whole Arsenal merge, Convoy also receives arsenal/rockets.js, arsenal/harpoon.js and arsenal/mortar.js for measured impact and blast geometry forwarding. Rig-only blast eligibility uses actual valve points when a car-centre cull would miss them; preserve existing damage, falloff, owners and the ordinary-car branches. Native bypass and valve-in-range/body-centre-out-of-range tests precede source; no new damage numbers or helper framework."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, audio_qa]
     acceptance:
       - "Build docs/SCRAPDOME.md section 10, Convoy Raid, exactly: the rigid tanker on its loop, two escorts, three valves, the lit roof plate and boarding finish, the 60 s reset, pay once per event. Install the approved ART-FIT-TANKER recipe output when the mode loads it. Headless tests and a private browser scenario."
@@ -1354,20 +1438,40 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-04
     branch: codex/cmb/gunn
-    test_commit: 99f6251
+    test_commit: 11a54f21
+    source_commit: a714587f
+    art_test_verdict: "Independent review clears the pure geometry extraction; both fresh renderer imports pass. Export geometry, fit, heat isolation and native checks pass, with approved kit hashes unchanged. The comparison sheet and Claude approval remain."
+    geometry_review_commit: a714587f10e80502dba97c2e542dc425a18045f8
+    comparison_scenario_commit: 5167ce32709d257d9b65947f65e8775672dd487e
+    comparison_fixture_commit: 0c71789266f47ba1b21c900af8cf70ddc227bc45
+    comparison_fixture_review: "Independent review clears native kit equip and matching screenshot names. Existing capture assertions stay exact; no art round was spent on the two setup failures."
+    art_round: 1
+    art_sheet: docs/board/looks/gunn/round-1.jpg
+    art_round_verdict: "Twelve native fitting views pass loading, framing and purity checks. The independent critic requests steel-wear and tube-contrast changes; Claude receives the sheet. Fight motion and frame pacing remain unmeasured."
+    comparison_source_review: "Independent source review clears the native twelve-view recipe and full-frame sheet builder. Captures, appearance and Claude's approval remain unproved."
+    trajectory_review_commit: d068bffb
+    yard_test_commit: 9139255fbf61c6cd26f109bc0984cebca404e751
+    yard_test_verdict: "Native yard and Armory tests expose lost injected Gunn flags; released and default controls pass. Existing assertions stay unchanged. The real router check follows in the browser after the source hook lands."
     note_commit: bcda842
-    waiting_on: claude
-    note: "The native fight and rewards pass their focused checks. Claude must settle the finished turret asset before the card can merge."
-    art_question: "The authored car kit has only a mount; Odessa's existing turret is a code-built prop. What approved finished roof turret should Gunn and the earned cosmetic look use? Keep the settled combat and reward rules."
+    note: "Claude has given the round-two changes. Build the darker, larger steel turret and send the new sheet; finish fight motion and frame pacing while its look awaits approval."
+    claude_round2_direction_2026_10_04: "Dark gunmetal rocket box, with rust and chipped paint only at edges and corners, no long streaks. Four clear blackened steel collars and dark welded seams; enlarge the whole turret about fifteen percent. Preserve fit, turning head and separate heat panel; send the round-two sheet to Claude."
+    claude_asset_answer_2026_10_04: "Build one scrap rocket-pod turret in armor-kits.py on the existing mount, using approved kit materials and wear: low ring, short yoke, four tubes in a two-by-two welded box and rear heat panel. Separate base, head and panel for tracking, glow and tube-mouth firing. Same cosmetic model on Gunn's Stuttgart and any earned-look car; kit size and frame limits stay. One sheet of side, three-quarter and top views on Stuttgart and another car; three rounds maximum, look approval before merge."
     claude_answer_2026_10_04: "Barrage needs ready cooldown, clear sight and player 25 to 90 metres away; aim tracks through the tell then commits the predicted first-arrival point, with rockets 0.25 seconds apart. Broken sight at lock fires nothing but earns overheat; single rockets fire every three seconds at 40 to 80 metres, outside tell/window and two seconds after barrage. First win earns Rocket Pods and an Armory turret kit look with no gameplay effect (SCRAPDOME Gunn)."
     design_question: "Set the barrage trigger and when predictive aim locks, the single-rocket cadence, and how the turret look is awarded and equipped alongside armor. Shared tell lengths are already settled."
     flag: gunn
-    owns: [src/warlords/gunn.js, tools/test-warlord-gunn.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
+    owns: [src/warlords/gunn.js, src/warlords/gunn-turret.js, tools/test-warlord-gunn.mjs, tools/test-warlord-gunn-art.mjs, tools/scenarios/gunn.mjs, docs/changes/WAR-03a.md]
     hooks: [src/warlords/index.js, src/warlords.js, src/arena/arena-tell-view.js, src/arena/warlord-event.js, src/arsenal/rockets.js, src/arena/warlord-settlement.js, src/armor-kits.js, src/wasteland-progress.js, src/armor-kit-meshes.js, src/screen-armory.js, src/screen-territory.js, src/app.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs]
     hook_requests: [src/weapon-upgrades.js]
-    sequencing: "Gunn's separate data, catalog and earned-look text commits return their hooks to Arsenal. App is frozen for Gunn's narrow availability caller commit, then returns to Arsenal. Native defense uses the existing boss registry. The final turret art still waits for Claude."
+    art_hooks: [tools/blender/armor-kits.py, tools/blender/gunn-turret.json, public/assets/models/wasteland/kits/gunn-turret.glb, docs/board/looks/gunn/]
+    geometry_input: "One small JSON input holds head and tube-mouth positions and existing per-car mount centres. Blender and native Gunn consume it; renderer coordinates never change race state. Do not regenerate approved kits."
+    geometry_import_fix: "Tests first add fresh-process imports for both newly broken renderer entries. Extract only pure turret layout and pose helpers into gunn-turret.js, consumed by fight and presentation without the fight dependency graph. Preserve geometry, asset bytes, native trajectories and registry behavior; no lazy registry workaround or new standalone-boss architecture requirement."
+    art_contract: "Reuse loadKitAsset('gunn-turret'). Named nodes: gunn-turret-root, gunn-turret-base, gunn-turret-head, gunn-turret-heat-panel and gunn-turret-mouth-0 through -3. Mouth markers belong to the turning head at the real tube openings. Preserve old car loader keys and approved kit hashes; clone heat materials per actor."
+    sequencing: "Build the settled turret recipe and native fight while Arsenal holds shared callers and rendering. Do not regenerate the nine approved kit models. After Arsenal merges, grant the runtime turret hooks; send the finished comparison sheet to Claude before merge."
     test_grant: "Add Gunn to the built-boss list. Move the old unbuilt-boss denial fixture from Gunn to Tollkeeper, retaining every denial assertion. The corrected native Pit poses keep all combat assertions; each fixture change needs independent review."
-    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
+    trajectory_test_grant: "Independent author adds the convergence witness; the source worker replaces only the contradicted parallel-ray assertion after that proof. Four real mouths must reach Claude's one locked world point. Keep tell, five-shot count, lock, timing and player-turn checks; review the changed assertion before merge."
+    yard_hook_grant: "After the whole Arsenal merge, Gunn may forward injected flags through screen-router.js and screen-yard-home.js to the territory panel, including its Armory view. Tests first preserve released yard behavior. Convoy still owns central contacts, projectiles, entry, renderer and audio first; no unfinished peer hooks transfer."
+    fighter_hook_sequence: "Crew finishes the generic Rocket Pods fighter contact slice after Convoy merges, using the already settled car splash rule. Gunn receives that whole reviewed merge, then tests its real aimed rockets against fighters. Its existing car target policy stays unchanged; art review need not reserve the shared files."
+    helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa, art_critic]
     acceptance:
       - "Build exactly 'Settled for build: Gearhead Gunn' in docs/SCRAPDOME.md section 5, with the shared rules. Tests: every barrage has its tell, the window, phase two, one-time settlement. When built, status review and waiting_on: claude before merge."
   - id: WAR-03b
@@ -3401,20 +3505,25 @@ tasks:
     lane: AUDIO
     size: M
     needs: [AUD-17]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-04
     branch: codex/audio/fight-voices
-    source_commit: bfa1aec
+    source_commit: e6ad35a65c03b41bf553da2b410c57536687fdb3
+    merged_commit: f1e4ed0bd513efb1c3442f70dd5055281dac1554
+    lane_gate_passed: 349
+    lane_gate_duration_seconds: 570.1119268
+    lane_build_passed: true
+    build_ms: 455
     test_commit: d8df393
     flag: fight-voices
     owns: [src/fight-voices.js, tools/build-fight-voices.mjs, tools/test-fight-voices.mjs, tools/scenarios/fight-voices.mjs, public/assets/audio/voices/, docs/changes/AUD-18.md]
-    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
+    hooks: [src/audio.js, src/sound-bank.js, src/combat-hud.js, src/combat-hud.css, src/combat-weapons.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview-launcher.mjs, tools/test-wasteland-beta.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, public/assets/audio/CREDITS.md, public/assets/audio/credits.html]
     helpers: [test_author, reviewer, browser_qa, audio_qa]
     acceptance:
       - "Use exactly the nine kept takes in audio-src/voices and the existing sound-bank hook. Raiders use Bill; Rook uses Harry. No recording, paid service, new voice choices or source changes."
       - "Play crew callouts and raider warnings during real fights, with matching subtitles, repeat limits and pause/mute handling. Keep simulation and replay fingerprints unchanged."
       - "Tests first; private memory-only browser and recorded audio checks at High and Performance. Keep behind a new dev switch; record any human listening still due."
-    note: "Kyle authorized runtime wiring on 4 October. Preserve the kept sources, receipts and the separate audio worktree."
+    note: "Merged after all 349 lane suites, build and independent source, browser and audio checks passed. The nine kept sources and receipts are unchanged; human listening remains unmeasured."
     sequencing: "Voice owns audio and combat HUD first; Arsenal receives its reviewed commit before editing those hooks. Arsenal freezes combat-weapons while Voice adds native actor attribution only. Crew callouts follow the first player combat action; the existing raiderWarning plays the kept warning. Exact subtitles remain visible while muted; presentation timers never change simulation."
   - id: ARS-01
     title: "Arsenal wave 1: Harpoon and Caltrops, and computer use of wave 1"
