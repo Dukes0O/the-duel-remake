@@ -28,12 +28,9 @@ is generated; Claude's look approval is still required before merge.
 
 ## Checks
 
-- Independent turret tests before source: seven cases, 23 executed checks,
-  one pass and six red. All nine approved kit hashes pass unchanged. Five
-  cases stop at the missing gunn-turret.glb. A separate native elevated Gunn
-  barrage originally launched horizontally instead of toward the lower car.
-  Prepared source now passes that focused native case: seven checks include
-  real lower-car contact and the unchanged ten-armor Rocket Pods damage.
+- Initial art tests: seven cases, 23 checks, one pass/six red before source.
+  Five stopped at the missing GLB; the native lower-car shot was horizontal.
+  Fixed flight passes seven checks, including contact and ten-armor damage.
 - Authored checks use the actual GLB hierarchy and ray-tested hollow mouths,
   the existing 12,000-triangle kit ceiling and local resources. File size is
   reported against the existing soft target, not made a new merge blocker.
@@ -77,6 +74,9 @@ is generated; Claude's look approval is still required before merge.
   Existing art/fight assertions stay exact: 24 cases and 397 checks pass.
   GLB bytes and all nine kit hashes remain exact. No export, build, browser,
   audio, balance or broad tier ran. Metadata 6804ba59 merged byte-exact.
+- Prepared scenario gunn: twelve full real-model views (two cars, three views,
+  two quality modes), bounded sheet recipe and native-state/pixel checks.
+  Syntax only passes; browser execution and Claude verdict are pending.
 
 ## Remaining
 
