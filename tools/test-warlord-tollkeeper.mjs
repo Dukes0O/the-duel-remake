@@ -25,6 +25,7 @@ import {Group, Mesh, BoxGeometry, MeshStandardMaterial} from 'three';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {ownsArmorKit, armorKitBonus, armorKitMass, equipArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
 import {createArmoryScreen} from '../src/screen-armory.js';
+import {WARLORDS} from '../src/warlords.js';
 
 const DT = 1 / 120;
 let checks = 0;
@@ -75,6 +76,29 @@ test('native entry has a dev switch, real tanker and five-minute charge format',
   equal(isConvoyRig(f.duel, f.rig), true, 'the native body, projectile and boarding hooks recognize the rig');
   equal(f.duel._vehicleSpec(f.rig).mass, CONVOY_BODY.mass, 'the rig retains its actual twelve-tonne body');
   equal(arena.convoy.valves, [150, 150, 150], 'all three approved valves start at normal armor');
+});
+
+test('native format admission rejects arbitrary extra opponents and mismatched metadata', () => {
+  const make = enabled => {
+    const duel = new Duel({featureFlags: createFeatureFlags({storage: null, qa: true,
+      overrides: {tollkeeper: enabled, 'salt-flats': true, 'convoy-raid': true}})});
+    duel.state.wastelandGateDiscovered = true;
+    return duel;
+  };
+  const opponents = WARLORDS.tollkeeper.team.map(({car, brain}) => ({car, brain}));
+  const entry = {venueId: 'salt-flats', mode: 'warlord', opponents};
+  equal(make(true).startArenaEvent(entry), false, 'ordinary Warlord entry retains its two-opponent limit');
+  equal(make(false).startArenaEvent({...entry, warlordId: 'tollkeeper'}), false,
+    'a direct native format request cannot bypass the disabled fight');
+  equal(make(true).startArenaEvent({...entry, warlordId: 'blackiron'}), false,
+    'unbuilt metadata cannot raise the native limit');
+  equal(make(true).startArenaEvent({...entry, warlordId: 'tollkeeper', venueId: 'pit'}), false,
+    'format admission requires the exact registered venue');
+  equal(make(true).startArenaEvent({...entry, warlordId: 'tollkeeper',
+    opponents: opponents.map((actor, index) => index ? actor : {...actor, brain: 'rammer'})}), false,
+    'format admission requires the exact registered team');
+  equal(make(true).startArenaEvent({...entry, mode: 'convoy-raid'}), true,
+    'ordinary Convoy retains its standard three-opponent entry');
 });
 
 test('the real introduction and HUD show charge rules instead of three-wreck rules', () => {

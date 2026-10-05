@@ -13,7 +13,7 @@ export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) || !warlordEnabled(duel, warlordId)) return false;
   // A warlord fights alone, or as a team of cars (`team`), each on its own.
   const team = warlord.team ?? [{car: warlord.car, brain: warlord.brain}];
-  if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord',
+  if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord', warlordId,
       opponents: team.map(({car, brain}) => ({car, brain}))})) return false;
   const state = duel.state, arena = state.arena;
   arena.warlordId = warlordId;

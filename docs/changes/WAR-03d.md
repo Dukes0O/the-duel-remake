@@ -38,6 +38,10 @@ were prepared before their code changes; no RED execution is claimed.
 Whole Gunn integration is synced. The conflicts union both dev flags, built
 fight lists and named cues. Tollkeeper reuses the settled `featureFlag` and
 tell `cue` hooks. Released fights, Gunn rewards and old audio hashes stay intact.
+The first focused run exposed native entry's ordinary two-opponent cap. The
+format cap now requires a built, enabled fight and its exact registered venue
+and team. Ordinary Warlord entry still rejects three opponents. No assertion
+or tolerance changed. The new local klaxon is encoded; listening is not approved.
 
 ## Removed
 
