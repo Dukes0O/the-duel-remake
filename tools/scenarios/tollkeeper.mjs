@@ -164,7 +164,10 @@ export async function run(context) {
       s.s=s.prevS=r.s-28;s.lateral=s.prevLateral=r.lateral;s.headingError=0;s.invulnerableSec=0;
       a.onFrame?.(s,0);window.__render.renderFrame();
       if(r.tollGate?.stage!=='tell'||!window.__render.scene.getObjectByName('convoy-tanker')?.visible)
-        throw Error('Native moving tanker or gate tell missing');})()`);
+        throw Error('Native moving tanker or gate tell missing');
+      const objective=document.querySelector('#stage-objective')?.textContent;
+      if(!objective?.includes('VALVES')||objective.includes('THREE WRECKS'))
+        throw Error('Actual charge-format HUD advertises ordinary Warlord rules');})()`);
     await context.screenshot(quality + '-tollkeeper-tell');
     await context.evaluate(`(()=>{const a=window.__qaApp;a.advance(.9);const s=a.duel.state;
       if(s.opponents[0].tollGate.stage!=='window'||s.arena.markers.filter(m=>m.kind==='light').length!==2)

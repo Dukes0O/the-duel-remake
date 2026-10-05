@@ -53,6 +53,9 @@ verdict remain pending; measurements alone do not approve the sound.
 The browser's first hit incorrectly assumed damage above the released 80 cap.
 Its corrected recipe uses two real capped hits and two real capped blasts.
 Every phase, charge and once-only payment assertion remains unchanged.
+Actual capture exposed the ordinary Warlord objective overriding the charge
+HUD. The read-only HUD now prioritizes its existing Convoy view; the owned
+browser control checks real DOM text. Ordinary Warlord text is unchanged.
 
 ## Removed
 
