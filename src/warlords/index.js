@@ -16,7 +16,7 @@ const FIGHTS = Object.freeze({
   kettle: KETTLE_FIGHT,
   vultures: VULTURES_FIGHT,
   gunn: GUNN_FIGHT,
-  tollkeeper: TOLLKEEPER_FIGHT,
+  get tollkeeper() { return TOLLKEEPER_FIGHT; },
 });
 
 export function warlordEnabled(duel, id) {

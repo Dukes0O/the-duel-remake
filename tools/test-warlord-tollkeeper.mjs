@@ -26,12 +26,21 @@ import {applyArmorDamage} from '../src/combat-armor.js';
 import {ownsArmorKit, armorKitBonus, armorKitMass, equipArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
 import {createArmoryScreen} from '../src/screen-armory.js';
 import {WARLORDS} from '../src/warlords.js';
+import {execFileSync} from 'node:child_process';
 
 const DT = 1 / 120;
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };
 const ok = (actual, message) => { checks++; assert.ok(actual, message); };
 test.after(() => console.log(`Tollkeeper: ${checks} acceptance checks executed.`));
+
+test('the per-boss module imports independently in a fresh native process', () => {
+  const url = new URL('../src/warlords/tollkeeper.js', import.meta.url).href;
+  const result = execFileSync(process.execPath, ['--input-type=module', '-e',
+    `const m=await import(${JSON.stringify(url)});console.log(m.TOLLKEEPER_FIGHT.featureFlag,m.TOLLKEEPER_RULES.coreValve);`],
+    {encoding: 'utf8'});
+  equal(result.trim(), 'tollkeeper 0', 'the direct boss import retains the real hook and rear valve');
+});
 
 function admitted({difficulty = 'medium', seed = 317, enabled = true} = {}) {
   const flags = createFeatureFlags({storage: null, qa: true,

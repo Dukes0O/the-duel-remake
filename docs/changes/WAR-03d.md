@@ -42,6 +42,9 @@ The first focused run exposed native entry's ordinary two-opponent cap. The
 format cap now requires a built, enabled fight and its exact registered venue
 and team. Ordinary Warlord entry still rejects three opponents. No assertion
 or tolerance changed. The new local klaxon is encoded; listening is not approved.
+A fresh native boss-module import exposed a registry cycle. Its immutable
+entry now reads the hook lazily; the additive fresh-process control preserves
+the exact hook and most-rear valve. No simulation rule changed.
 
 ## Removed
 
