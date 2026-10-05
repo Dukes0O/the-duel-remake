@@ -6,6 +6,7 @@ import {crewPerks} from '../crew.js';
 import {gearContact, gearDirection, enemyCars, fighterTargets,
   damageGearCar, damageGearFighter, cannonShove} from './contacts.js';
 import {signatureFor, GEAR_EPSILON} from './gear.js';
+import {convoyBlastDistance} from '../arena/convoy.js';
 
 const GRAVITY = COMBAT_TUNING.bomb.gravity;
 export function launchGearProjectile(duel, fighter, gear, serial, motion = {x: 0, z: 0}) {
@@ -71,6 +72,7 @@ function explodeSticky(duel, shot) {
   for (const actor of [duel.state, ...duel.state.opponents]) {
     const at = carBodyPoint(duel, actor);
     if (shot.attachedId === targetIdentity(duel, actor) ||
+        convoyBlastDistance(duel, actor, shot) < radius ||
         Math.hypot(at.x - shot.x, at.z - shot.z) < radius)
       damageGearCar(duel, actor, gear.carDamage, owner, null,
         {hitPosition: {x: shot.x, y: shot.y, z: shot.z}, blastRadius: radius});

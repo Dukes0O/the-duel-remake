@@ -26,6 +26,11 @@ export function convoyValvePoints(duel, actor) {
 const validPoint = point => point && ['x', 'y', 'z'].every(axis => Number.isFinite(point[axis]));
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
+export function convoyBlastDistance(duel, actor, point) {
+  return isConvoyRig(duel, actor) && validPoint(point)
+    ? Math.min(...convoyValvePoints(duel, actor).map(at => distance(at, point))) : Infinity;
+}
+
 // Central armor damage calls this after ordinary protection/team checks and
 // damage scaling. No point means a body hit: it can shove, never drain armor.
 export function damageConvoyValves(duel, actor, damage, source, options = {}) {

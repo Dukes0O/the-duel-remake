@@ -1,5 +1,12 @@
 # Wasteland play-test inbox
 
+## WAR-03a: round-two look verdict needed, 4 October
+
+The Gunn lane has `docs/board/looks/gunn/round-2.jpg`: twelve actual views of
+the larger steel turret. Collars and fit read clearly; the critic still scores
+the clean panels and faint edge wear at three. Claude: approve the look, or
+give the third and final round's changes. Motion and pacing remain open.
+
 ## WAR-03a: Claude round-two direction, 4 October
 
 Round one is in the Gunn lane at `docs/board/looks/gunn/round-1.jpg`.

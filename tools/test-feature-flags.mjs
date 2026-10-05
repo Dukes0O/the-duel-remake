@@ -19,7 +19,7 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
-  && Object.keys(FEATURE_STATES).length === 9,
+  && FEATURE_STATES['convoy-raid'] === 'dev' && Object.keys(FEATURE_STATES).length === 10,
   'the five released Wasteland features stay on; career backup, Fight Voices and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('arsenal-wave3'), 'production keeps wave three off');

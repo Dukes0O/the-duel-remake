@@ -27,6 +27,7 @@ import {launchHarpoon} from '../src/arsenal/harpoon.js';
 import {carEffect, carAlongPush, stepCarEffects} from '../src/arsenal/car-effects.js';
 import {point} from '../src/combat-weapons.js';
 import {sweepObstacle} from '../src/collision.js';
+import {launchMortar, stepMortars, MORTAR_RULES} from '../src/arsenal/mortar.js';
 
 // ARENA-07: native rules and the pure settlement contract settled on 4 October.
 const DT = 1 / 120;
@@ -517,7 +518,7 @@ function memoryAppConvoy(run) {
     app.audio.unlock = () => {}; app.cpuDifficulty = 'medium';
     app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
       discoveredGate: true, xp: 1_000_000, scrap: 23,
-      territories: {...app.profile.wasteland.territories, tollkeeper: {hold: 10}}}};
+      territories: {...app.profile.wasteland.territories, tollkeeper: {hold: 10}, kettle: {hold: 50}}}};
     equal(app._saveProfile(), true, 'the starting real App owner is saved only in memory');
     equal(app.visitWasteland(), true, 'the actual App visits its discovered yard'); app.advance(8);
     // This production owner/run path bypasses only the held public mode allow-list.
@@ -562,12 +563,41 @@ test('an actual failed App Convoy result write retains one retry and banks no ea
   equal(app.profile.wasteland.scrap, before.wasteland.scrap, 'failed native settlement exposes no early scrap');
   equal(result.settlementSaved, false, 'the actual failed result cannot claim a successful save');
   equal(result.settlementRetryable, true, 'the same actual Convoy completion retains a public Retry');
+  equal(result.hold, 10, 'a failed Convoy write still displays Tollkeeper hold, not Kettle hold');
   equal(app.retryArenaSettlement(), true, 'public Retry durably saves that genuine completed Convoy event');
   equal(app.profile.wasteland.scrap, before.wasteland.scrap + 144, 'retry pays the native loss exactly once');
   const paid = values.get(PLAYERS_KEY), writes = storage.writes;
   equal(app.retryArenaSettlement(), false, 'a second public Retry cannot pay the event again');
   equal(values.get(PLAYERS_KEY), paid, 'repeat Retry keeps the exact durable paid bytes');
   equal(storage.writes, writes, 'repeat Retry does not write again');
+}));
+
+test('adopting an already paid native Convoy result displays Tollkeeper hold without another write', () => memoryAppConvoy(({app, storage, values}) => {
+  const result = timeoutAppConvoy(app), paid = values.get(PLAYERS_KEY), writes = storage.writes;
+  Object.assign(result, {settlementSaved: false, settlementRetryable: false});
+  equal(app._settleArenaResult({result}, app.duel.state), false, 'a durable existing payment cannot award again');
+  equal(result.settlementSaved, true, 'the existing durable payment is adopted');
+  equal(result.hold, 10, 'adopting Convoy displays Tollkeeper hold rather than the different Kettle hold');
+  equal(values.get(PLAYERS_KEY), paid, 'adoption preserves the exact paid registry bytes');
+  equal(storage.writes, writes, 'adoption needs no additional registry write');
+}));
+
+test('the real App durably pays a native charge win and Tollkeeper hold once', () => memoryAppConvoy(({app, values}) => {
+  const before = structuredClone(app.profile), rig = app.duel.state.opponents[0];
+  roofCrossing({duel: app.duel, rig});
+  stepFootTransition(app.duel, DT); app.duel.state.fighterInput.fire = true;
+  for(let n=0;n<360;n++)stepFootTransition(app.duel, DT);
+  app.duel.step(DT);
+  const result = app.duel.state.arena.result;
+  equal(result?.reason, 'charge', 'a real roof hold and full fuse create the native win');
+  equal(result.settlementSaved, true, 'the actual App saves the completed charge result');
+  equal(result.scrapEarned, 840, 'the native Medium win pays 840');
+  const saved = values.get(PLAYERS_KEY), owner = JSON.parse(saved).players.find(p=>p.id===app.player.id);
+  equal(owner.profile.wasteland.scrap, before.wasteland.scrap + 840, 'the starting owner receives the saved payout');
+  equal(owner.profile.wasteland.territories.tollkeeper.hold, 35, 'the native win adds 25 Tollkeeper hold');
+  equal(owner.profile.credits, before.credits, 'ordinary credits stay unchanged');
+  equal(app._settleArenaResult({result}, app.duel.state), false, 'the completed win cannot pay twice');
+  equal(values.get(PLAYERS_KEY), saved, 'a repeated win event leaves saved bytes unchanged');
 }));
 
 test('native Odessa turret reports its swept body contact, with unchanged nearest-target damage and cadence', () => {
@@ -771,8 +801,8 @@ test('geometry transfer: native Rocket Pods forwards its real blast point and ra
 test('geometry transfer: an ordinary-car Rocket blast reaches a valve with the tanker centre outside its radius', () => {
   const f = exposedFight(); requireNativeTankerSpec(f); const valve = placeBesideValve(f);
   const escort = f.duel.state.opponents[1], at = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
-  placeActor(f.duel, escort, f.duel.course.nearest(valve.x + Math.cos(at.heading) * 1.8,
-    valve.z - Math.sin(at.heading) * 1.8, f.rig.s), 0);
+  placeActor(f.duel, escort, f.duel.course.nearest(valve.x + Math.cos(at.heading) * .3,
+    valve.z - Math.sin(at.heading) * .3, f.rig.s), 0);
   const shot = nativeRocketAt(f.duel, point(f.duel, escort));
   const impact = measuredRocketBodyContact(f.duel, shot, escort), armor = f.rig.armor, escortArmor = escort.armor;
   const centre = point(f.duel, f.rig), distances = convoyValvePoints(f.duel, f.rig)
@@ -787,4 +817,23 @@ test('geometry transfer: an ordinary-car Rocket blast reaches a valve with the t
     'rig eligibility follows real valve distances even when its centre is outside the blast');
   equal(f.rig.armor, armor, 'nearby native splash cannot drain rigid tanker body armor');
   equal(escort.armor, escortArmor - 10, 'the primary ordinary escort still receives the established ten armor damage');
+});
+
+test('native Mortar landing damages only real valves in its blast radius without draining the rig body', () => {
+  const f = exposedFight(); requireNativeTankerSpec(f);
+  placeActor(f.duel, f.duel.state, {s:f.rig.s-30,lateral:f.rig.lateral}, 0);
+  const shell = launchMortar(f.duel, f.duel.state, 0), armor = f.rig.armor;
+  ok(shell && shell.targetId === f.rig.arenaId, 'the native Mortar producer targets the real tanker');
+  const gaps = convoyValvePoints(f.duel, f.rig).map(p=>Math.hypot(p.x-shell.x,p.y-shell.y,p.z-shell.z));
+  const amount = MORTAR_RULES.damage * (1-Math.min(...gaps)/shell.radius);
+  ok(amount>0, 'the native landing genuinely reaches at least one valve');
+  stepMortars(f.duel, MORTAR_RULES.flightSec-DT);
+  equal(f.duel.state.arena.convoy.valves, [150,150,150], 'the warning causes no early damage');
+  stepMortars(f.duel, DT);
+  const expected = gaps.map(gap=>gap<=shell.radius?150-amount:150);
+  equal(f.duel.state.arena.convoy.valves, expected, 'only valves inside the actual landing radius lose native blast damage');
+  equal(f.rig.armor, armor, 'the Mortar cannot drain the tanker body');
+  equal(f.rig.airborne, false, 'a Mortar cannot hop the fixed-loop twelve-tonne rig');
+  stepMortars(f.duel, DT);
+  equal(f.duel.state.arena.convoy.valves, expected, 'the consumed shell cannot hit twice');
 });

@@ -36,6 +36,7 @@ export function initializeConvoyRaid(duel) {
     participant.targetId = null;
   });
   rig.arenaRole = 'convoy-rig';
+  rig.weaponsDisabledUntil = Infinity;
   rig.s = rig.prevS = duel.course.length * .2;
   rig.lateral = rig.prevLateral = CONVOY_RULES.loopOffset;
   rig.headingError = 0;

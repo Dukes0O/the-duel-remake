@@ -11,6 +11,8 @@ import {damageFighter, knockdownFighter, FIGHTER_RULES} from './onfoot.js';
 import {stepGearProjectile} from './crew-gear/projectiles.js';
 import {stepRocketPod} from './arsenal/rockets.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {isConvoyRig} from './arena/modes/convoy-raid.js';
+import {convoyBlastDistance} from './arena/convoy.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -158,7 +160,9 @@ function hit(duel, actor, projectile, power, enemy, armorOptions = {}) {
     enemy,
     ...(projectile.raid ? {owner: 'raider', raidZone: projectile.raidZone} : {}),
     victim: actor === state ? 'player' : state.opponents.includes(actor) ? 'rival' : 'traffic',
-    hitPosition: {x: where.x, y: where.y, z: where.z},
+    hitPosition: isConvoyRig(duel, actor) && armorOptions.hitPosition ? {
+      x: armorOptions.hitPosition.x, y: armorOptions.hitPosition.y, z: armorOptions.hitPosition.z,
+    } : {x: where.x, y: where.y, z: where.z},
   });
   return applyArmorDamage(duel, actor, projectile.kind === 'rpg'
     ? armorOptions.splash ? 'rpg-splash' : 'rpg-direct'
@@ -340,8 +344,9 @@ export function stepProjectiles(duel, dt) {
       const radius = vehicle.halfWidth + T.projectileRadiusPadding;
       let approach;
       if (modernProjectiles) {
-        const from = duel.course.groundAt(actor.prevS ?? actor.s,
-          actor.prevLateral ?? actor.lateral);
+        const stoppedRig = isConvoyRig(duel, actor) && actor.speedMph === 0;
+        const from = duel.course.groundAt(stoppedRig ? actor.s : actor.prevS ?? actor.s,
+          stoppedRig ? actor.lateral : actor.prevLateral ?? actor.lateral);
         // Bolts must cross the car's body, from its base to its actual roof.
         // Keep the existing hit band for bombs and RPGs.
         const halfHeight = projectile.kind === 'crossbow'
@@ -403,8 +408,13 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
 
+    const hitPosition = target && modernProjectiles ? {
+      x: old.x + (projectile.x - old.x) * firstContact,
+      y: old.y + (projectile.y - old.y) * firstContact,
+      z: old.z + (projectile.z - old.z) * firstContact,
+    } : {x: projectile.x, y: projectile.y, z: projectile.z};
     if (projectile.kind === 'harpoon') {
-      if (target) hitHarpoon(duel, target, projectile);
+      if (target) hitHarpoon(duel, target, projectile, hitPosition);
       continue;
     }
 
@@ -435,7 +445,7 @@ export function stepProjectiles(duel, dt) {
       continue;
     }
 
-    if (raiderTarget || fighterTarget) {
+    if (raiderTarget || fighterTarget || target && isConvoyRig(duel, target)) {
       projectile.x = old.x + (projectile.x - old.x) * firstContact;
       projectile.y = old.y + (projectile.y - old.y) * firstContact;
       projectile.z = old.z + (projectile.z - old.z) * firstContact;
@@ -463,8 +473,8 @@ export function stepProjectiles(duel, dt) {
       for (const actor of [state, ...state.opponents, ...state.traffic]) {
         if (!actor || actor.alive === false) continue;
         const at = point(duel, actor);
-        const distance = Math.hypot(at.x - projectile.x, at.z - projectile.z,
-          at.y - projectile.y);
+        const distance = isConvoyRig(duel, actor) ? convoyBlastDistance(duel, actor, projectile) :
+          Math.hypot(at.x - projectile.x, at.z - projectile.z, at.y - projectile.y);
         const radius = bombRadius;
         const selfDamage = actor === thrower ? T.bomb.selfDamage : 1;
         if (distance < radius) {
@@ -472,7 +482,7 @@ export function stepProjectiles(duel, dt) {
             (1 - distance / radius) * T.bomb.blastPower *
             (1 + projectile.level * T.bomb.powerPerLevel) * selfDamage,
             projectile.enemy, {distanceFraction: distance / radius,
-              self: actor === thrower});
+              self: actor === thrower, hitPosition: projectile, blastRadius: radius});
         }
       }
       if (modernProjectiles) {
@@ -487,7 +497,8 @@ export function stepProjectiles(duel, dt) {
     } else if (projectile.kind === 'rpg') {
       if (raiderTarget) damageRaider(duel, raiderTarget, T.raider.directDamage);
       if (contact) {
-        const removed = target && hit(duel, target, projectile, 1.35, false);
+        const removed = target && hit(duel, target, projectile, 1.35, false,
+          {hitPosition, blastRadius: rpgSplashRadius});
         if (removed > 0 && state.opponents.includes(target)) {
           combat.notorietyEvents ??= [];
           if (combat.notorietyEvents.length < 256) combat.notorietyEvents.push({
@@ -498,11 +509,11 @@ export function stepProjectiles(duel, dt) {
       for (const actor of [state, ...state.opponents, ...state.traffic]) {
         if (!actor || actor === target || actor.alive === false) continue;
         const at = point(duel, actor);
-        const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
-          at.z - projectile.z);
+        const distance = isConvoyRig(duel, actor) ? convoyBlastDistance(duel, actor, projectile) :
+          Math.hypot(at.x - projectile.x, at.y - projectile.y, at.z - projectile.z);
         if (distance < rpgSplashRadius) hit(duel, actor, projectile,
           1 - distance / rpgSplashRadius, false,
-          {splash: true, self: actor === state});
+          {splash: true, self: actor === state, hitPosition: projectile, blastRadius: rpgSplashRadius});
       }
       for (const zone of state.raids?.zones || []) {
         for (const raider of zone.raiders) {
@@ -521,7 +532,7 @@ export function stepProjectiles(duel, dt) {
       hit(duel, target, projectile,
         projectile.raid ? .32 :
           T.crossbow.power * (1 + projectile.level * T.crossbow.powerPerLevel),
-        projectile.enemy);
+        projectile.enemy, {hitPosition});
     }
   }
   combat.projectiles = live;

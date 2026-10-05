@@ -319,7 +319,10 @@ export class Duel {
         (venueId === 'salt-flats' && !this.featureFlags.enabled('salt-flats')) ||
         (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) ||
         (mode === 'bounty-hunt' && !this.featureFlags.enabled('bounty-hunt')) || !venue || !rules ||
-        !Array.isArray(opponents) || opponents.length < 1 || opponents.length > rules.maxOpponents ||
+        !Array.isArray(opponents) ||
+        (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
+          venueId !== 'salt-flats' || opponents.length !== 3)) ||
+        opponents.length < 1 || opponents.length > rules.maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     const s = this.state;
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
