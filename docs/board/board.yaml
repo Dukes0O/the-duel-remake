@@ -5,6 +5,21 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: GATE-CALLBACK-DIAGNOSTICS
+    title: "Retain native audio callback timestamps and input lengths"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-director-2026-10-04
+    branch: codex/tools/callback-diagnostics
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs, docs/changes/GATE-CALLBACK-DIAGNOSTICS.md]
+    helpers: [test_author, reviewer, audio_qa, test_runner]
+    acceptance:
+      - "Retain each native callback's raw currentFrame and left/right input lengths with its existing chunk. Keep PCM copying, original frame labels and every existing assertion unchanged. Tests first cover ordinary and offset timestamps, input lengths and byte-exact PCM. No label repair, retry, skip, tolerance change or new framework."
+      - "Independent review and native capture identify what the evidence proves and leaves unproved. Lane and build gates precede integration; feature merges remain held until a full checkpoint passes."
+    note: "The full tier still fails audio continuity. Paired frame-label offsets need raw callback evidence; missing audio and the cause remain unproved."
   - id: GATE-DIAGNOSTICS
     title: "Retain failure details from native audio and temporary Git fixtures"
     owner: codex

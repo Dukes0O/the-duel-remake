@@ -838,3 +838,11 @@ requests less wood-like wear and clearer steel tubes. The one capped sheet
 and verdict are committed in the lane; Claude has the look question and
 the card waits on Claude. Motion and pacing remain unmeasured.
 
+The full tier on clean d0bb574c finished in 709.12 seconds: 348 passed,
+one failed, none skipped. Non-fuel and six-blast audio chunks show a
+128-frame early label followed by a correction; all chunks are full and
+their total span is normal. Earlier missing-block descriptions were not
+proved. Independent review finds no repeated nearby PCM quantum but cannot
+prove input continuity. Add raw callback timestamps and input lengths only;
+keep PCM and assertions unchanged. Feature merges remain held.
+
