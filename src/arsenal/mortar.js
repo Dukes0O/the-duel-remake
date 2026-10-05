@@ -4,6 +4,8 @@ import {applyArmorDamage} from '../combat-armor.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
 import {setCarMortarHop} from './car-effects.js';
+import {isConvoyRig} from '../arena/modes/convoy-raid.js';
+import {convoyBlastDistance} from '../arena/convoy.js';
 
 export const MORTAR_RULES = Object.freeze({
   flightSec: 1.6, radius: 3, damage: 25, hopMps: 3,
@@ -65,13 +67,16 @@ export function stepMortars(duel, dt) {
     const owner = actorForTarget(duel, shell.ownerId);
     for (const actor of [duel.state, ...duel.state.opponents]) {
       if (!owner || !hostile(duel, owner, actor) || outOfPlay(duel, actor)) continue;
-      const at = point(duel, actor), distance = Math.hypot(at.x - shell.x, at.z - shell.z);
+      const at = point(duel, actor), rig = isConvoyRig(duel, actor);
+      const distance = rig ? convoyBlastDistance(duel, actor, shell) :
+        Math.hypot(at.x - shell.x, at.z - shell.z);
       const share = Math.max(0, 1 - distance / shell.radius);
       if (!(share > 0)) continue;
       const removed = applyArmorDamage(duel, actor, 'fixed', {
         owner: shell.damageOwnerId, amount: MORTAR_RULES.damage * share,
+        hitPosition: shell, blastRadius: shell.radius,
         damageMultiplier: 1 + Math.max(0, Math.min(3, shell.level)) * COMBAT_TUNING.armor.upgradePerLevel});
-      if (removed > 0 && !actor.drone && !actor.combatWrecking) {
+      if (removed > 0 && !rig && !actor.drone && !actor.combatWrecking) {
         actor._ramVerticalSpeed = Math.max(actor._ramVerticalSpeed || 0, MORTAR_RULES.hopMps * share);
         setCarMortarHop(actor, true);
         actor.airborne = true;

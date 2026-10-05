@@ -2,6 +2,10 @@ import {sweepObstacle} from '../collision.js';
 import {outOfPlay} from '../combat-teams.js';
 import {actorForTarget, targetIdentity} from '../arsenal/targeting.js';
 import {damageGearCar} from './contacts.js';
+import {applyArmorDamage} from '../combat-armor.js';
+import {CONVOY_ROOF_PLATE, convoyPoint} from '../arena/convoy.js';
+import {CONVOY_BODY, isConvoyRig, convoyBoardingOpen, plantConvoyCharge}
+  from '../arena/modes/convoy-raid.js';
 
 // All durations are accumulated by the fixed fighter step, never by rendering.
 export const BOARDING_RULES = Object.freeze({
@@ -22,6 +26,14 @@ function active(duel) {
 }
 function body(duel, actor) {
   const ground = duel.course.groundAt(actor.s, actor.lateral);
+  if (isConvoyRig(duel, actor)) {
+    const plate = CONVOY_ROOF_PLATE;
+    const at = convoyPoint(duel, actor, [plate.x, plate.y, plate.z]);
+    return {...ground, x: at.x, z: at.z,
+      y: ground.y + (actor.airHeight || 0), roofY: at.y,
+      heading: ground.heading + (actor.headingError || 0),
+      halfWidth: plate.halfWidth, halfLength: plate.halfLength};
+  }
   const spec = duel._vehicleSpec(actor);
   return {...ground, y: ground.y + (actor.airHeight || 0),
     roofY: ground.y + (actor.airHeight || 0) + spec.height,
@@ -50,6 +62,7 @@ export function canBoardTarget(duel, actor, method = 'roof') {
       !duel.state.opponents?.includes(actor) ||
       duel.state.traffic?.includes(actor) || outOfPlay(duel, actor) ||
       !Number.isFinite(actor.speedMph) || duel.state.boarding) return false;
+  if (isConvoyRig(duel, actor) && !convoyBoardingOpen(duel, actor)) return false;
   const kph = Math.abs(actor.speedMph) * 1.609344;
   return method === 'roof' ? kph < BOARDING_RULES.roofMaximumKph :
     method === 'grapple' && kph < BOARDING_RULES.grappleMaximumKph;
@@ -62,7 +75,10 @@ function safeLanding(duel, actor) {
   for (const ds of [0, -3, 3, -6, 6, -10, 10, -16, 16])
     for (const side of [1, -1])
       for (const distance of [1.8, 2.8, 4.2]) {
-        const s = actor.s + ds, lateral = side * (course.roadHalfWidthAt(s) + distance);
+        const s = actor.s + ds;
+        const lateral = isConvoyRig(duel, actor)
+          ? actor.lateral + side * (CONVOY_BODY.halfWidth + FIGHTER_BODY.halfWidth + distance)
+          : side * (course.roadHalfWidthAt(s) + distance);
         const ground = course.groundAt(s, lateral);
         if (!(ground.y > -15) || !Number.isFinite(ground.x) ||
             !Number.isFinite(ground.z)) continue;
@@ -141,7 +157,8 @@ export function stepBoarding(duel, dt, {sidewaysAcceleration = 0,
   const actor = actorForTarget(duel, boarding.targetId);
   if (boarding.phase === 'roof') {
     if (!actor || outOfPlay(duel, actor) || !state.fighter ||
-        state.fighter.knockedDown) {
+        state.fighter.knockedDown ||
+        isConvoyRig(duel, actor) && !convoyBoardingOpen(duel, actor)) {
       leaveRoof(duel, boarding, 'target-lost'); return true;
     }
     const landing = safeLanding(duel, actor);
@@ -160,6 +177,9 @@ export function stepBoarding(duel, dt, {sidewaysAcceleration = 0,
     if (boarding.fireSeconds + EPS >= BOARDING_RULES.plantHoldSeconds) {
       boarding.phase = 'charge'; boarding.chargesPlanted = 1;
       boarding.fuseSeconds = BOARDING_RULES.fuseSeconds;
+      if (isConvoyRig(duel, actor) && !plantConvoyCharge(duel, actor)) {
+        leaveRoof(duel, boarding, 'target-lost'); return true;
+      }
       leaveRoof(duel, boarding, 'plant');
     }
     return true;
@@ -168,7 +188,10 @@ export function stepBoarding(duel, dt, {sidewaysAcceleration = 0,
   boarding.fuseSeconds -= dt;
   if (boarding.fuseSeconds > EPS) return true;
   if (actor && !outOfPlay(duel, actor)) {
-    damageCar(duel, actor, BOARDING_RULES.armorDamage, state);
+    if (isConvoyRig(duel, actor)) {
+      applyArmorDamage(duel, actor, 'fixed', {amount: BOARDING_RULES.armorDamage,
+        owner: 'player', convoyCharge: true});
+    } else damageCar(duel, actor, BOARDING_RULES.armorDamage, state);
     actor.weaponsDisabledUntil = Math.max(actor.weaponsDisabledUntil || 0,
       state.stageTimeSec + BOARDING_RULES.weaponDisableSeconds);
     duel.emit({crewBoardingCue: 'crew.boarding.blast', targetId: boarding.targetId,

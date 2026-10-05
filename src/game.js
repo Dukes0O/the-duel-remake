@@ -324,7 +324,10 @@ export class Duel {
         (ambush && (!this.featureFlags.enabled('ambush-alley') ||
           !['pit', 'salt-flats'].includes(venueId) || !Number.isSafeInteger(arsenalRank) ||
           arsenalRank < 12)) || !venue || !rules ||
-        !Array.isArray(opponents) || opponents.length < (ambush ? 0 : 1) || opponents.length > rules.maxOpponents ||
+        !Array.isArray(opponents) ||
+        (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
+          venueId !== 'salt-flats' || opponents.length !== 3)) ||
+        opponents.length < (ambush ? 0 : 1) || opponents.length > rules.maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
       upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];

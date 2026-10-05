@@ -108,6 +108,12 @@ Cinder uses her flamer only within 6 m. Then the RPG fills the remaining
 shots, up to a three-shot total. Jax and Wren use only the RPG; Rook uses
 the RPG with his perk. No gear is used outside repair stops and ambushes.
 
+**Stop pacing, Claude, 5 October 2026.** Keep the triggers, ranges, weapons
+and Hard's 20-40% win target. Braking to a stop, getting out, getting back
+in and pulling away together add at most 2.5 s beyond repair or shots.
+After a stop, ordinary Hard catch-up applies as for any car left behind.
+If Hard still exceeds 40%, allow only one Hard repair stop per race.
+
 ## 4. Cards
 
 | Card | Scope | Needs |

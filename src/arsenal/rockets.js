@@ -109,10 +109,11 @@ export function stepRocketVolleys(duel, dt) {
     volley.fired < ROCKET_RULES.count &&
     !outOfPlay(duel, actorForTarget(duel, volley.ownerId)));
 }
-function defaultDamage(duel, actor, amount, shot) {
+function defaultDamage(duel, actor, amount, shot, hitPosition) {
   return applyArmorDamage(duel, actor, 'crossbow', {
     owner: shot.ownerId, level: shot.level,
     damageMultiplier: amount / armorDamageFor('crossbow'),
+    hitPosition, blastRadius: ROCKET_RULES.blastRadius,
   });
 }
 function body(duel, actor) {
@@ -132,7 +133,7 @@ function blast(duel, shot, at, damageCar, shielded, fighters, blastFighter) {
     const reach = Math.hypot(target.halfX, target.halfZ);
     if (Math.hypot(target.x - at.x, target.z - at.z) >
         ROCKET_RULES.blastRadius + reach + EPS) continue;
-    const removed = damageCar(duel, actor, ROCKET_RULES.damage, shot);
+    const removed = damageCar(duel, actor, ROCKET_RULES.damage, shot, at);
     if (removed > 0) duel.emit({combatHit: true, strength: removed / 60,
       enemy: shot.enemy, victim: actor === duel.state ? 'player' : 'rival',
       hitPosition: at});

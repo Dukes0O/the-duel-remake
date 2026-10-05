@@ -873,4 +873,7 @@ Deleted only the merged lane and branch. Its used review evidence is next;
 all unmerged lanes and the protected audio lane stay.
 
 5 October: merged ARENA-05 from 4aad99b3; lane 352/352 (one audio-check retry), build, native, laptop browser, source and pay reviews pass; shared hooks released to Gunn.
+5 October: end full on clean 2e7862fb passes 352/352 in 1091.41 s, alone with four jobs; no rerun.
+Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lanes and protected audio. Cleanup left tracked size at 290 MB. Candidates and released switches stay flagged; Wasteland models are 102 MB against 60 MB, so propose 120 MB without changing targets.
+5 October: merged ARENA-07 from efde10ad; all 353 lane tasks covered with one isolated audio retry, build and reviews pass. CONVOY-FRAMES blocks release; Tollkeeper starts next.
 

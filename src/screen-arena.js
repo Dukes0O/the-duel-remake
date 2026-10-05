@@ -35,6 +35,7 @@ export function arenaHud(state) {
   }
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
+  const convoy = arena.mode === 'convoy-raid';
   const suddenDeath = arena.phase === 'sudden-death';
   const remainingSec = fuel && suddenDeath ? 0 : Math.max(0, suddenDeath ? arena.suddenDeathLimitSec - arena.suddenDeathSec
     : arena.timeLimitSec - arena.clockSec);
@@ -51,14 +52,17 @@ export function arenaHud(state) {
     phase: arena.phase,
     fuel,
     bounty,
+    convoy,
     markedId: arena.bountyHunt?.pendingVictimId ? null : arena.bountyHunt?.markedId,
-    modeLabel: bounty ? 'BOUNTY HUNT · MOST POINTS' : fuel ? 'FUEL RUN · FIRST TO FIVE' : arena.mode === 'warlord' ? 'FIRST TO THREE WRECKS' : 'LAST CAR ROLLING',
+    modeLabel: convoy ? 'CONVOY RAID' : bounty ? 'BOUNTY HUNT · MOST POINTS' : fuel ? 'FUEL RUN · FIRST TO FIVE' : arena.mode === 'warlord' ? 'FIRST TO THREE WRECKS' : 'LAST CAR ROLLING',
     timeLabel: suddenDeath ? fuel ? 'SUDDEN DEATH · NEXT DELIVERY WINS' : 'SUDDEN DEATH · NEXT WRECK WINS' : 'TIME LEFT',
     remainingSec,
     place, field: ranking.length,
     placeText: ORDINALS[place - 1] || String(place),
     leaderText: tiedAtTop ? 'LEVEL AT THE TOP' : leader.id === 'player' ? 'YOU LEAD' : `${leader.name} LEADS`,
-    scoreText: bounty ? `POINTS ${me.bountyPoints} · ${arena.bountyHunt.markedId === 'player' && !arena.bountyHunt.pendingVictimId ? 'YOU CARRY THE BOUNTY' : 'HUNT THE BEACON'}` : fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
+    scoreText: convoy ? arena.convoy.chargePlanted ? 'CHARGE PLANTED' : arena.convoy.boardingLeftSec > 0 ?
+      `BOARDING WINDOW ${Math.ceil(arena.convoy.boardingLeftSec)} s` : `VALVES ${arena.convoy.valves.filter(hp=>hp===0).length} / 3` :
+      bounty ? `POINTS ${me.bountyPoints} · ${arena.bountyHunt.markedId === 'player' && !arena.bountyHunt.pendingVictimId ? 'YOU CARRY THE BOUNTY' : 'HUNT THE BEACON'}` : fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
     huntedBy: hunters.map(participant => participant.name),
     respawnSec: state.combatWrecking ? Math.max(1, Math.ceil(state.combatWreckTimer || 0)) : 0,
     // A warlord's pair is one row: the warlord's name and the pair's totals.
@@ -120,6 +124,8 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
   const ambushAvailable = profile?.wasteland?.discoveredGate === true && profile.wasteland.rank >= 12 &&
     featureFlags?.enabled('ambush-alley') === true;
   const saltAvailable = arenaVenueAvailable(featureFlags, profile, 'salt-flats');
+  const convoyAvailable = saltAvailable && profile?.wasteland?.territories?.tollkeeper?.hold > 0 &&
+    featureFlags?.enabled('convoy-raid') === true;
   const ambush = ambushAvailable && mode === 'ambush-alley';
   const venues = ambush ? ['pit', ...(saltAvailable ? ['salt-flats'] : [])] : ['scrapdome', 'salt-flats'];
   const selectedVenue = saltAvailable && venueId === 'salt-flats' ? 'salt-flats' : ambush ? 'pit' : 'scrapdome';
@@ -128,11 +134,16 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
   const enterLabel = selectedVenue === 'salt-flats' ? 'ENTER THE SALT FLATS' : ambush ? 'ENTER THE PIT' : 'ENTER THE SCRAPDOME';
   const fuel = available && mode === 'fuel-run';
   const bounty = bountyAvailable && mode === 'bounty-hunt';
-  const selectedMode = ambush ? 'ambush-alley' : bounty ? 'bounty-hunt' : fuel ? 'fuel-run' : 'last-car-rolling';
+  const convoy = convoyAvailable && mode === 'convoy-raid';
+  const selectedMode = convoy ? 'convoy-raid' : ambush ? 'ambush-alley' : bounty ? 'bounty-hunt' : fuel ? 'fuel-run' : 'last-car-rolling';
   const choices = ['last-car-rolling', ...(available ? ['fuel-run'] : []), ...(bountyAvailable ? ['bounty-hunt'] : []),
-    ...(ambushAvailable ? ['ambush-alley'] : [])];
+    ...(ambushAvailable ? ['ambush-alley'] : []), ...(convoyAvailable ? ['convoy-raid'] : [])];
   const modes = choices.length > 1 ? '<div class="segmented" role="group" aria-label="Scrapdome mode">' +
-    choices.map(id => `<button type="button" class="choice${selectedMode === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${selectedMode === id}">${id === 'ambush-alley' ? 'AMBUSH ALLEY' : id === 'fuel-run' ? 'FUEL RUN' : id === 'bounty-hunt' ? 'BOUNTY HUNT' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
+    choices.map(id => `<button type="button" class="choice${selectedMode === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${selectedMode === id}">${id === 'convoy-raid' ? 'CONVOY RAID' : id === 'ambush-alley' ? 'AMBUSH ALLEY' : id === 'fuel-run' ? 'FUEL RUN' : id === 'bounty-hunt' ? 'BOUNTY HUNT' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
+  if (convoy) return `<div class="yard-home-intro arena-yard">${modes}
+    <p class="arena-yard-mode">CONVOY RAID · SALT FLATS · 5:00</p>
+    <p class="arena-yard-difficulty">TANKER + TWO ESCORTS · ${String(difficulty).toUpperCase()}</p>
+    <button type="button" class="start-button arena-start" data-action="arena-start"><span>ENTER THE SALT FLATS</span></button></div>`;
   if (ambush) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
     <p class="arena-yard-mode">AMBUSH ALLEY / FIVE WAVES</p>
     <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()}</p>
@@ -198,15 +209,16 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const winner = byId[result.winnerId];
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
+  const convoy = arena.mode === 'convoy-raid';
   const warlord = arena.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
-  const title = warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
+  const title = convoy ? won ? 'CONVOY<br>STOPPED.' : 'CONVOY<br>ESCAPED.' : warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
     won ? bounty ? 'BOUNTY<br>CLAIMED.' : fuel ? 'FUEL<br>DELIVERED.' : 'LAST CAR<br>ROLLING.' : place === 2 ? 'SO CLOSE.' : 'BACK TO<br>THE HEAP.';
-  let description = warlord
+  let description = convoy ? won ? 'The boarding charge stopped the tanker.' : 'The tanker escaped before you planted the charge.' : warlord
     ? `${won ? `You beat ${escapeHTML(warlord.name)}.` : `${escapeHTML(warlord.name)} won. Losing costs nothing.`} ${REASONS[result.reason] || ''}`
     : bounty ? `${won ? 'You claimed the bounty.' : `${escapeHTML(winner.name)} won the bounty.`} ${REASONS[result.reason] || ''}`
     : fuel ? `${won ? 'You brought home the fuel.' : `${escapeHTML(winner.name)} delivered the most fuel.`} ${REASONS[result.reason] || ''}`
     : `${won ? 'You wrecked them more than they wrecked you.' : `${escapeHTML(winner.name)} took the Scrapdome.`} ${REASONS[result.reason] || ''}`;
-  if ((warlord || fuel || bounty) && result.settlementRetryable) {
+  if ((warlord || fuel || bounty || convoy) && result.settlementRetryable) {
     description += ' Could not save this result. Retry before leaving.';
   } else if (warlord && result.settlementSaved && result.kitEarned === 'side-saws') {
     description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
@@ -229,9 +241,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const p = byId[id];
     return `<li class="${id === 'player' ? 'is-you' : ''}"><b>${ORDINALS[index]}</b><span>${escapeHTML(p.name)}${arenaStyleLabel(p) ? ` · ${arenaStyleLabel(p)}` : ''}</span><strong>${bounty ? p.bountyPoints : fuel ? p.fuelDelivered : `${p.wrecks} / ${p.wrecked}`}</strong></li>`;
   }).join('')}</ol>`;
-  return {eyebrow: `SCRAPDOME / ${warlord ? escapeHTML(warlord.name.toUpperCase()) : bounty ? 'BOUNTY HUNT' : fuel ? 'FUEL RUN' : 'LAST CAR ROLLING'} / ${won ? 'VICTORY' : ORDINALS[place - 1]}`, title, description,
+  return {eyebrow: `SCRAPDOME / ${convoy ? 'CONVOY RAID' : warlord ? escapeHTML(warlord.name.toUpperCase()) : bounty ? 'BOUNTY HUNT' : fuel ? 'FUEL RUN' : 'LAST CAR ROLLING'} / ${won ? 'VICTORY' : ORDINALS[place - 1]}`, title, description,
     metrics, extra: table,
-    actions: ((warlord || fuel || bounty) && result.settlementRetryable ? action('RETRY SAVE', 'warlord-retry-save', true) : '') +
+    actions: ((warlord || fuel || bounty || convoy) && result.settlementRetryable ? action('RETRY SAVE', 'warlord-retry-save', true) : '') +
       action('REMATCH', 'arena-rematch', !result.settlementRetryable) +
       action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
 }

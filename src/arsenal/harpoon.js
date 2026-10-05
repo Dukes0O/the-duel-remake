@@ -4,6 +4,7 @@ import {applyArmorDamage, combatShielded} from '../combat-armor.js';
 import {combatOwnerId, outOfPlay} from '../combat-teams.js';
 import {carEffect, setCarEffect, carSteering, addCarSidewaysPush} from './car-effects.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
+import {isConvoyRig} from '../arena/modes/convoy-raid.js';
 
 const RANGE = 50, SPEED = 70, CONE = 4 * Math.PI / 180;
 const angleDifference = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
@@ -69,13 +70,14 @@ export function harpoonTravelStep(projectile, dt) {
   return step;
 }
 
-export function hitHarpoon(duel, target, projectile) {
+export function hitHarpoon(duel, target, projectile, hitPosition = point(duel, target)) {
   const shooter = actorForTarget(duel, projectile.attackerId);
   if (!shooter || outOfPlay(duel, target) || combatShielded(duel, target)) return;
   const removed = applyArmorDamage(duel, target, 'harpoon',
-    {level: projectile.level, owner: projectile.ownerId});
+    {level: projectile.level, owner: projectile.ownerId, hitPosition});
   if (!(removed > 0)) return;
   const at = point(duel, target), from = point(duel, shooter);
+  if (!isConvoyRig(duel, target)) hitPosition = {x: at.x, y: at.y, z: at.z};
   const headingError = target.headingError || 0, heading = at.heading + headingError;
   const side = (from.x - at.x) * Math.cos(heading) - (from.z - at.z) * Math.sin(heading);
   if (!target.combatWrecking) {
@@ -89,9 +91,9 @@ export function hitHarpoon(duel, target, projectile) {
   }
   duel.emit({combatHit: true, strength: removed / 60, enemy: shooter !== duel.state,
     victim: target === duel.state ? 'player' : 'rival',
-    hitPosition: {x: at.x, y: at.y, z: at.z}});
+    hitPosition});
   duel.emit({arsenalCue: 'weapon.harpoon.hit', actor: target, projectile,
-    hitPosition: {x: at.x, y: at.y, z: at.z}});
+    hitPosition});
 }
 
 export function stepTether(duel, target, dt) {

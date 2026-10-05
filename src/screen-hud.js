@@ -272,7 +272,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('lap-time',arena.scoreText);
       text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
       text('stage-objective',arena.ambush ? arena.enemyText : s.arena.mode === 'warlord' ?
-        'FIRST TO THREE WRECKS' : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
+        'FIRST TO THREE WRECKS' : arena.convoy ? arena.scoreText : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
           arena.fuel ? 'BRING FUEL TO YOUR BLUE DEPOT' : 'WRECK THEM MORE THAN THEY WRECK YOU');
       text('route-percent','');
       text('route-remaining',arena.scoreText);
