@@ -56,6 +56,10 @@ Every phase, charge and once-only payment assertion remains unchanged.
 Actual capture exposed the ordinary Warlord objective overriding the charge
 HUD. The read-only HUD now prioritizes its existing Convoy view; the owned
 browser control checks real DOM text. Ordinary Warlord text is unchanged.
+The lane exposed an old territory test still pinning the removed venue suffix.
+It now requires the current Salt venue label and rejects only that stale
+suffix. Discovery, hold, separate unavailable-fight and ordinary venue checks
+remain unchanged. The Director approved this expectation correction.
 
 ## Removed
 
