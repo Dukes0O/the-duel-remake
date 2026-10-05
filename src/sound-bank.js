@@ -487,6 +487,12 @@ export const SOUND_BANK = {
       tone(184, 0.55, 0.06, 'square', 0.06, 370),
     ],
   }),
+  'arena.toll-gate': cue('impacts', {
+    priority: 85,
+    limit: 1,
+    files: ['tollkeeper/gate-klaxon.ogg'],
+    volume: .5,
+  }),
   'arena.gunn-barrage': cue('impacts', {
     flag: 'gunn', priority: 70, limit: 1,
     // The oscillator tail also fits Gunn's shortest (phase-two Hard) tell.

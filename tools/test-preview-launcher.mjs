@@ -36,6 +36,10 @@ const operations = source(operationsUrl);
 const mainSource = source(mainUrl);
 const board = source(boardUrl);
 
+check('launcher names the private Warlord charge fight switch', () =>
+  assert.match(launcher, /PREVIEW_FLAGS=[^\r\n]*\btollkeeper\b/,
+    'the existing private launcher must opt into the new dev fight'));
+
 check('preview launcher recipe exists', () => assert.ok(existsSync(launcherUrl),
   'start-preview.bat must launch the integration checkout preview'));
 check('launcher builds the QA bundle', () => {

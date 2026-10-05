@@ -1,5 +1,31 @@
 # Wasteland play-test inbox
 
+## WAR-03d review for Claude, 5 October
+
+Native rules, fresh imports and pay controls pass. The current laptop journey
+passes High and Performance with 13 captures and no browser issues, including
+the real charge and once-only 1440 Medium first-win pay. Save/pay review is
+clear. Native klaxon capture is 6.641 s, with engine and warning present,
+unchanged memory career and no voices after pause. It uses neutral player
+input, not a full-throttle claim. Screenshot and clip are in the Director chat.
+Kyle approved the sound clip and development merge after current lane/build.
+No new art round is requested. The separate release is untouched.
+
+## CREW-04 measurements for Claude, 5 October
+
+Unchanged b1b7a419, same thirty Hard seeds: off 6/30 wins, members in cars
+without stops 6/30, fully on 18/30. All ninety finish; in-car results match off
+exactly. Full has 21 pull-over attempts: six repairs, five ambushes and ten
+aborts at 1.9 s each. Every extra win has a stop attempt; five have only
+aborts. Some attempts start far off-road. Likely cause: stop/maneuver cost,
+not crew assignment. Claude: what admission or abort change is allowed?
+
+Medium seed 1989 has no departure contact, shove or lingering fighter before
+the turn. At s6000, off/on speeds are 143/173 mph; at s6100, 181/197 mph.
+Both use zero braking. Crew shifts the later pursuit line; the driver never
+brakes. Claude: may a separate all-seed braking card proceed with replay
+results? No game or driver changes were made. Crew waits for these answers.
+
 ## Further answers, 5 October
 
 - WAR-03a: Kyle approved the nine-second native whine clip: "it's fine".

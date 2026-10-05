@@ -8,6 +8,8 @@ export function createTankerModel({loadAsset} = {}) {
   let native = null;
   let lamps = [];
   let broken = false;
+  let signal = null;
+  let seconds = 0;
   const released = new Set();
 
   function release(scene) {
@@ -29,9 +31,12 @@ export function createTankerModel({loadAsset} = {}) {
   }
 
   function updateLamps() {
+    const flashing = signal && seconds < signal.untilSec;
+    const on = flashing ? Math.floor(seconds * 8) % 2 === 0 : broken;
+    const color = flashing && signal.kind === 'tell' ? 0xffe8b5 : 0xff8c00;
     for (const material of lamps) {
-      material.emissive.setHex(broken ? 0xff8c00 : 0);
-      material.emissiveIntensity = broken ? 1.2 : 0;
+      material.emissive.setHex(on ? color : 0);
+      material.emissiveIntensity = on ? 1.2 : 0;
     }
   }
 
@@ -67,6 +72,12 @@ export function createTankerModel({loadAsset} = {}) {
       if (disposed) return;
       broken = Array.isArray(health) && health.length === 3 &&
         health.every(value => Number.isFinite(value) && value <= 0);
+      updateLamps();
+    },
+    setLampSignal(value, now) {
+      if (disposed) return;
+      signal = Number.isFinite(value?.untilSec) ? value : null;
+      seconds = Number.isFinite(now) ? now : 0;
       updateLamps();
     },
     dispose() {

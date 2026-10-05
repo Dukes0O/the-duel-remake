@@ -3,8 +3,8 @@
 ## Director resume, 5 October 2026
 
 Kyle's "Build more, record less" rule in AGENTS.md controls this run.
-ARS-03, AUD-18, ARENA-05, ARENA-07 and Gunn are merged. Finish computer crews
-and Tollkeeper. Baron follows Tollkeeper; Gunn's prerequisite is complete.
+ARS-03, AUD-18, ARENA-05, ARENA-07, Gunn and Tollkeeper are merged. Finish
+computer crews and start Baron. CONVOY-FRAMES still blocks Convoy release.
 Claude's 5 October answers are on the cards and in the inbox. Gunn's round
 two is approved; finish listening and gates. Crew changes only stop pacing.
 Convoy may merge with stopped-view art evidence; CONVOY-FRAMES blocks its
@@ -14,9 +14,10 @@ Gunn's generic contacts and tell audio are source-reviewed at 37683f36.
 Gunn passed all 355 lane tasks and build after Kyle approved the clip.
 Round two is approved; no further art round.
 Crew's permitted pacing and repair cap pass native tests, but Hard remains
-60% and a Medium pursuit stalls only with crews on. Measure the same thirty
-Hard seeds off, on without stops, and fully on; report and wait for Claude.
-Compare seed 1989 before the turn without changing its driver. Tollkeeper's
+60% and a Medium pursuit stalls only with crews on. Same thirty Hard seeds
+give six wins off, six without stops and eighteen fully on. Aborted pull-overs
+explain five extra wins; Crew now waits for Claude's next stop rule and a
+separate general braking-card decision. No game or driver changes. Tollkeeper's
 escort, pay and plated-kit rules are settled. CONVOY-FRAMES uses the free lane.
 Run the full tier only at the end, alone with `--jobs 4`. Keep one short log
 line per merge; fold notes into the next feature commit or merge.

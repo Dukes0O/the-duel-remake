@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-05T16:40:33.820Z
+Observed at: 2026-10-05T17:51:47.196Z
 
-Observation commit: 872ea0b11a9a44070dcc6edd850da4743abd1598
+Observation commit: 4e045c7be50a082171bdffd0f08713ebecdb7788
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 872ea0b11a9a44070dcc6edd850da4743abd1598
+Integration HEAD: 4e045c7be50a082171bdffd0f08713ebecdb7788
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -23,6 +23,7 @@ Last recorded full run: 2026-10-05T08:52:55.312Z; tested commit: 2e7862fb9938635
 | Switch | State |
 | --- | --- |
 | convoy-raid | dev |
+| tollkeeper | dev |
 | arsenal-wave3 | dev |
 | career-backup | dev |
 | hidden-road | on |
@@ -42,9 +43,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/cmb/gunn | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gunn |
-| codex/cmb/tollkeeper | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tollkeeper |
-| codex/foot/cpu-crews | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/cpu-crews |
+| codex/cmb/tollkeeper | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tollkeeper |
+| codex/foot/cpu-crews | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/cpu-crews |
 | codex/tools/callback-diagnostics | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | codex/vis/convoy-frames | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/convoy-frames |
 | lane/audio/aud-10 | 10 | unknown | true | false | unknown |
@@ -57,10 +57,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/cmb/gunn | unknown | 2026-10-05T09:17:41-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/gunn/round-1-review.md, docs/board/looks/gunn/round-1.jpg, docs/board/looks/gunn/round-2-review.md, docs/board/looks/gunn/round-2.jpg, docs/changes/WAR-03a.md |
-| codex/foot/cpu-crews | unknown | 2026-10-05T08:30:37-07:00 | 0 | last commit 2026-10-05T08:30:37-07:00 | docs/changes/CREW-04.md, src/arsenal/rockets.js, src/audio.js, src/combat-ai.js, src/combat-projectiles.js |
+| codex/cmb/tollkeeper | unknown | 2026-10-05T10:44:49-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/WAR-03d.md, public/assets/audio/CREDITS.md, public/assets/audio/credits.html, public/assets/audio/tollkeeper/gate-klaxon.ogg, src/arena/arena-event.js |
+| codex/foot/cpu-crews | unknown | 2026-10-05T08:30:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/CREW-04.md, src/arsenal/rockets.js, src/audio.js, src/combat-ai.js, src/combat-projectiles.js |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 0 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
-| codex/vis/convoy-frames | unknown | 2026-10-05T08:33:47-07:00 | 0 | last commit 2026-10-05T08:33:47-07:00 | docs/changes/CONVOY-FRAMES.md, tools/scenarios/convoy-frames.mjs |
+| codex/vis/convoy-frames | unknown | 2026-10-05T10:32:06-07:00 | 0 | last commit 2026-10-05T10:32:06-07:00 | docs/changes/CONVOY-FRAMES.md, tools/scenarios/convoy-frames.mjs |
 
 ## Size targets
 
@@ -69,14 +69,14 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 264,760,521 B | +0 B | 250,000,000 B |
-| Wasteland models | 104,777,180 B | +208,192 B | 60,000,000 B |
+| Wasteland models | 104,777,180 B | +0 B | 60,000,000 B |
 | Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
-| Review `looks/` | 15,695,983 B | +517,444 B | 20,000,000 B |
-| Added bytes in last merge | 4,554,393 B | +3,031,936 B | 5,000,000 B |
-| All `public/` | 263,169,696 B | +208,192 B | unavailable |
-| Git objects | 341,794,816 B | +835,584 B | unavailable |
+| Review `looks/` | 15,695,983 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 3,182,727 B | -1,371,666 B | 5,000,000 B |
+| All `public/` | 263,179,468 B | +9,772 B | unavailable |
+| Git objects | 342,973,440 B | +1,178,624 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +85,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 8cf7979fa83218d5e15360253e7841ddd18db743
 - Local main: missing
-- Local integration/wasteland: 872ea0b11a9a44070dcc6edd850da4743abd1598
+- Local integration/wasteland: 4e045c7be50a082171bdffd0f08713ebecdb7788
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

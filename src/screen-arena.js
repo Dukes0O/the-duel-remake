@@ -35,7 +35,7 @@ export function arenaHud(state) {
   }
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
-  const convoy = arena.mode === 'convoy-raid';
+  const convoy = arena.mode === 'convoy-raid' || arena.format === 'convoy-raid';
   const suddenDeath = arena.phase === 'sudden-death';
   const remainingSec = fuel && suddenDeath ? 0 : Math.max(0, suddenDeath ? arena.suddenDeathLimitSec - arena.suddenDeathSec
     : arena.timeLimitSec - arena.clockSec);
@@ -264,11 +264,12 @@ export function warlordIntroScreen(state, {metric, action, escapeHTML}) {
   const warlord = arena?.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
   if (!warlord || state.status !== 'warlord_intro') return null;
   return {
-    eyebrow: `${arena.venueId === 'pit' ? 'THE PIT' : 'SCRAPDOME'} / WARLORD DUEL`,
+    eyebrow: `${arena.venueId === 'salt-flats' ? 'SALT FLATS' : arena.venueId === 'pit' ? 'THE PIT' : 'SCRAPDOME'} / WARLORD DUEL`,
     title: escapeHTML(warlord.name.toUpperCase()),
     description: escapeHTML(warlord.taunt),
-    metrics: metric('CAR', escapeHTML(CARS[warlord.car].name.toUpperCase()), true) +
-      metric('WIN', 'FIRST TO THREE WRECKS') + metric('TIME', '4:00 + SUDDEN DEATH'),
+    metrics: metric('CAR', escapeHTML((warlord.vehicleName || CARS[warlord.car].name).toUpperCase()), true) +
+      metric('WIN', arena.format === 'convoy-raid' ? 'BOARDING CHARGE' : 'FIRST TO THREE WRECKS') +
+      metric('TIME', arena.format === 'convoy-raid' ? '5:00' : '4:00 + SUDDEN DEATH'),
     extra: '',
     actions: action('BEGIN FIGHT', 'warlord-begin', true) +
       action('BACK TO THE YARD', 'arena-yard'),

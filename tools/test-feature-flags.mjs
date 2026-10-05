@@ -20,10 +20,18 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
   && FEATURE_STATES['convoy-raid'] === 'dev'
+  && FEATURE_STATES.tollkeeper === 'dev'
   && FEATURE_STATES['cpu-crews'] === 'dev' && FEATURE_STATES['ambush-alley'] === 'dev'
-  && FEATURE_STATES.gunn === 'dev' && Object.keys(FEATURE_STATES).length === 13,
-  'the five released Wasteland features stay on; career backup, Fight Voices, computer crews, Ambush Alley, Convoy Raid, Gunn and Arsenal wave three stay dev; retired switches stay absent');
+  && FEATURE_STATES.gunn === 'dev' && Object.keys(FEATURE_STATES).length === 14,
+  'the five released Wasteland features stay on; career backup, Fight Voices, computer crews, Ambush Alley, Convoy Raid, Gunn, Tollkeeper and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
+check(!productionFlags.enabled('tollkeeper'), 'production keeps the Tollkeeper fight off');
+check(!createFeatureFlags({storage: null, qa: false, search: '?flags=tollkeeper'}).enabled('tollkeeper'),
+  'production URLs cannot enable the Tollkeeper fight');
+check(!createFeatureFlags({storage: null, qa: true, search: '?flags=convoy-raid'}).enabled('tollkeeper'),
+  'the normal Convoy switch does not admit the Warlord fight');
+check(createFeatureFlags({storage: null, qa: true, search: '?flags=tollkeeper'}).enabled('tollkeeper'),
+  'private QA admits the explicit Tollkeeper fight request');
 check(FEATURE_STATES['cpu-crews'] === 'dev', 'computer crews start behind their own dev switch');
 check(!productionFlags.enabled('cpu-crews'), 'production keeps computer crews off');
 check(!createFeatureFlags({storage: null, qa: false, search: '?flags=cpu-crews'}).enabled('cpu-crews'),

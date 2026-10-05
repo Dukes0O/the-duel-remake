@@ -45,6 +45,8 @@ export function recordCombatWreck(duel, victim, owner) {
   if (victim === state) {
     scoring.wrecksTaken++;
   } else if (owner === 'player' && state.opponents.includes(victim)) {
+    if (state.arena?.participants?.find(item => item.id === victim.arenaId)?.wreckScorable === false)
+      return;
     scoring.wrecksCaused++;
     awardStyle(duel, T.wreckStylePoints);
   }

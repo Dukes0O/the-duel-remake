@@ -1405,6 +1405,43 @@
         "channels": 1
       },
       "cue": "weapon.nitro.loop"
+    },
+    {
+      "source": "freesound-prepared",
+      "key": "tollkeeper-gate-klaxon",
+      "cue": "arena.toll-gate",
+      "title": "electric hum.wav",
+      "author": "soundofsong",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/soundofsong/sounds/641335/",
+      "download": "https://cdn.freesound.org/previews/641/641335_9782868-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 7.99,
+      "file": "freesound/641335-electric-hum-wav.ogg",
+      "sha256": "17fadacde8ea5041adb317c7ec9f7c814c8aa8da0d85b84c5246eebd3ab48159",
+      "bytes": 118022,
+      "fetched": "2026-10-03",
+      "creditsUsed": 0,
+      "processing": {
+        "recipe": "tools/build-tollkeeper-audio.mjs",
+        "cue": "arena.toll-gate",
+        "source": "641335",
+        "start": 1.1,
+        "length": 0.46,
+        "rate": 2.4,
+        "filters": "highpass=f=100,lowpass=f=2400",
+        "approval": "Director, 5 October 2026: derive one klaxon from cached CC0 hum; listening remains separate."
+      },
+      "runtime": {
+        "file": "public/assets/audio/tollkeeper/gate-klaxon.ogg",
+        "sha256": "c3888342cfe9c0da471aaf0c3f8f93fb397be49031c1e427f9042e64bfd3b41c",
+        "bytes": 9025,
+        "sampleRate": 48000,
+        "channels": 1,
+        "integratedLufs": -17.95,
+        "truePeakDbtp": -10.59
+      }
     }
   ]
 }

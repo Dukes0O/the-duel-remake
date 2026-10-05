@@ -22,7 +22,14 @@ const details = Object.freeze({
     team: Object.freeze([Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture One'}),
       Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture Two'})]),
     taunt: 'Two of us. One of you. Do the math.'},
-  tollkeeper: {},
+  tollkeeper: {venue: 'salt-flats', format: 'convoy-raid',
+    vehicleName: 'Armored tanker',
+    car: 'stuttgart_959s', brain: 'convoy-rig', armorScale: 1,
+    reward: 'Convoy kit', rewardBuilt: true, rewardKit: 'warlord', rewardKitAnyCar: true,
+    team: Object.freeze([Object.freeze({car: 'stuttgart_959s', brain: 'convoy-rig', name: 'Tollkeeper'}),
+      Object.freeze({car: 'dusthawk_rally', brain: 'guard', name: 'Escort One'}),
+      Object.freeze({car: 'aurora_gt', brain: 'guard', name: 'Escort Two'})]),
+    taunt: 'This road has a price.'},
   blackiron: {},
 });
 
@@ -44,7 +51,7 @@ export const WARLORD_LADDER = Object.freeze([
   'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper']);
 
 // Jax's grapple reaches this much farther once the Twin Vultures are beaten.
 // Earned means the saved defeat itself, as with the Side Saws; the crew
