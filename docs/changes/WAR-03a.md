@@ -23,6 +23,8 @@ is generated; Claude's look approval is still required before merge.
 - Native origins and visible yaw/pitch share that numeric layout. Binding
   caches one asset, clones heat materials and hides cosmetic plating. A red
   line follows the tell. The isolated recipe now exports gunn-turret.glb.
+- Pure gunn-turret.js owns layout and pose helpers, importing only JSON.
+  Renderer imports avoid the fight graph; gunn.js keeps public reexports.
 
 ## Checks
 
@@ -32,7 +34,6 @@ is generated; Claude's look approval is still required before merge.
   barrage originally launched horizontally instead of toward the lower car.
   Prepared source now passes that focused native case: seven checks include
   real lower-car contact and the unchanged ten-armor Rocket Pods damage.
-  JS and Blender recipe syntax pass without running Blender.
 - Authored checks use the actual GLB hierarchy and ray-tested hollow mouths,
   the existing 12,000-triangle kit ceiling and local resources. File size is
   reported against the existing soft target, not made a new merge blocker.
@@ -71,11 +72,11 @@ is generated; Claude's look approval is still required before merge.
   run passes 22 cases and 393 checks (art 249, fight 144). Source and asset
   review found the intended isolated output and approved material settings.
   Whole integration metadata through 272823a7 is merged, not peer source.
-- Fresh-process renderer regressions precede the pure turret helper extraction.
-  Both armor-kit-meshes and arena-tell-view fail before their exports are ready:
-  GUNN_FIGHT is read before initialization through the fight import graph.
-  The focused two-case probe executes two checks, both red. Existing Duel-first
-  art, geometry and trajectory assertions stay exact; no source or heavy work.
+- Author 11a54f21 first proved both fresh renderer imports red: GUNN_FIGHT
+  before initialization. After helper extraction both pass four checks.
+  Existing art/fight assertions stay exact: 24 cases and 397 checks pass.
+  GLB bytes and all nine kit hashes remain exact. No export, build, browser,
+  audio, balance or broad tier ran. Metadata 6804ba59 merged byte-exact.
 
 ## Remaining
 
@@ -93,4 +94,5 @@ is generated; Claude's look approval is still required before merge.
 
 The unanswered move questions were replaced by four settled answers.
 The obsolete one-muzzle parallel-ray assertion is replaced, not retained.
+Renderer imports of the native fight module were removed, not deferred.
 No assets were replaced. No existing Rocket Pods behavior was removed.

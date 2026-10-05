@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {GUNN_TURRET_LAYOUT, gunnTurretMount} from '../warlords/gunn.js';
+import {GUNN_TURRET_LAYOUT, gunnTurretMount} from '../warlords/gunn-turret.js';
 
 // ARENA-FEEL presentation: headlight flares on a computer car telling a
 // charge, and a halo on a car that has just respawned. It reads the
