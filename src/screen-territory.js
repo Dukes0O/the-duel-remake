@@ -1,6 +1,8 @@
 import {COURSE} from './config.js';
 import {TERRITORIES} from './wasteland-career.js';
 import {BUILT_WARLORD_IDS, WARLORDS} from './warlords.js';
+import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
+import {warlordEnabled} from './warlords/index.js';
 
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
 const venueNames = Object.freeze({
@@ -8,14 +10,15 @@ const venueNames = Object.freeze({
   'salt-flats': 'Salt Flats Convoy Raid (coming later)',
 });
 
-export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, canFight = true} = {}) {
+export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, canFight = true,
+  featureFlags = defaultFeatureFlags} = {}) {
   const career = profile?.wasteland;
   if (career?.version !== 1 || career.discoveredGate !== true) return '';
   const cards = Object.entries(TERRITORIES).map(([id, territory]) => {
     const progress = career.territories?.[id] || {hold: 0, claimed: false};
     const warlord = WARLORDS[id];
     const warlordProgress = career.warlords?.[id] || {};
-    const fightBuilt = builtWarlordIds.includes(id);
+    const fightBuilt = builtWarlordIds.includes(id) && warlordEnabled({featureFlags}, id);
     const hold = Number.isSafeInteger(progress.hold)
       ? Math.max(0, Math.min(100, progress.hold)) : 0;
     const courses = territory.courses.map(course => courseNames.get(course)).join(' · ');

@@ -15,6 +15,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'arsenal-wave3': 'dev',
     'cpu-crews': 'dev',
     'ambush-alley': 'dev',
+    gunn: 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
