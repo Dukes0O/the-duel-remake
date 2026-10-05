@@ -266,19 +266,19 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     if(arena){
     // Scrapdome events replace laps, route progress and race position.
       text('race-time-label',arena.timeLabel);
-      text('race-time',arena.fuel && arena.phase==='sudden-death' ? 'NEXT DELIVERY' : time(arena.remainingSec));
+      text('race-time',arena.ambush && arena.remainingSec === 0 ? `${arena.fortHealth} / 300` : arena.fuel && arena.phase==='sudden-death' ? 'NEXT DELIVERY' : time(arena.remainingSec));
       text('penalty-time','');
       text('lap-number',arena.modeLabel);
       text('lap-time',arena.scoreText);
       text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
-      text('stage-objective',s.arena.mode === 'warlord' ?
+      text('stage-objective',arena.ambush ? arena.enemyText : s.arena.mode === 'warlord' ?
         'FIRST TO THREE WRECKS' : arena.convoy ? arena.scoreText : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
           arena.fuel ? 'BRING FUEL TO YOUR BLUE DEPOT' : 'WRECK THEM MORE THAN THEY WRECK YOU');
       text('route-percent','');
       text('route-remaining',arena.scoreText);
       text('route-lap','ARENA');
       text('route-section','THE SCRAPDOME');
-      ui['progress-fill'].style.transform=`scaleX(${clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
+      ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
       text('race-position',String(arena.place).padStart(2,'0'));
       text('position-total',`/${String(arena.field).padStart(2,'0')}`);
       text('gap-label','PLACING');

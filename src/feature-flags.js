@@ -5,7 +5,7 @@ export const FEATURE_STATES = Object.freeze({
   'arsenal-wave3': 'dev',
   'career-backup': 'dev', 'hidden-road': 'on',
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',
-  'crew-gear': 'on', 'fight-voices': 'dev',
+  'crew-gear': 'on', 'fight-voices': 'dev', 'cpu-crews': 'dev', 'ambush-alley': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

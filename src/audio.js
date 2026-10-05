@@ -554,7 +554,7 @@ export class EngineAudio {
 
   _raiderShot(event, state, course) {
     const output = this._spatialOutput(event, state, course);
-    this._playCue('raider.shot', {
+    this._playCue(event.audioWeapon === 'rpg' ? 'weapon.rpg.fire' : 'raider.shot', {
       destination: output.level,
       onEnd: output.disconnect,
     });
@@ -1593,6 +1593,16 @@ export class EngineAudio {
     }
     if (state?.arena?.mode === 'bounty-hunt' && this.flags.enabled('bounty-hunt') &&
         (ev.arenaLoaded || ev.bountyMark)) this._playCue('arena.bounty-mark');
+    if (state?.arena?.mode === 'ambush-alley' && this.flags.enabled('ambush-alley')) {
+      if (ev.ambushWave) this._playCue('interface.go');
+      if (ev.ambushWaveComplete) this._playCue('interface.bonus');
+      if (ev.ambushFortHit?.source === 'ram')
+        this._runCue('combat.hit', () => this._combatImpact(
+          {...ev, combatHit: true, strength: ev.ambushFortHit.removed / 35,
+            hitPosition: ev.ambushFortHit.hitPosition}, state, course));
+      if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player'
+        ? 'interface.win' : 'interface.lose');
+    }
     if (state?.arena?.mode === 'fuel-run' && this.flags.enabled('fuel-run')) {
       if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
       if (ev.fuelPickup?.participantId === 'player') this._playCue('interface.bonus');

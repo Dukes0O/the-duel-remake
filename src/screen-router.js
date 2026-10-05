@@ -155,7 +155,8 @@ root.addEventListener('click',e => {
   if(courseActions.handle(button))return;
   if(button.dataset.warlord){if(app.startWarlordFight(button.dataset.warlord)){yardPanel='home';lastScreen=null;}return;}
   if (button.dataset.arenaVenue) {
-    if (!app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
+    if (!(arenaMode === 'ambush-alley' && button.dataset.arenaVenue === 'pit' &&
+      app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
     arenaVenue = button.dataset.arenaVenue; lastScreen = null;
     renderState(app.duel.state);
     root.querySelector(`[data-arena-venue="${arenaVenue}"]`)?.focus({preventScroll:true});
@@ -164,6 +165,8 @@ root.addEventListener('click',e => {
   if(button.dataset.arenaMode){
     arenaMode=button.dataset.arenaMode;
     if(arenaMode==='convoy-raid')arenaVenue='salt-flats';
+    else if(arenaMode==='ambush-alley'&&arenaVenue!=='salt-flats')arenaVenue='pit';
+    else if(arenaMode!=='ambush-alley'&&arenaVenue==='pit')arenaVenue='scrapdome';
     lastScreen=null;renderState(app.duel.state);return;
   }
   if(button.dataset.arenaOpponents){arenaOpponents=Math.max(1,Math.min(3,Number(button.dataset.arenaOpponents)||3));lastScreen=null;renderState(app.duel.state);root.querySelector(`[data-arena-opponents="${arenaOpponents}"]`)?.focus({preventScroll:true});return;}
@@ -202,6 +205,10 @@ root.addEventListener('click',e => {
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'convoy-raid' && (!app.convoyRaidAvailable?.() || arenaVenue !== 'salt-flats')) arenaMode = 'last-car-rolling';
+      if (arenaMode === 'ambush-alley' && !app.ambushAlleyAvailable?.()) {
+        arenaMode = 'last-car-rolling';
+        if (arenaVenue === 'pit') arenaVenue = 'scrapdome';
+      }
       if (app.startArenaEvent({venueId: arenaVenue, mode: arenaMode, opponents: arenaOpponents})) {
         yardPanel = 'home'; lastScreen = null;
       }
@@ -320,7 +327,8 @@ function renderState(s) {
   if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
   if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
   if (arenaMode === 'convoy-raid' && (!app.convoyRaidAvailable?.() || arenaVenue !== 'salt-flats')) arenaMode = 'last-car-rolling';
-  if (!app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
+  if (!(arenaMode === 'ambush-alley' && arenaVenue === 'pit' &&
+    app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(arenaVenue)) arenaVenue = 'scrapdome';
   const showImpact = s.status === 'gameover' && s.impactTimer > 0;
   const screen=`${s.status}:${!!s.paused}:${showImpact}:${app.player.id}:${garageOpen}:${armoryOpen}:${playersOpen}:${leaderboardOpen}:${coursesOpen}:${yardActive}:${yardPanel}:${arenaOpponents}:${arenaMode}:${arenaVenue}:${yardActive?profile().wasteland?.scrap:''}:${garageOpen ? garageCar + ':' + profile().credits : ''}`;
   if (screen!==lastScreen) {

@@ -91,6 +91,9 @@ fully merged worktree without force. Delete its merged lane branch and that
 card's used raw evidence after the review verdict is committed. Never delete
 a branch merely because it is idle or because an agent does not recognize it.
 
+The Director handles lane cleanup. If any path check, junction unlink or Git
+command fails, stop immediately. Do not run the next removal command.
+
 Git's recursive lane cleanup emptied the shared integration dependency folder
 through a junction on 24 September. The exact locked dependencies were restored
 from the local cache with `npm ci --offline --no-audit --no-fund`. No package

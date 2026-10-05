@@ -3,6 +3,7 @@ import {targetFor,targetIdentity} from './arsenal/targeting.js';
 import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
+import {AMBUSH_RULES, ambushRepairTarget} from './arena/modes/ambush-alley.js';
 import {initializeCrewGear, crewGearEnabled, crewRpgTiming, selectSignatureGear,
   showSignatureGear, resetCrewGearUser, stepSignatureGear, restoreRpgTiming,
   noteRpgTiming} from './crew-gear/signature.js';
@@ -191,8 +192,18 @@ function carDistance(duel, fighter) {
 
 function stepWrench(duel, weapons, fighter, input, dt, hit) {
   const state = duel.state;
-  const repairSeconds=T.wrenchRepairSeconds /
+  const fort = ambushRepairTarget(duel, fighter);
+  const target = fort || state, healthKey = fort ? 'health' : 'armor';
+  const maximum = fort ? fort.maxHealth : state.maxArmor;
+  const repairAmount = fort ? AMBUSH_RULES.repairAmount : T.wrenchRepairAmount;
+  const repairSeconds = fort ? AMBUSH_RULES.repairSeconds : T.wrenchRepairSeconds /
     (crewPerks(fighter.crewId).repairRateMultiplier || 1);
+  if (!!weapons.repairFort !== !!fort) {
+    weapons.repairing = false;
+    weapons.repairSeconds = weapons.repairAmount = 0;
+    if (fort) weapons.repairFort = true;
+    else delete weapons.repairFort;
+  }
   if (!input.fire) {
     if (weapons.repairing) duel.emit({footRepairInterrupted: true});
     weapons.repairing = false;
@@ -200,31 +211,31 @@ function stepWrench(duel, weapons, fighter, input, dt, hit) {
     weapons.repairBlockedUntilRelease = false;
     return;
   }
-  if (hit || fighter.knockedDown || state.combatWrecking ||
-      carDistance(duel, fighter) > T.repairRangeMeters) {
+  if (hit || fighter.knockedDown || !fort && (state.combatWrecking ||
+      carDistance(duel, fighter) > T.repairRangeMeters)) {
     if (weapons.repairing) duel.emit({footRepairInterrupted: true});
     weapons.repairing = false;
     weapons.repairBlockedUntilRelease = true;
     return;
   }
   if (weapons.repairBlockedUntilRelease ||
-      !(state.armor < state.maxArmor)) return;
+      !(target[healthKey] < maximum)) return;
   if (!weapons.repairing) {
     weapons.repairing = true;
     weapons.repairSeconds = weapons.repairAmount = 0;
     duel.emit({footRepairStarted: true});
   }
-  const restored = Math.min(T.wrenchRepairAmount - weapons.repairAmount,
-    T.wrenchRepairAmount / repairSeconds * dt,
-    state.maxArmor - state.armor);
+  const restored = Math.min(repairAmount - weapons.repairAmount,
+    repairAmount / repairSeconds * dt,
+    maximum - target[healthKey]);
   if (restored > 0) {
-    state.armor += restored;
+    target[healthKey] += restored;
     weapons.repairAmount += restored;
   }
   weapons.repairSeconds += dt;
   if (weapons.repairSeconds + EPSILON >= repairSeconds ||
-      weapons.repairAmount + EPSILON >= T.wrenchRepairAmount ||
-      state.armor + EPSILON >= state.maxArmor) {
+      weapons.repairAmount + EPSILON >= repairAmount ||
+      target[healthKey] + EPSILON >= maximum) {
     weapons.repairing = false;
     weapons.repairBlockedUntilRelease = true;
     duel.emit({footRepairCompleted: true, armorRestored: weapons.repairAmount});

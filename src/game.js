@@ -38,6 +38,7 @@ import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wastel
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
+import {initializeAmbushAlley} from './arena/modes/ambush-alley.js';
 import {ARENA_VENUES} from './arena/venues.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
@@ -315,15 +316,21 @@ export class Duel {
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
     seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook' } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
+    const ambush = mode === 'ambush-alley';
     if (!wastelandRulesActive(this.state) ||
         (venueId === 'salt-flats' && !this.featureFlags.enabled('salt-flats')) ||
         (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) ||
-        (mode === 'bounty-hunt' && !this.featureFlags.enabled('bounty-hunt')) || !venue || !rules ||
+        (mode === 'bounty-hunt' && !this.featureFlags.enabled('bounty-hunt')) ||
+        (ambush && (!this.featureFlags.enabled('ambush-alley') ||
+          !['pit', 'salt-flats'].includes(venueId) || !Number.isSafeInteger(arsenalRank) ||
+          arsenalRank < 12)) || !venue || !rules ||
         !Array.isArray(opponents) ||
         (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
-        opponents.length < 1 || opponents.length > rules.maxOpponents ||
+        opponents.length < (ambush ? 0 : 1) || opponents.length > rules.maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
+    if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
+      upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];
     const s = this.state;
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     s.seed = this.seed;
@@ -398,6 +405,11 @@ export class Duel {
     applyArenaArmor(this);
     initializeFootTransition(this);
     initializeFootWeapons(this);
+    if (mode === 'ambush-alley') {
+      Object.assign(s.opponents[0], {arenaRole: 'ambush-buggy', finished: true,
+        weaponsDisabledUntil: Infinity, weaponLoadout: []});
+      initializeAmbushAlley(this);
+    }
     s.countdown = 3;
     s.status = 'countdown';
     this.emit({ arenaLoaded: venue.id, countdown: 3 });

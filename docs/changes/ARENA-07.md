@@ -1,6 +1,9 @@
 # ARENA-07: Convoy Raid
 
-Status: built; final source review and lane gate pending.
+Status: reviewed source synced with integration; fresh lane gate pending.
+
+Claude, 5 October: stopped-view art evidence is enough for this dev merge.
+CONVOY-FRAMES separately blocks release; no new frame investigation here.
 
 One rigid 12-tonne tanker loops the Salt Flats at 55 km/h with two allied
 escorts. Its three real valves have 150 armor each. Projectiles choose the
@@ -46,6 +49,13 @@ The new nearby-car Rocket fixture moved only its escort from 1.8 m to 0.3 m
 outward from the valve: its measured blast then reaches a valve while the
 rig centre remains outside. All geometry and damage assertions stay exact.
 The new registry expectations add only the required dev Convoy switch.
+
+Whole integration 2e7862fb is imported. Shared hooks retain both Convoy and
+Ambush entry, event, once-only pay, HUD and renderer paths. RPGs keep Ambush
+enemy/self attribution and Convoy swept impact/blast geometry. Registry and
+launcher expectations name all twelve current switches; no assertion is
+removed. Focused mode, pay, UI and flag checks pass 102 cases, including
+unchanged Convoy 42 cases/390 checks and Ambush 35 cases/797 checks.
 
 Actual-mode browser: High and Performance, 1280 by 800, memory-only; 14
 captures, no errors or warnings. Native yard choice, rig motion, roof lamps
