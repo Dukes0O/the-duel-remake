@@ -800,3 +800,10 @@ the chunk frame indices, so gap count, location and cause remain unproved.
 No runtime, test or asset differs from the prior passing checkpoint. Keep
 all assertions unchanged and run the full tier again before feature merges.
 
+The quiet recovery full tier on clean 30d3e336 finished in 702.32 seconds:
+347 passed, two failed, none skipped. Crash audio again reports a missing
+input block, this time in the non-fuel row; peaks and other audio checks pass.
+The compaction test also failed while configuring its temporary Git fixture.
+Stop repeated full runs pending focused diagnosis of both existing paths.
+Feature merges remain held; runtime, assets and assertions stay unchanged.
+

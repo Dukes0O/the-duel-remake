@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-10-05T01:25:19.267Z
+Observed at: 2026-10-05T01:42:52.611Z
 
-Observation commit: 89f5f975d9663f02ca810447c467cbc971e09ff6
+Observation commit: 30d3e3369435ae4d39f49e519141f986bdb87ca9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 89f5f975d9663f02ca810447c467cbc971e09ff6
+Integration HEAD: 30d3e3369435ae4d39f49e519141f986bdb87ca9
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: failed; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-05T01:17:45.582Z; tested commit: 15b9c4587bb2c40d855079e5b718ba6796a080a2.
+Last recorded full run: 2026-10-05T01:37:34.198Z; tested commit: 30d3e3369435ae4d39f49e519141f986bdb87ca9.
 
 ## Feature switches
 
@@ -38,7 +38,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/cmb/arsenal-wave3 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/arsenal-wave3 |
-| codex/cmb/convoy-raid | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/convoy |
+| codex/cmb/convoy-raid | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/convoy |
 | codex/cmb/gunn | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gunn |
 | codex/foot/ambush-alley | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ambush-alley |
 | codex/foot/cpu-crews | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/cpu-crews |
@@ -53,7 +53,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/cmb/arsenal-wave3 | unknown | 2026-10-04T18:06:16-07:00 | 0 | last commit 2026-10-04T18:06:16-07:00 | docs/changes/ARS-03.md, public/assets/audio/arsenal-wave3/decoy-burst-a.ogg, public/assets/audio/arsenal-wave3/decoy-burst-b.ogg, public/assets/audio/arsenal-wave3/decoy-burst-c.ogg, public/assets/audio/arsenal-wave3/decoy-deploy-a.ogg |
-| codex/cmb/convoy-raid | unknown | 2026-10-04T17:17:02-07:00 | 0 | last commit 2026-10-04T17:17:02-07:00 | docs/changes/ARENA-07.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/arena-settlement.js, src/arena/convoy.js |
+| codex/cmb/convoy-raid | unknown | 2026-10-04T17:17:02-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/ARENA-07.md, src/arena/arena-brains.js, src/arena/arena-event.js, src/arena/arena-settlement.js, src/arena/convoy.js |
 | codex/cmb/gunn | unknown | 2026-10-04T17:58:27-07:00 | 0 | last commit 2026-10-04T17:58:27-07:00 | docs/changes/WAR-03a.md, public/assets/models/wasteland/kits/gunn-turret.glb, src/app.js, src/arena/arena-tell-view.js, src/arena/warlord-event.js |
 | codex/foot/ambush-alley | unknown | 2026-10-04T14:48:29-07:00 | 0 | last commit 2026-10-04T14:48:29-07:00 | docs/changes/ARENA-05.md, src/arena/modes/ambush-alley.js, tools/test-arena-ambush-alley.mjs |
 | codex/foot/cpu-crews | unknown | 2026-10-04T18:18:34-07:00 | 0 | last commit 2026-10-04T18:18:34-07:00 | docs/changes/CREW-04.md, src/crew-gear/cpu-crews.js, src/raiders.js, tools/scenarios/cpu-crews.mjs, tools/test-cpu-crews.mjs |
@@ -72,7 +72,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 15,178,539 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 345,171 B | +0 B | 5,000,000 B |
 | All `public/` | 260,395,847 B | +0 B | unavailable |
-| Git objects | 333,564,928 B | +2,366,464 B | unavailable |
+| Git objects | 333,600,768 B | +35,840 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 8cf7979fa83218d5e15360253e7841ddd18db743
 - Local main: missing
-- Local integration/wasteland: 89f5f975d9663f02ca810447c467cbc971e09ff6
+- Local integration/wasteland: 30d3e3369435ae4d39f49e519141f986bdb87ca9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
