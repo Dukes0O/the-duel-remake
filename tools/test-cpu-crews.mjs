@@ -6,6 +6,8 @@ import {CREW} from '../src/crew.js';
 import {stepRaiders, damageRaider} from '../src/raiders.js';
 import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
 import {stepCombatAI} from '../src/combat-ai.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
+import {point} from '../src/combat-weapons.js';
 import {EngineAudio} from '../src/audio.js';
 import {FIGHT_VOICE_LINES, readFightSubtitle} from '../src/fight-voices.js';
 
@@ -275,6 +277,31 @@ function nativeVoiceListener(f, cpuCue = null) {
   });
   return {audio, events, speech: () => calls.filter(id => Object.hasOwn(FIGHT_VOICE_LINES, id))};
 }
+test('a real computer crew RPG keeps its enemy owner while guiding toward the player', () => {
+  const f = controllerAmbush('odessa');
+  const fighter = f.rival.cpuCrew.fighter;
+  Object.assign(f.state, {s: fighter.s + 40, prevS: fighter.s + 40,
+    lateral: fighter.lateral, prevLateral: fighter.lateral});
+  for (let n = 0; n < 240 && !f.state.combat.projectiles.some(shot => shot.kind === 'rpg'); n++) {
+    f.state.stageTimeSec += DT;
+    stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  }
+  const shot = f.state.combat.projectiles.find(projectile => projectile.kind === 'rpg');
+  ok(shot, 'the real ambush controller emits its RPG, not a test-made projectile');
+  equal(shot.sourceIndex, f.state.opponents.indexOf(f.rival), 'the shot identifies its actual computer owner');
+  equal(shot.targetIndex, -1, 'the real enemy shot locks the player');
+  equal(shot.targetId, 'player', 'the native target identity is the player');
+  f.state.lateral += 12; f.state.prevLateral = f.state.lateral;
+  const target = point(f.duel, f.state);
+  const wanted = Math.atan2(target.x - shot.x, target.z - shot.z);
+  const error = () => Math.abs(Math.atan2(Math.sin(wanted - Math.atan2(shot.vx, shot.vz)),
+    Math.cos(wanted - Math.atan2(shot.vx, shot.vz))));
+  const before = error();
+  ok(before > .01, 'the real target moved away from the emitted launch bearing');
+  stepProjectiles(f.duel, .01);
+  equal(shot.targetIndex, -1, 'native enemy guidance keeps the hostile player lock');
+  ok(error() < before, 'the native RPG turns toward the player instead of querying targets as the player');
+});
 for (const [member, cue] of [['odessa', 'crew.turret.deploy'],
     ['odessa', 'crew.turret.fire'], ['cinder', 'crew.flamer.start']]) {
   test(`native CPU ${cue} leaves the player Rook callout unused`, () => {

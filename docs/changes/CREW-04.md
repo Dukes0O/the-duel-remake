@@ -62,6 +62,11 @@ Car damage/once-only and participant protection pass. Earlier player bodies,
 60-health falloff/half-radius, shield/wreck independence, real raiders and the
 real repair-module CPU fighter are missed. No fake shots; old tests are exact.
 
+An added real ambusher RPG witness loses its player lock in the native
+projectile step: guidance queries targets as the player instead of its
+computer owner. The shot's native owner and launch controls pass. The
+projectile hook remains held; no earlier assertion changed.
+
 Direct controller probes pass Odessa's 40-armor/two-second repair and the
 three-second knockdown/respawn through damageRaider. Eight seeded crew probes
 use real stepProjectiles and finish with three attacks; Dune fires only bolts,
