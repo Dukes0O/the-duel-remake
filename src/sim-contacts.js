@@ -24,6 +24,7 @@ import {applyDriverModifiers} from './drivers.js';
 import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 import {carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 import {actorForTarget} from './arsenal/targeting.js';
+import {CONVOY_BODY, isConvoyRig} from './arena/modes/convoy-raid.js';
 
 function recordBoardingCrash(duel, a, b, crash) {
   const boarding = duel.state.boarding;
@@ -137,8 +138,10 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
     closingKph > COMBAT_TUNING.armor.ramThresholdKph) {
     const pointA = duel.course.groundAt(a.s, a.lateral);
     const pointB = duel.course.groundAt(b.s, b.lateral);
-    const hitPosition = {x: (pointA.x + pointB.x) / 2, y: (pointA.y + pointB.y) / 2,
-      z: (pointA.z + pointB.z) / 2};
+    const rigContact = isConvoyRig(duel, a) || isConvoyRig(duel, b);
+    const hitPosition = {x: rigContact ? crash.result.point.x : (pointA.x + pointB.x) / 2,
+      y: (pointA.y + pointB.y) / 2,
+      z: rigContact ? crash.result.point.z : (pointA.z + pointB.z) / 2};
     const report = (attacker, victim, face, victimFace) => {
       const attackerIndex = attacker === duel.state ? -1 : duel.state.opponents.indexOf(attacker);
       const victimIndex = victim === duel.state ? -1 : duel.state.opponents.indexOf(victim);
@@ -146,6 +149,7 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
       const modifiers = vehicleContactModifiers(duel, attacker, victim, face, victimFace);
       const armorRemoved = applyRamArmorDamage(duel, victim, impactMph,
         {spiked, owner: combatOwnerId(duel, attacker), contactFace: victimFace,
+          contactPoint: hitPosition,
           damageMultiplier: modifiers.multiplier, ...(dvDamage ? {dvMph: dvOf(victim)} : {})});
       const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.warlordMove);
       // This existing bounded spark pool is already drawn by combat effects.
@@ -167,6 +171,7 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
 }
 
 export function _vehicleSpec(actor) {
+  if (isConvoyRig(this, actor)) return CONVOY_BODY;
   if (this.state.arena && actor.kind === 'junkCar') return arenaJunkSpec(actor);
   // Upgrades change handling and power, never the collision shell. Armor-kit
   // plating adds its weight to the mass (Mad Max only; CRASH-04).

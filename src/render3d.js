@@ -39,6 +39,8 @@ import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
 import {createAmbushAlleyView} from './arena/modes/ambush-alley-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createTankerModel} from './arena/tanker-model.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -177,6 +179,20 @@ export function attachRenderer(host, app) {
   const vehicleAttachments=createVehicleAttachmentRegistry();
   const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
   const fuelView=createFuelRunView(app.duel);scene.add(fuelView.group);
+  let tanker=null,tankerReady=false,tankerFailed=false;
+  function prepareTanker(){
+    if(!tanker){
+      tanker=createTankerModel({loadAsset:()=>new GLTFLoader().loadAsync('/assets/models/wasteland/convoy-tanker.glb')});
+      tanker.ready.then(loaded=>{
+        tankerReady=loaded;sceneRevision++;ambientShading.refresh();
+      }).catch(()=>{tankerFailed=true;});
+    }
+    host.dataset.convoyAsset=tankerReady?'ready':tankerFailed?'error':'loading';
+    if(tankerReady)return true;
+    renderer.domElement.style.visibility='hidden';rearView.hide();
+    if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+    app.holdVisualReadiness?.(readinessOwner);return false;
+  }
   const fuelEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
   const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
@@ -218,6 +234,7 @@ export function attachRenderer(host, app) {
   function retireObject(object,beforeDispose){
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
+    if(object===tanker?.group)return;
     const release=()=>{beforeDispose?.();disposeTree(object);};
     if(warmup)warmup.releaseWhenIdle(release);else release();
   }
@@ -257,8 +274,10 @@ export function attachRenderer(host, app) {
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const opponents = st.opponents || (st.rival ? [st.rival] : []);
-    const rivalCarKey=!menu&&st.rival?.car||carKey;
-    if(rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const convoy=!menu&&st.arena?.mode==='convoy-raid';
+    const rivalCarKey=convoy?'convoy-tanker':!menu&&st.rival?.car||carKey;
+    if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next) {
       if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
@@ -278,7 +297,8 @@ export function attachRenderer(host, app) {
       ambientShading.refresh();
     }
     if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
-    if (!rival) { rival = vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    if (!rival) { rival = convoy?tanker.group:vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    if(convoy)tanker.setValveHealth(st.arena.convoy.valves);
     while(extraOpponents.length>(menu?0:Math.max(0,opponents.length-1))){
       const entry=extraOpponents.pop();
       retireObject(entry.mesh, () => entry.droneStyle?.restore());
@@ -475,7 +495,7 @@ export function attachRenderer(host, app) {
       ghost.visible=!!ghostPose&&Math.abs(ghostPose.s-st.s)<650;
       if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;applyVehicleTerrainPose(ghost,course,ghostPose);}
     }
-    updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
+    if(!convoy)updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650 &&
       !(st.rival.arenaRole === 'ambush-buggy' && !st.rival.ambushWave);
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
@@ -544,7 +564,7 @@ export function attachRenderer(host, app) {
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
-    combatScene.update(app.duel,{player,rival,extraOpponents,camera},useCombatAtlas);
+    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera},useCombatAtlas);
     if(st.arena?.mode==='fuel-run'){
       fuelEntries[0].id='player';fuelEntries[0].mesh=player;fuelEntries[0].actor=st;
       for(let index=1;index<4;index++){
@@ -680,6 +700,7 @@ export function attachRenderer(host, app) {
       bountyView.dispose();
       ambushView.dispose();
       fuelView.dispose();
+      tanker?.dispose();
       rearView.dispose();
       firstPersonGear.dispose();
       combatScene.dispose();

@@ -1,16 +1,21 @@
-# Next run: phase 3, a Wasteland worth finding (updated 4 October 2026)
+# Next run: phase 3, a Wasteland worth finding (updated 5 October 2026)
 
-## Director resume, 4 October 2026
+## Director resume, 5 October 2026
 
 Kyle's "Build more, record less" rule in AGENTS.md controls this run.
-ARS-03, AUD-18 and ARENA-05 are merged. Finish Convoy and computer crews,
-then Gunn when Claude approves its look. Tollkeeper follows Convoy and its
-remaining design answer. Keep shared files with one owner at a time.
-Convoy waits for Claude's frame-cost decision; Crew waits for its Hard pacing
-answer. Gunn now owns shared tell audio and generic rocket contacts on the
-whole Ambush merge, without importing either unfinished lane.
+ARS-03, AUD-18, ARENA-05 and ARENA-07 are merged. Finish computer crews
+and Gunn; Tollkeeper now starts from Convoy. Baron follows Gunn and Tollkeeper.
+Claude's 5 October answers are on the cards and in the inbox. Gunn's round
+two is approved; finish listening and gates. Crew changes only stop pacing.
+Convoy may merge with stopped-view art evidence; CONVOY-FRAMES blocks its
+release, not development. Tollkeeper uses the rear valve and a seeded 4 m
+gap, with no doors. Shared files keep one owner at a time.
+Gunn's generic contacts and tell audio are source-reviewed at 37683f36.
 Run the full tier only at the end, alone with `--jobs 4`. Keep one short log
 line per merge; fold notes into the next feature commit or merge.
+End full passes all 352 suites on clean 2e7862fb, alone with four jobs.
+End notes and status wait for the next real merge. Push waits for approved
+binary compaction; unmerged lanes must stay in place.
 
 ARS-02, CREW-03 and BALANCE-W2-OFF-RETIRE are merged. AUD-17 is complete:
 Kyle's nine kept voice choices are final. AUD-18 now owns playing those
@@ -300,8 +305,8 @@ for candidates only; Kyle picks.
 
 ## Rules to watch
 
-- Gates: lane tier and build before every merge; full tier after every 5
-  merges or 2 hours and at the end of the run; update STATUS.md after every merge.
+- Gates: lane tier and build before every merge. Full tier only at the end
+  or before release, alone with four jobs. Fold status into a real merge.
 - After every merge, the janitor deletes that lane's branch, folder and used
   evidence (unlink `node_modules` junctions first). Never delete a branch for
   being idle; never delete Kyle's branches.
@@ -341,8 +346,8 @@ Claude or Kyle. The designs are settled by Claude: build on them, do not
 redesign them; send design questions to Claude in writing. Follow Kyle's stop
 rule: if a card cannot meet its acceptance with the tools we have on this
 laptop, stop, write why, set waiting_on: kyle and move on. Write tests
-first. Gates: lane tier and build before every merge; full tier after every
-5 merges or 2 hours and at the end; build-status after every merge; janitor
+first. Gates: lane tier and build before every merge; full tier only at the
+end, alone with four jobs; fold status into a real merge; janitor
 after every merge with plain git worktree remove, and the sweep at the end.
 The Preview builds into .preview-dist; never touch it, the live folder, port
 5174 or real saves. Do not rewrite history or release; push

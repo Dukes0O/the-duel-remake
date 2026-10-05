@@ -6,6 +6,7 @@ import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
   // Released on 4 October 2026: Fuel Run, Bounty Hunt, Arsenal, Salt Flats, Crew gear.
   assert.deepEqual(FEATURE_STATES, {
+    'convoy-raid': 'dev',
     'bounty-hunt': 'on', 'career-backup': 'dev', 'hidden-road': 'on',
     'fuel-run': 'on',
     arsenal: 'on',

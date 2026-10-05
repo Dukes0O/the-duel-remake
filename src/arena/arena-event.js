@@ -12,6 +12,8 @@ import {thinkBrain, STYLE_ORDER, ARENA_FEEL} from './arena-brains.js';
 import {spawnSlots} from './venues.js';
 import {warlordFight} from '../warlords/index.js';
 import {WARLORD_RULES, noteWarlordWreck, stepWarlordClock, teamTotal} from './warlord-event.js';
+import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
+  stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
 import {stepRaiders} from '../raiders.js';
@@ -22,6 +24,8 @@ import {armorDamageFor} from '../combat-armor.js';
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
 
 export const ARENA_MODES = Object.freeze({
+  'convoy-raid': Object.freeze({timeLimitSec: CONVOY_RULES.timeLimitSec,
+    suddenDeathSec: Infinity, maxOpponents: 3}),
   'ambush-alley': Object.freeze({timeLimitSec: AMBUSH_RULES.timeLimitSec,
     suddenDeathSec: AMBUSH_RULES.suddenDeathSec, maxOpponents: AMBUSH_RULES.maxOpponents}),
   'bounty-hunt': Object.freeze({timeLimitSec: BOUNTY_RULES.timeLimitSec,
@@ -74,6 +78,7 @@ export function applyArenaArmor(duel) {
     actor.maxArmor *= scale;
     actor.armor = actor.maxArmor;
   }
+  initializeConvoyRaid(duel);
 }
 
 // Put a car at a pose with the kinematic state of a fresh start.
@@ -212,13 +217,19 @@ function finish(duel, reason, winnerId = null) {
   duel._callout(arena.mode === 'ambush-alley' ?
     winnerId === 'player' ? 'AMBUSH ALLEY / YOU WIN' : 'THE FORT FELL' : winner.id === 'player' ?
     arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
-      arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
+      arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' :
+      arena.mode === 'convoy-raid' ? 'CONVOY RAID / YOU WIN' : 'LAST CAR ROLLING / YOU WIN' :
     `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
 
 function stepClock(duel, dt) {
   const arena = duel.state.arena;
+  if (arena.mode === 'convoy-raid') {
+    const decision = stepConvoyRaid(duel, dt);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   if (arena.mode === 'ambush-alley') {
     arena.phase = 'fight';
     arena.clockSec += dt;
@@ -282,7 +293,7 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
-  const onFoot = (arena.mode === 'fuel-run' || ambush) && stepFootTransition(duel, dt);
+  const onFoot = (['fuel-run', 'convoy-raid'].includes(arena.mode) || ambush) && stepFootTransition(duel, dt);
   if (ambush) {
     const spawn = ambushBuggySpawn(duel);
     if (spawn) {
@@ -319,6 +330,10 @@ export function stepArenaEvent(duel, dt) {
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
       stepKnock(duel, actor, dt);
+      containInArena(duel, actor, dt);
+      continue;
+    }
+    if (stepConvoyRig(duel, actor, dt)) {
       containInArena(duel, actor, dt);
       continue;
     }

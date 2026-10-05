@@ -6,6 +6,7 @@ import {predictedPoint} from '../combat-weapons.js';
 import {arenaFloorSpeed} from './venues.js';
 import {nearestRepairCrate} from './arena-pickups.js';
 import {warlordFight} from '../warlords/index.js';
+import {convoyEscortGoal} from './modes/convoy-raid.js';
 import {ambushBuggyGoal} from './modes/ambush-alley.js';
 
 // What a computer car wants (docs/SCRAPDOME.md section 4). Difficulty changes
@@ -103,6 +104,7 @@ export function chooseTarget(duel, participant) {
 }
 
 export function styleOf(duel, participant, actor) {
+  if (participant.brain === 'guard') return 'rammer';
   if (participant.brain !== 'brawler') return participant.brain;
   return (actor.armor ?? 1) >= (actor.maxArmor ?? 1) * STYLES.brawler.switchArmorFraction ? 'rammer' : 'gunner';
 }
@@ -215,6 +217,13 @@ export function thinkBrain(duel, participant, actor, dt) {
   if (duel.state.arena.mode === 'ambush-alley') {
     participant.targetId = null;
     return ambushBuggyGoal(duel, actor) || {...worldPose(duel, actor), speedMph: 0, boost: false};
+  }
+  const escortGoal = convoyEscortGoal(duel, participant);
+  if (escortGoal) {
+    participant.targetId = null;
+    participant.targetHeldSec = 0;
+    participant.goal = escortGoal;
+    return escortGoal;
   }
   if (duel.state.arena.mode === 'fuel-run' && (participant.brain === 'collector' ||
       participant.fuelCanisterId || !duel.state.arena.participants.some(p =>
