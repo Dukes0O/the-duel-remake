@@ -9,7 +9,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const RATE = 48000;
 export const BLACKIRON_AUDIO_RECIPE = Object.freeze({cue: 'warlord.nitroSpent',
   source: '651534', start: 2.7, length: .85, rate: .7,
-  filters: 'highpass=f=90,lowpass=f=2200,tremolo=f=13:d=.95'});
+  filters: 'highpass=f=90,lowpass=f=2200',
+  catches: Object.freeze([[0, .15, 1], [.21, .42, .82], [.51, .8, .55]].map(Object.freeze))});
 
 export function buildBlackironAudio() {
   const recipe = BLACKIRON_AUDIO_RECIPE;
@@ -25,7 +26,14 @@ export function buildBlackironAudio() {
   for (let n = 0; n < samples; n++) {
     const at = recipe.start * RATE + n * recipe.rate, i = Math.floor(at), blend = at - i;
     const fade = Math.min(1, n / (RATE * .006), (samples - n - 1) / (RATE * .09));
-    cut.writeFloatLE((pcm.readFloatLE(i * 4) * (1 - blend) + pcm.readFloatLE((i + 1) * 4) * blend) * fade, n * 4);
+    // Uneven softly faded catches replace the rejected regular digital chopping.
+    const time = n / RATE;
+    let catchGain = .24;
+    for (const [start, end, strength] of recipe.catches) {
+      if (time < start || time > end) continue;
+      catchGain += strength * Math.sin(Math.PI * (time - start) / (end - start)) ** 2;
+    }
+    cut.writeFloatLE((pcm.readFloatLE(i * 4) * (1 - blend) + pcm.readFloatLE((i + 1) * 4) * blend) * fade * catchGain, n * 4);
   }
   const bytes = ffmpeg(['-f', 'f32le', '-ar', String(RATE), '-ac', '1', '-i', 'pipe:0',
     '-af', 'loudnorm=I=-18:TP=-3:LRA=7', '-ar', String(RATE),
@@ -43,7 +51,7 @@ export function buildBlackironAudio() {
   catalog.sounds.push({...source, source: 'freesound-prepared', key: 'blackiron-nitro-spent',
     cue: recipe.cue, runtime: result,
     processing: {recipe: 'tools/audio/build-blackiron.mjs', ...recipe,
-      approval: 'Claude and Director, 5 October 2026: reproducible Nitro sputter from cached CC0 engine.'}});
+      approval: 'Kyle feedback and Director, 9 October 2026: remove regular artificial chopping; keep uneven Nitro recovery sputter from the same cached CC0 engine.'}});
   writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2) + '\n');
   return result;
 }

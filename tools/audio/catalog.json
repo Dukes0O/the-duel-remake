@@ -1463,8 +1463,25 @@
         "start": 2.7,
         "length": 0.85,
         "rate": 0.7,
-        "filters": "highpass=f=90,lowpass=f=2200,tremolo=f=13:d=.95",
-        "approval": "Claude and Director, 5 October 2026: reproducible Nitro sputter from cached CC0 engine."
+        "filters": "highpass=f=90,lowpass=f=2200",
+        "catches": [
+          [
+            0,
+            0.15,
+            1
+          ],
+          [
+            0.21,
+            0.42,
+            0.82
+          ],
+          [
+            0.51,
+            0.8,
+            0.55
+          ]
+        ],
+        "approval": "Kyle feedback and Director, 9 October 2026: remove regular artificial chopping; keep uneven Nitro recovery sputter from the same cached CC0 engine."
       },
       "decode": {
         "file": "v8-rev-source.wav",
@@ -1477,16 +1494,16 @@
       "runtime": {
         "cue": "warlord.nitroSpent",
         "file": "public/assets/audio/blackiron/nitro-spent.ogg",
-        "sha256": "44f9ac3e4b2074f788dd2c35ba257300056e2626e44a444a254834ade7eee644",
-        "bytes": 9934,
+        "sha256": "5508bfc5e029f2b5700e822d15a1c16f4b57ba8c9326e89dd00c8d3f2a906699",
+        "bytes": 9902,
         "sampleRate": 48000,
         "channels": 1,
         "sourceFile": "legacy/v8-rev-source.mp3",
         "sourceSha256": "65d7f1d60ecc276a48ea974a265bbee0715d6b2e0bd0081a45c57362a61a470c",
         "available": true,
         "method": "FFmpeg loudnorm / EBU R128",
-        "integratedLufs": -21.66,
-        "truePeakDbtp": -3.18,
+        "integratedLufs": -22.88,
+        "truePeakDbtp": -3.19,
         "loudnessRangeLu": 0,
         "targets": {
           "loudness": {

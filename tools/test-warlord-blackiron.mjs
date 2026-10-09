@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import {readFileSync} from 'node:fs';
+import {ffmpeg} from './audio/codec.mjs';
 import {Duel} from '../src/game.js';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
@@ -416,4 +418,25 @@ test('Failed Crown wear and Baron settlement writes expose no partial reward and
     if (cancelDescriptor) Object.defineProperty(globalThis, 'cancelAnimationFrame', cancelDescriptor);
     else delete globalThis.cancelAnimationFrame;
   }
+});
+
+test('Native spent engine cue avoids the rejected regular digital chopping', () => {
+  const bytes = readFileSync(new URL('../public/assets/audio/blackiron/nitro-spent.ogg', import.meta.url));
+  const pcm = ffmpeg(['-i', 'pipe:0', '-ac', '1', '-ar', '48000', '-f', 'f32le', 'pipe:1'], {input: bytes});
+  assert.ok(Math.abs(pcm.length / 4 / 48000 - .85) < .03, 'same short cue, allowing codec padding');
+  const envelope = [];
+  for (let i = 0; i + 480 * 4 < pcm.length; i += 480 * 4) {
+    let energy = 0;
+    for (let j = 0; j < 480; j++) energy += pcm.readFloatLE(i + j * 4) ** 2;
+    envelope.push(Math.sqrt(energy / 480));
+  }
+  const mean = envelope.reduce((sum, value) => sum + value, 0) / envelope.length;
+  let cosine = 0, sine = 0;
+  for (let i = 0; i < envelope.length; i++) {
+    const phase = i * .01 * 9.1 * 2 * Math.PI;
+    cosine += (envelope[i] - mean) * Math.cos(phase);
+    sine += (envelope[i] - mean) * Math.sin(phase);
+  }
+  const regularChop = 2 * Math.hypot(cosine, sine) / envelope.length / mean;
+  assert.ok(regularChop < .35, '9.1 Hz artificial chopping must be subdued: ' + regularChop);
 });

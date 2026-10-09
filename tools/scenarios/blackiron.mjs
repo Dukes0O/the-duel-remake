@@ -322,7 +322,9 @@ async function runNitroPresentation(context) {
 }
 
 async function runNitroAudio(context) {
-  await menu(context, 'high');
+  const quality = process.env.BLACKIRON_NITRO_AUDIO_QUALITY || 'high';
+  if (!['high', 'performance'].includes(quality)) throw Error('Invalid Nitro audio quality');
+  await menu(context, quality);
   await context.evaluate('if(!window.__qaApp.visitWasteland())throw Error("Baron audio yard denied")');
   await context.waitFor('window.__qaApp.visualReady&&document.querySelector("#renderer-loading")?.hidden',
     'Baron audio yard assets', 60000);
@@ -354,13 +356,19 @@ async function runNitroAudio(context) {
     const ctx=audio.context;
     if(ctx?.state!=='running'||ctx.sampleRate<44100)throw Error('Native-rate Baron audio required');
     const silent=ctx.createGain();silent.gain.value=0;silent.connect(ctx.destination);
-    const r=window.__baronAudio={sampleRate:ctx.sampleRate,startedAt:ctx.currentTime,
+    const stream=ctx.createMediaStreamDestination();audio.output.connect(stream);
+    const mediaType=['audio/webm;codecs=opus','audio/webm'].find(type=>MediaRecorder.isTypeSupported(type));
+    if(!mediaType)throw Error('Native stream recording unavailable');
+    const media=new MediaRecorder(stream.stream,{mimeType:mediaType,audioBitsPerSecond:192000});
+    const mediaChunks=[];media.ondataavailable=event=>{if(event.data.size)mediaChunks.push(event.data);};
+    const r=window.__baronAudio={sampleRate:ctx.sampleRate,startedAt:ctx.currentTime,media,mediaChunks,stream,mediaType,
       tracks:{},sources:[],events:[],cues:[],silent,spent:false};
-    for(const [name,source] of [['mix',audio.output],['effects',audio.buses.impacts],['engine',audio.buses.engine]]){
-      const processor=ctx.createScriptProcessor(2048,2,2),track={chunks:[],firstPlayback:null};
+    for(const [name,source] of [['mix',audio.output],['effects',audio.buses.impacts],['weapons',audio.buses.weapons],['engine',audio.buses.engine]]){
+      const processor=ctx.createScriptProcessor(2048,2,2),track={chunks:[],firstPlayback:null,playbackTimes:[]};
       source.connect(processor);processor.connect(silent);r.tracks[name]=track;r.sources.push({source,processor});
       processor.onaudioprocess=event=>{
         if(track.firstPlayback===null)track.firstPlayback=event.playbackTime;
+        track.playbackTimes.push(event.playbackTime);
         const left=event.inputBuffer.getChannelData(0),right=event.inputBuffer.getChannelData(1);
         const pcm=new Int16Array(left.length*2);
         for(let i=0;i<left.length;i++){
@@ -369,6 +377,7 @@ async function runNitroAudio(context) {
         }track.chunks.push(pcm);
       };
     }
+    media.start(100);
     r.originalPlayCue=audio._playCue;
     audio._playCue=function(id,options){const voice=r.originalPlayCue.call(this,id,options);
       if(voice)r.cues.push({id,audioSec:ctx.currentTime-r.startedAt,simSec:app.duel.state.stageTimeSec});
@@ -388,12 +397,14 @@ async function runNitroAudio(context) {
       return r.spent&&a.duel.state.opponents[0].arenaNitroSpentSec===0&&
         a.audio.context.currentTime-r.startedAt>=7;})()`, 'real-time Baron tell, ram and spent sound', 25000);
   } finally {
-    await context.evaluate(`(()=>{const app=window.__qaApp,r=window.__baronAudio;
+    await context.evaluate(`(async()=>{const app=window.__qaApp,r=window.__baronAudio;
       app.stop();r.unsubscribe();app.audio._playCue=r.originalPlayCue;
       for(const {source,processor} of r.sources){source.disconnect(processor);processor.disconnect();processor.onaudioprocess=null;}
-      r.silent.disconnect();app.audio.setPaused(true);})()`);
+      r.silent.disconnect();
+      await new Promise(done=>{r.media.onstop=done;r.media.stop();});
+      app.audio.output.disconnect(r.stream);app.audio.setPaused(true);})()`);
   }
-  const result=await context.evaluate(`(()=>{
+  const result=await context.evaluate(`(async()=>{
     const app=window.__qaApp,r=window.__baronAudio,tracks={};
     if(JSON.stringify(app.profile)!==window.__baronAudioProfile)throw Error('Audio review changed the memory career');
     for(const [name,track] of Object.entries(r.tracks)){
@@ -404,15 +415,26 @@ async function runNitroAudio(context) {
       let peak=0,energy=0;for(const sample of pcm){const value=sample/32768;
         peak=Math.max(peak,Math.abs(value));energy+=value*value;}
       tracks[name]={pcmBase64:btoa(binary),frames:pcm.length/2,
-        audioStartSec:track.firstPlayback-r.startedAt,peak,rms:Math.sqrt(energy/pcm.length)};
+        audioStartSec:track.firstPlayback-r.startedAt,peak,rms:Math.sqrt(energy/pcm.length),
+        callbackGaps:track.playbackTimes.slice(1).map((time,index)=>time-track.playbackTimes[index]-2048/r.sampleRate)
+          .filter(gap=>Math.abs(gap)>1/r.sampleRate)};
     }
-    return {sampleRate:r.sampleRate,channels:2,tracks,events:r.events,cues:r.cues,
+    const nativeBytes=new Uint8Array(await new Blob(r.mediaChunks,{type:r.mediaType}).arrayBuffer());
+    let nativeBinary='';for(let i=0;i<nativeBytes.length;i+=8192)nativeBinary+=String.fromCharCode(...nativeBytes.subarray(i,i+8192));
+    return {nativeBase64:btoa(nativeBinary),nativeType:r.mediaType,sampleRate:r.sampleRate,channels:2,tracks,events:r.events,cues:r.cues,
       memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
         window.name.startsWith('__duel_qa_tab_v2:'),profileUnchanged:true};
   })()`);
   if(!result.memoryOnly||!['tell','start','spent'].every(kind=>result.events.some(event=>event.kind===kind))||
     !['warlord.nitroTell','warlord.nitroSpent'].every(id=>result.cues.some(cue=>cue.id===id)))
     throw Error('Actual Baron Nitro audio event or cue missing');
+  for(const id of ['warlord.nitroTell','warlord.nitroSpent'])
+    if(result.cues.filter(cue=>cue.id===id).length!==1)throw Error('Native Baron cue retriggered: '+id);
+  const native=Buffer.from(result.nativeBase64,'base64');delete result.nativeBase64;
+  result.quality=quality;result.nativeRecording='blackiron-native.webm';
+  await writeFile(join(context.outputDir,result.nativeRecording),native);
+  const listening=ffmpeg(['-i','pipe:0','-codec:a','libmp3lame','-b:a','128k','-f','mp3','pipe:1'],{input:native});
+  result.nativeListeningFile='blackiron-native.mp3';await writeFile(join(context.outputDir,result.nativeListeningFile),listening);
   for(const [name,track] of Object.entries(result.tracks)){
     if(!(track.frames>result.sampleRate*6&&track.rms>.00001&&track.peak<1))
       throw Error('Silent, clipped or short native Baron '+name+' recording');

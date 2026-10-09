@@ -1,117 +1,66 @@
 # WAR-03e: Baron Blackiron
 
-Source and 9 October review evidence are ready for Director. Preview only
-until WAR-04 merges. Claude's Crown, reward and Nitro answers are recorded
-in SCRAPDOME, the card and inbox.
-No release changes.
+Claude approved final Crown round two on 9 October. Kyle rejected the first
+Nitro mix for digital stutter; the revised native clip is ready for listening.
+Preview only until WAR-04 merges. No release or fresh gate pass is claimed.
 
 ## Changes
 
-9 October final Crown direction: preserve the fitted base and authored originals;
-make only the cloned spikes 1.5 times taller above their lower edge. Use bright
-polished chrome, strong reflections and small texture-driven scratches. Round
-two is the final sheet and remains subject to Claude's look verdict. The narrow
-audio grant covers only three Baron bank IDs and the nitroSpent catalog row
-in the two older audio snapshots; every old hash and assertion stays exact.
+Baron uses the Pit/Viper and literal 120 armor, delegates all four settled
+moves, and adds told Nitro Ram in phase two. Each Nitro end opens the full
+2.5-second window: half top speed, 1.5x incoming damage, retracted spikes,
+black exhaust and HE'S OUT OF NITRO. HIT HIM! Actor-only arsenal admission
+leaves other actors' weapon gates unchanged. First win atomically saves the
+1560 Hard reward, earned title and Crown; Vesper remains an entitlement.
+Save/reward source is frozen under its existing independent review.
 
-- Baron uses the Viper in the Pit, with literal 120 armor at entry and respawn.
-  His cycle delegates the settled Saw Sweep, Dust Veil, Mirage and Barrage.
-  Phase two adds told Nitro Ram and paired moves without cutting short windows.
-- The registered fight grants the Baron full arsenal admission. Player, ordinary
-  CPU and other Warlord weapon gates stay unchanged. Nitro remains signature-only.
-- Each Nitro end opens 2.5 seconds at half top speed and 1.5x incoming damage.
-  Spikes retract; existing smoke slots show black exhaust. The callout is
-  HE'S OUT OF NITRO. HIT HIM!
-- Chrome Crown is a zero-armor, zero-mass roof look. It preserves paid plating,
-  works on stock cars and shares one slot with Side Saws and Turret Look.
-  Fitted crown and crossbar clones keep the original authored parts untouched.
-- First win saves the title and Crown in the existing atomic settlement.
-  Saved defeat is Vesper's entitlement; no unfinished roster or gear is added.
-- Unlock requires all seven earlier saved defeats and 100 own territory hold.
-  Optional roof and bounded title fields never grant rewards during normalization.
+Final Crown spikes are bright polished chrome, 1.5 times taller above their
+fitted lower edge, with a blackened base. Authored geometry/materials stay
+exact; cloned geometry preserves rotated/nonuniform fit and is disposed.
+The approved twelve-view High/Performance sheet is 257,855 bytes. No more art.
 
-## Sound
+## Nitro audio fix and checks
 
-`arena.blackiron-barrage` aliases the current Gunn whine; `warlord.nitroTell`
-aliases current Nitro-start layers. `warlord.nitroSpent` is an additive recipe
-from the cached, verified CC0 V8 source. No network or new recording.
-Runtime Ogg: 9,934 bytes, mono 48 kHz, -21.66 LUFS, -3.18 dBTP;
-SHA256 `44f9ac3e4b2074f788dd2c35ba257300056e2626e44a444a254834ade7eee644`.
-The catalog's advisory loudness target reports low; its peak limit passes.
-All old catalog rows and 121 old bank cues compare exact with c2762d1b.
+Settled direction before code: remove the unwanted regular artificial
+chopping while retaining the short spent engine sputter. Three uneven,
+softly faded catches use the same verified CC0 V8 cut, rate, duration and
+bank volume. Only its recipe, Ogg and catalog row change; no global engine
+change. The rejected cut's 9.1 Hz amplitude modulation measured 0.922845;
+the revised cut measures 0.226230. The new decoded-audio control failed the
+old asset and passes unchanged on the replacement. Runtime Ogg: 9,902 bytes,
+mono 48 kHz, -22.88 LUFS, -3.19 dBTP. Loudness target is advisory; peak passes.
 
-## Checks
+Focused checks: Baron 16/16, Core audio 14/14, Wave One audio 36/36, Preview
+launcher 23/23. Every other catalog row/metadata stays exact. The narrow
+snapshot migration excludes only the three Baron bank IDs and nitroSpent
+catalog row; all old expected hashes and assertions stay unchanged.
 
-Focused native set: 123/123 pass in 1.75 seconds. It covers old Sal, Gunn, kit,
-profile and settlement controls; native Baron entry, move windows, respawn,
-actual oil cancel, lower-only speed clamp, real full-arsenal actor admission,
-default-off flags, historical entitlements, failed writes and once-only rewards.
-Original Crown transforms and maps remain exact through normal/Crown/normal.
-New Crown material versions change once per map variant, not each frame.
-Later Baron plus bank set: 16/16 pass in 0.85 s, adding native cue admission.
+Native before/after High and Performance use private memory-only careers,
+with zero warnings/errors. Each admits one tell and one spent cue. Their
+simulation times stay 0.008333/0.65/3.65 seconds for tell/start/spent. Separate
+MediaRecorder streams capture the actual final output alongside PCM engine,
+weapons and impacts stems. Callback labels contain gaps in both versions;
+those labels do not establish a game-engine defect. No global fix is inferred.
+The revised native mix and cue alone await Kyle's listening verdict.
 
-Crown: twelve real laptop High/Performance views, zero warnings/errors.
-Round-one JPG: 259,298 bytes. Claude requested the final bright/taller pass
-on 9 October; the two-round limit is unchanged.
-All nine current kit GLBs contain the crown and crossbar parts. Fight browser:
-both modes pass native yard-button entry and projectile three-wreck win;
-1560 saved once with title. Short moving sample: 159 frames, p95 16.8 ms in
-each mode. It precedes signatures and does not prove their cost. The new
-scenario's 50 ms guard needs Director review; it is not a settled merge limit.
-The private 9 October review removed the QA panel from result captures. Actual
-High and Performance Nitro tell, ram, spent window and recovery each render
-with zero browser issues. The Crown spikes extend, retract and return; the
-black exhaust and callout appear only in recovery. The existing 120-frame
-profiler measured moving p95 16.9 and 17.0 ms, with zero frames over 33 ms.
-This is a full-scene sample, not isolated Nitro GPU cost.
+Existing Nitro browser controls show tell/ram/window/recovery correctly;
+120-frame moving samples had p95 16.9/17.0 ms and zero frames above 33 ms.
+The earlier preserved native mix was 7.6373 seconds with peak 0.332458496;
+the old 7.17-second figures were stale and are removed.
 
-The 48 kHz native mix records tell at 0.72 s, start at 1.27 s and spent at
-4.63 s; mix sample peak is 0.390 with no sample clipping. The 7.17 s mix,
-effects and engine tracks are in ignored review evidence. The throttle-and-brake
-fixture is not a full race balance verdict. Listening approval remains with Claude.
+The previous broad gate ended 269 pass, one stale Preview-flag failure and
+87 not run. Director granted the exact launcher addition; blackiron is now
+requested and its unchanged focused assertion passes. Current integration
+0dac3098 is fully synced. Fresh lane tier/build waits for Director's slot.
 
-The earlier 9 October lane gate stopped on old audio snapshots. Director's
-narrow grant is applied: only arena.blackiron-barrage, warlord.nitroTell and
-warlord.nitroSpent are added to both old-bank exclusion sets; only nitroSpent
-is added to both old-catalog filters. All expected hashes and assertions stay
-exact. Focused checks pass: Baron 15/15, Core audio 14/14, Wave One audio 36/36.
-Final Crown sheet: 257,855 bytes, twelve native High/Performance views, zero
-browser warnings/errors. Controls prove the 1.5x height, preserved lower edge,
-width, depth and black base; cloned geometry is released on disposal. Parent
-independent source review found no issue. Save/reward source remains untouched.
+## Changed assertions
 
-The first final-Crown gate exposed one stale Preview launcher list: blackiron
-was missing from its requested dev switches. Director granted only the exact
-start-preview.bat flag-list hook; blackiron is appended, the existing
-launcher assertion stays unchanged. A fresh lane tier/build is required.
-
-Pending: Claude's final Crown and listening verdict, and a fresh passing lane
-tier/build. Existing independent save review remains applicable; no new save
-edits. No lane full tier.
-
-## Changed Assertions
-
-Additive admissions only: the exact dev switch catalog adds `blackiron: dev`
-and count 14 becomes 15. Built boss IDs add Blackiron. Default-off, production
-URL denial and named private QA controls are added. All old flag, boss, reward,
-hash and tolerance assertions remain unchanged. The narrow audio snapshot
-migration excludes only the three new Baron bank IDs and one new catalog row;
-the old expected hashes remain exact. Added Crown controls check final height,
-fit, finish and geometry disposal; no older assertion is relaxed. The added
-width control first exposed shear loss under a rotated synthetic part with a
-nonuniform parent scale. Cloned vertices now use the original authored matrix,
-and that strict control passes. All nine actual kit matrices have no shear
-(maximum decomposition error 6.7e-17), so the captured appearance is unchanged.
+Earlier additive flag/boss admission remains. No old hash or tolerance is
+relaxed. New controls cover Crown height/fit/disposal and the rejected
+regular 9.1 Hz chopping. Native recording also rejects cue retriggering.
 
 ## Removed
 
-No previous feature is replaced. The temporary Nitro window draft was removed
-before implementation; only Claude's 2.5-second rule remains. Existing Crown
-parts are not reparented or rescaled. No Vesper placeholder is introduced.
-
-## Hooks
-
-Director granted narrow earlier-move reuse, actor-only weapon capability,
-optional lower-only pilot cap, existing smoke/audio event paths, earned title,
-per-car roof look, generic admission/results forwarding and additive sound
-recipe hooks. The card lists every file. Save/reward files are frozen for review.
+The regular tremolo and its former runtime Ogg are replaced in place. No
+protected sound, historical Crown, save field or finished feature is removed.
+No Vesper placeholder or additional art round is introduced.
