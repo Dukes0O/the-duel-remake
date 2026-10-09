@@ -80,6 +80,11 @@ browser warnings/errors. Controls prove the 1.5x height, preserved lower edge,
 width, depth and black base; cloned geometry is released on disposal. Parent
 independent source review found no issue. Save/reward source remains untouched.
 
+The first final-Crown gate exposed one stale Preview launcher list: blackiron
+was missing from its requested dev switches. Director granted only the exact
+start-preview.bat flag-list hook; blackiron is appended, the existing
+launcher assertion stays unchanged. A fresh lane tier/build is required.
+
 Pending: Claude's final Crown and listening verdict, and a fresh passing lane
 tier/build. Existing independent save review remains applicable; no new save
 edits. No lane full tier.
