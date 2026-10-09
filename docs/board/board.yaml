@@ -1206,7 +1206,7 @@ tasks:
     diagnostic_hard_wins: [6, 6, 18]
     diagnostic_result: "Same thirty seeds: off six wins, in-car without stops six, full eighteen; all ninety finish and in-car matches off exactly. Full has twenty-one pull-overs, including ten aborted attempts; five extra wins have only aborts. Medium1989 has no departure shove or lingering fighter, but reaches the turn faster with zero braking. Source and driver unchanged."
     design_question: "The unchanged cross-road pull-over now brakes for 2.4417 s before the ambush, leaving no lock work and exceeding the 2.5 s cap with pull-away. Which admission-only remedy is allowed: nearest existing safe shoulder or a pre-braking feasibility check? No aborts or other rule changes."
-    note: "Matching Arsenal+cpu-crews Hard30 passes 10/30, all finish, six repairs and no aborts; measured repair overhead max1.05s. Native browser exposed a legal cross-road ambush cap conflict. Waiting Claude immediately, no merge."
+    note: "Matching Arsenal+cpu-crews 30 Hard races pass 10/30, all finish, six repairs and no aborts; measured repair overhead maximum 1.05 s. Native browser exposed a legal cross-road ambush cap conflict. Waiting Claude immediately, no merge."
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
@@ -1471,19 +1471,28 @@ tasks:
     lane: VIS
     size: S
     needs: [ARENA-07]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-05
     branch: codex/vis/convoy-frames
     flag: convoy-raid
     owns: [tools/scenarios/convoy-frames.mjs, docs/changes/CONVOY-FRAMES.md]
     hooks: [src/arena/tanker-model.js, tools/scenarios/convoy-raid.mjs, tools/test-convoy-tanker-art.mjs, tools/test-warlord-tollkeeper.mjs]
-    note: "Resumed with the fixed-camera full-loop fixture. Old partial results give no cost pass. Claude owns remaining decisions."
+    note: "Merged after all eight fixed-camera full loops pass. Frame p95 stays 16.8 ms; maximum added CPU 2.04%, GPU lower in every pair. Near visuals and source review clear. Lane 356/356 in 898.29 s, build 617 ms, 162 unchanged replay checks. Convoy moving-cost blocker cleared."
     sequencing: "A lane is free while the bosses wait for Claude. Prepare matched moving measurement; heavy checks follow Crew. Tanker-model changes wait for a measured excess and a Director handoff from Tollkeeper."
     acceptance:
       - "Measure moving frame cost on the Salt Flats with and without the tanker in matched laptop runs. If the tanker adds more than ten percent, simplify its distant view and measure again. Preserve native state, near appearance and disposal; no new tanker parts. Pass before Convoy Raid is released."
     claude_answer_2026_10_09: "Drop player input. Fixed camera follows the tanker around a full Salt Flats loop. Twice with tanker and same-size plain box, in High and Performance. Simplify distant view above 10% added cost. Claude owns this decision, not Kyle."
     distant_view_grant: "After measured excess, merge existing geometry with its unchanged atlas/UVs in the far view, retaining original roof and warning lamp clones. Near hierarchy/materials remain exact; no new parts. Add native near/far/lamps/disposal controls in test-convoy-tanker-art.mjs, preserving all old assertions."
     lamp_fixture_grant: "Add only a separately materialed body box to the Tollkeeper lamp-only fixture. Keep every existing assertion; no runtime fallback. Actual native tanker already supplies its body."
+    final_frame_cost_max_cpu_percent: 2.040816202405993
+    final_frame_p95_ms: 16.8
+    final_browser_errors: 0
+    final_browser_warnings: 8
+    source_commit: b15330f7993497b7983bc3d0bdf762a8c245b5e7
+    source_frozen: true
+    lane_gate_passed: 356
+    lane_gate_duration_seconds: 898.29
+    build_ms: 617
   - id: WAR-03a
     title: "Gearhead Gunn: Barrage; Rocket Pods reward"
     owner: codex
@@ -3023,6 +3032,7 @@ tasks:
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
     note: "The current audit flags forty-eight assets; forty-seven retain dynamic runtime, source, rights, reference or QA uses, while the old dirt texture retains documented future arena use. All twenty-five flagged exports are used inside their modules, so no deletion is proved safe. Keep the dirt decision and dynamic reporting scope here; the legacy Rustwall generator still has test consumers and needs deliberate migration by its art owner."
 
+    audit_2026_10_09: "49 asset and 55 export candidates remain advisory. No unused modules or removed-feature tests found. Preserve dynamic consumers and all six released switches until their removal has named hooks and unchanged replay proof. Protected audio inspection skipped."
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
     lane: TOOL
@@ -3842,7 +3852,7 @@ tasks:
     hooks: []
     acceptance:
       - "Repair test-driver braking for all seeds, no seed-1989 exception or game driving edits. Record before/after replays on identical seeds and rules, including Medium pursuit 1989 and Hard 1989-2018. Keep targets and old assertions."
-    note: "General pursuit braking merged: Medium finishes24/30 to30/30, Hard30 complete results/traces exact. Tests first, independent source review and lane10/10 in62.54s plus build614ms pass. No game driving change."
+    note: "General pursuit braking merged: Medium finishes 24/30 to 30/30, 30 Hard complete results/traces exact. Tests first, independent source review and lane tier 10/10 in 62.54 s plus build 614 ms pass. No game driving change."
     source_commit: d9e6cdd2
     lane_gate_passed: 10
     lane_gate_duration_seconds: 62.54

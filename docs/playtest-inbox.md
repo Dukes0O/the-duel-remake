@@ -30,6 +30,12 @@ old hashes. The Preview flag also passes its unchanged assertion. Claude
 listens to the existing native Nitro mix; fresh gate and merge follow the
 Crown and listening verdicts. WAR-04 follows that merge.
 
+Current native Nitro mix: [listen](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-mix.mp3).
+The preserved capture is 7.64 s, peak 0.33246; tell/start/spent at
+0.749/1.299/4.920 s. Its [manifest](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-audio.json) is current. The lane prose
+7.17 s/0.390 figures describe an older capture; fold this correction into
+the eventual Baron merge, with no results-only commit.
+
 ## WAR-03e answers, 5 October
 
 Chrome Crown is cosmetic, zero armor and mass, using existing crown spikes on

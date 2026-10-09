@@ -881,4 +881,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 5 October: end full passes 356/356 on clean c2762d1b, alone with four jobs, 836.47 s; crash-peak passes first try. Notes wait for the next real commit.
 5 October: janitor removed merged Gunn, Convoy and Tollkeeper lanes and used evidence; unmerged lanes and Kyle's audio stay. Audit found no unused modules or removed-feature tests; asset candidates remain advisory. Tracked size 279.8 MiB before and after.
 
-9 October: merged TEST-DRIVER-BRAKING from d9e6cdd2; lane10/10(62.54s), build614ms and source review pass. Medium finishes24/30 to30/30; all Hard30 traces/results identical.
+9 October: merged TEST-DRIVER-BRAKING from d9e6cdd2; lane 10/10 (62.54 s), build 614 ms and source review pass. Medium finishes 24/30 to 30/30; all 30 Hard traces/results identical.
+9 October: merged CONVOY-FRAMES from b15330f7; lane 356/356 (898.29 s), build 617 ms and source/visual review pass. Eight full loops pass 10% cost; frame p95 16.8 ms, maximum CPU addition 2.04%; replay pins unchanged.

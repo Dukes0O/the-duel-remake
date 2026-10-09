@@ -259,6 +259,10 @@ test('the native tell reaches its named recorded klaxon without changing race st
 
 test('existing tanker lamps flash from read-only signals and retain ordinary boarding light behavior', async () => {
   const scene = new Group(), material = new MeshStandardMaterial();
+  // A tanker has a body as well as lamps; keep its material independent of
+  // the read-only warning signal tested below.
+  const body = new Mesh(new BoxGeometry(3, 3.5, 11), new MeshStandardMaterial());
+  body.name = 'tanker-body'; scene.add(body);
   for (let n = 0; n < 2; n++) {
     const lamp = new Mesh(new BoxGeometry(.2, .2, .2), material);
     lamp.name = 'tanker-warning-lamp-' + n; scene.add(lamp);

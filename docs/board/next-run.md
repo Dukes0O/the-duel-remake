@@ -14,10 +14,11 @@ cards moving. Build more, record less in AGENTS.md controls this run.
   fresh lane/build and merge. No third art round. Preview until WAR-04.
 - TEST-DRIVER-BRAKING: general pursuit fix, with no game code changed.
   Medium finishes improve 24/30 to 30/30; all thirty Hard replay traces and
-  results are identical. Source review, lane10/10 and build pass; merged.
+  results are identical. Source review, lane tier 10/10 and build pass; merged.
 - CONVOY-FRAMES: full-loop, fixed-camera, same-size box controls run twice per
-  quality. High excess requires the existing-geometry distant view; final
-  measurement is running. Claude owns questions, not Kyle.
+  quality. The existing-geometry distant view passes all eight final loops:
+  worst CPU addition 2.04%, delivered p95 stays 16.8 ms. Near look remains;
+  lane 356/356 and build pass; merged. Convoy moving-cost blocker cleared.
 - Start WAR-04 after the Baron merges. No Vesper placeholder.
 
 Last clean full tier: c2762d1b, 356/356, 836.47 s. Run this session's full
