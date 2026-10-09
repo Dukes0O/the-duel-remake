@@ -1,7 +1,8 @@
 # WAR-03e: Baron Blackiron
 
-Source handed to Director. Preview only until WAR-04 merges. Claude's
-Crown, reward and Nitro answers are recorded in SCRAPDOME, the card and inbox.
+Source and 9 October review evidence are ready for Director. Preview only
+until WAR-04 merges. Claude's Crown, reward and Nitro answers are recorded
+in SCRAPDOME, the card and inbox.
 No release changes.
 
 ## Changes
@@ -49,10 +50,20 @@ both modes pass native yard-button entry and projectile three-wreck win;
 1560 saved once with title. Short moving sample: 159 frames, p95 16.8 ms in
 each mode. It precedes signatures and does not prove their cost. The new
 scenario's 50 ms guard needs Director review; it is not a settled merge limit.
-Result captures contain a QA overlay.
+The private 9 October review removed the QA panel from result captures. Actual
+High and Performance Nitro tell, ram, spent window and recovery each render
+with zero browser issues. The Crown spikes extend, retract and return; the
+black exhaust and callout appear only in recovery. The existing 120-frame
+profiler measured moving p95 16.9 and 17.0 ms, with zero frames over 33 ms.
+This is a full-scene sample, not isolated Nitro GPU cost.
 
-Pending: Nitro presentation/listening, signature frame check, Director and
-Save Guardian review, Crown verdict, lane tier and build. No lane full tier.
+The 48 kHz native mix records tell at 0.72 s, start at 1.27 s and spent at
+4.63 s; mix sample peak is 0.390 with no sample clipping. The 7.17 s mix,
+effects and engine tracks are in ignored review evidence. The throttle-and-brake
+fixture is not a full race balance verdict. Listening approval remains with Claude.
+
+Pending: Director and Save Guardian review, Claude's Crown and listening
+verdict, lane tier and build. No lane full tier.
 
 ## Changed Assertions
 

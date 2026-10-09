@@ -1,6 +1,8 @@
 import {writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
+import {wavFromPcm} from './audio-race.mjs';
+import {ffmpeg} from '../audio/codec.mjs';
 
 const cars = ['viper_proto', 'falcone_f42'];
 const views = ['side', 'three-quarter', 'top'];
@@ -51,6 +53,7 @@ async function menu(context, quality) {
         warlords:Object.fromEntries(['sal','dustmonger','mirage','gunn','kettle','vultures','tollkeeper'].map(id=>[id,{defeated:true,wins:1}])),
         territories:{...app.profile.wasteland.territories,blackiron:{hold:100,claimed:false}}}};
     if(!app._saveProfile())throw Error('Memory-only fixture failed');
+    document.head.insertAdjacentHTML('beforeend','<style>body > details{display:none!important}</style>');
   })()`);
 }
 
@@ -209,8 +212,227 @@ async function runFight(context) {
   await writeFile(join(context.outputDir, 'blackiron-fight.json'), JSON.stringify(report, null, 2) + '\n');
 }
 
+async function runNitroPresentation(context) {
+  const report = {card: 'WAR-03e', memoryOnly: true, rows: [],
+    fixture: 'Actual Baron yard entry and phase-two fight. The review starts his next move at Nitro in an isolated memory career; native steps, renderer and audio events remain in control.',
+    limits: ['The moving sample covers the native Nitro signature, not an isolated GPU cost.',
+      'Screenshots and meters do not supply Claude\'s Crown or listening verdict.']};
+  for (const quality of ['high', 'performance']) {
+    await menu(context, quality);
+    await context.evaluate('if(!window.__qaApp.visitWasteland())throw Error("Baron yard denied")');
+    await context.waitFor('window.__qaApp.visualReady&&document.querySelector("#renderer-loading")?.hidden', 'Baron yard assets', 60000);
+    await context.evaluate('window.__qaApp.advance(8)');
+    await context.waitFor('window.__qaApp.isYardHomeActive()', 'Baron yard home', 60000);
+    await context.evaluate(`(() => {
+      const app=window.__qaApp;
+      app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
+      const territory=document.querySelector('button[data-action="yard-territory"]');
+      if(!territory||territory.disabled)throw Error('Baron territory route missing');territory.click();
+      const fight=document.querySelector('button[data-warlord="blackiron"]');
+      if(!fight||fight.disabled)throw Error('Baron fight control missing');fight.click();
+      if(app.duel.state.status!=='warlord_intro'||!app.beginWarlordFight())throw Error('Baron fight entry failed');
+      app.stop();for(let i=0;i<361;i++)app.duel.step(1/120);
+      const d=app.duel,s=d.state,a=s.opponents[0];
+      if(s.status!=='racing'||a?.warlordId!=='blackiron'||!a.blackiron)throw Error('Native Baron fight missing');
+      s.arena.warlordPhase=2;
+      Object.assign(s,{s:100,prevS:100,lateral:-27.5,prevLateral:-27.5,speedMph:0,headingError:0,
+        armor:10000,maxArmor:10000});
+      Object.assign(a,{s:100,prevS:100,lateral:2.5,prevLateral:2.5,speedMph:0,headingError:0});
+      Object.assign(a.blackiron,{index:4,move:null,started:false,nextSec:s.stageTimeSec,pairSecond:false});
+      d.setInput({throttle:0,brake:1,steer:0,boost:false});
+      window.__baronNitro={profile:JSON.stringify(app.profile),stages:[]};
+      window.__baronNitro.paint=()=>{
+        const ground=d.course.groundAt(a.s,a.lateral);
+        app.inspectionCamera={position:[ground.x+16,ground.y+11,ground.z+19],
+          target:[ground.x,ground.y+1.5,ground.z]};
+        const before=JSON.stringify(s);app.onFrame?.(s,0);window.__render.renderFrame();
+        if(JSON.stringify(s)!==before||JSON.stringify(app.profile)!==window.__baronNitro.profile)
+          throw Error('Nitro rendering changed race or memory career');
+        const vehicles=[];window.__render.scene.traverse(node=>{
+          if(node.userData.vehicleKey===a.car)vehicles.push(node);
+        });
+        const spikes=vehicles.map(vehicle=>vehicle.getObjectByName('chrome-crown-spikes')).find(Boolean);
+        const smoke=window.__render.scene.getObjectByName('combat-vfx-damage-1-smoke');
+        if(!spikes||!smoke)throw Error('Baron Crown or exhaust mesh missing');
+        let spikesVisible=true;for(let node=spikes;node;node=node.parent)spikesVisible&&=node.visible;
+        let smokeVisible=true;for(let node=smoke;node;node=node.parent)smokeVisible&&=node.visible;
+        return {stage:a.blackiron.stage,move:a.blackiron.move,time:s.stageTimeSec,
+          tellSec:a.arenaNitroTellSec,windowSec:a.arenaNitroSpentSec,
+          callout:s.callout,spikesVisible,spikesScale:spikes.scale.toArray(),
+          smokeVisible,smokeColor:smoke.material.color.getHex(),
+          bossVehicleCount:vehicles.length,drawCalls:window.__render.renderer.info.render.calls,
+          triangles:window.__render.renderer.info.render.triangles,stateUnchanged:true};
+      };
+      window.__baronNitro.advance=stage=>{
+        for(let i=0;i<1200&&a.blackiron.stage!==stage;i++)d.step(1/120);
+        if(a.blackiron.stage!==stage)throw Error('Native Nitro never reached '+stage);
+        return window.__baronNitro.paint();
+      };
+      app.onFrame?.(s,0);window.__render.renderFrame();
+    })()`);
+    await context.waitFor('window.__qaApp.visualReady&&!!window.__render.scene.getObjectByName("chrome-crown-spikes")',
+      'real Baron Crown', 60000);
+    const row = {quality, stages: []};report.rows.push(row);
+    for (const stage of ['tell', 'ram']) {
+      const seen=await context.evaluate(`window.__baronNitro.advance(${JSON.stringify(stage)})`);
+      seen.capture=await context.screenshot(`${quality}-baron-nitro-${stage}`);row.stages.push(seen);
+      if(!seen.spikesVisible||seen.smokeVisible)throw Error(`${quality} ${stage} Crown or exhaust state wrong: `+
+        JSON.stringify({spikes:seen.spikesVisible,smoke:seen.smokeVisible,color:seen.smokeColor,
+          scale:seen.spikesScale,windowSec:seen.windowSec}));
+    }
+    await context.evaluate('window.__qaApp.start()');
+    await context.waitFor(`window.__qaApp.running&&window.__qaApp.visualReady&&
+      ['ready','fallback','off','unsupported-fallback'].includes(document.querySelector('#view3d')?.dataset.warmupStatus)`,
+    `${quality} moving Nitro warmup`, 60000);
+    await new Promise(done=>setTimeout(done,1200));
+    await context.evaluate(`(() => {const button=[...document.querySelectorAll('button')]
+      .find(node=>node.textContent==='Measure frame pacing');
+      if(!button)throw Error('Existing frame measurement control missing');button.click();})()`);
+    try {
+      await context.waitFor(`document.querySelector('#performance-results')?.textContent.includes('"frames": 120')`,
+        `${quality} native moving Nitro sample`, 35000);
+    } catch (error) {
+      const state=await context.evaluate(`(() => {const app=window.__qaApp;
+        return {status:app.duel.state.status,stage:app.duel.state.opponents[0]?.blackiron?.stage,
+          running:app.running,warmup:document.querySelector('#view3d')?.dataset.warmupStatus,
+          button:[...document.querySelectorAll('button')].find(node=>node.textContent.includes('frame pacing'))?.textContent,
+          summary:[...document.querySelectorAll('summary')].map(node=>node.textContent).find(text=>text.includes('Sample')),
+          result:document.querySelector('#performance-results')?.textContent?.slice(-600)};})()`);
+      throw Error(`${error.message}: ${JSON.stringify(state)}`);
+    }
+    row.pacing=await context.evaluate(`(() => {const app=window.__qaApp;app.stop();
+      if(JSON.stringify(app.profile)!==window.__baronNitro.profile)throw Error('Nitro pacing changed memory career');
+      return JSON.parse(document.querySelector('#performance-results').textContent).at(-1);})()`);
+    if(row.pacing.frames!==120||row.pacing.quality!==(quality==='high'?'High':'Performance')||
+      !Number.isFinite(row.pacing.p95)||row.pacing.p95<=0)
+      throw Error(`${quality} invalid moving Nitro sample`);
+    row.pacing.capture=await context.screenshot(`${quality}-baron-nitro-moving`);
+    const window=await context.evaluate('window.__baronNitro.advance("window")');
+    window.capture=await context.screenshot(`${quality}-baron-nitro-window`);row.stages.push(window);
+    if(window.spikesVisible||!window.smokeVisible||window.smokeColor!==0x242424||
+      !window.callout?.includes("HE'S OUT OF NITRO"))throw Error(`${quality} Nitro spent presentation missing`);
+    await context.evaluate(`(() => {const d=window.__qaApp.duel,a=d.state.opponents[0];
+      for(let i=0;i<360&&a.arenaNitroSpentSec>0;i++)d.step(1/120);
+      if(a.arenaNitroSpentSec>0)throw Error('Nitro recovery exceeded 2.5 seconds');})()`);
+    const cooled=await context.evaluate('window.__baronNitro.paint()');
+    cooled.capture=await context.screenshot(`${quality}-baron-nitro-cooled`);row.stages.push(cooled);
+    if(cooled.smokeVisible)throw Error(`${quality} Nitro exhaust stayed on after recovery`);
+  }
+  await writeFile(join(context.outputDir,'blackiron-nitro.json'),JSON.stringify(report,null,2)+'\n');
+}
+
+async function runNitroAudio(context) {
+  await menu(context, 'high');
+  await context.evaluate('if(!window.__qaApp.visitWasteland())throw Error("Baron audio yard denied")');
+  await context.waitFor('window.__qaApp.visualReady&&document.querySelector("#renderer-loading")?.hidden',
+    'Baron audio yard assets', 60000);
+  await context.evaluate('window.__qaApp.advance(8)');
+  await context.waitFor('window.__qaApp.isYardHomeActive()', 'Baron audio yard home', 60000);
+  await context.evaluate(`(() => {
+    const app=window.__qaApp;
+    app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
+    const territory=document.querySelector('button[data-action="yard-territory"]');
+    if(!territory||territory.disabled)throw Error('Baron audio territory route missing');territory.click();
+    const fight=document.querySelector('button[data-warlord="blackiron"]');
+    if(!fight||fight.disabled)throw Error('Baron audio fight control missing');fight.click();
+    if(app.duel.state.status!=='warlord_intro'||!app.beginWarlordFight())throw Error('Baron audio fight entry failed');
+    app.stop();for(let i=0;i<361;i++)app.duel.step(1/120);
+    const d=app.duel,s=d.state,a=s.opponents[0];
+    if(s.status!=='racing'||a?.warlordId!=='blackiron'||!a.blackiron)throw Error('Native Baron audio fight missing');
+    s.arena.warlordPhase=2;
+    Object.assign(s,{s:100,prevS:100,lateral:-27.5,prevLateral:-27.5,speedMph:0,headingError:0,
+      armor:10000,maxArmor:10000});
+    Object.assign(a,{s:100,prevS:100,lateral:2.5,prevLateral:2.5,speedMph:0,headingError:0});
+    Object.assign(a.blackiron,{index:4,move:null,started:false,nextSec:s.stageTimeSec,pairSecond:false});
+    d.setInput({throttle:1,brake:1,steer:0,boost:false});
+    window.__baronAudioProfile=JSON.stringify(app.profile);
+  })()`);
+  await context.evaluate(`(async()=>{
+    const app=window.__qaApp,audio=app.audio;
+    audio.unlock();audio.setMuted(false);audio.setPaused(false);
+    await Promise.all([audio._samplesPromise,audio._ambiencePromise,audio._cueBuffersPromise]);
+    const ctx=audio.context;
+    if(ctx?.state!=='running'||ctx.sampleRate<44100)throw Error('Native-rate Baron audio required');
+    const silent=ctx.createGain();silent.gain.value=0;silent.connect(ctx.destination);
+    const r=window.__baronAudio={sampleRate:ctx.sampleRate,startedAt:ctx.currentTime,
+      tracks:{},sources:[],events:[],cues:[],silent,spent:false};
+    for(const [name,source] of [['mix',audio.output],['effects',audio.buses.impacts],['engine',audio.buses.engine]]){
+      const processor=ctx.createScriptProcessor(2048,2,2),track={chunks:[],firstPlayback:null};
+      source.connect(processor);processor.connect(silent);r.tracks[name]=track;r.sources.push({source,processor});
+      processor.onaudioprocess=event=>{
+        if(track.firstPlayback===null)track.firstPlayback=event.playbackTime;
+        const left=event.inputBuffer.getChannelData(0),right=event.inputBuffer.getChannelData(1);
+        const pcm=new Int16Array(left.length*2);
+        for(let i=0;i<left.length;i++){
+          pcm[i*2]=Math.round(Math.max(-1,Math.min(1,left[i]))*32767);
+          pcm[i*2+1]=Math.round(Math.max(-1,Math.min(1,right[i]))*32767);
+        }track.chunks.push(pcm);
+      };
+    }
+    r.originalPlayCue=audio._playCue;
+    audio._playCue=function(id,options){const voice=r.originalPlayCue.call(this,id,options);
+      if(voice)r.cues.push({id,audioSec:ctx.currentTime-r.startedAt,simSec:app.duel.state.stageTimeSec});
+      return voice;};
+    r.unsubscribe=app.duel.onChange((state,event)=>{
+      const kind=event.arenaTell?.cue==='warlord.nitroTell'?'tell':
+        event.arsenalCue==='weapon.nitro.start'?'start':
+        event.arsenalCue==='warlord.nitroSpent'?'spent':null;
+      if(!kind)return;if(kind==='spent')r.spent=true;
+      r.events.push({kind,audioSec:ctx.currentTime-r.startedAt,simSec:state.stageTimeSec,
+        cue:event.arenaTell?.cue||event.arsenalCue,callout:state.callout});
+    });
+    app.start();
+  })()`);
+  try {
+    await context.waitFor(`(()=>{const a=window.__qaApp,r=window.__baronAudio;
+      return r.spent&&a.duel.state.opponents[0].arenaNitroSpentSec===0&&
+        a.audio.context.currentTime-r.startedAt>=7;})()`, 'real-time Baron tell, ram and spent sound', 25000);
+  } finally {
+    await context.evaluate(`(()=>{const app=window.__qaApp,r=window.__baronAudio;
+      app.stop();r.unsubscribe();app.audio._playCue=r.originalPlayCue;
+      for(const {source,processor} of r.sources){source.disconnect(processor);processor.disconnect();processor.onaudioprocess=null;}
+      r.silent.disconnect();app.audio.setPaused(true);})()`);
+  }
+  const result=await context.evaluate(`(()=>{
+    const app=window.__qaApp,r=window.__baronAudio,tracks={};
+    if(JSON.stringify(app.profile)!==window.__baronAudioProfile)throw Error('Audio review changed the memory career');
+    for(const [name,track] of Object.entries(r.tracks)){
+      const pcm=new Int16Array(track.chunks.reduce((n,chunk)=>n+chunk.length,0));
+      let at=0;for(const chunk of track.chunks){pcm.set(chunk,at);at+=chunk.length;}
+      const bytes=new Uint8Array(pcm.buffer);let binary='';
+      for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+      let peak=0,energy=0;for(const sample of pcm){const value=sample/32768;
+        peak=Math.max(peak,Math.abs(value));energy+=value*value;}
+      tracks[name]={pcmBase64:btoa(binary),frames:pcm.length/2,
+        audioStartSec:track.firstPlayback-r.startedAt,peak,rms:Math.sqrt(energy/pcm.length)};
+    }
+    return {sampleRate:r.sampleRate,channels:2,tracks,events:r.events,cues:r.cues,
+      memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value&&
+        window.name.startsWith('__duel_qa_tab_v2:'),profileUnchanged:true};
+  })()`);
+  if(!result.memoryOnly||!['tell','start','spent'].every(kind=>result.events.some(event=>event.kind===kind))||
+    !['warlord.nitroTell','warlord.nitroSpent'].every(id=>result.cues.some(cue=>cue.id===id)))
+    throw Error('Actual Baron Nitro audio event or cue missing');
+  for(const [name,track] of Object.entries(result.tracks)){
+    if(!(track.frames>result.sampleRate*6&&track.rms>.00001&&track.peak<1))
+      throw Error('Silent, clipped or short native Baron '+name+' recording');
+    const bytes=wavFromPcm(Buffer.from(track.pcmBase64,'base64'),result.sampleRate,result.channels);
+    track.file='blackiron-'+name+'.wav';await writeFile(join(context.outputDir,track.file),bytes);
+    if(name==='mix'){
+      const mp3=ffmpeg(['-i','pipe:0','-codec:a','libmp3lame','-b:a','128k','-f','mp3','pipe:1'],{input:bytes});
+      result.listeningFile='blackiron-mix.mp3';await writeFile(join(context.outputDir,result.listeningFile),mp3);
+    }
+    delete track.pcmBase64;
+  }
+  result.limits=['Native PCM and cue timing establish an actual mix; listening approval is still Claude\'s.',
+    'The player held throttle and brake for a loud engine bed; this is not a full race balance verdict.'];
+  await writeFile(join(context.outputDir,'blackiron-audio.json'),JSON.stringify(result,null,2)+'\n');
+}
+
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
+  if (process.env.BLACKIRON_NITRO_AUDIO_REVIEW === '1') return runNitroAudio(context);
+  if (process.env.BLACKIRON_NITRO_REVIEW === '1') return runNitroPresentation(context);
   if (process.env.BLACKIRON_FIGHT_REVIEW === '1') return runFight(context);
   const round = Number(process.env.BLACKIRON_ART_ROUND || 1), paths = blackironReviewPaths(round);
   const report = {card: 'WAR-03e', round, memoryOnly: true, paths, controls: [], captures: [],
