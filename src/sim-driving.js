@@ -319,7 +319,13 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   }
   const arena = this.course.def.kind === 'arena';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
-  if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain) || !Number.isFinite(dt) || dt <= 0) return;
+  if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain) || !Number.isFinite(dt) || dt <= 0) {
+    // On the prepared road or a shortcut the all-terrain rules sleep. Forget
+    // the height they last tracked, or the next step off the road measures
+    // from a stale height and drops the car from the air (DUSTHAWK-AIR).
+    if (!actor.tumble && !actor.airborne && actor._jumpY != null) { actor._jumpY = null; actor._verticalSpeed = 0; }
+    return;
+  }
   const groundPoint = this._supportAt(actor.s, actor.lateral, actor), previousPoint = this._supportAt(actor.prevS ?? actor.s, actor.prevLateral ?? actor.lateral, actor);
   const ground = groundPoint.y, previousGround = previousPoint.y;
   if (!Number.isFinite(ground) || !Number.isFinite(previousGround)) return;
