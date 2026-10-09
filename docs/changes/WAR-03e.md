@@ -62,8 +62,15 @@ The 48 kHz native mix records tell at 0.72 s, start at 1.27 s and spent at
 effects and engine tracks are in ignored review evidence. The throttle-and-brake
 fixture is not a full race balance verdict. Listening approval remains with Claude.
 
+The 9 October lane gate stopped after 108 pass, one fail and 248 not run.
+Arsenal Core audio's old bank and catalog snapshots omit the three new Baron
+bank IDs and one new catalog row; Wave One audio independently fails the same
+two snapshots. Existing hash strings and assertions are unchanged. A narrow
+Director file grant is requested before migrating those exact new IDs.
+The focused Baron native suite passes 15/15, and the production build passes.
+
 Pending: Director and Save Guardian review, Claude's Crown and listening
-verdict, lane tier and build. No lane full tier.
+verdict, and a fresh passing lane tier. No lane full tier.
 
 ## Changed Assertions
 
