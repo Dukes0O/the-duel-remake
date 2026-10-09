@@ -202,6 +202,8 @@ test('Crown preserves authored transforms and material variants through normal-C
     const scale = original.scale.toArray(), map = original.material.map;
     const color = original.material.color.toArray(), originalVersion = original.material.version;
     const bindScale = spikes.scale.clone(), ordinaryVersion = spikes.material.version;
+    let cloneDisposed = false;
+    spikes.geometry.addEventListener('dispose', () => {cloneDisposed = true;});
     assert.equal(visible(original), true); assert.equal(visible(spikes), false);
     const before = structuredClone(state);
     state.combatRoofLook = 'chrome-crown';
@@ -212,6 +214,20 @@ test('Crown preserves authored transforms and material variants through normal-C
     assert.deepEqual(original.scale.toArray(), scale); assert.equal(original.material.map, map);
     assert.deepEqual(original.material.color.toArray(), color); assert.equal(original.material.version, originalVersion);
     assert.equal(spikes.material.map, null); assert.equal(spikes.material.roughnessMap, map);
+    assert.equal(spikes.material.color.getHex(), 0xf6f8fa);
+    assert.equal(spikes.material.roughness, .13); assert.equal(spikes.material.metalness, 1);
+    assert.equal(spikes.material.envMapIntensity, 1.9);
+    assert.notEqual(spikes.geometry, original.geometry, 'stretch never edits authored geometry');
+    const oldBounds = new THREE.Box3().setFromObject(original, true);
+    const tallerBounds = new THREE.Box3().setFromObject(spikes, true);
+    assert.ok(Math.abs(tallerBounds.min.y - oldBounds.min.y) < 1e-7, 'fitted lower edge stays put');
+    for (const axis of ['x', 'z']) for (const edge of ['min', 'max'])
+      assert.ok(Math.abs(tallerBounds[edge][axis] - oldBounds[edge][axis]) < 1e-7, 'width and depth keep their fit: ' + JSON.stringify({axis, edge, old:oldBounds[edge][axis], taller:tallerBounds[edge][axis]}));
+    const blackBase = car.getObjectByName('chrome-crown-base');
+    assert.deepEqual(blackBase.matrixWorld.toArray(), car.getObjectByName('warlord-crossbar').matrixWorld.toArray());
+    assert.equal(blackBase.material.color.getHex(), 0x15191b);
+    assert.ok(Math.abs((tallerBounds.max.y - tallerBounds.min.y) /
+      (oldBounds.max.y - oldBounds.min.y) - 1.5) < 1e-7, 'spikes are 1.5 times taller');
     assert.equal(spikes.material.version, ordinaryVersion + 1);
     const chromeVersion = spikes.material.version;
     for (let i = 0; i < 10; i++) kits.update(duel, {player: car}, true);
@@ -234,6 +250,8 @@ test('Crown preserves authored transforms and material variants through normal-C
     assert.deepEqual(original.matrixWorld.toArray(), transform); assert.deepEqual(state, before);
     kits.update(duel, {player: car}, true);
     assert.equal(spikes.material.version, chromeVersion + 1);
+    kits.dispose();
+    assert.equal(cloneDisposed, true, 'dispose releases the cloned spike geometry');
   } finally {kits.dispose();}
 });
 

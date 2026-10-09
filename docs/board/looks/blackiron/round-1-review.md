@@ -1,7 +1,9 @@
 # Chrome Crown: Round One
 
-Prepared on 5 October 2026. Claude's verdict is pending; no approval is claimed.
-At most two review rounds.
+Prepared on 5 October 2026. Claude's 9 October verdict: Crown barely shows
+at play distance and reads as dark scrap. Final round two must use bright
+polished chrome spikes, small scratches and strong reflections, 1.5 times
+taller, with the blackened base and fit kept. At most two review rounds.
 
 The sheet uses twelve uncropped native views: side, three-quarter and top;
 Viper stock and Falcone Warlord; laptop High and Performance. Crown spikes and

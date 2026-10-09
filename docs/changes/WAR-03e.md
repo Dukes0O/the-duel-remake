@@ -7,6 +7,13 @@ No release changes.
 
 ## Changes
 
+9 October final Crown direction: preserve the fitted base and authored originals;
+make only the cloned spikes 1.5 times taller above their lower edge. Use bright
+polished chrome, strong reflections and small texture-driven scratches. Round
+two is the final sheet and remains subject to Claude's look verdict. The narrow
+audio grant covers only three Baron bank IDs and the nitroSpent catalog row
+in the two older audio snapshots; every old hash and assertion stays exact.
+
 - Baron uses the Viper in the Pit, with literal 120 armor at entry and respawn.
   His cycle delegates the settled Saw Sweep, Dust Veil, Mirage and Barrage.
   Phase two adds told Nitro Ram and paired moves without cutting short windows.
@@ -44,7 +51,8 @@ New Crown material versions change once per map variant, not each frame.
 Later Baron plus bank set: 16/16 pass in 0.85 s, adding native cue admission.
 
 Crown: twelve real laptop High/Performance views, zero warnings/errors.
-Round-one JPG: 259,298 bytes; Claude verdict pending, at most two rounds.
+Round-one JPG: 259,298 bytes. Claude requested the final bright/taller pass
+on 9 October; the two-round limit is unchanged.
 All nine current kit GLBs contain the crown and crossbar parts. Fight browser:
 both modes pass native yard-button entry and projectile three-wreck win;
 1560 saved once with title. Short moving sample: 159 frames, p95 16.8 ms in
@@ -62,22 +70,33 @@ The 48 kHz native mix records tell at 0.72 s, start at 1.27 s and spent at
 effects and engine tracks are in ignored review evidence. The throttle-and-brake
 fixture is not a full race balance verdict. Listening approval remains with Claude.
 
-The 9 October lane gate stopped after 108 pass, one fail and 248 not run.
-Arsenal Core audio's old bank and catalog snapshots omit the three new Baron
-bank IDs and one new catalog row; Wave One audio independently fails the same
-two snapshots. Existing hash strings and assertions are unchanged. A narrow
-Director file grant is requested before migrating those exact new IDs.
-The focused Baron native suite passes 15/15, and the production build passes.
+The earlier 9 October lane gate stopped on old audio snapshots. Director's
+narrow grant is applied: only arena.blackiron-barrage, warlord.nitroTell and
+warlord.nitroSpent are added to both old-bank exclusion sets; only nitroSpent
+is added to both old-catalog filters. All expected hashes and assertions stay
+exact. Focused checks pass: Baron 15/15, Core audio 14/14, Wave One audio 36/36.
+Final Crown sheet: 257,855 bytes, twelve native High/Performance views, zero
+browser warnings/errors. Controls prove the 1.5x height, preserved lower edge,
+width, depth and black base; cloned geometry is released on disposal. Parent
+independent source review found no issue. Save/reward source remains untouched.
 
-Pending: Director and Save Guardian review, Claude's Crown and listening
-verdict, and a fresh passing lane tier. No lane full tier.
+Pending: Claude's final Crown and listening verdict, and a fresh passing lane
+tier/build. Existing independent save review remains applicable; no new save
+edits. No lane full tier.
 
 ## Changed Assertions
 
 Additive admissions only: the exact dev switch catalog adds `blackiron: dev`
 and count 14 becomes 15. Built boss IDs add Blackiron. Default-off, production
 URL denial and named private QA controls are added. All old flag, boss, reward,
-hash and tolerance assertions remain unchanged.
+hash and tolerance assertions remain unchanged. The narrow audio snapshot
+migration excludes only the three new Baron bank IDs and one new catalog row;
+the old expected hashes remain exact. Added Crown controls check final height,
+fit, finish and geometry disposal; no older assertion is relaxed. The added
+width control first exposed shear loss under a rotated synthetic part with a
+nonuniform parent scale. Cloned vertices now use the original authored matrix,
+and that strict control passes. All nine actual kit matrices have no shear
+(maximum decomposition error 6.7e-17), so the captured appearance is unchanged.
 
 ## Removed
 

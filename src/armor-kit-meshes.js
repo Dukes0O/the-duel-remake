@@ -143,6 +143,8 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
     rig.authored?.removeFromParent();
     for (const material of rig.authoredMaterials || []) material.dispose();
     rig.authoredMaterials = null;
+    for (const geometry of rig.crownGeometries || []) geometry.dispose();
+    rig.crownGeometries = null;
     rig.authored = null;
   }
   function requestAuthored(rig, vehicle) {
@@ -171,6 +173,32 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         fitted.decompose(spikes.position, spikes.quaternion, spikes.scale);
         spikes.userData.crownBindScale = spikes.scale.toArray();
         authored.add(spikes);
+        // Stretch only cloned geometry in authored coordinates. Its lowest edge
+        // stays fitted to the crossbar; the cached and historical Crown stay exact.
+        authored.updateMatrixWorld(true);
+        const inverse = authored.matrixWorld.clone().invert();
+        const nodes = [], bounds = new THREE.Box3(), originalMatrices = [];
+        crown.traverse(node => {
+          if (node.isMesh && node.geometry) originalMatrices.push(inverse.clone().multiply(node.matrixWorld));
+        });
+        spikes.traverse(node => {
+          if (!node.isMesh || !node.geometry) return;
+          const matrix = inverse.clone().multiply(node.matrixWorld);
+          const originalMatrix = originalMatrices[nodes.length];
+          const position = node.geometry.attributes.position;
+          const point = new THREE.Vector3();
+          for (let i = 0; i < position.count; i++)
+            bounds.expandByPoint(point.fromBufferAttribute(position, i).applyMatrix4(originalMatrix));
+          nodes.push({node, matrix, originalMatrix});
+        });
+        const stretch = new THREE.Matrix4().makeScale(1, 1.5, 1);
+        stretch.elements[13] = -bounds.min.y * .5;
+        rig.crownGeometries = [];
+        for (const {node, matrix, originalMatrix} of nodes) {
+          node.geometry = node.geometry.clone();
+          node.geometry.applyMatrix4(matrix.clone().invert().multiply(stretch).multiply(originalMatrix));
+          rig.crownGeometries.push(node.geometry);
+        }
         const base = crossbar.clone(true);
         base.name = 'chrome-crown-base';
         const matrix = authored.matrixWorld.clone().invert().multiply(crossbar.matrixWorld);
@@ -206,7 +234,8 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         const clone = material => {
           const own = material.clone();
           own.userData.crownOriginal = {color: own.color.clone(), roughness: own.roughness,
-            metalness: own.metalness, map: own.map, roughnessMap: own.roughnessMap};
+            metalness: own.metalness, envMapIntensity: own.envMapIntensity,
+            map: own.map, roughnessMap: own.roughnessMap};
           own.userData.crownChrome = chrome;
           rig.authoredMaterials.push(own);
           return own;
@@ -429,12 +458,14 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
             const old = material.userData.crownOriginal;
             material.color.copy(old.color);
             material.roughness = old.roughness; material.metalness = old.metalness;
+            material.envMapIntensity = old.envMapIntensity;
             material.map = old.map; material.roughnessMap = old.roughnessMap;
             if (crownLook) {
-              material.color.setHex(material.userData.crownChrome ? 0xd8dde0 : 0x15191b);
-              material.roughness = material.userData.crownChrome ? .28 : .65;
-              material.metalness = .95;
+              material.color.setHex(material.userData.crownChrome ? 0xf6f8fa : 0x15191b);
+              material.roughness = material.userData.crownChrome ? .13 : .65;
+              material.metalness = material.userData.crownChrome ? 1 : .95;
               if (material.userData.crownChrome) {
+                material.envMapIntensity = 1.9;
                 material.roughnessMap = old.roughnessMap || old.map;
                 material.map = null;
               }
