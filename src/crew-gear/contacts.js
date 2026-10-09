@@ -51,7 +51,8 @@ export function fighterBody(fighter, raider = false) {
 }
 export function fighterObstacle(target) {
   const {fighter, raider} = target;
-  return {x: fighter.x, y: fighter.y, z: fighter.z,
+  return {x: fighter.x, y: raider
+    ? fighterBody(fighter, true).y - COMBAT_TUNING.raider.hitHeight : fighter.y, z: fighter.z,
     halfX: raider ? COMBAT_TUNING.raider.hitRadius : FIGHTER_RULES.radius,
     halfZ: raider ? COMBAT_TUNING.raider.hitRadius : FIGHTER_RULES.radius,
     height: raider ? COMBAT_TUNING.raider.hitHeight * 2 : FIGHTER_RULES.height,

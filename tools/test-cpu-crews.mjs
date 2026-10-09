@@ -3,12 +3,13 @@ import {test} from 'node:test';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {CREW} from '../src/crew.js';
-import {stepRaiders, damageRaider} from '../src/raiders.js';
+import {stepRaiders, damageRaider, raiderShotScheduled} from '../src/raiders.js';
 import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
 import {stepCombatAI} from '../src/combat-ai.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {point} from '../src/combat-weapons.js';
 import {createFighter} from '../src/onfoot.js';
+import {launchAimedRocket} from '../src/arsenal/rockets.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {createCombatScene} from '../src/combat-scene.js';
 import {EngineAudio} from '../src/audio.js';
@@ -68,6 +69,17 @@ function repairStart(f) {
 function ambushRace(options = {}) {
   const f = race({difficulty: 'hard', ...options});
   const zone = f.state.raids.zones[0];
+  // Exercise the native camp fire before arranging the stop. Pending incoming
+  // shots now correctly reject admission, so the positive fixture uses an
+  // actually spent camp without changing its members or shot allowance.
+  f.rival.s = f.rival.prevS = zone.s;
+  f.rival.speedMph = 20;
+  for (let n = 0; n < 480; n++) {
+    f.state.stageTimeSec += DT;
+    stepRaiders(f.duel, DT); stepProjectiles(f.duel, DT);
+  }
+  f.rival.speedMph = 0; f.rival.headingError = 0; f.rival.pushVelocity = 0;
+  f.rival.armor = f.rival.maxArmor;
   f.rival.s = f.rival.prevS = zone.s;
   f.state.s = f.state.prevS = zone.s - 200;
   return f;
@@ -195,6 +207,37 @@ test('an actual ambush outside all weapon reach cannot spend its cap idling', ()
     'the genuinely unreachable player produces no signature gear, RPG shot or reload work');
   ok(measured.elapsed <= 2.5 + 1e-8,
     'a no-shot stop returns and physically pulls away within the full 2.5-second overhead cap');
+});
+
+test('admission selects the nearer safe existing shoulder on either side of an ambush', () => {
+  const f = ambushRace();
+  f.rival.lateral = -2;
+  qualify(f); tick(f);
+  equal(f.rival.cpuCrew.phase, 'pulling-over', 'one continuous second still admits a reachable stop');
+  equal(f.rival.cpuCrew.stopLateral, -(f.duel.course.roadHalfWidthAt(f.rival.prevS) +
+    f.duel._vehicleSpec(f.rival).halfWidth + 1),
+    'the nearer external left shoulder beats the zone preference and inner fallback');
+});
+
+test('unreachable shoulders reject before braking without spending race motion or a stop allowance', () => {
+  const f = race(); f.rival.armor = 29;
+  // An arranged wider road keeps all existing shoulder candidates beyond
+  // the unchanged maneuver's time budget; no stop phase is fabricated.
+  f.duel.course.roadHalfWidthAt = () => 80;
+  const before = {s: f.rival.s, lateral: f.rival.lateral, speedMph: f.rival.speedMph,
+    headingError: f.rival.headingError, armor: f.rival.armor,
+    braking: f.rival.braking, boosting: f.rival.boosting}, events = [];
+  f.duel.onChange((_state, event) => events.push(event));
+  controllerTick(f, 240);
+  const crew = f.rival.cpuCrew;
+  equal(crew.phase, 'driving', 'no reachable shoulder means no braking or stop admission');
+  equal({s: f.rival.s, lateral: f.rival.lateral, speedMph: f.rival.speedMph,
+    headingError: f.rival.headingError, armor: f.rival.armor,
+    braking: f.rival.braking, boosting: f.rival.boosting}, before,
+    'planning rejection adds no motion, brake or armor cost');
+  equal([crew.repairLap, crew.ambushLap, crew.shots, crew.fighter], [-1, -1, 0, null],
+    'planning rejection spends neither lap allowance nor attack and creates no fighter');
+  equal(events, [], 'rejected admission emits no exit, entry or repair event');
 });
 
 test('cross-road admission finishes its native ambush within the unchanged overhead cap', () => {
@@ -722,4 +765,88 @@ test('every seeded native crew uses only its settled ambush gear and the three-a
       ['rpg', member === 'nell' ? 'sticky-bomb' : member === 'tusk' ? 'scrap-cannon' : null].includes(kind)),
     `${member}: the emitted native weapon kinds follow the settled rule`);
   }
+});
+
+for (const [height, hit] of [[2.10, false], [-.20, true]]) {
+  test('native Rocket Pod retains the original raider vertical boundary at ' + height + ' m', () => {
+    const f = race({difficulty: 'hard'}), raider = f.state.raids.zones[0].raiders[0];
+    f.state.raids.zones = [{...f.state.raids.zones[0], raiders: [raider]}];
+    const origin = {x: raider.x - 2, y: raider.y + height, z: raider.z};
+    const shot = launchAimedRocket(f.duel, f.state, {...origin, x: raider.x + 2}, {origin});
+    ok(shot, 'the native aimed Rocket Pod producer creates the boundary control');
+    stepProjectiles(f.duel, .05);
+    equal(!!shot.dead, hit, 'the established center and half-height decide direct contact');
+  });
+}
+
+test('inner road-edge fallback remains available only when both external shoulders are blocked', () => {
+  const f = ambushRace(), width = f.duel.course.roadHalfWidthAt(f.rival.s);
+  const external = width + f.duel._vehicleSpec(f.rival).halfWidth + 1;
+  f.rival.lateral = -2;
+  f.duel._obstacles = (from, to) => [-1, 1].map(side => ({
+    ...f.duel.course.groundAt((from + to) / 2, side * external),
+    halfX: .1, halfZ: .1, height: 5, shape: 'box'}));
+  qualify(f); tick(f);
+  equal(f.rival.cpuCrew.phase, 'pulling-over', 'the established geometrically clear fallback can admit');
+  equal(f.rival.cpuCrew.stopLateral, -(width - .5),
+    'only the original inner road-edge fallback is used when both outer corridors are blocked');
+});
+
+test('admission threat reads native raider timing and targeting without spending a shot', () => {
+  const f = race({difficulty: 'hard'}), zone = f.state.raids.zones[0];
+  f.rival.s = zone.s; f.state.s = zone.s - 200;
+  f.rival.speedMph = 20; zone.nextShotAt = f.state.stageTimeSec + .5;
+  const before = JSON.stringify(f.state), events = [];
+  f.duel.onChange((_state, event) => events.push(event));
+  equal(raiderShotScheduled(f.duel, f.rival, .49), false, 'a shot after the braking window is not a current threat');
+  equal(raiderShotScheduled(f.duel, f.rival, .5), true, 'the exact scheduled native shot boundary blocks admission');
+  equal(raiderShotScheduled(f.duel, f.state, .5), false, 'the camp does not target the distant player');
+  equal(JSON.stringify(f.state), before, 'the native threat query is read-only');
+  equal(events, [], 'preview emits no shot or hit event');
+  for (const raider of zone.raiders) Object.assign(raider, {knockedDown: true, knockdownRemaining: .1});
+  equal(raiderShotScheduled(f.duel, f.rival, .5), true, 'known native recovery before the scheduled shot remains unsafe');
+  for (const raider of zone.raiders) raider.knockedDown = false;
+  f.rival.speedMph = 0;
+  equal(raiderShotScheduled(f.duel, f.rival, 1), false, 'native raiders do not target a parked car');
+  f.rival.speedMph = 20;
+  for (const raider of zone.raiders) raider.firedLap = f.state.currentLap;
+  equal(raiderShotScheduled(f.duel, f.rival, 1), false, 'the native once-per-lap shot allowance remains exact');
+  f.state.combat.projectiles.push({raid: true, targetIndex: 0});
+  equal(raiderShotScheduled(f.duel, f.rival, 0), true, 'an already-fired native shot holds unsafe admission');
+  f.state.combat.projectiles[0].dead = true;
+  equal(raiderShotScheduled(f.duel, f.rival, 0), false, 'a consumed shot cannot block admission');
+});
+
+test('scheduled native camp threat rejects controller admission without motion or allowance cost', () => {
+  const f = race({difficulty: 'hard'}), zone = f.state.raids.zones[0];
+  f.rival.s = f.rival.prevS = zone.s; f.rival.lateral = -2;
+  f.state.s = zone.s - 200; zone.nextShotAt = .5;
+  const snapshot = () => [f.rival.s, f.rival.lateral, f.rival.speedMph,
+    f.rival.headingError, f.rival.armor, f.rival.braking, f.rival.boosting];
+  const before = snapshot(), events = [];
+  f.duel.onChange((_state, event) => events.push(event));
+  controllerTick(f, 240);
+  equal(f.rival.cpuCrew.phase, 'driving', 'the currently unsafe scheduled approach never begins braking');
+  equal(snapshot(), before, 'rejected threat spends no motion, braking, boost or armor');
+  equal([f.rival.cpuCrew.repairLap, f.rival.cpuCrew.ambushLap, f.rival.cpuCrew.shots,
+    f.rival.cpuCrew.fighter], [-1, -1, 0, null], 'neither stop allowance is spent');
+  equal(events, [], 'no entry, exit, shot or repair event comes from rejection');
+});
+
+test('read-only admission preview preserves the native raider replay', () => {
+  const control = race({difficulty: 'hard', cpuEnabled: false});
+  const queried = race({difficulty: 'hard', cpuEnabled: false});
+  for (const f of [control, queried]) {
+    const zone = f.state.raids.zones[0];
+    Object.assign(f.rival, {s: zone.s, prevS: zone.s});
+    Object.assign(f.state, {s: zone.s - 160, prevS: zone.s - 160});
+    f.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+  }
+  for (let n = 0; n < 720; n++) {
+    raiderShotScheduled(queried.duel, queried.rival, 1, {...queried.rival});
+    control.duel.step(DT); queried.duel.step(DT);
+  }
+  ok(control.state.raids.shots > 0, 'the native replay actually fires camp shots');
+  equal(JSON.stringify(queried.state), JSON.stringify(control.state),
+    'query interleaving preserves every native race and raider field');
 });

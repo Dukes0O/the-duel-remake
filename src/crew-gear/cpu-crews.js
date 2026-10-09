@@ -11,6 +11,8 @@ import {carBodyPoint} from '../arsenal/hazards.js';
 import {gearContact, damageGearCar, damageGearFighter} from './contacts.js';
 import {signatureFor, crewGearEnabled, GEAR_EPSILON} from './gear.js';
 import {sweepObstacle} from '../collision.js';
+import {carAlongPush} from '../arsenal/car-effects.js';
+import {raiderShotScheduled} from '../raiders.js';
 import {strikeCpuCrewFighterFromVehicles} from '../onfoot-race.js';
 
 const SALT = 0xc4e704;
@@ -139,8 +141,7 @@ function startStop(duel, actor, crew, stop) {
   const lap = actor.completedLaps || 0;
   const width = duel.course.roadHalfWidthAt(actor.s), spec = duel._vehicleSpec(actor);
   const preferred = stop.side * (width + spec.halfWidth + 1);
-  const candidates = [preferred, -preferred, stop.side * (width - .5), -stop.side * (width - .5)];
-  const stopLateral = candidates.find(lateral => {
+  const safe = lateral => {
     for (let along = 0; along <= 40; along += 4) {
       const at = duel.course.groundAt(actor.s + along, lateral);
       if ([...duel._obstacles(actor.s + along - spec.halfLength,
@@ -149,7 +150,13 @@ function startStop(duel, actor, crew, stop) {
           halfWidth: spec.halfWidth + .35}))) return false;
     }
     return true;
-  });
+  };
+  const shoulders = [preferred, -preferred].filter(safe);
+  // Preserve the old inner-edge fallback only for blocked exterior corridors.
+  const candidates = shoulders.length ? shoulders
+    : [stop.side * (width - .5), -stop.side * (width - .5)].filter(safe);
+  candidates.sort((a, b) => Math.abs(a - actor.lateral) - Math.abs(b - actor.lateral));
+  const stopLateral = candidates.find(lateral => canFinishPullOver(duel, actor, lateral));
   if (stopLateral === undefined) return false;
   crew[`${stop.kind}Lap`] = lap;
   Object.assign(crew, {phase: 'pulling-over', stopKind: stop.kind,
@@ -159,8 +166,8 @@ function startStop(duel, actor, crew, stop) {
   return true;
 }
 
-function pullOver(duel, actor, crew, dt) {
-  const delta = crew.stopLateral - actor.lateral;
+function pullOverMotion(duel, actor, stopLateral, dt) {
+  const delta = stopLateral - actor.lateral;
   const stoppingPace = Math.sqrt(2 * STOP_PACING.braking *
     Math.max(0, Math.abs(delta) - .2) / DRIVE.mphToWorld);
   const pace = Math.abs(delta) > .25 ? Math.min(STOP_PACING.maneuverMph, stoppingPace) : 0;
@@ -175,8 +182,38 @@ function pullOver(duel, actor, crew, dt) {
   actor.lateral += Math.sin(actor.headingError) * speed * dt;
   actor.s += Math.cos(actor.headingError) * speed * dt /
     Math.max(.25, 1 - duel.course.at(actor.s).curvature * actor.lateral);
+  return Math.abs(delta) <= .25 && actor.speedMph <= 1;
+}
+
+function canFinishPullOver(duel, actor, lateral) {
+  // Preview only this unchanged maneuver on private state. The existing .6 s
+  // native acceleration window reserves the return and one-car pull-away.
+  const preview = {s: actor.s, lateral: actor.lateral, speedMph: actor.speedMph,
+    headingError: actor.headingError, pushVelocity: actor.pushVelocity || 0};
+  let alongPush = carAlongPush(actor);
+  const dt = 1 / 120, budget = STOP_PACING.overhead - STOP_PACING.pullAway;
+  const spec = duel._vehicleSpec(actor);
+  for (let elapsed = dt; elapsed <= budget + GEAR_EPSILON; elapsed += dt) {
+    if (raiderShotScheduled(duel, actor, elapsed, preview)) return false;
+    const from = duel.course.groundAt(preview.s, preview.lateral), previousS = preview.s;
+    const settled = pullOverMotion(duel, preview, lateral, dt);
+    preview.lateral += preview.pushVelocity * dt;
+    preview.s += alongPush * dt /
+      Math.max(.25, 1 - duel.course.at(preview.s).curvature * preview.lateral);
+    const damping = Math.exp(-1.5 * dt);
+    preview.pushVelocity *= damping; alongPush *= damping;
+    const to = duel.course.groundAt(preview.s, preview.lateral);
+    if (duel._obstacles(previousS, preview.s).some(obstacle =>
+      sweepObstacle(from, to, obstacle, to.heading + preview.headingError, spec))) return false;
+    if (settled) return true;
+  }
+  return false;
+}
+
+function pullOver(duel, actor, crew, dt) {
+  const settled = pullOverMotion(duel, actor, crew.stopLateral, dt);
   crew.stopSeconds += dt;
-  if (Math.abs(delta) <= .25 && actor.speedMph <= 1) {
+  if (settled) {
     actor.speedMph = 0;
     // Contact correction can also rotate the shell. Finish settling before
     // placing its fighter so the next stationary step cannot move it away.
