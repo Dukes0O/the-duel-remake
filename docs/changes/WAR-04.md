@@ -59,7 +59,10 @@ Decoy timing checks 3 seconds minus the native application tick, then expiry.
 Approved Vesper recipe and fit inputs are unchanged: 21 original art cases,
 102061 checks pass. Installed GLB is 2,387,328 bytes, SHA-256
 29a3873ae936dcd80ca6593d46537ce77cccda206a645e8948c06ea89a9a4f46.
-Lane/build gates are pending on this frozen whole-integration source.
+First frozen lane gate stopped at the existing completion-screen fixture
+(63 passed, one failed, 298 not run, 91.23 s): its minimal App has no switch
+method. Results now default absent switch admission to off; the same untouched
+fixture passes. Lane/build rerun remains pending on the corrected source.
 
 ## Removed
 
