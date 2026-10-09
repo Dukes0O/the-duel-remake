@@ -1,46 +1,65 @@
-# CONVOY-FRAMES: moving tanker cost
+# CONVOY-FRAMES: full-loop tanker cost
 
-Matched moving-frame scenario is prepared. Valid measurements are still pending.
+The distant tanker passes the ten-percent cost limit in both presets and both
+repeats. Native near appearance, lamp signals and race state are preserved.
+Lane gate passes all 356 suites in 898.29 s; production build passes in 617 ms.
 
 ## Changed
 
-- Existing private harness and 120-frame profiler compare High and Performance
-  at 1280 by 720, near and distant, in two counterbalanced seeded pairs.
-- Real native Convoy entry, one repeated coasting pose and ordinary chase camera
-  keep simulation and presentation moving. Fixed-tick witnesses compare paths.
-- Baseline detaches only the loaded tanker around composer draws, restoring its
-  exact parent, child index and visibility in finally. Asset loading, native
-  movement, pose and valve updates stay common. It does not change the game.
-- Delivered frame p95, CPU submission and completed GPU pass costs stay separate.
-  GPU pass p95 sums are a cost proxy, not a whole-frame percentile. Unavailable
-  GPU timing is reported; paired delivered/CPU costs remain. Inconsistent costs
-  do not pass. Repeated overhead above ten percent
-  requests the distant-view hook before any optimization.
+Claude, 9 October: drop player input; follow the tanker with a fixed camera for
+one whole Salt Flats loop. Run twice with the tanker and a plain box of the
+same size, in High and Performance. Simplify the distant view above ten percent.
+Further decisions belong to Claude.
+
+At 80 m the view combines existing native body geometry into one draw, retaining
+every original texture coordinate and the worn atlas. The exact roof and two
+warning posts make four distant draws. It switches back below 76 m to prevent
+flicker. Near objects, hierarchy, geometry and materials stay exact. Shared
+lamps keep boarding recovery and Tollkeeper flashes; all resources dispose once.
 
 ## Checks
 
-Source review found that missing CPU timing could evade a comparison. The sample
-now requires the record, sufficient frames and finite positive CPU cost.
-Browser setup stopped before samples: yard presentation, then stopped asset
-readiness. Both now use the existing Convoy onFrame plus renderFrame recipe;
-the yard also waits for its real control. No paired guard or cost threshold changed.
-The harness's isolated build passed; no frame-cost verdict or runtime change.
-The latest ready check still timed out with no samples, warnings or errors.
-The last attempt proved native Convoy/Salt Flats/countdown entry and loaded tanker
-readiness, then timed out before the first 120-frame profiler result. It recorded
-no cancellation reason. No valid samples or cost/release pass; runtime is unchanged.
-The fixture now waits the existing Gunn profiler-ready guard and 1.2 s, then arms
-the existing profiler at native tick 480. Paired start snapshots must match;
-fixed-tick path witnesses continue through 960. Missing readiness fails instead
-of changing native time or inputs. A failed sample keeps the profiler's summary
-title and start status. Frame, CPU and cost checks are unchanged.
-All processes are closed. This source repair awaits the exclusive measurement slot.
+Original main-view measurements on the older lane base exceeded ten percent
+in both High repeats (GPU +42.53%/+132.62%). Final measurements use integration
+c2762d1b and replace the tanker in every native scene draw, including the mirror.
+The box is exactly 3 by 3.5 by 11 m, centred at height 1.75 m. Both conditions
+retain native movement, poses, valves and temporary career ownership.
 
-## Remaining
+Final private laptop run: seed 9908, zero inputs, camera fixed 110 m behind,
+12 m across and 14 m above, 1280 by 720, resolution scale 1. All eight continuous
+640 m loops match native start tick 120, end tick 4703 and one-second witnesses.
+Each loop covers 38.1917 native seconds and 2,271–2,292 delivered frames.
 
-Run the matched measurements, simplify the existing distant view only if needed,
-then source review and current lane/build. This card blocks Convoy release.
+| Preset/repeat | Delivered p95 added | CPU submission p95 added | Main-view GPU p95 added |
+| --- | ---: | ---: | ---: |
+| High 1 | 0% | -37.37% | -31.25% |
+| High 2 | 0% | -54.76% | -34.59% |
+| Performance 1 | 0% | -24.56% | -10.82% |
+| Performance 2 | 0% | +2.04% | -12.41% |
+
+Delivered p95 is 16.8 ms throughout. CPU, delivered intervals and completed GPU
+queries are separate measures. GPU queries cover the High composer or
+Performance scene pass; CPU submission also includes the mirror. Missing,
+disjoint or sparse available GPU timing fails. Native owner, scale, camera view,
+start/end and path guards pass. Browser: zero errors, eight known QA-only
+Three-bundle warnings (one per page). All processes and private port are closed.
+
+The parent reviewed source, all-view sampling, near and far captures and metrics:
+no finding. Native tanker suite: 62 controls pass, including exact near pose,
+far geometry/UVs, lamp recovery/flash and disposal. Actual runtime GLB UV/flash
+check passes. Tollkeeper: 165 acceptance checks in 21 passing tests.
+Existing assertions and expected hashes remain unchanged. The Director granted
+only the warning-material fixture expansion for shared clones, plus one separate
+body in Tollkeeper's former lamps-only fixture. Neither relaxes an assertion.
+Simulation and replay data are unchanged. The lane replay suite passes all 162
+checks across 18 cases, 16 events, eight categories, three frame rates and three
+runs. No expected replay fingerprint or world signature was regenerated. The
+build has the existing chunk-size warning; the lane gate has zero failures and
+zero skipped suites.
 
 ## Removed
 
-Nothing replaced. Runtime geometry, approved appearance and disposal are unchanged.
+Replaced the stopped/coasting pose and 120-frame partial profiler with continuous
+full native loops. Replaced distant material groups with one native atlas draw;
+the original model remains the near level. No native parts or assets were added.
+Raw captures/reports are disposable after review; only this verdict is retained.

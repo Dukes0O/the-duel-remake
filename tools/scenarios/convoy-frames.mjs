@@ -1,10 +1,29 @@
 import {writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
+import {join, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {build} from 'vite';
+
+async function privateBundle() {
+  const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
+  const entry = join(root, '.qa-dist/convoy-frames.virtual.js').replaceAll('\\', '/');
+  const built = await build({root, configFile: false, logLevel: 'silent',
+    plugins: [{name: 'convoy-frames-private',
+      resolveId(id) {if (id.replaceAll('\\', '/') === entry) return '\0convoy-frames';},
+      load(id) {if (id === '\0convoy-frames') return "export {Box3,Vector3,Mesh,BoxGeometry,MeshStandardMaterial} from 'three';";},
+    }],
+    build: {write: false, emptyOutDir: false, minify: false,
+      lib: {entry, name: 'ConvoyFrameQa', formats: ['iife']}},
+  });
+  const outputs = Array.isArray(built) ? built[0].output : built.output;
+  const code = outputs.find(value => value.type === 'chunk')?.code;
+  if (!code) throw Error('Private frame bundle missing');
+  return code;
+}
 
 async function click(context, selector) {
   const at = await context.evaluate(`(() => {
     const button = document.querySelector(${JSON.stringify(selector)});
-    if (!button || button.disabled) throw Error('Missing Convoy frame control: ' + ${JSON.stringify(selector)});
+    if (!button || button.disabled) throw Error('Missing Convoy frame control');
     button.scrollIntoView({block: 'center'});
     const rect = button.getBoundingClientRect();
     return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
@@ -14,21 +33,12 @@ async function click(context, selector) {
   }
 }
 
-async function ready(context) {
-  await context.waitFor(`(() => {
-    const app = window.__qaApp;
-    app?.onFrame?.(app.duel.state, 0);
-    window.__render?.renderFrame();
-    return app?.visualReady && document.querySelector('#renderer-loading')?.hidden &&
-      window.__render?.scene.getObjectByName('convoy-tanker')?.children.length > 0;
-  })()`, 'loaded native tanker and Salt Flats', 60000);
-}
-
-async function measure(context, quality, distance, present, pair) {
-  const label = `${quality}-${distance}-${present ? 'tanker' : 'baseline'}-${pair}`;
+async function measure(context, bundle, quality, present, pair) {
+  const label = `${quality}-${present ? 'tanker' : 'box'}-${pair}`;
   await context.evaluate('window.name = ""');
   await context.navigate('/tools/menu-check.html?flags=convoy-raid&harness=convoy-frames');
   await context.waitFor('!!window.__qaApp && !!window.__render', 'memory-only Convoy App', 60000);
+  await context.evaluate(bundle + '\nwindow.__convoyFrameQa = ConvoyFrameQa;');
   await context.evaluate(`(() => {
     const app = window.__qaApp;
     app.stop();
@@ -47,223 +57,271 @@ async function measure(context, quality, distance, present, pair) {
     document.head.insertAdjacentHTML('beforeend', '<style>details{display:none!important}</style>');
   })()`);
   await context.waitFor(`(() => {const app = window.__qaApp; app.onFrame?.(app.duel.state, 0);
-    window.__render?.renderFrame();
+    window.__render.renderFrame();
     return app.visualReady && document.querySelector('#renderer-loading')?.hidden;})()`, 'native yard', 60000);
   await context.evaluate('window.__qaApp.advance(8); window.__qaApp.onFrame?.(window.__qaApp.duel.state, 0)');
   await context.waitFor('!!document.querySelector(\'[data-action="yard-scrapdome"]\')', 'native yard control', 60000);
   await click(context, '[data-action="yard-scrapdome"]');
   await click(context, '[data-arena-mode="convoy-raid"]');
   await click(context, '[data-action="arena-start"]');
-  await context.evaluate(`(() => {
-    const state = window.__qaApp.duel.state;
-    const entry = {mode: state.arena?.mode, venueId: state.arena?.venueId,
-      status: state.status, countdown: state.countdown};
-    if (entry.mode !== 'convoy-raid' || entry.venueId !== 'salt-flats' ||
-        entry.status !== 'countdown' || !(entry.countdown > 0)) {
-      throw Error('Native Convoy entry was not reached: ' + JSON.stringify(entry));
-    }
-  })()`);
-  await ready(context);
-  await context.evaluate(`(() => {
+  await context.waitFor(`(() => {
     const app = window.__qaApp;
+    app.onFrame?.(app.duel.state, 0); window.__render.renderFrame();
+    return app.visualReady && document.querySelector('#renderer-loading')?.hidden &&
+      window.__render.scene.getObjectByName('convoy-tanker')?.children.length > 0;
+  })()`, 'loaded native tanker and Salt Flats', 60000);
+  await context.evaluate(`(() => {
+    const app = window.__qaApp, api = window.__render, Q = window.__convoyFrameQa;
+    const state = app.duel.state;
+    if (state.arena?.mode !== 'convoy-raid' || state.arena.venueId !== 'salt-flats' ||
+        state.status !== 'countdown') throw Error('Native Convoy entry missing');
     app.advance(3.1);
-    const state = app.duel.state, rig = state.opponents[0];
-    if (state.status !== 'racing' || state.arena.mode !== 'convoy-raid') {
-      throw Error('Native Convoy countdown did not finish');
-    }
-    Object.assign(state, {s: rig.s - ${distance}, prevS: rig.s - ${distance},
-      lateral: rig.lateral, prevLateral: rig.lateral, speedMph: rig.speedMph,
-      headingError: rig.headingError, yawVelocity: 0, pushVelocity: 0});
-    app.keys = {};
+    const rig = state.opponents[0], model = api.scene.getObjectByName('convoy-tanker');
+    app.keys = {}; app.autopilot = false;
     app.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
-    app.onFrame?.(state, 0);
-    window.__render.renderFrame();
-    const model = window.__render.scene.getObjectByName('convoy-tanker');
-    if (!model?.visible || !model.children.length) throw Error('Approved tanker is not visible');
-    const button = [...document.querySelectorAll('button')].find(node => node.textContent === 'Measure frame pacing');
-    if (!button) throw Error('Existing frame profiler control missing');
-    const originalStep = app.duel.step, originalDraw = window.__render.composer.render;
-    const actor = value => ({s: value.s, lateral: value.lateral, speedMph: value.speedMph,
-      headingError: value.headingError, armor: value.armor, maxArmor: value.maxArmor,
-      airHeight: value.airHeight, finished: value.finished, combatWrecking: value.combatWrecking});
-    const snapshot = tick => ({tick, time: state.stageTimeSec,
-      player: actor(state), opponents: state.opponents.map(actor),
+    app.inspectionCamera = {position: [0, 0, 0], target: [0, 0, 0]};
+    const cameraPose = () => {
+      const at = app.duel.course.groundAt(rig.s, rig.lateral);
+      const heading = at.heading + (rig.headingError || 0);
+      app.inspectionCamera.position.splice(0, 3,
+        at.x - Math.sin(heading) * 110 + Math.cos(heading) * 12, at.y + 14,
+        at.z - Math.cos(heading) * 110 - Math.sin(heading) * 12);
+      app.inspectionCamera.target.splice(0, 3, at.x, at.y + 1.7, at.z);
+    };
+    cameraPose(); app.onFrame?.(state, 0); api.renderFrame();
+    model.updateWorldMatrix(true, true);
+    const identity = model.parent.matrixWorld.elements;
+    if (identity.some((value, index) => Math.abs(value - (index % 5 === 0 ? 1 : 0)) > 1e-10) ||
+        model.scale.toArray().some(value => value !== 1)) throw Error('Box baseline requires identity owner and native scale');
+    const bounds = new Q.Box3().setFromObject(model), size = bounds.getSize(new Q.Vector3());
+    const center = model.worldToLocal(bounds.getCenter(new Q.Vector3()));
+    // At entry rotation can enlarge an axis-aligned world box. Local native
+    // bounds give the exact dimensions and centre, independent of the pose.
+    const quaternion = model.quaternion.clone(), position = model.position.clone();
+    model.quaternion.identity(); model.position.set(0, 0, 0); model.updateWorldMatrix(true, true);
+    bounds.setFromObject(model); bounds.getSize(size); bounds.getCenter(center);
+    model.quaternion.copy(quaternion); model.position.copy(position); model.updateWorldMatrix(true, true);
+    const box = new Q.Mesh(new Q.BoxGeometry(size.x, size.y, size.z),
+      new Q.MeshStandardMaterial({color: 0x888888, roughness: .6, metalness: .2}));
+    box.name = 'convoy-frame-box'; box.castShadow = box.receiveShadow = true;
+    const gl = api.renderer.getContext(), ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
+    const originalStep = app.duel.step, owner = ${quality === 'high'} ? api.composer : api.composer.passes[0];
+    const originalDraw = owner.render, originalRendererDraw = api.renderer.render, originalDiagnostics = app.frameDiagnostics;
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+    const review = window.__convoyFrames = {ticks: 0, frames: [], cpu: [], gpu: [],
+      pending: [], disjoint: false, active: false, done: false, failure: null,
+      witnesses: [], startSnapshot: null, endSnapshot: null, startS: null,
+      scales: new Set(), viewports: new Set(), ratios: new Set(), model, box,
+      originalStep, originalDraw, originalDiagnostics, owner, seed: app.duel.seed,
+      size: size.toArray(), center: center.toArray(), previous: null,
+      gpuName: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unavailable',
+      gpuSupported: !!ext, originalCamera: null, profile: JSON.stringify(app.profile)};
+    const snapshot = () => ({tick: review.ticks, time: state.stageTimeSec,
+      rig: {s: rig.s, lateral: rig.lateral, speedMph: rig.speedMph, armor: rig.armor},
       convoy: structuredClone(state.arena.convoy)});
-    const review = window.__convoyFrames = {model, originalStep, originalDraw,
-      profile: JSON.stringify(app.profile), ticks: 0, witnesses: [], drawCount: 0,
-      armed: false, startSnapshot: null, startError: null,
-      startedAt: state.stageTimeSec, rigStartedAt: rig.s,
-      seed: app.duel.seed, cameraStartedAt: window.__render.camera.position.toArray()};
-    app.duel.step = function(dt) {
-      const result = originalStep.call(this, dt);
-      review.ticks++;
-      if (review.ticks % 120 === 0 && review.ticks <= 960) {
-        review.witnesses.push(snapshot(review.ticks));
+    const poll = () => {
+      if (!ext || review.disjoint) return;
+      if (gl.getParameter(ext.GPU_DISJOINT_EXT)) {
+        review.disjoint = true; review.gpu.length = 0;
+        for (const row of review.pending) gl.deleteQuery(row.query);
+        review.pending.length = 0; return;
       }
-      if (review.ticks === 480) {
-        const ready = app.running && app.visualReady && state.status === 'racing' &&
-          ['ready', 'fallback', 'off', 'unsupported-fallback'].includes(
-            document.querySelector('#view3d')?.dataset.warmupStatus);
-        if (!review.armed || !ready) review.startError = 'Profiler readiness missed native tick 480';
-        else {
-          review.startSnapshot = snapshot(review.ticks);
-          button.click();
-          if (!button.disabled) review.startError = 'Existing profiler rejected the fixed-tick start';
+      for (let i = review.pending.length - 1; i >= 0; i--) {
+        const row = review.pending[i];
+        if (!gl.getQueryParameter(row.query, gl.QUERY_RESULT_AVAILABLE)) continue;
+        const ms = gl.getQueryParameter(row.query, gl.QUERY_RESULT) / 1e6;
+        if (Number.isFinite(ms) && ms >= 0) review.gpu.push(ms);
+        gl.deleteQuery(row.query); review.pending.splice(i, 1);
+      }
+    };
+    app.duel.step = function(dt) {
+      if (review.endSnapshot) return; // Stop at the same native tick in both paired runs.
+      const value = originalStep.call(this, dt); review.ticks++; cameraPose();
+      if (review.ticks === 120) {
+        review.active = true; review.startS = rig.s; review.startSnapshot = snapshot();
+      }
+      if (review.active && review.ticks % 120 === 0) review.witnesses.push(snapshot());
+      if (review.active && rig.s - review.startS >= app.duel.course.length) review.endSnapshot = snapshot();
+      if (state.status !== 'racing' || state.paused) review.failure = 'Native fight stopped before full loop';
+      return value;
+    };
+    // Existing renderer attribution hook, extended only within this private
+    // scenario to retain every frame of the loop, rather than its last window.
+    app.frameDiagnostics = {active: true, now: () => performance.now(), recordAppFrame() {},
+      recordRendererFrame(now, updateMs, submitMs) {
+        if (!review.active || review.done) return;
+        if (review.previous !== null) review.frames.push(now - review.previous);
+        review.previous = now; review.cpu.push(submitMs);
+        const host = document.querySelector('#view3d');
+        review.scales.add(Number(host.dataset.resolutionScale) || 1);
+        review.ratios.add(api.renderer.getPixelRatio());
+        review.viewports.add(host.clientWidth + 'x' + host.clientHeight);
+        if (review.endSnapshot) {
+          review.done = true; review.active = false; app.stop();
+          poll();
+        }
+      }, stop() {} };
+    // Replace the native scene model for every view, including the rear mirror
+    // and ambient normals. Postprocess quads keep their original presentation.
+    api.renderer.render = function(scene, camera) {
+      if (scene !== api.scene) return originalRendererDraw.call(this, scene, camera);
+      const parent = model.parent, index = parent?.children.indexOf(model), visible = model.visible;
+      if (!parent || index < 0 || !visible) throw Error('Native tanker owner lost');
+      model.updateWorldMatrix(true, false);
+      box.position.copy(center).applyMatrix4(model.matrixWorld);
+      box.quaternion.copy(model.quaternion); box.scale.copy(model.scale);
+      if (${present}) return originalRendererDraw.call(this, scene, camera);
+      parent.add(box); model.visible = false;
+      try {return originalRendererDraw.call(this, scene, camera);}
+      finally {
+        box.removeFromParent(); model.visible = visible;
+        if (model.parent !== parent || parent.children.indexOf(model) !== index) {
+          review.failure = 'Native tanker presentation ownership changed';
         }
       }
-      return result;
     };
-    window.__render.composer.render = function(...args) {
-      review.drawCount++;
-      if (${present}) return originalDraw.apply(this, args);
-      const parent = model.parent, index = parent?.children.indexOf(model), visible = model.visible;
-      if (!parent || index < 0) throw Error('Tanker baseline lost its presentation owner');
-      parent.remove(model);
+    owner.render = function(...args) {
+      poll();
+      let query = null;
+      if (review.active && ext && !review.disjoint && review.pending.length < 32 &&
+          !gl.getQuery(ext.TIME_ELAPSED_EXT, gl.CURRENT_QUERY)) {
+        query = gl.createQuery(); if (query) gl.beginQuery(ext.TIME_ELAPSED_EXT, query);
+      }
       try {return originalDraw.apply(this, args);}
       finally {
-        parent.add(model);
-        parent.children.splice(parent.children.indexOf(model), 1);
-        parent.children.splice(index, 0, model);
-        model.visible = visible;
+        if (query) {gl.endQuery(ext.TIME_ELAPSED_EXT); review.pending.push({query});}
       }
+    };
+    review.cleanup = () => {
+      app.stop(); app.duel.step = originalStep; owner.render = originalDraw;
+      api.renderer.render = originalRendererDraw;
+      app.frameDiagnostics = originalDiagnostics; app.inspectionCamera = null;
+      box.removeFromParent(); box.geometry.dispose(); box.material.dispose();
+      for (const row of review.pending) gl.deleteQuery(row.query);
+      review.pending.length = 0;
+      if (!model.parent || !model.visible) throw Error('Tanker draw cleanup failed');
     };
     app.start();
   })()`);
   try {
     await context.waitFor(`(() => {
-      if (window.__convoyFrames.startError) throw Error(window.__convoyFrames.startError);
-      return window.__qaApp.running && window.__qaApp.visualReady &&
-        ['ready','fallback','off','unsupported-fallback'].includes(document.querySelector('#view3d')?.dataset.warmupStatus);
-    })()`, label + ' native profiler warmup', 10000);
-    await new Promise(done => setTimeout(done, 1200));
-    await context.evaluate(`(() => {
       const review = window.__convoyFrames;
-      if (review.startError || review.ticks >= 480) throw Error(review.startError || 'Profiler readiness missed native tick 480');
-      review.armed = true;
-    })()`);
-    await context.waitFor(`(() => {
-      if (window.__convoyFrames.startError) throw Error(window.__convoyFrames.startError);
-      return document.querySelector('#performance-results')?.textContent.includes('"frames": 120');
-    })()`,
-      label + ' delivered native frames', 35000);
+      if (review.failure) throw Error(review.failure);
+      return review.done;
+    })()`, label + ' complete native loop', 180000);
     const result = await context.evaluate(`(() => {
-      const app = window.__qaApp, state = app.duel.state, review = window.__convoyFrames;
-      app.stop();
-      if (state.status !== 'racing' || state.stageTimeSec <= review.startedAt ||
-          state.opponents[0].s === review.rigStartedAt || !review.drawCount ||
-          window.__render.camera.position.toArray().every((value, i) => value === review.cameraStartedAt[i])) {
-        throw Error('Profiler did not cover a moving native fight and camera');
+      const review = window.__convoyFrames, state = window.__qaApp.duel.state;
+      if (!review.startSnapshot || !review.endSnapshot || state.status !== 'racing' ||
+          review.endSnapshot.rig.s - review.startSnapshot.rig.s < window.__qaApp.duel.course.length ||
+          JSON.stringify(window.__qaApp.profile) !== review.profile || !review.model.visible || !review.model.parent) {
+        throw Error('Full-loop coverage or ownership guard failed');
       }
-      if (JSON.stringify(app.profile) !== review.profile || !review.model.parent || !review.model.visible) {
-        throw Error('Frame baseline changed career or tanker ownership');
+      const target = review.model.getWorldPosition(window.__render.camera.position.clone());
+      target.y += 1.7; target.project(window.__render.camera);
+      if (Math.abs(target.x) >= .95 || Math.abs(target.y) >= .95 || target.z < -1 || target.z > 1) {
+        throw Error('Tanker outside fixed camera view');
       }
-      const camera = window.__render.camera;
-      const projected = review.model.getWorldPosition(camera.position.clone());
-      projected.y += 1.7;
-      projected.project(camera);
-      if (Math.abs(projected.x) >= .95 || Math.abs(projected.y) >= .95 ||
-          projected.z < -1 || projected.z > 1) throw Error('Moving tanker is outside the camera view');
-      if (!review.startSnapshot) throw Error('Fixed-tick profiler start was not recorded');
-      return {seed: review.seed, startSnapshot: review.startSnapshot,
-        witnesses: review.witnesses, ticks: review.ticks,
-        drawCount: review.drawCount, startedAt: review.startedAt, endedAt: state.stageTimeSec,
-        profileUnchanged: true, tankerRestored: true,
-        pacing: JSON.parse(document.querySelector('#performance-results').textContent).at(-1)};
+      return {seed: review.seed, frames: review.frames, cpu: review.cpu, gpu: review.gpu,
+        gpuStatus: !review.gpuSupported ? 'unsupported' : review.disjoint ? 'disjoint' : 'available',
+        gpuName: review.gpuName, scales: [...review.scales], ratios: [...review.ratios],
+        viewports: [...review.viewports], size: review.size, center: review.center,
+        startSnapshot: review.startSnapshot, endSnapshot: review.endSnapshot,
+        loopLength: window.__qaApp.duel.course.length, witnesses: review.witnesses};
     })()`);
-    const pacing = result.pacing, cpu = pacing.phaseTiming?.cpuMs;
-    if (pacing.frames !== 120 || pacing.quality !== (quality === 'high' ? 'High' : 'Performance') ||
-        pacing.startScale !== pacing.endScale || !Number.isFinite(pacing.p95) || pacing.p95 <= 0 ||
-        !cpu?.renderSubmit || !(cpu.renderSubmit.samples >= 110) ||
-        !Number.isFinite(cpu.renderSubmit.p95Ms) || cpu.renderSubmit.p95Ms <= 0 || !result.witnesses.length) {
-      throw Error('Invalid or changing-scale frame sample');
+    if (result.frames.length < 600 || result.cpu.length < 600 ||
+        result.scales.length !== 1 || result.ratios.length !== 1 || result.viewports.length !== 1) {
+      throw Error('Invalid or changing-scale loop measurement');
     }
+    const summary = values => {
+      if (!values.length) return null;
+      const sorted = [...values].sort((a, b) => a - b);
+      if (sorted.some(value => !Number.isFinite(value) || value < 0)) throw Error('Invalid loop timing');
+      return {samples: sorted.length, mean: sorted.reduce((a, b) => a + b, 0) / sorted.length,
+        p50: sorted[Math.ceil(sorted.length * .5) - 1], p95: sorted[Math.ceil(sorted.length * .95) - 1]};
+    };
+    const pacing = {delivered: summary(result.frames), cpu: summary(result.cpu), gpu: summary(result.gpu)};
+    delete result.frames; delete result.cpu; delete result.gpu;
+    if (pacing.delivered.p95 <= 0 || pacing.cpu.p95 <= 0 || result.gpuStatus === 'disjoint' ||
+        result.gpuStatus === 'available' && (!pacing.gpu || pacing.gpu.samples < pacing.cpu.samples * .8 || pacing.gpu.p95 <= 0)) {
+      throw Error('Insufficient completed GPU or renderer frames');
+    }
+    await context.evaluate("document.head.insertAdjacentHTML('beforeend', '<style>.combat-opponent-marker{visibility:hidden!important}</style>')");
     result.capture = await context.screenshot(label);
-    return {quality, distance, present, pair, ...result};
-  } catch (error) {
-    const diagnostic = await context.evaluate(`(() => {
-      const app = window.__qaApp, review = window.__convoyFrames;
-      const results = document.querySelector('#performance-results');
-      const button = [...document.querySelectorAll('button')].find(node =>
-        node.textContent.includes('frame') && node.textContent.includes('Measur'));
-      return {title: results?.closest('details')?.querySelector('summary')?.textContent,
-        startError: review.startError, ticks: review.ticks, startSnapshot: review.startSnapshot,
-        running: app.running, visualReady: app.visualReady, status: app.duel.state.status,
-        warmup: document.querySelector('#view3d')?.dataset.warmupStatus,
-        vehicleAsset: document.querySelector('#view3d')?.dataset.vehicleAsset,
-        button: button?.textContent, disabled: button?.disabled, audio: app.audio?.context?.state};
-    })()`);
-    error.message += ': ' + JSON.stringify(diagnostic);
-    throw error;
+    if (quality === 'high' && present && pair === 1) {
+      await context.evaluate(`(() => {
+        const app = window.__qaApp, api = window.__render, rig = app.duel.state.opponents[0];
+        const review = window.__convoyFrames, lod = review.model.getObjectByName('convoy-tanker-detail');
+        const at = app.duel.course.groundAt(rig.s, rig.lateral), heading = at.heading + (rig.headingError || 0);
+        review.farCamera = structuredClone(app.inspectionCamera);
+        app.inspectionCamera.position.splice(0, 3,
+          at.x - Math.sin(heading) * 35 + Math.cos(heading) * 12, at.y + 8,
+          at.z - Math.cos(heading) * 35 - Math.sin(heading) * 12);
+        api.camera.position.fromArray(app.inspectionCamera.position);
+        if (lod) {lod.autoUpdate = false; lod.levels[0].object.visible = true; lod.levels[1].object.visible = false;}
+        api.renderFrame({presentationSeconds: app.duel.state.stageTimeSec});
+      })()`);
+      result.nearOriginal = await context.screenshot('near-original-native');
+      await context.evaluate(`(() => {
+        const app = window.__qaApp, api = window.__render;
+        const lod = window.__convoyFrames.model.getObjectByName('convoy-tanker-detail');
+        if (lod) lod.autoUpdate = true;
+        api.camera.position.fromArray(app.inspectionCamera.position);
+        api.renderFrame({presentationSeconds: app.duel.state.stageTimeSec});
+      })()`);
+      result.nearSelected = await context.screenshot('near-selected-native');
+      await context.evaluate(`(() => {
+        const app = window.__qaApp, review = window.__convoyFrames;
+        app.inspectionCamera.position.splice(0, 3, ...review.farCamera.position);
+        app.inspectionCamera.target.splice(0, 3, ...review.farCamera.target);
+      })()`);
+    }
+    console.log(label + ' loop: ' + JSON.stringify(pacing));
+    return {quality, present, pair, ...result, pacing};
   } finally {
-    await context.evaluate(`(() => {
-      const app = window.__qaApp, review = window.__convoyFrames;
-      app.stop();
-      app.duel.step = review.originalStep;
-      window.__render.composer.render = review.originalDraw;
-      if (!review.model.parent || !review.model.visible) throw Error('Tanker draw cleanup failed');
-    })()`);
+    await context.evaluate('window.__convoyFrames?.cleanup()');
   }
-}
-
-function cost(row) {
-  const pacing = row.pacing;
-  const passes = pacing.passTiming?.passes || [];
-  const gpuAvailable = pacing.passTiming?.gpuStatus?.startsWith('available');
-  const gpuValid = gpuAvailable && passes.length > 0 && passes.every(pass => pass.gpuMs?.samples >= 100);
-  return {delivered: pacing.p95, cpu: pacing.phaseTiming.cpuMs.renderSubmit.p95Ms,
-    gpu: gpuValid ? passes.reduce((sum, pass) => sum + pass.gpuMs.p95, 0) : null};
 }
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
     width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
   });
+  const bundle = await privateBundle();
   const report = {card: 'CONVOY-FRAMES', rows: [], comparisons: [], passed: false,
-    method: 'Seeded native Convoy entry, one repeated coasting pose, ordinary chase camera and real-time App physics. Existing 120-frame profiler only.',
-    baseline: 'Only the loaded tanker presentation group is detached around composer drawing and restored to its exact parent/index/visibility. Native movement, pose and valve updates remain common.',
-    limits: ['Delivered intervals, CPU submission and completed GPU pass costs are separate; they are not added together.',
-      'Summed GPU pass p95 values are a pass-cost proxy, not a whole-frame GPU percentile. Native tanker pose and lamp updates remain in the baseline.']};
+    method: 'Zero player input. Fixed tanker-relative camera 110 m behind/12m across/14m above. Two counterbalanced complete native Salt Flats loops per model and preset.',
+    baseline: 'One neutral PBR box exactly matching native local bounds and shadows replaces tanker only during every native-scene draw, including the rear mirror. Native pose and valve updates remain common.',
+    limits: ['Renderer RAF intervals, CPU submission and completed whole-view GPU costs are separate.',
+      'GPU timer covers High composer or Performance scene pass. CPU attribution uses the existing renderer hook.']};
   const persist = () => writeFile(join(context.outputDir, 'convoy-frames.json'), JSON.stringify(report, null, 2) + '\n');
   try {
     for (const quality of ['high', 'performance']) {
-      for (const distance of [35, 110]) {
-        for (const pair of [1, 2]) {
-          for (const present of pair === 1 ? [false, true] : [true, false]) {
-            report.rows.push(await measure(context, quality, distance, present, pair));
-            await persist();
-          }
-          const rows = report.rows.filter(row => row.quality === quality && row.distance === distance && row.pair === pair);
-          const baseline = rows.find(row => !row.present), tanker = rows.find(row => row.present);
-          const count = Math.min(baseline.witnesses.length, tanker.witnesses.length);
-          if (baseline.pacing.startScale !== tanker.pacing.startScale ||
-              baseline.pacing.renderPixelRatio !== tanker.pacing.renderPixelRatio ||
-              baseline.pacing.viewport !== tanker.pacing.viewport ||
-              baseline.pacing.gpu !== tanker.pacing.gpu) throw Error('Matched renderer configurations differ');
-          if (baseline.seed !== tanker.seed || JSON.stringify(baseline.startSnapshot) !==
-              JSON.stringify(tanker.startSnapshot) || JSON.stringify(baseline.witnesses.slice(0, count)) !==
-              JSON.stringify(tanker.witnesses.slice(0, count))) throw Error('Matched native Convoy paths diverged');
-          const a = cost(baseline), b = cost(tanker);
-          report.comparisons.push({quality, distance, pair, matchedTicks: count * 120,
-            baseline: a, tanker: b, addedPercent: Object.fromEntries(Object.keys(a).map(key =>
-              [key, a[key] > 0 && b[key] != null ? (b[key] / a[key] - 1) * 100 : null]))});
-          await persist();
+      for (const pair of [1, 2]) {
+        for (const present of pair === 1 ? [false, true] : [true, false]) {
+          report.rows.push(await measure(context, bundle, quality, present, pair)); await persist();
         }
+        const rows = report.rows.filter(row => row.quality === quality && row.pair === pair);
+        const box = rows.find(row => !row.present), tanker = rows.find(row => row.present);
+        for (const key of ['seed', 'size', 'center', 'scales', 'ratios', 'viewports', 'gpuName', 'startSnapshot', 'endSnapshot']) {
+          if (JSON.stringify(box[key]) !== JSON.stringify(tanker[key])) throw Error('Matched loop differs: ' + key);
+        }
+        const count = Math.min(box.witnesses.length, tanker.witnesses.length);
+        if (JSON.stringify(box.witnesses.slice(0, count)) !== JSON.stringify(tanker.witnesses.slice(0, count))) {
+          throw Error('Matched native loop paths diverged');
+        }
+        const comparison = {quality, pair, matchedTicks: count * 120, addedPercent: {}};
+        for (const metric of ['delivered', 'cpu', 'gpu']) {
+          const a = box.pacing[metric], b = tanker.pacing[metric];
+          comparison.addedPercent[metric] = a && b ? (b.p95 / a.p95 - 1) * 100 : null;
+        }
+        report.comparisons.push(comparison); await persist();
       }
     }
-    const paired = report.comparisons;
-    report.requiresSimplification = paired.some(row => ['delivered', 'cpu', 'gpu'].some(key =>
-      row.addedPercent[key] > 10 && paired.some(other => other.quality === row.quality &&
-        other.distance === row.distance && other.pair !== row.pair && other.addedPercent[key] > 10)));
-    report.inconclusive = paired.some(row =>
-      ['delivered', 'cpu', 'gpu'].some(key => row.addedPercent[key] > 10)) && !report.requiresSimplification;
-    report.passed = !report.requiresSimplification && !report.inconclusive;
+    report.requiresSimplification = report.comparisons.some(row =>
+      Object.values(row.addedPercent).some(value => value > 10));
+    report.passed = !report.requiresSimplification;
     await persist();
-    if (!report.passed) throw Error(report.requiresSimplification ?
-      'Matched tanker cost exceeds ten percent; distant-view hook review required' :
-      'Matched tanker cost is noisy; one bounded repeated measurement is needed');
+    if (!report.passed) throw Error('Tanker adds more than ten percent over matched full-loop box; simplify distant view and remeasure');
   } catch (error) {
-    report.failure = error.message;
-    await persist();
-    throw error;
+    report.failure = error.message; await persist(); throw error;
   }
 }
