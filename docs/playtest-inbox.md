@@ -1,14 +1,53 @@
 # Wasteland play-test inbox
 
-## WAR-03e answer, 5 October
+## CREW-04 admission and overhead conflict for Claude, 9 October
 
-Claude: Chrome Crown is a cosmetic roof look, zero armor and mass, made from
-the existing crown spikes. Any car and armor tier; one roof look at a time.
-Worn chrome spikes, blackened steel base; Baron wears it. One Viper/other-car
-comparison sheet in three views, at most two rounds. Saved Baron defeat earns
-Vesper; WAR-04 builds her roster, perk and Shock Charge. First win saves the
-title and shows it with THE BARON IS DOWN! on results. Preview only until
-WAR-04 merges. The Director has started the lane after Gunn and Tollkeeper.
+The matching Arsenal-enabled Hard seeds 1989-2018 pass: 10/30 wins, all
+finish, six completed repairs, no aborts; maximum measured repair-stop
+overhead is 1.05 s. Source uses only your new admission/no-abort/80 m rules.
+
+The real browser ambush exposes a conflict: the one-second ordinary drive
+leaves the car on the opposite side of the road from the preferred shoulder.
+The unchanged pull-over then brakes for 2.4417 s, leaving no time for lock
+and exceeding the 2.5 s cap once pull-away is included: 2.7167 s total. No planner, trigger,
+range or pacing rule was changed to hide it.
+
+Please settle the allowed admission-only remedy: choose the nearest existing
+safe shoulder before braking, or reject a maneuver that cannot meet the cap.
+Crew is waiting_on: claude; other cards continue.
+
+## WAR-03e final Crown sheet for Claude, 9 October
+
+Round two is ready: bright chrome spikes, 1.5 times taller, original fitted
+base retained. Twelve actual Viper/Falcone views, High and Performance,
+zero browser issues; sheet is 257,855 bytes. Please give the final Crown
+verdict. No third round or look approval is claimed.
+
+Sheet: `C:/Users/kyleb/.codex/worktrees/wasteland-integration/blackiron/docs/board/looks/blackiron/round-2.jpg`.
+
+The three Baron sound IDs and one catalog-row snapshot migration pass all
+old hashes. The Preview flag also passes its unchanged assertion. Claude
+listens to the existing native Nitro mix; fresh gate and merge follow the
+Crown and listening verdicts. WAR-04 follows that merge.
+
+Current native Nitro mix: [listen](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-mix.mp3).
+The preserved capture is 7.64 s, peak 0.33246; tell/start/spent at
+0.749/1.299/4.920 s. Its [manifest](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-audio.json) is current. The lane prose
+7.17 s/0.390 figures describe an older capture; fold this correction into
+the eventual Baron merge, with no results-only commit.
+
+## WAR-03e answers, 5 October
+
+Chrome Crown is cosmetic, zero armor and mass, using existing crown spikes on
+any car and armor tier, one roof look at a time. Worn chrome and blackened steel;
+Baron wears it. One Viper/other-car sheet in three views, at most two rounds.
+Saved Baron defeat earns Vesper; WAR-04 builds her. First win saves the title
+and shows it with THE BARON IS DOWN! on results. Preview only until WAR-04.
+
+Every Nitro end earns 2.5 s at half top speed and 1.5 times incoming damage on
+all sides, including miss or oil cancellation. Spikes retract, exhaust coughs
+black smoke, engine sputters: warlord.nitroSpent, HE'S OUT OF NITRO. HIT HIM!
+The next move cannot shorten the window. These rules are on the card and table.
 
 ## WAR-03d review for Claude, 5 October
 
@@ -409,9 +448,3 @@ Claude's answers (30 September 2026), settled in docs/SCRAPDOME.md section 5:
 The Director will add a short summary when work reaches its first checkpoint.
 
 - **ARENA-SHOVE final review question for Claude:** clean f409 actual private16495 completes the full High/Performance contact matrix. All8public native input streams, spawns, traces and runtime bytes match pre-card0f exactly. The negative-side38/54authored-body/kit rail crossings are inherited; positive-side controls have zero newcrossings. The exported diagnostic comparator still requests your classification. Can this pre-existing body versus center-boundary mismatch remain outside the bounded shove Sourcef703 fix, or does it need a separate card before merge? No global containment or model refit is inferred. Absolute119RAF samples per quality P9516.8ms; the old PUBLIC_ONLY baseline contains no timings, so no relative10% claim. Gates precede formal review; Kyle Preview feel remains.
-# WAR-03e Nitro window, Claude, 5 October 2026
-
-Every Nitro end earns 2.5 s at a 50% speed cap and 1.5 times incoming damage
-on every face. Spikes retract, exhaust turns black and the engine sputters.
-Callout: HE'S OUT OF NITRO. HIT HIM! Sound: warlord.nitroSpent. No next move
-shortens the window.
