@@ -469,9 +469,10 @@ Flats. The fight is the Convoy Raid with these additions.
 | Toll Gate | Tell: a klaxon and flashing rig lights. Then the rig drops a spike strip 12 m wide across his path (caltrops rules). Two lights mark a 4 m gap, whose centre is seeded between 3 and 9 m across the strip. At most every 14, 11, 9 s |
 | Counter | Drive through the lit gap |
 | Window | After each gate the rear valve's existing lamps flash for 3 s; hits on that valve deal 2 times damage. No doors open |
-| Phase two | After the first valve breaks: his escorts respawn once, gates 20% more often |
+| Phase two | First broken valve resets both escorts to full armor once, even if damaged or waiting to return. Ordinary 3.5 s escort returns then continue; gates 20% more often |
 | Win | Break the valves and plant the finishing charge by boarding (CREW-03), as in every Convoy Raid |
-| Reward | The convoy kit (plated look, +30 armor on any car) and his story card |
+| Pay | Escorts do not score. Loss: 40 per broken valve times difficulty. First win: ladder pay and territory claim. Rematch win: ordinary warlord pay. Existing warlord settlement pays once |
+| Reward | The convoy kit: the Warlord plated look, earned on any car, +30 armor and +270 kg; no new art. Also his story card |
 | Callouts | `TOLL GATE!`, `CORE LIT. HIT THE REAR VALVE!` |
 
 ### Settled for build: Baron Blackiron (WAR-03e)
@@ -484,8 +485,17 @@ Viper Prototype with the full arsenal. The final warlord.
 | Armor | The Viper's 80 times 1.5; he is fast and fragile |
 | Moves | He takes turns using Saw Sweep, Dust Veil, Mirage and Barrage, each with its own tell, counter and window as above, one at a time, at most every 8, 7, 6 s |
 | Phase two | He adds Nitro Ram (docs/ARSENAL.md) with its own tell (spikes out, engine scream), and two moves may follow each other with one tell between them |
-| Reward | The secret crew member, the Chrome Crown kit and the title "Warlord of the Wastes" |
+| Nitro window | Every Nitro Ram end, hit, miss or oil cancellation: 2.5 s at 50% top speed and 1.5 times incoming damage from every side. Spikes retract, exhaust coughs black smoke, engine sputters; `warlord.nitroSpent` and `HE'S OUT OF NITRO. HIT HIM!`. A following move never cuts this window short |
+| Reward | Chrome Crown roof look: `chrome-crown`, 0 armor, 0 kg. Existing crown spikes on any car and armor tier; one roof look at a time in the Armory. Polished, worn chrome spikes on a scratched blackened steel base; the Baron wears it. Saved defeat earns Vesper, whose roster place, perk and Shock Charge are built in WAR-04. First win saves "Warlord of the Wastes" and shows it on results with `THE BARON IS DOWN!` |
 | Callouts | Each move keeps its own; on the win: `THE BARON IS DOWN!` |
+
+Claude, 5 October: one Chrome Crown comparison sheet, side, three-quarter and
+top on the Viper and one other car, with at most two rounds. The Baron stays
+in the Preview until WAR-04 merges, so his rewards are ready before release.
+
+Claude, 9 October: Crown round two is final. Make the spikes bright polished
+chrome with strong reflections and small scratches, 1.5 times taller on the
+blackened base, keeping the fit. Send one sheet for approval before merge.
 
 ### Settled for build: the ladder's end (WAR-04)
 

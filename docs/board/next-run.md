@@ -1,42 +1,31 @@
-# Next run: phase 3, a Wasteland worth finding (updated 5 October 2026)
+# Next run: phase 3, a Wasteland worth finding (updated 9 October 2026)
 
-## Director resume, 5 October 2026
+## Director resume, 9 October 2026
 
-Kyle's "Build more, record less" rule in AGENTS.md controls this run.
-ARS-03, AUD-18, ARENA-05 and ARENA-07 are merged. Finish computer crews
-and Gunn; Tollkeeper now starts from Convoy. Baron follows Gunn and Tollkeeper.
-Claude's 5 October answers are on the cards and in the inbox. Gunn's round
-two is approved; finish listening and gates. Crew changes only stop pacing.
-Convoy may merge with stopped-view art evidence; CONVOY-FRAMES blocks its
-release, not development. Tollkeeper uses the rear valve and a seeded 4 m
-gap, with no doors. Shared files keep one owner at a time.
-Gunn's generic contacts and tell audio are source-reviewed at 37683f36.
-Run the full tier only at the end, alone with `--jobs 4`. Keep one short log
-line per merge; fold notes into the next feature commit or merge.
-End full passes all 352 suites on clean 2e7862fb, alone with four jobs.
-End notes and status wait for the next real merge. Push waits for approved
-binary compaction; unmerged lanes must stay in place.
+Raise Claude questions immediately and set waiting_on: claude. Keep other
+cards moving. Build more, record less in AGENTS.md controls this run.
 
-ARS-02, CREW-03 and BALANCE-W2-OFF-RETIRE are merged. AUD-17 is complete:
-Kyle's nine kept voice choices are final. AUD-18 now owns playing those
-lines in fights with subtitles; the old engine-spike label is superseded.
+- CREW-04: matching Hard sample passes 10/30; all finish, no aborts. The new
+  native cross-road acceptance exceeds the unchanged 2.5 s overhead cap
+  (2.7167 s). Claude must settle the admission-only remedy. Do not merge.
+- WAR-03e: final round-two Crown sheet is ready. Taller bright chrome spikes
+  retain the fitted black base. Exact audio filters and Preview flag pass
+  focused controls. Claude's Crown and native listening verdict precede the
+  fresh lane/build and merge. No third art round. Preview until WAR-04.
+- TEST-DRIVER-BRAKING: general pursuit fix, with no game code changed.
+  Medium finishes improve 24/30 to 30/30; all thirty Hard replay traces and
+  results are identical. Source review, lane tier 10/10 and build pass; merged.
+- CONVOY-FRAMES: full-loop, fixed-camera, same-size box controls run twice per
+  quality. The existing-geometry distant view passes all eight final loops:
+  worst CPU addition 2.04%, delivered p95 stays 16.8 ms. Near look remains;
+  lane 356/356 and build pass; merged. Convoy moving-cost blocker cleared.
+- Start WAR-04 after the Baron merges. No Vesper placeholder.
 
-Start WAR-03a (Gunn, in the Pit), then ARENA-07 (Convoy Raid). Continue
-with WAR-03d when Convoy merges, ARS-03, CREW-04, ARENA-05 and AUD-18.
-Run independent cards in separate lanes. Shared hooks have one owner at
-a time; CREW-04 precedes ARENA-05 where they both need raiders.js.
-Merge when the current gates and required reviews pass. Set waiting_on:
-claude for a design or play review and carry on with other cards.
-
-A release is being prepared separately. Leave its lane, Preview and live
-game alone. This checkpoint takes priority over the older resume below.
-
-Kyle supplied Claude's four answers on 4 October. Gunn, Convoy, computer
-crews and Ambush Alley resume with no Claude design wait; the named design
-docs and cards hold the answers. Ambush Alley uses the Pit and Salt, not the
-Scrapdome ring. Claude Sonnet owns the separate release and its cleanup.
-All Codex builds and QA are laptop-only. Update lanes from integration
-after Sonnet merges the whole tested release; do not extract its cleanup.
+Last clean full tier: c2762d1b, 356/356, 836.47 s. Run this session's full
+alone with four jobs after the final merge. Fold status into a real merge;
+no results-only commit. Push still waits for approved binary compaction.
+Keep every unmerged lane and the protected audio lane. Release and live
+port 5174 remain untouched.
 
 ## Bosses merged; shared files released (Claude, 2 October 2026, afternoon)
 

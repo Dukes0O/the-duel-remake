@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {GUNN_TURRET_LAYOUT, gunnTurretMount} from '../warlords/gunn-turret.js';
 
 // ARENA-FEEL presentation: headlight flares on a computer car telling a
 // charge, and a halo on a car that has just respawned. It reads the
@@ -49,7 +50,38 @@ function partsFor(mesh) {
   halo.name = 'Arena respawn shimmer';
   halo.position.set(0, HALO.y, 0);
   mesh.add(halo);
-  return (mesh.userData.arenaTell = {flares, halo});
+  return (mesh.userData.arenaTell = {flares, halo, aimingLine: null});
+}
+
+const aimFrom = new THREE.Vector3(), aimTo = new THREE.Vector3();
+function updateAimingLine(mesh, actor, parts) {
+  const aim = actor.gunnBarrage?.stage === 'tell' && actor.gunnBarrage.aim;
+  if (!aim && !parts.aimingLine) return;
+  if (!parts.aimingLine) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    parts.aimingLine = new THREE.Line(geometry, new THREE.LineBasicMaterial({color: 0xff2718,
+      transparent: true, opacity: .85, depthWrite: false, toneMapped: false}));
+    parts.aimingLine.name = 'Gunn barrage aiming line';
+    parts.aimingLine.visible = false;
+    mesh.add(parts.aimingLine);
+  }
+  parts.aimingLine.visible = !!aim;
+  if (!aim) return;
+  mesh.updateWorldMatrix(true, true);
+  const mouth = mesh.getObjectByName('gunn-turret-mouth-0');
+  if (mouth) mesh.worldToLocal(mouth.getWorldPosition(aimFrom));
+  else {
+    const mount = gunnTurretMount(actor.car);
+    if (!mount) {parts.aimingLine.visible = false; return;}
+    aimFrom.fromArray(mount); aimFrom.y += GUNN_TURRET_LAYOUT.headPivot[1];
+  }
+  aimTo.set(aim.x, aim.y ?? 1, aim.z); mesh.worldToLocal(aimTo);
+  const positions = parts.aimingLine.geometry.getAttribute('position');
+  positions.setXYZ(0, aimFrom.x, aimFrom.y, aimFrom.z);
+  positions.setXYZ(1, aimTo.x, aimTo.y, aimTo.z);
+  positions.needsUpdate = true;
+  parts.aimingLine.geometry.computeBoundingSphere();
 }
 
 // Returns true when it added sprites, so the caller refreshes passes that
@@ -62,6 +94,9 @@ export function updateArenaTells(entries, seconds, shimmerSec) {
     if (!(tell > 0 || shimmer > 0) && !mesh.userData.arenaTell) continue;
     added ||= !mesh.userData.arenaTell;
     const parts = partsFor(mesh);
+    const hadAimingLine = !!parts.aimingLine;
+    updateAimingLine(mesh, actor, parts);
+    if (!hadAimingLine && parts.aimingLine) added = true;
     // Flashing high beams: a hard size pulse the player can read at range.
     const pulse = .5 + .5 * Math.sin(seconds * Math.PI * 2 * FLARE.hz);
     for (const flare of parts.flares) {
@@ -82,6 +117,7 @@ const MARKER_COLORS = Object.freeze({danger: 0xff3b21});
 export function updateArenaMarkers(group, markers, seconds) {
   if (!group) return;
   const list = Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'ring') : [];
+  updateGapLights(group, Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'light') : [], seconds);
   updateTyreMarks(group, Array.isArray(markers) ? markers.filter(marker => marker?.kind === 'tyre') : []);
   group.userData.rings ??= [];
   const rings = group.userData.rings;
@@ -103,6 +139,24 @@ export function updateArenaMarkers(group, markers, seconds) {
     ring.scale.setScalar(marker.radius);
     ring.material.color.setHex(MARKER_COLORS[marker.color] ?? MARKER_COLORS.danger);
     ring.material.opacity = .55 + .35 * Math.sin(seconds * Math.PI * 2 * 3) ** 2;
+  });
+}
+
+function updateGapLights(group, list, seconds) {
+  group.userData.gapLights ??= [];
+  const lights = group.userData.gapLights;
+  while (lights.length < list.length) {
+    const light = sprite(0xa8ffb0);
+    light.name = 'Arena safe gap light';
+    group.add(light);
+    lights.push(light);
+  }
+  lights.forEach((light, index) => {
+    const marker = list[index];
+    light.visible = !!marker;
+    if (!marker) return;
+    light.position.set(marker.x, (marker.y || 0) + .35, marker.z);
+    light.scale.setScalar(marker.radius * (1.8 + .2 * Math.sin(seconds * 12) ** 2));
   });
 }
 

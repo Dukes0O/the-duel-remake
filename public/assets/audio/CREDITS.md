@@ -107,3 +107,11 @@ by **megashroom**, released under **CC0 1.0**. The public HQ Ogg preview is
 trimmed to its start-up scream, high- and low-pass filtered, faded, loudness
 conditioned and encoded as mono Vorbis by `tools/audio/build-sal.mjs`. Runtime
 file: `sal-saw-scream.ogg`. No author endorsement is implied.
+
+## Toll Gate klaxon
+
+[electric hum.wav](https://freesound.org/people/soundofsong/sounds/641335/)
+by **soundofsong**, CC0 1.0. The verified cached preview is filtered, repitched,
+soft-clipped and pulsed, faded, level-conditioned and encoded as mono Vorbis
+by `tools/build-tollkeeper-audio.mjs`. Runtime file:
+`tollkeeper/gate-klaxon.ogg`. No author endorsement is implied.

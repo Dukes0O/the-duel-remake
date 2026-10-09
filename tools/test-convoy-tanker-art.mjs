@@ -437,6 +437,61 @@ check('same seed repeats actual fitted geometry, parts, transforms and materials
   assert.deepEqual(manifest.parts,first.manifest.parts);assert.deepEqual(manifest.sourceInstances,first.manifest.sourceInstances);
   assert.deepEqual(manifest.stats,first.manifest.stats);
 });
+check('distant native atlas merge preserves near hierarchy, source geometry, lamps and single disposal',async()=>{
+  const api=await moduleApi(),data=await candidate();let loaded,nearSnapshot,hierarchy;
+  const result=api.createTankerModel({loadAsset:async()=>{
+    loaded=await asset(join(data.output,config.outputs.model));
+    nearSnapshot=worldSnapshot(loaded.gltf.scene);
+    hierarchy=[];loaded.gltf.scene.traverse(node=>hierarchy.push({node,children:[...node.children],matrix:node.matrix.toArray()}));
+    return loaded.gltf;
+  }});
+  await result.ready;
+  for(const row of hierarchy){
+    assert.deepEqual(row.node.children,row.children,'near children remain the identical native objects');
+    assert.deepEqual(row.node.matrix.toArray(),row.matrix,'near local transforms stay exact');
+  }
+  assert.deepEqual(worldSnapshot(loaded.gltf.scene),nearSnapshot,'near native world geometry and names stay exact');
+  const lod=result.group.getObjectByName('convoy-tanker-detail');
+  const far=result.group.getObjectByName('convoy-tanker-distant');
+  const body=far.getObjectByName('convoy-tanker-distant-body');
+  assert.ok(lod?.isLOD&&far&&body?.isMesh,'real native near/far views are installed');
+  const camera=new THREE.PerspectiveCamera();result.group.updateMatrixWorld(true);
+  for(const [distance,nearVisible] of [[35,true],[110,false],[35,true]]){
+    camera.position.set(0,0,distance);camera.updateMatrixWorld(true);lod.update(camera);
+    assert.equal(loaded.gltf.scene.visible,nearVisible,'near appearance switches solely by camera distance');
+    assert.equal(far.visible,!nearVisible,'distant drawing replaces rather than adds to near drawing');
+  }
+  const sourceMeshes=meshList(loaded.gltf.scene).filter(mesh=>!mesh.name.startsWith('tanker-warning-lamp-')&&mesh.name!=='tanker-boarding-plate');
+  assert.deepEqual(triangles(body).map(faceKey).sort(),sourceMeshes.flatMap(mesh=>triangles(mesh)).map(faceKey).sort(),
+    'merged distant triangles are the exact existing native parts in source poses');
+  assert.deepEqual(Array.from(body.geometry.attributes.uv.array),sourceMeshes.flatMap(mesh=>Array.from(mesh.geometry.attributes.uv.array)),
+    'merging preserves every native texture coordinate in source order');
+  assert.equal(body.geometry.groups.length,0,'one shared atlas draw replaces native material groups');
+  assert.equal(body.material.map.image,sourceMeshes[0].material.map.image,'distant body keeps the exact original worn atlas');
+  assert.equal(meshList(far).length,4,'distant body, roof and the two original warning posts are four draws');
+  const sourceLamps=meshList(loaded.gltf.scene).filter(mesh=>mesh.name.startsWith('tanker-warning-lamp-'));
+  const farLamps=meshList(far).filter(mesh=>mesh.name.startsWith('tanker-warning-lamp-'));
+  assert.equal(farLamps.length,sourceLamps.length,'every native warning post has a distant copy');
+  for(const source of sourceLamps){const copy=farLamps.find(mesh=>mesh.name===source.name);
+    assert.equal(copy.geometry,source.geometry,'warning copies reuse native geometry');
+    assert.equal(copy.material,source.material,'both views read the same native warning material');}
+  for(const [health,lit] of [[[0,0,0],true],[[75,75,75],false]]){
+    result.setValveHealth(Object.freeze(health));
+    assert.ok(farLamps.every(mesh=>lit?mesh.material.emissiveIntensity>0:mesh.material.emissiveIntensity===0),
+      'distant warning lamps follow native valve break and recovery');
+  }
+  result.setLampSignal(Object.freeze({kind:'tell',untilSec:2}),0);
+  assert.ok(farLamps.every(mesh=>mesh.material.emissive.getHex()===0xffe8b5&&mesh.material.emissiveIntensity===1.2),
+    'far copies retain the Tollkeeper bright tell flash');
+  result.setLampSignal(Object.freeze({kind:'tell',untilSec:2}),.125);
+  assert.ok(farLamps.every(mesh=>mesh.material.emissiveIntensity===0),'far tell flashes off on the native beat');
+  result.setLampSignal(null,2);
+  assert.ok(farLamps.every(mesh=>mesh.material.emissiveIntensity===0),'expired tell returns to recovered valve state');
+  const resources=watchResources(result.group);
+  result.dispose();result.dispose();
+  assert.ok([...resources.values()].every(count=>count===1),'native, cloned and new merged resources retire exactly once');
+  assert.equal(meshList(result.group).length,0,'no far geometry survives disposal');
+});
 check('real loaded model lamps follow every valve combination and recovery without changing geometry or inputs',async()=>{
   const api=await moduleApi(),data=await candidate();let loaded;
   const result=api.createTankerModel({loadAsset:async()=>{loaded=await asset(join(data.output,config.outputs.model));return loaded.gltf;}});
@@ -445,6 +500,10 @@ check('real loaded model lamps follow every valve combination and recovery witho
   const snapshot=worldSnapshot(result.group);
   assert.ok(lampValues(result.group,data.manifest).every(value=>value===0),'healthy initial valves leave lamps off');
   const lampMeshes=new Set(data.manifest.parts.filter(row=>row.role==='warning-lamp').flatMap(row=>meshList(result.group.getObjectByName(row.node))));
+  // Far lamps share exactly these native materials; both views are warning
+  // presentation, so the unchanged non-warning assertion excludes both copies.
+  const lampMaterials=new Set([...lampMeshes].flatMap(mesh=>Array.isArray(mesh.material)?mesh.material:[mesh.material]));
+  for(const mesh of meshList(result.group))if((Array.isArray(mesh.material)?mesh.material:[mesh.material]).some(mat=>lampMaterials.has(mat)))lampMeshes.add(mesh);
   const otherMaterials=()=>meshList(result.group).filter(mesh=>!lampMeshes.has(mesh)).flatMap(mesh=>
     (Array.isArray(mesh.material)?mesh.material:[mesh.material]).map(mat=>({color:mat.color.getHex(),emissive:mat.emissive.getHex(),intensity:mat.emissiveIntensity,roughness:mat.roughness})));
   const untouchedMaterials=otherMaterials();

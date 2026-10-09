@@ -1,4 +1,5 @@
 import {CONVOY_RULES, isConvoyRig} from './modes/convoy-raid.js';
+import {warlordFight} from '../warlords/index.js';
 
 // Red handwheel centres from the approved ART-FIT-TANKER GLB recipe, Y-up.
 export const CONVOY_VALVE_CENTRES = Object.freeze([
@@ -52,7 +53,8 @@ export function damageConvoyValves(duel, actor, damage, source, options = {}) {
   let removed = 0;
   for (const index of indices) {
     const before = convoy.valves[index];
-    const taken = Math.min(before, damage);
+    const multiplier = warlordFight(duel, actor)?.valveMultiplier?.(duel, actor, index) ?? 1;
+    const taken = Math.min(before, damage * multiplier);
     convoy.valves[index] = before - taken;
     removed += taken;
     if (before > 0 && convoy.valves[index] === 0 && options.owner === 'player' &&
@@ -62,6 +64,7 @@ export function damageConvoyValves(duel, actor, damage, source, options = {}) {
     }
   }
   if (removed > 0) convoy.attackerId = options.owner || convoy.attackerId;
+  if (removed > 0) warlordFight(duel, actor)?.valvesDamaged?.(duel, actor);
   if (removed > 0 && convoy.valves.every(armor => armor === 0)) {
     convoy.boardingLeftSec = CONVOY_RULES.boardingSeconds;
     actor.speedMph = CONVOY_RULES.boardingKph / 1.609344;

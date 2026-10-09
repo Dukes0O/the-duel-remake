@@ -1597,11 +1597,13 @@ export class EngineAudio {
         state,
         course,
       );
-      this._playCue('arena.tell', {
+      this._playCue(ev.arenaTell.cue || 'arena.tell', {
         destination: output.level,
         onEnd: output.disconnect,
       });
     }
+    if (ev.warlordWindow?.open && ev.warlordWindow.soundCue)
+      this._playCue(ev.warlordWindow.soundCue);
     if (state?.arena?.mode === 'bounty-hunt' && this.flags.enabled('bounty-hunt') &&
         (ev.arenaLoaded || ev.bountyMark)) this._playCue('arena.bounty-mark');
     if (state?.arena?.mode === 'ambush-alley' && this.flags.enabled('ambush-alley')) {

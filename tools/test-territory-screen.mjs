@@ -21,5 +21,6 @@ test('territory panel is scoped to discovered players and shows earned hold', ()
   assert.match(panel, /data-warlord="dustmonger">FIGHT/);
   assert.match(panel, /Scrapdome/);
   assert.doesNotMatch(panel, /Scrapdome \(coming later\)/, 'the arena venue is playable');
-  assert.match(panel, /Salt Flats Convoy Raid \(coming later\)/);
+  assert.match(panel, /Salt Flats Convoy Raid/);
+  assert.doesNotMatch(panel, /Salt Flats Convoy Raid \(coming later\)/, 'the existing Salt venue is playable');
 });

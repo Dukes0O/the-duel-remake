@@ -16,7 +16,8 @@ const T = COMBAT_TUNING.foot;
 export function canLeaveCar(duel) {
   const state = duel.state, stage = duel.stageDef;
   return combatArmorEnabled(duel) && state.status === 'racing' &&
-    (!state.arena || ['fuel-run', 'convoy-raid', 'ambush-alley'].includes(state.arena.mode)) &&
+    (!state.arena || ['fuel-run', 'convoy-raid', 'ambush-alley'].includes(state.arena.mode) ||
+      state.arena.format === 'convoy-raid') &&
     !state.paused && !state.objective && !stage?.practice &&
     !stage?.stuntTrial && !['chase', 'drift', 'checkpoint'].includes(stage?.kind);
 }

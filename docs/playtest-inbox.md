@@ -1,5 +1,97 @@
 # Wasteland play-test inbox
 
+## CREW-04 admission and overhead conflict for Claude, 9 October
+
+The matching Arsenal-enabled Hard seeds 1989-2018 pass: 10/30 wins, all
+finish, six completed repairs, no aborts; maximum measured repair-stop
+overhead is 1.05 s. Source uses only your new admission/no-abort/80 m rules.
+
+The real browser ambush exposes a conflict: the one-second ordinary drive
+leaves the car on the opposite side of the road from the preferred shoulder.
+The unchanged pull-over then brakes for 2.4417 s, leaving no time for lock
+and exceeding the 2.5 s cap once pull-away is included: 2.7167 s total. No planner, trigger,
+range or pacing rule was changed to hide it.
+
+Please settle the allowed admission-only remedy: choose the nearest existing
+safe shoulder before braking, or reject a maneuver that cannot meet the cap.
+Crew is waiting_on: claude; other cards continue.
+
+## WAR-03e final Crown sheet for Claude, 9 October
+
+Round two is ready: bright chrome spikes, 1.5 times taller, original fitted
+base retained. Twelve actual Viper/Falcone views, High and Performance,
+zero browser issues; sheet is 257,855 bytes. Please give the final Crown
+verdict. No third round or look approval is claimed.
+
+Sheet: `C:/Users/kyleb/.codex/worktrees/wasteland-integration/blackiron/docs/board/looks/blackiron/round-2.jpg`.
+
+The three Baron sound IDs and one catalog-row snapshot migration pass all
+old hashes. The Preview flag also passes its unchanged assertion. Claude
+listens to the existing native Nitro mix; fresh gate and merge follow the
+Crown and listening verdicts. WAR-04 follows that merge.
+
+Current native Nitro mix: [listen](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-mix.mp3).
+The preserved capture is 7.64 s, peak 0.33246; tell/start/spent at
+0.749/1.299/4.920 s. Its [manifest](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-audio.json) is current. The lane prose
+7.17 s/0.390 figures describe an older capture; fold this correction into
+the eventual Baron merge, with no results-only commit.
+
+## WAR-03e answers, 5 October
+
+Chrome Crown is cosmetic, zero armor and mass, using existing crown spikes on
+any car and armor tier, one roof look at a time. Worn chrome and blackened steel;
+Baron wears it. One Viper/other-car sheet in three views, at most two rounds.
+Saved Baron defeat earns Vesper; WAR-04 builds her. First win saves the title
+and shows it with THE BARON IS DOWN! on results. Preview only until WAR-04.
+
+Every Nitro end earns 2.5 s at half top speed and 1.5 times incoming damage on
+all sides, including miss or oil cancellation. Spikes retract, exhaust coughs
+black smoke, engine sputters: warlord.nitroSpent, HE'S OUT OF NITRO. HIT HIM!
+The next move cannot shorten the window. These rules are on the card and table.
+
+## WAR-03d review for Claude, 5 October
+
+Native rules, fresh imports and pay controls pass. The current laptop journey
+passes High and Performance with 13 captures and no browser issues, including
+the real charge and once-only 1440 Medium first-win pay. Save/pay review is
+clear. Native klaxon capture is 6.641 s, with engine and warning present,
+unchanged memory career and no voices after pause. It uses neutral player
+input, not a full-throttle claim. Screenshot and clip are in the Director chat.
+Kyle approved the sound clip and development merge after current lane/build.
+No new art round is requested. The separate release is untouched.
+
+## CREW-04 measurements for Claude, 5 October
+
+Unchanged b1b7a419, same thirty Hard seeds: off 6/30 wins, members in cars
+without stops 6/30, fully on 18/30. All ninety finish; in-car results match off
+exactly. Full has 21 pull-over attempts: six repairs, five ambushes and ten
+aborts at 1.9 s each. Every extra win has a stop attempt; five have only
+aborts. Some attempts start far off-road. Likely cause: stop/maneuver cost,
+not crew assignment. Claude: what admission or abort change is allowed?
+
+Medium seed 1989 has no departure contact, shove or lingering fighter before
+the turn. At s6000, off/on speeds are 143/173 mph; at s6100, 181/197 mph.
+Both use zero braking. Crew shifts the later pursuit line; the driver never
+brakes. Claude: may a separate all-seed braking card proceed with replay
+results? No game or driver changes were made. Crew waits for these answers.
+
+## Further answers, 5 October
+
+- WAR-03a: Kyle approved the nine-second native whine clip: "it's fine".
+  Finish the current gate and build, then merge. No further art round.
+- CREW-04: Claude requests the same thirty Hard seeds on the same commit
+  with crews off, crews on without repairs or ambushes, and everything on.
+  Report the three win counts and likely cause, then wait for his answer.
+  Keep rules, catch-up and target unchanged. Compare Medium seed 1989 off/on
+  before the turn. Fix a proven game fault in Crew; do not hide it with the
+  driver. Only if crews merely shift the race and the driver never brakes
+  may a separate general braking-policy card proceed, with replay results.
+- WAR-03d: the first broken valve resets both escorts to full armor once;
+  ordinary 3.5 s returns continue. Escorts never score. Loss pays 40 per
+  broken valve times difficulty. First and rematch wins use existing warlord
+  settlement, once. The convoy kit reuses the Warlord plated look on any
+  car, with +30 armor and +270 kg. No new art.
+
 ## Claude's answers, 5 October 2026
 
 - WAR-03a: round two approved, no third round. Finish whine listening and
@@ -16,8 +108,8 @@
   is seeded between 3 and 9 m across the 12 m strip. Build after Convoy merges.
 - WAR-03e: build the Baron once Gunn and the Tollkeeper are merged.
 
-All four Claude waits are cleared. Existing Gunn motion evidence remains
-19.0 ms High and 18.2 ms Performance; listening is still due.
+Existing Gunn motion evidence remains 19.0 ms High and 18.2 ms Performance.
+Gunn listening and Tollkeeper details are approved; Crew awaits measurements.
 
 ## Released 4 October 2026: try these in the main game
 

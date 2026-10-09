@@ -7,7 +7,9 @@ const details = Object.freeze({
     car: 'dusthawk_rally', brain: 'gunner', taunt: 'Follow me into the dust. I dare you.'},
   mirage: {reward: 'Decoy Drone', rewardBuilt: true, rewardWeapon: 'decoy', car: 'aurora_gt', brain: 'gunner',
     taunt: 'Which one of me are you looking at?'},
-  gunn: {},
+  gunn: {venue: 'pit', reward: 'Rocket Pods and turret look', rewardBuilt: true,
+    rewardWeapon: 'rockets', rewardKit: 'turret-look',
+    car: 'stuttgart_959s', brain: 'kiter', taunt: 'Keep driving. My turret can keep up.'},
   kettle: {reward: 'Titan warlord kit and Tusk', rewardBuilt: true,
     rewardKit: 'warlord', rewardKitCar: 'titan_monster', rewardCrew: 'tusk',
     car: 'titan_monster', brain: 'rammer', taunt: 'Stand still. It hurts less.'},
@@ -20,7 +22,14 @@ const details = Object.freeze({
     team: Object.freeze([Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture One'}),
       Object.freeze({car: 'dusthawk_rally', brain: 'hunter', name: 'Vulture Two'})]),
     taunt: 'Two of us. One of you. Do the math.'},
-  tollkeeper: {},
+  tollkeeper: {venue: 'salt-flats', format: 'convoy-raid',
+    vehicleName: 'Armored tanker',
+    car: 'stuttgart_959s', brain: 'convoy-rig', armorScale: 1,
+    reward: 'Convoy kit', rewardBuilt: true, rewardKit: 'warlord', rewardKitAnyCar: true,
+    team: Object.freeze([Object.freeze({car: 'stuttgart_959s', brain: 'convoy-rig', name: 'Tollkeeper'}),
+      Object.freeze({car: 'dusthawk_rally', brain: 'guard', name: 'Escort One'}),
+      Object.freeze({car: 'aurora_gt', brain: 'guard', name: 'Escort Two'})]),
+    taunt: 'This road has a price.'},
   blackiron: {},
 });
 
@@ -42,7 +51,7 @@ export const WARLORD_LADDER = Object.freeze([
   'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'kettle', 'vultures']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper']);
 
 // Jax's grapple reaches this much farther once the Twin Vultures are beaten.
 // Earned means the saved defeat itself, as with the Side Saws; the crew

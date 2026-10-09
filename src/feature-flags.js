@@ -2,10 +2,11 @@
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
   'convoy-raid': 'dev',
+  tollkeeper: 'dev',
   'arsenal-wave3': 'dev',
   'career-backup': 'dev', 'hidden-road': 'on',
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',
-  'crew-gear': 'on', 'fight-voices': 'dev', 'cpu-crews': 'dev', 'ambush-alley': 'dev',
+  'crew-gear': 'on', 'fight-voices': 'dev', 'cpu-crews': 'dev', 'ambush-alley': 'dev', gunn: 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

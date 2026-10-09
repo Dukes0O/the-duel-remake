@@ -1,5 +1,6 @@
 import {WARLORDS, BUILT_WARLORD_IDS} from '../warlords.js';
-import {warlordFight} from '../warlords/index.js';
+import {warlordFight, warlordEnabled} from '../warlords/index.js';
+import {initializeConvoyRaid, CONVOY_RULES} from './modes/convoy-raid.js';
 
 // Shared warlord format (docs/SCRAPDOME.md section 5). All simulation
 // decisions stay here; presentation and rewards read the resulting state.
@@ -9,15 +10,21 @@ export const WARLORD_RULES = Object.freeze({
 
 export function startWarlordEvent(duel, {warlordId, ...options} = {}) {
   const warlord = WARLORDS[warlordId];
-  if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId)) return false;
+  if (!warlord || !BUILT_WARLORD_IDS.includes(warlordId) || !warlordEnabled(duel, warlordId)) return false;
   // A warlord fights alone, or as a team of cars (`team`), each on its own.
   const team = warlord.team ?? [{car: warlord.car, brain: warlord.brain}];
-  if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord',
+  if (!duel.startArenaEvent({...options, venueId: warlord.venue ?? 'scrapdome', mode: 'warlord', warlordId,
       opponents: team.map(({car, brain}) => ({car, brain}))})) return false;
   const state = duel.state, arena = state.arena;
   arena.warlordId = warlordId;
   arena.warlordPhase = 1;
   arena.warlordBossId = 'cpu-1';
+  if (warlord.format === 'convoy-raid') {
+    arena.format = warlord.format;
+    arena.timeLimitSec = CONVOY_RULES.timeLimitSec;
+    initializeConvoyRaid(duel);
+    for (const participant of arena.participants.slice(2)) participant.wreckScorable = false;
+  }
   // Only a team warlord records its cars; a lone warlord's arena state is unchanged.
   if (warlord.team) arena.warlordTeamIds = team.map((_, index) => `cpu-${index + 1}`);
   arena.phase = 'intro';
@@ -57,6 +64,7 @@ export function teamTotal(arena, participant, field) {
 export function noteWarlordWreck(duel, victim, credited) {
   const arena = duel.state.arena;
   if (arena.mode !== 'warlord') return null;
+  if (arena.format === 'convoy-raid') return null;
   // Phase two starts once the warlord's side has been wrecked enough times
   // (the first wreck by default; a team may need more).
   if ((arena.warlordTeamIds ?? [arena.warlordBossId]).includes(victim.id) && arena.warlordPhase === 1 &&

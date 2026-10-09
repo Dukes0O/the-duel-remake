@@ -158,7 +158,8 @@ function creditWrecks(duel) {
     participant.wrecked++;
     const recent = participant.lastHitBy &&
       state.stageTimeSec - participant.lastHitAt <= ARENA_RULES.creditWindowSec;
-    const credited = recent ? arena.participants.find(p => p.id === participant.lastHitBy) : null;
+    const credited = recent && participant.wreckScorable !== false
+      ? arena.participants.find(p => p.id === participant.lastHitBy) : null;
     if (credited) credited.wrecks++;
     const bountyDecision = noteBountyWreck(duel, participant, credited);
     participant.lastHitBy = null; participant.lastHitAt = -Infinity;
@@ -225,7 +226,7 @@ function finish(duel, reason, winnerId = null) {
 
 function stepClock(duel, dt) {
   const arena = duel.state.arena;
-  if (arena.mode === 'convoy-raid') {
+  if (arena.mode === 'convoy-raid' || arena.format === 'convoy-raid') {
     const decision = stepConvoyRaid(duel, dt);
     if (decision) finish(duel, decision.reason, decision.winnerId);
     return;
@@ -293,7 +294,16 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
-  const onFoot = (['fuel-run', 'convoy-raid'].includes(arena.mode) || ambush) && stepFootTransition(duel, dt);
+  const requested = arena.respawnRequests || [];
+  delete arena.respawnRequests;
+  for (const id of new Set(requested)) {
+    const participant = arena.participants.find(item => item.id === id && item.kind === 'cpu');
+    const actor = participant && arenaActor(duel, id);
+    if (actor) respawn(duel, participant, actor);
+  }
+
+  const onFoot = (['fuel-run', 'convoy-raid'].includes(arena.mode) ||
+    arena.format === 'convoy-raid' || ambush) && stepFootTransition(duel, dt);
   if (ambush) {
     const spawn = ambushBuggySpawn(duel);
     if (spawn) {
@@ -330,6 +340,11 @@ export function stepArenaEvent(duel, dt) {
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
       stepKnock(duel, actor, dt);
+      containInArena(duel, actor, dt);
+      continue;
+    }
+    if (arena.format === 'convoy-raid' &&
+        warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
       continue;
     }
