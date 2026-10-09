@@ -5,15 +5,16 @@ import {addHazard, carBodyPoint} from './hazards.js';
 import {setCarEffect} from './car-effects.js';
 import {enemiesBehind} from './targeting.js';
 
-export function deployCaltrops(duel, owner, level = 0) {
+export function deployCaltrops(duel, owner, level = 0, placement = null) {
   if (!owner || outOfPlay(duel, owner)) return null;
-  const at = point(duel, owner), heading = at.heading + (owner.headingError || 0);
-  const x = at.x - Math.sin(heading) * 3, z = at.z - Math.cos(heading) * 3;
+  const at = point(duel, owner), heading = placement?.heading ?? at.heading + (owner.headingError || 0);
+  const x = placement?.x ?? at.x - Math.sin(heading) * 3;
+  const z = placement?.z ?? at.z - Math.cos(heading) * 3;
   const rear = duel.course.nearest(x, z, owner.s);
   const ground = point(duel, {s: rear.s, lateral: rear.lateral});
   const strip = addHazard(duel, {kind: 'caltrops', shape: 'strip',
     x, z, y: ground.y,
-    heading, length: 8, width: 5, lifetime: 8, owner, ownerGraceSec: 1,
+    heading, length: 8, width: placement?.width ?? 5, lifetime: 8, owner, ownerGraceSec: 1,
     onTouch(actor) {
       if (combatShielded(duel, actor)) return;
       const removed = applyArmorDamage(duel, actor, 'caltrops',

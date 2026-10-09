@@ -40,6 +40,8 @@ import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
 import {initializeAmbushAlley} from './arena/modes/ambush-alley.js';
 import {ARENA_VENUES} from './arena/venues.js';
+import {WARLORDS, BUILT_WARLORD_IDS} from './warlords.js';
+import {warlordEnabled} from './warlords/index.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 
@@ -314,9 +316,20 @@ export class Duel {
   // to a player who has found the gate.
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
-    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook' } = {}) {
+    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook',
+    warlordId = null } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const ambush = mode === 'ambush-alley';
+    const warlord = warlordId === null ? null : WARLORDS[warlordId];
+    if (warlordId !== null && (mode !== 'warlord' || !warlord ||
+        !BUILT_WARLORD_IDS.includes(warlordId) || !warlordEnabled(this, warlordId) ||
+        venueId !== (warlord.venue ?? 'scrapdome') || !Array.isArray(opponents) ||
+        opponents.length !== (warlord.team?.length ?? 1) ||
+        opponents.some((actor, index) => {
+          const expected = warlord.team?.[index] ?? warlord;
+          return actor?.car !== expected.car || actor?.brain !== expected.brain;
+        }))) return false;
+    const maxOpponents = warlord?.format ? ARENA_MODES[warlord.format]?.maxOpponents : rules?.maxOpponents;
     if (!wastelandRulesActive(this.state) ||
         (venueId === 'salt-flats' && !this.featureFlags.enabled('salt-flats')) ||
         (mode === 'fuel-run' && !this.featureFlags.enabled('fuel-run')) ||
@@ -327,7 +340,7 @@ export class Duel {
         !Array.isArray(opponents) ||
         (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
-        opponents.length < (ambush ? 0 : 1) || opponents.length > rules.maxOpponents ||
+        opponents.length < (ambush ? 0 : 1) || opponents.length > maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
       upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];

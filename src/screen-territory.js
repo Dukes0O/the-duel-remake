@@ -7,7 +7,7 @@ import {warlordEnabled} from './warlords/index.js';
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
 const venueNames = Object.freeze({
   scrapdome: 'Scrapdome',
-  'salt-flats': 'Salt Flats Convoy Raid (coming later)',
+  'salt-flats': 'Salt Flats Convoy Raid',
 });
 
 export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, canFight = true,

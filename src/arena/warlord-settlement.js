@@ -2,6 +2,7 @@ import {CARS} from '../config.js';
 import {isCarUnlocked} from '../progression.js';
 import {WARLORDS, BUILT_WARLORD_IDS, WARLORD_LADDER} from '../warlords.js';
 import {rewardArsenalWeapon} from '../weapon-upgrades.js';
+import {CONVOY_RULES} from './modes/convoy-raid.js';
 
 // Pure career transaction. App owns the starting player identity and the one
 // registry write; a failed write can retry this same immutable result.
@@ -37,11 +38,12 @@ function payExplanation({warlordId, won, firstWin, wrecksOnWarlord, cpuDifficult
 
 function resultFacts(arena) {
   const warlord = WARLORDS[arena?.warlordId], size = warlord?.team?.length ?? 1;
+  const chargeFormat = warlord?.format === 'convoy-raid';
   if (!record(arena) || arena.version !== 1 || arena.venueId !== (warlord?.venue ?? 'scrapdome') ||
       arena.mode !== 'warlord' || !BUILT_WARLORD_IDS.includes(arena.warlordId) ||
       !warlord || arena.warlordBossId !== 'cpu-1' ||
       arena.phase !== 'over' || !record(arena.result) ||
-      !COMPLETED_REASONS.has(arena.result?.reason) ||
+      !(chargeFormat ? ['charge', 'time'].includes(arena.result?.reason) : COMPLETED_REASONS.has(arena.result?.reason)) ||
       !Array.isArray(arena.participants) || !arena.participants.every(record) ||
       !Array.isArray(arena.result?.placings)) return null;
   // A warlord's decoy copies are not competitors and never settle. A team
@@ -61,6 +63,23 @@ function resultFacts(arena) {
   const wrecksOf = group => group.reduce((sum, item) => sum + bounded(item.wrecks, 1_000_000), 0);
   if (arena.result.reason === 'three-wrecks' &&
       wrecksOf(winner === player ? [player] : side) < 3) return null;
+  if (chargeFormat) {
+    const convoy = arena.convoy, boss = side.find(item => item.id === arena.warlordBossId);
+    if (arena.format !== warlord.format || !record(convoy) || convoy.rigId !== boss.id ||
+        !Array.isArray(convoy.valves) || convoy.valves.length !== CONVOY_RULES.valveCount ||
+        !convoy.valves.every(value => Number.isFinite(value) && value >= 0 && value <= CONVOY_RULES.valveArmor) ||
+        !Array.isArray(convoy.playerBroken) || convoy.playerBroken.length !== CONVOY_RULES.valveCount ||
+        !convoy.playerBroken.every(value => typeof value === 'boolean') ||
+        convoy.playerValvesBroken !== convoy.playerBroken.filter(Boolean).length ||
+        !Number.isFinite(arena.clockSec) || arena.clockSec < 0 || arena.clockSec > CONVOY_RULES.timeLimitSec) return null;
+    const won = arena.result.winnerId === player.id;
+    if (won ? arena.result.reason !== 'charge' || convoy.finished !== true ||
+        convoy.chargePlanted !== true || !convoy.valves.every(value => value === 0) || boss.wrecked !== 1
+      : arena.result.reason !== 'time' || arena.result.winnerId !== boss.id ||
+        arena.clockSec !== CONVOY_RULES.timeLimitSec || convoy.finished !== false || convoy.chargePlanted !== false) return null;
+    return {won, wrecksOnWarlord: boss.wrecked, playerValvesBroken: convoy.playerValvesBroken,
+      chargeFormat: true};
+  }
   // One warlord reports its own count unchanged, so payout validation still
   // sees bad data; a team's count is the sum of its cars' (invalid if any is).
   const wrecked = side.map(item => item.wrecked);
@@ -91,8 +110,10 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
   const firstWin = facts.won && !defeated;
   const payContext = {warlordId: arena.warlordId, won: facts.won, firstWin,
     wrecksOnWarlord: facts.wrecksOnWarlord, cpuDifficulty};
-  const reward = warlordPay(payContext);
-  if (reward === null) return noAward(profile, key);
+  const reward = facts.chargeFormat && !facts.won
+    ? Math.round(facts.playerValvesBroken * CONVOY_RULES.valveScrap * DIFFICULTY_FACTORS[cpuDifficulty])
+    : warlordPay(payContext);
+  if (reward === null || !Number.isSafeInteger(reward) || reward < 0) return noAward(profile, key);
   const oldScrap = bounded(career.scrap, 1_000_000_000);
   const scrap = Math.min(1_000_000_000, oldScrap + reward);
   const entry = {...previous, defeated: defeated || facts.won,
@@ -128,7 +149,9 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     if (unlocked.ok) { settledProfile = unlocked.profile; weaponEarned = warlord.rewardWeapon; }
   }
   return {profile: settledProfile, key, awarded: true,
-    scrapEarned: scrap - oldScrap, firstWin, rewardReason: payExplanation(payContext),
+    scrapEarned: scrap - oldScrap, firstWin,
+    rewardReason: facts.chargeFormat && !facts.won ? 'Valve pay: 40 per broken valve (' +
+      facts.playerValvesBroken + ') at ' + DIFFICULTY_FACTORS[cpuDifficulty] + 'x difficulty.' : payExplanation(payContext),
     kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned,
     crewEarned: firstWin && warlord.rewardCrew ? warlord.rewardCrew : null,
     gearEarned: firstWin && warlord.rewardGear ? warlord.rewardGear.id : null,

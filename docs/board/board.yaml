@@ -1202,8 +1202,11 @@ tasks:
     native_cases_passed: 51
     hard_player_win_percent: 60
     claude_measurement_answer_2026_10_05: "On the same commit and seeds, compare thirty Hard races with crews off, crews on without stops, and everything on. Report wins and likely cause, then wait. Compare Medium seed 1989 before the turn with crews off/on; do not change its driver to hide a game fault. A general braking-policy card is allowed only if crews merely shift the race and the driver never brakes, with before/after replays."
-    design_question: "Report the three Hard measurements and the pre-turn seed 1989 comparison, then await Claude's next change."
-    note: "Claude requests measurements before further changes. Keep combat, catch-up and target unchanged; no pursuit-driver fix yet."
+    diagnostic_source_commit: b1b7a419
+    diagnostic_hard_wins: [6, 6, 18]
+    diagnostic_result: "Same thirty seeds: off six wins, in-car without stops six, full eighteen; all ninety finish and in-car matches off exactly. Full has twenty-one pull-overs, including ten aborted attempts; five extra wins have only aborts. Medium1989 has no departure shove or lingering fighter, but reaches the turn faster with zero braking. Source and driver unchanged."
+    design_question: "What stop-admission or abort change is allowed? May a separate all-seed pursuit braking card proceed with before/after replay results?"
+    note: "Measurements complete. Claude awaits the stop/abort and general pursuit-driver decisions; no rule, target or catch-up changes."
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
@@ -1594,7 +1597,10 @@ tasks:
     lane: CMB
     size: M
     needs: [ARENA-07]
-    status: building
+    status: merged
+    lane_gate_covered: 356
+    lane_gate_missing: 0
+    build_ms: 466
     claimed_by: codex-director-2026-10-05
     branch: codex/cmb/tollkeeper
     design_question: null
@@ -1619,6 +1625,18 @@ tasks:
     reward_hooks: [tools/test-warlord-settlement.mjs, src/armor-kits.js, src/wasteland-progress.js, src/screen-armory.js]
     scoring_hook: src/combat-scoring.js
     scoring_grant: "Tests first exclude escort wreck count and style points only in the Convoy-format warlord. Preserve ordinary hit/damage credit, normal Convoy and all other formats; generic participant metadata, no shared boss names."
+    native_entry_hook: src/game.js
+    objective_hook: src/screen-hud.js
+    venue_fixture_hook: tools/test-territory-screen.mjs
+    native_entry_grant: "Use only registered built warlord format metadata and its enabled fight for the native opponent limit; validate venue and team. No arbitrary caller limit override. Ordinary warlord max two and normal Convoy admission remain exact."
+    source_commit: acfb4fdc
+    source_review: "Director clears native rules, whole Gunn union, metadata entry, fresh-import getter, capped-hit fixture, charge HUD and additive preservation admissions. All 356 lane entries covered across documented continuations; build passes."
+    listening_approved_2026_10_05: "Kyle: sound clip is fine."
+    development_review_2026_10_05: "Kyle approved development merge after the current lane gate and build pass. Release remains separate."
+    review_question: null
+    browser_captures: 13
+    listening_capture_seconds: 6.641
+    save_pay_review: "Clear on f395b140; the reviewed files stay byte-exact through 19fc2c43. Twelve memory-only suites pass 161 cases, including seven fixtures, backup, budgets and common atomic/retry controls. No new save shape."
   - id: WAR-03e
     title: "Baron Blackiron: the move cycle and Nitro Ram"
     owner: codex
