@@ -89,7 +89,7 @@ function resultFacts(arena) {
 }
 
 export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayerId,
-    arena, car, cpuDifficulty} = {}) {
+    arena, car, cpuDifficulty, warlordCardsEnabled = false} = {}) {
   const key = typeof runId === 'string' && runId.length > 0 && runId.length <= 128
     ? `warlord:${runId}` : null;
   const career = profile?.wasteland, facts = resultFacts(arena);
@@ -146,6 +146,9 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
   const titleEarned = firstWin && warlord.rewardTitle ? warlord.rewardTitle : null;
   const wasteland = {...career, scrap, territories, kits, ...(crew === undefined ? {} : {crew}),
     ...(titleEarned ? {title: titleEarned} : {}),
+    ...(firstWin && warlordCardsEnabled ? {cards: [...(Array.isArray(career.cards) ? career.cards : []),
+      ...((Array.isArray(career.cards) ? career.cards : []).some(card => card?.id === id && card?.kind === 'warlord-story') ? [] :
+        [{id,kind:'warlord-story',earnedAt:runId}])]} : {}),
     warlords: {...career.warlords, [id]: entry},
     settledResults: [...career.settledResults, key].slice(-1000)};
   let settledProfile = {...profile, wasteland}, weaponEarned = null;

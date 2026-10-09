@@ -17,6 +17,8 @@ export const SIGNATURE_GEAR = Object.freeze({
     range: 150, speed: 90, carDamage: 15, reload: 1.5, magnification: 3}),
   wren: Object.freeze({id: 'smoke-grenade', name: 'SMOKE GRENADES', capacity: 2,
     range: 20, radius: 2.5, lifetime: 6}),
+  vesper: Object.freeze({id:'shock-charge',name:'SHOCK CHARGE',capacity:null,
+    recharge:18,tellSec:.4,radius:8,disabledSec:3}),
   tusk: Object.freeze({id: 'scrap-cannon', name: 'SCRAP CANNON', capacity: 2,
     reload: 4, carDamage: 20, shoveMass: 1450, shoveMph: 35}),
 });
@@ -29,6 +31,10 @@ export function crewGearEnabled(duel) {
 }
 export function signatureFor(crewId) {
   return Object.hasOwn(SIGNATURE_GEAR, crewId) ? SIGNATURE_GEAR[crewId] : SIGNATURE_GEAR.rook;
+}
+export function rechargeFor(crewId) {
+  const recharge = signatureFor(crewId).recharge;
+  return crewId === 'vesper' ? recharge * .75 : recharge;
 }
 export function crewRpgTiming(duel, crewId) {
   return crewGearEnabled(duel) && crewId === 'rook'

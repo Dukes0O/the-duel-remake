@@ -1,3 +1,4 @@
+import {startTeslaCharge} from '../arsenal/tesla.js';
 import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {carBodyPoint} from '../arsenal/hazards.js';
 import {actorForTarget, targetIdentity} from '../arsenal/targeting.js';
@@ -6,7 +7,7 @@ import {outOfPlay, hostile} from '../combat-teams.js';
 import {gearDirection, gearContact, enemyCars, fighterTargets,
   damageGearCar, damageGearFighter} from './contacts.js';
 import {launchGearProjectile} from './projectiles.js';
-import {signatureFor, crewGearEnabled, GEAR_EPSILON} from './gear.js';
+import {signatureFor, rechargeFor, crewGearEnabled, GEAR_EPSILON} from './gear.js';
 
 export {crewGearEnabled, crewRpgTiming, signatureFor} from './gear.js';
 export {stepGearProjectile} from './projectiles.js';
@@ -17,6 +18,9 @@ function ready(duel) {
 export function initializeCrewGear(duel) {
   if (!crewGearEnabled(duel)) {delete duel.state.crewGear; return;}
   const gear = signatureFor(duel.state.crewId);
+  if (gear.id === 'shock-charge' && duel.featureFlags?.enabled('warlord-cards') !== true) {
+    delete duel.state.crewGear; return;
+  }
   duel.state.crewGear = {crewId: duel.state.crewId || 'rook', id: gear.id,
     ammo: gear.capacity, serial: 0, fireHeld: false, turret: null,
     turretReadyAt: 0, lastTurretFireAt: null, grapple: null,
@@ -269,14 +273,16 @@ export function stepSignatureGear(duel, dt) {
   } else if (available && input.fire && !user.fireHeld &&
       state.stageTimeSec + GEAR_EPSILON >= nextFireAt && (user.ammo === null || user.ammo > 0)) {
     let fired;
-    if (gear.id === 'grapple') fired = beginGrapple(duel, user, fighter, gear);
+    if (gear.id === 'shock-charge') fired = duel.featureFlags?.enabled('warlord-cards') === true &&
+      !!startTeslaCharge(duel,state,{origin:'fighter',radius:gear.radius,crewShock:true});
+    else if (gear.id === 'grapple') fired = beginGrapple(duel, user, fighter, gear);
     else if (gear.id === 'scrap-turret') fired = deployTurret(duel, user, fighter, gear);
     else fired = !!launchGearProjectile(duel, fighter, gear, ++user.serial, motion);
     if (fired) {
       if (user.ammo !== null) user.ammo--;
       if (gear.id !== 'scrap-turret') {
         user.lastFireAt = state.stageTimeSec;
-        user.nextFireAt = state.stageTimeSec + (gear.recharge || gear.reload || .3);
+        user.nextFireAt = state.stageTimeSec + (rechargeFor(user.crewId) || gear.reload || .3);
       }
       duel.emit({footWeaponFired: gear.id, hitPosition: fighter});
       if (gear.id === 'marksman') duel.emit({crewGearCue: 'crew.marksman.fire', hitPosition: fighter});

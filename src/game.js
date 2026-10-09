@@ -17,7 +17,7 @@ import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
 import {validArmorKit} from './armor-kits.js';
 import {initializeFootWeapons, selectFootGear} from './onfoot-weapons.js';
-import {CREW} from './crew.js';
+import {CREW, crewMember} from './crew.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
 
@@ -200,7 +200,8 @@ export class Duel {
     else delete this.state.combatRoofLook;
     this.state.crewId = this.state.mode === 'wasteland' &&
       wastelandRulesActive(this.state) ?
-      (Object.hasOwn(CREW,crewId) ? crewId : 'rook') : null;
+      (Object.hasOwn(CREW,crewId) || crewId === 'vesper' && crewMember(crewId) &&
+        this.featureFlags.enabled('warlord-cards') && this.featureFlags.enabled('crew-gear') ? crewId : 'rook') : null;
     this.state.lives = LIVES.start;
     this.state.totalTimeSec = 0;
     this.state.penaltySec = 0;
@@ -371,7 +372,9 @@ export class Duel {
     s.combatArmorKit = validArmorKit(combatArmorKit);
     if (combatRoofLook === 'chrome-crown') s.combatRoofLook = combatRoofLook;
     else delete s.combatRoofLook;
-    s.crewId = Object.hasOwn(CREW, crewId) ? crewId : 'rook';
+    s.crewId = Object.hasOwn(CREW, crewId) || crewId === 'vesper' && crewMember(crewId) &&
+      s.wastelandGateDiscovered && this.featureFlags.enabled('warlord-cards') &&
+      this.featureFlags.enabled('crew-gear') ? crewId : 'rook';
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
     s.majorCrashes = 0; s.catastrophic = false; s.boundaryResets = 0;
     s.damageZones = { front: 0, rear: 0, left: 0, right: 0 };

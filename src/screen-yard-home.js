@@ -1,3 +1,4 @@
+import {cardWallScreen} from './screen-card-wall.js';
 import {territoryPanel} from './screen-territory.js';
 import {crewPanel} from './crew-ui.js';
 
@@ -8,7 +9,7 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
-  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}</nav>`;
+  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${career?.discoveredGate && featureFlags?.enabled('warlord-cards') ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}</nav>`;
   const intro = '<p>Win Mad Max Duel events to earn scrap and build territory hold. The yard is your place to prepare for the next fight.</p>';
   const claimed = Object.values(career?.territories || {}).filter(territory => territory.claimed).length;
   const canFight = !!arenaMarkup && warlordsAvailable;
@@ -18,7 +19,8 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   if (panel === 'scrapdome' && arenaMarkup) content = arenaMarkup;
   else if (panel === 'territory') content = territoryPanel(profile,
     canFight ? {featureFlags} : {builtWarlordIds: [], featureFlags});
-  else if (panel === 'crew') content = crewPanel(profile, escapeHTML);
+  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) content = cardWallScreen(profile,escapeHTML);
+  else if (panel === 'crew') content = crewPanel(profile, escapeHTML,{gearEnabled:featureFlags?.enabled('crew-gear')===true,warlordCardsEnabled:featureFlags?.enabled('warlord-cards')===true && featureFlags?.enabled('crew-gear')===true});
   else if (panel === 'armory') content = armoryMarkup;
   else if (panel === 'career') content = careerContent;
   else {

@@ -18,6 +18,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     gunn: 'dev',
     tollkeeper: 'dev',
     blackiron: 'dev',
+    'warlord-cards': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);

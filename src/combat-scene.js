@@ -12,6 +12,7 @@ import {
   hazardsFor
 } from './arsenal/hazards.js';
 import * as THREE from 'three';
+import {teslaChargePoint} from './arsenal/tesla.js';
 import {
   createVehicleAttachmentRegistry
 } from './vehicle-attachments.js';
@@ -334,7 +335,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const owner = charge && actorForTarget(duel, charge.ownerId);
       view.arcs.visible = !!owner;
       if (owner) {
-        const at = point(duel, owner), positions = view.arcs.geometry.attributes.position;
+        const at = teslaChargePoint(duel,charge,owner), positions = view.arcs.geometry.attributes.position;
+        view.arcs.scale.setScalar(charge.crewShock ? .55 : 1);
         view.arcs.position.set(at.x, at.y + .5, at.z);
         for (let arc = 0; arc < 12; arc++) {
           const angle = arc * Math.PI / 6 + charge.age * 11;

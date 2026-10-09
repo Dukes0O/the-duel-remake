@@ -314,7 +314,7 @@ export class App {
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
       combatRoofLook:this.wastelandUnlocked() ? getEquippedRoofLook(this.profile, car) : null,
-      crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
+      crewId:this.wastelandUnlocked()?selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
@@ -680,7 +680,8 @@ export class App {
     } else return false;
     const settled = settleWarlordResult(profile, {runId: pending.runId,
       ownerPlayerId: pending.ownerId, activePlayerId: this.player.id,
-      arena: state.arena, car: state.car, cpuDifficulty: state.cpuDifficulty});
+      arena: state.arena, car: state.car, cpuDifficulty: state.cpuDifficulty,
+      warlordCardsEnabled: this._switches().enabled('warlord-cards') === true});
     if (!settled.awarded) {
       if (settled.key && profile.wasteland?.settledResults?.includes(settled.key)) {
         this._adoptWarlordRegistry(registry, true);
@@ -890,7 +891,7 @@ export class App {
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout: getCarLoadout(this.profile,this._arsenalOptions()), combatArmorKit: this._combatArmorKit(car),
       combatRoofLook: getEquippedRoofLook(this.profile, car),
-      crewId: selectedCrewId(this.profile)};
+      crewId: selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')})};
     return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
   }
@@ -1021,7 +1022,7 @@ export class App {
     if(!this._wastelandShopAccess()||!this.wastelandUnlocked())
       return {ok:false,reason:'Return to the Wasteland Armory to choose crew.'};
     this._refreshPlayer();if(!this._wastelandShopAccess())return {ok:false,reason:'This yard visit no longer belongs to this player.'};
-    const previous=this.profile,result=chooseCrew(this.profile,id);
+    const previous=this.profile,result=chooseCrew(this.profile,id,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')});
     if(result.ok&&result.changed){this.profile=result.profile;if(!this._saveShopProfile(previous))return {ok:false,reason:'Could not save this crew choice.'};
       this.duel.emit({garage:true,crewChanged:true});}
     return result;

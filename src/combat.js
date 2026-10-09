@@ -94,8 +94,10 @@ export function stepCombat(duel, dt) {
   }
   if (arsenalWaveThreeEnabled(duel)) {
     stepMortars(duel, dt);
-    stepTeslaCharges(duel, dt);
+
   }
+  if (arsenalWaveThreeEnabled(duel) || state.combat.teslaCharges?.some(charge=>charge.crewShock) ||
+      state.combat.teslaPulses?.length) stepTeslaCharges(duel, dt);
   stepProjectiles(duel, dt);
   if (hazardsActive(duel)) {
     for (const actor of [state, ...state.opponents, ...state.traffic, state.police?.pursuit]) {

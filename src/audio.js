@@ -1443,7 +1443,9 @@ export class EngineAudio {
       (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
       (this.flags.enabled('arsenal') && this.flags.enabled('arsenal-wave3') &&
         ARSENAL_WAVE_THREE_CUES.has(ev.arsenalCue)) ||
-      (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue))
+      (ev.warlordMove === true && ARSENAL_CORE_CUES.has(ev.arsenalCue)) ||
+      (ev.crewShock === true && this.flags.enabled('warlord-cards') && this.flags.enabled('crew-gear') &&
+        ['weapon.tesla.charge','weapon.tesla.pulse'].includes(ev.arsenalCue))
     )) {
       // One-shots use the native point; flight belongs to the moving voice map.
       // The flight event never starts a second overlapping source.
@@ -1451,7 +1453,7 @@ export class EngineAudio {
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
       );
       const voice = this._playCue(ev.arsenalCue,
-        {destination: output.level, onEnd: output.disconnect});
+        {destination: output.level, onEnd: output.disconnect, ...(ev.crewShock ? {scale:.55} : {})});
       const field = ev.arsenalCue === 'weapon.flame.loop' ? ev.burst :
         ev.arsenalCue === 'weapon.magnet.hum' ? ev.magnet : null;
       if (field && voice) this.arsenalFieldVoices.set(field, voice);

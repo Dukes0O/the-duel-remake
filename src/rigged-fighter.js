@@ -4,7 +4,7 @@ import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {createOnFootFigures, MAX_FIGHTER_FIGURES} from './onfoot-figures.js';
 import {selectFighterPresentation} from './fighter-presentation.js';
 
-const CREW = new Set(['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk']);
+const CREW = new Set(['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk', 'vesper']);
 const REQUIRED_CLIPS = ['idle', 'walk', 'knockdown'];
 const ONCE = new Set(['jump', 'knockdown', 'get-up', 'fire', 'reload', 'enter', 'exit']);
 const EMPTY = Object.freeze([]);
