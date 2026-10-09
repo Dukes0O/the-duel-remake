@@ -1189,23 +1189,23 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: building
-    source_frozen: false
+    status: merged
+    source_frozen: true
     held_source_commit: b1b7a419
     claude_answer_2026_10_05: "Change only stop pacing. Braking, exit, re-entry and pulling away together add at most 2.5 s beyond repair or shots. After a stop use ordinary Hard catch-up. Keep triggers, ranges, weapons and the 20-40% target. If Hard remains above forty percent, cap Hard repair stops at one per race; then merge."
     claimed_by: codex-director-2026-10-04
     branch: codex/foot/cpu-crews
     test_commit: 045f18d6
     note_commit: 2febf4e
-    source_commit: 5f505d411d2ce2fc5356a57bfd85b1c5b2e319d3
-    native_cases_passed: 57
+    source_commit: 579a555b01780d54536e3309b999a7bdc61c552e
+    native_cases_passed: 66
     hard_player_win_percent: 33.333333333333336
     claude_measurement_answer_2026_10_05: "On the same commit and seeds, compare thirty Hard races with crews off, crews on without stops, and everything on. Report wins and likely cause, then wait. Compare Medium seed 1989 before the turn with crews off/on; do not change its driver to hide a game fault. A general braking-policy card is allowed only if crews merely shift the race and the driver never brakes, with before/after replays."
     diagnostic_source_commit: b1b7a419
     diagnostic_hard_wins: [6, 6, 18]
     diagnostic_result: "Same thirty seeds: off six wins, in-car without stops six, full eighteen; all ninety finish and in-car matches off exactly. Full has twenty-one pull-overs, including ten aborted attempts; five extra wins have only aborts. Medium1989 has no departure shove or lingering fighter, but reaches the turn faster with zero braking. Source and driver unchanged."
     design_question: null
-    note: "Claude settled both admission remedies: nearest existing safe shoulder first, then reject a stop that cannot meet the unchanged overhead cap. Rerun the matching Hard sample and original browser ambush before merge."
+    note: "Both admission remedies are built. The same thirty Hard races give ten wins and all finish, with no aborted stops and a maximum whole overhead of 1.05 seconds. Original browser ambush, review, all lane tests and build pass."
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
@@ -1228,6 +1228,10 @@ tasks:
     claude_answer_2026_10_09: "Begin a pull-over only on the road after stop conditions hold continuously for 1 s. Once braking begins finish the stop, no aborts. Enemy within 80 m during repair means immediate re-entry. Keep the normal 2.5 s overhead cap and all other rules. Same thirty Hard seeds, merge at 20-40%."
     claude_admission_answer_2026_10_09: "Before braking choose the nearest existing safe shoulder on either side. If none can keep the whole stop within 2.5 s overhead, do not admit it and charge no cost. All other rules stay; rerun the same Hard seeds and browser ambush, merge at 20-40%."
     admission_threat_hook_grant: "In the existing raiders.js hook, expose a read-only query of current native targeting, unfired members and scheduled shots during projected braking. Reject an unsafe admission without cost; do not change firing, aim, ranges, timing or race state. Review original rejected approach and a genuine completed ambush separately."
+    lane_passed: 360
+    lane_seconds: 960.23
+    build_milliseconds: 461
+    native_checks_passed: 323
   - id: ARENA-03
     title: "Fuel Run"
     owner: codex
@@ -1696,8 +1700,11 @@ tasks:
     design_question: null
     flag: warlord-cards
     owns: [src/warlord-cards.js, src/screen-card-wall.js, src/warlord-card-art.js, src/screen-card-wall.css, tools/test-warlord-cards.mjs, tools/test-vesper-gear.mjs, tools/scenarios/warlord-cards.mjs, tools/build-vesper.mjs, public/assets/models/wasteland/crew/vesper.glb, docs/changes/WAR-04.md]
-    hooks: [src/crew.js, src/crew-ui.js, src/crew-gear/gear.js, src/crew-gear/signature.js, src/arsenal/tesla.js, src/combat-scene.js, src/combat.js, src/audio.js, src/rigged-fighter.js, src/first-person-gear.js, src/first-person-presentation.js, src/arena/warlord-settlement.js, src/app.js, src/screen-results.js, src/screen-yard-home.js, src/screen-yard-home.css, src/screen-router.js, src/wasteland-progress.js, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, start-preview.bat]
+    hooks: [src/crew.js, src/crew-ui.js, src/crew-gear/gear.js, src/crew-gear/signature.js, src/arsenal/tesla.js, src/combat-scene.js, src/combat.js, src/audio.js, src/rigged-fighter.js, src/first-person-gear.js, src/first-person-presentation.js, src/arena/warlord-settlement.js, src/app.js, src/screen-results.js, src/screen-armory.js, src/screen-yard-home.js, src/screen-yard-home.css, src/screen-router.js, src/wasteland-progress.js, src/game.js, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, start-preview.bat]
     sequencing: "Start only after Baron merges. Reuse the approved Vesper fitting recipe unchanged and the exact shared Tesla effects. Preserve the eight ordinary computer crew identities and all car-weapon recharges. Keep player cards additive through the existing atomic settlement; no loading-time reward writes. Runtime pictures must render actual models, never placeholders. Request any additional file hook before editing it."
+    armory_crew_hook_grant: "Only add the warlord-cards context option to screen-armory.js existing crewContext, with current crew-gear and discovery admission. The same earned crew and selected identity must appear in every existing roster; preserve purchases and all other Armory behavior."
+    existing_card_entitlements: "The wall reads existing saved warlord defeats, including the supported legacy defeat list, as earned cards without a loading-time write or extra reward. New first wins append their card in the same atomic transaction; other stored cards remain additive."
+    crew_start_hook_grant: "In game.js only, replace the two campaign and arena crew identity admissions with the earned-metadata helper and existing discovery/crew-gear plus explicit warlord-cards gates. Preserve ordinary crew admission, constructor behavior, seeds and all other game rules."
     dev_gate: "Add only warlord-cards: dev for the wall, poster and Vesper. Preserve discovery and existing crew-gear admission, every released switch, all eight ordinary crew identities and exact Preview current-dev-switch assertion; append only this requested switch. Additive registry expectations are reviewed in the change note."
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     acceptance:

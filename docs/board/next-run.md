@@ -5,10 +5,9 @@
 Raise Claude questions immediately and set waiting_on: claude. Keep other
 cards moving. Build more, record less in AGENTS.md controls this run.
 
-- CREW-04: Claude has settled admission: choose the nearest existing safe
-  shoulder, then reject a stop that cannot keep whole overhead within 2.5 s.
-  Keep all other rules. Rerun the same thirty Hard seeds and browser ambush;
-  merge at 20-40%.
+- CREW-04: merged after both admission remedies, same thirty Hard races
+  at 33.33%, original browser ambush in both qualities, independent review
+  and all 360 lane tests plus build. Maximum overhead is 1.05 s.
 - WAR-03e: merged after final Crown approval, the narrow Nitro repair,
   all 358 lane tests and build. Preview until WAR-04. No further art round.
 - TEST-DRIVER-BRAKING: general pursuit fix, with no game code changed.

@@ -20,8 +20,9 @@ The repair has no new subjective listening verdict.
 
 CREW-04: choose the nearest existing safe shoulder on either side before
 braking. If neither can meet the full 2.5 s overhead cap, do not admit the
-stop; it costs nothing. Keep every other rule, rerun the same thirty Hard
-seeds and browser ambush, and merge at 20-40%.
+stop; it costs nothing. Built without other rule changes: the same thirty
+Hard seeds give ten wins (33.33%), all finish and no stops abort. Original
+browser ambush passes both qualities; 360 lane tests and build pass. Merged.
 
 WAR-03e: final Chrome Crown round two approved. Kyle hears a kind of digital
 stutter in the Nitro mix, beyond gunfire. Investigate the native sound, then

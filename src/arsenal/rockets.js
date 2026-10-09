@@ -4,6 +4,7 @@ import {COMBAT_TUNING} from '../wasteland-tuning.js';
 import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.js';
 import {combatOwnerId, outOfPlay, hostile} from '../combat-teams.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
+import {carFighterTargets, fighterObstacle, splashCarFighter} from '../crew-gear/contacts.js';
 
 export const ROCKET_RULES = Object.freeze({
   count: 4, spacing: .12, bearings: [-1.5, -.5, .5, 1.5],
@@ -123,7 +124,7 @@ function body(duel, actor) {
     halfX: spec.halfWidth, halfZ: spec.halfLength,
     height: spec.height, shape: 'box'};
 }
-function blast(duel, shot, at, damageCar, shielded, fighters, blastFighter) {
+function blast(duel, shot, at, damageCar, shielded) {
   const owner = [duel.state, ...duel.state.opponents].find(actor =>
     targetIdentity(duel, actor) === shot.attackerId);
   for (const actor of [duel.state, ...duel.state.opponents]) {
@@ -138,11 +139,12 @@ function blast(duel, shot, at, damageCar, shielded, fighters, blastFighter) {
       enemy: shot.enemy, victim: actor === duel.state ? 'player' : 'rival',
       hitPosition: at});
   }
-  for (const target of fighters) blastFighter(duel, target, shot, ROCKET_RULES.blastRadius);
+  for (const target of carFighterTargets(duel, shot))
+    splashCarFighter(duel, target.fighter, {...shot, ...at}, ROCKET_RULES.blastRadius, target.raider);
   duel.emit({arsenalCue: 'weapon.rockets.hit', projectile: shot, hitPosition: at});
 }
 export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
-  shielded = combatShielded, fighters = [], blastFighter = () => {}} = {}) {
+  shielded = combatShielded} = {}) {
   if (!shot || shot.kind !== 'rocket-pod' || shot.dead || !(dt > 0)) return false;
   const speed = Math.hypot(shot.vx, shot.vz);
   if (!(speed > 0)) {shot.dead = true; return false;}
@@ -161,7 +163,7 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
   for (const actor of [duel.state, ...duel.state.opponents])
     if (actor !== owner && !outOfPlay(duel, actor) && hostile(duel, owner, actor))
       consider(body(duel, actor));
-  for (const target of fighters) consider(target.body);
+  for (const target of carFighterTargets(duel, shot)) consider(fighterObstacle(target));
   if (duel._obstacles) {
     const a = duel.course.nearest(from.x, from.z), b = duel.course.nearest(to.x, to.z, a.s);
     for (const obstacle of duel._obstacles(Math.min(a.s, b.s) - 3,
@@ -174,8 +176,7 @@ export function stepRocketPod(duel, shot, dt, {damageCar = defaultDamage,
     shot.travelled + travel * (first ? first.t : 1));
   shot.age += dt;
   if (first) {
-    blast(duel, shot, {x: shot.x, y: shot.y, z: shot.z}, damageCar, shielded,
-      fighters, blastFighter);
+    blast(duel, shot, {x: shot.x, y: shot.y, z: shot.z}, damageCar, shielded);
     shot.dead = true; return false;
   }
   if (shot.travelled + EPS >= ROCKET_RULES.range) {

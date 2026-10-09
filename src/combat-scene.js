@@ -254,6 +254,13 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   crewTurret.add(turretBase,turretHead,turretBarrel); crewTurret.visible=false; group.add(crewTurret);
   const crewFlame = new THREE.Mesh(new THREE.ConeGeometry(1.75,6,16,1,true),materials.fire);
   crewFlame.visible=false;group.add(crewFlame);
+  const cpuGearViews = Array.from({length: 12}, (_, index) => {
+    const turret = crewTurret.clone(true), flame = crewFlame.clone();
+    turret.name = `cpu-crew-turret-${index}`; flame.name = `cpu-crew-flamer-${index}`;
+    turret.visible = flame.visible = false;
+    group.add(turret, flame);
+    return {turret, head: turret.children[1], flame};
+  });
   // Fixed pools keep the three wave-two tells independent of frame rate.
   const arsenalFlameGeometry = new THREE.ConeGeometry(9 * Math.tan(Math.PI / 12),
     9, 12, 1, true);
@@ -510,6 +517,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     fighter:null,
     knockdownDuration:COMBAT_TUNING.raider.knockdownSeconds
   }));
+  const cpuEntries = Array.from({length: 12}, () => ({fighter: null,
+    knockdownDuration: 3, input: {aim: true}, weapons: {}, presentation: null}));
   const fighterOptions = {
     active:false, enabled:false, time:0
   };
@@ -529,6 +538,23 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     wastelandRulesActive(s)&&((s.onFoot&&!!s.fighter)||showDeparted);
     let fighterCount = 0;
     const fighterCapacity = showFighter ? 11 : 12;
+    if (active && duel.featureFlags?.enabled('cpu-crews') === true) {
+      for (const actor of s.opponents || []) {
+        const crew = actor.cpuCrew;
+        const departed = crew?.departed;
+        const showReturn = departed && s.stageTimeSec >= departed.presentation.startedAt &&
+          s.stageTimeSec < departed.presentation.startedAt + departed.presentation.duration;
+        const fighter = crew?.fighter || showReturn && departed.fighter;
+        if (!fighter || fighterCount >= fighterCapacity) continue;
+        const entry = cpuEntries[fighterCount];
+        entry.fighter = fighter;
+        entry.presentation = crew.fighter ? fighter.presentation : departed.presentation;
+        Object.assign(entry.weapons, {selected: fighter.repairing ? 'wrench' : 'rpg',
+          repairing: !!fighter.repairing, repairSeconds: crew.repairSeconds,
+          serial: crew.serial, lastFireAt: crew.lastFireAt, nextFireAt: crew.nextFireAt});
+        fighterRoster[fighterCount++] = entry;
+      }
+    }
     if (active && s.raids) {
       for (let zoneIndex = 0; zoneIndex < s.raids.zones.length && fighterCount < fighterCapacity; zoneIndex++) {
         const raiders = s.raids.zones[zoneIndex].raiders;
@@ -643,6 +669,26 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         fighter.z+Math.cos(fighter.yaw)*3);
       crewFlame.rotation.set(Math.PI/2,fighter.yaw,0);
     }
+    cpuGearViews.forEach((view, index) => {
+      const crew = s.opponents?.[index]?.cpuCrew;
+      const enabled = active && duel.featureFlags?.enabled('cpu-crews') === true;
+      const turret = enabled && crew?.turret, fighter = enabled && crew?.fighter;
+      view.turret.visible = !!turret;
+      if (turret) {
+        view.turret.position.set(turret.x, turret.y, turret.z);
+        const target = actorForTarget(duel, turret.targetId);
+        if (target) {
+          const at = target === s && s.onFoot && s.fighter || point(duel, target);
+          view.head.rotation.y = Math.atan2(at.x - turret.x, at.z - turret.z);
+        }
+      }
+      view.flame.visible = fighter?.flaming === true;
+      if (view.flame.visible) {
+        view.flame.position.set(fighter.x + Math.sin(fighter.yaw) * 3, fighter.y + .9,
+          fighter.z + Math.cos(fighter.yaw) * 3);
+        view.flame.rotation.set(Math.PI / 2, fighter.yaw, 0);
+      }
+    });
     const boarding = s.boarding;
     const chargeTarget = active && duel.featureFlags?.enabled('crew-gear') === true &&
       boarding?.phase === 'charge' ? actorForTarget(duel, boarding.targetId) : null;

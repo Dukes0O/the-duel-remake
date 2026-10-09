@@ -3,6 +3,7 @@ import {point, predictedPoint} from './combat-weapons.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {crewPerks} from './crew.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
@@ -111,6 +112,8 @@ export function initializeRaiders(duel) {
 }
 
 export function damageRaider(duel, raider, amount, {source = 'onFoot', owner = 'player'} = {}) {
+  if (cpuCrewActor(duel, raider))
+    return damageCpuCrewFighter(duel, raider, amount, {source, owner});
   const raids = duel.state.raids;
   if (!raids || !Number.isFinite(amount) || amount <= 0 ||
       raider.knockedDown || !raids.zones.some(zone =>
@@ -167,19 +170,32 @@ function collectSalvage(duel, zone) {
     hitPosition: {x: crate.x, y: crate.y + 1, z: crate.z}});
 }
 
-function targetFor(duel, zone) {
+function targetFor(duel, zone, preview = null) {
   const state = duel.state;
   const available = [state, ...state.opponents];
   let best = null, distance = Infinity;
   for (let index = 0; index < available.length; index++) {
-    const actor = available[index];
+    const original = available[index];
+    const actor = original === preview?.actor ? preview.pose : original;
     if (!actor || actor.finished || actor.crushed || actor.combatWrecking ||
         Math.abs(actor.speedMph || 0) < 8) continue;
     const gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
     if (gap > FIRE_METERS) continue;
-    if (gap < distance) {best = {actor, targetIndex: index - 1}; distance = gap;}
+    if (gap < distance) {best = {actor: original, targetIndex: index - 1}; distance = gap;}
   }
   return best;
+}
+
+// Read-only stop admission: reuse the current native camp target and shot rules.
+export function raiderShotScheduled(duel, actor, seconds, pose = actor) {
+  const state = duel.state, targetIndex = actor === duel.state ? -1 : state.opponents.indexOf(actor);
+  if ((state.combat?.projectiles || []).some(shot => shot.raid && !shot.dead &&
+      shot.targetIndex === targetIndex)) return true;
+  return (state.raids?.zones || []).some(zone => !zone.ambushWave &&
+    zone.nextShotAt <= state.stageTimeSec + seconds &&
+    zone.raiders.some(member => (!member.knockedDown || member.knockdownRemaining <= seconds) &&
+      member.firedLap !== state.currentLap) &&
+    targetFor(duel, zone, {actor, pose})?.actor === actor);
 }
 
 function fire(duel, zone, raider, target) {

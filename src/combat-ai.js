@@ -16,6 +16,7 @@ import {shouldUseNitroRam} from './arsenal/nitro-ram.js';
 import {arenaTargetOf} from './combat-teams.js';
 import {warlordFight} from './warlords/index.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {cpuCrewStopped} from './crew-gear/cpu-crews.js';
 
 const T = COMBAT_TUNING;
 
@@ -57,7 +58,7 @@ function useCpuPickupShield(duel) {
   const state = duel.state;
   const combat = state.combat;
   for (const opponent of state.opponents) {
-    if (opponent.decoy || opponent.finished || opponent.crushed || opponent.combatWrecking ||
+    if (opponent.decoy || cpuCrewStopped(opponent) || opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const charges = cpuPickupCharges(state, combat, opponent);
     if (charges.star && fireWeapon(duel, 'star', true, opponent)) {
@@ -70,7 +71,7 @@ function useCpuPickupShield(duel) {
 function useCpuPickupUfo(duel, cpu) {
   const {state} = duel;
   for (const opponent of state.opponents) {
-    if (!opponent.decoy && cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
+    if (!opponent.decoy && !cpuCrewStopped(opponent) && cpuPickupCharges(state, state.combat, opponent).ufo > 0 &&
         incomingBolt(duel, cpu, opponent)) {
       // Hold the charge until the existing defensive reaction sees a threat.
       // UFO use has its own per-lap limit. It never spends or resets the
@@ -98,7 +99,7 @@ export function stepCombatAI(duel, dt) {
   // decisions across the cars instead of firing a synchronized volley.
   let liveOpponents = 0;
   if (modernField) for (const opponent of state.opponents) {
-    if (!opponent.decoy && warlordFight(duel, opponent)?.mayFire?.(duel, opponent) !== false &&
+    if (!opponent.decoy && !cpuCrewStopped(opponent) && warlordFight(duel, opponent)?.mayFire?.(duel, opponent) !== false &&
         !opponent.finished && !opponent.crushed && !opponent.combatWrecking)
       liveOpponents++;
   }
@@ -110,7 +111,7 @@ export function stepCombatAI(duel, dt) {
   combat.aiTimer -= dt;
 
   for (const opponent of state.opponents) {
-    if (opponent.decoy) continue;
+    if (opponent.decoy || cpuCrewStopped(opponent)) continue;
     const ready = opponent === state.rival
       ? combat.aiShieldCooldown <= 0
       : opponent.aiShieldCooldown <= 0;
@@ -129,7 +130,7 @@ export function stepCombatAI(duel, dt) {
     const opponent = opponents[index];
     // Decoy cars never fire (docs/SCRAPDOME.md section 5), and a warlord's
     // fight may hold a car's fire for a while.
-    if (opponent.decoy || warlordFight(duel, opponent)?.mayFire?.(duel, opponent) === false ||
+    if (opponent.decoy || cpuCrewStopped(opponent) || warlordFight(duel, opponent)?.mayFire?.(duel, opponent) === false ||
         opponent.finished || opponent.crushed || opponent.combatWrecking ||
         opponent.impactTimer > 0) continue;
     const attacker = point(duel, opponent);
