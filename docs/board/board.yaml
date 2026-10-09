@@ -1189,9 +1189,8 @@ tasks:
     lane: FOOT
     size: M
     needs: [CREW-02]
-    status: review
-    waiting_on: claude
-    source_frozen: true
+    status: building
+    source_frozen: false
     held_source_commit: b1b7a419
     claude_answer_2026_10_05: "Change only stop pacing. Braking, exit, re-entry and pulling away together add at most 2.5 s beyond repair or shots. After a stop use ordinary Hard catch-up. Keep triggers, ranges, weapons and the 20-40% target. If Hard remains above forty percent, cap Hard repair stops at one per race; then merge."
     claimed_by: codex-director-2026-10-04
@@ -1205,8 +1204,8 @@ tasks:
     diagnostic_source_commit: b1b7a419
     diagnostic_hard_wins: [6, 6, 18]
     diagnostic_result: "Same thirty seeds: off six wins, in-car without stops six, full eighteen; all ninety finish and in-car matches off exactly. Full has twenty-one pull-overs, including ten aborted attempts; five extra wins have only aborts. Medium1989 has no departure shove or lingering fighter, but reaches the turn faster with zero braking. Source and driver unchanged."
-    design_question: "The unchanged cross-road pull-over now brakes for 2.4417 s before the ambush, leaving no lock work and exceeding the 2.5 s cap with pull-away. Which admission-only remedy is allowed: nearest existing safe shoulder or a pre-braking feasibility check? No aborts or other rule changes."
-    note: "Matching Arsenal+cpu-crews 30 Hard races pass 10/30, all finish, six repairs and no aborts; measured repair overhead maximum 1.05 s. Native browser exposed a legal cross-road ambush cap conflict. Waiting Claude immediately, no merge."
+    design_question: null
+    note: "Claude settled both admission remedies: nearest existing safe shoulder first, then reject a stop that cannot meet the unchanged overhead cap. Rerun the matching Hard sample and original browser ambush before merge."
     claude_answer_2026_10_04: "Repair uses only the wrench; Odessa keeps her perk. Ambush gear is used once when it reaches the player, then RPG up to three attacks; Dune uses bolts instead, Jax and Wren use RPG only, and Rook keeps his perk (docs/CREW.md section 3)."
     flag: cpu-crews
     owns: [src/crew-gear/cpu-crews.js, tools/test-cpu-crews.mjs, tools/scenarios/cpu-crews.mjs, docs/changes/CREW-04.md]
@@ -1227,6 +1226,8 @@ tasks:
     acceptance:
       - "Build docs/CREW.md section 3 exactly, with its tests, including never on Easy, never near the finish, and a full Hard race where an ambush happens and the race completes. The thirty-race balance passes with the switch on."
     claude_answer_2026_10_09: "Begin a pull-over only on the road after stop conditions hold continuously for 1 s. Once braking begins finish the stop, no aborts. Enemy within 80 m during repair means immediate re-entry. Keep the normal 2.5 s overhead cap and all other rules. Same thirty Hard seeds, merge at 20-40%."
+    claude_admission_answer_2026_10_09: "Before braking choose the nearest existing safe shoulder on either side. If none can keep the whole stop within 2.5 s overhead, do not admit it and charge no cost. All other rules stay; rerun the same Hard seeds and browser ambush, merge at 20-40%."
+    admission_threat_hook_grant: "In the existing raiders.js hook, expose a read-only query of current native targeting, unfired members and scheduled shots during projected braking. Reject an unsafe admission without cost; do not change firing, aim, ranges, timing or race state. Review original rejected approach and a genuine completed ambush separately."
   - id: ARENA-03
     title: "Fuel Run"
     owner: codex
@@ -1656,11 +1657,10 @@ tasks:
     lane: CMB
     size: M
     needs: [WAR-02b, WAR-02c, WAR-03a, WAR-03b, WAR-03c, WAR-03d, ARS-03, ARENA-PIT]
-    status: review
-    waiting_on: claude
+    status: merged
     claimed_by: codex-director-2026-10-05
     branch: codex/cmb/blackiron
-    source_commit: d61b04be9cd599eacf4b898f54eaf0fc2fa1db7e
+    source_commit: 3a6c96e56d4519c62bf0610c5e22ccc20ff612bf
     claude_answer_2026_10_05: "Build after Gunn and the Tollkeeper are merged. Earlier required bosses and Arsenal are already merged; reuse their settled moves unchanged."
     reward_answer_2026_10_05: "Chrome Crown is the chrome-crown roof look, zero armor and mass, using existing crown spikes on any car and armor tier, mutually exclusive with Side Saws and Turret Look. Polished scratched chrome on a blackened steel base; Baron wears it. One Viper/other-car comparison sheet, side/three-quarter/top, at most two rounds. Saved defeat earns Vesper; WAR-04 builds her. First win saves Warlord of the Wastes and shows it with THE BARON IS DOWN! on results. Preview only until WAR-04 merges."
     nitro_answer_2026_10_05: "Every Nitro end, including hit, miss or oil cancellation, earns 2.5 seconds at half top speed and 1.5 times incoming damage on all sides. Spikes retract, black exhaust cough and engine sputter; warlord.nitroSpent and HE'S OUT OF NITRO. HIT HIM! The next move never cuts the window short."
@@ -1671,26 +1671,38 @@ tasks:
     sequencing: "Tests and source use the settled moves unchanged. Sal may expose its existing core with a default-preserving charge option. Generic active-fight metadata admits full arsenal for this actor only; player and ordinary CPU gates stay exact. Ask for narrow additional hooks. Save/title changes require save review."
     roof_look_grant: "Optional Crown roofLook alongside stock or paid plating. Absent field preserves old saves; no normalization grant. Old Side Saws/Turret choices clear Crown; Crown clears an old exclusive cosmetic without guessing a paid tier. Plating changes retain Crown. No general cosmetic migration."
     release_hold: "Preview until WAR-04 merges. Final Crown sheet requires Claude approval. Raise questions immediately."
-    build_note: "Final Crown sheet, audio filters and Preview flag are reviewed; focused tests pass. First gate found the Preview list, now fixed. Fresh gate/build waits for Claude final Crown and native listening verdict."
+    build_note: "Final Crown round two is approved. Regular artificial chopping was removed from the spent cue; native High and Performance captures have once-only cues and no clipping. All lane tests and build pass; source and frozen save review clear."
     save_pay_review: "Clear on dcdb27ee: 269 focused tests, seven historical fixtures with 247 preservation checks, and 308 damaged/partial cases pass. Medium first win/rematch/two-wreck loss pay 1560/312/144 once. Failed Crown/title writes retry without partial rewards. Nine frozen hashes unchanged; memory-only, no load-time reward grant."
-    follow_up_work: "Claude reviews the final Crown sheet and native Nitro mix. Fresh lane/build and merge follow approval; WAR-04 then starts."
+    follow_up_work: "Resolve the Nitro sound finding, gate and merge, then start WAR-04. No further Crown round."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Baron Blackiron' in docs/SCRAPDOME.md section 5, reusing the earlier warlords' moves unchanged. Unlocks only when the other seven are defeated. When built, status review and waiting_on: claude before merge."
     claude_answer_2026_10_09: "Final Crown round two: bright polished chrome with strong reflections and small scratches, spikes 1.5 times taller on the blackened base, keep fit. Send one sheet. Narrow permission adds the three Baron sound IDs and one catalog row to both audio snapshots only. Gate and merge after Crown approval."
     preview_flag_grant: "Add blackiron only to existing start-preview.bat PREVIEW_FLAGS. Preserve the exact every-current-dev-switch test assertion; no released flag change."
+    crown_approved_2026_10_09: "Claude approves Chrome Crown round two, the final round."
+    nitro_listening_verdict_2026_10_09: "Kyle hears a kind of digital stutter, not just gunfire; hard to tell. Investigate before the gate and merge."
+    lane_passed: 358
+    lane_seconds: 1348.71
+    build_milliseconds: 557
   - id: WAR-04
     title: "Story cards, wanted posters and Vesper Blackiron"
     owner: codex
     lane: SAVE
     size: M
     needs: [WAR-03e, CREW-02]
-    status: ready
-    flag: scrapdome
-    owns: [src/warlord-cards.js, src/screen-card-wall.js, tools/test-warlord-cards.mjs, docs/changes/WAR-04.md]
+    status: building
+    claimed_by: codex-director-2026-10-09
+    branch: codex/save/warlord-cards
+    design_question: null
+    flag: warlord-cards
+    owns: [src/warlord-cards.js, src/screen-card-wall.js, src/warlord-card-art.js, src/screen-card-wall.css, tools/test-warlord-cards.mjs, tools/test-vesper-gear.mjs, tools/scenarios/warlord-cards.mjs, tools/build-vesper.mjs, public/assets/models/wasteland/crew/vesper.glb, docs/changes/WAR-04.md]
+    hooks: [src/crew.js, src/crew-ui.js, src/crew-gear/gear.js, src/crew-gear/signature.js, src/arsenal/tesla.js, src/combat-scene.js, src/combat.js, src/audio.js, src/rigged-fighter.js, src/first-person-gear.js, src/first-person-presentation.js, src/arena/warlord-settlement.js, src/app.js, src/screen-results.js, src/screen-yard-home.js, src/screen-yard-home.css, src/screen-router.js, src/wasteland-progress.js, src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, start-preview.bat]
+    sequencing: "Start only after Baron merges. Reuse the approved Vesper fitting recipe unchanged and the exact shared Tesla effects. Preserve the eight ordinary computer crew identities and all car-weapon recharges. Keep player cards additive through the existing atomic settlement; no loading-time reward writes. Runtime pictures must render actual models, never placeholders. Request any additional file hook before editing it."
+    dev_gate: "Add only warlord-cards: dev for the wall, poster and Vesper. Preserve discovery and existing crew-gear admission, every released switch, all eight ordinary crew identities and exact Preview current-dev-switch assertion; append only this requested switch. Additive registry expectations are reviewed in the change note."
     helpers: [test_author, reviewer, save_guardian, browser_qa]
     acceptance:
       - "Build 'Settled for build: the ladder's end' in docs/SCRAPDOME.md section 5: story cards on a yard wall and wanted posters, both rendered from the real models (no generated pictures), per named player and additive (Save Guardian); Vesper Blackiron listed only after the Baron falls, with her perk and Shock Charge."
+    claude_shock_answer_2026_10_09: "18 s base recharge, 0.4 s crackle with smaller Tesla look/sound, unlimited cooldown uses. Exact Tesla disabled effect: weapons and boost off 3 s, star shield lost instead, end Scrap Magnet and destroy decoy. Radius 8 m around Vesper. Her on-foot signature recharge is 25% shorter (13.5 s); no car-weapon recharge change."
   - id: FEATURE-PLAYTEST
     title: "Kyle and Gratian play Titan climbing and Muddy Hollow in the Preview"
     owner: claude

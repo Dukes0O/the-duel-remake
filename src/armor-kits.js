@@ -16,6 +16,7 @@ export const ARMOR_KITS = Object.freeze({
 export const EARNED_ARMOR_KITS = Object.freeze({
   'side-saws': Object.freeze({name: 'Side Saws', armor: 0, massKg: 0}),
   'turret-look': Object.freeze({name: 'Turret Look', armor: 0, massKg: 0}),
+  'chrome-crown': Object.freeze({name: 'Chrome Crown', armor: 0, massKg: 0}),
 });
 
 export function validArmorKit(id) {
@@ -60,6 +61,12 @@ export function getEquippedArmorKit(profile, car) {
   return equipped && ownsArmorKit(profile, car, equipped) ? equipped : null;
 }
 
+export function getEquippedRoofLook(profile, car) {
+  return profile?.wasteland?.kits?.[car]?.roofLook === 'chrome-crown' &&
+    !['side-saws', 'turret-look'].includes(profile.wasteland.kits[car].equipped) &&
+    ownsArmorKit(profile, car, 'chrome-crown') ? 'chrome-crown' : null;
+}
+
 function currentWasteland(profile) {
   // The startup migration verifies a backup before presenting version 1 to
   // the Armory. A direct caller cannot use a purchase to bypass that gate.
@@ -91,7 +98,8 @@ export function purchaseArmorKit(profile, car, id) {
   return {
     profile: {...profile, credits: scrapCareer ? profile.credits : profile.credits - kit.price,
       wasteland: {...wasteland, ...(scrapCareer ? {scrap: balance - kit.price} : {}), kits: {...wasteland.kits,
-        [car]: {owned: [...installed.owned, id], equipped: id}}}},
+        [car]: {owned: [...installed.owned, id], equipped: id,
+          ...(Object.hasOwn(installed, 'roofLook') ? {roofLook: installed.roofLook} : {})}}}},
     ok: true, reason: '', cost: kit.price, equipped: id,
   };
 }
@@ -104,11 +112,21 @@ export function equipArmorKit(profile, car, id = null) {
   const installed = wasteland.kits[car] || {owned: [], equipped: null};
   if (id !== null && !ownsArmorKit({...profile, wasteland}, car, id))
     return result(profile, 'Earn or buy this kit first.');
-  if (installed.equipped === id) return result(profile, id ? 'This kit is already equipped.' : 'This car is already stock.');
+  if (id === 'chrome-crown') {
+    if (getEquippedRoofLook(profile, car)) return result(profile, 'This look is already equipped.');
+    const equipped = Object.hasOwn(ARMOR_KITS, installed.equipped) ? installed.equipped : null;
+    return {profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
+      [car]: {...installed, owned: [...new Set([...installed.owned, id])],
+        equipped, roofLook: id}}}}, ok: true, reason: '', cost: 0, equipped: id};
+  }
+  if (installed.equipped === id && (id !== null || !getEquippedRoofLook(profile, car)))
+    return result(profile, id ? 'This kit is already equipped.' : 'This car is already stock.');
+  const clearsRoof = id === null || id === 'side-saws' || id === 'turret-look';
   return {
     profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
       [car]: {...installed, owned: Object.hasOwn(EARNED_ARMOR_KITS, id) || earnedOnAnyCar(profile, id)
-        ? [...new Set([...installed.owned, id])] : installed.owned, equipped: id}}}},
+        ? [...new Set([...installed.owned, id])] : installed.owned, equipped: id,
+        ...(clearsRoof && Object.hasOwn(installed, 'roofLook') ? {roofLook: null} : {})}}}},
     ok: true, reason: '', cost: 0, equipped: id,
   };
 }

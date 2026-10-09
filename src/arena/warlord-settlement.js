@@ -129,9 +129,12 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     const kitCar = warlord.rewardKitCar ?? car;
     const installed = record(kits?.[kitCar]) ? kits[kitCar] : {};
     const owned = Array.isArray(installed.owned) ? installed.owned : [];
+    const roofLook = warlord.rewardKit === 'chrome-crown';
     kits = {...kits, [kitCar]: {...installed,
       owned: [...new Set([...owned, warlord.rewardKit])],
-      equipped: kitCar === car || !installed.equipped ? warlord.rewardKit : installed.equipped}};
+      ...(roofLook ? {roofLook: warlord.rewardKit,
+        equipped: ['side-saws', 'turret-look'].includes(installed.equipped) ? null : installed.equipped ?? null}
+        : {equipped: kitCar === car || !installed.equipped ? warlord.rewardKit : installed.equipped})}};
   }
   let crew = career.crew;
   if (firstWin && warlord.rewardCrew) {
@@ -140,7 +143,9 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     const unlocked = Array.isArray(current.unlocked) ? current.unlocked : [];
     crew = {...current, unlocked: [...new Set([...unlocked, warlord.rewardCrew])]};
   }
+  const titleEarned = firstWin && warlord.rewardTitle ? warlord.rewardTitle : null;
   const wasteland = {...career, scrap, territories, kits, ...(crew === undefined ? {} : {crew}),
+    ...(titleEarned ? {title: titleEarned} : {}),
     warlords: {...career.warlords, [id]: entry},
     settledResults: [...career.settledResults, key].slice(-1000)};
   let settledProfile = {...profile, wasteland}, weaponEarned = null;
@@ -152,7 +157,7 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     scrapEarned: scrap - oldScrap, firstWin,
     rewardReason: facts.chargeFormat && !facts.won ? 'Valve pay: 40 per broken valve (' +
       facts.playerValvesBroken + ') at ' + DIFFICULTY_FACTORS[cpuDifficulty] + 'x difficulty.' : payExplanation(payContext),
-    kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned,
+    kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned, titleEarned,
     crewEarned: firstWin && warlord.rewardCrew ? warlord.rewardCrew : null,
     gearEarned: firstWin && warlord.rewardGear ? warlord.rewardGear.id : null,
     territoryClaimed: facts.won};

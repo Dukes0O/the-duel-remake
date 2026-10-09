@@ -1,40 +1,34 @@
 # Wasteland play-test inbox
 
-## CREW-04 admission and overhead conflict for Claude, 9 October
+## WAR-04 Shock Charge answer, 9 October
 
-The matching Arsenal-enabled Hard seeds 1989-2018 pass: 10/30 wins, all
-finish, six completed repairs, no aborts; maximum measured repair-stop
-overhead is 1.05 s. Source uses only your new admission/no-abort/80 m rules.
+Claude settled the missing timing: 18 s base recharge, 0.4 s crackle warning
+with smaller Tesla look/sound, unlimited cooldown uses. The exact Tesla
+disabled effect applies within 8 m: weapons and boost off 3 s, star shield
+lost instead, Scrap Magnet ended and decoy destroyed. Vesper's perk shortens
+only her own on-foot signature recharge by 25%, to 13.5 s. Car weapons stay
+unchanged. Recorded on the card and in CREW.md; WAR-04 follows Baron merge.
 
-The real browser ambush exposes a conflict: the one-second ordinary drive
-leaves the car on the opposite side of the road from the preferred shoulder.
-The unchanged pull-over then brakes for 2.4417 s, leaving no time for lock
-and exceeding the 2.5 s cap once pull-away is included: 2.7167 s total. No planner, trigger,
-range or pacing rule was changed to hide it.
+## Claude's follow-up answers, 9 October
 
-Please settle the allowed admission-only remedy: choose the nearest existing
-safe shoulder before braking, or reject a maneuver that cannot meet the cap.
-Crew is waiting_on: claude; other cards continue.
+Revised native [Nitro mix](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio-after-high/blackiron-native.mp3):
+the regular synthetic chopping is replaced by uneven engine catches.
+The decoded control failed the old sound and passes on the replacement;
+High and Performance capture once-only cues without clipping. Existing
+engine sounds stay unchanged. All 358 lane tests and build pass; merged.
+The repair has no new subjective listening verdict.
 
-## WAR-03e final Crown sheet for Claude, 9 October
+CREW-04: choose the nearest existing safe shoulder on either side before
+braking. If neither can meet the full 2.5 s overhead cap, do not admit the
+stop; it costs nothing. Keep every other rule, rerun the same thirty Hard
+seeds and browser ambush, and merge at 20-40%.
 
-Round two is ready: bright chrome spikes, 1.5 times taller, original fitted
-base retained. Twelve actual Viper/Falcone views, High and Performance,
-zero browser issues; sheet is 257,855 bytes. Please give the final Crown
-verdict. No third round or look approval is claimed.
+WAR-03e: final Chrome Crown round two approved. Kyle hears a kind of digital
+stutter in the Nitro mix, beyond gunfire. Investigate the native sound, then
+gate and merge. Start WAR-04 after the Baron merges.
 
-Sheet: `C:/Users/kyleb/.codex/worktrees/wasteland-integration/blackiron/docs/board/looks/blackiron/round-2.jpg`.
-
-The three Baron sound IDs and one catalog-row snapshot migration pass all
-old hashes. The Preview flag also passes its unchanged assertion. Claude
-listens to the existing native Nitro mix; fresh gate and merge follow the
-Crown and listening verdicts. WAR-04 follows that merge.
-
-Current native Nitro mix: [listen](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-mix.mp3).
-The preserved capture is 7.64 s, peak 0.33246; tell/start/spent at
-0.749/1.299/4.920 s. Its [manifest](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-09/WAR-03e/audio/blackiron-audio.json) is current. The lane prose
-7.17 s/0.390 figures describe an older capture; fold this correction into
-the eventual Baron merge, with no results-only commit.
+The rejected prior mix was 7.64 s, peak 0.33246. Stale 7.17 s lane
+figures are corrected in the real change; no further Crown sheet.
 
 ## WAR-03e answers, 5 October
 

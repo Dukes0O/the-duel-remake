@@ -32,7 +32,8 @@ const WAVE_THREE_CUES = ['weapon.mortar.fire', 'weapon.mortar.whistle', 'weapon.
   'weapon.tesla.charge', 'weapon.tesla.pulse', 'weapon.decoy.deploy',
   'weapon.decoy.burst', 'weapon.nitro.start', 'weapon.nitro.loop'];
 const BANK_ADDITIONS = new Set([...NEW_ARSENAL_CUES, ...WAVE_TWO_CUES, 'arena.bounty-mark',
-  ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage', 'arena.toll-gate']);
+  ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage', 'arena.toll-gate',
+  'arena.blackiron-barrage', 'warlord.nitroTell', 'warlord.nitroSpent']);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 // Rebuild only retired flag fields in test memory so the original exact pin
 // still checks every cue recipe without accepting any other bank change.
@@ -167,7 +168,7 @@ check('existing sound-bank entries and all other exports stay exact', () => {
 check('existing catalog records and metadata stay exact', () => {
   assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row =>
     !NEW_ARSENAL_CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue) &&
-    !WAVE_THREE_CUES.includes(row.cue) && row.cue !== 'arena.toll-gate')}),
+    !WAVE_THREE_CUES.includes(row.cue) && row.cue !== 'arena.toll-gate' && row.cue !== 'warlord.nitroSpent')}),
     '104e9dafe12aa861857d055e73685a315a6fb809ee56db2f25a60990a283f1c5');
 });
 for (const id of CUES) {

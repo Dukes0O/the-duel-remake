@@ -3,6 +3,7 @@
 export const FEATURE_STATES = Object.freeze({
   'convoy-raid': 'dev',
   tollkeeper: 'dev',
+  blackiron: 'dev',
   'arsenal-wave3': 'dev',
   'career-backup': 'dev', 'hidden-road': 'on',
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',

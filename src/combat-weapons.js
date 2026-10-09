@@ -19,6 +19,7 @@ import {deployDecoyDrone} from './arsenal/decoy-drone.js';
 import {startNitroRam} from './arsenal/nitro-ram.js';
 import {targetFor, targetIdentity} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {warlordFight} from './warlords/index.js';
 
 const cpuCooldowns = new WeakMap();
 const boltLaunchSpeeds = new WeakMap();
@@ -307,7 +308,9 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   const waveTwo = ['rockets', 'flamethrower', 'magnet'].includes(weapon);
   const waveThree = ['mortar', 'tesla', 'decoy', 'nitro'].includes(weapon);
   if ((rearHazard || weapon === 'harpoon' || waveTwo || waveThree) && !arsenal) return false;
-  if (waveThree && !arsenalWaveThreeEnabled(duel)) return false;
+  if (waveThree && !arsenalWaveThreeEnabled(duel) &&
+      !(enemy && warlordFight(duel, actor)?.fullArsenal === true)) return false;
+  if (enemy && warlordFight(duel, actor)?.mayUseWeapon?.(duel, actor, weapon) === false) return false;
   if (arsenal && carEffect(actor, 'disabled')) return false;
   if (arsenal && enemy && !actor.weaponLoadout?.includes(weapon)) return false;
   let cooldowns = combat.cooldowns;

@@ -1,7 +1,7 @@
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
-import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit} from './armor-kits.js';
+import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
@@ -15,7 +15,7 @@ import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
-import {BUILT_WARLORD_IDS} from './warlords.js';
+import {BUILT_WARLORD_IDS, warlordUnlockSatisfied} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
@@ -313,6 +313,7 @@ export class App {
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
+      combatRoofLook:this.wastelandUnlocked() ? getEquippedRoofLook(this.profile, car) : null,
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
@@ -715,6 +716,7 @@ export class App {
       firstWin: settled.firstWin, rewardReason: settled.rewardReason, kitEarned: settled.kitEarned,
       weaponEarned: settled.weaponEarned ?? null, crewEarned: settled.crewEarned ?? null,
       gearEarned: settled.gearEarned ?? null,
+      titleEarned: settled.titleEarned ?? null,
       territoryClaimed: settled.territoryClaimed});
     this._warlordSettlementRetry = null;
   }
@@ -820,7 +822,7 @@ export class App {
       state.playerId === this.player.id;
     if (!this.warlordsAvailable() || !BUILT_WARLORD_IDS.includes(warlordId) ||
         !warlordEnabled(this.duel, warlordId) ||
-        this.profile.wasteland?.territories?.[warlordId]?.hold !== 100 ||
+        !warlordUnlockSatisfied(this.profile, warlordId) ||
         !(this.isYardHomeActive() || ownRematch)) return false;
     return this._startArenaFight({warlordId, opponents: 1});
   }
@@ -887,6 +889,7 @@ export class App {
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout: getCarLoadout(this.profile,this._arsenalOptions()), combatArmorKit: this._combatArmorKit(car),
+      combatRoofLook: getEquippedRoofLook(this.profile, car),
       crewId: selectedCrewId(this.profile)};
     return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);

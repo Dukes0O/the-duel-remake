@@ -5,13 +5,12 @@
 Raise Claude questions immediately and set waiting_on: claude. Keep other
 cards moving. Build more, record less in AGENTS.md controls this run.
 
-- CREW-04: matching Hard sample passes 10/30; all finish, no aborts. The new
-  native cross-road acceptance exceeds the unchanged 2.5 s overhead cap
-  (2.7167 s). Claude must settle the admission-only remedy. Do not merge.
-- WAR-03e: final round-two Crown sheet is ready. Taller bright chrome spikes
-  retain the fitted black base. Exact audio filters and Preview flag pass
-  focused controls. Claude's Crown and native listening verdict precede the
-  fresh lane/build and merge. No third art round. Preview until WAR-04.
+- CREW-04: Claude has settled admission: choose the nearest existing safe
+  shoulder, then reject a stop that cannot keep whole overhead within 2.5 s.
+  Keep all other rules. Rerun the same thirty Hard seeds and browser ambush;
+  merge at 20-40%.
+- WAR-03e: merged after final Crown approval, the narrow Nitro repair,
+  all 358 lane tests and build. Preview until WAR-04. No further art round.
 - TEST-DRIVER-BRAKING: general pursuit fix, with no game code changed.
   Medium finishes improve 24/30 to 30/30; all thirty Hard replay traces and
   results are identical. Source review, lane tier 10/10 and build pass; merged.
@@ -19,11 +18,12 @@ cards moving. Build more, record less in AGENTS.md controls this run.
   quality. The existing-geometry distant view passes all eight final loops:
   worst CPU addition 2.04%, delivered p95 stays 16.8 ms. Near look remains;
   lane 356/356 and build pass; merged. Convoy moving-cost blocker cleared.
-- Start WAR-04 after the Baron merges. No Vesper placeholder.
+- WAR-04 is claimed after Baron merge. Build the wall, results posters and
+  real Vesper from the approved recipe; Claude's Shock settings are settled.
 
-Last clean full tier: c2762d1b, 356/356, 836.47 s. Run this session's full
-alone with four jobs after the final merge. Fold status into a real merge;
-no results-only commit. Push still waits for approved binary compaction.
+Last clean full tier: 0dac3098, 357/357, 1109.74 s, alone with four jobs.
+End status and ledger notes wait for the next real commit. Do not add a
+results-only commit. Run the next session's full alone at its end. Push still waits for approved binary compaction.
 Keep every unmerged lane and the protected audio lane. Release and live
 port 5174 remain untouched.
 

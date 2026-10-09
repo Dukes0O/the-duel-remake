@@ -495,7 +495,9 @@ in the Preview until WAR-04 merges, so his rewards are ready before release.
 
 Claude, 9 October: Crown round two is final. Make the spikes bright polished
 chrome with strong reflections and small scratches, 1.5 times taller on the
-blackened base, keeping the fit. Send one sheet for approval before merge.
+blackened base, keeping the fit. Claude approved that final sheet on 9 October.
+Kyle heard digital stutter in the native Nitro mix; investigate it before
+the current gate and merge. WAR-04 follows the Baron merge.
 
 ### Settled for build: the ladder's end (WAR-04)
 
@@ -512,6 +514,8 @@ blackened base, keeping the fit. Send one sheet for approval before merge.
   her that disables car weapons for 3 s (the arsenal's `disabled` effect).
   She appears in the crew roster only after the Baron is defeated; before
   that she is not listed at all.
+  Claude's 9 October timing and exact Tesla-effect answer is in CREW.md's
+  Vesper entry: 0.4 s warning, 18 s base recharge, 13.5 s with her perk.
 
 
 
