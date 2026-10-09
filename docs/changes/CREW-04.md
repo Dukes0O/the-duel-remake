@@ -15,6 +15,14 @@ Idle range waiting is overhead. Ordinary Hard catch-up follows each stop.
 Hard remained above 40%, so Claude's permitted fallback limits Hard repair
 to once per race. Medium retains once per lap; no other trigger changes.
 
+Claude's 9 October answer changes only stop admission and repair interruption.
+The car must be on road with the same stop conditions for one continuous second.
+That second remains ordinary native driving, outside stop overhead. Losing a
+condition resets the timer; crossing road center does not. Braking finishes
+its pull-over without the former 1.9-second abort. An enemy car within 80 m
+during repair sends the fighter back in immediately, before another repair tick.
+The existing 2.5-second overhead, repair and attack limits remain.
+
 ## Source
 
 The cpu-crews dev switch admits discovered Wasteland races only. Released
@@ -65,33 +73,61 @@ The exact registry tests add only the two new dev entries.
 Six additive review controls reproduce enemy direct/splash credit and live
 fighter aim faults before the fix, then pass with unchanged player positives.
 
-The first report forced released Arsenal off; all 138 races finished, but
-its win-band and ambush verdicts are not the intended released baseline.
-The correct command requests arsenal,cpu-crews. Its natural Hard seed-1989
-probe finishes in 104.70 s with five CPU hits; no eligible crew stop occurs.
-The source review clears both fixes. Current balance, private
-High/Performance browser, lane tier and build remain open.
-The corrected report finishes 138 races: Easy 28/30, Medium 19/30,
-Hard 21/30. Only Hard fails. Seven additive pacing controls then show six
-expected cap failures; the ordinary Hard driving control passes.
-Pacing source passes all seven new cases / 27 checks. Current native Crew,
-contact, Convoy and Ambush controls pass, with twelve replay fingerprints
-unchanged. The current report finishes all 138 main races: Easy 28/30,
-Medium 19/30, Hard 18/30. Its separate Medium pursuit seed 1989 stalls.
-The fallback first fails its Hard next-lap control while Medium passes;
-the one-line Hard limit then passes all 51 Crew cases / 266 checks.
-The fallback review is clear. Its report still finishes all 138 main races
-with the same 28/19/18 wins and Hard event counts: six repairs, five ambushes,
-nine attacks. The repair cap does not change these samples. Medium pursuit
-seed 1989 still stalls at s 6266.54; the identical cpu-crews-off run finishes
-in 134.72 s. Native departure has no player collision or ejection. The later
-turn reaches 197 mph and hits turn-chevron-10 at 122.13 s before stalling.
-No pilot, contact, target or rescue change was made. Ask Claude for the next
-Hard lever and a separate pursuit turn-speed fix. Investigation stopped;
-private browser and lane/build stay closed. No merge pass is claimed.
+Pacing and fallback source reviews are clear. All 51 Crew cases / 266 checks,
+native contacts, Convoy and Ambush controls pass; twelve replay fingerprints
+stay unchanged. The fallback first fails its new Hard next-lap control while
+Medium passes. Its report finishes 138 main races: Easy 28/30, Medium 19/30,
+Hard 18/30. Private browser and lane/build stay closed; no merge pass claimed.
+
+## 9 October verdict
+
+Matching prior settings: Arsenal and cpu-crews on, none policy, unchanged
+club driver/Falcone F42, Hard seeds 1989-2018. Ten wins (33.33%); all thirty
+finish. Six repairs/returns, no ambushes, aborts or unfinished stops.
+Maximum braking: 0.7583333333339368 s; maximum braking, idle and one-car
+pull-away overhead: 1.0500000000009815 s, observed without state/driver edits.
+Two earlier cpu-only reports are supplemental, not the matching acceptance.
+Source SHA-256: 92d454589e3bee80dec2c330c74bb916e9055988ffeaf9d1c45d6dc6d7f6fb90.
+
+57 crew cases / 293 checks pass; ordinary replays pass 162 checks and twelve
+released combat fingerprints stay unchanged. Director review approves the
+source and admission-timing changes; no existing assertion or cap is weakened.
+The added full-native, seeded-traffic seed-3004 case fails: cross-road braking
+is 2.4416666666666584 s; actual overhead is 2.7166666666666575 s, above 2.5 s.
+
+The separate positive browser witness passes High/Performance: seed 3008's
+existing left-side zone, real Tusk scrap-cannon attack, re-entry, one-car
+pull-away in 0.2666666666666657 s and full two-lap finish. Four screenshots,
+zero warnings/errors, private memory-only port 7237. Initial lead changes
+200 to 160 m to allow ordinary admission motion, inside the unchanged
+150-400 m trigger. The unmodified same-side zone leaves seed 3004's fault
+covered by the retained failing cap case.
+
+Claude question raised immediately: may admission choose the nearest existing
+safe shoulder, or reject a pull-over that cannot meet the cap? Which remedy
+keeps 2.5-second overhead with no braking aborts? No planner, speed, driver or
+rule remedy invented. Waiting_on: claude; lane/build and merge stay closed
+while the cap acceptance fails.
+
+## Diagnosis (5 October)
+
+Unchanged b1b7a419, Hard seeds 1989-2018, native none policy and released
+settings: off 6/30, in-car members 6/30, full 18/30; all 90 finish. In-car
+matches every off race result exactly. Full has 21 pull-over attempts: six
+repairs, five ambushes, ten aborts at 1.9 s. All twelve added wins have a
+stop attempt; five have only an aborted attempt. Stop handling, including
+aborts, explains the difference; member assignment alone does not.
+Medium pursuit 1989: off finishes in 134.72 s; full stalls. Reentry has no
+collision or ejection. Before the later turn, at s 6000 off/full speeds are
+143.21/173.37 mph, lines +0.851/-3.366; at s 6100, 180.59/196.75 mph,
+lines +0.862/-1.538. Both brake inputs are zero, player shove is zero, and
+the full fighter is gone. Full hits turn-chevron-10 at 122.13 s. Likely a
+shifted no-braking pursuit line, not departure contact. No driver, combat
+or catch-up edit made. Ask Claude about abort handling and a separate
+all-seed pursuit braking card with before/after evidence, then stop.
 
 ## Removed
 
 The old player-only car-fighter selection and duplicate body/damage/splash
 helpers were replaced by the shared native path. Obsolete held-hook notes
-were removed. No asset, licensed file or save format was changed.
+were removed. The pull-over overhead abort was removed. No asset, licensed file or save format was changed.

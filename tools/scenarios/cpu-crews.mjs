@@ -12,12 +12,15 @@ export async function run(context) {
     app.stop(); app.audio.setMuted(true);
     app.setGraphicsQuality('${quality}');
     duel.startCampaign({mode: 'wasteland', car: 'falcone_f42',
-      seed: 3004, discoveredGate: true, opponentCount: 1,
+      seed: 3008, discoveredGate: true, opponentCount: 1,
       cpuDifficulty: 'hard'});
-    const s = duel.state, rival = s.opponents[0], zone = s.raids.zones[0];
+    const s = duel.state, rival = s.opponents[0], zone = s.raids.zones.find(zone => zone.side < 0);
+    if (!zone) throw Error('The same-side native ambush fixture has no left zone');
     Object.assign(s, {status: 'racing', countdown: 0, paused: false,
-      s: zone.s - 200, prevS: zone.s - 200,
+      s: zone.s - 160, prevS: zone.s - 160,
       lateral: 0, prevLateral: 0, speedMph: 0});
+    // A same-side start is the positive attack/completion witness. The native
+    // cross-road start has its separate failing overhead acceptance case.
     Object.assign(rival, {s: zone.s, prevS: zone.s, lateral: 0,
       prevLateral: 0, speedMph: 0, headingError: 0});
     duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});

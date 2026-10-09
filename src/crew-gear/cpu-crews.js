@@ -107,10 +107,19 @@ export function damageCpuCrewFighter(duel, fighter, amount,
   return true;
 }
 
+function enemyCarNear(duel, actor) {
+  const origin = point(duel, actor);
+  return [duel.state, ...duel.state.opponents].some(enemy =>
+    hostile(duel, actor, enemy) && !outOfPlay(duel, enemy) &&
+    Math.hypot(point(duel, enemy).x - origin.x,
+      point(duel, enemy).z - origin.z) <= 80 + GEAR_EPSILON);
+}
+
 function eligibleStop(duel, actor, crew) {
   const s = duel.state, lap = actor.completedLaps || 0;
   const remaining = duel.course.raceLength - actor.s;
-  if (s.cpuDifficulty === 'easy' || actor.airborne || actor.knock ||
+  if (!duel._surface(actor.s, actor.lateral).road ||
+      s.cpuDifficulty === 'easy' || actor.airborne || actor.knock ||
       actor.combatWrecking || actor.crushed || actor.finished) return null;
   const lead = actor.s - s.s;
   if (s.cpuDifficulty === 'hard' && remaining > 500 &&
@@ -122,10 +131,7 @@ function eligibleStop(duel, actor, crew) {
   if (remaining <= 400 || crew.repairLap === lap ||
       (s.cpuDifficulty === 'hard' && crew.repairLap >= 0) ||
       !(actor.maxArmor > 0 && actor.armor / actor.maxArmor < .3)) return null;
-  const origin = point(duel, actor);
-  if ([s, ...s.opponents].some(enemy => hostile(duel, actor, enemy) &&
-      !outOfPlay(duel, enemy) && Math.hypot(point(duel, enemy).x - origin.x,
-        point(duel, enemy).z - origin.z) <= 80)) return null;
+  if (enemyCarNear(duel, actor)) return null;
   return {kind: 'repair', side: actor.lateral < 0 ? -1 : 1};
 }
 
@@ -187,8 +193,7 @@ function pullOver(duel, actor, crew, dt) {
     crew.stopSeconds = 0;
     duel.emit({cpuCrewExited: true, actor, enemy: true, actorId: targetIdentity(duel, actor),
       crewId: crew.crewId, reason: crew.stopKind, hitPosition: crew.fighter});
-  } else if (crew.overheadSeconds + GEAR_EPSILON >=
-      STOP_PACING.overhead - STOP_PACING.pullAway) finishStop(duel, actor);
+  }
 }
 
 export function cpuCrewAimPoint(duel, target, seconds = 0) {
@@ -387,8 +392,13 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
   }
   if (crew.phase === 'driving') {
     const stop = eligibleStop(duel, actor, crew);
-    if (!stop) return false;
+    const same = stop && crew.pendingStop?.kind === stop.kind &&
+      s.stageTimeSec - crew.lastEligibleAt <= dt + GEAR_EPSILON;
+    crew.eligibleSeconds = stop ? (same ? crew.eligibleSeconds : 0) + dt : 0;
+    crew.pendingStop = stop; crew.lastEligibleAt = s.stageTimeSec;
+    if (!stop || crew.eligibleSeconds + GEAR_EPSILON < 1) return false;
     if (!startStop(duel, actor, crew, stop)) return false;
+    crew.pendingStop = null; crew.eligibleSeconds = 0;
   }
   strikeCpuCrewFighterFromVehicles(duel, actor);
   // Native vehicle sweeps may knock a fighter down without dealing health damage.
@@ -421,6 +431,7 @@ export function stepCpuCrew(duel, actor, dt, {enabled = false} = {}) {
     return true;
   }
   if (crew.phase === 'repair') {
+    if (enemyCarNear(duel, actor)) {finishStop(duel, actor); return true;}
     const seconds = FOOT.wrenchRepairSeconds / (crewPerks(crew.crewId).repairRateMultiplier || 1);
     if (!crew.fighter.repairing) duel.emit({footRepairStarted: true, actor, enemy: true,
       actorId: targetIdentity(duel, actor), hitPosition: crew.fighter});

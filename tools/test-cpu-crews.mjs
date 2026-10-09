@@ -46,9 +46,18 @@ function tick(f, count = 1) {
     if (f.state.raids) stepRaiders(f.duel, DT);
   }
 }
+function controllerTick(f, count = 1) {
+  for (let n = 0; n < count; n++) {
+    f.state.stageTimeSec += DT;
+    stepCpuCrew(f.duel, f.rival, DT, {enabled: true});
+  }
+}
+// Keep the arranged admission conditions steady for the new one-second
+// decision interval; native movement owns the braking and stopped work.
+function qualify(f) {controllerTick(f, 119);}
 const stopped = actor => ['pulling-over', 'repair', 'ambush', 'recovering'].includes(actor.cpuCrew?.phase);
 function repairStart(f) {
-  f.rival.armor = 29; tick(f);
+  f.rival.armor = 29; qualify(f); tick(f);
   ok(stopped(f.rival), 'an eligible native computer must start its repair stop');
   for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'repair'; n++) tick(f);
   equal(f.rival.cpuCrew.phase, 'repair', 'the computer actually stops and gets out');
@@ -65,6 +74,7 @@ function ambushRace(options = {}) {
 }
 
 function completeMeasuredStop(f) {
+  if (!stopped(f.rival)) qualify(f);
   const start = f.state.stageTimeSec, events = [];
   let armed = false, enteredAt = null, parkedS = null;
   f.duel.onChange((_state, event) => {
@@ -83,6 +93,70 @@ function completeMeasuredStop(f) {
   ok(armed, 'the initial native conditions arm a real crew stop');
   assert.fail('The actual crew stop did not return and pull away by one car length');
 }
+
+test('a native car waits one continuous second on road before braking for repair', () => {
+  const f = race(); f.rival.armor = 29;
+  tick(f, 119);
+  equal(f.rival.cpuCrew.phase, 'driving', 'ordinary native driving owns the first 119 steps');
+  ok(f.rival.speedMph > 1, 'the decision delay does not stop or brake the native car');
+  tick(f);
+  equal(f.rival.cpuCrew.phase, 'pulling-over', 'the 120th eligible step starts braking');
+});
+
+for (const kind of ['repair', 'ambush']) {
+  test(kind + ' admission resets after leaving the road or losing its conditions', () => {
+    const f = kind === 'repair' ? race() : ambushRace();
+    if (kind === 'repair') f.rival.armor = 29;
+    controllerTick(f, 90);
+    equal(f.rival.cpuCrew.phase, 'driving', 'three quarters of a second cannot start a stop');
+    const lateral = f.rival.lateral;
+    f.rival.lateral = f.duel.course.roadHalfWidthAt(f.rival.s) + 1;
+    controllerTick(f, 120);
+    equal(f.rival.cpuCrew.phase, 'driving', 'an off-road car never starts a pull-over');
+    f.rival.lateral = lateral;
+    controllerTick(f, 119);
+    equal(f.rival.cpuCrew.phase, 'driving', 'returning to road requires a fresh continuous second');
+    if (kind === 'repair') f.rival.armor = 30;
+    else f.state.s = f.rival.s - 401;
+    controllerTick(f);
+    if (kind === 'repair') f.rival.armor = 29;
+    else f.state.s = f.rival.s - 200;
+    controllerTick(f, 119);
+    equal(f.rival.cpuCrew.phase, 'driving', 'a broken trigger also resets the decision timer');
+    controllerTick(f);
+    ok(stopped(f.rival), 'one fresh uninterrupted second finally admits the stop');
+  });
+}
+
+test('braking finishes its stop even after the admission conditions disappear', () => {
+  const f = race(); f.rival.armor = 29; f.rival.speedMph = 160;
+  qualify(f); tick(f);
+  equal(f.rival.cpuCrew.phase, 'pulling-over', 'the car actually begins its pull-over');
+  f.rival.armor = 31;
+  for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'repair'; n++) tick(f);
+  equal(f.rival.cpuCrew.phase, 'repair', 'lost low-armor eligibility cannot abort braking');
+  ok(f.rival.cpuCrew.fighter, 'a completed pull-over puts its real fighter outside');
+});
+
+for (const distance of [80, 80.01]) test('repair enemy boundary at ' + distance + ' m', () => {
+  const f = actualControllerRepair(), events = [], crew = f.rival.cpuCrew;
+  controllerTick(f, 12);
+  f.duel.onChange((_state, event) => events.push(event));
+  const origin = point(f.duel, f.rival);
+  Object.assign(f.state, {s: f.rival.s, prevS: f.rival.s,
+    lateral: f.rival.lateral + distance, prevLateral: f.rival.lateral + distance});
+  const before = f.rival.armor;
+  // Same road station makes world-space enemy distance the exact lateral gap.
+  ok(Math.abs(Math.hypot(point(f.duel, f.state).x - origin.x,
+    point(f.duel, f.state).z - origin.z) - distance) < 1e-8,
+    'the arranged native car is at the stated world-space boundary');
+  controllerTick(f);
+  equal(crew.phase, distance === 80 ? 'driving' : 'repair',
+    'at eighty metres the fighter enters immediately; beyond it repair continues');
+  equal(!!events.find(event => event.footRepairInterrupted), distance === 80,
+    'only the interrupted repair emits the spatial interruption cue');
+  if (distance === 80) equal(f.rival.armor, before, 'the interruption adds no extra repair tick');
+});
 
 for (const seed of [3004, 3013]) for (const speedMph of [0, 90])
   test(`native repair overhead includes braking and pull-away at seed ${seed}, ${speedMph} mph`, () => {
@@ -123,6 +197,43 @@ test('an actual ambush outside all weapon reach cannot spend its cap idling', ()
     'a no-shot stop returns and physically pulls away within the full 2.5-second overhead cap');
 });
 
+test('cross-road admission finishes its native ambush within the unchanged overhead cap', () => {
+  const duel = new Duel({seed: 3004, featureFlags: createFeatureFlags({storage: null,
+    qa: true, overrides: {'cpu-crews': true}})});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', seed: 3004,
+    discoveredGate: true, opponentCount: 1, cpuDifficulty: 'hard'});
+  const state = duel.state, rival = state.opponents[0], zone = state.raids.zones[0];
+  const f = {duel, state, rival};
+  Object.assign(state, {status: 'racing', countdown: 0, paused: false,
+    s: zone.s - 160, prevS: zone.s - 160, lateral: 0, prevLateral: 0, speedMph: 0});
+  Object.assign(rival, {s: zone.s, prevS: zone.s, lateral: 0,
+    prevLateral: 0, speedMph: 0, headingError: 0});
+  duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+  let began = null, exited = null, entered = null, parkedS = null;
+  const shots = [];
+  f.duel.onChange((_state, event) => {
+    if (event.cpuCrewExited) exited = f.state.stageTimeSec;
+    if (event.enemy && event.footWeaponFired) shots.push(f.state.stageTimeSec);
+    if (event.cpuCrewEntered) {entered = f.state.stageTimeSec; parkedS = f.rival.s;}
+  });
+  for (let n = 0; n < 3600; n++) {
+    const phase = f.rival.cpuCrew?.phase;
+    f.duel.step(DT);
+    if (phase === 'driving' && f.rival.cpuCrew.phase === 'pulling-over')
+      began = f.state.stageTimeSec - DT;
+    if (entered !== null && f.rival.s >= parkedS + f.duel._vehicleSpec(f.rival).halfLength * 2 &&
+        f.rival.speedMph > 1) break;
+  }
+  ok(began !== null && exited !== null && entered !== null,
+    'the real car admits, brakes, gets out and returns without an abort');
+  const work = shots.length ? COMBAT_TUNING.foot.rpgLockSeconds + shots.at(-1) - shots[0]
+    : f.rival.cpuCrew.lockSeconds;
+  const overhead = f.state.stageTimeSec - began - work;
+  console.log(JSON.stringify({crossRoadWitness: {braking: exited - began, overhead}}));
+  ok(overhead <= 2.5 + 1e-8,
+    'actual cross-road braking, return and one-car pull-away must retain the 2.5-second overhead cap');
+});
+
 test('a returned Hard crew uses the same ordinary catch-up driving as the off control', () => {
   const f = race({difficulty: 'hard'});
   f.rival.armor = 29; completeMeasuredStop(f);
@@ -154,7 +265,7 @@ test('computer crews have their own explicitly requested dev admission', () => {
   const f = race();
   equal(f.duel.featureFlags.state('cpu-crews'), 'dev', 'computer behavior has its own dev switch, not released crew gear');
   equal(f.duel.featureFlags.enabled('cpu-crews'), true, 'the native acceptance fixture explicitly requests computer crews');
-  f.rival.armor = 29; tick(f);
+  f.rival.armor = 29; qualify(f); tick(f);
   ok(stopped(f.rival), 'the explicitly admitted native computer begins its eligible repair stop');
 });
 
@@ -321,7 +432,7 @@ for (const difficulty of ['hard', 'medium'])
     Object.assign(f.rival, {s: anchor, prevS: anchor, completedLaps: 1,
       lateral: 0, prevLateral: 0, speedMph: 0, armor: 29});
     Object.assign(f.state, {s: anchor - 1000, prevS: anchor - 1000, completedLaps: 1});
-    tick(f);
+    qualify(f); tick(f);
     equal(stopped(f.rival), difficulty === 'medium',
       'Hard repairs once per race; Medium keeps its native once-per-lap repair');
     if (difficulty === 'medium') {
@@ -341,12 +452,12 @@ for (const [label, options, arrange] of [
   ['nearby enemy', {}, f => {f.state.s = f.rival.s - 20;}],
   ['last four hundred metres', {}, f => {f.rival.s = f.duel.course.raceLength - 399;}],
 ]) test(`repair eligibility rejects ${label}`, () => {
-  const f = race(options); f.rival.armor = 29; arrange(f); tick(f, 2);
+  const f = race(options); f.rival.armor = 29; arrange(f); tick(f, 121);
   equal(stopped(f.rival), false, `${label} must not send the computer crew out to repair`);
 });
 
 test('Hard computer at an ambush zone starts a real fighter ambush when leading by 150 to 400 metres', () => {
-  const f = ambushRace(); tick(f);
+  const f = ambushRace(); qualify(f); tick(f);
   ok(stopped(f.rival), 'the eligible native Hard computer must pull over for its ambush');
   for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'ambush'; n++) tick(f);
   equal(f.rival.cpuCrew.phase, 'ambush', 'the Hard computer actually stops for its ambush');
@@ -360,7 +471,7 @@ test('Hard computer at an ambush zone starts a real fighter ambush when leading 
 test('a Hard ambush outside RPG reach arms but waits for the player to approach', () => {
   const f = ambushRace();
   f.state.s = f.state.prevS = f.rival.s - 250;
-  tick(f);
+  qualify(f); tick(f);
   ok(stopped(f.rival), 'a 250-metre lead still triggers an eligible ambush');
   for (let n = 0; n < 1200 && f.rival.cpuCrew.phase !== 'ambush'; n++) tick(f);
   equal(f.rival.cpuCrew.phase, 'ambush', 'the actual fighter exits at the ambush zone');
@@ -398,7 +509,7 @@ for (const [label, options, arrange] of [
     f.state.raids.zones[0].s = s; f.rival.s = s; f.state.s = s - 250;
   }],
 ]) test(`ambush eligibility rejects ${label}`, () => {
-  const f = ambushRace(options); arrange(f); tick(f, 2);
+  const f = ambushRace(options); arrange(f); controllerTick(f, 121);
   equal(stopped(f.rival), false, `${label} must not send the computer crew out to ambush`);
 });
 
@@ -585,7 +696,7 @@ test('every seeded native crew uses only its settled ambush gear and the three-a
     dune: 'crew.marksman.fire', wren: null, tusk: 'crew.scrap-cannon.fire'};
   const selected = new Map();
   for (let seed = 3004; seed < 3068 && selected.size < 8; seed++) {
-    const f = ambushRace({seed}); tick(f);
+    const f = ambushRace({seed}); qualify(f); tick(f);
     if (!selected.has(f.rival.cpuCrew.crewId)) selected.set(f.rival.cpuCrew.crewId, f);
   }
   equal(selected.size, 8, 'the actual seeded field supplies every settled crew member');
