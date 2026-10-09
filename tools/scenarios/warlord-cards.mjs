@@ -84,7 +84,7 @@ export async function run(context) {
     await context.screenshot(quality+'-shock-tell');
     await context.evaluate(`window.__qaApp.advance(.4);window.__qaApp.onFrame?.(window.__qaApp.duel.state,0);window.__render.renderFrame();`);
     await context.screenshot(quality+'-shock-pulse');
-    const cues=await context.evaluate(`(()=>{const cues=window.__shockCues;if(cues.length!==2||cues[0].id!=='weapon.tesla.charge'||cues[1].id!=='weapon.tesla.pulse'||cues.some(c=>c.scale!==.55)||Math.abs(cues[1].simSec-cues[0].simSec-.4)>1/120+.000001)throw Error('Existing smaller Tesla sound did not follow the actual Shock tell');return cues;})()`);
+    const cues=await context.evaluate(`(()=>{const cues=window.__shockCues;if(cues.length!==2||cues[0].id!=='weapon.tesla.charge'||cues[1].id!=='weapon.tesla.pulse'||cues.some(c=>c.scale!==.55)||Math.abs(cues[1].simSec-cues[0].simSec-.4)>1/120+.000001)throw Error('Existing smaller Tesla sound did not follow the actual Shock tell: '+JSON.stringify(cues));return cues;})()`);
     report.push({quality,wall,poster,shock,cues});
   }
   await writeFile(join(context.outputDir,'warlord-cards.json'),JSON.stringify(report,null,2)+'\n');

@@ -1,6 +1,6 @@
 # WAR-04: Story cards, wanted posters and Vesper
 
-Status: building. Direction settled before implementation on 9 October 2026.
+Status: source frozen for lane/build. Direction settled before code on 9 October 2026.
 
 ## Approach
 
@@ -30,23 +30,38 @@ Status: building. Direction settled before implementation on 9 October 2026.
 
 ## Checks
 
-Independent native tests failed before implementation and now pass all seven
-cases. Feature controls pass 58 checks. Actual High story pictures include all
-eight fitted cars, native Tanker and earned Vesper; wall rendering preserves the
-profile and race byte-for-byte. Final High/Performance scenario and gates remain
-pending on the whole CREW integration merge.
+Meaningful native red cases preceded implementation. All eight acceptance cases
+pass, including a later real audio failure: Shock event admission passed but
+_playCue rejected the existing Tesla bank flag. The narrow crewShock exception
+now admits only those two cues with cards, gear and discovery; normal Tesla
+still requires wave three. Protected bank, catalog, files and snapshots are exact.
+Existing wave-three audio passes 41 checks; feature controls pass 58.
 
-Source review closed Unicode/import, earned selection and late kit disposal
-findings. Deferred disposal now creates zero late roots or turret requests.
-Director also granted only the existing Armory crew-context option. Its native
-fixture now selects earned Vesper and does not mislabel Rook. No assertion was
-weakened; the new flag catalog row is additive. Native decoy timing is checked
-at 3 seconds minus the application tick, then at expiry.
+Whole CREW dc2e145b merged without conflicts. Shared CPU controls pass 66 native
+cases/323 assertions, rocket contacts 94, Gunn 24 cases/279 checks. Ordinary
+162 and combat 12 replay fingerprints are unchanged.
 
-Approved Vesper recipe and fit inputs are unchanged. Installed GLB is 2,387,328
-bytes, SHA-256 29a3873ae936dcd80ca6593d46537ce77cccda206a645e8948c06ea89a9a4f46.
+Native memory-only browser passes High and Performance on private port 31362:
+14 pictures, zero warnings/errors. All eight fitted story cars include the real
+armored Tanker; earned Vesper selection, approved on-foot rig and winning poster
+work. Wall rendering preserves profile and race byte-for-byte. Actual poster
+has three wrecks, 20 native hits and 1:12.0; it uses frozen fight paint/kit. Shock
+uses 13.5 s cooldown and existing smaller cues at .55, at .408333/.808333 s.
+
+Frames source review cleared import/Unicode, earned selection and late disposal
+findings; deferred disposal leaves zero late roots/turret requests. Save Guardian
+cleared 247 checks over seven old save shapes, atomic/failure/retry controls and
+secret selection. Reviewed save/crew source is unchanged after that verdict.
+Director granted only the existing Armory crew-context option; native earned
+Vesper selected, Rook unselected. No assertion weakened; flag row is additive.
+Decoy timing checks 3 seconds minus the native application tick, then expiry.
+
+Approved Vesper recipe and fit inputs are unchanged: 21 original art cases,
+102061 checks pass. Installed GLB is 2,387,328 bytes, SHA-256
+29a3873ae936dcd80ca6593d46537ce77cccda206a645e8948c06ea89a9a4f46.
+Lane/build gates are pending on this frozen whole-integration source.
 
 ## Removed
 
-No superseded runtime output exists yet. The build recipe keeps only the
+No superseded runtime output exists. The build recipe keeps only the
 installed Vesper binary; private regenerable fitting output stays in QA scratch.
