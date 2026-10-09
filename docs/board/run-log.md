@@ -889,3 +889,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 9 October: merged WAR-03e from 3a6c96e5; lane 358/358 (1348.71 s), build 557 ms and source/frozen save reviews pass. Final Crown round two approved; narrow Nitro chopping repair measured in both qualities. WAR-04 claimed; release untouched.
 
 9 October: merged CREW-04 from 579a555b; conflict-free whole Baron sync, lane 360/360 (960.23 s), build 461 ms and review pass. Same Hard seeds give 10/30 wins, all finish, zero aborts, maximum overhead 1.05 s; original ambush passes both qualities.
+
+9 October: merged WAR-04 from 086e9cc0; lane 362/362 (924.99 s), build 488 ms, native eight cases, both browser qualities and source/save reviews pass. Story wall, native posters and earned Vesper are built; Claude takes P3-POLISH next.

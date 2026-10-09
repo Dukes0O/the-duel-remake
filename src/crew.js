@@ -1,7 +1,8 @@
 import {rankForXp} from './notoriety.js';
+import {vesperEarned} from './warlords.js';
 
-// These are the eight named crew in SPEC 3.5. The secret warlord reward has
-// no identity or play rules yet and is deliberately absent from this catalog.
+// These eight ordinary identities also define the seeded computer field.
+// Earned Vesper metadata stays outside this catalog, preserving that field.
 export const CREW=Object.freeze({
   rook:Object.freeze({id:'rook',name:'Rook Calloway',role:'Drifter · all-rounder',
     perk:'+10% on-foot health',gear:'RPG handling',rank:1,
@@ -53,42 +54,49 @@ export const CREW=Object.freeze({
       shoulder:1.24,pack:1.12,hood:false})}),
 });
 
-export function crewPerks(id){return Object.hasOwn(CREW,id)?CREW[id].perks:CREW.rook.perks;}
-export function crewAppearance(id){return Object.hasOwn(CREW,id)?CREW[id].appearance:CREW.rook.appearance;}
+export const VESPER = Object.freeze({id:'vesper',name:'Vesper Blackiron',
+  role:'Scout-mechanic',perk:'Shock Charge recharges 25% faster',gear:'Shock Charge',
+  rank:1,active:true,perks:Object.freeze({signatureRechargeMultiplier:.75}),
+  appearance:Object.freeze({coat:0x1b1815,vest:0x40474f,armor:0x40474f,
+    trousers:0x1b1815,helmet:0x282c31,skin:0xd4ad94,accent:0x7a110d,
+    shoulder:.95,pack:1.2,hood:false})});
+export function crewMember(id){return id === 'vesper' ? VESPER : Object.hasOwn(CREW,id) ? CREW[id] : null;}
+export function crewRoster(profile,{warlordCardsEnabled=false}={}){
+  return [...Object.values(CREW),...(warlordCardsEnabled &&
+    profile?.wasteland?.discoveredGate === true && vesperEarned(profile) ? [VESPER] : [])];
+}
+export function crewPerks(id){return (crewMember(id)||CREW.rook).perks;}
+export function crewAppearance(id){return (crewMember(id)||CREW.rook).appearance;}
 export function crewRank(profile){return rankForXp(profile?.wasteland?.xp||0);}
-function crewAdmitted(profile, id) {
+function crewAdmitted(profile,id,options){
+  if (id === 'vesper') return crewRoster(profile,options).includes(VESPER);
+  if (!CREW[id]) return false;
   if (CREW[id].rank <= crewRank(profile)) return true;
-  // The Kettle Kingpin's earned Tusk reward is usable immediately. This
-  // existing entitlement never spends scrap or opens unearned rank-gated crew.
   return id === 'tusk' && profile?.wasteland?.version === 1 &&
-    Array.isArray(profile.wasteland.crew?.unlocked) &&
-    profile.wasteland.crew.unlocked.includes(id);
+    Array.isArray(profile.wasteland.crew?.unlocked) && profile.wasteland.crew.unlocked.includes(id);
 }
-export function availableCrew(profile){
-  return Object.values(CREW).filter(member=>crewAdmitted(profile,member.id));
+export function availableCrew(profile,options){
+  return crewRoster(profile,options).filter(member=>crewAdmitted(profile,member.id,options));
 }
-export function selectedCrewId(profile){
+export function selectedCrewId(profile,options){
   const id=profile?.wasteland?.crew?.selected;
-  return profile?.wasteland?.version===1 && Object.hasOwn(CREW,id) &&
-    crewAdmitted(profile,id) ? id : 'rook';
+  return profile?.wasteland?.version===1 && crewAdmitted(profile,id,options) ? id : 'rook';
 }
-export function selectCrew(profile,id){
+export function selectCrew(profile,id,options){
   if(profile?.wasteland?.version!==1)
-    return {ok:false,profile,reason:'This career is not ready for Wasteland crew changes.'};
-  if(!Object.hasOwn(CREW,id))
-    return {ok:false,profile,reason:'Choose a known crew member.'};
-  if(!crewAdmitted(profile,id))
-    return {ok:false,profile,reason:`Reach Notoriety rank ${CREW[id].rank} first.`};
-  if(selectedCrewId(profile)===id)
-    return {ok:true,changed:false,profile,id};
+    return {ok:false,changed:false,profile,reason:'This career is not ready for Wasteland crew changes.'};
+  const member=crewMember(id);
+  if(!member || !crewAdmitted(profile,id,options))
+    return {ok:false,changed:false,profile,reason: id==='vesper' ? 'Defeat the Baron to earn Vesper.' :
+      member ? `Reach Notoriety rank ${member.rank} first.` : 'Choose a known crew member.'};
+  if(selectedCrewId(profile,options)===id) return {ok:true,changed:false,profile,id};
   const current=profile.wasteland.crew||{};
   const scrapCareer=profile.wasteland.discoveredGate===true;
   const owned=Array.isArray(current.unlocked)&&current.unlocked.includes(id);
-  const cost=scrapCareer&&id!=='rook'&&!owned?300:0;
+  const cost=scrapCareer&&id!=='rook'&&id!=='vesper'&&!owned?300:0;
   if(cost&&(!Number.isSafeInteger(profile.wasteland.scrap)||profile.wasteland.scrap<cost))
     return {ok:false,changed:false,profile,id,reason:`You need ${cost} scrap for this crew member.`};
   const unlocked=[...new Set([...(Array.isArray(current.unlocked)?current.unlocked:[]),'rook',id])];
   return {ok:true,changed:true,id,profile:{...profile,wasteland:{...profile.wasteland,
-    ...(cost?{scrap:profile.wasteland.scrap-cost}:{}),
-    crew:{...current,unlocked,selected:id}}}};
+    ...(cost?{scrap:profile.wasteland.scrap-cost}:{}),crew:{...current,unlocked,selected:id}}}};
 }

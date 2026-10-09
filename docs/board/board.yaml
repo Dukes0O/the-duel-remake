@@ -1674,10 +1674,10 @@ tasks:
     hooks: [src/warlords/index.js, src/warlords.js, src/warlords/sal.js, src/warlords/gunn.js, src/armor-kits.js, src/armor-kit-meshes.js, src/arena/warlord-settlement.js, src/arena/arena-tell-view.js, src/screen-armory.js, src/screen-results.js, src/screen-arena.js, src/screen-territory.js, src/app.js, src/game.js, src/wasteland-progress.js, src/combat-weapons.js, src/arena/arena-pilot.js, src/combat-effects.js, src/audio.js, src/feature-flags.js, src/sound-bank.js, tools/audio/catalog.json, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-warlords.mjs, tools/test-warlord-settlement.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, start-preview.bat]
     sequencing: "Tests and source use the settled moves unchanged. Sal may expose its existing core with a default-preserving charge option. Generic active-fight metadata admits full arsenal for this actor only; player and ordinary CPU gates stay exact. Ask for narrow additional hooks. Save/title changes require save review."
     roof_look_grant: "Optional Crown roofLook alongside stock or paid plating. Absent field preserves old saves; no normalization grant. Old Side Saws/Turret choices clear Crown; Crown clears an old exclusive cosmetic without guessing a paid tier. Plating changes retain Crown. No general cosmetic migration."
-    release_hold: "Preview until WAR-04 merges. Final Crown sheet requires Claude approval. Raise questions immediately."
+    release_hold: "Final Crown is approved and WAR-04 is merged. The Preview-only dependency hold is cleared; release still follows Claude review and Kyle approval."
     build_note: "Final Crown round two is approved. Regular artificial chopping was removed from the spent cue; native High and Performance captures have once-only cues and no clipping. All lane tests and build pass; source and frozen save review clear."
     save_pay_review: "Clear on dcdb27ee: 269 focused tests, seven historical fixtures with 247 preservation checks, and 308 damaged/partial cases pass. Medium first win/rematch/two-wreck loss pay 1560/312/144 once. Failed Crown/title writes retry without partial rewards. Nine frozen hashes unchanged; memory-only, no load-time reward grant."
-    follow_up_work: "Resolve the Nitro sound finding, gate and merge, then start WAR-04. No further Crown round."
+    follow_up_work: "Nitro repair and WAR-04 are merged. Claude takes the finished phase to look, sound and feel review. No further Crown round."
     helpers: [test_author, reviewer, save_guardian, balance_analyst, browser_qa]
     acceptance:
       - "Build exactly 'Settled for build: Baron Blackiron' in docs/SCRAPDOME.md section 5, reusing the earlier warlords' moves unchanged. Unlocks only when the other seven are defeated. When built, status review and waiting_on: claude before merge."
@@ -1694,7 +1694,7 @@ tasks:
     lane: SAVE
     size: M
     needs: [WAR-03e, CREW-02]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-09
     branch: codex/save/warlord-cards
     design_question: null
@@ -1710,6 +1710,13 @@ tasks:
     acceptance:
       - "Build 'Settled for build: the ladder's end' in docs/SCRAPDOME.md section 5: story cards on a yard wall and wanted posters, both rendered from the real models (no generated pictures), per named player and additive (Save Guardian); Vesper Blackiron listed only after the Baron falls, with her perk and Shock Charge."
     claude_shock_answer_2026_10_09: "18 s base recharge, 0.4 s crackle with smaller Tesla look/sound, unlimited cooldown uses. Exact Tesla disabled effect: weapons and boost off 3 s, star shield lost instead, end Scrap Magnet and destroy decoy. Radius 8 m around Vesper. Her on-foot signature recharge is 25% shorter (13.5 s); no car-weapon recharge change."
+    source_commit: 086e9cc02f390b163f79de85c6153ba86e557da2
+    lane_passed: 362
+    lane_seconds: 924.99
+    build_milliseconds: 488
+    native_cases_passed: 8
+    browser_captures: 14
+    note: "Story cards, native victory posters and earned Vesper are merged. High and Performance browser checks, source and save reviews, all lane tests and build pass. Claude's timing and perk rules are built; no open design question remains."
   - id: FEATURE-PLAYTEST
     title: "Kyle and Gratian play Titan climbing and Muddy Hollow in the Preview"
     owner: claude

@@ -1,3 +1,5 @@
+import {createWarlordCardArt} from './warlord-card-art.js';
+import './screen-card-wall.css';
 import {hiddenRoadHints,hiddenRoadMapKey} from './hidden-road-hints.js';
 import {createRendererReadiness} from './screen-readiness.js';
 import {screenMarkup, createMenuScreen, updateBuildNotice} from './screen-menu.js';
@@ -8,7 +10,7 @@ import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {crewPanel} from './crew-ui.js';
-import {CREW} from './crew.js';
+import {CREW,crewMember} from './crew.js';
 import {courseScreen, createCourseActions} from './screen-courses.js';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight} from './screen-hud.js';
@@ -53,6 +55,7 @@ const sound = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="
 const choices = app.getRaceChoices();
 let uiDisposed=false,lastScreen, garageOpen = false, armoryOpen = false, garageCar = choices.car, armoryCar = choices.car, garageMessage = '', playersOpen=false,playerMessage='',backupMessage='',leaderboardOpen=false;
 let coursesOpen=false,courseMessage='',yardPanel='home',arenaOpponents=3,arenaMode='last-car-rolling',arenaVenue='scrapdome';
+let cardArt=null;
 const domEvents=new AbortController();
 const boardFilter={stage:choices.startStage,car:'',driverId:getEquippedDriverId(app.profile)};
 const profile = () => app.profile || createProfile();
@@ -92,7 +95,7 @@ const buildUpdates=createBuildUpdateChecker({
 const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();cardArt?.dispose();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -183,7 +186,7 @@ root.addEventListener('click',e => {
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
   if(button.dataset.crewSelect){
     const result=app.selectCrewMember(button.dataset.crewSelect);
-    const message=result.ok?`${CREW[result.id].name} selected for on-foot play.`:result.reason;
+    const message=result.ok?`${crewMember(result.id).name} selected for on-foot play.`:result.reason;
     if(armoryOpen)refreshArmory(message);else refreshGarage(message);
     return;
   }
@@ -218,6 +221,7 @@ root.addEventListener('click',e => {
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.returnToYard())lastScreen=null; return;
+    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards'))openYardPanel('cards'); return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
@@ -340,10 +344,24 @@ function renderState(s) {
       focused?.dataset?.crewSelect?['crewSelect',focused.dataset.crewSelect]:null;
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
+    cardArt?.dispose();cardArt=null;
     const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
+    if(cardPictures.length){
+      cardArt=createWarlordCardArt({quality:app.ambientOcclusionEnabled ? 'high' : 'performance'});
+      const owner=cardArt;
+      for(const image of cardPictures)owner.render(JSON.parse(image.dataset.cardView)).then(data=>{
+        if(owner!==cardArt || !image.isConnected || !data)return;
+        image.src=data;image.dataset.cardArt='ready';image.nextElementSibling.hidden=true;
+      }).catch(error=>{
+        if(owner!==cardArt || !image.isConnected)return;
+        image.dataset.cardArt='error';image.nextElementSibling.textContent='Picture unavailable. Reopen the wall to retry.';
+        console.error(error);
+      });
+    }
     if(menu&&garageOpen&&app.wastelandUnlocked())
       ui['modal-layer'].querySelector('.driver-panel')?.insertAdjacentHTML(
-        'afterend',crewPanel(profile(),escapeHTML,{gearEnabled:app._switches().enabled('crew-gear')===true}));
+        'afterend',crewPanel(profile(),escapeHTML,{gearEnabled:app._switches().enabled('crew-gear')===true,warlordCardsEnabled:app._switches().enabled('warlord-cards')===true && app._switches().enabled('crew-gear')===true}));
     const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER TWO LAPS`):s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
     ui['pause-button'].setAttribute('aria-label',s.paused?'Resume race':'Pause race');
     if(modal){

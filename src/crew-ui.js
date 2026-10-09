@@ -1,4 +1,4 @@
-import {CREW, crewRank, selectedCrewId} from './crew.js';
+import {crewRoster, crewRank, selectedCrewId} from './crew.js';
 
 function perkStatus(member, gearEnabled) {
   if (!gearEnabled && ['jax', 'cinder', 'tusk'].includes(member.id))
@@ -8,10 +8,10 @@ function perkStatus(member, gearEnabled) {
 }
 
 function crewCard(member, {rank, selected, ready, scrapCareer, owned, scrap, escapeHTML, gearEnabled}) {
-  const unlocked = rank >= member.rank || ready && member.id === 'tusk' && owned.includes(member.id);
+  const unlocked = member.id === 'vesper' || rank >= member.rank || ready && member.id === 'tusk' && owned.includes(member.id);
   const chosen = ready && selected === member.id;
   const accent = `#${member.appearance.accent.toString(16).padStart(6, '0')}`;
-  const price = scrapCareer && member.id !== 'rook' && !owned.includes(member.id) ? 300 : 0;
+  const price = scrapCareer && member.id !== 'rook' && member.id !== 'vesper' && !owned.includes(member.id) ? 300 : 0;
   const buttonText = !ready ? 'CAREER NOT READY' : chosen ? 'SELECTED'
     : !unlocked ? `UNLOCKS AT RANK ${member.rank}`
     : price ? `HIRE · ${price} SCRAP` : 'SELECT CREW';
@@ -33,9 +33,9 @@ function crewCard(member, {rank, selected, ready, scrapCareer, owned, scrap, esc
   </article>`;
 }
 
-export function crewPanel(profile, escapeHTML, {gearEnabled = false} = {}) {
+export function crewPanel(profile, escapeHTML, {gearEnabled = false, warlordCardsEnabled = false} = {}) {
   const rank = crewRank(profile);
-  const selected = selectedCrewId(profile);
+  const selected = selectedCrewId(profile,{warlordCardsEnabled});
   const ready = profile?.wasteland?.version === 1;
   const scrapCareer = profile?.wasteland?.discoveredGate === true;
   const intro = ready ? '' :
@@ -49,7 +49,7 @@ export function crewPanel(profile, escapeHTML, {gearEnabled = false} = {}) {
     <summary>CREW · WHO GETS OUT</summary>
     <p class="crew-intro">Your driver still controls the car. Your selected crew
       member fights on foot. ${scrapCareer?'Reach their rank, then hire them with scrap.':'Rank unlocks are free.'}${intro}</p>
-    <div class="crew-grid">${Object.values(CREW)
+    <div class="crew-grid">${crewRoster(profile,{warlordCardsEnabled})
       .map(member => crewCard(member, context)).join('')}</div>
   </details>`;
 }

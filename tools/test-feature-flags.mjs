@@ -22,7 +22,7 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES['convoy-raid'] === 'dev'
   && FEATURE_STATES.tollkeeper === 'dev'
   && FEATURE_STATES['cpu-crews'] === 'dev' && FEATURE_STATES['ambush-alley'] === 'dev'
-  && FEATURE_STATES.gunn === 'dev' && FEATURE_STATES.blackiron === 'dev' && Object.keys(FEATURE_STATES).length === 15,
+  && FEATURE_STATES.gunn === 'dev' && FEATURE_STATES.blackiron === 'dev' && FEATURE_STATES['warlord-cards'] === 'dev' && Object.keys(FEATURE_STATES).length === 16,
   'the five released Wasteland features stay on; career backup, Fight Voices, computer crews, Ambush Alley, Convoy Raid, Gunn, Tollkeeper and Arsenal wave three stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 check(!productionFlags.enabled('blackiron'), 'production keeps the Baron off');

@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-09T22:19:57.413Z
+Observed at: 2026-10-09T22:20:45.517Z
 
-Observation commit: 9ab1476a98647e5e58f6a3e5787548c84f44e38b
+Observation commit: dc2e145b63653b2fa1a3533b66733c1849f11aaf
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9ab1476a98647e5e58f6a3e5787548c84f44e38b
+Integration HEAD: dc2e145b63653b2fa1a3533b66733c1849f11aaf
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -44,7 +44,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/foot/cpu-crews | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/cpu-crews |
 | codex/save/warlord-cards | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/warlord-cards |
 | codex/tools/callback-diagnostics | 4 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 14 | unknown | true | false | unknown |
@@ -57,7 +56,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/foot/cpu-crews | unknown | 2026-10-09T15:01:06-07:00 | 0 | last commit 2026-10-09T15:01:06-07:00 | docs/changes/CREW-04.md, src/arsenal/rockets.js, src/audio.js, src/combat-ai.js, src/combat-projectiles.js |
 | codex/save/warlord-cards | unknown | 2026-10-09T15:08:55-07:00 | 0 | uncommitted changes; exact activity time unknown | tools/test-vesper-gear.mjs, tools/test-warlord-cards.mjs, src/app.js, src/arena/warlord-settlement.js, src/arsenal/tesla.js |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 4 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -73,9 +71,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 16,215,058 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 2,347,849 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 1,820,144 B | -527,705 B | 5,000,000 B |
 | All `public/` | 263,189,370 B | +0 B | unavailable |
-| Git objects | 346,315,776 B | +175,104 B | unavailable |
+| Git objects | 346,519,552 B | +203,776 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -84,7 +82,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 8cf7979fa83218d5e15360253e7841ddd18db743
 - Local main: missing
-- Local integration/wasteland: 9ab1476a98647e5e58f6a3e5787548c84f44e38b
+- Local integration/wasteland: dc2e145b63653b2fa1a3533b66733c1849f11aaf
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

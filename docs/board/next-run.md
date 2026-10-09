@@ -9,7 +9,7 @@ cards moving. Build more, record less in AGENTS.md controls this run.
   at 33.33%, original browser ambush in both qualities, independent review
   and all 360 lane tests plus build. Maximum overhead is 1.05 s.
 - WAR-03e: merged after final Crown approval, the narrow Nitro repair,
-  all 358 lane tests and build. Preview until WAR-04. No further art round.
+  all 358 lane tests and build. WAR-04 is now merged; no further art round.
 - TEST-DRIVER-BRAKING: general pursuit fix, with no game code changed.
   Medium finishes improve 24/30 to 30/30; all thirty Hard replay traces and
   results are identical. Source review, lane tier 10/10 and build pass; merged.
@@ -17,8 +17,11 @@ cards moving. Build more, record less in AGENTS.md controls this run.
   quality. The existing-geometry distant view passes all eight final loops:
   worst CPU addition 2.04%, delivered p95 stays 16.8 ms. Near look remains;
   lane 356/356 and build pass; merged. Convoy moving-cost blocker cleared.
-- WAR-04 is claimed after Baron merge. Build the wall, results posters and
-  real Vesper from the approved recipe; Claude's Shock settings are settled.
+- WAR-04: merged story wall, native results posters and real earned Vesper.
+  Claude's Shock settings are built. Eight native cases, both browser qualities,
+  source/save review, all 362 lane suites and build pass.
+- No open Codex feature or Claude design question remains. P3-POLISH is
+  Claude's next card: look, sound and feel review, then an approved release.
 
 Last clean full tier: 0dac3098, 357/357, 1109.74 s, alone with four jobs.
 End status and ledger notes wait for the next real commit. Do not add a

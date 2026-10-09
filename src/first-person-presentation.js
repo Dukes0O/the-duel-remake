@@ -1,4 +1,4 @@
-import {CREW} from './crew.js';
+import {crewMember} from './crew.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 
 const EMPTY = Object.freeze({});
@@ -13,8 +13,8 @@ export function selectFirstPersonPresentation(entry, {time = 0} = EMPTY, out = {
   const input = entry?.input || EMPTY;
   const weapons = entry?.weapons || EMPTY;
   const now = Math.max(0, finite(time));
-  out.crewId = Object.hasOwn(CREW, fighter.crewId) ? fighter.crewId : 'rook';
-  out.weapon = weapons.selected === 'wrench' ? 'wrench' : 'rpg';
+  out.crewId = crewMember(fighter.crewId) ? fighter.crewId : 'rook';
+  out.weapon = weapons.selected === 'shock-charge' ? 'shock-charge' : weapons.selected === 'wrench' ? 'wrench' : 'rpg';
   out.aim = out.weapon === 'rpg' && input.aim === true;
   out.loaded = out.weapon === 'rpg' && weapons.ammo > 0;
   out.action = 'idle';

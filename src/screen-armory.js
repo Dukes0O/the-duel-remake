@@ -16,7 +16,9 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
   const arsenalOptions = () => ({wastelandEnabled:kitsEnabled(), arsenalEnabled:arsenalEnabled(),
     arsenalWave3Enabled: arsenalWave3Enabled()});
   const crewContext = saved => ({gearEnabled: crewGearEnabled() === true &&
-    saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true});
+    saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true,
+    warlordCardsEnabled: featureFlags?.enabled('warlord-cards') === true && crewGearEnabled() === true &&
+      saved?.wasteland?.version === 1 && saved.wasteland.discoveredGate === true});
   function weaponUpgradePanel(saved, wastelandEnabled = false) {
     const weapons = getProfileWeapons(saved);
     const details = {ufo:'Adds four metres to your one safe forward jump per lap.',bomb:'More bombs, wider blasts and stronger knockback.',crossbow:'Faster arrows, stronger knockback and quicker reloads.',star:'Faster recharge. Invincibility always lasts five seconds.'};

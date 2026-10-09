@@ -76,7 +76,16 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     record = {status: 'loading', model: null};
     cache.set(key, record);
     records.push(record);
-    Promise.resolve().then(() => loadAsset(kind, id)).then(asset => {
+    Promise.resolve().then(() => {
+      if(kind !== 'shock-charge') return loadAsset(kind,id);
+      const scene=new THREE.Group(), metal=new THREE.MeshStandardMaterial({color:0x252c31,metalness:.8,roughness:.4});
+      const coil=new THREE.Mesh(new THREE.TorusGeometry(.055,.014,6,16),metal);
+      coil.rotation.x=Math.PI/2; coil.position.set(0,.02,-.08); scene.add(coil);
+      const light=new THREE.Mesh(new THREE.IcosahedronGeometry(.035,0),
+        new THREE.MeshBasicMaterial({color:0x8ce4ff}));
+      light.position.copy(coil.position); scene.add(light);
+      scene.name='Vesper handheld Shock Charge'; return {scene,animations:[]};
+    }).then(asset => {
       REFERENCES.set(asset, (REFERENCES.get(asset) || 0) + 1);
       if (disposed) { releaseAsset(asset); return; }
       try {
@@ -115,7 +124,7 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
         entry.fighter.knockedDown) return;
     clock.time = options.time;
     const selected = selectFirstPersonPresentation(entry, clock, presentation);
-    const hands = request('hands', selected.crewId);
+    const hands = request('hands', selected.crewId === 'vesper' ? 'odessa' : selected.crewId);
     const tool = request(selected.weapon);
     if (hands.status !== 'ready' || tool.status !== 'ready') {
       group.userData.assetStatus = hands.status === 'failed' || tool.status === 'failed' ? 'failed' : 'loading';
@@ -125,7 +134,7 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     if (shownHands !== hands || shownTool !== tool) {
       if (shownHands) shownHands.model.visible = false;
       if (shownTool) shownTool.model.visible = false;
-      hands.model.getObjectByName(`${selected.weapon}-mount`).add(tool.model);
+      hands.model.getObjectByName(`${selected.weapon === 'shock-charge' ? 'wrench' : selected.weapon}-mount`).add(tool.model);
       shownHands = hands;
       shownTool = tool;
     }

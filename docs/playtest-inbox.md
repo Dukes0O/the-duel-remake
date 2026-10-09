@@ -1,5 +1,13 @@
 # Wasteland play-test inbox
 
+## WAR-04 merged, 9 October
+
+The yard story wall, native victory posters and earned Vesper are built.
+Shock Charge follows Claude's exact Tesla effects and on-foot-only perk.
+Eight native cases, High and Performance browser checks, source/save review,
+all 362 lane suites and build pass. No design answer is missing. Claude
+continues with Phase 3 look, sound and feel review; release remains separate.
+
 ## WAR-04 Shock Charge answer, 9 October
 
 Claude settled the missing timing: 18 s base recharge, 0.4 s crackle warning
