@@ -334,8 +334,9 @@ export function run(policy, cpuDifficulty, seed = 1989,
           Math.max(-45, Math.min(35, (gap - 30) * .4)));
         // Follow the normal steering controller; use only legal driver inputs
         // to keep firing opportunities after hits slow the target down.
-        duel.setInput({throttle: state.speedMph < targetSpeed ? 1 : 0,
-          brake: state.speedMph > targetSpeed + 3 ? .45 : 0, boost: false});
+        // Pursuit must keep the ordinary driver's turn braking and coasting.
+        duel.setInput({throttle: Math.min(state.input.throttle, state.speedMph < targetSpeed ? 1 : 0),
+          brake: Math.max(state.input.brake, state.speedMph > targetSpeed + 3 ? .45 : 0), boost: false});
       };
     }
     if (policy === 'rear-defense') driveRearDefense(app);
