@@ -62,7 +62,10 @@ Approved Vesper recipe and fit inputs are unchanged: 21 original art cases,
 First frozen lane gate stopped at the existing completion-screen fixture
 (63 passed, one failed, 298 not run, 91.23 s): its minimal App has no switch
 method. Results now default absent switch admission to off; the same untouched
-fixture passes. Lane/build rerun remains pending on the corrected source.
+fixture passes. The next gate stopped on the unchanged update-lifecycle check
+(133 passed, one failed, 228 not run, 441.72 s). HMR now cancels DOM listeners
+before card-art disposal, preserving the original ordering even if art disposal
+throws. Its unchanged acceptance test passes. Final lane/build rerun pending.
 
 ## Removed
 
