@@ -1439,6 +1439,13 @@ export class EngineAudio {
       Number.isFinite(state.maxArmor) &&
       state.maxArmor > 0;
     const recordedAudio = wastelandAudio && wastelandRulesActive(state);
+    if (recordedAudio && this.flags.enabled('cpu-crews') &&
+        (ev.cpuCrewExited || ev.cpuCrewEntered || ev.cpuCrewRespawned)) {
+      const output = this._spatialOutput({hitPosition: ev.hitPosition, combatHit: true},
+        state, course, this.buses.vehicle || this.buses.weapons);
+      this._playCue('vehicle.landing', {scale: .25, destination: output.level,
+        onEnd: output.disconnect});
+    }
     if (recordedAudio && bank(ev.arsenalCue) && (
       (this.flags.enabled('arsenal') && ARSENAL_EVENT_CUES.has(ev.arsenalCue)) ||
       (this.flags.enabled('arsenal') && this.flags.enabled('arsenal-wave3') &&
@@ -1535,9 +1542,13 @@ export class EngineAudio {
       }
     }
     if (wastelandAudio) {
-      if (ev.footRepairStarted) this._repairCue('start');
-      if (ev.footRepairCompleted) this._repairCue('complete');
-      if (ev.footRepairInterrupted) this._repairCue('interrupted');
+      const repairPhase = ev.footRepairStarted ? 'start' : ev.footRepairCompleted ? 'complete' :
+        ev.footRepairInterrupted ? 'interrupted' : null;
+      if (repairPhase && ev.enemy && ev.hitPosition) {
+        const output = this._spatialOutput({hitPosition: ev.hitPosition, combatHit: true},
+          state, course, this.buses.vehicle || this.buses.weapons);
+        this._playCue('repair.' + repairPhase, {destination: output.level, onEnd: output.disconnect});
+      } else if (repairPhase) this._repairCue(repairPhase);
       if (ev.raiderWarning) {
         this._playCue('raider.warning');
       }

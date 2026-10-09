@@ -6,6 +6,8 @@ import {damageRaider} from '../raiders.js';
 import {damageFighter, knockdownFighter, FIGHTER_RULES} from '../onfoot.js';
 import {actorBody, startKnock, bodyHeading} from '../vehicle-knock.js';
 import {solveVehicleImpact, yawInertia, CRASH_TUNING, impactSeverity} from '../vehicle-collision.js';
+import {COMBAT_TUNING} from '../wasteland-tuning.js';
+import {actorForTarget} from '../arsenal/targeting.js';
 
 const SHOT_BODY = {halfWidth: .04, halfLength: .04, height: .08};
 export function gearDirection(fighter) {
@@ -26,7 +28,63 @@ export function fighterTargets(duel, owner = duel.state, includeOwner = false) {
   for (const zone of duel.state.raids?.zones || [])
     for (const fighter of zone.raiders)
       if (owner === duel.state || includeOwner) targets.push({fighter, raider: true});
+  for (const actor of duel.state.opponents) {
+    const fighter = actor.cpuCrew?.fighter;
+    if (fighter && (includeOwner || hostile(duel, owner, actor)) &&
+        !arenaDamageBlocked(duel, actor, combatOwnerId(duel, owner)))
+      targets.push({fighter, raider: false, actor});
+  }
   return targets.filter(target => !target.fighter.knockedDown);
+}
+export function carFighterTargets(duel, projectile) {
+  if (projectile.raid) return [];
+  const owner = actorForTarget(duel, projectile.attackerId) || actorForTarget(duel, projectile.ownerId) ||
+    (projectile.enemy ? duel.state.opponents[projectile.sourceIndex || 0] : duel.state);
+  if (!owner) return [];
+  return fighterTargets(duel, owner).filter(target => !target.actor?.finished &&
+    !target.actor?.crushed && (target.raider || target.actor ||
+      !duel.state.finished && !duel.state.crushed));
+}
+export function fighterBody(fighter, raider = false) {
+  return {x: fighter.x, y: fighter.y + (raider ? .9 : FIGHTER_RULES.height / 2),
+    z: fighter.z};
+}
+export function fighterObstacle(target) {
+  const {fighter, raider} = target;
+  return {x: fighter.x, y: raider
+    ? fighterBody(fighter, true).y - COMBAT_TUNING.raider.hitHeight : fighter.y, z: fighter.z,
+    halfX: raider ? COMBAT_TUNING.raider.hitRadius : FIGHTER_RULES.radius,
+    halfZ: raider ? COMBAT_TUNING.raider.hitRadius : FIGHTER_RULES.radius,
+    height: raider ? COMBAT_TUNING.raider.hitHeight * 2 : FIGHTER_RULES.height,
+    shape: 'box'};
+}
+export function hitCarFighter(duel, fighter, projectile, health, knockdown = false, raider = false,
+    {source = 'car'} = {}) {
+  if (fighter.knockedDown || !(health > 0)) return false;
+  const actor = duel.state.opponents.find(actor => actor.cpuCrew?.fighter === fighter);
+  if (raider || actor) damageRaider(duel, fighter, knockdown ? fighter.health : health,
+    {source, owner: projectile.enemy ? 'cpu' : 'player'});
+  else {
+    damageFighter(fighter, health);
+    if (knockdown) knockdownFighter(fighter);
+  }
+  const where = fighterBody(fighter, raider);
+  duel.emit({combatHit: true, strength: health / 60, enemy: projectile.enemy,
+    victim: raider ? 'raider' : actor ? 'rival' : 'player', fighter: true,
+    hitPosition: where});
+  if (!raider && !actor && fighter.knockedDown) {
+    duel.emit({fighterKnockdown: true, source: projectile.kind,
+      owner: projectile.ownerId, hitPosition: where});
+    duel._callout('FIGHTER HIT / RECOVERING', 2);
+  }
+  return true;
+}
+export function splashCarFighter(duel, fighter, projectile, radius, raider = false) {
+  const at = fighterBody(fighter, raider);
+  const distance = Math.hypot(at.x - projectile.x, at.y - projectile.y,
+    at.z - projectile.z);
+  if (distance < radius) hitCarFighter(duel, fighter, projectile,
+    60 * (1 - distance / radius), distance < radius / 2, raider);
 }
 export function damageGearCar(duel, actor, amount, owner, normal = null,
   {hitPosition, contactPoint, blastRadius} = {}) {
@@ -49,18 +107,18 @@ export function damageGearCar(duel, actor, amount, owner, normal = null,
   return removed;
 }
 export function damageGearFighter(duel, target, amount, owner, knockdown = false) {
-  const {fighter, raider} = target;
+  const {fighter, raider, actor} = target;
   if (fighter.knockedDown || !(amount > 0)) return false;
-  if (raider) damageRaider(duel, fighter, knockdown ? fighter.health : amount,
+  if (raider || actor) damageRaider(duel, fighter, knockdown ? fighter.health : amount,
     {source: 'onFoot', owner: combatOwnerId(duel, owner)});
   else {
     damageFighter(fighter, amount);
     if (knockdown) knockdownFighter(fighter);
   }
   duel.emit({combatHit: true, fighter: true, footGearHit: true,
-    victim: raider ? 'raider' : 'player', strength: amount / 60,
+    victim: raider ? 'raider' : actor ? 'rival' : 'player', strength: amount / 60,
     hitPosition: {x: fighter.x, y: fighter.y + 1, z: fighter.z}});
-  if (!raider && fighter.knockedDown) duel.emit({fighterKnockdown: true,
+  if (!raider && !actor && fighter.knockedDown) duel.emit({fighterKnockdown: true,
     owner: combatOwnerId(duel, owner), source: 'crew-gear'});
   return true;
 }

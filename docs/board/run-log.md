@@ -887,3 +887,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 9 October janitor: removed merged braking and Frame lanes and their raw evidence; folded the obsolete 5 October resume into current guidance. No unused modules or obsolete tests found; 49 assets/55 exports stay on CLEAN-11. Crown, Crew, parked diagnostics and Kyle's audio refs retained. Tracked size 279.8 to 279.9 MiB; small code/test growth, no new runtime binaries.
 
 9 October: merged WAR-03e from 3a6c96e5; lane 358/358 (1348.71 s), build 557 ms and source/frozen save reviews pass. Final Crown round two approved; narrow Nitro chopping repair measured in both qualities. WAR-04 claimed; release untouched.
+
+9 October: merged CREW-04 from 579a555b; conflict-free whole Baron sync, lane 360/360 (960.23 s), build 461 ms and review pass. Same Hard seeds give 10/30 wins, all finish, zero aborts, maximum overhead 1.05 s; original ambush passes both qualities.

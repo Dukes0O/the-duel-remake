@@ -49,6 +49,28 @@ function distanceToSweep(point, from, to) {
   return Math.hypot(point.x - (from.x + dx * t),
     point.z - (from.z + dz * t));
 }
+export function strikeCpuCrewFighterFromVehicles(duel, owner) {
+  const state = duel.state, fighter = owner.cpuCrew?.fighter;
+  if (!fighter || fighter.knockedDown) return false;
+  for (const actor of [state, ...state.opponents, ...state.traffic]) {
+    if (!actor || actor === owner || actor.alive === false || actor.finished || actor.crushed ||
+        actor.combatWrecking || actor.roadsideMotion || actor.wrecked) continue;
+    const speedKph = Math.abs(actor.speedMph || 0) * KPH_PER_MPH;
+    if (speedKph <= 30) continue;
+    const from = duel.course.groundAt(actor.prevS ?? actor.s,
+      actor.prevLateral ?? actor.lateral), to = duel.course.groundAt(actor.s, actor.lateral);
+    const spec = duel._vehicleSpec(actor);
+    if (fighter.y > Math.max(from.y, to.y) + spec.height + .25 ||
+        distanceToSweep(fighter, from, to) > Math.max(spec.halfWidth, spec.halfLength * .55) + .34)
+      continue;
+    if (!strikeFighterWithCar(fighter, speedKph)) continue;
+    duel.emit({fighterKnockdown: true, cpuCrew: true,
+      actorId: fighter.id, source: 'car', owner: actor === state ? 'player' : 'cpu',
+      speedKph, hitPosition: {x: fighter.x, y: fighter.y, z: fighter.z}});
+    return true;
+  }
+  return false;
+}
 
 export function strikeFighterFromVehicles(duel) {
   const state = duel.state, fighter = state.onFoot && state.fighter;
