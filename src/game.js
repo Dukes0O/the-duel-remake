@@ -167,7 +167,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this.state.arena = null;
@@ -195,6 +195,9 @@ export class Duel {
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
       wastelandRulesActive(this.state) ? validArmorKit(combatArmorKit) : null;
+    if (this.state.mode === 'wasteland' && wastelandRulesActive(this.state) && combatRoofLook === 'chrome-crown')
+      this.state.combatRoofLook = combatRoofLook;
+    else delete this.state.combatRoofLook;
     this.state.crewId = this.state.mode === 'wasteland' &&
       wastelandRulesActive(this.state) ?
       (Object.hasOwn(CREW,crewId) ? crewId : 'rook') : null;
@@ -316,7 +319,7 @@ export class Duel {
   // to a player who has found the gate.
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
-    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, crewId = 'rook',
+    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook',
     warlordId = null } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const ambush = mode === 'ambush-alley';
@@ -366,6 +369,8 @@ export class Duel {
       arsenalEnabled(this) ? [...WEAPON_IDS,
         ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
+    if (combatRoofLook === 'chrome-crown') s.combatRoofLook = combatRoofLook;
+    else delete s.combatRoofLook;
     s.crewId = Object.hasOwn(CREW, crewId) ? crewId : 'rook';
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
     s.majorCrashes = 0; s.catastrophic = false; s.boundaryResets = 0;

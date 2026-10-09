@@ -23,11 +23,15 @@ export function isSalFight(duel, actor) {
 
 export function resetSalFight(duel, actor) {
   if (!isSalFight(duel, actor)) return;
+  resetSawSweep(duel, actor);
+  // This is the existing renderer's tier alias. It adds no armor or mass.
+  actor.armorKit = 'warlord';
+}
+
+export function resetSawSweep(duel, actor) {
   const old = actor.salSaw;
   actor.salSaw = {stage: 'idle', phase: 'idle', sinceSec: duel.state.stageTimeSec,
     nextSweepSec: old?.nextSweepSec ?? 0, chargeSpent: false, hit: false};
-  // This is the existing renderer's tier alias. It adds no armor or mass.
-  actor.armorKit = 'warlord';
 }
 
 function setStage(duel, participant, actor, stage) {
@@ -104,6 +108,11 @@ function startChargeTell(duel, participant, actor, relative, difficulty) {
 export function thinkSalFight(duel, participant, actor, difficulty) {
   if (!isSalFight(duel, actor)) return null;
   if (!actor.salSaw) resetSalFight(duel, actor);
+  return thinkSawSweep(duel, participant, actor, difficulty);
+}
+
+export function thinkSawSweep(duel, participant, actor, difficulty, {allowCharge = true} = {}) {
+  if (!actor.salSaw) resetSawSweep(duel, actor);
   const move = actor.salSaw, now = duel.state.stageTimeSec;
   const target = arenaActor(duel, 'player');
   if (outOfPlay(duel, actor) || !target || outOfPlay(duel, target)) {
@@ -175,7 +184,7 @@ export function thinkSalFight(duel, participant, actor, difficulty) {
   // The rammer's 60-metre approach range still bounds the extra move.
   const aligned = relative.along > 0 && Math.abs(relative.sideways) <= SAL_RULES.sidewaysMetres;
   if (!aligned || relative.distance >= 60) move.chargeSpent = false;
-  if (duel.state.arena.warlordPhase === 2 && aligned && relative.distance < 60 && !move.chargeSpent) {
+  if (allowCharge && duel.state.arena.warlordPhase === 2 && aligned && relative.distance < 60 && !move.chargeSpent) {
     startChargeTell(duel, participant, actor, relative, difficulty);
     return straightGoal({...relative.me, heading: move.runHeading}, pace * .6);
   }

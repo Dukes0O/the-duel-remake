@@ -22,7 +22,7 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end',
   'weapon.magnet.hum',
 ]);
-const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy']);
+const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy', 'warlord.nitroSpent']);
 const ARSENAL_WAVE_THREE_CUES = new Set([
   'weapon.mortar.fire', 'weapon.mortar.hit', 'weapon.tesla.charge',
   'weapon.tesla.pulse', 'weapon.decoy.deploy', 'weapon.decoy.burst', 'weapon.nitro.start',

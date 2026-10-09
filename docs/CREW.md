@@ -36,6 +36,18 @@ back into the car.
 
 Computer fighters (section 3) use the same gear with the same numbers.
 
+### Vesper Blackiron (WAR-04, settled 9 October 2026)
+
+Vesper appears only after this named player defeats the Baron. Her approved
+scout-mechanic figure uses Shock Charge on foot: unlimited uses on cooldown,
+18 s base recharge and a 0.4 s crackle warning, with the Tesla Coil's look and
+sound at a smaller radius. It pulses 8 m around her. It uses Tesla's exact
+disabled effect: weapons and boost off for 3 s, a star shield lost instead,
+Scrap Magnet ended and decoys destroyed.
+
+Her perk shortens only her own on-foot signature-gear recharge by 25%, to
+13.5 s. It never shortens car-weapon recharge.
+
 ### Car weapons against fighters on foot (settled 30 September 2026)
 
 Car weapons hit fighters on foot (the player's crew, computer crews and
@@ -118,8 +130,11 @@ If Hard still exceeds 40%, allow only one Hard repair stop per race.
 only while on the road, after the stop conditions hold continuously for 1 s.
 Once braking starts, it completes the stop without aborts. An enemy car
 within 80 m during repair makes the fighter get back in immediately. The
-normal 2.5 s overhead cap and every other rule above remain. Test the same
-thirty Hard seeds (1989-2018); merge only with Hard at 20-40%.
+normal 2.5 s overhead cap and every other rule above remain. Before braking,
+choose the nearest existing safe shoulder on either side. If neither shoulder
+can keep the whole stop within that overhead cap, do not admit the stop; it
+costs nothing. Test the same thirty Hard seeds (1989-2018) and the browser
+ambush; merge only with Hard at 20-40%.
 
 ## 4. Cards
 

@@ -883,3 +883,7 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 9 October: merged TEST-DRIVER-BRAKING from d9e6cdd2; lane 10/10 (62.54 s), build 614 ms and source review pass. Medium finishes 24/30 to 30/30; all 30 Hard traces/results identical.
 9 October: merged CONVOY-FRAMES from b15330f7; lane 356/356 (898.29 s), build 617 ms and source/visual review pass. Eight full loops pass 10% cost; frame p95 16.8 ms, maximum CPU addition 2.04%; replay pins unchanged.
+9 October: end full passes 357/357 on clean 0dac3098, alone with four jobs, 1109.74 s; no rerun. End ledger/status notes wait for the next real commit.
+9 October janitor: removed merged braking and Frame lanes and their raw evidence; folded the obsolete 5 October resume into current guidance. No unused modules or obsolete tests found; 49 assets/55 exports stay on CLEAN-11. Crown, Crew, parked diagnostics and Kyle's audio refs retained. Tracked size 279.8 to 279.9 MiB; small code/test growth, no new runtime binaries.
+
+9 October: merged WAR-03e from 3a6c96e5; lane 358/358 (1348.71 s), build 557 ms and source/frozen save reviews pass. Final Crown round two approved; narrow Nitro chopping repair measured in both qualities. WAR-04 claimed; release untouched.

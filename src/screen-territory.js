@@ -1,6 +1,6 @@
 import {COURSE} from './config.js';
 import {TERRITORIES} from './wasteland-career.js';
-import {BUILT_WARLORD_IDS, WARLORDS} from './warlords.js';
+import {BUILT_WARLORD_IDS, WARLORDS, warlordUnlockSatisfied} from './warlords.js';
 import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
 import {warlordEnabled} from './warlords/index.js';
 
@@ -36,7 +36,7 @@ export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, ca
         (warlord.rewardBuilt !== false && warlord.reward ? ` · ${warlord.reward.toUpperCase()} EARNED` : '')+
         (progress.claimed === true ? ' · CLAIMED' : '');
       action = `<button type="button" data-warlord="${id}">REMATCH</button>`;
-    } else if (hold === 100 && fightBuilt) {
+    } else if (hold === 100 && fightBuilt && warlordUnlockSatisfied(profile, id)) {
       status = `${warlord.name.toUpperCase()} IS WAITING`;
       action = `<button type="button" data-warlord="${id}">FIGHT</button>`;
     }

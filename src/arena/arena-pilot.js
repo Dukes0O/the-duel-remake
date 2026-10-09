@@ -184,7 +184,9 @@ export function pilotStep(duel, actor, goal, dt) {
     actor.boost = Math.min(1, actor.boost + BOOST.refillPerSec * dt);
   }
   const cap = actor.boosting ? floorTop * BOOST.topSpeedMult : floorTop;
-  actor.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(cap, next));
+  const moveCap = Number.isFinite(goal.speedCapMph) && goal.speedCapMph >= 0
+    ? Math.min(cap, goal.speedCapMph) : cap;
+  actor.speedMph = Math.max(-DRIVE.reverseMaxMph, Math.min(moveCap, next));
   actor.braking = actor.speedMph < speed - .01;
 
   // Move in world space, then describe the result relative to the ring.

@@ -211,7 +211,7 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const bounty = arena.mode === 'bounty-hunt';
   const convoy = arena.mode === 'convoy-raid';
   const warlord = arena.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
-  const title = convoy ? won ? 'CONVOY<br>STOPPED.' : 'CONVOY<br>ESCAPED.' : warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
+  const title = warlord?.victoryTitle && won ? escapeHTML(warlord.victoryTitle) : convoy ? won ? 'CONVOY<br>STOPPED.' : 'CONVOY<br>ESCAPED.' : warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
     won ? bounty ? 'BOUNTY<br>CLAIMED.' : fuel ? 'FUEL<br>DELIVERED.' : 'LAST CAR<br>ROLLING.' : place === 2 ? 'SO CLOSE.' : 'BACK TO<br>THE HEAP.';
   let description = convoy ? won ? 'The boarding charge stopped the tanker.' : 'The tanker escaped before you planted the charge.' : warlord
     ? `${won ? `You beat ${escapeHTML(warlord.name)}.` : `${escapeHTML(warlord.name)} won. Losing costs nothing.`} ${REASONS[result.reason] || ''}`
@@ -231,6 +231,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   }
   if (warlord && result.settlementSaved && typeof result.rewardReason === 'string') {
     description += ' ' + escapeHTML(result.rewardReason);
+  }
+  if (warlord && result.settlementSaved && result.titleEarned) {
+    description += ' ' + escapeHTML(result.titleEarned) + '. ' + escapeHTML(warlord.reward) + ' earned.';
   }
   const metrics = metric('PLACE', `${ORDINALS[place - 1]} / ${arenaTeams(arena).length}`, true) +
     (bounty ? metric('BOUNTY POINTS', me.bountyPoints) : fuel ? metric('FUEL DELIVERED', me.fuelDelivered) : '') + metric('WRECKS', me.wrecks) + metric('WRECKED', me.wrecked) + metric('DAMAGE DEALT', Math.round(me.damageDealt)) +
