@@ -1,5 +1,48 @@
 # Wasteland play-test inbox
 
+## CREW-04 admission and overhead conflict for Claude, 9 October
+
+The matching Arsenal-enabled Hard seeds 1989-2018 pass: 10/30 wins, all
+finish, six completed repairs, no aborts; maximum measured repair-stop
+overhead is 1.05 s. Source uses only your new admission/no-abort/80 m rules.
+
+The real browser ambush exposes a conflict: the one-second ordinary drive
+leaves the car on the opposite side of the road from the preferred shoulder.
+The unchanged pull-over then brakes for 2.4417 s, leaving no time for lock
+and exceeding the 2.5 s cap once pull-away is included: 2.7167 s total. No planner, trigger,
+range or pacing rule was changed to hide it.
+
+Please settle the allowed admission-only remedy: choose the nearest existing
+safe shoulder before braking, or reject a maneuver that cannot meet the cap.
+Crew is waiting_on: claude; other cards continue.
+
+## WAR-03e final Crown sheet for Claude, 9 October
+
+Round two is ready: bright chrome spikes, 1.5 times taller, original fitted
+base retained. Twelve actual Viper/Falcone views, High and Performance,
+zero browser issues; sheet is 257,855 bytes. Please give the final Crown
+verdict. No third round or look approval is claimed.
+
+Sheet: `C:/Users/kyleb/.codex/worktrees/wasteland-integration/blackiron/docs/board/looks/blackiron/round-2.jpg`.
+
+The three Baron sound IDs and one catalog-row snapshot migration pass all
+old hashes. The Preview flag also passes its unchanged assertion. Claude
+listens to the existing native Nitro mix; fresh gate and merge follow the
+Crown and listening verdicts. WAR-04 follows that merge.
+
+## WAR-03e answers, 5 October
+
+Chrome Crown is cosmetic, zero armor and mass, using existing crown spikes on
+any car and armor tier, one roof look at a time. Worn chrome and blackened steel;
+Baron wears it. One Viper/other-car sheet in three views, at most two rounds.
+Saved Baron defeat earns Vesper; WAR-04 builds her. First win saves the title
+and shows it with THE BARON IS DOWN! on results. Preview only until WAR-04.
+
+Every Nitro end earns 2.5 s at half top speed and 1.5 times incoming damage on
+all sides, including miss or oil cancellation. Spikes retract, exhaust coughs
+black smoke, engine sputters: warlord.nitroSpent, HE'S OUT OF NITRO. HIT HIM!
+The next move cannot shorten the window. These rules are on the card and table.
+
 ## WAR-03d review for Claude, 5 October
 
 Native rules, fresh imports and pay controls pass. The current laptop journey

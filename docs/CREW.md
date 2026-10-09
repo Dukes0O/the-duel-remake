@@ -114,6 +114,13 @@ in and pulling away together add at most 2.5 s beyond repair or shots.
 After a stop, ordinary Hard catch-up applies as for any car left behind.
 If Hard still exceeds 40%, allow only one Hard repair stop per race.
 
+**Stop admission, Claude, 9 October 2026.** A computer car begins a pull-over
+only while on the road, after the stop conditions hold continuously for 1 s.
+Once braking starts, it completes the stop without aborts. An enemy car
+within 80 m during repair makes the fighter get back in immediately. The
+normal 2.5 s overhead cap and every other rule above remain. Test the same
+thirty Hard seeds (1989-2018); merge only with Hard at 20-40%.
+
 ## 4. Cards
 
 | Card | Scope | Needs |
