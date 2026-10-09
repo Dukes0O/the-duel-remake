@@ -131,3 +131,39 @@ test('Vesper personal recharge is 13.5 s with unlimited uses; car Tesla recharge
     assert.notEqual(race(options).state.crewId,'vesper','each required feature/discovery gate protects native admission');
   for(const crewId of ordinary)assert.equal(race({crewId}).state.crewId,crewId,'ordinary admission stays '+crewId);
 });
+
+test('native Shock charge and pulse play recorded Tesla cues with wave three off, without opening ordinary car Tesla',async()=>{
+  const {EngineAudio}=await import('../src/audio.js');
+  const f=footFixture({waveThree:false}),started=[];
+  const node=()=>({connect(){},disconnect(){},gain:{value:1,setValueAtTime(){},linearRampToValueAtTime(){}}});
+  // Only Web Audio hardware is replaced. Bank definitions, event routing,
+  // _playCue, _runCue and _sample remain the production implementations.
+  const context={state:'running',currentTime:10,createGain:node,
+    createStereoPanner:()=>({...node(),pan:{value:0}}),
+    createBufferSource:()=>({connect(){},disconnect(){},stop(){},playbackRate:{value:1},
+      start(){started.push(this.buffer.cue);}})};
+  const audio=new EngineAudio({flags:f.duel.featureFlags});audio.context=context;
+  audio.muted=false;audio.buses={weapons:{}};
+  for(const cue of ['weapon.tesla.charge','weapon.tesla.pulse'])audio.cueBuffers[cue]={duration:.6,cue};
+  assert.equal(audio._playCue,EngineAudio.prototype._playCue);
+  assert.equal(audio._sample,EngineAudio.prototype._sample);
+  f.rival.s=f.rival.prevS=580;
+  const off=f.duel.onChange((state,event)=>{
+    if(!event.arsenalCue)return;
+    const before=JSON.stringify(state);audio.event(event,state,f.duel.course);
+    assert.equal(JSON.stringify(state),before,'audio cannot change the native race');
+  });
+  try {
+    press(f);ticks(f,47);
+    assert.deepEqual(started,['weapon.tesla.charge','weapon.tesla.pulse'],
+      'both real native Shock events must start their existing recorded bank samples');
+    assert.equal(audio._playCue('weapon.tesla.charge'),null,'ordinary cue calls still require wave three');
+    assert.equal(audio._playCue('weapon.tesla.pulse'),null);
+    const ordinary=race({crewId:'rook',waveThree:false});
+    assert.equal(fireWeapon(ordinary.duel,'tesla'),false,'ordinary car Tesla remains unavailable');
+    const shock=f.events.find(event=>event.arsenalCue==='weapon.tesla.charge');
+    audio.flags=switches(false,true,false);audio.event(shock,f.state,f.duel.course);
+    audio.flags=switches(true,true,false);audio.event(shock,{...f.state,wastelandGateDiscovered:false},f.duel.course);
+    assert.equal(started.length,2,'cards-off and undiscovered events cannot start Shock samples');
+  } finally {off();}
+});
