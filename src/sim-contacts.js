@@ -478,7 +478,8 @@ export function _vehicleContact(a, b, reason) {
   const descendingCrush = a === this.state && a.airborne && a._verticalSpeed < -1 && (a.prevAirHeight || 0) > (a.airHeight || 0)
     && canCrushVehicle(this.car, specB, { descending: true });
   // Road traffic yields to the player; hostile arena participants remain solid.
-  const yieldNormal = !this.state.arena && a === this.state && !this.state.onFoot && !descendingCrush &&
+  // In a Grand Prix the field are racers, not road users, and share the road on equal terms.
+  const yieldNormal = !this.state.arena && !this.state.field && a === this.state && !this.state.onFoot && !descendingCrush &&
     !b.wrecked && !b.knock ?
     npcYieldContactNormal(a, b, hit, start.z) : null;
   if (yieldNormal) {

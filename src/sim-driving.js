@@ -7,7 +7,9 @@ import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
+import { gripFor, normalizeTyre } from './race-surfaces.js';
 import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
+import {FIELD} from './race-field.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -15,7 +17,14 @@ export function _surface(distance, lateral) {
   return { ...surface, mainRoad: surface.mainRoad ?? surface.road };
 }
 
-export function _drivingSurface(distance, lateral, car = this.car, hasContact = true) {
+// What the road under a car does to its grip (docs/CIRCUITS.md 3.4). Asphalt on
+// summer tyres is the shared neutral answer, so ordinary courses are untouched.
+export function _roadGrip(distance, lateral, car = this.car, tyre) {
+  const kind = this.course.gripKindAt?.(distance, lateral) ?? 'asphalt';
+  return gripFor(kind, normalizeTyre(tyre ?? (car === this.car ? this.state.tyre : undefined)), car);
+}
+
+export function _drivingSurface(distance, lateral, car = this.car, hasContact = true, tyre) {
   const floor = this.state.arena && this.course.def.scrapdome;
   if (floor) return { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
     boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
@@ -24,6 +33,7 @@ export function _drivingSurface(distance, lateral, car = this.car, hasContact = 
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
+  const road = this._roadGrip(distance, lateral, car, tyre);
   const mud = hasContact ? clamp(Number(surface.mud) || 0, 0, 1) : 0;
   const waterDepth = hasContact ? clamp(Number(surface.waterDepth) || 0, 0, 1) : 0;
   const traction = surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip;
@@ -31,7 +41,8 @@ export function _drivingSurface(distance, lateral, car = this.car, hasContact = 
   const scrub = surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale;
   return { ...surface, preparedGravel, boostAllowed: surface.road || this.course.def.practice,
     mud, waterDepth,
-    traction: traction * (1 - mud * .45),
+    ...(road.active ? { gripKind: road.kind, grip: road.grip, gripTopSpeedMph: road.topSpeedMph, gripTopShare: road.topShare } : {}),
+    traction: (road.active && surface.mainRoad ? traction * road.grip : traction) * (1 - mud * .45),
     speedLimit: mud > 0 ? Math.min(speedLimit, 42 + (1 - mud) * 32) : speedLimit,
     scrub: scrub + mud * .42,
     roughness: preparedGravel ? (rally ? .14 : .2) * roughnessScale : null };
@@ -65,8 +76,10 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
-  const accelerationShare = arsenalEnabled(this) ? carAcceleration(s) : 1;
-  const nitroSpeedShare = arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1;
+  // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
+  const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
+  const accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
+  const nitroSpeedShare = (arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1) * towTop;
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
@@ -93,6 +106,9 @@ export function _drive(dt) {
     if (s.reverseHoldSec + 1e-9 >= DRIVE.reverseHoldSec) s.gear = -1;
   } else s.reverseHoldSec = 0;
   const reversing = s.gear < 0;
+  const road = this._roadGrip(s.s, s.lateral, car);
+  if (this._gripCourse !== this.course) { this._gripCourse = this.course; this._gripKind = 'asphalt'; }
+  if (road.kind !== this._gripKind) { this._gripKind = road.kind; this.emit({ surfaceChanged: { kind: road.kind, cue: road.cue } }); }
   const gmax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
   s.revs = gmax ? Math.abs(s.speedMph) / gmax : 0;
   if (!reversing && d.autoShift) {
@@ -109,16 +125,16 @@ export function _drive(dt) {
   const accelFactor = Math.max(0.15, 1 - Math.max(0, s.revs - 0.5)); // falls off near redline
   if (reversing) {
     if (s.input.throttle > 0) {
-      s.speedMph = Math.min(0, s.speedMph + DRIVE.brakeAccel * car.braking * s.input.throttle * dt);
+      s.speedMph = Math.min(0, s.speedMph + DRIVE.brakeAccel * car.braking * s.input.throttle * road.grip * dt);
       if (s.speedMph === 0) { s.gear = 0; s.reverseHoldSec = 0; }
     } else if (s.input.brake > 0) s.speedMph -= DRIVE.reverseAccel * s.input.brake * dt;
     s.speedMph = Math.min(0, s.speedMph + DRIVE.dragCoeff * dt * (s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1));
   } else {
     if (s.input.throttle > 0) {
-      const ceil = Math.min(car.topSpeed * nitroSpeedShare, gearMax * DRIVE.gearCeilFrac);
+      const ceil = Math.min(car.topSpeed * nitroSpeedShare * road.topShare, gearMax * DRIVE.gearCeilFrac, road.topSpeedMph ?? Infinity);
       if (s.speedMph < ceil) s.speedMph += car.accel * accelFactor * s.input.throttle * dt * DRIVE.accelScale * accelerationShare;
     }
-    if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * dt;
+    if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
   }
   if (s.gear !== previousGear) this.emit({ shift: s.gear });
@@ -194,8 +210,10 @@ export function _drive(dt) {
     if (!surface.boostAllowed) s.boosting = false;
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
+  // Deep snow holds any car to its speed limit: no throttle above it, and a car that arrives faster eases down quickly.
+  if (road.topSpeedMph !== null && s.speedMph > road.topSpeedMph) s.speedMph -= (s.speedMph - road.topSpeedMph) * (1 - Math.exp(-8 * dt));
 
-  const effectScale = arsenalEnabled(this) ? carTopSpeed(s) : 1;
+  const effectScale = (arsenalEnabled(this) ? carTopSpeed(s) : 1) * road.topShare * towTop;
   const speedCap = (s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed) * effectScale;
   if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
   if (effectScale < 1) s.speedMph = Math.min(s.speedMph, speedCap);

@@ -11,6 +11,8 @@
 // z = cos(heading). Heading grows when the road turns LEFT, and lateral
 // offsets are positive on the LEFT of the direction of travel.
 
+import { SURFACE_KINDS } from './race-surfaces.js';
+
 const DEG = Math.PI / 180;
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -107,7 +109,10 @@ export function resolvePieces(script, { id = 'script', defaults = {} } = {}) {
       if (!WALL_VALUES.includes(opts.walls)) throw new TrackScriptError(`${label(id, index, name)}: walls must be one of ${WALL_VALUES.join(', ')}.`);
       walls = opts.walls;
     }
-    if (opts.surface !== undefined) surface = String(opts.surface);
+    if (opts.surface !== undefined) {
+      if (!SURFACE_KINDS.includes(opts.surface)) throw new TrackScriptError(`${label(id, index, name)}: surface must be one of ${SURFACE_KINDS.join(', ')}.`);
+      surface = opts.surface;
+    }
     piece.width = width;
     piece.walls = walls;
     piece.surface = surface;
@@ -560,7 +565,9 @@ function boardList(geometry) {
 // ---------------------------------------------------------------------------
 
 export const REFERENCE_DYNAMICS = Object.freeze({
-  lateralAccel: 25,  // m/s squared a car of grip 1.0 can hold in a corner
+  lateralAccel: 20,  // m/s squared the reference car holds in a corner
+  yawRate: 1.1,      // radians per second the reference car can turn at full lock
+  minRadius: 12.7,   // the tightest circle the reference car can drive, metres
   brake: 20,         // m/s squared of braking
   accel: 9,          // m/s squared of acceleration
   topSpeed: 90,      // m/s
@@ -576,7 +583,10 @@ export function buildRacingLine(geometry, dynamics = REFERENCE_DYNAMICS) {
   const keys = [];
   for (const piece of turns) {
     const apex = piece.s0 + (piece.s1 - piece.s0) * TRACK_SCRIPT.apexShare;
-    keys.push({ s: piece.s0, side: -piece.dir }, { s: apex, side: piece.dir }, { s: piece.s1, side: -piece.dir });
+    // The apex goes to the inside edge unless the corner is tighter than the car
+    // can turn: then the line runs wide to give the car a bigger circle.
+    const inside = clamp((piece.radius - (dynamics.minRadius ?? 0)) / Math.max(.1, room(apex)), -1, 1);
+    keys.push({ s: piece.s0, side: -piece.dir }, { s: apex, side: piece.dir * inside }, { s: piece.s1, side: -piece.dir });
   }
   keys.sort((a, b) => a.s - b.s);
   const merged = [];
@@ -612,7 +622,8 @@ export function buildRacingLine(geometry, dynamics = REFERENCE_DYNAMICS) {
     const abx = px[b] - px[a], abz = pz[b] - pz[a], bcx = px[c] - px[b], bcz = pz[c] - pz[b], acx = px[c] - px[a], acz = pz[c] - pz[a];
     const lab = Math.hypot(abx, abz), lbc = Math.hypot(bcx, bcz), lac = Math.hypot(acx, acz);
     const k = lab * lbc * lac > 1e-9 ? 2 * Math.abs(abx * bcz - abz * bcx) / (lab * lbc * lac) : 0;
-    cornerSpeed[i] = Math.min(dynamics.topSpeed, Math.sqrt(dynamics.lateralAccel / Math.max(k, 1e-6)));
+    // Grip limits the corner, and so does how fast the car can swing its nose round.
+    cornerSpeed[i] = Math.min(dynamics.topSpeed, Math.sqrt(dynamics.lateralAccel / Math.max(k, 1e-6)), (dynamics.yawRate ?? Infinity) / Math.max(k, 1e-6));
     gaps[i] = Math.max(.01, lbc);
   }
   if (closed) cornerSpeed[count] = cornerSpeed[0];
