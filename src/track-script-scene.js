@@ -2,7 +2,7 @@
 // snow, ice, deep snow) and braking and ICE boards. Drawing only: the driving
 // code reads the same positions from the Course and nothing here changes state.
 import * as THREE from 'three';
-import { strip } from './world-surfaces.js';
+import { strip, worldAtExtended } from './world-surfaces.js';
 import { SURFACES } from './race-surfaces.js';
 
 const OVERLAY = {
@@ -72,6 +72,53 @@ function addBoards(group, course) {
   }
 }
 
+// The walls: one instanced box per solid segment, the same boxes a car hits.
+function addWalls(group, course) {
+  const walls = course.features.walls ?? [];
+  if (!walls.length) return;
+  const material = new THREE.MeshStandardMaterial({ color: 0xaeada6, roughness: .92, metalness: 0 });
+  const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, walls.length);
+  const matrix = new THREE.Matrix4(), rotation = new THREE.Quaternion(), position = new THREE.Vector3(), scale = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  walls.forEach((wall, i) => {
+    const height = wall.maxY - wall.minY;
+    rotation.setFromAxisAngle(up, wall.heading);
+    position.set(wall.x, wall.minY + height / 2, wall.z);
+    scale.set(wall.halfX * 2, height, wall.halfZ * 2 - .1);
+    mesh.setMatrixAt(i, matrix.compose(position, rotation, scale));
+  });
+  mesh.name = 'track-walls'; mesh.castShadow = mesh.receiveShadow = true;
+  group.add(mesh);
+}
+
+// Kerbs: red and white blocks two metres long on the edge of the road.
+function addKerbs(group, course) {
+  const kerbs = course.features.kerbs ?? [];
+  if (!kerbs.length) return;
+  const build = parity => {
+    const positions = [], indices = [];
+    for (const kerb of kerbs) {
+      const first = Math.ceil(kerb.s0 / 2), last = Math.floor(kerb.s1 / 2);
+      for (let block = first; block < last; block++) {
+        if (((block % 2) + 2) % 2 !== parity) continue;
+        const a = block * 2, b = a + 2, edge = s => course.roadHalfWidthAt(s);
+        const corners = [[a, kerb.side * (edge(a) - kerb.width)], [a, kerb.side * edge(a)], [b, kerb.side * (edge(b) - kerb.width)], [b, kerb.side * edge(b)]]
+          .map(([s, off]) => worldAtExtended(course, s, off));
+        const base = positions.length / 3;
+        for (const p of corners) positions.push(p.x, p.y + .05, p.z);
+        indices.push(base, base + 1, base + 2, base + 2, base + 1, base + 3);
+        indices.push(base, base + 2, base + 1, base + 2, base + 3, base + 1);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setIndex(indices); geometry.computeVertexNormals();
+    return geometry;
+  };
+  for (const [parity, color] of [[0, 0xc9332a], [1, 0xe8e6df]]) {
+    const mesh = new THREE.Mesh(build(parity), new THREE.MeshStandardMaterial({ color, roughness: .75, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, side: THREE.DoubleSide }));
+    mesh.name = 'track-kerbs'; mesh.receiveShadow = true; group.add(mesh);
+  }
+}
+
 export function addTrackScriptScene(group, course) {
   for (const run of surfaceRuns(course)) {
     const look = OVERLAY[run.kind];
@@ -91,5 +138,7 @@ export function addTrackScriptScene(group, course) {
       }
     }
   }
+  addWalls(group, course);
+  addKerbs(group, course);
   addBoards(group, course);
 }
