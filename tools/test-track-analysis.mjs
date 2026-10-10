@@ -2,12 +2,15 @@ import assert from 'node:assert/strict';
 import {
   analyseTrack, sampleCourse, detectCorners, detectCrests, longestStraight,
   namedPieces, nameFeatures, cornerSpeeds, markSlowCorners, referenceSpeedColour, trackSectors,
-  cornerId, resolveTrackIntel, courseFingerprint, buildTrackDossier, analyseLap,
+  cornerId, resolveTrackIntel, courseFingerprint, buildTrackDossier, analyseLap, trackSnapshotPose,
 } from '../src/track-analysis.js';
 import {buildReview, drawMap} from './track-review.mjs';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {getRouteVariants} from '../src/route-variants.js';
+import {teamRoomMarkup, teamRoomMap} from '../src/screen-team-room.js';
+import {courseAccessPanel} from '../src/course-access-ui.js';
+import {createProfile} from '../src/progression.js';
 
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
@@ -49,6 +52,11 @@ function stadium({hump = true, shift = 0} = {}) {
 }
 
 const course = stadium();
+const playerProfile = freeze(createProfile());
+check(!courseAccessPanel(playerProfile).includes('data-team-room'), 'Team Room entry stays absent unless its real feature switch enables it');
+const enabledEntries = courseAccessPanel(playerProfile, 0, '', {teamRoomEnabled: true});
+check(/data-team-room="pacific-canyon"[^>]*>TEAM ROOM/.test(enabledEntries), 'An owned circuit gets a Team Room entry');
+check(/data-team-room="high-country"[^>]*disabled/.test(enabledEntries), 'A locked circuit cannot open Team Room');
 const profile = sampleCourse(course);
 const corners = detectCorners(profile);
 equal(corners.length, 2, 'Two semicircles yield two corners');
@@ -182,6 +190,13 @@ const seamCourse = stadium({shift: 700 + Math.PI * 75});
 const seamLap = analyseLap(seamCourse, {trace: lapTrace, lapMs: measuredLap.lapMs});
 check(seamLap.corners.every(row => row.elapsedMs > 0 && row.elapsedMs < measuredLap.lapMs / 2),
   'A corner across the start line has a positive, bounded crossing time');
+const ring = {closed: true, length: Math.PI * 300, def: {id: 'ring'}, features: {},
+  at: s => ({x: 150 * Math.sin(s / 150), z: 150 * Math.cos(s / 150), heading: s / 150}),
+  groundAt: () => ({y: 0})};
+const ringLap = analyseLap(ring, {lapMs: 60000, trace: [
+  {s: 0, t: 0, mph: 80, gear: 3}, {s: ring.length, t: 60, mph: 80, gear: 3}]});
+equal(ringLap.corners.map(row => row.elapsedMs), [60000],
+  'A continuous full-lap corner has the whole lap time, not zero at its coincident entry and exit');
 const unequalSectors = analyseLap(course, {trace: lapTrace, lapMs: measuredLap.lapMs,
   authored: {sectors: [500, 1500]}});
 equal(unequalSectors.sectorMs, [10000, 20000, measuredLap.lapMs - 30000],
@@ -204,6 +219,15 @@ const reference = {eventId: course.def.id, route: 'fixed', seed: 1989, car: 'stu
     entryKph: 240, minKph: 129, exitKph: 170, gear: 3}))};
 freeze(reference);
 const dossier = buildTrackDossier(course, {reference});
+const room = teamRoomMarkup({...dossier, name: '<img src=x onerror=fail>'});
+check(room.includes('&lt;img src=x onerror=fail&gt;') && !room.includes('<img src=x'),
+  'Dossier titles remain escaped text rather than executable markup');
+check(room.includes('Reference lap: Stuttgart 959-S') && room.includes('data-team-flag="signature"'),
+  'Dossier exposes the fixed reference identity and a selectable signature');
+const map = teamRoomMap(dossier);
+equal(map.corners.length, analysis.corners.length, 'The dossier map includes every numbered corner');
+equal(map.flags.length, dossier.flags.length, 'Every hot-spot flag appears on the map');
+check(map.segments.every(segment => /^rgb\(/.test(segment.colour)), 'Map segments use actual reference-speed colours');
 equal(dossier.flags.filter(flag => flag.kind === 'corner').length, dossier.analysis.corners.filter(corner => corner.slow).length,
   'Every slow corner has a selectable flag');
 equal(dossier.flags.filter(flag => flag.kind === 'crest').length, dossier.analysis.crests.length, 'Every crest has a selectable flag');
@@ -212,6 +236,11 @@ check(dossier.flags.some(flag => flag.kind === 'overtaking'), 'A native approach
 equal(new Set(dossier.flags.map(flag => flag.id)).size, dossier.flags.length, 'Flag identities are unique');
 check(dossier.flags.every(flag => flag.snapshotS >= 0 && flag.snapshotS < course.length), 'Every live snapshot has a bounded native approach position');
 const firstCornerFlag = dossier.flags.find(flag => flag.id === 'c1');
+const cameraPose = trackSnapshotPose(course, {snapshotS: 350, camera: {up: 1.2, ahead: 70}});
+equal(cameraPose.position, {x: 0, y: 7.2, z: 350}, 'Driver-seat snapshot rests 1.2 m above the native ground at its actual approach');
+near(cameraPose.target.z, 420, 1e-8, 'Snapshot looks ahead along the native course');
+check(cameraPose.target.y < cameraPose.position.y, 'Snapshot aim follows the road down beyond a crest');
+assert.throws(() => trackSnapshotPose(course, {snapshotS: NaN, camera: {up: 1.2, ahead: 70}}), /snapshot/i); checks++;
 equal(firstCornerFlag.snapshotS, reference.corners[0].brakeS, 'Corner snapshot uses its actual reference braking point');
 equal(firstCornerFlag.engineer.targetKph, 129, 'Generated target speed comes from the actual reference corner');
 equal(firstCornerFlag.engineer.gear, 3, 'Generated gear comes from the actual reference corner');

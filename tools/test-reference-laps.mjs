@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {COURSE} from '../src/config.js';
+import {Course} from '../src/course.js';
+import {courseFingerprint, analyseTrack, cornerId} from '../src/track-analysis.js';
 import {
   REFERENCE_POLICY, referenceTargets, selectReferenceLap, referenceTrace,
   referenceSectorTimes, withReferenceApp, installReferenceFixture, buildReferenceSet, startReferenceApp,
@@ -170,6 +172,33 @@ if (process.argv.includes('--native')) {
       equal(JSON.stringify(COURSE), definitionsBefore, 'Native fixture never edits global course definitions');
     } finally { nativeFixture.dispose(); }
   });
+}
+
+const rebuild = 'Run node tools/build-reference-laps.mjs to rebuild all native references.';
+const {referenceLap, referenceKey, REFERENCE_LAPS} = await import('../src/reference-laps.js')
+  .catch(error => {throw Error(`Missing bundled reference laps. ${rebuild}`, {cause: error});});
+equal(referenceKey('pacific-canyon', 'route_b'), 'pacific-canyon|route_b', 'Runtime loader preserves explicit route identity');
+equal(referenceLap('not-a-course'), null, 'Unknown runtime references are absent rather than invented');
+equal(Object.keys(REFERENCE_LAPS).sort(), targets.map(target => target.key).sort(), `Exactly every native closed event/route must be present. ${rebuild}`);
+for (const target of targets) {
+  const record = referenceLap(target.eventId, target.route);
+  const definition = COURSE.find(row => row.id === target.eventId), course = new Course(definition, target.seed);
+  equal(record.courseFingerprint, courseFingerprint(course, {route: target.route}), `${target.key} reference is stale. ${rebuild}`);
+  equal([record.eventId, record.route, record.seed, record.car, record.driver, record.cpu, record.fixtureVersion],
+    [target.eventId, target.route, target.seed, REFERENCE_POLICY.car, REFERENCE_POLICY.driver, REFERENCE_POLICY.cpu, 1],
+    `${target.key} must retain the approved fixed policy`);
+  equal(record.sectorMs.length, 3, `${target.key} has exactly three measured sectors`);
+  equal(record.sectorMs.reduce((sum, value) => sum + value, 0), record.lapMs, `${target.key} sector times sum to its actual lap`);
+  check(record.lapMs > 0 && record.sectorMs.every(value => Number.isInteger(value) && value > 0), `${target.key} has positive measured times`);
+  equal(record.trace.length, Math.ceil(course.length / 20), `${target.key} covers the whole lap at 20 m steps`);
+  check(record.trace.every(([distance, kph], index) => distance === index * 20 && Number.isInteger(kph) && kph >= 0),
+    `${target.key} stores ordered distance/kph samples`);
+  equal(record.corners.map(corner => corner.id), analyseTrack(course).corners.map(cornerId),
+    `${target.key} corner identities follow native geometry`);
+  check(record.corners.every(corner => ['s', 'brakeS', 'entryKph', 'minKph', 'exitKph', 'gear', 'elapsedMs']
+    .every(key => Number.isFinite(corner[key])) && corner.gear >= 1 && corner.elapsedMs > 0),
+    `${target.key} corner metrics are measured, including elapsed time and displayed gear`);
+  check(Object.isFrozen(record) && Object.isFrozen(record.trace[0]), `${target.key} bundled reference cannot be mutated by a view`);
 }
 
 console.log(`Reference laps: ${checks} checks.`);

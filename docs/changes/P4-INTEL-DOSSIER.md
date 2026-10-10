@@ -1,7 +1,7 @@
 # P4-INTEL-DOSSIER - Team Room track dossier
 
-Status: shared analysis, dossier data and native reference recipe implemented.
-Full reference generation, Team Room UI and renderer/browser evidence remain pending.
+Status: dossier UI, live snapshot hook and 24 native references implemented.
+Independent source review, scheduled browser checks and lane/build remain pending.
 Day/night renderer source is retained separately at `66b3c45b`.
 
 ## Decisions before code
@@ -43,8 +43,8 @@ Day/night renderer source is retained separately at `66b3c45b`.
   in memory and discarded on close. No stored screenshot assets. Do not move
   the real player/rival, swap the real race state or invoke a fake race. The
   missing renderer capture hook waits until TRACK merges and DAY hooks finish.
-- UI actions use the existing interface interaction sound, with no new race
-  event or sound cue. No dependency, network request or asset placeholder.
+- UI actions follow the existing course-menu behavior. There is no new race
+  event or sound cue, dependency, network request or asset placeholder.
 
 ## Reference and metadata policy, settled before implementation
 
@@ -89,6 +89,12 @@ Director recorded the additional owned files and fixture correction before code.
   with layoutSeed. Production App is unchanged. The reference fingerprint
   describes that actual course, not a different runtime seed. Native pedal
   samples are captured, but no unapproved pedal thresholds or advice is added.
+- The Director approved an early presentation-only branch of the existing
+  renderer. It reuses the native scene, world, lighting, camera, quality path
+  and deferred GPU release. It bypasses actor/effect updates and App readiness
+  writes. Non-world/non-lighting visibility is restored in `finally`.
+  The copied canvas is transient; stale requests are cancelled, and closing
+  drops the canvas and restores the normal scene on the next frame.
 
 The `grand-prix` catalog entry is FIELD-owned and absent at this base. The
 feature must stay hidden until that real entry lands. A mocked switch proves
@@ -98,7 +104,7 @@ unit behavior only, not native entry acceptance. Renderer edits remain held.
 
 `node tools/test-track-analysis.mjs` failed first with `ERR_MODULE_NOT_FOUND`
 for the absent shared module. The Director reviewed and approved the proposal
-before runtime code. It now passes 172 checks across 24 native closed event/route
+before runtime code. It now passes 185 checks across 24 native closed event/route
 combinations. The unchanged review-tool suite passes 57 checks.
 Coverage includes known stadium/circle geometry, the cyclic seam, frozen inputs,
 RNG prohibition, authored piece names, explicit trace speeds and their absence,
@@ -110,16 +116,35 @@ Sector and authored-dossier cases also failed first on their absent exports.
 The reference suite failed first on the absent build recipe, then passed 44
 checks for route identity, complete-lap selection, distance/KPH sampling, actual
 sector crossings, storage-descriptor restoration on errors and the completion
-facade's physical method receivers and complete-set assembly. The optional
-`--native` probe passes 50 checks: 720 playground physical steps exactly match
+facade's physical method receivers and complete-set assembly. The completed
+data/geometry suite now passes 287 checks; `--native` passes 293 checks:
+720 playground physical steps exactly match
 an equivalent direct Duel in position, speed, gear, heading, ground, air and
 boost. Course definitions remain unchanged. A permitted single-event probe
 completed three Pacific Canyon A laps and selected 49,996 ms, 200 samples,
-fingerprint `track-v1-c1ebefb6`. No full data file has been published.
+fingerprint `track-v1-c1ebefb6`.
+
+The full memory-only sweep completed all three legal native laps on all 24
+event/routes. The runtime JSON is 66,278 bytes. A second full sweep matched
+every record exactly: native lap/sector/corner times, speed trace, seed and
+geometry fingerprint. Required coverage and freshness are checked against
+every actual closed event/route with a rebuild command on failure. Current
+fixed definitions have no distinct layout seed, so their actual seed is
+1989; route A/B/C seeds are 1989/42/17. The real JSON records retain every
+event's seed and fingerprint. No failed route was omitted.
 
 Shared lap and elapsed-time tests also failed before their exports/fields
 existed. One implementation correction uses the actual finish sample's time
 at a seam rather than rounding the whole lap before measuring a corner.
+The full data check then found the continuous-circle case: coincident entry
+and exit means one full lap, not zero elapsed time. A new independent circle
+regression failed first; the shared function was fixed and all references
+regenerated. Assertions and native physics were unchanged.
+
+UI tests first failed on the absent screen module. Current checks cover safe
+author text, every map flag/corner, fixed-reference labels, locked/owned entry
+markup and exact ground-based driver-seat pose. The unchanged production
+course/practice UI suite also passes 38 checks.
 
 Remaining UI/browser checks cover owned and locked
 tracks, the real feature switch, all existing closed circuits, keyboard focus,
@@ -129,6 +154,8 @@ must be witnessed; a requested camera field is not proof of the actual view.
 
 No browser, frame, art, lane/build or release result is claimed. All heavy jobs
 wait for the Director's quiet slot. Art sheets go to Claude via the Director.
+The strict `team-room` browser scenario requires the real `grand-prix` catalog
+entry; it does not substitute a mocked switch for native entry acceptance.
 
 ## Removed
 

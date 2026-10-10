@@ -293,6 +293,17 @@ export function cornerId(corner) {
   return slug || `c${corner.number}`;
 }
 
+export function trackSnapshotPose(course, flag) {
+  const {snapshotS, camera} = flag ?? {};
+  if (![snapshotS, camera?.up, camera?.ahead].every(Number.isFinite) || camera.up <= 0 || camera.ahead <= 0)
+    throw Error('Track snapshot needs a finite approach position and positive camera height/look-ahead.');
+  const s = wrap(snapshotS, course.length), ahead = wrap(s + camera.ahead, course.length);
+  const eye = course.at(s), target = course.at(ahead);
+  return {position: {x: eye.x, y: course.groundAt(s, 0).y + camera.up, z: eye.z},
+    target: {x: target.x, y: course.groundAt(ahead, 0).y + camera.up, z: target.z},
+    heading: eye.heading, s};
+}
+
 // Interpolate an actual forward crossing. The caller keeps the native lap
 // timestamps; this only locates distance boundaries between observations.
 export function lapCrossing(trace, distance) {
@@ -345,7 +356,8 @@ export function analyseLap(course, {trace, lapMs, route = 'fixed', authored} = {
     const entryTime = lapCrossing(trace, wrap(corner.entryS, course.length)).t;
     const exitTime = lapCrossing(trace, wrap(corner.exitS, course.length)).t;
     const elapsedMs = Math.round((exitTime - entryTime +
-      (corner.exitS < corner.entryS ? trace.at(-1).t : 0)) * 1000);
+      (corner.exitS <= corner.entryS ? trace.at(-1).t : 0)) * 1000);
+    if (elapsedMs <= 0) throw Error('Complete lap trace has no positive elapsed time through a corner.');
     return {id: cornerId(corner), s: corner.apexS, brakeS: corner.brakeS,
       entryKph: speedAt(corner.entryS), minKph: Math.round(minimum.mph * 1.609344),
       exitKph: speedAt(corner.exitS), gear: minimum.gear + 1, elapsedMs};
