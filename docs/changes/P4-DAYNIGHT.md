@@ -1,6 +1,6 @@
 # P4-DAYNIGHT - light that moves
 
-Status: owner modules implemented; renderer hook held for P4-TRACK-SCRIPT sync.
+Status: owner modules and native renderer hooks implemented after P4-TRACK-SCRIPT sync.
 Browser, frame, art review and lane/build evidence remain pending.
 
 ## Design decision (10 October 2026, before code)
@@ -12,7 +12,7 @@ Browser, frame, art review and lane/build evidence remain pending.
   storage fields, clock, random draw or race event are added.
 - Distance paths wrap at each closed-circuit lap. Point-to-point distance clamps
   at the final road metre, never modulo-wraps. Race-progress paths use unwrapped
-  `state.s / course.raceLength`, so only that sunset continues across lap boundaries.
+  `state.s / duel.raceLength`, so only that sunset continues across lap boundaries.
   Negative grid positions clamp to the first keyframe. Reversing retraces the light.
   Menu previews show the first keyframe. Pause freezes progress naturally.
 - Keyframes must be finite, strictly increasing and use known looks. A single
@@ -86,15 +86,17 @@ No existing assertion, tolerance, signature or pin was changed.
 
 ## Retained draft and remaining work
 
-The Director requested this real draft commit while P4-TRACK-SCRIPT owns the
-shared renderer. It is not ready to merge. Keep this lane until that card lands,
-sync it, then add the renderer hooks: pass unwrapped distance/race length/menu to
-`lighting.apply`; bind the native world with `setWorld`; call `updateCar` for
-visible native vehicles and `updateWorld` after placement; call `detachVehicle`
-and `detachWorld` only inside deferred object retirement before native disposal.
-Ghosts remain outside the car adapter. No renderer hook has been edited yet.
+P4-TRACK-SCRIPT merged and the lane synced its native course support. The renderer
+now passes unwrapped distance, native `duel.raceLength` and menu state to the
+sampler, binds each native world, and updates native car lenses and world details
+after placement. One reused world input holds position, heading, distance and
+quality. Ghosts and decoy drones stay outside the adapter. Detached world/vehicle
+resources are released only inside existing deferred retirement before disposal;
+the reused convoy tanker keeps its existing lifetime. No race-state writes were
+added. Focused checks pass unchanged after the hooks: 467 + 2666 + 1078.
+Syntax and diff whitespace checks pass. This draft remains unready for merge.
 
-After that integration, run the native browser scenario and resolve any actual
+Run the native browser scenario and resolve any actual
 fixture or visual failures. Prove eight visible models, including the licensed
 pair, four looks in both presets, legacy material restoration, and unchanged
 race/profile data. In the Director's quiet slot, measure the matched night cost
