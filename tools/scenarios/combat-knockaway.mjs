@@ -1,5 +1,13 @@
 // Inspect real scene objects and pooled debris in memory-only High and
 // Performance races. The renderer reads the scripted state without changing it.
+import {readFile} from 'node:fs/promises';
+
+// The preview serves built assets, so source-module URLs are unavailable.
+// Carry the unchanged, dependency-free native geometry module into this
+// disposable page rather than adding a runtime export just for inspection.
+const collisionSource=await readFile(new URL('../../src/vehicle-collision.js',import.meta.url),'utf8');
+const collisionModule=`data:text/javascript;base64,${Buffer.from(collisionSource).toString('base64')}`;
+
 async function qualityPass(context, quality) {
   await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine').disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
@@ -84,6 +92,35 @@ async function qualityPass(context, quality) {
   const high=await context.evaluate(`(async () => {
     const qa=window.__roadsideQA;
     const {duel,state,render,frame,present,trafficMesh}=qa;
+    const {boxContact}=await import(${JSON.stringify(collisionModule)});
+    // A real frame first reaches the car's face. Deeply overlapping centres
+    // can select a side normal in the rigid-body solver, even at high speed.
+    qa.touchTraffic=actor=>{
+      const playerSpec=duel._vehicleSpec(state),trafficSpec=duel._vehicleSpec(actor);
+      const estimate=actor.s-playerSpec.halfLength-trafficSpec.halfLength;
+      const heading=duel.course.at(actor.s).heading;
+      const difference=duel.course.at(estimate).heading-heading;
+      const playerExtent=playerSpec.halfLength*Math.abs(Math.cos(difference))+
+        playerSpec.halfWidth*Math.abs(Math.sin(difference));
+      state.s=actor.s-trafficSpec.halfLength-playerExtent+.05;
+      state.prevS=state.s-1.1;
+      actor.prevS=actor.s+(actor.dir<0?1.1:0);
+      const body=item=>{
+        const point=duel.course.worldAt(item.s,item.lateral),spec=duel._vehicleSpec(item);
+        return {x:point.x,z:point.z,halfLength:spec.halfLength,halfWidth:spec.halfWidth,
+          heading:duel.course.at(item.s).heading+(item.headingError||0)+
+            (item.dir<0?Math.PI:0)};
+      };
+      const contact=boxContact(body(state),body(actor));
+      const rearNormal=-(contact.normal.x*Math.sin(heading)+
+        contact.normal.z*Math.cos(heading));
+      const geometry={rearNormal,overlap:contact.overlap,
+        playerS:state.s,playerPrevS:state.prevS,trafficS:actor.s,
+        trafficPrevS:actor.prevS,playerExtent,trafficHalfLength:trafficSpec.halfLength};
+      if(!(rearNormal>.95)||!(contact.overlap>=-.3&&contact.overlap<=.3))
+        throw Error('Traffic fixture did not reach the intended face: '+JSON.stringify(geometry));
+      return geometry;
+    };
     qa.wreckPose=actor=>{
       const point=duel.course.groundAt(actor.s,actor.lateral);
       const smoke=render.scene.getObjectByName('combat-vfx-traffic-wreck-0-smoke');
@@ -124,6 +161,7 @@ async function qualityPass(context, quality) {
     const actor={alive:true,s:130,prevS:130,lateral:.6,prevLateral:.6,
       speedMph:0,dir:1,headingError:0,pushVelocity:0,knock:null};
     state.traffic=[actor];
+    const geometry=qa.touchTraffic(actor);
     const point=await frame(actor.s,actor.lateral);
     const sameMesh=render.scene.children.find(item=>item.visible&&item.userData?.size&&
       Math.hypot(item.position.x-point.x,item.position.z-point.z)<1.5)===trafficMesh;
@@ -139,7 +177,7 @@ async function qualityPass(context, quality) {
     const later=qa.wreckPose(actor);
     qa.advanceTraffic(48);
     await frame(actor.s,actor.lateral);
-    return {preContact,sameMesh,first,later,after:qa.wreckPose(actor),
+    return {preContact,geometry,sameMesh,first,later,after:qa.wreckPose(actor),
       moved:Math.hypot(later.position.x-first.position.x,later.position.z-first.position.z),
       outcomes:impacts.map(event=>event.outcome),
       armorDelta:armor-state.armor,crashes:state.stageCrashes,
@@ -168,6 +206,7 @@ async function qualityPass(context, quality) {
     const actor={alive:true,s:105,prevS:115,lateral:.6,prevLateral:.6,
       speedMph:60,dir:-1,headingError:0,pushVelocity:0,knock:null};
     state.traffic=[actor];
+    const geometry=qa.touchTraffic(actor);
     const point=await frame(actor.s,actor.lateral);
     const sameMesh=render.scene.children.find(item=>item.visible&&item.userData?.size&&
       Math.hypot(item.position.x-point.x,item.position.z-point.z)<1.5)===trafficMesh;
@@ -183,7 +222,7 @@ async function qualityPass(context, quality) {
     qa.advanceTraffic(48);
     const {renderMs:explosionRenderMs,drawCalls:explosionDrawCalls}=await present();
     const impacts=events.filter(event=>event.roadsideImpact).map(event=>event.roadsideImpact);
-    return {preContact,sameMesh,first,later,after:qa.wreckPose(actor),firstCallout,
+    return {preContact,geometry,sameMesh,first,later,after:qa.wreckPose(actor),firstCallout,
       finalCallout:state.callout,outcomes:impacts.map(event=>event.outcome),
       actorMatches:impacts.every(event=>event.actor===actor),
       oldWreckEvent:events.some(event=>event.trafficWrecked),

@@ -1,37 +1,41 @@
-# Next run: phase 3, a Wasteland worth finding (updated 10 October 2026)
+# Next run: phase 4, Grand Circuits (updated 10 October 2026)
 
-## Approved release in progress, 10 October 2026
+## Start here
 
-Kyle approved Smoke round two and Arena round two (final), and authorized
-release of the five polish changes after the required checks. Merge order:
-Smoke, Flame after sync and a fresh lane/build gate, then Arena.
+The five approved polish changes are live at commit 1046076a, build
+20261010195525-87b479fc74c0. The exact clean release commit passed all
+371 full-tier suites, alone with four jobs, plus the accepted release checks.
+One rollback build is retained. Kyle accepted the seeker damage ratio
+1.328662 at damage 8 and the tanker GPU increase with unchanged frame pacing.
+The two stale collision browser checks have now been corrected and pass in
+High and Performance; their lane tier (371/371), build and source review pass.
 
-- Height and Seekers are merged. Ordinary arena armor is 1.21; Medium
-  averages 13.833 wrecks and warlord health is unchanged.
-- Kyle accepted seeker damage 8 and its measured 1.328662 damage-per-firing
-  ratio as an exception to the original 1.3 target. Off Pods and Gunn keep 10.
-- Smoke is merged after lane 367/367, build and independent review. The
-  native test fixture now calls the renderer's camera-preparation phase;
-  every original assertion remains unchanged.
-- Flame is merged after lane 368/368, build and source review. Round one
-  and its p95 frame cost are approved. The added texture entry required a
-  reviewed catalog snapshot update; existing source pins are preserved.
-- Arena round two is merged after lane 369/369, build and source review.
-  Near/far lamp tests now check the approved separate materials and exact
-  brightness; all geometry, timing, input and disposal checks remain.
-- Release preparation enables Seekers in production. Career backup stays
-  in development; no save format or settlement behavior changes.
+Phase 4 is governed by [CIRCUITS.md](../CIRCUITS.md) and the board:
 
-After these merges, finish combined browser, frame, art and save checks,
-fold release notes into the final commit, and run the full tier alone with
-four jobs on that exact commit. Then install the approved build without
-refreshing an open race or accessing real saves. The earlier ac01cbe6 full
-pass is historical and does not qualify this release.
+- Claude owns P4-TRACK-SCRIPT, P4-FIELD and P4-GRIP. P4-REVIEW-TOOL and the
+  Team Room plan are merged. Do not take over Claude's cards.
+- P4-ART-SRC: Kyle selected sources **1, 3, 5, 8, 9 and 11**. The chosen
+  [source sheet](looks/p4-src/index.html) is merged after passing lane/build
+  checks and independent review. The Lantern
+  Tower needs assembly, the avalanche gallery needs adaptation, and the
+  yeti's required clips still need inspection. These are donor approvals,
+  not finished-art approval.
+- P4-DAYNIGHT: draft 4b74d256 is retained in its clean lane. Pure light
+  paths, sky, scene and vehicle adapters pass focused tests. Wait for
+  P4-TRACK-SCRIPT before renderer hooks, then prove the native browser
+  views, eight-car frame cost and art sheet before the lane/build gate.
+- New tracks stay behind their switches. Each still needs Claude's finishing
+  pass and Kyle's release approval.
 
-Retain pending lanes until their merges. Protected audio, parked diagnostics
-and Kyle/Claude branches remain untouched. Push is held for separately
-approved binary-history compaction; release approval does not authorize a
-history rewrite.
+Keep the existing live game running. No further live update is authorized by
+starting Phase 4. Finish this session with the full tier alone, four jobs, on
+the final combined commit. The release pass does not qualify later commits.
+
+Remove only merged lanes and used evidence. Retain the day/night draft,
+active Claude lanes, protected audio and parked diagnostics. GitHub push
+still waits for separately approved binary-history compaction.
+
+## Earlier handoff context
 
 ## Phase 3 handoff before polish, 9 October 2026
 

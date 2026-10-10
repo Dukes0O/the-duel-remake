@@ -3932,13 +3932,29 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: building
+    status: merged
+    source_commit: 1c81cf6e21e6cbf72cf74e4285fd5d5643a1b867
+    note: "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11. All 24 prior source records retained exactly; 13 new sources, 11 selected, no downloads. Lane 8/8 in 93.39 s, build 1.34 s and source review pass. Tower/gallery adaptation and yeti clip inspection remain for construction cards."
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-art-src
     owns: [docs/board/looks/p4-src/, tools/art/catalog.json, docs/changes/P4-ART-SRC.md]
+    hooks: [tools/test-tanker-valve-source.mjs]
+    selection_2026_10_10: "Kyle selected 1, 3, 5, 8, 9 and 11. Donors only; tower assembly, gallery adaptation and yeti animation inspection remain explicit. Selected-source lane/build and independent review passed."
     acceptance:
       - "One sourcing sheet with two or three CC0 or CC-BY candidates for every group in docs/CIRCUITS.md section 8, licences checked and recorded. Send to Kyle with Claude; set waiting_on: kyle. No building before Kyle picks."
 
+  - id: P4-KITS
+    title: "Prepare Kyle's picked art kits for the new tracks"
+    owner: codex
+    lane: ART
+    size: M
+    needs: [P4-ART-SRC]
+    status: ready
+    owns: [tools/blender/p4-kits.py, docs/board/looks/p4-kits/, docs/changes/P4-KITS.md]
+    hooks: [public/assets/models/, tools/art/catalog.json]
+    acceptance:
+      - "From Kyle's picks (P4-ART-SRC), prepare game-ready kits ahead of the track cards, as Blender recipes: start gantry with five lamps (lamp parts named so the game can light them), pit garages and pit wall, grandstands, armco, concrete walls, catch fences, tyre walls, braking boards (150, 100, 50), marshal posts; the Lantern Tower and old-town shopfronts; the ski lodge, chairlift tower, cable and chair; the snow shed (gallery) pieces, summit hut and observatory; the snowman and the yeti (check its animation clips)."
+      - "Gritty and believable, never toy-like; small runtime files with distant versions; credits recorded. One comparison sheet per kit group to Claude, at most three rounds. No track geometry: the track cards place these."
   - id: P4-PANORAMA
     title: "Panorama Ridge: the mountain circuit"
     owner: codex
@@ -3978,7 +3994,8 @@ tasks:
     branch: codex/p4-daynight
     owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md, tools/scenarios/p4-daynight.mjs, tools/art/p4-daynight-sheet.py, docs/board/looks/p4-daynight/]
     hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
-    sequencing: "Edits render3d.js before P4-SNOW."
+    sequencing: "Wait for Claude P4-TRACK-SCRIPT to merge before renderer hooks; then edit render3d.js before P4-SNOW."
+    note: "Retained draft 4b74d256: pure light paths and scene/sky/car owners pass focused checks. Renderer untouched. Sync, native browser and frame checks, art verdict and lane/build remain before merge."
     acceptance:
       - "Build docs/CIRCUITS.md section 3.6: light paths by distance or race progress, blended sun, sky, fog, ambient and stars; headlights and tail lights on below a light level (only the player car casts a real light); cat's eyes and boards glowing in headlights; moon, town lights and lit windows at night."
       - "Presentation only: race state unchanged. Existing courses look identical unless a light path is set. Frame cost within the usual limit with 8 cars at night. One sheet to Claude (day, golden, dusk, night on one test circuit), at most three rounds."
@@ -4001,13 +4018,13 @@ tasks:
     owner: codex
     lane: AUDIO
     size: S
-    needs: [P4-FIELD]
+    needs: []
     status: ready
     owns: [docs/changes/P4-AUDIO.md]
     hooks: [src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/]
     acceptance:
       - "Every cue in docs/CIRCUITS.md section 9 from library recipes first, wired to its event as each card lands (start lights, positions, final lap, flag first). Ambient beds per track. Credits recorded. Listening clips to Kyle."
-
+    claude_note: "10 October 2026: start now. Make every cue as a library recipe and listening clip first; wire each one when its card lands (start lights and positions after P4-FIELD merges)."
   - id: P4-CAREER
     title: "Grand Prix in the career: menu, prices, pay, records"
     owner: codex
@@ -4174,6 +4191,81 @@ tasks:
     hooks: [src/grand-prix-career.js, src/screen-courses.js, src/screen-garage.js, src/app.js]
     acceptance:
       - "Build the cups in docs/CIRCUITS.md section 7: Mountain, Night and Winter Cups and the Grand Tour, points 10 to 1 with the tie rule, saved per named player, abandonable, settled once, cup bonus pay, and the garage trophy case. Additive save fields; old-save fixtures load unchanged."
+
+  - id: P4-INTEL-DOSSIER
+    title: "Team Room: track dossier, flags, live snapshots, engineer notes"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-REVIEW-TOOL]
+    status: ready
+    flag: grand-prix
+    owns: [src/track-analysis.js, src/screen-team-room.js, src/screen-team-room.css, tools/test-track-analysis.mjs, tools/scenarios/team-room.mjs, docs/changes/P4-INTEL-DOSSIER.md]
+    hooks: [tools/track-review.mjs, src/screen-courses.js, src/screen-router.js, src/render3d.js, src/app.js]
+    acceptance:
+      - "Build the Team Room screen and dossier in docs/CIRCUITS.md section 7b: TEAM ROOM on event cards, map coloured by reference speed with named corners, flags at hot spots, live-rendered driver-seat snapshots at each flag (no stored pictures), engineer notes from the circuit file or generated for existing circuits. Move corner, crest and sector analysis into src/track-analysis.js and make tools/track-review.mjs use it. Works for every closed circuit. Read-only: race state never changes."
+    claude_note: "10 October 2026: start now on the existing circuits; read corner names from scripted circuits once P4-TRACK-SCRIPT merges (the review tool already reads course.script.pieces)."
+  - id: P4-INTEL-TELEMETRY
+    title: "Team Room: your lap against the reference, and where you lose time"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-INTEL-DOSSIER]
+    status: ready
+    flag: grand-prix
+    owns: [src/lap-telemetry.js, tools/build-reference-laps.mjs, tools/test-lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
+    hooks: [src/ghost.js, src/screen-results.js, src/screen-team-room.js, src/leaderboard.js]
+    acceptance:
+      - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and car class, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
+
+  - id: P4-INTEL-LEVELS
+    title: "Team Room: earning intel levels and the reference ghost"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-INTEL-TELEMETRY, P4-CAREER]
+    status: ready
+    flag: grand-prix
+    owns: [src/intel-levels.js, tools/test-intel-levels.mjs, docs/changes/P4-INTEL-LEVELS.md]
+    hooks: [src/screen-team-room.js, src/grand-prix-career.js, src/ghost.js]
+    acceptance:
+      - "Build the four intel levels in docs/CIRCUITS.md section 7b exactly, per event and named player, with the stated ways to earn them, and the level 4 reference ghost in Time Trial. Settles once; additive save fields; old saves unchanged."
+
+  - id: P4-QUALIFYING
+    title: "Qualifying before a Grand Prix"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-FIELD]
+    status: ready
+    flag: grand-prix
+    owns: [src/qualifying.js, tools/test-qualifying.mjs, docs/changes/P4-QUALIFYING.md]
+    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js]
+    acceptance:
+      - "Build optional qualifying in docs/CIRCUITS.md section 7b: two timed laps alone, best lap sets your grid slot among the computer racers' seeded times; skipping keeps the default start. Practice laps count toward intel level 2."
+
+  - id: P4-COACH
+    title: "Coach markers for learning a track"
+    owner: codex
+    lane: VIS
+    size: S
+    needs: [P4-INTEL-LEVELS]
+    status: ready
+    flag: grand-prix
+    owns: [src/coach-markers.js, tools/test-coach-markers.mjs, docs/changes/P4-COACH.md]
+    hooks: [src/render3d.js, src/race-settings-ui.js]
+    acceptance:
+      - "Build Coach in docs/CIRCUITS.md section 7b: an option, off by default, showing a braking-point marker and a faint apex line on corners with level 2 notes; never in Hard Grand Prix races or cups. Presentation only."
+
+  - id: P4-FINISH-TEAMROOM
+    title: "Claude's finishing pass: the Team Room"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-INTEL-LEVELS]
+    status: ready
+    acceptance:
+      - "Claude reviews the Team Room look and words, writes the engineer notes for every circuit, picks the flag spots and snapshot framing, and sends Kyle a postcard of the dossier."
 
   - id: P4-FINISH-PANORAMA
     title: "Claude's finishing pass: Panorama Ridge"
@@ -4371,7 +4463,9 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
+    status: merged
+    source_commit: 6bc43fa7008b5cb449e0c7678efd4277b99b573c
+    note: "Both native browser checks pass in High and Performance with zero warnings/issues. Reviewed geometry and ground-height fixture corrections only; no runtime/save change. Lane 371/371 in 1352.32 s and build 1.00 s pass; source review clear."
     claimed_by: codex-qa-stale-collision
     branch: codex/qa-stale-collision
     owns: [tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-ramming.mjs, docs/changes/QA-STALE-COLLISION.md]
