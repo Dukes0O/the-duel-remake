@@ -101,3 +101,16 @@ reverse build, which is why the reverse test runs alone).
 ## Removed
 
 Nothing replaced.
+
+## Tremblant Woods redrawn (Claude, 10 October 2026)
+
+The fitted first draft was a long thin loop with Timber Straight running
+close beside the outward road. Claude redrew it as a clockwise loop with the
+hairpin at the end of a short spur: 4.44 km, 3 laps, closes with straight
+changes under 5% (tools/track-script-fit.mjs), closest separate stretches
+66 m apart at the spur, highest grade 19.7%, tightest radius 22 m. Test
+driver laps 1:39, 1:37, 1:37 with no crashes. Changed assertions in
+tools/test-circuit-layouts.mjs follow the new design: laps 3, Timber
+Straight about 1,305 m, Beaver Hairpin radius 22 m.
+
+Removed: the fitted first-draft Tremblant script.
