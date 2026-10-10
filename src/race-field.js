@@ -75,7 +75,7 @@ export const RACERS = Object.freeze([
     traits: trait({ skill: .98, consistency: .85, aggression: .5, defend: .25, looseGrip: 1.06 }) }),
   Object.freeze({ id: 'boone_ward', driverId: 'boone_ward', name: 'Boone Ward', paint: { color: 0x6a45a0, accent: 0xd8d8cc },
     traits: trait({ skill: .98, consistency: .72, aggression: .45, defend: .95 }) }),
-  Object.freeze({ id: 'club', driverId: 'club', name: 'Club Racer', paint: { color: 0x8c9096, accent: 0x2a2d31 },
+  Object.freeze({ id: 'club', driverId: 'club', name: 'Dex Calloway', paint: { color: 0x8c9096, accent: 0x2a2d31 },
     traits: trait({ skill: .975, brake: .82, consistency: .6, aggression: .4, defend: .2 }) }),
 ]);
 

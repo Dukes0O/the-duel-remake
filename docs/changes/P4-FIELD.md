@@ -9,7 +9,7 @@ A Grand Prix race on Pacific Canyon: you and up to seven computer racers on a
 closed road with no traffic, police or radar, three laps.
 
 - **The field.** Mara Vale, Iko Ren, Sana Marlow, Jules Reyes, Nia Frost and
-  Boone Ward, plus a club racer; Axel Storm replaces the club racer on Hard.
+  Boone Ward, plus Dex Calloway, the filler racer; Axel Storm takes his place on Hard.
   Each drives a car near yours: its pace on the circuit (`performanceIndex`,
   average speed on the racing line) is within 10% of yours, Easy from the slower
   half, Hard from the faster half. A racer's pace is then evened to your car's

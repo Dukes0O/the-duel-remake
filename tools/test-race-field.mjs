@@ -73,7 +73,7 @@ for (const cpu of ['easy', 'medium', 'hard']) {
   equal(new Set(names).size, names.length, `${cpu}: every racer has their own name`);
   for (const name of ['Mara Vale', 'Iko Ren', 'Sana Marlow', 'Jules Reyes', 'Nia Frost', 'Boone Ward']) check(names.includes(name), `${cpu}: ${name} races`);
   equal(names.includes('Axel Storm'), cpu === 'hard', `${cpu}: Axel Storm races on Hard only`);
-  equal(names.includes('Club Racer'), cpu !== 'hard', `${cpu}: a club racer fills the last slot unless Axel does`);
+  equal(names.includes('Dex Calloway'), cpu !== 'hard', `${cpu}: the filler racer, Dex Calloway, fills the last slot unless Axel does`);
   // The grid: two by two, staggered, 8 m between rows, nobody off the road.
   const cars = [{ s: s.s, lateral: s.lateral }, ...s.opponents.map(r => ({ s: r.s, lateral: r.lateral }))].sort((a, b) => b.s - a.s);
   equal(new Set(cars.map(c => `${c.s}|${c.lateral}`)).size, 8, `${cpu}: eight different grid slots`);
@@ -375,7 +375,7 @@ function oneLapApp(deferFinish) {
 // ---- what the screens show ----
 {
   equal(shortRacerName('Mara Vale'), 'M. VALE', 'racers show as an initial and a surname');
-  equal(shortRacerName('Club Racer'), 'C. RACER', 'club racers too');
+  equal(shortRacerName('Dex Calloway'), 'D. CALLOWAY', 'the filler racer too');
   const duel = racing(start({ seed: 1989, fieldSeed: 31 }));
   run(duel, 6);
   const rows = runningOrderRows(duel.state.field);
