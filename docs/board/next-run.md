@@ -15,7 +15,8 @@ Phase 4 is governed by [CIRCUITS.md](../CIRCUITS.md) and the board:
 - Claude owns P4-TRACK-SCRIPT, P4-FIELD and P4-GRIP. P4-REVIEW-TOOL and the
   Team Room plan are merged. Do not take over Claude's cards.
 - P4-ART-SRC: Kyle selected sources **1, 3, 5, 8, 9 and 11**. The chosen
-  sources are recorded; lane/build checks precede their merge. The Lantern
+  [source sheet](looks/p4-src/index.html) is merged after passing lane/build
+  checks and independent review. The Lantern
   Tower needs assembly, the avalanche gallery needs adaptation, and the
   yeti's required clips still need inspection. These are donor approvals,
   not finished-art approval.
