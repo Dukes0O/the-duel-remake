@@ -192,7 +192,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       holder,oil,smoke,caltrops,oilMaterial,smokeCloud
     };
   });
-  const smokeHazeMaterial = new THREE.MeshBasicMaterial({color: 0x81796f,
+  const smokeHazeMaterial = new THREE.MeshBasicMaterial({color: 0x85878a,
     transparent: true, opacity: 0, depthTest: false, depthWrite: false,
     side: THREE.BackSide, fog: false, toneMapped: false});
   const smokeHaze = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), smokeHazeMaterial);
@@ -224,16 +224,21 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         const nearest = duel.course.nearest(hazard.x, hazard.z);
         const ground = duel.course.groundAt(nearest.s, nearest.lateral);
         view.holder.position.y = ground.y + .025;
-        view.smokeCloud.update(hazard, vehicles.camera, vehicles.smokeTexture);
+        view.smokeCloud.update(hazard, null, vehicles.smokeTexture);
         smokeClouds.push({...hazard, y: ground.y});
       }
       view.oilMaterial.opacity=.9*hazard.opacity;
 
     });
-    const camera = vehicles.camera;
+  }
+  function prepareSmokeCamera(camera) {
+    for (const view of hazardViews) {
+      if (group.visible && view.holder.visible && view.smoke.visible)
+        view.smokeCloud.faceCamera(camera);
+    }
     smokeHazeMaterial.opacity = smokeHazeOpacity(smokeClouds, camera?.position);
     smokeHaze.visible = smokeHazeMaterial.opacity > 0;
-    if (camera) smokeHaze.position.copy(camera.position);
+    if (camera) {smokeHaze.position.copy(camera.position); smokeHaze.updateMatrixWorld(true);}
   }
   const rocketBody=new THREE.CylinderGeometry(.16,.16,1.25,8),rocketNose=new THREE.ConeGeometry(.21,.38,8);
   const shieldShell=new THREE.IcosahedronGeometry(1,0);
@@ -784,6 +789,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     onFootFigures,
     update,
     detachVehicle,
+    prepareSmokeCamera,
     dispose(){
       onFootFigures.dispose();
       raiderMarkers.dispose();

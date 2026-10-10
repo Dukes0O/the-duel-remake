@@ -1,9 +1,8 @@
 # POLISH-FLAME
 
 Status: round 1 approved by Claude/Kyle on 10 October 2026.
-Merge depends on POLISH-SMOKE approval/merge, integration sync and a fresh lane
-gate. No longer waiting on Claude; no additional frame rerun is required.
-Exact shared-source dependency: POLISH-SMOKE 36b0da674033abc13f5c30c31e8fbb802822963a.
+Merge depends on POLISH-SMOKE approval/merge and a fresh lane gate after sync. No longer waiting on Claude; no additional frame rerun is required.
+Exact shared-source dependency: POLISH-SMOKE b4494e996201e0956fb9ee1945e34bd531b2e430.
 
 ## Design before code
 - Use verified CC0 Kenney Particle Pack flame/smoke silhouettes, reduced to small
@@ -54,6 +53,23 @@ https://kenney.nl/assets/particle-pack page explicitly labels CC0, verified
   tools/scenarios/polish-flame.mjs; raw evidence stays under integration
   .evidence/2026-10-09/POLISH-FLAME/. No second art round is needed.
 - Broad lane gate awaits the approved Smoke dependency and integration sync. No integration merge or release is authorized here.
+
+## Smoke source sync on 10 October
+- Synced integration 1f5da9c8 (Height) cleanly in merge 75bb16e7, folding the
+  existing Flame approval notes into that real sync. Then merged Smoke b4494e99.
+- One conflict: render3d combatScene creation. Resolution preserves Flame's
+  TextureLoader injection and adds Smoke's scene.onBeforeRender preparation for
+  each main/rear camera. Combat scene auto-merge retains Flame plus Smoke's grey
+  haze, deferred facing and prepareSmokeCamera. No new hook or Flame art change.
+- Director reviewed the source/conflict resolution: clear. Flame module, shared
+  Smoke and native Arsenal Wave 2 (39) checks pass; build passes.
+- Native Flame scenario repeats all eight start/full/burning/Cinder poses across
+  High and Performance: zero warnings/errors, decoded textures, unchanged race
+  state, exact range/angle/origins. Maximum endpoint error 3.90e-14 m; post-burst
+  native burn timer remains 1.4583 s. Car and Cinder previews inspected in both.
+- New source-sync evidence: integration .evidence/2026-10-10/POLISH-FLAME/.
+  No new art or frame round, broad gate, integration merge or release claimed.
+  Smoke still needs final art approval and integration merge before Flame's gate.
 
 ## Removed
 Removed the old car and crew orange cones and their dedicated geometry/material.

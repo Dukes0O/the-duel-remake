@@ -186,7 +186,7 @@ export async function run(context) {
 // POLISH-SMOKE: matched native deployment / silhouette controls. This optional
 // path leaves the established Arsenal gameplay scenario and its assertions intact.
 async function smokePolish(context) {
-  const rows = [];
+  const rows = [], frameRows = [];
   for (const quality of ['high', 'performance']) {
     await context.command('Emulation.setDeviceMetricsOverride',
       {width:1280,height:800,deviceScaleFactor:1,mobile:false});
@@ -253,6 +253,40 @@ async function smokePolish(context) {
         })()`);
         await context.waitFor(`(() => {window.__smokePaint();return window.__qaApp.visualReady &&
           window.__render.renderer.domElement.style.visibility!=='hidden';})()`, 'smoke capture readiness',60000);
+        if (process.env.DUEL_SMOKE_FRAMES === '1') {
+          if (distance === 25) {
+            const frames = await context.evaluate(`(async () => {
+              const percentile=(values,fraction)=>{
+                const ordered=[...values].sort((a,b)=>a-b);
+                return Number(ordered[Math.ceil(ordered.length*fraction)-1].toFixed(3));
+              };
+              const result=await new Promise(resolve=>{
+                let warm=60,previous=null,frame=0;const intervals=[],work=[];
+                const tick=now=>{
+                  // The same native simulation and camera path run against
+                  // each checkout. No renderer or material is substituted.
+                  window.__qaApp.duel.step(1/240);
+                  const {ground,heading}=window.__smokePose,angle=heading+Math.sin(frame++*.012)*.22;
+                  window.__qaApp.inspectionCamera={position:[ground.x-Math.sin(angle)*25,
+                    ground.y+3.2,ground.z-Math.cos(angle)*25],target:[ground.x,ground.y+1.5,ground.z]};
+                  const start=performance.now();window.__smokePaint();
+                  const cost=performance.now()-start;
+                  if(warm>0){warm--;previous=now;requestAnimationFrame(tick);return;}
+                  intervals.push(now-previous);work.push(cost);previous=now;
+                  if(intervals.length<180){requestAnimationFrame(tick);return;}
+                  resolve({frames:180,p50:percentile(intervals,.5),p95:percentile(intervals,.95),
+                    max:percentile(intervals,1),workP50:percentile(work,.5),workP95:percentile(work,.95),
+                    over33:intervals.filter(ms=>ms>33).length});
+                };requestAnimationFrame(tick);
+              });
+              return {...result,activeClouds:Number(window.__render.scene.getObjectByName('arsenal-hazard-0')?.visible),
+                statePure:true,source: 'Actual checkout source; native simulation and moving camera'};
+            })()`);
+            frameRows.push({quality,kind,...frames});
+            console.log('Smoke frames '+JSON.stringify(frameRows.at(-1)));
+          }
+          continue;
+        }
         const measured=await context.evaluate(`(() => {
           const app=window.__qaApp,view=window.__render,scene=view.scene,renderer=view.renderer;
           const {ground}=window.__smokePose;
@@ -321,6 +355,7 @@ async function smokePolish(context) {
         await context.screenshot(`smoke-${kind}-${distance}-${quality}`);
 
       }
+      if(process.env.DUEL_SMOKE_FRAMES === '1') continue;
       const inside=await context.evaluate(`(() => {
         const app=window.__qaApp,{ground,heading}=window.__smokePose;
         app.inspectionCamera={position:[ground.x,ground.y+2,ground.z],
@@ -336,8 +371,13 @@ async function smokePolish(context) {
   }
   const {writeFile}=await import('node:fs/promises');
   const {join}=await import('node:path');
+  if(process.env.DUEL_SMOKE_FRAMES === '1') {
+    await writeFile(join(context.outputDir,'smoke-frames.json'),JSON.stringify(frameRows,null,2)+'\n');
+    return;
+  }
   await writeFile(join(context.outputDir,'concealment.json'),JSON.stringify(rows,null,2)+'\n');
   if(rows.filter(row=>row.kind==='screen'&&row.fullyInside).length!==4)throw Error('Screen controls must fully contain the car');
+  if(frameRows.length)await writeFile(join(context.outputDir,'smoke-frames.json'),JSON.stringify(frameRows,null,2)+'\n');
   const failed=rows.filter(row=>row.fullyInside&&row.visibleFraction>.1);
   if(failed.length)throw Error('More than 10% of the car remains visible: '+JSON.stringify(failed));
 }

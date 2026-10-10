@@ -561,7 +561,7 @@ export function smokeHazeOpacity(clouds, position) {
 }
 
 export function createSmokeCloud() {
-  const count = 25;
+  const count = 32;
   const geometry = new THREE.PlaneGeometry(1, 1);
   const cells = new Float32Array(count * 2);
   for (let i = 0; i < count; i++) {
@@ -569,49 +569,79 @@ export function createSmokeCloud() {
     cells[i * 2 + 1] = 3; // Full smoke, before the atlas thins.
   }
   geometry.setAttribute('smokeCell', new THREE.InstancedBufferAttribute(cells, 2));
-  const material = new THREE.MeshStandardMaterial({color: 0xb9b0a2,
+  const material = new THREE.MeshStandardMaterial({color: 0xc5c7c9,
     roughness: 1, metalness: 0, transparent: true, opacity: 1,
     depthWrite: false, side: THREE.DoubleSide});
+  const churn = {value: 0};
   material.onBeforeCompile = shader => {
-    shader.vertexShader = 'attribute vec2 smokeCell;\nvarying vec2 smokeLocalUv;\n' + shader.vertexShader;
+    shader.uniforms.smokeAge = churn;
+    shader.vertexShader = 'attribute vec2 smokeCell;\nvarying vec2 smokeLocalUv;\nvarying float smokePhase;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>',
-      '#include <uv_vertex>\nsmokeLocalUv = uv;\n#ifdef USE_MAP\nvMapUv = (vMapUv + smokeCell) / 8.0;\n#endif');
-    shader.fragmentShader = 'varying vec2 smokeLocalUv;\n' + shader.fragmentShader;
+      '#include <uv_vertex>\nsmokeLocalUv = uv;\nsmokePhase = smokeCell.x * 1.73;\n#ifdef USE_MAP\nvMapUv = (vMapUv + smokeCell) / 8.0;\n#endif');
+    shader.fragmentShader = 'uniform float smokeAge;\nvarying vec2 smokeLocalUv;\nvarying float smokePhase;\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>',
       '#include <map_fragment>\n' +
-      'float smokeEdge = 1.0 - smoothstep(0.65, 1.0, length(smokeLocalUv * 2.0 - 1.0));\n' +
-      'float smokeShade = clamp(dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)), 0.24, 0.72);\n' +
-      'diffuseColor.rgb = diffuse * smokeShade;\n' +
+      'vec2 smokeUv = smokeLocalUv * 2.0 - 1.0;\n' +
+      'float smokeAngle = atan(smokeUv.y, smokeUv.x);\n' +
+      'float smokeChurn = smokeAge * 0.38 + smokePhase;\n' +
+      'float smokeRuffle = 0.045 * sin(smokeAngle * 7.0 + smokeChurn) + 0.035 * sin(smokeAngle * 11.0 - smokeChurn * 0.7);\n' +
+      'float smokeEdge = 1.0 - smoothstep(0.82, 1.02 + smokeRuffle, length(smokeUv));\n' +
+      'float smokeTexture = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));\n' +
+      'float smokeLight = mix(0.08, 0.44, smoothstep(-0.8, 0.75, smokeUv.y));\n' +
+      'float smokeFold = 0.025 * sin(smokeUv.x * 8.0 + smokeChurn + sin(smokeUv.y * 6.0));\n' +
+      'diffuseColor.rgb = vec3(smokeLight + smokeTexture * 0.07 + smokeFold);\n' +
       'diffuseColor.a = opacity * smokeEdge;');
+    // Keep illumination from the scene while preventing its warm sun tint
+    // from turning the requested neutral smoke into brown dust.
+    shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>',
+      'outgoingLight = vec3(dot(outgoingLight, vec3(0.299, 0.587, 0.114)) * 0.45);\n#include <opaque_fragment>');
   };
-  material.customProgramCacheKey = () => 'smoke-hazard-atlas-v1';
+  material.customProgramCacheKey = () => 'smoke-hazard-atlas-v2';
   const mesh = new THREE.InstancedMesh(geometry, material, count);
   mesh.name = 'layered-smoke-puffs';
   mesh.visible = false;
   mesh.frustumCulled = false;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   const transform = new THREE.Object3D();
+  const direction = new THREE.Vector3();
+  const puffs = Array.from({length: count}, (_, index) => ({index, matrix: new THREE.Matrix4(), depth: 0}));
   let current = null;
   function faceCamera(camera) {
     if (!current || !camera) return;
-    for (let i = 0; i < count; i++) {
+    camera.getWorldDirection(direction);
+    for (const puff of puffs) {
+      const i = puff.index;
       const upper = i >= 16;
+      const wisp = i >= 25;
       const angle = upper ? (i - 16) * Math.PI / 4 : i * Math.PI / 8;
-      const radial = i === 24 ? 0 : current.radius * (upper ? .5 : .65);
+      const variation = .5 + .5 * Math.sin(i * 2.399);
       const drift = Math.sin(current.age * .55 + i) * .02;
+      const radial = i === 24 ? 0 : current.radius * (wisp ? .38 : upper ? .5 : .65);
+      const height = wisp ? 1.25 + variation * .45 : upper ? 2.7 + variation * .1 : 2.8;
+      const centerY = wisp ? 3.15 : upper ? 2.6 : 1.3;
       transform.position.set(Math.sin(angle + drift) * radial,
-        upper ? 2.6 : 1.3, Math.cos(angle + drift) * radial);
+        centerY, Math.cos(angle + drift) * radial);
       transform.quaternion.copy(camera.quaternion);
-      transform.scale.set(current.radius * .7, 2.8, 1);
+      const width = wisp ? .32 + variation * .13 : upper ? .68 + variation * .04 : .7;
+      transform.scale.set(current.radius * width, height, 1);
       transform.updateMatrix();
-      mesh.setMatrixAt(i, transform.matrix);
+      puff.matrix.copy(transform.matrix);
+      puff.depth = transform.position.dot(direction);
     }
+    // Transparent instances do not sort themselves. Back-to-front order
+    // prevents a concealed car from cutting a ghost shape in later puffs.
+    puffs.sort((a, b) => b.depth - a.depth || a.index - b.index);
+    for (let slot = 0; slot < count; slot++) {
+      mesh.setMatrixAt(slot, puffs[slot].matrix);
+      cells[slot * 2] = puffs[slot].index % 8;
+    }
+    geometry.attributes.smokeCell.needsUpdate = true;
     mesh.instanceMatrix.needsUpdate = true;
   }
-  mesh.onBeforeRender = (_renderer, _scene, camera) => faceCamera(camera);
-  return {mesh,
+  return {mesh, faceCamera,
     update(hazard, camera, texture = null) {
       current = hazard;
+      churn.value = hazard.age || 0;
       material.opacity = smokeVisualOpacity(hazard);
       mesh.visible = material.opacity > 0;
       if (texture && material.map !== texture) {
@@ -619,6 +649,6 @@ export function createSmokeCloud() {
       }
       faceCamera(camera);
     },
-    dispose() {geometry.dispose(); material.dispose();},
+    dispose() {mesh.dispose(); geometry.dispose(); material.dispose();},
   };
 }

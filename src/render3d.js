@@ -180,6 +180,8 @@ export function attachRenderer(host, app) {
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
   });scene.add(combatScene.group);
+  // Scene preparation precedes instanced-buffer uploads for main and rear views.
+  scene.onBeforeRender = (_renderer, _scene, viewCamera) => combatScene.prepareSmokeCamera(viewCamera);
   const fuelView=createFuelRunView(app.duel);scene.add(fuelView.group);
   let tanker=null,tankerReady=false,tankerFailed=false;
   function prepareTanker(){
