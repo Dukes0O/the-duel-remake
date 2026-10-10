@@ -3978,8 +3978,10 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-TRACK-SCRIPT]
-    status: building
+    status: merged
     claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    branch: claude/p4-grip
+    note: "Surfaces, tyres, HUD, setup choice and surface drawing built to CIRCUITS.md 3.4; pit stop tyre change stays with P4-PIT, per-racer tyres with P4-FIELD. See docs/changes/P4-GRIP.md."
     owns: [src/race-surfaces.js, tools/test-race-surfaces.mjs, docs/changes/P4-GRIP.md]
     hooks: [src/sim-driving.js, src/course.js, src/screen-hud.js, src/race-settings.js, src/race-settings-ui.js, src/world-surfaces.js]
     acceptance:

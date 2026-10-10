@@ -11,6 +11,8 @@
 // z = cos(heading). Heading grows when the road turns LEFT, and lateral
 // offsets are positive on the LEFT of the direction of travel.
 
+import { SURFACE_KINDS } from './race-surfaces.js';
+
 const DEG = Math.PI / 180;
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -107,7 +109,10 @@ export function resolvePieces(script, { id = 'script', defaults = {} } = {}) {
       if (!WALL_VALUES.includes(opts.walls)) throw new TrackScriptError(`${label(id, index, name)}: walls must be one of ${WALL_VALUES.join(', ')}.`);
       walls = opts.walls;
     }
-    if (opts.surface !== undefined) surface = String(opts.surface);
+    if (opts.surface !== undefined) {
+      if (!SURFACE_KINDS.includes(opts.surface)) throw new TrackScriptError(`${label(id, index, name)}: surface must be one of ${SURFACE_KINDS.join(', ')}.`);
+      surface = opts.surface;
+    }
     piece.width = width;
     piece.walls = walls;
     piece.surface = surface;
