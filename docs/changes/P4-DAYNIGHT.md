@@ -135,6 +135,19 @@ image review confirms the mirror now follows each look. The first compressed
 sheet and review request are under `docs/board/looks/p4-daynight/`. Frame cost,
 Claude's art verdict, lane/build and merge remain pending.
 
+## Independent source review
+
+The independent review of 13a094a6 cleared the runtime sampler, native city
+shader, resource lifetime, legacy restoration and read-only renderer hooks.
+It found that zero timer batches could produce a NaN pair ratio and falsely
+pass the frame budget. The new regression failed on the missing rejection.
+The shared scenario summary now requires positive p95 before any division;
+479 lighting acceptance checks pass. Existing sample counts, percentile recipe
+and the 10% limit are unchanged. CPU measures native main/rear-view render
+submission, GPU measures the main pipeline, and delivered frames measure RAF
+pacing, as in the established convoy check. Measured cost and art verdict are
+still pending.
+
 ## Removed
 
 No obsolete runtime path was replaced. Path-only lamps, reflector objects and

@@ -154,6 +154,15 @@ function installMeasurement(quality) {
     for(const query of run.pending)gl.deleteQuery(query);run.pending.length=0;};
 }
 
+export function summarizeFrameTiming(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.some(value => !Number.isFinite(value) || value < 0)) throw Error('Invalid timing value');
+  const p95 = sorted[Math.ceil(sorted.length * .95) - 1];
+  if (!(p95 > 0)) throw Error('Frame timings need a positive p95.');
+  return {samples: sorted.length, p50: sorted[Math.ceil(sorted.length * .5) - 1], p95};
+}
+
 async function measure(context, quality, look, pair) {
   await context.evaluate('window.__dayNightReview.setLook(' + JSON.stringify(look) + ')');
   await context.evaluate('(' + installMeasurement.toString() + ')(' + JSON.stringify(quality) + ')');
@@ -167,14 +176,9 @@ async function measure(context, quality, look, pair) {
       return {frames:r.frames,cpu:r.cpu,gpu:r.gpu,gpuSupported:r.gpuSupported,
         before:r.before,scales:[...r.scales],ratios:[...r.ratios]};
     })()`);
-    const summarize = values => {
-      if (!values.length) return null;
-      const sorted=[...values].sort((a,b)=>a-b);
-      if(sorted.some(x=>!Number.isFinite(x)||x<0))throw Error('Invalid timing value');
-      return {samples:sorted.length,p50:sorted[Math.ceil(sorted.length*.5)-1],p95:sorted[Math.ceil(sorted.length*.95)-1]};
-    };
-    const pacing={delivered:summarize(row.frames),cpu:summarize(row.cpu),gpu:summarize(row.gpu)};
-    if(row.scales.length!==1||row.ratios.length!==1||pacing.cpu.samples!==360||pacing.delivered.samples<359||
+
+    const pacing={delivered:summarizeFrameTiming(row.frames),cpu:summarizeFrameTiming(row.cpu),gpu:summarizeFrameTiming(row.gpu)};
+    if(row.scales.length!==1||row.ratios.length!==1||!pacing.cpu||!pacing.delivered||pacing.cpu.samples!==360||pacing.delivered.samples<359||
         row.gpuSupported&&(!pacing.gpu||pacing.gpu.samples<288))throw Error('Incomplete or changing-resolution frame sample');
     return {quality,look,pair,pacing,witness:row.before,scales:row.scales,ratios:row.ratios,gpuSupported:row.gpuSupported};
   } finally {await context.evaluate('window.__dayNightFrames.cleanup()');}

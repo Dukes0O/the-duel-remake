@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {summarizeFrameTiming} from './scenarios/p4-daynight.mjs';
 import * as THREE from 'three';
 import { sampleLightPath, lightPathLook } from '../src/light-path.js';
 import { resolveLightingSettings } from '../src/lighting-moods.js';
@@ -16,6 +17,14 @@ const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
   return value;
 };
+// A broken supported timer must never turn zero/zero into a passing NaN ratio.
+assert.throws(() => summarizeFrameTiming(Array(360).fill(0)), /positive p95/,
+  'all-zero timings cannot qualify as frame-cost evidence');checks++;
+assert.throws(() => summarizeFrameTiming([...Array(359).fill(0), 1]), /positive p95/,
+  'a zero p95 is invalid even when one timing sample is positive');checks++;
+equal(summarizeFrameTiming([1, 3, 2]), {samples: 3, p50: 2, p95: 3},
+  'valid frame timing keeps the established percentile recipe');
+
 const looks = ['day', 'golden', 'dusk', 'night'];
 const path = freeze({axis: 'race-progress', keyframes: looks.map((look, i) => ({at: i / 3, look}))});
 const sample = (distance, extra = {}) => sampleLightPath(path, {distance, raceLength: 3000, theme: 'coast', ...extra});
