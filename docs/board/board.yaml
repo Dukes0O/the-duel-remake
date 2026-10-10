@@ -3939,6 +3939,7 @@ tasks:
       - "Build docs/CIRCUITS.md section 5.1 from its script in src/circuits/panorama-ridge.js: widths, walls, crests, the Sunset light path over the race, landmarks, grandstands, pit buildings, the valley town. Event appended to COURSE with a stable id."
       - "Section 4 feel targets checked with the review tool; lap time and corner speeds in the change note. Full field races cleanly (section 3.2 targets on this track). Frame cost within the usual limit. Then Claude's finishing pass (P4-FINISH-PANORAMA) before release."
     claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
+    note: "Road layout built by Claude behind the panorama-ridge dev switch (src/circuits/panorama-ridge.js, 4.84 km, fitted to close; see docs/changes/P4-CIRCUIT-LAYOUTS.md). Codex still owes art, light path, landmarks and the full field; card stays open."
   - id: P4-GRIP
     title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
     owner: claude
@@ -4019,6 +4020,7 @@ tasks:
       - "Build docs/CIRCUITS.md section 5.2 from its script in src/circuits/harbour-lights.js: walls and catch fences everywhere, escape roads at Casino Corner and Lantern Hairpin, the old town, lanterns, neon, harbour, Lantern Tower, wet-look road (looks only). Night by default."
       - "Lantern Hairpin is driveable on the keyboard by the test driver without contact in at least 90% of laps on Medium. Full field targets on this track. Frame cost within the usual limit at night with 8 cars. Then P4-FINISH-HARBOUR."
     claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
+    note: "Road layout built by Claude behind the harbour-lights dev switch (src/circuits/harbour-lights.js, 3.19 km, fitted to close; Lantern Hairpin driven clean; needs a redraw in the finishing pass). Codex still owes art, neon, escape roads and the full field; card stays open."
   - id: P4-TREMBLANT
     title: "Tremblant Woods: the forest circuit"
     owner: codex
@@ -4032,6 +4034,7 @@ tasks:
     acceptance:
       - "Build docs/CIRCUITS.md section 5.3 from its script in src/circuits/tremblant-woods.js: autumn morning light, the ski lodge, lake and dock, the moving chairlift over Timber Straight with the second crest beneath it, ski runs through the trees. Full field targets on this track. Then P4-FINISH-TREMBLANT."
     claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
+    note: "Road layout built by Claude behind the tremblant-woods dev switch (src/circuits/tremblant-woods.js, 3.23 km, fitted to close; needs a redraw in the finishing pass). Codex still owes autumn light, lodge, lake, chairlift and the full field; card stays open."
   - id: P4-SNOW
     title: "The snow world"
     owner: codex
