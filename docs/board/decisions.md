@@ -1509,16 +1509,24 @@ Audio owns exactly the twenty cue IDs listed on P4-AUDIO. Its two historical
 audio-test hooks may exclude those additions only; old hashes, cue records and
 assertions stay exact. Listening groups are race signals; pit and road surfaces;
 mountain hazards; and crowd, wind and location beds. Event wiring waits for its
-owners released hooks.
+owners' released hooks.
 
 The common build-time reference recipe moves from Telemetry to Dossier; Telemetry
 will consume and extend it. The event-card entry lives in course-access-ui.js.
-Shared analysis must retain the review tools geometry and names. Reference
+Shared analysis must retain the review tool's geometry and names. Reference
 speeds come from an actual native driver lap. Driver-seat snapshots come from
 the live renderer.
 
-Claude must settle the fixed reference policy before that recipe is coded.
-The proposal is Stuttgart 959-S with no upgrades, seed 1989, Medium driver,
-one warm-up lap and the best of two timed laps per event. Until answered,
-Dossier continues pure analysis and tests. Renderer changes wait for Track
-Script, then Day/Night, then Dossier. Day/Night and Dossier are waiting on Claude.
+Claude confirmed the policy through Kyle on 10 October. Use Stuttgart 959-S
+without upgrades on Medium: one warm-up, then the best of two timed laps in an
+isolated native fixture. References match each event and route; legacy A/B/C
+use seeds 1989/42/17. Label the reference car beside comparisons with a different
+car. Per-class references can come later.
+
+Use three equal-distance sectors unless the circuit authors its boundaries.
+Authored signature and overtaking flags and engineer notes override generated
+data; generate only what is missing. Claude is writing the final field layout
+and policy into CIRCUITS section 7b. Use that layout once it lands.
+
+Renderer changes wait for Track Script, then Day/Night, then Dossier.
+Day/Night and Dossier remain waiting on that shared renderer dependency.
