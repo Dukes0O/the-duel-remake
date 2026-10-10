@@ -298,7 +298,8 @@ export function buildSeekerDamageReport(offRaces, onRaces) {
   const allowedOnAverage = off.averageArmorRemoved === null ? null : off.averageArmorRemoved * 1.3;
   return {
     scope: 'Matched Medium rank-13 wave-two races with native Armory purchases and legal inputs. Only seeker-rockets changes. One firing is one native volley activation, including misses, shields and interrupted volleys. Damage is actual armor removed by that volley, including remaining-armor clipping; pooled totals include player and CPU. Aimed boss rockets are excluded.',
-    damagePerRocket: ROCKET_RULES.damage, racesPerVariant: pairs.length,
+    damagePerRocket: {off: ROCKET_RULES.damage, on: ROCKET_RULES.seekerDamage},
+    racesPerVariant: pairs.length,
     settings: {policy: offRaces[0].policy, cpuDifficulty: offRaces[0].cpuDifficulty,
       arsenalRank: offRaces[0].arsenalRank, flagsOff: offRaces[0].flags, flagsOn: onRaces[0].flags},
     off, on, ratio: off.averageArmorRemoved > 0 ? on.averageArmorRemoved / off.averageArmorRemoved : null,

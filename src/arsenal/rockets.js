@@ -8,7 +8,7 @@ import {carFighterTargets, fighterObstacle, splashCarFighter} from '../crew-gear
 
 export const ROCKET_RULES = Object.freeze({
   count: 4, spacing: .12, bearings: [-1.5, -.5, .5, 1.5],
-  speed: 80, range: 120, damage: 10, blastRadius: 2,
+  speed: 80, range: 120, damage: 10, seekerDamage: 8, blastRadius: 2,
   seekerAngleDegrees: 20, seekerTurnDegrees: 35, decoyPullRadius: 25,
   cpuMinimum: 20, cpuMaximum: 100, cpuAngleDegrees: 3,
 });
@@ -95,16 +95,18 @@ function spawnRocket(duel, volley, slot) {
     ROCKET_RULES.bearings[slot] * Math.PI / 180;
   const dx = Math.sin(bearing), dz = Math.cos(bearing);
   const combat = duel.state.combat;
+  const seeking = seekerRocketsEnabled(duel);
   const shot = {id: ++combat.serial, kind: 'rocket-pod',
     ownerId: combatOwnerId(duel, owner), attackerId: targetIdentity(duel, owner),
     enemy: owner !== duel.state, level: volley.level, volleyId: volley.id,
+    damage: seeking ? ROCKET_RULES.seekerDamage : ROCKET_RULES.damage,
     x: at.x + dx * COMBAT_TUNING.projectileSpawnOffset,
     y: at.y,
     z: at.z + dz * COMBAT_TUNING.projectileSpawnOffset,
     vx: dx * ROCKET_RULES.speed + carry.x,
     vy: 0, vz: dz * ROCKET_RULES.speed + carry.z,
     travelled: 0, age: 0, launchedAt: volley.startedAt + slot * ROCKET_RULES.spacing};
-  if (seekerRocketsEnabled(duel)) {
+  if (seeking) {
     const target = seekerTarget(duel, owner);
     shot.seekerTargetId = target ? targetIdentity(duel, target) : null;
     shot.vx = dx * ROCKET_RULES.speed; shot.vz = dz * ROCKET_RULES.speed;
@@ -145,7 +147,7 @@ export function launchAimedRocket(duel, owner, aim, {launchedAt = duel.state.sta
   const dx = ax / distance, dz = az / distance;
   const shot = {id: ++combat.serial, kind: 'rocket-pod',
     ownerId: combatOwnerId(duel, owner), attackerId: targetIdentity(duel, owner),
-    enemy: owner !== duel.state, level,
+    enemy: owner !== duel.state, level, damage: ROCKET_RULES.damage,
     x: at.x + (origin ? 0 : dx * COMBAT_TUNING.projectileSpawnOffset), y: at.y,
     z: at.z + (origin ? 0 : dz * COMBAT_TUNING.projectileSpawnOffset),
     vx: dx * ROCKET_RULES.speed + carry.x,
@@ -209,7 +211,7 @@ function blast(duel, shot, at, damageCar, shielded) {
     const reach = Math.hypot(target.halfX, target.halfZ);
     if (Math.hypot(target.x - at.x, target.z - at.z) >
         ROCKET_RULES.blastRadius + reach + EPS) continue;
-    const removed = damageCar(duel, actor, ROCKET_RULES.damage, shot, at);
+    const removed = damageCar(duel, actor, shot.damage ?? ROCKET_RULES.damage, shot, at);
     if (removed > 0) duel.emit({combatHit: true, strength: removed / 60,
       enemy: shot.enemy, victim: actor === duel.state ? 'player' : 'rival',
       hitPosition: at});

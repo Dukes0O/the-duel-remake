@@ -7,9 +7,9 @@ import {startRocketVolley, stepRocketVolleys, stepRocketPod, launchAimedRocket,
   ROCKET_RULES} from '../src/arsenal/rockets.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 
-function fixture({armor=100, shield=false, distance=20, secondArmor=null}={}) {
+function fixture({armor=100, shield=false, distance=20, secondArmor=null, seeker=false}={}) {
   const duel=new Duel({seed:1989,featureFlags:createFeatureFlags({storage:null,
-    overrides:{arsenal:true,'seeker-rockets':false}})});
+    overrides:{arsenal:true,'seeker-rockets':seeker}})});
   duel.startCampaign({mode:'wasteland',discoveredGate:true,arsenalRank:13,
     opponentCount:secondArmor===null?1:2});
   const state=duel.state;
@@ -36,14 +36,39 @@ function fixture({armor=100, shield=false, distance=20, secondArmor=null}={}) {
 }
 
 test('one native volley is one firing, with its four actual armor hits',()=>{
-  assert.equal(ROCKET_RULES.damage,10,'latest authorized damage stays 10');
+  assert.equal(ROCKET_RULES.damage,10,'flag-off damage stays 10');
   const {duel,state,finish}=fixture();
   startRocketVolley(duel,state);
+  assert.equal(state.combat.projectiles[0].damage,10,'legacy shot records its launch damage');
   const measured=finish();
   assert.equal(state.rival.armor,60);
   assert.equal(measured.player.firings,1);
   assert.equal(measured.player.armorRemoved,40);
   assert.equal(measured.volleys[0].launchedRockets,4);
+});
+
+test('seeker Pods record authorized 8 at launch and keep it if the flag changes in flight',()=>{
+  const {duel,state,finish}=fixture({seeker:true});
+  startRocketVolley(duel,state);stepRocketVolleys(duel,.4);
+  assert.equal(state.combat.projectiles.length,4);
+  assert.ok(state.combat.projectiles.every(shot=>shot.damage===8));
+  const enabled=duel.featureFlags.enabled.bind(duel.featureFlags);
+  duel.featureFlags={...duel.featureFlags,enabled:key=>key==='seeker-rockets'?false:enabled(key)};
+  const measured=finish();
+  assert.equal(state.rival.armor,68);
+  assert.equal(measured.player.firings,1);
+  assert.equal(measured.player.armorRemoved,32);
+});
+
+test('aimed Gunn shots keep native 10 with seeker mode enabled',()=>{
+  const {duel,state,finish}=fixture({seeker:true});
+  const shot=launchAimedRocket(duel,state,{x:0,y:1,z:20});
+  assert.equal(shot.damage,10);
+  assert.equal(shot.seekerTargetId,undefined);
+  const measured=finish();
+  assert.equal(state.rival.armor,90);
+  assert.equal(measured.player.firings,0);
+  assert.equal(measured.player.armorRemoved,0);
 });
 
 test('native remaining armor clips measured damage, not the report',()=>{
@@ -111,6 +136,7 @@ test('paired report weights all firings and uses exact 1.3 comparison',()=>{
   const off=[race(1989,false,1,20),race(1990,false,9,0)];
   const on=[race(1989,true,1,0),race(1990,true,9,26)];
   const report=balance.buildSeekerDamageReport(off,on);
+  assert.deepEqual(report.damagePerRocket,{off:10,on:8});
   assert.equal(report.off.averageArmorRemoved,2);
   assert.equal(report.on.averageArmorRemoved,2.6);
   assert.equal(report.ratio,1.3);
