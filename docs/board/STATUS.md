@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-10T19:57:58.171Z
+Observed at: 2026-10-10T20:30:43.736Z
 
-Observation commit: 1046076a90623c26c76ffe623e9589dbf5717490
+Observation commit: 409ed04e38306893e882d8fc6646e4dc158e3fed
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1046076a90623c26c76ffe623e9589dbf5717490
+Integration HEAD: 409ed04e38306893e882d8fc6646e4dc158e3fed
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: 1046076a90623c26c76ffe623e9589dbf5717490
 
 Live build version: 20261010195525-87b479fc74c0
 
-Full tier: dirty; exact HEAD passed: no.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-10-10T19:54:25.043Z; tested commit: 1046076a90623c26c76ffe623e9589dbf5717490.
 
@@ -46,11 +46,13 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/qa-stale-collision | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-stale-collision |
+| codex/p4-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-art-src |
+| codex/p4-daynight | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-daynight |
+| codex/qa-stale-collision | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-stale-collision |
 | codex/tools/callback-diagnostics | 5 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 15 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 15 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 15 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 15 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -58,6 +60,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/p4-art-src | unknown | 2026-10-10T13:23:39-07:00 | 0 | last commit 2026-10-10T13:23:39-07:00 | docs/board/looks/p4-src/index.html, docs/changes/P4-ART-SRC.md, tools/art/catalog.json, tools/test-tanker-valve-source.mjs |
+| codex/p4-daynight | unknown | 2026-10-10T13:24:16-07:00 | 0 | last commit 2026-10-10T13:24:16-07:00 | docs/changes/P4-DAYNIGHT.md, src/atmosphere.js, src/light-path.js, src/scene-lighting.js, src/vehicles.js |
+| codex/qa-stale-collision | unknown | 2026-10-10T13:29:08-07:00 | 0 | last commit 2026-10-10T13:29:08-07:00 | docs/changes/QA-STALE-COLLISION.md, tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-ramming.mjs |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 5 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -72,9 +77,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 18,377,648 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 881,300 B | -54,199,272 B | 5,000,000 B |
+| Added bytes in last merge | 869,457 B | -11,843 B | 5,000,000 B |
 | All `public/` | 270,657,947 B | +0 B | unavailable |
-| Git objects | 375,525,376 B | +676,864 B | unavailable |
+| Git objects | 376,939,520 B | +1,414,144 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -83,7 +88,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1046076a90623c26c76ffe623e9589dbf5717490
 - Local main: missing
-- Local integration/wasteland: 1046076a90623c26c76ffe623e9589dbf5717490
+- Local integration/wasteland: 409ed04e38306893e882d8fc6646e4dc158e3fed
 
 Local rollback build (dist-previous): 20261010012052-a7177c289a56. Manifest presence does not verify the full rollback build.
 

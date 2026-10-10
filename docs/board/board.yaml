@@ -3934,6 +3934,8 @@ tasks:
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-art-src
     owns: [docs/board/looks/p4-src/, tools/art/catalog.json, docs/changes/P4-ART-SRC.md]
+    hooks: [tools/test-tanker-valve-source.mjs]
+    selection_2026_10_10: "Kyle selected 1, 3, 5, 8, 9 and 11. Donors only; tower assembly, gallery adaptation and yeti animation inspection remain explicit. Selected-source lane/build pending."
     acceptance:
       - "One sourcing sheet with two or three CC0 or CC-BY candidates for every group in docs/CIRCUITS.md section 8, licences checked and recorded. Send to Kyle with Claude; set waiting_on: kyle. No building before Kyle picks."
 
@@ -3976,7 +3978,8 @@ tasks:
     branch: codex/p4-daynight
     owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md, tools/scenarios/p4-daynight.mjs, tools/art/p4-daynight-sheet.py, docs/board/looks/p4-daynight/]
     hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
-    sequencing: "Edits render3d.js before P4-SNOW."
+    sequencing: "Wait for Claude P4-TRACK-SCRIPT to merge before renderer hooks; then edit render3d.js before P4-SNOW."
+    note: "Retained draft 4b74d256: pure light paths and scene/sky/car owners pass focused checks. Renderer untouched. Sync, native browser and frame checks, art verdict and lane/build remain before merge."
     acceptance:
       - "Build docs/CIRCUITS.md section 3.6: light paths by distance or race progress, blended sun, sky, fog, ambient and stars; headlights and tail lights on below a light level (only the player car casts a real light); cat's eyes and boards glowing in headlights; moon, town lights and lit windows at night."
       - "Presentation only: race state unchanged. Existing courses look identical unless a light path is set. Frame cost within the usual limit with 8 cars at night. One sheet to Claude (day, golden, dusk, night on one test circuit), at most three rounds."
@@ -4444,7 +4447,9 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
+    status: merged
+    source_commit: 6bc43fa7008b5cb449e0c7678efd4277b99b573c
+    note: "Both native browser checks pass in High and Performance with zero warnings/issues. Reviewed geometry and ground-height fixture corrections only; no runtime/save change. Lane 371/371 in 1352.32 s and build 1.00 s pass; source review clear."
     claimed_by: codex-qa-stale-collision
     branch: codex/qa-stale-collision
     owns: [tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-ramming.mjs, docs/changes/QA-STALE-COLLISION.md]
