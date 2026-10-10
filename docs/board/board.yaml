@@ -3868,11 +3868,12 @@ tasks:
 
   - id: P4-TRACK-SCRIPT
     title: "Track scripts: authored circuits with width, walls, crests and a racing line"
-    owner: codex
+    owner: claude
     lane: RACE
     size: L
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Claude (Sonnet agent), 10 October 2026"
     owns: [src/track-script.js, src/circuits/index.js, tools/track-script.mjs, tools/test-track-script.mjs, docs/changes/P4-TRACK-SCRIPT.md]
     hooks: [src/course.js, src/config.js, src/sim-driving.js, src/sim-contacts.js, src/collision.js, src/checkpoint-gates.js, src/world-surfaces.js, src/road-furniture.js, src/route-map.js, src/render3d.js]
     sequencing: "First editor of course.js in phase 4. Other cards wait for its merge before editing course.js."
@@ -3899,11 +3900,12 @@ tasks:
 
   - id: P4-REVIEW-TOOL
     title: "Claude's track review tool: map, named-point frames, speed trace"
-    owner: codex
+    owner: claude
     lane: TOOL
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: "Claude (Sonnet agent), 10 October 2026"
     owns: [tools/track-review.mjs, tools/scenarios/track-review.mjs, tools/test-track-review.mjs, docs/changes/P4-REVIEW-TOOL.md]
     acceptance:
       - "Build the review tool in docs/CIRCUITS.md section 11, step 2: for a course id, a top-down map with corner names, 16 chase-camera frames at named points (grid, signature points, every slow corner braking point and apex, every crest, landmark views), a speed trace of a test-driver lap with corner speeds and lap time, and a first-corner pack frame. One command, private port, memory-only saves, output under .evidence/."
