@@ -1,8 +1,34 @@
 # POLISH-SEEKERS
 
-Status: implementation reviewed; lane gate needs a fresh run before merge.
-Waiting for Claude's
-Rocket Pods hit-rate target or acceptance of the existing balance report.
+Status: paired damage metric implemented and reviewed; final post-Height
+report and fresh gates pending.
+
+## 10 October balance decision
+
+A firing is one native Rocket Pods volley activation, not each of its four
+rockets. Count every firing, including misses, shields and interrupted volleys.
+Sum actual armor removed, including clipping to remaining armor, only from
+that volley's native blast events. The native blast emits removed/60 as its
+hit strength and shares the exact hit-position object with its rocket-hit
+cue; the report matches those events without changing simulation state.
+
+Run the same thirty Medium rank-13 wave-two seeds off/on, changing only
+seeker-rockets. Publish every pair, pooled armor/firing and role totals. The
+pooled on value must be <=1.3 times off. The initial authorized damage is 10.
+The first pre-Height matched run failed: off 80 armor / 447 firings,
+on 140 / 471; ratio 1.6608280255. Both variants completed 30/30 races,
+with zero unattributed damage. Player totals were 70/415 off and 100/416
+on; CPU totals were 10/32 off and 40/55 on. This is provisional until
+Height is included.
+
+Kyle then authorized 8 if the final post-Height run at 10 also fails.
+Director approved the conditional design before code: store damage on each
+shot at launch, 8 for seeker-enabled Rocket Pods and legacy 10 off. Gunn's
+aimed shots stay 10. Publish both nominal settings with actual damage and
+add focused on/off/Gunn assertions. No other tuning, sample exclusions,
+metric clipping or threshold change is authorized. Current source remains
+at 10 pending that final run.
+
 
 ## Design and implementation
 
@@ -15,6 +41,11 @@ Shield remains the counter. Scene-only brackets track live locks. The new
 weapon.rockets.lock cue is a short two-tone synth.
 
 ## Checks
+
+- New actual-damage counter native tests pass 10/10: four-shot denominator,
+  clipped armor, misses/shields/interruption, splash, unrelated damage,
+  player/CPU separation, Gunn exclusion, exact ratio and matched metadata.
+  Existing balance tests pass 34/34. Director reviewed the metric source.
 
 - Acceptance tests started red; final focused tests 17/17. Cover nearest/cone,
   walls/scrap/smoke, permanent loss, 30/60/144 Hz turn cap, 3D speed, moving
