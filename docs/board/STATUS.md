@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-10T15:26:59.370Z
+Observed at: 2026-10-10T17:00:19.041Z
 
-Observation commit: 1f5da9c8bb2b7154b7a7a1edbac6b9a43a320874
+Observation commit: 5eaa9181e330d9071f4e778a3ea837b2c48f4854
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1f5da9c8bb2b7154b7a7a1edbac6b9a43a320874
+Integration HEAD: 5eaa9181e330d9071f4e778a3ea837b2c48f4854
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,12 +16,13 @@ Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-10T04:31:09.234Z; tested commit: 3af7f15c2a1774c7b34b14deb1d6c5cb7b0abfcb.
+Last recorded full run: 2026-10-10T16:08:16.721Z; tested commit: ac01cbe6c694619d1ec6077ca2a0278553310f1e.
 
 ## Feature switches
 
 | Switch | State |
 | --- | --- |
+| seeker-rockets | dev |
 | convoy-raid | on |
 | tollkeeper | on |
 | blackiron | on |
@@ -46,9 +47,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/polish-arena | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-arena |
-| codex/polish-flame | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-flame |
-| codex/polish-seekers | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-seekers |
-| codex/polish-smoke | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-smoke |
+| codex/polish-flame | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-flame |
+| codex/release-2026-10-10 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/release-polish |
 | codex/tools/callback-diagnostics | 5 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 15 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 15 | unknown | true | false | unknown |
@@ -60,11 +60,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/polish-arena | POLISH-ARENA | 2026-10-10T08:24:24-07:00 | 0 | last commit 2026-10-10T08:24:24-07:00 | docs/board/looks/polish-arena/round-1-review.md, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/board/looks/polish-arena/round-2.jpg, docs/changes/POLISH-ARENA.md |
-| codex/polish-flame | POLISH-FLAME | 2026-10-09T21:19:48-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/polish-flame/round-1-review.md, docs/board/looks/polish-flame/round-1.jpg, docs/changes/POLISH-FLAME.md, docs/changes/POLISH-SMOKE.md, public/assets/audio/CREDITS.md |
-| codex/polish-seekers | POLISH-SEEKERS | 2026-10-10T08:17:05-07:00 | 0 | last commit 2026-10-10T08:17:05-07:00 | docs/changes/POLISH-SEEKERS.md, src/arsenal/rockets.js, src/arsenal/targeting.js, src/audio.js, src/combat-scene.js |
-| codex/polish-smoke | POLISH-SMOKE | 2026-10-09T21:15:16-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/smoke/round-1-review.md, docs/board/looks/smoke/round-1.jpg, docs/changes/POLISH-SMOKE.md, src/combat-effects.js, src/combat-scene.js |
-| codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 5 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
+| codex/polish-arena | unknown | 2026-10-10T09:18:58-07:00 | 0 | last commit 2026-10-10T09:18:58-07:00 | docs/board/looks/polish-arena/round-1-review.md, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/board/looks/polish-arena/round-2.jpg, docs/changes/POLISH-ARENA.md |
+| codex/polish-flame | unknown | 2026-10-10T09:59:41-07:00 | 0 | last commit 2026-10-10T09:59:41-07:00 | docs/board/looks/polish-flame/round-1-review.md, docs/board/looks/polish-flame/round-1.jpg, docs/changes/POLISH-FLAME.md, public/assets/audio/CREDITS.md, public/assets/audio/credits.html |
+| codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 5 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
 
@@ -77,10 +75,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 23,283,392 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
-| Review `looks/` | 16,215,058 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 690,894 B | +302,360 B | 5,000,000 B |
-| All `public/` | 265,576,698 B | +0 B | unavailable |
-| Git objects | 370,649,088 B | +10,417,152 B | unavailable |
+| Review `looks/` | 17,462,663 B | +457,129 B | 20,000,000 B |
+| Added bytes in last merge | 1,776,367 B | +0 B | 5,000,000 B |
+| All `public/` | 265,632,683 B | +55,985 B | unavailable |
+| Git objects | 372,886,528 B | +490,496 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -89,7 +87,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: e4b82b0bfaa5bdc6a587b42f842c33ac3458792d
 - Local main: missing
-- Local integration/wasteland: 1f5da9c8bb2b7154b7a7a1edbac6b9a43a320874
+- Local integration/wasteland: 5eaa9181e330d9071f4e778a3ea837b2c48f4854
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

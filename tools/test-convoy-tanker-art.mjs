@@ -474,19 +474,25 @@ check('distant native atlas merge preserves near hierarchy, source geometry, lam
   assert.equal(farLamps.length,sourceLamps.length,'every native warning post has a distant copy');
   for(const source of sourceLamps){const copy=farLamps.find(mesh=>mesh.name===source.name);
     assert.equal(copy.geometry,source.geometry,'warning copies reuse native geometry');
-    assert.equal(copy.material,source.material,'both views read the same native warning material');}
+    assert.notEqual(copy.material,source.material,'approved distant warning material is independent');
+    assert.equal(copy.material.map,source.material.map,'both warning views keep the native atlas');
+    assert.equal(copy.material.toneMapped,false,'distant warning keeps its approved display brightness');
+    for(const key of ['roughness','metalness'])assert.equal(copy.material[key],source.material[key],'distant warning preserves native surface properties');
+    assert.equal(copy.material.color.getHex(),source.material.color.getHex(),'distant warning preserves native base color');}
   for(const [health,lit] of [[[0,0,0],true],[[75,75,75],false]]){
     result.setValveHealth(Object.freeze(health));
-    assert.ok(farLamps.every(mesh=>lit?mesh.material.emissiveIntensity>0:mesh.material.emissiveIntensity===0),
-      'distant warning lamps follow native valve break and recovery');
+    for(const [meshes,intensity] of [[sourceLamps,1.2],[farLamps,4.5]])
+      assert.ok(meshes.every(mesh=>mesh.material.emissiveIntensity===(lit?intensity:0)&&mesh.material.emissive.getHex()===(lit?0xff8c00:0)),
+        'both warning views follow exact valve break and recovery brightness and color');
   }
   result.setLampSignal(Object.freeze({kind:'tell',untilSec:2}),0);
-  assert.ok(farLamps.every(mesh=>mesh.material.emissive.getHex()===0xffe8b5&&mesh.material.emissiveIntensity===1.2),
-    'far copies retain the Tollkeeper bright tell flash');
+  for(const [meshes,intensity] of [[sourceLamps,1.2],[farLamps,4.5]])
+    assert.ok(meshes.every(mesh=>mesh.material.emissive.getHex()===0xffe8b5&&mesh.material.emissiveIntensity===intensity),
+      'both views retain the Tollkeeper tell color with approved near and distant brightness');
   result.setLampSignal(Object.freeze({kind:'tell',untilSec:2}),.125);
-  assert.ok(farLamps.every(mesh=>mesh.material.emissiveIntensity===0),'far tell flashes off on the native beat');
+  assert.ok([...sourceLamps,...farLamps].every(mesh=>mesh.material.emissiveIntensity===0&&mesh.material.emissive.getHex()===0),'both tell views flash off on the native beat');
   result.setLampSignal(null,2);
-  assert.ok(farLamps.every(mesh=>mesh.material.emissiveIntensity===0),'expired tell returns to recovered valve state');
+  assert.ok([...sourceLamps,...farLamps].every(mesh=>mesh.material.emissiveIntensity===0&&mesh.material.emissive.getHex()===0),'expired tell returns both views to recovered valve state');
   const resources=watchResources(result.group);
   result.dispose();result.dispose();
   assert.ok([...resources.values()].every(count=>count===1),'native, cloned and new merged resources retire exactly once');
@@ -499,17 +505,20 @@ check('real loaded model lamps follow every valve combination and recovery witho
   await result.ready;assert.ok(meshList(result.group).length,'actual native art is attached');
   const snapshot=worldSnapshot(result.group);
   assert.ok(lampValues(result.group,data.manifest).every(value=>value===0),'healthy initial valves leave lamps off');
-  const lampMeshes=new Set(data.manifest.parts.filter(row=>row.role==='warning-lamp').flatMap(row=>meshList(result.group.getObjectByName(row.node))));
-  // Far lamps share exactly these native materials; both views are warning
-  // presentation, so the unchanged non-warning assertion excludes both copies.
-  const lampMaterials=new Set([...lampMeshes].flatMap(mesh=>Array.isArray(mesh.material)?mesh.material:[mesh.material]));
-  for(const mesh of meshList(result.group))if((Array.isArray(mesh.material)?mesh.material:[mesh.material]).some(mat=>lampMaterials.has(mat)))lampMeshes.add(mesh);
+  const lampNames=data.manifest.parts.filter(row=>row.role==='warning-lamp').map(row=>row.node);
+  const lampMeshes=new Set(meshList(result.group).filter(mesh=>lampNames.includes(mesh.name)));
+  for(const name of lampNames)assert.equal([...lampMeshes].filter(mesh=>mesh.name===name).length,2,'each native warning has exactly one near and one distant copy');
+  const nearLamps=meshList(loaded.gltf.scene).filter(mesh=>lampMeshes.has(mesh));
+  const farLamps=meshList(result.group.getObjectByName('convoy-tanker-distant')).filter(mesh=>lampMeshes.has(mesh));
   const otherMaterials=()=>meshList(result.group).filter(mesh=>!lampMeshes.has(mesh)).flatMap(mesh=>
     (Array.isArray(mesh.material)?mesh.material:[mesh.material]).map(mat=>({color:mat.color.getHex(),emissive:mat.emissive.getHex(),intensity:mat.emissiveIntensity,roughness:mat.roughness})));
   const untouchedMaterials=otherMaterials();
   for(let bits=0;bits<8;bits++){
     const health=Object.freeze([0,1,2].map(index=>bits&(1<<index)?0:150));result.setValveHealth(health);
     const values=lampValues(result.group,data.manifest);assert.ok(values.every(value=>bits===7?value>0:value===0),'warning lamps light only after all three real valves break');
+    for(const [meshes,intensity] of [[nearLamps,1.2],[farLamps,4.5]])
+      assert.ok(meshes.every(mesh=>mesh.material.emissiveIntensity===(bits===7?intensity:0)),
+        'every valve combination keeps exact approved near and distant brightness');
     assert.deepEqual(worldSnapshot(result.group),snapshot,'presentation cannot articulate, open a hatch or move source geometry');
     assert.deepEqual(otherMaterials(),untouchedMaterials,'valve presentation lights only the warning lamp materials');
     assert.deepEqual(health,[0,1,2].map(index=>bits&(1<<index)?0:150),'caller valve health remains read-only');

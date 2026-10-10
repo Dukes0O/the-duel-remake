@@ -32,7 +32,10 @@ quality/version, P95 16.8 -> 16.8 ms in both qualities; mean 16.667 ms in both.
 Both satisfy the unchanged +10% frame limit. Camera distance is exactly
 89.16794 m for all four tanker captures, with two lit far lamps. Native draw
 calls: High 488 -> 488; Performance 299 -> 312.
-Final lane gate and build follow the Flame integration merge and a fresh sync.
+Final clean Flame integration sync c911a420: lane 369/369 (618.11 s) and build
+passed. Director reviewed the older native tanker fixture correction: distinct
+far warning material and exact near 1.2 / far 4.5 brightness; geometry, all valve
+states, tell timing, untouched surfaces and disposal remain checked (62/62).
 
 Salt native asset: 232,100 triangles, 172 draws, 28,308,656 bytes. Raw captures,
 manifest and checks are under integration .evidence/2026-10-10/POLISH-ARENA/.

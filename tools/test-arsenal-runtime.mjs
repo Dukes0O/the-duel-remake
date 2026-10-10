@@ -405,12 +405,18 @@ for (const kind of ['oil', 'smoke']) {
     const duel = race(); duel.state.raids = null;
     let disposedView = false;
     const view = createCombatScene(undefined, {loadFighterAsset: () => Promise.reject(Error('inactive fighter asset boundary'))});
+    const camera = new THREE.PerspectiveCamera();
+    const cameraTarget = point(duel, duel.state);
+    camera.position.set(cameraTarget.x, cameraTarget.y + 3, cameraTarget.z + 15);
+    camera.lookAt(cameraTarget.x, cameraTarget.y + 2, cameraTarget.z);
+    // The production scene prepares camera-facing instances before rendering.
+    const updateView = () => {view.update(duel); view.prepareSmokeCamera(camera);};
     try {
-      view.update(duel); const baseline = new Set(visibleMeshes(view.group));
+      updateView(); const baseline = new Set(visibleMeshes(view.group));
       const at = point(duel, duel.state), radius = kind === 'oil' ? 3.5 : 6;
       addHazard(duel, {kind, shape: 'circle', ...at, radius, lifetime: kind === 'oil' ? 6 : 5, owner: duel.state});
       const before = JSON.stringify(duel.state), hazardBefore = {...hazardsFor(duel)[0]};
-      view.update(duel);
+      updateView();
       const meshes = visibleMeshes(view.group).filter(mesh => !baseline.has(mesh));
       ok(meshes.length > 0, 'actual native ' + kind + ' hazard exposes nonempty visible geometry');
       const bounds = new THREE.Box3(); for (const mesh of meshes) bounds.expandByObject(mesh);
@@ -424,7 +430,7 @@ for (const kind of ['oil', 'smoke']) {
       for (let i = 0; i < 30; i++) {
         clearHazards(duel);
         for (let j = 0; j < 30; j++) addHazard(duel, {kind, shape: 'circle', x: at.x + j * 10, z: at.z, radius, lifetime: 6});
-        view.update(duel);
+        updateView();
       }
       eq(hazardsFor(duel).length, 24, 'actual visible hazard fixture reaches the shared bounded pool');
       eq(view.group.children.length, count, 'updates never append unbounded native scene objects');

@@ -38,7 +38,6 @@ the other three round-1 differences were too subtle. No label or rule changes.
   Means 16.67 ms. Native draw calls 599 -> 612 High, 332 -> 332 Performance.
 - Director independently reviewed source and viewed sheet on 9 October: clear;
   approved exact asset SHA/triangle pins for the shown visual difference.
-  Claude retains final art approval. No second round before Claude feedback.
 - Salt GLB SHA256: 7520ed6b33959af8bc1c97a76275704bfe72caea06be24c093e27018430ded92.
   Mesh draws stay 172; triangles 184,340 -> 200,420. GLB grows 1,746,780 bytes
   for the two approved donor scrap stacks and regenerated salt atlas.
@@ -50,8 +49,6 @@ the other three round-1 differences were too subtle. No label or rule changes.
 - Lane tier rerun: 364 passed, zero failed (824.16 s); npm run build passed.
   Focused repaired DOM-double suite: 99/99. Build and gate logs are in evidence.
 - Sheet: docs/board/looks/polish-arena/round-1.jpg (443,390 bytes).
-  Retained recipe: tools/art/polish-arena-sheet.py; browser recipe:
-  tools/scenarios/polish-arena.mjs (ARENA_POLISH_FRAMES=1 for quiet sampling).
   Raw files live under integration .evidence/2026-10-09/POLISH-ARENA/.
 
 ## Round 2 verification
@@ -84,7 +81,7 @@ the other three round-1 differences were too subtle. No label or rule changes.
   unchanged +10% frame limit passes. Native camera exactly 89.16794 m for both
   versions/qualities, with two lit far lamps; zero warnings/errors.
   High calls 488 -> 488; Performance 299 -> 312. Final private baseline removed.
-  Final lane/build waits for Flame to merge and then a fresh integration sync.
+  Final c911a420 sync: lane 369/369 passed in 618.11 s; production build passed.
 - Recipes: tools/scenarios/polish-arena.mjs and tools/art/polish-arena-sheet.py.
   Sheet: docs/board/looks/polish-arena/round-2.jpg. Raw review evidence:
   integration .evidence/2026-10-10/POLISH-ARENA/.
@@ -96,6 +93,13 @@ the other three round-1 differences were too subtle. No label or rule changes.
   43,745 unchanged grounded sweeps and 21 native car crossings.
 - Merge order remains Smoke, Flame, Arena. Final Arena gate/build runs only
   after the Flame merge and latest integration sync; no release work in this lane.
+- Final c911a420 sync is clean; approved round-2 runtime/art remains unchanged.
+  First fresh lane stopped at 188 pass / 1 fail: the older native tanker fixture
+  still required shared warning materials and far intensity 1.2. Director approved
+  its hook and exact distinct-material / near 1.2 / far 4.5 expectations. Native
+  geometry/atlas, all eight valve states, tell timing, other surfaces and disposal
+  retain coverage; no runtime or tolerance change. Focused native checks: 62/62.
+  Fresh lane: 369 passed, 0 failed/unrun (618.11 s); npm run build passed.
 
 ## Removed
 Replace the current Salt GLB in place. No duplicate runtime asset or old label path.
