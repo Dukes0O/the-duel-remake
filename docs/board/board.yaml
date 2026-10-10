@@ -3872,8 +3872,10 @@ tasks:
     lane: RACE
     size: L
     needs: []
-    status: building
+    status: merged
     claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    branch: claude/p4-track-script
+    note: "Built to CIRCUITS.md 3.1 with a pilot circuit in the tests; lane 308/308 and build pass, existing road samples and replay fingerprints unchanged. Finding: the section 5 drafts do not close as written (see docs/changes/P4-TRACK-SCRIPT.md)."
     owns: [src/track-script.js, src/circuits/index.js, tools/track-script.mjs, tools/test-track-script.mjs, docs/changes/P4-TRACK-SCRIPT.md]
     hooks: [src/course.js, src/config.js, src/sim-driving.js, src/sim-contacts.js, src/collision.js, src/checkpoint-gates.js, src/world-surfaces.js, src/road-furniture.js, src/route-map.js, src/render3d.js]
     sequencing: "First editor of course.js in phase 4. Other cards wait for its merge before editing course.js."
