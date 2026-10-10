@@ -1,9 +1,14 @@
 // Native FIELD/audio functional QA. Private memory-only browser; no timing or
 // listening verdict. Keep simulation, lap count and result creation untouched.
-import {writeFile} from 'node:fs/promises';
+import {appendFile, open, readFile, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {ffmpeg} from '../audio/codec.mjs';
+import {measureLoudness, repetition} from '../audio/measurements.mjs';
+import {detectOnset, rms} from '../audio-analysis.mjs';
+import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
+  from '../audio/capture-witness.mjs';
 
-async function install() {
+async function install(recorder) {
   const app = window.__qaApp, audio = app.audio;
   if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value || !window.__qaMemoryBackupStore)
     throw Error('P4 audio requires isolated memory-only saves.');
@@ -13,7 +18,7 @@ async function install() {
   await Promise.all([audio._samplesPromise, audio._ambiencePromise, audio._cueBuffersPromise]);
   const ids = ['race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final', 'race.finish.flag'];
   const report = {native: [], cues: [], decoded: [], lifecycle: [], steps: 0, phase: 'race',
-    memoryOnly: true, syntheticResults: false, simulationEdits: false, listeningApproved: false};
+    frames: [], stages: [], interfaceActivity: [], memoryOnly: true, syntheticResults: false, simulationEdits: false, listeningApproved: false};
   const demand = (yes, message) => { if (!yes) throw Error(message); };
   for (const id of ids) {
     const buffer = audio.cueBuffers[id];
@@ -39,7 +44,8 @@ async function install() {
     if (ids.includes(observingCue)) {
       const row = {id: observingCue, phase: report.phase, started: false, ended: false, stops: []};
       const start = source.start.bind(source), stop = source.stop.bind(source);
-      source.start = (...values) => { row.started = true; row.buffer = source.buffer; return start(...values); };
+      source.start = (...values) => { row.started = true; row.buffer = source.buffer;
+        row.audioStartSec = values[0] ?? this.currentTime; return start(...values); };
       source.stop = (...values) => { row.stops.push(values[0] ?? this.currentTime); return stop(...values); };
       source.addEventListener('ended', () => { row.ended = true; });
       sources.push(row);
@@ -48,16 +54,21 @@ async function install() {
   };
   audio._playCue = function(id, ...args) {
     const previous = observingCue; observingCue = id;
+    const audioTimeSec = this.context.currentTime;
     let voice;
     try { voice = original.play.call(this, id, ...args); } finally { observingCue = previous; }
+    if (ids.includes(id) || id.startsWith('interface.')) report.interfaceActivity.push({id, phase: report.phase,
+      audioTimeSec, until: voice?.until ?? audioTimeSec, started: !!voice});
     if (ids.includes(id) || ['interface.countdown', 'interface.go', 'interface.win', 'interface.lose'].includes(id))
       report.cues.push({id, phase: report.phase, started: !!voice});
     return voice;
   };
   audio.event = function(ev, state, course) {
+    if (ev.stageLoaded != null) report.stages.push({phase: report.phase, audioTimeSec: this.context.currentTime, stage: ev.stageLoaded});
     const kind = ev.startLight ? 'light' : ev.go && ev.lightsOut ? 'go' : ev.positionGain ? 'gain' :
       ev.finalLap ? 'final' : ev.stageResult?.grandPrix && ev.stageResult.completed ? 'finish' : null;
     const before = kind ? JSON.stringify(state) : null;
+    const audioTimeSec = this.context.currentTime;
     const result = original.event.call(this, ev, state, course);
     if (kind) {
       demand(JSON.stringify(state) === before, 'Audio changed native race state: ' + kind);
@@ -66,7 +77,7 @@ async function install() {
       original.event.call(this, {...ev}, state, course);
       demand(report.cues.length === count, 'Duplicate audio delivery: ' + kind);
       demand(JSON.stringify(state) === before, 'Repeated audio changed native race state');
-      report.native.push({kind, phase: report.phase, light: ev.startLight,
+      report.native.push({kind, phase: report.phase, light: ev.startLight, audioTimeSec,
         at: state.stageTimeSec, position: state.field.position, laps: state.completedLaps});
       lastEvents[kind] = ev;
     }
@@ -138,8 +149,199 @@ async function install() {
       return report;
     },
   };
-  start();
+  const frame = app.onFrame;
+  app.onFrame = function(state, dt) {
+    frame?.(state, dt);
+    if (report.phase === 'race') report.frames.push({audioTimeSec: audio.context.currentTime,
+      raceTime: state.stageTimeSec, revs: state.revs, speedMph: state.speedMph,
+      throttle: state.input.throttle, status: state.status, laps: state.completedLaps});
+  };
+  window.__p4Capture = await recorder.create(audio, recorder);
   return {decoded: report.decoded.length, context: audio.context.state};
+}
+
+// Each segment uses the established recorder and its independent input witness.
+// Overlapping meters see one absolute native clock; no wall-time splicing.
+async function nativeRecorder(audio, helpers) {
+  const ctx = audio.context, rate = ctx.sampleRate;
+  const reference = helpers.createWitness(rate);
+  const witnessBuffer = ctx.createBuffer(1, reference.length, rate);
+  witnessBuffer.copyToChannel(reference, 0);
+  const url = URL.createObjectURL(new Blob([helpers.worklet], {type: 'text/javascript'}));
+  try { await ctx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+  const silent = ctx.createGain(); silent.gain.value = 0; silent.connect(ctx.destination);
+  const buses = {mix: audio.output, engine: audio.buses.engine, interface: audio.buses.interface};
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const demand = (yes, message) => { if (!yes) throw Error(message); };
+  const segments = [];
+  let active = null;
+  async function settle(test, label) {
+    const end = performance.now() + 5000;
+    while (!test()) { if (performance.now() > end) throw Error(label); await wait(16); }
+  }
+  async function segment() {
+    const source = ctx.createBufferSource(); source.buffer = witnessBuffer;
+    const tracks = {};
+    for (const [name, bus] of Object.entries(buses)) {
+      const node = new AudioWorkletNode(ctx, 'arsenal-native-meter',
+        {numberOfInputs: 2, numberOfOutputs: 1, outputChannelCount: [2]});
+      const chunks = [];
+      node.port.onmessage = event => chunks.push(event.data);
+      node.connect(silent); bus.connect(node); source.connect(node, 0, 1);
+      tracks[name] = {node, bus, chunks};
+    }
+    source.start();
+    const row = {index: segments.length, tracks, source, startFrame: null}; segments.push(row);
+    await settle(() => Object.values(tracks).every(track => {
+      const last = track.chunks.slice(-3);
+      return last.length === 3 && last.every((chunk, i) => chunk.witness[0] > 0 &&
+        (!i || chunk.frame === last[i - 1].frame + 2048));
+    }), 'Recorder did not establish three real consecutive blocks');
+    row.startFrame = Math.min(...Object.values(tracks).map(track => track.chunks.at(-1).frame));
+    return row;
+  }
+  function disconnect(row) {
+    if (row.closed) return;
+    row.closed = true;
+    row.source.stop(); row.source.disconnect();
+    for (const track of Object.values(row.tracks)) {
+      track.bus.disconnect(track.node); track.node.disconnect(); track.node.port.close();
+    }
+  }
+  function encode(values) {
+    const bytes = new Uint8Array(values.buffer, values.byteOffset, values.byteLength);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
+    return btoa(binary);
+  }
+  async function close(row, endFrame) {
+    demand(Number.isInteger(endFrame) && endFrame > row.startFrame, 'Invalid native capture interval');
+    await settle(() => Object.values(row.tracks).every(track =>
+      track.chunks.at(-1)?.frame + 2048 >= endFrame), 'Recorder did not cover its final native frame');
+    disconnect(row);
+    const output = {};
+    for (const [name, track] of Object.entries(row.tracks)) {
+      const chunks = track.chunks.filter(chunk => chunk.frame < endFrame && chunk.frame + 2048 > row.startFrame);
+      const pcm = new Float32Array((endFrame - row.startFrame) * 2);
+      const witness = new Float32Array(endFrame - row.startFrame);
+      let covered = row.startFrame, emptyInput = 0, callbacks = 0;
+      for (const chunk of chunks) {
+        demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
+        const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
+        demand(from === covered, 'Missing or duplicated native sample frames: ' + name);
+        const offset = from - chunk.frame, count = to - from, target = from - row.startFrame;
+        pcm.set(chunk.pcm.subarray(offset * 2, (offset + count) * 2), target * 2);
+        witness.set(chunk.witness.subarray(offset, offset + count), target);
+        for (const header of chunk.callbacks.filter(item => item.frame < to && item.frame + 128 > from)) {
+          callbacks++;
+          demand(header.witnessFrames === 128, 'Short witness input: ' + name);
+          demand([0, 128].includes(header.leftFrames) && [0, 128].includes(header.rightFrames), 'Short signal input: ' + name);
+          if (!header.leftFrames) emptyInput++;
+        }
+        covered = to;
+      }
+      demand(covered === endFrame, 'Incomplete native interval: ' + name);
+      const identity = helpers.inspectWitness(witness, reference);
+      demand(identity.complete, 'Native sample identity failed: ' + name + ' ' + JSON.stringify(identity));
+      demand(name === 'interface' || emptyInput === 0, 'Connected mix/engine input missing: ' + name);
+      for (const sample of pcm) demand(Number.isFinite(sample), 'Nonfinite recorded sample: ' + name);
+      output[name] = {pcmBase64: encode(pcm), identity, callbacks, disconnectedSilentInputCallbacks: emptyInput,
+        startFrame: row.startFrame, endFrame, frames: pcm.length / 2};
+      track.chunks.length = 0;
+    }
+    return {index: row.index, sampleRate: rate, startFrame: row.startFrame, endFrame, tracks: output};
+  }
+  return {
+    async begin() { active = await segment(); return {sampleRate: rate, startFrame: active.startFrame}; },
+    age() { return active ? ctx.currentTime - active.startFrame / rate : 0; },
+    async rotate() {
+      const previous = active, next = await segment(); active = next;
+      return close(previous, next.startFrame);
+    },
+    async finish() {
+      if (!active) return null;
+      const row = active; active = null;
+      const result = await close(row, Math.ceil(ctx.currentTime * rate / 128) * 128);
+      silent.disconnect(); return result;
+    },
+    stop() { for (const row of segments) disconnect(row); silent.disconnect(); },
+  };
+}
+
+function recorderCode() {
+  return '{worklet:' + JSON.stringify(recorderWorkletSource) + ',createWitness:(' + createCaptureWitness.toString() +
+    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),create:(' + nativeRecorder.toString() + ')}';
+}
+
+async function appendSegment(outputDir, recording, segment) {
+  if (!segment || segment.startFrame !== (recording.endFrame ?? recording.startFrame))
+    throw Error('Capture segments do not share the exact native boundary');
+  const tracks = {};
+  for (const [name, {pcmBase64, ...track}] of Object.entries(segment.tracks)) {
+    const bytes = Buffer.from(pcmBase64, 'base64');
+    if (!track.identity.complete || track.startFrame !== segment.startFrame || track.endFrame !== segment.endFrame ||
+        bytes.length !== (segment.endFrame - segment.startFrame) * 8) throw Error('Invalid native recorded stem: ' + name);
+    await appendFile(join(outputDir, name + '.f32'), bytes);
+    tracks[name] = track;
+  }
+  recording.endFrame = segment.endFrame;
+  recording.segments.push({...segment, tracks});
+}
+
+async function measureRecording(outputDir, recording, functional) {
+  const rate = recording.sampleRate;
+  recording.duration = (recording.endFrame - recording.startFrame) / rate;
+  recording.measurements = {};
+  for (const name of ['mix', 'engine', 'interface']) {
+    const file = join(outputDir, name + '.wav');
+    ffmpeg(['-threads', '1', '-filter_threads', '1', '-y', '-f', 'f32le', '-ar', String(rate), '-ac', '2',
+      '-i', join(outputDir, name + '.f32'), '-c:a', 'pcm_f32le', file]);
+    recording.measurements[name] = measureLoudness(await readFile(file));
+  }
+  if (!recording.measurements.mix.available) throw Error('Recorded mix has no measurable loudness');
+  const firstStage = functional.stages.find(row => row.phase === 'race');
+  if (!firstStage || firstStage.audioTimeSec * rate < recording.startFrame)
+    throw Error('Recorder began after the genuine race stage loaded');
+  const handles = Object.fromEntries(await Promise.all(['engine', 'interface'].map(async name =>
+    [name, await open(join(outputDir, name + '.f32'), 'r')])));
+  async function windowTrack(name, event, seconds) {
+    const start = Math.max(recording.startFrame, Math.floor(event.audioTimeSec * rate) - Math.ceil(.1 * rate));
+    const end = Math.min(recording.endFrame, start + Math.ceil((seconds + .3) * rate));
+    const bytes = Buffer.alloc((end - start) * 8);
+    const read = await handles[name].read(bytes, 0, bytes.length, (start - recording.startFrame) * 8);
+    if (read.bytesRead !== bytes.length) throw Error('Short recorded event window');
+    const left = new Float32Array(end - start), right = new Float32Array(end - start);
+    for (let i = 0; i < left.length; i++) { left[i] = bytes.readFloatLE(i * 8); right[i] = bytes.readFloatLE(i * 8 + 4); }
+    return {left, right, sampleRate: rate, audioStartSec: start / rate};
+  }
+  const cueFor = {light: 'race.start.light', go: 'race.start.go', gain: 'race.position.gain',
+    final: 'race.lap.final', finish: 'race.finish.flag'};
+  const events = functional.native.filter(event => event.phase === 'race').map(event => ({...event,
+    cue: cueFor[event.kind], variant: 'single-recording', duration: functional.decoded.find(row => row.id === cueFor[event.kind]).duration}));
+  recording.events = [];
+  try {
+    for (const event of events) {
+      if (event.audioTimeSec * rate < recording.startFrame || (event.audioTimeSec + event.duration) * rate > recording.endFrame)
+        throw Error('Native cue or its full tail is outside retained PCM: ' + event.kind);
+      const ui = await windowTrack('interface', event, event.duration), engine = await windowTrack('engine', event, event.duration);
+      const duration = Math.min(.3, event.duration), uiRms = rms(ui, event.audioTimeSec, duration), engineRms = rms(engine, event.audioTimeSec, duration);
+      const overlap = functional.interfaceActivity.some(other => other.phase === 'race' && other.started &&
+        !(other.id === event.cue && Math.abs(other.audioTimeSec - event.audioTimeSec) < .05) &&
+        other.audioTimeSec < event.audioTimeSec + duration && other.until > event.audioTimeSec);
+      const onset = detectOnset(ui, event.audioTimeSec);
+      if (!(uiRms > .00001)) throw Error('Native race cue absent from recorded interface stem: ' + event.kind);
+      if (!overlap && (onset === null || Math.abs(onset) > .15)) throw Error('Recorded interface onset missing or late: ' + event.kind);
+      recording.events.push({...event, interfaceRms: uiRms, engineRms,
+        interfaceOverEngineDb: engineRms > 0 ? 20 * Math.log10(uiRms / engineRms) : null,
+        onsetDelaySec: onset, overlappingInterfaceCue: overlap});
+    }
+  } finally { await Promise.all(Object.values(handles).map(handle => handle.close())); }
+  recording.repetition = repetition(events);
+  recording.repetitionNote = 'Each race signal has one chosen recording; five identical light ticks are intentional. Native duplicate-event/source checks are separate.';
+  recording.frames = functional.frames.filter(frame => frame.audioTimeSec >= recording.startFrame / rate && frame.audioTimeSec < recording.endFrame / rate);
+  recording.nativeSources = functional.sources.filter(source => source.phase === 'race');
+  recording.verdict = {continuousNativeFrames: true, sourceIdentity: true, nativeEventSignal: true,
+    completeThreeLapRace: true, listeningApproved: false, advisoryMixTargets: recording.measurements.mix.targets};
 }
 
 async function ready(context) {
@@ -152,22 +354,35 @@ export async function run(context) {
   await context.waitFor(`!!window.__qaApp && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`, 'isolated audio App', 60_000);
   await context.evaluate(`window.__qaApp.setGraphicsQuality('performance')`);
-  await context.evaluate(`(${install.toString()})()`);
+  await context.evaluate(`(${install.toString()})(${recorderCode()})`);
+  const recording = {status: 'incomplete', segments: [], method: 'existing native worklet and independent sample witness',
+    mode: 'real-time Grand Prix', listeningApproved: false};
+  for (const name of ['mix', 'engine', 'interface']) await writeFile(join(context.outputDir, name + '.f32'), Buffer.alloc(0));
   try {
     await ready(context);
-    for (let batch = 0; batch < 360; batch++) {
-      const state = await context.evaluate(`(() => {
-        const q=window.__p4Audio,a=q.app;
-        a.advance(a.duel.state.status==='countdown'?.25:5);
-        a._updateAudio();
-        a.onFrame?.(a.duel.state);
-        return {status:a.duel.state.status,time:a.duel.state.stageTimeSec,laps:a.duel.state.completedLaps};
-      })()`);
-      if (batch % 24 === 0) console.log('P4 native race progress: ' + JSON.stringify(state));
-      if (state.status === 'stage_result') break;
-      if (['gameover', 'complete'].includes(state.status)) throw Error('Autopilot ended before a completed Grand Prix: ' + JSON.stringify(state));
-      if (batch === 359) throw Error('Genuine Grand Prix did not finish within bounded advance: ' + JSON.stringify(state));
+    Object.assign(recording, await context.evaluate('window.__p4Capture.begin()'));
+    await context.evaluate('window.__p4Audio.start()');
+    await ready(context);
+    await context.evaluate('window.__p4Audio.app.start()');
+    const deadline = Date.now() + 600_000;
+    let finishAt = null, lastProgress = 0;
+    while (Date.now() < deadline) {
+      const state = await context.evaluate(`(() => {const q=window.__p4Audio,s=q.app.duel.state;
+        return {status:s.status,time:s.stageTimeSec,laps:s.completedLaps,age:window.__p4Capture.age(),
+          audioTime:q.audio.context.currentTime,finishDuration:q.audio.cueBuffers['race.finish.flag'].duration};})()`);
+      if (state.age >= 20) await appendSegment(context.outputDir, recording, await context.evaluate('window.__p4Capture.rotate()'));
+      if (state.time >= lastProgress + 20) {
+        console.log('P4 real-time race progress: ' + JSON.stringify({status: state.status, time: state.time, laps: state.laps}));
+        lastProgress = state.time;
+      }
+      if (state.status === 'stage_result') finishAt ??= state.audioTime + state.finishDuration + .3;
+      if (finishAt !== null && state.audioTime >= finishAt) break;
+      if (['gameover', 'complete'].includes(state.status)) throw Error('Real-time race ended before a genuine Grand Prix finish');
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
+    if (finishAt === null) throw Error('Real-time Grand Prix exceeded its ten-minute bound');
+    await context.evaluate('window.__p4Audio.app.stop()');
+    await appendSegment(context.outputDir, recording, await context.evaluate('window.__p4Capture.finish()'));
     const result = await context.evaluate('window.__p4Audio.finish()');
     await context.screenshot('p4-audio-genuine-finish');
     console.log('Native P4 audio finish: ' + JSON.stringify(result));
@@ -195,9 +410,19 @@ export async function run(context) {
       a.advance(1);q.demand(au.grandPrixVoices.size>0,'New cue missing after unlock');
       await q.cleanup('menu after unlock',()=>a.returnToMenu());
       q.report.lifecycle.push({label:'unlock without replay',passed:true});
+      q.report.functionalVerdict={nativeEvents:true,replay:true,lifecycle:true,genuineThreeLapFinish:true,listeningApproved:false};
     })()`);
   } finally {
+    await context.evaluate('window.__qaApp.stop(); window.__p4Capture.stop()');
     const report = await context.evaluate('window.__p4Audio.result()');
     await writeFile(join(context.outputDir, 'p4-audio.json'), JSON.stringify(report, null, 2) + '\n');
+    try {
+      if (report.functionalVerdict) {
+        recording.status = 'measuring';
+        await measureRecording(context.outputDir, recording, report);
+        recording.status = 'complete';
+      }
+    } catch (error) { recording.error = error.message; throw error; }
+    finally { await writeFile(join(context.outputDir, 'recording.json'), JSON.stringify(recording, null, 2) + '\n'); }
   }
 }

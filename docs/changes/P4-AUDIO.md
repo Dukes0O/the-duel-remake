@@ -27,11 +27,21 @@ Ordinary countdown and results retain their existing cues. Completed Grand Prix 
 
 ## Native browser design
 
-Director added `tools/scenarios/p4-audio.mjs` to AUDIO ownership. Use the production App, Duel and EngineAudio on a private harness port with disposable memory storage. Wrap the real audio event and source methods only to observe native delivery, decoded AudioBuffer samples, started sources and cleanup. Preserve their return values and behavior. Start the genuine eight-car, three-lap Grand Prix with fixed seeds, then use App.advance and its ordinary autopilot controls through the finish. Do not shorten laps, move cars, inject results or modify simulation fields.
+Director added `tools/scenarios/p4-audio.mjs` to AUDIO ownership. Use the production App, Duel and EngineAudio on a private harness port with disposable memory storage. Wrap the real audio event and source methods only to observe native delivery, decoded AudioBuffer samples, started sources and cleanup. Preserve their return values and behavior. Start the genuine eight-car, three-lap Grand Prix with fixed seeds, then use its real-time fixed-step and ordinary autopilot controls through the finish. App.advance is reserved for the later lifecycle checks. Do not shorten laps, move cars, inject results or modify simulation fields.
 
 Replay the same real fixed-step inputs in a separate graphics-free Duel with identical start options and no audio listener. Compare the final race fingerprint. Check audio leaves race state unchanged during each event. Require five native light ticks, one go, a real position gain, one final-lap signal and one genuine completed finish, without legacy countdown/go/win/lose doubles. Copied delivery checks may repeat an already observed event to the sound manager only.
 
 Then exercise actual App pause/resume and menu/stage transitions plus audio mute and suspended-context resume. Check native decoded sources stop and release, missed events do not replay, and fresh fields get fresh starts. This is functional browser evidence; no frame timing or listening approval is claimed. Scenario additions require a fresh lane gate and build on final source.
+
+## Recorded race plan (Director approved)
+
+The source reels and accelerated native observer are not a gameplay mix recording. Before integration, record a genuine real-time eight-car, three-lap Grand Prix through ordinary App autopilot and fixed-step controls. Keep the current native event and exact input-replay witnesses. Do not alter the lap count, car positions, simulation state or finish result. Bound the attempt to ten minutes of wall time and any recorder diagnosis to thirty minutes.
+
+Reuse the unchanged `tools/audio/capture-witness.mjs` AudioWorklet, independent witness generator and sample-identity inspector. Tap the actual post-output mix, engine bus and interface bus. Establish recording before the real campaign starts and retain every native cue plus the complete finish tail. Assert their actual audio times lie within retained PCM. Rotate overlapping captures about every twenty seconds, within the existing ninety-second witness source. Establish each segment only after all three meters deliver consecutive native blocks. Close the earlier segment on the next segment's absolute native sample frame. Prove witness identity, frame continuity and equal boundaries on every stem; discard only setup samples and exact overlap. Never fill, resample, relabel or conceal missing samples. Save joined native-rate PCM and metadata in ignored P4-AUDIO evidence.
+
+Record actual AudioContext times for native events and source starts, and per-frame race time, revs, throttle, speed and status. Measure the joined race mix and stems with existing `measurements.mjs` LUFS/true-peak functions. Measure interface onset against native event times and interface/engine level during each cue; report overlap when another interface cue prevents isolation. Record repetition by cue/source identity; the five deliberately identical light ticks remain explicit. Existing decoded-asset checks cover loop boundaries; listening stays pending. Keep functional, recorder-integrity and measured-mix verdicts separate.
+
+Director approved this QA order to avoid repeating the full lane for recorder repairs: finish the owned recipe, syntax/build, root source review, then a scheduled native run. Freeze the proven recipe and run the required final lane tier and build before integration. Earlier lane runs were interrupted, not passing evidence.
 
 ## Listening and remaining work
 
