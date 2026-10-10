@@ -329,9 +329,9 @@ root.addEventListener('change',event=>{
   const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);
 },{signal:domEvents.signal});
 function renderState(s) {
+  buildUpdates.syncState();
   if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
       !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
-  buildUpdates.syncState();
   const yardActive=app.isYardHomeActive?.()===true;
   if(!yardActive)yardPanel='home';
   const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);

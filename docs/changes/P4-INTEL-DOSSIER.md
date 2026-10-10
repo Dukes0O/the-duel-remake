@@ -222,3 +222,19 @@ The duplicate geometry/speed analysis was removed from the review tool in the
 same extraction; its existing exports delegate to the shared module.
 No stored pictures, duplicate renderer, saved-state migration
 or replacement reference-data implementation is introduced by this proposal.
+
+## Build-update lifecycle correction
+
+The Telemetry lane gate found that the inherited Team Room guard precedes
+`buildUpdates.syncState()` in `renderState`, violating the unchanged existing
+build-update lifecycle assertion. The Director explicitly assigned root this
+narrow Dossier router-hook repair in the integration board. Restore sync as
+the first statement and keep the full Team Room player/status/switch close
+guard immediately after it. Height provides the independent source review.
+No assertion, simulation, save, reference or renderer behavior changes. This
+fix does not clear the all-27 catalog hold or authorize integration merge.
+The unchanged `tools/test-build-update.mjs` passes all 190 checks after this
+ordering repair. Height independently reviewed the complete narrow diff:
+Team Room guard bytes are unchanged, with no test, save, race, reference or
+renderer edits. Required current lane/build evidence still precedes any
+integration merge; the complete reference catalog remains held.
