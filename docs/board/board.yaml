@@ -3891,17 +3891,17 @@ tasks:
     lane: CMB
     size: M
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-seekers
-    source_commit: c6e90d380c68edad2ee41fc9db998296eb850977
-    note: "Claude settled the metric on10 October: average actual armor damage per Rocket Pods firing on paired seeds, seekers off/on; on at most1.3 times off. Kyle subsequently authorized 8 for seeker-enabled Pods if the post-Height repeat still fails at 10; legacy Pods and aimed Gunn rockets stay 10. Verify, gate and merge."
+    source_commit: f098988739854f65ab4b0d883a62de54543990bb
+    note: "Kyle accepted seeker damage 8 and its measured 1.328662 ratio on 10 October: explicit exception to the original 1.3 target, not a mathematical pass. Keep off/Gunn at 10; no 7.8 tuning. Merged after lane 366/366, build and source review passed. Approval recorded for Claude."
     flag: seeker-rockets
     owns: [tools/test-seeker-rockets.mjs, tools/scenarios/seeker-rockets.mjs, docs/changes/POLISH-SEEKERS.md]
     hooks: [tools/test-combat-balance.mjs, tools/test-seeker-balance.mjs, src/arsenal/rockets.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-hud.js, src/combat-scene.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/combat-balance.mjs]
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Rocket Pods become heat seekers, exactly, behind the new seeker-rockets switch (dev, and on in the Preview). Tests: target choice (cone, range, line), turn limit, no retarget, smoke break, decoy pull, shield block, straight flight with no target, the computer firing rule, Gunn unchanged."
-      - "Paired-seed Rocket Pods armor damage per firing: seekers on at most1.3 times off. Kyle authorized 8 for seekers if the post-Height repeat fails at 10; off and Gunn stay 10. Add the metric to the balance report and name the lock cue."
+      - "Report actual paired-seed armor damage per firing. Kyle explicitly accepted the measured 1.328662 ratio at seeker damage 8 on 10 October, as an exception to the original 1.3 target. Legacy Pods and Gunn stay 10. Retain truthful report and unchanged metric assertions; gate and merge."
     claude_verdict_2026_10_10: "Claude settled the metric on10 October: average actual armor damage per Rocket Pods firing on paired seeds, seekers off/on; on at most1.3 times off. Kyle subsequently authorized 8 for seeker-enabled Pods if the post-Height repeat still fails at 10; legacy Pods and aimed Gunn rockets stay 10. Verify, gate and merge."
   - id: POLISH-SMOKE
     title: "Smoke you cannot see through"
@@ -3909,12 +3909,13 @@ tasks:
     lane: VIS
     size: S
     needs: []
-    status: building
+    status: review
+    waiting_on: claude
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-smoke
-    source_commit: fb60bda11995201796182deb472ba90a6d2bb1dc
-    render_commit: 36b0da674033abc13f5c30c31e8fbb802822963a
-    note: "Round two authorized10 October: overlapping varied soft grey puffs, broken wispy edges, lighter tops/darker undersides, drift and churn. Preserve concealment and native rules. One next sheet to Claude; only then set waiting_on. Smoke exclusively owns shared visual edits."
+    source_commit: b4494e996201e0956fb9ee1945e34bd531b2e430
+    render_commit: b4494e996201e0956fb9ee1945e34bd531b2e430
+    note: "Round two ready for Claude: grey layered puffs, dark undersides and churn. Screen High visible 7.779%/2.460%, Performance 0.886%/2.127%; unchanged 10% cap. Native repeat/purity, source review and build pass. Actual-source p95 at most +0.595%, work p95 +5.714%. Broad gate follows art approval."
     owns: [docs/board/looks/smoke/round-2.jpg, docs/board/looks/smoke/round-2-review.md, docs/changes/POLISH-SMOKE.md, tools/test-polish-smoke.mjs, tools/art/polish-smoke-sheet.py, docs/board/looks/smoke/round-1.jpg, docs/board/looks/smoke/round-1-review.md]
     hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/smoke.js, src/crew-gear/signature.js, src/render3d.js, tools/scenarios/arsenal-core.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-FLAME: one card edits it at a time."
@@ -3930,8 +3931,8 @@ tasks:
     status: review
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-flame
-    source_commit: 6370d6edb9a31cff458351531f5b7572a5af8a99
-    note: "Round one approved10 October. Judge frame cost by p95; High mean rise is recorded and explicitly not a blocker. Merge after approved Smoke, with fresh lane/build and review after integration sync. No new art round required."
+    source_commit: 81a9b64b799db076fa1db75075e6abc6472e6511
+    note: "Round one and p95 approved. Synced Height integration and Smoke round two at 81a9b64b; reviewed loader/per-camera conflict preserves both. Focused Flame/Smoke, Wave2 39, build and eight native views pass; no new art round. After approved Smoke merges, sync latest integration and run fresh lane/build before merge."
     owns: [docs/changes/POLISH-FLAME.md, src/flame-view.js, tools/art/polish-flame-textures.py, tools/art/polish-flame-sheet.py, tools/test-polish-flame.mjs, tools/scenarios/polish-flame.mjs, docs/board/looks/polish-flame/round-1.jpg, docs/board/looks/polish-flame/round-1-review.md]
     hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-SMOKE: one card edits it at a time."
@@ -3944,11 +3945,12 @@ tasks:
     lane: VIS
     size: S
     needs: []
-    status: building
-    source_commit: aa5d89166505d092bfe5869d79810cae2b1ba877
+    status: review
+    waiting_on: claude
+    source_commit: 1a3f30ceb29c908b6179a8a3de1589ca3632b85f
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-arena
-    note: "Round two authorized10 October, labels approved. Make roughly twice the inner-island scrap in tall clusters using approved pieces, clearly different ridge widths, distant tanker lit lamps/roof plate readable at play distance. Next sheet must show each change clearly; only then waiting_on Claude."
+    note: "Round two ready for Claude final art verdict: native comparison sheet 467475 bytes, 93 shells in tall clusters, varied ridge widths, lit lamps/roof at 89.16794 m. Physics/state/focused/build pass; actual-source p95 16.8 to 16.8 ms both qualities. Labels stay approved. No merge gate or merge claimed; final allowed art round."
     owns: [docs/board/looks/polish-arena/round-2.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/changes/POLISH-ARENA.md, tools/art/polish-arena-sheet.py, tools/scenarios/polish-arena.mjs, tools/test-polish-arena.mjs, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-1-review.md]
     hooks: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, public/assets/models/wasteland/salt-flats/venue.glb, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-arsenal-wave3.mjs, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js, src/combat-hud.js]
     acceptance:

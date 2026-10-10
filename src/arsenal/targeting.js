@@ -49,9 +49,12 @@ export function targetFor(duel, attacker, context = {}) {
   };
   let target = context.lockedTargetId != null
     ? actorForTarget(duel, context.lockedTargetId) : nativeTarget(duel, attacker);
-  if (target && (target.decoy || arenaTargetOutOfPlay(duel, target) ||
+  const liveDecoy = actor => actor?.decoy && actor.active === true &&
+    Number.isFinite(actor.expiresAt) && actor.expiresAt > duel.state.stageTimeSec;
+  if (target && ((target.decoy && !(context.allowLockedDecoy && liveDecoy(target))) || arenaTargetOutOfPlay(duel, target) ||
       !hostile(duel, attacker, target) || !within(target))) target = null;
-  const decoys = (duel.state.opponents || []).filter(actor => {
+  const decoys = (context.allowDecoys === false ? [] : duel.state.opponents || []).filter(actor => {
+    if (context.decoyFilter && !context.decoyFilter(actor)) return false;
     const participant = arenaParticipant(duel, actor);
     const owner = actorForTarget(duel, actor.ownerId);
     return actor.decoy === true && actor.active === true &&

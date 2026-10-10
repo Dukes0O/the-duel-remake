@@ -19,8 +19,8 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && Object.keys(FEATURE_STATES).length === 16,
-  'the Wasteland features are released (on, 9 October 2026); only career backup stays dev; retired switches stay absent');
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'dev' && Object.keys(FEATURE_STATES).length === 17,
+  'the Wasteland features are released (on, 9 October 2026); career backup and seeker rockets stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 // These nine switches were released (on) on 9 October 2026. Their development-switch
 // isolation, proved earlier on the real catalog, is kept by pinning each one to dev.

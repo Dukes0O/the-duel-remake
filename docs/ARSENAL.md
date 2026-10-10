@@ -135,13 +135,14 @@ could be heat seeking, and the Smoke Screen is too easy to see through.
   flies straight on. A Decoy Drone within 25 m of the target pulls the rocket
   onto the drone. A star shield blocks it as before.
 - The balance report compares actual armor damage per Rocket Pods firing on
-  matched seeds, seekers off and on; on must be at most 1.3 times off. Report
-  player and computer contributions as well as the pooled result. Count
-  misses, shields and interrupted volleys. This replaces the unspecified
-  hit-rate target. On 10 October, Kyle authorized 8 damage for seeker-enabled
-  Rocket Pods if the repeat after Height still fails at 10. Select damage at
-  launch; feature-off Pods and Gunn's aimed rockets retain 10. No other
-  tuning or threshold change is authorized.
+  matched seeds, seekers off and on. Count misses, shields and interrupted
+  volleys; show player/computer totals and actual remaining-armor clipping.
+  The original target was on at most 1.3 times off. On 10 October, Kyle
+  explicitly accepted the measured 1.328662 result at 8 damage and authorized
+  merge. This is a recorded exception, not a claim that the 1.3 check passed.
+  Seeker-enabled Pods therefore deal 8 per rocket, selected at launch;
+  feature-off Pods and Gunn's aimed rockets keep 10. The proposed 7.8 change
+  was not applied. The report and its mathematical assertions stay truthful.
 - Cue: a short lock tone (`weapon.rockets.lock`) and a bracket on the target
   for as long as any rocket is chasing it.
 - Computer: fires at an enemy 20 to 100 m ahead within 20 degrees.

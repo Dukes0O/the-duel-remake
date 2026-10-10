@@ -901,3 +901,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 9 October polish: full 363/363 passes in 725.14 s on unchanged integration 3af7f15c, alone with four jobs; dirty documentation is recorded, no retry or merge. Five clean lane candidates await Claude; status and verdicts fold into the next real commit.
 
 10 October: merged POLISH-HEIGHT from 52f2d049; lane 364/364 in 922.15 s, build and source review pass. Ordinary armor 1.20 to 1.21 gives Medium 13.833 wrecks; warlord health and non-armor replay fields stay exact.
+
+10 October: merged POLISH-SEEKERS from f0989887; lane 366/366 in 599.22 s, build 516 ms and source review pass. Kyle accepted 8 damage and the measured 1.328662 ratio as an explicit exception to the original 1.3 target; off/Gunn stay 10 and metric assertions stay unchanged.
