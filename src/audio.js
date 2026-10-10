@@ -245,12 +245,20 @@ export class EngineAudio {
   }
 
   _loadCueBuffers() {
-    if (this._cueBuffersPromise) return this._cueBuffersPromise;
-    this._cueBuffersPromise = Promise.allSettled(
+    const grandPrix = this.flags.enabled('grand-prix');
+    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted))
+      return this._cueBuffersPromise;
+    const pending = this._cueBuffersPromise;
+    // A later Grand Prix activation adds only its own batch. Existing cue and
+    // fight-voice loading retains the selection made at ordinary audio startup.
+    if (grandPrix) this._p4CueBuffersStarted = true;
+    const loading = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
           ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
-            (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')),
+            (!pending || cue.flag === 'grand-prix') &&
+            (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
+            (cue.flag !== 'grand-prix' || grandPrix),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -263,6 +271,7 @@ export class EngineAudio {
           this.cueBuffers[id] = cue.files ? buffers : buffers[0];
         }),
     );
+    this._cueBuffersPromise = pending ? Promise.allSettled([pending, loading]) : loading;
     return this._cueBuffersPromise;
   }
 
