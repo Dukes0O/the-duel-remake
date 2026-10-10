@@ -37,7 +37,7 @@ async function install(recorder) {
   }
   const original = {event: audio.event, play: audio._playCue,
     createSource: audio.context.createBufferSource, start: app.duel.startCampaign, step: app.duel.step};
-  let observingCue = null, control = null, replay = true;
+  let observingCue = null, control = null, controlApp = null, replay = true;
   const sources = [], lastEvents = {};
   audio.context.createBufferSource = function(...args) {
     const source = original.createSource.apply(this, args);
@@ -87,6 +87,31 @@ async function install(recorder) {
     if (replay) {
       control = new this.constructor({seed: this.seed, car: this.carKey,
         difficulty: this.difficultyKey, featureFlags: this.featureFlags});
+      const profile = structuredClone(app.profile), player = structuredClone(app.player);
+      const startingProfile = JSON.stringify(profile);
+      controlApp = {duel: control, profile, player,
+        _switches: app._switches, getHiddenRoadDiscovery: app.getHiddenRoadDiscovery};
+      report.controlAdapter = {nativeDiscovery: true, nativeGrandPrixSettlement: true, saveCalls: 0, events: 0};
+      control.onChange((state, event) => {
+        demand(state.mode === 'grandprix' && !state.arena, 'Replay adapter must stay in the native Grand Prix branch');
+        // This synchronous adapter may read its clone, but may never save.
+        const storage = window.localStorage;
+        const writes = Object.fromEntries(['setItem', 'removeItem', 'clear'].map(key => [key, storage[key]]));
+        for (const key of Object.keys(writes)) storage[key] = () => {
+          report.controlAdapter.saveCalls++; throw Error('No-audio replay adapter attempted a save');
+        };
+        try {
+          app._syncHiddenRoadDiscovery.call(controlApp);
+          if (event.stageResult) {
+            demand(event.stageResult.grandPrix === true, 'Replay settlement needs a native Grand Prix result');
+            app._settleResult.call(controlApp, event.stageResult, state);
+            demand(event.stageResult.creditReward === 0 && event.stageResult.creditBalance === profile.credits,
+              'Native replay settlement changed its Grand Prix presentation contract');
+          }
+        } finally { for (const [key, value] of Object.entries(writes)) storage[key] = value; }
+        demand(JSON.stringify(profile) === startingProfile, 'Replay adapter changed its cloned profile');
+        report.controlAdapter.events++;
+      });
       control.startCampaign({...options});
     }
     return original.start.call(this, options);
@@ -117,7 +142,15 @@ async function install(recorder) {
       const state = app.duel.state;
       demand(state.status === 'stage_result' && state.results?.grandPrix && state.results.completed &&
         state.completedLaps === 3, 'No genuine completed three-lap Grand Prix');
-      report.replayDifference = Object.keys(state).filter(key => JSON.stringify(state[key]) !== JSON.stringify(control.state[key]));
+      demand(report.controlAdapter.saveCalls === 0 && report.controlAdapter.events > 0, 'Replay adapter save boundary failed');
+      demand(state.results.creditReward === 0 && state.results.creditBalance === app.profile.credits &&
+        control.state.results.creditReward === 0 && control.state.results.creditBalance === controlApp.profile.credits,
+        'Native Grand Prix reward/balance presentation differs');
+      demand(JSON.stringify(state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery()) &&
+        JSON.stringify(control.state.hiddenRoadDiscovery) === JSON.stringify(app.getHiddenRoadDiscovery.call(controlApp)),
+        'Native discovery presentation differs');
+      report.replayDifference = [...new Set([...Object.keys(state), ...Object.keys(control.state)])]
+        .filter(key => JSON.stringify(state[key]) !== JSON.stringify(control.state[key]));
       report.raceFingerprint = await digest(JSON.stringify(state));
       report.replayFingerprint = await digest(JSON.stringify(control.state));
       demand(report.replayDifference.length === 0, 'Native input replay differs with audio: ' + report.replayDifference.join(', '));
@@ -228,7 +261,10 @@ async function nativeRecorder(audio, helpers) {
       for (const chunk of chunks) {
         demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
         const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
-        demand(from === covered, 'Missing or duplicated native sample frames: ' + name);
+        demand(from === covered, 'Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
+          segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
+          chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
+          callbacks: chunk.callbacks.map(item => item.frame), witnessFirst: chunk.witness[0]}));
         const offset = from - chunk.frame, count = to - from, target = from - row.startFrame;
         pcm.set(chunk.pcm.subarray(offset * 2, (offset + count) * 2), target * 2);
         witness.set(chunk.witness.subarray(offset, offset + count), target);

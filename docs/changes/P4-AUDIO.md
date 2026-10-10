@@ -43,6 +43,12 @@ Record actual AudioContext times for native events and source starts, and per-fr
 
 Director approved this QA order to avoid repeating the full lane for recorder repairs: finish the owned recipe, syntax/build, root source review, then a scheduled native run. Freeze the proven recipe and run the required final lane tier and build before integration. Earlier lane runs were interrupted, not passing evidence.
 
+## Native replay adapter correction
+
+The first real-time run stopped on a native frame discontinuity after two valid segments. A diagnostic retry recorded the entire genuine race: nine segments, 8,627,456 frames at 48 kHz, with exact native continuity and independent sample identity for all three stems. Its full-state replay assertion then found only `results` and `hiddenRoadDiscovery` different. The native App adds discovery metadata and Grand Prix reward/balance fields; the graphics-free Duel did not run those App callbacks. Original failed hashes remain in ignored evidence; neither run is a functional pass.
+
+Director approved a narrow correction before code: give the no-audio Duel a disposable adapter with cloned starting player/profile and the same native switch provider. Run the actual App discovery sync on its native events and the actual App settlement method only for a genuine Grand Prix result. Require its Grand Prix branch, zero save calls, an unchanged cloned profile and exact reward/balance/discovery values. Keep full-state equality and both hashes unchanged as assertions; do not remove fields, copy final state or alter either race. This adapter supplies the missing native App presentation lifecycle to the independent replay.
+
 ## Listening and remaining work
 
 Four labelled MP3 reels and their cue timestamp index are in ignored P4-AUDIO evidence: race signals; pit and surfaces; mountain hazards; crowd, summit wind and three location beds. These are processed recordings, not gameplay captures. Kyle's listening verdict remains pending.
