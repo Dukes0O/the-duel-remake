@@ -392,12 +392,13 @@ test('native CPU Nitro decisions require Hard, an enemy ahead within forty metre
     equal(cpuDecision('nitro', options).used, expected, `native Nitro decision ${JSON.stringify(options)}`);
 });
 
-test('wave three is separately dev-gated without changing the existing arsenal switch', () => {
-  equal(FEATURE_STATES['arsenal-wave3'], 'dev', 'the four new weapons have their own dev switch');
+test('wave three is released (on, 9 October 2026) and keeps its separate gate without changing the existing arsenal switch', () => {
+  equal(FEATURE_STATES['arsenal-wave3'], 'on', 'the four new weapons are released');
   equal(FEATURE_STATES.arsenal, 'on', 'the existing released arsenal switch remains unchanged');
-  const released = createFeatureFlags({qa: false, storage: {getItem: () => 'true'},
-    search: '?flags=arsenal-wave3'});
-  equal(released.enabled('arsenal-wave3'), false, 'the new wave is unavailable outside QA');
+  equal(createFeatureFlags({qa: false, storage: null}).enabled('arsenal-wave3'), true, 'the new wave is available in the released build');
+  const dev = createFeatureFlags({catalog: {...FEATURE_STATES, 'arsenal-wave3': 'dev'}, qa: false,
+    storage: {getItem: () => 'true'}, search: '?flags=arsenal-wave3'});
+  equal(dev.enabled('arsenal-wave3'), false, 'a dev wave is unavailable outside QA');
 });
 
 for (const [id] of WEAPONS) for (const cpu of [false, true]) {

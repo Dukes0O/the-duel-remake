@@ -30,7 +30,9 @@ import {createArmorKitMeshes} from '../src/armor-kit-meshes.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {EngineAudio} from '../src/audio.js';
 
-const flags = enabled => createFeatureFlags({storage: null, qa: true, overrides: {blackiron: enabled}});
+// Wave three was released on 9 October 2026; this older baseline names it off explicitly.
+const flags = enabled => createFeatureFlags({storage: null, qa: true,
+  overrides: {blackiron: enabled, 'arsenal-wave3': false}});
 function profile() {
   const saved = createProfile();
   saved.wasteland.discoveredGate = true;

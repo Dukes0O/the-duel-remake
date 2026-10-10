@@ -103,6 +103,21 @@ also have new car weapons (Oil Slick, Smoke Screen, Harpoon, Caltrops, Rocket
 Pods, Flamethrower and Scrap Magnet, bought in the Armory as their rank
 arrives) and eight crew members with signature gear, including boarding an
 enemy car from the roof.
+Four more car weapons arrive in the Armory (Mortar, Tesla, Nitro and the Decoy
+Drone), so Mother Mirage's reward is now real. Three more warlords wait on the
+territory map: Gearhead Gunn (a turret car in the Pit that fires rockets; he
+earns you Rocket Pods and a turret look), the Tollkeeper (an armored tanker in
+the Salt Flats that drops spikes across the road; he earns you the Convoy kit)
+and Baron Blackiron (a chrome car that rams with nitro; he earns you the
+Chrome Crown and the title Warlord of the Wastes). Beating the Baron opens Vesper as a ninth crew member, and the
+yard wall now shows a story card for each warlord you have beaten, with a
+poster of your own winning car after every warlord fight. Convoy Raid (the
+Salt Flats, once you hold the Tollkeeper's territory) is a chase after a
+tanker: break its three fuel valves, then plant a charge on its roof. Ambush
+Alley (rank 12, in the Pit or the Salt Flats) is five waves of raiders at
+your fort, which you repair with the wrench. In Wasteland races the computer
+cars now stop to repair and fight with their own crew, and your crew shouts
+a line with a caption when you use a weapon.
 A saved career with a damaged number in it now loads with that one value
 reset, instead of losing the named player's whole career.
 Wreck recovery has a short two-second race penalty. A missed checkpoint retries

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {App} from '../src/app.js';
 import {Duel} from '../src/game.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
+import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {createProfile, normalizeProfile, loadPlayers, replacePlayerProfile, savePlayers, PLAYERS_KEY} from '../src/progression.js';
 import {startWarlordEvent} from '../src/arena/warlord-event.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
@@ -606,7 +606,9 @@ test('an actual saved Sal win advertises earned working saws for the built fight
     const future = {...saved, wasteland: {...saved.wasteland,
       warlords: {...saved.wasteland.warlords, tollkeeper: {defeated: true, wins: 1, losses: 0}},
       territories: {...saved.wasteland.territories, tollkeeper: {hold: 100, claimed: true}}}};
-    ok(!/CONVOY KIT EARNED|data-warlord="tollkeeper"/.test(territoryPanel(future)),
+    // The Tollkeeper was released on 9 October 2026; the unbuilt case pins his switch to dev.
+    const devTollkeeper = createFeatureFlags({catalog: {...FEATURE_STATES, tollkeeper: 'dev'}, storage: null, qa: false});
+    ok(!/CONVOY KIT EARNED|data-warlord="tollkeeper"/.test(territoryPanel(future, {featureFlags: devTollkeeper})),
       'a saved future defeat cannot claim an unbuilt reward or advertise its rematch');
     const armory = () => createArmoryScreen({profile: () => saved, credits: String, escapeHTML: String,
       getGarageMessage: () => '', kitsEnabled: () => true,

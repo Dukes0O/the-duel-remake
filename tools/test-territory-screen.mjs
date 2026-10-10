@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {territoryPanel} from '../src/screen-territory.js';
 import {createProfile} from '../src/progression.js';
+import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 
 test('territory panel is scoped to discovered players and shows earned hold', () => {
   const undiscovered = createProfile();
@@ -9,10 +10,12 @@ test('territory panel is scoped to discovered players and shows earned hold', ()
   const discovered = createProfile();
   discovered.wasteland.discoveredGate = true;
   discovered.wasteland.territories.sal.hold = 75;
-  // Gunn's fight is not built yet; the Dustmonger's is (WAR-02b).
+  // Gunn was released on 9 October 2026. The "coming later" status is still tested
+  // with Gunn pinned to dev; the Dustmonger's fight is built (WAR-02b).
   discovered.wasteland.territories.gunn.hold = 100;
   discovered.wasteland.territories.dustmonger.hold = 100;
-  const panel = territoryPanel(discovered);
+  const devGunn = createFeatureFlags({catalog: {...FEATURE_STATES, gunn: 'dev'}, storage: null, qa: false});
+  const panel = territoryPanel(discovered, {featureFlags: devGunn});
   assert.match(panel, /TERRITORY MAP/);
   assert.match(panel, /Sawtooth Sal/);
   assert.match(panel, /75 \/ 100/);

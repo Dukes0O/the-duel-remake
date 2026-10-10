@@ -5,20 +5,22 @@ import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 
 test('the Wasteland switches are released and the Experimental panel is gone', () => {
   // Released on 4 October 2026: Fuel Run, Bounty Hunt, Arsenal, Salt Flats, Crew gear.
+  // Released on 9 October 2026: Convoy Raid, Tollkeeper, Baron Blackiron, Warlord cards,
+  // Arsenal wave three, Fight Voices, computer crews, Ambush Alley and Gunn.
   assert.deepEqual(FEATURE_STATES, {
-    'convoy-raid': 'dev',
+    'convoy-raid': 'on',
     'bounty-hunt': 'on', 'career-backup': 'dev', 'hidden-road': 'on',
     'fuel-run': 'on',
     arsenal: 'on',
     'salt-flats': 'on', 'crew-gear': 'on',
-    'fight-voices': 'dev',
-    'arsenal-wave3': 'dev',
-    'cpu-crews': 'dev',
-    'ambush-alley': 'dev',
-    gunn: 'dev',
-    tollkeeper: 'dev',
-    blackiron: 'dev',
-    'warlord-cards': 'dev',
+    'fight-voices': 'on',
+    'arsenal-wave3': 'on',
+    'cpu-crews': 'on',
+    'ambush-alley': 'on',
+    gunn: 'on',
+    tollkeeper: 'on',
+    blackiron: 'on',
+    'warlord-cards': 'on',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
@@ -26,8 +28,8 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   assert.equal(flags.enabled('career-backup'), false);
   assert.equal(flags.enabled('warlords'), false);
   assert.equal(flags.enabled('fuel-run'), true);
-  assert.equal(flags.enabled('tollkeeper'), false);
-  assert.equal(flags.enabled('blackiron'), false);
+  assert.equal(flags.enabled('tollkeeper'), true);
+  assert.equal(flags.enabled('blackiron'), true);
   assert.deepEqual(flags.betaFeatures(), []);
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');

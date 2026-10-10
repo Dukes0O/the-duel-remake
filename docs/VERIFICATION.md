@@ -826,3 +826,26 @@ and Salt controls, the on-foot weapons) now run with Arsenal and crew gear off
 explicitly, with every assertion unchanged. Release evidence is recorded in
 docs/board/run-log.md.
 
+
+## Release 9 October 2026: the rest of the Preview
+
+Kyle played the Preview and asked for everything in it in the main game.
+`convoy-raid`, `tollkeeper`, `blackiron`, `warlord-cards`, `arsenal-wave3`,
+`fight-voices`, `cpu-crews`, `ambush-alley` and `gunn` are on (they stay in the
+switch list until retired). `career-backup` stays a development switch. Also
+live: Gearhead Gunn (WAR-03a), the Tollkeeper (WAR-03d), Baron Blackiron
+(WAR-03e), the story wall, results posters and Vesper (WAR-04), the Mortar,
+Tesla, Nitro and Decoy Drone weapons (ARS-03, which also makes Mother Mirage's
+Decoy Drone reward real), Convoy Raid (ARENA-07), Ambush Alley (ARENA-05),
+computer crews (CREW-04) and Fight Voices.
+
+Thirteen test files that pinned these nine switches as development switches, or
+whose older baseline relied on one being off, were changed on purpose and are
+listed in docs/changes/RELEASE-2026-10-09.md. Development-switch rules are
+still tested with the switch pinned to dev in a test catalog; older baselines
+now name the switch off explicitly. No fingerprint, number, tolerance or
+expected value changed. The full tier passed on the release commit, 363 of 363.
+Browser scenarios convoy-raid, gunn, blackiron, arena-ambush-alley, cpu-crews,
+arsenal-wave3, new-warlords, fight-voices and frame-pacing all passed with
+memory-only saves, no warnings and no issues. Release evidence is recorded in
+docs/board/run-log.md.

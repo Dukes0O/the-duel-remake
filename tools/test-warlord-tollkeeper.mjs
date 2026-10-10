@@ -73,8 +73,8 @@ function gate(f) {
   return f.rig.tollGate;
 }
 
-test('native entry has a dev switch, real tanker and five-minute charge format', () => {
-  equal(FEATURE_STATES.tollkeeper, 'dev', 'the new fight remains behind its own dev switch');
+test('native entry has its own switch (on, 9 October 2026), real tanker and five-minute charge format', () => {
+  equal(FEATURE_STATES.tollkeeper, 'on', 'the fight is released on its own switch');
   equal(admitted({enabled: false}).started, false, 'disabled entry cannot build a fight');
   const f = fight(), arena = f.duel.state.arena;
   equal(arena.mode, 'warlord', 'the event uses Warlord settlement, not ordinary Convoy settlement');
@@ -139,8 +139,9 @@ test('the built charge-fight territory uses the current venue label while unbuil
   profile.wasteland.discoveredGate = true;
   profile.wasteland.territories.tollkeeper.hold = 100;
   profile.wasteland.territories.blackiron.hold = 100;
-  const panel = territoryPanel(profile, {featureFlags: createFeatureFlags({storage: null, qa: true,
-    overrides: {tollkeeper: true}})});
+  // Baron Blackiron was released on 9 October 2026; the unbuilt case pins his switch to dev.
+  const panel = territoryPanel(profile, {featureFlags: createFeatureFlags({
+    catalog: {...FEATURE_STATES, blackiron: 'dev'}, storage: null, qa: true, overrides: {tollkeeper: true}})});
   ok(panel.includes('Salt Flats Convoy Raid'), 'the native territory panel retains its named venue');
   ok(!panel.includes('Salt Flats Convoy Raid (coming later)'), 'the built native venue has no stale coming-later suffix');
   const unbuilt = panel.match(/<article class="territory-card"><h4>[^<]*Black[^<]*<\/h4>[\s\S]*?<\/article>/i)?.[0];

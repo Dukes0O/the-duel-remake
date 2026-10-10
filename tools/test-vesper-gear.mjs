@@ -111,7 +111,7 @@ test('Shock consumes Star instead of disable, ends even shielded Scrap Magnet an
 });
 
 test('Vesper personal recharge is 13.5 s with unlimited uses; car Tesla recharge and feature isolation stay native',()=>{
-  assert.equal(FEATURE_STATES['warlord-cards'],'dev');
+  assert.equal(FEATURE_STATES['warlord-cards'],'on');
   const f=footFixture();f.rival.s=f.rival.prevS=580;press(f);
   const user=f.state.crewGear;near(user.nextFireAt-user.lastFireAt,13.5,'Vesper signature recharge');
   assert.equal(user.ammo,null);

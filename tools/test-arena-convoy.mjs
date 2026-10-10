@@ -322,11 +322,12 @@ test('the native yard entry requires unlocked Salt Flats and some race-earned To
   equal(enter({xp: 0, hold: 25}), false, 'Tollkeeper hold cannot bypass the Salt Flats unlock');
 });
 
-test('Convoy Raid has its own dev switch', () => {
-  equal(FEATURE_STATES['convoy-raid'], 'dev', 'the unfinished Convoy mode must have a dev switch');
-  const released = createFeatureFlags({storage: {getItem: () => 'true'}, qa: false,
+test('Convoy Raid is released (on, 9 October 2026); its dev switch rules still hold when pinned to dev', () => {
+  equal(FEATURE_STATES['convoy-raid'], 'on', 'the released Convoy mode is on');
+  equal(createFeatureFlags({storage: null, qa: false}).enabled('convoy-raid'), true, 'Convoy is on in the released player build');
+  const dev = createFeatureFlags({catalog: {...FEATURE_STATES, 'convoy-raid': 'dev'}, storage: {getItem: () => 'true'}, qa: false,
     search: '?flags=convoy-raid'});
-  equal(released.enabled('convoy-raid'), false, 'Convoy stays hidden in the released player build');
+  equal(dev.enabled('convoy-raid'), false, 'a dev Convoy stays hidden in the released player build');
 });
 
 test('native entry admits Convoy Raid on the actual Salt Flats', () => {
@@ -382,7 +383,7 @@ test('identical native entry seeds and inputs keep the convoy repeatable', () =>
 test('native Convoy admission is independently default-off, explicit-off and explicit-on', () => {
   const outcomes = [];
   for (const request of [null, false, true]) {
-    const flags = createFeatureFlags({storage: null, qa: request !== null,
+    const flags = createFeatureFlags({catalog: {...FEATURE_STATES, 'convoy-raid': 'dev'}, storage: null, qa: request !== null,
       overrides: {'salt-flats': true, ...(request === null ? {} : {'convoy-raid': request})}});
     const duel = new Duel({seed: 307, featureFlags: flags});
     duel.state.wastelandGateDiscovered = true;
