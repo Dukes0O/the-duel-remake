@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Duel · Phase 4 source choices</title>
+<style>
+:root {
+  --ink:#17201f;
+  --muted:#53615d;
+  --paper:#f2f1eb;
+  --card:#fff;
+  --line:#d6dcd5;
+  --accent:#dca73d;
+  --green:#255d49
+}
+
+* {
+  box-sizing:border-box
+}
+html {
+  scroll-behavior:smooth;
+  scroll-padding-top:85px
+}
+body {
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font:16px/1.55 system-ui,Segoe UI,sans-serif
+}
+a {
+  color:#205d67;
+  text-underline-offset:3px
+}
+a:hover {
+  color:#103941
+}
+a:focus-visible {
+  outline:3px solid #b9780b;
+  outline-offset:5px
+}
+header {
+  background:#142420;
+  color:#f4f2e8;
+  padding:55px max(24px,calc((100vw - 1280px)/2)) 34px
+}
+.eyebrow {
+  font-size:11px;
+  font-weight:750;
+  letter-spacing:1.9px;
+  margin:0 0 6px;
+  color:var(--green)
+}
+header .eyebrow {
+  color:#edbe62
+}
+h1 {
+  font-size:clamp(36px,4vw,60px);
+  line-height:1.08;
+  letter-spacing:-2px;
+  max-width:850px;
+  margin:10px 0 19px
+}
+header .lead {
+  max-width:780px;
+  font-size:19px;
+  color:#d9e2db
+}
+header .meta {
+  font-size:13px;
+  color:#bac9c0;
+  margin-top:25px
+}
+.summary {
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:9px;
+  margin-top:28px
+}
+.summary a {
+  color:white;
+  background:#243a32;
+  border:1px solid #416050;
+  border-radius:8px;
+  padding:12px;
+  text-decoration:none;
+  display:flex;
+  gap:10px;
+  align-items:center
+}
+.summary b {
+  font-size:28px;
+  color:#edbe62
+}
+.summary span {
+  font-size:12px;
+  line-height:1.3
+}
+nav {
+  position:sticky;
+  top:0;
+  background:#fdfdf8ee;
+  backdrop-filter:blur(12px);
+  z-index:1;
+  border-bottom:1px solid var(--line);
+  padding:13px 24px;
+  display:flex;
+  justify-content:center;
+  gap:24px;
+  flex-wrap:wrap
+}
+nav a {
+  font-size:13px;
+  font-weight:650;
+  text-decoration:none;
+  color:var(--ink)
+}
+main {
+  max-width:1328px;
+  margin:auto;
+  padding:28px 24px 60px
+}
+.notice {
+  background:#fff8e7;
+  border-left:4px solid var(--accent);
+  padding:18px 22px;
+  margin:0 0 32px
+}
+.notice p {
+  margin:4px 0
+}
+.legend {
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  font-size:13px;
+  margin-top:14px
+}
+section {
+  margin:0 0 56px;
+  padding-top:12px
+}
+.section-title {
+  display:flex;
+  gap:18px;
+  border-top:1px solid #a9b8ac;
+  padding-top:27px;
+  margin-bottom:22px
+}
+.section-title>span {
+  color:#6c7f70;
+  font:700 30px/1.3 ui-monospace,monospace
+}
+h2 {
+  font-size:29px;
+  line-height:1.15;
+  margin:0 0 9px;
+  letter-spacing:-.6px
+}
+.section-title p {
+  color:var(--muted);
+  margin:0
+}
+h3 {
+  font-size:19px;
+  line-height:1.25;
+  margin:4px 0 0
+}
+.choices {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px
+}
+.choice {
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+  padding:21px
+}
+.choice.recommended {
+  border:2px solid #7c9b7b;
+  padding:20px
+}
+.choice-top {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  margin-bottom:17px
+}
+.number {
+  display:grid;
+  place-items:center;
+  min-width:47px;
+  height:47px;
+  background:#e8ede4;
+  border-radius:50%;
+  font-size:24px
+}
+.recommended .number {
+  background:#244e39;
+  color:white
+}
+.previews {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px
+}
+.previews.single {
+  grid-template-columns:1fr
+}
+.preview {
+  display:block;
+  text-decoration:none;
+  color:var(--muted);
+  min-width:0
+}
+.preview img {
+  display:block;
+  width:100%;
+  height:200px;
+  object-fit:contain;
+  background:#e6e8e2;
+  border:1px solid #dde1da;
+  border-radius:7px
+}
+.previews.single img {
+  height:200px
+}
+.preview span {
+  display:block;
+  font-size:11px;
+  line-height:1.3;
+  padding-top:6px
+}
+.choice p {
+  margin:12px 0 0;
+  font-size:14px
+}
+.choice .eyebrow {
+  margin:0;
+  font-size:10px
+}
+.choice .sources {
+  font-size:12px
+}
+.risk {
+  color:#665338
+}
+.table-wrap {
+  overflow:auto;
+  margin-top:17px;
+  border:1px solid var(--line);
+  border-radius:9px
+}
+table {
+  border-collapse:collapse;
+  width:100%;
+  background:#fcfcf7;
+  font-size:13px;
+  table-layout:fixed
+}
+thead {
+  background:#dfe6dc
+}
+th,td {
+  vertical-align:top;
+  padding:12px 14px;
+  text-align:left;
+  border-bottom:1px solid var(--line)
+}
+th:first-child {
+  width:19%
+}
+tbody th {
+  font-weight:600
+}
+td {
+  width:40.5%
+}
+.state {
+  display:block;
+  text-transform:uppercase;
+  font-size:10px;
+  letter-spacing:.7px;
+  color:#25624a;
+  margin-bottom:4px
+}
+.state.adapt {
+  color:#80600b
+}
+.state.gap {
+  color:#a13c2d
+}
+.back {
+  display:block;
+  text-align:right;
+  font-size:12px;
+  margin-top:9px
+}
+.source-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px
+}
+.source {
+  background:white;
+  padding:17px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  scroll-margin-top:100px
+}
+.source img {
+  height:175px
+}
+.source p {
+  font-size:12px;
+  margin:10px 0
+}
+.source .by {
+  font-weight:650
+}
+.source>a:last-child {
+  font-size:13px
+}
+footer {
+  border-top:1px solid var(--line);
+  padding-top:22px;
+  font-size:13px;
+  color:var(--muted)
+}
+.credit {
+  background:white;
+  padding:16px;
+  border-radius:8px;
+  overflow-wrap:anywhere
+}
+
+@media(max-width:850px) {
+  .summary {
+  grid-template-columns:repeat(3,1fr)
+}
+.choices {
+  grid-template-columns:1fr
+}
+.source-grid {
+  grid-template-columns:1fr 1fr
+}
+nav {
+  gap:12px
+}
+.previews img {
+  height:185px
+}
+table {
+  min-width:720px
+}
+
+}
+
+@media(max-width:520px) {
+  main {
+  padding:22px 14px
+}
+.source-grid {
+  grid-template-columns:1fr
+}
+.summary {
+  grid-template-columns:1fr 1fr
+}
+.choice {
+  padding:16px
+}
+.choice.recommended {
+  padding:15px
+}
+header {
+  padding:35px 22px 25px
+}
+h1 {
+  letter-spacing:-1px
+}
+nav {
+  position:static
+}
+
+}
+
+@media print {
+  nav,.back {
+  display:none
+}
+header {
+  padding:22px;
+  background:white;
+  color:#17201f
+}
+header .lead,header .meta {
+  color:#53615d
+}
+.summary a {
+  color:#17201f;
+  background:white
+}
+.choices {
+  break-inside:avoid
+}
+section {
+  break-before:page
+}
+.source-grid {
+  grid-template-columns:repeat(2,1fr)
+}
+.preview img {
+  height:150px
+}
+
+}
+
+</style>
+</head>
+<body id="top">
+<header>
+<p class="eyebrow">THE DUEL · CIRCUITS · P4-ART-SRC</p>
+<h1>Source pieces selected.<br>The track's look comes next.</h1>
+<p class="lead">Kyle selected <strong>1, 3, 5, 8, 9 and 11</strong> on <strong>10 October 2026</strong>. The two donor mixes per group remain here for comparison. Every image is an unmodified publisher preview, not an in-game render.</p>
+<p class="meta">Selection recorded · 10 October 2026 · Donors approved · No new model downloads or imports</p>
+<div class="summary">
+<a href="#race">
+<b>1</b>
+<span>Race infrastructure</span>
+</a>
+<a href="#barriers">
+<b>3</b>
+<span>Barriers and track furniture</span>
+</a>
+<a href="#street">
+<b>5</b>
+<span>Harbour street circuit</span>
+</a>
+<a href="#forest">
+<b>8</b>
+<span>Autumn forest resort</span>
+</a>
+<a href="#snow">
+<b>9</b>
+<span>Snow kit and summit</span>
+</a>
+<a href="#creatures">
+<b>11</b>
+<span>Snowman and yeti</span>
+</a>
+</div>
+</header>
+<nav aria-label="Source groups">
+<a href="#race">Race infrastructure</a>
+<a href="#barriers">Barriers</a>
+<a href="#street">Street</a>
+<a href="#forest">Forest</a>
+<a href="#snow">Snow</a>
+<a href="#creatures">Snowman and yeti</a>
+<a href="#sources">Source &amp; license list</a>
+</nav>
+<main>
+<aside class="notice">
+<p>
+<strong>These picks approve donors, not the finished art.</strong> Most previews are clean or stylized. All need a believable scale, restrained colours and worn materials before they fit The Duel.</p>
+<p>
+<strong>Three open pieces:</strong> the Lantern Tower is a proposed assembly; no ready-made 10 m avalanche gallery was verified; the yeti's roar, chest beat and lope clips remain unverified. Those are shown below before any selection.</p>
+<p>Click an image for the original full preview. Some alternatives share support parts; they are different mixes, not twelve separate complete packs.</p>
+<div class="legend">
+<span>
+<b class="state">Found</b>Visible or named by the source</span>
+<span>
+<b class="state">Reuse</b>Already in the project library</span>
+<span>
+<b class="state adapt">Adapt</b>Donor exists; work described</span>
+<span>
+<b class="state gap">Gap</b>Required part/clip unverified</span>
+</div>
+</aside>
+<section id="race">
+<div class="section-title">
+<span>01</span>
+<div>
+<h2>Race infrastructure</h2>
+<p>Gantry, five lights, pit garages, pit wall and grandstands. Keep the existing stadium crowd.</p>
+</div>
+</div>
+<div class="choices">
+<article class="choice recommended">
+<div class="choice-top">
+<b class="number">1</b>
+<div>
+<p class="eyebrow">SELECTED BY KYLE · 10 OCT 2026</p>
+<h3>Kenney venue + concrete pit wall</h3>
+</div>
+</div>
+<div class="previews single">
+<a class="preview" href="https://kenney.nl/media/pages/assets/racing-kit/dc5ecd9a41-1677580942/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/racing-kit/dc5ecd9a41-1677580942/preview.png" alt="Racing Kit — official source preview" loading="lazy">
+<span>Racing Kit · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-kenney-racing">Racing Kit</a> · <a href="#source-barrier">3D Concrete Barrier</a>
+</p>
+<p>
+<strong>Why it fits.</strong> A coherent established kit. Keep the useful building and seating shapes, then age the surfaces.</p>
+<p class="risk">
+<strong>Work still needed.</strong> The preview is distinctly miniature-like. This is a donor choice, not acceptance of its bright finish.</p>
+</article>
+<article class="choice">
+<div class="choice-top">
+<b class="number">2</b>
+<div>
+<p class="eyebrow">UNSELECTED ALTERNATIVE</p>
+<h3>Grand Prix venue + concrete pit wall</h3>
+</div>
+</div>
+<div class="previews single">
+<a class="preview" href="https://cdn.3dassets.dev/assets/15234/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/15234/v1/poster.webp" alt="Grand Prix Circuit — official source preview" loading="lazy">
+<span>Grand Prix Circuit · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-gp">Grand Prix Circuit</a> · <a href="#source-barrier">3D Concrete Barrier</a>
+</p>
+<p>
+<strong>Why it fits.</strong> The gantry already shows five hanging light blocks. Named garages and six-tier stands are available.</p>
+<p class="risk">
+<strong>Work still needed.</strong> AI-authored; the gantry and garage are very spare. Add believable housings, supports and surface wear.</p>
+</article>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Required item</th>
+<th>Left option</th>
+<th>Right option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Start gantry + five lights</th>
+<td>
+<b class="state adapt">Adapt</b>Racing Kit gantry; replace its signal layout with exactly five lamps.</td>
+<td>
+<b class="state found">Found</b>Grand Prix Start light gantry visibly has five blocks. Separate lamp control still needs inspection.</td>
+</tr>
+<tr>
+<th>Pit garages</th>
+<td>
+<b class="state found">Found</b>Racing Kit garage buildings in the official preview.</td>
+<td>
+<b class="state found">Found</b>Grand Prix Open pit garage bay and end wall.</td>
+</tr>
+<tr>
+<th>Pit wall</th>
+<td>
+<b class="state adapt">Adapt</b>Repeat the concrete Jersey barrier along the pit edge.</td>
+<td>
+<b class="state adapt">Adapt</b>Same concrete barrier; Grand Prix monitor stand can sit behind it.</td>
+</tr>
+<tr>
+<th>Grandstands</th>
+<td>
+<b class="state found">Found</b>Racing Kit straight and curved seating blocks.</td>
+<td>
+<b class="state found">Found</b>Grand Prix Six-tier grandstand module and angled corner.</td>
+</tr>
+<tr>
+<th>Crowd</th>
+<td>
+<b class="state reuse">Reuse</b>Existing stadium crowd, as CIRCUITS specifies.</td>
+<td>
+<b class="state reuse">Reuse</b>Same existing crowd. No new character source.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="back" href="#top">Back to choices ↑</a>
+</section>
+<section id="barriers">
+<div class="section-title">
+<span>02</span>
+<div>
+<h2>Barriers and track furniture</h2>
+<p>One family for the track edges; use geometry only where the driving camera can read it.</p>
+</div>
+</div>
+<div class="choices">
+<article class="choice recommended">
+<div class="choice-top">
+<b class="number">3</b>
+<div>
+<p class="eyebrow">SELECTED BY KYLE · 10 OCT 2026</p>
+<h3>Grand Prix barriers + worn concrete</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://cdn.3dassets.dev/assets/15234/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/15234/v1/poster.webp" alt="Grand Prix Circuit — official source preview" loading="lazy">
+<span>Grand Prix Circuit · official preview ↗</span>
+</a>
+<a class="preview" href="https://opengameart.org/sites/default/files/jerseybarrier.jpg" target="_blank" rel="noopener">
+<img src="https://opengameart.org/sites/default/files/jerseybarrier.jpg" alt="3D Concrete Barrier — official source preview" loading="lazy">
+<span>3D Concrete Barrier · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-gp">Grand Prix Circuit</a> · <a href="#source-barrier">3D Concrete Barrier</a>
+</p>
+<p>
+<strong>Why it fits.</strong> Simple guardrail and fence donors, with a more convincing worn concrete barrier.</p>
+<p class="risk">
+<strong>Work still needed.</strong> The guardrail is a flat double rail, not a verified corrugated armco profile. Tyre walls need a modest height adjustment.</p>
+</article>
+<article class="choice">
+<div class="choice-top">
+<b class="number">4</b>
+<div>
+<p class="eyebrow">UNSELECTED ALTERNATIVE</p>
+<h3>Kart tyre walls + Grand Prix safety parts</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://cdn.3dassets.dev/assets/34369/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/34369/v1/poster.webp" alt="Go Kart Track and Pit Lane — official source preview" loading="lazy">
+<span>Go Kart Track and Pit Lane · official preview ↗</span>
+</a>
+<a class="preview" href="https://opengameart.org/sites/default/files/jerseybarrier.jpg" target="_blank" rel="noopener">
+<img src="https://opengameart.org/sites/default/files/jerseybarrier.jpg" alt="3D Concrete Barrier — official source preview" loading="lazy">
+<span>3D Concrete Barrier · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-kart">Go Kart Track and Pit Lane</a> · <a href="#source-gp">Grand Prix Circuit</a> · <a href="#source-barrier">3D Concrete Barrier</a>
+</p>
+<p>
+<strong>Why it fits.</strong> The kart kit adds strapped tyre walls, low kerbs and a clear marshal platform.</p>
+<p class="risk">
+<strong>Work still needed.</strong> Mixed donor scales and bright marker tyres need a shared material pass. Use the taller Grand Prix fence for car racing.</p>
+</article>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Required item</th>
+<th>Left option</th>
+<th>Right option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Kerbs</th>
+<td>
+<b class="state found">Found</b>Grand Prix straight/corner kerbs; code-made kerbs remain an allowed alternative.</td>
+<td>
+<b class="state found">Found</b>Kart red/white kerb sections; fit to the road curve.</td>
+</tr>
+<tr>
+<th>Armco</th>
+<td>
+<b class="state adapt">Adapt</b>Grand Prix double guardrail; add a corrugated steel profile and worn finish.</td>
+<td>
+<b class="state adapt">Adapt</b>Same Grand Prix guardrail donor; kart spectator rails are not armco.</td>
+</tr>
+<tr>
+<th>Concrete walls</th>
+<td>
+<b class="state found">Found</b>MrMajestatisch Jersey barrier; repeat as track and pit wall modules.</td>
+<td>
+<b class="state found">Found</b>Same CC0 Jersey barrier donor.</td>
+</tr>
+<tr>
+<th>Catch fences</th>
+<td>
+<b class="state found">Found</b>Grand Prix Debris containment fence panel and corner post.</td>
+<td>
+<b class="state found">Found</b>Same Grand Prix containment fence; do not substitute short kart spectator fencing.</td>
+</tr>
+<tr>
+<th>Tyre walls</th>
+<td>
+<b class="state found">Found</b>Grand Prix straight and corner tyre-stack walls.</td>
+<td>
+<b class="state found">Found</b>Kart Tyre Wall Barrier Section and Corner.</td>
+</tr>
+<tr>
+<th>Marshal posts</th>
+<td>
+<b class="state found">Found</b>Grand Prix Marshal observation hut.</td>
+<td>
+<b class="state found">Found</b>Kart Flag Post and Marshal Post.</td>
+</tr>
+<tr>
+<th>Braking boards</th>
+<td>
+<b class="state adapt">Adapt</b>Grand Prix blank distance board; add readable 150 / 100 / 50 faces.</td>
+<td>
+<b class="state adapt">Adapt</b>Same blank board donor and project-authored numerals.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="back" href="#top">Back to choices ↑</a>
+</section>
+<section id="street">
+<div class="section-title">
+<span>03</span>
+<div>
+<h2>Harbour street circuit</h2>
+<p>Warm shop light, restrained neon and working boats. The Lantern Tower is our own landmark.</p>
+</div>
+</div>
+<div class="choices">
+<article class="choice recommended">
+<div class="choice-top">
+<b class="number">5</b>
+<div>
+<p class="eyebrow">SELECTED BY KYLE · 10 OCT 2026</p>
+<h3>Kenney shop blocks + selected neon details</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://kenney.nl/media/pages/assets/city-kit-commercial/f9afc81822-1747481468/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/city-kit-commercial/f9afc81822-1747481468/preview.png" alt="City Kit (Commercial) — official source preview" loading="lazy">
+<span>City Kit (Commercial) · official preview ↗</span>
+</a>
+<a class="preview" href="https://cdn.3dassets.dev/assets/37848/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/37848/v1/poster.webp" alt="Cyberpunk Apartment and Neon Block — official source preview" loading="lazy">
+<span>Cyberpunk Apartment and Neon Block · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-city">City Kit (Commercial)</a> · <a href="#source-neon">Cyberpunk Apartment and Neon Block</a> · <a href="#source-boats">Watercraft Kit</a>
+</p>
+<p>
+<strong>Why it fits.</strong> Recognisable low-rise shopfronts, with only a few signs and lantern strings from the detailed kit.</p>
+<p class="risk">
+<strong>Work still needed.</strong> The city kit is clean and generic. Rework windows, awnings and roughness; avoid turning the whole harbour into a sci-fi district.</p>
+</article>
+<article class="choice">
+<div class="choice-top">
+<b class="number">6</b>
+<div>
+<p class="eyebrow">UNSELECTED ALTERNATIVE</p>
+<h3>Modular neon facades + harbour boats</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://cdn.3dassets.dev/assets/37848/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/37848/v1/poster.webp" alt="Cyberpunk Apartment and Neon Block — official source preview" loading="lazy">
+<span>Cyberpunk Apartment and Neon Block · official preview ↗</span>
+</a>
+<a class="preview" href="https://kenney.nl/media/pages/assets/watercraft-kit/0a7953e9b7-1713354133/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/watercraft-kit/0a7953e9b7-1713354133/preview.png" alt="Watercraft Kit — official source preview" loading="lazy">
+<span>Watercraft Kit · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-neon">Cyberpunk Apartment and Neon Block</a> · <a href="#source-city">City Kit (Commercial)</a> · <a href="#source-boats">Watercraft Kit</a>
+</p>
+<p>
+<strong>Why it fits.</strong> More visible pipes, balcony cages and sign brackets suit a worn night street.</p>
+<p class="risk">
+<strong>Work still needed.</strong> The source is an apartment kit. Shop entrances and counters require adaptation; repeated 4,996-triangle lantern strips need simplification.</p>
+</article>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Required item</th>
+<th>Left option</th>
+<th>Right option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Shopfronts</th>
+<td>
+<b class="state found">Found</b>City Kit low-rise commercial buildings and awnings.</td>
+<td>
+<b class="state adapt">Adapt</b>Neon Block window/wall modules become shop bays. They are not supplied as completed shops.</td>
+</tr>
+<tr>
+<th>Neon signs</th>
+<td>
+<b class="state adapt">Adapt</b>Neon Block blank sign frames; add original shop names and controlled emissive materials.</td>
+<td>
+<b class="state adapt">Adapt</b>Same source frames; original text and night lighting still needed.</td>
+</tr>
+<tr>
+<th>Lanterns</th>
+<td>
+<b class="state found">Found</b>Neon Block Paper Lantern Strip: six lanterns on a cable.</td>
+<td>
+<b class="state found">Found</b>Same six-lantern strip; simplify repeated geometry.</td>
+</tr>
+<tr>
+<th>Harbour boats</th>
+<td>
+<b class="state found">Found</b>Watercraft Kit workboats, small motorboats and barges.</td>
+<td>
+<b class="state found">Found</b>Same Watercraft Kit; choose a different mix of working hulls if preferred.</td>
+</tr>
+<tr>
+<th>Lantern Tower</th>
+<td>
+<b class="state adapt">Adapt</b>Use a City Kit tall building as the base, with a new lantern crown assembled from the lantern/sign donors.</td>
+<td>
+<b class="state adapt">Adapt</b>Use City Kit tower mass plus Neon Block facade modules and lantern crown. No finished Lantern Tower is supplied.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="back" href="#top">Back to choices ↑</a>
+</section>
+<section id="forest">
+<div class="section-title">
+<span>04</span>
+<div>
+<h2>Autumn forest resort</h2>
+<p>A timber lodge, a moving chairlift, a lake dock and autumn trees.</p>
+</div>
+</div>
+<div class="choices">
+<article class="choice">
+<div class="choice-top">
+<b class="number">7</b>
+<div>
+<p class="eyebrow">UNSELECTED ALTERNATIVE</p>
+<h3>Log-cabin lodge + sourced chairlift</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" alt="Holiday Kit — official source preview" loading="lazy">
+<span>Holiday Kit · official preview ↗</span>
+</a>
+<a class="preview" href="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" target="_blank" rel="noopener">
+<img src="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" alt="Ultimate Nature Pack — official source preview" loading="lazy">
+<span>Ultimate Nature Pack · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-holiday">Holiday Kit</a> · <a href="#source-ski">Ski Resort and Snow Park</a> · <a href="#source-boats">Watercraft Kit</a> · <a href="#source-nature">Ultimate Nature Pack</a>
+</p>
+<p>
+<strong>Why it fits.</strong> Warm log walls give the strongest rustic lodge cue. Reuse the already licensed nature pack.</p>
+<p class="risk">
+<strong>Work still needed.</strong> Holiday Kit is chunky and festive. Remove decorations and snow, enlarge the lodge footprint and weather the timber.</p>
+</article>
+<article class="choice recommended">
+<div class="choice-top">
+<b class="number">8</b>
+<div>
+<p class="eyebrow">SELECTED BY KYLE · 10 OCT 2026</p>
+<h3>Ski Resort lodge and lift + existing nature</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://cdn.3dassets.dev/assets/26036/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/26036/v1/poster.webp" alt="Ski Resort and Snow Park — official source preview" loading="lazy">
+<span>Ski Resort and Snow Park · official preview ↗</span>
+</a>
+<a class="preview" href="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" target="_blank" rel="noopener">
+<img src="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" alt="Ultimate Nature Pack — official source preview" loading="lazy">
+<span>Ultimate Nature Pack · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-ski">Ski Resort and Snow Park</a> · <a href="#source-boats">Watercraft Kit</a> · <a href="#source-nature">Ultimate Nature Pack</a>
+</p>
+<p>
+<strong>Why it fits.</strong> The two-storey Lodge Hall and lift hardware share a useful scale. Fewer structural edits than the cabin option.</p>
+<p class="risk">
+<strong>Work still needed.</strong> AI-authored lodge/lift; remove roof snow for autumn. Cable sag, hillside alignment and chair movement are future work.</p>
+</article>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Required item</th>
+<th>Left option</th>
+<th>Right option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Ski lodge</th>
+<td>
+<b class="state adapt">Adapt</b>Holiday Kit cabin wall/roof pieces assembled into a larger lodge; remove festive details.</td>
+<td>
+<b class="state adapt">Adapt</b>Ski Resort Lodge Hall (12 × 9 m footprint in source description); remove snow and mute colours.</td>
+</tr>
+<tr>
+<th>Chairlift towers</th>
+<td>
+<b class="state found">Found</b>Ski Resort Chairlift Tower, with crossarm and sheave wheels.</td>
+<td>
+<b class="state found">Found</b>Same named Chairlift Tower.</td>
+</tr>
+<tr>
+<th>Chairlift cable</th>
+<td>
+<b class="state adapt">Adapt</b>Ski Resort Cable Span 12 m supplies straight ropes. Remove its snow strip and fit sag/slope.</td>
+<td>
+<b class="state adapt">Adapt</b>Same cable donor. Do not claim the static flat span is a finished hillside lift.</td>
+</tr>
+<tr>
+<th>Chairlift chairs</th>
+<td>
+<b class="state found">Found</b>Ski Resort four-seat chair and hanger. Game-driven motion still required.</td>
+<td>
+<b class="state found">Found</b>Same chair donor; source metadata calls it static.</td>
+</tr>
+<tr>
+<th>Wooden dock</th>
+<td>
+<b class="state found">Found</b>Watercraft Kit dock sections visible beside the small boats.</td>
+<td>
+<b class="state found">Found</b>Same dock sections; fit to the lake shore.</td>
+</tr>
+<tr>
+<th>Autumn trees</th>
+<td>
+<b class="state reuse">Reuse</b>Existing Quaternius Ultimate Nature library: autumn variants visible in its preview.</td>
+<td>
+<b class="state reuse">Reuse</b>Same licensed source. Vary sizes and mute the orange palette.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="back" href="#top">Back to choices ↑</a>
+</section>
+<section id="snow">
+<div class="section-title">
+<span>05</span>
+<div>
+<h2>Snow kit and summit</h2>
+<p>Reuse the existing snowy vegetation where possible. Neither option is a finished avalanche gallery.</p>
+</div>
+</div>
+<div class="choices">
+<article class="choice recommended">
+<div class="choice-top">
+<b class="number">9</b>
+<div>
+<p class="eyebrow">SELECTED BY KYLE · 10 OCT 2026</p>
+<h3>Existing nature + resort structures</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" target="_blank" rel="noopener">
+<img src="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" alt="Ultimate Nature Pack — official source preview" loading="lazy">
+<span>Ultimate Nature Pack · official preview ↗</span>
+</a>
+<a class="preview" href="https://cdn.3dassets.dev/assets/26036/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/26036/v1/poster.webp" alt="Ski Resort and Snow Park — official source preview" loading="lazy">
+<span>Ski Resort and Snow Park · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-nature">Ultimate Nature Pack</a> · <a href="#source-holiday">Holiday Kit</a> · <a href="#source-ski">Ski Resort and Snow Park</a> · <a href="#source-dome">Observatory Dome Base</a>
+</p>
+<p>
+<strong>Why it fits.</strong> Existing snow-loaded pines reduce new imports. Resort hut and canopy give useful structural donors.</p>
+<p class="risk">
+<strong>Work still needed.</strong> The gallery needs a 10 m clear road, continuous roof and snow loading. The observatory donor is much too detailed at 36,408 triangles.</p>
+</article>
+<article class="choice">
+<div class="choice-top">
+<b class="number">10</b>
+<div>
+<p class="eyebrow">UNSELECTED ALTERNATIVE</p>
+<h3>Holiday snow shapes + garage-bay gallery donor</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" alt="Holiday Kit — official source preview" loading="lazy">
+<span>Holiday Kit · official preview ↗</span>
+</a>
+<a class="preview" href="https://cdn.3dassets.dev/assets/31843/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/31843/v1/poster.webp" alt="Observatory Dome Base — official source preview" loading="lazy">
+<span>Observatory Dome Base · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-holiday">Holiday Kit</a> · <a href="#source-gp">Grand Prix Circuit</a> · <a href="#source-dome">Observatory Dome Base</a>
+</p>
+<p>
+<strong>Why it fits.</strong> A consistent set of snowy pines, rocks, ground patches and cabin pieces.</p>
+<p class="risk">
+<strong>Work still needed.</strong> Toy-like snow shapes need irregular edges. Garage bays require major width/support changes for a believable gallery.</p>
+</article>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Required item</th>
+<th>Left option</th>
+<th>Right option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Snow-loaded pines</th>
+<td>
+<b class="state reuse">Reuse</b>Quaternius Nature snow-loaded pine variants.</td>
+<td>
+<b class="state found">Found</b>Holiday Kit snowy pines.</td>
+</tr>
+<tr>
+<th>Snow ground</th>
+<td>
+<b class="state adapt">Adapt</b>Ski Resort Piste Tile as a surface donor; fit material to the game's terrain.</td>
+<td>
+<b class="state adapt">Adapt</b>Holiday Kit snow patches; extend with the terrain material after selection.</td>
+</tr>
+<tr>
+<th>Rocks with snow</th>
+<td>
+<b class="state found">Found</b>Holiday Kit snow-capped rock clusters.</td>
+<td>
+<b class="state found">Found</b>Same Holiday Kit rock clusters.</td>
+</tr>
+<tr>
+<th>Plough banks</th>
+<td>
+<b class="state adapt">Adapt</b>Stretch and vary Holiday snow piles along road edges; add dirt at the base.</td>
+<td>
+<b class="state adapt">Adapt</b>Same piles; no purpose-made plough bank was verified.</td>
+</tr>
+<tr>
+<th>Snow shed / gallery</th>
+<td>
+<b class="state adapt">Adapt</b>Ski Resort Car Park Shelter: widen/rework supports to give 10 m clear road, join roof sections, add uphill retaining side.</td>
+<td>
+<b class="state adapt">Adapt</b>Grand Prix Open pit garage bay: combine/rework bays, remove the road-blocking centre support, add roof depth and snow. No finished 10 m gallery.</td>
+</tr>
+<tr>
+<th>Summit hut</th>
+<td>
+<b class="state found">Found</b>Ski Resort Warming Hut; weather and add lit windows.</td>
+<td>
+<b class="state adapt">Adapt</b>Holiday cabin pieces made into a small, undecorated summit hut.</td>
+</tr>
+<tr>
+<th>Observatory</th>
+<td>
+<b class="state adapt">Adapt</b>Observatory Dome Base: simplify, make the roof opaque, add snow and a lit base.</td>
+<td>
+<b class="state adapt">Adapt</b>Same dome donor. The glass-heavy official preview is not the intended finished look.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="back" href="#top">Back to choices ↑</a>
+</section>
+<section id="creatures">
+<div class="section-title">
+<span>06</span>
+<div>
+<h2>Snowman and yeti</h2>
+<p>Snowmen break into snow, hat and carrot. The yeti is a distant, harmless sighting.</p>
+</div>
+</div>
+<div class="choices">
+<article class="choice recommended">
+<div class="choice-top">
+<b class="number">11</b>
+<div>
+<p class="eyebrow">SELECTED BY KYLE · 10 OCT 2026</p>
+<h3>Holiday snowman + Quaternius full-body yeti</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" alt="Holiday Kit — official source preview" loading="lazy">
+<span>Holiday Kit · official preview ↗</span>
+</a>
+<a class="preview" href="https://quaternius.com/assets/images/fullres/ultimatemonsters.jpg" target="_blank" rel="noopener">
+<img src="https://quaternius.com/assets/images/fullres/ultimatemonsters.jpg" alt="Ultimate Monsters — official source preview" loading="lazy">
+<span>Ultimate Monsters · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-holiday">Holiday Kit</a> · <a href="#source-monsters">Ultimate Monsters</a>
+</p>
+<p>
+<strong>Why it fits.</strong> The named CC0 creators in CIRCUITS. Use the hatted snowman and the white/blue full-body yeti shown near the lower left of the monster lineup.</p>
+<p class="risk">
+<strong>Work still needed.</strong> The yeti needs less cartoonish proportions and colouring. The required gesture clips have not been verified.</p>
+</article>
+<article class="choice">
+<div class="choice-top">
+<b class="number">12</b>
+<div>
+<p class="eyebrow">UNSELECTED ALTERNATIVE</p>
+<h3>Holiday snowman variant + THE CUBE GUY yeti</h3>
+</div>
+</div>
+<div class="previews ">
+<a class="preview" href="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" alt="Holiday Kit — official source preview" loading="lazy">
+<span>Holiday Kit · official preview ↗</span>
+</a>
+<a class="preview" href="https://media.sketchfab.com/models/dc7ae2194c504a79bbe20fa450be6ad6/thumbnails/623dec006d14480aac7bb92b353c53c1/29a3aed4ba6b44b68511633645b8e9e2.jpeg" target="_blank" rel="noopener">
+<img src="https://media.sketchfab.com/models/dc7ae2194c504a79bbe20fa450be6ad6/thumbnails/623dec006d14480aac7bb92b353c53c1/29a3aed4ba6b44b68511633645b8e9e2.jpeg" alt="YETI — official source preview" loading="lazy">
+<span>YETI · official preview ↗</span>
+</a>
+</div>
+<p class="sources">
+<a href="#source-holiday">Holiday Kit</a> · <a href="#source-yeti">YETI</a>
+</p>
+<p>
+<strong>Why it fits.</strong> The longer-limbed, furred yeti has a more natural silhouette. The plain snowman can receive the hatted variant's accessories.</p>
+<p class="risk">
+<strong>Work still needed.</strong> CC-BY credit required. Rig and animations are unverified; allow more work than option 11. Download access may require an existing Sketchfab account.</p>
+</article>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Required item</th>
+<th>Left option</th>
+<th>Right option</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Snowman body</th>
+<td>
+<b class="state found">Found</b>Holiday Kit hatted snowman visible in the official preview.</td>
+<td>
+<b class="state found">Found</b>Holiday Kit plain snowman variant; this is a different body option from the same source pack.</td>
+</tr>
+<tr>
+<th>Flying hat + carrot</th>
+<td>
+<b class="state adapt">Adapt</b>Inspect and separate the hatted snowman's parts after selection. Do not assume separate meshes.</td>
+<td>
+<b class="state adapt">Adapt</b>Use hat/carrot from the same kit; attachment and separate debris pieces still need inspection.</td>
+</tr>
+<tr>
+<th>Yeti geometry</th>
+<td>
+<b class="state found">Found</b>Ultimate Monsters full-body white/blue yeti. Do not use the head-only Cute Monsters version.</td>
+<td>
+<b class="state found">Found</b>THE CUBE GUY's YETI; creator page reports 10.2k triangles.</td>
+</tr>
+<tr>
+<th>Roar / chest beat / lope</th>
+<td>
+<b class="state gap">Gap</b>Pack advertises animation, but these exact yeti clips are unverified. Inspect first; adapt/add clips if missing.</td>
+<td>
+<b class="state gap">Gap</b>No rig or clips confirmed. Plan rigging and all three motions unless the source proves otherwise.</td>
+</tr>
+<tr>
+<th>Credit</th>
+<td>
+<b class="state cc">CC0</b>No credit condition; retain creator/source provenance.</td>
+<td>
+<b class="state ccby">CC-BY</b>Credit title, THE CUBE GUY, source URL and CC BY 4.0; state modifications once made.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<a class="back" href="#top">Back to choices ↑</a>
+</section>
+<section id="sources">
+<div class="section-title">
+<span>↗</span>
+<div>
+<h2>Sources, rights and cautions</h2>
+<p>All licenses checked against the creator or publisher page. File contents, rigs and performance await selection and inspection.</p>
+</div>
+</div>
+<div class="source-grid">
+<article class="source" id="source-kenney-racing">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://kenney.nl/media/pages/assets/racing-kit/dc5ecd9a41-1677580942/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/racing-kit/dc5ecd9a41-1677580942/preview.png" alt="Racing Kit — official source preview" loading="lazy">
+<span>Racing Kit · official preview ↗</span>
+</a>
+<h3>Racing Kit</h3>
+<p class="by">Kenney · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>CC0 is linked on the official pack page.</p>
+<p>Clean, miniature-like finish needs real-world scaling, rough surfaces and restrained paint.</p>
+<a href="https://kenney.nl/assets/racing-kit" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-gp">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://cdn.3dassets.dev/assets/15234/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/15234/v1/poster.webp" alt="Grand Prix Circuit — official source preview" loading="lazy">
+<span>Grand Prix Circuit · official preview ↗</span>
+</a>
+<h3>Grand Prix Circuit</h3>
+<p class="by">3D Assets · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official pack and item metadata specify CC0 1.0.</p>
+<p>Publisher reports AI generation with Claude Fable 5.1. Very plain geometry needs close inspection and weathering.</p>
+<a href="https://3dassets.dev/packs/grand-prix-circuit-and-open-wheel" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-kart">
+<b class="state">Unselected alternative</b>
+<a class="preview" href="https://cdn.3dassets.dev/assets/34369/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/34369/v1/poster.webp" alt="Go Kart Track and Pit Lane — official source preview" loading="lazy">
+<span>Go Kart Track and Pit Lane · official preview ↗</span>
+</a>
+<h3>Go Kart Track and Pit Lane</h3>
+<p class="by">3D Assets · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official pack and item metadata specify CC0 1.0.</p>
+<p>Publisher reports AI generation with Claude Opus 5. Kart-scale furniture needs rescaling; primary colours need toning down.</p>
+<a href="https://3dassets.dev/packs/go-kart-track-and-pit-lane" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-barrier">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://opengameart.org/sites/default/files/jerseybarrier.jpg" target="_blank" rel="noopener">
+<img src="https://opengameart.org/sites/default/files/jerseybarrier.jpg" alt="3D Concrete Barrier — official source preview" loading="lazy">
+<span>3D Concrete Barrier · official preview ↗</span>
+</a>
+<h3>3D Concrete Barrier</h3>
+<p class="by">MrMajestatisch · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Creator's OpenGameArt page links CC0 and supplies FBX/Blend downloads.</p>
+<p>Source texture maps are not independently inspected. Confirm included texture provenance and reduce maps after selection.</p>
+<a href="https://opengameart.org/content/3d-concrete-barrier" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-city">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://kenney.nl/media/pages/assets/city-kit-commercial/f9afc81822-1747481468/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/city-kit-commercial/f9afc81822-1747481468/preview.png" alt="City Kit (Commercial) — official source preview" loading="lazy">
+<span>City Kit (Commercial) · official preview ↗</span>
+</a>
+<h3>City Kit (Commercial)</h3>
+<p class="by">Kenney · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>CC0 is linked on the official pack page.</p>
+<p>Modern white blocks need warm shop lighting, mixed signs and dirt; the Lantern Tower remains a custom assembly.</p>
+<a href="https://kenney.nl/assets/city-kit-commercial" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-boats">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://kenney.nl/media/pages/assets/watercraft-kit/0a7953e9b7-1713354133/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/watercraft-kit/0a7953e9b7-1713354133/preview.png" alt="Watercraft Kit — official source preview" loading="lazy">
+<span>Watercraft Kit · official preview ↗</span>
+</a>
+<h3>Watercraft Kit</h3>
+<p class="by">Kenney · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>CC0 is linked on the official pack page.</p>
+<p>Use fishing/workboat shapes and mute the bright palette. Dock proportions and mooring details need inspection.</p>
+<a href="https://kenney.nl/assets/watercraft-kit" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-neon">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://cdn.3dassets.dev/assets/37848/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/37848/v1/poster.webp" alt="Cyberpunk Apartment and Neon Block — official source preview" loading="lazy">
+<span>Cyberpunk Apartment and Neon Block · official preview ↗</span>
+</a>
+<h3>Cyberpunk Apartment and Neon Block</h3>
+<p class="by">3D Assets · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official pack and item metadata specify CC0 1.0.</p>
+<p>Publisher reports AI generation with Claude Opus 5. Six-lantern strip is listed at 4,996 triangles; simplify for repeats. Apartment fronts are not finished shops.</p>
+<a href="https://3dassets.dev/packs/cyberpunk-apartment-and-neon-block" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-holiday">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" target="_blank" rel="noopener">
+<img src="https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png" alt="Holiday Kit — official source preview" loading="lazy">
+<span>Holiday Kit · official preview ↗</span>
+</a>
+<h3>Holiday Kit</h3>
+<p class="by">Kenney · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>CC0 is linked on the official pack page.</p>
+<p>Remove festive details and reduce chunky proportions. Separate hat/carrot meshes and deformation are not verified.</p>
+<a href="https://kenney.nl/assets/holiday-kit" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-ski">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://cdn.3dassets.dev/assets/26036/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/26036/v1/poster.webp" alt="Ski Resort and Snow Park — official source preview" loading="lazy">
+<span>Ski Resort and Snow Park · official preview ↗</span>
+</a>
+<h3>Ski Resort and Snow Park</h3>
+<p class="by">3D Assets · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official pack and item metadata specify CC0 1.0.</p>
+<p>Publisher reports AI generation with Claude Fable 5.1. Lift is static; movement, cable sag and slope fitting are future work.</p>
+<a href="https://3dassets.dev/packs/ski-resort-and-snow-park" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-nature">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" target="_blank" rel="noopener">
+<img src="https://quaternius.com/assets/images/fullres/ultimatenature.jpg" alt="Ultimate Nature Pack — official source preview" loading="lazy">
+<span>Ultimate Nature Pack · official preview ↗</span>
+</a>
+<h3>Ultimate Nature Pack</h3>
+<p class="by">Quaternius · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official pack page links CC0 1.0; the existing selected catalog record is retained.</p>
+<p>Reuse the existing library before fetching anything. Faceted trees need muted colours and varied scale.</p>
+<a href="https://quaternius.com/packs/ultimatenature.html" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-dome">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://cdn.3dassets.dev/assets/31843/v1/poster.webp" target="_blank" rel="noopener">
+<img src="https://cdn.3dassets.dev/assets/31843/v1/poster.webp" alt="Observatory Dome Base — official source preview" loading="lazy">
+<span>Observatory Dome Base · official preview ↗</span>
+</a>
+<h3>Observatory Dome Base</h3>
+<p class="by">3D Assets · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official item and parent pack specify CC0 1.0.</p>
+<p>Publisher reports AI generation with GPT-6. Listed at 36,408 triangles; reduce sharply. Glass-heavy preview needs an opaque weathered dome, snow and lit base windows.</p>
+<a href="https://3dassets.dev/assets/planetarium-and-optical-observatory-observatory-dome-b-1dbccfb2" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-monsters">
+<b class="state">Selected source · 10 Oct 2026</b>
+<a class="preview" href="https://quaternius.com/assets/images/fullres/ultimatemonsters.jpg" target="_blank" rel="noopener">
+<img src="https://quaternius.com/assets/images/fullres/ultimatemonsters.jpg" alt="Ultimate Monsters — official source preview" loading="lazy">
+<span>Ultimate Monsters · official preview ↗</span>
+</a>
+<h3>Ultimate Monsters</h3>
+<p class="by">Quaternius · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0-1.0</a>
+</p>
+<p>Official pack page links CC0 1.0 and describes 50 animated monsters.</p>
+<p>Exact yeti clip names and roar/chest-beat/lope are unverified. Recolour the blue face and reduce cartoon proportions.</p>
+<a href="https://quaternius.com/packs/ultimatemonsters.html" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+<article class="source" id="source-yeti">
+<b class="state">Unselected alternative</b>
+<a class="preview" href="https://media.sketchfab.com/models/dc7ae2194c504a79bbe20fa450be6ad6/thumbnails/623dec006d14480aac7bb92b353c53c1/29a3aed4ba6b44b68511633645b8e9e2.jpeg" target="_blank" rel="noopener">
+<img src="https://media.sketchfab.com/models/dc7ae2194c504a79bbe20fa450be6ad6/thumbnails/623dec006d14480aac7bb92b353c53c1/29a3aed4ba6b44b68511633645b8e9e2.jpeg" alt="YETI — official source preview" loading="lazy">
+<span>YETI · official preview ↗</span>
+</a>
+<h3>YETI</h3>
+<p class="by">THE CUBE GUY (@mishrau60) · <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY-4.0</a>
+</p>
+<p>Creator's Sketchfab page lists CC Attribution; page license metadata points to CC BY 4.0.</p>
+<p>Rig and animation are not advertised. Treat all gestures as work to add; Sketchfab download access may require an existing account.</p>
+<a href="https://sketchfab.com/3d-models/yeti-dc7ae2194c504a79bbe20fa450be6ad6" target="_blank" rel="noopener">Creator / source page ↗</a>
+</article>
+</div>
+</section>
+<footer>
+<p>
+<strong>Kyle's selection, 10 October 2026:</strong> 1, 3, 5, 8, 9 and 11. Eleven source records are selected; the kart pack and THE CUBE GUY yeti remain unselected alternatives. These choices do not waive the open items or the gritty, believable look requirement. No construction starts on this sourcing card; each track still has the three-round art cap.</p>
+<p>
+<strong>CC-BY option 12 credit, if selected:</strong>
+</p>
+<p class="credit">“YETI” by THE CUBE GUY (@mishrau60), via <a href="https://sketchfab.com/3d-models/yeti-dc7ae2194c504a79bbe20fa450be6ad6">Sketchfab</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Add the actual modifications here when an adaptation is made.</p>
+<p>Source-page claims are distinguished from file inspection. Publisher-reported triangle counts are not runtime budgets. Review images load from their original public hosts; this document adds no game network request. No art round or finished asset is claimed by this sourcing sheet.</p>
+</footer>
+</main>
+</body>
+</html>
