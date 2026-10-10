@@ -1,0 +1,632 @@
+# Phase 4: Grand Circuits
+
+Claude, 10 October 2026, at Kyle's request. Settled for build. This page is
+the design; the cards in `docs/board/board.yaml` (prefix `P4-`) are the work.
+SPEC section 0.15 points here.
+
+## 1. Kyle's direction
+
+After the Mad Max work, Kyle wants proper racing back: new race tracks that
+borrow and vary shapes from real circuits (his poster of the world's tracks
+to scale), driving that asks more of the player, and a long mountain race:
+climb into snow, take jumps, switch to winter tyres at a pit stop, tunnels,
+avalanches, day turning to night, snowmen and a yeti. Some races should be a
+pure race against several opponents with no oncoming traffic, on new tracks
+and on the tracks we already have.
+
+Kyle's picks from the poster (10 October 2026):
+
+- **Mount Panorama** (Bathurst): the mountain circuit.
+- **Guia** (Macau): fast street circuit with a famous crawling hairpin.
+- **Mont-Tremblant**: rolling forest circuit.
+- **Pikes Peak**: the summit climb, made keyboard-friendly.
+
+Kyle on finish quality: Codex builds and polishes; Claude adds the finishing
+touch on every track (section 11). A track is not done until Claude's
+finishing pass and Kyle's play in the Preview.
+
+## 2. Principles (settled)
+
+1. **Borrow the shape, not the name.** Each track takes the rhythm and the
+   signature corners of a real circuit, simplified and varied. Every track,
+   corner and landmark gets our own name; no real logos, sponsors, signs or
+   branding. This replaces the six-course expansion's "no replica layouts"
+   rule for phase 4 only (Kyle's decision).
+2. **A pure race.** Grand Prix events have no oncoming traffic, no police and
+   no radar traps: you against a full field on a closed road.
+3. **Keyboard first.** Every corner can be driven well on the arrow keys.
+   Only one corner in the whole phase is tighter than 14 m radius (Harbour
+   Lights' hairpin, the signature). Every slow corner has braking boards and
+   at least 120 m of straight road before it.
+4. **Few shapes, many events.** Four tracks give eleven events through
+   variations: reverse, night, dusk, snow and time attack (section 6).
+5. **The same rules as everything else.** Race state stays repeatable from
+   seed and inputs and runs without graphics. The renderer, HUD and menus
+   never change race state. Each new player feature is behind a switch.
+   Saved careers, records and ghosts of existing events keep their ids: new
+   events are appended to `COURSE`, never inserted.
+6. **One file per circuit.** Like the warlords: each circuit lives in
+   `src/circuits/<id>.js` (its script, sections, landmarks, light, scenery
+   placements) and is registered with one line in `src/circuits/index.js`.
+   Shared course, race and render files never name a circuit; when a
+   circuit needs something new, add it to the shared code generically.
+7. **Start from existing assets** (SPEC 0.11): CC0 first, then CC-BY with
+   credit; Blender is for fitting and combining. One sourcing sheet for Kyle
+   to pick from before any building (P4-ART-SRC).
+
+## 3. Foundations
+
+### 3.1 Track scripts (P4-TRACK-SCRIPT)
+
+Today a circuit's centreline comes from a smooth closed formula (a radius
+that varies with angle, `expansionPoint`). That cannot draw a hairpin, a
+chicane or a long straight into a 90 degree corner. Phase 4 adds authored
+**track scripts**: a list of straights and turns, like directions.
+
+```js
+// src/circuits/panorama-ridge.js (shape only; section 5.1 has the full list)
+script: [
+  ['straight', 520, {climb: 0, name: 'Pit Straight'}],
+  ['turn', 'L', 90, 28, {name: 'Hell Gate'}],
+  ['straight', 880, {climb: 55, name: 'Mountain Straight'}],
+  // ...
+]
+```
+
+- **Pieces.** `['straight', length, opts]` and `['turn', 'L'|'R', degrees,
+  radius, opts]`. Lengths and radii in metres. Options: `climb` (metres of
+  height gained over the piece; negative to drop), `width` (road width in
+  metres from this piece on), `bank` (degrees, leaning into the turn),
+  `crest` (height of a smooth crest at the piece's middle, which becomes a
+  jump at speed through the existing crest flight), `walls` (`'both'`,
+  `'left'`, `'right'`, `'none'`), `surface` (section 3.4), `kerbs`
+  (`true` on turns by default), `boards` (braking boards, on by default
+  before every turn under 40 m radius), `name` (shown on the map and used by
+  landmarks).
+- **Building.** Walk the pieces, turning the heading on arcs, with a smooth
+  easing (clothoid) of at least 25 m into and out of every arc so steering
+  never snaps. Turns enter and leave tangent.
+- **Closing a loop.** For a closed circuit the signed turn angles must sum
+  to 360 degrees (left positive) within 2 degrees, or the build fails with a
+  clear message. The leftover position gap is closed by scaling the
+  straights only, by least squares, each by at most 15%; turns stay exact.
+  The tool reports every straight's change. Elevation must also return to
+  the start; the leftover is spread over the straights.
+- **Point to point.** `closed: false` builds an open road with one lap;
+  the start and finish are separate.
+- **Width per piece.** Road width becomes a property of the road at each
+  point (`halfWidthAt(s)`), used by driving, contacts, the pilot, lap
+  validation, the renderer and the map. Existing courses keep 7 m half width
+  everywhere, so every existing replay fingerprint stays exact.
+- **Walls and runoff.** Walls are solid, finite-height barriers (the
+  POLISH-HEIGHT rules) along the chosen side, set back 1 m from the road
+  edge. Without walls, there is grass or gravel runoff before scenery.
+- **Racing line.** The build also produces a racing line (outside, apex,
+  outside, limited to the road minus 1.5 m) and a speed profile from
+  curvature, grip and braking, stored with the course for the computer
+  racers (3.2).
+- **Reverse.** `reverse: true` builds the same script backwards (pieces in
+  reverse order, turn directions flipped, climbs negated). Boards and kerbs
+  are rebuilt for the new direction.
+- **Tools.** `tools/track-script.mjs <id>` prints length, closure changes,
+  highest grade, tightest radius and a top-down picture of the centreline
+  with corner names (PNG in `.qa-dist/`). Tests cover closure, tangent
+  joins, width, reverse, repeatability and the existing courses unchanged.
+
+### 3.2 Racing a full field (P4-FIELD)
+
+Road races allow at most three opponents today, all copies of one rival
+starting behind each other. Grand Prix races need up to seven computer
+racers who race properly.
+
+- **The field.** Up to 8 cars (you and 7). The computer racers are the
+  specialist drivers, so they have names and characters, each in a car they
+  suit, close to your car's pace (performance index within 10% of yours;
+  Easy picks the slower half, Hard the faster half):
+
+  | Racer | Character on track |
+  | --- | --- |
+  | Mara Vale | Brakes latest into slow corners; strong in hairpins |
+  | Iko Ren | Very consistent; rarely makes a mistake |
+  | Sana Marlow | Fastest on long straights; slipstreams well |
+  | Jules Reyes | Best starts; aggressive first lap |
+  | Nia Frost | Best on snow, ice and gravel |
+  | Boone Ward | Defends hard: covers the inside before braking zones |
+  | Club racers | Fill empty grid slots, neutral |
+
+  Axel Storm joins on Hard only, in a car of your class, as the one to beat.
+- **Grid and start.** A two-by-two staggered grid, 8 m between rows. You
+  start in the back half (Easy 5th, Medium 6th, Hard 8th). A gantry of five
+  red lights comes on one per second, then goes out after a seeded 0.4 to
+  1.2 s; throttle does nothing until lights out (no jump starts). Holding
+  throttle at lights out gives a clean launch; nothing more.
+- **How they race.** Each racer follows the racing line with its own skill
+  (corner speed margin and braking point), consistency (small seeded
+  mistakes: a missed apex, an early lift; none on Hard) and aggression
+  (how readily it attempts a pass).
+  - **Passing.** A faster car within 1.2 s behind on a straight pulls out
+    to the side with room and tries to brake later into the next corner.
+  - **Defending.** The car ahead may move once to cover the inside before
+    a braking zone. No weaving, never a move once the attacker is alongside.
+  - **Sharing corners.** A car more than half alongside keeps its side
+    through the corner; nobody turns into an overlapping car.
+  - **Slipstream.** Within 30 m behind another car and within 2.5 m to
+    the side, top speed rises 5% and drag falls; the HUD shows a small
+    tow marker. You get it too.
+  - Contact uses the existing crash physics. Computer racers never aim
+    for contact in a Grand Prix.
+- **Catch-up.** None on Hard. Medium: a racer more than 8 s ahead of you
+  eases off 2%. Easy: 4%, and the leader makes more mistakes.
+- **HUD.** Position (P3 / 8), lap, gap to the car ahead and behind, a
+  compact running order on the left (names and positions, your row lit),
+  final-lap call. The map shows every car.
+- **Results.** Finishing order with names, cars, gaps and best laps; your
+  pay by position (section 7).
+- **Targets** (tests over 30 seeded races per track and difficulty, with
+  the test driver as the player):
+  - every computer racer finishes in at least 95% of races;
+  - first-lap pile-ups (three or more cars crashing in the first 30 s) in
+    at most 1 race in 20;
+  - at least 3 passes between computer racers per race on Medium;
+  - the test driver wins 60 to 80% on Easy, 30 to 50% on Medium and 10 to
+    25% on Hard on the pilot track.
+- **Switch:** `grand-prix`. Build and tune it first on the ordinary
+  Pacific Canyon circuit with traffic off, so it is proven before any new
+  track needs it.
+
+### 3.3 Grand Prix on the tracks we have (P4-GP-EXISTING)
+
+A **Grand Prix** choice on the race setup for the closed road circuits:
+Pacific Canyon, High Country, Harbor & Highlands and the six expansion
+circuits. Field of 8, no traffic, police or radar, 3 laps. Existing Duel,
+Time Trial and Wasteland modes are unchanged. Records and ghosts are kept
+separately per mode. Check every circuit's grid area, first corner and
+narrow spots with a full field; widen a section (with the width option) only
+where 8 cars cannot race through, and record any change.
+
+### 3.4 Grip, surfaces and tyres (P4-GRIP)
+
+Surfaces (multiply the car's grip, braking and steering authority):
+
+| Surface | Grip | Looks like |
+| --- | ---: | --- |
+| Asphalt | 1.00 | Dry road |
+| Graded gravel | 0.85 (rally car and Titan: 1.00) | Packed brown gravel with loose stones |
+| Packed snow | 0.70 | White, tyre-tracked, plough marks at the edges |
+| Ice | 0.50 | Glossy blue-grey patches with a faint sparkle |
+| Deep snow (avalanche drift, snowbanks) | 0.55, top speed limited to 45 mph | Heaped soft snow |
+
+Tyres (chosen on the race setup when a track has snow or ice; changed at a
+pit stop):
+
+| Tyre | Asphalt | Packed snow | Ice | Top speed on asphalt |
+| --- | ---: | ---: | ---: | ---: |
+| Summer | 1.00 | 0.75 | 0.55 | 100% |
+| Winter | 0.94 | 1.00 | 0.85 | 97% |
+
+Effective grip is surface times tyre. Braking and steering scale with it,
+never below 40% of normal, so a car on the wrong tyres slides wide but can
+still be driven.
+
+- **Ice is always fair.** At most 60 m long, never on a hairpin apex,
+  always with an ICE board 100 m before and a visible gloss. Shaded spots
+  only (forest, under a ridge).
+- **HUD.** A small tyre icon (sun or snowflake) and a surface hint when grip
+  drops below 0.8 ("SNOW", "ICE", "GRAVEL").
+- **Sound.** Each surface has its tyre sound (section 9).
+- Surfaces live on the course by stretch (`surface` in the track script) and
+  as patches; the driving code reads them, the renderer only draws them.
+
+### 3.5 Pit lane and stops (P4-PIT)
+
+- **The lane.** A pit lane is a separate road beside a straight, with an
+  entry line, a speed limit of 60 km/h (the car is held to it automatically,
+  a limiter tone plays) and an exit line. The track script names the
+  straight; the lane is 9 m wide with a pit wall.
+- **The stop.** Your box is marked on the lane. Stop in it (under 5 km/h)
+  and the crew works for 4 s: they change tyres to the other type and refill
+  boost. The pit crew are two of the existing crew fighters in overalls
+  (reuse, no new characters). Drive away when the board says GO.
+- **Choosing.** On the approach a pit board shows what the stop will fit
+  (for example "WINTER TYRES"). The stop always swaps to the other type.
+- **Computer racers** decide by difficulty and character: Easy always pits
+  when the next stretch suits the other tyre; Medium 75% of the time; Hard
+  pits only when it is faster. Nia Frost may stay out on summer tyres
+  through snow (she is good on it).
+- **Balance target** (Summit Run, Medium, test driver): pitting for winter
+  tyres at the tree line is 4 to 8 s faster than staying on summer tyres,
+  and starting on winter tyres is 2 to 5 s slower than pitting. A real
+  choice, not a trap.
+- Pit lanes exist on Summit Run and Tremblant Snow first; circuits may add
+  them later for strategy.
+
+### 3.6 Light that moves (P4-DAYNIGHT)
+
+Today a course is either day (with a lighting mood) or night (the city
+theme). Phase 4 lets the light change during a race.
+
+- **Light paths.** A course or event may give a light path: keyframes from
+  a list of looks (`day`, `golden`, `dusk`, `night`), either along the road
+  (Summit Run: by distance) or over the race (Panorama Sunset: by race
+  progress, so the last lap is at dusk). The renderer blends sun height
+  and colour, sky, fog, ambient light and the star field between keyframes.
+- **Headlights.** Below a set light level, every car's headlights and tail
+  lights come on (emissive lamps and a cheap light cone; only your car casts
+  a real light). Road reflectors (cat's eyes) and boards glow in headlights.
+- **Night extras.** Stars, a moon, distant town lights in valleys, lit
+  windows on landmarks.
+- Light is presentation only: it never changes race state. Frame cost stays
+  within the usual limit with 8 cars at night.
+
+### 3.7 Snow world (P4-SNOW)
+
+A winter look for the alpine theme, used by Summit Run's upper half and
+Tremblant Snow:
+
+- Snow ground and snow-loaded pines (from the sourcing sheet), plough
+  banks along the road edges (deep snow surface), packed-snow and ice road
+  materials (3.4), frozen ponds, rock faces with snow on the ledges.
+- Light falling snow near the camera (cheap, camera-local particles;
+  Performance quality shows fewer).
+- Breath of wind: blowing snow across the road on exposed ridges.
+- Tyre tracks in snow behind cars (short-lived decals, capped).
+
+## 4. Racing feel targets for every track
+
+These are the rules Claude's finishing pass judges (section 11):
+
+- **A signature moment every lap**: the one corner or view players talk
+  about (Skyline, Casino Corner, the chairlift jump, the Gallery).
+- **One overtaking zone per lap**: a long straight into heavy braking.
+- **One commitment corner**: fast, frightening, possible flat out for the
+  brave, never a crash for the careful.
+- **Rhythm**: fast and slow alternate; never more than three slow corners
+  in a row.
+- **Elevation you feel**: crests that lighten the car, compressions at the
+  bottom of dips.
+- **Readable at speed**: every slow corner announced by boards (150, 100,
+  50 m), a kerb you can see 2 s before the apex, and a landmark or fence
+  line through every blind crest.
+- **Scenery frames the road, never hides it**, in three layers: near
+  (barriers, kerbs, boards), middle (trees, buildings, crowds), far
+  (mountains, skyline, the landmark).
+- **Lap time** 1:30 to 2:15 on Medium in a mid car; a race of 5 to 7
+  minutes.
+
+## 5. The tracks
+
+Scripts below are Claude's first drafts in the track script format (L is
+left, R right; radius and length in metres; climb in metres over the piece).
+P4-TRACK-SCRIPT's closure may adjust straights by up to 15%. Claude tunes
+the numbers during the finishing pass.
+
+### 5.1 Panorama Ridge (Mount Panorama)
+
+A circuit that climbs a mountain, crosses a narrow ridge between walls and
+plunges back down to the longest straight in the game.
+
+- **Event:** Panorama Ridge Sunset, 3 laps, about 4.5 km a lap, field of
+  8. Light path over the race: golden late afternoon to dusk on the last
+  lap.
+- **Width:** 15 m; 11 m with walls on both sides from The Cutting to
+  Forrest Elbow (the ridge is narrow and walled); 16 m on Conrod.
+- **Signature:** Skyline, a blind crest at the top where you see only sky,
+  then the Esses drop away beneath you with the valley lights below.
+- **Overtaking:** Conrod Straight into The Chase and Murray's Corner.
+- **Commitment:** The Chase kink at full speed.
+- **Landmarks:** grandstands and pit buildings on Pit Straight; a radio
+  mast on the summit; the valley town below Skyline; a lit scoreboard tower.
+
+| # | Piece | Name | Notes |
+| --- | --- | --- | --- |
+| 1 | straight 520 | Pit Straight | start line 80 m in; pit lane alongside |
+| 2 | turn L 90, r 28 | Hell Gate | heavy braking, first-lap scramble |
+| 3 | straight 880, climb +55 | Mountain Straight | steady climb, walls begin |
+| 4 | turn R 40, r 110, climb +6 | Griffin Bend | fast uphill right |
+| 5 | straight 140, climb +10 | | |
+| 6 | turn L 110, r 20, climb +14 | The Cutting | steepest, slowest; width 11 from here |
+| 7 | straight 200, climb +16 | | walls both sides |
+| 8 | turn R 30, r 150, climb +6 | Reid Rise | |
+| 9 | straight 220, climb +8 | | |
+| 10 | turn L 45, r 160, crest 2.5, climb +4 | Summit Park | light jump over the crest |
+| 11 | straight 160 | Ridge Top | flat, radio mast ahead |
+| 12 | turn R 25, r 90, crest 3, climb -12 | Skyline | blind crest, sky only, then the drop |
+| 13 | turn L 35, r 60, climb -10 | The Esses 1 | |
+| 14 | turn R 35, r 60, climb -10 | The Esses 2 | |
+| 15 | turn L 30, r 70, climb -8 | The Esses 3 | |
+| 16 | straight 150, climb -20 | The Dipper | steep dip, compression at the bottom |
+| 17 | turn L 100, r 22, climb -4 | Forrest Elbow | slow; width back to 15 after |
+| 18 | straight 1150, climb -55 | Conrod Straight | two small crests (1.5 m) for air at top speed |
+| 19 | turn R 25, r 200 | The Chase | flat-out kink |
+| 20 | straight 60 | | |
+| 21 | turn L 15, r 220 | Chase Exit | |
+| 22 | straight 260 | | braking boards |
+| 23 | turn L 90, r 25 | Murray Corner | last-corner lunge |
+
+Turns sum to +360 (left 515, right 155). Climbs and drops balance (119 m).
+
+### 5.2 Harbour Lights (Guia)
+
+A night street race between walls: a seafront straight, a hard right at the
+casino, a tight climb through the old town and the slowest hairpin in the
+game, then a flat-out sweep along the reservoir.
+
+- **Event:** Harbour Lights Night, 4 laps, about 3.0 km a lap, field of 8.
+- **Width:** 14 m on the Seafront and the Reservoir Sweep; 10 to 12 m in
+  the old town. Walls both sides everywhere (concrete blocks with catch
+  fences); escape roads at Casino Corner and the hairpin only.
+- **Signature:** Lantern Hairpin, radius 9 m, about 30 km/h, under strings
+  of paper lanterns.
+- **Overtaking:** Seafront Straight into Casino Corner.
+- **Commitment:** Lantern Kink and the Reservoir Sweep, flat out between
+  walls.
+- **Look:** neon signs and lit shopfronts, harbour with moored boats, a
+  lit tower ("Lantern Tower", our own landmark) above the casino, a
+  wet-look road that reflects the lights (looks only, grip is dry).
+
+| # | Piece | Name | Notes |
+| --- | --- | --- | --- |
+| 1 | straight 600 | Seafront Straight | start line 100 m in |
+| 2 | turn L 20, r 300 | Lantern Kink | flat out between walls |
+| 3 | straight 450 | | boards for Casino Corner |
+| 4 | turn R 95, r 22 | Casino Corner | heavy braking, escape road |
+| 5 | straight 120, climb +6 | | |
+| 6 | turn L 40, r 60, climb +6 | Temple Hill | |
+| 7 | straight 90, climb +6 | | |
+| 8 | turn R 60, r 35, climb +5 | Bell Tower Bend | |
+| 9 | straight 140, climb +4 | | width 10 from here |
+| 10 | turn L 45, r 30, climb +3 | Old Town Esses 1 | |
+| 11 | turn R 50, r 30 | Old Town Esses 2 | |
+| 12 | turn L 40, r 35 | Old Town Esses 3 | |
+| 13 | turn R 35, r 40 | Old Town Esses 4 | |
+| 14 | straight 160 | Hillside | harbour view through gaps |
+| 15 | turn R 70, r 25, climb -6 | Precinct Bend | |
+| 16 | straight 120, climb -6 | | boards |
+| 17 | turn R 175, r 9, climb -2 | Lantern Hairpin | the slowest corner in the game |
+| 18 | straight 220, climb -8 | | width 12 |
+| 19 | turn L 60, r 45, climb -4 | Fishmarket Bend | |
+| 20 | straight 300, climb -4 | | width 14 |
+| 21 | turn R 80, r 120 | Reservoir Sweep | long, fast, walls close |
+| 22 | straight 200 | | back to the Seafront |
+
+Turns sum to -360 (right 565, left 205). Climbs and drops balance (30 m).
+
+### 5.3 Tremblant Woods (Mont-Tremblant)
+
+A rolling forest circuit at a ski resort: a plunge to a lake, crests that
+throw the car into the air, a hairpin and a long straight with jumps.
+
+- **Event:** Tremblant Woods Autumn, 4 laps, about 3.3 km a lap, field of
+  8. Crisp autumn morning: low sun, orange and red leaves, mist on the lake.
+- **Width:** 14 m. Grass and gravel runoff; forest close behind.
+- **Signature:** the chairlift: Timber Straight runs under a moving ski
+  chairlift, and the second crest launches you right beneath it.
+- **Overtaking:** Timber Straight into Devil's Chicane.
+- **Commitment:** Pine Drop, a fast downhill right over a crest.
+- **Landmarks:** the ski lodge above the start, the chairlift, the lake
+  with a wooden dock, ski runs cut through the trees on the hill.
+
+| # | Piece | Name | Notes |
+| --- | --- | --- | --- |
+| 1 | straight 420, climb -6 | Lodge Straight | start, pits, grandstand |
+| 2 | turn R 60, r 80, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
+| 3 | turn L 70, r 45, climb -12 | Lakeside Plunge | lake opens up ahead |
+| 4 | straight 240, climb -4 | Lakeshore | |
+| 5 | turn R 40, r 50, climb +2 | Fir Esses 1 | |
+| 6 | turn L 35, r 55, climb +2 | Fir Esses 2 | |
+| 7 | straight 320, crest 2.5, climb +12 | Ridge Run | air over the crest |
+| 8 | turn R 90, r 35, climb +6 | Ridge Corner | |
+| 9 | straight 280 | | boards |
+| 10 | turn R 170, r 14, climb +2 | Beaver Hairpin | |
+| 11 | straight 1100, climb -6 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
+| 12 | turn R 30, r 60 | Devil's Chicane 1 | |
+| 13 | turn L 30, r 60 | Devil's Chicane 2 | |
+| 14 | straight 220, climb +8 | | |
+| 15 | turn R 65, r 50, climb +6 | Lodge Bend | |
+| 16 | straight 200 | | |
+| 17 | turn R 40, r 90 | Final Turn | onto Lodge Straight |
+
+Turns sum to -360 (right 495, left 135). Climbs and drops balance (38 m).
+
+**Tremblant Snow** (variant, P4-TREMBLANT-SNOW): the same circuit in
+winter. Packed snow on most of the lap; asphalt on Lodge Straight and
+Timber Straight (ploughed, sunny); two ice patches in the forest (Fir Esses
+exit and before Beaver Hairpin). Choose tyres on the setup; a pit lane on
+Lodge Straight. Skiers on the slopes (static figures), the chairlift running.
+
+### 5.4 Summit Run (Pikes Peak)
+
+The phase's showpiece: a point-to-point race from the desert to a snowy
+summit at night. About 14 km and 6 to 8 minutes. Only six hairpins, all at
+least 15 m radius, with fast climbing roads between them.
+
+- **Event:** Summit Run, 1 run, field of 6 (narrow mountain road), all
+  cars allowed. The rally car is strong on the gravel and snow; fast road
+  cars win the foothills.
+- **Width:** 12 m, 10 m in the Gallery.
+- **Light path along the road:** day at the start, golden at the tree line,
+  dusk in the snowfields, night from the Gallery on.
+- **Total climb:** about 720 m.
+
+| Section | Distance | What happens |
+| --- | --- | --- |
+| A. Desert Foothills | 0 to 3.2 km | Start straight (staggered grid). Six fast sweepers (radius 120 to 300). Cattle Grid Jump (crest 2.5 m) at 1.1 km. Graded gravel from 1.8 to 2.6 km. Ranger Station Jump at 2.9 km. Climb 120 m. |
+| B. Pine Switchbacks | 3.2 to 6.4 km | Forest. Hairpins: Picnic (L 180, r 16) at 3.8, Engineer's (R 175, r 16) at 4.5, Brookside (L 170, r 18) at 5.3, joined by climbing straights of 400 to 600 m with kinks. Climb 220 m. |
+| C. Tree Line | 6.4 to 6.9 km | Pit straight with the pit lane on the right (winter tyres, boost). The last trees; snow starts on the verges. Golden light. Climb 30 m. |
+| D. Snowfields | 6.9 to 10.0 km | Packed snow at the edges, packed snow on the road from 7.6 km. Three short ice patches. Glacier Hairpin (R 180, r 16) at 8.6 km. Whiteout Crest (1.5 m) at 9.4 km. Snowmen in the runoffs. Dusk. Climb 200 m. |
+| E. Avalanche Gallery | 10.0 to 11.4 km | The road splits at 10.1 km: the Gallery (a snow shed, 10 m wide, tighter curves, safe) or the Open Road (faster, under the avalanche slope). They rejoin at 10.9 km. Then a ledge with the valley and town lights far below. Night begins; first stars. |
+| F. Devil's Staircase | 11.4 to 13.6 km | Devil's Elbow (L 180, r 15) at 12.0 km, Last Breath (R 180, r 15) at 12.9 km. Night, headlights, light snowfall and blowing snow on the ridge. Climb 150 m. |
+| G. Summit | 13.6 to 14.0 km | Finish straight to the summit hut and observatory with lit windows. Yeti spots. |
+
+**The avalanche** (P4-AVALANCHE):
+
+- When the first car passes 10.0 km, the avalanche comes down a seeded 6
+  to 12 s later, so sometimes the leaders get through and sometimes not.
+- **Tell (3 s):** a deep rumble, snow plumes breaking off the slope above
+  the Open Road, a small camera shake, the callout `AVALANCHE!` and an arrow
+  to the Gallery if you have not reached the split.
+- **Slide (2.5 s):** snow pours across the Open Road from 10.42 to
+  10.58 km. A car under it is shoved toward the outer edge by the crash
+  solver as if hit at 20 mph and slowed to 30 mph; nobody is wrecked.
+- **After:** a deep-snow drift (3.4) covers that stretch of the Open Road
+  for the rest of the race.
+- **The choice:** with the Open Road clear it is about 1.2 s faster than the
+  Gallery; through the drift it is about 5 s slower. Signs at the split:
+  GALLERY (left) and OPEN ROAD (right).
+- Computer racers choose by what they can see: before the slide, the bold
+  ones take the Open Road; after it, everyone takes the Gallery.
+
+**Snowmen** (P4-SNOWMEN): 12 snowmen in runoffs and outside the hairpins,
+never on the racing line. Hitting one bursts it into snow with its carrot
+and hat flying (existing destructible scenery). 25 credits each, at most
+10 paid per race, counted on the results ("SNOWMEN 7"). Tremblant Snow
+gets 8 near the lodge.
+
+**The yeti** (P4-YETI): a rare sighting, never a danger.
+
+- In about 1 race in 3 (seeded), the yeti stands on a ridge 25 to 40 m off
+  the road at one of three spots in Devil's Staircase or the Summit.
+- Pass within 60 m with a clear view and it roars, beats its chest and lopes
+  away; the callout `YETI!` shows once and the career counts a sighting.
+- Three sightings earn a yeti roof look (looks only, the roof slot); five
+  earn a frosted paint finish.
+- The yeti never touches a car and never blocks the road. Kyle and Gratian
+  name it; until then it is "the yeti". A CC0 yeti model from the sourcing
+  sheet (Quaternius's monster pack has one).
+
+**Summit Time Attack** (variant): alone against the clock and your ghost,
+with bronze, silver and gold times; the avalanche still falls (seeded by
+your start), and the yeti may appear.
+
+## 6. Variations (P4-VARIANTS)
+
+| Track | Events |
+| --- | --- |
+| Panorama Ridge | Sunset (default), Night, Reverse |
+| Harbour Lights | Night (default), Dusk, Reverse |
+| Tremblant Woods | Autumn (default), Snow, Reverse |
+| Summit Run | Race (default), Time Attack |
+
+Reverse uses the track script's reverse build; braking boards, kerbs and
+pit lanes follow the new direction. A track's variants unlock when you
+finish its default event in the top three. Each event is its own entry in
+`COURSE` with a stable id (`panorama-ridge`, `panorama-ridge-night`,
+`panorama-ridge-reverse`, and so on), appended after the existing events.
+
+## 7. Career (P4-CAREER and P4-CUPS)
+
+- **Where:** a GRAND PRIX section on the course screen, listing the new
+  tracks and the Grand Prix versions of existing circuits (3.3).
+- **Unlocks:** Panorama Ridge 1,600 credits, Tremblant Woods 1,600, Harbour
+  Lights 1,800, Summit Run 2,600 (bought like other courses). Grand Prix on
+  existing circuits is open on any circuit you own.
+- **Pay:** by finishing position, scaled so a Medium Grand Prix win pays like
+  a current circuit win (`progression.js`), with smaller pay down to 8th.
+  Snowmen add their credits.
+- **Cups:** a series of races with points (10, 8, 6, 5, 4, 3, 2, 1);
+  ties go to the better best finish.
+  - Mountain Cup: Tremblant Woods Autumn, Panorama Ridge Sunset, Summit Run.
+  - Night Cup: Harbour Lights Night, Panorama Ridge Night, Neon Docks Grand
+    Prix.
+  - Winter Cup: Tremblant Snow, Summit Run, Alpine Serpent Grand Prix.
+  - Grand Tour (after the other three): all four default events plus Eifel
+    Crown Grand Prix.
+  A cup win pays a bonus and puts a trophy in a **trophy case** in the
+  garage (a row of small trophies, one per cup and difficulty). Cup state
+  is saved per named player, can be abandoned, and settles once.
+- **Records and ghosts:** per event, mode and car class, like today.
+- **Saves:** new career fields are additive with defaults; old saves load
+  unchanged (fixture tests).
+
+## 8. Art (P4-ART-SRC first, SPEC 0.11)
+
+One sourcing sheet for Kyle with two or three candidates for each:
+
+- start gantry with five lights; pit garages and pit wall; grandstands (the
+  existing stadium crowd fills them);
+- kerbs (can be made in code), armco, concrete walls, catch fences, tyre
+  walls, marshal posts, braking boards;
+- street circuit: shopfronts, neon signs, lanterns, harbour boats, the
+  Lantern Tower;
+- forest resort: ski lodge, chairlift (towers, cable, chairs), dock, autumn
+  trees;
+- snow kit: snow-loaded pines, snow ground, rocks with snow, plough banks,
+  snow shed (gallery) pieces, summit hut and observatory;
+- snowman (Kenney's holiday kit is CC0) and yeti (Quaternius monsters, CC0).
+
+Gritty and believable, never toy-like. Kyle picks before building. Each
+track's look gets at most three rounds (SPEC 0.11), with sheets sent to
+Claude.
+
+## 9. Sound (named cues)
+
+`race.start.light`, `race.start.go`, `race.position.gain`, `race.lap.final`,
+`race.finish.flag`, `pit.limiter`, `pit.wrench`, `pit.go`, `surface.gravel`,
+`surface.snow`, `surface.ice`, `avalanche.rumble`, `avalanche.slide`,
+`yeti.roar`, `snowman.burst`, `crowd.cheer` (passing a grandstand),
+`wind.summit`, and an ambient bed per track (harbour night, forest morning,
+mountain wind). Library recipes first (`tools/audio/catalog.json`);
+ElevenLabs only by the audio owner within budget.
+
+## 10. Performance
+
+- 8 cars at the start and at night within the usual frame limit (p95) on
+  High and Performance, measured at each track's busiest view.
+- Only your car's headlights are a real light; other cars use emissive
+  lamps and sprites.
+- Snowfall, blowing snow, tyre tracks and wet-look reflections all have
+  Performance-quality reductions.
+- Distant cars use simpler models (existing level-of-detail rules).
+
+## 11. Claude's finishing pass
+
+Kyle wants Claude's taste on every track. Each track has a Claude card
+(`P4-FINISH-<track>`) that opens when Codex merges the track.
+
+1. **Codex builds to acceptance** and merges behind the track's switch.
+2. **Claude drives and looks.** The review tool (P4-REVIEW-TOOL) gives
+   Claude, without playing by hand: a top-down map with corner names; a
+   strip of 16 frames from the chase camera at named points (grid, every
+   signature point, every slow corner's braking point and apex, every
+   crest, the landmark views); a speed trace of a test-driver lap with
+   corner speeds and lap time; and a pack frame at the first corner.
+3. **Claude tunes the data directly.** While a finishing card is open,
+   Claude owns that circuit's data in `src/circuits/<id>.js`: corner radii,
+   crest heights, widths, banking, kerb and board placement, landmark
+   positions and framing, scenery density by section, light keyframes,
+   ambient sound levels. Codex does not edit that file during the pass.
+4. **Code-level findings become small Codex cards** with settled rules.
+5. **A postcard sheet** (the track's six best views) goes to Kyle with
+   Claude's verdict. Kyle and Gratian play it in the Preview; their notes
+   come back to Claude.
+6. A track is released only after its finishing pass and Kyle's approval.
+
+The finishing pass judges the section 4 feel targets, plus: the first view
+from the grid should make you want to race; every corner should look like
+it belongs in its place (no scenery floating, nothing clipping the road);
+the light should flatter the track at its signature moment.
+
+## 12. Order and cards
+
+Run independent cards in parallel lanes (at most four). Shared files are
+edited by one card at a time: `course.js` (P4-TRACK-SCRIPT first),
+`game.js` and `sim-rival.js` (P4-FIELD first), `render3d.js` (P4-DAYNIGHT
+before P4-SNOW).
+
+| Wave | Cards |
+| --- | --- |
+| A, foundations | P4-TRACK-SCRIPT, P4-FIELD, P4-REVIEW-TOOL, P4-ART-SRC (Kyle picks) |
+| B, first track | P4-PANORAMA, P4-GRIP, P4-DAYNIGHT, P4-GP-EXISTING, P4-AUDIO, P4-CAREER |
+| C, more tracks | P4-HARBOUR, P4-TREMBLANT, P4-SNOW, P4-PIT |
+| D, the mountain | P4-TREMBLANT-SNOW, P4-SUMMIT, P4-AVALANCHE, P4-SNOWMEN, P4-YETI, P4-VARIANTS, P4-SUMMIT-ATTACK |
+| E, career | P4-CUPS |
+| Claude | P4-FINISH-PANORAMA, P4-FINISH-HARBOUR, P4-FINISH-TREMBLANT, P4-FINISH-SUMMIT, P4-RELEASE |
+
+Releases go in batches as Kyle approves them: Grand Prix on existing
+circuits and Panorama Ridge first; then Harbour Lights and Tremblant Woods;
+then the snow, Summit Run and the cups.
+
+**Switches:** `grand-prix` (the field, Grand Prix mode and the career
+section), `panorama-ridge`, `harbour-lights`, `tremblant-woods`,
+`summit-run`. Grip, tyres, pit stops, moving light and snow come with the
+first track switch that uses them. All are on in the Preview.

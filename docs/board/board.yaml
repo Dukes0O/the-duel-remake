@@ -1745,11 +1745,11 @@ tasks:
     lane: DESIGN
     size: M
     needs: [WAR-04, ARENA-07, CREW-04, ARS-03]
-    status: ready
+    status: merged
     acceptance:
       - "Look, sound and feel rounds (SPEC 10.1) across the finished phase, each finding a codex card with a settled rule; then a release Kyle approves in writing. Features also release earlier in batches as Kyle and Gratian approve them in the Preview."
     claude_polish_list: "From the 1 October reviews: more scrap on the Salt Flats inner island; tanker readability at distance; Salt Flats ridge width variety."
-
+    claude_closed: "10 October 2026: phase 3 released on 9 October; the polish cards POLISH-HEIGHT, -SEEKERS, -SMOKE, -FLAME and -ARENA carried the remaining findings."
   - id: CRASH-02
     title: "Crash look and sound"
     priority: 3
@@ -3877,6 +3877,347 @@ tasks:
     note: "Merged after independent tests-first reproduction, implementation review and current lane and build checks. Every recipe run now preserves its exact current game files, with all donor pins and native art assertions unchanged."
     gate_commit: f12c822e6869be6a8ba372843379e2a24127e6f1
     merged_commit: 700a947e52b450adba663853595a048180365ef2
+
+  - id: P4-TRACK-SCRIPT
+    title: "Track scripts: authored circuits with width, walls, crests and a racing line"
+    owner: claude
+    lane: RACE
+    size: L
+    needs: []
+    status: building
+    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    owns: [src/track-script.js, src/circuits/index.js, tools/track-script.mjs, tools/test-track-script.mjs, docs/changes/P4-TRACK-SCRIPT.md]
+    hooks: [src/course.js, src/config.js, src/sim-driving.js, src/sim-contacts.js, src/collision.js, src/checkpoint-gates.js, src/world-surfaces.js, src/road-furniture.js, src/route-map.js, src/render3d.js]
+    sequencing: "First editor of course.js in phase 4. Other cards wait for its merge before editing course.js."
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.1 exactly: straight and turn pieces with eased joins, closed loops closed by scaling straights only (at most 15%, reported), point-to-point roads, per-piece width read through halfWidthAt(s) everywhere road width is used, walls with finite height, runoff, kerbs, braking boards, racing line and speed profile, reverse build."
+      - "Existing courses keep 7 m half width and every existing replay fingerprint stays exact. New files: src/track-script.js and src/circuits/index.js; shared course files never name a circuit."
+      - "tools/track-script.mjs prints length, closure changes, highest grade, tightest radius and a top-down PNG with corner names. Tests: closure, tangent joins, width, walls, reverse, repeatability. Pilot: a small test circuit in the tests only."
+
+  - id: P4-FIELD
+    title: "Racing a full field: grid, start lights, passing, defending, slipstream"
+    owner: claude
+    lane: RACE
+    size: L
+    needs: []
+    status: building
+    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    flag: grand-prix
+    owns: [src/race-field.js, src/race-lines.js, tools/test-race-field.mjs, tools/race-field-balance.mjs, tools/scenarios/grand-prix.mjs, docs/changes/P4-FIELD.md]
+    hooks: [src/game.js, src/sim-rival.js, src/npc-yielding.js, src/sim-results.js, src/screen-results.js, src/screen-hud.js, src/route-map.js, src/race-settings.js, src/race-settings-ui.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs]
+    sequencing: "First editor of game.js and sim-rival.js in phase 4."
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.2 exactly behind the grand-prix switch: up to 7 computer racers from the specialist drivers with their characters, staggered grid, five-light start, racing-line driving with skill, consistency and aggression, passing, one defensive move, corner sharing, slipstream, the stated catch-up per difficulty, position HUD, running order, results with names, cars, gaps and best laps."
+      - "Prove it on Pacific Canyon with traffic, police and radar off. Meet the section 3.2 targets over 30 seeded races per difficulty, recorded in the change note. Existing Duel, Time Trial and Wasteland races and their fingerprints are unchanged."
+      - "Frame cost with 8 cars within the usual limit on High and Performance."
+
+  - id: P4-REVIEW-TOOL
+    title: "Claude's track review tool: map, named-point frames, speed trace"
+    owner: claude
+    lane: TOOL
+    size: S
+    needs: []
+    status: building
+    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    owns: [tools/track-review.mjs, tools/scenarios/track-review.mjs, tools/test-track-review.mjs, docs/changes/P4-REVIEW-TOOL.md]
+    acceptance:
+      - "Build the review tool in docs/CIRCUITS.md section 11, step 2: for a course id, a top-down map with corner names, 16 chase-camera frames at named points (grid, signature points, every slow corner braking point and apex, every crest, landmark views), a speed trace of a test-driver lap with corner speeds and lap time, and a first-corner pack frame. One command, private port, memory-only saves, output under .evidence/."
+      - "Works on existing circuits now and on scripted circuits once P4-TRACK-SCRIPT merges."
+
+  - id: P4-ART-SRC
+    title: "Phase 4 sourcing sheet for Kyle"
+    owner: codex
+    lane: ART
+    size: S
+    needs: []
+    status: ready
+    owns: [docs/board/looks/p4-src/, tools/art/catalog.json, docs/changes/P4-ART-SRC.md]
+    acceptance:
+      - "One sourcing sheet with two or three CC0 or CC-BY candidates for every group in docs/CIRCUITS.md section 8, licences checked and recorded. Send to Kyle with Claude; set waiting_on: kyle. No building before Kyle picks."
+
+  - id: P4-PANORAMA
+    title: "Panorama Ridge: the mountain circuit"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT]
+    status: ready
+    flag: panorama-ridge
+    owns: [src/circuits/panorama-ridge.js, tools/test-circuit-panorama.mjs, docs/changes/P4-PANORAMA.md]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 5.1 from its script in src/circuits/panorama-ridge.js: widths, walls, crests, the Sunset light path over the race, landmarks, grandstands, pit buildings, the valley town. Event appended to COURSE with a stable id."
+      - "Section 4 feel targets checked with the review tool; lap time and corner speeds in the change note. Full field races cleanly (section 3.2 targets on this track). Frame cost within the usual limit. Then Claude's finishing pass (P4-FINISH-PANORAMA) before release."
+    claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
+  - id: P4-GRIP
+    title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
+    owner: claude
+    lane: RACE
+    size: M
+    needs: [P4-TRACK-SCRIPT]
+    status: building
+    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    owns: [src/race-surfaces.js, tools/test-race-surfaces.mjs, docs/changes/P4-GRIP.md]
+    hooks: [src/sim-driving.js, src/course.js, src/screen-hud.js, src/race-settings.js, src/race-settings-ui.js, src/world-surfaces.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.4 exactly: surface and tyre tables, effective grip scaling braking and steering with the 40% floor, ice rules, tyre choice on the race setup for tracks with snow or ice, HUD tyre icon and surface hint, surfaces by stretch and patch on the course."
+      - "Existing courses unchanged (asphalt and their current off-road rules); fingerprints exact. Tests for every surface and tyre pairing."
+
+  - id: P4-DAYNIGHT
+    title: "Light that moves: dusk races, day to night, headlights"
+    owner: codex
+    lane: VIS
+    size: M
+    needs: []
+    status: ready
+    owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md]
+    hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
+    sequencing: "Edits render3d.js before P4-SNOW."
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.6: light paths by distance or race progress, blended sun, sky, fog, ambient and stars; headlights and tail lights on below a light level (only the player car casts a real light); cat's eyes and boards glowing in headlights; moon, town lights and lit windows at night."
+      - "Presentation only: race state unchanged. Existing courses look identical unless a light path is set. Frame cost within the usual limit with 8 cars at night. One sheet to Claude (day, golden, dusk, night on one test circuit), at most three rounds."
+
+  - id: P4-GP-EXISTING
+    title: "Grand Prix on the circuits we already have"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-FIELD]
+    status: ready
+    flag: grand-prix
+    owns: [tools/test-grand-prix-existing.mjs, docs/changes/P4-GP-EXISTING.md]
+    hooks: [src/race-settings.js, src/race-settings-ui.js, src/screen-courses.js, src/leaderboard.js, src/ghost.js, src/config.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.3: a Grand Prix choice for Pacific Canyon, High Country, Harbor and Highlands and the six expansion circuits; field of 8, 3 laps, no traffic, police or radar; records and ghosts per mode. Check each grid, first corner and narrow spot with a full field; widen only where needed and record it. Existing modes unchanged."
+
+  - id: P4-AUDIO
+    title: "Phase 4 sound cues"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: [P4-FIELD]
+    status: ready
+    owns: [docs/changes/P4-AUDIO.md]
+    hooks: [src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/]
+    acceptance:
+      - "Every cue in docs/CIRCUITS.md section 9 from library recipes first, wired to its event as each card lands (start lights, positions, final lap, flag first). Ambient beds per track. Credits recorded. Listening clips to Kyle."
+
+  - id: P4-CAREER
+    title: "Grand Prix in the career: menu, prices, pay, records"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-PANORAMA]
+    status: ready
+    flag: grand-prix
+    owns: [src/grand-prix-career.js, tools/test-grand-prix-career.mjs, docs/changes/P4-CAREER.md]
+    hooks: [src/screen-courses.js, src/course-access.js, src/progression.js, src/leaderboard.js, src/app.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 7 except cups: the GRAND PRIX section on the course screen, track prices, variant unlock by a top-three finish, pay by position calibrated to existing circuit wins, snowman credits, records and ghosts per event and mode. Additive save fields with defaults; old-save fixtures load unchanged. Tracks added later join the same list."
+
+  - id: P4-HARBOUR
+    title: "Harbour Lights: the night street circuit"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC]
+    status: ready
+    flag: harbour-lights
+    owns: [src/circuits/harbour-lights.js, tools/test-circuit-harbour.mjs, docs/changes/P4-HARBOUR.md]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 5.2 from its script in src/circuits/harbour-lights.js: walls and catch fences everywhere, escape roads at Casino Corner and Lantern Hairpin, the old town, lanterns, neon, harbour, Lantern Tower, wet-look road (looks only). Night by default."
+      - "Lantern Hairpin is driveable on the keyboard by the test driver without contact in at least 90% of laps on Medium. Full field targets on this track. Frame cost within the usual limit at night with 8 cars. Then P4-FINISH-HARBOUR."
+    claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
+  - id: P4-TREMBLANT
+    title: "Tremblant Woods: the forest circuit"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC]
+    status: ready
+    flag: tremblant-woods
+    owns: [src/circuits/tremblant-woods.js, tools/test-circuit-tremblant.mjs, docs/changes/P4-TREMBLANT.md]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 5.3 from its script in src/circuits/tremblant-woods.js: autumn morning light, the ski lodge, lake and dock, the moving chairlift over Timber Straight with the second crest beneath it, ski runs through the trees. Full field targets on this track. Then P4-FINISH-TREMBLANT."
+    claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
+  - id: P4-SNOW
+    title: "The snow world"
+    owner: codex
+    lane: VIS
+    size: M
+    needs: [P4-GRIP, P4-ART-SRC, P4-DAYNIGHT]
+    status: ready
+    owns: [src/snow-world.js, tools/test-snow-world.mjs, docs/changes/P4-SNOW.md]
+    hooks: [src/render3d.js, src/vegetation.js, src/mountain-landscape.js, src/world-surfaces.js, src/effects.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.7 from Kyle's picks: snow ground and pines, plough banks (deep snow), packed snow and ice road materials, frozen ponds, snow on rock ledges, camera-local snowfall, blowing snow on ridges, capped tyre tracks. Performance-quality reductions. Frame cost within the usual limit. One sheet to Claude, at most three rounds."
+
+  - id: P4-PIT
+    title: "Pit lanes and stops"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP]
+    status: ready
+    owns: [src/pit-lane.js, tools/test-pit-lane.mjs, docs/changes/P4-PIT.md]
+    hooks: [src/track-script.js, src/race-field.js, src/sim-driving.js, src/screen-hud.js, src/onfoot-figures.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 3.5 exactly: pit lane beside a named straight, 60 km/h limiter with tone, marked box, 4 s stop swapping tyres and refilling boost, pit crew from existing crew fighters, pit board on approach, computer racers deciding by difficulty and character."
+      - "Meet the Summit Run balance target once P4-SUMMIT exists (record it there); until then prove the stop on a test circuit."
+
+  - id: P4-TREMBLANT-SNOW
+    title: "Tremblant Snow variant"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-TREMBLANT, P4-SNOW, P4-PIT]
+    status: ready
+    flag: tremblant-woods
+    owns: [tools/test-circuit-tremblant-snow.mjs, docs/changes/P4-TREMBLANT-SNOW.md]
+    hooks: [src/circuits/tremblant-woods.js, src/circuits/index.js]
+    acceptance:
+      - "Build the Tremblant Snow variant in docs/CIRCUITS.md section 5.3: surfaces by stretch, two ice patches with boards, tyre choice on setup, pit lane on Lodge Straight, skiers and the running chairlift, 8 snowmen once P4-SNOWMEN lands. Stable event id appended to COURSE."
+
+  - id: P4-SUMMIT
+    title: "Summit Run: the mountain epic"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
+    status: ready
+    flag: summit-run
+    owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
+      - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
+
+  - id: P4-AVALANCHE
+    title: "The avalanche on Summit Run"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-SUMMIT]
+    status: ready
+    flag: summit-run
+    owns: [src/circuits/summit-avalanche.js, tools/test-summit-avalanche.mjs, docs/changes/P4-AVALANCHE.md]
+    hooks: [src/circuits/summit-run.js, src/race-field.js, src/sound-bank.js]
+    acceptance:
+      - "Build the avalanche in docs/CIRCUITS.md section 5.4 exactly: seeded 6 to 12 s trigger after the first car passes 10.0 km, 3 s tell with rumble, plumes, camera shake, AVALANCHE! callout and Gallery arrow, 2.5 s slide with the crash-solver shove and slowdown, no wrecks, the deep-snow drift for the rest of the race, split signs, computer racers choosing by what they see. Tests for timing, shove, drift and the 1.2 s and 5 s route differences."
+
+  - id: P4-SNOWMEN
+    title: "Snowmen to smash"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-SNOW]
+    status: ready
+    owns: [src/snowmen.js, tools/test-snowmen.mjs, docs/changes/P4-SNOWMEN.md]
+    hooks: [src/destructibles.js, src/screen-results.js, src/grand-prix-career.js]
+    acceptance:
+      - "Build the snowmen in docs/CIRCUITS.md section 5.4: 12 on Summit Run and 8 on Tremblant Snow, in runoffs and outside hairpins, never on the racing line; burst with carrot and hat through the existing destructible scenery; 25 credits each, at most 10 paid per race, shown on results. Snowman model from Kyle's pick."
+
+  - id: P4-YETI
+    title: "The yeti"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-SUMMIT]
+    status: ready
+    owns: [src/yeti.js, tools/test-yeti.mjs, docs/changes/P4-YETI.md]
+    hooks: [src/circuits/summit-run.js, src/armor-kits.js, src/paint-presets.js, src/grand-prix-career.js]
+    acceptance:
+      - "Build the yeti in docs/CIRCUITS.md section 5.4 exactly: seeded about 1 race in 3, three ridge spots, sighting within 60 m with a clear view, roar and walk-off, YETI! callout once, career sighting count, yeti roof look at 3 and frosted paint at 5. It never touches a car or blocks the road. Model from Kyle's pick; name from Kyle and Gratian when given."
+
+  - id: P4-VARIANTS
+    title: "Reverse, night and dusk variants"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-PANORAMA, P4-HARBOUR, P4-TREMBLANT, P4-CAREER]
+    status: ready
+    owns: [tools/test-circuit-variants.mjs, docs/changes/P4-VARIANTS.md]
+    hooks: [src/circuits/index.js, src/circuits/panorama-ridge.js, src/circuits/harbour-lights.js, src/circuits/tremblant-woods.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 6 for Panorama Ridge (Night, Reverse), Harbour Lights (Dusk, Reverse) and Tremblant Woods (Reverse): reverse script builds with rebuilt boards, kerbs and pit lanes; variant light paths; stable appended event ids; variants unlock after a top-three finish on the default event. Each reverse checked with the review tool."
+
+  - id: P4-SUMMIT-ATTACK
+    title: "Summit Time Attack"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-SUMMIT, P4-AVALANCHE]
+    status: ready
+    flag: summit-run
+    owns: [tools/test-summit-attack.mjs, docs/changes/P4-SUMMIT-ATTACK.md]
+    hooks: [src/circuits/summit-run.js, src/circuits/index.js, src/ghost.js]
+    acceptance:
+      - "Build Summit Time Attack in docs/CIRCUITS.md section 5.4: alone against the clock and your ghost, bronze, silver and gold times set from test-driver runs on Medium, avalanche seeded by the start, the yeti may appear."
+
+  - id: P4-CUPS
+    title: "Cups and the trophy case"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
+    status: ready
+    flag: grand-prix
+    owns: [src/grand-prix-cups.js, src/screen-trophies.js, tools/test-grand-prix-cups.mjs, docs/changes/P4-CUPS.md]
+    hooks: [src/grand-prix-career.js, src/screen-courses.js, src/screen-garage.js, src/app.js]
+    acceptance:
+      - "Build the cups in docs/CIRCUITS.md section 7: Mountain, Night and Winter Cups and the Grand Tour, points 10 to 1 with the tie rule, saved per named player, abandonable, settled once, cup bonus pay, and the garage trophy case. Additive save fields; old-save fixtures load unchanged."
+
+  - id: P4-FINISH-PANORAMA
+    title: "Claude's finishing pass: Panorama Ridge"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-PANORAMA, P4-REVIEW-TOOL]
+    status: ready
+    acceptance:
+      - "docs/CIRCUITS.md section 11: review with the tool, tune src/circuits/panorama-ridge.js directly, small Codex cards for code needs, postcard sheet to Kyle."
+
+  - id: P4-FINISH-HARBOUR
+    title: "Claude's finishing pass: Harbour Lights"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-HARBOUR, P4-REVIEW-TOOL]
+    status: ready
+    acceptance:
+      - "docs/CIRCUITS.md section 11 for Harbour Lights."
+
+  - id: P4-FINISH-TREMBLANT
+    title: "Claude's finishing pass: Tremblant Woods and Tremblant Snow"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-TREMBLANT, P4-REVIEW-TOOL]
+    status: ready
+    acceptance:
+      - "docs/CIRCUITS.md section 11 for Tremblant Woods, and for Tremblant Snow once P4-TREMBLANT-SNOW merges."
+
+  - id: P4-FINISH-SUMMIT
+    title: "Claude's finishing pass: Summit Run"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-SUMMIT, P4-AVALANCHE, P4-REVIEW-TOOL]
+    status: ready
+    acceptance:
+      - "docs/CIRCUITS.md section 11 for Summit Run, including the avalanche moment, the pit choice and the night summit."
+
+  - id: P4-RELEASE
+    title: "Phase 4 releases in batches"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-FINISH-PANORAMA, P4-GP-EXISTING, P4-CAREER]
+    status: ready
+    acceptance:
+      - "Release in the batches of docs/CIRCUITS.md section 12, each after its finishing passes and Kyle's written approval, with the full release evidence."
 
   - id: POLISH-HEIGHT
     title: "Scenery hit boxes have their real height"

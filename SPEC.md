@@ -593,6 +593,16 @@ race contacts are intended here; record every re-pinned fingerprint.
 
 ---
 
+### 0.15 Phase 4: Grand Circuits (Kyle, 10 October 2026)
+
+After the Mad Max work, phase 4 brings racing back: four new tracks whose
+shapes borrow from Mount Panorama, Guia, Mont-Tremblant and Pikes Peak (our
+own names, no real branding), a full field of named computer racers with no
+oncoming traffic, Grand Prix races on the existing circuits, snow and ice
+with winter tyres and pit stops, light that changes during a race, an
+avalanche, snowmen and a yeti. Claude adds a finishing pass to every track.
+The design is `docs/CIRCUITS.md`; the cards start with `P4-`.
+
 ## 1. Objective
 
 ### What we are building and why
