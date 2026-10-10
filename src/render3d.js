@@ -178,6 +178,8 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
   const combatScene=createCombatScene(vehicleAttachments);scene.add(combatScene.group);
+  // Scene preparation precedes instanced-buffer uploads for main and rear views.
+  scene.onBeforeRender = (_renderer, _scene, viewCamera) => combatScene.prepareSmokeCamera(viewCamera);
   const fuelView=createFuelRunView(app.duel);scene.add(fuelView.group);
   let tanker=null,tankerReady=false,tankerFailed=false;
   function prepareTanker(){

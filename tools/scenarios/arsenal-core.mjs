@@ -253,57 +253,39 @@ async function smokePolish(context) {
         })()`);
         await context.waitFor(`(() => {window.__smokePaint();return window.__qaApp.visualReady &&
           window.__render.renderer.domElement.style.visibility!=='hidden';})()`, 'smoke capture readiness',60000);
-        if (process.env.DUEL_SMOKE_FRAMES === '1' && distance === 25) {
-          const frames = await context.evaluate(`(async () => {
-            const view=window.__render,scene=view.scene,renderer=view.renderer;
-            const holder=scene.getObjectByName('arsenal-hazard-0');
-            const puffs=holder.getObjectByName('layered-smoke-puffs');
-            let geometry=null;
-            scene.traverse(node=>{if(!geometry&&node.geometry?.type==='IcosahedronGeometry'&&
-              node.geometry.parameters.radius===1&&node.geometry.parameters.detail===1)geometry=node.geometry.clone();});
-            if(!geometry||!puffs?.visible)throw Error('Native smoke / legacy geometry missing');
-            const material=new puffs.material.constructor({color:0x82786c,roughness:1,
-              transparent:true,opacity:.65,depthWrite:false});
-            const legacy=new holder.children[0].constructor(geometry,material);
-            const hazard=window.__smokeHazard;
-            legacy.position.y=2.1+hazard.y-window.__smokePose.ground.y;
-            legacy.scale.set(hazard.radius,2.1,hazard.radius);
-            legacy.visible=false;holder.add(legacy);
-            const original=renderer.render,results=[];
-            let phase='candidate';
-            renderer.render=function(current,camera){
-              if(current!==scene)return original.call(this,current,camera);
-              const before=puffs.visible;
-              puffs.visible=before&&phase==='candidate';legacy.visible=before&&phase==='legacy';
-              try{return original.call(this,current,camera);}
-              finally{puffs.visible=before;legacy.visible=false;}
-            };
-            const percentile=(values,fraction)=>{
-              const ordered=[...values].sort((a,b)=>a-b);
-              return Number(ordered[Math.ceil(ordered.length*fraction)-1].toFixed(3));
-            };
-            const sample=label=>new Promise(resolve=>{
-              phase=label;let warm=20,previous=null;const intervals=[],work=[];
-              const tick=now=>{
-                const start=performance.now();window.__smokePaint();
-                const cost=performance.now()-start;
-                if(warm>0){warm--;previous=now;requestAnimationFrame(tick);return;}
-                intervals.push(now-previous);work.push(cost);previous=now;
-                if(intervals.length<120){requestAnimationFrame(tick);return;}
-                resolve({phase:label,frames:120,p50:percentile(intervals,.5),
-                  p95:percentile(intervals,.95),max:percentile(intervals,1),
-                  workP50:percentile(work,.5),workP95:percentile(work,.95),
-                  over33:intervals.filter(ms=>ms>33).length});
-              };requestAnimationFrame(tick);
-            });
-            try{for(let trial=0;trial<2;trial++)for(const label of ['legacy','candidate','legacy'])
-              results.push({trial,...await sample(label)});}
-            finally{renderer.render=original;legacy.removeFromParent();geometry.dispose();material.dispose();window.__smokePaint();}
-            return {results,activeClouds:1,statePure:true,
-              limitation:'Legacy draw replacement shares current scene preparation; work timing is advisory.'};
-          })()`);
-          frameRows.push({quality,kind,...frames});
-          console.log('Smoke frames '+JSON.stringify(frameRows.at(-1)));
+        if (process.env.DUEL_SMOKE_FRAMES === '1') {
+          if (distance === 25) {
+            const frames = await context.evaluate(`(async () => {
+              const percentile=(values,fraction)=>{
+                const ordered=[...values].sort((a,b)=>a-b);
+                return Number(ordered[Math.ceil(ordered.length*fraction)-1].toFixed(3));
+              };
+              const result=await new Promise(resolve=>{
+                let warm=60,previous=null,frame=0;const intervals=[],work=[];
+                const tick=now=>{
+                  // The same native simulation and camera path run against
+                  // each checkout. No renderer or material is substituted.
+                  window.__qaApp.duel.step(1/240);
+                  const {ground,heading}=window.__smokePose,angle=heading+Math.sin(frame++*.012)*.22;
+                  window.__qaApp.inspectionCamera={position:[ground.x-Math.sin(angle)*25,
+                    ground.y+3.2,ground.z-Math.cos(angle)*25],target:[ground.x,ground.y+1.5,ground.z]};
+                  const start=performance.now();window.__smokePaint();
+                  const cost=performance.now()-start;
+                  if(warm>0){warm--;previous=now;requestAnimationFrame(tick);return;}
+                  intervals.push(now-previous);work.push(cost);previous=now;
+                  if(intervals.length<180){requestAnimationFrame(tick);return;}
+                  resolve({frames:180,p50:percentile(intervals,.5),p95:percentile(intervals,.95),
+                    max:percentile(intervals,1),workP50:percentile(work,.5),workP95:percentile(work,.95),
+                    over33:intervals.filter(ms=>ms>33).length});
+                };requestAnimationFrame(tick);
+              });
+              return {...result,activeClouds:Number(window.__render.scene.getObjectByName('arsenal-hazard-0')?.visible),
+                statePure:true,source: 'Actual checkout source; native simulation and moving camera'};
+            })()`);
+            frameRows.push({quality,kind,...frames});
+            console.log('Smoke frames '+JSON.stringify(frameRows.at(-1)));
+          }
+          continue;
         }
         const measured=await context.evaluate(`(() => {
           const app=window.__qaApp,view=window.__render,scene=view.scene,renderer=view.renderer;
@@ -373,6 +355,7 @@ async function smokePolish(context) {
         await context.screenshot(`smoke-${kind}-${distance}-${quality}`);
 
       }
+      if(process.env.DUEL_SMOKE_FRAMES === '1') continue;
       const inside=await context.evaluate(`(() => {
         const app=window.__qaApp,{ground,heading}=window.__smokePose;
         app.inspectionCamera={position:[ground.x,ground.y+2,ground.z],
@@ -388,6 +371,10 @@ async function smokePolish(context) {
   }
   const {writeFile}=await import('node:fs/promises');
   const {join}=await import('node:path');
+  if(process.env.DUEL_SMOKE_FRAMES === '1') {
+    await writeFile(join(context.outputDir,'smoke-frames.json'),JSON.stringify(frameRows,null,2)+'\n');
+    return;
+  }
   await writeFile(join(context.outputDir,'concealment.json'),JSON.stringify(rows,null,2)+'\n');
   if(rows.filter(row=>row.kind==='screen'&&row.fullyInside).length!==4)throw Error('Screen controls must fully contain the car');
   if(frameRows.length)await writeFile(join(context.outputDir,'smoke-frames.json'),JSON.stringify(frameRows,null,2)+'\n');

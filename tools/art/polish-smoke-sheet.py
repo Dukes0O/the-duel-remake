@@ -6,14 +6,15 @@ from PIL import Image, ImageDraw, ImageFont
 
 parser = argparse.ArgumentParser()
 parser.add_argument('capture', type=Path)
-parser.add_argument('--output', type=Path, default=Path('docs/board/looks/smoke/round-1.jpg'))
+parser.add_argument('--round', type=int, default=2)
+parser.add_argument('--output', type=Path, default=Path('docs/board/looks/smoke/round-2.jpg'))
 args = parser.parse_args()
 rows = json.loads((args.capture / 'concealment.json').read_text(encoding='utf-8'))
 font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 18)
 small = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 15)
 sheet = Image.new('RGB', (1600, 1250), '#172020')
 draw = ImageDraw.Draw(sheet)
-draw.text((18, 12), 'POLISH-SMOKE | Round 1 | Native Screen / Wren | selected soft-density source', font=font, fill='white')
+draw.text((18, 12), f'POLISH-SMOKE | Round {args.round} | Native Screen / Wren | grey layered puffs and soft churn', font=font, fill='white')
 draw.text((18, 39), 'Screen: <=10% car pixels visible. Wren: shared look only; F42 extends outside native 2.5 m radius.', font=small, fill='#c7d2cb')
 for index, (kind, quality) in enumerate([('screen','high'),('screen','performance'),('wren','high'),('wren','performance')]):
     y = 72 + index * 290

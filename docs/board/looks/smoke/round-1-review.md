@@ -1,9 +1,9 @@
 # Smoke: round 1
 
-Verdict: awaiting Claude. Director reviewed the sheet and source; no race-state
-or lifecycle blocker. Main art concern: the dense body looks flat and nearly
-uniform brown, with little visible puff/texture structure. Do not call this
-finished art or generate another round before Claude's response.
+Verdict: Claude requested round 2 on 10 October: grey smoke, varied
+overlapping puffs, broken soft edges, brighter tops/darker undersides and
+drift/churn. Director found no race-state or lifecycle blocker; the flat
+brown body needed work. Round 2 supersedes this candidate.
 
 Source rendering is frozen at 36b0da67. One compressed comparison sheet is
 390,518 bytes; build it with tools/art/polish-smoke-sheet.py and the selected
@@ -43,5 +43,6 @@ build and actual old-source/candidate frame comparison are required before
 merge. No merge/release.
 
 Reproduce: DUEL_SMOKE_POLISH=1 enables the native arsenal-core scenario;
-DUEL_SMOKE_FRAMES=1 adds the paired frame sample. Use browser-harness.mjs
-on its private port and memory-only storage. Render source stays unchanged.
+The former DUEL_SMOKE_FRAMES draw-swap sample is removed in round 2,
+replaced with actual old-source/candidate timing. Use browser-harness.mjs
+on its private port and memory-only storage.
