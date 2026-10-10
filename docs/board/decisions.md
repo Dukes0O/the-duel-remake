@@ -1502,3 +1502,23 @@ edge. Its native pile radius is eight metres, so cover is sixteen metres
 from the centre; the parked car uses clear ground inside that ring. Salt
 uses the midpoint of its authored longest straight or low-curvature run.
 Do not change the venue or add a pixel-perfect curvature gate for placement.
+
+## 10 October 2026: Phase 4 audio and Team Room boundaries
+
+Audio owns exactly the twenty cue IDs listed on P4-AUDIO. Its two historical
+audio-test hooks may exclude those additions only; old hashes, cue records and
+assertions stay exact. Listening groups are race signals; pit and road surfaces;
+mountain hazards; and crowd, wind and location beds. Event wiring waits for its
+owners released hooks.
+
+The common build-time reference recipe moves from Telemetry to Dossier; Telemetry
+will consume and extend it. The event-card entry lives in course-access-ui.js.
+Shared analysis must retain the review tools geometry and names. Reference
+speeds come from an actual native driver lap. Driver-seat snapshots come from
+the live renderer.
+
+Claude must settle the fixed reference policy before that recipe is coded.
+The proposal is Stuttgart 959-S with no upgrades, seed 1989, Medium driver,
+one warm-up lap and the best of two timed laps per event. Until answered,
+Dossier continues pure analysis and tests. Renderer changes wait for Track
+Script, then Day/Night, then Dossier. Day/Night and Dossier are waiting on Claude.
