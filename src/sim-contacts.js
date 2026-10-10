@@ -293,7 +293,8 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const travelHeading = this.course.at(car.s).heading + (car.headingError || 0) + (car.dir < 0 ? Math.PI : 0);
   const heading = travelHeading + (car.slipAngle || 0);
   const obstacles = this._obstacles(oldS, car.s);
-  const dimensions = this._vehicleSpec(car);
+  const dimensions = {...this._vehicleSpec(car),
+    useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;
   for (let attempt = 0; attempt < 4; attempt++) {
     let first = null;
@@ -304,10 +305,9 @@ export function _staticContacts(car, player, journeyColliders = null) {
         || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) continue;
       const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
       if (cactus && this._fallenCactusIds?.has(obstacle.id)) continue;
-      // Unlike a solid tree, a cactus can be cleared by a jump and gives way
-      // on contact. Keep the course's reusable scenery data immutable.
-      const collider = cactus && Number.isFinite(start.y)
-        ? { ...obstacle, height: 3.1 * (obstacle.scale || 1) } : obstacle;
+      // Older/custom courses without measurements keep their scale-aware shell.
+      const collider = cactus && (!dimensions.useModelBounds || !Number.isFinite(obstacle.modelMaxY)) && Number.isFinite(start.y)
+        ? {...obstacle, height: 3.1 * (obstacle.scale || 1)} : obstacle;
       const hit = sweepObstacle(start, end, collider, heading, dimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
