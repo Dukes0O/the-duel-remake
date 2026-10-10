@@ -100,7 +100,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const keep = args.flatMap((arg, i) => (arg === '--keep' ? [args[i + 1]] : []));
   const result = fitScript(def, { turnWeight: value('--turns') ?? 4, keep, minStraight: value('--min-straight') ?? 20 });
   const places = value('--round') ?? 1;
-  const round = (n, turn) => (turn ? Math.round(n * 2) / 2 : Math.round(n / places) * places);
+  const round = (n, turn, radius = 0) => (turn ? Math.max(Math.round(n * 2) / 2, radius ? Math.ceil(25 / radius * 180 / Math.PI * 2 + 1e-9) / 2 : 0) : Math.round(n / places) * places);
   console.log(result.closed ? 'Closed.' : 'Did not close.');
   for (const slot of result.slots) {
     const now = result.script[slot.piece][slot.field], name = def.script[slot.piece].at(-1)?.name ?? '';
@@ -111,7 +111,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const text = value => JSON.stringify(value).replace(/"([a-z]+)":/g, '$1: ').replace(/"/g, "'").replace(/,/g, ', ').replace(/^\{/, '{ ').replace(/\}$/, ' }');
   for (const piece of result.script) {
     const turn = piece[0] === 'turn', opts = piece.at(-1);
-    const head = turn ? `'turn', '${piece[1]}', ${round(piece[2], true)}, ${piece[3]}` : `'straight', ${round(piece[1], false)}`;
+    const head = turn ? `'turn', '${piece[1]}', ${round(piece[2], true, piece[3])}, ${piece[3]}` : `'straight', ${round(piece[1], false)}`;
     console.log(`  [${head}${Object.keys(opts).length ? ', ' + text(opts) : ''}],`);
   }
   console.log(']');
