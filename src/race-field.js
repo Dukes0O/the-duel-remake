@@ -42,11 +42,11 @@ export const FIELD = Object.freeze({
 // What each difficulty asks of the field. `pace` is how close to the car's
 // limit the racers drive; the spread is a small seeded difference per racer.
 export const FIELD_TUNING = Object.freeze({
-  easy:   Object.freeze({ pace: .846, spread: .02, form: .022, mistakes: .1, leaderMistakes: 2.5, catchUp: .04, playerSlot: 4,
+  easy:   Object.freeze({ pace: .842, spread: .02, form: .022, mistakes: .1, leaderMistakes: 2.5, catchUp: .04, playerSlot: 4,
     cars: 'slower', reaction: [.32, .6], aggression: .8 }),
   medium: Object.freeze({ pace: .889, spread: .015, form: .02, mistakes: .05, leaderMistakes: 1, catchUp: .02, playerSlot: 5,
     cars: 'all', reaction: [.22, .45], aggression: 1 }),
-  hard:   Object.freeze({ pace: .905, spread: .012, form: .016, mistakes: 0, leaderMistakes: 1, catchUp: 0, playerSlot: 7,
+  hard:   Object.freeze({ pace: .88, spread: .012, form: .016, mistakes: 0, leaderMistakes: 1, catchUp: 0, playerSlot: 7,
     cars: 'faster', reaction: [.15, .32], aggression: 1.15 }),
 });
 export const CATCH_UP_GAP_SEC = 8;
@@ -61,21 +61,21 @@ export function catchUpFactor(tuning, leadSec) {
 const trait = (extra = {}) => ({ skill: 1, brake: .86, slowCorners: 0, topSpeed: 0, tow: 1, consistency: .75,
   aggression: .5, defend: .25, start: 0, firstLap: .15, looseGrip: 1, ...extra });
 export const RACERS = Object.freeze([
-  Object.freeze({ id: 'axel_storm', driverId: 'axel_storm', name: 'Axel Storm', hardOnly: true,
+  Object.freeze({ id: 'axel_storm', driverId: 'axel_storm', name: 'Axel Storm', hardOnly: true, paint: { color: 0x1d1d22, accent: 0xd1a93a },
     traits: trait({ skill: 1.02, brake: .95, consistency: 1, aggression: .7, defend: .55, start: .03 }) }),
-  Object.freeze({ id: 'mara_vale', driverId: 'mara_vale', name: 'Mara Vale',
+  Object.freeze({ id: 'mara_vale', driverId: 'mara_vale', name: 'Mara Vale', paint: { color: 0x2f7d57, accent: 0xe8e2c8 },
     traits: trait({ skill: .99, brake: 1, slowCorners: .08, consistency: .8, aggression: .55, defend: .3 }) }),
-  Object.freeze({ id: 'iko_ren', driverId: 'iko_ren', name: 'Iko Ren',
+  Object.freeze({ id: 'iko_ren', driverId: 'iko_ren', name: 'Iko Ren', paint: { color: 0x6f93b8, accent: 0x1b2a3a },
     traits: trait({ skill: .99, consistency: .97, aggression: .35, defend: .25 }) }),
-  Object.freeze({ id: 'sana_marlow', driverId: 'sana_marlow', name: 'Sana Marlow',
+  Object.freeze({ id: 'sana_marlow', driverId: 'sana_marlow', name: 'Sana Marlow', paint: { color: 0xd9741a, accent: 0x20242a },
     traits: trait({ skill: .985, topSpeed: .03, tow: 1.5, consistency: .8, aggression: .5, defend: .25 }) }),
-  Object.freeze({ id: 'jules_reyes', driverId: 'jules_reyes', name: 'Jules Reyes',
+  Object.freeze({ id: 'jules_reyes', driverId: 'jules_reyes', name: 'Jules Reyes', paint: { color: 0xe3c321, accent: 0x20242a },
     traits: trait({ skill: .985, consistency: .62, aggression: .95, defend: .3, start: .12, firstLap: .5 }) }),
-  Object.freeze({ id: 'nia_frost', driverId: 'nia_frost', name: 'Nia Frost',
+  Object.freeze({ id: 'nia_frost', driverId: 'nia_frost', name: 'Nia Frost', paint: { color: 0x2fa6a0, accent: 0xf0f0e6 },
     traits: trait({ skill: .98, consistency: .85, aggression: .5, defend: .25, looseGrip: 1.06 }) }),
-  Object.freeze({ id: 'boone_ward', driverId: 'boone_ward', name: 'Boone Ward',
+  Object.freeze({ id: 'boone_ward', driverId: 'boone_ward', name: 'Boone Ward', paint: { color: 0x6a45a0, accent: 0xd8d8cc },
     traits: trait({ skill: .98, consistency: .72, aggression: .45, defend: .95 }) }),
-  Object.freeze({ id: 'club', driverId: 'club', name: 'Club Racer',
+  Object.freeze({ id: 'club', driverId: 'club', name: 'Club Racer', paint: { color: 0x8c9096, accent: 0x2a2d31 },
     traits: trait({ skill: .975, brake: .82, consistency: .6, aggression: .4, defend: .2 }) }),
 ]);
 
@@ -216,7 +216,7 @@ export function initializeField(duel) {
     const [lo, hi] = tuning.reaction;
     const reaction = Math.max(.1, lo + rng.float() * (hi - lo) - racer.traits.start * 1);
     return {
-      id: `gp-${index + 1}`, name: racer.name, racerId: racer.id, driverId: racer.driverId,
+      id: `gp-${index + 1}`, name: racer.name, racerId: racer.id, driverId: racer.driverId, paint: { ...racer.paint },
       car: cars[index].car, upgrades,
       s: pose.s, lateral: pose.lateral, speedMph: 0, finished: false, finishTime: null,
       headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost: 1, boosting: false,

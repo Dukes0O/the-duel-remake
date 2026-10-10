@@ -141,7 +141,7 @@ export function attachRenderer(host, app) {
   const lighting=createSceneLighting({scene,renderer,bloom,host});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
-  let course, world, loadedCar, loadedRivalCar, player, rival, chickens, ghost, ghostStyle, worldKey;
+  let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   const vehicleAssets=createVehicleAssets();
@@ -298,8 +298,10 @@ export function attachRenderer(host, app) {
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
-    if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
-    if (!rival) { rival = convoy?tanker.group:vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    // A Grand Prix racer wears its own paint; every other rival keeps the usual grey.
+    const rivalPaint=!menu&&st.rival?.paint?st.rival.paint:null,rivalPaintKey=rivalPaint?rivalPaint.color:0;
+    if(rival&&(loadedRivalCar!==rivalCarKey||loadedRivalPaint!==rivalPaintKey)){retireObject(rival);rival=null;}
+    if (!rival) { rival = convoy?tanker.group:vehicleAssets.create(rivalCarKey,{color:rivalPaint?.color??0xbfcace,accent:rivalPaint?.accent??0x142a36}); loadedRivalCar=rivalCarKey;loadedRivalPaint=rivalPaintKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
     if(convoy){
       tanker.setValveHealth(st.arena.convoy.valves);
       tanker.setLampSignal(st.rival?.convoyLampSignal,st.stageTimeSec);
@@ -310,15 +312,15 @@ export function attachRenderer(host, app) {
     }
     for(let index=1;!menu&&index<opponents.length;index++){
       const carKey=opponents[index].car||st.car,entry=extraOpponents[index-1];
-      const drone=opponents[index].drone===true;
-      if(entry?.carKey===carKey&&entry.drone===drone)continue;
+      const drone=opponents[index].drone===true,paint=opponents[index].paint;
+      if(entry?.carKey===carKey&&entry.drone===drone&&entry.paintKey===(paint?.color??0))continue;
       if(entry)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       // A copy wears its original's colours so the three cars match.
-      const mesh=vehicleAssets.create(carKey,{color:opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
+      const mesh=vehicleAssets.create(carKey,{color:paint?.color??(opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba),accent:paint?.accent??0x142a36});
       const droneStyle=drone?styleGhostVehicle(mesh):null;
       droneStyle?.opacity(.3);
       if(drone)mesh.name='Arsenal Decoy Drone';
-      scene.add(mesh);extraOpponents[index-1]={mesh,carKey,drone,droneStyle};sceneRevision++;ambientShading.refresh();
+      scene.add(mesh);extraOpponents[index-1]={mesh,carKey,drone,droneStyle,paintKey:paint?.color??0};sceneRevision++;ambientShading.refresh();
     }
     // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
     // the wreck-effect pool counts real cars only and is not rebuilt for them.

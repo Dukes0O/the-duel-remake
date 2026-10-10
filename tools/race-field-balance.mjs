@@ -104,11 +104,14 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = 42
 // lane and does not drive into the car ahead. Only legal driver inputs are used.
 export function installTestDriver(app) {
   const base = app._driveAutopilot.bind(app);
-  let lane = null, laneSince = -Infinity;
+  let lane = null, laneSince = -Infinity, stuck = 0;
   app._driveAutopilot = dt => {
     base(dt);
     const duel = app.duel, state = duel.state;
     if (state.status !== 'racing' || state.impactTimer > 0 || state.input == null) return;
+    // Pushed far off the road and stuck, the marshals put the scripted driver back, as they do the computer racers.
+    stuck = state.speedMph < 8 && state.stageTimeSec > 8 ? stuck + dt : 0;
+    if (stuck > 4) { duel._safeReset(state); stuck = 0; state.field.stats.playerRecoveries = (state.field.stats.playerRecoveries || 0) + 1; }
     const halfWidth = duel.course.roadHalfWidthAt?.(state.s) ?? DRIVE.roadHalfWidth;
     const cruise = -Math.min(DRIVE.laneOffset, halfWidth * .48);
     const metres = Math.max(15, state.speedMph * DRIVE.mphToWorld);
