@@ -7,6 +7,8 @@ export async function run(context){
   'isolated loadout Armory',60_000);
   const armory=await context.evaluate(`(()=>{
     const app=window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     document.querySelector('#armory-open').click();
     const before=[...document.querySelectorAll('[data-loadout-slot]')]
       .map(select=>select.value);

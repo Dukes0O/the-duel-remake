@@ -7,8 +7,9 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   // Released on 4 October 2026: Fuel Run, Bounty Hunt, Arsenal, Salt Flats, Crew gear.
   // Released on 9 October 2026: Convoy Raid, Tollkeeper, Baron Blackiron, Warlord cards,
   // Arsenal wave three, Fight Voices, computer crews, Ambush Alley and Gunn.
+  // Released on 10 October 2026: seeker rockets.
   assert.deepEqual(FEATURE_STATES, {
-    'seeker-rockets': 'dev',
+    'seeker-rockets': 'on',
     'convoy-raid': 'on',
     'bounty-hunt': 'on', 'career-backup': 'dev', 'hidden-road': 'on',
     'fuel-run': 'on',
@@ -27,6 +28,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   assert.equal(flags.enabled('wasteland2'), false);
   assert.equal(flags.enabled('hidden-road'), true);
   assert.equal(flags.enabled('career-backup'), false);
+  assert.equal(flags.enabled('seeker-rockets'), true);
   assert.equal(flags.enabled('warlords'), false);
   assert.equal(flags.enabled('fuel-run'), true);
   assert.equal(flags.enabled('tollkeeper'), true);

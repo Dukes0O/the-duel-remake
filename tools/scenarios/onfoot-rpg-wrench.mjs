@@ -10,10 +10,14 @@ export async function run(context) {
   'memory-only fighter gear scene', 60_000);
   await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989}))
       throw Error('Wasteland race did not start');
     app.stop();
     const state = app.duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('onfoot-rpg-wrench fixture launched without gate discovery');
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,
       s: 500, prevS: 500, lateral: 0, prevLateral: 0,
       speedMph: 0, traffic: []});

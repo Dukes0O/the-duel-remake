@@ -281,7 +281,10 @@ def salt_material(output,config,physical):
     gap=(np.sqrt(second)-np.sqrt(first))*size
     # The ridge spans several native atlas samples instead of vanishing
     # between texels. Its relief and wider seam share the same seeded cells.
-    ridge=np.exp(-(gap/settings['crustRidgeWidthMetres'])**2)
+    width_mix=np.clip((salt_noise(x/13+31,z/13-17,seed)-.25)/.5,0,1)
+    width_mix=width_mix*width_mix*(3-2*width_mix)
+    width_scale=.30+2.70*width_mix
+    ridge=np.exp(-(gap/(settings['crustRidgeWidthMetres']*width_scale))**2)
     seam=np.exp(-(gap/settings['crustSeamWidthMetres'])**2)
     bright,dark=settings['crustColorWeights'];crust=bright*ridge+dark*seam
     # Read the real Course boundary frames to tint its tyre-worn driving band.
@@ -409,7 +412,9 @@ def main():
     # existing solid wreck boundary. One merged scenery draw adds no Course
     # obstacles and leaves the original bus, crane and driving band clear.
     island=Geometry(config['islandSalvage']['node'])
-    for stack in config['islandSalvage']['stacks']:
+    extra_stacks=[{'center':[-48,16],'headingDegrees':-38,'paintTile':2},
+                  {'center':[30,15],'headingDegrees':-28,'paintTile':5}]
+    for stack_index,stack in enumerate(config['islandSalvage']['stacks']+extra_stacks):
         x,z=stack['center'];yaw=math.radians(stack['headingDegrees']);tile=stack['paintTile']
         def place(part,size,local,heading=0,indices=None,paint=tile):
             lx,y,lz=local
@@ -435,6 +440,16 @@ def main():
                   indices=body,paint=(tile+index+2)%6)
         place(sedan,(2.3,.80,5.1),(0,2.18,-1.4),heading=.15,
               indices=body,paint=(tile+4)%6)
+        if stack_index in (0,1,3):
+            # Three tall, supported heaps double the island's wreck count.
+            # Every shell remains inside the existing 11.5 x 2.44 m container
+            # roof footprint. Courses overlap slightly; no new Course solid.
+            for level in range(5):
+                spread=3.60-level*.20
+                for column,lx in enumerate((-spread,0,spread)):
+                    place(sedan,(2.04,.90,3.65),(lx,5.34+level*.81,6.0),
+                          heading=math.pi/2+(.025 if (level+column)%2 else -.025),
+                          indices=body,paint=(tile+level+column+1)%6)
         # Real discarded donor parts break the base outline. Each rests on
         # the salt; their retained source faces are recorded in the manifest.
         for lx,lz in [(-9,1),(8.5,1.5)]:

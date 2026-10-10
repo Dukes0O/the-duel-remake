@@ -15,10 +15,14 @@ async function qualityPass(context, quality) {
 
   const playerWreck = await context.evaluate(`(async () => {
     const app = window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     const buildStart = performance.now();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, seed: 1989})) throw Error('Three-opponent race did not start');
     const buildMs = performance.now() - buildStart;
+    if(app.duel.state.wastelandGateDiscovered!==true)
+      throw Error('Armored wreck fixture launched without gate discovery');
     app.stop();
     window.__presentCombatFrame = async () => {
       for (let attempt = 0; attempt < 400; attempt++) {

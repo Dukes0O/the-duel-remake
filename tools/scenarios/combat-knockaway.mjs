@@ -1,5 +1,13 @@
 // Inspect real scene objects and pooled debris in memory-only High and
 // Performance races. The renderer reads the scripted state without changing it.
+import {readFile} from 'node:fs/promises';
+
+// The preview serves built assets, so source-module URLs are unavailable.
+// Carry the unchanged, dependency-free native geometry module into this
+// disposable page rather than adding a runtime export just for inspection.
+const collisionSource=await readFile(new URL('../../src/vehicle-collision.js',import.meta.url),'utf8');
+const collisionModule=`data:text/javascript;base64,${Buffer.from(collisionSource).toString('base64')}`;
+
 async function qualityPass(context, quality) {
   await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine').disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
@@ -15,10 +23,15 @@ async function qualityPass(context, quality) {
 
   await context.evaluate(`(async () => {
     const app=window.__qaApp;
+    app.profile.wasteland.discoveredGate=true;
+    app._saveProfile();
     if(!app.startCampaign({mode:'wasteland',startStage:0,car:'falcone_f42',seed:1989}))
       throw Error('Wasteland race did not start');
     app.stop();
     const duel=app.duel,state=duel.state,render=window.__render;
+    if(state.wastelandGateDiscovered!==true||!Number.isFinite(state.armor)||
+      !Number.isFinite(state.maxArmor))
+      throw Error('Discovered Wasteland race did not initialize armor');
     if(!duel.roadsideKnockAwayEnabled())throw Error('Flagged knock-away is off');
     Object.assign(state,{status:'racing',paused:false,opponents:[],traffic:[],invulnerableSec:0});
     app.onFrame?.(state);
@@ -77,32 +90,155 @@ async function qualityPass(context, quality) {
   await context.screenshot(`roadside-traffic-knock-${quality}`);
 
   const high=await context.evaluate(`(async () => {
-    const {duel,state,render,frame,present,trafficMesh}=window.__roadsideQA;
+    const qa=window.__roadsideQA;
+    const {duel,state,render,frame,present,trafficMesh}=qa;
+    const {boxContact}=await import(${JSON.stringify(collisionModule)});
+    // A real frame first reaches the car's face. Deeply overlapping centres
+    // can select a side normal in the rigid-body solver, even at high speed.
+    qa.touchTraffic=actor=>{
+      const playerSpec=duel._vehicleSpec(state),trafficSpec=duel._vehicleSpec(actor);
+      const estimate=actor.s-playerSpec.halfLength-trafficSpec.halfLength;
+      const heading=duel.course.at(actor.s).heading;
+      const difference=duel.course.at(estimate).heading-heading;
+      const playerExtent=playerSpec.halfLength*Math.abs(Math.cos(difference))+
+        playerSpec.halfWidth*Math.abs(Math.sin(difference));
+      state.s=actor.s-trafficSpec.halfLength-playerExtent+.05;
+      state.prevS=state.s-1.1;
+      actor.prevS=actor.s+(actor.dir<0?1.1:0);
+      const body=item=>{
+        const point=duel.course.worldAt(item.s,item.lateral),spec=duel._vehicleSpec(item);
+        return {x:point.x,z:point.z,halfLength:spec.halfLength,halfWidth:spec.halfWidth,
+          heading:duel.course.at(item.s).heading+(item.headingError||0)+
+            (item.dir<0?Math.PI:0)};
+      };
+      const contact=boxContact(body(state),body(actor));
+      const rearNormal=-(contact.normal.x*Math.sin(heading)+
+        contact.normal.z*Math.cos(heading));
+      const geometry={rearNormal,overlap:contact.overlap,
+        playerS:state.s,playerPrevS:state.prevS,trafficS:actor.s,
+        trafficPrevS:actor.prevS,playerExtent,trafficHalfLength:trafficSpec.halfLength};
+      if(!(rearNormal>.95)||!(contact.overlap>=-.3&&contact.overlap<=.3))
+        throw Error('Traffic fixture did not reach the intended face: '+JSON.stringify(geometry));
+      return geometry;
+    };
+    qa.wreckPose=actor=>{
+      const point=duel.course.groundAt(actor.s,actor.lateral);
+      const smoke=render.scene.getObjectByName('combat-vfx-traffic-wreck-0-smoke');
+      const pool=render.scene.children.find(item=>item.name==='Roadside debris pool');
+      return {dead:actor.alive===false,physical:actor.wrecked?.physical===true,
+        visible:trafficMesh.visible,attached:trafficMesh.parent===render.scene,
+        poseError:Math.hypot(trafficMesh.position.x-point.x,trafficMesh.position.z-point.z),
+        position:{x:trafficMesh.position.x,z:trafficMesh.position.z},
+        smoke:smoke?.visible===true,smokeOpacity:smoke?.material.opacity??0,
+        exploded:actor.wrecked?.exploded===true,
+        debris:pool?.children.some(item=>item.visible)===true};
+    };
+    qa.advanceTraffic=steps=>{
+      for(let i=0;i<steps;i++){state.stageTimeSec+=1/120;duel._traffic(1/120);}
+    };
+    qa.contactInputs=(actor,playerSpeed,trafficSpeed,trafficDirection)=>{
+      const motion=item=>({speedMph:item.speedMph,dir:item.dir??1,
+        knock:item.knock??null,pushVelocity:item.pushVelocity??0,
+        headingError:item.headingError??0,slipAngle:item.slipAngle??0,
+        yawVelocity:item.yawVelocity??0,airborne:item.airborne===true,
+        airHeight:item.airHeight??0,prevAirHeight:item.prevAirHeight??0,
+        verticalSpeed:item._verticalSpeed??0});
+      const snapshot={player:motion(state),traffic:motion(actor)};
+      const clean=item=>item.knock===null&&item.pushVelocity===0&&
+        item.headingError===0&&item.slipAngle===0&&item.yawVelocity===0&&
+        !item.airborne&&item.airHeight===0&&item.prevAirHeight===0&&item.verticalSpeed===0;
+      if(snapshot.player.speedMph!==playerSpeed||snapshot.player.dir!==1||
+          snapshot.traffic.speedMph!==trafficSpeed||snapshot.traffic.dir!==trafficDirection||
+          !clean(snapshot.player)||!clean(snapshot.traffic))
+        throw Error('Scripted contact inputs changed: '+JSON.stringify(snapshot));
+      return snapshot;
+    };
     const speed=duel.car.topSpeed*.7,armor=state.armor;
+    // This is a new straight, grounded contact, not a continuation of the low hit.
     Object.assign(state,{s:127,prevS:120,lateral:0,prevLateral:0,
-      speedMph:speed,stageTimeSec:10});
+      speedMph:speed,stageTimeSec:10,knock:null,pushVelocity:0,headingError:0,
+      slipAngle:0,yawVelocity:0,airborne:false,airHeight:0,prevAirHeight:0,_verticalSpeed:0});
     const actor={alive:true,s:130,prevS:130,lateral:.6,prevLateral:.6,
-      speedMph:0,dir:1,headingError:0,pushVelocity:0};
+      speedMph:0,dir:1,headingError:0,pushVelocity:0,knock:null};
     state.traffic=[actor];
-    await frame(actor.s,actor.lateral);
+    const geometry=qa.touchTraffic(actor);
+    const point=await frame(actor.s,actor.lateral);
+    const sameMesh=render.scene.children.find(item=>item.visible&&item.userData?.size&&
+      Math.hypot(item.position.x-point.x,item.position.z-point.z)<1.5)===trafficMesh;
     const {renderMs:baselineRenderMs,drawCalls:baselineDrawCalls}=await present();
+    const impacts=[];
+    duel.onChange((_,event)=>{if(event.roadsideImpact?.actor===actor)impacts.push(event.roadsideImpact);});
+    const preContact=qa.contactInputs(actor,speed,0,1);
     if(!duel._vehicleContact(state,actor,'traffic'))throw Error('High traffic contact missed');
-    const {renderMs:firstBurstRenderMs,drawCalls:burstDrawCalls}=await present();
-    const pool=render.scene.children.find(item=>item.name==='Roadside debris pool');
-    const burstNow=pool?.children.some(item=>item.visible);
-    const carNow=trafficMesh.visible;
-    for(let i=0;i<36;i++)duel._traffic(1/120);
-    state.stageTimeSec+=.3;
+    const {renderMs:firstSmashRenderMs,drawCalls:smashDrawCalls}=await present();
+    const first=qa.wreckPose(actor);
+    qa.advanceTraffic(36);
     await frame(actor.s,actor.lateral);
-    return {burstNow,carNow,carAfter:trafficMesh.visible,
-      burstAfter:pool?.children.some(item=>item.visible),
+    const later=qa.wreckPose(actor);
+    qa.advanceTraffic(48);
+    await frame(actor.s,actor.lateral);
+    return {preContact,geometry,sameMesh,first,later,after:qa.wreckPose(actor),
+      moved:Math.hypot(later.position.x-first.position.x,later.position.z-first.position.z),
+      outcomes:impacts.map(event=>event.outcome),
       armorDelta:armor-state.armor,crashes:state.stageCrashes,
-      baselineRenderMs,firstBurstRenderMs,baselineDrawCalls,burstDrawCalls};
+      baselineRenderMs,firstSmashRenderMs,baselineDrawCalls,smashDrawCalls};
   })()`);
-  if(!high.burstNow||!high.carNow||high.carAfter||!high.burstAfter||
+  const physicalPose=pose=>pose.dead&&pose.physical&&pose.visible&&pose.attached&&
+    Number.isFinite(pose.poseError)&&pose.poseError<=1e-6;
+  if(!high.sameMesh||![high.first,high.later,high.after].every(physicalPose)||
+      !(high.moved>0)||!high.later.smoke||!(high.later.smokeOpacity>0)||
+      [high.first,high.later,high.after].some(pose=>pose.exploded||pose.debris)||
+      high.outcomes.length!==1||high.outcomes[0]!=='smash'||
       high.armorDelta!==0||high.crashes!==0)
-    throw Error(`${quality} high traffic burst/removal failed: ${JSON.stringify(high)}`);
-  await context.screenshot(`roadside-traffic-debris-${quality}`);
+    throw Error(`${quality} high traffic physical wreck failed: ${JSON.stringify(high)}`);
+  await context.screenshot(`roadside-traffic-physical-wreck-${quality}`);
+
+  // The unchanged stationary .7-top-speed case is below the blast threshold.
+  // This separate oncoming contact covers the native delayed explosion.
+  const blast=await context.evaluate(`(async () => {
+    const qa=window.__roadsideQA;
+    const {duel,state,render,frame,present,trafficMesh}=qa;
+    const armor=state.armor,crashes=state.stageCrashes,penalty=state.racePenaltySec;
+    Object.assign(state,{s:100,prevS:80,lateral:0,prevLateral:0,speedMph:130,
+      stageTimeSec:12,invulnerableSec:0,impactTimer:0,knock:null,pushVelocity:0,
+      headingError:0,slipAngle:0,yawVelocity:0,airborne:false,airHeight:0,
+      prevAirHeight:0,_verticalSpeed:0});
+    const actor={alive:true,s:105,prevS:115,lateral:.6,prevLateral:.6,
+      speedMph:60,dir:-1,headingError:0,pushVelocity:0,knock:null};
+    state.traffic=[actor];
+    const geometry=qa.touchTraffic(actor);
+    const point=await frame(actor.s,actor.lateral);
+    const sameMesh=render.scene.children.find(item=>item.visible&&item.userData?.size&&
+      Math.hypot(item.position.x-point.x,item.position.z-point.z)<1.5)===trafficMesh;
+    const events=[];
+    duel.onChange((_,event)=>events.push(event));
+    const preContact=qa.contactInputs(actor,130,60,-1);
+    if(!duel._vehicleContact(state,actor,'head_on'))throw Error('Oncoming blast contact missed');
+    await present();
+    const first=qa.wreckPose(actor),firstCallout=state.callout;
+    qa.advanceTraffic(36);
+    await frame(actor.s,actor.lateral);
+    const later=qa.wreckPose(actor);
+    qa.advanceTraffic(48);
+    const {renderMs:explosionRenderMs,drawCalls:explosionDrawCalls}=await present();
+    const impacts=events.filter(event=>event.roadsideImpact).map(event=>event.roadsideImpact);
+    return {preContact,geometry,sameMesh,first,later,after:qa.wreckPose(actor),firstCallout,
+      finalCallout:state.callout,outcomes:impacts.map(event=>event.outcome),
+      actorMatches:impacts.every(event=>event.actor===actor),
+      oldWreckEvent:events.some(event=>event.trafficWrecked),
+      armorDelta:armor-state.armor,crashDelta:state.stageCrashes-crashes,
+      penaltyDelta:state.racePenaltySec-penalty,explosionRenderMs,explosionDrawCalls};
+  })()`);
+  if(!blast.sameMesh||![blast.first,blast.later,blast.after].every(physicalPose)||
+      blast.first.exploded||blast.later.exploded||blast.first.debris||blast.later.debris||
+      !blast.later.smoke||!(blast.later.smokeOpacity>0)||
+      !blast.after.exploded||!blast.after.debris||!blast.after.smoke||
+      blast.outcomes.length!==2||blast.outcomes[0]!=='smash'||blast.outcomes[1]!=='obliterate'||
+      !blast.actorMatches||blast.oldWreckEvent||blast.firstCallout!=='TRAFFIC SMASHED'||
+      blast.finalCallout!=='TRAFFIC EXPLODED'||blast.armorDelta!==0||blast.crashDelta!==0||
+      blast.penaltyDelta!==0||blast.explosionDrawCalls<=0)
+    throw Error(`${quality} delayed traffic explosion failed: ${JSON.stringify(blast)}`);
+  await context.screenshot(`roadside-traffic-delayed-blast-${quality}`);
 
   const sign=await context.evaluate(`(async () => {
     const {duel,state,render,frame}=window.__roadsideQA;
@@ -148,10 +284,11 @@ async function qualityPass(context, quality) {
     throw Error(`${quality} road-sign mesh/debris failed: ${JSON.stringify(sign)}`);
   await context.screenshot(`roadside-sign-debris-${quality}`);
   console.log(`${quality}: traffic knocked ${low.lateral.toFixed(1)} m clear; `+
-    `high traffic and ${sign.highId} removed after pooled debris; `+
+    `high traffic stayed solid; oncoming wreck exploded; ${sign.highId} removed after pooled debris; `+
     `${sign.lowId} shifted ${sign.lowShift.toFixed(1)} m; `+
     `nearby render ${high.baselineRenderMs.toFixed(2)} ms, `+
-    `first debris render ${high.firstBurstRenderMs.toFixed(2)} ms.`);
+    `first smash render ${high.firstSmashRenderMs.toFixed(2)} ms, `+
+    `delayed explosion render ${blast.explosionRenderMs.toFixed(2)} ms.`);
 }
 
 export async function run(context) {

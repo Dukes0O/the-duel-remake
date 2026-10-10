@@ -219,8 +219,8 @@ check('existing Factory catalogue records actual valve inspection', () => {
     {model: 'pipe-large-valve', path: modelPath, triangles: 456, evaluatedTriangles: 456, armatures: 0, actions: []},
     'actual 456-triangle valve inspection is missing from the existing catalogue');
 });
-check('every other catalogue entry stays exactly as reviewed', () => {
-  assert.equal(digest(catalog.assets.filter(asset => asset.id !== 'kenney-factory-kit')), '0f2d168ba64a3a99dd7ebe4ab409cd60e13681f96d7fe63d91fa01d7d689c367');
+check('reviewed non-Factory catalogue includes the approved Flame source', () => {
+  assert.equal(digest(catalog.assets.filter(asset => asset.id !== 'kenney-factory-kit')), 'cb98201e7daf38aaea010a2b18a34deaa661d0416c4403f92daf427974226b0f');
 });
 check('existing Factory provenance and other source uses stay exact', () => {
   const retained = structuredClone(factory);

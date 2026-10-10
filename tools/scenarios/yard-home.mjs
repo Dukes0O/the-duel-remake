@@ -20,7 +20,15 @@ const LADDER_HTML=territoryPanel({wasteland:{version:1,discoveredGate:true,
 
 async function framedCar(context,car){
   const size={width:1280,height:800};
-  await context.waitFor(`(() => {const canvas=document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]'),rect=canvas?.getBoundingClientRect();return window.__qaApp.visualReady===true && canvas?.parentElement?.dataset?.vehicleAsset==='ready' && Math.abs(rect?.width-${size.width})<1 && Math.abs(rect?.height-${size.height})<1 && Math.abs(window.__render.camera.aspect-rect.width/rect.height)<.001;})()`,`${car} ${viewport} asset and camera`,60000);
+  await context.waitFor(`(() => {
+    const canvas = document.querySelector('canvas[aria-label="The Duel three-dimensional racing scene"]');
+    const rect = canvas?.getBoundingClientRect();
+    return window.__qaApp.visualReady === true &&
+      canvas?.parentElement?.dataset?.vehicleAsset === 'ready' &&
+      Math.abs(rect?.width - ${size.width}) < 1 &&
+      Math.abs(rect?.height - ${size.height}) < 1 &&
+      Math.abs(window.__render.camera.aspect - rect.width / rect.height) < .001;
+  })()`, `${car} ${size.width}x${size.height} asset and camera`, 60000);
   const result=await context.evaluate(`(() => {
     const app=window.__qaApp, view=window.__render, camera=view.camera;
     view.renderFrame();camera.updateWorldMatrix(true,false);camera.updateProjectionMatrix();

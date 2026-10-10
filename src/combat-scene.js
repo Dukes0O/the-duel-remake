@@ -1,3 +1,6 @@
+import {createFlameResources, createFlameView, createFlameScorch, createFlameLighting} from './flame-view.js';
+import {FLAME_RULES} from './arsenal/flamethrower.js';
+import {SIGNATURE_GEAR} from './crew-gear/gear.js';
 import {createSmokeCloud, smokeHazeOpacity} from './combat-effects.js';
 import {
   arsenalEnabled, hazardsActive, point
@@ -34,7 +37,7 @@ import {
 } from './wasteland-tuning.js';
 // Reusable effects geometry; the flagged fighter pool is prepared on asset load.
 export function createCombatScene(attachments = createVehicleAttachmentRegistry(), {
-  loadFighterAsset
+  loadFighterAsset, loadFlameTexture = () => new THREE.Texture()
 } = {
 }){
   const group=new THREE.Group();
@@ -275,33 +278,46 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   turretHead.position.y=.43; turretBarrel.position.set(0,.48,.62);
   turretBarrel.rotation.x=Math.PI/2;
   crewTurret.add(turretBase,turretHead,turretBarrel); crewTurret.visible=false; group.add(crewTurret);
-  const crewFlame = new THREE.Mesh(new THREE.ConeGeometry(1.75,6,16,1,true),materials.fire);
-  crewFlame.visible=false;group.add(crewFlame);
+  const flameResources = createFlameResources({loadTexture: loadFlameTexture});
+  const flameScorch = createFlameScorch({resources: flameResources});
+  const flameLighting = createFlameLighting();
+  group.add(flameScorch.group, flameLighting.group);
+  const cinderGear = SIGNATURE_GEAR.cinder;
+  function flameView(name, options) {
+    const view = createFlameView({resources: flameResources, ...options});
+    view.group.name = name; group.add(view.group); return view;
+  }
+  const crewFlame = flameView('crew-flamer', {range: cinderGear.range, halfAngle: cinderGear.cone / 2});
   const cpuGearViews = Array.from({length: 12}, (_, index) => {
-    const turret = crewTurret.clone(true), flame = crewFlame.clone();
-    turret.name = `cpu-crew-turret-${index}`; flame.name = `cpu-crew-flamer-${index}`;
-    turret.visible = flame.visible = false;
-    group.add(turret, flame);
+    const turret = crewTurret.clone(true);
+    const flame = flameView(`cpu-crew-flamer-${index}`, {range: cinderGear.range, halfAngle: cinderGear.cone / 2});
+    turret.name = `cpu-crew-turret-${index}`; turret.visible = false; group.add(turret);
     return {turret, head: turret.children[1], flame};
   });
-  // Fixed pools keep the three wave-two tells independent of frame rate.
-  const arsenalFlameGeometry = new THREE.ConeGeometry(9 * Math.tan(Math.PI / 12),
-    9, 12, 1, true);
-  const arsenalFlameMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff8c16, transparent: true, opacity: .38, depthWrite: false,
-    side: THREE.DoubleSide,
-  });
-  const arsenalFlames = Array.from({length: 12}, (_, index) => {
-    const view = new THREE.Group();
-    view.name = `arsenal-flame-${index}`;
-    const plume = new THREE.Mesh(arsenalFlameGeometry, arsenalFlameMaterial);
-    plume.rotation.x = -Math.PI / 2;
-    plume.position.z = 4.5;
-    view.add(plume);
-    view.visible = false;
-    group.add(view);
-    return view;
-  });
+  const arsenalFlames = Array.from({length: 12}, (_, index) => flameView(`arsenal-flame-${index}`,
+    {range: FLAME_RULES.range, halfAngle: FLAME_RULES.halfConeRadians}));
+  const burningCars = Array.from({length: 13}, (_, index) => flameView(`burning-car-${index}`, {body: true}));
+  const flameLightSources = [];
+  let flameScorchTimes = new WeakMap();
+  let flameRaceState = null;
+  function presentFlame(view, {active, at, heading = 0, seconds, camera, quality, age,
+    range = FLAME_RULES.range, coneHalfAngle, body = false}, duel) {
+    if (active) {
+      view.group.position.set(at.x, at.y, at.z); view.group.rotation.set(0, heading, 0);
+    }
+    view.update({active, seconds, camera, quality, age, coneHalfAngle});
+    if (!active) {flameScorchTimes.delete(view); return;}
+    const center = body ? 0 : range * .45;
+    const x = at.x + Math.sin(heading) * center, z = at.z + Math.cos(heading) * center;
+    flameLightSources.push({x, y: at.y, z, range, body});
+    const last = flameScorchTimes.get(view) ?? -Infinity;
+    if (seconds - last >= .24) {
+      const nearest = duel.course.nearest?.(x, z);
+      const ground = nearest ? duel.course.groundAt(nearest.s, nearest.lateral) : at;
+      flameScorch.stamp({x, y: ground.y, z, heading, size: body ? 1.1 : range * .32}, seconds);
+      flameScorchTimes.set(view, seconds);
+    }
+  }
   const arsenalMagnets = Array.from({length: 12}, (_, index) => {
     const view = new THREE.Mesh(ring, materials.neon);
     view.name = `arsenal-magnet-${index}`;
@@ -585,6 +601,14 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const s = duel.state, c = s.combat;
     const active = !!c && s.status !== 'menu';
     group.visible = active;
+    const flameSeconds = s.stageTimeSec || 0;
+    if (flameRaceState !== s) {
+      flameRaceState = s;
+      flameScorch.reset();
+      flameScorchTimes = new WeakMap();
+    }
+    flameLightSources.length = 0;
+    flameLighting.update(flameLightSources, flameSeconds);
     updateHazards(duel,active,vehicles);
     updateTethers(duel,active);
     updateWaveThree(duel, active);
@@ -694,14 +718,13 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       rocket.rotation.x=Math.PI/2-Math.atan2(p.vy,Math.hypot(p.vx,p.vz));
       bomb.rotation.set(p.age*5,p.age*3,0);
     });
+    const flameFrame = {seconds: flameSeconds, camera: vehicles.camera, quality: vehicles.quality || 'high'};
     arsenalFlames.forEach((view, index) => {
       const burst = arsenalEnabled(duel) && c.flameBursts?.[index];
       const owner = burst && actorForTarget(duel, burst.ownerId);
-      view.visible = !!owner;
-      if (!owner) return;
-      const at = point(duel, owner);
-      view.position.set(at.x, at.y, at.z);
-      view.rotation.y = at.heading + (owner.headingError || 0);
+      const at = owner && point(duel, owner);
+      presentFlame(view, {...flameFrame, active: !!owner, at,
+        heading: at ? at.heading + (owner.headingError || 0) : 0, age: burst?.age}, duel);
     });
     arsenalMagnets.forEach((view, index) => {
       const magnet = arsenalEnabled(duel) && c.magnets?.[index];
@@ -721,13 +744,15 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       turretBase.rotation.y=s.stageTimeSec*.3;
     }
     const fighter=s.fighter;
-    crewFlame.visible=active&&duel.featureFlags?.enabled('crew-gear')===true&&
-      s.onFoot&&fighter?.flaming===true;
-    if(crewFlame.visible){
-      crewFlame.position.set(fighter.x+Math.sin(fighter.yaw)*3,fighter.y+.9,
-        fighter.z+Math.cos(fighter.yaw)*3);
-      crewFlame.rotation.set(Math.PI/2,fighter.yaw,0);
-    }
+    // The native hand-flamer test uses fighter x/z as its origin. Pitch narrows
+    // its horizontal sector through the same projected direction cosine.
+    const cinderCosine = Math.cos(cinderGear.cone / 2) / Math.max(1e-9, Math.cos(fighter?.pitch || 0));
+    const cinderHalfAngle = Math.acos(Math.min(1, cinderCosine));
+    presentFlame(crewFlame, {...flameFrame,
+      active: active && duel.featureFlags?.enabled('crew-gear') === true &&
+        s.onFoot && fighter?.flaming === true && cinderHalfAngle > 0,
+      at: fighter && {x: fighter.x, y: fighter.y + .85, z: fighter.z},
+      heading: fighter?.yaw, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
     cpuGearViews.forEach((view, index) => {
       const crew = s.opponents?.[index]?.cpuCrew;
       const enabled = active && duel.featureFlags?.enabled('cpu-crews') === true;
@@ -741,13 +766,19 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
           view.head.rotation.y = Math.atan2(at.x - turret.x, at.z - turret.z);
         }
       }
-      view.flame.visible = fighter?.flaming === true;
-      if (view.flame.visible) {
-        view.flame.position.set(fighter.x + Math.sin(fighter.yaw) * 3, fighter.y + .9,
-          fighter.z + Math.cos(fighter.yaw) * 3);
-        view.flame.rotation.set(Math.PI / 2, fighter.yaw, 0);
-      }
+      presentFlame(view.flame, {...flameFrame, active: fighter?.flaming === true,
+        at: fighter && {x: fighter.x, y: fighter.y + .85, z: fighter.z},
+        heading: fighter?.yaw, range: cinderGear.range}, duel);
     });
+    burningCars.forEach((view, index) => {
+      const actor = index ? s.opponents?.[index - 1] : s;
+      const burn = arsenalEnabled(duel) && actor && carEffect(actor, 'burning');
+      const at = burn && point(duel, actor);
+      presentFlame(view, {...flameFrame, active: !!burn, at, body: true,
+        heading: at ? at.heading + (actor.headingError || 0) : 0}, duel);
+    });
+    flameScorch.update(flameSeconds);
+    flameLighting.update(flameLightSources, flameSeconds);
     const boarding = s.boarding;
     const chargeTarget = active && duel.featureFlags?.enabled('crew-gear') === true &&
       boarding?.phase === 'charge' ? actorForTarget(duel, boarding.targetId) : null;
@@ -803,8 +834,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       for (const vehicle of [...bindings]) if (vehicle) detachVehicle(vehicle);
       rigs.forEach((rig, index) => rigMounts(index, rig).forEach(mount => attachments.detach(mount.owner)));
       for(const geometry of [oilGeometry,sphere,ring,shaft,tip,rocketBody,rocketNose,armorGeometry,shieldShell,shieldRim,
-        turretBase.geometry,turretHead.geometry,turretBarrel.geometry,crewFlame.geometry,
-        chargeBase.geometry,arsenalFlameGeometry])geometry.dispose();
+        turretBase.geometry,turretHead.geometry,turretBarrel.geometry,
+        chargeBase.geometry])geometry.dispose();
       hazardViews.forEach(view=>{
         view.oilMaterial.dispose();
         view.smokeCloud.dispose();
@@ -819,7 +850,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       Object.values({
         ...materials,...pickupMaterials
       }).forEach(material=>material.dispose());
-      arsenalFlameMaterial.dispose();
+      for (const view of [crewFlame, ...cpuGearViews.map(entry => entry.flame), ...arsenalFlames, ...burningCars]) view.dispose();
+      flameScorch.dispose(); flameLighting.dispose(); flameResources.dispose();
       mortarRingGeometry.dispose();
       mortarRingMaterial.dispose();
       teslaViews.forEach(view => view.arcs.geometry.dispose());

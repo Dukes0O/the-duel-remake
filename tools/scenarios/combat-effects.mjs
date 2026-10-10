@@ -18,11 +18,15 @@ async function pass(context, quality) {
 
   const setup = await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, cpuDifficulty: 'hard', seed: 1989}))
       throw Error('Three-car Wasteland race did not start');
     app.stop();
     const duel = app.duel, state = duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('Combat effects fixture launched without gate discovery');
     if (state.opponents.length !== 3 || !Number.isFinite(state.maxArmor))
       throw Error('Armored three-CPU field is unavailable');
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,

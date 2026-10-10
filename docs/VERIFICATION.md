@@ -1,5 +1,181 @@
 # Remake verification
 
+## Polish release — 10 October 2026
+
+Installed 10 October at 19:56 UTC from exact commit `1046076a`. Live build
+`20261010195525-87b479fc74c0` is verified over HTTP. The full tier passed
+371/371 in 937.27 s, alone with four jobs, with clean start/end source and
+unchanged commit. A prior attempt was interrupted after a separate Claude lane
+started competing tests; its partial result is not used as release evidence.
+The staged production build passed High and Performance menu/race checks at
+72 and 71 km/h, with zero browser warnings/errors and disposable memory-only
+storage. Real saves were not accessed and open races were not refreshed.
+
+One rollback build is retained in `dist-previous`. The staged server and
+`dist-next` are removed. Old hashed live assets are retained for open races;
+pruning them is deferred until those races no longer need them. Remote backup
+is held by the existing binary-history compaction approval and protected refs;
+no history was rewritten and no protected work was removed.
+
+
+Kyle approved the Height and Seeker changes, accepted Smoke round two and
+Arena round two (final), and authorized Smoke, Flame and Arena merges in
+that order followed by the full tier and a real-game release. Flame round
+one was already approved. Seeker rockets are on in production; career
+backup stays dev. No save format or settlement behavior changes.
+
+Ordinary arena armor is 1.21 instead of 1.20. Medium wrecks average 13.833,
+within the unchanged 10–14 range. Warlord health is exact. Reviewed arena
+replay changes contain only the added armor; other movement fields match.
+
+Seeker damage is 8; legacy Pods and Gunn stay 10. Matched thirty-seed runs
+complete all sixty races: off 80 armor / 447 firings, on 112 / 471 firings,
+ratio 1.3286624203821655. Kyle explicitly accepted this exception to the
+original 1.3 target. The original metric check still reports the excess; no
+sample, threshold, rounding rule or damage-attribution assertion changed.
+
+Approved Smoke covers the car at the measured distances: High visible
+fractions 7.779%/2.460%, Performance 0.886%/2.127% at 10/25 m, all below 10%.
+Wren retains its native 2.5 m radius; its sheet makes an appearance/haze
+claim, not full F42 coverage. Actual-source frame p95 rises at most 0.595%;
+preparation/render work p95 at most 5.714%. Flame p95 rises 3.3% in High
+and is unchanged in Performance; the High mean rise was explicitly accepted.
+Arena frame p95 stays 16.8 ms in both qualities. These source comparisons
+use 3af7f15c, whose game source equals released master e4b82b0b.
+
+Combat balance checks pass on ac01cbe6 with both explicit configurations.
+The legacy weapon baseline has Easy/Medium/Hard wins 26/19/8 out of 30
+(727.43 s). The released arsenal, wave-three, computer-crew and Seeker
+configuration has 28/19/10 wins (787.31 s). The retired wasteland2 switch
+cannot be tested as an off/on pair; these reports name their actual flags.
+The independent paired Seeker damage exception above remains unchanged.
+Source review through Arena merge 2bbabd9f confirms only presentation code
+changed after those reports. Final promotion changes only the explicitly
+overridden catalog state; simulation and balance-report code remain exact.
+
+Height checks cover 43,745 finite colliders with unchanged grounded sweeps,
+21 native crossing cases, 36 browser clear/touch/grounded cases and six native
+UFO actions in both qualities. UFO remains an instant relocation. Derived
+bounds add one-time construction work, with the largest measured addition
+219 ms CPU on Eifel Crown; no per-frame geometry work was added. Two arena
+control pins changed only for the approved armor fields (16 and 30 values);
+movement, clock, scores, authored geometry and ordinary replay pins stay exact.
+
+Smoke merged after 367 lane suites, build and review passed. Its only later
+fixture correction calls the real camera-preparation phase before measuring
+puff instances. All 22 original Oil/Smoke checks remain, and the full native
+arsenal runtime suite passes 209 tests. No assertion or tolerance changed.
+
+Flame merged after 368/368 fresh lane suites (620.71 s), build (494 ms),
+and independent review. Its new licensed texture entry changed the catalog
+snapshot. The reviewed digest update preserves every old catalog entry,
+the separate Factory provenance snapshot, and all 30 source checks.
+
+The browser release sweep distinguishes current scenarios from historical
+art-fit recipes. Seven require obsolete or deleted private candidates, an old source/input
+comparison, an obsolete launch mode, or pre-limiter audio equality: arena-shove, convoy-tanker-art,
+first-person-polish, rustwall, rustwall-frame, vesper-art, and audio-baseline. Their assertions and pins
+remain unchanged. Current native arena, convoy, installed hand/weapon,
+hidden-road and earned-Vesper scenarios supply released-game coverage;
+the approved art/frame verdicts above remain the visual acceptance.
+This is an explicit scope limit, not a pass for those historical recipes.
+
+The attempted audio-baseline run also exposed its own reference-repeatability
+failure (1.648e-5 versus 2e-6). More fundamentally, it still requires exact
+final-output equality with pre-limiter cf72d9c. Approved c0bb9b18, already
+in master, intentionally inserted the final limiter; upstream differences
+remain at or below 2.4e-7. No baseline assertion was edited. Current native
+crash-audio coverage passes through its dedicated test runner (22.44 s in
+the release lane), including actual output routing, peak limits, timing,
+quiet-signal preservation and recorder cleanup. Its generic scenario needs
+the private recorder page supplied only by that dedicated runner; the
+generic navigation rejection is not recorded as a browser pass.
+The historical Rustwall timing recipe starts ordinary Duel, which correctly
+no longer exposes the Hidden Road. Current visit scenarios use the real
+entry; frame pacing is compared with the last release separately.
+
+Release-switch fixtures keep the old straight-flight, 10-damage cases
+explicitly off, preserving their numeric and geometry assertions. Added
+production-default witnesses verify 8 damage once and a real fighter
+intercepting a seeker before its target car. The Fuel Run witness picks up
+a generated canister through the native rule before acquiring its target.
+Focused convoy checks pass 43 tests/401 checks; fighter contacts pass
+11 tests/120 checks. The two initial new-witness setup failures exposed
+normal Fuel Run target eligibility and ordinary-arena exit restrictions;
+only those new fixtures were corrected, with no gameplay change.
+
+Arena merged after 369/369 fresh lane suites (618.11 s), build (521 ms),
+62 focused native tanker checks and independent review. The old test's
+shared-material assumption was replaced with exact approved near/far
+materials and 1.2/4.5 brightness. Both views retain color, timing, on/off
+and recovery checks; geometry, input, non-lamp materials and disposal remain
+protected. No runtime or asset change followed the approved art.
+
+The final release-switch candidate b57e3dcd passes 369/369 lane suites in
+623.48 s and its production build in 452 ms. The first lane stopped on two
+voice cases whose flat-course mock omitted nearest; adding the exact inverse
+of its existing point mapping fixed all 26 voice cases without disabling
+seekers or changing assertions. Root review is clear.
+
+Art intake passes: seven planned images present, no missing images or failures,
+15,569,098 bytes. The generated storage model uses 3.48 MB of its 4.00 MB
+budget for eight full players, records, archives and a full ghost reservation.
+The 64-player boundary case fits at 2,500,506 bytes with a future maximum
+ghost write after the existing origin move; no real career is read or trimmed.
+
+The evidence-only native arsenal recorder passes all original checks in both
+qualities, with zero measured chunk-clock gaps and no browser warnings/errors.
+Its independent sample witness is also continuous: 588,927 retained frames
+in High and 587,647 in Performance for each of mix, engine and weapons. This
+proves the new capture, not the cause of earlier failures. Silent weapons-bus
+intervals correctly report absent input channels; the same original zero-fill
+and audio-quality checks remain. No assertion, clock label or tolerance changed.
+The existing callback-diagnostics card retains the unresolved earlier cause.
+
+The final A1/candidate/A2 driving comparison uses 120 frames per quality, full
+render scale and the live rear-view mirror. Every p95 is 16.8 ms and p50 is
+16.7 ms. The candidate has no frames above 33 ms; baseline A2 High has one
+33.4-ms frame. Other maxima are 16.8–17.0 ms. Final Smoke Screen visible
+fractions at 10/25 m are High 7.806%/2.690% and Performance 0.886%/2.127%,
+all below the unchanged 10% limit. Wren remains the accepted small-radius haze,
+not a full-car concealment claim.
+The corrected convoy fixture removes the duplicate Three engine. Its retry
+keeps delivered frame p95 at 16.8 ms throughout, but Performance pair two GPU
+p95 is 9.704448 ms for the tanker versus 8.369152 ms for the box: +15.954974%,
+above the unchanged 10% limit. Other pairs pass. Source review found no concrete
+fixture defect. Approved distant lamp scaling and roof emissive mapping can
+add work; the result is not dismissed as noise. The passing comparison with released
+master is separate evidence and cannot turn this failed box comparison
+into a metric pass. Blackiron's unchanged retry passes at 33.4/16.8 ms High/Performance.
+
+The current browser tally is 94 passing and three failing scenarios out of
+97 applicable generic scenarios. Seven historical recipes are excluded above;
+audio-crash-peak is covered by its dedicated runner. Earlier raw failures are
+retained separately from these final verdicts.
+
+Two collision expectations fail identically on the candidate and an isolated
+checkout of installed master e4b82b0b with the same reviewed fixtures. The
+clean 140.7-mph stationary traffic contact produces knock, not a physical
+smoking wreck. The ram target reaches lateral 7.110145 m after 24 ticks while
+the native road half-width is 7.699509 m, so it is still on the main road.
+Both builds have the same impact, motion, damage and crash results. The polish
+did not introduce these two results. Their expectations remain failed; no
+speed, timing, location, threshold or outcome assertion was changed to pass.
+Bounded investigation is closed; the exception below settles the release decision.
+Kyle relayed Claude's release decision on 10 October: accept the tanker GPU
+excess because delivered frame pacing is unchanged and the distant lamps were
+requested. Accept the two identical installed-build collision failures as
+stale checks, not regressions. These three results remain recorded failures
+with explicit release exceptions; they no longer hold installation. After
+installation, QA-STALE-COLLISION will update the two checks to current rules
+or delete them if they test removed behavior. No further QA investigation.
+
+The final reviewed QA lane passes 370/370 suites in 895.32 seconds and the
+production build passes in 580 ms. All reusable QA repairs are retained.
+The exact final integration full-tier run follows this promotion merge.
+This section does not yet claim that the candidate is installed.
+
+
 ## The Wasteland as a Mad Max easter egg — September 25, 2026
 
 Kyle asked for nothing new on the main menu beyond Mad Max Duel, with the

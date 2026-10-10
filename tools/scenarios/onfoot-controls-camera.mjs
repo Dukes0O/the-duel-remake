@@ -7,10 +7,14 @@ export async function run(context){
     'private Wasteland scene',60_000);
   await context.evaluate(`(()=>{
     const app=window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if(!app.startCampaign({mode:'wasteland',startStage:0,seed:1989}))
       throw Error('Wasteland race did not start');
     app.stop();
     const s=app.duel.state;
+    if(s.wastelandGateDiscovered!==true)
+      throw Error('onfoot-controls-camera fixture launched without gate discovery');
     Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,
       prevS:500,lateral:0,prevLateral:0,speedMph:0,traffic:[],opponents:[]});
     s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
@@ -56,11 +60,12 @@ export async function run(context){
     const c=window.__render.camera;
     return {distance:Math.hypot(f.x-start.x,f.z-start.z),
       cameraRange:Math.hypot(c.position.x-f.x,c.position.z-f.z),
-      yaw:f.yaw,carDistance:Math.hypot(f.x-app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral).x,
+      yaw:f.yaw,beforeYaw:${JSON.stringify(before)},yawDelta:f.yaw-(${JSON.stringify(before)}),
+      carDistance:Math.hypot(f.x-app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral).x,
         f.z-app.duel.course.groundAt(app.duel.state.s,app.duel.state.lateral).z)};
   })()`);
   await key(context,'keyUp','KeyW','w',87);
-  if(moved.distance<.4||moved.cameraRange>.05||moved.yaw<=before||
+  if(moved.distance<.4||moved.cameraRange>.05||moved.yaw>=before||
       moved.carDistance>3.5)
     throw Error(`Fighter walk/look/camera failed: ${JSON.stringify(moved)}`);
   await context.screenshot('onfoot-controls-camera');

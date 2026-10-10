@@ -908,3 +908,23 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October janitor: removed merged Height and Seekers lanes and consumed review evidence; retained three pending art lanes, parked diagnostics and protected audio. No unused modules or obsolete tests; 50 assets/54 exports remain advisory on CLEAN-11, including two newly flagged Seeker exports. Tracked integration size 296,678,583 to 296,753,643 bytes across the two merges; small code, tests and documentation growth, no new runtime binaries. Size targets unchanged.
 
 10 October: merged approved POLISH-SMOKE from 108265b9; lane 367/367 in 827.33 s, build 538 ms, all 162 replay checks and independent review pass. Native fixture now includes the renderer camera-preparation step; every original assertion is retained.
+
+10 October: merged approved POLISH-FLAME from 7ff094a4; fresh lane 368/368 in 620.71 s, build 494 ms and source review pass. Reviewed catalog snapshot now includes the new approved Flame source; all original source assertions and Factory provenance remain.
+
+10 October: merged approved POLISH-ARENA from 390742cb; fresh lane 369/369 in 618.11 s, build 521 ms and source review pass. Reviewed lamp assertions now require the approved separate near/far materials and exact 1.2/4.5 brightness; unchanged geometry, timing, input and disposal protections pass.
+
+10 October: promote approved polish and reusable QA repairs from 1e8eeb3a; lane 370/370 in 895.32 s, build 580 ms, independent source/document review clear. Browser 94/97; Kyle accepts tanker GPU excess and two identical installed-build collision failures. Full tier follows on the exact final commit; no further release-blocking QA work.
+
+10 October: release full passes 371/371 in 937.27 s, alone with four jobs on clean exact 1046076a; prior overlapping attempt interrupted, no result claimed. Installed build 20261010195525-87b479fc74c0; staged High/Performance driving and live HTTP manifest/HTML pass. One rollback retained; open-race hashes kept; staging removed. Notes committed at Kyle's request; QA-STALE-COLLISION opened and Phase 4 sourcing/light claims follow.
+10 October janitor: removed the clean merged release-polish branch/worktree and disposable release-baseline after unlinking both dependency/evidence junctions. Active QA, Claude lanes, protected audio and parked diagnostics retained. Source/assets unchanged by cleanup; current sizes are in STATUS.
+
+10 October: merged QA-STALE-COLLISION from 6bc43fa7; native knockaway and ramming pass High/Performance with zero warnings/issues, lane 371/371 in 1352.32 s, build 1.00 s and source review pass. Fixture geometry/grounding only; no runtime, save or replay change.
+10 October janitor: deleted 918,263,112 bytes of consumed release captures after their verdicts were committed. Audit: 1,527 tracked files, 304,303,872 bytes; no unused modules or obsolete tests. The existing 50 asset and 54 export candidates remain advisory under CLEAN-11. Protected audio, parked diagnostics, the day/night draft and active Claude lanes remain.
+
+10 October: merged P4-ART-SRC from 1c81cf6e; Kyle selected 1/3/5/8/9/11, lane 8/8 in 93.39 s, build 1.34 s and source review pass. All 24 prior catalog records are unchanged; the strict aggregate pin includes the reviewed selections. No runtime assets downloaded or constructed.
+10 October janitor: removed the merged QA lane after detaching both dependency/evidence junctions, plus 31,382,201 bytes of consumed collision captures. Day/night draft and all active Claude/protected lanes retained.
+10 October janitor: removed the merged P4 source-selection lane after detaching its dependency junction. The chosen sheet and provenance remain on integration; final status records the retained day/night draft and active Claude lanes.
+
+10 October: end full passes 371/371 on clean exact 0025c766 in 905.09 s, alone with four jobs; zero failures, zero not run and no reruns. Final ledger/status/log updates wait for the next real commit; no results-only commit or new release.
+
+10 October: started parallel P4-KITS, P4-AUDIO and P4-INTEL-DOSSIER lanes from Claude's handoff; retained the P4-DAYNIGHT draft. Shared renderer follows Track Script, then Day/Night, then dossier hooks if needed. Race-field balance is active; heavy work waits for the Director's slot.

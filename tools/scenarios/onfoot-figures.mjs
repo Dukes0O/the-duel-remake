@@ -9,10 +9,14 @@ export async function run(context) {
     'private Wasteland figure scene',60_000);
   await context.evaluate(`(() => {
     const app=window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if(!app.startCampaign({mode:'wasteland',startStage:0,seed:1989}))
       throw Error('Wasteland race did not start');
     app.stop();
     const s=app.duel.state;
+    if(s.wastelandGateDiscovered!==true)
+      throw Error('onfoot-figures fixture launched without gate discovery');
     Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,
       prevS:500,lateral:0,prevLateral:0,speedMph:0,traffic:[],opponents:[]});
     s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
@@ -70,7 +74,7 @@ export async function run(context) {
   await context.evaluate(`(() => {
     const app=window.__qaApp,f=app.duel.state.fighter;
     // Sample one second into the authored fall so the shot shows the prone pose.
-    f.knockedDown=true;f.knockdownRemaining=2;f.health=0;
+    f.knockedDown=true;f.knockdownDuration=3;f.knockdownRemaining=2;f.health=0;
     window.__render.renderFrame();
     const figures=window.__render.scene.getObjectByName('Rigged on-foot fighters');
     const figure=figures.children.find(child=>child.userData.clip &&
