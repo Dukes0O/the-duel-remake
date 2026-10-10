@@ -48,6 +48,14 @@ const DUST_STORM_FOG = new THREE.Color(0x8a6a48);
 
 // Read-only projection for HUD markers. The positions come from rendered cars,
 // so slides, jumps and camera modes all use the same pose as the main view.
+// In a full Grand Prix field, a car far from the camera stops casting a shadow:
+// nobody sees it, and eight detailed cars would otherwise double the draw calls.
+const FIELD_SHADOW_RANGE=140;
+function setCarShadows(mesh,on){
+  if(mesh.userData.shadowsOn===on)return;
+  mesh.userData.shadowsOn=on;
+  mesh.traverse(object=>{if(object.isMesh){object.userData.castsShadow??=object.castShadow;object.castShadow=on&&object.userData.castsShadow;}});
+}
 export function projectVehicleMarkers(camera, vehicles) {
   camera.updateWorldMatrix(true, false);
   const markers = [];
@@ -505,12 +513,14 @@ export function attachRenderer(host, app) {
     if(!convoy)updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650 &&
       !(st.rival.arenaRole === 'ambush-buggy' && !st.rival.ambushWave);
+    if (rival.visible&&st.field)setCarShadows(rival,Math.abs(visualGap(st.rival.s))<FIELD_SHADOW_RANGE);
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];
       updateNpcVehicleDamage(mesh,menu?null:actor,combatVehicleWear(actor,combatWearEnabled));
       mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
       if(!mesh.visible)return;
+      if(st.field)setCarShadows(mesh,Math.abs(visualGap(actor.s))<FIELD_SHADOW_RANGE);
       place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));
       mesh.position.y+=actor.airHeight||0;
       const slope=groundSlope(course,actor.s,actor.lateral,actor.headingError||0);
