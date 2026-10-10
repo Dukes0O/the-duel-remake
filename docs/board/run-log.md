@@ -924,3 +924,7 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October: merged P4-ART-SRC from 1c81cf6e; Kyle selected 1/3/5/8/9/11, lane 8/8 in 93.39 s, build 1.34 s and source review pass. All 24 prior catalog records are unchanged; the strict aggregate pin includes the reviewed selections. No runtime assets downloaded or constructed.
 10 October janitor: removed the merged QA lane after detaching both dependency/evidence junctions, plus 31,382,201 bytes of consumed collision captures. Day/night draft and all active Claude/protected lanes retained.
 10 October janitor: removed the merged P4 source-selection lane after detaching its dependency junction. The chosen sheet and provenance remain on integration; final status records the retained day/night draft and active Claude lanes.
+
+10 October: end full passes 371/371 on clean exact 0025c766 in 905.09 s, alone with four jobs; zero failures, zero not run and no reruns. Final ledger/status/log updates wait for the next real commit; no results-only commit or new release.
+
+10 October: started parallel P4-KITS, P4-AUDIO and P4-INTEL-DOSSIER lanes from Claude's handoff; retained the P4-DAYNIGHT draft. Shared renderer follows Track Script, then Day/Night, then dossier hooks if needed. Race-field balance is active; heavy work waits for the Director's slot.

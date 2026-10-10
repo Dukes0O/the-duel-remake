@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-10T20:33:17.826Z
+Observed at: 2026-10-10T20:59:29.420Z
 
-Observation commit: 747edae5c9b7e3e07446660cd1c8e1e83e6bcbc3
+Observation commit: e117d2922486aee3d8a4b7bcf0e584c3647f2341
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 747edae5c9b7e3e07446660cd1c8e1e83e6bcbc3
+Integration HEAD: e117d2922486aee3d8a4b7bcf0e584c3647f2341
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -16,7 +16,7 @@ Live build version: 20261010195525-87b479fc74c0
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-10T19:54:25.043Z; tested commit: 1046076a90623c26c76ffe623e9589dbf5717490.
+Last recorded full run: 2026-10-10T20:51:10.357Z; tested commit: 0025c76637eb71e6555bbf8eab253d4616299357.
 
 ## Feature switches
 
@@ -46,7 +46,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/p4-audio | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-audio |
 | codex/p4-daynight | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-daynight |
+| codex/p4-intel-dossier | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-intel-dossier |
+| codex/p4-kits | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kits |
 | codex/tools/callback-diagnostics | 5 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 15 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 15 | unknown | true | false | unknown |
@@ -73,9 +76,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 18,426,853 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 678,968 B | +104,630 B | 5,000,000 B |
+| Added bytes in last merge | 419,299 B | -259,555 B | 5,000,000 B |
 | All `public/` | 270,657,947 B | +0 B | unavailable |
-| Git objects | 377,377,792 B | +204,800 B | unavailable |
+| Git objects | 378,529,792 B | +637,952 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -84,7 +87,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1046076a90623c26c76ffe623e9589dbf5717490
 - Local main: missing
-- Local integration/wasteland: 747edae5c9b7e3e07446660cd1c8e1e83e6bcbc3
+- Local integration/wasteland: e117d2922486aee3d8a4b7bcf0e584c3647f2341
 
 Local rollback build (dist-previous): 20261010012052-a7177c289a56. Manifest presence does not verify the full rollback build.
 
