@@ -1481,6 +1481,74 @@
       "risk": "Toy proportions conflict with the settled gritty art; no source geometry count or articulation is claimed.",
       "decision": "Declined for this shortlist. Retain downloaded original and its license outside the repository; not an adaptation candidate.",
       "changed": "Only the original ZIP was downloaded and safely extracted for license/file inventory. No models were fitted, rendered, exported or installed."
+    },
+    {
+      "id": "kenney-particle-pack-flame",
+      "card": "POLISH-FLAME",
+      "family": "effects",
+      "sourcePage": "https://kenney.nl/assets/particle-pack",
+      "author": "Kenney Vleugels",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official source page and downloaded original License.txt both grant Creative Commons Zero.",
+      "status": "selected",
+      "downloaded": true,
+      "checked": "2026-10-09",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\kenney-particle-pack",
+      "downloadedFrom": "https://kenney.nl/media/pages/assets/particle-pack/f8fe0f8cb8-1677578741/kenney_particle-pack.zip",
+      "files": [
+        {
+          "path": "unpacked/License.txt",
+          "sha256": "f9e70b81d8cc07c4e07c9f2eff1d94fd371a06070b18cb67c651c41158ec2975",
+          "bytes": 651
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "d581d9120be64875738923abe731b90696d512dcc5539074194e994ff004621a",
+          "bytes": 17446
+        },
+        {
+          "path": "kenney_particle-pack.zip",
+          "sha256": "b631d4b07f7002549fdcf155f01141ad482f79f3440e4e301eed49ce5f1d8958",
+          "bytes": 15001764
+        },
+        {
+          "path": "unpacked/PNG (Transparent)/flame_01.png",
+          "sha256": "92a70bcb90b1e21c57b2dae42843135703b2e988abee97433f84c3119723d144",
+          "bytes": 54099
+        },
+        {
+          "path": "unpacked/PNG (Transparent)/flame_02.png",
+          "sha256": "7afff66979a5a30319d4fa491b13a9027223ebbdadfa38fae4ae76e31d05d9c5",
+          "bytes": 68498
+        },
+        {
+          "path": "unpacked/PNG (Transparent)/flame_03.png",
+          "sha256": "366678a08a7d22ebb87baa7b42005aaaeb0fd51ab751f2d4e7c9edfa61a33e38",
+          "bytes": 49857
+        },
+        {
+          "path": "unpacked/PNG (Transparent)/flame_04.png",
+          "sha256": "71deb274feea6ae5e6bb82c802a6e4d22f168397aa36b7a9e89de863948f3cf5",
+          "bytes": 70731
+        },
+        {
+          "path": "unpacked/PNG (Transparent)/smoke_03.png",
+          "sha256": "a71f8abcac64f8d73a94625cc9a10033dbeafa7eaea750560cba0daa73fe8752",
+          "bytes": 39737
+        },
+        {
+          "path": "unpacked/PNG (Transparent)/scorch_01.png",
+          "sha256": "ea72697696638786ccd4795a346d177b1b6a904331b5536a7e85a7ed927b93a5",
+          "bytes": 60598
+        }
+      ],
+      "recipe": "tools/art/polish-flame-textures.py",
+      "fit": "Four native wispy flame silhouettes and smoke/scorch reduced to 120 px in padded 128 px tiles; native RGBA preserved, runtime flame shading adds amber heat.",
+      "runtime": [
+        "public/assets/textures/flamethrower-tongues.png",
+        "public/assets/textures/flamethrower-smoke.png",
+        "public/assets/textures/flamethrower-scorch.png"
+      ]
     }
   ]
 }

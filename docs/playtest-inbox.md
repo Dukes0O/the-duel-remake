@@ -43,7 +43,7 @@ its broad lane gate follows approval. This is the second and final allowed round
 
 ## POLISH-SMOKE round two for Claude
 
-[Round-two comparison sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-smoke/docs/board/looks/smoke/round-2.jpg)
+[Round-two comparison sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/smoke/round-2.jpg)
 shows soft grey puffs, darker undersides and broken edges in both qualities.
 The native cloud drifts and churns. Screen visible-car fractions at 10/25 m
 are High 7.779%/2.460% and Performance 0.886%/2.127%, below the unchanged 10%

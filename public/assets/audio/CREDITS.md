@@ -115,3 +115,7 @@ by **soundofsong**, CC0 1.0. The verified cached preview is filtered, repitched,
 soft-clipped and pulsed, faded, level-conditioned and encoded as mono Vorbis
 by `tools/build-tollkeeper-audio.mjs`. Runtime file:
 `tollkeeper/gate-klaxon.ogg`. No author endorsement is implied.
+
+## Flamethrower particles
+
+[Particle Pack](https://kenney.nl/assets/particle-pack) by Kenney Vleugels. CC0 1.0. Four native wispy flame silhouettes, smoke and scorch are resized to padded 128 px tiles. The renderer adds amber shading and time-driven animation. Recipe: tools/art/polish-flame-textures.py. Original license and exact source hashes: tools/art/catalog.json, kenney-particle-pack-flame.

@@ -908,3 +908,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October janitor: removed merged Height and Seekers lanes and consumed review evidence; retained three pending art lanes, parked diagnostics and protected audio. No unused modules or obsolete tests; 50 assets/54 exports remain advisory on CLEAN-11, including two newly flagged Seeker exports. Tracked integration size 296,678,583 to 296,753,643 bytes across the two merges; small code, tests and documentation growth, no new runtime binaries. Size targets unchanged.
 
 10 October: merged approved POLISH-SMOKE from 108265b9; lane 367/367 in 827.33 s, build 538 ms, all 162 replay checks and independent review pass. Native fixture now includes the renderer camera-preparation step; every original assertion is retained.
+
+10 October: merged approved POLISH-FLAME from 7ff094a4; fresh lane 368/368 in 620.71 s, build 494 ms and source review pass. Reviewed catalog snapshot now includes the new approved Flame source; all original source assertions and Factory provenance remain.

@@ -3930,18 +3930,19 @@ tasks:
     lane: VIS
     size: M
     needs: [POLISH-SMOKE]
-    status: review
+    status: merged
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-flame
-    source_commit: 81a9b64b799db076fa1db75075e6abc6472e6511
-    note: "Round one and p95 approved. Synced Height integration and Smoke round two at 81a9b64b; reviewed loader/per-camera conflict preserves both. Focused Flame/Smoke, Wave2 39, build and eight native views pass; no new art round. After approved Smoke merges, sync latest integration and run fresh lane/build before merge."
+    source_commit: 7ff094a4baa6df7590f9f91be9d8240d1704bcd6
+    note: "Approved round one merged after clean Smoke sync, lane 368/368 in 620.71 s, build 494 ms and independent source review. The new Flame catalog entry required a reviewed digest update; all Factory source pins and all 30 source checks are retained. No new art round or gameplay change."
     owns: [docs/changes/POLISH-FLAME.md, src/flame-view.js, tools/art/polish-flame-textures.py, tools/art/polish-flame-sheet.py, tools/test-polish-flame.mjs, tools/scenarios/polish-flame.mjs, docs/board/looks/polish-flame/round-1.jpg, docs/board/looks/polish-flame/round-1-review.md]
-    hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
+    hooks: [tools/test-tanker-valve-source.mjs, src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-SMOKE: one card edits it at a time."
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Real flames: looks only, the cone and damage unchanged, the fire filling exactly the damage cone. CC0 source recorded with its licence; small runtime textures only. Frame pacing within the usual limit in High and Performance with two flamethrowers firing. One sheet per round to Claude (start, full burst, burning car, Cinder), at most three rounds."
     claude_verdict_2026_10_10: "Round one approved10 October. Judge frame cost by p95; High mean rise is recorded and explicitly not a blocker. Merge after approved Smoke, with fresh lane/build and review after integration sync. No new art round required."
     release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
 
   - id: POLISH-ARENA
     title: "Arena polish from Claude's reviews"
