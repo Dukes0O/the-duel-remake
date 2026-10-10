@@ -129,6 +129,7 @@ const combatHud = createCombatHud({root, app,
 const {ensureRenderer, syncRendererReadiness} = readiness;
 const courseScreen = (playerProfile, selectedStage, message) => courseScreenMarkup(playerProfile,
   selectedStage, message, {teamRoomEnabled: app._switches().enabled('grand-prix')});
+let teamRoomPlayerId = null;
 const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
     if (!app._switches().enabled('grand-prix') || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) return null;
@@ -139,7 +140,9 @@ const teamRoom = createTeamRoom({host: root,
     const route = supportsRouteVariants(definition) ? selectedRoute : 'fixed';
     const reference = referenceLap(eventId, route);
     const course = new Course(definition, reference?.seed ?? 1989);
-    return {...buildTrackDossier(course, {route, reference}), course};
+    teamRoomPlayerId = app.player.id;
+    return {...buildTrackDossier(course, {route, reference}), course,
+      telemetry: app.getLapTelemetry?.({eventId, route, courseFingerprint: reference.courseFingerprint})};
   },
   async capture(dossier, flag, {signal}) {
     await ensureRenderer();
@@ -326,6 +329,8 @@ root.addEventListener('change',event=>{
   const key=event.target.dataset.boardFilter;if(!key)return;boardFilter[key]=key==='stage'?Number(event.target.value):event.target.value;lastScreen=null;renderState(app.duel.state);
 },{signal:domEvents.signal});
 function renderState(s) {
+  if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
+      !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
   buildUpdates.syncState();
   const yardActive=app.isYardHomeActive?.()===true;
   if(!yardActive)yardPanel='home';

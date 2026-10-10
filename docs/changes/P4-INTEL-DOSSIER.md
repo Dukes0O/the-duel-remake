@@ -145,6 +145,36 @@ UI tests first failed on the absent screen module. Current checks cover safe
 author text, every map flag/corner, fixed-reference labels, locked/owned entry
 markup and exact ground-based driver-seat pose. The unchanged production
 course/practice UI suite also passes 38 checks.
+The unchanged renderer reuse/lifetime suite passes 176 checks. A dossier
+closes if the named player changes, active play begins or its switch turns off.
+
+Integration `0134a75e` adds three authored circuit layouts and GRIP after the
+24-route reference pass above. Their registry includes them in `COURSE` only
+when each real dev switch is enabled. Final reference coverage must include
+these actual authored definitions under their native flags and repeat the
+build on current physics; the earlier 24-route evidence does not grant that
+expanded coverage. No fake catalog entry or skipped route is acceptable.
+
+Proposed final native bootstrap: default targets are the deduplicated union of
+`COURSE` and the authored `ALL_CIRCUITS` registry. When Node's current catalog
+does not contain those targets, the owned reference recipe launches one fresh
+Node worker. Before importing App/config, that worker installs memory-only
+storage and the supported QA query containing each circuit's real native dev
+flag. It then imports the ordinary registry and builds all 27 targets in order.
+The parent publishes JSON only after the entire worker succeeds. No runtime
+registry, switch definition or course definition is changed. Tests must cover
+the enabled native catalog, mandatory complete-set coverage and worker failure
+without partial publication. The Director approved this proposal before code.
+
+Approved reverse policy for player telemetry: analysis keeps native elapsed
+time and signed gear (`-1` displays as `R`), while speed plots use magnitude.
+The recorder supplies the final forward crossing for every distance sample,
+including seam crossings, so time spent reversing remains in measured timing.
+Forward-only reference results must remain unchanged.
+The new reverse/seam regression failed first on rejected negative native speed
+and gear. After the narrow analysis fix, all 195 track-analysis checks pass,
+including exact forward parity, positive magnitude, `R`, sector totals, seam
+delay counted once, and frozen-input preservation.
 
 Remaining UI/browser checks cover owned and locked
 tracks, the real feature switch, all existing closed circuits, keyboard focus,
