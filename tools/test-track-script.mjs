@@ -249,7 +249,8 @@ test('racing line: outside, apex, outside, inside the road minus 1.5 m; speeds f
     assert.ok(Math.abs(b * b - a * a) / 2 <= Math.max(line.dynamics.brake, line.dynamics.accel) * 3 + 1e-6, 'speed changes no faster than the car can');
   }
   // Reference dynamics can be replaced for another car.
-  const quick = buildRacingLine(road, { ...line.dynamics, lateralAccel: 40 });
+  // A grippier, quicker-turning car holds more speed (yaw rate now limits a corner as well as grip).
+  const quick = buildRacingLine(road, { ...line.dynamics, lateralAccel: 40, yawRate: 2.5 });
   assert.ok(quick.speedAt(hook.s0 + 60) > line.speedAt(hook.s0 + 60));
 });
 

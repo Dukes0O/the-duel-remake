@@ -15,6 +15,7 @@ import { createTerrainMaterial } from './terrain-style.js';
 import { createPavedRoadMaterial, createPavedShoulderMaterial } from './road-surface.js';
 import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
+import { addTrackScriptScene } from './track-script-scene.js';
 import { addFreestyleScenery } from './freestyle-scene.js';
 
 import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, hollowMudTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
@@ -68,6 +69,7 @@ export function buildEnvironment(course, {saltFlats} = {}) {
     if(!course.def.arena&&!course.def.offroad){group.add(new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream));
     group.add(new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow));}
   }
+  if(course.script)addTrackScriptScene(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};

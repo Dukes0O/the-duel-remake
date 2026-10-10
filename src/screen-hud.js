@@ -4,6 +4,7 @@ import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
 import {onFootHint} from './onfoot-hints.js';
 import {controlsHelpMarkup} from './controls-help.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {gripReadout} from './race-surfaces.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden>
@@ -60,6 +61,7 @@ export function hudMarkup() {
     <div class="boost-track"><i id="boost-fill"></i>
     </div><kbd>SPACE</kbd>
     </div>
+    <div id="grip-readout" class="grip-readout" role="status" aria-label="Tyres and road surface" hidden><b id="tyre-icon" aria-hidden="true"></b><span id="tyre-name"></span><span id="surface-hint"></span></div>
     <div class="speed-footer"><span id="camera-label">CHASE CAM</span><span><kbd>ESC</kbd> PAUSE · <kbd>H</kbd> HELP</span>
     </div>
     </div>
@@ -136,6 +138,10 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['boost-fill'].style.transform=`scaleX(${clamp(s.boost??1)})`;
     ui.stage.classList.toggle('is-boosting',!!s.boosting);
     text('camera-label',`${(app.cameraMode||'chase').toUpperCase()} CAM`);
+    // Tyre icon on a snow or ice circuit; the surface name when grip drops below 0.8.
+    const grip=gripReadout(app.duel);ui['grip-readout'].hidden=!grip.tyre&&!grip.hint;
+    text('tyre-icon',grip.tyre?(grip.tyre.icon==='snowflake'?'❄':'☀'):'');text('tyre-name',grip.tyre?.name.toUpperCase()??'');text('surface-hint',grip.hint);
+    ui['grip-readout'].classList.toggle('slippery',!!grip.hint);
     text('style-score',String(s.score||0).padStart(4,'0'));
     text('combo-label',s.combo>1?`×${s.combo} COMBO`:'');
     const drift=s.objective?.kind==='driftTrial',rush=s.objective?.kind==='checkpointRush';

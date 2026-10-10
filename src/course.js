@@ -82,7 +82,10 @@ export class Course {
     }
     if(this.script){
       // Authored circuit: the road comes from the script, not a formula.
-      installTrackScript(this,{lateralAccel:DRIVE.maxLateralAccel*.85,brake:DRIVE.brakeAccel*DRIVE.mphToWorld*.85,accel:9,topSpeed:201*DRIVE.mphToWorld});
+      // Reference car: grip .82, the least grippy road car. Its tightest circle is
+      // speed over yaw rate at 30 mph, where steering reaches full authority.
+      installTrackScript(this,{lateralAccel:DRIVE.maxLateralAccel*.82*.85,yawRate:DRIVE.yawRate*.82,minRadius:DRIVE.mphToWorld*30/(DRIVE.yawRate*.82)*1.05,
+        brake:DRIVE.brakeAccel*DRIVE.mphToWorld*.85,accel:9,topSpeed:201*DRIVE.mphToWorld});
       this._nearestIndex=createPolylineIndex(this.samples);
       this.rivalStartS=this.def.hasRival?-20:null;
       this._solidScenery();return;
@@ -366,6 +369,14 @@ export class Course {
     const frame=this.at(bestS),lateral=(x-frame.x)*Math.cos(frame.heading)-(z-frame.z)*Math.sin(frame.heading);
     if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;
     return{...frame,s:bestS,lateral,distance:Math.hypot(x-frame.x,z-frame.z)};}
+  // The road surface under a place (src/race-surfaces.js): the stretch the script gives it, then any patch. Verges are asphalt-kind: the old off-road rules govern them.
+  gripKindAt(s,lateral=0){
+    if(!this.script)return'asphalt';
+    const p=this.phase(s);if(Math.abs(lateral)>this.script.halfWidthAt(p))return'asphalt';
+    let kind=this.script.surfaceAt(p);
+    for(const patch of this.features.surfacePatches)if(p>=patch.s0&&p<=patch.s1&&lateral>=patch.from&&lateral<=patch.to)kind=patch.kind;
+    return kind;
+  }
   nearestRadar(s){let best=null;for(const trap of this.features.radarTraps){let absolute=trap.s+Math.floor(s/this.length)*this.length;if(absolute<s-50)absolute+=this.length;if(!best||absolute<best.s)best={...trap,s:absolute};}return best;}
 }
 
