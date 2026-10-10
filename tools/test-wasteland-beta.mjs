@@ -8,6 +8,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   // Released on 9 October 2026: Convoy Raid, Tollkeeper, Baron Blackiron, Warlord cards,
   // Arsenal wave three, Fight Voices, computer crews, Ambush Alley and Gunn.
   assert.deepEqual(FEATURE_STATES, {
+    'seeker-rockets': 'dev',
     'convoy-raid': 'on',
     'bounty-hunt': 'on', 'career-backup': 'dev', 'hidden-road': 'on',
     'fuel-run': 'on',

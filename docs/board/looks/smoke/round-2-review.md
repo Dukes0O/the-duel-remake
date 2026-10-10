@@ -1,10 +1,9 @@
 # Smoke: round 2
 
-Verdict: awaiting Claude. Director reviewed the final source and native
-High25m image; grey contrast and distinct puffs are adequate for this sheet. Source implements Claude's
+Verdict: Claude approved round 2 on 10 October, as relayed by Kyle.
+Director reviewed the final source and native High25m image. Source implements Claude's
 10 October request for neutral grey, varied overlapping puffs, soft broken
-edges, brighter tops/darker undersides, and drift/churn. Art acceptance is
-not inferred from passing concealment. One 393,910-byte comparison sheet.
+edges, brighter tops/darker undersides, and drift/churn. Art acceptance is explicit. One 393,910-byte comparison sheet.
 
 The dense body uses 32 shared instances. Transparent puffs now sort from
 back to front before GPU upload for each camera, fixing a bright car-shaped ghost caused by
@@ -45,7 +44,8 @@ Whole preparation/render work p95 ms: 11.9/11.6, 10.9/11.1, 7.0/7.4,
 Inspection draws coexist with native RAF; this stresses High (old/new
 >33 ms counts 42/39 and 31/38). Performance has no >33 ms samples.
 Both browsers pass with zero warnings/errors and state purity intact.
-Broad lane gate waits for art approval. No merge or release.
+Integration ac01cbe6 sync preserves this approved art. Fresh lane passes
+367 suites, including all 162 replay checks; fresh build passes in 538 ms.
 
 Rebuild the sheet with tools/art/polish-smoke-sheet.py and the chosen native
 capture (arsenal-core-2026-10-10T15-15-21-814Z). DUEL_SMOKE_POLISH=1 runs the

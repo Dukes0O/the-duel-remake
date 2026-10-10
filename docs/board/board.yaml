@@ -3058,7 +3058,7 @@ tasks:
     owns: [tools/repo-audit.mjs, tools/test-repo-audit.mjs]
     note: "The current audit flags forty-eight assets; forty-seven retain dynamic runtime, source, rights, reference or QA uses, while the old dirt texture retains documented future arena use. All twenty-five flagged exports are used inside their modules, so no deletion is proved safe. Keep the dirt decision and dynamic reporting scope here; the legacy Rustwall generator still has test consumers and needs deliberate migration by its art owner."
 
-    audit_2026_10_09: "49 asset and 55 export candidates remain advisory. No unused modules or removed-feature tests found. Preserve dynamic consumers and all six released switches until their removal has named hooks and unchanged replay proof. Protected audio inspection skipped."
+    audit_2026_10_09: "Polish-run audit: 50 asset candidates remain advisory; no deletion is proved safe. Keep dynamic consumers and the fifteen fully-on switches until removal has named hooks and unchanged replay proof. All five unmerged polish lanes, parked diagnostics and protected audio remain. Tracked integration size is 282.9 MiB before and after; no cleanup deletion."
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
     lane: TOOL
@@ -3871,65 +3871,93 @@ tasks:
     lane: CMB
     size: M
     needs: []
-    status: ready
-    owns: [tools/collider-heights.mjs, tools/test-collider-heights.mjs, docs/changes/POLISH-HEIGHT.md]
-    hooks: [src/collision.js, src/sim-contacts.js, src/world-props.js, src/roadside-debris.js, src/arena-props.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/combat-projectiles.js]
+    status: merged
+    claimed_by: codex-director-2026-10-09-polish
+    branch: codex/polish-height
+    source_commit: 52f2d049befcaa4a8ac4dba52e642c4797a5179f
+    note: "Merged after approved ordinary armor 1.20 to 1.21: Medium mean 13.833; warlord health exact. Reviewed armor-only trace pins; lane 364/364 in 922.15 s, build and source review pass."
+    owns: [tools/collider-heights.mjs, tools/test-collider-heights.mjs, tools/scenarios/collider-heights.mjs, src/scenery-bounds.js, docs/changes/POLISH-HEIGHT.md]
+    hooks: [tools/replays/arena-fuel-run-controls.json, tools/replays/salt-flats-controls.json, src/arena/arena-event.js, src/course.js, src/collision.js, src/sim-contacts.js, src/world-props.js, src/roadside-debris.js, src/arena-props.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/combat-projectiles.js]
     acceptance:
       - "Kyle, 9 October 2026: some hit boxes on various levels reach far too high, as if infinitely tall. Claude found the likely cause: src/collision.js sweepObstacle checks height only when the obstacle has a finite y and height, so colliders without them block at any height."
       - "Write tools/collider-heights.mjs first: list every collider on every course, route, the hidden road, Muddy Hollow, Rustwall, the Scrapdome ring, the Pit and the Salt Flats (scenery, rails, walls, rocks, trees, buildings, junk cars, scrap piles, props) with its kind and whether it has a finite bottom and top. The test fails on any collider without them."
       - "Give each collider kind the real height of its model, measured once from the model's bounds and stored with the scenery data, not computed per frame. Airborne cars (jumps, the UFO jump, the Kettle Drop leap), fighters on foot and projectiles pass over anything they clear by 0.3 m or more; anything they would touch still hits."
       - "Grounded cars keep the existing horizontal rules, so every grounded replay fingerprint stays unchanged. Explain any changed airborne fingerprint in the change note."
       - "Browser check on a private port: a UFO jump over a rail and a scrap pile on two courses and in the Pit clears them; driving into them still hits."
+    claude_verdict_2026_10_10: "Claude approved the height fix on 10 October. Raise only ordinary arena armor just enough for Medium mean at most14; preserve every warlord health value. Then current lane/build, review and merge."
   - id: POLISH-SEEKERS
     title: "Rocket Pods become heat seekers"
     owner: codex
     lane: CMB
     size: M
     needs: []
-    status: ready
+    status: merged
+    claimed_by: codex-director-2026-10-09-polish
+    branch: codex/polish-seekers
+    source_commit: f098988739854f65ab4b0d883a62de54543990bb
+    note: "Kyle accepted seeker damage 8 and its measured 1.328662 ratio on 10 October: explicit exception to the original 1.3 target, not a mathematical pass. Keep off/Gunn at 10; no 7.8 tuning. Merged after lane 366/366, build and source review passed. Approval recorded for Claude."
     flag: seeker-rockets
-    owns: [tools/test-seeker-rockets.mjs, docs/changes/POLISH-SEEKERS.md]
-    hooks: [src/arsenal/rockets.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-hud.js, src/combat-scene.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/combat-balance.mjs]
+    owns: [tools/test-seeker-rockets.mjs, tools/scenarios/seeker-rockets.mjs, docs/changes/POLISH-SEEKERS.md]
+    hooks: [tools/test-combat-balance.mjs, tools/test-seeker-balance.mjs, src/arsenal/rockets.js, src/arsenal/targeting.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-hud.js, src/combat-scene.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, tools/combat-balance.mjs]
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Rocket Pods become heat seekers, exactly, behind the new seeker-rockets switch (dev, and on in the Preview). Tests: target choice (cone, range, line), turn limit, no retarget, smoke break, decoy pull, shield block, straight flight with no target, the computer firing rule, Gunn unchanged."
-      - "Run the arsenal balance report with the switch on; the only allowed lever is 8 damage per rocket. Name the lock cue in the change note."
+      - "Report actual paired-seed armor damage per firing. Kyle explicitly accepted the measured 1.328662 ratio at seeker damage 8 on 10 October, as an exception to the original 1.3 target. Legacy Pods and Gunn stay 10. Retain truthful report and unchanged metric assertions; gate and merge."
+    claude_verdict_2026_10_10: "Claude settled the metric on10 October: average actual armor damage per Rocket Pods firing on paired seeds, seekers off/on; on at most1.3 times off. Kyle subsequently authorized 8 for seeker-enabled Pods if the post-Height repeat still fails at 10; legacy Pods and aimed Gunn rockets stay 10. Verify, gate and merge."
   - id: POLISH-SMOKE
     title: "Smoke you cannot see through"
     owner: codex
     lane: VIS
     size: S
     needs: []
-    status: ready
-    owns: [docs/changes/POLISH-SMOKE.md]
+    status: review
+    waiting_on: claude
+    claimed_by: codex-director-2026-10-09-polish
+    branch: codex/polish-smoke
+    source_commit: b4494e996201e0956fb9ee1945e34bd531b2e430
+    render_commit: b4494e996201e0956fb9ee1945e34bd531b2e430
+    note: "Round two ready for Claude: grey layered puffs, dark undersides and churn. Screen High visible 7.779%/2.460%, Performance 0.886%/2.127%; unchanged 10% cap. Native repeat/purity, source review and build pass. Actual-source p95 at most +0.595%, work p95 +5.714%. Broad gate follows art approval."
+    owns: [docs/board/looks/smoke/round-2.jpg, docs/board/looks/smoke/round-2-review.md, docs/changes/POLISH-SMOKE.md, tools/test-polish-smoke.mjs, tools/art/polish-smoke-sheet.py, docs/board/looks/smoke/round-1.jpg, docs/board/looks/smoke/round-1-review.md]
     hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/smoke.js, src/crew-gear/signature.js, src/render3d.js, tools/scenarios/arsenal-core.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-FLAME: one card edits it at a time."
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Smoke you cannot see through: looks only, gameplay unchanged. Measured check: a car fully inside the cloud, chase camera 10 to 25 m away, at most 10% of its pixels visible against a frame without it, High and Performance. Camera-inside haze. Wren's grenades share the look. Frame pacing within the usual limit. One sheet to Claude, at most three rounds."
+    claude_verdict_2026_10_10: "Round two authorized10 October: overlapping varied soft grey puffs, broken wispy edges, lighter tops/darker undersides, drift and churn. Preserve concealment and native rules. One next sheet to Claude; only then set waiting_on. Smoke exclusively owns shared visual edits."
   - id: POLISH-FLAME
     title: "Real flames for the Flamethrower and Cinder"
     owner: codex
     lane: VIS
     size: M
-    needs: []
-    status: ready
-    owns: [docs/changes/POLISH-FLAME.md]
+    needs: [POLISH-SMOKE]
+    status: review
+    claimed_by: codex-director-2026-10-09-polish
+    branch: codex/polish-flame
+    source_commit: 81a9b64b799db076fa1db75075e6abc6472e6511
+    note: "Round one and p95 approved. Synced Height integration and Smoke round two at 81a9b64b; reviewed loader/per-camera conflict preserves both. Focused Flame/Smoke, Wave2 39, build and eight native views pass; no new art round. After approved Smoke merges, sync latest integration and run fresh lane/build before merge."
+    owns: [docs/changes/POLISH-FLAME.md, src/flame-view.js, tools/art/polish-flame-textures.py, tools/art/polish-flame-sheet.py, tools/test-polish-flame.mjs, tools/scenarios/polish-flame.mjs, docs/board/looks/polish-flame/round-1.jpg, docs/board/looks/polish-flame/round-1-review.md]
     hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-SMOKE: one card edits it at a time."
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Real flames: looks only, the cone and damage unchanged, the fire filling exactly the damage cone. CC0 source recorded with its licence; small runtime textures only. Frame pacing within the usual limit in High and Performance with two flamethrowers firing. One sheet per round to Claude (start, full burst, burning car, Cinder), at most three rounds."
+    claude_verdict_2026_10_10: "Round one approved10 October. Judge frame cost by p95; High mean rise is recorded and explicitly not a blocker. Merge after approved Smoke, with fresh lane/build and review after integration sync. No new art round required."
   - id: POLISH-ARENA
     title: "Arena polish from Claude's reviews"
     owner: codex
     lane: VIS
     size: S
     needs: []
-    status: ready
-    owns: [docs/changes/POLISH-ARENA.md]
-    hooks: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js]
+    status: review
+    waiting_on: claude
+    source_commit: 1a3f30ceb29c908b6179a8a3de1589ca3632b85f
+    claimed_by: codex-director-2026-10-09-polish
+    branch: codex/polish-arena
+    note: "Round two ready for Claude final art verdict: native comparison sheet 467475 bytes, 93 shells in tall clusters, varied ridge widths, lit lamps/roof at 89.16794 m. Physics/state/focused/build pass; actual-source p95 16.8 to 16.8 ms both qualities. Labels stay approved. No merge gate or merge claimed; final allowed art round."
+    owns: [docs/board/looks/polish-arena/round-2.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/changes/POLISH-ARENA.md, tools/art/polish-arena-sheet.py, tools/scenarios/polish-arena.mjs, tools/test-polish-arena.mjs, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-1-review.md]
+    hooks: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, public/assets/models/wasteland/salt-flats/venue.glb, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-arsenal-wave3.mjs, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js, src/combat-hud.js]
     acceptance:
       - "Four items, looks only (race state and replays unchanged): (1) more scrap on the Salt Flats inner island, reusing the approved Salt Flats pieces; (2) more variety in the Salt Flats ridge widths, inside the existing drivable band rules; (3) the tanker easier to read at a distance: its warning lamps and roof plate stay visible in the distant view; (4) floating labels (Tanker, Escort and similar) never overlap: stack them with a small gap."
       - "One sheet to Claude covering all four, at most two rounds. Frame pacing within the usual limit."
 
+    claude_verdict_2026_10_10: "Round two authorized10 October, labels approved. Make roughly twice the inner-island scrap in tall clusters using approved pieces, clearly different ridge widths, distant tanker lit lamps/roof plate readable at play distance. Next sheet must show each change clearly; only then waiting_on Claude."
   - id: TEST-DRIVER-BRAKING
     title: "All-seed pursuit test-driver braking"
     owner: codex

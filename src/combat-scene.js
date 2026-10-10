@@ -545,6 +545,41 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const fighterOptions = {
     active:false, enabled:false, time:0
   };
+  // A bounded, shared line mesh brackets each chased target. It is a world
+  // marker, so scenery can occlude it and HUD label stacking cannot displace it.
+  const seekerCorners = [];
+  for (const x of [-1, 1]) for (const y of [-1, 1]) {
+    seekerCorners.push(x, y * .65, 0, x * .65, y * .65, 0,
+      x, y * .65, 0, x, y * .4, 0);
+  }
+  const seekerGeometry = new THREE.BufferGeometry();
+  seekerGeometry.setAttribute('position', new THREE.Float32BufferAttribute(seekerCorners, 3));
+  const seekerMaterial = new THREE.LineBasicMaterial({color: 0xffcf65, depthWrite: false});
+  const seekerBrackets = Array.from({length: COMBAT_TUNING.projectileLimit}, (_, index) => {
+    const bracket = new THREE.LineSegments(seekerGeometry, seekerMaterial);
+    bracket.name = `seeker-target-bracket-${index}`;
+    bracket.visible = false;
+    group.add(bracket);
+    return bracket;
+  });
+  function updateSeekerBrackets(duel, active, camera) {
+    const ids = new Set();
+    if (active) for (const shot of duel.state.combat.projectiles || []) {
+      if (!shot.dead && shot.seekerTargetId != null) ids.add(shot.seekerTargetId);
+    }
+    let count = 0;
+    for (const id of ids) {
+      const target = actorForTarget(duel, id);
+      if (!target || target.finished || target.crushed || target.combatWrecking) continue;
+      const bracket = seekerBrackets[count++], at = point(duel, target);
+      const spec = duel._vehicleSpec(target);
+      bracket.visible = true;
+      bracket.position.set(at.x, at.y, at.z);
+      bracket.scale.setScalar(Math.max(spec.halfWidth, spec.halfLength) + .4);
+      if (camera) bracket.quaternion.copy(camera.quaternion);
+    }
+    for (; count < seekerBrackets.length; count++) seekerBrackets[count].visible = false;
+  }
   function update(duel, vehicles = {
   }, useAtlas = false){
     const s = duel.state, c = s.combat;
@@ -553,6 +588,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     updateHazards(duel,active,vehicles);
     updateTethers(duel,active);
     updateWaveThree(duel, active);
+    updateSeekerBrackets(duel, active, vehicles.camera);
     const departed = s.footPresentation;
     const showDeparted = !s.onFoot && departed &&
     s.stageTimeSec >= departed.presentation.startedAt &&
@@ -789,6 +825,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       teslaViews.forEach(view => view.arcs.geometry.dispose());
       teslaMaterial.dispose();
       teslaPulseMaterial.dispose();
+      seekerGeometry.dispose();
+      seekerMaterial.dispose();
     },
   };
 }

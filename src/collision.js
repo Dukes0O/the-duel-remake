@@ -44,7 +44,11 @@ export function sweepObstacle(start, end, obstacle, carHeading = 0, dimensions =
   const width = obstacle.halfX + halfWidth * c + halfLength * s, length = obstacle.halfZ + halfLength * c + halfWidth * s;
   let hit = sweep(startLocal, endLocal, width, length);
   if (!hit) return null;
-  const minY = obstacle.minY ?? obstacle.y, maxY = obstacle.maxY ?? (obstacle.y + obstacle.height);
+  // Grounded cars explicitly retain their historical authored envelopes.
+  // Airborne cars, fighters and projectile sweeps use model measurements.
+  const modelBounds = dimensions.useModelBounds !== false;
+  const minY = (modelBounds ? obstacle.modelMinY : undefined) ?? obstacle.minY ?? obstacle.y;
+  const maxY = (modelBounds ? obstacle.modelMaxY : undefined) ?? obstacle.maxY ?? (obstacle.y + obstacle.height);
   if ([start.y, end.y, minY, maxY, dimensions.height].every(Number.isFinite)) {
     // Clip against the time interval where the vehicle and obstacle overlap
     // vertically. This handles both a clear overflight and descent onto a roof.

@@ -101,6 +101,10 @@ export const SOUND_BANK = {
     flag: 'arsenal', files: ['arsenal-core/smoke-deploy.ogg',
       'arsenal-core/smoke-deploy-b.ogg', 'arsenal-core/smoke-deploy-c.ogg'], volume: 3.915, priority: 60, limit: 6,
   }),
+  'weapon.rockets.lock': cue('weapons', {
+    flag: 'seeker-rockets', priority: 70, limit: 2,
+    layers: [tone(880, .09, .1, 'sine'), tone(1320, .09, .08, 'sine', .07)],
+  }),
   'weapon.rockets.fire': cue('weapons', {
     flag: 'arsenal', files: ['arsenal-wave2/rocket-fire-a.ogg',
       'arsenal-wave2/rocket-fire-b.ogg', 'arsenal-wave2/rocket-fire-c.ogg'],
