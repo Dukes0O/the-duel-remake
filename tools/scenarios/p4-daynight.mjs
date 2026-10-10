@@ -42,7 +42,7 @@ function prepare(quality) {
     profile: JSON.stringify(app.profile), state: null, scene: api.scene, legacyMaterials: null};
   review.setLook = look => {
     course.def = look === 'legacy' ? originalDefinition : {...originalDefinition, lightPath: fixedPath(look)};
-    api.renderFrame({presentationSeconds: 40});
+    api.renderFrame();
   };
   review.witness = () => {
     api.camera.updateWorldMatrix(true, false);
@@ -190,7 +190,11 @@ export async function run(context) {
       const initial=await setup(context,quality);
       for(const look of ['day','golden','dusk','night']) {
         await context.evaluate('window.__dayNightReview.setLook('+JSON.stringify(look)+')');
-        await context.waitFor(`document.querySelector('#view3d')?.dataset.lightPath==='true'`, 'native path owner', 20000);
+        await context.waitFor(`(() => {
+          window.__render.renderFrame();
+          const view=document.querySelector('#view3d');
+          return view?.dataset.lightPath==='true' && view.dataset.rearView==='ready' && view.dataset.rearViewRefreshed==='true';
+        })()`, 'native path and current rear-view frame', 20000);
         const witness=await context.evaluate('window.__dayNightReview.witness()');
         if(look==='night'&&(!witness.poses.every(car=>car.cones&&car.headlights.some(v=>v>0)&&car.tails.some(v=>v>0))||
             witness.stars!==1||witness.moon!==1||!witness.reflectors||!witness.windows.some(row=>row.intensity>0)))

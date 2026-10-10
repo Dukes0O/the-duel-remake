@@ -121,7 +121,13 @@ the exact original material. Nine native city-material regressions failed
 before this fix and now pass; the focused total is 476. The unchanged lighting
 mood and scene suites remain 2666 and 1078. The browser selector recognises the
 actual city shader; the night-window requirement is unchanged. No existing
-assertion or tolerance changed. Native visual and frame checks are still pending.
+assertion or tolerance changed. Native visual checks then passed all eight cars, four looks and both presets
+on private port 32797 with memory-only saves and zero warnings/errors. Image
+review caught a stale rear-view capture: the fixture supplied fixed presentation
+time 40 seconds, ahead of the browser clock, so the mirror could not refresh.
+The fixture now uses native time and requires an actual refreshed rear-view
+frame after each look. No runtime mirror change or weakened assertion is needed.
+The corrected capture and quiet frame comparison remain pending.
 
 ## Removed
 
