@@ -31,7 +31,7 @@ const FIGHT_VOICE_CUES = ['crew.cinder.callout', 'crew.dune.callout', 'crew.jax.
 const WAVE_THREE_CUES = ['weapon.mortar.fire', 'weapon.mortar.whistle', 'weapon.mortar.hit',
   'weapon.tesla.charge', 'weapon.tesla.pulse', 'weapon.decoy.deploy',
   'weapon.decoy.burst', 'weapon.nitro.start', 'weapon.nitro.loop'];
-const BANK_ADDITIONS = new Set([...NEW_ARSENAL_CUES, ...WAVE_TWO_CUES, 'arena.bounty-mark',
+const BANK_ADDITIONS = new Set([...NEW_ARSENAL_CUES, ...WAVE_TWO_CUES, 'weapon.rockets.lock', 'arena.bounty-mark',
   ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage', 'arena.toll-gate',
   'arena.blackiron-barrage', 'warlord.nitroTell', 'warlord.nitroSpent']);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');

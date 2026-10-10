@@ -35,4 +35,7 @@ Source sync on 10 October retains this approved Flame art with Smoke b4494e99
 and Height integration 1f5da9c8. Director cleared the single renderer conflict
 resolution. Focused Flame/Smoke tests, build and eight native Flame poses in
 both qualities pass. This is a source compatibility check, not another art or
-frame round. Smoke approval/merge and Flame's fresh lane gate remain pending.
+frame round. Smoke round 2 is now approved and merged in integration 5eaa9181. Flame's
+fresh lane gate passed 368/368 in 620.71 s and build passed after that sync.
+The art remains approved. The Director reviewed the exact catalogue pin update
+for the approved Flame source addition; original Factory provenance stays exact.

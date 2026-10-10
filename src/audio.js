@@ -18,7 +18,7 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.oil.deploy', 'weapon.oil.slip', 'weapon.smoke.deploy',
   'weapon.harpoon.fire', 'weapon.harpoon.hit', 'weapon.harpoon.break',
   'weapon.caltrops.deploy', 'weapon.caltrops.hit',
-  'weapon.rockets.fire', 'weapon.rockets.hit',
+  'weapon.rockets.fire', 'weapon.rockets.hit', 'weapon.rockets.lock',
   'weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end',
   'weapon.magnet.hum',
 ]);

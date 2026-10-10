@@ -1,5 +1,13 @@
 # Next run: phase 3, a Wasteland worth finding (updated 10 October 2026)
 
+## Approved release in progress, 10 October 2026
+
+Smoke is merged; Arena round two is approved. Next merge Flame after sync
+and a fresh lane/build gate, then Arena. Kyle authorizes the real-game
+release after the final full tier runs alone and all release checks pass.
+The earlier waiting-for-art and no-release statements below are superseded.
+
+
 ## Current polish work, 10 October 2026
 
 Kyle supplied all five Claude verdicts. The board and play-test inbox record
@@ -9,29 +17,34 @@ these decisions. Earlier question holds are cleared.
   1.20 to 1.21: Medium averages 13.833 wrecks, within the unchanged 10–14
   limit. Warlord health is unchanged. Reviewed replay changes contain only
   the added armor. Lane 364/364, build and source review pass.
-- SEEKERS: add average actual armor damage per Rocket Pods firing, on the
-  same thirty seeds with seekers off/on. On must be at most 1.3 times off.
-  If the repeat after Height fails at 10, Kyle authorized 8 for seekers;
-  feature-off Pods and Gunn stay 10. Verify the metric and gate before merge.
-- SMOKE: build round two with varied soft grey puffs, wispy edges, lighter
-  tops, darker undersides, drift and churn. Preserve native concealment.
-  Submit the next sheet to Claude, then set waiting_on: claude.
-- ARENA: build round two with roughly twice the inner-island scrap in tall
-  clusters, clearly varied ridge widths, and distant lit tanker lamps and
-  roof plate readable at play distance. Keep the approved labels. Submit
-  the next sheet to Claude, then set waiting_on: claude.
+- SEEKERS: Kyle accepted the measured 1.328662 ratio at 8 damage and authorized
+  merge on 10 October. Record that exception to the original 1.3 target for
+  Claude; do not claim the old check passed. Off/Gunn keep 10. No 7.8 tuning.
+  Merged from f0989887 after lane 366/366, build and source review passed.
+- SMOKE: round two committed at b4494e99, waiting_on: claude for its next
+  art verdict. Grey layers and darker undersides keep visible-car fractions
+  below 10%; native checks/build pass. Actual-source p95 rises at most 0.595%,
+  work p95 at most 5.714%. Broad gate follows approval. Two of three rounds used.
+- ARENA: round two is committed at 1a3f30ce and waiting_on: claude for the
+  final allowed art verdict. The native sheet shows taller scrap clusters,
+  varied ridges and lit tanker details at 89.16794 m. Focused checks/build
+  pass; actual-source p95 remains 16.8 ms in both qualities. Gate after approval.
 - FLAME: round one approved. High p95 rises 3.3%; Performance is unchanged.
-  The High mean rise is noted and is not a blocker. Merge after Smoke, with
-  fresh lane/build evidence after syncing the shared rendering changes.
+  The High mean rise is noted and is not a blocker. Merge after Smoke.
+  Flame is synced with Height/Smoke round two at 81a9b64b; focused checks,
+  build and eight native views pass. Sync latest integration and gate after
+  Smoke approval/merge.
 
-Smoke owns shared visual edits while Seekers adds the report metric. Preserve
+Shared visual changes are frozen in those candidates. Preserve
 unmerged lanes and pending art evidence. No release is authorized.
 
-Previous session-end full: 363/363 in 725.14 s on unchanged integration
-3af7f15c, alone with four jobs. Its dirty-documentation ledger is not a clean
-release verdict. Run the full tier alone at this session's end. Fold status
-and notes into real work; do not make a status-only commit. Push remains held
-for approved binary compaction. Keep protected audio and parked diagnostics.
+Session-end full: 366/366 in 779.95 s on unchanged integration ac01cbe6,
+alone with four jobs. Only status documentation was dirty during the run;
+the ledger records that honestly and is not a clean release verdict. End
+status and notes wait for the next real commit; no status-only commit.
+Height and Seekers lanes and consumed evidence are removed. Smoke, Arena,
+Flame, parked diagnostics and protected audio are retained. Push remains
+held for approved binary compaction. No release is authorized.
 
 ## Phase 3 handoff before polish, 9 October 2026
 

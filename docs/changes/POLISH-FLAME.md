@@ -1,8 +1,9 @@
 # POLISH-FLAME
 
 Status: round 1 approved by Claude/Kyle on 10 October 2026.
-Merge depends on POLISH-SMOKE approval/merge and a fresh lane gate after sync. No longer waiting on Claude; no additional frame rerun is required.
-Exact shared-source dependency: POLISH-SMOKE b4494e996201e0956fb9ee1945e34bd531b2e430.
+Smoke round 2 is approved and merged. Fresh Flame lane/build passed after the
+final integration sync; ready for the reviewed merge. No new art or frame round is required.
+Exact shared-source dependency: Smoke integration 5eaa9181 (source 108265b9).
 
 ## Design before code
 - Use verified CC0 Kenney Particle Pack flame/smoke silhouettes, reduced to small
@@ -52,7 +53,7 @@ https://kenney.nl/assets/particle-pack page explicitly labels CC0, verified
   Retained sheet/browser recipes are tools/art/polish-flame-sheet.py and
   tools/scenarios/polish-flame.mjs; raw evidence stays under integration
   .evidence/2026-10-09/POLISH-FLAME/. No second art round is needed.
-- Broad lane gate awaits the approved Smoke dependency and integration sync. No integration merge or release is authorized here.
+- Final integration sync and lane/build are complete. Director owns integration merge and release.
 
 ## Smoke source sync on 10 October
 - Synced integration 1f5da9c8 (Height) cleanly in merge 75bb16e7, folding the
@@ -69,7 +70,20 @@ https://kenney.nl/assets/particle-pack page explicitly labels CC0, verified
   native burn timer remains 1.4583 s. Car and Cinder previews inspected in both.
 - New source-sync evidence: integration .evidence/2026-10-10/POLISH-FLAME/.
   No new art or frame round, broad gate, integration merge or release claimed.
-  Smoke still needs final art approval and integration merge before Flame's gate.
+  Smoke subsequently received final approval and merged as 5eaa9181.
+
+## Final integration sync
+- 5eaa9181 merged cleanly, retaining Flame textures/resources, Smoke camera
+  preparation and its native runtime fixture, and Seeker target brackets.
+  No Flame art or simulation rule changed.
+- First gate: 327 pass, 1 fail, 40 unrun (611.64 s). Tanker-source test's whole
+  non-Factory catalogue digest predates the sole approved Flame entry. Director
+  proved every older entry unchanged and all nine new original bytes/SHA256/CC0
+  valid, then approved the exact new digest and label. All 30 checks, Factory
+  provenance digest, source/rights/geometry assertions and tolerances stay intact.
+- Reviewed source fix: tanker 30/30. Fresh whole lane: 368 passed, zero failed
+  or unrun in 620.71 s; build passed. Final source sync review is clear.
+  Logs: final-lane-rerun.log and final-build.log in the 10 October evidence.
 
 ## Removed
 Removed the old car and crew orange cones and their dedicated geometry/material.

@@ -901,3 +901,10 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 9 October polish: full 363/363 passes in 725.14 s on unchanged integration 3af7f15c, alone with four jobs; dirty documentation is recorded, no retry or merge. Five clean lane candidates await Claude; status and verdicts fold into the next real commit.
 
 10 October: merged POLISH-HEIGHT from 52f2d049; lane 364/364 in 922.15 s, build and source review pass. Ordinary armor 1.20 to 1.21 gives Medium 13.833 wrecks; warlord health and non-armor replay fields stay exact.
+
+10 October: merged POLISH-SEEKERS from f0989887; lane 366/366 in 599.22 s, build 516 ms and source review pass. Kyle accepted 8 damage and the measured 1.328662 ratio as an explicit exception to the original 1.3 target; off/Gunn stay 10 and metric assertions stay unchanged.
+
+10 October: end full passes 366/366 on unchanged ac01cbe6 in 779.95 s, alone with four jobs; zero failures or reruns. Only status documentation was dirty; ledger/status notes wait for the next real commit. No push or release.
+10 October janitor: removed merged Height and Seekers lanes and consumed review evidence; retained three pending art lanes, parked diagnostics and protected audio. No unused modules or obsolete tests; 50 assets/54 exports remain advisory on CLEAN-11, including two newly flagged Seeker exports. Tracked integration size 296,678,583 to 296,753,643 bytes across the two merges; small code, tests and documentation growth, no new runtime binaries. Size targets unchanged.
+
+10 October: merged approved POLISH-SMOKE from 108265b9; lane 367/367 in 827.33 s, build 538 ms, all 162 replay checks and independent review pass. Native fixture now includes the renderer camera-preparation step; every original assertion is retained.

@@ -1,8 +1,8 @@
 # POLISH-SMOKE
 
-Status: round 2 source and sheet ready for Director and Claude review.
-Native checks and build pass. Actual old-source/candidate frame comparison passes.
-Broad lane gate waits for Claude art approval; art is not yet accepted.
+Status: Claude approved round 2 on 10 October, as relayed by Kyle.
+Native and actual-source frame verdicts are accepted. Approved art is unchanged.
+Integration ac01cbe6 is synced; fresh lane and build pass. Ready for merge.
 
 ## Design and implementation
 
@@ -48,7 +48,7 @@ lifetime, drift, targeting, damage and weapon.smoke.deploy stay unchanged.
   coverage alone was insufficient. Correct transparent-instance sorting
   resolved the ghost without hiding the car or changing the test.
 - Build passed: 294 modules, 517 ms, existing large-chunk warning only.
-- One round 2 comparison sheet is 393,910 bytes. Art verdict pending.
+- One round 2 comparison sheet is 393,910 bytes. Claude approved round 2.
 - Actual pre-Smoke source (3af7f15c) versus candidate, run alone in the
   Director's quiet window. Native simulation, moving camera, one active
   cloud, 60 warm-up / 180 measured RAF frames per kind/quality. No draw or
@@ -59,9 +59,23 @@ lifetime, drift, targeting, damage and weapon.smoke.deploy stay unchanged.
   7.0/7.4, 6.9/7.2 ms; maximum +5.714%, also below 10%. Inspection draws
   run alongside native RAF, so High is a stressed paired sample; old/new
   >33 ms counts are 42/39 and 31/38, with zero in Performance.
-- Broad lane gate waits for art approval. Fresh lane/build evidence is
-  required before merge. No simulation files or assets changed.
+- Fresh lane after the fixture fix: 367 passed, zero failed or unrun, 827.33 s.
+  All 162 replay fingerprints pass across 18 cases, 16 events, eight categories,
+  three FPS values and three runs. Fresh build passed in 538 ms; existing
+  large-chunk warning only. Evidence: POLISH-SMOKE/lane-approved-sync-fixed.log
+  and build-approved-sync.log under integration's dated .evidence folder.
+  No simulation files or assets changed by Smoke.
 
+- Integration ac01cbe6 synced without conflicts; independent source review
+  confirms Seeker locks and Smoke camera preparation remain intact.
+- The first fresh lane found one genuine fixture failure in
+  test-arsenal-runtime: its presentation check stopped after view.update,
+  before the production scene's camera preparation initialized the puff
+  instances. Director approved the narrow test hook. The fixture now uses
+  a real THREE camera and prepareSmokeCamera after each update. Both Oil
+  and Smoke pass all 22 original checks; all 209 arsenal-runtime tests pass.
+  Director independently reviewed and approved this fixture correction.
+  No assertion, tolerance, runtime code or approved art changed.
 ## Removed
 
 The old single-sphere Smoke Screen rendering and material are removed.
