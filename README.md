@@ -2,9 +2,10 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
-## Wasteland polish candidate — 10 October 2026
+## Wasteland polish release — 10 October 2026
 
-Approved features are integrated. The accepted release exceptions and final
+The five approved polish changes are installed in the live game. The accepted
+release exceptions and final
 gate results are recorded in [verification](docs/VERIFICATION.md).
 
 Rocket Pods seek nearby enemy cars, with a lock cue and brackets. Smoke and
