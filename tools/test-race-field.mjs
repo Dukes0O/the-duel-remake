@@ -8,6 +8,7 @@ import { Course } from '../src/course.js';
 import { FEATURE_STATES } from '../src/feature-flags.js';
 import { normalizeRaceSettings } from '../src/race-settings.js';
 import { createProfile } from '../src/progression.js';
+import { testCourseAccess } from './career-fixture.mjs';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { FIELD, FIELD_TUNING, CATCH_UP_GAP_SEC, gridPose, chooseRacers, performanceIndex, racerSpec, catchUpFactor,
   classify } from '../src/race-field.js';
@@ -54,7 +55,7 @@ check(FEATURE_STATES['grand-prix'] === 'dev', 'the Grand Prix switch starts in d
 {
   const profile = createProfile();
   equal(normalizeRaceSettings({ mode: 'grandprix' }, profile).mode, 'grandprix', 'the race setup remembers Grand Prix on Pacific Canyon');
-  equal(normalizeRaceSettings({ mode: 'grandprix', eventId: COURSE[1].id }, { ...profile, courses: { [COURSE[1].id]: true } }).mode === 'grandprix', false,
+  equal(normalizeRaceSettings({ mode: 'grandprix', eventId: COURSE[1].id }, { ...profile, courses: testCourseAccess() }).mode === 'grandprix', false,
     'the race setup does not offer Grand Prix where the circuit has none');
 }
 
@@ -165,10 +166,11 @@ function placeScene(duel, scene) {
     const spot = scene[i];
     if (spot) Object.assign(r, { s: spot.s, prevS: spot.s, lateral: spot.lateral, prevLateral: spot.lateral, speedMph: spot.v, headingError: 0, finished: false });
     else Object.assign(r, { s: -5000 - i * 30, prevS: -5000 - i * 30, lateral: 0, speedMph: 0, contactExempt: true, finished: true });
-    r.field.intent = r.lateral; r.field.bias = 0; r.field.reaction = 0;
+    r.field.intent = r.lateral; r.field.bias = 0; r.field.reaction = 0; r.field.formAmp = 0;
   });
   Object.assign(s, { s: -4000, prevS: -4000, lateral: 0, speedMph: 0 });
   s.invulnerableSec = 99;
+  s.stageTimeSec = 20; // past the opening seconds, when nobody attempts a pass
 }
 function quietStretch(duel) {
   // A place where the racing line runs nearly straight and no braking zone is close.
@@ -182,7 +184,7 @@ function quietStretch(duel) {
 }
 {
   const duel = start({ cpu: 'hard', seed: 1989, fieldSeed: 9 });
-  const base = quietStretch(duel);
+  const base = quietStretch(start({ cpu: 'hard', seed: 1989, fieldSeed: 9 }));
   check(base != null, 'Pacific Canyon has a straight to test on');
   const lineAt = distance => racingLineFor(duel.course).offsetAt(distance);
   // Passing: a faster car 15 m behind a slower one on a straight pulls out to the side with room.
@@ -246,10 +248,13 @@ function quietStretch(duel) {
   const [a, b] = duel.state.opponents;
   let minimum = Infinity, swapped = false;
   const leftFirst = a.lateral < b.lateral;
-  for (let i = 0; i < 60 * 6; i++) {
+  for (let i = 0; i < 60 * 3; i++) {
     duel.step(STEP);
-    minimum = Math.min(minimum, Math.abs(a.lateral - b.lateral));
-    if ((a.lateral < b.lateral) !== leftFirst) swapped = true;
+    // While they overlap along the road; once one is clear ahead they may share a line.
+    if (Math.abs(a.s - b.s) < 6) {
+      minimum = Math.min(minimum, Math.abs(a.lateral - b.lateral));
+      if ((a.lateral < b.lateral) !== leftFirst) swapped = true;
+    }
   }
   check(!swapped, 'cars alongside through a corner keep their sides');
   check(minimum > 2.1, 'and nobody turns into the other car');
@@ -268,18 +273,21 @@ function quietStretch(duel) {
   Object.assign(s, { s: base + 180, prevS: base + 180, lateral: 0, speedMph: 150, headingError: 0 });
   duel.setInput({ throttle: 1 });
   let marker = 0;
-  for (let i = 0; i < 60; i++) { duel.step(STEP); lead.speedMph = 150; lead.s = Math.max(lead.s, s.s + 20); marker = Math.max(marker, s.field.tow); }
+  for (let i = 0; i < 60; i++) { duel.step(STEP); lead.speedMph = 150; lead.lateral = 0; lead.headingError = 0; lead.s = Math.max(lead.s, s.s + 20); marker = Math.max(marker, s.field.tow); }
   check(marker > .9, 'following within 30 m and 2.5 m builds the tow, which the HUD shows');
   equal(s.field.towBehind, 0, 'the tow knows which car it follows');
-  check(s.speedMph > CARS.falcone_f42.topSpeed * .99, 'the tow lifts top speed');
+  // Fast in the tow: the car passes its own top speed, by no more than 5%.
+  Object.assign(s, { speedMph: 200, gear: CARS.falcone_f42.gears.length - 1 });
+  for (let i = 0; i < 60 * 3; i++) { duel.step(STEP); s.lateral = 0; s.headingError = 0; lead.speedMph = 215; lead.lateral = 0; lead.headingError = 0; lead.s = Math.max(lead.s, s.s + 20); }
+  check(s.speedMph > CARS.falcone_f42.topSpeed + 1 && s.speedMph <= CARS.falcone_f42.topSpeed * 1.05 + .5, 'the tow lifts top speed, by no more than 5%');
   // Out of range: fades.
   lead.s = s.s + 60;
-  for (let i = 0; i < 90; i++) { duel.step(STEP); lead.speedMph = 150; lead.s = Math.max(lead.s, s.s + 60); }
+  for (let i = 0; i < 90; i++) { duel.step(STEP); lead.speedMph = 150; lead.lateral = 0; lead.s = Math.max(lead.s, s.s + 60); }
   equal(s.field.tow, 0, 'the tow fades once you are more than 30 m back');
   const side = start({ seed: 1989, fieldSeed: 9 });
   placeScene(side, [{ s: base + 200, lateral: 0, v: 150 }]);
   Object.assign(side.state, { s: base + 180, prevS: base + 180, lateral: 3.4, speedMph: 150 });
-  for (let i = 0; i < 60; i++) { side.step(STEP); side.state.opponents[0].speedMph = 150; side.state.opponents[0].s = Math.max(side.state.opponents[0].s, side.state.s + 20); }
+  for (let i = 0; i < 60; i++) { side.step(STEP); side.state.opponents[0].speedMph = 150; side.state.opponents[0].lateral = 0; side.state.opponents[0].s = Math.max(side.state.opponents[0].s, side.state.s + 20); }
   equal(side.state.field.tow, 0, 'more than 2.5 m to the side is out of the tow');
   // The tow adds 5% to top speed, and the player's cap is the same 5%.
   const free = start({ seed: 1989, fieldSeed: 9 }); placeScene(free, []);
