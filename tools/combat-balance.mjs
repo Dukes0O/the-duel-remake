@@ -24,12 +24,12 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
-const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews,seeker-rockets] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
+const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews', 'seeker-rockets'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected arsenal, arsenal-wave3 or cpu-crews.');
+    throw Error('Unsupported flags; expected arsenal, arsenal-wave3, cpu-crews or seeker-rockets.');
   return [...new Set(flags)];
 }
 
@@ -70,7 +70,7 @@ export function parseArgs(args = []) {
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    overrides: { arsenal: flags.includes('arsenal'),
+    overrides: { 'seeker-rockets': flags.includes('seeker-rockets'), arsenal: flags.includes('arsenal'),
       'arsenal-wave3': flags.includes('arsenal-wave3'), 'cpu-crews': flags.includes('cpu-crews') } });
 }
 
