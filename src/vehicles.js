@@ -449,3 +449,110 @@ export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damag
     pivot.scale.y = 1-roofCrush*.18;
   }
 }
+
+
+// Opt-in lamps for an authored light path. Native cars already own their damage
+// materials; still clone the lenses here so even a shared source cannot couple
+// two cars' brake lights. Preserve each lens's existing damage shader hooks.
+export function createVehicleNightLighting(vehicle) {
+  const originals = new Map(), privateMaterials = new Map(), bindings = [];
+  const tails = new Set(vehicle.userData.brakeLights || []), heads = [];
+  vehicle.traverse(mesh => {
+    if (!mesh.isMesh || Array.isArray(mesh.material)) return;
+    const source = mesh.material;
+    const head = /^(Headlamp lenses|Headlight)$/.test(source.name) ||
+      source.name === '' && source.emissive?.getHex() === 0xffdf97 && source.roughness === .2;
+    const tail = tails.has(mesh);
+    if (!head && !tail) return;
+    if (!privateMaterials.has(source)) {
+      const material = source.clone();
+      material.userData.sharedAsset = false;
+      material.onBeforeCompile = source.onBeforeCompile;
+      material.customProgramCacheKey = source.customProgramCacheKey;
+      privateMaterials.set(source, material);
+      originals.set(source, {intensity: source.emissiveIntensity, head, tail});
+    }
+    bindings.push({mesh, source, material: privateMaterials.get(source)});
+    if (head) heads.push(mesh);
+  });
+  const cones = new THREE.Group();cones.name = 'Night headlight cones';cones.visible = false;
+  cones.userData.excludeAmbientOcclusion = true;
+  const positions = [], coordinates = [];
+  const point = new THREE.Vector3(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4();
+  const bounds = new THREE.Box3();
+  vehicle.updateWorldMatrix(true, true);inverse.copy(vehicle.matrixWorld).invert();
+  for (const mesh of heads) {
+    const attribute = mesh.geometry.attributes.position;
+    matrix.multiplyMatrices(inverse, mesh.matrixWorld);
+    for (let i = 0; i < attribute.count; i++) bounds.expandByPoint(point.fromBufferAttribute(attribute, i).applyMatrix4(matrix));
+  }
+  if (heads.length && !bounds.isEmpty()) {
+    let height = 0, count = 0;
+    for (const mesh of heads) {
+      const attribute = mesh.geometry.attributes.position;
+      matrix.multiplyMatrices(inverse, mesh.matrixWorld);
+      for (let i = 0; i < attribute.count; i++) {
+        point.fromBufferAttribute(attribute, i).applyMatrix4(matrix);
+        if (point.z >= bounds.max.z - .12) { height += point.y;count++; }
+      }
+    }
+    const y = count ? height / count : bounds.getCenter(point).y;
+    const x = Math.max(.24, Math.max(Math.abs(bounds.min.x), Math.abs(bounds.max.x)) * .75);
+    const z = bounds.max.z + .035;
+    const triangle = (a, b, c, uv) => { positions.push(...a, ...b, ...c);coordinates.push(...uv); };
+    for (const side of [-1, 1]) {
+      const left = [side * x - .10, y, z], right = [side * x + .10, y, z];
+      const farLeft = [side * x - 2.1, .08, z + 30], farRight = [side * x + 2.1, .08, z + 30];
+      // One tapered pool and two faint sides read as a volume at racing speed.
+      triangle(left, farLeft, right, [0, 0, 0, 1, 1, 0]);
+      triangle(right, farLeft, farRight, [1, 0, 0, 1, 1, 1]);
+      triangle(left, [side * x, y + .05, z], farLeft, [0, 0, .5, 0, 0, 1]);
+      triangle(right, farRight, [side * x, y + .05, z], [1, 0, 1, 1, .5, 0]);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(coordinates, 2));
+  const beam = new THREE.ShaderMaterial({transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending, uniforms: {strength: {value: 0}},
+    vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader: `varying vec2 vUv;uniform float strength;
+      void main(){float edge=pow(max(0.,1.-abs(vUv.x*2.-1.)),.65);
+      float reach=pow(1.-vUv.y,1.8)*smoothstep(0.,.09,vUv.y);
+      gl_FragColor=vec4(.72,.83,1.,edge*reach*strength*.12);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(geometry, beam);mesh.userData.excludeAmbientOcclusion = true;
+  mesh.renderOrder = 2;cones.add(mesh);vehicle.add(cones);
+  let disposed = false;
+  function restore({braking} = {}) {
+    if (disposed) return;
+    for (const binding of bindings) binding.mesh.material = binding.source;
+    // This runs after the renderer's normal braking assignment. Restore that
+    // current input, not the last frame's brighter night value.
+    if (typeof braking === 'boolean') for (const lamp of tails) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
+    cones.visible = false;
+  }
+  return {
+    update({amount = 0, braking = false} = {}) {
+      if (disposed) return;
+      const level = Math.max(0, Math.min(1, Number.isFinite(amount) ? amount : 0));
+      for (const binding of bindings) binding.mesh.material = binding.material;
+      for (const [source, material] of privateMaterials) {
+        const original = originals.get(source);
+        material.emissiveIntensity = original.head ? Math.max(4.2, original.intensity + 1) * level : braking ? 4.5 : .18 + 1.62 * level;
+      }
+      beam.uniforms.strength.value = level;cones.visible = level > 0 && heads.length > 0;
+    },
+    restore,
+    dispose() {
+      if (disposed) return;
+      restore();disposed = true;vehicle.remove(cones);
+      geometry.dispose();beam.dispose();
+      for (const material of privateMaterials.values()) material.dispose();
+      bindings.length = 0;privateMaterials.clear();originals.clear();
+    },
+  };
+}
