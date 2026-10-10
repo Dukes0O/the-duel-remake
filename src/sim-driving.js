@@ -8,6 +8,7 @@ import { arenaFloorSpeed } from './arena/venues.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
+import {FIELD} from './race-field.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -65,8 +66,10 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
-  const accelerationShare = arsenalEnabled(this) ? carAcceleration(s) : 1;
-  const nitroSpeedShare = arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1;
+  // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
+  const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
+  const accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
+  const nitroSpeedShare = (arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1) * towTop;
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
@@ -195,7 +198,7 @@ export function _drive(dt) {
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);
 
-  const effectScale = arsenalEnabled(this) ? carTopSpeed(s) : 1;
+  const effectScale = (arsenalEnabled(this) ? carTopSpeed(s) : 1) * towTop;
   const speedCap = (s.boosting ? car.topSpeed * boostTopSpeed : car.topSpeed) * effectScale;
   if (!s.boosting && s.speedMph > speedCap) s.speedMph -= 22 * dt;
   if (effectScale < 1) s.speedMph = Math.min(s.speedMph, speedCap);
