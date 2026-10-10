@@ -538,6 +538,159 @@ finish its default event in the top three. Each event is its own entry in
 - **Saves:** new career fields are additive with defaults; old saves load
   unchanged (fixture tests).
 
+## 7b. The Team Room: study the track like a real team (Kyle, 10 October 2026)
+
+Kyle: getting faster should not be "drive a random lap and hope". A real
+team prepares its drivers: track maps, corner notes, data from your own
+laps, and pictures of the key corners to study before the race. The Team
+Room brings that into the game, for every circuit, old and new.
+
+**Where.** A TEAM ROOM button on each event's card and on the results screen
+("ANALYSE MY LAP"). One screen per event, the **track dossier**:
+
+- **The map**, coloured by the team's reference speed, with numbered and
+  named corners, crests and the start line (the same picture as Claude's
+  review tool, drawn by the game).
+- **Flags at hot spots**: every slow corner, every crest, the overtaking
+  zone and the signature moment. Click a flag and a **snapshot** opens: the
+  view from the driver's seat at the braking point, rendered live by the
+  game's own renderer (never stored pictures, so it always matches the
+  current art), with the engineer's note under it.
+- **The engineer's notes** for that corner, in a racing engineer's voice,
+  short and practical: "Brake at the 100 board. Third gear. Clip the inside
+  kerb and use all the road on the way out. Lose time here and you lose it
+  all down Conrod." Written per corner in the circuit's file (Claude writes
+  them in the finishing pass); existing circuits get notes generated from
+  their corner data and edited by Claude.
+
+**Intel you earn, level by level** (per event, per named player):
+
+| Level | Unlocks | How you earn it |
+| --- | --- | --- |
+| 1. Track map | Map, corner names, flags with snapshots | Free when you own the track |
+| 2. Corner notes | Braking board, gear, target speed and line for every corner | Drive 3 laps of the track (any mode) |
+| 3. Telemetry | Your best lap's speed against the team's reference lap; sector times; the three corners where you lose the most time, each with advice | Finish a race in the top 5, or 400 credits |
+| 4. Reference ghost | Race the team's reference lap as a ghost in Time Trial | Finish on the podium, or 800 credits |
+
+- **The reference lap** is the test driver's best lap on Medium in a mid
+  car (the same driver as the review tool), recorded per event and car
+  class when the build is made, so it is fixed and fair.
+- **Your laps** record speed, throttle, brake and position at small steps
+  (added to what the ghost already stores), so the overlay and "where you
+  lose time" come from what you actually did.
+- **Where you lose time**: compare your lap with the reference corner by
+  corner (entry speed, minimum speed, exit speed, braking point) and name
+  the cause in plain words: "braking 30 m too early", "too slow at the apex",
+  "late on the throttle".
+
+**Race weekend (P4-QUALIFYING).** A Grand Prix can start with an optional
+qualifying session: two timed laps alone on the track; your best lap sets
+your grid slot among the field's own times (seeded from their skill).
+Skipping it keeps the default back-half start. Practice laps count toward
+intel level 2.
+
+**Coach (P4-COACH).** An option, off by default, for learning a track: on
+corners where you have level 2 notes, a small marker on the road shows the
+braking point and a faint line shows the apex. Never in Hard Grand Prix
+races or cups.
+
+**Engineer.** One named race engineer for the whole team (text only for
+now; a voice later if Kyle wants). Kyle and Gratian may name them; until
+then, "your engineer".
+
+### 7b.1 Reference laps and authored intel: final policy (Claude, 10 October 2026)
+
+**Reference laps.**
+
+- One reference per **event and route**. Route events (`ROUTE_EVENT_IDS`:
+  Pacific Canyon, High Country, Harbor & Highlands, Ridge Rally) get three,
+  one per route: `route_a` seed 1989, `route_b` seed 42, `route_c` seed 17,
+  exactly as `src/route-variants.js`. Every other event, including scripted
+  circuits and their variants, gets one, keyed `fixed`. Never reuse one
+  route's reference for another.
+- **Car and driver:** the Stuttgart 959-S, no upgrades, Club Driver, the
+  test driver on Medium.
+- **Run:** an isolated native fixture: no opponents, traffic, police, radar
+  or weapons; memory-only; the route's seed (scripted circuits: the
+  course's layout seed). One warm-up lap from a standing start, then two
+  timed flying laps; the reference is the faster of the two.
+- **Comparison note:** when the player drives another car, the dossier
+  shows "Reference lap: Stuttgart 959-S" beside every comparison. Per-class
+  references are not built now.
+- **Stale references fail the build checks.** Each record stores the
+  course's geometry fingerprint; a test fails when any closed-circuit event
+  and route lacks a reference or its fingerprint no longer matches, with the
+  rebuild command in the message.
+
+**Sectors.** Three per lap. Default: equal thirds of the lap distance.
+Authored boundaries in the circuit's intel replace them.
+
+**Authored beats generated.** Written sectors, flags and engineer notes
+override generated ones, item by item. Generated data only fills what is not
+written: unnamed corners, missing notes, missing flags.
+
+**Where authored intel lives.**
+
+- Scripted circuits: an `intel` block in `src/circuits/<id>.js`.
+- Existing courses: `src/circuit-intel/<event-id>.js`, registered with one
+  line in `src/circuit-intel/index.js`. Shared code never names a course.
+- Route events may author per route: `routes: {route_b: {...}}` overrides
+  the event's block for that route.
+
+```js
+// Authored intel. Every field is optional.
+intel: {
+  // Start distances in metres along the lap of sectors 2 and 3
+  // (sector 1 starts at the line). Default: equal thirds.
+  sectors: [1520, 3010],
+  // Hot-spot flags shown on the map. kind: 'signature' | 'overtaking' |
+  // 'corner' | 'crest'. Exactly one signature and at most two overtaking
+  // flags per lap. camera is the driver-seat snapshot: metres behind the
+  // flag's point, height above the road, look-ahead distance.
+  flags: [
+    {id: 'skyline', kind: 'signature', s: 2480, title: 'Skyline',
+     camera: {back: 30, up: 1.2, ahead: 70}},
+    {id: 'conrod', kind: 'overtaking', s: 3900, title: 'Conrod to Murray'},
+  ],
+  // Engineer notes by corner id: the slug of the script piece name
+  // ('hell-gate'), or 'c1'...'cN' in lap order for unnamed corners.
+  notes: {
+    'hell-gate': {brakeBoard: 100, gear: 3, targetKph: 95,
+      line: 'Wide on entry, clip the inside kerb, use all the exit.',
+      note: 'First-lap scramble. Brake early on lap one, late after that.'},
+  },
+  routes: {route_b: {/* same shape; overrides this block for route B */}},
+}
+```
+
+**Reference record** (generated by `tools/build-reference-laps.mjs` into
+`src/generated/reference-laps.json`, committed because the game loads it;
+keep it small):
+
+```js
+"pacific-canyon|route_a": {
+  "eventId": "pacific-canyon", "route": "route_a", "seed": 1989,
+  "car": "stuttgart_959s", "driver": "club", "cpu": "medium",
+  "fixtureVersion": 1, "courseFingerprint": "<geometry hash>",
+  "lapMs": 50390, "sectorMs": [17010, 16420, 16960],
+  // [distance m, speed km/h] every 20 m along the lap
+  "trace": [[0, 221], [20, 226]],
+  // in lap order; ids match the notes keys
+  "corners": [{"id": "c1", "s": 40, "brakeS": 3920, "entryKph": 304,
+               "minKph": 220, "exitKph": 260, "gear": 4}]
+}
+```
+
+**Player laps** record the same fields (trace every 20 m, sector times,
+corner entry, minimum and exit speeds, braking points), so "where you lose
+time" compares like with like. Saved per event, route and named player:
+best lap only, within the save budget.
+
+**Shared code.** The corner, crest and sector analysis moves into
+`src/track-analysis.js`, used by both the game and Claude's review tool, so
+they always agree. Race state is never changed by the Team Room; it only
+reads saved laps and the course.
+
 ## 8. Art (P4-ART-SRC first, SPEC 0.11)
 
 One sourcing sheet for Kyle with two or three candidates for each:
@@ -619,8 +772,8 @@ before P4-SNOW).
 | B, first track | P4-PANORAMA, P4-GRIP, P4-DAYNIGHT, P4-GP-EXISTING, P4-AUDIO, P4-CAREER |
 | C, more tracks | P4-HARBOUR, P4-TREMBLANT, P4-SNOW, P4-PIT |
 | D, the mountain | P4-TREMBLANT-SNOW, P4-SUMMIT, P4-AVALANCHE, P4-SNOWMEN, P4-YETI, P4-VARIANTS, P4-SUMMIT-ATTACK |
-| E, career | P4-CUPS |
-| Claude | P4-FINISH-PANORAMA, P4-FINISH-HARBOUR, P4-FINISH-TREMBLANT, P4-FINISH-SUMMIT, P4-RELEASE |
+| E, career | P4-CUPS, P4-INTEL-DOSSIER, P4-INTEL-TELEMETRY, P4-INTEL-LEVELS, P4-QUALIFYING, P4-COACH |
+| Claude | P4-FINISH-PANORAMA, P4-FINISH-HARBOUR, P4-FINISH-TREMBLANT, P4-FINISH-SUMMIT, P4-FINISH-TEAMROOM, P4-RELEASE |
 
 Releases go in batches as Kyle approves them: Grand Prix on existing
 circuits and Panorama Ridge first; then Harbour Lights and Tremblant Woods;

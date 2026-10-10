@@ -1549,6 +1549,349 @@
         "public/assets/textures/flamethrower-smoke.png",
         "public/assets/textures/flamethrower-scorch.png"
       ]
+    },
+    {
+      "id": "p4-kenney-racing",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Racing Kit",
+      "sourcePage": "https://kenney.nl/assets/racing-kit",
+      "previewImage": "https://kenney.nl/media/pages/assets/racing-kit/dc5ecd9a41-1677580942/preview.png",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "CC0 is linked on the official pack page.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Garages, grandstands and track furniture are visible in the official preview.",
+      "risk": "Clean, miniature-like finish needs real-world scaling, rough surfaces and restrained paint.",
+      "checked": "2026-10-10",
+      "choices": [
+        1
+      ],
+      "selectedChoices": [
+        1
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 1. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-gp",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Grand Prix Circuit",
+      "sourcePage": "https://3dassets.dev/packs/grand-prix-circuit-and-open-wheel",
+      "previewImage": "https://cdn.3dassets.dev/assets/15234/v1/poster.webp",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Named five-light gantry, garage, grandstand and barrier parts reduce modelling work.",
+      "risk": "Publisher reports AI generation with Claude Fable 5.1. Very plain geometry needs close inspection and weathering.",
+      "checked": "2026-10-10",
+      "choices": [
+        2,
+        3,
+        4,
+        10
+      ],
+      "selectedChoices": [
+        3
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 3. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-kart",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Go Kart Track and Pit Lane",
+      "sourcePage": "https://3dassets.dev/packs/go-kart-track-and-pit-lane",
+      "previewImage": "https://cdn.3dassets.dev/assets/34369/v1/poster.webp",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
+      "status": "candidate",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Tyre walls, kerbs and marshal stand have useful trackside detail.",
+      "risk": "Publisher reports AI generation with Claude Opus 5. Kart-scale furniture needs rescaling; primary colours need toning down.",
+      "checked": "2026-10-10",
+      "choices": [
+        4
+      ]
+    },
+    {
+      "id": "p4-barrier",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "3D Concrete Barrier",
+      "sourcePage": "https://opengameart.org/content/3d-concrete-barrier",
+      "previewImage": "https://opengameart.org/sites/default/files/jerseybarrier.jpg",
+      "author": "MrMajestatisch",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Creator's OpenGameArt page links CC0 and supplies FBX/Blend downloads.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "A worn Jersey barrier fits the game's grounded look; creator reports 284 triangles.",
+      "risk": "Source texture maps are not independently inspected. Confirm included texture provenance and reduce maps after selection.",
+      "checked": "2026-10-10",
+      "choices": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "selectedChoices": [
+        1,
+        3
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 1, 3. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-city",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "City Kit (Commercial)",
+      "sourcePage": "https://kenney.nl/assets/city-kit-commercial",
+      "previewImage": "https://kenney.nl/media/pages/assets/city-kit-commercial/f9afc81822-1747481468/preview.png",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "CC0 is linked on the official pack page.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Low-rise shops, awnings and tall buildings provide a coherent harbour skyline.",
+      "risk": "Modern white blocks need warm shop lighting, mixed signs and dirt; the Lantern Tower remains a custom assembly.",
+      "checked": "2026-10-10",
+      "choices": [
+        5,
+        6
+      ],
+      "selectedChoices": [
+        5
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 5. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-boats",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Watercraft Kit",
+      "sourcePage": "https://kenney.nl/assets/watercraft-kit",
+      "previewImage": "https://kenney.nl/media/pages/assets/watercraft-kit/0a7953e9b7-1713354133/preview.png",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "CC0 is linked on the official pack page.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Official preview shows small harbour boats, barges and two wooden dock sections.",
+      "risk": "Use fishing/workboat shapes and mute the bright palette. Dock proportions and mooring details need inspection.",
+      "checked": "2026-10-10",
+      "choices": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "selectedChoices": [
+        5,
+        8
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 5, 8. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-neon",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Cyberpunk Apartment and Neon Block",
+      "sourcePage": "https://3dassets.dev/packs/cyberpunk-apartment-and-neon-block",
+      "previewImage": "https://cdn.3dassets.dev/assets/37848/v1/poster.webp",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Blank sign frames, paper lanterns and modular facades can dress the night street.",
+      "risk": "Publisher reports AI generation with Claude Opus 5. Six-lantern strip is listed at 4,996 triangles; simplify for repeats. Apartment fronts are not finished shops.",
+      "checked": "2026-10-10",
+      "choices": [
+        5,
+        6
+      ],
+      "selectedChoices": [
+        5
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 5. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-holiday",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Holiday Kit",
+      "sourcePage": "https://kenney.nl/assets/holiday-kit",
+      "previewImage": "https://kenney.nl/media/pages/assets/holiday-kit/9e62ea4066-1733923957/preview.png",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseEvidence": "CC0 is linked on the official pack page.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Cabin pieces, snow shapes, snowy rocks/pines and plain/hatted snowmen are visible.",
+      "risk": "Remove festive details and reduce chunky proportions. Separate hat/carrot meshes and deformation are not verified.",
+      "checked": "2026-10-10",
+      "choices": [
+        7,
+        9,
+        10,
+        11,
+        12
+      ],
+      "selectedChoices": [
+        9,
+        11
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 9, 11. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-ski",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Ski Resort and Snow Park",
+      "sourcePage": "https://3dassets.dev/packs/ski-resort-and-snow-park",
+      "previewImage": "https://cdn.3dassets.dev/assets/26036/v1/poster.webp",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Named tower, cable span, four-seat chair, lodge, warming hut and shelter cover rare resort parts.",
+      "risk": "Publisher reports AI generation with Claude Fable 5.1. Lift is static; movement, cable sag and slope fitting are future work.",
+      "checked": "2026-10-10",
+      "choices": [
+        7,
+        8,
+        9
+      ],
+      "selectedChoices": [
+        8,
+        9
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 8, 9. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-nature",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Ultimate Nature Pack",
+      "sourcePage": "https://quaternius.com/packs/ultimatenature.html",
+      "previewImage": "https://quaternius.com/assets/images/fullres/ultimatenature.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official pack page links CC0 1.0; the existing selected catalog record is retained.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Already licensed in this project. Official preview shows autumn trees and snow-loaded pines.",
+      "risk": "Reuse the existing library before fetching anything. Faceted trees need muted colours and varied scale.",
+      "checked": "2026-10-10",
+      "choices": [
+        7,
+        8,
+        9
+      ],
+      "reusesCatalogId": "quaternius-ultimate-nature-pack",
+      "downloadNote": "No new download for P4-ART-SRC; inspect/reuse the existing selected library first.",
+      "selectedChoices": [
+        8,
+        9
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 8, 9. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-dome",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Observatory Dome Base",
+      "sourcePage": "https://3dassets.dev/assets/planetarium-and-optical-observatory-observatory-dome-b-1dbccfb2",
+      "previewImage": "https://cdn.3dassets.dev/assets/31843/v1/poster.webp",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official item and parent pack specify CC0 1.0.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "A complete dome enclosure is a donor for the distant summit landmark.",
+      "risk": "Publisher reports AI generation with GPT-6. Listed at 36,408 triangles; reduce sharply. Glass-heavy preview needs an opaque weathered dome, snow and lit base windows.",
+      "checked": "2026-10-10",
+      "choices": [
+        9,
+        10
+      ],
+      "selectedChoices": [
+        9
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 9. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-monsters",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "Ultimate Monsters",
+      "sourcePage": "https://quaternius.com/packs/ultimatemonsters.html",
+      "previewImage": "https://quaternius.com/assets/images/fullres/ultimatemonsters.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Official pack page links CC0 1.0 and describes 50 animated monsters.",
+      "status": "selected",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "The white/blue full-body yeti in the official preview has arms and legs; animation is advertised at pack level.",
+      "risk": "Exact yeti clip names and roar/chest-beat/lope are unverified. Recolour the blue face and reduce cartoon proportions.",
+      "checked": "2026-10-10",
+      "choices": [
+        11
+      ],
+      "selectedChoices": [
+        11
+      ],
+      "selectionDate": "2026-10-10",
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 11. Selection approves the donor only; stated adaptations and gaps remain open."
+    },
+    {
+      "id": "p4-yeti",
+      "card": "P4-ART-SRC",
+      "family": "circuit-source",
+      "title": "YETI",
+      "sourcePage": "https://sketchfab.com/3d-models/yeti-dc7ae2194c504a79bbe20fa450be6ad6",
+      "previewImage": "https://media.sketchfab.com/models/dc7ae2194c504a79bbe20fa450be6ad6/thumbnails/623dec006d14480aac7bb92b353c53c1/29a3aed4ba6b44b68511633645b8e9e2.jpeg",
+      "author": "THE CUBE GUY (@mishrau60)",
+      "license": "CC-BY-4.0",
+      "licenseEvidence": "Creator's Sketchfab page lists CC Attribution; page license metadata points to CC BY 4.0.",
+      "status": "candidate",
+      "downloaded": false,
+      "sha256": null,
+      "fit": "Long limbs and fur read more naturally than the cartoon donor; page reports 10.2k triangles.",
+      "risk": "Rig and animation are not advertised. Treat all gestures as work to add; Sketchfab download access may require an existing account.",
+      "checked": "2026-10-10",
+      "choices": [
+        12
+      ],
+      "attribution": "YETI by THE CUBE GUY (@mishrau60), via https://sketchfab.com/3d-models/yeti-dc7ae2194c504a79bbe20fa450be6ad6, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). State actual modifications when made."
     }
   ]
 }

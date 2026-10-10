@@ -2,7 +2,7 @@
 
 Start with [AGENTS.md](../AGENTS.md), then [SPEC.md](../SPEC.md) section 0.
 The spec settles game rules. [Next run](board/next-run.md) gives the current
-phase 2 plan. [Board](board/board.yaml) assigns files and records card state.
+development plan. [Board](board/board.yaml) assigns files and records card state.
 [STATUS](board/STATUS.md) reports the last observed build, tests, lanes and
 sizes. A status snapshot applies only to its stated commit.
 
