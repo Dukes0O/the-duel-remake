@@ -19,3 +19,21 @@
 .weapon-hud[hidden]{display:none}.weapon-hud button{border:1px solid #cc783c;background:linear-gradient(#3c2b20,#17130f);color:#ffdda0;padding:13px 6px;font:700 11px monospace;cursor:pointer;box-shadow:inset 0 2px #ffffff12}
 .weapon-hud button:disabled{color:#aa9988;border-color:#625040;cursor:default}.weapon-hud button:focus-visible{outline:3px solid #a1ffdc;outline-offset:2px}.weapon-status{grid-column:1/-1;text-align:center;font:700 10px monospace;letter-spacing:1px;color:#ffe2a4;text-shadow:0 2px 3px #000}
 .combat-mode #style-score-panel{bottom:105px}.combat-mode .race-health #damage-label{color:#ffc68a}
+/* Grand Prix: start lights, running order, gaps and the tow marker (src/screen-field.js). */
+.start-lights{display:flex;justify-content:center;gap:16px;margin:20px 0 14px}
+.start-lights[hidden]{display:none}
+.start-lights i{width:50px;height:50px;border-radius:50%;background:#1a0d0c;border:3px solid #3a2321;box-shadow:inset 0 0 14px #000}
+.start-lights[data-lights="1"] i:nth-child(-n+1),.start-lights[data-lights="2"] i:nth-child(-n+2),.start-lights[data-lights="3"] i:nth-child(-n+3),.start-lights[data-lights="4"] i:nth-child(-n+4),.start-lights[data-lights="5"] i:nth-child(-n+5){background:radial-gradient(circle at 36% 30%,#ff8a74,#e1170d 55%,#8a0905);border-color:#ff5c46;box-shadow:0 0 28px #ff2a188c,inset 0 0 9px #ffb7a8}
+.field-board{position:absolute;left:36px;top:196px;width:178px}
+.field-board[hidden]{display:none}
+.field-board ol{margin:0;padding:0;list-style:none;display:grid;gap:2px}
+.field-board li{display:grid;grid-template-columns:16px 1fr 34px;gap:6px;align-items:center;height:19px;padding:0 7px;background:#0d1a1cc4;border-left:2px solid #e6d9b638;font-size:10px;font-weight:650;letter-spacing:.8px;font-variant-numeric:tabular-nums;color:#d9dccd;text-shadow:none}
+.field-board li>b{font-weight:800;color:#f3ce9d}
+.field-board li>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field-board li>em{font-style:normal;text-align:right;color:#b9c1b2}
+.field-board li.you{background:#6d321bec;border-left-color:#ff8150;color:#fff}
+.field-board li.you>b{color:#ffd0b3}
+.field-gap{display:block;font-size:9px;font-weight:650;letter-spacing:.9px;color:#d8dccb;white-space:nowrap;font-variant-numeric:tabular-nums}
+.field-gap[hidden]{display:none}
+.tow-marker{align-self:flex-end;margin:0 auto 7px;padding:3px 9px;border:1px solid #8fe3c8;background:#0e2b2399;color:#c0f5e2;font-size:10px;font-weight:850;letter-spacing:2.4px;border-radius:2px;text-shadow:none}
+.tow-marker[hidden]{display:none}

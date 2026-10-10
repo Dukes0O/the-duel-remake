@@ -18,6 +18,7 @@ import {initializeFootTransition, stepFootTransition,
 import {validArmorKit} from './armor-kits.js';
 import {initializeFootWeapons, selectFootGear} from './onfoot-weapons.js';
 import {CREW, crewMember} from './crew.js';
+import {grandPrixCourse, courseForGrandPrix, initializeField, stepStartSequence, stepField} from './race-field.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
 
@@ -162,12 +163,13 @@ export class Duel {
   }
   _surface(...args) { return simDriving._surface.apply(this, args); }
   _drivingSurface(...args) { return simDriving._drivingSurface.apply(this, args); }
+  _roadGrip(...args) { return simDriving._roadGrip.apply(this, args); }
   _vehicleSpec(...args) { return simContacts._vehicleSpec.apply(this, args); }
 
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this.state.arena = null;
@@ -183,8 +185,15 @@ export class Duel {
     this.state.driverId = normalizeDriverId(driverId);
     this.state.rivalSettings = normalizeRival(rival);this.state.weaponLevels=normalizeWeapons({levels:weaponLevels}).levels;
     this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
+    // A Grand Prix (docs/CIRCUITS.md 3.2) races a full field on a closed road circuit.
+    const grandPrix = mode === 'grandprix' && this.featureFlags.enabled('grand-prix') && grandPrixCourse(COURSE[startStage]);
+    if (grandPrix && Number.isSafeInteger(fieldSeed)) this.state.fieldSeed = fieldSeed >>> 0;
+    else delete this.state.fieldSeed;
+    if (grandPrix) this.state.opponentCount = Number.isSafeInteger(fieldSize) ? Math.max(1, Math.min(7, fieldSize)) : 7;
+    // Winter tyres only on request; summer is the unmarked default (src/race-surfaces.js).
+    if (tyre === 'winter') this.state.tyre = 'winter'; else delete this.state.tyre;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
-    this.state.mode = mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
+    this.state.mode = grandPrix ? 'grandprix' : mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     if (arsenalEnabled(this)) this.state.arsenalRank = arsenalRank;
     else delete this.state.arsenalRank;
     this.state.weaponLoadout=this.state.mode==='wasteland'&&
@@ -226,7 +235,9 @@ export class Duel {
     clearArsenalState(this);
     const s = this.state;
     s.stageIndex = idx;
-    this.course = new Course(COURSE[idx], this.seed, {
+    const grandPrix = s.mode === 'grandprix' && grandPrixCourse(COURSE[idx]);
+    if (s.mode === 'grandprix' && !grandPrix) s.mode = 'duel';
+    this.course = new Course(grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx], this.seed, {
       hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
       muddyHollow: s.wastelandGateDiscovered === true,
     });
@@ -257,7 +268,7 @@ export class Duel {
     const rivalCar=rivalSettings?.car&&rivalSettings.car!=='match'?rivalSettings.car:s.car;
     const rivalLevels=Object.fromEntries(UPGRADE_KEYS.map(key=>[key,CARS[rivalCar].factoryMaxed?3:rivalSettings?.upgradeLevel||0]));
     this.rivalSpec=rivalSettings?applyDriverModifiers(upgradedCar(CARS[rivalCar],rivalLevels),rivalSettings.driverId,rivalCar):CARS[s.car];
-    const firstOpponent = (s.opponentCount > 0 && !s.practice && (COURSE[idx].hasRival || s.opponentCount > 1) && s.mode !== 'timetrial')
+    const firstOpponent = (!grandPrix && s.opponentCount > 0 && !s.practice && (COURSE[idx].hasRival || s.opponentCount > 1) && s.mode !== 'timetrial')
       ? { car:rivalCar,driverId:rivalSettings?.driverId||DEFAULT_DRIVER,upgrades:rivalLevels,s: this.course.rivalStartS ?? -20, lateral: -DRIVE.laneOffset, speedMph: 0, finished: false, finishTime: null,
         headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost:1, boosting:false,
         damageZones: freshDamageZones(), damageCooldown: 0,
@@ -271,7 +282,9 @@ export class Duel {
         damageZones: freshDamageZones(), upgrades: { ...rivalLevels }, lapTimes: [] });
     }
     // pre-spawn deterministic two-way traffic
-    s.traffic = this._spawnTraffic(idx);
+    s.traffic = grandPrix ? [] : this._spawnTraffic(idx);
+    if (grandPrix) initializeField(this);
+    else delete s.field;
     s.combat=s.mode==='wasteland'&&supportsCombat(COURSE[idx])?createCombat(s.weaponLevels):null;
     initializeArsenalCombat(this);
     initializeCombatArmor(this);
@@ -453,6 +466,7 @@ export class Duel {
       return;
     }
     if (s.status === 'countdown') {
+      if (s.field) { stepStartSequence(this, dt); return; }
       const beat = Math.ceil(s.countdown);
       s.countdown -= dt;
       if (s.countdown <= 0) { s.status = 'racing'; this._callout('GO. MAKE IT COUNT.', 2); this.emit({ go: true }); }
@@ -509,6 +523,7 @@ export class Duel {
       this._driftHit = false; this._driftReset = false;
     }
 
+    if (s.field) stepField(this, dt);
     if (s.impactTimer > 0 && !s.onFoot) {
       this._impact(dt);
       this._crushProps(s);

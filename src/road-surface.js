@@ -58,6 +58,7 @@ export function createPavedRoadMaterial({ asphalt, night = false }) {
 // The shoulder shader samples this same width at strip vertices. Keeping this
 // small contract explicit lets the focused test compare it with Course.
 export function pavedShoulderWidthAt(course, s) {
+  if (course.script) return course.script.halfWidthAt(s);
   const p = course.phase(s), smooth = x => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
   let width = 7;
   for (const lane of course.features.passingLanes) width += 3.5 * smooth((p - lane.start) / 45) * smooth((lane.end - p) / 45);
@@ -66,6 +67,9 @@ export function pavedShoulderWidthAt(course, s) {
 
 export function createPavedShoulderMaterial({ gravel, alpine = false, course }) {
   const lanes = course.features.passingLanes.map(lane => new THREE.Vector2(lane.start, lane.end));
+  // An authored circuit changes width along the road, so each shoulder vertex
+  // carries its own road edge (see world.js) instead of the one constant.
+  const scripted = !!course.script;
   const material = new THREE.MeshStandardMaterial({
     name: 'Textured paved-road shoulder', map: gravel, bumpMap: gravel, bumpScale: .034,
     color: alpine ? 0xaaa997 : 0xb8afa0, roughness: 1,
@@ -79,9 +83,10 @@ export function createPavedShoulderMaterial({ gravel, alpine = false, course }) 
       uniform float shoulderCourseLength;
       ${lanes.length ? `uniform vec2 shoulderPassingLanes[${lanes.length}];` : ''}
       varying float vShoulderAcross;
+      ${scripted ? 'attribute float shoulderEdge;' : ''}
     `).replace('#include <begin_vertex>', `
       #include <begin_vertex>
-      float shoulderPhase=mod(uv.y*10.0,shoulderCourseLength),shoulderWidth=7.0;
+      float shoulderPhase=mod(uv.y*10.0,shoulderCourseLength),shoulderWidth=${scripted ? 'shoulderEdge' : '7.0'};
       ${lanes.length ? `for(int lane=0;lane<${lanes.length};lane++) {
         vec2 bounds=shoulderPassingLanes[lane];
         shoulderWidth+=3.5*smoothstep(0.0,45.0,shoulderPhase-bounds.x)*smoothstep(0.0,45.0,bounds.y-shoulderPhase);
@@ -99,6 +104,6 @@ export function createPavedShoulderMaterial({ gravel, alpine = false, course }) 
         diffuseColor.rgb*=.98+(shoulderMacro-.5)*.17-(1.0-smoothstep(0.0,.25,vShoulderAcross))*.10;
       `);
   };
-  material.customProgramCacheKey = () => `paved-shoulder-gravel-v1-${lanes.length}`;
+  material.customProgramCacheKey = () => `paved-shoulder-gravel-v1-${lanes.length}${scripted ? '-scripted' : ''}`;
   return material;
 }

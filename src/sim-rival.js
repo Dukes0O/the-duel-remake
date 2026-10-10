@@ -15,6 +15,7 @@ import {explodeTrafficWreck} from './sim-contacts.js';
 import {trafficSpeedNearFighter, opponentFighterIntent} from './onfoot-race.js';
 import {targetIdentity} from './arsenal/targeting.js';
 import {stepCpuCrew, cpuCrewStopped, cpuCrewPullAwayAcceleration} from './crew-gear/cpu-crews.js';
+import {stepFieldRacer} from './race-field-driver.js';
 
 export function _npcYield(actor, targetMph, plannedHeading = actor.headingError || 0) {
   const player = this.state, playerSpec = this._vehicleSpec(player), actorSpec = this._vehicleSpec(actor);
@@ -34,7 +35,8 @@ export function _npcYield(actor, targetMph, plannedHeading = actor.headingError 
 
 export function _spawnTraffic(idx) {
   const def = COURSE[idx];
-  if (def.practice || ['arena','drift','checkpoint'].includes(def.kind)) return [];
+  // A circuit with `noTraffic` is a pure race on a closed road (docs/CIRCUITS.md section 2).
+  if (def.practice || def.noTraffic || ['arena','drift','checkpoint'].includes(def.kind)) return [];
   const rng = makeRng(this.seed ^ (idx * 0x51ed) ^ 0x7a17);
   const density = this.diff.trafficDensity
     * (this.course.theme.fogDensity > TRAFFIC.fogDensityThreshold ? TRAFFIC.fogSpawnMult : 1);
@@ -102,6 +104,8 @@ export function _traffic(dt) {
 export function _rival(dt, opponent = this.state.rival) {
   const s = this.state, r = opponent;
   if (!r) return;
+  // A Grand Prix racer drives by the field rules (src/race-field-driver.js).
+  if (s.field) return stepFieldRacer(this, r, dt);
   if (r.combatWrecking) {
     // A wreck made at speed skids to rest first, and recovers where it
     // stopped (CRASH-04).

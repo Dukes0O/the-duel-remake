@@ -394,39 +394,45 @@ Turns sum to -360 (right 565, left 205). Climbs and drops balance (30 m).
 ### 5.3 Tremblant Woods (Mont-Tremblant)
 
 A rolling forest circuit at a ski resort: a plunge to a lake, crests that
-throw the car into the air, a hairpin and a long straight with jumps.
+throw the car into the air, a hairpin at the end of a short spur and a long
+straight back with jumps. Redrawn by Claude on 10 October 2026 (the first
+draft did not close); the file `src/circuits/tremblant-woods.js` holds the
+exact numbers.
 
-- **Event:** Tremblant Woods Autumn, 4 laps, about 3.3 km a lap, field of
-  8. Crisp autumn morning: low sun, orange and red leaves, mist on the lake.
-- **Width:** 14 m. Grass and gravel runoff; forest close behind.
-- **Signature:** the chairlift: Timber Straight runs under a moving ski
-  chairlift, and the second crest launches you right beneath it.
+- **Event:** Tremblant Woods Autumn, 3 laps, about 4.4 km a lap (test
+  driver 1:37), field of 8. Crisp autumn morning: low sun, orange and red
+  leaves, mist on the lake.
+- **Width:** 14 m. Grass and gravel runoff; forest close behind. A wall
+  between the hairpin spur and Timber Straight (66 m apart, centre to
+  centre).
+- **Signature:** the chairlift over Timber Straight; the second crest
+  launches you right beneath it.
 - **Overtaking:** Timber Straight into Devil's Chicane.
 - **Commitment:** Pine Drop, a fast downhill right over a crest.
 - **Landmarks:** the ski lodge above the start, the chairlift, the lake
-  with a wooden dock, ski runs cut through the trees on the hill.
+  with a wooden dock beside Lakeshore, ski runs cut through the trees.
 
 | # | Piece | Name | Notes |
 | --- | --- | --- | --- |
-| 1 | straight 420, climb -6 | Lodge Straight | start, pits, grandstand |
-| 2 | turn R 60, r 80, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
-| 3 | turn L 70, r 45, climb -12 | Lakeside Plunge | lake opens up ahead |
-| 4 | straight 240, climb -4 | Lakeshore | |
-| 5 | turn R 40, r 50, climb +2 | Fir Esses 1 | |
-| 6 | turn L 35, r 55, climb +2 | Fir Esses 2 | |
-| 7 | straight 320, crest 2.5, climb +12 | Ridge Run | air over the crest |
-| 8 | turn R 90, r 35, climb +6 | Ridge Corner | |
-| 9 | straight 280 | | boards |
-| 10 | turn R 170, r 14, climb +2 | Beaver Hairpin | |
-| 11 | straight 1100, climb -6 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
-| 12 | turn R 30, r 60 | Devil's Chicane 1 | |
-| 13 | turn L 30, r 60 | Devil's Chicane 2 | |
-| 14 | straight 220, climb +8 | | |
-| 15 | turn R 65, r 50, climb +6 | Lodge Bend | |
-| 16 | straight 200 | | |
-| 17 | turn R 40, r 90 | Final Turn | onto Lodge Straight |
-
-Turns sum to -360 (right 495, left 135). Climbs and drops balance (38 m).
+| 1 | straight 414, climb -6 | Lodge Straight | start, pits, grandstand |
+| 2 | turn R 60, r 90, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
+| 3 | turn L 70, r 50, climb -12 | Lakeside Plunge | lake opens up ahead |
+| 4 | straight 258, climb -4 | Lakeshore | dock and lake on the left |
+| 5 | turn R 40, r 55, climb +2 | Fir Esses 1 | |
+| 6 | turn L 35, r 60, climb +2 | Fir Esses 2 | |
+| 7 | straight 326, crest 2.5, climb +12 | Ridge Run | air over the crest |
+| 8 | turn R 90.5, r 45, climb +4 | Ridge Corner | |
+| 9 | straight 323, climb +6 | Beaver Run | boards |
+| 10 | turn L 80, r 40 | Beaver Kink | onto the spur |
+| 11 | straight 80 | The Spur | |
+| 12 | turn R 170.5, r 22, climb +2 | Beaver Hairpin | |
+| 13 | straight 1302, climb -8 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
+| 14 | turn R 30, r 60 | Devil's Chicane 1 | |
+| 15 | turn L 30, r 60 | Devil's Chicane 2 | |
+| 16 | straight 283, climb +4 | | |
+| 17 | turn R 114, r 50, climb +6 | Lodge Bend | |
+| 18 | straight 500, climb +2 | Lodge Climb | |
+| 19 | turn R 70, r 70 | Final Turn | onto Lodge Straight |
 
 **Tremblant Snow** (variant, P4-TREMBLANT-SNOW): the same circuit in
 winter. Packed snow on most of the lap; asphalt on Lodge Straight and
@@ -597,6 +603,94 @@ races or cups.
 **Engineer.** One named race engineer for the whole team (text only for
 now; a voice later if Kyle wants). Kyle and Gratian may name them; until
 then, "your engineer".
+
+### 7b.1 Reference laps and authored intel: final policy (Claude, 10 October 2026)
+
+**Reference laps.**
+
+- One reference per **event and route**. Route events (`ROUTE_EVENT_IDS`:
+  Pacific Canyon, High Country, Harbor & Highlands, Ridge Rally) get three,
+  one per route: `route_a` seed 1989, `route_b` seed 42, `route_c` seed 17,
+  exactly as `src/route-variants.js`. Every other event, including scripted
+  circuits and their variants, gets one, keyed `fixed`. Never reuse one
+  route's reference for another.
+- **Car and driver:** the Stuttgart 959-S, no upgrades, Club Driver, the
+  test driver on Medium.
+- **Run:** an isolated native fixture: no opponents, traffic, police, radar
+  or weapons; memory-only; the route's seed (scripted circuits: the
+  course's layout seed). One warm-up lap from a standing start, then two
+  timed flying laps; the reference is the faster of the two.
+- **Comparison note:** when the player drives another car, the dossier
+  shows "Reference lap: Stuttgart 959-S" beside every comparison. Per-class
+  references are not built now.
+- **Stale references fail the build checks.** Each record stores the
+  course's geometry fingerprint; a test fails when any closed-circuit event
+  and route lacks a reference or its fingerprint no longer matches, with the
+  rebuild command in the message.
+
+**Sectors.** Three per lap. Default: equal thirds of the lap distance.
+Authored boundaries in the circuit's intel replace them.
+
+**Authored beats generated.** Written sectors, flags and engineer notes
+override generated ones, item by item. Generated data only fills what is not
+written: unnamed corners, missing notes, missing flags.
+
+**Where authored intel lives.**
+
+- Scripted circuits: an `intel` block in `src/circuits/<id>.js`.
+- Existing courses: `src/circuit-intel/<event-id>.js`, registered with one
+  line in `src/circuit-intel/index.js`. Shared code never names a course.
+- Route events may author per route: `routes: {route_b: {...}}` overrides
+  the event's block for that route.
+
+```js
+// Authored intel. Every field is optional.
+intel: {
+  // Start distances in metres along the lap of sectors 2 and 3
+  // (sector 1 starts at the line). Default: equal thirds.
+  sectors: [1520, 3010],
+  // Hot-spot flags shown on the map. kind: 'signature' | 'overtaking' |
+  // 'corner' | 'crest'. Exactly one signature and at most two overtaking
+  // flags per lap. camera is the driver-seat snapshot: metres behind the
+  // flag's point, height above the road, look-ahead distance.
+  flags: [
+    {id: 'skyline', kind: 'signature', s: 2480, title: 'Skyline',
+     camera: {back: 30, up: 1.2, ahead: 70}},
+    {id: 'conrod', kind: 'overtaking', s: 3900, title: 'Conrod to Murray'},
+  ],
+  // Engineer notes by corner id: the slug of the script piece name
+  // ('hell-gate'), or 'c1'...'cN' in lap order for unnamed corners.
+  notes: {
+    'hell-gate': {brakeBoard: 100, gear: 3, targetKph: 95,
+      line: 'Wide on entry, clip the inside kerb, use all the exit.',
+      note: 'First-lap scramble. Brake early on lap one, late after that.'},
+  },
+  routes: {route_b: {/* same shape; overrides this block for route B */}},
+}
+```
+
+**Reference record** (generated by `tools/build-reference-laps.mjs` into
+`src/generated/reference-laps.json`, committed because the game loads it;
+keep it small):
+
+```js
+"pacific-canyon|route_a": {
+  "eventId": "pacific-canyon", "route": "route_a", "seed": 1989,
+  "car": "stuttgart_959s", "driver": "club", "cpu": "medium",
+  "fixtureVersion": 1, "courseFingerprint": "<geometry hash>",
+  "lapMs": 50390, "sectorMs": [17010, 16420, 16960],
+  // [distance m, speed km/h] every 20 m along the lap
+  "trace": [[0, 221], [20, 226]],
+  // in lap order; ids match the notes keys
+  "corners": [{"id": "c1", "s": 40, "brakeS": 3920, "entryKph": 304,
+               "minKph": 220, "exitKph": 260, "gear": 4}]
+}
+```
+
+**Player laps** record the same fields (trace every 20 m, sector times,
+corner entry, minimum and exit speeds, braking points), so "where you lose
+time" compares like with like. Saved per event, route and named player:
+best lap only, within the save budget.
 
 **Shared code.** The corner, crest and sector analysis moves into
 `src/track-analysis.js`, used by both the game and Claude's review tool, so
