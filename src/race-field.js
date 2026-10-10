@@ -79,9 +79,12 @@ export const RACERS = Object.freeze([
     traits: trait({ skill: .975, brake: .82, consistency: .6, aggression: .4, defend: .2 }) }),
 ]);
 
-// Cars a computer racer may drive on a road circuit.
-const ROAD_CARS = Object.freeze(['falcone_f42', 'falcone_heritage', 'stuttgart_959s', 'aurora_gt',
+// Road cars. The computer racers drive only the lighter models: the Falcone
+// Heritage and the Aurora are more than three times as heavy to draw, and
+// eight cars on screen must stay within the frame limit.
+const ROAD_CLASS = Object.freeze(['falcone_f42', 'falcone_heritage', 'stuttgart_959s', 'aurora_gt',
   'dusthawk_rally', 'banshee_muscle', 'viper_proto']);
+const ROAD_CARS = Object.freeze(['falcone_f42', 'stuttgart_959s', 'dusthawk_rally', 'banshee_muscle', 'viper_proto']);
 // What each racer would like to drive, then how to choose when that is out of range.
 const CAR_WISH = Object.freeze({
   axel_storm: ['koenigsegg_jesko'],
@@ -139,7 +142,7 @@ export function chooseCars({ playerSpec, playerCar, playerUpgrades, racers, cpuD
   const target = performanceIndex(playerSpec, course);
   const rng = makeRng((seed ^ 0xc4a7) >>> 0);
   const own = () => ({ car: playerCar, level: Math.round(Math.min(3, ...Object.values(playerUpgrades || {}).concat(3))) });
-  const pool = ROAD_CARS.includes(playerCar) ? ROAD_CARS : [];
+  const pool = ROAD_CLASS.includes(playerCar) ? ROAD_CARS : [];
   const candidates = [];
   for (const car of pool) for (let level = 0; level <= 3; level++) {
     const generic = racerSpec(car, levelsFor(level), 'club');

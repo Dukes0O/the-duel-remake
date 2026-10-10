@@ -58,15 +58,50 @@ button, shown only when available), `src/app.js` (availability, a fresh field se
 per run, no pay or active-race mark yet). New files: `src/race-field-driver.js`
 and `src/screen-field.js`.
 
+## Racer paint (small change in `src/render3d.js`)
+
+Every racer has its own paint colour and accent (`paint` on the racer, copied to
+the computer car). `render3d.js` now paints the rival and the extra computer cars
+from `actor.paint` when it is there and keeps the old grey and copy colours
+otherwise. The vehicle builder already took a colour option, so no paint code
+changed. The renderer remakes a car if its paint changes.
+
+## Hook files beyond the card's named list (approved by Claude)
+
+`src/sim-contacts.js`, `src/sim-crash.js`, `src/sim-driving.js`,
+`src/screen-menu.js`, `src/app.js`, plus `src/render3d.js` for paint. Two new
+files not in the card's list: `src/race-field-driver.js` and `src/screen-field.js`.
+
 ## Tests and checks
 
-TO FILL IN AFTER THE GATES: lane tier, full tier (alone, `--jobs 4`), build,
-`tools/test-race-field.mjs`, browser scenario `grand-prix` on High and
-Performance with frame pacing, and the balance table below.
+TO FILL IN AFTER THE GATES: lane tier, full tier (alone, `--jobs 4`), build and
+the browser scenario `grand-prix` with frame pacing.
 
-## Balance (`node tools/race-field-balance.mjs`, 30 seeded races per difficulty)
+`node tools/test-race-field.mjs`: 1235 checks pass (grid, start lights, no jump
+start, passing, defending, corner sharing, slipstream, catch-up, repeatability,
+results).
 
-TO FILL IN.
+## Balance (`node tools/race-field-balance.mjs`, 30 seeded races per difficulty, Pacific Canyon, scripted driver as you)
+
+Last full run (before the lighter car pool below; to be repeated):
+
+| | Easy | Medium | Hard | Target |
+| --- | ---: | ---: | ---: | --- |
+| You win | 73% | 40% | 17% | 60-80 / 30-50 / 10-25 |
+| Racers that finish | 100% | 100% | 100% | at least 95% |
+| First-lap pile-ups | 0 of 30 | 1 of 30 | 0 of 30 | at most 1 in 20 |
+| Passes between computer racers per race | 5.0 | 4.3 | 3.1 | at least 3 on Medium |
+
+Pace per difficulty (`FIELD_TUNING`): Easy 0.842, Medium 0.889, Hard 0.88, as a
+share of what the car can do; Hard has no mistakes or catch-up and Axel Storm is a
+touch faster still. The scripted driver itself laps at about 93% of the limit.
+
+## Frame cost with eight cars
+
+Eight detailed cars roughly double the draw calls. The Falcone Heritage and the
+Aurora models are more than three times as heavy as the others, so the computer
+racers drive the lighter road cars only (Falcone F42, Stuttgart 959-S, Dusthawk,
+Banshee, Viper). Numbers from the browser scenario to be added.
 
 ## Changed assertions
 

@@ -217,7 +217,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     text('radar-label',p.pursuit?.active?'PURSUIT / OUTRUN THE PATROL':p.beep>.2?'RADAR / SPEED TRAP AHEAD':'RADAR CLEAR');
     ui['radar-label'].classList.toggle('warning',p.beep>.2||!!p.pursuit?.active);
     ui['radar-fill'].style.transform=`scaleX(${p.pursuit?.active?1:clamp(p.beep)})`;
-    if(s.status==='countdown'){
+    if(s.status==='countdown'&&!s.field){
       text('countdown-number',Math.max(1,Math.ceil(s.countdown)));
       text('countdown-word',s.countdown>1?'GET READY':'MAKE IT COUNT');
     }
