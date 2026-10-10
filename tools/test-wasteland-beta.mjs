@@ -23,6 +23,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     tollkeeper: 'on',
     blackiron: 'on',
     'warlord-cards': 'on',
+    'grand-prix': 'dev', // Phase 4 (P4-FIELD): a new switch, still in development
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);

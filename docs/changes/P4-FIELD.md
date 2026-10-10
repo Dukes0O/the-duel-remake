@@ -74,8 +74,11 @@ files not in the card's list: `src/race-field-driver.js` and `src/screen-field.j
 
 ## Tests and checks
 
-TO FILL IN AFTER THE GATES: lane tier, full tier (alone, `--jobs 4`), build and
-the browser scenario `grand-prix` with frame pacing.
+Lane tier and build pass (the lane tier showed load-related failures in different
+suites on each run, all of which passed when rerun alone on the same commit). Full
+tier alone, `--jobs 4`: 371 of 372 passed, the one failure being the exact switch
+list in `test-wasteland-beta.mjs` (fixed, see below, and rerun passing). Browser
+scenario `grand-prix` passes on High and Performance (frame numbers below).
 
 `node tools/test-race-field.mjs`: 1235 checks pass (grid, start lights, no jump
 start, passing, defending, corner sharing, slipstream, catch-up, repeatability,
@@ -120,8 +123,9 @@ no police or radar on the HUD, and the results table.
 
 ## Changed assertions
 
-`tools/test-feature-flags.mjs`: the switch count 17 to 18 (the new `grand-prix`
-switch). No other assertion changed.
+`tools/test-feature-flags.mjs`: the switch count 17 to 18 and a check that
+`grand-prix` is dev. `tools/test-wasteland-beta.mjs`: the exact switch list gains
+`'grand-prix': 'dev'`. No other assertion changed.
 
 ## Removed
 
