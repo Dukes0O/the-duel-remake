@@ -44,9 +44,9 @@ export const FIELD = Object.freeze({
 export const FIELD_TUNING = Object.freeze({
   easy:   Object.freeze({ pace: .842, spread: .02, form: .022, mistakes: .1, leaderMistakes: 2.5, catchUp: .04, playerSlot: 4,
     cars: 'slower', reaction: [.32, .6], aggression: .8 }),
-  medium: Object.freeze({ pace: .889, spread: .015, form: .02, mistakes: .05, leaderMistakes: 1, catchUp: .02, playerSlot: 5,
+  medium: Object.freeze({ pace: .893, spread: .015, form: .02, mistakes: .05, leaderMistakes: 1, catchUp: .02, playerSlot: 5,
     cars: 'all', reaction: [.22, .45], aggression: 1 }),
-  hard:   Object.freeze({ pace: .88, spread: .012, form: .016, mistakes: 0, leaderMistakes: 1, catchUp: 0, playerSlot: 7,
+  hard:   Object.freeze({ pace: .882, spread: .012, form: .016, mistakes: 0, leaderMistakes: 1, catchUp: 0, playerSlot: 7,
     cars: 'faster', reaction: [.15, .32], aggression: 1.15 }),
 });
 export const CATCH_UP_GAP_SEC = 8;

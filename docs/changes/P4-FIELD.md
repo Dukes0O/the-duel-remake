@@ -83,25 +83,40 @@ results).
 
 ## Balance (`node tools/race-field-balance.mjs`, 30 seeded races per difficulty, Pacific Canyon, scripted driver as you)
 
-Last full run (before the lighter car pool below; to be repeated):
+Final run (30 races per difficulty, seeds in `tools/race-field-balance.mjs`):
 
 | | Easy | Medium | Hard | Target |
 | --- | ---: | ---: | ---: | --- |
-| You win | 73% | 40% | 17% | 60-80 / 30-50 / 10-25 |
+| You win | 73% | 43% | 17% | 60-80 / 30-50 / 10-25 |
 | Racers that finish | 100% | 100% | 100% | at least 95% |
-| First-lap pile-ups | 0 of 30 | 1 of 30 | 0 of 30 | at most 1 in 20 |
-| Passes between computer racers per race | 5.0 | 4.3 | 3.1 | at least 3 on Medium |
+| First-lap pile-ups | 0 of 30 | 0 of 30 | 0 of 30 | at most 1 in 20 |
+| Passes between computer racers per race | 5.0 | 3.5 | 3.6 | at least 3 on Medium |
 
-Pace per difficulty (`FIELD_TUNING`): Easy 0.842, Medium 0.889, Hard 0.88, as a
+Pace per difficulty (`FIELD_TUNING`): Easy 0.842, Medium 0.893, Hard 0.882, as a
 share of what the car can do; Hard has no mistakes or catch-up and Axel Storm is a
 touch faster still. The scripted driver itself laps at about 93% of the limit.
+The Hard win rate is sensitive: half a percent of pace moves it between 7% and 23%.
 
 ## Frame cost with eight cars
 
-Eight detailed cars roughly double the draw calls. The Falcone Heritage and the
-Aurora models are more than three times as heavy as the others, so the computer
-racers drive the lighter road cars only (Falcone F42, Stuttgart 959-S, Dusthawk,
-Banshee, Viper). Numbers from the browser scenario to be added.
+Eight detailed cars roughly doubled the draw calls at first. Two fixes: the
+Falcone Heritage and the Aurora models are more than three times as heavy as the
+others, so the computer racers drive the lighter road cars only (Falcone F42,
+Stuttgart 959-S, Dusthawk, Banshee, Viper); and in a Grand Prix a car more than
+140 m from the camera stops casting a shadow (`render3d.js`, Grand Prix only).
+
+Browser scenario `grand-prix`, 1280x720, nothing else heavy running, 120 frames
+each, the same scenario measured against an ordinary two-car Duel:
+
+| Quality | Cars | p50 | p95 | Frames over 33 ms | Draw calls | Triangles |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| High | 2 | 16.7 ms | 16.8 ms | 0 | 563 | 1.97 M |
+| High | 8 | 16.7 ms | 16.8 ms | 0 | 693 | 1.42 M |
+| Performance | 2 | 16.7 ms | 16.8 ms | 0 | 461 | 1.65 M |
+| Performance | 8 | 16.7 ms | 16.8 ms | 0 | 433 | 0.88 M |
+
+The scenario also checks the start lights, the eight-car grid, the running order,
+no police or radar on the HUD, and the results table.
 
 ## Changed assertions
 
