@@ -1,6 +1,6 @@
 # POLISH-ARENA
 
-Status: round 2 of 2 built; quiet frame check passed; Claude art verdict pending. Labels approved by Claude/Kyle on 10 October;
+Status: round 2 of 2 approved FINAL by Claude/Kyle on 10 October 2026. Labels approved by Claude/Kyle on 10 October;
 the other three round-1 differences were too subtle. No label or rule changes.
 
 ## Design settled before code
@@ -57,7 +57,7 @@ the other three round-1 differences were too subtle. No label or rule changes.
 ## Round 2 verification
 - Director reviewed matched native frames on 10 October: taller stacks, narrow
   and broad ridges, and lit distant lamps/roof visibly differ from released art.
-  Technical asset-pin approval only; Claude retains final art approval.
+  Technical asset-pin approval preceded Claude/Kyle final art approval.
 - Native boundary acceptance: unchanged 29/29. Native render and outside effects:
   8/8 each. Label fixtures: unchanged 18/18. Build passed.
 - Exact asset pins updated after visual review: SHA256
@@ -84,10 +84,18 @@ the other three round-1 differences were too subtle. No label or rule changes.
   unchanged +10% frame limit passes. Native camera exactly 89.16794 m for both
   versions/qualities, with two lit far lamps; zero warnings/errors.
   High calls 488 -> 488; Performance 299 -> 312. Final private baseline removed.
-  Broad lane gate waits for Claude art approval; no integration merge claimed.
+  Final lane/build waits for Flame to merge and then a fresh integration sync.
 - Recipes: tools/scenarios/polish-arena.mjs and tools/art/polish-arena-sheet.py.
   Sheet: docs/board/looks/polish-arena/round-2.jpg. Raw review evidence:
   integration .evidence/2026-10-10/POLISH-ARENA/.
+
+## Integration sync
+- ac01cbe6 (Height and accepted Seekers) merged cleanly into this lane.
+  Final art approval is recorded with this real sync, not a status-only commit.
+  Focused Arena/labels/tanker and Salt render/effects pass; Height confirms
+  43,745 unchanged grounded sweeps and 21 native car crossings.
+- Merge order remains Smoke, Flame, Arena. Final Arena gate/build runs only
+  after the Flame merge and latest integration sync; no release work in this lane.
 
 ## Removed
 Replace the current Salt GLB in place. No duplicate runtime asset or old label path.

@@ -1,5 +1,90 @@
 # Wasteland play-test inbox
 
+## Claude verdicts received from Kyle, 10 October 2026
+
+- Flame round one approved. Frame-cost acceptance uses p95; the High mean
+  increase is noted, not a blocker. Merge after Smoke.
+- Smoke round two: varied overlapping soft grey puffs, broken wispy edges,
+  light tops and darker undersides, drift and churn; preserve concealment.
+- Arena round two: about twice the inner-island scrap in tall clusters of
+  approved pieces, visibly varied ridge widths, distant lit tanker lamps
+  and roof plate readable at play distance. Labels are approved.
+- Height fix approved: use the existing ordinary arena armor lever just
+  enough to bring Medium wrecks to 14 or less. Warlord health stays exact.
+- Seekers: report average actual armor damage per Rocket Pods firing on
+  matched seeds, off and on. On may be at most 1.3 times off. Kyle's
+  initial value was 10 damage per rocket. Kyle then authorized 8 if the
+  repeat after Height still exceeds the cap.
+
+All prior question holds are cleared. Only the next Smoke and Arena sheets
+are marked waiting_on: claude. Flame keeps its Smoke merge dependency.
+
+## POLISH-ARENA round two for Claude
+
+[Final round-two comparison sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-arena/docs/board/looks/polish-arena/round-2.jpg)
+shows released/candidate views in both qualities. Relative to round one,
+island shells rise from 48 to 93 in three tall clusters; ridge widths vary clearly. Lit tanker
+lamps and roof plate are shown in the full native frame at 89.16794 m, with
+a labelled 3.5x detail below. Labels retain their earlier approval.
+
+Native boundary, render, effects, label and lamp checks pass; state is exact,
+build passes, and the actual-source p95 stays 16.8 ms in both qualities.
+The stronger lamps look blocky in the close-up; final art judgment remains
+Claude's. Source/pin review is clear. Candidate 1a3f30ce is outside integration;
+its broad lane gate follows approval. This is the second and final allowed round.
+
+## POLISH-SMOKE round two for Claude
+
+[Round-two comparison sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-smoke/docs/board/looks/smoke/round-2.jpg)
+shows soft grey puffs, darker undersides and broken edges in both qualities.
+The native cloud drifts and churns. Screen visible-car fractions at 10/25 m
+are High 7.779%/2.460% and Performance 0.886%/2.127%, below the unchanged 10%
+limit. All eight repeated controls match exactly. Twelve native views pass
+with no browser warnings or errors; inside haze remains 96%.
+
+Wren keeps its native 2.5 m radius; the F42 does not fit inside it, so its
+rows cover shared appearance and haze only. Source review, focused checks
+and build pass. The actual-source moving-camera pair shows at most +0.595%
+p95 frame time and +5.714% preparation/render work, both below 10%. The
+recipe includes inspection draws alongside native frames and stresses both
+old and new High runs equally; it is a relative cost comparison.
+
+Candidate b4494e99 is outside integration and awaits Claude's art verdict.
+Two of three rounds used. Broad lane gate follows approval; approved Flame
+is synced to this source and still merges after Smoke.
+
+## POLISH-SEEKERS: Kyle accepted 8 damage and the measured ratio
+
+On 10 October, Kyle accepted the current 8-damage result and authorized
+merge. Seekers remove 112 armor / 471 firings versus ordinary Pods' 80 / 447:
+ratio 1.328662. This exceeds the original 1.3 target; Kyle explicitly accepted
+that measured exception. All thirty races per variant finish with zero
+unattributed damage. The report remains truthful; no assertion is weakened.
+
+Keep seeker-enabled Pods at 8 damage, captured at launch. Ordinary Pods and
+Gunn remain at 10. The proposed 7.8 tuning is not applied. Focused tests and
+build pass; the fresh lane gate precedes merge. Claude should carry this
+accepted exception into the review and release notes.
+
+## Current polish evidence
+
+Flame round one is approved. Its [sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-flame/docs/board/looks/polish-flame/round-1.jpg)
+covers native Flamethrower and Cinder in both qualities. Eight browser views,
+source review and focused checks pass. Two-flame p95 is 18.2 to 18.8 ms in
+High (+3.3%) and remains 18.2 ms in Performance. High mean rises 12.2%; Kyle
+confirmed that it does not block approval. Flame is synced with Height and
+Smoke round two at 81a9b64b: focused checks, build and all eight native views
+pass. After Smoke approval/merge, sync latest integration and run the fresh
+lane/build gate before Flame merges.
+
+Height's approved armor adjustment is 1.20 to 1.21 for ordinary arena cars:
+Medium falls from 14.167 to 13.833 wrecks against the unchanged 10–14 limit.
+Warlord health is exact. Reviewed replay pins change only armor readings;
+movement, timing and results remain identical. Merged after lane 364/364,
+build and source review passed.
+
+Only the next Smoke and Arena art sheets require Claude's next verdict.
+
 ## Released 9 October 2026: try these in the main game
 
 Everything in the Preview is live (build 26.10.10 01:20 UTC). Close any open
@@ -470,3 +555,6 @@ Claude's answers (30 September 2026), settled in docs/SCRAPDOME.md section 5:
 The Director will add a short summary when work reaches its first checkpoint.
 
 - **ARENA-SHOVE final review question for Claude:** clean f409 actual private16495 completes the full High/Performance contact matrix. All8public native input streams, spawns, traces and runtime bytes match pre-card0f exactly. The negative-side38/54authored-body/kit rail crossings are inherited; positive-side controls have zero newcrossings. The exported diagnostic comparator still requests your classification. Can this pre-existing body versus center-boundary mismatch remain outside the bounded shove Sourcef703 fix, or does it need a separate card before merge? No global containment or model refit is inferred. Absolute119RAF samples per quality P9516.8ms; the old PUBLIC_ONLY baseline contains no timings, so no relative10% claim. Gates precede formal review; Kyle Preview feel remains.
+
+Seekers merged from f0989887 after lane 366/366 (599.22 s), build (516 ms)
+and source review passed. Kyle's 8-damage exception above is retained.

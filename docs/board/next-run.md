@@ -1,6 +1,42 @@
-# Next run: phase 3, a Wasteland worth finding (updated 9 October 2026)
+# Next run: phase 3, a Wasteland worth finding (updated 10 October 2026)
 
-## Director resume, 9 October 2026
+## Current polish work, 10 October 2026
+
+Kyle supplied all five Claude verdicts. The board and play-test inbox record
+these decisions. Earlier question holds are cleared.
+
+- HEIGHT: merged. Ordinary arena armor rises from
+  1.20 to 1.21: Medium averages 13.833 wrecks, within the unchanged 10–14
+  limit. Warlord health is unchanged. Reviewed replay changes contain only
+  the added armor. Lane 364/364, build and source review pass.
+- SEEKERS: Kyle accepted the measured 1.328662 ratio at 8 damage and authorized
+  merge on 10 October. Record that exception to the original 1.3 target for
+  Claude; do not claim the old check passed. Off/Gunn keep 10. No 7.8 tuning.
+  Merged from f0989887 after lane 366/366, build and source review passed.
+- SMOKE: round two committed at b4494e99, waiting_on: claude for its next
+  art verdict. Grey layers and darker undersides keep visible-car fractions
+  below 10%; native checks/build pass. Actual-source p95 rises at most 0.595%,
+  work p95 at most 5.714%. Broad gate follows approval. Two of three rounds used.
+- ARENA: round two is committed at 1a3f30ce and waiting_on: claude for the
+  final allowed art verdict. The native sheet shows taller scrap clusters,
+  varied ridges and lit tanker details at 89.16794 m. Focused checks/build
+  pass; actual-source p95 remains 16.8 ms in both qualities. Gate after approval.
+- FLAME: round one approved. High p95 rises 3.3%; Performance is unchanged.
+  The High mean rise is noted and is not a blocker. Merge after Smoke.
+  Flame is synced with Height/Smoke round two at 81a9b64b; focused checks,
+  build and eight native views pass. Sync latest integration and gate after
+  Smoke approval/merge.
+
+Shared visual changes are frozen in those candidates. Preserve
+unmerged lanes and pending art evidence. No release is authorized.
+
+Previous session-end full: 363/363 in 725.14 s on unchanged integration
+3af7f15c, alone with four jobs. Its dirty-documentation ledger is not a clean
+release verdict. Run the full tier alone at this session's end. Fold status
+and notes into real work; do not make a status-only commit. Push remains held
+for approved binary compaction. Keep protected audio and parked diagnostics.
+
+## Phase 3 handoff before polish, 9 October 2026
 
 Raise Claude questions immediately and set waiting_on: claude. Keep other
 cards moving. Build more, record less in AGENTS.md controls this run.
@@ -23,9 +59,11 @@ cards moving. Build more, record less in AGENTS.md controls this run.
 - No open Codex feature or Claude design question remains. P3-POLISH is
   Claude's next card: look, sound and feel review, then an approved release.
 
-Last clean full tier: 0dac3098, 357/357, 1109.74 s, alone with four jobs.
-End status and ledger notes wait for the next real commit. Do not add a
-results-only commit. Run the next session's full alone at its end. Push still waits for approved binary compaction.
+Last clean full tier: 11acd958, 363/363, 1211.28 s, alone with four jobs.
+The earlier 362-suite pass became stale when the separate rally shortcut fix
+merged during the run; this fresh pass covers the exact combined commit.
+End status, ledger and handoff notes wait for the next real commit. Do not
+add a results-only commit. Push still waits for approved binary compaction.
 Keep every unmerged lane and the protected audio lane. Release and live
 port 5174 remain untouched.
 

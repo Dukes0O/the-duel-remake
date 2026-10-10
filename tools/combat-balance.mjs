@@ -10,6 +10,7 @@ import {createProfile, createPlayerRegistry, savePlayers} from '../src/progressi
 import {normalizeWasteland} from '../src/wasteland-progress.js';
 import {point, velocity} from '../src/combat-weapons.js';
 import { winRateFailures } from './balance-targets.mjs';
+import {ROCKET_RULES} from '../src/arsenal/rockets.js';
 
 // Headless runs use the production App, its standard scripted driving line,
 // fixed-step Duel physics, and disposable in-memory saves.
@@ -24,18 +25,18 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only';
-const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews'];
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews,seeker-rockets] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only | --seeker-pair';
+const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews', 'seeker-rockets'];
 
 function selectedFlags(flags = []) {
   if (!Array.isArray(flags) || flags.some(flag => !BALANCE_FLAGS.includes(flag)))
-    throw Error('Unsupported flags; expected arsenal, arsenal-wave3 or cpu-crews.');
+    throw Error('Unsupported flags; expected arsenal, arsenal-wave3, cpu-crews or seeker-rockets.');
   return [...new Set(flags)];
 }
 
 export function parseArgs(args = []) {
   const options = { flags: [], check: false, verbose: false, baselineOnly: false,
-    waveTwoOnly: false, waveThreeOnly: false, probe: null };
+    waveTwoOnly: false, waveThreeOnly: false, seekerPair: false, probe: null };
   const seen = new Set();
   for (let index = 0; index < args.length; index++) {
     const argument = args[index];
@@ -51,6 +52,7 @@ export function parseArgs(args = []) {
     else if (argument === '--baseline-only') options.baselineOnly = true;
     else if (argument === '--wave-two-only') options.waveTwoOnly = true;
     else if (argument === '--wave-three-only') options.waveThreeOnly = true;
+    else if (argument === '--seeker-pair') options.seekerPair = true;
     else if (key === '--probe') {
       const parts = argument.slice('--probe='.length).split(',');
       const [cpuDifficulty, seedText] = parts;
@@ -63,14 +65,16 @@ export function parseArgs(args = []) {
   if (options.baselineOnly && (options.check || options.verbose || options.probe) ||
       options.probe && (options.check || options.verbose) ||
       options.waveTwoOnly && (options.baselineOnly || options.probe || options.verbose || options.waveThreeOnly) ||
-      options.waveThreeOnly && (options.baselineOnly || options.probe || options.verbose))
+      options.waveThreeOnly && (options.baselineOnly || options.probe || options.verbose) ||
+      options.seekerPair && (options.baselineOnly || options.probe || options.verbose ||
+        options.waveTwoOnly || options.waveThreeOnly))
     throw Error(usage);
   return options;
 }
 
 function simulationFlags(flags) {
   return createFeatureFlags({ storage: null, search: '', qa: false,
-    overrides: { arsenal: flags.includes('arsenal'),
+    overrides: { 'seeker-rockets': flags.includes('seeker-rockets'), arsenal: flags.includes('arsenal'),
       'arsenal-wave3': flags.includes('arsenal-wave3'), 'cpu-crews': flags.includes('cpu-crews') } });
 }
 
@@ -204,6 +208,107 @@ function weaponUseCounter(duel) {
       else unattributed[weapon] = (unattributed[weapon] || 0) + 1;
     }
   }};
+}
+
+// Native Rocket Pods blast emits actual removed armor / 60, then its hit
+// cue with the same position object. Match by identity, not nearby coordinates
+// or hit count: another weapon's damage must never enter this measurement.
+export function createRocketDamageCounter(duel) {
+  const volleys = new Map(), damageAt = new WeakMap(), settledShots = new Set();
+  let unattributed = 0;
+  return {
+    observe(event) {
+      const at = event.hitPosition;
+      if (event.combatHit && at && typeof at === 'object' &&
+          Number.isFinite(event.strength) && event.strength > 0) {
+        damageAt.set(at, (damageAt.get(at) || 0) + event.strength * 60);
+      }
+      const shot = event.projectile;
+      if (shot?.kind !== 'rocket-pod' || shot.volleyId == null) return;
+      if (event.arsenalCue === 'weapon.rockets.fire') {
+        let volley = volleys.get(shot.volleyId);
+        if (!volley) {
+          const role = event.actor === duel.state ? 'player' :
+            duel.state.opponents.includes(event.actor) ? 'cpu' : null;
+          if (!role) unattributed++;
+          volley = {id: shot.volleyId, role, launchedRockets: 0, armorRemoved: 0};
+          volleys.set(shot.volleyId, volley);
+        }
+        volley.launchedRockets++;
+      } else if (event.arsenalCue === 'weapon.rockets.hit' && !settledShots.has(shot.id)) {
+        settledShots.add(shot.id);
+        const volley = volleys.get(shot.volleyId);
+        if (!volley) {unattributed++; return;}
+        volley.armorRemoved += at && damageAt.get(at) || 0;
+        if (at) damageAt.delete(at);
+      }
+    },
+    snapshot() {
+      const result = {player: {firings: 0, armorRemoved: 0},
+        cpu: {firings: 0, armorRemoved: 0}, unattributed,
+        volleys: [...volleys.values()].map(volley => ({...volley}))};
+      for (const volley of result.volleys) if (volley.role) {
+        result[volley.role].firings++;
+        result[volley.role].armorRemoved += volley.armorRemoved;
+      }
+      return result;
+    },
+  };
+}
+
+export function buildSeekerDamageReport(offRaces, onRaces) {
+  if (!offRaces.length || offRaces.length !== onRaces.length ||
+      new Set(offRaces.map(race => race.seed)).size !== offRaces.length ||
+      new Set(onRaces.map(race => race.seed)).size !== onRaces.length)
+    throw Error('Seeker report needs matched, unique seeds.');
+  const enabledBySeed = new Map(onRaces.map(race => [race.seed, race]));
+  const pairs = offRaces.map(off => {
+    const on = enabledBySeed.get(off.seed);
+    const offFlags = [...off.flags].sort();
+    const onFlags = [...(on?.flags || [])].filter(flag => flag !== 'seeker-rockets').sort();
+    if (!on || off.flags.includes('seeker-rockets') || !on.flags.includes('seeker-rockets') ||
+        JSON.stringify(offFlags) !== JSON.stringify(onFlags) ||
+        ['policy', 'cpuDifficulty', 'arsenalRank'].some(key => off[key] !== on[key]))
+      throw Error('Seeker report needs matched settings with only seeker-rockets changed.');
+    return {seed: off.seed, off: {completed: off.completed, rocketPods: off.rocketPods},
+      on: {completed: on.completed, rocketPods: on.rocketPods}};
+  });
+  const summarize = races => {
+    const result = {firings: 0, armorRemoved: 0,
+      player: {firings: 0, armorRemoved: 0}, cpu: {firings: 0, armorRemoved: 0},
+      completed: races.filter(race => race.completed).length, unattributed: 0};
+    for (const race of races) {
+      for (const role of ['player', 'cpu']) {
+        const sample = race.rocketPods?.[role];
+        if (!Number.isSafeInteger(sample?.firings) || sample.firings < 0 ||
+            !Number.isFinite(sample?.armorRemoved) || sample.armorRemoved < 0)
+          throw Error('Missing or invalid native Rocket Pods damage measurement.');
+        result[role].firings += sample.firings;
+        result[role].armorRemoved += sample.armorRemoved;
+        result.firings += sample.firings;
+        result.armorRemoved += sample.armorRemoved;
+      }
+      result.unattributed += race.rocketPods.unattributed;
+    }
+    for (const row of [result, result.player, result.cpu])
+      row.averageArmorRemoved = row.firings ? row.armorRemoved / row.firings : null;
+    return result;
+  };
+  const off = summarize(offRaces), on = summarize(onRaces);
+  const allowedOnAverage = off.averageArmorRemoved === null ? null : off.averageArmorRemoved * 1.3;
+  return {
+    scope: 'Matched Medium rank-13 wave-two races with native Armory purchases and legal inputs. Only seeker-rockets changes. One firing is one native volley activation, including misses, shields and interrupted volleys. Damage is actual armor removed by that volley, including remaining-armor clipping; pooled totals include player and CPU. Aimed boss rockets are excluded.',
+    damagePerRocket: {off: ROCKET_RULES.damage, on: ROCKET_RULES.seekerDamage},
+    racesPerVariant: pairs.length,
+    settings: {policy: offRaces[0].policy, cpuDifficulty: offRaces[0].cpuDifficulty,
+      arsenalRank: offRaces[0].arsenalRank, flagsOff: offRaces[0].flags, flagsOn: onRaces[0].flags},
+    off, on, ratio: off.averageArmorRemoved > 0 ? on.averageArmorRemoved / off.averageArmorRemoved : null,
+    maximumRatio: 1.3, allowedOnAverage,
+    passed: off.completed === pairs.length && on.completed === pairs.length &&
+      off.unattributed === 0 && on.unattributed === 0 && off.firings > 0 && on.firings > 0 &&
+      on.averageArmorRemoved <= allowedOnAverage,
+    pairs,
+  };
 }
 
 function sumWeaponUses(races) {
@@ -358,6 +463,7 @@ export function run(policy, cpuDifficulty, seed = 1989,
     const cpuCrew = {repairs: 0, ambushes: 0, attacks: 0, returns: 0, respawns: 0};
     const wrecks = emptyWrecks();
     const weaponCounter = weaponUseCounter(duel);
+    const rocketCounter = createRocketDamageCounter(duel);
     const wreckedTraffic = new WeakSet();
     const recordTrafficWreck = (actor, owner) => {
       if (actor && typeof actor === 'object') {
@@ -369,6 +475,7 @@ export function run(policy, cpuDifficulty, seed = 1989,
     };
     duel.onChange((_, event) => {
       weaponCounter.observe(event);
+      rocketCounter.observe(event);
       if (event.cpuCrewExited) cpuCrew[event.reason === 'repair' ? 'repairs' : 'ambushes']++;
       if (event.cpuCrewEntered) cpuCrew.returns++;
       if (event.cpuCrewRespawned) cpuCrew.respawns++;
@@ -405,7 +512,7 @@ export function run(policy, cpuDifficulty, seed = 1989,
     }
     const state = duel.state;
     const result = {
-      policy, cpuDifficulty, seed, flags, wrecks, playerOpponentWrecks, status: state.status,
+      policy, cpuDifficulty, seed, flags, arsenalRank, wrecks, playerOpponentWrecks, status: state.status,
       ...(flags.includes('cpu-crews') ? {cpuCrew} : {}),
       ...(cpuLoadout ? {cpuLoadout} : {}),
       completed: state.results?.completed === true,
@@ -417,6 +524,7 @@ export function run(policy, cpuDifficulty, seed = 1989,
       timeSec: rounded(state.results?.timeSec ?? state.stageTimeSec),
       rivalTimeSec: state.rival?.finishTime == null ? null : rounded(state.rival.finishTime),
       shots, weaponUses: weaponCounter.uses, unattributedWeaponUses: weaponCounter.unattributed,
+      rocketPods: rocketCounter.snapshot(),
       rivalHits: state.combat?.hits ?? 0,
       cpuHits: unattributedEnemyHits ? null : cpuHits, unattributedEnemyHits,
       majorCrashes: state.stageCrashes,
@@ -609,8 +717,26 @@ export function reportFailures(report, runs, baselineRuns) {
 }
 
 function main(args) {
-  const { flags, check, verbose, baselineOnly, waveTwoOnly, waveThreeOnly, probe } = parseArgs(args);
+  const { flags, check, verbose, baselineOnly, waveTwoOnly, waveThreeOnly, seekerPair, probe } = parseArgs(args);
   const options = { flags };
+  if (seekerPair) {
+    if (!flags.includes('arsenal')) throw Error('Seeker paired report needs --flags arsenal.');
+    const started = performance.now(), off = [], on = [];
+    const flagsOff = flags.filter(flag => flag !== 'seeker-rockets');
+    const flagsOn = [...flagsOff, 'seeker-rockets'];
+    for (const seed of baselineSeeds) {
+      off.push(run('wave-two', 'medium', seed, {flags: flagsOff, arsenalRank: 13}));
+      on.push(run('wave-two', 'medium', seed, {flags: flagsOn, arsenalRank: 13}));
+    }
+    const report = buildSeekerDamageReport(off, on);
+    report.elapsedSec = rounded((performance.now() - started) / 1000);
+    console.log(JSON.stringify(report, null, 2));
+    if (check && !report.passed) {
+      console.error('Seeker paired report requires complete attributed samples and average actual armor damage per firing no greater than 1.3 times off.');
+      process.exitCode = 1;
+    }
+    return;
+  }
   if (waveThreeOnly) {
     if (!flags.includes('arsenal') || !flags.includes('arsenal-wave3'))
       throw Error('Wave-three report needs --flags arsenal,arsenal-wave3.');

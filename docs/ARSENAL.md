@@ -134,8 +134,15 @@ could be heat seeking, and the Smoke Screen is too easy to see through.
 - Smoke breaks it: a target inside smoke, or smoke between, and the rocket
   flies straight on. A Decoy Drone within 25 m of the target pulls the rocket
   onto the drone. A star shield blocks it as before.
-- Damage stays 10 per rocket. If the arsenal balance report shows Rocket Pods
-  above their current hit-rate target, the only allowed lever is 8 per rocket.
+- The balance report compares actual armor damage per Rocket Pods firing on
+  matched seeds, seekers off and on. Count misses, shields and interrupted
+  volleys; show player/computer totals and actual remaining-armor clipping.
+  The original target was on at most 1.3 times off. On 10 October, Kyle
+  explicitly accepted the measured 1.328662 result at 8 damage and authorized
+  merge. This is a recorded exception, not a claim that the 1.3 check passed.
+  Seeker-enabled Pods therefore deal 8 per rocket, selected at launch;
+  feature-off Pods and Gunn's aimed rockets keep 10. The proposed 7.8 change
+  was not applied. The report and its mathematical assertions stay truthful.
 - Cue: a short lock tone (`weapon.rockets.lock`) and a bracket on the target
   for as long as any rocket is chasing it.
 - Computer: fires at an enemy 20 to 100 m ahead within 20 degrees.
@@ -145,8 +152,10 @@ could be heat seeking, and the Smoke Screen is too easy to see through.
 **Smoke you cannot see through (POLISH-SMOKE).** Looks only; the cloud's
 size, time and rules above are unchanged. A car fully inside the cloud, seen
 from the chase camera 10 to 25 m away, must be hidden: at most 10% of its
-pixels show against a frame without it. Soft layered puffs, grey-brown, lit
-by the scene, filling the full 6 m radius and about 4 m high, thinning only
+pixels show against a frame without it. Round two (10 October) uses overlapping
+soft grey puffs of varied sizes, broken wispy edges, lighter tops and darker
+undersides, with drift and churn. Keep scene lighting and the full 6 m radius
+and about 4 m height, thinning only
 in the last second. With the camera inside the cloud, the screen is a heavy
 grey haze. Wren's Smoke Grenades use the same look at their 5 m size.
 
@@ -158,7 +167,9 @@ short scorch marks that fade in 5 s. A burning car shows small flames on its
 body for its 1.5 s. Cinder's Hand Flamer uses the same look at 6 m and 35
 degrees. Start from CC0 flame and smoke textures (for example Kenney's
 particle pack) per SPEC 0.11; gritty, never cartoon. One comparison sheet
-per round to Claude, at most three rounds.
+per round to Claude, at most three rounds. Round one is approved (10 October);
+frame cost is judged by p95. The noted High mean increase is not a blocker.
+Merge after approved Smoke.
 
 ### Wave 2 (ARS-02)
 

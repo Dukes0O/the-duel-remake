@@ -43,8 +43,8 @@ export const ARENA_FIELD = Object.freeze(['dusthawk_rally', 'aurora_gt', 'stuttg
 
 export const ARENA_RULES = Object.freeze({
   creditWindowSec: 5, protectedSec: 2, respawnSpeedMph: 12, spawnClearMetres: 12,
-  // Ordinary cars need longer fights with the kept, stronger arena steering.
-  armorScale: 1.2,
+  // Ordinary cars keep the 10–14 wreck pace with measured scenery clearances.
+  armorScale: 1.21,
 });
 
 export function createArenaEvent({mode, venueId, opponentBrains, course}) {

@@ -891,3 +891,15 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 9 October: merged CREW-04 from 579a555b; conflict-free whole Baron sync, lane 360/360 (960.23 s), build 461 ms and review pass. Same Hard seeds give 10/30 wins, all finish, zero aborts, maximum overhead 1.05 s; original ambush passes both qualities.
 
 9 October: merged WAR-04 from 086e9cc0; lane 362/362 (924.99 s), build 488 ms, native eight cases, both browser qualities and source/save reviews pass. Story wall, native posters and earned Vesper are built; Claude takes P3-POLISH next.
+
+9 October: full 362/362 in 1362.75 s started on 71f2fd77 but a parallel rally-shortcut merge moved HEAD to 11acd958 during the run. The exact-commit guard marked it stale; a fresh full followed.
+9 October: end full passes 363/363 on clean 11acd958, alone with four jobs, 1211.28 s; no failures. End status, ledger and handoff notes wait for the next real commit; push remains held for approved binary compaction.
+9 October janitor: removed merged Baron, Crew and WAR-04 lanes plus 96,857,000 bytes of consumed review evidence. Kept the current Nitro listening clip, full-run logs until their verdicts are folded, parked diagnostics and protected audio refs. No unused modules or obsolete tests; 50 assets/52 exports remain advisory for CLEAN-11. Tracked size 280.6 to 282.9 MiB across WAR-04 and the parallel rally fix, mainly the genuine 2.39 MB Vesper model; size targets unchanged.
+
+9 October polish janitor: no proven-unused deletion; advisory assets and fully-on switches stay on CLEAN-11. Retained all five unmerged polish lanes, parked diagnostics and protected audio. Integration tracked size stays 282.9 MiB; pending lane assets are outside integration.
+
+9 October polish: full 363/363 passes in 725.14 s on unchanged integration 3af7f15c, alone with four jobs; dirty documentation is recorded, no retry or merge. Five clean lane candidates await Claude; status and verdicts fold into the next real commit.
+
+10 October: merged POLISH-HEIGHT from 52f2d049; lane 364/364 in 922.15 s, build and source review pass. Ordinary armor 1.20 to 1.21 gives Medium 13.833 wrecks; warlord health and non-armor replay fields stay exact.
+
+10 October: merged POLISH-SEEKERS from f0989887; lane 366/366 in 599.22 s, build 516 ms and source review pass. Kyle accepted 8 damage and the measured 1.328662 ratio as an explicit exception to the original 1.3 target; off/Gunn stay 10 and metric assertions stay unchanged.
