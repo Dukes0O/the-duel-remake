@@ -129,6 +129,12 @@ The fixture now uses native time and requires an actual refreshed rear-view
 frame after each look. No runtime mirror change or weakened assertion is needed.
 The corrected capture and quiet frame comparison remain pending.
 
+Corrected captures passed on private port 11053, again with eight native cars,
+four looks, both presets, memory-only saves and zero warnings/errors. Native
+image review confirms the mirror now follows each look. The first compressed
+sheet and review request are under `docs/board/looks/p4-daynight/`. Frame cost,
+Claude's art verdict, lane/build and merge remain pending.
+
 ## Removed
 
 No obsolete runtime path was replaced. Path-only lamps, reflector objects and
