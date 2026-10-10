@@ -104,8 +104,210 @@ gaps remain open; no finished-art claim or merge gate is claimed. Lane and
 build were deliberately not run at this review checkpoint. Raw evidence stays
 in the integration evidence folder until the verdict.
 
+## Claude's round-one verdict — 10 October 2026
+
+Kyle relayed this verdict and chose the Yeti direction before round-two code.
+All groups need varied colours, wear, grime and edge damage; never toy-clean.
+
+| Group | Score / 5 | Decision and required changes |
+| --- | --- | --- |
+| Paddock | 3 | Hold. Gantry must span the track, with five large named lamp parts and a series banner. Garage needs depth, a roller door and coloured stripes, without logos. Grandstand and pit wall pass. |
+| Safety | 3.5 | Hold. Galvanised grey W-profile Armco, upright concrete barrier and round tyre stacks at distance. Braking boards, catch fence and marshal post pass. |
+| Harbour | 2.5 | Hold. Replace the cartoon-city reading with varied worn shopfronts, awnings, shutters and grime. Warm emissive windows must vary; red/amber paper lanterns must be bigger and brighter. Taller tower with a lit crown visible across the track. Neon passes. |
+| Forest | 2.5 | Hold. Proper tree trunk and canopy in two or three shapes and colours. Retain distant dock planks. Lodge and all chairlift parts pass. |
+| Snow | 3 | Hold. Heavy concrete snow-shed roof across the full road, on pillars, open on the valley side, with snow above. White/silver dome must hold together at distance. Pine, ground, rocks, bank and summit hut pass. |
+| Characters | Snowman 4 | Snowman passes unchanged. Kyle chose a 2.8 m hunched Yeti with white matted shaggy fur, darker face, small eyes and no tongue. It must read at 30 m at night. Check real roar and walk-off clips. |
+
+Round two gets one comparison sheet per held group, including the changed Yeti.
+This is round two of at most three formal rounds. Passed pieces stay byte-exact;
+the broad material direction applies to the held pieces, not silent changes to
+assets Claude already passed.
+
+## Round-two design before code
+
+Use the same selected, pinned donors and retain their source records. Keep
+all protected catalog rows exact. Do not regenerate passed GLBs. Changes below
+are recipe adaptations of the chosen donors, with authored detail identified
+honestly. No track placement, real saves, physics or runtime dependency changes.
+
+| Piece | Shape and material plan | Distant representation |
+| --- | --- | --- |
+| Start gantry | Keep 17.5 m overall span and 6.5 m height. Preserve a clear 14 m road opening and at least 4.8 m headroom. Five distinct `lamp-1`…`lamp-5` lenses, each about 0.6 m across, sit in dark protective housings below a roughly 10 m wide banner marked `THE DUEL`. Chipped dark blue frame, faded cream banner and steel fasteners. | Preserve opening, five round lenses and banner; remove only small fasteners and shallow edge detail. |
+| Pit garage | Keep the donor side supports and their original tested positions. Use the full 8 m depth for a recessed bay, with a rear roller door, dark interior and a visible lintel. Faded teal/ochre stripes, worn concrete base and roller-door grime. | Keep complete side supports, bay depth and door divisions. Remove small hinge and trim detail only. |
+| Armco | Re-form the selected rail into a continuous galvanised W section, 4 m long and about 0.85 m high on separate posts. Silver-grey faces, dull rough patches, rust at fixings and scuffed rail edges. | Keep both W folds and every load-bearing post. Reduce fasteners and cross-section subdivisions without collapsing the profile. |
+| Concrete wall | Reorient and fit the selected barrier as an upright 4 m module with a flat top, broad base, vertical upper faces, cast seams and chipped corners. Grey concrete with grime concentrated at the foot. | Preserve upright cross-section and stable silhouette; dissolve planar subdivisions. |
+| Tyre wall | Preserve the actual donor's round stacked tyres and dark rubber separations. | Use controlled radial simplification per tyre; preserve at least eight radial sides and the stack layers. No unconstrained collapse into spikes. |
+| Harbour buildings | Retain each donor's building structure. Use faded teal, ochre and terracotta wall sections, dark grime at cornices/base, shutters, recessed entries and striped awnings. Window groups alternate warm amber and cream emission, with some dark panes. | Retain major openings, awnings and a readable warm/dark window rhythm. Flatten minor mouldings only. |
+| Lantern string and tower | Paper lanterns about 0.5 m across, with alternating bright red and amber emissive panels and dark ribs. Preserve the cable. Increase tower height to about 32 m; its larger crown carries emissive windows/lanterns on all visible sides. | Keep lantern silhouettes, cable and tower crown continuous. Reduce ribs and roof subdivisions without losing emission. |
+| Autumn trees | Preserve donor trunk/branch structure and rebuild the canopy reading through branch separation, lobe shaping and leaf texture. Provide russet broad, golden upright and sparse copper variants from the same selected donor. Director decision: keep `autumn-tree` as the russet broad variant and add `autumn-tree-golden` and `autumn-tree-copper` as ordinary selectable assets. Each has its own High/distant pair. The manifest grows from 33 to 35 pieces; existing track hooks select the asset by name. | Retain a visible trunk and several connected canopy lobes, with different outer shapes; avoid a single rock-like mass. |
+| Wooden dock | Preserve all original deck planks, seams and supports. Add worn grey-brown wood grain and dark plank gaps. | Preserve plank top faces and seams; remove hidden underside faces and small trim rather than decimating through the deck. |
+| Gallery | Retain the selected shelter's roof, snow and outer supports as the adaptation basis. Heavy concrete roof at least 0.65 m thick, spanning the existing tested 10 m clear road with 4.5 m headroom. Widen supports outside the road and keep the valley side open. Add a visibly deep snow load on top. | Keep slab thickness, pillars, roof snow and the full clear-road volume. Planar face reduction only on structural members. |
+| Observatory | Preserve and weld the selected dome cover. White/silver weathered metal, coherent meridians and a dark base. | Use topology-aware reduction that keeps a closed cover; prove shell continuity with surface rays, not only a bounding box. |
+
+Materials must survive GLB export. Bake deterministic colour variation, grime,
+grain and edge wear into small image/vertex channels. Do not rely on Blender-only
+procedural nodes. Add material variants locally so passed assets retain their
+existing bytes. Keep existing LOD size envelopes, meaningful reduction rule,
+gallery clearance, exact bank profile and structural witnesses unchanged.
+New tests should reject the actual round-one failures before repaired exports.
+Any required assertion or catalog aggregate change goes to the Director with
+the exact difference before it is applied.
+
+Director-approved added structural witnesses: dock rays at x=-0.9/0/0.9 m
+and z=-3…3 m in 0.12 m steps require identical High/distant hit presence and
+at most 0.015 m top-surface error. Dome rays at y=4/7/9 m over 32 azimuths
+require identical hit presence and at most 0.12 m radial surface error.
+Both qualities must retain five named lamps with at least 0.5 m across each
+lens's two broad axes. Existing structural witnesses remain unchanged.
+
+### Tree variant acceptance before code
+
+The Director approved three separate assets rather than a multi-root GLB.
+Update only the expected piece count from 33 to 35, add the two explicit IDs to
+the forest group and recipe donor map, and require the existing provenance,
+ground pivot, LOD envelope and meaningful reduction rules for both additions.
+All three reuse the selected, pinned nature donor. Native and Blender forest
+comparisons must show each variant. No runtime selection system is added.
+
+### Yeti feasibility and motion
+
+The current donor is a smooth cartoon body with a large round head, oversized
+eyes and a tongue. The existing tint is insufficient. The 43-joint licensed rig
+and weighted skin provide a usable deformation base; their joints, weights and
+verified original clips must remain traceable. Round two requires actual mesh
+reshaping and silhouette fur, not a new colour described as a new creature.
+
+Plan: lower the head into the shoulders, strengthen the upper back and lengthen
+the shag silhouette around shoulders/forearms. Reduce the visible eye area,
+remove tongue faces, and keep a dark inset face. Use off-white matted clumps
+with darker roots and dirty lower fur. Fur geometry must carry the corresponding
+native skin weights and follow the existing joints. Use opaque textured clumps,
+not simulated hairs or a transparent particle effect. The complete distant
+character stays at or below 2,000 triangles, including fur; its shoulder/back
+outline must survive at 30 m under real native night lighting.
+
+The current four clips are donor Idle/Run renamed `idle`/`lope`, plus authored
+`roar`/`chest-beat` on the retained skeleton. `lope` has explicitly removed root
+travel, so it is not evidence of walking away. Preserve these four real clips.
+The Director approved a separately named, explicitly authored `walk-off` using
+retained leg motion with slower timing and measured forward root travel; inspect
+foot contact and body motion before calling it a walk-off. Native proof must sample the actual skin over
+time, show a roar and a genuine departure, and retain race/profile state.
+
+These changes are feasible with Blender and the existing rig, but the source
+inspection alone does not prove the chosen creature. If reshaping or weight
+transfer breaks the retained motions, or the strict distant budget prevents a
+readable shaggy silhouette, stop and report that specific limit before using
+an approximation. No Yeti export or animation approval is claimed here.
+
+Before code, the new Yeti acceptance is explicit: both GLBs retain a valid
+43-joint weighted skin, the four existing distinct clips and a separate real
+`walk-off`; the prepared grounded idle height is 2.8 m (±0.005 m export allowance only); both qualities retain the existing <=2,000-triangle
+distant limit. Sampled walk-off must move the skinned body's root forward and
+cycle its legs coherently, rather than only animate hands or translate an inert
+body. Director-approved additions require at least 1 m of root XZ travel, a
+sampled skinned-body departure, and normalized nonzero skin weights on every
+fur vertex. Keep the four original clip checks and their exact distinct-count
+assertion; check the new walk-off separately in each quality. Capture actual roar/departure poses and a 30 m night silhouette at native
+metric scale. Existing structural tests and donor pins remain unchanged.
+
+### Source checkpoint and expected RED
+
+The first bounded two-thread donor inspection completed without exports or
+renders. The concrete donor's long axis is Y; the recipe now rotates that axis
+before its metric fit. Lantern bulbs were flattened because the old fit included
+the original ground poles. The dome has separate structural, rib and clear-cover
+meshes, so it now uses white/silver materials and angular planar reduction.
+
+Direct vertex inspection found that the Armco donor has two sloping flanges
+and a flat middle web, rather than a complete W profile. The recipe now bisects
+the actual front web at mid-height and pushes that new centre ridge forward,
+retaining the two grooves and both outer flanges. A source guard preserves every
+original rear/post vertex exactly. Galvanised grey materials are additional to
+that shape repair. The unreachable Yeti tint branch is removed; the snowman
+still applies the exact original RGB multiplier and wear path.
+
+The source implementation now covers all 16 held/new IDs. Passed pieces are
+excluded from round-two export by default and explicit requests are rejected.
+New structural LOD paths remove genuine near detail: dock undersides, tyre
+angular samples, concrete edge bevels and minor fixings. They do not stretch a
+reduced mesh back to its old bounds to conceal missing surfaces.
+
+The Yeti's inspected purple tongue region is removed as geometry. The original
+skin is reshaped, and opaque fur anchors inherit normalized original weights.
+The distant body uses a 0.24 reduction ratio, leaving up to 448 retained fur
+triangles inside the unchanged 2,000-triangle cap. A separately named authored
+walk-off uses the retained Run gait at slower timing, a turn and 2.4 m intended
+root travel. Foot contact, actual exported motion and the chosen silhouette are
+still unproved; no animation or finished-art verdict is claimed.
+
+Focused acceptance RED was recorded before exports: the current 33-piece
+manifest lacks `autumn-tree-golden` and `autumn-tree-copper`, exactly as expected.
+The first export batch stopped inside Blender on the gantry with a native
+`tbbmalloc.dll` access violation, before writing a runtime file. Inspection found
+an unsafe UV-layer reference held across creation of a corner-colour layer.
+The helper now creates both layers before acquiring its write handles. One
+approved gantry-only retry succeeded (872 High / 420 distant triangles), which
+verifies the repaired recipe but does not establish the native crash cause.
+Both exports retain five distinct lenses over 0.5 m across two axes and four
+embedded textures. The next batch exported the garage (372/276 triangles),
+Armco (156/72) and concrete barrier (284/188), then stopped at the tyre source
+guard. Direct topology inspection found one connected row with six columns,
+384 triangles per column and three existing stack layers. No face crosses a
+column boundary. The recipe now extracts five complete original columns and
+keeps those three layers; it no longer assumes six loose individual shells or
+duplicates already-stacked tyres. Existing acceptance remains unchanged. All 19 passed-piece records, 38 passed GLBs and the protected
+catalog/pin files remain byte-exact. The complete 35-piece / 70-GLB export and focused acceptance now pass; native
+art and gait approval remain pending.
+
+Native night evidence now has a source recipe: actual 2.8 m weighted skin at
+30 m, native alpine night lighting, roar/departure poses in both quality modes,
+and 51 weighted-sole samples against the local terrain. The character sheet
+adds four complete night frames to its four ordinary comparisons, retaining
+the one-sheet, 500 KB limit. These witnesses still need to run and receive a
+motion verdict before formal submission.
+
+### Complete candidate checks
+
+The unchanged focused suite passes all 35 High/distant pairs, source pins,
+ground pivots, meaningful LOD reduction, structural rays, gallery clearance,
+lamps, original four clips and the added Yeti departure witnesses. The bank
+still has 371 hits with zero maximum profile error. All 70 GLBs embed images;
+actual browser decoding and visual fidelity remain to be checked.
+
+Tyre LOD initially increased 1,920 triangles to 1,925 because the metric fit
+made its circular coordinates elliptical. The reducer now normalizes X/Y before
+angular snapping. It groups only the donor's two measured inner/outer radius
+rings, using 0.003 of the fitted half-width to merge source quantization noise
+(about 1.2 mm); height levels stay intact. The real distant result is 1,416
+triangles. Tower planar reduction retained too much detail, so the original
+building body now uses 0.65 collapse while the new crown lights/dividers and
+roof remain intact: 1,524 High / 1,069 distant. Openings and silhouette still
+require native visual review.
+
+The first added Yeti joint check failed because Three removes periods from
+runtime object names. The Director approved resolving each unique original GLB
+node name through the parser's exact node index. Each resolved joint must be a
+real bone in every mesh skeleton. No joint name, old assertion, movement limit,
+weight limit or height allowance changed. Both qualities now pass 43 joints,
+normalized nonzero weights, actual grounded 2.8 m idle skin, the original four
+clips, a distinct authored walk-off, over 1 m of root and weighted-body travel,
+and changing rotations in all four required leg joints. High/distant geometry
+is 6,326/1,857 triangles. The exporter normalized body vertices with more than
+four donor influences to its four-influence format; the exported weights pass.
+Native contact, sliding, direction and appearance are still unapproved.
+
+Candidate totals: 74,325 High / 44,444 distant triangles, 11,944,440 bytes.
+The observatory grows from 7,456/4,089 triangles and 912,816 bytes to
+35,520/25,000 triangles and 3,126,352 bytes. This removes the old aggressive
+collapse in favour of preserving the curved cover; all radial shell witnesses
+pass, but the growth and distant shape remain explicit visual-review items.
+All 19 passed-piece manifest records, their 38 GLBs, the complete art catalog
+and tanker provenance pin remain byte-exact after the final candidate export.
+
 ## Removed
 
-No existing runtime asset or source record is replaced. Candidate exports omit
+Round-two source removes the superseded unreachable harbour adaptation branch,
+the collapsing dome recipe and the Yeti tint-only finish. The 14 held runtime pairs are replaced and two new tree pairs are added. No selected source record is replaced. Candidate exports omit
 imported editor bone handles and the redundant added rock-cap slab. Final
 integration removes temporary evidence after its verdict is recorded.

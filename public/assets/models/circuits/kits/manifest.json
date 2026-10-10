@@ -4,7 +4,7 @@
   "up": "Y",
   "card": "P4-KITS",
   "recipe": "tools/blender/p4-kits.py",
-  "round": 1,
+  "round": 2,
   "pieces": [
     {
       "id": "start-gantry",
@@ -14,14 +14,14 @@
       ],
       "high": "start-gantry.glb",
       "low": "start-gantry-lod.glb",
-      "highTriangles": 96,
-      "lowTriangles": 96,
+      "highTriangles": 872,
+      "lowTriangles": 420,
       "size": [
         17.5,
         6.5,
-        0.48
+        0.64
       ],
-      "bytes": 59784,
+      "bytes": 233916,
       "credits": [
         {
           "author": "3D Assets",
@@ -38,14 +38,14 @@
       ],
       "high": "pit-garage.glb",
       "low": "pit-garage-lod.glb",
-      "highTriangles": 96,
-      "lowTriangles": 96,
+      "highTriangles": 372,
+      "lowTriangles": 276,
       "size": [
-        7.0,
+        7.005,
         5.2,
         8.0
       ],
-      "bytes": 147680,
+      "bytes": 282536,
       "credits": [
         {
           "author": "Kenney",
@@ -116,14 +116,14 @@
       ],
       "high": "armco.glb",
       "low": "armco-lod.glb",
-      "highTriangles": 68,
-      "lowTriangles": 68,
+      "highTriangles": 156,
+      "lowTriangles": 72,
       "size": [
         4.0,
         0.85,
-        0.32
+        0.349
       ],
-      "bytes": 44408,
+      "bytes": 82120,
       "credits": [
         {
           "author": "Kenney",
@@ -141,13 +141,13 @@
       "high": "concrete-wall.glb",
       "low": "concrete-wall-lod.glb",
       "highTriangles": 284,
-      "lowTriangles": 102,
+      "lowTriangles": 188,
       "size": [
         4.0,
         1.05,
         0.72
       ],
-      "bytes": 51188,
+      "bytes": 63004,
       "credits": [
         {
           "author": "MrMajestatisch",
@@ -188,14 +188,14 @@
       ],
       "high": "tyre-wall.glb",
       "low": "tyre-wall-lod.glb",
-      "highTriangles": 2304,
-      "lowTriangles": 1648,
+      "highTriangles": 1920,
+      "lowTriangles": 1416,
       "size": [
         4.0,
         1.0,
-        0.9
+        0.8
       ],
-      "bytes": 356748,
+      "bytes": 354184,
       "credits": [
         {
           "author": "3D Assets",
@@ -304,28 +304,22 @@
       "id": "lantern-tower",
       "group": "harbour",
       "sources": [
-        "p4-city",
-        "p4-neon"
+        "p4-city"
       ],
       "high": "lantern-tower.glb",
       "low": "lantern-tower-lod.glb",
-      "highTriangles": 6328,
-      "lowTriangles": 2269,
+      "highTriangles": 1524,
+      "lowTriangles": 1069,
       "size": [
         9.1,
-        28.85,
+        32.65,
         9.1
       ],
-      "bytes": 756952,
+      "bytes": 489124,
       "credits": [
         {
           "author": "Kenney",
           "sourcePage": "https://kenney.nl/assets/city-kit-commercial",
-          "license": "CC0-1.0"
-        },
-        {
-          "author": "3D Assets",
-          "sourcePage": "https://3dassets.dev/packs/cyberpunk-apartment-and-neon-block",
           "license": "CC0-1.0"
         }
       ]
@@ -338,14 +332,14 @@
       ],
       "high": "shopfront-a.glb",
       "low": "shopfront-a-lod.glb",
-      "highTriangles": 2800,
-      "lowTriangles": 1002,
+      "highTriangles": 3848,
+      "lowTriangles": 2192,
       "size": [
         6.0,
         8.8,
-        5.6
+        5.775
       ],
-      "bytes": 400884,
+      "bytes": 730952,
       "credits": [
         {
           "author": "Kenney",
@@ -362,14 +356,14 @@
       ],
       "high": "shopfront-b.glb",
       "low": "shopfront-b-lod.glb",
-      "highTriangles": 2061,
-      "lowTriangles": 733,
+      "highTriangles": 2313,
+      "lowTriangles": 1825,
       "size": [
         8.0,
         6.5,
-        5.6
+        5.775
       ],
-      "bytes": 333612,
+      "bytes": 666028,
       "credits": [
         {
           "author": "Kenney",
@@ -410,14 +404,14 @@
       ],
       "high": "lantern-string.glb",
       "low": "lantern-string-lod.glb",
-      "highTriangles": 4996,
-      "lowTriangles": 1792,
+      "highTriangles": 4916,
+      "lowTriangles": 2706,
       "size": [
-        8.0,
-        1.1,
-        0.55
+        7.71216,
+        2.32753,
+        0.49825
       ],
-      "bytes": 545432,
+      "bytes": 602960,
       "credits": [
         {
           "author": "3D Assets",
@@ -555,13 +549,13 @@
       "high": "wooden-dock.glb",
       "low": "wooden-dock-lod.glb",
       "highTriangles": 128,
-      "lowTriangles": 40,
+      "lowTriangles": 94,
       "size": [
         3.0,
         1.1,
         7.0
       ],
-      "bytes": 47516,
+      "bytes": 62712,
       "credits": [
         {
           "author": "Kenney",
@@ -579,13 +573,61 @@
       "high": "autumn-tree.glb",
       "low": "autumn-tree-lod.glb",
       "highTriangles": 1584,
-      "lowTriangles": 570,
+      "lowTriangles": 914,
       "size": [
-        6.5,
-        9.0,
-        6.0
+        3.0497,
+        8.89386,
+        3.68803
       ],
-      "bytes": 204548,
+      "bytes": 347016,
+      "credits": [
+        {
+          "author": "Quaternius",
+          "sourcePage": "https://quaternius.com/packs/ultimatenature.html",
+          "license": "CC0-1.0"
+        }
+      ]
+    },
+    {
+      "id": "autumn-tree-golden",
+      "group": "forest",
+      "sources": [
+        "p4-nature"
+      ],
+      "high": "autumn-tree-golden.glb",
+      "low": "autumn-tree-golden-lod.glb",
+      "highTriangles": 1584,
+      "lowTriangles": 914,
+      "size": [
+        2.41434,
+        10.37617,
+        2.91969
+      ],
+      "bytes": 352100,
+      "credits": [
+        {
+          "author": "Quaternius",
+          "sourcePage": "https://quaternius.com/packs/ultimatenature.html",
+          "license": "CC0-1.0"
+        }
+      ]
+    },
+    {
+      "id": "autumn-tree-copper",
+      "group": "forest",
+      "sources": [
+        "p4-nature"
+      ],
+      "high": "autumn-tree-copper.glb",
+      "low": "autumn-tree-copper-lod.glb",
+      "highTriangles": 1584,
+      "lowTriangles": 914,
+      "size": [
+        2.55087,
+        7.90565,
+        2.97128
+      ],
+      "bytes": 342040,
       "credits": [
         {
           "author": "Quaternius",
@@ -698,14 +740,14 @@
       ],
       "high": "gallery.glb",
       "low": "gallery-lod.glb",
-      "highTriangles": 184,
-      "lowTriangles": 80,
+      "highTriangles": 1268,
+      "lowTriangles": 196,
       "size": [
-        13.0,
-        6.27122,
+        12.99166,
+        6.68122,
         5.99977
       ],
-      "bytes": 103648,
+      "bytes": 227024,
       "credits": [
         {
           "author": "3D Assets",
@@ -746,14 +788,14 @@
       ],
       "high": "observatory.glb",
       "low": "observatory-lod.glb",
-      "highTriangles": 7456,
-      "lowTriangles": 4089,
+      "highTriangles": 35520,
+      "lowTriangles": 25000,
       "size": [
         12.0,
         11.0,
         12.0
       ],
-      "bytes": 912816,
+      "bytes": 3126352,
       "credits": [
         {
           "author": "3D Assets",
@@ -794,14 +836,14 @@
       ],
       "high": "yeti.glb",
       "low": "yeti-lod.glb",
-      "highTriangles": 6094,
-      "lowTriangles": 1889,
+      "highTriangles": 6326,
+      "lowTriangles": 1857,
       "size": [
-        3.41517,
+        3.84648,
         2.8,
-        1.62323
+        2.1478
       ],
-      "bytes": 783072,
+      "bytes": 1334772,
       "credits": [
         {
           "author": "Quaternius",

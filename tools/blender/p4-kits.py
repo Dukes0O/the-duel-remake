@@ -21,7 +21,7 @@ GROUPS = {
     "harbour": ["lantern-tower", "shopfront-a", "shopfront-b", "neon-sign",
                 "lantern-string", "harbour-boat"],
     "forest": ["ski-lodge", "chairlift-tower", "chairlift-cable", "chairlift-chair",
-               "wooden-dock", "autumn-tree"],
+               "wooden-dock", "autumn-tree", "autumn-tree-golden", "autumn-tree-copper"],
     "snow": ["snow-pine", "snow-ground", "snow-rock", "plough-bank",
              "gallery", "summit-hut", "observatory"],
     "characters": ["snowman", "yeti"],
@@ -51,6 +51,8 @@ DONORS = {
     "chairlift-chair": ("p4-ski", "chair"),
     "wooden-dock": ("p4-boats", "dock"),
     "autumn-tree": ("p4-nature", "tree"),
+    "autumn-tree-golden": ("p4-nature", "tree"),
+    "autumn-tree-copper": ("p4-nature", "tree"),
     "snow-pine": ("p4-holiday", "pine"),
     "snow-ground": ("p4-holiday", "ground"),
     "snow-rock": ("p4-holiday", "rock"),
@@ -70,12 +72,13 @@ DIMENSIONS = {
     "marshal-post": (2.5, 2.2, 3.2),
     "braking-board-150": (1.05, .12, 1.75), "braking-board-100": (1.05, .12, 1.75),
     "braking-board-50": (1.05, .12, 1.75),
-    "lantern-tower": (8, 8, 28), "shopfront-a": (6, 5, 8.8),
+    "lantern-tower": (8, 8, 32), "shopfront-a": (6, 5, 8.8),
     "shopfront-b": (8, 5, 6.5), "neon-sign": (2.4, .35, 1.2),
     "lantern-string": (8, .55, 1.1), "harbour-boat": (2.4, 5.2, 3.0),
     "ski-lodge": (16, 11, 7), "chairlift-tower": (4, 1.5, 10),
     "chairlift-cable": (12, .18, .22), "chairlift-chair": (2.6, 1.3, 2.6),
     "wooden-dock": (3, 7, 1.1), "autumn-tree": (6.5, 6.0, 9),
+    "autumn-tree-golden": (4.8, 4.5, 10.5), "autumn-tree-copper": (6.0, 5.2, 8),
     "snow-pine": (4, 4, 8.5), "snow-ground": (8, 8, .28),
     "snow-rock": (4.4, 3.5, 2.4), "plough-bank": (5, 1.6, 1.2),
     "summit-hut": (7, 6, 4.4), "observatory": (12, 12, 11),
@@ -93,6 +96,14 @@ PALETTE = {
     "leaf": ((.53, .24, .065), .92, 0),
     "snow": ((.84, .88, .9), .96, 0),
     "carrot": ((.72, .25, .035), .82, 0),
+}
+
+
+ROUND_TWO = {
+    "start-gantry", "pit-garage", "armco", "concrete-wall", "tyre-wall",
+    "lantern-tower", "shopfront-a", "shopfront-b", "lantern-string",
+    "autumn-tree", "autumn-tree-golden", "autumn-tree-copper", "wooden-dock",
+    "gallery", "observatory", "yeti",
 }
 
 
@@ -143,6 +154,7 @@ def arguments():
     parser.add_argument("--skip-renders", action="store_true")
     parser.add_argument("--render-only", action="store_true")
     parser.add_argument("--paths-only", action="store_true")
+    parser.add_argument("--inspect-only", action="store_true", help="Read selected donors; do not export or render")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     args.root = args.root.resolve()
     return args
@@ -166,9 +178,17 @@ def main():
     globals().update(bpy=bpy, bmesh=bmesh, Vector=Vector, Matrix=Matrix, Quaternion=Quaternion, np=np)
     out.mkdir(parents=True, exist_ok=True)
     evidence.mkdir(parents=True, exist_ok=True)
-    selection = set(args.only.split(",")) if args.only else set(DONORS)
+    selection = set(args.only.split(",")) if args.only else (ROUND_TWO if args.round >= 2 else set(DONORS))
     if not selection <= set(DONORS):
         raise ValueError("Unknown kit piece")
+    if args.inspect_only:
+        for identifier in sorted(selection):
+            reset()
+            MATERIALS, SAMPLED_IMAGES = {}, {}
+            inspect_donor(identifier)
+        return
+    if args.round >= 2 and not args.render_only and not selection <= ROUND_TWO:
+        raise ValueError("Passed round-one pieces must remain byte-exact")
     if args.render_only:
         if args.skip_renders:
             raise ValueError("Choose export-only or render-only, not both")
@@ -189,6 +209,7 @@ def main():
                 continue
             reset()
             MATERIALS, SAMPLED_IMAGES = {}, {}
+            print("PREPARING " + identifier, flush=True)
             sources = build_piece(identifier)
             high = out / (identifier + ".glb")
             low = out / (identifier + "-lod.glb")
@@ -265,6 +286,37 @@ def donor(source, key):
         else:
             kept.append(obj)
     return kept
+
+
+def inspect_donor(identifier):
+    """Bounded source inspection for a planned adaptation; no file mutation."""
+    source, key = DONORS[identifier]
+    objects = donor(source, key)
+    report = {"id": identifier, "objects": [], "bones": []}
+    for obj in objects:
+        if obj.type == "ARMATURE":
+            report["bones"] = [{"name": bone.name, "head": list(bone.head_local),
+                                "tail": list(bone.tail_local)} for bone in obj.data.bones]
+        if obj.type != "MESH":
+            continue
+        low, high = bounds([obj])
+        obj.data.calc_loop_triangles()
+        colors = {}
+        for polygon in obj.data.polygons:
+            color = tuple(round(float(c), 2) for c in original_color(obj, polygon))
+            row = colors.setdefault(str(color), {"faces": 0, "min": [1e9] * 3, "max": [-1e9] * 3})
+            row["faces"] += 1
+            for index in polygon.vertices:
+                point = obj.matrix_world @ obj.data.vertices[index].co
+                for axis in range(3):
+                    row["min"][axis] = min(row["min"][axis], round(point[axis], 4))
+                    row["max"][axis] = max(row["max"][axis], round(point[axis], 4))
+        report["objects"].append({"name": obj.name, "vertices": len(obj.data.vertices),
+            "triangles": len(obj.data.loop_triangles), "min": list(low), "max": list(high),
+            "materials": [mat.name for mat in obj.data.materials if mat],
+            "colors": dict(sorted(colors.items(), key=lambda item: -item[1]["faces"])[:24]),
+            "groups": [group.name for group in obj.vertex_groups]})
+    print("DONOR " + json.dumps(report), flush=True)
 
 
 def bounds(objects):
@@ -388,6 +440,411 @@ def material(key, emission=0):
     result.node_tree.links.new(texture.outputs["Color"], shader.inputs["Base Color"])
     MATERIALS[cache_key] = result
     return result
+
+
+def held_material(name, color, roughness=.86, metal=0, emission=0, pattern="grain"):
+    """Baked round-two surfaces; existing passed-piece materials are untouched."""
+    cache = "round-two-" + name
+    if cache in MATERIALS:
+        return MATERIALS[cache]
+    result = bpy.data.materials.new(cache)
+    result.use_nodes = True
+    shader = result.node_tree.nodes.get("Principled BSDF")
+    shader.inputs["Roughness"].default_value = roughness
+    shader.inputs["Metallic"].default_value = metal
+    shader.inputs["Base Color"].default_value = (*color, 1)
+    n = 128
+    y, x = np.mgrid[0:n, 0:n].astype(float) / n
+    phase = int(hashlib.sha256(name.encode()).hexdigest()[:8], 16) / 0xffffffff
+    grain = .89 + .035 * np.sin(x * 251 + y * 157 + phase * 31)
+    grain -= .13 * (np.sin(x * 21 + phase * 7) * np.cos(y * 17) + 1) / 2
+    grain -= .07 * (np.cos(x * 71 + np.sin(y * 9) * 3) > .88)
+    if pattern == "wood":
+        grain += .10 * np.sin(x * 163 + np.sin(y * 17) * 1.2)
+    if pattern == "leaf":
+        grain = .83 + .16 * np.sin(x * 79 + y * 107) * np.sin(x * 137 - y * 61)
+        grain += .12 * (np.sin(x * 59 + y * 31) > .8)
+    if pattern == "stripe":
+        grain *= np.where((x * 8).astype(int) % 2 == 0, 1, .36)
+    if pattern == "paper":
+        grain = .90 + .06 * np.sin(x * 251 + y * 173)
+        grain -= .10 * (np.cos(x * math.tau * 12) > .94)
+    pixels = np.ones((n, n, 4), dtype=np.float32)
+    pixels[:, :, :3] = np.clip(np.array(color)[None, None, :] * grain[:, :, None], 0, 1)
+    image = bpy.data.images.new(cache + " baked surface", width=n, height=n, alpha=False)
+    image.pixels.foreach_set(pixels.reshape(-1)); image.pack()
+    texture = result.node_tree.nodes.new("ShaderNodeTexImage")
+    texture.image = image; texture.extension = "REPEAT"
+    result.node_tree.links.new(texture.outputs["Color"], shader.inputs["Base Color"])
+    if emission:
+        result.node_tree.links.new(texture.outputs["Color"], shader.inputs["Emission Color"])
+        shader.inputs["Emission Strength"].default_value = emission
+    MATERIALS[cache] = result
+    return result
+
+
+def finish_held(obj, assigned, grain_scale=1.7):
+    """Keep material boundaries and bake grime into an exported vertex channel."""
+    if not isinstance(assigned, list):
+        assigned = [assigned] * len(obj.data.polygons)
+    unique = list(dict.fromkeys(assigned))
+    obj.data.materials.clear()
+    for mat in unique:
+        obj.data.materials.append(mat)
+    # Adding a corner layer can reallocate Blender's mesh CustomData. Create
+    # both layers first, then acquire their live RNA references for writing.
+    if not obj.data.uv_layers.active:
+        obj.data.uv_layers.new(name="Baked surface")
+    if not obj.data.color_attributes.get("Wear"):
+        obj.data.color_attributes.new(name="Wear", type="BYTE_COLOR", domain="CORNER")
+    uv = obj.data.uv_layers.active
+    wear = obj.data.color_attributes["Wear"]
+    obj.data.color_attributes.active_color = wear
+    low, high = bounds([obj]); span = max(.1, high.z - low.z)
+    for polygon, mat in zip(obj.data.polygons, assigned):
+        polygon.material_index = unique.index(mat)
+        axis = max(range(3), key=lambda i: abs(polygon.normal[i]))
+        plane = [i for i in range(3) if i != axis]
+        for loop in polygon.loop_indices:
+            point = obj.data.vertices[obj.data.loops[loop].vertex_index].co
+            uv.data[loop].uv = (point[plane[0]] / grain_scale, point[plane[1]] / grain_scale)
+            height = max(0, min(1, (point.z - low.z) / span))
+            dirt = .68 + .29 * min(1, height * 5)
+            dirt += .03 * math.sin(point.x * 19 + point.y * 23 + point.z * 29)
+            wear.data[loop].color = (dirt, dirt * .995, dirt * .97, 1)
+    obj.data.update()
+
+
+def detail_block(name, size, center, mat, distant=True):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=center)
+    obj = bpy.context.object; obj.name = name
+    obj.scale = size
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    finish_held(obj, mat)
+    obj["p4PreserveSurface"] = True
+    if not distant:
+        obj["p4LodOmit"] = True
+    return obj
+
+
+def prepare_tree(objects, identifier):
+    """Three ordinary assets with distinct branch/canopy proportions."""
+    parts = []
+    for obj in objects:
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True); bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.separate(type="MATERIAL"); bpy.ops.object.mode_set(mode="OBJECT")
+        parts.extend(list(bpy.context.selected_objects))
+    trunk, foliage = [], []
+    for obj in parts:
+        used = {obj.data.materials[face.material_index].name.lower() for face in obj.data.polygons}
+        if any("wood" in name for name in used):
+            trunk.append(obj)
+        else:
+            foliage.extend(separate_loose(obj))
+    if not trunk or len(foliage) < 2:
+        raise ValueError("Inspected donor trunk and distinct canopy lobes are required")
+    parts = trunk + foliage
+    fit(parts)
+    low, high = bounds(parts)
+    height = {"autumn-tree": 9, "autumn-tree-golden": 10.5, "autumn-tree-copper": 8}[identifier]
+    scale = height / (high.z - low.z)
+    spread = {"autumn-tree": 1.12, "autumn-tree-golden": .76, "autumn-tree-copper": 1.25}[identifier]
+    transform = Matrix.Diagonal((scale * spread, scale * spread, scale, 1))
+    for obj in parts:
+        obj.data.transform(transform)
+    wood = held_material("tree-weathered-bark", (.25, .21, .16), .98, pattern="wood")
+    for obj in trunk:
+        obj.name = identifier + "-trunk-and-branches"
+        finish_held(obj, wood, grain_scale=.32); obj["p4LodRatio"] = .58
+    colors = {"autumn-tree": [(.50, .20, .055), (.69, .33, .075), (.37, .14, .045)],
+              "autumn-tree-golden": [(.74, .53, .10), (.59, .40, .075), (.82, .64, .19)],
+              "autumn-tree-copper": [(.51, .28, .12), (.34, .20, .09), (.67, .39, .14)]}[identifier]
+    foliage.sort(key=lambda obj: sum(bounds([obj])[i].z for i in [0, 1]))
+    for index, obj in enumerate(foliage):
+        low, high = bounds([obj]); centre = (low + high) * .5
+        shrink = .80 if identifier != "autumn-tree-copper" else .64
+        for vertex in obj.data.vertices:
+            delta = vertex.co - centre
+            vertex.co = centre + Vector((delta.x * shrink, delta.y * shrink, delta.z * .93))
+        obj.name = identifier + "-canopy-lobe-" + str(index + 1)
+        leaf = held_material(identifier + "-leaves-" + str(index % 3), colors[index % 3], .98, pattern="leaf")
+        finish_held(obj, leaf, grain_scale=.36)
+        obj["p4LodRatio"] = .58
+    fit(meshes())
+    return meshes()
+
+
+def prepare_lantern_string(objects):
+    """Spread original lamps along a cable without flattening the paper globes."""
+    parts = []
+    for obj in objects:
+        parts.extend(separate_loose(obj))
+    retained = []
+    for obj in parts:
+        low, high = bounds([obj]); size = high - low; centre = (low + high) * .5
+        name = obj.data.materials[obj.data.polygons[0].material_index].name.lower()
+        # Ground-support poles belong to the original freestanding display.
+        if size.z > 1.25 and size.x < .16 and size.y < .16:
+            bpy.data.objects.remove(obj, do_unlink=True)
+            continue
+        if size.x > 1.8:
+            for vertex in obj.data.vertices:
+                vertex.co.x *= 8 / 2.76
+        else:
+            target = Vector((centre.x * 8 / 2.76, centre.y, centre.z))
+            for vertex in obj.data.vertices:
+                vertex.co = target + (vertex.co - centre) * 1.10
+        if name in ["amber", "paint", "neon"]:
+            amber = name == "amber"
+            mat = held_material("lantern-amber" if amber else "lantern-red",
+                                (.95, .43, .055) if amber else (.87, .075, .025),
+                                .76, emission=2.8, pattern="paper")
+            obj["p4LodRatio"] = .58
+        else:
+            mat = held_material("lantern-wire-and-ribs", (.065, .06, .052), .85, .12)
+            obj["p4LodRatio"] = .55
+        finish_held(obj, mat, grain_scale=.35)
+        obj.name = "lantern-string-" + name
+        retained.append(obj)
+    if not retained:
+        raise ValueError("Original lanterns are missing")
+    fit(retained)
+    return retained
+
+
+def prepare_harbour_building(objects, identifier):
+    wall_colors = {"shopfront-a": (.25, .46, .42), "shopfront-b": (.61, .31, .20),
+                   "lantern-tower": (.49, .43, .30)}
+    wall = held_material(identifier + "-faded-plaster", wall_colors[identifier], .95)
+    trim = held_material("harbour-worn-cream-trim", (.73, .68, .54), .94)
+    roof = held_material("harbour-weathered-roof", (.24, .27, .26), .91, .08)
+    dark = held_material("harbour-unlit-pane", (.055, .071, .069), .7)
+    amber = held_material("harbour-warm-amber-pane", (.94, .48, .16), .57, emission=1.65)
+    cream = held_material("harbour-warm-cream-pane", (.96, .76, .42), .57, emission=1.2)
+    height = DIMENSIONS[identifier][2]
+    for obj in objects:
+        assigned = []
+        for polygon in obj.data.polygons:
+            color = original_color(obj, polygon)
+            centre = polygon.center
+            if max(color) < .35 and .18 * height < centre.z < .88 * height:
+                pane = (round(centre.x / 1.6) + round(centre.y / 1.6) + round(centre.z / 1.7)) % 5
+                mat = dark if pane == 0 else amber if pane < 3 else cream
+            elif max(color) < .35:
+                mat = dark
+            elif abs(polygon.normal.z) > .65:
+                mat = roof if polygon.normal.z > 0 else dark
+            elif min(color) > .68:
+                mat = trim
+            else:
+                mat = wall
+            assigned.append(mat)
+        finish_held(obj, assigned, grain_scale=1.8)
+        obj.name = identifier + "-original-structure"
+        if identifier == "lantern-tower":
+            obj["p4LodRatio"] = .65
+        else:
+            obj["p4PlanarLod"] = True
+    if identifier == "lantern-tower":
+        for side in [-1, 1]:
+            detail_block("tower-crown-lit-front-back", (6.5, .06, 1.45), (0, side * 4.04, 30.25), amber)
+            detail_block("tower-crown-lit-sides", (.06, 6.5, 1.45), (side * 4.04, 0, 30.25), cream)
+            for offset in [-2.1, 0, 2.1]:
+                detail_block("tower-crown-mullion", (.15, .10, 1.55), (offset, side * 4.10, 30.25), dark)
+                detail_block("tower-crown-side-mullion", (.10, .15, 1.55), (side * 4.10, offset, 30.25), dark)
+        canopy = flatten(donor("p4-city", "awning"))
+        fit(canopy, (9.1, 9.1, 1.05))
+        for obj in canopy:
+            finish_held(obj, roof); obj["p4PlanarLod"] = True
+        move(canopy, (0, 0, 31.6))
+        return meshes()
+    width = 4.6 if identifier == "shopfront-a" else 6.3
+    awning = flatten(donor("p4-city", "awning"))
+    fit(awning, (width, 1.25, .48))
+    canvas = held_material(identifier + "-striped-awning", (.69, .57, .36), .96, pattern="stripe")
+    for obj in awning:
+        finish_held(obj, canvas, grain_scale=width); obj["p4PlanarLod"] = True
+    move(awning, (0, -2.65, 2.35))
+    detail_block("shop-recessed-entry", (1.2, .04, 2.05), (0, -2.525, 1.045), dark)
+    for side in [-1, 1]:
+        detail_block("shop-door-jamb", (.12, .20, 2.15), (side * .66, -2.59, 1.075), trim)
+        shutter = held_material(identifier + "-shutter-wood", (.21, .32, .28), .94, pattern="wood")
+        detail_block("shop-shutter", (.83, .10, 1.65), (side * 1.63, -2.59, 1.18), shutter)
+        for index in range(8):
+            detail_block("shop-shutter-louvre", (.79, .065, .065),
+                         (side * 1.63, -2.68, .48 + index * .19), trim, distant=index % 2 == 0)
+    label("PORT SUPPLY" if identifier.endswith("a") else "CAFE", (0, -2.70, 3.04), .35, "shop-sign")
+    return meshes()
+
+
+def near_edge_detail(obj, width=.035):
+    """Real near-view edge bevel; the distant mesh retains the structural shell."""
+    source = obj.data.copy(); source.name = obj.name + " distant structural shell"
+    obj["p4LodMesh"] = source.name
+    bpy.context.view_layer.objects.active = obj
+    bevel = obj.modifiers.new("Worn concrete edges", "BEVEL")
+    bevel.width = width; bevel.segments = 2; bevel.limit_method = "ANGLE"
+    bpy.ops.object.modifier_apply(modifier=bevel.name)
+
+
+def prepare_observatory(objects):
+    for obj in objects:
+        names = " ".join(mat.name.lower() for mat in obj.data.materials if mat)
+        if "stone" in names or "blue" in names:
+            mat = held_material("observatory-dark-base", (.26, .29, .28), .89, .12)
+        elif "chrome" in names:
+            mat = held_material("observatory-silver-ribs", (.68, .72, .71), .56, .55)
+        else:
+            mat = held_material("observatory-white-cover", (.82, .83, .78), .72, .25)
+        bm = bmesh.new(); bm.from_mesh(obj.data)
+        bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.0002)
+        bmesh.ops.dissolve_limit(bm, angle_limit=.002, verts=list(bm.verts),
+                                 edges=list(bm.edges), delimit=set())
+        bm.to_mesh(obj.data); bm.free(); obj.data.update()
+        finish_held(obj, mat, grain_scale=2.0)
+        obj.name = "observatory-" + ("ribs" if "chrome" in names else "base" if "stone" in names or "blue" in names else "cover")
+        obj["p4DomeLod"] = True
+    return objects
+
+
+def prepare_tyres(objects):
+    # The source has six touching columns, each already holding three tyres.
+    # Welding joins the columns, so loose-part count cannot identify them.
+    if len(objects) != 1:
+        raise ValueError("Selected tyre donor must contain its single original row mesh")
+    original = objects[0]
+    low, high = bounds(objects); width = (high.x - low.x) / 6
+    columns = [[] for _ in range(6)]
+    for face in original.data.polygons:
+        points = [original.data.vertices[index].co for index in face.vertices]
+        centre = sum(point.x for point in points) / len(points)
+        column = max(0, min(5, int((centre - low.x) / width)))
+        left, right = low.x + column * width, low.x + (column + 1) * width
+        if any(point.x < left - .0002 or point.x > right + .0002 for point in points):
+            raise ValueError("A donor face crosses the measured tyre-column boundary")
+        columns[column].append(face.index)
+    if any(len(column) != 384 for column in columns):
+        raise ValueError("Each original three-tyre column must retain all 384 source triangles")
+    rubber = held_material("tyre-wall-scuffed-rubber", (.095, .094, .086), .98)
+    for column in range(5):
+        obj = original.copy(); obj.data = original.data.copy()
+        bpy.context.collection.objects.link(obj)
+        bm = bmesh.new(); bm.from_mesh(obj.data); bm.faces.ensure_lookup_table()
+        retained = set(columns[column])
+        bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.index not in retained], context="FACES")
+        bm.to_mesh(obj.data); bm.free(); obj.data.update()
+        fit([obj], (.79, .79, 1))
+        move([obj], ((column - 2) * .80, 0, 0))
+        obj.name = "tyre-stack-" + str(column + 1) + "-three-original-layers"
+        finish_held(obj, rubber, grain_scale=.45)
+        obj["p4RadialLod"] = 12
+    bpy.data.objects.remove(original, do_unlink=True)
+    fit(meshes(), (4, .8, 1))
+    return meshes()
+
+
+def reduce_radial_shell(obj, sides):
+    """Reduce angular samples in the fitted ellipse's original radial space."""
+    low, high = bounds([obj]); centre = (low + high) * .5
+    half = (high - low) * .5
+    bm = bmesh.new(); bm.from_mesh(obj.data)
+    radii = []
+    for vertex in bm.verts:
+        delta = vertex.co - centre
+        radii.append(math.hypot(delta.x / half.x, delta.y / half.y))
+    rings = []
+    for radius in sorted(radii):
+        if not rings or radius - rings[-1][0] > .003:
+            rings.append([radius])
+        else:
+            rings[-1].append(radius)
+    canonical = [sum(ring) / len(ring) for ring in rings]
+    if len(canonical) != 2:
+        raise ValueError("Original tyre inner/outer radius rings must remain distinct")
+    for vertex, radius in zip(bm.verts, radii):
+        delta = vertex.co - centre
+        angle = round(math.atan2(delta.y / half.y, delta.x / half.x) * sides / math.tau) * math.tau / sides
+        radius = min(canonical, key=lambda value: abs(value - radius))
+        vertex.co.x = centre.x + radius * half.x * math.cos(angle)
+        vertex.co.y = centre.y + radius * half.y * math.sin(angle)
+    bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.0002)
+    bmesh.ops.dissolve_degenerate(bm, edges=list(bm.edges), dist=.00001)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(obj.data); bm.free(); obj.data.update()
+
+
+def prepare_garage(objects):
+    concrete = held_material("garage-concrete", (.59, .58, .52))
+    teal = held_material("garage-faded-teal", (.16, .36, .35))
+    cream = held_material("garage-cream", (.73, .68, .53))
+    dark = held_material("garage-interior", (.075, .078, .075))
+    for obj in objects:
+        assigned = []
+        for polygon in obj.data.polygons:
+            centre = polygon.center
+            if 2.7 < centre.z < 3.25 and abs(polygon.normal.z) < .6:
+                mat = teal
+            elif polygon.normal.z > .5:
+                mat = concrete
+            else:
+                mat = concrete if centre.z < 1.0 else cream
+            assigned.append(mat)
+        finish_held(obj, assigned)
+        obj["p4PlanarLod"] = True
+    # The back of the actual eight-metre donor bay provides its depth cue.
+    detail_block("garage-rear-roller-door", (5.8, .08, 2.45), (0, 3.82, 1.35), dark)
+    slat = held_material("garage-roller-grey", (.38, .43, .42), .73, .3)
+    for index in range(12):
+        detail_block("garage-door-slat-" + str(index), (5.72, .045, .13),
+                     (0, 3.74, .30 + index * .18), slat)
+    for side in [-1, 1]:
+        detail_block("garage-side-stripe", (.045, 7.6, .38), (side * 3.48, 0, 2.9), teal)
+        for index in range(4):
+            detail_block("garage-near-door-fixing", (.045, .04, .08),
+                         (side * 2.84, 3.67, .4 + index * .55), slat, distant=False)
+    return meshes()
+
+
+def prepare_armco(objects):
+    steel = held_material("galvanised-grey", (.65, .68, .67), .67, .48)
+    for obj in objects:
+        # The inspected donor has two sloping flanges but a flat middle web.
+        # Cut that actual web at mid-height and form its second corrugation.
+        # Rear/post vertices stay exact; this is geometry, not a silver tint.
+        bm = bmesh.new(); bm.from_mesh(obj.data)
+        front = [vertex for vertex in bm.verts if vertex.co.y < -.05]
+        if not front:
+            raise ValueError("Inspected Armco front web is missing")
+        middle = (min(vertex.co.z for vertex in front) + max(vertex.co.z for vertex in front)) * .5
+        protected = {tuple(vertex.co) for vertex in bm.verts if vertex.co.y >= -.05}
+        bmesh.ops.bisect_plane(bm, geom=list(bm.verts) + list(bm.edges) + list(bm.faces),
+                              dist=.000001, plane_co=(0, 0, middle), plane_no=(0, 0, 1),
+                              clear_outer=False, clear_inner=False)
+        fold = [vertex for vertex in bm.verts if abs(vertex.co.z - middle) < .00001 and vertex.co.y < -.05]
+        if len(fold) < 2:
+            raise ValueError("Armco centre fold did not cross the donor front web")
+        for vertex in fold:
+            vertex.co.y = -.18
+        if not protected <= {tuple(vertex.co) for vertex in bm.verts}:
+            raise ValueError("Armco rear/post vertices changed while forming its W profile")
+        bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+        bm.to_mesh(obj.data); bm.free(); obj.data.update()
+        finish_held(obj, steel)
+        obj["p4PlanarLod"] = True
+    rust = held_material("armco-rusted-fixings", (.35, .20, .11), .85, .15)
+    for x in [-1.55, 0, 1.55]:
+        detail_block("armco-fixing", (.065, .028, .07), (x, -.175, .62), rust, distant=False)
+    return meshes()
+
+
+def prepare_concrete(objects):
+    finish = held_material("barrier-cast-concrete", (.57, .59, .57), .94)
+    for obj in objects:
+        finish_held(obj, finish)
+        obj["p4PlanarLod"] = True
+    return objects
 
 
 def original_color(obj, polygon):
@@ -596,7 +1053,20 @@ def simplify(identifier):
         # Tiny complete donor props are cheaper than broken structural faces.
         return
     before_low, before_high = bounds(meshes())
-    for obj in meshes():
+    for obj in list(meshes()):
+        if obj.get("p4RadialLod"):
+            reduce_radial_shell(obj, int(obj["p4RadialLod"]))
+            continue
+        if obj.get("p4LodMesh"):
+            old = obj.data
+            obj.data = bpy.data.meshes[obj["p4LodMesh"]]
+            bpy.data.meshes.remove(old)
+            continue
+        if obj.get("p4LodOmit"):
+            bpy.data.objects.remove(obj, do_unlink=True)
+            continue
+        if obj.get("p4PreserveSurface"):
+            continue
         obj.data.calc_loop_triangles()
         if len(obj.data.loop_triangles) < 24:
             continue
@@ -611,6 +1081,16 @@ def simplify(identifier):
             bm = bmesh.new()
             bm.from_mesh(obj.data)
             bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.00001)
+            if identifier == "wooden-dock":
+                bm.normal_update()
+                # The lake-facing undersides are distant-only detail. Keep
+                # every upward plank face, seam and vertical support face.
+                bottom = [face for face in bm.faces if face.normal.z < -.25]
+                bmesh.ops.delete(bm, geom=bottom, context="FACES")
+                bmesh.ops.dissolve_limit(bm, angle_limit=.001, verts=list(bm.verts),
+                                         edges=list(bm.edges), delimit=set())
+                bm.to_mesh(obj.data); bm.free(); obj.data.update()
+                continue
             if identifier == "plough-bank":
                 cull_bank_hidden_faces(bm)
                 bm.to_mesh(obj.data)
@@ -633,7 +1113,17 @@ def simplify(identifier):
             bm.free()
             obj.data.update()
         modifier = obj.modifiers.new("Distant detail reduction", "DECIMATE")
-        if identifier == "grandstand":
+        if obj.get("p4DomeLod"):
+            modifier.decimate_type = "DISSOLVE"
+            modifier.angle_limit = .055
+            modifier.delimit = {"MATERIAL"}
+            modifier.use_dissolve_boundaries = False
+        elif obj.get("p4PlanarLod"):
+            modifier.decimate_type = "DISSOLVE"
+            modifier.angle_limit = .001
+            modifier.delimit = {"MATERIAL"}
+            modifier.use_dissolve_boundaries = False
+        elif identifier == "grandstand":
             # Coplanar colour subdivisions are distant detail. Tread planes,
             # outer roof corners and load-bearing supports remain intact.
             modifier.decimate_type = "DISSOLVE"
@@ -641,8 +1131,8 @@ def simplify(identifier):
             modifier.delimit = set()
             modifier.use_dissolve_boundaries = False
         else:
-            modifier.ratio = (.31 if identifier == "yeti" else
-                              .70 if identifier in ["harbour-boat", "chairlift-tower"] else .36)
+            modifier.ratio = obj.get("p4LodRatio", (.24 if identifier == "yeti" else
+                              .70 if identifier in ["harbour-boat", "chairlift-tower"] else .36))
             modifier.use_collapse_triangulate = True
         bpy.ops.object.modifier_apply(modifier=modifier.name)
         if identifier != "yeti":
@@ -652,7 +1142,7 @@ def simplify(identifier):
             bm.to_mesh(obj.data)
             bm.free()
             obj.data.update()
-    if identifier not in ["yeti", "grandstand", "plough-bank"]:
+    if identifier not in ROUND_TWO and identifier not in ["yeti", "grandstand", "plough-bank"]:
         # Retain the module mating envelope while simplifying interior detail.
         low, high = bounds(meshes())
         old_size, new_size = before_high - before_low, high - low
@@ -684,13 +1174,7 @@ def tinted_original(objects, identifier):
                     image.name = identifier + " restrained original atlas"
                     pixels = np.array(source.pixels[:], dtype=np.float32).reshape(-1, 4)
                     rgb = pixels[:, :3]
-                    if identifier == "yeti":
-                        blue = (rgb[:, 2] > rgb[:, 0] * 1.2) & (rgb[:, 2] > rgb[:, 1] * .92)
-                        rgb[blue] = (.27, .31, .30)
-                        bright = rgb.min(axis=1) > .7
-                        rgb[bright] *= (.89, .90, .88)
-                    else:
-                        rgb *= (.91, .92, .91)
+                    rgb *= (.91, .92, .91)
                     image.pixels.foreach_set(pixels.reshape(-1))
                     image.pack()
                     changed[source.name] = image
@@ -734,6 +1218,9 @@ def prepare_gantry(objects):
         raise ValueError("Expected exactly five original countdown lamps")
     lamps.sort(key=lambda obj: sum(bounds([obj])[i].x for i in [0, 1]))
     for index, obj in enumerate(lamps, 1):
+        fit([obj], (.64, .18, .64))
+        move([obj], ((index - 3) * 1.4, -.31, 4.92))
+        obj["p4PreserveSurface"] = True
         obj.name = "lamp-" + str(index)
         obj.data.materials.clear()
         lamp_material = bpy.data.materials.new("countdown lamp " + str(index))
@@ -748,13 +1235,22 @@ def prepare_gantry(objects):
             polygon.material_index = 0
         origin_at_center(obj)
     steel = [obj for obj in meshes() if obj not in lamps]
-    style(steel, "start-gantry")
+    frame = held_material("gantry-weathered-blue", (.13, .24, .29), .79, .3)
+    dark = held_material("gantry-lamp-housing", (.055, .059, .06), .73, .2)
+    for obj in steel:
+        finish_held(obj, frame)
+        obj["p4PreserveSurface"] = True
+    for index in range(1, 6):
+        detail_block("lamp-housing-" + str(index), (.78, .30, .78),
+                     ((index - 3) * 1.4, -.12, 5.24), dark)
+    banner = held_material("gantry-faded-banner", (.79, .74, .58))
+    detail_block("gantry-series-banner", (10.4, .18, .80), (0, -.06, 6.02), banner)
+    label("THE DUEL", (0, -.17, 6.01), .59, "gantry-series-name")
     return meshes()
 
 
 def prepare_gallery(objects):
-    # Keep the selected shelter's actual posts, crossbeams, roof and roof snow.
-    # Drop parking slab/markings and ground snow, which would block the road.
+    """Adapt the selected shelter into a concrete, open-sided snow shed."""
     retained = []
     for obj in objects:
         low, high = bounds([obj])
@@ -763,35 +1259,57 @@ def prepare_gallery(objects):
             continue
         name = obj.data.materials[0].name.lower() if obj.data.materials else ""
         if "snow" in name:
-            bm = bmesh.new()
-            bm.from_mesh(obj.data)
-            remove = [face for face in bm.faces if any(v.co.z < 3.20 for v in face.verts)]
-            bmesh.ops.delete(bm, geom=remove, context="FACES")
-            bm.to_mesh(obj.data)
-            bm.free()
-        retained.append(obj)
-    for obj in retained:
-        name = obj.data.materials[0].name.lower() if obj.data.materials else ""
+            bm = bmesh.new(); bm.from_mesh(obj.data)
+            bmesh.ops.delete(bm, geom=[face for face in bm.faces if any(vertex.co.z < 3.20 for vertex in face.verts)], context="FACES")
+            bm.to_mesh(obj.data); bm.free()
         for vertex in obj.data.vertices:
             vertex.co.x *= 13 / 11
             vertex.co.y *= 6 / 5.4
             if "steel" in name:
                 vertex.co.z = max(0, vertex.co.z - .15) * 1.56
             else:
-                vertex.co.z += 1.75
-    # Split original support members so interior parking posts, if present,
-    # can be removed rather than concealed in the road.
-    for obj in list(retained):
-        if not obj.data.materials or "steel" not in obj.data.materials[0].name.lower():
-            continue
-        parts = separate_loose(obj)
-        for part in parts:
-            low, high = bounds([part])
-            if low.z < 4.5 and low.x < 5.05 and high.x > -5.05:
-                bpy.data.objects.remove(part, do_unlink=True)
-    style(meshes(), "gallery")
-    for obj in meshes():
-        obj.name = "gallery-" + obj.name
+                vertex.co.z += 2.0
+                if "snow" in name:
+                    vertex.co.z += .16
+        retained.append(obj)
+    concrete = held_material("gallery-heavy-concrete", (.56, .58, .54), .96)
+    snow = held_material("gallery-loaded-snow", (.87, .90, .91), .99)
+    for obj in retained:
+        name = obj.data.materials[0].name.lower() if obj.data.materials else ""
+        if "steel" in name:
+            for part in separate_loose(obj):
+                low, high = bounds([part]); size = high - low
+                if low.z < 4.5 and low.x < 5.05 and high.x > -5.05:
+                    bpy.data.objects.remove(part, do_unlink=True)
+                    continue
+                if size.z > 1.5:
+                    centre = (low + high) * .5
+                    for vertex in part.data.vertices:
+                        vertex.co.x = centre.x + (vertex.co.x - centre.x) * .64 / max(size.x, .01)
+                        vertex.co.y = centre.y + (vertex.co.y - centre.y) * .64 / max(size.y, .01)
+                part.name = "gallery-concrete-pillar" if size.z > 1.5 else "gallery-concrete-crossbeam"
+                finish_held(part, concrete)
+                near_edge_detail(part)
+        elif "snow" in name:
+            obj.name = "gallery-roof-snow"
+            finish_held(obj, snow); obj["p4PlanarLod"] = True
+        else:
+            # Retain the selected gabled roof's top planes, then give them a
+            # true heavy slab underside. The lowest underside stays >4.5 m.
+            bm = bmesh.new(); bm.from_mesh(obj.data)
+            bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.00001)
+            bm.normal_update()
+            bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.normal.z <= .1], context="FACES")
+            if not bm.faces:
+                raise ValueError("Selected gallery roof has no upward cover planes")
+            bm.to_mesh(obj.data); bm.free(); obj.data.update()
+            bpy.context.view_layer.objects.active = obj
+            thickness = obj.modifiers.new("Concrete slab 0.72 m", "SOLIDIFY")
+            thickness.thickness = .72; thickness.offset = -1; thickness.use_even_offset = True
+            bpy.ops.object.modifier_apply(modifier=thickness.name)
+            obj.name = "gallery-heavy-concrete-roof"
+            finish_held(obj, concrete)
+            near_edge_detail(obj, .025)
     return meshes()
 
 
@@ -844,7 +1362,31 @@ def build_piece(identifier):
     if identifier == "snowman":
         prepare_snowman(objects)
         return sources
+    if identifier.startswith("autumn-tree"):
+        prepare_tree(objects, identifier)
+        return sources
+    if identifier == "lantern-string":
+        prepare_lantern_string(objects)
+        return sources
+    if identifier == "concrete-wall":
+        for obj in objects:
+            obj.data.transform(Matrix.Rotation(math.pi / 2, 4, "Z"))
     fit(objects, DIMENSIONS[identifier])
+    if identifier in ["lantern-tower", "shopfront-a", "shopfront-b"]:
+        prepare_harbour_building(objects, identifier)
+        return sources
+    if identifier == "pit-garage":
+        prepare_garage(objects)
+        return sources
+    if identifier == "tyre-wall":
+        prepare_tyres(objects)
+        return sources
+    if identifier == "armco":
+        prepare_armco(objects)
+        return sources
+    if identifier == "concrete-wall":
+        prepare_concrete(objects)
+        return sources
     if identifier == "start-gantry":
         prepare_gantry(objects)
         return sources
@@ -856,25 +1398,13 @@ def build_piece(identifier):
                 if vertex.co.z > .15:
                     vertex.co.z = .90 + (vertex.co.z / 1.1) * .08
         fit(objects, DIMENSIONS[identifier])
-    if identifier == "observatory":
-        # The selected 36k-triangle dome needs a useful near version too.
+        wood = held_material("dock-weathered-timber", (.40, .32, .23), pattern="wood")
         for obj in objects:
-            # The donor has split coincident vertices; weld its actual cover
-            # before collapsing faces so the dome does not tear into islands.
-            bm = bmesh.new()
-            bm.from_mesh(obj.data)
-            bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.0002)
-            bm.to_mesh(obj.data)
-            bm.free()
-            obj.data.update()
-            bpy.context.view_layer.objects.active = obj
-            reduction = obj.modifiers.new("Dome near-detail budget", "DECIMATE")
-            reduction.ratio = .21
-            bpy.ops.object.modifier_apply(modifier=reduction.name)
-            for mat in obj.data.materials:
-                if "clear" in mat.name.lower():
-                    mat.name = "weathered steel dome"
-        fit(objects, DIMENSIONS[identifier])
+            finish_held(obj, wood, grain_scale=.45)
+        return sources
+    if identifier == "observatory":
+        prepare_observatory(objects)
+        return sources
     board_label = None
     if identifier.startswith("braking-board-"):
         panel = [obj for obj in objects if any(mat and mat.name.lower() == "white"
@@ -890,14 +1420,6 @@ def build_piece(identifier):
     if identifier == "pit-wall":
         detail_donor("p4-gp", "monitor", (.8, .5, .65), (0, .08, 1.03), identifier)
         sources.add("p4-gp")
-    elif identifier in ["shopfront-a", "shopfront-b"]:
-        width = 4.6 if identifier == "shopfront-a" else 6.3
-        detail_donor("p4-city", "awning", (width, 1.1, .5), (0, -2.55, 2.25), identifier)
-        label("MERCADO" if identifier.endswith("a") else "CAFE", (0, -2.62, 2.95), .38, "shop-sign")
-    elif identifier == "lantern-tower":
-        detail_donor("p4-neon", "lanterns", (7.2, .6, 1.1), (0, -4.15, 24.5), identifier)
-        detail_donor("p4-city", "awning", (9.1, 9.1, 1.25), (0, 0, 27.6), identifier)
-        sources.add("p4-neon")
     elif identifier == "neon-sign":
         text = label("LANTERN", (0, -.2, .6), .32, "neon-letters")
         text.data.materials.clear()
@@ -950,6 +1472,178 @@ def hand_target(armature, side, target, elbow_hint):
     elbow = shoulder + axis * along + perpendicular * across
     aim_bone(armature, upper.name, shoulder, elbow)
     aim_bone(armature, lower.name, upper.tail.copy(), target)
+
+
+def reshape_yeti(objects, armature):
+    """Reshape the licensed weighted body and add opaque weighted shag clumps."""
+    skin = [obj for obj in objects if obj.type == "MESH"]
+    if len(skin) != 1:
+        raise ValueError("Expected the selected original single Yeti skin")
+    body = skin[0]
+    source_colors = [original_color(body, face) for face in body.data.polygons]
+    tongue = {face.index for face, color in zip(body.data.polygons, source_colors)
+              if color[0] > .25 and color[2] > color[1] * 1.2 and color[0] > color[1] * 1.3}
+    if not 200 <= len(tongue) <= 240:
+        raise ValueError("Original tongue region no longer matches the inspected atlas")
+    eye_vertices = set()
+    for face, color in zip(body.data.polygons, source_colors):
+        if (.50 < color[0] < .60 and .53 < color[1] < .61 and color[2] > .60):
+            eye_vertices.update(face.vertices)
+        if max(color) < .2:
+            eye_vertices.update(index for index in face.vertices
+                                if body.data.vertices[index].co.z > 2.11)
+    groups = {group.index: group.name for group in body.vertex_groups}
+    for vertex in body.data.vertices:
+        point = vertex.co
+        if vertex.index in eye_vertices:
+            centre = Vector((.235 if point.x >= 0 else -.235, -.50, 2.29))
+            point[:] = centre + (point - centre) * .42
+        weights = {groups[item.group]: item.weight for item in vertex.groups}
+        head = min(1, weights.get("Head", 0) + weights.get("Neck", 0) * .4)
+        upper = min(1, weights.get("Torso", 0) + weights.get("Shoulder.L", 0) +
+                    weights.get("Shoulder.R", 0))
+        point.x *= 1 - .15 * head + .13 * upper
+        point.z -= head * (.20 + max(0, point.z - 2.1) * .12)
+        point.y -= head * .13
+        back = max(0, min(1, (point.y + .02) / .55))
+        point.z += upper * back * .18
+        point.y += upper * back * .13
+    body.data.update()
+    # Remove the actual tongue faces; an atlas tint would leave its silhouette.
+    bm = bmesh.new(); bm.from_mesh(body.data); bm.faces.ensure_lookup_table()
+    bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.index in tongue], context="FACES")
+    bmesh.ops.delete(bm, geom=[vertex for vertex in bm.verts if not vertex.link_faces], context="VERTS")
+    bm.to_mesh(body.data); bm.free(); body.data.update()
+    ivory = held_material("yeti-matted-ivory", (.77, .76, .67), .97, pattern="wood")
+    face_mat = held_material("yeti-dark-face", (.075, .079, .069), .97)
+    eyes = held_material("yeti-small-eyes", (.58, .49, .29), .55)
+    black = held_material("yeti-eye-and-mouth-shadow", (.025, .026, .022), .94)
+    assigned, candidates = [], []
+    for polygon in body.data.polygons:
+        color = original_color(body, polygon)
+        point = polygon.center
+        is_eye = .50 < color[0] < .60 and .53 < color[1] < .61 and color[2] > .60
+        front_face = point.z > 1.70 and point.y < -.34 and abs(point.x) < .48
+        if is_eye:
+            mat = eyes
+        elif max(color) < .2:
+            mat = black
+        elif front_face and (color[2] > color[0] * 1.2 or color[0] > color[1] * 1.1):
+            mat = face_mat
+        else:
+            mat = ivory
+            if point.z > .33 and not front_face:
+                candidates.append(polygon.index)
+        assigned.append(mat)
+    # Save anchor weights before replacing the source atlas/UV channels.
+    anchors = []
+    for index in sorted(candidates, key=lambda value: (value * 2654435761) % 4294967291):
+        polygon = body.data.polygons[index]
+        centre = polygon.center.copy()
+        if any((centre - row[0]).length < .135 for row in anchors):
+            continue
+        weights = {}
+        for vertex_index in polygon.vertices:
+            for item in body.data.vertices[vertex_index].groups:
+                name = groups[item.group]
+                weights[name] = weights.get(name, 0) + item.weight / len(polygon.vertices)
+        weights = dict(sorted(weights.items(), key=lambda item: -item[1])[:4])
+        total = sum(weights.values())
+        if total <= 0:
+            raise ValueError("Fur anchor has no original skin weights")
+        anchors.append((centre, polygon.normal.copy(), {name: value / total for name, value in weights.items()}))
+        if len(anchors) == 112:
+            break
+    if len(anchors) < 90:
+        raise ValueError("Insufficient weighted body surface for the planned shag silhouette")
+    finish_held(body, assigned, grain_scale=.35)
+    body["p4YetiBody"] = True
+    vertices, faces, fur_weights = [], [], []
+    for index, (centre, normal, weights) in enumerate(anchors):
+        normal.normalize()
+        across = normal.cross(Vector((0, 0, 1)))
+        if across.length < .01:
+            across = normal.cross(Vector((1, 0, 0)))
+        across.normalize(); along = normal.cross(across).normalized()
+        width = .065 + .02 * (index % 3)
+        base = len(vertices)
+        vertices.extend([centre + across * width,
+                         centre - across * width * .65 + along * width * .65,
+                         centre - across * width * .65 - along * width * .65,
+                         centre + normal * .055 + Vector((0, 0, -.16 - .025 * (index % 3)))])
+        faces.extend([(base, base + 1, base + 3), (base + 1, base + 2, base + 3),
+                      (base + 2, base, base + 3), (base, base + 2, base + 1)])
+        fur_weights.extend([weights] * 4)
+    mesh = bpy.data.meshes.new("Yeti opaque weighted shag")
+    mesh.from_pydata(vertices, [], faces); mesh.update()
+    fur = bpy.data.objects.new("yeti-weighted-shag", mesh)
+    bpy.context.collection.objects.link(fur)
+    fur.parent = body.parent; fur.matrix_world = body.matrix_world.copy()
+    for group in body.vertex_groups:
+        fur.vertex_groups.new(name=group.name)
+    for index, weights in enumerate(fur_weights):
+        for name, value in weights.items():
+            fur.vertex_groups[name].add([index], value, "REPLACE")
+    modifier = fur.modifiers.new("Retained original 43-joint skin", "ARMATURE")
+    modifier.object = armature
+    finish_held(fur, ivory, grain_scale=.18)
+    wear = fur.data.color_attributes["Wear"]
+    for loop in fur.data.loops:
+        tone = .98 if loop.vertex_index % 4 == 3 else .73
+        wear.data[loop.index].color = (tone, tone * .995, tone * .96, 1)
+    fur["p4PreserveSurface"] = True
+    armature["shapeAdaptation"] = "Original weighted body reshaped; tongue faces removed; smaller eyes; " + str(len(anchors)) + " authored opaque weighted fur clumps"
+    return fur
+
+
+def author_walk_off(armature, idle, run):
+    """Author a turn/departure from retained leg motion, with real root travel.
+
+    The original Run stays separately available as in-place lope. This action
+    slows its gait and turns the character before travelling 2.4 metric metres.
+    Exported foot contact and skin motion still require native visual review.
+    """
+    armature.animation_data.action = idle
+    bpy.context.scene.frame_set(int(idle.frame_range[0]))
+    low, high = bounds(meshes())
+    source_metres = (high.z - low.z) / 2.8
+    first, last = run.frame_range
+    cycle = max(1, last - first)
+    samples = []
+    for frame in range(1, 152, 3):
+        armature.animation_data.action = run
+        source_frame = first + ((frame - 1) / 2.5) % cycle
+        bpy.context.scene.frame_set(int(source_frame), subframe=source_frame % 1)
+        bpy.context.view_layer.update()
+        samples.append((frame, {bone.name: bone.matrix_basis.copy()
+                               for bone in armature.pose.bones}))
+    action = bpy.data.actions.new("walk-off")
+    armature.animation_data.action = action
+    for frame, pose in samples:
+        for bone in armature.pose.bones:
+            bone.rotation_mode = "QUATERNION"
+            bone.matrix_basis = pose[bone.name]
+        bpy.context.view_layer.update()
+        turn = min(1, (frame - 1) / 30)
+        turn = turn * turn * (3 - 2 * turn)
+        travel = max(0, (frame - 31) / 120)
+        root = armature.pose.bones["Root"]
+        matrix = Matrix.Rotation(math.pi * turn, 4, "Z") @ root.matrix
+        matrix.translation += Vector((0, 2.4 * source_metres * travel, 0))
+        root.matrix = matrix
+        bpy.context.view_layer.update()
+        for bone in armature.pose.bones:
+            bone.keyframe_insert(data_path="location", frame=frame)
+            bone.keyframe_insert(data_path="rotation_quaternion", frame=frame)
+            bone.keyframe_insert(data_path="scale", frame=frame)
+    for curve in action_curves(action):
+        for point in curve.keyframe_points:
+            point.interpolation = "LINEAR"
+    action.use_fake_user = True
+    armature.animation_data.action = idle
+    bpy.context.scene.frame_set(int(idle.frame_range[0]))
+    bpy.context.view_layer.update()
+    return action
 
 
 def prepare_yeti(objects):
@@ -1026,15 +1720,17 @@ def prepare_yeti(objects):
     armature.animation_data.action = idle
     bpy.context.scene.frame_set(int(idle.frame_range[0]))
     bpy.context.view_layer.update()
+    fur = reshape_yeti(objects, armature)
+    objects.append(fur)
+    author_walk_off(armature, idle, run)
     low, high = bounds(meshes())
     scale = 2.8 / (high.z - low.z)
     roots = [obj for obj in objects if obj.parent not in objects]
     transform = Matrix.Diagonal((scale, scale, scale, 1)) @ Matrix.Translation(Vector((0, 0, -low.z)))
     for obj in roots:
         obj.matrix_world = transform @ obj.matrix_world
-    tinted_original(meshes(), "yeti")
-    armature["preparedClips"] = "idle,roar,chest-beat,lope"
-    armature["sourceClips"] = "Idle and Run retained; roar/chest-beat authored on the original 43-joint skin"
+    armature["preparedClips"] = "idle,roar,chest-beat,lope,walk-off"
+    armature["sourceClips"] = "Idle and in-place Run retained; roar/chest-beat authored; walk-off authored from slowed Run with turn and root travel on the original 43-joint skin"
 
 
 def render_group(group, ids, out, evidence, original=False):

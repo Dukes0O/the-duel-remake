@@ -14,12 +14,13 @@ const wanted = {
   safety: ['armco', 'concrete-wall', 'catch-fence', 'tyre-wall',
     'braking-board-150', 'braking-board-100', 'braking-board-50', 'marshal-post'],
   harbour: ['lantern-tower', 'shopfront-a', 'shopfront-b', 'neon-sign', 'lantern-string', 'harbour-boat'],
-  forest: ['ski-lodge', 'chairlift-tower', 'chairlift-cable', 'chairlift-chair', 'wooden-dock', 'autumn-tree'],
+  forest: ['ski-lodge', 'chairlift-tower', 'chairlift-cable', 'chairlift-chair', 'wooden-dock', 'autumn-tree',
+    'autumn-tree-golden', 'autumn-tree-copper'],
   snow: ['snow-pine', 'snow-ground', 'snow-rock', 'plough-bank', 'gallery', 'summit-hut', 'observatory'],
   characters: ['snowman', 'yeti'],
 };
 const expected = Object.values(wanted).flat();
-assert.equal(expected.length, 33);
+assert.equal(expected.length, 35);
 assert.ok(existsSync(join(home, 'manifest.json')), 'P4-KITS actual prepared assets and manifest are required');
 const manifest = JSON.parse(readFileSync(join(home, 'manifest.json'), 'utf8'));
 assert.equal(manifest.version, 1);
@@ -191,6 +192,45 @@ chair.model.scene.traverse(mesh => {
 requireStructure(frameArea > .1, 'donor has a measurable lower steel chair frame');
 requireStructure(retainedFrameArea / frameArea >= .9,
   `chair LOD retains lower frame surface; fraction=${retainedFrameArea / frameArea}`);
+
+// Reviewed round-two failure witnesses, added before repaired exports.
+const dock = models.get('wooden-dock');
+let dockSurfaceHits = 0;
+for (const x of [-.9, 0, .9]) for (let step = 0; step <= 50; step++) {
+  const z = -3 + step * .12;
+  const high = structuralHit(dock, [x, 2, z], [0, -1, 0]);
+  const low = structuralHit(dock.low, [x, 2, z], [0, -1, 0]);
+  requireStructure((high == null) === (low == null), `dock keeps plank surface at ${x},${z}`);
+  if (high != null && low != null) {
+    dockSurfaceHits++;
+    requireStructure(Math.abs(high - low) <= .015, `dock plank top at ${x},${z}: ${high}/${low}`);
+  }
+}
+requireStructure(dockSurfaceHits > 50, 'dock witnesses cover actual deck planks');
+const dome = models.get('observatory');
+let domeSurfaceHits = 0;
+for (const y of [4, 7, 9]) for (let index = 0; index < 32; index++) {
+  const angle = index * Math.PI / 16;
+  const origin = [12 * Math.sin(angle), y, 12 * Math.cos(angle)];
+  const direction = [-Math.sin(angle), 0, -Math.cos(angle)];
+  const high = structuralHit(dome, origin, direction), low = structuralHit(dome.low, origin, direction);
+  requireStructure((high == null) === (low == null), `dome cover parity at ${y}/${index}`);
+  if (high != null && low != null) {
+    domeSurfaceHits++;
+    requireStructure(Math.abs(high - low) <= .12, `dome cover surface at ${y}/${index}: ${high}/${low}`);
+  }
+}
+requireStructure(domeSurfaceHits > 60, 'dome witnesses cover actual curved shell');
+for (const [quality, asset] of [['High', models.get('start-gantry')], ['LOD', models.get('start-gantry').low]]) {
+  for (let index = 1; index <= 5; index++) {
+    const lamp = asset.model.scene.getObjectByName('lamp-' + index);
+    requireStructure(lamp?.isMesh, `${quality} lamp-${index} remains distinct`);
+    if (!lamp?.isMesh) continue;
+    const size = new THREE.Box3().setFromObject(lamp).getSize(new THREE.Vector3()).toArray().sort((a, b) => b - a);
+    requireStructure(size[1] >= .5, `${quality} lamp-${index} has a readable half-metre lens`);
+  }
+}
+
 assert.deepEqual(structuralFailures, [], 'distant donor structures remain intact');
 const gantry = models.get('start-gantry').model.scene;
 const lamps = [1, 2, 3, 4, 5].map(n => gantry.getObjectByName('lamp-' + n));
@@ -236,6 +276,92 @@ for (const name of ['idle', 'roar', 'chest-beat', 'lope']) {
   mixer.stopAllAction(); mixer.uncacheRoot(yeti.scene);
 }
 assert.equal(signatures.size, 4, 'four distinct motions');
+
+// Round-two redesign adds a departure clip without changing the four original
+// clip assertions above. Read the actual exported skin, not authoring metadata.
+function skinBounds(scene) {
+  scene.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  scene.traverse(mesh => {
+    if (!mesh.isSkinnedMesh) return;
+    mesh.skeleton.update();
+    const positions = mesh.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+      const point = new THREE.Vector3().fromBufferAttribute(positions, i);
+      mesh.applyBoneTransform(i, point);
+      box.expandByPoint(point.applyMatrix4(mesh.matrixWorld));
+    }
+  });
+  assert.equal(box.isEmpty(), false, 'actual weighted Yeti vertices');
+  return box;
+}
+for (const [quality, asset] of [['High', models.get('yeti')], ['LOD', models.get('yeti').low]]) {
+  const model = asset.model, scene = model.scene;
+  const skins = [];
+  scene.traverse(mesh => {if (mesh.isSkinnedMesh) skins.push(mesh);});
+  assert.ok(skins.length, quality + ' retains the original weighted character');
+  for (const mesh of skins) {
+    assert.equal(mesh.skeleton.bones.length, 43, quality + ' original 43-joint rig');
+    const weights = mesh.geometry.attributes.skinWeight;
+    const joints = mesh.geometry.attributes.skinIndex;
+    assert.equal(weights?.count, mesh.geometry.attributes.position.count, quality + ' every vertex weighted');
+    assert.equal(joints?.count, weights.count, quality + ' every weight has a joint');
+    for (let i = 0; i < weights.count; i++) {
+      const values = [weights.getX(i), weights.getY(i), weights.getZ(i), weights.getW(i)];
+      assert.ok(values.every(value => Number.isFinite(value) && value >= 0), quality + ' valid skin weights');
+      assert.ok(Math.abs(values.reduce((a, b) => a + b, 0) - 1) < .001,
+        quality + ' normalized nonzero body and fur weights');
+      for (const joint of [joints.getX(i), joints.getY(i), joints.getZ(i), joints.getW(i)])
+        assert.ok(Number.isInteger(joint) && joint >= 0 && joint < 43, quality + ' original joint indices');
+    }
+  }
+  const mixer = new THREE.AnimationMixer(scene);
+  const idle = THREE.AnimationClip.findByName(model.animations, 'idle');
+  mixer.clipAction(idle).play(); mixer.setTime(0);
+  const standing = skinBounds(scene);
+  assert.ok(Math.abs(standing.min.y) <= .005, quality + ' grounded prepared idle skin');
+  assert.ok(Math.abs(standing.max.y - standing.min.y - 2.8) <= .005, quality + ' 2.8 m prepared idle skin');
+  mixer.stopAllAction();
+  const departure = THREE.AnimationClip.findByName(model.animations, 'walk-off');
+  assert.ok(departure && departure.duration > .3 && departure.tracks.length > 1,
+    quality + ' separately authored playable walk-off');
+  const departureSignature = hash(Buffer.from(JSON.stringify(departure.tracks.map(
+    track => [track.name, [...track.times], [...track.values]]))));
+  assert.equal(signatures.has(departureSignature), false, quality + ' walk-off differs from original four clips');
+  async function originalBone(name) {
+    // GLTFLoader removes periods from runtime names. Resolve the exact source
+    // node index so the witness still requires the original named joint.
+    const indices = model.parser.json.nodes.flatMap((node, index) => node.name === name ? [index] : []);
+    assert.equal(indices.length, 1, quality + ' unique original joint ' + name);
+    const bone = await model.parser.getDependency('node', indices[0]);
+    assert.ok(bone?.isBone && skins.every(mesh => mesh.skeleton.bones.includes(bone)),
+      quality + ' original weighted joint ' + name);
+    return bone;
+  }
+  const rootBone = await originalBone('Root');
+  const legs = await Promise.all(['UpperLeg.L', 'LowerLeg.L', 'UpperLeg.R', 'LowerLeg.R'].map(originalBone));
+  assert.ok(rootBone?.isBone && legs.every(bone => bone?.isBone), quality + ' original root and leg joints');
+  const action = mixer.clipAction(departure);
+  action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; action.play();
+  function sampleDeparture(time) {
+    mixer.setTime(time);
+    const box = skinBounds(scene);
+    return {root: rootBone.getWorldPosition(new THREE.Vector3()),
+      centre: box.getCenter(new THREE.Vector3()),
+      legs: legs.map(bone => bone.quaternion.clone())};
+  }
+  const first = sampleDeparture(0);
+  const phases = [.23, .51, .77, .99].map(fraction => sampleDeparture(departure.duration * fraction));
+  const last = phases.at(-1);
+  const planarDistance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+  assert.ok(planarDistance(first.root, last.root) >= 1, quality + ' actual root departs at least 1 m');
+  assert.ok(planarDistance(first.centre, last.centre) >= 1, quality + ' weighted body departs with root');
+  for (let i = 0; i < legs.length; i++) assert.ok(
+    phases.some(frame => first.legs[i].angleTo(frame.legs[i]) > .01),
+    quality + ' walk-off cycles ' + legs[i].name);
+  mixer.stopAllAction(); mixer.uncacheRoot(scene);
+}
+
 assert.ok(readdirSync(home).every(name => /\.(?:glb|json)$/.test(name)));
-console.log('P4 kits: 33 actual high/low props, provenance, lamps, clearance, debris and clips passed.');
+console.log('P4 kits: 35 actual high/low props, provenance, lamps, clearance, debris and clips passed.');
 console.log(`Bank top profile: ${bankProfileHits} hits, maximum error ${bankMaxProfileError} m.`);
