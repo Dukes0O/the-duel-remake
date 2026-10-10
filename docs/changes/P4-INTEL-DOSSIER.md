@@ -145,6 +145,15 @@ UI tests first failed on the absent screen module. Current checks cover safe
 author text, every map flag/corner, fixed-reference labels, locked/owned entry
 markup and exact ground-based driver-seat pose. The unchanged production
 course/practice UI suite also passes 38 checks.
+The unchanged renderer reuse/lifetime suite passes 176 checks. A dossier
+closes if the named player changes, active play begins or its switch turns off.
+
+Integration `0134a75e` adds three authored circuit layouts and GRIP after the
+24-route reference pass above. Their registry includes them in `COURSE` only
+when each real dev switch is enabled. Final reference coverage must include
+these actual authored definitions under their native flags and repeat the
+build on current physics; the earlier 24-route evidence does not grant that
+expanded coverage. No fake catalog entry or skipped route is acceptable.
 
 Remaining UI/browser checks cover owned and locked
 tracks, the real feature switch, all existing closed circuits, keyboard focus,
