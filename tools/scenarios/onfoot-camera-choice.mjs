@@ -21,15 +21,75 @@ export async function run(c){
   for(const quality of ['high','performance']){
     await c.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
     await c.navigate('/tools/menu-check.html');await c.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','camera menu',60000);
-    await c.evaluate(`(()=>{const a=window.__qaApp;if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only QA required');a.stop();a.audio.setMuted(true);a.onFrame?.(a.duel.state,0);const qaPanel=[...document.querySelectorAll('body > details')].find(n=>n.querySelector(':scope > summary')?.textContent==='MENU QA · TEMPORARY SAVES'),metricsPanel=document.querySelector('#performance-results')?.closest('details');if(!qaPanel||!metricsPanel)throw Error('Specific QA panels missing');qaPanel.hidden=true;metricsPanel.hidden=true;const select=document.querySelector('#foot-camera');if(!select||select.closest('label').hidden)throw Error('Visible camera setting missing');select.value='overhead';select.dispatchEvent(new Event('change',{bubbles:true}));if(a.footCameraMode!=='overhead')throw Error('Menu setting failed');select.value='first-person';select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
-    if(quality==='high')await capture('desktop-camera-setting');
-    await c.evaluate(`(()=>{const a=window.__qaApp;a.setGraphicsQuality(${JSON.stringify(quality)});a.setCamera('wide');a.startCampaign({mode:'wasteland',startStage:0,seed:1989});a.stop();const s=a.duel.state;Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,lateral:0,prevLateral:0,speedMph:0,traffic:[]});s.rival.s=s.s+55;s.rival.lateral=3;s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;a.duel._rival=()=>{};a.duel._traffic=()=>{};a.onFrame?.(s,0);window.__render.renderFrame();})()`);
+    await c.evaluate(`(() => {
+      const a = window.__qaApp;
+      if (!window.name.startsWith('__duel_qa_tab_v2:'))
+        throw Error('Memory-only QA required');
+      a.stop();
+      a.audio.setMuted(true);
+      a.profile = {
+        ...a.profile,
+        wasteland: {...a.profile.wasteland, discoveredGate: true},
+      };
+      a._saveProfile();
+      a.onFrame?.(a.duel.state, 0);
+      const qaPanel = [...document.querySelectorAll('body > details')].find(node =>
+        node.querySelector(':scope > summary')?.textContent === 'MENU QA · TEMPORARY SAVES');
+      const metricsPanel = document.querySelector('#performance-results')?.closest('details');
+      if (!qaPanel || !metricsPanel) throw Error('Specific QA panels missing');
+      qaPanel.hidden = true;
+      metricsPanel.hidden = true;
+      if (document.querySelector('#foot-camera'))
+        throw Error('Removed camera menu setting is still present');
+    })()`);
+    if(quality==='high')await capture('menu-no-camera-setting');
+    await c.evaluate(`(() => {
+      const a = window.__qaApp;
+      a.setGraphicsQuality(${JSON.stringify(quality)});
+      a.setCamera('wide');
+      a.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989});
+      a.stop();
+      a.setFootCamera('first-person');
+      if (a.footCameraMode !== 'first-person' ||
+          a.profile.raceSettings.footCamera !== 'first-person')
+        throw Error('Native first-person camera setup did not update live and saved settings');
+      const s = a.duel.state;
+      Object.assign(s, {status: 'racing', countdown: 0, paused: false,
+        s: 500, prevS: 500, lateral: 0, prevLateral: 0, speedMph: 0, traffic: []});
+      s.rival.s = s.s + 55;
+      s.rival.lateral = 3;
+      s.raids = null;
+      s.combat.aiTimer = Infinity;
+      s.combat.pickupTimer = Infinity;
+      a.duel._rival = () => {};
+      a.duel._traffic = () => {};
+      a.onFrame?.(s, 0);
+      window.__render.renderFrame();
+    })()`);
     await c.waitFor('window.__qaApp.visualReady','camera race ready',60000);
     await key(c,'keyDown','KeyF','f',70);await c.evaluate('window.__qaApp.advance(.42)');await key(c,'keyUp','KeyF','f',70);
     await c.waitFor("window.__render.scene.getObjectByName('First-person hands and gear')?.userData.assetStatus==='ready'",'first-person hands',60000);
     await capture(`${quality}-first-person`);
     await tap(c,'KeyC','c',67);await refresh(c);
-    report.checks[quality]=await c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=window.__render,g=r.scene.getObjectByName('First-person hands and gear');if(a.footCameraMode!=='overhead'||g.visible||r.camera.position.distanceTo({x:s.fighter.x,y:s.fighter.y+1.62,z:s.fighter.z})<3)throw Error('Overhead body/gear selection failed');const body=r.scene.getObjectByName('rigged-fighter-0');if(!body?.visible)throw Error('Existing local body missing');const at=a.duel.course.groundAt(s.rival.s,s.rival.lateral),f=s.fighter;f.yaw=Math.atan2(at.x-f.x,at.z-f.z);f.pitch=Math.atan2(at.y+1-f.y-1.62,Math.hypot(at.x-f.x,at.z-f.z));return{body:body.userData.crewId,footCamera:a.footCameraMode,carCamera:a.cameraMode};})()`);
+    report.checks[quality] = await c.evaluate(`(() => {
+      const a = window.__qaApp;
+      const s = a.duel.state;
+      const r = window.__render;
+      const gear = r.scene.getObjectByName('First-person hands and gear');
+      if (a.footCameraMode !== 'overhead' || gear.visible ||
+          r.camera.position.distanceTo({x: s.fighter.x, y: s.fighter.y + 1.62, z: s.fighter.z}) < 3)
+        throw Error('Overhead body/gear selection failed');
+      if (a.profile.raceSettings.footCamera !== 'overhead')
+        throw Error('Native camera switch was not saved in this player career');
+      const body = r.scene.getObjectByName('rigged-fighter-0');
+      if (!body?.visible) throw Error('Existing local body missing');
+      const at = a.duel.course.groundAt(s.rival.s, s.rival.lateral);
+      const fighter = s.fighter;
+      fighter.yaw = Math.atan2(at.x - fighter.x, at.z - fighter.z);
+      fighter.pitch = Math.atan2(at.y + 1 - fighter.y - 1.62,
+        Math.hypot(at.x - fighter.x, at.z - fighter.z));
+      return {body: body.userData.crewId, footCamera: a.footCameraMode, carCamera: a.cameraMode};
+    })()`);
     const point=await c.evaluate(`(()=>{const r=document.querySelector('#view3d canvas').getBoundingClientRect();return{x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)};})()`);
     const mouse=(type,button)=>c.command('Input.dispatchMouseEvent',{type,button,clickCount:1,...point});
     await mouse('mousePressed','right');await c.waitFor('!!document.pointerLockElement','overhead aim pointer lock',10000);await c.evaluate('window.__qaApp.advance(.81)');await capture(`${quality}-overhead-aim`);

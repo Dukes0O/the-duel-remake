@@ -6,10 +6,14 @@ export async function run(context) {
   'memory-only salvage scene', 60_000);
   await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989}))
       throw Error('Wasteland race did not start');
     app.stop();
     const duel = app.duel, state = duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('raider-salvage fixture launched without gate discovery');
     const crate = state.raids?.zones[0]?.salvage;
     if (!crate) throw Error('Ledge salvage missing');
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,

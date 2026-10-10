@@ -8,7 +8,7 @@ export async function run(context){
   const selection=await context.evaluate(`(()=>{
     const app=window.__qaApp;
     app.profile={...app.profile,wasteland:{...app.profile.wasteland,
-      xp:100000,rank:30}};
+      discoveredGate:true,scrap:300,xp:100000,rank:30}};
     app._saveProfile();
     document.querySelector('#armory-open').click();
     const cards=[...document.querySelectorAll('#modal-layer [data-crew-select]')];
@@ -19,6 +19,9 @@ export async function run(context){
     if(app.profile.wasteland.crew.selected!=='wren'||
         selected?.getAttribute('aria-pressed')!=='true')
       throw Error('Wren selection did not persist');
+    if(!app.profile.wasteland.crew.unlocked.includes('wren')||
+        app.profile.wasteland.scrap!==0)
+      throw Error('Native Wren hire did not grant ownership and debit 300 scrap');
     return {count:cards.length,selected:app.profile.wasteland.crew.selected,
       memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value};
   })()`);

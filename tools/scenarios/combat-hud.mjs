@@ -15,6 +15,8 @@ async function pass(context, quality, width, height) {
 
   const result = await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0, opponentCount: 3, seed: 1989}))
       throw Error('Combat HUD race did not start');
     app.stop();
@@ -62,10 +64,11 @@ async function pass(context, quality, width, height) {
     textObserver.disconnect();
     const playerArmor = document.querySelector('.combat-player-armor');
     const bomb = document.querySelector('[data-combat-weapon=bomb]');
+    const visibleBounds = visible.getBoundingClientRect();
     return {memoryOnly: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value,
       slots: document.querySelectorAll('[data-combat-weapon]').length,
       markers: markers.length, visible: markers.filter(marker => marker.dataset.placement === 'over-car').length,
-      markerX: parseFloat(visible.style.left) / 100,
+      markerX: (visibleBounds.left + visibleBounds.width / 2) / innerWidth,
       armor: playerArmor.querySelector('strong').textContent,
       bomb: bomb.querySelector('.combat-slot-state').textContent,
       hit: document.querySelector('.combat-hit-marker').classList.contains('is-visible'),
@@ -95,9 +98,18 @@ export async function run(context) {
       'ordinary combat menu', 60_000);
     const ordinary = await context.evaluate(`(() => {
       const app = window.__qaApp;
-      app.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989});
+      if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value ||
+          !window.name.startsWith('__duel_qa_tab_v2:'))
+        throw Error('Undiscovered HUD control requires memory-only storage');
+      const added = app.addPlayer('HUD undiscovered');
+      if (!added.ok || app.profile.wasteland.discoveredGate !== false)
+        throw Error('Undiscovered HUD control did not create a fresh player');
+      if (!app.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989}))
+        throw Error('Undiscovered HUD race did not start');
       app.stop();
       const state = app.duel.state;
+      if (state.wastelandGateDiscovered !== false)
+        throw Error('Fresh HUD race unexpectedly has Wasteland discovery');
       state.status = 'racing';
       state.countdown = 0;
       app.onFrame?.(state);
@@ -105,7 +117,7 @@ export async function run(context) {
         upgraded: !document.querySelector('.combat-upgraded-hud').hidden};
     })()`);
     if (!ordinary.legacy || ordinary.upgraded)
-      throw Error(`Flag-off combat HUD changed: ${JSON.stringify(ordinary)}`);
+      throw Error(`Undiscovered combat HUD changed: ${JSON.stringify(ordinary)}`);
   } finally {
     await context.command('Emulation.clearDeviceMetricsOverride');
   }

@@ -164,7 +164,15 @@ async function setup(context,quality) {
   await context.evaluate(`(() => {
     if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
     const select=document.querySelector('#graphics-quality');select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));
-    const app=window.__qaApp;app.startCampaign({mode:'wasteland',startStage:0,seed:1989});app.stop();
+    const app = window.__qaApp;
+    app.profile = {...app.profile,
+      wasteland: {...app.profile.wasteland, discoveredGate: true}};
+    app._saveProfile();
+    if (!app.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989}))
+      throw Error('First-person race did not start');
+    app.stop();
+    if (!app.duel.state.wastelandGateDiscovered || !app.duel.state.footTransition)
+      throw Error('First-person race is missing native on-foot eligibility');
     const s=app.duel.state;Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,lateral:0,prevLateral:0,speedMph:0,traffic:[]});
     s.rival.s=s.s+55;s.rival.lateral=3;s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
     app.duel._rival=()=>{};app.duel._traffic=()=>{};app.onFrame?.(s);window.__render.renderFrame();

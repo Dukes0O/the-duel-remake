@@ -1,97 +1,54 @@
 # Wasteland play-test inbox
 
-## Release approved by Kyle, 10 October 2026
+## Approved polish release, 10 October 2026
 
-Claude approved Smoke round two and Arena round two (final). Kyle authorized
-merges in order: Smoke, Flame after sync and a fresh lane gate, then Arena.
-After all three, run the full tier alone and complete the release checks
-before updating the real game. The earlier art holds are cleared.
+Kyle relayed Claude's final approval of Smoke round two and Arena round two,
+and authorized the real-game release after the required checks. Smoke,
+Flame and Arena have merged in that order. Release preparation enables
+Seekers by default; final combined checks and installation are pending.
 
+What to try after installation:
 
-## Claude verdicts received from Kyle, 10 October 2026
+- Fire Rocket Pods at a car ahead. Watch the lock brackets and try breaking
+  the chase with Smoke, scenery, a shield or a Decoy Drone.
+- Drive through Smoke Screen and Wren's smoke; check the grey puffs,
+  darker undersides, moving edges and inside-cloud haze.
+- Try the Flamethrower and Cinder's fire. Look for fuller bursts, burning
+  surfaces and scorch marks.
+- Visit Salt Flats for taller island scrap and varied ridges. Check the
+  tanker's distant lamps, roof and separated labels during Convoy Raid.
+- Jump over low scenery and drive into it on the ground. Ordinary arena
+  armor is slightly higher; warlord health is unchanged.
 
-- Flame round one approved. Frame-cost acceptance uses p95; the High mean
-  increase is noted, not a blocker. Merge after Smoke.
-- Smoke round two: varied overlapping soft grey puffs, broken wispy edges,
-  light tops and darker undersides, drift and churn; preserve concealment.
-- Arena round two: about twice the inner-island scrap in tall clusters of
-  approved pieces, visibly varied ridge widths, distant lit tanker lamps
-  and roof plate readable at play distance. Labels are approved.
-- Height fix approved: use the existing ordinary arena armor lever just
-  enough to bring Medium wrecks to 14 or less. Warlord health stays exact.
-- Seekers: report average actual armor damage per Rocket Pods firing on
-  matched seeds, off and on. On may be at most 1.3 times off. Kyle's
-  initial value was 10 damage per rocket. Kyle then authorized 8 if the
-  repeat after Height still exceeds the cap.
+Accepted decisions and limits:
 
-All prior question holds are cleared. Only the next Smoke and Arena sheets
-are marked waiting_on: claude. Flame keeps its Smoke merge dependency.
+- Height: ordinary armor 1.20 to 1.21 brings Medium wrecks from 14.167 to
+  13.833, inside the original 10–14 target. Replay changes contain only
+  armor readings; movement, timing and results remain exact.
+- Seekers: Kyle first chose 10 damage, then authorized 8 if the repeated
+  post-Height check still exceeded the cap. He explicitly accepted the
+  measured 1.328662 damage-per-firing ratio at 8 as an exception to 1.3.
+  Paired results are 112 armor/471 firings versus 80/447; all thirty races
+  per variant finish with zero unattributed damage. Off Pods and Gunn stay
+  10; 7.8 is not applied. The original metric is not claimed as a pass.
+- Smoke: Claude approved the varied soft grey puffs, wispy edges, light
+  tops/dark undersides and drift/churn. Screen visible-car fractions at
+  10/25 m are High 7.779%/2.460%, Performance 0.886%/2.127%; inside haze
+  is 96%. Wren's native 2.5 m cloud shares appearance/haze but does not fit
+  the whole F42. Actual frame p95 rises at most 0.595%; work p95 5.714%.
+- Flame: round one approved; two-flame p95 rises 18.2 to 18.8 ms in High
+  (+3.3%) and stays 18.2 ms in Performance. The 12.2% High mean rise is
+  recorded and explicitly accepted as non-blocking.
+- Arena: final round two approved. Island shells rise from 48 to 93 in
+  tall clusters; ridges vary in width; lit tanker details read at 89.16794 m.
+  Labels remain approved. Actual-source p95 stays 16.8 ms in both qualities.
+  The close-up's blocky bright lamps were included in the final art verdict.
 
-## POLISH-ARENA round two for Claude
-
-[Final round-two comparison sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-arena/docs/board/looks/polish-arena/round-2.jpg)
-shows released/candidate views in both qualities. Relative to round one,
-island shells rise from 48 to 93 in three tall clusters; ridge widths vary clearly. Lit tanker
-lamps and roof plate are shown in the full native frame at 89.16794 m, with
-a labelled 3.5x detail below. Labels retain their earlier approval.
-
-Native boundary, render, effects, label and lamp checks pass; state is exact,
-build passes, and the actual-source p95 stays 16.8 ms in both qualities.
-The stronger lamps look blocky in the close-up; final art judgment remains
-Claude's. Source/pin review is clear. Candidate 1a3f30ce is outside integration;
-its broad lane gate follows approval. This is the second and final allowed round.
-
-## POLISH-SMOKE round two for Claude
-
-[Round-two comparison sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/smoke/round-2.jpg)
-shows soft grey puffs, darker undersides and broken edges in both qualities.
-The native cloud drifts and churns. Screen visible-car fractions at 10/25 m
-are High 7.779%/2.460% and Performance 0.886%/2.127%, below the unchanged 10%
-limit. All eight repeated controls match exactly. Twelve native views pass
-with no browser warnings or errors; inside haze remains 96%.
-
-Wren keeps its native 2.5 m radius; the F42 does not fit inside it, so its
-rows cover shared appearance and haze only. Source review, focused checks
-and build pass. The actual-source moving-camera pair shows at most +0.595%
-p95 frame time and +5.714% preparation/render work, both below 10%. The
-recipe includes inspection draws alongside native frames and stresses both
-old and new High runs equally; it is a relative cost comparison.
-
-Candidate b4494e99 is outside integration and awaits Claude's art verdict.
-Two of three rounds used. Broad lane gate follows approval; approved Flame
-is synced to this source and still merges after Smoke.
-
-## POLISH-SEEKERS: Kyle accepted 8 damage and the measured ratio
-
-On 10 October, Kyle accepted the current 8-damage result and authorized
-merge. Seekers remove 112 armor / 471 firings versus ordinary Pods' 80 / 447:
-ratio 1.328662. This exceeds the original 1.3 target; Kyle explicitly accepted
-that measured exception. All thirty races per variant finish with zero
-unattributed damage. The report remains truthful; no assertion is weakened.
-
-Keep seeker-enabled Pods at 8 damage, captured at launch. Ordinary Pods and
-Gunn remain at 10. The proposed 7.8 tuning is not applied. Focused tests and
-build pass; the fresh lane gate precedes merge. Claude should carry this
-accepted exception into the review and release notes.
-
-## Current polish evidence
-
-Flame round one is approved. Its [sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-flame/docs/board/looks/polish-flame/round-1.jpg)
-covers native Flamethrower and Cinder in both qualities. Eight browser views,
-source review and focused checks pass. Two-flame p95 is 18.2 to 18.8 ms in
-High (+3.3%) and remains 18.2 ms in Performance. High mean rises 12.2%; Kyle
-confirmed that it does not block approval. Flame is synced with Height and
-Smoke round two at 81a9b64b: focused checks, build and all eight native views
-pass. After Smoke approval/merge, sync latest integration and run the fresh
-lane/build gate before Flame merges.
-
-Height's approved armor adjustment is 1.20 to 1.21 for ordinary arena cars:
-Medium falls from 14.167 to 13.833 wrecks against the unchanged 10–14 limit.
-Warlord health is exact. Reviewed replay pins change only armor readings;
-movement, timing and results remain identical. Merged after lane 364/364,
-build and source review passed.
-
-Only the next Smoke and Arena art sheets require Claude's next verdict.
+Approved sheets: [Smoke](board/looks/smoke/round-2.jpg),
+[Flame](board/looks/polish-flame/round-1.jpg),
+[Arena](board/looks/polish-arena/round-2.jpg).
+See [verification](VERIFICATION.md) for gate and release evidence.
+No art hold remains on these five cards.
 
 ## Released 9 October 2026: try these in the main game
 

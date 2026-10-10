@@ -8,6 +8,7 @@ import {stepFootTransition} from '../src/onfoot-transition.js';
 import {point, fireWeapon} from '../src/combat-weapons.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
+import {stepFuelRun} from '../src/arena/modes/fuel-run.js';
 import {sweepObstacle} from '../src/collision.js';
 import {FIGHTER_RULES} from '../src/onfoot.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
@@ -24,14 +25,16 @@ function place(actor, s, lateral = 0) {
     speedMph: 0, headingError: 0, airHeight: 0, prevAirHeight: 0,
     impactTimer: 0, combatShield: 0});
 }
-function fixture({race = false} = {}) {
+function fixture({race = false, seeker = false, mode = 'fuel-run'} = {}) {
   const duel = new Duel({seed: 1989, featureFlags: createFeatureFlags({storage: null,
-    qa: true, overrides: {'crew-gear': true, 'cpu-crews': true}})});
+    qa: true, overrides: {'crew-gear': true, 'cpu-crews': true,
+      // Keep historical straight-ray cases off; seeker cases use the released catalog.
+      ...(seeker ? {} : {'seeker-rockets': false})}})});
   if (race) duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', crewId: 'nell',
     seed: 1989, startStage: 0, opponentCount: 2, cpuDifficulty: 'medium', discoveredGate: true});
   else {
     duel.state.wastelandGateDiscovered = true;
-    equal(duel.startArenaEvent({mode: 'fuel-run', car: 'falcone_f42', crewId: 'nell',
+    equal(duel.startArenaEvent({mode, car: 'falcone_f42', crewId: 'nell',
       opponents: [{car: 'dusthawk_rally'}, {car: 'aurora_gt'}]}), true, 'the real arena admits the fighter fixture');
   }
   const state = duel.state;
@@ -134,12 +137,12 @@ function splashFixture(fraction) {
   return {...f, fighter, shot, impact, car};
 }
 
-test('native Rocket Pods still hit a car for ten armor once without foot-gear attribution', () => {
+test('legacy Rocket Pods with seekers off hit a car for ten armor once without foot-gear attribution', () => {
   const f = fixture(), car = f.state.opponents[1], armor = car.armor;
   place(f.state, 230, 0);
   const shot = aimAndLaunch(f, f.state.opponents[0], point(f.duel, car));
   resolve(f, shot);
-  near(car.armor, armor - 10, 'the released car damage remains ten armor');
+  near(car.armor, armor - 10, 'legacy car damage with seekers off remains ten armor');
   const after = car.armor; stepProjectiles(f.duel, DT);
   equal(car.armor, after, 'a consumed native rocket cannot hit a car twice');
   equal(f.events.filter(e => e.arsenalCue === 'weapon.rockets.hit').length, 1, 'one native shot produces one blast');
@@ -157,6 +160,49 @@ test('the earliest real player fighter intercepts a native rocket before a later
   equal(fighter.knockedDown, true, 'direct Rocket Pods blast knocks the fighter down inside half radius');
   equal(car.armor, armor, 'the later car outside the actual fighter blast remains untouched');
   ok(f.events.some(e => e.combatHit && e.fighter && e.enemy && !e.footGearHit), 'the fighter hit retains enemy car attribution');
+});
+
+// This car-hit witness uses ordinary arena targeting; the fighter witness below uses Fuel Run.
+test('released seeker Rocket Pods hit a car for eight armor once', () => {
+  const f = fixture({seeker: true, mode: 'last-car-rolling'}), car = f.state.opponents[1], armor = car.armor;
+  equal(f.duel.featureFlags.enabled('seeker-rockets'), true, 'the production catalog enables seekers without an override');
+  place(f.state, 230, 0);
+  const shot = aimAndLaunch(f, f.state.opponents[0], point(f.duel, car));
+  equal(shot.damage, 8, 'the real released producer records eight armor damage');
+  ok(shot.seekerTargetId != null, 'the real released producer acquires a chase');
+  resolve(f, shot);
+  near(car.armor, armor - 8, 'released seeker contact removes eight armor');
+  const after = car.armor; stepProjectiles(f.duel, DT);
+  equal(car.armor, after, 'a consumed seeker cannot hit a car twice');
+  equal(f.events.filter(e => e.arsenalCue === 'weapon.rockets.hit').length, 1, 'one native seeker produces one blast');
+  ok(!f.events.some(e => e.footGearHit), 'seeker car rockets are not signature foot gear');
+});
+
+test('the earliest real player fighter intercepts a released seeker before a later car', () => {
+  const f = fixture({seeker: true}), fighter = exit(f), car = f.state.opponents[1];
+  // Fuel Run permits exiting, and only a real fuel carrier is a seeker target.
+  const pose = {s: car.s, lateral: car.lateral};
+  const canister = f.state.arena.fuelRun.canisters.find(item => !item.carriedBy);
+  place(car, canister.s, canister.lateral);
+  stepFuelRun(f.duel, DT);
+  equal(f.state.arena.participants.find(p => p.id === car.arenaId).fuelCanisterId, canister.id,
+    'the native pickup installs the actual target carrier record');
+  equal(canister.carriedBy, car.arenaId, 'the real generated canister belongs to the target');
+  ok(f.events.some(e => e.fuelPickup?.participantId === car.arenaId),
+    'the real Fuel Run pickup makes the later car an eligible chase target');
+  place(car, pose.s, pose.lateral);
+  place(f.state, 230, 0);
+  const shot = aimAndLaunch(f, f.state.opponents[0], point(f.duel, car));
+  equal(shot.damage, 8, 'the intercepted seeker retains its released launch damage');
+  ok(shot.seekerTargetId != null, 'the intercepted seeker starts a real car chase');
+  placePlayerOnRay(f, fighter, shot);
+  const armor = car.armor, hit = resolve(f, shot);
+  ok(hit && Math.hypot(hit.x - fighter.x, hit.z - fighter.z) < 1,
+    'the native seeker sweep stops at the earlier fighter body');
+  equal(fighter.knockedDown, true, 'direct seeker contact knocks the fighter down inside half radius');
+  equal(car.armor, armor, 'the later car outside the actual fighter blast remains untouched');
+  ok(f.events.some(e => e.combatHit && e.fighter && e.enemy && !e.footGearHit),
+    'the seeker fighter hit retains enemy car attribution');
 });
 
 for (const [fraction, down] of [[.75, false], [.49, true]]) {

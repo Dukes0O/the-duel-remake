@@ -55,9 +55,12 @@ async function pass(context, quality) {
     await new Promise(done=>setTimeout(done,700));
     const ordinary=await sample();
 
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode:'wasteland',startStage:0,opponentCount:3,seed:1989}))
       throw Error('Armored race did not start');
     const state=setup();
+    if(state.wastelandGateDiscovered!==true)throw Error('Armored fixture launched without gate discovery');
     if (!Number.isFinite(state.armor))throw Error('Armored race is missing armor');
     await ready();
     await new Promise(done=>setTimeout(done,700));

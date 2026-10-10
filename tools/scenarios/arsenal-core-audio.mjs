@@ -3,8 +3,10 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {ffmpeg} from '../audio/codec.mjs';
 import {measureLoudness} from '../audio/measurements.mjs';
+import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
+  from '../audio/capture-witness.mjs';
 
-async function capture(quality, side) {
+async function capture(quality, side, recorder) {
   const sleep = ms => new Promise(done => setTimeout(done, ms));
   const app = window.__qaApp, audio = app.audio;
   if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value || !window.__qaMemoryBackupStore)
@@ -61,27 +63,28 @@ async function capture(quality, side) {
     }
     window.dispatchEvent(new KeyboardEvent('keydown', {code: 'KeyW', key: 'w', bubbles: true}));
   }
-  const worklet = `class Meter extends AudioWorkletProcessor {
-    constructor(){super();this.pcm=new Float32Array(4096);this.at=0;this.first=0;}
-    process(inputs){const a=inputs[0]||[],l=a[0],r=a[1]||l;
-      for(let i=0;i<128;i++){if(!this.at)this.first=currentFrame+i;
-        this.pcm[this.at++]=l?.[i]||0;this.pcm[this.at++]=r?.[i]||0;
-        if(this.at===4096){this.port.postMessage({frame:this.first,pcm:this.pcm},[this.pcm.buffer]);
-          this.pcm=new Float32Array(4096);this.at=0;}}
-      return true;}}
-    registerProcessor('arsenal-native-meter',Meter);`;
+  const worklet = recorder.worklet;
+  const witnessValues = recorder.createWitness(ctx.sampleRate);
+  const witnessBuffer = ctx.createBuffer(1, witnessValues.length, ctx.sampleRate);
+  witnessBuffer.copyToChannel(witnessValues, 0);
+  const witnessSource = ctx.createBufferSource();
+  witnessSource.buffer = witnessBuffer;
+  witnessSource.playbackRate.value = 1;
   const url = URL.createObjectURL(new Blob([worklet], {type: 'text/javascript'}));
   try {await ctx.audioWorklet.addModule(url);} finally {URL.revokeObjectURL(url);}
   function meter(node) {
     const chunks = [], tap = new AudioWorkletNode(ctx, 'arsenal-native-meter',
-      {numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2]}), silent = ctx.createGain();
+      {numberOfInputs: 2, numberOfOutputs: 1, outputChannelCount: [2]}), silent = ctx.createGain();
     silent.gain.value = 0; tap.connect(silent); silent.connect(ctx.destination);
     tap.port.onmessage = event => chunks.push(event.data); node.connect(tap);
+    witnessSource.connect(tap, 0, 1);
     return {chunks, stop(){node.disconnect(tap);tap.disconnect();silent.disconnect();tap.port.close();}};
   }
   let began = ctx.currentTime, epochFrame = null;
   const tracks = {mix: meter(audio.output),
     engine: meter(audio.buses.engine), weapons: meter(audio.buses.weapons)};
+  // This native source feeds only the diagnostic input; the worklet emits silence.
+  witnessSource.start();
   const native = [], cues = [], frames = [];
   const original = {event: audio.event, play: audio._playCue, buffer: audio._cueBuffer,
     space: audio._spatialOutput, frame: app.onFrame};
@@ -224,6 +227,7 @@ async function capture(quality, side) {
     audio.event = original.event;
     audio._playCue = original.play; audio._cueBuffer = original.buffer;
     audio._spatialOutput = original.space; app.onFrame = original.frame;
+    witnessSource.stop(); witnessSource.disconnect();
     for (const track of Object.values(tracks)) track.stop();
     await sleep(40);
   }
@@ -244,15 +248,31 @@ async function capture(quality, side) {
     const skip = first ? Math.max(0, epochFrame - first.frame) : 0;
     const length = chunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0) - skip * 2;
     const pcm = new Float32Array(Math.max(0, length));
+    const witness = new Float32Array(pcm.length / 2);
     let at = 0;
     for (const [i, chunk] of chunks.entries()) {
       const samples = i ? chunk.pcm : chunk.pcm.subarray(skip * 2);
+      witness.set(i ? chunk.witness : chunk.witness.subarray(skip), at / 2);
       pcm.set(samples, at); at += samples.length;
     }
     const bytes = new Uint8Array(pcm.buffer); let binary = '';
     for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
+    const witnessBytes = new Uint8Array(witness.buffer); let witnessBinary = '';
+    for (let i = 0; i < witnessBytes.length; i += 32768)
+      witnessBinary += String.fromCharCode(...witnessBytes.subarray(i, i + 32768));
+    const callbackHeaders = allChunks.map(chunk => ({frame: chunk.frame,
+      pcmFrames: chunk.pcm.length / 2, witnessFrames: chunk.witness.length,
+      callbacks: chunk.callbacks}));
+    const measuredCallbacks = chunks.flatMap((chunk, index) => chunk.callbacks.filter(
+      callback => index || callback.chunkOffset + 128 > skip));
+    const witnessDiagnostic = recorder.inspectWitness(witness, witnessValues);
+    witnessDiagnostic.inputLengths = {callbacks: measuredCallbacks.length,
+      missingOrShortLeft: measuredCallbacks.filter(item => item.leftFrames !== 128).length,
+      nonMonoOrStereoRight: measuredCallbacks.filter(item => ![0, 128].includes(item.rightFrames)).length,
+      missingOrShortWitness: measuredCallbacks.filter(item => item.witnessFrames !== 128).length};
     const firstFrame = first ? Math.max(epochFrame, first.frame) : null;
-    return {pcmBase64: btoa(binary), frames: pcm.length / 2, chunkCount: chunks.length,
+    return {pcmBase64: btoa(binary), witnessBase64: btoa(witnessBinary),
+      witnessDiagnostic, callbackHeaders, measuredFirstChunkSkip: skip, frames: pcm.length / 2, chunkCount: chunks.length,
       epochFrame, firstFrame, lastFrame: chunks.at(-1)?.frame ?? null,
       setupSamplesDiscarded: (allChunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0) - pcm.length) / 2,
       totalGapCount: allGaps.length, measuredGapCount: measuredGaps.length,
@@ -272,7 +292,7 @@ export async function run(context) {
     // Preserve native events, input frames and diagnostic headers before any
     // file validation. Never serialize large Float32/base64 payloads to JSON.
     const metadata = rows.map(row => ({...row, tracks: Object.fromEntries(
-      Object.entries(row.tracks).map(([kind, {pcmBase64, ...track}]) => [kind, track]))}));
+      Object.entries(row.tracks).map(([kind, {pcmBase64, witnessBase64, ...track}]) => [kind, track]))}));
     await writeFile(join(context.outputDir, 'capture.json'), JSON.stringify({status, quality, rows: metadata,
       limitations: ['Human listening and cue recognition remain unmeasured', 'No release or live save access']}, null, 2) + '\n');
   }
@@ -282,8 +302,21 @@ export async function run(context) {
       'memory-only Arsenal audio App', 60_000);
     await context.evaluate(`(() => {const select=document.querySelector('#graphics-quality');
       select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
-    const row = await context.evaluate('(' + capture.toString() + ')(' + JSON.stringify(quality) + ',' + side + ')');
+    const recorder = '{createWitness:(' + createCaptureWitness.toString() +
+      '),inspectWitness:(' + inspectCaptureWitness.toString() +
+      '),worklet:' + JSON.stringify(recorderWorkletSource) + '}';
+    const row = await context.evaluate('(' + capture.toString() + ')(' +
+      JSON.stringify(quality) + ',' + side + ',' + recorder + ')');
     row.validationStatus = 'partial'; rows.push(row);
+    // Write all three raw tracks before any existing assertion can abort.
+    // These are the exact measured PCM and matching independent input samples.
+    for (const [kind, track] of Object.entries(row.tracks)) {
+      track.rawFile = quality + '-' + kind + '.f32le';
+      track.witnessFile = quality + '-' + kind + '-witness.f32le';
+      await writeFile(join(context.outputDir, track.rawFile), Buffer.from(track.pcmBase64, 'base64'));
+      await writeFile(join(context.outputDir, track.witnessFile), Buffer.from(track.witnessBase64, 'base64'));
+      delete track.witnessBase64;
+    }
     await persist('validating', quality);
     for (const [kind, track] of Object.entries(row.tracks)) {
       if (!track.contiguous || !track.frames) {

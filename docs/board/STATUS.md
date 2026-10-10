@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-10T17:22:12.724Z
+Observed at: 2026-10-10T19:30:58.817Z
 
-Observation commit: c911a420db3d6c4440b9b194d2662f6f69a1fa1d
+Observation commit: 2bbabd9f3b5a5d774a7a39767fc6334447425423
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: c911a420db3d6c4440b9b194d2662f6f69a1fa1d
+Integration HEAD: 2bbabd9f3b5a5d774a7a39767fc6334447425423
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -22,7 +22,7 @@ Last recorded full run: 2026-10-10T16:08:16.721Z; tested commit: ac01cbe6c694619
 
 | Switch | State |
 | --- | --- |
-| seeker-rockets | dev |
+| seeker-rockets | on |
 | convoy-raid | on |
 | tollkeeper | on |
 | blackiron | on |
@@ -46,12 +46,11 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/polish-arena | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-arena |
-| codex/release-2026-10-10 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/release-polish |
+| codex/release-2026-10-10 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/release-polish |
 | codex/tools/callback-diagnostics | 5 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 15 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 15 | unknown | true | false | unknown |
-| lane/audio/aud-17-picks | 15 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
+| lane/audio/aud-17-picks | 15 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
 
@@ -59,7 +58,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/polish-arena | unknown | 2026-10-10T10:21:42-07:00 | 0 | last commit 2026-10-10T10:21:42-07:00 | docs/board/looks/polish-arena/round-1-review.md, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/board/looks/polish-arena/round-2.jpg, docs/changes/POLISH-ARENA.md |
+| codex/release-2026-10-10 | RELEASE-2026 | 2026-10-10T12:30:19-07:00 | 0 | last commit 2026-10-10T12:30:19-07:00 | docs/changes/RELEASE-2026-10-10.md, src/feature-flags.js, tools/audio/capture-witness.mjs, tools/scenarios/arena-pit.mjs, tools/scenarios/armor-kit-purchase.mjs |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 5 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -69,14 +68,14 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 270,047,923 B | +0 B | 250,000,000 B |
-| Wasteland models | 112,189,772 B | +5,025,264 B | 60,000,000 B |
-| Largest runtime file | 28,308,656 B | +5,025,264 B | 8,000,000 B |
+| Wasteland models | 112,189,772 B | +0 B | 60,000,000 B |
+| Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
-| Review `looks/` | 18,377,648 B | +914,985 B | 20,000,000 B |
-| Added bytes in last merge | 1,406,289 B | +0 B | 5,000,000 B |
-| All `public/` | 270,657,947 B | +5,025,264 B | unavailable |
-| Git objects | 373,352,448 B | +275,456 B | unavailable |
+| Review `looks/` | 18,377,648 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 55,080,572 B | +0 B | 5,000,000 B |
+| All `public/` | 270,657,947 B | +0 B | unavailable |
+| Git objects | 374,848,512 B | +1,305,600 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -85,7 +84,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: e4b82b0bfaa5bdc6a587b42f842c33ac3458792d
 - Local main: missing
-- Local integration/wasteland: c911a420db3d6c4440b9b194d2662f6f69a1fa1d
+- Local integration/wasteland: 2bbabd9f3b5a5d774a7a39767fc6334447425423
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

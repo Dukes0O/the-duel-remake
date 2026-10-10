@@ -11,7 +11,7 @@ const check = (name, fn) => {try {fn(); passed++;} catch (error) {console.error(
 function fixture(enabled=true) {
   const state={s:0,lateral:0,speedMph:0,headingError:0,stageTimeSec:0,mode:'wasteland',status:'racing',opponents:[],traffic:[],combat:{serial:0,projectiles:[],rocketVolleys:[]}};
   const events=[];
-  const duel={state,events,featureFlags:createFeatureFlags({storage:null,qa:true,search:enabled?'?flags=seeker-rockets':''}),
+  const duel={state,events,featureFlags:createFeatureFlags({storage:null,qa:false,overrides:enabled?{}:{'seeker-rockets':false}}),
     course:{groundAt:(s,lateral=0)=>({x:lateral,y:0,z:s,heading:0}),nearest:(x,z)=>({s:z,lateral:x})},
     _vehicleSpec:()=>({halfWidth:1,halfLength:2,height:1.7}), _obstacles:()=>[],emit:e=>events.push(e)};
   const car=(s,lateral=0)=>{const actor={s,lateral,speedMph:0,armor:100};state.opponents.push(actor);return actor;};
@@ -19,9 +19,15 @@ function fixture(enabled=true) {
   return {duel,state,car,fire,events};
 }
 const steer=(duel,shot,dt=1/120)=>stepRocketPod(duel,shot,dt,{damageCar:(_d,a,n)=>{a.armor-=n;return n;},shielded:(_d,a)=>a.shield});
-check('dev flag is production isolated',()=>{
-  assert.equal(FEATURE_STATES['seeker-rockets'],'dev');
-  assert.equal(createFeatureFlags({storage:null,qa:false,search:'?flags=seeker-rockets'}).enabled('seeker-rockets'),false);
+check('released seekers are on; a dev seeker stays isolated', () => {
+  assert.equal(FEATURE_STATES['seeker-rockets'], 'on');
+  assert.equal(createFeatureFlags({storage:null, qa:false}).enabled('seeker-rockets'), true);
+  const catalog = {...FEATURE_STATES, 'seeker-rockets': 'dev'};
+  const flags = options => createFeatureFlags({catalog, storage:null, ...options});
+  assert.equal(flags({qa:false, search:'?flags=seeker-rockets'}).enabled('seeker-rockets'), false);
+  assert.equal(flags({qa:true}).enabled('seeker-rockets'), false);
+  assert.equal(flags({qa:true, search:'?flags=arsenal'}).enabled('seeker-rockets'), false);
+  assert.equal(flags({qa:true, search:'?flags=seeker-rockets'}).enabled('seeker-rockets'), true);
 });
 check('nearest eligible enemy within nose cone and range',()=>{
   const {car,fire}=fixture(); car(10,20);car(121);car(65,5);car(40,7);

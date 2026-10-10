@@ -912,3 +912,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October: merged approved POLISH-FLAME from 7ff094a4; fresh lane 368/368 in 620.71 s, build 494 ms and source review pass. Reviewed catalog snapshot now includes the new approved Flame source; all original source assertions and Factory provenance remain.
 
 10 October: merged approved POLISH-ARENA from 390742cb; fresh lane 369/369 in 618.11 s, build 521 ms and source review pass. Reviewed lamp assertions now require the approved separate near/far materials and exact 1.2/4.5 brightness; unchanged geometry, timing, input and disposal protections pass.
+
+10 October: promote approved polish and reusable QA repairs from 1e8eeb3a; lane 370/370 in 895.32 s, build 580 ms, independent source/document review clear. Browser 94/97; Kyle accepts tanker GPU excess and two identical installed-build collision failures. Full tier follows on the exact final commit; no further release-blocking QA work.
