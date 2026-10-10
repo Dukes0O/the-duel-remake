@@ -1,7 +1,9 @@
 # POLISH-SMOKE
 
-Status: source frozen for shared-hook handoff. Review, lane gate, frame check
-and Claude round 1 are pending; this is not an accepted release candidate.
+Status: source frozen and Director reviewed. Waiting for Claude round 1.
+Native checks and build pass. Scoped draw-replacement pacing is recorded;
+full-change CPU cost is not proven. Lane gate is deferred
+until art approval; this is not an accepted release candidate.
 
 ## Design and implementation
 
@@ -22,8 +24,9 @@ lifetime, drift, targeting and damage are unchanged. Camera-inside haze is
   without the car; a white car-only mask supplies the denominator. Pixels
   differ visibly at >=12 RGB levels; limit remains <=10% of the silhouette.
 - Chosen source so far: Screen High 6.974% at 10 m / .917% at 25 m;
-  repeated smoky captures have zero differing pixels. Full eight rows are
-  being collected and kept in the ignored browser evidence.
+  Performance 0% / .104%. All eight repeated smoky captures have zero
+  differing pixels. Twelve native screenshots; zero browser warnings/errors.
+  All paired rendering checks preserve race and hazard state.
 - F42 rendered radius is 3.432 m, so it is fully inside Screen. Its 3.435 m
   radius at the Wren site exceeds Wren's 2.5 m: Wren rows verify native
   activation/shared appearance/haze only, not fully-inside concealment.
@@ -34,8 +37,21 @@ lifetime, drift, targeting and damage are unchanged. Camera-inside haze is
   inner cylinder did not improve that result. Both were removed. The final
   selected variant restores the earlier soft shading; no metric threshold
   or pixel criterion was relaxed.
-- Required lane gate/build, frame pacing, and Claude's art verdict pending.
-  Shared source is frozen so the next serial card can proceed.
+- Build passed: 294 modules, 2.60 s, existing large-chunk warning only.
+- Quiet frozen-pose frame comparison: native Screen and Wren, High and
+  Performance, two old/candidate/old trials, 120 RAF frames per phase.
+  Candidate p95 18.1-18.2 ms; maximum paired increase .275%, below 10%;
+  zero >33 ms intervals across 2,880 measured frames. One active cloud.
+  Legacy draw replacement shares current preparation; render-work timing
+  is advisory and cannot measure the added matrix-update preparation work.
+  This is not a full-change CPU-cost pass. First High Screen work p95 6.8 ms versus old 4.7/4.9;
+  repeat 4.5 versus 4.4/4.4. This does not prove moving multi-cloud CPU cost.
+- Director found no race-state/lifecycle blocker and accepted native Wren
+  exclusion. Art concern: body reads flat brown with little puff texture.
+  One 390,518-byte sheet goes to Claude; no self-directed second round.
+- Director deferred broad lane gate while waiting for art approval. Fresh
+  lane gate, build and actual old-source/candidate frame comparison remain
+  required before merge. Source stays frozen.
 
 ## Removed
 
