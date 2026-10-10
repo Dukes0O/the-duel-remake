@@ -3059,6 +3059,7 @@ tasks:
     note: "The current audit flags forty-eight assets; forty-seven retain dynamic runtime, source, rights, reference or QA uses, while the old dirt texture retains documented future arena use. All twenty-five flagged exports are used inside their modules, so no deletion is proved safe. Keep the dirt decision and dynamic reporting scope here; the legacy Rustwall generator still has test consumers and needs deliberate migration by its art owner."
 
     audit_2026_10_09: "Polish-run audit: 50 asset candidates remain advisory; no deletion is proved safe. Keep dynamic consumers and the fifteen fully-on switches until removal has named hooks and unchanged replay proof. All five unmerged polish lanes, parked diagnostics and protected audio remain. Tracked integration size is 282.9 MiB before and after; no cleanup deletion."
+    audit_2026_10_10: "After Height and Seekers: no unused modules or obsolete tests; 50 assets and 54 exports remain advisory. Newly flagged exports seekerRocketsEnabled and seekerTarget in src/arsenal/rockets.js need consumer review before removing any export. Tracked size 296753643 bytes; pending art, parked diagnostics and protected audio retained."
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
     lane: TOOL
@@ -3909,19 +3910,20 @@ tasks:
     lane: VIS
     size: S
     needs: []
-    status: review
-    waiting_on: claude
+    status: merged
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-smoke
-    source_commit: b4494e996201e0956fb9ee1945e34bd531b2e430
+    source_commit: 108265b990439df3532755ea62cdcbc18c1e86c1
     render_commit: b4494e996201e0956fb9ee1945e34bd531b2e430
-    note: "Round two ready for Claude: grey layered puffs, dark undersides and churn. Screen High visible 7.779%/2.460%, Performance 0.886%/2.127%; unchanged 10% cap. Native repeat/purity, source review and build pass. Actual-source p95 at most +0.595%, work p95 +5.714%. Broad gate follows art approval."
+    note: "Claude approved round two. Merged after conflict-free Height/Seeker sync, reviewed native camera-preparation fixture correction, lane 367/367 (827.33 s), build (538 ms), unchanged 162 replay checks and independent source review. Art and frame acceptance remain unchanged."
     owns: [docs/board/looks/smoke/round-2.jpg, docs/board/looks/smoke/round-2-review.md, docs/changes/POLISH-SMOKE.md, tools/test-polish-smoke.mjs, tools/art/polish-smoke-sheet.py, docs/board/looks/smoke/round-1.jpg, docs/board/looks/smoke/round-1-review.md]
-    hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/smoke.js, src/crew-gear/signature.js, src/render3d.js, tools/scenarios/arsenal-core.mjs]
+    hooks: [tools/test-arsenal-runtime.mjs, src/combat-scene.js, src/combat-effects.js, src/arsenal/smoke.js, src/crew-gear/signature.js, src/render3d.js, tools/scenarios/arsenal-core.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-FLAME: one card edits it at a time."
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Smoke you cannot see through: looks only, gameplay unchanged. Measured check: a car fully inside the cloud, chase camera 10 to 25 m away, at most 10% of its pixels visible against a frame without it, High and Performance. Camera-inside haze. Wren's grenades share the look. Frame pacing within the usual limit. One sheet to Claude, at most three rounds."
     claude_verdict_2026_10_10: "Round two authorized10 October: overlapping varied soft grey puffs, broken wispy edges, lighter tops/darker undersides, drift and churn. Preserve concealment and native rules. One next sheet to Claude; only then set waiting_on. Smoke exclusively owns shared visual edits."
+    release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
   - id: POLISH-FLAME
     title: "Real flames for the Flamethrower and Cinder"
     owner: codex
@@ -3939,6 +3941,8 @@ tasks:
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Real flames: looks only, the cone and damage unchanged, the fire filling exactly the damage cone. CC0 source recorded with its licence; small runtime textures only. Frame pacing within the usual limit in High and Performance with two flamethrowers firing. One sheet per round to Claude (start, full burst, burning car, Cinder), at most three rounds."
     claude_verdict_2026_10_10: "Round one approved10 October. Judge frame cost by p95; High mean rise is recorded and explicitly not a blocker. Merge after approved Smoke, with fresh lane/build and review after integration sync. No new art round required."
+    release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
   - id: POLISH-ARENA
     title: "Arena polish from Claude's reviews"
     owner: codex
@@ -3946,7 +3950,6 @@ tasks:
     size: S
     needs: []
     status: review
-    waiting_on: claude
     source_commit: 1a3f30ceb29c908b6179a8a3de1589ca3632b85f
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-arena
@@ -3958,6 +3961,8 @@ tasks:
       - "One sheet to Claude covering all four, at most two rounds. Frame pacing within the usual limit."
 
     claude_verdict_2026_10_10: "Round two authorized10 October, labels approved. Make roughly twice the inner-island scrap in tall clusters using approved pieces, clearly different ridge widths, distant tanker lit lamps/roof plate readable at play distance. Next sheet must show each change clearly; only then waiting_on Claude."
+    release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
   - id: TEST-DRIVER-BRAKING
     title: "All-seed pursuit test-driver braking"
     owner: codex
@@ -3977,3 +3982,21 @@ tasks:
     lane_gate_duration_seconds: 62.54
     build_ms: 614
     gate_commit: d9e6cdd2c19e34d22c19f0354302843417a59f4a
+
+  - id: RELEASE-2026-10-10
+    title: "Release the five approved polish changes"
+    owner: codex
+    lane: REL
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-director-2026-10-10-release
+    branch: codex/release-2026-10-10
+    flag: seeker-rockets
+    owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-seeker-rockets.mjs, docs/changes/RELEASE-2026-10-10.md]
+    hooks: [tools/test-arsenal-wave2.mjs, start-preview.bat, tools/scenarios/seeker-rockets.mjs]
+    sequencing: "Prepare independently; sync after Smoke, Flame and Arena merge in that order. Fresh lane/build before promotion merge; final release notes and full tier precede live cutover."
+    design: "Kyle's accepted real-game release turns seeker-rockets on. Keep career-backup dev and the explicit off path. Update only state-specific assertions; preserve dev isolation with a pinned dev catalog and older off baselines with explicit overrides. No damage, balance threshold or save-format change."
+    acceptance:
+      - "The production catalog enables accepted seekers at 8 damage; off Pods and Gunn remain 10. Kyle accepted the measured 1.328662 ratio; do not change the original 1.3 check."
+      - "Current lane/build, independent release review, actual released-flag balance, all browser scenarios, quiet frame comparison, art and save budgets, then full alone on the exact final commit. No live race refresh or real-save access."

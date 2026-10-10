@@ -1,3 +1,4 @@
+import {createSmokeCloud, smokeHazeOpacity} from './combat-effects.js';
 import {
   arsenalEnabled, hazardsActive, point
 } from './combat-weapons.js';
@@ -170,14 +171,10 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       color:0x171512,metalness:.35,
       roughness:.22,transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide
     });
-    const smokeMaterial=new THREE.MeshStandardMaterial({
-      color:0x82786c,roughness:1,
-      transparent:true,opacity:.65,depthWrite:false
-    });
+    const smokeCloud = createSmokeCloud();
     const oil=new THREE.Mesh(oilGeometry,oilMaterial);
     oil.rotation.x=-Math.PI/2;
-    const smoke=new THREE.Mesh(sphere,smokeMaterial);
-    smoke.position.y=2.1;
+    const smoke = smokeCloud.mesh;
     const caltrops=new THREE.InstancedMesh(caltropsGeometry,caltropsMaterial,40);
     for(let i=0;i<40;i++){
       spikeTransform.position.set((i%5-2),.17,(Math.floor(i/5)-3.5));
@@ -189,10 +186,21 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     holder.add(oil,smoke,caltrops);
     group.add(holder);
     return {
-      holder,oil,smoke,caltrops,oilMaterial,smokeMaterial
+      holder,oil,smoke,caltrops,oilMaterial,smokeCloud
     };
   });
-  function updateHazards(duel,active){
+  const smokeHazeMaterial = new THREE.MeshBasicMaterial({color: 0x85878a,
+    transparent: true, opacity: 0, depthTest: false, depthWrite: false,
+    side: THREE.BackSide, fog: false, toneMapped: false});
+  const smokeHaze = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), smokeHazeMaterial);
+  smokeHaze.name = 'smoke-camera-haze';
+  smokeHaze.frustumCulled = false;
+  smokeHaze.visible = false;
+  smokeHaze.renderOrder = 1000;
+  group.add(smokeHaze);
+  const smokeClouds = [];
+  function updateHazards(duel,active,vehicles){
+    smokeClouds.length = 0;
     const hazards=active&&hazardsActive(duel) ? hazardsFor(duel) : [];
     hazardViews.forEach((view,index)=>{
       const hazard=hazards[index];
@@ -209,10 +217,25 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         view.caltrops.scale.set(hazard.width/5,1,hazard.length/8);
       }
       if(oil)view.oil.scale.setScalar(hazard.radius);
-      if(view.smoke.visible)view.smoke.scale.set(hazard.radius,2.1,hazard.radius);
+      if(view.smoke.visible) {
+        const nearest = duel.course.nearest(hazard.x, hazard.z);
+        const ground = duel.course.groundAt(nearest.s, nearest.lateral);
+        view.holder.position.y = ground.y + .025;
+        view.smokeCloud.update(hazard, null, vehicles.smokeTexture);
+        smokeClouds.push({...hazard, y: ground.y});
+      }
       view.oilMaterial.opacity=.9*hazard.opacity;
-      view.smokeMaterial.opacity=.65*hazard.opacity;
+
     });
+  }
+  function prepareSmokeCamera(camera) {
+    for (const view of hazardViews) {
+      if (group.visible && view.holder.visible && view.smoke.visible)
+        view.smokeCloud.faceCamera(camera);
+    }
+    smokeHazeMaterial.opacity = smokeHazeOpacity(smokeClouds, camera?.position);
+    smokeHaze.visible = smokeHazeMaterial.opacity > 0;
+    if (camera) {smokeHaze.position.copy(camera.position); smokeHaze.updateMatrixWorld(true);}
   }
   const rocketBody=new THREE.CylinderGeometry(.16,.16,1.25,8),rocketNose=new THREE.ConeGeometry(.21,.38,8);
   const shieldShell=new THREE.IcosahedronGeometry(1,0);
@@ -562,7 +585,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const s = duel.state, c = s.combat;
     const active = !!c && s.status !== 'menu';
     group.visible = active;
-    updateHazards(duel,active);
+    updateHazards(duel,active,vehicles);
     updateTethers(duel,active);
     updateWaveThree(duel, active);
     updateSeekerBrackets(duel, active, vehicles.camera);
@@ -771,6 +794,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     onFootFigures,
     update,
     detachVehicle,
+    prepareSmokeCamera,
     dispose(){
       onFootFigures.dispose();
       raiderMarkers.dispose();
@@ -783,9 +807,11 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         chargeBase.geometry,arsenalFlameGeometry])geometry.dispose();
       hazardViews.forEach(view=>{
         view.oilMaterial.dispose();
-        view.smokeMaterial.dispose();
+        view.smokeCloud.dispose();
         view.caltrops.dispose();
       });
+      smokeHaze.geometry.dispose();
+      smokeHazeMaterial.dispose();
       caltropsGeometry.dispose();
       caltropsMaterial.dispose();
       tetherViews.forEach(cable=>cable.geometry.dispose());

@@ -1,5 +1,13 @@
 # Wasteland play-test inbox
 
+## Release approved by Kyle, 10 October 2026
+
+Claude approved Smoke round two and Arena round two (final). Kyle authorized
+merges in order: Smoke, Flame after sync and a fresh lane gate, then Arena.
+After all three, run the full tier alone and complete the release checks
+before updating the real game. The earlier art holds are cleared.
+
+
 ## Claude verdicts received from Kyle, 10 October 2026
 
 - Flame round one approved. Frame-cost acceptance uses p95; the High mean

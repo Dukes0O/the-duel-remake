@@ -1,5 +1,13 @@
 # Next run: phase 3, a Wasteland worth finding (updated 10 October 2026)
 
+## Approved release in progress, 10 October 2026
+
+Smoke is merged; Arena round two is approved. Next merge Flame after sync
+and a fresh lane/build gate, then Arena. Kyle authorizes the real-game
+release after the final full tier runs alone and all release checks pass.
+The earlier waiting-for-art and no-release statements below are superseded.
+
+
 ## Current polish work, 10 October 2026
 
 Kyle supplied all five Claude verdicts. The board and play-test inbox record
@@ -30,11 +38,13 @@ these decisions. Earlier question holds are cleared.
 Shared visual changes are frozen in those candidates. Preserve
 unmerged lanes and pending art evidence. No release is authorized.
 
-Previous session-end full: 363/363 in 725.14 s on unchanged integration
-3af7f15c, alone with four jobs. Its dirty-documentation ledger is not a clean
-release verdict. Run the full tier alone at this session's end. Fold status
-and notes into real work; do not make a status-only commit. Push remains held
-for approved binary compaction. Keep protected audio and parked diagnostics.
+Session-end full: 366/366 in 779.95 s on unchanged integration ac01cbe6,
+alone with four jobs. Only status documentation was dirty during the run;
+the ledger records that honestly and is not a clean release verdict. End
+status and notes wait for the next real commit; no status-only commit.
+Height and Seekers lanes and consumed evidence are removed. Smoke, Arena,
+Flame, parked diagnostics and protected audio are retained. Push remains
+held for approved binary compaction. No release is authorized.
 
 ## Phase 3 handoff before polish, 9 October 2026
 
