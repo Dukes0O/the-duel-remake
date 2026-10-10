@@ -3904,8 +3904,8 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
-    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    status: merged
+    note: "node tools/track-review.mjs <course-id> gives map, 16 named-point chase frames, speed trace, pack picture and review.json; tried on pacific-canyon and eifel-crown. See docs/changes/P4-REVIEW-TOOL.md."
     owns: [tools/track-review.mjs, tools/scenarios/track-review.mjs, tools/test-track-review.mjs, docs/changes/P4-REVIEW-TOOL.md]
     acceptance:
       - "Build the review tool in docs/CIRCUITS.md section 11, step 2: for a course id, a top-down map with corner names, 16 chase-camera frames at named points (grid, signature points, every slow corner braking point and apex, every crest, landmark views), a speed trace of a test-driver lap with corner speeds and lap time, and a first-corner pack frame. One command, private port, memory-only saves, output under .evidence/."
