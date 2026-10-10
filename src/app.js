@@ -34,6 +34,7 @@ import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDri
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
 import {isCourseUnlocked,purchaseCourse as buyCourse} from './course-access.js';
+import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {collectMuddyHollowHubcap, discoverMuddyHollow,
   muddyHollowSnapshot} from './wasteland-progress.js';
 
@@ -301,7 +302,9 @@ export class App {
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
     const difficulty=options.difficulty??this.duel.state.difficulty;
     const rival=Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
-    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,rival,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
+    // Winter tyres count only where there is snow or ice to use them on.
+    const tyre=options.tyre==='winter'&&courseHasWinterSurfaces(stage)?'winter':'summer';
+    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,rival,tyre,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
     this.menuStage=stageIndex;this.menuCar=car;
     this.audio.unlock();
     this.audio.setPaused(false);
@@ -309,7 +312,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,weaponLevels:getProfileWeapons(this.profile).levels,
+    this.duel.startCampaign({...options,tyre,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,

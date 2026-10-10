@@ -18,9 +18,9 @@ export function normalizeRaceSettings(value,profile) {
   return {version:1,eventId:stage.id,mode:stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':v.mode==='wasteland'&&supportsCombat(stage)?'wasteland':v.mode==='timetrial'?'timetrial':'duel',
     cpuDifficulty:Object.hasOwn(CPU_DIFFICULTY,v.cpuDifficulty)?v.cpuDifficulty:DEFAULT_CPU_DIFFICULTY,difficulty:Object.hasOwn(DIFFICULTY,v.difficulty)?v.difficulty:DEFAULT_DIFFICULTY,
     car,...(rival?{rival}:{}),routeVariant:isRouteVariant(v.routeVariant)?v.routeVariant:DEFAULT_ROUTE_VARIANT,lightingMood:normalizeLightingMood(v.lightingMood),ghostEnabled:typeof v.ghostEnabled==='boolean'?v.ghostEnabled:true,
-    footCamera:v.footCamera==='overhead'?'overhead':'first-person'};
+    footCamera:v.footCamera==='overhead'?'overhead':'first-person',...(v.tyre==='winter'?{tyre:'winter'}:{})};
 }
 
 export function raceSettingsChoices(settings) {
-  return {car:settings.car,difficulty:settings.difficulty,cpuDifficulty:settings.cpuDifficulty,mode:settings.mode,startStage:raceSettingsStage(settings),...(settings.rival?{rival:settings.rival}:{})};
+  return {car:settings.car,difficulty:settings.difficulty,cpuDifficulty:settings.cpuDifficulty,mode:settings.mode,startStage:raceSettingsStage(settings),...(settings.rival?{rival:settings.rival}:{}),...(settings.tyre?{tyre:settings.tyre}:{})};
 }

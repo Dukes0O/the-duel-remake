@@ -1,7 +1,8 @@
 // Puts an authored track script (src/track-script.js) into a Course: the
 // sampled centreline, the finish, the racing line and the solid walls. Like the
 // Pit's builder, this runs only for definitions that carry a `script`.
-import { TRACK_SCRIPT, buildRacingLine } from './track-script.js';
+import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
+import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
 // is stored for a reference car and computer racers scale it to their own.
@@ -12,6 +13,11 @@ export function installTrackScript(course, dynamics) {
   f.walls = [];
   f.kerbs = script.kerbs.map(kerb => ({ ...kerb }));
   f.boards = script.boards.map(board => ({ ...board }));
+  // Surface patches (ice, a drift of deep snow...) lie on top of the script's stretches.
+  f.surfacePatches = (course.def.surfacePatches || []).map(patch => ({ from: -Infinity, to: Infinity, ...patch }));
+  const problems = checkSurfaceRules(script, f.surfacePatches);
+  if (problems.length) throw new TrackScriptError(`Track script "${script.id}" breaks the surface rules: ${problems.join(' ')}`);
+  f.boards.push(...iceBoards(script, f.surfacePatches));
   if (!course.def.practice) f.checkpoints.push({ s: course.raceLength, kind: 'finish' });
   if (!course.def.practice) for (let i = 1; i < 4; i++) f.lapGates.push({ s: course.length * i / 4 });
 }
