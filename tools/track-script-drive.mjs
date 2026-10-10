@@ -9,7 +9,7 @@ import { DEFAULT_DRIVER } from '../src/drivers.js';
 // of the car, which is not enough to brake for a hairpin at the end of a long
 // straight. This driver steers the same way, through the same physics, but
 // takes its line and speed from the circuit's racing line and speed profile,
-// scaled to the car's grip and a skill factor.
+// scaled to the car's grip (the profile is for the grip .82 reference car) and a skill factor.
 function useRacingLine(app, skill) {
   app._driveAutopilot = function lineDriver() {
     const d = this.duel, st = d.state, course = d.course, line = course.racingLine;
@@ -34,7 +34,7 @@ function useRacingLine(app, skill) {
     const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     // The profile is for a car of grip 1; speed in a corner goes with the square root of grip.
     const target = Math.min(surface.speedLimit, d.car.topSpeed * .97,
-      line.speedAt(st.s) * skill * Math.sqrt(d.car.grip * (surface.traction || 1)) / DRIVE.mphToWorld);
+      line.speedAt(st.s) * skill * Math.sqrt(d.car.grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
     d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake: st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0, steer, boost: false });
   };
 }
@@ -60,7 +60,7 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
     app.autopilot = true;
     app._scriptedCrashDone = true; // skip the demo's deliberate shoulder visit
     if (driver === 'line' && app.duel.course.racingLine) useRacingLine(app, skill);
-    const d = app.duel, facts = { crashes: 0, boundaryResets: 0, checkpointResets: 0, finite: true, topMph: 0, minMphAfterStart: Infinity, stuckSeconds: 0, maxStuckSeconds: 0 };
+    const d = app.duel, facts = { crashes: 0, boundaryResets: 0, checkpointResets: 0, finite: true, topMph: 0, minMphAfterStart: Infinity, stuckSeconds: 0, maxStuckSeconds: 0, lapEdge: [], lapMinMph: [] };
     d.onChange((state, event) => {
       if (event.crash) facts.crashes++;
       if (event.boundaryReset) facts.boundaryResets++;
@@ -79,6 +79,11 @@ export function driveCircuit(def, { car = 'falcone_f42', difficulty = 'casual', 
         facts.stuckSeconds = s.speedMph < 3 ? facts.stuckSeconds + dt : 0;
         facts.maxStuckSeconds = Math.max(facts.maxStuckSeconds, facts.stuckSeconds);
       }
+      // How far the car's centre strays past the road edge on each lap (negative: inside).
+      // A car whose centre is within a metre of the edge is touching a wall there.
+      const lap = Math.min(s.completedLaps, 99), edge = Math.abs(s.lateral) - d.course.roadHalfWidthAt(s.s);
+      facts.lapEdge[lap] = Math.max(facts.lapEdge[lap] ?? -Infinity, edge);
+      facts.lapMinMph[lap] = Math.min(facts.lapMinMph[lap] ?? Infinity, s.speedMph);
       onTick?.(s, d);
     };
     while (!['stage_result', 'gameover', 'complete'].includes(d.state.status) && frames++ < fps * maxSeconds) app.advance(1 / fps, 1 / fps);

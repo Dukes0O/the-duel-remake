@@ -23,6 +23,8 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     tollkeeper: 'on',
     blackiron: 'on',
     'warlord-cards': 'on',
+    // Phase 4 circuit road layouts (docs/CIRCUITS.md): dev until Kyle approves each.
+    'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'dev',
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
