@@ -15,6 +15,7 @@ import { createTerrainMaterial } from './terrain-style.js';
 import { createPavedRoadMaterial, createPavedShoulderMaterial } from './road-surface.js';
 import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
+import { addTrackScriptScene } from './track-script-scene.js';
 import { addFreestyleScenery } from './freestyle-scene.js';
 
 import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, hollowMudTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
@@ -59,10 +60,16 @@ export function buildEnvironment(course, {saltFlats} = {}) {
   const shoulder = createPavedShoulderMaterial({gravel:surfaceTexture('gravel'),alpine,course});
   for (const side of [-1, 1]) {
     if(course.def.offroad||course.def.arena)addTrailShoulder(group,course,side,trailMat);
-    else group.add(new THREE.Mesh(strip(course, s=>side*course.roadHalfWidthAt(s), s=>side*(course.roadHalfWidthAt(s)+ROAD_SHOULDER_WIDTH), .018), shoulder));
+    else{
+      const shoulderStrip=strip(course, s=>side*course.roadHalfWidthAt(s), s=>side*(course.roadHalfWidthAt(s)+ROAD_SHOULDER_WIDTH), .018);
+      // Authored circuits vary in width: the shoulder shader reads each vertex's road edge.
+      if(course.script){const uv=shoulderStrip.attributes.uv,edge=new Float32Array(uv.count);for(let i=0;i<uv.count;i++)edge[i]=course.roadHalfWidthAt(uv.getY(i)*10);shoulderStrip.setAttribute('shoulderEdge',new THREE.BufferAttribute(edge,1));}
+      group.add(new THREE.Mesh(shoulderStrip, shoulder));
+    }
     if(!course.def.arena&&!course.def.offroad){group.add(new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream));
     group.add(new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow));}
   }
+  if(course.script)addTrackScriptScene(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};

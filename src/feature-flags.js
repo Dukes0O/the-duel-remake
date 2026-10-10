@@ -12,6 +12,8 @@ export const FEATURE_STATES = Object.freeze({
   'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
   'grand-prix': 'dev',
+  // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
+  'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

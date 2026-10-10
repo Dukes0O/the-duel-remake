@@ -35,7 +35,8 @@ export function _npcYield(actor, targetMph, plannedHeading = actor.headingError 
 
 export function _spawnTraffic(idx) {
   const def = COURSE[idx];
-  if (def.practice || ['arena','drift','checkpoint'].includes(def.kind)) return [];
+  // A circuit with `noTraffic` is a pure race on a closed road (docs/CIRCUITS.md section 2).
+  if (def.practice || def.noTraffic || ['arena','drift','checkpoint'].includes(def.kind)) return [];
   const rng = makeRng(this.seed ^ (idx * 0x51ed) ^ 0x7a17);
   const density = this.diff.trafficDensity
     * (this.course.theme.fogDensity > TRAFFIC.fogDensityThreshold ? TRAFFIC.fogSpawnMult : 1);

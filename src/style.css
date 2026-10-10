@@ -159,3 +159,5 @@
 .controls-help dt { font-weight: 700; color: #fff3d6; }
 .controls-help dd { margin: 0; }
 .onfoot-hint { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #d3945b66; text-align: left; }
+
+.grip-readout{margin-top:14px;display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:9px;letter-spacing:2px;color:#d6e3ea}.grip-readout[hidden]{display:none}.grip-readout b{font-size:15px;font-weight:400;color:#bfe6ff}#surface-hint{font-weight:800}.grip-readout.slippery #surface-hint{color:#ffd37a}

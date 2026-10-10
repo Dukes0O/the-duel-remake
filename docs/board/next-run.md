@@ -24,6 +24,12 @@ Phase 4 is governed by [CIRCUITS.md](../CIRCUITS.md) and the board:
   paths, sky, scene and vehicle adapters pass focused tests. Wait for
   P4-TRACK-SCRIPT before renderer hooks, then prove the native browser
   views, eight-car frame cost and art sheet before the lane/build gate.
+- P4-KITS, P4-AUDIO and P4-INTEL-DOSSIER are claimed in separate Codex
+  lanes. Prepare picked asset kits, licensed cue recipes/listening clips and
+  the Team Room on existing circuits. Leave Claude-owned files alone.
+  Send kit sheets to Claude and clips to Kyle; mark waiting_on when needed.
+- Before a full tier, inspect laptop processes for another full run or
+  race-field balance run and wait for it. Run the full tier alone.
 - New tracks stay behind their switches. Each still needs Claude's finishing
   pass and Kyle's release approval.
 

@@ -163,12 +163,13 @@ export class Duel {
   }
   _surface(...args) { return simDriving._surface.apply(this, args); }
   _drivingSurface(...args) { return simDriving._drivingSurface.apply(this, args); }
+  _roadGrip(...args) { return simDriving._roadGrip.apply(this, args); }
   _vehicleSpec(...args) { return simContacts._vehicleSpec.apply(this, args); }
 
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this.state.arena = null;
@@ -189,6 +190,8 @@ export class Duel {
     if (grandPrix && Number.isSafeInteger(fieldSeed)) this.state.fieldSeed = fieldSeed >>> 0;
     else delete this.state.fieldSeed;
     if (grandPrix) this.state.opponentCount = Number.isSafeInteger(fieldSize) ? Math.max(1, Math.min(7, fieldSize)) : 7;
+    // Winter tyres only on request; summer is the unmarked default (src/race-surfaces.js).
+    if (tyre === 'winter') this.state.tyre = 'winter'; else delete this.state.tyre;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = grandPrix ? 'grandprix' : mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
     if (arsenalEnabled(this)) this.state.arsenalRank = arsenalRank;

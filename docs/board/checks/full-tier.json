@@ -1,17 +1,15 @@
 {
   "schema": 1,
-  "commit": "c04bc905cd2010f8cf4829f7ff73a21ecdfb7570",
-  "time": "2026-10-10T22:13:22.888Z",
+  "commit": "0025c76637eb71e6555bbf8eab253d4616299357",
+  "time": "2026-10-10T20:51:10.357Z",
   "tier": "full",
-  "passed": false,
+  "passed": true,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "c04bc905cd2010f8cf4829f7ff73a21ecdfb7570",
+  "endCommit": "0025c76637eb71e6555bbf8eab253d4616299357",
   "complete": true,
-  "total": 372,
-  "completed": 372,
-  "failures": [
-    "tools/test-wasteland-beta.mjs"
-  ]
+  "total": 371,
+  "completed": 371,
+  "failures": []
 }
