@@ -4173,6 +4173,81 @@ tasks:
     acceptance:
       - "Build the cups in docs/CIRCUITS.md section 7: Mountain, Night and Winter Cups and the Grand Tour, points 10 to 1 with the tie rule, saved per named player, abandonable, settled once, cup bonus pay, and the garage trophy case. Additive save fields; old-save fixtures load unchanged."
 
+  - id: P4-INTEL-DOSSIER
+    title: "Team Room: track dossier, flags, live snapshots, engineer notes"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-REVIEW-TOOL, P4-TRACK-SCRIPT]
+    status: ready
+    flag: grand-prix
+    owns: [src/track-analysis.js, src/screen-team-room.js, src/screen-team-room.css, tools/test-track-analysis.mjs, tools/scenarios/team-room.mjs, docs/changes/P4-INTEL-DOSSIER.md]
+    hooks: [tools/track-review.mjs, src/screen-courses.js, src/screen-router.js, src/render3d.js, src/app.js]
+    acceptance:
+      - "Build the Team Room screen and dossier in docs/CIRCUITS.md section 7b: TEAM ROOM on event cards, map coloured by reference speed with named corners, flags at hot spots, live-rendered driver-seat snapshots at each flag (no stored pictures), engineer notes from the circuit file or generated for existing circuits. Move corner, crest and sector analysis into src/track-analysis.js and make tools/track-review.mjs use it. Works for every closed circuit. Read-only: race state never changes."
+
+  - id: P4-INTEL-TELEMETRY
+    title: "Team Room: your lap against the reference, and where you lose time"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-INTEL-DOSSIER]
+    status: ready
+    flag: grand-prix
+    owns: [src/lap-telemetry.js, tools/build-reference-laps.mjs, tools/test-lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
+    hooks: [src/ghost.js, src/screen-results.js, src/screen-team-room.js, src/leaderboard.js]
+    acceptance:
+      - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and car class, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
+
+  - id: P4-INTEL-LEVELS
+    title: "Team Room: earning intel levels and the reference ghost"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-INTEL-TELEMETRY, P4-CAREER]
+    status: ready
+    flag: grand-prix
+    owns: [src/intel-levels.js, tools/test-intel-levels.mjs, docs/changes/P4-INTEL-LEVELS.md]
+    hooks: [src/screen-team-room.js, src/grand-prix-career.js, src/ghost.js]
+    acceptance:
+      - "Build the four intel levels in docs/CIRCUITS.md section 7b exactly, per event and named player, with the stated ways to earn them, and the level 4 reference ghost in Time Trial. Settles once; additive save fields; old saves unchanged."
+
+  - id: P4-QUALIFYING
+    title: "Qualifying before a Grand Prix"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-FIELD]
+    status: ready
+    flag: grand-prix
+    owns: [src/qualifying.js, tools/test-qualifying.mjs, docs/changes/P4-QUALIFYING.md]
+    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js]
+    acceptance:
+      - "Build optional qualifying in docs/CIRCUITS.md section 7b: two timed laps alone, best lap sets your grid slot among the computer racers' seeded times; skipping keeps the default start. Practice laps count toward intel level 2."
+
+  - id: P4-COACH
+    title: "Coach markers for learning a track"
+    owner: codex
+    lane: VIS
+    size: S
+    needs: [P4-INTEL-LEVELS]
+    status: ready
+    flag: grand-prix
+    owns: [src/coach-markers.js, tools/test-coach-markers.mjs, docs/changes/P4-COACH.md]
+    hooks: [src/render3d.js, src/race-settings-ui.js]
+    acceptance:
+      - "Build Coach in docs/CIRCUITS.md section 7b: an option, off by default, showing a braking-point marker and a faint apex line on corners with level 2 notes; never in Hard Grand Prix races or cups. Presentation only."
+
+  - id: P4-FINISH-TEAMROOM
+    title: "Claude's finishing pass: the Team Room"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-INTEL-LEVELS]
+    status: ready
+    acceptance:
+      - "Claude reviews the Team Room look and words, writes the engineer notes for every circuit, picks the flag spots and snapshot framing, and sends Kyle a postcard of the dossier."
+
   - id: P4-FINISH-PANORAMA
     title: "Claude's finishing pass: Panorama Ridge"
     owner: claude
