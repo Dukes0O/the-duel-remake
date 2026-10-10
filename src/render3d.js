@@ -41,6 +41,7 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
+import {trackSnapshotPose} from './track-analysis.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -139,6 +140,7 @@ export function attachRenderer(host, app) {
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
+  const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, player, rival, chickens, ghost, ghostStyle, worldKey;
@@ -239,7 +241,13 @@ export function attachRenderer(host, app) {
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
     if(object===tanker?.group)return;
-    const release=()=>{beforeDispose?.();disposeTree(object);};
+    const retiredWorld = object === world;
+    const release = () => {
+      beforeDispose?.();
+      if (retiredWorld) lighting.detachWorld(object);
+      else lighting.detachVehicle(object);
+      disposeTree(object);
+    };
     if(warmup)warmup.releaseWhenIdle(release);else release();
   }
   function build(next) {
@@ -252,6 +260,7 @@ export function attachRenderer(host, app) {
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood});
     world = buildEnvironment(course); scene.add(world);
+    lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
     chickens=createChickens(course);world.add(chickens.group);
@@ -259,10 +268,92 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
+  const nightWorldInput = {};
+  let trackSnapshot = null;
+  const snapshotLightPose = {rotation: {y: 0}};
+  function clearTrackSnapshot() {
+    const previous = trackSnapshot;trackSnapshot = null;ready = false;
+    if (previous && !previous.settled) {previous.settled = true;previous.reject(Error('Track view changed.'));}
+    delete host.dataset.trackSnapshot;
+  }
+  function captureTrackSnapshot({course: inspectedCourse, flag}) {
+    if (disposed || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status))
+      return Promise.reject(Error('Return to the menu or results before studying the track.'));
+    const pose = trackSnapshotPose(inspectedCourse, flag);
+    clearTrackSnapshot();
+    return new Promise((resolve, reject) => {
+      trackSnapshot = {course: inspectedCourse, flag, pose, resolve, reject,
+        settled: false, deadline: performance.now() + 15000};
+    });
+  }
+  function drawTrackSnapshot(now) {
+    const view = trackSnapshot;
+    frameMetrics.suspend();adaptiveResolution.reset();rearView.hide();
+    const visibility = [];
+    try {
+      if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
+      if (course !== view.course) {
+        if (world && worldKey === environmentKey(view.course)) course = view.course;
+        else build(view.course);
+      }
+      const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
+      const ground = course.groundAt(distance, 0);
+      camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+      camera.up.set(0, 1, 0);camera.fov = 54;
+      camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
+      lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+        tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: true});
+      lighting.followCamera(camera, ground, now / 1000);
+      snapshotLightPose.rotation.y = pose.heading;
+      lighting.updateVehicles({course, position: ground, player: snapshotLightPose, police,
+        distance, tall: false, now, high, menu: true});
+      lighting.updateWorld({position: ground, heading: pose.heading, distance, high});
+      animateScene(world, now / 1000);
+      syncScene(world, {crushedProps: []}, 0);
+      for (const object of scene.children) {
+        if (object === world || lightingRoots.has(object) || object.isLight) continue;
+        visibility.push([object, object.visible]);object.visible = false;
+      }
+      quality.update(high, 1);
+      if (warmup) {
+        const revision = preparationKey({worldBuildCount, car: 'team-room', high});
+        if (revision !== warmupKey) {
+          warmupKey = revision;
+          warmupTicket = warmup.request(revision, () => high
+            ? compileWarmupPipeline(renderer, scene, camera, composer)
+            : compileWarmupScene(renderer, scene, camera, null));
+        }
+        if (!warmup.canDraw(warmupKey)) return;
+      }
+      renderer.info.autoReset = false;renderer.info.reset();
+      renderMainView(renderer, composer, high);
+      renderer.domElement.style.visibility = 'visible';
+      host.dataset.trackSnapshot = view.flag.id;
+      if (!view.settled) {
+        const canvas = document.createElement('canvas');canvas.width = 960;canvas.height = 540;
+        const source = renderer.domElement, ratio = canvas.width / canvas.height;
+        const width = Math.min(source.width, source.height * ratio), height = width / ratio;
+        const context = canvas.getContext('2d');
+        if (!context) throw Error('The browser could not copy the track view.');
+        context.drawImage(source, (source.width - width) / 2, (source.height - height) / 2,
+          width, height, 0, 0, canvas.width, canvas.height);
+        view.settled = true;view.resolve(canvas);
+      }
+    } catch (error) {
+      if (!view.settled) {view.settled = true;view.reject(error);}
+      if (trackSnapshot === view) trackSnapshot = null;
+    } finally {
+      for (const [object, visible] of visibility) object.visible = visible;
+    }
+  }
   let ready = false, lastMenu = null, previousT = performance.now();
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
+    if (trackSnapshot) {
+      if (['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) {drawTrackSnapshot(now);return;}
+      clearTrackSnapshot();
+    }
     const diagnosticTime = Number.isFinite(presentation.presentationSeconds);
     const presentationSeconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
     const ambientNow = diagnosticTime ? presentationSeconds*1000 : now;
@@ -367,7 +458,10 @@ export function attachRenderer(host, app) {
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
-    lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
+    lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+      blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance), distance,
+      raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
+      menu});
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
@@ -608,6 +702,20 @@ export function attachRenderer(host, app) {
     animateScene(world,presentationSeconds);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
+    lighting.updateCar(player, !!braking && !menu);
+    if (!convoy) lighting.updateCar(rival, !!st.rival?.braking);
+    for (let index = 0; index < extraOpponents.length; index++) {
+      const entry = extraOpponents[index];
+      if (!entry.drone) lighting.updateCar(entry.mesh, !!opponents[index + 1]?.braking);
+    }
+    for (let index = 0; index < traffic.length; index++)
+      lighting.updateCar(traffic[index], !!st.traffic[index]?.braking);
+    lighting.updateCar(police, !!pursuit?.braking);
+    nightWorldInput.position = pp;
+    nightWorldInput.heading = player.rotation.y;
+    nightWorldInput.distance = distance;
+    nightWorldInput.high = app.ambientOcclusionEnabled !== false;
+    lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
@@ -688,7 +796,8 @@ export function attachRenderer(host, app) {
     const colors = new Set(); for (let i = 0; i < data.length; i += 4) colors.add(`${data[i] >> 4},${data[i + 1] >> 4},${data[i + 2] >> 4}`);
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
-  return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+  return { prepareVehicle, captureTrackSnapshot, clearTrackSnapshot,
+    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
     projectFootAim() {
       const state=app.duel.state;
       return !disposed&&state.onFoot&&state.status!=='menu'?projectOnFootAim(camera,state.fighter):null;
@@ -701,6 +810,7 @@ export function attachRenderer(host, app) {
       return projectVehicleMarkers(camera, meshes);
     },
     dispose() {
+    clearTrackSnapshot();
     if(disposed)return;disposed=true;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;

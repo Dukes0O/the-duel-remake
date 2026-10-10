@@ -49,6 +49,42 @@ export function createAtmosphericSky(){
   });
   const sky=new THREE.Mesh(new THREE.SphereGeometry(1900,32,20),material);
   sky.name='Atmosphere and cloud deck';sky.frustumCulled=false;sky.userData.excludeAmbientOcclusion=true;
-  let disposed=false;
-  return{sky,update(time){if(!disposed)material.uniforms.cloudTime.value=time;},dispose(){if(disposed)return;disposed=true;clouds.dispose();}};
+  let disposed=false,nightMaterial=null;
+  return {
+    sky,
+    // Keep the exact released shader/material for courses without a path.
+    // The opt-in variant shares existing uniforms and texture, with no extra draw.
+    setLightPath(enabled) {
+      if(disposed)return;
+      if(enabled&&!nightMaterial) {
+        const fragment=material.fragmentShader.replace('uniform sampler2D cloudDensity;',
+          'uniform sampler2D cloudDensity; uniform float stars,moon;')
+          .replace('gl_FragColor=vec4(colour,1.0);', `
+            // Fixed celestial coordinates; there is no simulation/random input.
+            vec2 celestial=vec2(atan(d.z,d.x),asin(clamp(d.y,-1.0,1.0)))*vec2(210.0,210.0);
+            vec2 cell=floor(celestial),local=fract(celestial)-.5;
+            float hash=fract(sin(dot(cell,vec2(127.1,311.7)))*43758.5453);
+            float star=1.0-smoothstep(.025,.10,length(local));
+            star*=step(.991,hash)*smoothstep(.02,.24,d.y)*(1.0-coverage);
+            colour+=vec3(.72,.82,1.0)*star*stars*1.8;
+            vec3 moonDirection=normalize(vec3(-.42,.59,-.69));
+            float moonDot=dot(d,moonDirection);
+            float disc=smoothstep(.99969,.99975,moonDot);
+            float halo=pow(max(moonDot,0.0),420.0)*.045;
+            float craters=.86+.09*sin(d.x*690.0)*sin(d.y*560.0)+.05*sin(d.z*870.0);
+            colour+=vec3(.77,.84,1.0)*(disc*craters*1.9+halo)*moon*(1.0-coverage);
+            gl_FragColor=vec4(colour,1.0);`);
+        nightMaterial=new THREE.ShaderMaterial({side:material.side,depthWrite:false,
+          uniforms:{...material.uniforms,stars:{value:0},moon:{value:0}},
+          vertexShader:material.vertexShader,fragmentShader:fragment});
+        nightMaterial.name='Authored day-night sky';
+      }
+      sky.material=enabled?nightMaterial:material;
+    },
+    update(time){if(!disposed)material.uniforms.cloudTime.value=time;},
+    dispose(){
+      if(disposed)return;
+      disposed=true;sky.material=material;nightMaterial?.dispose();clouds.dispose();
+    },
+  };
 }
