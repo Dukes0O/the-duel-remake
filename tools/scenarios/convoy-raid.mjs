@@ -60,7 +60,7 @@ export async function run(context){
       s.combat.aiTimer=Infinity;a.onFrame?.(s,0);})()`);await ready(context);
     const cold=await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=s.opponents[0],before=JSON.stringify(s.arena);
       a.onFrame?.(s,0);window.__render.renderFrame();const model=window.__render.scene.getObjectByName('convoy-tanker'),lamps=[];
-      model?.traverse(n=>{if(n.name.startsWith('tanker-warning-lamp-'))lamps.push(n.material.emissiveIntensity)});
+      (model?.getObjectByName('convoy-tanker-detail')?.levels[0]?.object??model)?.traverse(n=>{if(n.name.startsWith('tanker-warning-lamp-'))lamps.push(n.material.emissiveIntensity)});
       if(!model?.visible||lamps.length!==2||lamps.some(v=>v!==0)||a.duel._vehicleSpec(r).mass!==12000)
         throw Error('Actual rig or cold roof lamps missing');
       if(JSON.stringify(s.arena)!==before)throw Error('Renderer changed Convoy state');
@@ -79,7 +79,7 @@ export async function run(context){
       if(s.arena.convoy.valves.some(v=>v!==0))throw Error('Native blasts did not break all valves '+JSON.stringify({valves:s.arena.convoy.valves,mode:s.mode,discovered:s.wastelandGateDiscovered,finished:r.finished,crushed:r.crushed,wrecking:r.combatWrecking,shield:s.combat.rivalShield,protection:s.arena.participants[1].protectedSec}));
       s.s=s.prevS=r.s-28;s.lateral=s.prevLateral=r.lateral;a.onFrame?.(s,0);})()`);await ready(context);
     await context.evaluate(`(()=>{const s=window.__qaApp.duel.state,model=window.__render.scene.getObjectByName('convoy-tanker'),lamps=[];
-      model.traverse(n=>{if(n.name.startsWith('tanker-warning-lamp-'))lamps.push(n.material.emissiveIntensity)});
+      (model?.getObjectByName('convoy-tanker-detail')?.levels[0]?.object??model).traverse(n=>{if(n.name.startsWith('tanker-warning-lamp-'))lamps.push(n.material.emissiveIntensity)});
       if(lamps.length!==2||lamps.some(v=>v!==1.2)||s.arena.convoy.boardingLeftSec<59)
         throw Error('Native boarding window or lit roof lamps missing');})()`);
     await context.screenshot(quality+'-convoy-lamps-on');
