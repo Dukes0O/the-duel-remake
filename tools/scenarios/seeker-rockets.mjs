@@ -76,10 +76,12 @@ async function start(context) {
 export async function run(context) {
   for (const quality of ['high', 'performance']) {
     await context.command('Emulation.setDeviceMetricsOverride', {width:1280,height:800,deviceScaleFactor:1,mobile:false});
-    await context.navigate('/tools/menu-check.html?flags=arsenal,seeker-rockets');
+    await context.navigate('/tools/menu-check.html');
     await context.waitFor(`!!window.__qaApp && !!window.__render && document.querySelector('#view3d')?.dataset.vehicleAsset === 'ready' && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value`, 'memory-only seeker page', 60000);
     await context.evaluate(`(() => {
       const app=window.__qaApp, select=document.querySelector('#graphics-quality');
+      if(location.search || !app.duel.featureFlags.enabled('seeker-rockets'))
+        throw Error('Released seekers must be on without a QA flag override');
       select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
       app.addPlayer('Seekers ${quality}');
       app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true,xp:20000,scrap:4000}};

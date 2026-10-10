@@ -6,10 +6,14 @@ export async function run(context) {
   'memory-only ambush scene', 60_000);
   await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0, seed: 1989}))
       throw Error('Wasteland race did not start');
     app.stop();
     const duel = app.duel, state = duel.state, zone = state.raids?.zones[0];
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('raider-ambush fixture launched without gate discovery');
     if (!zone || zone.raiders.length !== 3) throw Error('Raiders missing');
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,
       s: zone.s - 110, prevS: zone.s - 110, lateral: 0, prevLateral: 0,

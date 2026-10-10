@@ -680,6 +680,12 @@ function withNativeHud(f, action) {
       setProperty: (name, value) => styles.set(name, String(value)),
     }, classList: {toggle(name, force) {if (force) classes.add(name); else classes.delete(name);}},
     append() {}, remove() {}, addEventListener() {},
+    // Native label layout measures DOM rectangles; slot assertions below
+    // still exercise the production HUD against the same real Duel state.
+    getBoundingClientRect() {
+      const [width, height] = this.className === 'combat-opponent-marker' ? [180, 40] : [1280, 800];
+      return {x: 0, y: 0, left: 0, top: 0, right: width, bottom: height, width, height};
+    },
     setAttribute: (name, value) => attributes.set(name, String(value)),
     getAttribute: name => attributes.get(name) ?? null,
     querySelector(selector) {

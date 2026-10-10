@@ -2,6 +2,23 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Wasteland polish candidate — 10 October 2026
+
+Approved features are integrated. The accepted release exceptions and final
+gate results are recorded in [verification](docs/VERIFICATION.md).
+
+Rocket Pods seek nearby enemy cars, with a lock cue and brackets. Smoke and
+scenery break a lock; shields block hits and a Decoy Drone can draw rockets
+away. Seeker rockets deal 8 damage; Gunn's aimed rockets are unchanged.
+
+Smoke Screen and Wren's smoke now use moving grey puffs with darker undersides.
+Flamethrower and Cinder fire have fuller flames, burning surfaces and scorch
+marks. Salt Flats islands have taller scrap clusters, ridges vary
+in width, and convoy tanker lights and roof details read from farther away.
+
+Airborne cars can clear scenery when they are above its real height. Ordinary
+arena armor rises slightly to balance that fix; warlord health is unchanged.
+
 ## Play
 
 On Windows, click **The Duel** desktop icon or run `start-game.bat` from this

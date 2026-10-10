@@ -19,18 +19,18 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'dev' && Object.keys(FEATURE_STATES).length === 17,
-  'the Wasteland features are released (on, 9 October 2026); career backup and seeker rockets stay dev; retired switches stay absent');
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 17,
+  'the Wasteland features and seekers are released (on, 10 October 2026); career backup stays dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
-// These nine switches were released (on) on 9 October 2026. Their development-switch
+// These switches were released on 9 October 2026, with seekers on 10 October. Their development-switch
 // isolation, proved earlier on the real catalog, is kept by pinning each one to dev.
-const RELEASED_NINE = ['blackiron', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'arsenal-wave3',
-  'fight-voices', 'convoy-raid', 'warlord-cards'];
-check(RELEASED_NINE.every(name => productionFlags.enabled(name)), 'production has the nine newly released features on');
-check(RELEASED_NINE.every(name => createFeatureFlags({storage: null, qa: false, search: `?flags=${name}`}).enabled(name)),
+const RELEASED_FLAGS = ['blackiron', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'arsenal-wave3',
+  'fight-voices', 'convoy-raid', 'warlord-cards', 'seeker-rockets'];
+check(RELEASED_FLAGS.every(name => productionFlags.enabled(name)), 'production has all newly released features on');
+check(RELEASED_FLAGS.every(name => createFeatureFlags({storage: null, qa: false, search: `?flags=${name}`}).enabled(name)),
   'a released switch stays on whatever the URL says');
 const devPinned = (name, options) => createFeatureFlags({catalog: {...FEATURE_STATES, [name]: 'dev'}, storage: null, ...options});
-for (const name of RELEASED_NINE) {
+for (const name of RELEASED_FLAGS) {
   check(!devPinned(name, {qa: false}).enabled(name), `a dev ${name} is off in production`);
   check(!devPinned(name, {qa: false, search: `?flags=${name}`}).enabled(name), `production URLs cannot enable a dev ${name}`);
   check(!devPinned(name, {qa: true}).enabled(name), `unnamed QA keeps a dev ${name} off`);

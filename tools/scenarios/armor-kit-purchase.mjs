@@ -12,7 +12,7 @@ export async function run(context) {
   const purchase = await context.evaluate(`(() => {
     const app = window.__qaApp;
     app.profile = {...app.profile, credits: 5000,
-      wasteland: {...app.profile.wasteland, xp: 950}};
+      wasteland: {...app.profile.wasteland, discoveredGate: true, scrap: 5000, xp: 950}};
     app._saveProfile();
     app.duel.emit({garage: true});
     document.querySelector('#armory-open').click();
@@ -25,10 +25,10 @@ export async function run(context) {
     button.click();
     const after = document.querySelector('#modal-layer [role="dialog"]');
     if (!after?.textContent.includes('SCRAPPER EQUIPPED') ||
-        app.profile.credits !== 4650 ||
+        app.profile.wasteland.scrap !== 4650 || app.profile.credits !== 5000 ||
         app.profile.wasteland.kits.falcone_f42.equipped !== 'scrapper')
       throw Error('Armory purchase did not equip or debit once');
-    return {credits: app.profile.credits,
+    return {scrap: app.profile.wasteland.scrap, credits: app.profile.credits,
       memoryOnly: !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value};
   })()`);
   if (!purchase.memoryOnly) throw Error('QA storage was not isolated');
@@ -66,5 +66,5 @@ export async function run(context) {
   const visual = await context.evaluate(`({kit: window.__qaApp.duel.state.combatArmorKit,
     armor: window.__qaApp.duel.state.maxArmor})`);
   await context.screenshot('armor-kit-equipped-race');
-  console.log(`Memory-only kit purchase: ${purchase.credits} credits, ${visual.kit}, ${visual.armor} armor.`);
+  console.log(`Memory-only kit purchase: ${purchase.scrap} scrap, ${purchase.credits} credits, ${visual.kit}, ${visual.armor} armor.`);
 }

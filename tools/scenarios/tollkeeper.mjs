@@ -33,9 +33,9 @@ async function ready(context) {
   await context.waitFor(`(()=>{const a=window.__qaApp;a?.onFrame?.(a.duel.state,0);window.__render?.renderFrame();
     return a?.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`, 'Tollkeeper assets', 60000);
 }
-async function yard(context, flags, quality) {
+async function yard(context, quality) {
   await context.evaluate('window.name=""');
-  await context.navigate('/tools/menu-check.html?flags=' + flags + '&harness=tollkeeper-' + quality);
+  await context.navigate('/tools/menu-check.html?harness=tollkeeper-' + quality);
   await context.waitFor('!!window.__qaApp', 'Tollkeeper memory menu', 60000);
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.setGraphicsQuality(${JSON.stringify(quality)});
     if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
@@ -141,13 +141,27 @@ export async function run(context) {
   const native = await helpers();
   await context.command('Emulation.setDeviceMetricsOverride',
     {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  await yard(context, 'salt-flats,crew-gear', 'high');
-  await context.evaluate(`(()=>{const a=window.__qaApp;
-    if(document.querySelector('[data-warlord="tollkeeper"]')||a.startWarlordFight('tollkeeper'))
-      throw Error('Default-off dev fight appeared or started through the actual router');})()`);
-  await context.screenshot('tollkeeper-default-off-territory');
+  await yard(context, 'high');
+  await context.evaluate(`(() => {
+    const a = window.__qaApp;
+    const button = document.querySelector('[data-warlord="tollkeeper"]');
+    if (new URLSearchParams(location.search).has('flags') ||
+        a.duel.featureFlags.state('tollkeeper') !== 'on' ||
+        !a.duel.featureFlags.enabled('tollkeeper') || !button || button.disabled ||
+        !button.getBoundingClientRect().width)
+      throw Error('Released Tollkeeper territory action is unavailable without opt-in flags');
+  })()`);
+  await click(context, '[data-warlord="tollkeeper"]');
+  await ready(context);
+  await context.evaluate(`(() => {
+    const state = window.__qaApp.duel.state;
+    if (state.status !== 'warlord_intro' || state.arena.mode !== 'warlord' ||
+        state.arena.format !== 'convoy-raid' || state.arena.warlordId !== 'tollkeeper')
+      throw Error('Released Tollkeeper action did not enter its native charge fight');
+  })()`);
+  await context.screenshot('tollkeeper-released-default-intro');
   for (const quality of ['high', 'performance']) {
-    await yard(context, 'tollkeeper,salt-flats,crew-gear', quality);
+    await yard(context, quality);
     await context.evaluate(native + ';window.__tollkeeperNative=TollkeeperNative;');
     await click(context, '[data-warlord="tollkeeper"]'); await ready(context);
     await context.evaluate(`(()=>{const s=window.__qaApp.duel.state;

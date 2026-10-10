@@ -199,6 +199,7 @@ function nativeVoices({cuesOnly = false} = {}) {
   s.combat.aiTimer = s.combat.pickupTimer = Infinity;
   const point = (distance, lateral = 0) => ({x: lateral, y: 0, z: distance, heading: 0, curvature: 0});
   duel.course = {...duel.course, at: point, worldAt: point, groundAt: point,
+    nearest: (x, z) => ({s: z, lateral: x}),
     obstaclesNear: () => [], roadHalfWidthAt: () => 20};
   duel._obstacles = () => [];
   duel.onChange((next, event) => {

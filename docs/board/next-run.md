@@ -2,49 +2,36 @@
 
 ## Approved release in progress, 10 October 2026
 
-Smoke is merged; Arena round two is approved. Next merge Flame after sync
-and a fresh lane/build gate, then Arena. Kyle authorizes the real-game
-release after the final full tier runs alone and all release checks pass.
-The earlier waiting-for-art and no-release statements below are superseded.
+Kyle approved Smoke round two and Arena round two (final), and authorized
+release of the five polish changes after the required checks. Merge order:
+Smoke, Flame after sync and a fresh lane/build gate, then Arena.
 
+- Height and Seekers are merged. Ordinary arena armor is 1.21; Medium
+  averages 13.833 wrecks and warlord health is unchanged.
+- Kyle accepted seeker damage 8 and its measured 1.328662 damage-per-firing
+  ratio as an exception to the original 1.3 target. Off Pods and Gunn keep 10.
+- Smoke is merged after lane 367/367, build and independent review. The
+  native test fixture now calls the renderer's camera-preparation phase;
+  every original assertion remains unchanged.
+- Flame is merged after lane 368/368, build and source review. Round one
+  and its p95 frame cost are approved. The added texture entry required a
+  reviewed catalog snapshot update; existing source pins are preserved.
+- Arena round two is merged after lane 369/369, build and source review.
+  Near/far lamp tests now check the approved separate materials and exact
+  brightness; all geometry, timing, input and disposal checks remain.
+- Release preparation enables Seekers in production. Career backup stays
+  in development; no save format or settlement behavior changes.
 
-## Current polish work, 10 October 2026
+After these merges, finish combined browser, frame, art and save checks,
+fold release notes into the final commit, and run the full tier alone with
+four jobs on that exact commit. Then install the approved build without
+refreshing an open race or accessing real saves. The earlier ac01cbe6 full
+pass is historical and does not qualify this release.
 
-Kyle supplied all five Claude verdicts. The board and play-test inbox record
-these decisions. Earlier question holds are cleared.
-
-- HEIGHT: merged. Ordinary arena armor rises from
-  1.20 to 1.21: Medium averages 13.833 wrecks, within the unchanged 10–14
-  limit. Warlord health is unchanged. Reviewed replay changes contain only
-  the added armor. Lane 364/364, build and source review pass.
-- SEEKERS: Kyle accepted the measured 1.328662 ratio at 8 damage and authorized
-  merge on 10 October. Record that exception to the original 1.3 target for
-  Claude; do not claim the old check passed. Off/Gunn keep 10. No 7.8 tuning.
-  Merged from f0989887 after lane 366/366, build and source review passed.
-- SMOKE: round two committed at b4494e99, waiting_on: claude for its next
-  art verdict. Grey layers and darker undersides keep visible-car fractions
-  below 10%; native checks/build pass. Actual-source p95 rises at most 0.595%,
-  work p95 at most 5.714%. Broad gate follows approval. Two of three rounds used.
-- ARENA: round two is committed at 1a3f30ce and waiting_on: claude for the
-  final allowed art verdict. The native sheet shows taller scrap clusters,
-  varied ridges and lit tanker details at 89.16794 m. Focused checks/build
-  pass; actual-source p95 remains 16.8 ms in both qualities. Gate after approval.
-- FLAME: round one approved. High p95 rises 3.3%; Performance is unchanged.
-  The High mean rise is noted and is not a blocker. Merge after Smoke.
-  Flame is synced with Height/Smoke round two at 81a9b64b; focused checks,
-  build and eight native views pass. Sync latest integration and gate after
-  Smoke approval/merge.
-
-Shared visual changes are frozen in those candidates. Preserve
-unmerged lanes and pending art evidence. No release is authorized.
-
-Session-end full: 366/366 in 779.95 s on unchanged integration ac01cbe6,
-alone with four jobs. Only status documentation was dirty during the run;
-the ledger records that honestly and is not a clean release verdict. End
-status and notes wait for the next real commit; no status-only commit.
-Height and Seekers lanes and consumed evidence are removed. Smoke, Arena,
-Flame, parked diagnostics and protected audio are retained. Push remains
-held for approved binary compaction. No release is authorized.
+Retain pending lanes until their merges. Protected audio, parked diagnostics
+and Kyle/Claude branches remain untouched. Push is held for separately
+approved binary-history compaction; release approval does not authorize a
+history rewrite.
 
 ## Phase 3 handoff before polish, 9 October 2026
 

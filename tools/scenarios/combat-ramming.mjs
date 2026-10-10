@@ -58,9 +58,13 @@ async function pass(context, quality) {
       opponentCount:3,seed:1989})) throw Error('Ordinary comparison race did not start');
     placeQuietField(app.duel.state);
     const ordinary=await sample();
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode:'wasteland',startStage:0,car:'titan_monster',
       opponentCount:3,seed:1989})) throw Error('Three-opponent combat race did not start');
     const duel = app.duel, state = duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('combat-ramming fixture launched without gate discovery');
     if (state.opponents.length !== 3 || state.car !== 'titan_monster' ||
         !Number.isFinite(state.armor))
       throw Error('Armored field is missing');
@@ -86,10 +90,17 @@ async function pass(context, quality) {
 
   const shove = await context.evaluate(`(() => {
     const app=window.__qaApp,duel=app.duel,state=duel.state,target=state.opponents[1];
-    const place=(actor,s,lateral)=>Object.assign(actor,{s,prevS:s,lateral,
-      prevLateral:lateral,pushVelocity:0,headingError:0,slipAngle:0,
-      airborne:false,airHeight:0,prevAirHeight:0,impactTimer:0,
-      contactCooldown:0,damageCooldown:0});
+    const place = (actor, s, lateral) => Object.assign(actor, {
+      s, prevS: s, lateral, prevLateral: lateral,
+      knock: null, pushVelocity: 0, headingError: 0, slipAngle: 0,
+      airborne: false, airHeight: 0, prevAirHeight: 0, impactTimer: 0,
+      contactCooldown: 0, damageCooldown: 0,
+    });
+    const lateralSpeed = () => {
+      const heading = duel.course.at(target.s).heading;
+      const knock = target.knock;
+      return knock ? knock.vx * Math.cos(heading) - knock.vz * Math.sin(heading) : 0;
+    };
     state.opponents[0].s=state.opponents[0].prevS=540;
     state.opponents[2].s=state.opponents[2].prevS=560;
     target.car='viper_proto';
@@ -99,8 +110,12 @@ async function pass(context, quality) {
     if (!duel._vehicleContact(state,target,'rival')) throw Error('Front ram missed');
     const hit=window.__combatRamEvents.find(event=>event.combatRamHit &&
       event.attackerIndex===-1 && event.victimIndex===1);
-    if (!hit?.spiked || !(hit.armorRemoved>0) || !(target.pushVelocity>0) ||
-        !(target._ramVerticalSpeed>0)) throw Error('Spiked shove failed');
+    const launch = target.knock?.vy;
+    if (!hit?.spiked || !(hit.armorRemoved > 0) || !(lateralSpeed() > 0) ||
+        !(launch > 0)) throw Error('Spiked shove failed: ' + JSON.stringify({
+          spiked: hit?.spiked ?? null, armorRemoved: hit?.armorRemoved ?? null,
+          lateralSpeed: lateralSpeed(), launch: launch ?? null,
+        }));
     // Let the accepted impulse play out through the same 60 Hz CPU motion
     // used by the race, rather than posing the struck car beside the road.
     for (let tick=0;tick<24;tick++) duel._rival(1/60,target);
@@ -119,8 +134,13 @@ async function pass(context, quality) {
       throw Error('Disabled spikes remain visible');
     state.combatBumperSpikes=true;
     window.__render.renderFrame();
-    return {targetLateral:target.lateral,offRoad:target.offRoad,
-      height:target.airHeight,push:target.pushVelocity,
+    const surface = duel._surface(target.s, target.lateral);
+    return {targetS: target.s, targetLateral: target.lateral,
+      offRoad: !surface.mainRoad, cachedOffRoad: target.offRoad,
+      roadHalfWidth: surface.roadHalfWidth,
+      surface: {road: surface.road, mainRoad: surface.mainRoad, shortcutId: surface.shortcutId},
+      tumbling: !!target.tumble, combatWrecking: !!target.combatWrecking,
+      height:target.airHeight,push:lateralSpeed(),launch,
       targetArmor:target.armor,playerArmor:state.armor,
       crashSlots:state.stageCrashes,hit};
   })()`);
@@ -134,11 +154,15 @@ async function pass(context, quality) {
     state.s=state.prevS=500;target.s=target.prevS=560;
     if (duel._vehicleContact(state,target,'rival'))
       throw Error('Separated pair did not clear its incident');
-    Object.assign(state,{s:502,prevS:498,lateral:3.5,prevLateral:3.5,
-      speedMph:130,airborne:false,airHeight:0});
-    Object.assign(target,{s:504,prevS:504,lateral:4.2,prevLateral:4.2,
-      speedMph:20,pushVelocity:0,airborne:false,airHeight:0,
-      prevAirHeight:0,armor:5});
+    Object.assign(state, {
+      s: 502, prevS: 498, lateral: 3.5, prevLateral: 3.5,
+      speedMph: 130, knock: null, airborne: false, airHeight: 0, prevAirHeight: 0,
+    });
+    Object.assign(target, {
+      s: 504, prevS: 504, lateral: 4.2, prevLateral: 4.2,
+      speedMph: 20, knock: null, pushVelocity: 0, airborne: false, airHeight: 0,
+      prevAirHeight: 0, armor: 5,
+    });
     if (!duel._vehicleContact(state,target,'rival') || !target.combatWrecking)
       throw Error('Later CPU did not enter local armor wreck');
     const hit=window.__combatRamEvents.filter(event=>event.combatRamHit &&
