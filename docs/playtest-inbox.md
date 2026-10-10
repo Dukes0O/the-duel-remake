@@ -1,5 +1,15 @@
 # Wasteland play-test inbox
 
+## Installed polish — 10 October 2026
+
+Live build **19:55 UTC · 87b479** includes the five approved polish cards: Height,
+Seekers, Smoke, Flame and Arena. Reload from the menu when ready to try them.
+Open races were left running and no real save was accessed. Full tier: 371/371;
+staged driving: High and Performance, no warnings or errors. The accepted tanker
+GPU cost and two stale collision checks remain recorded release exceptions.
+QA-STALE-COLLISION is separate follow-up work.
+
+
 ## Approved polish release, 10 October 2026
 
 Kyle relayed Claude's final approval of Smoke round two and Arena round two,

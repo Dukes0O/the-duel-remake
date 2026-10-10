@@ -1,11 +1,27 @@
 # Remake verification
 
-## Polish release candidate — 10 October 2026
+## Polish release — 10 October 2026
+
+Installed 10 October at 19:56 UTC from exact commit `1046076a`. Live build
+`20261010195525-87b479fc74c0` is verified over HTTP. The full tier passed
+371/371 in 937.27 s, alone with four jobs, with clean start/end source and
+unchanged commit. A prior attempt was interrupted after a separate Claude lane
+started competing tests; its partial result is not used as release evidence.
+The staged production build passed High and Performance menu/race checks at
+72 and 71 km/h, with zero browser warnings/errors and disposable memory-only
+storage. Real saves were not accessed and open races were not refreshed.
+
+One rollback build is retained in `dist-previous`. The staged server and
+`dist-next` are removed. Old hashed live assets are retained for open races;
+pruning them is deferred until those races no longer need them. Remote backup
+is held by the existing binary-history compaction approval and protected refs;
+no history was rewritten and no protected work was removed.
+
 
 Kyle approved the Height and Seeker changes, accepted Smoke round two and
 Arena round two (final), and authorized Smoke, Flame and Arena merges in
 that order followed by the full tier and a real-game release. Flame round
-one was already approved. Seeker rockets will be on in production; career
+one was already approved. Seeker rockets are on in production; career
 backup stays dev. No save format or settlement behavior changes.
 
 Ordinary arena armor is 1.21 instead of 1.20. Medium wrecks average 13.833,

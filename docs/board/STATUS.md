@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-10-10T19:30:58.817Z
+Observed at: 2026-10-10T19:57:58.171Z
 
-Observation commit: 2bbabd9f3b5a5d774a7a39767fc6334447425423
+Observation commit: 1046076a90623c26c76ffe623e9589dbf5717490
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2bbabd9f3b5a5d774a7a39767fc6334447425423
+Integration HEAD: 1046076a90623c26c76ffe623e9589dbf5717490
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
-Live commit: not checked
+Live commit: 1046076a90623c26c76ffe623e9589dbf5717490
 
-Live build version: not checked
+Live build version: 20261010195525-87b479fc74c0
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: dirty; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-10T16:08:16.721Z; tested commit: ac01cbe6c694619d1ec6077ca2a0278553310f1e.
+Last recorded full run: 2026-10-10T19:54:25.043Z; tested commit: 1046076a90623c26c76ffe623e9589dbf5717490.
 
 ## Feature switches
 
@@ -46,7 +46,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/release-2026-10-10 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/release-polish |
+| codex/qa-stale-collision | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-stale-collision |
 | codex/tools/callback-diagnostics | 5 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 15 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 15 | unknown | true | false | unknown |
@@ -58,7 +58,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/release-2026-10-10 | RELEASE-2026 | 2026-10-10T12:30:19-07:00 | 0 | last commit 2026-10-10T12:30:19-07:00 | docs/changes/RELEASE-2026-10-10.md, src/feature-flags.js, tools/audio/capture-witness.mjs, tools/scenarios/arena-pit.mjs, tools/scenarios/armor-kit-purchase.mjs |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 5 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -73,23 +72,23 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
 | Review `looks/` | 18,377,648 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 55,080,572 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 881,300 B | -54,199,272 B | 5,000,000 B |
 | All `public/` | 270,657,947 B | +0 B | unavailable |
-| Git objects | 374,848,512 B | +1,305,600 B | unavailable |
+| Git objects | 375,525,376 B | +676,864 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: e4b82b0bfaa5bdc6a587b42f842c33ac3458792d
+- Local master: 1046076a90623c26c76ffe623e9589dbf5717490
 - Local main: missing
-- Local integration/wasteland: 2bbabd9f3b5a5d774a7a39767fc6334447425423
+- Local integration/wasteland: 1046076a90623c26c76ffe623e9589dbf5717490
 
-Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
+Local rollback build (dist-previous): 20261010012052-a7177c289a56. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit e4b82b0bfaa5bdc6a587b42f842c33ac3458792d.
+- Remote origin/master: behind local; cached commit e4b82b0bfaa5bdc6a587b42f842c33ac3458792d.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
 - Remote origin/integration/wasteland: behind local; cached commit cbb4e8975fe23911b9940499e0ae1ee17660955b.

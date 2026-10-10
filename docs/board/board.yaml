@@ -3932,7 +3932,9 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-10
+    branch: codex/p4-art-src
     owns: [docs/board/looks/p4-src/, tools/art/catalog.json, docs/changes/P4-ART-SRC.md]
     acceptance:
       - "One sourcing sheet with two or three CC0 or CC-BY candidates for every group in docs/CIRCUITS.md section 8, licences checked and recorded. Send to Kyle with Claude; set waiting_on: kyle. No building before Kyle picks."
@@ -3971,8 +3973,10 @@ tasks:
     lane: VIS
     size: M
     needs: []
-    status: ready
-    owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md]
+    status: building
+    claimed_by: codex-director-2026-10-10
+    branch: codex/p4-daynight
+    owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md, tools/scenarios/p4-daynight.mjs, tools/art/p4-daynight-sheet.py, docs/board/looks/p4-daynight/]
     hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
     sequencing: "Edits render3d.js before P4-SNOW."
     acceptance:
@@ -4346,9 +4350,11 @@ tasks:
     lane: REL
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-10-release
-    branch: codex/release-2026-10-10
+    released_commit: 1046076a90623c26c76ffe623e9589dbf5717490
+    released_build: 20261010195525-87b479fc74c0
+    release_full: "371/371 in 937.27 s; clean exact commit; alone, four jobs"
     flag: seeker-rockets
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-seeker-rockets.mjs, docs/changes/RELEASE-2026-10-10.md]
     hooks: [tools/scenarios/arsenal-core-audio.mjs, tools/audio/capture-witness.mjs, tools/test-arsenal-audio-recorder.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/traffic-wreck-callout.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/hidden-road-arrival.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/crew-fighters.mjs, tools/scenarios/crew-selection.mjs, tools/scenarios/convoy-frames.mjs, tools/scenarios/combat-ramming.mjs, tools/scenarios/combat-results.mjs, tools/scenarios/onfoot-controls-camera.mjs, tools/scenarios/onfoot-figures.mjs, tools/scenarios/onfoot-rpg-wrench.mjs, tools/scenarios/raider-ambush.mjs, tools/scenarios/raider-salvage.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/onfoot-camera-choice.mjs, tools/scenarios/car-loadout-armory.mjs, tools/scenarios/combat-hud.mjs, tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-pickups2.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/arsenal-core.mjs, tools/scenarios/armored-ram.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/scenarios/arena-pit.mjs, tools/scenarios/armor-kit-purchase.mjs, tools/test-fight-voices.mjs, tools/test-arena-convoy.mjs, tools/test-rocket-fighter-contacts.mjs, tools/test-arsenal-wave2.mjs, start-preview.bat, tools/scenarios/seeker-rockets.mjs]
@@ -4358,3 +4364,18 @@ tasks:
     acceptance:
       - "The production catalog enables accepted seekers at 8 damage; off Pods and Gunn remain 10. Kyle accepted the measured 1.328662 ratio; do not change the original 1.3 check."
       - "Current lane/build, independent release review, actual released-flag balance, all browser scenarios, quiet frame comparison, art and save budgets, then full alone on the exact final commit. No live race refresh or real-save access."
+
+  - id: QA-STALE-COLLISION
+    title: "Update the two stale collision browser checks"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-qa-stale-collision
+    branch: codex/qa-stale-collision
+    owns: [tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-ramming.mjs, docs/changes/QA-STALE-COLLISION.md]
+    design: "Keep both current behaviors. Derive traffic touching contact from native body dimensions and road headings, retaining every smash/wreck/blast/cost assertion. Preserve the ram's original early airborne displacement and add a shoulder case derived from native road width that must really leave the road airborne. No runtime edits, post-hit teleport, loosened tolerances or parameter search."
+    acceptance:
+      - "Both browser scenarios pass on current game in High and Performance with memory-only storage and no warnings/issues; preserve real contact, identity, damage, recovery and zero ordinary crash cost."
+      - "Explain and independently review changed assertions; lane/build before merge. This card cannot hold the installed polish release. No other QA investigation."
