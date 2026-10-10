@@ -120,6 +120,46 @@ recharge 14 s · rear
   behind and it has been hit in the last 5 s.
 - Sound: `weapon.smoke.deploy`.
 
+### Polish after phase 3 (Kyle and Claude, 9 October 2026)
+
+Kyle's play notes: the Flamethrower is just an orange cone, the rockets
+could be heat seeking, and the Smoke Screen is too easy to see through.
+
+**Rocket Pods become heat seekers (POLISH-SEEKERS, switch `seeker-rockets`).**
+- When fired, each rocket takes the nearest enemy car within 20 degrees of
+  the firing car's nose, up to 120 m, with a clear line (no smoke, no wall or
+  scrap pile between). No target: it flies straight, as now.
+- A seeker turns at most 35 degrees a second at the same 80 m/s, so a hard
+  turn at close range still slips it. It never picks a new target.
+- Smoke breaks it: a target inside smoke, or smoke between, and the rocket
+  flies straight on. A Decoy Drone within 25 m of the target pulls the rocket
+  onto the drone. A star shield blocks it as before.
+- Damage stays 10 per rocket. If the arsenal balance report shows Rocket Pods
+  above their current hit-rate target, the only allowed lever is 8 per rocket.
+- Cue: a short lock tone (`weapon.rockets.lock`) and a bracket on the target
+  for as long as any rocket is chasing it.
+- Computer: fires at an enemy 20 to 100 m ahead within 20 degrees.
+- Gunn's barrage and single rockets stay aimed at his locked point: his
+  counter (break the line) is unchanged.
+
+**Smoke you cannot see through (POLISH-SMOKE).** Looks only; the cloud's
+size, time and rules above are unchanged. A car fully inside the cloud, seen
+from the chase camera 10 to 25 m away, must be hidden: at most 10% of its
+pixels show against a frame without it. Soft layered puffs, grey-brown, lit
+by the scene, filling the full 6 m radius and about 4 m high, thinning only
+in the last second. With the camera inside the cloud, the screen is a heavy
+grey haze. Wren's Smoke Grenades use the same look at their 5 m size.
+
+**Real flames (POLISH-FLAME).** Looks only; the 9 m, 30 degree cone and its
+damage are unchanged, and the visible fire fills exactly that cone so players
+can read the danger. Rolling flame from a nozzle flicker to a wide tongue,
+smoke curling off the tip, embers, a hot glow on nearby ground and cars, and
+short scorch marks that fade in 5 s. A burning car shows small flames on its
+body for its 1.5 s. Cinder's Hand Flamer uses the same look at 6 m and 35
+degrees. Start from CC0 flame and smoke textures (for example Kenney's
+particle pack) per SPEC 0.11; gritty, never cartoon. One comparison sheet
+per round to Claude, at most three rounds.
+
 ### Wave 2 (ARS-02)
 
 **Rocket Pods** · rank 7 (Gearhead Gunn's reward delivers them early) ·

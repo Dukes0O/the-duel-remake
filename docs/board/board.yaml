@@ -3865,6 +3865,71 @@ tasks:
     gate_commit: f12c822e6869be6a8ba372843379e2a24127e6f1
     merged_commit: 700a947e52b450adba663853595a048180365ef2
 
+  - id: POLISH-HEIGHT
+    title: "Scenery hit boxes have their real height"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: []
+    status: ready
+    owns: [tools/collider-heights.mjs, tools/test-collider-heights.mjs, docs/changes/POLISH-HEIGHT.md]
+    hooks: [src/collision.js, src/sim-contacts.js, src/world-props.js, src/roadside-debris.js, src/arena-props.js, src/crew-gear/contacts.js, src/crew-gear/projectiles.js, src/combat-projectiles.js]
+    acceptance:
+      - "Kyle, 9 October 2026: some hit boxes on various levels reach far too high, as if infinitely tall. Claude found the likely cause: src/collision.js sweepObstacle checks height only when the obstacle has a finite y and height, so colliders without them block at any height."
+      - "Write tools/collider-heights.mjs first: list every collider on every course, route, the hidden road, Muddy Hollow, Rustwall, the Scrapdome ring, the Pit and the Salt Flats (scenery, rails, walls, rocks, trees, buildings, junk cars, scrap piles, props) with its kind and whether it has a finite bottom and top. The test fails on any collider without them."
+      - "Give each collider kind the real height of its model, measured once from the model's bounds and stored with the scenery data, not computed per frame. Airborne cars (jumps, the UFO jump, the Kettle Drop leap), fighters on foot and projectiles pass over anything they clear by 0.3 m or more; anything they would touch still hits."
+      - "Grounded cars keep the existing horizontal rules, so every grounded replay fingerprint stays unchanged. Explain any changed airborne fingerprint in the change note."
+      - "Browser check on a private port: a UFO jump over a rail and a scrap pile on two courses and in the Pit clears them; driving into them still hits."
+  - id: POLISH-SEEKERS
+    title: "Rocket Pods become heat seekers"
+    owner: codex
+    lane: CMB
+    size: M
+    needs: []
+    status: ready
+    flag: seeker-rockets
+    owns: [tools/test-seeker-rockets.mjs, docs/changes/POLISH-SEEKERS.md]
+    hooks: [src/arsenal/rockets.js, src/combat-projectiles.js, src/combat-ai.js, src/combat-hud.js, src/combat-scene.js, src/sound-bank.js, src/audio.js, tools/audio/catalog.json, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/combat-balance.mjs]
+    acceptance:
+      - "Build docs/ARSENAL.md 'Polish after phase 3', Rocket Pods become heat seekers, exactly, behind the new seeker-rockets switch (dev, and on in the Preview). Tests: target choice (cone, range, line), turn limit, no retarget, smoke break, decoy pull, shield block, straight flight with no target, the computer firing rule, Gunn unchanged."
+      - "Run the arsenal balance report with the switch on; the only allowed lever is 8 damage per rocket. Name the lock cue in the change note."
+  - id: POLISH-SMOKE
+    title: "Smoke you cannot see through"
+    owner: codex
+    lane: VIS
+    size: S
+    needs: []
+    status: ready
+    owns: [docs/changes/POLISH-SMOKE.md]
+    hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/smoke.js, src/crew-gear/signature.js, src/render3d.js, tools/scenarios/arsenal-core.mjs]
+    sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-FLAME: one card edits it at a time."
+    acceptance:
+      - "Build docs/ARSENAL.md 'Polish after phase 3', Smoke you cannot see through: looks only, gameplay unchanged. Measured check: a car fully inside the cloud, chase camera 10 to 25 m away, at most 10% of its pixels visible against a frame without it, High and Performance. Camera-inside haze. Wren's grenades share the look. Frame pacing within the usual limit. One sheet to Claude, at most three rounds."
+  - id: POLISH-FLAME
+    title: "Real flames for the Flamethrower and Cinder"
+    owner: codex
+    lane: VIS
+    size: M
+    needs: []
+    status: ready
+    owns: [docs/changes/POLISH-FLAME.md]
+    hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
+    sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-SMOKE: one card edits it at a time."
+    acceptance:
+      - "Build docs/ARSENAL.md 'Polish after phase 3', Real flames: looks only, the cone and damage unchanged, the fire filling exactly the damage cone. CC0 source recorded with its licence; small runtime textures only. Frame pacing within the usual limit in High and Performance with two flamethrowers firing. One sheet per round to Claude (start, full burst, burning car, Cinder), at most three rounds."
+  - id: POLISH-ARENA
+    title: "Arena polish from Claude's reviews"
+    owner: codex
+    lane: VIS
+    size: S
+    needs: []
+    status: ready
+    owns: [docs/changes/POLISH-ARENA.md]
+    hooks: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js]
+    acceptance:
+      - "Four items, looks only (race state and replays unchanged): (1) more scrap on the Salt Flats inner island, reusing the approved Salt Flats pieces; (2) more variety in the Salt Flats ridge widths, inside the existing drivable band rules; (3) the tanker easier to read at a distance: its warning lamps and roof plate stay visible in the distant view; (4) floating labels (Tanker, Escort and similar) never overlap: stack them with a small gap."
+      - "One sheet to Claude covering all four, at most two rounds. Frame pacing within the usual limit."
+
   - id: TEST-DRIVER-BRAKING
     title: "All-seed pursuit test-driver braking"
     owner: codex
