@@ -9,6 +9,7 @@ export function createTankerModel({loadAsset} = {}) {
   let native = null;
   let distant = null;
   let lamps = [];
+  let distantLamps = [];
   let broken = false;
   let signal = null;
   let seconds = 0;
@@ -48,18 +49,22 @@ export function createTankerModel({loadAsset} = {}) {
           copy.matrix.copy(node.matrixWorld);
           if (node.name.startsWith('tanker-warning-lamp-')) {
             // Enlarge around the native lens centre only in the distant LOD.
-            // Shared lamp materials preserve the exact tell/boarding timing.
+            // Separate far emission keeps lenses readable; timing is still native.
             node.geometry.computeBoundingBox();
             const center = node.geometry.boundingBox.getCenter(new Vector3());
             const scale = new Matrix4().makeTranslation(center.x, center.y, center.z)
-              .multiply(new Matrix4().makeScale(1.6, 1.6, 1.6))
+              .multiply(new Matrix4().makeScale(3, 3, 3))
               .multiply(new Matrix4().makeTranslation(-center.x, -center.y, -center.z));
             copy.matrix.multiply(scale);
+            copy.material = node.material.clone();
+            copy.material.toneMapped = false;
+            distantLamps.push(copy.material);
           } else {
             copy.material = node.material.clone();
-            copy.material.color.setHex(0xffd590);
-            copy.material.emissive.setHex(0x755023);
-            copy.material.emissiveIntensity = .3;
+            copy.material.color.setHex(0xffecb5);
+            copy.material.emissiveMap = copy.material.map;
+            copy.material.emissive.setHex(0xffc766);
+            copy.material.emissiveIntensity = 2.5;
             copy.material.toneMapped = false;
           }
           far.add(copy);
@@ -100,6 +105,10 @@ export function createTankerModel({loadAsset} = {}) {
       material.emissive.setHex(on ? color : 0);
       material.emissiveIntensity = on ? 1.2 : 0;
     }
+    for (const material of distantLamps) {
+      material.emissive.setHex(on ? color : 0);
+      material.emissiveIntensity = on ? 4.5 : 0;
+    }
   }
 
   const ready = Promise.resolve().then(() => {
@@ -124,6 +133,7 @@ export function createTankerModel({loadAsset} = {}) {
     lamps = [...new Set(lamps)];
     updateLamps();
     distant = distantView(scene);
+    updateLamps();
     const lod = new LOD();
     lod.name = 'convoy-tanker-detail';
     lod.addLevel(scene, 0);
@@ -155,6 +165,7 @@ export function createTankerModel({loadAsset} = {}) {
       native = null;
       distant = null;
       lamps = [];
+      distantLamps = [];
       group.clear();
     },
   };

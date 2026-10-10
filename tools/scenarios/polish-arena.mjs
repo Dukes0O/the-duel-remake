@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
@@ -24,29 +23,31 @@ export async function run(c) {
       document.head.insertAdjacentHTML('beforeend','<style>details{display:none!important}</style>');
     })()`);
     await settled(c);
-    for(const view of ['island','ridges','tanker','labels']) {
+    for(const view of ['island','ridges','tanker']) {
       const witness=await c.evaluate(`(()=>{const a=window.__qaApp,d=a.duel,s=d.state,r=window.__render;
         const rig=s.opponents[0],p=d.course.groundAt(rig.s,rig.lateral),h=p.heading;
         const view='${view}';
-        if(view==='island')a.inspectionCamera={position:[-105,72,115],target:[0,0,0]};
-        if(view==='ridges')a.inspectionCamera={position:[-16,9,-12],target:[0,0,-25]};
-        if(view==='tanker'||view==='labels') {
-          a.inspectionCamera={position:[p.x-Math.sin(h)*105+Math.cos(h)*10,p.y+14,p.z-Math.cos(h)*105-Math.sin(h)*10],target:[p.x,p.y+2,p.z]};
+        if(view==='island')a.inspectionCamera={position:[-105,58,115],target:[0,0,0]};
+        if(view==='ridges')a.inspectionCamera={position:[-40,38,-54],target:[-40,0,-72]};
+        if(view==='tanker') {
+          a.inspectionCamera={position:[p.x-Math.sin(h)*88+Math.cos(h)*8,p.y+12,p.z-Math.cos(h)*88-Math.sin(h)*8],target:[p.x,p.y+2,p.z]};
           s.arena.convoy.valves=[0,0,0];
-          if(view==='labels')for(const [i,o]of s.opponents.entries()){o.s=rig.s+i*3;o.prevS=o.s;o.lateral=rig.lateral+i*.3;o.prevLateral=o.lateral;}
         }
+        // Pin inspection pose before rendering so vertical camera damping
+        // cannot make baseline/candidate witnesses depend on capture timing.
+        r.camera.position.fromArray(a.inspectionCamera.position);
         const before=JSON.stringify(s);a.onFrame(s,0);r.renderFrame();
         if(JSON.stringify(s)!==before)throw Error('Renderer changed race state');
-        return {view,quality:'${quality}',raceStateUnchanged:true};})()`);
+        const tanker=r.scene.getObjectByName('convoy-tanker');
+        const far=tanker.getObjectByName('convoy-tanker-distant');
+        const lamps=[];far.traverse(n=>{if(n.isMesh&&n.name.startsWith('tanker-warning-lamp-'))lamps.push(n.material.emissiveIntensity);});
+        return {view,quality:'${quality}',raceStateUnchanged:true,distantVisible:far.visible,lamps,
+          cameraDistance:r.camera.position.distanceTo(tanker.position)};})()`);
+      if(view==='tanker'&&(!witness.distantVisible||witness.cameraDistance<85||witness.cameraDistance>90||
+          witness.lamps.length!==2||witness.lamps.some(value=>value<=0)))throw Error('Expected lit distant tanker at native play distance');
       await settled(c);
-      await c.evaluate(`document.querySelector('.combat-opponent-layer').style.visibility='${view==='labels'?'visible':'hidden'}'`);
+      await c.evaluate(`document.querySelector('.combat-opponent-layer').style.visibility='hidden'`);
       const path=await c.screenshot(quality+'-'+view);report.captures.push({...witness,path});
-      if(view==='labels') {
-        const rects=await c.evaluate(`Array.from(document.querySelectorAll('.combat-opponent-marker:not([hidden])')).map(e=>{const r=e.getBoundingClientRect();return {name:e.textContent,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})`);
-        report.captures.at(-1).labels=rects;
-        if(report.variant==='after') for(let i=0;i<rects.length;i++)for(const b of rects.slice(0,i)){const a=rects[i];
-          assert(a.right+5<=b.left||b.right+5<=a.left||a.bottom+5<=b.top||b.bottom+5<=a.top,'visible floating labels overlap');}
-      }
     }
     if(process.env.ARENA_POLISH_FRAMES==='1') {
       const frames=await c.evaluate(`new Promise(done=>{const a=window.__qaApp,r=window.__render,rows=[];let last;

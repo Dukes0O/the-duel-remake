@@ -1,6 +1,7 @@
 # POLISH-ARENA
 
-Status: review; waiting_on: claude. Round 1 of at most 2.
+Status: round 2 of 2 built; quiet frame check passed; Claude art verdict pending. Labels approved by Claude/Kyle on 10 October;
+the other three round-1 differences were too subtle. No label or rule changes.
 
 ## Design settled before code
 - Add approved wreck-shell and loose-part stacks only inside the solid inner island.
@@ -14,7 +15,20 @@ Status: review; waiting_on: claude. Round 1 of at most 2.
 - Director added the combat-hud.js positioning hook, focused test/browser scenario,
   round sheet/review paths and the rebuilt Salt GLB. No new sound event.
 
-## Verification
+## Round 2 design settled before code
+- Keep all six current island footprints. Add 45 approved wheel-less shells
+  in three roof-supported tapered stacks, about 9 m high: 48 -> 93 shells compared
+  with round 1. All new geometry stays behind the existing island barrier.
+- Make seeded crust ridges visibly narrow or broad (about 0.10 to 0.96 m);
+  preserve the Course, driving-band tint, boundary solids and relief rules.
+- Give far tanker lenses separate bright emission with the same native on/off
+  signal; strengthen the roof plate's textured contrast. Near view unchanged.
+- Compare released art at 3af7f15c against round 2 in both qualities. Show the
+  uncropped native tanker at 85-90 m first; any inset must be labeled.
+- Director approved this design. Show actual visual differences before changing
+  exact GLB or LOD test pins. Broad lane gate waits for final art approval.
+
+## Round 1 verification
 - Focused label test: 18 center/edge fixtures; native tanker LOD and disposal pass.
 - Existing native Salt boundary suite: 29/29; Course envelopes unchanged.
 - Actual memory-only browser, both qualities: 8 matched views, zero errors/warnings;
@@ -39,6 +53,41 @@ Status: review; waiting_on: claude. Round 1 of at most 2.
   Retained recipe: tools/art/polish-arena-sheet.py; browser recipe:
   tools/scenarios/polish-arena.mjs (ARENA_POLISH_FRAMES=1 for quiet sampling).
   Raw files live under integration .evidence/2026-10-09/POLISH-ARENA/.
+
+## Round 2 verification
+- Director reviewed matched native frames on 10 October: taller stacks, narrow
+  and broad ridges, and lit distant lamps/roof visibly differ from released art.
+  Technical asset-pin approval only; Claude retains final art approval.
+- Native boundary acceptance: unchanged 29/29. Native render and outside effects:
+  8/8 each. Label fixtures: unchanged 18/18. Build passed.
+- Exact asset pins updated after visual review: SHA256
+  f85c07082ab80e6b6c751ab97bd0bce570e80e5dde8a4f4fc100a5c0181e7449;
+  232,100 triangles and unchanged 172 draws. Runtime GLB 28,308,656 bytes
+  (round 1: 25,030,172). Growth is the 45 approved donor shells and new atlas.
+- Director separately approved replacing far-lamp shared-material/1.6-scale
+  assertions with distinct-material/3-scale assertions. Exact near intensity
+  1.2, far intensity 4.5, off 0, tell color and flash timing now checked together.
+  Shared textures, plate emission and disposal pass. No tolerances loosened.
+- Matched seed-1989 native High/Performance screenshots: zero browser errors or
+  warnings; all six rendered poses leave race state byte-identical. Course,
+  physical rules, labels, RNG and replay assertions are unchanged.
+- Sheet keeps the full native tanker frame first, then a labeled 3.5x detail.
+  Private fixture pins camera position before drawing to avoid vertical damping
+  in distance witnesses. Both versions require two lit far lamps at 85-90 m.
+- Height combination review: stacks remain unreachable to vehicles (unchanged
+  arena clamp +/-18; UFO destinations +/-16; fighters/boarding stay within
+  +/-20.66). The 9.03 m stacks are scenery without Course colliders. Projectiles
+  can pass through them, as through the existing visual-only island salvage.
+  Director accepted this existing presentation limitation; no physics edit.
+- Quiet actual released/candidate pair: 240 rAF intervals each per quality.
+  High P95 16.8 -> 16.8 ms; Performance 16.8 -> 16.8 ms. Means 16.667 ms;
+  unchanged +10% frame limit passes. Native camera exactly 89.16794 m for both
+  versions/qualities, with two lit far lamps; zero warnings/errors.
+  High calls 488 -> 488; Performance 299 -> 312. Final private baseline removed.
+  Broad lane gate waits for Claude art approval; no integration merge claimed.
+- Recipes: tools/scenarios/polish-arena.mjs and tools/art/polish-arena-sheet.py.
+  Sheet: docs/board/looks/polish-arena/round-2.jpg. Raw review evidence:
+  integration .evidence/2026-10-10/POLISH-ARENA/.
 
 ## Removed
 Replace the current Salt GLB in place. No duplicate runtime asset or old label path.

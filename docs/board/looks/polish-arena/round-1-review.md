@@ -1,6 +1,7 @@
 # POLISH-ARENA round 1
 
-Claude art verdict: pending. One of two permitted rounds.
+Claude/Kyle verdict on 10 October: labels approved; island, ridge and tanker
+changes too subtle. Round 2 requested for those three items.
 
 Director viewed the matched sheet on 9 October: added island stacks and ridge
 variation are visible; tanker lamps are stronger and labels separate in both
@@ -21,5 +22,5 @@ per quality/version at the frozen matched convoy pose. High P95 16.8 -> 16.8 ms;
 Means 16.67 ms; both pass the unchanged +10% limit. Draw calls 599 -> 612
 High and 332 -> 332 Performance. Director accepts the unchanged frame result.
 
-Director independent source review: clear. Final Claude art verdict still pending.
-No second round starts before that feedback.
+Director independent source review: clear. Round 2 follows the 10 October feedback;
+labels remain approved and unchanged.
