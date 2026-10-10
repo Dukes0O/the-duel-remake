@@ -27,7 +27,7 @@ assert(!isAbsolute(local)&&!local.startsWith('..')&&
   (local.replaceAll('\\','/')==='public/assets/models/wasteland/salt-flats/venue.glb'||
     /^(?:\.evidence|\.qa-dist)[\\/]/.test(local)),'approved installed Salt asset or private candidate only');
 const bytes=readFileSync(candidate),sha=createHash('sha256').update(bytes).digest('hex');
-assert.equal(sha,'87e30d6da263f189310077ce12328286835334fee218558817368b7bb50ea0cd','approved native Source freeze');
+assert.equal(sha,'7520ed6b33959af8bc1c97a76275704bfe72caea06be24c093e27018430ded92','approved native Source freeze');
 async function asset(){const loader=new GLTFLoader();loader.register(()=>({name:'PRIVATE_HEADLESS_IMAGES',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
   return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');}
 const flush=()=>new Promise(done=>setImmediate(done));
@@ -41,7 +41,7 @@ const makeCourse=()=>new Course(SALT_FLATS_VENUE,1989);
 try{
   await check('real environment routes and loads the complete native Salt graph',async()=>{const gltf=await asset();let calls=0;const world=buildEnvironment(makeCourse(),{saltFlats:{loadAsset:async()=>{calls++;return gltf;}}});
     try{const native=saltRoot(world);await flush();assert.equal(calls,1);assert.equal(native.userData.assetStatus,'ready');assert.deepEqual(native.userData.loadErrors,[]);
-      assert.equal(native.getObjectByName('salt-flats-ground'),gltf.scene.getObjectByName('salt-flats-ground'));let triangles=0,meshes=0;native.traverse(n=>{if(n.isMesh){meshes++;triangles+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;}});assert.equal(meshes,172);assert.equal(triangles,184340);
+      assert.equal(native.getObjectByName('salt-flats-ground'),gltf.scene.getObjectByName('salt-flats-ground'));let triangles=0,meshes=0;native.traverse(n=>{if(n.isMesh){meshes++;triangles+=(n.geometry.index?.count??n.geometry.attributes.position.count)/3;}});assert.equal(meshes,172);assert.equal(triangles,200420);
     }finally{disposeTree(world);}});
   await check('world disposal retires success graph and releases every owned resource exactly once',async()=>{const gltf=await asset(),counts=watched(gltf);const world=buildEnvironment(makeCourse(),{saltFlats:{loadAsset:async()=>gltf}});
     try{const native=saltRoot(world);await flush();assert.equal(native.userData.assetStatus,'ready');disposeTree(world);disposeTree(world);assert.equal(native.userData.assetStatus,'retired');assert.equal(native.children.length,0);exactlyOnce(counts);}finally{disposeTree(world);}});

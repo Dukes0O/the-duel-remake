@@ -1,4 +1,4 @@
-import {Group, LOD, Mesh} from 'three';
+import {Group, LOD, Mesh, Matrix4, Vector3} from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** Presentation owns the supplied GLTF and never owns valve or race state. */
@@ -46,6 +46,22 @@ export function createTankerModel({loadAsset} = {}) {
           const copy = node.clone(false);
           copy.matrixAutoUpdate = false;
           copy.matrix.copy(node.matrixWorld);
+          if (node.name.startsWith('tanker-warning-lamp-')) {
+            // Enlarge around the native lens centre only in the distant LOD.
+            // Shared lamp materials preserve the exact tell/boarding timing.
+            node.geometry.computeBoundingBox();
+            const center = node.geometry.boundingBox.getCenter(new Vector3());
+            const scale = new Matrix4().makeTranslation(center.x, center.y, center.z)
+              .multiply(new Matrix4().makeScale(1.6, 1.6, 1.6))
+              .multiply(new Matrix4().makeTranslation(-center.x, -center.y, -center.z));
+            copy.matrix.multiply(scale);
+          } else {
+            copy.material = node.material.clone();
+            copy.material.color.setHex(0xffd590);
+            copy.material.emissive.setHex(0x755023);
+            copy.material.emissiveIntensity = .3;
+            copy.material.toneMapped = false;
+          }
           far.add(copy);
           return;
         }
