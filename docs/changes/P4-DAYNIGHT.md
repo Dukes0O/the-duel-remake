@@ -105,6 +105,24 @@ obtain the required art verdict within the three-round cap, then run lane/build
 and the independent review. No browser, frame, art or merge approval is implied
 by this draft. The Director owns later full-tier and release scheduling.
 
+## Native browser corrections
+
+The first native checks exposed two fixture errors: the first opponent must
+also be the native rival, and a stopped App needs its existing onFrame callback
+to update the loading overlay after renderer preparation. The harness now uses
+those native paths and keeps every readiness and eight-car assertion.
+
+The next check reached the actual night view and found no window bindings.
+Harbour buildings now use the native city parallax material rather than the
+old fallback window boxes. That shader assigns emissive radiance directly.
+The path-only clone preserves its perspective room shader and multiplies its
+final emission by the night fade and warm colour. Leaving the path restores
+the exact original material. Nine native city-material regressions failed
+before this fix and now pass; the focused total is 476. The unchanged lighting
+mood and scene suites remain 2666 and 1078. The browser selector recognises the
+actual city shader; the night-window requirement is unchanged. No existing
+assertion or tolerance changed. Native visual and frame checks are still pending.
+
 ## Removed
 
 No obsolete runtime path was replaced. Path-only lamps, reflector objects and

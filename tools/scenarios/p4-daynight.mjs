@@ -29,6 +29,7 @@ function prepare(quality) {
       s: grid + row * 8, prevS: grid + row * 8, lateral: side * 2.6, prevLateral: side * 2.6,
       speedMph: 0, headingError: 0, pushVelocity: 0, knock: null, braking: false};
   });
+  state.rival = state.opponents[0];
   state.police.pursuit = null;
   const at = course.groundAt(grid + 12, 0), heading = course.at(grid).heading;
   app.inspectionCamera = {position: [at.x - Math.sin(heading) * 43, at.y + 10,
@@ -67,7 +68,8 @@ function prepare(quality) {
     const reflections = api.scene.getObjectByName('Road reflectors');
     const windows = [];
     api.scene.traverse(mesh => {
-      if (mesh.isMesh && (mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(mesh.material?.name || '')))
+      if (mesh.isMesh && (mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(mesh.material?.name || '') ||
+          mesh.material?.customProgramCacheKey?.().startsWith('city-room-parallax-v1')))
         windows.push({name: mesh.name, material: mesh.material.name, intensity: mesh.material.emissiveIntensity});
     });
     return {poses, stars: sky.material.uniforms.stars?.value ?? null, moon: sky.material.uniforms.moon?.value ?? null,
@@ -84,12 +86,24 @@ async function setup(context, quality) {
   await context.navigate('/tools/menu-check.html?harness=p4-daynight');
   await context.waitFor("!!window.__qaApp && !!window.__render && document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'", 'native menu', 60000);
   const setup = await context.evaluate('(' + prepare.toString() + ')(' + JSON.stringify(quality) + ')');
-  await context.waitFor(`(() => {
-    const app=window.__qaApp,api=window.__render;api.renderFrame();
-    return app.visualReady && document.querySelector('#renderer-loading')?.hidden &&
-      JSON.stringify(api.scene.children.filter(item=>item.visible&&window.__dayNightReview.nativeKeys.includes(item.userData.vehicleKey))
-        .map(item=>item.userData.vehicleKey).sort())===JSON.stringify([...window.__dayNightReview.nativeKeys].sort());
-  })()`, quality + ' eight native cars', 60000);
+  try {
+    await context.waitFor(`(() => {
+      const app=window.__qaApp,api=window.__render;api.renderFrame();app.onFrame?.(app.duel.state,0);
+      return app.visualReady && document.querySelector('#renderer-loading')?.hidden &&
+        JSON.stringify(api.scene.children.filter(item=>item.visible&&window.__dayNightReview.nativeKeys.includes(item.userData.vehicleKey))
+          .map(item=>item.userData.vehicleKey).sort())===JSON.stringify([...window.__dayNightReview.nativeKeys].sort());
+    })()`, quality + ' eight native cars', 60000);
+  } catch (error) {
+    const diagnostic = await context.evaluate(`(() => {
+      const app=window.__qaApp,api=window.__render;
+      return {visualReady:app.visualReady,loadingHidden:document.querySelector('#renderer-loading')?.hidden,
+        dataset:{...document.querySelector('#view3d').dataset}, status:app.duel.state.status,
+        rival:app.duel.state.rival?.car,opponents:app.duel.state.opponents.map(actor=>actor.car),
+        roots:api.scene.children.map(item=>({name:item.name,visible:item.visible,key:item.userData.vehicleKey}))};
+    })()`);
+    await writeFile(join(context.outputDir,'startup-diagnostic.json'),JSON.stringify(diagnostic,null,2)+'\n');
+    throw error;
+  }
   await context.evaluate(`(() => {
     const r=window.__dayNightReview,api=window.__render;
     r.state=JSON.stringify(window.__qaApp.duel.state);

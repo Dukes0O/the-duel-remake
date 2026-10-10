@@ -185,6 +185,7 @@ export function createPathNightDetails({world, course}) {
   const group = new THREE.Group();group.name = 'Authored night details';group.visible = false;
   const eye = {value: new THREE.Vector3()}, direction = {value: new THREE.Vector3(0, 0, 1)}, strength = {value: 0};
   const bindings = [], materials = new Map(), windowMaterials = new Set();
+  const interiorNight = {value: 0};
   const originalKey = material => material.customProgramCacheKey();
   function reflective(source) {
     const material = source.clone(), compile = source.onBeforeCompile, key = originalKey(source);
@@ -218,7 +219,8 @@ export function createPathNightDetails({world, course}) {
     const source = mesh.material;
     const sign = mesh.parent?.userData.roadSignId && !!source.map || mesh.userData.turnSignCell?.kind === 'boards' ||
       mesh.userData.brakingBoard === true;
-    const window = mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(source.name) ||
+    const cityInterior = originalKey(source) === 'city-room-parallax-v1';
+    const window = cityInterior || mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(source.name) ||
       !!source.emissiveMap && source.emissive?.getHex() === 0xffbc71;
     if (!sign && !window) return;
     if (!materials.has(source)) {
@@ -226,6 +228,19 @@ export function createPathNightDetails({world, course}) {
       if (window) {
         material.onBeforeCompile = source.onBeforeCompile;material.customProgramCacheKey = source.customProgramCacheKey;
         material.emissive.set(0xffc17b);windowMaterials.add(material);
+        if (cityInterior) {
+          // Native parallax panes assign emissive radiance directly. Preserve
+          // their room-box shader and apply the path fade to that final value.
+          material.onBeforeCompile = (shader, renderer) => {
+            source.onBeforeCompile.call(source, shader, renderer);
+            shader.uniforms.pathInteriorNight = interiorNight;
+            shader.fragmentShader = shader.fragmentShader.replace('#include <common>',
+              '#include <common>\nuniform float pathInteriorNight;')
+              .replace('totalEmissiveRadiance=cityInteriorColor*cityInteriorLight;',
+                'totalEmissiveRadiance=cityInteriorColor*cityInteriorLight*pathInteriorNight*vec3(1.0,.87,.69);');
+          };
+          material.customProgramCacheKey = () => 'city-room-parallax-v1:path-window-v1';
+        }
       }
       material.userData.sharedAsset = false;materials.set(source, material);
     }
@@ -273,6 +288,7 @@ export function createPathNightDetails({world, course}) {
       if (stopped) return;
       for (const binding of bindings) binding.mesh.material = binding.material;
       const night = THREE.MathUtils.clamp(amount, 0, 1);
+      interiorNight.value = night * 1.4;
       for (const material of windowMaterials) material.emissiveIntensity = night * 1.4;
       eye.value.set(position.x, position.y + .75, position.z);
       direction.value.set(Math.sin(heading), 0, Math.cos(heading));strength.value = headlights;

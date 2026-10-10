@@ -6,6 +6,7 @@ import { createSceneLighting, createPathNightDetails } from '../src/scene-lighti
 import * as vehicles from '../src/vehicles.js';
 import { createVehicleAssets } from '../src/vehicle-assets.js';
 import { disposeTree } from '../src/world.js';
+import { createCityInteriorMaterial } from '../src/city-interiors.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -265,5 +266,36 @@ sharedHead.dispose(); sharedTail.dispose();
   details.dispose();details.dispose();
   equal(world.children, [sign, window], 'world detail disposal removes only its own group');
   for (const item of [board, window]) { item.geometry.dispose();item.material.dispose(); }signMap.dispose();
+}
+// Real city panes replace Harbor fallback windows. Their native shader writes
+// emissive radiance directly, so changing the material intensity alone is inert.
+{
+  const world = new THREE.Group(), source = createCityInteriorMaterial();
+  const pane = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), source, 1);
+  pane.name = 'City glass pane';world.add(pane);
+  const course = {def: {}, length: 1000, closed: true, roadHalfWidthAt: () => 7,
+    groundAt: (s, off) => ({x: off, y: 0, z: s, heading: 0})};
+  const input = {amount: 1, headlights: 1, position: {x: 0, y: 0, z: 50}, distance: 50};
+  const originalCompile = source.onBeforeCompile, originalKey = source.customProgramCacheKey();
+  const details = createPathNightDetails({world, course});details.update(input);
+  check(pane.material !== source, 'actual native city interior receives a path-only binding');
+  const shader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader,
+    fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+  const nativeShader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader,
+    fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+  source.onBeforeCompile(nativeShader);pane.material.onBeforeCompile(shader);
+  near(shader.uniforms.pathInteriorNight.value, 1.4, 'native city shader receives night strength');
+  equal(shader.vertexShader, nativeShader.vertexShader, 'native city perspective vertex path stays exact');
+  equal(shader.fragmentShader.replace('\nuniform float pathInteriorNight;', '')
+    .replace('totalEmissiveRadiance=cityInteriorColor*cityInteriorLight*pathInteriorNight*vec3(1.0,.87,.69);',
+      'totalEmissiveRadiance=cityInteriorColor*cityInteriorLight;'), nativeShader.fragmentShader,
+    'native room-box/parallax shader stays exact apart from bounded night emission');
+  check(pane.material.customProgramCacheKey() !== originalKey, 'path shader has a separate program key');
+  details.update({...input, amount: 0});
+  equal(shader.uniforms.pathInteriorNight.value, 0, 'day path removes native room emission');
+  equal(source.emissiveIntensity, .7, 'original native interior intensity is unchanged');
+  equal(source.onBeforeCompile, originalCompile, 'original native interior shader is unchanged');
+  details.restore();equal(pane.material, source, 'leaving path restores the exact native city material');
+  details.dispose();pane.geometry.dispose();source.dispose();
 }
 console.log(`Light paths: ${checks} acceptance checks passed.`);
