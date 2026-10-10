@@ -302,9 +302,11 @@ export function attachRenderer(host, app) {
       camera.up.set(0, 1, 0);camera.fov = 54;
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
-        tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: true});
+        tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: false});
       lighting.followCamera(camera, ground, now / 1000);
       snapshotLightPose.rotation.y = pose.heading;
+      // Keep chase/police lights in menu mode; only the authored road-light
+      // sample above uses the selected approach rather than the menu's start.
       lighting.updateVehicles({course, position: ground, player: snapshotLightPose, police,
         distance, tall: false, now, high, menu: true});
       lighting.updateWorld({position: ground, heading: pose.heading, distance, high});

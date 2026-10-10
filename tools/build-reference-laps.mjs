@@ -1,18 +1,22 @@
 // Deterministic Team Room references, built with the production App driver.
 // All storage and completion overrides belong to a disposable Node fixture.
 import {COURSE} from '../src/config.js';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {getRouteVariants, supportsRouteVariants} from '../src/route-variants.js';
 import {lapCrossing as crossing, compactLapTrace, lapSectorTimes, analyseLap} from '../src/track-analysis.js';
 import {mkdirSync, renameSync, writeFileSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 
 export const REFERENCE_POLICY = Object.freeze({
   car: 'stuttgart_959s', driver: 'club', cpu: 'medium', fixtureVersion: 1,
   warmupLaps: 1, timedLaps: 2, sampleMetres: 20,
 });
 
-export function referenceTargets(definitions = COURSE) {
+export function referenceTargets(definitions = [...new Map([...COURSE, ...ALL_CIRCUITS]
+  .map(definition => [definition.id, definition])).values()]) {
   return definitions.filter(definition => definition.closed !== false).flatMap(definition => {
     const routes = supportsRouteVariants(definition) ? getRouteVariants(definition)
       : [{id: 'fixed', seed: definition.layoutSeed ?? 1989}];
@@ -181,7 +185,47 @@ export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass} 
   }, {AppClass});
 }
 
+// Load the production registry only after its supported QA flags are active.
+// A separate process avoids cached imports and gives it no real save storage.
+export async function runReferenceWorker({targets = referenceTargets(), catalogOnly = false} = {}) {
+  const script = `
+    const request = JSON.parse(process.argv[1]), rows = new Map();
+    globalThis.__DUEL_QA__ = true;
+    globalThis.location = {search: '?flags=' + request.flags.join(',')};
+    globalThis.localStorage = {get length(){return rows.size}, key:i=>[...rows.keys()][i]??null,
+      getItem:key=>rows.get(String(key))??null, setItem:(key,value)=>rows.set(String(key),String(value)),
+      removeItem:key=>rows.delete(String(key)), clear:()=>rows.clear()};
+    const recipe = await import(request.recipe);
+    const {COURSE} = await import(request.config);
+    const {featureFlags} = await import(request.switches);
+    const result = request.catalogOnly ? {events:COURSE.map(row=>row.id), storageLength:localStorage.length,
+      flags:request.flags.map(name=>({name,state:featureFlags.state(name),enabled:featureFlags.enabled(name)}))}
+      : await recipe.buildReferenceSet({targets:request.targets});
+    process.stdout.write(JSON.stringify(result));
+  `;
+  const request = {targets, catalogOnly, flags: ALL_CIRCUITS.map(circuit => circuit.flag),
+    recipe: import.meta.url, config: new URL('../src/config.js', import.meta.url).href,
+    switches: new URL('../src/feature-flags.js', import.meta.url).href};
+  try {
+    const {stdout} = await promisify(execFile)(process.execPath,
+      ['--input-type=module', '-e', script, JSON.stringify(request)], {maxBuffer: 16 * 1024 * 1024});
+    return JSON.parse(stdout);
+  } catch (error) {
+    const detail = error.stderr?.match(/^Error: (.+)$/m)?.[1] ?? error.message;
+    throw Error(`Native reference worker failed: ${detail}`, {cause: error});
+  }
+}
+
 export async function buildReferenceSet({targets = referenceTargets(), run = buildReferenceRecord, onRecord = () => {}} = {}) {
+  if (run === buildReferenceRecord && targets.some(target => !COURSE.some(definition => definition.id === target.eventId))) {
+    // Reject typos here rather than recursively starting another worker.
+    const known = new Set(referenceTargets().map(target => target.eventId));
+    const missing = targets.find(target => !known.has(target.eventId));
+    if (missing) throw Error(`Unknown reference event: ${missing.eventId}`);
+    const records = await runReferenceWorker({targets});
+    for (const target of targets) onRecord(target, records[target.key]);
+    return records;
+  }
   const records = {};
   for (const target of targets) {
     records[target.key] = await run(target);

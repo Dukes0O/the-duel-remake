@@ -176,6 +176,35 @@ and gear. After the narrow analysis fix, all 195 track-analysis checks pass,
 including exact forward parity, positive magnitude, `R`, sector totals, seam
 delay counted once, and frozen-input preservation.
 
+The expanded reference suite failed first at 24 rather than 27 targets. The
+isolated worker now proves real native dev switches and all three authored
+definitions, empty memory storage, unchanged parent catalog and propagated
+failure. One initial new seed assertion assumed a declared `layoutSeed`; these
+three actual definitions omit it. The assertion now checks the contract's
+declared seed or fixed 1989 fallback. No existing assertion was weakened.
+
+The authorized 27-target rebuild stopped at Panorama Ridge: after 720
+simulated seconds, the native driver completed zero legal laps. No partial
+JSON was published. It leaves Hell Gate at 11.99 s / 526.21 m, lateral -14.14 m
+against 7.5 m road half-width. By 13.99 s / 560.58 m on Mountain Straight it
+slows to 2.86 mph, then remains off-road at about 2.406 mph / lateral -12.021 m.
+At 716.99 s it has reached only 905.55 m of 4,842.04 m, with no first gate.
+The unchanged review tool independently reproduces this with
+`runHeadlessLaps({courseId:'panorama-ridge',car:'stuttgart_959s',seed:1989})`:
+no lap times; final 911.2 m at 1 mph. Both use App's actual autopilot and 1/30
+advancement. Harbour Lights and Tremblant Woods each complete three unassisted
+native laps in 226.28 and 201.02 simulated seconds. The bounded investigation
+ended without changing controls, geometry, physics or lap guards. Reference
+completion is waiting on Claude's native Panorama driver/layout correction.
+The mandatory bundled-data test remains red for the three absent records.
+
+Snapshot lighting regression failed first: the real renderer input sampled
+the start's day look instead of a selected 900 m night approach. Snapshot
+`lighting.apply` now uses the actual approach distance while vehicle/police
+lights retain menu handling. Frozen App race/profile inputs stay unchanged.
+All 207 track-analysis checks pass across 27 real closed event/routes. The
+browser scenario now requests each authored circuit's real native flag.
+
 Remaining UI/browser checks cover owned and locked
 tracks, the real feature switch, all existing closed circuits, keyboard focus,
 flag captures in both presets, no saved images, course switching and exact

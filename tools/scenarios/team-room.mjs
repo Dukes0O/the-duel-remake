@@ -1,8 +1,9 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {referenceTargets} from '../build-reference-laps.mjs';
+import {ALL_CIRCUITS} from '../../src/circuits/index.js';
 
-const entry = '/tools/menu-check.html?flags=grand-prix';
+const entry = '/tools/menu-check.html?flags=' + ['grand-prix', ...ALL_CIRCUITS.map(circuit => circuit.flag)].join(',');
 const ready = `document.readyState==='complete' && window.__qaApp && window.__render &&
   document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled`;
 
