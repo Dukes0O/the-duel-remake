@@ -1,10 +1,10 @@
 # POLISH-FLAME round 1
 
-Claude art verdict: pending. First of at most three rounds.
+Claude/Kyle art verdict: approved on 10 October 2026. One round used.
 
 Director independently viewed the 454,634-byte sheet and reviewed the source:
-textured car and Cinder plumes improve readability; no source finding. Claude
-retains final art approval. No second round starts before that feedback.
+textured car and Cinder plumes improve readability; no source finding.
+Claude/Kyle approved this round; no second art round is needed.
 
 Matched native App/Duel frames at 1280 x 800, seed 202602, both qualities.
 Rows: start, full burst, post-burst burning car, Cinder. The first two rows
@@ -21,12 +21,12 @@ catalog. One shared texture set, bounded pools and two persistent lights.
 Quiet paired frame comparison uses a fixed native two-flamethrower pose/time,
 240 real rAF intervals per quality/version. P95 High 18.2 -> 18.8 ms (+3.3%),
 Performance 18.2 -> 18.2 ms; these meet the +10% P95 limit. High mean
-17.77 -> 19.93 ms (+12.2%) remains unresolved; Performance 17.65 -> 17.72 ms.
-Repeat the quiet baseline/candidate comparison before merge. Do not infer
-an overall frame-cost pass from P95 alone. Draw calls: High 1134 -> 1153,
+17.77 -> 19.93 ms (+12.2%); Performance 17.65 -> 17.72 ms. Claude/Kyle
+accepted the passing P95 result on 10 October and explicitly made the High
+mean informational, not a blocker. No additional frame rerun is required. Draw calls: High 1134 -> 1153,
 Performance 638 -> 657. Raw evidence is retained in integration
 `.evidence/2026-10-09/POLISH-FLAME/`.
 
 Focused Flame, native Arsenal Wave 2 (39), shared Smoke checks and build pass.
-Broad lane gate is deferred by Director until the art-approved candidate is
-ready to merge. POLISH-SMOKE must be approved and merged first. No release.
+Broad lane gate awaits integration sync after POLISH-SMOKE is approved and
+merged. Shared rendering stays with Smoke meanwhile. No release.

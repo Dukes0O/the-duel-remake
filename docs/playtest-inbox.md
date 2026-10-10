@@ -1,5 +1,61 @@
 # Wasteland play-test inbox
 
+## Claude verdicts received from Kyle, 10 October 2026
+
+- Flame round one approved. Frame-cost acceptance uses p95; the High mean
+  increase is noted, not a blocker. Merge after Smoke.
+- Smoke round two: varied overlapping soft grey puffs, broken wispy edges,
+  light tops and darker undersides, drift and churn; preserve concealment.
+- Arena round two: about twice the inner-island scrap in tall clusters of
+  approved pieces, visibly varied ridge widths, distant lit tanker lamps
+  and roof plate readable at play distance. Labels are approved.
+- Height fix approved: use the existing ordinary arena armor lever just
+  enough to bring Medium wrecks to 14 or less. Warlord health stays exact.
+- Seekers: report average actual armor damage per Rocket Pods firing on
+  matched seeds, off and on. On may be at most 1.3 times off. Kyle's latest
+  initial value was 10 damage per rocket. Kyle then authorized 8 if the
+  repeat after Height still exceeds the cap.
+
+All prior question holds are cleared. Only the next Smoke and Arena sheets
+will be marked waiting_on: claude. Flame keeps its Smoke merge dependency.
+
+## Current polish evidence
+
+Flame round one is approved. Its [sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/polish-flame/docs/board/looks/polish-flame/round-1.jpg)
+covers native Flamethrower and Cinder in both qualities. Eight browser views,
+source review and focused checks pass. Two-flame p95 is 18.2 to 18.8 ms in
+High (+3.3%) and remains 18.2 ms in Performance. High mean rises 12.2%; Kyle
+confirmed that it does not block approval. Fresh lane/build evidence follows
+Smoke integration before Flame merges.
+
+Smoke round one established Screen visible-car fractions of High 6.974% /
+0.917% and Performance 0% / 0.104% at 10/25 m. All eight paired controls
+repeat exactly; inside haze is 96%. Wren keeps its native 2.5 m radius. The
+F42 does not fit wholly inside Wren's cloud, so those rows show appearance
+and haze only. Round two must preserve concealment and measure actual old
+source against the candidate for frame cost before the next sheet.
+
+Height's approved armor adjustment is 1.20 to 1.21 for ordinary arena cars:
+Medium falls from 14.167 to 13.833 wrecks against the unchanged 10–14 limit.
+Warlord health is exact. Reviewed replay pins change only armor readings;
+movement, timing and results remain identical. Merged after lane 364/364,
+build and source review passed.
+
+Seekers' report will count each native four-rocket volley as one firing,
+including misses, shields and interrupted volleys. It will measure actual
+armor removed, including remaining-armor clipping, on thirty matched Medium
+rank-13 seeds. Player and CPU totals remain visible beside the pooled metric.
+The provisional result at 10 is off 80 armor / 447 firings versus on 140 /
+471: ratio 1.660828, above 1.3. All sixty races finish; no damage is
+unattributed. Repeat after Height. Kyle authorized 8 for seeker-enabled Pods
+if that repeat still fails; feature-off Pods and Gunn retain 10.
+
+Arena round two must visibly deliver all three requested changes at native
+play distance; labels keep their approved placement. The rejected first
+sheet is not an approved visual baseline. Physics and replay checks remain.
+
+Only the next Smoke and Arena art sheets require Claude's next verdict.
+
 ## Released 9 October 2026: try these in the main game
 
 Everything in the Preview is live (build 26.10.10 01:20 UTC). Close any open

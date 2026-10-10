@@ -1,8 +1,8 @@
 # POLISH-FLAME
 
-Status: review; waiting_on: claude. Round 1 of at most 3.
-Merge depends on POLISH-SMOKE approval/merge, a fresh lane gate and repeated
-quiet frame comparison (High mean regression remains unresolved).
+Status: round 1 approved by Claude/Kyle on 10 October 2026.
+Merge depends on POLISH-SMOKE approval/merge, integration sync and a fresh lane
+gate. No longer waiting on Claude; no additional frame rerun is required.
 Exact shared-source dependency: POLISH-SMOKE 36b0da674033abc13f5c30c31e8fbb802822963a.
 
 ## Design before code
@@ -40,8 +40,8 @@ https://kenney.nl/assets/particle-pack page explicitly labels CC0, verified
 - Quiet fixed-pose sampling, two native flamethrowers, 240 real rAF intervals:
   P95 High 18.2 -> 18.8 ms (+3.3%), Performance 18.2 -> 18.2 ms. P95 passes
   the +10% limit. Means: High 17.77 -> 19.93 ms (+12.2%); Performance
-  17.65 -> 17.72 ms. High mean is unresolved: repeat quiet baseline/candidate
-  measurements before merge. This is not a blanket frame-cost pass.
+  17.65 -> 17.72 ms. Claude/Kyle accepted the passing P95 result on 10 October;
+  the High mean increase is recorded information, explicitly not a merge blocker.
   Draw calls High 1134 -> 1153; Performance 638 -> 657.
 - First technical captures exposed faint scalar-mask sampling; corrected gamma
   handling and density. Cinder fixture now renders the first native firing tick
@@ -49,12 +49,11 @@ https://kenney.nl/assets/particle-pack page explicitly labels CC0, verified
 - Focused Flame checks, native Arsenal Wave 2 (39), shared Smoke checks and
   npm run build pass. No existing assertion or race fingerprint changed.
 - Director independently viewed round-1.jpg (454,634 bytes): textured car and
-  Cinder plumes improve readability. Final art verdict belongs to Claude.
+  Cinder plumes improve readability. Claude/Kyle approved round 1 on 10 October.
   Retained sheet/browser recipes are tools/art/polish-flame-sheet.py and
   tools/scenarios/polish-flame.mjs; raw evidence stays under integration
-  .evidence/2026-10-09/POLISH-FLAME/. No second round before Claude feedback.
-- Broad lane gate deliberately deferred by Director until Claude approves the
-  art candidate for merge. No integration merge or release is authorized here.
+  .evidence/2026-10-09/POLISH-FLAME/. No second art round is needed.
+- Broad lane gate awaits the approved Smoke dependency and integration sync. No integration merge or release is authorized here.
 
 ## Removed
 Removed the old car and crew orange cones and their dedicated geometry/material.
