@@ -52,6 +52,7 @@ async function start(context) {
   })()`);
 }
 export async function run(context) {
+  if (process.env.DUEL_SMOKE_POLISH === '1') return smokePolish(context);
   await ready(context);
   await career(context);
   const disabled = await context.evaluate(`(() => {
@@ -180,4 +181,163 @@ export async function run(context) {
     })()`);
     console.log('Arsenal ' + quality + ': actual purchases, owner isolation, Oil contact/shield/grace, Smoke occlusion/recovery and render purity passed. ' + JSON.stringify({oil, smoke}));
   }
+}
+
+// POLISH-SMOKE: matched native deployment / silhouette controls. This optional
+// path leaves the established Arsenal gameplay scenario and its assertions intact.
+async function smokePolish(context) {
+  const rows = [];
+  for (const quality of ['high', 'performance']) {
+    await context.command('Emulation.setDeviceMetricsOverride',
+      {width:1280,height:800,deviceScaleFactor:1,mobile:false});
+    await ready(context, '?flags=arsenal,crew-gear');
+    await context.evaluate(`(() => {
+      const select=document.querySelector('#graphics-quality');
+      select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
+    })()`);
+    for (const kind of ['screen', 'wren']) {
+      await context.evaluate(`(() => {
+        const app=window.__qaApp,duel=app.duel;
+        app.stop();
+        duel.startCampaign({mode:'wasteland',car:'falcone_f42',seed:1989,
+          discoveredGate:true,crewId:${JSON.stringify(kind === 'wren' ? 'wren' : 'rook')},
+          arsenalRank:30,opponentCount:1});
+        const state=duel.state;
+        Object.assign(state,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
+          lateral:0,prevLateral:0,speedMph:0,headingError:0,traffic:[],invulnerableSec:0});
+        state.combat.aiTimer=state.combat.pickupTimer=Infinity;
+        state.opponents.forEach((actor,i)=>Object.assign(actor,{s:850+i*40,prevS:850+i*40,
+          lateral:0,prevLateral:0,speedMph:0,headingError:0,airHeight:0,prevAirHeight:0}));
+        window.__smokeDetach?.();window.__smokeHazard=null;
+        window.__smokeDetach=duel.onChange((_state,event)=>{
+          if(event.arsenalCue==='weapon.smoke.deploy')window.__smokeHazard=event.hazard;
+        });
+        if(${JSON.stringify(kind)}==='screen') {
+          state.weaponLoadout=['smoke','crossbow','bomb','star'];
+          if(!duel.fireWeapon('smoke'))throw Error('Native Screen did not deploy');
+        } else {
+          duel.setInput({interact:true});
+          for(let i=0;i<50&&!state.onFoot;i++)duel.step(1/120);
+          duel.setInput({interact:false});duel.selectFootGear(3);
+          duel.setFighterInput({fire:true});duel.step(1/120);duel.setFighterInput({fire:false});
+          for(let i=0;i<300&&!window.__smokeHazard;i++)duel.step(1/120);
+          if(!window.__smokeHazard)throw Error('Native Wren grenade did not make smoke');
+          state.onFoot=false;state.fighter=null;
+        }
+        const cloud=window.__smokeHazard;
+        if(!cloud||cloud.radius!==(${JSON.stringify(kind)}==='screen'?6:2.5))throw Error('Wrong native cloud radius');
+        const nearest=duel.course.nearest(cloud.x,cloud.z),ground=duel.course.groundAt(nearest.s,nearest.lateral);
+        Object.assign(state,{s:nearest.s,prevS:nearest.s,lateral:nearest.lateral,prevLateral:nearest.lateral,
+          speedMph:0,headingError:0,airHeight:0,prevAirHeight:0,impactTimer:0});
+        window.__smokePose={ground,heading:ground.heading};
+        window.__smokePaint=()=>{
+          const before=JSON.stringify(state),hazardBefore=JSON.stringify({...cloud,owner:null});
+          const camera=window.__render.camera;
+          if(app.inspectionCamera){camera.position.fromArray(app.inspectionCamera.position);
+            camera.lookAt(...app.inspectionCamera.target);camera.updateMatrixWorld(true);}
+          app.onFrame?.(state,0);window.__render.renderFrame({presentationSeconds:20});
+          document.querySelectorAll('details').forEach(panel=>{
+            const title=panel.querySelector('summary')?.textContent||'';
+            if(title.includes('TEMPORARY SAVES')||title.startsWith('Performance samples'))panel.style.display='none';
+          });
+          if(JSON.stringify(state)!==before||JSON.stringify({...cloud,owner:null})!==hazardBefore)
+            throw Error('Smoke rendering changed gameplay');
+        };
+      })()`);
+      for (const distance of [10,25]) {
+        await context.evaluate(`(() => {
+          const app=window.__qaApp,{ground,heading}=window.__smokePose;
+          app.inspectionCamera={position:[ground.x-Math.sin(heading)*${distance},ground.y+3.2,
+            ground.z-Math.cos(heading)*${distance}],target:[ground.x,ground.y+1.5,ground.z]};
+          window.__smokePaint();
+        })()`);
+        await context.waitFor(`(() => {window.__smokePaint();return window.__qaApp.visualReady &&
+          window.__render.renderer.domElement.style.visibility!=='hidden';})()`, 'smoke capture readiness',60000);
+        const measured=await context.evaluate(`(() => {
+          const app=window.__qaApp,view=window.__render,scene=view.scene,renderer=view.renderer;
+          const {ground}=window.__smokePose;
+          const models=scene.children.filter(node=>node.userData.vehicleKey);
+          models.sort((a,b)=>Math.hypot(a.position.x-ground.x,a.position.z-ground.z)-Math.hypot(b.position.x-ground.x,b.position.z-ground.z));
+          const car=models[0],cloud=scene.getObjectByName('arsenal-hazard-0');
+          if(!car||!cloud?.visible)throw Error('Native car/cloud render controls missing');
+          let carRadius=0;const vertex=car.position.clone();car.updateMatrixWorld(true);
+          car.traverse(node=>{if(!node.isMesh||!node.visible)return;const positions=node.geometry?.attributes.position;
+            if(!positions)return;for(let i=0;i<positions.count;i++){vertex.fromBufferAttribute(positions,i).applyMatrix4(node.matrixWorld);
+              carRadius=Math.max(carRadius,Math.hypot(vertex.x-ground.x,vertex.z-ground.z));}});
+          const gl=renderer.getContext(),width=gl.drawingBufferWidth,height=gl.drawingBufferHeight;
+          const pixels=()=>{const data=new Uint8Array(width*height*4);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,data);return data;};
+          const original=renderer.render;
+          function capture(showCar,showSmoke) {
+            renderer.render=function(current,camera){
+              if(current!==scene)return original.call(this,current,camera);
+              const cv=car.visible,sv=cloud.visible;
+              car.visible=showCar&&cv;cloud.visible=showSmoke&&sv;
+              try{return original.call(this,current,camera);}finally{car.visible=cv;cloud.visible=sv;}
+            };
+            try{window.__smokePaint();window.__smokePaint();return pixels();}finally{renderer.render=original;}
+          }
+          const clearCar=capture(true,false),clearPng=renderer.domElement.toDataURL('image/png');
+          const clearEmpty=capture(false,false);
+          const smokyCar=capture(true,true),smokyPng=renderer.domElement.toDataURL('image/png');
+          const smokyRepeat=capture(true,true);let unstablePixels=0;
+          for(let i=0;i<smokyCar.length;i+=4)if([0,1,2].some(c=>smokyCar[i+c]!==smokyRepeat[i+c]))unstablePixels++;
+          const smokyEmpty=capture(false,true),emptyPng=renderer.domElement.toDataURL('image/png');
+          // A car-only white silhouette excludes cast shadows and the ground
+          // from the denominator. It is a temporary render override only.
+          const rootVisibility=scene.children.map(node=>[node,node.visible]);
+          const background=scene.background,fog=scene.fog,override=scene.overrideMaterial;
+          let donor=null;car.traverse(node=>{if(!donor&&node.isMesh)donor=Array.isArray(node.material)?node.material[0]:node.material;});
+          const maskMaterial=donor.clone();maskMaterial.map=null;maskMaterial.alphaMap=null;
+          maskMaterial.transparent=false;maskMaterial.opacity=1;maskMaterial.color.set(0xffffff);
+          if(maskMaterial.emissive)maskMaterial.emissive.set(0xffffff);
+          scene.overrideMaterial=maskMaterial;scene.background=maskMaterial.color.clone().set(0);scene.fog=null;
+          for(const [node]of rootVisibility)node.visible=node===car;
+          let mask;
+          try{original.call(renderer,scene,view.camera);mask=pixels();}
+          finally{for(const [node,visible]of rootVisibility)node.visible=visible;
+            scene.background=background;scene.fog=fog;scene.overrideMaterial=override;maskMaterial.dispose();}
+          let silhouette=0,visible=0,clearPixels=0;
+          for(let i=0;i<mask.length;i+=4) {
+            if(mask[i]<64||mask[i+1]<64||mask[i+2]<64)continue;
+            silhouette++;
+            const clear=Math.max(...[0,1,2].map(c=>Math.abs(clearCar[i+c]-clearEmpty[i+c])));
+            const smoky=Math.max(...[0,1,2].map(c=>Math.abs(smokyCar[i+c]-smokyEmpty[i+c])));
+            if(clear>=12)clearPixels++;
+            if(smoky>=12)visible++;
+          }
+          if(silhouette<100||clearPixels<silhouette*.5)throw Error('Invalid car-silhouette control: '+JSON.stringify({silhouette,clearPixels}));
+          window.__smokePaint();
+          return {clearPng,smokyPng,emptyPng,silhouette,clearPixels,visible,visibleFraction:visible/silhouette,unstablePixels,
+            radius:window.__smokeHazard.radius,carRadius,fullyInside:carRadius<=window.__smokeHazard.radius,drawCalls:renderer.info.render.calls,
+            camera: view.camera.position.toArray(),statePure:true};
+        })()`);
+        const {clearPng,smokyPng,emptyPng,...metrics}=measured;
+        const {writeFile}=await import('node:fs/promises');
+        const {join}=await import('node:path');
+        for(const [label,png]of [['clear',clearPng],['smoke',smokyPng],['empty',emptyPng]])
+          await writeFile(join(context.outputDir,`control-${kind}-${distance}-${quality}-${label}.png`),Buffer.from(png.split(',')[1],'base64'));
+        rows.push({quality,kind,distance,...metrics});
+        console.log('Smoke concealment '+JSON.stringify(rows.at(-1)));
+        await context.screenshot(`smoke-${kind}-${distance}-${quality}`);
+
+      }
+      const inside=await context.evaluate(`(() => {
+        const app=window.__qaApp,{ground,heading}=window.__smokePose;
+        app.inspectionCamera={position:[ground.x,ground.y+2,ground.z],
+          target:[ground.x+Math.sin(heading)*10,ground.y+2,ground.z+Math.cos(heading)*10]};
+        window.__smokePaint();
+        const haze=window.__render.scene.getObjectByName('smoke-camera-haze');
+        if(!haze?.visible||haze.material.opacity<.9)throw Error('Inside camera lacks heavy haze');
+        return {opacity:haze.material.opacity};
+      })()`);
+      console.log('Smoke inside '+JSON.stringify({quality,kind,...inside}));
+      await context.screenshot(`smoke-${kind}-inside-${quality}`);
+    }
+  }
+  const {writeFile}=await import('node:fs/promises');
+  const {join}=await import('node:path');
+  await writeFile(join(context.outputDir,'concealment.json'),JSON.stringify(rows,null,2)+'\n');
+  if(rows.filter(row=>row.kind==='screen'&&row.fullyInside).length!==4)throw Error('Screen controls must fully contain the car');
+  const failed=rows.filter(row=>row.fullyInside&&row.visibleFraction>.1);
+  if(failed.length)throw Error('More than 10% of the car remains visible: '+JSON.stringify(failed));
 }

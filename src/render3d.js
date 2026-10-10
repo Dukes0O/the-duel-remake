@@ -567,7 +567,8 @@ export function attachRenderer(host, app) {
       effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
-    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera},useCombatAtlas);
+    combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera,
+      smokeTexture:combatEffects?.resources.textures.smoke},useCombatAtlas);
     if(st.arena?.mode==='fuel-run'){
       fuelEntries[0].id='player';fuelEntries[0].mesh=player;fuelEntries[0].actor=st;
       for(let index=1;index<4;index++){

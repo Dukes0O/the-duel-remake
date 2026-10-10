@@ -542,3 +542,83 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     withWarmupVisibility, dispose,
     get available() { return resources.available && resources.ready; }};
 }
+
+// Smoke hazards share this visual volume. Rules keep their own opacity and
+// lifetime: presentation only thins during the final second.
+export function smokeVisualOpacity(hazard) {
+  return Math.max(0, Math.min(1, (hazard?.lifetime || 0) - (hazard?.age || 0)));
+}
+export function smokeHazeOpacity(clouds, position) {
+  if (!position) return 0;
+  let opacity = 0;
+  for (const cloud of clouds) {
+    if (position.y < cloud.y || position.y > cloud.y + 4) continue;
+    const distance = Math.hypot(position.x - cloud.x, position.z - cloud.z);
+    const edge = Math.max(0, Math.min(1, (cloud.radius - distance) / .6));
+    opacity = Math.max(opacity, .96 * edge * smokeVisualOpacity(cloud));
+  }
+  return opacity;
+}
+
+export function createSmokeCloud() {
+  const count = 25;
+  const geometry = new THREE.PlaneGeometry(1, 1);
+  const cells = new Float32Array(count * 2);
+  for (let i = 0; i < count; i++) {
+    cells[i * 2] = i % 8;
+    cells[i * 2 + 1] = 3; // Full smoke, before the atlas thins.
+  }
+  geometry.setAttribute('smokeCell', new THREE.InstancedBufferAttribute(cells, 2));
+  const material = new THREE.MeshStandardMaterial({color: 0xb9b0a2,
+    roughness: 1, metalness: 0, transparent: true, opacity: 1,
+    depthWrite: false, side: THREE.DoubleSide});
+  material.onBeforeCompile = shader => {
+    shader.vertexShader = 'attribute vec2 smokeCell;\nvarying vec2 smokeLocalUv;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>',
+      '#include <uv_vertex>\nsmokeLocalUv = uv;\n#ifdef USE_MAP\nvMapUv = (vMapUv + smokeCell) / 8.0;\n#endif');
+    shader.fragmentShader = 'varying vec2 smokeLocalUv;\n' + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>',
+      '#include <map_fragment>\n' +
+      'float smokeEdge = 1.0 - smoothstep(0.65, 1.0, length(smokeLocalUv * 2.0 - 1.0));\n' +
+      'float smokeShade = clamp(dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)), 0.24, 0.72);\n' +
+      'diffuseColor.rgb = diffuse * smokeShade;\n' +
+      'diffuseColor.a = opacity * smokeEdge;');
+  };
+  material.customProgramCacheKey = () => 'smoke-hazard-atlas-v1';
+  const mesh = new THREE.InstancedMesh(geometry, material, count);
+  mesh.name = 'layered-smoke-puffs';
+  mesh.visible = false;
+  mesh.frustumCulled = false;
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const transform = new THREE.Object3D();
+  let current = null;
+  function faceCamera(camera) {
+    if (!current || !camera) return;
+    for (let i = 0; i < count; i++) {
+      const upper = i >= 16;
+      const angle = upper ? (i - 16) * Math.PI / 4 : i * Math.PI / 8;
+      const radial = i === 24 ? 0 : current.radius * (upper ? .5 : .65);
+      const drift = Math.sin(current.age * .55 + i) * .02;
+      transform.position.set(Math.sin(angle + drift) * radial,
+        upper ? 2.6 : 1.3, Math.cos(angle + drift) * radial);
+      transform.quaternion.copy(camera.quaternion);
+      transform.scale.set(current.radius * .7, 2.8, 1);
+      transform.updateMatrix();
+      mesh.setMatrixAt(i, transform.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+  mesh.onBeforeRender = (_renderer, _scene, camera) => faceCamera(camera);
+  return {mesh,
+    update(hazard, camera, texture = null) {
+      current = hazard;
+      material.opacity = smokeVisualOpacity(hazard);
+      mesh.visible = material.opacity > 0;
+      if (texture && material.map !== texture) {
+        material.map = texture; material.needsUpdate = true;
+      }
+      faceCamera(camera);
+    },
+    dispose() {geometry.dispose(); material.dispose();},
+  };
+}
