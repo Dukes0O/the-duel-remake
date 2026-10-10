@@ -114,12 +114,12 @@ async function setup(context, quality) {
   return setup;
 }
 
-function installMeasurement(quality) {
+function installMeasurement(quality, diagnose) {
   const app = window.__qaApp, api = window.__render, fixture = window.__dayNightReview;
   const gl = api.renderer.getContext(), ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
   const owner = quality === 'high' ? api.composer : api.composer.passes[0], originalDraw = owner.render;
   const originalDiagnostics = app.frameDiagnostics;
-  const run = window.__dayNightFrames = {frames: [], cpu: [], gpu: [], pending: [], seen: 0,
+  const run = window.__dayNightFrames = {frames: [], cpu: [], gpu: [], rendererUpdate: [], updateAndSubmit: [], pending: [], seen: 0,
     active: false, done: false, disjoint: false, previous: null, before: fixture.witness(),
     gpuSupported: !!ext, scales: new Set(), ratios: new Set()};
   const poll = () => {
@@ -146,6 +146,9 @@ function installMeasurement(quality) {
       run.active=true;
       if(run.previous!==null)run.frames.push(now-run.previous);
       run.previous=now;run.cpu.push(submitMs);
+      // Native update includes lighting and other renderer preparation. These
+      // writes occur after the measured phases but can affect later frames.
+      if(diagnose){run.rendererUpdate.push(updateMs);run.updateAndSubmit.push(updateMs+submitMs);}
       run.scales.add(document.querySelector('#view3d').dataset.resolutionScale||'1');run.ratios.add(api.renderer.getPixelRatio());
       if(run.cpu.length>=360){run.active=false;run.done=true;run.after=fixture.witness();poll();}
     }};
@@ -163,9 +166,9 @@ export function summarizeFrameTiming(values) {
   return {samples: sorted.length, p50: sorted[Math.ceil(sorted.length * .5) - 1], p95};
 }
 
-async function measure(context, quality, look, pair) {
+async function measure(context, quality, look, pair, diagnose) {
   await context.evaluate('window.__dayNightReview.setLook(' + JSON.stringify(look) + ')');
-  await context.evaluate('(' + installMeasurement.toString() + ')(' + JSON.stringify(quality) + ')');
+  await context.evaluate('(' + installMeasurement.toString() + ')(' + JSON.stringify(quality) + ',' + JSON.stringify(diagnose) + ')');
   try {
     await context.waitFor('window.__dayNightFrames.done', quality + ' ' + look + ' frame sample', 60000);
     await context.waitFor('(() => {const r=window.__dayNightFrames;r.poll();return r.pending.length===0||r.disjoint;})()', 'completed GPU timers', 10000);
@@ -173,21 +176,35 @@ async function measure(context, quality, look, pair) {
       const r=window.__dayNightFrames;
       if(r.disjoint)throw Error('Disjoint GPU sample');
       if(JSON.stringify(r.before)!==JSON.stringify(r.after))throw Error('Frame view/model witness changed');
-      return {frames:r.frames,cpu:r.cpu,gpu:r.gpu,gpuSupported:r.gpuSupported,
+      return {frames:r.frames,cpu:r.cpu,gpu:r.gpu,rendererUpdate:r.rendererUpdate,updateAndSubmit:r.updateAndSubmit,gpuSupported:r.gpuSupported,
         before:r.before,scales:[...r.scales],ratios:[...r.ratios]};
     })()`);
 
     const pacing={delivered:summarizeFrameTiming(row.frames),cpu:summarizeFrameTiming(row.cpu),gpu:summarizeFrameTiming(row.gpu)};
     if(row.scales.length!==1||row.ratios.length!==1||!pacing.cpu||!pacing.delivered||pacing.cpu.samples!==360||pacing.delivered.samples<359||
         row.gpuSupported&&(!pacing.gpu||pacing.gpu.samples<288))throw Error('Incomplete or changing-resolution frame sample');
-    return {quality,look,pair,pacing,witness:row.before,scales:row.scales,ratios:row.ratios,gpuSupported:row.gpuSupported};
+    const diagnostics=diagnose?{
+      rendererUpdate:summarizeFrameTiming(row.rendererUpdate),
+      updateAndSubmit:summarizeFrameTiming(row.updateAndSubmit),
+      orderedSamples:{rendererUpdate:row.rendererUpdate,updateAndSubmit:row.updateAndSubmit,
+        cpuSubmit:row.cpu,delivered:row.frames},
+      gpuCompletionSamples:row.gpu,
+    }:null;
+    return {quality,look,pair,pacing,diagnostics,witness:row.before,scales:row.scales,ratios:row.ratios,gpuSupported:row.gpuSupported};
   } finally {await context.evaluate('window.__dayNightFrames.cleanup()');}
 }
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:800,deviceScaleFactor:1,mobile:false});
   const frames = process.env.P4_DAYNIGHT_MEASURE_FRAMES === '1';
+  const diagnose = frames && process.env.P4_DAYNIGHT_DIAGNOSE_FRAMES === '1';
   const report={card:'P4-DAYNIGHT',captures:[],frames:[],comparisons:[],frameStatus:frames?'running':'not scheduled',passed:false};
+  if(diagnose)report.diagnosis={deliveredDecisionLimitMs:20,order:['legacy','night'],
+    scope:'Fixed scene and inspection camera; fixed night look, not moving blend or camera cost.',
+    timingScope:'rendererUpdate includes lighting and all other native renderer preparation; updateAndSubmit sums each frame before percentile calculation.',
+    observerEffect:'Additional array writes reuse existing clock readings and occur after measured phases; later RAF or collection pauses may still be affected. No overhead is subtracted.',
+    decisionScope:'Kyle/Claude diagnostic routing only, not technical causal proof or a release floor. Original CPU/GPU/delivered 10% gate remains authoritative.',
+    dispositions:[]};
   const persist=()=>writeFile(join(context.outputDir,'p4-daynight.json'),JSON.stringify(report,null,2)+'\n');
   try {
     for(const quality of ['high','performance']) {
@@ -208,9 +225,9 @@ export async function run(context) {
         const capture=await context.screenshot(quality+'-'+look);
         report.captures.push({quality,look,capture,...initial,witness});await persist();
       }
-      if(frames) for(const pair of [1,2]) {
+      if(frames) for(const pair of diagnose?[1]:[1,2]) {
         for(const look of pair===1?['legacy','night']:['night','legacy']) {
-          report.frames.push(await measure(context,quality,look,pair));await persist();
+          report.frames.push(await measure(context,quality,look,pair,diagnose));await persist();
         }
         const baseline=report.frames.find(row=>row.quality===quality&&row.pair===pair&&row.look==='legacy');
         const candidate=report.frames.find(row=>row.quality===quality&&row.pair===pair&&row.look==='night');
@@ -220,7 +237,21 @@ export async function run(context) {
         const addedPercent={};
         for(const key of ['delivered','cpu','gpu'])addedPercent[key]=baseline.pacing[key]&&candidate.pacing[key]?
           (candidate.pacing[key].p95/baseline.pacing[key].p95-1)*100:null;
-        report.comparisons.push({quality,pair,addedPercent});await persist();
+        const comparison={quality,pair,addedPercent};
+        if(diagnose){
+          comparison.diagnosticAddedPercent={};
+          for(const key of ['rendererUpdate','updateAndSubmit']){
+            const off=baseline.diagnostics[key],on=candidate.diagnostics[key];
+            comparison.diagnosticAddedPercent[key]=off&&on&&off.p95>0?(on.p95/off.p95-1)*100:null;
+          }
+          const offMs=baseline.pacing.delivered.p95,onMs=candidate.pacing.delivered.p95;
+          const offExceeds=offMs>report.diagnosis.deliveredDecisionLimitMs;
+          const onExceeds=onMs>report.diagnosis.deliveredDecisionLimitMs;
+          report.diagnosis.dispositions.push({quality,pair,offDeliveredP95Ms:offMs,onDeliveredP95Ms:onMs,
+            offExceeds,onExceeds,classification:offExceeds&&onExceeds?'route-to-measurement-diagnosis':
+              onExceeds?'route-to-feature-investigation':offExceeds?'off-only-exceeds-decision-limit':'neither-exceeds-decision-limit'});
+        }
+        report.comparisons.push(comparison);await persist();
       }
       await context.evaluate(`(() => {
         const r=window.__dayNightReview,api=window.__render;r.setLook('legacy');

@@ -148,8 +148,121 @@ submission, GPU measures the main pipeline, and delivered frames measure RAF
 pacing, as in the established convoy check. Measured cost and art verdict are
 still pending.
 
+## Quiet frame comparison, 10 October
+
+At unchanged source 4834abde, the first quiet eight-car run failed High pair
+2: render-submission CPU +53.61% and main-pipeline GPU +28.68%; delivered
+pacing and both Performance pairs stayed within the unchanged 10% limit.
+The High legacy GPU p95 shifted from 24.94 ms in pair 1 to 11.54 ms in pair 2.
+No cause was proved and no runtime code, assertion or tolerance was changed.
+
+One unchanged diagnostic repeat, still alone on the laptop, passed all four
+pairs on private port 22672 with memory-only saves, eight native screenshots,
+zero warnings and zero errors. Worst added CPU p95 was 4.40%, GPU p95 4.00%,
+and delivered p95 did not increase. All batches retained 360 CPU, 359 delivered
+and 359 valid GPU samples, fixed resolution and exact eight-car poses.
+Both reports remain under integration `.evidence/2026-10-10/P4-DAYNIGHT/`
+(`frames-1` and `frames-2`). A small deferred timing-diagnosis card keeps the
+unexplained first-run instability visible. This records the successful repeat
+and the failed first run; it does not establish the cause or an art/merge pass.
+Claude's first art verdict and the lane/build gate remain pending.
+## FIELD sync and current frame hold
+
+The lane synced FIELD/GRIP at 42b9b5f7. The automatic renderer merge was
+independently reviewed: FIELD paint/shadow handling and DAY resource ownership
+remain intact. Focused checks pass 479 light-path, 1078 scene-lighting and 2666
+lighting-mood assertions. Native views still pass all eight cars, all four looks
+and both presets, with memory-only saves and zero warnings/errors.
+
+The first quiet check on this source failed Performance pair 1: CPU +19.39%,
+GPU +14.11%. Both High pairs and Performance pair 2 stayed within 10%; delivered
+p95 was 16.8 ms throughout. An unchanged repeat numerically passed (worst CPU
++6.08%, GPU +5.94%), but Harbour lane gate PID 40912 started at 22:55:00 UTC
+before the report completed at 22:55:55. That repeat is valid functional evidence
+only and cannot qualify the quiet frame budget. Both reports remain in
+`frames-field-1` and `frames-field-2` under the card's ignored evidence folder.
+
+The first-run variation has no proved cause. Investigation reached its time cap;
+QA-FRAME-SETTLING records the uncertainty, and other cards continue. Current frame
+acceptance remains open pending a coordinated quiet slot. No runtime change,
+assertion/tolerance relaxation, exception approval or final frame pass is claimed.
+Claude's first art verdict and the lane/build gate are also pending.
 ## Removed
 
 No obsolete runtime path was replaced. Path-only lamps, reflector objects and
 cloned materials are removed by their owner on disposal. The original lighting
 path remains necessary for every current course.
+
+## Confirmed quiet FIELD measurement — 10 October
+
+Kyle relayed Claude's confirmed quiet slot before this run. Claude stopped its
+Harbour check and also interrupted our AUDIO and Telemetry lane runs; those
+interruptions have no test verdict and are restarted after this measurement.
+All three Codex builders held heavy work. Separate prelaunch and post-run
+process inventories showed no competing gates, builds, browser harnesses,
+balance runs or Blender jobs.
+
+The unchanged source `42b9b5f7e9f9a0833ec52a58d7e97d371896ce09` ran on private
+port 45114 with memory-only storage. All eight native visual captures completed.
+The required frame gate **failed**, exit 1, with the original limits and samples:
+
+| Quality / pair | Added CPU p95 | Added GPU p95 | Delivered p95 |
+| --- | ---: | ---: | ---: |
+| High / 1 | -7.27% | -2.65% | 16.8 ms |
+| High / 2 | +13.40% | +6.58% | 16.8 ms |
+| Performance / 1 | +49.33% | +21.88% | 16.8 ms |
+| Performance / 2 | -1.37% | +1.00% | 16.8 ms |
+
+This is a valid quiet failure, not a passing repeat or an overlap excuse.
+The numeric pass from `frames-field-2` remains invalid for quiet timing.
+Evidence is in ignored `frames-field-3`. No runtime code, sample count,
+assertion, tolerance or adverse sample changed. The cause of variation remains
+unproved. The investigation cap has been reached; no further same-source
+repeat is scheduled. Keep DAYNIGHT held and continue the other cards while
+Kyle decides when the existing QA-FRAME-SETTLING diagnosis should run.
+
+## Bounded timing diagnosis design — before instrumentation
+
+Kyle relayed one further 30-minute quiet slot: compare the same scene and
+camera with one path-off then path-on pair in High and Performance. A scoped
+diagnostic mode runs that one pair; the ordinary acceptance scenario retains
+both orders. Keep all original sample counts, timing guards and the 10%
+CPU/GPU/delivered p95 gate. No runtime optimization is justified yet.
+The Director reviews this diagnostic source before the scheduled browser run.
+
+Use the native `recordRendererFrame(now, updateMs, submitMs)` callback to retain
+`rendererUpdate` and per-frame `updateAndSubmit` samples alongside the original
+`cpu` submission samples. The update phase includes lighting, car placement,
+world updates and other renderer preparation; it is not lighting-only time.
+The lighting owner is private to the renderer, so this two-file QA change
+cannot isolate its methods without adding a runtime hook. Sum each frame's
+update and submission times before calculating percentiles; do not sum p95s.
+Store CPU/update/RAF arrays in chronological order and diagnostic paired
+deltas separately from the existing budget fields. GPU queries are collected
+in completion-observation order by the existing reverse pending-query loop;
+store those separately as `gpuCompletionSamples`, without claiming temporal
+order or changing polling, timer values or p95. Do not add these diagnostics
+to the acceptance gate.
+
+These timings reuse the existing native clock reads. Array writes add observer
+work after the native measured phases and may affect later RAF intervals or
+collection pauses. Both branches use identical instrumentation. Do not subtract
+estimated overhead or treat comparison with earlier uninstrumented runs as a
+feature-cost result. The stopped App and fixed inspection camera measure a
+fixed night look; they do not prove moving light-blend or moving-camera cost.
+The generic frame-pacing scenario has no absolute pass cutoff. Kyle/Claude
+therefore explicitly set 20 ms delivered p95 for this diagnostic routing
+decision only. Record whether off and on exceed 20 ms. Both exceeding it
+routes the case to measurement diagnosis by Director instruction, not proof
+of technical cause. Only on exceeding it routes feature investigation; keep
+off-only and neither-exceeds outcomes explicit. This is neither a new release
+floor nor a replacement for any original 10% relative-cost gate.
+
+Earlier reports, failed samples and others' pending review notes stay intact.
+No new mirrored implementation test is needed for this additive QA capture.
+Syntax/diff inspection and the Director's source review precede the one native
+run. Heavy jobs remain held until Audio completes and the quiet slot is granted.
+
+Draft syntax and diff-whitespace checks pass. The scoped run requires both
+`P4_DAYNIGHT_MEASURE_FRAMES=1` and `P4_DAYNIGHT_DIAGNOSE_FRAMES=1`.
+No browser or timing result is claimed for this instrumentation yet.
