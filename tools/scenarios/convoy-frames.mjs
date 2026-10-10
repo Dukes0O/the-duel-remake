@@ -1,24 +1,5 @@
 import {writeFile} from 'node:fs/promises';
-import {join, resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {build} from 'vite';
-
-async function privateBundle() {
-  const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
-  const entry = join(root, '.qa-dist/convoy-frames.virtual.js').replaceAll('\\', '/');
-  const built = await build({root, configFile: false, logLevel: 'silent',
-    plugins: [{name: 'convoy-frames-private',
-      resolveId(id) {if (id.replaceAll('\\', '/') === entry) return '\0convoy-frames';},
-      load(id) {if (id === '\0convoy-frames') return "export {Box3,Vector3,Mesh,BoxGeometry,MeshStandardMaterial} from 'three';";},
-    }],
-    build: {write: false, emptyOutDir: false, minify: false,
-      lib: {entry, name: 'ConvoyFrameQa', formats: ['iife']}},
-  });
-  const outputs = Array.isArray(built) ? built[0].output : built.output;
-  const code = outputs.find(value => value.type === 'chunk')?.code;
-  if (!code) throw Error('Private frame bundle missing');
-  return code;
-}
+import {join} from 'node:path';
 
 async function click(context, selector) {
   const at = await context.evaluate(`(() => {
@@ -33,12 +14,11 @@ async function click(context, selector) {
   }
 }
 
-async function measure(context, bundle, quality, present, pair) {
+async function measure(context, quality, present, pair) {
   const label = `${quality}-${present ? 'tanker' : 'box'}-${pair}`;
   await context.evaluate('window.name = ""');
   await context.navigate('/tools/menu-check.html?flags=convoy-raid&harness=convoy-frames');
   await context.waitFor('!!window.__qaApp && !!window.__render', 'memory-only Convoy App', 60000);
-  await context.evaluate(bundle + '\nwindow.__convoyFrameQa = ConvoyFrameQa;');
   await context.evaluate(`(() => {
     const app = window.__qaApp;
     app.stop();
@@ -71,12 +51,30 @@ async function measure(context, bundle, quality, present, pair) {
       window.__render.scene.getObjectByName('convoy-tanker')?.children.length > 0;
   })()`, 'loaded native tanker and Salt Flats', 60000);
   await context.evaluate(`(() => {
-    const app = window.__qaApp, api = window.__render, Q = window.__convoyFrameQa;
+    const app = window.__qaApp, api = window.__render;
     const state = app.duel.state;
     if (state.arena?.mode !== 'convoy-raid' || state.arena.venueId !== 'salt-flats' ||
         state.status !== 'countdown') throw Error('Native Convoy entry missing');
     app.advance(3.1);
     const rig = state.opponents[0], model = api.scene.getObjectByName('convoy-tanker');
+    // Use the production Three constructors; importing another copy here adds
+    // a second engine to every comparison page before the native frame sample.
+    const donor = api.scene.getObjectByName('crew-boarding-charge')?.children.find(node =>
+      node.type === 'Mesh' && node.geometry?.type === 'BoxGeometry' &&
+      node.material?.type === 'MeshStandardMaterial');
+    let nativeGeometry = null;
+    model.traverse(node => {
+      if (!nativeGeometry && node.isMesh && node.geometry?.isBufferGeometry)
+        nativeGeometry = node.geometry;
+    });
+    if (!donor || !api.camera.position.isVector3 || !nativeGeometry)
+      throw Error('Native Three constructor donors are unavailable');
+    if (!nativeGeometry.boundingBox) nativeGeometry.computeBoundingBox();
+    if (!nativeGeometry.boundingBox?.isBox3)
+      throw Error('Native tanker Box3 donor is unavailable');
+    const Q = {Box3: nativeGeometry.boundingBox.constructor,
+      Vector3: api.camera.position.constructor, Mesh: donor.constructor,
+      BoxGeometry: donor.geometry.constructor, MeshStandardMaterial: donor.material.constructor};
     app.keys = {}; app.autopilot = false;
     app.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
     app.inspectionCamera = {position: [0, 0, 0], target: [0, 0, 0]};
@@ -286,7 +284,6 @@ export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {
     width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
   });
-  const bundle = await privateBundle();
   const report = {card: 'CONVOY-FRAMES', rows: [], comparisons: [], passed: false,
     method: 'Zero player input. Fixed tanker-relative camera 110 m behind/12m across/14m above. Two counterbalanced complete native Salt Flats loops per model and preset.',
     baseline: 'One neutral PBR box exactly matching native local bounds and shadows replaces tanker only during every native-scene draw, including the rear mirror. Native pose and valve updates remain common.',
@@ -297,7 +294,7 @@ export async function run(context) {
     for (const quality of ['high', 'performance']) {
       for (const pair of [1, 2]) {
         for (const present of pair === 1 ? [false, true] : [true, false]) {
-          report.rows.push(await measure(context, bundle, quality, present, pair)); await persist();
+          report.rows.push(await measure(context, quality, present, pair)); await persist();
         }
         const rows = report.rows.filter(row => row.quality === quality && row.pair === pair);
         const box = rows.find(row => !row.present), tanker = rows.find(row => row.present);

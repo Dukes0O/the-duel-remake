@@ -1,5 +1,5 @@
-// The released roadside rule retires oncoming traffic without charging
-// player armor, a crash slot, or race time. Inspect the live HUD and scene.
+// The released roadside rule leaves a physical traffic wreck without charging
+// player armor, a crash slot, or race time. Hard hits explode after the smash.
 export async function run(context) {
   await context.navigate('/tools/menu-check.html');
   await context.waitFor("!!window.__qaApp && !!window.__render && !document.querySelector('#start-engine').disabled && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value",
@@ -49,30 +49,67 @@ export async function run(context) {
     app.onFrame?.(player);
     const firstDrawCalls = await present();
     const pool = render.scene.children.find(item => item.name === 'Roadside debris pool');
-    const firstDebrisVisible = pool?.children.some(item => item.visible);
-    const firstCarVisible = trafficMesh.visible;
-    for (let i = 0; i < 36; i++) duel._traffic(1 / 120);
-    player.stageTimeSec += .3;
-    const laterDrawCalls = await present();
+    const wreckPose = () => {
+      const ground = duel.course.groundAt(traffic.s, traffic.lateral);
+      const smoke = render.scene.getObjectByName('combat-vfx-traffic-wreck-0-smoke');
+      return {dead: traffic.alive === false, physical: traffic.wrecked?.physical === true,
+        visible: trafficMesh.visible, attached: trafficMesh.parent === render.scene,
+        poseError: Math.hypot(trafficMesh.position.x - ground.x,
+          trafficMesh.position.z - ground.z),
+        position: {x: trafficMesh.position.x, z: trafficMesh.position.z},
+        smoke: smoke?.visible === true, smokeOpacity: smoke?.material.opacity ?? 0,
+        exploded: traffic.wrecked?.exploded === true,
+        debris: pool?.children.some(item => item.visible) === true};
+    };
+    const first = wreckPose();
     const impact = events.find(event => event.roadsideImpact)?.roadsideImpact;
+    const calloutVisible = !document.querySelector('#race-callout').hidden;
+    const message = document.querySelector('#callout-text').textContent;
+    // Keep the original .3-second view before the native .6-second blast.
+    // The traffic step reads the race clock to dispatch that delayed event.
+    const advanceTraffic = steps => {
+      for (let i = 0; i < steps; i++) {
+        player.stageTimeSec += 1 / 120;
+        duel._traffic(1 / 120);
+      }
+    };
+    advanceTraffic(36);
+    const laterDrawCalls = await present();
+    const later = wreckPose();
+    advanceTraffic(48);
+    app.onFrame?.(player);
+    const explodedDrawCalls = await present();
+    const exploded = wreckPose();
+    const impacts = events.filter(event => event.roadsideImpact).map(event => event.roadsideImpact);
+    const explosions = impacts.filter(event => event.outcome === 'obliterate');
     return {outcome: impact?.outcome, actorMatches: impact?.actor === traffic,
       oldWreckEvent: events.some(event => event.trafficWrecked),
       armorUnchanged: Object.is(armor, player.armor),
       crashDelta: player.stageCrashes - crashes,
       penaltyDelta: player.racePenaltySec - penalty,
-      calloutVisible: !document.querySelector('#race-callout').hidden,
-      message: document.querySelector('#callout-text').textContent,
-      firstDebrisVisible, laterDebrisVisible: pool?.children.some(item => item.visible),
-      firstCarVisible, carRetired: !trafficMesh.visible,
-      firstDrawCalls, laterDrawCalls};
+      calloutVisible, message, first, later, exploded,
+      moved: Math.hypot(later.position.x - first.position.x,
+        later.position.z - first.position.z),
+      impactCount: impacts.length, explosionCount: explosions.length,
+      explosionActorMatches: explosions[0]?.actor === traffic,
+      explodedCalloutVisible: !document.querySelector('#race-callout').hidden,
+      explodedMessage: document.querySelector('#callout-text').textContent,
+      firstDrawCalls, laterDrawCalls, explodedDrawCalls};
   })()`);
-  if (result.outcome !== 'obliterate' || !result.actorMatches || result.oldWreckEvent ||
+  const poses = [result.first, result.later, result.exploded];
+  if (result.outcome !== 'smash' || !result.actorMatches || result.oldWreckEvent ||
       !result.armorUnchanged || result.crashDelta !== 0 || result.penaltyDelta !== 0 ||
-      !result.calloutVisible || result.message !== 'TRAFFIC OBLITERATED' ||
-      !result.firstDebrisVisible || !result.laterDebrisVisible ||
-      !result.firstCarVisible || !result.carRetired ||
-      result.firstDrawCalls <= 0 || result.laterDrawCalls <= 0)
-    throw Error(`Flagged traffic feedback is incomplete: ${JSON.stringify(result)}`);
-  await context.screenshot('traffic-obliterated-callout');
-  console.log(`Roadside traffic retired with ${result.firstDrawCalls}/${result.laterDrawCalls} live draws; zero player armor, crash, or time loss.`);
+      !result.calloutVisible || result.message !== 'TRAFFIC SMASHED' ||
+      poses.some(pose => !pose.dead || !pose.physical || !pose.visible ||
+        !pose.attached || !Number.isFinite(pose.poseError) || pose.poseError > 1e-6) ||
+      !(result.moved > 0) || !result.later.smoke || !(result.later.smokeOpacity > 0) ||
+      result.first.exploded || result.later.exploded ||
+      result.first.debris || result.later.debris ||
+      result.impactCount !== 2 || result.explosionCount !== 1 || !result.explosionActorMatches ||
+      !result.exploded.exploded || !result.exploded.debris || !result.exploded.smoke ||
+      !result.explodedCalloutVisible || result.explodedMessage !== 'TRAFFIC EXPLODED' ||
+      result.firstDrawCalls <= 0 || result.laterDrawCalls <= 0 || result.explodedDrawCalls <= 0)
+    throw Error(`Traffic smash and delayed explosion feedback is incomplete: ${JSON.stringify(result)}`);
+  await context.screenshot('traffic-exploded-persistent-wreck');
+  console.log(`Physical traffic wreck stayed visible through smash and delayed explosion with ${result.firstDrawCalls}/${result.laterDrawCalls}/${result.explodedDrawCalls} live draws; zero player armor, crash, or time loss.`);
 }

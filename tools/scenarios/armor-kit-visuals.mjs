@@ -18,12 +18,14 @@ async function qualityPass(context, quality) {
   const initial = await context.evaluate(`(() => {
     const app = window.__qaApp;
     app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
-      kits: {...app.profile.wasteland.kits,
+      discoveredGate: true, kits: {...app.profile.wasteland.kits,
         falcone_f42: {owned: ['scrapper'], equipped: 'scrapper'}}}};
     app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, seed: 1989})) throw Error('Combat field did not start');
     const state = app.duel.state;
+    if (state.wastelandGateDiscovered !== true || state.combatArmorKit !== 'scrapper')
+      throw Error('Armor-kit fixture did not launch with discovered gate and equipped Scrapper');
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,
       s: 500, prevS: 500, lateral: 0, prevLateral: 0,
       speedMph: 0, traffic: [], armor: state.maxArmor});
@@ -140,12 +142,14 @@ async function frameCostRun(context) {
       select.dispatchEvent(new Event('change',{bubbles:true}));
       const app=window.__qaApp;
       app.profile={...app.profile,wasteland:{...app.profile.wasteland,
-        kits:{...app.profile.wasteland.kits,
+        discoveredGate:true,kits:{...app.profile.wasteland.kits,
           falcone_f42:{owned:['warlord'],equipped:'warlord'}}}};
       app._saveProfile();
       if(!app.startCampaign({mode:'wasteland',startStage:0,car:'falcone_f42',
         opponentCount:3,seed:1989}))throw Error('Four-car kit cost field did not start');
       const state=app.duel.state;
+      if(state.wastelandGateDiscovered!==true||state.combatArmorKit!=='warlord')
+        throw Error('Kit cost fixture did not launch with discovered gate and equipped Warlord');
       Object.assign(state,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
         lateral:0,prevLateral:0,speedMph:0,traffic:[],armor:state.maxArmor,
         combatArmorKit:'warlord',combatWrecking:false});
@@ -262,11 +266,14 @@ async function fitMatrixPass(context) {
   'memory-only all-car fit menu',60_000);
   await context.evaluate(`(() => {
     const app=window.__qaApp;
-    app.profile={...app.profile,unlockedCars:${JSON.stringify(cars)}};
+    app.profile={...app.profile,unlockedCars:${JSON.stringify(cars)},
+      wasteland:{...app.profile.wasteland,discoveredGate:true}};
     app._saveProfile();
     if(!app.startCampaign({mode:'wasteland',startStage:0,car:'falcone_f42',
       opponentCount:3,seed:1989}))throw Error('Fit field did not start');
     const state=app.duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('Kit fit fixture did not launch with discovered gate');
     Object.assign(state,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
       lateral:0,prevLateral:0,speedMph:0,traffic:[],armor:state.maxArmor});
     state.opponents.forEach(actor=>{actor.s=-700;actor.prevS=-700;actor.speedMph=0;});

@@ -42,6 +42,8 @@ async function start(context, quality, venue) {
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio.setMuted(true);
     if(!window.name.startsWith('__duel_qa_tab_v2:')||!Object.getOwnPropertyDescriptor(window,'localStorage')?.value)
       throw Error('Pit requires memory-only QA storage');
+    // This visual fixture enters with discovery only inside disposable QA state.
+    a.duel.state.wastelandGateDiscovered=true;
     a.setGraphicsQuality(${JSON.stringify(quality)});
     for(const d of document.querySelectorAll('details'))if(d.querySelector('summary')?.textContent.startsWith('MENU QA'))d.open=false;
     if(!a.duel.startArenaEvent({venueId:${JSON.stringify(venue)},mode:'last-car-rolling',seed:1989,

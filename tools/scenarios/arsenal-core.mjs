@@ -56,11 +56,22 @@ export async function run(context) {
   await ready(context);
   await career(context);
   const disabled = await context.evaluate(`(() => {
-    const app = window.__qaApp;
-    if (app.purchaseArsenalWeapon('oil').ok) throw Error('Dev-disabled Arsenal purchase succeeded');
-    document.querySelector('#armory-open').click();
-    if (document.querySelector('[data-arsenal-purchase]')) throw Error('Dev-disabled offers leaked into Armory');
-    return [...document.querySelectorAll('[data-loadout-slot]')].map(select => select.value);
+    const app = window.__qaApp, original = app.duel.featureFlags;
+    const base = original.base || original;
+    if (location.search || !base.enabled('arsenal'))
+      throw Error('Released Arsenal must be on without a QA flag override');
+    // Explicit off control: an empty URL no longer disables released Arsenal.
+    const off = {...base, enabled: name => name === 'arsenal' ? false : base.enabled(name)};
+    app.duel.featureFlags = {...original, base: off,
+      enabled: name => name === 'arsenal' ? false : original.enabled(name)};
+    try {
+      if (app.purchaseArsenalWeapon('oil').ok) throw Error('Explicitly disabled Arsenal purchase succeeded');
+      document.querySelector('#armory-open').click();
+      if (document.querySelector('[data-arsenal-purchase]')) throw Error('Explicitly disabled offers leaked into Armory');
+      return [...document.querySelectorAll('[data-loadout-slot]')].map(select => select.value);
+    } finally {
+      app.duel.featureFlags = original;
+    }
   })()`);
   if (disabled.join(',') !== 'ufo,bomb,crossbow,star') throw Error('Four starter slots changed');
   for (const quality of ['high', 'performance']) {
