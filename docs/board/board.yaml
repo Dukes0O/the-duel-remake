@@ -4225,10 +4225,13 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-INTEL-DOSSIER]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-10
+    branch: codex/p4-intel-telemetry
     flag: grand-prix
     owns: [src/lap-telemetry.js, tools/test-lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
     hooks: [tools/build-reference-laps.mjs, src/ghost.js, src/screen-results.js, src/screen-team-room.js, src/leaderboard.js]
+    decision: "Kyle explicitly requested Dossier and Telemetry together on 10 October. Use CIRCUITS7b.1 exactly: one Stuttgart 959-S Medium reference per event and route; no per-class references now. Dossier owns the common reference recipe/data and authored intel registry. Telemetry records actual best completed laps, 20 m speed/throttle/brake/position samples, sectors and corner comparisons; all save fields are additive per event, route and named player. Old saves remain intact, budget checked, independent save review required. Design/tests may proceed before Dossier merges; native comparison UI waits for its real hooks."
     acceptance:
       - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and car class, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
 
