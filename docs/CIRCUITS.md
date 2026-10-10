@@ -394,39 +394,45 @@ Turns sum to -360 (right 565, left 205). Climbs and drops balance (30 m).
 ### 5.3 Tremblant Woods (Mont-Tremblant)
 
 A rolling forest circuit at a ski resort: a plunge to a lake, crests that
-throw the car into the air, a hairpin and a long straight with jumps.
+throw the car into the air, a hairpin at the end of a short spur and a long
+straight back with jumps. Redrawn by Claude on 10 October 2026 (the first
+draft did not close); the file `src/circuits/tremblant-woods.js` holds the
+exact numbers.
 
-- **Event:** Tremblant Woods Autumn, 4 laps, about 3.3 km a lap, field of
-  8. Crisp autumn morning: low sun, orange and red leaves, mist on the lake.
-- **Width:** 14 m. Grass and gravel runoff; forest close behind.
-- **Signature:** the chairlift: Timber Straight runs under a moving ski
-  chairlift, and the second crest launches you right beneath it.
+- **Event:** Tremblant Woods Autumn, 3 laps, about 4.4 km a lap (test
+  driver 1:37), field of 8. Crisp autumn morning: low sun, orange and red
+  leaves, mist on the lake.
+- **Width:** 14 m. Grass and gravel runoff; forest close behind. A wall
+  between the hairpin spur and Timber Straight (66 m apart, centre to
+  centre).
+- **Signature:** the chairlift over Timber Straight; the second crest
+  launches you right beneath it.
 - **Overtaking:** Timber Straight into Devil's Chicane.
 - **Commitment:** Pine Drop, a fast downhill right over a crest.
 - **Landmarks:** the ski lodge above the start, the chairlift, the lake
-  with a wooden dock, ski runs cut through the trees on the hill.
+  with a wooden dock beside Lakeshore, ski runs cut through the trees.
 
 | # | Piece | Name | Notes |
 | --- | --- | --- | --- |
-| 1 | straight 420, climb -6 | Lodge Straight | start, pits, grandstand |
-| 2 | turn R 60, r 80, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
-| 3 | turn L 70, r 45, climb -12 | Lakeside Plunge | lake opens up ahead |
-| 4 | straight 240, climb -4 | Lakeshore | |
-| 5 | turn R 40, r 50, climb +2 | Fir Esses 1 | |
-| 6 | turn L 35, r 55, climb +2 | Fir Esses 2 | |
-| 7 | straight 320, crest 2.5, climb +12 | Ridge Run | air over the crest |
-| 8 | turn R 90, r 35, climb +6 | Ridge Corner | |
-| 9 | straight 280 | | boards |
-| 10 | turn R 170, r 14, climb +2 | Beaver Hairpin | |
-| 11 | straight 1100, climb -6 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
-| 12 | turn R 30, r 60 | Devil's Chicane 1 | |
-| 13 | turn L 30, r 60 | Devil's Chicane 2 | |
-| 14 | straight 220, climb +8 | | |
-| 15 | turn R 65, r 50, climb +6 | Lodge Bend | |
-| 16 | straight 200 | | |
-| 17 | turn R 40, r 90 | Final Turn | onto Lodge Straight |
-
-Turns sum to -360 (right 495, left 135). Climbs and drops balance (38 m).
+| 1 | straight 414, climb -6 | Lodge Straight | start, pits, grandstand |
+| 2 | turn R 60, r 90, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
+| 3 | turn L 70, r 50, climb -12 | Lakeside Plunge | lake opens up ahead |
+| 4 | straight 258, climb -4 | Lakeshore | dock and lake on the left |
+| 5 | turn R 40, r 55, climb +2 | Fir Esses 1 | |
+| 6 | turn L 35, r 60, climb +2 | Fir Esses 2 | |
+| 7 | straight 326, crest 2.5, climb +12 | Ridge Run | air over the crest |
+| 8 | turn R 90.5, r 45, climb +4 | Ridge Corner | |
+| 9 | straight 323, climb +6 | Beaver Run | boards |
+| 10 | turn L 80, r 40 | Beaver Kink | onto the spur |
+| 11 | straight 80 | The Spur | |
+| 12 | turn R 170.5, r 22, climb +2 | Beaver Hairpin | |
+| 13 | straight 1302, climb -8 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
+| 14 | turn R 30, r 60 | Devil's Chicane 1 | |
+| 15 | turn L 30, r 60 | Devil's Chicane 2 | |
+| 16 | straight 283, climb +4 | | |
+| 17 | turn R 114, r 50, climb +6 | Lodge Bend | |
+| 18 | straight 500, climb +2 | Lodge Climb | |
+| 19 | turn R 70, r 70 | Final Turn | onto Lodge Straight |
 
 **Tremblant Snow** (variant, P4-TREMBLANT-SNOW): the same circuit in
 winter. Packed snow on most of the lap; asphalt on Lodge Straight and
