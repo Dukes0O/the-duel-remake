@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import * as budget from '../src/career-budget.js';
 import {MAX_GHOST_BYTES,GHOST_KEY} from '../src/ghost.js';
 import {createProfile,PLAYERS_KEY} from '../src/progression.js';
+import {COURSE,DRIVE} from '../src/config.js';
+import {LapTelemetryRecorder,LapTelemetryStore} from '../src/lap-telemetry.js';
 
 const TELEMETRY_KEY='the-duel-lap-telemetry-v1';
 const PRIMARY='origin-primary-v1';
@@ -53,6 +55,24 @@ async function installed(context,writer){
   const descriptor=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
   try{return await budget.prepareCareerBudget({...context,writer,installGlobal:true});}
   finally{if(descriptor)Object.defineProperty(globalThis,'localStorage',descriptor);else delete globalThis.localStorage;}
+}
+// Generate one semantically valid companion record through the real recorder.
+// The circular course and all career data are synthetic, never player saves.
+function recordedTelemetry(){
+  const length=400,radius=length/(2*Math.PI);
+  const at=s=>({x:radius*Math.sin(s/radius),y:0,z:radius*Math.cos(s/radius),heading:s/radius});
+  const course={closed:true,length,def:COURSE[0],features:{ramps:[]},at,groundAt:at,halfWidthAt:()=>7};
+  const context={course,playerId:'kyle',playerName:'Kyle',stageIndex:0,seed:1989,
+    car:'falcone_f42',driverId:'club',mode:'timetrial',difficulty:'casual',cpuDifficulty:'medium',upgrades:{},tyre:'summer'};
+  const recorder=new LapTelemetryRecorder(context);let record=null;
+  for(let step=0;step<=80;step++){
+    record=recorder.observe({...context,course:undefined,status:'racing',paused:false,
+      s:step*5,lateral:0,speedMph:20/DRIVE.mphToWorld,gear:1,stageTimeSec:step/4,racePenaltySec:0,
+      input:{throttle:.6,brake:0},completedLaps:step===80?1:0,lapTimes:step===80?[20]:[],
+      lapStartedAt:step===80?20:0,assistedLaps:step===80?[false]:[],assistedLap:false})??record;
+  }
+  assert.ok(record,'the round-trip fixture must be emitted by the real recorder');
+  return record;
 }
 let passes=0;const failures=[];
 async function test(name,run){
@@ -257,6 +277,65 @@ try{
     assert.deepEqual(JSON.parse(context.physical.getItem(budget.ORIGIN_POINTER_KEY)),{version:1,id:PRIMARY});
     locks.close(name);
   });
+  for(const variant of ['valid','malformed','future']){
+    await test(`guarded ${variant} telemetry survives pending journal, export, import and fresh reload exactly`,async()=>{
+      const lap=recordedTelemetry(),locks=lockManager(),name='companion-roundtrip-'+variant;
+      const events=lifecycle(),writer=await budget.acquireCareerWriter({locks,name,eventTarget:events});
+      const sourceEntries={[PLAYERS_KEY]:syntheticPlayers(),
+        [GHOST_KEY]:JSON.stringify({version:1,records:[],archivedRecords:[]}),
+        'the-duel-preserved-fixture':'untouched é and 🏁'};
+      const source=fixture(sourceEntries),first=await installed(source,writer);
+      if(variant==='valid'){
+        const saved=new LapTelemetryStore(first.storage).record(lap);
+        assert.equal(saved.saved,true);assert.equal(saved.status,'saved');
+      }else{
+        // Spaces and trailing newline make normalization detectable byte for byte.
+        const raw=variant==='malformed'?' { "version": 1, "laps": [ broken 🏁 \n':
+          JSON.stringify({version:9001,laps:[lap],unknown:{text:'keep é and 🏁'}},null,2)+'\n';
+        first.storage.setItem(TELEMETRY_KEY,raw);
+      }
+      const expectedRaw=first.storage.getItem(TELEMETRY_KEY);
+      const pending=source.physical.getItem(budget.ORIGIN_JOURNAL_KEY);
+      assert.ok(pending,'the first owner has an unflushed accepted companion journal');
+      assert.equal(source.store.rows.get(PRIMARY).entries[TELEMETRY_KEY],undefined);
+      events.fire('pagehide');locks.close(name);await Promise.resolve();await Promise.resolve();
+      const recoveredContext=cloneFixture(source);
+      const recoveredWriter=await budget.acquireCareerWriter({locks,name,eventTarget:lifecycle()});
+      const recovered=await installed(recoveredContext,recoveredWriter);
+      assert.equal(recoveredContext.physical.getItem(budget.ORIGIN_JOURNAL_KEY),pending);
+      assert.equal(recovered.storage.getItem(TELEMETRY_KEY),expectedRaw);
+      const loaded=new LapTelemetryStore(recovered.storage).best(lap);
+      if(variant==='valid'){assert.equal(loaded.status,'saved');assert.deepEqual(loaded.lap,lap);}
+      else{
+        assert.equal(loaded.status,'unavailable');assert.equal(loaded.lap,null);
+        assert.equal(new LapTelemetryStore(recovered.storage).record(lap).status,'session-only');
+        assert.equal(recovered.storage.getItem(TELEMETRY_KEY),expectedRaw);
+        assert.equal(recoveredContext.physical.getItem(budget.ORIGIN_JOURNAL_KEY),pending);
+      }
+      const exported=budget.createBudgetCareerExport(recovered.storage);
+      assert.deepEqual(JSON.parse(exported).entries,{...sourceEntries,[TELEMETRY_KEY]:expectedRaw});
+      await recovered.flush();locks.close(name);await Promise.resolve();await Promise.resolve();
+      const target=fixture({[PLAYERS_KEY]:syntheticPlayers(),'the-duel-prior-target':'recoverable before import'});
+      const targetPrior=structuredClone(target.store.rows.get(PRIMARY).entries);
+      const targetWriter=await budget.acquireCareerWriter({locks,name,eventTarget:lifecycle()});
+      const targetFacade=await installed(target,targetWriter);
+      const imported=await budget.importBudgetCareer(exported,{storage:targetFacade.storage,store:target.store});
+      assert.equal(imported.playerCount,2);
+      assert.deepEqual(target.store.rows.get(imported.backupId).entries,targetPrior);
+      assert.equal(targetFacade.storage.getItem(TELEMETRY_KEY),expectedRaw);
+      assert.equal(target.store.rows.get(PRIMARY).entries[TELEMETRY_KEY],expectedRaw);
+      locks.close(name);await Promise.resolve();await Promise.resolve();
+      const reload=cloneFixture(target),reloadWriter=await budget.acquireCareerWriter({locks,name,eventTarget:lifecycle()});
+      const final=await installed(reload,reloadWriter);
+      assert.deepEqual(JSON.parse(budget.createBudgetCareerExport(final.storage)).entries,JSON.parse(exported).entries);
+      const best=new LapTelemetryStore(final.storage).best(lap);
+      if(variant==='valid'){assert.equal(best.status,'saved');assert.deepEqual(best.lap,lap);}
+      else{assert.equal(best.status,'unavailable');assert.equal(best.lap,null);}
+      assert.equal(final.storage.getItem(TELEMETRY_KEY),expectedRaw);
+      assert.equal(reload.physical.getItem(budget.ORIGIN_JOURNAL_KEY),null);
+      locks.close(name);await Promise.resolve();await Promise.resolve();
+    });
+  }
   await test('lock request denial becomes an unavailable-writer error',async()=>{
     await assert.rejects(budget.acquireCareerWriter({locks:{request(){throw new Error('Synthetic security policy');}}}),
       error=>error.code==='CAREER_WRITER_UNAVAILABLE');

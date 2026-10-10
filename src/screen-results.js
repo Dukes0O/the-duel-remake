@@ -100,7 +100,7 @@ function modalScreen(s) {
   if(['stage_result','complete'].includes(s.status)){
     const eventId=COURSE[s.stageIndex]?.id,telemetry=app.getLapTelemetry?.({eventId});
     if(telemetry?.lap){
-      actions+=`<button type="button" class="secondary-button" data-team-room="${escapeHTML(eventId)}"><span>COMPARE YOUR LAP</span></button>`;
+      actions+=`<button type="button" class="secondary-button" data-team-room="${escapeHTML(eventId)}"><span>ANALYSE MY LAP</span></button>`;
       if(telemetry.status==='session-only')description+=' Your best lap is available for this session only.';
     }
   }

@@ -82,6 +82,11 @@ Native private browser `career-writer-lock`: real popup with the same native Web
 
 Pending: lane tier and build in a Director slot; actual Grand Prix Team Room visual QA with the real flag/reference dependencies; complete native reference catalog acceptance; independent final Save Guardian review. This source commit is for review, not merge approval or finished-feature acceptance.
 
+## Review follow-up
+
+The Director reports Save Guardian source review clear on frozen commit `2ed6367710d0fd80dd66fb9d6860342a30dd9dba`. Added three coverage cases for valid, malformed and future-version telemetry through an accepted pending journal, guarded restart, real career export/import, verified pre-import backup and a fresh guarded reload. They assert exact companion bytes and unrelated career entries; valid data also returns the recorder's exact lap through `LapTelemetryStore`. The seven migration fixtures and existing assertions remain unchanged. These coverage additions follow the clear runtime review; no artificial failing runtime change was made.
+
+Corrected the results button to the card's required **ANALYSE MY LAP** wording. The same native Team Room action remains. No existing test asserted the previous wording, so no assertion was changed. Focused follow-up results: career recovery/writer **19 groups passed**, telemetry **19 groups passed**, existing career-budget checks passed, all seven unchanged historical save shapes passed **247 first-load/round-trip checks**, and career-backup checks passed (including 88 ARS-01 acceptance checks and 14 TAP tests). All three new guarded variants passed on their first execution; no runtime defect or artificial RED was introduced. Native race fingerprint remains unchanged.
 ## Removed
 
 No existing save, record or code path is replaced. Temporary test/evidence output stays ignored and is removed after its verdict is recorded.
