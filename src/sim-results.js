@@ -2,6 +2,7 @@
 import { CARS, CPU_DIFFICULTY, COURSE, LIVES, DRIVE, SCORING } from './config.js';
 import { finishDrift } from './drift-scoring.js';
 import {combatResultSnapshot} from './combat-scoring.js';
+import {finishGrandPrix} from './race-field.js';
 
 export function _parTime() {
   const car = CARS[this.state.car], skill = CPU_DIFFICULTY[this.state.cpuDifficulty].skill;
@@ -49,6 +50,7 @@ export function _finishStage() {
   const s = this.state;
   const opponents = s.opponents.filter(opponent => !opponent.decoy);
   if (s.status !== 'racing' || s.completedLaps < s.lapsTotal || s.s < this.raceLength) return false;
+  if (s.field) return finishGrandPrix(this);
   if (this._deadline()) return false;
   if (s.drift) this._commitDrift(finishDrift(s.drift, { completed: true }));
   const timeSec = s.stageTimeSec + s.racePenaltySec;

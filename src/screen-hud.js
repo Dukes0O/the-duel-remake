@@ -4,6 +4,7 @@ import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
 import {onFootHint} from './onfoot-hints.js';
 import {controlsHelpMarkup} from './controls-help.js';
 import {wastelandRulesActive} from './wasteland-access.js';
+import {fieldHudMarkup, presentField} from './screen-field.js';
 import {gripReadout} from './race-surfaces.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 export function hudMarkup() {
@@ -17,7 +18,7 @@ export function hudMarkup() {
     </div>
     </div>
     <div class="race-position"><span class="position-number"><b id="race-position">01</b><span id="position-total">/02</span></span>
-    <div><span class="field-label" id="gap-label">RIVAL BEHIND</span><b id="rival-gap">0.0 SEC</b>
+    <div><span class="field-label" id="gap-label">RIVAL BEHIND</span><b id="rival-gap">0.0 SEC</b>${fieldHudMarkup.gaps}
     </div>
     </div>
   <section id="controls-help" class="controls-help" aria-label="Controls" hidden>
@@ -51,7 +52,7 @@ export function hudMarkup() {
     <div class="gear"><span class="field-label">GEAR</span><b id="gear-value">1</b>
     </div>
     <div class="speed"><b id="speed-value">000</b><span>km/h</span>
-    </div>
+    </div>${fieldHudMarkup.tow}
     </div>
     <div class="rpm-track"><i id="rpm-fill"></i>
     </div>
@@ -87,7 +88,8 @@ export function hudMarkup() {
     <div class="drift-target-track"><i id="checkpoint-target-fill"></i>
     </div><p id="checkpoint-next">NEXT GATE 1 / 12</p><p id="checkpoint-notice" aria-live="polite">Each gate adds time.</p>
     </section>
-  <div id="countdown" class="countdown" hidden><span id="countdown-word">GET READY</span><b id="countdown-number">3</b><p>HOLD W OR ↑ TO ACCELERATE</p>
+  ${fieldHudMarkup.board}
+  <div id="countdown" class="countdown" hidden><span id="countdown-word">GET READY</span>${fieldHudMarkup.lights}<b id="countdown-number">3</b><p>HOLD W OR ↑ TO ACCELERATE</p>
     </div>
     <div id="race-callout" class="race-callout" aria-live="polite" hidden><span id="callout-kicker"></span><b id="callout-text"></b>
     </div>
@@ -125,10 +127,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     text('onfoot-hint', footHint ?? '');
     text('race-time',time(s.stageTimeSec));
     text('penalty-time',s.racePenaltySec?`+${Math.round(s.racePenaltySec)} SEC PENALTIES`:'');
-    text('lap-number',`LAP ${s.currentLap||s.lap||1} / ${app.duel.stageDef.laps||2}`);
+    const lapsTotal=s.field?s.lapsTotal:app.duel.stageDef.laps||2;
+    text('lap-number',s.field&&s.field.finalLap?`FINAL LAP ${s.lapsTotal} / ${s.lapsTotal}`:`LAP ${s.currentLap||s.lap||1} / ${lapsTotal}`);
     text('lap-time',time(s.lapTimeSec||0));
     const section=app.duel.course?.sectionAt?.(s.s)?.name||'COMPLETE BOTH LAPS';
-    text('stage-objective',s.objective?.kind==='checkpointRush'?`GATES ${s.checkpointRush?.passed||0} / ${s.checkpointRush?.total||12} · EACH GATE +${s.checkpointRush?.extensionSec||0} SEC`:s.objective?.kind==='driftTrial'?`BANK ${credits(s.objective.targetScore)} POINTS · FINISH BOTH LAPS`:s.objective?.kind==='stuntTrial'?`LANDINGS ${s.jumps||0} / ${s.objective.targetJumps} · CRUSHES ${s.crushCount||0} / ${s.objective.targetCrushes} · ${time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0)))} LEFT`:`${section}${s.timeLimitSec?` · ESCAPE IN ${time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0)))}`:s.mode==='timetrial'&&s.parTimeSec?` · TARGET ${time(s.parTimeSec)}`:''}`);
+    text('stage-objective',s.field?`GRAND PRIX · ${s.lapsTotal} LAPS · ${s.field.size} CARS · ${section}`:s.objective?.kind==='checkpointRush'?`GATES ${s.checkpointRush?.passed||0} / ${s.checkpointRush?.total||12} · EACH GATE +${s.checkpointRush?.extensionSec||0} SEC`:s.objective?.kind==='driftTrial'?`BANK ${credits(s.objective.targetScore)} POINTS · FINISH BOTH LAPS`:s.objective?.kind==='stuntTrial'?`LANDINGS ${s.jumps||0} / ${s.objective.targetJumps} · CRUSHES ${s.crushCount||0} / ${s.objective.targetCrushes} · ${time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0)))} LEFT`:`${section}${s.timeLimitSec?` · ESCAPE IN ${time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0)))}`:s.mode==='timetrial'&&s.parTimeSec?` · TARGET ${time(s.parTimeSec)}`:''}`);
     const [speedValue,gearValue]=speedGearPresentation(s);
     text('speed-value',speedValue);
     text('gear-value',gearValue);
@@ -200,9 +203,10 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     if(opponents.length)text('position-total',`/${String(opponents.length+1).padStart(2,'0')}`);
     ui['position-total'].hidden=!s.rival;
     ui['rival-legend'].hidden=!s.rival;
+    presentField(ui,text,s);
     const hits=s.combat?s.majorCrashes||0:Math.max(0,LIVES.start-s.lives),limit=s.combat?DRIVE.majorCrashLimit:LIVES.start,persistent=!!app.duel.stageDef.persistentVehicle;
     const armored=s.mode==='wasteland'&&!!s.combat&&wastelandRulesActive(s)&&Number.isFinite(s.armor)&&Number.isFinite(s.maxArmor);
-    ui['lives-display'].hidden=persistent||armored;
+    ui['lives-display'].hidden=persistent||armored||!!s.field;
     const hitKey=`${s.combat?'combat':'race'}:${hits}`;
     if(ui['lives-display'].dataset.value!==hitKey){
       ui['lives-display'].dataset.value=hitKey;
@@ -210,15 +214,16 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       ui['lives-display'].setAttribute('aria-label',s.combat?`${hits} of ${limit} major hits; automatic recovery`:`${hits} of ${limit} crashes`);
     }
     text('damage-label',armored?`ARMOR ${Math.round(s.armor)} / ${Math.round(s.maxArmor)}${s.combatWrecking?' · RECOVERING':''}`:s.combat?`${hits} MAJOR HITS · AUTO RECOVERY`:persistent?`IMPACTS ADD +${app.duel.stageDef.chaseCrashPenaltySec||8} SEC`:`${hits} / ${limit} CRASHES`);
+    if(s.field)text('damage-label','CLOSED ROAD · NO TRAFFIC, POLICE OR RADAR');
     ui['damage-label'].classList.toggle('critical',armored?s.armor<=s.maxArmor*.25:!s.combat&&!persistent&&hits>=limit-1);
-    const objectiveTrial=!!s.objective;
+    const objectiveTrial=!!s.objective||!!s.field;
     ui['radar-label'].hidden=objectiveTrial;
     ui['radar-meter'].hidden=objectiveTrial;
     const p=s.police;
     text('radar-label',p.pursuit?.active?'PURSUIT / OUTRUN THE PATROL':p.beep>.2?'RADAR / SPEED TRAP AHEAD':'RADAR CLEAR');
     ui['radar-label'].classList.toggle('warning',p.beep>.2||!!p.pursuit?.active);
     ui['radar-fill'].style.transform=`scaleX(${p.pursuit?.active?1:clamp(p.beep)})`;
-    if(s.status==='countdown'){
+    if(s.status==='countdown'&&!s.field){
       text('countdown-number',Math.max(1,Math.ceil(s.countdown)));
       text('countdown-word',s.countdown>1?'GET READY':'MAKE IT COUNT');
     }
@@ -236,7 +241,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const crushed=Math.max(0,Math.floor(s.crushCount||0));
     text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);
     text('route-section',section);
-    text('route-lap',`${s.currentLap||s.lap||1} / ${app.duel.stageDef.laps||2}`);
+    text('route-lap',`${s.currentLap||s.lap||1} / ${lapsTotal}`);
     ui['police-legend'].hidden=!s.police?.pursuit?.active;
     ui['shortcut-legend'].hidden=!app.duel.course?.features.shortcuts.length;
     ui['shortcut-b-legend'].hidden=(app.duel.course?.features.shortcuts.length||0)<2;

@@ -29,6 +29,7 @@ import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} f
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
+import {grandPrixCourse} from './race-field.js';
 import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
 import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
@@ -302,6 +303,8 @@ export class App {
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
     const difficulty=options.difficulty??this.duel.state.difficulty;
     const rival=Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
+    // A new field seed for every Grand Prix, so the same circuit does not always play out the same way.
+    if(mode==='grandprix'&&options.fieldSeed==null)options={...options,fieldSeed:Math.floor(Math.random()*4294967296)>>>0};
     // Winter tyres count only where there is snow or ice to use them on.
     const tyre=options.tyre==='winter'&&courseHasWinterSurfaces(stage)?'winter':'summer';
     this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,rival,tyre,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
@@ -366,7 +369,7 @@ export class App {
     }
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
     this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,rival:this.duel.state.rivalSettings,
-      opponentCount:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
+      opponentCount:this.duel.state.opponentCount,fieldSize:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
   // Menu views share these immutable-by-convention previews; racing always builds its own Course.
@@ -504,9 +507,15 @@ export class App {
     if(result.ok&&result.profile!==this.profile){this.profile=result.profile;this._saveProfile();this.duel.state.driverId=getEquippedDriverId(this.profile);this.duel.emit({garage:true,driverChanged:true});}
     return result;
   }
+  // A Grand Prix is offered while its switch is on, on the circuits that have one.
+  grandPrixAvailable(stage=COURSE[this.menuStage]){
+    return this._switches().enabled('grand-prix')===true&&grandPrixCourse(stage);
+  }
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
+    // Grand Prix pay and records come with the career card (P4-CAREER).
+    if(state.mode==='grandprix'){result.creditReward=0;result.creditBalance=this.profile.credits;return;}
     if(state.hiddenRoadVisit)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
@@ -938,7 +947,7 @@ export class App {
     return true;
   }
   _markActiveRace(state){
-    if(state.arena)return;
+    if(state.arena||state.mode==='grandprix')return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
