@@ -6,7 +6,9 @@ import { saltFlatsPhysicalGeometry, saltFlatsRampHeight } from './arena/venues.j
 import {buildPitCourse, pitFrame, pitNearest, pitRampHeight, pitObstacles} from './arena/venues/pit.js';
 import { installHiddenRoad } from './hidden-road.js';
 import { installMuddyHollow } from './muddy-hollow.js';
-import { THEMES } from './config.js';
+import { THEMES, DRIVE } from './config.js';
+import { buildTrackScript } from './track-script.js';
+import { installTrackScript, trackScriptSolids } from './track-script-course.js';
 import { buildRoadFurniture, tunnelCoverShape } from './road-furniture.js';
 import { createPolylineIndex } from './polyline-index.js';
 import { cloneShortcuts, findShortcutPreset, shortcutPresetFingerprint } from './shortcut-preset-cache.js';
@@ -42,9 +44,11 @@ const ROUTE_SHAPES={
 
 export class Course {
   constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false}={}){
-    this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];this.length=def.lengthU;
+    this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
+    // An authored script (src/track-script.js) fixes its own length once the loop is closed.
+    this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
     this._solveShortcuts=solveShortcuts===true;
-    this.closed=def.closed!==false;this.raceLength=this.length*(def.laps||2);
+    this.closed=def.closed!==false;this.raceLength=this.length*(this.script&&!this.closed?1:def.laps||2);
     this.rng=makeRng(this.seed^((def.stage+1)*0x9e37));
     let start=0;const sections=def.sections||[{theme:def.theme,name:this.theme.name,share:1}];
     this.sections=sections.map((section,i)=>{const end=i===sections.length-1?this.length:start+section.share*this.length;
@@ -59,6 +63,7 @@ export class Course {
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}
   themeAt(s){return this.sectionAt(s).theme;}
   _height(s){
+    if(this.script)return this.script.heightAt(s);
     if(this.def.expansion)return expansionHeight(this.def,s);
     if(this.def.arena)return 0;
     const p=this.phase(s),a=p/this.length*TAU;
@@ -74,6 +79,13 @@ export class Course {
     if(this.def.pit){
       buildPitCourse(this);this._nearestIndex=createPolylineIndex(this.samples);
       this.rivalStartS=-20;this._solidScenery();return;
+    }
+    if(this.script){
+      // Authored circuit: the road comes from the script, not a formula.
+      installTrackScript(this,{lateralAccel:DRIVE.maxLateralAccel*.85,brake:DRIVE.brakeAccel*DRIVE.mphToWorld*.85,accel:9,topSpeed:201*DRIVE.mphToWorld});
+      this._nearestIndex=createPolylineIndex(this.samples);
+      this.rivalStartS=this.def.hasRival?-20:null;
+      this._solidScenery();return;
     }
     const rng=this.rng,arena=this.def.arena,randomPhase=rng.range(0,TAU),phase=Number.isFinite(this.def.layoutSeed)?makeRng((this.def.layoutSeed>>>0)^((this.def.stage+1)*0x9e37)).range(0,TAU):randomPhase,raw=[],count=2048;
     const cityLoop=this.def.kind==='chase'||this.def.layout==='city'?roundedCityLoop():null;
@@ -136,7 +148,8 @@ export class Course {
     if(cut.offsets)return sampledOffset(cut.offsets,t);
     const u=Math.min(1,Math.min(t,1-t)/(cut.transition||.5));return cut.offset*Math.sin(Math.PI*.5*u)**2;
   }
-  roadHalfWidthAt(s){if(this.def.practice)return 24;if(this.def.scrapdome)return this.def.scrapdome.floorHalfWidth;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
+  halfWidthAt(s){return this.roadHalfWidthAt(s);}
+  roadHalfWidthAt(s){if(this.script)return this.script.halfWidthAt(s);if(this.def.practice)return 24;if(this.def.scrapdome)return this.def.scrapdome.floorHalfWidth;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
     for(const lane of this.features.passingLanes)if(p>=lane.start&&p<=lane.end)width+=3.5*smooth((p-lane.start)/45)*smooth((lane.end-p)/45);return width;}
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
     if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
@@ -183,6 +196,7 @@ export class Course {
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;
+    if(this.script){trackScriptSolids(this);return;}
     if(this.def.pit){
       const {pile,walls}=pitObstacles(this);f.obstacles.push(pile,...walls);f.barriers.push(...walls);
       this.obstacleBuckets=new Map();this.rockBuckets=new Map();this.bucketCount=Math.ceil(this.length/64);
@@ -329,11 +343,11 @@ export class Course {
     for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}return [...found];}
   rocksNear(from,to=from){return this.obstaclesNear(from,to).filter(o=>o.kind==='rock').map(o=>o.source);}
   at(s){if(this.def.pit)return pitFrame(this,s);
-    const p=this.phase(s),idx=Math.min(this.samples.length-2,Math.floor(p/STEP)),a=this.samples[idx],b=this.samples[idx+1],t=(p-a.s)/STEP;
-    return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
-  worldAt(s,lat=0){const f=this.at(s);return{x:f.x+Math.cos(f.heading)*lat,y:f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
+    const p=this.phase(s),idx=Math.min(this.samples.length-2,Math.floor(p/this.step)),a=this.samples[idx],b=this.samples[idx+1],t=(p-a.s)/this.step;
+    return{x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t),y:this.def.expansion||this.script?this._height(s):lerp(a.y,b.y,t),heading:lerp(a.heading,b.heading,t),curvature:lerp(a.curvature,b.curvature,t),tunnel:!!this.tunnelAt(s)};}
+  worldAt(s,lat=0){const f=this.at(s);return{x:f.x+Math.cos(f.heading)*lat,y:this.script&&lat?f.y+this.script.bankLift(s,lat):f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
   nearest(x,z,referenceS){if(this.def.pit)return pitNearest(this,x,z,referenceS);
-    const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*STEP;
+    const nearest=this._nearestIndex.query(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step;
     if(this.def.saltFlats){
       // Solve the same sampled frame's normal projection, including scenery
       // coordinates inside and outside the driving band. No coordinate oracle.

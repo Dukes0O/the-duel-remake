@@ -3884,8 +3884,10 @@ tasks:
     lane: RACE
     size: L
     needs: []
-    status: building
+    status: merged
     claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    branch: claude/p4-track-script
+    note: "Built to CIRCUITS.md 3.1 with a pilot circuit in the tests; lane 308/308 and build pass, existing road samples and replay fingerprints unchanged. Finding: the section 5 drafts do not close as written (see docs/changes/P4-TRACK-SCRIPT.md)."
     owns: [src/track-script.js, src/circuits/index.js, tools/track-script.mjs, tools/test-track-script.mjs, docs/changes/P4-TRACK-SCRIPT.md]
     hooks: [src/course.js, src/config.js, src/sim-driving.js, src/sim-contacts.js, src/collision.js, src/checkpoint-gates.js, src/world-surfaces.js, src/road-furniture.js, src/route-map.js, src/render3d.js]
     sequencing: "First editor of course.js in phase 4. Other cards wait for its merge before editing course.js."
@@ -3995,6 +3997,7 @@ tasks:
     branch: codex/p4-daynight
     owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md, tools/scenarios/p4-daynight.mjs, tools/art/p4-daynight-sheet.py, docs/board/looks/p4-daynight/]
     hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
+    waiting_on: claude
     sequencing: "Wait for Claude P4-TRACK-SCRIPT to merge before renderer hooks; then edit render3d.js before P4-SNOW."
     note: "Retained draft 4b74d256: pure light paths and scene/sky/car owners pass focused checks. Renderer untouched. Sync, native browser and frame checks, art verdict and lane/build remain before merge."
     acceptance:
@@ -4024,8 +4027,9 @@ tasks:
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-audio
     owns: [docs/changes/P4-AUDIO.md, tools/audio/p4-audio.mjs, tools/audio/p4-listening.mjs, tools/test-p4-audio.mjs]
+    decision: "Exactly 20 licensed recorded cues: race.start.light, race.start.go, race.position.gain, race.lap.final, race.finish.flag, pit.limiter, pit.wrench, pit.go, surface.gravel, surface.snow, surface.ice, avalanche.rumble, avalanche.slide, yeti.roar, snowman.burst, crowd.cheer, wind.summit, ambient.harbour-night, ambient.forest-morning, ambient.mountain-wind. Historical audio filters may exclude only these IDs; all existing hashes and assertions stay exact. Four listening groups go to Kyle."
     sequencing: "Prepare licensed recipes and listening clips now. Do not edit Claude-owned event files; wire through released hooks when the owning cards land."
-    hooks: [src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/]
+    hooks: [src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs]
     acceptance:
       - "Every cue in docs/CIRCUITS.md section 9 from library recipes first, wired to its event as each card lands (start lights, positions, final lap, flag first). Ambient beds per track. Credits recorded. Listening clips to Kyle."
     claude_note: "10 October 2026: start now. Make every cue as a library recipe and listening clip first; wire each one when its card lands (start lights and positions after P4-FIELD merges)."
@@ -4205,9 +4209,12 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-intel-dossier
+    waiting_on: claude
     flag: grand-prix
-    owns: [src/track-analysis.js, src/screen-team-room.js, src/screen-team-room.css, tools/test-track-analysis.mjs, tools/scenarios/team-room.mjs, docs/changes/P4-INTEL-DOSSIER.md]
-    hooks: [tools/track-review.mjs, src/screen-courses.js, src/screen-router.js, src/render3d.js, src/app.js]
+    owns: [src/track-analysis.js, src/reference-laps.js, src/generated/reference-laps.json, src/circuit-intel/index.js, src/screen-team-room.js, src/screen-team-room.css, tools/test-track-analysis.mjs, tools/test-reference-laps.mjs, tools/build-reference-laps.mjs, tools/scenarios/team-room.mjs, docs/changes/P4-INTEL-DOSSIER.md]
+    hooks: [tools/track-review.mjs, src/screen-courses.js, src/course-access-ui.js, src/screen-router.js, src/render3d.js, src/app.js]
+    decision: "Claude confirmed 10 October: fixed Stuttgart 959-S with no upgrades on Medium; one warm-up then best of two timed laps in an isolated native fixture. References are per event and route (legacy A/B/C seeds 1989/42/17). Label the reference car beside different-car comparisons; per-class references can come later. Three equal-distance sectors unless authored boundaries exist. Authored signature/overtaking flags and engineer notes override generated data; generated data fills only missing fields. Common recipe is Dossier-owned and shared with Telemetry. TEAM ROOM entry is a narrow course-access-ui.js hook. Final authored and reference data layout is CIRCUITS7b.1, merged 88770bbd; renderer waits for TRACK then DAY."
+    reference_fixture: "Use CIRCUITS7b.1 layout. All closed event/routes, including practice/objective circuits: neutralize objective/deadline/pursuit completion only in disposable metadata. Native physical course.def.practice and state.practice stay original. For practice circuits only, native lap/finish methods see a disposable completion-only facade with practice false/laps 3; driving still sees the original course. Ordered gates, plausible travel, legal crossings and elapsed lap timing remain native; no synthetic lap count/time or teleport. Global COURSE and authored definitions stay untouched; geometry, surfaces, checkpoints, physics and Medium driver remain exact. Isolated means no opponents, traffic, police, radar or weapons. Publish only a fully completed best timed lap; stale geometry fingerprints fail build checks. Bundle generated reference JSON locally without fetch. Tests cover route identity, repeatability, physical-step parity, no partial publication and disposable cleanup."
     sequencing: "Shared analysis and existing-circuit UI may proceed now. Do not edit render3d.js while P4-TRACK-SCRIPT owns it; then coordinate after P4-DAYNIGHT. Prefer the current renderer API when it can satisfy snapshots."
     acceptance:
       - "Build the Team Room screen and dossier in docs/CIRCUITS.md section 7b: TEAM ROOM on event cards, map coloured by reference speed with named corners, flags at hot spots, live-rendered driver-seat snapshots at each flag (no stored pictures), engineer notes from the circuit file or generated for existing circuits. Move corner, crest and sector analysis into src/track-analysis.js and make tools/track-review.mjs use it. Works for every closed circuit. Read-only: race state never changes."
@@ -4218,10 +4225,13 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-INTEL-DOSSIER]
-    status: ready
+    status: building
+    claimed_by: codex-director-2026-10-10
+    branch: codex/p4-intel-telemetry
     flag: grand-prix
-    owns: [src/lap-telemetry.js, tools/build-reference-laps.mjs, tools/test-lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
-    hooks: [src/ghost.js, src/screen-results.js, src/screen-team-room.js, src/leaderboard.js]
+    owns: [src/lap-telemetry.js, tools/test-lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
+    hooks: [tools/build-reference-laps.mjs, src/ghost.js, src/screen-results.js, src/screen-team-room.js, src/leaderboard.js]
+    decision: "Kyle explicitly requested Dossier and Telemetry together on 10 October. Use CIRCUITS7b.1 exactly: one Stuttgart 959-S Medium reference per event and route; no per-class references now. Dossier owns the common reference recipe/data and authored intel registry. Telemetry records actual best completed laps, 20 m speed/throttle/brake/position samples, sectors and corner comparisons; all save fields are additive per event, route and named player. Old saves remain intact, budget checked, independent save review required. Design/tests may proceed before Dossier merges; native comparison UI waits for its real hooks."
     acceptance:
       - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and car class, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
 
