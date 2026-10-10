@@ -207,11 +207,12 @@ function settlement(f, scrap, hold) {
     'a different named player cannot collect the result');
 }
 
-test('Ambush Alley has a separate dev gate', () => {
-  equal(FEATURE_STATES['ambush-alley'], 'dev', 'unfinished Ambush Alley has an independent dev switch');
-  const released = createFeatureFlags({qa: false, storage: {getItem: () => 'true'},
-    search: '?flags=ambush-alley'});
-  equal(released.enabled('ambush-alley'), false, 'ordinary released settings cannot activate the mode');
+test('Ambush Alley is released (on, 9 October 2026); its dev gate rules still hold when pinned to dev', () => {
+  equal(FEATURE_STATES['ambush-alley'], 'on', 'the released Ambush Alley is on');
+  equal(createFeatureFlags({qa: false, storage: null}).enabled('ambush-alley'), true, 'the released build has the mode on');
+  const dev = createFeatureFlags({catalog: {...FEATURE_STATES, 'ambush-alley': 'dev'}, qa: false,
+    storage: {getItem: () => 'true'}, search: '?flags=ambush-alley'});
+  equal(dev.enabled('ambush-alley'), false, 'ordinary released settings cannot activate a dev mode');
 });
 
 test('flag-off entry leaves native state unchanged and invalid careers or venues are rejected', () => {

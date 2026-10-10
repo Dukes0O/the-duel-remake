@@ -18,55 +18,30 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && !Object.hasOwn(FEATURE_STATES, 'warlords') && FEATURE_STATES['fuel-run'] === 'on'
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
-  && FEATURE_STATES['fight-voices'] === 'dev' && FEATURE_STATES['arsenal-wave3'] === 'dev'
-  && FEATURE_STATES['convoy-raid'] === 'dev'
-  && FEATURE_STATES.tollkeeper === 'dev'
-  && FEATURE_STATES['cpu-crews'] === 'dev' && FEATURE_STATES['ambush-alley'] === 'dev'
-  && FEATURE_STATES.gunn === 'dev' && FEATURE_STATES.blackiron === 'dev' && FEATURE_STATES['warlord-cards'] === 'dev' && Object.keys(FEATURE_STATES).length === 16,
-  'the five released Wasteland features stay on; career backup, Fight Voices, computer crews, Ambush Alley, Convoy Raid, Gunn, Tollkeeper and Arsenal wave three stay dev; retired switches stay absent');
+  && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && Object.keys(FEATURE_STATES).length === 16,
+  'the Wasteland features are released (on, 9 October 2026); only career backup stays dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
-check(!productionFlags.enabled('blackiron'), 'production keeps the Baron off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=blackiron'}).enabled('blackiron'),
-  'production URLs cannot enable the Baron');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=blackiron'}).enabled('blackiron'),
-  'private QA admits the explicit Baron request');
-check(!productionFlags.enabled('tollkeeper'), 'production keeps the Tollkeeper fight off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=tollkeeper'}).enabled('tollkeeper'),
-  'production URLs cannot enable the Tollkeeper fight');
-check(!createFeatureFlags({storage: null, qa: true, search: '?flags=convoy-raid'}).enabled('tollkeeper'),
-  'the normal Convoy switch does not admit the Warlord fight');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=tollkeeper'}).enabled('tollkeeper'),
-  'private QA admits the explicit Tollkeeper fight request');
-check(FEATURE_STATES['cpu-crews'] === 'dev', 'computer crews start behind their own dev switch');
-check(!productionFlags.enabled('cpu-crews'), 'production keeps computer crews off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=cpu-crews'}).enabled('cpu-crews'),
-  'production URLs cannot enable computer crews');
-check(!createFeatureFlags({storage: null, qa: true, search: '?flags=crew-gear'}).enabled('cpu-crews'),
-  'requesting player gear does not admit computer crews');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=cpu-crews'}).enabled('cpu-crews'),
-  'private QA admits only an explicit computer crew request');
-check(!productionFlags.enabled('ambush-alley'), 'production keeps Ambush Alley off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=ambush-alley'}).enabled('ambush-alley'),
-  'production URLs cannot enable Ambush Alley');
-check(!createFeatureFlags({storage: null, qa: true, search: '?flags=cpu-crews'}).enabled('ambush-alley'),
-  'requesting computer crews does not admit Ambush Alley');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=ambush-alley'}).enabled('ambush-alley'),
-  'private QA admits only an explicit Ambush Alley request');
-check(!productionFlags.enabled('gunn'), 'production keeps Gunn off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=gunn'}).enabled('gunn'),
-  'production URLs cannot enable unfinished Gunn');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=gunn'}).enabled('gunn'),
-  'explicit private QA enables Gunn');
-check(!productionFlags.enabled('arsenal-wave3'), 'production keeps wave three off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
-  'production URLs cannot enable unfinished wave three');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=arsenal-wave3'}).enabled('arsenal-wave3'),
-  'explicit private QA enables wave three');
-check(!productionFlags.enabled('fight-voices'), 'production keeps fight voices off');
-check(!createFeatureFlags({storage: null, qa: false, search: '?flags=fight-voices'}).enabled('fight-voices'),
-  'production URLs cannot enable unfinished fight voices');
-check(createFeatureFlags({storage: null, qa: true, search: '?flags=fight-voices'}).enabled('fight-voices'),
-  'explicit private QA enables fight voices');
+// These nine switches were released (on) on 9 October 2026. Their development-switch
+// isolation, proved earlier on the real catalog, is kept by pinning each one to dev.
+const RELEASED_NINE = ['blackiron', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'arsenal-wave3',
+  'fight-voices', 'convoy-raid', 'warlord-cards'];
+check(RELEASED_NINE.every(name => productionFlags.enabled(name)), 'production has the nine newly released features on');
+check(RELEASED_NINE.every(name => createFeatureFlags({storage: null, qa: false, search: `?flags=${name}`}).enabled(name)),
+  'a released switch stays on whatever the URL says');
+const devPinned = (name, options) => createFeatureFlags({catalog: {...FEATURE_STATES, [name]: 'dev'}, storage: null, ...options});
+for (const name of RELEASED_NINE) {
+  check(!devPinned(name, {qa: false}).enabled(name), `a dev ${name} is off in production`);
+  check(!devPinned(name, {qa: false, search: `?flags=${name}`}).enabled(name), `production URLs cannot enable a dev ${name}`);
+  check(!devPinned(name, {qa: true}).enabled(name), `unnamed QA keeps a dev ${name} off`);
+  check(devPinned(name, {qa: true, search: `?flags=${name}`}).enabled(name), `private QA admits an explicit ${name} request`);
+}
+check(!devPinned('tollkeeper', {qa: true, search: '?flags=convoy-raid'}).enabled('tollkeeper'),
+  'the normal Convoy switch does not admit a dev Warlord fight');
+check(!devPinned('cpu-crews', {qa: true, search: '?flags=crew-gear'}).enabled('cpu-crews'),
+  'requesting player gear does not admit dev computer crews');
+check(!devPinned('ambush-alley', {qa: true, search: '?flags=cpu-crews'}).enabled('ambush-alley'),
+  'requesting computer crews does not admit a dev Ambush Alley');
 check(!productionFlags.enabled('roadside-destruction'), 'retired roadside switch is no longer recognized');
 check(!productionFlags.enabled('wasteland2') && productionFlags.enabled('hidden-road'),
   'retired Wasteland rules switch is absent and Hidden Road is released');

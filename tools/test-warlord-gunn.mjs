@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {Duel} from '../src/game.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
+import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {WARLORDS, BUILT_WARLORD_IDS} from '../src/warlords.js';
 import {startWarlordEvent, beginWarlordEvent} from '../src/arena/warlord-event.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
@@ -46,11 +46,15 @@ function yardFlagFixture() {
   return {profile, yard, armory, gunnCard};
 }
 
-test('native yard and Armory retain default/off Gunn and released Sal behavior', () => {
+test('native yard and Armory retain off Gunn and released Sal behavior', () => {
+  // Gunn was released on 9 October 2026, so the earlier default is now named explicitly:
+  // Gunn off by override, or pinned to dev in a test catalog.
   const f = yardFlagFixture(), before = structuredClone(f.profile);
-  const baseline = {yard: f.yard(), armory: f.armory()};
-  for (const flags of [createFeatureFlags({storage: null, qa: false}),
-    createFeatureFlags({storage: null, qa: true, overrides: {gunn: false}})]) {
+  const off = createFeatureFlags({storage: null, qa: true, overrides: {gunn: false}});
+  const baseline = {yard: f.yard(off), armory: f.armory(off)};
+  const released = f.yard();
+  ok(released.includes('data-warlord="gunn"'), 'the released build gives Gunn a yard launch control');
+  for (const flags of [createFeatureFlags({catalog: {...FEATURE_STATES, gunn: 'dev'}, storage: null, qa: false}), off]) {
     const yard = f.yard(flags), armory = f.armory(flags);
     equal(yard, baseline.yard, 'default/off injection preserves the native yard markup');
     equal(armory, baseline.armory, 'default/off injection preserves the native Armory markup');

@@ -1,14 +1,14 @@
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
-  'convoy-raid': 'dev',
-  tollkeeper: 'dev',
-  blackiron: 'dev',
-  'warlord-cards': 'dev',
-  'arsenal-wave3': 'dev',
+  'convoy-raid': 'on',
+  tollkeeper: 'on',
+  blackiron: 'on',
+  'warlord-cards': 'on',
+  'arsenal-wave3': 'on',
   'career-backup': 'dev', 'hidden-road': 'on',
   'fuel-run': 'on', 'bounty-hunt': 'on', arsenal: 'on', 'salt-flats': 'on',
-  'crew-gear': 'on', 'fight-voices': 'dev', 'cpu-crews': 'dev', 'ambush-alley': 'dev', gunn: 'dev',
+  'crew-gear': 'on', 'fight-voices': 'on', 'cpu-crews': 'on', 'ambush-alley': 'on', gunn: 'on',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

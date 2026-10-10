@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {Duel} from '../src/game.js';
-import {createFeatureFlags} from '../src/feature-flags.js';
+import {createFeatureFlags, FEATURE_STATES} from '../src/feature-flags.js';
 import {CREW} from '../src/crew.js';
 import {stepRaiders, damageRaider, raiderShotScheduled} from '../src/raiders.js';
 import {stepCpuCrew} from '../src/crew-gear/cpu-crews.js';
@@ -292,10 +292,12 @@ test('a returned Hard crew uses the same ordinary catch-up driving as the off co
     'the returned crew does not replace ordinary Hard driving or add a catch-up multiplier');
 });
 
-test('released crew gear does not implicitly admit computer crews', () => {
+test('computer crews are released (on, 9 October 2026) and an explicit off still creates no crew', () => {
   const defaults = createFeatureFlags({storage: null, qa: false});
   equal(defaults.enabled('crew-gear'), true, 'the existing released crew gear remains enabled');
-  equal(defaults.enabled('cpu-crews'), false, 'new computer behavior is off without its own request');
+  equal(defaults.enabled('cpu-crews'), true, 'the released build has computer crews on');
+  const dev = createFeatureFlags({catalog: {...FEATURE_STATES, 'cpu-crews': 'dev'}, storage: null, qa: false});
+  equal(dev.enabled('cpu-crews'), false, 'a dev computer crew switch is off without its own request');
   const f = race({cpuEnabled: false}); f.rival.armor = 29;
   tick(f, 120);
   equal(f.duel.featureFlags.enabled('crew-gear'), true, 'the CPU-only off control retains released player gear');
@@ -304,9 +306,14 @@ test('released crew gear does not implicitly admit computer crews', () => {
   ok(f.rival.speedMph > 1, 'the off native computer continues ordinary driving');
 });
 
-test('computer crews have their own explicitly requested dev admission', () => {
+test('computer crews have their own switch, now on, and a dev switch still needs an explicit request', () => {
   const f = race();
-  equal(f.duel.featureFlags.state('cpu-crews'), 'dev', 'computer behavior has its own dev switch, not released crew gear');
+  equal(f.duel.featureFlags.state('cpu-crews'), 'on', 'computer behavior has its own switch, released on 9 October 2026');
+  const dev = {...FEATURE_STATES, 'cpu-crews': 'dev'};
+  equal(createFeatureFlags({catalog: dev, storage: null, qa: true, search: '?flags=crew-gear'}).enabled('cpu-crews'), false,
+    'a dev computer switch is not admitted by released crew gear');
+  equal(createFeatureFlags({catalog: dev, storage: null, qa: true, search: '?flags=cpu-crews'}).enabled('cpu-crews'), true,
+    'a dev computer switch is admitted by an explicit request');
   equal(f.duel.featureFlags.enabled('cpu-crews'), true, 'the native acceptance fixture explicitly requests computer crews');
   f.rival.armor = 29; qualify(f); tick(f);
   ok(stopped(f.rival), 'the explicitly admitted native computer begins its eligible repair stop');

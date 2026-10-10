@@ -80,8 +80,8 @@ for (const row of KEPT) test(`${row.cue} uses the exact take through the voice s
     row.sha256, 'runtime MP3 is the approved take, with no new recording or transcription');
 });
 
-test('fight voices begins in dev', () => {
-  equal(FEATURE_STATES['fight-voices'], 'dev', 'new fight speech has its own dev switch');
+test('fight voices is released (on, 9 October 2026)', () => {
+  equal(FEATURE_STATES['fight-voices'], 'on', 'fight speech has its own switch, released on');
 });
 
 test('the first native player combat action plays the selected crew line with its exact subtitle', async () => {
