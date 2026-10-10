@@ -20,7 +20,45 @@ function solve3(a, b) {
   return m.map((row, i) => row[3] / row[i]);
 }
 
+// A slower, steadier search for drafts the quick method cannot close (a draft
+// whose shape is wrong, not just slightly off). Moves one number at a time,
+// keeping the cheapest set of changes that ends where the road began.
+export function searchScript(def, { keep = [], restarts = 60, iterations = 9000, turnWeight = 8, minStraight = 20 } = {}) {
+  const slots = def.script.map((piece, i) => { const turn = piece[0] === 'turn'; return { piece: i, field: turn ? 2 : 1, turn, nominal: piece[turn ? 2 : 1], name: piece.at(-1)?.name ?? '' }; });
+  const sign = Math.sign(measureScript(def).turnSumDeg) || 1, wanted = sign * Math.PI * 2;
+  const build = x => def.script.map((piece, i) => { const copy = [...piece]; copy[slots[i].field] = x[i]; return copy; });
+  const residual = x => { try { const m = measureScript({ ...def, script: build(x) }); return [m.x, m.z, (m.heading - wanted) * 300]; } catch { return null; } };
+  const cost = x => {
+    const r = residual(x); if (!r) return 1e12;
+    let c = 0; slots.forEach((slot, i) => { const rel = (x[i] - slot.nominal) / slot.nominal; c += (keep.includes(slot.name) ? 1e4 : slot.turn ? turnWeight : 1) * rel * rel; });
+    return c * 2e3 + 40 * (r[0] ** 2 + r[1] ** 2 + r[2] ** 2);
+  };
+  const random = seed => { let s = seed; return () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; };
+  let best = null;
+  for (let trial = 0; trial < restarts; trial++) {
+    const rnd = random(trial + 7);
+    let x = slots.map(slot => slot.nominal * (trial === 0 ? 1 : 1 + (rnd() - .5) * .4)), step = slots.map(slot => slot.nominal * .05), now = cost(x);
+    for (let it = 0; it < iterations; it++) {
+      const k = Math.floor(rnd() * slots.length), y = [...x];
+      y[k] = Math.max(slots[k].turn ? 3 : minStraight, y[k] + (rnd() < .5 ? -1 : 1) * step[k] * (.2 + rnd()));
+      const c = cost(y);
+      if (c < now) { x = y; now = c; } else if (it % 200 === 199) step = step.map(v => v * .8);
+    }
+    if (!best || now < best.cost) best = { cost: now, x };
+  }
+  const r = residual(best.x), script = build(best.x).map(piece => (piece[0] === 'turn' ? piece : piece));
+  return { script, slots, closed: !!r && Math.hypot(r[0], r[1]) < 5 && Math.abs(r[2]) / 300 < .02 };
+}
+
 export function fitScript(def, { turnWeight = 4, minStraight = 20, keep = [] } = {}) {
+  try {
+    const quick = quickFit(def, { turnWeight, minStraight, keep });
+    if (quick.closed) return quick;
+  } catch { /* a step made an impossible corner; use the search */ }
+  return searchScript(def, { keep, turnWeight: Math.max(8, turnWeight * 2), minStraight: Math.max(60, minStraight) });
+}
+
+function quickFit(def, { turnWeight = 4, minStraight = 20, keep = [] } = {}) {
   const script = def.script.map(piece => [...piece.slice(0, piece[0] === 'turn' ? 4 : 2), { ...(piece[piece[0] === 'turn' ? 4 : 2] ?? {}) }]);
   const slots = [];
   script.forEach((piece, i) => slots.push({ piece: i, field: piece[0] === 'turn' ? 2 : 1, turn: piece[0] === 'turn', nominal: piece[piece[0] === 'turn' ? 2 : 1] }));
@@ -60,7 +98,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const value = name => { const i = args.indexOf(name); return i >= 0 ? Number(args[i + 1]) : undefined; };
   const def = await findDefinition(target);
   const keep = args.flatMap((arg, i) => (arg === '--keep' ? [args[i + 1]] : []));
-  const result = fitScript(def, { turnWeight: value('--turns') ?? 4, keep });
+  const result = fitScript(def, { turnWeight: value('--turns') ?? 4, keep, minStraight: value('--min-straight') ?? 20 });
   const places = value('--round') ?? 1;
   const round = (n, turn) => (turn ? Math.round(n * 2) / 2 : Math.round(n / places) * places);
   console.log(result.closed ? 'Closed.' : 'Did not close.');
