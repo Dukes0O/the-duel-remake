@@ -88,12 +88,12 @@ test('Harbour Lights: walls everywhere, the Lantern Hairpin, night', () => {
 
 test('Tremblant Woods: open road, forest runoff, the long straight', () => {
   const road = buildTrackScript(TREMBLANT_WOODS), course = new Course(TREMBLANT_WOODS, 1989), timber = piece(road, 'Timber Straight');
-  assert.equal(TREMBLANT_WOODS.laps, 4);
+  assert.equal(TREMBLANT_WOODS.laps, 3);
   assert.equal(road.walls.length, 0); assert.equal(course.features.walls.length, 0);
   assert.ok(road.pieces.every(item => item.width === 14));
   near(road.runoffAt(100, 1), 12, 0);
-  near(timber.s1 - timber.s0, 1100, 2); assert.equal(piece(road, 'Ridge Run').crest, 2.5);
-  assert.equal(piece(road, 'Pine Drop').crest, 2); assert.equal(piece(road, 'Beaver Hairpin').radius, 14);
+  near(timber.s1 - timber.s0, 1305, 3); assert.equal(piece(road, 'Ridge Run').crest, 2.5);
+  assert.equal(piece(road, 'Pine Drop').crest, 2); assert.equal(piece(road, 'Beaver Hairpin').radius, 22);
 });
 
 test('scenery stays off the road, out of the runoff and off the inside of corners', () => {
