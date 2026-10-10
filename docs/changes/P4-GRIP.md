@@ -65,6 +65,15 @@ unchanged.
 - Existing courses: the lane tier (replay fingerprints, course samples,
   shortcut presets) passes unchanged.
 
+## Tests updated (not weakened)
+
+The tests that pin exact lists now list the new items: `tools/test-feature-flags.mjs`
+and `tools/test-wasteland-beta.mjs` (the switch catalog gains the three dev circuit
+switches; count 17 to 20), `tools/test-course-eligibility.mjs` (its stand-in menu
+needs the new `tyre-choice` element). The shortcut preset file is regenerated: only
+its source fingerprint line changes (the circuit and speed profile code sits in the
+fingerprinted part of `course.js`); every saved shortcut path is identical.
+
 ## Removed
 
 Nothing replaced.
