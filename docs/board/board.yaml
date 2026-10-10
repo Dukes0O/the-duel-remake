@@ -3900,8 +3900,8 @@ tasks:
     lane: RACE
     size: L
     needs: []
-    status: building
-    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    status: merged
+    note: "10 October 2026: eight-car Grand Prix on Pacific Canyon behind grand-prix; balance 73/43/17% wins, 100% finish, 3.5+ passes on Medium; frame p95 16.8 ms on High and Performance."
     flag: grand-prix
     owns: [src/race-field.js, src/race-field-driver.js, src/race-lines.js, src/screen-field.js, tools/test-race-field.mjs, tools/race-field-balance.mjs, tools/scenarios/grand-prix.mjs, docs/changes/P4-FIELD.md]
     hooks: [src/game.js, src/sim-rival.js, src/sim-driving.js, src/sim-contacts.js, src/sim-crash.js, src/sim-results.js, src/screen-results.js, src/screen-hud.js, src/screen-menu.js, src/route-map.js, src/race-settings.js, src/app.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs]
