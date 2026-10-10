@@ -190,6 +190,31 @@ const seamCourse = stadium({shift: 700 + Math.PI * 75});
 const seamLap = analyseLap(seamCourse, {trace: lapTrace, lapMs: measuredLap.lapMs});
 check(seamLap.corners.every(row => row.elapsedMs > 0 && row.elapsedMs < measuredLap.lapMs / 2),
   'A corner across the start line has a positive, bounded crossing time');
+// Recorder output keeps final forward distance crossings: reverse travel adds
+// elapsed time, and its signed native observations remain valid input.
+const reversedTrace = freeze(lapTrace.map(row => ({...row,
+  t: row.t + (row.s >= 1000 ? 5 : 0),
+  mph: row.s === 940 ? -4 : row.mph, gear: row.s === 940 ? -1 : row.gear})));
+const reverseBefore = JSON.stringify(reversedTrace);
+const reversedLap = analyseLap(course, {trace: reversedTrace, lapMs: measuredLap.lapMs + 5000});
+equal(reversedLap.corners[0].minKph, 6, 'Reverse speed contributes its magnitude to the corner minimum');
+equal(reversedLap.corners[0].gear, 'R', 'Signed native reverse gear displays as R');
+equal(reversedLap.trace.find(row => row[0] === 940)[1], 6, 'The speed plot uses reverse speed magnitude');
+equal(reversedLap.corners[0].elapsedMs, measuredLap.corners[0].elapsedMs + 5000,
+  'Time spent reversing remains inside the actual corner crossing time');
+equal(reversedLap.sectorMs.reduce((sum, value) => sum + value, 0), measuredLap.lapMs + 5000,
+  'Sector timing retains all elapsed reverse time');
+equal(JSON.stringify(reversedTrace), reverseBefore, 'Signed player trace is never rewritten in place');
+const reverseSeamTrace = freeze(lapTrace.map(row => ({...row,
+  t: row.t + (row.s >= 100 ? 5 : 0), mph: row.s === 0 ? -4 : row.mph,
+  gear: row.s === 0 ? -1 : row.gear})));
+const reverseSeamLap = analyseLap(seamCourse, {trace: reverseSeamTrace, lapMs: measuredLap.lapMs + 5000});
+const seamIndex = seam.findIndex(corner => corner.entryS > corner.exitS);
+equal(reverseSeamLap.corners[seamIndex].elapsedMs, seamLap.corners[seamIndex].elapsedMs + 5000,
+  'A seam corner includes reverse delay near the start line exactly once');
+equal(reverseSeamLap.corners[seamIndex].gear, 'R', 'A seam corner preserves reverse gear at its minimum');
+equal(analyseLap(course, {trace: lapTrace, lapMs: measuredLap.lapMs}), measuredLap,
+  'Forward-only reference metrics remain exactly unchanged');
 const ring = {closed: true, length: Math.PI * 300, def: {id: 'ring'}, features: {},
   at: s => ({x: 150 * Math.sin(s / 150), z: 150 * Math.cos(s / 150), heading: s / 150}),
   groundAt: () => ({y: 0})};
@@ -203,7 +228,8 @@ equal(unequalSectors.sectorMs, [10000, 20000, measuredLap.lapMs - 30000],
   'Shared lap timing interpolates authored distance boundaries');
 for (const invalid of [lapTrace.slice(1), lapTrace.slice(0, -1),
   lapTrace.map((row, i) => i === 2 ? {...row, t: -1} : row),
-  lapTrace.map((row, i) => i === 2 ? {...row, gear: NaN} : row)]) {
+  lapTrace.map((row, i) => i === 2 ? {...row, gear: NaN} : row),
+  lapTrace.map((row, i) => i === 2 ? {...row, gear: -2} : row)]) {
   assert.throws(() => analyseLap(course, {trace: invalid, lapMs: measuredLap.lapMs}), /complete|trace|gear/i); checks++;
 }
 equal(courseFingerprint(stadium()), fingerprint, 'Equivalent native geometry fingerprints match');

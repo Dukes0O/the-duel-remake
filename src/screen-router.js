@@ -141,7 +141,8 @@ const teamRoom = createTeamRoom({host: root,
     const reference = referenceLap(eventId, route);
     const course = new Course(definition, reference?.seed ?? 1989);
     teamRoomPlayerId = app.player.id;
-    return {...buildTrackDossier(course, {route, reference}), course};
+    return {...buildTrackDossier(course, {route, reference}), course,
+      telemetry: app.getLapTelemetry?.({eventId, route, courseFingerprint: reference.courseFingerprint})};
   },
   async capture(dossier, flag, {signal}) {
     await ensureRenderer();

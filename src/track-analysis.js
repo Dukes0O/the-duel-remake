@@ -335,15 +335,18 @@ export function lapSectorTimes(lap, sectors) {
 
 // Both the shipped reference and the player's telemetry enter here with one
 // complete native lap, rebased to s=0/t=0, including the finish-line sample.
-// Native gears are zero-based; the dossier schema uses the displayed gear.
+// Native forward gears are zero-based; reverse is -1. The recorder supplies
+// final forward distance crossings, retaining elapsed time spent reversing.
 export function analyseLap(course, {trace, lapMs, route = 'fixed', authored} = {}) {
   if (!Array.isArray(trace) || trace.length < 2 || !Number.isInteger(lapMs) || lapMs <= 0 ||
       trace[0].s !== 0 || trace[0].t !== 0 || Math.abs(trace.at(-1).s - course.length) > 1e-6 ||
       Math.abs(trace.at(-1).t * 1000 - lapMs) > 1 ||
       trace.some((row, index) => ![row.s, row.t, row.mph, row.gear].every(Number.isFinite) ||
-        row.s < 0 || row.s > course.length || row.mph < 0 || !Number.isInteger(row.gear) || row.gear < 0 ||
+        row.s < 0 || row.s > course.length || !Number.isInteger(row.gear) || row.gear < -1 ||
         (index > 0 && row.t < trace[index - 1].t)))
     throw Error('Lap analysis needs a complete native trace with finite times, speeds and gears.');
+  // Speed is a magnitude in plots/targets; controls retain their signed gear.
+  trace = trace.map(row => ({...row, mph: Math.abs(row.mph)}));
   const intel = resolveTrackIntel(course, route, authored);
   const analysis = analyseTrack(course, {trace, sectorStarts: intel.sectors});
   const lap = {length: course.length, trace, lapMs};
@@ -360,7 +363,7 @@ export function analyseLap(course, {trace, lapMs, route = 'fixed', authored} = {
     if (elapsedMs <= 0) throw Error('Complete lap trace has no positive elapsed time through a corner.');
     return {id: cornerId(corner), s: corner.apexS, brakeS: corner.brakeS,
       entryKph: speedAt(corner.entryS), minKph: Math.round(minimum.mph * 1.609344),
-      exitKph: speedAt(corner.exitS), gear: minimum.gear + 1, elapsedMs};
+      exitKph: speedAt(corner.exitS), gear: minimum.gear === -1 ? 'R' : minimum.gear + 1, elapsedMs};
   });
   return {lapMs, sectorMs: lapSectorTimes(lap, analysis.sectors), trace: compactLapTrace(lap),
     corners, courseFingerprint: courseFingerprint(course, {route, authored})};
