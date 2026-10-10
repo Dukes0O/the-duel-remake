@@ -1,50 +1,41 @@
-# Next run: phase 3, a Wasteland worth finding (updated 10 October 2026)
+# Next run: phase 4, Grand Circuits (updated 10 October 2026)
 
-## Approved release in progress, 10 October 2026
+## Start here
 
-Smoke is merged; Arena round two is approved. Next merge Flame after sync
-and a fresh lane/build gate, then Arena. Kyle authorizes the real-game
-release after the final full tier runs alone and all release checks pass.
-The earlier waiting-for-art and no-release statements below are superseded.
+The five approved polish changes are live at commit 1046076a, build
+20261010195525-87b479fc74c0. The exact clean release commit passed all
+371 full-tier suites, alone with four jobs, plus the accepted release checks.
+One rollback build is retained. Kyle accepted the seeker damage ratio
+1.328662 at damage 8 and the tanker GPU increase with unchanged frame pacing.
+The two stale collision browser checks have now been corrected and pass in
+High and Performance; their lane tier (371/371), build and source review pass.
 
+Phase 4 is governed by [CIRCUITS.md](../CIRCUITS.md) and the board:
 
-## Current polish work, 10 October 2026
+- Claude owns P4-TRACK-SCRIPT, P4-FIELD and P4-GRIP. P4-REVIEW-TOOL and the
+  Team Room plan are merged. Do not take over Claude's cards.
+- P4-ART-SRC: Kyle selected sources **1, 3, 5, 8, 9 and 11**. The chosen
+  [source sheet](looks/p4-src/index.html) is merged after passing lane/build
+  checks and independent review. The Lantern
+  Tower needs assembly, the avalanche gallery needs adaptation, and the
+  yeti's required clips still need inspection. These are donor approvals,
+  not finished-art approval.
+- P4-DAYNIGHT: draft 4b74d256 is retained in its clean lane. Pure light
+  paths, sky, scene and vehicle adapters pass focused tests. Wait for
+  P4-TRACK-SCRIPT before renderer hooks, then prove the native browser
+  views, eight-car frame cost and art sheet before the lane/build gate.
+- New tracks stay behind their switches. Each still needs Claude's finishing
+  pass and Kyle's release approval.
 
-Kyle supplied all five Claude verdicts. The board and play-test inbox record
-these decisions. Earlier question holds are cleared.
+Keep the existing live game running. No further live update is authorized by
+starting Phase 4. Finish this session with the full tier alone, four jobs, on
+the final combined commit. The release pass does not qualify later commits.
 
-- HEIGHT: merged. Ordinary arena armor rises from
-  1.20 to 1.21: Medium averages 13.833 wrecks, within the unchanged 10–14
-  limit. Warlord health is unchanged. Reviewed replay changes contain only
-  the added armor. Lane 364/364, build and source review pass.
-- SEEKERS: Kyle accepted the measured 1.328662 ratio at 8 damage and authorized
-  merge on 10 October. Record that exception to the original 1.3 target for
-  Claude; do not claim the old check passed. Off/Gunn keep 10. No 7.8 tuning.
-  Merged from f0989887 after lane 366/366, build and source review passed.
-- SMOKE: round two committed at b4494e99, waiting_on: claude for its next
-  art verdict. Grey layers and darker undersides keep visible-car fractions
-  below 10%; native checks/build pass. Actual-source p95 rises at most 0.595%,
-  work p95 at most 5.714%. Broad gate follows approval. Two of three rounds used.
-- ARENA: round two is committed at 1a3f30ce and waiting_on: claude for the
-  final allowed art verdict. The native sheet shows taller scrap clusters,
-  varied ridges and lit tanker details at 89.16794 m. Focused checks/build
-  pass; actual-source p95 remains 16.8 ms in both qualities. Gate after approval.
-- FLAME: round one approved. High p95 rises 3.3%; Performance is unchanged.
-  The High mean rise is noted and is not a blocker. Merge after Smoke.
-  Flame is synced with Height/Smoke round two at 81a9b64b; focused checks,
-  build and eight native views pass. Sync latest integration and gate after
-  Smoke approval/merge.
+Remove only merged lanes and used evidence. Retain the day/night draft,
+active Claude lanes, protected audio and parked diagnostics. GitHub push
+still waits for separately approved binary-history compaction.
 
-Shared visual changes are frozen in those candidates. Preserve
-unmerged lanes and pending art evidence. No release is authorized.
-
-Session-end full: 366/366 in 779.95 s on unchanged integration ac01cbe6,
-alone with four jobs. Only status documentation was dirty during the run;
-the ledger records that honestly and is not a clean release verdict. End
-status and notes wait for the next real commit; no status-only commit.
-Height and Seekers lanes and consumed evidence are removed. Smoke, Arena,
-Flame, parked diagnostics and protected audio are retained. Push remains
-held for approved binary compaction. No release is authorized.
+## Earlier handoff context
 
 ## Phase 3 handoff before polish, 9 October 2026
 

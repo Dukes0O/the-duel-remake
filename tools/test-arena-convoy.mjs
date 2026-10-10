@@ -39,7 +39,9 @@ const FIELD = [{car: 'stuttgart_959s'}, {car: 'dusthawk_rally'}, {car: 'aurora_g
 
 function admitted({venueId = 'salt-flats', discovered = true, enabled = true, difficulty = 'medium', seed = 307} = {}) {
   const flags = createFeatureFlags({storage: null, qa: true,
-    overrides: {'convoy-raid': enabled, 'salt-flats': true, 'crew-gear': true}});
+    overrides: {'convoy-raid': enabled, 'salt-flats': true, 'crew-gear': true,
+      // Preserve the historical straight-ray, ten-damage geometry fixtures.
+      'seeker-rockets': false}});
   const duel = new Duel({seed, featureFlags: flags});
   duel.state.wastelandGateDiscovered = discovered;
   return {duel, started: duel.startArenaEvent({venueId, mode: 'convoy-raid',
@@ -677,8 +679,10 @@ test('native Odessa turret reports its swept body contact, with unchanged neares
   } finally {stop();}
 });
 
-function ordinaryProjectileFight() {
-  const duel = new Duel({seed: 307, featureFlags: createFeatureFlags({storage: null, qa: true})});
+function ordinaryProjectileFight({seeker = false} = {}) {
+  // Seeker witnesses use the released catalog; legacy geometry stays explicitly off.
+  const duel = new Duel({seed: 307, featureFlags: createFeatureFlags({storage: null, qa: true,
+    overrides: seeker ? {} : {'seeker-rockets': false}})});
   duel.state.wastelandGateDiscovered = true;
   equal(duel.startArenaEvent({venueId: 'salt-flats', mode: 'last-car-rolling',
     car: 'falcone_f42', opponents: [{car: 'dusthawk_rally'}]}), true,
@@ -739,13 +743,26 @@ function measuredRocketBodyContact(duel, shot, car) {
     z: from.z + (to.z - from.z) * hit.t};
 }
 
-test('geometry transfer: ordinary car native Rocket Pods still removes ten armor once', () => {
+test('geometry transfer: legacy Rocket Pods with seekers off remove ten armor once', () => {
   const {duel, car} = ordinaryProjectileFight(), armor = car.armor;
   const shot = nativeRocketAt(duel, point(duel, car)), events = resolveNativeProduct(duel, shot);
-  equal(car.armor, armor - 10, 'ordinary-car Rocket Pods damage remains exactly ten armor');
+  equal(car.armor, armor - 10, 'legacy ordinary-car Rocket Pods damage remains exactly ten armor');
   equal(events.filter(e => e.arsenalCue === 'weapon.rockets.hit').length, 1, 'one real rocket emits one ordinary blast');
   stepProjectiles(duel, DT);
   equal(car.armor, armor - 10, 'retired ordinary rocket cannot apply damage twice');
+});
+
+test('geometry transfer: production-default seekers remove eight armor from an ordinary car once', () => {
+  const {duel, car} = ordinaryProjectileFight({seeker: true}), armor = car.armor;
+  equal(duel.featureFlags.enabled('seeker-rockets'), true, 'released seekers need no flag override');
+  const shot = nativeRocketAt(duel, point(duel, car));
+  equal(shot.damage, 8, 'the native released seeker records eight damage at launch');
+  ok(shot.seekerTargetId != null, 'the native released seeker acquires the real car');
+  const events = resolveNativeProduct(duel, shot);
+  equal(car.armor, armor - 8, 'the real released seeker removes eight armor');
+  equal(events.filter(e => e.arsenalCue === 'weapon.rockets.hit').length, 1, 'one native seeker emits one ordinary blast');
+  stepProjectiles(duel, DT);
+  equal(car.armor, armor - 8, 'a retired seeker cannot apply damage twice');
 });
 
 test('geometry transfer: ordinary car native Harpoon keeps six armor, sideways yank and three-second tether', () => {

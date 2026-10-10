@@ -5,6 +5,18 @@
 # in SPEC.md section 12.1 and docs/CODEX_PLAYBOOK.md section 11.
 # Director assigns owns/hooks before dispatching a card to a lane.
 tasks:
+  - id: GATE-FRAME-DELIVERY
+    title: "Explain variable browser frame delivery in fixed native scenes"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: backlog
+    owns: [tools/scenarios/blackiron.mjs, tools/scenarios/convoy-frames.mjs, docs/changes/GATE-FRAME-DELIVERY.md]
+    acceptance:
+      - "Identify frame-delivery variability with bounded native evidence. Preserve scene, sample counts, all timing limits and failure behavior. No automatic retries or tolerance changes."
+      - "Blackiron first release sweep measured High p95 210.9 ms; one unchanged quiet rerun measured 33.4 ms High and 16.8 ms Performance and passed the original 50 ms limit. Treat this as an unreliable observation, not proof of cause."
+    note: "Do not hold feature work after the unchanged passing retry. Spend at most 30 minutes on a future investigation."
   - id: GATE-CALLBACK-DIAGNOSTICS
     title: "Prove audio capture delivery independently of callback clocks"
     owner: codex
@@ -3059,7 +3071,7 @@ tasks:
     note: "The current audit flags forty-eight assets; forty-seven retain dynamic runtime, source, rights, reference or QA uses, while the old dirt texture retains documented future arena use. All twenty-five flagged exports are used inside their modules, so no deletion is proved safe. Keep the dirt decision and dynamic reporting scope here; the legacy Rustwall generator still has test consumers and needs deliberate migration by its art owner."
 
     audit_2026_10_09: "Polish-run audit: 50 asset candidates remain advisory; no deletion is proved safe. Keep dynamic consumers and the fifteen fully-on switches until removal has named hooks and unchanged replay proof. All five unmerged polish lanes, parked diagnostics and protected audio remain. Tracked integration size is 282.9 MiB before and after; no cleanup deletion."
-    audit_2026_10_10: "After Height and Seekers: no unused modules or obsolete tests; 50 assets and 54 exports remain advisory. Newly flagged exports seekerRocketsEnabled and seekerTarget in src/arsenal/rockets.js need consumer review before removing any export. Tracked size 296753643 bytes; pending art, parked diagnostics and protected audio retained."
+    audit_2026_10_10: "After the five polish merges: no unused modules or obsolete tests; 50 assets and 54 exports remain advisory. Seeker exports still need consumer review before removal. Tracked size 304104147 bytes (290.0 MiB); approved Salt Flats geometry accounts for 5025264 added bytes, with Flame textures and approved review sheets making up most other growth. Merged lanes and consumed evidence removed; parked diagnostics, protected audio and Claude phase4-plan retained. Size targets unchanged."
   - id: FIX-STATUS-CARD
     title: "Preserve phase suffixes in status lane ownership"
     lane: TOOL
@@ -3905,8 +3917,8 @@ tasks:
     lane: TOOL
     size: S
     needs: []
-    status: building
-    claimed_by: "Claude (Sonnet agent), 10 October 2026"
+    status: merged
+    note: "node tools/track-review.mjs <course-id> gives map, 16 named-point chase frames, speed trace, pack picture and review.json; tried on pacific-canyon and eifel-crown. See docs/changes/P4-REVIEW-TOOL.md."
     owns: [tools/track-review.mjs, tools/scenarios/track-review.mjs, tools/test-track-review.mjs, docs/changes/P4-REVIEW-TOOL.md]
     acceptance:
       - "Build the review tool in docs/CIRCUITS.md section 11, step 2: for a course id, a top-down map with corner names, 16 chase-camera frames at named points (grid, signature points, every slow corner braking point and apex, every crest, landmark views), a speed trace of a test-driver lap with corner speeds and lap time, and a first-corner pack frame. One command, private port, memory-only saves, output under .evidence/."
@@ -3918,8 +3930,14 @@ tasks:
     lane: ART
     size: S
     needs: []
-    status: ready
+    status: merged
+    source_commit: 1c81cf6e21e6cbf72cf74e4285fd5d5643a1b867
+    note: "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11. All 24 prior source records retained exactly; 13 new sources, 11 selected, no downloads. Lane 8/8 in 93.39 s, build 1.34 s and source review pass. Tower/gallery adaptation and yeti clip inspection remain for construction cards."
+    claimed_by: codex-director-2026-10-10
+    branch: codex/p4-art-src
     owns: [docs/board/looks/p4-src/, tools/art/catalog.json, docs/changes/P4-ART-SRC.md]
+    hooks: [tools/test-tanker-valve-source.mjs]
+    selection_2026_10_10: "Kyle selected 1, 3, 5, 8, 9 and 11. Donors only; tower assembly, gallery adaptation and yeti animation inspection remain explicit. Selected-source lane/build and independent review passed."
     acceptance:
       - "One sourcing sheet with two or three CC0 or CC-BY candidates for every group in docs/CIRCUITS.md section 8, licences checked and recorded. Send to Kyle with Claude; set waiting_on: kyle. No building before Kyle picks."
 
@@ -3957,10 +3975,13 @@ tasks:
     lane: VIS
     size: M
     needs: []
-    status: ready
-    owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md]
+    status: building
+    claimed_by: codex-director-2026-10-10
+    branch: codex/p4-daynight
+    owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md, tools/scenarios/p4-daynight.mjs, tools/art/p4-daynight-sheet.py, docs/board/looks/p4-daynight/]
     hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
-    sequencing: "Edits render3d.js before P4-SNOW."
+    sequencing: "Wait for Claude P4-TRACK-SCRIPT to merge before renderer hooks; then edit render3d.js before P4-SNOW."
+    note: "Retained draft 4b74d256: pure light paths and scene/sky/car owners pass focused checks. Renderer untouched. Sync, native browser and frame checks, art verdict and lane/build remain before merge."
     acceptance:
       - "Build docs/CIRCUITS.md section 3.6: light paths by distance or race progress, blended sun, sky, fog, ambient and stars; headlights and tail lights on below a light level (only the player car casts a real light); cat's eyes and boards glowing in headlights; moon, town lights and lit windows at night."
       - "Presentation only: race state unchanged. Existing courses look identical unless a light path is set. Frame cost within the usual limit with 8 cars at night. One sheet to Claude (day, golden, dusk, night on one test circuit), at most three rounds."
@@ -4157,6 +4178,81 @@ tasks:
     acceptance:
       - "Build the cups in docs/CIRCUITS.md section 7: Mountain, Night and Winter Cups and the Grand Tour, points 10 to 1 with the tie rule, saved per named player, abandonable, settled once, cup bonus pay, and the garage trophy case. Additive save fields; old-save fixtures load unchanged."
 
+  - id: P4-INTEL-DOSSIER
+    title: "Team Room: track dossier, flags, live snapshots, engineer notes"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-REVIEW-TOOL, P4-TRACK-SCRIPT]
+    status: ready
+    flag: grand-prix
+    owns: [src/track-analysis.js, src/screen-team-room.js, src/screen-team-room.css, tools/test-track-analysis.mjs, tools/scenarios/team-room.mjs, docs/changes/P4-INTEL-DOSSIER.md]
+    hooks: [tools/track-review.mjs, src/screen-courses.js, src/screen-router.js, src/render3d.js, src/app.js]
+    acceptance:
+      - "Build the Team Room screen and dossier in docs/CIRCUITS.md section 7b: TEAM ROOM on event cards, map coloured by reference speed with named corners, flags at hot spots, live-rendered driver-seat snapshots at each flag (no stored pictures), engineer notes from the circuit file or generated for existing circuits. Move corner, crest and sector analysis into src/track-analysis.js and make tools/track-review.mjs use it. Works for every closed circuit. Read-only: race state never changes."
+
+  - id: P4-INTEL-TELEMETRY
+    title: "Team Room: your lap against the reference, and where you lose time"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-INTEL-DOSSIER]
+    status: ready
+    flag: grand-prix
+    owns: [src/lap-telemetry.js, tools/build-reference-laps.mjs, tools/test-lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
+    hooks: [src/ghost.js, src/screen-results.js, src/screen-team-room.js, src/leaderboard.js]
+    acceptance:
+      - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and car class, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
+
+  - id: P4-INTEL-LEVELS
+    title: "Team Room: earning intel levels and the reference ghost"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-INTEL-TELEMETRY, P4-CAREER]
+    status: ready
+    flag: grand-prix
+    owns: [src/intel-levels.js, tools/test-intel-levels.mjs, docs/changes/P4-INTEL-LEVELS.md]
+    hooks: [src/screen-team-room.js, src/grand-prix-career.js, src/ghost.js]
+    acceptance:
+      - "Build the four intel levels in docs/CIRCUITS.md section 7b exactly, per event and named player, with the stated ways to earn them, and the level 4 reference ghost in Time Trial. Settles once; additive save fields; old saves unchanged."
+
+  - id: P4-QUALIFYING
+    title: "Qualifying before a Grand Prix"
+    owner: codex
+    lane: RACE
+    size: S
+    needs: [P4-FIELD]
+    status: ready
+    flag: grand-prix
+    owns: [src/qualifying.js, tools/test-qualifying.mjs, docs/changes/P4-QUALIFYING.md]
+    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js]
+    acceptance:
+      - "Build optional qualifying in docs/CIRCUITS.md section 7b: two timed laps alone, best lap sets your grid slot among the computer racers' seeded times; skipping keeps the default start. Practice laps count toward intel level 2."
+
+  - id: P4-COACH
+    title: "Coach markers for learning a track"
+    owner: codex
+    lane: VIS
+    size: S
+    needs: [P4-INTEL-LEVELS]
+    status: ready
+    flag: grand-prix
+    owns: [src/coach-markers.js, tools/test-coach-markers.mjs, docs/changes/P4-COACH.md]
+    hooks: [src/render3d.js, src/race-settings-ui.js]
+    acceptance:
+      - "Build Coach in docs/CIRCUITS.md section 7b: an option, off by default, showing a braking-point marker and a faint apex line on corners with level 2 notes; never in Hard Grand Prix races or cups. Presentation only."
+
+  - id: P4-FINISH-TEAMROOM
+    title: "Claude's finishing pass: the Team Room"
+    owner: claude
+    lane: DESIGN
+    size: M
+    needs: [P4-INTEL-LEVELS]
+    status: ready
+    acceptance:
+      - "Claude reviews the Team Room look and words, writes the engineer notes for every circuit, picks the flag spots and snapshot framing, and sends Kyle a postcard of the dossier."
+
   - id: P4-FINISH-PANORAMA
     title: "Claude's finishing pass: Panorama Ridge"
     owner: claude
@@ -4271,18 +4367,19 @@ tasks:
     lane: VIS
     size: M
     needs: [POLISH-SMOKE]
-    status: review
+    status: merged
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-flame
-    source_commit: 81a9b64b799db076fa1db75075e6abc6472e6511
-    note: "Round one and p95 approved. Synced Height integration and Smoke round two at 81a9b64b; reviewed loader/per-camera conflict preserves both. Focused Flame/Smoke, Wave2 39, build and eight native views pass; no new art round. After approved Smoke merges, sync latest integration and run fresh lane/build before merge."
+    source_commit: 7ff094a4baa6df7590f9f91be9d8240d1704bcd6
+    note: "Approved round one merged after clean Smoke sync, lane 368/368 in 620.71 s, build 494 ms and independent source review. The new Flame catalog entry required a reviewed digest update; all Factory source pins and all 30 source checks are retained. No new art round or gameplay change."
     owns: [docs/changes/POLISH-FLAME.md, src/flame-view.js, tools/art/polish-flame-textures.py, tools/art/polish-flame-sheet.py, tools/test-polish-flame.mjs, tools/scenarios/polish-flame.mjs, docs/board/looks/polish-flame/round-1.jpg, docs/board/looks/polish-flame/round-1-review.md]
-    hooks: [src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
+    hooks: [tools/test-tanker-valve-source.mjs, src/combat-scene.js, src/combat-effects.js, src/arsenal/flamethrower.js, src/crew-gear/signature.js, src/render3d.js, public/assets/, tools/art/catalog.json, tools/scenarios/arsenal-wave2.mjs, tools/scenarios/crew-gear.mjs]
     sequencing: "Shares combat-scene.js with POLISH-SEEKERS and POLISH-SMOKE: one card edits it at a time."
     acceptance:
       - "Build docs/ARSENAL.md 'Polish after phase 3', Real flames: looks only, the cone and damage unchanged, the fire filling exactly the damage cone. CC0 source recorded with its licence; small runtime textures only. Frame pacing within the usual limit in High and Performance with two flamethrowers firing. One sheet per round to Claude (start, full burst, burning car, Cinder), at most three rounds."
     claude_verdict_2026_10_10: "Round one approved10 October. Judge frame cost by p95; High mean rise is recorded and explicitly not a blocker. Merge after approved Smoke, with fresh lane/build and review after integration sync. No new art round required."
     release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
 
   - id: POLISH-ARENA
     title: "Arena polish from Claude's reviews"
@@ -4290,19 +4387,20 @@ tasks:
     lane: VIS
     size: S
     needs: []
-    status: review
-    source_commit: 1a3f30ceb29c908b6179a8a3de1589ca3632b85f
+    status: merged
+    source_commit: 390742cb5ef827772d1565409968f0f6ff4a4e1c
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-arena
-    note: "Round two ready for Claude final art verdict: native comparison sheet 467475 bytes, 93 shells in tall clusters, varied ridge widths, lit lamps/roof at 89.16794 m. Physics/state/focused/build pass; actual-source p95 16.8 to 16.8 ms both qualities. Labels stay approved. No merge gate or merge claimed; final allowed art round."
+    note: "Claude approved round two final. Merged after clean Flame sync, lane 369/369 in 618.11 s, build 521 ms, 62 focused native tanker checks and independent review. Approved art unchanged. Reviewed old shared-material assertion now checks independent near/far lamps at exact 1.2/4.5 brightness, with geometry, timing, input and disposal protections retained."
     owns: [docs/board/looks/polish-arena/round-2.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/changes/POLISH-ARENA.md, tools/art/polish-arena-sheet.py, tools/scenarios/polish-arena.mjs, tools/test-polish-arena.mjs, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-1-review.md]
-    hooks: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, public/assets/models/wasteland/salt-flats/venue.glb, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-arsenal-wave3.mjs, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js, src/combat-hud.js]
+    hooks: [tools/test-convoy-tanker-art.mjs, src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, public/assets/models/wasteland/salt-flats/venue.glb, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-arsenal-wave3.mjs, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js, src/combat-hud.js]
     acceptance:
       - "Four items, looks only (race state and replays unchanged): (1) more scrap on the Salt Flats inner island, reusing the approved Salt Flats pieces; (2) more variety in the Salt Flats ridge widths, inside the existing drivable band rules; (3) the tanker easier to read at a distance: its warning lamps and roof plate stay visible in the distant view; (4) floating labels (Tanker, Escort and similar) never overlap: stack them with a small gap."
       - "One sheet to Claude covering all four, at most two rounds. Frame pacing within the usual limit."
 
     claude_verdict_2026_10_10: "Round two authorized10 October, labels approved. Make roughly twice the inner-island scrap in tall clusters using approved pieces, clearly different ridge widths, distant tanker lit lamps/roof plate readable at play distance. Next sheet must show each change clearly; only then waiting_on Claude."
     release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
 
   - id: TEST-DRIVER-BRAKING
     title: "All-seed pursuit test-driver braking"
@@ -4330,14 +4428,34 @@ tasks:
     lane: REL
     size: S
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-10-release
-    branch: codex/release-2026-10-10
+    released_commit: 1046076a90623c26c76ffe623e9589dbf5717490
+    released_build: 20261010195525-87b479fc74c0
+    release_full: "371/371 in 937.27 s; clean exact commit; alone, four jobs"
     flag: seeker-rockets
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-seeker-rockets.mjs, docs/changes/RELEASE-2026-10-10.md]
-    hooks: [tools/test-arsenal-wave2.mjs, start-preview.bat, tools/scenarios/seeker-rockets.mjs]
+    hooks: [tools/scenarios/arsenal-core-audio.mjs, tools/audio/capture-witness.mjs, tools/test-arsenal-audio-recorder.mjs, tools/scenarios/yard-home.mjs, tools/scenarios/traffic-wreck-callout.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/hidden-road-arrival.mjs, tools/scenarios/first-person-gear.mjs, tools/scenarios/crew-fighters.mjs, tools/scenarios/crew-selection.mjs, tools/scenarios/convoy-frames.mjs, tools/scenarios/combat-ramming.mjs, tools/scenarios/combat-results.mjs, tools/scenarios/onfoot-controls-camera.mjs, tools/scenarios/onfoot-figures.mjs, tools/scenarios/onfoot-rpg-wrench.mjs, tools/scenarios/raider-ambush.mjs, tools/scenarios/raider-salvage.mjs, tools/scenarios/rigged-fighter.mjs, tools/scenarios/onfoot-camera-choice.mjs, tools/scenarios/car-loadout-armory.mjs, tools/scenarios/combat-hud.mjs, tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-pickups2.mjs, tools/scenarios/combat-armor-frame-pacing.mjs, tools/scenarios/combat-armor-wreck.mjs, tools/scenarios/combat-effects.mjs, tools/scenarios/arsenal-core.mjs, tools/scenarios/armored-ram.mjs, tools/scenarios/armor-kit-visuals.mjs, tools/scenarios/arena-pit.mjs, tools/scenarios/armor-kit-purchase.mjs, tools/test-fight-voices.mjs, tools/test-arena-convoy.mjs, tools/test-rocket-fighter-contacts.mjs, tools/test-arsenal-wave2.mjs, start-preview.bat, tools/scenarios/seeker-rockets.mjs]
     sequencing: "Prepare independently; sync after Smoke, Flame and Arena merge in that order. Fresh lane/build before promotion merge; final release notes and full tier precede live cutover."
-    design: "Kyle's accepted real-game release turns seeker-rockets on. Keep career-backup dev and the explicit off path. Update only state-specific assertions; preserve dev isolation with a pinned dev catalog and older off baselines with explicit overrides. No damage, balance threshold or save-format change."
+    release_exceptions: "Kyle relayed Claude, 10 October: release now. Accept tanker GPU +15.954974% because measured frame pacing is unchanged and distant lamps were requested. The two collision checks fail identically on installed master and are accepted as stale, non-regression exceptions. No more QA investigation. After installation open only QA-STALE-COLLISION, commit notes and leave integration clean, then Codex starts P4-ART-SRC and P4-DAYNIGHT; P4-TRACK-SCRIPT, P4-REVIEW-TOOL, P4-FIELD and P4-GRIP remain Claude owned."
+    design: "Kyle's accepted real-game release turns seeker-rockets on. Keep career-backup dev and the explicit off path. Update only state-specific assertions; preserve dev isolation with a pinned dev catalog and older off baselines with explicit overrides. No damage, balance threshold or save-format change. Browser fixtures must use existing discovered-career eligibility and native scrap purchases: seed disposable discovery/scrap (including visual, frame and fit fixtures; combat armor/effects seed only before the armored launch, after ordinary frame sampling and before startup timers), assert discovered launch state and equipped kit, preserve 350 scrap cost, unchanged credits, real click/equip and armor-110 assertions. Arsenal checks assert default-on then explicitly force only Arsenal off for original denial controls, restoring flags afterward. Discovered loadout/HUD/pickup/contact fixtures preserve all native assertions and fresh undiscovered controls. HUD final undiscovered control creates a new player through native app.addPlayer in the verified memory-only facade, verifies fresh profile and race discovery are false, then keeps original legacy-visible/upgraded-hidden assertions; same-tab navigation alone intentionally preserves the earlier QA career. HUD marker location uses actual element-rectangle center divided by viewport width after approved pixel-based stacking; bounds stay unchanged. On-foot/raider/armor fixtures seed discovery before launch, retaining ordinary controls and all mechanics assertions. Camera-choice now asserts the removed menu selector stays absent, sets first-person through the existing public setter after eligible launch (so cached/live/saved settings agree), and verifies real C-key switching persists overhead while preserving aim/fire/repair/pause/reentry checks. Crew selection seeds discovery and exactly 300 scrap, verifies native Wren ownership and zero scrap after hire, retaining all selection/exit/sprint checks. Convoy frame fixture removes duplicate Three bundle and takes equivalent constructors from native scene objects; preserve native-derived current bounds, identical box/material/pose/shadow settings and every timer/sample/10-percent limit. Hidden Road arrival waits for the exact visible enabled button after resume before its existing native mouse click; all native arrival/drive assertions remain. On-foot controls retain first-person and movement bounds; mouse-right must decrease yaw, matching existing applyFootLook and headless screen-direction tests. Correct only the reversed browser inequality and record before/delta yaw. The on-foot figure fixture supplies native knockdownDuration 3 with remaining 2 to sample one second into the authored fall; retain exact clip/time and visibility assertions. Tollkeeper is already released on in master 9e631c92; replace obsolete default-off URL control with a no-flags catalog-on, visible-enabled native territory click witness leading to warlord_intro/convoy-raid. Run both existing quality fights without URL opt-in and retain valve, charge, 1440-scrap and one-settlement checks. Existing explicit-off native headless admission tests remain. Traffic-wreck-callout follows accepted CRASH-05: retain the pre-discovery route, contact identity, no old event, unchanged player costs and draw checks. Require initial smash/TRAFFIC SMASHED, a dead physical hulk visible at impact and 0.3 seconds, native pose following and movement plus smoke. Advance native traffic and stage clock together past 0.6 seconds, then require exactly one delayed obliterate/TRAFFIC EXPLODED, debris and the persistent hulk. Replace only obsolete immediate obliteration/retirement expectations. Combat-knockaway retains its exact high-speed stationary collision, which is below the native 250-km/h explosion threshold: assert smash identity, persistent physical hulk, pose/movement/smoke and no explosion/debris through 0.7 seconds. Keep low contact, scenery, same-mesh, frame baseline and player-cost checks. At explicit high and blast repositions, clear prior player knock, pushVelocity, headingError, slipAngle and yawVelocity, set fresh traffic knock null, and capture/assert clean declared pre-contact kinematics. actorBody otherwise uses prior collision velocity instead of the fixture speed; retain all authored speeds and outcome thresholds. Add a separate native 130-mph player versus 60-mph oncoming contact to verify exactly one delayed blast after 0.6 seconds with debris and persistent hulk. Advance native traffic and clock together; accurately rename first-contact timing but retain limits. Yard-home fixes an undefined viewport variable in the wait diagnostic label by using existing size.width and size.height. Preserve all nine views, camera/occlusion limits and economy assertions. Bound current audio failure investigation to 30 minutes from 18:28 UTC. Preserve failed float32 PCM, full chunk labels and callback clocks/input lengths before existing strict validation. Add a silent native AudioBufferSource witness to each recorder second input, copied in the same payload as unchanged game PCM. Use a prevalidated strictly increasing float32 sine segment at native sample rate, playbackRate 1; locate its first measured sample and require byte-exact successors independently of currentFrame. Test missing/repeated 128 and 2048 sample spans, wrong input lengths, misleading clock labels with intact samples, and byte-exact game PCM preservation. No runtime audio changes, label repair, retries, skipped assertions, tolerance or acceptance migration. Independent review and one separately coordinated native diagnostic capture must establish what is proved. Ram checks read current knock.vy and signed lateral knock velocity instead of retired fields; retain positive shove, air-height, impact and crash limits. Combat-ramming uses the same projected native velocity for its exact spiked shove checks. Its explicit pose helper and later ground reposition clear knock on both actors and reset player previous air height, matching the declared speed/heading rather than carrying the first impact velocity. During native knock, sim-rival returns before its normal offRoad assignment; staticContacts also skips its update for tumble/crushed/wrecking actors. Cached status is inconclusive. Query current duel._surface(target.s,target.lateral).mainRoad for the unchanged off-road acceptance instead of that stale cache; report cachedOffRoad, targetS, roadHalfWidth and road/mainRoad/shortcutId without mutating simulation. Preserve 24 native CPU steps, separated-pair incident clearance, lateral/off-road/positive-height/zero-crash checks, five-armor overkill, recovery and every frame threshold; add diagnostics only."
     acceptance:
       - "The production catalog enables accepted seekers at 8 damage; off Pods and Gunn remain 10. Kyle accepted the measured 1.328662 ratio; do not change the original 1.3 check."
       - "Current lane/build, independent release review, actual released-flag balance, all browser scenarios, quiet frame comparison, art and save budgets, then full alone on the exact final commit. No live race refresh or real-save access."
+
+  - id: QA-STALE-COLLISION
+    title: "Update the two stale collision browser checks"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    source_commit: 6bc43fa7008b5cb449e0c7678efd4277b99b573c
+    note: "Both native browser checks pass in High and Performance with zero warnings/issues. Reviewed geometry and ground-height fixture corrections only; no runtime/save change. Lane 371/371 in 1352.32 s and build 1.00 s pass; source review clear."
+    claimed_by: codex-qa-stale-collision
+    branch: codex/qa-stale-collision
+    owns: [tools/scenarios/combat-knockaway.mjs, tools/scenarios/combat-ramming.mjs, docs/changes/QA-STALE-COLLISION.md]
+    design: "Keep both current behaviors. Derive traffic touching contact from native body dimensions and road headings, retaining every smash/wreck/blast/cost assertion. Preserve the ram's original early airborne displacement and add a shoulder case derived from native road width that must really leave the road airborne. No runtime edits, post-hit teleport, loosened tolerances or parameter search."
+    acceptance:
+      - "Both browser scenarios pass on current game in High and Performance with memory-only storage and no warnings/issues; preserve real contact, identity, damage, recovery and zero ordinary crash cost."
+      - "Explain and independently review changed assertions; lane/build before merge. This card cannot hold the installed polish release. No other QA investigation."

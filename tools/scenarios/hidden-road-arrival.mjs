@@ -120,10 +120,23 @@ function installCapture(round,quality) {
   window.__arrivalQa=qa;
 }
 
-async function click(context,text) {
-  const point=await context.evaluate(`(() => {const button=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)}&&!b.hidden&&!b.disabled&&b.getBoundingClientRect().width);if(!button)throw Error('Visible button missing: '+${JSON.stringify(text)});const r=button.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
-  await context.command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});
-  await context.command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
+async function click(context, text) {
+  const visibleButton = `[...document.querySelectorAll('button')].find(button => {
+    const rect = button.getBoundingClientRect();
+    return button.textContent.trim() === ${JSON.stringify(text)} &&
+      !button.hidden && !button.disabled && rect.width > 0 && rect.height > 0;
+  })`;
+  await context.waitFor(`!!(${visibleButton})`, `visible button: ${text}`, 10_000);
+  const point = await context.evaluate(`(() => {
+    const button = ${visibleButton};
+    if (!button) throw Error('Visible button missing: ' + ${JSON.stringify(text)});
+    const rect = button.getBoundingClientRect();
+    return {x: rect.x + rect.width / 2, y: rect.y + rect.height / 2};
+  })()`);
+  await context.command('Input.dispatchMouseEvent',
+    {type: 'mousePressed', button: 'left', clickCount: 1, ...point});
+  await context.command('Input.dispatchMouseEvent',
+    {type: 'mouseReleased', button: 'left', clickCount: 1, ...point});
 }
 
 async function imageSheet(context,rows,path,columns,width,height,title) {

@@ -125,7 +125,8 @@ recharge 14 s · rear
 Kyle's play notes: the Flamethrower is just an orange cone, the rockets
 could be heat seeking, and the Smoke Screen is too easy to see through.
 
-**Rocket Pods become heat seekers (POLISH-SEEKERS, switch `seeker-rockets`).**
+**Rocket Pods seek targets (POLISH-SEEKERS, switch `seeker-rockets`).**
+Approved for the 10 October release with the switch on. Career backup remains dev.
 - When fired, each rocket takes the nearest enemy car within 20 degrees of
   the firing car's nose, up to 120 m, with a clear line (no smoke, no wall or
   scrap pile between). No target: it flies straight, as now.
@@ -150,7 +151,7 @@ could be heat seeking, and the Smoke Screen is too easy to see through.
   counter (break the line) is unchanged.
 
 **Smoke you cannot see through (POLISH-SMOKE).** Looks only; the cloud's
-size, time and rules above are unchanged. A car fully inside the cloud, seen
+size, time and rules above are unchanged. Claude approved round two on 10 October. A car fully inside the cloud, seen
 from the chase camera 10 to 25 m away, must be hidden: at most 10% of its
 pixels show against a frame without it. Round two (10 October) uses overlapping
 soft grey puffs of varied sizes, broken wispy edges, lighter tops and darker
@@ -175,11 +176,13 @@ Merge after approved Smoke.
 
 **Rocket Pods** · rank 7 (Gearhead Gunn's reward delivers them early) ·
 recharge 8 s · front
-- Four unguided rockets, 0.12 s apart, spread 3 degrees, 80 m/s, range 120 m,
-  10 armor each with a 2 m blast.
-- Counter: shield, or weave. Computer: fires at an enemy 20 to 100 m ahead
-  within 3 degrees.
-- Sounds: `weapon.rockets.fire`, `.flight`, `.hit`.
+- Four rockets, 0.12 s apart, spread 3 degrees, 80 m/s, range 120 m,
+  8 armor each with a 2 m blast. Each takes a target within 20 degrees at
+  launch and turns at most 35 degrees/s; see the lock rules above.
+- Counter: shield, a hard close turn, smoke, or a Decoy Drone. Computer:
+  fires at an enemy 20 to 100 m ahead within 20 degrees.
+- The explicit switch-off path and Gunn's aimed rockets retain 10 damage.
+- Sounds: `weapon.rockets.fire`, `.flight`, `.hit`, `.lock`.
 
 **Flamethrower** · rank 9 · recharge 11 s · front
 - A 3 s burst: a cone 9 m long and 30 degrees wide. 8 armor per second to any

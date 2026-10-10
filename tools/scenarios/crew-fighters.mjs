@@ -95,8 +95,14 @@ export async function run(context) {
       const app=window.__qaApp;
       const select=document.querySelector('#graphics-quality');
       select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
-      app.startCampaign({mode:'wasteland',startStage:0,seed:1989});app.stop();
+      app.profile.wasteland.discoveredGate=true;
+      app._saveProfile();
+      if(!app.startCampaign({mode:'wasteland',startStage:0,seed:1989}))
+        throw Error('Discovered crew race did not start');
+      app.stop();
       const s=app.duel.state;
+      if(s.wastelandGateDiscovered!==true||!s.footTransition)
+        throw Error('Discovered crew race did not initialize foot transition');
       Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,speedMph:0,traffic:[],opponents:[],stageTimeSec:10,crewId:'rook'});
       s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
       s.input.interact=true;
@@ -291,8 +297,14 @@ async function courseContext(context,quality,root,relative) {
   await context.evaluate(`(() => {
     const app=window.__qaApp,select=document.querySelector('#graphics-quality');
     select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
-    app.startCampaign({mode:'wasteland',startStage:0,seed:1989});app.stop();
+    app.profile.wasteland.discoveredGate=true;
+    app._saveProfile();
+    if(!app.startCampaign({mode:'wasteland',startStage:0,seed:1989}))
+      throw Error('Discovered course crew race did not start');
+    app.stop();
     const s=app.duel.state;
+    if(s.wastelandGateDiscovered!==true||!s.footTransition)
+      throw Error('Discovered course crew race did not initialize foot transition');
     Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,lateral:0,speedMph:0,traffic:[],opponents:[],stageTimeSec:10,crewId:'rook'});
     s.raids=null;s.combat.aiTimer=Infinity;s.combat.pickupTimer=Infinity;
     s.input.interact=true;for(let i=0;i<50&&!s.onFoot;i++)app.duel.step(1/120);

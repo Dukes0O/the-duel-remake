@@ -21,11 +21,16 @@ async function qualityPass(context, quality) {
 
   const before = await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile.wasteland.discoveredGate = true;
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, cpuDifficulty: 'hard', seed: 1989}))
       throw Error('Seeded three-opponent Wasteland race did not start');
     app.stop();
     const duel = app.duel, state = duel.state, combat = state.combat;
+    if (state.wastelandGateDiscovered !== true || !Number.isFinite(state.armor) ||
+        !Number.isFinite(state.maxArmor))
+      throw Error('Discovered Wasteland race did not initialize armor');
     if (state.opponents.length !== 3 || !Number.isFinite(state.maxArmor))
       throw Error('Wasteland2 armor and three CPU cars are required');
     Object.assign(state, {status: 'racing', countdown: 0, paused: false,

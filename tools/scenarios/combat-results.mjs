@@ -20,10 +20,14 @@ async function pass(context, quality, {width, height, name}) {
 
   const report = await context.evaluate(`(() => {
     const app = window.__qaApp;
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode: 'wasteland', startStage: 0,
       opponentCount: 3, seed: 1989})) throw Error('Combat result race did not start');
     app.stop();
     const duel = app.duel, state = duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('combat-results fixture launched without gate discovery');
     Object.assign(state, {status: 'racing', countdown: 0,
       s: 500, prevS: 500, lateral: 0, prevLateral: 0,
       speedMph: 0, invulnerableSec: 0, traffic: []});

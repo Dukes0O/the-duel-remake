@@ -50,8 +50,12 @@ export async function run(context) {
       const select=document.querySelector('#graphics-quality');
       select.value='${quality}';select.dispatchEvent(new Event('change',{bubbles:true}));
       const app=window.__qaApp;
+      app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+      app._saveProfile();
       app.startCampaign({mode:'wasteland',startStage:0,seed:1989});app.stop();
       const s=app.duel.state;
+      if(s.wastelandGateDiscovered!==true)
+        throw Error('rigged-fighter fixture launched without gate discovery');
       Object.assign(s,{status:'racing',countdown:0,paused:false,s:500,prevS:500,
         speedMph:0,traffic:[],opponents:[],onFoot:true,stageTimeSec:.25});
       const p=app.duel.course.groundAt(500,3);

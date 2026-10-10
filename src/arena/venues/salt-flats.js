@@ -126,7 +126,9 @@ if (saltAtlasEdge > 0.0) {
       saltDistances.x = min(saltDistances.x, distance);
     }
     float gap = (sqrt(saltDistances.y) - sqrt(saltDistances.x)) * saltCrustSize;
-    tone += crustResolved * (saltCrustColors.x * exp(-pow(gap / saltCrustWidths.x, 2.0)) +
+    float widthMix = smoothstep(0.25, 0.75, saltNoise(saltAt / 13.0 + vec2(31.0, -17.0)));
+    float ridgeWidth = saltCrustWidths.x * (0.30 + 2.70 * widthMix);
+    tone += crustResolved * (saltCrustColors.x * exp(-pow(gap / ridgeWidth, 2.0)) +
       saltCrustColors.y * exp(-pow(gap / saltCrustWidths.y, 2.0)));
   }
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.70, 0.72, 0.695) + tone, saltAtlasEdge);
@@ -140,7 +142,7 @@ diffuseColor.rgb *= 1.0 + saltGrain * saltGrainContrast * saltNearGrain * saltGr
 normal = normalize(mix(normal, nonPerturbedNormal, saltAtlasEdge));
 `);
   };
-  material.customProgramCacheKey = function() {return previousKey.call(this) + '|salt-generated-ground-v3';};
+  material.customProgramCacheKey = function() {return previousKey.call(this) + '|salt-generated-ground-v5';};
   material.needsUpdate = true;
 }
 

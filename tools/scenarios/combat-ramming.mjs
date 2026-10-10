@@ -58,9 +58,13 @@ async function pass(context, quality) {
       opponentCount:3,seed:1989})) throw Error('Ordinary comparison race did not start');
     placeQuietField(app.duel.state);
     const ordinary=await sample();
+    app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};
+    app._saveProfile();
     if (!app.startCampaign({mode:'wasteland',startStage:0,car:'titan_monster',
       opponentCount:3,seed:1989})) throw Error('Three-opponent combat race did not start');
     const duel = app.duel, state = duel.state;
+    if(state.wastelandGateDiscovered!==true)
+      throw Error('combat-ramming fixture launched without gate discovery');
     if (state.opponents.length !== 3 || state.car !== 'titan_monster' ||
         !Number.isFinite(state.armor))
       throw Error('Armored field is missing');
@@ -86,10 +90,17 @@ async function pass(context, quality) {
 
   const shove = await context.evaluate(`(() => {
     const app=window.__qaApp,duel=app.duel,state=duel.state,target=state.opponents[1];
-    const place=(actor,s,lateral)=>Object.assign(actor,{s,prevS:s,lateral,
-      prevLateral:lateral,pushVelocity:0,headingError:0,slipAngle:0,
-      airborne:false,airHeight:0,prevAirHeight:0,impactTimer:0,
-      contactCooldown:0,damageCooldown:0});
+    const place = (actor, s, lateral) => Object.assign(actor, {
+      s, prevS: s, lateral, prevLateral: lateral,
+      knock: null, pushVelocity: 0, headingError: 0, slipAngle: 0,
+      airborne: false, airHeight: 0, prevAirHeight: 0, impactTimer: 0,
+      contactCooldown: 0, damageCooldown: 0,
+    });
+    const lateralSpeed = () => {
+      const heading = duel.course.at(target.s).heading;
+      const knock = target.knock;
+      return knock ? knock.vx * Math.cos(heading) - knock.vz * Math.sin(heading) : 0;
+    };
     state.opponents[0].s=state.opponents[0].prevS=540;
     state.opponents[2].s=state.opponents[2].prevS=560;
     target.car='viper_proto';
@@ -99,8 +110,12 @@ async function pass(context, quality) {
     if (!duel._vehicleContact(state,target,'rival')) throw Error('Front ram missed');
     const hit=window.__combatRamEvents.find(event=>event.combatRamHit &&
       event.attackerIndex===-1 && event.victimIndex===1);
-    if (!hit?.spiked || !(hit.armorRemoved>0) || !(target.pushVelocity>0) ||
-        !(target._ramVerticalSpeed>0)) throw Error('Spiked shove failed');
+    const launch = target.knock?.vy;
+    if (!hit?.spiked || !(hit.armorRemoved > 0) || !(lateralSpeed() > 0) ||
+        !(launch > 0)) throw Error('Spiked shove failed: ' + JSON.stringify({
+          spiked: hit?.spiked ?? null, armorRemoved: hit?.armorRemoved ?? null,
+          lateralSpeed: lateralSpeed(), launch: launch ?? null,
+        }));
     // Let the accepted impulse play out through the same 60 Hz CPU motion
     // used by the race, rather than posing the struck car beside the road.
     for (let tick=0;tick<24;tick++) duel._rival(1/60,target);
@@ -119,12 +134,19 @@ async function pass(context, quality) {
       throw Error('Disabled spikes remain visible');
     state.combatBumperSpikes=true;
     window.__render.renderFrame();
-    return {targetLateral:target.lateral,offRoad:target.offRoad,
-      height:target.airHeight,push:target.pushVelocity,
+    const surface = duel._surface(target.s, target.lateral);
+    return {targetS: target.s, targetLateral: target.lateral,
+      offRoad: !surface.mainRoad, cachedOffRoad: target.offRoad,
+      roadHalfWidth: surface.roadHalfWidth,
+      surface: {road: surface.road, mainRoad: surface.mainRoad, shortcutId: surface.shortcutId},
+      tumbling: !!target.tumble, combatWrecking: !!target.combatWrecking,
+      height:target.airHeight,push:lateralSpeed(),launch,
       targetArmor:target.armor,playerArmor:state.armor,
       crashSlots:state.stageCrashes,hit};
   })()`);
-  if (!(shove.targetLateral>4.2) || !shove.offRoad ||
+  // This early airborne frame can still be over the widened passing lane.
+  // The separate shoulder contact below checks that a real ram leaves it.
+  if (!(shove.targetLateral>4.2) || !(shove.push>0) ||
       !(shove.height>0) || shove.crashSlots!==0)
     throw Error(`${quality} shove did not leave a playable race: ${JSON.stringify(shove)}`);
   await context.screenshot(`combat-ram-shove-${quality}`);
@@ -134,11 +156,15 @@ async function pass(context, quality) {
     state.s=state.prevS=500;target.s=target.prevS=560;
     if (duel._vehicleContact(state,target,'rival'))
       throw Error('Separated pair did not clear its incident');
-    Object.assign(state,{s:502,prevS:498,lateral:3.5,prevLateral:3.5,
-      speedMph:130,airborne:false,airHeight:0});
-    Object.assign(target,{s:504,prevS:504,lateral:4.2,prevLateral:4.2,
-      speedMph:20,pushVelocity:0,airborne:false,airHeight:0,
-      prevAirHeight:0,armor:5});
+    Object.assign(state, {
+      s: 502, prevS: 498, lateral: 3.5, prevLateral: 3.5,
+      speedMph: 130, knock: null, airborne: false, airHeight: 0, prevAirHeight: 0,
+    });
+    Object.assign(target, {
+      s: 504, prevS: 504, lateral: 4.2, prevLateral: 4.2,
+      speedMph: 20, knock: null, pushVelocity: 0, airborne: false, airHeight: 0,
+      prevAirHeight: 0, armor: 5,
+    });
     if (!duel._vehicleContact(state,target,'rival') || !target.combatWrecking)
       throw Error('Later CPU did not enter local armor wreck');
     const hit=window.__combatRamEvents.filter(event=>event.combatRamHit &&
@@ -173,8 +199,79 @@ async function pass(context, quality) {
   if (recovery.status!=='racing' || recovery.crashSlots!==0)
     throw Error(`${quality} recovery lost the race: ${JSON.stringify(recovery)}`);
   await context.screenshot(`combat-ram-recovered-${quality}`);
-  console.log(`${quality} three-car ram: ${JSON.stringify({setup,shove,wreck,recovery})}`);
-  return {quality,setup,shove,wreck,recovery};
+
+  const shoulder=await context.evaluate(`(() => {
+    const app=window.__qaApp,duel=app.duel,state=duel.state,target=state.opponents[2];
+    target.car='viper_proto';
+    const targetS=504,playerS=502;
+    const halfWidth=duel._vehicleSpec(target).halfWidth;
+    const roadHalfWidth=duel.course.roadHalfWidthAt(targetS);
+    // Begin with the whole target on the road, one tenth of a metre inside
+    // the shoulder. Only the native collision and CPU steps move it out.
+    const targetLateral=roadHalfWidth-halfWidth-.1;
+    const place=(actor,s,lateral,speedMph)=>Object.assign(actor,{
+      s,prevS:s,lateral,prevLateral:lateral,speedMph,
+      groundHeight:duel.course.groundAt(s,lateral).y,
+      prevGroundHeight:duel.course.groundAt(s,lateral).y,
+      knock:null,pushVelocity:0,headingError:0,slipAngle:0,yawVelocity:0,
+      airborne:false,airHeight:0,prevAirHeight:0,_verticalSpeed:0,
+      impactTimer:0,contactCooldown:0,damageCooldown:0,
+    });
+    place(state,500,0,0);
+    place(target,560,0,0);
+    if(duel._vehicleContact(state,target,'rival'))
+      throw Error('Separated shoulder pair did not clear its incident');
+    place(state,playerS,targetLateral-.7,130);
+    place(target,targetS,targetLateral,20);
+    state.prevS=498;
+    state.invulnerableSec=0;
+    state.input.steer=1;
+    const startSurface=duel._surface(target.s,target.lateral);
+    if(!startSurface.mainRoad||target.lateral+halfWidth>startSurface.roadHalfWidth||
+        !duel._surface(state.s,state.lateral).mainRoad||target.combatWrecking)
+      throw Error('Shoulder contact did not begin with two playable cars on the road');
+    const beforeArmor=target.armor,eventStart=window.__combatRamEvents.length;
+    if(!duel._vehicleContact(state,target,'rival')){
+      const pose=actor=>({s:actor.s,prevS:actor.prevS,lateral:actor.lateral,
+        prevLateral:actor.prevLateral,groundHeight:actor.groundHeight,
+        nativeGroundHeight:duel.course.groundAt(actor.s,actor.lateral).y,
+        airborne:actor.airborne,airHeight:actor.airHeight,tumble:!!actor.tumble,
+        combatWrecking:!!actor.combatWrecking,crushed:!!actor.crushed,
+        wrecked:!!actor.wrecked,roadsideMotion:!!actor.roadsideMotion,
+        contactExempt:!!actor.contactExempt,spec:duel._vehicleSpec(actor)});
+      throw Error('Shoulder ram missed: '+JSON.stringify({player:pose(state),target:pose(target)}));
+    }
+    const hits=window.__combatRamEvents.slice(eventStart).filter(event=>
+      event.combatRamHit&&event.attackerIndex===-1&&event.victimIndex===2);
+    const launch=target.knock?.vy;
+    if(hits.length!==1||!hits[0].spiked||!(hits[0].armorRemoved>0)||
+        hits[0].armorRemoved!==beforeArmor-target.armor||!(launch>0))
+      throw Error('Shoulder ram lost its indexed native damage or launch');
+    for(let tick=0;tick<24;tick++)duel._rival(1/60,target);
+    const surface=duel._surface(target.s,target.lateral);
+    const heading=duel.course.at(target.s).heading;
+    const push=target.knock?target.knock.vx*Math.cos(heading)-
+      target.knock.vz*Math.sin(heading):0;
+    const point=duel.course.groundAt(target.s,target.lateral);
+    app.inspectionCamera={position:[point.x+16,point.y+7,point.z+14],
+      target:[point.x,point.y+2,point.z]};
+    app.onFrame?.(state);
+    window.__render.camera.position.fromArray(app.inspectionCamera.position);
+    const frame=window.__render.renderFrame();
+    return {start:{s:targetS,lateral:targetLateral,halfWidth,roadHalfWidth},
+      targetS:target.s,targetLateral:target.lateral,roadHalfWidth:surface.roadHalfWidth,
+      offRoad:!surface.mainRoad,height:target.airHeight,airborne:target.airborne,
+      push,launch,hit:hits[0],identity:state.opponents[2]===target,
+      crashSlots:state.stageCrashes,status:state.status,drawCalls:frame.drawCalls};
+  })()`);
+  if(!shoulder.offRoad||!(shoulder.targetLateral>shoulder.start.lateral)||
+      !(shoulder.height>0)||!shoulder.airborne||!(shoulder.push>0)||
+      !shoulder.identity||shoulder.crashSlots!==0||shoulder.status!=='racing'||
+      !(shoulder.drawCalls>0))
+    throw Error(`${quality} shoulder ram did not leave the road airborne: ${JSON.stringify(shoulder)}`);
+  await context.screenshot(`combat-ram-shoulder-${quality}`);
+  console.log(`${quality} three-car ram: ${JSON.stringify({setup,shove,wreck,recovery,shoulder})}`);
+  return {quality,setup,shove,wreck,recovery,shoulder};
 }
 
 export async function run(context) {
