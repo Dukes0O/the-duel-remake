@@ -1,5 +1,24 @@
 # Wasteland play-test inbox
 
+## Released 9 October 2026: try these in the main game
+
+Everything in the Preview is live (build 26.10.10 01:20 UTC). Close any open
+game tab and reopen it.
+
+- The last three warlords: Gearhead Gunn and his rocket barrages in the Pit,
+  the Tollkeeper driving the tanker on the Salt Flats, and Baron Blackiron,
+  who opens once the other seven are beaten.
+- Beat the Baron for Vesper Blackiron in the crew list, the Chrome Crown look
+  and the title "Warlord of the Wastes". Every first warlord win now gives a
+  story card on the wall in the Scrapdome yard.
+- Convoy Raid: break the tanker's three valves, board it and plant the charge.
+- Ambush Alley: hold the scrap fort on foot against five waves of raiders.
+- New car weapons: Mortar, Tesla Coil, Decoy Drone and Nitro Ram.
+- On Hard, computer crews now get out to repair or to ambush you.
+- The crew and raiders now speak their lines in fights, with subtitles.
+- Fixed: the Dusthawk Rally and Titan Monster no longer drop out of the air
+  on shortcuts.
+
 ## WAR-04 merged, 9 October
 
 The yard story wall, native victory posters and earned Vesper are built.
