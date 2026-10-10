@@ -186,7 +186,8 @@ export class Duel {
     this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
     // A Grand Prix (docs/CIRCUITS.md 3.2) races a full field on a closed road circuit.
     const grandPrix = mode === 'grandprix' && this.featureFlags.enabled('grand-prix') && grandPrixCourse(COURSE[startStage]);
-    this.state.fieldSeed = grandPrix && Number.isSafeInteger(fieldSeed) ? fieldSeed >>> 0 : null;
+    if (grandPrix && Number.isSafeInteger(fieldSeed)) this.state.fieldSeed = fieldSeed >>> 0;
+    else delete this.state.fieldSeed;
     if (grandPrix) this.state.opponentCount = Number.isSafeInteger(fieldSize) ? Math.max(1, Math.min(7, fieldSize)) : 7;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));
     this.state.mode = grandPrix ? 'grandprix' : mode === 'wasteland' && supportsCombat(COURSE[startStage]) ? 'wasteland' : mode === 'timetrial' ? 'timetrial' : 'duel';
