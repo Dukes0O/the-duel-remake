@@ -25,6 +25,14 @@ Ordinary countdown and results retain their existing cues. Completed Grand Prix 
 - Focused checks pass: P4 AUDIO; Audio/PCM 460 checks with 617,062 finite automation commands; Arsenal core 14; Arsenal wave one 36. `git diff --check` passes. Director's source review found no blocker.
 - One new fixture initially lacked Web Audio node methods when the deterministic drive reached a real car contact. The test device substitute now implements those methods. No assertion or tolerance was relaxed. Earlier Windows FFmpeg pipe closure was fixed by reading verified cache paths directly.
 
+## Native browser design
+
+Director added `tools/scenarios/p4-audio.mjs` to AUDIO ownership. Use the production App, Duel and EngineAudio on a private harness port with disposable memory storage. Wrap the real audio event and source methods only to observe native delivery, decoded AudioBuffer samples, started sources and cleanup. Preserve their return values and behavior. Start the genuine eight-car, three-lap Grand Prix with fixed seeds, then use App.advance and its ordinary autopilot controls through the finish. Do not shorten laps, move cars, inject results or modify simulation fields.
+
+Replay the same real fixed-step inputs in a separate graphics-free Duel with identical start options and no audio listener. Compare the final race fingerprint. Check audio leaves race state unchanged during each event. Require five native light ticks, one go, a real position gain, one final-lap signal and one genuine completed finish, without legacy countdown/go/win/lose doubles. Copied delivery checks may repeat an already observed event to the sound manager only.
+
+Then exercise actual App pause/resume and menu/stage transitions plus audio mute and suspended-context resume. Check native decoded sources stop and release, missed events do not replay, and fresh fields get fresh starts. This is functional browser evidence; no frame timing or listening approval is claimed. Scenario additions require a fresh lane gate and build on final source.
+
 ## Listening and remaining work
 
 Four labelled MP3 reels and their cue timestamp index are in ignored P4-AUDIO evidence: race signals; pit and surfaces; mountain hazards; crowd, summit wind and three location beds. These are processed recordings, not gameplay captures. Kyle's listening verdict remains pending.
