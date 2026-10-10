@@ -910,3 +910,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October: merged approved POLISH-SMOKE from 108265b9; lane 367/367 in 827.33 s, build 538 ms, all 162 replay checks and independent review pass. Native fixture now includes the renderer camera-preparation step; every original assertion is retained.
 
 10 October: merged approved POLISH-FLAME from 7ff094a4; fresh lane 368/368 in 620.71 s, build 494 ms and source review pass. Reviewed catalog snapshot now includes the new approved Flame source; all original source assertions and Factory provenance remain.
+
+10 October: merged approved POLISH-ARENA from 390742cb; fresh lane 369/369 in 618.11 s, build 521 ms and source review pass. Reviewed lamp assertions now require the approved separate near/far materials and exact 1.2/4.5 brightness; unchanged geometry, timing, input and disposal protections pass.

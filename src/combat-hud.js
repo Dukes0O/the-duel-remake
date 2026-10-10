@@ -10,6 +10,29 @@ import {arsenalEnabled} from './combat-weapons.js';
 import {carEffect} from './arsenal/car-effects.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
+// Rectangles include the pointer below the label. Stable actor order keeps
+// stacked names predictable when several cars share one screen position.
+export function stackOpponentLabels(labels, width, height, gap = 6) {
+  const placed = [];
+  for (const label of labels) {
+    const w = Math.min(label.width, width), h = Math.min(label.height, height);
+    const left = Math.max(0, Math.min(width - w, label.x - w / 2));
+    const preferred = Math.max(0, Math.min(height - h, label.y - h));
+    const intersectsX = other => left < other.left + other.width + gap &&
+      left + w + gap > other.left;
+    const nearby = placed.filter(intersectsX);
+    const candidates = [preferred, 0, height - h,
+      ...nearby.flatMap(other => [other.top - h - gap, other.top + other.height + gap])];
+    candidates.sort((a, b) => Math.abs(a - preferred) - Math.abs(b - preferred) || a - b);
+    const top = candidates.find(y => y >= 0 && y + h <= height &&
+      nearby.every(other => y + h + gap <= other.top || y >= other.top + other.height + gap));
+    // Normal play has at most 12 cars. If a very small viewport has no room,
+    // hide the excess name instead of covering an already readable one.
+    placed.push({...label, left, top: top ?? preferred, width: w, height: h, fits: top !== undefined});
+  }
+  return placed;
+}
+
 const zones = ['front', 'right', 'rear', 'left'];
 
 export function combatHudEnabled(duel, state) {
@@ -346,6 +369,18 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       marker.classList.toggle('is-critical', opponentArmor.fraction <= .25);
       marker.classList.toggle('is-wrecked', !!opponent.combatWrecking);
       setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} armor ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
+    }
+    const layerRect = layer.getBoundingClientRect();
+    const visibleLabels = markers.filter(marker => !marker.hidden).map(marker => {
+      const rect = marker.getBoundingClientRect();
+      return {marker, x: parseFloat(marker.style.left) * layerRect.width / 100,
+        y: parseFloat(marker.style.top) * layerRect.height / 100 + 15,
+        width: rect.width, height: rect.height + 15};
+    });
+    for (const label of stackOpponentLabels(visibleLabels, layerRect.width, layerRect.height)) {
+      label.marker.hidden = !label.fits;
+      label.marker.style.left = `${label.left + label.width / 2}px`;
+      label.marker.style.top = `${label.top + label.height - 15}px`;
     }
     hitMarker.classList.toggle('is-visible', hitUntil > state.stageTimeSec && !state.paused);
     damageArrow.classList.toggle('is-visible', damageUntil > state.stageTimeSec && !state.paused);

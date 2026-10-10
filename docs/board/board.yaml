@@ -3950,19 +3950,20 @@ tasks:
     lane: VIS
     size: S
     needs: []
-    status: review
-    source_commit: 1a3f30ceb29c908b6179a8a3de1589ca3632b85f
+    status: merged
+    source_commit: 390742cb5ef827772d1565409968f0f6ff4a4e1c
     claimed_by: codex-director-2026-10-09-polish
     branch: codex/polish-arena
-    note: "Round two ready for Claude final art verdict: native comparison sheet 467475 bytes, 93 shells in tall clusters, varied ridge widths, lit lamps/roof at 89.16794 m. Physics/state/focused/build pass; actual-source p95 16.8 to 16.8 ms both qualities. Labels stay approved. No merge gate or merge claimed; final allowed art round."
+    note: "Claude approved round two final. Merged after clean Flame sync, lane 369/369 in 618.11 s, build 521 ms, 62 focused native tanker checks and independent review. Approved art unchanged. Reviewed old shared-material assertion now checks independent near/far lamps at exact 1.2/4.5 brightness, with geometry, timing, input and disposal protections retained."
     owns: [docs/board/looks/polish-arena/round-2.jpg, docs/board/looks/polish-arena/round-2-review.md, docs/changes/POLISH-ARENA.md, tools/art/polish-arena-sheet.py, tools/scenarios/polish-arena.mjs, tools/test-polish-arena.mjs, docs/board/looks/polish-arena/round-1.jpg, docs/board/looks/polish-arena/round-1-review.md]
-    hooks: [src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, public/assets/models/wasteland/salt-flats/venue.glb, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-arsenal-wave3.mjs, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js, src/combat-hud.js]
+    hooks: [tools/test-convoy-tanker-art.mjs, src/arena/venues/salt-flats.js, tools/blender/salt-flats.py, public/assets/models/wasteland/salt-flats/venue.glb, tools/test-salt-flats-render.mjs, tools/test-salt-flats-effects.mjs, tools/test-arsenal-wave3.mjs, src/arena/tanker-model.js, src/arena/arena-tell-view.js, src/screen-hud.js, src/combat-hud.js]
     acceptance:
       - "Four items, looks only (race state and replays unchanged): (1) more scrap on the Salt Flats inner island, reusing the approved Salt Flats pieces; (2) more variety in the Salt Flats ridge widths, inside the existing drivable band rules; (3) the tanker easier to read at a distance: its warning lamps and roof plate stay visible in the distant view; (4) floating labels (Tanker, Escort and similar) never overlap: stack them with a small gap."
       - "One sheet to Claude covering all four, at most two rounds. Frame pacing within the usual limit."
 
     claude_verdict_2026_10_10: "Round two authorized10 October, labels approved. Make roughly twice the inner-island scrap in tall clusters using approved pieces, clearly different ridge widths, distant tanker lit lamps/roof plate readable at play distance. Next sheet must show each change clearly; only then waiting_on Claude."
     release_direction_2026_10_10: "Kyle relayed Claude approval: Smoke round two approved; Arena round two approved final. Merge Smoke, then synced and freshly gated Flame, then Arena. Run the full tier alone and release to the real game after all required release checks."
+
 
   - id: TEST-DRIVER-BRAKING
     title: "All-seed pursuit test-driver braking"
@@ -3995,7 +3996,7 @@ tasks:
     branch: codex/release-2026-10-10
     flag: seeker-rockets
     owns: [src/feature-flags.js, tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs, tools/test-seeker-rockets.mjs, docs/changes/RELEASE-2026-10-10.md]
-    hooks: [tools/test-arsenal-wave2.mjs, start-preview.bat, tools/scenarios/seeker-rockets.mjs]
+    hooks: [tools/test-arena-convoy.mjs, tools/test-rocket-fighter-contacts.mjs, tools/test-arsenal-wave2.mjs, start-preview.bat, tools/scenarios/seeker-rockets.mjs]
     sequencing: "Prepare independently; sync after Smoke, Flame and Arena merge in that order. Fresh lane/build before promotion merge; final release notes and full tier precede live cutover."
     design: "Kyle's accepted real-game release turns seeker-rockets on. Keep career-backup dev and the explicit off path. Update only state-specific assertions; preserve dev isolation with a pinned dev catalog and older off baselines with explicit overrides. No damage, balance threshold or save-format change."
     acceptance:

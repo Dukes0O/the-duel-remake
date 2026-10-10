@@ -16,7 +16,9 @@ Smoke, Flame after sync and a fresh lane/build gate, then Arena.
 - Flame is merged after lane 368/368, build and source review. Round one
   and its p95 frame cost are approved. The added texture entry required a
   reviewed catalog snapshot update; existing source pins are preserved.
-- Arena round two is final and approved. Sync and gate after Flame merges.
+- Arena round two is merged after lane 369/369, build and source review.
+  Near/far lamp tests now check the approved separate materials and exact
+  brightness; all geometry, timing, input and disposal checks remain.
 - Release preparation enables Seekers in production. Career backup stays
   in development; no save format or settlement behavior changes.
 
