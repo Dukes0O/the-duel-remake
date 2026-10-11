@@ -66,7 +66,9 @@ Simulation code is unchanged; the native viewer preserves race/profile state.
 The first source gate was 376/379 in 815.58 s: only the three repository
 issues above failed, with permitted headless balance jobs also running.
 Repair checks pass: Blender output 44, review evidence 363, placement exact;
-no existing assertion/tolerance changed. The repaired lane/build follow.
+no existing assertion/tolerance changed. Fresh exact c04e3189 lane379/379
+passes in905.73s; sequential build passes745ms. Source review clear and
+Claude final3 verdict approves all3.5. No fourth round or release.
 
 ## Removed
 

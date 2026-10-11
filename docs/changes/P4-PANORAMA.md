@@ -49,7 +49,8 @@ Quiet frames and field balance remain pending; Claude art/driver decisions wait.
 Private QA now waits for the actual native inspection camera before metadata
 and pixels. Frame sampling fixes only its presentation camera position to the
 authored grid view before the original sampler witness; no racer is moved.
-The unchanged sampler/counts/limits remain. No new native/frame run claimed.
+The unchanged sampler/counts/limits remain. No new native/frame run claimed. Independent ec4ef834 camera/limit review clears.
+Genuine dcdab76a sync installs consumed-art cleanup; runtime remains exact.
 
 ## Removed
 

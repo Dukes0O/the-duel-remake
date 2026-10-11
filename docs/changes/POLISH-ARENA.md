@@ -48,7 +48,8 @@ the other three round-1 differences were too subtle. No label or rule changes.
   to that double. Existing Tesla/recharge assertions and tolerances stay exact.
 - Lane tier rerun: 364 passed, zero failed (824.16 s); npm run build passed.
   Focused repaired DOM-double suite: 99/99. Build and gate logs are in evidence.
-- Sheet: docs/board/looks/polish-arena/round-1.jpg (443,390 bytes).
+- Consumed first sheet: 443,390 bytes. Its verdict is retained in
+  docs/board/looks/polish-arena/round-2-review.md; the final sheet remains.
   Raw files live under integration .evidence/2026-10-09/POLISH-ARENA/.
 
 ## Round 2 verification
