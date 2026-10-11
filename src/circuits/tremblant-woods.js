@@ -101,7 +101,8 @@ const halfAt = s => road.halfWidthAt(wrap(s));
 const FACE_LEFT = Math.PI / 2, FACE_RIGHT = -Math.PI / 2;
 // Roadside pieces face the road; `side` is -1 for the right of the road, +1 for the left.
 const facing = side => side < 0 ? FACE_LEFT : FACE_RIGHT;
-const kit = (id, s, lateral, extra = {}) => ({ id, s: wrap(s), lateral, heading: 0, scale: 1, ...extra });
+// The last few metres before the lap line have no drawn ground to stand on, so nothing is placed there.
+const kit = (id, s, lateral, extra = {}) => wrap(s) > LENGTH - 6 ? null : ({ id, s: wrap(s), lateral, heading: 0, scale: 1, ...extra });
 // A small repeatable random stream (mulberry32), so the scenery is the same on every machine.
 const stream = seed => () => {
   seed = (seed + 0x6D2B79F5) | 0;
@@ -113,7 +114,7 @@ const stream = seed => () => {
 const along = (id, s0, s1, step, lateral, extra = {}) => {
   const side = Math.sign(lateral), out = [];
   for (let s = s0; s <= s1 + 1e-6; s += step) out.push(kit(id, s, lateral, { heading: facing(side), ...extra }));
-  return out;
+  return out.filter(Boolean);
 };
 // The outside of a corner is the side the road is turning away from.
 const outside = item => -item.dir;
@@ -122,7 +123,7 @@ const barrier = (id, name, margin, gap, extra = {}) => {
   return along(id, corner.s0 - margin, corner.s1 + margin, 4.05, side * (halfAt((corner.s0 + corner.s1) / 2) + gap), extra);
 };
 
-const START = { gantry: 0, pits: [-12, 70], stands: [10, 70] };
+const START = { gantry: 0, pits: [4, 84], stands: [10, 70] };
 const HILL = {
   s: 235, lateral: 112, along: 190, across: 84, height: 36, pines: 260,
   // Three runs down the slope toward the road, wide and a little crooked.
@@ -252,5 +253,5 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
   ] },
   hills: [HILL],
   effects: { lake: LAKE, mist: { count: 12, height: 1.4, spread: .8 }, lift: LIFT },
-  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()],
+  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()].filter(Boolean),
 });
