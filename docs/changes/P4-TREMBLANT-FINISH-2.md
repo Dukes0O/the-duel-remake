@@ -74,14 +74,14 @@ old assertions forbade.
 - Review sheet: `docs/board/looks/p4-tremblant/finish-2.jpg` (frames 08, 09 and
   11 have no white blob any more; 03, 07 and 10 run-offs are dark olive and
   grey instead of bright tan).
-- FRAME_NUMBERS
+- Frame cost: NOT YET MEASURED in a free slot. Two attempts ran while another program held the laptop's graphics (a Chrome window at 84% of the 3D engine, plus other lanes' browser jobs): delivered p50 16.7 then 33.5 ms, p95 33 to 50 ms, the same whole-interval pattern the KIT-LOAD-TIME packet reports for the base scene. Triangles and draws are lower than before this round (High grid 6.14 M / 2,147 against 6.90 M / 2,282) except five more draws for the stands, so no cost is expected.
 
 ## Tests
 
 - `tools/test-circuit-tremblant.mjs`: four new checks (hairpin boards, filled
   stands inside their seating, the gentler land untouched near the road, the
   gravel only ever darker and only beside corners). 23 pass.
-- GATE_NUMBERS
+- Lane gate on commit ad2a0e1d: `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, 322 passed, 0 failed. `npm run build`: NOT YET RUN (slot held by Codex).
 
 ## Removed
 
