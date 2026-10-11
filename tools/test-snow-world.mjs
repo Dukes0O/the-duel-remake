@@ -5,6 +5,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTrackKits} from '../src/track-kits.js';
 import {addLandscapeDetail} from '../src/landscape-detail.js';
 import {disposeTree} from '../src/world.js';
+import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {Course} from '../src/course.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
@@ -164,4 +165,30 @@ try{
   THREE.TextureLoader.prototype.load=originalTextureLoad;
   disposeTree(baselineDetail);disposeTree(winterDetail);disposeTree(emptyFoliage);
 }
+// Authored curved pond crosses the actual near/far overlap, not an analytic plane.
+const pondCourse=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.snowWorld,
+  ponds:[{s:600,lateral:58,radiusX:12,radiusZ:8}]}},1989);
+const pondOwner=createSnowWorld(pondCourse),pond=pondOwner.group.getObjectByName('Frozen winter pond');
+const actualMaterial=new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),
+  actualNear=new THREE.Mesh(terrainGeometry(pondCourse),actualMaterial),
+  actualFar=new THREE.Mesh(farTerrainGeometry(pondCourse),actualMaterial),
+  pondRay=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
+let witnessedNear=0,witnessedFar=0,witnessedOverlap=0;
+for(let i=0;i<pond.geometry.attributes.position.count;i++){
+  const vertices=pond.geometry.attributes.position;
+  pondRay.set(new THREE.Vector3(vertices.getX(i),2000,vertices.getZ(i)),down);
+  const hits=pondRay.intersectObjects([actualNear,actualFar],false);
+  assert.ok(hits.length,'every curved pond vertex has actual drawn terrain beneath it');
+  assert.ok(Math.abs(vertices.getY(i)-hits[0].point.y-.055)<1e-4,
+    'pond follows the upper actual Float32 terrain triangle, including overlaps');
+  if(hits[0].object===actualNear)witnessedNear++;
+  if(hits[0].object===actualFar)witnessedFar++;
+  if(hits.some(hit=>hit.object===actualNear)&&hits.some(hit=>hit.object===actualFar))witnessedOverlap++;
+}
+assert.ok(witnessedNear&&witnessedFar&&witnessedOverlap,'curved near/far and overlapping drawn triangles are exercised');
+pondOwner.dispose();actualNear.geometry.dispose();actualFar.geometry.dispose();actualMaterial.dispose();
+const unsupportedPond=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.snowWorld,
+  ponds:[{s:180,lateral:5000,radiusX:9,radiusZ:5}]}},1989);
+assert.throws(()=>createSnowWorld(unsupportedPond),/actual rendered terrain/,
+  'a pond outside the actual terrain fails without an analytic fallback');
 console.log('Snow ranges, physics bands, kit identity, terrain, poses and bounded read-only lifetime pass.');

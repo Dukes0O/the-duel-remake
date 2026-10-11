@@ -4,6 +4,7 @@ import {makeRng} from './rng.js';
 import {winterRanges} from './race-surfaces.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
 import {prepareVehicleGrounding} from './vehicle-grounding.js';
+import {renderedGroundHeight} from './rendered-ground.js';
 export const SNOW_LIMITS=Object.freeze({high:Object.freeze({flakes:240,marks:512}),
   performance:Object.freeze({flakes:72,marks:128})});
 export const SNOW_KIT_IDS=Object.freeze(['snow-pine','snow-rock','snow-ground','plough-bank']);
@@ -110,7 +111,12 @@ function addPonds(group,course){
     if(![s,lateral,rx,rz].every(Number.isFinite)||s<0||s>course.length||rx<=0||rz<=0||rx>40||rz>40||
       !ranges(course).some(range=>s-rz>=range.from&&s+rz<=range.to)||Math.abs(lateral)-Math.max(rx,rz)<course.roadHalfWidthAt(s)+2)throw Error('A frozen pond must stay in an authored winter range clear of the road.');
     const positions=[],indices=[],segments=48;
-    const append=(along,off)=>{const p=course.groundAt(s+along,lateral+off);positions.push(p.x,p.y+.055,p.z);};append(0,0);
+    const append=(along,off)=>{
+      const point={...course.groundAt(s+along,lateral+off),s:s+along,off:lateral+off};
+      const height=renderedGroundHeight(course,point,{requireSurface:true});
+      if(!Number.isFinite(height))throw Error('A frozen pond vertex needs actual rendered terrain.');
+      positions.push(point.x,height+.055,point.z);
+    };append(0,0);
     for(let i=0;i<segments;i++)append(Math.sin(i/segments*Math.PI*2)*rz,Math.cos(i/segments*Math.PI*2)*rx);
     for(let i=0;i<segments;i++)indices.push(0,i+1,(i+1)%segments+1);
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();

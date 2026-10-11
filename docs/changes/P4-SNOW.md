@@ -14,7 +14,9 @@ The renderer reads these surfaces. Cue names remain surface.snow/surface.ice
 through existing surfaceChanged events; weather adds no new gameplay event.
 
 Terrain coverage uses a winter weight on the drawn triangles; ponds are
-explicit off-road metadata, with fixed ice shells and shoreline snow. Pines
+explicit off-road metadata, with fixed ice shells and shoreline snow.
+Every pond vertex uses requireSurface renderedGroundHeight on actual Float32
+near/far triangles; a missing surface fails instead of floating analytic ice. Pines
 replace their ordinary winter-range instances and retain broken-scenery poses.
 Existing packed-snow/ice road overlays gain granular/worn surface detail.
 An optional landscape-detail omitFoliageAt predicate removes summer grass
@@ -31,7 +33,11 @@ and never write state. All randomness uses a separate seeded makeRng.
 Native memory-only High/Performance checks must load the real assets, show a
 full field, preserve state and saves, and cover warm readiness/disposal.
 One compressed art sheet goes through the card to Claude, up to three rounds.
-Frame checks keep the usual limits and run in a reserved quiet slot.
+Frame checks reuse the unchanged DAY 360 CPU / >=359 delivered / async GPU
+sampler, both orders and qualities, with the original 10% limits. Static
+eight-car snapshots keep flakes/track expiry active. Moving native full-field
+checks separately prove wheel-track generation/lifetime; static timings do
+not measure moving-car Snow update cost. Quiet slot required.
 
 ## Checks
 
@@ -45,6 +51,8 @@ Retained dry grass matrices and tints remain exact after winter omissions;
 all-omitted grass releases its orphan texture. Focused suite passes in 2.7 s.
 Existing surface suite: 11/11 pass; dry neutrality and cue assertions retained.
 New malformed-ridge and pond-footprint tests failed first, then passed.
+Curved pond vertices pass upper near/far Float32 triangle raycasts, including
+actual overlaps; missing rendered terrain is rejected. Test failed before fix.
 No existing assertion or tolerance was changed.
 
 Memory-only native High/Performance full-field recipe and <=500 KB sheet

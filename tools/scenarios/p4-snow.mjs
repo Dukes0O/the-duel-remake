@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {installMeasurement,summarizeFrameTiming} from './p4-daynight.mjs';
 
 function prepareNative(quality) {
   const app=window.__qaApp;
@@ -12,7 +13,7 @@ function prepareNative(quality) {
   const def=app.getMenuCourse(0).def;
   window.__snowOriginal={def,values:{...def}};
   Object.assign(def,{name:'Winter renderer QA',theme:'alpine',closed:true,laps:3,
-    hasRadar:false,noTraffic:true,airborne:true,layoutVersion:90,
+    hasRadar:false,noTraffic:true,airborne:true,layoutVersion:90,terrainHalfWidth:64,kind:'circuit',
     scenery:{trees:100,rocks:30,mountains:true},
     script:[['straight',500,{name:'Lodge Straight',width:16,surface:'snow',climb:40,walls:'none'}],
       ['turn','L',180,80,{name:'Exposed Ridge',width:16,walls:'none'}],
@@ -21,6 +22,7 @@ function prepareNative(quality) {
     surfacePatches:[{id:'shaded-winter-ice',kind:'ice',s0:540,s1:575,shaded:true}],
     snowWorld:{ranges:[{from:0,to:750}],exposed:[{from:500,to:730}],
       ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12}]}});
+  window.__snowBeforeBuilds=Number(document.querySelector('#view3d').dataset.worldBuilds||0);
   app._menuCourses.clear();app.onFrame?.(app.duel.state,0);
 }
 
@@ -37,11 +39,13 @@ function startNative(){
 
 function setView(view) {
   const app=window.__qaApp,api=window.__render,course=app.duel.course,state=app.duel.state;
-  if(view==='grid'){
+  if(view==='grid'||view==='frame'){
     const poses=[state,...state.opponents].map(actor=>course.groundAt(actor.s,actor.lateral));
     const center=poses.reduce((p,a)=>({x:p.x+a.x/poses.length,y:p.y+a.y/poses.length,z:p.z+a.z/poses.length}),{x:0,y:0,z:0});
     const heading=course.at(state.s).heading;
-    app.inspectionCamera={position:[center.x-Math.sin(heading)*52,center.y+23,center.z-Math.cos(heading)*52],
+    const radius=Math.max(...poses.map(p=>Math.hypot(p.x-center.x,p.z-center.z)));
+    const back=view==='frame'?Math.max(52,radius*2.4):52,height=view==='frame'?Math.max(23,radius*1.5):23;
+    app.inspectionCamera={position:[center.x-Math.sin(heading)*back,center.y+height,center.z-Math.cos(heading)*back],
       target:[center.x,center.y+1,center.z]};
   }else{
     const p=course.groundAt(state.s,0),h=p.heading;
@@ -155,18 +159,22 @@ async function driveTo(context,s) {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:800,deviceScaleFactor:1,mobile:false});
-  const report={card:'P4-SNOW',captures:[],frameStatus:'not scheduled',passed:false};
+  const frames=process.env.P4_SNOW_MEASURE_FRAMES==='1';
+  const report={card:'P4-SNOW',captures:[],moving:[],frames:[],comparisons:[],
+    frameScope:'Static native eight-car snapshots; flakes and track expiry remain active. Moving Snow update cost is not measured.',
+    frameStatus:frames?'running':'not scheduled',passed:false};
   try{
     for(const quality of ['high','performance']){
       await context.navigate('/tools/menu-check.html?flags=grand-prix,snow-world');
       await context.waitFor(`window.__qaApp?.visualReady&&!document.querySelector('#start-engine')?.disabled`, 'native isolated menu',60000);
       await context.evaluate('('+prepareNative.toString()+')('+JSON.stringify(quality)+')');
-      await context.waitFor(`window.__qaApp.visualReady&&window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets in the actual menu world',60000);
+      await context.waitFor(`window.__qaApp.visualReady&&Number(document.querySelector('#view3d').dataset.worldBuilds)>window.__snowBeforeBuilds&&window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets in the actual menu world',60000);
       await context.evaluate('('+startNative.toString()+')()');
       await context.waitFor(`window.__qaApp.visualReady&&window.__render?.scene.getObjectByName('Authored snow world')`, 'fresh native full-field winter world',60000);
       await context.evaluate(`document.head.insertAdjacentHTML('beforeend','<style>details,#race-hud,#modal-layer,.combat-opponent-marker{display:none!important}</style>')`);
       report.captures.push(await capture(context,quality,'grid'));
       await driveTo(context,190);report.captures.push(await capture(context,quality,'tracks'));
+      report.moving.push(await expireTracks(context,quality));
       report.captures.push(await capture(context,quality,'pond'));
       await driveTo(context,600);report.captures.push(await capture(context,quality,'ridge'));
       await context.evaluate(`(()=>{
@@ -176,9 +184,10 @@ export async function run(context) {
         Object.assign(original.def,original.values);window.__qaApp._menuCourses.clear();delete window.__snowOriginal;
         if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||!window.name.startsWith('__duel_qa_tab_v2:'))
           throw Error('Only the established disposable QA tab adapter may reset.');
-        window.name='';
+        if (${quality === 'high'}) window.name='';
       })()`);
     }
+    if(frames)await frameComparisons(context,report);
     report.passed=true;
     console.log('Snow native High/Performance: full eight-car field, terrain, pond, ridge, actual wheel tracks and read-only rendering pass. Frames remain separately scheduled.');
   }finally{
@@ -187,4 +196,94 @@ export async function run(context) {
       for(const key of Object.keys(original.def))if(!Object.hasOwn(original.values,key))delete original.def[key];
       Object.assign(original.def,original.values);window.__qaApp._menuCourses.clear();delete window.__snowOriginal;})()`);
   }
+}
+
+async function expireTracks(context,quality){
+  const result=await context.evaluate(`(async()=>{
+    const app=window.__qaApp,api=window.__render,tracks=api.scene.getObjectByName('Actual wheel snow tracks');
+    const before=JSON.stringify({state:app.duel.state,profile:app.profile});
+    const active=()=>[...tracks.geometry.attributes.snowAlpha.array.slice(0,tracks.count)].filter(a=>a>0).length;
+    const generated=active();if(!generated)throw Error('Genuine native eight-car driving generated no wheel tracks.');
+    const start=performance.now();while(performance.now()-start<8500){await new Promise(requestAnimationFrame);api.renderFrame();}
+    if(active()!==0||tracks.visible)throw Error('Native wheel tracks did not expire within their bounded lifetime.');
+    if(before!==JSON.stringify({state:app.duel.state,profile:app.profile}))throw Error('Track expiry changed the race/profile.');
+    return {generated,expired:active(),field:app.duel.state.opponents.length+1,s:app.duel.state.s};
+  })()`);
+  assert.equal(result.field,8);return {quality,...result};
+}
+
+function frameWitness(){
+  const app=window.__qaApp,api=window.__render,camera=api.camera;
+  camera.updateMatrixWorld(true);
+  const cars=api.scene.children.filter(node=>node.visible&&node.userData.vehicleKey);
+  if(cars.length!==8)throw Error('The static comparison requires eight actual imported cars.');
+  const poses=cars.map(car=>{
+    const p=car.getWorldPosition(car.position.clone());p.y+=.8;p.project(camera);
+    if(p.z< -1||p.z>1||Math.abs(p.x)>=.98||Math.abs(p.y)>=.98)throw Error('A native frame car is outside the view.');
+    return {key:car.userData.vehicleKey,position:car.position.toArray(),rotation:car.rotation.toArray()};
+  });
+  return {poses,state:JSON.stringify(app.duel.state),profile:JSON.stringify(app.profile),
+    camera:{position:camera.position.toArray(),target:app.inspectionCamera.target},
+    quality:app.ambientOcclusionEnabled!==false?'high':'performance',
+    snow:!!api.scene.getObjectByName('Authored snow world')};
+}
+
+async function staticLeg(context,quality,snow,pair){
+  // A fresh QA URL chooses the real immutable feature flag; no runtime override.
+  await context.evaluate(`(()=>{if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||
+    !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Disposable adapter required');window.name='';})()`);
+  await context.navigate('/tools/menu-check.html?flags=grand-prix'+(snow?',snow-world':''));
+  await context.waitFor(`window.__qaApp?.visualReady&&!document.querySelector('#start-engine')?.disabled`, 'isolated static comparison menu',60000);
+  await context.evaluate('('+prepareNative.toString()+')('+JSON.stringify(quality)+')');
+  await context.waitFor(`window.__qaApp.visualReady&&Number(document.querySelector('#view3d').dataset.worldBuilds)>window.__snowBeforeBuilds`, 'actual authored comparison menu',60000);
+  await context.evaluate('('+startNative.toString()+')()');
+  await context.waitFor(`window.__qaApp.visualReady&&window.__qaApp.duel.state.opponents.length===7`, 'actual eight-car static leg',60000);
+  await driveTo(context,190);
+  await context.evaluate('('+setView.toString()+')("frame")');
+  await context.evaluate('window.__dayNightReview={witness:('+frameWitness.toString()+')};');
+  await context.evaluate('('+installMeasurement.toString()+')('+JSON.stringify(quality)+',false)');
+  try{
+    await context.waitFor('window.__dayNightFrames.done',quality+' Snow '+snow+' static sample',60000);
+    await context.waitFor('(()=>{const r=window.__dayNightFrames;r.poll();return r.pending.length===0||r.disjoint;})()', 'completed unchanged async GPU sample',10000);
+    const row=await context.evaluate(`(()=>{
+      const r=window.__dayNightFrames;
+      if(r.disjoint)throw Error('Disjoint Snow GPU sample');
+      if(JSON.stringify(r.before)!==JSON.stringify(r.after))throw Error('Native static state/view witness changed');
+      return {cpu:r.cpu,gpu:r.gpu,frames:r.frames,witness:r.before,gpuSupported:r.gpuSupported,
+        scales:[...r.scales],ratios:[...r.ratios]};})()`);
+    const pacing={cpu:summarizeFrameTiming(row.cpu),gpu:summarizeFrameTiming(row.gpu),delivered:summarizeFrameTiming(row.frames)};
+    if(row.scales.length!==1||row.ratios.length!==1||!pacing.cpu||!pacing.delivered||
+      pacing.cpu.samples!==360||pacing.delivered.samples<359||
+      row.gpuSupported&&(!pacing.gpu||pacing.gpu.samples<288))throw Error('Incomplete or changing-resolution Snow sample');
+    assert.equal(row.witness.quality,quality);assert.equal(row.witness.snow,snow);
+    return {quality,snow,pair,pacing,witness:row.witness,gpuSupported:row.gpuSupported,scales:row.scales,ratios:row.ratios};
+  }finally{
+    await context.evaluate('window.__dayNightFrames.cleanup()');
+    await context.evaluate(`(()=>{const original=window.__snowOriginal;
+      if(original){for(const key of Object.keys(original.def))if(!Object.hasOwn(original.values,key))delete original.def[key];
+        Object.assign(original.def,original.values);window.__qaApp._menuCourses.clear();delete window.__snowOriginal;}})()`);
+  }
+}
+
+async function frameComparisons(context,report){
+  for(const quality of ['high','performance'])for(const pair of [1,2]){
+    const order=pair===1?[false,true]:[true,false],rows=[];
+    for(const snow of order){
+      const leg=await staticLeg(context,quality,snow,pair);rows.push(leg);report.frames.push(leg);
+      await writeFile(join(context.outputDir,'p4-snow.json'),JSON.stringify(report,null,2)+'\n');
+    }
+    const off=rows.find(row=>!row.snow),on=rows.find(row=>row.snow);
+    assert.deepEqual(on.witness.poses,off.witness.poses,'native seed/inputs and full-field car snapshots match');
+    assert.deepEqual(on.witness.camera,off.witness.camera,'same actual camera in both controls');
+    for(const metric of ['cpu','gpu','delivered']){
+      if(metric==='gpu'&&!off.gpuSupported&&!on.gpuSupported)continue;
+      const baseline=off.pacing[metric],added=on.pacing[metric];
+      if(!baseline||!added)throw Error('Missing matched '+metric+' sample');
+      report.comparisons.push({quality,pair,metric,off:baseline.p95,on:added.p95,
+        increasePercent:(added.p95/baseline.p95-1)*100,pass:added.p95<=baseline.p95*1.1});
+    }
+  }
+  report.frameStatus=report.comparisons.every(row=>row.pass)?'passes original 10% limits':'fails original 10% limits';
+  await writeFile(join(context.outputDir,'p4-snow.json'),JSON.stringify(report,null,2)+'\n');
+  assert.ok(report.comparisons.every(row=>row.pass),report.frameStatus);
 }
