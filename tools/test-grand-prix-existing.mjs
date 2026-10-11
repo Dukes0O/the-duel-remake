@@ -254,6 +254,50 @@ try {
   check(!app.ghostPose && app.ghostStatus === 'none', 'GP never displays a ghost among the field');
   app.returnToMenu();
   check(!app.grandPrixLapRecorder, 'menu clears unfinished lap recording');
+  // Actual Azure input-driven crossings distinguish staging from a flying lap.
+  if (process.argv.includes('--azure-ghost-only')) {
+    app.dispose();app = new App();ownTestCourses(app);
+    app.duel.featureFlags = createFeatureFlags({storage: null, qa: false, search: '',
+      overrides: {'grand-prix': true}});
+    check(app.startCampaign({startStage: azureIndex, seed: 1989, fieldSeed: 1000,
+      mode: 'grandprix', car: 'falcone_f42', cpuDifficulty: 'medium', difficulty: 'casual'}),
+      'real Azure GP starts in disposable memory');
+    app.autopilot = true;app._scriptedCrashDone = true;installTestDriver(app);
+    const stagedS = app.duel.state.s, nativeLaps = [];
+    let priorRecorderInvalid = false, firstSampleS = null, previousLapClock = 0;
+    const stopObserving = app.duel.onChange((live, event) => {
+      if (!event.lapCompleted) return;
+      const saved = app.ghosts.records.find(row => row.mode === 'grandprix' && row.eventId === 'azure-riviera');
+      nativeLaps.push({lap: event.lapCompleted, seconds: event.lapTimeSec,
+        exactSeconds: live.lapStartedAt - previousLapClock,
+        assisted: event.assisted, recorderInvalid: priorRecorderInvalid,
+        savedStart: saved?.samples[0][1] ?? null, savedSeconds: saved?.timeSec ?? null});
+      previousLapClock = live.lapStartedAt;
+    });
+    try {
+      for (let tick = 0; tick < 24000 && ['countdown', 'racing'].includes(app.duel.state.status) &&
+          nativeLaps.length < 2; tick++) {
+        const capture = app.grandPrixLapRecorder?.recorder;
+        priorRecorderInvalid = capture?.invalid ?? false;
+        if (!nativeLaps.length && capture?.samples.length) firstSampleS ??= capture.samples[0][1];
+        app.advance(1 / 60, 1 / 60);
+      }
+      equal(nativeLaps.length, 2, 'two genuine Azure lap crossings reach the real recorder');
+      equal(firstSampleS, Math.round(stagedS * 100), 'the first capture honestly starts on the staged grid');
+      check(firstSampleS < -4000, 'staging exceeds the unchanged40m GP admission bound');
+      check(!nativeLaps[0].assisted && !nativeLaps[0].recorderInvalid,
+        'first lap exclusion is independent of assistance or malformed capture');
+      equal(nativeLaps[0].savedStart, null, 'the longer staged lap is excluded by current ghost admission');
+      equal(app.duel.state.lapTimes[0], nativeLaps[0].seconds, 'the first actual lap time is retained');
+      check(!nativeLaps[1].assisted && !nativeLaps[1].recorderInvalid,
+        'the next genuine flying lap is clean');
+      equal(nativeLaps[1].savedStart, 0, 'the real flying lap saves from the old timing line');
+      equal(nativeLaps[1].savedSeconds, nativeLaps[1].exactSeconds, 'saved flying lap uses its actual unrounded crossing clocks');
+      equal(+nativeLaps[1].exactSeconds.toFixed(3), nativeLaps[1].seconds, 'native lap event retains its exact millisecond-rounding contract');
+      console.log('Azure actual recorder witness:', JSON.stringify({stagedS, firstSampleS, nativeLaps}));
+    } finally { stopObserving(); }
+    app.returnToMenu();
+  }
 } finally {
   app?.dispose();
   if (priorStorage) Object.defineProperty(globalThis, 'localStorage', priorStorage); else delete globalThis.localStorage;
