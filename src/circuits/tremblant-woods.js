@@ -142,7 +142,8 @@ const LIFT = (() => {
 })();
 
 function paddock() {
-  const out = [kit('start-gantry', START.gantry, 0)];
+  // The gantry's lamps face +z, so it turns round to face the cars coming up to the line.
+  const out = [kit('start-gantry', START.gantry, 0, { heading: Math.PI })];
   out.push(...along('pit-garage', START.pits[0], START.pits[1], 7.4, -31));
   out.push(...along('pit-wall', START.pits[0] - 2, START.pits[1] + 2, 4.05, -22));
   for (let s = START.stands[0]; s <= START.stands[1]; s += 15) out.push(kit('grandstand', s, 31, { heading: FACE_RIGHT, clear: 10 }));
@@ -156,6 +157,15 @@ function safety() {
   // Tyre walls where the slow corners run out.
   out.push(...barrier('tyre-wall', 'Beaver Hairpin', -30, 4.4));
   out.push(...barrier('tyre-wall', 'Ridge Corner', -34, 5));
+  // Braking boards (150, 100, 50 m) at the two corners the track script leaves without them;
+  // the script's own board already stands before Beaver Hairpin. They face the oncoming cars.
+  for (const name of ['Ridge Corner', "Devil's Chicane 1"]) {
+    const corner = named(name), side = outside(corner);
+    for (const distance of [150, 100, 50]) {
+      const s = corner.s0 - distance, board = `braking-board-${distance}`;
+      if (road.pieceAt(wrap(s)).kind === 'straight') out.push(kit(board, s, side * (halfAt(s) + 2.4), { heading: Math.PI }));
+    }
+  }
   // Marshal posts behind them.
   for (const [name, at] of [['Pine Drop', .5], ['Ridge Corner', .5], ['Beaver Hairpin', .3], ["Devil's Chicane 2", .6], ['Lodge Bend', .5]]) {
     const corner = named(name), side = outside(corner), s = corner.s0 + (corner.s1 - corner.s0) * at;
