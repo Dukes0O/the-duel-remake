@@ -9,13 +9,17 @@
 //     Hard 10 to 25%).
 // Saves are memory-only. Usage:
 //   node tools/race-field-balance.mjs [--races 30] [--jobs 8] [--difficulty easy,medium,hard]
-//     [--check] [--json] [--car falcone_f42] [--probe DIFFICULTY,INDEX]
+//     [--course tremblant-woods] [--check] [--json] [--car falcone_f42] [--probe DIFFICULTY,INDEX]
+// --course names an authored circuit (src/circuits/); it joins COURSE for the run
+// only, as in the circuit tests. The default is Pacific Canyon.
 import { spawn } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createFeatureFlags } from '../src/feature-flags.js';
 import { App } from '../src/app.js';
-import { DRIVE, steeringYawAuthority } from '../src/config.js';
+import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
+import { useRacingLine } from './track-script-drive.mjs';
+import { ALL_CIRCUITS } from '../src/circuits/index.js';
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 // The three audited routes give different layouts; the field seed varies
@@ -41,8 +45,21 @@ function memoryStorage() {
 }
 
 // One race from the grid to the last racer home (or the time cap).
-export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = 420, fieldSize = 7, startStage = 0, onStep = null } = {}) {
+// An authored circuit that is not on COURSE (its switch is off) is added for the run.
+export function stageOf(courseId) {
+  if (!courseId) return 0;
+  let at = COURSE.findIndex(item => item.id === courseId);
+  if (at < 0) {
+    const circuit = ALL_CIRCUITS.find(item => item.id === courseId);
+    if (!circuit) throw Error(`Unknown course ${courseId}`);
+    at = COURSE.push(circuit) - 1;
+  }
+  return at;
+}
+
+export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = 420, fieldSize = 7, startStage = 0, course = null, onStep = null } = {}) {
   const { seed, fieldSeed } = raceSeeds(index);
+  if (course) startStage = stageOf(course);
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const previousCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
   let app;
@@ -51,10 +68,17 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = 42
     globalThis.cancelAnimationFrame ??= () => {};
     app = new App();
     app.duel.featureFlags = createFeatureFlags({ storage: null, qa: false, search: '', overrides: { 'grand-prix': true } });
+    // A new circuit costs credits: the memory-only test profile buys it first.
+    if (course) {
+      app.profile = { ...app.profile, credits: 1e6 }; app._saveProfile();
+      if (!app.purchaseCourse(course).ok) throw Error(`Could not unlock ${course}`);
+    }
     if (!app.startCampaign({ startStage, seed, fieldSeed, fieldSize, mode: 'grandprix', car, difficulty: 'casual', cpuDifficulty }))
       throw Error(`Could not start ${cpuDifficulty} race ${index}`);
     app.autopilot = true;
     app._scriptedCrashDone = true;
+    // An authored circuit has hairpins the stock driver cannot brake for: it drives the circuit's own racing line.
+    if (app.duel.course.racingLine) useRacingLine(app, app.duel.course.def.testDriverSkill ?? .95);
     installTestDriver(app);
     const duel = app.duel, state = duel.state;
     state.field.deferFinish = true;
@@ -113,8 +137,8 @@ export function installTestDriver(app) {
     stuck = state.speedMph < 8 && state.stageTimeSec > 8 ? stuck + dt : 0;
     if (stuck > 4) { duel._safeReset(state); stuck = 0; state.field.stats.playerRecoveries = (state.field.stats.playerRecoveries || 0) + 1; }
     const halfWidth = duel.course.roadHalfWidthAt?.(state.s) ?? DRIVE.roadHalfWidth;
-    const cruise = -Math.min(DRIVE.laneOffset, halfWidth * .48);
     const metres = Math.max(15, state.speedMph * DRIVE.mphToWorld);
+    const cruise = duel.course.racingLine ? duel.course.racingLine.offsetAt(state.s + Math.max(12, metres * .45)) : -Math.min(DRIVE.laneOffset, halfWidth * .48);
     const cars = state.opponents.filter(car => !car.finished && !car.crushed).map(car => {
       const ds = duel.relativeS(car.s, state.s) - state.s;
       return { car, ds, lateral: car.lateral, speed: car.speedMph };
@@ -143,7 +167,7 @@ export function installTestDriver(app) {
       const gap = item.ds - 4.7;
       const comfortable = DRIVE.brakeAccel * duel.car.braking * .62 * DRIVE.mphToWorld;
       const lead = item.speed * DRIVE.mphToWorld;
-      const room = Math.max(0, gap - 2.2) + lead * lead / (2 * comfortable * 1.15);
+      const room = Math.max(0, gap - 2.2) + lead * lead / (2 * comfortable * (duel.course.def.fieldFollow?.leadBraking ?? 1.15));
       cap = Math.min(cap, comfortable * (-.22 + Math.sqrt(.22 * .22 + 2 * room / comfortable)) / DRIVE.mphToWorld);
     }
     if (state.speedMph > cap) { throttle = 0; brake = Math.max(brake, Math.min(1, (state.speedMph - cap) / 12)); }
@@ -195,13 +219,14 @@ function format(summary) {
 }
 
 function parse(args) {
-  const options = { races: 30, jobs: 8, difficulties: DIFFICULTIES, check: false, json: false, car: 'falcone_f42', probe: null, worker: null };
+  const options = { races: 30, jobs: 8, difficulties: DIFFICULTIES, check: false, json: false, car: 'falcone_f42', probe: null, worker: null, course: null };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--races') options.races = Number(args[++i]);
     else if (a === '--jobs') options.jobs = Number(args[++i]);
     else if (a === '--difficulty') options.difficulties = args[++i].split(',');
     else if (a === '--car') options.car = args[++i];
+    else if (a === '--course') options.course = args[++i];
     else if (a === '--check') options.check = true;
     else if (a === '--json') options.json = true;
     else if (a === '--probe') options.probe = args[++i];
@@ -213,9 +238,9 @@ function parse(args) {
   return options;
 }
 
-function runInChild(cpu, index, car) {
+function runInChild(cpu, index, car, course) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--worker', `${cpu},${index}`, '--car', car],
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--worker', `${cpu},${index}`, '--car', car, ...(course ? ['--course', course] : [])],
       { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     let out = '', err = '';
     child.stdout.on('data', chunk => { out += chunk; });
@@ -231,12 +256,12 @@ export async function main(args = process.argv.slice(2)) {
   const options = parse(args);
   if (options.worker) {
     const [cpu, index] = options.worker.split(',');
-    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car })));
+    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car, course: options.course })));
     return 0;
   }
   if (options.probe) {
     const [cpu, index] = options.probe.split(',');
-    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car }), null, 1));
+    console.log(JSON.stringify(runRace(cpu, Number(index), { car: options.car, course: options.course }), null, 1));
     return 0;
   }
   const jobs = [];
@@ -247,7 +272,7 @@ export async function main(args = process.argv.slice(2)) {
   await Promise.all(Array.from({ length: Math.min(options.jobs, jobs.length) }, async () => {
     while (next < jobs.length) {
       const [cpu, index] = jobs[next++];
-      results.push(await runInChild(cpu, index, options.car));
+      results.push(await runInChild(cpu, index, options.car, options.course));
     }
   }));
   results.sort((a, b) => DIFFICULTIES.indexOf(a.cpuDifficulty) - DIFFICULTIES.indexOf(b.cpuDifficulty) || a.index - b.index);

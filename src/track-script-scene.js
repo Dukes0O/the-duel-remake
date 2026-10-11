@@ -119,6 +119,37 @@ function addKerbs(group, course) {
   }
 }
 
+// Escape roads: loose ground behind the opening in the wall, drawn as a grid
+// whose corners stay clear of the road (a corner that falls on the road is
+// pushed out to its edge), so the gravel never lies over the road surface.
+function addEscapeRoads(group, course) {
+  for (const escape of course.escapeRoads ?? []) {
+    const columns = Math.ceil(escape.width / 2.5), rows = Math.ceil(escape.run / 3), positions = [], indices = [], uvs = [];
+    for (let row = 0; row <= rows; row++) for (let column = 0; column <= columns; column++) {
+      const u = escape.run * row / rows, v = escape.inner + escape.width * column / columns;
+      let x = escape.origin.x + escape.forward.x * u + escape.left.x * escape.side * v, z = escape.origin.z + escape.forward.z * u + escape.left.z * escape.side * v;
+      const found = course.nearest(x, z), edge = course.roadHalfWidthAt(found.s) + .3;
+      if (found.distance < edge) {
+        const reach = found.distance || 1e-6, away = reach > 1e-3 ? { x: (x - found.x) / reach, z: (z - found.z) / reach } : { x: escape.left.x * escape.side, z: escape.left.z * escape.side };
+        x = found.x + away.x * edge; z = found.z + away.z * edge;
+      }
+      const near = course.nearest(x, z);
+      positions.push(x, course.groundAt(near.s, near.lateral).y + .04, z); uvs.push(column / columns * escape.width / 4, row / rows * escape.run / 4);
+    }
+    for (let row = 0; row < rows; row++) for (let column = 0; column < columns; column++) {
+      const a = row * (columns + 1) + column, b = a + 1, c = a + columns + 1, d = c + 1;
+      // Both windings: the ribbon is seen from above whichever way it was folded.
+      indices.push(a, c, b, b, c, d);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.setIndex(indices); geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ name: 'Escape road gravel', color: OVERLAY.gravel.color, roughness: 1, metalness: 0,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, side: THREE.DoubleSide }));
+    mesh.name = `escape-road-${escape.id}`; mesh.receiveShadow = true; group.add(mesh);
+  }
+}
+
 export function addTrackScriptScene(group, course) {
   for (const run of surfaceRuns(course)) {
     const look = OVERLAY[run.kind];
@@ -139,6 +170,7 @@ export function addTrackScriptScene(group, course) {
     }
   }
   addWalls(group, course);
+  addEscapeRoads(group, course);
   addKerbs(group, course);
   addBoards(group, course);
 }

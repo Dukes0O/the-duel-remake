@@ -181,7 +181,15 @@ export class Course {
       const headland=Math.exp(-(((p-(sec.start+(sec.end-sec.start)*.58))/50)**2+((off-73)/24)**2));
       h-=Math.min(48,(off-28)*.55)*coastFade*(1-headland*.96);}
     for(const cut of this.features.shortcuts)if(p>=cut.start&&p<=cut.end){const distance=Math.abs(off-this.shortcutOffset(cut,p)),blend=smooth((p-cut.start)/36)*smooth((cut.end-p)/36);h*=1-blend*(1-smooth((distance-cut.halfWidth-3)/6));}
+    // A circuit's basins (`basins` on its definition) sink the ground beside the road to hold harbour or reservoir water.
+    if(this.def.basins)for(const basin of this.def.basins){const w=this.basinWeight(basin,p,off);if(w>0)h=lerp(h,basin.level-basin.deep-this.at(p).y,w);}
     return h;
+  }
+  // How far inside a basin a place is: 0 outside, 1 on its floor. Side -1 is the right of the road.
+  basinWeight(basin,p,off){
+    const across=basin.side<0?-off:off;if(across<=0)return 0;
+    const fade=basin.fade??30,edge=basin.edge??6;
+    return smooth((p-basin.s0)/fade)*smooth((basin.s1-p)/fade)*smooth((across-basin.from)/edge)*smooth((basin.to-across)/edge);
   }
   _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){

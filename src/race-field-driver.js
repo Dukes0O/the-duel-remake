@@ -37,12 +37,15 @@ export function runtimeOf(duel, r) {
   const spec = racerSpec(r.car, r.upgrades, r.driverId);
   // A faster car than yours shows only part of its edge; a slower one is helped a little.
   const carEdge = Math.pow(duel.state.field.playerIndex / performanceIndex(spec, duel.course), FIELD.carPaceShare);
-  const pace = tuning.pace * t.skill * f.skillRoll * carEdge;
+  // A circuit may ask the field to drive a little under or over the usual pace (`fieldPace`).
+  const pace = tuning.pace * (duel.course.def.fieldPace ?? 1) * t.skill * f.skillRoll * carEdge;
   const line = racingLineFor(duel.course);
   const profile = buildSpeedProfile(line, spec, { cornerFactor: pace, topFactor: pace * (1 + t.topSpeed),
     brakeFactor: t.brake, slowBonus: t.slowCorners });
   const shell = duel._vehicleSpec(r);
-  run = { course: duel.course, spec, profile, line, tuning, near: [], pace,
+  // A circuit with heavy braking between walls may ask racers to keep more room (`fieldFollow`).
+  const follow = duel.course.def.fieldFollow ? { ...FOLLOW, ...duel.course.def.fieldFollow } : FOLLOW;
+  run = { course: duel.course, spec, profile, line, tuning, near: [], pace, follow,
     halfWidth: shell.halfWidth, halfLength: shell.halfLength };
   runtimes.set(r, run);
   return run;
@@ -70,10 +73,11 @@ function sense(duel, r, run) {
 // brakes: a driver's reaction time, then comfortable braking for both cars.
 export const FOLLOW = Object.freeze({ reaction: .22, margin: 2.2, comfort: .62, leadBraking: 1.15 });
 export function followLimitMph(run, blocker) {
-  const comfortable = DRIVE.brakeAccel * run.spec.braking * FOLLOW.comfort * MPH;
+  const follow = run.follow ?? FOLLOW;
+  const comfortable = DRIVE.brakeAccel * run.spec.braking * follow.comfort * MPH;
   const lead = blocker.speed * MPH;
-  const room = Math.max(0, blocker.gap - FOLLOW.margin) + lead * lead / (2 * comfortable * FOLLOW.leadBraking);
-  const v = comfortable * (-FOLLOW.reaction + Math.sqrt(FOLLOW.reaction * FOLLOW.reaction + 2 * room / comfortable));
+  const room = Math.max(0, blocker.gap - follow.margin) + lead * lead / (2 * comfortable * follow.leadBraking);
+  const v = comfortable * (-follow.reaction + Math.sqrt(follow.reaction * follow.reaction + 2 * room / comfortable));
   return v / MPH;
 }
 
@@ -200,14 +204,19 @@ export function stepFieldRacer(duel, r, dt) {
     if (!blocker || c.gap < blocker.gap) blocker = c;
   }
   let speedCap = Infinity, desired = lineOffset;
-  const roadLimit = Math.max(0, halfRoad - run.halfWidth - .5);
+  // Between walls a racer keeps further off them (`wallRoom`, metres), as a car at speed overshoots a lane.
+  const roadLimit = Math.max(0, halfRoad - run.halfWidth - .5 - (run.follow.wallRoom ?? 0));
   let lo = -roadLimit, hi = roadLimit;
   // A car more than half alongside keeps its side; nobody turns into it.
   let squeezed = null;
+  // A circuit between walls may ask racers to count a car they are about to draw level with
+  // (or that is about to draw level with them) as alongside already (`closeIn`, seconds).
+  const closeIn = run.follow.closeIn ?? 0;
   for (const c of near) {
     const band = run.halfWidth + c.hw + .3;
+    const closing = closeIn ? Math.max(0, c.ds > 0 ? r.speedMph - c.speed : c.speed - r.speedMph) * MPH * closeIn : 0;
     // Cars directly ahead or behind in the same lane are handled by following.
-    if (Math.abs(c.ds) > run.halfLength + c.hl + .6 || Math.abs(c.dl) < band * .35) continue;
+    if (Math.abs(c.ds) > run.halfLength + c.hl + .6 + closing || Math.abs(c.dl) < band * .35) continue;
     if (c.dl >= 0) hi = Math.min(hi, c.o.lateral - band); else lo = Math.max(lo, c.o.lateral + band);
     // Only the car that is behind gives way when there is no room for both.
     if (c.ds > .25 || (Math.abs(c.ds) <= .25 && c.index < f.index))

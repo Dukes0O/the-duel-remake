@@ -10,7 +10,7 @@ import { DEFAULT_DRIVER } from '../src/drivers.js';
 // straight. This driver steers the same way, through the same physics, but
 // takes its line and speed from the circuit's racing line and speed profile,
 // scaled to the car's grip (the profile is for the grip .82 reference car) and a skill factor.
-function useRacingLine(app, skill) {
+export function useRacingLine(app, skill) {
   app._driveAutopilot = function lineDriver() {
     const d = this.duel, st = d.state, course = d.course, line = course.racingLine;
     if (st.status === 'ticket') { d.ackTicket(); return; }

@@ -28,7 +28,7 @@ import { defineScriptedCourse } from '../track-script.js';
 export const HARBOUR_LIGHTS = defineScriptedCourse({
   id: 'harbour-lights', name: 'Harbour Lights', flag: 'harbour-lights',
   theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 1,
-  closed: true, laps: 4, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
+  closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
   airborne: true, terrainHalfWidth: 64, scenery: { trees: 100, rocks: 40, mountains: false },
   sections: [
     { theme: 'city', name: 'Seafront', share: .30 },
@@ -37,6 +37,27 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
   ],
   scriptStart: 100,
   scriptDefaults: { walls: 'both' },
+  // How the racing line and the computer racers treat a road between walls (see race-lines.js and
+  // race-field-driver.js): the line keeps 2.6 m from the road edge and crosses the road no more
+  // than 60% of a bend's sagitta; racers drive a little under their usual pace, count a car about
+  // to draw level as alongside, keep 1.6 m further off the walls and leave room for a leader that
+  // brakes at full strength.
+  lineMargin: 2.6, lineSwing: .6, fieldPace: .82, fieldFollow: { leadBraking: 1.6, closeIn: 1.2, wallRoom: 1.6 },
+  // Straight run-offs behind openings in the wall, on the outside of the two
+  // slow corners (src/track-script-course.js).
+  escapeRoads: [
+    { id: 'casino-corner', piece: 'Casino Corner', run: 70, width: 10 },
+    { id: 'lantern-hairpin', piece: 'Lantern Hairpin', run: 55, width: 9 },
+  ],
+  // Water beside the road: the harbour along the Seafront Straight and Harbour Road, two terraced
+  // pools of the reservoir along the Reservoir Run. The ground beside the road is sunk to hold
+  // them (Course.basinWeight); `level` is the water's height, `deep` how far the floor lies below it.
+  basins: [
+    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: 2.4 },
+    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: 2.4 },
+    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: 2.4 },
+    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: 2.4 },
+  ],
   script: [
     ['straight', 500, { name: 'Seafront Straight', width: 14 }],
     ['turn', 'L', 20, 300, { name: 'Lantern Kink' }],

@@ -13,7 +13,7 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 const MPH = DRIVE.mphToWorld;
 
 // Circuits that offer a Grand Prix. P4-GP-EXISTING adds the others.
-export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon']);
+export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'harbour-lights']);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({
@@ -240,7 +240,7 @@ export function initializeField(duel) {
   s.opponentCount = racers.length;
   duel.rivalSpec = s.opponents.length ? racerSpec(s.opponents[0].car, s.opponents[0].upgrades, s.opponents[0].driverId) : null;
   s.field = {
-    version: 1, laps: FIELD.laps, size, playerSlot, hold, cpuDifficulty: cpu, playerIndex: performanceIndex(duel.car, course), seed: fieldSeed,
+    version: 1, laps: duel.course.def.laps || FIELD.laps, size, playerSlot, hold, cpuDifficulty: cpu, playerIndex: performanceIndex(duel.car, course), seed: fieldSeed,
     start: { elapsed: 0, lights: 0, out: false },
     tow: 0, towBehind: null,
     order: [], position: size, finalLap: false,
@@ -249,7 +249,7 @@ export function initializeField(duel) {
     deferFinish: false,
   };
   s.countdown = FIELD.lights * FIELD.lightSec + hold;
-  s.lapsTotal = FIELD.laps;
+  s.lapsTotal = duel.course.def.laps || FIELD.laps;
   s.traffic = [];
   updateOrder(duel);
   s.field.lastPosition = s.field.position;
@@ -471,5 +471,6 @@ export function fieldView(state) {
 }
 
 export function courseForGrandPrix(def) {
-  return { ...def, laps: FIELD.laps, hasRadar: false, grandPrix: true };
+  // An authored circuit may set its own Grand Prix length (`grandPrixLaps`).
+  return { ...def, laps: def.grandPrixLaps ?? FIELD.laps, hasRadar: false, grandPrix: true };
 }
