@@ -153,7 +153,9 @@ assert.match(errorNodes.strong.textContent,/track scenery/);assert.match(errorNo
 // decoding is stubbed here; the private native scenario checks actual textures.
 const parser=new GLTFLoader();parser.register(()=>({name:'KIT_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
 const nativeCourse=new Course(COURSE[0],1989);
-const real=createTrackKits(nativeCourse,{placements:TRACK_KIT_IDS.map((id,index)=>({id,s:100+Math.floor(index/7)*50,lateral:80})),
+const real=createTrackKits(nativeCourse,{placements:TRACK_KIT_IDS.map((id,index)=>id==='start-gantry'?{id,s:15,lateral:0}:
+  id==='gallery'?{id,s:65,lateral:0,scale:[1.8,1.3,1]}:
+  {id,s:120+Math.floor(index/4)*35,lateral:40+(index%4)*25}),
   loadAsset:async path=>{const bytes=await readFile(new URL('../public'+path,import.meta.url));
     return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');}});
 assert.equal(await real.ready,true,real.error?.message);
