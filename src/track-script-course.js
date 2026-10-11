@@ -62,7 +62,7 @@ function wallSegments(course) {
 // only the wall drawn along it is opened, and the new walls are added here.
 // ---------------------------------------------------------------------------
 
-function escapeRoadsFor(course) {
+export function escapeRoadsFor(course) {
   const specs = course.def.escapeRoads;
   if (!Array.isArray(specs) || !specs.length) return [];
   const script = course.script;

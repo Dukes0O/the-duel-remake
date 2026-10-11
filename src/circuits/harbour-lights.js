@@ -35,14 +35,31 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
     { theme: 'city', name: 'Old Town', share: .45 },
     { theme: 'city', name: 'Reservoir', share: .25 },
   ],
+  // Night all lap: the street lamps, lit windows, car lamps and the moon of P4-DAYNIGHT (src/light-path.js).
+  lightPath: { axis: 'distance', keyframes: [{ at: 0, look: 'night' }] },
   scriptStart: 100,
   scriptDefaults: { walls: 'both' },
-  // How the racing line and the computer racers treat a road between walls (see race-lines.js and
-  // race-field-driver.js): the line keeps 2.6 m from the road edge and crosses the road no more
-  // than 60% of a bend's sagitta; racers drive a little under their usual pace, count a car about
-  // to draw level as alongside, keep 1.6 m further off the walls and leave room for a leader that
-  // brakes at full strength.
-  lineMargin: 2.6, lineSwing: .6, fieldPace: .82, fieldFollow: { leadBraking: 1.6, closeIn: 1.2, wallRoom: 1.6 },
+  // How the racing line and the computer racers treat a road between walls (race-lines.js,
+  // race-field.js, race-field-driver.js). The line keeps 2.6 m from the road edge and crosses the
+  // road no more than 60% of a bend's sagitta. Racers drive a little under their usual pace (by
+  // difficulty), vary a little more from one another, attack more keenly, keep 1 m further off the
+  // walls, leave room for a leader that brakes at full strength, and on the first lap, with the
+  // whole field bunched, keep a longer gap and count a car about to draw level as alongside.
+  lineMargin: 2.6, lineSwing: .6,
+  fieldPace: { easy: .815, medium: .787, hard: .78 }, fieldForm: 2.5, fieldSpread: 1.5, fieldAggression: 1.4,
+  fieldFollow: { leadBraking: 1.6, wallRoom: 1.0, firstLap: { margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4 } },
+  // Wet-look road at night: glossy asphalt and soft pools of colour under lanterns and neon
+  // (src/circuit-water.js). Looks only; grip is dry.
+  wetRoad: { performanceShare: .5 },
+  // Water beside the road: the harbour along the Seafront Straight and Harbour Road, two terraced
+  // pools of the reservoir along the Reservoir Run. The ground beside the road is sunk to hold
+  // them (Course.basinWeight); `level` is the water's height, `deep` how far the floor lies below it.
+  basins: [
+    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: 2.4 },
+    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: 2.4 },
+    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: 2.4 },
+    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: 2.4 },
+  ],
   // Straight run-offs behind openings in the wall, on the outside of the two
   // slow corners (src/track-script-course.js).
   escapeRoads: [

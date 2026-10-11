@@ -215,7 +215,7 @@ export function initializeField(duel) {
   s.opponents = racers.map((racer, index) => {
     const upgrades = levelsFor(cars[index].level);
     const pose = gridPose(slotOf[index]);
-    const jitter = (rng.float() * 2 - 1) * tuning.spread;
+    const jitter = (rng.float() * 2 - 1) * tuning.spread * (course.def.fieldSpread ?? 1);
     const [lo, hi] = tuning.reaction;
     const reaction = Math.max(.1, lo + rng.float() * (hi - lo) - racer.traits.start * 1);
     return {
@@ -228,7 +228,7 @@ export function initializeField(duel) {
       completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0,
       field: {
         index, slot: slotOf[index], skillRoll: 1 + jitter, reaction, rng: (rng.float() * 4294967296) >>> 0,
-        formAmp: tuning.form, formPeriod: 25 + rng.float() * 30, formPhase: rng.float() * Math.PI * 2,
+        formAmp: tuning.form * (course.def.fieldForm ?? 1), formPeriod: 25 + rng.float() * 30, formPhase: rng.float() * Math.PI * 2,
         traits: { ...racer.traits }, bias: 0, intent: pose.lateral, pass: null, passCool: 0, passes: { start: 0, done: 0, timeout: 0, stalled: 0, edge: 0, dives: 0 }, diveKey: null, tow: 0, mistake: null,
         zoneKey: null, rolledKey: null, defendKey: null, defendSide: 0, lateBrake: 0, stuck: 0, offSec: 0,
         recoveries: 0, crashes: 0, knocked: false, cooldownSeen: 0, hits: 0, moveSpeed: 0,

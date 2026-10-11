@@ -7,6 +7,7 @@ import {buildPitCourse, pitFrame, pitNearest, pitRampHeight, pitObstacles} from 
 import { installHiddenRoad } from './hidden-road.js';
 import { installMuddyHollow } from './muddy-hollow.js';
 import { THEMES, DRIVE } from './config.js';
+import { basinWeight } from './basins.js';
 import { buildTrackScript } from './track-script.js';
 import { installTrackScript, trackScriptSolids } from './track-script-course.js';
 import { buildRoadFurniture, tunnelCoverShape } from './road-furniture.js';
@@ -185,12 +186,7 @@ export class Course {
     if(this.def.basins)for(const basin of this.def.basins){const w=this.basinWeight(basin,p,off);if(w>0)h=lerp(h,basin.level-basin.deep-this.at(p).y,w);}
     return h;
   }
-  // How far inside a basin a place is: 0 outside, 1 on its floor. Side -1 is the right of the road.
-  basinWeight(basin,p,off){
-    const across=basin.side<0?-off:off;if(across<=0)return 0;
-    const fade=basin.fade??30,edge=basin.edge??6;
-    return smooth((p-basin.s0)/fade)*smooth((basin.s1-p)/fade)*smooth((across-basin.from)/edge)*smooth((basin.to-across)/edge);
-  }
+  basinWeight(basin,p,off){return basinWeight(basin,p,off);}
   _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;

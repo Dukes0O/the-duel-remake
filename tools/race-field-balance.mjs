@@ -57,7 +57,7 @@ export function stageOf(courseId) {
   return at;
 }
 
-export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = 420, fieldSize = 7, startStage = 0, course = null, onStep = null } = {}) {
+export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = null, fieldSize = 7, startStage = 0, course = null, onStep = null } = {}) {
   const { seed, fieldSeed } = raceSeeds(index);
   if (course) startStage = stageOf(course);
   const previousStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
@@ -82,6 +82,8 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = 42
     installTestDriver(app);
     const duel = app.duel, state = duel.state;
     state.field.deferFinish = true;
+    // A long authored circuit needs longer than the 7 minutes that suit a three-lap Pacific Canyon.
+    if (maxSec == null) maxSec = duel.course.script ? Math.max(420, duel.course.raceLength / 14) : 420;
     const started = performance.now();
     const step = 1 / 60;
     let sinceGo = 0;
@@ -146,7 +148,8 @@ export function installTestDriver(app) {
     const free = candidate => cars.every(item => !(item.ds > -16 && item.ds < 40 + Math.max(0, state.speedMph - item.speed) * DRIVE.mphToWorld * 1.2 &&
       Math.abs(item.lateral - candidate) < 3.1));
     if (lane == null || state.stageTimeSec - laneSince > .8) {
-      const options = [cruise, cruise - 1.6, cruise + 1.8, 0, 3.4, 4.8, -4.8].filter(value => Math.abs(value) <= halfWidth - 1.8)
+      // Between walls the driver stays within a lane or two of the racing line and well off the walls.
+      const options = (duel.course.script ? [cruise, cruise - 1.8, cruise + 1.8, cruise - 3.4, cruise + 3.4].filter(value => Math.abs(value) <= halfWidth - 2.6) : [cruise, cruise - 1.6, cruise + 1.8, 0, 3.4, 4.8, -4.8].filter(value => Math.abs(value) <= halfWidth - 1.8))
         .sort((a, b) => Math.abs(a - cruise) - Math.abs(b - cruise));
       const pick = options.find(free) ?? cruise;
       if (pick !== lane) { lane = pick; laneSince = state.stageTimeSec; }
@@ -163,11 +166,13 @@ export function installTestDriver(app) {
     // Do not run into the car ahead in the lane being driven.
     let cap = Infinity;
     for (const item of cars) {
-      if (item.ds <= 0 || Math.abs(item.lateral - state.lateral) > 2.9) continue;
+      // On an authored circuit the driver also watches the lane it is moving to, not only the one it is in.
+      const beside = duel.course.script ? Math.min(Math.abs(item.lateral - state.lateral), Math.abs(item.lateral - lane)) : Math.abs(item.lateral - state.lateral);
+      if (item.ds <= 0 || beside > 2.9) continue;
       const gap = item.ds - 4.7;
       const comfortable = DRIVE.brakeAccel * duel.car.braking * .62 * DRIVE.mphToWorld;
       const lead = item.speed * DRIVE.mphToWorld;
-      const room = Math.max(0, gap - 2.2) + lead * lead / (2 * comfortable * (duel.course.def.fieldFollow?.leadBraking ?? 1.15));
+      const room = Math.max(0, gap - (state.completedLaps === 0 && duel.course.def.fieldFollow?.firstLap?.margin || 2.2)) + lead * lead / (2 * comfortable * (duel.course.def.fieldFollow?.leadBraking ?? 1.15));
       cap = Math.min(cap, comfortable * (-.22 + Math.sqrt(.22 * .22 + 2 * room / comfortable)) / DRIVE.mphToWorld);
     }
     if (state.speedMph > cap) { throttle = 0; brake = Math.max(brake, Math.min(1, (state.speedMph - cap) / 12)); }
