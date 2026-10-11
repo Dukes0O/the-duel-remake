@@ -3,6 +3,8 @@ import test from 'node:test';
 import * as THREE from 'three';
 import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
 import {Course} from '../src/course.js';
+import {Duel} from '../src/game.js';
+import {COURSE} from '../src/config.js';
 import {sampleCourseLightPath, lightPathLook} from '../src/light-path.js';
 import {addCircuitLandmarks, scoreboardText} from '../src/circuit-landmarks.js';
 import {syncScene} from '../src/scene-systems.js';
@@ -88,4 +90,24 @@ test('every Panorama placement loads both approved GLBs on actual terrain and cl
     assert.equal(owner.placements.length,PANORAMA_RIDGE.kitPlacements.length);
     assert.ok(owner.group.children.length>0);
   } finally {owner.dispose();}
+});
+
+test('Panorama starts a genuine native three-lap eight-car Grand Prix', () => {
+  const added = !COURSE.some(def => def.id === PANORAMA_RIDGE.id);
+  if (added) COURSE.push(PANORAMA_RIDGE);
+  try {
+    const d = new Duel({seed: 1989, featureFlags: {'grand-prix': true}});
+    d.startCampaign({mode: 'grandprix', startStage: COURSE.findIndex(def => def.id === PANORAMA_RIDGE.id),
+      car: 'stuttgart_959s', seed: 1989, fieldSeed: 1000, cpuDifficulty: 'medium'});
+    assert.equal(d.state.mode, 'grandprix');
+    assert.equal(d.state.opponents.length, 7);
+    assert.equal(d.state.lapsTotal, 3);
+    assert.equal(d.state.traffic.length, 0);
+    assert.equal(d.course.features.radarTraps.length, 0);
+    assert.ok(d.state.field);
+    assert.equal(d.course.def.id, PANORAMA_RIDGE.id);
+    assert.equal(d.course.def.script, PANORAMA_RIDGE.script);
+    assert.equal(d.course.def.kitPlacements, PANORAMA_RIDGE.kitPlacements);
+    assert.equal(d.course.def.grandPrix, true);
+  } finally {if (added) COURSE.splice(COURSE.findIndex(def => def.id === PANORAMA_RIDGE.id), 1);}
 });

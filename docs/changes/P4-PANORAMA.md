@@ -32,7 +32,19 @@ Team Room snapshot cleanup plus kit retry/disposal. Independent runtime review
 is clear. Two prepared-browser issues were corrected before execution:
 in-memory Vite helpers replace missing raw module paths, and named captures
 follow genuine field progress with actual sampled light metadata.
-Native, quiet frame, field-balance and Claude art checks remain pending.
+The real native-start regression first fails (duel instead of Grand Prix), then
+passes after adding only Panorama to the closed-road allow-list. All six focused
+checks pass; old course ids and rules stay exact. The new fixture initially
+required definition object identity; GP intentionally wraps it with grandPrix:true.
+It now checks the exact stable id, original script/kit references and GP marker;
+no existing assertion or tolerance changed. The private helper also sets
+the same QA build flag as the native app, preserving course ownership.
+Native High/Performance pass private54308:12 captures, zero warnings/errors.
+Actual road/drawn triangle heights and native Ridge chase are checked. Genuine
+laps117.483/120.176/98.667s; all8 finish with25 passes. Seed1000 has3+ distinct
+first30s crashes; no clean-field/rate pass is claimed. First actual art sheet
+is277023bytes before final grounded-camera rebuild; actual final bytes on card.
+Quiet frames and field balance remain pending; Claude art/driver decisions wait.
 
 ## Removed
 

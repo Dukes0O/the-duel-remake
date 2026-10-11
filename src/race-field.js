@@ -13,10 +13,10 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 
 const MPH = DRIVE.mphToWorld;
 
-// Existing closed road circuits. Objective events and off-road arenas remain separate.
+// Closed road circuits. Objective events and off-road arenas remain separate.
 export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'high-country',
   'harbor-highlands', 'eifel-crown', 'alpine-serpent', 'azure-riviera', 'red-mesa',
-  'neon-docks', 'cloudbreak-skyway']);
+  'neon-docks', 'cloudbreak-skyway', 'panorama-ridge']);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({

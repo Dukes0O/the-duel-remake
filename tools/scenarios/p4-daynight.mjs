@@ -189,7 +189,7 @@ async function setup(context, quality) {
   return setup;
 }
 
-function installMeasurement(quality, diagnose) {
+export function installMeasurement(quality, diagnose) {
   const app = window.__qaApp, api = window.__render, fixture = window.__dayNightReview;
   const gl = api.renderer.getContext(), ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
   const owner = quality === 'high' ? api.composer : api.composer.passes[0], originalDraw = owner.render;
