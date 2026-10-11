@@ -951,3 +951,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 11 October janitor sweep: no unused module or removed-feature test proved; 50 asset candidates are advisory dynamic paths/credits, left for DISC/CLEAN-11. Consumed request posts folded into current cards; idle unmerged branches retained. Tracked size322,216,132B, looks17,671,624B; no runtime growth/deletion.
 
 11 October merge P4-PIT5ebfaa85: lane384/384 in648.47s/build496ms, actual eight boxes and four-second High/Performance service pass; finite kerb/Dossier union exact. No release.
+
+11 October merge P4-KIT-LOADER4c337aed: lane385/385 in673.25s/build634ms; real High/LOD assets and ready read-only snapshots pass, actual PIT callback/lifetimes retained. Claude track lanes unblocked; no release.
