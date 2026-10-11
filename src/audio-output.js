@@ -1,24 +1,32 @@
-// Preserve compressor timing and bus balance. Raise the race mix before the
-// existing oversampled peak ceiling so loud transients keep their headroom.
-// 0.8 leaves headroom for native resampling overshoot; the final path is
-// measured for both sample and intersample peaks, not just the curve bound.
-const KNEE = 0.65;
-const CEILING = 0.8;
-const WIDTH = 2 * (CEILING - KNEE);
+// Keep quiet gain exact while giving sustained backgrounds transient headroom.
+// The native crash capture must certify sample and reconstructed peaks after
+// 4x resampling; the curve bound alone is not the final-output ceiling.
+const QUIET = .25;
+const TAPER_END = .41;
+const BED_CREST = .33;
+const IMPACT_START = .65;
+const CEILING = .70;
 const curve = new Float32Array(8193);
 for (let index = 0; index < curve.length; index++) {
   const input = (index * 2) / (curve.length - 1) - 1;
   const magnitude = Math.abs(input);
-  const excess = Math.min(WIDTH, Math.max(0, magnitude - KNEE));
-  const limited = magnitude <= KNEE
-    ? magnitude
-    : KNEE + excess - (excess * excess) / (2 * WIDTH);
+  let limited;
+  if (magnitude <= QUIET) limited = magnitude;
+  else if (magnitude < TAPER_END) {
+    const excess = magnitude - QUIET;
+    limited = QUIET + excess - excess * excess / (2 * (TAPER_END - QUIET));
+  } else if (magnitude <= IMPACT_START) limited = BED_CREST;
+  else {
+    const blend = (magnitude - IMPACT_START) / (1 - IMPACT_START);
+    limited = BED_CREST + (CEILING - BED_CREST) * blend * blend * (3 - 2 * blend);
+  }
   curve[index] = Math.sign(input) * limited;
 }
 
 export function createAudioOutput(context, master) {
   const compressor = context.createDynamicsCompressor();
   compressor.threshold.value = -18;
+  compressor.attack.value = 0.003;
   compressor.knee.value = 16;
   compressor.ratio.value = 4;
   const ceiling = context.createWaveShaper();
