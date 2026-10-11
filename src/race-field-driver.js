@@ -165,22 +165,29 @@ export function stepFieldRacer(duel, r, dt) {
   // Waiting for a reaction at the start. The lights are already out.
   if (s.stageTimeSec < f.reaction) return;
 
-  const lane=duel.course.pitLane;
-  if(lane){
-    const phase=duel.course.phase(r.s);
-    if(phase>=lane.entry-180&&phase<=lane.exit&&!f.pitChoice)f.pitChoice=choosePit(duel,r,run);
-    if(f.pitChoice?.stop&&phase>=lane.entry&&phase<=lane.exit){
-      if(stepPitService(duel,r,dt)){f.stuck=0;f.offSec=0;return;}
-      const box=pitBox(lane,r),serviced=!!f.pitServiced;
-      const remaining=box-phase;
-      let target=serviced?PIT.limitMph:Math.min(PIT.limitMph,Math.sqrt(2*DRIVE.brakeAccel*run.spec.braking*MPH*Math.max(0,remaining-1))/MPH);
-      if(!serviced&&remaining<2&&Math.abs(r.lateral-lane.offsetAt(phase))>1.6)target=3;
-      move(duel,r,run,dt,target,lane.offsetAt(look),surface,look);
-      limitPitSpeed(duel.course,r);
-      duel._staticContacts(r,false);duel._boundary(r);duel._advanceLaps(r,dt);
-      f.stuck=0;f.offSec=0;f.moveSpeed=r.speedMph;return;
+  const lane = duel.course.pitLane;
+  if (lane) {
+    const phase = duel.course.phase(r.s);
+    if (phase >= lane.entry - 180 && phase <= lane.exit && !f.pitChoice)
+      f.pitChoice = choosePit(duel, r, run);
+    if (f.pitChoice?.stop && phase >= lane.entry && phase <= lane.exit) {
+      if (stepPitService(duel, r, dt)) { f.stuck = 0; f.offSec = 0; return; }
+      const box = pitBox(lane, r), serviced = !!f.pitServiced;
+      const remaining = box - phase;
+      const stopMph = Math.sqrt(2 * DRIVE.brakeAccel * run.spec.braking * MPH *
+        Math.max(0, remaining - 1)) / MPH;
+      let target = serviced ? PIT.limitMph : Math.min(PIT.limitMph, stopMph);
+      if (!serviced && remaining < 2 && Math.abs(r.lateral - lane.offsetAt(phase)) > 1.6)
+        target = 3;
+      move(duel, r, run, dt, target, lane.offsetAt(look), surface, look);
+      limitPitSpeed(duel.course, r);
+      duel._staticContacts(r, false);
+      duel._boundary(r);
+      duel._advanceLaps(r, dt);
+      f.stuck = 0; f.offSec = 0; f.moveSpeed = r.speedMph;
+      return;
     }
-    if(phase>lane.exit&&f.pitChoice?.stop){f.pitChoice.stop=false;f.pitDone=true;}
+    if (phase > lane.exit && f.pitChoice?.stop) { f.pitChoice.stop = false; f.pitDone = true; }
   }
 
   const { profile, line, tuning } = run;
