@@ -37,6 +37,7 @@ function normalizeRecord(row){
   const current=row.layoutVersion===(stage.layoutVersion??1);
   if(current&&row.laps!==ghostLaps(row.mode,stage))return null;
   const context={...row,...driver,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context,row.layoutVersion,driver.driverSignature);
+  if(!Array.isArray(row.samples))return null;
   // Legacy ghosts did not retain the old route length. Their final sample is
   // the only available old finish position; never validate it against new roads.
   const raceLength=current?stage.lengthU*row.laps:row.raceLength??row.samples?.at(-1)?.[1]/100;

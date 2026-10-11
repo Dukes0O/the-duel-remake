@@ -91,7 +91,10 @@ RED absent width metadata, actual shoulder mismatch and old-module staged flag a
 GREEN11,228 Course/surface/line/world-vertex/shader/ghost checks,11 storage and86 TT ghost checks.
 Legacy sampled fingerprint7f43383b stays exact; GP width honestly changes it to58a80e29.
 No existing assertion or sample bound changed. Original90 seeds/5percent and native/gates wait.
+## Legacy guard, before code
+Save Guardian found damaged old-layout samples{} or42 without raceLength throws, hiding a mixedvalid store.
+Director approves only Array.isArray before final-sample inference; valid bounds/keys/capacity stay exact.
+RED exact.at TypeError; GREEN26 mixed/capacity checks and86 TT ghost checks. Renewed save review requested.
 ## Removed
-No runtime asset or legacy mode is replaced. Remove the stale menu claim that
-Grand Prix cannot record once recording is wired. Replace implicit staged rejection
+No runtime asset or legacy mode is replaced. Remove the stale no-GP-recording menu claim once wired. Replace implicit staged rejection
 with explicit first-lap policy; replace duplicate GP shoulder width after hook grant.

@@ -16,7 +16,7 @@ import { createProfile, eventKey, isValidFinish } from '../src/progression.js';
 import { normalizeRaceSettings } from '../src/race-settings.js';
 import { grandPrixCourse, gridPose, courseForGrandPrix } from '../src/race-field.js';
 import { createLeaderboard, recordFinish, saveLeaderboard, loadLeaderboard, getLeaderboard } from '../src/leaderboard.js';
-import { GrandPrixLapRecorder, createGhostStore, storeGhost, findGhost, normalizeGhostStore, GhostRecorder, ghostKey, MAX_GHOST_BYTES, MAX_GHOSTS } from '../src/ghost.js';
+import { GrandPrixLapRecorder, createGhostStore, storeGhost, findGhost, normalizeGhostStore, loadGhosts, GHOST_KEY, GhostRecorder, ghostKey, MAX_GHOST_BYTES, MAX_GHOSTS } from '../src/ghost.js';
 import { testCourseAccess } from './career-fixture.mjs';
 
 let checks = 0;
@@ -47,6 +47,21 @@ const gpStorage = {...storageTT, mode: 'grandprix', laps: 1,
 gpStorage.key = ghostKey(gpStorage.playerId, gpStorage);
 const oldLayout = {...storageTT, layoutVersion: storageTT.layoutVersion - 1};
 oldLayout.key = ghostKey(oldLayout.playerId, oldLayout, oldLayout.layoutVersion, oldLayout.driverSignature);
+// Damaged old-layout sample containers cannot hide valid current/archive ghosts.
+const legacyWithoutLength = {...oldLayout}; delete legacyWithoutLength.raceLength;
+const validMixed = {version: 1, records: [storageTT], archivedRecords: [legacyWithoutLength]};
+const validMixedBytes = JSON.stringify(normalizeGhostStore(validMixed));
+for (const samples of [{}, 42, 'damaged', true, null]) {
+  const damagedLegacy = {...legacyWithoutLength, samples};
+  const mixed = {version: 1, records: [storageTT, damagedLegacy], archivedRecords: [legacyWithoutLength]};
+  const original = JSON.stringify(mixed);
+  const normalized = normalizeGhostStore(mixed);
+  equal(JSON.stringify(normalized), validMixedBytes, 'damaged legacy samples retain exact valid current/archive records');
+  equal(JSON.stringify(mixed), original, 'damaged legacy rejection never mutates caller bytes');
+  const disposableStorage = {getItem: key => key === GHOST_KEY ? original : null};
+  equal(JSON.stringify(loadGhosts(disposableStorage)), validMixedBytes,
+    'public load keeps valid mixed-store ghosts accessible despite one damaged legacy row');
+}
 const countStore = normalizeGhostStore({version: 1, records: storageRows, archivedRecords: [oldLayout]});
 equal(countStore.archivedRecords.length, 1, 'count fixture retains a valid historical recording');
 equal(countStore.records.length, 12, 'count fixture retains all twelve old ghosts');
