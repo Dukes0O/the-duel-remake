@@ -171,6 +171,8 @@ export async function runHeadlessLaps(options) {
     app.autopilot = true;
     app._scriptedCrashDone = true;         // no scripted shoulder excursion: a clean lap
     const duel = app.duel, state = duel.state, course = duel.course;
+    // The stock driver cannot brake for a hairpin: an authored circuit is driven on its own racing line.
+    if (course.racingLine) { const { useRacingLine } = await import('./track-script-drive.mjs'); useRacingLine(app); }
     const gridS = state.s, def = COURSE[stageIndex];
     const trace = [], laps = def.laps ?? 2;
     let frames = 0;

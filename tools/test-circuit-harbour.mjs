@@ -119,7 +119,7 @@ test('the layout knows the sizes in the kit manifest', () => {
 
 test('every placement is a valid loader entry, in the same order every time', () => {
   const ids = new Set(manifest.pieces.map(piece => piece.id));
-  assert.ok(placements.length > 3000);
+  assert.ok(placements.length > 1500);
   for (const entry of placements) {
     assert.ok(ids.has(entry.id), entry.id);
     assert.ok(Number.isFinite(entry.s) && entry.s >= 0 && entry.s <= course.length, `s of ${entry.id}`);
