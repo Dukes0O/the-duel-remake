@@ -71,7 +71,7 @@ old assertions forbade.
 
 ## Pictures and numbers
 
-- Review sheet: `docs/board/looks/p4-tremblant/finish-2.jpg`, taken at the committed 25 degree sun (frames 08, 09 and
+- Review sheet: `docs/board/looks/p4-tremblant/round-2.jpg`, taken at the committed 25 degree sun (frames 08, 09 and
   11 have no white blob any more; 03, 07 and 10 run-offs are dark olive and
   grey instead of bright tan).
 - Frame cost (`tools/scenarios/tremblant-views.mjs`, 8 cars, graphics card idle, nothing else heavy running, delivered): High grid p50 16.7 ms, p95 16.8 ms, 0 over 33 ms (1,793 draws, 3.89 M triangles); High Timber Straight p95 16.8 ms; Performance grid p95 16.8 ms (1,137 draws, 3.01 M); Performance Timber Straight p95 16.8 ms. Limit 18.5 ms. (An earlier pair of runs while a Chrome window used 84% of the graphics card read 33 to 50 ms and was discarded.)
@@ -81,7 +81,7 @@ old assertions forbade.
 - `tools/test-circuit-tremblant.mjs`: four new checks (hairpin boards, filled
   stands inside their seating, the gentler land untouched near the road, the
   gravel only ever darker and only beside corners). 23 pass.
-- Lane gate on commit ad2a0e1d: `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, 322 passed, 0 failed. `npm run build`: BUILD_RESULT.
+- Lane gate on commit ad2a0e1d: `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, 322 passed, 0 failed. `npm run build` passes. After merging integration (79ba1a96) the lane tier was 321 passed, 1 failed (the repository placement check, which only accepts review sheets named `round-N.jpg`; the sheet was renamed to `round-2.jpg` and the check passes).
 
 ## Removed
 
