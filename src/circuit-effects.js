@@ -52,8 +52,8 @@ export function lakeGeometry(course, lake) {
 }
 
 function lakeMesh(course, lake) {
-  const material = new THREE.MeshStandardMaterial({ name: 'Lake water', vertexColors: true, transparent: true, roughness: .22, metalness: 0,
-    envMapIntensity: .55, depthWrite: false, side: THREE.DoubleSide });
+  const material = new THREE.MeshStandardMaterial({ name: 'Lake water', vertexColors: true, transparent: true, roughness: .85, metalness: 0,
+    envMapIntensity: .25, depthWrite: false, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(lakeGeometry(course, lake), material);
   mesh.name = 'Lake'; mesh.receiveShadow = true; mesh.renderOrder = 1;
   return mesh;
@@ -103,7 +103,7 @@ function addMist(group, course, lake, level, options) {
 // A hill: a dome following the ground, dark forest floor, with the ski runs paler.
 export function hillGeometry(course, hill) {
   const nu = 44, nv = 44, positions = [], colours = [], indices = [];
-  const floor = new THREE.Color(0x5b6a38), litter = new THREE.Color(0x7d6b36), run = new THREE.Color(0xa8b866), runDry = new THREE.Color(0xc2b56c), mix = new THREE.Color();
+  const floor = new THREE.Color(0x5b6a38), litter = new THREE.Color(0x7d6b36), run = new THREE.Color(0xbcc878), runDry = new THREE.Color(0xd4c882), mix = new THREE.Color();
   for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
     const du = (i / nu * 2 - 1) * hill.along, dv = (j / nv * 2 - 1) * hill.across;
     const s = hill.s + du, lateral = hill.lateral + dv, rise = hillHeight(hill, du, dv);

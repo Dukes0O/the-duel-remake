@@ -128,9 +128,9 @@ const HILL = {
   s: 235, lateral: 112, along: 190, across: 84, height: 36, pines: 260,
   // Three runs down the slope toward the road, wide and a little crooked.
   runs: [
-    { from: [-35, 8], to: [-78, -70], width: 20 },
-    { from: [6, 10], to: [30, -76], width: 16 },
-    { from: [48, 4], to: [118, -58], width: 22 },
+    { from: [-30, 14], to: [-84, -72], width: 26 },
+    { from: [10, 14], to: [34, -78], width: 22 },
+    { from: [52, 6], to: [122, -60], width: 28 },
   ],
 };
 const LAKE = { s: 690, lateral: 58, along: 190, across: 38, level: .75 };
@@ -190,7 +190,7 @@ function lakeside() {
 
 function lodge() {
   // On the lower slope of the hill, looking down the straight.
-  const du = -72, dv = -34;
+  const du = -62, dv = -12;
   return [kit('ski-lodge', HILL.s + du, HILL.lateral + dv, { heading: FACE_RIGHT, scale: 1.6, clear: 24, hill: 0 })];
 }
 
