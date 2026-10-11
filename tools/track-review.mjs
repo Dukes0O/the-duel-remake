@@ -156,6 +156,10 @@ export async function runHeadlessLaps(options) {
     };
     globalThis.cancelAnimationFrame ??= () => {};
     app = new App();
+    // An authored circuit whose switch is off joins COURSE for this run when --flags names it
+    // (the browser step turns the same switches on in its own page).
+    const { ALL_CIRCUITS } = await import('../src/circuits/index.js');
+    for (const circuit of ALL_CIRCUITS) if (options.flags.includes(circuit.flag) && !COURSE.some(entry => entry.id === circuit.id)) COURSE.push(circuit);
     const stageIndex = COURSE.findIndex(entry => entry.id === options.courseId);
     if (stageIndex < 0) throw Error(`No course called ${options.courseId}. Known: ${COURSE.map(c => c.id).join(', ')}`);
     app.profile = { ...app.profile, courses: { version: 1, unlocked: COURSE.map(c => c.id) } };

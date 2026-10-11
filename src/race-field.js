@@ -14,7 +14,7 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 const MPH = DRIVE.mphToWorld;
 
 // Circuits that offer a Grand Prix. P4-GP-EXISTING adds the others.
-export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon']);
+export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'tremblant-woods']);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({

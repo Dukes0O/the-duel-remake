@@ -3,15 +3,17 @@
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
 import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
+import { hillLocal, hillReach, hillHeight, runWeight } from './circuit-hills.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
-// is stored for a reference car and computer racers scale it to their own.
+// is stored for a reference car and computer racers scale it to their own. A
+// circuit may shape its line with a `racingLine` block (see buildRacingLine).
 export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
   installPitLane(course);
-  course.racingLine = buildRacingLine(script, dynamics);
+  course.racingLine = buildRacingLine(script, { ...dynamics, ...(course.def.racingLine ?? {}) });
   f.walls = [];
   f.kerbs = script.kerbs.map(kerb => ({ ...kerb }));
   f.boards = script.boards.map(board => ({ ...board }));
@@ -78,9 +80,23 @@ function scatterScenery(course) {
     const p = course.groundAt(s, off);
     return f.obstacles.every(o => Math.hypot(o.x - p.x, o.z - p.z) > Math.hypot(o.halfX, o.halfZ) + radius);
   };
+  // A circuit can keep planted scenery out of places it draws itself: stretches
+  // (`scenery.clear`: s0, s1 along the road, from, to across it), its hills, and
+  // a radius around its kit pieces (`clear` on each of `kitPlacements`).
+  const keepClear = [...(course.def.scenery?.clear ?? [])], hills = course.def.hills ?? [];
+  const blocked = [];
+  for (const kit of course.def.kitPlacements ?? []) if (kit.clear > 0) { const p = course.groundAt(kit.s, kit.lateral); blocked.push({ x: p.x, z: p.z, radius: kit.clear }); }
+  const cleared = (s, off, radius = 0) => {
+    const phase = course.phase(s);
+    if (keepClear.some(zone => phase >= zone.s0 - radius && phase <= zone.s1 + radius && off >= zone.from - radius && off <= zone.to + radius)) return true;
+    if (hills.some(hill => hillReach(hill, ...hillLocal(hill, phase, off)) < 1.02 + radius / hill.along)) return true;
+    if (!blocked.length) return false;
+    const p = course.groundAt(s, off);
+    return blocked.some(kit => Math.hypot(kit.x - p.x, kit.z - p.z) < kit.radius + radius);
+  };
   for (let i = 0; i < options.rocks; i++) {
     const s = rng.range(50, course.length - 50), off = (i % 2 ? 1 : -1) * rng.range(18, 72), sx = rng.range(1.3, 4), sz = rng.range(1.2, 4), sy = rng.range(.9, 3), angle = rng.range(0, TAU);
-    if (!roadClear(s, off, Math.hypot(sx, sz), 4) || !vacant(s, off, 5)) continue;
+    if (!roadClear(s, off, Math.hypot(sx, sz), 4) || !vacant(s, off, 5) || cleared(s, off, Math.hypot(sx, sz))) continue;
     const rock = { s, off, theme: course.themeAt(s), scale: [sx, sy, sz], angle, radiusX: sx, radiusZ: sz };
     f.rocks.push(rock); add(`rock-${i}`, 'rock', s, off, sx, sz, angle, { shape: 'ellipse', source: rock });
   }
@@ -90,8 +106,8 @@ function scatterScenery(course) {
       if (theme === 'city') continue;
       const sx = rng.range(55, 115), sz = rng.range(55, 110), height = rng.range(65, theme === 'alpine' ? 200 : 120), side = i % 2 ? 1 : -1;
       let off = side * rng.range(180, 330); const radius = Math.hypot(sx, sz) * 1.1;
-      for (let j = 0; j < 9 && !roadClear(s, off, radius, 25); j++) off += side * 40;
-      if (!roadClear(s, off, radius, 25)) continue;
+      for (let j = 0; j < 9 && (!roadClear(s, off, radius, 25) || cleared(s, off, radius)); j++) off += side * 40;
+      if (!roadClear(s, off, radius, 25) || cleared(s, off, radius)) continue;
       f.mountains.push(add(`mountain-${i}`, 'mountain', s, off, sx, sz, rng.range(0, TAU), { height, scale: [sx, height, sz], shape: 'ellipse' }));
     }
   }
@@ -114,8 +130,20 @@ function scatterScenery(course) {
     const s = rng.range(5, course.length - 5), theme = course.themeAt(s);
     if (theme === 'city' && i % 5 || theme === 'desert' && i % 3) continue;
     const off = (i % 2 ? 1 : -1) * rng.range(13, 80), scale = rng.range(.65, 1.7);
-    if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));
+    if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && !cleared(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));
   }
+  // Pines on a hill the circuit draws (circuit-hills.js), standing on its slope
+  // and never on a ski run. Drawn after everything else so the rest is unchanged.
+  hills.forEach((hill, h) => {
+    for (let i = 0; i < (hill.pines ?? 0); i++) {
+      const s = hill.s + rng.range(-hill.along, hill.along), off = hill.lateral + rng.range(-hill.across, hill.across), scale = rng.range(.8, 1.9);
+      const [du, dv] = hillLocal(hill, s, off), p = course.groundAt(s, off);
+      if (hillReach(hill, du, dv) > .96 || runWeight(hill, du, dv) > .02 || blocked.some(kit => Math.hypot(kit.x - p.x, kit.z - p.z) < kit.radius)) continue;
+      const tree = add(`hill-tree-${h}-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale });
+      tree.y += hillHeight(hill, du, dv);
+      f.trees.push(tree);
+    }
+  });
 }
 
 export function trackScriptSolids(course) {
