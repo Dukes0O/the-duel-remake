@@ -43,4 +43,29 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
     ['straight', 500, { climb: 2, name: 'Lodge Climb' }],
     ['turn', 'R', 70, 70, { name: 'Final Turn' }],
   ],
+  // Team Room intel (docs/CIRCUITS.md section 7b.1), written by Claude. Target
+  // speeds and gears come from the reference lap; these notes give the line.
+  intel: {
+    sectors: [1240, 3330],
+    flags: [
+      { id: 'chairlift', kind: 'signature', s: 2700, title: 'Timber Straight and the chairlift', camera: { back: 40, up: 1.2, ahead: 90 } },
+      { id: 'timber', kind: 'overtaking', s: 3170, title: "Timber Straight into Devil's Chicane" },
+      { id: 'pine-drop', kind: 'corner', s: 290, title: 'Pine Drop' },
+      { id: 'ridge-run', kind: 'crest', s: 1050, title: 'Ridge Run crest' },
+      { id: 'beaver-hairpin', kind: 'corner', s: 1780, title: 'Beaver Hairpin' },
+    ],
+    notes: {
+      'pine-drop': { line: 'Turn in before the crest, let the car fall into the right-hander.', note: 'The commitment corner. Fast and downhill over a crest; the careful lift a little, the brave do not.' },
+      'lakeside-plunge': { line: 'Brake as the road levels, left, then straight along the lake.', note: 'The lake opens up in front of you. Do not stare at the view.' },
+      'fir-esses-1': { line: 'Straight-line the esses, kerb to kerb.', note: 'Light right, light left. Barely a lift.' },
+      'fir-esses-2': { line: 'Set up straight for the Ridge Run crest.', note: 'Be straight before the crest; the car takes off.' },
+      'ridge-corner': { brakeBoard: 100, line: 'Wide in, late apex.', note: 'Heavy braking after the crest. Land, then brake.' },
+      'beaver-kink': { line: 'Stay right onto the spur.', note: 'Lines you up for the hairpin.' },
+      'beaver-hairpin': { brakeBoard: 100, line: 'Wide entry, slow in, fast out.', note: 'Everything here is about the exit: the longest straight in the game comes next.' },
+      "devil-s-chicane-1": { brakeBoard: 100, line: 'Brake straight, right then left, use the kerbs.', note: 'The place to pass after Timber Straight. Out-brake them into the first part.' },
+      "devil-s-chicane-2": { line: 'Exit wide, then hug the inside up to Lodge Bend.', note: 'A clean exit keeps them behind you.' },
+      'lodge-bend': { line: 'Long right: patient on the throttle.', note: 'A long uphill corner. Throttle on gently, all the way round.' },
+      'final-turn': { line: 'Wide exit onto Lodge Straight.', note: 'Speed onto the straight is your lap time.' },
+    },
+  },
 });
