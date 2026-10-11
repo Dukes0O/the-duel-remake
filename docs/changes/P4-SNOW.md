@@ -28,11 +28,14 @@ on snow only, expire and never write state. All randomness uses a separate seede
 
 Native High/Performance uses real assets/full field; rules/saves/readiness/disposal exact.
 One compressed art sheet per round goes through the card to Claude, at most three.
-Frame checks reuse the unchanged DAY 360 CPU / >=359 delivered / async GPU
-sampler, both orders and qualities, with the original 10% limits. Static
-eight-car snapshots keep flakes/track expiry active. Moving native full-field
-checks separately prove wheel-track generation/lifetime; static timings do
-not measure moving-car Snow update cost. Quiet slot required.
+Whole-view recipe, before code: fresh native dry/Snow worlds retain road,
+ground,8-car poses,HUD and rear view. Frozen shared6e5f2d64 main/rear sampler:
+120warmup,360CPU,359delivered,>=288GPU,two opposite pairs/quality; original10%
+limits plus combined update/submit10% and candidate deliveredp95<=18.5ms.
+No state edits, sample discard or overhead subtraction. Static effects stay active;
+Moving cost unmeasured; syntax/pure-boundary controls pass, native quiet run pending.
+Loader union retains Snow extras/vehicle update, trusted runtime clearance,
+camera culling and scoped rear restoration; only2granted renderer conflicts.
 
 High native acceptance also requires real floating-point reads from the scene
 before Bloom, bright extraction and all ten blur targets: zero NaN/Inf.
@@ -59,8 +62,7 @@ shader composition, pine break/reset/obliterate poses including the exact
 loader-prepared ground anchor, quality caps and expiry. The actual eight Snow
 High/LOD GLBs pass real mesh clearance, bank containment and pose reset.
 Retained dry grass matrices and tints remain exact after winter omissions;
-all-omitted grass releases its orphan texture. Focused suite passes in 2.7 s.
-Existing surface suite: 11/11 pass; dry neutrality and cue assertions retained.
+All-omitted grass releases its texture; focused suite2.7s/surfaces11pass, original cues exact.
 Malformed ridge/pond tests RED/GREEN; curved ponds pass actual Float32 raycasts including
 actual overlaps; missing rendered terrain is rejected. Test failed before fix.
 Original assertions/tolerances remain exact.
@@ -72,7 +74,7 @@ pass 98 actual triangle anchors, including near/far overlap; max offset error
 0.000004895 m. Live bank identities and winter pine/grass replacement pass.
 Private functional QA has eight captures and no warnings/errors. The scenario
 readiness predicate now returns a boolean instead of serializing a scene;
-acceptance assertions stay unchanged. Clean inspection cameras hide only UI.
+acceptance assertions stay unchanged. Art inspection cameras hide UI; timing keeps it.
 High ridge initially had a black region covering 58.85% of the canvas.
 AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
 90 NaN components; first NaN hit a zero-normal kerb. FIX-P4-KERB-NORMALS
@@ -81,12 +83,10 @@ Fresh native default Bloom input, bright and all ten blur targets have zero
 NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
 Final KIT-LOADER integration ec734cfd genuinely merged without conflicts.
-Renderer prepares extras, retains current bank identities and feeds eight grounded cars.
-Round-one art held; round-two source ba68528f reviewed, same eight native views pass.
+Prepared extras/current bank identities/eight grounded cars pass; round2 ba685 native passes.
 Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
 Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.
-Static timing fixes only its native presentation camera before sampling;
-original samples/10percent limits and all actor poses stay exact.
+Static timing fixes only its native presentation camera; poses and limits stay exact.
 Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
 Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
 Revised native materials/12 finite targets/308 current banks pass; art/frames/gates pending.
@@ -96,5 +96,5 @@ Revised native materials/12 finite targets/308 current banks pass; art/frames/ga
 Winter-range ordinary pine, rock and summer-grass instances are removed from
 the copied presentation views. Snow switches replace the flat winter road
 material path. Shared ordinary scenery remains in use on dry ranges/tracks.
-Consumed ray/AO/flake/composite probes are removed after the cause is proved;
-shared kerb duplicate faces are removed in FIX-P4-KERB-NORMALS.
+Consumed probes/shared reverse kerbs are removed in FIX-P4-KERB-NORMALS.
+Main-only hidden-mirror timing recipe is replaced by fresh whole-view controls.
