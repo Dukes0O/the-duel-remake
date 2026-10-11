@@ -57,14 +57,14 @@ export function winterWeight(course,s){
   return 0;
 }
 const winterAt=(course,s)=>ranges(course).some(row=>course.phase(s)>=row.from&&course.phase(s)<=row.to);
-export function snowPineIds(course){return new Set(course.features.trees.filter(tree=>winterAt(course,tree.s)).map(tree=>tree.id));}
-export function snowRockFeatures(course){return new Set(course.features.rocks.filter(rock=>winterAt(course,rock.s)));}
+export function snowPineIds(course){return new Set(course.def.snowWorld?course.features.trees.map(tree=>tree.id):[]);}
+export function snowRockFeatures(course){return new Set(course.def.snowWorld?course.features.rocks:[]);}
 const placementsCache=new WeakMap();
 export function snowWorldPlacements(course){
   if(placementsCache.has(course))return placementsCache.get(course);
   if(!course.def.snowWorld)return [];
   const entries=[],rng=makeRng(course.seed^0x51a0a77);
-  for(const tree of course.features.trees)if(winterAt(course,tree.s))entries.push({
+  for(const tree of course.features.trees)entries.push({
     id:'snow-pine',s:tree.s,lateral:tree.off,heading:tree.heading-course.at(tree.s).heading,
     scale:tree.scale*.7,scenery:Object.freeze({kind:'tree',id:tree.id})});
   const clusters=course.def.snowWorld.pineClusters??[];
@@ -98,7 +98,7 @@ export function snowWorldPlacements(course){
 // A genuine attribute on every drawn terrain vertex supplies winter coverage.
 export function applySnowTerrain(geometry,course){
   const position=geometry.attributes.position,weights=new Float32Array(position.count);
-  for(let i=0;i<position.count;i++)weights[i]=winterWeight(course,course.nearest(position.getX(i),position.getZ(i)).s);
+  weights.fill(course.def.snowWorld?1:0);
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }
 export function winterTerrainMaterial(material){
@@ -155,6 +155,7 @@ export function snowSceneryPose(tree,events,now,upright=null){
 function addPonds(group,course){
   const ponds=course.def.snowWorld.ponds??[];
   if(!Array.isArray(ponds)||ponds.length>8)throw Error('Winter ponds need at most eight off-road ellipses.');
+  const rimRng=makeRng(course.seed^0x5a0a11);
   for(const pond of ponds){
     const {s,lateral,radiusX:rx,radiusZ:rz}=pond;
     if(![s,lateral,rx,rz].every(Number.isFinite)||s<0||s>course.length||rx<=0||rz<=0||rx>40||rz>40||
@@ -169,8 +170,25 @@ function addPonds(group,course){
     for(let i=0;i<segments;i++)append(Math.sin(i/segments*Math.PI*2)*rz,Math.cos(i/segments*Math.PI*2)*rx);
     for(let i=0;i<segments;i++)indices.push(0,i+1,(i+1)%segments+1);
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
-    const material=winterSurfaceMaterial(new THREE.MeshStandardMaterial({color:0x9ab8c5,roughness:.16,metalness:.18,side:THREE.DoubleSide}), 'ice');
+    const material=winterSurfaceMaterial(new THREE.MeshPhysicalMaterial({color:0x9ab8c5,
+      clearcoat:.55,clearcoatRoughness:.18,ior:1.31,side:THREE.DoubleSide}), 'ice');
+    material.metalness=.08;material.envMapIntensity=1.1;
     const mesh=new THREE.Mesh(geometry,material);mesh.name='Frozen winter pond';mesh.receiveShadow=true;group.add(mesh);
+    const rimPositions=[],rimIndices=[],lift=.16;
+    for(let i=0;i<segments;i++){
+      const angle=i/segments*Math.PI*2,sine=Math.sin(angle),cosine=Math.cos(angle),width=rimRng.range(.65,1.1);
+      for(const [along,off] of [[sine*rz*.97,cosine*rx*.97],[sine*(rz+width),cosine*(rx+width)]]){
+        const point={...course.groundAt(s+along,lateral+off),s:s+along,off:lateral+off},
+          height=renderedGroundHeight(course,point,{requireSurface:true});
+        if(!Number.isFinite(height))throw Error('A pond snow rim needs actual rendered terrain.');
+        rimPositions.push(point.x,height+lift,point.z);
+      }
+      const a=i*2,b=((i+1)%segments)*2;rimIndices.push(a,a+1,b,a+1,b+1,b);
+    }
+    const rimGeometry=new THREE.BufferGeometry();rimGeometry.setAttribute('position',new THREE.Float32BufferAttribute(rimPositions,3));
+    rimGeometry.setIndex(rimIndices);rimGeometry.computeVertexNormals();
+    const rim=new THREE.Mesh(rimGeometry,new THREE.MeshStandardMaterial({color:new THREE.Color().setRGB(.78,.8,.82),roughness:.98,side:THREE.DoubleSide}));
+    rim.name='Anchored pond snow rim';rim.userData.groundLift=lift;rim.receiveShadow=true;rim.castShadow=true;group.add(rim);
   }
 }
 export function createSnowWorld(course,{kits,high=true}={}){

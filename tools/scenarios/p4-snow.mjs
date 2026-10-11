@@ -22,7 +22,8 @@ function prepareNative(quality) {
     surfacePatches:[{id:'shaded-winter-ice',kind:'ice',s0:540,s1:575,shaded:true}],
     snowWorld:{ranges:[{from:0,to:750}],exposed:[{from:500,to:730}],
       ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12},{s:600,lateral:58,radiusX:12,radiusZ:8}],
-      pineClusters:[{s:100,lateral:32,count:5},{s:260,lateral:-34,count:5},{s:580,lateral:38,count:5}]}});
+      pineClusters:[80,180,350,600].flatMap(s=>[-1,1].map(side=>({s,
+        lateral:side*(s===600?38:s===180?36:32),count:8,radius:7})))}});
   window.__snowBeforeBuilds=Number(document.querySelector('#view3d').dataset.worldBuilds||0);
   app._menuCourses.clear();app.onFrame?.(app.duel.state,0);
 }
@@ -79,7 +80,7 @@ function witness(view) {
         dry:[...weight.array].filter(v=>v===0).length,key:mesh.material.customProgramCacheKey()});
     }
   });
-  if(terrain.length<2 || !terrain.some(row=>row.white>0&&row.dry>0&&row.key.includes('winter')))
+  if(terrain.length!==2 || terrain.some(row=>row.white!==row.vertices||row.dry!==0||!row.key.includes('winter')))
     throw Error('Actual near/far ground triangles do not carry winter coverage.');
   const kits=api.scene.getObjectByName('Approved track kits');
   const placements=kits?.userData.trackKitPlacements,kitStats=kits?.userData.trackKitStats;
@@ -98,13 +99,13 @@ function witness(view) {
   if(snowMaterials.size<4||[...snowMaterials].some(material=>material.userData.snowAlbedo!==.8))
     throw Error('Actual approved snow materials do not carry the reviewed albedo.');
   const clusterPines=placements.filter(row=>row.id==='snow-pine'&&!row.scenery).length;
-  if(clusterPines!==15)throw Error('The three authored native pine clusters did not load every approved piece.');
+  if(clusterPines!==64)throw Error('The eight authored native pine clusters did not load every approved piece.');
   if(placements.filter(row=>row.id==='plough-bank').some(row=>row.scale[1]<1.3))
     throw Error('Native physical plough banks lack the reviewed raised profile.');
   const winterMountains=[];api.scene.traverse(node=>{
     if(node.isMesh&&node.name.includes('ridge range'))winterMountains.push(node);
   });
-  if(!winterMountains.length||winterMountains.some(node=>node.material.customProgramCacheKey()!=='connected-mountain-v2-alpine'))
+  if(!winterMountains.length||winterMountains.some(node=>node.material.customProgramCacheKey()!=='connected-mountain-v2-alpine-snow-caps'||node.material.userData.winterCaps!==true))
     throw Error('The winter world retained desert mountains instead of the actual alpine snow shader.');
   const packed=api.scene.getObjectByName('surface-snow'),bloom=api.composer.passes.find(pass=>pass.name==='Bloom');
   if(!packed||packed.material.color.r>=.4||packed.material.color.b>=.5)
@@ -117,15 +118,8 @@ function witness(view) {
       throw Error('An ordinary pine duplicates its approved winter replacement.');
   });
   api.scene.traverse(node=>{
-    if(node.userData.landscapeCell?.kind!=='foliage')return;
-    const matrix=node.matrix.clone();
-    for(let i=0;i<node.count;i++){
-      node.getMatrixAt(i,matrix);
-      const nearest=app.duel.course.nearest(matrix.elements[12],matrix.elements[14]);
-      const p=app.duel.course.phase(nearest.s);
-      if(app.duel.course.def.snowWorld.ranges.some(range=>p>range.from&&p<range.to))
-        throw Error('Green summer foliage remains in the authored winter range.');
-    }
+    if(node.userData.landscapeCell?.kind==='foliage'&&node.count>0)
+      throw Error('Green summer foliage remains in the Snow scene.');
   });
   const cars=api.scene.children.filter(node=>node.visible&&node.userData.vehicleKey);
   if(cars.length!==8 || cars.some(car=>!(car.userData.grounding?.wheels.length>=4)))
@@ -149,7 +143,8 @@ function witness(view) {
     throw Error('An authored exposed ridge did not produce the bounded blowing snow.');
   const pond=snow.getObjectByName('Frozen winter pond');
   if(!pond)throw Error('The authored frozen pond is missing.');
-  if(pond.material.roughness<=0||pond.material.roughness>.08||pond.material.color.b>=.3)
+  if(pond.material.roughness<=0||pond.material.roughness>.08||pond.material.color.b>=.3||
+      !pond.material.isMeshPhysicalMaterial||pond.material.clearcoat<=0||pond.material.envMapIntensity<=0||!api.scene.environment)
     throw Error('Native frozen pond lacks dark glossy reflective ice.');
   let pondGround=null;
   if(view==='pond'){
@@ -164,9 +159,13 @@ function witness(view) {
       }
       return {vertices,index:mesh.geometry.index.array};
     });
-    const ponds=[];snow.traverse(node=>{if(node.name==='Frozen winter pond')ponds.push(node);});
-    let count=0,maxError=0,near=false,far=false,overlap=false;
-    for(const nativePond of ponds){
+    const ponds=[],rims=[];snow.traverse(node=>{
+      if(node.name==='Frozen winter pond')ponds.push(node);
+      if(node.name==='Anchored pond snow rim')rims.push(node);
+    });
+    let count=0,rimCount=0,maxError=0,rimMaxError=0,near=false,far=false,overlap=false,
+      rimNear=false,rimFar=false,rimOverlap=false;
+    for(const nativePond of [...ponds,...rims]){
       nativePond.updateWorldMatrix(true,false);
       const position=nativePond.geometry.attributes.position,point=nativePond.position.clone();
       for(let i=0;i<position.count;i++){
@@ -187,13 +186,18 @@ function witness(view) {
           }
         }
         if(!Number.isFinite(upper))throw Error('A native pond vertex has no drawn terrain triangle.');
-        const error=Math.abs(point.y-upper-.055);maxError=Math.max(maxError,error);
+        const isRim=nativePond.name==='Anchored pond snow rim',lift=isRim?nativePond.userData.groundLift:.055;
+        if(isRim&&lift!==.16)throw Error('Actual snow rim lift differs from the reviewed anchor.');
+        const error=Math.abs(point.y-upper-lift);
+        if(isRim){rimCount++;rimMaxError=Math.max(rimMaxError,error);}else{count++;maxError=Math.max(maxError,error);}
         if(error>1e-4)throw Error('A native pond vertex floats above/below its actual rendered triangle: '+error);
-        near ||= hitSurfaces.has(0);far ||= hitSurfaces.has(1);overlap ||= hitSurfaces.size>1;count++;
+        if(isRim){rimNear ||= hitSurfaces.has(0);rimFar ||= hitSurfaces.has(1);rimOverlap ||= hitSurfaces.size>1;}
+        else{near ||= hitSurfaces.has(0);far ||= hitSurfaces.has(1);overlap ||= hitSurfaces.size>1;}
       }
     }
-    if(ponds.length!==2||!near||!far||!overlap)throw Error('Native curved ponds must exercise near/far terrain and overlaps.');
-    pondGround={ponds:ponds.length,vertices:count,maxError,near,far,overlap};
+    if(ponds.length!==2||count!==98||!near||!far||!overlap)throw Error('Native curved ponds must exercise near/far terrain and overlaps.');
+    if(rims.length!==2||rimCount!==192||!rimNear||!rimFar||!rimOverlap)throw Error('Native snow rims must independently exercise near/far terrain and overlaps.');
+    pondGround={ponds:ponds.length,vertices:count,maxError,near,far,overlap,rims:rims.length,rimVertices:rimCount,rimMaxError,rimNear,rimFar,rimOverlap};
   }
 
   const programs=api.renderer.info.programs;
@@ -203,6 +207,7 @@ function witness(view) {
     look:{clusterPines,bankScale:1.3,snowMaterials:snowMaterials.size,albedo:.8,
       mountains:winterMountains.length,packedColour:packed.material.color.toArray(),
       iceColour:pond.material.color.toArray(),iceRoughness:pond.material.roughness,
+      iceClearcoat:pond.material.clearcoat,environmentReflection:!!api.scene.environment,
       exposure:api.renderer.toneMappingExposure,bloom:bloom.strength},programs:programs.length};
 }
 

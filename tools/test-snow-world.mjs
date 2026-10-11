@@ -6,6 +6,7 @@ import {createTrackKits} from '../src/track-kits.js';
 import {addLandscapeDetail} from '../src/landscape-detail.js';
 import {disposeTree} from '../src/world.js';
 import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
+import {createMountainMaterial,buildMountainGeometry} from '../src/mountain-landscape.js';
 import {Course} from '../src/course.js';
 import {createSceneLighting} from '../src/scene-lighting.js';
 import {resolveLightingSettings} from '../src/lighting-moods.js';
@@ -63,7 +64,9 @@ const geom=new THREE.BufferGeometry();
 const a=course.groundAt(200,20),b=course.groundAt(1100,20);
 geom.setAttribute('position',new THREE.Float32BufferAttribute([a.x,a.y,a.z,b.x,b.y,b.z],3));
 applySnowTerrain(geom,course);
-assert.equal(geom.attributes.winterWeight.getX(0),1);assert.equal(geom.attributes.winterWeight.getX(1),0);
+assert.equal(geom.attributes.winterWeight.getX(0),1);
+assert.equal(geom.attributes.winterWeight.getX(1),1,'final-round Snow scene covers both formerly green grid verges');
+assert.equal(winterWeight(course,1100),0,'full-scene visual snow does not expand authored physical ranges');
 const tree=course.features.trees.find(row=>snowPineIds(course).has(row.id));assert.ok(tree);
 const upright=snowSceneryPose(tree,[],0),fallen=snowSceneryPose(tree,[{kind:'tree',id:tree.id,
   atTime:0,directionX:1,directionZ:0,outcome:'knock'}],1);
@@ -180,6 +183,7 @@ try{
 // Authored curved pond crosses the actual near/far overlap, not an analytic plane.
 const pondCourse=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.snowWorld,
   ponds:[{s:600,lateral:58,radiusX:12,radiusZ:8}]}},1989);
+const pondFeaturesBefore=JSON.stringify(pondCourse.features);
 const pondOwner=createSnowWorld(pondCourse),pond=pondOwner.group.getObjectByName('Frozen winter pond');
 const actualMaterial=new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),
   actualNear=new THREE.Mesh(terrainGeometry(pondCourse),actualMaterial),
@@ -198,16 +202,50 @@ for(let i=0;i<pond.geometry.attributes.position.count;i++){
   if(hits.some(hit=>hit.object===actualNear)&&hits.some(hit=>hit.object===actualFar))witnessedOverlap++;
 }
 assert.ok(witnessedNear&&witnessedFar&&witnessedOverlap,'curved near/far and overlapping drawn triangles are exercised');
+assert.equal(pond.material.isMeshPhysicalMaterial,true,'pond uses native environment reflection');
+assert.ok(pond.material.clearcoat>0&&pond.material.clearcoatRoughness>0&&pond.material.envMapIntensity>0);
+assert.equal(pond.material.roughness,.065,'original glossy dark ice remains');
+const rim=pondOwner.group.getObjectByName('Anchored pond snow rim');
+assert.ok(rim,'the frozen pond has a genuine snow rim');
+assert.equal(rim.geometry.attributes.position.count,96);
+assert.equal(rim.geometry.index.count,288);
+assert.equal(rim.userData.groundLift,.16);
+let rimNear=0,rimFar=0,rimOverlap=0;
+for(let i=0;i<rim.geometry.attributes.position.count;i++){
+  const vertices=rim.geometry.attributes.position,normals=rim.geometry.attributes.normal;
+  pondRay.set(new THREE.Vector3(vertices.getX(i),2000,vertices.getZ(i)),down);
+  const hits=pondRay.intersectObjects([actualNear,actualFar],false);
+  assert.ok(hits.length,'every uneven rim vertex has actual drawn terrain');
+  assert.ok(Math.abs(vertices.getY(i)-hits[0].point.y-.16)<1e-4,'rim follows the actual upper triangle');
+  const nearest=pondCourse.nearest(vertices.getX(i),vertices.getZ(i));
+  assert.ok(nearest.distance>pondCourse.roadHalfWidthAt(nearest.s)+2,'rim remains clear of the actual road');
+  const normal=new THREE.Vector3().fromBufferAttribute(normals,i);
+  assert.ok(normal.toArray().every(Number.isFinite)&&Math.abs(normal.length()-1)<1e-6,'rim normals are finite unit vectors');
+  if(hits[0].object===actualNear)rimNear++;
+  if(hits[0].object===actualFar)rimFar++;
+  if(hits.some(hit=>hit.object===actualNear)&&hits.some(hit=>hit.object===actualFar))rimOverlap++;
+}
+assert.ok(rimNear&&rimFar&&rimOverlap,'rim exercises the same genuine near/far overlap');
+const repeatedPondOwner=createSnowWorld(new Course(pondCourse.def,1989));
+assert.deepEqual(repeatedPondOwner.group.getObjectByName('Anchored pond snow rim').geometry.attributes.position.array,
+  rim.geometry.attributes.position.array,'bounded rim seed repeats exactly');
+repeatedPondOwner.dispose();
+assert.equal(JSON.stringify(pondCourse.features),pondFeaturesBefore,'rim never changes physical surfaces or scenery');
+
 pondOwner.dispose();actualNear.geometry.dispose();actualFar.geometry.dispose();actualMaterial.dispose();
 const unsupportedPond=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.snowWorld,
   ponds:[{s:180,lateral:5000,radiusX:9,radiusZ:5}]}},1989);
 assert.throws(()=>createSnowWorld(unsupportedPond),/actual rendered terrain/,
   'a pond outside the actual terrain fails without an analytic fallback');
-const clusteredDef={...def,snowWorld:{...def.snowWorld,pineClusters:[
-  {s:180,lateral:32,count:5},{s:580,lateral:-36,count:5}]}};
+const clusterCentres=[80,180,350,600].flatMap(s=>[-1,1].map(side=>({s,lateral:side*(s===600?38:s===180?36:32),count:8,radius:7})));
+const clusteredDef={...def,terrainHalfWidth:64,scenery:{trees:100,rocks:30,mountains:true},
+  script:[['straight',500,{width:16,surface:'snow',climb:40,walls:'none'}],
+    ['turn','L',180,80,{width:16,walls:'none'}],
+    ['straight',500,{width:16,climb:-40,walls:'none'}],['turn','L',180,80,{width:16,walls:'none'}]],
+  snowWorld:{...def.snowWorld,pineClusters:clusterCentres}};
 const clusteredCourse=new Course(clusteredDef,1989),clusteredBefore=JSON.stringify(clusteredCourse.features);
 const clusteredRows=snowWorldPlacements(clusteredCourse),extraPines=clusteredRows.filter(row=>row.id==='snow-pine'&&!row.scenery);
-assert.equal(extraPines.length,10,'authored winter clusters add genuine approved pines');
+assert.equal(extraPines.length,64,'eight authored winter clusters add every approved pine');
 assert.deepEqual(clusteredRows,snowWorldPlacements(new Course(clusteredDef,1989)),'separate cluster RNG repeats exactly');
 assert.equal(JSON.stringify(clusteredCourse.features),clusteredBefore,'clusters never edit physical features');
 assert.throws(()=>snowWorldPlacements(new Course({...def,snowWorld:{...def.snowWorld,
@@ -216,9 +254,43 @@ const clusterKits=createTrackKits(clusteredCourse,{extraPlacements:clusteredRows
   loadAsset:async path=>{const bytes=await readFile(new URL('../public'+path,import.meta.url));
     return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');}});
 assert.equal(await clusterKits.ready,true,clusterKits.error?.message);
-assert.equal(clusterKits.placements.filter(row=>row.id==='snow-pine'&&!row.scenery).length,10,
-  'all clustered approved High/LOD meshes pass actual anchoring and clearance');
+assert.equal(clusterKits.placements.filter(row=>row.id==='snow-pine'&&!row.scenery).length,64,
+  'all 64 clustered approved High/LOD meshes pass actual anchoring and clearance');
 clusterKits.dispose();
+// Existing alpine cap shader remains exact for ordinary calls, and widens only Snow.
+const compileMountain=material=>{
+  const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};
+  material.onBeforeCompile(shader);return shader;
+};
+for(const theme of ['alpine','desert','coast']){
+  const texture=new THREE.Texture(),original=createMountainMaterial(theme,texture),
+    explicitDry=createMountainMaterial(theme,texture,{winterCaps:false}),winter=createMountainMaterial(theme,texture,{winterCaps:true});
+  assert.deepEqual(compileMountain(original),compileMountain(explicitDry),'explicit dry shader remains exact');
+  assert.equal(original.customProgramCacheKey(),explicitDry.customProgramCacheKey());
+  assert.ok(compileMountain(original).fragmentShader.includes('smoothstep(.54,.81,mountainSnowLine)*smoothstep(.24,.73,mountainNormal.y)'),
+    'ordinary calls retain the exact original cap formula');
+  assert.deepEqual(original.color.toArray(),winter.color.toArray(),'caps retain original rock material');
+  assert.equal(original.bumpScale,winter.bumpScale);
+  const shader=compileMountain(winter);
+  if(theme==='alpine'){
+    assert.equal(winter.customProgramCacheKey(),'connected-mountain-v2-alpine-snow-caps');
+    assert.ok(shader.fragmentShader.includes('smoothstep(.38,.64,mountainSnowLine)*smoothstep(.04,.32,mountainNormal.y)'));
+  }else assert.deepEqual(shader,compileMountain(original),'other themes never gain winter caps');
+  original.dispose();explicitDry.dispose();winter.dispose();texture.dispose();
+}
+for(let variant=0;variant<4;variant++){
+  const geometry=buildMountainGeometry(variant),position=geometry.attributes.position,normal=geometry.attributes.normal;
+  let newCoverage=0,oldCoverage=0;
+  const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
+  for(let i=0;i<position.count;i++){
+    if(position.getY(i)<.5)continue;
+    const y=position.getY(i),slope=normal.getY(i);
+    oldCoverage+=smooth(.54,.81,y)*smooth(.24,.73,slope);
+    newCoverage+=smooth(.38,.64,y)*smooth(.04,.32,slope);
+  }
+  assert.ok(newCoverage>oldCoverage,'actual existing peak normals gain snow coverage without a geometry replacement');
+  geometry.dispose();
+}
 // Round-two palette checks precede appearance code. Dry presets and owners stay exact.
 const paletteLoader=THREE.TextureLoader.prototype.load;
 THREE.TextureLoader.prototype.load=()=>new THREE.Texture();

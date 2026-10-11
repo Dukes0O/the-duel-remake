@@ -2,8 +2,8 @@
 
 ## Design, before code
 
-Only explicit snowWorld ranges opt a track into winter scenery. Existing dry
-tracks stay exact. The snow-world dev switch controls this new presentation.
+Explicit snowWorld metadata plus snow-world dev opts a scene into winter.
+Full visible terrain is snow; authored ranges still own exact physical surfaces.
 Snow pines, ground, ledge rocks and banks reuse Kyle's approved kit GLBs.
 
 Course construction generates real deep-snow verge bands from the same ranges.
@@ -15,10 +15,10 @@ Terrain coverage uses a winter weight on the drawn triangles; ponds are
 explicit off-road metadata, with fixed ice shells and shoreline snow.
 Every pond vertex uses requireSurface renderedGroundHeight on actual Float32
 near/far triangles; a missing surface fails instead of floating analytic ice. Pines
-replace their ordinary winter-range instances and retain broken-scenery poses.
+replace ordinary Snow-scene instances and retain broken-scenery poses.
 Existing packed-snow/ice road overlays gain granular/worn surface detail.
 An optional landscape-detail omitFoliageAt predicate removes summer grass
-inside winter ranges after all seeded placement/color calls, preserving dry
+throughout Snow scenes after seeded placement/color calls, preserving dry
 object signatures and RNG order. Native checks reject duplicate green grass.
 Camera-local flakes, ridge gusts and tyre decals have fixed limits and fewer
 instances in Performance. A winter world rebuilds when an equivalent Course
@@ -44,15 +44,14 @@ triangles without changing vertices/materials; its independent regression
 failed on the actual ridge zero normal first. Genuine fix merge preserves
 Dossier snapshot/readiness/retry/disposal and Snow/PIT presentation hooks.
 Equivalent winter snapshots must rebuild with the current Course bank identities.
-
-Round two, before look code: Claude held lighting2/readability2/grounding3/consistency1.5.
-Use near-.8 Snow albedo, cool shadows/pale sky, lower positive Snow exposure/Bloom;
-retain timed sun/night fields through pure settings transform, dry defaults exact.
-Darker packed road/ruts, raised banks within exact patches, dark glossy reflective ice.
-Existing alpine snowy mountains replace desert appearance; optional seeded authored
-pineClusters reuse approved pieces, light flakes retain original caps/ridge cues.
-Palette RED proves missing transform, then1-ULP dry residue; snapshot six actual colours.
-Proven A-winterB-B RED: fixed last-dry components tag one snapshot; restore same,else canonical.
+Round3 final, before code: Claude holds round2 at3.5/3.5/3.5/2.5.
+Full-scene snow attributes/foliage exclusion replace range-only coverage;
+physical ranges/grip/banks stay exact. Eight seeded approved8-pine clusters.
+Existing alpine shader gets Snow-only lower cap height/slope thresholds;
+mesh positions/normals and all ordinary shader calls stay exact. Pond gains
+bounded seeded uneven snow rim anchored to actual upper triangles, and native
+physical clearcoat for faint real environment reflection; no new render pass.
+Prior near-.8 albedo, positive Bloom, dry palette provenance and lifetime stay exact.
 
 ## Checks
 
@@ -62,19 +61,19 @@ shader composition, pine break/reset/obliterate poses including the exact
 loader-prepared ground anchor, quality caps and expiry. The actual eight Snow
 High/LOD GLBs pass real mesh clearance, bank containment and pose reset.
 Retained dry grass matrices and tints remain exact after winter omissions;
-All-omitted grass releases its texture; focused suite2.7s/surfaces11pass, original cues exact.
+All-omitted grass releases its texture; original surface cues remain exact.
 Malformed ridge/pond tests RED/GREEN; curved ponds pass actual Float32 raycasts including
 actual overlaps; missing rendered terrain is rejected. Test failed before fix.
-Original assertions/tolerances remain exact.
+Round3 coverage RED0 versus1 then GREEN; native coverage/foliage scope now
+requires the full Snow scene, per Claude.64 actual assets/rim ray/unit normals pass.
 
-Memory-only native High/Performance acceptance passes with eight actual cars,
+Round2 memory-only native High/Performance passes with eight actual cars,
 340/128 driven wheel marks expiring to zero after 8.5 s, and unchanged
 state/profile/memory saves. Flakes use 240/72 and marks 512/128. Two ponds
 pass 98 actual triangle anchors, including near/far overlap; max offset error
 0.000004895 m. Live bank identities and winter pine/grass replacement pass.
-Private functional QA has eight captures and no warnings/errors. The scenario
-readiness predicate now returns a boolean instead of serializing a scene;
-acceptance assertions stay unchanged. Art inspection cameras hide UI; timing keeps it.
+Round2 functional QA has eight captures and no warnings/errors. Readiness uses
+a boolean. Art inspection cameras hide UI; whole-view timing keeps it.
 High ridge initially had a black region covering 58.85% of the canvas.
 AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
 90 NaN components; first NaN hit a zero-normal kerb. FIX-P4-KERB-NORMALS
@@ -89,11 +88,12 @@ Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite tar
 Static timing fixes only its native presentation camera; poses and limits stay exact.
 Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
 Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
-Revised native materials/12 finite targets/308 current banks pass; art/frames/gates pending.
+Round3 focused GREEN: dry cap shader, wider real normals,64 seeded pines,
+actual rim overlap/road clearance/read-only identity; native art/frames/gates pending.
 
 ## Removed
 
-Winter-range ordinary pine, rock and summer-grass instances are removed from
+Snow-scene ordinary pine, rock and summer-grass instances are removed from
 the copied presentation views. Snow switches replace the flat winter road
 material path. Shared ordinary scenery remains in use on dry ranges/tracks.
 Consumed probes/shared reverse kerbs are removed in FIX-P4-KERB-NORMALS.
