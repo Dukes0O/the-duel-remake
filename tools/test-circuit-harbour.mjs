@@ -98,3 +98,83 @@ test('the same seed gives the same walls and scenery', () => {
   assert.equal(again.features.walls.length, course.features.walls.length);
   assert.equal(again.features.trees.length, course.features.trees.length);
 });
+
+// ---------------------------------------------------------------------------
+// The street: kit placements for the loader (src/circuit-kit-layout.js)
+
+import { readFileSync } from 'node:fs';
+import { PIECES } from '../src/circuit-kit-layout.js';
+import { basinWeight } from '../src/basins.js';
+
+const manifest = JSON.parse(readFileSync(new URL('../public/assets/models/circuits/kits/manifest.json', import.meta.url), 'utf8'));
+const placements = HARBOUR_LIGHTS.kitPlacements;
+
+test('the layout knows the sizes in the kit manifest', () => {
+  for (const [id, info] of Object.entries(PIECES)) {
+    const piece = manifest.pieces.find(item => item.id === id);
+    assert.ok(piece, `${id} is in the manifest`);
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(piece.size[i] - info.size[i]) < .02, `${id} size ${i}`);
+  }
+});
+
+test('every placement is a valid loader entry, in the same order every time', () => {
+  const ids = new Set(manifest.pieces.map(piece => piece.id));
+  assert.ok(placements.length > 3000);
+  for (const entry of placements) {
+    assert.ok(ids.has(entry.id), entry.id);
+    assert.ok(Number.isFinite(entry.s) && entry.s >= 0 && entry.s <= course.length, `s of ${entry.id}`);
+    assert.ok(Number.isFinite(entry.lateral) && Number.isFinite(entry.heading));
+    const scale = Array.isArray(entry.scale) ? entry.scale : [entry.scale];
+    assert.ok(scale.every(value => value > 0 && Number.isFinite(value)));
+  }
+  assert.equal(JSON.stringify(placements), JSON.stringify(new Course(HARBOUR_LIGHTS, 7).def.kitPlacements));
+});
+
+test('the street has everything the card asks for', () => {
+  const count = id => placements.filter(entry => entry.id === id).length;
+  for (const id of ['concrete-wall', 'catch-fence', 'tyre-wall', 'shopfront-a', 'shopfront-b', 'neon-sign', 'lantern-string', 'lantern-tower', 'harbour-boat', 'start-gantry', 'pit-garage', 'grandstand'])
+    assert.ok(count(id) > 0, id);
+  assert.equal(count('concrete-wall'), count('catch-fence'));
+  assert.equal(count('start-gantry'), 1);
+  // Strings of lanterns hang over the old town and over the Lantern Hairpin.
+  const hairpin = piece(course.script, 'Lantern Hairpin');
+  assert.ok(placements.some(entry => entry.id === 'lantern-string' && entry.s > hairpin.s0 - 60 && entry.s < hairpin.s1 + 60), 'lanterns above the hairpin');
+  const oldTown = placements.filter(entry => entry.id === 'lantern-string' && entry.s > 1250 && entry.s < 1670);
+  assert.ok(oldTown.length > 20, 'lanterns through the old town');
+  // The Lantern Tower stands above Casino Corner.
+  const tower = placements.find(entry => entry.id === 'lantern-tower'), casino = piece(course.script, 'Casino Corner');
+  assert.ok(tower.s > casino.s0 && tower.s < casino.s1);
+});
+
+test('no building, sign or boat stands on the road, a run-off road or in the water', () => {
+  const water = HARBOUR_LIGHTS.basins;
+  for (const entry of placements) {
+    if (['concrete-wall', 'catch-fence', 'tyre-wall', 'lantern-string', 'start-gantry', 'neon-sign', 'harbour-boat'].includes(entry.id)) continue;
+    const world = course.worldAt(entry.s, entry.lateral), found = course.nearest(world.x, world.z);
+    assert.ok(found.distance > course.roadHalfWidthAt(found.s) + 2.5, `${entry.id} at ${entry.s.toFixed(0)} m is off the road`);
+    for (const escape of course.escapeRoads) {
+      const { u, v } = escapeFrame(escape, world.x, world.z);
+      assert.ok(!(u > -4 && u < escape.run + 6 && v > escape.inner - 4 && v < escape.outer + 5), `${entry.id} clear of ${escape.id}`);
+    }
+    for (const basin of water) assert.ok(basinWeight(basin, found.s, found.lateral) < .05, `${entry.id} out of the ${basin.id} water`);
+  }
+  for (const boat of placements.filter(entry => entry.id === 'harbour-boat')) {
+    const found = course.nearest(...(() => { const w = course.worldAt(boat.s, boat.lateral); return [w.x, w.z]; })());
+    assert.ok(water.some(basin => basinWeight(basin, found.s, found.lateral) > .9), `boat at ${boat.s.toFixed(0)} floats`);
+  }
+});
+
+test('no wall stands in the openings of the escape roads, and the water holds the ground down', () => {
+  for (const escape of course.escapeRoads) {
+    const clash = placements.filter(entry => entry.id === 'concrete-wall').filter(entry => {
+      const w = course.worldAt(entry.s, entry.lateral), { u, v } = escapeFrame(escape, w.x, w.z);
+      return u > 2 && u < 14 && v > escape.inner + 1 && v < escape.outer + .25 && Math.abs(entry.s - escape.s0) < 120;
+    });
+    assert.equal(clash.length, 0, escape.id);
+  }
+  for (const basin of HARBOUR_LIGHTS.basins) {
+    const mid = (basin.s0 + basin.s1) / 2, across = (basin.from + basin.to) / 2, ground = course.groundAt(mid, basin.side * across).y;
+    assert.ok(Math.abs(ground - (basin.level - basin.deep)) < .05, `${basin.id}: the floor lies below the water`);
+    assert.ok(ground < course.at(mid).y - 1, `${basin.id}: below the road`);
+  }
+});

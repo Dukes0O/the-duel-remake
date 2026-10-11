@@ -24,8 +24,9 @@
 // Lantern Hairpin turns the road for home; the Reservoir Run and Harbour Road
 // bring it back. Closest separate stretches: the hairpin approach and exit.
 import { defineScriptedCourse } from '../track-script.js';
+import { buildKitPlacements } from '../circuit-kit-layout.js';
 
-export const HARBOUR_LIGHTS = defineScriptedCourse({
+const BASE = defineScriptedCourse({
   id: 'harbour-lights', name: 'Harbour Lights', flag: 'harbour-lights',
   theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 1,
   closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
@@ -55,10 +56,10 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
   // pools of the reservoir along the Reservoir Run. The ground beside the road is sunk to hold
   // them (Course.basinWeight); `level` is the water's height, `deep` how far the floor lies below it.
   basins: [
-    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: 2.4 },
-    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: 2.4 },
-    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: 2.4 },
-    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: 2.4 },
+    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: .8 },
+    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: .8 },
+    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: .8 },
+    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: .8 },
   ],
   // Straight run-offs behind openings in the wall, on the outside of the two
   // slow corners (src/track-script-course.js).
@@ -70,10 +71,10 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
   // pools of the reservoir along the Reservoir Run. The ground beside the road is sunk to hold
   // them (Course.basinWeight); `level` is the water's height, `deep` how far the floor lies below it.
   basins: [
-    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: 2.4 },
-    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: 2.4 },
-    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: 2.4 },
-    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: 2.4 },
+    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: .8 },
+    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: .8 },
+    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: .8 },
+    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: .8 },
   ],
   script: [
     ['straight', 500, { name: 'Seafront Straight', width: 14 }],
@@ -129,3 +130,37 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
     },
   },
 });
+
+// The street (docs/CIRCUITS.md 5.2), laid out for the kit loader by src/circuit-kit-layout.js.
+const TINTS = [0xe9d3b0, 0xd89a8a, 0x9cc0bb, 0xdcb25a, 0xa9b4d0, 0xc98562];
+const STREET = {
+  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall' },
+  paddock: {
+    gantry: { at: -2.5 },
+    garages: { side: 1, from: -92, to: 96, lane: 9 },
+    stands: { side: -1, from: -58, to: 62, setback: 5 },
+  },
+  rows: [
+    { id: 'casino-street', pieces: ['shopfront-a', 'shopfront-b'], from: 895, to: 1045, side: 'both' },
+    { id: 'temple-hill', pieces: ['shopfront-a', 'shopfront-b'], from: 1112, to: 1250, side: 'both' },
+    { id: 'old-town', pieces: ['shopfront-a', 'shopfront-b'], from: 1252, to: 1760, side: 'both', setback: 1.8, gap: .3 },
+    { id: 'hairpin-street', pieces: ['shopfront-a', 'shopfront-b'], from: 1760, to: 2030, side: 'both', setback: 2.2 },
+    { id: 'fishmarket', pieces: ['shopfront-b', 'shopfront-a'], from: 2083, to: 2255, side: 'both', setback: 3 },
+    { id: 'quay-front', pieces: ['shopfront-b'], from: 140, to: 394, side: 1, setback: 5, scale: [.9, 1.1] },
+  ],
+  singles: [{ id: 'lantern-tower', at: { piece: 'Casino Corner', at: 'middle' }, lateral: -62, scale: 1.5 }],
+  signs: { from: 905, to: 2250, every: 46, side: 'both', lift: 4.6 },
+  strings: [
+    { from: 920, to: 1040, every: 30 },
+    { from: 1255, to: 1665, every: 27 },
+    { from: 1985, to: 2125, every: 14 },
+  ],
+  boats: [{ basin: 'seafront', count: 11 }, { basin: 'harbour-road', count: 12 }],
+};
+
+// The placements take a third of a second to work out, so they are worked out the first time
+// someone reads them (the kit loader, when this circuit's world is built), not when the game starts.
+let placements = null;
+export const HARBOUR_LIGHTS = Object.freeze(Object.defineProperty({ ...BASE }, 'kitPlacements', {
+  enumerable: true, get: () => (placements ??= Object.freeze(buildKitPlacements(BASE, STREET))),
+}));
