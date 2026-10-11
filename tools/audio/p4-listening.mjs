@@ -5,6 +5,7 @@ import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {ffmpeg, decodeAudioBytes} from './codec.mjs';
 import {runtimeName} from './p4-audio.mjs';
+import {measureLoudness} from './measurements.mjs';
 
 export const LISTENING_GROUPS = Object.freeze({
   '01-race-signals': ['race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final', 'race.finish.flag'],
@@ -122,8 +123,94 @@ export function buildP4RecordedListening(out) {
   return info;
 }
 
+// A failed whole capture can still contain an independently verified prefix.
+// This mode never changes its source manifests or grants a whole-race verdict.
+export function inspectP4PartialRecording({recording, functional, harness, sourceWave, pcmByStem}) {
+  const demand = (yes, message) => {if (!yes) throw Error(message);};
+  demand(recording?.status === 'incomplete', 'Partial mode needs an incomplete native recording');
+  demand(harness?.scenario === 'p4-audio' && harness.passed === false && harness.memoryOnlySaves === true &&
+    typeof harness.error === 'string' && harness.error.length > 0, 'Partial mode needs the original failed memory-only harness');
+  demand(functional?.memoryOnly === true && functional.simulationEdits === false && functional.syntheticResults === false &&
+    functional.controlAdapter?.saveCalls === 0, 'Partial source lacks unedited memory-only native checks');
+  const {sampleRate,startFrame,endFrame} = recording;
+  demand(sampleRate === 48000 && Number.isInteger(startFrame) && Number.isInteger(endFrame) && endFrame > startFrame,
+    'Partial mode needs integer native boundaries at48kHz');
+  const frames=endFrame-startFrame,durationSec=frames/sampleRate;
+  demand(recording.duration == null || recording.duration === durationSec, 'Partial native duration conflicts with its frames');
+  demand(Array.isArray(recording.segments) && recording.segments.length > 0, 'No verified native prefix segments');
+  let nextFrame=startFrame;
+  for(const segment of recording.segments) {
+    demand(segment.sampleRate === sampleRate && segment.startFrame === nextFrame &&
+      Number.isInteger(segment.endFrame) && segment.endFrame > nextFrame, 'Partial native segment boundary/rate mismatch');
+    const count=segment.endFrame-segment.startFrame;
+    for(const name of ['mix','engine','interface']) {
+      const track=segment.tracks?.[name];
+      demand(track?.startFrame === segment.startFrame && track.endFrame === segment.endFrame && track.frames === count &&
+        track.identity?.complete === true && track.identity.checkedFrames === count,
+        'Partial native stem identity/boundary mismatch: '+name);
+    }
+    nextFrame=segment.endFrame;
+  }
+  demand(nextFrame === endFrame, 'Partial segments do not cover exactly the retained native prefix');
+  const sha256=bytes=>createHash('sha256').update(bytes).digest('hex'),stemSha256={};
+  for(const name of ['mix','engine','interface']) {
+    const pcm=pcmByStem?.[name];
+    demand(Buffer.isBuffer(pcm) && pcm.length === frames*8, 'Partial retained PCM length mismatch: '+name);
+    for(let at=0;at<pcm.length;at+=4)demand(Number.isFinite(pcm.readFloatLE(at)), 'Nonfinite partial PCM: '+name);
+    stemSha256[name]=sha256(pcm);
+  }
+  demand(Buffer.isBuffer(sourceWave), 'Missing partial source WAV');
+  const wave=waveInfo(sourceWave);
+  demand(wave.encoding === 3 && wave.bits === 32 && wave.channels === 2 && wave.sampleRate === sampleRate &&
+    wave.frames === frames, 'Partial WAV differs from native prefix format/frames');
+  demand(wave.pcm.equals(pcmByStem.mix), 'Partial source WAV is not the exact retained native mix prefix');
+  return {status:'incomplete',completeRace:false,wholeHarnessPassed:false,verifiedPrefix:true,
+    sampleRate,channels:2,startFrame,endFrame,frames,durationSec,segments:recording.segments.length,
+    originalFailure:harness.error,sourcePcmSha256:stemSha256.mix,stemSha256,sourceSha256:sha256(sourceWave)};
+}
+
+function floatWave(pcm,sampleRate,channels) {
+  const wave=Buffer.alloc(44+pcm.length),stride=channels*4;
+  wave.write('RIFF');wave.writeUInt32LE(wave.length-8,4);wave.write('WAVEfmt ',8);
+  wave.writeUInt32LE(16,16);wave.writeUInt16LE(3,20);wave.writeUInt16LE(channels,22);
+  wave.writeUInt32LE(sampleRate,24);wave.writeUInt32LE(sampleRate*stride,28);
+  wave.writeUInt16LE(stride,32);wave.writeUInt16LE(32,34);wave.write('data',36);
+  wave.writeUInt32LE(pcm.length,40);pcm.copy(wave,44);return wave;
+}
+
+export function buildP4PartialRecordedListening(out) {
+  if(!out)throw Error('--partial-recorded-mix needs an existing native evidence directory');
+  const readJson=name=>JSON.parse(readFileSync(join(out,name),'utf8'));
+  const sourceWave=readFileSync(join(out,'mix.wav'));
+  const pcmByStem=Object.fromEntries(['mix','engine','interface'].map(name=>[name,readFileSync(join(out,name+'.f32'))]));
+  const prefix=inspectP4PartialRecording({recording:readJson('recording.json'),functional:readJson('p4-audio.json'),
+    harness:readJson('report.json'),sourceWave,pcmByStem});
+  const file='mix-incomplete-listening.mp3';
+  const args=['-threads','1','-filter_threads','1','-y','-i',join(out,'mix.wav'),'-map','0:a:0',
+    '-map_metadata','-1','-c:a','libmp3lame','-q:a','2',join(out,file)];
+  ffmpeg(args);
+  const output=readFileSync(join(out,file)),format=waveInfo(decodeAudioBytes(output));
+  const decodeArgs=['-threads','1','-i',join(out,file),'-c:a','pcm_f32le','-f','f32le','pipe:1'];
+  const decodedPcm=ffmpeg(decodeArgs),decodedFrames=decodedPcm.length/(format.channels*4);
+  if(format.sampleRate !== prefix.sampleRate || format.channels !== prefix.channels || decodedFrames !== prefix.frames)
+    throw Error('Partial MP3 changed the native prefix rate/channels/frame count');
+  const sourceMeasurements=measureLoudness(sourceWave);
+  const reconstructedMeasurements=measureLoudness(floatWave(decodedPcm,format.sampleRate,format.channels));
+  if(!sourceMeasurements.available || !reconstructedMeasurements.available)throw Error('Partial mix loudness unavailable');
+  const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const info={...prefix,file,source:'mix.wav',outputSha256:sha256(output),outputBytes:output.length,
+    decodedFrames,sourceMeasurements,reconstructedMeasurements,
+    purpose:'INCOMPLETE native listening prefix. The whole-race recording failed; this file cannot certify its finish or full capture.',
+    normalization:false,edits:false,resampling:false,listeningApproved:false,
+    recipe:{helper:'tools/audio/codec.mjs:ffmpeg',args,decodeArgs,measurement:'FFmpeg loudnorm input metrics; normalized analysis output discarded'}};
+  writeFileSync(join(out,'listening-partial.json'),JSON.stringify(info,null,2)+'\n');return info;
+}
+
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  const partial = process.argv[2] === '--partial-recorded-mix';
+  if (partial && process.argv.length !== 4) throw Error('Usage: p4-listening.mjs --partial-recorded-mix <native-evidence-directory>');
   const recorded = process.argv[2] === '--recorded-mix';
   if (recorded && process.argv.length !== 4) throw Error('Usage: p4-listening.mjs --recorded-mix <native-evidence-directory>');
-  console.log(JSON.stringify(recorded ? buildP4RecordedListening(process.argv[3]) : buildP4Listening(process.argv[2]), null, 2));
+  console.log(JSON.stringify(partial ? buildP4PartialRecordedListening(process.argv[3]) :
+    recorded ? buildP4RecordedListening(process.argv[3]) : buildP4Listening(process.argv[2]), null, 2));
 }

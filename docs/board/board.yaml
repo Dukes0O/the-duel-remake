@@ -3978,7 +3978,7 @@ tasks:
     lane: VIS
     size: S
     needs: [P4-DAYNIGHT, P4-KITS]
-    status: building
+    status: merged
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-kit-loader
     owns: [src/track-kits.js, tools/test-track-kits.mjs, tools/scenarios/track-kits.mjs, docs/changes/P4-KIT-LOADER.md]
@@ -3991,7 +3991,10 @@ tasks:
 
     lift_decision: "Claude check-in4: optional finite nonnegative lift metres above actual ground anchor, default0. Actual lowestpoint must clear the real road by4.5m before lifted road-overlap exemption. Preserve old/default placements exactly, both High/LOD validated; focused native metadata/clearance regression before fresh gate."
     current_review_commit: d774b5080c3f1d055f4260accd4b810689dd6c4e
-    current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
+    current_review: "Director source/native review clear at4c337aed; actual integration union retains PIT callback, ready snapshots, High/LOD, timeout, retries and both disposal paths. Fresh lane385/385 in673.25s/build634ms pass."
+    snapshot_decision: "Current Dossier early snapshot path builds before normal prepareKitWorld, so an authored snapshot can lack ready kit assets. Genuinely sync current integration, retain both renderer APIs/disposal; early drawTrackSnapshot must await prepareKitWorld(view.course), then update approved kit High/LOD using the actual snapshot ground/quality and menu read-only state. Native regression must reject an unready/broken owner, show real approved placements afterready and preserve race/profile/storage, with no fallback. Current gate after this actual source union/fix."
+    gate_commit: 4c337aedf87eaa454821d349b4509086aa3e842e
+    gate_result: "lane385/385,0failed/0notrun in673.25s; build634ms. Real70GLBs/72terrain probes and High/Performance snapshot/native state checks pass."
 
   - id: P4-PANORAMA
     title: "Panorama Ridge: the mountain circuit"
@@ -4094,6 +4097,8 @@ tasks:
     native_question: "Azure Riviera High first-corner native check finds3crashingCars at8.775s, size8/rows8 and finite. First5High circuits pass; the unchanged3-car pile-up assertion holds. Decide the smallest existing-circuit fix; no tolerances weakened."
     rate_decision: "Claude check-in4: run the existing 30 seeded Grand Prix benchmark on Azure Riviera at each of Easy, Medium and Hard. Preserve the standard driver, native field inputs and every existing assertion/threshold; report full-race results and first30s pile-up rate. If above1in20, move only the GP start line back on the straight as the smallest authorized fix, then repeat. Never weaken the native first-corner assertion. Bound one investigation to30minutes."
     rate_hook: [tools/gp-existing-rate.mjs]
+    rate_result: "fd925862: 90 complete seeded Azure GP races, Easy2/30 (6.67%), Medium10/30 (33.33%), Hard2/30 (6.67%); all exceed unchanged5% first30s pile-up target. Memory-only, original driver/seeds, one job, original prototype restored; evidence .evidence/2026-10-11/P4-GP-EXISTING/azure-rate/azure-rate.json."
+    start_line_question: "No generic course/lap-origin hook exists. A -400m grid-only setback in initializeField puts all eight cars on the preceding straight but adds400m to lap one and keeps timing/visible arch at0. Approve this narrower staging alternative, or require a true GP start/finish-line shift with separately granted course, lap timing, renderer, GP ghost and Telemetry hooks? Road geometry and Duel/TT remain unchanged; no assertion weakened."
 
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
@@ -4114,6 +4119,23 @@ tasks:
     overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
 
     mix_decision: "Kyle explicitly requests -16 LUFS and at most -1 dBTP. Initial +6.4 dB follows the measured -22.42 LUFS whole race. The quiet-tone comparison against released a6523ea must expect that exact +6.4 dB, retaining the 0.1 dB tolerance for peak and RMS. This changes the expected level, never the peak ceiling, contrast, onset, copy/continuity, lifecycle or licensed-asset assertions. Independent review and native whole-mix measurement determine the final gain."
+    stress_design_decision: "Actual louder52348cc2 canonical native stress fails original sample/truepeak and distinguishable30ms onset checks despite whole-race-16.08LUFS/-1.21dBTP. Before code, bounded actual output analysis must prove oversampled ceiling overshoot and background headroom; fix audio-output mastering while retaining all original peak/contrast/onset/continuity/lifetime limits. No lowered gain or test waiver may be claimed as the requested-16LUFS result. Report exact proposed dynamics/ceiling change before implementation; thirty-minute limit."
+    waiting_on: claude
+    mastering_source: 9e9bcebd
+    mastering_review_question: "Trial2 preserves original compressor/+6.4 quiet gain and all limits; canonical native23/23 and focused469checks pass, worsttruepeak-1.60dBTP. Whole capture plus one identical-source retry fail original native128-frame continuity at different segments:2048 chunks advance1920 then2176, one256 callback gap. Valid121.347s partial is-16.20LUFS/-2.49dBTP, never a wholepass. Please settle a separate recorder follow-up scope to distinguish native clock metadata from real PCM loss while preserving every identity/continuity assertion; no fill/resampling/waiver. Audio remains held until full current whole proof. Originalc665 full recording and both failed attempts remain; no third attempt or release."
+
+  - id: QA-AUDIO-CLOCK
+    title: "Native audio recorder clock diagnosis"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: []
+    status: ready
+    waiting_on: claude
+    owns: [tools/scenarios/p4-audio.mjs, docs/changes/QA-AUDIO-CLOCK.md]
+    decision_question: "Two identical-source current P4-AUDIO whole captures fail the original 128-frame continuity assertion at different segments: 2048-frame chunks advance 1920 then 2176 with one 256-frame callback gap. Approve a bounded recorder diagnosis to distinguish incorrect native clock metadata from real PCM loss. Preserve every raw sample-identity, continuity and clock assertion; no sample fill, resampling, tolerance waiver or inferred complete capture."
+    acceptance:
+      - "Prove the native discontinuity cause with actual recorded PCM and AudioWorklet clock witnesses, then settle the smallest fix before code. Preserve original assertions and both failed attempts. Complete current-source whole-race capture must pass unchanged continuity and meet about -16 LUFS with at most -1 dBTP before P4-AUDIO is ready."
 
   - id: P4-CAREER
     title: "Grand Prix in the career: menu, prices, pay, records"
@@ -4176,6 +4198,13 @@ tasks:
       - "Build docs/CIRCUITS.md section 3.7 from Kyle's picks: snow ground and pines, plough banks (deep snow), packed snow and ice road materials, frozen ponds, snow on rock ledges, camera-local snowfall, blowing snow on ridges, capped tyre tracks. Performance-quality reductions. Frame cost within the usual limit. One sheet to Claude, at most three rounds."
     design_decision: "Director 11 October: opt-in snowWorld metadata specifies winter distance ranges, exposed ridge spans and frozen ponds. Reuse approved kits through P4-KIT-LOADER; real terrain coverage, snow pines/rocks/banks; bounded camera flakes/ridge gusts/short-lived wheel tracks, fewer in Performance. Generate plough-bank deep-snow bands in headless course construction, and read authored surface patches beyond the road before the existing verge default. Renderer only reads state. Cue remains surface.snow/surface.ice from existing surfaceChanged events. Shared world/render hooks wait for loader source freeze; no dry-course changes."
     renderer_identity_decision: "Winter owners rebuild when Course object changes even for the same environment key, preserving actual live surfacePatch identities. Dry reuse stays exact. Winter foliage exclusion occurs after unchanged seeded generation; native green-grass and physical-patch identity witnesses are required."
+    waiting_on: claude
+    source_commit: b40b8157
+    round_one_sheet: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow/docs/board/looks/p4-snow/round-1.jpg"
+    round_one_review: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow/docs/board/looks/p4-snow/round-1-review.md"
+    review_question: "Claude: score appearance/readability/grounding/consistency and give round-two fixes if needed. Actual High/Performance eight-car native route shows approved Snow kits, real terrain/pond triangles, wheel marks and ridge; default Bloom now finite after separate FIX-P4-KERB-NORMALS. This disposable QA route is not the finished Summit/Tremblant. Sheet286803bytes, first of at most3rounds. Native functional passes; quiet frames and lane/build remain scheduled separately."
+    frame_camera_decision: "Private static frame view sets only the native presentation camera to its chosen inspection position before the original sampler witness; same Panorama camera fix independently cleared. This prevents interpolating-before versus settled-after witnesses. No actor poses/rules or sample/10percent limits change."
+    renderer_union_review: "Director clear on3004ee6c three additive render hooks: Snow vehicle buffer plus Dossier snapshot block, both snapshot/kitretry APIs, both snapshot/prepared-kit disposal. Old behaviors retained."
 
   - id: P4-PIT
     title: "Pit lanes and stops"
@@ -4183,7 +4212,7 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP]
-    status: building
+    status: merged
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-pit
     owns: [src/pit-lane.js, tools/test-pit-lane.mjs, docs/changes/P4-PIT.md, tools/scenarios/pit-lane.mjs]
@@ -4196,7 +4225,9 @@ tasks:
 
     native_check_scope: "Director, 11 October: pit-lane scenario uses private memory-only native High and Performance races to verify an actual limiter, stop, crew and exit. No frame measurement in this functional check."
     current_review_commit: dfddbf092bce7d7df8492ed7be7e785073b9bd08
-    current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
+    current_review: "Director review clear; actual High/Performance eight-box service, four-second stop, limiter and read-only storage pass. Frozen5eb lane384/384 in648.47s/build496ms; additive integration union retains Dossier APIs and finite kerb normals."
+    gate_commit: 5ebfaa85d277e9891eccca5c25bd45a2a73eacd8
+    gate_result: "lane384/384,0failed/0notrun in648.47s; build496ms."
 
   - id: P4-TREMBLANT-SNOW
     title: "Tremblant Snow variant"
@@ -4682,7 +4713,7 @@ tasks:
     owner: codex
     lane: VIS
     size: S
-    status: building
+    status: merged
     claimed_by: codex-overnight-2026-10-11
     branch: codex/fix-p4-kerb-normals
     needs: [P4-TRACK-SCRIPT]
@@ -4690,4 +4721,6 @@ tasks:
     design_decision: "Actual Snow native firstNaN pixel hits kerb normal0. addKerbs emits both opposing windings on sharedvertices, cancelling normals; material alreadyDoubleSide. Remove redundant reverse triangles, preserve everyvertex/UV/material/physics, require finite unit normals on both curved kerb sides. A controlled native kerb-hidden probe confirmscause; freshSnowHigh/Performance mustremoveNaNs without disablingBloom. Existingworld/replay fingerprints remain; neverregeneratewithoutreview."
     acceptance: "Meaningfulactual curved-kerb normal regression RED thenGREEN; nativeHalfFloat scene/Bloom noNaNs with originalBloom enabled; HighSnowframe visible, state/profile/storage exact. One source review/currentlane/build before ownmerge."
     review_commit: 6d284cb081917c32868c8fa83d7a6e18f13c2443
-    source_review: "Director clear: only redundant reverse triangles removed, existing DoubleSide retained;2112 actual finite unit normals/1056 nondegenerate faces and exact position/UV/material digest. Native finite-target witness and mandatory lane/build queued."
+    source_review: "Director clear: only redundant reverse triangles removed, existing DoubleSide retained;2112 actual finite unit normals/1056 nondegenerate faces and exact position/UV/material digest. Native zero nonfinite targets with default Bloom; exact e6b82a12 lane74/74 in91.20s/build616ms pass."
+    gate_commit: e6b82a120fbcafe028fb91db9a2eb8a3c751db97
+    gate_result: "lane74/74,0failed/notrun in91.20s; build616ms. One reverse-index line only; original geometry digest and seeded rules exact."
