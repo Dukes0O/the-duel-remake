@@ -44,7 +44,7 @@ before Bloom, bright extraction and all ten blur targets: zero NaN/Inf.
 Default Bloom stays enabled. FIX-P4-KERB-NORMALS removes shared reverse kerb
 triangles without changing vertices/materials; its independent regression
 failed on the actual ridge zero normal first. Genuine fix merge preserves
-Dossier snapshot declarations/API/cleanup and Snow vehicles, kit retry/disposal.
+Dossier snapshot/readiness/retry/disposal and Snow/PIT presentation hooks.
 
 ## Checks
 
@@ -83,7 +83,7 @@ Renderer prepares approved extras before building Snow, keeps bank identities
 on menu-to-race transitions, and feeds the actual eight grounded car meshes.
 Round-one native art is pending Claude. Quiet frames, lane/build, final review
 and merge remain pending.
-No finished-art/frame verdict. Current integration dcdab76a genuinely synced.
+No finished-art/frame verdict. PIT 4c1d4f23 genuinely synced; final loader still pending.
 Static timing fixes only its native presentation camera before sampling;
 original samples/10percent limits and all actor poses stay exact.
 Director clears the three additive renderer hooks; no real saves/release/live QA.

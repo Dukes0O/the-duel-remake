@@ -12,11 +12,12 @@ Claude passed lighting 4/4/4/4 and final kits 3.5. No fourth kit art round.
 
 Telemetry merged79a75173 after lane383/383 in653.18s/build1.24s. Separate
 consumed-art janitor merged dcdab76a after lane6/6/build548ms. Next: kit loader.
-Loader d774b508 adds Claude's finite nonnegative lift above the actual ground,
+Loader 4c337aed adds Claude's finite nonnegative lift above the actual ground,
 with the unchanged 4.5 m road clearance test for both High and distant models.
-Post its merge for Claude's Harbour and Tremblant lanes, which he owns.
+Its current Dossier snapshot guard also waits for genuine kit readiness.
+Fresh lane/build follows PIT. Post its merge for Claude's Harbour and Tremblant.
 
-PIT dfddbf09 fixes the actual eight-car player's invalid service box; native
+PIT merged after 5ebfaa85 lane384/384 in648.47s/build496ms; native
 four-second service and all eight unique boxes pass. QUAL 6abe1284 has genuine
 pit-exit and flying-lap proof, retains only the best clean comparison lap,
 and starts the earned GP grid. Qualifying still depends on the GP card.
@@ -36,10 +37,12 @@ fault was repaired by merged FIX-P4-KERB-NORMALS after lane74/74/build616ms.
 Snow now shows zero non-finite HDR/Bloom pixels with Bloom enabled. Its first
 actual art sheet waits for Claude; quiet frame checks remain.
 
-Audio c665e537: actual native whole race is -16.08 LUFS and -1.21 dBTP;
-raw capture continuity and replay identity pass. Keep the exact PCM listening
-file for Kyle tomorrow. The lossy MP3 reconstructs peaks above the PCM ceiling,
-so it is not peak evidence. Lane/build remain queued.
+Audio 9e9bcebd is held for Claude under QA-AUDIO-CLOCK. Crash stress passes
+23/23 with worst -1.60 dBTP and all original onset/quiet checks. Two whole
+captures reject the same 128-frame native clock discontinuity. The valid
+partial is -16.20 LUFS/-2.49 dBTP, not complete acceptance. No third retry.
+Preserve c665's original complete PCM and both attempts; current listening
+needs a complete verified capture. No missing-frame fill or assertion waiver.
 
 Heavy checks are coordinated in the inbox. Full tiers run alone with 4 jobs,
 after checking all laptop jobs, including Claude. End with full tier, janitor

@@ -13,7 +13,7 @@ const COLORS = Object.freeze({
 
 // Four reusable InstancedMeshes draw every body, including future CPU crews.
 // +Z is forward and Y=0 is the fighter's feet, matching the fixed-step fighter.
-export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
+export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES, pitCrew = false} = {}) {
   if (!Number.isInteger(capacity) || capacity < 1 || capacity > MAX_FIGHTER_FIGURES)
     throw new RangeError('Fighter figure capacity must be between 1 and 12.');
   const group = new THREE.Group();
@@ -52,7 +52,8 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
   const paintedCrew=[];
   function paint(actor,id){
     if(paintedCrew[actor]===id)return;
-    const appearance=crewAppearance(id);
+    const base=crewAppearance(id);
+    const appearance=pitCrew?{...base,coat:0x227b87,trousers:0x227b87,vest:0x227b87,armor:0xddd4bd,pack:0x227b87}:base;
     for(const [kind,mesh] of Object.entries(meshes)){
       for(let index=0;index<PARTS[kind];index++){
         const key=colorParts[kind][index];
@@ -148,12 +149,13 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
     for (const side of [-1, 1]) {
       const offset = side < 0 ? 0 : 2;
       const step = side * gait, lift = airborne ? .15 : 0;
-      const handZ = -step * .9 + (airborne ? .16 : 0);
+      const work=pitCrew?Number(fighter.work)||0:0;
+      const handZ = work ? .32 +Math.sin(work*18)*.07:-step * .9 + (airborne ? .16 : 0);
       const elbowZ = -step * .4 + (airborne ? .08 : 0);
       limb(actor, offset, side * .32, 1.32, 0,
         side * .41, 1.08 + lift * .4, elbowZ, .17);
       limb(actor, offset + 1, side * .41, 1.08 + lift * .4, elbowZ,
-        side * .45, .84 + lift, handZ, .14);
+        side * .45, (work ? .65 : .84) + lift, handZ, .14);
       limb(actor, 4 + offset, side * .16, .68, 0,
         side * .17, .42 + lift, step * .3 + lift, .22);
       limb(actor, 5 + offset, side * .17, .42 + lift, step * .3 + lift,
@@ -161,7 +163,7 @@ export function createOnFootFigures({capacity = MAX_FIGHTER_FIGURES} = {}) {
       const boxIndex = side < 0 ? 5 : 6;
       block('plates', actor, boxIndex, side * .18, .115 + lift,
         step + .11 + lift * .5, .24, .20, .36);
-      block('plates', actor, boxIndex + 2, side * .45, .83 + lift,
+      block('plates', actor, boxIndex + 2, side * .45, (work ? .64 : .83) + lift,
         handZ, .15, .16, .16);
     }
   }

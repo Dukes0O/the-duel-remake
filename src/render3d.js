@@ -749,6 +749,7 @@ export function attachRenderer(host, app) {
     lastSaltHeatEnabled = setSaltFlatsHeatEnabled(world,presentation.saltHeatEnabled !== false);
     animateScene(world,presentationSeconds);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
+    world.userData.updatePitCrew?.(st);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
     lighting.updateCar(player, !!braking && !menu);
     if (!convoy) lighting.updateCar(rival, !!st.rival?.braking);

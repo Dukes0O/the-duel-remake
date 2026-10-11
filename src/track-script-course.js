@@ -3,12 +3,14 @@
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
 import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
+import {installPitLane, pitAt} from './pit-lane.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
 // is stored for a reference car and computer racers scale it to their own.
 export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
+  installPitLane(course);
   course.racingLine = buildRacingLine(script, dynamics);
   f.walls = [];
   f.kerbs = script.kerbs.map(kerb => ({ ...kerb }));
@@ -63,6 +65,8 @@ function scatterScenery(course) {
     f.obstacles.push(o); return o;
   };
   const roadClear = (s, off, radius = 0, margin = 2) => {
+    if (course.pitLane && s >= course.pitLane.entry - 8 && s <= course.pitLane.exit + 8 &&
+      Math.abs(off - course.pitLane.offsetAt(s)) < course.pitLane.width / 2 + radius + margin + 4) return false;
     const p = course.worldAt(s, off), n = course.nearest(p.x, p.z), width = course.roadHalfWidthAt(n.s);
     const side = Math.sign(n.lateral) || 1, room = Math.max(3, script.runoffAt(n.s, side));
     if (n.distance < width + room + radius + margin) return false;
@@ -124,6 +128,16 @@ export function trackScriptSolids(course) {
       heading: p.heading, halfX: .25, halfZ: .25, shape: 'box', theme: course.themeAt(finishS) });
   }
   f.walls = wallSegments(course);
+  const lane=course.pitLane;
+  if(lane){
+    f.walls=f.walls.filter(w=>!(Math.sign(w.off)===lane.side&&w.s>=lane.entry-3&&w.s<=lane.exit+3));
+    for(let s=lane.entry+65;s<lane.exit-65;s+=4){
+      const off=lane.side*(course.roadHalfWidthAt(s)+.65),p=course.groundAt(s,off);
+      const y=course.worldAt(s,off).y;
+      f.walls.push({id:`pit-wall-${s}`,kind:'prop',shape:'box',barrier:true,trackWall:true,pitWall:true,
+        s,off,x:p.x,y:y-.1,z:p.z,heading:p.heading,halfX:.3,halfZ:2,height:1.15,minY:y-.1,maxY:y+1.05,theme:course.themeAt(s)});
+    }
+  }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
   course.obstacleBuckets = new Map(); course.rockBuckets = new Map();
