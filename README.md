@@ -5,14 +5,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 ## Grand Prix release — 11 October 2026
 
 Grand Prix racing is in the game: choose GRAND PRIX under THE CHALLENGE on
-Pacific Canyon or the new Tremblant Woods circuit and race seven computer
-drivers over three laps, starting in the back half of the grid. There is no
-traffic or police, and Grand Prix races don't pay or set records yet.
-
-Tremblant Woods is a 4.4 km autumn forest circuit: the lodge and the ski hill,
-the lake with its dock and morning mist, the chairlift over Timber Straight and
-the Beaver Hairpin. The Team Room shows each circuit's sectors, corners and
-notes, and your best laps against the reference lap.
+Pacific Canyon and race seven computer drivers over three laps, starting in
+the back half of the grid. There is no traffic or police, and Grand Prix
+races don't pay or set records yet. The Team Room shows the circuit's sectors,
+corners and notes, and your best laps against the reference lap. Tremblant
+Woods follows in its own release.
 
 ## Wasteland polish release — 10 October 2026
 
