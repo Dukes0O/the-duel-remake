@@ -4,7 +4,7 @@ import {COURSE,DRIVE} from '../src/config.js';
 import {supportsCombat,stepCombat} from '../src/combat.js';
 
 const stages=COURSE.map((stage,index)=>supportsCombat(stage)?{stage,index}:null).filter(Boolean);
-assert.equal(stages.length,11,'moving-rival probe covers every combat course');
+assert.equal(stages.length,12,'moving-rival probe covers every combat course');
 const seeds=[42,1989];
 const speeds=[[65,60],[90,80],[130,115]];
 const gaps=[15,45,75,105];
@@ -51,7 +51,7 @@ const summary={shots,hits,rate:+rate.toFixed(3),shielded:cases.filter(row=>row.s
   byDifficulty:summarize('cpuDifficulty'),byGap:summarize('gap'),
   bySpeed:summarize('playerSpeed'),byCourse:summarize('course')};
 console.log(JSON.stringify(summary));
-assert.equal(shots,11*2*3*4*3,'all 792 seeded, moving-rival cases ran');
+assert.equal(shots,12*2*3*4*3,'all 864 seeded, moving-rival cases ran');
 for(const difficulty of difficulties){
   const rows=cases.filter(row=>row.cpuDifficulty===difficulty),hitRate=rows.filter(row=>row.hit).length/rows.length;
   assert.equal(rows.filter(row=>row.shielded).length,0,

@@ -20,8 +20,8 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
     'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 22
-    && ['panorama-ridge', 'harbour-lights', 'tremblant-woods', 'grand-prix', 'the-deep'].every(name => FEATURE_STATES[name] === 'dev'),
-  'the Wasteland features and seekers are released (on, 10 October 2026); career backup stays dev; the three Phase 4 circuits, the Grand Prix and The Deep start as dev; retired switches stay absent');
+    && ['panorama-ridge', 'harbour-lights', 'grand-prix', 'the-deep'].every(name => FEATURE_STATES[name] === 'dev') && FEATURE_STATES['tremblant-woods'] === 'on',
+  'the Wasteland features and seekers are released (on, 10 October 2026); Tremblant Woods is released (on); career backup, Panorama Ridge, Harbour Lights, the Grand Prix and The Deep stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 // These switches were released on 9 October 2026, with seekers on 10 October. Their development-switch
 // isolation, proved earlier on the real catalog, is kept by pinning each one to dev.

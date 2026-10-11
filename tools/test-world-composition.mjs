@@ -28,6 +28,7 @@ const baseline={
   'cloudbreak-skyway':{hash:'d37553f4af313e50f6b24ffbc1d3e0cec0e431362e572b693e4e31d79cff4c4b',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
   // QA screenshot reviewed: open paved drag entrance, readable gantry and clear training mound; runway adds one mesh, geometry and material.
   'titan-freestyle':{hash:'19ecd561629f7f4b3aab3709558681fd19ae543450b07081d7a7bddb1248f42f',nodes:226,meshes:161,instances:129,geometries:158,materials:37,textures:5},
+  'tremblant-woods':{hash:'9ab2fe2c864833c827ad9af7cec34c710762ecb72dfa47804f28d8444d8f30cf',nodes:307,meshes:271,instances:23200,geometries:38,materials:23,textures:13},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -43,6 +44,8 @@ globalThis.document={createElement(){
     putImageData:(image,...args)=>record('putImageData',bytes(image.data),args),
     measureText:()=>({width:40}),
     createLinearGradient:(...args)=>{record('gradient',args);return {addColorStop:(...stop)=>record('colorStop',stop)};},
+    // Authored circuits paint pebble textures with radial gradients; the older scenes never call this.
+    createRadialGradient:(...args)=>{record('radialGradient',args);return {addColorStop:(...stop)=>record('colorStop',stop)};},
   },{get:(target,key)=>target[key]??((...args)=>record(key,args)),set:(target,key,value)=>{record('set',key,value);target[key]=value;return true;}});
   canvas.getContext=()=>context;canvas.commandDigest=()=>commands.copy().digest('hex');return canvas;
 }};
@@ -89,7 +92,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,16,'all sixteen event scenes are covered');
+  equal(COURSE.length,17,'all seventeen event scenes are covered');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
@@ -98,4 +101,4 @@ try{
     disposeTree(world);
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across sixteen events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across seventeen events.`);

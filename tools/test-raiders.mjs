@@ -18,10 +18,10 @@ function race(stageIndex = 0, discovered = true, seed = 1989) {
   return duel;
 }
 
-test('all 11 combat courses get three seeded, roadside three-raider camps', () => {
+test('all 12 combat courses get three seeded, roadside three-raider camps', () => {
   const combatStages = COURSE.map((stage, index) => ({stage, index}))
     .filter(({stage}) => supportsCombat(stage));
-  assert.equal(combatStages.length, 11);
+  assert.equal(combatStages.length, 12);
   for (const {index} of combatStages) {
     const duel = race(index), zones = duel.state.raids.zones;
     assert.equal(zones.length, 3);
