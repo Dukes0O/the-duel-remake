@@ -14,7 +14,10 @@ export const TRACK_KIT_IDS = Object.freeze([
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
 const LOD_DISTANCE = 160;
-const hidden = new THREE.Matrix4().makeScale(0,0,0);
+const CHUNK_LENGTH = 100;
+const MAIN_DISTANCE = 900;
+const REAR_DISTANCE = 220;
+const MAX_REAR_CHUNKS = 3;
 const finite = value => Number.isFinite(value);
 const fail = message => {throw new Error('Track kit '+message);};
 
@@ -100,7 +103,28 @@ function placementMatrix(course, row, bounds) {
     new THREE.Vector3(...row.scale));
 }
 
-function validateClearance(course, row, asset, matrix, bounds) {
+// A road segment box is deliberately broader than the actual clearance guard.
+// Unknown/un-sampled courses keep the complete original triangle check.
+function clearanceRoadBoxes(course) {
+  if (!Array.isArray(course.samples) || course.samples.length < 2) return null;
+  const width = Math.max(...course.samples.map(p => course.roadHalfWidthAt(p.s))) + 4.5;
+  if (!finite(width)) return null;
+  const boxes = [];
+  for (let i = 1; i < course.samples.length; i++) {
+    const a = course.samples[i - 1], b = course.samples[i];
+    if (![a.x,a.z,b.x,b.z].every(finite)) return null;
+    boxes.push(new THREE.Box3(
+      new THREE.Vector3(Math.min(a.x,b.x) - width, -Infinity, Math.min(a.z,b.z) - width),
+      new THREE.Vector3(Math.max(a.x,b.x) + width, Infinity, Math.max(a.z,b.z) + width)));
+  }
+  return boxes;
+}
+
+function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) {
+  if (!row.physicalPatch && roadBoxes) {
+    const placed = bounds.clone().applyMatrix4(matrix);
+    if (!roadBoxes.some(box => box.intersectsBox(placed))) return false;
+  }
   const flatGround = row.id === 'snow-ground' && (bounds.max.y-bounds.min.y)*row.scale[1] <= .5;
   const point = new THREE.Vector3(), centroid = new THREE.Vector3();
   const triangle = Array.from({length:3},()=>new THREE.Vector3());
@@ -134,14 +158,19 @@ function validateClearance(course, row, asset, matrix, bounds) {
       for (let j=0;j<3;j++) check(point.copy(triangle[j]).lerp(triangle[(j+1)%3],.5));
     }
   });
+  return true;
 }
 
 // Own cache and instances for one world. No module-global asset lifetime.
-export function createTrackKits(course, {placements=course.def.kitPlacements ?? [],
-    extraPlacements=[],requiredIds=[],loadAsset}={}) {
+export function createTrackKits(course, options) {
+  const enteredAt = performance.now();
+  const {placements=course.def.kitPlacements ?? [],extraPlacements=[],requiredIds=[],
+    loadAsset,validateClearance=true} = options === undefined ? {} : options;
   const group = new THREE.Group(); group.name = 'Approved track kits';
-  const resources = new Set(), released = new WeakSet(), assets = new Map(), dirtyBatches = new Set();
-  const skeletons = new Set(), batches = [], instances = [];
+  const resources = new Set(), released = new WeakSet(), assets = new Map();
+  const skeletons = new Set(), batches = [], instances = [], chunks = new Map();
+  let activeView = null;
+  const rearScopes = [];
   let retired = false, failed = false, status = 'loading', error = null, rows = [];
   const loader = loadAsset ? null : new GLTFLoader();
   const load = loadAsset ?? (path => loader.loadAsync(path));
@@ -159,77 +188,221 @@ export function createTrackKits(course, {placements=course.def.kitPlacements ?? 
     for (const skeleton of skeletons) release(skeleton);
     skeletons.clear();
     for (const resource of resources) release(resource);
-    resources.clear(); assets.clear(); instances.length = 0; dirtyBatches.clear();
+    resources.clear(); assets.clear(); instances.length = 0; chunks.clear(); activeView = null;
     group.clear();
   };
+  const normalizeStarted = performance.now();
   try {
+    if (typeof validateClearance !== 'boolean') fail('clearance option must be boolean.');
     rows = normalizeKitPlacements(course,[...placements,...extraPlacements]);
     if (!Array.isArray(requiredIds) || !requiredIds.every(id => approved.has(id))) fail('required id is unknown.');
   } catch (caught) {failed = true;status = 'error';error = caught;}
-  const stats = {high:0,low:0};
-  function writePose(instance) {
-    for (const part of instance.parts) {
-      if (part.mesh.isInstancedMesh) {
-        const matrix = instance.version === part.version
-          ? new THREE.Matrix4().multiplyMatrices(instance.matrix,part.local) : hidden;
-        part.mesh.setMatrixAt(part.index,matrix); part.mesh.instanceMatrix.needsUpdate = true;
-        dirtyBatches.add(part.mesh);
-      } else {
-        part.mesh.visible = instance.version === part.version;
-        part.mesh.matrix.copy(instance.matrix); part.mesh.matrixWorldNeedsUpdate = true;
-      }
-    }
+  const stats = {high:0,low:0,visibleChunks:0,
+    presentation:{constructionMs:null,activeCpuMs:performance.now()-normalizeStarted},
+    clearance:{trianglePlacements:0,broadPhaseSkipped:0,runtimeSkipped:0}};
+  const scratch = new THREE.Vector3(), transform = new THREE.Matrix4();
+  const frustumMatrix = new THREE.Matrix4();
+  function refreshChunkBounds(chunk) {
+    chunk.bounds.makeEmpty();
+    for (const entry of chunk.entries) chunk.bounds.union(entry.instance.bounds);
   }
   function assemble() {
     const grouped = new Map();
+    const roadBoxes = validateClearance ? clearanceRoadBoxes(course) : null;
     rows.forEach((row,index) => {
       const high = assets.get(row.id+'/high');
       const matrix = placementMatrix(course,row,high.bounds);
+      const placedBounds = new THREE.Box3();
       for (const version of ['high','low']) {
         const asset = assets.get(row.id+'/'+version);
-        validateClearance(course,row,asset.model,matrix,asset.bounds);
+        placedBounds.union(asset.bounds.clone().applyMatrix4(matrix));
+        if (!validateClearance) stats.clearance.runtimeSkipped++;
+        else if (checkPlacementClearance(course,row,asset.model,matrix,asset.bounds,roadBoxes))
+          stats.clearance.trianglePlacements++;
+        else stats.clearance.broadPhaseSkipped++;
       }
-      const instance = {matrix,version:null,parts:[],lamps:[]};instances.push(instance);
-      let entry = grouped.get(row.id);
-      if (!entry) {entry = [];grouped.set(row.id,entry);}
-      entry.push({row,index,instance});
+      const chunkIndex = Math.floor(row.s / CHUNK_LENGTH);
+      let chunk = chunks.get(chunkIndex);
+      if (!chunk) {
+        chunk = {index:chunkIndex,entries:[],batches:[],roots:[],bounds:new THREE.Box3()};
+        chunks.set(chunkIndex,chunk);
+      }
+      const instance = {matrix,bounds:placedBounds,revision:0,chunk,parts:[],lamps:[]};
+      instances.push(instance);
+      const entry = {row,index,instance};
+      chunk.entries.push(entry); chunk.bounds.union(placedBounds);
+      const key = row.id + '/' + chunkIndex;
+      let entries = grouped.get(key);
+      if (!entries) { entries = []; grouped.set(key,entries); }
+      entries.push(entry);
     });
-    for (const [id,entries] of grouped) for (const version of ['high','low']) {
+    for (const entries of grouped.values()) for (const version of ['high','low']) {
+      const id = entries[0].row.id, chunk = entries[0].instance.chunk;
       const asset = assets.get(id+'/'+version);
-      let skinned = false;asset.model.scene.traverse(node => {if(node.isSkinnedMesh) skinned = true;});
+      let skinned = false;
+      asset.model.scene.traverse(node => {if (node.isSkinnedMesh) skinned = true;});
       if (id === 'start-gantry' || skinned) {
         for (const {instance,index} of entries) {
-          const model = cloneSkeleton(asset.model.scene), root = new THREE.Group();root.add(model);
-          root.name = id+' '+version;root.matrixAutoUpdate = false;root.visible = false;
-          Object.assign(root.userData,{trackKitId:id,trackKitVersion:version,trackKitPlacementIndex:index});
-          model.traverse(node => {if(node.isSkinnedMesh) skeletons.add(node.skeleton);});
+          const model = cloneSkeleton(asset.model.scene), root = new THREE.Group();
+          root.add(model); root.name = id+' '+version;
+          root.matrixAutoUpdate = false; root.visible = false;
+          Object.assign(root.userData,{trackKitId:id,trackKitVersion:version,
+            trackKitPlacementIndex:index,trackKitChunk:chunk.index});
+          model.traverse(node => {if (node.isSkinnedMesh) skeletons.add(node.skeleton);});
           if (id === 'start-gantry') for (let i=1;i<=5;i++) {
             const lamp = model.getObjectByName('lamp-'+i);
-            lamp.material = lamp.material.clone();own(lamp.material);
-            instance.lamps.push({material:lamp.material,index:i,intensity:Math.max(1,lamp.material.emissiveIntensity)});
+            lamp.material = lamp.material.clone(); own(lamp.material);
+            instance.lamps.push({material:lamp.material,index:i,
+              intensity:Math.max(1,lamp.material.emissiveIntensity)});
             lamp.material.emissiveIntensity = 0;
           }
-          group.add(root);instance.parts.push({mesh:root,version});
+          root.matrix.copy(instance.matrix); group.add(root);
+          const part = {mesh:root,version,instance,index};
+          instance.parts.push(part); chunk.roots.push(part);
         }
       } else {
         asset.model.scene.traverse(node => {
           if (!node.isMesh) return;
           const mesh = new THREE.InstancedMesh(node.geometry,node.material,entries.length);
-          mesh.name = id+' '+version;mesh.castShadow = node.castShadow;mesh.receiveShadow = true;
-          mesh.userData.trackKitId = id;mesh.userData.trackKitVersion = version;
-          mesh.userData.trackKitPlacementIndices = Object.freeze(entries.map(entry=>entry.index));
-          // A painted piece: each placement's bands colour the layer this mesh is.
+          mesh.name = id+' '+version;
+          mesh.castShadow = node.castShadow; mesh.receiveShadow = true;
+          Object.assign(mesh.userData,{trackKitId:id,trackKitVersion:version,
+            trackKitChunk:chunk.index,
+            trackKitPlacementIndices:Object.freeze(entries.map(entry=>entry.index)),
+            trackKitDrawnPlacementIndices:Object.freeze([])});
+          const local = node.matrixWorld.clone();
+          const layer = Number(/layer-(\d+)/.exec(node.name)?.[1] ?? 1) - 1;
+          // Preserve Claude's painted layers while retaining owned chunk batches.
           if (entries.some(({row}) => row.bands)) {
-            const layer = Number(/layer-(\d+)/.exec(node.name)?.[1] ?? 1) - 1, paint = new THREE.Color();
-            entries.forEach(({row},index) => mesh.setColorAt(index, row.bands ? paint.setRGB(...row.bands[layer % row.bands.length]) : paint.setRGB(1,1,1)));
+            const paint = new THREE.Color();
+            entries.forEach(({row},index) => mesh.setColorAt(index,row.bands
+              ? paint.setRGB(...row.bands[layer % row.bands.length]) : paint.setRGB(1,1,1)));
           }
-          group.add(mesh);batches.push({mesh});
           entries.forEach(({instance},index) => {
-            mesh.setMatrixAt(index,hidden);
-            instance.parts.push({mesh,version,index,local:node.matrixWorld.clone()});
+            mesh.setMatrixAt(index,transform.multiplyMatrices(instance.matrix,local));
           });
+          mesh.count = 0; mesh.visible = false;
+          const batch = {mesh,version,entries,local,layer,drawn:[],revisions:[]};
+          group.add(mesh); batches.push(batch); chunk.batches.push(batch);
         });
       }
+    }
+  }
+  function packBatch(batch, selected, version) {
+    const entries = batch.version === version ? selected : [];
+    const changed = entries.length !== batch.drawn.length || entries.some((entry,i) =>
+      entry.index !== batch.drawn[i] || entry.instance.revision !== batch.revisions[i]);
+    batch.mesh.count = entries.length; batch.mesh.visible = entries.length > 0;
+    if (!changed) return;
+    batch.drawn = entries.map(entry=>entry.index);
+    batch.revisions = entries.map(entry=>entry.instance.revision);
+    batch.mesh.userData.trackKitDrawnPlacementIndices = Object.freeze([...batch.drawn]);
+    if (!entries.length) return;
+    // Save only buffers that this scope really overwrites. Nested scopes keep
+    // their own prior values, while untouched distant batches never upload.
+    for (const scope of rearScopes) {
+      const saved = scope.get(batch);
+      if (saved.matrices) continue;
+      saved.matrices = batch.mesh.instanceMatrix.array.slice();
+      saved.sphere = batch.mesh.boundingSphere?.clone() ?? null;
+      saved.colours = batch.mesh.instanceColor?.array.slice() ?? null;
+    }
+    const paint = batch.mesh.instanceColor ? new THREE.Color() : null;
+    entries.forEach(({instance,row},index) => {
+      batch.mesh.setMatrixAt(index,transform.multiplyMatrices(instance.matrix,batch.local));
+      if (paint) batch.mesh.setColorAt(index,row.bands
+        ? paint.setRGB(...row.bands[batch.layer % row.bands.length]) : paint.setRGB(1,1,1));
+    });
+    batch.mesh.instanceMatrix.needsUpdate = true;
+    if (paint) batch.mesh.instanceColor.needsUpdate = true;
+    batch.mesh.computeBoundingSphere();
+  }
+  function applyView(view) {
+    stats.high = stats.low = stats.visibleChunks = 0;
+    const position = view.position;
+    let frustum = null;
+    if (view.camera) {
+      view.camera.updateMatrixWorld(true);
+      frustum = new THREE.Frustum().setFromProjectionMatrix(
+        frustumMatrix.multiplyMatrices(view.camera.projectionMatrix,view.camera.matrixWorldInverse));
+    }
+    const nearby = [...chunks.values()].filter(chunk => {
+      if (!position) return true;
+      const distance = chunk.bounds.distanceToPoint(position);
+      if (distance > (view.rear ? REAR_DISTANCE : MAIN_DISTANCE)) return false;
+      if (frustum && !frustum.intersectsBox(chunk.bounds)) return false;
+      return !view.rear || chunk.entries.some(({instance}) => {
+        instance.bounds.getCenter(scratch).sub(position);
+        return scratch.dot(view.forward) >= 0;
+      });
+    });
+    if (view.rear && position) nearby.sort((a,b) =>
+      a.bounds.distanceToPoint(position)-b.bounds.distanceToPoint(position));
+    const chosen = new Set(view.rear ? nearby.slice(0,MAX_REAR_CHUNKS) : nearby);
+    for (const chunk of chunks.values()) {
+      const version = !view.rear && view.high && position &&
+        chunk.bounds.distanceToPoint(position) <= LOD_DISTANCE ? 'high' : 'low';
+      const selected = chosen.has(chunk) ? chunk.entries.filter(({instance}) => {
+        if (frustum && !frustum.intersectsBox(instance.bounds)) return false;
+        if (!position) return true;
+        if (instance.bounds.distanceToPoint(position) > (view.rear ? REAR_DISTANCE : MAIN_DISTANCE)) return false;
+        if (!view.rear) return true;
+        instance.bounds.getCenter(scratch).sub(position);
+        return scratch.dot(view.forward) >= 0;
+      }) : [];
+      if (selected.length) stats.visibleChunks++;
+      stats[version] += selected.length;
+      const selectedIndices = new Set(selected.map(entry=>entry.index));
+      for (const batch of chunk.batches)
+        packBatch(batch,batch.entries.filter(entry=>selectedIndices.has(entry.index)),version);
+      for (const root of chunk.roots) {
+        root.mesh.visible = root.version === version && selectedIndices.has(root.index);
+        root.mesh.matrix.copy(root.instance.matrix); root.mesh.matrixWorldNeedsUpdate = true;
+      }
+    }
+  }
+  function withRearView({position,forward}, draw) {
+    if (typeof draw !== 'function') fail('rear scope needs a draw function.');
+    if (retired || status !== 'ready') return draw();
+    if (!position || ![position.x,position.z].every(finite) ||
+        !forward?.isVector3 || !forward.toArray().every(finite))
+      fail('rear scope needs a finite actual orientation.');
+    const previousView = activeView;
+    const previousStats = {high:stats.high,low:stats.low,visibleChunks:stats.visibleChunks};
+    const savedBatches = new Map(batches.map(batch => [batch,{batch,count:batch.mesh.count,
+      visible:batch.mesh.visible,matrices:null,colours:null,sphere:null,boundingSphere:batch.mesh.boundingSphere,
+      drawn:batch.drawn,revisions:batch.revisions,
+      indices:batch.mesh.userData.trackKitDrawnPlacementIndices}]));
+    const savedRoots = instances.flatMap(instance=>instance.parts.map(part=>({
+      mesh:part.mesh,visible:part.mesh.visible,matrix:part.mesh.matrix.clone()})));
+    rearScopes.push(savedBatches);
+    try {
+      activeView = {rear:true,high:false,position:new THREE.Vector3(position.x,finite(position.y)?position.y:0,position.z),forward:forward.clone()};
+      applyView(activeView);
+      return draw();
+    } finally {
+      rearScopes.pop();
+      for (const saved of savedBatches.values()) {
+        const {batch} = saved;
+        batch.mesh.count = saved.count; batch.mesh.visible = saved.visible;
+        if (saved.matrices) {
+          batch.mesh.instanceMatrix.array.set(saved.matrices);
+          batch.mesh.instanceMatrix.needsUpdate = true;
+          if (saved.colours) {
+            batch.mesh.instanceColor.array.set(saved.colours);
+            batch.mesh.instanceColor.needsUpdate = true;
+          }
+          if (saved.boundingSphere) saved.boundingSphere.copy(saved.sphere);
+          batch.mesh.boundingSphere = saved.boundingSphere;
+        }
+        batch.drawn = saved.drawn; batch.revisions = saved.revisions;
+        batch.mesh.userData.trackKitDrawnPlacementIndices = saved.indices;
+      }
+      for (const saved of savedRoots) {
+        saved.mesh.visible = saved.visible; saved.mesh.matrix.copy(saved.matrix);
+        saved.mesh.matrixWorldNeedsUpdate = true;
+      }
+      Object.assign(stats,previousStats); activeView = previousView;
     }
   }
   function syncLights(state) {
@@ -246,37 +419,43 @@ export function createTrackKits(course, {placements=course.def.kitPlacements ?? 
       const model = await load(path);
       if (model?.scene?.isObject3D) for (const resource of resourcesOf(model.scene)) own(resource);
       if (retired || failed) return;
-      const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});
+      const validationStarted = performance.now();
+      try {
+        const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});
+      } finally {stats.presentation.activeCpuMs += performance.now()-validationStarted;}
     }))).then(() => {
       if (retired || failed) return false;
-      assemble();status = 'ready';return true;
+      const assemblyStarted = performance.now();
+      try {assemble();}
+      finally {stats.presentation.activeCpuMs += performance.now()-assemblyStarted;}
+      status = 'ready';stats.presentation.constructionMs = performance.now()-enteredAt;return true;
     }).catch(caught => {
       if (!retired) {failed = true;status = 'error';error = caught;}
       clear();return false;
     });
-  if (!ids.length && !failed) status = 'ready';
+  if (!ids.length && !failed) {status = 'ready';stats.presentation.constructionMs = performance.now()-enteredAt;}
   group.userData.trackKitPlacements=rows;group.userData.trackKitStats=stats;
   return {
     group,ready,placements:rows,stats,
     get status(){return status;},get error(){return error;},
-    update({high=true,position,state}={}) {
+    update({high=true,position,camera,state}={}) {
       if (status !== 'ready' || retired) return;
-      stats.high = stats.low = 0;
-      for (const instance of instances) {
-        const elements = instance.matrix.elements;
-        const near = position && Math.hypot(elements[12]-position.x,elements[14]-position.z) <= LOD_DISTANCE;
-        const version = high && near ? 'high' : 'low'; stats[version]++;
-        if (instance.version !== version) {instance.version = version;writePose(instance);}
-      }
-      syncLights(state);
-      for (const mesh of dirtyBatches) mesh.computeBoundingSphere();
-      dirtyBatches.clear();
+      activeView = {high,position:position ? new THREE.Vector3(position.x,finite(position.y)?position.y:0,position.z) : null,camera};
+      applyView(activeView); syncLights(state);
     },
     sync:syncLights,
+    withRearView,
     setPlacementPose(index,matrix) {
       if (retired || status !== 'ready' || !Number.isInteger(index) || !instances[index] ||
           !matrix?.isMatrix4 || !matrix.elements.every(finite)) return false;
-      instances[index].matrix.copy(matrix);writePose(instances[index]);return true;
+      const instance = instances[index], row = rows[index];
+      instance.matrix.copy(matrix); instance.revision++;
+      instance.bounds.makeEmpty();
+      for (const version of ['high','low'])
+        instance.bounds.union(assets.get(row.id+'/'+version).bounds.clone().applyMatrix4(matrix));
+      refreshChunkBounds(instance.chunk);
+      if (activeView) applyView(activeView);
+      return true;
     },
     getPlacementPose(index) {return instances[index]?.matrix.clone() ?? null;},
     dispose() {
