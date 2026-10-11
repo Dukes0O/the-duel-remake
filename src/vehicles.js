@@ -449,3 +449,156 @@ export function updateVehicleDamage(vehicle, count, catastrophic, age = 0, damag
     pivot.scale.y = 1-roofCrush*.18;
   }
 }
+
+
+// Opt-in lamps for an authored light path. Native cars already own their damage
+// materials; still clone the lenses here so even a shared source cannot couple
+// two cars' brake lights. Preserve each lens's existing damage shader hooks.
+export function createVehicleNightLighting(vehicle) {
+  const originals = new Map(), privateMaterials = new Map(), bindings = [];
+  const tails = new Set(vehicle.userData.brakeLights || []), heads = [];
+  vehicle.traverse(mesh => {
+    if (!mesh.isMesh || Array.isArray(mesh.material)) return;
+    const source = mesh.material;
+    const head = /^(Headlamp lenses|Headlight)$/.test(source.name) ||
+      source.name === '' && source.emissive?.getHex() === 0xffdf97 && source.roughness === .2;
+    const tail = tails.has(mesh);
+    if (!head && !tail) return;
+    if (!privateMaterials.has(source)) {
+      const material = source.clone();
+      material.userData.sharedAsset = false;
+      material.onBeforeCompile = source.onBeforeCompile;
+      material.customProgramCacheKey = source.customProgramCacheKey;
+      privateMaterials.set(source, material);
+      originals.set(source, {intensity: source.emissiveIntensity, head, tail});
+    }
+    bindings.push({mesh, source, material: privateMaterials.get(source)});
+    if (head) heads.push(mesh);
+  });
+  const cones = new THREE.Group();cones.name = 'Night headlight cones';cones.visible = false;
+  cones.userData.excludeAmbientOcclusion = true;
+  const positions = [], coordinates = [];
+  const point = new THREE.Vector3(), inverse = new THREE.Matrix4(), matrix = new THREE.Matrix4();
+  const bounds = new THREE.Box3();
+  vehicle.updateWorldMatrix(true, true);inverse.copy(vehicle.matrixWorld).invert();
+  for (const mesh of heads) {
+    const attribute = mesh.geometry.attributes.position;
+    matrix.multiplyMatrices(inverse, mesh.matrixWorld);
+    for (let i = 0; i < attribute.count; i++) bounds.expandByPoint(point.fromBufferAttribute(attribute, i).applyMatrix4(matrix));
+  }
+  if (heads.length && !bounds.isEmpty()) {
+    let height = 0, count = 0;
+    for (const mesh of heads) {
+      const attribute = mesh.geometry.attributes.position;
+      matrix.multiplyMatrices(inverse, mesh.matrixWorld);
+      for (let i = 0; i < attribute.count; i++) {
+        point.fromBufferAttribute(attribute, i).applyMatrix4(matrix);
+        if (point.z >= bounds.max.z - .12) { height += point.y;count++; }
+      }
+    }
+    const y = count ? height / count : bounds.getCenter(point).y;
+    const x = Math.max(.24, Math.max(Math.abs(bounds.min.x), Math.abs(bounds.max.x)) * .75);
+    const z = bounds.max.z + .035;
+    const triangle = (a, b, c, uv) => { positions.push(...a, ...b, ...c);coordinates.push(...uv); };
+    for (const side of [-1, 1]) {
+      const left = [side * x - .10, y, z], right = [side * x + .10, y, z];
+      const farLeft = [side * x - 2.1, .08, z + 30], farRight = [side * x + 2.1, .08, z + 30];
+      // One tapered pool and two faint sides read as a volume at racing speed.
+      triangle(left, farLeft, right, [0, 0, 0, 1, 1, 0]);
+      triangle(right, farLeft, farRight, [1, 0, 0, 1, 1, 1]);
+      triangle(left, [side * x, y + .05, z], farLeft, [0, 0, .5, 0, 0, 1]);
+      triangle(right, farRight, [side * x, y + .05, z], [1, 0, 1, 1, .5, 0]);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(coordinates, 2));
+  const beam = new THREE.ShaderMaterial({transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending, uniforms: {strength: {value: 0}},
+    vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader: `varying vec2 vUv;uniform float strength;
+      void main(){float edge=pow(max(0.,1.-abs(vUv.x*2.-1.)),.65);
+      float reach=pow(1.-vUv.y,1.8)*smoothstep(0.,.09,vUv.y);
+      gl_FragColor=vec4(.72,.83,1.,edge*reach*strength*.21);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(geometry, beam);mesh.userData.excludeAmbientOcclusion = true;
+  mesh.renderOrder = 2;cones.add(mesh);vehicle.add(cones);
+  const tailGlow = new THREE.Group();tailGlow.name = 'Night tail glow';tailGlow.visible = false;
+  tailGlow.userData.excludeAmbientOcclusion = true;
+  const tailGeometry = new THREE.PlaneGeometry(1, 1), glows = [];
+  for (const tail of tails) {
+    bounds.makeEmpty();
+    const attribute = tail.geometry.attributes.position;
+    matrix.multiplyMatrices(inverse, tail.matrixWorld);
+    for (let i = 0; i < attribute.count; i++) bounds.expandByPoint(point.fromBufferAttribute(attribute, i).applyMatrix4(matrix));
+    if (bounds.isEmpty()) continue;
+    const center = bounds.getCenter(new THREE.Vector3()), width = bounds.max.x - bounds.min.x;
+    const sides = width > 1 ? [-1, 1] : [0];
+    for (const side of sides) {
+      const glowMaterial = new THREE.ShaderMaterial({transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending, uniforms: {strength: {value: 0}},
+        vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+        fragmentShader: `varying vec2 vUv;uniform float strength;void main(){
+          float radius=length((vUv-.5)*2.);
+          float glow=pow(max(0.,1.-radius),1.8);
+          gl_FragColor=vec4(1.,.012,.006,glow*strength*.48);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`});
+      const glow = new THREE.Mesh(tailGeometry, glowMaterial);
+      glow.position.set(center.x + side * width * .36, center.y, bounds.min.z - .06);
+      glow.scale.set(Math.max(.55, side ? width * .4 : width * 1.8), Math.max(.36, (bounds.max.y - bounds.min.y) * 2.5), 1);
+      glow.renderOrder = 2;glow.userData.excludeAmbientOcclusion = true;tailGlow.add(glow);
+      // Read the existing lens wear. A damaged lamp must not regain its glow.
+      const vertices = [];
+      for (let i = 0; i < attribute.count; i++) {
+        point.fromBufferAttribute(attribute, i).applyMatrix4(matrix);
+        if (!side || (point.x - center.x) * side >= 0) vertices.push(i);
+      }
+      glows.push({material: glowMaterial, tail, vertices});
+    }
+  }
+  vehicle.add(tailGlow);
+  let disposed = false;
+  function restore({braking} = {}) {
+    if (disposed) return;
+    for (const binding of bindings) binding.mesh.material = binding.source;
+    // This runs after the renderer's normal braking assignment. Restore that
+    // current input, not the last frame's brighter night value.
+    if (typeof braking === 'boolean') for (const lamp of tails) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
+    cones.visible = false;tailGlow.visible = false;
+  }
+  return {
+    update({amount = 0, braking = false} = {}) {
+      if (disposed) return;
+      const level = Math.max(0, Math.min(1, Number.isFinite(amount) ? amount : 0));
+      for (const binding of bindings) binding.mesh.material = binding.material;
+      for (const [source, material] of privateMaterials) {
+        const original = originals.get(source);
+        material.emissiveIntensity = original.head ? Math.min(2, Math.max(1.5, original.intensity + .65)) * level : braking ? 4.5 : .18 + 1.62 * level;
+      }
+      beam.uniforms.strength.value = level;cones.visible = level > 0 && heads.length > 0;
+      tailGlow.visible = level > 0 && glows.length > 0;
+      for (const glow of glows) {
+        const wear = glow.tail.geometry.attributes.panelWear;
+        let amount = 0;
+        if (wear) for (const index of glow.vertices) amount += Math.min(.97, Math.max(0, wear.getX(index) * 1.85));
+        const intact = 1 - (glow.vertices.length ? amount / glow.vertices.length : 0);
+        glow.material.uniforms.strength.value = level * (braking ? 1.6 : 1) * intact;
+      }
+    },
+    restore,
+    dispose() {
+      if (disposed) return;
+      restore();disposed = true;vehicle.remove(cones, tailGlow);
+      geometry.dispose();beam.dispose();tailGeometry.dispose();
+      for (const glow of glows) glow.material.dispose();
+      glows.length = 0;
+      for (const material of privateMaterials.values()) material.dispose();
+      bindings.length = 0;privateMaterials.clear();originals.clear();
+    },
+  };
+}
