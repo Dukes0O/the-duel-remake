@@ -3,7 +3,7 @@ import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
 import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
-// app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
+// app.js â€” owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
 
@@ -24,7 +24,7 @@ import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } fro
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
-import {loadGhosts,saveGhosts,findGhost,mergeGhostStores,storeGhost,GhostRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
+import {loadGhosts,saveGhosts,findGhost,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
@@ -146,8 +146,16 @@ export class App {
       }
       else if(event.gameover)this._settleResult(state.results||{},state);
       if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);}
-      if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);}
-      if(event.boundaryReset||event.recovered||event.checkpointReset)this.ghostRecorder?.discontinuity();
+      if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);}
+      if(event.lapCompleted && state.mode==='grandprix'){
+        const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
+        if(lap){
+          const current=this.ghostSaved===false?this.ghosts:mergeGhostStores(this.ghosts,loadGhosts());
+          const saved=storeGhost(current,lap);this.ghosts=saved.store;
+          if(saved.saved)this.ghostSaved=saveGhosts(this.ghosts);
+        }
+      }
+      if(event.boundaryReset||event.recovered||event.checkpointReset){this.ghostRecorder?.discontinuity();this.grandPrixLapRecorder?.discontinuity();}
       if(event.fighterExited||event.fighterEntered){
         this.inputContext=null;
         this.keys={};
@@ -411,6 +419,12 @@ export class App {
   }
   _startGhostStage(state){
     this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';
+    this.grandPrixLapRecorder=null;
+    if(state.mode==='grandprix'&&state.qualifying?.phase!=='driving'&&this._runPlayerId===this.player.id&&state.playerId===this.player.id){
+      this.grandPrixLapRecorder=new GrandPrixLapRecorder({playerId:this.player.id,seed:state.seed,
+        stageIndex:state.stageIndex,car:state.car,driverId:state.driverId,difficulty:state.difficulty,
+        cpuDifficulty:state.cpuDifficulty,upgrades:{...state.upgrades}},this.duel.course.length);
+    }
     if(COURSE[state.stageIndex]?.practice||state.mode!=='timetrial'||!this.runId||this._runPlayerId!==this.player.id||state.playerId!==this.player.id)return;
     if(this.ghostSaved!==false)this.ghosts=mergeGhostStores(this.ghosts,loadGhosts());
     const context={playerId:this.player.id,seed:state.seed,stageIndex:state.stageIndex,laps:state.lapsTotal,car:state.car,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,upgrades:{...state.upgrades}};
@@ -421,6 +435,7 @@ export class App {
   }
   _updateGhost(state){
     this.ghostPose=null;
+    this.grandPrixLapRecorder?.observe(state);
     if(COURSE[state.stageIndex]?.practice||state.mode!=='timetrial'||state.playerId!==this.player.id||!['countdown','racing','ticket'].includes(state.status)){this.ghostStatus='none';return;}
     this.ghostRecorder?.observe(state);
     this.ghostStatus=this.ghostRecord?(this.ghostEnabled?'playing':'off'):'recording';
@@ -533,6 +548,7 @@ export class App {
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       result.best=recorded.best;
       result.personalBest=recorded.recorded;
+      this.grandPrixLapRecorder=null;
       return;
     }
     const awarded=settleRace(this.profile,payload);
@@ -899,7 +915,7 @@ export class App {
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._runPlayerId = this.player.id; this._markedRaceKey = null; this._arenaOpponents = count;
     this._arenaSerial = (this._arenaSerial || 0) + 1;
-    this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = this.grandPrixLapRecorder = null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
@@ -930,7 +946,7 @@ export class App {
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this._settledHiddenRoadJourney = null;
     this._settledMuddyHollowDeparture = null;
-    this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = this.grandPrixLapRecorder = null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
@@ -1129,7 +1145,7 @@ export class App {
     st.muddyHollowDeparture = null; st.arena = null;
     if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
-    this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';
+    this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.grandPrixLapRecorder=null;this.ghostStatus='none';
     this._racePaint=null;this._racePaintCar=null;
     this.driftNotice=null;
     this.checkpointNotice=null;

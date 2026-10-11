@@ -36,6 +36,7 @@ const rowKey = row =>
   [
     row.playerId,
     row.eventKey,
+    row.mode || 'duel',
     row.car,
     ...(row.mode === 'wasteland' ? ['wasteland', weaponSignature(row)] : []),
     row.driverSignature ?? driverModifierSignature(row.driverId, row.car),

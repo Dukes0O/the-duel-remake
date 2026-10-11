@@ -1,6 +1,6 @@
 # P4-GP-EXISTING
 
-Status: building; Grand Prix ghost display decision is with Claude.
+Status: building. Claude settled best-lap ghosts; playback remains Time Trial only.
 
 ## Design before code
 
@@ -11,9 +11,10 @@ layout versions and every existing mode unchanged. Widen only if the full-field
 check proves a particular section cannot work.
 
 Grand Prix records use additive mode keys and three-lap validation; legacy
-record and ghost keys remain exact. A valid finish records without credits,
-loss charges or milestones; pay belongs to P4-CAREER. Ghost recording/playback
-waits for Claude's answer. The same course access rules still apply.
+record and ghost keys remain exact. The score screen offers a separate GP
+filter; All existing modes retains its old event key. A valid finish records without credits,
+loss charges or milestones; pay belongs to P4-CAREER. Grand Prix records a separate best-lap ghost per event, route and mode,
+for the later Team Room. Playback stays Time Trial only. The same course access rules still apply.
 
 The Director granted narrow hooks in race-field, app and progression, plus
 FIELD test updates. The previous High Country rejection expectation will use
@@ -22,8 +23,14 @@ This reflects newly supported road circuits, with no tolerance change.
 
 ## Checks
 
-Test-first eligibility and record-isolation checks pending. Native checks cover
-every grid, first corner and narrow stretch with eight cars. No art change.
+Test-first eligibility failed on missing High Country support before code.
+The GP best-lap recorder starts from native grid and interpolated line crossings;
+completed unassisted laps alone can replace the mode best. Existing ghost keys,
+Time Trial playback and storage caps remain exact. Native checks cover
+every grid, first corner and narrow stretch with eight cars. The focused
+246-check pass covers eligibility, state parity, mode rows and pure lap ghosts.
+The later native App run was interrupted for the four-lane cap; no verdict.
+Browser, save review, current lane/build remain pending. No art change.
 
 ## Removed
 
