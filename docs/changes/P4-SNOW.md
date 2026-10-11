@@ -79,7 +79,7 @@ AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
 Fresh native default Bloom input, bright and all ten blur targets have zero
 NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
-Integration4527 synced; reviewed loaderd05 band/rear compatibility retains Snow API.
+Integration4527 synced; loaderd05 retains Snow API. Current 15276b08 genuinely merges rulesf30 and Tremblant9ed; Snow has none of the new relief/gravel/crowd opt-ins. Before fixture edit: lane failed the exact flag count21 because approved snow-world dev makes22; root grants count22 plus required snow-world dev, with every old released/retired/isolation assertion retained.
 Prepared extras/current bank identities/eight grounded cars pass; round2 ba685 native passes.
 Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
 Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.
@@ -87,7 +87,7 @@ Static timing fixes only its native presentation camera; poses and limits stay e
 Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
 Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
 Round3 GREEN: outside-range lightfall RED/GREEN, dry cap shader,64 seeded pines,
-actual rim overlap/road clearance/read-only identity. e6ac2080 final native8views passes,0warnings/errors,12finiteHDRtargets.
+actual rim overlap/road clearance/read-only identity. e6ac2080 final native8views passes. Placement-fixed cfcf4b24 native passes8views, private56398,0warnings/errors,12finiteHDRtargets,308current/0oldbanks,340/128marks expire0; actualpond image reviewed CLEAR. No frame timing. Catalog fixture GREEN78 checks.
 Claude13:40 accepts final cap2.5/4/3/3.5 subject to everypine6moutsidepond; all remaining look toClaude, no fourth round.
 Before placement code: new106pine acceptance uses original1989native fixture and actual seededFloat32 outer polygons, with signed inside/near/outside and invalid-math controls; Claude14:15 approves onlypond2 s600→650 and firstpositivecluster s180→205; everypine>=6.4m, all else exact. Original RED12violations (2physical/10authored), min-8.254607m. GREEN106pines min6.446767m,0violations; physicalfeatures/RNG exact.
 
