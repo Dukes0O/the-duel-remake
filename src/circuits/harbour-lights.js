@@ -18,6 +18,11 @@
 //     220 to 60, 300 to 375, last 200 to 60.
 // Claude's finishing pass should redraw this layout; the numbers here make the
 // loop close and keep the named corners in the drafted order.
+// Redrawn by Claude, 10 October 2026: Seafront Straight, Lantern Kink and the
+// Casino Approach give about 900 m into Casino Corner (the overtaking zone); the
+// old town climbs away from the start; Precinct Bend turns further away and the
+// Lantern Hairpin turns the road for home; the Reservoir Run and Harbour Road
+// bring it back. Closest separate stretches: the hairpin approach and exit.
 import { defineScriptedCourse } from '../track-script.js';
 
 export const HARBOUR_LIGHTS = defineScriptedCourse({
@@ -33,27 +38,29 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
   scriptStart: 100,
   scriptDefaults: { walls: 'both' },
   script: [
-    ['straight', 599, { name: 'Seafront Straight', width: 14 }],
-    ['turn', 'L', 14, 300, { name: 'Lantern Kink' }],
-    ['straight', 60, { name: 'Casino Approach' }],
-    ['turn', 'R', 152, 22, { name: 'Casino Corner' }],
-    ['straight', 200, { climb: 6 }],
-    ['turn', 'L', 28.5, 60, { climb: 6, name: 'Temple Hill' }],
-    ['straight', 66, { climb: 6 }],
-    ['turn', 'R', 59.5, 35, { climb: 5, name: 'Bell Tower Bend' }],
-    ['straight', 294, { climb: 4, width: 10 }],
-    ['turn', 'L', 50, 32, { climb: 3, name: 'Old Town Esses 1' }],
-    ['turn', 'R', 48, 30, { name: 'Old Town Esses 2' }],
-    ['turn', 'L', 48.5, 36, { name: 'Old Town Esses 3' }],
-    ['turn', 'R', 35, 41, { name: 'Old Town Esses 4' }],
-    ['straight', 320, { name: 'Hillside' }],
-    ['turn', 'R', 57.5, 25, { climb: -6, name: 'Precinct Bend' }],
-    ['straight', 254, { climb: -6, name: 'Hairpin Approach', width: 12 }],
-    ['turn', 'R', 173.5, 9, { climb: -2, name: 'Lantern Hairpin' }],
-    ['straight', 60, { climb: -8 }],
-    ['turn', 'L', 96, 45, { climb: -4, name: 'Fishmarket Bend' }],
-    ['straight', 375, { climb: -4, width: 14 }],
-    ['turn', 'R', 71.5, 120, { name: 'Reservoir Sweep' }],
-    ['straight', 60, { name: 'Harbour Return' }],
+    ['straight', 500, { name: 'Seafront Straight', width: 14 }],
+    ['turn', 'L', 20, 300, { name: 'Lantern Kink' }],
+    ['straight', 294, { name: 'Casino Approach' }],
+    ['turn', 'R', 104, 22, { name: 'Casino Corner' }],
+    ['straight', 150, { climb: 6 }],
+    ['turn', 'L', 40, 60, { climb: 6, name: 'Temple Hill' }],
+    ['straight', 78, { climb: 6 }],
+    ['turn', 'R', 60, 35, { climb: 5, name: 'Bell Tower Bend' }],
+    ['straight', 192, { climb: 4, width: 10 }],
+    ['turn', 'L', 46.5, 32, { climb: 3, name: 'Old Town Esses 1' }],
+    ['turn', 'R', 51.5, 30, { name: 'Old Town Esses 2' }],
+    ['turn', 'L', 43, 36, { name: 'Old Town Esses 3' }],
+    ['turn', 'R', 40, 41, { name: 'Old Town Esses 4' }],
+    ['straight', 103, { name: 'Hillside' }],
+    ['turn', 'L', 29.5, 60, { climb: -6, name: 'Precinct Bend' }],
+    ['straight', 220, { climb: -6, name: 'Hairpin Approach', width: 12 }],
+    ['turn', 'R', 175, 9, { climb: -2, name: 'Lantern Hairpin' }],
+    ['straight', 99, { climb: -8 }],
+    ['turn', 'L', 60, 45, { climb: -4, name: 'Fishmarket Bend', width: 14 }],
+    ['straight', 827, { climb: -4, name: 'Reservoir Run' }],
+    ['turn', 'R', 59, 120, { name: 'Reservoir Sweep' }],
+    ['straight', 500, { name: 'Harbour Road' }],
+    ['turn', 'R', 109, 60, { name: 'Harbour Turn' }],
+    ['straight', 61, { name: 'Harbour Return' }],
   ],
 });

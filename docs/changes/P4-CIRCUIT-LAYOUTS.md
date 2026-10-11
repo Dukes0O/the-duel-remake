@@ -114,3 +114,16 @@ tools/test-circuit-layouts.mjs follow the new design: laps 3, Timber
 Straight about 1,305 m, Beaver Hairpin radius 22 m.
 
 Removed: the fitted first-draft Tremblant script.
+
+## Harbour Lights redrawn (Claude, 10 October 2026)
+
+The fitted first draft turned Casino Corner into a 152 degree second hairpin
+with a 60 m approach. Claude redrew it: about 900 m from the start line into
+a 104 degree Casino Corner, the old town climbing away from home, Precinct
+Bend turning further away and the Lantern Hairpin (radius 9 m, 175 degrees)
+turning the road for home, then the Reservoir Run and Harbour Road back.
+4.05 km, 4 laps, closes with small changes (tools/track-script-fit.mjs),
+highest grade 15.1%. Test driver laps 1:37 then 1:34, no crashes. No test
+assertion changed.
+
+Removed: the fitted first-draft Harbour Lights script.
