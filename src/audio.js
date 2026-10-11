@@ -93,6 +93,10 @@ export class EngineAudio {
     this.cueIndices = new Map();
     this.projectileVoices = new Map();
     this.arsenalFieldVoices = new Map();
+    this.grandPrixVoices = new Set();
+    this.grandPrixDeliveries = new WeakMap();
+    this.grandPrixField = null;
+    this.grandPrixStatus = null;
     this.pendingGatekeeper = null;
     this.sampleStatus = 'locked';
     this.ambience = {};
@@ -245,12 +249,20 @@ export class EngineAudio {
   }
 
   _loadCueBuffers() {
-    if (this._cueBuffersPromise) return this._cueBuffersPromise;
-    this._cueBuffersPromise = Promise.allSettled(
+    const grandPrix = this.flags.enabled('grand-prix');
+    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted))
+      return this._cueBuffersPromise;
+    const pending = this._cueBuffersPromise;
+    // A later Grand Prix activation adds only its own batch. Existing cue and
+    // fight-voice loading retains the selection made at ordinary audio startup.
+    if (grandPrix) this._p4CueBuffersStarted = true;
+    const loading = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
           ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
-            (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')),
+            (!pending || cue.flag === 'grand-prix') &&
+            (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
+            (cue.flag !== 'grand-prix' || grandPrix),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -263,6 +275,7 @@ export class EngineAudio {
           this.cueBuffers[id] = cue.files ? buffers : buffers[0];
         }),
     );
+    this._cueBuffersPromise = pending ? Promise.allSettled([pending, loading]) : loading;
     return this._cueBuffersPromise;
   }
 
@@ -803,6 +816,71 @@ export class EngineAudio {
       }
   }
 
+  _clearGrandPrixVoices() {
+    for (const voice of this.grandPrixVoices) voice.stop();
+    this.grandPrixVoices.clear();
+  }
+
+  _syncGrandPrix(state) {
+    const field = this.flags.enabled('grand-prix') && state?.mode === 'grandprix'
+      ? state.field : null;
+    const status = state?.status;
+    if (field !== this.grandPrixField || !field || state?.paused || this.paused || this.muted ||
+        !['countdown', 'racing', 'stage_result'].includes(status) ||
+        (status === 'stage_result' && this.grandPrixStatus !== status))
+      this._clearGrandPrixVoices();
+    this.grandPrixField = field || null;
+    this.grandPrixStatus = status;
+    return field;
+  }
+
+  _grandPrixEvent(ev, state) {
+    const field = this._syncGrandPrix(state);
+    if (!field || !ev) return {active: false, finish: false};
+    // FIELD owns race identity and emits synchronously. No audio key is written
+    // into simulation state. Keep consumed keys through mute, pause and menu.
+    let delivered = this.grandPrixDeliveries.get(field);
+    if (!delivered) {
+      delivered = {keys: new Set(), events: new WeakSet()};
+      this.grandPrixDeliveries.set(field, delivered);
+    }
+    const finish = ev.stageResult === state.results && state.status === 'stage_result' &&
+      ev.stageResult?.grandPrix === true && ev.stageResult.completed === true;
+    const result = {active: true, finish};
+    if (delivered.events.has(ev)) return result;
+    delivered.events.add(ev);
+    let key, cue;
+    if (state.status === 'countdown' && !field.start.out &&
+        Number.isInteger(ev.startLight) && ev.startLight >= 1 && ev.startLight <= 5 &&
+        ev.startLight === field.start.lights) {
+      key = 'light:' + ev.startLight;
+      cue = 'race.start.light';
+    } else if (state.status === 'racing' && ev.go && ev.lightsOut && field.start.out) {
+      key = 'go';
+      cue = 'race.start.go';
+    } else if (state.status === 'racing' && ev.positionGain &&
+        ev.positionGain.from === field.lastPosition && ev.positionGain.to === field.position &&
+        ev.positionGain.to < ev.positionGain.from) {
+      key = `position:${state.stageTimeSec}:${ev.positionGain.from}:${ev.positionGain.to}`;
+      cue = 'race.position.gain';
+    } else if (state.status === 'racing' && ev.finalLap && field.finalLap &&
+        state.lapsTotal > 1 && state.completedLaps === state.lapsTotal - 1) {
+      key = 'final';
+      cue = 'race.lap.final';
+    } else if (finish) {
+      key = 'finish';
+      cue = 'race.finish.flag';
+    }
+    if (!key || delivered.keys.has(key)) return result;
+    delivered.keys.add(key);
+    // A missed cue stays missed. Unlocking or resuming must not replay it.
+    if (this.muted || this.paused || state.paused || this.context?.state !== 'running') return result;
+    let voice;
+    voice = this._playCue(cue, {onEnd: () => this.grandPrixVoices.delete(voice)});
+    if (voice) this.grandPrixVoices.add(voice);
+    return result;
+  }
+
   _recordedImpact(id, event, state, course) {
     const output = this._spatialOutput(event, state, course);
     const filter = this.context.createBiquadFilter();
@@ -957,6 +1035,7 @@ export class EngineAudio {
     this._volume();
     if (this.muted) for (const voice of this.activeShots) this._stopShot(voice);
     if (this.muted) {
+      this._clearGrandPrixVoices();
       this.fightVoices.mute();
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
@@ -978,6 +1057,7 @@ export class EngineAudio {
       this.shiftStarted = this.shiftUntil = 0;
     }
     if (this.paused) {
+      this._clearGrandPrixVoices();
       this.fightVoices.clear();
       this._stopHiddenRoadVoices();
       this._clearProjectiles();
@@ -995,6 +1075,7 @@ export class EngineAudio {
   }
 
   update(st, environment = {}) {
+    this._syncGrandPrix(st);
     this._syncMixer(st);
     this.updateFightVoices(st);
     this.updateHiddenRoad(st);
@@ -1428,6 +1509,7 @@ export class EngineAudio {
       this.nextThrottle = this.nextLift = 0;
       this.shiftStarted = this.shiftUntil = 0;
     }
+    const grandPrix = this._grandPrixEvent(ev, state);
     if (
       !this.context ||
       this.context.state !== 'running' ||
@@ -1495,8 +1577,8 @@ export class EngineAudio {
       );
       this._playCue(boardingCue, {destination: output.level, onEnd: output.disconnect});
     }
-    if (ev.countdown) this._playCue('interface.countdown');
-    if (ev.go) this._playCue('interface.go');
+    if (ev.countdown && !grandPrix.active) this._playCue('interface.countdown');
+    if (ev.go && !grandPrix.active) this._playCue('interface.go');
       if (state?.arena?.mode === 'convoy-raid' && this.flags.enabled('convoy-raid')) {
         if (ev.convoyWindow) this._playCue(ev.convoyWindow.soundCue);
         if (ev.arenaResult) this._playCue(ev.arenaResult.result.winnerId === 'player' ? 'interface.win' : 'interface.lose');
@@ -1530,10 +1612,10 @@ export class EngineAudio {
     if (ev.nearMiss) {
       this._playCue('interface.near-miss');
     }
-    if (ev.escaped || ev.stageResult?.won || ev.complete) {
+    if (ev.escaped || (ev.stageResult?.won && !grandPrix.finish) || ev.complete) {
       this._playCue('interface.win');
     }
-    if (ev.ticket || ev.gameover || ev.stageResult?.won === false)
+    if (ev.ticket || ev.gameover || (ev.stageResult?.won === false && !grandPrix.finish))
       this._playCue('interface.lose');
     // These Arsenal launches already emit their own recorded native cue.
     if (ev.weaponFired && !['harpoon', 'caltrops', 'rockets',

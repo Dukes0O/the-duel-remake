@@ -928,3 +928,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October: end full passes 371/371 on clean exact 0025c766 in 905.09 s, alone with four jobs; zero failures, zero not run and no reruns. Final ledger/status/log updates wait for the next real commit; no results-only commit or new release.
 
 10 October: started parallel P4-KITS, P4-AUDIO and P4-INTEL-DOSSIER lanes from Claude's handoff; retained the P4-DAYNIGHT draft. Shared renderer follows Track Script, then Day/Night, then dossier hooks if needed. Race-field balance is active; heavy work waits for the Director's slot.
+
+10 October: merged P4-AUDIO foundation from c331f6db; lane 376/376 in 1086.89 s, build 668 ms, Director source review clear. Genuine 8-car/3-lap native audio, exact PCM continuity and full-state value equality pass; listening and 15 future event hooks remain open. Live game unchanged.

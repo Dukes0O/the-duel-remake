@@ -45,8 +45,11 @@ in the round-two review; this face correction does not repair them.
 Final native capture passes: memory-only saves, 40 frames, zero issues and
 four expected duplicate-Three warnings. Three matched round-three sheets
 are in docs/board/looks/p4-kits; each is below 500 KB.
-Final art verdict, lane/build and independent source review remain before
-merge. No frame budget, full-tier, release or replay-fingerprint pass claimed.
+Claude's final round-three verdict passes Paddock, Snow and Yeti at 3.5 each.
+Director source review is clear; no fourth round. Synced reviewed lighting
+and atomic crash-audio capture source a89e562c before the queued lane/build.
+Kit records, runtime pairs, recipes and reviewed sheets stay unchanged.
+The native packet predates that source sync; lane/build remain before merge. No frame budget, full-tier, release or replay-fingerprint pass claimed.
 Simulation code is unchanged; the native viewer preserves race/profile state.
 
 ## Removed

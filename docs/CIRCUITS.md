@@ -347,86 +347,93 @@ Turns sum to +360 (left 515, right 155). Climbs and drops balance (119 m).
 
 ### 5.2 Harbour Lights (Guia)
 
-A night street race between walls: a seafront straight, a hard right at the
-casino, a tight climb through the old town and the slowest hairpin in the
-game, then a flat-out sweep along the reservoir.
+A night street race between walls: a seafront run into a hard right at the
+casino, a tight climb through the old town, the slowest hairpin in the game
+where the road turns for home, then the long Reservoir Run and Harbour Road
+back. Redrawn by Claude on 10 October 2026 (the first draft did not close);
+`src/circuits/harbour-lights.js` holds the exact numbers.
 
-- **Event:** Harbour Lights Night, 4 laps, about 3.0 km a lap, field of 8.
-- **Width:** 14 m on the Seafront and the Reservoir Sweep; 10 to 12 m in
-  the old town. Walls both sides everywhere (concrete blocks with catch
-  fences); escape roads at Casino Corner and the hairpin only.
+- **Event:** Harbour Lights Night, 4 laps, about 4.05 km a lap (test driver
+  1:34), field of 8.
+- **Width:** 14 m on the seafront, reservoir and harbour roads; 10 m in the
+  old town; 12 m at the hairpin. Walls both sides everywhere (concrete
+  blocks with catch fences); escape roads at Casino Corner and the hairpin.
 - **Signature:** Lantern Hairpin, radius 9 m, about 30 km/h, under strings
-  of paper lanterns.
-- **Overtaking:** Seafront Straight into Casino Corner.
+  of paper lanterns; its approach and exit run side by side with a wall
+  between.
+- **Overtaking:** Seafront Straight, Lantern Kink and the Casino Approach,
+  about 900 m into Casino Corner; also Harbour Road into Harbour Turn.
 - **Commitment:** Lantern Kink and the Reservoir Sweep, flat out between
   walls.
-- **Look:** neon signs and lit shopfronts, harbour with moored boats, a
-  lit tower ("Lantern Tower", our own landmark) above the casino, a
-  wet-look road that reflects the lights (looks only, grip is dry).
+- **Look:** neon signs and lit shopfronts, harbour with moored boats, the
+  Lantern Tower above the casino, a wet-look road (looks only, grip is dry).
 
 | # | Piece | Name | Notes |
 | --- | --- | --- | --- |
-| 1 | straight 600 | Seafront Straight | start line 100 m in |
+| 1 | straight 500 | Seafront Straight | start line 100 m in |
 | 2 | turn L 20, r 300 | Lantern Kink | flat out between walls |
-| 3 | straight 450 | | boards for Casino Corner |
-| 4 | turn R 95, r 22 | Casino Corner | heavy braking, escape road |
-| 5 | straight 120, climb +6 | | |
+| 3 | straight 294 | Casino Approach | boards |
+| 4 | turn R 104, r 22 | Casino Corner | heavy braking, escape road |
+| 5 | straight 150, climb +6 | | |
 | 6 | turn L 40, r 60, climb +6 | Temple Hill | |
-| 7 | straight 90, climb +6 | | |
+| 7 | straight 78, climb +6 | | |
 | 8 | turn R 60, r 35, climb +5 | Bell Tower Bend | |
-| 9 | straight 140, climb +4 | | width 10 from here |
-| 10 | turn L 45, r 30, climb +3 | Old Town Esses 1 | |
-| 11 | turn R 50, r 30 | Old Town Esses 2 | |
-| 12 | turn L 40, r 35 | Old Town Esses 3 | |
-| 13 | turn R 35, r 40 | Old Town Esses 4 | |
-| 14 | straight 160 | Hillside | harbour view through gaps |
-| 15 | turn R 70, r 25, climb -6 | Precinct Bend | |
-| 16 | straight 120, climb -6 | | boards |
+| 9 | straight 192, climb +4 | | width 10 from here |
+| 10 to 13 | L 46.5 r 32, R 51.5 r 30, L 43 r 36, R 40 r 41 | Old Town Esses | |
+| 14 | straight 103 | Hillside | |
+| 15 | turn L 29.5, r 60, climb -6 | Precinct Bend | turns further from home |
+| 16 | straight 220, climb -6 | Hairpin Approach | width 12, boards |
 | 17 | turn R 175, r 9, climb -2 | Lantern Hairpin | the slowest corner in the game |
-| 18 | straight 220, climb -8 | | width 12 |
-| 19 | turn L 60, r 45, climb -4 | Fishmarket Bend | |
-| 20 | straight 300, climb -4 | | width 14 |
-| 21 | turn R 80, r 120 | Reservoir Sweep | long, fast, walls close |
-| 22 | straight 200 | | back to the Seafront |
-
-Turns sum to -360 (right 565, left 205). Climbs and drops balance (30 m).
+| 18 | straight 99, climb -8 | | |
+| 19 | turn L 60, r 45, climb -4 | Fishmarket Bend | width 14 from here |
+| 20 | straight 827, climb -4 | Reservoir Run | |
+| 21 | turn R 59, r 120 | Reservoir Sweep | fast, walls close |
+| 22 | straight 500 | Harbour Road | boards |
+| 23 | turn R 109, r 60 | Harbour Turn | |
+| 24 | straight 61 | Harbour Return | onto the Seafront |
 
 ### 5.3 Tremblant Woods (Mont-Tremblant)
 
 A rolling forest circuit at a ski resort: a plunge to a lake, crests that
-throw the car into the air, a hairpin and a long straight with jumps.
+throw the car into the air, a hairpin at the end of a short spur and a long
+straight back with jumps. Redrawn by Claude on 10 October 2026 (the first
+draft did not close); the file `src/circuits/tremblant-woods.js` holds the
+exact numbers.
 
-- **Event:** Tremblant Woods Autumn, 4 laps, about 3.3 km a lap, field of
-  8. Crisp autumn morning: low sun, orange and red leaves, mist on the lake.
-- **Width:** 14 m. Grass and gravel runoff; forest close behind.
-- **Signature:** the chairlift: Timber Straight runs under a moving ski
-  chairlift, and the second crest launches you right beneath it.
+- **Event:** Tremblant Woods Autumn, 3 laps, about 4.4 km a lap (test
+  driver 1:37), field of 8. Crisp autumn morning: low sun, orange and red
+  leaves, mist on the lake.
+- **Width:** 14 m. Grass and gravel runoff; forest close behind. A wall
+  between the hairpin spur and Timber Straight (66 m apart, centre to
+  centre).
+- **Signature:** the chairlift over Timber Straight; the second crest
+  launches you right beneath it.
 - **Overtaking:** Timber Straight into Devil's Chicane.
 - **Commitment:** Pine Drop, a fast downhill right over a crest.
 - **Landmarks:** the ski lodge above the start, the chairlift, the lake
-  with a wooden dock, ski runs cut through the trees on the hill.
+  with a wooden dock beside Lakeshore, ski runs cut through the trees.
 
 | # | Piece | Name | Notes |
 | --- | --- | --- | --- |
-| 1 | straight 420, climb -6 | Lodge Straight | start, pits, grandstand |
-| 2 | turn R 60, r 80, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
-| 3 | turn L 70, r 45, climb -12 | Lakeside Plunge | lake opens up ahead |
-| 4 | straight 240, climb -4 | Lakeshore | |
-| 5 | turn R 40, r 50, climb +2 | Fir Esses 1 | |
-| 6 | turn L 35, r 55, climb +2 | Fir Esses 2 | |
-| 7 | straight 320, crest 2.5, climb +12 | Ridge Run | air over the crest |
-| 8 | turn R 90, r 35, climb +6 | Ridge Corner | |
-| 9 | straight 280 | | boards |
-| 10 | turn R 170, r 14, climb +2 | Beaver Hairpin | |
-| 11 | straight 1100, climb -6 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
-| 12 | turn R 30, r 60 | Devil's Chicane 1 | |
-| 13 | turn L 30, r 60 | Devil's Chicane 2 | |
-| 14 | straight 220, climb +8 | | |
-| 15 | turn R 65, r 50, climb +6 | Lodge Bend | |
-| 16 | straight 200 | | |
-| 17 | turn R 40, r 90 | Final Turn | onto Lodge Straight |
-
-Turns sum to -360 (right 495, left 135). Climbs and drops balance (38 m).
+| 1 | straight 414, climb -6 | Lodge Straight | start, pits, grandstand |
+| 2 | turn R 60, r 90, crest 2, climb -10 | Pine Drop | fast downhill over a crest |
+| 3 | turn L 70, r 50, climb -12 | Lakeside Plunge | lake opens up ahead |
+| 4 | straight 258, climb -4 | Lakeshore | dock and lake on the left |
+| 5 | turn R 40, r 55, climb +2 | Fir Esses 1 | |
+| 6 | turn L 35, r 60, climb +2 | Fir Esses 2 | |
+| 7 | straight 326, crest 2.5, climb +12 | Ridge Run | air over the crest |
+| 8 | turn R 90.5, r 45, climb +4 | Ridge Corner | |
+| 9 | straight 323, climb +6 | Beaver Run | boards |
+| 10 | turn L 80, r 40 | Beaver Kink | onto the spur |
+| 11 | straight 80 | The Spur | |
+| 12 | turn R 170.5, r 22, climb +2 | Beaver Hairpin | |
+| 13 | straight 1302, climb -8 | Timber Straight | crests of 1.5 m and 2.5 m; chairlift over the second |
+| 14 | turn R 30, r 60 | Devil's Chicane 1 | |
+| 15 | turn L 30, r 60 | Devil's Chicane 2 | |
+| 16 | straight 283, climb +4 | | |
+| 17 | turn R 114, r 50, climb +6 | Lodge Bend | |
+| 18 | straight 500, climb +2 | Lodge Climb | |
+| 19 | turn R 70, r 70 | Final Turn | onto Lodge Straight |
 
 **Tremblant Snow** (variant, P4-TREMBLANT-SNOW): the same circuit in
 winter. Packed snow on most of the lap; asphalt on Lodge Straight and
@@ -457,6 +464,80 @@ least 15 m radius, with fast climbing roads between them.
 | E. Avalanche Gallery | 10.0 to 11.4 km | The road splits at 10.1 km: the Gallery (a snow shed, 10 m wide, tighter curves, safe) or the Open Road (faster, under the avalanche slope). They rejoin at 10.9 km. Then a ledge with the valley and town lights far below. Night begins; first stars. |
 | F. Devil's Staircase | 11.4 to 13.6 km | Devil's Elbow (L 180, r 15) at 12.0 km, Last Breath (R 180, r 15) at 12.9 km. Night, headlights, light snowfall and blowing snow on the ridge. Climb 150 m. |
 | G. Summit | 13.6 to 14.0 km | Finish straight to the summit hut and observatory with lit windows. Yeti spots. |
+
+**Claude's layout draft** (10 October 2026), for P4-SUMMIT to build as a
+point-to-point track script. It is checked: no two stretches of road come
+within 165 m of each other more than 750 m apart along the road, so the
+ground under one leg never overlaps another. Near each hairpin the two legs
+run close and climb apart; a kink after every hairpin turns the next leg
+away. P4-SUMMIT may adjust lengths and angles by up to 10% to fit the
+sections, climbs and jumps, and must keep that separation (add a test).
+Climbs follow the section table above (about 720 m in total).
+
+| # | Piece | Name | At (km) | Notes |
+| --- | --- | --- | --- | --- |
+| | **A. Desert Foothills** | | | |
+| 1 | straight 470 | Start Straight | 0.0 | staggered grid |
+| 2 | turn L 26.5, r 200 |  | 0.5 |  |
+| 3 | straight 380 | Cattle Grid Jump | 0.6 | crest 2.5 m (jump) |
+| 4 | turn R 42.5, r 150 |  | 0.9 |  |
+| 5 | straight 370 |  | 1.1 |  |
+| 6 | turn L 48.5, r 180 |  | 1.4 |  |
+| 7 | straight 340 |  | 1.6 |  |
+| 8 | turn R 37.5, r 250 |  | 1.9 |  |
+| 9 | straight 630 | Graded Gravel | 2.1 | gravel surface |
+| 10 | turn L 52.5, r 120 |  | 2.7 |  |
+| 11 | straight 390 | Ranger Station Jump | 2.8 | crest 2.5 m (jump) |
+| 12 | turn R 34.5, r 200 |  | 3.2 |  |
+| 13 | straight 310 |  | 3.3 |  |
+| | **B. Pine Switchbacks** | | | |
+| 14 | straight 420 |  | 3.6 |  |
+| 15 | turn L 175.5, r 16 | Picnic Hairpin | 4.1 |  |
+| 16 | straight 190 |  | 4.1 |  |
+| 17 | turn R 54, r 80 |  | 4.3 |  |
+| 18 | straight 560 |  | 4.4 |  |
+| 19 | turn R 172, r 16 | Engineer's Hairpin | 4.9 |  |
+| 20 | straight 210 |  | 5.0 |  |
+| 21 | turn L 47, r 80 |  | 5.2 |  |
+| 22 | straight 570 |  | 5.3 |  |
+| 23 | turn L 167.5, r 18 | Brookside Hairpin | 5.8 |  |
+| 24 | straight 170 |  | 5.9 |  |
+| 25 | turn R 50, r 80 |  | 6.0 |  |
+| 26 | straight 370 |  | 6.1 |  |
+| | **C. Tree Line** | | | |
+| 27 | straight 560 | Tree Line Pit Straight | 6.5 | pit lane on the right |
+| | **D. Snowfields** | | | |
+| 28 | turn R 38.5, r 150 |  | 7.0 |  |
+| 29 | straight 610 |  | 7.1 |  |
+| 30 | turn L 40.5, r 150 |  | 7.8 |  |
+| 31 | straight 390 |  | 7.9 |  |
+| 32 | turn R 175, r 16 | Glacier Hairpin | 8.3 |  |
+| 33 | straight 170 |  | 8.3 |  |
+| 34 | turn L 53, r 80 |  | 8.5 |  |
+| 35 | straight 590 | Whiteout Crest | 8.5 | crest 1.5 m |
+| 36 | turn R 33.5, r 200 |  | 9.1 |  |
+| 37 | straight 520 |  | 9.3 |  |
+| | **E. Avalanche Gallery** | | | |
+| 38 | straight 470 | Gallery split | 9.8 | road splits: Gallery left, Open Road right |
+| 39 | turn L 40.5, r 120 |  | 10.2 |  |
+| 40 | straight 490 | The Gallery / Open Road | 10.3 | avalanche slope over the Open Road |
+| 41 | turn R 40, r 120 |  | 10.8 |  |
+| 42 | straight 360 | The Ledge | 10.9 | valley and town lights below |
+| | **F. Devil's Staircase** | | | |
+| 43 | straight 370 |  | 11.3 |  |
+| 44 | turn L 175, r 15 | Devil's Elbow | 11.6 |  |
+| 45 | straight 140 |  | 11.7 |  |
+| 46 | turn R 38, r 80 |  | 11.8 |  |
+| 47 | straight 580 |  | 11.9 |  |
+| 48 | turn R 178.5, r 15 | Last Breath | 12.5 |  |
+| 49 | straight 160 |  | 12.5 |  |
+| 50 | turn L 52, r 80 |  | 12.7 |  |
+| 51 | straight 590 |  | 12.7 |  |
+| | **G. Summit** | | | |
+| 52 | straight 440 | Summit Finish | 13.3 | finish at the summit hut |
+
+Total about 13.8 km.
+
 
 **The avalanche** (P4-AVALANCHE):
 
@@ -597,6 +678,94 @@ races or cups.
 **Engineer.** One named race engineer for the whole team (text only for
 now; a voice later if Kyle wants). Kyle and Gratian may name them; until
 then, "your engineer".
+
+### 7b.1 Reference laps and authored intel: final policy (Claude, 10 October 2026)
+
+**Reference laps.**
+
+- One reference per **event and route**. Route events (`ROUTE_EVENT_IDS`:
+  Pacific Canyon, High Country, Harbor & Highlands, Ridge Rally) get three,
+  one per route: `route_a` seed 1989, `route_b` seed 42, `route_c` seed 17,
+  exactly as `src/route-variants.js`. Every other event, including scripted
+  circuits and their variants, gets one, keyed `fixed`. Never reuse one
+  route's reference for another.
+- **Car and driver:** the Stuttgart 959-S, no upgrades, Club Driver, the
+  test driver on Medium.
+- **Run:** an isolated native fixture: no opponents, traffic, police, radar
+  or weapons; memory-only; the route's seed (scripted circuits: the
+  course's layout seed). One warm-up lap from a standing start, then two
+  timed flying laps; the reference is the faster of the two.
+- **Comparison note:** when the player drives another car, the dossier
+  shows "Reference lap: Stuttgart 959-S" beside every comparison. Per-class
+  references are not built now.
+- **Stale references fail the build checks.** Each record stores the
+  course's geometry fingerprint; a test fails when any closed-circuit event
+  and route lacks a reference or its fingerprint no longer matches, with the
+  rebuild command in the message.
+
+**Sectors.** Three per lap. Default: equal thirds of the lap distance.
+Authored boundaries in the circuit's intel replace them.
+
+**Authored beats generated.** Written sectors, flags and engineer notes
+override generated ones, item by item. Generated data only fills what is not
+written: unnamed corners, missing notes, missing flags.
+
+**Where authored intel lives.**
+
+- Scripted circuits: an `intel` block in `src/circuits/<id>.js`.
+- Existing courses: `src/circuit-intel/<event-id>.js`, registered with one
+  line in `src/circuit-intel/index.js`. Shared code never names a course.
+- Route events may author per route: `routes: {route_b: {...}}` overrides
+  the event's block for that route.
+
+```js
+// Authored intel. Every field is optional.
+intel: {
+  // Start distances in metres along the lap of sectors 2 and 3
+  // (sector 1 starts at the line). Default: equal thirds.
+  sectors: [1520, 3010],
+  // Hot-spot flags shown on the map. kind: 'signature' | 'overtaking' |
+  // 'corner' | 'crest'. Exactly one signature and at most two overtaking
+  // flags per lap. camera is the driver-seat snapshot: metres behind the
+  // flag's point, height above the road, look-ahead distance.
+  flags: [
+    {id: 'skyline', kind: 'signature', s: 2480, title: 'Skyline',
+     camera: {back: 30, up: 1.2, ahead: 70}},
+    {id: 'conrod', kind: 'overtaking', s: 3900, title: 'Conrod to Murray'},
+  ],
+  // Engineer notes by corner id: the slug of the script piece name
+  // ('hell-gate'), or 'c1'...'cN' in lap order for unnamed corners.
+  notes: {
+    'hell-gate': {brakeBoard: 100, gear: 3, targetKph: 95,
+      line: 'Wide on entry, clip the inside kerb, use all the exit.',
+      note: 'First-lap scramble. Brake early on lap one, late after that.'},
+  },
+  routes: {route_b: {/* same shape; overrides this block for route B */}},
+}
+```
+
+**Reference record** (generated by `tools/build-reference-laps.mjs` into
+`src/generated/reference-laps.json`, committed because the game loads it;
+keep it small):
+
+```js
+"pacific-canyon|route_a": {
+  "eventId": "pacific-canyon", "route": "route_a", "seed": 1989,
+  "car": "stuttgart_959s", "driver": "club", "cpu": "medium",
+  "fixtureVersion": 1, "courseFingerprint": "<geometry hash>",
+  "lapMs": 50390, "sectorMs": [17010, 16420, 16960],
+  // [distance m, speed km/h] every 20 m along the lap
+  "trace": [[0, 221], [20, 226]],
+  // in lap order; ids match the notes keys
+  "corners": [{"id": "c1", "s": 40, "brakeS": 3920, "entryKph": 304,
+               "minKph": 220, "exitKph": 260, "gear": 4}]
+}
+```
+
+**Player laps** record the same fields (trace every 20 m, sector times,
+corner entry, minimum and exit speeds, braking points), so "where you lose
+time" compares like with like. Saved per event, route and named player:
+best lap only, within the save budget.
 
 **Shared code.** The corner, crest and sector analysis moves into
 `src/track-analysis.js`, used by both the game and Claude's review tool, so

@@ -29,7 +29,7 @@ import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
-import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
+import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
@@ -48,6 +48,14 @@ const DUST_STORM_FOG = new THREE.Color(0x8a6a48);
 
 // Read-only projection for HUD markers. The positions come from rendered cars,
 // so slides, jumps and camera modes all use the same pose as the main view.
+// In a full Grand Prix field, a car far from the camera stops casting a shadow:
+// nobody sees it, and eight detailed cars would otherwise double the draw calls.
+const FIELD_SHADOW_RANGE=140;
+function setCarShadows(mesh,on){
+  if(mesh.userData.shadowsOn===on)return;
+  mesh.userData.shadowsOn=on;
+  mesh.traverse(object=>{if(object.isMesh){object.userData.castsShadow??=object.castShadow;object.castShadow=on&&object.userData.castsShadow;}});
+}
 export function projectVehicleMarkers(camera, vehicles) {
   camera.updateWorldMatrix(true, false);
   const markers = [];
@@ -141,7 +149,7 @@ export function attachRenderer(host, app) {
   const lighting=createSceneLighting({scene,renderer,bloom,host});
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
-  let course, world, loadedCar, loadedRivalCar, player, rival, chickens, ghost, ghostStyle, worldKey;
+  let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   const vehicleAssets=createVehicleAssets();
@@ -239,7 +247,13 @@ export function attachRenderer(host, app) {
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
     if(object===tanker?.group)return;
-    const release=()=>{beforeDispose?.();disposeTree(object);};
+    const retiredWorld = object === world;
+    const release = () => {
+      beforeDispose?.();
+      if (retiredWorld) lighting.detachWorld(object);
+      else lighting.detachVehicle(object);
+      disposeTree(object);
+    };
     if(warmup)warmup.releaseWhenIdle(release);else release();
   }
   function build(next) {
@@ -252,6 +266,7 @@ export function attachRenderer(host, app) {
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood});
     world = buildEnvironment(course); scene.add(world);
+    lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
     chickens=createChickens(course);world.add(chickens.group);
@@ -259,6 +274,7 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
+  const nightWorldInput = {};
   let ready = false, lastMenu = null, previousT = performance.now();
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
@@ -300,8 +316,10 @@ export function attachRenderer(host, app) {
       scene.add(player); loadedCar = carKey;sceneRevision++;
       ambientShading.refresh();
     }
-    if(rival&&loadedRivalCar!==rivalCarKey){retireObject(rival);rival=null;}
-    if (!rival) { rival = convoy?tanker.group:vehicleAssets.create(rivalCarKey,{color:0xbfcace,accent:0x142a36}); loadedRivalCar=rivalCarKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
+    // A Grand Prix racer wears its own paint; every other rival keeps the usual grey.
+    const rivalPaint=!menu&&st.rival?.paint?st.rival.paint:null,rivalPaintKey=rivalPaint?rivalPaint.color:0;
+    if(rival&&(loadedRivalCar!==rivalCarKey||loadedRivalPaint!==rivalPaintKey)){retireObject(rival);rival=null;}
+    if (!rival) { rival = convoy?tanker.group:vehicleAssets.create(rivalCarKey,{color:rivalPaint?.color??0xbfcace,accent:rivalPaint?.accent??0x142a36}); loadedRivalCar=rivalCarKey;loadedRivalPaint=rivalPaintKey;scene.add(rival);sceneRevision++;ambientShading.refresh(); }
     if(convoy){
       tanker.setValveHealth(st.arena.convoy.valves);
       tanker.setLampSignal(st.rival?.convoyLampSignal,st.stageTimeSec);
@@ -312,15 +330,15 @@ export function attachRenderer(host, app) {
     }
     for(let index=1;!menu&&index<opponents.length;index++){
       const carKey=opponents[index].car||st.car,entry=extraOpponents[index-1];
-      const drone=opponents[index].drone===true;
-      if(entry?.carKey===carKey&&entry.drone===drone)continue;
+      const drone=opponents[index].drone===true,paint=opponents[index].paint;
+      if(entry?.carKey===carKey&&entry.drone===drone&&entry.paintKey===(paint?.color??0))continue;
       if(entry)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       // A copy wears its original's colours so the three cars match.
-      const mesh=vehicleAssets.create(carKey,{color:opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba,accent:0x142a36});
+      const mesh=vehicleAssets.create(carKey,{color:paint?.color??(opponents[index].decoy?0xbfcace:index%2?0xb7a479:0x9bb9ba),accent:paint?.accent??0x142a36});
       const droneStyle=drone?styleGhostVehicle(mesh):null;
       droneStyle?.opacity(.3);
       if(drone)mesh.name='Arsenal Decoy Drone';
-      scene.add(mesh);extraOpponents[index-1]={mesh,carKey,drone,droneStyle};sceneRevision++;ambientShading.refresh();
+      scene.add(mesh);extraOpponents[index-1]={mesh,carKey,drone,droneStyle,paintKey:paint?.color??0};sceneRevision++;ambientShading.refresh();
     }
     // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
     // the wreck-effect pool counts real cars only and is not rebuilt for them.
@@ -367,7 +385,10 @@ export function attachRenderer(host, app) {
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
-    lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
+    lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+      blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance), distance,
+      raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
+      menu});
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
@@ -505,12 +526,14 @@ export function attachRenderer(host, app) {
     if(!convoy)updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650 &&
       !(st.rival.arenaRole === 'ambush-buggy' && !st.rival.ambushWave);
+    if (rival.visible&&st.field)setCarShadows(rival,Math.abs(visualGap(st.rival.s))<FIELD_SHADOW_RANGE);
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];
       updateNpcVehicleDamage(mesh,menu?null:actor,combatVehicleWear(actor,combatWearEnabled));
       mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
       if(!mesh.visible)return;
+      if(st.field)setCarShadows(mesh,Math.abs(visualGap(actor.s))<FIELD_SHADOW_RANGE);
       place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));
       mesh.position.y+=actor.airHeight||0;
       const slope=groundSlope(course,actor.s,actor.lateral,actor.headingError||0);
@@ -608,6 +631,20 @@ export function attachRenderer(host, app) {
     animateScene(world,presentationSeconds);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
+    lighting.updateCar(player, !!braking && !menu);
+    if (!convoy) lighting.updateCar(rival, !!st.rival?.braking);
+    for (let index = 0; index < extraOpponents.length; index++) {
+      const entry = extraOpponents[index];
+      if (!entry.drone) lighting.updateCar(entry.mesh, !!opponents[index + 1]?.braking);
+    }
+    for (let index = 0; index < traffic.length; index++)
+      lighting.updateCar(traffic[index], !!st.traffic[index]?.braking);
+    lighting.updateCar(police, !!pursuit?.braking);
+    nightWorldInput.position = pp;
+    nightWorldInput.heading = player.rotation.y;
+    nightWorldInput.distance = distance;
+    nightWorldInput.high = app.ambientOcclusionEnabled !== false;
+    lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
@@ -623,9 +660,15 @@ export function attachRenderer(host, app) {
       if(revision!==warmupKey){
         warmupKey=revision;app.holdVisualReadiness?.(readinessOwner);firstWorldFrame=true;
         host.dataset.warmupSubmitMs='0';host.dataset.warmupWaitMs='0';
+        const preparingWorld=world;
+        const withNightMaterials=guardLightingWarmup(
+          ()=>!disposed&&warmupKey===revision&&world===preparingWorld,lighting.withNightMaterials);
         warmupTicket=warmup.request(revision,()=>{
           const started=performance.now();let compilation;
-          try{compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);}
+          try{
+            compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);
+            compilation=compileWarmupLighting(renderer,scene,camera,composer,{high,initialCompilation:compilation,withNightMaterials});
+          }
           finally{if(!disposed&&warmupKey===revision)host.dataset.warmupSubmitMs=(performance.now()-started).toFixed(0);}
           const submitted=performance.now();
           return Promise.resolve(compilation).finally(()=>{

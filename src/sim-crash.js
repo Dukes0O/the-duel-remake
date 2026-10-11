@@ -210,8 +210,9 @@ export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMp
   s.boosting = false;
   s.combo = 0; s.comboTimer = 0;
   const practice = this.course.def.practice === true;
-  const recoverable = practice || s.mode==='wasteland' || this.stageDef.persistentVehicle || this.stageDef.kind === 'chase';
-  const penalty = practice ? 0 : s.mode === 'wasteland' ? WASTELAND_CRASH_PENALTY_SEC :
+  // A Grand Prix crash costs the time it takes to recover, not a life or a penalty.
+  const recoverable = practice || s.mode==='wasteland' || s.mode==='grandprix' || this.stageDef.persistentVehicle || this.stageDef.kind === 'chase';
+  const penalty = practice || s.mode === 'grandprix' ? 0 : s.mode === 'wasteland' ? WASTELAND_CRASH_PENALTY_SEC :
     this.stageDef.crashPenaltySec ?? (this.stageDef.kind === 'chase' ? this.stageDef.chaseCrashPenaltySec : LIVES.crashPenaltySec);
   if (!recoverable) s.lives -= LIVES.crashLifeCost;
   s.penaltySec += penalty;
@@ -234,7 +235,7 @@ export function _crash(reason, side = 0, impactMph = Math.abs(this.state.speedMp
   s.invulnerableSec = s.impactDuration + DRIVE.recoverySec;
   s.speedMph = clamp(s.speedMph * .3, -DRIVE.crashSpeedCapMph, DRIVE.crashSpeedCapMph);
   s.gear = s.speedMph < 0 ? -1 : Math.max(0, s.gear); s.reverseHoldSec = 0;
-  this._callout(reason === 'engine_blew' ? 'ENGINE FAILURE. SHIFT EARLIER.' : `IMPACT  /  +${penalty} SECONDS`, 2.8);
+  this._callout(reason === 'engine_blew' ? 'ENGINE FAILURE. SHIFT EARLIER.' : s.mode === 'grandprix' ? 'IMPACT' : `IMPACT  /  +${penalty} SECONDS`, 2.8);
   this.emit({ crash: reason, livesLeft: s.lives, strength: s.impactStrength, side: s.impactSide, zone, explosion: s.catastrophic });
   if (!recoverable && (s.lives <= 0 || s.catastrophic)) {
     s.status = 'gameover';

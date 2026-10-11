@@ -1,6 +1,7 @@
 # P4-KITS final round 3
 
-Claude verdict pending. This is the third and final formal art round.
+Claude final verdict: Paddock 3.5, Snow 3.5, Yeti 3.5, all pass.
+This is the third and final formal art round. No fourth round.
 Source/runtime candidate: `61dab66b`. Manifest SHA-256:
 `36c8ce04de78d12d262cc9b8232d60f880ebd987ba30c85fb096800c3ca1e72f`.
 
@@ -35,8 +36,9 @@ does not repair them; no overall movement or strict signature pass is claimed.
 Raw Blender panels: `.evidence/2026-10-10/P4-KITS/round-3/`.
 Native packet: `.evidence/2026-10-11/P4-KITS/round-3/native/`.
 The source recipe uses the host date for raw render paths. This packet is
-for the user's 11 October overnight run. Lane/build and independent source
-review remain before merge, following Claude's actual art verdict.
+for the user's 11 October overnight run. Director source review is clear. Lane/build remain before merge.
+Reviewed lighting/capture source a89e562c is synced; all kit assets, recipes
+and sheets retain their reviewed bytes. The native packet predates that sync.
 
 ## Removed
 
