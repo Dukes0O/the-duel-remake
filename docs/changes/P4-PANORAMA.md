@@ -55,6 +55,8 @@ Geometry/material controls RED actual old crest height and missing finish helper
 then GREEN13circuit checks plus544light checks. Review found ready-owner finish was deferred past native one-time window discovery.
 Before fix: finish an already-ready owner synchronously, pending owners only after
 genuine ready, retired/error never mutate. Actual discovery RED unbound then GREEN.
+New fixture initially checked before native update binds resources; invoke actual
+update before the unchanged identity/intensity assertions. No tolerance changed.
 Shader/default resources exact;
 final sheet includes two actual dusk valley views, uncropped1280x720sources.
 

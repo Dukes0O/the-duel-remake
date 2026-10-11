@@ -216,5 +216,5 @@ test('ready Panorama owner finishes windows before synchronous native night disc
   const group=new THREE.Group(),source=new THREE.MeshStandardMaterial({name:'round-two-harbour-warm-amber-pane',emissive:0xffffff,emissiveIntensity:1.65}),pane=new THREE.Mesh(new THREE.BoxGeometry(),source);pane.userData.trackKitId='shopfront-a';group.add(pane);
   const finished=finishRidgeKitMaterials({status:'ready',ready:Promise.resolve(true),group});
   const details=createPathNightDetails({world:group,course});
-  try{assert.notEqual(pane.material,source,'native synchronous discovery must bind an already-ready window');details.update({position:new THREE.Vector3(),heading:0,distance:0,high:true,amount:.55,headlights:1});assert.ok(pane.material.emissiveIntensity>0&&pane.material.emissiveIntensity<1.65);await finished;}finally{details.dispose();disposeTree(group);}
+  try{details.update({position:new THREE.Vector3(),heading:0,distance:0,high:true,amount:.55,headlights:1});assert.notEqual(pane.material,source,'native synchronous discovery must bind an already-ready window');assert.ok(pane.material.emissiveIntensity>0&&pane.material.emissiveIntensity<1.65);await finished;}finally{details.dispose();disposeTree(group);}
 });
