@@ -14,6 +14,8 @@ export const FEATURE_STATES = Object.freeze({
   'grand-prix': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
   'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'dev',
+  // The Deep (docs/THE_DEEP.md): the hidden underwater world. Off; nothing reaches it yet.
+  'the-deep': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

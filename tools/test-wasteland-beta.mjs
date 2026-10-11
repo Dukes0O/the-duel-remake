@@ -26,6 +26,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     // Phase 4 circuit road layouts (docs/CIRCUITS.md): dev until Kyle approves each.
     'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'dev',
     'grand-prix': 'dev', 'snow-world': 'dev', // Phase 4: development switches
+    'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
