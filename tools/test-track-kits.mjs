@@ -384,6 +384,19 @@ async function kitCullingChecks() {
   retiring.dispose();assert.equal(releases,4);
   assert.equal(retiring.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=>17),17);
   assert.equal(retiring.group.children.length,0,'retired scope never restores a world into the scene');
+  let allowLoad;
+  const loadingGate=new Promise(resolve=>{allowLoad=resolve;});
+  const timed=createTrackKits(flatCourse,{placements:rows,validateClearance:false,
+    loadAsset:async()=>{await loadingGate;return asset();}});
+  assert.equal(timed.stats.presentation.constructionMs,null,'pending assets never claim completed construction');
+  await new Promise(resolve=>setTimeout(resolve,20));allowLoad();
+  assert.equal(await timed.ready,true);
+  assert.ok(timed.stats.presentation.constructionMs>=timed.stats.presentation.activeCpuMs+10,
+    'actual construction includes the genuine asset wait, without subtracting it');
+  timed.dispose();
+  const failedTiming=createTrackKits(flatCourse,{placements:[{id:'bad-kit',s:0,lateral:0}]});
+  assert.equal(await failedTiming.ready,false);assert.equal(failedTiming.stats.presentation.constructionMs,null);
+  failedTiming.dispose();
   console.log('Track kit runtime trust, packed chunks, culling and exact rear restoration passed.');
 }
 

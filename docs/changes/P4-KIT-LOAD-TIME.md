@@ -39,9 +39,33 @@ nonzero hidden-matrix storage. The no-High Performance assertion stays exact;
 new checks require count/placement indices equality and no submitted zero scale.
 The functional gallery camera is80m above ground, within the actual160m detail
 range. Native GPU main/rear counts and exact main restoration are prepared.
-Real assets/terrain, dense runtime work and native timing are not yet rerun.
+Full High/LOD clearance passed for all1969 placements in Claude's frozen
+Harbour91ef3e20 via the owned --validate-circuit CLI. Native timing is pending.
 Current source has no asset, road, simulation, save or placement edits.
 Focused source-only checks pass; syntax and whitespace checks pass.
+
+Owner presentation constructionMs is entry-to-genuine-ready elapsed, including
+actual asset wait/parse, source validation and assembly. Disjoint activeCpuMs
+sums normalization, real source validation and assembly only. Pending/failed
+owners never fabricate completed timing. Focused actual20ms asset-wait test
+passes; acceptance uses the total, with no subtraction.
+
+Dense QA config is unpacked and explicitly env-pinned to actual frozen Harbour
+91ef3e20; alias only authored definition and additive own-field QA admission.
+It preserves our engine, jitter, form and laps. No production course/flag edit.
+Fresh paired off/on native fixtures use identical seeds/rules/eight cars. Only
+kitPlacements is omitted before the baseline world builds, so CPU work is not
+masked by merely hiding the group. Exact full state and actor poses match;
+each native sample retains complete state/profile/storage before/after.
+Same120 unmeasured/360 measured frames, two pair orders, original10% limit and
+18.5ms delivered p95. GPU timers cover genuine main plus rear; none discarded.
+Reusable owned exports: installMainRearMeasurement and measureMainRearFrames;
+other track recipes may import the sampler after this exact source is reviewed.
+Native actual eight-car grid/old-town witnesses are prepared; the native .95
+circuit driver reaches old town through actual rules, with no position staging.
+
+Genuinely synced approved integration fbc7d76c; source/native timing remain
+unclaimed. Existing required gate/build and ordinary QA-patch review are queued.
 
 Actual dense Harbour construction under1s and quiet High/Performance grid and
 old-town frame checks (original10%/18.5ms limits) remain queued; no pass claimed.

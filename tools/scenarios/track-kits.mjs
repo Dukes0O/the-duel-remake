@@ -1,7 +1,10 @@
 // Real unchanged circuit kits through production world readiness. Memory-only;
 // no art round or frame measurement. Run only in the Director's quiet slot.
 import {writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
+import {join,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {build} from 'vite';
+import {summarizeFrameTiming} from './p4-daynight.mjs';
 import {TRACK_KIT_IDS} from '../../src/track-kits.js';
 
 function stage(entries,quality,stageIndex=0) {
@@ -93,10 +96,238 @@ async function snapshotReadiness(context, quality, broken=false) {
   return detail;
 }
 
+const HARBOUR_HEAD='91ef3e2085a9327b0f3b42aa96ef90f9b3344033';
+
+async function denseDriverBundle() {
+  const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
+  const entry=join(root,'.qa-dist/track-kits-driver.virtual.js').replaceAll('\\','/');
+  const result=await build({root,configFile:false,logLevel:'silent',plugins:[{
+    name:'track-kits-private-driver',
+    resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0track-kits-driver';},
+    load(id){if(id==='\0track-kits-driver')return "export {useRacingLine} from "+
+      JSON.stringify(join(root,'tools/track-script-drive.mjs').replaceAll('\\','/'))+';';},
+  }],build:{write:false,minify:false,lib:{entry,name:'TrackKitsDriverQa',formats:['iife']}}});
+  return (Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk').code;
+}
+
+function densePrepare(quality,present=true) {
+  const app=window.__qaApp;
+  if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||
+      !window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only dense QA required');
+  app.stop();app.audio.setMuted(true);app.setGraphicsQuality(quality);app.cameraMode='chase';
+  let stage;
+  for(let i=0;i<40;i++)if(app.getMenuCourse(i)?.def.id==='harbour-lights'){stage=i;break;}
+  if(stage==null)throw Error('Pinned actual Harbour definition was not admitted');
+  const definition=app.getMenuCourse(stage).def;
+  if(definition.kitPlacements?.length!==1969)throw Error('Exact dense authored placements missing');
+  app.duel.startCampaign({mode:'grandprix',startStage:stage,car:'falcone_f42',difficulty:'casual',
+    cpuDifficulty:'medium',seed:1989,fieldSeed:12,fieldSize:7});
+  if(app.duel.state.mode!=='grandprix'||app.duel.state.opponents.length!==7||
+      app.duel.course.def.kitPlacements!==definition.kitPlacements)
+    throw Error('Metadata-only hybrid did not create the genuine eight-car GP');
+  if(!present)app.duel.course.def={...app.duel.course.def,kitPlacements:[]};
+  app.autopilot=true;app._scriptedCrashDone=true;
+  TrackKitsDriverQa.useRacingLine(app,.95);
+  app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
+}
+
+async function denseWitness() {
+  const app=window.__qaApp,view=window.__render,renderer=view.renderer;
+  const group=view.scene.getObjectByName('Approved track kits');
+  if(group?.userData.trackKitPlacements.length!==1969)throw Error('Dense owner is incomplete');
+  const readOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,
+    storage:Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).sort().map(k=>[k,localStorage.getItem(k)])});
+  const stateBefore=readOnly(),original=renderer.render,rears=[];let main=null;
+  const witness=()=>({stats:{...group.userData.trackKitStats},visible:group.visible,
+    meshes:group.children.map(mesh=>({version:mesh.userData.trackKitVersion,
+      chunk:mesh.userData.trackKitChunk,visible:mesh.visible,count:mesh.isInstancedMesh?mesh.count:null,
+      indices:mesh.userData.trackKitDrawnPlacementIndices??[mesh.userData.trackKitPlacementIndex],
+      matrices:Array.from(mesh.isInstancedMesh?mesh.instanceMatrix.array:mesh.matrix.elements)}))});
+  function counts(packet) {
+    const high=new Set(),low=new Set(),chunks=new Set();let primitives=0;
+    for(const mesh of packet.meshes){
+      if(!mesh.visible||mesh.count===0)continue;
+      if(mesh.count!==null){
+        if(mesh.count!==mesh.indices.length)throw Error('Dense packed count differs from active indices');
+        for(let i=0;i<mesh.count;i++)for(const axis of [0,4,8])
+          if(!(Math.hypot(...mesh.matrices.slice(i*16+axis,i*16+axis+3))>0))
+            throw Error('Dense GPU submitted a zero-scale instance');
+      }
+      primitives+=mesh.count??1;chunks.add(mesh.chunk);
+      for(const index of mesh.indices)(mesh.version==='high'?high:low).add(index);
+    }
+    if([...high].some(index=>low.has(index)))throw Error('Dense GPU submits both versions of one placement');
+    return {high:high.size,low:low.size,chunks:[...chunks],submittedPrimitives:primitives};
+  }
+  renderer.render=function(scene,camera){
+    if(scene===view.scene){
+      const packet=witness();
+      if(camera===view.camera)main=packet;
+      else if(renderer.getRenderTarget()){
+        const row=counts(packet);
+        if(row.high||row.chunks.length>3)throw Error('Actual dense rear violates distant/nearest chunk contract');
+        rears.push(row);
+      }
+    }
+    return original.call(this,scene,camera);
+  };
+  try{
+    for(let i=0;i<18&&!rears.length;i++){
+      await new Promise(resolve=>requestAnimationFrame(resolve));view.renderFrame();
+      if(main&&JSON.stringify(witness())!==JSON.stringify(main))throw Error('Dense rear did not restore exact main packing');
+    }
+    if(!main||!rears.length)throw Error('Actual dense main/rear submissions were not observed');
+    if(readOnly()!==stateBefore)throw Error('Dense rendering changed race/profile/storage');
+    const keys=view.scene.children.filter(node=>node.visible&&node.userData.vehicleKey).map(node=>node.userData.vehicleKey);
+    if(keys.length!==8)throw Error('Dense view does not retain all eight genuine cars');
+    const timing={...group.userData.trackKitStats.presentation};
+    if(!Number.isFinite(timing.constructionMs)||timing.constructionMs<0||
+      !Number.isFinite(timing.activeCpuMs)||timing.activeCpuMs<0||timing.activeCpuMs>timing.constructionMs)
+      throw Error('Dense actual construction timings are missing or inconsistent');
+    const mainCounts=counts(main);
+    if(!mainCounts.high&&!mainCounts.low)throw Error('Dense main submits no authored street');
+    return {s:app.duel.state.s,stageTimeSec:app.duel.state.stageTimeSec,cars:keys,
+      placements:1969,construction:timing,underOneSecond:timing.constructionMs<1000,
+      main:mainCounts,rears,clearance:{...group.userData.trackKitStats.clearance}};
+  } finally {renderer.render=original;}
+}
+
+export function installMainRearMeasurement(quality) {
+  const app=window.__qaApp,view=window.__render;
+  const gl=view.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+  const owner=quality==='high'?view.composer:view.composer.passes[0],originalDraw=owner.render;
+  const originalDiagnostics=app.frameDiagnostics;
+  const stable=()=>JSON.stringify({state:app.duel.state,profile:app.profile,
+    storage:Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).sort().map(k=>[k,localStorage.getItem(k)])});
+  const run=window.__mainRearFrames={frames:[],cpu:[],gpu:[],update:[],combined:[],pending:[],
+    seen:0,active:false,done:false,disjoint:false,previous:null,currentQuery:null,
+    gpuSupported:!!ext,scales:new Set(),ratios:new Set(),before:stable(),calls:[],triangles:[]};
+  const poll=()=>{
+    if(!ext||run.disjoint)return;
+    if(gl.getParameter(ext.GPU_DISJOINT_EXT)){run.disjoint=true;return;}
+    for(let i=run.pending.length-1;i>=0;i--){const query=run.pending[i];
+      if(!gl.getQueryParameter(query,gl.QUERY_RESULT_AVAILABLE))continue;
+      run.gpu.push(gl.getQueryParameter(query,gl.QUERY_RESULT)/1e6);gl.deleteQuery(query);run.pending.splice(i,1);
+    }
+  };
+  const endQuery=()=>{if(run.currentQuery){gl.endQuery(ext.TIME_ELAPSED_EXT);
+    run.pending.push(run.currentQuery);run.currentQuery=null;}};
+  owner.render=function(...args){
+    poll();
+    if(run.active&&ext&&!run.disjoint&&run.pending.length<32&&!gl.getQuery(ext.TIME_ELAPSED_EXT,gl.CURRENT_QUERY)){
+      run.currentQuery=gl.createQuery();if(run.currentQuery)gl.beginQuery(ext.TIME_ELAPSED_EXT,run.currentQuery);
+    }
+    try{return originalDraw.apply(this,args);}
+    catch(error){endQuery();throw error;}
+    // The query ends after the actual rear draw in recordRendererFrame.
+  };
+  app.frameDiagnostics={active:true,now:()=>performance.now(),recordAppFrame(){},stop(){},
+    recordRendererFrame(now,updateMs,submitMs){
+      endQuery();if(run.done)return;
+      if(++run.seen<=120)return;
+      run.active=true;
+      if(run.previous!==null)run.frames.push(now-run.previous);
+      run.previous=now;run.cpu.push(submitMs);run.update.push(updateMs);run.combined.push(updateMs+submitMs);
+      run.scales.add(document.querySelector('#view3d').dataset.resolutionScale||'1');
+      run.ratios.add(view.renderer.getPixelRatio());run.calls.push(view.renderer.info.render.calls);
+      run.triangles.push(view.renderer.info.render.triangles);
+      if(run.cpu.length>=360){run.active=false;run.done=true;run.after=stable();poll();}
+    }};
+  run.poll=poll;
+  run.cleanup=()=>{endQuery();owner.render=originalDraw;app.frameDiagnostics=originalDiagnostics;
+    for(const query of run.pending)gl.deleteQuery(query);run.pending.length=0;};
+}
+
+export async function measureMainRearFrames(context,quality,label) {
+  await context.evaluate('('+installMainRearMeasurement.toString()+')('+JSON.stringify(quality)+')');
+  try{
+    await context.waitFor('window.__mainRearFrames.done',quality+' '+label+' main/rear frames',60000);
+    await context.waitFor('(()=>{const r=window.__mainRearFrames;r.poll();return !r.pending.length||r.disjoint;})()',
+      'dense full main/rear GPU timers',10000);
+    const row=await context.evaluate(`(()=>{const r=window.__mainRearFrames;
+      if(r.disjoint||r.before!==r.after)throw Error('Dense timing disjoint or changed native state');
+      return {frames:r.frames,cpu:r.cpu,gpu:r.gpu,update:r.update,combined:r.combined,
+        gpuSupported:r.gpuSupported,scales:[...r.scales],ratios:[...r.ratios],calls:r.calls,triangles:r.triangles,
+        raceState:JSON.stringify(window.__qaApp.duel.state),
+        actorPoses:window.__render.scene.children.filter(node=>node.visible&&node.userData.vehicleKey)
+          .map(node=>({car:node.userData.vehicleKey,position:node.position.toArray(),quaternion:node.quaternion.toArray()}))};})()`);
+    const pacing={delivered:summarizeFrameTiming(row.frames),cpu:summarizeFrameTiming(row.cpu),gpu:summarizeFrameTiming(row.gpu)};
+    if(row.scales.length!==1||row.ratios.length!==1||pacing.cpu?.samples!==360||pacing.delivered?.samples!==359||
+      row.gpuSupported&&(!pacing.gpu||pacing.gpu.samples<288))throw Error('Incomplete or changing dense frame sample');
+    return {quality,label,pacing,gpuSupported:row.gpuSupported,scales:row.scales,ratios:row.ratios,
+      update:summarizeFrameTiming(row.update),combined:summarizeFrameTiming(row.combined),
+      raceState:row.raceState,actorPoses:row.actorPoses,orderedSamples:row};
+  }finally{await context.evaluate('window.__mainRearFrames.cleanup()');}
+}
+
+async function denseFrameSample(context,quality,place,present,pair) {
+  await context.evaluate(`(()=>{const group=window.__render.scene.getObjectByName('Approved track kits');
+    if(!!group!==${present})throw Error('Dense baseline must omit only kit metadata before world construction');})()`);
+  return {...await measureMainRearFrames(context,quality,place),place,present,pair};
+}
+
+async function setupDenseFixture(context,quality,bundle,present,place) {
+  await context.navigate('/tools/menu-check.html?flags=grand-prix,harbour-lights&harness=kit-dense');
+  await context.waitFor('window.__qaApp?.visualReady&&!!window.__render','dense empty menu ready',60000);
+  await context.evaluate(bundle);
+  await context.evaluate('('+densePrepare.toString()+')('+JSON.stringify(quality)+','+present+')');
+  await context.waitFor(`(()=>{const a=window.__qaApp;window.__render.renderFrame();a.onFrame?.(a.duel.state,0);
+    return a.visualReady&&document.querySelector('#view3d').dataset.trackKitAsset===${JSON.stringify(present?'ready':'off')};})()`,
+    quality+' dense actual assets/shaders ready',60000);
+  if(place==='old-town')await context.evaluate(`(()=>{const a=window.__qaApp;let ticks=0;
+    while(a.duel.state.s<1330&&ticks++<60*420&&!['stage_result','gameover','complete'].includes(a.duel.state.status))a.advance(1/60,1/60);
+    if(a.duel.state.status!=='racing'||a.duel.state.s<1330||a.duel.state.opponents.length!==7)
+      throw Error('Actual native driver did not reach the old town with its genuine field');
+    a.onFrame?.(a.duel.state,0);window.__render.renderFrame();})()`);
+}
+
+async function denseHarbour(context,report,persist) {
+  if(!process.env.P4_KIT_HARBOUR_SOURCE)throw Error('Dense QA requires the explicit pinned Harbour source environment');
+  const frames=process.env.P4_KIT_DENSE_FRAMES==='1',bundle=await denseDriverBundle();
+  report.dense={hybrid:{definitionSource:HARBOUR_HEAD,engine:'this lane; additive QA Harbour eligibility only',
+    genuineGrid:true,placements:1969},qualities:[],frames:[],comparisons:[],failures:[],frameStatus:frames?'running':'not scheduled'};
+  await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
+  for(const quality of ['high','performance'])for(const place of ['grid','old-town']){
+    await setupDenseFixture(context,quality,bundle,true,place);
+    const witness=await context.evaluate('('+denseWitness.toString()+')()');
+    witness.quality=quality;witness.place=place;witness.capture=await context.screenshot('track-kits-dense-'+quality+'-'+place);
+    if(quality==='performance'&&witness.main.high)throw Error('Dense Performance submitted High placements');
+    if(quality==='high'&&!witness.main.high)throw Error('Dense near High placements missing');
+    if(place==='old-town'&&!witness.rears.some(row=>row.low>0))throw Error('Actual old-town rear street was not observed');
+    if(!witness.underOneSecond)report.dense.failures.push(quality+' '+place+' total construction '+witness.construction.constructionMs+'ms exceeds1s');
+    report.dense.qualities.push(witness);await persist();
+    if(frames)for(const pair of [1,2]){
+      for(const present of pair===1?[false,true]:[true,false]){
+        // Fresh seeded fixtures remove all loader CPU from the genuine off leg.
+        // Omit only kitPlacements before world creation; preserve actual rules.
+        await setupDenseFixture(context,quality,bundle,present,place);
+        report.dense.frames.push(await denseFrameSample(context,quality,place,present,pair));await persist();
+      }
+      const off=report.dense.frames.find(row=>row.quality===quality&&row.place===place&&row.pair===pair&&!row.present);
+      const on=report.dense.frames.find(row=>row.quality===quality&&row.place===place&&row.pair===pair&&row.present);
+      for(const key of ['scales','ratios'])if(JSON.stringify(off[key])!==JSON.stringify(on[key]))throw Error('Dense paired resolution differs');
+      if(off.raceState!==on.raceState||JSON.stringify(off.actorPoses)!==JSON.stringify(on.actorPoses))
+        throw Error('Dense paired native race state or eight-car poses differ');
+      const addedPercent={};
+      for(const key of ['delivered','cpu','gpu'])addedPercent[key]=off.pacing[key]&&on.pacing[key]?(on.pacing[key].p95/off.pacing[key].p95-1)*100:null;
+      const comparison={quality,place,pair,addedPercent,deliveredP95:on.pacing.delivered.p95};
+      report.dense.comparisons.push(comparison);
+      if(Object.values(addedPercent).some(value=>value>10)||on.pacing.delivered.p95>18.5)
+        report.dense.failures.push(quality+' '+place+' pair'+pair+' exceeds original10%/18.5ms');
+      await persist();
+    }
+  }
+  if(frames)report.dense.frameStatus=report.dense.failures.length?'failed':'passed';
+  if(report.dense.failures.length)throw Error(report.dense.failures.join('; '));
+}
+
 export async function run(context) {
   const report={passed:false,qualities:[],snapshots:[]};
   const persist=()=>writeFile(join(context.outputDir,'track-kits.json'),JSON.stringify(report,null,2)+'\n');
   try {
+    if(process.env.P4_KIT_DENSE_ONLY==='1'){
+      await denseHarbour(context,report,persist);report.passed=true;return;
+    }
     for(const quality of ['high','performance']) {
       report.snapshots.push(await snapshotReadiness(context,quality));
       report.snapshots.push(await snapshotReadiness(context,quality,true));
@@ -227,6 +458,7 @@ export async function run(context) {
       if(before!==JSON.stringify(a.duel.state))throw Error('Authored terrain inspection changed race');
       return {course:c.def.id,placements:kits.userData.trackKitPlacements,worldBuilds:document.querySelector('#view3d').dataset.worldBuilds};})()`);
     report.terrain.capture=await context.screenshot('track-kits-authored-terrain-join');
+    if(process.env.P4_KIT_HARBOUR_SOURCE)await denseHarbour(context,report,persist);
     report.passed=true;
   } finally {await persist();}
   console.log('Track kits: real textures, both native qualities, genuine countdown, read-only state and visible source failure passed.');

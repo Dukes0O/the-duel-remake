@@ -158,6 +158,7 @@ function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) 
 // Own cache and instances for one world. No module-global asset lifetime.
 export function createTrackKits(course, {placements=course.def.kitPlacements ?? [],
     extraPlacements=[],requiredIds=[],loadAsset,validateClearance=true}={}) {
+  const enteredAt = performance.now();
   const group = new THREE.Group(); group.name = 'Approved track kits';
   const resources = new Set(), released = new WeakSet(), assets = new Map();
   const skeletons = new Set(), batches = [], instances = [], chunks = new Map();
@@ -182,12 +183,14 @@ export function createTrackKits(course, {placements=course.def.kitPlacements ?? 
     resources.clear(); assets.clear(); instances.length = 0; chunks.clear(); activeView = null;
     group.clear();
   };
+  const normalizeStarted = performance.now();
   try {
     if (typeof validateClearance !== 'boolean') fail('clearance option must be boolean.');
     rows = normalizeKitPlacements(course,[...placements,...extraPlacements]);
     if (!Array.isArray(requiredIds) || !requiredIds.every(id => approved.has(id))) fail('required id is unknown.');
   } catch (caught) {failed = true;status = 'error';error = caught;}
   const stats = {high:0,low:0,visibleChunks:0,
+    presentation:{constructionMs:null,activeCpuMs:performance.now()-normalizeStarted},
     clearance:{trianglePlacements:0,broadPhaseSkipped:0,runtimeSkipped:0}};
   const scratch = new THREE.Vector3(), transform = new THREE.Matrix4();
   const frustumMatrix = new THREE.Matrix4();
@@ -378,15 +381,21 @@ export function createTrackKits(course, {placements=course.def.kitPlacements ?? 
       const model = await load(path);
       if (model?.scene?.isObject3D) for (const resource of resourcesOf(model.scene)) own(resource);
       if (retired || failed) return;
-      const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});
+      const validationStarted = performance.now();
+      try {
+        const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});
+      } finally {stats.presentation.activeCpuMs += performance.now()-validationStarted;}
     }))).then(() => {
       if (retired || failed) return false;
-      assemble();status = 'ready';return true;
+      const assemblyStarted = performance.now();
+      try {assemble();}
+      finally {stats.presentation.activeCpuMs += performance.now()-assemblyStarted;}
+      status = 'ready';stats.presentation.constructionMs = performance.now()-enteredAt;return true;
     }).catch(caught => {
       if (!retired) {failed = true;status = 'error';error = caught;}
       clear();return false;
     });
-  if (!ids.length && !failed) status = 'ready';
+  if (!ids.length && !failed) {status = 'ready';stats.presentation.constructionMs = performance.now()-enteredAt;}
   group.userData.trackKitPlacements=rows;group.userData.trackKitStats=stats;
   return {
     group,ready,placements:rows,stats,

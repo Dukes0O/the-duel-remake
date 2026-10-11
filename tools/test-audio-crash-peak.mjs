@@ -174,14 +174,17 @@ for(const name of ['non-fuel-contact','fuel-contact','six-blast-overlap']){
 }
 function rowOf(name){return capture.rows.find(r=>r.name===name);}
 
-test('safe quiet audio preserves the existing signal through the complete runtime output',()=>{
+test('safe quiet audio receives the requested 6.4 dB gain through the complete runtime output',()=>{
+  // P4-AUDIO: compare against the unchanged released native reference.
+  // Peak and RMS must receive the exact requested gain; tolerance stays 0.1 dB.
+  const requestedGainDb=6.4;
   const item=track({name:'quiet',track:capture.quiet.track}),amplitude=peak(item,.2,.6);
   const reference=track({name:'quiet-reference',track:capture.quiet.referenceTrack});
   const expected=peak(reference,.2,.6);
   ok(amplitude>0,'native quiet signal reaches the actual final output');
-  ok(Math.abs(db(amplitude/expected))<=.1,'safe quiet peak gain changed by '+db(amplitude/expected).toFixed(3)+' dB; blanket attenuation is not a fix');
+  ok(Math.abs(db(amplitude/expected)-requestedGainDb)<=.1,'requested quiet peak gain differs from +6.4 dB by '+(db(amplitude/expected)-requestedGainDb).toFixed(3)+' dB');
   const expectedRms=rms(reference,.2,.6),actualRms=rms(item,.2,.6);
-  ok(Math.abs(db(actualRms/expectedRms))<=.1,'safe quiet RMS gain changed by '+db(actualRms/expectedRms).toFixed(3)+' dB');
+  ok(Math.abs(db(actualRms/expectedRms)-requestedGainDb)<=.1,'requested quiet RMS gain differs from +6.4 dB by '+(db(actualRms/expectedRms)-requestedGainDb).toFixed(3)+' dB');
 });
 test('actual pause and dispose clean up owned audio without final-output leakage',()=>{
   const c=capture.cleanup;
