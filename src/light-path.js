@@ -19,10 +19,10 @@ function rgb(value) {
 
 // Each theme retains its existing day/golden palette. A daytime city uses the
 // coastal palette; the legacy city-night lookup itself is never changed.
-export function lightPathLook(look, theme = 'desert') {
+export function lightPathLook(look, theme = 'desert', palette) {
   if (!LOOKS.has(look)) return null;
   const biome = theme === 'city' ? 'coast' : BIOMES.has(theme) ? theme : 'desert';
-  const key = `${biome}:${look}`;
+  const key = biome+':'+look+':'+(palette||'default');
   if (lookCache.has(key)) return lookCache.get(key);
   let value = {...resolveLightingSettings(biome, {mood: look === 'golden' ? 'golden' : 'clear'}),
     stars: 0, moon: 0, nightAmount: 0, lightLevel: look === 'golden' ? .7 : 1};
@@ -36,6 +36,12 @@ export function lightPathLook(look, theme = 'desert') {
     fogNear: 170, fogFar: 1300, exposure: 1.02, bloom: .16, sunStrength: 0,
     sunOffset: {x: -65, y: 76, z: -90}, cloudCover: .2, cloudTint: [.12, .16, .23],
     stars: 1, moon: 1, nightAmount: 1, lightLevel: .1};
+  if(palette==='mountain-sunset'&&look==='golden') value={...value,
+    sunOffset:{x:-100,y:21,z:73},sunColor:0xffb86f,ground:0x797450,
+    horizon:'#efb98a',hemi:1.6,env:.78};
+  if(palette==='mountain-sunset'&&look==='dusk') value={...value,
+    fog:0x8c808e,top:'#675278',horizon:'#df9170',ground:0x596377,
+    hemi:1.2,env:.4,exposure:1.12,cloudTint:[.59,.44,.52]};
   for (const field of COLOURS) value[field] = Object.freeze(field === 'cloudTint' ? [...value[field]] : rgb(value[field]));
   value.sunOffset = Object.freeze({...value.sunOffset});
   Object.freeze(value);
@@ -44,7 +50,7 @@ export function lightPathLook(look, theme = 'desert') {
 }
 
 function validPath(path) {
-  if (!path || typeof path !== 'object') return false;
+  if (!path || typeof path !== 'object' || path.palette!==undefined&&path.palette!=='mountain-sunset') return false;
   if (pathCache.has(path)) return pathCache.get(path);
   const frames = path.keyframes;
   let valid = (path.axis === 'distance' || path.axis === 'race-progress') && Array.isArray(frames) && frames.length > 0;
@@ -82,7 +88,7 @@ function sampleAt(path, position, theme, tunnel, output) {
   while (index < frames.length - 1 && position > frames[index + 1].at) index++;
   const from = frames[index], to = frames[Math.min(index + 1, frames.length - 1)];
   const blend = from === to ? 0 : smooth((position - from.at) / (to.at - from.at));
-  const a = lightPathLook(from.look, theme), b = lightPathLook(to.look, theme), settings = settingsBuffer(output);
+  const a = lightPathLook(from.look, theme, path.palette), b = lightPathLook(to.look, theme, path.palette), settings = settingsBuffer(output);
   for (const key of SCALARS) settings[key] = mix(a[key], b[key], blend);
   for (const key of COLOURS) for (let i = 0; i < 3; i++) settings[key][i] = mix(a[key][i], b[key][i], blend);
   for (const key of AXES) settings.sunOffset[key] = mix(a.sunOffset[key], b.sunOffset[key], blend);

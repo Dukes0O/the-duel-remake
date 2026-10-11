@@ -78,7 +78,7 @@ function addBoards(group, course) {
 function addWalls(group, course) {
   const walls = course.features.walls ?? [];
   if (!walls.length) return;
-  const material = new THREE.MeshStandardMaterial({ color: 0xaeada6, roughness: .92, metalness: 0 });
+  const material = new THREE.MeshStandardMaterial({ color: course.def.plainSafetyWalls ? 0x747975 : 0xaeada6, roughness: .92, metalness: 0 });
   const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, walls.length);
   const matrix = new THREE.Matrix4(), rotation = new THREE.Quaternion(), position = new THREE.Vector3(), scale = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   walls.forEach((wall, i) => {

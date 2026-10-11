@@ -52,6 +52,20 @@ authored grid view before the original sampler witness; no racer is moved.
 The unchanged sampler/counts/limits remain. No new native/frame run claimed. Independent ec4ef834 camera/limit review clears.
 Genuine dcdab76a sync installs consumed-art cleanup; runtime remains exact.
 
+## Round two (Claude check-in 5)
+
+Before code: keep road geometry/rules exact; add shared deterministic hillside
+cut/ridge drops/valley to actual ground, near/far meshes and physical verges.
+Approved catch fences sit behind original grey collision walls; existing kerbs
+stay low. Seeded tree clusters/rocks/scrub use actual upper Float32 triangles.
+One camera-floor helper serves chase and Dossier snapshots in both qualities.
+The course-only low golden sun and brighter orange/violet dusk preserve default
+palettes and light timing. Same native views plus Murray/Esses will go to Claude.
+RED mountain bank/light tests failed original source; GREEN9 tests and544 light
+checks passed, including actual GLBs/clearance. All native tree roots pass;
+camera/dry regression pending. Quiet native art/frame proof remains due.
+No old assertion changed and no world signature regenerated.
+
 ## Removed
 
 The road-only presentation is replaced by approved circuit kits and landmarks.

@@ -111,7 +111,10 @@ function scatterScenery(course) {
     }
   }
   for (let i = 0; i < options.trees; i++) {
-    const s = rng.range(5, course.length - 5), theme = course.themeAt(s);
+    const randomS = rng.range(5, course.length - 5);
+    // Authored clusters use the same seeded draw count and retain open exits.
+    const s = options.clusteredTrees ? Math.max(5,Math.min(course.length-5,
+      Math.round(randomS/130)*130+(i%7-3)*7)) : randomS, theme = course.themeAt(s);
     if (theme === 'city' && i % 5 || theme === 'desert' && i % 3) continue;
     const off = (i % 2 ? 1 : -1) * rng.range(13, 80), scale = rng.range(.65, 1.7);
     if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));

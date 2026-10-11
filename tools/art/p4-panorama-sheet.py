@@ -20,6 +20,8 @@ def main():
     qualities = ['high', 'performance']
     keys = [('Pit Straight', 'golden-grid'), ('Ridge Top', 'golden-racing'),
             ('Skyline', 'golden-racing'), ('Conrod Straight', 'golden-racing'), ('Final Lap', 'dusk')]
+    if args.round >= 2:
+        keys += [('The Esses 1', 'golden-racing'), ('Murray Corner', 'golden-racing')]
     captures = report['captures']
     rows = []
     for quality in qualities:
@@ -37,7 +39,9 @@ def main():
                 raise ValueError('Dusk must come from actual lap progress and light metadata')
             matches.append(found[0])
         rows.append(matches)
-    width, cell_width, image_height = 1920, 384, 216
+    cell_width = 384 if args.round == 1 else 320
+    image_height = cell_width * 9 // 16
+    width = cell_width * len(keys)
     sheet = Image.new('RGB', (width, 730), '#111c23')
     draw = ImageDraw.Draw(sheet)
     fonts = Path('C:/Windows/Fonts')

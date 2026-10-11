@@ -105,6 +105,11 @@ function panoramaPlacements(road) {
     const s = Math.max(0, corner.s0 - 30);
     placements.push({id: 'marshal-post', s, lateral: road.halfWidthAt(s) + 6, heading: Math.PI});
   }
+  // The approved fence sits behind the unchanged physical ridge walls.
+  for (let s = road.pieces.find(p => p.name === 'The Cutting').s0; s < road.pieces.find(p => p.name === 'Forrest Elbow').s1; s += 8) {
+    for (const side of [-1, 1]) placements.push({id: 'catch-fence', s,
+      lateral: side * (road.halfWidthAt(s) + 1.8), heading: Math.PI / 2, lift: 1.05});
+  }
   // A real lower town on the descent: two staggered streets, with an open
   // foreground below Skyline rather than houses on its crest or racing line.
   const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
@@ -117,10 +122,19 @@ function panoramaPlacements(road) {
 }
 const road = buildTrackScript(PANORAMA_ROAD);
 const ridge = road.pieces.find(piece => piece.name === 'Ridge Top');
+const named = name => road.pieces.find(piece => piece.name === name);
+const ridgeLandform = Object.freeze({
+  hillside: Object.freeze([named('Mountain Straight').s0, named('The Cutting').s0 + 80]),
+  ridge: Object.freeze([named('The Cutting').s0 - 80, named('Forrest Elbow').s1 + 80]),
+  valleyFloor: 0, hillsideGrade: .8, ridgeGrade: 1.25,
+});
 export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
   name: 'Panorama Ridge Sunset',
+  ridgeLandform,
+  scenery: Object.freeze({trees: 1600, rocks: 280, clusteredTrees: true}),
+  plainSafetyWalls: true,
   pitLane: Object.freeze({straight: 'Pit Straight', side: 'right'}),
-  lightPath: Object.freeze({axis: 'race-progress', keyframes: Object.freeze([
+  lightPath: Object.freeze({axis: 'race-progress', palette: 'mountain-sunset', keyframes: Object.freeze([
     Object.freeze({at: 0, look: 'golden'}),
     Object.freeze({at: 1 / 3, look: 'golden'}),
     Object.freeze({at: 2 / 3, look: 'dusk'}),

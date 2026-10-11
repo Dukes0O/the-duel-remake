@@ -111,3 +111,65 @@ test('Panorama starts a genuine native three-lap eight-car Grand Prix', () => {
     assert.equal(d.course.def.grandPrix, true);
   } finally {if (added) COURSE.splice(COURSE.findIndex(def => def.id === PANORAMA_RIDGE.id), 1);}
 });
+
+test("authored mountain cut and ridge fall away while the road stays exact", () => {
+  const legacy = new Course({...PANORAMA_RIDGE, ridgeLandform: undefined}, 1989);
+  const middle = name => {const p=course.script.pieces.find(p=>p.name===name);return (p.s0+p.s1)/2;};
+  for(let distance=0;distance<course.length;distance+=11) {
+    assert.deepEqual(course.worldAt(distance),legacy.worldAt(distance));
+    assert.equal(course.roadHalfWidthAt(distance),legacy.roadHalfWidthAt(distance));
+    for(const off of [-course.roadHalfWidthAt(distance),0,course.roadHalfWidthAt(distance)])
+      assert.deepEqual(course.groundAt(distance,off),legacy.groundAt(distance,off));
+  }
+  const climb=middle("Mountain Straight"),hill=course.groundAt(climb,-64),valley=course.groundAt(climb,64);
+  assert.ok(hill.y-course.worldAt(climb).y>25,"hillside bank rises beside climb");
+  assert.ok(valley.y<course.worldAt(climb).y-10,"opposite side falls to valley");
+  for(const name of ["Ridge Top","Skyline","The Esses 1"]) {
+    const at=middle(name),top=course.worldAt(at).y;
+    for(const side of [-1,1]) assert.ok(course.groundAt(at,side*64).y<top-35,name+" steep ridge drop");
+  }
+});
+test("Panorama warm sunlight and readable violet dusk have their own palette",()=>{
+  const defaultCourse={...course,def:{...course.def,lightPath:{...course.def.lightPath,palette:undefined}}};
+  const golden=sampleCourseLightPath(course,{distance:0}).settings;
+  assert.ok(golden.sunOffset.y<sampleCourseLightPath(defaultCourse,{distance:0}).settings.sunOffset.y);
+  const dusk=sampleCourseLightPath(course,{distance:course.raceLength}).settings;
+  assert.ok(dusk.hemi>lightPathLook("dusk","alpine").hemi);
+  assert.ok(dusk.env>lightPathLook("dusk","alpine").env);
+  near(dusk.nightAmount,.55);
+  assert.deepEqual(sampleCourseLightPath(defaultCourse,{distance:course.raceLength}).settings,lightPathLook("dusk","alpine"));
+});
+
+test('every native mountain tree root uses the actual upper drawn triangles', async()=>{
+  const {addPineTrees}=await import('../src/vegetation.js');
+  const {renderedGroundHeight}=await import('../src/rendered-ground.js');
+  const load=THREE.TextureLoader.prototype.load;
+  THREE.TextureLoader.prototype.load=()=>new THREE.Texture();
+  const group=new THREE.Group();
+  try {
+    addPineTrees(group,course.features.trees,course);
+    const matrix=new THREE.Matrix4();let roots=0;
+    for(const mesh of group.children.filter(m=>m.name.startsWith('Pine trunks'))) {
+      const entries=mesh.userData.vegetationCell.entries;
+      entries.forEach(({feature},index)=>{
+        mesh.getMatrixAt(index,matrix);
+        const ground=renderedGroundHeight(course,feature,{requireSurface:true});
+        assert.ok(Number.isFinite(ground));near(matrix.elements[13],ground-.24,2e-4);roots++;
+      });
+    }
+    assert.equal(roots,course.features.trees.length);assert.ok(roots>400);
+  }finally{THREE.TextureLoader.prototype.load=load;disposeTree(group);}
+});
+
+test('mountain chase and snapshot camera floor follows actual terrain; dry cameras stay exact',async()=>{
+  const {constrainMountainCamera}=await import('../src/render3d.js');
+  const {renderedGroundHeight}=await import('../src/rendered-ground.js');
+  const ridge=course.script.pieces.find(p=>p.name==='Ridge Top');
+  const pose=course.worldAt(ridge.s0,-16),nearest=course.nearest(pose.x,pose.z);
+  const ground=renderedGroundHeight(course,{...pose,s:nearest.s,off:nearest.lateral},{requireSurface:true});
+  const camera=new THREE.Vector3(pose.x,ground-10,pose.z);
+  assert.equal(constrainMountainCamera(course,camera,ridge.s0),camera);nearEqual(camera.y,ground+.7);
+  const dry={...course,def:{...course.def,ridgeLandform:undefined}},below=camera.clone().setY(-500),before=below.clone();
+  constrainMountainCamera(dry,below,ridge.s0);assert.deepEqual(below,before);
+  function nearEqual(a,b){near(a,b,1e-6);}
+});
