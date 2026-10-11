@@ -79,7 +79,7 @@ AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
 Fresh native default Bloom input, bright and all ten blur targets have zero
 NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
-Integration4527 synced; loaderd05 retains Snow API. Current 15276b08 genuinely merges rulesf30 and Tremblant9ed; Snow has none of the new relief/gravel/crowd opt-ins. Before fixture edit: lane failed the exact flag count21 because approved snow-world dev makes22; root grants count22 plus required snow-world dev, with every old released/retired/isolation assertion retained.
+Integration4527 synced; loaderd05 retains Snow API. Current 15276b08 genuinely merges rulesf30 and Tremblant9ed; Snow has none of the new relief/gravel/crowd opt-ins. Before fixture edit: lane failed the exact flag count21 because approved snow-world dev makes22; root grants count22 plus required snow-world dev, with every old released/retired/isolation assertion retained. Current6c gate:386pass/3fail/0notrun; preview omitted Snow, beta exact catalog omitted Snow, snapshot fixture omitted real winter scope. Before launcher edit: root grants only PREVIEW_FLAGS append snow-world; every launcher assertion/default remains exact. Before companion fixtures: root grants beta exact catalog addSnowdev and snapshot extraction actual winter imports/renderer-equivalent wrapper; every old assertion remains exact.
 Prepared extras/current bank identities/eight grounded cars pass; round2 ba685 native passes.
 Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
 Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.
@@ -97,4 +97,4 @@ Snow-scene ordinary pine, rock and summer-grass instances are removed from the c
 material path. Shared ordinary scenery remains in use on dry ranges/tracks.
 Consumed probes/shared reverse kerbs are removed in FIX-P4-KERB-NORMALS.
 Main-only hidden-mirror timing recipe is replaced by fresh whole-view controls. Mixed relative10% acceptance is replaced by Claude10:30 absolute policy; every original diagnostic stays.
-Replaced only the overlapping positive cluster centre and second pond centre; physical tree placements retained.
+Replaced only the overlapping positive cluster centre and second pond centre; physical tree placements retained. Removed obsolete preview/catalog omissions and incomplete extracted-call scope; original acceptance guards retained.

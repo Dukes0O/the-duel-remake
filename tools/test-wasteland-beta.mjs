@@ -25,7 +25,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'warlord-cards': 'on',
     // Phase 4 circuit road layouts (docs/CIRCUITS.md): dev until Kyle approves each.
     'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'dev',
-    'grand-prix': 'dev', // Phase 4 (P4-FIELD): a new switch, still in development
+    'grand-prix': 'dev', 'snow-world': 'dev', // Phase 4: development switches
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
