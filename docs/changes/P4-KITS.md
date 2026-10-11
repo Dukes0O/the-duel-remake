@@ -42,7 +42,9 @@ No overall walking approval is claimed. Prior native terrain sole minimum
 -0.039495/-0.038204 m and strict exporter rounding failures remain recorded
 in the round-two review; this face correction does not repair them.
 
-Final native capture and three matched round-three sheets are pending.
+Final native capture passes: memory-only saves, 40 frames, zero issues and
+four expected duplicate-Three warnings. Three matched round-three sheets
+are in docs/board/looks/p4-kits; each is below 500 KB.
 Final art verdict, lane/build and independent source review remain before
 merge. No frame budget, full-tier, release or replay-fingerprint pass claimed.
 Simulation code is unchanged; the native viewer preserves race/profile state.
