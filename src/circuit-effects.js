@@ -13,7 +13,7 @@
 //   hills         [{ s, lateral, along, across, height, pines, runs }] (circuit-hills.js)
 //   effects.lift  { s, towers, lines, height, spacing, speed }
 //     A chairlift across the road. The towers, cable spans and chairs are kit
-//     pieces named in `kitPlacements` (their `lift` field says which); once the
+//     pieces named in `kitPlacements` (their `ride` field says which); once the
 //     kit has loaded the cable is stretched between the tower tops and the chairs
 //     ride it. Kit pieces marked `hill` are lifted onto the hill they stand on.
 import * as THREE from 'three';
@@ -146,8 +146,8 @@ function addKitMotion(group, course) {
   placements.forEach((piece, index) => {
     if (piece.hill !== undefined) raised.push({ piece, index });
     if (piece.id === 'chairlift-tower') towers.push({ piece, index });
-    if (piece.lift?.role === 'cable') cables.push({ piece, index });
-    if (piece.lift?.role === 'chair') chairs.push({ piece, index });
+    if (piece.ride?.role === 'cable') cables.push({ piece, index });
+    if (piece.ride?.role === 'chair') chairs.push({ piece, index });
   });
   if (!raised.length && !(lift && towers.length)) return;
   let prepared = false, tops = null;
@@ -168,7 +168,7 @@ function addKitMotion(group, course) {
       kits.setPlacementPose(index, pose);
     }
     cables.forEach(({ piece, index }) => {
-      const line = tops[piece.lift.line], a = line[towers.findIndex(({ piece: t }) => t.lateral === piece.lift.a)], b = line[towers.findIndex(({ piece: t }) => t.lateral === piece.lift.b)];
+      const line = tops[piece.ride.line], a = line[towers.findIndex(({ piece: t }) => t.lateral === piece.ride.a)], b = line[towers.findIndex(({ piece: t }) => t.lateral === piece.ride.b)];
       const direction = new THREE.Vector3().subVectors(b, a), length = direction.length();
       rotation.setFromUnitVectors(RIGHT, direction.normalize());
       position.addVectors(a, b).multiplyScalar(.5).y -= .12;
@@ -188,7 +188,7 @@ function addKitMotion(group, course) {
   const moveChairs = seconds => {
     const kits = trackKitsOf(group), total = towers.at(-1).piece.lateral - towers[0].piece.lateral;
     for (const { piece, index } of chairs) {
-      const { line, k, count } = piece.lift, forward = line === 0 ? 1 : -1;
+      const { line, k, count } = piece.ride, forward = line === 0 ? 1 : -1;
       const travel = ((k * total / count + forward * seconds * lift.speed) % total + total) % total;
       onLine(tops[line], travel, point); onLine(tops[line], Math.min(total, travel + 1), ahead);
       const heading = Math.atan2((ahead.x - point.x) * forward, (ahead.z - point.z) * forward);

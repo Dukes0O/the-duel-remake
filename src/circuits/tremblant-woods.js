@@ -90,7 +90,7 @@ const BASE = {
 // pieces are `{ id, s, lateral, heading, scale }`: s along the road, lateral
 // across it (positive is left), both in metres. A piece on the right of the
 // road with its front to the road turns +90 degrees; on the left, -90.
-// `clear` keeps the planted pines that far from the piece; `lift` and `hill`
+// `clear` keeps the planted pines that far from the piece; `ride` and `hill`
 // tell circuit-effects.js how to move the piece once it has loaded.
 // ---------------------------------------------------------------------------
 const road = buildTrackScript(BASE);
@@ -200,10 +200,10 @@ function chairlift() {
     for (let i = 0; i + 1 < towers.length; i++) {
       const a = towers[i], b = towers[i + 1];
       // The cable is drawn between the tower tops once it loads; it starts off the road.
-      out.push(kit('chairlift-cable', LIFT.s + ds, Math.abs((a + b) / 2) < 25 ? 30 : (a + b) / 2, { lift: { role: 'cable', line, a, b } }));
+      out.push(kit('chairlift-cable', LIFT.s + ds, Math.abs((a + b) / 2) < 25 ? 30 : (a + b) / 2, { ride: { role: 'cable', line, a, b } }));
     }
     const span = towers.at(-1) - towers[0], count = Math.floor(span / spacing);
-    for (let k = 0; k < count; k++) out.push(kit('chairlift-chair', LIFT.s + ds, 40, { lift: { role: 'chair', line, k, count } }));
+    for (let k = 0; k < count; k++) out.push(kit('chairlift-chair', LIFT.s + ds, 40, { ride: { role: 'chair', line, k, count } }));
   });
   return out;
 }

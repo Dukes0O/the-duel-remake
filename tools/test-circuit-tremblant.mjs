@@ -76,7 +76,7 @@ test('every kit piece is an approved kit id and stays clear of every road', () =
     assert.ok(ids.has(piece.id), `${piece.id} is a kit piece`);
     assert.ok(piece.s >= 0 && piece.s <= course.length);
     if (piece.id === 'start-gantry') continue; // spans the grid
-    if (piece.lift?.role === 'cable' || piece.lift?.role === 'chair') continue; // posed over the road once loaded, starts off it
+    if (piece.ride?.role === 'cable' || piece.ride?.role === 'chair') continue; // posed over the road once loaded, starts off it
     // The cars' boundary is 1 m outside the road edge; barriers stand just beyond it.
     assert.ok(gap(piece.s, piece.lateral) > 2.3, `${piece.id} at s ${piece.s.toFixed(0)}, ${piece.lateral.toFixed(1)} m is ${gap(piece.s, piece.lateral).toFixed(1)} m from a road edge`);
   }
