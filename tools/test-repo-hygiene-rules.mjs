@@ -130,6 +130,15 @@ try {
     same(report.failures, [], 'round summary JPG is not treated as a raw capture');
   });
 
+  test('a look-test sheet JPG has a valid review home', () => {
+    const root = fixture('look-sheet');
+    put(root, 'docs/board/looks/the-deep/look-1.jpg', 'compressed look sheet');
+    put(root, 'docs/board/looks/the-deep/look-1-review.md', '# Review\n');
+    const { status, report } = run(hygieneTool, root);
+    same(status, 0, 'a look-test sheet and its note pass placement');
+    same(report.failures, [], 'look-N.jpg is a review sheet, not a raw capture');
+  });
+
   test('audit reports cleanup candidates without changing files', () => {
     const root = fixture('audit');
     put(root, 'public/assets/models/orphan.glb', 'unreferenced runtime asset');
