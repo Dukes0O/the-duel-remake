@@ -142,6 +142,7 @@ export class GrandPrixLapRecorder {
     this.startedAt = 0;
     this.recorder = new GhostRecorder(this.context);
     this.previous = null;
+    this.stagedFirstLap = false;
   }
   local(state) {
     return { ...state, mode: 'timetrial',
@@ -151,6 +152,10 @@ export class GrandPrixLapRecorder {
   observe(state) {
     if (state.qualifying?.phase === 'driving' || state.paused ||
         !['countdown', 'racing', 'ticket'].includes(state.status)) return;
+    if (this.lap === 0 && this.previous === null) {
+      // Only Azure's actual staged grid exceeds the unchanged40m GP start bound.
+      this.stagedFirstLap = COURSE[this.context.stageIndex]?.id === 'azure-riviera' && state.s < -40;
+    }
     this.recorder.observe(this.local(state));
     this.previous = { ...state };
   }
@@ -173,7 +178,7 @@ export class GrandPrixLapRecorder {
     this.recorder.observe(local, true);
     // Native lap admission is authoritative. One-lap GP records are not race finishes.
     let record = null;
-    if (!event.assisted && !this.recorder.invalid && player?.id === state.playerId &&
+    if (!this.stagedFirstLap && !event.assisted && !this.recorder.invalid && player?.id === state.playerId &&
         player.id === this.context.playerId && playerName(player.name) &&
         state.car === this.context.car && state.stageIndex === this.context.stageIndex &&
         Number.isFinite(event.lapTimeSec) && event.lapTimeSec > 0) {
@@ -186,6 +191,7 @@ export class GrandPrixLapRecorder {
       record = normalizeRecord(candidate);
     }
     this.lap = event.lapCompleted;
+    this.stagedFirstLap = false;
     this.startedAt = time;
     this.recorder = new GhostRecorder(this.context);
     this.recorder.observe(this.local(crossing), true);

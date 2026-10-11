@@ -476,6 +476,8 @@ export function fieldView(state) {
     ahead: f.ahead, behind: f.behind, finalLap: f.finalLap, lights: f.start.lights, lightsOut: f.start.out };
 }
 
+const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, halfWidth: 1});
 export function courseForGrandPrix(def) {
-  return { ...def, laps: FIELD.laps, hasRadar: false, grandPrix: true };
+  return { ...def, laps: FIELD.laps, hasRadar: false, grandPrix: true,
+    ...(def.id === 'azure-riviera' ? {grandPrixEntryWidth: AZURE_GP_ENTRY_WIDTH} : {}) };
 }

@@ -1,4 +1,10 @@
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {Course} from '../src/course.js';
+import {racingLineFor, LINE} from '../src/race-lines.js';
+import {courseFingerprint} from '../src/track-analysis.js';
+import {buildEnvironment, disposeTree} from '../src/world.js';
+import {pavedShoulderWidthAt} from '../src/road-surface.js';
 import { COURSE, CARS } from '../src/config.js';
 import { createLeaderboardScreen } from '../src/screen-leaderboard.js';
 import { App } from '../src/app.js';
@@ -8,7 +14,7 @@ import { ownTestCourses } from './career-fixture.mjs';
 import { Duel } from '../src/game.js';
 import { createProfile, eventKey, isValidFinish } from '../src/progression.js';
 import { normalizeRaceSettings } from '../src/race-settings.js';
-import { grandPrixCourse, gridPose } from '../src/race-field.js';
+import { grandPrixCourse, gridPose, courseForGrandPrix } from '../src/race-field.js';
 import { createLeaderboard, recordFinish, saveLeaderboard, loadLeaderboard, getLeaderboard } from '../src/leaderboard.js';
 import { GrandPrixLapRecorder, createGhostStore, storeGhost, findGhost, normalizeGhostStore, GhostRecorder, ghostKey, MAX_GHOST_BYTES, MAX_GHOSTS } from '../src/ghost.js';
 import { testCourseAccess } from './career-fixture.mjs';
@@ -88,6 +94,144 @@ const start = (stageIndex, mode, flag = true, cpuDifficulty = 'medium') => {
 };
 // Claude check-in5: staging changes only Azure GP's grid, never its lap origin.
 const azureIndex = COURSE.findIndex(stage => stage.id === 'azure-riviera');
+// Claude check-in7: one immutable GP-only entry patch, every actual width consumer.
+const azureDef = COURSE[azureIndex], azureCatalog = JSON.stringify(azureDef);
+const widenedDef = courseForGrandPrix(azureDef), baselineAzure = new Course(azureDef, 1989);
+check(!!widenedDef.grandPrixEntryWidth && Object.isFrozen(widenedDef.grandPrixEntryWidth), 'GP entry width metadata is immutable');
+equal(widenedDef.grandPrixEntryWidth, {start: 225, peak: 260, end: 295, halfWidth: 1},
+  'only the approved225-260-295m one-metre-per-edge patch is installed');
+const widenedAzure = new Course(widenedDef, 1989);
+equal(widenedAzure.samples, baselineAzure.samples, 'GP entry width cannot change actual road center or elevation');
+for (const [s, extra] of [[224, 0], [225, 0], [242.5, .5], [260, 1], [277.5, .5], [295, 0], [296, 0]]) {
+  equal(widenedAzure.roadHalfWidthAt(s), baselineAzure.roadHalfWidthAt(s) + extra, 'actual entry width at' + s);
+  equal(widenedAzure.roadHalfWidthAt(s + widenedAzure.length), widenedAzure.roadHalfWidthAt(s), 'width repeats at lap seam');
+  equal(pavedShoulderWidthAt(widenedAzure, s), widenedAzure.roadHalfWidthAt(s), 'actual shoulder uses identical GP width');
+}
+for (let s = 0; s < widenedAzure.length; s += 5) {
+  const increase = widenedAzure.roadHalfWidthAt(s) - baselineAzure.roadHalfWidthAt(s);
+  check(increase >= 0 && increase <= 1, 'GP widening never narrows or exceeds one metre per edge');
+  if (s <= 225 || s >= 295) equal(increase, 0, 'GP widening stays strictly inside approved entry');
+}
+const increaseAt = s => widenedAzure.roadHalfWidthAt(s) - baselineAzure.roadHalfWidthAt(s);
+for (const boundary of [225, 260, 295]) {
+  check(Math.abs(increaseAt(boundary + .001) - increaseAt(boundary)) / .001 < .000003,
+    'entry taper meets each boundary with smooth zero slope');
+  check(Math.abs(increaseAt(boundary) - increaseAt(boundary - .001)) / .001 < .000003,
+    'entry taper has the same smooth incoming slope');
+}
+for (const side of [-1, 1]) {
+  const offset = side * (baselineAzure.roadHalfWidthAt(260) + .5);
+  check(!baselineAzure.surfaceAt(260, offset).road && widenedAzure.surfaceAt(260, offset).road,
+    'actual road surface admits only the newly widened entry on both sides');
+}
+const widenedLine = racingLineFor(widenedAzure);
+for (let i = 0; i < widenedLine.count; i++) {
+  check(Math.abs(widenedLine.offset[i]) <= widenedAzure.roadHalfWidthAt(i * widenedLine.step) - LINE.margin + 1e-9,
+    'actual shared racing line stays inside its widened road margin');
+}
+check(Array.from(widenedLine.offset).some((value, i) => value !== racingLineFor(baselineAzure).offset[i]),
+  'native racing line actually consumes the extra entry room');
+check(courseFingerprint(widenedAzure) !== courseFingerprint(baselineAzure),
+  'GP width changes its actual geometry fingerprint honestly');
+equal(JSON.stringify(azureDef), azureCatalog, 'GP wrapper preserves frozen Azure catalog bytes');
+for (const def of COURSE.filter(def => grandPrixCourse(def) && def.id !== 'azure-riviera')) {
+  const gpDef = courseForGrandPrix(def);
+  check(!gpDef.grandPrixEntryWidth, 'other GP courses have no Azure width metadata');
+  const legacy = new Course(def, 1989), gp = new Course(gpDef, 1989);
+  for (const s of [0, 225, 260, 295, legacy.length - 1])
+    equal(gp.roadHalfWidthAt(s), legacy.roadHalfWidthAt(s), 'other GP widths remain exact');
+}
+for (const mode of ['duel', 'timetrial']) {
+  const legacy = start(azureIndex, mode);
+  check(!legacy.course.def.grandPrixEntryWidth, mode + ': Azure has no GP patch');
+  for (const s of [225, 242.5, 260, 277.5, 295])
+    equal(legacy.course.roadHalfWidthAt(s), baselineAzure.roadHalfWidthAt(s), mode + ': width remains exact');
+}
+// Real world mesh/shader construction in the existing headless texture fixture.
+// These disposable textures are unit-test inputs, never native art evidence.
+const originalLoad = THREE.TextureLoader.prototype.load, originalDocument = globalThis.document;
+const canvasContext = new Proxy({createImageData: (w, h) => ({data: new Uint8ClampedArray(w * h * 4)}),
+  measureText: () => ({width: 40}), createLinearGradient: () => ({addColorStop() {}})},
+  {get: (target, key) => target[key] ?? (() => {})});
+let widthWorld;
+try {
+  THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+  globalThis.document = {createElement: () => ({getContext: () => canvasContext})};
+  widthWorld = buildEnvironment(widenedAzure);
+  const shoulders = widthWorld.children.filter(node => node.material?.name === 'Textured paved-road shoulder');
+  equal(shoulders.length, 2, 'actual world constructs both widened shoulders');
+  for (const mesh of shoulders) {
+    const edge = mesh.geometry.attributes.shoulderEdge, uv = mesh.geometry.attributes.uv;
+    check(edge && edge.count === uv.count, 'actual GP shoulder has a road-edge attribute for every vertex');
+    for (let i = 0; i < uv.count; i++)
+      check(Math.abs(edge.getX(i) - widenedAzure.roadHalfWidthAt(uv.getY(i) * 10)) < .00003,
+        'actual shoulder vertices retain the shared width across passing lanes and GP entry');
+    const shader = {uniforms: {}, vertexShader: '#include <common>\n#include <begin_vertex>',
+      fragmentShader: '#include <common>\n#include <map_fragment>'};
+    mesh.material.onBeforeCompile(shader);
+    check(shader.vertexShader.includes('attribute float shoulderEdge;') &&
+      shader.vertexShader.includes('shoulderWidth=shoulderEdge'), 'actual GP shoulder shader reads its real edge');
+    check(!shader.vertexShader.includes('shoulderWidth+=3.5'), 'GP vertex width never double-adds passing lanes');
+  }
+} finally {
+  if (widthWorld) disposeTree(widthWorld);
+  THREE.TextureLoader.prototype.load = originalLoad;
+  if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
+}
+// Explicit staged policy, not rejection as an accidental malformed recording.
+const entryPlayer = {id: 'entry-ghost', name: 'Entry Driver'};
+const entryContext = {...storageContext, playerId: entryPlayer.id, stageIndex: azureIndex, mode: 'grandprix', laps: 1};
+const stagedRecorder = new GrandPrixLapRecorder(entryContext, azureDef.lengthU);
+const stagedState = {...entryContext, driverId: 'club', status: 'racing', stageTimeSec: 0,
+  racePenaltySec: 0, s: -426, lateral: 2.6, speedMph: 80};
+stagedRecorder.observe(stagedState);
+check(stagedRecorder.stagedFirstLap, 'actual initial Azure setback is explicitly classified as staged');
+for (let tick = 1; tick <= 1000; tick++) {
+  stagedState.stageTimeSec = tick / 10; stagedState.s = -426 + (azureDef.lengthU + 426) * tick / 1000;
+  stagedRecorder.observe(stagedState);
+}
+stagedState.lapStartedAt = 100;
+check(!stagedRecorder.recorder.invalid, 'honest staged recording stays clean and bounded');
+equal(stagedRecorder.recorder.samples[0][1], -42600, 'staged capture keeps its actual initial position');
+equal(stagedRecorder.complete(stagedState, {lapCompleted: 1, lapTimeSec: 100, assisted: false}, entryPlayer), null,
+  'staged first lap alone deliberately has no best-lap ghost');
+equal(stagedRecorder.startedAt, 100, 'staged first lap crossing time is preserved');
+check(!stagedRecorder.stagedFirstLap, 'staged policy ends at the actual first crossing');
+for (let tick = 1; tick <= 800; tick++) {
+  stagedState.stageTimeSec = 100 + tick / 10; stagedState.s = azureDef.lengthU + azureDef.lengthU * tick / 800;
+  stagedRecorder.observe(stagedState);
+}
+stagedState.lapStartedAt = 180;
+const entryFlying = stagedRecorder.complete(stagedState, {lapCompleted: 2, lapTimeSec: 80, assisted: false}, entryPlayer);
+check(entryFlying && entryFlying.timeSec === 80, 'later clean Azure flying lap retains its original ghost');
+equal(entryFlying.samples[0].slice(0, 2), [0, 0], 'later Azure capture starts at the original line');
+for (let tick = 1; tick <= 700; tick++) {
+  stagedState.stageTimeSec = 180 + tick / 10; stagedState.s = 2 * azureDef.lengthU + azureDef.lengthU * tick / 700;
+  stagedRecorder.observe(stagedState);
+}
+stagedState.lapStartedAt = 250;
+const entryThird = stagedRecorder.complete(stagedState, {lapCompleted: 3, lapTimeSec: 70, assisted: false}, entryPlayer);
+check(entryThird && entryThird.timeSec === 70, 'third clean Azure lap also retains its own flying ghost');
+equal(entryThird.samples[0].slice(0, 2), [0, 0], 'third lap keeps the original timing-line origin');
+check(!findGhost(storeGhost(createGhostStore(), entryThird).store, 'other-player', entryContext),
+  'the later flying ghost remains isolated to its actual player');
+const nonstaged = new GrandPrixLapRecorder(entryContext, azureDef.lengthU);
+nonstaged.observe({...stagedState, s: -26, stageTimeSec: 0});
+check(!nonstaged.stagedFirstLap, 'ordinary Azure grid capture is not excluded by course id alone');
+const normalState = {...stagedState, s: -26, stageTimeSec: 0};
+for (let tick = 1; tick <= 900; tick++) {
+  normalState.stageTimeSec = tick / 10; normalState.s = -26 + (azureDef.lengthU + 26) * tick / 900;
+  nonstaged.observe(normalState);
+}
+normalState.lapStartedAt = 90;
+check(nonstaged.complete(normalState, {lapCompleted: 1, lapTimeSec: 90, assisted: false}, entryPlayer),
+  'an unstaged Azure first lap remains eligible under original admission guards');
+const unrelated = new GrandPrixLapRecorder({...entryContext, stageIndex: 0}, COURSE[0].lengthU);
+unrelated.observe({...stagedState, stageIndex: 0, s: -426, stageTimeSec: 0});
+check(!unrelated.stagedFirstLap, 'other courses cannot acquire the Azure staged policy');
+if (process.argv.includes('--entry-focused')) {
+  console.log('GP entry width/ghost: ' + checks + ' checks passed.'); process.exit(0);
+}
 for (const cpu of ['easy', 'medium', 'hard']) {
   const duel = start(azureIndex, 'grandprix', true, cpu), state = duel.state;
   const actors = [{actor: state, slot: state.field.playerSlot},

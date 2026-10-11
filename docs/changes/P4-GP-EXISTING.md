@@ -1,30 +1,23 @@
 # P4-GP-EXISTING
-
 Status: building. Claude settled best-lap ghosts; playback remains Time Trial only.
-
 ## Design before code
-
 Offer Grand Prix on the three original closed road circuits and six expansion
 circuits, behind the existing grand-prix switch. Use the settled eight-car,
 three-lap field with no traffic, police or radar. Keep course IDs, geometry,
 layout versions and every existing mode unchanged. Widen only if the full-field
 check proves a particular section cannot work.
-
 Grand Prix records use additive mode keys and three-lap validation; legacy
 record and ghost keys remain exact. The score screen offers a separate GP
 filter; All existing modes retains its old event key. A valid finish records without credits,
 loss charges or milestones; pay belongs to P4-CAREER. Grand Prix records a separate best-lap ghost per event, route and mode,
 for the later Team Room. Playback stays Time Trial only. The same course access rules still apply.
-
 The Director granted narrow hooks in race-field, app and progression, plus
 FIELD test updates. The previous High Country rejection expectation will use
 Titan Arena instead: the test still requires unsupported events to reject GP.
 This reflects newly supported road circuits, with no tolerance change. Internal
 leaderboard deduplication now includes mode so old Duel and Time Trial rows can
 coexist; their serialized event keys remain unchanged.
-
 ## Checks
-
 Test-first eligibility failed on missing High Country support before code.
 The GP best-lap recorder starts from native grid and interpolated line crossings;
 completed unassisted laps alone can replace the mode best. Existing ghost keys,
@@ -38,29 +31,18 @@ session candidate. Results explicitly say storage full or save failed; no claim
 of persistence. Eleven pure storage checks pass; old TT admission is unchanged.
 Restored original UTF-8 punctuation in owned sources. Browser, save re-review,
 current lane/build remain pending. Root source review and named save-guardian
-review cleared 4cb54419 (11 storage checks plus 247 save fixtures). This final
-presentation-only cleanup keeps the new GP notice readable. No art change.
-
+review cleared 4cb54419 (11 storage checks plus 247 save fixtures). This final presentation cleanup keeps the GP notice readable. No art change.
 ## Reviewed source sync
-
-Synced a89e562c (DAYNIGHT and atomic native audio capture) without conflicts.
-GP storage admission and record modules stay byte-identical to c77e937d.
-Synced e648f380 (all-27 Dossier and reviewed Telemetry) next. App conflicts
-combine imports, startup, go observations, reset and cleanup for GP, TT and
-Telemetry; incoming storage modules and GP storage modules remain exact.
-No qualifying source is included. No native check, gate or build ran during
-the shared gate; the combined source needs current checks before handoff.
-
+Synced a89e562c lighting/atomic audio, then e648f380 all27 Dossier/Telemetry.
+App unions retain GP/TT/TL startup, go, observe, reset and cleanup. GP storage
+and record modules stay byte-identical to c77e937d; no qualifying source.
 ## Native recipe repair
-
 The built QA preview cannot serve raw source-module imports. Bundle the actual
 course-access, configuration, race-line and existing installTestDriver helpers
 with installed Vite in memory. No helper output, dependency or runtime hook.
 All 18 native grid/corner/width/state assertions remain unchanged. Native,
 current lane/build checks stay queued until the Director grants a quiet slot.
-
 ## Native first result
-
 Native 2aa40030 stops at Azure Riviera High: three distinct computer racers
 crash by 8.775 s, violating the unchanged fewer-than-three opening check.
 Pacific, High Country, Harbor, Eifel and Alpine High passed with zero crashes;
@@ -69,20 +51,15 @@ Retain the failed packet in integration evidence for Claude's decision.
 QA now saves the failed corner's crash events and actual actor poses before
 throwing the same assertion. No width, race rule or limit changed; no full
 18-case pass or performance claim. Further native/balance checks await schedule.
-
-Bounded headless reproduction at the same seeds: fresh Azure and the six-course
-sequence both have zero crashes through 232 m at 8.375 s across outer steps
-1/60, 1/30, .05 and .1 s. A second check uses the five actual native stop times
-and pause/resume, continuing Azure to 10 s: one racer crashes at 9.10 s, none
-by the failed native 8.775 s. This does not reproduce or explain the native
-three-car failure. Keep the native assertion and Claude hold; no rule change.
-
+Bounded fresh/sequence Azure repro at1/60,1/30,.05,.1 s has zero crashes
+through232m/8.375s. Native five-stop/pause cadence through10s finds one
+at9.10s and none by8.775s, failing to explain the native three-car result.
+All native assertions stay exact; no rule change.
 Claude check-in4 judges Azure by the unchanged first30s pile-up rate <=1/20
 over30 full seeded races per difficulty. Recipe calls existing runRace in
 one job with its standard driver/seeds; restores a temporary start wrapper
 that adds existing ownTestCourses only after the private memory facade exists.
 Rate recipe changes no runtime/rule/assertion; native assertion stays exact.
-
 Actual fd925862 full90: Easy2/30, Medium10/30, Hard2/30 opening pile-ups;
 all exceed5%. Every race finished; seeds/layout/state fingerprints retained.
 Claude check-in5 approves only Azure GP grid staging400m earlier: timing and
@@ -92,9 +69,29 @@ Genuinely sync ec734cfd before narrow initializeField pose assignment.
 All8-position RED old[-6..-34] vs staged[-406..-434]; GREEN151 grid checks
 and406 focused checks. New fixture corrected legacy field=null to undefined;
 old assertions exact. Storage modules unchanged; first staged ghost bound needs
-Director decision. No90-race recheck yet; Medium failure needs GP entry+2m plan.
-
+Director decision. Setback90: Easy3/30 (10%), Medium5/30 (16.67%) fail;
+Hard0/30 passes5%. All90 player3laps/all7CPUfinish; layout7f43383b unchanged.
+Full rawsetback report retained; exact225-295m GP +2m total entry asksClaude.
+Actual fresh memory App Azure passes417checks: native staged lap86.134s
+has honest-426m start, clean/uninvalidated, excluded; flying lap62.87s saves
+from0 with exact62.87027493425816s crossing-clock delta. First lap time kept.
+New fixture compares exact clocks and rounded-ms event separately; initial
+exact-vs-rounded fixture corrected, no tolerance or oldassertion edit.
+## Approved entry/ghost design, before code
+Claude check-in7: Azure GP-only +2m total, smooth zero225m to peak260m to zero295m.
+Immutable opt-in course metadata feeds Course.roadHalfWidthAt; road center, elevation,
+start/timing, Duel/TT and all other GP widths remain exact. Actual drawing, surfaces,
+scenery clearance and racing line must share it; GP geometry fingerprint changes honestly.
+Exclude only the actual staged Azure first-lap ghost, retaining its lap time and later
+clean flying ghosts; every sample bound, capacity and player guard remains.
+Director grants only road-surface shoulder-width/material and world shoulderEdge hooks;
+GP vertex width comes from Course with no duplicate passing-lane addition. Existing paths stay exact.
+Genuine4527 sync b8bf3408 retains local9 plus Tremblant once; no other code conflict.
+RED absent width metadata, actual shoulder mismatch and old-module staged flag absent;
+GREEN11,228 Course/surface/line/world-vertex/shader/ghost checks,11 storage and86 TT ghost checks.
+Legacy sampled fingerprint7f43383b stays exact; GP width honestly changes it to58a80e29.
+No existing assertion or sample bound changed. Original90 seeds/5percent and native/gates wait.
 ## Removed
-
 No runtime asset or legacy mode is replaced. Remove the stale menu claim that
-Grand Prix cannot record once recording is wired. No width change is assumed.
+Grand Prix cannot record once recording is wired. Replace implicit staged rejection
+with explicit first-lap policy; replace duplicate GP shoulder width after hook grant.
