@@ -3,7 +3,7 @@
 ## Decision before code
 
 Use only the 35 approved local High/LOD GLB pairs, unchanged. Circuit metadata
-opts in with `kitPlacements` entries: `{id,s,lateral,heading=0,scale=1}`.
+opts in with `kitPlacements` entries: `{id,s,lateral,heading=0,scale=1,lift=0}`.
 Distances and lateral offsets are metres, heading is a radian offset from the
 road tangent. Scale is positive scalar or `[x,y,z]`. Copy and freeze inputs;
 never mutate course, race state or authored assets. No new switch is needed:
@@ -69,6 +69,16 @@ recipe registration now inherited. All seven owned runtime files and runtime
 assets remain byte-identical to ac1e053e; incoming Harbour/Tremblant intel
 metadata is retained. Native verdict above remains applicable. No new native,
 lane gate or build ran during this sync; current gate/build stay queued.
+
+Claude check-in4 adds optional finite nonnegative lift in metres above the
+rendered ground anchor, default0. Keep the existing actual High/LOD triangle
+clearance test: elevated geometry must clear the road by4.5m at every checked
+point. No blanket exemption or change to ground-level matrices. Harbour uses
+this for lantern strings and raised signs; tests cover missing/invalid lift,
+actual raised transforms, threshold clearance and low-detail clearance.
+The raised lantern regression first fails road clearance, then passes with lift.
+All70 real GLBs and72 actual terrain probes pass; prior default transforms
+remain exact. No new native/frame run; current lane/build and review are queued.
 
 ## Removed
 

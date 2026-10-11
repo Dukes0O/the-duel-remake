@@ -89,6 +89,35 @@ assert.deepEqual(position.toArray(),[20,2,100]);assert.deepEqual(scale.toArray()
 assert.ok(new THREE.Vector3(0,0,1).applyQuaternion(rotation).distanceTo(new THREE.Vector3(1,0,0))<1e-10);
 assert.ok(Object.isFrozen(transformed.placements[0].scenery));transformed.dispose();
 
+// Lift is above the rendered terrain anchor and never waives road headroom.
+const raised=createTrackKits(course,{placements:[{id:'lantern-string',s:100,lateral:0,lift:5}],
+  loadAsset:async()=>fake()});
+assert.equal(await raised.ready,true,raised.error?.message);
+assert.equal(raised.getPlacementPose(0).elements[13],7);
+assert.equal(raised.placements[0].lift,5);
+raised.dispose();
+assert.equal(normalizeKitPlacements(course,[{id:'armco',s:100,lateral:20}])[0].lift,0);
+for(const lift of [-1,NaN,Infinity,'5'])
+  assert.throws(()=>normalizeKitPlacements(course,[{id:'armco',s:100,lateral:20,lift}]),/kit/i);
+const flatCourse={...course,samples:[],
+  at:s=>({...course.at(s),y:0}),groundAt:(s,lateral)=>({...course.groundAt(s,lateral),y:0})};
+for(const [lift,expected] of [[4.5,true],[4.499,false]]){
+  const threshold=createTrackKits(flatCourse,{placements:[{id:'neon-sign',s:100,lateral:0,lift}],
+    loadAsset:async()=>fake()});
+  assert.equal(await threshold.ready,expected,threshold.error?.message);
+  if(!expected)assert.match(threshold.error.message,/clearance/);
+  threshold.dispose();
+}
+const lowTooLow=createTrackKits(flatCourse,{placements:[{id:'neon-sign',s:100,lateral:0,lift:4.5}],
+  loadAsset:async path=>{
+    const asset=fake();
+    if(path.includes('-lod'))asset.scene.children[0].geometry.translate(0,-1,0);
+    return asset;
+  }});
+assert.equal(await lowTooLow.ready,false);
+assert.match(lowTooLow.error.message,/clearance/);
+lowTooLow.dispose();
+
 // The bank exception is tied to the exact actual patch, including its footprint.
 const patch={kind:'deep-snow',s0:90,s1:110,from:10,to:30};
 const snowy={...course,features:{surfacePatches:[patch]}};
