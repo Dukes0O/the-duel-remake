@@ -3949,10 +3949,10 @@ tasks:
     lane: ART
     size: M
     needs: [P4-ART-SRC]
-    status: building
+    status: review
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-kits
-    waiting_on: claude
+    review_commit: 6054485c
     note: 'Claude round one: paddock 3 hold, safety 3.5 hold, harbour 2.5 hold, forest 2.5 hold, snow 3 hold; snowman 4 pass. Kyle selected the 2.8 m hunched shaggy white Yeti with dark face, small eyes and no tongue. Build round two for the five held groups and revised Yeti; preserve passed parts, use varied worn materials and keep the three-round cap. Actual verdict and decisions live in the kit change note.'
     owns: [tools/blender/p4-kits.py, docs/board/looks/p4-kits/, docs/changes/P4-KITS.md, tools/test-p4-kits.mjs, tools/scenarios/p4-kits.mjs, tools/art/p4-kits-sheet.py]
     hooks: [public/assets/models/circuits/kits/, tools/art/catalog.json, tools/test-tanker-valve-source.mjs]
@@ -3960,6 +3960,9 @@ tasks:
     acceptance:
       - "From Kyle's picks (P4-ART-SRC), prepare game-ready kits ahead of the track cards, as Blender recipes: start gantry with five lamps (lamp parts named so the game can light them), pit garages and pit wall, grandstands, armco, concrete walls, catch fences, tyre walls, braking boards (150, 100, 50), marshal posts; the Lantern Tower and old-town shopfronts; the ski lodge, chairlift tower, cable and chair; the snow shed (gallery) pieces, summit hut and observatory; the snowman and the yeti (check its animation clips)."
       - "Gritty and believable, never toy-like; small runtime files with distant versions; credits recorded. One comparison sheet per kit group to Claude, at most three rounds. No track geometry: the track cards place these."
+    current_work: "Claude final round three passed all groups, each 3.5. Independent source review cleared 6054485c; 40 native frames passed with prior movement limits retained. Final lane/build are queued after DAYNIGHT. Art is approved; no merge without the remaining gate."
+    round_three_sheets: ["C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kits/docs/board/looks/p4-kits/paddock/round-3.jpg", "C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kits/docs/board/looks/p4-kits/snow/round-3.jpg", "C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kits/docs/board/looks/p4-kits/characters/round-3.jpg"]
+    claude_final_round_three: "Claude, 11 October, check-in 2: paddock 3.5, snow 3.5, Yeti 3.5; pass all. Required gate, build and source review remain. Track cards place the gantry at full span with five start lamps; Summit places the gallery at road scale with roof snow visible from the valley. No extra art round."
   - id: P4-PANORAMA
     title: "Panorama Ridge: the mountain circuit"
     owner: codex
@@ -3976,6 +3979,8 @@ tasks:
       - "Section 4 feel targets checked with the review tool; lap time and corner speeds in the change note. Full field races cleanly (section 3.2 targets on this track). Frame cost within the usual limit. Then Claude's finishing pass (P4-FINISH-PANORAMA) before release."
     claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
     note: "Road layout built by Claude behind the panorama-ridge dev switch (src/circuits/panorama-ridge.js, 4.84 km, fitted to close; see docs/changes/P4-CIRCUIT-LAYOUTS.md). Codex still owes art, light path, landmarks and the full field; card stays open."
+    waiting_on: claude
+    kit_hook_question: "Before coding, settle the shared approved-kit GLB loader and world/renderer hook owner with Claude Harbour/Tremblant. The question is under For Claude in the playtest inbox. Lighting merge remains a dependency."
   - id: P4-GRIP
     title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
     owner: claude
@@ -3998,11 +4003,12 @@ tasks:
     lane: VIS
     size: M
     needs: []
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-daynight
+    review_commit: bd438f49db0f86db7460bfb9a97ccb39793e3946
     owns: [src/light-path.js, tools/test-light-path.mjs, docs/changes/P4-DAYNIGHT.md, tools/scenarios/p4-daynight.mjs, tools/art/p4-daynight-sheet.py, docs/board/looks/p4-daynight/]
-    hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js]
+    hooks: [src/render3d.js, src/lighting-moods.js, src/scene-lighting.js, src/atmosphere.js, src/vehicles.js, src/render-warmup.js, tools/test-render-warmup.mjs, src/world.js]
     sequencing: "Wait for Claude P4-TRACK-SCRIPT to merge before renderer hooks; then edit render3d.js before P4-SNOW."
     note: "Quiet bounded diagnostic f6b591f3 (unchanged runtime 42b9b5f7), private port 15625: valid 360 CPU/update/sum and 359 GPU/delivered samples per leg, no overlap or browser errors. High OFF to ON p95 ms: CPU 9.7 to 11.3 (+16.49%), GPU 11.102208 to 12.085248 (+8.85%), update 0.8 to 0.8, update+submit 10.4 to 12.0. Performance CPU 8.4 to 7.2 (-14.29%), GPU 8.119296 to 7.856128 (-3.24%), update 0.9 to 0.8, sum 9.0 to 7.9. Delivered p95 16.8 ms in all legs: neither exceeds the approved 20 ms diagnostic cutoff. Original 10% gate FAILS High CPU; cause remains unproved. Kyle relayed Claude acceptance on 10 October: scoped exception accepted with these numbers; no more investigation. Finish art verdict and lane/build, then merge. Delivered p95 does not prove that every individual frame met a deadline. Panorama Night and Harbour Lights must measure delivered p95 with eight cars in their own cards and trim lighting if pacing slips. Earlier failed reports retained. Round-one art verdict held at 2/4/4/2; authorized fixes are in claude_art_round1. Interrupted DAY floor has no verdict. New-source art/frame and lane/build remain before merge."
     claude_art_round1: "Kyle relayed Claude 10 October: lighting 2, road readability 4, grounding 4, scene consistency 2. Hold; build round two. Sun fades from golden and is gone by dusk; warm dim dusk, deep blue-grey unlit night facades. Seeded 30-50% existing warm varied windows only dusk/night. Red tails and soft headlights/road glow on all eight cars in both qualities, no white blowout. Cheap emissive street heads and soft road decals, no real lights. Dark navy sky with visible stars/moon above skyline. Same eight views in one round-two sheet; retain frame watch. Earlier CPU exception is only the recorded old-source result; new-source art/frame proof remains open."
@@ -4010,19 +4016,36 @@ tasks:
       - "Build docs/CIRCUITS.md section 3.6: light paths by distance or race progress, blended sun, sky, fog, ambient and stars; headlights and tail lights on below a light level (only the player car casts a real light); cat's eyes and boards glowing in headlights; moon, town lights and lit windows at night."
       - "Presentation only: race state unchanged. Existing courses look identical unless a light path is set. Frame cost within the usual limit with 8 cars at night. One sheet to Claude (day, golden, dusk, night on one test circuit), at most three rounds."
 
+    round_two_frame: "Frozen 0f3cf576 (runtime 65d72ec1), one quiet standard run, all 8 legs complete, 360 CPU and 359 GPU/delivered samples each. High pair1 CPU/GPU +3.03/-0.33%; pair2 CPU 9.6 to 18.7 ms (+94.79%), GPU 11.132928 to 17.587200 (+57.97%), delivered 16.8 to 18.2 ms (+8.33%). Performance pairs CPU -4/+1.45%, GPU +1.75/+0.18%; delivered 18.2 to 18.1 and 18.1 to 18.1. Original 10% gate FAILS High pair2; delivered p95 <=18.2 is not a relative-cost pass. Actual 2 street heads/2 matching pools and 2 soft rear meshes on each of 8 cars pass both qualities; state/profile/material restore pass, zero warnings/errors. No retry or further timing investigation. Round-two art and new scoped timing decision requested from Claude; old exception is not carried over. Lane/build and merge held."
+    claude_round_three: "Kyle relayed Claude 11 October: round-two lighting 4, road readability 2.5, grounding 4, scene consistency 4; hold for final round three. Glow lamp heads and soft tarmac pools on both sides, no real lights. Raise cool-blue night ambient for building edges, kerbs and road edge. Centre/edge markings visible at 50 m and cat eyes glinting. Keep round-two facades, windows, moon and tails. One bounded fix: prewarm every night material and lamp shader in race warmup; suspected mid-measure compile remains inference. Then one quiet standard rerun of both pairs, unchanged samples and limits. If High still fails delivered frames, wait for Claude with exact numbers. Hook re-slice permits render-warmup and its existing test for this scoped fix. No fourth art round."
+    round_three_design: "Before-code review: pair supported poles/arms/heads/pools every 40 m in city sections, cap32 lamps/16 stations; cool authored-night fill and private reflections on existing centre/edge markings. Narrow world.js hook tags only four existing strips, preserving order/geometry/materials. Explicit reversible native night variant submission during structural warmup, all promises settle before readiness/resources release; preserve target and lifetime rules. Isolated QA definition carries path before stage creation, restores catalog immediately and awaits real structural readiness; no preparation-key/progress pause, increased wait, changed timing samples/orders/limits or claimed compile cause. Native pixels at 50 m and both road sides, then final eight-view art sheet and one quiet frame run."
+    round_three_frame: "One quiet standard run passes all original limits in both graphics modes and both pairs. Worst CPU increase 5.43%, GPU 2.16%, delivered 0.55%; delivered p95 18.1 to 18.2 ms. All eight legs retain 360 CPU and 359 GPU/delivered samples, zero warnings/errors; earlier failures remain recorded. Final art verdict pending before lane/build and merge; no cause inferred."
+    overnight_gate_hold: "Art approved and original frame limits passed. Final lane coverage needs the inherited unchanged-audio suite rerun in a quiet slot. Repeated Claude balance restarts prevent that capture; acknowledge the hold under For Claude. Runtime source remains 640d7d7d."
+    gate_commit: a89e562cea48713c88fd33c2f9209d360fc7ee7a
+    lane_gate_passed: 378
+    lane_gate_duration_seconds: 892.12
+    build_ms: 827
+    merge_verdict: "Claude art4/4/4/4; exact runtime quiet frames pass every unchanged10%limit, delivered p95<=18.2ms. Source review clear. Lighting plus atomic audio capture passes378/378 lane and build; no full run or release claim."
+
   - id: P4-GP-EXISTING
     title: "Grand Prix on the circuits we already have"
     owner: codex
     lane: RACE
     size: M
     needs: [P4-FIELD]
-    status: ready
+    status: building
+    claimed_by: codex-overnight-2026-10-11
+    branch: codex/p4-gp-existing
     flag: grand-prix
-    owns: [tools/test-grand-prix-existing.mjs, docs/changes/P4-GP-EXISTING.md]
-    hooks: [src/race-settings.js, src/race-settings-ui.js, src/screen-courses.js, src/leaderboard.js, src/ghost.js, src/config.js]
+    owns: [tools/test-grand-prix-existing.mjs, docs/changes/P4-GP-EXISTING.md, tools/scenarios/grand-prix-existing.mjs]
+    hooks: [src/race-settings.js, src/race-settings-ui.js, src/screen-courses.js, src/leaderboard.js, src/ghost.js, src/config.js, src/race-field.js, src/screen-menu.js, src/app.js, src/progression.js, tools/test-race-field.mjs, src/screen-leaderboard.js, src/screen-results.js]
     acceptance:
       - "Build docs/CIRCUITS.md section 3.3: a Grand Prix choice for Pacific Canyon, High Country, Harbor and Highlands and the six expansion circuits; field of 8, 3 laps, no traffic, police or radar; records and ghosts per mode. Check each grid, first corner and narrow spot with a full field; widen only where needed and record it. Existing modes unchanged."
 
+    overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
+
+    leaderboard_scope: "Director, 11 October: show separate selectable Grand Prix 3-lap records on the existing leaderboard. Keep old mode keys and the All default exact. No router change."
+    ghost_capacity_fix: "Save Guardian reproduced silent loss of an older Time Trial ghost in a full shared store. GP admission must reject count or byte overflow with old bytes intact and a visible session-only notice. Narrow screen-results.js hook is limited to that GP notice; keep the telemetry entry unchanged."
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
     owner: codex
@@ -4031,15 +4054,18 @@ tasks:
     needs: []
     status: building
     claimed_by: codex-director-2026-10-10
-    waiting_on: kyle
-    note: "Foundation integrated from c331f6db: 20 licensed recordings, five genuine FIELD cues, full native three-lap capture and lifecycle/state-value checks pass; lane 376/376 and build pass. Kyle listening remains pending; mix -22.42 LUFS is outside its advisory target, peak -4.25 dBTP passes. Fifteen prepared definitions await real owner events; card remains open. No release or complete audio approval. The proven source recipe and canonical listening files remain available after lane cleanup."
+    note: "Foundation integrated from c331f6db: 20 licensed recordings, five genuine FIELD cues, full native three-lap capture and lifecycle/state-value checks pass; lane 376/376 and build pass. Kyle accepted the current full three-lap native mix on 11 October (go with it); mix -22.42 LUFS is outside its advisory target, peak -4.25 dBTP passes. Fifteen prepared definitions await real owner events; card remains open. No release; acceptance covers the current native race mix, not fifteen future unwired events. The proven source recipe and canonical listening files remain available after lane cleanup."
     owns: [docs/changes/P4-AUDIO.md, tools/audio/p4-audio.mjs, tools/audio/p4-listening.mjs, tools/test-p4-audio.mjs, tools/scenarios/p4-audio.mjs]
     decision: "Exactly 20 licensed recorded cues: race.start.light, race.start.go, race.position.gain, race.lap.final, race.finish.flag, pit.limiter, pit.wrench, pit.go, surface.gravel, surface.snow, surface.ice, avalanche.rumble, avalanche.slide, yeti.roar, snowman.burst, crowd.cheer, wind.summit, ambient.harbour-night, ambient.forest-morning, ambient.mountain-wind. Historical audio filters may exclude only these IDs; all existing hashes and assertions stay exact. Four listening groups go to Kyle."
     sequencing: "Prepare licensed recipes and listening clips now. Do not edit Claude-owned event files; wire through released hooks when the owning cards land."
-    hooks: [src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs]
+    hooks: [src/sound-bank.js, src/audio.js, tools/audio/catalog.json, public/assets/audio/, tools/test-arsenal-core-audio.mjs, tools/test-arsenal-wave1-audio.mjs, src/audio-output.js, tools/test-audio-crash-peak.mjs]
     acceptance:
       - "Every cue in docs/CIRCUITS.md section 9 from library recipes first, wired to its event as each card lands (start lights, positions, final lap, flag first). Ambient beds per track. Credits recorded. Listening clips to Kyle."
     claude_note: "10 October 2026: start now. Make every cue as a library recipe and listening clip first; wire each one when its card lands (start lights and positions after P4-FIELD merges)."
+    overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
+
+    mix_decision: "Kyle explicitly requests -16 LUFS and at most -1 dBTP. Initial +6.4 dB follows the measured -22.42 LUFS whole race. The quiet-tone comparison against released a6523ea must expect that exact +6.4 dB, retaining the 0.1 dB tolerance for peak and RMS. This changes the expected level, never the peak ceiling, contrast, onset, copy/continuity, lifecycle or licensed-asset assertions. Independent review and native whole-mix measurement determine the final gain."
+
   - id: P4-CAREER
     title: "Grand Prix in the career: menu, prices, pay, records"
     owner: codex
@@ -4055,7 +4081,7 @@ tasks:
 
   - id: P4-HARBOUR
     title: "Harbour Lights: the night street circuit"
-    owner: codex
+    owner: claude
     lane: RACE
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC]
@@ -4069,9 +4095,10 @@ tasks:
       - "Lantern Hairpin is driveable on the keyboard by the test driver without contact in at least 90% of laps on Medium. Full field targets on this track. Frame cost within the usual limit at night with 8 cars. Then P4-FINISH-HARBOUR."
     claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
     note: "Road layout built by Claude behind the harbour-lights dev switch (src/circuits/harbour-lights.js, 3.19 km, fitted to close; Lantern Hairpin driven clean; needs a redraw in the finishing pass). Codex still owes art, neon, escape roads and the full field; card stays open."
+    claimed_by: "Claude Sonnet agent, 11 October 2026; begins after KITS and DAYNIGHT merge"
   - id: P4-TREMBLANT
     title: "Tremblant Woods: the forest circuit"
-    owner: codex
+    owner: claude
     lane: RACE
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC]
@@ -4083,6 +4110,7 @@ tasks:
       - "Build docs/CIRCUITS.md section 5.3 from its script in src/circuits/tremblant-woods.js: autumn morning light, the ski lodge, lake and dock, the moving chairlift over Timber Straight with the second crest beneath it, ski runs through the trees. Full field targets on this track. Then P4-FINISH-TREMBLANT."
     claude_note: "10 October 2026: a Claude Sonnet agent builds the road layout (track script, widths, walls, crests, boards) behind the switch once P4-TRACK-SCRIPT merges, using existing scenery. Codex finishes the card: art from Kyle's picks, light, landmarks and the full field."
     note: "Road layout built by Claude behind the tremblant-woods dev switch (src/circuits/tremblant-woods.js, 3.23 km, fitted to close; needs a redraw in the finishing pass). Codex still owes autumn light, lodge, lake, chairlift and the full field; card stays open."
+    claimed_by: "Claude Sonnet agent, 11 October 2026; begins after KITS merges"
   - id: P4-SNOW
     title: "The snow world"
     owner: codex
@@ -4101,13 +4129,18 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP]
-    status: ready
-    owns: [src/pit-lane.js, tools/test-pit-lane.mjs, docs/changes/P4-PIT.md]
-    hooks: [src/track-script.js, src/race-field.js, src/sim-driving.js, src/screen-hud.js, src/onfoot-figures.js]
+    status: building
+    claimed_by: codex-overnight-2026-10-11
+    branch: codex/p4-pit
+    owns: [src/pit-lane.js, tools/test-pit-lane.mjs, docs/changes/P4-PIT.md, tools/scenarios/pit-lane.mjs]
+    hooks: [src/track-script.js, src/race-field.js, src/sim-driving.js, src/screen-hud.js, src/onfoot-figures.js, src/track-script-course.js, src/track-script-scene.js, src/race-field-driver.js, src/audio.js, src/render3d.js]
     acceptance:
       - "Build docs/CIRCUITS.md section 3.5 exactly: pit lane beside a named straight, 60 km/h limiter with tone, marked box, 4 s stop swapping tyres and refilling boost, pit crew from existing crew fighters, pit board on approach, computer racers deciding by difficulty and character."
       - "Meet the Summit Run balance target once P4-SUMMIT exists (record it there); until then prove the stop on a test circuit."
 
+    overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
+
+    native_check_scope: "Director, 11 October: pit-lane scenario uses private memory-only native High and Performance races to verify an actual limiter, stop, crew and exit. No frame measurement in this functional check."
   - id: P4-TREMBLANT-SNOW
     title: "Tremblant Snow variant"
     owner: codex
@@ -4219,10 +4252,9 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-intel-dossier
-    waiting_on: claude
     flag: grand-prix
     owns: [src/track-analysis.js, src/reference-laps.js, src/generated/reference-laps.json, src/circuit-intel/index.js, src/screen-team-room.js, src/screen-team-room.css, tools/test-track-analysis.mjs, tools/test-reference-laps.mjs, tools/build-reference-laps.mjs, tools/scenarios/team-room.mjs, docs/changes/P4-INTEL-DOSSIER.md]
-    hooks: [tools/track-review.mjs, src/screen-courses.js, src/course-access-ui.js, src/screen-router.js, src/render3d.js, src/app.js]
+    hooks: [tools/track-review.mjs, src/screen-courses.js, src/course-access-ui.js, src/screen-router.js, src/render3d.js, src/app.js, tools/track-script-drive.mjs]
     router_fix: "Director assignment 10 October: root handles only the Dossier renderState hook ordering in its retained lane: restore buildUpdates.syncState as the first statement and keep the Team Room close guard immediately after it. Height independently reviews the unchanged lifecycle assertion and cherry-picks the narrow fix into Telemetry, then reruns lane/build. Arena continues KITS and does not edit the router. No all-27 or merge clearance is granted."
     decision: "Claude confirmed 10 October: fixed Stuttgart 959-S with no upgrades on Medium; one warm-up then best of two timed laps in an isolated native fixture. References are per event and route (legacy A/B/C seeds 1989/42/17). Label the reference car beside different-car comparisons; per-class references can come later. Three equal-distance sectors unless authored boundaries exist. Authored signature/overtaking flags and engineer notes override generated data; generated data fills only missing fields. Common recipe is Dossier-owned and shared with Telemetry. TEAM ROOM entry is a narrow course-access-ui.js hook. Final authored and reference data layout is CIRCUITS7b.1, merged 88770bbd; renderer waits for TRACK then DAY."
     reference_metrics: "Director 10 October: optional corner elapsedMs measures native entry-to-exit crossings for like-for-like time loss. Required 7b.1 fields remain unchanged. brakeS is the existing suggested speed-analysis point, not measured pedal-on timing; new pedal advice is held. Fixed references use policy layoutSeed through a disposable native Duel start before advancing; do not change production App seeds or claim a different runtime seed matches. Geometry fingerprints describe the actual reference course."
@@ -4231,6 +4263,8 @@ tasks:
     acceptance:
       - "Build the Team Room screen and dossier in docs/CIRCUITS.md section 7b: TEAM ROOM on event cards, map coloured by reference speed with named corners, flags at hot spots, live-rendered driver-seat snapshots at each flag (no stored pictures), engineer notes from the circuit file or generated for existing circuits. Move corner, crest and sector analysis into src/track-analysis.js and make tools/track-review.mjs use it. Works for every closed circuit. Read-only: race state never changes."
     claude_note: "10 October 2026: start now on the existing circuits; read corner names from scripted circuits once P4-TRACK-SCRIPT merges (the review tool already reads course.script.pieces)."
+    dependency_update: "Claude Panorama intel merged at 6add6e37: authored flags, sectors and notes only. Native road geometry/driver remains unchanged from the proved Hell Gate stall; complete all-27 reference hold remains. The pending native correction request still applies."
+    overnight_progress: "Approved circuit driver built all 27 references; 323 reference and 207 analysis checks pass. Final native check passed 58 views in both presets with unchanged state. Independent source review clear; final lane/build queued."
   - id: P4-INTEL-TELEMETRY
     title: "Team Room: your lap against the reference, and where you lose time"
     owner: codex
@@ -4240,7 +4274,6 @@ tasks:
     status: building
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-intel-telemetry
-    waiting_on: claude
     note: 'Exact 0dba9249 lane gate passed 380/380 and build passed after the independently reviewed router ordering repair. This checkpoint still uses the older 24-reference Dossier dependency. Keep held for the native Panorama correction and complete all-27 Dossier catalog; sync, review and rerun current lane/build after that dependency lands. No all-27 or integration merge clearance is claimed.'
     flag: grand-prix
     owns: [src/lap-telemetry.js, tools/test-lap-telemetry.mjs, tools/test-career-budget-recovery.mjs, tools/scenarios/career-writer-lock.mjs, tools/scenarios/lap-telemetry.mjs, docs/changes/P4-INTEL-TELEMETRY.md]
@@ -4252,6 +4285,7 @@ tasks:
     acceptance:
       - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and route, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
 
+    overnight_progress: "Final reference sync 9fbcc671 and Save Guardian review clear. Actual recording and read-only comparison passed both presets; 323 reference and 19 telemetry groups pass. Final lane/build queued."
   - id: P4-INTEL-LEVELS
     title: "Team Room: earning intel levels and the reference ghost"
     owner: codex
@@ -4271,12 +4305,22 @@ tasks:
     lane: RACE
     size: S
     needs: [P4-FIELD]
-    status: ready
+    status: building
+    claimed_by: codex-overnight-2026-10-11
+    branch: codex/p4-qualifying
     flag: grand-prix
-    owns: [src/qualifying.js, tools/test-qualifying.mjs, docs/changes/P4-QUALIFYING.md]
-    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js]
+    owns: [src/qualifying.js, tools/test-qualifying.mjs, docs/changes/P4-QUALIFYING.md, tools/scenarios/qualifying.mjs]
+    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js, src/screen-menu.js, src/screen-router.js]
     acceptance:
       - "Build optional qualifying in docs/CIRCUITS.md section 7b: two timed laps alone, best lap sets your grid slot among the computer racers' seeded times; skipping keeps the default start. Practice laps count toward intel level 2."
+
+    overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
+
+    overnight_question: "Resolved by Claude, 11 October, check-in 2: courses without pits start on the racing line at 80 km/h. Others start at the actual pit exit. The first legal crossing arms two timed laps."
+
+    overnight_progress: "Claude approved 80 km/h on the racing line when no pit exists, actual pit exit otherwise. Native two timed laps, earned grid and SKIP passed; source review clear. Final pit integration check and lane/build queued."
+    waiting_on: claude
+    telemetry_question: "Combined4b genuine App drive: two valid51.553/50.372s qualifying laps, two practice events and earned pole, but zero telemetry laps. Arming invalidates first via native position rebase; GP reload replaces second before post-step observe. Future Intel2 practice events survive. Should current telemetry capture both qualifying laps, or should qualifying be expressly excluded until Intel2? Native pit seam remains queued. Please settle scope; no save changes yet."
 
   - id: P4-COACH
     title: "Coach markers for learning a track"
@@ -4536,3 +4580,22 @@ tasks:
     acceptance:
       - "Prove whether native asset readiness, shader preparation, laptop load or measurement lifecycle explains the first-batch drift, without editing game behaviour or discarding adverse samples."
       - "Keep 360 CPU, at least 359 delivered and 288 GPU samples, positive timing guards, both orders and qualities, fixed view/resolution, eight native models and unchanged 10% threshold. Any test change needs a meaningful failure and independent review."
+
+  - id: QA-AUDIO-CAPTURE
+    title: "Capture native audio stems in one callback"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: merged
+    claimed_by: codex-overnight-2026-10-11
+    branch: codex/qa-audio-capture
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-audio-crash-meter.mjs, docs/changes/QA-AUDIO-CAPTURE.md]
+    design: "One native multi-input meter captures mix, engine and impacts atomically instead of three independently scheduled processors. Keep unchanged Float32 copying, raw chunk timestamps, every original continuity/audio assertion and all thresholds. Retain per-quantum raw clocks and input lengths. One bounded native run must pass; no inferred clock repair, fitted labels, filled samples or assertion waiver. Investigation ends by 06:34 UTC."
+    acceptance:
+      - "Meaningful VM copy, input routing, raw-clock failure and transfer controls; independent source review; native existing 23 checks; lane and build before merge. Old failure cause remains unproved."
+
+    source_commit: a89e562cea48713c88fd33c2f9209d360fc7ee7a
+    lane_gate_passed: 378
+    build_ms: 827
+    note: "One quiet native23/23 and original98checks; VM original copying/routing/transfers/adverseclock controls pass; source review clear. Shared meter improvement does not prove old cause. Lane378/378 in892.12s and build827ms pass; no changed old assertions."

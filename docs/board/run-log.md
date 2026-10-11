@@ -930,3 +930,10 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 10 October: started parallel P4-KITS, P4-AUDIO and P4-INTEL-DOSSIER lanes from Claude's handoff; retained the P4-DAYNIGHT draft. Shared renderer follows Track Script, then Day/Night, then dossier hooks if needed. Race-field balance is active; heavy work waits for the Director's slot.
 
 10 October: merged P4-AUDIO foundation from c331f6db; lane 376/376 in 1086.89 s, build 668 ms, Director source review clear. Genuine 8-car/3-lap native audio, exact PCM continuity and full-state value equality pass; listening and 15 future event hooks remain open. Live game unchanged.
+10 October janitor: removed the clean merged P4-AUDIO lane and branch after unlinking both junctions, plus 573,386 bytes of consumed final gate logs. Pending listening captures/recipes and active or parked lanes retained; current sizes are in STATUS.
+
+11 October: end full passes 376/376 on clean exact 6add6e37 in 794.06 s, alone with four jobs; no failures or reruns. Ledger, status and notes await the next real commit; live unchanged.
+11 October janitor: audit finds 1,580 files and 291.8 MiB, unchanged from the prior sweep; no proven unused removal. Retained pending art/reference lanes, protected audio and parked diagnostics; advisory candidates remain with DISC/CLEAN-11.
+11 October handoff: Kyle accepted the current native audio mix. KITS round two and DAYNIGHT final round three await Claude art; DAYNIGHT's one standard timing rerun passes every original limit. Dossier/Telemetry still need the native Panorama correction and complete all-27 references. No new P4 card, release, push or history rewrite.
+
+11 October overnight: merged DAYNIGHT and QA-AUDIO-CAPTURE from a89e562c; lane378/378 in892.12s, build827ms and source reviews clear; Claude art4/4/4/4, unchanged quiet frames allpass with delivered<=18.2ms. No release; end full remains pending.

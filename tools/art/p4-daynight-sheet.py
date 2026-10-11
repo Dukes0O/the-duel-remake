@@ -1,0 +1,68 @@
+"""One review sheet from native P4-DAYNIGHT captures; never changes the images."""
+import argparse
+import json
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--evidence', required=True)
+parser.add_argument('--output', required=True)
+parser.add_argument('--round', type=int, default=1, choices=[1, 2, 3])
+parser.add_argument('--audit-only', action='store_true', help='Record same-capture 50 m pixels without creating a sheet')
+args = parser.parse_args()
+root, output = Path(args.evidence), Path(args.output)
+report = json.loads((root / 'p4-daynight.json').read_text(encoding='utf-8'))
+if args.round == 3 or args.audit_only:
+    def pixel(image, position):
+        x, y = (round(value) for value in position)
+        assert 0 <= x < image.width and 0 <= y < image.height, 'Projected road point lies outside native capture'
+        return image.getpixel((x, y))
+
+    def luminance(rgb):
+        return sum(channel * weight for channel, weight in zip(rgb, (.2126, .7152, .0722)))
+
+    audit = []
+    for capture in report['captures']:
+        if capture['look'] not in ('dusk', 'night'):
+            continue
+        picture = Image.open(root / f"{capture['quality']}-{capture['look']}.png").convert('RGB')
+        rows = []
+        for row in capture['witness']['markings50']:
+            paint_position, tarmac_position = row['paint']['pixel'], row['tarmac']['pixel']
+            paint, tarmac = pixel(picture, paint_position), pixel(picture, tarmac_position)
+            peak = max((pixel(picture, [paint_position[0] + x, paint_position[1] + y])
+                        for x in (-1, 0, 1) for y in (-1, 0, 1)), key=luminance)
+            rows.append({'kind': row['kind'], 'side': row['side'], 'metresAhead': row['metresAhead'],
+                         'paintPixel': paint_position, 'tarmacPixel': tarmac_position,
+                         'paintRGB': paint, 'paintPeak3x3RGB': peak, 'tarmacRGB': tarmac,
+                         'centreLumaDifference': luminance(paint) - luminance(tarmac),
+                         'peakLumaDifference': luminance(peak) - luminance(tarmac)})
+        audit.append({'quality': capture['quality'], 'look': capture['look'], 'markings50': rows})
+    (root / 'marking-readability.json').write_text(json.dumps({'source': 'Unmodified native full-frame screenshots',
+        'scope': 'Observed pixel evidence for art review, not a replacement for visibility judgment',
+        'captures': audit}, indent=2) + '\n', encoding='utf-8')
+    if args.audit_only:
+        print(root / 'marking-readability.json')
+        raise SystemExit(0)
+width, height, caption = 640, 400, 32
+sheet = Image.new('RGB', (width * 4, 92 + (height + caption) * 2), '#121923')
+draw = ImageDraw.Draw(sheet)
+font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 22)
+small = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 17)
+draw.text((15, 13), f'P4-DAYNIGHT | Round {args.round} | Native eight-car harbor view', font=font, fill='white')
+draw.text((15, 49), 'Same native models and camera. Frame-cost status: ' + report['frameStatus'] + '. High above; Performance below.', font=small, fill='#c3cfdf')
+for row, quality in enumerate(['high', 'performance']):
+    for column, look in enumerate(['day', 'golden', 'dusk', 'night']):
+        picture = Image.open(root / f'{quality}-{look}.png').convert('RGB')
+        assert picture.size == (1280, 800), f'Unexpected native capture dimensions: {picture.size}'
+        picture = picture.resize((width, height), Image.Resampling.LANCZOS)
+        x, y = column * width, 92 + row * (height + caption)
+        draw.text((x + 10, y + 6), quality.upper() + ' | ' + look.upper(), font=small, fill='white')
+        sheet.paste(picture, (x, y + caption))
+output.parent.mkdir(parents=True, exist_ok=True)
+for quality in [86, 81, 76, 71, 66, 61, 56, 51]:
+    sheet.save(output, quality=quality, optimize=True)
+    if output.stat().st_size <= 500000:
+        break
+assert output.stat().st_size <= 500000, 'Review sheet exceeds 500 KB'
+print(output, output.stat().st_size)
