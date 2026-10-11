@@ -66,8 +66,12 @@ export function buildEnvironment(course, {saltFlats} = {}) {
       if(course.script){const uv=shoulderStrip.attributes.uv,edge=new Float32Array(uv.count);for(let i=0;i<uv.count;i++)edge[i]=course.roadHalfWidthAt(uv.getY(i)*10);shoulderStrip.setAttribute('shoulderEdge',new THREE.BufferAttribute(edge,1));}
       group.add(new THREE.Mesh(shoulderStrip, shoulder));
     }
-    if(!course.def.arena&&!course.def.offroad){group.add(new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream));
-    group.add(new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow));}
+    if(!course.def.arena&&!course.def.offroad){
+      const edge = new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream);
+      edge.userData.roadMarking = 'edge';group.add(edge);
+      const centre = new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow);
+      centre.userData.roadMarking = 'centre';group.add(centre);
+    }
   }
   if(course.script)addTrackScriptScene(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){
