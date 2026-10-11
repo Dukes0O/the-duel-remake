@@ -23,11 +23,82 @@ function stage(entries,quality,stageIndex=0) {
   window.__kitState=JSON.stringify(app.duel.state);window.__kitProfile=JSON.stringify(app.profile);
 }
 
+async function snapshotReadiness(context, quality, broken=false) {
+  await context.navigate('/tools/menu-check.html?flags=grand-prix,panorama-ridge');
+  await context.waitFor('window.__qaApp?.visualReady && !!window.__render','snapshot empty world ready',60000);
+  await context.evaluate(`(() => {
+    const a=window.__qaApp,v=window.__render;
+    if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:'))
+      throw Error('Memory-only snapshot QA required');
+    a.stop();a.audio.setMuted(true);a.setGraphicsQuality(${JSON.stringify(quality)});
+    let index;for(let i=0;i<40;i++)if(a.getMenuCourse(i)?.def.id==='panorama-ridge'){index=i;break;}
+    if(index==null)throw Error('Real authored snapshot course missing');
+    a.duel.startCampaign({mode:'timetrial',startStage:index,car:'falcone_f42',seed:1989});
+    const course=a.duel.course,definition=course.def,original=JSON.stringify(definition);
+    course.def={...definition,kitPlacements:${broken ? "[{id:'missing-kit',s:300,lateral:80}]" : "[{id:'shopfront-a',s:300,lateral:45},{id:'shopfront-b',s:300,lateral:70},{id:'gallery',s:300,lateral:0,scale:[1.8,1.3,1]}]"}};
+    if(JSON.stringify(definition)!==original)throw Error('Snapshot changed source catalog');
+    a.returnToMenu();a.onFrame?.(a.duel.state,0);v.renderFrame();
+    window.__snapshotReadOnly=()=>JSON.stringify({state:a.duel.state,profile:a.profile,
+      storage:Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).sort().map(k=>[k,localStorage.getItem(k)])});
+    window.__snapshotBefore=window.__snapshotReadOnly();window.__snapshotResult={settled:false};window.__snapshotSourceError=null;
+    const builds=document.querySelector('#view3d').dataset.worldBuilds;
+    v.captureTrackSnapshot({course,flag:{id:'kit-ready',snapshotS:280,camera:{up:1.35,ahead:55}}})
+      .then(canvas=>{window.__snapshotCanvas=canvas;window.__snapshotResult={settled:true,ok:true};},
+        error=>{window.__snapshotResult={settled:true,ok:false,error:error.message};});
+    v.renderFrame();
+    if(document.querySelector('#view3d').dataset.worldBuilds!==builds || document.querySelector('#view3d').dataset.trackSnapshot)
+      throw Error('Snapshot bypassed pending real kit preparation');
+    if(window.__snapshotReadOnly()!==window.__snapshotBefore)throw Error('Pending snapshot changed race/profile/storage');
+  })()`);
+  await context.waitFor(`(() => {window.__render.renderFrame();const a=window.__qaApp;a.onFrame?.(a.duel.state,0);
+    const host=document.querySelector('#view3d');
+    if(!window.__snapshotResult.settled&&host.dataset.trackKitAsset==='error') {
+      if(host.dataset.trackSnapshot || !host.dataset.trackKitError || document.querySelector('#renderer-error').hidden)
+        throw Error('Pending broken snapshot hid its visible source error or drew fallback');
+      window.__snapshotSourceError=host.dataset.trackKitError;
+    }
+    return window.__snapshotResult.settled;})()`,quality+' snapshot completion/error',25000);
+  const detail=await context.evaluate(`(() => {
+    const result=window.__snapshotResult,v=window.__render,host=document.querySelector('#view3d');
+    if(window.__snapshotReadOnly()!==window.__snapshotBefore)throw Error('Snapshot changed complete race/profile/storage');
+    if(${broken}) {
+      if(result.ok || host.dataset.trackSnapshot || !window.__snapshotSourceError)
+        throw Error('Broken snapshot owner drew fallback or hid source error');
+      if(!result.error.includes('too long'))throw Error('Existing snapshot timeout/error path changed');
+      v.clearTrackSnapshot();return {broken:true,error:result.error};
+    }
+    if(!result.ok || host.dataset.trackKitAsset!=='ready' || host.dataset.trackSnapshot!=='kit-ready')
+      throw Error('Snapshot did not wait for approved assets');
+    const kits=v.scene.getObjectByName('Approved track kits');
+    if(kits?.userData.trackKitPlacements.length!==3)throw Error('Snapshot lacks actual authored placements');
+    let high=0,lod=0,textures=0;
+    kits.traverse(n=>{if(!n.isInstancedMesh)return;let active=false;
+      for(let i=0;i<n.instanceMatrix.array.length;i+=16)if(n.instanceMatrix.array[i]||n.instanceMatrix.array[i+1]||n.instanceMatrix.array[i+2])active=true;
+      if(active){if(n.userData.trackKitVersion==='high')high++;else if(n.userData.trackKitVersion==='low')lod++;}
+      for(const m of [].concat(n.material||[]))for(const value of Object.values(m))if(value?.isTexture&&value.image?.width)textures++;});
+    if(!textures || (${JSON.stringify(quality)}==='high'?!high:high||!lod))throw Error('Snapshot quality versions/textures incomplete');
+    const canvas=window.__snapshotCanvas,data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data,colours=new Set();
+    for(let i=0;i<data.length;i+=64)colours.add([data[i]>>4,data[i+1]>>4,data[i+2]>>4].join(','));
+    if(colours.size<20)throw Error('Snapshot pixels blank');
+    kits.traverse(n=>{if(n.isMesh&&/^lamp-[1-5]$/.test(n.name)&&n.material.emissiveIntensity)throw Error('Snapshot lit race countdown lamps');});
+    return {quality:${JSON.stringify(quality)},high,lod,textures,colours:colours.size,placements:3};
+  })()`);
+  if(!broken) {
+    detail.capture=await context.screenshot('track-kits-snapshot-'+quality);
+    await context.evaluate(`(() => {window.__render.clearTrackSnapshot();
+      if(window.__snapshotReadOnly()!==window.__snapshotBefore)throw Error('Clearing snapshot changed state');})()`);
+  }
+  return detail;
+}
+
 export async function run(context) {
-  const report={passed:false,qualities:[]};
+  const report={passed:false,qualities:[],snapshots:[]};
   const persist=()=>writeFile(join(context.outputDir,'track-kits.json'),JSON.stringify(report,null,2)+'\n');
   try {
     for(const quality of ['high','performance']) {
+      report.snapshots.push(await snapshotReadiness(context,quality));
+      report.snapshots.push(await snapshotReadiness(context,quality,true));
+      await persist();
       await context.navigate('/tools/menu-check.html?flags=grand-prix');
       await context.waitFor('window.__qaApp?.visualReady && !!window.__render','native empty-route ready',60000);
       const rows=TRACK_KIT_IDS.map((id,index)=>id==='start-gantry'?{id,s:15,lateral:0}:

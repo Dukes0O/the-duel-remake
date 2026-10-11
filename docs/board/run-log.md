@@ -939,3 +939,9 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 11 October overnight: merged DAYNIGHT and QA-AUDIO-CAPTURE from a89e562c; lane378/378 in892.12s, build827ms and source reviews clear; Claude art4/4/4/4, unchanged quiet frames allpass with delivered<=18.2ms. No release; end full remains pending.
 
 11 October overnight: merged KITS c04e3189; lane379/379 in905.73s, build745ms, source clear and Claude final3 all3.5. Approved70GLBs/current sheets, strict recipe/evidence repair; no release.
+
+11 October overnight: merged Dossier faeb4885; lane381/381 in867.94s/build516ms, source/native58views clear and all27 reference laps complete. KITS completed lane/branch removed normally after unlinking; no release.
+
+2026-10-11 merge P4-INTEL-TELEMETRY aa18f6b6: lane383/383 653.18s, build1.24s, native comparison and save reviews clear; Dossier lane/branch cleaned normally.
+
+11 October janitor merge405cabb7: lane6/6 46.72s/build548ms, five consumed JPGs/notes removed after durable facts folded; looks19,980,225→17,671,624B. Current final hashes/runtime exact; stray root ledger removed.

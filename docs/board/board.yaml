@@ -1374,7 +1374,6 @@ tasks:
     qa_commit: "de672497b81eaf4c8bdf082f2c46eccf7ca62222"
     note: "Merged after approved final art, public entry, native rewards, independent reviews and current lane/build gates. Strict audio capture now runs alone without changing its assertions. Last Car Rolling and Fuel Run are playable on Salt; later modes add it in their cards."
     kyle_decision_ground: "Kyle, 1 October 2026: the tiled salt photo looks like a silly pattern; a generated ground would be better. Replace it with seeded generated salt as docs/SCRAPDOME.md (Salt Flats, Salt ground) says, remove the photo and its mirrored material in this card, and show the full view and racing camera on the next sheet. This comes before the other look fixes."
-    round_1_sheet: "docs/board/looks/salt-flats/round-1.jpg"
     final_comparison: "docs/board/looks/salt-flats/round-3.jpg"
     claude_verdict: "1 October 2026, evening: the generated salt meets Kyle's direction: real crust cells, a dusty driving band and no repeating pattern from the full view or the racing camera. Accept round 3 and finish the card: public entry, rank 9 unlock, the four modes, gates, then merge and Kyle's look in the Preview. For P3-POLISH, not this card: the inner island still reads sparse from the full view; add scrap there then."
     design_question: "May Salt merge real Last Car Rolling and Fuel Run entry, with Bounty Hunt and Ambush Alley proving this venue in their own cards? Those modes are not built, and Ambush needs crew gear while Dune zoom waits for Salt to free the renderer."
@@ -3949,11 +3948,11 @@ tasks:
     lane: ART
     size: M
     needs: [P4-ART-SRC]
-    status: review
+    status: merged
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-kits
-    review_commit: 6054485c
-    note: 'Claude round one: paddock 3 hold, safety 3.5 hold, harbour 2.5 hold, forest 2.5 hold, snow 3 hold; snowman 4 pass. Kyle selected the 2.8 m hunched shaggy white Yeti with dark face, small eyes and no tongue. Build round two for the five held groups and revised Yeti; preserve passed parts, use varied worn materials and keep the three-round cap. Actual verdict and decisions live in the kit change note.'
+    review_commit: c04e3189
+    note: "Final round three approved all3.5. Native35pairs/read-only loading and review clear; lane379/379 in905.73s/build745ms. Current canonical sheets retained; prior consumed facts in final review. No fourth round or release."
     owns: [tools/blender/p4-kits.py, docs/board/looks/p4-kits/, docs/changes/P4-KITS.md, tools/test-p4-kits.mjs, tools/scenarios/p4-kits.mjs, tools/art/p4-kits-sheet.py]
     hooks: [public/assets/models/circuits/kits/, tools/art/catalog.json, tools/test-tanker-valve-source.mjs, tools/test-blender-output.mjs, docs/board/looks/p4-kits-paddock/, docs/board/looks/p4-kits-snow/, docs/board/looks/p4-kits-characters/, docs/board/looks/p4-daynight/]
     sequencing: "Only selected P4 sources may be inspected/adapted. Catalog pin hook permits the reviewed aggregate digest only; keep unrelated records and Factory provenance exact. Art rounds and heavy checks are scheduled by the Director."
@@ -3971,6 +3970,8 @@ tasks:
     gate_commit: c04e3189dda815a58af64351715007b8a823abcf
     merge_verdict: "Claude final3 passes all3.5; source review clear; fresh lane379/379 in905.73s and build745ms. Approved70runtimeGLBs and current canonical sheets; no fourth round. No release."
 
+    merged_commit: 5b6e325bbb611e85844bb7041b1ebd8ec47d6a97
+
   - id: P4-KIT-LOADER
     title: "Load approved track kits with world readiness and cleanup"
     owner: codex
@@ -3987,6 +3988,10 @@ tasks:
       - "Load Kyle's approved local GLB pairs; instantiate authored placements with road clearance/ground anchoring, quality/distance versions and five gantry lamps from actual start state. Shared assets dispose once and late loading cannot revive a retired world."
       - "Tests cover bad metadata/load failure, transforms, material/resource ownership and native memory-only High/Performance loading and cleanup. Usual lane/build plus one review before integration. Post merge commit in Claude inbox before track finishing."
     terrain_decision: "Director actual triangle reproduction: authored64m ribbon with old far32m grid/80m omission misses44/72 near-verge probes. Treat only terrainHalfWidth64 like existing expansion far grid16/40m threshold, and anchor kits to actual upper near/far Float32 triangles. Keep all legacy geometry and simulation exact; new raycast coverage is required. Native visual difference is reviewed before any signature change."
+
+    lift_decision: "Claude check-in4: optional finite nonnegative lift metres above actual ground anchor, default0. Actual lowestpoint must clear the real road by4.5m before lifted road-overlap exemption. Preserve old/default placements exactly, both High/LOD validated; focused native metadata/clearance regression before fresh gate."
+    current_review_commit: d774b5080c3f1d055f4260accd4b810689dd6c4e
+    current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
 
   - id: P4-PANORAMA
     title: "Panorama Ridge: the mountain circuit"
@@ -4014,6 +4019,11 @@ tasks:
     frame_design: "Director before code: reuse the unchanged DAY 120-warmup/360-CPU/359-delivered/GPU>=288 sampler and10% limits, two pairs in opposite orders per quality. Genuine stationary eight-car native grid, fixed camera/night path. Control uses the same complete ground/road with authored kit/landmark groups hidden and day light; candidate shows real kits/landmarks/night. Renderer preparation remains active in both; record update diagnostics without subtracting overhead. This bounds presentation cost, not a comparison with the old incomplete-ground road or moving-camera simulation. Quiet exclusive scheduling required."
 
     gp_entry_decision: "Native browser proved Panorama is absent from the closed-road Grand Prix allow-list, so the requested GP silently becomes duel. Grant only its stable id in src/race-field.js; old entries and rules stay exact. Add a real headless eight-car/three-lap start regression. Claude owns adding Harbour/Tremblant in their cards; merge list additions together without overwriting."
+
+    round_one_sheet: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama/docs/board/looks/p4-panorama/round-1.jpg"
+    round_one_review: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama/docs/board/looks/p4-panorama/round-1-review.md"
+    native_verdict: "Private54308 High/Performance12captures/0warnings/errors, actual8cargrid/7CPUfinish/3laps; lap117.483/120.176/98.667s and25passes. Actual light final-lap dusk0.55. Seed1000 first30s3+distinctcrashes is not a clean-field pass. Sheet269807bytes, runtimegrounded/nativechase inspected. Quietframes queued."
+    frame_camera_decision: "Private frame fixture sets only the native inspection camera and its presentation position to the same authored grid view before sampling, avoiding interpolation in the before witness. No actor or rule state changes. Native art captures wait for the actual camera to reach their requested drawn-ground height before recording metadata and pixels. Existing sampler/counts/10percent limits stay exact."
 
   - id: P4-GRIP
     title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
@@ -4082,6 +4092,8 @@ tasks:
     ghost_capacity_fix: "Save Guardian reproduced silent loss of an older Time Trial ghost in a full shared store. GP admission must reject count or byte overflow with old bytes intact and a visible session-only notice. Narrow screen-results.js hook is limited to that GP notice; keep the telemetry entry unchanged."
     waiting_on: claude
     native_question: "Azure Riviera High first-corner native check finds3crashingCars at8.775s, size8/rows8 and finite. First5High circuits pass; the unchanged3-car pile-up assertion holds. Decide the smallest existing-circuit fix; no tolerances weakened."
+    rate_decision: "Claude check-in4: run the existing 30 seeded Grand Prix benchmark on Azure Riviera at each of Easy, Medium and Hard. Preserve the standard driver, native field inputs and every existing assertion/threshold; report full-race results and first30s pile-up rate. If above1in20, move only the GP start line back on the straight as the smallest authorized fix, then repeat. Never weaken the native first-corner assertion. Bound one investigation to30minutes."
+    rate_hook: [tools/gp-existing-rate.mjs]
 
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
@@ -4183,6 +4195,9 @@ tasks:
     overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
 
     native_check_scope: "Director, 11 October: pit-lane scenario uses private memory-only native High and Performance races to verify an actual limiter, stop, crew and exit. No frame measurement in this functional check."
+    current_review_commit: dfddbf092bce7d7df8492ed7be7e785073b9bd08
+    current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
+
   - id: P4-TREMBLANT-SNOW
     title: "Tremblant Snow variant"
     owner: codex
@@ -4291,7 +4306,7 @@ tasks:
     lane: RACE
     size: L
     needs: [P4-REVIEW-TOOL]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-intel-dossier
     flag: grand-prix
@@ -4307,13 +4322,16 @@ tasks:
     claude_note: "10 October 2026: start now on the existing circuits; read corner names from scripted circuits once P4-TRACK-SCRIPT merges (the review tool already reads course.script.pieces)."
     dependency_update: "Claude Panorama intel merged at 6add6e37: authored flags, sectors and notes only. Native road geometry/driver remains unchanged from the proved Hell Gate stall; complete all-27 reference hold remains. The pending native correction request still applies."
     overnight_progress: "Approved circuit driver built all 27 references; 323 reference and 207 analysis checks pass. Final native check passed 58 views in both presets with unchanged state. Independent source review clear; final lane/build queued."
+    gate_commit: faeb48858ad99dec1cbffdee93d71d3842998e2f
+    merge_verdict: "All27 approved references, native58High/Performance views/read-only checks and source review clear. Fresh lane381/381 in867.94s/build516ms. No release."
+
   - id: P4-INTEL-TELEMETRY
     title: "Team Room: your lap against the reference, and where you lose time"
     owner: codex
     lane: RACE
     size: M
     needs: [P4-INTEL-DOSSIER]
-    status: building
+    status: merged
     claimed_by: codex-director-2026-10-10
     branch: codex/p4-intel-telemetry
     note: 'Exact 0dba9249 lane gate passed 380/380 and build passed after the independently reviewed router ordering repair. This checkpoint still uses the older 24-reference Dossier dependency. Keep held for the native Panorama correction and complete all-27 Dossier catalog; sync, review and rerun current lane/build after that dependency lands. No all-27 or integration merge clearance is claimed.'
@@ -4327,7 +4345,9 @@ tasks:
     acceptance:
       - "Build telemetry in docs/CIRCUITS.md section 7b: record speed, throttle, brake and position on your laps (extending what ghosts store, additive save fields within the save budget), the fixed reference lap per event and route, the speed overlay, sector times, and the three corners where you lose the most time with plain-word causes. ANALYSE MY LAP on the results screen. Old saves load unchanged (fixtures)."
 
-    overnight_progress: "Final reference sync 9fbcc671 and Save Guardian review clear. Actual recording and read-only comparison passed both presets; 323 reference and 19 telemetry groups pass. Final lane/build queued."
+    overnight_progress: "Final reference sync 9fbcc671 and Save Guardian review clear. Actual recording and read-only comparison passed both presets; 323 reference and 19 telemetry groups pass. Final lane/build queued."    gate_commit: aa18f6b63b1cda37e53f72d951230cef231f34a1
+    gate_verdict: "Lane383/383 in653.18s and build1.24s pass; native comparisons and independent source/save review clear. Old save keys/fingerprints retained."
+
   - id: P4-INTEL-LEVELS
     title: "Team Room: earning intel levels and the reference ghost"
     owner: codex
@@ -4645,8 +4665,29 @@ tasks:
     title: Remove consumed prior art rounds before the new track reviews
     phase: 4
     owner: codex
-    status: ready
+    status: merged
     needs: [P4-KITS]
     owns: [docs/board/looks/salt-flats, docs/board/looks/vesper, docs/board/looks/smoke, docs/board/looks/polish-arena, docs/changes/JANITOR-P4-ART-EVIDENCE.md]
     design_decision: "Separate janitor step: fold needed prior-round verdicts into each current final review, then delete consumed earlier JPGs and notes. Keep current final sheets, all recipes, runtime assets, licensed inputs and Kyle decisions. The unchanged 20 MB evidence limit remains. Lane and build before its own merge; no unrelated sweep in a feature card."
     acceptance: "Current verdicts preserve prior limits and decisions; consumed prior art removed; current final JPG bytes and all game/replay source remain exact; lane and build pass."
+    claimed_by: codex-overnight-2026-10-11
+    branch: codex/janitor-p4-art-evidence
+    hooks: [docs/changes/POLISH-ARENA.md]
+    pointer_decision: "Cleanup review found historical pointers to consumed sheets. Board keeps current final pointers only; historical Arena note retains the earlier443390-byte fact and points to the current folded verdict. No art decision changed."
+    gate_commit: 405cabb72e155d1ee85b69e11cdaf5b18a6de1b8
+    gate_verdict: "Mandatory lane6/6 in46.72s/build548ms; review clear, four final JPGs exact. Consumed evidence removed; looks19,980,225 to17,671,624bytes. No runtime changes."
+
+  - id: FIX-P4-KERB-NORMALS
+    title: Repair zero kerb normals that corrupt High Bloom
+    owner: codex
+    lane: VIS
+    size: S
+    status: building
+    claimed_by: codex-overnight-2026-10-11
+    branch: codex/fix-p4-kerb-normals
+    needs: [P4-TRACK-SCRIPT]
+    owns: [src/track-script-scene.js, tools/test-kerb-normals.mjs, docs/changes/FIX-P4-KERB-NORMALS.md]
+    design_decision: "Actual Snow native firstNaN pixel hits kerb normal0. addKerbs emits both opposing windings on sharedvertices, cancelling normals; material alreadyDoubleSide. Remove redundant reverse triangles, preserve everyvertex/UV/material/physics, require finite unit normals on both curved kerb sides. A controlled native kerb-hidden probe confirmscause; freshSnowHigh/Performance mustremoveNaNs without disablingBloom. Existingworld/replay fingerprints remain; neverregeneratewithoutreview."
+    acceptance: "Meaningfulactual curved-kerb normal regression RED thenGREEN; nativeHalfFloat scene/Bloom noNaNs with originalBloom enabled; HighSnowframe visible, state/profile/storage exact. One source review/currentlane/build before ownmerge."
+    review_commit: 6d284cb081917c32868c8fa83d7a6e18f13c2443
+    source_review: "Director clear: only redundant reverse triangles removed, existing DoubleSide retained;2112 actual finite unit normals/1056 nondegenerate faces and exact position/UV/material digest. Native finite-target witness and mandatory lane/build queued."
