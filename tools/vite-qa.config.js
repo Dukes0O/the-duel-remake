@@ -43,6 +43,7 @@ const input = {
   vehicles:fileURLToPath(new URL('./vehicle-art-check.html',import.meta.url)),
   audio:fileURLToPath(new URL('./audio-race-check.html',import.meta.url)),
   listening:fileURLToPath(new URL('./audio/listening.html',import.meta.url)),
+  deeplook:fileURLToPath(new URL('./deep-look.html',import.meta.url)),
 };
 
 export default defineConfig({
