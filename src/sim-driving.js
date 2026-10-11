@@ -10,6 +10,7 @@ import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
 import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
 import {FIELD} from './race-field.js';
+import {stepPitService,limitPitSpeed} from './pit-lane.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -39,7 +40,7 @@ export function _drivingSurface(distance, lateral, car = this.car, hasContact = 
   const traction = surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip;
   const speedLimit = surface.mainRoad ? car.topSpeed : preparedGravel ? car.topSpeed * (rally ? .98 : .95) : car.offRoadSpeed ?? 68;
   const scrub = surface.mainRoad ? 0 : (preparedGravel ? rally ? .014 : .035 : car.offRoadScrub ?? DRIVE.offRoadScrub) * roughnessScale;
-  return { ...surface, preparedGravel, boostAllowed: surface.road || this.course.def.practice,
+  return { ...surface, preparedGravel, boostAllowed: !surface.pitLane && (surface.road || this.course.def.practice),
     mud, waterDepth,
     ...(road.active ? { gripKind: road.kind, grip: road.grip, gripTopSpeedMph: road.topSpeedMph, gripTopShare: road.topShare } : {}),
     traction: (road.active && surface.mainRoad ? traction * road.grip : traction) * (1 - mud * .45),
@@ -76,6 +77,7 @@ export function _tickDrift(dt) {
 
 export function _drive(dt) {
   const s = this.state, car = this.car, d = this.diff;
+  if(stepPitService(this,s,dt))return;
   // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
   const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
   const accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
@@ -224,6 +226,7 @@ export function _drive(dt) {
     s.speedMph=Math.sign(s.speedMph)*Math.max(0,Math.abs(s.speedMph)-waterLoss);
   }
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
+  limitPitSpeed(this.course,s);
   const metresPerSec = s.speedMph * DRIVE.mphToWorld, alongPush = carAlongPush(s);
   if (onHiddenRoad(this.course, s)) s.hiddenRoadDriving = true;
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
@@ -247,6 +250,7 @@ export function _drive(dt) {
     s.lateral += (Math.sin(s.headingError) * metresPerSec + s.pushVelocity) * dt;
     s.s += progress;
   }
+  limitPitSpeed(this.course,s);
   s.pushVelocity *= Math.exp(-2.4 * dt);
   dampCarAlongPush(s, Math.exp(-2.4 * dt));
   this._offroadStep(dt, !surface.road);

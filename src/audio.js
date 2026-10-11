@@ -1519,6 +1519,7 @@ export class EngineAudio {
     )
       return;
     this._syncMixer(state);
+    if (['pit.limiter','pit.wrench','pit.go'].includes(ev.pitCue)) this._playCue(ev.pitCue);
     const wastelandAudio =
       state?.mode === 'wasteland' &&
       Number.isFinite(state.maxArmor) &&

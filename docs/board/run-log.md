@@ -947,3 +947,7 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 11 October janitor merge405cabb7: lane6/6 46.72s/build548ms, five consumed JPGs/notes removed after durable facts folded; looks19,980,225→17,671,624B. Current final hashes/runtime exact; stray root ledger removed.
 
 11 October merge FIX-P4-KERB-NORMALS e6b82a12: lane74/74 in91.20s/build616ms; actual geometry digest exact, zero nonfinite High Bloom targets.
+
+11 October janitor sweep: no unused module or removed-feature test proved; 50 asset candidates are advisory dynamic paths/credits, left for DISC/CLEAN-11. Consumed request posts folded into current cards; idle unmerged branches retained. Tracked size322,216,132B, looks17,671,624B; no runtime growth/deletion.
+
+11 October merge P4-PIT5ebfaa85: lane384/384 in648.47s/build496ms, actual eight boxes and four-second High/Performance service pass; finite kerb/Dossier union exact. No release.

@@ -8,6 +8,7 @@ import { DRIVE, steeringYawAuthority } from './config.js';
 import { clamp } from './sim-common.js';
 import { stepKnock } from './vehicle-knock.js';
 import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-lines.js';
+import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
 const MPH = DRIVE.mphToWorld;
@@ -132,6 +133,7 @@ function move(duel, r, run, dt, target, intent, surface, look) {
 
 export function stepFieldRacer(duel, r, dt) {
   const s = duel.state, f = r.field, run = runtimeOf(duel, r);
+  if(r.pit?.phase==='servicing'&&stepPitService(duel,r,dt)){f.stuck=0;f.offSec=0;return;}
   if (r.knock) {
     // A knocked car is a free body until its tyres bite; the shared rules apply.
     stepKnock(duel, r, dt);
@@ -145,7 +147,7 @@ export function stepFieldRacer(duel, r, dt) {
   r.contactCooldown = Math.max(0, (r.contactCooldown || 0) - dt);
   r.braking = false;
   noteIncidents(duel, r);
-  const surface = duel._drivingSurface(r.s, r.lateral, run.spec);
+  const surface = duel._drivingSurface(r.s, r.lateral, run.spec,true,r.tyre);
   r.offRoad = !surface.mainRoad; r.preparedGravel = surface.preparedGravel;
   const mps = Math.max(0, r.speedMph) * MPH;
   const look = r.s + Math.max(6, mps * .3);
@@ -162,6 +164,31 @@ export function stepFieldRacer(duel, r, dt) {
   }
   // Waiting for a reaction at the start. The lights are already out.
   if (s.stageTimeSec < f.reaction) return;
+
+  const lane = duel.course.pitLane;
+  if (lane) {
+    const phase = duel.course.phase(r.s);
+    if (phase >= lane.entry - 180 && phase <= lane.exit && !f.pitChoice)
+      f.pitChoice = choosePit(duel, r, run);
+    if (f.pitChoice?.stop && phase >= lane.entry && phase <= lane.exit) {
+      if (stepPitService(duel, r, dt)) { f.stuck = 0; f.offSec = 0; return; }
+      const box = pitBox(lane, r), serviced = !!f.pitServiced;
+      const remaining = box - phase;
+      const stopMph = Math.sqrt(2 * DRIVE.brakeAccel * run.spec.braking * MPH *
+        Math.max(0, remaining - 1)) / MPH;
+      let target = serviced ? PIT.limitMph : Math.min(PIT.limitMph, stopMph);
+      if (!serviced && remaining < 2 && Math.abs(r.lateral - lane.offsetAt(phase)) > 1.6)
+        target = 3;
+      move(duel, r, run, dt, target, lane.offsetAt(look), surface, look);
+      limitPitSpeed(duel.course, r);
+      duel._staticContacts(r, false);
+      duel._boundary(r);
+      duel._advanceLaps(r, dt);
+      f.stuck = 0; f.offSec = 0; f.moveSpeed = r.speedMph;
+      return;
+    }
+    if (phase > lane.exit && f.pitChoice?.stop) { f.pitChoice.stop = false; f.pitDone = true; }
+  }
 
   const { profile, line, tuning } = run;
   const t = f.traits, now = s.stageTimeSec;
@@ -346,7 +373,8 @@ export function stepFieldRacer(duel, r, dt) {
   }
   // The paved shoulder is forgiving; beyond it the car slows hard.
   if (r.offRoad) target = Math.abs(r.lateral) > surface.roadHalfWidth + 1.25 ? Math.min(target * .7, surface.speedLimit) : target * .92;
-  target = Math.max(0, Math.min(target, speedCap));
+  if(r.tyre)target*=Math.sqrt(surface.grip??1)*(surface.gripTopShare??1);
+  target = Math.max(0, Math.min(target, speedCap,surface.gripTopSpeedMph??Infinity));
   move(duel, r, run, dt, target, f.intent, surface, look);
   f.moveSpeed = r.speedMph;
 
