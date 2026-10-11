@@ -82,13 +82,14 @@ NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
 Final KIT-LOADER integration ec734cfd genuinely merged without conflicts.
 Renderer prepares extras, retains current bank identities and feeds eight grounded cars.
-Round-one art is held; revised winter look, gates, review and merge remain pending.
+Round-one art held; round-two source ba68528f reviewed, same eight native views pass.
 Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
 Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.
 Static timing fixes only its native presentation camera before sampling;
 original samples/10percent limits and all actor poses stay exact.
 Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
-Original lighting1078/moods2666/lightpath544 pass. Native revised art/frames remain pending.
+Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
+Revised native materials/12 finite targets/308 current banks pass; art/frames/gates pending.
 
 ## Removed
 
