@@ -71,6 +71,20 @@ QA now saves the failed corner's crash events and actual actor poses before
 throwing the same assertion. No width, race rule or limit changed; no full
 18-case pass or performance claim. Further native/balance checks await schedule.
 
+Bounded headless reproduction at the same seeds: fresh Azure and the six-course
+sequence both have zero crashes through 232 m at 8.375 s across outer steps
+1/60, 1/30, .05 and .1 s. A second check uses the five actual native stop times
+and pause/resume, continuing Azure to 10 s: one racer crashes at 9.10 s, none
+by the failed native 8.775 s. This does not reproduce or explain the native
+three-car failure. Keep the native assertion and Claude hold; no rule change.
+
+Claude check-in4 judges Azure by the unchanged first30s pile-up rate <=1/20
+over30 full seeded races per difficulty. Recipe calls existing runRace in
+one job with its standard driver/seeds; restores a temporary start wrapper
+that adds existing ownTestCourses only after the private memory facade exists.
+No runtime/rule/assertion edit. Above-target evidence precedes any GP-only
+start-line setback; current failed native assertion stays exact.
+
 ## Removed
 
 No runtime asset or legacy mode is replaced. Remove the stale menu claim that
