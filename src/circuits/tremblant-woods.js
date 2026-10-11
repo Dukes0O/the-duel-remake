@@ -193,7 +193,7 @@ function lakeside() {
 function lodge() {
   // On the lower slope of the hill, looking down the straight.
   const du = -62, dv = -12;
-  return [kit('ski-lodge', HILL.s + du, HILL.lateral + dv, { heading: FACE_RIGHT, scale: 1.6, clear: 24, hill: 0 })];
+  return [kit('ski-lodge', HILL.s + du, HILL.lateral + dv, { heading: FACE_RIGHT, scale: 1.6, clear: 24, hill: 0, sink: .7 })];
 }
 
 function chairlift() {

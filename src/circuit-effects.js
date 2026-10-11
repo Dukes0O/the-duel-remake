@@ -15,7 +15,8 @@
 //     A chairlift across the road. The towers, cable spans and chairs are kit
 //     pieces named in `kitPlacements` (their `ride` field says which); once the
 //     kit has loaded the cable is stretched between the tower tops and the chairs
-//     ride it. Kit pieces marked `hill` are lifted onto the hill they stand on.
+//     ride it. Kit pieces marked `hill` are lifted onto the hill they stand on
+//     (`sink` metres into it, so a building has no gap under its walls).
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
 import { trackKitsOf } from './track-kits.js';
@@ -164,7 +165,7 @@ function addKitMotion(group, course) {
     for (const { piece, index } of raised) {
       const hill = course.def.hills[piece.hill], [du, dv] = hillLocal(hill, piece.s, piece.lateral);
       const pose = kits.getPlacementPose(index);
-      pose.premultiply(matrix.makeTranslation(0, hillHeight(hill, du, dv), 0));
+      pose.premultiply(matrix.makeTranslation(0, hillHeight(hill, du, dv) - (piece.sink ?? 0), 0));
       kits.setPlacementPose(index, pose);
     }
     cables.forEach(({ piece, index }) => {
