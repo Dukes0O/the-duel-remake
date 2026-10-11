@@ -60,19 +60,34 @@ function prepare(quality) {
       const head = [];
       car.traverse(item => { if (item.isMesh && /^(Headlamp lenses|Headlight)$/.test(item.material?.name)) head.push(item.material.emissiveIntensity); });
       const tails = (car.userData.brakeLights || []).map(lamp => lamp.material.emissiveIntensity);
+      const rearGlow = car.getObjectByName('Night tail glow');
+      const softGlowMeshes = rearGlow?.children.filter(mesh => mesh.isMesh && mesh.visible &&
+        mesh.material?.transparent && mesh.material.uniforms?.strength?.value > 0).length || 0;
       return {key: car.userData.vehicleKey, position: car.position.toArray(), visible,
-        headlights: head, tails, cones: car.getObjectByName('Night headlight cones')?.visible === true};
+        headlights: head, tails, rearGlow: {visible: rearGlow?.visible === true, softGlowMeshes},
+        cones: car.getObjectByName('Night headlight cones')?.visible === true};
     });
     const sky = api.scene.getObjectByName('Atmosphere and cloud deck');
     const nightGroup = api.scene.getObjectByName('Authored night details');
     const reflections = api.scene.getObjectByName('Road reflectors');
+    const lampHeads = api.scene.getObjectByName('Night streetlamp heads');
+    const lampPools = api.scene.getObjectByName('Night streetlamp road pools');
+    const streetlamps = {
+      heads: {count: lampHeads?.isInstancedMesh ? lampHeads.count : 0,
+        visible: lampHeads?.visible === true && nightGroup?.visible === true,
+        opacity: lampHeads?.material.opacity ?? 0, color: lampHeads?.material.color?.getHex() ?? null},
+      pools: {count: lampPools?.isInstancedMesh ? lampPools.count : 0,
+        visible: lampPools?.visible === true && nightGroup?.visible === true,
+        transparent: lampPools?.material.transparent === true,
+        strength: lampPools?.material.uniforms?.night?.value ?? 0},
+    };
     const windows = [];
     api.scene.traverse(mesh => {
       if (mesh.isMesh && (mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(mesh.material?.name || '') ||
           mesh.material?.customProgramCacheKey?.().startsWith('city-room-parallax-v1')))
         windows.push({name: mesh.name, material: mesh.material.name, intensity: mesh.material.emissiveIntensity});
     });
-    return {poses, stars: sky.material.uniforms.stars?.value ?? null, moon: sky.material.uniforms.moon?.value ?? null,
+    return {poses, streetlamps, stars: sky.material.uniforms.stars?.value ?? null, moon: sky.material.uniforms.moon?.value ?? null,
       nightGroup: nightGroup?.visible === true, reflectors: reflections?.visible && nightGroup?.visible ? reflections.count : 0,
       windows, lightCount: api.scene.children.filter(item => item.isLight).length,
       viewport: [document.querySelector('#view3d').clientWidth, document.querySelector('#view3d').clientHeight],
@@ -222,6 +237,14 @@ export async function run(context) {
           throw Error('Native night presentation incomplete: '+JSON.stringify(witness));
         if(look==='day'&&(witness.stars!==0||witness.moon!==0||witness.poses.some(car=>car.cones)))
           throw Error('Day view contains night extras');
+        if(look==='dusk'||look==='night') {
+          const {heads,pools}=witness.streetlamps;
+          if(!(heads.count>0&&heads.count<=32&&heads.visible&&heads.opacity>0&&heads.color!==null&&
+              pools.count===heads.count&&pools.visible&&pools.transparent&&pools.strength>0))
+            throw Error('Native streetlamp batches incomplete: '+JSON.stringify(witness.streetlamps));
+          if(!witness.poses.every(car=>car.rearGlow.visible&&car.rearGlow.softGlowMeshes>0))
+            throw Error('Native rear glow incomplete: '+JSON.stringify(witness.poses));
+        }
         const capture=await context.screenshot(quality+'-'+look);
         report.captures.push({quality,look,capture,...initial,witness});await persist();
       }

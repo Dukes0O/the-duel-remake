@@ -248,3 +248,14 @@ Native eight-view art, current-source frame watch and lane/build remain pending.
 Removed in round two: dusk/night direct sunlight, night sunset-HDR contribution,
 the all-pane emission adapter, white-hot headlamp floor and subpixel star dots.
 No native facade, window, pole, car geometry or legacy lighting path was removed.
+
+Round-two QA instrumentation plan (before code): extend only the existing
+native witness with the actual streetlamp head/pool instance counts, effective
+visibility and material emission/opacity, and each car's actual visible soft
+rear-glow mesh count. Dusk/night must show matching bounded street batches and
+nonzero rear glow on all eight native cars in both presets. Keep every existing
+assertion, view, seed, camera, timer, sample count and frame-cost limit unchanged.
+No runtime change is needed. The eight-view capture already passed on 65d72ec1
+at private port 51149 with zero warnings/errors and exact state/profile/material
+restoration; frame measurement was off. The new witness awaits its own native
+run in the separately granted quiet slot.
