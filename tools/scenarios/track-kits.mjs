@@ -18,7 +18,7 @@ function stage(entries,quality,stageIndex=0) {
   app.duel.course.def={...app.duel.course.def,kitPlacements:entries};
   if(JSON.stringify(def)!==originalDefinition)throw Error('Native catalog changed');
   const course=app.duel.course,target=course.groundAt(230,70),eye=course.groundAt(70,70);
-  app.inspectionCamera={position:[eye.x,eye.y+150,eye.z],target:[target.x,target.y+4,target.z]};
+  app.inspectionCamera={position:[eye.x,eye.y+80,eye.z],target:[target.x,target.y+4,target.z]};
   app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
   window.__kitState=JSON.stringify(app.duel.state);window.__kitProfile=JSON.stringify(app.profile);
 }
@@ -72,8 +72,10 @@ async function snapshotReadiness(context, quality, broken=false) {
     const kits=v.scene.getObjectByName('Approved track kits');
     if(kits?.userData.trackKitPlacements.length!==3)throw Error('Snapshot lacks actual authored placements');
     let high=0,lod=0,textures=0;
-    kits.traverse(n=>{if(!n.isInstancedMesh)return;let active=false;
-      for(let i=0;i<n.instanceMatrix.array.length;i+=16)if(n.instanceMatrix.array[i]||n.instanceMatrix.array[i+1]||n.instanceMatrix.array[i+2])active=true;
+    kits.traverse(n=>{if(!n.isInstancedMesh)return;const active=n.visible&&n.count>0;
+      if(n.count!==n.userData.trackKitDrawnPlacementIndices?.length)throw Error('Snapshot packed count mismatch');
+      for(let i=0;i<n.count;i++)if(!Math.hypot(...n.instanceMatrix.array.slice(i*16,i*16+3)))
+        throw Error('Snapshot submitted a zero-scale instance');
       if(active){if(n.userData.trackKitVersion==='high')high++;else if(n.userData.trackKitVersion==='low')lod++;}
       for(const m of [].concat(n.material||[]))for(const value of Object.values(m))if(value?.isTexture&&value.image?.width)textures++;});
     if(!textures || (${JSON.stringify(quality)}==='high'?!high:high||!lod))throw Error('Snapshot quality versions/textures incomplete');
@@ -120,8 +122,12 @@ export async function run(context) {
         for(const texture of textures){const image=texture.image;if(!image||!image.width||!image.height)
           throw Error('Actual runtime kit texture failed decoding');}
         const highBatches=group.children.filter(node=>node.isInstancedMesh&&node.userData.trackKitVersion==='high');
-        const active=mesh=>{const array=mesh.instanceMatrix.array;for(let i=0;i<array.length;i+=16)
-          if(array[i]||array[i+1]||array[i+2])return true;return false;};
+        const active=mesh=>mesh.visible&&mesh.count>0;
+        for(const mesh of group.children.filter(node=>node.isInstancedMesh)){
+          if(mesh.count!==mesh.userData.trackKitDrawnPlacementIndices?.length)throw Error('Native packed count mismatch');
+          for(let i=0;i<mesh.count;i++)if(!Math.hypot(...mesh.instanceMatrix.array.slice(i*16,i*16+3)))
+            throw Error('Native submitted a zero-scale instance');
+        }
         if(${JSON.stringify(quality)}==='performance'&&highBatches.some(active))throw Error('Performance submitted High kit instances');
         if(${JSON.stringify(quality)}==='high'&&!highBatches.some(active))throw Error('Near High kit instances missing');
         if(view.renderer.info.programs.some(program=>!program.isReady()))throw Error('Kit world claimed ready before native shader readiness');
@@ -129,6 +135,42 @@ export async function run(context) {
           throw Error('Kit loading or rendering changed race/profile');
         return {batches,skins,textures:textures.size,worldBuilds:document.querySelector('#view3d').dataset.worldBuilds,
           programs:view.renderer.info.programs.length};
+      })()`);
+      // Observe real main/rear GPU submissions, retaining complete native state.
+      detail.packedViews=await context.evaluate(`(async () => {
+        const app=window.__qaApp,view=window.__render,renderer=view.renderer;
+        const group=view.scene.getObjectByName('Approved track kits');
+        const readOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,
+          storage:Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).sort().map(k=>[k,localStorage.getItem(k)])});
+        const stateBefore=readOnly(),original=renderer.render,rears=[];let main=null;
+        const witness=()=>({stats:{...group.userData.trackKitStats},meshes:group.children.map(mesh=>({
+          name:mesh.name,version:mesh.userData.trackKitVersion,chunk:mesh.userData.trackKitChunk,
+          visible:mesh.visible,count:mesh.isInstancedMesh?mesh.count:null,
+          indices:mesh.userData.trackKitDrawnPlacementIndices??null,
+          matrices:mesh.isInstancedMesh?Array.from(mesh.instanceMatrix.array):Array.from(mesh.matrix.elements)}))});
+        renderer.render=function(scene,camera){
+          if(scene===view.scene){
+            const packet=witness();
+            if(camera===view.camera)main=packet;
+            else if(renderer.getRenderTarget()){
+              const active=packet.meshes.filter(mesh=>mesh.visible&&(mesh.count===null||mesh.count>0));
+              if(active.some(mesh=>mesh.version==='high'))throw Error('Actual rear submitted detailed kits');
+              if(new Set(active.map(mesh=>mesh.chunk)).size>3)throw Error('Actual rear submitted too many chunks');
+              rears.push({chunks:[...new Set(active.map(mesh=>mesh.chunk))],
+                instances:active.reduce((sum,mesh)=>sum+(mesh.count??1),0)});
+            }
+          }
+          return original.call(this,scene,camera);
+        };
+        try{
+          for(let i=0;i<12&&!rears.length;i++){
+            await new Promise(resolve=>requestAnimationFrame(resolve));view.renderFrame();
+            if(main&&JSON.stringify(witness())!==JSON.stringify(main))throw Error('Actual rear did not restore exact main packing');
+          }
+          if(!main||!rears.length)throw Error('Actual main/rear GPU submissions were not observed');
+          if(readOnly()!==stateBefore)throw Error('Native packed-view witness changed race/profile/storage');
+          return {mainChunks:main.stats.visibleChunks,mainHigh:main.stats.high,mainLow:main.stats.low,rears};
+        }finally{renderer.render=original;}
       })()`);
       // Advance the actual seeded GP countdown without running race physics.
       for(let light=1;light<=5;light++) {

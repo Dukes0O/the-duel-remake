@@ -174,7 +174,7 @@ export function attachRenderer(host, app) {
       preparedTrackKits.dispose(); preparedTrackKits = null; preparedTrackKitKey = null;
     }
     if (!preparedTrackKits) {
-      preparedTrackKits = createTrackKits(next); preparedTrackKitKey = key;
+      preparedTrackKits = createTrackKits(next,{validateClearance:false}); preparedTrackKitKey = key;
     }
     host.dataset.trackKitAsset = preparedTrackKits.status;
     host.dataset.trackKitError = preparedTrackKits.error?.message ?? '';
@@ -306,6 +306,7 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
+  const rearKitForward = new THREE.Vector3();
   const nightWorldInput = {};
   let trackSnapshot = null;
   const snapshotLightPose = {rotation: {y: 0}};
@@ -351,7 +352,7 @@ export function attachRenderer(host, app) {
       lighting.updateWorld({position: ground, heading: pose.heading, distance, high});
       animateScene(world, now / 1000);
       syncScene(world, {crushedProps: []}, 0);
-      trackKitsOf(world)?.update({high,position:ground,state:{status:'menu'}});
+      trackKitsOf(world)?.update({high,position:camera.position,camera,state:{status:'menu'}});
       for (const object of scene.children) {
         if (object === world || lightingRoots.has(object) || object.isLight) continue;
         visibility.push([object, object.visible]);object.visible = false;
@@ -766,7 +767,7 @@ export function attachRenderer(host, app) {
     lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
-    trackKitsOf(world)?.update({high,position:pp,state:menu?{status:'menu'}:st});
+    trackKitsOf(world)?.update({high,position:camera.position,camera,state:menu?{status:'menu'}:st});
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();
     const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricFootCamera!==`${!!st.onFoot}:${app.footCameraMode}`||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
@@ -802,7 +803,12 @@ export function attachRenderer(host, app) {
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
     const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();renderMainView(renderer,composer,high);
-    rearView.render({state:st,player,course,now:ambientNow});
+    const kits = trackKitsOf(world);
+    if (kits) {
+      rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
+      kits.withRearView({position:player.position,forward:rearKitForward},
+        () => rearView.render({state:st,player,course,now:ambientNow}));
+    } else rearView.render({state:st,player,course,now:ambientNow});
     const cpuRenderMs=performance.now()-renderStarted;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
     if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
