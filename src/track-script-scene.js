@@ -202,7 +202,7 @@ export function addTrackScriptScene(group, course, {snow = false} = {}) {
     group.add(mesh);
     if (look.tracks) {
       // Two pairs of darker wheel tracks, tyre-worn into the snow.
-      const trackMaterial = new THREE.MeshStandardMaterial({ color: 0x8e979d, roughness: 1, transparent: true, opacity: .55, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, depthWrite: false });
+      const trackMaterial = new THREE.MeshStandardMaterial({ color: snow?0x596b78:0x8e979d, roughness: 1, transparent: true, opacity: .55, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, depthWrite: false });
       let narrowest = Infinity;
       for (let s = run.s0; s <= run.s1; s += 8) narrowest = Math.min(narrowest, course.roadHalfWidthAt(s));
       for (const centre of [-4.25, -2.55, 2.55, 4.25].filter(value => Math.abs(value) + .5 < narrowest)) {

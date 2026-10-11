@@ -4,14 +4,12 @@
 
 Only explicit snowWorld ranges opt a track into winter scenery. Existing dry
 tracks stay exact. The snow-world dev switch controls this new presentation.
-Snow loaded pines, ground detail, snow ledge rocks and plough banks reuse
-Kyle's approved kit GLBs through P4-KIT-LOADER, never substitute shapes.
+Snow pines, ground, ledge rocks and banks reuse Kyle's approved kit GLBs.
 
 Course construction generates real deep-snow verge bands from the same ranges.
 Course.gripKindAt reads patches before its existing outside-road default;
 ordinary courses and pre-existing road patches retain their exact answers.
-The renderer reads these surfaces. Cue names remain surface.snow/surface.ice
-through existing surfaceChanged events; weather adds no new gameplay event.
+Renderer reads surfaces; existing surface.snow/surface.ice cues stay exact.
 
 Terrain coverage uses a winter weight on the drawn triangles; ponds are
 explicit off-road metadata, with fixed ice shells and shoreline snow.
@@ -24,15 +22,12 @@ inside winter ranges after all seeded placement/color calls, preserving dry
 object signatures and RNG order. Native checks reject duplicate green grass.
 Camera-local flakes, ridge gusts and tyre decals have fixed limits and fewer
 instances in Performance. A winter world rebuilds when an equivalent Course
-object changes between
-menu and race, so frozen banks retain the actual live surface-patch identities.
+object changes, so frozen banks retain the actual live surface-patch identities.
 Dry worlds retain their existing same-key reuse. Tyre marks follow actual cars
-on snow only, expire,
-and never write state. All randomness uses a separate seeded makeRng.
+on snow only, expire and never write state. All randomness uses a separate seeded makeRng.
 
-Native memory-only High/Performance checks must load the real assets, show a
-full field, preserve state and saves, and cover warm readiness/disposal.
-One compressed art sheet goes through the card to Claude, up to three rounds.
+Native High/Performance uses real assets/full field; rules/saves/readiness/disposal exact.
+One compressed art sheet per round goes through the card to Claude, at most three.
 Frame checks reuse the unchanged DAY 360 CPU / >=359 delivered / async GPU
 sampler, both orders and qualities, with the original 10% limits. Static
 eight-car snapshots keep flakes/track expiry active. Moving native full-field
@@ -47,10 +42,18 @@ failed on the actual ridge zero normal first. Genuine fix merge preserves
 Dossier snapshot/readiness/retry/disposal and Snow/PIT presentation hooks.
 Equivalent winter snapshots must rebuild with the current Course bank identities.
 
+Round two, before look code: Claude held lighting2/readability2/grounding3/consistency1.5.
+Use near-.8 Snow albedo, cool shadows/pale sky, lower positive Snow exposure/Bloom;
+retain timed sun/night fields through pure settings transform, dry defaults exact.
+Darker packed road/ruts, raised banks within exact patches, dark glossy reflective ice.
+Existing alpine snowy mountains replace desert appearance; optional seeded authored
+pineClusters reuse approved pieces, light flakes retain original caps/ridge cues.
+Palette RED proves missing transform, then1-ULP dry residue; snapshot six actual colours.
+Proven A-winterB-B RED: fixed last-dry components tag one snapshot; restore same,else canonical.
+
 ## Checks
 
-Focused headless acceptance passes: ranges, true deep-snow verge driving
-(90 to <=45 mph), winter tyre grip, exact approved-kit patch identities,
+Focused: ranges, real bank driving90 to<=45mph, winter grip, exact kit patch identities,
 seeded placements without consuming course RNG, actual ground attributes,
 shader composition, pine break/reset/obliterate poses including the exact
 loader-prepared ground anchor, quality caps and expiry. The actual eight Snow
@@ -58,10 +61,9 @@ High/LOD GLBs pass real mesh clearance, bank containment and pose reset.
 Retained dry grass matrices and tints remain exact after winter omissions;
 all-omitted grass releases its orphan texture. Focused suite passes in 2.7 s.
 Existing surface suite: 11/11 pass; dry neutrality and cue assertions retained.
-New malformed-ridge and pond-footprint tests failed first, then passed.
-Curved pond vertices pass upper near/far Float32 triangle raycasts, including
+Malformed ridge/pond tests RED/GREEN; curved ponds pass actual Float32 raycasts including
 actual overlaps; missing rendered terrain is rejected. Test failed before fix.
-No existing assertion or tolerance was changed.
+Original assertions/tolerances remain exact.
 
 Memory-only native High/Performance acceptance passes with eight actual cars,
 340/128 driven wheel marks expiring to zero after 8.5 s, and unchanged
@@ -74,20 +76,19 @@ acceptance assertions stay unchanged. Clean inspection cameras hide only UI.
 High ridge initially had a black region covering 58.85% of the canvas.
 AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
 90 NaN components; first NaN hit a zero-normal kerb. FIX-P4-KERB-NORMALS
-6d284cb0 removes only reverse duplicate faces; positions/UV/material remain
-exact. Genuine merge 3004ee6c retains Dossier snapshot hooks and Snow disposal.
+6d284cb0 removes only reverse faces; vertices/UV/material and owner hooks remain.
 Fresh native default Bloom input, bright and all ten blur targets have zero
 NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
 Final KIT-LOADER integration ec734cfd genuinely merged without conflicts.
-Renderer prepares approved extras before building Snow, keeps bank identities
-on menu-to-race transitions, and feeds the actual eight grounded car meshes.
+Renderer prepares extras, retains current bank identities and feeds eight grounded cars.
 Round-one art is held; revised winter look, gates, review and merge remain pending.
 Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
 Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.
 Static timing fixes only its native presentation camera before sampling;
 original samples/10percent limits and all actor poses stay exact.
-Director clears the three additive renderer hooks; no real saves/release/live QA.
+Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
+Original lighting1078/moods2666/lightpath544 pass. Native revised art/frames remain pending.
 
 ## Removed
 

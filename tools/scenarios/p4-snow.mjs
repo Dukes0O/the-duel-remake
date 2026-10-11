@@ -21,7 +21,8 @@ function prepareNative(quality) {
       ['turn','L',180,80,{name:'Home Bend',width:16,walls:'none'}]],
     surfacePatches:[{id:'shaded-winter-ice',kind:'ice',s0:540,s1:575,shaded:true}],
     snowWorld:{ranges:[{from:0,to:750}],exposed:[{from:500,to:730}],
-      ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12},{s:600,lateral:58,radiusX:12,radiusZ:8}]}});
+      ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12},{s:600,lateral:58,radiusX:12,radiusZ:8}],
+      pineClusters:[{s:100,lateral:32,count:5},{s:260,lateral:-34,count:5},{s:580,lateral:38,count:5}]}});
   window.__snowBeforeBuilds=Number(document.querySelector('#view3d').dataset.worldBuilds||0);
   app._menuCourses.clear();app.onFrame?.(app.duel.state,0);
 }
@@ -91,6 +92,25 @@ function witness(view) {
   for(const row of placements.filter(row=>row.id==='plough-bank'))
     if(!app.duel.course.features.surfacePatches.includes(row.physicalPatch))
       throw Error('A visible plough bank does not reference its actual headless surface.');
+  const snowMaterials=new Set();kits.traverse(node=>{
+    for(const material of [].concat(node.material??[]))if(material.name?.includes('worn snow'))snowMaterials.add(material);
+  });
+  if(snowMaterials.size<4||[...snowMaterials].some(material=>material.userData.snowAlbedo!==.8))
+    throw Error('Actual approved snow materials do not carry the reviewed albedo.');
+  const clusterPines=placements.filter(row=>row.id==='snow-pine'&&!row.scenery).length;
+  if(clusterPines!==15)throw Error('The three authored native pine clusters did not load every approved piece.');
+  if(placements.filter(row=>row.id==='plough-bank').some(row=>row.scale[1]<1.3))
+    throw Error('Native physical plough banks lack the reviewed raised profile.');
+  const winterMountains=[];api.scene.traverse(node=>{
+    if(node.isMesh&&node.name.includes('ridge range'))winterMountains.push(node);
+  });
+  if(!winterMountains.length||winterMountains.some(node=>node.material.customProgramCacheKey()!=='connected-mountain-v2-alpine'))
+    throw Error('The winter world retained desert mountains instead of the actual alpine snow shader.');
+  const packed=api.scene.getObjectByName('surface-snow'),bloom=api.composer.passes.find(pass=>pass.name==='Bloom');
+  if(!packed||packed.material.color.r>=.4||packed.material.color.b>=.5)
+    throw Error('Packed winter road does not remain darker than the snowfields.');
+  if(!bloom?.enabled||bloom.strength<=0||!Number.isFinite(api.renderer.toneMappingExposure))
+    throw Error('Snow exposure/Bloom tuning disabled a pass or produced a nonfinite value.');
   const winterTreeIds=new Set(placements.filter(row=>row.id==='snow-pine').map(row=>row.scenery?.id));
   api.scene.traverse(node=>{
     if(node.userData.vegetationCell?.entries.some(entry=>winterTreeIds.has(entry.feature.id)))
@@ -129,6 +149,8 @@ function witness(view) {
     throw Error('An authored exposed ridge did not produce the bounded blowing snow.');
   const pond=snow.getObjectByName('Frozen winter pond');
   if(!pond)throw Error('The authored frozen pond is missing.');
+  if(pond.material.roughness<=0||pond.material.roughness>.08||pond.material.color.b>=.3)
+    throw Error('Native frozen pond lacks dark glossy reflective ice.');
   let pondGround=null;
   if(view==='pond'){
     // Read actual Float32 scene triangles, including their world transforms.
@@ -178,7 +200,10 @@ function witness(view) {
   if(programs.some(program=>!program.isReady()))throw Error('A submitted Snow shader is not ready.');
   return {view,quality:nativeQuality,field:cars.length,visibleCars,s:state.s,
     terrain,kitIds:ids,placements:placements.length,kitStats:{...kitStats},flakes:limits.flakes,liveMarks,markCap:tracks.count,pondVertices:pond.geometry.attributes.position.count,pondGround,
-    programs:programs.length};
+    look:{clusterPines,bankScale:1.3,snowMaterials:snowMaterials.size,albedo:.8,
+      mountains:winterMountains.length,packedColour:packed.material.color.toArray(),
+      iceColour:pond.material.color.toArray(),iceRoughness:pond.material.roughness,
+      exposure:api.renderer.toneMappingExposure,bloom:bloom.strength},programs:programs.length};
 }
 
 async function snapshotIdentity(context,quality) {

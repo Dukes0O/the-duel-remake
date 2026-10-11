@@ -86,7 +86,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};
     for(const field of ['mountains','trees','rocks'])view.features[field]=course.features[field].filter(p=>p.theme===theme);
-    if(winter){view.features.trees=view.features.trees.filter(tree=>!winterTrees.has(tree.id));
+    if(winter){view.def={...view.def,theme:'alpine'};view.features.trees=view.features.trees.filter(tree=>!winterTrees.has(tree.id));
       view.features.rocks=view.features.rocks.filter(rock=>!winterRocks.has(rock));}
     view.features.mountains=filterMuddyHollowMountains(course,view.features.mountains);
     view.detailSections=course.sections.filter(s=>s.theme===theme);

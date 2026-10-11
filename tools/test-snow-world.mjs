@@ -7,11 +7,13 @@ import {addLandscapeDetail} from '../src/landscape-detail.js';
 import {disposeTree} from '../src/world.js';
 import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {Course} from '../src/course.js';
+import {createSceneLighting} from '../src/scene-lighting.js';
+import {resolveLightingSettings} from '../src/lighting-moods.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
 import {winterRanges,gripFor,SURFACES} from '../src/race-surfaces.js';
 import {snowWorldPlacements,snowPineIds,winterWeight,applySnowTerrain,
-  snowSceneryPose,createSnowWorld,SNOW_LIMITS,winterTerrainMaterial} from '../src/snow-world.js';
+  snowSceneryPose,createSnowWorld,SNOW_LIMITS,winterTerrainMaterial,winterLightingSettings} from '../src/snow-world.js';
 const def={id:'winter-qa',stage:90,name:'Winter QA',theme:'alpine',closed:true,laps:3,
   hasRival:true,hasRadar:false,noTraffic:true,airborne:true,layoutVersion:1,
   scenery:{trees:80,rocks:20,mountains:false},script:[
@@ -133,6 +135,16 @@ assert.notDeepEqual(realKits.getPlacementPose(pineIndex).elements,originalKitPos
 snowOwner.update({state:{status:'racing',s:200,stageTimeSec:1,brokenScenery:[]},dt:0});
 assert.deepEqual(realKits.getPlacementPose(pineIndex).elements,originalKitPose.elements,
   'the actual approved asset restores its prepared terrain pose');
+const snowMaterials=new Set();realKits.group.traverse(node=>{
+  for(const material of [].concat(node.material??[]))if(material.name.includes('worn snow'))snowMaterials.add(material);
+});
+assert.ok(snowMaterials.size>=4,'approved High/LOD pieces expose their real snow materials');
+for(const material of snowMaterials){
+  assert.deepEqual(material.color.toArray(),[.78,.8,.82],'actual owner snow albedo preserves shading headroom');
+  assert.equal(material.roughness,.94,'approved snow retains a rough surface');
+}
+assert.ok(realKits.placements.filter(row=>row.id==='plough-bank').every(row=>row.scale[1]>1),
+  'real approved banks rise while the original exact footprint check remains');
 snowOwner.dispose();realKits.dispose();
 const liveCourse=new Course(def,1989),livePlacements=snowWorldPlacements(liveCourse);
 const menuBank=placements.find(row=>row.physicalPatch),liveBank=livePlacements.find(row=>row.physicalPatch);
@@ -191,4 +203,77 @@ const unsupportedPond=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.s
   ponds:[{s:180,lateral:5000,radiusX:9,radiusZ:5}]}},1989);
 assert.throws(()=>createSnowWorld(unsupportedPond),/actual rendered terrain/,
   'a pond outside the actual terrain fails without an analytic fallback');
+const clusteredDef={...def,snowWorld:{...def.snowWorld,pineClusters:[
+  {s:180,lateral:32,count:5},{s:580,lateral:-36,count:5}]}};
+const clusteredCourse=new Course(clusteredDef,1989),clusteredBefore=JSON.stringify(clusteredCourse.features);
+const clusteredRows=snowWorldPlacements(clusteredCourse),extraPines=clusteredRows.filter(row=>row.id==='snow-pine'&&!row.scenery);
+assert.equal(extraPines.length,10,'authored winter clusters add genuine approved pines');
+assert.deepEqual(clusteredRows,snowWorldPlacements(new Course(clusteredDef,1989)),'separate cluster RNG repeats exactly');
+assert.equal(JSON.stringify(clusteredCourse.features),clusteredBefore,'clusters never edit physical features');
+assert.throws(()=>snowWorldPlacements(new Course({...def,snowWorld:{...def.snowWorld,
+  pineClusters:[{s:180,lateral:32,count:1000}]}},1989)),/bounded authored winter centre/,'cluster memory count is bounded');
+const clusterKits=createTrackKits(clusteredCourse,{extraPlacements:clusteredRows,
+  loadAsset:async path=>{const bytes=await readFile(new URL('../public'+path,import.meta.url));
+    return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');}});
+assert.equal(await clusterKits.ready,true,clusterKits.error?.message);
+assert.equal(clusterKits.placements.filter(row=>row.id==='snow-pine'&&!row.scenery).length,10,
+  'all clustered approved High/LOD meshes pass actual anchoring and clearance');
+clusterKits.dispose();
+// Round-two palette checks precede appearance code. Dry presets and owners stay exact.
+const paletteLoader=THREE.TextureLoader.prototype.load;
+THREE.TextureLoader.prototype.load=()=>new THREE.Texture();
+try {
+  const scene=new THREE.Scene(),renderer={toneMappingExposure:1},bloom={strength:.2},host={dataset:{}};
+  const target=new THREE.WebGLRenderTarget(1,1);
+  const lighting=createSceneLighting({scene,renderer,bloom,host},{
+    createPMREM:()=>({fromScene:()=>target,dispose(){}}),
+    createRoom:()=>({dispose(){}}),loadEnvironment(){},
+  });
+  const sky=scene.getObjectByName('Atmosphere and cloud deck'),hemi=scene.children.find(node=>node.isHemisphereLight);
+  const graph=scene.children.map(node=>node.uuid);
+  const paletteColor=value=>Array.isArray(value)?new THREE.Color().setRGB(...value):new THREE.Color(value);
+  const observed=()=>({exposure:renderer.toneMappingExposure,bloom:bloom.strength,
+    top:sky.material.uniforms.top.value.toArray(),horizon:sky.material.uniforms.horizon.value.toArray(),
+    fog:scene.fog.color.toArray(),cloudTint:sky.material.uniforms.cloudTint.value.toArray(),
+    ground:hemi.groundColor.toArray(),sunColour:lighting.sun.color.toArray(),
+    sun:lighting.sun.intensity,env:scene.environmentIntensity});
+  for(const theme of ['coast','alpine','desert','city','arena'])for(const mood of ['clear','golden','overcast']){
+    const current={def:{theme},features:{poles:[]}},base=resolveLightingSettings(theme,{mood});
+    const original=JSON.stringify(base);
+    lighting.apply({course:current,mood});const dryBefore=observed();
+    const winter=winterLightingSettings(base);
+    assert.equal(JSON.stringify(base),original,'winter palette never mutates cached dry settings');
+    assert.equal(resolveLightingSettings(theme,{mood}),base,'dry preset object remains exact');
+    assert.ok(winter.exposure>0&&winter.exposure<base.exposure,'winter exposure retains slope detail');
+    assert.ok(winter.bloom>0&&winter.bloom<base.bloom,'winter Bloom is reduced and remains enabled');
+    assert.deepEqual(winter.sunOffset,base.sunOffset,'winter palette preserves actual sun path');
+    assert.equal(winter.sun,base.sun,'winter palette preserves timed sunlight intensity');
+    for(const color of [winter.top,winter.horizon,winter.ground,winter.sunColor])
+      assert.ok(paletteColor(color).toArray().every(Number.isFinite),'winter palette uses finite native colours');
+    lighting.apply({course:current,mood,winter:winterLightingSettings});
+    assert.equal(renderer.toneMappingExposure,winter.exposure,'real lighting owner applies Snow exposure');
+    assert.equal(bloom.strength,winter.bloom,'real lighting owner applies Snow Bloom');
+    lighting.apply({course:current,mood});
+    assert.deepEqual(observed(),dryBefore,'leaving winter restores exact original native dry settings');
+    assert.deepEqual(scene.children.map(node=>node.uuid),graph,'winter palette adds no scene/light owners');
+  }
+  const timed={...resolveLightingSettings('alpine'),nightAmount:.75,stars:.4,moon:.6};
+  const night=winterLightingSettings(timed);
+  for(const key of ['nightAmount','stars','moon','sunOffset','sunStrength'])
+    assert.deepEqual(night[key],timed[key],'winter keeps original timed-night field '+key);
+  const cool=paletteColor(winterLightingSettings(resolveLightingSettings('alpine')).ground);
+  assert.ok(cool.b>cool.r&&cool.b>cool.g,'daytime winter ground lighting gives cool blue shadows');
+  const fullNight={...resolveLightingSettings('alpine'),nightAmount:1,
+    top:[.015,.025,.05],horizon:[.04,.05,.09],fog:[.03,.04,.07],ground:[.02,.03,.05],sunColor:[.3,.4,.6]};
+  const retainedNight=winterLightingSettings(fullNight);
+  for(const key of ['top','horizon','fog','ground','sunColor'])
+    assert.deepEqual(retainedNight[key],fullNight[key],'linear timed-night palette stays dark/exact: '+key);
+  const desert={def:{theme:'desert'},features:{poles:[]}},alpine={def:{theme:'alpine'},features:{poles:[]}};
+  lighting.apply({course:desert});
+  lighting.apply({course:alpine,winter:winterLightingSettings});
+  lighting.apply({course:alpine});
+  assert.deepEqual(sky.material.uniforms.top.value.toArray(),new THREE.Color(resolveLightingSettings('alpine').top).toArray(),
+    'a different winter base cannot restore the preceding desert palette');
+  lighting.dispose();disposeTree(scene);
+} finally {THREE.TextureLoader.prototype.load=paletteLoader;}
 console.log('Snow ranges, physics bands, kit identity, terrain, poses and bounded read-only lifetime pass.');

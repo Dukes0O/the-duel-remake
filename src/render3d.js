@@ -1,5 +1,5 @@
 import {createTrackKits,trackKitsOf} from './track-kits.js';
-import {snowWorldEnabled,snowWorldPlacements,SNOW_KIT_IDS,snowWorldOf} from './snow-world.js';
+import {snowWorldEnabled,snowWorldPlacements,SNOW_KIT_IDS,snowWorldOf,winterLightingSettings} from './snow-world.js';
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
 import {createFirstPersonGear} from './first-person-gear.js';
@@ -297,7 +297,7 @@ export function attachRenderer(host, app) {
     worldKey=environmentKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
-    lighting.apply({course,mood:app.lightingMood});
+    lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});
     world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
     lighting.setWorld(world);
@@ -344,6 +344,7 @@ export function attachRenderer(host, app) {
       camera.up.set(0, 1, 0);camera.fov = 54;
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+        winter:winterEnabled(course)?winterLightingSettings:undefined,
         tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: false});
       lighting.followCamera(camera, ground, now / 1000);
       snapshotLightPose.rotation.y = pose.heading;
@@ -421,7 +422,7 @@ export function attachRenderer(host, app) {
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next) {
-      if(world&&worldKey===environmentKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
+      if(world&&worldKey===environmentKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
       else build(next);
       syncScene(world,menu?{crushedProps:[]}:st,0);
       ready = false;
@@ -507,6 +508,7 @@ export function attachRenderer(host, app) {
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+        winter:winterEnabled(course)?winterLightingSettings:undefined,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});

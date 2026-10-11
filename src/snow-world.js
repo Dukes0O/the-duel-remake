@@ -18,6 +18,34 @@ function ranges(course){
   if(!rangeCache.has(course))rangeCache.set(course,winterRanges(course.script,course.def.snowWorld));
   return rangeCache.get(course);
 }
+// Optional transform consumed by the existing lighting owner only for Snow.
+export function winterLightingSettings(base) {
+  const night=Math.max(0,Math.min(1,base.nightAmount ?? (base.sun<.3?1:0)));
+  const day=1-night;
+  const colour=(original,winter)=>{
+    const value=Array.isArray(original)?new THREE.Color().setRGB(...original):new THREE.Color(original);
+    return value.lerp(new THREE.Color(winter),day).toArray();
+  };
+  return {...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
+    top:colour(base.top,0x83a6bf),horizon:colour(base.horizon,0xcfdae5),
+    fog:colour(base.fog,0xb9cbdc),ground:colour(base.ground,0x7896b0),
+    sunColor:colour(base.sunColor,0xe3edff),
+    cloudTint:base.cloudTint.map((value,i)=>value*night+[.78,.84,.9][i]*day)};
+}
+
+function shadeSnowKits(kits) {
+  const materials=new Set();
+  kits?.group?.traverse(node=>{
+    if(!SNOW_KIT_IDS.includes(node.userData.trackKitId))return;
+    for(const material of [].concat(node.material??[])){
+      if(materials.has(material)||!material.name.includes('worn snow'))continue;
+      materials.add(material);
+      // These decoded materials belong solely to this real kit owner.
+      material.color.setRGB(.78,.8,.82);material.roughness=.94;
+      material.userData.snowAlbedo=.8;material.needsUpdate=true;
+    }
+  });
+}
 export function snowWorldEnabled(course,flags){return !!course?.def.snowWorld&&flags?.enabled('snow-world')===true;}
 export function winterWeight(course,s){
   const p=course.phase(s);
@@ -39,13 +67,31 @@ export function snowWorldPlacements(course){
   for(const tree of course.features.trees)if(winterAt(course,tree.s))entries.push({
     id:'snow-pine',s:tree.s,lateral:tree.off,heading:tree.heading-course.at(tree.s).heading,
     scale:tree.scale*.7,scenery:Object.freeze({kind:'tree',id:tree.id})});
+  const clusters=course.def.snowWorld.pineClusters??[];
+  if(!Array.isArray(clusters)||clusters.length>16)throw Error('Winter pine clusters need at most sixteen centres.');
+  const clusterRng=makeRng(course.seed^0x6a091ac);
+  for(const cluster of clusters){
+    const {s,lateral,count=5,radius=5}=cluster;
+    if(![s,lateral,radius].every(Number.isFinite)||s<0||s>course.length||radius<=0||radius>12||
+        !Number.isInteger(count)||count<2||count>8||!winterAt(course,s))
+      throw Error('A winter pine cluster needs a bounded authored winter centre.');
+    for(let i=0;i<count;i++){
+      const angle=clusterRng.range(0,Math.PI*2),distance=clusterRng.range(.7,radius);
+      const along=s+Math.sin(angle)*distance,off=lateral+Math.cos(angle)*distance;
+      const scale=clusterRng.range(.8,1.15),heading=clusterRng.range(-Math.PI,Math.PI);
+      if(along<0||along>course.length||!winterAt(course,along))continue;
+      const point=course.groundAt(along,off),near=course.nearest(point.x,point.z);
+      if(near.distance<course.roadHalfWidthAt(near.s)+5)continue;
+      entries.push({id:'snow-pine',s:along,lateral:off,heading,scale});
+    }
+  }
   for(const rock of snowRockFeatures(course))entries.push({id:'snow-rock',s:rock.s,lateral:rock.off,
     heading:rock.angle,scale:Object.freeze([rock.scale[0]*2/4.4,rock.scale[1]*2/2.4,rock.scale[2]*2/3.5])});
   for(const range of ranges(course))for(let s=range.from+5;s<range.to-5;s+=18)for(const side of [-1,1])
     entries.push({id:'snow-ground',s,lateral:side*(course.roadHalfWidthAt(s)+4.5),heading:rng.range(-.08,.08),scale:1});
   for(const patch of course.features.surfacePatches.filter(row=>row.snowBank)){
     for(let s=patch.s0+3;s<patch.s1-3;s+=4.8)entries.push({id:'plough-bank',s,
-      lateral:(patch.from+patch.to)/2,heading:Math.PI/2,scale:Object.freeze([.94,.8,.7]),physicalPatch:patch});
+      lateral:(patch.from+patch.to)/2,heading:Math.PI/2,scale:Object.freeze([.94,1.3,.7]),physicalPatch:patch});
   }
   const result=Object.freeze(entries.map(Object.freeze));placementsCache.set(course,result);return result;
 }
@@ -66,12 +112,15 @@ export function winterTerrainMaterial(material){
     shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
       varying float vWinterWeight;varying vec3 vWinterPosition;`)
       .replace('#include <color_fragment>',`#include <color_fragment>
-      float winterGrain=.96+.025*sin(vWinterPosition.x*29.0)*sin(vWinterPosition.z*31.0);
-      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.85,.89,.93)*winterGrain,clamp(vWinterWeight,0.0,1.0));`);
+      float winterGrain=.975+.0125*sin(vWinterPosition.x*29.0)*sin(vWinterPosition.z*31.0);
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.8,.82)*winterGrain,clamp(vWinterWeight,0.0,1.0));`);
   };
   material.customProgramCacheKey=()=>key()+'-winter-v1';material.needsUpdate=true;return material;
 }
 export function winterSurfaceMaterial(material,kind){
+  if(kind==='ice'){material.color.setRGB(.12,.19,.24);material.roughness=.065;material.metalness=.18;material.envMapIntensity=.9;material.emissive?.set(0);}
+  else if(kind==='snow'){material.color.setRGB(.34,.38,.42);material.roughness=.94;}
+  else if(kind==='deep-snow')material.color.setRGB(.78,.8,.82);
   const previous=material.onBeforeCompile;
   material.onBeforeCompile=shader=>{
     previous.call(material,shader);
@@ -79,9 +128,9 @@ export function winterSurfaceMaterial(material,kind){
       .replace('#include <begin_vertex>','#include <begin_vertex>\nvWinterRoad=(modelMatrix*vec4(transformed,1.0)).xyz;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vWinterRoad;')
       .replace('#include <color_fragment>',`#include <color_fragment>
-      float grain=.88+.12*sin(vWinterRoad.x*47.0)*sin(vWinterRoad.z*53.0);
+      float grain=.95+.04*sin(vWinterRoad.x*47.0)*sin(vWinterRoad.z*53.0);
       float scrape=smoothstep(.86,.99,sin(vWinterRoad.x*1.7+sin(vWinterRoad.z*.31)));
-      diffuseColor.rgb*=grain*(1.0-scrape*${kind==='ice'?'.14':'.08'});`);
+      diffuseColor.rgb*=grain*(1.0-scrape*${kind==='ice'?'.035':'.13'});`);
   };
   material.customProgramCacheKey=()=>`winter-road-${kind}-v1`;return material;
 }
@@ -130,14 +179,14 @@ export function createSnowWorld(course,{kits,high=true}={}){
     !Number.isFinite(row.from)||!Number.isFinite(row.to)||row.to<=row.from||
     !ranges(course).some(range=>row.from>=range.from&&row.to<=range.to)))
     throw Error('Exposed ridges must lie within one authored winter range.');
-  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);
+  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);shadeSnowKits(kits);
   const rng=makeRng(course.seed^0x5a0f1a),limits=SNOW_LIMITS.high,count=limits.flakes,
     position=new Float32Array(count*3),speed=new Float32Array(count),phase=new Float32Array(count);
   for(let i=0;i<count;i++){position[i*3]=rng.range(-17,17);position[i*3+1]=rng.range(-3,16);position[i*3+2]=rng.range(-18,18);speed[i]=rng.range(.7,1.8);phase[i]=rng.range(0,Math.PI*2);}
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(position,3).setUsage(THREE.DynamicDrawUsage));
   const flakes=new THREE.Points(geometry,new THREE.ShaderMaterial({transparent:true,depthWrite:false,
-    uniforms:{strength:{value:.55}},vertexShader:`varying float vDepth;void main(){vec4 p=modelViewMatrix*vec4(position,1.);vDepth=-p.z;gl_Position=projectionMatrix*p;gl_PointSize=clamp(12.0/max(1.0,-p.z),1.0,3.2);}`,
-    fragmentShader:`uniform float strength;varying float vDepth;void main(){float a=(1.0-smoothstep(.1,.5,length(gl_PointCoord-.5)))*strength*smoothstep(0.0,2.0,vDepth);gl_FragColor=vec4(.88,.93,1.0,a);if(a<.01)discard;
+    uniforms:{strength:{value:.55}},vertexShader:`varying float vDepth;void main(){vec4 p=modelViewMatrix*vec4(position,1.);vDepth=-p.z;gl_Position=projectionMatrix*p;gl_PointSize=clamp(8.0/max(1.0,-p.z),1.0,2.0);}`,
+    fragmentShader:`uniform float strength;varying float vDepth;void main(){float a=(1.0-smoothstep(.1,.5,length(gl_PointCoord-.5)))*strength*smoothstep(0.0,2.0,vDepth);gl_FragColor=vec4(.88,.93,1.0,a*.55);if(a<.01)discard;
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`}));flakes.frustumCulled=false;flakes.name='Camera-local snow and ridge gusts';group.add(flakes);
