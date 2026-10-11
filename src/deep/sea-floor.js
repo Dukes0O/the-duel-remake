@@ -2,15 +2,16 @@
 // The shape comes from sea-floor-shape.js. Ripples and grain are drawn in the
 // shader; seagrass and rocks are instanced (a handful of meshes, many copies).
 import * as THREE from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeRng } from '../rng.js';
-import { FLOOR_HALF_WIDTH, floorHeight, rockiness, seagrassPlacements, rockPlacements } from './sea-floor-shape.js';
+import { FLOOR_HALF_WIDTH, floorHeight, pebblePlacements, rockiness, seagrassPlacements, rockPlacements } from './sea-floor-shape.js';
 import { patchWaterMaterial } from './water-shader.js';
 
-const SAND = new THREE.Color().setRGB(0.80, 0.71, 0.54, THREE.SRGBColorSpace);
-const SAND_DARK = new THREE.Color().setRGB(0.62, 0.55, 0.42, THREE.SRGBColorSpace);
-const ROCK = new THREE.Color().setRGB(0.40, 0.37, 0.31, THREE.SRGBColorSpace);
-const TURF = new THREE.Color().setRGB(0.36, 0.34, 0.22, THREE.SRGBColorSpace);
+// Pale golden sand, not bright white: it is lit by strong sun and must not glow.
+const SAND = new THREE.Color().setRGB(0.66, 0.57, 0.39, THREE.SRGBColorSpace);
+const SAND_DARK = new THREE.Color().setRGB(0.42, 0.35, 0.25, THREE.SRGBColorSpace);
+const SAND_GREY = new THREE.Color().setRGB(0.50, 0.47, 0.40, THREE.SRGBColorSpace);
+const ROCK = new THREE.Color().setRGB(0.34, 0.32, 0.27, THREE.SRGBColorSpace);
+const TURF = new THREE.Color().setRGB(0.30, 0.29, 0.17, THREE.SRGBColorSpace);
 
 function softNoise(x, z) {
   return 0.5 + 0.25 * Math.sin(x * 0.9 + z * 0.4) * Math.cos(z * 1.1 - x * 0.3) + 0.15 * Math.sin(x * 2.9 + z * 3.7) + 0.1 * Math.sin(x * 7.1 - z * 5.3);
@@ -27,7 +28,10 @@ export function createFloorMesh(uniforms, { cell = 1, zFrom = -14, zTo = 440 } =
       const i = r * cols + c, x = -halfWidth + c * cell, z = zFrom + r * cell;
       positions[i * 3] = x; positions[i * 3 + 1] = floorHeight(x, z); positions[i * 3 + 2] = z;
       const rock = rockiness(x, z), n = softNoise(x * 0.6, z * 0.6);
-      tint.copy(SAND).lerp(SAND_DARK, Math.min(1, n * 0.9));
+      // Patches of darker, browner and greyer sand across the floor.
+      const patch = softNoise(x * 0.11 + 3, z * 0.09), grey = softNoise(x * 0.05 - 7, z * 0.06 + 2);
+      tint.copy(SAND).lerp(SAND_DARK, Math.min(1, Math.max(0, (patch - 0.35) * 1.5) * 0.8 + n * 0.25));
+      tint.lerp(SAND_GREY, Math.min(1, Math.max(0, (grey - 0.5) * 2.2)));
       tint.lerp(rock > 0.5 ? ROCK : TURF, Math.min(1, rock * 1.15));
       colours[i * 3] = tint.r; colours[i * 3 + 1] = tint.g; colours[i * 3 + 2] = tint.b;
       sand[i] = 1 - Math.min(1, rock * 1.4);
@@ -70,7 +74,7 @@ const GRASS_SWAY = /* glsl */`
 }`;
 const GRASS_PARS = 'attribute float aT; attribute float aLength; uniform float uUwTime;';
 
-function grassTuftGeometry(rng, blades = 14) {
+function grassTuftGeometry(rng, blades = 12) {
   const positions = [], colours = [], ts = [], lengths = [], index = [];
   const dark = new THREE.Color().setRGB(0.20, 0.28, 0.08, THREE.SRGBColorSpace);
   const bright = new THREE.Color().setRGB(0.58, 0.66, 0.24, THREE.SRGBColorSpace);
@@ -110,47 +114,72 @@ function grassTuftGeometry(rng, blades = 14) {
   return geometry;
 }
 
-export function createSeagrass(uniforms, { tufts = 1100, seed = 1989 } = {}) {
+// Seagrass in chunks along the trail; chunks too far to see are not drawn.
+export function createSeagrass(uniforms, { tufts = 1100, seed = 1989, distance = 85 } = {}) {
   const list = seagrassPlacements(seed, tufts);
-  const geometry = grassTuftGeometry(makeRng(seed ^ 0x6772), 14);
+  const geometry = grassTuftGeometry(makeRng(seed ^ 0x6772), 12);
   const material = patchWaterMaterial(
     new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide }),
     uniforms, { key: 'grass', vertexPars: GRASS_PARS, vertexSway: GRASS_SWAY, translucent: 0.25 });
-  const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, list.length));
-  mesh.count = list.length;
-  const matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  const group = new THREE.Group();
+  group.name = 'Seagrass';
+  const chunks = new Map();
   list.forEach((t, i) => {
-    q.setFromAxisAngle(up, t.yaw);
-    s.set(t.size, t.size * (0.8 + 0.4 * ((i * 7919) % 100) / 100), t.size);
-    p.set(t.x, t.y - 0.02, t.z);
-    mesh.setMatrixAt(i, matrix.compose(p, q, s));
+    const key = `${Math.floor(t.z / 24)}:${Math.floor(t.x / 40)}`;
+    if (!chunks.has(key)) chunks.set(key, []);
+    chunks.get(key).push({ t, i });
   });
-  mesh.instanceMatrix.needsUpdate = true;
-  mesh.name = 'Seagrass';
-  mesh.receiveShadow = true;
-  mesh.frustumCulled = false;
-  return { mesh, count: list.length, dispose() { geometry.dispose(); material.dispose(); } };
+  const matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  const parts = [];
+  for (const members of chunks.values()) {
+    const mesh = new THREE.InstancedMesh(geometry, material, members.length);
+    const box = new THREE.Box3(), sphere = new THREE.Sphere();
+    members.forEach(({ t, i }, k) => {
+      q.setFromAxisAngle(up, t.yaw);
+      s.set(t.size, t.size * (0.8 + 0.4 * ((i * 7919) % 100) / 100), t.size);
+      p.set(t.x, t.y - 0.02, t.z);
+      mesh.setMatrixAt(k, matrix.compose(p, q, s));
+      box.expandByPoint(p);
+    });
+    box.expandByScalar(2);
+    box.getBoundingSphere(sphere);
+    mesh.boundingSphere = sphere;
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    parts.push({ mesh, sphere });
+  }
+  return {
+    group, count: list.length,
+    update(camera) {
+      for (const { mesh, sphere } of parts) mesh.visible = camera.position.distanceTo(sphere.center) - sphere.radius < distance;
+    },
+    dispose() { geometry.dispose(); material.dispose(); },
+  };
 }
 
 // ---- rocks ------------------------------------------------------------
 
-function rockGeometry(variant, detail) {
+// An angular, craggy rock: a sphere cut by flat planes and roughened, left
+// faceted (flat shading) so the faces read as broken stone, with a coat of
+// growth on the upward faces. Same function of position everywhere, so the
+// faces never crack apart.
+function rockGeometry(variant, detail, crags = 18) {
   const rng = makeRng(0x524f4b + variant * 977);
   const offsets = [0, 1, 2, 3, 4, 5].map(() => rng.range(0, 100));
-  // Angular boulder: a sphere cut by a handful of random flat planes, then roughened.
   const cuts = [];
-  for (let i = 0; i < 9; i++) {
-    const n = new THREE.Vector3(rng.range(-1, 1), rng.range(-0.6, 1), rng.range(-1, 1)).normalize();
-    cuts.push({ n, c: rng.range(0.55, 0.85) });
+  for (let i = 0; i < crags; i++) {
+    const n = new THREE.Vector3(rng.range(-1, 1), rng.range(-0.7, 1), rng.range(-1, 1)).normalize();
+    cuts.push({ n, c: rng.range(0.50, 0.82) });
   }
-  let g = new THREE.IcosahedronGeometry(1, detail);
+  const g = new THREE.IcosahedronGeometry(1, detail);   // not indexed: every face has its own corners
   g.deleteAttribute('uv'); g.deleteAttribute('normal');
-  g = mergeVertices(g, 1e-4);
-  const pos = g.attributes.position, v = new THREE.Vector3();
+  const pos = g.attributes.position, v = new THREE.Vector3(), dir = new THREE.Vector3();
   const colours = new Float32Array(pos.count * 3);
-  const top = new THREE.Color().setRGB(0.42, 0.41, 0.32, THREE.SRGBColorSpace);
-  const side = new THREE.Color().setRGB(0.34, 0.32, 0.29, THREE.SRGBColorSpace);
-  const base = new THREE.Color().setRGB(0.20, 0.19, 0.17, THREE.SRGBColorSpace);
+  const top = new THREE.Color().setRGB(0.40, 0.40, 0.30, THREE.SRGBColorSpace);
+  const side = new THREE.Color().setRGB(0.31, 0.29, 0.26, THREE.SRGBColorSpace);
+  const base = new THREE.Color().setRGB(0.18, 0.17, 0.15, THREE.SRGBColorSpace);
+  const growth = new THREE.Color().setRGB(0.30, 0.34, 0.12, THREE.SRGBColorSpace);
   const tint = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i).normalize();
@@ -158,17 +187,20 @@ function rockGeometry(variant, detail) {
       const d = v.dot(n);
       if (d > c) v.addScaledVector(n, -(d - c));
     }
-    const dir = v.clone().normalize();
-    const rough = Math.sin(dir.x * 6.1 + offsets[0]) * Math.sin(dir.y * 7.3 + offsets[1]) * 0.05
-      + Math.sin(dir.z * 13 + dir.x * 9 + offsets[2]) * 0.025 + Math.sin(dir.y * 21 + dir.z * 17 + offsets[3]) * 0.012;
+    dir.copy(v).normalize();
+    const rough = Math.sin(dir.x * 6.1 + offsets[0]) * Math.sin(dir.y * 7.3 + offsets[1]) * 0.12
+      + Math.abs(Math.sin(dir.z * 11 + dir.x * 9 + offsets[2])) * 0.09 + Math.sin(dir.y * 19 + dir.z * 17 + offsets[3]) * 0.04;
     v.addScaledVector(dir, rough);
     pos.setXYZ(i, v.x, v.y, v.z);
     const h = dir.y;
     tint.copy(side).lerp(top, Math.max(0, h)).lerp(base, Math.max(0, -h) * 0.8);
+    // Patches of green-brown growth, mostly on the upper faces.
+    const g1 = Math.sin(dir.x * 5 + offsets[4]) * Math.sin(dir.z * 6 + offsets[5]) + h * 0.8;
+    if (g1 > 0.35) tint.lerp(growth, Math.min(1, (g1 - 0.35) * 1.8));
     colours[i * 3] = tint.r; colours[i * 3 + 1] = tint.g; colours[i * 3 + 2] = tint.b;
   }
   g.setAttribute('color', new THREE.BufferAttribute(colours, 3));
-  g.computeVertexNormals();
+  g.computeVertexNormals();   // not indexed, so these are flat: facets
   g.computeBoundingSphere();
   return g;
 }
@@ -198,6 +230,35 @@ export function createRocks(uniforms, { count = 90, seed = 1989, detail = 3 } = 
     mesh.frustumCulled = false;
     group.add(mesh);
     return mesh;
+  });
+  return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); } };
+}
+
+// Pebbles and cobbles: many small rough stones from the same three shapes, one
+// draw each. They are what makes the ground read as ground, not a sheet.
+export function createPebbles(uniforms, { count = 900, seed = 1989 } = {}) {
+  const list = pebblePlacements(seed, count);
+  const geometries = [0, 1, 2].map(v => rockGeometry(v + 5, 1, 7));
+  const material = patchWaterMaterial(
+    new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 }),
+    uniforms, { key: 'rock', rock: true });
+  const group = new THREE.Group();
+  group.name = 'Pebbles';
+  const matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  geometries.forEach((geometry, variant) => {
+    const members = list.filter(r => r.variant === variant);
+    const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, members.length));
+    mesh.count = members.length;
+    members.forEach((r, i) => {
+      q.setFromAxisAngle(up, r.yaw);
+      s.set(r.size, r.size * r.squash, r.size * 0.9);
+      p.set(r.x, r.y, r.z);
+      mesh.setMatrixAt(i, matrix.compose(p, q, s));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    group.add(mesh);
   });
   return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); } };
 }

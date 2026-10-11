@@ -30,8 +30,12 @@ const GLINT = /* glsl */`
 {
   vec3 wn = inverseTransformDirection(normal, viewMatrix);
   float flank = abs(dot(wn, uUwSun));
-  float flash = pow(flank, 9.0) * (1.0 - smoothstep(10.0, 30.0, -vUwPos.y));
-  outgoingLight += vec3(1.0, 0.97, 0.9) * flash * 1.6 * (0.4 + 0.6 * diffuseColor.g);
+  vec3 uwEyeDir = normalize(vUwPos - uUwCam[3].xyz);
+  // A silver flank is a small mirror: it flashes only for the few fish turned
+  // so that the sun reflects toward you, and the flashes sweep across the school.
+  float mirror = pow(max(dot(reflect(uwEyeDir, wn), uUwSun), 0.0), 26.0);
+  float flash = (mirror * 14.0 + pow(flank, 10.0) * 0.8) * (1.0 - smoothstep(10.0, 30.0, -vUwPos.y));
+  outgoingLight += vec3(1.0, 0.97, 0.9) * flash * (0.4 + 0.6 * diffuseColor.g);
 }`;
 
 // A small silver fish pointing along +z, one unit long. Flattened side to side,

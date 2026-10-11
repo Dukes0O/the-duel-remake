@@ -33,7 +33,7 @@ choose which one to read; they do not override the spec or current board.
 | Courses and driving | [Course expansion](COURSE_EXPANSION.md), [course access](COURSE_ACCESS.md), [route landforms](ROUTE_LANDFORMS.md), [shortcut pace](SHORTCUT_PACE_AUDIT.md), [physics](PHYSICS_EXPANSION.md), [freestyle](FREESTYLE_EXPANSION.md), [stunt trial](STUNT_TRIAL.md) |
 | Arena and warlords | [Scrapdome](SCRAPDOME.md): play design, architecture and the handoff cards |
 | Phase 4 racing | [Grand Circuits](CIRCUITS.md): new tracks, full-field Grand Prix racing, snow, pit stops and the Summit Run, settled for build |
-| Hidden underwater world | [The Deep](THE_DEEP.md): kelp, reefs, sea life and the boat-race route, a plan waiting for Kyle's approval |
+| Hidden underwater world | [The Deep](THE_DEEP.md): kelp, reefs, sea life and the boat-race route, approved by Kyle, built after Phase 4 cards |
 | Car weapons | [Arsenal](ARSENAL.md): the new weapons and their shared systems, settled for build |
 | Crew on foot | [Crew](CREW.md): signature gear, boarding and computer crews, settled for build |
 | Crashes and the Titan | [Crash physics](CRASH_PHYSICS.md), [Muddy Hollow](MUDDY_HOLLOW.md): the monster truck playground |

@@ -9,7 +9,7 @@ export const FLOOR_LENGTH = 300;
 export const FLOOR_HALF_WIDTH = 90;
 
 // Hard caps. Asking for more gets the cap, so a mistake cannot flood the scene.
-export const CAPS = Object.freeze({ kelpStems: 700, seagrassTufts: 2000, rocks: 120 });
+export const CAPS = Object.freeze({ kelpStems: 700, seagrassTufts: 3000, rocks: 120, pebbles: 1500 });
 
 const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -49,7 +49,7 @@ export function floorHeight(x, z) {
   const rock = rockiness(x, z);
   const lump = (Math.sin(x * 0.52 + z * 0.37) * Math.cos(z * 0.61 - x * 0.29) + 0.5 * Math.sin(x * 1.3 + z * 0.9)) * 0.45 * rock * rock;
   // Long, low sand dunes crossing the trail.
-  const dune = 0.22 * Math.sin(z * 0.42 + wobble(x, z) * 2.2) * (1 - rock);
+  const dune = 0.13 * Math.sin(z * 0.42 + wobble(x, z) * 2.2) * (1 - rock);
   return -trailDepth(z) + bank + swell + lump + dune;
 }
 
@@ -59,7 +59,7 @@ export function kelpDensity(x, z) {
   const band = smoothstep(5, 8, depth) * (1 - smoothstep(18, 24, depth));
   const forest = smoothstep(50, 85, z) * (1 - smoothstep(205, 245, z));
   const clump = 0.55 + 0.45 * Math.sin(x * 0.11 + z * 0.083 + 0.9) * Math.sin(z * 0.07 - x * 0.05 + 1.7);
-  const edge = 1 - smoothstep(48, 82, Math.abs(x));
+  const edge = 1 - smoothstep(55, 88, Math.abs(x));
   return band * forest * clump * edge * (0.45 + 0.55 * rockiness(x, z));
 }
 
@@ -73,7 +73,7 @@ export function kelpPlacements(seed = 1989, requested = 520) {
   const stems = [];
   let tries = 0;
   while (stems.length < wanted && tries++ < wanted * 40) {
-    const x = rng.range(-FLOOR_HALF_WIDTH * 0.55, FLOOR_HALF_WIDTH * 0.55), z = rng.range(40, 260);
+    const x = rng.range(-FLOOR_HALF_WIDTH * 0.5, FLOOR_HALF_WIDTH * 0.5), z = rng.range(40, 260);
     if (rng.float() > kelpDensity(x, z) * 1.5) continue;
     const y = floorHeight(x, z), height = -y - KELP_TOP + rng.range(-0.5, 0.2);
     if (height < 3) continue;
@@ -94,7 +94,7 @@ export function seagrassPlacements(seed = 1989, requested = 1100) {
     const depth = -floorHeight(x, z);
     // Meadows: thick in patches, bare sand between them.
     const patch = Math.max(0, Math.sin(x * 0.13 + z * 0.09 + 2.0) * Math.sin(z * 0.07 - x * 0.05 + 0.6) * 1.3 - 0.12);
-    const cover = (1 - smoothstep(9, 15, depth)) * (1 - rockiness(x, z)) * Math.min(1, patch * 1.4 + 0.04);
+    const cover = (1 - smoothstep(9, 15, depth)) * (1 - rockiness(x, z)) * Math.min(1, patch * 2.2 + 0.06);
     if (rng.float() > cover) continue;
     tufts.push({ x, y: floorHeight(x, z), z, yaw: rng.float() * Math.PI * 2, size: rng.range(0.7, 1.4), phase: rng.float() * Math.PI * 2 });
     // Tufts come in little clumps.
@@ -120,4 +120,25 @@ export function rockPlacements(seed = 1989, requested = 90) {
       variant: rng.int(0, 2), tilt: rng.range(-0.18, 0.18) });
   }
   return rocks;
+}
+
+// How far under a kelp canopy this spot is (0 open water, 1 deep in the forest).
+export function forestShade(x, z) {
+  return smoothstep(55, 90, z) * (1 - smoothstep(200, 240, z)) * (1 - smoothstep(50, 85, Math.abs(x)));
+}
+
+// Pebbles and cobbles: thick where sand turns to rock, a few scattered on the sand.
+export function pebblePlacements(seed = 1989, requested = 900) {
+  const rng = makeRng(seed ^ 0x70656262);
+  const wanted = Math.min(Math.max(0, Math.floor(Number.isFinite(requested) ? requested : 0)), CAPS.pebbles);
+  const pebbles = [];
+  let tries = 0;
+  while (pebbles.length < wanted && tries++ < wanted * 25) {
+    const x = rng.range(-70, 70), z = rng.range(-5, 280);
+    const rock = rockiness(x, z);
+    if (rng.float() > 0.06 + 0.94 * Math.min(1, rock * 1.6)) continue;
+    const size = rng.range(0.05, 0.22) * (0.6 + rock);
+    pebbles.push({ x, y: floorHeight(x, z) + size * 0.2, z, size, squash: rng.range(0.5, 0.85), yaw: rng.float() * Math.PI * 2, variant: rng.int(0, 2) });
+  }
+  return pebbles;
 }

@@ -13,7 +13,7 @@ import {
   FISH_HARD_CAP, VERTICAL_WEIGHT, cappedFishCount, partOffset, schoolCentre, schoolShape,
 } from '../src/deep/fish-rules.js';
 import {
-  CAPS, FLOOR_HALF_WIDTH, KELP_TOP, floorHeight, kelpDensity, kelpPlacements, rockPlacements, seagrassPlacements, trailDepth,
+  CAPS, FLOOR_HALF_WIDTH, KELP_TOP, floorHeight, forestShade, kelpDensity, kelpPlacements, pebblePlacements, rockPlacements, seagrassPlacements, trailDepth,
 } from '../src/deep/sea-floor-shape.js';
 import { LOOK_QUALITY, lookQuality } from '../src/deep/look-quality.js';
 import { SHAFT_HARD_CAP } from '../src/deep/light-shafts.js';
@@ -123,7 +123,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   check([...a.offsets].some((v, i) => v !== c.offsets[i]), 'a different seed gives a different school');
   check(schoolShape(99999, makeRng(1)).count === FISH_HARD_CAP, 'a school cannot be bigger than the hard cap');
   let reach = 0;
-  for (let i = 0; i < a.count; i++) reach = Math.max(reach, Math.hypot(a.offsets[i * 3] / 1.9, a.offsets[i * 3 + 1] / 1.5, a.offsets[i * 3 + 2] / 4.4));
+  for (let i = 0; i < a.count; i++) reach = Math.max(reach, Math.hypot(a.offsets[i * 3] / 1.7, a.offsets[i * 3 + 1] / 1.4, a.offsets[i * 3 + 2] / 3.8));
   check(reach <= 1.0001, 'every fish sits inside the egg-shaped cloud');
   // The loop passes through its anchor twice a lap and keeps a steady turn.
   const anchor = { x: 12, y: -6, z: 80 }, lap = 60, out = {};
@@ -159,13 +159,20 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   check(seagrassPlacements(1989, 99999).length <= CAPS.seagrassTufts, 'seagrass is capped');
   check(seagrassPlacements(1989, 1700).every(t => -t.y < 16), 'seagrass stays in the shallows');
   check(rockPlacements(1989, 99999).length <= CAPS.rocks, 'rocks are capped');
+  check(pebblePlacements(1989, 99999).length <= CAPS.pebbles && pebblePlacements(1989, NaN).length === 0, 'pebbles are capped and bad counts are safe');
+  const pebbles = pebblePlacements(1989, 900);
+  check(pebbles.length > 500 && pebbles.every(p => p.size >= 0.03 && p.size < 0.5), 'pebbles are small');
+  assert.deepEqual(pebbles, pebblePlacements(1989, 900)); checks++;
+  let shadeOk = true;
+  for (let z = -20; z <= 320; z += 5) for (let x = -90; x <= 90; x += 10) { const v = forestShade(x, z); if (!(v >= 0 && v <= 1)) shadeOk = false; }
+  check(shadeOk && forestShade(0, 5) === 0 && forestShade(0, 300) === 0 && forestShade(0, 140) > 0.9 && forestShade(80, 140) < 0.2, 'canopy shade is 0 in open water, near 1 mid-forest, and fades toward the banks');
   check(kelpPlacements(1989, -4).length === 0 && seagrassPlacements(1989, NaN).length === 0, 'bad counts give nothing, not a crash');
 }
 
 // ---- quality settings stay inside every cap ------------------------------
 {
   for (const [name, q] of Object.entries(LOOK_QUALITY)) {
-    check(q.kelpStems <= CAPS.kelpStems && q.seagrassTufts <= CAPS.seagrassTufts && q.rocks <= CAPS.rocks, `${name}: scenery within caps`);
+    check(q.kelpStems <= CAPS.kelpStems && q.seagrassTufts <= CAPS.seagrassTufts && q.rocks <= CAPS.rocks && q.pebbles <= CAPS.pebbles, `${name}: scenery within caps`);
     check(q.fish <= FISH_HARD_CAP && q.snowSpecks <= SNOW_HARD_CAP && q.lightShafts <= SHAFT_HARD_CAP, `${name}: fish, specks and shafts within caps`);
     check(q.shadowSize >= 1024 && q.pixelRatioMax >= 1, `${name}: sensible shadow size and pixel ratio`);
   }
@@ -178,8 +185,8 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
 
 // ---- cheap meshes ------------------------------------------------------
 {
-  const stem = kelpStemGeometry(), light = kelpStemGeometry({ nodes: 14, bladeSegments: 2 }), fish = fishGeometry();
-  check(triangles(stem) > 100 && triangles(stem) < 900, `a kelp stem is a few hundred triangles (${triangles(stem)})`);
+  const stem = kelpStemGeometry(), light = kelpStemGeometry({ stipes: 2, nodes: 6, bladeSegments: 2 }), fish = fishGeometry();
+  check(triangles(stem) > 500 && triangles(stem) < 4000, `a kelp clump is a couple of thousand triangles (${triangles(stem)})`);
   check(triangles(light) < triangles(stem), 'the light kelp is cheaper');
   check(triangles(fish) < 250, `a fish is under 250 triangles (${triangles(fish)})`);
   for (const geometry of [stem, fish]) {

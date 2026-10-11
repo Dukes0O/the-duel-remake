@@ -36,6 +36,15 @@ function buildEnvironment(renderer) {
   return target;
 }
 
+// Sunlit ripples on glossy paint: the clear coat reflects more than it scatters,
+// so the caustic pattern is added to the paint colour directly.
+export const CAUSTIC_ON_PAINT = `
+  {
+    vec3 uwPaintN = inverseTransformDirection(normal, viewMatrix);
+    float uwFacing = max(dot(uwPaintN, uUwSun), 0.0);
+    outgoingLight += diffuseColor.rgb * (uwSunCaustic(vUwPos) - 1.0) * uwFacing * 0.85;
+  }`;
+
 export function createUnderwaterLook({ renderer, scene, quality = 'high', sunDirection = [0.38, 0.86, 0.34] } = {}) {
   const profile = lookQuality(quality);
   const uniforms = createWaterUniforms();
@@ -86,6 +95,8 @@ export function createUnderwaterLook({ renderer, scene, quality = 'high', sunDir
         }
       });
     },
+    // A colour cast on the water where the camera is (olive under kelp).
+    setTint(rgb) { uniforms.uUwTint.value.set(rgb[0], rgb[1], rgb[2]); },
     // Keep the sun's shadows around the thing you are looking at.
     focusSun(point) {
       sun.target.position.copy(point);

@@ -22,6 +22,8 @@ export function createWaterUniforms() {
     uUwSun: { value: new THREE.Vector3(0.26, 0.92, 0.30).normalize() },
     uUwExposure: { value: 1 },
     uUwCaustic: { value: 1 },
+    // Colour cast of the water here, for example olive-green under a kelp canopy.
+    uUwTint: { value: new THREE.Vector3(1, 1, 1) },
   };
 }
 
@@ -35,6 +37,7 @@ uniform vec3 uUwWater;
 uniform vec3 uUwSun;
 uniform float uUwExposure;
 uniform float uUwCaustic;
+uniform vec3 uUwTint;
 
 float uwHash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -61,7 +64,7 @@ float uwNoise3(vec3 p) {
 }
 
 // Share of each colour of daylight left at world height y (the surface is y = 0).
-vec3 uwLight(float y) { return exp(-uUwKd * max(-y, 0.0)); }
+vec3 uwLight(float y) { return exp(-uUwKd * max(-y, 0.0)) * uUwTint; }
 
 // Colour of the water seen looking sideways at height y.
 vec3 uwWaterAt(float y) { return uUwWater * uwLight(y); }
@@ -82,21 +85,21 @@ vec3 uwHaze(vec3 lit, float dist, float y) {
 vec3 uwWaterDome(vec3 dir) {
   float camY = uUwCam[3].y;
   float d = clamp(-camY - dir.y * 45.0, 0.0, 60.0);
-  return uUwWater * exp(-uUwKd * d);
+  return uUwWater * exp(-uUwKd * d) * uUwTint;
 }
 
 // Rippling sunlight pattern, repeating; bright lines on a darker field.
-float uwCausticPattern(vec2 uv, float t) {
+float uwCausticPattern(vec2 uv, float t, const int steps) {
   vec2 p = mod(uv * 6.28318530718, 6.28318530718) - 250.0;
   vec2 i = p;
   float c = 1.0;
   const float inten = 0.005;
-  for (int n = 0; n < 4; n++) {
+  for (int n = 0; n < steps; n++) {
     float tt = t * (1.0 - (3.5 / float(n + 1)));
     i = p + vec2(cos(tt - i.x) + sin(tt + i.y), sin(tt - i.y) + cos(tt + i.x));
     c += 1.0 / length(vec2(p.x / (sin(i.x + tt) / inten), p.y / (cos(i.y + tt) / inten)));
   }
-  c /= 4.0;
+  c /= float(steps);
   c = 1.17 - pow(c, 1.4);
   return clamp(pow(abs(c), 8.0), 0.0, 1.5);
 }
@@ -110,10 +113,11 @@ float uwSunCaustic(vec3 pos) {
   vec2 uv = pos.xz + uUwSun.xz / max(uUwSun.y, 0.25) * depth;
   // Fine network of bright lines, finer in the shallows where the surface is close.
   float scale = mix(1.05, 0.55, smoothstep(2.0, 14.0, depth));
-  float a = uwCausticPattern(uv * scale, uUwTime * 0.55);
-  float b = uwCausticPattern(uv * scale * 0.73 + vec2(3.7, 1.9), uUwTime * 0.47 + 2.0);
-  float c = clamp(sqrt(a * b) * 2.1 + (a + b) * 0.55, 0.0, 2.6);
-  return mix(1.0, 0.22 + 2.4 * c, amount);
+  float a = uwCausticPattern(uv * scale, uUwTime * 0.55, 4);
+  float b = uwCausticPattern(uv * scale * 0.73 + vec2(3.7, 1.9), uUwTime * 0.47 + 2.0, 3);
+  // Thin bright filaments on a darker field, strong in the shallows.
+  float c = clamp(sqrt(a * b) * 2.6 + (a + b) * 0.45, 0.0, 3.2);
+  return mix(1.0, 0.12 + 2.9 * c, amount);
 }
 `;
 
@@ -191,24 +195,30 @@ export function patchWaterMaterial(material, uniforms, { key = 'plain', ripples 
     vs = replaceOnce(vs, '#include <project_vertex>', '#include <project_vertex>\nvUwPos = (uUwCam * mvPosition).xyz;', 'vertex position');
 
     const lampGain = `vec3 uwLampGain() { return min(vec3(1.0) / uwLight(vUwPos.y), vec3(400.0)); }`;
-    fs = replaceOnce(fs, '#include <common>', `#include <common>\n${FRAGMENT_PARS_VARYING}${WATER_GLSL}\n${lampGain}\n${ripples ? 'varying float vSand;\n' + RIPPLE_GLSL : ''}`, 'fragment common');
+    fs = replaceOnce(fs, '#include <common>', `#include <common>\n${FRAGMENT_PARS_VARYING}${WATER_GLSL}\n${lampGain}\n${ripples ? 'varying float vSand;\n' + RIPPLE_GLSL + ' vec3 uwRippleCache;' : ''}`, 'fragment common');
     fs = replaceOnce(fs, '#include <lights_fragment_begin>', patchLightChunk(THREE.ShaderChunk.lights_fragment_begin), 'lights');
     if (ripples) {
+      // Detail is only worked out where it can show: near the camera. Far sand
+      // takes the colour baked into the mesh.
       fs = replaceOnce(fs, '#include <color_fragment>', `#include <color_fragment>
-        {
-          float uwNear = 1.0 - smoothstep(18.0, 70.0, length(vViewPosition));
+        uwRippleCache = vec3(0.0);
+        float uwSandNear = 1.0 - smoothstep(26.0, 90.0, length(vViewPosition));
+        if (uwSandNear > 0.0) {
           vec3 rip = uwSandRipple(vUwPos.xz);
+          uwRippleCache = rip;
           float grainFade = 1.0 - smoothstep(0.5, 1.2, fwidth(vUwPos.x * 41.0) + fwidth(vUwPos.z * 41.0));
-          float grain = mix(0.5, uwNoise(vUwPos.xz * 41.0) * 0.5 + uwNoise(vUwPos.xz * 113.0) * 0.5, grainFade);
-          float mottle = uwNoise(vUwPos.xz * 0.6) * 0.6 + uwNoise(vUwPos.xz * 2.3) * 0.4;
-          diffuseColor.rgb *= (0.86 + 0.28 * mottle) * (1.0 + (rip.x * 0.10 + (grain - 0.5) * 0.30) * uwNear * vSand);
+          float grain = mix(0.5, uwNoise(vUwPos.xz * 41.0), grainFade);
+          float mottle = uwNoise(vUwPos.xz * 1.7);
+          // Shell grit: sparse pale flecks and dark grains, only where the pixels can show them.
+          vec2 cell = floor(vUwPos.xz * 52.0);
+          float h1 = uwHash(cell), h2 = uwHash(cell + 17.0);
+          float grit = (h1 > 0.972 ? 0.75 : 0.0) - (h2 > 0.965 ? 0.45 : 0.0);
+          diffuseColor.rgb *= (0.8 + 0.4 * mottle) * (1.0 + (rip.x * 0.20 + (grain - 0.5) * 0.30 + grit * grainFade) * uwSandNear * vSand);
         }`, 'fragment colour');
       fs = replaceOnce(fs, '#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-        {
-          float uwNear = 1.0 - smoothstep(14.0, 55.0, length(vViewPosition));
-          vec3 rip = uwSandRipple(vUwPos.xz);
+        if (uwSandNear > 0.0) {
           vec3 wn = inverseTransformDirection(normal, viewMatrix);
-          wn = normalize(wn + vec3(-rip.y, 0.0, -rip.z) * 0.022 * uwNear * vSand);
+          wn = normalize(wn + vec3(-uwRippleCache.y, 0.0, -uwRippleCache.z) * 0.050 * uwSandNear * vSand);
           normal = normalize(transformDirection(wn, viewMatrix));
         }`, 'fragment normal');
     }
@@ -235,7 +245,7 @@ export function patchWaterMaterial(material, uniforms, { key = 'plain', ripples 
         {
           vec3 uwEye = normalize(vUwPos - uUwCam[3].xyz);
           float uwThrough = pow(max(dot(uUwSun, uwEye), 0.0), 2.2) + 0.04;
-          outgoingLight += diffuseColor.rgb * vec3(1.0, 0.92, 0.55) * uwThrough * ${translucent.toFixed(2)};
+          outgoingLight += diffuseColor.rgb * vec3(0.95, 0.80, 0.30) * uwThrough * ${translucent.toFixed(2)};
         }` : '';
     fs = replaceOnce(fs, '#include <opaque_fragment>', `${through}
       ${fragmentExtra}

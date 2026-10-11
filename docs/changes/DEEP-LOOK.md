@@ -24,9 +24,10 @@ real zone:
 | `water-surface.js` | The surface seen from below: rippled ceiling, Snell's window, sun as a soft disc, silver mirror outside the window; plus the open-water background |
 | `light-shafts.js` | Slanting sun shafts on a fixed grid under the surface, drifting, thinning with depth, strongest toward the sun. Capped at 40 |
 | `marine-snow.js` | Drifting specks that wrap around the camera. One draw, all movement in the shader. Capped at 2000 |
-| `sea-floor-shape.js` | Pure: the trail's depth (5 m shallows, level kelp forest, slope to about 30 m, still falling past the end), where kelp, seagrass and rocks grow, with hard caps (700, 2000, 120) |
-| `sea-floor.js` | Rippled sand and rocky ground mesh, instanced seagrass tufts, three instanced rock shapes |
-| `kelp.js` | Tall swaying stems with leaf blades, instanced in chunks along the trail, sway and flutter in the vertex shader, light through the blades, shadows that sway too |
+| `sea-floor-shape.js` | Pure: the trail's depth (5 m shallows, level kelp forest, slope to about 30 m, still falling past the end), where kelp, seagrass, rocks and pebbles grow, how deep under the canopy a spot is, with hard caps (700, 3000, 120, 1500) |
+| `sea-floor.js` | Rippled sand with patches and grit, instanced seagrass meadows in chunks, craggy faceted rocks, pebbles |
+| `kelp.js` | Giant kelp: clumps of three stipes with ruffled blades and gas bulbs, a canopy, three levels of detail by distance, sway and flutter in the vertex shader, light through the blades, shadows that sway too |
+| `contact-shadow.js` | A soft dark patch under a car so it sits on the sand |
 | `fish-rules.js` | Pure: fish parting rule, the school's looping path, school shape, hard cap 800 |
 | `fish-school.js` | One school of 480 silver fish in one instanced mesh, tail beat in the shader, parting around a point (the car, read only) |
 | `headlights.js` | Two spot lights, glowing lenses and a faint beam in the water |
@@ -40,44 +41,35 @@ and nothing reads it yet).
 Look-test page: `tools/deep-look.html` + `tools/deep-look.js`. A 300 m stretch of
 sea floor from 5 m into a kelp forest and down to about 30 m, the Falcone F42
 (built by the existing `createClassicVehicle`, no new model, no downloads) on
-the sand with headlights, six fixed views, and `window.__deepLook` for views and
-frame measurements. `?quality=high|performance`; High uses the game's
+the sand with headlights, six fixed views, and `window.__deepLook` for views.
+`?quality=high|performance`; High uses the game's
 composite pipeline (bloom, SMAA, 2048 shadows), Performance its direct one
 (1024 shadows). `tools/scenarios/deep-look.mjs` takes the six pictures through
-the browser harness, joins them, and measures delivered and GPU frame times;
+the browser harness and joins them;
 `tools/vite-qa.config.js` gains the page so the harness serves it.
 
 ## Picture sheet
 
-[`docs/board/looks/the-deep/look-1.jpg`](../board/looks/the-deep/look-1.jpg)
-(370 KB) and its [review](../board/looks/the-deep/look-1-review.md). Recipe:
-`node tools/browser-harness.mjs scenario deep-look`. Three rounds, looking at
-each sheet with the image reader: round one fixed the overall tone (the car was
-brown, the shafts were hard tubes, the kelp looked like banana leaves, a hard
-band showed at the far edge of the deep); round two fixed the headlight beam,
-the sun disc and the first view's framing; round three fixed two fish a metre
-from the camera in view 1, clipped framing, and a bigger, tighter school. Open
-points are in the review.
+[`docs/board/looks/the-deep/look-2.jpg`](../board/looks/the-deep/look-2.jpg)
+(405 KB) and its [review](../board/looks/the-deep/look-2-review.md). Recipe:
+`node tools/browser-harness.mjs scenario deep-look`. Round one (look-1) was
+replaced by round two in the same commit, one version of each file. Round two
+answers Claude's seven notes: giant kelp with a canopy, colour by depth and
+under kelp, clearer caustics (also on the paint), a grounded car, a richer sea
+floor, soft headlight beams, silver fish flashes. Open points are in the review.
 
-## Frame times
+## Timing
 
-On this laptop (NVIDIA RTX A1000, Chrome headless on the real GPU), 300
-delivered frames per view with the clock running, all six views:
-
-| Quality | Pixel ratio | Delivered p95 | Worst frame | GPU p95 | Draw calls | Triangles |
-| --- | --- | --- | --- | --- | --- | --- |
-| High | 1.0 | 16.8 ms | 17.1 ms | 9.0 to 12.7 ms | 94 to 150 | 0.66 to 1.26 M |
-| High | 1.6 | 16.8 ms | 17.0 ms | 12.3 to 16.2 ms | 94 to 150 | 0.66 to 1.26 M |
-| Performance | 1.0 | 16.8 ms | 16.9 ms | 4.7 to 10.4 ms | 71 to 126 | 0.33 to 0.52 M |
-
-All at or under the 18.5 ms aim (the display is locked to 60 Hz, so 16.8 ms
-means no missed frames). High at 1.6 is the tight case. Construction of the
-stretch took 0.92 s; the first frame 3.5 s (shaders compile once, so the real
-zone needs the game's warm-up). Measured with no other heavy job running.
+None measured. Players cannot reach this look test, so under the testing rules
+(AGENTS.md rule 9) timing comes when it is wired into the game. Round one's
+frame-time measurement and its code (the in-page timer and the scenario's
+measuring phase) were removed. New in round two: kelp is drawn in three levels
+of detail (full, cheaper, not at all) and seagrass in chunks that are not drawn
+when far, so D4 starts from a scene already built to be cheap at distance.
 
 ## Tests
 
-- New `node tools/test-deep-look.mjs` (5,283 checks, picked up automatically by
+- New `node tools/test-deep-look.mjs` (5,287 checks, picked up automatically by
   the runner): depth colour curve (red first, blue deep, caustics and shafts
   fade and end, bad input safe), the fish parting rule (nobody inside the gap,
   nobody outside the ring moved, order kept, car point never changed), fish,
@@ -90,7 +82,7 @@ zone needs the game's warm-up). Measured with no other heavy job running.
   suites passed, 1 failed. The failure was `test-preview-launcher`, which
   requires every dev switch to be in `start-preview.bat`'s PREVIEW_FLAGS; I added
   `the-deep` there (harmless, nothing reads it) and that suite now passes
-  (23 of 23). I reran that suite, not the whole gate. `npm run build` passes.
+  (23 of 23). Round two: lane gate 389 suites passed, 0 failed; `npm run build` passes.
 
 ## Changed assertions (reviewed)
 
@@ -110,14 +102,16 @@ No race rule, fingerprint, replay, save or game file changed.
 
 ## Removed
 
-Nothing is replaced, so nothing is removed. New files only, plus one page added
-to the QA build list. The raw captures under `.evidence/` are deleted now the
-sheet is committed.
+Round two removed: the look-1 sheet and its note (replaced by look-2, one
+version of each file); round one's single-stem kelp, round-one rocks and
+headlight cone (replaced in place); the frame-measurement code and its
+scenario phase (rule 9). Apart from the QA build list entry, files are new. The
+raw captures under `.evidence/` are deleted now the sheet is committed.
 
 ## Left for later
 
-- D4 turns this into the real zone: denser seagrass, better rocks, richer kelp,
-  warm-up for first-frame shaders, and a frame budget that keeps High at 1.6
-  under about 14 ms of GPU time.
+- D4 turns this into the real zone: better rocks, warm-up for first-frame
+  shaders (every shader compiles on the first frame), and timing once it is in
+  the game.
 - `tools/repo-audit.mjs` will list `src/deep/` as "nothing imports it" until D4
   imports it from the zone; that is expected for a look test.

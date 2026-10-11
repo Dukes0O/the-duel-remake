@@ -6,12 +6,12 @@
 // a diver's warm shallows turn blue-green and then plain blue with depth.
 
 // How quickly each colour of daylight fades per metre of depth (clear coastal water).
-export const DAYLIGHT_FADE = Object.freeze([0.115, 0.064, 0.036]);
+export const DAYLIGHT_FADE = Object.freeze([0.115, 0.070, 0.036]);
 // How quickly an object's colour is lost per metre of water between it and the eye.
 // Red is mostly gone by about 30 m of water; blue lasts about 85 m.
 export const SIGHT_FADE = Object.freeze([0.095, 0.058, 0.035]);
 // The colour of the water itself just under the surface, lit by full daylight.
-export const SURFACE_WATER = Object.freeze([0.012, 0.135, 0.205]);
+export const SURFACE_WATER = Object.freeze([0.030, 0.170, 0.160]);
 // Sunlight just under the surface: warm white.
 export const SUN_COLOUR = Object.freeze([1.0, 0.90, 0.74]);
 

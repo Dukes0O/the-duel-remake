@@ -1,19 +1,17 @@
-// The Deep, look test pictures and frame times (card D0 DEEP-LOOK).
+// The Deep, look test pictures (card D0 DEEP-LOOK).
 //
 //   node tools/browser-harness.mjs scenario deep-look
 //
 // Private port, no saves. Opens tools/deep-look.html (it builds its own scene
 // and touches no game state) and, on High quality:
 //   * photographs the six fixed views at 1280x720;
-//   * joins them into one sheet (look-sheet.jpg, 1280 wide);
-//   * measures delivered frame times on High and Performance for every view.
+//   * joins them into one sheet (look-sheet.jpg, 1600 wide).
 // Everything lands in the harness's .evidence folder; the sheet that is kept
 // in Git is copied by hand to docs/board/looks/the-deep/.
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const page = quality => `/tools/deep-look.html?quality=${quality}&still=1&clean=1&manual=1`;
-const FRAMES = 300;
 
 async function open(context, quality, scale = 1) {
   await context.command('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: scale, mobile: false });
@@ -41,13 +39,11 @@ async function pageSheet(spec) {
 }
 
 export async function run(context) {
-  const result = { views: [], frameTimes: { high: [], performance: [] }, info: {} };
+  const result = { views: [], info: {} };
   // ---- pictures, High quality ----
   await open(context, 'high');
   result.info.high = await context.evaluate('window.__deepLook.info()');
   const names = await context.evaluate('window.__deepLook.views');
-  // First frame: every shader is compiled here, once.
-  result.info.firstFrameMs = Math.round(await context.evaluate('(()=>{const t=performance.now();window.__deepLook.showView(1,{frames:1});return performance.now()-t})()'));
   const cells = [];
   for (let index = 1; index <= names.length; index++) {
     const before = context.issues.length;
@@ -64,17 +60,6 @@ export async function run(context) {
   writeFileSync(sheetPath, Buffer.from(sheet.slice(sheet.indexOf(',') + 1), 'base64'));
   context.screenshots.push(sheetPath);
 
-  // ---- frame times: every view, High then Performance, at 1.0 and at the game's 1.6 pixel ratio ----
-  for (const [quality, scale] of [['high', 1], ['performance', 1], ['high', 1.6], ['performance', 1.6]]) {
-    await open(context, quality, scale);
-    const rows = [];
-    for (let index = 1; index <= names.length; index++) {
-      const row = await context.evaluate(`window.__deepLook.measure(${index}, ${FRAMES})`);
-      rows.push({ ...row, pixelRatio: scale });
-    }
-    result.frameTimes[quality].push(...rows);
-    console.log(`${quality} x${scale}: delivered p95 ${rows.map(r => r.frameMsP95.toFixed(1)).join(', ')} ms; GPU p95 ${rows.map(r => r.gpuMsP95 === null ? 'n/a' : r.gpuMsP95.toFixed(1)).join(', ')} ms`);
-  }
   result.info.gpu = result.info.high.gpu;
   writeFileSync(join(context.outputDir, 'look-result.json'), JSON.stringify(result, null, 2));
 }

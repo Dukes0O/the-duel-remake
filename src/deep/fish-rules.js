@@ -38,7 +38,7 @@ export function partOffset(pos, away, inner, outer, out = { x: 0, y: 0, z: 0 }, 
 // Where the middle of a school is at time t: a slow loop that crosses the
 // anchor twice per lap, so the school keeps coming back past the same spot.
 // Returns position and heading (radians, 0 = along +z) into `out`.
-export function schoolCentre(t, { anchor = { x: 0, y: 4, z: 0 }, reachX = 9, reachZ = 12, lap = 60, lift = 1.6, phase = 0 } = {}, out = { x: 0, y: 0, z: 0, heading: 0 }) {
+export function schoolCentre(t, { anchor = { x: 0, y: 4, z: 0 }, reachX = 6.5, reachZ = 9, lap = 60, lift = 1.6, phase = 0 } = {}, out = { x: 0, y: 0, z: 0, heading: 0 }) {
   const w = (Math.PI * 2) / lap, a = w * t + phase;
   // A figure of eight: x swings once a lap and z twice, so the path crosses its
   // own middle (the anchor) twice a lap.
@@ -54,7 +54,7 @@ export function schoolCentre(t, { anchor = { x: 0, y: 4, z: 0 }, reachX = 9, rea
 // Each fish keeps its own spot in the school (an egg-shaped cloud, thicker in
 // the middle), its own swim speed and its own beat of the tail. Deterministic
 // from the random generator handed in (src/rng.js), so a picture is repeatable.
-export function schoolShape(count, rng, { length = 4.4, width = 1.9, height = 1.5 } = {}) {
+export function schoolShape(count, rng, { length = 3.8, width = 1.7, height = 1.4 } = {}) {
   const n = cappedFishCount(count);
   const offsets = new Float32Array(n * 3), traits = new Float32Array(n * 4);
   for (let i = 0; i < n; i++) {
