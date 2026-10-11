@@ -3,7 +3,7 @@ import test from 'node:test';
 import { Course } from '../src/course.js';
 import { HARBOUR_LIGHTS } from '../src/circuits/harbour-lights.js';
 import { GRAND_PRIX_COURSES, courseForGrandPrix, grandPrixCourse, FIELD } from '../src/race-field.js';
-import { escapeFrame } from '../src/track-script-course.js';
+import { escapeFrame } from '../src/escape-roads.js';
 import { buildTrackScript } from '../src/track-script.js';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { racerSpec } from '../src/race-field.js';

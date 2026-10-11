@@ -11,7 +11,7 @@
 import { makeRng } from './rng.js';
 import { TRACK_SCRIPT, buildTrackScript } from './track-script.js';
 import { basinWeight } from './basins.js';
-import { escapeRoadsFor, escapeFrame } from './track-script-course.js';
+import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
 
 const WALL_OUT = TRACK_SCRIPT.wallSetback + TRACK_SCRIPT.wallThickness; // road edge to the outer face of a wall
 const HALF_PI = Math.PI / 2;
@@ -45,16 +45,14 @@ function roadAdapter(def, road) {
     const p = ((s % length) + length) % length, i = Math.min(count - 1, Math.floor(p / step)), a = samples[i], b = samples[i + 1], t = (p - a.s) / step;
     return { x: lerp(a.x, b.x, t), z: lerp(a.z, b.z, t), y: road.heightAt(p), heading: lerp(a.heading, b.heading, t), curvature: lerp(a.curvature, b.curvature, t) };
   };
-  // Nearest centre-line point to a world place: coarse pass every 8 m, then refined.
+  // Nearest centre-line point to a world place: every sample, then a fine scan around the best.
   const nearest = (x, z) => {
     let best = 0, bestD = Infinity;
-    for (let i = 0; i < count; i += 4) { const d = (samples[i].x - x) ** 2 + (samples[i].z - z) ** 2; if (d < bestD) { bestD = d; best = i; } }
-    let lo = Math.max(0, best - 5) * step, hi = (best + 5) * step;
-    for (let s = lo; s <= hi; s += step) { const f = at(s), d = (f.x - x) ** 2 + (f.z - z) ** 2; if (d < bestD) { bestD = d; best = s / step; } }
-    let s = best * step;
-    for (let k = 0; k < 3; k++) { const f = at(s), along = (x - f.x) * Math.sin(f.heading) + (z - f.z) * Math.cos(f.heading); s += along; }
-    const f = at(s);
-    return { s: ((s % length) + length) % length, distance: Math.hypot(x - f.x, z - f.z), lateral: (x - f.x) * Math.cos(f.heading) - (z - f.z) * Math.sin(f.heading) };
+    for (let i = 0; i < count; i++) { const d = (samples[i].x - x) ** 2 + (samples[i].z - z) ** 2; if (d < bestD) { bestD = d; best = i; } }
+    let bestS = best * step;
+    for (let s = bestS - step; s <= bestS + step; s += .1) { const f = at(s), d = (f.x - x) ** 2 + (f.z - z) ** 2; if (d < bestD) { bestD = d; bestS = s; } }
+    const f = at(bestS);
+    return { s: ((bestS % length) + length) % length, distance: Math.sqrt(bestD), lateral: (x - f.x) * Math.cos(f.heading) - (z - f.z) * Math.sin(f.heading) };
   };
   const adapter = { def, script: road, length, at, nearest, closed: true, phase: s => ((s % length) + length) % length,
     worldAt: (s, lateral) => { const f = at(s); return { x: f.x + Math.cos(f.heading) * lateral, z: f.z - Math.sin(f.heading) * lateral, heading: f.heading }; } };
@@ -191,7 +189,7 @@ export function buildKitPlacements(def, spec) {
       const ends = [-1, 1].map(side => course.worldAt(s, side * reach));
       if (!check(ends.map(e => [e.x, e.z]), -1.4)) continue;
       const count = Math.max(1, Math.ceil(total / (size[0] - .4))), step = total / count;
-      for (let i = 0; i < count; i++) place('lantern-string', s, -reach + step * (i + .5), HALF_PI, [step / size[0] * 1.04, 1, 1], { lift: string.height ?? 6.4 - size[1] });
+      for (let i = 0; i < count; i++) place('lantern-string', s, -reach + step * (i + .5), HALF_PI, [step / size[0] * 1.04, 1, 1], { lift: string.lift ?? 5.2 });
     }
   }
 
