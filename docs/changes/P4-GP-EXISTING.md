@@ -42,6 +42,12 @@ current lane/build remain pending. Root source review and named save-guardian
 review cleared 4cb54419 (11 storage checks plus 247 save fixtures). This final
 presentation-only cleanup keeps the new GP notice readable. No art change.
 
+## Reviewed source sync
+
+Synced a89e562c (DAYNIGHT and atomic native audio capture) without conflicts.
+GP storage admission and record modules stay byte-identical to c77e937d.
+No new native check, gate or build ran during the shared gate.
+
 ## Removed
 
 No runtime asset or legacy mode is replaced. Remove the stale menu claim that

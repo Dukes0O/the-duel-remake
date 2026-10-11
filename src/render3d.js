@@ -29,7 +29,7 @@ import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
-import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
+import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
@@ -247,7 +247,13 @@ export function attachRenderer(host, app) {
     detachRetiredVehicleVisuals(object,combatScene,vehicleAttachments);
     scene.remove(object);
     if(object===tanker?.group)return;
-    const release=()=>{beforeDispose?.();disposeTree(object);};
+    const retiredWorld = object === world;
+    const release = () => {
+      beforeDispose?.();
+      if (retiredWorld) lighting.detachWorld(object);
+      else lighting.detachVehicle(object);
+      disposeTree(object);
+    };
     if(warmup)warmup.releaseWhenIdle(release);else release();
   }
   function build(next) {
@@ -260,6 +266,7 @@ export function attachRenderer(host, app) {
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood});
     world = buildEnvironment(course); scene.add(world);
+    lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
     chickens=createChickens(course);world.add(chickens.group);
@@ -267,6 +274,7 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuildMs=(performance.now()-buildStart).toFixed(0);firstWorldFrame=true;
   }
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
+  const nightWorldInput = {};
   let ready = false, lastMenu = null, previousT = performance.now();
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
@@ -377,7 +385,10 @@ export function attachRenderer(host, app) {
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
-    lighting.apply({course,theme:course.themeAt(distance),mood:app.lightingMood,blend:1-Math.exp(-dt*1.1),tunnel:!!course.tunnelAt(distance)});
+    lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+      blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance), distance,
+      raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
+      menu});
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
@@ -620,6 +631,20 @@ export function attachRenderer(host, app) {
     animateScene(world,presentationSeconds);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
+    lighting.updateCar(player, !!braking && !menu);
+    if (!convoy) lighting.updateCar(rival, !!st.rival?.braking);
+    for (let index = 0; index < extraOpponents.length; index++) {
+      const entry = extraOpponents[index];
+      if (!entry.drone) lighting.updateCar(entry.mesh, !!opponents[index + 1]?.braking);
+    }
+    for (let index = 0; index < traffic.length; index++)
+      lighting.updateCar(traffic[index], !!st.traffic[index]?.braking);
+    lighting.updateCar(police, !!pursuit?.braking);
+    nightWorldInput.position = pp;
+    nightWorldInput.heading = player.rotation.y;
+    nightWorldInput.distance = distance;
+    nightWorldInput.high = app.ambientOcclusionEnabled !== false;
+    lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
@@ -635,9 +660,15 @@ export function attachRenderer(host, app) {
       if(revision!==warmupKey){
         warmupKey=revision;app.holdVisualReadiness?.(readinessOwner);firstWorldFrame=true;
         host.dataset.warmupSubmitMs='0';host.dataset.warmupWaitMs='0';
+        const preparingWorld=world;
+        const withNightMaterials=guardLightingWarmup(
+          ()=>!disposed&&warmupKey===revision&&world===preparingWorld,lighting.withNightMaterials);
         warmupTicket=warmup.request(revision,()=>{
           const started=performance.now();let compilation;
-          try{compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);}
+          try{
+            compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);
+            compilation=compileWarmupLighting(renderer,scene,camera,composer,{high,initialCompilation:compilation,withNightMaterials});
+          }
           finally{if(!disposed&&warmupKey===revision)host.dataset.warmupSubmitMs=(performance.now()-started).toFixed(0);}
           const submitted=performance.now();
           return Promise.resolve(compilation).finally(()=>{
