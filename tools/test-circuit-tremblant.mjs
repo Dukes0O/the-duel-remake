@@ -12,6 +12,8 @@ import { hillHeight, hillReach, runWeight, basinGround } from '../src/circuit-hi
 import { lakeLevel } from '../src/circuit-effects.js';
 import { circuitLighting, resolveLightingSettings } from '../src/lighting-moods.js';
 import { PANORAMA_RIDGE } from '../src/circuits/panorama-ridge.js';
+import { standCrowdGeometry } from '../src/stand-crowd.js';
+import { terrainGeometry } from '../src/world-surfaces.js';
 
 // Tremblant Woods as a finished Grand Prix circuit (card P4-TREMBLANT,
 // docs/CIRCUITS.md 5.3). The road layouts have their own suite
@@ -251,15 +253,77 @@ test('tyre walls are painted in bands so they do not read as black stacks', () =
   assert.ok(walls.every(item => item.bands[1][0] > item.bands[1][1] * 4));
 });
 
-test('the light is an autumn morning: lower, warmer and hazier than golden hour', () => {
+test('the light is an autumn morning: lower than midday, warm, hazy and not blown out', () => {
   const golden = resolveLightingSettings('alpine', { mood: 'golden' }), clear = resolveLightingSettings('alpine', { mood: 'clear' });
   const morning = circuitLighting(golden, TREMBLANT_WOODS.light);
   const elevation = look => Math.atan2(look.sunOffset.y, Math.hypot(look.sunOffset.x, look.sunOffset.z));
-  assert.ok(elevation(morning) < elevation(golden) && elevation(morning) > .1, 'a low sun');
+  // A morning sun well up from the horizon (20 to 28 degrees): low enough for long shadows, high
+  // enough that it does not glance off the cars and blow out the ground facing it.
+  const degrees = elevation(morning) * 180 / Math.PI;
+  assert.ok(elevation(morning) < elevation(clear) && degrees > 20 && degrees < 28, `a morning sun at ${degrees.toFixed(1)} degrees`);
   assert.ok(morning.sunColor > 0xff0000 && (morning.sunColor >> 8 & 255) < 0xd0, 'a warm sun');
   assert.ok(morning.fogFar > morning.fogNear + 1000 && morning.fogNear >= 200, 'a light haze, not a wall of it');
   assert.equal(circuitLighting(clear, TREMBLANT_WOODS.light), circuitLighting(clear, TREMBLANT_WOODS.light), 'made once and reused');
   assert.equal(circuitLighting(clear, undefined), clear, 'a circuit without a light is unchanged');
-  // The sun keeps the sunlit scene bright as it drops.
-  assert.ok(morning.sun > golden.sun);
+  // The sun is no stronger than the golden hour's, and the bloom is light, so nothing facing it burns white.
+  assert.ok(morning.sun <= golden.sun && morning.bloom <= .16);
+});
+
+test('Beaver Hairpin has its 150, 100 and 50 m boards, all on the outside of the corner', () => {
+  const hairpin = road.pieces.find(item => item.name === 'Beaver Hairpin'), side = -hairpin.dir;
+  const scriptBoards = new Course(TREMBLANT_WOODS).features.boards.filter(item => item.name === 'Beaver Hairpin');
+  assert.deepEqual(scriptBoards.map(item => item.distance), [50], 'the script has room for the 50 m board only');
+  for (const distance of [150, 100]) {
+    const board = placements.find(item => item.id === `braking-board-${distance}` && Math.abs(item.s - (hairpin.s0 - distance)) < .01);
+    assert.ok(board, `a ${distance} m board before the hairpin`);
+    assert.equal(Math.sign(board.lateral), side);
+    assert.equal(board.heading, Math.PI);
+  }
+});
+
+test('the grandstands at the start are filled with spectators, inside their seating', () => {
+  const stands = placements.filter(item => item.id === 'grandstand');
+  assert.ok(stands.length >= 4 && stands.every(item => item.crowd === true));
+  const seating = { half: 5.0, rows: [[2.75, 1.91], [2.25, 2.30], [1.75, 2.69], [1.25, 3.09], [.75, 3.48], [.25, 3.87]] };
+  const geometry = standCrowdGeometry(seating, 7), position = geometry.attributes.position;
+  const cards = position.count / 4;
+  assert.ok(cards > 40 && cards <= seating.rows.length * 14, `${cards} spectators in a stand`);
+  for (let i = 0; i < position.count; i++) {
+    assert.ok(Math.abs(position.getX(i)) < seating.half + 1.2, 'inside the width of the stand');
+    assert.ok(position.getZ(i) > 0 && position.getZ(i) < 3, 'on the treads');
+    assert.ok(position.getY(i) > 1.4 && position.getY(i) < 5.8, 'under the roof');
+  }
+  assert.deepEqual(standCrowdGeometry(seating, 7).attributes.position.array, position.array, 'the same seats fill every time');
+});
+
+test('the land beyond the trees rises gently, and the road and its edges are untouched', () => {
+  const plain = new Course({ ...TREMBLANT_WOODS, relief: undefined, basins: undefined }), calm = new Course({ ...TREMBLANT_WOODS, basins: undefined });
+  const edge = TREMBLANT_WOODS.relief.from;
+  let softer = 0;
+  for (let s = 100; s < plain.length; s += 150) for (const side of [-1, 1]) {
+    const half = plain.roadHalfWidthAt(s);
+    // Up to `from` metres beyond the road edge nothing changes.
+    for (const off of [0, half, half + edge * .9]) assert.equal(calm.groundAt(s, side * off).y, plain.groundAt(s, side * off).y);
+    const far = half + 200, change = Math.abs(plain.groundAt(s, side * far).y - plain.worldAt(s, side * far).y) - Math.abs(calm.groundAt(s, side * far).y - calm.worldAt(s, side * far).y);
+    assert.ok(change > -1e-9, 'never steeper than before');
+    if (change > 1) softer++;
+  }
+  assert.ok(softer > 10, 'the far hillsides are lower');
+});
+
+test('the ground beside each corner is greyer and darker gravel, and no other ground changes', () => {
+  const plain = terrainGeometry(new Course({ ...TREMBLANT_WOODS, groundLeaves: { ...TREMBLANT_WOODS.groundLeaves, gravel: undefined } }));
+  const gravel = terrainGeometry(new Course(TREMBLANT_WOODS));
+  const a = plain.attributes.color, b = gravel.attributes.color;
+  assert.equal(a.count, b.count);
+  let darker = 0, changed = 0, brighter = 0;
+  for (let i = 0; i < a.count; i++) {
+    if (a.getX(i) === b.getX(i) && a.getY(i) === b.getY(i) && a.getZ(i) === b.getZ(i)) continue;
+    changed++;
+    // Fallen leaves are taken out of the gravel, so a single channel can rise; the ground as a whole does not.
+    if (b.getX(i) + b.getY(i) + b.getZ(i) <= a.getX(i) + a.getY(i) + a.getZ(i) + 1e-9) darker++; else brighter++;
+  }
+  assert.ok(changed > 200, `${changed} vertices re-tinted`);
+  assert.equal(brighter, 0, 'only ever darker overall');
+  assert.ok(changed < a.count * .35, 'only the ground beside the corners');
 });
