@@ -37,6 +37,12 @@ export function addPineTrees(group, trees, course) {
     const trunks = new THREE.InstancedMesh(assets.trunk, assets.bark, entries.length);
     const leaves = new THREE.InstancedMesh(assets.crown, assets.needles, entries.length);
     trunks.name = `Pine trunks ${key}`; leaves.name = `Pine crowns ${key}`;
+    // A tree with a `tint` (autumn colours, track-script-course.js) has its crown
+    // coloured by it; the others in the cell stay white, which the shader reads as none.
+    if (entries.some(({ feature }) => feature.tint)) {
+      leaves.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(entries.length * 3).fill(1), 3);
+      entries.forEach(({ feature }, i) => { if (feature.tint) leaves.instanceColor.setXYZ(i, ...feature.tint); });
+    }
     entries.forEach(({ feature: tree }, i) => {
       const groundY=course?.def.expansion?renderedGroundHeight(course,tree):tree.y;
       object.position.set(tree.x, groundY - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
@@ -116,7 +122,13 @@ objectNormal=normalize(mix(objectNormal,pineCrownNormal,pineCrownBias));`);
     // the same lighting rather than flashing pale on their reverse side.
     shader.fragmentShader=shader.fragmentShader
       .replace('#include <common>','#include <common>\nuniform float pineLowerShade;\nvarying float vPineHeight;')
-      .replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb*=mix(pineLowerShade,1.0,smoothstep(.1,.8,vPineHeight));')
+      .replace('#include <color_fragment>',`#include <color_fragment>
+diffuseColor.rgb*=mix(pineLowerShade,1.0,smoothstep(.1,.8,vPineHeight));
+#ifdef USE_INSTANCING_COLOR
+// An autumn tree has an instance colour that is not white: its leaves keep their light and shade but take the tint.
+float pineLeaf=dot(diffuseColor.rgb/max(vColor,vec3(.05)),vec3(.2126,.7152,.0722));
+diffuseColor.rgb=mix(diffuseColor.rgb,vColor*(pineLeaf*10.0+.12),1.0-step(.999,min(vColor.r,min(vColor.g,vColor.b))));
+#endif`)
       .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
 #if defined(DOUBLE_SIDED) && !defined(FLAT_SHADED)
 normal*=faceDirection;

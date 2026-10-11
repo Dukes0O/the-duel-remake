@@ -8,7 +8,10 @@ import { GRAND_PRIX_COURSES, grandPrixCourse } from '../src/race-field.js';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 import { CARS } from '../src/config.js';
 import { runRace } from './race-field-balance.mjs';
-import { hillHeight, hillReach, runWeight } from '../src/circuit-hills.js';
+import { hillHeight, hillReach, runWeight, basinGround } from '../src/circuit-hills.js';
+import { lakeLevel } from '../src/circuit-effects.js';
+import { circuitLighting, resolveLightingSettings } from '../src/lighting-moods.js';
+import { PANORAMA_RIDGE } from '../src/circuits/panorama-ridge.js';
 
 // Tremblant Woods as a finished Grand Prix circuit (card P4-TREMBLANT,
 // docs/CIRCUITS.md 5.3). The road layouts have their own suite
@@ -160,4 +163,103 @@ test('the lodge stands on a level terrace', () => {
   const centre = hillHeight(hill, du, dv);
   for (const [x, z] of [[-12, 0], [12, 0], [0, -8], [0, 8], [-10, -7], [10, 7]]) assert.ok(Math.abs(hillHeight(hill, du + x, dv + z) - centre) < .3, 'the ground under the lodge is level');
   assert.ok(centre > 8, `the lodge is ${centre.toFixed(1)} m above the road`);
+});
+
+// ---- the finishing pass ------------------------------------------------------
+
+test('the forest crowds the road on both sides and keeps its distance and its gaps', () => {
+  const forest = course.features.trees.filter(tree => tree.id.startsWith('forest-'));
+  assert.ok(forest.length > 2200, `${forest.length} pines in the forest`);
+  for (const tree of forest) {
+    const found = course.nearest(tree.x, tree.z), edge = found.distance - course.roadHalfWidthAt(found.s);
+    assert.ok(edge >= 12 && edge <= 60, `${tree.id} is ${edge.toFixed(1)} m beyond the road edge`);
+  }
+  // Both sides of Timber Straight outside the fence and the lift, and of Ridge Run, are lined with trees.
+  for (const [from, to] of [[2200, 2640], [3000, 3190], [960, 1200]]) for (const side of [-1, 1]) {
+    const count = forest.filter(tree => tree.s >= from && tree.s <= to && Math.sign(tree.off) === side).length;
+    assert.ok(count >= 25, `${count} forest pines on side ${side} between ${from} and ${to}`);
+  }
+  // No forest at the paddock, under the chairlift or by the catch fence.
+  assert.equal(forest.filter(tree => tree.s < 120 || tree.s > course.length - 90).length, 0, 'the paddock is clear');
+  const lift = TREMBLANT_WOODS.effects.lift;
+  assert.equal(forest.filter(tree => Math.abs(tree.s - lift.s) < 7).length, 0, 'the lift crosses a clear cut');
+});
+
+test('about four trees in ten turn colour, and the same ones every build', () => {
+  const trees = course.features.trees, tinted = trees.filter(tree => tree.tint);
+  const share = tinted.length / trees.length;
+  assert.ok(share > .35 && share < .45, `${(share * 100).toFixed(0)}% of the trees are in autumn colour`);
+  const palette = TREMBLANT_WOODS.scenery.autumn.colours;
+  assert.ok(palette.length >= 4 && tinted.every(tree => palette.includes(tree.tint)));
+  // Red, gold and orange are all there.
+  const reds = palette.filter(c => c[0] > c[1] * 3), golds = palette.filter(c => c[1] > c[0] * .7), oranges = palette.filter(c => c[1] > c[0] * .4 && c[1] < c[0] * .7);
+  assert.ok(reds.length && golds.length && oranges.length);
+  assert.deepEqual(new Course(TREMBLANT_WOODS, 1989).features.trees.map(tree => !!tree.tint), trees.map(tree => !!tree.tint));
+  // The ground carries fallen leaves beside the road and woodland beyond.
+  assert.ok(TREMBLANT_WOODS.groundLeaves.colours.length >= 3 && TREMBLANT_WOODS.groundLeaves.wood.share > .2);
+});
+
+test('circuits have white edge lines and no centre line', () => {
+  assert.equal(TREMBLANT_WOODS.markings, 'circuit');
+  assert.equal(PANORAMA_RIDGE.markings, 'circuit');
+});
+
+test('the lake lies in a dug bowl: deep in the middle, level at the shore, the road side untouched', () => {
+  const lake = TREMBLANT_WOODS.effects.lake, level = lakeLevel(course, lake);
+  assert.deepEqual(TREMBLANT_WOODS.basins, [lake]);
+  const middle = course.groundAt(lake.s, lake.lateral);
+  assert.ok(level - middle.y > lake.depth * .8, `${(level - middle.y).toFixed(1)} m of water in the middle`);
+  // The lake is bigger than a pond and lower than the road beside it.
+  assert.ok(lake.along * lake.across > 15000);
+  assert.ok(lake.surface < 0);
+  // Halfway to the shore the ground is still under water; just outside the shore it is above it.
+  const inside = course.groundAt(lake.s, lake.lateral - lake.across * .7), outside = course.groundAt(lake.s, lake.lateral - lake.across * 1.15);
+  assert.ok(inside.y < level - .4 && outside.y > level - .2, `inside ${(inside.y - level).toFixed(1)}, outside ${(outside.y - level).toFixed(1)} m from the water`);
+  // The ground beside the road is what it was without the lake.
+  const bare = new Course({ ...TREMBLANT_WOODS, basins: [] }, 1989);
+  for (const lateral of [-30, -8, 8, 10, 12]) for (let s = 500; s <= 900; s += 40)
+    assert.ok(Math.abs(course.groundAt(s, lateral).y - bare.groundAt(s, lateral).y) < 1e-6, `ground at ${s}, ${lateral} is changed`);
+  // A circuit without basins is untouched.
+  assert.equal(basinGround({ s: 0, lateral: 50, along: 100, across: 50, depth: 5 }, 0, 400).weight, 0);
+});
+
+test('rounded hills ring the circuit; the ski mountain behind the lodge is the tallest', () => {
+  const { hills } = TREMBLANT_WOODS.effects.backdrop, ski = hills[0];
+  assert.ok(hills.length >= 8, `${hills.length} backdrop hills`);
+  assert.ok(hills.every(hill => hill.height <= ski.height) && ski.height >= 140);
+  assert.ok(ski.runs.length >= 5, 'pale ski runs down its face');
+  assert.equal(TREMBLANT_WOODS.scenery.mountains, false, 'no grey peaks');
+  for (const hill of hills) {
+    // The foot of every hill is clear of every road: each road point lies outside the hill's outline.
+    const cos = Math.cos(hill.angle ?? 0), sin = Math.sin(hill.angle ?? 0);
+    for (let i = 0; i < course.samples.length; i += 2) {
+      const dx = course.samples[i].x - hill.x, dz = course.samples[i].z - hill.z;
+      const reach = hillReach(hill, sin * dx + cos * dz, cos * dx - sin * dz);
+      assert.ok(reach > 1.05, `the road is inside a backdrop hill (reach ${reach.toFixed(2)} at s ${course.samples[i].s.toFixed(0)})`);
+    }
+  }
+  // The lodge stands on the foothill in front of it.
+  const lodge = placements.find(item => item.id === 'ski-lodge'), foot = TREMBLANT_WOODS.hills[0];
+  assert.ok(Math.hypot(lodge.s - foot.s, lodge.lateral - foot.lateral) < foot.along);
+});
+
+test('tyre walls are painted in bands so they do not read as black stacks', () => {
+  const walls = placements.filter(item => item.id === 'tyre-wall');
+  assert.ok(walls.length >= 10 && walls.every(item => item.bands.length === 3));
+  // Every band is far brighter than the dark rubber it multiplies; the middle band is red.
+  assert.ok(walls.every(item => item.bands.every(band => Math.max(...band) > 8)));
+  assert.ok(walls.every(item => item.bands[1][0] > item.bands[1][1] * 4));
+});
+
+test('the light is an autumn morning: lower, warmer and hazier than golden hour', () => {
+  const golden = resolveLightingSettings('alpine', { mood: 'golden' }), clear = resolveLightingSettings('alpine', { mood: 'clear' });
+  const morning = circuitLighting(golden, TREMBLANT_WOODS.light);
+  const elevation = look => Math.atan2(look.sunOffset.y, Math.hypot(look.sunOffset.x, look.sunOffset.z));
+  assert.ok(elevation(morning) < elevation(golden) && elevation(morning) > .1, 'a low sun');
+  assert.ok(morning.sunColor > 0xff0000 && (morning.sunColor >> 8 & 255) < 0xd0, 'a warm sun');
+  assert.ok(morning.fogFar > morning.fogNear + 1000 && morning.fogNear >= 200, 'a light haze, not a wall of it');
+  assert.equal(circuitLighting(clear, TREMBLANT_WOODS.light), circuitLighting(clear, TREMBLANT_WOODS.light), 'made once and reused');
+  assert.equal(circuitLighting(clear, undefined), clear, 'a circuit without a light is unchanged');
+  // The sun keeps the sunlit scene bright as it drops.
+  assert.ok(morning.sun > golden.sun);
 });

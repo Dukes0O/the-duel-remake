@@ -51,3 +51,52 @@ export function runWeight(hill, du, dv) {
   }
   return best;
 }
+
+// ---------------------------------------------------------------------------
+// A lake: the ground is dug into a bowl (course.js `_relief` calls basinRelief
+// for a circuit that lists `basins`), and circuit-effects.js lays the water on
+// top. Both read the same outline, so the water ends where the bank begins.
+//
+// A basin is { s, lateral, along, across, surface, depth, bank, blend, keep }:
+// an uneven oval `along` and `across` metres each way from a point beside the
+// road; `surface` metres above the road's height at s (usually below it);
+// `depth` metres deep at the middle; the bank rises `bank` metres per metre
+// beyond the shore and fades into the natural ground over `blend` metres; the
+// ground within `keep` metres of the road edge is never touched.
+// ---------------------------------------------------------------------------
+
+// The shore is not a perfect oval. `angle` is the direction round the lake.
+export const shoreFactor = angle => 1 + .09 * Math.sin(angle * 3 + 1.1) + .05 * Math.sin(angle * 5 + 2.3) + .03 * Math.sin(angle * 9);
+
+// 1 at the shore, 0 in the middle, more than 1 outside it.
+export function basinReach(basin, du, dv) {
+  const x = du / basin.along, y = dv / basin.across;
+  return Math.hypot(x, y) / shoreFactor(Math.atan2(y, x));
+}
+
+// Where the ground should be and how firmly it is held there, as
+// { weight, height } with `height` metres above the water surface. Weight 0
+// leaves the natural ground alone. `roadGap` is the distance to the road edge.
+export function basinGround(basin, du, dv, roadGap = Infinity) {
+  const reach = basinReach(basin, du, dv), room = Math.min(basin.along, basin.across);
+  const fade = (basin.blend ?? 30) / room;
+  if (reach >= 1 + fade) return { weight: 0, height: 0 };
+  const keep = basin.keep ?? 6, spare = smooth((roadGap - keep) / 10);
+  if (reach <= 1) return { weight: spare, height: -basin.depth * (1 - smooth((reach - .3) / .7)) };
+  return { weight: (1 - smooth((reach - 1) / fade)) * spare, height: (reach - 1) * room * (basin.bank ?? .1) };
+}
+
+// Digs a course's basins into its ground. The course keeps its own relief; this
+// wraps it, so a course without basins never reaches this code.
+export function installBasins(course) {
+  const natural = course._relief.bind(course);
+  course._relief = (s, off) => {
+    let height = natural(s, off);
+    const phase = course.phase(s);
+    for (const basin of course.def.basins) {
+      const ground = basinGround(basin, phase - basin.s, off - basin.lateral, Math.abs(off) - course.roadHalfWidthAt(phase));
+      if (ground.weight > 0) height += (course._height(basin.s) + basin.surface + ground.height - course.worldAt(s, off).y - height) * ground.weight;
+    }
+    return height;
+  };
+}
