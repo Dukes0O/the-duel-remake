@@ -164,6 +164,7 @@ export function createTrackKits(course, options) {
   const resources = new Set(), released = new WeakSet(), assets = new Map();
   const skeletons = new Set(), batches = [], instances = [], chunks = new Map();
   let activeView = null;
+  const rearScopes = [];
   let retired = false, failed = false, status = 'loading', error = null, rows = [];
   const loader = loadAsset ? null : new GLTFLoader();
   const load = loadAsset ?? (path => loader.loadAsync(path));
@@ -283,11 +284,20 @@ export function createTrackKits(course, options) {
     batch.drawn = entries.map(entry=>entry.index);
     batch.revisions = entries.map(entry=>entry.instance.revision);
     batch.mesh.userData.trackKitDrawnPlacementIndices = Object.freeze([...batch.drawn]);
+    if (!entries.length) return;
+    // Save only buffers that this scope really overwrites. Nested scopes keep
+    // their own prior values, while untouched distant batches never upload.
+    for (const scope of rearScopes) {
+      const saved = scope.get(batch);
+      if (saved.matrices) continue;
+      saved.matrices = batch.mesh.instanceMatrix.array.slice();
+      saved.sphere = batch.mesh.boundingSphere?.clone() ?? null;
+    }
     entries.forEach(({instance},index) => {
       batch.mesh.setMatrixAt(index,transform.multiplyMatrices(instance.matrix,batch.local));
     });
     batch.mesh.instanceMatrix.needsUpdate = true;
-    if (entries.length) batch.mesh.computeBoundingSphere();
+    batch.mesh.computeBoundingSphere();
   }
   function applyView(view) {
     stats.high = stats.low = stats.visibleChunks = 0;
@@ -341,25 +351,30 @@ export function createTrackKits(course, options) {
       fail('rear scope needs a finite actual orientation.');
     const previousView = activeView;
     const previousStats = {high:stats.high,low:stats.low,visibleChunks:stats.visibleChunks};
-    const savedBatches = batches.map(batch => ({batch,count:batch.mesh.count,
-      visible:batch.mesh.visible,matrices:batch.mesh.instanceMatrix.array.slice(),
+    const savedBatches = new Map(batches.map(batch => [batch,{batch,count:batch.mesh.count,
+      visible:batch.mesh.visible,matrices:null,sphere:null,boundingSphere:batch.mesh.boundingSphere,
       drawn:batch.drawn,revisions:batch.revisions,
-      indices:batch.mesh.userData.trackKitDrawnPlacementIndices}));
+      indices:batch.mesh.userData.trackKitDrawnPlacementIndices}]));
     const savedRoots = instances.flatMap(instance=>instance.parts.map(part=>({
       mesh:part.mesh,visible:part.mesh.visible,matrix:part.mesh.matrix.clone()})));
+    rearScopes.push(savedBatches);
     try {
       activeView = {rear:true,high:false,position:new THREE.Vector3(position.x,finite(position.y)?position.y:0,position.z),forward:forward.clone()};
       applyView(activeView);
       return draw();
     } finally {
-      for (const saved of savedBatches) {
+      rearScopes.pop();
+      for (const saved of savedBatches.values()) {
         const {batch} = saved;
         batch.mesh.count = saved.count; batch.mesh.visible = saved.visible;
-        batch.mesh.instanceMatrix.array.set(saved.matrices);
-        batch.mesh.instanceMatrix.needsUpdate = true;
+        if (saved.matrices) {
+          batch.mesh.instanceMatrix.array.set(saved.matrices);
+          batch.mesh.instanceMatrix.needsUpdate = true;
+          if (saved.boundingSphere) saved.boundingSphere.copy(saved.sphere);
+          batch.mesh.boundingSphere = saved.boundingSphere;
+        }
         batch.drawn = saved.drawn; batch.revisions = saved.revisions;
         batch.mesh.userData.trackKitDrawnPlacementIndices = saved.indices;
-        if (saved.count) batch.mesh.computeBoundingSphere();
       }
       for (const saved of savedRoots) {
         saved.mesh.visible = saved.visible; saved.mesh.matrix.copy(saved.matrix);

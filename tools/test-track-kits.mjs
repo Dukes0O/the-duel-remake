@@ -302,6 +302,9 @@ async function kitCullingChecks() {
   const before = meshes.map(mesh => ({mesh, count: mesh.count, visible: mesh.visible,
     matrices: Array.from(mesh.instanceMatrix.array)}));
   const beforeStats = JSON.stringify(runtime.stats);
+  const untouched = meshes.filter(mesh => mesh.userData.trackKitChunk === 8)
+    .map(mesh => ({mesh, version:mesh.instanceMatrix.version}));
+  assert.ok(untouched.length, 'actual distant batches remain outside both views');
   assert.throws(() => runtime.withRearView({position: camera.position,
     forward: new THREE.Vector3(0, 0, -1)}, () => {
     assert.equal(runtime.stats.high, 0, 'rear never submits detailed instances');
@@ -314,6 +317,8 @@ async function kitCullingChecks() {
     assert.deepEqual(Array.from(saved.mesh.instanceMatrix.array), saved.matrices);
   }
   assert.equal(JSON.stringify(runtime.stats), beforeStats, 'throw restores exact main statistics');
+  for (const saved of untouched) assert.equal(saved.mesh.instanceMatrix.version,saved.version,
+    'a rear scope must not re-upload untouched distant matrix buffers');
   assert.equal(runtime.withRearView({position:camera.position,
     forward:new THREE.Vector3(0,0,-1)},()=> 'actual draw return'),'actual draw return');
   assert.equal(JSON.stringify(runtime.stats),beforeStats,'successful scope restores main statistics');

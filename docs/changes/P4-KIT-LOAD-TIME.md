@@ -1,6 +1,6 @@
 # P4-KIT-LOAD-TIME
 
-Status: building; focused source checks passed; native timing remains queued.
+Status: fixing measured native cost; original dense frame packet failed.
 
 ## Design before code
 
@@ -76,8 +76,14 @@ s1330.2998 at38.4333s both qualities. Evidence:dense-ff86-functional under
 integration .evidence/2026-10-11/P4-KIT-LOAD-TIME/. No frame pass inferred.
 Clock-entry/combined-CPU review fixes follow; lane/build/quiet frames queued.
 
-Actual dense Harbour construction under1s and quiet High/Performance grid and
-old-town frame checks (original10%/18.5ms limits) remain queued; no pass claimed.
+Exact6e quiet packet completed16legs/8comparisons:all8fail relative limits,
+combined52.63–122.50%, GPU27.72–72.47%; High old-town pair1 delivered18.8ms
+also fails18.5ms. Evidence:dense-6e5-frames, unchanged thresholds.
+Before fix, untouched-distant-buffer upload regression RED (version1 vs0).
+Approved fix scopes only actual rear camera draws and lazily restores touched
+matrix buffers; cached mirror frames do no owner scope. Ranges/art stay exact.
+Untouched upload RED→GREEN; full owned real-asset/lifetime suite passed1.17s.
+Corrected native check and mandatory lane/build remain pending.
 
 ## Removed
 

@@ -805,9 +805,16 @@ export function attachRenderer(host, app) {
     const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();renderMainView(renderer,composer,high);
     const kits = trackKitsOf(world);
     if (kits) {
-      rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
-      kits.withRearView({position:player.position,forward:rearKitForward},
-        () => rearView.render({state:st,player,course,now:ambientNow}));
+      const previousRender = renderer.render;
+      renderer.render = function(renderedScene, renderedCamera, ...args) {
+        if (renderedScene !== scene || renderedCamera !== rearView.camera)
+          return previousRender.call(this,renderedScene,renderedCamera,...args);
+        rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
+        return kits.withRearView({position:player.position,forward:rearKitForward},
+          () => previousRender.call(this,renderedScene,renderedCamera,...args));
+      };
+      try {rearView.render({state:st,player,course,now:ambientNow});}
+      finally {renderer.render = previousRender;}
     } else rearView.render({state:st,player,course,now:ambientNow});
     const cpuRenderMs=performance.now()-renderStarted;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
