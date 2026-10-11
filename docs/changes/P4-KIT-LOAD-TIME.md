@@ -83,6 +83,8 @@ b647 mandatory lane:220 passed/1 failed/167 not run in503.37s; no build. The ori
 
 090 lane:285 passed/1 failed/102 not run in531.61s; frame boundary134checks passes. Original preview-launcher regex requires a literal preview property; generated nine-entry input did include the page. Director settles owned config correction before code: explicit nine properties preserve identical names/path/order, plugins, fixture pin/alias/admission and every original preview assertion; runtime stays exact d05. Test-source search finds only preview literal and version-plugin guards. Original preview23checks and build-update190checks pass; imported config nine paths/order equal the prior mapping. Fresh lane/build remains required.
 
+9895 lane:332 passed/1 failed/55 not run in619.90s; preview23 and frame134 pass. Scene-presentation has the remaining obsolete main/rear adjacency regex. Director settles test-only compatibility before code: bounded first CPU endpoint, exact main then both rear branches/finally, reordered/missing/early-endpoint negative controls. All actual RenderPass clearing/direct/composite/error-restoration/warmup/adaptive assertions and runtime remain exact; full test-source scan finds no other main/rear adjacency guard. Original presentation checks plus14 bounded source controls pass; frame134 and preview23 pass. Fresh mandatory lane/build remains required.
+
 ## Removed
 
 Replace whole-route zero-scale hidden draws and repeated runtime triangle checks; full build/test clearance remains. Remove cached-rear scope work and untouched buffer uploads in the same fix. No placements/assets/art removed.
