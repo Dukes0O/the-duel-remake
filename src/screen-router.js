@@ -11,7 +11,12 @@ import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {crewPanel} from './crew-ui.js';
 import {CREW,crewMember} from './crew.js';
-import {courseScreen, createCourseActions} from './screen-courses.js';
+import {courseScreen as courseScreenMarkup, createCourseActions} from './screen-courses.js';
+import {createTeamRoom} from './screen-team-room.js';
+import {buildTrackDossier} from './track-analysis.js';
+import {referenceLap} from './reference-laps.js';
+import {Course} from './course.js';
+import './screen-team-room.css';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight} from './screen-hud.js';
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
@@ -95,7 +100,7 @@ const buildUpdates=createBuildUpdateChecker({
 const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();cardArt?.dispose();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -122,6 +127,31 @@ const combatHud = createCombatHud({root, app,
   projectFootAim:()=>readiness.handle?.projectFootAim?.() || null,
   projectOpponents:()=>readiness.handle?.projectOpponents?.() || []});
 const {ensureRenderer, syncRendererReadiness} = readiness;
+const courseScreen = (playerProfile, selectedStage, message) => courseScreenMarkup(playerProfile,
+  selectedStage, message, {teamRoomEnabled: app._switches().enabled('grand-prix')});
+let teamRoomPlayerId = null;
+const teamRoom = createTeamRoom({host: root,
+  getDossier(eventId) {
+    if (!app._switches().enabled('grand-prix') || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) return null;
+    const definition = COURSE.find(course => course.id === eventId);
+    if (!definition || definition.closed === false || !isCourseUnlocked(profile(), definition)) return null;
+    const selectedRoute = app.duel.state.status === 'menu' ? app.menuRouteId
+      : getRouteVariantForSeed(app.duel.state.seed)?.id ?? app.menuRouteId;
+    const route = supportsRouteVariants(definition) ? selectedRoute : 'fixed';
+    const reference = referenceLap(eventId, route);
+    const course = new Course(definition, reference?.seed ?? 1989);
+    teamRoomPlayerId = app.player.id;
+    return {...buildTrackDossier(course, {route, reference}), course,
+      telemetry: app.getLapTelemetry?.({eventId, route, courseFingerprint: reference.courseFingerprint})};
+  },
+  async capture(dossier, flag, {signal}) {
+    await ensureRenderer();
+    if (signal.aborted) throw Error('Track view changed.');
+    if (!readiness.handle) throw Error('3D graphics are not ready.');
+    return readiness.handle.captureTrackSnapshot({course: dossier.course, flag});
+  },
+  clearCapture: () => readiness.handle?.clearTrackSnapshot(),
+});
 const courseActions = createCourseActions({app, choices, setMessage:value=>courseMessage=value, setOpen:value=>coursesOpen=value, updateMenuScene, invalidate:()=>lastScreen=null, renderState:()=>renderState(app.duel.state)});
 
 function refreshRaceSetup(){
@@ -156,6 +186,7 @@ function openYardPanel(panel){
 }
 root.addEventListener('click',e => {
   const button = e.target.closest('button,[data-action]'); if (!button) return;
+  if (button.dataset.teamRoom) {e.preventDefault();teamRoom.open(button.dataset.teamRoom, button);return;}
   if(courseActions.handle(button))return;
   if(button.dataset.warlord){if(app.startWarlordFight(button.dataset.warlord)){yardPanel='home';lastScreen=null;}return;}
   if (button.dataset.arenaVenue) {
@@ -299,6 +330,8 @@ root.addEventListener('change',event=>{
 },{signal:domEvents.signal});
 function renderState(s) {
   buildUpdates.syncState();
+  if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
+      !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
   const yardActive=app.isYardHomeActive?.()===true;
   if(!yardActive)yardPanel='home';
   const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);

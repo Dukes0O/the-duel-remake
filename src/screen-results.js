@@ -106,6 +106,13 @@ function modalScreen(s) {
     }
   }
   else return '';
+  if(['stage_result','complete'].includes(s.status)){
+    const eventId=COURSE[s.stageIndex]?.id,telemetry=app.getLapTelemetry?.({eventId});
+    if(telemetry?.lap){
+      actions+=`<button type="button" class="secondary-button" data-team-room="${escapeHTML(eventId)}"><span>ANALYSE MY LAP</span></button>`;
+      if(telemetry.status==='session-only')description+=' Your best lap is available for this session only.';
+    }
+  }
   const bonus=r.creditBreakdown?Object.entries(r.creditBreakdown).filter(([key,value])=>key!=='base'&&key!=='milestones'&&value>0).map(([key,value])=>`${{clean:'CLEAN RACE',personalBest:'CAR BEST',streak:'WIN STREAK',jumps:'ARENA JUMPS',crush:'CRUSH BONUS',drift:'DRIFT BONUS',police:'POLICE ESCAPE',combat:'COMBAT BONUS',manual:'PRO / MANUAL BONUS'}[key]} +${credits(value)}`).join(' · '):'';
   const repairs=r.won&&(r.crashesRepaired>0||r.livesRestored>0)?`<p class="result-bonuses">STAGE WIN REPAIRS · ${r.crashesRepaired||0} MAJOR CRASH${r.crashesRepaired===1?'':'ES'} REPAIRED · ${r.livesRestored||0} CRASH SLOT${r.livesRestored===1?'':'S'} REFILLED</p>`:'';
   let grandPrixGhostNotice = '';

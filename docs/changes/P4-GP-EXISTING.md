@@ -46,7 +46,11 @@ presentation-only cleanup keeps the new GP notice readable. No art change.
 
 Synced a89e562c (DAYNIGHT and atomic native audio capture) without conflicts.
 GP storage admission and record modules stay byte-identical to c77e937d.
-No new native check, gate or build ran during the shared gate.
+Synced e648f380 (all-27 Dossier and reviewed Telemetry) next. App conflicts
+combine imports, startup, go observations, reset and cleanup for GP, TT and
+Telemetry; incoming storage modules and GP storage modules remain exact.
+No qualifying source is included. No native check, gate or build ran during
+the shared gate; the combined source needs current checks before handoff.
 
 ## Removed
 
