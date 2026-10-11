@@ -63,25 +63,30 @@ centreline/turns/climbs/pit/default courses stay exact; fences follow the edge.
 Actual ridge RED: Cutting11!=13; one-line13 GREEN15/15 in5.61s, High/LOD3.91s.
 Field still reuses actual merged Harbour settings and original90/3.2; no new mechanism.
 
+## Field safety, settled before code
+
+Actual Harbour0cdf merged as99269056; only course-ID conflict unions all12.
+Director/Claude16:30 approve racingLine lineMargin2.6/lineSwing.6/holdRacers:true;
+fieldFollow leadBraking1.6/wallRoom1/firstLap:{margin5,reaction.5,closeIn.8,wallRoom1.4}.
+Only existing safety opt-ins; comfort.62 and pace/form/spread/aggression1 inherited.
+Geometry13m/native.95 driver exact; extend existing payload expectations only.
+Original90/3.2 before pace tuning; then freeze metadata and existing complete27
+base-route publisher refresh: width changes fingerprint, line path changes despite
+geometry-only hash. No row/hash/version edits, new mechanism or GP-Azure reference.
+
 ## Whole native view recipe and policy
 
-Earlier full-kit paired recipe retained actual ground/road, main/rear/HUD,
-state/poses/profile/storage equality and original frozen6e sampler. No measured
-whole-view pass was claimed. Claude10:30 replaced relative10% acceptance with
-absolute18.5ms and construction<1000; its21 numeric assertions passed.
-Genuine loader79ba ancestry is present; actual Harbour field sync still pending.
-
-Kyle rules7–10 and card lighter_frame_design settle this replacement before code:
-one fresh native eight-car final-dusk leg per quality, Performance then High.
-Every actual kit/landmark, mountain ground/road and main/rear/HUD remains active.
-Existing120warm/360CPU+update+combined/359delivered/GPU>=288, positive/finite
-samples, fixed resolution and per-leg before/after state/pose/storage guards stay.
-Delivered p95<=18.5ms; actual owner construction finite/nonnegative and<1000ms.
-Existing paired numeric expectations become single-row absolute expectations;
-all original boundary/invalid/sample assertions remain. No new controls/machinery.
-Grid camera is an eight-visible-car candidate; globally busiest view is unproved.
-Root settles intended view on the card before timing. Art acceptance and actual
-player reachability precede timing; code prepared only, no new execution claimed.
+Earlier full-kit pairs kept ground/road/main/rear/HUD and native state/poses/profile/
+storage equality; no measured pass. Claude10:30 policy21 assertions passed; loader79ba present.
+Kyle rules7–10 replace pairs with one fresh final-dusk leg Performance then High.
+All kits/landmarks and120warm/360CPU+update+combined/359delivered/GPU>=288 exact;
+finite/positive/fixedresolution and before/after witnesses unchanged.
+Delivered p95<=18.5ms; real construction finite/nonnegative and<1000ms.
+Existing single-row boundary/invalid/sample expectations; no new machinery.
+Focused policy PASS1/1,12assertions,1.6655ms; Node total1423.083ms.
+Claude15:00 confirms future grid8cars/paddock/kits/landmarks/main/rear/HUD view;
+globally busiest ranking unproved. No dev-hidden/art timing: art acceptance and
+player reachability precede that check. New safety/reference/native checks queued.
 
 ## Removed
 
@@ -91,4 +96,4 @@ with final packet; verdict retained. Replace populated hidden baseline and hidde
 rear/HUD sampler with fresh worlds/full actual views. Replace the empty-kit
 comparison with full-kit day/dusk worlds, then obsolete paired/relative reports
 with one full final-dusk leg under Kyle rules7–10. Final art removes striped
-fence finish and mountain snow/ice appearance only for Panorama. Replace old11m ridge with approved13m; no signatures regenerated.
+fence finish and mountain snow/ice appearance only for Panorama. Replace old11m ridge with13m; replace unsafe default line/follow settings only on Panorama.
