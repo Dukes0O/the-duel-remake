@@ -4059,6 +4059,8 @@ tasks:
 
     ridge_width_slice_decision: "Before code: implement Claudecheck7 approved11→13m only from The Cutting through Forrest Elbow using existing inheritedwidth/blending; Conrod remains16 and otherpiecesexact. This owned geometry slice can finish before Harbour engine arrives so finalthirdart uses coherentfinalroad. Dynamic authored fences/walls follow existingroad edge rules; keep centreline, allturns/climbs/pit/defaultcourses and RNGrecipe exact. Meaningful old11m RED/new13m GREEN plus actualHigh/LODclearance; no worldsignature regeneration, newfieldmechanism or artpassinferred. Nativefield settings stillonlyafteractualHarbourmerge."
 
+    ridge_width_verdict: "c8c4fb8c: meaningful old11m RED then all15/15 GREEN in5.61s, including genuineHigh/LODclearance. One runtime line sets The Cutting13m; inherited width through Elbow, originalblends/otherwidthtargets/centreline byteexact, fences followedge. Ordinaryreview clear, finalart and Harbour fieldpending."
+
   - id: P4-GRIP
     title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
     owner: claude
@@ -4179,7 +4181,7 @@ tasks:
 
     replacement_prefix_design: "Director scope settled before code: one DUEL_P4_LISTENING_PREFIX=121 native capture, explicit purpose listening-prefix/status incomplete. Stop the existing recorder after at least121 seconds of actual AudioContext frame time on its original native boundary; every rotation/stem/sample identity assertion stays. Continue the genuine three-lap race and unchanged functional replay/state/lifecycle checks. Measure only complete retained cue tails, name uncaptured later cues. Separate exporter accepts passed genuine functional harness plus intentional native-prefix stop metadata; no whole-capture verdict, trim/fill/resampling/normalization or third whole retry. One failed prefix becomes QA-AUDIO-CLOCK evidence, never a repeat loop."
     gate_commit: 6b3c9c15b1b07e6f41fd058607d93a169596fa29
-    overnight_verdict: "Requested mix merged: +6.4dB, original native stress23/23/98 worst-1.59dBTP; lane127/127398.05s/build678ms/source review clear. Actual121.053333s incomplete listening prefix source-16.29LUFS/-2.43dBTP; unnormalizedMP3-16.29/-2.10. Finish audio uncaptured. Kyle approved the sound on11October2026 (sound approved - keep going); listening review complete, no whole-recording claim or release. Preserve measured verdict and recipes; remove consumed listening evidence after this approval is committed."
+    overnight_verdict: "Requested mix merged: +6.4dB, original native stress23/23/98 worst-1.59dBTP; lane127/127398.05s/build678ms/source review clear. Actual121.053333s incomplete listening prefix source-16.29LUFS/-2.43dBTP; unnormalizedMP3-16.29/-2.10. Finish audio uncaptured. Kyle approved the sound on11October2026 (sound approved - keep going); listening review complete, no whole-recording claim or release. Preserve measured verdict and recipes; Consumed listening evidence284,485,319B removed after approval committed33aacf7a; recipes and assets retained."
 
   - id: QA-AUDIO-CLOCK
     title: "Native audio recorder clock diagnosis"
@@ -4750,21 +4752,7 @@ tasks:
     gate_commit: 42de7cf003aa5786865619cb7802a32a05565c0f
     gate_verdict: "Lane 388/388 passed, zero failures/not run, 729.18 s; sequential build 529 ms. In-tier native audio 23/98 also passed. Clean frozen lane and current source review verified before merge. Kyle sound approval folded into this real merge; no release."
 
-  - id: QA-FRAME-SETTLING
-    title: "Diagnose unstable first eight-car timing batches"
-    owner: codex
-    lane: TOOL
-    size: S
-    needs: []
-    status: dropped
-    owns: [tools/scenarios/p4-daynight.mjs, tools/test-light-path.mjs, docs/changes/QA-FRAME-SETTLING.md]
-    sequencing: "Kyle relayed Claude acceptance 10 October: no more investigation now. Reopen only with Claude scope; retained first-run timing drift is unproved. Before any later code, do not change sample counts, percentile rules or the 10% cost limit to obtain a pass."
-    note: "At unchanged 4834abde, quiet frames-1 failed High pair 2 (CPU +53.61%, GPU +28.68%). Legacy High GPU p95 shifted 24.94 to 11.54 ms across pairs. One unchanged quiet repeat frames-2 passed all four pairs: CPU +4.40%, GPU +4.00% worst, no delivered pacing increase. Cause unproved; Claude09:45 drops diagnosis. Both reports are absent from current integration evidence; preserve only the verdict."
-    acceptance:
-      - "Prove whether native asset readiness, shader preparation, laptop load or measurement lifecycle explains the first-batch drift, without editing game behaviour or discarding adverse samples."
-      - "Keep 360 CPU, at least 359 delivered and 288 GPU samples, positive timing guards, both orders and qualities, fixed view/resolution, eight native models and unchanged 10% threshold. Any test change needs a meaningful failure and independent review."
-
-    dropped_decision: "Claude09:45PT11October drops investigation under Build more record less30-minutecap and kit policy. One unchanged repeat already passed; retain sample counts, percentile rules and10%off/on diagnostic. Original cause unproved. Delete its two retained reports, no runtime/test change."
+    merged_commit: 33aacf7a82929af51f315a93248aa26cfb15ded7
 
   - id: QA-AUDIO-CAPTURE
     title: "Capture native audio stems in one callback"
@@ -4828,7 +4816,7 @@ tasks:
     claimed_by: codex-overnight-loader-performance
     branch: codex/p4-kit-load-time
     owns: [src/track-kits.js, tools/test-track-kits.mjs, tools/scenarios/track-kits.mjs, docs/changes/P4-KIT-LOAD-TIME.md]
-    hooks: [src/render3d.js, tools/vite-qa.config.js]
+    hooks: [src/render3d.js, tools/vite-qa.config.js, docs/board/board.yaml, docs/board/next-run.md]
     design_decision: "Claude check-ins5/6 before code: bound-box road broadphase before expensive actual-vertex4.5m headroom validation. Full clearance remains required by tests and track build checks; runtime trusts explicitly validated authored placements. No metadata/asset/lift/road guard waiver. Chunk instanced groups about100m along road, choose detailed or distant per chunk by camera distance, pack visible instances and set mesh.count; never zero-scale hidden draws. Rear view nearest behind-car chunks distant-only via scoped renderer hook with main state restored. Same dense Harbour placements; no removed art. Settle build-validator/runtime trust witness and rear scope precisely before code. Source tests and native actual materials/roots/disposal unchanged; under1s kit work at race start and deliveredp95<=18.5ms within original frame limits at Harbour grid/oldtown High/Performance. Claude owns track metadata."
     implementation_design: "Director settles before code: repo-owned offline placement metadata is trusted only after mandatory actual full build/test validation, with no receipts/hashes/new metadata. createTrackKits defaults to full clearance; renderer alone explicitly passes runtime geometric-clearance skip. Normalization, real source finite geometry/bounds, lift, material/lamp checks, terrain anchoring, readiness and exact ownership stay. Full validation uses transformed source bounding boxes versus conservative sampled-road segment boxes expanded by global road width plus4.5m; near/uncertain/physicalPatch entries retain exact old vertices/centroids/edge-midpoint checks. Owned test CLI --validate-circuit verifies a local circuit source module and parses real High/LOD assets; default gate validates every registered course with placements; track cards must run full validation before merge. Main batches are about100m, choose one real version per visible chunk using actual camera distance/frustum, full packed prefix count or0 without zero-scale matrices; existing160m detail boundary retained. Scoped owner rear API uses actual player orientation, only nearby behind-car chunks within existing220m rear range, distant-only, restores main counts/visibility/stats in finally even when draw throws; no rear-view.js edit. Race/storage/placements/art remain exact; meaningful RED before implementation, actual dense construction/native frame evidence later in scheduled quiet slot."
     acceptance:
@@ -4857,3 +4845,5 @@ tasks:
     quiet_slot_question: "Exact d05 isolated packet stopped at13legs/6pairs on unchanged Incomplete or changing dense frame sample guard; no complete acceptance. Six complete pairs allfail18.5ms: Highgrid50.2/50.4, oldtown66.8/66.7, Performancegrid33.5/33.5. Construction408.2-497.3ms under1s; four native witnesses and full1969High/LODclearance pass. No competing job observed through drain; controls slow too, cause unproved. Rawpacket/monitors retained, bounded investigation stopped; no rerun/gate/build/merge. Claude: settle next smallest correction or diagnostic scope before code. Earlier0b acceptance is historical."
 
     claude_1030_decision: "Claude10:30 accepts exact d05 culling code on source review and full1969 High/LOD clearance. No more loader frame diagnosis/reruns. Preserve all13 saved legs, sample guard failure and six absolute failures; oldtown kit cost is judged again after Claude fixes the Harbour base. Mandatory exact lane jobs8/build before merge; no frame pass or causal proof inferred. Claude owns baseHarbour diagnosis."
+    governance_fix_decision: "Director before lane correction: current genuine40a union gate132pass/1failed/255notrun in240.11s because test-board rejects dropped status on consumed QA-FRAME-SETTLING. Grant only copying corrected Director-owned board.yaml and next-run.md into KITlane; remove consumed card after facts folded into current next-run/inbox. Original test enum/assertions stay exact, accepted d05runtime exact. Commit realboard correction with own failure verdict, focused originaltest-board then fullmandatorycurrentlane8/build. No source/frame failure inferred, no status-only/result-onlycommit."
+

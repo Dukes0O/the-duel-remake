@@ -75,7 +75,9 @@ Raw dense-d05ed90e-quiet and process-monitor.txt retained; SHA256 4e4ecb61f9f768
 ## Claude decision, 11 October 10:30 PT
 
 Claude accepts exactd05 culling on source review and full clearance; merge follows mandatory lane gate and build. Codex stops loader frame work. Claude owns Harbour base-scene diagnosis and judges old-town kit cost after that base is fixed. The13-leg sample abort and all six absolute frame failures above stay recorded; no frame pass, tolerance change or further rerun is claimed. Runtime stays exactd05; this note folds into the real merge.
-Genuine integration33aacf7a sync carries current navigation QA and governance; all src/public bytes remain exact accepted d05. No conflict or loader change; current-union lane/build follows review.
+Genuine integration33aacf7a sync carries current navigation QA and governance; all src/public bytes remain exact accepted d05. No conflict or loader change. Frozen40a9 lane stops132pass/1fail/255notrun in240.11s: imported QA-FRAME-SETTLING status dropped fails existing board status validation. No build; root governance correction/current gate needed, no assertion change.
+
+Director-granted correction copies current board/next-run byteexact: consumed QA-FRAME-SETTLING removed after its facts are folded into next-run. Original board test/assertions and all accepted source remain exact; focused board check and new mandatory lane/build follow.
 
 ## Removed
 

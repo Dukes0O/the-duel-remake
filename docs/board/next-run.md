@@ -64,8 +64,11 @@ Writer/helper runtime bytes remain exact86; no writer rerun or broader diagnosis
 The historical failing transition remains unproved.
 
 Claude's 09:45 answer drops QA-FRAME-SETTLING. Preserve the unchanged method,
-counts, percentiles and 10% diagnostic. Its two old reports are absent from
-current integration evidence; do not claim an unobserved deletion. Claude owns
+counts, percentiles and 10% diagnostic. Original4834abde first pair failed CPU
++53.61%/GPU+28.68%, baselineGPU24.94→11.54ms; one unchanged repeat passed
+all four pairs (worstCPU+4.40%/GPU+4.00%, delivered unchanged). Cause unproved.
+Both reports are absent from current integration evidence, no deletion claimed.
+The consumed card is removed, as dropped is not a supported board status. Claude owns
 Harbour/Tremblant polish. Claude10:30 says Kyle approved the Deep plan. Its new Codex cards go below all
 Phase4 work only after the plan merges; no Deep card starts during this run.
 
