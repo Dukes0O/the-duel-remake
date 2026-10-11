@@ -1,7 +1,7 @@
 import {App} from './app.js';
 import {mountScreenRouter} from './screen-router.js';
 import {backupBeforeMigration, backupCareer, captureCareer, createCompleteCareerExport, createIndexedDbBackupStore, retireSharedBest} from './career-backup.js';
-import {prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
+import {acquireCareerWriter, CAREER_WRITER_LOCK, prepareCareerBudget, createBudgetCareerExport, ORIGIN_POINTER_KEY} from './career-budget.js';
 
 const root = document.querySelector('#app');
 // A QA entry may inject a tab-scoped store before this module loads. Production
@@ -26,9 +26,14 @@ async function downloadCareer(){
   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 await (async()=>{
+  // Private QA careers are tab-scoped; production tabs share one durable career.
+  const writerName=qaBackupStore?CAREER_WRITER_LOCK+'-qa-'+crypto.randomUUID():CAREER_WRITER_LOCK;
+  const writer=await acquireCareerWriter({name:writerName});
+  writer.assertActive();
   await backupBeforeMigration(undefined,backupStore);
+  writer.assertActive();
   const physical=globalThis.localStorage;
-  budgetStorage=await prepareCareerBudget({physical,store:backupStore,
+  budgetStorage=await prepareCareerBudget({physical,store:backupStore,writer,
     backup:()=>backupCareer(physical,backupStore,'before-origin-budget-migration'),
     onFailure:error=>{
       let notice=document.querySelector('#career-save-error');
@@ -37,9 +42,20 @@ await (async()=>{
         document.body.append(notice);}
       notice.textContent='Career save failed. Stop playing and export your career before closing this tab. '+error.message;
     },installGlobal:true});
+  await budgetStorage.flush();
+  writer.assertActive();
   await backupBeforeMigration(budgetStorage.storage,backupStore);
+  writer.assertActive();
   await retireSharedBest(budgetStorage.storage,backupStore);
+  writer.assertActive();
 })().catch(error=>{
+  if(error.code?.startsWith('CAREER_WRITER_')){
+    root.innerHTML='<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER STORAGE</p><h1 id="writer-title"></h1><p id="writer-error"></p></section>';
+    root.querySelector('#writer-title').textContent=error.code==='CAREER_WRITER_BUSY'?'THE DUEL IS ALREADY OPEN.':'RELOAD BEFORE PLAYING.';
+    root.querySelector('#writer-error').textContent=error.message;
+    // This tab has no verified current career. Do not attach an export handler.
+    throw error;
+  }
   const archiveProblem=/archive|snapshot|journal|origin pointer|budget/i.test(error.message);
   root.innerHTML=archiveProblem
     ?'<section class="backup-blocked" role="alert"><p class="eyebrow">CAREER STORAGE NEEDS RECOVERY</p><h1>KEEP THIS BROWSER DATA.</h1><p id="backup-error"></p><button type="button" id="backup-export">TRY COMPLETE EXPORT</button></section>'

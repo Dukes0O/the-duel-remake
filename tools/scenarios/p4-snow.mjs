@@ -60,6 +60,8 @@ function setView(view) {
       app.inspectionCamera={position:[pond.x-18,pond.y+14,pond.z-28],target:[pond.x,pond.y,pond.z]};
     }
   }
+  // Freeze only the presentation camera before a static timing witness.
+  if(view==='frame')api.camera.position.fromArray(app.inspectionCamera.position);
   api.renderFrame();
 }
 

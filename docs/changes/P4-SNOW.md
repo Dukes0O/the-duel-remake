@@ -83,7 +83,10 @@ Renderer prepares approved extras before building Snow, keeps bank identities
 on menu-to-race transitions, and feeds the actual eight grounded car meshes.
 Round-one native art is pending Claude. Quiet frames, lane/build, final review
 and merge remain pending.
-No finished-art or frame verdict yet. No real saves, release or live QA.
+No finished-art/frame verdict. Current integration dcdab76a genuinely synced.
+Static timing fixes only its native presentation camera before sampling;
+original samples/10percent limits and all actor poses stay exact.
+Director clears the three additive renderer hooks; no real saves/release/live QA.
 
 ## Removed
 

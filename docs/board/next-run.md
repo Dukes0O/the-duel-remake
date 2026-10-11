@@ -1,37 +1,48 @@
 # Overnight run, 11 October 2026
 
-The live game stays at1046076a/build20261010195525-87b479fc74c0. No release.
-Follow Kyle's Build more, record less rules and the current board. Check the
-shared playtest inbox before each new card and after each integration merge.
-Claude decisions go on the card and under Claude answers; unresolved questions
-use waiting_on:claude and For Claude. Keep other cards moving.
+The live game stays at 1046076a. No release. Follow Kyle's Build more, record
+less rules. Check the shared playtest inbox before each new card and after
+merges. Questions and art go on the card and under For Claude; his answers
+are under Claude answers. Keep independent cards moving without waiting for Kyle.
 
-DAYNIGHT and QA-AUDIO-CAPTURE have merged. Claude final art4/4/4/4 and the
-exact-source quiet frames pass original limits (delivered<=18.2ms). Lane
-378/378 in892.12s and build827ms pass. The atomic capture keeps raw clocks,
-original PCM and every old assertion; old timestamp failure cause is unproved.
+Merged: DAYNIGHT and atomic audio capture (59c408fe), final KITS (5b6e325b),
+and Dossier with all 27 reference laps (86a7c336). Current lane/build evidence
+is on their cards and change notes. DAY quiet delivered p95 is at most 18.2 ms;
+Claude passed lighting 4/4/4/4 and final kits 3.5. No fourth kit art round.
 
-KITS final art passes3.5 for paddock, snow and Yeti; no fourthround. Final
-source2b0c585e needs current lane/build before merge. Dossier98aa90cf and
-Telemetrye648f380 have all27 references, native functional evidence and source
-review; telemetry save review is clear. Their current gates remain queued.
+Telemetry merged79a75173 after lane383/383 in653.18s/build1.24s. Separate
+consumed-art janitor passed lane6/6/build548ms and merges now. Next: kit loader.
+Loader d774b508 adds Claude's finite nonnegative lift above the actual ground,
+with the unchanged 4.5 m road clearance test for both High and distant models.
+Post its merge for Claude's Harbour and Tremblant lanes, which he owns.
 
-GP09e01b86 is reviewed, including telemetry sync and non-evicting GP ghost
-admission; native/gates remain queued. PIT80dca4f5 is reviewed with actual
-native service/crew evidence; uniqueCPUbox check and gates remain queued.
-QUAL4b7c0470 has actual moving-start and no-pit native proof; real pit-exit
-fixture queued. Its reproduced qualifying telemetry gap awaits Claude scope.
+PIT dfddbf09 fixes the actual eight-car player's invalid service box; native
+four-second service and all eight unique boxes pass. QUAL 6abe1284 has genuine
+pit-exit and flying-lap proof, retains only the best clean comparison lap,
+and starts the earned GP grid. Qualifying still depends on the GP card.
 
-Panorama waits for Claude's shared-kit-loader hook decision. Start Snow after
-lighting; both use Kyle's approved kits and send actual sheets through cards.
-Claude owns Harbour and Tremblant overnight; Codex does not start either.
+GP existing has an actual Azure first-corner pile-up. Claude requested all
+30 seeded races per difficulty with the existing driver. That balance is
+running. Keep native assertions unchanged. If above 1 in 20, his smallest
+approved fix is a GP-only start setback; existing Duel and records stay exact.
 
-Audio level source is prepared with initial+6.4dB from the old-22.42LUFS
-mix toward requested-16LUFS. Exact quiet peak/RMS expectation changes by
-that intended gain with unchanged0.1dB tolerance; source review clear. Whole
-native race recording, truepeak stress and gates remain. Kyle listens tomorrow.
+Panorama's actual first art sheet is on its card for Claude. Approved kits,
+landmarks, native eight-car finish and Sunset through final-lap dusk pass
+functional checks; its own quiet frame check and full-field driver decision
+remain. First full track: no placeholder or fake finish.
 
-Heavy checks are coordinated in the inbox. Full tiers run alone with4jobs,
-after checking all laptop jobs, including Claude. End with full tier and status.
-Prior clean full6add6e37 passed376/376 in794.06s; it does not cover later source.
-No results-only commits; fold ledger/status/log into real changes or merges.
+Snow's native pond, bank and moving eight-car checks pass. A shared kerb-normal
+fault makes High Bloom corrupt half the frame. Separate FIX-P4-KERB-NORMALS
+removes redundant opposite triangles with a failing-normal regression;
+Snow must show zero non-finite HDR/Bloom pixels with Bloom still enabled.
+Its actual art and quiet frame checks follow that repair.
+
+Audio c665e537: actual native whole race is -16.08 LUFS and -1.21 dBTP;
+raw capture continuity and replay identity pass. Keep the exact PCM listening
+file for Kyle tomorrow. The lossy MP3 reconstructs peaks above the PCM ceiling,
+so it is not peak evidence. Lane/build remain queued.
+
+Heavy checks are coordinated in the inbox. Full tiers run alone with 4 jobs,
+after checking all laptop jobs, including Claude. End with full tier, janitor
+sweep and status. Prior full passes do not cover the overnight changes.
+Fold ledger/status/run-log into real changes or merges; no results-only commit.
