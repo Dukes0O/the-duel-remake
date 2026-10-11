@@ -17,9 +17,9 @@
 // after it +16 to +21, Skyline -12 to -5 and its crest 3 to 2.4, Esses -10, -10, -8 to -7, -7, -8,
 // Conrod -55 to -68. The climbs still add up to zero.
 // The numbers below then close with every straight within 1%.
-import { defineScriptedCourse } from '../track-script.js';
+import { defineScriptedCourse, buildTrackScript } from '../track-script.js';
 
-export const PANORAMA_RIDGE = defineScriptedCourse({
+const PANORAMA_ROAD = defineScriptedCourse({
   id: 'panorama-ridge', name: 'Panorama Ridge', flag: 'panorama-ridge',
   theme: 'alpine', stage: 16, kind: 'circuit', layoutVersion: 1,
   closed: true, laps: 3, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
@@ -84,4 +84,53 @@ export const PANORAMA_RIDGE = defineScriptedCourse({
       'murray-corner': { brakeBoard: 100, line: 'Brake in a straight line, turn late, inside kerb.', note: 'Last chance to pass. Out-brake them here, and defend the inside if you are ahead.' },
     },
   },
+});
+
+
+// Static authored scenery is independent of route RNG and race state. Kit
+// dimensions are metres, Y-up; heading is an offset from the sampled road.
+function panoramaPlacements(road) {
+  const placements = [{id: 'start-gantry', s: 0, lateral: 0, scale: [1.06, 1, 1]}];
+  for (let s = 120; s <= 400; s += 35) {
+    placements.push({id: 'pit-garage', s, lateral: -27, heading: Math.PI / 2});
+  }
+  for (let s = 70; s <= 420; s += 55) {
+    placements.push({id: 'grandstand', s, lateral: 25, heading: -Math.PI / 2});
+  }
+  for (let s = 100; s <= 380; s += 4) {
+    placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2});
+  }
+  for (const name of ['Hell Gate', 'The Cutting', 'Forrest Elbow', 'Murray Corner']) {
+    const corner = road.pieces.find(piece => piece.name === name);
+    const s = Math.max(0, corner.s0 - 30);
+    placements.push({id: 'marshal-post', s, lateral: road.halfWidthAt(s) + 6, heading: Math.PI});
+  }
+  // A real lower town on the descent: two staggered streets, with an open
+  // foreground below Skyline rather than houses on its crest or racing line.
+  const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
+  for (let i = 0; i < 16; i++) for (const row of [0, 1]) {
+    placements.push({id: (i + row) % 2 ? 'shopfront-a' : 'shopfront-b',
+      s: conrod.s0 + 180 + i * 12, lateral: 100 + row * 24,
+      heading: row ? Math.PI : 0, scale: .9 + (i % 3) * .05});
+  }
+  return Object.freeze(placements.map(Object.freeze));
+}
+const road = buildTrackScript(PANORAMA_ROAD);
+const ridge = road.pieces.find(piece => piece.name === 'Ridge Top');
+export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
+  name: 'Panorama Ridge Sunset',
+  pitLane: Object.freeze({straight: 'Pit Straight', side: 'right'}),
+  lightPath: Object.freeze({axis: 'race-progress', keyframes: Object.freeze([
+    Object.freeze({at: 0, look: 'golden'}),
+    Object.freeze({at: 1 / 3, look: 'golden'}),
+    Object.freeze({at: 2 / 3, look: 'dusk'}),
+    Object.freeze({at: 1, look: 'dusk'}),
+  ])}),
+  kitPlacements: panoramaPlacements(road),
+  circuitLandmarks: Object.freeze([
+    Object.freeze({id: 'ridge-radio', type: 'radio-mast', s: ridge.s1 - 24,
+      lateral: -24, height: 28}),
+    Object.freeze({id: 'pit-timing', type: 'scoreboard', s: 45,
+      lateral: 21, height: 16, title: 'PANORAMA'}),
+  ]),
 });
