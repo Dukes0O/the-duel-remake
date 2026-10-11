@@ -46,8 +46,14 @@ lap time remain authoritative. Incomplete runs publish nothing.
   session through the QA adapter window name between presets. Protected
   storage correctly refused clear(); that failed trial is removed. All
   locked-entry and read-only assertions stay exact.
-- Native Team Room snapshots, read-only browser lifecycle, final lane
-  tier/build and independent source review remain before merge.
+- Final authored native Team Room check passed 58 driver-seat views across
+  all 27 routes in High and Performance, private port 26563. No warnings or
+  errors; race/profile/settings/storage and focus witnesses stayed exact.
+  Screenshots show readable maps, flags, sectors and live road views.
+- Independent source review cleared the driver, snapshot lifecycle, final
+  lighting sync and disposable-session adapter. Genuine integration sync
+  5b6e325b preserves the reviewed runtime and all 27 reference bytes; the
+  existing final native verdict above is retained. Final lane/build remain.
 
 ## Behavior and test changes
 
@@ -68,3 +74,6 @@ module. Incomplete legacy reference data is replaced atomically by the
 complete current set. Stale progress narratives are folded into this note;
 Git text history retains the detailed failures. No saved picture, duplicate
 renderer, save migration, licensed input or production driver is introduced.
+
+Exact faeb4885 lane381/381 passes in867.94s; build516ms. Source/native
+verdicts remain clear; no post-pass runtime change. Integration merge only.

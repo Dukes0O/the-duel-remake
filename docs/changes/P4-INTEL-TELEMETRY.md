@@ -1,6 +1,6 @@
 # P4-INTEL-TELEMETRY
 
-Status: building; final sync and native acceptance in progress.
+Status: building; native acceptance passed, current lane/build follow.
 
 ## What changed
 
@@ -64,7 +64,8 @@ real Web Locks exclusion. No backup/archive schema or reward rules change.
   launch alongside a foreign full run was rejected as evidence and repeated.
 - Earlier lane/build on 3d76b5a3 passed 392/392 plus independent source review.
   That evidence does not grant a pass after this sync.
-- Save Guardian cleared 0dba9249 conditionally; final sync needs fresh review.
+- Save Guardian cleared final 9fbcc671. No storage or fixture bytes changed
+  during the final lighting/reference sync; old layout laps remain retained.
 - Synced current Dossier, final DAYNIGHT source and all 27 native references.
   Source hooks merged without conflict. The old Dossier lifecycle narrative
   was replaced with its current approved note. Current reference suite passes
@@ -81,8 +82,12 @@ real Web Locks exclusion. No backup/archive schema or reward rules change.
   rebuilt references. Reviewed ac4c9cbf replaces the rejected memory.clear()
   fixture with the established QA window.name adapter reset after every
   preset's unchanged-state assertions. Root's adapter native check passed all
-  27 routes in both presets; final authored snapshot rerun is pending.
-  Final lane/build and fresh Save Guardian review remain.
+  27 routes in both presets. Final authored rerun also passed 58 native
+  views, all 27 routes, both presets and unchanged-state witnesses.
+  Genuine integration sync 86a7c336 adds approved kits/canonical checks;
+  reviewed runtime and reference bytes stay exact against e648f380, and
+  telemetry/save code and fixtures stay exact against Save Guardian 9fbcc671.
+  Final lane/build remain.
 ## Removed
 
 Duplicate analysis is removed by the Dossier extraction; telemetry delegates
