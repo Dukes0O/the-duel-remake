@@ -83,7 +83,7 @@ export async function run(context){
   assert.equal(blocked.exportButton,false);assert.equal(blocked.opens,0);assert.equal(blocked.value,fixtureValue);
   assert.equal(blocked.childFixture,fixtureValue);
   await context.evaluate(`window.__writerContender.close()`);
-  await context.command('Page.reload',{ignoreCache:true});
+  await context.reload({ignoreCache:true});
   await context.waitFor(`(${ready}) && performance.timeOrigin!==${first.timeOrigin}`,
     'new document reacquires the writer after real reload',60_000);
   const afterReload=await context.evaluate(`(async()=>({
@@ -102,7 +102,7 @@ export async function run(context){
 
   // Real history navigation either creates a fresh document or reaches the
   // early pageshow restoration guard, which reloads before App can resume.
-  await context.evaluate('history.back()');
+  await context.back();
   await context.waitFor(`(${ready}) && !location.search.includes('writer-unavailable=1')`,
     'history return safely re-enters writer admission',60_000);
   const afterBack=await context.evaluate(`(async()=>({

@@ -231,6 +231,7 @@ async function openPage(cdp, issues, warnings) {
   });
   await Promise.all([
     cdp.send('Page.enable', {}, sessionId),
+    cdp.send('Page.setLifecycleEventsEnabled', {enabled:true}, sessionId),
     cdp.send('Runtime.enable', {}, sessionId),
     cdp.send('Log.enable', {}, sessionId),
     cdp.send('Network.enable', {}, sessionId),
@@ -253,6 +254,84 @@ async function waitForValue(cdp, sessionId, expression, label, timeoutMs = 45_00
     await delay(250);
   }
   throw Error(`Timed out waiting for ${label}.`);
+}
+
+// A command acknowledgement can precede document/context replacement.
+export function createPageNavigation(cdp, page, baseURL) {
+  async function transition(method, params) {
+    const {frameTree} = await cdp.send('Page.getFrameTree', {}, page.sessionId);
+    const mainId = frameTree.frame.id, previousLoader = frameTree.frame.loaderId;
+    return new Promise((resolve, reject) => {
+      let commit = null, execution = null, expectedLoader = null;
+      let accepted = false, restored = false, checking = false, finished = false;
+      const loaded = new Set();
+      const complete = error => {
+        if (finished) return;
+        finished = true;clearTimeout(timer);off();
+        cdp.socket?.removeEventListener('close', closed);
+        if (error) reject(error);else resolve();
+      };
+      const closed = () => complete(Error('Chrome DevTools connection closed.'));
+      const ready = () => {
+        if (finished || checking || !accepted || !commit || restored) return;
+        if (!commit.sameDocument && (!execution || !loaded.has(commit.loaderId) ||
+          expectedLoader && commit.loaderId !== expectedLoader)) return;
+        checking = true;
+        // This read probes the selected default context, never game readiness.
+        cdp.send('Runtime.evaluate', {expression:'true',returnByValue:true,
+          ...(!commit.sameDocument ? {uniqueContextId:execution.uniqueId} : {})}, page.sessionId)
+          .then(response => {
+            if (response.exceptionDetails) complete(Error('Navigation context probe failed: '+response.exceptionDetails.text));
+            else if (response.result?.value !== true) complete(Error('Navigation default context is not usable.'));
+            else complete();
+          }, complete);
+      };
+      const off = cdp.onEvent(packet => {
+        if (packet.method === 'Target.detachedFromTarget' && packet.params.sessionId === page.sessionId) {
+          complete(Error('Navigation target detached.'));return;
+        }
+        if (packet.method === 'Target.targetDestroyed' && packet.params.targetId === page.targetId) {
+          complete(Error('Navigation target destroyed.'));return;
+        }
+        if (packet.sessionId !== page.sessionId) return;
+        const {method:event,params:value} = packet;
+        if (event === 'Runtime.executionContextsCleared') execution = null;
+        if (event === 'Runtime.executionContextDestroyed' && execution?.id === value.executionContextId) execution = null;
+        if (event === 'Runtime.executionContextCreated' && value.context.auxData?.isDefault &&
+          value.context.auxData.frameId === mainId) execution = value.context;
+        if (event === 'Page.frameNavigated' && value.frame.id === mainId && !value.frame.parentId) {
+          // The writer's restored document synchronously reloads on pageshow.
+          restored = value.type === 'BackForwardCacheRestore';
+          if (restored) {commit = null;execution = null;}
+          else if (value.frame.loaderId !== previousLoader) commit = value.frame;
+        }
+        if (event === 'Page.lifecycleEvent' && value.frameId === mainId && value.name === 'DOMContentLoaded')
+          loaded.add(value.loaderId);
+        if (event === 'Page.navigatedWithinDocument' && value.frameId === mainId)
+          commit = {sameDocument:true};
+        ready();
+      });
+      const timer = setTimeout(() => complete(Error('Timed out waiting for navigation document/context.')), TIMEOUT_MS);
+      cdp.socket?.addEventListener('close', closed);
+      // Listener is installed before the one mutation, including fast events.
+      cdp.send(method, params, page.sessionId).then(result => {
+        if (result.errorText) {complete(Error('Navigation failed: '+result.errorText));return;}
+        expectedLoader = result.loaderId ?? null;accepted = true;ready();
+      }, complete);
+    });
+  }
+  return {
+    navigate(path) {
+      if (!path.startsWith('/tools/') || path.includes('..')) throw Error('Scenario path must stay in QA tools.');
+      return transition('Page.navigate', {url:baseURL+path});
+    },
+    reload: (params = {}) => transition('Page.reload', params),
+    async back() {
+      const history = await cdp.send('Page.getNavigationHistory', {}, page.sessionId);
+      if (history.currentIndex < 1) throw Error('No previous QA history entry.');
+      return transition('Page.navigateToHistoryEntry', {entryId:history.entries[history.currentIndex-1].id});
+    },
+  };
 }
 
 async function cleanupProfile(profile) {
@@ -290,9 +369,10 @@ export async function main(args = process.argv.slice(2)) {
     const debugPort = await waitForChromePort(profile, chrome.child, chrome.output);
     cdp = await connectDevTools(debugPort);
     const page = await openPage(cdp, issues, warnings);
+    const navigation = createPageNavigation(cdp,page,baseURL);
     const context = {
       baseURL, outputDir, issues, warnings, screenshots,
-      navigate: async path => { if (!path.startsWith('/tools/') || path.includes('..')) throw Error('Scenario path must stay in QA tools.'); await cdp.send('Page.navigate', { url: baseURL + path }, page.sessionId); },
+      navigate: navigation.navigate, reload: navigation.reload, back: navigation.back,
       evaluate: expression => evaluate(cdp, page.sessionId, expression),
       waitFor: (expression, label, timeoutMs) => waitForValue(cdp, page.sessionId, expression, label, timeoutMs),
       command: (method, params) => cdp.send(method, params, page.sessionId),
