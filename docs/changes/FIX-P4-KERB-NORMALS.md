@@ -22,7 +22,7 @@ GREEN after one reverse-index line removal: 2,112 finite unit normals and
 Pre-fix position/UV/material digest 077a29a3...9e075d remains exact.
 Native Snow High/Performance passes with eight cars, zero warnings/errors,
 zero NaN/Inf in all12 actual HalfFloat scene/Bloom targets, default Bloom on.
-Director source review clear; current integration genuinely synced. Gates pending.
+Director source review clear; current integration genuinely synced. Exact e6b82a12 lane74/74 in91.20s and build616ms pass.
 No existing test assertion or tolerance changes. No world signatures regenerated.
 
 ## Removed

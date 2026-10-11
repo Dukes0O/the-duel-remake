@@ -78,7 +78,7 @@ remain exact. No new native/frame run; current lane/build and review are queued.
 ## Snapshot sync decision before code
 
 The reviewed d774 source passed lane380/380 in690.19s and build507ms.
-Genuinely merged dcdab, then current bafd kerb fix without conflicts;
+Genuinely merged dcdab and current ababc9c5 kerb source/card/status;
 snapshot APIs plus kit retry/disposal retained.
 Snapshot drawing must wait for real kit readiness before world build, then
 update High/LOD at the snapshot ground with menu-only presentation state.
