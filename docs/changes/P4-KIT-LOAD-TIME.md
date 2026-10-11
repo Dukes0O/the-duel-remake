@@ -45,7 +45,7 @@ Current source has no asset, road, simulation, save or placement edits.
 Focused source-only checks pass; syntax and whitespace checks pass.
 
 Owner presentation constructionMs is entry-to-genuine-ready elapsed, including
-actual asset wait/parse, source validation and assembly. Disjoint activeCpuMs
+option/default getters, actual asset wait/parse, source validation and assembly. Disjoint activeCpuMs
 sums normalization, real source validation and assembly only. Pending/failed
 owners never fabricate completed timing. Focused actual20ms asset-wait test
 passes; acceptance uses the total, with no subtraction.
@@ -58,14 +58,23 @@ kitPlacements is omitted before the baseline world builds, so CPU work is not
 masked by merely hiding the group. Exact full state and actor poses match;
 each native sample retains complete state/profile/storage before/after.
 Same120 unmeasured/360 measured frames, two pair orders, original10% limit and
-18.5ms delivered p95. GPU timers cover genuine main plus rear; none discarded.
+18.5ms delivered p95. Combined update+submit also has the same10% guard, so
+added culling work cannot hide outside submitMs; original checks remain exact.
+GPU timers cover genuine main plus rear; no recorded sample is discarded.
 Reusable owned exports: installMainRearMeasurement and measureMainRearFrames;
 other track recipes may import the sampler after this exact source is reviewed.
 Native actual eight-car grid/old-town witnesses are prepared; the native .95
 circuit driver reaches old town through actual rules, with no position staging.
 
-Genuinely synced approved integration fbc7d76c; source/native timing remain
-unclaimed. Existing required gate/build and ordinary QA-patch review are queued.
+Genuinely synced approved integration fbc7d76c. Functional ff86 passed private
+15540:four screenshots,0warnings/errors,8actual scene-visible car roots (field
+naturally spreads; no staging/all-in-camera claim). Total construction High
+228.4/173.5ms, Performance167.1/166.6ms; activeCPU76.0/64.2/64.4/62.4ms.
+Main High86+363/126+730, Performance0+449/0+856 unique placements; actual rear
+0High+96/176Low in3chunks, exact main restore. Actual driver reaches old town
+s1330.2998 at38.4333s both qualities. Evidence:dense-ff86-functional under
+integration .evidence/2026-10-11/P4-KIT-LOAD-TIME/. No frame pass inferred.
+Clock-entry/combined-CPU review fixes follow; lane/build/quiet frames queued.
 
 Actual dense Harbour construction under1s and quiet High/Performance grid and
 old-town frame checks (original10%/18.5ms limits) remain queued; no pass claimed.

@@ -156,9 +156,10 @@ function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) 
 }
 
 // Own cache and instances for one world. No module-global asset lifetime.
-export function createTrackKits(course, {placements=course.def.kitPlacements ?? [],
-    extraPlacements=[],requiredIds=[],loadAsset,validateClearance=true}={}) {
+export function createTrackKits(course, options) {
   const enteredAt = performance.now();
+  const {placements=course.def.kitPlacements ?? [],extraPlacements=[],requiredIds=[],
+    loadAsset,validateClearance=true} = options === undefined ? {} : options;
   const group = new THREE.Group(); group.name = 'Approved track kits';
   const resources = new Set(), released = new WeakSet(), assets = new Map();
   const skeletons = new Set(), batches = [], instances = [], chunks = new Map();

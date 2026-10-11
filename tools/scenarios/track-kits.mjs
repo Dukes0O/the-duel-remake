@@ -310,6 +310,7 @@ async function denseHarbour(context,report,persist) {
         throw Error('Dense paired native race state or eight-car poses differ');
       const addedPercent={};
       for(const key of ['delivered','cpu','gpu'])addedPercent[key]=off.pacing[key]&&on.pacing[key]?(on.pacing[key].p95/off.pacing[key].p95-1)*100:null;
+      addedPercent.combined=(on.combined.p95/off.combined.p95-1)*100;
       const comparison={quality,place,pair,addedPercent,deliveredP95:on.pacing.delivered.p95};
       report.dense.comparisons.push(comparison);
       if(Object.values(addedPercent).some(value=>value>10)||on.pacing.delivered.p95>18.5)
