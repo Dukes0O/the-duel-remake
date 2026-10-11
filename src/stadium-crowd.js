@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 export const STADIUM_SECTIONS=24,STADIUM_ROWS=8;
 let atlas;
-function crowdTexture(){
+export function crowdTexture(){
   if(!atlas){atlas=new THREE.TextureLoader().load('/assets/textures/stadium-crowd.png');atlas.colorSpace=THREE.SRGBColorSpace;atlas.anisotropy=4;atlas.userData.sharedAsset=true;}
   return atlas;
 }
