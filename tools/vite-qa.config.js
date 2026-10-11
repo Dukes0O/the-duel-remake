@@ -33,11 +33,17 @@ if (harbourSource) {
     },
   });
 }
-const input = Object.fromEntries([
-  ['game','../index.html'],['preview','./preview.html'],['checks','./visual-check.html'],
-  ['contacts','./contact-check.html'],['updates','./update-check.html'],['menu','./menu-check.html'],
-  ['vehicles','./vehicle-art-check.html'],['audio','./audio-race-check.html'],['listening','./audio/listening.html'],
-].map(([name,path])=>[name,fileURLToPath(new URL(path,import.meta.url))]));
+const input = {
+  game:fileURLToPath(new URL('../index.html',import.meta.url)),
+  preview:fileURLToPath(new URL('./preview.html',import.meta.url)),
+  checks:fileURLToPath(new URL('./visual-check.html',import.meta.url)),
+  contacts:fileURLToPath(new URL('./contact-check.html',import.meta.url)),
+  updates:fileURLToPath(new URL('./update-check.html',import.meta.url)),
+  menu:fileURLToPath(new URL('./menu-check.html',import.meta.url)),
+  vehicles:fileURLToPath(new URL('./vehicle-art-check.html',import.meta.url)),
+  audio:fileURLToPath(new URL('./audio-race-check.html',import.meta.url)),
+  listening:fileURLToPath(new URL('./audio/listening.html',import.meta.url)),
+};
 
 export default defineConfig({
   plugins:plugins,resolve:{alias:aliases},define:{__DUEL_QA__:'true'},

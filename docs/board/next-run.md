@@ -8,8 +8,8 @@ DAYNIGHT, final KITS, Dossier (27 references), telemetry, PIT, finite kerbs,
 shared kit loader and Audio are merged. Claude merged Tremblant through 4527b3f5.
 Audio stress passed 23/23, worst peak -1.59 dBTP. Kyle approved the sound on 11 October (sound approved - keep going). The
 valid 121-second partial measured -16.29 LUFS / -2.10 dBTP; finish audio remains
-uncaptured. Commit this listening verdict with the next real merge, then remove
-consumed captures while keeping recipes and current runtime assets.
+uncaptured. Approval is committed in33aacf7a; consumed listening284,485,319B
+and navigation852,173B are removed. Recipes and current runtime assets remain.
 QA-AUDIO-CLOCK stays low priority with one bounded 30-minute investigation.
 
 Claude10:30 accepts the loader on exact reviewed d05ed90e. It genuinely includes
@@ -21,7 +21,9 @@ High grid 50.2/50.4, old town 66.8/66.7; Performance grid 33.5/33.5 ms.
 Construction 408.2–497.3 ms passes under 1 s; four native witnesses pass.
 No competing job observed through drain; controls slow too, cause unproved.
 Preserve both packets and monitors. The bounded investigation has stopped;
-no more frame rerun or diagnosis. Exact mandatory lane jobs8/build precedes merge;
+no more frame rerun or diagnosis. Current frozen75df10c2 also fixes consumed
+board status and obsolete source guards without numeric/tolerance changes.
+Exact mandatory lane jobs8/build precedes merge;
 Claude owns the Harbour base-scene diagnosis and later old-town cost.
 Earlier accepted 0b figures are historical; current absolute failures remain failures.
 
@@ -39,40 +41,43 @@ plain fence finish, rounded rocky peaks, warmer violet dusk and actual lower
 town views. All 14 focused checks pass; native ready-window ordering has a
 meaningful old-source failure and current fix. The third packet waits accepted
 loader and actual Harbour settings. Reuse Harbour's opt-in field mechanism,
-widen only the ridge from 11 to 13 m (Cutting through Forrest Elbow), then run
+ridge width11to13 is implemented c8c4fb8c (15focused checks pass); final
+source93e7fce4 also passes21numeric frame-policy controls. Then run
 the original 90 attempts against unchanged 3.2 targets. Original field rates
 failed. Claude10:30 approves day-versus-authored-dusk full-kit comparisons as information;
 absolute delivered18.5ms and construction<1s are acceptance. Keep original sampler. Final art must show the coherent final road.
 
-Snow final source 865d070e is reviewed clear and genuinely includes current
-Tremblant/loader: full-scene snow and flakes, existing mountain snow caps,
-grounded pond rims, faint actual sky reflection and 64 cluster pines. Physical
-ranges/grip and dry shaders stay exact. Same eight final native views, finite
-HDR checks and the final <=500 KB sheet await accepted loader integration.
-Claude10:30 makes mixed kit/effects relative costs information and absolute
-delivered18.5ms/construction<1s acceptance; retain all sample/finite/state guards. Claude receives each actual third sheet; there is no fourth art round.
+Snow final packet56213a27 is committed; accepted loader runtime is genuine.
+Native e6ac2080: eight High/Performance views and cars, no warnings/errors,
+12finite HDRtargets; final sheet269446B sent throughcard/inbox. Claude13:40
+accepts the look at cap (2.5/4/3/3.5), subject everypine6m outsidepond rim.
+Two converted immutable physical trees also violate. Proposed authored fix:
+only secondpond s600to650 and positivefirstcluster s180to205, all106pines
+minimum6.44677m, all64clusters/physicalfeatures/pond dimensions/RNG exact.
+Actualnear/far/overlap/1e-4anchors pass. Await Claude's scope answer before
+edits; no fourth round or runtime relocation mechanism. Then genuine KITsync,
+native placement witness and original absolute frames18.5ms/construction<1s;
+relative kit/effects costs are information, allsample/finite/state guards stay.
+Remaining shading/peak/pines/sky belongs to Claude's finishing track passes.
 
-Navigation QA source 42de7cf0 is reviewed clear and merged. Nine meaningful
-headless regressions pass, and the original native writer proof passes with
-memory-only saves and zero warnings/issues. Its first lane stopped at
-123 passed / one setup failure / 264 not run: the copied audio stress harness
-expected the removed navigation text anchor. The granted recipe compatibility
-fix retains the lifecycle wait, recorder URL and every stress assertion/limit.
-Current original native stress passes23/98, worst -1.47dBTP; lane388/388
-in729.18s and sequential build529ms pass.
-Writer/helper runtime bytes remain exact86; no writer rerun or broader diagnosis.
-The historical failing transition remains unproved.
+Navigation QA42de7cf0 merged33aacf7a: lane388/388729.18s/build529ms,
+review clear. Nine lifecycle regressions, original memory-only writer and
+native stress23/98 (-1.47dBTP) pass. Consumed evidence/lane are removed.
+Historical failing telemetry transition remains unproved; no broader diagnosis.
 
 Claude's 09:45 answer drops QA-FRAME-SETTLING. Preserve the unchanged method,
-counts, percentiles and 10% diagnostic. Its two old reports are absent from
-current integration evidence; do not claim an unobserved deletion. Claude owns
+counts, percentiles and 10% diagnostic. Original4834abde first pair failed CPU
++53.61%/GPU+28.68%, baselineGPU24.94→11.54ms; one unchanged repeat passed
+all four pairs (worstCPU+4.40%/GPU+4.00%, delivered unchanged). Cause unproved.
+Both reports are absent from current integration evidence, no deletion claimed.
+The consumed card is removed, as dropped is not a supported board status. Claude owns
 Harbour/Tremblant polish. Claude10:30 says Kyle approved the Deep plan. Its new Codex cards go below all
 Phase4 work only after the plan merges; no Deep card starts during this run.
 
 Claude10:30 yields the shared slot after the current Tremblant gate, holding
 all captures, frames, gates, balance and builds until inbox says slot released.
-Queue: approved ridge focused check, accepted loader current-union lane/build, Snow final native
-packet, then full alone. Azure/Pan field checks await actual Harbour integration. Check every team's current processes, including gp-existing-rate,
+Queue: accepted loader frozen75 lane/build/merge, Snow approved-placement
+answer and absolute frames, then full alone. Azure/Pan field checks await actual Harbour integration. Check every team's current processes, including gp-existing-rate,
 panorama-field-rate and browser-harness, before reserving heavy work. Full
 runs alone with four jobs, with no gates, builds, balance or browser checks.
 End with a new full tier --jobs 4 --keep-going, janitor sweep and status page.
