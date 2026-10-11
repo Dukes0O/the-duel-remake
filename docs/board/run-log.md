@@ -955,3 +955,8 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 11 October merge P4-KIT-LOADER4c337aed: lane385/385 in673.25s/build634ms; real High/LOD assets and ready read-only snapshots pass, actual PIT callback/lifetimes retained. Claude track lanes unblocked; no release.
 
 2026-10-11 merge P4-AUDIO source6b3c9c15: lane127/127398.05s/build678ms; native stress23/23 worst-1.59dBTP; actual121s incomplete listening-16.29LUFS/-2.10dBTP MP3; Kyle listening pending, no release.
+
+2026-10-11 janitor: removed 23,025,372 B of consumed Audio stress/gate evidence; listening and held packets preserved. Tracked 322,216,132 → 322,346,325 B (+130,193 B QA/design text, runtime assets unchanged); 0 proved unused modules/tests. Advisory assets/exports stay with DISC/CLEAN-11; idle unmerged lanes retained.
+2026-10-11 full: merged game fbc7d76c, 387/387 passed, 0 failed/not run, 788.57 s, jobs 4 alone; only governance notes/status dirty, held lanes retained, no release.
+
+2026-10-11 merge QA-NAVIGATION-CONTEXT 42de7cf0: lane388/388 in729.18s, build529ms, review clear; original writer and native audio23/98 pass. Kyle sound approval included; no release.
