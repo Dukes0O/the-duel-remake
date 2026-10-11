@@ -138,7 +138,8 @@ const LIFT = (() => {
   const timber = road.pieces.filter(item => item.name === 'Timber Straight');
   const s = wrap((timber[1].s0 + timber[1].s1) / 2);
   const towers = [-130, -95, -60, -22, 22, 60, 95, 130];
-  return { s, towers, lines: [-1.6, 1.6], height: 9.4, spacing: 26, speed: 2.4 };
+  // The cable rides the top of the towers (10 m tall); the two lines hang either side of the crossbar.
+  return { s, towers, lines: [-1.6, 1.6], height: 10.05, spacing: 26, speed: 2.4 };
 })();
 
 function paddock() {
@@ -250,6 +251,6 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
     { s0: LIFT.s - 7, s1: LIFT.s + 7, from: -135, to: 135 },
   ] },
   hills: [HILL],
-  effects: { lake: LAKE, mist: { count: 12, height: 1.4, spread: .8 } },
+  effects: { lake: LAKE, mist: { count: 12, height: 1.4, spread: .8 }, lift: LIFT },
   kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()],
 });

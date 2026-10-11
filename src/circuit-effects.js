@@ -11,8 +11,14 @@
 //   effects.mist  { count, height, spread }
 //     Soft banks of mist over the lake that drift slowly.
 //   hills         [{ s, lateral, along, across, height, pines, runs }] (circuit-hills.js)
+//   effects.lift  { s, towers, lines, height, spacing, speed }
+//     A chairlift across the road. The towers, cable spans and chairs are kit
+//     pieces named in `kitPlacements` (their `lift` field says which); once the
+//     kit has loaded the cable is stretched between the tower tops and the chairs
+//     ride it. Kit pieces marked `hill` are lifted onto the hill they stand on.
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
+import { trackKitsOf } from './track-kits.js';
 import { hillHeight, hillLocal, hillReach, runWeight } from './circuit-hills.js';
 
 const TAU = Math.PI * 2;
@@ -129,6 +135,80 @@ function hillMesh(course, hill, index) {
   return mesh;
 }
 
+// Where the kit pieces move once they have loaded (track-kits.js hands out
+// poses, nothing else). The cable, the chairs and anything on a hill.
+const CABLE_LENGTH = 12, CHAIR_HANGER = 2.6;
+const RIGHT = new THREE.Vector3(1, 0, 0), UP = new THREE.Vector3(0, 1, 0), FORWARD = new THREE.Vector3(0, 0, 1);
+
+function addKitMotion(group, course) {
+  const placements = course.def.kitPlacements ?? [], lift = course.def.effects?.lift;
+  const raised = [], cables = [], chairs = [], towers = [];
+  placements.forEach((piece, index) => {
+    if (piece.hill !== undefined) raised.push({ piece, index });
+    if (piece.id === 'chairlift-tower') towers.push({ piece, index });
+    if (piece.lift?.role === 'cable') cables.push({ piece, index });
+    if (piece.lift?.role === 'chair') chairs.push({ piece, index });
+  });
+  if (!raised.length && !(lift && towers.length)) return;
+  let prepared = false, tops = null;
+  const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), rotation = new THREE.Quaternion(), scale = new THREE.Vector3(1, 1, 1), roll = new THREE.Quaternion();
+  const tangent = lift ? course.at(lift.s).heading : 0;
+  const along = new THREE.Vector3(Math.sin(tangent), 0, Math.cos(tangent));
+
+  // Tower tops for each cable line, from where the towers actually stand.
+  const prepare = kits => {
+    tops = lift ? lift.lines.map(ds => towers.map(({ index }) => {
+      const base = kits.getPlacementPose(index), at = new THREE.Vector3().setFromMatrixPosition(base);
+      return at.addScaledVector(along, ds).add(new THREE.Vector3(0, lift.height, 0));
+    })) : null;
+    for (const { piece, index } of raised) {
+      const hill = course.def.hills[piece.hill], [du, dv] = hillLocal(hill, piece.s, piece.lateral);
+      const pose = kits.getPlacementPose(index);
+      pose.premultiply(matrix.makeTranslation(0, hillHeight(hill, du, dv), 0));
+      kits.setPlacementPose(index, pose);
+    }
+    cables.forEach(({ piece, index }) => {
+      const line = tops[piece.lift.line], a = line[towers.findIndex(({ piece: t }) => t.lateral === piece.lift.a)], b = line[towers.findIndex(({ piece: t }) => t.lateral === piece.lift.b)];
+      const direction = new THREE.Vector3().subVectors(b, a), length = direction.length();
+      rotation.setFromUnitVectors(RIGHT, direction.normalize());
+      position.addVectors(a, b).multiplyScalar(.5).y -= .12;
+      kits.setPlacementPose(index, matrix.compose(position, rotation, scale.set(length / CABLE_LENGTH, 1, 1)));
+    });
+  };
+  // A point on a cable line and its direction, `along` metres across from the first tower.
+  const onLine = (line, distance, out) => {
+    const first = towers[0].piece.lateral;
+    for (let i = 0; i + 1 < line.length; i++) {
+      const a = towers[i].piece.lateral - first, b = towers[i + 1].piece.lateral - first;
+      if (distance <= b || i + 2 === line.length) return out.lerpVectors(line[i], line[i + 1], Math.max(0, Math.min(1, (distance - a) / (b - a))));
+    }
+    return out;
+  };
+  const point = new THREE.Vector3(), ahead = new THREE.Vector3();
+  const moveChairs = seconds => {
+    const kits = trackKitsOf(group), total = towers.at(-1).piece.lateral - towers[0].piece.lateral;
+    for (const { piece, index } of chairs) {
+      const { line, k, count } = piece.lift, forward = line === 0 ? 1 : -1;
+      const travel = ((k * total / count + forward * seconds * lift.speed) % total + total) % total;
+      onLine(tops[line], travel, point); onLine(tops[line], Math.min(total, travel + 1), ahead);
+      const heading = Math.atan2((ahead.x - point.x) * forward, (ahead.z - point.z) * forward);
+      rotation.setFromAxisAngle(UP, heading);
+      roll.setFromAxisAngle(FORWARD, .05 * Math.sin(seconds * 1.3 + k * 1.9));
+      rotation.multiply(roll);
+      // Chairs shrink away at the ends of the line rather than popping out.
+      const grow = smooth(Math.min(travel, total - travel) / 8);
+      position.copy(point); position.y -= CHAIR_HANGER * grow;
+      kits.setPlacementPose(index, matrix.compose(position, rotation, scale.setScalar(Math.max(.001, grow))));
+    }
+  };
+  registerSceneSystem(group, { animate(seconds) {
+    const kits = trackKitsOf(group);
+    if (!kits || kits.status !== 'ready') return;
+    if (!prepared) { prepared = true; prepare(kits); }
+    if (lift && chairs.length) moveChairs(seconds);
+  } });
+}
+
 export function addCircuitEffects(group, course) {
   const effects = course.def.effects ?? {};
   if (effects.lake) {
@@ -137,4 +217,5 @@ export function addCircuitEffects(group, course) {
     if (effects.mist) addMist(group, course, effects.lake, mesh.geometry.userData.level, effects.mist);
   }
   (course.def.hills ?? []).forEach((hill, index) => group.add(hillMesh(course, hill, index)));
+  addKitMotion(group, course);
 }
