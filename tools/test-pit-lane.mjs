@@ -122,3 +122,28 @@ test('all seven computer boxes leave the marked player box free',()=>{
   assert.equal(new Set(boxes).size,8);
   assert.deepEqual(boxes,[250,226,234,242,258,266,274,282]);
 });
+
+
+test('Grand Prix player uses the centre box despite its race-wide field object',()=>{
+  const duel=new Duel({seed:1989,featureFlags:{enabled:name=>name==='grand-prix'}});
+  duel.startCampaign({startStage:0,mode:'grandprix',seed:1989,fieldSeed:4242,
+    car:'falcone_f42',cpuDifficulty:'easy',difficulty:'casual'});
+  assert.equal(duel.state.field.size,8);
+  assert.equal(duel.state.opponents.length,7);
+  duel.course=new Course(def,1989);
+  const state=duel.state,lane=duel.course.pitLane;
+  assert.equal(pitBox(lane,state),lane.box);
+  const boxes=[state,...state.opponents].map(actor=>pitBox(lane,actor));
+  assert.equal(new Set(boxes).size,8);
+  assert.deepEqual(boxes,[250,226,234,242,258,266,274,282]);
+  Object.assign(state,{status:'racing',s:lane.box,lateral:lane.offsetAt(lane.box),
+    speedMph:0,boost:.1,paused:false});
+  for(let index=0;index<479;index++)stepPitService(duel,state,dt);
+  assert.equal(state.pit.phase,'servicing');
+  assert.equal(state.tyre,undefined);
+  assert.equal(state.speedMph,0);
+  stepPitService(duel,state,dt);
+  assert.equal(state.pit.phase,'ready');
+  assert.equal(state.tyre,'winter');
+  assert.equal(state.boost,1);
+});

@@ -19,6 +19,11 @@ she cannot skip when the estimate saves over three seconds. Choices use
 the race seed and racer identity and are held for the race.
 The Summit Run timing comparison belongs to P4-SUMMIT when that course exists.
 
+Native QA adds actual eight-car field identities and the production pitBox
+helper to verify seven distinct CPU boxes leave the player box free. Compare
+the whole active race before/after service rendering to prove crew is read-only.
+Keep current service thresholds and deliberate authored fixture; no fake finish.
+
 ## Verification
 
 Initial test fixtures corrected: exact mph limit comparison avoids a decimal
@@ -42,6 +47,19 @@ No owned conflict; the read-only pit callback survives the renderer merge.
 The native packet predates this sync. Unique CPU-box coverage and the actual
 pit/qualifying seam remain queued; no current gate pass is claimed.
 Sound cues: pit.limiter, pit.wrench, pit.go from the existing approved bank.
+
+Actual Grand Prix player regression: its race-wide field has no CPU index,
+so pitBox returned NaN and prevented service. Director grants the narrow fix:
+only actual integer CPU indices use assigned boxes; the player uses centre.
+Keep all seven distinct CPU boxes and existing four-second/limiter assertions.
+
+Regression first fails NaN vs centre250 with all seven old tests green; narrow
+index classification fixes it and all8 tests pass. Current native High/Perf
+passes on private26729: actual active8-car box allocation, four-second TYRES
+to GO, winter/refill/limiter, read-only crew and exact storage all pass. Eight
+screenshots inspected, zero warnings/errors. Removed the inherited fixture
+rival=null setter that silently cleared the seven opponents. No fake finish
+or frame measurement. Current lane/build and independent review stay queued.
 
 ## Removed
 

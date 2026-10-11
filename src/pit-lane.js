@@ -46,8 +46,8 @@ export function pitAt(course, s, off) {
   return lane;
 }
 export function pitBox(lane, actor) {
-  if (!actor.field) return lane.box;
-  const index = actor.field.index;
+  const index = actor.field?.index;
+  if (!Number.isInteger(index)) return lane.box;
   // Leave the marked player box free, including an eight-car field.
   return lane.box + (index < 3 ? index - 3 : index - 2) * 8;
 }
