@@ -5,11 +5,12 @@ import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.
 import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
-// is stored for a reference car and computer racers scale it to their own.
+// is stored for a reference car and computer racers scale it to their own. A
+// circuit may shape its line with a `racingLine` block (see buildRacingLine).
 export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
-  course.racingLine = buildRacingLine(script, dynamics);
+  course.racingLine = buildRacingLine(script, { ...dynamics, ...(course.def.racingLine ?? {}) });
   f.walls = [];
   f.kerbs = script.kerbs.map(kerb => ({ ...kerb }));
   f.boards = script.boards.map(board => ({ ...board }));

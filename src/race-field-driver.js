@@ -37,7 +37,9 @@ export function runtimeOf(duel, r) {
   const spec = racerSpec(r.car, r.upgrades, r.driverId);
   // A faster car than yours shows only part of its edge; a slower one is helped a little.
   const carEdge = Math.pow(duel.state.field.playerIndex / performanceIndex(spec, duel.course), FIELD.carPaceShare);
-  const pace = tuning.pace * t.skill * f.skillRoll * carEdge;
+  // A circuit may ask for a field a little quicker or slower than the standard
+  // (`fieldPace` in its definition), found with tools/race-field-balance.mjs.
+  const pace = tuning.pace * t.skill * f.skillRoll * carEdge * (duel.course.def.fieldPace ?? 1);
   const line = racingLineFor(duel.course);
   const profile = buildSpeedProfile(line, spec, { cornerFactor: pace, topFactor: pace * (1 + t.topSpeed),
     brakeFactor: t.brake, slowBonus: t.slowCorners });

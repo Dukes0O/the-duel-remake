@@ -21,6 +21,13 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
     { theme: 'alpine', name: 'Ridge Run', share: .25 },
     { theme: 'alpine', name: 'Timber Straight', share: .40 },
   ],
+  // Pine Drop runs straight into Lakeside Plunge, a right then a left with a crest
+  // in the first: a line from kerb to kerb is more than a car can follow there.
+  racingLine: { roadShare: .85, maxSlope: .08 },
+  // The computer racers drive this much of their usual pace here (src/race-field-driver.js).
+  // Found with tools/race-field-balance.mjs --course tremblant-woods: the test driver
+  // wins about 90, 47 and 17% on Easy, Medium and Hard.
+  fieldPace: .85,
   scriptStart: 100,
   script: [
     ['straight', 414, { climb: -6, name: 'Lodge Straight' }],
@@ -35,7 +42,12 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
     ['turn', 'L', 80, 40, { name: 'Beaver Kink' }],
     ['straight', 80, { name: 'The Spur' }],
     ['turn', 'R', 170.5, 22, { climb: 2, name: 'Beaver Hairpin' }],
-    ['straight', 1302, { climb: -8, name: 'Timber Straight' }],
+    // Timber Straight carries the two crests of docs/CIRCUITS.md 5.3. A piece has
+    // one crest, so the straight is three pieces; the second crest sits at about
+    // s 2700 and the chairlift crosses the road right there.
+    ['straight', 540, { climb: -3.2, crest: 1.5, name: 'Timber Straight' }],
+    ['straight', 520, { climb: -3.2, crest: 2.5, name: 'Timber Straight' }],
+    ['straight', 242, { climb: -1.6, name: 'Timber Straight' }],
     ['turn', 'R', 30, 60, { name: "Devil's Chicane 1" }],
     ['turn', 'L', 30, 60, { name: "Devil's Chicane 2" }],
     ['straight', 283, { climb: 4 }],
