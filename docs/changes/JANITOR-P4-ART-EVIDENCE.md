@@ -12,7 +12,9 @@ file changes. The whole looks folder is 19,980,225 bytes before and
 17,671,624 bytes after. Deleted JPGs total 2,302,498 bytes;
 all deleted files total 2,311,964 bytes. Durable facts added to current reviews
 account for the small difference. The unchanged limit is 20,000,000 bytes.
-Mandatory lane/build and independent review are queued behind dossier/telemetry.
+Independent review clears preserved facts, exact final hashes and totals.
+Its stale-pointer finding is corrected in the board/current Arena verdict link.
+Mandatory lane/build are queued behind dossier/telemetry.
 
 ## Removed
 
