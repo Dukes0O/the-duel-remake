@@ -28,6 +28,17 @@ remain exact, as do the complete catalog and tanker source pin.
   grey cheeks, heavy brow, small eyes, flat nose, mouth and uneven head shag.
   No attached block face. Preserve body fur, size, original rig and motion.
 
+## Repository repair plan before edits
+
+The first lane gate found three deterministic repository issues: missing
+new-generator coverage, nested sheet homes and consumed sheets over 20 MB.
+Register the actual Blender-free KITS CLI with two temporary-root path and
+no-import/no-write checks. Keep the exhaustive discovery, placement and
+20 MB assertions exact. This expands coverage; no tolerance is relaxed.
+Fold needed prior verdicts into the current review, remove consumed sheets
+and the superseded review, and publish final sheets in direct family homes.
+The sheet recipe changes paths only; runtime assets retain their bytes.
+
 ## Verification
 
 Focused 35-pair acceptance passes with unchanged assertions: provenance,
@@ -40,17 +51,22 @@ All four original clip tracks are exact in both Yeti qualities. Yeti is
 metrics stay exact: at most 0.000188 m heel error, 2.40000035 m root travel.
 No overall walking approval is claimed. Prior native terrain sole minimum
 -0.039495/-0.038204 m and strict exporter rounding failures remain recorded
-in the round-two review; this face correction does not repair them.
+in the current final review; this face correction does not repair them.
 
 Final native capture passes: memory-only saves, 40 frames, zero issues and
 four expected duplicate-Three warnings. Three matched round-three sheets
-are in docs/board/looks/p4-kits; each is below 500 KB.
+are in direct p4-kits-paddock/snow/characters families; each is below 500 KB.
 Claude's final round-three verdict passes Paddock, Snow and Yeti at 3.5 each.
 Director source review is clear; no fourth round. Synced reviewed lighting
 and atomic crash-audio capture source a89e562c before the queued lane/build.
-Kit records, runtime pairs, recipes and reviewed sheets stay unchanged.
+Kit records and runtime pairs stay unchanged; reviewed sheets keep their bytes.
 The native packet predates that source sync; lane/build remain before merge. No frame budget, full-tier, release or replay-fingerprint pass claimed.
 Simulation code is unchanged; the native viewer preserves race/profile state.
+
+The first source gate was 376/379 in 815.58 s: only the three repository
+issues above failed, with permitted headless balance jobs also running.
+Repair checks pass: Blender output 44, review evidence 363, placement exact;
+no existing assertion/tolerance changed. The repaired lane/build follow.
 
 ## Removed
 
@@ -58,4 +74,9 @@ Replaced four held runtime pairs in place. Removed the old rear closed-door
 adaptation and all-black face treatment. Temporary attached facial blocks
 were removed before review; only continuous donor face geometry ships.
 Passed donor assets and source pins were retained. Delete raw review evidence
-after Claude's verdict; keep one compressed sheet per formal group/round.
+after Claude's verdict. Consumed round-one/two sheets and the superseded
+round-two review are removed after folding needed facts into the final review.
+Only the three current sheets remain, in canonical direct family homes.
+Director also grants removal of consumed DAY round-one/two sheets (876,493
+bytes) and superseded reviews after retaining their verdicts in DAY's final
+review. Keep DAY's final sheet exact. The global 20 MB assertion stays exact.
