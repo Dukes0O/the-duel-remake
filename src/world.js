@@ -54,6 +54,7 @@ export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
   const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: .8 });
   const metal = new THREE.MeshStandardMaterial({ color: 0xa6aaa5, metalness: .55, roughness: .57 });
   const terrain = new THREE.Mesh(terrainGeometry(course), groundMat); terrain.receiveShadow = true; group.add(terrain);
   const farTerrain = new THREE.Mesh(farTerrainGeometry(course), groundMat); farTerrain.receiveShadow = true; group.add(farTerrain);
@@ -69,10 +70,14 @@ export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
       group.add(new THREE.Mesh(shoulderStrip, shoulder));
     }
     if(!course.def.arena&&!course.def.offroad){
-      const edge = new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream);
+      // A race circuit (`markings: 'circuit'`) has white edge lines and no centre line.
+      const race = course.def.markings === 'circuit';
+      const edge = new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-(race?.55:.45)), s=>side*(course.roadHalfWidthAt(s)-.28), .057), race?white:cream);
       edge.userData.roadMarking = 'edge';group.add(edge);
-      const centre = new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow);
-      centre.userData.roadMarking = 'centre';group.add(centre);
+      if(!race){
+        const centre = new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow);
+        centre.userData.roadMarking = 'centre';group.add(centre);
+      }
     }
   }
   if(course.script)addTrackScriptScene(group,course);

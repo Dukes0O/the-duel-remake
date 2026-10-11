@@ -576,6 +576,13 @@ export const REFERENCE_DYNAMICS = Object.freeze({
 // Outside, apex, outside through every turn, never closer than lineMargin to
 // the road edge, then the fastest speed the curvature, braking and
 // acceleration allow. Computer racers scale this for their own car and skill.
+//
+// A circuit may shape the line with two optional numbers in its `racingLine`
+// block. `roadShare` (0 to 1) is how much of the room to each road edge the
+// line uses; below 1 it stays clear of the kerbs. `maxSlope` is how many
+// metres across the road the line may move per metre of road: a quick swing
+// between two corners that the car cannot follow is shared out between the
+// apexes. Both are off unless a circuit asks for them.
 export function buildRacingLine(geometry, dynamics = REFERENCE_DYNAMICS) {
   const { length, closed, count, step, samples } = geometry;
   const turns = geometry.pieces.filter(piece => piece.kind === 'turn');
@@ -601,8 +608,17 @@ export function buildRacingLine(geometry, dynamics = REFERENCE_DYNAMICS) {
     if (last && key.s - last.s < 1) { last.side = (last.side * last.n + key.side) / (last.n + 1); last.n++; }
     else merged.push({ s: key.s, side: key.side, n: 1 });
   }
-  const frames = merged.map(key => ({ s: closed ? ((key.s % length) + length) % length : clamp(key.s, 0, length), lat: key.side * room(key.s) }));
+  const frames = merged.map(key => ({ s: closed ? ((key.s % length) + length) % length : clamp(key.s, 0, length), lat: key.side * room(key.s) * (dynamics.roadShare ?? 1) }));
   frames.sort((a, b) => a.s - b.s);
+  if (dynamics.maxSlope) {
+    const n = frames.length, slope = dynamics.maxSlope;
+    for (let pass = 0; pass < 8; pass++) for (let i = 0; i < n * 2; i++) {
+      const a = frames[i % n], b = frames[(i + 1) % n];
+      if (!closed && (i % n) === n - 1) continue;
+      const ds = ((b.s - a.s) % length + length) % length || length, limit = slope * ds, diff = b.lat - a.lat;
+      if (Math.abs(diff) > limit) { const cut = (Math.abs(diff) - limit) / 2; a.lat += Math.sign(diff) * cut; b.lat -= Math.sign(diff) * cut; }
+    }
+  }
   const offsetAt = s => {
     if (!frames.length) return 0;
     const p = geometry.phase(s);

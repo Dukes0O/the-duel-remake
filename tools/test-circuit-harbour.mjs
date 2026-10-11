@@ -83,7 +83,7 @@ test('a bad escape road names its turn', () => {
 test('racing line settings for walls only change this circuit', () => {
   const line = course.racingLine;
   const half = s => course.roadHalfWidthAt(s);
-  for (let s = 0; s < course.length; s += 4) assert.ok(Math.abs(line.offsetAt(s)) <= half(s) - HARBOUR_LIGHTS.lineMargin + 1e-6, 'inside the wall margin');
+  for (let s = 0; s < course.length; s += 4) assert.ok(Math.abs(line.offsetAt(s)) <= half(s) - HARBOUR_LIGHTS.racingLine.lineMargin + 1e-6, 'inside the wall margin');
   // A gentle bend sweeps less than a bend that bows far from its chord.
   const kink = piece(course.script, 'Lantern Kink'), casino = piece(course.script, 'Casino Corner');
   const sweep = turn => { let low = Infinity, high = -Infinity; for (let s = turn.s0; s <= turn.s1; s += 2) { const o = line.offsetAt(s); low = Math.min(low, o); high = Math.max(high, o); } return high - low; };
@@ -104,7 +104,7 @@ test('the same seed gives the same walls and scenery', () => {
 
 import { readFileSync } from 'node:fs';
 import { PIECES } from '../src/circuit-kit-layout.js';
-import { basinWeight } from '../src/basins.js';
+import { basinReach } from '../src/circuit-hills.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../public/assets/models/circuits/kits/manifest.json', import.meta.url), 'utf8'));
 const placements = HARBOUR_LIGHTS.kitPlacements;
@@ -156,11 +156,11 @@ test('no building, sign or boat stands on the road, a run-off road or in the wat
       const { u, v } = escapeFrame(escape, world.x, world.z);
       assert.ok(!(u > -4 && u < escape.run + 6 && v > escape.inner - 4 && v < escape.outer + 5), `${entry.id} clear of ${escape.id}`);
     }
-    for (const basin of water) assert.ok(basinWeight(basin, found.s, found.lateral) < .05, `${entry.id} out of the ${basin.id} water`);
+    for (const basin of water) assert.ok(basinReach(basin, found.s - basin.s, found.lateral - basin.lateral) > 1.1, `${entry.id} out of the ${basin.id} water`);
   }
   for (const boat of placements.filter(entry => entry.id === 'harbour-boat')) {
     const found = course.nearest(...(() => { const w = course.worldAt(boat.s, boat.lateral); return [w.x, w.z]; })());
-    assert.ok(water.some(basin => basinWeight(basin, found.s, found.lateral) > .9), `boat at ${boat.s.toFixed(0)} floats`);
+    assert.ok(water.some(basin => basinReach(basin, found.s - basin.s, found.lateral - basin.lateral) < .7), `boat at ${boat.s.toFixed(0)} floats`);
   }
 });
 
@@ -173,9 +173,9 @@ test('no wall stands in the openings of the escape roads, and the water holds th
     assert.equal(clash.length, 0, escape.id);
   }
   for (const basin of HARBOUR_LIGHTS.basins) {
-    const mid = (basin.s0 + basin.s1) / 2, across = (basin.from + basin.to) / 2, ground = course.groundAt(mid, basin.side * across).y;
-    assert.ok(Math.abs(ground - (basin.level - basin.deep)) < .05, `${basin.id}: the floor lies below the water`);
-    assert.ok(ground < course.at(mid).y - 1, `${basin.id}: below the road`);
+    const ground = course.groundAt(basin.s, basin.lateral).y, level = course.at(basin.s).y + basin.surface;
+    assert.ok(ground < level && ground > level - basin.depth - .3, `${basin.id}: the floor lies just below the water`);
+    assert.ok(ground < course.at(basin.s).y - 1, `${basin.id}: below the road`);
   }
 });
 

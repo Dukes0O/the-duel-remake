@@ -10,7 +10,7 @@
 // turn from the road's direction: -PI/2 faces a left-hand piece toward the road.
 import { makeRng } from './rng.js';
 import { TRACK_SCRIPT, buildTrackScript } from './track-script.js';
-import { basinWeight } from './basins.js';
+import { basinReach } from './circuit-hills.js';
 import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
 
 const WALL_OUT = TRACK_SCRIPT.wallSetback + TRACK_SCRIPT.wallThickness; // road edge to the outer face of a wall
@@ -140,7 +140,7 @@ export function buildKitPlacements(def, spec) {
         const { u, v } = escapeFrame(escape, x, z);
         if (u > -4 && u < escape.run + 6 && v > escape.inner - 4 && v < escape.outer + 5) return false;
       }
-      if (basins.some(basin => basinWeight(basin, wrapLap(n.s, length), n.lateral) > .02)) return false;
+      if (basins.some(basin => basinReach(basin, wrapLap(n.s, length) - basin.s, n.lateral - basin.lateral) < 1.15)) return false;
     }
     return true;
   };
@@ -231,15 +231,15 @@ export function buildKitPlacements(def, spec) {
   for (const [index, group] of (spec.boats ?? []).entries()) {
     const basin = basins.find(item => item.id === group.basin);
     if (!basin) throw new Error(`Boats name no basin called "${group.basin}".`);
-    const rng = makeRng((0xb0a7 + index * 131) ^ (def.stage * 53)), side = basin.side < 0 ? -1 : 1, mine = [];
-    for (let i = 0, tries = 0; i < group.count && tries < group.count * 6; tries++) {
-      const along = rng.range(basin.s0 + 45, basin.s1 - 45), across = rng.range(basin.from + (group.near ?? 14), Math.min(basin.to - 10, basin.from + (group.far ?? 60)));
+    const rng = makeRng((0xb0a7 + index * 131) ^ (def.stage * 53)), mine = [];
+    for (let i = 0, tries = 0; i < group.count && tries < group.count * 8; tries++) {
+      const du = rng.range(-.8, .8) * basin.along, dv = rng.range(-.8, .8) * basin.across;
       const k = rng.range(.9, 1.35), heading = rng.chance(.7) ? HALF_PI : rng.range(0, Math.PI * 2);
-      if (basinWeight(basin, along, side * across) < .95) continue;
-      const w = course.worldAt(along, side * across);
+      if (basinReach(basin, du, dv) > .65) continue;
+      const along = basin.s + du, lateral = basin.lateral + dv, w = course.worldAt(along, lateral);
       if (mine.some(m => Math.hypot(m.x - w.x, m.z - w.z) < 9)) continue;
       mine.push(w); i++;
-      place('harbour-boat', along, side * across, heading, k, group.lift ? { lift: group.lift } : {});
+      place('harbour-boat', along, lateral, heading, k, group.lift ? { lift: group.lift } : {});
     }
   }
   return out;

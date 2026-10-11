@@ -156,12 +156,10 @@ export async function runHeadlessLaps(options) {
     };
     globalThis.cancelAnimationFrame ??= () => {};
     app = new App();
-    // An authored circuit whose switch is off joins COURSE for this run only, as in the circuit tests.
-    if (!COURSE.some(entry => entry.id === options.courseId)) {
-      const { ALL_CIRCUITS } = await import('../src/circuits/index.js');
-      const circuit = ALL_CIRCUITS.find(entry => entry.id === options.courseId);
-      if (circuit) COURSE.push(circuit);
-    }
+    // An authored circuit whose switch is off joins COURSE for this run when --flags names it
+    // (the browser step turns the same switches on in its own page).
+    const { ALL_CIRCUITS } = await import('../src/circuits/index.js');
+    for (const circuit of ALL_CIRCUITS) if (options.flags.includes(circuit.flag) && !COURSE.some(entry => entry.id === circuit.id)) COURSE.push(circuit);
     const stageIndex = COURSE.findIndex(entry => entry.id === options.courseId);
     if (stageIndex < 0) throw Error(`No course called ${options.courseId}. Known: ${COURSE.map(c => c.id).join(', ')}`);
     app.profile = { ...app.profile, courses: { version: 1, unlocked: COURSE.map(c => c.id) } };
@@ -171,8 +169,6 @@ export async function runHeadlessLaps(options) {
     app.autopilot = true;
     app._scriptedCrashDone = true;         // no scripted shoulder excursion: a clean lap
     const duel = app.duel, state = duel.state, course = duel.course;
-    // The stock driver cannot brake for a hairpin: an authored circuit is driven on its own racing line.
-    if (course.racingLine) { const { useRacingLine } = await import('./track-script-drive.mjs'); useRacingLine(app); }
     const gridS = state.s, def = COURSE[stageIndex];
     const trace = [], laps = def.laps ?? 2;
     let frames = 0;

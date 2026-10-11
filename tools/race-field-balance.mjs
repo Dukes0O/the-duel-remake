@@ -18,8 +18,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createFeatureFlags } from '../src/feature-flags.js';
 import { App } from '../src/app.js';
 import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
-import { useRacingLine } from './track-script-drive.mjs';
 import { ALL_CIRCUITS } from '../src/circuits/index.js';
+import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 // The three audited routes give different layouts; the field seed varies
@@ -77,8 +77,6 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = nu
       throw Error(`Could not start ${cpuDifficulty} race ${index}`);
     app.autopilot = true;
     app._scriptedCrashDone = true;
-    // An authored circuit has hairpins the stock driver cannot brake for: it drives the circuit's own racing line.
-    if (app.duel.course.racingLine) useRacingLine(app, app.duel.course.def.testDriverSkill ?? .95);
     installTestDriver(app);
     const duel = app.duel, state = duel.state;
     state.field.deferFinish = true;
@@ -128,9 +126,16 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = nu
 // The scripted driver, made to race among other cars. Its pace is the standard
 // autopilot's (same cornering and braking); on top of that it keeps to a free
 // lane and does not drive into the car ahead. Only legal driver inputs are used.
-export function installTestDriver(app) {
+// On an authored circuit (src/circuits/) the standard autopilot cannot be used as it
+// is: it judges a corner from three points ahead and cannot brake for a hairpin
+// at the end of a long straight. There the driver takes its line and speed from
+// the circuit's racing line: the speed profile the computer racers use, built for
+// the player's own car at LINE_SKILL of its limit (the standard autopilot is at
+// about .93 on Pacific Canyon).
+export const LINE_SKILL = Number(process.env.LINE_SKILL) || .86;
+export function installTestDriver(app, { lineSkill = LINE_SKILL } = {}) {
   const base = app._driveAutopilot.bind(app);
-  let lane = null, laneSince = -Infinity, stuck = 0;
+  let lane = null, laneSince = -Infinity, stuck = 0, profile = null, profileCourse = null;
   app._driveAutopilot = dt => {
     base(dt);
     const duel = app.duel, state = duel.state;
@@ -139,17 +144,19 @@ export function installTestDriver(app) {
     stuck = state.speedMph < 8 && state.stageTimeSec > 8 ? stuck + dt : 0;
     if (stuck > 4) { duel._safeReset(state); stuck = 0; state.field.stats.playerRecoveries = (state.field.stats.playerRecoveries || 0) + 1; }
     const halfWidth = duel.course.roadHalfWidthAt?.(state.s) ?? DRIVE.roadHalfWidth;
+    const line = duel.course.script ? duel.course.racingLine : null;
     const metres = Math.max(15, state.speedMph * DRIVE.mphToWorld);
-    const cruise = duel.course.racingLine ? duel.course.racingLine.offsetAt(state.s + Math.max(12, metres * .45)) : -Math.min(DRIVE.laneOffset, halfWidth * .48);
+    const cruise = line ? clampTo(line.offsetAt(state.s + Math.max(12, metres * .45)), halfWidth - 1.8) : -Math.min(DRIVE.laneOffset, halfWidth * .48);
     const cars = state.opponents.filter(car => !car.finished && !car.crushed).map(car => {
       const ds = duel.relativeS(car.s, state.s) - state.s;
       return { car, ds, lateral: car.lateral, speed: car.speedMph };
     });
-    const free = candidate => cars.every(item => !(item.ds > -16 && item.ds < 40 + Math.max(0, state.speedMph - item.speed) * DRIVE.mphToWorld * 1.2 &&
-      Math.abs(item.lateral - candidate) < 3.1));
-    if (lane == null || state.stageTimeSec - laneSince > .8) {
-      // Between walls the driver stays within a lane or two of the racing line and well off the walls.
-      const options = (duel.course.script ? [cruise, cruise - 1.8, cruise + 1.8, cruise - 3.4, cruise + 3.4].filter(value => Math.abs(value) <= halfWidth - 2.6) : [cruise, cruise - 1.6, cruise + 1.8, 0, 3.4, 4.8, -4.8].filter(value => Math.abs(value) <= halfWidth - 1.8))
+    // On an authored circuit only a car alongside or just behind blocks a move (the pack is tight there).
+    const behind = line ? -7 : -16, wide = line ? 2.7 : 3.1;
+    const free = candidate => cars.every(item => !(item.ds > behind && item.ds < 40 + Math.max(0, state.speedMph - item.speed) * DRIVE.mphToWorld * 1.2 &&
+      Math.abs(item.lateral - candidate) < wide));
+    if (lane == null || line || state.stageTimeSec - laneSince > .8) {
+      const options = [cruise, cruise - 1.6, cruise + 1.8, ...(line ? [cruise - 3, cruise + 3.2, cruise - 4.2, cruise + 4.4] : [0, 3.4, 4.8, -4.8])].filter(value => Math.abs(value) <= halfWidth - 1.8)
         .sort((a, b) => Math.abs(a - cruise) - Math.abs(b - cruise));
       const pick = options.find(free) ?? cruise;
       if (pick !== lane) { lane = pick; laneSince = state.stageTimeSec; }
@@ -158,27 +165,45 @@ export function installTestDriver(app) {
     const frame = duel.course.at(state.s);
     const headingTarget = Math.atan((lane - state.lateral) * 2.5 / metres);
     const look = duel.course.at(state.s + metres * .18);
-    const desiredYaw = look.curvature * metres + (headingTarget - state.headingError) * 6;
+    let desiredYaw = look.curvature * metres + (headingTarget - state.headingError) * 6;
+    if (line) {
+      // The computer racers' own controller: follow the line's heading and bend.
+      const raceLine = racingLineFor(duel.course), ahead = state.s + Math.max(6, metres * .3);
+      const wanted = raceLine.relHeadingAt(ahead) + Math.atan((lane - state.lateral) * 2.4 / Math.max(15, metres));
+      const error = Math.atan2(Math.sin(Math.max(-1.2, Math.min(1.2, wanted)) - state.headingError), Math.cos(Math.max(-1.2, Math.min(1.2, wanted)) - state.headingError));
+      desiredYaw = raceLine.curvatureAt(ahead) * metres + error * 6;
+    }
     const surface = duel._drivingSurface(state.s, state.lateral);
     const authority = Math.max(.05, steeringYawAuthority(state.speedMph, duel.car.grip, surface.traction, duel.car));
     const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     let { throttle, brake } = state.input;
+    if (line) {
+      // The same speed profile the computer racers use, built for the player's own car.
+      if (profileCourse !== duel.course) {
+        profileCourse = duel.course;
+        profile = buildSpeedProfile(racingLineFor(duel.course), duel.car, { cornerFactor: lineSkill, topFactor: 1 });
+      }
+      const surfaceNow = duel._drivingSurface(state.s, state.lateral);
+      const aim = Math.min(surfaceNow.speedLimit, duel.car.topSpeed * .97, profile.at(state.s + metres * .05) * Math.sqrt(surfaceNow.traction || 1));
+      throttle = state.speedMph < aim ? 1 : 0;
+      brake = state.speedMph > aim + 3 ? Math.min(1, (state.speedMph - aim) / 14) : 0;
+    }
     // Do not run into the car ahead in the lane being driven.
     let cap = Infinity;
     for (const item of cars) {
-      // On an authored circuit the driver also watches the lane it is moving to, not only the one it is in.
-      const beside = duel.course.script ? Math.min(Math.abs(item.lateral - state.lateral), Math.abs(item.lateral - lane)) : Math.abs(item.lateral - state.lateral);
-      if (item.ds <= 0 || beside > 2.9) continue;
+      if (item.ds <= 0 || Math.abs(item.lateral - state.lateral) > 2.9) continue;
       const gap = item.ds - 4.7;
       const comfortable = DRIVE.brakeAccel * duel.car.braking * .62 * DRIVE.mphToWorld;
       const lead = item.speed * DRIVE.mphToWorld;
-      const room = Math.max(0, gap - (state.completedLaps === 0 && duel.course.def.fieldFollow?.firstLap?.margin || 2.2)) + lead * lead / (2 * comfortable * (duel.course.def.fieldFollow?.leadBraking ?? 1.15));
+      const room = Math.max(0, gap - 2.2) + lead * lead / (2 * comfortable * 1.15);
       cap = Math.min(cap, comfortable * (-.22 + Math.sqrt(.22 * .22 + 2 * room / comfortable)) / DRIVE.mphToWorld);
     }
     if (state.speedMph > cap) { throttle = 0; brake = Math.max(brake, Math.min(1, (state.speedMph - cap) / 12)); }
     duel.setInput({ throttle, brake, steer, boost: false });
   };
 }
+
+const clampTo = (value, limit) => Math.max(-limit, Math.min(limit, value));
 
 export function summarize(results) {
   const out = {};

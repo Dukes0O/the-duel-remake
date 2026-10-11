@@ -1,19 +1,20 @@
 // Water and the wet look of a circuit by night: a flat sheet over each basin the
-// circuit sinks into the ground (`basins` on its definition, src/basins.js),
+// circuit sinks into the ground (`basins` on its definition, src/circuit-hills.js),
 // with a faint swell and a glitter path toward the moon, and soft coloured pools
 // on the road under lanterns and neon (`wetRoad`). Drawing only: nothing here
 // changes race state, and nothing here is a kit piece (the kit loader owns those).
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
+import { lakeGeometry } from './circuit-effects.js';
 
 // The moon of P4-DAYNIGHT (src/atmosphere.js): fixed in the sky, west and low.
 const MOON = new THREE.Vector3(-.97, .18, .16).normalize();
 
-function waterMaterial(night) {
+function waterMaterial(night, glitter = true) {
   const time = { value: 0 }, moon = { value: MOON };
-  const material = new THREE.MeshStandardMaterial({ name: 'Harbour water', color: night ? 0x0b2433 : 0x2b6a7a, roughness: .16, metalness: .55,
-    transparent: true, opacity: .93, emissive: night ? 0x04101a : 0x000000 });
-  material.customProgramCacheKey = () => 'circuit-water-v1';
+  const material = new THREE.MeshStandardMaterial({ name: 'Harbour water', roughness: .16, metalness: .55,
+    transparent: true, vertexColors: true, depthWrite: false, side: THREE.DoubleSide, color: 0xffffff, emissive: night ? 0x04101a : 0x000000 });
+  material.customProgramCacheKey = () => `circuit-water-v1-${night}-${glitter}`;
   material.onBeforeCompile = shader => {
     shader.uniforms.waterTime = time; shader.uniforms.waterMoon = moon;
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWaterWorld;')
@@ -29,29 +30,23 @@ function waterMaterial(night) {
         vec3 toCamera=normalize(cameraPosition-vWaterWorld);
         vec3 mirror=reflect(-toCamera,normalize(vec3(-slope.x,1.0,-slope.y)));
         float glitter=pow(max(dot(mirror,waterMoon),0.0),90.0);
-        totalEmissiveRadiance+=vec3(.55,.68,.9)*glitter*${night ? '1.2' : '0.0'};
+        totalEmissiveRadiance+=vec3(.55,.68,.9)*glitter*${night && glitter ? '1.2' : '0.0'};
       `);
   };
   return { material, time };
 }
 
+// Harbour and reservoir water over the circuit's basins (the same ovals that sink the
+// ground, src/circuit-hills.js; the shape and level come from circuit-effects.js `lakeGeometry`).
+// Only a circuit that asks for it (`water` in its definition) gets this water.
 export function addCircuitWater(group, course) {
-  const basins = course.def.basins;
+  const basins = course.def.water ? course.def.basins : null;
   if (!basins?.length) return null;
   const night = course.def.timeOfDay === 'night' || course.def.lightPath?.keyframes?.[0]?.look === 'night';
-  const { material, time } = waterMaterial(night);
+  const { material, time } = waterMaterial(night, course.def.water.glitter !== false);
   for (const basin of basins) {
-    const side = basin.side < 0 ? -1 : 1, near = basin.from + basin.edge * .4, far = basin.to - basin.edge * .2;
-    const steps = Math.ceil((basin.s1 - basin.s0) / 10), columns = 6, positions = [], indices = [];
-    for (let i = 0; i <= steps; i++) for (let j = 0; j < columns; j++) {
-      const p = course.worldAt(basin.s0 + (basin.s1 - basin.s0) * i / steps, side * (near + (far - near) * j / (columns - 1)));
-      positions.push(p.x, basin.level, p.z);
-      if (i && j) { const a = i * columns + j; indices.push(a - columns - 1, a - 1, a - columns, a - columns, a - 1, a); }
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setIndex(indices); geometry.computeVertexNormals();
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = `water-${basin.id}`; mesh.receiveShadow = false; mesh.renderOrder = -1;
+    const mesh = new THREE.Mesh(lakeGeometry(course, { ...basin, colour: night ? 0x061a28 : 0x1d5c6e, shallow: night ? 0x123a4a : 0x3a8590 }), material);
+    mesh.name = `water-${basin.id}`; mesh.receiveShadow = false; mesh.renderOrder = 1;
     group.add(mesh);
   }
   registerSceneSystem(group, { animate: seconds => { time.value = seconds; } });

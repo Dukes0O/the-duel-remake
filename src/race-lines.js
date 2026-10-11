@@ -73,7 +73,7 @@ export function buildRacingLine(course) {
     const s = i * step, frame = course.at(s);
     points.cx[i] = frame.x; points.cz[i] = frame.z;
     points.nx[i] = Math.cos(frame.heading); points.nz[i] = -Math.sin(frame.heading);
-    points.room[i] = Math.max(0, halfWidthAt(course, s) - (course.def?.lineMargin ?? LINE.margin));
+    points.room[i] = Math.max(0, halfWidthAt(course, s) - (course.def?.racingLine?.lineMargin ?? LINE.margin));
     heading[i] = frame.heading;
   }
   const offset = solveOffsets(course, points, closed);
@@ -121,6 +121,29 @@ export function accelAt(spec, speedMph) {
   return spec.accel * DRIVE.accelScale * Math.max(.2, 1 - .62 * share * share);
 }
 
+// A racer takes a crest inside a corner at a speed that keeps the car on the
+// road: fast enough over it to leave the ground, the car lands off its line
+// (a pile of cars at the Pine Drop crest, Tremblant Woods). Only authored
+// circuits (a provided line) carry crests that matter; on a straight a racer
+// may fly. Returns the speed limit in metres per second at each line point,
+// or null where no crest in a corner limits anyone.
+const CREST_SAFETY = .92, CREST_GRAVITY = 18, CREST_MIN_BEND = 1 / 500;
+function crestLimits(line) {
+  if (!line.provided) return null;
+  const { course, count, step, offset, curvature, closed } = line;
+  const height = new Float64Array(count);
+  for (let i = 0; i < count; i++) height[i] = course.groundAt(i * step, offset[i]).y;
+  const wrap = i => (closed ? (i + count) % count : clamp(i, 0, count - 1));
+  let limits = null;
+  for (let i = 0; i < count; i++) {
+    const bend = (2 * height[i] - height[wrap(i - 1)] - height[wrap(i + 1)]) / (step * step);
+    if (bend < .002 || Math.abs(curvature[i]) < CREST_MIN_BEND) continue;
+    limits ??= new Float64Array(count).fill(Infinity);
+    limits[i] = CREST_SAFETY * Math.sqrt(CREST_GRAVITY / bend);
+  }
+  return limits;
+}
+
 // The fastest speed the line allows at each point for one car, as the car can
 // brake for corners and accelerate away. `skill` scales how close to the car's
 // limits the racer drives (all 1 = the limit).
@@ -132,19 +155,19 @@ export function buildSpeedProfile(line, spec, skill = {}) {
   const lateral = DRIVE.maxLateralAccel * spec.grip;
   const brake = DRIVE.brakeAccel * spec.braking * brakeFactor * MPH;
   const cornerSpeed = new Float64Array(count), v = new Float64Array(count);
-  const feasible = line.course?.racingLine?.cornerSpeedAt, roadYawShare = line.course?.def?.roadYawShare;
+  // A circuit may hold its racers to the corner speeds its own line allows the reference car
+  // (`racingLine.holdRacers` in its definition): between walls they may not turn faster than that.
+  const feasible = line.course?.def?.racingLine?.holdRacers ? line.course.racingLine?.cornerSpeedAt : null;
   // A hairpin specialist carries a little more speed through the slow corners.
   const slowBonus = skill.slowBonus ?? 0;
+  const crest = crestLimits(line);
   for (let i = 0; i < count; i++) {
     let corner = cornerFactor * Math.sqrt(lateral / Math.max(Math.abs(curvature[i]), 1e-5));
     // An authored circuit's own line also knows how fast the reference car can take
     // each corner (grip and how fast it can turn its nose); a racer keeps to that.
     if (feasible) corner = Math.min(corner, cornerFactor * Math.sqrt(spec.grip / REFERENCE_GRIP) * feasible(i * step));
-    // A circuit between walls may also hold racers to the road's own bends (`roadYawShare`):
-    // a car that cuts a corner still has to turn as fast as the road does.
-    if (roadYawShare) corner = Math.min(corner, cornerFactor * roadYawShare * DRIVE.yawRate * spec.grip / Math.max(Math.abs(line.course.at(i * step).curvature), 1e-5));
     if (slowBonus) corner *= 1 + slowBonus * clamp((140 - corner / MPH) / 60, 0, 1);
-    cornerSpeed[i] = Math.min(top, corner);
+    cornerSpeed[i] = Math.min(top, corner, crest ? crest[i] : Infinity);
     v[i] = cornerSpeed[i];
   }
   const passes = closed ? 3 : 1;
