@@ -2,6 +2,18 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Grand Prix release — 11 October 2026
+
+Grand Prix racing is in the game: choose GRAND PRIX under THE CHALLENGE on
+Pacific Canyon or the new Tremblant Woods circuit and race seven computer
+drivers over three laps, starting in the back half of the grid. There is no
+traffic or police, and Grand Prix races don't pay or set records yet.
+
+Tremblant Woods is a 4.4 km autumn forest circuit: the lodge and the ski hill,
+the lake with its dock and morning mist, the chairlift over Timber Straight and
+the Beaver Hairpin. The Team Room shows each circuit's sectors, corners and
+notes, and your best laps against the reference lap.
+
 ## Wasteland polish release — 10 October 2026
 
 The five approved polish changes are installed in the live game. The accepted
