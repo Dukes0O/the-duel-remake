@@ -24,6 +24,8 @@ import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } fro
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
+import {LapTelemetryRecorder,LapTelemetryStore,telemetryRoute} from './lap-telemetry.js';
+import {courseFingerprint} from './track-analysis.js';
 import {loadGhosts,saveGhosts,findGhost,mergeGhostStores,storeGhost,GhostRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
@@ -111,7 +113,7 @@ export class App {
     }
     this._rememberWarlordOwner();
     this.leaderboard=loadLeaderboard();this.cpuDifficulty=DEFAULT_CPU_DIFFICULTY;
-    this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
+    this.lapTelemetry=new LapTelemetryStore();this.lapTelemetryRecorder=null;this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
     this.ambientOcclusionEnabled=readGraphicsQuality()!=='performance';
     this.lightingMood=readLightingMood();
     this.menuStage = 0;
@@ -145,9 +147,9 @@ export class App {
         this._settleResult(event.stageResult,state);
       }
       else if(event.gameover)this._settleResult(state.results||{},state);
-      if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);}
-      if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);}
-      if(event.boundaryReset||event.recovered||event.checkpointReset)this.ghostRecorder?.discontinuity();
+      if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
+      if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
+      if(event.boundaryReset||event.recovered||event.checkpointReset){this.ghostRecorder?.discontinuity();this.lapTelemetryRecorder?.discontinuity();}
       if(event.fighterExited||event.fighterEntered){
         this.inputContext=null;
         this.keys={};
@@ -226,7 +228,7 @@ export class App {
     this.stop();this._inputEvents?.abort();this.keys={};this._keyboardSteering.reset();this.onFrame=null;
     this.frameDiagnostics?.stop();this.frameDiagnostics=null;
     this._visualReadiness=null;
-    this._menuCourses.clear();this.ghostRecorder=this.ghostRecord=this.ghostPose=null;
+    this._menuCourses.clear();this.ghostRecorder=this.ghostRecord=this.ghostPose=null;this.lapTelemetryRecorder=null;
     this.audio.setPaused(true);this.audio.context?.close?.()?.catch?.(()=>{});
     if(typeof window!=='undefined'&&window.__game?.duel===this.duel)delete window.__game;
   }
@@ -274,7 +276,7 @@ export class App {
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
-      this._updateGhost(this.duel.state);
+      this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);
       this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);
     }
   }
@@ -408,6 +410,34 @@ export class App {
   }
   setGhostEnabled(enabled){
     this._refreshPlayer();this.ghostEnabled=!!enabled;this._rememberRaceSettings({ghostEnabled:this.ghostEnabled});saveGhostEnabled(this.ghostEnabled);this._updateGhost(this.duel.state);this.duel.emit({ghostChanged:true});return this.ghostEnabled;
+  }
+  getLapTelemetry({eventId=COURSE[this.menuStage]?.id,route,courseFingerprint:fingerprint}={}){
+    if(!this._switches().enabled('grand-prix'))return {lap:null,status:'off',message:''};
+    const stageIndex=COURSE.findIndex(stage=>stage.id===eventId);
+    const active=this.duel.state.status!=='menu'&&this.duel.state.stageIndex===stageIndex;
+    const selectedRoute=route??telemetryRoute(eventId,active?this.duel.state.seed:this.getMenuSeed(stageIndex));
+    if(stageIndex<0||!selectedRoute||!this.player)return {lap:null,status:'unavailable',message:'Lap comparison is unavailable for this route.'};
+    if(!fingerprint){
+      const course=this.duel.state.status!=='menu'&&this.duel.state.stageIndex===stageIndex?this.duel.course:this.getMenuCourse(stageIndex);
+      fingerprint=courseFingerprint(course,{route:selectedRoute});
+    }
+    return this.lapTelemetry.best({playerId:this.player.id,eventId,route:selectedRoute,courseFingerprint:fingerprint});
+  }
+  _startLapTelemetry(state){
+    this.lapTelemetryRecorder=null;
+    if(!this._switches().enabled('grand-prix')||!this.runId||!this.player||
+      this._runPlayerId!==this.player.id||state.playerId!==this.player.id||COURSE[state.stageIndex]?.practice||
+      this.duel.course?.closed===false)return;
+    this.lapTelemetryRecorder=new LapTelemetryRecorder({course:this.duel.course,playerId:this.player.id,
+      playerName:this.player.name,seed:state.seed,stageIndex:state.stageIndex,car:state.car,driverId:state.driverId,
+      mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty,
+      upgrades:{...state.upgrades},tyre:state.tyre});
+  }
+  _updateLapTelemetry(state){
+    if(!this._switches().enabled('grand-prix')){this.lapTelemetryRecorder=null;return;}
+    const record=this.lapTelemetryRecorder?.observe(state);
+    if(record)this.lapTelemetry.record(record);
+    if(['stage_result','gameover','complete','menu'].includes(state.status))this.lapTelemetryRecorder=null;
   }
   _startGhostStage(state){
     this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';
@@ -890,7 +920,7 @@ export class App {
     this.runId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._runPlayerId = this.player.id; this._markedRaceKey = null; this._arenaOpponents = count;
     this._arenaSerial = (this._arenaSerial || 0) + 1;
-    this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = null;this.lapTelemetryRecorder=null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
@@ -921,7 +951,7 @@ export class App {
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this._settledHiddenRoadJourney = null;
     this._settledMuddyHollowDeparture = null;
-    this.ghostRecorder = this.ghostRecord = this.ghostPose = null; this.ghostStatus = 'none';
+    this.ghostRecorder = this.ghostRecord = this.ghostPose = null;this.lapTelemetryRecorder=null; this.ghostStatus = 'none';
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
@@ -1120,7 +1150,7 @@ export class App {
     st.muddyHollowDeparture = null; st.arena = null;
     if (wasVisit) this._applyRaceSettings(this._raceSettings);
     st.driverId=getEquippedDriverId(this.profile);
-    this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.ghostStatus='none';
+    this.ghostRecorder=null;this.ghostRecord=null;this.ghostPose=null;this.lapTelemetryRecorder=null;this.ghostStatus='none';
     this._racePaint=null;this._racePaintCar=null;
     this.driftNotice=null;
     this.checkpointNotice=null;

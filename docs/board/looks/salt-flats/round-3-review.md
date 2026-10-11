@@ -32,3 +32,9 @@ views, and add less uniform local dust wear. They do not authorize a fourth
 round. Claude reviews the completed comparison. Public entry, rank unlock,
 mode hooks, final lane/build gate and installation remain unfinished; this
 private native review does not grant a whole-card merge pass.
+
+## Prior rounds, consumed
+
+Earlier material verdicts: round1 near Art3/Reads3/Ground4/Materials3/Clear4/Frame4; full2/3/4/2/4/4. Round2 near3/3/4/3/4 and full3/4/4/3/4. Pale relief, weak broad tone and a rectangular lattice caused both holds; the final round resolves them without geometry, UV or transform changes. Round1 source8d36433/pin d07c6cd and round2 source0955ea2/pin d960124 had the same six unfinished public-hook failures; private pictures never granted entry/installation. Both used16 real captures with zero issues. Paired180RAF p95: round1 bothvenues/qualities16.8ms; round2 High17.3/16.9ms and Performance17.0/16.8ms, original10% pass. Motion/audio remained unmeasured. No fourth round was authorized.
+
+Earlier sheets and superseded notes are removed after their verdict facts are folded here. Recipes and the final comparison remain.

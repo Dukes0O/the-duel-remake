@@ -84,8 +84,16 @@ reference, but now expects exactly +6.4 dB in peak and RMS. The existing
 0.1 dB tolerance remains. This tests the requested output change; every
 ceiling, contrast, onset, continuity and lifecycle limit remains unchanged.
 Independent review clears the gain and this exact expected-level change.
-Native peak stress, whole-mix measurement and lane/build remain pending.
-Initial audio460 and P4-assets checks pass.
+Native whole-mix/replay/recorder passes; current lane/build remain pending.
+Initial audio460 and P4-assets checks pass; integration dcdab76a genuinely synced.
+
+Actual c665e537 native mix passes: -16.08 LUFS/-1.21 dBTP, private6230, zero issues.
+Real eight-car/three-lap finish154.73s; exact replay values and lifecycle pass.
+Complete188.232s/9,035,136frames at48kHz, ten segments, all stem witnesses pass.
+Unnormalized MP3:2,402,685bytes, full native duration/rate/channels verified.
+Lossy copy measures -16.08LUFS/-0.58dBTP; exact WAV keeps the game peak verdict.
+Evidence `.evidence/2026-10-11/P4-AUDIO/native-c665/`; `mix-listening.mp3` and
+`listening.json` retain recipe/hashes. Kyle listens tomorrow; future cues stay pending.
 
 ## Removed
 

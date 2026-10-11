@@ -33,6 +33,8 @@ const nativeGenerators = [
   {script: 'tools/blender/vesper-blackiron.py', test: 'tools/test-vesper-art.mjs'},
   {script: 'tools/blender/salt-flats.py', test: 'tools/test-salt-flats-output.mjs'},
 ];
+// Circuit kits plan directories rather than one editable Blend per model.
+const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
 const reviewHelpers = [
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
@@ -176,10 +178,68 @@ function rejectsPrivateOutput(generator, fixtureRoot, output) {
   assert.equal(call.stdout.trim(), '', 'rejected output must not claim a valid plan');
 }
 
+// Run the actual KITS entry point under an audit guard. Planning must neither
+// load Blender/licensed donors nor mutate any file, including outside the root.
+const kitPlanAudit = String.raw`
+import json, os, runpy, sys
+from pathlib import Path
+script = Path(sys.argv[1]).resolve()
+stdlib = Path(sys.base_prefix).resolve()
+record = {'reads': [], 'imports': [], 'denied': []}
+def deny(message):
+    record['denied'].append(message)
+    raise RuntimeError(message)
+def audit(event, arguments):
+    if event == 'import':
+        name = arguments[0]
+        record['imports'].append(name)
+        if name.split('.')[0] in ('bpy', 'bmesh', 'mathutils', 'numpy'):
+            deny('paths-only attempted forbidden import: ' + name)
+    elif event == 'open' and isinstance(arguments[0], (str, bytes)):
+        path = Path(os.fsdecode(arguments[0])).resolve()
+        mode, flags = arguments[1:3]
+        if (isinstance(mode, str) and any(letter in mode for letter in 'wax+')) or flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND):
+            deny('paths-only attempted file write: ' + str(path))
+        record['reads'].append(str(path))
+        if path != script and not path.is_relative_to(stdlib):
+            deny('paths-only attempted donor or other input read: ' + str(path))
+    elif event in ('os.mkdir', 'os.remove', 'os.rmdir', 'os.rename', 'os.symlink', 'os.link', 'os.truncate'):
+        deny('paths-only attempted filesystem mutation: ' + event)
+sys.addaudithook(audit)
+sys.argv = [str(script)] + sys.argv[2:]
+try:
+    runpy.run_path(str(script), run_name='__main__')
+finally:
+    print('DUEL_KIT_PATH_AUDIT=' + json.dumps(record), file=sys.stderr)
+`;
+function kitPathPlan(generator, fixtureRoot) {
+  const before = fixtureTree(fixtureRoot);
+  const call = spawnSync('python', ['-I', '-B', '-S', '-c', kitPlanAudit,
+    join(root, generator.script), '--', '--root', fixtureRoot,
+    '--round', String(generator.round), '--paths-only'],
+    { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+  assert.equal(call.error, undefined, call.error?.message);
+  assert.deepEqual(fixtureTree(fixtureRoot), before, 'KITS planning changed its temporary root');
+  assert.equal(call.status, 0, generator.script + ' planning failed: ' + call.stderr.trim());
+  const receipt = call.stderr.split(/\r?\n/).find(line => line.startsWith('DUEL_KIT_PATH_AUDIT='));
+  assert.ok(receipt, 'actual CLI must retain its filesystem/import audit');
+  const audit = JSON.parse(receipt.slice('DUEL_KIT_PATH_AUDIT='.length));
+  assert.deepEqual(audit.denied, [], 'KITS planning attempted forbidden imports, input reads or writes');
+  assert.ok(audit.imports.every(name => !['bpy', 'bmesh', 'mathutils', 'numpy'].includes(name.split('.')[0])),
+    'planning imported a Blender or array dependency');
+  const plan = JSON.parse(call.stdout);
+  assert.deepEqual(Object.keys(plan).sort(), ['evidence', 'runtime'], 'complete KITS directory plan');
+  assert.ok(isAbsolute(plan.runtime) && isAbsolute(plan.evidence), 'planned directories must be absolute');
+  assert.equal(resolve(plan.runtime), join(fixtureRoot, 'public/assets/models/circuits/kits'), 'exact runtime kit home');
+  const evidence = relative(fixtureRoot, resolve(plan.evidence)).split(sep).join('/');
+  assert.match(evidence, /^\.evidence\/\d{4}-\d{2}-\d{2}\/P4-KITS\/round-3$/, 'exact ignored evidence family and round');
+  return {runtime: relative(fixtureRoot, resolve(plan.runtime)).split(sep).join('/'), evidence};
+}
+
 check('all Blender asset generators are covered', () => {
   const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && name !== 'fidelity-sheet.py')
     .map(name => `tools/blender/${name}`);
-  assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators].map(item => item.script).sort());
+  assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators, ...kitGenerators].map(item => item.script).sort());
 });
 
 for (const generator of nativeGenerators) check(`${generator.script} retains its native CLI suite`, () => {
@@ -217,6 +277,12 @@ try {
       }
     });
   }
+
+  for (const generator of kitGenerators) check(generator.script + ' plans exact kit/evidence homes without Blender, donor reads or writes', () => {
+    const plans = fixtureRoots.map(fixtureRoot => kitPathPlan(generator, fixtureRoot));
+    assert.deepEqual(plans[0], plans[1], 'same KITS recipe changed relative paths between roots');
+    fixtureRoots.forEach(fixtureRoot => assert.deepEqual(readdirSync(fixtureRoot), [], 'planning created files'));
+  });
 
   for (const generator of privateGenerators) {
     check(generator.script + ' plans private model, manifest and packed atlas without Blender, licensed reads or writes', () => {

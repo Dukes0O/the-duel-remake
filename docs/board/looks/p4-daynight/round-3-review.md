@@ -44,8 +44,22 @@ exception is needed. CPU rises at most 5.43%, GPU 2.16%, delivered 0.55%.
 All eight legs retain 360 CPU and 359 GPU/delivered samples. Earlier failures
 remain recorded. No new timing run, fourth art round or runtime change.
 
+## Retained earlier verdicts
+
+Round one was HOLD: lighting 2, road readability 4, grounding 4, consistency 2.
+Its original High CPU +16.49% failed the 10% limit (9.7/11.3 ms); Kyle relayed
+Claude's scoped acceptance on 11 October at 00:20 UTC. GPU rose 8.85%; delivered
+p95 stayed 16.8 ms. That old-source exception did not apply to round two.
+Round-two source 0f3cf576 retained a failed original High pair two: CPU
+9.6/18.7 ms (+94.79%), GPU 11.132928/17.587200 ms (+57.97%), delivered
+16.8/18.2 ms (+8.33%). Other comparisons met the unchanged 10% limit.
+No cause, retry pass or tolerance change was inferred from those failures.
+Detailed old-source timings and native findings remain in the DAY change note.
+
 ## Removed
 
 The sparse one-side path fixture batches and late-injected QA path were
 replaced in this change. No additional sheet, raw capture or timing log is
-committed. Earlier round verdicts and failures remain available for review.
+committed. Consumed round-one/two sheets (876,493 bytes) and superseded
+reviews are deleted after retaining needed verdicts and failures here. The
+final round-three sheet retains its reviewed 447,115 bytes exactly.
