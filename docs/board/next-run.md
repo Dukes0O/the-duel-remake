@@ -11,7 +11,7 @@ is on their cards and change notes. DAY quiet delivered p95 is at most 18.2 ms;
 Claude passed lighting 4/4/4/4 and final kits 3.5. No fourth kit art round.
 
 Telemetry merged79a75173 after lane383/383 in653.18s/build1.24s. Separate
-consumed-art janitor passed lane6/6/build548ms and merges now. Next: kit loader.
+consumed-art janitor merged dcdab76a after lane6/6/build548ms. Next: kit loader.
 Loader d774b508 adds Claude's finite nonnegative lift above the actual ground,
 with the unchanged 4.5 m road clearance test for both High and distant models.
 Post its merge for Claude's Harbour and Tremblant lanes, which he owns.
@@ -23,8 +23,8 @@ and starts the earned GP grid. Qualifying still depends on the GP card.
 
 GP existing has an actual Azure first-corner pile-up. Claude requested all
 30 seeded races per difficulty with the existing driver. That balance is
-running. Keep native assertions unchanged. If above 1 in 20, his smallest
-approved fix is a GP-only start setback; existing Duel and records stay exact.
+complete: Easy2/30, Medium10/30, Hard2/30 exceed the5% target. Claude must
+settle grid-only setback versus a true start-line shift; no assertion waiver.
 
 Panorama's actual first art sheet is on its card for Claude. Approved kits,
 landmarks, native eight-car finish and Sunset through final-lap dusk pass
@@ -32,10 +32,9 @@ functional checks; its own quiet frame check and full-field driver decision
 remain. First full track: no placeholder or fake finish.
 
 Snow's native pond, bank and moving eight-car checks pass. A shared kerb-normal
-fault makes High Bloom corrupt half the frame. Separate FIX-P4-KERB-NORMALS
-removes redundant opposite triangles with a failing-normal regression;
-Snow must show zero non-finite HDR/Bloom pixels with Bloom still enabled.
-Its actual art and quiet frame checks follow that repair.
+fault was repaired by merged FIX-P4-KERB-NORMALS after lane74/74/build616ms.
+Snow now shows zero non-finite HDR/Bloom pixels with Bloom enabled. Its first
+actual art sheet waits for Claude; quiet frame checks remain.
 
 Audio c665e537: actual native whole race is -16.08 LUFS and -1.21 dBTP;
 raw capture continuity and replay identity pass. Keep the exact PCM listening

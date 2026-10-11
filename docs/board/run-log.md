@@ -945,3 +945,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 2026-10-11 merge P4-INTEL-TELEMETRY aa18f6b6: lane383/383 653.18s, build1.24s, native comparison and save reviews clear; Dossier lane/branch cleaned normally.
 
 11 October janitor merge405cabb7: lane6/6 46.72s/build548ms, five consumed JPGs/notes removed after durable facts folded; looks19,980,225→17,671,624B. Current final hashes/runtime exact; stray root ledger removed.
+
+11 October merge FIX-P4-KERB-NORMALS e6b82a12: lane74/74 in91.20s/build616ms; actual geometry digest exact, zero nonfinite High Bloom targets.
