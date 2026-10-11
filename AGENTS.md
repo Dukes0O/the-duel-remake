@@ -69,6 +69,29 @@ text in the playbook, SPEC or cards that asks for more checking or recording.
    for work that touches saves, releases, money and pay, or art rounds. Other
    cards: the builder's tests, the lane gate and one review.
 
+Added 11 October 2026 (Kyle: "yes", after one shared test slot held every
+team's merges back for hours):
+
+7. Only frame timing needs a quiet laptop. Lane gates, builds, balance runs
+   and browser checks that do not time frames run alongside each other, at
+   most two at once across all teams, each with `--jobs 4` or fewer. A frame
+   measurement waits until no gate, build, balance run or browser check is
+   going, and nobody starts one while it runs. The full tier still runs
+   alone (rule 2).
+8. A frame check is simple: one run per quality (Performance and High) at the
+   track's busiest view with eight cars, passing at delivered p95 at most
+   18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
+   and extra controls are used only to find the cause after a simple check
+   fails, inside rule 4's 30 minutes. Before timing, check that no other
+   program (a browser window, a game tab) is using the graphics card heavily;
+   if one is, wait, and never count that run.
+9. No frame checks on art rounds, look tests or anything a player cannot
+   reach yet. Art is judged on its pictures; timing comes when it is wired
+   into the game.
+10. No new test machinery (guards, negative controls, harness recipes,
+    scenario frameworks) unless a card asks for it. A tool problem gets rule
+    4's 30 minutes, then a small card, then back to building.
+
 ## Gates (SPEC 0.5)
 
 - Before **every** merge into integration, including docs-only, tuning-only
