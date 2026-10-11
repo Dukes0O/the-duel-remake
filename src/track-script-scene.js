@@ -3,6 +3,8 @@
 // code reads the same positions from the Course and nothing here changes state.
 import * as THREE from 'three';
 import { strip, worldAtExtended } from './world-surfaces.js';
+import {createOnFootFigures} from './onfoot-figures.js';
+import {PIT,otherTyre} from './pit-lane.js';
 import { SURFACES } from './race-surfaces.js';
 
 const OVERLAY = {
@@ -40,7 +42,7 @@ function plateTexture(text, background, ink) {
   if (!ctx) return null;
   ctx.fillStyle = background; ctx.fillRect(0, 0, 128, 80);
   ctx.strokeStyle = ink; ctx.lineWidth = 5; ctx.strokeRect(5, 5, 118, 70);
-  ctx.fillStyle = ink; ctx.font = 'bold 46px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = ink; ctx.font = `bold ${Math.min(46,Math.floor(114/Math.max(1,text.length*.65)))}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, 64, 42);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -119,6 +121,40 @@ function addKerbs(group, course) {
   }
 }
 
+function addPit(group,course){
+  const lane=course.pitLane;if(!lane)return;
+  const pit=new THREE.Group();pit.name='pit-facility';group.add(pit);
+  const asphalt=new THREE.MeshStandardMaterial({color:0x41454a,roughness:.95});
+  const road=new THREE.Mesh(strip(course,s=>lane.offsetAt(s)-4.5,s=>lane.offsetAt(s)+4.5,.045,lane.entry,lane.exit),asphalt);
+  road.name='pit-lane-road';road.receiveShadow=true;pit.add(road);
+  const paint=new THREE.MeshStandardMaterial({color:0xffd34f,roughness:.85,side:THREE.DoubleSide});
+  const mark=(name,a,b,left,right)=>{const mesh=new THREE.Mesh(strip(course,left,right,.06,a,b),paint);mesh.name=name;pit.add(mesh);};
+  for(const [name,s] of [['pit-entry-line',lane.entry+60],['pit-exit-line',lane.exit-60]])
+    mark(name,s,s+.35,t=>lane.offsetAt(t)-4.5,t=>lane.offsetAt(t)+4.5);
+  for(const side of [-1,1])mark('pit-player-box',lane.box-4,lane.box+4,s=>lane.offsetAt(s)+side*2-.08,s=>lane.offsetAt(s)+side*2+.08);
+  for(const s of [lane.box-4,lane.box+4])mark('pit-player-box',s,s+.16,t=>lane.offsetAt(t)-2,t=>lane.offsetAt(t)+2);
+  const board=new THREE.Mesh(new THREE.BoxGeometry(3.6,1.2,.12),new THREE.MeshStandardMaterial({color:0xf2c400,roughness:.65}));
+  const point=course.worldAt(lane.entry-40,lane.side*(course.roadHalfWidthAt(lane.entry-40)+3));
+  board.name='pit-choice-board';board.position.set(point.x,point.y+2.4,point.z);board.rotation.y=point.heading+Math.PI;pit.add(board);
+  const stopBoard=board.clone();stopBoard.name='pit-go-board';
+  const stopPoint=course.worldAt(lane.box+8,lane.offsetAt(lane.box)+3.5);
+  stopBoard.position.set(stopPoint.x,stopPoint.y+2.4,stopPoint.z);stopBoard.rotation.y=stopPoint.heading+Math.PI;pit.add(stopBoard);
+  const crew=createOnFootFigures({capacity:2,pitCrew:true});crew.group.name='pit-crew';pit.add(crew.group);
+  const figures=['odessa','nell'].map(crewId=>({crewId,x:0,y:0,z:0,yaw:0,steps:0,work:0}));
+  let lastText='';
+  group.userData.updatePitCrew=state=>{
+    const actor=[state,...(state.opponents||[])].find(a=>a.pit?.phase==='servicing')||state;
+    const work=actor.pit?.phase==='servicing'?actor.pit.elapsed:0;
+    const box=actor.pit?.phase==='servicing'?course.phase(actor.s):lane.box;
+    figures.forEach((f,i)=>{const p=course.worldAt(box+(i?1.6:-1.6),lane.offsetAt(box)+(work?2.1:3.5));Object.assign(f,{x:p.x,y:p.y,z:p.z,yaw:p.heading-Math.PI/2,work});});
+    crew.update(figures,{active:true});
+    const text=state.pit?.phase==='ready'?'GO':`${otherTyre(state.tyre).toUpperCase()} TYRES`;
+    if(text!==lastText){lastText=text;const texture=plateTexture(text,text==='GO'?'#16802b':'#f2c400','#111111');
+      board.material.map?.dispose();board.material.map=texture;board.material.needsUpdate=true;}
+  };
+  group.userData.updatePitCrew({tyre:'summer'});
+}
+
 export function addTrackScriptScene(group, course) {
   for (const run of surfaceRuns(course)) {
     const look = OVERLAY[run.kind];
@@ -141,4 +177,5 @@ export function addTrackScriptScene(group, course) {
   addWalls(group, course);
   addKerbs(group, course);
   addBoards(group, course);
+  addPit(group, course);
 }
