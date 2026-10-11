@@ -108,7 +108,7 @@ function panoramaPlacements(road) {
   // The approved fence sits behind the unchanged physical ridge walls.
   for (let s = road.pieces.find(p => p.name === 'The Cutting').s0; s < road.pieces.find(p => p.name === 'Forrest Elbow').s1; s += 8) {
     for (const side of [-1, 1]) placements.push({id: 'catch-fence', s,
-      lateral: side * (road.halfWidthAt(s) + 1.8), heading: Math.PI / 2, lift: 1.05});
+      lateral: side * (road.halfWidthAt(s) + 1.8), heading: Math.PI / 2, scale: [2, 1, 1], lift: 1.05});
   }
   // A real lower town on the descent: two staggered streets, with an open
   // foreground below Skyline rather than houses on its crest or racing line.

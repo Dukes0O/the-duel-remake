@@ -14,7 +14,8 @@ import {useRacingLine} from './track-script-drive.mjs';
 import {DIFFICULTIES,TARGETS,runRace,summarize,checkTargets} from './race-field-balance.mjs';
 
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
-export async function runPanoramaRate(outputDir){
+export async function runPanoramaRate(outputDir,{difficulties=DIFFICULTIES}={}){
+  assert.ok(Array.isArray(difficulties)&&difficulties.length&&new Set(difficulties).size===difficulties.length&&difficulties.every(d=>DIFFICULTIES.includes(d)));
   const output=resolve(root,outputDir),inside=relative(resolve(root,'.evidence'),output);
   assert.ok(inside&&inside!=='..'&&!inside.startsWith('..'+sep)&&!inside.includes(':'));
   const git=spawnSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',windowsHide:true});
@@ -33,7 +34,7 @@ export async function runPanoramaRate(outputDir){
     return originalStart.call(this,options);
   };
   try{
-    for(const difficulty of DIFFICULTIES)for(let index=0;index<30;index++){
+    for(const difficulty of difficulties)for(let index=0;index<30;index++){
       let installed=false,lastDuel;
       const result=runRace(difficulty,index,{startStage:stage,car:'falcone_f42',onStep:duel=>{
         assert.equal(duel,activeApp.duel);
@@ -62,7 +63,7 @@ export async function runPanoramaRate(outputDir){
   }
   const summary=summarize(results),failures=checkTargets(summary);
   await mkdir(output,{recursive:true});
-  const report={sourceCommit,setup:{memoryOnly:true,driver:'native useRacingLine .95; existing field avoidance',
+  const report={sourceCommit,completeCoverage:difficulties.length===DIFFICULTIES.length,setup:{memoryOnly:true,driver:'native useRacingLine .95; existing field avoidance',
     car:'falcone_f42',seeds:'existing raceSeeds',jobs:1,syntheticResults:false,prototypeRestored:true},
     targets:TARGETS,summary,failures,results};
   await writeFile(join(output,'panorama-rate.json'),JSON.stringify(report,null,2)+'\n');
@@ -70,8 +71,8 @@ export async function runPanoramaRate(outputDir){
   return report;
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){
-  if(process.argv.length!==4||process.argv[2]!=='--output-dir')
-    throw Error('Usage: panorama-field-rate.mjs --output-dir .evidence/<date>/<card>/<run>');
-  const report=await runPanoramaRate(process.argv[3]);
+  if(![4,6].includes(process.argv.length)||process.argv[2]!=='--output-dir'||process.argv.length===6&&process.argv[4]!=='--difficulty')
+    throw Error('Usage: panorama-field-rate.mjs --output-dir .evidence/<date>/<card>/<run> [--difficulty easy|medium|hard]');
+  const report=await runPanoramaRate(process.argv[3],{difficulties:process.argv.length===6?[process.argv[5]]:DIFFICULTIES});
   if(report.failures.length)process.exitCode=1;
 }
