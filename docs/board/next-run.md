@@ -10,8 +10,8 @@ and Dossier with all 27 reference laps (86a7c336). Current lane/build evidence
 is on their cards and change notes. DAY quiet delivered p95 is at most 18.2 ms;
 Claude passed lighting 4/4/4/4 and final kits 3.5. No fourth kit art round.
 
-Telemetry aa18f6b6 has native comparison and save review clear; its lane gate
-is running. Next gates: separate consumed-art janitor, then shared kit loader.
+Telemetry merged79a75173 after lane383/383 in653.18s/build1.24s. Separate
+consumed-art janitor passed lane6/6/build548ms and merges now. Next: kit loader.
 Loader d774b508 adds Claude's finite nonnegative lift above the actual ground,
 with the unchanged 4.5 m road clearance test for both High and distant models.
 Post its merge for Claude's Harbour and Tremblant lanes, which he owns.

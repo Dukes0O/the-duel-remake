@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- Telemetry merged 79a75173: exact aa18f6b6 lane 383/383 in 653.18 s and build 1.24 s pass; native and independent save review clear. NEXT gate: separate art-evidence janitor, then loader d774b508. Azure balance may overlap the lane; no full tier or frame measurement while either runs.
+
 - Azure balance is reserved now: 30 complete races per Easy/Medium/Hard, one job using the existing driver and raceSeeds. Telemetry lane may continue; no full tier or frame measurement while this runs. Runtime and the 1-in-20 target stay unchanged.
 
 - CURRENT gate: telemetry aa18f6b6. Independent Azure 30-seed per difficulty balance is next; lane and balance may overlap, but no full tier or frame measurement may start. Loader lift d774b508 is implemented with finite nonnegative lift above the actual ground, and the original actual-vertex 4.5 m clearance test retained for both High/LOD. Its gate follows telemetry and the small art-evidence janitor; merge commit will be posted.

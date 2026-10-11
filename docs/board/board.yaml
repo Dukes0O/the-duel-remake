@@ -4194,7 +4194,8 @@ tasks:
 
     overnight_scope: "Director 11 October: additional hooks are limited to this card's named feature regions. Shared rendering remains read-only; existing modes and records remain unchanged. Coordinate with parallel lanes."
 
-    native_check_scope: "Director, 11 October: pit-lane scenario uses private memory-only native High and Performance races to verify an actual limiter, stop, crew and exit. No frame measurement in this functional check."    current_review_commit: dfddbf092bce7d7df8492ed7be7e785073b9bd08
+    native_check_scope: "Director, 11 October: pit-lane scenario uses private memory-only native High and Performance races to verify an actual limiter, stop, crew and exit. No frame measurement in this functional check."
+    current_review_commit: dfddbf092bce7d7df8492ed7be7e785073b9bd08
     current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
 
   - id: P4-TREMBLANT-SNOW
@@ -4664,7 +4665,7 @@ tasks:
     title: Remove consumed prior art rounds before the new track reviews
     phase: 4
     owner: codex
-    status: building
+    status: merged
     needs: [P4-KITS]
     owns: [docs/board/looks/salt-flats, docs/board/looks/vesper, docs/board/looks/smoke, docs/board/looks/polish-arena, docs/changes/JANITOR-P4-ART-EVIDENCE.md]
     design_decision: "Separate janitor step: fold needed prior-round verdicts into each current final review, then delete consumed earlier JPGs and notes. Keep current final sheets, all recipes, runtime assets, licensed inputs and Kyle decisions. The unchanged 20 MB evidence limit remains. Lane and build before its own merge; no unrelated sweep in a feature card."
@@ -4673,6 +4674,8 @@ tasks:
     branch: codex/janitor-p4-art-evidence
     hooks: [docs/changes/POLISH-ARENA.md]
     pointer_decision: "Cleanup review found historical pointers to consumed sheets. Board keeps current final pointers only; historical Arena note retains the earlier443390-byte fact and points to the current folded verdict. No art decision changed."
+    gate_commit: 405cabb72e155d1ee85b69e11cdaf5b18a6de1b8
+    gate_verdict: "Mandatory lane6/6 in46.72s/build548ms; review clear, four final JPGs exact. Consumed evidence removed; looks19,980,225 to17,671,624bytes. No runtime changes."
 
   - id: FIX-P4-KERB-NORMALS
     title: Repair zero kerb normals that corrupt High Bloom
@@ -4686,3 +4689,5 @@ tasks:
     owns: [src/track-script-scene.js, tools/test-kerb-normals.mjs, docs/changes/FIX-P4-KERB-NORMALS.md]
     design_decision: "Actual Snow native firstNaN pixel hits kerb normal0. addKerbs emits both opposing windings on sharedvertices, cancelling normals; material alreadyDoubleSide. Remove redundant reverse triangles, preserve everyvertex/UV/material/physics, require finite unit normals on both curved kerb sides. A controlled native kerb-hidden probe confirmscause; freshSnowHigh/Performance mustremoveNaNs without disablingBloom. Existingworld/replay fingerprints remain; neverregeneratewithoutreview."
     acceptance: "Meaningfulactual curved-kerb normal regression RED thenGREEN; nativeHalfFloat scene/Bloom noNaNs with originalBloom enabled; HighSnowframe visible, state/profile/storage exact. One source review/currentlane/build before ownmerge."
+    review_commit: 6d284cb081917c32868c8fa83d7a6e18f13c2443
+    source_review: "Director clear: only redundant reverse triangles removed, existing DoubleSide retained;2112 actual finite unit normals/1056 nondegenerate faces and exact position/UV/material digest. Native finite-target witness and mandatory lane/build queued."
