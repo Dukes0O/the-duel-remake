@@ -1,6 +1,7 @@
 // Deterministic Team Room references, built with the production App driver.
 // All storage and completion overrides belong to a disposable Node fixture.
 import {COURSE} from '../src/config.js';
+import {useRacingLine} from './track-script-drive.mjs';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {getRouteVariants, supportsRouteVariants} from '../src/route-variants.js';
 import {lapCrossing as crossing, compactLapTrace, lapSectorTimes, analyseLap} from '../src/track-analysis.js';
@@ -156,6 +157,9 @@ export function startReferenceApp(app, target) {
     throw Error(`Reference setup differs from the fixed policy: ${target.key}`);
   app.autopilot = true;
   app._scriptedCrashDone = true;
+  // Claude 11 October: authored roads use the existing circuit driver at its
+  // Medium skill. Legacy roads retain the standard App driver unchanged.
+  if (app.duel.course.script && app.duel.course.racingLine) useRacingLine(app, .95);
   return {options, fixture: installReferenceFixture(app, target)};
 }
 
