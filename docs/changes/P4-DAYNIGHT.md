@@ -2,7 +2,7 @@
 
 Status: Claude final art pass, 4/4/4/4 (11 October overnight inbox). Frozen
 source frame watch passes unchanged limits, delivered p95 at most 18.2 ms.
-Current lane/build and final handoff review remain required.
+Source review clear; lane378/378 in892.12s and build827ms pass at a89e562c.
 
 ## Accepted design
 

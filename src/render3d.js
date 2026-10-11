@@ -43,6 +43,7 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
+import {trackSnapshotPose} from './track-analysis.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -149,6 +150,7 @@ export function attachRenderer(host, app) {
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
+  const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
@@ -308,10 +310,93 @@ export function attachRenderer(host, app) {
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
   const nightWorldInput = {};
   const snowVehicles=Array.from({length:8},()=>({state:null,mesh:null}));
+  let trackSnapshot = null;
+  const snapshotLightPose = {rotation: {y: 0}};
+  function clearTrackSnapshot() {
+    const previous = trackSnapshot;trackSnapshot = null;ready = false;
+    if (previous && !previous.settled) {previous.settled = true;previous.reject(Error('Track view changed.'));}
+    delete host.dataset.trackSnapshot;
+  }
+  function captureTrackSnapshot({course: inspectedCourse, flag}) {
+    if (disposed || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status))
+      return Promise.reject(Error('Return to the menu or results before studying the track.'));
+    const pose = trackSnapshotPose(inspectedCourse, flag);
+    clearTrackSnapshot();
+    return new Promise((resolve, reject) => {
+      trackSnapshot = {course: inspectedCourse, flag, pose, resolve, reject,
+        settled: false, deadline: performance.now() + 15000};
+    });
+  }
+  function drawTrackSnapshot(now) {
+    const view = trackSnapshot;
+    frameMetrics.suspend();adaptiveResolution.reset();rearView.hide();
+    const visibility = [];
+    try {
+      if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
+      if (course !== view.course) {
+        if (world && worldKey === environmentKey(view.course)) course = view.course;
+        else build(view.course);
+      }
+      const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
+      const ground = course.groundAt(distance, 0);
+      camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+      camera.up.set(0, 1, 0);camera.fov = 54;
+      camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
+      lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+        tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: false});
+      lighting.followCamera(camera, ground, now / 1000);
+      snapshotLightPose.rotation.y = pose.heading;
+      // Keep chase/police lights in menu mode; only the authored road-light
+      // sample above uses the selected approach rather than the menu's start.
+      lighting.updateVehicles({course, position: ground, player: snapshotLightPose, police,
+        distance, tall: false, now, high, menu: true});
+      lighting.updateWorld({position: ground, heading: pose.heading, distance, high});
+      animateScene(world, now / 1000);
+      syncScene(world, {crushedProps: []}, 0);
+      for (const object of scene.children) {
+        if (object === world || lightingRoots.has(object) || object.isLight) continue;
+        visibility.push([object, object.visible]);object.visible = false;
+      }
+      quality.update(high, 1);
+      if (warmup) {
+        const revision = preparationKey({worldBuildCount, car: 'team-room', high});
+        if (revision !== warmupKey) {
+          warmupKey = revision;
+          warmupTicket = warmup.request(revision, () => high
+            ? compileWarmupPipeline(renderer, scene, camera, composer)
+            : compileWarmupScene(renderer, scene, camera, null));
+        }
+        if (!warmup.canDraw(warmupKey)) return;
+      }
+      renderer.info.autoReset = false;renderer.info.reset();
+      renderMainView(renderer, composer, high);
+      renderer.domElement.style.visibility = 'visible';
+      host.dataset.trackSnapshot = view.flag.id;
+      if (!view.settled) {
+        const canvas = document.createElement('canvas');canvas.width = 960;canvas.height = 540;
+        const source = renderer.domElement, ratio = canvas.width / canvas.height;
+        const width = Math.min(source.width, source.height * ratio), height = width / ratio;
+        const context = canvas.getContext('2d');
+        if (!context) throw Error('The browser could not copy the track view.');
+        context.drawImage(source, (source.width - width) / 2, (source.height - height) / 2,
+          width, height, 0, 0, canvas.width, canvas.height);
+        view.settled = true;view.resolve(canvas);
+      }
+    } catch (error) {
+      if (!view.settled) {view.settled = true;view.reject(error);}
+      if (trackSnapshot === view) trackSnapshot = null;
+    } finally {
+      for (const [object, visible] of visibility) object.visible = visible;
+    }
+  }
   let ready = false, lastMenu = null, previousT = performance.now();
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
+    if (trackSnapshot) {
+      if (['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) {drawTrackSnapshot(now);return;}
+      clearTrackSnapshot();
+    }
     const diagnosticTime = Number.isFinite(presentation.presentationSeconds);
     const presentationSeconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
     const ambientNow = diagnosticTime ? presentationSeconds*1000 : now;
@@ -776,7 +861,8 @@ export function attachRenderer(host, app) {
     const colors = new Set(); for (let i = 0; i < data.length; i += 4) colors.add(`${data[i] >> 4},${data[i + 1] >> 4},${data[i + 2] >> 4}`);
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
-  return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+  return { prepareVehicle, captureTrackSnapshot, clearTrackSnapshot,
+    retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
     retryTrackKits() {const next=app.duel.state.status==='menu'?app.getMenuCourse(app.menuStage||0):app.duel.course;return prepareKitWorld(next,{retry:true});},
     projectFootAim() {
       const state=app.duel.state;
@@ -790,6 +876,7 @@ export function attachRenderer(host, app) {
       return projectVehicleMarkers(camera, meshes);
     },
     dispose() {
+    clearTrackSnapshot();
     if(disposed)return;disposed=true;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
