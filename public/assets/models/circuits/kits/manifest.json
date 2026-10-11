@@ -4,7 +4,7 @@
   "up": "Y",
   "card": "P4-KITS",
   "recipe": "tools/blender/p4-kits.py",
-  "round": 2,
+  "round": 3,
   "pieces": [
     {
       "id": "start-gantry",
@@ -14,14 +14,14 @@
       ],
       "high": "start-gantry.glb",
       "low": "start-gantry-lod.glb",
-      "highTriangles": 1600,
-      "lowTriangles": 1008,
+      "highTriangles": 1660,
+      "lowTriangles": 1068,
       "size": [
-        17.5,
-        7.625,
-        0.64
+        17.76,
+        7.7,
+        0.93
       ],
-      "bytes": 299400,
+      "bytes": 317456,
       "credits": [
         {
           "author": "3D Assets",
@@ -38,14 +38,14 @@
       ],
       "high": "pit-garage.glb",
       "low": "pit-garage-lod.glb",
-      "highTriangles": 372,
-      "lowTriangles": 276,
+      "highTriangles": 408,
+      "lowTriangles": 312,
       "size": [
         7.005,
         5.2,
-        8.0
+        8.02
       ],
-      "bytes": 282536,
+      "bytes": 319832,
       "credits": [
         {
           "author": "Kenney",
@@ -740,14 +740,14 @@
       ],
       "high": "gallery.glb",
       "low": "gallery-lod.glb",
-      "highTriangles": 1268,
-      "lowTriangles": 196,
+      "highTriangles": 2024,
+      "lowTriangles": 952,
       "size": [
-        13.0,
-        6.2732,
-        6.0274
+        13.26768,
+        6.91828,
+        6.03469
       ],
-      "bytes": 226992,
+      "bytes": 327604,
       "credits": [
         {
           "author": "3D Assets",
@@ -836,14 +836,14 @@
       ],
       "high": "yeti.glb",
       "low": "yeti-lod.glb",
-      "highTriangles": 6326,
-      "lowTriangles": 1857,
+      "highTriangles": 6354,
+      "lowTriangles": 1886,
       "size": [
         3.84648,
         2.8,
-        2.1478
+        2.2291
       ],
-      "bytes": 1329412,
+      "bytes": 1342888,
       "credits": [
         {
           "author": "Quaternius",

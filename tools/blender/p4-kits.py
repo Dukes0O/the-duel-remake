@@ -99,6 +99,8 @@ PALETTE = {
 }
 
 
+ROUND_THREE = {"start-gantry", "pit-garage", "gallery", "yeti"}
+
 ROUND_TWO = {
     "start-gantry", "pit-garage", "armco", "concrete-wall", "tyre-wall",
     "lantern-tower", "shopfront-a", "shopfront-b", "lantern-string",
@@ -178,7 +180,7 @@ def main():
     globals().update(bpy=bpy, bmesh=bmesh, Vector=Vector, Matrix=Matrix, Quaternion=Quaternion, np=np)
     out.mkdir(parents=True, exist_ok=True)
     evidence.mkdir(parents=True, exist_ok=True)
-    selection = set(args.only.split(",")) if args.only else (ROUND_TWO if args.round >= 2 else set(DONORS))
+    selection = set(args.only.split(",")) if args.only else (ROUND_THREE if args.round == 3 else ROUND_TWO if args.round == 2 else set(DONORS))
     if not selection <= set(DONORS):
         raise ValueError("Unknown kit piece")
     if args.inspect_only:
@@ -187,6 +189,8 @@ def main():
             MATERIALS, SAMPLED_IMAGES = {}, {}
             inspect_donor(identifier)
         return
+    if args.round == 3 and not args.render_only and not selection <= ROUND_THREE:
+        raise ValueError("Passed round-two pieces must remain byte-exact")
     if args.round >= 2 and not args.render_only and not selection <= ROUND_TWO:
         raise ValueError("Passed round-one pieces must remain byte-exact")
     if args.render_only:
@@ -853,17 +857,31 @@ def prepare_garage(objects):
             assigned.append(mat)
         finish_held(obj, assigned)
         obj["p4PlanarLod"] = True
-    # The back of the actual eight-metre donor bay provides its depth cue.
-    detail_block("garage-rear-roller-door", (5.8, .08, 2.45), (0, 3.82, 1.35), dark)
-    slat = held_material("garage-roller-grey", (.38, .43, .42), .73, .3)
-    for index in range(12):
-        detail_block("garage-door-slat-" + str(index), (5.72, .045, .13),
-                     (0, 3.74, .30 + index * .18), slat)
+    # Open the donor's front bays; retain its columns, roof and side walls.
+    for obj in objects:
+        bm = bmesh.new(); bm.from_mesh(obj.data); bm.normal_update()
+        covered = [face for face in bm.faces
+                   if abs(face.calc_center_median().x) < 2.72 and
+                   face.calc_center_median().y < -3.55 and
+                   .18 < face.calc_center_median().z < 3.10]
+        bmesh.ops.delete(bm, geom=covered, context="FACES")
+        bm.to_mesh(obj.data); bm.free(); obj.data.update()
+    # A dark back and ceiling, seven metres inside the actual open bay.
+    detail_block("garage-dark-rear", (5.85, .10, 2.9), (0, 3.25, 1.48), dark)
+    detail_block("garage-dark-ceiling", (5.85, 7.5, .08), (0, 0, 3.12), dark)
+    floor = held_material("garage-oil-stained-floor", (.21, .23, .21), .98)
+    detail_block("garage-worn-floor", (6.9, 7.8, .055), (0, 0, .03), floor)
+    slat = held_material("garage-roller-grey", (.33, .39, .39), .73, .3)
+    detail_block("garage-half-raised-roller", (5.80, .10, 1.45), (0, -3.87, 2.36), slat)
+    for index in range(10):
+        detail_block("garage-front-door-slat-" + str(index), (5.74, .07, .06),
+                     (0, -3.94, 1.70 + index * .145), dark)
     for side in [-1, 1]:
-        detail_block("garage-side-stripe", (.045, 7.6, .38), (side * 3.48, 0, 2.9), teal)
+        detail_block("garage-side-stripe", (.045, 7.6, .46), (side * 3.48, 0, 2.90), teal)
+        detail_block("garage-front-team-stripe", (.57, .08, .46), (side * 3.12, -3.98, 2.90), teal)
         for index in range(4):
             detail_block("garage-near-door-fixing", (.045, .04, .08),
-                         (side * 2.84, 3.67, .4 + index * .55), slat, distant=False)
+                         (side * 2.89, -3.96, .4 + index * .55), slat, distant=False)
     return meshes()
 
 
@@ -1286,8 +1304,8 @@ def prepare_gantry(objects):
         raise ValueError("Expected exactly five original countdown lamps")
     lamps.sort(key=lambda obj: sum(bounds([obj])[i].x for i in [0, 1]))
     for index, obj in enumerate(lamps, 1):
-        fit([obj], (.64, .18, .64))
-        move([obj], ((index - 3) * 1.4, -.31, 4.92))
+        fit([obj], (.72, .18, .72))
+        move([obj], ((index - 3) * 1.4, -.42, 5.12))
         obj["p4PreserveSurface"] = True
         obj.name = "lamp-" + str(index)
         obj.data.materials.clear()
@@ -1309,10 +1327,15 @@ def prepare_gantry(objects):
         finish_held(obj, frame)
         obj["p4PreserveSurface"] = True
     for index in range(1, 6):
-        detail_block("lamp-housing-" + str(index), (.78, .30, .78),
-                     ((index - 3) * 1.4, -.12, 5.24), dark)
+        detail_block("lamp-housing-" + str(index), (.88, .34, .88),
+                     ((index - 3) * 1.4, -.22, 5.48), dark)
+    # Retain the donor frame and reinforce its actual 17.5 m clear span.
+    for side in [-1, 1]:
+        detail_block("gantry-reinforced-post", (.42, .60, 6.50), (side * 8.52, 0, 3.25), frame)
+        detail_block("gantry-footing", (.72, .84, .28), (side * 8.52, 0, .14), dark)
+    detail_block("gantry-reinforced-crossbeam", (17.5, .56, .42), (0, .03, 6.26), frame)
     banner = held_material("gantry-faded-banner", (.86, .81, .65))
-    detail_block("gantry-series-banner", (10.8, .22, 1.05), (0, -.06, 7.10), banner)
+    detail_block("gantry-series-banner", (13.2, .22, 1.20), (0, -.06, 7.10), banner)
     for x in [-4.4, 4.4]:
         detail_block("gantry-banner-mount", (.10, .16, .16), (x, -.06, 6.55), frame)
     front = label("THE DUEL", (0, -.183, 7.10), .94, "gantry-series-name-front")
@@ -1360,8 +1383,8 @@ def prepare_gallery(objects):
                 if size.z > 1.5:
                     centre = (low + high) * .5
                     for vertex in part.data.vertices:
-                        vertex.co.x = centre.x + (vertex.co.x - centre.x) * .64 / max(size.x, .01)
-                        vertex.co.y = centre.y + (vertex.co.y - centre.y) * .64 / max(size.y, .01)
+                        vertex.co.x = (1 if centre.x >= 0 else -1) * max(abs(centre.x), 5.7) + (vertex.co.x - centre.x) * 1.0 / max(size.x, .01)
+                        vertex.co.y = centre.y + (vertex.co.y - centre.y) * .95 / max(size.y, .01)
                 part.name = "gallery-concrete-pillar" if size.z > 1.5 else "gallery-concrete-crossbeam"
                 finish_held(part, concrete)
                 near_edge_detail(part)
@@ -1379,12 +1402,45 @@ def prepare_gallery(objects):
                 raise ValueError("Selected gallery roof has no upward cover planes")
             bm.to_mesh(obj.data); bm.free(); obj.data.update()
             bpy.context.view_layer.objects.active = obj
-            thickness = obj.modifiers.new("Concrete slab 0.84 m", "SOLIDIFY")
-            thickness.thickness = .84; thickness.offset = -1; thickness.use_even_offset = True
+            thickness = obj.modifiers.new("Concrete slab 1.02 m", "SOLIDIFY")
+            thickness.thickness = 1.02; thickness.offset = -1; thickness.use_even_offset = True
             bpy.ops.object.modifier_apply(modifier=thickness.name)
             obj.name = "gallery-heavy-concrete-roof"
             finish_held(obj, concrete)
             near_edge_detail(obj, .025)
+    detail_block("gallery-solid-uphill-back", (.80, 6.0, 4.62), (6.10, 0, 2.31), concrete)
+    # Fit additional copies of the donor snow into distinct roof heaps. These
+    # use the selected shelter's real snow silhouette, not a new snow model.
+    snow_cover = [obj for obj in meshes() if obj.name == "gallery-roof-snow"]
+    for index, (x, y, lift, sx, sy) in enumerate([
+            (2.1, -.5, .36, .65, .8), (-2.5, .6, .28, .55, .66), (5.4, -.2, .18, .22, .85)]):
+        for donor_snow in snow_cover:
+            copy = donor_snow.copy(); copy.data = donor_snow.data.copy()
+            bpy.context.collection.objects.link(copy)
+            bm=bmesh.new();bm.from_mesh(copy.data)
+            bmesh.ops.subdivide_edges(bm,edges=list(bm.edges),cuts=2,use_grid_fill=True)
+            bm.to_mesh(copy.data);bm.free();copy.data.update()
+            low, high = bounds([copy]); centre = (low + high) * .5
+            hx=max(.1,(high.x-low.x)/2);hy=max(.1,(high.y-low.y)/2)
+            for vertex in copy.data.vertices:
+                rx=(vertex.co.x-centre.x)/hx;ry=(vertex.co.y-centre.y)/hy
+                vertex.co.x = (vertex.co.x - centre.x) * sx + x
+                vertex.co.y = (vertex.co.y - centre.y) * sy + y
+                vertex.co.z += lift + .42*math.exp(-1.5*(rx*rx+ry*ry))
+            copy.name = "gallery-donor-snow-heap-" + str(index)
+            copy["p4PreserveSurface"] = True
+    # A few irregular donor snow pieces overhang the uphill fascia; preserve
+    # the valley-side road opening and original clearance throughout.
+    for index, y in enumerate([-2.0, -.65, 1.1, 2.0]):
+        if not snow_cover:
+            raise ValueError("Gallery donor snow cover is missing")
+        copy = snow_cover[0].copy(); copy.data = snow_cover[0].data.copy()
+        bpy.context.collection.objects.link(copy)
+        fit([copy], (.7 + .15 * (index % 2), .75, .65 + .10 * (index % 3)))
+        move([copy], (6.2, y, 5.45))
+        copy.name = "gallery-donor-snow-spill-" + str(index)
+        copy["p4PreserveSurface"] = True
+
     return meshes()
 
 
@@ -1590,8 +1646,8 @@ def reshape_yeti(objects, armature):
     bmesh.ops.delete(bm, geom=[vertex for vertex in bm.verts if not vertex.link_faces], context="VERTS")
     bm.to_mesh(body.data); bm.free(); body.data.update()
     ivory = held_material("yeti-matted-ivory", (.77, .76, .67), .97, pattern="wood")
-    face_mat = held_material("yeti-dark-face", (.075, .079, .069), .97)
-    eyes = held_material("yeti-small-eyes", (.58, .49, .29), .55)
+    face_mat = held_material("yeti-dark-face", (.31, .32, .30), .97)
+    eyes = held_material("yeti-small-eyes", (.40, .38, .32), .44)
     black = held_material("yeti-eye-and-mouth-shadow", (.025, .026, .022), .94)
     assigned, candidates = [], []
     for polygon in body.data.polygons:
@@ -1602,7 +1658,8 @@ def reshape_yeti(objects, armature):
         if is_eye:
             mat = eyes
         elif max(color) < .2:
-            mat = black
+            mat = (black if not front_face or (1.76 < point.z < 1.84 and abs(point.x) < .27)
+                   else face_mat)
         elif front_face and (color[2] > color[0] * 1.2 or color[0] > color[1] * 1.1):
             mat = face_mat
         else:
@@ -1631,6 +1688,12 @@ def reshape_yeti(objects, armature):
             break
     if len(anchors) < 90:
         raise ValueError("Insufficient weighted body surface for the planned shag silhouette")
+    # Uneven cheek and brow tufts interrupt the donor face border. Existing
+    # 112 body-fur anchors stay exact; only these head-weighted tufts are added.
+    for index, (x, z) in enumerate([(-.42, 2.15), (.37, 2.19), (-.45, 1.99),
+                                   (.40, 1.92), (-.32, 1.78), (.29, 1.76), (-.14, 2.22)]):
+        anchors.append((Vector((x, -.48 - .015 * (index % 3), z)),
+                        Vector((x * .25, -1, .10)).normalized(), {"Head": 1.0}))
     finish_held(body, assigned, grain_scale=.35)
     body["p4YetiBody"] = True
     vertices, faces, fur_weights = [], [], []
@@ -1667,6 +1730,50 @@ def reshape_yeti(objects, armature):
         tone = .98 if loop.vertex_index % 4 == 3 else .73
         wear.data[loop.index].color = (tone, tone * .995, tone * .96, 1)
     fur["p4PreserveSurface"] = True
+    # Sculpt the continuous donor face in its posed coordinates. This avoids
+    # rigid accessories: its retained triangles form the brow, nose and mouth.
+    evaluated = body.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    posed = evaluated.to_mesh()
+    positions = [vertex.co.copy() for vertex in posed.vertices]
+    evaluated.to_mesh_clear()
+    region = {i for face in body.data.polygons
+              if body.data.materials[face.material_index] in [face_mat, eyes, black]
+              for i in face.vertices if positions[i].z > 1.65 and positions[i].y < -.35}
+    low = Vector(tuple(min(positions[i][axis] for i in region) for axis in range(3)))
+    high = Vector(tuple(max(positions[i][axis] for i in region) for axis in range(3)))
+    centre = (low + high) * .5; span = high.z - low.z
+    matrices = {bone.name: body.matrix_world.inverted() @ armature.matrix_world @
+                armature.pose.bones[bone.name].matrix @ bone.matrix_local.inverted() @
+                armature.matrix_world.inverted() @ body.matrix_world
+                for bone in armature.data.bones}
+    eye_indices = {i for face in body.data.polygons
+                   if body.data.materials[face.material_index] == eyes for i in face.vertices}
+    for index in region:
+        vertex = body.data.vertices[index]; point = positions[index].copy()
+        x = point.x - centre.x; z = point.z - centre.z
+        brow = math.exp(-((z - span * .20) / .065) ** 2) * math.exp(-(x / .43) ** 4)
+        nose = math.exp(-((z + .025) / .105) ** 2 - (x / .14) ** 4)
+        cheek = .18 * (abs(x) / max(.1, (high.x-low.x)/2)) ** 2
+        point.y = low.y + .14 + cheek + .10 * (z / max(.1,span/2)) ** 2 - .18*brow - .16*nose
+        if index in eye_indices:
+            point.y -= .017
+        weighted = Matrix(((0,0,0,0),)*4)
+        total = sum(item.weight for item in vertex.groups)
+        for item in vertex.groups:
+            weighted += matrices[groups[item.group]] * (item.weight / total)
+        vertex.co = weighted.inverted() @ point
+    body.data.update()
+    # Limit black to the narrow mouth and the original small pupils. Grey
+    # sculpted cheeks and the brow replace the old all-black face plate.
+    assigned = []
+    for polygon in body.data.polygons:
+        mat = body.data.materials[polygon.material_index]
+        if mat == black and any(i in region for i in polygon.vertices):
+            point = sum((positions[i] for i in polygon.vertices), Vector()) / len(polygon.vertices)
+            mouth = abs(point.x-centre.x) < .27 and centre.z-span*.35 < point.z < centre.z-span*.22
+            if not mouth: mat = face_mat
+        assigned.append(mat)
+    finish_held(body, assigned, grain_scale=.35)
     armature["shapeAdaptation"] = "Original weighted body reshaped; tongue faces removed; smaller eyes; " + str(len(anchors)) + " authored opaque weighted fur clumps"
     return fur
 
