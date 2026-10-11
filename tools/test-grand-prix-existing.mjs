@@ -115,6 +115,11 @@ const widenedDef = courseForGrandPrix(azureDef), baselineAzure = new Course(azur
 check(!!widenedDef.grandPrixEntryWidth && Object.isFrozen(widenedDef.grandPrixEntryWidth), 'GP entry width metadata is immutable');
 equal(widenedDef.grandPrixEntryWidth, {start: 225, peak: 260, end: 295, halfWidth: 1},
   'only the approved225-260-295m one-metre-per-edge patch is installed');
+equal(widenedDef.fieldFollow, {wallRoom: 1,
+  firstLap: {margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4}},
+  'Azure GP reuses only the approved Harbour first-lap gap and wall room');
+check(Object.isFrozen(widenedDef.fieldFollow) && Object.isFrozen(widenedDef.fieldFollow.firstLap),
+  'Azure GP following metadata and its first-lap overlay are immutable');
 const widenedAzure = new Course(widenedDef, 1989);
 equal(widenedAzure.samples, baselineAzure.samples, 'GP entry width cannot change actual road center or elevation');
 for (const [s, extra] of [[224, 0], [225, 0], [242.5, .5], [260, 1], [277.5, .5], [295, 0], [296, 0]]) {
@@ -152,6 +157,7 @@ equal(JSON.stringify(azureDef), azureCatalog, 'GP wrapper preserves frozen Azure
 for (const def of COURSE.filter(def => grandPrixCourse(def) && def.id !== 'azure-riviera')) {
   const gpDef = courseForGrandPrix(def);
   check(!gpDef.grandPrixEntryWidth, 'other GP courses have no Azure width metadata');
+  equal(gpDef.fieldFollow, def.fieldFollow, 'other GP courses retain their authored following defaults');
   const legacy = new Course(def, 1989), gp = new Course(gpDef, 1989);
   for (const s of [0, 225, 260, 295, legacy.length - 1])
     equal(gp.roadHalfWidthAt(s), legacy.roadHalfWidthAt(s), 'other GP widths remain exact');
@@ -159,6 +165,7 @@ for (const def of COURSE.filter(def => grandPrixCourse(def) && def.id !== 'azure
 for (const mode of ['duel', 'timetrial']) {
   const legacy = start(azureIndex, mode);
   check(!legacy.course.def.grandPrixEntryWidth, mode + ': Azure has no GP patch');
+  equal(legacy.course.def.fieldFollow, azureDef.fieldFollow, mode + ': Azure following defaults remain exact');
   for (const s of [225, 242.5, 260, 277.5, 295])
     equal(legacy.course.roadHalfWidthAt(s), baselineAzure.roadHalfWidthAt(s), mode + ': width remains exact');
 }

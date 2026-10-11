@@ -17,6 +17,7 @@ export const LINE = Object.freeze({
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const wrapAngle = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const MPH = DRIVE.mphToWorld;
+const REFERENCE_GRIP = .82; // the grip of the car an authored circuit's corner speeds are worked out for
 
 export function halfWidthAt(course, s) {
   return course.roadHalfWidthAt?.(s) ?? DRIVE.roadHalfWidth;
@@ -72,7 +73,7 @@ export function buildRacingLine(course) {
     const s = i * step, frame = course.at(s);
     points.cx[i] = frame.x; points.cz[i] = frame.z;
     points.nx[i] = Math.cos(frame.heading); points.nz[i] = -Math.sin(frame.heading);
-    points.room[i] = Math.max(0, halfWidthAt(course, s) - LINE.margin);
+    points.room[i] = Math.max(0, halfWidthAt(course, s) - (course.def?.racingLine?.lineMargin ?? LINE.margin));
     heading[i] = frame.heading;
   }
   const offset = solveOffsets(course, points, closed);
@@ -154,11 +155,17 @@ export function buildSpeedProfile(line, spec, skill = {}) {
   const lateral = DRIVE.maxLateralAccel * spec.grip;
   const brake = DRIVE.brakeAccel * spec.braking * brakeFactor * MPH;
   const cornerSpeed = new Float64Array(count), v = new Float64Array(count);
+  // A circuit may hold its racers to the corner speeds its own line allows the reference car
+  // (`racingLine.holdRacers` in its definition): between walls they may not turn faster than that.
+  const feasible = line.course?.def?.racingLine?.holdRacers ? line.course.racingLine?.cornerSpeedAt : null;
   // A hairpin specialist carries a little more speed through the slow corners.
   const slowBonus = skill.slowBonus ?? 0;
   const crest = crestLimits(line);
   for (let i = 0; i < count; i++) {
     let corner = cornerFactor * Math.sqrt(lateral / Math.max(Math.abs(curvature[i]), 1e-5));
+    // An authored circuit's own line also knows how fast the reference car can take
+    // each corner (grip and how fast it can turn its nose); a racer keeps to that.
+    if (feasible) corner = Math.min(corner, cornerFactor * Math.sqrt(spec.grip / REFERENCE_GRIP) * feasible(i * step));
     if (slowBonus) corner *= 1 + slowBonus * clamp((140 - corner / MPH) / 60, 0, 1);
     cornerSpeed[i] = Math.min(top, corner, crest ? crest[i] : Infinity);
     v[i] = cornerSpeed[i];

@@ -19,10 +19,12 @@ function surfaceVaryings(shader) {
   shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>' + varyings + NOISE);
 }
 
-export function createPavedRoadMaterial({ asphalt, night = false }) {
+// `wet` is the wet look of a street at night: glossier, a little darker, so lamps and the
+// lights of cars glint on it. Looks only; grip is unchanged.
+export function createPavedRoadMaterial({ asphalt, night = false, wet = false }) {
   const material = new THREE.MeshStandardMaterial({
     name: 'Worn paved asphalt', map: asphalt, bumpMap: asphalt, bumpScale: .028,
-    roughness: night ? .55 : .9, color: night ? 0xa7b2bc : 0xd3d0ca, metalness: night ? .025 : 0,
+    roughness: wet ? .24 : night ? .55 : .9, color: wet ? 0x8d99a4 : night ? 0xa7b2bc : 0xd3d0ca, metalness: wet ? .1 : night ? .025 : 0,
   });
   material.onBeforeCompile = shader => {
     surfaceVaryings(shader);
@@ -48,10 +50,10 @@ export function createPavedRoadMaterial({ asphalt, night = false }) {
       diffuseColor.rgb*=roadTone;
     `).replace('#include <roughnessmap_fragment>', `
       #include <roughnessmap_fragment>
-      roughnessFactor=clamp(roughnessFactor-roadWheelWear*roadWearPolish-roadRepair*.025+(roadAge-.5)*.055,.36,1.0);
+      roughnessFactor=clamp(roughnessFactor-roadWheelWear*roadWearPolish-roadRepair*.025+(roadAge-.5)*.055,${wet ? '.16' : '.36'},1.0);
     `);
   };
-  material.customProgramCacheKey = () => 'paved-road-wear-v2';
+  material.customProgramCacheKey = () => (wet ? 'paved-road-wear-v2-wet' : 'paved-road-wear-v2');
   return material;
 }
 
