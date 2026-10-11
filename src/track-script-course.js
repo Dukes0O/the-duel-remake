@@ -102,8 +102,8 @@ function scatterScenery(course) {
       if (theme === 'city') continue;
       const sx = rng.range(55, 115), sz = rng.range(55, 110), height = rng.range(65, theme === 'alpine' ? 200 : 120), side = i % 2 ? 1 : -1;
       let off = side * rng.range(180, 330); const radius = Math.hypot(sx, sz) * 1.1;
-      for (let j = 0; j < 9 && !roadClear(s, off, radius, 25); j++) off += side * 40;
-      if (!roadClear(s, off, radius, 25)) continue;
+      for (let j = 0; j < 9 && (!roadClear(s, off, radius, 25) || cleared(s, off, radius)); j++) off += side * 40;
+      if (!roadClear(s, off, radius, 25) || cleared(s, off, radius)) continue;
       f.mountains.push(add(`mountain-${i}`, 'mountain', s, off, sx, sz, rng.range(0, TAU), { height, scale: [sx, height, sz], shape: 'ellipse' }));
     }
   }
@@ -133,8 +133,8 @@ function scatterScenery(course) {
   hills.forEach((hill, h) => {
     for (let i = 0; i < (hill.pines ?? 0); i++) {
       const s = hill.s + rng.range(-hill.along, hill.along), off = hill.lateral + rng.range(-hill.across, hill.across), scale = rng.range(.8, 1.9);
-      const [du, dv] = hillLocal(hill, s, off);
-      if (hillReach(hill, du, dv) > .96 || runWeight(hill, du, dv) > .02) continue;
+      const [du, dv] = hillLocal(hill, s, off), p = course.groundAt(s, off);
+      if (hillReach(hill, du, dv) > .96 || runWeight(hill, du, dv) > .02 || blocked.some(kit => Math.hypot(kit.x - p.x, kit.z - p.z) < kit.radius)) continue;
       const tree = add(`hill-tree-${h}-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale });
       tree.y += hillHeight(hill, du, dv);
       f.trees.push(tree);

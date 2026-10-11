@@ -28,7 +28,7 @@ const smooth = x => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 -
 export function lakeGeometry(course, lake) {
   const rings = 12, around = 60, positions = [], colours = [], indices = [];
   const level = course.groundAt(lake.s, lake.lateral).y + lake.level;
-  const deep = new THREE.Color(lake.colour ?? 0x35575f), shallow = new THREE.Color(0x5f8584), mix = new THREE.Color();
+  const deep = new THREE.Color(lake.colour ?? 0x1f4a5a), shallow = new THREE.Color(0x3f7a80), mix = new THREE.Color();
   for (let ring = 0; ring <= rings; ring++) for (let a = 0; a < around; a++) {
     const reach = ring / rings, angle = a / around * TAU;
     // An uneven shore, not a perfect oval.
@@ -36,7 +36,7 @@ export function lakeGeometry(course, lake) {
     const point = course.worldAt(lake.s + Math.cos(angle) * reach * shore * lake.along, lake.lateral + Math.sin(angle) * reach * shore * lake.across);
     positions.push(point.x, level, point.z);
     mix.copy(deep).lerp(shallow, smooth((reach - .45) / .55));
-    colours.push(mix.r, mix.g, mix.b, 1 - smooth((reach - .7) / .3));
+    colours.push(mix.r, mix.g, mix.b, 1 - smooth((reach - .86) / .14));
   }
   for (let ring = 0; ring < rings; ring++) for (let a = 0; a < around; a++) {
     const b = (a + 1) % around, i = ring * around + a, j = ring * around + b, k = (ring + 1) * around + a, l = (ring + 1) * around + b;
@@ -52,8 +52,8 @@ export function lakeGeometry(course, lake) {
 }
 
 function lakeMesh(course, lake) {
-  const material = new THREE.MeshStandardMaterial({ name: 'Lake water', vertexColors: true, transparent: true, roughness: .06, metalness: .05,
-    envMapIntensity: 1.3, depthWrite: false, side: THREE.DoubleSide });
+  const material = new THREE.MeshStandardMaterial({ name: 'Lake water', vertexColors: true, transparent: true, roughness: .22, metalness: 0,
+    envMapIntensity: .55, depthWrite: false, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(lakeGeometry(course, lake), material);
   mesh.name = 'Lake'; mesh.receiveShadow = true; mesh.renderOrder = 1;
   return mesh;
@@ -76,7 +76,7 @@ function mistTexture() {
 // Banks of mist: wide, low sprites that face the camera and slide slowly across the water.
 function addMist(group, course, lake, level, options) {
   const texture = mistTexture(), banks = [];
-  const material = new THREE.SpriteMaterial({ map: texture, color: 0xfff2e0, transparent: true, opacity: .34, depthWrite: false });
+  const material = new THREE.SpriteMaterial({ map: texture, color: 0xfff0dc, transparent: true, opacity: .22, depthWrite: false });
   const count = options.count ?? 12;
   for (let i = 0; i < count; i++) {
     // A fixed spread of positions inside the lake, in road terms.
@@ -103,14 +103,14 @@ function addMist(group, course, lake, level, options) {
 // A hill: a dome following the ground, dark forest floor, with the ski runs paler.
 export function hillGeometry(course, hill) {
   const nu = 44, nv = 44, positions = [], colours = [], indices = [];
-  const floor = new THREE.Color(0x5d5a32), litter = new THREE.Color(0x7a5a30), run = new THREE.Color(0xa5a85a), runDry = new THREE.Color(0xb9a460), mix = new THREE.Color();
+  const floor = new THREE.Color(0x5b6a38), litter = new THREE.Color(0x7d6b36), run = new THREE.Color(0xa8b866), runDry = new THREE.Color(0xc2b56c), mix = new THREE.Color();
   for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
     const du = (i / nu * 2 - 1) * hill.along, dv = (j / nv * 2 - 1) * hill.across;
     const s = hill.s + du, lateral = hill.lateral + dv, rise = hillHeight(hill, du, dv);
     const point = course.worldAt(s, lateral), ground = course.groundAt(s, lateral);
     positions.push(point.x, ground.y + .06 + rise, point.z);
     const patch = .5 + .5 * Math.sin(du * .21 + Math.sin(dv * .13) * 2);
-    mix.copy(floor).lerp(litter, .25 + .5 * patch);
+    mix.copy(floor).lerp(litter, .1 + .35 * patch);
     const onRun = runWeight(hill, du, dv);
     if (onRun > 0) mix.lerp(runDry.clone().lerp(run, .5 + .5 * Math.sin(dv * .31 + du * .17)), onRun * .92);
     colours.push(mix.r, mix.g, mix.b);

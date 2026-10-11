@@ -185,13 +185,13 @@ function safety() {
 
 function lakeside() {
   // The dock reaches out from the shore toward the middle of the lake.
-  return [kit('wooden-dock', LAKE.s, 17.5, { heading: FACE_RIGHT + Math.PI, clear: 6 })];
+  return [kit('wooden-dock', LAKE.s, 26, { heading: FACE_RIGHT + Math.PI, clear: 6 })];
 }
 
 function lodge() {
   // On the lower slope of the hill, looking down the straight.
   const du = -72, dv = -34;
-  return [kit('ski-lodge', HILL.s + du, HILL.lateral + dv, { heading: FACE_RIGHT, clear: 16, hill: 0 })];
+  return [kit('ski-lodge', HILL.s + du, HILL.lateral + dv, { heading: FACE_RIGHT, scale: 1.6, clear: 24, hill: 0 })];
 }
 
 function chairlift() {
@@ -229,7 +229,7 @@ function trees() {
     for (let i = 0; i < count; i++) {
       const ts = s + (random() - .5) * 22, tl = lateral + (random() - .5) * 16;
       if (avoid(ts, tl)) continue;
-      out.push(kit(ids[(grove + i) % 3], ts, tl, { heading: random() * Math.PI * 2, scale: .85 + random() * .6, clear: 3.2 }));
+      out.push(kit(ids[(grove + i) % 3], ts, tl, { heading: random() * Math.PI * 2, scale: 1.05 + random() * .7, clear: 4.5 }));
     }
   }
   // And on the hill, off the ski runs.
@@ -237,7 +237,7 @@ function trees() {
   for (let attempt = 0; onHill < 12 && attempt < 800; attempt++) {
     const du = (random() * 2 - 1) * HILL.along * .8, dv = (random() * 2 - 1) * HILL.across * .8;
     if (hillReach(HILL, du, dv) > .8 || runWeight(HILL, du, dv) > .02) continue;
-    out.push(kit(ids[attempt % 3], HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: 1 + random() * .5, clear: 3.2, hill: 0 }));
+    out.push(kit(ids[attempt % 3], HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: 1.3 + random() * .6, clear: 4.5, hill: 0 }));
     onHill++;
   }
   return out;
