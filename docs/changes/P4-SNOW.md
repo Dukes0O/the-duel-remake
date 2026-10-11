@@ -45,6 +45,7 @@ Default Bloom stays enabled. FIX-P4-KERB-NORMALS removes shared reverse kerb
 triangles without changing vertices/materials; its independent regression
 failed on the actual ridge zero normal first. Genuine fix merge preserves
 Dossier snapshot/readiness/retry/disposal and Snow/PIT presentation hooks.
+Equivalent winter snapshots must rebuild with the current Course bank identities.
 
 ## Checks
 
@@ -83,7 +84,7 @@ Renderer prepares approved extras before building Snow, keeps bank identities
 on menu-to-race transitions, and feeds the actual eight grounded car meshes.
 Round-one native art is pending Claude. Quiet frames, lane/build, final review
 and merge remain pending.
-No finished-art/frame verdict. PIT is synced; winter snapshot identity needs review.
+No finished-art/frame verdict. PIT is synced; genuine snapshot identity RED is queued.
 Static timing fixes only its native presentation camera before sampling;
 original samples/10percent limits and all actor poses stay exact.
 Director clears the three additive renderer hooks; no real saves/release/live QA.

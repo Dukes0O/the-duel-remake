@@ -181,6 +181,55 @@ function witness(view) {
     programs:programs.length};
 }
 
+async function snapshotIdentity(context,quality) {
+  await context.evaluate(`(() => {
+    const app=window.__qaApp,api=window.__render,host=document.querySelector('#view3d');
+    if(app.duel.state.status!=='menu')throw Error('Winter snapshot identity requires the genuine menu.');
+    const previous=app.getMenuCourse(0);
+    const oldBanks=api.scene.getObjectByName('Approved track kits')?.userData.trackKitPlacements
+      .filter(row=>row.id==='plough-bank');
+    if(!oldBanks?.length||oldBanks.some(row=>!previous.features.surfacePatches.includes(row.physicalPatch)))
+      throw Error('The original winter world lacks genuine previous-Course bank identities.');
+    const readOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,
+      storage:Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).sort().map(k=>[k,localStorage.getItem(k)])});
+    const before=readOnly();
+    app._menuCourses.clear();
+    const current=app.getMenuCourse(0);
+    const shape=course=>JSON.stringify({seed:course.seed,length:course.length,samples:course.samples,
+      patches:course.features.surfacePatches});
+    if(current===previous||current.def!==previous.def||shape(current)!==shape(previous)||
+      current.features.surfacePatches.some(patch=>previous.features.surfacePatches.includes(patch)))
+      throw Error('The regression needs genuine equivalent Course objects with independent patch identities.');
+    const fixture=window.__snowSnapshotFixture={previous,current,oldBanks,readOnly,before,
+      builds:Number(host.dataset.worldBuilds),settled:false};
+    api.captureTrackSnapshot({course:current,flag:{id:'snow-bank-identity',snapshotS:180,camera:{up:2,ahead:55}}})
+      .then(canvas=>{fixture.canvas=canvas;fixture.settled=true;},
+        error=>{fixture.error=error.message;fixture.settled=true;});
+    api.renderFrame();
+    if(readOnly()!==before)throw Error('Pending winter snapshot changes race/profile/storage.');
+  })()`);
+  await context.waitFor(`(()=>{window.__render.renderFrame();return window.__snowSnapshotFixture.settled;})()`,
+    quality+' genuine equivalent-Course winter snapshot',25000);
+  return context.evaluate(`(() => {
+    const fixture=window.__snowSnapshotFixture,api=window.__render,host=document.querySelector('#view3d');
+    try {
+      if(fixture.error)throw Error(fixture.error);
+      if(fixture.readOnly()!==fixture.before)throw Error('Winter snapshot changes exact race/profile/storage.');
+      if(!fixture.canvas||host.dataset.trackKitAsset!=='ready'||host.dataset.trackSnapshot!=='snow-bank-identity')
+        throw Error('Winter snapshot bypasses original assets/readiness completion.');
+      const banks=api.scene.getObjectByName('Approved track kits')?.userData.trackKitPlacements
+        .filter(row=>row.id==='plough-bank');
+      if(!banks?.length||banks.length!==fixture.oldBanks.length)throw Error('Winter snapshot dropped generated banks.');
+      return {quality:${JSON.stringify(quality)},bankCount:banks.length,
+        previousBanks:banks.filter(row=>fixture.previous.features.surfacePatches.includes(row.physicalPatch)).length,
+        currentBanks:banks.filter(row=>fixture.current.features.surfacePatches.includes(row.physicalPatch)).length,
+        distinctWorldBanks:banks.filter(row=>!fixture.oldBanks.includes(row)).length,
+        buildsBefore:fixture.builds,buildsAfter:Number(host.dataset.worldBuilds),readOnly:true,
+        actualQuality:window.__qaApp.ambientOcclusionEnabled!==false?'high':'performance'};
+    } finally {api.clearTrackSnapshot();delete window.__snowSnapshotFixture;}
+  })()`);
+}
+
 async function capture(context,quality,view) {
   await context.evaluate('('+setView.toString()+')('+JSON.stringify(view)+')');
   const before=await context.evaluate(`JSON.stringify({state:window.__qaApp.duel.state,profile:window.__qaApp.profile,
@@ -211,7 +260,7 @@ async function driveTo(context,s) {
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:800,deviceScaleFactor:1,mobile:false});
   const frames=process.env.P4_SNOW_MEASURE_FRAMES==='1';
-  const report={card:'P4-SNOW',captures:[],moving:[],frames:[],comparisons:[],
+  const report={card:'P4-SNOW',captures:[],snapshots:[],moving:[],frames:[],comparisons:[],
     frameScope:'Static native eight-car snapshots; flakes and track expiry remain active. Moving Snow update cost is not measured.',
     frameStatus:frames?'running':'not scheduled',bloomTargets:[],passed:false};
   try{
@@ -220,6 +269,12 @@ export async function run(context) {
       await context.waitFor(`window.__qaApp?.visualReady&&!document.querySelector('#start-engine')?.disabled`, 'native isolated menu',60000);
       await context.evaluate('('+prepareNative.toString()+')('+JSON.stringify(quality)+')');
       await context.waitFor(`window.__qaApp.visualReady&&Number(document.querySelector('#view3d').dataset.worldBuilds)>window.__snowBeforeBuilds&&!!window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets in the actual menu world',60000);
+      const snapshot=await snapshotIdentity(context,quality);report.snapshots.push(snapshot);
+      assert.equal(snapshot.actualQuality,quality,'winter snapshot retains native quality');
+      assert.equal(snapshot.currentBanks,snapshot.bankCount,'all snapshot banks reference the current equivalent Course');
+      assert.equal(snapshot.previousBanks,0,'no snapshot bank retains a previous Course patch');
+      assert.equal(snapshot.distinctWorldBanks,snapshot.bankCount,'winter snapshot builds fresh bank placements');
+      assert.ok(snapshot.buildsAfter>snapshot.buildsBefore,'equivalent winter snapshot rebuilds the actual world');
       await context.evaluate('('+startNative.toString()+')()');
       await context.waitFor(`window.__qaApp.visualReady&&!!window.__render?.scene.getObjectByName('Authored snow world')`, 'fresh native full-field winter world',60000);
       await context.evaluate(`document.head.insertAdjacentHTML('beforeend','<style>details,#overlay,.rear-view-frame{display:none!important}</style>')`);
