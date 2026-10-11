@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { strip, worldAtExtended } from './world-surfaces.js';
 import { SURFACES } from './race-surfaces.js';
+import {winterSurfaceMaterial} from './snow-world.js';
 
 const OVERLAY = {
   gravel: { color: 0x8c775a, roughness: 1, metalness: 0, lift: .046, tracks: false },
@@ -26,10 +27,11 @@ export function surfaceRuns(course) {
   return runs;
 }
 
-function overlayMaterial(kind) {
+function overlayMaterial(kind, winter = false) {
   const look = OVERLAY[kind];
-  return new THREE.MeshStandardMaterial({ name: `${SURFACES[kind].name} road`, color: look.color, roughness: look.roughness, metalness: look.metalness,
+  const material = new THREE.MeshStandardMaterial({ name: `${SURFACES[kind].name} road`, color: look.color, roughness: look.roughness, metalness: look.metalness,
     emissive: look.emissive ?? 0x000000, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  return winter && ['snow','ice','deep-snow'].includes(kind) ? winterSurfaceMaterial(material,kind) : material;
 }
 
 function plateTexture(text, background, ink) {
@@ -119,12 +121,13 @@ function addKerbs(group, course) {
   }
 }
 
-export function addTrackScriptScene(group, course) {
+export function addTrackScriptScene(group, course, {snow = false} = {}) {
   for (const run of surfaceRuns(course)) {
     const look = OVERLAY[run.kind];
     if (!look) continue;
     const left = s => Math.max(run.from, -course.roadHalfWidthAt(s)), right = s => Math.min(run.to, course.roadHalfWidthAt(s));
-    const mesh = new THREE.Mesh(strip(course, left, right, look.lift, run.s0, run.s1), overlayMaterial(run.kind));
+    if (left((run.s0 + run.s1) / 2) >= right((run.s0 + run.s1) / 2)) continue;
+    const mesh = new THREE.Mesh(strip(course, left, right, look.lift, run.s0, run.s1), overlayMaterial(run.kind,snow));
     mesh.receiveShadow = true; mesh.name = `surface-${run.kind}`;
     group.add(mesh);
     if (look.tracks) {

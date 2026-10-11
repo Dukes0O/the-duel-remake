@@ -2,7 +2,7 @@
 // sampled centreline, the finish, the racing line and the solid walls. Like the
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
-import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
+import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
 // is stored for a reference car and computer racers scale it to their own.
@@ -15,6 +15,7 @@ export function installTrackScript(course, dynamics) {
   f.boards = script.boards.map(board => ({ ...board }));
   // Surface patches (ice, a drift of deep snow...) lie on top of the script's stretches.
   f.surfacePatches = (course.def.surfacePatches || []).map(patch => ({ from: -Infinity, to: Infinity, ...patch }));
+  f.surfacePatches.push(...winterBankPatches(script, course.def.snowWorld));
   const problems = checkSurfaceRules(script, f.surfacePatches);
   if (problems.length) throw new TrackScriptError(`Track script "${script.id}" breaks the surface rules: ${problems.join(' ')}`);
   f.boards.push(...iceBoards(script, f.surfacePatches));
