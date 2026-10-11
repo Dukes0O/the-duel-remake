@@ -91,18 +91,17 @@ async function captureYetiNight(context, {quality, bundle, piece}) {
       const hit=new api.Raycaster(view.camera.position,direction.normalize(),.01,length-.05).intersectObjects(candidates,false)[0];
       if(hit&&!belongs(hit.object))throw Error('Night character is occluded by '+(hit.object.name||hit.object.type));
     }
-    const footBones={};
-    for(const side of ['L','R']){
-      footBones[side]=[];
-      for(const name of ['LowerLeg.'+side,'Foot.'+side]){
-        const indices=gltf.parser.json.nodes.flatMap((node,index)=>node.name===name?[index]:[]);
-        if(indices.length!==1)throw Error('Unique original foot joint required: '+name);
-        const bone=await gltf.parser.getDependency('node',indices[0]);
-        if(!bone?.isBone||skins.some(mesh=>!mesh.skeleton.bones.includes(bone)))
-          throw Error('Original weighted foot joint required: '+name);
-        footBones[side].push(bone);
-      }
-    }
+    const originalBone=async name=>{
+      const indices=gltf.parser.json.nodes.flatMap((node,index)=>node.name===name?[index]:[]);
+      if(indices.length!==1)throw Error('Unique original joint required: '+name);
+      const bone=await gltf.parser.getDependency('node',indices[0]);
+      if(!bone?.isBone||skins.some(mesh=>!mesh.skeleton.bones.includes(bone)))
+        throw Error('Original weighted joint required: '+name);
+      return bone;
+    };
+    const rootBone=await originalBone('Root'),footBones={};
+    for(const side of ['L','R'])footBones[side]=await Promise.all(
+      ['LowerLeg.'+side,'Foot.'+side].map(originalBone));
     const feet={L:[],R:[]};
     for(const mesh of skins){const weights=mesh.geometry.attributes.skinWeight,joints=mesh.geometry.attributes.skinIndex;
       for(let i=0;i<weights.count;i++){
@@ -117,14 +116,34 @@ async function captureYetiNight(context, {quality, bundle, piece}) {
       }
     }
     if(!feet.L.length||!feet.R.length)throw Error('Original weighted foot vertices required');
-    window.__p4YetiNight={actor,gltf,mixer,skins,feet,pointAt,bounds,beforeState,beforeProfile,
-      groundY:actor.position.y};
+    const anchors={},anchorReport={};
+    for(const side of ['L','R']){
+      const candidates=feet[side].map(vertex=>({...vertex,point:pointAt(vertex.mesh,vertex.index)}));
+      const minimum=Math.min(...candidates.map(vertex=>vertex.point.y));
+      const sole=candidates.filter(vertex=>vertex.point.y<=minimum+.08);
+      const projection=vertex=>vertex.point.clone().sub(actor.position).dot(facing);
+      const rear=Math.min(...sole.map(projection)),front=Math.max(...sole.map(projection));
+      if(front-rear<=.001)throw Error('Distinct original heel/toe vertices required: '+side);
+      const heel=sole.filter(vertex=>projection(vertex)<=rear+(front-rear)*.2).sort((a,b)=>a.point.y-b.point.y)[0];
+      const toe=sole.filter(vertex=>projection(vertex)>=front-(front-rear)*.2).sort((a,b)=>a.point.y-b.point.y)[0];
+      anchors[side]={};anchorReport[side]={};
+      for(const [name,vertex] of Object.entries({heel,toe})){
+        const association=gltf.parser.associations.get(vertex.mesh);
+        if(!Number.isInteger(association?.meshes)||!Number.isInteger(association?.primitives))
+          throw Error('Original glTF primitive identity required for sole anchor');
+        const id={mesh:association.meshes,primitive:association.primitives,vertex:vertex.index};
+        anchors[side][name]={mesh:vertex.mesh,index:vertex.index,id};
+        anchorReport[side][name]={id,idlePosition:vertex.point.toArray()};
+      }
+    }
+    window.__p4YetiNight={actor,gltf,mixer,skins,feet,anchors,rootBone,pointAt,bounds,beforeState,beforeProfile,
+      groundY:actor.position.y,initialFacing:facing.toArray()};
     if(beforeState!==JSON.stringify(app.duel.state)||beforeProfile!==JSON.stringify(app.profile))
       throw Error('Night character setup changed race/profile state');
     return {height,cameraDistance:view.camera.position.distanceTo(target),camera:app.inspectionCamera,
       actualQuality:app.ambientOcclusionEnabled!==false?'high':'performance',
       night:app.duel.course.def.timeOfDay,theme:app.duel.course.themeAt(app.duel.state.s),
-      feet:{L:feet.L.length,R:feet.R.length}};
+      feet:{L:feet.L.length,R:feet.R.length},anchors:anchorReport};
   })()`);
   assert.equal(setup.actualQuality, quality);
   assert.equal(setup.night, 'night');assert.equal(setup.theme, 'alpine');
@@ -149,24 +168,46 @@ async function captureYetiNight(context, {quality, bundle, piece}) {
     const q=window.__p4YetiNight,api=P4KitsQa;
     q.mixer.stopAllAction();const clip=q.gltf.animations.find(clip=>clip.name==='walk-off');
     const action=q.mixer.clipAction(clip);action.reset();action.setLoop(api.LoopOnce,1);action.clampWhenFinished=true;action.play();
+    q.mixer.setTime(0);q.actor.updateMatrixWorld(true);
+    const startRotation=q.rootBone.getWorldQuaternion(q.rootBone.quaternion.clone());
+    const startPosition=q.rootBone.getWorldPosition(new api.Vector3());
+    const surfaceAt=point=>{
+      const app=window.__qaApp,nearest=app.duel.course.nearest(point.x,point.z,app.duel.state.s);
+      const height=app.duel.course.groundAt(nearest.s,nearest.lateral).y;
+      if(!Number.isFinite(height))throw Error('Finite actual ground height required for contact witness');
+      return height;
+    };
     const frames=[];
     for(let step=0;step<=50;step++){
       q.mixer.setTime(clip.duration*step/50);q.actor.updateMatrixWorld(true);
-      const row={time:clip.duration*step/50};
+      const position=q.rootBone.getWorldPosition(new api.Vector3());
+      const rotation=q.rootBone.getWorldQuaternion(q.rootBone.quaternion.clone());
+      const heading=new api.Vector3(...q.initialFacing).applyQuaternion(
+        rotation.clone().multiply(startRotation.clone().invert()));
+      heading.y=0;
+      if(!Number.isFinite(heading.lengthSq())||heading.lengthSq()<1e-8)throw Error('Measurable root heading required');
+      heading.normalize();
+      const row={time:clip.duration*step/50,phase:step<=10?'turn':'departure',
+        root:{position:position.toArray(),displacement:position.clone().sub(startPosition).toArray(),
+          rotation:rotation.toArray(),heading:heading.toArray()}};
       for(const side of ['L','R']){
         const points=q.feet[side].map(vertex=>q.pointAt(vertex.mesh,vertex.index)).sort((a,b)=>a.y-b.y);
         const lowest=points.slice(0,Math.max(3,Math.ceil(points.length*.1)));
         const centre=lowest.reduce((sum,point)=>sum.add(point),new api.Vector3()).multiplyScalar(1/lowest.length);
-        const app=window.__qaApp,nearest=app.duel.course.nearest(centre.x,centre.z,app.duel.state.s);
-        const surface=app.duel.course.groundAt(nearest.s,nearest.lateral);
-        row[side]={minHeight:points[0].y-(surface.y||0),surfaceY:surface.y||0,centre:centre.toArray()};
+        const surfaceY=surfaceAt(centre);
+        row[side]={minHeight:points[0].y-surfaceY,surfaceY,centre:centre.toArray(),anchors:{}};
+        for(const [name,vertex] of Object.entries(q.anchors[side])){
+          const point=q.pointAt(vertex.mesh,vertex.index),surfaceY=surfaceAt(point);
+          row[side].anchors[name]={id:vertex.id,position:point.toArray(),surfaceY,height:point.y-surfaceY};
+        }
       }
       frames.push(row);
     }
     if(q.beforeState!==JSON.stringify(window.__qaApp.duel.state)||q.beforeProfile!==JSON.stringify(window.__qaApp.profile))
       throw Error('Foot-contact sampling changed race/profile state');
-    return {frames,stateUnchanged:true,profileUnchanged:true,
-      basis:'Actual weighted sole vertices sampled over the authored clip; inspect contact, sliding and travel direction before approval.'};
+    return {frames,stateUnchanged:true,profileUnchanged:true,initialGroundY:q.groundY,
+      initialFacing:q.initialFacing,startRootPosition:startPosition.toArray(),
+      basis:'Changing lowest-sole centres report apparent drift. Fixed original heel/toe vertex IDs retain correspondence through all poses. Root heading uses rotation relative to the initial pose. Inspect contact, foot roll, sliding, terrain grade and departure direction; sampling is not gait approval.'};
   })()`);
   return {quality,file,sha256:sha(bytes),...setup,captures,contact};
 }

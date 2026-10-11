@@ -305,6 +305,47 @@ pass, but the growth and distant shape remain explicit visual-review items.
 All 19 passed-piece manifest records, their 38 GLBs, the complete art catalog
 and tanker provenance pin remain byte-exact after the final candidate export.
 
+### Native gait evidence plan before capture
+
+The existing lowest-10%-of-sole centre may use different vertices as a foot
+rolls. Its motion is apparent contact-centre drift, not a fixed-point sliding
+measurement. Before capture, add two fixed original weighted vertex anchors
+per foot: heel and toe, selected once from the grounded idle sole. Record the
+exact glTF mesh/primitive/vertex IDs and follow those same vertices through all
+51 poses. Keep the existing minimum-height and changing-centre samples. Each
+anchor gets its own real local course-ground height, so terrain grade cannot
+be silently treated as animation drift. No recipe, runtime asset or acceptance
+limit changes for this witness.
+
+Resolve the exact original Root bone, with the same unique-source-name and
+skin-membership checks as the foot bones. For each pose record its position,
+rotation and heading relative to the initial character-facing direction.
+Report the initial turn separately from the departure. The verdict will state
+root/body departure distance away from the camera, heading after the turn,
+left/right support order, deepest penetration, longest unsupported interval,
+and maximum fixed-anchor drift during consecutive near-ground samples.
+
+Use a 3 cm near-ground band only to label review intervals; print the actual
+heights and durations. Three or more consecutive samples define a measurable
+interval, not an automatic pass. Compare heel and toe separately so normal foot
+roll is not called sliding. A missing contact interval is missing evidence,
+not zero sliding. Report terrain-height change alongside anchor heights and
+drift. Inspect the actual native pose sequence in both qualities and give
+separate contact, sliding, direction and overall gait verdicts. Ambiguous
+measurements or a disagreement with visible motion remain held; collecting
+samples alone never approves the gait.
+
+After usable native and Blender candidates exist, compose exactly six formal
+round-two sheets: paddock, safety, harbour, forest, snow and characters. Each
+keeps complete selected-source, adapted-Blender, native High and native distant
+frames. The character sheet also keeps complete 30 m night roar/departure frames
+in both qualities. The three tree variants appear together. Require the current
+manifest hash, matching native asset hashes, matching render commit and all
+19/38 accepted records/assets unchanged. A changed GLB invalidates that group's
+native and Blender evidence before sheet generation. Each JPG stays below
+500 KB; temporary poses/contact data support the motion verdict and are not
+substitutes for it. No sheet or art verdict is generated during the heavy hold.
+
 ## Removed
 
 Round-two source removes the superseded unreachable harbour adaptation branch,
