@@ -385,14 +385,39 @@ async function ready(context) {
     'actual campaign visual readiness', 60_000);
 }
 
+// Explicit QA-only replacement material; the default whole capture is unchanged.
+export function p4ListeningCaptureMode(env=process.env) {
+  const value=env.DUEL_P4_LISTENING_PREFIX;
+  if(value == null || value === '')return null;
+  if(value !== '121')throw Error('DUEL_P4_LISTENING_PREFIX accepts only the approved121-second listening prefix');
+  return {purpose:'listening-prefix',requestedDurationSec:121};
+}
+
+async function measureListeningPrefix(outputDir,recording,functional) {
+  const rate=recording.sampleRate;
+  const contained=event=>event.audioTimeSec*rate >= recording.startFrame &&
+    (event.audioTimeSec+functional.decoded.find(row=>row.id === ({light:'race.start.light',go:'race.start.go',
+      gain:'race.position.gain',final:'race.lap.final',finish:'race.finish.flag'})[event.kind]).duration)*rate <= recording.endFrame;
+  const raceEvents=functional.native.filter(event=>event.phase === 'race');
+  const retained=raceEvents.filter(contained);
+  if(!retained.some(event=>event.kind === 'go') || retained.filter(event=>event.kind === 'light').length !== 5)
+    throw Error('Listening prefix lacks its genuine five start lights and go');
+  // Keep original full-tail signal/onset measurement for each actually retained cue.
+  // Later cues are explicitly uncaptured; the original whole mode still tests all.
+  await measureRecording(outputDir,recording,{...functional,native:retained});
+  recording.uncapturedEvents=raceEvents.filter(event=>!contained(event)).map(({kind,audioTimeSec})=>({kind,audioTimeSec}));
+  recording.verdict={...recording.verdict,completeThreeLapRace:false,verifiedListeningPrefix:true};
+}
+
 export async function run(context) {
+  const prefix=p4ListeningCaptureMode();
   await context.navigate('/tools/menu-check.html?flags=grand-prix');
   await context.waitFor(`!!window.__qaApp && !!Object.getOwnPropertyDescriptor(window,'localStorage')?.value &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'`, 'isolated audio App', 60_000);
   await context.evaluate(`window.__qaApp.setGraphicsQuality('performance')`);
   await context.evaluate(`(${install.toString()})(${recorderCode()})`);
   const recording = {status: 'incomplete', segments: [], method: 'existing native worklet and independent sample witness',
-    mode: 'real-time Grand Prix', listeningApproved: false};
+    mode: 'real-time Grand Prix', listeningApproved: false,...(prefix ?? {})};
   for (const name of ['mix', 'engine', 'interface']) await writeFile(join(context.outputDir, name + '.f32'), Buffer.alloc(0));
   try {
     await ready(context);
@@ -401,12 +426,17 @@ export async function run(context) {
     await ready(context);
     await context.evaluate('window.__p4Audio.app.start()');
     const deadline = Date.now() + 600_000;
-    let finishAt = null, lastProgress = 0;
+    let finishAt = null, lastProgress = 0,prefixStopped=false;
     while (Date.now() < deadline) {
       const state = await context.evaluate(`(() => {const q=window.__p4Audio,s=q.app.duel.state;
         return {status:s.status,time:s.stageTimeSec,laps:s.completedLaps,age:window.__p4Capture.age(),
           audioTime:q.audio.context.currentTime,finishDuration:q.audio.cueBuffers['race.finish.flag'].duration};})()`);
-      if (state.age >= 20) await appendSegment(context.outputDir, recording, await context.evaluate('window.__p4Capture.rotate()'));
+      if(prefix && !prefixStopped && state.audioTime-recording.startFrame/recording.sampleRate >= prefix.requestedDurationSec) {
+        await appendSegment(context.outputDir,recording,await context.evaluate('window.__p4Capture.finish()'));
+        recording.stopReason='native-prefix-duration';recording.stopAudioTimeSec=recording.endFrame/recording.sampleRate;
+        prefixStopped=true;console.log('Native listening prefix intentionally stopped: '+JSON.stringify({
+          startFrame:recording.startFrame,endFrame:recording.endFrame,sampleRate:recording.sampleRate}));
+      } else if (!prefixStopped && state.age >= 20) await appendSegment(context.outputDir, recording, await context.evaluate('window.__p4Capture.rotate()'));
       if (state.time >= lastProgress + 20) {
         console.log('P4 real-time race progress: ' + JSON.stringify({status: state.status, time: state.time, laps: state.laps}));
         lastProgress = state.time;
@@ -418,7 +448,8 @@ export async function run(context) {
     }
     if (finishAt === null) throw Error('Real-time Grand Prix exceeded its ten-minute bound');
     await context.evaluate('window.__p4Audio.app.stop()');
-    await appendSegment(context.outputDir, recording, await context.evaluate('window.__p4Capture.finish()'));
+    if(prefix && !prefixStopped)throw Error('Genuine race finished before the approved native listening prefix');
+    if(!prefix)await appendSegment(context.outputDir, recording, await context.evaluate('window.__p4Capture.finish()'));
     const result = await context.evaluate('window.__p4Audio.finish()');
     await context.screenshot('p4-audio-genuine-finish');
     console.log('Native P4 audio finish: ' + JSON.stringify(result));
@@ -454,9 +485,14 @@ export async function run(context) {
     await writeFile(join(context.outputDir, 'p4-audio.json'), JSON.stringify(report, null, 2) + '\n');
     try {
       if (report.functionalVerdict) {
-        recording.status = 'measuring';
-        await measureRecording(context.outputDir, recording, report);
-        recording.status = 'complete';
+        if(prefix) {
+          await measureListeningPrefix(context.outputDir,recording,report);
+          recording.status='incomplete';
+        } else {
+          recording.status = 'measuring';
+          await measureRecording(context.outputDir, recording, report);
+          recording.status = 'complete';
+        }
       }
     } catch (error) { recording.error = error.message; throw error; }
     finally { await writeFile(join(context.outputDir, 'recording.json'), JSON.stringify(recording, null, 2) + '\n'); }
