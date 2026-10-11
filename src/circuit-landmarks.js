@@ -134,8 +134,8 @@ export function addCircuitLandmarks(world, course) {
 
 // Materials belong to this ready kit owner; keep source assets and placement exact.
 export function finishRidgeKitMaterials(owner) {
-  return owner.ready.then(ready=>{
-    if(!ready)return false;
+  const finish=()=>{
+    if(owner.status && owner.status!=='ready')return false;
     const finished=new Set();
     owner.group.traverse(mesh=>{
       if(!mesh.isMesh)return;
@@ -155,5 +155,8 @@ export function finishRidgeKitMaterials(owner) {
       }
     });
     return true;
-  });
+  };
+  // Native prepared owners are already ready when world lighting scans once.
+  if(owner.status==='ready')return Promise.resolve(finish());
+  return owner.ready.then(ready=>ready?finish():false);
 }

@@ -209,3 +209,12 @@ test('Panorama finish uses actual owner materials and leaves non-fence/default r
   fence.userData.trackKitId='catch-fence';pane.userData.trackKitId='shopfront-a';group.add(fence,pane,other);const key=other.material.customProgramCacheKey();
   await finishRidgeKitMaterials({ready:Promise.resolve(true),group});const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <map_fragment>'};fence.material.onBeforeCompile(shader);assert.match(shader.fragmentShader,/vRidgeFenceHeight/);assert.doesNotMatch(shader.fragmentShader,/#include <map_fragment>/);assert.match(pane.material.name,/window/);assert.equal(other.material.name,'untouched');assert.equal(other.material.customProgramCacheKey(),key);disposeTree(group);
 });
+
+test('ready Panorama owner finishes windows before synchronous native night discovery',async()=>{
+  const {finishRidgeKitMaterials}=await import('../src/circuit-landmarks.js');
+  const {createPathNightDetails}=await import('../src/scene-lighting.js');
+  const group=new THREE.Group(),source=new THREE.MeshStandardMaterial({name:'round-two-harbour-warm-amber-pane',emissive:0xffffff,emissiveIntensity:1.65}),pane=new THREE.Mesh(new THREE.BoxGeometry(),source);pane.userData.trackKitId='shopfront-a';group.add(pane);
+  const finished=finishRidgeKitMaterials({status:'ready',ready:Promise.resolve(true),group});
+  const details=createPathNightDetails({world:group,course});
+  try{assert.notEqual(pane.material,source,'native synchronous discovery must bind an already-ready window');details.update({position:new THREE.Vector3(),heading:0,distance:0,high:true,amount:.55,headlights:1});assert.ok(pane.material.emissiveIntensity>0&&pane.material.emissiveIntensity<1.65);await finished;}finally{details.dispose();disposeTree(group);}
+});

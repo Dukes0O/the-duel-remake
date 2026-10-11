@@ -52,7 +52,10 @@ town centre. Capture real Skyline/Conrod dusk during final native lap as well
 as existing views, no racers/state moved. Third sheet only after loader/Harbour
 sync and coherent final width. Final art/field/quiet-frame verdicts still pending.
 Geometry/material controls RED actual old crest height and missing finish helper,
-then GREEN13circuit checks plus544light checks. Shader/default resources exact;
+then GREEN13circuit checks plus544light checks. Review found ready-owner finish was deferred past native one-time window discovery.
+Before fix: finish an already-ready owner synchronously, pending owners only after
+genuine ready, retired/error never mutate. Actual discovery RED unbound then GREEN.
+Shader/default resources exact;
 final sheet includes two actual dusk valley views, uncropped1280x720sources.
 
 Claude field decision: reuse Harbour opt-in settings after its merge; no second
