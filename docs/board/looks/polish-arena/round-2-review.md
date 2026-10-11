@@ -41,3 +41,9 @@ Salt native asset: 232,100 triangles, 172 draws, 28,308,656 bytes. Raw captures,
 manifest and checks are under integration .evidence/2026-10-10/POLISH-ARENA/.
 The sheet recipe and browser scenario are committed; raw evidence is disposable
 once its verdict is recorded.
+
+## Prior rounds, consumed
+
+Earlier arena verdict: Kyle/Claude approved round1 labels but found island/ridge/tanker changes too subtle; round2 was requested for those three. The reviewed exact asset/triangle pins were approved without changed gameplay signatures or tolerances. Round1 source retained172draws,200420triangles (old184340),GLB25030172bytes (old23283392). Its labeled105m tanker crop did not replace native-distance inspection. Paired240RAF perquality/version: p95 16.8→16.8ms, means16.67ms; original10% passed, calls High599→612 and Performance332→332. Labels remain approved exact in finalround2.
+
+Earlier sheets and superseded notes are removed after their verdict facts are folded here. Recipes and the final comparison remain.
