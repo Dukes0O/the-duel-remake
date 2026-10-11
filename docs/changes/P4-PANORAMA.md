@@ -75,8 +75,12 @@ Native3fed art failed missing ground at4840.939m/offset28.735m: final2.043m
 of4m terrain ribbon omitted. New actual-ray/full-landscape regression RED,
 then GREEN after Panorama-only exact final row and matching triangle sampler.
 Road/rules and legacy terrain rows stay exact; no analytic fallback/signature edit.
+Native1343private34986PASS16views/0issues, all8finish129.81/98.665/100.06s,
+21passes/light.55; actual14view315987B round2sheet goes to Claude, no artpass.
+All11focused and2,545,523existing terrain checks pass; source review clear.
 
 ## Removed
 
 The road-only presentation is replaced by approved circuit kits and landmarks.
 No road geometry, existing mode or real save is removed.
+Consumed round1sheet/note removed; verdict retained on card/currentround2note.
