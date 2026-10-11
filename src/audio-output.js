@@ -1,5 +1,5 @@
-// Keep the released compressor's quiet gain and timing. Only its loud peaks
-// reach the final ceiling; oversampling limits the new harmonics before output.
+// Preserve compressor timing and bus balance. Raise the race mix before the
+// existing oversampled peak ceiling so loud transients keep their headroom.
 // 0.8 leaves headroom for native resampling overshoot; the final path is
 // measured for both sample and intersample peaks, not just the curve bound.
 const KNEE = 0.65;
@@ -25,7 +25,10 @@ export function createAudioOutput(context, master) {
   ceiling.curve = curve;
   ceiling.oversample = '4x';
   master.connect(compressor);
-  compressor.connect(ceiling);
+  const raceLevel = context.createGain();
+  raceLevel.gain.value = 10 ** (6.4 / 20);
+  compressor.connect(raceLevel);
+  raceLevel.connect(ceiling);
   ceiling.connect(context.destination);
   return ceiling;
 }

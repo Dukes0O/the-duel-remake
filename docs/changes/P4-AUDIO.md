@@ -60,16 +60,33 @@ Director added `tools/audio/p4-listening.mjs` to this follow-up. Add an exported
 - Full-state **value** equality passed across the union of every key on both states: no differences. Raw whole-object JSON hashes differ because the native App and replay adapter insert top-level metadata keys in a different order. Race serialization SHA-256: `8729622640fa6686def2fd92a175e177bf0e225aeafbde4cfff5aeebc020409f`; control serialization: `c0a532937c256631ca47a77b74868e1679de42f971bfbcd5ce00128bdea2c093`. Do not report these as equal serialization hashes. No comparison field was removed or copied to obtain the value equality.
 - The complete 171.144-second capture retained 8,214,912 native frames at 48 kHz across nine segments. Mix, engine and interface all passed exact sample boundaries, continuous native frame coverage and independent witness identity. Recording began before the real stage load and includes every signal's full tail.
 - Actual mix: -22.42 LUFS and -4.25 dBTP. Its loudness is outside the advisory -16 ±2 LUFS target; true peak passes the -1 dBTP ceiling. Engine stem: -20.56 LUFS / -5.76 dBTP. Interface stem: -16.64 LUFS / -2.64 dBTP. No volume or mastering change was made to make the advisory pass.
-- Measured cue onsets range from -3 to 107 ms; the final-lap signal is 107 ms. Interface/engine RMS ratios range from -1.92 to +19.07 dB. The first gain overlaps the go tail and is labelled as aggregate interface signal. Repetition advisory flags the five identical start ticks and four identical gain recordings; listening remains pending.
+- Measured cue onsets range from -3 to 107 ms; the final-lap signal is 107 ms. Interface/engine RMS ratios range from -1.92 to +19.07 dB. The first gain overlaps the go tail and is labelled as aggregate interface signal. Repetition advisory flags the five identical start ticks and four identical gain recordings. Kyle accepted this current native race mix on 11 October: go with it; no level or repetition changes requested.
 - `node tools/audio/p4-listening.mjs --recorded-mix .evidence/2026-10-10/P4-AUDIO/native-ca2` verifies the complete metadata, exact float WAV/native PCM agreement and decoded MP3 rate, channels and all 8,214,912 frames. The 2,243,709-byte whole-race MP3 is unnormalized and unedited. WAV SHA-256: `db956124a60195a877db95a9e17f47d2bbcb7c9dce489947c4ae2eac7ffd1f28`; MP3 SHA-256: `da5e661d89e79a74a59852ed8058d1b720e20c3be44ef76cfb998a9bbc32e2d6`. `listening.json` preserves the recipe and cue times. The existing four-reel cue arrays, builder and default path remain byte-for-byte unchanged.
 - Offline decode first exposed 47 MP3 padding frames when input bytes were piped to FFmpeg. Reading the actual seekable MP3 file applies its gapless end-padding metadata and decodes exactly the native frame count. No tolerance, trimming or audio filter was added. Syntax and diff checks pass. Final frozen source c331f6db passed 376/376 lane suites in 1086.89 seconds and the sequential build in 668 ms; zero failed or not run.
 
 ## Listening and remaining work
 
-Four labelled MP3 reels and their cue timestamp index are in ignored P4-AUDIO evidence: race signals; pit and surfaces; mountain hazards; crowd, summit wind and three location beds. These are processed recordings, not gameplay captures. Kyle's listening verdict remains pending.
+Four labelled MP3 reels and their cue timestamp index are in ignored P4-AUDIO evidence: race signals; pit and surfaces; mountain hazards; crowd, summit wind and three location beds. These are processed recordings, not gameplay captures. The source reels remain available for future owner events; the current native three-lap race mix was accepted by Kyle on 11 October.
 
-The event and QA follow-up changes `src/audio.js`, `tools/test-p4-audio.mjs`, `tools/scenarios/p4-audio.mjs`, the recorded-mix mode of `tools/audio/p4-listening.mjs`, and this note. Source catalog, runtime audio assets and source processing recipes are unchanged. Functional browser, recorder integrity, final lane gate and build passed; Director source review is clear. Integration merges this foundation. Human gameplay listening and complete P4 audio approval remain open. The other prepared cues become active only after their owning cards expose real events.
+The event and QA follow-up changes `src/audio.js`, `tools/test-p4-audio.mjs`, `tools/scenarios/p4-audio.mjs`, the recorded-mix mode of `tools/audio/p4-listening.mjs`, and this note. Source catalog, runtime audio assets and source processing recipes are unchanged. Functional browser, recorder integrity, final lane gate and build passed; Director source review is clear. Integration merges this foundation. Kyle accepted the current complete native three-lap gameplay recording on 11 October. Complete P4 event wiring remains open. The other prepared cues become active only after their owning cards expose real events.
+
+## Louder mix, 11 October
+
+Kyle requests -16 LUFS, about 5 dB louder, with true peaks at most -1 dBTP.
+Use gain after the existing compressor and before its oversampled ceiling.
+The original -22.42 LUFS whole-race measurement gives an initial +6.4 dB.
+Bus balance, compressor timing, cue assets, events and race state stay exact.
+The actual new whole-race recording determines the final gain. Kyle listens
+again tomorrow; earlier acceptance covers only the earlier quieter mix.
+
+Changed assertion: the native quiet tone keeps its unchanged released
+reference, but now expects exactly +6.4 dB in peak and RMS. The existing
+0.1 dB tolerance remains. This tests the requested output change; every
+ceiling, contrast, onset, continuity and lifecycle limit remains unchanged.
+Independent review clears the gain and this exact expected-level change.
+Native peak stress, whole-mix measurement and lane/build remain pending.
+Initial audio460 and P4-assets checks pass.
 
 ## Removed
 
-No existing audio is replaced. The bare-Duel replay setup was replaced with the native App metadata adapter; no state-comparison fields were removed. Temporary review audio and raw derived files will be removed after the listening verdict is recorded. Future owner cards activate prepared cues as their events land.
+The direct compressor-to-ceiling connection is replaced by the output gain. No existing audio is replaced. The bare-Duel replay setup was replaced with the native App metadata adapter; no state-comparison fields were removed. Temporary review audio and raw derived files will be removed after the listening verdict is recorded. Future owner cards activate prepared cues as their events land.
