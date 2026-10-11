@@ -99,8 +99,14 @@ export async function run(context) {
           document.querySelector('[data-action="courses-close"]').click();
         })()`);
       }
+      // Each quality begins from the same fresh, isolated QA career.
+      await context.evaluate(`(() => {
+        if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:'))
+          throw Error('Refusing to reset storage outside the memory-only QA tab.');
+        localStorage.clear();
+      })()`);
     }
     report.passed=true;
   } finally {await writeFile(join(context.outputDir,'team-room.json'),JSON.stringify(report,null,2)+'\n');}
-  console.log(`Team Room: ${report.views.length} native driver-seat views; all 24 routes, both presets, unchanged state and profile.`);
+  console.log(`Team Room: ${report.views.length} native driver-seat views; all ${referenceTargets().length} routes, both presets, unchanged state and profile.`);
 }
