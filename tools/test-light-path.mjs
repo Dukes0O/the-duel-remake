@@ -8,6 +8,7 @@ import * as vehicles from '../src/vehicles.js';
 import { createVehicleAssets } from '../src/vehicle-assets.js';
 import { disposeTree } from '../src/world.js';
 import { createCityInteriorMaterial } from '../src/city-interiors.js';
+import { createSkylineFacadeMaterial } from '../src/city-skyline.js';
 
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; };
@@ -49,9 +50,9 @@ for (const theme of ['desert', 'coast', 'alpine', 'arena']) for (const look of [
 }
 const day = lightPathLook('day', 'coast'), golden = lightPathLook('golden', 'coast');
 const dusk = lightPathLook('dusk', 'coast'), night = lightPathLook('night', 'coast');
-check(day.sun > golden.sun && golden.sun > dusk.sun && dusk.sun > night.sun, 'sun dims through all four looks');
+check(day.sun > golden.sun && golden.sun > 0 && dusk.sun === 0 && night.sun === 0, 'direct sun dims then disappears by dusk');
 check(day.sunOffset.y > golden.sunOffset.y && golden.sunOffset.y > dusk.sunOffset.y, 'sun drops toward the horizon');
-check(night.hemi > 0 && night.env > 0, 'night keeps visible road and car fill');
+check(night.hemi > 0 && night.env === 0, 'night keeps ambient fill without sunset HDR direction');
 equal([day.stars, day.moon, day.nightAmount], [0, 0, 0], 'day contains no night extras');
 equal([night.stars, night.moon, night.nightAmount], [1, 1, 1], 'night enables the complete night presentation');
 equal(dusk.nightAmount, .55, 'dusk uses the settled blend');
@@ -295,10 +296,12 @@ sharedHead.dispose(); sharedTail.dispose();
   source.onBeforeCompile(nativeShader);pane.material.onBeforeCompile(shader);
   near(shader.uniforms.pathInteriorNight.value, 1.4, 'native city shader receives night strength');
   equal(shader.vertexShader, nativeShader.vertexShader, 'native city perspective vertex path stays exact');
-  equal(shader.fragmentShader.replace('\nuniform float pathInteriorNight;', '')
+  equal(shader.fragmentShader.replace('\nuniform float pathInteriorNight,pathWindowCutoff;', '')
+    .replace('step(pathWindowCutoff,vCityRoomSeed)', 'step(cityHeight>1.8?.08:.29,vCityRoomSeed)')
+    .replace('(.65+vCityRoomSeed*.65)*cityLit', 'mix(.025,.65+vCityRoomSeed*.65,cityLit)')
     .replace('totalEmissiveRadiance=cityInteriorColor*cityInteriorLight*pathInteriorNight*vec3(1.0,.87,.69);',
       'totalEmissiveRadiance=cityInteriorColor*cityInteriorLight;'), nativeShader.fragmentShader,
-    'native room-box/parallax shader stays exact apart from bounded night emission');
+    'native room-box/parallax shader stays exact apart from selected night emission');
   check(pane.material.customProgramCacheKey() !== originalKey, 'path shader has a separate program key');
   details.update({...input, amount: 0});
   equal(shader.uniforms.pathInteriorNight.value, 0, 'day path removes native room emission');
@@ -307,4 +310,110 @@ sharedHead.dispose(); sharedTail.dispose();
   details.restore();equal(pane.material, source, 'leaving path restores the exact native city material');
   details.dispose();pane.geometry.dispose();source.dispose();
 }
+// Claude round two: these assert missing presentation behavior before runtime
+// changes. Native pixels and the art verdict still decide readability/quality.
+const roundTwoFailures = [];
+const roundTwo = (condition, label) => {
+  checks++;
+  if (!condition) roundTwoFailures.push(label);
+};
+THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+try {
+  const scene = new THREE.Scene(), renderer = {toneMappingExposure: 1}, bloom = {strength: 0}, host = {dataset: {}};
+  const lighting = createSceneLighting({scene, renderer, bloom, host}, {
+    createPMREM: () => ({fromScene: () => ({texture: new THREE.Texture(), dispose() {}}), dispose() {}}),
+    createRoom: () => ({dispose() {}}), loadEnvironment: () => {},
+  });
+  for (const quality of ['high', 'performance']) for (const look of ['dusk', 'night']) {
+    const course = {def: {theme: 'city', lightPath: freeze({axis: 'distance', keyframes: [{at: 0, look}]})},
+      length: 1000, closed: false, features: {poles: []}, themeAt: () => 'city', tunnelAt: () => false};
+    lighting.apply({course, distance: 50, blend: 1});
+    roundTwo(lighting.sun.intensity === 0, `${quality}/${look}: actual native directional sun is gone`);
+    const sky = scene.getObjectByName('Atmosphere and cloud deck');
+    roundTwo(sky.material.uniforms.sunStrength.value === 0, `${quality}/${look}: sky contains no bright sun disc`);
+    if (look === 'night') {
+      roundTwo(scene.environmentIntensity === 0, `${quality}: night excludes the directional sunset HDR contribution`);
+      const moon = sky.material.uniforms.moonDirection?.value;
+      roundTwo(moon?.isVector3 && Math.abs(moon.length() - 1) < 1e-6 && moon.y >= .1 && moon.y <= .4,
+        `${quality}: actual moon uniform puts a fixed celestial disc above the skyline`);
+      roundTwo(sky.material.fragmentShader.includes('fwidth('), `${quality}: stars use screen-space antialiasing rather than subpixel points`);
+    }
+  }
+  lighting.dispose();
+} finally { THREE.TextureLoader.prototype.load = originalLoader; }
+
+for (const [label, createMaterial, seedName] of [
+  ['native perspective rooms', createCityInteriorMaterial, 'vCityRoomSeed'],
+  ['native skyline windows', createSkylineFacadeMaterial, 'occupancy'],
+]) {
+  const world = new THREE.Group(), source = createMaterial();
+  const pane = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, .05), source, 1);world.add(pane);
+  const course = {def: {}, length: 1000, closed: true, features: {poles: []}, roadHalfWidthAt: () => 7,
+    groundAt: (s, off) => ({x: off, y: 0, z: s, heading: 0})};
+  const details = createPathNightDetails({world, course});
+  details.update({amount: 1, headlights: 1, position: {x: 0, y: 0, z: 50}, distance: 50});
+  const shader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader,
+    fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+  pane.material.onBeforeCompile(shader);
+  const cutoff = shader.uniforms.pathWindowCutoff?.value;
+  roundTwo(Number.isFinite(cutoff) && cutoff >= .5 && cutoff <= .7,
+    `${label}: actual compiled shader selects 30–50% from its stable window seed`);
+  roundTwo(shader.fragmentShader.includes(`step(pathWindowCutoff,${seedName})`) &&
+    /totalEmissiveRadiance=[^;]*pathInteriorNight/.test(shader.fragmentShader),
+    `${label}: selection gates actual emitted radiance, not just material emissiveIntensity`);
+  const fragment = shader.fragmentShader;
+  details.update({amount: 0, headlights: 0, position: {x: 0, y: 0, z: 50}, distance: 50});
+  roundTwo(shader.uniforms.pathInteriorNight?.value === 0,
+    `${label}: day turns off the compiled shader emission`);
+  details.update({amount: .55, headlights: .8, position: {x: 0, y: 0, z: 50}, distance: 50});
+  roundTwo(shader.fragmentShader === fragment && shader.uniforms.pathWindowCutoff?.value === cutoff,
+    `${label}: dusk reuses the same shader and selected window subset`);
+  details.restore();roundTwo(pane.material === source, `${label}: exact legacy material is restored`);
+  details.dispose();pane.geometry.dispose();source.dispose();
+}
+
+for (const quality of ['high', 'performance']) {
+  const car = new THREE.Group();
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.4, .1, .05),
+    new THREE.MeshStandardMaterial({name: 'Headlamp lenses', emissive: 0xffdb9a, emissiveIntensity: .85}));
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(.4, .1, .05),
+    new THREE.MeshStandardMaterial({name: 'Brake lenses', emissive: 0xff2116, emissiveIntensity: 1.4}));
+  head.position.z = 2;tail.position.z = -2;car.add(head, tail);car.userData.brakeLights = [tail];
+  const lamps = vehicles.createVehicleNightLighting(car);
+  for (const amount of [.8, 1]) {
+    lamps.update({amount, braking: false, high: quality === 'high'});
+    const glow = car.getObjectByName('Night tail glow');
+    roundTwo(glow?.visible === true && glow.children.some(mesh => mesh.isMesh && mesh.material.transparent),
+      `${quality}/${amount}: rear glow has real soft geometry and does not require bloom`);
+    roundTwo(head.material.emissiveIntensity > 0 && head.material.emissiveIntensity <= 2,
+      `${quality}/${amount}: headlamp lenses stay bounded below the old white-hot emission floor`);
+    roundTwo(tail.material.emissive.r > tail.material.emissive.g * 2 &&
+      tail.material.emissive.r > tail.material.emissive.b * 2, `${quality}/${amount}: actual rear lens remains red`);
+  }
+  let lights = 0;car.traverse(object => { if (object.isLight) lights++; });
+  roundTwo(lights === 0, `${quality}: lamp adapters still add no real car lights`);
+  lamps.dispose();for (const mesh of [head, tail]) {mesh.geometry.dispose();mesh.material.dispose();}
+}
+
+{
+  const world = new THREE.Group();
+  const course = {def: {theme: 'city'}, length: 1000, closed: false,
+    features: {poles: [{x: -9, y: 0, z: 50, s: 50, heading: 0, theme: 'city'}]},
+    roadHalfWidthAt: () => 7, groundAt: (s, off) => ({x: off, y: 0, z: s, heading: 0})};
+  const details = createPathNightDetails({world, course});
+  for (const high of [true, false]) {
+    details.update({amount: 1, headlights: 1, position: {x: 0, y: 0, z: 50}, distance: 50, high});
+    const heads = world.getObjectByName('Night streetlamp heads');
+    const pools = world.getObjectByName('Night streetlamp road pools');
+    roundTwo(heads?.isInstancedMesh && heads.count > 0 && heads.count <= 32,
+      `${high ? 'High' : 'Performance'}: native pole positions have a bounded emissive-head batch`);
+    roundTwo(pools?.isInstancedMesh && pools.count === heads?.count && pools.material.transparent,
+      `${high ? 'High' : 'Performance'}: native lamps have soft road-pool geometry`);
+  }
+  let lights = 0;world.traverse(object => { if (object.isLight) lights++; });
+  roundTwo(lights === 0, 'streetlamp heads and pools add no real lights');
+  details.dispose();roundTwo(world.children.length === 0, 'all new path-only lamp batches are disposed');
+}
+assert.deepEqual(roundTwoFailures, [], 'Round-two missing behavior:\n' + roundTwoFailures.join('\n'));
+
 console.log(`Light paths: ${checks} acceptance checks passed.`);

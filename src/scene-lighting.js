@@ -112,12 +112,12 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       if (stopped) return;
       for (const { light, side } of headlights) {
         const heading = player.rotation.y, c = Math.cos(heading), sn = Math.sin(heading);
-        light.intensity = current.tunnelAt(distance) ? 125 : pathSample ? 78 * pathSample.headlights : current.def.timeOfDay === 'night' || current.themeAt(distance) === 'city' ? 78 : 0;
+        light.intensity = current.tunnelAt(distance) ? 125 : pathSample ? 38 * pathSample.headlights : current.def.timeOfDay === 'night' || current.themeAt(distance) === 'city' ? 78 : 0;
         light.position.set(position.x + c * side * .65 + sn * 1.8, position.y + (tall ? 2.2 : .72), position.z - sn * side * .65 + c * 1.8);
         light.target.position.set(position.x + sn * 40, position.y - 1, position.z + c * 40);
         light.target.updateMatrixWorld();
       }
-      localLighting.update({ course: current, position, police, now, night: pathSample ? pathSample.settings.nightAmount > .5 : current.def.timeOfDay === 'night' || current.themeAt(distance) === 'city', high, menu });
+      localLighting.update({ course: current, position, police, now, night: pathSample ? false : current.def.timeOfDay === 'night' || current.themeAt(distance) === 'city', high, menu });
     },
     updateCar(vehicle, braking) {
       if (stopped || !vehicle) return;
@@ -185,7 +185,7 @@ export function createPathNightDetails({world, course}) {
   const group = new THREE.Group();group.name = 'Authored night details';group.visible = false;
   const eye = {value: new THREE.Vector3()}, direction = {value: new THREE.Vector3(0, 0, 1)}, strength = {value: 0};
   const bindings = [], materials = new Map(), windowMaterials = new Set();
-  const interiorNight = {value: 0};
+  const interiorNight = {value: 0}, windowCutoff = {value: .6};
   const originalKey = material => material.customProgramCacheKey();
   function reflective(source) {
     const material = source.clone(), compile = source.onBeforeCompile, key = originalKey(source);
@@ -220,7 +220,8 @@ export function createPathNightDetails({world, course}) {
     const sign = mesh.parent?.userData.roadSignId && !!source.map || mesh.userData.turnSignCell?.kind === 'boards' ||
       mesh.userData.brakingBoard === true;
     const cityInterior = originalKey(source) === 'city-room-parallax-v1';
-    const window = cityInterior || mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(source.name) ||
+    const skyline = originalKey(source) === 'city-skyline-grid-v1';
+    const window = cityInterior || skyline || mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(source.name) ||
       !!source.emissiveMap && source.emissive?.getHex() === 0xffbc71;
     if (!sign && !window) return;
     if (!materials.has(source)) {
@@ -228,18 +229,25 @@ export function createPathNightDetails({world, course}) {
       if (window) {
         material.onBeforeCompile = source.onBeforeCompile;material.customProgramCacheKey = source.customProgramCacheKey;
         material.emissive.set(0xffc17b);windowMaterials.add(material);
-        if (cityInterior) {
-          // Native parallax panes assign emissive radiance directly. Preserve
-          // their room-box shader and apply the path fade to that final value.
+        if (cityInterior || skyline) {
+          // Select the existing stable pane seed, preserving all native room
+          // geometry and perspective. Both shaders assign radiance directly.
           material.onBeforeCompile = (shader, renderer) => {
             source.onBeforeCompile.call(source, shader, renderer);
             shader.uniforms.pathInteriorNight = interiorNight;
+            shader.uniforms.pathWindowCutoff = windowCutoff;
             shader.fragmentShader = shader.fragmentShader.replace('#include <common>',
-              '#include <common>\nuniform float pathInteriorNight;')
+              '#include <common>\nuniform float pathInteriorNight,pathWindowCutoff;')
+              .replace('step(cityHeight>1.8?.08:.29,vCityRoomSeed)', 'step(pathWindowCutoff,vCityRoomSeed)')
+              .replace('mix(.025,.65+vCityRoomSeed*.65,cityLit)', '(.65+vCityRoomSeed*.65)*cityLit')
               .replace('totalEmissiveRadiance=cityInteriorColor*cityInteriorLight;',
-                'totalEmissiveRadiance=cityInteriorColor*cityInteriorLight*pathInteriorNight*vec3(1.0,.87,.69);');
+                'totalEmissiveRadiance=cityInteriorColor*cityInteriorLight*pathInteriorNight*vec3(1.0,.87,.69);')
+              .replace('step(.67,occupancy)', 'step(pathWindowCutoff,occupancy)')
+              .replace('mix(vec3(.40,.47,.52),vec3(.62,.49,.32),step(.37,vSkylineSeed))*lit*.28',
+                'vec3(1.0,.68,.34)*(.4+occupancy*.6)*lit*.65')
+              .replace('totalEmissiveRadiance=skylineGlow;', 'totalEmissiveRadiance=skylineGlow*pathInteriorNight;');
           };
-          material.customProgramCacheKey = () => 'city-room-parallax-v1:path-window-v1';
+          material.customProgramCacheKey = () => `${originalKey(source)}:path-window-v2`;
         }
       }
       material.userData.sharedAsset = false;materials.set(source, material);
@@ -274,6 +282,28 @@ export function createPathNightDetails({world, course}) {
       transparent: true, opacity: 0, depthWrite: false, toneMapped: false});
     town = new THREE.Points(geometry, material);town.name = 'Distant town windows';group.add(town);
   }
+  // Native lamp coordinates, two bounded batches and no additional real light.
+  const fixtures = (course.features?.poles || []).filter(p => p.theme === 'city');
+  const lampGeometry = new THREE.BoxGeometry(1.15, .12, .65);
+  const lampMaterial = new THREE.MeshBasicMaterial({color: 0xffd296, transparent: true, opacity: 0});
+  const lampHeads = new THREE.InstancedMesh(lampGeometry, lampMaterial, 32);
+  lampHeads.name = 'Night streetlamp heads';lampHeads.count = 0;lampHeads.frustumCulled = false;
+  const poolGeometry = new THREE.PlaneGeometry(15, 22);poolGeometry.rotateX(-Math.PI / 2);
+  const poolMaterial = new THREE.ShaderMaterial({transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, uniforms: {night: interiorNight},
+    vertexShader: `varying vec2 vUv;void main(){vUv=uv;
+      gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.);}`,
+    fragmentShader: `varying vec2 vUv;uniform float night;void main(){
+      float radius=length((vUv-.5)*2.);
+      float softness=pow(max(0.,1.-radius),2.);
+      gl_FragColor=vec4(1.,.67,.32,softness*night*.19);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`});
+  const lampPools = new THREE.InstancedMesh(poolGeometry, poolMaterial, 32);
+  lampPools.name = 'Night streetlamp road pools';lampPools.count = 0;lampPools.frustumCulled = false;
+  lampHeads.userData.excludeAmbientOcclusion = lampPools.userData.excludeAmbientOcclusion = true;
+  group.add(lampHeads, lampPools);
   world.add(group);
   const object = new THREE.Object3D();
   let stopped = false, lastBucket = NaN, lastCount = 0;
@@ -294,6 +324,7 @@ export function createPathNightDetails({world, course}) {
       direction.value.set(Math.sin(heading), 0, Math.cos(heading));strength.value = headlights;
       group.visible = night > 0 || headlights > 0;
       if (town) town.material.opacity = night;
+      lampMaterial.opacity = night;
       const pairs = high ? 32 : 20, bucket = Math.floor(distance / 6);
       if (bucket !== lastBucket || pairs !== lastCount) {
         lastBucket = bucket;lastCount = pairs;
@@ -309,6 +340,19 @@ export function createPathNightDetails({world, course}) {
           }
         }
         reflectors.count = count;reflectors.instanceMatrix.needsUpdate = true;
+        let lamps = 0;
+        for (const pole of fixtures) {
+          if (lamps === 32) break;
+          if (Math.abs(pole.x - position.x) > 180 || Math.abs(pole.z - position.z) > 180) continue;
+          const angle = pole.heading || 0;
+          object.position.set(pole.x + Math.cos(angle) * 5.4, pole.y + 10.25, pole.z - Math.sin(angle) * 5.4);
+          object.rotation.set(0, angle, 0);object.updateMatrix();lampHeads.setMatrixAt(lamps, object.matrix);
+          const ground = course.groundAt(pole.s, -4.8);
+          object.position.set(ground.x, ground.y + .08, ground.z);object.updateMatrix();
+          lampPools.setMatrixAt(lamps++, object.matrix);
+        }
+        lampHeads.count = lampPools.count = lamps;
+        lampHeads.instanceMatrix.needsUpdate = lampPools.instanceMatrix.needsUpdate = true;
       }
     },
     restore,
@@ -316,6 +360,7 @@ export function createPathNightDetails({world, course}) {
       if (stopped) return;
       restore();stopped = true;world.remove(group);
       reflectorGeometry.dispose();reflectorMaterial.dispose();
+      lampGeometry.dispose();lampMaterial.dispose();poolGeometry.dispose();poolMaterial.dispose();
       town?.geometry.dispose();town?.material.dispose();
       for (const material of materials.values()) material.dispose();
       bindings.length = 0;materials.clear();windowMaterials.clear();
