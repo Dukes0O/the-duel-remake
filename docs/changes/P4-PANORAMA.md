@@ -75,7 +75,10 @@ fixedresolution, two opposite-order pairs per quality, no discarded samples.
 Original relative10% plus combined10%/18.5ms;22numeric checks/syntax pass.
 Claude check7 kit-only absolute policy may classify kit contribution; it does
 not waive night-light cost. Current whole-view source has no measured frame pass.
-Corrected loader and Harbour sync required before any new native capture/gate.
+Genuine4527 sync preserves additive eleven GP IDs and every Claude source.
+Shared loader conflict uses exact reviewed d05ed90e colour/culling union; no local
+implementation. Its genuine branch ancestry is synced next. Native final packet
+still waits accepted integration loader/Harbour and coherent final road.
 
 ## Removed
 

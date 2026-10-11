@@ -32,6 +32,39 @@ export function strip(course, left, right, y, start=0, end=course.length, ground
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); g.computeVertexNormals(); return g;
 }
 
+
+// Fallen leaves on the ground (`groundLeaves` on a circuit: { colours, strength,
+// reach, far }): patches of red, gold and orange lie on the verges and thin out
+// under the far hills. Colour only; the vertex tint multiplies the grass.
+const leafSmooth = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
+function fallenLeaves(course, colour, s, off) {
+  const leaves = course.def.groundLeaves;
+  if (!leaves) return;
+  const edge = Math.abs(off) - course.roadHalfWidthAt(s);
+  const reach = leafSmooth((edge - 1.5) / 6) * (1 - (1 - (leaves.far ?? .3)) * leafSmooth((edge - (leaves.reach ?? 40)) / 40));
+  if (reach <= 0) return;
+  const swell = Math.sin(s * .031 + off * .11) + .8 * Math.sin(s * .017 - off * .07 + 1.3) + .5 * Math.sin(s * .071 + off * .05) + .45 * Math.sin(s * 2.7 + off * 1.9);
+  const amount = reach * leafSmooth((swell + .4) / 1.9) * (leaves.strength ?? .8);
+  if (amount <= 0) return;
+  const pick = leaves.colours[Math.floor((Math.sin(s * .013 + off * .021 + 2) * .5 + .5) * leaves.colours.length * .999)];
+  colour.r *= 1 + (pick[0] - 1) * amount; colour.g *= 1 + (pick[1] - 1) * amount; colour.b *= 1 + (pick[2] - 1) * amount;
+}
+
+// The hillsides beyond the verge (`groundLeaves.wood`: { green, colours, share, from }):
+// dark forest green, with patches of autumn where a slow swell is high.
+function woodland(course, colour, s, off) {
+  const wood = course.def.groundLeaves?.wood;
+  if (!wood) return;
+  const weight = leafSmooth((Math.abs(off) - course.roadHalfWidthAt(s) - (wood.from ?? 40)) / 50);
+  if (weight <= 0) return;
+  const swell = (Math.sin(s * .011 + off * .017) + .7 * Math.sin(s * .023 - off * .009 + 2) + .5 * Math.sin(s * .047 + off * .031 + 1) + .3 * Math.sin(s * .13 + off * .09)) / 2.5;
+  const turn = leafSmooth((swell - (1 - 2 * wood.share) * .6) / .18);
+  const pick = wood.colours[Math.floor((Math.sin(s * .019 - off * .013 + 4) * .5 + .5) * wood.colours.length * .999)];
+  colour.r *= 1 + (wood.green[0] + (pick[0] - wood.green[0]) * turn - 1) * weight;
+  colour.g *= 1 + (wood.green[1] + (pick[1] - wood.green[1]) * turn - 1) * weight;
+  colour.b *= 1 + (wood.green[2] + (pick[2] - wood.green[2]) * turn - 1) * weight;
+}
+
 export function terrainGeometry(course) {
   if(course.def.practice)return freestyleTerrainGeometry(course);
   const v = [], colors = [], uv = [], weights = [], groups = TERRAIN_THEMES.map(()=>[]);
@@ -55,7 +88,7 @@ export function terrainGeometry(course) {
     offsets.forEach((off, j) => {
       const p = course.groundAt(s,off),wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
-      col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); colors.push(col.r, col.g, col.b);
+      col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); fallenLeaves(course, col, s, off); woodland(course, col, s, off); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
     });
   }
@@ -80,7 +113,7 @@ export function farTerrainGeometry(course) {
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
     v.push(x,course.groundAt(roadS,off).y-.15,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
-    const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));colors.push(col.r,col.g,col.b);
+    const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));fallenLeaves(course,col,roadS,off);woodland(course,col,roadS,off);colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,quad=[a-columns-1,a-1,a-columns,a];
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
       if(quad.every(k=>distances[k]>(course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
