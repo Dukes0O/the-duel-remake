@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-11T06:29:29.445Z
+Observed at: 2026-10-11T07:39:59.148Z
 
-Observation commit: 6add6e379404c382a13031dd138454c21136e6a1
+Observation commit: 1cf1c46c72d7774a0d80f3927ae94312f9f9c5e1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6add6e379404c382a13031dd138454c21136e6a1
+Integration HEAD: 1cf1c46c72d7774a0d80f3927ae94312f9f9c5e1
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: dirty; exact HEAD passed: no.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-10-11T01:45:31.294Z; tested commit: 6add6e379404c382a13031dd138454c21136e6a1.
 
@@ -51,14 +51,15 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/p4-audio-level | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-audio-level |
-| codex/p4-daynight | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-daynight |
 | codex/p4-gp-existing | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-intel-dossier | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-intel-dossier |
 | codex/p4-intel-telemetry | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-intel-telemetry |
+| codex/p4-kit-loader | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kit-loader |
 | codex/p4-kits | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kits |
+| codex/p4-panorama | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-pit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-pit |
 | codex/p4-qualifying | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
-| codex/qa-audio-capture | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-audio-capture |
+| codex/p4-snow | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow |
 | codex/tools/callback-diagnostics | 6 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 15 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 16 | unknown | true | false | unknown |
@@ -70,15 +71,16 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-audio-level | unknown | 2026-10-10T23:17:23-07:00 | 0 | last commit 2026-10-10T23:17:23-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-daynight | unknown | 2026-10-10T22:35:39-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-gp-existing | unknown | 2026-10-10T23:24:43-07:00 | 0 | last commit 2026-10-10T23:24:43-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-intel-dossier | unknown | 2026-10-10T23:20:23-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-intel-telemetry | unknown | 2026-10-10T23:20:28-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-kits | unknown | 2026-10-10T23:17:41-07:00 | 0 | last commit 2026-10-10T23:17:41-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-pit | unknown | 2026-10-10T23:18:18-07:00 | 0 | last commit 2026-10-10T23:18:18-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/p4-qualifying | unknown | 2026-10-10T23:00:35-07:00 | 0 | last commit 2026-10-10T23:00:35-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
-| codex/qa-audio-capture | unknown | 2026-10-10T23:12:23-07:00 | 0 | last commit 2026-10-10T23:12:23-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
+| codex/p4-audio-level | unknown | 2026-10-10T23:17:23-07:00 | 0 | last commit 2026-10-10T23:17:23-07:00 | docs/changes/P4-AUDIO.md, src/audio-output.js, tools/test-audio-crash-peak.mjs |
+| codex/p4-gp-existing | unknown | 2026-10-11T00:34:53-07:00 | 0 | last commit 2026-10-11T00:34:53-07:00 | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-INTEL-DOSSIER.md, docs/changes/P4-INTEL-TELEMETRY.md, src/app.js, src/career-budget.js |
+| codex/p4-intel-dossier | unknown | 2026-10-11T00:22:02-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
+| codex/p4-intel-telemetry | unknown | 2026-10-10T23:20:28-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-INTEL-DOSSIER.md, docs/changes/P4-INTEL-TELEMETRY.md, src/app.js, src/career-budget.js, src/circuit-intel/index.js |
+| codex/p4-kit-loader | unknown | 2026-10-11T00:08:40-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-kits/characters/round-1.jpg, docs/board/looks/p4-kits/characters/round-2.jpg, docs/board/looks/p4-kits/characters/round-3.jpg, docs/board/looks/p4-kits/forest/round-1.jpg, docs/board/looks/p4-kits/forest/round-2.jpg |
+| codex/p4-kits | unknown | 2026-10-11T00:11:20-07:00 | 0 | last commit 2026-10-11T00:11:20-07:00 | docs/board/looks/p4-daynight/round-1-review.md, docs/board/looks/p4-daynight/round-1.jpg, docs/board/looks/p4-daynight/round-2-review.md, docs/board/looks/p4-daynight/round-2.jpg, docs/board/looks/p4-daynight/round-3-review.md |
+| codex/p4-panorama | unknown | 2026-10-11T00:17:52-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-kits/characters/round-1.jpg, docs/board/looks/p4-kits/characters/round-2.jpg, docs/board/looks/p4-kits/characters/round-3.jpg, docs/board/looks/p4-kits/forest/round-1.jpg, docs/board/looks/p4-kits/forest/round-2.jpg |
+| codex/p4-pit | unknown | 2026-10-10T23:18:18-07:00 | 0 | last commit 2026-10-10T23:18:18-07:00 | docs/changes/P4-PIT.md, src/audio.js, src/onfoot-figures.js, src/pit-lane.js, src/race-field-driver.js |
+| codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 0 | last commit 2026-10-10T23:41:37-07:00 | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-INTEL-DOSSIER.md, docs/changes/P4-INTEL-TELEMETRY.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md |
+| codex/p4-snow | unknown | 2026-10-11T00:20:32-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-kits/characters/round-1.jpg, docs/board/looks/p4-kits/characters/round-2.jpg, docs/board/looks/p4-kits/characters/round-3.jpg, docs/board/looks/p4-kits/forest/round-1.jpg, docs/board/looks/p4-kits/forest/round-2.jpg |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 6 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -92,10 +94,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,188 B | +0 B | 500,000 B |
-| Review `looks/` | 19,758,800 B | +1,331,947 B | 20,000,000 B |
-| Added bytes in last merge | 6,187 B | +0 B | 5,000,000 B |
-| All `public/` | 271,845,657 B | +0 B | unavailable |
-| Git objects | 408,197,120 B | +4,196,352 B | unavailable |
+| Review `looks/` | 19,980,225 B | +221,425 B | 20,000,000 B |
+| Added bytes in last merge | 11,399 B | +0 B | 5,000,000 B |
+| All `public/` | 288,151,563 B | +16,305,906 B | unavailable |
+| Git objects | 410,191,872 B | +1,485,824 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +106,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1046076a90623c26c76ffe623e9589dbf5717490
 - Local main: missing
-- Local integration/wasteland: 6add6e379404c382a13031dd138454c21136e6a1
+- Local integration/wasteland: 1cf1c46c72d7774a0d80f3927ae94312f9f9c5e1
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

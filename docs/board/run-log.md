@@ -937,3 +937,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 11 October handoff: Kyle accepted the current native audio mix. KITS round two and DAYNIGHT final round three await Claude art; DAYNIGHT's one standard timing rerun passes every original limit. Dossier/Telemetry still need the native Panorama correction and complete all-27 references. No new P4 card, release, push or history rewrite.
 
 11 October overnight: merged DAYNIGHT and QA-AUDIO-CAPTURE from a89e562c; lane378/378 in892.12s, build827ms and source reviews clear; Claude art4/4/4/4, unchanged quiet frames allpass with delivered<=18.2ms. No release; end full remains pending.
+
+11 October overnight: merged KITS c04e3189; lane379/379 in905.73s, build745ms, source clear and Claude final3 all3.5. Approved70GLBs/current sheets, strict recipe/evidence repair; no release.
