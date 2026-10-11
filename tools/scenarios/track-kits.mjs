@@ -10,17 +10,13 @@ function stage(entries,quality,stageIndex=0) {
       !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only QA required');
   app.stop();app.audio.setMuted(true);app.setGraphicsQuality(quality);
   const def=app.getMenuCourse(stageIndex).def;
-  const original=Object.getOwnPropertyDescriptor(def,'kitPlacements');
-  try {
-    Object.defineProperty(def,'kitPlacements',{value:entries,enumerable:true,configurable:true,writable:true});
-    app.duel.startCampaign({mode:stageIndex===0?'grandprix':'timetrial',startStage:stageIndex,car:'falcone_f42',seed:1989,
-      fieldSeed:12,fieldSize:7,cpuDifficulty:'medium'});
-    app.duel.course.def={...def};
-  } finally {
-    if(original)Object.defineProperty(def,'kitPlacements',original);else delete def.kitPlacements;
-  }
-  if(JSON.stringify(Object.getOwnPropertyDescriptor(def,'kitPlacements'))!==JSON.stringify(original))
-    throw Error('Native catalog did not restore');
+  const originalDefinition=JSON.stringify(def);
+  app.duel.startCampaign({mode:stageIndex===0?'grandprix':'timetrial',startStage:stageIndex,
+    car:'falcone_f42',seed:1989,fieldSeed:12,fieldSize:7,cpuDifficulty:'medium'});
+  // Circuit catalog definitions are frozen. This run owns a metadata copy;
+  // attach it before the first world build without writing the catalog.
+  app.duel.course.def={...app.duel.course.def,kitPlacements:entries};
+  if(JSON.stringify(def)!==originalDefinition)throw Error('Native catalog changed');
   const course=app.duel.course,target=course.groundAt(230,70),eye=course.groundAt(70,70);
   app.inspectionCamera={position:[eye.x,eye.y+150,eye.z],target:[target.x,target.y+4,target.z]};
   app.onFrame?.(app.duel.state,0);window.__render.renderFrame();
