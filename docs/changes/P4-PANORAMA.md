@@ -65,7 +65,7 @@ Field still reuses actual merged Harbour settings and original90/3.2; no new mec
 
 ## Field safety, settled before code
 
-Actual Harbour0cdf merged as99269056; only course-ID conflict unions all12.
+Actual Harbour0cdf merged as99269056; admission scope is upstream3 plus Panorama.
 Director/Claude16:30 approve racingLine lineMargin2.6/lineSwing.6/holdRacers:true;
 fieldFollow leadBraking1.6/wallRoom1/firstLap:{margin5,reaction.5,closeIn.8,wallRoom1.4}.
 Only existing safety opt-ins; comfort.62 and pace/form/spread/aggression1 inherited.
@@ -96,4 +96,4 @@ with final packet; verdict retained. Replace populated hidden baseline and hidde
 rear/HUD sampler with fresh worlds/full actual views. Replace the empty-kit
 comparison with full-kit day/dusk worlds, then obsolete paired/relative reports
 with one full final-dusk leg under Kyle rules7–10. Final art removes striped
-fence finish and mountain snow/ice appearance only for Panorama. Replace old11m ridge with13m; replace unsafe default line/follow settings only on Panorama.
+Replace striped fence/mountain snow,11m ridge and unsafe line/follow only on Panorama. Remove provisional legacy GP admissions here; P4-GP-EXISTING owns them.

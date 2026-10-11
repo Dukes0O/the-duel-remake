@@ -13,10 +13,9 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 
 const MPH = DRIVE.mphToWorld;
 
-// Closed road circuits; preserve independent course admission additions.
-export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'high-country',
-  'harbor-highlands', 'eifel-crown', 'alpine-serpent', 'azure-riviera', 'red-mesa',
-  'neon-docks', 'cloudbreak-skyway', 'panorama-ridge', 'tremblant-woods', 'harbour-lights']);
+// Actual integrated circuits plus Panorama; legacy expansion belongs to P4-GP-EXISTING.
+export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'tremblant-woods',
+  'harbour-lights', 'panorama-ridge']);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({
