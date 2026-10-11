@@ -36,7 +36,11 @@ readable frames, zero warnings/errors. Complete disposable storage rows stay
 exact during service. HUD and physical boards show the fit then GO; two reused
 fighters work in overalls. Evidence: .evidence/2026-10-11/P4-PIT/native.
 No frame measurement, full tier, release or Summit balance claim.
-Lane/build and one independent source review remain before integration.
+Director source review of c1898d47 is clear, conditional on queued gates.
+Synced reviewed lighting/capture source a89e562c before those gates.
+No owned conflict; the read-only pit callback survives the renderer merge.
+The native packet predates this sync. Unique CPU-box coverage and the actual
+pit/qualifying seam remain queued; no current gate pass is claimed.
 Sound cues: pit.limiter, pit.wrench, pit.go from the existing approved bank.
 
 ## Removed
