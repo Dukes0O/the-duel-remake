@@ -103,7 +103,7 @@ function updateMenuScene() {
   updateMenuCar();
   if(choices.mode==='grandprix'){
     text('cpu-target-label','THE FIELD');text('scene-length',`${(preview.distanceKm/preview.laps*3).toFixed(1)} KM · 3 LAPS`);
-    text('entry-reward','GRAND PRIX · SEVEN COMPUTER RACERS · START IN THE BACK HALF · NO PAY OR RECORDS YET');
+    text('entry-reward','GRAND PRIX · SEVEN COMPUTER RACERS · SEPARATE RECORDS · NO PAY YET');
     ui['event-brief'].hidden=false;text('event-brief','A pure race on a closed road: no traffic, police or radar. Five red lights, then go. Follow the tow behind a car for extra speed.');
     ui['rival-customization'].hidden=true;
     root.querySelector('.start-note').textContent='GRAND PRIX · 8 CARS · 3 LAPS · NO TRAFFIC OR POLICE';

@@ -514,8 +514,6 @@ export class App {
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
-    // Grand Prix pay and records come with the career card (P4-CAREER).
-    if(state.mode==='grandprix'){result.creditReward=0;result.creditBalance=this.profile.credits;return;}
     if(state.hiddenRoadVisit)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
@@ -526,6 +524,17 @@ export class App {
       combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
+    // Existing-circuit Grand Prix records are free of wallet settlement. Career pay is separate.
+    if(state.mode==='grandprix'){
+      result.creditReward=0;result.creditBalance=this.profile.credits;
+      const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),
+        {...payload,rival:null},this.player);
+      this.leaderboard=recorded.board;
+      if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
+      result.best=recorded.best;
+      result.personalBest=recorded.recorded;
+      return;
+    }
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();

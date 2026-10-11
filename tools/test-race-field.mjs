@@ -41,7 +41,7 @@ check(FEATURE_STATES['grand-prix'] === 'dev', 'the Grand Prix switch starts in d
   equal(off.state.mode, 'duel', 'with the switch off a Grand Prix request is an ordinary Duel');
   check(!off.state.field && off.state.opponents.length === 1, 'with the switch off there is no field, just the rival');
   const other = new Duel({ seed: 1989, featureFlags: { 'grand-prix': true } });
-  other.startCampaign({ mode: 'grandprix', startStage: 1, seed: 1989 });
+  other.startCampaign({ mode: 'grandprix', startStage: 3, seed: 1989 });
   equal(other.state.mode, 'duel', 'a circuit without a Grand Prix stays an ordinary Duel');
 }
 {
@@ -55,7 +55,7 @@ check(FEATURE_STATES['grand-prix'] === 'dev', 'the Grand Prix switch starts in d
 {
   const profile = createProfile();
   equal(normalizeRaceSettings({ mode: 'grandprix' }, profile).mode, 'grandprix', 'the race setup remembers Grand Prix on Pacific Canyon');
-  equal(normalizeRaceSettings({ mode: 'grandprix', eventId: COURSE[1].id }, { ...profile, courses: testCourseAccess() }).mode === 'grandprix', false,
+  equal(normalizeRaceSettings({ mode: 'grandprix', eventId: COURSE[3].id }, { ...profile, courses: testCourseAccess() }).mode === 'grandprix', false,
     'the race setup does not offer Grand Prix where the circuit has none');
 }
 
