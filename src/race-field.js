@@ -3,6 +3,7 @@
 // the slipstream and the finishing order. Everything here is repeatable from
 // the seed and the inputs and runs without graphics. The per-step driving of
 // each racer lives in race-field-driver.js.
+import {normalizeTyre} from './race-surfaces.js';
 import { CARS, DRIVE } from './config.js';
 import { applyDriverModifiers } from './drivers.js';
 import { upgradedCar } from './progression.js';
@@ -223,6 +224,7 @@ export function initializeField(duel) {
     return {
       id: `gp-${index + 1}`, name: racer.name, racerId: racer.id, driverId: racer.driverId, paint: { ...racer.paint },
       car: cars[index].car, upgrades,
+      ...(course.pitLane?{tyre:normalizeTyre(s.tyre)}:{}),
       s: pose.s, lateral: pose.lateral, speedMph: 0, finished: false, finishTime: null,
       headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost: 1, boosting: false,
       damageZones: freshDamageZones(), damageCooldown: 0,
