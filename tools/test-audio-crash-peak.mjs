@@ -68,10 +68,10 @@ before(async()=>{
     ["'tools/vite-qa.config.js'",JSON.stringify(join(scratchDir,'vite.config.mjs'))],
     ["join(PROJECT_ROOT, '.qa-dist', 'tools', 'menu-check.html')","join("+JSON.stringify(scratchDir)+", 'build', 'tools', 'menu-check.html')"],
     ["!path.startsWith('/tools/')","(!path.startsWith('/tools/')&&!path.startsWith('/.evidence/'+"+JSON.stringify(runDir.replaceAll('\\','/').split('/.evidence/')[1]) + "+'/'))"],
-    ["await cdp.send('Page.navigate', { url: baseURL + path }, page.sessionId);",
-      "await cdp.send('Page.navigate', { url: baseURL + (path.endsWith('/recorder-probe.html') ? '/.qa-dist/"+
+    ["return transition('Page.navigate', {url:baseURL+path});",
+      "return transition('Page.navigate', {url:baseURL+(path.endsWith('/recorder-probe.html') ? '/.qa-dist/"+
       scratchDir.replaceAll('\\','/').split('/.qa-dist/')[1]+
-      "/recorder-probe.html' : path) }, page.sessionId);"],
+      "/recorder-probe.html' : path)});"],
   ];
   for(const [from,to]of substitutions){if(!harness.includes(from))throw Error('Private harness recipe anchor changed: '+from);harness=harness.replaceAll(from,to);}
   await writeFile(join(scratchDir,'harness.mjs'),harness);
