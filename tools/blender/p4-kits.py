@@ -2007,6 +2007,21 @@ def render_group(group, ids, out, evidence, original=False):
         if original:
             source, key = DONORS[identifier]
             objects = donor(source, key)
+            if identifier in {"autumn-tree", "autumn-tree-golden", "autumn-tree-copper"}:
+                # This FBX imports opaque diffuse colors with shader Alpha zero.
+                # Repair opacity only in the original-source review render.
+                materials = {mat for obj in objects if obj.type == "MESH"
+                             for mat in obj.data.materials if mat}
+                for mat in materials:
+                    shaders = [node for node in mat.node_tree.nodes
+                               if node.type == "BSDF_PRINCIPLED"] if mat.use_nodes else []
+                    if len(shaders) != 1:
+                        raise ValueError("Source tree requires one imported Principled shader")
+                    alpha = shaders[0].inputs["Alpha"]
+                    if alpha.is_linked or alpha.default_value != 0 or mat.diffuse_color[3] != 1:
+                        raise ValueError("Source tree opacity differs from the inspected FBX import")
+                    alpha.default_value = mat.diffuse_color[3]
+                print("SOURCE OPACITY REPAIR " + identifier + " " + str(len(materials)), flush=True)
         else:
             before = set(bpy.context.scene.objects)
             bpy.ops.import_scene.gltf(filepath=str(out / (identifier + ".glb")))
