@@ -44,5 +44,47 @@ assert.match(source,/if\(!prepareVehicle\(carKey\)\).*adaptiveResolution\.reset\
 assert.match(source,/if\(!warmup\.canDraw\(warmupKey\)\).*adaptiveResolution\.reset\(\);return;/);
 assert.match(source,/const resize = .*adaptiveResolution\.reset\(\)/);
 assert.match(source,/const visibility = .*adaptiveResolution\.reset\(\)/);
-assert.match(source,/renderMainView\(renderer,composer,high\);\s*rearView\.render/,'mirror draws after either main-view path');
+function mainPrecedesBothMirrors(rendererSource) {
+  const start = rendererSource.indexOf('renderStarted=performance.now();');
+  const end = rendererSource.indexOf('const cpuRenderMs=performance.now()-renderStarted', start);
+  if (start < 0 || end < start || end - start > 2000) return false;
+  const boundary = rendererSource.slice(start, end);
+  const main = /^renderStarted=performance\.now\(\);renderMainView\(renderer,composer,high\);\s*/;
+  if (!main.test(boundary)) return false;
+  const rear = boundary.replace(main, '');
+  const direct = /^rearView\.render\(\{state:st,player,course,now(?::ambientNow)?\}\);\s*$/;
+  const scoped = new RegExp([
+    String.raw`^const kits = trackKitsOf\(world\);\s*if \(kits\) \{\s*`,
+    String.raw`const previousRender = renderer\.render;\s*`,
+    String.raw`renderer\.render = function\(renderedScene, renderedCamera, \.\.\.args\) \{`,
+    String.raw`[\s\S]{1,1400}\};\s*`,
+    String.raw`try \{rearView\.render\(\{state:st,player,course,now:ambientNow\}\);\}\s*`,
+    String.raw`finally \{renderer\.render = previousRender;\}\s*`,
+    String.raw`\} else rearView\.render\(\{state:st,player,course,now:ambientNow\}\);\s*$`,
+  ].join(''));
+  return direct.test(rear) || scoped.test(rear);
+}
+assert.ok(mainPrecedesBothMirrors(source),'mirror draws after either main-view path');
+const mainSubmission = 'renderMainView(renderer,composer,high);';
+const scopedMirror = 'try {rearView.render({state:st,player,course,now:ambientNow});}';
+const directMirror = '} else rearView.render({state:st,player,course,now:ambientNow});';
+const restoration = 'finally {renderer.render = previousRender;}';
+for (const [label, marker] of [
+  ['main', mainSubmission], ['scoped mirror', scopedMirror],
+  ['direct mirror', directMirror], ['restoration', restoration],
+]) {
+  assert.ok(source.includes(marker), `${label} control targets actual renderer source`);
+  assert.equal(mainPrecedesBothMirrors(source.replace(marker, '')), false, `missing ${label} is rejected`);
+}
+for (const mirror of [scopedMirror, directMirror]) {
+  const reordered = source.replace(mainSubmission, '').replace(mirror, `${mirror}${mainSubmission}`);
+  assert.equal(mainPrecedesBothMirrors(reordered), false, 'main submission after either mirror is rejected');
+}
+const cpuEndpoint = 'const cpuRenderMs=performance.now()-renderStarted;';
+for (const marker of [scopedMirror, directMirror, restoration]) {
+  assert.equal(mainPrecedesBothMirrors(source.replace(marker, `${cpuEndpoint}${marker}`)), false,
+    'CPU endpoint before either mirror or restoration is rejected');
+}
+assert.ok(mainPrecedesBothMirrors(`renderStarted=performance.now();${mainSubmission}rearView.render({state:st,player,course,now});${cpuEndpoint}`),
+  'original direct main-before-mirror layout remains supported');
 console.log('Scene presentation: real RenderPass clearing, direct/composite routing, error restoration, matching warmup, mirror ordering and adaptive lifecycle passed.');

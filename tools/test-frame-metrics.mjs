@@ -63,7 +63,43 @@ check(/const capture=measure&&!document\.hidden/.test(renderer),'hidden draws ar
 check(/if\(!prepareVehicle\(carKey\)\)\{frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'asset loading breaks the interval anchor');
 check(/if\(!warmup\.canDraw\(warmupKey\)\)\{rearView\.hide\(\);frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'shader warmup hides the mirror and breaks the interval anchor');
 check(/loadingFrame=firstWorldFrame\|\|metricsChanged/.test(renderer),'first loading and configuration-change frames do not pollute steady-state metrics');
-check(/renderStarted=performance\.now\(\);renderMainView\(renderer,composer,high\);\s*rearView\.render\(\{state:st,player,course,now(?::ambientNow)?\}\);\s*const cpuRenderMs=performance\.now\(\)-renderStarted/.test(renderer),'CPU cost covers both main view and mirror submission, not an asserted GPU duration');
+function coversCpuRenderBoundary(source) {
+  const start = source.indexOf('renderStarted=performance.now();');
+  const endpoint = 'const cpuRenderMs=performance.now()-renderStarted';
+  const end = source.indexOf(endpoint, start);
+  if (start < 0 || end < start || end - start > 2000) return false;
+  const body = source.slice(start, end);
+  const main = /^renderStarted=performance\.now\(\);renderMainView\(renderer,composer,high\);\s*/;
+  if (!main.test(body)) return false;
+  const rear = body.replace(main, '');
+  // Keep the original direct mirror path and recognize the owned cached-rear
+  // scope. The bounded function body cannot consume a CPU endpoint: extraction
+  // stops at the first endpoint before either branch or restoration.
+  const direct = /^rearView\.render\(\{state:st,player,course,now(?::ambientNow)?\}\);\s*$/;
+  const scoped = new RegExp([
+    String.raw`^const kits = trackKitsOf\(world\);\s*if \(kits\) \{\s*`,
+    String.raw`const previousRender = renderer\.render;\s*`,
+    String.raw`renderer\.render = function\(renderedScene, renderedCamera, \.\.\.args\) \{`,
+    String.raw`[\s\S]{1,1400}\};\s*`,
+    String.raw`try \{rearView\.render\(\{state:st,player,course,now:ambientNow\}\);\}\s*`,
+    String.raw`finally \{renderer\.render = previousRender;\}\s*`,
+    String.raw`\} else rearView\.render\(\{state:st,player,course,now:ambientNow\}\);\s*$`,
+  ].join(''));
+  return direct.test(rear) || scoped.test(rear);
+}
+check(coversCpuRenderBoundary(renderer),'CPU cost covers both main view and mirror submission, not an asserted GPU duration');
+const cpuEndpoint = 'const cpuRenderMs=performance.now()-renderStarted;';
+for (const [label, marker] of [
+  ['main submission', 'renderMainView(renderer,composer,high);'],
+  ['scoped mirror submission', 'try {rearView.render({state:st,player,course,now:ambientNow});}'],
+  ['mirror restoration', 'finally {renderer.render = previousRender;}'],
+  ['direct mirror submission', '} else rearView.render({state:st,player,course,now:ambientNow});'],
+]) {
+  check(renderer.includes(marker), `${label} negative control targets actual renderer source`);
+  check(!coversCpuRenderBoundary(renderer.replace(marker, `${cpuEndpoint}${marker}`)), `CPU endpoint before ${label} is rejected`);
+  check(!coversCpuRenderBoundary(renderer.replace(marker, '')), `missing ${label} is rejected`);
+}
+check(coversCpuRenderBoundary(`renderStarted=performance.now();renderMainView(renderer,composer,high);rearView.render({state:st,player,course,now});${cpuEndpoint}`),'original direct mirror boundary remains supported');
 check(/if\(capture&&!loadingFrame\)frameMetrics\.record\(now,cpuRenderMs\)/.test(renderer),'only presented steady-state RAF frames reach the ring');
 check(/const visibility = \(\) => \{resetFrameMetrics\(\);adaptiveResolution\.reset\(\);\}/.test(renderer)&&/document\.addEventListener\('visibilitychange',visibility\)/.test(renderer)&&/document\.removeEventListener\('visibilitychange',visibility\)/.test(renderer),'hidden-tab gaps reset the window and the observer is cleaned on disposal');
 for(const key of ['metricRevision','metricEnvironment','metricQuality','metricRatio','metricMenu','metricCamera','metricMood','metricInspection','metricCar'])check(new RegExp(`${key}!==`).test(renderer),`${key} changes invalidate old readings`);

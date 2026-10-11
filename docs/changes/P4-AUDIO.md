@@ -96,10 +96,13 @@ and listening review are approved. This does not certify a whole recording or
 the uncaptured finish cue. No release; current recipes/assets stay exact.
 Consumed listening evidence may be deleted after this verdict is committed.
 
+Consumed approved listening evidence284,485,319B removed after approval
+committed33aacf7a. Measured verdict, recipes/current assets and licensed takes kept.
+
 ## Removed
 
 Direct compressor-to-ceiling routing becomes the gain/crest-aware ceiling.
 Rejected threshold/attack trial is removed; no alternate mastering branch.
 Bare-Duel replay uses the native callback adapter; no state fields removed.
-Source assets/cues/reels stay exact. Consumed inspection output is deleted
-after review; keep actual121s prefix PCM/MP3/raws until Kyle listens. No whole PCM.
+Source assets/cues/reels stay exact. Consumed inspection output and approved
+121s prefix PCM/MP3/raws are deleted after committed review. No whole PCM existed.
