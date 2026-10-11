@@ -60,6 +60,17 @@ with installed Vite in memory. No helper output, dependency or runtime hook.
 All 18 native grid/corner/width/state assertions remain unchanged. Native,
 current lane/build checks stay queued until the Director grants a quiet slot.
 
+## Native first result
+
+Native 2aa40030 stops at Azure Riviera High: three distinct computer racers
+crash by 8.775 s, violating the unchanged fewer-than-three opening check.
+Pacific, High Country, Harbor, Eifel and Alpine High passed with zero crashes;
+remaining cases were not run. Native helper loads with no raw-import failure.
+Retain the failed packet in integration evidence for Claude's decision.
+QA now saves the failed corner's crash events and actual actor poses before
+throwing the same assertion. No width, race rule or limit changed; no full
+18-case pass or performance claim. Further native/balance checks await schedule.
+
 ## Removed
 
 No runtime asset or legacy mode is replaced. Remove the stale menu claim that

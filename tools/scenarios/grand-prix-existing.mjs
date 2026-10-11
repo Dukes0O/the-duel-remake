@@ -100,14 +100,19 @@ export async function run(context) {
         const app=window.__qaApp,s=app.duel.state;
         return {size:s.opponents.length+1,rows:document.querySelectorAll('#field-rows li').length,
           elapsed:s.stageTimeSec,crashingCars:new Set(s.field.stats.crashes.filter(hit=>hit.t<=30).map(hit=>hit.index)).size,
-          ghostVisible:!!app.ghostPose,finite:[s,...s.opponents].every(actor=>
+          ghostVisible:!!app.ghostPose,
+          crashEvents:s.field.stats.crashes.filter(hit=>hit.t<=30),
+          actors:[s,...s.opponents].map((actor,index)=>({index:index-1,name:actor.name||'YOU',
+            s:actor.s,lateral:actor.lateral,speedMph:actor.speedMph,offRoad:actor.offRoad,
+            impactTimer:actor.impactTimer,knock:actor.knock})),
+          finite:[s,...s.opponents].every(actor=>
             [actor.s,actor.lateral,actor.speedMph].every(Number.isFinite))};
       })()`);
+      reports.push({...grid,corner});
+      await writeFile(join(context.outputDir,'grand-prix-existing.json'),JSON.stringify({reports},null,2)+'\n');
       if (corner.size !== 8 || corner.rows !== 8 || corner.ghostVisible || !corner.finite || corner.crashingCars >= 3)
         throw Error(`Native first corner failed ${JSON.stringify(corner)}`);
       await context.screenshot(`${id}-corner-${quality}`);
-      reports.push({...grid,corner});
-      await writeFile(join(context.outputDir,'grand-prix-existing.json'),JSON.stringify({reports},null,2)+'\n');
     }
   }
   console.log('Existing Grand Prix: nine native grids, first corners and narrow roads in both qualities.');
