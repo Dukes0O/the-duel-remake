@@ -126,6 +126,8 @@ const barrier = (id, name, margin, gap, extra = {}) => {
 const START = { gantry: 0, pits: [4, 84], stands: [10, 70] };
 const HILL = {
   s: 235, lateral: 112, along: 190, across: 84, height: 36, pines: 260,
+  // A level terrace for the lodge.
+  pads: [{ du: -62, dv: -12, radius: 17, blend: 14 }],
   // Three runs down the slope toward the road, wide and a little crooked.
   runs: [
     { from: [-30, 14], to: [-84, -72], width: 26 },

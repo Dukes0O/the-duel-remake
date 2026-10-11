@@ -150,3 +150,11 @@ test('the scenery is the same on every build', () => {
   assert.equal(again.features.trees.length, course.features.trees.length);
   assert.deepEqual(TREMBLANT_WOODS.kitPlacements.slice(0, 5), placements.slice(0, 5));
 });
+
+test('the lodge stands on a level terrace', () => {
+  const hill = TREMBLANT_WOODS.hills[0], lodge = placements.find(item => item.id === 'ski-lodge');
+  const [du, dv] = [lodge.s - hill.s, lodge.lateral - hill.lateral];
+  const centre = hillHeight(hill, du, dv);
+  for (const [x, z] of [[-12, 0], [12, 0], [0, -8], [0, 8], [-10, -7], [10, 7]]) assert.ok(Math.abs(hillHeight(hill, du + x, dv + z) - centre) < .3, 'the ground under the lodge is level');
+  assert.ok(centre > 8, `the lodge is ${centre.toFixed(1)} m above the road`);
+});
