@@ -23,6 +23,9 @@ test('Tremblant Woods races with the full field', () => {
   assert.equal(grandPrixCourse({ id: 'eifel-crown' }), false);
   assert.equal(TREMBLANT_WOODS.closed, true);
   assert.equal(TREMBLANT_WOODS.laps, 3);
+  // The racers' pace on this circuit, set per difficulty from the balance runs.
+  assert.deepEqual(Object.keys(TREMBLANT_WOODS.fieldPace), ['easy', 'medium', 'hard']);
+  assert.ok(Object.values(TREMBLANT_WOODS.fieldPace).every(value => value > .7 && value < 1));
 });
 
 test('Timber Straight has its two crests, the second where the chairlift crosses', () => {

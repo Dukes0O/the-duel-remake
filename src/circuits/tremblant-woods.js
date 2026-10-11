@@ -25,10 +25,10 @@ const BASE = {
   // Pine Drop runs straight into Lakeside Plunge, a right then a left with a crest
   // in the first: a line from kerb to kerb is more than a car can follow there.
   racingLine: { roadShare: .85, maxSlope: .08 },
-  // The computer racers drive this much of their usual pace here (src/race-field-driver.js).
-  // Found with tools/race-field-balance.mjs --course tremblant-woods: the test driver
-  // wins about 90, 47 and 17% on Easy, Medium and Hard.
-  fieldPace: .85,
+  // The computer racers drive this much of their usual pace here, per difficulty
+  // (src/race-field-driver.js). Found with tools/race-field-balance.mjs --course
+  // tremblant-woods: the test driver wins about 77, 43 and 13% on Easy, Medium and Hard.
+  fieldPace: { easy: .87, medium: .85, hard: .85 },
   scriptStart: 100,
   script: [
     ['straight', 414, { climb: -6, name: 'Lodge Straight' }],

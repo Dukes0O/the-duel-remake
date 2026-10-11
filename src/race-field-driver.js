@@ -39,8 +39,10 @@ export function runtimeOf(duel, r) {
   // A faster car than yours shows only part of its edge; a slower one is helped a little.
   const carEdge = Math.pow(duel.state.field.playerIndex / performanceIndex(spec, duel.course), FIELD.carPaceShare);
   // A circuit may ask for a field a little quicker or slower than the standard
-  // (`fieldPace` in its definition), found with tools/race-field-balance.mjs.
-  const pace = tuning.pace * t.skill * f.skillRoll * carEdge * (duel.course.def.fieldPace ?? 1);
+  // (`fieldPace` in its definition: one number, or one per difficulty), found
+  // with tools/race-field-balance.mjs.
+  const asked = duel.course.def.fieldPace, circuitPace = (typeof asked === 'object' ? asked?.[duel.state.cpuDifficulty] : asked) ?? 1;
+  const pace = tuning.pace * t.skill * f.skillRoll * carEdge * circuitPace;
   const line = racingLineFor(duel.course);
   const profile = buildSpeedProfile(line, spec, { cornerFactor: pace, topFactor: pace * (1 + t.topSpeed),
     brakeFactor: t.brake, slowBonus: t.slowCorners });
