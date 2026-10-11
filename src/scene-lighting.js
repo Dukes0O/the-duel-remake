@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createAtmosphericSky, SUN_OFFSET } from './atmosphere.js';
-import { resolveLightingSettings } from './lighting-moods.js';
+import { resolveLightingSettings, circuitLighting } from './lighting-moods.js';
 import { createLocalLighting } from './local-lighting.js';
 import { sampleCourseLightPath } from './light-path.js';
 import { createVehicleNightLighting } from './vehicles.js';
@@ -67,7 +67,8 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       sampleInputs.distance = distance;sampleInputs.raceLength = raceLength;sampleInputs.theme = theme;
       sampleInputs.tunnel = tunnel;sampleInputs.menu = menu;
       pathSample = sampleCourseLightPath(course, sampleInputs, sampleBuffer);
-      const settings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
+      let settings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
+      if (!pathSample && !night && !tunnel && mood !== 'overcast') settings = circuitLighting(settings, course.def.light);
       const amount = pathSample ? 1 : blend;
       atmosphere.setLightPath(!!pathSample);
       if (!scene.fog) scene.fog = new THREE.Fog(colour(settings.fog), 260, 1650);
