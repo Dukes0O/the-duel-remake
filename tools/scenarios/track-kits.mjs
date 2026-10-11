@@ -7,6 +7,12 @@ import {build} from 'vite';
 import {summarizeFrameTiming} from './p4-daynight.mjs';
 import {TRACK_KIT_IDS} from '../../src/track-kits.js';
 
+// Claude check-in7: a full city versus an empty track has informative relative
+// cost. Kits must meet these absolute targets in both graphics qualities.
+export const kitConstructionAccepted = ms => Number.isFinite(ms) && ms >= 0 && ms < 1000;
+export const kitDeliveredAccepted = ms => Number.isFinite(ms) && ms >= 0 && ms <= 18.5;
+
+
 function stage(entries,quality,stageIndex=0) {
   const app=window.__qaApp;
   if (!Object.getOwnPropertyDescriptor(window,'localStorage')?.value ||
@@ -285,7 +291,8 @@ async function denseHarbour(context,report,persist) {
   if(!process.env.P4_KIT_HARBOUR_SOURCE)throw Error('Dense QA requires the explicit pinned Harbour source environment');
   const frames=process.env.P4_KIT_DENSE_FRAMES==='1',bundle=await denseDriverBundle();
   report.dense={hybrid:{definitionSource:HARBOUR_HEAD,engine:'this lane; additive QA Harbour eligibility only',
-    genuineGrid:true,placements:1969},qualities:[],frames:[],comparisons:[],failures:[],frameStatus:frames?'running':'not scheduled'};
+    genuineGrid:true,placements:1969},acceptancePolicy:'claude-check-in7-absolute',
+    qualities:[],frames:[],comparisons:[],failures:[],frameStatus:frames?'running':'not scheduled'};
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
   for(const quality of ['high','performance'])for(const place of ['grid','old-town']){
     await setupDenseFixture(context,quality,bundle,true,place);
@@ -294,7 +301,7 @@ async function denseHarbour(context,report,persist) {
     if(quality==='performance'&&witness.main.high)throw Error('Dense Performance submitted High placements');
     if(quality==='high'&&!witness.main.high)throw Error('Dense near High placements missing');
     if(place==='old-town'&&!witness.rears.some(row=>row.low>0))throw Error('Actual old-town rear street was not observed');
-    if(!witness.underOneSecond)report.dense.failures.push(quality+' '+place+' total construction '+witness.construction.constructionMs+'ms exceeds1s');
+    if(!kitConstructionAccepted(witness.construction.constructionMs))report.dense.failures.push(quality+' '+place+' total construction '+witness.construction.constructionMs+'ms exceeds1s');
     report.dense.qualities.push(witness);await persist();
     if(frames)for(const pair of [1,2]){
       for(const present of pair===1?[false,true]:[true,false]){
@@ -311,10 +318,10 @@ async function denseHarbour(context,report,persist) {
       const addedPercent={};
       for(const key of ['delivered','cpu','gpu'])addedPercent[key]=off.pacing[key]&&on.pacing[key]?(on.pacing[key].p95/off.pacing[key].p95-1)*100:null;
       addedPercent.combined=(on.combined.p95/off.combined.p95-1)*100;
-      const comparison={quality,place,pair,addedPercent,deliveredP95:on.pacing.delivered.p95};
+      const comparison={quality,place,pair,addedPercent,relativeInformational:true,deliveredP95:on.pacing.delivered.p95};
       report.dense.comparisons.push(comparison);
-      if(Object.values(addedPercent).some(value=>value>10)||on.pacing.delivered.p95>18.5)
-        report.dense.failures.push(quality+' '+place+' pair'+pair+' exceeds original10%/18.5ms');
+      if(!kitDeliveredAccepted(on.pacing.delivered.p95))
+        report.dense.failures.push(quality+' '+place+' pair'+pair+' exceeds delivered18.5ms');
       await persist();
     }
   }

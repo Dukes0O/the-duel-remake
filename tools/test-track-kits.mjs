@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {kitConstructionAccepted,kitDeliveredAccepted} from './scenarios/track-kits.mjs';
 import * as THREE from 'three';
 import {readFile} from 'node:fs/promises';
 import {resolve,dirname,relative} from 'node:path';
@@ -16,6 +17,16 @@ import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {createRendererReadiness} from '../src/screen-readiness.js';
 import {createTrackKits, normalizeKitPlacements, TRACK_KIT_IDS} from '../src/track-kits.js';
+
+// Claude check-in7: kit thresholds are total construction and delivered p95.
+assert.equal(kitConstructionAccepted(999.999),true);
+assert.equal(kitConstructionAccepted(1000),false,'construction must be under1s');
+assert.equal(kitDeliveredAccepted(18.5),true,'delivered cap includes18.5ms');
+assert.equal(kitDeliveredAccepted(18.500001),false,'over-cap delivered fails');
+for(const value of [-1,NaN,Infinity,null,undefined,'18']){
+  assert.equal(kitConstructionAccepted(value),false,'construction must be finite measured time');
+  assert.equal(kitDeliveredAccepted(value),false,'delivered must be finite measured time');
+}
 
 if (process.argv[2] === '--validate-circuit') {
   assert.equal(process.argv.length,4,'Usage: test-track-kits.mjs --validate-circuit <tracked src/circuits/module.js>');
