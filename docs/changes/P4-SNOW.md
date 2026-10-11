@@ -37,8 +37,7 @@ Policy RED: old relative acceptance; GREEN28 numeric checks cover both qualities
 Loader union retains Snow extras/vehicle update, trusted runtime clearance,
 camera culling and scoped rear restoration; only2granted renderer conflicts.
 
-High native acceptance also requires real floating-point reads from the scene
-before Bloom, bright extraction and all ten blur targets: zero NaN/Inf.
+High native acceptance also requires real floating-point reads from the scene before Bloom, bright extraction and all ten blur targets: zero NaN/Inf.
 Default Bloom stays enabled. FIX-P4-KERB-NORMALS removes shared reverse kerb
 triangles without changing vertices/materials; its independent regression
 failed on the actual ridge zero normal first. Genuine fix merge preserves
@@ -89,7 +88,8 @@ Static timing fixes only its native presentation camera; poses and limits stay e
 Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
 Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
 Round3 GREEN: outside-range lightfall RED/GREEN, dry cap shader,64 seeded pines,
-actual rim overlap/road clearance/read-only identity; native art/frames/gates pending.
+actual rim overlap/road clearance/read-only identity. e6ac2080 final native8views passes,0warnings/errors,12finiteHDRtargets.
+Sheet269446B final3 sent for review; frames/gates pending, no appearance approval or fourth round.
 
 ## Removed
 
