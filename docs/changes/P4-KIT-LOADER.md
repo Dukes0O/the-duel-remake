@@ -50,10 +50,25 @@ for terrainHalfWidth=64. Ordinary legacy branches and road physics stay exact.
 The initial headless fixture failed on the missing module before implementation.
 Metadata, transform, clearance, lifetime, readiness and all 70 real GLBs now pass;
 actual authored near/far terrain triangles and all 72 join points pass.
-The 34 existing readiness UI and 33 exact legacy world checks also pass. Real native High/Performance loading,
-lane tier, build and one independent review remain required. Director grants
+The 34 existing readiness UI and 33 exact legacy world checks also pass.
+Director source/lifetime/terrain review clears 6f387678; native recipe fixes
+freeze at ac1e053e. Memory-only native High/Performance and Panorama join pass
+on private port 59154: 532 static batches, 10 skinned meshes, 248 decoded
+textures per quality, all five real countdown lamps, source failure/recovery,
+and unchanged race/profile; zero console errors or warnings. Three functional
+screenshots inspected: separate grounded pieces and continuous authored join.
+No frame measurement or performance claim while Claude ran headless balance.
+The first native attempt exposed a frozen catalog fixture; fixed by copying
+run-owned metadata before world build. No runtime/assertion waiver. Lane/build
+remain queued. Director grants
 the narrow screen-readiness kit-loading/error status hook as well. No fourth art
 round; all approved assets stay unchanged. Heavy checks wait for the Director.
+
+Synced approved integration 5b6e325b: canonical kit sheets and Blender-free
+recipe registration now inherited. All seven owned runtime files and runtime
+assets remain byte-identical to ac1e053e; incoming Harbour/Tremblant intel
+metadata is retained. Native verdict above remains applicable. No new native,
+lane gate or build ran during this sync; current gate/build stay queued.
 
 ## Removed
 
