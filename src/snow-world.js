@@ -9,6 +9,9 @@ export const SNOW_LIMITS=Object.freeze({high:Object.freeze({flakes:240,marks:512
 export const SNOW_KIT_IDS=Object.freeze(['snow-pine','snow-rock','snow-ground','plough-bank']);
 const clamp=x=>Math.max(0,Math.min(1,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
+const worlds=new WeakMap();
+export function bindSnowWorld(world,owner){worlds.set(world,owner);world.add(owner.group);}
+export function snowWorldOf(world){return worlds.get(world)??null;}
 const rangeCache=new WeakMap();
 function ranges(course){
   if(!rangeCache.has(course))rangeCache.set(course,winterRanges(course.script,course.def.snowWorld));

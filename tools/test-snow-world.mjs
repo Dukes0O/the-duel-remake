@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {readFile} from 'node:fs/promises';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createTrackKits} from '../src/track-kits.js';
+import {addLandscapeDetail} from '../src/landscape-detail.js';
+import {disposeTree} from '../src/world.js';
 import {Course} from '../src/course.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
@@ -106,4 +111,57 @@ assert.ok(shader.vertexShader.includes('vWinterWeight=winterWeight'));
 assert.ok(shader.fragmentShader.includes('clamp(vWinterWeight,0.0,1.0)'));
 assert.equal(material.customProgramCacheKey(),'prior-terrain-winter-v1');
 material.dispose();geom.dispose();
+// Actual approved High/LOD meshes must fit the exact physical bands on bends.
+const parser=new GLTFLoader();
+parser.register(()=>({name:'SNOW_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+const realKits=createTrackKits(course,{extraPlacements:placements,
+  loadAsset:async path=>{const bytes=await readFile(new URL('../public'+path,import.meta.url));
+    return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');}});
+assert.equal(await realKits.ready,true,realKits.error?.message);
+assert.equal(JSON.stringify(course.features),before,'real kit validation never changes physical features');
+realKits.update({high:true,position:course.groundAt(200,0),state:{status:'racing'}});
+assert.ok(realKits.stats.high>0);
+realKits.update({high:false,position:course.groundAt(200,0),state:{status:'racing'}});
+assert.equal(realKits.stats.low,placements.length);
+const pineIndex=realKits.placements.findIndex(row=>row.id==='snow-pine');
+const originalKitPose=realKits.getPlacementPose(pineIndex),boundTree=course.features.trees.find(t=>t.id===realKits.placements[pineIndex].scenery.id);
+const snowOwner=createSnowWorld(course,{kits:realKits});
+snowOwner.update({state:{status:'racing',s:200,stageTimeSec:1,brokenScenery:[
+  {kind:'tree',id:boundTree.id,atTime:0,directionX:1,directionZ:0,outcome:'knock'}]},dt:0});
+assert.notDeepEqual(realKits.getPlacementPose(pineIndex).elements,originalKitPose.elements);
+snowOwner.update({state:{status:'racing',s:200,stageTimeSec:1,brokenScenery:[]},dt:0});
+assert.deepEqual(realKits.getPlacementPose(pineIndex).elements,originalKitPose.elements,
+  'the actual approved asset restores its prepared terrain pose');
+snowOwner.dispose();realKits.dispose();
+const liveCourse=new Course(def,1989),livePlacements=snowWorldPlacements(liveCourse);
+const menuBank=placements.find(row=>row.physicalPatch),liveBank=livePlacements.find(row=>row.physicalPatch);
+assert.notEqual(menuBank.physicalPatch,liveBank.physicalPatch,'equivalent menu/race Courses own different physical patches');
+assert.ok(liveCourse.features.surfacePatches.includes(liveBank.physicalPatch));
+assert.ok(!liveCourse.features.surfacePatches.includes(menuBank.physicalPatch));
+// Omission happens after seeded generation: every retained dry instance is exact.
+const originalTextureLoad=THREE.TextureLoader.prototype.load,loadedTextures=[];
+THREE.TextureLoader.prototype.load=function(path){const texture=new THREE.Texture();
+  const row={path,texture,disposed:0};texture.addEventListener('dispose',()=>row.disposed++);
+  loadedTextures.push(row);return texture;};
+const baselineDetail=new THREE.Group(),winterDetail=new THREE.Group(),emptyFoliage=new THREE.Group();
+try{
+  addLandscapeDetail(baselineDetail,course,true);
+  addLandscapeDetail(winterDetail,course,true,{omitFoliageAt:(x,z)=>winterWeight(course,course.nearest(x,z).s)>0});
+  const foliage=group=>{const result=new Map();group.traverse(mesh=>{
+    if(mesh.userData.landscapeCell?.kind!=='foliage')return;
+    const ids=mesh.userData.landscapeCell.indices;
+    for(let i=0;i<mesh.count;i++)result.set(ids[i],{matrix:[...mesh.instanceMatrix.array.slice(i*16,(i+1)*16)],
+      color:[...mesh.instanceColor.array.slice(i*3,(i+1)*3)]});});return result;};
+  const original=foliage(baselineDetail),retained=foliage(winterDetail);
+  assert.ok(retained.size>0&&retained.size<original.size,'only actual winter grass instances are removed');
+  for(const [id,row] of retained)assert.deepEqual(row,original.get(id),'dry placement and tint retain the original RNG sequence');
+  const loadedBefore=loadedTextures.length;
+  addLandscapeDetail(emptyFoliage,course,true,{omitFoliageAt:()=>true});
+  assert.equal(foliage(emptyFoliage).size,0);
+  assert.equal(loadedTextures.slice(loadedBefore).find(row=>row.path.includes('meadow-grass')).disposed,1,
+    'all-omitted summer grass releases its orphan texture');
+}finally{
+  THREE.TextureLoader.prototype.load=originalTextureLoad;
+  disposeTree(baselineDetail);disposeTree(winterDetail);disposeTree(emptyFoliage);
+}
 console.log('Snow ranges, physics bands, kit identity, terrain, poses and bounded read-only lifetime pass.');

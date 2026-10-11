@@ -21,7 +21,12 @@ function prepareNative(quality) {
     surfacePatches:[{id:'shaded-winter-ice',kind:'ice',s0:540,s1:575,shaded:true}],
     snowWorld:{ranges:[{from:0,to:750}],exposed:[{from:500,to:730}],
       ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12}]}});
-  app._menuCourses.clear();
+  app._menuCourses.clear();app.onFrame?.(app.duel.state,0);
+}
+
+function startNative(){
+  const app=window.__qaApp;
+  window.__snowMenuCourse=app.getMenuCourse(0);
   if(!app.startCampaign({startStage:0,mode:'grandprix',qualifying:false,seed:1989,
       fieldSeed:444,car:'falcone_f42',difficulty:'casual',cpuDifficulty:'medium',tyre:'winter'}))
     throw Error('The actual full-field winter race did not start.');
@@ -72,6 +77,7 @@ function witness(view) {
   const ids=[...new Set(placements.map(row=>row.id))];
   for(const id of ['snow-pine','snow-rock','snow-ground','plough-bank'])
     if(!ids.includes(id))throw Error('Missing actual approved Snow kit: '+id);
+  if(window.__snowMenuCourse===app.duel.course)throw Error('Native menu/live Course control did not create distinct objects.');
   for(const row of placements.filter(row=>row.id==='plough-bank'))
     if(!app.duel.course.features.surfacePatches.includes(row.physicalPatch))
       throw Error('A visible plough bank does not reference its actual headless surface.');
@@ -79,6 +85,17 @@ function witness(view) {
   api.scene.traverse(node=>{
     if(node.userData.vegetationCell?.entries.some(entry=>winterTreeIds.has(entry.feature.id)))
       throw Error('An ordinary pine duplicates its approved winter replacement.');
+  });
+  api.scene.traverse(node=>{
+    if(node.userData.landscapeCell?.kind!=='foliage')return;
+    const matrix=node.matrix.clone();
+    for(let i=0;i<node.count;i++){
+      node.getMatrixAt(i,matrix);
+      const nearest=app.duel.course.nearest(matrix.elements[12],matrix.elements[14]);
+      const p=app.duel.course.phase(nearest.s);
+      if(app.duel.course.def.snowWorld.ranges.some(range=>p>range.from&&p<range.to))
+        throw Error('Green summer foliage remains in the authored winter range.');
+    }
   });
   const cars=api.scene.children.filter(node=>node.visible&&node.userData.vehicleKey);
   if(cars.length!==8 || cars.some(car=>!(car.userData.grounding?.wheels.length>=4)))
@@ -144,7 +161,9 @@ export async function run(context) {
       await context.navigate('/tools/menu-check.html?flags=grand-prix,snow-world');
       await context.waitFor(`window.__qaApp?.visualReady&&!document.querySelector('#start-engine')?.disabled`, 'native isolated menu',60000);
       await context.evaluate('('+prepareNative.toString()+')('+JSON.stringify(quality)+')');
-      await context.waitFor(`window.__qaApp.visualReady&&window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets and native full-field renderer',60000);
+      await context.waitFor(`window.__qaApp.visualReady&&window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets in the actual menu world',60000);
+      await context.evaluate('('+startNative.toString()+')()');
+      await context.waitFor(`window.__qaApp.visualReady&&window.__render?.scene.getObjectByName('Authored snow world')`, 'fresh native full-field winter world',60000);
       await context.evaluate(`document.head.insertAdjacentHTML('beforeend','<style>details,#race-hud,#modal-layer,.combat-opponent-marker{display:none!important}</style>')`);
       report.captures.push(await capture(context,quality,'grid'));
       await driveTo(context,190);report.captures.push(await capture(context,quality,'tracks'));
