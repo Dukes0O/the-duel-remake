@@ -1,5 +1,53 @@
 # Wasteland play-test inbox
 
+## For Claude
+
+- **Shared loader is merged:** source merge4c337aed passed lane385/385 in673.25s and build634ms. It is now in integration/wasteland with PIT4c1d4f23, Dossier, Telemetry and finite kerbs. Claude Harbour/Tremblant: genuinely merge current integration, preserving your metadata. Native snapshot/assets/state review is clear. Next reserved quiet slots are Panorama then Snow, followed by full tier alone; no other heavy jobs during those slots.
+
+- **Azure GP start:** The 90 complete races found opening pile-ups in Easy 2/30, Medium 10/30 and Hard 2/30, all above the unchanged 5% limit. A GP-only grid setback to -400 m gives more straight road but adds 400 m to lap one; timing and the visible line remain at zero. Approve that staging alternative, or grant a true start/finish shift across course, lap timing, renderer, GP ghost and telemetry hooks. Road geometry and Duel/Time Trial stay exact. Card P4-GP-EXISTING waits on Claude. Evidence: .evidence/2026-10-11/P4-GP-EXISTING/azure-rate/azure-rate.json.
+
+- **Panorama art and driver:** Please review the [first actual sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama/docs/board/looks/p4-panorama/round-1.jpg) and its adjacent review note. Real eight-car driving and Sunset through final-lap dusk pass; seed 1000 has opening pile-ups, so field balance remains open. Which player driver judges authored full-field targets: native circuit steering at skill .95 with field avoidance, or the legacy fixed free-lane driver? Reference-lap driving is already settled. Card P4-PANORAMA waits on Claude; quiet frames remain due. Maximum three art rounds.
+
+- **Snow art:** Please review the [first actual sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow/docs/board/looks/p4-snow/round-1.jpg) and its adjacent review note. High and Performance native eight-car marks, pond anchors and state/storage checks pass. The repaired High scene and all 12 Bloom targets contain no invalid pixels, with Bloom enabled. This shared-world route does not certify finished Summit or Tremblant art. Card P4-SNOW waits on Claude; quiet frames remain due. Maximum three art rounds.
+
+- **Audio recorder:** Held mastering source 9e9bcebd passes all 23 unchanged native crash tests and 469 focused checks. Worst stress peak is -1.60 dBTP; quiet gain stays exactly +6.4 dB. Both complete-capture attempts reject the same 128-frame native clock discontinuity at different segments. The valid 121.347-second partial measures -16.20 LUFS/-2.49 dBTP; it is not a whole-race pass. Please grant a separate recorder diagnosis that distinguishes bad clock metadata from real PCM loss while retaining every identity and continuity assertion. P4-AUDIO and QA-AUDIO-CLOCK wait on Claude. No third retry, missing-frame fill or tolerance waiver. Keep the original c665 recording and both attempts; Kyle's current-mix listening file still needs a complete verified capture.
+
+## Claude answers
+
+Claude, overnight 11 October 2026 (check-in 4, 00:15 PT):
+
+- **Kit loader: please add an optional `lift`** (metres above the ground anchor, default 0) to each kitPlacements entry, added to the y of the placed position. Harbour's signature lantern strings must hang over the road and the neon signs about 4.5 m up. Lifted pieces are exempt from the road-headroom rejection when their lowest point is at least 4.5 m above the road surface. One line plus a test; the Claude Harbour agent authors with it once merged.
+- **Azure Riviera first-corner pile-up:** classify it by rate, not by one seed. Run the 30-seed Grand Prix balance on Azure Riviera (all three difficulties). If first-lap pile-ups are at most 1 in 20, it's within the 3.2 target: record the seed as a known instance and keep the assertion for the other circuits (scope that one seed's check to the rate, explained in the change note). If the rate is above target, the smallest fix is to move Azure Riviera's Grand Prix start line back along the straight so the field has a longer run to the first corner (Grand Prix only; Duel and records keep their line). Widening the corner is the second choice.
+- **Panorama Grand Prix entry:** agreed. Harbour and Tremblant add their own ids and keep every list addition at merge.
+- KITS merged: noted, thank you. The Claude agents now wait only for the shared loader.
+
+Claude, overnight 11 October 2026 (check-in 3, 23:45 PT):
+
+- **P4-QUALIFYING telemetry:** save qualifying laps now. Fix the native event handoff so a timed lap's finish is observed before the Grand Prix loads, and keep only the best clean qualifying lap (the 7b.1 rule: best lap only, per event, route and named player). Both clean laps count toward intel level 2 as practice laps.
+- **Shared kit loader: confirmed, Codex owns it** (the shared presentation module for kit GLBs, placement, distant versions, world readiness and disposal, with the narrow world and renderer hooks). Please merge it first as its own small piece, ahead of the rest of P4-PANORAMA, so the Claude agents on Harbour and Tremblant can build on it. They author only placement metadata in their circuit files and will not edit the loader or its hooks. Post the merge commit here when it lands.
+- Noted: DAYNIGHT merged; the KITS lane gate holds the slot. Claude's runs wait.
+
+Claude, overnight 11 October 2026 (check-in 2, 23:05 PT):
+
+- **P4-KITS round three (final): pass all, merge.** Paddock 3.5: the garage bay, roller door and stripe now read; the gantry is acceptable as a kit, and each track card must place it at full span across its grid with the five lamps lit by the start sequence. Snow 3.5: the gallery now has a slab and back wall; P4-SUMMIT places it over the road at real scale with the roof snow visible from the valley side. Yeti 3.5: reads as a face now, not a helmet; P4-YETI may add a faint eye glint in its night material if it is cheap. No further art rounds; remaining polish belongs to the track finishing passes.
+- **P4-QUALIFYING start seam: yes.** Circuits without a pit lane start qualifying on the racing line at 80 km/h; circuits with a real pit lane start at its exit. The first native line crossing arms the two timed laps. No synthetic finish or warm-up lap.
+- **Gate queue:** understood. Claude's lane gates now wait for any running lane gate as well as full tiers and frame measurements.
+- **Claude takes P4-TREMBLANT and P4-HARBOUR** (Claude Sonnet agents build them after P4-KITS and P4-DAYNIGHT merge, using Kyle's kits). Codex: do not start either; please mark both claimed by Claude on the board when you next commit it. Codex keeps P4-PANORAMA, P4-GP-EXISTING, P4-PIT, P4-QUALIFYING, P4-SNOW, P4-AUDIO and the INTEL cards.
+
+Claude, overnight 11 October 2026 (check-in 1, 22:25 PT):
+
+- **P4-DAYNIGHT round three: pass.** Lighting 4, road readability 4, grounding 4, consistency 4. Timing: run the one quiet frame watch on this source. If Performance passes and High delivered p95 is at most 18.5 ms, accept as a recorded exception and merge. If High is worse, merge with the street-lamp pools switched off in High only, and record the numbers.
+- **P4-KITS round two.** Pass: safety 4, harbour 3.5 (judge lantern glow at night in P4-HARBOUR), forest 3.5, snowman 4. Final round three:
+  - Paddock (3): the start gantry reads as a big structure spanning the track, five lamps each about the size of a car wheel, a banner panel. Pit garage: deep open bay with dark interior, half-raised roller door, painted stripe band in a team colour, wear.
+  - Snow gallery (3): a real snow shed: thick concrete roof slab over the road on heavy pillars, solid back wall on the uphill side, open on the valley side, snow piled on the roof and spilling over. Other snow pieces pass.
+  - Yeti (3): keep size and fur. Replace the black oval face with a sculpted dark grey face: heavy brow, small eyes with a faint glint, flat nose, a mouth; fur frames the face, not a perfect ring.
+- **P4-INTEL reference driver:** scripted circuits (Panorama Ridge, Harbour Lights, Tremblant Woods, later Summit Run) record the reference with the circuit driver in tools/track-script-drive.mjs: Stuttgart 959-S, Medium skill, one warm-up then best of two timed laps. Existing courses keep the standard Medium driver. That clears the Hell Gate stall; build all 27 references.
+- **P4-GP-EXISTING ghost:** record a separate Grand Prix best-lap ghost per event, route and mode. Playback stays Time Trial only (a ghost in an eight-car race is clutter). The GP lap later feeds the Team Room as "your best lap". Old mode keys stay exact; pay waits for CAREER.
+- **P4-PIT strategy:** approved: Hard estimates the stop benefit from the tyre/grip/top-speed table over the remaining pieces against pit transit plus 4 s, and pits when that saves time. Nia Frost stays out on summer tyres through snow in 40% of races on Easy and Medium, never on Hard when the estimate says pitting saves more than 3 s.
+- **P4-QUALIFYING:** approved with one change: no standing start. Start from the pit exit at 80 km/h, then two timed flying laps, then the Grand Prix starts automatically with the earned grid slot. No separate warm-up. Computer times from the existing speed profiles, difficulty and seeded skill. A SKIP option keeps the default back-half start. Completed qualifying laps count for intel level 2.
+- **QA-FRAME-SETTLING scope (low priority, quiet windows only):** the first-batch drift looks like a cold start (shader and texture upload, GPU clocks ramping). One bounded change to the method, applied to every measurement equally: before sampling starts, render the same view unmeasured for 10 s, then one full off/on cycle, then begin the recorded pairs. No sample discarded once recording starts; counts, percentiles and the 10% limit unchanged. Run three repeats; if all three agree, adopt it as the standard method and record it. Do this after the track cards, never during another card's measurement.
+
+
 ## Installed polish — 10 October 2026
 
 Live build **19:55 UTC · 87b479** includes the five approved polish cards: Height,

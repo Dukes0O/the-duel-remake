@@ -1561,8 +1561,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "CC0 is linked on the official pack page.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "8a71ea16219315a01d00d5a90c4f6b5c090faddbc56d80ecf727e2b3b853c6c0",
       "fit": "Garages, grandstands and track furniture are visible in the official preview.",
       "risk": "Clean, miniature-like finish needs real-world scaling, rough surfaces and restrained paint.",
       "checked": "2026-10-10",
@@ -1573,7 +1573,65 @@
         1
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 1. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 1. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-kenney-racing",
+        "inputs": {
+          "garage": "unpacked/Models/GLTF format/pitsGarage.glb",
+          "grandstand": "unpacked/Models/GLTF format/grandStandCovered.glb",
+          "armco": "unpacked/Models/GLTF format/rail.glb",
+          "wall": "unpacked/Models/GLTF format/barrierWall.glb"
+        },
+        "files": [
+          {
+            "path": "source.zip",
+            "bytes": 6082755,
+            "sha256": "8a71ea16219315a01d00d5a90c4f6b5c090faddbc56d80ecf727e2b3b853c6c0"
+          },
+          {
+            "path": "unpacked/License.txt",
+            "bytes": 611,
+            "sha256": "905627df4313a9eb7fa9337129e572979ef51cc3857c8d2942e57ae84736096c"
+          },
+          {
+            "path": "unpacked/Models/GLTF format/barrierWall.glb",
+            "bytes": 5812,
+            "sha256": "86abcd8c4d5ee9ff9862dda49b9f079e7e66c27266e4ab696e03c799e737cef8"
+          },
+          {
+            "path": "unpacked/Models/GLTF format/grandStandCovered.glb",
+            "bytes": 15200,
+            "sha256": "48fc8e7eace9969a849805bddd5dce2bf1244129f46ae18f7dc8499fe1792b50"
+          },
+          {
+            "path": "unpacked/Models/GLTF format/pitsGarage.glb",
+            "bytes": 13028,
+            "sha256": "db73d2ebd70763380ef872ffd2a399eb72c979f96c5a3c1ab377d93670204a23"
+          },
+          {
+            "path": "unpacked/Models/GLTF format/rail.glb",
+            "bytes": 5940,
+            "sha256": "c60d60e34b675d5d832d91c6f5d7c125a1020953c2e22dbcd1215397990aaaf4"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 17625,
+            "sha256": "277d415f70e4f2c0be854d1bd6d1c3e7c7c9cc4a1f810c7bbec7447e5cb87da1"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "CC0 is linked on the official pack page.",
+        "changes": "Metric pit garage, grandstand, pit wall and armco; face-separated muted baked surface materials; distant geometry; selected GP monitor combined with pit wall.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "pit-garage",
+          "pit-wall",
+          "grandstand",
+          "armco"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-gp",
@@ -1586,8 +1644,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "9eba7953b93cda5745bf50ee62d882559572e244dcadc92b2a4bb95dac9b5481",
       "fit": "Named five-light gantry, garage, grandstand and barrier parts reduce modelling work.",
       "risk": "Publisher reports AI generation with Claude Fable 5.1. Very plain geometry needs close inspection and weathering.",
       "checked": "2026-10-10",
@@ -1601,7 +1659,101 @@
         3
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 3. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 3. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-gp",
+        "inputs": {
+          "gantry": "15234.glb",
+          "tyres": "15206.glb",
+          "fence": "15213.glb",
+          "marshal": "15214.glb",
+          "board": "15238.glb",
+          "monitor": "15220.glb"
+        },
+        "files": [
+          {
+            "path": "15206.glb",
+            "bytes": 111684,
+            "sha256": "7508e5cf8fbb949efd7ea7872323a89dd94764b60ddd14cae1ad183c841bd3ca"
+          },
+          {
+            "path": "15206.json",
+            "bytes": 4168,
+            "sha256": "fc3ac8a3b19c947cd00dc17736360a212cf027df1f8d6c9e266f31a134cfc188"
+          },
+          {
+            "path": "15213.glb",
+            "bytes": 41028,
+            "sha256": "4c430ec87364eac5bade7b76d214b9a4f410aadd364900b2b90ef2c89152def4"
+          },
+          {
+            "path": "15213.json",
+            "bytes": 4200,
+            "sha256": "b6af925e01bc0c019338862db0b426f81c4c37954861e4069ae687ec1ad0ea74"
+          },
+          {
+            "path": "15214.glb",
+            "bytes": 16064,
+            "sha256": "840b1f4aa41adc64618f2f8ded256fd715a15134bbafe1aac0307ca3dde5a14d"
+          },
+          {
+            "path": "15214.json",
+            "bytes": 4150,
+            "sha256": "46250c69f3524774efc915bd7f54f75b7fc60f8babcd6e5fd6a1f1ee1791d972"
+          },
+          {
+            "path": "15220.glb",
+            "bytes": 9180,
+            "sha256": "e76123d77b77ebf77cee0cfb3fb76ff17f93c19dcccdc47106d1a23282b7de6b"
+          },
+          {
+            "path": "15220.json",
+            "bytes": 4123,
+            "sha256": "4a85bd859ac3593dd6695113b44f05627f23236e86fbc98c20d3d64eb7f59352"
+          },
+          {
+            "path": "15234.glb",
+            "bytes": 6384,
+            "sha256": "93843ef8e8e74d650af0136c3df27b9dc1eeba4fef21fdd8da08d8cfbd0e89b1"
+          },
+          {
+            "path": "15234.json",
+            "bytes": 4156,
+            "sha256": "775983cdbcce04602608deadf055a95f969a9a46bb306459d9a7b3edcb72487f"
+          },
+          {
+            "path": "15238.glb",
+            "bytes": 4368,
+            "sha256": "46bdf84ef18f656d5a289faf24e114fece818b68b3087966012604f97c9f7027"
+          },
+          {
+            "path": "15238.json",
+            "bytes": 4147,
+            "sha256": "682728b114819378fda74b81defe48cf2ad8d9c9895b0d66df52ee950b42be91"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 862561,
+            "sha256": "108739cbf8f01dd452b88c3b34315f1798147c98446e1241f67f7d54ff37f312"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Official pack and item metadata specify CC0 1.0.",
+        "changes": "Metric gantry, fence, tyres, marshal post, braking boards and pit monitor. Gantry retains five original separately named lamps and independent emissive materials. Fitted 150/100/50 board lettering and baked worn surfaces.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "start-gantry",
+          "pit-wall",
+          "catch-fence",
+          "tyre-wall",
+          "braking-board-150",
+          "braking-board-100",
+          "braking-board-50",
+          "marshal-post"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-kart",
@@ -1634,8 +1786,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Creator's OpenGameArt page links CC0 and supplies FBX/Blend downloads.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "64a646d9532cc44690fa93b126216c990362ce84db9285c506d460944c9a9bc8",
       "fit": "A worn Jersey barrier fits the game's grounded look; creator reports 284 triangles.",
       "risk": "Source texture maps are not independently inspected. Confirm included texture provenance and reduce maps after selection.",
       "checked": "2026-10-10",
@@ -1650,7 +1802,57 @@
         3
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 1, 3. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 1, 3. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-barrier",
+        "inputs": {
+          "barrier": "unpacked/jerseyBarrier/jerseyBarrier.fbx",
+          "color": "unpacked/jerseyBarrier/Concrete015_2K_Color.jpg",
+          "normal": "unpacked/jerseyBarrier/Concrete015_2K_Normal.jpg",
+          "roughness": "unpacked/jerseyBarrier/Concrete015_2K_Roughness.jpg"
+        },
+        "files": [
+          {
+            "path": "source.zip",
+            "bytes": 15093226,
+            "sha256": "64a646d9532cc44690fa93b126216c990362ce84db9285c506d460944c9a9bc8"
+          },
+          {
+            "path": "unpacked/jerseyBarrier/Concrete015_2K_Color.jpg",
+            "bytes": 1967158,
+            "sha256": "d10ad9c1f2032e057e9599f840298d81340995380715ef8e8bbff16b483a0d84"
+          },
+          {
+            "path": "unpacked/jerseyBarrier/Concrete015_2K_Normal.jpg",
+            "bytes": 8636310,
+            "sha256": "e7762ae3a7b61da8743ed44cd504f36f39b95b2e9d8ad9cdd911775af8311dbe"
+          },
+          {
+            "path": "unpacked/jerseyBarrier/Concrete015_2K_Roughness.jpg",
+            "bytes": 2470476,
+            "sha256": "8385cc481aff86f27b7926ff458d3ddae7225b5ac1a489d6a04b50dcf522fd05"
+          },
+          {
+            "path": "unpacked/jerseyBarrier/jerseyBarrier.fbx",
+            "bytes": 38220,
+            "sha256": "64a0a3edd7b584cb9bf7775bf6934c2a4d7a150721fee33f59a98f7d93f88d60"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 23044,
+            "sha256": "75025a781dc6a5476e37ac1b79454ad93c43ac6334baa7db735bcacf091897c7"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Creator's OpenGameArt page links CC0 and supplies FBX/Blend downloads.",
+        "changes": "Original concrete barrier fitted to a 4 m module, ground pivot, restrained concrete surface and a reduced distant mesh.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "concrete-wall"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-city",
@@ -1663,8 +1865,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "CC0 is linked on the official pack page.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "f8b09b081c2bb88bcc126e2dec1cb40fd0dad7e7e591b6c26aaefe96fb35276b",
       "fit": "Low-rise shops, awnings and tall buildings provide a coherent harbour skyline.",
       "risk": "Modern white blocks need warm shop lighting, mixed signs and dirt; the Lantern Tower remains a custom assembly.",
       "checked": "2026-10-10",
@@ -1676,7 +1878,69 @@
         5
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 5. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 5. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-city",
+        "inputs": {
+          "shopA": "unpacked/Models/GLB format/building-a.glb",
+          "shopB": "unpacked/Models/GLB format/building-e.glb",
+          "tower": "unpacked/Models/GLB format/building-skyscraper-a.glb",
+          "awning": "unpacked/Models/GLB format/detail-awning.glb"
+        },
+        "files": [
+          {
+            "path": "source.zip",
+            "bytes": 4096974,
+            "sha256": "f8b09b081c2bb88bcc126e2dec1cb40fd0dad7e7e591b6c26aaefe96fb35276b"
+          },
+          {
+            "path": "unpacked/License.txt",
+            "bytes": 708,
+            "sha256": "c38cee408d022e57e44e49f1cd655c2fe0dc881a07b881276b795215cdc0de69"
+          },
+          {
+            "path": "unpacked/Models/GLB format/Textures/colormap.png",
+            "bytes": 11002,
+            "sha256": "191bec3889aaaca5018380038fecc129ebb5c2182879a099b7b538b3fa050b5d"
+          },
+          {
+            "path": "unpacked/Models/GLB format/building-a.glb",
+            "bytes": 108936,
+            "sha256": "5cf220f90ee3f21e7abe38055ca409a48aa8ef1d5ffab6e2deb99e5a5e1ed5e0"
+          },
+          {
+            "path": "unpacked/Models/GLB format/building-e.glb",
+            "bytes": 128208,
+            "sha256": "edbe5b49858a3c83e72d3cf496129c06082ef3a3d6005769f8883138e275b456"
+          },
+          {
+            "path": "unpacked/Models/GLB format/building-skyscraper-a.glb",
+            "bytes": 111336,
+            "sha256": "d8339bbb75944ff91d1ec9a70ec6dead71bd98b94a42d3dd0fc1f3b107ddbe85"
+          },
+          {
+            "path": "unpacked/Models/GLB format/detail-awning.glb",
+            "bytes": 5528,
+            "sha256": "386978daf81dc11ac601638f19a41918a391ff882a8c518ae5a3215a1bed4d8a"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 19029,
+            "sha256": "4e638f9f0c3fbb8806c8ae870ce02126d72aeea1ab9a2563121e7812fee738f6"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "CC0 is linked on the official pack page.",
+        "changes": "Selected buildings fitted into two shopfronts and a 28 m tower; existing awnings combined with storefronts/crown; warm glazing, worn plaster, fictional signs and reduced distant geometry.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "lantern-tower",
+          "shopfront-a",
+          "shopfront-b"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-boats",
@@ -1689,8 +1953,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "CC0 is linked on the official pack page.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "cd1470c1cf441c7f46d0944ae6d0d897242365dc97677c5079b3238965d659f3",
       "fit": "Official preview shows small harbour boats, barges and two wooden dock sections.",
       "risk": "Use fishing/workboat shapes and mute the bright palette. Dock proportions and mooring details need inspection.",
       "checked": "2026-10-10",
@@ -1705,7 +1969,56 @@
         8
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 5, 8. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 5, 8. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-boats",
+        "inputs": {
+          "boat": "unpacked/Models/GLB format/boat-fishing-small.glb",
+          "dock": "unpacked/Models/GLB format/ramp.glb"
+        },
+        "files": [
+          {
+            "path": "source.zip",
+            "bytes": 1870991,
+            "sha256": "cd1470c1cf441c7f46d0944ae6d0d897242365dc97677c5079b3238965d659f3"
+          },
+          {
+            "path": "unpacked/License.txt",
+            "bytes": 717,
+            "sha256": "f5f520f81277128fb422aebe334d2f08e6d8e5f7face6008885d8ff920253724"
+          },
+          {
+            "path": "unpacked/Models/GLB format/Textures/colormap.png",
+            "bytes": 8814,
+            "sha256": "311138350e74e35c5497a1bd8076a01740b7c302bed11027639fa553459a68de"
+          },
+          {
+            "path": "unpacked/Models/GLB format/boat-fishing-small.glb",
+            "bytes": 22948,
+            "sha256": "f6a03c86e7147764de6aac135433a428ee503d42852ecd101c1795a278480742"
+          },
+          {
+            "path": "unpacked/Models/GLB format/ramp.glb",
+            "bytes": 14808,
+            "sha256": "fefbd8cf1988bf40bbbc88cedc5027a6c77b260e056d4298a4d57e35ef09daae"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 17477,
+            "sha256": "53fdbb21107eed53bb058fb07357551d6d86f821a323067138647b91c160a9b7"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "CC0 is linked on the official pack page.",
+        "changes": "Fishing boat fitted to metres. Existing timber ramp flattened into a dock while preserving plank/support geometry; baked worn surfaces and distant versions.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "harbour-boat",
+          "wooden-dock"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-neon",
@@ -1718,8 +2031,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "761967dd0fcf186117c25835d354de177dc511c87469956363ebb67bd4fbb6f7",
       "fit": "Blank sign frames, paper lanterns and modular facades can dress the night street.",
       "risk": "Publisher reports AI generation with Claude Opus 5. Six-lantern strip is listed at 4,996 triangles; simplify for repeats. Apartment fronts are not finished shops.",
       "checked": "2026-10-10",
@@ -1731,7 +2044,52 @@
         5
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 5. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 5. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-neon",
+        "inputs": {
+          "sign": "37838.glb",
+          "lanterns": "37840.glb"
+        },
+        "files": [
+          {
+            "path": "37838.glb",
+            "bytes": 67800,
+            "sha256": "8b99fd4d17a1a75f547cec773fa23123802e5a78d55de6dfcbb949e0940e9d5f"
+          },
+          {
+            "path": "37838.json",
+            "bytes": 4481,
+            "sha256": "76bc1ed541af3cb6bcd45bae96e3cbaa89a4760597fdb4391e15d804fbc06ae3"
+          },
+          {
+            "path": "37840.glb",
+            "bytes": 187484,
+            "sha256": "16dbaa04e9cac7bd9f860dc9b4f8bc607e199f0c272c21f5cebc66d8a32c354f"
+          },
+          {
+            "path": "37840.json",
+            "bytes": 4419,
+            "sha256": "35455496da2bfd49e1b75cca6522fee9b9bf06f11fb972aacf4b58210d26c673"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 806496,
+            "sha256": "c809fa11ec304680bcef9cf230c5b6a3f1cd2bc97b1d363f241b195a4e4ad53e"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Official pack and item metadata specify CC0 1.0.",
+        "changes": "Selected sign and lantern strip fitted into local sign/string props and tower lighting details; muted surfaces, fictional lettering and distant versions.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "lantern-tower",
+          "neon-sign",
+          "lantern-string"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-holiday",
@@ -1744,8 +2102,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "CC0 is linked on the official pack page.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "fde4d514d7297388d98058e8933ff614e071886f7ce57f9aea4b00d7698dd769",
       "fit": "Cabin pieces, snow shapes, snowy rocks/pines and plain/hatted snowmen are visible.",
       "risk": "Remove festive details and reduce chunky proportions. Separate hat/carrot meshes and deformation are not verified.",
       "checked": "2026-10-10",
@@ -1761,7 +2119,77 @@
         11
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 9, 11. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 9, 11. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-holiday",
+        "inputs": {
+          "snowman": "unpacked/Models/GLB format/snowman-hat.glb",
+          "pine": "unpacked/Models/GLB format/tree-snow-a.glb",
+          "ground": "unpacked/Models/GLB format/snow-flat-large.glb",
+          "rock": "unpacked/Models/GLB format/rocks-large.glb",
+          "bank": "unpacked/Models/GLB format/snow-pile.glb"
+        },
+        "files": [
+          {
+            "path": "source.zip",
+            "bytes": 4482244,
+            "sha256": "fde4d514d7297388d98058e8933ff614e071886f7ce57f9aea4b00d7698dd769"
+          },
+          {
+            "path": "unpacked/License.txt",
+            "bytes": 714,
+            "sha256": "6010f677d95f3ab7935faf873d8f4eb96ad1e5f02fd0e4659c9d92852b768d6a"
+          },
+          {
+            "path": "unpacked/Models/GLB format/Textures/colormap.png",
+            "bytes": 12777,
+            "sha256": "015fcc1664be7576f468a98bc4f5f329ef8b3c9caef0d85b2a4dc0ca69516863"
+          },
+          {
+            "path": "unpacked/Models/GLB format/rocks-large.glb",
+            "bytes": 70008,
+            "sha256": "c00f2dfa322bb7a724f027f4f762e06c12488391c953e0dcd15251ae5e4362c3"
+          },
+          {
+            "path": "unpacked/Models/GLB format/snow-flat-large.glb",
+            "bytes": 10264,
+            "sha256": "1122009ac0fef96edc00cb6520c6593517f64c6ec1bb2329ba69c1df056a1c3b"
+          },
+          {
+            "path": "unpacked/Models/GLB format/snow-pile.glb",
+            "bytes": 13796,
+            "sha256": "37ba917164564051371d63588489bb662444eba0327517546dd125ccd45b1007"
+          },
+          {
+            "path": "unpacked/Models/GLB format/snowman-hat.glb",
+            "bytes": 56284,
+            "sha256": "3734abb86420eda3278012beccc7344afc39161415c10422a20a6ae5fa4e338f"
+          },
+          {
+            "path": "unpacked/Models/GLB format/tree-snow-a.glb",
+            "bytes": 34484,
+            "sha256": "582c4c33e9833372afd0e63f55822006b005b4555dd2ae061fa1cef1813574de"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 17637,
+            "sha256": "1b1d3b5d2c4f1aa63984329db289fac57f85f72e69dc123ba172d876805408c7"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "CC0 is linked on the official pack page.",
+        "changes": "Fitted snow pine, ground, rock and plough bank. Original rock snow caps retained; a redundant added slab was removed. Snowman original mesh split into named hat, carrot and snow-body, original atlas restrained, ground pivots and distant geometry.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "snow-pine",
+          "snow-ground",
+          "snow-rock",
+          "plough-bank",
+          "snowman"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-ski",
@@ -1774,8 +2202,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Official pack and item metadata specify CC0 1.0.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "d982997bbf1903bf5027305947575cbdf5f25833382663db5247a6d5a194c37c",
       "fit": "Named tower, cable span, four-seat chair, lodge, warming hut and shelter cover rare resort parts.",
       "risk": "Publisher reports AI generation with Claude Fable 5.1. Lift is static; movement, cable sag and slope fitting are future work.",
       "checked": "2026-10-10",
@@ -1789,7 +2217,99 @@
         9
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 8, 9. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 8, 9. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-ski",
+        "inputs": {
+          "tower": "25946.glb",
+          "cable": "25945.glb",
+          "chair": "25954.glb",
+          "lodge": "25988.glb",
+          "hut": "25994.glb",
+          "gallery": "26001.glb"
+        },
+        "files": [
+          {
+            "path": "25945.glb",
+            "bytes": 4492,
+            "sha256": "6ab83051dcd933ea188c6c7b7b4ff432d7c90386c524f6734eb91aef21a72d0c"
+          },
+          {
+            "path": "25945.json",
+            "bytes": 4718,
+            "sha256": "e2231223bd187237b3b0cce03f92b09b753e5a35a7023550ab95bfb9ed9dcb58"
+          },
+          {
+            "path": "25946.glb",
+            "bytes": 45340,
+            "sha256": "b0121883a94702d56a57df39d79356d4cadcff0689fc36e0fa59569cdbf674b9"
+          },
+          {
+            "path": "25946.json",
+            "bytes": 4749,
+            "sha256": "e7415cbe273840cecafd6aa2564ef4ac1e9a4b8193663679975640772208080b"
+          },
+          {
+            "path": "25954.glb",
+            "bytes": 16916,
+            "sha256": "fe77525e2e9f213c7291e238a0bb2c9350de54b01cbd8b15e27ef5ba493c0ae7"
+          },
+          {
+            "path": "25954.json",
+            "bytes": 4598,
+            "sha256": "ccaf5a7f99fa6595fdb42e57f2588023b36f008b05212a3c525a5936a4174d24"
+          },
+          {
+            "path": "25988.glb",
+            "bytes": 27088,
+            "sha256": "d8e868e5242f6b70c5a36a22b4be0e1a1cb5ec5e5a36448010c01247d1f12c16"
+          },
+          {
+            "path": "25988.json",
+            "bytes": 4477,
+            "sha256": "6ef6228cebfdbca4540ed447d07cc9fbcbd9c0ed80b0a1b7f197baf9ec0aea6d"
+          },
+          {
+            "path": "25994.glb",
+            "bytes": 21728,
+            "sha256": "72c4643a1eff1f2ffdbca1fd4e867bee578c21893274f504fc939af79075ea93"
+          },
+          {
+            "path": "25994.json",
+            "bytes": 4257,
+            "sha256": "c630ccf6d2b9d2d1ae39f5a78e8c77ed29bc733b08c6e687d162897cfb96342d"
+          },
+          {
+            "path": "26001.glb",
+            "bytes": 22580,
+            "sha256": "b1bce24ed6e7181983e6d6e86ada77ecab7ed73bc94805388df96f62f2b1a4df"
+          },
+          {
+            "path": "26001.json",
+            "bytes": 4354,
+            "sha256": "c16b24f28059177d90eaf545f68064d5b3ad67a4e171f54ddf41dcc0d159e1fc"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 872481,
+            "sha256": "0967767e67323581a91568d8809ada6536459fe8fcd0752c3d1d5e6ebd2aee37"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Official pack and item metadata specify CC0 1.0.",
+        "changes": "Metric lodge, chairlift tower/cable/chair, summit hut and 6 m gallery. Original parking floor, markings and interior posts removed from gallery; original roof/outer supports fitted around a tested 10 m clear road with 4.5 m headroom; baked timber/stone/snow surfaces and distant meshes.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "ski-lodge",
+          "chairlift-tower",
+          "chairlift-cable",
+          "chairlift-chair",
+          "gallery",
+          "summit-hut"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-nature",
@@ -1802,8 +2322,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Official pack page links CC0 1.0; the existing selected catalog record is retained.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "292463ab21c76e11118923c7a71dc20f32c4eb37699765ea02910d79b2584d72",
       "fit": "Already licensed in this project. Official preview shows autumn trees and snow-loaded pines.",
       "risk": "Reuse the existing library before fetching anything. Faceted trees need muted colours and varied scale.",
       "checked": "2026-10-10",
@@ -1813,13 +2333,45 @@
         9
       ],
       "reusesCatalogId": "quaternius-ultimate-nature-pack",
-      "downloadNote": "No new download for P4-ART-SRC; inspect/reuse the existing selected library first.",
+      "downloadNote": "Reused the existing nature License.txt; fetched only missing CommonTree_Autumn_3.fbx from the same selected official pack.",
       "selectedChoices": [
         8,
         9
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 8, 9. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mixes 8, 9. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/quaternius-ultimate-nature-pack",
+        "inputs": {
+          "tree": "fbx/CommonTree_Autumn_3.fbx"
+        },
+        "files": [
+          {
+            "path": "License.txt",
+            "bytes": 364,
+            "sha256": "83d8959f9fc56353ed571fbe2dc52e4bcd64508e2399501cd45ac2ce3df0bf8c"
+          },
+          {
+            "path": "fbx/CommonTree_Autumn_3.fbx",
+            "bytes": 48396,
+            "sha256": "f3024a4eec5ee0a4e0b6236d0df75135cb5ae272d72bc5792190452450e08ded"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 14770,
+            "sha256": "62d3896a94b824dc375afb6efd74af8bb8675f8f8a4813ca475d316ce477fb9c"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Official pack page links CC0 1.0; the existing selected catalog record is retained.",
+        "changes": "Selected autumn tree fitted to 9 m, restrained autumn foliage and timber surfaces, metric ground pivot and reduced distant geometry.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "autumn-tree"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-dome",
@@ -1832,8 +2384,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Official item and parent pack specify CC0 1.0.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "bc114b5cccbe1a0ab29443a527f4691ccd46661286e351ffc7ae99f7079e4f08",
       "fit": "A complete dome enclosure is a donor for the distant summit landmark.",
       "risk": "Publisher reports AI generation with GPT-6. Listed at 36,408 triangles; reduce sharply. Glass-heavy preview needs an opaque weathered dome, snow and lit base windows.",
       "checked": "2026-10-10",
@@ -1845,7 +2397,39 @@
         9
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 9. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 9. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-dome",
+        "inputs": {
+          "dome": "31843.glb"
+        },
+        "files": [
+          {
+            "path": "31843.glb",
+            "bytes": 1083264,
+            "sha256": "7108ac7b59a2b87dec1ababed064cc25f35cced1c0921d903ef1b1cad91563a7"
+          },
+          {
+            "path": "31843.json",
+            "bytes": 4704,
+            "sha256": "7c02a68970f1ab08142d8c8e80ea48cb2df02ac36f2cd5438421c9956537ab1c"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 296344,
+            "sha256": "3ceec41ce362b3886543f1809eb67216a003a3a0f9326682d7f05b59f4a9eb38"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Official item and parent pack specify CC0 1.0.",
+        "changes": "Selected observatory fitted to 12 by 12 by 11 m. Coincident donor vertices welded before reduction to preserve its real shell and viewing opening; near mesh about 7,500 triangles, worn steel/stone surfaces and a further reduced distant mesh. No replacement dome geometry.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "observatory"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-monsters",
@@ -1858,8 +2442,8 @@
       "license": "CC0-1.0",
       "licenseEvidence": "Official pack page links CC0 1.0 and describes 50 animated monsters.",
       "status": "selected",
-      "downloaded": false,
-      "sha256": null,
+      "downloaded": true,
+      "sha256": "25ffd689e9124af7022e63ce006b487bca96c62c9f59a0754d6110306ea28969",
       "fit": "The white/blue full-body yeti in the official preview has arms and legs; animation is advertised at pack level.",
       "risk": "Exact yeti clip names and roar/chest-beat/lope are unverified. Recolour the blue face and reduce cartoon proportions.",
       "checked": "2026-10-10",
@@ -1870,7 +2454,56 @@
         11
       ],
       "selectionDate": "2026-10-10",
-      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 11. Selection approves the donor only; stated adaptations and gaps remain open."
+      "decision": "Kyle selected donor mixes 1, 3, 5, 8, 9 and 11 on 10 October 2026. This source supports selected mix 11. Selection approves the donor only; stated adaptations and gaps remain open.",
+      "p4Kits": {
+        "card": "P4-KITS",
+        "library": "C:/Users/kyleb/dev/art-library/p4-monsters",
+        "inputs": {
+          "yeti": "Yeti.gltf"
+        },
+        "files": [
+          {
+            "path": "License.txt",
+            "bytes": 374,
+            "sha256": "de990ef6fc68cffd7fd1ae342c4d0c823b541b8848d8f76bca5d3339f4de6f6e"
+          },
+          {
+            "path": "Yeti.gltf",
+            "bytes": 1227684,
+            "sha256": "ab60f4fbc1c2e1fdc3ed4f63023dc2185240dbd55751df568099557b29af6fd5"
+          },
+          {
+            "path": "source-page.html",
+            "bytes": 14969,
+            "sha256": "9e5d63dc1e1c37ff4f6fdb001bfa234947601d919a4658d944f669e9bb0fad9f"
+          }
+        ],
+        "recipe": "tools/blender/p4-kits.py",
+        "rights": "Official pack page links CC0 1.0 and describes 50 animated monsters. Original shared License.txt grants CC0 but is titled Ultimate Platformer Pack. The selected official Ultimate Monsters page separately grants CC0.",
+        "changes": "Original 43-joint Yeti skin fitted to 2.8 m; blue atlas recoloured to muted charcoal, pale fur restrained and foot grime baked as vertex colour. Blender editor bone handles excluded. Original Idle/Run retained as idle/in-place lope; real roar/chest-beat motion authored on the original rig; reduced distant skin.",
+        "originalClips": [
+          "Death",
+          "Duck",
+          "HitReact",
+          "Idle",
+          "Jump",
+          "Jump_Idle",
+          "Jump_Land",
+          "No",
+          "Punch",
+          "Run",
+          "Walk",
+          "Wave",
+          "Weapon",
+          "Yes"
+        ],
+        "download": "Exact public glTF and license IDs obtained from the publisher-linked Drive folder; connected Google Drive raw-file read after public web quota errors.",
+        "licenseEvidence": "Official source-page.html cached 2026-10-10, plus the original license or individual asset metadata listed here. HTML is evidence only and is never executed.",
+        "preparedPieces": [
+          "yeti"
+        ],
+        "review": "Art verdicts and current checks are recorded in docs/board/looks/p4-kits/ and docs/changes/P4-KITS.md. This provenance record is not an art approval."
+      }
     },
     {
       "id": "p4-yeti",

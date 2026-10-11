@@ -80,12 +80,64 @@ if (process.argv.includes('--storage-only')) {
 const ids = ['pacific-canyon', 'high-country', 'harbor-highlands', 'eifel-crown',
   'alpine-serpent', 'azure-riviera', 'red-mesa', 'neon-docks', 'cloudbreak-skyway'];
 const profile = { ...createProfile(), courses: testCourseAccess() };
-const start = (stageIndex, mode, flag = true) => {
+const start = (stageIndex, mode, flag = true, cpuDifficulty = 'medium') => {
   const duel = new Duel({ seed: 1989, featureFlags: { 'grand-prix': flag } });
   duel.startCampaign({ startStage: stageIndex, mode, seed: 1989, fieldSeed: 4242,
-    cpuDifficulty: 'medium', difficulty: 'casual', car: 'falcone_f42' });
+    cpuDifficulty, difficulty: 'casual', car: 'falcone_f42' });
   return duel;
 };
+// Claude check-in5: staging changes only Azure GP's grid, never its lap origin.
+const azureIndex = COURSE.findIndex(stage => stage.id === 'azure-riviera');
+for (const cpu of ['easy', 'medium', 'hard']) {
+  const duel = start(azureIndex, 'grandprix', true, cpu), state = duel.state;
+  const actors = [{actor: state, slot: state.field.playerSlot},
+    ...state.opponents.map(actor => ({actor, slot: actor.field.slot}))].sort((a, b) => a.slot - b.slot);
+  equal(actors.map(({actor}) => [actor.s, actor.lateral]),
+    Array.from({length: 8}, (_, slot) => {const pose = gridPose(slot);return [pose.s - 400, pose.lateral];}),
+    `${cpu}: all eight Azure GP racers stage400m before the old grid`);
+  equal(state.prevS, state.s, `${cpu}: player previous position starts at the staged grid`);
+  for (const {actor} of actors) {
+    const frame = duel.course.at(actor.s);
+    check(Number.isFinite(frame.x) && Number.isFinite(frame.z), `${cpu}: actual staged road position is finite`);
+    check(Math.abs(actor.lateral) + (CARS[actor.car].collision?.halfWidth ?? 1.1) <
+      duel.course.roadHalfWidthAt(actor.s), `${cpu}: actual staged vehicle fits the road`);
+  }
+  const oldPlayer = gridPose(state.field.playerSlot);
+  equal(duel.course.length - state.s, duel.course.length - oldPlayer.s + 400,
+    `${cpu}: only first lap gains400m of starting travel`);
+  equal(duel._lapGates, [.25, .5, .75].map(part => part * duel.course.length),
+    `${cpu}: timing gates keep the old zero origin`);
+  const line = duel.course.worldAt(0), legacy = start(azureIndex, 'timetrial');
+  equal(line, legacy.course.worldAt(0), `${cpu}: visible course line remains the old physical zero`);
+  // Exercise native admission on either side of the unchanged finish threshold.
+  Object.assign(state, {status: 'racing', stageTimeSec: 100, speedMph: 80,
+    prevS: duel.course.length - .1, s: duel.course.length + .1,
+    prevLateral: 0, lateral: 0, nextLapGate: duel._lapGates.length});
+  duel._advanceLaps(state, 1 / 60);
+  equal(state.completedLaps, 1, `${cpu}: native lap admission still crosses the old zero line`);
+  Object.assign(state, {stageTimeSec: 200, prevS: duel.course.length * 2 - .2,
+    s: duel.course.length * 2 - .1, nextLapGate: duel._lapGates.length});
+  duel._advanceLaps(state, 1 / 60);
+  equal(state.completedLaps, 1, `${cpu}: lap two waits for exactly one circuit after the old line`);
+  state.prevS = state.s;state.s = duel.course.length * 2 + .1;
+  duel._advanceLaps(state, 1 / 60);
+  equal(state.completedLaps, 2, `${cpu}: following lap finishes at the unchanged next line`);
+}
+for (const id of ids.filter(id => id !== 'azure-riviera')) {
+  const state = start(COURSE.findIndex(stage => stage.id === id), 'grandprix').state;
+  equal([state.s, state.lateral], Object.values(gridPose(state.field.playerSlot)), `${id}: player grid remains exact`);
+  for (const actor of state.opponents) equal([actor.s, actor.lateral], Object.values(gridPose(actor.field.slot)),
+    `${id}: computer grid remains exact`);
+}
+for (const mode of ['duel', 'timetrial']) {
+  const duel = start(azureIndex, mode);
+  equal([duel.state.s, duel.state.lateral, duel.state.lapsTotal], [0, 0, 2], `${mode}: Azure start and laps remain exact`);
+  equal(duel.state.field, undefined, `${mode}: no Grand Prix staging field`);
+}
+if (process.argv.includes('--grid-only')) {
+  console.log(`Grand Prix grid regression: ${checks} checks passed.`);process.exit(0);
+}
+
 for (const id of ids) {
   const index = COURSE.findIndex(stage => stage.id === id), stage = COURSE[index];
   check(grandPrixCourse(stage), `${id} offers Grand Prix`);

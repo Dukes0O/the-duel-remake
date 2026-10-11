@@ -51,3 +51,9 @@ Rebuild the sheet with tools/art/polish-smoke-sheet.py and the chosen native
 capture (arsenal-core-2026-10-10T15-15-21-814Z). DUEL_SMOKE_POLISH=1 runs the
 native capture. DUEL_SMOKE_FRAMES=1 instead samples actual checkout timing;
 run it against both actual source checkouts with the same scenario file.
+
+## Prior rounds, consumed
+
+Earlier smoke verdict: Claude requested grey varied puffs, soft broken edges, brighter tops/darker undersides and drift/churn; flat brown round1 source36b0da67 was superseded. Native Screen visibility High6.974%/.917%, Performance0%/.104% at10/25m; Wren High74.552%/78.657% and Performance73.063%/73.781% were appearance-only because its2.5m cloud cannot contain the actual3.432/3.435m F42. This explicit scope and96% inside haze persist above. Twelveviews/read-only state passed, repeatedpixels exact, threshold12RGB unchanged. Round1 draw-swap2880RAF p95 18.1–18.2ms/+0.275% was scoped pacing only: new matrix preparation ran in both controls, High work initially6.8 vs4.7/4.9ms (repeat4.5 vs4.4/4.4). It did not establish full-change or moving multi-cloud CPU cost. That draw-swap recipe was removed and replaced by round2 actual-source timing.
+
+Earlier sheets and superseded notes are removed after their verdict facts are folded here. Recipes and the final comparison remain.

@@ -31,7 +31,6 @@ completed unassisted laps alone can replace the mode best. Existing ghost keys,
 Time Trial playback and storage caps remain exact. Native checks cover
 every grid, first corner and narrow stretch with eight cars. The focused
 246-check pass covers eligibility, state parity, mode rows and pure lap ghosts.
-The later native App run was interrupted for the four-lane cap; no verdict.
 A failing twelve-valid-TT fixture proved new GP admission silently evicted an
 old recording. GP admission now rejects count/byte overflow before eviction,
 keeps the original store bytes (including archives), and retains a queryable
@@ -65,7 +64,7 @@ current lane/build checks stay queued until the Director grants a quiet slot.
 Native 2aa40030 stops at Azure Riviera High: three distinct computer racers
 crash by 8.775 s, violating the unchanged fewer-than-three opening check.
 Pacific, High Country, Harbor, Eifel and Alpine High passed with zero crashes;
-remaining cases were not run. Native helper loads with no raw-import failure.
+remaining cases unrun; helper loads without raw-import failure.
 Retain the failed packet in integration evidence for Claude's decision.
 QA now saves the failed corner's crash events and actual actor poses before
 throwing the same assertion. No width, race rule or limit changed; no full
@@ -82,8 +81,18 @@ Claude check-in4 judges Azure by the unchanged first30s pile-up rate <=1/20
 over30 full seeded races per difficulty. Recipe calls existing runRace in
 one job with its standard driver/seeds; restores a temporary start wrapper
 that adds existing ownTestCourses only after the private memory facade exists.
-No runtime/rule/assertion edit. Above-target evidence precedes any GP-only
-start-line setback; current failed native assertion stays exact.
+Rate recipe changes no runtime/rule/assertion; native assertion stays exact.
+
+Actual fd925862 full90: Easy2/30, Medium10/30, Hard2/30 opening pile-ups;
+all exceed5%. Every race finished; seeds/layout/state fingerprints retained.
+Claude check-in5 approves only Azure GP grid staging400m earlier: timing and
+visible line stay0, lap one is400m longer. Duel/TT and all other GP grids,
+road geometry and record/ghost keys stay exact. Native assertion unchanged.
+Genuinely sync ec734cfd before narrow initializeField pose assignment.
+All8-position RED old[-6..-34] vs staged[-406..-434]; GREEN151 grid checks
+and406 focused checks. New fixture corrected legacy field=null to undefined;
+old assertions exact. Storage modules unchanged; first staged ghost bound needs
+Director decision. No90-race recheck yet; Medium failure needs GP entry+2m plan.
 
 ## Removed
 

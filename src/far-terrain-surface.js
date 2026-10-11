@@ -8,7 +8,7 @@ const surfaceCache = new WeakMap();
 export function farTerrainHeightSampler(course) {
   if(surfaceCache.has(course.samples))return surfaceCache.get(course.samples);
   if(course.def.practice){const sample=(x,z)=>freestyleSurfaceHeightAt(course,x,z);surfaceCache.set(course.samples,sample);return sample;}
-  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32,threshold=course.def.arena?18:course.def.expansion?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
+  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion||course.def.terrainHalfWidth===64?16:32,threshold=course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1),vertices=new Map();if(route.at(-1)!==last)route.push(last);
   const routeIndex=createPolylineIndex(route);
   const vertex=(i,j)=>{
