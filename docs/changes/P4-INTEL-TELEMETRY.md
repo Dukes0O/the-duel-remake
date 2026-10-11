@@ -52,7 +52,7 @@ real Web Locks exclusion. No backup/archive schema or reward rules change.
 - Before-code tests failed for the missing module/provider/panel; new budget
   tests reproduced the inherited startup failure. Old assertions/tolerances
   remain unchanged.
-- Lap telemetry: 19 acceptance groups; budget recovery: 16 groups. Existing
+- Lap telemetry: 19 acceptance groups; budget recovery: 19 groups. Existing
   budget and Preview suites passed. Reverse, reset, player/route/layout
   separation, malformed/future data, quota, backup, delayed/failed flush and
   guarded writer/import lifetime have memory-only regressions.
@@ -67,8 +67,20 @@ real Web Locks exclusion. No backup/archive schema or reward rules change.
 - Save Guardian cleared 0dba9249 conditionally; final sync needs fresh review.
 - Synced current Dossier, final DAYNIGHT source and all 27 native references.
   Source hooks merged without conflict. The old Dossier lifecycle narrative
-  was replaced with its current approved note. Final focused suites, native
-  telemetry recording/overlay, lane/build and fresh save review remain.
+  was replaced with its current approved note. Current reference suite passes
+  323 checks across all 27 references. Telemetry and recovery each pass 19 groups.
+- Native lap-telemetry browser on 67c772df passed High and Performance at
+  private port 54715: actual Harbor C lap 54.270 s, 221 samples, three sectors,
+  two positive corner losses, two speed traces, actual results entry, focus
+  return and unchanged read-only witnesses. Temporary journal and durable
+  memory backup held the same verified lap; zero native IndexedDB opens,
+  warnings or errors. Both screenshots reviewed; labels and comparisons read
+  clearly. This real-recording browser uses Harbor C; all-27 native reference
+  and snapshot coverage is the Dossier check, not a claimed 27-race matrix.
+- Independently reviewed and synced c391f9b5: after each preset's complete
+  unchanged-state assertions, the verified QA memory store clears so the next
+  preset starts with the same locked-track precondition. No assertion weakened.
+  Final lane/build and fresh Save Guardian review remain.
 
 ## Removed
 

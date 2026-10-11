@@ -39,6 +39,9 @@ lap time remain authoritative. Incomplete runs publish nothing.
 - Earlier standard-driver Panorama build failed honestly with zero laps
   at Hell Gate and published nothing. Claude's approved circuit controller
   resolves that stall; no geometry or lap validation was relaxed.
+- Native High snapshots passed all27 routes. Performance setup then caught
+  stale QA unlocks retained across the reload. Reset only verified memory
+  storage between presets; locked-entry and read-only assertions stay exact.
 - Native Team Room snapshots, read-only browser lifecycle, final lane
   tier/build and independent source review remain before merge.
 
