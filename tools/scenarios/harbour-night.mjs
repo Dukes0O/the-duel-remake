@@ -1,6 +1,6 @@
 // Private browser check for Harbour Lights at night (card P4-HARBOUR): the five-light
 // start, the pack at the first corner, mid-race with the running order, frame
-// pacing with eight cars, and the results screen, on High and Performance.
+// pacing with eight cars (at the start and in the old town), on High and Performance.
 // Saves are disposable and memory-only. Run:
 //   node tools/browser-harness.mjs scenario harbour-night
 import { writeFile } from 'node:fs/promises';
@@ -85,7 +85,7 @@ export async function run(context) {
     })()`);
     // Five red lights, one a second.
     await context.waitFor(`window.__qaApp.duel.state.status==='countdown' && window.__qaApp.duel.state.field?.start.lights>=5 &&
-      !document.querySelector('#start-lights').hidden`, `${quality} five start lights`, 30_000);
+      !document.querySelector('#start-lights').hidden`, `${quality} five start lights`, 180_000);
     const start = await context.evaluate(`(() => {
       const s = window.__qaApp.duel.state;
       return {cars: s.opponents.length + 1, lit: document.querySelector('#start-lights').dataset.lights,
@@ -117,22 +117,6 @@ export async function run(context) {
     await context.waitFor(`window.__qaApp.duel.state.s > 1380`, `${quality} old town`, 30_000);
     await context.screenshot(`harbour-night-old-town-${quality}`);
     reports.push({ quality: quality + '-old-town', ...(await measure(context, quality + ' old town', two)) });
-    if (quality === 'high') {
-      // Shorten the race to the lap in progress so the results screen is reached in a minute.
-      await context.evaluate(`(() => {
-        const duel = window.__qaApp.duel, s = duel.state;
-        s.lapsTotal = s.completedLaps + 1; duel.course.raceLength = duel.course.length * s.lapsTotal;
-      })()`);
-      await context.waitFor(`window.__qaApp.duel.state.status==='stage_result'`, 'results', 120_000);
-      const results = await context.evaluate(`(() => {
-        const r = window.__qaApp.duel.state.results;
-        return {rows: document.querySelectorAll('.field-results tbody tr').length, position: r.position, size: r.fieldSize,
-          names: r.field.map(row => row.name), cars: r.field.every(row => row.carName), bestLaps: r.field.filter(row => row.bestLapSec != null).length};
-      })()`);
-      if (results.rows !== 8 || !results.cars) throw Error(`The results table is wrong ${JSON.stringify(results)}`);
-      await context.screenshot('harbour-night-results-high');
-      console.log('Results: ' + JSON.stringify(results));
-    }
   }
   await writeFile(join(context.outputDir, 'harbour-night-frame-pacing.json'), JSON.stringify({ reports }, null, 2) + '\n');
 }

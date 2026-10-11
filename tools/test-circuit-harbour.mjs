@@ -178,3 +178,15 @@ test('no wall stands in the openings of the escape roads, and the water holds th
     assert.ok(ground < course.at(mid).y - 1, `${basin.id}: below the road`);
   }
 });
+
+test('the wet look is looks only: glossier asphalt, no change to the road or its grip', async () => {
+  const THREE = await import('three');
+  const { createPavedRoadMaterial } = await import('../src/road-surface.js');
+  const texture = new THREE.Texture();
+  const dry = createPavedRoadMaterial({ asphalt: texture, night: true }), wet = createPavedRoadMaterial({ asphalt: texture, night: true, wet: true });
+  assert.ok(wet.roughness < dry.roughness * .6 && wet.metalness > dry.metalness);
+  assert.notEqual(wet.customProgramCacheKey(), dry.customProgramCacheKey());
+  assert.equal(dry.roughness, .55, 'the ordinary night road is as it was');
+  assert.ok(HARBOUR_LIGHTS.wetRoad && HARBOUR_LIGHTS.wetRoad.performanceShare < 1, 'Performance draws the reflections at reduced strength');
+  assert.equal(course.script.surfaceAt(500), 'asphalt');
+});
