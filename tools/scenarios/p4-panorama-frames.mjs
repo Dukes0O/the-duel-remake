@@ -1,10 +1,10 @@
-// Full native view: full kits in fresh seeded day/dusk worlds; unchanged samples.
+// Full native view: one fresh eight-car final-dusk world per quality; unchanged samples.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {nativeBundle} from './p4-panorama.mjs';
 import {measureMainRearFrames} from './track-kits.mjs';
 
-function prepare(quality, dusk) {
+function prepare(quality) {
   const app = window.__qaApp, api = window.__render, host = document.querySelector('#view3d');
   if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value ||
       !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only QA required');
@@ -24,12 +24,12 @@ function prepare(quality, dusk) {
   if (state.mode !== 'grandprix' || state.opponents.length !== 7 ||
       !original.kitPlacements?.length || !original.circuitLandmarks?.length)
     throw Error('Actual authored eight-car Grand Prix required');
-  // Only the fixed look changes before the first draw. Both worlds retain
-  // every authored kit and landmark; the candidate uses the final-lap palette.
+  // Fix the authored final-lap look before the first draw, retaining
+  // every actual kit and landmark in the complete native world.
   const finalLook = original.lightPath?.keyframes.at(-1)?.look;
   if (finalLook !== 'dusk') throw Error('Actual authored final-lap dusk required');
   course.def = {...original, lightPath: {...original.lightPath,
-    axis: 'race-progress', keyframes: [{at: 0, look: dusk ? finalLook : 'day'}]}};
+    axis: 'race-progress', keyframes: [{at: 0, look: finalLook}]}};
   if (Number(host.dataset.worldBuilds) !== buildsBefore) throw Error('Race world built before fixed lighting');
   const fixedLightPath = JSON.stringify(course.def.lightPath);
   const metadataExact = () => {
@@ -105,76 +105,52 @@ export function validateFrameLeg(row) {
   if (row.scales.length !== 1 || row.ratios.length !== 1) throw Error('Changing full-view resolution');
 }
 
-export function compareFrameCosts(off, on) {
-  validateFrameLeg(off); validateFrameLeg(on);
-  for (const key of ['scales', 'ratios']) {
-    if (JSON.stringify(off[key]) !== JSON.stringify(on[key])) throw Error('Paired full-view resolution differs');
-  }
-  if (off.gpuSupported !== on.gpuSupported) throw Error('Paired GPU support differs');
-  const costs = {};
-  for (const metric of ['cpu', 'gpu', 'delivered', 'combined']) {
-    const baseline = metric === 'combined' ? off.combined : off.pacing[metric];
-    const candidate = metric === 'combined' ? on.combined : on.pacing[metric];
-    if (metric === 'gpu' && !off.gpuSupported) { costs.gpu = 'unsupported'; continue; }
-    costs[metric] = {off: baseline.p95, on: candidate.p95, increase: candidate.p95 / baseline.p95 - 1,
-      informational: true, passed: candidate.p95 <= baseline.p95 * 1.10};
-  }
-  const delivered = {off: off.pacing.delivered.p95, on: on.pacing.delivered.p95, limit: 18.5,
-    passed: off.pacing.delivered.p95 <= 18.5 && on.pacing.delivered.p95 <= 18.5};
-  const construction = [off, on].map(row => {
-    const ms = row.witness?.constructionMs;
-    if (!Number.isFinite(ms) || ms < 0) throw Error('Actual paired kit construction timing missing');
-    return {look: row.look, ms, limit: 1000, passed: ms < 1000};
-  });
-  return {costs, delivered, construction,
-    passed: delivered.passed && construction.every(row => row.passed)};
+export function compareFrameCosts(row) {
+  validateFrameLeg(row);
+  const delivered = {ms: row.pacing.delivered.p95, limit: 18.5,
+    passed: row.pacing.delivered.p95 <= 18.5};
+  const ms = row.witness?.constructionMs;
+  if (!Number.isFinite(ms) || ms < 0) throw Error('Actual kit construction timing missing');
+  const construction = {ms, limit: 1000, passed: ms < 1000};
+  return {delivered, construction, passed: delivered.passed && construction.passed};
 }
 
-async function frameLeg(context, bundle, quality, look, pair) {
+async function frameLeg(context, bundle, quality) {
   // Navigation creates a fresh renderer/world; no populated owners are hidden.
   await context.navigate('/tools/menu-check.html?flags=grand-prix,panorama-ridge');
   await context.waitFor('window.__qaApp?.visualReady && !!window.__render', 'native memory menu', 60000);
   await context.evaluate(bundle + ';globalThis.__panQa=PanQa;');
-  await context.evaluate('(' + prepare.toString() + ')(' + JSON.stringify(quality) + ',' + (look === 'on') + ')');
+  await context.evaluate('(' + prepare.toString() + ')(' + JSON.stringify(quality) + ')');
   await context.waitFor('(()=>{const a=window.__qaApp,v=window.__render;v.renderFrame();' +
     'return a.visualReady && document.querySelector("#view3d").dataset.trackKitAsset===' +
     JSON.stringify('ready') + ' && v.camera.position.toArray().every((x,i)=>' +
     'Math.abs(x-a.inspectionCamera.position[i])<.001);})()', 'actual full race world and camera ready', 90000);
   const before = await context.evaluate('window.__panoramaFrames.witness()');
-  const sample = await measureMainRearFrames(context, quality, 'Panorama pair' + pair + ' ' + look);
+  const sample = await measureMainRearFrames(context, quality, 'Panorama final-dusk');
   const after = await context.evaluate('window.__panoramaFrames.witness()');
   if (JSON.stringify(before) !== JSON.stringify(after) || sample.raceState !== before.raceState ||
       JSON.stringify(sample.actorPoses) !== JSON.stringify(before.models))
     throw Error('Full-view sampling changed actual camera, native poses or presentation');
   validateFrameLeg(sample);
-  return {...sample, pair, look, witness: before};
+  return {...sample, look: 'final-dusk', witness: before};
 }
 
 export async function run(context) {
   if (process.env.P4_PANORAMA_MEASURE_FRAMES !== '1') throw Error('Director must schedule a quiet frame slot');
   const report = {passed: false,
-    scope: 'Fresh identical native eight-car grids with all authored kits and landmarks: original day versus authored final-lap dusk. Complete mountain ground/road, main, rear and production HUD remain active. Relative costs are information; absolute delivered and construction targets are acceptance. Stationary grid cost; no moving-field or art verdict.',
+    scope: 'One fresh native eight-car final-dusk grid per quality with all authored kits and landmarks. Complete mountain ground/road, main, rear and production HUD remain active. Absolute delivered and construction targets are acceptance. Stationary grid candidate; globally busiest view unproved, no moving-field or art verdict.',
     protocol: {warmup: 120, cpu: 360, update: 360, combined: 360, delivered: 359, minimumGpu: 288,
-      relativeDiagnostic: .10, deliveredLimitMs: 18.5, constructionLimitMs: 1000, sharedSamplerSource: '6e5f2d64'}, frames: [], comparisons: []};
+      deliveredLimitMs: 18.5, constructionLimitMs: 1000, sharedSamplerSource: '6e5f2d64'}, frames: []};
   const persist = () => writeFile(join(context.outputDir, 'p4-panorama-frames.json'), JSON.stringify(report, null, 2) + '\n');
   const bundle = await nativeBundle();
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   try {
-    for (const quality of ['high', 'performance']) for (const pair of [1, 2]) {
-      for (const look of pair === 1 ? ['off', 'on'] : ['on', 'off']) {
-        report.frames.push(await frameLeg(context, bundle, quality, look, pair)); await persist();
-      }
-      const rows = report.frames.filter(row => row.quality === quality && row.pair === pair);
-      const off = rows.find(row => row.look === 'off'), on = rows.find(row => row.look === 'on');
-      for (const key of ['raceState', 'profile', 'storage', 'models', 'camera', 'target', 'course', 'hud', 'rear', 'kits', 'landmarks']) {
-        if (JSON.stringify(off.witness[key]) !== JSON.stringify(on.witness[key]))
-          throw Error('Fresh paired native witness differs: ' + key);
-      }
-      const comparison = {quality, pair, ...compareFrameCosts(off, on)};
-      report.comparisons.push(comparison); await persist();
+    for (const quality of ['performance', 'high']) {
+      const row = await frameLeg(context, bundle, quality);
+      report.frames.push({...row, ...compareFrameCosts(row)}); await persist();
     }
-    if (report.comparisons.some(row => !row.passed)) throw Error('Full-view18.5ms or kit construction under1s target exceeded');
+    if (report.frames.some(row => !row.passed)) throw Error('Full-view18.5ms or kit construction under1s target exceeded');
     report.passed = true;
   } finally { await persist(); }
-  console.log('Panorama quiet native full-view CPU/GPU/delivered/combined comparisons pass.');
+  console.log('Panorama quiet native final-dusk full-view absolute targets pass.');
 }

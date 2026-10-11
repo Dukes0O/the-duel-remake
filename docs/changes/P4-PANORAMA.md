@@ -63,30 +63,25 @@ centreline/turns/climbs/pit/default courses stay exact; fences follow the edge.
 Actual ridge RED: Cutting11!=13; one-line13 GREEN15/15 in5.61s, High/LOD3.91s.
 Field still reuses actual merged Harbour settings and original90/3.2; no new mechanism.
 
-## Whole native view recipe
+## Whole native view recipe and policy
 
-Reviewed d64f8ba5 fresh metadata-only off/day and actual on/night eight-car worlds,
-complete ground/road, actual main+rear/HUD, camera/state/poses/profile/storage exact.
-Shared frozen6e main/rear sampler120warm/360CPU+update/359delivered/GPU>=288,
-fixedresolution, two opposite-order pairs per quality, no discarded samples.
-Original relative10% plus combined10%/18.5ms;22numeric checks/syntax pass.
-No measured whole-view frame pass is claimed.
-Genuine4527 sync preserves additive eleven GP IDs and every Claude source.
-Shared loader uses exact reviewed d05 colour/culling union; ancestry sync follows
-its merge. Final packet still waits Harbour and coherent final road.
+Earlier full-kit paired recipe retained actual ground/road, main/rear/HUD,
+state/poses/profile/storage equality and original frozen6e sampler. No measured
+whole-view pass was claimed. Claude10:30 replaced relative10% acceptance with
+absolute18.5ms and construction<1000; its21 numeric assertions passed.
+Genuine loader79ba ancestry is present; actual Harbour field sync still pending.
 
-## Claude 10:30 frame policy, before recipe code
-
-Claude approves every real kit/landmark in both fresh eight-car worlds, original
-day versus actual authored final-lap dusk with its mountain-sunset palette.
-Relative CPU/GPU/delivered/combined10% values remain reported diagnostics;
-acceptance is delivered p95<=18.5ms in both day/dusk High/Performance worlds
-and actual kit construction<1000ms in each world. This explicitly replaces the mixed empty-world10%
-assertion under Claude's policy, without changing timing samples or absolute limits.
-Original 120warm/360CPU+update+combined/359delivered/GPU>=288, positive timings,
-orders/resolution/rear/HUD and native race/profile/storage/pose guards remain.
-Construction is read from the actual owner stats, finite/nonnegative required.
-Policy regression21 assertions passes; ordinary review clear, native timing pending.
+Kyle rules7–10 and card lighter_frame_design settle this replacement before code:
+one fresh native eight-car final-dusk leg per quality, Performance then High.
+Every actual kit/landmark, mountain ground/road and main/rear/HUD remains active.
+Existing120warm/360CPU+update+combined/359delivered/GPU>=288, positive/finite
+samples, fixed resolution and per-leg before/after state/pose/storage guards stay.
+Delivered p95<=18.5ms; actual owner construction finite/nonnegative and<1000ms.
+Existing paired numeric expectations become single-row absolute expectations;
+all original boundary/invalid/sample assertions remain. No new controls/machinery.
+Grid camera is an eight-visible-car candidate; globally busiest view is unproved.
+Root settles intended view on the card before timing. Art acceptance and actual
+player reachability precede timing; code prepared only, no new execution claimed.
 
 ## Removed
 
@@ -94,5 +89,6 @@ Replace incomplete road-only presentation with approved kits/landmarks/landform.
 Round1 sheet/note removed with verdict above. Round2 consumed sheet/note removed
 with final packet; verdict retained. Replace populated hidden baseline and hidden
 rear/HUD sampler with fresh worlds/full actual views. Replace the empty-kit
-comparison with identical full-kit day/dusk worlds under Claude10:30 policy. Final art removes striped
+comparison with full-kit day/dusk worlds, then obsolete paired/relative reports
+with one full final-dusk leg under Kyle rules7–10. Final art removes striped
 fence finish and mountain snow/ice appearance only for Panorama. Replace old11m ridge with approved13m; no signatures regenerated.

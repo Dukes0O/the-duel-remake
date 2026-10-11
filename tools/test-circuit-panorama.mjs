@@ -47,37 +47,32 @@ test('approved 13 m ridge keeps the original centreline and other width targets'
     near(Math.abs(fence.lateral), road.halfWidthAt(fence.s) + 1.8);
 });
 test('approved full-kit frame policy keeps absolute boundaries and sample guards', () => {
-  const row = (look, ms) => ({look, scales: [1], ratios: [1], gpuSupported: true,
-    pacing: {cpu: {samples: 360, p95: ms}, gpu: {samples: 300, p95: ms},
-      delivered: {samples: 359, p95: ms}}, update: {samples: 360, p95: ms},
-    combined: {samples: 360, p95: ms}, witness: {constructionMs: 999.999}});
-  const off = row('off', 10), on = row('on', 18.5);
-  let result = compareFrameCosts(off, on);
-  assert.equal(result.passed, true, '18.5 ms and strict sub1000 construction meet absolute policy');
-  assert.ok(Object.values(result.costs).every(cost => cost.informational && !cost.passed),
-    'every failed relative diagnostic stays reported');
-  for (const leg of [off, on]) {
-    const delivered = leg.pacing.delivered.p95;
-    leg.pacing.delivered.p95 = 18.500001;
-    assert.equal(compareFrameCosts(off, on).passed, false, 'both day/dusk require18.5ms');
-    leg.pacing.delivered.p95 = delivered;
-    leg.witness.constructionMs = 1000;
-    assert.equal(compareFrameCosts(off, on).passed, false, 'construction is strictly under1s');
-    for (const invalid of [undefined, null, NaN, Infinity, -1]) {
-      leg.witness.constructionMs = invalid;
-      assert.throws(() => compareFrameCosts(off, on), /construction timing missing/);
-    }
-    leg.witness.constructionMs = 0;
-    assert.equal(compareFrameCosts(off, on).passed, true, 'zero construction remains valid');
-    leg.witness.constructionMs = 999.999;
+  const row = {look: 'final-dusk', scales: [1], ratios: [1], gpuSupported: true,
+    pacing: {cpu: {samples: 360, p95: 18.5}, gpu: {samples: 300, p95: 18.5},
+      delivered: {samples: 359, p95: 18.5}}, update: {samples: 360, p95: 18.5},
+    combined: {samples: 360, p95: 18.5}, witness: {constructionMs: 999.999}};
+  assert.equal(compareFrameCosts(row).passed, true,
+    '18.5 ms and strict sub1000 construction meet absolute policy');
+  row.pacing.delivered.p95 = 18.500001;
+  assert.equal(compareFrameCosts(row).passed, false, 'final dusk requires18.5ms');
+  row.pacing.delivered.p95 = 18.5;
+  row.witness.constructionMs = 1000;
+  assert.equal(compareFrameCosts(row).passed, false, 'construction is strictly under1s');
+  for (const invalid of [undefined, null, NaN, Infinity, -1]) {
+    row.witness.constructionMs = invalid;
+    assert.throws(() => compareFrameCosts(row), /construction timing missing/);
   }
-  on.pacing.cpu.samples = 359;
-  assert.throws(() => compareFrameCosts(off, on), /Incomplete full-view cpu samples/);
-  on.pacing.cpu.samples = 360; on.pacing.gpu.samples = 287;
-  assert.throws(() => compareFrameCosts(off, on), /Incomplete full-view GPU samples/);
-  on.pacing.gpu.samples = 300; off.combined.p95 = 0;
-  assert.throws(() => compareFrameCosts(off, on), /Incomplete full-view combined samples/);
+  row.witness.constructionMs = 0;
+  assert.equal(compareFrameCosts(row).passed, true, 'zero construction remains valid');
+  row.witness.constructionMs = 999.999;
+  row.pacing.cpu.samples = 359;
+  assert.throws(() => compareFrameCosts(row), /Incomplete full-view cpu samples/);
+  row.pacing.cpu.samples = 360; row.pacing.gpu.samples = 287;
+  assert.throws(() => compareFrameCosts(row), /Incomplete full-view GPU samples/);
+  row.pacing.gpu.samples = 300; row.combined.p95 = 0;
+  assert.throws(() => compareFrameCosts(row), /Incomplete full-view combined samples/);
 });
+
 test('Sunset remains golden on lap one and reaches dusk for the whole last lap', () => {
   for (const fraction of [0, .1, 1 / 3]) {
     const sample = sampleCourseLightPath(course, {distance: fraction * course.raceLength});
