@@ -13,6 +13,39 @@ import {resolveLightingSettings} from '../src/lighting-moods.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
 import {winterRanges,gripFor,SURFACES} from '../src/race-surfaces.js';
+import {compareSnowFramePair} from './scenarios/p4-snow.mjs';
+function framePolicyChecks(){
+  let checks=0;
+  const row=snow=>({quality:'high',pair:1,snow,gpuSupported:true,scales:[1],ratios:[1],actorPoses:[{id:'actual-fixture'}],raceState:'same-fixture',
+    pacing:{cpu:{p95:snow?3:2},gpu:{p95:snow?3:2},delivered:{p95:snow?18.5:10}},combined:{p95:snow?6:4},
+    witness:{poses:[],ground:[],road:'same',state:'same',profile:'same',storage:'same',camera:{},quality:'high',views:{hud:true,rear:true},snow,
+      ...(snow?{kitConstructionMs:999.999}:{})}});
+  for(const quality of ['high','performance']){
+    const off=row(false),on=row(true);off.quality=on.quality=quality;off.witness.quality=on.witness.quality=quality;
+    const result=compareSnowFramePair(off,on),relative=result.filter(item=>item.increasePercent!==undefined);
+    assert.equal(relative.length,4);checks++;
+    assert.ok(relative.every(item=>item.pass===false&&item.acceptance===false),'failing10% diagnostics remain explicit information');checks++;
+    assert.ok(result.filter(item=>item.acceptance).every(item=>item.pass),'absolute18.5 and strict sub1000 accept even when mixed costs exceed10%');checks++;
+    assert.equal(result.find(item=>item.metric==='candidate kit construction').on,999.999);checks++;
+    on.pacing.delivered.p95=18.50001;
+    assert.equal(compareSnowFramePair(off,on).find(item=>item.metric==='candidate delivered p95').pass,false);checks++;
+    on.pacing.delivered.p95=18.5;on.witness.kitConstructionMs=1000;
+    assert.equal(compareSnowFramePair(off,on).find(item=>item.metric==='candidate kit construction').pass,false);checks++;
+    for(const invalid of [undefined,null,NaN,Infinity,-1]){
+      on.witness.kitConstructionMs=invalid;
+      assert.throws(()=>compareSnowFramePair(off,on),/construction/i,'missing/nonfinite/negative native construction cannot pass');checks++;
+    }
+    on.witness.kitConstructionMs=0;
+    assert.equal(compareSnowFramePair(off,on).find(item=>item.metric==='candidate kit construction').pass,true);checks++;
+    off.pacing.cpu.p95=0;
+    assert.throws(()=>compareSnowFramePair(off,on),/Missing matched cpu sample/,'original positive sample guard remains');checks++;
+    off.pacing.cpu.p95=2;on.witness.state='changed';
+    assert.throws(()=>compareSnowFramePair(off,on),/state matches exactly/,'original exact native state guard remains');checks++;
+  }
+  console.log('Snow approved absolute frame policy: '+checks+' numeric checks pass; no native timing claimed.');
+}
+framePolicyChecks();
+if(process.argv.includes('--frame-policy-focused'))process.exit(0);
 import {snowWorldPlacements,snowPineIds,winterWeight,applySnowTerrain,
   snowSceneryPose,createSnowWorld,SNOW_LIMITS,winterTerrainMaterial,winterLightingSettings} from '../src/snow-world.js';
 const def={id:'winter-qa',stage:90,name:'Winter QA',theme:'alpine',closed:true,laps:3,

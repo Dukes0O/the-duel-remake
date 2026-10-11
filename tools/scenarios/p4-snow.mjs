@@ -293,6 +293,7 @@ export async function run(context) {
   const frames=process.env.P4_SNOW_MEASURE_FRAMES==='1';
   const report={card:'P4-SNOW',captures:[],snapshots:[],moving:[],frames:[],comparisons:[],
     frameScope:'Fresh dry/Snow native eight-car worlds with main, rear and HUD active; static flakes/track expiry remain active. Moving Snow update cost is not measured.',
+    frameAcceptancePolicy:'claude-1030-absolute: delivered p95<=18.5ms and actual kit construction<1000ms; mixed relative metrics remain information.',
     frameStatus:frames?'running':'not scheduled',bloomTargets:[],passed:false};
   try{
     for(const quality of ['high','performance']){
@@ -399,11 +400,19 @@ function frameWitness(){
   });
   if(snow&&winterWeights.length!==2||!snow&&winterWeights.length)
     throw Error('The dry/Snow baseline must be genuinely constructed with its selected presentation.');
+  let kitConstructionMs=null;
+  if(snow){
+    const kits=api.scene.getObjectByName('Approved track kits');
+    kitConstructionMs=kits?.userData.trackKitStats?.presentation?.constructionMs;
+    if(host.dataset.trackKitAsset!=='ready'||!kits?.userData.trackKitPlacements?.length||
+        !Number.isFinite(kitConstructionMs)||kitConstructionMs<0)
+      throw Error('Snow timing requires the actual ready kit owner and finite nonnegative construction witness.');
+  }
   return {poses,ground,road:JSON.stringify(app.duel.course.samples),state:JSON.stringify(app.duel.state),
     profile:JSON.stringify(app.profile),storage:JSON.stringify(Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).sort()
       .map(key=>[key,localStorage.getItem(key)])),
     camera:{position:camera.position.toArray(),target:app.inspectionCamera.target},
-    quality:app.ambientOcclusionEnabled!==false?'high':'performance',snow,
+    quality:app.ambientOcclusionEnabled!==false?'high':'performance',snow,kitConstructionMs,
     views:{hud:true,rear:true,resolution:host.dataset.rearViewResolution}};
 }
 
@@ -475,10 +484,14 @@ export function compareSnowFramePair(off,on){
     if(!baseline||!added||!Number.isFinite(baseline.p95)||baseline.p95<=0||!Number.isFinite(added.p95))
       throw Error('Missing matched '+metric+' sample');
     comparisons.push({quality:on.quality,pair:on.pair,metric,off:baseline.p95,on:added.p95,
-      increasePercent:(added.p95/baseline.p95-1)*100,pass:added.p95<=baseline.p95*1.1});
+      increasePercent:(added.p95/baseline.p95-1)*100,acceptance:false,pass:added.p95<=baseline.p95*1.1});
   }
   comparisons.push({quality:on.quality,pair:on.pair,metric:'candidate delivered p95',
-    on:on.pacing.delivered.p95,limit:18.5,pass:on.pacing.delivered.p95<=18.5});
+    on:on.pacing.delivered.p95,limit:18.5,acceptance:true,pass:on.pacing.delivered.p95<=18.5});
+  const constructionMs=on.witness.kitConstructionMs;
+  assert.ok(Number.isFinite(constructionMs)&&constructionMs>=0,'actual Snow kit construction witness must be finite and nonnegative');
+  comparisons.push({quality:on.quality,pair:on.pair,metric:'candidate kit construction',
+    on:constructionMs,limit:1000,strictLimit:true,acceptance:true,pass:constructionMs<1000});
   return comparisons;
 }
 
@@ -491,9 +504,12 @@ async function frameComparisons(context,report){
     }
     report.comparisons.push(...compareSnowFramePair(rows.find(row=>!row.snow),rows.find(row=>row.snow)));
   }
-  report.frameStatus=report.comparisons.every(row=>row.pass)?'passes original 10% and whole-view18.5ms limits':'fails original 10% or whole-view18.5ms limits';
+  const accepted=report.comparisons.filter(row=>row.acceptance).every(row=>row.pass);
+  report.frameStatus=accepted?'passes delivered18.5ms and kit construction under1s':'fails delivered18.5ms or kit construction under1s';
+  report.relativeFrameStatus=report.comparisons.filter(row=>!row.acceptance).every(row=>row.pass)
+    ?'within original10% information limits':'exceeds original10% information limits';
   await writeFile(join(context.outputDir,'p4-snow.json'),JSON.stringify(report,null,2)+'\n');
-  assert.ok(report.comparisons.every(row=>row.pass),report.frameStatus);
+  assert.ok(accepted,report.frameStatus);
 }
 
 

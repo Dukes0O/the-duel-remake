@@ -2,12 +2,10 @@
 
 ## Design, before code
 
-Explicit snowWorld metadata plus snow-world dev opts a scene into winter.
-Full visible terrain is snow; authored ranges still own exact physical surfaces.
+Explicit snowWorld metadata plus snow-world dev opts a scene into winter. Full visible terrain is snow; authored ranges still own exact physical surfaces.
 Snow pines, ground, ledge rocks and banks reuse Kyle's approved kit GLBs.
 
-Course construction generates real deep-snow verge bands from the same ranges.
-Course.gripKindAt reads patches before its existing outside-road default;
+Course construction generates real deep-snow verge bands from the same ranges. Course.gripKindAt reads patches before its existing outside-road default;
 ordinary courses and pre-existing road patches retain their exact answers.
 Renderer reads surfaces; existing surface.snow/surface.ice cues stay exact.
 
@@ -26,14 +24,16 @@ object changes, so frozen banks retain the actual live surface-patch identities.
 Dry worlds retain their existing same-key reuse. Tyre marks follow actual cars
 on snow only, expire and never write state. All randomness uses a separate seeded makeRng.
 
-Native High/Performance uses real assets/full field; rules/saves/readiness/disposal exact.
-One compressed art sheet per round goes through the card to Claude, at most three.
+Native High/Performance uses real assets/full field; rules/saves/readiness/disposal exact. One compressed art sheet per round goes through the card to Claude, at most three.
 Whole-view recipe, before code: fresh native dry/Snow worlds retain road,
 ground,8-car poses,HUD and rear view. Frozen shared6e5f2d64 main/rear sampler:
-120warmup,360CPU,359delivered,>=288GPU,two opposite pairs/quality; original10%
-limits plus combined update/submit10% and candidate deliveredp95<=18.5ms.
+120warmup,360CPU,359delivered,>=288GPU,two opposite pairs/quality stay exact.
+Claude10:30 changes acceptance to deliveredp95<=18.5ms High/Performance and real kit construction<1000ms.
+Mixed dry/fullSnow CPU/GPU/delivered/combined10% results remain visible information, including failures.
+Before code: read Approved track kits.userData.trackKitStats.presentation.constructionMs; reject missing/nonfinite/negative witnesses.
+Policy assertions change only per the written Claude decision; no extra effects-only comparison.
 No state edits, sample discard or overhead subtraction. Static effects stay active;
-Moving cost unmeasured; syntax/pure-boundary controls pass, native quiet run pending.
+Policy RED: old relative acceptance; GREEN28 numeric checks cover both qualities,18.5ms and strict1000ms boundaries, invalid witness/state/positive guards. Syntax passes; moving/native timing unmeasured.
 Loader union retains Snow extras/vehicle update, trusted runtime clearance,
 camera culling and scoped rear restoration; only2granted renderer conflicts.
 
@@ -97,4 +97,4 @@ Snow-scene ordinary pine, rock and summer-grass instances are removed from
 the copied presentation views. Snow switches replace the flat winter road
 material path. Shared ordinary scenery remains in use on dry ranges/tracks.
 Consumed probes/shared reverse kerbs are removed in FIX-P4-KERB-NORMALS.
-Main-only hidden-mirror timing recipe is replaced by fresh whole-view controls.
+Main-only hidden-mirror timing recipe is replaced by fresh whole-view controls. Mixed relative10% acceptance is replaced by Claude10:30 absolute policy; every original diagnostic stays.
