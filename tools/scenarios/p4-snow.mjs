@@ -21,7 +21,7 @@ function prepareNative(quality) {
       ['turn','L',180,80,{name:'Home Bend',width:16,walls:'none'}]],
     surfacePatches:[{id:'shaded-winter-ice',kind:'ice',s0:540,s1:575,shaded:true}],
     snowWorld:{ranges:[{from:0,to:750}],exposed:[{from:500,to:730}],
-      ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12}]}});
+      ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12},{s:600,lateral:58,radiusX:12,radiusZ:8}]}});
   window.__snowBeforeBuilds=Number(document.querySelector('#view3d').dataset.worldBuilds||0);
   app._menuCourses.clear();app.onFrame?.(app.duel.state,0);
 }
@@ -35,6 +35,7 @@ function startNative(){
   app.autopilot=true;app._scriptedCrashDone=true;app.stop();
   if(app.duel.state.opponents.length!==7 || app.duel.state.field?.size!==8)
     throw Error('Snow review requires eight native race actors.');
+  app.onFrame?.(app.duel.state,0);
 }
 
 function setView(view) {
@@ -51,6 +52,9 @@ function setView(view) {
     const p=course.groundAt(state.s,0),h=p.heading;
     app.inspectionCamera={position:[p.x-Math.sin(h)*24+Math.cos(h)*7,p.y+9,p.z-Math.cos(h)*24-Math.sin(h)*7],
       target:[p.x+Math.sin(h)*28,p.y+1,p.z+Math.cos(h)*28]};
+    if(view==='ridge')app.inspectionCamera={
+      position:[p.x-Math.sin(h)*42+Math.cos(h)*15,p.y+25,p.z-Math.cos(h)*42-Math.sin(h)*15],
+      target:[p.x+Math.sin(h)*28,p.y+1,p.z+Math.cos(h)*28]};
     if(view==='pond'){
       const pond=course.groundAt(180,32);
       app.inspectionCamera={position:[pond.x-18,pond.y+14,pond.z-28],target:[pond.x,pond.y,pond.z]};
@@ -65,9 +69,9 @@ function witness(view) {
   const flakes=snow?.getObjectByName('Camera-local snow and ridge gusts');
   const tracks=snow?.getObjectByName('Actual wheel snow tracks');
   if(!snow||!flakes||!tracks)throw Error('Native Snow world/effects are missing.');
-  const terrain=[];api.scene.traverse(mesh=>{
+  const terrain=[],terrainMeshes=[];api.scene.traverse(mesh=>{
     if(mesh.isMesh && mesh.geometry?.attributes.winterWeight){
-      const weight=mesh.geometry.attributes.winterWeight;
+      terrainMeshes.push(mesh);const weight=mesh.geometry.attributes.winterWeight;
       terrain.push({vertices:weight.count,white:[...weight.array].filter(v=>v>.9).length,
         dry:[...weight.array].filter(v=>v===0).length,key:mesh.material.customProgramCacheKey()});
     }
@@ -123,10 +127,55 @@ function witness(view) {
     throw Error('An authored exposed ridge did not produce the bounded blowing snow.');
   const pond=snow.getObjectByName('Frozen winter pond');
   if(!pond)throw Error('The authored frozen pond is missing.');
+  let pondGround=null;
+  if(view==='pond'){
+    // Read actual Float32 scene triangles, including their world transforms.
+    // This checks native anchoring; it never asks the analytical Course height.
+    const surfaces=terrainMeshes.map(mesh=>{
+      mesh.updateWorldMatrix(true,false);
+      const position=mesh.geometry.attributes.position,point=mesh.position.clone(),vertices=[];
+      for(let i=0;i<position.count;i++){
+        point.fromBufferAttribute(position,i).applyMatrix4(mesh.matrixWorld);
+        vertices.push(point.x,point.y,point.z);
+      }
+      return {vertices,index:mesh.geometry.index.array};
+    });
+    const ponds=[];snow.traverse(node=>{if(node.name==='Frozen winter pond')ponds.push(node);});
+    let count=0,maxError=0,near=false,far=false,overlap=false;
+    for(const nativePond of ponds){
+      nativePond.updateWorldMatrix(true,false);
+      const position=nativePond.geometry.attributes.position,point=nativePond.position.clone();
+      for(let i=0;i<position.count;i++){
+        point.fromBufferAttribute(position,i).applyMatrix4(nativePond.matrixWorld);
+        let upper=-Infinity;const hitSurfaces=new Set();
+        for(let surface=0;surface<surfaces.length;surface++){
+          const {vertices:v,index}=surfaces[surface];
+          for(let j=0;j<index.length;j+=3){
+            const a=index[j]*3,b=index[j+1]*3,c=index[j+2]*3;
+            if(point.x<Math.min(v[a],v[b],v[c])-1e-5||point.x>Math.max(v[a],v[b],v[c])+1e-5||
+                point.z<Math.min(v[a+2],v[b+2],v[c+2])-1e-5||point.z>Math.max(v[a+2],v[b+2],v[c+2])+1e-5)continue;
+            const denominator=(v[b+2]-v[c+2])*(v[a]-v[c])+(v[c]-v[b])*(v[a+2]-v[c+2]);
+            if(Math.abs(denominator)<1e-9)continue;
+            const wa=((v[b+2]-v[c+2])*(point.x-v[c])+(v[c]-v[b])*(point.z-v[c+2]))/denominator;
+            const wb=((v[c+2]-v[a+2])*(point.x-v[c])+(v[a]-v[c])*(point.z-v[c+2]))/denominator,wc=1-wa-wb;
+            if(Math.min(wa,wb,wc)<-1e-5)continue;
+            upper=Math.max(upper,wa*v[a+1]+wb*v[b+1]+wc*v[c+1]);hitSurfaces.add(surface);
+          }
+        }
+        if(!Number.isFinite(upper))throw Error('A native pond vertex has no drawn terrain triangle.');
+        const error=Math.abs(point.y-upper-.055);maxError=Math.max(maxError,error);
+        if(error>1e-4)throw Error('A native pond vertex floats above/below its actual rendered triangle: '+error);
+        near ||= hitSurfaces.has(0);far ||= hitSurfaces.has(1);overlap ||= hitSurfaces.size>1;count++;
+      }
+    }
+    if(ponds.length!==2||!near||!far||!overlap)throw Error('Native curved ponds must exercise near/far terrain and overlaps.');
+    pondGround={ponds:ponds.length,vertices:count,maxError,near,far,overlap};
+  }
+
   const programs=api.renderer.info.programs;
   if(programs.some(program=>!program.isReady()))throw Error('A submitted Snow shader is not ready.');
   return {view,quality:nativeQuality,field:cars.length,visibleCars,s:state.s,
-    terrain,kitIds:ids,placements:placements.length,kitStats:{...kitStats},flakes:limits.flakes,liveMarks,markCap:tracks.count,pondVertices:pond.geometry.attributes.position.count,
+    terrain,kitIds:ids,placements:placements.length,kitStats:{...kitStats},flakes:limits.flakes,liveMarks,markCap:tracks.count,pondVertices:pond.geometry.attributes.position.count,pondGround,
     programs:programs.length};
 }
 
@@ -162,21 +211,35 @@ export async function run(context) {
   const frames=process.env.P4_SNOW_MEASURE_FRAMES==='1';
   const report={card:'P4-SNOW',captures:[],moving:[],frames:[],comparisons:[],
     frameScope:'Static native eight-car snapshots; flakes and track expiry remain active. Moving Snow update cost is not measured.',
-    frameStatus:frames?'running':'not scheduled',passed:false};
+    frameStatus:frames?'running':'not scheduled',bloomTargets:[],passed:false};
   try{
     for(const quality of ['high','performance']){
       await context.navigate('/tools/menu-check.html?flags=grand-prix,snow-world');
       await context.waitFor(`window.__qaApp?.visualReady&&!document.querySelector('#start-engine')?.disabled`, 'native isolated menu',60000);
       await context.evaluate('('+prepareNative.toString()+')('+JSON.stringify(quality)+')');
-      await context.waitFor(`window.__qaApp.visualReady&&Number(document.querySelector('#view3d').dataset.worldBuilds)>window.__snowBeforeBuilds&&window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets in the actual menu world',60000);
+      await context.waitFor(`window.__qaApp.visualReady&&Number(document.querySelector('#view3d').dataset.worldBuilds)>window.__snowBeforeBuilds&&!!window.__render?.scene.getObjectByName('Authored snow world')`, 'approved Snow assets in the actual menu world',60000);
       await context.evaluate('('+startNative.toString()+')()');
-      await context.waitFor(`window.__qaApp.visualReady&&window.__render?.scene.getObjectByName('Authored snow world')`, 'fresh native full-field winter world',60000);
-      await context.evaluate(`document.head.insertAdjacentHTML('beforeend','<style>details,#race-hud,#modal-layer,.combat-opponent-marker{display:none!important}</style>')`);
+      await context.waitFor(`window.__qaApp.visualReady&&!!window.__render?.scene.getObjectByName('Authored snow world')`, 'fresh native full-field winter world',60000);
+      await context.evaluate(`document.head.insertAdjacentHTML('beforeend','<style>details,#overlay,.rear-view-frame{display:none!important}</style>')`);
       report.captures.push(await capture(context,quality,'grid'));
       await driveTo(context,190);report.captures.push(await capture(context,quality,'tracks'));
       report.moving.push(await expireTracks(context,quality));
       report.captures.push(await capture(context,quality,'pond'));
       await driveTo(context,600);report.captures.push(await capture(context,quality,'ridge'));
+      if(quality==='high'){
+        const before=await context.evaluate('('+nativeSnapshot.toString()+')()');
+        const targets=await context.evaluate('('+probeBloomTargets.toString()+')()');
+        assert.equal(targets.length,12,'actual scene, bright extraction and all ten blur targets must be read');
+        for(const target of targets){
+          assert.equal(target.floatRead,true,`${target.label}: real floating-point target required`);
+          assert.equal(target.error,undefined,`${target.label}: native read must succeed`);
+          assert.equal(target.unsupported,undefined,`${target.label}: actual target must be available`);
+          assert.equal(target.nan,0,`${target.label}: no NaN colour components`);
+          assert.equal(target.infinite,0,`${target.label}: no infinite colour components`);
+        }
+        assert.equal(await context.evaluate('('+nativeSnapshot.toString()+')()'),before,'buffer probes preserve race, profile and memory saves');
+        report.bloomTargets=targets;
+      }
       await context.evaluate(`(()=>{
         const original=window.__snowOriginal;
         window.__qaApp.returnToMenu();
@@ -286,4 +349,55 @@ async function frameComparisons(context,report){
   report.frameStatus=report.comparisons.every(row=>row.pass)?'passes original 10% limits':'fails original 10% limits';
   await writeFile(join(context.outputDir,'p4-snow.json'),JSON.stringify(report,null,2)+'\n');
   assert.ok(report.comparisons.every(row=>row.pass),report.frameStatus);
+}
+
+
+function nativeSnapshot(){
+  const app=window.__qaApp;
+  return JSON.stringify({state:app.duel.state,profile:app.profile,
+    storage:Object.fromEntries(Array.from({length:localStorage.length},(_,i)=>{const k=localStorage.key(i);return [k,localStorage.getItem(k)];}))});
+}
+
+function probeBloomTargets(){
+  const api=window.__render,renderer=api.renderer,gl=renderer.getContext(),results=[];
+  const bloom=api.composer.passes.find(pass=>pass.name==='Bloom');
+  if(!bloom?.enabled)throw Error('Actual default Bloom required.');
+  function sample(label,target){
+    const framebuffer=renderer.properties.get(target).__webglFramebuffer;
+    if(!framebuffer||Array.isArray(framebuffer))return {label,unsupported:'Expected a native two-dimensional target'};
+    const previousRead=gl.getParameter(gl.READ_FRAMEBUFFER_BINDING),previousDraw=gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING);
+    try{
+      gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffer);
+      const type=gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_TYPE),format=gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_FORMAT),
+        count=target.width*target.height*4,
+        pixels=type===gl.FLOAT?new Float32Array(count):type===gl.HALF_FLOAT?new Uint16Array(count):new Uint8Array(count);
+      if(format!==gl.RGBA)return {label,width:target.width,height:target.height,unsupported:'Native read format '+format};
+      gl.readPixels(0,0,target.width,target.height,format,type,pixels);
+      const error=gl.getError();if(error)return {label,width:target.width,height:target.height,error,type};
+      let nan=0,infinite=0,negative=0,min=Infinity,max=-Infinity,firstInvalid=null;
+      for(let i=0;i<pixels.length;i++){
+        let value=pixels[i];
+        if(type===gl.HALF_FLOAT){
+          const sign=value&32768?-1:1,exponent=value>>10&31,mantissa=value&1023;
+          value=exponent===31?(mantissa?NaN:sign*Infinity):exponent===0?sign*mantissa*Math.pow(2,-24):sign*(1+mantissa/1024)*Math.pow(2,exponent-15);
+        }
+        if(Number.isNaN(value)){nan++;if(!firstInvalid)firstInvalid={x:Math.floor(i/4)%target.width,y:Math.floor(i/4/target.width),channel:i%4};}
+        else if(!Number.isFinite(value))infinite++;
+        else{min=Math.min(min,value);max=Math.max(max,value);if(value<0)negative++;}
+      }
+      return {label,width:target.width,height:target.height,type,floatRead:type===gl.FLOAT||type===gl.HALF_FLOAT,nan,infinite,negative,min,max,firstInvalid};
+    }finally{
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER,previousRead);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,previousDraw);
+    }
+  }
+  const original=bloom.render;
+  bloom.render=function(renderer,writeBuffer,readBuffer,...rest){
+    results.push(sample('Actual Bloom input',readBuffer));
+    original.call(this,renderer,writeBuffer,readBuffer,...rest);
+    results.push(sample('Bright extraction',this.renderTargetBright));
+    this.renderTargetsHorizontal.forEach((target,i)=>results.push(sample('Horizontal blur '+i,target)));
+    this.renderTargetsVertical.forEach((target,i)=>results.push(sample('Vertical blur '+i,target)));
+  };
+  try{api.renderFrame();return results;}
+  finally{bloom.render=original;}
 }

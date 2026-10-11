@@ -21,7 +21,10 @@ draw = ImageDraw.Draw(sheet)
 font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 22)
 small = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 17)
 draw.text((15, 13), f'P4-SNOW | Round {args.round} | Approved Snow kits in the actual renderer', font=font, fill='white')
-draw.text((15, 49), 'High above; Performance below. Actual full field and driven wheel contacts. Frames: ' + report['frameStatus'], font=small, fill='#c3cfdf')
+targets = report['bloomTargets']
+assert len(targets) == 12 and all(row['floatRead'] and row['nan'] == 0 and row['infinite'] == 0 for row in targets)
+caption = 'High above; Performance below. Default Bloom; actual field and wheel contacts. Frames: ' + report['frameStatus']
+draw.text((15, 49), caption, font=small, fill='#c3cfdf')
 for row, quality in enumerate(['high', 'performance']):
     for column, view in enumerate(views):
         capture = captures[(quality, view)]

@@ -39,6 +39,13 @@ eight-car snapshots keep flakes/track expiry active. Moving native full-field
 checks separately prove wheel-track generation/lifetime; static timings do
 not measure moving-car Snow update cost. Quiet slot required.
 
+High native acceptance also requires real floating-point reads from the scene
+before Bloom, bright extraction and all ten blur targets: zero NaN/Inf.
+Default Bloom stays enabled. FIX-P4-KERB-NORMALS removes shared reverse kerb
+triangles without changing vertices/materials; its independent regression
+failed on the actual ridge zero normal first. Genuine fix merge preserves
+Dossier snapshot declarations/API/cleanup and Snow vehicles, kit retry/disposal.
+
 ## Checks
 
 Focused headless acceptance passes: ranges, true deep-snow verge driving
@@ -55,11 +62,27 @@ Curved pond vertices pass upper near/far Float32 triangle raycasts, including
 actual overlaps; missing rendered terrain is rejected. Test failed before fix.
 No existing assertion or tolerance was changed.
 
-Memory-only native High/Performance full-field recipe and <=500 KB sheet
-recipe are prepared. Genuine KIT-LOADER 6f387678 merged without conflicts.
+Memory-only native High/Performance acceptance passes with eight actual cars,
+340/128 driven wheel marks expiring to zero after 8.5 s, and unchanged
+state/profile/memory saves. Flakes use 240/72 and marks 512/128. Two ponds
+pass 98 actual triangle anchors, including near/far overlap; max offset error
+0.000004895 m. Live bank identities and winter pine/grass replacement pass.
+Private functional QA has eight captures and no warnings/errors. The scenario
+readiness predicate now returns a boolean instead of serializing a scene;
+acceptance assertions stay unchanged. Clean inspection cameras hide only UI.
+High ridge initially had a black region covering 58.85% of the canvas.
+AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
+90 NaN components; first NaN hit a zero-normal kerb. FIX-P4-KERB-NORMALS
+6d284cb0 removes only reverse duplicate faces; positions/UV/material remain
+exact. Genuine merge 3004ee6c retains Dossier snapshot hooks and Snow disposal.
+Fresh native default Bloom input, bright and all ten blur targets have zero
+NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
+the permanent finite-target acceptance and normal regression remain.
+Genuine KIT-LOADER 6f387678 merged without conflicts.
 Renderer prepares approved extras before building Snow, keeps bank identities
 on menu-to-race transitions, and feeds the actual eight grounded car meshes.
-Native art/frame checks, lane/build, review and merge remain pending.
+Round-one native art is pending Claude. Quiet frames, lane/build, final review
+and merge remain pending.
 No finished-art or frame verdict yet. No real saves, release or live QA.
 
 ## Removed
@@ -67,3 +90,5 @@ No finished-art or frame verdict yet. No real saves, release or live QA.
 Winter-range ordinary pine, rock and summer-grass instances are removed from
 the copied presentation views. Snow switches replace the flat winter road
 material path. Shared ordinary scenery remains in use on dry ranges/tracks.
+Consumed ray/AO/flake/composite probes are removed after the cause is proved;
+shared kerb duplicate faces are removed in FIX-P4-KERB-NORMALS.
