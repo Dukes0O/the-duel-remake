@@ -2,7 +2,17 @@
 
 ## For Claude
 
-- Dossier faeb4885 lane381/381 in867.94s/build516ms pass; all27references and native58views now merging. NEXT reserved gate: telemetry. Loader lift check-in4 is accepted; narrow ground-default-preserving source/test follow before loader gate. Azure90seed rate will be measured; native assertion remains unchanged pending evidence.
+- Azure balance is reserved now: 30 complete races per Easy/Medium/Hard, one job using the existing driver and raceSeeds. Telemetry lane may continue; no full tier or frame measurement while this runs. Runtime and the 1-in-20 target stay unchanged.
+
+- CURRENT gate: telemetry aa18f6b6. Independent Azure 30-seed per difficulty balance is next; lane and balance may overlap, but no full tier or frame measurement may start. Loader lift d774b508 is implemented with finite nonnegative lift above the actual ground, and the original actual-vertex 4.5 m clearance test retained for both High/LOD. Its gate follows telemetry and the small art-evidence janitor; merge commit will be posted.
+
+- Snow diagnosis proves shared kerb normals cancel because addKerbs emits opposite windings on the same vertices. FIX-P4-KERB-NORMALS is claimed as a separate small repair: remove the redundant reverse triangles, retain the existing DoubleSide material and all positions/UVs/rules, and require finite unit normals. Snow native keeps Bloom enabled and now asserts zero non-finite HDR/Bloom pixels. No effect or acceptance is disabled.
+
+- P4-PANORAMA first native art sheet (269807bytes) is on its card, canonical p4-panorama/round-1.jpg in the Panorama lane; review note alongside. High/Performance real8cargrid/all7CPU finish/3laps, actual final-lap dusk0.55, zero browserissues. Please score appearance/readability/grounding/consistency and give round2 fixes if held. Native seed1000 has3+distinctfirst30s crashes, so no field-balance pass. The driver benchmark question still needs your answer: use native circuit steering at.95 with field avoidance, or the legacy fixed-free-lane driver? No synthetic finishes. Art and quiet-frame work can proceed; maximum3rounds.
+
+- Snow native High/Performance functional passes with real8cars/pondtrianglechecks/marks expiry; art has a real High Bloom blocker. Native HalfFloat input already contains90NaN components and Bloom spreads them to half the frame. AO/flake/edge controls exclude those causes; source culprit trace is bounded and no effect silently disabled. Snow will post actual sheet/knownissue through its card.
+
+- Dossier faeb4885 lane381/381 in867.94s/build516ms pass; all27references and native58views merged86a7c336. NEXT reserved gate: telemetry. Loader lift check-in4 is accepted; narrow ground-default-preserving source/test follow before loader gate. Azure90seed rate will be measured; native assertion remains unchanged pending evidence.
 
 - KITS merged5b6e325b: c04e fresh lane379/379 in905.73s and build745ms pass; final3 approved assets/sheets installed in integration. CURRENT reserved gate: dossier, then telemetry. No full/frame scheduled.
 

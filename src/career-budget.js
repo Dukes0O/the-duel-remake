@@ -8,7 +8,48 @@ export const ORIGIN_POINTER_KEY='__the_duel_origin_pointer_v1';
 export const ORIGIN_JOURNAL_KEY='__the_duel_origin_journal_v1';
 const PRIMARY_ID='origin-primary-v1';
 const GHOST_KEY='the-duel-ghosts-v1',BOARD_KEY='the-duel-leaderboard-v1';
-const GHOST_WRITE_RESERVE=2_600_000;
+const RECORD_WRITE_RESERVE=3_600_000;
+const TELEMETRY_KEY='the-duel-lap-telemetry-v1';
+const isRecordKey=key=>key===GHOST_KEY||key===TELEMETRY_KEY;
+export const CAREER_WRITER_LOCK='the-duel-career-writer-v1';
+
+function writerError(code,message){return Object.assign(new Error(message),{code});}
+// Acquisition resolves separately: the callback promise keeps the browser lock
+// for this document's lifetime without preventing startup from continuing.
+export function acquireCareerWriter({locks=globalThis.navigator?.locks,name=CAREER_WRITER_LOCK,
+  eventTarget=globalThis,reload=()=>globalThis.location?.reload()}={}){
+  if(typeof locks?.request!=='function')return Promise.reject(writerError('CAREER_WRITER_UNAVAILABLE',
+    'This browser cannot secure career storage. Enable browser storage access, then reload.'));
+  return new Promise((resolve,reject)=>{
+    let active=false,suspended=false,claimed=false;
+    const assertActive=()=>{
+      if(!active||suspended)throw writerError('CAREER_WRITER_INACTIVE',
+        'This career writer is inactive. Reload before playing or saving.');
+    };
+    const lease=Object.freeze({assertActive,claim(){assertActive();
+      if(claimed)throw writerError('CAREER_WRITER_CLAIMED','This career writer already owns a storage facade.');
+      claimed=true;
+    }});
+    Promise.resolve().then(()=>locks.request(name,{mode:'exclusive',ifAvailable:true},lock=>{
+      if(!lock)throw writerError('CAREER_WRITER_BUSY',
+        'The Duel is already open in another tab. Close that tab, then reload here.');
+      active=true;
+      // These capture listeners are installed before App or router listeners.
+      // Never release ownership while a cached document could resume.
+      eventTarget?.addEventListener?.('pagehide',()=>{suspended=true;},{capture:true});
+      eventTarget?.addEventListener?.('pageshow',event=>{
+        if(!event.persisted)return;
+        suspended=true;event.stopImmediatePropagation();reload();
+      },{capture:true});
+      resolve(lease);
+      return new Promise(()=>{});
+    })).then(()=>{active=false;},error=>{
+      active=false;
+      reject(error.code?.startsWith('CAREER_WRITER_')?error:writerError('CAREER_WRITER_UNAVAILABLE',
+        'This browser cannot secure career storage. Enable browser storage access, then reload.'));
+    });
+  });
+}
 const isGameKey=key=>key.startsWith('the-duel-')||key.startsWith('duel_');
 const has=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
@@ -24,6 +65,14 @@ export function originStorageBytes(storage){
 function projectedBytes(storage,key,value){
   const prior=storage.getItem(key);
   return originStorageBytes(storage)-2*(prior===null?0:key.length+prior.length)+2*(key.length+value.length);
+}
+function journalBytes(raw){return raw===null?0:2*(ORIGIN_JOURNAL_KEY.length+raw.length);}
+function ordinaryJournalBytes(journal){
+  const ordinary={...journal,operations:journal.operations.filter(operation=>!isRecordKey(operation.key))};
+  return journalBytes(JSON.stringify(ordinary));
+}
+function ordinaryPhysicalBytes(physical,journal){
+  return originStorageBytes(physical)-journalBytes(physical.getItem(ORIGIN_JOURNAL_KEY))+ordinaryJournalBytes(journal);
 }
 function validateSnapshot(record){
   if(record?.id!==PRIMARY_ID||record.version!==1||!Number.isSafeInteger(record.revision)||record.revision<0||
@@ -124,7 +173,7 @@ function mergeOldArchives(entries,record){
   entries[GHOST_KEY]=completeGhosts;
   delete entries[ARCHIVE_POINTER_KEY];
 }
-function createFacade(physical,store,snapshot,journal,onFailure){
+function createFacade(physical,store,snapshot,journal,onFailure,assertWriter){
   let base=snapshot,log=journal??{version:1,baseRevision:snapshot.revision,operations:[]};
   let entries=replay(snapshot,log),inflight=null,lastError=null;
   const report=error=>{lastError=error;onFailure?.(error);};
@@ -137,6 +186,7 @@ function createFacade(physical,store,snapshot,journal,onFailure){
     return [...keys];
   };
   async function flush(){
+    assertWriter();
     if(inflight)return inflight;
     const consumed=base.revision-log.baseRevision;
     if(consumed===log.operations.length)return;
@@ -144,8 +194,11 @@ function createFacade(physical,store,snapshot,journal,onFailure){
     for(const op of log.operations.slice(consumed,count))applyOperation(newEntries,op);
     const next={id:PRIMARY_ID,version:1,revision:log.baseRevision+count,entries:newEntries};
     inflight=(async()=>{
+      assertWriter();
       await store.save(next);
+      assertWriter();
       const saved=validateSnapshot(await store.load(PRIMARY_ID));
+      assertWriter();
       if(!same(saved,next))throw new Error('The IndexedDB career snapshot could not be verified.');
       base=next;
       const trimmed={version:1,baseRevision:next.revision,operations:log.operations.slice(count)};
@@ -162,11 +215,14 @@ function createFacade(physical,store,snapshot,journal,onFailure){
     while(base.revision-log.baseRevision<log.operations.length);
   }
   function write(key,value,remove=false){
+    assertWriter();
     key=String(key);value=remove?null:String(value);
     if(!isGameKey(key)){
       try{
         if(value===null){physical.removeItem(key);return;}
-        if(projectedBytes(physical,key,value)>=ORIGIN_BUDGET_BYTES-GHOST_WRITE_RESERVE){
+        const fullBytes=projectedBytes(physical,key,value);
+        const ordinaryBytes=fullBytes-journalBytes(physical.getItem(ORIGIN_JOURNAL_KEY))+ordinaryJournalBytes(log);
+        if(fullBytes>=ORIGIN_BUDGET_BYTES||ordinaryBytes>=ORIGIN_BUDGET_BYTES-RECORD_WRITE_RESERVE){
           throw new Error('The 4 MB origin storage budget must reserve space for a future ghost.');
         }
         physical.setItem(key,value);return;
@@ -177,8 +233,10 @@ function createFacade(physical,store,snapshot,journal,onFailure){
     const operation=patchFor(key,oldValue,value);
     const next={version:1,baseRevision:log.baseRevision,operations:[...log.operations,operation]};
     const serialized=JSON.stringify(next);
-    const ceiling=key===GHOST_KEY?ORIGIN_BUDGET_BYTES:ORIGIN_BUDGET_BYTES-GHOST_WRITE_RESERVE;
-    if(projectedBytes(physical,ORIGIN_JOURNAL_KEY,serialized)>=ceiling){
+    const fullBytes=projectedBytes(physical,ORIGIN_JOURNAL_KEY,serialized);
+    const ordinaryBytes=ordinaryPhysicalBytes(physical,next);
+    if(fullBytes>=ORIGIN_BUDGET_BYTES||
+      (!isRecordKey(key)&&ordinaryBytes>=ORIGIN_BUDGET_BYTES-RECORD_WRITE_RESERVE)){
       const error=new Error('The 4 MB origin storage budget is full; this change was not saved.');report(error);throw error;
     }
     try{physical.setItem(ORIGIN_JOURNAL_KEY,serialized);}
@@ -195,17 +253,24 @@ function createFacade(physical,store,snapshot,journal,onFailure){
     removeItem:key=>write(key,null,true),
     clear(){throw new Error('Use career import to replace this save safely.');},
     flush:drain,
+    assertWriter,
     get lastError(){return lastError;},
     get physical(){return physical;},
     get snapshotRevision(){return base.revision;},
-    replaceSnapshot(next){base=next;log={version:1,baseRevision:next.revision,operations:[]};entries={...next.entries};lastError=null;},
+    replaceSnapshot(next){assertWriter();base=next;log={version:1,baseRevision:next.revision,operations:[]};entries={...next.entries};lastError=null;},
   };
   return facade;
 }
 
-export async function prepareCareerBudget({physical,store,backup,onFailure,installGlobal=false}={}){
+export async function prepareCareerBudget({physical,store,backup,onFailure,installGlobal=false,writer}={}){
+  if(installGlobal&&!writer)throw writerError('CAREER_WRITER_REQUIRED','An active career writer lease is required.');
+  writer?.claim();
+  const assertWriter=()=>writer?.assertActive();
+  assertWriter();
   if(!physical||!store?.save||!store?.load)throw new Error('Career budget storage is unavailable.');
-  let snapshot=await store.load(PRIMARY_ID),journal=parseJournal(physical),backupRecord=null;
+  let snapshot=await store.load(PRIMARY_ID);
+  assertWriter();
+  let journal=parseJournal(physical),backupRecord=null;
   const pointerRaw=physical.getItem(ORIGIN_POINTER_KEY);
   let pointer=null;
   if(pointerRaw){try{pointer=JSON.parse(pointerRaw);}catch{throw new Error('The career origin pointer is invalid.');}}
@@ -219,6 +284,7 @@ export async function prepareCareerBudget({physical,store,backup,onFailure,insta
       const raw=captureCareer(physical),archivePointer=readCareerArchivePointer(physical);
       if(archivePointer){
         const record=await store.load(archivePointer.id);
+        assertWriter();
         if(record?.id!==archivePointer.id||!Array.isArray(record.leaderboardRows)||!Array.isArray(record.ghostRows)){
           throw new Error('The IndexedDB record archive cannot be read.');
         }
@@ -236,6 +302,7 @@ export async function prepareCareerBudget({physical,store,backup,onFailure,insta
     const entries=captureCareer(physical),archivePointer=readCareerArchivePointer(physical);
     if(archivePointer){
       const record=await store.load(archivePointer.id);
+      assertWriter();
       if(record?.id!==archivePointer.id||!Array.isArray(record.leaderboardRows)||!Array.isArray(record.ghostRows)){
         throw new Error('The IndexedDB record archive cannot be read.');
       }
@@ -244,26 +311,36 @@ export async function prepareCareerBudget({physical,store,backup,onFailure,insta
     if(Object.keys(entries).length){
       if(typeof backup!=='function')throw new Error('A verified backup is required before the career budget migration.');
       backupRecord=await backup();
+      assertWriter();
       if(!backupRecord?.id)throw new Error('The career budget backup could not be verified.');
     }
     snapshot={id:PRIMARY_ID,version:1,revision:0,entries};
+    assertWriter();
     await store.save(snapshot);
+    assertWriter();
     const saved=validateSnapshot(await store.load(PRIMARY_ID));
+    assertWriter();
     if(!same(saved,snapshot))throw new Error('The IndexedDB career snapshot could not be verified.');
     physical.setItem(ORIGIN_POINTER_KEY,JSON.stringify({version:1,id:PRIMARY_ID}));
   }
   // The durable snapshot is authoritative. A crash after its pointer was
   // written can leave old local keys; removing them is safe and repeatable.
+  assertWriter();
   for(const key of physicalGameKeys(physical)){
     if(key!==ARCHIVE_POINTER_KEY&&!has(snapshot.entries,key)){
       throw new Error('A local career key was not copied into the IndexedDB snapshot: '+key);
     }
     physical.removeItem(key);
   }
-  if(originStorageBytes(physical)>=ORIGIN_BUDGET_BYTES-GHOST_WRITE_RESERVE){
+  const fullBytes=originStorageBytes(physical);
+  // Only a journal already validated against this snapshot is recovery data.
+  // It remains byte-exact here, even when it is larger than the ordinary reserve.
+  const unrelatedBytes=fullBytes-(journal?journalBytes(physical.getItem(ORIGIN_JOURNAL_KEY)):0);
+  if(fullBytes>=ORIGIN_BUDGET_BYTES)throw new Error('The 4 MB origin storage budget is full; recovery data is retained.');
+  if(unrelatedBytes>=ORIGIN_BUDGET_BYTES-RECORD_WRITE_RESERVE){
     throw new Error('Unrelated origin data leaves no room for a future ghost within the 4 MB localStorage budget.');
   }
-  const storage=createFacade(physical,store,snapshot,journal,onFailure);
+  const storage=createFacade(physical,store,snapshot,journal,onFailure,assertWriter);
   if(installGlobal)Object.defineProperty(globalThis,'localStorage',{configurable:true,value:storage});
   return {storage,physical,backupId:backupRecord?.id??null,flush:()=>storage.flush()};
 }
@@ -295,28 +372,43 @@ function importedEntries(archive){
 }
 export async function importBudgetCareer(text,{storage,store}={}){
   if(!storage?.physical||!store?.save||!store?.load)throw new Error('Career budget import is unavailable.');
+  const assertWriter=()=>storage.assertWriter();
+  assertWriter();
   const archive=parseCareerExport(text),entries=importedEntries(archive),physical=storage.physical;
   await storage.flush();
+  assertWriter();
   const prior=validateSnapshot(await store.load(PRIMARY_ID));
+  assertWriter();
   const recovery={id:'career-'+Date.now()+'-'+(globalThis.crypto?.randomUUID?.()??Math.random()),
     reason:'before-import',createdAt:new Date().toISOString(),entries:captureCareer(storage),archives:null};
   await store.save(recovery);
-  if(!same(await store.load(recovery.id),recovery))throw new Error('The pre-import career backup could not be verified.');
+  assertWriter();
+  const verifiedRecovery=await store.load(recovery.id);
+  assertWriter();
+  if(!same(verifiedRecovery,recovery))throw new Error('The pre-import career backup could not be verified.');
   const next={id:PRIMARY_ID,version:1,revision:prior.revision+1,entries};
   const marker={version:1,from:prior.revision,to:next.revision,backupId:recovery.id};
   physical.setItem(ORIGIN_POINTER_KEY,JSON.stringify(marker));
   try{
+    assertWriter();
     await store.save(next);
+    assertWriter();
     const saved=validateSnapshot(await store.load(PRIMARY_ID));
+    assertWriter();
     if(!same(saved,next))throw new Error('The imported IndexedDB career could not be verified.');
     physical.removeItem(ORIGIN_JOURNAL_KEY);
     physical.setItem(ORIGIN_POINTER_KEY,JSON.stringify({version:1,id:PRIMARY_ID}));
     storage.replaceSnapshot(next);
   }catch(error){
     try{
+      assertWriter();
       const current=await store.load(PRIMARY_ID);
+      assertWriter();
       if(!same(current,prior))await store.save(prior);
-      if(!same(await store.load(PRIMARY_ID),prior))throw new Error('Rollback snapshot verification failed.');
+      assertWriter();
+      const restored=await store.load(PRIMARY_ID);
+      assertWriter();
+      if(!same(restored,prior))throw new Error('Rollback snapshot verification failed.');
       physical.setItem(ORIGIN_POINTER_KEY,JSON.stringify({version:1,id:PRIMARY_ID}));
     }catch(rollbackError){
       throw new Error('Import failed and rollback failed. Recovery backup '+recovery.id+' remains available. '+rollbackError.message,{cause:error});
