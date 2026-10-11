@@ -1,3 +1,4 @@
+import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
 import {createFirstPersonGear} from './first-person-gear.js';
@@ -152,6 +153,34 @@ export function attachRenderer(host, app) {
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
+  let preparedTrackKits = null, preparedTrackKitKey = null;
+  function prepareKitWorld(next, {retry=false}={}) {
+    if (!next.def.kitPlacements?.length) {
+      preparedTrackKits?.dispose();preparedTrackKits=null;preparedTrackKitKey=null;
+      host.dataset.trackKitAsset = 'off';host.dataset.trackKitError = '';return true;
+    }
+    if (world && next === course) {
+      host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';return true;
+    }
+    const key = environmentKey(next);
+    if (world && worldKey === key) {
+      host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';
+      host.dataset.trackKitError = '';
+      return true;
+    }
+    if (preparedTrackKits && (preparedTrackKitKey !== key || retry)) {
+      preparedTrackKits.dispose(); preparedTrackKits = null; preparedTrackKitKey = null;
+    }
+    if (!preparedTrackKits) {
+      preparedTrackKits = createTrackKits(next); preparedTrackKitKey = key;
+    }
+    host.dataset.trackKitAsset = preparedTrackKits.status;
+    host.dataset.trackKitError = preparedTrackKits.error?.message ?? '';
+    if (preparedTrackKits.status === 'ready') return true;
+    renderer.domElement.style.visibility = 'hidden'; rearView.hide();
+    if (!readinessClaimed) {app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
+    app.holdVisualReadiness?.(readinessOwner);return false;
+  }
   const vehicleAssets=createVehicleAssets();
   function prepareVehicle(key,{retry=false}={}) {
     if(disposed)return false;
@@ -265,7 +294,8 @@ export function attachRenderer(host, app) {
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood});
-    world = buildEnvironment(course); scene.add(world);
+    world = buildEnvironment(course,{trackKits:preparedTrackKits});
+    preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
     lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
@@ -293,6 +323,7 @@ export function attachRenderer(host, app) {
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    if(!prepareKitWorld(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     const opponents = st.opponents || (st.rival ? [st.rival] : []);
     const convoy=!menu&&(st.arena?.mode==='convoy-raid'||st.arena?.format==='convoy-raid');
     const rivalCarKey=convoy?'convoy-tanker':!menu&&st.rival?.car||carKey;
@@ -647,6 +678,7 @@ export function attachRenderer(host, app) {
     lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
+    trackKitsOf(world)?.update({high,position:pp,state:menu?{status:'menu'}:st});
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();
     const metricsChanged=metricRevision!==sceneRevision||metricEnvironment!==scene.environment||metricQuality!==ambientShading.enabled||metricRatio!==ratio||metricMenu!==menu||metricCamera!==app.cameraMode||metricFootCamera!==`${!!st.onFoot}:${app.footCameraMode}`||metricMood!==app.lightingMood||metricInspection!==app.inspectionCamera||metricCar!==carKey;
@@ -732,6 +764,7 @@ export function attachRenderer(host, app) {
     return { distinctColors: colors.size, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
   } };
   return { prepareVehicle, retryVehicle() { return prepareVehicle(host.dataset.vehicleKey,{retry:true}); },
+    retryTrackKits() {const next=app.duel.state.status==='menu'?app.getMenuCourse(app.menuStage||0):app.duel.course;return prepareKitWorld(next,{retry:true});},
     projectFootAim() {
       const state=app.duel.state;
       return !disposed&&state.onFoot&&state.status!=='menu'?projectOnFootAim(camera,state.fighter):null;
@@ -744,7 +777,7 @@ export function attachRenderer(host, app) {
       return projectVehicleMarkers(camera, meshes);
     },
     dispose() {
-    if(disposed)return;disposed=true;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;disposed=true;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
