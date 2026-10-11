@@ -19,6 +19,7 @@
 //     Each stands at a point on the map (x, z), is turned `angle` radians (its
 //     `along` axis runs toward +z at angle 0) and carries forest colour with
 //     patches of autumn (`colours.forest`, `colours.autumn`) and pale ski runs.
+//   kitPlacements[].crowd  true on a `grandstand`: it fills with seated spectators (stand-crowd.js).
 //   effects.lift  { s, towers, lines, height, spacing, speed }
 //     A chairlift across the road. The towers, cable spans and chairs are kit
 //     pieces named in `kitPlacements` (their `ride` field says which); once the
@@ -29,6 +30,7 @@ import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
 import { trackKitsOf } from './track-kits.js';
 import { hillHeight, hillLocal, hillReach, runWeight, shoreFactor } from './circuit-hills.js';
+import { addStandCrowds } from './stand-crowd.js';
 
 const TAU = Math.PI * 2;
 const smooth = x => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
@@ -331,4 +333,5 @@ export function addCircuitEffects(group, course) {
   if (effects.backdrop) addBackdrop(group, course, effects.backdrop, crowns);
   if (crowns) registerSceneSystem(group, { dispose() { crowns.dispose(); } });
   addKitMotion(group, course);
+  addStandCrowds(group, course);
 }
