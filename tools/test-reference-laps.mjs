@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {COURSE} from '../src/config.js';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {Course} from '../src/course.js';
 import {courseFingerprint, analyseTrack, cornerId} from '../src/track-analysis.js';
 import {
   REFERENCE_POLICY, referenceTargets, selectReferenceLap, referenceTrace,
-  referenceSectorTimes, withReferenceApp, installReferenceFixture, buildReferenceSet, startReferenceApp,
+  referenceSectorTimes, withReferenceApp, installReferenceFixture, buildReferenceSet, startReferenceApp, runReferenceWorker,
 } from './build-reference-laps.mjs';
 
 let checks = 0;
@@ -14,8 +15,11 @@ const equal = (actual, expected, message) => { assert.deepEqual(actual, expected
 equal(REFERENCE_POLICY, {car: 'stuttgart_959s', driver: 'club', cpu: 'medium',
   fixtureVersion: 1, warmupLaps: 1, timedLaps: 2, sampleMetres: 20}, 'Reference policy matches CIRCUITS 7b.1');
 const definitionsBefore = JSON.stringify(COURSE);
-const targets = referenceTargets(COURSE);
-equal(targets.length, 24, 'Every current closed event/route receives its own reference');
+const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(row => [row.id, row])).values()];
+const targets = referenceTargets();
+equal(targets.length, 27, 'Every current closed event/route, including native dev circuits, receives its own reference');
+check(ALL_CIRCUITS.every(definition => targets.some(target => target.eventId === definition.id &&
+  target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),
   [['route_a', 1989], ['route_b', 42], ['route_c', 17]], 'Legacy routes retain their real seeds');
 check(targets.some(target => target.eventId === 'titan-freestyle' && target.route === 'fixed'), 'Closed playground is included');
@@ -25,6 +29,15 @@ equal(referenceTargets([{id: 'authored-fixture', closed: true, layoutSeed: 9012}
   'Authored fixed events use their layout seed');
 equal(referenceTargets([{id: 'open-road', closed: false, layoutSeed: 1}]), [], 'Open roads do not become cyclic references');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Target discovery does not edit global definitions');
+const nativeCatalog = await runReferenceWorker({catalogOnly: true});
+check(ALL_CIRCUITS.every(definition => nativeCatalog.events.includes(definition.id)),
+  'Fresh worker enables authored circuits in the actual native COURSE registry');
+check(nativeCatalog.flags.every(row => row.state === 'dev' && row.enabled),
+  'Fresh worker uses real dev switches through the supported QA query');
+equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
+equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');
+await assert.rejects(() => runReferenceWorker({targets: [{key: 'missing|fixed', eventId: 'missing', route: 'fixed', seed: 1989}]}),
+  /Unknown reference event/); checks++;
 const fakeTargets = targets.slice(0, 2), visited = [];
 const completeSet = await buildReferenceSet({targets: fakeTargets, run: async target => {
   visited.push(target.key); return {eventId: target.eventId, route: target.route, lapMs: 8000};
@@ -182,7 +195,7 @@ equal(referenceLap('not-a-course'), null, 'Unknown runtime references are absent
 equal(Object.keys(REFERENCE_LAPS).sort(), targets.map(target => target.key).sort(), `Exactly every native closed event/route must be present. ${rebuild}`);
 for (const target of targets) {
   const record = referenceLap(target.eventId, target.route);
-  const definition = COURSE.find(row => row.id === target.eventId), course = new Course(definition, target.seed);
+  const definition = definitions.find(row => row.id === target.eventId), course = new Course(definition, target.seed);
   equal(record.courseFingerprint, courseFingerprint(course, {route: target.route}), `${target.key} reference is stale. ${rebuild}`);
   equal([record.eventId, record.route, record.seed, record.car, record.driver, record.cpu, record.fixtureVersion],
     [target.eventId, target.route, target.seed, REFERENCE_POLICY.car, REFERENCE_POLICY.driver, REFERENCE_POLICY.cpu, 1],

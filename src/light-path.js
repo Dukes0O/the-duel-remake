@@ -26,15 +26,15 @@ export function lightPathLook(look, theme = 'desert') {
   if (lookCache.has(key)) return lookCache.get(key);
   let value = {...resolveLightingSettings(biome, {mood: look === 'golden' ? 'golden' : 'clear'}),
     stars: 0, moon: 0, nightAmount: 0, lightLevel: look === 'golden' ? .7 : 1};
-  if (look === 'dusk') value = {...value, fog: 0x69758d, top: '#252c54', horizon: '#df927b',
-    ground: 0x303b49, sunColor: 0xefab88, sun: .48, hemi: .88, env: .45,
-    fogNear: 210, fogFar: 1450, exposure: 1.12, bloom: .24, sunStrength: .13,
+  if (look === 'dusk') value = {...value, fog: 0x505365, top: '#202944', horizon: '#b47869',
+    ground: 0x303b49, sunColor: 0xefab88, sun: 0, hemi: .62, env: .08,
+    fogNear: 210, fogFar: 1450, exposure: 1.06, bloom: .18, sunStrength: 0,
     sunOffset: {x: -105, y: 7, z: 73}, cloudCover: .65, cloudTint: [.39, .34, .40],
     stars: .18, moon: .3, nightAmount: .55, lightLevel: .3};
-  if (look === 'night') value = {...value, fog: 0x24364d, top: '#071225', horizon: '#263b55',
-    ground: 0x243342, sunColor: 0xa8c2e5, sun: .13, hemi: .59, env: .3,
-    fogNear: 170, fogFar: 1300, exposure: 1.16, bloom: .28, sunStrength: 0,
-    sunOffset: {x: -65, y: 76, z: -90}, cloudCover: .52, cloudTint: [.12, .16, .23],
+  if (look === 'night') value = {...value, fog: 0x172538, top: '#061024', horizon: '#14263d',
+    ground: 0x243342, sunColor: 0xa8c2e5, sun: 0, hemi: .82, env: 0,
+    fogNear: 170, fogFar: 1300, exposure: 1.02, bloom: .16, sunStrength: 0,
+    sunOffset: {x: -65, y: 76, z: -90}, cloudCover: .2, cloudTint: [.12, .16, .23],
     stars: 1, moon: 1, nightAmount: 1, lightLevel: .1};
   for (const field of COLOURS) value[field] = Object.freeze(field === 'cloudTint' ? [...value[field]] : rgb(value[field]));
   value.sunOffset = Object.freeze({...value.sunOffset});

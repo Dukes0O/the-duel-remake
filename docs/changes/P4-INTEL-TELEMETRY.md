@@ -1,104 +1,78 @@
 # P4-INTEL-TELEMETRY
 
-## Design proposal for Director and Save Guardian
+Status: building; final sync and native acceptance in progress.
 
-Record valid completed laps from native physics, behind `grand-prix`. Keep the best complete lap for each named player, event and route. Use the Dossier's one Stuttgart 959-S / Club Driver / Medium reference, with the visible label "Reference lap: Stuttgart 959-S". No per-class reference, intel purchase or qualifying work belongs here.
+## What changed
 
-### Sampling and comparison
+Behind grand-prix, record the best valid completed lap per named player,
+event, curated route and course fingerprint. The Team Room compares speed,
+three sectors and up to three positive measured corner losses against the
+fixed stock Stuttgart 959-S / Club Driver / Medium reference. Results offer
+ANALYSE MY LAP. Reference-car labels stay visible for other player cars.
 
-- `LapTelemetryRecorder` reads state after native physics steps. It captures speed, throttle, brake, road distance, lateral position, time and gear at each actual 20 m crossing, with interpolated start/finish endpoints. It never changes race state or consumes randomness.
-- A lap is complete only when the native completed-lap count advances with a matching finite lap time. Ignore countdown and paused observations. Invalidate the affected lap after recovery, a boundary/checkpoint reset, an impossible jump, missing initial coverage, assisted travel or changed player/car/context. A later clean lap can still record.
-- Feed the full completed 20 m trace to Dossier's shared `analyseLap(course, {trace, lapMs, route})`. That module owns sector boundaries, geometry fingerprints, corner IDs, reference-compatible speed traces and corner metrics. Do not duplicate that analysis.
-- Store the required reference-shaped fields: `lapMs`, `sectorMs`, `trace` as `[metres,kph]`, `corners`, and `courseFingerprint`. Add aligned compact player controls `[elapsedMs, throttlePercent, brakePercent, lateralCentimetres]`, plus player ID/name, event/route, car, driver and recorded build metadata. Native gear is supplied to shared analysis; corner output uses displayed gear numbers.
-- Director approved measured `elapsedMs` in each shared corner record. Rank up to three positive corner losses using these actual times. Give causes based on entry, minimum and exit speeds. Pedals are recorded, but new pedal-timing advice is held. The shared `brakeS` is a suggested point from the speed analysis, not a claimed pedal-on measurement.
-- Wrong route, missing reference or changed fingerprint yields no comparison. A different player car keeps the fixed reference-car label beside each comparison. Dossier owns the native Team Room screen and navigation; Telemetry adds the overlay, sector/corner comparison and results entry only through agreed hooks.
+The recorder reads native state only at 20 m crossings: speed, throttle,
+brake, road/lateral position, time and gear. Native lap completion and finite
+times authorize records. Pauses/countdowns cannot record; reset, impossible
+jump, changed context, incomplete coverage and assisted laps invalidate only
+the affected lap. Reverse detours keep elapsed time and replace superseded
+forward crossings; start t=0 stays native. Shared Dossier analyseLap owns
+sectors, corner IDs and geometry fingerprints. BrakeS is a suggested point,
+not measured pedal timing; new pedal advice remains held by the Director.
 
-### Reverse travel decision
+## Save boundary and approved corrections
 
-Director approved 10 October before recorder implementation: legal reverse travel stays in the native elapsed lap time. Keep the final forward crossing of each 20 m distance boundary after a reverse detour, removing superseded crossings so sector/corner times stay ordered. The zero-distance lap start remains at native t=0, including any initial reverse delay. The speed graph uses speed magnitude. Aligned controls retain signed native gear (-1 means reverse), and shared corner output displays R where appropriate. Dossier owns that narrow shared-analysis change; its forward reference records stay exact. Add reverse travel, repeated crossing and start/finish seam regressions before the recorder code. Telemetry appends its measured finish endpoint to the shared compact speed trace, which intentionally stops at the last 20 m boundary for reference data.
+The additive companion key the-duel-lap-telemetry-v1 keeps a faster-only lap
+for each key. Existing profiles, wallets, ghosts, archives and old fixtures
+remain exact. Bounds: 500,000 UTF-8 bytes, 128 records, 1,024 samples per lap.
+Malformed/future data stays byte exact and blocks replacement. Quota/budget
+failure retains the candidate for the session with a visible notice; no other
+player, older layout, ghost or archive is evicted. Backups include the key.
 
-### Save boundary
+Save Guardian found two inherited blockers before code: accepted maximum
+ghost journals failed startup reserve accounting; independent cached facades
+could overwrite each other. The Director approved narrow career-budget and
+main startup hooks plus new recovery tests. Validated replay journals are
+excluded only from unrelated-data reserve accounting, never the unchanged
+4,000,000-byte physical ceiling. Ordinary writes measure their own serialized
+journal bytes separately from already accepted record operations. Actual
+serialized bytes, escaping and Unicode decide admission; no recovery data is
+trimmed. The proposed record reserve is 3,600,000 bytes.
 
-Use the additive companion key `the-duel-lap-telemetry-v1`, with `{version: 1, laps: [...]}`. Existing ghost recordings and samples stay exact. The ghost lifecycle supplies the integration points; a separate companion record is needed because ghosts store whole Time Trial runs per car/settings, while this feature stores individual laps from circuit modes per player/event/route.
+Production acquires one exclusive Web Lock before backup, migration, facade
+or App creation. Busy or unavailable admission stops startup with distinct
+messages. One live lease admits one facade; writes, awaited flushes and imports
+recheck ownership immediately before mutation. Ownership survives pagehide
+and awaits; cached-page restoration reloads through admission. Production has
+no timeout, takeover or automatic release. Private QA uses tab-scoped memory
+storage/backup stores and lock names; the same-name two-tab scenario proves
+real Web Locks exclusion. No backup/archive schema or reward rules change.
 
-Each lap key includes player ID, event, curated route and course fingerprint. The current view selects the current fingerprint only. Prior geometry stays retained and cannot win against a new layout. Faster-only replacement applies within the same key; equal/slower laps and duplicate completion do not write.
+## Evidence
 
-Bound persisted telemetry to **500,000 UTF-8 bytes**, **128 lap records**, and **1,024 samples per lap**. Each record is one best lap, not a race history. When a new record exceeds a bound, reject that write and keep it available for the current session with a clear session-only notice. Never evict another player's lap, an older layout, a ghost, an archive or career data to make room.
+- Before-code tests failed for the missing module/provider/panel; new budget
+  tests reproduced the inherited startup failure. Old assertions/tolerances
+  remain unchanged.
+- Lap telemetry: 19 acceptance groups; budget recovery: 16 groups. Existing
+  budget and Preview suites passed. Reverse, reset, player/route/layout
+  separation, malformed/future data, quota, backup, delayed/failed flush and
+  guarded writer/import lifetime have memory-only regressions.
+- Native Harbor Highlands C off/on race/reward fingerprint stayed exact:
+  06e9dba5bf807c38e49465a3bd2a9d3212146ba7e6656e389772e5a436bcc565.
+- Earlier career-writer-lock rerun on fa24610b passed private port 52135:
+  same-name popup denied before App/export; reload/history restoration retained
+  the exact synthetic lap, no native IndexedDB, warnings or errors. Its first
+  launch alongside a foreign full run was rejected as evidence and repeated.
+- Earlier lane/build on 3d76b5a3 passed 392/392 plus independent source review.
+  That evidence does not grant a pass after this sync.
+- Save Guardian cleared 0dba9249 conditionally; final sync needs fresh review.
+- Synced current Dossier, final DAYNIGHT source and all 27 native references.
+  Source hooks merged without conflict. The old Dossier lifecycle narrative
+  was replaced with its current approved note. Final focused suites, native
+  telemetry recording/overlay, lane/build and fresh save review remain.
 
-Reads validate finite values, known event/car/driver, curated route identity, sample spacing/order, aligned controls, valid sectors and complete endpoints. Malformed or future-version telemetry is unavailable for comparison and blocks replacement; leave its raw saved bytes intact. Saving reads the companion key through the sole active writer and merges faster laps before one atomic journal write. A second game tab is stopped before it creates a storage facade or starts the game; refreshing a cached facade alone is not a concurrency fix. Storage denial/quota errors report failure and preserve prior bytes.
-
-The existing backup and origin-storage wrappers already include every `the-duel-` key, so old saves need no migration or rewrite. Add tests for export/import and reload of the companion key, including malformed/unknown-version preservation. No profile, wallet, leaderboard or original ghost field needs editing.
-
-### Required narrow hooks
-
-- `src/app.js`: imports/private recorder state, existing ghost start/clear lifecycle, read-only observation after physics steps and go/lap/reset events, valid completed-lap persistence after result settlement, and selected-player best-lap getter. Dossier retains its UI/router code.
-- `src/career-budget.js`: record-key allowance and proposed 3,600,000-byte reserve; the startup journal accounting correction; a small exported writer-lock helper; production facade ownership checks at preparation, write, flush and import. Exact regions and tests are below. The hard 4,000,000-byte physical ceiling stays unchanged.
-- `src/main.js`: import the writer-lock helper; acquire its lease at the start of the existing startup async block, before the first backup/migration call; pass it to budget preparation; add a distinct startup message for a held/unavailable lock. This is startup storage ownership only, outside Dossier App UI/router work.
-- `tools/test-career-budget-recovery.mjs` (new): memory-only regressions for both Save Guardian findings and writer admission. Existing assertions remain exact; test discovery already includes new `test-*.mjs` files.
-- `src/screen-results.js` and the Dossier-owned Team Room hook, coordinated before edits.
-
-No edit to `src/ghost.js`, `src/leaderboard.js`, backup code, simulation or reward settlement is proposed. The Dossier builder remains owned by its lane.
-
-### Save Guardian corrections implemented after hook approval
-
-The first review found two blockers in existing storage, before telemetry code exists. A maximum ghost pending journal uses 2,500,506 physical bytes, but startup compares the entire origin against the unrelated-data threshold. Two independently prepared facades can also overwrite one another because each flush saves its cached complete snapshot. Both need correction before telemetry can use this storage safely.
-
-**Recover an accepted journal without charging it as unrelated data.** Keep the snapshot, journal and pointer formats unchanged. In `prepareCareerBudget`, after the existing pointer/snapshot checks and successful `replay(snapshot, journal)`, retain the exact validated raw journal string. At the final physical-budget check, calculate both (a) all physical UTF-16 bytes, which must remain below 4,000,000, and (b) physical bytes excluding only that validated journal key/value. Apply the future-record reserve to (b). Pointer bytes and every unrelated key still count. Invalid JSON, unsupported journal version, bad operation hashes/lengths, missing snapshot or revision disagreement gets no exemption and retains the recovery data. No recovery data is deleted or trimmed to get under a limit. Do not retroactively apply the smaller reserve threshold to an already accepted journal. Preserve normal migration of large legacy careers into IndexedDB; do not put a new hard-origin check ahead of that migration.
-
-The proposed 3,600,000-byte reserve is an allowance, not proof that every permitted string combination fits. The existing 1,250,000-character ghost upper bound alone can occupy about 2.5 MB of physical UTF-16 storage. Telemetry remains capped at 500,000 UTF-8 bytes; its serialized journal may cost more due to escaping. Every write still measures the actual serialized physical journal and rejects before mutation at the unchanged hard ceiling. Tests must cover both record writes pending together, escaping/Unicode, and safe rejection; do not claim unlimited pending laps or guaranteed storage for every maximum-size input. Ordinary-write reservation must exclude already accepted record operations. Measure unrelated physical data plus a serialized journal containing only non-record operations against the 400,000-byte ordinary allowance. Independently measure the full projected physical journal against the unchanged 4 MB hard ceiling before every mutation. This permits player/settings/settlement writes after telemetry while preserving both budgets, including delayed or failed flushes. Do not trim or discard any recovery operation to pass either check.
-
-**One active game writer per origin.** Add a small `acquireCareerWriter` helper in `src/career-budget.js` using the browser Web Locks API with a fixed game lock name, exclusive mode and `ifAvailable: true`. Resolve acquisition through a separate promise; the Web Locks callback stays pending for the document lifetime, so startup can continue while ownership is held. Acquire it in `src/main.js` before any backup, migration, facade installation or `new App()`. Do not use a localStorage flag, timeout lease, periodic refresh, or automatic takeover: none makes this cached snapshot writer safe. A busy lock stops the second startup with: "The Duel is already open in another tab. Close that tab, then reload here." An unavailable lock API also stops startup with a distinct storage-access message. Neither case starts a playable unsaved session or offers an unsafe export from a stale facade.
-
-Pass an active lease to production `prepareCareerBudget(..., installGlobal: true)` and claim it for exactly one facade. Fail if it is missing, inactive or already claimed. Guard that facade's write/flush and `importBudgetCareer` entry with the same lease. Repeat ownership assertions immediately before mutations after awaited I/O. Register pagehide/pageshow restoration guards before App creation; a cached restoration stops later handlers and reloads through admission. Hold ownership across awaits and imports; retain it on startup failure until the document closes. Do not release on `pagehide`, visibility changes or idle time while the document can resume. A restored cached document must reload through startup before resuming play. Browser document destruction releases the lock; the next tab acquires it and loads/replays the latest durable state. Unit tests inject a deterministic in-memory LockManager and can explicitly end a simulated document; production has no automatic release/takeover route.
-
-The existing pure memory-storage tests may still call budget preparation without `installGlobal`; they exercise storage algorithms, not production tab admission. New tests must exercise the actual guarded production path with two independently cached contexts sharing one memory physical store, one memory IndexedDB store and one lock manager. Do not present an unguarded two-facade test as fixed merely because a key is reread. Private QA builds with an injected tab-scoped memory backup store use a unique tab-scoped lock name, so independent QA pages do not contend for a career they do not share. Production always uses the fixed origin lock. A dedicated two-tab check must deliberately use the same lock name and shared synthetic storage to prove rejection.
-
-Exact additional ownership request: `src/career-budget.js` constants around lines 10-11; a new lock helper beside those exports; `createFacade` around lines 127-204 for lease guards; `prepareCareerBudget` around lines 206-269 for the validated-journal accounting and required production lease; `importBudgetCareer` entry around line 296 for ownership assertion. `src/main.js` import/startup/catch regions around lines 4 and 28-56. New `tools/test-career-budget-recovery.mjs`. No changes to `career-backup.js`, `career-archives.js`, their IndexedDB schema, old test assertions, App UI/router ownership, or unrelated save normalization.
-
-### Focused failing-test plan
-
-1. Reproduce the reported maximum-ghost pending journal with synthetic storage, interrupt before durable flush, then restart from cloned physical/IndexedDB data with no old timers. Require exact ghost bytes, unchanged profile/archives, recovery success below 4 MB and eventual verified flush. This currently fails at the startup reserve check.
-2. Keep a snapshot ahead of an untrimmed but valid journal to simulate a crash between durable save and journal cleanup. Require exact once-only recovery. Repeat with ghost and telemetry writes both pending and measure actual physical key/value bytes.
-3. Corrupt journal JSON, version, base revision, operation hash/length and snapshot presence independently. Require rejection and byte-exact retained physical recovery data. A large unrelated value must still fail the reserve check; a valid journal must never permit total physical bytes at or over 4 MB.
-4. Use a deterministic shared memory lock manager and storage adapters. Admit A through the production startup ownership path; deny B before its backup, migration, facade creation, App creation or any write. Let A save and flush Kyle's synthetic lap. B remains blocked and cannot overwrite it. End A's simulated document; a fresh B startup must read Kyle's exact lap before saving the son's separate lap, preserving both. Also try simultaneous acquisition and assert exactly one owner.
-5. Hold A's flush or import at an awaited store operation, then attempt B startup. B stays blocked throughout. Revoked/ended leases reject stale facade writes, flushes and imports without changing physical or IndexedDB bytes. Missing Web Locks fails closed before migrations. A lease cannot create two installed facades.
-6. Check player-visible blocked-tab wording and no game startup on the denied path. Scheduled private browser QA uses memory-only saves and a non-live port; it must demonstrate actual same-name Web Locks exclusion and fresh startup after the owning document closes. Independent private QA pages retain isolated lock names.
-
-The new recovery tests reproduced the startup failure before code, then passed after the approved correction. The production writer and journal fixes are implemented; final Save Guardian review remains required.
-
-## Tests before implementation
-
-Write failing tests for: actual 20 m crossings with variable step sizes; finite throttle/brake/position values; native complete-lap gating; pause/reset/restart/reverse/assisted travel; faster-only replacement; per-player/event/route/fingerprint isolation; all seven old-save fixtures; untouched ghost/archive/profile/wallet data; strict malformed/future-version and quota preservation; companion backup round trip; bounded telemetry plus maximum ghost journal under the unchanged 4 MB ceiling; actual native lap capture and unchanged race fingerprint; reference-car labels and ranked measured corner losses. Shared reference comparison checks wait for the real Dossier helpers/data.
-
-## Validation
-
-Implemented the separate bounded companion store, native 20 m recorder, App lifecycle/provider, Team Room comparison region and results entry. The feature remains behind `grand-prix`; the real catalog entry and complete reference catalog are dependencies owned by other lanes. Existing save formats, migrations, reward rules and seven fixture payloads are unchanged.
-
-Focused acceptance: `node tools/test-lap-telemetry.mjs` **19 groups passed**. Tests were written before implementation (missing module/provider/panel failures observed), including native reverse detours, clean following laps, per-player/route/layout separation, quota/future-format byte preservation and backup round trips. A full native Harbor Highlands C race with telemetry off/on had identical race/reward fingerprint `06e9dba5bf807c38e49465a3bd2a9d3212146ba7e6656e389772e5a436bcc565`.
-
-Storage: `node tools/test-career-budget-recovery.mjs` **16 groups passed**, covering maximum ghost replay, concurrent telemetry and ordinary writes, Unicode/escaping physical bytes, corrupt recovery retention, delayed/failed flush, guarded import and writer lifetime. Existing career-budget and preview-launcher focused suites passed without changing their assertions. No old test assertion or tolerance changed.
-
-Native private browser `career-writer-lock`: real popup with the same native Web Lock was denied before App startup, had no export action, and retained the cloned synthetic career. Primary reload and actual history return reacquired admission and preserved the exact synthetic lap. No native IndexedDB opens; no real player saves read. First run exited 0 on private port 31387 with 0 warnings/errors. **That first run was not accepted:** a separately launched foreign full tier appeared in the inventory returned with that launch; the Director was told immediately. The later assigned functional rerun on `fa24610b` passed at private port 52135, with 0 issues/warnings and memory-only saves, after separate prelaunch inventories showed only foreign lane PID 23180 and no full/balance. Its first attempt hit a CDP navigation-context interruption; the one permitted unchanged rerun passed. This is functional evidence with a concurrent lane, not laptop-wide timing evidence. The Director was asked to track the unreliable harness navigation check.
-
-Pending: lane tier and build in a Director slot, and complete native reference catalog acceptance. Final source/save review was clear on `fa24610b`; native bounded Harbor C acceptance is recorded below. These passes do not constitute merge approval or all-route feature acceptance.
-
-## Review follow-up
-
-The Director reports Save Guardian source review clear on frozen commit `2ed6367710d0fd80dd66fb9d6860342a30dd9dba`. Added three coverage cases for valid, malformed and future-version telemetry through an accepted pending journal, guarded restart, real career export/import, verified pre-import backup and a fresh guarded reload. They assert exact companion bytes and unrelated career entries; valid data also returns the recorder's exact lap through `LapTelemetryStore`. The seven migration fixtures and existing assertions remain unchanged. These coverage additions follow the clear runtime review; no artificial failing runtime change was made.
-
-Corrected the results button to the card's required **ANALYSE MY LAP** wording. The same native Team Room action remains. No existing test asserted the previous wording, so no assertion was changed. Focused follow-up results: career recovery/writer **19 groups passed**, telemetry **19 groups passed**, existing career-budget checks passed, all seven unchanged historical save shapes passed **247 first-load/round-trip checks**, and career-backup checks passed (including 88 ARS-01 acceptance checks and 14 TAP tests). All three new guarded variants passed on their first execution; no runtime defect or artificial RED was introduced. Native race fingerprint remains unchanged.
-## Bounded native Harbor C scenario design
-
-The new `tools/scenarios/lap-telemetry.mjs` proves one complete native integration path on the actual FIELD-enabled build. It opens the isolated Preview with `?flags=grand-prix`, verifies the real catalog switch and native writer admission, and rejects native IndexedDB access. Setup creates only a disposable named player and purchases Harbor Highlands through App with fixture credits. It never injects a lap, result, ghost, completion event or telemetry record.
-
-For High and Performance, the existing App autopilot drives a Harbor C Time Trial through the ordinary control-input and fixed-step physics path. The scenario may call the existing `App.advance` helper to reduce wall time, while renderer readiness still gates physics. Native lap events, assisted flags, control samples, final results and the actual companion store must agree. It flushes through the guarded career facade and checks the memory backup snapshot contains the exact real best lap.
-
-At actual results, it uses the native **ANALYSE MY LAP** button. The committed Harbor C reference must match the actual `track-v1-6eceb630` geometry and supply measured corner timings. The genuine Team Room must show both exact speed traces, three matching sector rows and the expected ranked losses. It captures profile, race, settings and saved-entry witnesses before opening and checks they stay identical through view, Tab focus trapping and Escape close with focus restored to the results action. Screenshots and the compact verdict stay in governed integration evidence.
-
-This is bounded Harbor C recording/results-entry evidence, not all-route acceptance or frame-pacing evidence. It does not change, filter, skip or replace the unchanged requirement for all 27 fresh references. No browser runs until the Director grants its slot.
-Native Harbor C verdict: **passed first run**, using actual FIELD-synced lane `a20987e45f0a30c140df77e62492b8a98b77eceb` plus this scenario (SHA-256 `d50cee81d9b2220ae806d857846821edf2c4646f6c6092341982390e6956215c`). High and Performance each completed two native laps and saved a **54.270 s** best with **221 samples** through one admitted native QA writer. The exact memory backup snapshot matched the companion record; actual IndexedDB opens were **0**. The actual results action opened two matching speed traces, three exact sector rows and two measured positive corner losses. Tab trapping, Escape focus restoration and race/profile/settings/saved-entry witnesses passed. Both screenshots were inspected: the comparison was readable without clipped content.
-
-`node tools/browser-harness.mjs scenario lap-telemetry` exited **0** on private port **40755**, with **0 warnings and 0 errors**. Separate prelaunch inventory showed foreign Harbour lane PID 40912 (`--tier lane --changed --jobs 4 --keep-going`) and no full or balance suite. This was permitted functional overlap; no laptop-exclusive or frame-pacing claim is made. Raw report and two screenshots are under the governed integration evidence directory `2026-10-10/lap-telemetry-2026-10-10T22-58-33-931Z`. No runtime source or all-27 reference assertion changed for this scenario.
 ## Removed
 
-No existing save, record or code path is replaced. Temporary test/evidence output stays ignored and is removed after its verdict is recorded.
+Duplicate analysis is removed by the Dossier extraction; telemetry delegates
+to its shared functions. This note folds the superseded proposal and detailed
+handoff narratives into the current design; Git text history retains them.
+No old save, archive, ghost or reference is removed to meet a budget.

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {sampleCourseLightPath} from '../src/light-path.js';
 import {
   analyseTrack, sampleCourse, detectCorners, detectCrests, longestStraight,
   namedPieces, nameFeatures, cornerSpeeds, markSlowCorners, referenceSpeedColour, trackSectors,
@@ -7,6 +9,7 @@ import {
 import {buildReview, drawMap} from './track-review.mjs';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {getRouteVariants} from '../src/route-variants.js';
 import {teamRoomMarkup, teamRoomMap} from '../src/screen-team-room.js';
 import {courseAccessPanel} from '../src/course-access-ui.js';
@@ -267,6 +270,24 @@ equal(cameraPose.position, {x: 0, y: 7.2, z: 350}, 'Driver-seat snapshot rests 1
 near(cameraPose.target.z, 420, 1e-8, 'Snapshot looks ahead along the native course');
 check(cameraPose.target.y < cameraPose.position.y, 'Snapshot aim follows the road down beyond a crest');
 assert.throws(() => trackSnapshotPose(course, {snapshotS: NaN, camera: {up: 1.2, ahead: 70}}), /snapshot/i); checks++;
+// Execute the snapshot's real renderer call against the native path sampler.
+// A menu-status App must still inspect the light at the selected road position.
+const rendererSource = readFileSync(new URL('../src/render3d.js', import.meta.url), 'utf8');
+const snapshotSource = rendererSource.slice(rendererSource.indexOf('function drawTrackSnapshot('),
+  rendererSource.indexOf('let ready = false'));
+const lightingCall = snapshotSource.match(/lighting\.apply\((\{[\s\S]*?\})\);/)[1];
+const lightCourse = freeze({...course, raceLength: course.length * 3,
+  def: {...course.def, theme: 'coast', lightPath: {axis: 'distance',
+    keyframes: [{at: 0, look: 'day'}, {at: 800, look: 'night'}]}},
+  themeAt: () => 'coast', tunnelAt: () => false});
+const menuApp = freeze({duel: {state: {status: 'menu', s: 12}}, profile: {name: 'Memory player'}, lightingMood: 'clear'});
+const menuBefore = JSON.stringify(menuApp);
+const snapshotInputs = new Function('course', 'app', 'distance', `return (${lightingCall});`)(lightCourse, menuApp, 900);
+equal(sampleCourseLightPath(lightCourse, snapshotInputs).settings.nightAmount, 1,
+  'A late-course snapshot samples actual night lighting despite menu race status');
+equal(sampleCourseLightPath(lightCourse, {...snapshotInputs, distance: 0}).settings.nightAmount, 0,
+  'The same authored path remains daytime at the start');
+equal(JSON.stringify(menuApp), menuBefore, 'Snapshot lighting input leaves race and profile unchanged');
 equal(firstCornerFlag.snapshotS, reference.corners[0].brakeS, 'Corner snapshot uses its actual reference braking point');
 equal(firstCornerFlag.engineer.targetKph, 129, 'Generated target speed comes from the actual reference corner');
 equal(firstCornerFlag.engineer.gear, 3, 'Generated gear comes from the actual reference corner');
@@ -316,7 +337,8 @@ equal(JSON.stringify(rampSource), rampBefore, 'Ramp metadata is not annotated in
 // Every existing closed event and each offered route must work with native
 // geometry. This needs no simulation advance, graphics, saved laps or browser.
 let nativeRoutes = 0;
-for (const definition of COURSE.filter(entry => entry.closed !== false)) {
+const allDefinitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(entry => [entry.id, entry])).values()];
+for (const definition of allDefinitions.filter(entry => entry.closed !== false)) {
   for (const route of getRouteVariants(definition)) {
     const native = new Course(definition, route.seed);
     const nativeBefore = JSON.stringify({definition, samples: native.samples, ramps: native.features.ramps});
