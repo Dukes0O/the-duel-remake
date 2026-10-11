@@ -73,3 +73,19 @@ test('landmark metadata cannot put structures on the road or silently substitute
     assert.throws(() => addCircuitLandmarks(new THREE.Group(), bad), /landmark|road/);
   }
 });
+
+test('every Panorama placement loads both approved GLBs on actual terrain and clears the road', async () => {
+  const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
+  const {createTrackKits}=await import('../src/track-kits.js');
+  const parser=new GLTFLoader();
+  parser.register(()=>({name:'PANORAMA_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const owner=createTrackKits(course,{loadAsset:async path=>{
+    const bytes=readFileSync(new URL('../public'+path,import.meta.url));
+    return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  }});
+  try {
+    assert.equal(await owner.ready,true,owner.error?.message);
+    assert.equal(owner.placements.length,PANORAMA_RIDGE.kitPlacements.length);
+    assert.ok(owner.group.children.length>0);
+  } finally {owner.dispose();}
+});

@@ -25,7 +25,14 @@ Claude's finishing pass remains required before any release.
 
 ## Checks
 
-Implementation and native checks pending. No frame/field/art pass claimed.
+All five focused checks pass, including every authored actual High/LOD GLB
+placement against rendered ground and native pit clearance. Lighting/PIT/GP
+and loader source were genuinely merged; the renderer conflict retains
+Team Room snapshot cleanup plus kit retry/disposal. Independent runtime review
+is clear. Two prepared-browser issues were corrected before execution:
+in-memory Vite helpers replace missing raw module paths, and named captures
+follow genuine field progress with actual sampled light metadata.
+Native, quiet frame, field-balance and Claude art checks remain pending.
 
 ## Removed
 

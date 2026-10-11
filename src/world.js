@@ -1,3 +1,4 @@
+import {addCircuitLandmarks} from './circuit-landmarks.js';
 import {createTrackKits,bindTrackKits} from './track-kits.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
 import * as THREE from 'three';
@@ -122,6 +123,7 @@ export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
   addRallyDetail(group,course);
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
+  addCircuitLandmarks(group,course);
   if (trackKits || course.def.kitPlacements?.length) {
     const kits = trackKits ?? createTrackKits(course);
     bindTrackKits(group,kits);
