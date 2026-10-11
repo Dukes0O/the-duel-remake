@@ -46,6 +46,69 @@ function framePolicyChecks(){
 }
 framePolicyChecks();
 if(process.argv.includes('--frame-policy-focused'))process.exit(0);
+// This acceptance reads only the real owned QA preparation recipe, with a disposable
+// definition facade. It runs no browser, race, asset loading or frame measurement.
+function signedPondRimClearance(point,polygon){
+  assert.ok(point&&Number.isFinite(point.x)&&Number.isFinite(point.z),'clearance point must be finite');
+  assert.ok(Array.isArray(polygon)&&polygon.length>=3&&polygon.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)),
+    'outer rim polygon needs at least three finite vertices');
+  let inside=false,minimum=Infinity;
+  for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+    const a=polygon[j],b=polygon[i],dx=b.x-a.x,dz=b.z-a.z,length=dx*dx+dz*dz;
+    assert.ok(Number.isFinite(length)&&length>0,'outer rim edge must have finite nonzero length');
+    const t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.z-a.z)*dz)/length));
+    minimum=Math.min(minimum,Math.hypot(point.x-a.x-t*dx,point.z-a.z-t*dz));
+    if((a.z>point.z)!==(b.z>point.z)&&point.x<(b.x-a.x)*(point.z-a.z)/(b.z-a.z)+a.x)inside=!inside;
+  }
+  return inside?-minimum:minimum;
+}
+async function pondPineClearanceChecks(){
+  const square=[{x:-1,z:-1},{x:1,z:-1},{x:1,z:1},{x:-1,z:1}];
+  assert.equal(signedPondRimClearance({x:0,z:0},square),-1,'inside must fail even when distance to rim is positive');
+  assert.equal(signedPondRimClearance({x:1,z:0},square),0,'rim boundary has no outside clearance');
+  assert.ok(signedPondRimClearance({x:7.399,z:0},square)<6.4,'near outside remains below approved6.4metres');
+  assert.equal(signedPondRimClearance({x:7.4,z:0},square),6.4,'exact approved6.4metres is accepted');
+  assert.ok(signedPondRimClearance({x:8,z:0},square)>6.4,'far outside is retained');
+  for(const point of [null,{x:NaN,z:0},{x:0,z:Infinity}])assert.throws(()=>signedPondRimClearance(point,square),/finite/);
+  for(const polygon of [[],square.slice(0,2),[{x:0,z:0},{x:Infinity,z:1},{x:1,z:0}]])
+    assert.throws(()=>signedPondRimClearance({x:0,z:0},polygon),/finite vertices/);
+  assert.throws(()=>signedPondRimClearance({x:0,z:0},[square[0],square[0],square[1]]),/nonzero/);
+  const source=await readFile(new URL('./scenarios/p4-snow.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('function prepareNative('),end=source.indexOf('\nfunction startNative',start);
+  assert.ok(start>=0&&end>start,'the original native preparation recipe must be identifiable');
+  const nativeDef={...COURSE[0]},mockWindow={name:'__duel_qa_tab_v2:pond-unit',localStorage:{},__qaApp:{
+    stop(){},audio:{setMuted(){}},setGraphicsQuality(){},getMenuCourse(){return {def:nativeDef};},
+    _menuCourses:new Map(),duel:{state:{}}}},mockDocument={querySelector(){return {dataset:{worldBuilds:'0'}};}};
+  Function('window','document',source.slice(start,end)+';prepareNative("high");')(mockWindow,mockDocument);
+  const nativeCourse=new Course(nativeDef,1989),featuresBefore=JSON.stringify(nativeCourse.features),
+    rows=snowWorldPlacements(nativeCourse).filter(row=>row.id==='snow-pine'),owner=createSnowWorld(nativeCourse);
+  try{
+    owner.group.updateMatrixWorld(true);const polygons=[];
+    owner.group.traverse(mesh=>{if(mesh.name!=='Anchored pond snow rim')return;
+      const p=mesh.geometry.attributes.position;assert.equal(p.count,96,'original forty-eight rim segments stay exact');
+      const outer=[];for(let i=1;i<p.count;i+=2){const vertex=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);
+        outer.push({x:vertex.x,z:vertex.z});}polygons.push(outer);
+    });
+    assert.equal(polygons.length,2,'both genuine seeded outer pond rims are checked');
+    assert.equal(rows.length,106,'all native converted and authored pines remain');
+    assert.equal(rows.filter(row=>!row.scenery).length,64,'no authored pine is discarded for clearance');
+    assert.equal(rows.filter(row=>row.scenery).length,42,'all actual physical scenery conversions remain');
+    const distances=rows.map(row=>{
+      const tree=row.scenery&&nativeCourse.features.trees.find(tree=>tree.id===row.scenery.id);
+      if(row.scenery)assert.ok(tree,'converted pine must retain its actual physical tree identity');
+      const point=tree??nativeCourse.groundAt(row.s,row.lateral);
+      return {id:row.scenery?.id??'authored-cluster',s:row.s,lateral:row.lateral,
+        converted:!!tree,clearance:Math.min(...polygons.map(polygon=>signedPondRimClearance(point,polygon)))};
+    });
+    assert.equal(JSON.stringify(nativeCourse.features),featuresBefore,'rim/placement acceptance never changes physical features');
+    const repeat=new Course(nativeDef,1989);assert.equal(nativeCourse.rng.float(),repeat.rng.float(),'presentation keeps the simulation RNG exact');
+    const failures=distances.filter(row=>row.clearance<6.4);
+    console.log(JSON.stringify({pondClearance:{seed:1989,total:rows.length,minimum:Math.min(...distances.map(row=>row.clearance)),failures}},null,2));
+    assert.equal(failures.length,0,'every actual snow pine must be outside both actual seeded outer rims by at least approved6.4worldmetres');
+  }finally{owner.dispose();}
+}
+await pondPineClearanceChecks();
+if(process.argv.includes('--pond-clearance-focused'))process.exit(0);
 import {snowWorldPlacements,snowPineIds,winterWeight,applySnowTerrain,
   snowSceneryPose,createSnowWorld,SNOW_LIMITS,winterTerrainMaterial,winterLightingSettings} from '../src/snow-world.js';
 const def={id:'winter-qa',stage:90,name:'Winter QA',theme:'alpine',closed:true,laps:3,
@@ -226,7 +289,7 @@ try{
 }
 // Authored curved pond crosses the actual near/far overlap, not an analytic plane.
 const pondCourse=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.snowWorld,
-  ponds:[{s:600,lateral:58,radiusX:12,radiusZ:8}]}},1989);
+  ponds:[{s:650,lateral:58,radiusX:12,radiusZ:8}]}},1989);
 const pondFeaturesBefore=JSON.stringify(pondCourse.features);
 const pondOwner=createSnowWorld(pondCourse),pond=pondOwner.group.getObjectByName('Frozen winter pond');
 const actualMaterial=new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),
@@ -281,7 +344,7 @@ const unsupportedPond=new Course({...def,terrainHalfWidth:64,snowWorld:{...def.s
   ponds:[{s:180,lateral:5000,radiusX:9,radiusZ:5}]}},1989);
 assert.throws(()=>createSnowWorld(unsupportedPond),/actual rendered terrain/,
   'a pond outside the actual terrain fails without an analytic fallback');
-const clusterCentres=[80,180,350,600].flatMap(s=>[-1,1].map(side=>({s,lateral:side*(s===600?38:s===180?36:32),count:8,radius:7})));
+const clusterCentres=[80,180,350,600].flatMap(s=>[-1,1].map(side=>({s:s===180&&side>0?205:s,lateral:side*(s===600?38:s===180?36:32),count:8,radius:7})));
 const clusteredDef={...def,terrainHalfWidth:64,scenery:{trees:100,rocks:30,mountains:true},
   script:[['straight',500,{width:16,surface:'snow',climb:40,walls:'none'}],
     ['turn','L',180,80,{width:16,walls:'none'}],

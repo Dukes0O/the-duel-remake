@@ -5,8 +5,7 @@
 Explicit snowWorld metadata plus snow-world dev opts a scene into winter. Full visible terrain is snow; authored ranges still own exact physical surfaces.
 Snow pines, ground, ledge rocks and banks reuse Kyle's approved kit GLBs.
 
-Course construction generates real deep-snow verge bands from the same ranges. Course.gripKindAt reads patches before its existing outside-road default;
-ordinary courses and pre-existing road patches retain their exact answers.
+Course construction generates real deep-snow verge bands from the same ranges. Course.gripKindAt reads patches before its existing outside-road default; ordinary courses and pre-existing road patches retain their exact answers.
 Renderer reads surfaces; existing surface.snow/surface.ice cues stay exact.
 
 Terrain coverage uses a winter weight on the drawn triangles; ponds are
@@ -33,7 +32,7 @@ Mixed dry/fullSnow CPU/GPU/delivered/combined10% results remain visible informat
 Before code: read Approved track kits.userData.trackKitStats.presentation.constructionMs; reject missing/nonfinite/negative witnesses.
 Policy assertions change only per the written Claude decision; no extra effects-only comparison.
 No state edits, sample discard or overhead subtraction. Static effects stay active;
-Policy RED: old relative acceptance; GREEN28 numeric checks cover both qualities,18.5ms and strict1000ms boundaries, invalid witness/state/positive guards. Syntax passes; moving/native timing unmeasured.
+Policy RED: old relative acceptance; GREEN28 numeric boundaries pass. Kyle rules7–10 supersede timing: currentSnow is QA-only, no catalogwintertrack; no art/look frames underrule9.
 Loader union retains Snow extras/vehicle update, trusted runtime clearance,
 camera culling and scoped rear restoration; only2granted renderer conflicts.
 
@@ -89,12 +88,13 @@ Round-two focused GREEN: actual assets/cluster clearance and exact dry/night pal
 Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
 Round3 GREEN: outside-range lightfall RED/GREEN, dry cap shader,64 seeded pines,
 actual rim overlap/road clearance/read-only identity. e6ac2080 final native8views passes,0warnings/errors,12finiteHDRtargets.
-Sheet269446B final3 sent for review; frames/gates pending, no appearance approval or fourth round.
+Claude13:40 accepts final cap2.5/4/3/3.5 subject to everypine6moutsidepond; all remaining look toClaude, no fourth round.
+Before placement code: new106pine acceptance uses original1989native fixture and actual seededFloat32 outer polygons, with signed inside/near/outside and invalid-math controls; Claude14:15 approves onlypond2 s600→650 and firstpositivecluster s180→205; everypine>=6.4m, all else exact. Original RED12violations (2physical/10authored), min-8.254607m. GREEN106pines min6.446767m,0violations; physicalfeatures/RNG exact.
 
 ## Removed
 
-Snow-scene ordinary pine, rock and summer-grass instances are removed from
-the copied presentation views. Snow switches replace the flat winter road
+Snow-scene ordinary pine, rock and summer-grass instances are removed from the copied presentation views. Snow switches replace the flat winter road
 material path. Shared ordinary scenery remains in use on dry ranges/tracks.
 Consumed probes/shared reverse kerbs are removed in FIX-P4-KERB-NORMALS.
 Main-only hidden-mirror timing recipe is replaced by fresh whole-view controls. Mixed relative10% acceptance is replaced by Claude10:30 absolute policy; every original diagnostic stays.
+Replaced only the overlapping positive cluster centre and second pond centre; physical tree placements retained.

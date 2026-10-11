@@ -21,8 +21,8 @@ function prepareNative(quality) {
       ['turn','L',180,80,{name:'Home Bend',width:16,walls:'none'}]],
     surfacePatches:[{id:'shaded-winter-ice',kind:'ice',s0:540,s1:575,shaded:true}],
     snowWorld:{ranges:[{from:0,to:750}],exposed:[{from:500,to:730}],
-      ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12},{s:600,lateral:58,radiusX:12,radiusZ:8}],
-      pineClusters:[80,180,350,600].flatMap(s=>[-1,1].map(side=>({s,
+      ponds:[{s:180,lateral:32,radiusX:9,radiusZ:12},{s:650,lateral:58,radiusX:12,radiusZ:8}],
+      pineClusters:[80,180,350,600].flatMap(s=>[-1,1].map(side=>({s:s===180&&side>0?205:s,
         lateral:side*(s===600?38:s===180?36:32),count:8,radius:7})))}});
   window.__snowBeforeBuilds=Number(document.querySelector('#view3d').dataset.worldBuilds||0);
   app._menuCourses.clear();app.onFrame?.(app.duel.state,0);
