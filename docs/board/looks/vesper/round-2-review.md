@@ -33,3 +33,9 @@ test file, which stays with that lane until merge. The mandatory lane floor on 3
 one fail and 203 unrun after fail-fast. Build passes. Claude's look verdict
 and a fresh green lane/build floor after registration are required before merge. WAR-04 owns the
 later reveal and installation; this comparison installs nothing.
+
+## Prior rounds, consumed
+
+Earlier costume verdict: round1 Art3/Reads4/Grounded4/Materials3/Clear4 in front/side/back and overhead/walk stills. Dark steel, weak red and flat seams caused the hold; no rig/body/action redesign was requested. Source43fc3eb/browser677a4c9:21 cases and10 complete native pictures passed, two inherited duplicate-Three warnings, no errors/failed requests. One visible4876-triangle skin;29 resources released once perquality. Private Odessa substitution left Nell/Odessa/Wren exact. HUD obscured inspection but did not hold costume; motion/frame/audio and public install were unclaimed.
+
+Earlier sheets and superseded notes are removed after their verdict facts are folded here. Recipes and the final comparison remain.

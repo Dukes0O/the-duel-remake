@@ -61,6 +61,15 @@ screenshots inspected, zero warnings/errors. Removed the inherited fixture
 rival=null setter that silently cleared the seven opponents. No fake finish
 or frame measurement. Current lane/build and independent review stay queued.
 
+## Current integration sync
+
+Genuinely merged dcdab76a (approved kits, Dossier, Telemetry and consumed-art
+cleanup) before the queued gate. No conflict resolution or race edit. Pit
+runtime, focused8-test regression and actual High/Performance scenario stay
+byte-identical to dfddbf09; the existing renderer pit callback survives its
+automatic additive Team Room merge. Keep the actual8-box/four-second native
+verdict above; current lane/build are still queued, with no new pass claimed.
+
 ## Removed
 
 No old runtime paths removed. The optional pit side replaces only its straight

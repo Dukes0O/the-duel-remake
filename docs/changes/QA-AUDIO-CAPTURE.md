@@ -21,7 +21,7 @@ VM routing, exact existing PCM copying (including ||0 signed-zero behavior),
 transfers, mono and adverse-clock rejection pass. Independent source review
 is clear. One quiet native run passes all 23 original cases and 98 checks;
 true peaks -1.39/-1.48/-1.48 dBTP. The old cause remains unproved.
-Lane gate and build pending.
+Lane378/378 in892.12s and build827ms pass on a89e562c.
 
 ## Removed
 
