@@ -4118,6 +4118,22 @@ tasks:
 
     mix_decision: "Kyle explicitly requests -16 LUFS and at most -1 dBTP. Initial +6.4 dB follows the measured -22.42 LUFS whole race. The quiet-tone comparison against released a6523ea must expect that exact +6.4 dB, retaining the 0.1 dB tolerance for peak and RMS. This changes the expected level, never the peak ceiling, contrast, onset, copy/continuity, lifecycle or licensed-asset assertions. Independent review and native whole-mix measurement determine the final gain."
     stress_design_decision: "Actual louder52348cc2 canonical native stress fails original sample/truepeak and distinguishable30ms onset checks despite whole-race-16.08LUFS/-1.21dBTP. Before code, bounded actual output analysis must prove oversampled ceiling overshoot and background headroom; fix audio-output mastering while retaining all original peak/contrast/onset/continuity/lifetime limits. No lowered gain or test waiver may be claimed as the requested-16LUFS result. Report exact proposed dynamics/ceiling change before implementation; thirty-minute limit."
+    waiting_on: claude
+    mastering_source: 9e9bcebd
+    mastering_review_question: "Trial2 preserves original compressor/+6.4 quiet gain and all limits; canonical native23/23 and focused469checks pass, worsttruepeak-1.60dBTP. Whole capture plus one identical-source retry fail original native128-frame continuity at different segments:2048 chunks advance1920 then2176, one256 callback gap. Valid121.347s partial is-16.20LUFS/-2.49dBTP, never a wholepass. Please settle a separate recorder follow-up scope to distinguish native clock metadata from real PCM loss while preserving every identity/continuity assertion; no fill/resampling/waiver. Audio remains held until full current whole proof. Originalc665 full recording and both failed attempts remain; no third attempt or release."
+
+  - id: QA-AUDIO-CLOCK
+    title: "Native audio recorder clock diagnosis"
+    owner: codex
+    lane: AUDIO
+    size: S
+    needs: []
+    status: ready
+    waiting_on: claude
+    owns: [tools/scenarios/p4-audio.mjs, docs/changes/QA-AUDIO-CLOCK.md]
+    decision_question: "Two identical-source current P4-AUDIO whole captures fail the original 128-frame continuity assertion at different segments: 2048-frame chunks advance 1920 then 2176 with one 256-frame callback gap. Approve a bounded recorder diagnosis to distinguish incorrect native clock metadata from real PCM loss. Preserve every raw sample-identity, continuity and clock assertion; no sample fill, resampling, tolerance waiver or inferred complete capture."
+    acceptance:
+      - "Prove the native discontinuity cause with actual recorded PCM and AudioWorklet clock witnesses, then settle the smallest fix before code. Preserve original assertions and both failed attempts. Complete current-source whole-race capture must pass unchanged continuity and meet about -16 LUFS with at most -1 dBTP before P4-AUDIO is ready."
 
   - id: P4-CAREER
     title: "Grand Prix in the career: menu, prices, pay, records"
@@ -4194,7 +4210,7 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP]
-    status: building
+    status: merged
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-pit
     owns: [src/pit-lane.js, tools/test-pit-lane.mjs, docs/changes/P4-PIT.md, tools/scenarios/pit-lane.mjs]
@@ -4207,7 +4223,9 @@ tasks:
 
     native_check_scope: "Director, 11 October: pit-lane scenario uses private memory-only native High and Performance races to verify an actual limiter, stop, crew and exit. No frame measurement in this functional check."
     current_review_commit: dfddbf092bce7d7df8492ed7be7e785073b9bd08
-    current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
+    current_review: "Director review clear; actual High/Performance eight-box service, four-second stop, limiter and read-only storage pass. Frozen5eb lane384/384 in648.47s/build496ms; additive integration union retains Dossier APIs and finite kerb normals."
+    gate_commit: 5ebfaa85d277e9891eccca5c25bd45a2a73eacd8
+    gate_result: "lane384/384,0failed/0notrun in648.47s; build496ms."
 
   - id: P4-TREMBLANT-SNOW
     title: "Tremblant Snow variant"
