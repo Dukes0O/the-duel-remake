@@ -142,7 +142,7 @@ class MockContext {
     return this.node('source', { playbackRate: 1 });
   }
   createDynamicsCompressor() {
-    return this.node('compressor', { threshold: -24, knee: 30, ratio: 12 });
+    return this.node('compressor', { threshold: -24, knee: 30, ratio: 12, attack: .003, release: .25 });
   }
   createWaveShaper() {
     const node = new Node(this, 'waveshaper');
@@ -238,6 +238,28 @@ const state = (overrides = {}) => ({
   ...overrides,
 });
 const { audio, context } = await makeAudio();
+// The actual output curve keeps quiet gain and leaves headroom for large hits.
+const outputCurve = audio.output.curve;
+const curveAt = value => outputCurve[Math.round((value + 1) * (outputCurve.length - 1) / 2)];
+check(outputCurve.every(Number.isFinite), 'actual output curve is finite');
+check(
+  outputCurve.every((value, index) => index === 0 || value >= outputCurve[index - 1]),
+  'actual output transfer is monotone',
+);
+check(
+  outputCurve.every((value, index) => Math.abs(value + outputCurve[outputCurve.length - 1 - index]) < 1e-7),
+  'output polarity is symmetric',
+);
+for (const input of [.0625, .125, .25]) {
+  check(Math.abs(curveAt(input) - input) < 1e-7, 'safe quiet amplitudes pass unchanged');
+}
+check(curveAt(.54) <= .34, 'measured sustained-background crests leave two-to-one hit headroom');
+check(curveAt(.95) > .60, 'large impact crests retain their distinct rise');
+check(
+  Math.abs(curveAt(1) - .70) < 1e-7 && curveAt(-1) >= -.7000001,
+  'actual curve endpoints retain resampling headroom',
+);
+
 check(audio.sampleStatus === 'ready', 'all eleven runtime recordings loaded');
 const spatialCourse = { groundAt: () => ({ x: 0, y: 0, z: 0, heading: 0 }) };
 const leftBurst = {
