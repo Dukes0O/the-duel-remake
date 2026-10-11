@@ -31,7 +31,8 @@ Frame checks keep the usual limits and run in a reserved quiet slot.
 Focused headless acceptance passes: ranges, true deep-snow verge driving
 (90 to <=45 mph), winter tyre grip, exact approved-kit patch identities,
 seeded placements without consuming course RNG, actual ground attributes,
-shader composition, pine break/reset/obliterate poses, quality caps and expiry.
+shader composition, pine break/reset/obliterate poses including the exact
+loader-prepared ground anchor, quality caps and expiry.
 Existing surface suite: 11/11 pass; dry neutrality and cue assertions retained.
 New malformed-ridge and pond-footprint tests failed first, then passed.
 No existing assertion or tolerance was changed.

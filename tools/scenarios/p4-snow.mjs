@@ -65,6 +65,21 @@ function witness(view) {
   });
   if(terrain.length<2 || !terrain.some(row=>row.white>0&&row.dry>0&&row.key.includes('winter')))
     throw Error('Actual near/far ground triangles do not carry winter coverage.');
+  const kits=api.scene.getObjectByName('Approved track kits');
+  const placements=kits?.userData.trackKitPlacements,kitStats=kits?.userData.trackKitStats;
+  if(!placements?.length || !Object.isFrozen(placements) || !kitStats)
+    throw Error('The approved native kit owner did not publish its frozen placements.');
+  const ids=[...new Set(placements.map(row=>row.id))];
+  for(const id of ['snow-pine','snow-rock','snow-ground','plough-bank'])
+    if(!ids.includes(id))throw Error('Missing actual approved Snow kit: '+id);
+  for(const row of placements.filter(row=>row.id==='plough-bank'))
+    if(!app.duel.course.features.surfacePatches.includes(row.physicalPatch))
+      throw Error('A visible plough bank does not reference its actual headless surface.');
+  const winterTreeIds=new Set(placements.filter(row=>row.id==='snow-pine').map(row=>row.scenery?.id));
+  api.scene.traverse(node=>{
+    if(node.userData.vegetationCell?.entries.some(entry=>winterTreeIds.has(entry.feature.id)))
+      throw Error('An ordinary pine duplicates its approved winter replacement.');
+  });
   const cars=api.scene.children.filter(node=>node.visible&&node.userData.vehicleKey);
   if(cars.length!==8 || cars.some(car=>!(car.userData.grounding?.wheels.length>=4)))
     throw Error('Eight actual imported, grounded cars are required.');
@@ -75,6 +90,8 @@ function witness(view) {
   }).length;
   if(view==='grid'&&visibleCars!==8)throw Error('The full native field must be in the grid view.');
   const nativeQuality=app.ambientOcclusionEnabled!==false?'high':'performance';
+  if(nativeQuality==='performance' && kitStats.high!==0)throw Error('Performance must use approved kit LODs.');
+  if(nativeQuality==='high' && kitStats.high===0)throw Error('Nearby approved High kits were not selected.');
   const alpha=tracks.geometry.attributes.snowAlpha.array;
   const liveMarks=[...alpha.slice(0,tracks.count)].filter(value=>value>0).length;
   const limits=nativeQuality==='high'?{flakes:240,marks:512}:{flakes:72,marks:128};
@@ -88,7 +105,7 @@ function witness(view) {
   const programs=api.renderer.info.programs;
   if(programs.some(program=>!program.isReady()))throw Error('A submitted Snow shader is not ready.');
   return {view,quality:nativeQuality,field:cars.length,visibleCars,s:state.s,
-    terrain,flakes:limits.flakes,liveMarks,markCap:tracks.count,pondVertices:pond.geometry.attributes.position.count,
+    terrain,kitIds:ids,placements:placements.length,kitStats:{...kitStats},flakes:limits.flakes,liveMarks,markCap:tracks.count,pondVertices:pond.geometry.attributes.position.count,
     programs:programs.length};
 }
 

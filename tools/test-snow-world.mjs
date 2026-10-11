@@ -61,6 +61,13 @@ const upright=snowSceneryPose(tree,[],0),fallen=snowSceneryPose(tree,[{kind:'tre
   atTime:0,directionX:1,directionZ:0,outcome:'knock'}],1);
 assert.notDeepEqual(upright.elements,fallen.elements);
 assert.deepEqual(snowSceneryPose(tree,[],1).elements,upright.elements,'reset restores upright kit');
+const renderedUpright=upright.clone();renderedUpright.elements[13]+=2;
+assert.deepEqual(snowSceneryPose(tree,[],1,renderedUpright).elements,renderedUpright.elements,
+  'kit reset restores its actual rendered-ground anchor');
+const anchoredFall=snowSceneryPose(tree,[{kind:'tree',id:tree.id,atTime:0,
+  directionX:1,directionZ:0,outcome:'knock'}],1,renderedUpright);
+assert.equal(anchoredFall.elements[13],renderedUpright.elements[13],
+  'broken Snow kit keeps its prepared ground pivot');
 assert.equal(new THREE.Vector3().setFromMatrixScale(snowSceneryPose(tree,[{kind:'tree',id:tree.id,
   atTime:0,directionX:1,directionZ:0,outcome:'obliterate'}],100)).length(),0);
 for(const high of [true,false]){

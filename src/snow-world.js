@@ -82,19 +82,22 @@ export function winterSurfaceMaterial(material,kind){
   material.customProgramCacheKey=()=>`winter-road-${kind}-v1`;return material;
 }
 // Match ordinary pine knock/obliterate timing; approved GLBs keep ground pivots.
-export function snowSceneryPose(tree,events,now){
-  const event=events.find(row=>row.kind==='tree'&&row.id===tree.id),position=new THREE.Vector3(tree.x,tree.y,tree.z),
-    rotation=new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DEFAULT_UP,tree.heading);
-  let scale=tree.scale*.7;
+export function snowSceneryPose(tree,events,now,upright=null){
+  const event=events.find(row=>row.kind==='tree'&&row.id===tree.id);
+  if(!event&&upright)return upright.clone();
+  const position=new THREE.Vector3(tree.x,tree.y,tree.z),
+    rotation=new THREE.Quaternion().setFromAxisAngle(THREE.Object3D.DEFAULT_UP,tree.heading),
+    scale=new THREE.Vector3().setScalar(tree.scale*.7);
+  if(upright)upright.decompose(position,rotation,scale);
   const length=event?Math.hypot(event.directionX,event.directionZ):0;
   if(event&&Number.isFinite(event.atTime)&&length>1e-6){
     const age=now-event.atTime,progress=clamp(age/.72),eased=smooth(progress);
     const fall=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(event.directionZ/length,0,-event.directionX/length),eased*1.38);
     rotation.premultiply(fall);
     if(event.outcome==='knock'){position.x+=event.directionX*COMBAT_TUNING.roadside.sceneryKnockDistance*eased;position.z+=event.directionZ*COMBAT_TUNING.roadside.sceneryKnockDistance*eased;}
-    if(event.outcome==='obliterate'&&age>=COMBAT_TUNING.roadside.sceneryVisibleSeconds)scale=0;
+    if(event.outcome==='obliterate'&&age>=COMBAT_TUNING.roadside.sceneryVisibleSeconds)scale.setScalar(0);
   }
-  return new THREE.Matrix4().compose(position,rotation,new THREE.Vector3(scale,scale,scale));
+  return new THREE.Matrix4().compose(position,rotation,scale);
 }
 function addPonds(group,course){
   const ponds=course.def.snowWorld.ponds??[];
@@ -140,7 +143,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
   const marks=new THREE.InstancedMesh(markGeometry,markMaterial,markCount);marks.frustumCulled=false;marks.name='Actual wheel snow tracks';group.add(marks);
   const zero=new THREE.Matrix4().makeScale(0,0,0);for(let i=0;i<markCount;i++)marks.setMatrixAt(i,zero);
   const trees=new Map(course.features.trees.map(tree=>[tree.id,tree])),entries=[];
-  for(const [index,entry] of (kits?.placements??[]).entries())if(entry.id==='snow-pine'&&entry.scenery)entries.push({index,tree:trees.get(entry.scenery.id),key:null});
+  for(const [index,entry] of (kits?.placements??[]).entries())if(entry.id==='snow-pine'&&entry.scenery)entries.push({index,tree:trees.get(entry.scenery.id),upright:kits.getPlacementPose(index),key:null});
   const previous=new Map(),point=new THREE.Vector3(),along=new THREE.Vector3(),across=new THREE.Vector3(),normal=new THREE.Vector3(),basis=new THREE.Matrix4();
   let disposed=false,cursor=0,time=0,lastClock=null;
   const stats={flakes:high?SNOW_LIMITS.high.flakes:SNOW_LIMITS.performance.flakes,liveMarks:0};
@@ -161,7 +164,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
     for(const item of entries)if(item.tree){
       const event=breaks.get(item.tree.id),age=(state.stageTimeSec??0)-(event?.atTime??0);
       const key=event?`${clamp(age/.72)}:${event.outcome}:${age>=COMBAT_TUNING.roadside.sceneryVisibleSeconds}`:null;
-      if(key!==item.key){kits.setPlacementPose(item.index,snowSceneryPose(item.tree,event?[event]:[],state.stageTimeSec??0));item.key=key;}
+      if(key!==item.key){kits.setPlacementPose(item.index,snowSceneryPose(item.tree,event?[event]:[],state.stageTimeSec??0,item.upright));item.key=key;}
     }
     for(let i=0;i<markCount;i++){life[i]=Math.max(0,life[i]-dt);alpha[i]=i<cap.marks?Math.min(.42,life[i]*.13):0;}
     if(!state.paused&&state.status==='racing')for(const {state:actor,mesh} of vehicles.slice(0,8)){
