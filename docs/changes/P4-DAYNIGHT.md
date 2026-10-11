@@ -54,7 +54,7 @@ readiness passed. Both presets record 22 supported fixtures, eight complete
 in-frustum stations per side, two rear glows on every car and clear 50 m lines.
 Shader counts: High 148 after warmup / 151 after initial preparation (+3);
 Performance 238 / 243 (+5); zero further additions at first dusk/night.
-The [final art note](../board/looks/p4-daynight/round-3.md) keeps the pixel audit
+The [final art note](../board/looks/p4-daynight/round-3-review.md) keeps the pixel audit
 and 447,115-byte sheet. Rounded Performance probes miss two subpixel lines;
 raw values and 3x3 peaks are preserved. No fourth art round is allowed.
 
@@ -83,17 +83,17 @@ limit. No cause, including shader compilation, is proved; no timing rerun occurr
   CPU/GPU +49.33%/+21.88%; delivered remained 16.8 ms.
 - `f6b591f3`: High CPU 9.7/11.3 ms (+16.49%), GPU +8.85%; Performance cheaper;
   delivered 16.8 ms. Kyle relayed Claude's source-specific exception at 00:20 UTC
-  11 Oct; the test stays failed. [Round one](../board/looks/p4-daynight/round-1.md)
+  11 Oct; the test stays failed. [Round one](../board/looks/p4-daynight/round-1-review.md)
   records it. Panorama Night and Harbour Lights each need eight-car night
   delivered p95 checks and lighting trims if needed; no general waiver applies.
 - `0f3cf576`: High CPU 9.6/18.7 ms (+94.79%), GPU 11.132928/17.587200 (+57.97%),
-  delivered 16.8/18.2 (+8.33%); other pairs passed. [Round two](../board/looks/p4-daynight/round-2.md)
+  delivered 16.8/18.2 (+8.33%); other pairs passed. [Round two](../board/looks/p4-daynight/round-2-review.md)
   retains all pairs. QA-FRAME-SETTLING retains the unproved variation finding.
 
 ## Removed
 
 Removed all-pane emission, white-hot head floor, subpixel star dots, sparse
 one-side fixtures and late-injected QA paths. Consolidated stale narratives;
-Older details remain in round notes/Git text history. No legacy path, native geometry,
+Notes use required round-N-review.md names; old filenames are removed. No legacy path, native geometry,
 save or licensed asset was removed. Raw evidence is disposable after verdict;
 only one compressed sheet per round is committed.
