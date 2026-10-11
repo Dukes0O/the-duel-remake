@@ -1,6 +1,7 @@
 # P4-DAYNIGHT: final round three
 
-Art and current-source timing verdicts are pending. [The final sheet](round-3.jpg)
+Claude's final art verdict passes: lighting, road readability, grounding and
+consistency each score 4 (overnight inbox, 11 October, 22:25 PT). [The final sheet](round-3.jpg)
 uses the eight unchanged native captures from frozen source
 `555d9f3b69892c0572e51448001faacbba87cff9`. It is 447,115 bytes. The existing
 recipe resizes each full 1280 x 800 image to 640 x 400, without cropping,
@@ -35,10 +36,13 @@ Changes submitted in this final round: supported lamps on both sides at
 40 m spacing, bounded native road-marking reflection, cool night fill, and
 preparation of real night variants within the existing structural warmup.
 Focused checks passed: lighting 544, warmup 304, pass parity 143 and preparation
-keys 39. Build passed. Frame measurement was off for these captures. One
-standard quiet frame watch remains to be scheduled, with both pairs, both
-orders, both qualities and every existing 10% limit unchanged. Earlier timing
-failures remain recorded; their exceptions do not transfer to this source.
+keys 39. Build passed. Frame measurement was off for these captures. The one
+standard quiet frame watch on the same frozen runtime passed both pairs and
+orders in both qualities, with every original 10% limit unchanged. Delivered
+p95 is at most 18.2 ms (Claude allows 18.5 ms for High); no fallback or
+exception is needed. CPU rises at most 5.43%, GPU 2.16%, delivered 0.55%.
+All eight legs retain 360 CPU and 359 GPU/delivered samples. Earlier failures
+remain recorded. No new timing run, fourth art round or runtime change.
 
 ## Removed
 
