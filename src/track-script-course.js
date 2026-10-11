@@ -3,6 +3,7 @@
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, buildRacingLine } from './track-script.js';
 import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
+import { basinWeight } from './basins.js';
 import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 
@@ -12,6 +13,21 @@ export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
   installPitLane(course);
+  // A circuit's basins (`basins` on its definition) sink the ground beside the road to hold
+  // harbour or reservoir water. Done here, for a scripted circuit only, so that the ground
+  // of every other course is exactly what it was.
+  if (course.def.basins?.length) {
+    const relief = course._relief.bind(course);
+    course._relief = (s, off) => {
+      let h = relief(s, off);
+      const p = course.phase(s);
+      for (const basin of course.def.basins) {
+        const w = basinWeight(basin, p, off);
+        if (w > 0) h += (basin.level - basin.deep - course.at(p).y - h) * w;
+      }
+      return h;
+    };
+  }
   const { lineMargin, lineSwing } = course.def;
   course.racingLine = buildRacingLine(script, lineMargin === undefined && lineSwing === undefined ? dynamics : { ...dynamics, lineMargin, lineSwing });
   f.walls = [];
@@ -115,7 +131,7 @@ function scatterScenery(course) {
     const piece = script.pieceAt(n.s);
     if (piece.kind === 'turn' && side === piece.dir && n.distance < width + 30 + radius) return false;
     // Nor in the water of a basin.
-    if ((course.def.basins ?? []).some(basin => course.basinWeight(basin, course.phase(n.s), n.lateral) > .02)) return false;
+    if ((course.def.basins ?? []).some(basin => basinWeight(basin, course.phase(n.s), n.lateral) > .02)) return false;
     // Nor on a run-off road or its walls.
     for (const escape of course.escapeRoads ?? []) {
       const { u, v } = escapeFrame(escape, p.x, p.z), slack = radius + margin + 3;

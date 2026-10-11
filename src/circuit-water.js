@@ -1,5 +1,5 @@
 // Water and the wet look of a circuit by night: a flat sheet over each basin the
-// circuit sinks into the ground (`basins` on its definition, Course.basinWeight),
+// circuit sinks into the ground (`basins` on its definition, src/basins.js),
 // with a faint swell and a glitter path toward the moon, and soft coloured pools
 // on the road under lanterns and neon (`wetRoad`). Drawing only: nothing here
 // changes race state, and nothing here is a kit piece (the kit loader owns those).

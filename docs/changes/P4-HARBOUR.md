@@ -33,7 +33,7 @@ boards were already merged (P4-CIRCUIT-LAYOUTS); this card adds the rest.
   straight and grandstands opposite. Every placement passes the loader's own
   checks (tested piece by piece against the real GLBs).
 - **Harbour and reservoir water.** `basins` sink the ground beside the road
-  (`Course.basinWeight`, `src/basins.js`) for the harbour along the Seafront
+  (`src/basins.js`, applied in `src/track-script-course.js`, so no other course's ground changes) for the harbour along the Seafront
   Straight and Harbour Road and two terraced pools along the Reservoir Run;
   `src/circuit-water.js` draws the water with a faint swell and a glitter path
   toward the moon. Boats sit on the shallow floor. Scenery stays out of the

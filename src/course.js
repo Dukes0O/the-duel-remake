@@ -7,7 +7,6 @@ import {buildPitCourse, pitFrame, pitNearest, pitRampHeight, pitObstacles} from 
 import { installHiddenRoad } from './hidden-road.js';
 import { installMuddyHollow } from './muddy-hollow.js';
 import { THEMES, DRIVE } from './config.js';
-import { basinWeight } from './basins.js';
 import { buildTrackScript } from './track-script.js';
 import { installTrackScript, trackScriptSolids } from './track-script-course.js';
 import { buildRoadFurniture, tunnelCoverShape } from './road-furniture.js';
@@ -182,11 +181,8 @@ export class Course {
       const headland=Math.exp(-(((p-(sec.start+(sec.end-sec.start)*.58))/50)**2+((off-73)/24)**2));
       h-=Math.min(48,(off-28)*.55)*coastFade*(1-headland*.96);}
     for(const cut of this.features.shortcuts)if(p>=cut.start&&p<=cut.end){const distance=Math.abs(off-this.shortcutOffset(cut,p)),blend=smooth((p-cut.start)/36)*smooth((cut.end-p)/36);h*=1-blend*(1-smooth((distance-cut.halfWidth-3)/6));}
-    // A circuit's basins (`basins` on its definition) sink the ground beside the road to hold harbour or reservoir water.
-    if(this.def.basins)for(const basin of this.def.basins){const w=this.basinWeight(basin,p,off);if(w>0)h=lerp(h,basin.level-basin.deep-this.at(p).y,w);}
     return h;
   }
-  basinWeight(basin,p,off){return basinWeight(basin,p,off);}
   _baseGroundAt(s,off=0){const p=this.worldAt(s,off);p.y+=this._relief(s,off);
     if(Math.abs(off)>this.roadHalfWidthAt(s)+1)for(const station of this.features.stations){
       const ds=angleDiff((this.phase(s)-station.s)/this.length*TAU,0)*this.length/TAU,dl=off-station.off,c=Math.cos(station.angle),sn=Math.sin(station.angle),x=c*dl-sn*ds,z=sn*dl+c*ds;

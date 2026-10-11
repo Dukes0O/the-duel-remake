@@ -54,7 +54,7 @@ const BASE = defineScriptedCourse({
   wetRoad: { performanceShare: .5 },
   // Water beside the road: the harbour along the Seafront Straight and Harbour Road, two terraced
   // pools of the reservoir along the Reservoir Run. The ground beside the road is sunk to hold
-  // them (Course.basinWeight); `level` is the water's height, `deep` how far the floor lies below it.
+  // them (src/basins.js); `level` is the water's height, `deep` how far the floor lies below it.
   basins: [
     { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: .8 },
     { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: .8 },
@@ -66,15 +66,6 @@ const BASE = defineScriptedCourse({
   escapeRoads: [
     { id: 'casino-corner', piece: 'Casino Corner', run: 70, width: 10 },
     { id: 'lantern-hairpin', piece: 'Lantern Hairpin', run: 55, width: 9 },
-  ],
-  // Water beside the road: the harbour along the Seafront Straight and Harbour Road, two terraced
-  // pools of the reservoir along the Reservoir Run. The ground beside the road is sunk to hold
-  // them (Course.basinWeight); `level` is the water's height, `deep` how far the floor lies below it.
-  basins: [
-    { id: 'seafront', side: -1, s0: 150, s1: 395, from: 12, to: 120, edge: 8, level: 11.8, deep: .8 },
-    { id: 'harbour-road', side: -1, s0: 3262, s1: 3735, from: 12, to: 110, edge: 8, level: 11.8, deep: .8 },
-    { id: 'reservoir-upper', side: -1, s0: 2300, s1: 2620, from: 14, to: 100, edge: 10, level: 15, deep: .8 },
-    { id: 'reservoir-lower', side: -1, s0: 2700, s1: 3060, from: 14, to: 100, edge: 10, level: 12.9, deep: .8 },
   ],
   script: [
     ['straight', 500, { name: 'Seafront Straight', width: 14 }],
