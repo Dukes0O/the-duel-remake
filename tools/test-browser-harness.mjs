@@ -71,3 +71,67 @@ test('explicit browser evidence paths stay inside the ignored root', () => {
     evidenceChecks++;
   }
 });
+
+// Navigation acceptance is not a new document or a usable context.
+function navigationFixture(){
+  const listeners=new Set(),calls=[];
+  const cdp={onEvent(fn){listeners.add(fn);return()=>listeners.delete(fn);},
+    async send(method,params={},sessionId){calls.push({method,params,sessionId});
+      if(method==='Page.getFrameTree')return{frameTree:{frame:{id:'main',loaderId:'old'}}};
+      if(method==='Page.getNavigationHistory')return{currentIndex:1,entries:[{id:11},{id:22}]};
+      if(method==='Page.navigate')return{frameId:'main',loaderId:'new'};
+      if(method==='Runtime.evaluate')return{result:{value:true}};
+      return{};
+    }};
+  const emit=(method,params,sessionId='session')=>{for(const fn of [...listeners])fn({method,params,sessionId});};
+  const document=(loaderId='new',type='Navigation')=>emit('Page.frameNavigated',{frame:{id:'main',loaderId},type});
+  const execution=(uniqueId='fresh')=>emit('Runtime.executionContextCreated',{context:{id:3,uniqueId,auxData:{frameId:'main',isDefault:true}}});
+  const loaded=(loaderId='new')=>emit('Page.lifecycleEvent',{frameId:'main',loaderId,name:'DOMContentLoaded'});
+  return{cdp,calls,emit,document,execution,loaded,listeners};
+}
+const turn=()=>new Promise(setImmediate);
+test('single navigation waits for its own document/context and ignores stale/subframe events',async()=>{
+  assert.equal(typeof browserHarness.createPageNavigation,'function');
+  const f=navigationFixture(),nav=browserHarness.createPageNavigation(f.cdp,{sessionId:'session',targetId:'target'},'http://127.0.0.1:5191');
+  let settled=false;const pending=nav.navigate('/tools/menu-check.html').then(()=>{settled=true;});await turn();
+  assert.equal(f.calls.filter(c=>c.method==='Page.navigate').length,1);
+  f.emit('Page.frameNavigated',{frame:{id:'child',parentId:'main',loaderId:'new'}});
+  f.emit('Page.lifecycleEvent',{frameId:'main',loaderId:'old',name:'DOMContentLoaded'});
+  f.emit('Runtime.executionContextCreated',{context:{id:1,uniqueId:'wrong',auxData:{frameId:'main',isDefault:true}}},'other');
+  await turn();assert.equal(settled,false);assert.equal(f.calls.filter(c=>c.method==='Runtime.evaluate').length,0);
+  f.document();f.loaded();await turn();assert.equal(settled,false,'commit/load without default context is insufficient');
+  f.execution();await pending;
+  assert.equal(f.calls.find(c=>c.method==='Runtime.evaluate').params.uniqueContextId,'fresh');
+  assert.equal(f.listeners.size,0,'completed barrier releases listeners');
+});
+test('reload waits for a replacement and back follows BFCache guard reload exactly once',async()=>{
+  assert.equal(typeof browserHarness.createPageNavigation,'function');
+  for(const action of ['reload','back']){
+    const f=navigationFixture(),nav=browserHarness.createPageNavigation(f.cdp,{sessionId:'session',targetId:'target'},'http://127.0.0.1:5191');
+    let settled=false;const pending=nav[action]().then(()=>{settled=true;});await turn();
+    if(action==='back'){
+      assert.equal(f.calls.filter(c=>c.method==='Page.navigateToHistoryEntry').length,1);
+      assert.equal(f.calls.find(c=>c.method==='Page.navigateToHistoryEntry').params.entryId,11);
+      f.document('restored','BackForwardCacheRestore');f.execution('restored');f.loaded('restored');
+      await turn();assert.equal(settled,false,'pageshow guard must reload before admission');
+      f.emit('Runtime.executionContextsCleared',{});
+    }else assert.equal(f.calls.filter(c=>c.method==='Page.reload').length,1);
+    f.execution();f.document();f.loaded();await pending;
+    assert.equal(f.calls.filter(c=>['Page.reload','Page.navigateToHistoryEntry'].includes(c.method)).length,1);
+    assert.equal(f.listeners.size,0);
+  }
+});
+test('navigation barrier propagates evaluation and target errors without mutation retries',async()=>{
+  assert.equal(typeof browserHarness.createPageNavigation,'function');
+  for(const failure of ['evaluation','detach']){
+    const f=navigationFixture(),send=f.cdp.send;
+    f.cdp.send=async(method,...args)=>{if(method==='Runtime.evaluate')throw Error('arbitrary evaluation failure');return send(method,...args);};
+    const nav=browserHarness.createPageNavigation(f.cdp,{sessionId:'session',targetId:'target'},'http://127.0.0.1:5191');
+    const pending=nav.navigate('/tools/menu-check.html');await turn();
+    if(failure==='detach')f.emit('Target.detachedFromTarget',{sessionId:'session'},undefined);
+    else{f.document();f.execution();f.loaded();}
+    await assert.rejects(pending,/arbitrary evaluation failure|detached/);
+    assert.equal(f.calls.filter(c=>c.method==='Page.navigate').length,1);
+    assert.equal(f.listeners.size,0);
+  }
+});

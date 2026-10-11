@@ -91,10 +91,18 @@ Source-16.29LUFS/-2.43dBTP; unnormalizedMP3-16.29/-2.10,1,600,365bytes.
 Finish audio uncaptured; no human pass. Pure45;6b lane127/127398.05s;stress23/23 worst-1.59dBTP;build678ms.
 
 Race8729622640fa6686def2fd92a175e177bf0e225aeafbde4cfff5aeebc020409f/replayc0a532937c256631ca47a77b74868e1679de42f971bfbcd5ce00128bdea2c093: by-key state exact; whole JSON key order differs.
+Kyle, 11 October 2026: "sound approved - keep going". Current louder race mix
+and listening review are approved. This does not certify a whole recording or
+the uncaptured finish cue. No release; current recipes/assets stay exact.
+Consumed listening evidence may be deleted after this verdict is committed.
+
+Consumed approved listening evidence284,485,319B removed after approval
+committed33aacf7a. Measured verdict, recipes/current assets and licensed takes kept.
+
 ## Removed
 
 Direct compressor-to-ceiling routing becomes the gain/crest-aware ceiling.
 Rejected threshold/attack trial is removed; no alternate mastering branch.
 Bare-Duel replay uses the native callback adapter; no state fields removed.
-Source assets/cues/reels stay exact. Consumed inspection output is deleted
-after review; keep actual121s prefix PCM/MP3/raws until Kyle listens. No whole PCM.
+Source assets/cues/reels stay exact. Consumed inspection output and approved
+121s prefix PCM/MP3/raws are deleted after committed review. No whole PCM existed.
