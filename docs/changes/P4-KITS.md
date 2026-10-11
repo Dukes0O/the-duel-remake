@@ -352,3 +352,109 @@ Round-two source removes the superseded unreachable harbour adaptation branch,
 the collapsing dome recipe and the Yeti tint-only finish. The 14 held runtime pairs are replaced and two new tree pairs are added. No selected source record is replaced. Candidate exports omit
 imported editor bone handles and the redundant added rock-cap slab. Final
 integration removes temporary evidence after its verdict is recorded.
+
+### Walk-off correction plan (before code, 10 October)
+Native round-two evidence holds the walk-off: both quality levels penetrate the
+terrain by about 28 cm, and the High left toe moves about 53–54 cm during two
+near-ground contact windows. The Root travels 1.84 m rather than the intended
+2.4 m. The camera and ground setup remain unchanged for the next native check.
+Replace only the fifth clip with an idle-based two-leg solve: alternating foot
+steps with overlapping stance, a stepped turn, then 2.4 m of metric Root travel.
+Use the final fit transform to convert metric targets into the original rig.
+Keep each stance toe fixed and solve foot pitch against its fixed weighted heel;
+solve the leg joints to each foot controller. Measure the actual exported-weight
+skin and whole-sole minimum as source evidence. Abort on an unsolved pose rather
+than falling back to the Run cycle. Preserve geometry, skin weights, all 43
+joints, and the other four clips. Flat-ground source proof remains distinct from
+the native scene's roughly 4 cm terrain grade. The Director reviews the source
+before the single-Yeti export, and native evidence still decides gait acceptance.
+
+Source endpoint checks measure the actual Root matrix and require 2.4 m travel
+within 1 mm and a half-turn within 0.001 radians. Each pose is solved with the
+growing action detached, so graph updates cannot reapply its earlier keys;
+the action is restored only to insert the solved pose. Fixed heel and toe drift
+are both reported, alongside whole-sole clearance. These are new fifth-clip
+solve checks; no existing assertion or tolerance changes.
+
+The first planted-foot export stopped before writing assets at L frame 21:
+whole-sole minimum -0.03461 m. The leg aim used direction alone and discarded
+axial yaw. The next source candidate carries the foot turn into the segment
+orientation before aiming it at the solved joint. The same -0.015 m whole-sole
+guard remains; failure now also reports the lowest vertex and its weights.
+
+The yaw-preserving retry exported both qualities. Its 151 sampled flat-ground
+poses measured Root travel 2.40000035 m and turn 3.14159274 radians. Minimum
+whole-sole height was -0.0132602 m against the unchanged -0.015 m source guard.
+Maximum fixed heel height error was 0.0001881 m; consecutive stance-sample
+movement was 0.005644 m at the heel and 0.000000333 m at the toe. These source
+measurements do not approve native terrain contact or visual gait.
+
+The actual exported kit passed the focused 35-pair acceptance check, including
+all existing lamp, cover, debris, skin and clip checks; the 371 bank probes had
+zero profile error. All 19 protected records, 38 GLBs, catalog and tanker pin
+remain exact. Both qualities retain exact byte signatures for the four original
+clip tracks, skin weights, joint indices, geometry indices, normals and UVs.
+Strict reconstruction comparison found POSITION deltas at most 2.3841858e-7 m
+and first-retry inverse-bind deltas at most 9.3132257e-10. The exact comparison
+failed; the signature comparison was not weakened.
+
+For the strict reconstruction difference, the next source candidate captures
+the final fit from untouched idle bounds before authoring the new clip, then
+restores every captured baseline bone basis before reapplying Idle. The exact
+retained-data comparison remains unchanged and must run after export.
+
+### Remaining static corrections (plan approved before code)
+
+- Tyres: split each retained donor column into its three measured height bands,
+  keep each original face once, create visible gaps, and bevel the horizontal
+  sidewall edges. Keep five columns within 4 x 0.8 x 1 m. Distant geometry keeps
+  all six radial bevel rings while using fewer angular samples.
+- Trees: preserve each original trunk/branch system and the three distinct
+  proportions. Shrink the faceted foliage into inner cores and add at most 720
+  opaque broad leaves per tree as thin closed meshes around the original lobe
+  envelopes. Use broken edges, gaps and warm variation. The distant model keeps
+  complete alternating leaves rather than collapsing them into fins.
+- Gallery: reshape the original gabled roof and snow into a broad shallow
+  sloping slab; preserve a visibly thick concrete fascia and stout edge supports.
+  Keep the complete drive-through opening above 4.5 m and retain existing cover
+  ray checks. The snow stays above the slab.
+- Gantry: increase the worn cream series face and dark text, show the series
+  name on both approach faces, and keep all five named 0.64 m countdown lamps and
+  housings unchanged. Review it with the same native camera and lighting.
+
+Only these owned source paths change. Dome and Harbour assets stay frozen.
+All protected 19 records and 38 GLBs still require exact comparison. New exports
+and native views need their own Director slot; source edits are not art passes.
+
+The stable-fit retry retains the same gait metrics and passes the actual focused
+35-pair check. Exact geometry/bind comparison still FAILS: POSITION maximum
+2.3841858e-7 m; inverse-bind maximum 1.1920929e-7; rest-node translation maximum
+1.19209293e-7. Rest rotations/scales, all four original clip tracks, weights,
+joints and topology remain exact. The Director reviewed the per-node/per-primitive
+evidence and accepted this measured exporter rounding for native review only.
+No assertion or signature threshold changed, and no byte-exact geometry/bind
+pass is claimed. Float investigation stops here.
+
+The static source candidate now includes all four approved repairs. Tree leaf
+shells use at most 720 closed six-vertex/eight-triangle leaves per tree; distant
+models keep complete alternating leaves. Actual counts and native appearance
+remain unverified until the targeted export and combined native capture.
+
+The first static export stopped at the tyre LOD guard: six expected bevel
+rings, only two found. The donor had split corner vertices, so its edges were
+not connected for beveling. The fix welds coincident corners within each single
+extracted tyre at 0.00001 m and recalculates normals before the bevel. It never
+joins separate layers/columns. The strict six-ring guard stays unchanged.
+
+The connected-tyre retry completed all six static exports and wrote a coherent
+35-piece manifest. The unchanged focused kit check passes, including all five
+named lamp sizes, gallery/cover clearance, debris, skins and clips. Bank probes:
+371 hits, zero error. Original 19 records/38 GLBs and the immediate pre-static
+29 records/58 GLBs (including current Yeti, Dome and Harbour) are exact; catalog
+and tanker pin remain exact.
+
+Actual High/LOD triangles: gantry 1,576/984; tyres 5,760/4,320; each autumn tree
+7,344/3,794; gallery 1,268/196. Current whole kit: 96,149/56,552 triangles and
+16,110,700 bytes. Growth adds actual rounded tyre layers, closed leaf surfaces
+and the sampled fifth Yeti clip. Native appearance, gait and frame cost remain
+unreviewed for these new exports; no look pass or performance claim is made.

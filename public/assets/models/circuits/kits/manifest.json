@@ -14,14 +14,14 @@
       ],
       "high": "start-gantry.glb",
       "low": "start-gantry-lod.glb",
-      "highTriangles": 872,
-      "lowTriangles": 420,
+      "highTriangles": 1576,
+      "lowTriangles": 984,
       "size": [
         17.5,
-        6.5,
+        6.705,
         0.64
       ],
-      "bytes": 233916,
+      "bytes": 292080,
       "credits": [
         {
           "author": "3D Assets",
@@ -188,14 +188,14 @@
       ],
       "high": "tyre-wall.glb",
       "low": "tyre-wall-lod.glb",
-      "highTriangles": 1920,
-      "lowTriangles": 1416,
+      "highTriangles": 5760,
+      "lowTriangles": 4320,
       "size": [
         4.0,
         1.0,
         0.8
       ],
-      "bytes": 354184,
+      "bytes": 711604,
       "credits": [
         {
           "author": "3D Assets",
@@ -572,14 +572,14 @@
       ],
       "high": "autumn-tree.glb",
       "low": "autumn-tree-lod.glb",
-      "highTriangles": 1584,
-      "lowTriangles": 914,
+      "highTriangles": 7344,
+      "lowTriangles": 3794,
       "size": [
-        3.0497,
-        8.89386,
-        3.68803
+        3.60682,
+        8.92678,
+        4.38266
       ],
-      "bytes": 347016,
+      "bytes": 1595236,
       "credits": [
         {
           "author": "Quaternius",
@@ -596,14 +596,14 @@
       ],
       "high": "autumn-tree-golden.glb",
       "low": "autumn-tree-golden-lod.glb",
-      "highTriangles": 1584,
-      "lowTriangles": 914,
+      "highTriangles": 7344,
+      "lowTriangles": 3794,
       "size": [
-        2.41434,
-        10.37617,
-        2.91969
+        2.87261,
+        10.40632,
+        3.47818
       ],
-      "bytes": 352100,
+      "bytes": 1611476,
       "credits": [
         {
           "author": "Quaternius",
@@ -620,14 +620,14 @@
       ],
       "high": "autumn-tree-copper.glb",
       "low": "autumn-tree-copper-lod.glb",
-      "highTriangles": 1584,
-      "lowTriangles": 914,
+      "highTriangles": 7344,
+      "lowTriangles": 3794,
       "size": [
-        2.55087,
-        7.90565,
-        2.97128
+        3.57863,
+        7.94042,
+        4.3482
       ],
-      "bytes": 342040,
+      "bytes": 1590512,
       "credits": [
         {
           "author": "Quaternius",
@@ -743,11 +743,11 @@
       "highTriangles": 1268,
       "lowTriangles": 196,
       "size": [
-        12.99166,
-        6.68122,
-        5.99977
+        13.0,
+        6.2732,
+        6.0274
       ],
-      "bytes": 227024,
+      "bytes": 226992,
       "credits": [
         {
           "author": "3D Assets",
@@ -843,7 +843,7 @@
         2.8,
         2.1478
       ],
-      "bytes": 1334772,
+      "bytes": 1329412,
       "credits": [
         {
           "author": "Quaternius",

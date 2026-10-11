@@ -527,6 +527,45 @@ def detail_block(name, size, center, mat, distant=True):
     return obj
 
 
+def leaf_envelope(identifier, lobe_index, centre, radii, count, colors):
+    """Closed broad leaves break the donor lobe silhouette without alpha cards."""
+    vertices, faces, assigned = [], [], []
+    palette = [held_material(identifier + "-leaf-cluster-" + str(index), color, .98, pattern="leaf")
+               for index, color in enumerate(colors)]
+    for index in range(count):
+        vertical = 1 - 2 * (index + .5) / count
+        angle = index * math.pi * (3 - math.sqrt(5)) + lobe_index * .71
+        radial = math.sqrt(max(0, 1 - vertical * vertical))
+        normal = Vector((math.cos(angle) * radial, math.sin(angle) * radial, vertical))
+        depth = .78 + .20 * ((index * 37) % 101) / 100
+        point = centre + Vector((normal.x * radii.x, normal.y * radii.y, normal.z * radii.z)) * depth
+        across = normal.cross(Vector((0, 0, 1)))
+        if across.length < .001:
+            across = Vector((1, 0, 0))
+        across.normalize()
+        along = normal.cross(across).normalized()
+        twist = .65 * math.sin(index * 1.73 + lobe_index)
+        axis_a = across * math.cos(twist) + along * math.sin(twist)
+        axis_b = -across * math.sin(twist) + along * math.cos(twist)
+        length, width = .46 + .17 * (index % 5) / 4, .30 + .13 * (index % 7) / 6
+        base = len(vertices)
+        vertices.extend([point + axis_a * length * .5, point + axis_b * width * .5,
+                         point - axis_a * length * .5, point - axis_b * width * .5,
+                         point + normal * .012, point - normal * .012])
+        for corner in range(4):
+            following = (corner + 1) % 4
+            faces.extend([(base + corner, base + following, base + 4),
+                          (base + following, base + corner, base + 5)])
+            assigned.extend([palette[(index + lobe_index) % 3], palette[(index + lobe_index + 1) % 3]])
+    mesh = bpy.data.meshes.new(identifier + " broad leaf clusters")
+    mesh.from_pydata(vertices, [], faces); mesh.update()
+    obj = bpy.data.objects.new(identifier + "-leaf-envelope-" + str(lobe_index + 1), mesh)
+    bpy.context.collection.objects.link(obj)
+    finish_held(obj, assigned, grain_scale=.18)
+    obj["p4WholeLeafVertices"] = 6
+    return obj
+
+
 def prepare_tree(objects, identifier):
     """Three ordinary assets with distinct branch/canopy proportions."""
     parts = []
@@ -564,14 +603,15 @@ def prepare_tree(objects, identifier):
     foliage.sort(key=lambda obj: sum(bounds([obj])[i].z for i in [0, 1]))
     for index, obj in enumerate(foliage):
         low, high = bounds([obj]); centre = (low + high) * .5
-        shrink = .80 if identifier != "autumn-tree-copper" else .64
+        envelope = (high - low) * .5
+        shrink = {"autumn-tree": .58, "autumn-tree-golden": .52, "autumn-tree-copper": .48}[identifier]
         for vertex in obj.data.vertices:
-            delta = vertex.co - centre
-            vertex.co = centre + Vector((delta.x * shrink, delta.y * shrink, delta.z * .93))
+            vertex.co = centre + (vertex.co - centre) * shrink
         obj.name = identifier + "-canopy-lobe-" + str(index + 1)
         leaf = held_material(identifier + "-leaves-" + str(index % 3), colors[index % 3], .98, pattern="leaf")
         finish_held(obj, leaf, grain_scale=.36)
         obj["p4LodRatio"] = .58
+        leaf_envelope(identifier, index, centre, envelope, 720 // len(foliage), colors)
     fit(meshes())
     return meshes()
 
@@ -710,36 +750,55 @@ def prepare_observatory(objects):
 
 
 def prepare_tyres(objects):
-    # The source has six touching columns, each already holding three tyres.
-    # Welding joins the columns, so loose-part count cannot identify them.
+    # Each of the six donor columns contains three complete authored tyres.
     if len(objects) != 1:
         raise ValueError("Selected tyre donor must contain its single original row mesh")
     original = objects[0]
-    low, high = bounds(objects); width = (high.x - low.x) / 6
-    columns = [[] for _ in range(6)]
+    low, high = bounds(objects)
+    width, layer_height = (high.x - low.x) / 6, (high.z - low.z) / 3
+    columns = [[[] for _ in range(3)] for _ in range(6)]
     for face in original.data.polygons:
         points = [original.data.vertices[index].co for index in face.vertices]
-        centre = sum(point.x for point in points) / len(points)
-        column = max(0, min(5, int((centre - low.x) / width)))
+        centre = sum((point for point in points), Vector()) / len(points)
+        column = max(0, min(5, int((centre.x - low.x) / width)))
         left, right = low.x + column * width, low.x + (column + 1) * width
         if any(point.x < left - .0002 or point.x > right + .0002 for point in points):
             raise ValueError("A donor face crosses the measured tyre-column boundary")
-        columns[column].append(face.index)
-    if any(len(column) != 384 for column in columns):
-        raise ValueError("Each original three-tyre column must retain all 384 source triangles")
+        if max(point.z for point in points) - min(point.z for point in points) < .00001:
+            level = round((centre.z - low.z) / layer_height)
+            layer = level - 1 if face.normal.z > 0 else level
+        else:
+            layer = int((centre.z - low.z) / layer_height)
+        if not 0 <= layer < 3:
+            raise ValueError("A donor tyre face does not belong to a measured layer")
+        columns[column][layer].append(face.index)
+    if any(len(layer) != 128 for column in columns for layer in column):
+        raise ValueError("Each original tyre must retain its 128 donor triangles")
     rubber = held_material("tyre-wall-scuffed-rubber", (.095, .094, .086), .98)
     for column in range(5):
-        obj = original.copy(); obj.data = original.data.copy()
-        bpy.context.collection.objects.link(obj)
-        bm = bmesh.new(); bm.from_mesh(obj.data); bm.faces.ensure_lookup_table()
-        retained = set(columns[column])
-        bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.index not in retained], context="FACES")
-        bm.to_mesh(obj.data); bm.free(); obj.data.update()
-        fit([obj], (.79, .79, 1))
-        move([obj], ((column - 2) * .80, 0, 0))
-        obj.name = "tyre-stack-" + str(column + 1) + "-three-original-layers"
-        finish_held(obj, rubber, grain_scale=.45)
-        obj["p4RadialLod"] = 12
+        for layer in range(3):
+            obj = original.copy(); obj.data = original.data.copy()
+            bpy.context.collection.objects.link(obj)
+            bm = bmesh.new(); bm.from_mesh(obj.data); bm.faces.ensure_lookup_table()
+            retained = set(columns[column][layer])
+            bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.index not in retained], context="FACES")
+            bmesh.ops.delete(bm, geom=[vertex for vertex in bm.verts if not vertex.link_faces], context="VERTS")
+            # The donor exports split face corners. Connect coincident vertices
+            # within this one tyre so the bevel can see its sidewall edges.
+            bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.00001)
+            bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+            bm.to_mesh(obj.data); bm.free(); obj.data.update()
+            fit([obj], (.79, .79, .30))
+            move([obj], ((column - 2) * .80, 0, layer * .35))
+            obj.name = "tyre-stack-" + str(column + 1) + "-layer-" + str(layer + 1)
+            bpy.context.view_layer.objects.active = obj
+            bevel = obj.modifiers.new("Rounded rubber sidewalls", "BEVEL")
+            bevel.width = .018; bevel.segments = 2
+            bevel.limit_method = "ANGLE"; bevel.angle_limit = .5
+            bpy.ops.object.modifier_apply(modifier=bevel.name)
+            finish_held(obj, rubber, grain_scale=.45)
+            obj["p4RadialLod"] = 12
+            obj["p4RadialRingCount"] = 6
     bpy.data.objects.remove(original, do_unlink=True)
     fit(meshes(), (4, .8, 1))
     return meshes()
@@ -761,8 +820,9 @@ def reduce_radial_shell(obj, sides):
         else:
             rings[-1].append(radius)
     canonical = [sum(ring) / len(ring) for ring in rings]
-    if len(canonical) != 2:
-        raise ValueError("Original tyre inner/outer radius rings must remain distinct")
+    expected = int(obj.get("p4RadialRingCount", 2))
+    if len(canonical) != expected:
+        raise ValueError(f"Tyre must preserve all {expected} measured radial rings; found {len(canonical)}")
     for vertex, radius in zip(bm.verts, radii):
         delta = vertex.co - centre
         angle = round(math.atan2(delta.y / half.y, delta.x / half.x) * sides / math.tau) * math.tau / sides
@@ -1054,6 +1114,14 @@ def simplify(identifier):
         return
     before_low, before_high = bounds(meshes())
     for obj in list(meshes()):
+        if obj.get("p4WholeLeafVertices"):
+            stride = int(obj["p4WholeLeafVertices"])
+            if stride != 6 or len(obj.data.vertices) % stride:
+                raise ValueError("Whole-leaf LOD requires complete closed six-vertex leaves")
+            bm = bmesh.new(); bm.from_mesh(obj.data); bm.verts.ensure_lookup_table()
+            bmesh.ops.delete(bm, geom=[vertex for vertex in bm.verts if (vertex.index // stride) % 2], context="VERTS")
+            bm.to_mesh(obj.data); bm.free(); obj.data.update()
+            continue
         if obj.get("p4RadialLod"):
             reduce_radial_shell(obj, int(obj["p4RadialLod"]))
             continue
@@ -1243,9 +1311,13 @@ def prepare_gantry(objects):
     for index in range(1, 6):
         detail_block("lamp-housing-" + str(index), (.78, .30, .78),
                      ((index - 3) * 1.4, -.12, 5.24), dark)
-    banner = held_material("gantry-faded-banner", (.79, .74, .58))
-    detail_block("gantry-series-banner", (10.4, .18, .80), (0, -.06, 6.02), banner)
-    label("THE DUEL", (0, -.17, 6.01), .59, "gantry-series-name")
+    banner = held_material("gantry-faded-banner", (.86, .81, .65))
+    detail_block("gantry-series-banner", (10.8, .22, 1.05), (0, -.06, 6.18), banner)
+    front = label("THE DUEL", (0, -.183, 6.18), .94, "gantry-series-name-front")
+    rear = label("THE DUEL", (0, .063, 6.18), .94, "gantry-series-name-rear")
+    rear.rotation_euler = (math.pi / 2, 0, math.pi)
+    for letters in [front, rear]:
+        letters["p4LodRatio"] = .58
     return meshes()
 
 
@@ -1266,11 +1338,12 @@ def prepare_gallery(objects):
             vertex.co.x *= 13 / 11
             vertex.co.y *= 6 / 5.4
             if "steel" in name:
-                vertex.co.z = max(0, vertex.co.z - .15) * 1.56
+                vertex.co.z = min(max(0, vertex.co.z - .15) * 1.56, 5.58 + .035 * vertex.co.y)
             else:
-                vertex.co.z += 2.0
+                original_height = vertex.co.z
+                vertex.co.z = 5.72 + .035 * vertex.co.y
                 if "snow" in name:
-                    vertex.co.z += .16
+                    vertex.co.z += .12 + max(0, original_height - 3.20) * .25
         retained.append(obj)
     concrete = held_material("gallery-heavy-concrete", (.56, .58, .54), .96)
     snow = held_material("gallery-loaded-snow", (.87, .90, .91), .99)
@@ -1294,8 +1367,8 @@ def prepare_gallery(objects):
             obj.name = "gallery-roof-snow"
             finish_held(obj, snow); obj["p4PlanarLod"] = True
         else:
-            # Retain the selected gabled roof's top planes, then give them a
-            # true heavy slab underside. The lowest underside stays >4.5 m.
+            # Retain the donor cover planes, flatten their gable into a shallow
+            # slab, and expose its heavy fascia. The underside stays >4.5 m.
             bm = bmesh.new(); bm.from_mesh(obj.data)
             bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=.00001)
             bm.normal_update()
@@ -1304,8 +1377,8 @@ def prepare_gallery(objects):
                 raise ValueError("Selected gallery roof has no upward cover planes")
             bm.to_mesh(obj.data); bm.free(); obj.data.update()
             bpy.context.view_layer.objects.active = obj
-            thickness = obj.modifiers.new("Concrete slab 0.72 m", "SOLIDIFY")
-            thickness.thickness = .72; thickness.offset = -1; thickness.use_even_offset = True
+            thickness = obj.modifiers.new("Concrete slab 0.84 m", "SOLIDIFY")
+            thickness.thickness = .84; thickness.offset = -1; thickness.use_even_offset = True
             bpy.ops.object.modifier_apply(modifier=thickness.name)
             obj.name = "gallery-heavy-concrete-roof"
             finish_held(obj, concrete)
@@ -1596,42 +1669,225 @@ def reshape_yeti(objects, armature):
     return fur
 
 
-def author_walk_off(armature, idle, run):
-    """Author a turn/departure from retained leg motion, with real root travel.
+def author_walk_off(armature, idle):
+    """Author the fifth clip with fixed stance targets on the retained rig.
 
-    The original Run stays separately available as in-place lope. This action
-    slows its gait and turns the character before travelling 2.4 metric metres.
-    Exported foot contact and skin motion still require native visual review.
+    All targets and skin checks use the same metric fit as the finished asset.
+    This flat-ground solve is evidence, not approval of native terrain contact.
     """
     armature.animation_data.action = idle
     bpy.context.scene.frame_set(int(idle.frame_range[0]))
+    bpy.context.view_layer.update()
     low, high = bounds(meshes())
-    source_metres = (high.z - low.z) / 2.8
-    first, last = run.frame_range
-    cycle = max(1, last - first)
-    samples = []
-    for frame in range(1, 152, 3):
-        armature.animation_data.action = run
-        source_frame = first + ((frame - 1) / 2.5) % cycle
-        bpy.context.scene.frame_set(int(source_frame), subframe=source_frame % 1)
+    scale = 2.8 / (high.z - low.z)
+    fit_matrix = Matrix.Diagonal((scale, scale, scale, 1)) @ Matrix.Translation(Vector((0, 0, -low.z)))
+    metric = fit_matrix @ armature.matrix_world
+    inverse_metric = metric.inverted()
+    baseline = {bone.name: bone.matrix_basis.copy() for bone in armature.pose.bones}
+    initial = {bone.name: metric @ bone.matrix for bone in armature.pose.bones}
+    body_mesh = next(obj for obj in meshes() if obj.get("p4YetiBody"))
+    group_names = {group.index: group.name for group in body_mesh.vertex_groups}
+    object_to_armature = armature.matrix_world.inverted() @ body_mesh.matrix_world
+    rest_inverse = {bone.name: bone.matrix_local.inverted() for bone in armature.data.bones}
+    # glTF exports the four strongest influences, normalized. Use precisely
+    # those weights here, including the heel shared by Foot and LowerLeg.
+    weighted = {}
+    for vertex in body_mesh.data.vertices:
+        weights = sorted([(group_names[item.group], item.weight) for item in vertex.groups],
+                         key=lambda item: -item[1])[:4]
+        total = sum(weight for _, weight in weights)
+        if total <= 0:
+            raise ValueError("Walk-off skin vertex has no weights")
+        point = object_to_armature @ vertex.co
+        weighted[vertex.index] = [(name, weight / total, rest_inverse[name] @ point)
+                                  for name, weight in weights]
+
+    def skin_point(index):
+        point = Vector((0, 0, 0))
+        for name, weight, rest_point in weighted[index]:
+            point += (metric @ armature.pose.bones[name].matrix @ rest_point) * weight
+        return point
+
+    feet = {}
+    for side in ["L", "R"]:
+        foot_name, lower_name = "Foot." + side, "LowerLeg." + side
+        eligible = [index for index, values in weighted.items()
+                    if sum(weight for name, weight, _ in values if name in [foot_name, lower_name]) > .5
+                    and skin_point(index).z < .32]
+        if len(eligible) < 6:
+            raise ValueError("Walk-off sole region missing: " + side)
+        minimum = min(skin_point(index).z for index in eligible)
+        sole = [index for index in eligible if skin_point(index).z <= minimum + .08]
+        # The donor faces -Y. Rear/front bands select fixed vertex identities.
+        front, rear = min(skin_point(i).y for i in sole), max(skin_point(i).y for i in sole)
+        span = rear - front
+        if span < .001:
+            raise ValueError("Walk-off sole has no heel-to-toe extent")
+        heel = min([i for i in sole if skin_point(i).y >= rear - span * .2], key=lambda i: skin_point(i).z)
+        toe = min([i for i in sole if skin_point(i).y <= front + span * .2], key=lambda i: skin_point(i).z)
+        if sum(weight for name, weight, _ in weighted[toe] if name == foot_name) < .999:
+            raise ValueError("Walk-off toe must follow its original Foot controller")
+        hip = initial["UpperLeg." + side].translation
+        knee = initial[lower_name].translation
+        ankle = initial[foot_name].translation
+        feet[side] = dict(heel=heel, toe=toe, sole=eligible, start=skin_point(toe),
+                          thigh=(knee - hip), shin=(ankle - knee),
+                          knee_hint=(knee - hip), pitch=0.0)
+
+    def set_metric(name, matrix):
+        armature.pose.bones[name].matrix = inverse_metric @ matrix
         bpy.context.view_layer.update()
-        samples.append((frame, {bone.name: bone.matrix_basis.copy()
-                               for bone in armature.pose.bones}))
+
+    def solve_leg(side, target, yaw, pitch):
+        foot = feet[side]
+        foot_name, upper_name, lower_name = "Foot." + side, "UpperLeg." + side, "LowerLeg." + side
+        rotation = Matrix.Rotation(yaw, 4, "Z") @ Matrix.Rotation(pitch, 4, "X")
+        foot_matrix = Matrix.Translation(target) @ rotation @ Matrix.Translation(-foot["start"]) @ initial[foot_name]
+        set_metric(foot_name, foot_matrix)
+        hip = (metric @ armature.pose.bones[upper_name].matrix).translation
+        ankle = foot_matrix.translation
+        axis = ankle - hip
+        distance = axis.length
+        length_a, length_b = foot["thigh"].length, foot["shin"].length
+        if not abs(length_a - length_b) + .0001 < distance < length_a + length_b - .0001:
+            raise ValueError(f"Walk-off unreachable {side} ankle: {distance:.5f}, lengths {length_a:.5f}/{length_b:.5f}")
+        axis.normalize()
+        along = (length_a * length_a - length_b * length_b + distance * distance) / (2 * distance)
+        across = math.sqrt(max(0, length_a * length_a - along * along))
+        hint = Matrix.Rotation(yaw, 3, "Z") @ foot["knee_hint"]
+        perpendicular = hint - axis * hint.dot(axis)
+        if perpendicular.length < .0001:
+            perpendicular = Matrix.Rotation(yaw, 3, "Z") @ Vector((0, -1, 0))
+            perpendicular -= axis * perpendicular.dot(axis)
+        perpendicular.normalize()
+        knee = hip + axis * along + perpendicular * across
+        for name, original_direction, head, tail in [
+                (upper_name, foot["thigh"], hip, knee),
+                (lower_name, foot["shin"], knee, ankle)]:
+            # Preserve the foot's axial turn before swinging each segment
+            # toward its solved direction; direction-only aiming loses twist.
+            turn = Matrix.Rotation(yaw, 3, "Z").to_quaternion()
+            turned_direction = turn @ original_direction.normalized()
+            rotation = turned_direction.rotation_difference((tail - head).normalized()) @ turn
+            matrix = rotation.to_matrix().to_4x4() @ initial[name]
+            matrix.translation = head
+            set_metric(name, matrix)
+
+    def place_foot(side, target, yaw):
+        foot = feet[side]
+        pitch = foot["pitch"]
+        for _ in range(14):
+            solve_leg(side, target, yaw, pitch)
+            error = skin_point(foot["heel"]).z - target.z
+            if abs(error) < .0002:
+                break
+            solve_leg(side, target, yaw, pitch + .002)
+            derivative = (skin_point(foot["heel"]).z - target.z - error) / .002
+            if abs(derivative) < .005:
+                raise ValueError("Walk-off heel pitch solve is singular: " + side)
+            pitch -= max(-.12, min(.12, error / derivative))
+            if abs(pitch) > .8:
+                raise ValueError("Walk-off heel pitch exceeds the foot limit: " + side)
+        solve_leg(side, target, yaw, pitch)
+        if abs(skin_point(foot["heel"]).z - target.z) > .001:
+            raise ValueError("Walk-off weighted heel did not reach its target: " + side)
+        if (skin_point(foot["toe"]) - target).length > .001:
+            raise ValueError("Walk-off weighted toe did not reach its target: " + side)
+        foot["pitch"] = pitch
+
+    # Three short turning steps followed by eight alternating departure steps.
+    # Swing intervals never overlap; both feet are planted between steps.
+    root_start = initial["Root"].translation.copy()
+    events = {"L": [], "R": []}
+    for side, start, end, yaw, travel in [
+            ("L", .10, .65, math.pi / 3, 0),
+            ("R", .75, 1.30, math.pi * 2 / 3, 0),
+            ("L", 1.40, 1.95, math.pi, 0)]:
+        events[side].append((start, end, yaw, travel))
+    for step in range(8):
+        events["R" if step % 2 == 0 else "L"].append(
+            (2.15 + step, 2.55 + step, math.pi, min(2.4, (step + 1) * .3)))
+
+    def planted_target(side, yaw, travel):
+        start = feet[side]["start"]
+        point = root_start + Matrix.Rotation(yaw, 3, "Z") @ (start - root_start)
+        point.y += travel
+        point.z = 0
+        return point
+
+    def foot_target(side, time):
+        previous = feet[side]["start"].copy()
+        previous.z = 0
+        previous_yaw = 0
+        for start, end, yaw, travel in events[side]:
+            destination = planted_target(side, yaw, travel)
+            if time < start:
+                return previous, previous_yaw, False
+            if time <= end:
+                phase = (time - start) / (end - start)
+                blend = phase * phase * (3 - 2 * phase)
+                point = previous.lerp(destination, blend)
+                point.z = .10 * math.sin(math.pi * phase)
+                return point, previous_yaw + (yaw - previous_yaw) * blend, True
+            previous, previous_yaw = destination, yaw
+        return previous, previous_yaw, False
+
     action = bpy.data.actions.new("walk-off")
     armature.animation_data.action = action
-    for frame, pose in samples:
+    metrics = dict(minSoleMetres=1e9, maxHeelErrorMetres=0, maxToeErrorMetres=0,
+                   maxStanceToeDriftMetres=0, maxStanceHeelDriftMetres=0, samples=0)
+    last_stance = {}
+    first_root = None
+    first_root_rotation = None
+    for frame in range(1, 302, 2):
+        time = (frame - 1) / 30
+        # Solving updates the dependency graph. Detach the growing action so
+        # it cannot reapply earlier keys at the scene's current frame.
+        armature.animation_data.action = None
         for bone in armature.pose.bones:
             bone.rotation_mode = "QUATERNION"
-            bone.matrix_basis = pose[bone.name]
+            bone.matrix_basis = baseline[bone.name]
         bpy.context.view_layer.update()
-        turn = min(1, (frame - 1) / 30)
+        turn = min(1, time / 2)
         turn = turn * turn * (3 - 2 * turn)
-        travel = max(0, (frame - 31) / 120)
-        root = armature.pose.bones["Root"]
-        matrix = Matrix.Rotation(math.pi * turn, 4, "Z") @ root.matrix
-        matrix.translation += Vector((0, 2.4 * source_metres * travel, 0))
-        root.matrix = matrix
-        bpy.context.view_layer.update()
+        travel = max(0, (time - 2) / 8) * 2.4
+        root_transform = (Matrix.Translation(Vector((0, travel, 0))) @ Matrix.Translation(root_start) @
+                          Matrix.Rotation(math.pi * turn, 4, "Z") @ Matrix.Translation(-root_start))
+        set_metric("Root", root_transform @ initial["Root"])
+        actual_root_matrix = metric @ armature.pose.bones["Root"].matrix
+        actual_root = actual_root_matrix.translation.copy()
+        actual_rotation = actual_root_matrix.to_quaternion()
+        if first_root is None:
+            first_root = actual_root
+            first_root_rotation = actual_rotation
+        metrics["rootTravelMetres"] = (actual_root - first_root).length
+        metrics["rootTurnRadians"] = first_root_rotation.rotation_difference(actual_rotation).angle
+        lowered_body = root_transform @ initial["Body"]
+        lowered_body.translation.z -= .08
+        set_metric("Body", lowered_body)
+        for side in ["L", "R"]:
+            target, yaw, swinging = foot_target(side, time)
+            place_foot(side, target, yaw)
+            foot = feet[side]
+            heel, toe = skin_point(foot["heel"]), skin_point(foot["toe"])
+            sole_min = min(skin_point(index).z for index in foot["sole"])
+            metrics["minSoleMetres"] = min(metrics["minSoleMetres"], sole_min)
+            metrics["maxHeelErrorMetres"] = max(metrics["maxHeelErrorMetres"], abs(heel.z - target.z))
+            metrics["maxToeErrorMetres"] = max(metrics["maxToeErrorMetres"], (toe - target).length)
+            if not swinging and side in last_stance:
+                metrics["maxStanceToeDriftMetres"] = max(metrics["maxStanceToeDriftMetres"], (toe - last_stance[side][0]).length)
+                metrics["maxStanceHeelDriftMetres"] = max(metrics["maxStanceHeelDriftMetres"], (heel - last_stance[side][1]).length)
+            if swinging:
+                last_stance.pop(side, None)
+            else:
+                last_stance[side] = (toe, heel)
+            if sole_min < -.015:
+                lowest = min(foot["sole"], key=lambda index: skin_point(index).z)
+                raise ValueError(f"Walk-off whole sole penetrates flat ground: {side} frame {frame} {sole_min:.5f}m; "
+                                 f"vertex {lowest}, weights {[(name, weight) for name, weight, _ in weighted[lowest]]}, "
+                                 f"heel {tuple(heel)}, toe {tuple(toe)}, yaw {yaw:.5f}, pitch {foot['pitch']:.5f}")
+        metrics["samples"] += 1
+        armature.animation_data.action = action
         for bone in armature.pose.bones:
             bone.keyframe_insert(data_path="location", frame=frame)
             bone.keyframe_insert(data_path="rotation_quaternion", frame=frame)
@@ -1640,6 +1896,13 @@ def author_walk_off(armature, idle, run):
         for point in curve.keyframe_points:
             point.interpolation = "LINEAR"
     action.use_fake_user = True
+    if abs(metrics["rootTravelMetres"] - 2.4) > .001 or abs(metrics["rootTurnRadians"] - math.pi) > .001:
+        raise ValueError("Walk-off Root missed the 1 mm / .001 rad endpoint solve tolerance")
+    print("P4_YETI_FLAT_GAIT " + json.dumps(metrics, sort_keys=True), flush=True)
+    armature.animation_data.action = None
+    for bone in armature.pose.bones:
+        bone.matrix_basis = baseline[bone.name]
+    bpy.context.view_layer.update()
     armature.animation_data.action = idle
     bpy.context.scene.frame_set(int(idle.frame_range[0]))
     bpy.context.view_layer.update()
@@ -1722,15 +1985,16 @@ def prepare_yeti(objects):
     bpy.context.view_layer.update()
     fur = reshape_yeti(objects, armature)
     objects.append(fur)
-    author_walk_off(armature, idle, run)
+    # The idle shape defines the asset fit before a new clip touches the rig.
     low, high = bounds(meshes())
     scale = 2.8 / (high.z - low.z)
+    author_walk_off(armature, idle)
     roots = [obj for obj in objects if obj.parent not in objects]
     transform = Matrix.Diagonal((scale, scale, scale, 1)) @ Matrix.Translation(Vector((0, 0, -low.z)))
     for obj in roots:
         obj.matrix_world = transform @ obj.matrix_world
     armature["preparedClips"] = "idle,roar,chest-beat,lope,walk-off"
-    armature["sourceClips"] = "Idle and in-place Run retained; roar/chest-beat authored; walk-off authored from slowed Run with turn and root travel on the original 43-joint skin"
+    armature["sourceClips"] = "Idle and in-place Run retained; roar/chest-beat authored; walk-off authored with fixed stance targets, weighted heel solve and 2.4 m metric root travel on the original 43-joint skin"
 
 
 def render_group(group, ids, out, evidence, original=False):
