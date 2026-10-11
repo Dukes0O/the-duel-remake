@@ -119,3 +119,23 @@ by `tools/build-tollkeeper-audio.mjs`. Runtime file:
 ## Flamethrower particles
 
 [Particle Pack](https://kenney.nl/assets/particle-pack) by Kenney Vleugels. CC0 1.0. Four native wispy flame silhouettes, smoke and scorch are resized to padded 128 px tiles. The renderer adds amber shading and time-driven animation. Recipe: tools/art/polish-flame-textures.py. Original license and exact source hashes: tools/art/catalog.json, kenney-particle-pack-flame.
+
+## Grand Prix sound library
+
+All sources below use [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The Grand Prix recipes trim, filter, pitch, fade and level-match these recordings; continuous beds use a short loop crossfade. Source hashes and exact cuts are in `tools/audio/catalog.json`; rebuild with `tools/audio/p4-audio.mjs`.
+
+- [Countdown for race, game start](https://freesound.org/people/Pastew/sounds/813525/), by **Pastew** (Freesound 813525).
+- [GASP_Chimes_Success_1.wav](https://freesound.org/people/Rob_Marion/sounds/541982/), by **Rob_Marion** (Freesound 541982).
+- [2016.07.22 Bell Single 01.wav](https://freesound.org/people/RP1312/sounds/350616/), by **RP1312** (Freesound 350616).
+- [v8 engine rev.wav](https://freesound.org/people/overmedium/sounds/651534/), by **overmedium** (Freesound 651534).
+- [Air Impact Wrench](https://freesound.org/people/sevenbsb/sounds/349398/), by **sevenbsb** (Freesound 349398).
+- [Car driving on a gravel dirt road, close recording of front wheel from outside](https://freesound.org/people/felix.blume/sounds/685231/), by **felix.blume** (Freesound 685231).
+- [tires_snow_ice_slow.wav](https://freesound.org/people/dunebuggy/sounds/71099/), by **dunebuggy** (Freesound 71099).
+- [Skates on Ice.wav](https://freesound.org/people/Rehanjo/sounds/593623/), by **Rehanjo** (Freesound 593623).
+- [S27-07 Ice avalanche sliding & breaking up; weird.wav](https://freesound.org/people/craigsmith/sounds/675734/), by **craigsmith** (Freesound 675734).
+- [Monster Long Roar 1.wav](https://freesound.org/people/ecfike/sounds/132866/), by **ecfike** (Freesound 132866).
+- [Hard Impact on Snow](https://freesound.org/people/Elements-Library/sounds/683786/), by **Elements-Library** (Freesound 683786).
+- [Stadium Crowd](https://freesound.org/people/stomachache/sounds/274516/), by **stomachache** (Freesound 274516).
+- [Larrun_Mountains_MedWind](https://freesound.org/people/nicotep/sounds/725630/), by **nicotep** (Freesound 725630).
+- [Distant harbour noise in a windy night, Hamburg Landungsbrücken](https://freesound.org/people/Pfannkuchn/sounds/342878/), by **Pfannkuchn** (Freesound 342878).
+- [Sunny Forest Ambience 1](https://freesound.org/people/deadrobotmusic/sounds/609952/), by **deadrobotmusic** (Freesound 609952).
