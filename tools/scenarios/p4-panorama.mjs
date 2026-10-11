@@ -59,9 +59,12 @@ export async function run(context) {
       await context.waitFor('(()=>{window.__render.renderFrame();return window.__qaApp.visualReady && document.querySelector("#view3d").dataset.trackKitAsset==="ready";})()',quality+' full native scene',90000);
       const witness=await context.evaluate('(()=>{const a=window.__qaApp,v=window.__render,s=a.duel.state,before=JSON.stringify(s);v.renderFrame();const kits=v.scene.getObjectByName("Approved track kits"),landmarks=v.scene.getObjectByName("Authored circuit landmarks");if(!kits?.children.length||!landmarks?.getObjectByName("ridge-radio")||!landmarks?.getObjectByName("pit-timing"))throw Error("Real circuit structures missing");let decoded=0;const textures=new Set();kits.traverse(n=>{if(n.isMesh)for(const m of [].concat(n.material||[]))for(const t of Object.values(m))if(t?.isTexture)textures.add(t);});for(const t of textures){if(!t.image?.width||!t.image?.height)throw Error("Approved texture failed to decode");decoded++;}if(!decoded||JSON.stringify(s)!==before||JSON.stringify(a.profile)!==window.__panoramaProfile)throw Error("Scenery mutated native race/profile");return {textures:decoded,kits:kits.children.length,landmarks:landmarks.children.length,programs:v.renderer.info.programs.length};})()');
       async function capture(name,phase){
-        const meta=await context.evaluate('(()=>{const a=window.__qaApp,d=a.duel,s=d.state,c=d.course;'+
+        await context.evaluate('(()=>{const a=window.__qaApp,d=a.duel,s=d.state,c=d.course;'+
           'if('+JSON.stringify(phase)+'==="golden-grid")window.__panoramaView("Pit Straight");else {'+
           'const e=c.groundAt(s.s-40,-16),t=c.groundAt(s.s+20,0),height=window.__panQa.renderedGroundHeight(c,{...e,s:s.s-40,off:-16},{requireSurface:true});if(!Number.isFinite(height))throw Error("Inspection camera has no drawn ground");a.inspectionCamera={position:[e.x,height+18,e.z],target:[t.x,t.y+1.5,t.z]};}'+
+          'window.__render.renderFrame();})()');
+        await context.waitFor('(()=>{const a=window.__qaApp,c=window.__render.camera,p=a.inspectionCamera.position;return Math.hypot(c.position.x-p[0],c.position.y-p[1],c.position.z-p[2])<.001;})()','native inspection camera reaches drawn-ground view',10000);
+        const meta=await context.evaluate('(()=>{const a=window.__qaApp,d=a.duel,s=d.state,c=d.course;'+
           'const before=JSON.stringify(s);window.__render.renderFrame();if(JSON.stringify(s)!==before)throw Error("Capture changed native race");'+
           'const distance=s.completedLaps*c.length+c.phase(s.s);const light=window.__panQa.sampleCourseLightPath(c,{distance});'+
           'const cars=window.__render.scene.children.filter(o=>o.visible&&o.userData.vehicleKey);'+

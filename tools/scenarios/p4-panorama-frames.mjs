@@ -13,6 +13,8 @@ function prepare() {
   d.course.def={...definition,lightPath:fixed('night')};
   const c=d.course, eye=c.groundAt(-68,-42),target=c.groundAt(-24,0);
   app.inspectionCamera={position:[eye.x,eye.y+20,eye.z],target:[target.x,target.y+1,target.z]};
+  // Fix the presentation camera before the sampler records its first witness.
+  api.camera.position.fromArray(app.inspectionCamera.position);
   const profile=JSON.stringify(app.profile), race=JSON.stringify(state);
   document.head.insertAdjacentHTML('beforeend','<style>details,#overlay,.rear-view-frame,#race-hud,#modal-layer,.combat-opponent-marker{display:none!important}</style>');
   const review=window.__dayNightReview={};
