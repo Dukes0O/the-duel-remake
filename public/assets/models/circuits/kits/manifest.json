@@ -14,14 +14,14 @@
       ],
       "high": "start-gantry.glb",
       "low": "start-gantry-lod.glb",
-      "highTriangles": 1576,
-      "lowTriangles": 984,
+      "highTriangles": 1600,
+      "lowTriangles": 1008,
       "size": [
         17.5,
-        6.705,
+        7.625,
         0.64
       ],
-      "bytes": 292080,
+      "bytes": 299400,
       "credits": [
         {
           "author": "3D Assets",

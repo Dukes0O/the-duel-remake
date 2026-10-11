@@ -458,3 +458,48 @@ Actual High/LOD triangles: gantry 1,576/984; tyres 5,760/4,320; each autumn tree
 16,110,700 bytes. Growth adds actual rounded tyre layers, closed leaf surfaces
 and the sampled fifth Yeti clip. Native appearance, gait and frame cost remain
 unreviewed for these new exports; no look pass or performance claim is made.
+
+### Native candidate 4f03be6a and gantry correction plan (before code)
+
+The combined native capture passed functional checks on private port 21171 with
+memory-only saves: 40 PNGs, zero issues, four expected duplicate-Three warnings.
+Both modes use the actual 10.0333 s exported walk-off at 30 m. Root travel and
+away projection are 2.40000035 m, final away-heading cosine is effectively 1,
+and no sampled frame has both soles more than 3 cm above the terrain.
+
+Strict stance uses the authored fixed-foot intervals, shifted by the exported
+one-frame offset, and excludes one 30 Hz frame at each swing boundary. Terrain
+height does not select these intervals. Max fixed-toe planar movement is
+0.000941 m High / 0.000936 m Performance; max fixed-heel movement is 0.014848 m /
+0.008347 m, greatest during the turn. Departure heel drift stays below 0.009 m.
+The old half-metre toe skating is absent in these fixed stance samples.
+Native whole-sole minimum remains -0.039495 m / -0.038204 m across actual ground
+ranges 0.041014 m / 0.040094 m. Direction and planted stance improved; terrain
+contact remains unresolved. The source flat-ground solve and these native
+terrain observations are separate. No overall native walking pass is claimed.
+
+Tyre layers now read clearly; tree leaves and the shallow gallery slab proceed
+to formal art review. The gantry still fails legibility. Actual GLB rays at
+height 6.2 m hit the original beam at depth +/-0.24 m before either glyph face
+(front +0.184 m, rear -0.064 m). The panel's 5.655-6.705 m height leaves only a
+thin cream strip visible above the 6.5 m beam.
+
+Director-approved bounded repair: raise only the panel and both text objects
+from centre height 6.18 m to 7.10 m, placing the panel bottom at 6.575 m. Add
+exactly two 0.10 x 0.16 x 0.16 m mounting brackets at x +/-4.4 m, height 6.55 m.
+Keep the frame, glyph size/orientation, all five named 0.64 m lamps and housings
+unchanged. Use the same front/rear witness rays translated with the sign to
+prove the glyphs become visible, then the unchanged native camera for legibility.
+The failed witness is retained. No other static or Yeti edits are authorized.
+
+The bounded gantry export passes the same panel-relative front/rear visibility
+rays in both qualities: each ray now hits its matching glyph face first. The
+preserved before evidence hits the original beam first in all four cases.
+The frame, all five lamps and five housings retain exact world transforms,
+geometry attributes and indices. The other 34 records/68 GLBs remain exact,
+as do the original 19 passed records/38 GLBs, catalog and tanker source pin.
+The focused 35-pair check passes; bank probes remain 371 hits with zero error.
+Gantry High/LOD: 1,600/1,008 triangles, 299,400 bytes. Whole kit now has
+96,173/56,576 triangles and 16,118,020 bytes. The extra 24 triangles per quality
+are the two mounts. Native camera legibility and the formal look verdict remain
+pending; visibility rays alone do not grant either pass.

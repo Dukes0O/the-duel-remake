@@ -1312,9 +1312,11 @@ def prepare_gantry(objects):
         detail_block("lamp-housing-" + str(index), (.78, .30, .78),
                      ((index - 3) * 1.4, -.12, 5.24), dark)
     banner = held_material("gantry-faded-banner", (.86, .81, .65))
-    detail_block("gantry-series-banner", (10.8, .22, 1.05), (0, -.06, 6.18), banner)
-    front = label("THE DUEL", (0, -.183, 6.18), .94, "gantry-series-name-front")
-    rear = label("THE DUEL", (0, .063, 6.18), .94, "gantry-series-name-rear")
+    detail_block("gantry-series-banner", (10.8, .22, 1.05), (0, -.06, 7.10), banner)
+    for x in [-4.4, 4.4]:
+        detail_block("gantry-banner-mount", (.10, .16, .16), (x, -.06, 6.55), frame)
+    front = label("THE DUEL", (0, -.183, 7.10), .94, "gantry-series-name-front")
+    rear = label("THE DUEL", (0, .063, 7.10), .94, "gantry-series-name-rear")
     rear.rotation_euler = (math.pi / 2, 0, math.pi)
     for letters in [front, rear]:
         letters["p4LodRatio"] = .58
