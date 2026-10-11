@@ -1,7 +1,7 @@
 // Puts an authored track script (src/track-script.js) into a Course: the
 // sampled centreline, the finish, the racing line and the solid walls. Like the
 // Pit's builder, this runs only for definitions that carry a `script`.
-import { TRACK_SCRIPT, buildRacingLine } from './track-script.js';
+import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
 import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
 import { basinWeight } from './basins.js';
 import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
