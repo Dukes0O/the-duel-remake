@@ -46,7 +46,10 @@ export function pitAt(course, s, off) {
   return lane;
 }
 export function pitBox(lane, actor) {
-  return lane.box + (actor.field ? actor.field.index * 8 - 24 : 0);
+  if (!actor.field) return lane.box;
+  const index = actor.field.index;
+  // Leave the marked player box free, including an eight-car field.
+  return lane.box + (index < 3 ? index - 3 : index - 2) * 8;
 }
 
 export function stepPitService(duel, actor, dt) {

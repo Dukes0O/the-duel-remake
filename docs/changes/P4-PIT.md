@@ -26,7 +26,9 @@ round trip; summer is intentionally absent in existing race state. No game
 assertion or tolerance was weakened. Focused acceptance passes 6/6: road and
 wall, real 60 km/h driving, no boost spent, exactly four-second service, one
 swap/refill/GO, CPU real entry/stop/exit with no reset, seeded Nia choices,
-contact hold and read-only crew callback. A demonstrated CPU exit restop was
+contact hold and read-only crew callback. Source review then removed a CPU
+box overlap with the player: seven distinct CPU boxes leave the player box
+free. The added unique-box assertion awaits the scheduled lane check. A demonstrated CPU exit restop was
 fixed by retaining serviced state across the road merge.
 
 Native High/Performance passes on private 28875: memory-only saves, eight

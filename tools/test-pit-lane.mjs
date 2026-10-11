@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
-import {PIT, pitAt, pitView, stepPitService,choosePit,pitEstimate} from '../src/pit-lane.js';
+import {PIT, pitAt, pitBox, pitView, stepPitService,choosePit,pitEstimate} from '../src/pit-lane.js';
 import {initializeField} from '../src/race-field.js';
 import {stepFieldRacer,runtimeOf} from '../src/race-field-driver.js';
 import {addTrackScriptScene} from '../src/track-script-scene.js';
@@ -114,4 +114,11 @@ test('service holds the stopped pose even if contact pushes it between ticks',()
     const before=JSON.stringify(s);group.userData.updatePitCrew(s);
     assert.equal(JSON.stringify(s),before,'crew/board renderer changes no race state');
   }finally{done();}
+});
+
+test('all seven computer boxes leave the marked player box free',()=>{
+  const lane={box:250};
+  const boxes=[pitBox(lane,{}),...Array.from({length:7},(_,index)=>pitBox(lane,{field:{index}}))];
+  assert.equal(new Set(boxes).size,8);
+  assert.deepEqual(boxes,[250,226,234,242,258,266,274,282]);
 });
