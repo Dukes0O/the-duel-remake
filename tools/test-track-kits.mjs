@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
+import {kitConstructionAccepted,kitDeliveredAccepted} from './scenarios/track-kits.mjs';
 import * as THREE from 'three';
 import {readFile} from 'node:fs/promises';
+import {resolve,dirname,relative} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {spawnSync} from 'node:child_process';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {bindTrackKits,trackKitsOf} from '../src/track-kits.js';
 import {disposeTree} from '../src/world.js';
@@ -12,6 +17,38 @@ import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {createRendererReadiness} from '../src/screen-readiness.js';
 import {createTrackKits, normalizeKitPlacements, TRACK_KIT_IDS} from '../src/track-kits.js';
+
+// Claude check-in7: kit thresholds are total construction and delivered p95.
+assert.equal(kitConstructionAccepted(999.999),true);
+assert.equal(kitConstructionAccepted(1000),false,'construction must be under1s');
+assert.equal(kitDeliveredAccepted(18.5),true,'delivered cap includes18.5ms');
+assert.equal(kitDeliveredAccepted(18.500001),false,'over-cap delivered fails');
+for(const value of [-1,NaN,Infinity,null,undefined,'18']){
+  assert.equal(kitConstructionAccepted(value),false,'construction must be finite measured time');
+  assert.equal(kitDeliveredAccepted(value),false,'delivered must be finite measured time');
+}
+
+if (process.argv[2] === '--validate-circuit') {
+  assert.equal(process.argv.length,4,'Usage: test-track-kits.mjs --validate-circuit <tracked src/circuits/module.js>');
+  const modulePath = resolve(process.argv[3]);
+  assert.match(modulePath.replaceAll('\\','/'),/\/src\/circuits\/[a-z0-9-]+\.js$/,
+    'Validate only an actual repository circuit source module.');
+  const moduleRoot = dirname(dirname(dirname(modulePath)));
+  const verified = spawnSync('git',['-C',moduleRoot,'ls-files','--error-unmatch',relative(moduleRoot,modulePath)],
+    {encoding:'utf8',windowsHide:true});
+  assert.equal(verified.status,0,'Circuit source must be a tracked repository file.');
+  const exported = await import(pathToFileURL(modulePath).href);
+  const definitions = [...new Set(Object.values(exported))].filter(def =>
+    def?.id && Array.isArray(def.kitPlacements) && def.kitPlacements.length);
+  assert.equal(definitions.length,1,'Module must name one authored circuit with actual kit placements.');
+  await validateCircuitKits(definitions[0]);
+  process.exit(0);
+}
+
+if (process.argv.includes('--culling-only')) {
+  await kitCullingChecks();
+  process.exit(0);
+}
 
 const course = {
   length: 1000, def: {}, samples: [], features: {surfacePatches: [],shortcuts: []},
@@ -230,3 +267,226 @@ for(const {point,hit} of [nearWitness,farWitness]){
 assert.equal(renderedGroundHeight(authoredCourse,{x:1e7,z:1e7,s:100,off:1e7},{requireSurface:true}),null);
 nearMesh.geometry.dispose();farMesh.geometry.dispose();surfaceMaterial.dispose();
 console.log('Track kits: authored near/far bases match actual Float32 terrain triangles.');
+
+
+// A small source-only regression set; no browser, timing or real-asset parsing.
+async function kitCullingChecks() {
+  let projections = 0;
+  const flatCourse = {
+    length: 1000, def: {}, samples: [], features: {surfacePatches: [],shortcuts: []},
+    at: s => ({s, x: 0, y: 0, z: s, heading: 0}),
+    groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
+    nearest: (x, z) => { projections++; return {s: z, lateral: x}; },
+    roadHalfWidthAt: () => 7,
+  };
+  const asset = () => {
+    const geometry = new THREE.BoxGeometry(1, 3, 1);
+    geometry.translate(0, 1.5, 0);
+    const scene = new THREE.Group();
+    scene.add(new THREE.Mesh(geometry, new THREE.MeshStandardMaterial()));
+    return {scene, animations: []};
+  };
+  const rows = [20, 70, 130, 880].map(s => ({id: 'armco', s, lateral: 20}));
+  const runtime = createTrackKits(flatCourse, {
+    placements: rows, validateClearance: false, loadAsset: async () => asset(),
+  });
+  assert.equal(await runtime.ready, true, runtime.error?.message);
+  assert.equal(projections, 0, 'explicit runtime trust avoids geometric triangle projection');
+  runtime.update({high: true, position: {x: 20, y: 0, z: 40}});
+  const meshes = runtime.group.children.filter(node => node.isInstancedMesh);
+  assert.equal(new Set(meshes.map(mesh => mesh.userData.trackKitChunk)).size, 3,
+    'placements occupy their actual roughly100m chunks');
+  assert.equal(meshes.reduce((sum, mesh) => sum + mesh.count, 0), 4,
+    'only one real version per placement is submitted');
+  const actual = new THREE.Matrix4(), actualScale = new THREE.Vector3();
+  for (const mesh of meshes) for (let i = 0; i < mesh.count; i++) {
+    mesh.getMatrixAt(i, actual);
+    actualScale.setFromMatrixScale(actual);
+    assert.ok(actualScale.toArray().every(value => value > 0), 'no zero-scale hidden draw');
+  }
+  const camera = new THREE.PerspectiveCamera(60, 1.6, .1, 500);
+  camera.position.set(20, 8, 40); camera.lookAt(20, 4, 150);
+  camera.updateProjectionMatrix(); camera.updateMatrixWorld(true);
+  runtime.update({high: true, position: camera.position, camera});
+  assert.equal(runtime.stats.high, 2, 'main packs only the two in-frustum nearby pieces');
+  assert.equal(runtime.stats.low, 0, 'far piece outside the actual camera is not submitted');
+  const before = meshes.map(mesh => ({mesh, count: mesh.count, visible: mesh.visible,
+    matrices: Array.from(mesh.instanceMatrix.array)}));
+  const beforeStats = JSON.stringify(runtime.stats);
+  const untouched = meshes.filter(mesh => mesh.userData.trackKitChunk === 8)
+    .map(mesh => ({mesh, version:mesh.instanceMatrix.version}));
+  assert.ok(untouched.length, 'actual distant batches remain outside both views');
+  assert.throws(() => runtime.withRearView({position: camera.position,
+    forward: new THREE.Vector3(0, 0, -1)}, () => {
+    assert.equal(runtime.stats.high, 0, 'rear never submits detailed instances');
+    assert.equal(runtime.stats.low, 1, 'rear submits only the nearby piece behind the car');
+    throw Error('deliberate rear draw failure');
+  }), /deliberate rear/);
+  for (const saved of before) {
+    assert.equal(saved.mesh.count, saved.count);
+    assert.equal(saved.mesh.visible, saved.visible);
+    assert.deepEqual(Array.from(saved.mesh.instanceMatrix.array), saved.matrices);
+  }
+  assert.equal(JSON.stringify(runtime.stats), beforeStats, 'throw restores exact main statistics');
+  for (const saved of untouched) assert.equal(saved.mesh.instanceMatrix.version,saved.version,
+    'a rear scope must not re-upload untouched distant matrix buffers');
+  assert.equal(runtime.withRearView({position:camera.position,
+    forward:new THREE.Vector3(0,0,-1)},()=> 'actual draw return'),'actual draw return');
+  assert.equal(JSON.stringify(runtime.stats),beforeStats,'successful scope restores main statistics');
+  const moved = new THREE.Matrix4().makeTranslation(20,0,25);
+  assert.equal(runtime.setPlacementPose(1,moved),true);
+  assert.equal(runtime.stats.high,1,'a real mutable pose leaves the main frustum');
+  runtime.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=> {
+    assert.equal(runtime.stats.low,2,'rear includes the actual moved pose');
+    runtime.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,1)},()=> {
+      assert.equal(runtime.stats.high,0);
+      assert.equal(runtime.stats.low,1,'nested rear scope follows its actual orientation');
+    });
+    assert.equal(runtime.stats.low,2,'nested scope restores its caller');
+  });
+  assert.equal(runtime.stats.high,1,'pose and main count survive the rear scope');
+  runtime.dispose();
+
+  // Claude's genuine layer colour contract must follow the selected row, not
+  // the old full-route buffer slot, through main and nested rear packing.
+  const paintedRows = rows.map((row,index) => ({...row,id:'tyre-wall',
+    ...(index===2?{}:{bands:[[index/3,0,1-index/3],[0,index/3,1-index/3]]})}));
+  const painted = createTrackKits(flatCourse,{placements:paintedRows,validateClearance:false,
+    loadAsset:async()=>{
+      const scene=new THREE.Group();
+      for(let layer=1;layer<=2;layer++){
+        const geometry=new THREE.BoxGeometry(1,3,1);geometry.translate(0,1.5,0);
+        geometry.userData.fixtureLayer=layer-1;
+        const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());
+        mesh.name='layer-'+layer;scene.add(mesh);
+      }
+      return {scene,animations:[]};
+    }});
+  assert.equal(await painted.ready,true,painted.error?.message);
+  assert.ok(Object.isFrozen(painted.placements[0].bands[0]),'layer colours remain immutable');
+  const actualPaint=new THREE.Color();
+  function assertPaintedPrefix(){
+    for(const mesh of painted.group.children){
+      if(!mesh.visible||!mesh.count)continue;
+      const layer=mesh.geometry.userData.fixtureLayer;
+      mesh.userData.trackKitDrawnPlacementIndices.forEach((index,slot)=>{
+        const expected=paintedRows[index].bands?.[layer]??[1,1,1];
+        if(mesh.instanceColor)mesh.getColorAt(slot,actualPaint);else actualPaint.setRGB(1,1,1);
+        assert.ok(actualPaint.toArray().every((value,axis)=>Math.abs(value-expected[axis])<1e-6),
+          'actual selected layer colour follows its packed placement index');
+      });
+    }
+  }
+  painted.update({high:true,position:camera.position,camera});assertPaintedPrefix();
+  const paintedBefore=painted.group.children.map(mesh=>({mesh,visible:mesh.visible,count:mesh.count,
+    matrices:Array.from(mesh.instanceMatrix.array),colours:mesh.instanceColor?Array.from(mesh.instanceColor.array):null,
+    colourVersion:mesh.instanceColor?.version}));
+  painted.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=>{
+    assertPaintedPrefix();
+    painted.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,1)},assertPaintedPrefix);
+    assertPaintedPrefix();
+  });
+  for(const saved of paintedBefore){
+    assert.equal(saved.mesh.visible,saved.visible);assert.equal(saved.mesh.count,saved.count);
+    assert.deepEqual(Array.from(saved.mesh.instanceMatrix.array),saved.matrices);
+    assert.deepEqual(saved.mesh.instanceColor?Array.from(saved.mesh.instanceColor.array):null,saved.colours,
+      'rear restores exact original layer colour buffers');
+    if(saved.mesh.userData.trackKitChunk===8)
+      assert.equal(saved.mesh.instanceColor?.version,saved.colourVersion,'untouched distant colour buffers never upload');
+  }
+  assertPaintedPrefix();painted.dispose();
+  assert.throws(()=>normalizeKitPlacements(flatCourse,[{...paintedRows[0],bands:[[0,NaN,1]]}]),/bands/);
+
+  const illegal = createTrackKits(flatCourse, {placements: [{id:'armco',s:100,lateral:0}],
+    loadAsset: async () => asset()});
+  assert.equal(await illegal.ready, false, 'default full validation still rejects the actual road intrusion');
+  assert.match(illegal.error.message, /clearance/i); illegal.dispose();
+  const malformed = createTrackKits(flatCourse, {placements: [{id:'armco',s:100,lateral:20,lift:NaN}],
+    validateClearance: false, loadAsset: async () => asset()});
+  assert.equal(await malformed.ready, false, 'runtime trust preserves metadata/lift checks');
+  malformed.dispose();
+
+  // Independent straight road boxes: outside pieces avoid triangles; nearby,
+  // spanning and physical-patch pieces retain the original complete guard.
+  const sampled = {...flatCourse,samples:[{s:0,x:0,z:0},{s:1000,x:0,z:1000}]};
+  projections=0;
+  const far = createTrackKits(sampled,{placements:[{id:'armco',s:100,lateral:20}],
+    loadAsset:async()=>asset()});
+  assert.equal(await far.ready,true,far.error?.message);
+  assert.equal(projections,0,'conservative broad phase proves an outside box clear');
+  assert.equal(far.stats.clearance.broadPhaseSkipped,2);far.dispose();
+  projections=0;
+  const close = createTrackKits(sampled,{placements:[{id:'armco',s:100,lateral:0,lift:5}],
+    loadAsset:async()=>asset()});
+  assert.equal(await close.ready,true,close.error?.message);
+  assert.ok(projections>0,'nearby lifted pieces keep triangle headroom validation');
+  assert.equal(close.stats.clearance.trianglePlacements,2);close.dispose();
+  const spanning = createTrackKits(sampled,{placements:[{id:'armco',s:100,lateral:20,scale:[50,1,1]}],
+    loadAsset:async()=>asset()});
+  assert.equal(await spanning.ready,false,'a model box spanning the road cannot be skipped');
+  assert.match(spanning.error.message,/clearance/i);spanning.dispose();
+  const patch={kind:'deep-snow',s0:90,s1:110,from:19,to:21};
+  const winter={...sampled,features:{...sampled.features,surfacePatches:[patch]}};
+  projections=0;
+  const bank=createTrackKits(winter,{placements:[{id:'plough-bank',s:100,lateral:20,physicalPatch:patch}],
+    loadAsset:async()=>asset()});
+  assert.equal(await bank.ready,true,bank.error?.message);
+  assert.ok(projections>0,'physical bank footprint checks never use the broad-phase exemption');
+  bank.dispose();
+  const outsideBank=createTrackKits(winter,{placements:[{id:'plough-bank',s:100,lateral:20,scale:[3,1,1],physicalPatch:patch}],
+    loadAsset:async()=>asset()});
+  assert.equal(await outsideBank.ready,false);
+  assert.match(outsideBank.error.message,/physical patch/i);outsideBank.dispose();
+
+  let releases=0;
+  const retiring=createTrackKits(flatCourse,{placements:rows,validateClearance:false,
+    loadAsset:async()=>{const model=asset();model.scene.traverse(node=>{
+      node.geometry?.addEventListener('dispose',()=>releases++);
+      node.material?.addEventListener('dispose',()=>releases++);
+    });return model;}});
+  assert.equal(await retiring.ready,true);retiring.update({high:true,position:camera.position,camera});
+  retiring.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=>retiring.dispose());
+  assert.equal(retiring.status,'retired');assert.equal(retiring.group.children.length,0);
+  assert.equal(releases,4,'rear retirement releases the two actual source pairs once');
+  retiring.dispose();assert.equal(releases,4);
+  assert.equal(retiring.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=>17),17);
+  assert.equal(retiring.group.children.length,0,'retired scope never restores a world into the scene');
+  let allowLoad;
+  const loadingGate=new Promise(resolve=>{allowLoad=resolve;});
+  const timed=createTrackKits(flatCourse,{placements:rows,validateClearance:false,
+    loadAsset:async()=>{await loadingGate;return asset();}});
+  assert.equal(timed.stats.presentation.constructionMs,null,'pending assets never claim completed construction');
+  await new Promise(resolve=>setTimeout(resolve,20));allowLoad();
+  assert.equal(await timed.ready,true);
+  assert.ok(timed.stats.presentation.constructionMs>=timed.stats.presentation.activeCpuMs+10,
+    'actual construction includes the genuine asset wait, without subtracting it');
+  timed.dispose();
+  const failedTiming=createTrackKits(flatCourse,{placements:[{id:'bad-kit',s:0,lateral:0}]});
+  assert.equal(await failedTiming.ready,false);assert.equal(failedTiming.stats.presentation.constructionMs,null);
+  failedTiming.dispose();
+  console.log('Track kit runtime trust, packed chunks, culling and exact rear restoration passed.');
+}
+
+await kitCullingChecks();
+
+
+async function validateCircuitKits(definition) {
+  const parser = new GLTFLoader();
+  parser.register(() => ({name:'KIT_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const course = new Course(definition,1989);
+  const owner = createTrackKits(course, {loadAsset:async path => {
+    const bytes = await readFile(new URL('../public'+path,import.meta.url));
+    return parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+  }});
+  try {
+    assert.equal(await owner.ready,true,owner.error?.message);
+    assert.equal(owner.placements.length,definition.kitPlacements.length);
+    assert.equal(owner.stats.clearance.runtimeSkipped,0,'build validates every real High/LOD placement');
+    assert.equal(owner.stats.clearance.trianglePlacements+owner.stats.clearance.broadPhaseSkipped,
+      owner.placements.length*2);
+    console.log(definition.id+': '+owner.placements.length+' actual High/LOD placements fully validated.');
+  } finally {owner.dispose();}
+}
+
+for (const definition of ALL_CIRCUITS)
+  if (definition.kitPlacements?.length) await validateCircuitKits(definition);
