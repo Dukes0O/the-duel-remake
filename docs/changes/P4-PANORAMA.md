@@ -49,7 +49,7 @@ Quiet frames and field balance remain pending; Claude art verdict waits.
 Private QA now waits for the actual native inspection camera before metadata
 and pixels. Frame sampling fixes only its presentation camera position to the
 authored grid view before the original sampler witness; no racer is moved.
-The unchanged sampler/counts/limits remain. No new native/frame run claimed. Independent ec4ef834 camera/limit review clears.
+The earlier camera review ec4ef834 cleared; no frame pass was claimed.
 Genuine dcdab76a sync installs consumed-art cleanup; runtime remains exact.
 
 ## Round two (Claude check-in 5)
@@ -70,7 +70,7 @@ and memory-only App. Three isolated30 reports need matching source/seed/index
 coverage before combined90 verdict. Actual3fed90 attempts FAIL all30/30 opening
 pileups and0wins each; player finishes11/14/12 of30, all7CPUfinish each.
 Remaining19/16/18 hit420s cap. Original limits stay; Claude correction requested.
-Frame output labels hidden mirror/HUD main-view scope; no frame pass claimed.
+The old hidden mirror/HUD frame recipe had no frame pass.
 Native3fed art failed missing ground at4840.939m/offset28.735m: final2.043m
 of4m terrain ribbon omitted. New actual-ray/full-landscape regression RED,
 then GREEN after Panorama-only exact final row and matching triangle sampler.
@@ -79,8 +79,22 @@ Native1343private34986PASS16views/0issues, all8finish129.81/98.665/100.06s,
 21passes/light.55; actual14view315987B round2sheet goes to Claude, no artpass.
 All11focused and2,545,523existing terrain checks pass; source review clear.
 
+## Whole-view recipe, before code
+
+Card decision: fresh identical seeded eight-car grids, off/day then on/night
+and the opposite order per quality. Before the race world is built, omit only
+kitPlacements/circuitLandmarks in off; preserve complete mountain ground/road.
+Keep actual camera, all eight native poses, rear view and HUD; rendering must
+preserve race/profile/storage. Reuse frozen6e5f2d64 main-plus-rear sampler:
+120 warm-up,360 CPU/update/combined,359 delivered,GPU at least288, fixed resolution.
+Original10% CPU/GPU/delivered limits stay; combined10% and on p95<=18.5ms apply.
+RED missing full-view validators; GREEN22 numeric count/limit checks and syntax pass.
+Shared sampler bytes match6e5f2d64; no native/frame/field/art pass. Loader correction sync is due.
+
 ## Removed
 
 The road-only presentation is replaced by approved circuit kits and landmarks.
 No road geometry, existing mode or real save is removed.
-Consumed round1sheet/note removed; verdict retained on card/currentround2note.
+Round1sheet/note removed; verdict remains on card/round2note.
+Replace the populated hidden-kit baseline and hidden mirror/HUD main-only sampler
+with fresh metadata-only baselines and the shared full-view sampler; no limits loosened.
