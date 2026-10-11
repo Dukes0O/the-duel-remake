@@ -1,7 +1,7 @@
 // Full-field targets on the authored mountain, with Claude's native .95 driver.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {resolve,relative,sep,join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -11,13 +11,17 @@ import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
 import {courseFingerprint} from '../src/track-analysis.js';
 import {ownTestCourses} from './career-fixture.mjs';
 import {useRacingLine} from './track-script-drive.mjs';
-import {DIFFICULTIES,TARGETS,runRace,summarize,checkTargets} from './race-field-balance.mjs';
+import {DIFFICULTIES,TARGETS,raceSeeds,runRace,summarize,checkTargets} from './race-field-balance.mjs';
 
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
-export async function runPanoramaRate(outputDir,{difficulties=DIFFICULTIES}={}){
-  assert.ok(Array.isArray(difficulties)&&difficulties.length&&new Set(difficulties).size===difficulties.length&&difficulties.every(d=>DIFFICULTIES.includes(d)));
+function evidenceDirectory(outputDir){
   const output=resolve(root,outputDir),inside=relative(resolve(root,'.evidence'),output);
   assert.ok(inside&&inside!=='..'&&!inside.startsWith('..'+sep)&&!inside.includes(':'));
+  return output;
+}
+export async function runPanoramaRate(outputDir,{difficulties=DIFFICULTIES}={}){
+  assert.ok(Array.isArray(difficulties)&&difficulties.length&&new Set(difficulties).size===difficulties.length&&difficulties.every(d=>DIFFICULTIES.includes(d)));
+  const output=evidenceDirectory(outputDir);
   const git=spawnSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',windowsHide:true});
   assert.equal(git.status,0);
   const sourceCommit=git.stdout.trim(),originalStart=App.prototype.startCampaign;
@@ -70,9 +74,41 @@ export async function runPanoramaRate(outputDir,{difficulties=DIFFICULTIES}={}){
   console.log(JSON.stringify({sourceCommit,summary,failures},null,2));
   return report;
 }
+export async function aggregatePanoramaRate(outputDir,inputDirs){
+  assert.equal(inputDirs.length,3,'All three isolated difficulty reports are required.');
+  const reports=await Promise.all(inputDirs.map(async input=>JSON.parse(
+    await readFile(join(evidenceDirectory(input),'panorama-rate.json'),'utf8'))));
+  const sourceCommit=reports[0].sourceCommit,results=reports.flatMap(report=>report.results);
+  assert.ok(/^[a-f0-9]{40}$/.test(sourceCommit));
+  assert.ok(reports.every(report=>report.sourceCommit===sourceCommit&&report.completeCoverage===false&&
+    report.setup.memoryOnly===true&&report.setup.prototypeRestored===true&&report.results.length===30),
+    'Inputs must be isolated complete thirty-race reports from the same source.');
+  assert.equal(results.length,90);
+  for(const difficulty of DIFFICULTIES){
+    const rows=results.filter(row=>row.cpuDifficulty===difficulty);
+    assert.equal(rows.length,30,'Every difficulty needs thirty native attempts.');
+    assert.equal(new Set(rows.map(row=>row.index)).size,30);
+    for(const row of rows){
+      assert.ok(Number.isInteger(row.index)&&row.index>=0&&row.index<30);
+      const expected=raceSeeds(row.index);
+      assert.equal(row.seed,expected.seed);assert.equal(row.fieldSeed,expected.fieldSeed);
+      assert.match(row.raceFingerprint,/^[a-f0-9]{64}$/);
+    }
+  }
+  const summary=summarize(results),failures=checkTargets(summary);
+  const report={sourceCommit,completeCoverage:true,setup:reports[0].setup,
+    targets:TARGETS,summary,failures,results};
+  const output=evidenceDirectory(outputDir);await mkdir(output,{recursive:true});
+  await writeFile(join(output,'panorama-rate.json'),JSON.stringify(report,null,2)+'\n');
+  console.log(JSON.stringify({sourceCommit,completeCoverage:true,summary,failures},null,2));
+  return report;
+}
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){
-  if(![4,6].includes(process.argv.length)||process.argv[2]!=='--output-dir'||process.argv.length===6&&process.argv[4]!=='--difficulty')
-    throw Error('Usage: panorama-field-rate.mjs --output-dir .evidence/<date>/<card>/<run> [--difficulty easy|medium|hard]');
-  const report=await runPanoramaRate(process.argv[3],{difficulties:process.argv.length===6?[process.argv[5]]:DIFFICULTIES});
+  const args=process.argv;
+  if(![4,6,8].includes(args.length)||args[2]!=='--output-dir'||
+      args.length===6&&args[4]!=='--difficulty'||args.length===8&&args[4]!=='--aggregate')
+    throw Error('Usage: panorama-field-rate.mjs --output-dir .evidence/<date>/<card>/<run> [--difficulty easy|medium|hard | --aggregate EASY_DIR MEDIUM_DIR HARD_DIR]');
+  const report=args.length===8?await aggregatePanoramaRate(args[3],args.slice(5)):
+    await runPanoramaRate(args[3],{difficulties:args.length===6?[args[5]]:DIFFICULTIES});
   if(report.failures.length)process.exitCode=1;
 }
