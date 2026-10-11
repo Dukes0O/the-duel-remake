@@ -63,8 +63,12 @@ The course-only low golden sun and brighter orange/violet dusk preserve default
 palettes and light timing. Same native views plus Murray/Esses will go to Claude.
 RED mountain bank/light tests failed original source; GREEN9 tests and544 light
 checks passed, including actual GLBs/clearance. All native tree roots pass;
-camera/dry regression pending. Quiet native art/frame proof remains due.
+camera/dry regressions pass. Quiet native art/frame proof remains due.
 No old assertion changed and no world signature regenerated.
+The field recipe uses the approved native.95 driver, exact original seeds/targets
+and memory-only App. Three isolated30 reports need matching source/seed/index
+coverage before combined90 verdict. Frame output labels its hidden mirror/HUD
+main-view scope; sampler/counts/limits are unchanged. No rate/frame pass claimed.
 
 ## Removed
 

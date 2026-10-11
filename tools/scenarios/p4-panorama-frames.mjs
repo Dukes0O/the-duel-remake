@@ -45,7 +45,7 @@ function prepare() {
 
 export async function run(context) {
   if(process.env.P4_PANORAMA_MEASURE_FRAMES!=='1')throw Error('Director must schedule a quiet frame slot');
-  const report={passed:false,scope:'Same complete ground/road and real stationary eight-car grid; kits/landmarks/day off versus kits/landmarks/night on. Native preparation continues. Not moving-camera cost or old incomplete-ground source.',frames:[],comparisons:[]};
+  const report={passed:false,scope:'Same complete ground/road and real stationary eight-car grid; kits/landmarks/day off versus kits/landmarks/night on. Native preparation continues. Mirror/HUD hidden for isolated main-view cost; not moving-camera or mirror cost, or old incomplete-ground source.',frames:[],comparisons:[]};
   const persist=()=>writeFile(join(context.outputDir,'p4-panorama-frames.json'),JSON.stringify(report,null,2)+'\n');
   const bundle=await nativeBundle();
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
