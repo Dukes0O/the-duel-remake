@@ -91,6 +91,27 @@ export function compileWarmupPipeline(renderer,scene,camera,composer){
   return settleCompilations(pending,failure);
 }
 
+// Re-check before each later submission: a completed initial poll may belong
+// to a retired scene. The old poll still settles under its original ticket.
+export function guardLightingWarmup(isCurrent,withNightMaterials){
+  return submit=>isCurrent()?withNightMaterials(submit):undefined;
+}
+
+// Prepare actual path variants during the existing structural loading job.
+// Sequence output modes: Three polls a material's currentProgram, which must
+// not be replaced by another target variant while that poll is outstanding.
+export async function compileWarmupLighting(renderer,scene,camera,composer,{high,withNightMaterials,initialCompilation}={}){
+  let failure;
+  try{
+    await (initialCompilation??(high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null)));
+  }catch(error){failure=error;}
+  if(typeof withNightMaterials==='function')for(const target of high?[composer.readBuffer]:[null,composer.readBuffer]){
+    try{await withNightMaterials(()=>compileWarmupScene(renderer,scene,camera,target));}
+    catch(error){failure??=error;}
+  }
+  if(failure)throw failure;
+}
+
 function settleCompilations(pending,failure){
   return Promise.allSettled(pending).then(results=>{
     if(failure)throw failure;

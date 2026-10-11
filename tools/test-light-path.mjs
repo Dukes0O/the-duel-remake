@@ -416,4 +416,107 @@ for (const quality of ['high', 'performance']) {
 }
 assert.deepEqual(roundTwoFailures, [], 'Round-two missing behavior:\n' + roundTwoFailures.join('\n'));
 
+// Final round: real both-side fixtures and existing-road marking adaptation.
+const roundThreeFailures = [];
+const roundThree = (condition, label) => {checks++;if (!condition) roundThreeFailures.push(label);};
+{
+  const world = new THREE.Group();
+  const course = {def: {theme: 'city'}, length: 1000, closed: false,
+    features: {poles: [{x: -18, y: 0, z: 12, s: 12, heading: 0, theme: 'city'}]},
+    themeAt: () => 'city', roadHalfWidthAt: () => 7,
+    groundAt: (s, off) => ({x: off, y: 0, z: s, heading: 0})};
+  const markingSource = new THREE.MeshStandardMaterial({color: 0xe8d2a5, roughness: .8});
+  const marking = new THREE.Mesh(new THREE.PlaneGeometry(.17, 100), markingSource);
+  marking.userData.roadMarking = 'edge';world.add(marking);
+  const geometry = marking.geometry, vertices = geometry.attributes.position.array.slice();
+  const details = createPathNightDetails({world, course});
+  details.update({amount: 1, headlights: 1, position: {x: 0, y: 0, z: 80}, distance: 80});
+  const heads = world.getObjectByName('Night streetlamp heads'), pools = world.getObjectByName('Night streetlamp road pools');
+  const poles = world.getObjectByName('Night streetlamp poles'), arms = world.getObjectByName('Night streetlamp arms');
+  roundThree(poles?.isInstancedMesh && arms?.isInstancedMesh && poles.count === heads?.count && arms.count === heads?.count,
+    'real instanced supports and arms accompany every night lamp');
+  roundThree(heads?.count >= 8 && heads.count <= 32 && pools?.count === heads.count,
+    'regular bounded paired stations replace sparse one-side fixtures');
+  const headPositions = [], poolPositions = [], matrix = new THREE.Matrix4(), point = new THREE.Vector3();
+  for (let i = 0; i < (heads?.count || 0); i++) {heads.getMatrixAt(i, matrix);headPositions.push(point.setFromMatrixPosition(matrix).clone());}
+  for (let i = 0; i < (pools?.count || 0); i++) {pools.getMatrixAt(i, matrix);poolPositions.push(point.setFromMatrixPosition(matrix).clone());}
+  roundThree(headPositions.some(p => p.x < 0) && headPositions.some(p => p.x > 0), 'actual lamp matrices occupy both road sides');
+  roundThree(poolPositions.length > 0 && poolPositions.every(p => Math.abs(p.x) < 7 && p.y > 0 && p.y < .2),
+    'actual soft pool centres sit on the tarmac');
+  const stations = [...new Set(headPositions.map(p => p.z))].sort((a, b) => a - b);
+  roundThree(stations.length >= 4 && stations.slice(1).every((s, i) => s - stations[i] <= 40.001),
+    'native fixture spacing covers the forward 50 m view');
+  roundThree(marking.material !== markingSource && marking.material.emissiveIntensity > 0,
+    'actual existing road marking has bounded ambient night response');
+  const shader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader,
+    fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+  marking.material.onBeforeCompile(shader);
+  roundThree(shader.uniforms.pathBeam?.value === 1 && shader.fragmentShader.includes('pathReflection'),
+    'existing marking shader responds to actual headlight beam at road distance');
+  roundThree(marking.geometry === geometry && vertices.every((v, i) => geometry.attributes.position.array[i] === v),
+    'lighting preserves the complete native marking geometry');
+  details.update({amount: 0, headlights: 0, position: {x: 0, y: 0, z: 80}, distance: 80});
+  roundThree(marking.material === markingSource, 'day restores the exact native road marking material');
+  details.restore();roundThree(marking.material === markingSource, 'legacy restores exact native marking material');
+  details.dispose();geometry.dispose();markingSource.dispose();
+}
+THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+try {
+  const scene = new THREE.Scene(), renderer = {toneMappingExposure: 1}, bloom = {strength: 0}, host = {dataset: {}};
+  const lighting = createSceneLighting({scene, renderer, bloom, host}, {
+    createPMREM: () => ({fromScene: () => ({texture: new THREE.Texture(), dispose() {}}), dispose() {}}),
+    createRoom: () => ({dispose() {}}), loadEnvironment: () => {},
+  });
+  const course = {def: {theme: 'city', lightPath: path}, length: 1000, raceLength: 3000, closed: false,
+    features: {poles: []}, themeAt: () => 'city', roadHalfWidthAt: () => 7,
+    groundAt: (s, off) => ({x: off, y: 0, z: s, heading: 0})};
+  lighting.apply({course, distance: 0});
+  const world = new THREE.Group();
+  const room = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), createCityInteriorMaterial());world.add(room);
+  const marking = new THREE.Mesh(new THREE.PlaneGeometry(.17, 100), new THREE.MeshStandardMaterial({color: 0xe8d2a5}));
+  marking.userData.roadMarking = 'edge';world.add(marking);scene.add(world);lighting.setWorld(world);
+  lighting.updateWorld({position: {x: 0, y: 0, z: 80}, heading: 0, distance: 80, high: true});
+  const assets = createVehicleAssets(), keys = ['falcone_f42', 'stuttgart_959s', 'dusthawk_rally', 'banshee_muscle', 'viper_proto', 'titan_monster', 'koenigsegg_jesko'];
+  const cars = keys.map(key => assets.create(key));cars.push(vehicles.createVehicle());
+  for (const car of cars) {scene.add(car);lighting.updateCar(car, false);}
+  const observedUniforms = ['strength','pathBeam','pathInteriorNight','pathWindowCutoff','pathEye','pathDirection',
+    'night','stars','moon','sunStrength'];
+  const snapshot = () => {
+    const rows = [];
+    scene.traverse(o => {
+      const material = o.material, shader = {uniforms: {}, vertexShader: THREE.ShaderLib.standard.vertexShader,
+        fragmentShader: THREE.ShaderLib.standard.fragmentShader};
+      if (material && !Array.isArray(material)) material.onBeforeCompile(shader);
+      const uniforms = material?.uniforms || shader.uniforms;
+      const values = observedUniforms.filter(key => uniforms[key]).map(key => {
+        const value = uniforms[key].value;return [key, value?.toArray ? value.toArray() : value];
+      });
+      rows.push([o.uuid,o.visible,material?.uuid,material?.emissiveIntensity,values]);
+    });
+    return JSON.stringify(rows);
+  };
+  const before = snapshot(), sky = scene.getObjectByName('Atmosphere and cloud deck');
+  roundThree(typeof lighting.withNightMaterials === 'function', 'native lighting owner exposes reversible actual night-material preparation');
+  if (typeof lighting.withNightMaterials === 'function') {
+    for (const throws of [false, true]) {
+      let reached = false;
+      try {lighting.withNightMaterials(() => {
+        reached = true;
+        roundThree(sky.material.uniforms.stars.value === 1 && sky.material.uniforms.moon.value === 1,
+          'night preparation binds actual celestial program');
+        roundThree(cars.every(car => car.getObjectByName('Night headlight cones')?.visible && car.getObjectByName('Night tail glow')?.visible),
+          'all eight native cars expose their actual hidden night programs at day-start warmup');
+        roundThree(world.getObjectByName('Authored night details')?.visible === true,
+          'world lamp, marking, reflector and window programs are prepared before night');
+        if (throws) throw Error('expected submission failure');
+      });} catch (error) {if (!throws) throw error;}
+      roundThree(reached, 'actual night binding scope submits compiler work');
+      roundThree(snapshot() === before && sky.material.uniforms.stars.value === 0 && sky.material.uniforms.moon.value === 0,
+        'day material identities, strength, visibility and celestial state restore on success/failure');
+    }
+  }
+  lighting.dispose();for (const car of cars) disposeTree(car);disposeTree(world);
+} finally {THREE.TextureLoader.prototype.load = originalLoader;}
+assert.deepEqual(roundThreeFailures, [], 'Round-three missing behavior:\n' + roundThreeFailures.join('\n'));
+
 console.log(`Light paths: ${checks} acceptance checks passed.`);

@@ -8,7 +8,28 @@ function prepare(quality) {
   if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value ||
       !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only QA required');
   app.stop();app.audio.setMuted(true);app.setGraphicsQuality(quality);app.cameraMode = 'chase';
-  app.duel.startCampaign({mode: 'duel', startStage: 2, car: 'falcone_f42', seed: 1989, opponentCount: 1});
+  const stageGetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(app.duel), 'stageDef')?.get;
+  if (!stageGetter) throw Error('Native stage definition getter unavailable');
+  const originalDefinition = stageGetter.call({state: {stageIndex: 2, arena: false}});
+  if (originalDefinition !== app.getMenuCourse(2).def) throw Error('QA does not hold the native Harbor catalog definition');
+  const originalPath = Object.getOwnPropertyDescriptor(originalDefinition, 'lightPath');
+  const initialPath = Object.freeze({axis: 'race-progress', keyframes: Object.freeze([
+    Object.freeze({at: 0, look: 'day'}), Object.freeze({at: 1, look: 'night'}),
+  ])});
+  let authoredAtCreation = false;
+  try {
+    Object.defineProperty(originalDefinition, 'lightPath', {value: initialPath, configurable: true, enumerable: true, writable: true});
+    app.duel.startCampaign({mode: 'duel', startStage: 2, car: 'falcone_f42', seed: 1989, opponentCount: 1});
+    authoredAtCreation = app.duel.course.def === originalDefinition && app.duel.stageDef === originalDefinition &&
+      app.duel.course.def.lightPath === initialPath;
+    if (!authoredAtCreation) throw Error('Authored path was not present at native stage creation');
+    app.duel.course.def = {...originalDefinition};
+  } finally {
+    if (originalPath) Object.defineProperty(originalDefinition, 'lightPath', originalPath);
+    else delete originalDefinition.lightPath;
+  }
+  const restoredPath = Object.getOwnPropertyDescriptor(originalDefinition, 'lightPath');
+  if (JSON.stringify(restoredPath) !== JSON.stringify(originalPath)) throw Error('Native catalog path descriptor did not restore');
   const state = app.duel.state, course = app.duel.course;
   if (course.def.id !== 'harbor-highlands') throw Error('Native harbor course missing');
   let grid = 250, busiest = -1;
@@ -36,9 +57,8 @@ function prepare(quality) {
     at.z - Math.cos(heading) * 43], target: [at.x, at.y + 1.4, at.z]};
   app.onFrame?.(state, 0);
   document.head.insertAdjacentHTML('beforeend', '<style>details,#race-hud,#modal-layer,.combat-opponent-marker{display:none!important}</style>');
-  const originalDefinition = course.def;
   const fixedPath = look => Object.freeze({axis: 'race-progress', keyframes: Object.freeze([Object.freeze({at: 0, look})])});
-  const review = window.__dayNightReview = {quality, grid, busiest, originalDefinition, nativeKeys,
+  const review = window.__dayNightReview = {quality, grid, busiest, originalDefinition, nativeKeys, authoredAtCreation,
     profile: JSON.stringify(app.profile), state: null, scene: api.scene, legacyMaterials: null};
   review.setLook = look => {
     course.def = look === 'legacy' ? originalDefinition : {...originalDefinition, lightPath: fixedPath(look)};
@@ -72,10 +92,44 @@ function prepare(quality) {
     const reflections = api.scene.getObjectByName('Road reflectors');
     const lampHeads = api.scene.getObjectByName('Night streetlamp heads');
     const lampPools = api.scene.getObjectByName('Night streetlamp road pools');
+    const lampPoles = api.scene.getObjectByName('Night streetlamp poles');
+    const lampArms = api.scene.getObjectByName('Night streetlamp arms');
+    const viewport = api.renderer.domElement.getBoundingClientRect();
+    const project = p => {
+      const point = api.camera.position.clone().set(p.x, p.y, p.z).project(api.camera);
+      return {pixel: [viewport.left + (point.x + 1) * viewport.width / 2,
+        viewport.top + (1 - point.y) * viewport.height / 2],
+        visible: point.z >= -1 && point.z <= 1 && Math.abs(point.x) < .98 && Math.abs(point.y) < .98};
+    };
+    const fixtureMatrices = [];
+    if (lampHeads && lampPoles && lampArms && lampPools) for (let i = 0; i < lampHeads.count; i++) {
+      const row = {};
+      for (const [kind, batch] of [['head',lampHeads],['pole',lampPoles],['arm',lampArms],['pool',lampPools]]) {
+        const matrix = batch.matrix.clone();batch.getMatrixAt(i, matrix);
+        const position = api.camera.position.clone().setFromMatrixPosition(matrix).applyMatrix4(batch.matrixWorld);
+        row[kind] = {matrix: matrix.toArray(), position: position.toArray(), ...project(position)};
+      }
+      const nearest = course.nearest(row.head.position[0], row.head.position[2], grid);
+      row.side = nearest.lateral < 0 ? 'left' : 'right';row.ahead = nearest.s - grid;fixtureMatrices.push(row);
+    }
+    const markingMeshes = [];
+    api.scene.traverse(mesh => {if (mesh.userData.roadMarking) markingMeshes.push({kind: mesh.userData.roadMarking,
+      material: mesh.material.uuid, intensity: mesh.material.emissiveIntensity});});
+    const markings50 = [];
+    for (const side of [-1,1]) for (const kind of ['centre','edge']) {
+      const offset = side * (kind === 'centre' ? .17 : course.roadHalfWidthAt(grid + 50) - .365);
+      const paint = course.worldAt(grid + 50, offset), tarmac = course.worldAt(grid + 50, offset + side * (kind === 'centre' ? .8 : -.65));
+      paint.y += kind === 'centre' ? .058 : .057;tarmac.y += .035;
+      markings50.push({side,kind,metresAhead:50,paint:{position:[paint.x,paint.y,paint.z],...project(paint)},
+        tarmac:{position:[tarmac.x,tarmac.y,tarmac.z],...project(tarmac)}});
+    }
     const streetlamps = {
       heads: {count: lampHeads?.isInstancedMesh ? lampHeads.count : 0,
         visible: lampHeads?.visible === true && nightGroup?.visible === true,
         opacity: lampHeads?.material.opacity ?? 0, color: lampHeads?.material.color?.getHex() ?? null},
+      poles: {count: lampPoles?.isInstancedMesh ? lampPoles.count : 0, visible: lampPoles?.visible === true && nightGroup?.visible === true},
+      arms: {count: lampArms?.isInstancedMesh ? lampArms.count : 0, visible: lampArms?.visible === true && nightGroup?.visible === true},
+      fixtureMatrices,
       pools: {count: lampPools?.isInstancedMesh ? lampPools.count : 0,
         visible: lampPools?.visible === true && nightGroup?.visible === true,
         transparent: lampPools?.material.transparent === true,
@@ -87,14 +141,14 @@ function prepare(quality) {
           mesh.material?.customProgramCacheKey?.().startsWith('city-room-parallax-v1')))
         windows.push({name: mesh.name, material: mesh.material.name, intensity: mesh.material.emissiveIntensity});
     });
-    return {poses, streetlamps, stars: sky.material.uniforms.stars?.value ?? null, moon: sky.material.uniforms.moon?.value ?? null,
+    return {poses, streetlamps, markingMeshes, markings50, stars: sky.material.uniforms.stars?.value ?? null, moon: sky.material.uniforms.moon?.value ?? null,
       nightGroup: nightGroup?.visible === true, reflectors: reflections?.visible && nightGroup?.visible ? reflections.count : 0,
       windows, lightCount: api.scene.children.filter(item => item.isLight).length,
       viewport: [document.querySelector('#view3d').clientWidth, document.querySelector('#view3d').clientHeight],
       ratio: api.renderer.getPixelRatio(), scale: document.querySelector('#view3d').dataset.resolutionScale || '1'};
   };
-  review.setLook('legacy');
-  return {grid, busiest, seed: app.duel.seed};
+  // Keep the preauthored definition until the real structural job completes.
+  return {grid, busiest, seed: app.duel.seed, authoredAtCreation};
 }
 
 async function setup(context, quality) {
@@ -105,6 +159,7 @@ async function setup(context, quality) {
     await context.waitFor(`(() => {
       const app=window.__qaApp,api=window.__render;api.renderFrame();app.onFrame?.(app.duel.state,0);
       return app.visualReady && document.querySelector('#renderer-loading')?.hidden &&
+        document.querySelector('#view3d').dataset.warmupStatus==='ready' &&
         JSON.stringify(api.scene.children.filter(item=>item.visible&&window.__dayNightReview.nativeKeys.includes(item.userData.vehicleKey))
           .map(item=>item.userData.vehicleKey).sort())===JSON.stringify([...window.__dayNightReview.nativeKeys].sort());
     })()`, quality + ' eight native cars', 60000);
@@ -121,6 +176,11 @@ async function setup(context, quality) {
   }
   await context.evaluate(`(() => {
     const r=window.__dayNightReview,api=window.__render;
+    r.warmupPrograms=api.renderer.info.programs.map(program=>({id:program.id,cacheKey:program.cacheKey,ready:program.isReady()}));
+    if(!r.authoredAtCreation||!r.warmupPrograms.length||r.warmupPrograms.some(program=>!program.ready))
+      throw Error('Actual authored scene programs are not ready');
+    r.setLook('legacy');
+    r.preTransitionPrograms=api.renderer.info.programs.map(program=>program.id);
     r.state=JSON.stringify(window.__qaApp.duel.state);
     r.legacyMaterials=[];
     api.scene.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.emissive)r.legacyMaterials.push({mesh,material:mesh.material,intensity:mesh.material.emissiveIntensity});});
@@ -244,9 +304,27 @@ export async function run(context) {
             throw Error('Native streetlamp batches incomplete: '+JSON.stringify(witness.streetlamps));
           if(!witness.poses.every(car=>car.rearGlow.visible&&car.rearGlow.softGlowMeshes>0))
             throw Error('Native rear glow incomplete: '+JSON.stringify(witness.poses));
+          const {poles,arms,fixtureMatrices}=witness.streetlamps;
+          if(poles.count!==heads.count||arms.count!==heads.count||!poles.visible||!arms.visible||
+              !['left','right'].every(side=>fixtureMatrices.some(row=>row.side===side&&row.ahead>=0&&row.ahead<=120&&
+                row.head.visible&&row.pole.visible&&row.arm.visible&&row.pool.visible)))
+            throw Error('Supported lamps are not actually in view on both road sides');
+          if(witness.markingMeshes.length!==4||witness.markings50.some(row=>!row.paint.visible||!row.tarmac.visible))
+            throw Error('Actual native centre/edge marking points at 50 m are not visible');
         }
+        const programs=await context.evaluate(`(() => {
+          const r=window.__dayNightReview,programs=window.__render.renderer.info.programs;
+          const inventory=programs.map(program=>({id:program.id,cacheKey:program.cacheKey,ready:program.isReady()}));
+          if(inventory.some(program=>!program.ready))throw Error('A submitted native shader program is not ready');
+          const warmed=new Set(r.warmupPrograms.map(program=>program.id));
+          const baseline=new Set(r.preTransitionPrograms);
+          return {warmup:r.warmupPrograms,current:inventory,added:inventory.filter(program=>!warmed.has(program.id)),
+            afterInitialPreparation:inventory.filter(program=>!baseline.has(program.id))};
+        })()`);
+        if((look==='dusk'||look==='night')&&programs.afterInitialPreparation.length)
+          throw Error('Night transition compiled programs after structural preparation: '+JSON.stringify(programs.afterInitialPreparation));
         const capture=await context.screenshot(quality+'-'+look);
-        report.captures.push({quality,look,capture,...initial,witness});await persist();
+        report.captures.push({quality,look,capture,...initial,witness,programs});await persist();
       }
       if(frames) for(const pair of diagnose?[1]:[1,2]) {
         for(const look of pair===1?['legacy','night']:['night','legacy']) {

@@ -32,7 +32,7 @@ export function lightPathLook(look, theme = 'desert') {
     sunOffset: {x: -105, y: 7, z: 73}, cloudCover: .65, cloudTint: [.39, .34, .40],
     stars: .18, moon: .3, nightAmount: .55, lightLevel: .3};
   if (look === 'night') value = {...value, fog: 0x172538, top: '#061024', horizon: '#14263d',
-    ground: 0x243342, sunColor: 0xa8c2e5, sun: 0, hemi: .52, env: 0,
+    ground: 0x243342, sunColor: 0xa8c2e5, sun: 0, hemi: .82, env: 0,
     fogNear: 170, fogFar: 1300, exposure: 1.02, bloom: .16, sunStrength: 0,
     sunOffset: {x: -65, y: 76, z: -90}, cloudCover: .2, cloudTint: [.12, .16, .23],
     stars: 1, moon: 1, nightAmount: 1, lightLevel: .1};

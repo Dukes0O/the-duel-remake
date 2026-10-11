@@ -2,7 +2,8 @@
 
 Status: Claude round-one art HOLD. Round two is limited to the corrections
 below. The accepted prior-source timing exception remains recorded; current
-art, source, lane/build and frame-watch evidence are still required.
+art and a scoped timing response are pending. Round-two native checks pass;
+the standard frame watch fails High pair-two CPU/GPU. Lane/build remain held.
 
 ## Design decision (10 October 2026, before code)
 
@@ -259,3 +260,135 @@ No runtime change is needed. The eight-view capture already passed on 65d72ec1
 at private port 51149 with zero warnings/errors and exact state/profile/material
 restoration; frame measurement was off. The new witness awaits its own native
 run in the separately granted quiet slot.
+
+Round-two standard watch on frozen `0f3cf576` (runtime `65d72ec1`) failed the
+unchanged 10% gate at private port 6341. High pair-two p95 off/on: CPU 9.6/18.7 ms
+(+94.79%), GPU 11.132928/17.587200 ms (+57.97%), delivered 16.8/18.2 ms (+8.33%).
+High pair one and both Performance pairs meet the 10% comparisons. All eight
+runs completed at scale/ratio 1, each with 360 CPU and 359 delivered/GPU samples.
+The round-two review note keeps every pair's numbers. No automatic retry,
+timing investigation, threshold change or causal claim was made.
+
+The new native witness passes both quality presets at dusk/night: two visible
+streetlamp heads and matching soft pools; all eight actual cars each own two
+visible nonzero soft rear-glow meshes. Existing state/profile/material restore
+checks pass, with zero browser warnings/errors. The original sheet/captures
+remain unchanged. Waiting for Claude's scoped timing/art response; lane/build
+are held. This result is folded into the next real change, not committed alone.
+
+## Final round three: before-code design and test plan
+
+Kyle-relayed Claude direction: this is the final allowed art round. Correct
+both-side supported lamps, cool road fill and 50 m marking readability while
+preserving round-two facades, windows, moon and vehicle tails. One bounded
+prewarm fix and one scheduled standard timing run are allowed. The round-two
+High pair-two timing FAIL remains evidence; shader compilation is a possible
+cause, not a proved cause or an inherited timing exception.
+
+Inspection found that Three's native compile traverses invisible meshes. Merely
+showing hidden glow groups is therefore not a fix. The existing QA fixture
+warms the legacy Harbor definition and injects lightPath later. Real authored
+paths already create several adapters before structural warmup, but there is
+no explicit complete variant submission/readiness contract. Course environment
+identity includes its full definition, so a real preauthored course causes the
+existing structural rebuild. No preparation-key change is needed or proposed.
+
+Planned rendering changes:
+
+- Build a bounded near-road fixture pool on both sides, at regular 40 m course
+  samples across city sections. Use native pole/arm proportions and matching
+  supports at both edges; attach warm heads and soft grade-following tarmac
+  pools. Reuse four small instance batches, with at most 32 lamps total (16
+  paired stations), independently of quality. Avoid duplicating an existing
+  native fixture at its anchor. No floating dots, real Lights or shadow passes.
+- Raise only authored night cool ambient fill enough to read road boundaries.
+  Keep the sun and sunset HDR contribution at zero. Leave round-two window
+  shaders, facade response, fixed moon/stars and red tail geometry unchanged.
+- Tag the existing main-road centre and edge strip meshes, then bind private
+  path-only marking materials. Their existing geometry and source materials
+  remain exact. Add a small cool ambient response plus headlight reflection
+  extending beyond 50 m; tune existing cat's-eye glints on the same bounded
+  road pool. Day and legacy restore exact original materials and strengths.
+
+Planned readiness changes:
+
+- At structural warmup, explicitly prepare the actual eligible native vehicle,
+  road, window, sign, lamp/pool, reflector and sky materials for an authored
+  path, including initial-day hidden effects. A reversible scene-lighting
+  submission scope binds each real variant for compilation, then restores
+  material identities, uniforms, visibility and active look synchronously.
+- Extend the existing render-warmup compile adapter to submit those variants
+  for the actual output modes (linear composer/mirror and canvas as needed).
+  Await all submitted compiler promises, including when an earlier submission
+  throws or rejects. Keep exact target/cube-face/mipmap restoration and existing
+  timeout, stale-ticket and deferred resource disposal rules. No clear or draw
+  is added during compilation. No per-frame compile or progress-key changes.
+- The native fixture must use a true authored day-start definition before stage
+  creation. In its isolated memory-only tab, temporarily add the fixture path
+  to the native catalog definition before startCampaign, retain a private copy
+  on the newly created Course, and restore the catalog definition immediately
+  in finally. This needs no game/catalog source edit. Warmup must finish before
+  readiness and before toggling the recorded comparison looks. Camera, seed,
+  field, standard sample counts, pair order and 10% limits remain unchanged.
+  Do not inflate waits to hide preparation. Record actual ready status and
+  shader-program inventory before and after the first night transition.
+
+Meaningful RED checks before runtime edits:
+
+- An initial-day authored fixture exposes every actual night material to the
+  warmup submitter, including all eight native car glow/beam materials and both
+  road sides' supported fixture/head/pool/marking materials.
+- A deferred second variant keeps readiness pending; rejection or synchronous
+  failure cannot release another variant's resources early. Temporary bindings,
+  visibility and render targets restore immediately on every exit. Repeated
+  frames and lighting progress do not add objects or compiler submissions.
+- Both-side matrices have supported poles/arms/heads and matching on-tarmac
+  pools at bounded regular spacing. Existing materials are restored exactly;
+  no new real Lights or race-state writes. Marking geometry stays identical,
+  responds to the path and headlight beam at 50 m, and resets in day/legacy.
+- Keep all existing scene, vehicle, shader, replay, resource lifetime, warmup
+  key/controller and finite-frame assertions. Any necessary replacement must
+  be listed and reviewed before it changes; no timing tolerance is relaxed.
+
+Native final evidence: preserve the same eight full-frame views and camera.
+The witness records actual left/right support/head/pool matrices and their
+projected positions, plus native centre/edge marking locations at 50 m ahead
+of the player and neighbouring tarmac pixels from the same captures. Review
+those actual pixels for visibility and cat's-eye glint, not only object counts.
+Record all native car glows and legacy/state/profile restoration again. One
+round-three sheet follows source/native checks. One quiet standard two-pair,
+both-order, both-quality run retains the existing counts and every 10% limit.
+A real failure is preserved without automatic retry or a fourth art round.
+
+Exact files: existing DAY owners/hooks in light-path.js, scene-lighting.js,
+render3d.js, tests/scenario/art/notes; newly granted render-warmup.js and
+tools/test-render-warmup.mjs. Request one additional narrow src/world.js hook:
+label only the four existing main-road strip meshes at the current cream edge
+and yellow centre construction (around lines 71-72); preserve their original
+material objects, geometry, transforms and order. No world-props.js, course.js,
+config.js, preparation-key change or additional test-file hook is requested.
+Atmosphere and vehicles need no new visual changes in this round.
+
+Removed by this plan: the sparse single-side path lamp batches, unprepared
+late-injected QA definition, and any superseded private marking adapter. Keep
+native legacy fixtures and all earlier timing failures. No runtime edits or
+new tests have started; source review and the Director's grants come first.
+
+Round-three source implementation: paired supported 40 m fixture stations,
+path-only marking reflection/ambient response and cool night fill are in place.
+Night binding preparation runs inside the existing structural job, sequentially
+per output mode because Three polls each material's current program. The actual
+production guard captures world/revision and checks disposal before every late
+submission. Earlier rejection/throw cannot release a deliberately pending later
+compile; day identities and actual glow/beam/world uniforms restore immediately.
+The focused checks pass: lighting 544, warmup 304, unchanged pass parity 143,
+and unchanged preparation-key behavior 39. The new stale-world entry point had
+its own meaningful RED before repair. The protected native quality-dispatch
+assertion remained unchanged and still verifies actual High/Performance routing.
+The final native scenario starts the exact native catalog definition with its
+path before stage creation, proves identity, then restores the original property
+descriptor in finally. It records complete native shader-program inventories,
+requires no new dusk/night programs after preparation, and records actual both-
+side fixture matrices and native 50 m marking/tarmac pixel projections. The
+existing sheet recipe can audit those same screenshot pixels without a new draw.
+Runtime source review and all scheduled native/frame/art/gates remain pending.

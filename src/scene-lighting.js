@@ -15,7 +15,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
   loadEnvironment = (loaded, failed) => new RGBELoader().load('/assets/textures/sunset-lighting.hdr', loaded, undefined, failed),
 } = {}) {
   let stopped = false, disposed = false, course, naturalEnvironment, pmremReleased = false, pathSample = null;
-  const sampleBuffer = {}, sampleInputs = {}, vehicleUpdate = {}, worldUpdate = {}, vehicleLights = new Map(), worldDetails = new Map();
+  const sampleBuffer = {}, sampleInputs = {}, vehicleUpdate = {}, worldUpdate = {}, vehicleLights = new Map(), vehicleInputs = new Map(), worldDetails = new Map();
   let activeWorld = null;
   const pmrem = createPMREM(), room = createRoom();
   const releasePMREM = () => { if (!pmremReleased) { pmremReleased = true; pmrem.dispose(); } };
@@ -123,13 +123,15 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       if (stopped || !vehicle) return;
       let lamps = vehicleLights.get(vehicle);
       if (pathSample && vehicle.visible) {
-        if (!lamps) { lamps = createVehicleNightLighting(vehicle);vehicleLights.set(vehicle, lamps); }
+        if (!lamps) { lamps = createVehicleNightLighting(vehicle);vehicleLights.set(vehicle, lamps);vehicleInputs.set(vehicle, {}); }
         vehicleUpdate.amount = pathSample.headlights;vehicleUpdate.braking = braking;lamps.update(vehicleUpdate);
-      } else if (lamps) { vehicleUpdate.braking = braking;lamps.restore(vehicleUpdate); }
+        Object.assign(vehicleInputs.get(vehicle), vehicleUpdate, {active: true});
+      } else if (lamps) { vehicleUpdate.braking = braking;lamps.restore(vehicleUpdate);
+        Object.assign(vehicleInputs.get(vehicle), vehicleUpdate, {active: false}); }
     },
     detachVehicle(vehicle) {
       const lamps = vehicleLights.get(vehicle);
-      if (lamps) { lamps.dispose();vehicleLights.delete(vehicle); }
+      if (lamps) { lamps.dispose();vehicleLights.delete(vehicle);vehicleInputs.delete(vehicle); }
     },
     setWorld(world) {
       if (activeWorld !== world) worldDetails.get(activeWorld)?.restore();
@@ -144,6 +146,30 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
         worldUpdate.amount = pathSample.settings.nightAmount;worldUpdate.headlights = pathSample.headlights;details.update(worldUpdate);
       } else details?.restore();
     },
+    // Binding changes are synchronous; only native compiler promises escape.
+    // The existing warmup job owns their lifetime until every variant settles.
+    withNightMaterials(submit) {
+      if (stopped || !pathSample) return;
+      const uniforms = sky.material.uniforms;
+      const stars = uniforms.stars.value, moon = uniforms.moon.value;
+      const details = worldDetails.get(activeWorld);
+      try {
+        uniforms.stars.value = uniforms.moon.value = 1;
+        for (const [vehicle, lamps] of vehicleLights) {
+          const input = vehicleInputs.get(vehicle);
+          if (input.active) lamps.update({amount: 1, braking: input.braking});
+        }
+        if (details) details.update({...worldUpdate, amount: 1, headlights: 1});
+        return submit();
+      } finally {
+        uniforms.stars.value = stars;uniforms.moon.value = moon;
+        for (const [vehicle, lamps] of vehicleLights) {
+          const input = vehicleInputs.get(vehicle);
+          if (input.active) lamps.update(input);else lamps.restore(input);
+        }
+        if (details) details.update(worldUpdate);
+      }
+    },
     detachWorld(world) {
       const details = worldDetails.get(world);
       if (details) { details.dispose();worldDetails.delete(world); }
@@ -157,7 +183,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       stopped = disposed = true;
       releasePMREM();
       for (const lamps of vehicleLights.values()) lamps.dispose();
-      vehicleLights.clear();
+      vehicleLights.clear();vehicleInputs.clear();
       for (const details of worldDetails.values()) details.dispose();
       worldDetails.clear();
       atmosphere.dispose();
@@ -184,7 +210,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
 export function createPathNightDetails({world, course}) {
   const group = new THREE.Group();group.name = 'Authored night details';group.visible = false;
   const eye = {value: new THREE.Vector3()}, direction = {value: new THREE.Vector3(0, 0, 1)}, strength = {value: 0};
-  const bindings = [], materials = new Map(), windowMaterials = new Set();
+  const bindings = [], materials = new Map(), windowMaterials = new Set(), markingMaterials = new Set();
   const interiorNight = {value: 0}, windowCutoff = {value: .6};
   const originalKey = material => material.customProgramCacheKey();
   function reflective(source) {
@@ -217,15 +243,17 @@ export function createPathNightDetails({world, course}) {
   world.traverse(mesh => {
     if (!mesh.isMesh || Array.isArray(mesh.material)) return;
     const source = mesh.material;
+    const marking = mesh.userData.roadMarking === 'edge' || mesh.userData.roadMarking === 'centre';
     const sign = mesh.parent?.userData.roadSignId && !!source.map || mesh.userData.turnSignCell?.kind === 'boards' ||
       mesh.userData.brakingBoard === true;
     const cityInterior = originalKey(source) === 'city-room-parallax-v1';
     const skyline = originalKey(source) === 'city-skyline-grid-v1';
     const window = cityInterior || skyline || mesh.userData.harborCell?.kind === 'windows' || /glazing|window/i.test(source.name) ||
       !!source.emissiveMap && source.emissive?.getHex() === 0xffbc71;
-    if (!sign && !window) return;
+    if (!sign && !window && !marking) return;
     if (!materials.has(source)) {
-      const material = sign ? reflective(source) : source.clone();
+      const material = sign || marking ? reflective(source) : source.clone();
+      if (marking) {material.emissive.set(0x6284b5);markingMaterials.add(material);}
       if (window) {
         material.onBeforeCompile = source.onBeforeCompile;material.customProgramCacheKey = source.customProgramCacheKey;
         material.emissive.set(0xffc17b);windowMaterials.add(material);
@@ -252,7 +280,7 @@ export function createPathNightDetails({world, course}) {
       }
       material.userData.sharedAsset = false;materials.set(source, material);
     }
-    bindings.push({mesh, source, material: materials.get(source)});
+    bindings.push({mesh, source, material: materials.get(source), marking});
   });
   const reflectorGeometry = new THREE.BoxGeometry(.13, .028, .20);
   const reflectorMaterial = new THREE.ShaderMaterial({
@@ -282,13 +310,19 @@ export function createPathNightDetails({world, course}) {
       transparent: true, opacity: 0, depthWrite: false, toneMapped: false});
     town = new THREE.Points(geometry, material);town.name = 'Distant town windows';group.add(town);
   }
-  // Native lamp coordinates, two bounded batches and no additional real light.
-  const fixtures = (course.features?.poles || []).filter(p => p.theme === 'city');
+  // Native fixture proportions in four bounded batches; no additional real light.
+  const poleGeometry = new THREE.CylinderGeometry(.12, .2, 11, 9);
+  const armGeometry = new THREE.BoxGeometry(6, .16, .18);
+  const supportMaterial = new THREE.MeshStandardMaterial({color: 0x596775, roughness: .78, metalness: .65});
+  const lampPoles = new THREE.InstancedMesh(poleGeometry, supportMaterial, 32);
+  const lampArms = new THREE.InstancedMesh(armGeometry, supportMaterial, 32);
+  lampPoles.name = 'Night streetlamp poles';lampArms.name = 'Night streetlamp arms';
+  lampPoles.count = lampArms.count = 0;lampPoles.frustumCulled = lampArms.frustumCulled = false;
   const lampGeometry = new THREE.BoxGeometry(1.15, .12, .65);
   const lampMaterial = new THREE.MeshBasicMaterial({color: 0xffd296, transparent: true, opacity: 0});
   const lampHeads = new THREE.InstancedMesh(lampGeometry, lampMaterial, 32);
   lampHeads.name = 'Night streetlamp heads';lampHeads.count = 0;lampHeads.frustumCulled = false;
-  const poolGeometry = new THREE.PlaneGeometry(15, 22);poolGeometry.rotateX(-Math.PI / 2);
+  const poolGeometry = new THREE.PlaneGeometry(10, 22);poolGeometry.rotateX(-Math.PI / 2);
   const poolMaterial = new THREE.ShaderMaterial({transparent: true, depthWrite: false,
     blending: THREE.AdditiveBlending, uniforms: {night: interiorNight},
     vertexShader: `varying vec2 vUv;void main(){vUv=uv;
@@ -303,10 +337,10 @@ export function createPathNightDetails({world, course}) {
   const lampPools = new THREE.InstancedMesh(poolGeometry, poolMaterial, 32);
   lampPools.name = 'Night streetlamp road pools';lampPools.count = 0;lampPools.frustumCulled = false;
   lampHeads.userData.excludeAmbientOcclusion = lampPools.userData.excludeAmbientOcclusion = true;
-  group.add(lampHeads, lampPools);
+  group.add(lampPoles, lampArms, lampHeads, lampPools);
   world.add(group);
   const object = new THREE.Object3D();
-  let stopped = false, lastBucket = NaN, lastCount = 0;
+  let stopped = false, lastBucket = NaN, lastCount = 0, lastLampBucket = NaN;
   function restore() {
     if (stopped) return;
     for (const binding of bindings) binding.mesh.material = binding.source;
@@ -316,8 +350,9 @@ export function createPathNightDetails({world, course}) {
     group,
     update({amount = 0, headlights = 0, position, heading = 0, distance = 0, high = true}) {
       if (stopped) return;
-      for (const binding of bindings) binding.mesh.material = binding.material;
       const night = THREE.MathUtils.clamp(amount, 0, 1);
+      for (const binding of bindings) binding.mesh.material = binding.marking && night === 0 ? binding.source : binding.material;
+      for (const material of markingMaterials) material.emissiveIntensity = night * .18;
       interiorNight.value = night * 1.4;
       for (const material of windowMaterials) material.emissiveIntensity = night * 1.4;
       eye.value.set(position.x, position.y + .75, position.z);
@@ -340,19 +375,34 @@ export function createPathNightDetails({world, course}) {
           }
         }
         reflectors.count = count;reflectors.instanceMatrix.needsUpdate = true;
+      }
+      const lampBucket = Math.floor(distance / 40);
+      if (lampBucket !== lastLampBucket) {
+        lastLampBucket = lampBucket;
         let lamps = 0;
-        for (const pole of fixtures) {
-          if (lamps === 32) break;
-          if (Math.abs(pole.x - position.x) > 180 || Math.abs(pole.z - position.z) > 180) continue;
-          const angle = pole.heading || 0;
-          object.position.set(pole.x + Math.cos(angle) * 5.4, pole.y + 10.25, pole.z - Math.sin(angle) * 5.4);
-          object.rotation.set(0, angle, 0);object.updateMatrix();lampHeads.setMatrixAt(lamps, object.matrix);
-          const ground = course.groundAt(pole.s, -4.8);
-          object.position.set(ground.x, ground.y + .08, ground.z);object.updateMatrix();
-          lampPools.setMatrixAt(lamps++, object.matrix);
+        for (let i = 0; i < 16; i++) {
+          const s = (lampBucket + i - 3) * 40;
+          if (course.closed === false && (s < 0 || s > course.length)) continue;
+          if ((course.themeAt?.(s) || course.def.theme) !== 'city') continue;
+          const width = course.roadHalfWidthAt?.(s) || 7;
+          for (const side of [-1, 1]) {
+            const base = course.groundAt(s, side * (width + 3.4)), angle = base.heading || 0;
+            object.rotation.set(0, angle, 0);object.position.set(base.x, base.y + 5.5, base.z);object.updateMatrix();
+            lampPoles.setMatrixAt(lamps, object.matrix);
+            object.position.set(base.x - side * Math.cos(angle) * 3, base.y + 10.5, base.z + side * Math.sin(angle) * 3);
+            object.updateMatrix();lampArms.setMatrixAt(lamps, object.matrix);
+            const head = course.groundAt(s, side * (width - 2));
+            object.position.set(head.x, base.y + 10.35, head.z);object.updateMatrix();lampHeads.setMatrixAt(lamps, object.matrix);
+            const offset = side * Math.max(1, width - 3.3), ground = course.groundAt(s, offset);
+            const ahead = course.groundAt(s + 1, offset), behind = course.groundAt(s - 1, offset);
+            const pitch = -Math.atan2(ahead.y - behind.y, Math.hypot(ahead.x - behind.x, ahead.z - behind.z));
+            object.rotation.set(pitch, angle, 0, 'YXZ');object.position.set(ground.x, ground.y + .08, ground.z);
+            object.updateMatrix();lampPools.setMatrixAt(lamps++, object.matrix);
+          }
         }
-        lampHeads.count = lampPools.count = lamps;
-        lampHeads.instanceMatrix.needsUpdate = lampPools.instanceMatrix.needsUpdate = true;
+        for (const batch of [lampPoles, lampArms, lampHeads, lampPools]) {
+          batch.count = lamps;batch.instanceMatrix.needsUpdate = true;
+        }
       }
     },
     restore,
@@ -361,9 +411,10 @@ export function createPathNightDetails({world, course}) {
       restore();stopped = true;world.remove(group);
       reflectorGeometry.dispose();reflectorMaterial.dispose();
       lampGeometry.dispose();lampMaterial.dispose();poolGeometry.dispose();poolMaterial.dispose();
+      poleGeometry.dispose();armGeometry.dispose();supportMaterial.dispose();
       town?.geometry.dispose();town?.material.dispose();
       for (const material of materials.values()) material.dispose();
-      bindings.length = 0;materials.clear();windowMaterials.clear();
+      bindings.length = 0;materials.clear();windowMaterials.clear();markingMaterials.clear();
     },
   };
 }
