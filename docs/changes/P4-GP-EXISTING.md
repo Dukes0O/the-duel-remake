@@ -38,7 +38,9 @@ keeps the original store bytes (including archives), and retains a queryable
 session candidate. Results explicitly say storage full or save failed; no claim
 of persistence. Eleven pure storage checks pass; old TT admission is unchanged.
 Restored original UTF-8 punctuation in owned sources. Browser, save re-review,
-current lane/build remain pending. No art change.
+current lane/build remain pending. Root source review and named save-guardian
+review cleared 4cb54419 (11 storage checks plus 247 save fixtures). This final
+presentation-only cleanup keeps the new GP notice readable. No art change.
 
 ## Removed
 
