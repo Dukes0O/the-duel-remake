@@ -79,6 +79,8 @@ Genuine integration33aacf7a sync carries current navigation QA and governance; a
 
 Director-granted correction copies current board/next-run byteexact: consumed QA-FRAME-SETTLING removed after its facts are folded into next-run. Original board test/assertions and all accepted source remain exact; focused board check and new mandatory lane/build follow.
 
+b647 mandatory lane:220 passed/1 failed/167 not run in503.37s; no build. The original frame-metrics adjacency regex cannot recognize the accepted cached-rear wrapper, although both rear branches and finally restoration remain inside the CPU boundary. Director records compatibility before code: only the static guard changes, retaining its main/rear measurement promise with bounded branch/order/restoration matching and negative controls for early endpoints or missing main/rear/finally. Every numeric/count/percentile/tolerance assertion and all runtime bytes stay exact d05. Focused original metrics plus13 compatibility/negative controls pass134 checks; a fresh lane/build remains required.
+
 ## Removed
 
 Replace whole-route zero-scale hidden draws and repeated runtime triangle checks; full build/test clearance remains. Remove cached-rear scope work and untouched buffer uploads in the same fix. No placements/assets/art removed.
