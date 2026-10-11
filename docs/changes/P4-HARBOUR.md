@@ -81,9 +81,38 @@ their ranges and move a lot with pace. Lantern Hairpin on Medium (30 races):
 1.2 spin-outs per race (about 1 in 25 car-passes) and 6.6 light wall touches;
 no pile-up came from it.
 
-## Frame cost
+## Frame cost (not yet within the limit)
 
-See the numbers at the end of this note (`## Frame numbers`).
+`node tools/browser-harness.mjs scenario harbour-night`, 1280x720, quiet slot,
+eight cars at night, High preset, delivered frames (p50 / p95):
+
+| View | Without any kit pieces | With the full street |
+| --- | --- | --- |
+| Start grid, 8 cars | 18.0 / 18.1 ms (3.4 M triangles, 1,502 draws) | 18.0 / **35.5 ms**, 11 frames over 33 ms (10.7 M triangles, 1,840 draws) |
+| Old town, 8 cars | 17.6 / 18.1 ms | 17.7 / 18.2 ms, 5 frames over 33 ms (16.7 M triangles, 2,569 draws) |
+
+The night lighting, water and wet road cost nothing measurable. The kit adds
+7 to 13 M triangles because the shared loader draws every placement's
+detailed and distant version in both views whether near or not, so cost grows
+with the circuit's placement count. Codex has the culling card (chunks along
+the road, only near chunks drawn, a cheaper rear view); the full street stays.
+Performance has not been measured with the street yet. A race start with the
+current loader takes about 30 s (per-triangle clearance check of 1,969
+placements, tested in Node); the same card targets under 1 s.
+**Re-measure High then Performance with the scenario once that card merges.**
+
+## Checks
+
+Lane tier 388/388 and build pass on the final lane commit (a first run found
+`tools/test-race-surfaces.mjs` failing on a lost import and
+`tools/test-shortcut-presets.mjs` on a source fingerprint, both fixed: the
+basin ground is applied from the circuit builder so `src/course.js` is
+untouched). New: `tools/test-circuit-harbour.mjs` (13 checks: escape roads,
+walls, racing line, placements against the kit manifest, nothing on the road,
+a run-off road or in the water, wet look). Every placement was also checked
+against the loader itself, piece by piece, with the real GLBs. Claude's review
+tool output: `.evidence/2026-10-11/review/harbour-lights/` in the integration
+folder (map, 16 frames, speed trace, pack picture, `review.json`).
 
 ## Changed assertions
 
