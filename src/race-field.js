@@ -14,7 +14,7 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 const MPH = DRIVE.mphToWorld;
 
 // Circuits that offer a Grand Prix. P4-GP-EXISTING adds the others.
-export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'tremblant-woods']);
+export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'tremblant-woods', 'harbour-lights']);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({
@@ -216,7 +216,7 @@ export function initializeField(duel) {
   s.opponents = racers.map((racer, index) => {
     const upgrades = levelsFor(cars[index].level);
     const pose = gridPose(slotOf[index]);
-    const jitter = (rng.float() * 2 - 1) * tuning.spread;
+    const jitter = (rng.float() * 2 - 1) * tuning.spread * (course.def.fieldSpread ?? 1);
     const [lo, hi] = tuning.reaction;
     const reaction = Math.max(.1, lo + rng.float() * (hi - lo) - racer.traits.start * 1);
     return {
@@ -230,7 +230,7 @@ export function initializeField(duel) {
       completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0,
       field: {
         index, slot: slotOf[index], skillRoll: 1 + jitter, reaction, rng: (rng.float() * 4294967296) >>> 0,
-        formAmp: tuning.form, formPeriod: 25 + rng.float() * 30, formPhase: rng.float() * Math.PI * 2,
+        formAmp: tuning.form * (course.def.fieldForm ?? 1), formPeriod: 25 + rng.float() * 30, formPhase: rng.float() * Math.PI * 2,
         traits: { ...racer.traits }, bias: 0, intent: pose.lateral, pass: null, passCool: 0, passes: { start: 0, done: 0, timeout: 0, stalled: 0, edge: 0, dives: 0 }, diveKey: null, tow: 0, mistake: null,
         zoneKey: null, rolledKey: null, defendKey: null, defendSide: 0, lateBrake: 0, stuck: 0, offSec: 0,
         recoveries: 0, crashes: 0, knocked: false, cooldownSeen: 0, hits: 0, moveSpeed: 0,
@@ -242,7 +242,7 @@ export function initializeField(duel) {
   s.opponentCount = racers.length;
   duel.rivalSpec = s.opponents.length ? racerSpec(s.opponents[0].car, s.opponents[0].upgrades, s.opponents[0].driverId) : null;
   s.field = {
-    version: 1, laps: FIELD.laps, size, playerSlot, hold, cpuDifficulty: cpu, playerIndex: performanceIndex(duel.car, course), seed: fieldSeed,
+    version: 1, laps: duel.course.def.laps || FIELD.laps, size, playerSlot, hold, cpuDifficulty: cpu, playerIndex: performanceIndex(duel.car, course), seed: fieldSeed,
     start: { elapsed: 0, lights: 0, out: false },
     tow: 0, towBehind: null,
     order: [], position: size, finalLap: false,
@@ -251,7 +251,7 @@ export function initializeField(duel) {
     deferFinish: false,
   };
   s.countdown = FIELD.lights * FIELD.lightSec + hold;
-  s.lapsTotal = FIELD.laps;
+  s.lapsTotal = duel.course.def.laps || FIELD.laps;
   s.traffic = [];
   updateOrder(duel);
   s.field.lastPosition = s.field.position;
@@ -473,5 +473,6 @@ export function fieldView(state) {
 }
 
 export function courseForGrandPrix(def) {
-  return { ...def, laps: FIELD.laps, hasRadar: false, grandPrix: true };
+  // An authored circuit may set its own Grand Prix length (`grandPrixLaps`).
+  return { ...def, laps: def.grandPrixLaps ?? FIELD.laps, hasRadar: false, grandPrix: true };
 }
