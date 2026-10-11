@@ -48,7 +48,7 @@ const BASE = defineScriptedCourse({
   // walls, leave room for a leader that brakes at full strength, and on the first lap, with the
   // whole field bunched, keep a longer gap and count a car about to draw level as alongside.
   racingLine: { lineMargin: 2.6, lineSwing: .6, holdRacers: true },
-  fieldPace: { easy: .815, medium: .787, hard: .78 }, fieldForm: 2.5, fieldSpread: 1.5, fieldAggression: 1.4,
+  fieldPace: { easy: .75, medium: .725, hard: .716 }, fieldForm: 2.5, fieldSpread: 1.5, fieldAggression: 1.4,
   fieldFollow: { leadBraking: 1.6, wallRoom: 1.0, firstLap: { margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4 } },
   // Wet-look road at night: glossy asphalt and soft pools of colour under lanterns and neon
   // (src/circuit-water.js). Looks only; grip is dry.

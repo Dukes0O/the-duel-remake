@@ -190,12 +190,16 @@ export function installTestDriver(app, { lineSkill = LINE_SKILL } = {}) {
     }
     // Do not run into the car ahead in the lane being driven.
     let cap = Infinity;
+    // A circuit that asks its racers for more room (`fieldFollow`) gets the same care from this driver:
+    // it watches the lane it is moving to too, keeps the first-lap gap and allows for a leader that brakes hard.
+    const care = duel.course.def.fieldFollow;
     for (const item of cars) {
-      if (item.ds <= 0 || Math.abs(item.lateral - state.lateral) > 2.9) continue;
+      const beside = care ? Math.min(Math.abs(item.lateral - state.lateral), Math.abs(item.lateral - lane)) : Math.abs(item.lateral - state.lateral);
+      if (item.ds <= 0 || beside > 2.9) continue;
       const gap = item.ds - 4.7;
       const comfortable = DRIVE.brakeAccel * duel.car.braking * .62 * DRIVE.mphToWorld;
       const lead = item.speed * DRIVE.mphToWorld;
-      const room = Math.max(0, gap - 2.2) + lead * lead / (2 * comfortable * 1.15);
+      const room = Math.max(0, gap - (care && state.completedLaps === 0 && care.firstLap?.margin || 2.2)) + lead * lead / (2 * comfortable * (care?.leadBraking ?? 1.15));
       cap = Math.min(cap, comfortable * (-.22 + Math.sqrt(.22 * .22 + 2 * room / comfortable)) / DRIVE.mphToWorld);
     }
     if (state.speedMph > cap) { throttle = 0; brake = Math.max(brake, Math.min(1, (state.speedMph - cap) / 12)); }

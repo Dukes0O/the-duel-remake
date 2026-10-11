@@ -32,9 +32,9 @@ boards were already merged (P4-CIRCUIT-LAYOUTS); this card adds the rest.
   harbour, the start gantry across the grid, pit garages along the start
   straight and grandstands opposite. Every placement passes the loader's own
   checks (tested piece by piece against the real GLBs).
-- **Harbour and reservoir water.** `basins` sink the ground beside the road
-  (`src/basins.js`, applied in `src/track-script-course.js`, so no other course's ground changes) for the harbour along the Seafront
-  Straight and Harbour Road and two terraced pools along the Reservoir Run;
+- **Harbour and reservoir water.** `basins` (Tremblant's oval format) sink the
+  ground beside the road for the harbour along the Seafront Straight and
+  Harbour Road and two terraced pools along the Reservoir Run;
   `src/circuit-water.js` draws the water with a faint swell and a glitter path
   toward the moon. Boats sit on the shallow floor. Scenery stays out of the
   water.
@@ -48,38 +48,41 @@ boards were already merged (P4-CIRCUIT-LAYOUTS); this card adds the rest.
 Harbour's walls and its 9 m hairpin broke the P4-FIELD racers (a first run
 had 268 crashes in a race and a pile-up every race). Everything below is read
 from the circuit's definition and is off, with identical numbers, for every
-other circuit:
+other circuit. It was merged with Tremblant's parallel settings into one
+mechanism per concern (their `racingLine` block, `fieldPace`, `basins`):
 
-- Racers keep to the road's own feasible corner speeds
-  (`racingLine.cornerSpeedAt`, `race-lines.js`); before, they were allowed
-  about 20% more than the reference car can turn.
-- `lineMargin` and `lineSwing`: the racing line keeps 2.6 m off the road edge
-  and crosses a gentle bend by at most 60% of its sagitta (the line of a 20
-  degree kink had crossed the whole road twice).
-- `fieldPace` (one number or one per difficulty), `fieldForm`, `fieldSpread`,
-  `fieldAggression`, `fieldFollow` (`leadBraking`, `wallRoom`, `closeIn`, and a
-  `firstLap` set with a longer gap) in `race-field.js` and `race-field-driver.js`.
-- The balance tool (`tools/race-field-balance.mjs`): `--course`, a test driver
-  that drives the circuit's racing line (`useRacingLine` exported from
-  `tools/track-script-drive.mjs`) and keeps within a lane or two of it between
-  walls, a longer time cap for a long circuit. Pacific Canyon runs are unchanged.
-- `tools/track-review.mjs`: a circuit whose switch is off joins COURSE for the
-  headless part, and a scripted circuit is driven on its racing line.
+- `racingLine: { lineMargin, lineSwing, holdRacers }`: the line keeps 2.6 m off
+  the road edge and crosses a bend by at most 60% of its sagitta (a 20 degree
+  kink had been crossed twice over the whole road); `holdRacers` keeps racers to
+  the corner speeds the circuit's own line allows the reference car (they had
+  been allowed about 20% more than a car can turn).
+- `fieldPace` (one number per difficulty, the same key Tremblant uses),
+  `fieldForm`, `fieldSpread`, `fieldAggression`, and `fieldFollow`
+  (`leadBraking`, `wallRoom`, `closeIn`, and a `firstLap` set with a longer gap)
+  in `race-field.js` and `race-field-driver.js`.
+- `basins` are Tremblant's oval basins (`src/circuit-hills.js`) for the ground;
+  `water: {glitter}` asks `src/circuit-water.js` to draw harbour water over
+  them (Tremblant draws its lake in `circuit-effects.js` and is unaffected).
+- Balance tool (`tools/race-field-balance.mjs`, integration's version with
+  Tremblant's `--course` and line-following test driver): a longer time cap for
+  a long circuit, and a circuit that sets `fieldFollow` gets the same care from
+  the test driver (it watches the lane it is moving to, keeps the first-lap
+  gap, allows for a hard-braking leader). Pacific Canyon runs are unchanged.
 
 ## Balance (30 seeded races per difficulty, `--jobs 4`, scripted driver as you)
 
 | | Easy | Medium | Hard | Target |
 | --- | ---: | ---: | ---: | --- |
-| You win | 67% | 30% | 10% | 60-80 / 30-50 / 10-25 |
+| You win | 70% | 47% | 20% | 60-80 / 30-50 / 10-25 |
 | Racers that finish | 100% | 100% | 100% | at least 95% |
-| First-lap pile-ups | 1 of 30 | 1 of 30 | 1 of 30 | at most 1 in 20 |
-| Passes between computer racers per race | 2.3 | 3.4 | 1.8 | at least 3 on Medium |
+| First-lap pile-ups | 0 of 30 | 1 of 30 | 0 of 30 | at most 1 in 20 |
+| Passes between computer racers per race | 3.3 | 3.0 | 3.8 | at least 3 on Medium |
 
-Pace per difficulty (`fieldPace`): Easy 0.815 of the usual, Medium 0.787,
-Hard 0.78; see the circuit file. Medium and Hard win rates sit on the edge of
-their ranges and move a lot with pace. Lantern Hairpin on Medium (30 races):
-1.2 spin-outs per race (about 1 in 25 car-passes) and 6.6 light wall touches;
-no pile-up came from it.
+Pace per difficulty (`fieldPace`): Easy 0.75, Medium 0.725, Hard 0.716. Win
+rates move a lot with pace (0.005 on Hard moved it from 7% to 30%). These are
+the numbers after merging Tremblant's test driver (the first pass with it
+needed new paces; before the merge the same targets held with the older driver).
+The Medium run here is 3.0 passes, right on the limit.
 
 ## Frame cost (not yet within the limit)
 
@@ -106,8 +109,7 @@ placements, tested in Node); the same card targets under 1 s.
 Lane tier 388/388 and build pass on the final lane commit (a first run found
 `tools/test-race-surfaces.mjs` failing on a lost import and
 `tools/test-shortcut-presets.mjs` on a source fingerprint, both fixed: the
-basin ground is applied from the circuit builder so `src/course.js` is
-untouched). New: `tools/test-circuit-harbour.mjs` (13 checks: escape roads,
+basin ground now comes from Tremblant's shared basin code, so `src/course.js` is untouched). New: `tools/test-circuit-harbour.mjs` (13 checks: escape roads,
 walls, racing line, placements against the kit manifest, nothing on the road,
 a run-off road or in the water, wet look). Every placement was also checked
 against the loader itself, piece by piece, with the real GLBs. Claude's review
