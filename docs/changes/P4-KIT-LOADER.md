@@ -23,8 +23,7 @@ Gantry lamp-1 through lamp-5 have private materials and read genuine GP start
 state. Non-GP/menu lights are off. No race writes or extra sound event.
 
 Validate actual transformed low structure against the road: 0.5 m margin and
-4.5 m headspace. Ground-level pivots anchor to actual rendered Float32 terrain triangles.
-Authored 64 m ribbons use the real far grid outside that strip; anchors over
+4.5 m headspace. Ground pivots anchor to actual Float32 near/far terrain triangles; anchors over
 omitted or outside terrain fail visibly. Authored hairpins sample the upper
 drawn near/far triangle by actual world position. Legacy default stays exact. Only plough-bank
 may reference its actual deep-snow surface patch with canonical
@@ -79,7 +78,8 @@ remain exact. No new native/frame run; current lane/build and review are queued.
 ## Snapshot sync decision before code
 
 The reviewed d774 source passed lane380/380 in690.19s and build507ms.
-Genuinely merge integration dcdab; retain snapshot APIs plus kit retry/disposal.
+Genuinely merged dcdab, then current bafd kerb fix without conflicts;
+snapshot APIs plus kit retry/disposal retained.
 Snapshot drawing must wait for real kit readiness before world build, then
 update High/LOD at the snapshot ground with menu-only presentation state.
 QA debug forwards the existing snapshot API without new state/catalog writes.

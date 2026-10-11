@@ -106,7 +106,6 @@ function addKerbs(group, course) {
         const base = positions.length / 3;
         for (const p of corners) positions.push(p.x, p.y + .05, p.z);
         indices.push(base, base + 1, base + 2, base + 2, base + 1, base + 3);
-        indices.push(base, base + 2, base + 1, base + 2, base + 3, base + 1);
       }
     }
     const geometry = new THREE.BufferGeometry();
