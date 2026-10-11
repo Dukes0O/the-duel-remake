@@ -330,6 +330,7 @@ export function attachRenderer(host, app) {
     const visibility = [];
     try {
       if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
+      if (!prepareKitWorld(view.course)) return;
       if (course !== view.course) {
         if (world && worldKey === environmentKey(view.course)) course = view.course;
         else build(view.course);
@@ -350,6 +351,7 @@ export function attachRenderer(host, app) {
       lighting.updateWorld({position: ground, heading: pose.heading, distance, high});
       animateScene(world, now / 1000);
       syncScene(world, {crushedProps: []}, 0);
+      trackKitsOf(world)?.update({high,position:ground,state:{status:'menu'}});
       for (const object of scene.children) {
         if (object === world || lightingRoots.has(object) || object.isLight) continue;
         visibility.push([object, object.visible]);object.visible = false;
@@ -834,7 +836,7 @@ export function attachRenderer(host, app) {
   document.addEventListener('visibilitychange',visibility);
   if(warmupRequested){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}
   host.dataset.rendererSetupMs=(performance.now()-rendererAttachedAt).toFixed(0);
-  const debugApi=window.__render = { renderer, scene, camera, composer, renderFrame({presentationSeconds,saltHeatEnabled}={}) {
+  const debugApi=window.__render = { renderer, scene, camera, composer, captureTrackSnapshot, clearTrackSnapshot, renderFrame({presentationSeconds,saltHeatEnabled}={}) {
     try {
       frame(performance.now(),false,{presentationSeconds,saltHeatEnabled});
       return {drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,

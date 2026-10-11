@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-11T08:50:53.633Z
+Observed at: 2026-10-11T09:06:36.919Z
 
-Observation commit: 066fe4f8194ed7831955a2c984d9ddbaf70f307a
+Observation commit: fe424aecaa98899d1ff8e96f8c355ff40ce2cf81
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 066fe4f8194ed7831955a2c984d9ddbaf70f307a
+Integration HEAD: fe424aecaa98899d1ff8e96f8c355ff40ce2cf81
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -52,9 +52,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/p4-audio-level | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-audio-level |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
-| codex/p4-kit-loader | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kit-loader |
+| codex/p4-kit-loader | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kit-loader |
 | codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
-| codex/p4-pit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-pit |
 | codex/p4-qualifying | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-snow | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow |
 | codex/tools/callback-diagnostics | 6 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -70,10 +69,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/p4-audio-level | unknown | 2026-10-11T01:38:41-07:00 | 0 | last commit 2026-10-11T01:38:41-07:00 | docs/changes/P4-AUDIO.md, src/audio-output.js, tools/test-audio-crash-peak.mjs, tools/test-audio.mjs |
 | codex/p4-gp-existing | unknown | 2026-10-11T01:10:03-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/app.js, src/ghost.js, src/leaderboard.js, src/progression.js |
-| codex/p4-kit-loader | unknown | 2026-10-11T01:40:18-07:00 | 0 | last commit 2026-10-11T01:40:18-07:00 | docs/changes/P4-KIT-LOADER.md, src/far-terrain-surface.js, src/render3d.js, src/rendered-ground.js, src/screen-readiness.js |
-| codex/p4-panorama | unknown | 2026-10-11T01:41:07-07:00 | 0 | last commit 2026-10-11T01:41:07-07:00 | docs/board/looks/p4-panorama/round-1-review.md, docs/board/looks/p4-panorama/round-1.jpg, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-KIT-LOADER.md, docs/changes/P4-PANORAMA.md |
+| codex/p4-panorama | unknown | 2026-10-11T01:51:42-07:00 | 0 | last commit 2026-10-11T01:51:42-07:00 | docs/board/looks/p4-panorama/round-1-review.md, docs/board/looks/p4-panorama/round-1.jpg, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-KIT-LOADER.md, docs/changes/P4-PANORAMA.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js |
-| codex/p4-snow | unknown | 2026-10-11T01:42:07-07:00 | 0 | last commit 2026-10-11T01:42:07-07:00 | docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/changes/P4-KIT-LOADER.md, docs/changes/P4-SNOW.md, src/course.js |
+| codex/p4-snow | unknown | 2026-10-11T01:52:52-07:00 | 0 | last commit 2026-10-11T01:52:52-07:00 | docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/changes/P4-KIT-LOADER.md, docs/changes/P4-SNOW.md, src/course.js |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 6 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -88,9 +86,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,671,624 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 468,217 B | +453,634 B | 5,000,000 B |
+| Added bytes in last merge | 360,775 B | -107,442 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 414,404,608 B | +655,360 B | unavailable |
+| Git objects | 415,062,016 B | +657,408 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +97,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1046076a90623c26c76ffe623e9589dbf5717490
 - Local main: missing
-- Local integration/wasteland: 066fe4f8194ed7831955a2c984d9ddbaf70f307a
+- Local integration/wasteland: fe424aecaa98899d1ff8e96f8c355ff40ce2cf81
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

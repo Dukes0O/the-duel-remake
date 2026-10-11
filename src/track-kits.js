@@ -22,7 +22,8 @@ export function normalizeKitPlacements(course, entries) {
   if (!Array.isArray(entries)) fail('placements must be an array.');
   return Object.freeze(entries.map(entry => {
     if (!entry || !approved.has(entry.id) || !finite(entry.s) || entry.s < 0 ||
-        entry.s > course.length || !finite(entry.lateral) || !finite(entry.heading ?? 0))
+        entry.s > course.length || !finite(entry.lateral) || !finite(entry.heading ?? 0) ||
+        !finite(entry.lift ?? 0) || (entry.lift ?? 0) < 0)
       fail('placement has an unknown id or invalid position.');
     const scale = Array.isArray(entry.scale) ? [...entry.scale] : Array(3).fill(entry.scale ?? 1);
     if (scale.length !== 3 || !scale.every(value => finite(value) && value > 0))
@@ -37,7 +38,7 @@ export function normalizeKitPlacements(course, entries) {
         patch.s0 < 0 || patch.s1 > course.length || patch.s0 >= patch.s1 || patch.from >= patch.to))
       fail('bank physicalPatch must reference its actual deep-snow band.');
     return Object.freeze({id:entry.id,s:entry.s,lateral:entry.lateral,
-      heading:entry.heading ?? 0,scale:Object.freeze(scale),
+      heading:entry.heading ?? 0,scale:Object.freeze(scale),lift:entry.lift ?? 0,
       ...(scenery ? {scenery:Object.freeze({...scenery})} : {}),
       ...(patch ? {physicalPatch:patch} : {})});
   }));
@@ -88,7 +89,7 @@ function placementMatrix(course, row, bounds) {
   const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
   if (!finite(height)) fail('placement has no rendered terrain beneath its anchor.');
   return new THREE.Matrix4().compose(
-    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1],ground.z),
+    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1]+row.lift,ground.z),
     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),ground.heading+row.heading),
     new THREE.Vector3(...row.scale));
 }
