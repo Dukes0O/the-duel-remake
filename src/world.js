@@ -60,6 +60,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   const terrainFor=geometry=>winter?applySnowTerrain(geometry,course):geometry;
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: .8 });
   const metal = new THREE.MeshStandardMaterial({ color: 0xa6aaa5, metalness: .55, roughness: .57 });
   const terrain = new THREE.Mesh(terrainFor(terrainGeometry(course)), groundMat); terrain.receiveShadow = true; group.add(terrain);
   const farTerrain = new THREE.Mesh(terrainFor(farTerrainGeometry(course)), groundMat); farTerrain.receiveShadow = true; group.add(farTerrain);
@@ -75,10 +76,14 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
       group.add(new THREE.Mesh(shoulderStrip, shoulder));
     }
     if(!course.def.arena&&!course.def.offroad){
-      const edge = new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-.45), s=>side*(course.roadHalfWidthAt(s)-.28), .057), cream);
+      // A race circuit (`markings: 'circuit'`) has white edge lines and no centre line.
+      const race = course.def.markings === 'circuit';
+      const edge = new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-(race?.55:.45)), s=>side*(course.roadHalfWidthAt(s)-.28), .057), race?white:cream);
       edge.userData.roadMarking = 'edge';group.add(edge);
-      const centre = new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow);
-      centre.userData.roadMarking = 'centre';group.add(centre);
+      if(!race){
+        const centre = new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow);
+        centre.userData.roadMarking = 'centre';group.add(centre);
+      }
     }
   }
   if(course.script)addTrackScriptScene(group,course,{snow:winter});

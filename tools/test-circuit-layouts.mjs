@@ -87,12 +87,16 @@ test('Harbour Lights: walls everywhere, the Lantern Hairpin, night', () => {
 });
 
 test('Tremblant Woods: open road, forest runoff, the long straight', () => {
-  const road = buildTrackScript(TREMBLANT_WOODS), course = new Course(TREMBLANT_WOODS, 1989), timber = piece(road, 'Timber Straight');
+  const road = buildTrackScript(TREMBLANT_WOODS), course = new Course(TREMBLANT_WOODS, 1989);
+  // Timber Straight is three pieces (one crest each on the first two); the length is the sum.
+  const timberPieces = road.pieces.filter(item => item.name === 'Timber Straight');
   assert.equal(TREMBLANT_WOODS.laps, 3);
   assert.equal(road.walls.length, 0); assert.equal(course.features.walls.length, 0);
   assert.ok(road.pieces.every(item => item.width === 14));
   near(road.runoffAt(100, 1), 12, 0);
-  near(timber.s1 - timber.s0, 1305, 3); assert.equal(piece(road, 'Ridge Run').crest, 2.5);
+  assert.equal(timberPieces.length, 3);
+  near(timberPieces.at(-1).s1 - timberPieces[0].s0, 1305, 3); assert.deepEqual(timberPieces.map(item => item.crest), [1.5, 2.5, 0]);
+  assert.equal(piece(road, 'Ridge Run').crest, 2.5);
   assert.equal(piece(road, 'Pine Drop').crest, 2); assert.equal(piece(road, 'Beaver Hairpin').radius, 22);
 });
 

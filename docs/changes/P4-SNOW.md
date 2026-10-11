@@ -81,7 +81,7 @@ AO/flakes/edge smoothing were excluded. Actual HalfFloat scene input had
 Fresh native default Bloom input, bright and all ten blur targets have zero
 NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
-Final KIT-LOADER integration ec734cfd genuinely merged without conflicts.
+Integration4527 synced; reviewed loaderd05 band/rear compatibility retains Snow API.
 Prepared extras/current bank identities/eight grounded cars pass; round2 ba685 native passes.
 Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
 Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.

@@ -7,6 +7,7 @@ import {createOnFootFigures} from './onfoot-figures.js';
 import {PIT,otherTyre} from './pit-lane.js';
 import { SURFACES } from './race-surfaces.js';
 import {winterSurfaceMaterial} from './snow-world.js';
+import { addCircuitEffects } from './circuit-effects.js';
 
 const OVERLAY = {
   gravel: { color: 0x8c775a, roughness: 1, metalness: 0, lift: .046, tracks: false },
@@ -215,4 +216,5 @@ export function addTrackScriptScene(group, course, {snow = false} = {}) {
   addKerbs(group, course);
   addBoards(group, course);
   addPit(group, course);
+  addCircuitEffects(group, course);
 }

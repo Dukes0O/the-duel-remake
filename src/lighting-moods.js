@@ -60,3 +60,18 @@ export function resolveLightingSettings(theme,options={}){
   const key=theme==='city'||night===true?'city':Object.hasOwn(BASE,theme)?theme:'desert';
   return settings.get(`${key}:${key==='city'?'clear':normalizeLightingMood(mood)}:${tunnel===true?'tunnel':'outside'}`);
 }
+
+// A circuit may carry its own light (`light` in its definition: any of the
+// fields above, such as sunOffset, sunColor, fog, horizon, cloudTint). It is
+// laid over the day's clear and golden looks, so the circuit keeps its hour
+// whatever the menu says. Overcast stays the player's choice. The merged
+// settings are made once per look and circuit and then reused.
+const circuitLooks=new WeakMap();
+export function circuitLighting(settings,light){
+  if(!light)return settings;
+  let byLight=circuitLooks.get(settings);
+  if(!byLight){byLight=new WeakMap();circuitLooks.set(settings,byLight);}
+  let merged=byLight.get(light);
+  if(!merged){merged=Object.freeze({...settings,...light});byLight.set(light,merged);}
+  return merged;
+}

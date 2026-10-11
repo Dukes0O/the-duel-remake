@@ -120,6 +120,29 @@ export function accelAt(spec, speedMph) {
   return spec.accel * DRIVE.accelScale * Math.max(.2, 1 - .62 * share * share);
 }
 
+// A racer takes a crest inside a corner at a speed that keeps the car on the
+// road: fast enough over it to leave the ground, the car lands off its line
+// (a pile of cars at the Pine Drop crest, Tremblant Woods). Only authored
+// circuits (a provided line) carry crests that matter; on a straight a racer
+// may fly. Returns the speed limit in metres per second at each line point,
+// or null where no crest in a corner limits anyone.
+const CREST_SAFETY = .92, CREST_GRAVITY = 18, CREST_MIN_BEND = 1 / 500;
+function crestLimits(line) {
+  if (!line.provided) return null;
+  const { course, count, step, offset, curvature, closed } = line;
+  const height = new Float64Array(count);
+  for (let i = 0; i < count; i++) height[i] = course.groundAt(i * step, offset[i]).y;
+  const wrap = i => (closed ? (i + count) % count : clamp(i, 0, count - 1));
+  let limits = null;
+  for (let i = 0; i < count; i++) {
+    const bend = (2 * height[i] - height[wrap(i - 1)] - height[wrap(i + 1)]) / (step * step);
+    if (bend < .002 || Math.abs(curvature[i]) < CREST_MIN_BEND) continue;
+    limits ??= new Float64Array(count).fill(Infinity);
+    limits[i] = CREST_SAFETY * Math.sqrt(CREST_GRAVITY / bend);
+  }
+  return limits;
+}
+
 // The fastest speed the line allows at each point for one car, as the car can
 // brake for corners and accelerate away. `skill` scales how close to the car's
 // limits the racer drives (all 1 = the limit).
@@ -133,10 +156,11 @@ export function buildSpeedProfile(line, spec, skill = {}) {
   const cornerSpeed = new Float64Array(count), v = new Float64Array(count);
   // A hairpin specialist carries a little more speed through the slow corners.
   const slowBonus = skill.slowBonus ?? 0;
+  const crest = crestLimits(line);
   for (let i = 0; i < count; i++) {
     let corner = cornerFactor * Math.sqrt(lateral / Math.max(Math.abs(curvature[i]), 1e-5));
     if (slowBonus) corner *= 1 + slowBonus * clamp((140 - corner / MPH) / 60, 0, 1);
-    cornerSpeed[i] = Math.min(top, corner);
+    cornerSpeed[i] = Math.min(top, corner, crest ? crest[i] : Infinity);
     v[i] = cornerSpeed[i];
   }
   const passes = closed ? 3 : 1;

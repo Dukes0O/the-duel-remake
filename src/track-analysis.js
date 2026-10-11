@@ -309,7 +309,8 @@ export function trackSnapshotPose(course, flag) {
 export function lapCrossing(trace, distance) {
   for (let i = 0; i < trace.length; i++) {
     const row = trace[i];
-    if (row.s === distance) return {...row, s: distance};
+    // The last row of a lap sits on the line to within rounding (a lap's distance minus its start).
+    if (Math.abs(row.s - distance) < 1e-6) return {...row, s: distance};
     const next = trace[i + 1];
     if (!next || row.s > distance || next.s < distance || next.s <= row.s) continue;
     const mix = (distance - row.s) / (next.s - row.s);

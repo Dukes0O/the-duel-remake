@@ -3,15 +3,18 @@
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
 import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
+import { hillLocal, hillReach, hillHeight, runWeight } from './circuit-hills.js';
+import { makeRng } from './rng.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
-// is stored for a reference car and computer racers scale it to their own.
+// is stored for a reference car and computer racers scale it to their own. A
+// circuit may shape its line with a `racingLine` block (see buildRacingLine).
 export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
   installPitLane(course);
-  course.racingLine = buildRacingLine(script, dynamics);
+  course.racingLine = buildRacingLine(script, { ...dynamics, ...(course.def.racingLine ?? {}) });
   f.walls = [];
   f.kerbs = script.kerbs.map(kerb => ({ ...kerb }));
   f.boards = script.boards.map(board => ({ ...board }));
@@ -79,9 +82,23 @@ function scatterScenery(course) {
     const p = course.groundAt(s, off);
     return f.obstacles.every(o => Math.hypot(o.x - p.x, o.z - p.z) > Math.hypot(o.halfX, o.halfZ) + radius);
   };
+  // A circuit can keep planted scenery out of places it draws itself: stretches
+  // (`scenery.clear`: s0, s1 along the road, from, to across it), its hills, and
+  // a radius around its kit pieces (`clear` on each of `kitPlacements`).
+  const keepClear = [...(course.def.scenery?.clear ?? [])], hills = course.def.hills ?? [];
+  const blocked = [];
+  for (const kit of course.def.kitPlacements ?? []) if (kit.clear > 0) { const p = course.groundAt(kit.s, kit.lateral); blocked.push({ x: p.x, z: p.z, radius: kit.clear }); }
+  const cleared = (s, off, radius = 0) => {
+    const phase = course.phase(s);
+    if (keepClear.some(zone => phase >= zone.s0 - radius && phase <= zone.s1 + radius && off >= zone.from - radius && off <= zone.to + radius)) return true;
+    if (hills.some(hill => hillReach(hill, ...hillLocal(hill, phase, off)) < 1.02 + radius / hill.along)) return true;
+    if (!blocked.length) return false;
+    const p = course.groundAt(s, off);
+    return blocked.some(kit => Math.hypot(kit.x - p.x, kit.z - p.z) < kit.radius + radius);
+  };
   for (let i = 0; i < options.rocks; i++) {
     const s = rng.range(50, course.length - 50), off = (i % 2 ? 1 : -1) * rng.range(18, 72), sx = rng.range(1.3, 4), sz = rng.range(1.2, 4), sy = rng.range(.9, 3), angle = rng.range(0, TAU);
-    if (!roadClear(s, off, Math.hypot(sx, sz), 4) || !vacant(s, off, 5)) continue;
+    if (!roadClear(s, off, Math.hypot(sx, sz), 4) || !vacant(s, off, 5) || cleared(s, off, Math.hypot(sx, sz))) continue;
     const rock = { s, off, theme: course.themeAt(s), scale: [sx, sy, sz], angle, radiusX: sx, radiusZ: sz };
     f.rocks.push(rock); add(`rock-${i}`, 'rock', s, off, sx, sz, angle, { shape: 'ellipse', source: rock });
   }
@@ -91,8 +108,8 @@ function scatterScenery(course) {
       if (theme === 'city') continue;
       const sx = rng.range(55, 115), sz = rng.range(55, 110), height = rng.range(65, theme === 'alpine' ? 200 : 120), side = i % 2 ? 1 : -1;
       let off = side * rng.range(180, 330); const radius = Math.hypot(sx, sz) * 1.1;
-      for (let j = 0; j < 9 && !roadClear(s, off, radius, 25); j++) off += side * 40;
-      if (!roadClear(s, off, radius, 25)) continue;
+      for (let j = 0; j < 9 && (!roadClear(s, off, radius, 25) || cleared(s, off, radius)); j++) off += side * 40;
+      if (!roadClear(s, off, radius, 25) || cleared(s, off, radius)) continue;
       f.mountains.push(add(`mountain-${i}`, 'mountain', s, off, sx, sz, rng.range(0, TAU), { height, scale: [sx, height, sz], shape: 'ellipse' }));
     }
   }
@@ -115,8 +132,59 @@ function scatterScenery(course) {
     const s = rng.range(5, course.length - 5), theme = course.themeAt(s);
     if (theme === 'city' && i % 5 || theme === 'desert' && i % 3) continue;
     const off = (i % 2 ? 1 : -1) * rng.range(13, 80), scale = rng.range(.65, 1.7);
-    if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));
+    if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && !cleared(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));
   }
+  // Pines on a hill the circuit draws (circuit-hills.js), standing on its slope
+  // and never on a ski run. Drawn after everything else so the rest is unchanged.
+  hills.forEach((hill, h) => {
+    for (let i = 0; i < (hill.pines ?? 0); i++) {
+      const s = hill.s + rng.range(-hill.along, hill.along), off = hill.lateral + rng.range(-hill.across, hill.across), scale = rng.range(.8, 1.9);
+      const [du, dv] = hillLocal(hill, s, off), p = course.groundAt(s, off);
+      if (hillReach(hill, du, dv) > .96 || runWeight(hill, du, dv) > .02 || blocked.some(kit => Math.hypot(kit.x - p.x, kit.z - p.z) < kit.radius)) continue;
+      const tree = add(`hill-tree-${h}-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale });
+      tree.y += hillHeight(hill, du, dv);
+      f.trees.push(tree);
+    }
+  });
+  // A forest (`scenery.forest`): rows of pines behind the runoff all the way
+  // round, from `from` to `to` metres beyond the road edge, one every `spacing`
+  // metres in each of `rows` rows. The same checks as any planted tree keep it
+  // off the road, the runoff and the inside of corners; the circuit's clear
+  // zones and kit pieces keep it off the lake, the lift and the paddock. It has
+  // its own random stream, so a circuit without one is exactly as it was.
+  const forest = course.def.scenery?.forest;
+  if (forest) {
+    const random = makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), taken = new Map(), cell = 6;
+    const key = (x, z) => `${Math.floor(x / cell)}:${Math.floor(z / cell)}`;
+    const claim = (x, z) => { const k = key(x, z); if (!taken.has(k)) taken.set(k, []); taken.get(k).push([x, z]); };
+    for (const o of f.obstacles) claim(o.x, o.z);
+    const crowded = (x, z, radius) => {
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++)
+        for (const [ox, oz] of taken.get(key(x + i * cell, z + j * cell)) ?? []) if (Math.hypot(ox - x, oz - z) < radius) return true;
+      return false;
+    };
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35 } = forest;
+    let serial = 0;
+    for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
+      const s = base + (random.float() - .5) * spacing * .9, depth = from + (to - from) * (row + random.float()) / rows;
+      // The rows thin out toward the back, so the wood has an edge.
+      if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
+      const off = side * (course.roadHalfWidthAt(s) + depth), scale = random.range(.9, 1.7);
+      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale)) continue;
+      const p = course.groundAt(s, off);
+      if (crowded(p.x, p.z, 3.2 * scale)) continue;
+      claim(p.x, p.z);
+      f.trees.push(add(`forest-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale }));
+    }
+  }
+  // Autumn (`scenery.autumn`): `share` of every planted tree turns one of the
+  // `colours` (red, gold and orange multipliers for the pine crowns), picked
+  // from the tree's place along the road so the same trees turn on every build.
+  const autumn = course.def.scenery?.autumn;
+  if (autumn) f.trees.forEach((tree, i) => {
+    const mix = Math.sin(i * 12.9898 + tree.s * .0371) * 43758.5453, pick = mix - Math.floor(mix);
+    if (pick < autumn.share) tree.tint = autumn.colours[Math.floor(pick / autumn.share * autumn.colours.length) % autumn.colours.length];
+  });
 }
 
 export function trackScriptSolids(course) {
