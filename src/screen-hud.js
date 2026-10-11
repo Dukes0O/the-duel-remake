@@ -133,6 +133,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     text('lap-number',s.field&&s.field.finalLap?`FINAL LAP ${s.lapsTotal} / ${s.lapsTotal}`:`LAP ${s.currentLap||s.lap||1} / ${lapsTotal}`);
     text('lap-time',time(s.lapTimeSec||0));
     const section=app.duel.course?.sectionAt?.(s.s)?.name||'COMPLETE BOTH LAPS';
+    ui['stage-objective'].style.color='';
     text('stage-objective',s.field?`GRAND PRIX · ${s.lapsTotal} LAPS · ${s.field.size} CARS · ${section}`:s.objective?.kind==='checkpointRush'?`GATES ${s.checkpointRush?.passed||0} / ${s.checkpointRush?.total||12} · EACH GATE +${s.checkpointRush?.extensionSec||0} SEC`:s.objective?.kind==='driftTrial'?`BANK ${credits(s.objective.targetScore)} POINTS · FINISH BOTH LAPS`:s.objective?.kind==='stuntTrial'?`LANDINGS ${s.jumps||0} / ${s.objective.targetJumps} · CRUSHES ${s.crushCount||0} / ${s.objective.targetCrushes} · ${time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0)))} LEFT`:`${section}${s.timeLimitSec?` · ESCAPE IN ${time(Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0)))}`:s.mode==='timetrial'&&s.parTimeSec?` · TARGET ${time(s.parTimeSec)}`:''}`);
     const [speedValue,gearValue]=speedGearPresentation(s);
     text('speed-value',speedValue);
@@ -258,6 +259,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('lap-number','NO LAP TARGET');
       text('lap-time','');
       text('stage-label',`${app.player.name.toUpperCase()} · FREE PRACTICE`);
+      ui['stage-objective'].style.color='';
       text('stage-objective','EXPLORE THE RAMPS · NO TIMER, RIVAL OR FINISH LINE');
       text('route-percent','FREE');
       text('route-remaining','EXPLORE AT YOUR OWN PACE');
@@ -287,7 +289,9 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
       text('stage-objective',arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
         'FIRST TO THREE WRECKS' : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
-          arena.fuel ? 'BRING FUEL TO YOUR BLUE DEPOT' : 'WRECK THEM MORE THAN THEY WRECK YOU');
+          arena.fuel ? `BRING FUEL TO YOUR ${arena.fuelColorName ?? 'MATCHING'} DEPOT` : 'WRECK THEM MORE THAN THEY WRECK YOU');
+      // The objective line takes the colour of the player's own depot.
+      ui['stage-objective'].style.color=arena.fuel&&arena.fuelColor?arena.fuelColor:'';
       text('route-percent','');
       text('route-remaining',arena.scoreText);
       text('route-lap','ARENA');

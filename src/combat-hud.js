@@ -8,6 +8,7 @@ import {wastelandRulesActive} from './wasteland-access.js';
 import {readFightSubtitle} from './fight-voices.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {carEffect} from './arsenal/car-effects.js';
+import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 // Rectangles include the pointer below the label. Stable actor order keeps
@@ -49,6 +50,15 @@ export function armorPresentation(actor) {
   const max = Math.max(0, Number(actor?.maxArmor) || 0);
   const armor = Math.max(0, Math.min(max, Number(actor?.armor) || 0));
   return {value: Math.round(armor), max: Math.round(max), fraction: max ? clamp(armor / max) : 0};
+}
+
+// The armored tanker's body cannot be wrecked, so its bar counts the armor
+// left on its three fuel valves, which is the damage a player can deal.
+export function opponentArmorPresentation(state, actor) {
+  const convoy = state?.arena?.convoy;
+  if (!convoy || actor?.arenaId !== convoy.rigId) return {...armorPresentation(actor), valves: false};
+  const {left, max, fraction} = convoyValveArmor(convoy);
+  return {value: Math.ceil(left), max: Math.round(max), fraction, valves: true};
 }
 
 export function damageZoneFromChange(previous, current) {
@@ -349,8 +359,9 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       marker.style.left = `${(Math.max(.11, Math.min(.89, clamp(position.x))) * 100).toFixed(1)}%`;
       marker.style.top = `${(clamp(position.y) * 100).toFixed(1)}%`;
       // A decoy copy shows its original's name and armor, so the HUD never gives it away.
-      const opponentArmor = armorPresentation(opponent.decoy ?
+      const opponentArmor = opponentArmorPresentation(state, opponent.decoy ?
         opponents.find(car => car.arenaId === opponent.ownerId) ?? opponent : opponent);
+      const barName = opponentArmor.valves ? 'valve armor' : 'armor', barPrefix = opponentArmor.valves ? 'VALVES ' : '';
       // In the Scrapdome, cars carry names and a red tag when hunting you, and
       // distance is measured across the floor, not along the ring.
       const arena = arenaMarker(state, opponent);
@@ -364,11 +375,11 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       marker.classList.toggle('is-hunting', !!arena?.hunting);
       marker.classList.toggle('is-marked', !!arena?.marked);
       marker.classList.toggle('is-protected', !!arena?.protected);
-      setText(marker.querySelector('.combat-marker-value'), exact ? `${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${opponentArmor.value} / ${opponentArmor.max}`);
+      setText(marker.querySelector('.combat-marker-value'), exact ? `${barPrefix}${opponentArmor.value} / ${opponentArmor.max}` : `${position.direction} · ${gapMetres} m · ${barPrefix}${opponentArmor.value} / ${opponentArmor.max}`);
       setFraction(marker.querySelector('.combat-marker-track i'), opponentArmor.fraction);
       marker.classList.toggle('is-critical', opponentArmor.fraction <= .25);
       marker.classList.toggle('is-wrecked', !!opponent.combatWrecking);
-      setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} armor ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
+      setAttribute(marker, 'aria-label', `${arena ? `${arena.heading}${arena.hunting ? ', hunting you' : ''}` : index ? `Opponent ${index + 1}` : 'Rival'} ${barName} ${opponentArmor.value} of ${opponentArmor.max}${exact ? '' : `, ${position.direction.toLowerCase()}, ${gapMetres} metres away`}`);
     }
     const layerRect = layer.getBoundingClientRect();
     const visibleLabels = markers.filter(marker => !marker.hidden).map(marker => {

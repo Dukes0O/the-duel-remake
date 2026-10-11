@@ -213,7 +213,7 @@ export class Course {
     }
     if(this.def.saltFlats){
       for(const solid of this.saltFlatsGeometry.solids){
-        const {center,halfExtents,heading}=solid.collision;
+        const {center,halfExtents,heading}=solid.contact;
         const nearest=this.nearest(center[0],center[2]);
         const obstacle={id:solid.id,kind:'prop',saltFlatsKind:solid.kind,shape:'box',
           s:nearest.s,off:nearest.lateral,x:center[0],y:center[1]-halfExtents[1],z:center[2],
@@ -329,7 +329,12 @@ export class Course {
         if(this.tunnelAt(s))continue;if(!vacant(s,off,4))off=(i%2?1:-1)*5;
         if(vacant(s,off,3.5))f.flocks.push({id:`flock-${i}`,s,off,radius:3.5,count:8,seed:rng.int(1,100000)});}
     }else if(!this.def.practice){
-      for(let s=0;s<this.length;s+=8)for(const side of[-1,1])f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,side*(this.def.scrapdome?.wallOffset??22),.5,4.2,0,{barrier:true,arenaWall:true}));
+      for(let s=0;s<this.length;s+=8)for(const side of[-1,1]){
+        // Pieces sit every 8 m along the centre line. Where the ring bends, the outer
+        // side is longer, so each piece grows to meet its neighbours (no open gaps).
+        const off=side*(this.def.scrapdome?.wallOffset??22);
+        f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,4.2*Math.max(1,1-this.at(s).curvature*off),0,{barrier:true,arenaWall:true}));
+      }
     }
     if(!this.def.practice)Object.assign(f,buildRoadFurniture(this));
     for(const sign of f.signs)for(const post of sign.posts)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});

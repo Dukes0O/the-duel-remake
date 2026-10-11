@@ -60,9 +60,12 @@ export const ARENA_VENUES = Object.freeze({
 
 export function saltFlatsPhysicalGeometry(course) {
   const solids = [];
-  const solid = (id, kind, center, size, fit = {}) => {
-    solids.push({id, kind, center, size, fit,
-      collision: {center, halfExtents: size.map(value => value / 2 + .002), heading: 0}});
+  // `collision` is the map-aligned box the Blender recipe fits each model to
+  // (tools/blender/salt-flats.py), so it stays as it is. `contact` is what cars,
+  // shots and fighters bump into; see boundary().
+  const solid = (id, kind, center, size, fit = {}, contact = null) => {
+    const collision = {center, halfExtents: size.map(value => value / 2 + .002), heading: 0};
+    solids.push({id, kind, center, size, fit, collision, contact: contact ?? collision});
   };
   // Local donor sections follow the same physical offset frames as the floor.
   // Each envelope contains one container/wreck or one short tyre assembly;
@@ -73,8 +76,17 @@ export function saltFlatsPhysicalGeometry(course) {
     const center = [at.x, size[1] / 2, at.z];
     const envelope = [cosine * size[0] + sine * size[2], size[1],
       sine * size[0] + cosine * size[2]];
-    solid(id, kind, center, envelope, {boundary: true, s, offset, center,
-      size, heading, source});
+    // The drawn piece sits turned along the ring, so it collides as that same
+    // turned box. The map-aligned envelope above reaches up to 5 m past the
+    // drawn face where the ring bends. The .25 m across covers the drawn model's
+    // measured overhang (at most .23 m).
+    // Pieces are spaced evenly on the centre line, so on the outer side of a bend
+    // they are further apart, and the salvage cars leave open slots between them.
+    // Lengthen each contact box so the whole ring is one closed wall.
+    const spacing = course.length / (kind.endsWith('-wall') ? 64 : 96) * Math.max(1, 1 - course.at(s).curvature * offset);
+    const along = Math.max(size[2] / 2 + .25, spacing / 2 + .3);
+    solid(id, kind, center, envelope, {boundary: true, s, offset, center, size, heading, source},
+      {center, heading, halfExtents: [size[0] / 2 + .25, size[1] / 2 + .002, along]});
   };
   for (let index = 0; index < 64; index++) {
     const s = index / 64 * course.length;
