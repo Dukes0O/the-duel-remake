@@ -128,14 +128,27 @@ export function buildP4RecordedListening(out) {
 export function inspectP4PartialRecording({recording, functional, harness, sourceWave, pcmByStem}) {
   const demand = (yes, message) => {if (!yes) throw Error(message);};
   demand(recording?.status === 'incomplete', 'Partial mode needs an incomplete native recording');
-  demand(harness?.scenario === 'p4-audio' && harness.passed === false && harness.memoryOnlySaves === true &&
-    typeof harness.error === 'string' && harness.error.length > 0, 'Partial mode needs the original failed memory-only harness');
+  const intentional=recording.purpose === 'listening-prefix';
+  demand(harness?.scenario === 'p4-audio' && harness.memoryOnlySaves === true,
+    'Partial mode needs the native memory-only harness');
+  if(intentional) {
+    demand(harness.passed === true && recording.requestedDurationSec === 121 &&
+      recording.stopReason === 'native-prefix-duration' && Number.isFinite(recording.stopAudioTimeSec) &&
+      ['continuousNativeFrames','sourceIdentity','nativeEventSignal','verifiedListeningPrefix']
+        .every(key=>recording.verdict?.[key] === true) && recording.verdict.completeThreeLapRace === false &&
+      ['nativeEvents','replay','lifecycle','genuineThreeLapFinish'].every(key=>functional?.functionalVerdict?.[key] === true) &&
+      Array.isArray(functional.replayDifference) && functional.replayDifference.length === 0,
+      'Intentional prefix lacks its actual native stop or genuine functional race pass');
+  } else demand(harness.passed === false && typeof harness.error === 'string' && harness.error.length > 0,
+    'Partial mode needs the original failed memory-only harness');
   demand(functional?.memoryOnly === true && functional.simulationEdits === false && functional.syntheticResults === false &&
     functional.controlAdapter?.saveCalls === 0, 'Partial source lacks unedited memory-only native checks');
   const {sampleRate,startFrame,endFrame} = recording;
   demand(sampleRate === 48000 && Number.isInteger(startFrame) && Number.isInteger(endFrame) && endFrame > startFrame,
     'Partial mode needs integer native boundaries at48kHz');
   const frames=endFrame-startFrame,durationSec=frames/sampleRate;
+  if(intentional)demand(durationSec >= recording.requestedDurationSec && durationSec <= recording.requestedDurationSec+5 &&
+    recording.stopAudioTimeSec === endFrame/sampleRate, 'Intentional prefix stop does not match its native frame interval');
   demand(recording.duration == null || recording.duration === durationSec, 'Partial native duration conflicts with its frames');
   demand(Array.isArray(recording.segments) && recording.segments.length > 0, 'No verified native prefix segments');
   let nextFrame=startFrame;
@@ -166,7 +179,10 @@ export function inspectP4PartialRecording({recording, functional, harness, sourc
   demand(wave.pcm.equals(pcmByStem.mix), 'Partial source WAV is not the exact retained native mix prefix');
   return {status:'incomplete',completeRace:false,wholeHarnessPassed:false,verifiedPrefix:true,
     sampleRate,channels:2,startFrame,endFrame,frames,durationSec,segments:recording.segments.length,
-    originalFailure:harness.error,sourcePcmSha256:stemSha256.mix,stemSha256,sourceSha256:sha256(sourceWave)};
+    functionalHarnessPassed:intentional,sourceOutcome:intentional?'intentional-stop':'failed-whole',
+    originalFailure:intentional?null:harness.error,sourcePcmSha256:stemSha256.mix,stemSha256,sourceSha256:sha256(sourceWave),
+    ...(intentional?{purpose:recording.purpose,requestedDurationSec:recording.requestedDurationSec,
+      stopAudioTimeSec:recording.stopAudioTimeSec,uncapturedEvents:recording.uncapturedEvents}: {})};
 }
 
 function floatWave(pcm,sampleRate,channels) {
@@ -200,7 +216,9 @@ export function buildP4PartialRecordedListening(out) {
   const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
   const info={...prefix,file,source:'mix.wav',outputSha256:sha256(output),outputBytes:output.length,
     decodedFrames,sourceMeasurements,reconstructedMeasurements,
-    purpose:'INCOMPLETE native listening prefix. The whole-race recording failed; this file cannot certify its finish or full capture.',
+    purpose:prefix.sourceOutcome === 'intentional-stop' ?
+      'INCOMPLETE native listening prefix. Recorder intentionally stopped early; this file cannot certify finish audio or a full capture.' :
+      'INCOMPLETE native listening prefix. The whole-race recording failed; this file cannot certify its finish or full capture.',
     normalization:false,edits:false,resampling:false,listeningApproved:false,
     recipe:{helper:'tools/audio/codec.mjs:ffmpeg',args,decodeArgs,measurement:'FFmpeg loudnorm input metrics; normalized analysis output discarded'}};
   writeFileSync(join(out,'listening-partial.json'),JSON.stringify(info,null,2)+'\n');return info;

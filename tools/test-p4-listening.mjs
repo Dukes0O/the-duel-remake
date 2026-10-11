@@ -67,4 +67,45 @@ reject('truncated source WAV rejected',f=>f.sourceWave=f.sourceWave.subarray(0,-
 reject('WAV/retained PCM mismatch rejected',f=>f.pcmByStem.mix.writeFloatLE(.9,0));
 reject('non-finite verified native samples rejected',f=>f.pcmByStem.engine.writeFloatLE(NaN,0));
 reject('empty verified segments rejected',f=>f.recording.segments=[]);
-console.log(`P4 partial listening: ${checks} prefix eligibility checks passed; no encoder or native capture ran.`);
+
+// An intentional prefix has a passed functional race, never a complete audio capture.
+const frames121=121*48000,base=fixture(),pcm=Buffer.alloc(frames121*8),sourceWave=Buffer.alloc(44+pcm.length);
+base.sourceWave.copy(sourceWave,0,0,44);sourceWave.writeUInt32LE(sourceWave.length-8,4);sourceWave.writeUInt32LE(pcm.length,40);pcm.copy(sourceWave,44);
+const intentional={...base,sourceWave,pcmByStem:{mix:pcm,engine:pcm,interface:pcm},
+  recording:{...base.recording,purpose:'listening-prefix',requestedDurationSec:121,stopReason:'native-prefix-duration',
+    verdict:{continuousNativeFrames:true,sourceIdentity:true,nativeEventSignal:true,verifiedListeningPrefix:true,completeThreeLapRace:false},
+    stopAudioTimeSec:(1024+frames121)/48000,endFrame:1024+frames121,segments:[{index:0,sampleRate:48000,startFrame:1024,endFrame:1024+frames121,
+      tracks:Object.fromEntries(['mix','engine','interface'].map(name=>[name,{startFrame:1024,endFrame:1024+frames121,frames:frames121,identity:{complete:true,checkedFrames:frames121}}]))}]},
+  harness:{scenario:'p4-audio',passed:true,memoryOnlySaves:true},
+  functional:{...base.functional,functionalVerdict:{nativeEvents:true,replay:true,lifecycle:true,genuineThreeLapFinish:true},replayDifference:[]}};
+check('intentional native stop remains incomplete after genuine functional pass',()=>{
+  const v=inspect(intentional);assert.equal(v.completeRace,false);assert.equal(v.wholeHarnessPassed,false);
+  assert.equal(v.functionalHarnessPassed,true);assert.equal(v.sourceOutcome,'intentional-stop');
+  assert.equal(v.originalFailure,null);assert.equal(v.durationSec,121);
+});
+const rejectIntentional=(name,mutate)=>check(name,()=>{
+  const f={...intentional,recording:structuredClone(intentional.recording),functional:structuredClone(intentional.functional),harness:{...intentional.harness}};
+  mutate(f);assert.throws(()=>inspect(f));
+});
+rejectIntentional('passed capture without explicit purpose rejected',f=>delete f.recording.purpose);
+rejectIntentional('intentional purpose cannot relabel failed harness',f=>{f.harness.passed=false;f.harness.error='clock failed';});
+rejectIntentional('unapproved prefix duration rejected',f=>f.recording.requestedDurationSec=120);
+rejectIntentional('unknown stop reason rejected',f=>f.recording.stopReason='manual');
+rejectIntentional('missing native stop time rejected',f=>delete f.recording.stopAudioTimeSec);
+rejectIntentional('missing original continuity verdict rejected',f=>delete f.recording.verdict.continuousNativeFrames);
+rejectIntentional('missing actual native event-signal verdict rejected',f=>f.recording.verdict.nativeEventSignal=false);
+rejectIntentional('intentional prefix cannot claim a complete recording',f=>f.recording.verdict.completeThreeLapRace=true);
+rejectIntentional('stop before native prefix bound rejected',f=>f.recording.stopAudioTimeSec=1);
+rejectIntentional('missing genuine functional finish rejected',f=>f.functional.functionalVerdict.genuineThreeLapFinish=false);
+rejectIntentional('missing functional replay rejected',f=>f.functional.functionalVerdict.replay=false);
+rejectIntentional('missing functional lifecycle rejected',f=>f.functional.functionalVerdict.lifecycle=false);
+rejectIntentional('nonempty native replay differences rejected',f=>f.functional.replayDifference=['state']);
+const scenario=await import('./scenarios/p4-audio.mjs');
+check('explicit capture mode rejects arbitrary lengths and preserves whole default',()=>{
+  assert.equal(typeof scenario.p4ListeningCaptureMode,'function');
+  assert.equal(scenario.p4ListeningCaptureMode({}),null);
+  assert.deepEqual(scenario.p4ListeningCaptureMode({DUEL_P4_LISTENING_PREFIX:'121'}),{purpose:'listening-prefix',requestedDurationSec:121});
+  assert.throws(()=>scenario.p4ListeningCaptureMode({DUEL_P4_LISTENING_PREFIX:'120'}));
+  assert.throws(()=>scenario.p4ListeningCaptureMode({DUEL_P4_LISTENING_PREFIX:'true'}));
+});
+console.log('P4 partial listening: '+checks+' prefix eligibility checks passed; no encoder or native capture ran.');

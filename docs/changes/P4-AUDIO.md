@@ -3,17 +3,14 @@
 ## Settled foundation
 
 17 CIRCUITS9 cues plus3 beds use licensed CC0/CC BY recordings and the GP flag.
-Source catalog/credits/checksums and all pre-P4 records remain exact.
 Runtime assets1,185,427bytes/peak0.71836; repeatable Vorbis builds exact.
-No paid generation, runtime dependency or network requests.
 
 FIELD cues use actual startLight, lightsOut/go, positionGain, finalLap and
 completed GP stageResult events. Five lights, go, final lap and finish play
 once per actual field; real position regains can play later. Duplicate events,
-late decode, mute/pause/locked audio never replay missed cues. Stage/menu
-replacement stops voices; the finish flourish may end naturally on results.
+late decode/mute/pause/locked audio never replay cues. Stage/menu replacement
+stops voices; the finish flourish may end naturally on results.
 Ordinary countdown/win/loss and GP failure fallback keep their old cues.
-Fifteen prepared cues await their real owner events; do not invent events.
 
 Foundation c331f6db: lane376/376/build668ms, native8cars/3laps154.73s,
 recorded cues, source/lifecycle/replay pass. Seeded12s duplicate-event fingerprint
@@ -25,7 +22,6 @@ cue onset advisory ranges-3..107ms; repetition flags five identical ticks and
 four gains. That approval does not cover the louder mastering below.
 
 ## Recording rules
-
 Actual App controls run real-time8car/3lap GP, no lap/position/finish injection.
 Existing worklet/independent witness meter output/engine/interface before
 stage load; rotate about20s and join exact native sample boundaries. Never
@@ -35,8 +31,8 @@ Bound the race at10minutes and any recorder diagnosis at30minutes.
 Native callback adapter preserves exact replay, cloned profile and zero saves;
 no final-state copy. Native cue times/revs/throttle/speed/status stay recorded. Functional,
 recorder identity, measured mix and human listening have separate verdicts.
-The offline --recorded-mix builder checks WAV/native PCM equality and full
-rate/channels/frame count before encoding an unedited, unnormalized MP3.
+Whole --recorded-mix checks exact WAV/native PCM/rate/channels/frame count
+before encoding an unedited, unnormalized MP3.
 Seekable MP3 decoding applies native padding metadata without trimming or
 changed tolerances; listening.json retains exact recipes/hashes/cue times.
 
@@ -50,7 +46,6 @@ Every ceiling/contrast/onset/continuity/lifecycle assertion remains unchanged.
 c665 native whole mix passes-16.08LUFS/-1.21dBTP,188.232s/9,035,136frames at
 48kHz, ten segments, exact replay/lifecycle/identity. The unnormalized MP3
 is2,402,685bytes and-16.08LUFS/-0.58dBTP; original runtime WAV certifies peaks.
-Keep native-c665 until a verified replacement.
 
 Canonical52348cc2 stress fails14/23: pre-hit peaks0.5428-.5511 require onset
 1.0855-1.1022, impossible below-1dB peak.8913. The.8 curve produces actual
@@ -74,22 +69,26 @@ First whole attempt rejected one128-frame discontinuity at segment6. Valid
 partial121.347s is-16.20LUFS/-2.49dBTP, explicitly not a whole-race pass.
 Identical-source retry rejects the same128-frame clock anomaly at segment2.
 It advances1920 then2176 frames between2048-frame chunks, with one256-frame
-callback gap. Both attempts remain; no third run, clock repair or waiver.
+callback gap. Both failed verdicts remain; no third whole run, clock repair or waiver.
 Claude check-in5 accepts held mastering/121s partial for Kyle; QA-AUDIO-CLOCK
 is separate low priority. Partial never certifies a complete race or human pass.
 
 ## Partial listening decision before code
-
 Genuinely sync integration ec734cfd; original mastering/assets/469+23 exact.
 Add explicit --partial-recorded-mix, leaving whole-pass builder unchanged.
-Require failed memory-only harness, incomplete native manifest, contiguous
-segment/stem boundaries and complete independent identity for every frame.
+Failed whole or explicit intentional-prefix mode; original whole path stays.
+One DUEL_P4_LISTENING_PREFIX=121 capture stops on actual native recorder time;
+real race continues to unchanged finish/replay/lifecycle checks. Intentional
+mode needs passed genuine functional harness and explicit native-stop metadata.
+Manifest/stems stay contiguous with independent identity every frame.
 Require48k/stereo/Float32 WAV exact retained mix.f32 prefix and finite samples;
 reject extra/missing/gapped/changed PCM, never trim/fill/resample/normalize.
 Separate incomplete MP3/metadata retain hashes, rate/channels/frames, failed
 whole label and measured source/reconstruction loudness/truepeak; originals unchanged.
-Red missing inspector, then30 pure prefix checks pass. Retained old PCM is absent;
-no current listening clip inferred. Review/current gates and approved new capture due.
+Old PCM absent; one replacement07bb native passes real3lap/replay/lifecycle,8291.
+121.053333s/5,810,560stereo48k frames,sixsegments; exact WAV/mixPCM/decodedframes.
+Source-16.29LUFS/-2.43dBTP; unnormalizedMP3-16.29/-2.10,1,600,365bytes.
+Finish audio uncaptured; incomplete/nohumanpass. Intentional Red/Green45 pass; gates due.
 
 ## Removed
 
