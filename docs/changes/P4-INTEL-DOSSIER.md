@@ -41,7 +41,9 @@ lap time remain authoritative. Incomplete runs publish nothing.
   resolves that stall; no geometry or lap validation was relaxed.
 - Native High snapshots passed all27 routes. Performance setup then caught
   stale QA unlocks retained across the reload. Reset only verified memory
-  storage between presets; locked-entry and read-only assertions stay exact.
+  session through the QA adapter window name between presets. Protected
+  storage correctly refused clear(); that failed trial is removed. All
+  locked-entry and read-only assertions stay exact.
 - Native Team Room snapshots, read-only browser lifecycle, final lane
   tier/build and independent source review remain before merge.
 

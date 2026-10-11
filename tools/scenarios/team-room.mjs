@@ -103,7 +103,7 @@ export async function run(context) {
       await context.evaluate(`(() => {
         if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value || !window.name.startsWith('__duel_qa_tab_v2:'))
           throw Error('Refusing to reset storage outside the memory-only QA tab.');
-        localStorage.clear();
+        window.name="";
       })()`);
     }
     report.passed=true;
