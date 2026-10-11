@@ -347,49 +347,50 @@ Turns sum to +360 (left 515, right 155). Climbs and drops balance (119 m).
 
 ### 5.2 Harbour Lights (Guia)
 
-A night street race between walls: a seafront straight, a hard right at the
-casino, a tight climb through the old town and the slowest hairpin in the
-game, then a flat-out sweep along the reservoir.
+A night street race between walls: a seafront run into a hard right at the
+casino, a tight climb through the old town, the slowest hairpin in the game
+where the road turns for home, then the long Reservoir Run and Harbour Road
+back. Redrawn by Claude on 10 October 2026 (the first draft did not close);
+`src/circuits/harbour-lights.js` holds the exact numbers.
 
-- **Event:** Harbour Lights Night, 4 laps, about 3.0 km a lap, field of 8.
-- **Width:** 14 m on the Seafront and the Reservoir Sweep; 10 to 12 m in
-  the old town. Walls both sides everywhere (concrete blocks with catch
-  fences); escape roads at Casino Corner and the hairpin only.
+- **Event:** Harbour Lights Night, 4 laps, about 4.05 km a lap (test driver
+  1:34), field of 8.
+- **Width:** 14 m on the seafront, reservoir and harbour roads; 10 m in the
+  old town; 12 m at the hairpin. Walls both sides everywhere (concrete
+  blocks with catch fences); escape roads at Casino Corner and the hairpin.
 - **Signature:** Lantern Hairpin, radius 9 m, about 30 km/h, under strings
-  of paper lanterns.
-- **Overtaking:** Seafront Straight into Casino Corner.
+  of paper lanterns; its approach and exit run side by side with a wall
+  between.
+- **Overtaking:** Seafront Straight, Lantern Kink and the Casino Approach,
+  about 900 m into Casino Corner; also Harbour Road into Harbour Turn.
 - **Commitment:** Lantern Kink and the Reservoir Sweep, flat out between
   walls.
-- **Look:** neon signs and lit shopfronts, harbour with moored boats, a
-  lit tower ("Lantern Tower", our own landmark) above the casino, a
-  wet-look road that reflects the lights (looks only, grip is dry).
+- **Look:** neon signs and lit shopfronts, harbour with moored boats, the
+  Lantern Tower above the casino, a wet-look road (looks only, grip is dry).
 
 | # | Piece | Name | Notes |
 | --- | --- | --- | --- |
-| 1 | straight 600 | Seafront Straight | start line 100 m in |
+| 1 | straight 500 | Seafront Straight | start line 100 m in |
 | 2 | turn L 20, r 300 | Lantern Kink | flat out between walls |
-| 3 | straight 450 | | boards for Casino Corner |
-| 4 | turn R 95, r 22 | Casino Corner | heavy braking, escape road |
-| 5 | straight 120, climb +6 | | |
+| 3 | straight 294 | Casino Approach | boards |
+| 4 | turn R 104, r 22 | Casino Corner | heavy braking, escape road |
+| 5 | straight 150, climb +6 | | |
 | 6 | turn L 40, r 60, climb +6 | Temple Hill | |
-| 7 | straight 90, climb +6 | | |
+| 7 | straight 78, climb +6 | | |
 | 8 | turn R 60, r 35, climb +5 | Bell Tower Bend | |
-| 9 | straight 140, climb +4 | | width 10 from here |
-| 10 | turn L 45, r 30, climb +3 | Old Town Esses 1 | |
-| 11 | turn R 50, r 30 | Old Town Esses 2 | |
-| 12 | turn L 40, r 35 | Old Town Esses 3 | |
-| 13 | turn R 35, r 40 | Old Town Esses 4 | |
-| 14 | straight 160 | Hillside | harbour view through gaps |
-| 15 | turn R 70, r 25, climb -6 | Precinct Bend | |
-| 16 | straight 120, climb -6 | | boards |
+| 9 | straight 192, climb +4 | | width 10 from here |
+| 10 to 13 | L 46.5 r 32, R 51.5 r 30, L 43 r 36, R 40 r 41 | Old Town Esses | |
+| 14 | straight 103 | Hillside | |
+| 15 | turn L 29.5, r 60, climb -6 | Precinct Bend | turns further from home |
+| 16 | straight 220, climb -6 | Hairpin Approach | width 12, boards |
 | 17 | turn R 175, r 9, climb -2 | Lantern Hairpin | the slowest corner in the game |
-| 18 | straight 220, climb -8 | | width 12 |
-| 19 | turn L 60, r 45, climb -4 | Fishmarket Bend | |
-| 20 | straight 300, climb -4 | | width 14 |
-| 21 | turn R 80, r 120 | Reservoir Sweep | long, fast, walls close |
-| 22 | straight 200 | | back to the Seafront |
-
-Turns sum to -360 (right 565, left 205). Climbs and drops balance (30 m).
+| 18 | straight 99, climb -8 | | |
+| 19 | turn L 60, r 45, climb -4 | Fishmarket Bend | width 14 from here |
+| 20 | straight 827, climb -4 | Reservoir Run | |
+| 21 | turn R 59, r 120 | Reservoir Sweep | fast, walls close |
+| 22 | straight 500 | Harbour Road | boards |
+| 23 | turn R 109, r 60 | Harbour Turn | |
+| 24 | straight 61 | Harbour Return | onto the Seafront |
 
 ### 5.3 Tremblant Woods (Mont-Tremblant)
 
@@ -463,6 +464,80 @@ least 15 m radius, with fast climbing roads between them.
 | E. Avalanche Gallery | 10.0 to 11.4 km | The road splits at 10.1 km: the Gallery (a snow shed, 10 m wide, tighter curves, safe) or the Open Road (faster, under the avalanche slope). They rejoin at 10.9 km. Then a ledge with the valley and town lights far below. Night begins; first stars. |
 | F. Devil's Staircase | 11.4 to 13.6 km | Devil's Elbow (L 180, r 15) at 12.0 km, Last Breath (R 180, r 15) at 12.9 km. Night, headlights, light snowfall and blowing snow on the ridge. Climb 150 m. |
 | G. Summit | 13.6 to 14.0 km | Finish straight to the summit hut and observatory with lit windows. Yeti spots. |
+
+**Claude's layout draft** (10 October 2026), for P4-SUMMIT to build as a
+point-to-point track script. It is checked: no two stretches of road come
+within 165 m of each other more than 750 m apart along the road, so the
+ground under one leg never overlaps another. Near each hairpin the two legs
+run close and climb apart; a kink after every hairpin turns the next leg
+away. P4-SUMMIT may adjust lengths and angles by up to 10% to fit the
+sections, climbs and jumps, and must keep that separation (add a test).
+Climbs follow the section table above (about 720 m in total).
+
+| # | Piece | Name | At (km) | Notes |
+| --- | --- | --- | --- | --- |
+| | **A. Desert Foothills** | | | |
+| 1 | straight 470 | Start Straight | 0.0 | staggered grid |
+| 2 | turn L 26.5, r 200 |  | 0.5 |  |
+| 3 | straight 380 | Cattle Grid Jump | 0.6 | crest 2.5 m (jump) |
+| 4 | turn R 42.5, r 150 |  | 0.9 |  |
+| 5 | straight 370 |  | 1.1 |  |
+| 6 | turn L 48.5, r 180 |  | 1.4 |  |
+| 7 | straight 340 |  | 1.6 |  |
+| 8 | turn R 37.5, r 250 |  | 1.9 |  |
+| 9 | straight 630 | Graded Gravel | 2.1 | gravel surface |
+| 10 | turn L 52.5, r 120 |  | 2.7 |  |
+| 11 | straight 390 | Ranger Station Jump | 2.8 | crest 2.5 m (jump) |
+| 12 | turn R 34.5, r 200 |  | 3.2 |  |
+| 13 | straight 310 |  | 3.3 |  |
+| | **B. Pine Switchbacks** | | | |
+| 14 | straight 420 |  | 3.6 |  |
+| 15 | turn L 175.5, r 16 | Picnic Hairpin | 4.1 |  |
+| 16 | straight 190 |  | 4.1 |  |
+| 17 | turn R 54, r 80 |  | 4.3 |  |
+| 18 | straight 560 |  | 4.4 |  |
+| 19 | turn R 172, r 16 | Engineer's Hairpin | 4.9 |  |
+| 20 | straight 210 |  | 5.0 |  |
+| 21 | turn L 47, r 80 |  | 5.2 |  |
+| 22 | straight 570 |  | 5.3 |  |
+| 23 | turn L 167.5, r 18 | Brookside Hairpin | 5.8 |  |
+| 24 | straight 170 |  | 5.9 |  |
+| 25 | turn R 50, r 80 |  | 6.0 |  |
+| 26 | straight 370 |  | 6.1 |  |
+| | **C. Tree Line** | | | |
+| 27 | straight 560 | Tree Line Pit Straight | 6.5 | pit lane on the right |
+| | **D. Snowfields** | | | |
+| 28 | turn R 38.5, r 150 |  | 7.0 |  |
+| 29 | straight 610 |  | 7.1 |  |
+| 30 | turn L 40.5, r 150 |  | 7.8 |  |
+| 31 | straight 390 |  | 7.9 |  |
+| 32 | turn R 175, r 16 | Glacier Hairpin | 8.3 |  |
+| 33 | straight 170 |  | 8.3 |  |
+| 34 | turn L 53, r 80 |  | 8.5 |  |
+| 35 | straight 590 | Whiteout Crest | 8.5 | crest 1.5 m |
+| 36 | turn R 33.5, r 200 |  | 9.1 |  |
+| 37 | straight 520 |  | 9.3 |  |
+| | **E. Avalanche Gallery** | | | |
+| 38 | straight 470 | Gallery split | 9.8 | road splits: Gallery left, Open Road right |
+| 39 | turn L 40.5, r 120 |  | 10.2 |  |
+| 40 | straight 490 | The Gallery / Open Road | 10.3 | avalanche slope over the Open Road |
+| 41 | turn R 40, r 120 |  | 10.8 |  |
+| 42 | straight 360 | The Ledge | 10.9 | valley and town lights below |
+| | **F. Devil's Staircase** | | | |
+| 43 | straight 370 |  | 11.3 |  |
+| 44 | turn L 175, r 15 | Devil's Elbow | 11.6 |  |
+| 45 | straight 140 |  | 11.7 |  |
+| 46 | turn R 38, r 80 |  | 11.8 |  |
+| 47 | straight 580 |  | 11.9 |  |
+| 48 | turn R 178.5, r 15 | Last Breath | 12.5 |  |
+| 49 | straight 160 |  | 12.5 |  |
+| 50 | turn L 52, r 80 |  | 12.7 |  |
+| 51 | straight 590 |  | 12.7 |  |
+| | **G. Summit** | | | |
+| 52 | straight 440 | Summit Finish | 13.3 | finish at the summit hut |
+
+Total about 13.8 km.
+
 
 **The avalanche** (P4-AVALANCHE):
 
