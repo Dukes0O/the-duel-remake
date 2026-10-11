@@ -87,9 +87,22 @@ export function buildKitPlacements(def, spec) {
   };
   if (spec.walls) {
     for (const span of road.walls) {
-      const tight = road.pieces[span.piece].radius < 30, target = tight ? 3 : 4, count = Math.max(1, Math.ceil((span.s1 - span.s0) / target)), size = (span.s1 - span.s0) / count;
-      for (let i = 0; i < count; i++) {
-        const c = span.s0 + (i + .5) * size, lateral = span.side * (road.halfWidthAt(c) + WALL_OUT / 2 + .5);
+      // Long pieces on straights and wide bends, short ones round tight corners; the loader
+      // checks every piece against the road, so fewer, longer pieces keep the world quick to build.
+      const turn = road.pieces[span.piece];
+      let target = turn.kind === 'straight' ? 16 : turn.radius >= 60 ? 8 : turn.radius >= 30 ? 6 : 3.5;
+      // The wall on the inside of a tight bend runs round a very small circle: its pieces must be shorter still.
+      if (turn.kind === 'turn' && span.side === turn.dir) target = Math.min(target, Math.max(1.4, (turn.radius - road.halfWidthAt(span.s0) - 1.5) * 1.6));
+      // Where the road changes width the wall slants: split a piece until it follows the wall to within 20 cm.
+      const pieces = [];
+      const split = (a, b) => {
+        const mid = (a + b) / 2, off = Math.max(Math.abs(road.halfWidthAt(a) - road.halfWidthAt(mid)), Math.abs(road.halfWidthAt(b) - road.halfWidthAt(mid)));
+        if (b - a > target + 1e-6 || (off > .2 && b - a > 3)) { split(a, mid); split(mid, b); } else pieces.push([a, b]);
+      };
+      const count0 = Math.max(1, Math.ceil((span.s1 - span.s0) / target));
+      for (let i = 0; i < count0; i++) split(span.s0 + (span.s1 - span.s0) * i / count0, span.s0 + (span.s1 - span.s0) * (i + 1) / count0);
+      for (const [a, b] of pieces) {
+        const c = (a + b) / 2, size = b - a, lateral = span.side * (road.halfWidthAt(c) + WALL_OUT / 2 + .5);
         const p = course.worldAt(c, lateral);
         if (escapes.some(escape => inOpening(escape, c, p.x, p.z))) continue;
         const k = [(size - .1) / PIECES['concrete-wall'].size[0], 1, 1];
@@ -154,7 +167,8 @@ export function buildKitPlacements(def, spec) {
         const heading = side > 0 ? -HALF_PI : HALF_PI;
         const w = course.worldAt(along, lateral), h = w.heading + heading;
         const corners = footprint(w.x, w.z, h, [-back, front], width / 2), radius = Math.hypot(width, deep) * .4;
-        if (!check(corners, setback * .6) || !free(w.x, w.z, radius)) { rng.range(0, 1); continue; }
+        const keep = rng.float() < (row.density ?? 1);
+        if (!keep || !check(corners, setback * .6) || !free(w.x, w.z, radius)) continue;
         taken.push({ x: w.x, z: w.z, r: radius });
         place(id, along, lateral, heading, k);
       }
