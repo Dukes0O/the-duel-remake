@@ -335,7 +335,7 @@ export function attachRenderer(host, app) {
       if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
       if (!prepareKitWorld(view.course)) return;
       if (course !== view.course) {
-        if (world && worldKey === environmentKey(view.course)) course = view.course;
+        if (world && worldKey === environmentKey(view.course) && !winterEnabled(view.course)) course = view.course;
         else build(view.course);
       }
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;

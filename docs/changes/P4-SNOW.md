@@ -82,9 +82,9 @@ the permanent finite-target acceptance and normal regression remain.
 Final KIT-LOADER integration ec734cfd genuinely merged without conflicts.
 Renderer prepares approved extras before building Snow, keeps bank identities
 on menu-to-race transitions, and feeds the actual eight grounded car meshes.
-Round-one native art is pending Claude. Quiet frames, lane/build, final review
-and merge remain pending.
-No finished-art/frame verdict. PIT is synced; genuine snapshot identity RED is queued.
+Round-one art is held; revised winter look, gates, review and merge remain pending.
+Snapshot RED:308 previous/0 current banks; builds2 to2; state/profile/storage exact.
+Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite targets.
 Static timing fixes only its native presentation camera before sampling;
 original samples/10percent limits and all actor poses stay exact.
 Director clears the three additive renderer hooks; no real saves/release/live QA.
