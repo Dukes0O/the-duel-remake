@@ -31,8 +31,10 @@ lap time remain authoritative. Incomplete runs publish nothing.
 ## Evidence
 
 - All 27 references rebuilt through actual App/Duel steps after syncing
-  Claude's current authored circuit intel. Panorama: 98.667 s; Harbour:
+  Claude's Panorama, Harbour and Tremblant authored intel. Panorama: 98.667 s; Harbour:
   88.053 s; Tremblant: 91.075 s. Each has one warm-up and two timed laps.
+  Harbour and Tremblant sector fingerprints were rebuilt after their notes
+  landed; native times and geometry remain unchanged.
 - Reference suite: 323 checks. Track analysis: 207 checks across all
   27 real closed event/routes. Existing physical-step parity, complete
   publication, isolation, route identity and policy assertions remain.
