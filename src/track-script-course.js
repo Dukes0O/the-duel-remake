@@ -2,8 +2,9 @@
 // sampled centreline, the finish, the racing line and the solid walls. Like the
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
+import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
 import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
-import { hillLocal, hillReach, hillHeight, runWeight } from './circuit-hills.js';
+import { hillLocal, hillReach, hillHeight, runWeight, basinReach } from './circuit-hills.js';
 import { makeRng } from './rng.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 
@@ -33,6 +34,7 @@ export function installTrackScript(course, dynamics) {
 function wallSegments(course) {
   const script = course.script, walls = [];
   let serial = 0;
+  const escapes = course.escapeRoads = escapeRoadsFor(course);
   for (const span of script.walls) {
     const tight = script.pieces[span.piece].radius < 30;
     const target = tight ? 3 : 4, count = Math.max(1, Math.ceil((span.s1 - span.s0) / target));
@@ -41,10 +43,11 @@ function wallSegments(course) {
       const a = span.s0 + i * size, b = a + size, c = (a + b) / 2;
       const off = span.side * (script.halfWidthAt(c) + TRACK_SCRIPT.wallSetback + TRACK_SCRIPT.wallThickness / 2);
       const centre = course.groundAt(c, off);
+      if (escapes.some(escape => inEscapeOpening(course, escape, c, centre))) continue;
       const heights = [a, c, b].map(s => course.groundAt(s, span.side * (script.halfWidthAt(s) + TRACK_SCRIPT.wallSetback + TRACK_SCRIPT.wallThickness / 2)).y);
       const low = Math.min(...heights), high = Math.max(...heights);
       walls.push({
-        id: `wall-${span.side > 0 ? 'left' : 'right'}-${serial++}`, kind: 'prop', shape: 'box', barrier: true, trackWall: true,
+        id: `wall-${span.side > 0 ? 'left' : 'right'}-${serial++}`, kind: 'prop', shape: 'box', barrier: true, trackWall: true, side: span.side,
         s: course.phase(c), off, x: centre.x, y: low - .1, z: centre.z, heading: centre.heading,
         halfX: TRACK_SCRIPT.wallThickness / 2, halfZ: size / 2 + .05,
         height: high - low + .1 + TRACK_SCRIPT.wallHeight,
@@ -53,6 +56,44 @@ function wallSegments(course) {
       });
     }
   }
+  for (const escape of escapes) walls.push(...escapeWalls(course, escape, serial));
+  return walls;
+}
+
+// ---------------------------------------------------------------------------
+// Escape roads (a circuit's `escapeRoads`): a straight run-off on the outside
+// of a named turn, behind an opening in the wall. The car that misses the turn
+// goes through the opening onto loose ground (the ordinary off-road rules slow
+// it) and meets a tyre wall at the far end. The road script is not changed:
+// only the wall drawn along it is opened, and the new walls are added here.
+// ---------------------------------------------------------------------------
+
+function inEscapeOpening(course, escape, s, centre) {
+  const along = ((course.phase(s) - escape.s0 + course.length * 1.5) % course.length) - course.length / 2;
+  if (Math.abs(along) > 200) return false; // another part of the lap
+  const { u, v } = escapeFrame(escape, centre.x, centre.z);
+  return u > -1.5 && u < escape.run + 1.5 && v > escape.inner - .8 && v < escape.outer + 1.2;
+}
+
+function escapeWalls(course, escape, firstSerial) {
+  const walls = [], thick = TRACK_SCRIPT.wallThickness, height = TRACK_SCRIPT.wallHeight;
+  const groundAtWorld = (x, z) => { const n = course.nearest(x, z); return course.groundAt(n.s, n.lateral); };
+  const place = (id, u, v, heading, halfX, halfZ, tall, extra = {}) => {
+    const x = escape.origin.x + escape.forward.x * u + escape.left.x * escape.side * v, z = escape.origin.z + escape.forward.z * u + escape.left.z * escape.side * v;
+    const found = course.nearest(x, z), ground = course.groundAt(found.s, found.lateral);
+    const c = Math.cos(heading), n = Math.sin(heading);
+    const heights = [[-1, -1], [1, 1], [-1, 1], [1, -1], [0, 0]].map(([a, b]) => groundAtWorld(x + c * a * halfX + n * b * halfZ, z - n * a * halfX + c * b * halfZ).y);
+    const low = Math.min(...heights, ground.y), high = Math.max(...heights, ground.y);
+    return { id, kind: 'prop', shape: 'box', barrier: true, trackWall: true, side: escape.side, escapeRoad: escape.id, ...extra,
+      s: course.phase(found.s), off: found.lateral, x, y: low - .1, z, heading, halfX, halfZ, height: high - low + .1 + tall, minY: low - .1, maxY: high + tall,
+      theme: course.themeAt(found.s) };
+  };
+  // The outer wall carries straight on beside the run-off.
+  const count = Math.max(1, Math.ceil(escape.run / 4)), size = escape.run / count;
+  for (let i = 0; i < count; i++) walls.push(place(`wall-${escape.id}-${i}`, (i + .5) * size, escape.outer + thick / 2, escape.heading, thick / 2, size / 2 + .05, height));
+  // The tyre wall across the far end.
+  const across = (escape.outer + thick - escape.inner + 1.6) / 2, middle = (escape.inner - .8 + escape.outer + thick) / 2;
+  walls.push(place(`tyres-${escape.id}`, escape.run + escape.tyreDepth / 2, middle, escape.heading + Math.PI / 2, escape.tyreDepth / 2, across, 1.3, { tyreWall: true }));
   return walls;
 }
 
@@ -76,6 +117,13 @@ function scatterScenery(course) {
     // Keep the inside of every corner open so the exit can be seen.
     const piece = script.pieceAt(n.s);
     if (piece.kind === 'turn' && side === piece.dir && n.distance < width + 30 + radius) return false;
+    // Nor in the water of a basin.
+    if ((course.def.basins ?? []).some(basin => basinReach(basin, course.phase(n.s) - basin.s, n.lateral - basin.lateral) < 1.15)) return false;
+    // Nor on a run-off road or its walls.
+    for (const escape of course.escapeRoads ?? []) {
+      const { u, v } = escapeFrame(escape, p.x, p.z), slack = radius + margin + 3;
+      if (u > -slack && u < escape.run + slack + escape.tyreDepth && v > escape.inner - slack && v < escape.outer + slack + 1) return false;
+    }
     return true;
   };
   const vacant = (s, off, radius) => {
