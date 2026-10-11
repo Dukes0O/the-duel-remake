@@ -1,7 +1,7 @@
 import {courseAccessPanel} from './course-access-ui.js';
 
-export function courseScreen(profile, selectedStage, message) {
-  return courseAccessPanel(profile, selectedStage, message);
+export function courseScreen(profile, selectedStage, message, options) {
+  return courseAccessPanel(profile, selectedStage, message, options);
 }
 
 export function createCourseActions({app, choices, setMessage, setOpen, updateMenuScene, invalidate, renderState}) {

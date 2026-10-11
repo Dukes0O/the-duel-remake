@@ -1,3 +1,4 @@
+import {createTrackKits,bindTrackKits} from './track-kits.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
 import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
@@ -39,7 +40,7 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 // Composition order is deliberate: surfaces, biome detail, physical-feature
 // shells, then their visual refinements and race markers. No new wrapper groups
 // are inserted, so material refinement, render order and batching stay stable.
-export function buildEnvironment(course, {saltFlats} = {}) {
+export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
   if(course.def.pit)return createPitEnvironment(course);
   if(course.def.id==='salt-flats'){
     const group=new THREE.Group();
@@ -123,6 +124,11 @@ export function buildEnvironment(course, {saltFlats} = {}) {
   addRallyDetail(group,course);
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
+  if (trackKits || course.def.kitPlacements?.length) {
+    const kits = trackKits ?? createTrackKits(course);
+    bindTrackKits(group,kits);
+    registerSceneSystem(group,{sync:kits.sync,dispose:kits.dispose});
+  }
   return group;
 }
 

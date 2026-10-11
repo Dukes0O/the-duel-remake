@@ -939,3 +939,15 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 11 October overnight: merged DAYNIGHT and QA-AUDIO-CAPTURE from a89e562c; lane378/378 in892.12s, build827ms and source reviews clear; Claude art4/4/4/4, unchanged quiet frames allpass with delivered<=18.2ms. No release; end full remains pending.
 
 11 October overnight: merged KITS c04e3189; lane379/379 in905.73s, build745ms, source clear and Claude final3 all3.5. Approved70GLBs/current sheets, strict recipe/evidence repair; no release.
+
+11 October overnight: merged Dossier faeb4885; lane381/381 in867.94s/build516ms, source/native58views clear and all27 reference laps complete. KITS completed lane/branch removed normally after unlinking; no release.
+
+2026-10-11 merge P4-INTEL-TELEMETRY aa18f6b6: lane383/383 653.18s, build1.24s, native comparison and save reviews clear; Dossier lane/branch cleaned normally.
+
+11 October janitor merge405cabb7: lane6/6 46.72s/build548ms, five consumed JPGs/notes removed after durable facts folded; looks19,980,225→17,671,624B. Current final hashes/runtime exact; stray root ledger removed.
+
+11 October merge FIX-P4-KERB-NORMALS e6b82a12: lane74/74 in91.20s/build616ms; actual geometry digest exact, zero nonfinite High Bloom targets.
+
+11 October janitor sweep: no unused module or removed-feature test proved; 50 asset candidates are advisory dynamic paths/credits, left for DISC/CLEAN-11. Consumed request posts folded into current cards; idle unmerged branches retained. Tracked size322,216,132B, looks17,671,624B; no runtime growth/deletion.
+
+11 October merge P4-PIT5ebfaa85: lane384/384 in648.47s/build496ms, actual eight boxes and four-second High/Performance service pass; finite kerb/Dossier union exact. No release.
