@@ -81,6 +81,8 @@ Director-granted correction copies current board/next-run byteexact: consumed QA
 
 b647 mandatory lane:220 passed/1 failed/167 not run in503.37s; no build. The original frame-metrics adjacency regex cannot recognize the accepted cached-rear wrapper, although both rear branches and finally restoration remain inside the CPU boundary. Director records compatibility before code: only the static guard changes, retaining its main/rear measurement promise with bounded branch/order/restoration matching and negative controls for early endpoints or missing main/rear/finally. Every numeric/count/percentile/tolerance assertion and all runtime bytes stay exact d05. Focused original metrics plus13 compatibility/negative controls pass134 checks; a fresh lane/build remains required.
 
+090 lane:285 passed/1 failed/102 not run in531.61s; frame boundary134checks passes. Original preview-launcher regex requires a literal preview property; generated nine-entry input did include the page. Director settles owned config correction before code: explicit nine properties preserve identical names/path/order, plugins, fixture pin/alias/admission and every original preview assertion; runtime stays exact d05. Test-source search finds only preview literal and version-plugin guards. Original preview23checks and build-update190checks pass; imported config nine paths/order equal the prior mapping. Fresh lane/build remains required.
+
 ## Removed
 
 Replace whole-route zero-scale hidden draws and repeated runtime triangle checks; full build/test clearance remains. Remove cached-rear scope work and untouched buffer uploads in the same fix. No placements/assets/art removed.
