@@ -102,7 +102,7 @@ async function snapshotReadiness(context, quality, broken=false) {
   return detail;
 }
 
-const HARBOUR_HEAD='91ef3e2085a9327b0f3b42aa96ef90f9b3344033';
+const HARBOUR_HEAD='e96d52bb4eb1f841b7be477a3e9ec707ff415ba7';
 
 async function denseDriverBundle() {
   const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
@@ -290,7 +290,7 @@ async function setupDenseFixture(context,quality,bundle,present,place) {
 async function denseHarbour(context,report,persist) {
   if(!process.env.P4_KIT_HARBOUR_SOURCE)throw Error('Dense QA requires the explicit pinned Harbour source environment');
   const frames=process.env.P4_KIT_DENSE_FRAMES==='1',bundle=await denseDriverBundle();
-  report.dense={hybrid:{definitionSource:HARBOUR_HEAD,engine:'this lane; additive QA Harbour eligibility only',
+  report.dense={hybrid:{definitionSource:HARBOUR_HEAD,engine:'4527b3f5 integration plus owned loader; additive QA Harbour eligibility only',
     genuineGrid:true,placements:1969},acceptancePolicy:'claude-check-in7-absolute',
     qualities:[],frames:[],comparisons:[],failures:[],frameStatus:frames?'running':'not scheduled'};
   await context.command('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});

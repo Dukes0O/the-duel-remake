@@ -346,6 +346,57 @@ async function kitCullingChecks() {
   });
   assert.equal(runtime.stats.high,1,'pose and main count survive the rear scope');
   runtime.dispose();
+
+  // Claude's genuine layer colour contract must follow the selected row, not
+  // the old full-route buffer slot, through main and nested rear packing.
+  const paintedRows = rows.map((row,index) => ({...row,id:'tyre-wall',
+    ...(index===2?{}:{bands:[[index/3,0,1-index/3],[0,index/3,1-index/3]]})}));
+  const painted = createTrackKits(flatCourse,{placements:paintedRows,validateClearance:false,
+    loadAsset:async()=>{
+      const scene=new THREE.Group();
+      for(let layer=1;layer<=2;layer++){
+        const geometry=new THREE.BoxGeometry(1,3,1);geometry.translate(0,1.5,0);
+        geometry.userData.fixtureLayer=layer-1;
+        const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());
+        mesh.name='layer-'+layer;scene.add(mesh);
+      }
+      return {scene,animations:[]};
+    }});
+  assert.equal(await painted.ready,true,painted.error?.message);
+  assert.ok(Object.isFrozen(painted.placements[0].bands[0]),'layer colours remain immutable');
+  const actualPaint=new THREE.Color();
+  function assertPaintedPrefix(){
+    for(const mesh of painted.group.children){
+      if(!mesh.visible||!mesh.count)continue;
+      const layer=mesh.geometry.userData.fixtureLayer;
+      mesh.userData.trackKitDrawnPlacementIndices.forEach((index,slot)=>{
+        const expected=paintedRows[index].bands?.[layer]??[1,1,1];
+        if(mesh.instanceColor)mesh.getColorAt(slot,actualPaint);else actualPaint.setRGB(1,1,1);
+        assert.ok(actualPaint.toArray().every((value,axis)=>Math.abs(value-expected[axis])<1e-6),
+          'actual selected layer colour follows its packed placement index');
+      });
+    }
+  }
+  painted.update({high:true,position:camera.position,camera});assertPaintedPrefix();
+  const paintedBefore=painted.group.children.map(mesh=>({mesh,visible:mesh.visible,count:mesh.count,
+    matrices:Array.from(mesh.instanceMatrix.array),colours:mesh.instanceColor?Array.from(mesh.instanceColor.array):null,
+    colourVersion:mesh.instanceColor?.version}));
+  painted.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=>{
+    assertPaintedPrefix();
+    painted.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,1)},assertPaintedPrefix);
+    assertPaintedPrefix();
+  });
+  for(const saved of paintedBefore){
+    assert.equal(saved.mesh.visible,saved.visible);assert.equal(saved.mesh.count,saved.count);
+    assert.deepEqual(Array.from(saved.mesh.instanceMatrix.array),saved.matrices);
+    assert.deepEqual(saved.mesh.instanceColor?Array.from(saved.mesh.instanceColor.array):null,saved.colours,
+      'rear restores exact original layer colour buffers');
+    if(saved.mesh.userData.trackKitChunk===8)
+      assert.equal(saved.mesh.instanceColor?.version,saved.colourVersion,'untouched distant colour buffers never upload');
+  }
+  assertPaintedPrefix();painted.dispose();
+  assert.throws(()=>normalizeKitPlacements(flatCourse,[{...paintedRows[0],bands:[[0,NaN,1]]}]),/bands/);
+
   const illegal = createTrackKits(flatCourse, {placements: [{id:'armco',s:100,lateral:0}],
     loadAsset: async () => asset()});
   assert.equal(await illegal.ready, false, 'default full validation still rejects the actual road intrusion');

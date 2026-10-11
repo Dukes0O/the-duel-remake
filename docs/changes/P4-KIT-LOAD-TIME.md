@@ -1,14 +1,13 @@
 # P4-KIT-LOAD-TIME
 
-Status: Claude check-in7 accepts runtime0b0799c9; recipe policy updated; gate/build pending.
+Status: accepted0b history; current4527 colour compatibility needs fresh native/gate/build.
 
 ## Design before code
 
 Trust is mandatory full build/test clearance of repo-owned offline metadata.
 createTrackKits defaults to full clearance; only renderer passes
 validateClearance:false. Metadata, real source finite bounds, lift, lamps,
-materials, actual terrain roots, readiness and ownership stay exact.
-No receipt, hash or new metadata requirement.
+materials, actual terrain roots, readiness and ownership stay exact; no receipts.
 
 Full clearance first compares transformed source boxes with conservative road
 segment boxes expanded by maximum road width plus4.5m. Near/uncertain pieces
@@ -50,10 +49,8 @@ Former10% relative guards are now informational under Claude check-in7;
 acceptance is total construction<1000ms and deliveredp95<=18.5ms in both qualities.
 Owned exports:installMainRearMeasurement,measureMainRearFrames.
 
-Genuine integration fbc7d76c sync retained. Functional ff86 private15540 passed
-four screenshots,0warnings/errors,8genuine car roots (field naturally spreads).
-Actual old town s1330.2998 at38.4333s; no all-in-camera claim.
-
+Functional ff86 private15540 passed0warnings/errors/8actual roots; old town
+s1330.2998 at38.4333s. That source is historical after genuine4527 sync.
 ## Quiet packet verdicts
 
 Original6e5:16legs/8pairs; all8 relative FAIL, combined52.63–122.50%,
@@ -88,8 +85,13 @@ Changed assertion removes only relative10% rejection, preserves every metric,
 sample/witness/state/pose/asset/placement/lifecycle guard. Boundary checks reject
 1000ms construction, accept18.5ms delivered and reject18.500001ms/nonfinite.
 Retained exact0b packet reclassified separately; raw failed reports untouched.
-All runtime/public bytes equal0b0799; no new native frame run. Lane/build pending.
-
+Policy ee4450 runtime/public were byte-equal0b; gate135pass/1fail/251notrun,
+591.67s. Explicit QA plugins property fixes unchanged failing guard:190GREEN.
+Current4527 sync preserves immutable bands; actual selected layer-colour RED
+then GREEN, lazy nested rear colour/matrix restore and untouched versions.
+Before fresh fixture:clean Harboure96d52bb actual1969placements/0bandedentries;
+metadata alias only, own4527 engine plus packed-band fix/additive admission.
+New runtime needs fresh16legs/eight pairs and mandatory lane/build; Azure first.
 ## Removed
 
 Replace whole-route zero-scale hidden draws and repeated runtime triangle checks;

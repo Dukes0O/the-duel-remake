@@ -40,8 +40,14 @@ export function normalizeKitPlacements(course, entries) {
         ![patch.s0,patch.s1,patch.from,patch.to].every(finite) ||
         patch.s0 < 0 || patch.s1 > course.length || patch.s0 >= patch.s1 || patch.from >= patch.to))
       fail('bank physicalPatch must reference its actual deep-snow band.');
+    // `bands` paints a stacked piece layer by layer (a tyre wall: one colour
+    // multiplier [r,g,b] per layer, repeating up the stack).
+    const bands = entry.bands;
+    if (bands && (!Array.isArray(bands) || !bands.length || !bands.every(band => Array.isArray(band) && band.length === 3 && band.every(finite))))
+      fail('bands must be a list of [r,g,b] colours.');
     return Object.freeze({id:entry.id,s:entry.s,lateral:entry.lateral,
       heading:entry.heading ?? 0,scale:Object.freeze(scale),lift:entry.lift ?? 0,
+      ...(bands ? {bands:Object.freeze(bands.map(band => Object.freeze([...band])))} : {}),
       ...(scenery ? {scenery:Object.freeze({...scenery})} : {}),
       ...(patch ? {physicalPatch:patch} : {})});
   }));
@@ -265,11 +271,18 @@ export function createTrackKits(course, options) {
             trackKitPlacementIndices:Object.freeze(entries.map(entry=>entry.index)),
             trackKitDrawnPlacementIndices:Object.freeze([])});
           const local = node.matrixWorld.clone();
+          const layer = Number(/layer-(\d+)/.exec(node.name)?.[1] ?? 1) - 1;
+          // Preserve Claude's painted layers while retaining owned chunk batches.
+          if (entries.some(({row}) => row.bands)) {
+            const paint = new THREE.Color();
+            entries.forEach(({row},index) => mesh.setColorAt(index,row.bands
+              ? paint.setRGB(...row.bands[layer % row.bands.length]) : paint.setRGB(1,1,1)));
+          }
           entries.forEach(({instance},index) => {
             mesh.setMatrixAt(index,transform.multiplyMatrices(instance.matrix,local));
           });
           mesh.count = 0; mesh.visible = false;
-          const batch = {mesh,version,entries,local,drawn:[],revisions:[]};
+          const batch = {mesh,version,entries,local,layer,drawn:[],revisions:[]};
           group.add(mesh); batches.push(batch); chunk.batches.push(batch);
         });
       }
@@ -292,11 +305,16 @@ export function createTrackKits(course, options) {
       if (saved.matrices) continue;
       saved.matrices = batch.mesh.instanceMatrix.array.slice();
       saved.sphere = batch.mesh.boundingSphere?.clone() ?? null;
+      saved.colours = batch.mesh.instanceColor?.array.slice() ?? null;
     }
-    entries.forEach(({instance},index) => {
+    const paint = batch.mesh.instanceColor ? new THREE.Color() : null;
+    entries.forEach(({instance,row},index) => {
       batch.mesh.setMatrixAt(index,transform.multiplyMatrices(instance.matrix,batch.local));
+      if (paint) batch.mesh.setColorAt(index,row.bands
+        ? paint.setRGB(...row.bands[batch.layer % row.bands.length]) : paint.setRGB(1,1,1));
     });
     batch.mesh.instanceMatrix.needsUpdate = true;
+    if (paint) batch.mesh.instanceColor.needsUpdate = true;
     batch.mesh.computeBoundingSphere();
   }
   function applyView(view) {
@@ -352,7 +370,7 @@ export function createTrackKits(course, options) {
     const previousView = activeView;
     const previousStats = {high:stats.high,low:stats.low,visibleChunks:stats.visibleChunks};
     const savedBatches = new Map(batches.map(batch => [batch,{batch,count:batch.mesh.count,
-      visible:batch.mesh.visible,matrices:null,sphere:null,boundingSphere:batch.mesh.boundingSphere,
+      visible:batch.mesh.visible,matrices:null,colours:null,sphere:null,boundingSphere:batch.mesh.boundingSphere,
       drawn:batch.drawn,revisions:batch.revisions,
       indices:batch.mesh.userData.trackKitDrawnPlacementIndices}]));
     const savedRoots = instances.flatMap(instance=>instance.parts.map(part=>({
@@ -370,6 +388,10 @@ export function createTrackKits(course, options) {
         if (saved.matrices) {
           batch.mesh.instanceMatrix.array.set(saved.matrices);
           batch.mesh.instanceMatrix.needsUpdate = true;
+          if (saved.colours) {
+            batch.mesh.instanceColor.array.set(saved.colours);
+            batch.mesh.instanceColor.needsUpdate = true;
+          }
           if (saved.boundingSphere) saved.boundingSphere.copy(saved.sphere);
           batch.mesh.boundingSphere = saved.boundingSphere;
         }

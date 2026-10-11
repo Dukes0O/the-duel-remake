@@ -23,7 +23,7 @@ export const PANORAMA_RIDGE = defineScriptedCourse({
   id: 'panorama-ridge', name: 'Panorama Ridge', flag: 'panorama-ridge',
   theme: 'alpine', stage: 16, kind: 'circuit', layoutVersion: 1,
   closed: true, laps: 3, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
-  airborne: true, terrainHalfWidth: 64, defaultMood: 'golden',
+  airborne: true, terrainHalfWidth: 64, defaultMood: 'golden', markings: 'circuit',
   sections: [
     { theme: 'alpine', name: 'Mountain Climb', share: .34 },
     { theme: 'alpine', name: 'The Ridge', share: .22 },
