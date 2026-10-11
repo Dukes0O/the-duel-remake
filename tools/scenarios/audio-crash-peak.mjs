@@ -40,31 +40,53 @@ async function captureNative(contactSource) {
     nativeContext: context instanceof AudioContext,
   };
   const worklet = `class PeakMeter extends AudioWorkletProcessor {
-    constructor(){super();this.data=new Float32Array(4096);this.at=0;this.first=0;}
+    constructor(options){super();this.count=options?.processorOptions?.streams||1;
+      this.data=Array.from({length:this.count},()=>new Float32Array(4096));
+      this.at=0;this.first=0;this.callbacks=[];}
     process(inputs){
-      const channels=inputs[0]||[],left=channels[0],right=channels[1]||left;
+      this.callbacks.push({frame:currentFrame,offset:this.at/2,
+        lengths:inputs.map(channels=>channels.map(channel=>channel.length))});
       for(let i=0;i<128;i++){
         if(this.at===0)this.first=currentFrame+i;
-        this.data[this.at++]=left?.[i]||0;this.data[this.at++]=right?.[i]||0;
-        if(this.at===this.data.length){
-          this.port.postMessage({frame:this.first,pcm:this.data},[this.data.buffer]);
-          this.data=new Float32Array(4096);this.at=0;
+        for(let stream=0;stream<this.count;stream++){
+          const channels=inputs[stream]||[],left=channels[0],right=channels[1]||left;
+          this.data[stream][this.at]=left?.[i]||0;
+          this.data[stream][this.at+1]=right?.[i]||0;
+        }
+        this.at+=2;
+        if(this.at===4096){
+          this.port.postMessage({frame:this.first,pcm:this.data[0],streams:this.data,
+            callbacks:this.callbacks},this.data.map(data=>data.buffer));
+          this.data=Array.from({length:this.count},()=>new Float32Array(4096));
+          this.at=0;this.callbacks=[];
         }
       }return true;
     }
   } registerProcessor('duel-crash-peak-meter',PeakMeter);`;
   const url = URL.createObjectURL(new Blob([worklet], {type:'text/javascript'}));
   try {await context.audioWorklet.addModule(url);} finally {URL.revokeObjectURL(url);}
-  function meter(node) {
-    const chunks = [], tap = new AudioWorkletNode(context, 'duel-crash-peak-meter',
-      {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
-    // The processor writes no output. Keep its silent node on a live render
-    // path instead of allowing a zero-gain branch to be pruned under load.
+  function meters(nodes) {
+    const entries=Object.entries(nodes),tracks=Object.fromEntries(entries.map(([name])=>[name,{chunks:[]}]));
+    const tap=new AudioWorkletNode(context,'duel-crash-peak-meter',
+      {numberOfInputs:entries.length,numberOfOutputs:1,outputChannelCount:[2],
+        processorOptions:{streams:entries.length}});
+    // One silent render path keeps every input live and all stems in one
+    // native callback. The processor never adds a signal to game output.
     tap.connect(context.destination);
-    tap.port.onmessage = event => chunks.push(event.data);
-    node.connect(tap);
-    return {chunks, stop(){node.disconnect(tap);tap.disconnect();tap.port.close();}};
+    tap.port.onmessage=event=>{
+      const packet=event.data;
+      for(let i=0;i<entries.length;i++)tracks[entries[i][0]].chunks.push({
+        frame:packet.frame,pcm:packet.streams[i],callbacks:packet.callbacks});
+    };
+    entries.forEach(([,node],index)=>node.connect(tap,0,index));
+    let stopped=false;
+    const stop=()=>{if(stopped)return;stopped=true;
+      for(const [,node]of entries)node.disconnect(tap);
+      tap.disconnect();tap.port.close();};
+    for(const track of Object.values(tracks))track.stop=stop;
+    return tracks;
   }
+  function meter(node) {return meters({single:node}).single;}
   function encode(chunks, began) {
     const first=chunks[0]?.frame ?? 0;
     const length=chunks.reduce((sum,c)=>sum+c.pcm.length,0),pcm=new Float32Array(length);
@@ -74,6 +96,7 @@ async function captureNative(contactSource) {
     for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
     return {pcmBase64:btoa(binary),frames:length/2,audioStartSec:first/context.sampleRate-began,
       firstFrame:first,chunkFrames:chunks.map(c=>c.frame),
+      chunkCallbacks:chunks.map(c=>c.callbacks),
       contiguous:chunks.every((c,i)=>!i||c.frame===chunks[i-1].frame+2048)};
   }
   const events=[],cues=[];
@@ -111,8 +134,8 @@ async function captureNative(contactSource) {
       airborne:false,airHeight:0,groundHeight:null,armor:1000,maxArmor:1000,invulnerableSec:0});
     app.keys.KeyW=true;app.autopilot=false;app._scriptedCrashDone=true;
     app.start();await sleep(700);app.stop();await sleep(250);
-    const began=context.currentTime,tracks={mix:meter(audio.output),engine:meter(audio.buses.engine),
-      impacts:meter(audio.buses.impacts)};
+    const began=context.currentTime,tracks=meters({mix:audio.output,engine:audio.buses.engine,
+      impacts:audio.buses.impacts});
     let struck=false,contactAt=null,physical=null,stressAt=null;
     const frames=[];
     app.onFrame=()=>{
