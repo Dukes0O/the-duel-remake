@@ -77,11 +77,12 @@ real Web Locks exclusion. No backup/archive schema or reward rules change.
   warnings or errors. Both screenshots reviewed; labels and comparisons read
   clearly. This real-recording browser uses Harbor C; all-27 native reference
   and snapshot coverage is the Dossier check, not a claimed 27-race matrix.
-- Independently reviewed and synced c391f9b5: after each preset's complete
-  unchanged-state assertions, the verified QA memory store clears so the next
-  preset starts with the same locked-track precondition. No assertion weakened.
+- Final sync includes e1a991a7: authored Harbour/Tremblant sector markers and
+  rebuilt references. Reviewed ac4c9cbf replaces the rejected memory.clear()
+  fixture with the established QA window.name adapter reset after every
+  preset's unchanged-state assertions. Root's adapter native check passed all
+  27 routes in both presets; final authored snapshot rerun is pending.
   Final lane/build and fresh Save Guardian review remain.
-
 ## Removed
 
 Duplicate analysis is removed by the Dossier extraction; telemetry delegates
