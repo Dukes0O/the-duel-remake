@@ -10,7 +10,7 @@ Tremblant Woods is a Grand Prix circuit now: eight cars, three laps, the five
 lights, in an autumn morning (the existing golden mood, low sun).
 
 - **Start.** The paddock kit: a gantry across the grid (its five lamps are lit by
-  the start sequence through the kit loader), twelve pit garages and a pit wall on
+  the start sequence through the kit loader), eleven pit garages and a pit wall on
   the right of Lodge Straight, five grandstands on the left.
 - **Lodge and hill.** A wooded hill on the left of Lodge Straight with three ski
   runs cut into it (paler strips, no trees on them), the ski lodge on a level
