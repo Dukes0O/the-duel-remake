@@ -173,3 +173,21 @@ test('mountain chase and snapshot camera floor follows actual terrain; dry camer
   constrainMountainCamera(dry,below,ridge.s0);assert.deepEqual(below,before);
   function nearEqual(a,b){near(a,b,1e-6);}
 });
+
+test('mountain terrain closes the final fractional strip and grounds all seeded landscape',async()=>{
+  const {terrainGeometry}=await import('../src/world-surfaces.js');
+  const {renderedGroundHeight}=await import('../src/rendered-ground.js');
+  const {addLandscapeDetail}=await import('../src/landscape-detail.js');
+  const s=4840.939449867449,off=28.7352222324349,p=course.groundAt(s,off);
+  const geometry=terrainGeometry(course),material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(geometry,material);mesh.updateMatrixWorld(true);
+  const ray=new THREE.Raycaster(new THREE.Vector3(p.x,10000,p.z),new THREE.Vector3(0,-1,0));
+  try {
+    const hits=ray.intersectObject(mesh);assert.ok(hits.length,'actual final fractional terrain strip is drawn');
+    near(renderedGroundHeight(course,{...p,s,off},{requireSurface:true}),hits[0].point.y,2e-5);
+  }finally{geometry.dispose();material.dispose();}
+  const group=new THREE.Group(),load=THREE.TextureLoader.prototype.load;
+  THREE.TextureLoader.prototype.load=()=>new THREE.Texture();
+  try{assert.doesNotThrow(()=>addLandscapeDetail(group,course,true));assert.ok(group.children.length>0);}
+  finally{THREE.TextureLoader.prototype.load=load;disposeTree(group);}
+});

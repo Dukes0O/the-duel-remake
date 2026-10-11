@@ -44,7 +44,7 @@ Actual road/drawn triangle heights and native Ridge chase are checked. Genuine
 laps117.483/120.176/98.667s; all8 finish with25 passes. Seed1000 has3+ distinct
 first30s crashes; no clean-field/rate pass is claimed. First submitted actual art sheet
 is269807bytes; its grounded-camera rebuild replaced the unsubmitted draft.
-Quiet frames and field balance remain pending; Claude art/driver decisions wait.
+Quiet frames and field balance remain pending; Claude art verdict waits.
 
 Private QA now waits for the actual native inspection camera before metadata
 and pixels. Frame sampling fixes only its presentation camera position to the
@@ -67,8 +67,14 @@ camera/dry regressions pass. Quiet native art/frame proof remains due.
 No old assertion changed and no world signature regenerated.
 The field recipe uses the approved native.95 driver, exact original seeds/targets
 and memory-only App. Three isolated30 reports need matching source/seed/index
-coverage before combined90 verdict. Frame output labels its hidden mirror/HUD
-main-view scope; sampler/counts/limits are unchanged. No rate/frame pass claimed.
+coverage before combined90 verdict. Actual3fed90 attempts FAIL all30/30 opening
+pileups and0wins each; player finishes11/14/12 of30, all7CPUfinish each.
+Remaining19/16/18 hit420s cap. Original limits stay; Claude correction requested.
+Frame output labels hidden mirror/HUD main-view scope; no frame pass claimed.
+Native3fed art failed missing ground at4840.939m/offset28.735m: final2.043m
+of4m terrain ribbon omitted. New actual-ray/full-landscape regression RED,
+then GREEN after Panorama-only exact final row and matching triangle sampler.
+Road/rules and legacy terrain rows stay exact; no analytic fallback/signature edit.
 
 ## Removed
 
