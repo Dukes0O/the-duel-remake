@@ -5,6 +5,10 @@ export function createRendererReadiness({app, ui, choices, profile, isDisposed, 
   let rendererPromise=null, rendererHandle=null, disposed=false;
   const stopped=()=>disposed||isDisposed();
 function ensureRenderer() {
+  if(rendererHandle && ui.view3d.dataset.trackKitAsset==='error'){
+    rendererHandle.retryTrackKits?.();syncRendererReadiness(app.duel.state);
+    return rendererPromise;
+  }
   if (!rendererPromise) {
     ui['renderer-loading'].hidden = false; ui['renderer-error'].hidden = true;
     ui['start-engine'].disabled = true;
@@ -21,13 +25,19 @@ function syncRendererReadiness(s) {
   if(stopped())return;
   if(rendererHandle){
     rendererHandle.prepareVehicle(s.status==='menu'?app.menuCar||choices.car:s.car);
-    const asset=ui.view3d.dataset.vehicleAsset,loading=asset==='loading'||asset==='idle',failed=asset==='error';
-    const preparing=asset==='ready'&&!app.visualReady;
+    const asset=ui.view3d.dataset.vehicleAsset,kit=ui.view3d.dataset.trackKitAsset;
+    const kitFailed=kit==='error',kitLoading=kit==='loading';
+    const loading=asset==='loading'||asset==='idle'||kitLoading,failed=asset==='error'||kitFailed;
+    const preparing=!failed&&asset==='ready'&&!app.visualReady;
     ui['renderer-loading'].hidden=!(loading||preparing);
-    ui['renderer-loading'].lastChild.textContent=preparing?' PREPARING THE ROAD':` LOADING ${CARS[ui.view3d.dataset.vehicleKey]?.name.toUpperCase()||'VEHICLE'}`;
-    ui['start-engine'].disabled=asset!=='ready'||!app.visualReady||!isCourseUnlocked(profile(),choices.startStage);
+    ui['renderer-loading'].lastChild.textContent=kitLoading?' LOADING TRACK SCENERY':preparing?' PREPARING THE ROAD':` LOADING ${CARS[ui.view3d.dataset.vehicleKey]?.name.toUpperCase()||'VEHICLE'}`;
+    ui['start-engine'].disabled=failed||kitLoading||asset!=='ready'||!app.visualReady||!isCourseUnlocked(profile(),choices.startStage);
     ui['renderer-error'].hidden=!failed;
-    if(failed){ui['renderer-error'].querySelector('strong').textContent="The car couldn't load.";ui['renderer-error'].querySelector('span').textContent='Retry the car download, or choose another car. Your progress is unchanged.';ui['renderer-error'].querySelector('button').textContent='RETRY CAR ↗';}
+    if(kitFailed){
+      ui['renderer-error'].querySelector('strong').textContent="The track scenery couldn't load.";
+      ui['renderer-error'].querySelector('span').textContent='Retry loading the track, or choose another course. Your progress is unchanged.';
+      ui['renderer-error'].querySelector('button').textContent='RETRY TRACK ↗';
+    }else if(failed){ui['renderer-error'].querySelector('strong').textContent="The car couldn't load.";ui['renderer-error'].querySelector('span').textContent='Retry the car download, or choose another car. Your progress is unchanged.';ui['renderer-error'].querySelector('button').textContent='RETRY CAR ↗';}
   }
 }
   return {ensureRenderer, syncRendererReadiness, get handle(){return rendererHandle;}, dispose(){disposed=true;rendererHandle?.dispose();rendererHandle=null;}};

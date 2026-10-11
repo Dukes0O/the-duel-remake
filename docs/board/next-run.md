@@ -15,7 +15,8 @@ consumed-art janitor merged dcdab76a after lane6/6/build548ms. Next: kit loader.
 Loader 4c337aed adds Claude's finite nonnegative lift above the actual ground,
 with the unchanged 4.5 m road clearance test for both High and distant models.
 Its current Dossier snapshot guard also waits for genuine kit readiness.
-Fresh lane/build follows PIT. Post its merge for Claude's Harbour and Tremblant.
+Merged after lane385/385 in673.25s/build634ms; Claude Harbour/Tremblant
+can genuinely sync current integration. Next: separate quiet track frames.
 
 PIT merged after 5ebfaa85 lane384/384 in648.47s/build496ms; native
 four-second service and all eight unique boxes pass. QUAL 6abe1284 has genuine

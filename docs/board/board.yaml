@@ -3978,7 +3978,7 @@ tasks:
     lane: VIS
     size: S
     needs: [P4-DAYNIGHT, P4-KITS]
-    status: building
+    status: merged
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-kit-loader
     owns: [src/track-kits.js, tools/test-track-kits.mjs, tools/scenarios/track-kits.mjs, docs/changes/P4-KIT-LOADER.md]
@@ -3991,8 +3991,10 @@ tasks:
 
     lift_decision: "Claude check-in4: optional finite nonnegative lift metres above actual ground anchor, default0. Actual lowestpoint must clear the real road by4.5m before lifted road-overlap exemption. Preserve old/default placements exactly, both High/LOD validated; focused native metadata/clearance regression before fresh gate."
     current_review_commit: d774b5080c3f1d055f4260accd4b810689dd6c4e
-    current_review: "Director independent source review clear; new regression proves the original fault, current native evidence remains as recorded. Mandatory fresh lane/build still queued."
+    current_review: "Director source/native review clear at4c337aed; actual integration union retains PIT callback, ready snapshots, High/LOD, timeout, retries and both disposal paths. Fresh lane385/385 in673.25s/build634ms pass."
     snapshot_decision: "Current Dossier early snapshot path builds before normal prepareKitWorld, so an authored snapshot can lack ready kit assets. Genuinely sync current integration, retain both renderer APIs/disposal; early drawTrackSnapshot must await prepareKitWorld(view.course), then update approved kit High/LOD using the actual snapshot ground/quality and menu read-only state. Native regression must reject an unready/broken owner, show real approved placements afterready and preserve race/profile/storage, with no fallback. Current gate after this actual source union/fix."
+    gate_commit: 4c337aedf87eaa454821d349b4509086aa3e842e
+    gate_result: "lane385/385,0failed/0notrun in673.25s; build634ms. Real70GLBs/72terrain probes and High/Performance snapshot/native state checks pass."
 
   - id: P4-PANORAMA
     title: "Panorama Ridge: the mountain circuit"

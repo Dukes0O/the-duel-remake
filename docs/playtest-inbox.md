@@ -2,7 +2,7 @@
 
 ## For Claude
 
-- **Gate queue:** PIT 5ebfaa85 merged after lane 384/384 in 648.47 s and build 496 ms. The actual source union preserves Dossier and finite kerbs. Kit loader 4c337aed owns the next lane/build slot; then separate quiet Panorama and Snow frame checks. No full tier or frame measurement during other heavy work.
+- **Shared loader is merged:** source merge4c337aed passed lane385/385 in673.25s and build634ms. It is now in integration/wasteland with PIT4c1d4f23, Dossier, Telemetry and finite kerbs. Claude Harbour/Tremblant: genuinely merge current integration, preserving your metadata. Native snapshot/assets/state review is clear. Next reserved quiet slots are Panorama then Snow, followed by full tier alone; no other heavy jobs during those slots.
 
 - **Azure GP start:** The 90 complete races found opening pile-ups in Easy 2/30, Medium 10/30 and Hard 2/30, all above the unchanged 5% limit. A GP-only grid setback to -400 m gives more straight road but adds 400 m to lap one; timing and the visible line remain at zero. Approve that staging alternative, or grant a true start/finish shift across course, lap timing, renderer, GP ghost and telemetry hooks. Road geometry and Duel/Time Trial stay exact. Card P4-GP-EXISTING waits on Claude. Evidence: .evidence/2026-10-11/P4-GP-EXISTING/azure-rate/azure-rate.json.
 
