@@ -79,6 +79,8 @@ const VIEWS = [
   ['grandstands', [30, -6, 3], [35, 31, 4]],
   ['lodge-and-ski-runs', [10, -14, 4], [170, 100, 22]],
   ['lodge-close', [100, 30, 5], [163, 78, 8]],
+  ['lodge-front', [173, 52, 24], [173, 100, 22]],
+  ['hill-from-above', [235, 10, 70], [235, 112, 14]],
   ['lake-and-mist', [560, 8, 2.2], [690, 50, 1.2]],
   ['dock', [660, 10, 2.5], [690, 24, 0.5]],
   ['chairlift-from-the-road', [2560, 0, 3], [2701, 0, 9]],
@@ -121,6 +123,7 @@ export async function run(context) {
     // Eight cars close together on Timber Straight, under the chairlift.
     await context.evaluate(`(() => {
       const app = window.__qaApp, s = app.duel.state, L = app.duel.course.length;
+      s.field.hold = .5; s.countdown = .5;
       for (let i = 0; i < 900 && s.status !== 'racing'; i++) app.advance(1 / 60, 1 / 60);
       const at = ${JSON.stringify(2450)} + L;
       s.s = s.prevS = at; s.lateral = s.prevLateral = 0; s.speedMph = 150; s.headingError = 0; s.impactTimer = 0; s.airHeight = 0;
