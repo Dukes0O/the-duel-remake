@@ -78,12 +78,12 @@ exact. Genuine merge 3004ee6c retains Dossier snapshot hooks and Snow disposal.
 Fresh native default Bloom input, bright and all ten blur targets have zero
 NaN/Inf. Ridge is fully visible. Consumed diagnostic probes are removed;
 the permanent finite-target acceptance and normal regression remain.
-Genuine KIT-LOADER 6f387678 merged without conflicts.
+Final KIT-LOADER integration ec734cfd genuinely merged without conflicts.
 Renderer prepares approved extras before building Snow, keeps bank identities
 on menu-to-race transitions, and feeds the actual eight grounded car meshes.
 Round-one native art is pending Claude. Quiet frames, lane/build, final review
 and merge remain pending.
-No finished-art/frame verdict. PIT 4c1d4f23 genuinely synced; final loader still pending.
+No finished-art/frame verdict. PIT is synced; winter snapshot identity needs review.
 Static timing fixes only its native presentation camera before sampling;
 original samples/10percent limits and all actor poses stay exact.
 Director clears the three additive renderer hooks; no real saves/release/live QA.
