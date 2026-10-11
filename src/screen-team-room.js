@@ -1,3 +1,4 @@
+import {compareLapTelemetry} from './lap-telemetry.js';
 import {referenceSpeedColour, cornerId, wrap} from './track-analysis.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g,
@@ -54,7 +55,7 @@ export function teamRoomMarkup(dossier) {
     </section><aside class="team-study-panel" aria-label="Study a track feature"><h3>Study the approach</h3><p class="team-study-intro">Choose a flag to see the road from the driver’s seat.</p>
       <div class="team-flag-list">${dossier.flags.map(flag => `<button type="button" data-team-flag="${escape(flag.id)}" data-team-snapshot-s="${flag.snapshotS}" data-team-camera-up="${flag.camera.up}" data-team-camera-ahead="${flag.camera.ahead}" data-team-kind="${flag.kind}" aria-pressed="false"><span class="team-flag-symbol">${symbol[flag.kind]}</span><span><small>${escape(kindName[flag.kind])} · ${Math.round(flag.s)} m</small><b>${escape(flag.title)}</b></span></button>`).join('')}</div>
       <section class="team-snapshot-panel" aria-live="polite"><h4 data-team-feature-title>Choose a flag</h4><div class="team-snapshot" data-team-snapshot></div><p class="team-snapshot-status" data-team-status role="status">The current track will be rendered when you select a feature.</p><div class="team-engineer" data-team-note></div></section>
-    </aside></div><div data-team-telemetry></div></section>`;
+    </aside></div><div data-team-telemetry>${telemetryMarkup(dossier)}</div></section>`;
 }
 
 function engineerMarkup(flag) {
@@ -120,4 +121,30 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
     close, get isOpen() { return !layer.hidden; },
     dispose() {close();events.abort();layer.remove();},
   };
+}
+
+export function telemetryMarkup(dossier){
+  const view=dossier.telemetry;
+  if(!view||view.status==='off')return '';
+  const {lap}=view,comparison=compareLapTelemetry(lap,dossier.reference);
+  if(!lap||comparison.status!=='ready')return `<section class="team-telemetry"><h3>Your best lap</h3><p>${escape(lap?'Lap comparison is unavailable for this track version.':view.message)}</p></section>`;
+  const reference=dossier.reference,length=lap.courseLength;
+  const maximum=Math.max(1,...lap.trace.map(row=>row[1]),...reference.trace.map(row=>row[1]));
+  const points=trace=>trace.map(([s,kph])=>`${(50+s/length*820).toFixed(1)},${(170-kph/maximum*140).toFixed(1)}`).join(' ');
+  const delta=value=>`${value>0?'+':value<0?'−':''}${(Math.abs(value)/1000).toFixed(3)} s`;
+  const names=new Map(dossier.analysis.corners.map(corner=>[cornerId(corner),corner.name||`Corner ${corner.number}`]));
+  return `<section class="team-telemetry" style="padding:22px;border-top:1px solid #435458"><h3>Your best lap · ${time(lap.lapMs)}</h3>
+    <p>${escape(lap.playerName)} · ${escape(lap.car.replaceAll('_',' '))} · ${escape(lap.mode)} · ${escape(lap.tyre)} tyres</p>
+    ${view.message?`<p role="status">${escape(view.message)}</p>`:''}
+    <p><b style="color:#7ae0ed">Your speed</b> · <b style="color:#ecc77d">Reference lap: Stuttgart 959-S</b> · ${delta(comparison.deltaMs)}</p>
+    <svg data-telemetry-speed viewBox="0 0 900 215" role="img" aria-label="Speed in kilometres per hour over lap distance. Your best lap is cyan; the Stuttgart reference is gold." style="display:block;width:100%;max-height:260px;background:#0c2028;border-radius:8px">
+      <path d="M50 20V170H870" fill="none" stroke="#728387"/>
+      <text x="8" y="28" fill="#eee" font-size="14">${maximum}</text><text x="8" y="174" fill="#eee" font-size="14">0</text>
+      <text x="50" y="199" fill="#eee" font-size="14">0 m</text><text x="785" y="199" fill="#eee" font-size="14">${Math.round(length)} m</text>
+      <polyline points="${points(reference.trace)}" fill="none" stroke="#ecc77d" stroke-width="3" stroke-dasharray="7 4"/>
+      <polyline points="${points(lap.trace)}" fill="none" stroke="#7ae0ed" stroke-width="3"/>
+    </svg>
+    <table style="width:100%;margin:16px 0;text-align:left;border-spacing:0 8px"><caption style="text-align:left">Sector comparison</caption><thead><tr><th scope="col">Sector</th><th scope="col">Your lap</th><th scope="col">Reference</th><th scope="col">Difference</th></tr></thead>
+      <tbody>${comparison.sectors.map(row=>`<tr><th scope="row">Sector ${row.number}</th><td>${time(row.lapMs)}</td><td>${time(row.referenceMs)}</td><td>${delta(row.deltaMs)}</td></tr>`).join('')}</tbody></table>
+    <h4>Largest measured corner losses</h4>${comparison.losses.length?`<ol>${comparison.losses.map(loss=>`<li data-telemetry-loss><b>${escape(names.get(loss.id)||loss.id)} · ${delta(loss.lossMs)}</b><p>${escape(loss.cause)}</p></li>`).join('')}</ol>`:'<p>No slower corner sections in this lap.</p>'}</section>`;
 }
