@@ -4,6 +4,7 @@
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
 import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
 import { hillLocal, hillReach, hillHeight, runWeight } from './circuit-hills.js';
+import { makeRng } from './rng.js';
 import {installPitLane, pitAt} from './pit-lane.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
@@ -143,6 +144,45 @@ function scatterScenery(course) {
       tree.y += hillHeight(hill, du, dv);
       f.trees.push(tree);
     }
+  });
+  // A forest (`scenery.forest`): rows of pines behind the runoff all the way
+  // round, from `from` to `to` metres beyond the road edge, one every `spacing`
+  // metres in each of `rows` rows. The same checks as any planted tree keep it
+  // off the road, the runoff and the inside of corners; the circuit's clear
+  // zones and kit pieces keep it off the lake, the lift and the paddock. It has
+  // its own random stream, so a circuit without one is exactly as it was.
+  const forest = course.def.scenery?.forest;
+  if (forest) {
+    const random = makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), taken = new Map(), cell = 6;
+    const key = (x, z) => `${Math.floor(x / cell)}:${Math.floor(z / cell)}`;
+    const claim = (x, z) => { const k = key(x, z); if (!taken.has(k)) taken.set(k, []); taken.get(k).push([x, z]); };
+    for (const o of f.obstacles) claim(o.x, o.z);
+    const crowded = (x, z, radius) => {
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++)
+        for (const [ox, oz] of taken.get(key(x + i * cell, z + j * cell)) ?? []) if (Math.hypot(ox - x, oz - z) < radius) return true;
+      return false;
+    };
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35 } = forest;
+    let serial = 0;
+    for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
+      const s = base + (random.float() - .5) * spacing * .9, depth = from + (to - from) * (row + random.float()) / rows;
+      // The rows thin out toward the back, so the wood has an edge.
+      if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
+      const off = side * (course.roadHalfWidthAt(s) + depth), scale = random.range(.9, 1.7);
+      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale)) continue;
+      const p = course.groundAt(s, off);
+      if (crowded(p.x, p.z, 3.2 * scale)) continue;
+      claim(p.x, p.z);
+      f.trees.push(add(`forest-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale }));
+    }
+  }
+  // Autumn (`scenery.autumn`): `share` of every planted tree turns one of the
+  // `colours` (red, gold and orange multipliers for the pine crowns), picked
+  // from the tree's place along the road so the same trees turn on every build.
+  const autumn = course.def.scenery?.autumn;
+  if (autumn) f.trees.forEach((tree, i) => {
+    const mix = Math.sin(i * 12.9898 + tree.s * .0371) * 43758.5453, pick = mix - Math.floor(mix);
+    if (pick < autumn.share) tree.tint = autumn.colours[Math.floor(pick / autumn.share * autumn.colours.length) % autumn.colours.length];
   });
 }
 

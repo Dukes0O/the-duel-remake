@@ -10,7 +10,7 @@
 // Lodge Bend and the climb north to the Final Turn. Closest separate stretches
 // of road: 66 m centre to centre, at the hairpin spur (wall between).
 import { buildTrackScript, defineScriptedCourse } from '../track-script.js';
-import { hillHeight, hillLocal, hillReach, runWeight } from '../circuit-hills.js';
+import { basinGround, hillLocal, hillReach, runWeight, shoreFactor } from '../circuit-hills.js';
 
 const BASE = {
   id: 'tremblant-woods', name: 'Tremblant Woods', flag: 'tremblant-woods',
@@ -124,6 +124,8 @@ const barrier = (id, name, margin, gap, extra = {}) => {
 };
 
 const START = { gantry: 0, pits: [4, 84], stands: [10, 70] };
+// Colour multipliers for the three layers of a tyre wall (the rubber is dark, so these are bright).
+const TYRE_BANDS = [[14, 13.5, 12.5], [14, 2.2, 1.6], [14, 13.5, 12.5]];
 const HILL = {
   s: 235, lateral: 112, along: 190, across: 84, height: 36, pines: 260,
   // A level terrace for the lodge.
@@ -135,7 +137,12 @@ const HILL = {
     { from: [52, 6], to: [122, -60], width: 28 },
   ],
 };
-const LAKE = { s: 690, lateral: 58, along: 190, across: 38, level: .75 };
+// The lake lies in a bowl dug into the ground (`basins` below); the water is laid
+// over the same outline. It lies a little lower than the road, which runs along
+// its near shore at a distance, and fills the view across Lakeshore.
+const LAKE = { s: 700, lateral: 112, along: 250, across: 84, surface: -2.4, depth: 7, bank: .11, blend: 34, colour: 0x082a36, shallow: 0x215e5c };
+// The edge of the water at an angle round the lake, as [s, lateral].
+const shoreAt = angle => [LAKE.s + Math.cos(angle) * shoreFactor(angle) * LAKE.along, LAKE.lateral + Math.sin(angle) * shoreFactor(angle) * LAKE.across];
 const LIFT = (() => {
   // The chairlift crosses the road where the second crest on Timber Straight throws the cars into the air.
   const timber = road.pieces.filter(item => item.name === 'Timber Straight');
@@ -143,6 +150,15 @@ const LIFT = (() => {
   const towers = [-130, -95, -60, -22, 22, 60, 95, 130];
   // The cable rides the top of the towers (10 m tall); the two lines hang either side of the crossbar.
   return { s, towers, lines: [-1.6, 1.6], height: 10.05, spacing: 26, speed: 2.4 };
+})();
+
+// The catch fence between the spur and Timber Straight: the two roads run side by side, 66 m apart.
+// Find which side of Timber Straight the spur is on, and fence both roads on that divide.
+const DIVIDE = (() => {
+  const timber = named('Timber Straight'), spur = named('The Spur'), kink = named('Beaver Kink');
+  const here = road.samples[Math.round(wrap(timber.s0 + 60) / road.step)], there = road.samples[Math.round(wrap(spur.s0) / road.step)];
+  const side = Math.sign((there.x - here.x) * Math.cos(here.heading) - (there.z - here.z) * Math.sin(here.heading));
+  return { side, timber: [timber.s0 + 6, timber.s0 + 126], spur: [kink.s0 + 36, spur.s1 - 4] };
 })();
 
 function paddock() {
@@ -159,8 +175,9 @@ function safety() {
   // Armco on the outside of the fast corners, just beyond where a car can go.
   for (const name of ['Pine Drop', 'Lakeside Plunge', 'Ridge Corner', 'Lodge Bend', 'Final Turn']) out.push(...barrier('armco', name, 6, 2.6));
   // Tyre walls where the slow corners run out.
-  out.push(...barrier('tyre-wall', 'Beaver Hairpin', -30, 4.4));
-  out.push(...barrier('tyre-wall', 'Ridge Corner', -34, 5));
+  // Painted bands, one colour for each of the three layers: white, red, white.
+  out.push(...barrier('tyre-wall', 'Beaver Hairpin', -30, 4.4, { bands: TYRE_BANDS }));
+  out.push(...barrier('tyre-wall', 'Ridge Corner', -34, 5, { bands: TYRE_BANDS }));
   // Braking boards (150, 100, 50 m) at the two corners the track script leaves without them;
   // the script's own board already stands before Beaver Hairpin. They face the oncoming cars.
   for (const name of ['Ridge Corner', "Devil's Chicane 1"]) {
@@ -175,19 +192,20 @@ function safety() {
     const corner = named(name), side = outside(corner), s = corner.s0 + (corner.s1 - corner.s0) * at;
     out.push(kit('marshal-post', s, side * (halfAt(s) + 9), { heading: facing(side), clear: 4 }));
   }
-  // The catch fence between the spur and Timber Straight: the two roads run side by side, 66 m apart.
-  // Find which side of Timber Straight the spur is on, and fence both roads on that divide.
-  const timber = named('Timber Straight'), spur = named('The Spur'), kink = named('Beaver Kink');
-  const here = road.samples[Math.round(wrap(timber.s0 + 60) / road.step)], there = road.samples[Math.round(wrap(spur.s0) / road.step)];
-  const side = Math.sign((there.x - here.x) * Math.cos(here.heading) - (there.z - here.z) * Math.sin(here.heading));
-  out.push(...along('catch-fence', timber.s0 + 6, timber.s0 + 126, 4.05, side * (halfAt(timber.s0 + 60) + 3.4)));
-  out.push(...along('catch-fence', kink.s0 + 36, spur.s1 - 4, 4.05, -side * (halfAt(spur.s0) + 3.4)));
+  out.push(...along('catch-fence', DIVIDE.timber[0], DIVIDE.timber[1], 4.05, DIVIDE.side * (halfAt(DIVIDE.timber[0]) + 3.4)));
+  out.push(...along('catch-fence', DIVIDE.spur[0], DIVIDE.spur[1], 4.05, -DIVIDE.side * (halfAt(DIVIDE.spur[0]) + 3.4)));
   return out;
 }
 
 function lakeside() {
-  // The dock reaches out from the shore toward the middle of the lake.
-  return [kit('wooden-dock', LAKE.s, 26, { heading: FACE_RIGHT + Math.PI, clear: 6 })];
+  // The dock reaches out from the near shore toward the middle of the lake: two
+  // pieces end to end, raised to stand over the water on the bowl's floor.
+  const [s, shore] = shoreAt(-Math.PI / 2), out = [];
+  for (const reach of [4.4, 14.2]) {
+    const lateral = shore + reach, bed = basinGround(LAKE, s - LAKE.s, lateral - LAKE.lateral).height;
+    out.push(kit('wooden-dock', s, lateral, { heading: FACE_RIGHT + Math.PI, scale: [1.4, 1.4, 1.4], lift: Math.max(0, -bed) + .5, clear: 7 }));
+  }
+  return out;
 }
 
 function lodge() {
@@ -215,17 +233,17 @@ function trees() {
   const random = stream(0x7e11), ids = ['autumn-tree', 'autumn-tree-golden', 'autumn-tree-copper'], out = [];
   const avoid = (s, lateral) => {
     const p = wrap(s);
-    const lake = Math.abs(p - LAKE.s) < LAKE.along + 20 && lateral > 0 && lateral < LAKE.lateral + LAKE.across + 14;
+    const lake = Math.abs(p - LAKE.s) < LAKE.along + 20 && lateral > 0 && lateral < LAKE.lateral + LAKE.across + 24;
     const lift = Math.abs(p - LIFT.s) < 16;
     const start = p < 240 || p > LENGTH - 80;
     const bend = road.pieceAt(p);
     const inside = bend.kind === 'turn' && Math.sign(lateral) === bend.dir && Math.abs(lateral) < halfAt(p) + 40;
     const hill = hillReach(HILL, ...hillLocal(HILL, p, lateral)) < 1.1;
-    return lake || lift || start || inside || hill || Math.abs(lateral) < 26;
+    return lake || lift || start || inside || hill || Math.abs(lateral) < 20;
   };
-  // Groves of three or four, on both sides of the road all the way round.
+  // Groves of three or four in the front rows of the forest, on both sides of the road all the way round.
   for (let grove = 0; out.length < 36 && grove < 400; grove++) {
-    const s = random() * LENGTH, side = random() < .5 ? -1 : 1, lateral = side * (28 + random() * 40);
+    const s = random() * LENGTH, side = random() < .5 ? -1 : 1, lateral = side * (22 + random() * 22);
     if (avoid(s, lateral)) continue;
     const count = 3 + Math.floor(random() * 2);
     for (let i = 0; i < count; i++) {
@@ -245,15 +263,70 @@ function trees() {
   return out;
 }
 
+// The rounded hills far behind the trees. The ski mountain stands behind the lodge
+// and is the tallest, its runs cut down the face that looks at the road; the others
+// ring the circuit, each placed so its foot is well clear of every road.
+function backdrop() {
+  const random = stream(0xb1ac), TAU = Math.PI * 2;
+  const near = (x, z) => { let best = Infinity; for (let i = 0; i < road.samples.length; i += 3) best = Math.min(best, Math.hypot(road.samples[i].x - x, road.samples[i].z - z)); return best; };
+  const xs = road.samples.map(item => item.x), zs = road.samples.map(item => item.z);
+  const middle = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2];
+  const foot = road.samples[Math.round(HILL.s / road.step)];
+  // A pale run: from the summit ridge down toward the road (dv falls toward the road).
+  const ski = { x: foot.x + Math.cos(foot.heading) * 310, z: foot.z - Math.sin(foot.heading) * 310, angle: foot.heading, along: 360, across: 230, height: 150, cell: 6,
+    runs: [
+      { from: [-120, 6], to: [-150, -70], width: 24 }, { from: [-150, -70], to: [-205, -150], width: 26 },
+      { from: [-30, 22], to: [-10, -80], width: 28 }, { from: [-10, -80], to: [25, -170], width: 30 },
+      { from: [80, 18], to: [120, -60], width: 24 }, { from: [120, -60], to: [96, -150], width: 28 },
+      { from: [185, -10], to: [230, -90], width: 22 },
+    ] };
+  // A lower shoulder along the ridge, so the skyline is not one bell.
+  const hills = [ski, { x: ski.x + 40, z: ski.z + 330, angle: foot.heading, along: 240, across: 190, height: 105, cell: 12 }];
+  for (let k = 0; k < 14; k++) {
+    const angle = (k + random() * .5) / 14 * TAU, along = 170 + random() * 150, across = 140 + random() * 110, height = 50 + random() * 60;
+    // Walk outward from the middle until the foot of the hill clears the road by 80 m.
+    let x = 0, z = 0;
+    for (let r = 200; r < 3000; r += 25) {
+      x = middle[0] + Math.sin(angle) * r * .8; z = middle[1] + Math.cos(angle) * r * 1.6;
+      if (near(x, z) > Math.max(along, across) + 80) break;
+    }
+    if (hills.some(other => Math.hypot(other.x - x, other.z - z) < (other.along + along) * .55)) continue;
+    hills.push({ x, z, angle: random() * TAU, along, across, height, cell: 14 });
+  }
+  return { hills, colours: { forest: [0x23501f, 0x2f6a25, 0x1d4a1e, 0x3a6a22], autumn: [0xc0661a, 0xa83a20, 0xd2a02a, 0xb44f1a], run: 0xdcec9e, share: .75, cut: .58 } };
+}
+
+// Leaves on the grass beside the road: red, gold and orange multipliers for the ground.
+const LEAVES = { colours: [[1.15, .55, .26], [1.0, .42, .22], [1.2, .85, .3], [.95, .5, .3]], strength: .6, reach: 38, far: .12,
+  // Beyond the verge the hillsides are forest, dark green with patches of autumn.
+  wood: { green: [.62, .86, .5], colours: [[1.3, .62, .22], [1.2, .42, .2], [1.3, .92, .3], [1.05, .5, .22]], share: .35, from: 38 } };
+// Pine crowns that turn: linear colours for the shader (gold, orange, red, copper).
+const AUTUMN = { share: .4, colours: [[1, .8, .15], [1, .5, .06], [.95, .2, .06], [1, .62, .08], [.9, .34, .06]] };
+// An autumn morning: the sun low and warm on the side away from the lake, long shadows, a light haze.
+const MORNING = {
+  sunOffset: { x: -118, y: 33, z: 24 }, sunColor: 0xffbb78, sun: 6.2, hemi: 1.0, env: .5, sunStrength: 1,
+  fog: 0xe6c7a0, fogNear: 340, fogFar: 2100, top: '#3f73a3', horizon: '#f4c58f', ground: 0x6a5a38,
+  cloudTint: [1, .76, .52], cloudCover: .5, exposure: 1.14, bloom: .28,
+};
+
 export const TREMBLANT_WOODS = defineScriptedCourse({
   ...BASE,
-  // Planted pines keep out of the lake and the chairlift's cut through the forest;
-  // the hill below plants its own.
-  scenery: { clear: [
-    { s0: LAKE.s - LAKE.along - 10, s1: LAKE.s + LAKE.along + 10, from: 8, to: LAKE.lateral + LAKE.across + 10 },
-    { s0: LIFT.s - 7, s1: LIFT.s + 7, from: -135, to: 135 },
-  ] },
+  markings: 'circuit', light: MORNING, groundLeaves: LEAVES,
+  // The forest crowds the road from 13 m beyond the edge; the pines keep out of the
+  // lake, the lift's cut through the trees, the paddock and the fence between the
+  // spur and Timber Straight (the hill below plants its own).
+  scenery: {
+    mountains: false, forest: { from: 13, to: 31, spacing: 4.6, rows: 4 }, autumn: AUTUMN,
+    clear: [
+      { s0: LAKE.s - LAKE.along - 10, s1: LAKE.s + LAKE.along + 10, from: 8, to: LAKE.lateral + LAKE.across + 10 },
+      { s0: LIFT.s - 7, s1: LIFT.s + 7, from: -135, to: 135 },
+      { s0: LENGTH - 90, s1: LENGTH, from: -60, to: 60 }, { s0: 0, s1: 130, from: -60, to: 60 },
+      { s0: DIVIDE.timber[0] - 6, s1: DIVIDE.timber[1] + 6, from: DIVIDE.side > 0 ? 8 : -90, to: DIVIDE.side > 0 ? 90 : -8 },
+      { s0: DIVIDE.spur[0] - 6, s1: DIVIDE.spur[1] + 6, from: DIVIDE.side > 0 ? -90 : 8, to: DIVIDE.side > 0 ? -8 : 90 },
+    ],
+  },
   hills: [HILL],
-  effects: { lake: LAKE, mist: { count: 12, height: 1.4, spread: .8 }, lift: LIFT },
+  basins: [LAKE],
+  effects: { lake: LAKE, mist: { count: 30, height: 1, spread: .85, opacity: .3 }, lift: LIFT, backdrop: backdrop() },
   kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()].filter(Boolean),
 });

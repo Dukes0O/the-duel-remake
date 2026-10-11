@@ -37,8 +37,14 @@ export function normalizeKitPlacements(course, entries) {
         ![patch.s0,patch.s1,patch.from,patch.to].every(finite) ||
         patch.s0 < 0 || patch.s1 > course.length || patch.s0 >= patch.s1 || patch.from >= patch.to))
       fail('bank physicalPatch must reference its actual deep-snow band.');
+    // `bands` paints a stacked piece layer by layer (a tyre wall: one colour
+    // multiplier [r,g,b] per layer, repeating up the stack).
+    const bands = entry.bands;
+    if (bands && (!Array.isArray(bands) || !bands.length || !bands.every(band => Array.isArray(band) && band.length === 3 && band.every(finite))))
+      fail('bands must be a list of [r,g,b] colours.');
     return Object.freeze({id:entry.id,s:entry.s,lateral:entry.lateral,
       heading:entry.heading ?? 0,scale:Object.freeze(scale),lift:entry.lift ?? 0,
+      ...(bands ? {bands:Object.freeze(bands.map(band => Object.freeze([...band])))} : {}),
       ...(scenery ? {scenery:Object.freeze({...scenery})} : {}),
       ...(patch ? {physicalPatch:patch} : {})});
   }));
@@ -212,6 +218,11 @@ export function createTrackKits(course, {placements=course.def.kitPlacements ?? 
           mesh.name = id+' '+version;mesh.castShadow = node.castShadow;mesh.receiveShadow = true;
           mesh.userData.trackKitId = id;mesh.userData.trackKitVersion = version;
           mesh.userData.trackKitPlacementIndices = Object.freeze(entries.map(entry=>entry.index));
+          // A painted piece: each placement's bands colour the layer this mesh is.
+          if (entries.some(({row}) => row.bands)) {
+            const layer = Number(/layer-(\d+)/.exec(node.name)?.[1] ?? 1) - 1, paint = new THREE.Color();
+            entries.forEach(({row},index) => mesh.setColorAt(index, row.bands ? paint.setRGB(...row.bands[layer % row.bands.length]) : paint.setRGB(1,1,1)));
+          }
           group.add(mesh);batches.push({mesh});
           entries.forEach(({instance},index) => {
             mesh.setMatrixAt(index,hidden);
