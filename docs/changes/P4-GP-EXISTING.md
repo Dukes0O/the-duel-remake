@@ -52,6 +52,14 @@ Telemetry; incoming storage modules and GP storage modules remain exact.
 No qualifying source is included. No native check, gate or build ran during
 the shared gate; the combined source needs current checks before handoff.
 
+## Native recipe repair
+
+The built QA preview cannot serve raw source-module imports. Bundle the actual
+course-access, configuration, race-line and existing installTestDriver helpers
+with installed Vite in memory. No helper output, dependency or runtime hook.
+All 18 native grid/corner/width/state assertions remain unchanged. Native,
+current lane/build checks stay queued until the Director grants a quiet slot.
+
 ## Removed
 
 No runtime asset or legacy mode is replaced. Remove the stale menu claim that

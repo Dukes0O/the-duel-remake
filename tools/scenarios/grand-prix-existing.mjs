@@ -1,16 +1,44 @@
 // Existing circuits, native full-field grid and first corner in both quality modes.
 // Existing 14 m road sections and passing lanes stay unchanged. No QA frame measurement.
 import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {build} from 'vite';
 import { installTestDriver } from '../race-field-balance.mjs';
 
 const ids = ['pacific-canyon', 'high-country', 'harbor-highlands', 'eifel-crown',
   'alpine-serpent', 'azure-riviera', 'red-mesa', 'neon-docks', 'cloudbreak-skyway'];
 
+const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
+async function nativeBundle() {
+  // Preview serves only the built QA bundle. Compile actual fixture functions
+  // in memory; do not request raw /src or /tools modules from that server.
+  const entry=join(root,'.qa-dist/gp-existing.virtual.js').replaceAll('\\','/');
+  const config=JSON.stringify(join(root,'src/config.js').replaceAll('\\','/'));
+  const access=JSON.stringify(join(root,'tools/career-fixture.mjs').replaceAll('\\','/'));
+  const lines=JSON.stringify(join(root,'src/race-lines.js').replaceAll('\\','/'));
+  const result=await build({root,configFile:false,logLevel:'silent',plugins:[{
+    name:'gp-existing-private',
+    resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0gp-existing';},
+    load(id){
+      if(id!=='\0gp-existing')return null;
+      return 'import {DRIVE,steeringYawAuthority} from '+config+';'+
+        'export {COURSE,CARS,DRIVE,steeringYawAuthority} from '+config+';'+
+        'export {ownTestCourses} from '+access+';'+
+        'export {racingLineFor,buildSpeedProfile} from '+lines+';'+
+        'export const installTestDriver='+installTestDriver.toString()+';';
+    },
+  }],build:{write:false,minify:false,lib:{entry,name:'GpExistingQa',formats:['iife']}}});
+  const chunk=(Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk');
+  if(!chunk)throw Error('Existing Grand Prix native helper bundle is missing.');
+  return chunk.code;
+}
+
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720,
     deviceScaleFactor: 1, mobile: false});
   const reports = [];
+  const bundle=await nativeBundle();
   for (const quality of ['high', 'performance']) {
     await context.navigate('/tools/menu-check.html?flags=grand-prix');
     await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
@@ -23,18 +51,18 @@ export async function run(context) {
     await context.waitFor(`document.querySelector('#graphics-quality')?.value===${JSON.stringify(quality)} &&
       document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' &&
       !document.querySelector('#start-engine')?.disabled`, `${quality} menu ready`, 60000);
+    await context.evaluate(bundle);
     for (const id of ids) {
       const grid = await context.evaluate(`(async () => {
-        const {COURSE,CARS,DRIVE,steeringYawAuthority}=await import('/src/config.js');
-        const {ownTestCourses}=await import('/tools/career-fixture.mjs');
-        const {racingLineFor,buildSpeedProfile}=await import('/src/race-lines.js');
+        const {COURSE,CARS,DRIVE,steeringYawAuthority,ownTestCourses,
+          racingLineFor,buildSpeedProfile,installTestDriver}=GpExistingQa;
         const app=window.__qaApp; app.returnToMenu(); ownTestCourses(app);
         const stage=COURSE.findIndex(def=>def.id===${JSON.stringify(id)});
         if(!app.grandPrixAvailable(COURSE[stage]))throw Error('GP unavailable: '+${JSON.stringify(id)});
         if(!app.startCampaign({startStage:stage,mode:'grandprix',seed:1989,fieldSeed:4242,
           car:'falcone_f42',cpuDifficulty:'medium',difficulty:'casual'}))throw Error('Start rejected');
         app.autopilot=true; app._scriptedCrashDone=true;
-        (${installTestDriver.toString()})(app);
+        installTestDriver(app);
         app.togglePause();
         const duel=app.duel,s=duel.state,course=duel.course;
         const widths=[];
