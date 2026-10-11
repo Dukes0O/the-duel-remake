@@ -1,4 +1,4 @@
-import {addCircuitLandmarks} from './circuit-landmarks.js';
+import {addCircuitLandmarks,finishRidgeKitMaterials} from './circuit-landmarks.js';
 import {createTrackKits,bindTrackKits} from './track-kits.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
 import * as THREE from 'three';
@@ -126,6 +126,7 @@ export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
   addCircuitLandmarks(group,course);
   if (trackKits || course.def.kitPlacements?.length) {
     const kits = trackKits ?? createTrackKits(course);
+    if(course.def.ridgeLandform)finishRidgeKitMaterials(kits);
     bindTrackKits(group,kits);
     registerSceneSystem(group,{sync:kits.sync,dispose:kits.dispose});
   }

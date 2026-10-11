@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { buildMountainSurface, mountainPlacement } from './mountain-surface.js';
 
-export function buildMountainGeometry(variant=0) {
+export function buildMountainGeometry(variant=0,{ridgeOutcrops=false}={}) {
   const {positions,uv,indices,rimStart}=buildMountainSurface(variant);
+  // Panorama keeps the same rim/top and triangles, softening only its rocky crest.
+  if(ridgeOutcrops)for(let i=1;i<positions.length;i+=3)positions[i]=Math.sin(positions[i]*Math.PI/2);
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));geometry.setIndex(new THREE.BufferAttribute(indices,1));geometry.computeVertexNormals();geometry.computeBoundingBox();geometry.computeBoundingSphere();
   geometry.name=`Connected ridge massif ${variant+1}`;geometry.userData.mountainVariant=variant;geometry.userData.rimStart=rimStart;
   return geometry;
@@ -22,12 +24,13 @@ export function rockTexture(theme) {
   return textureCache.get(name);
 }
 
-export function createMountainMaterial(theme,texture) {
+export function createMountainMaterial(theme,texture,{ridgeOutcrops=false}={}) {
   const material=new THREE.MeshStandardMaterial({map:texture,bumpMap:texture,bumpScale:.24,roughness:.96,color:theme==='desert'?0xe0cabb:theme==='coast'?0xb9bdad:0xbac2c5});
   material.name=`World mapped ${theme} rock`;
-  material.customProgramCacheKey=()=>`connected-mountain-v2-${theme}`;
+  material.userData.ridgeOutcrops=ridgeOutcrops;
+  material.customProgramCacheKey=()=>`connected-mountain-v2-${theme}`+(ridgeOutcrops?'-ridge-outcrops':'');
   material.onBeforeCompile=shader=>{
-    shader.uniforms.mountainSnow={value:theme==='alpine'?1:0};
+    shader.uniforms.mountainSnow={value:theme==='alpine'&&!ridgeOutcrops?1:0};
     shader.uniforms.mountainMoss={value:theme==='coast'?1:0};
     shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vMountainPosition;\nvarying vec3 vMountainNormal;\nvarying float vMountainHeight;');
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
@@ -68,10 +71,10 @@ export function createMountainMaterial(theme,texture) {
 
 export function addMountainLandscape(group,course) {
   if(!course.features.mountains.length)return;
-  const theme=course.def.theme,material=createMountainMaterial(theme,rockTexture(theme));
+  const theme=course.def.theme,ridgeOutcrops=!!course.def.ridgeLandform,material=createMountainMaterial(theme,rockTexture(theme),{ridgeOutcrops});
   for(let variant=0;variant<4;variant++){
     const features=course.features.mountains.filter((_,index)=>index%4===variant);if(!features.length)continue;
-    const mesh=new THREE.InstancedMesh(buildMountainGeometry(variant),material,features.length);mesh.name=`${theme} ridge range ${variant+1}`;
+    const mesh=new THREE.InstancedMesh(buildMountainGeometry(variant,{ridgeOutcrops}),material,features.length);mesh.name=`${theme} ridge range ${variant+1}`;
     features.forEach((mountain,index)=>mesh.setMatrixAt(index,mountainTransform(course,mountain)));
     mesh.receiveShadow=true;mesh.userData.mountainFeatures=features;mesh.computeBoundingSphere();group.add(mesh);
   }

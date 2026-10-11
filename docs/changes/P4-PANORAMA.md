@@ -1,100 +1,81 @@
-# P4-PANORAMA: the first full mountain circuit
+# P4-PANORAMA
 
-## Design, before code
+## Design before code
 
-Keep the authored road, stable id, widths, crests and lap geometry exact.
-Sunset uses race progress: golden through lap one, then a smooth transition
-to dusk by the start of the final lap. The light cannot reset at a lap seam.
+Finish approved mountain circuit with real kits/landmarks and native eight-car field.
+Sunset remains golden through lap one, smooth dusk by final lap without seam reset.
+Default courses, real saves and renderer-to-rule separation remain exact.
+Shared loader owns genuine readiness, packed LOD/rear culling and disposal.
+Art goes through Claude, maximum three rounds; field uses unchanged3.2 targets.
 
-Use Kyle's approved GLBs: full-span five-lamp gantry at the real line,
-open garages and stands along Pit Straight, barrier and marshal detail.
-The summit radio mast is a real lattice steel tower with aerials and guy
-wires. A lit timing tower shows the actual field; the lower town uses
-approved shopfronts, below Skyline. No placeholder landmark substitutes.
+## Earlier checks
 
-Shared loader owns readiness, distant models, private start lamps and
-resource cleanup. Only its frozen metadata contract is used here. Generic
-circuitLandmarks metadata drives radio/scoreboard geometry; its world hook
-waits for the loader source freeze to avoid shared-file conflicts.
+Native start RED duel instead of GP, GREEN only Panorama admission. Definition
+identity fixture corrected for intentional GP wrapper; original rules unchanged.
+Round1 private54308:12views/0issues, actual8cars finish117.483/120.176/98.667s,
+25passes; actual first30s3+crashes seed1000, no clean-field/rate claim.
+Claude held round1 lighting2/readability3.5/grounding2/consistency2.5.
 
-Check all eight cars at the grid, ridge, overtaking zones and final-lap dusk;
-measure the track's own quiet CPU/GPU/delivered cost with unchanged limits.
-Record actual Medium lap and named corner speeds and the section3.2 field
-results. Art sheet goes to Claude through the card, up to three rounds.
-Claude's finishing pass remains required before any release.
+Round2 before code: actual hillside cut/ridge drops/valley, upper Float32-grounded
+scenery/camera, course-only low golden sun/dusk, plain collision walls/catch fence.
+Camera helper shared with Dossier; defaults/road/rules originally exact.
+Mountain/light regressions RED→GREEN. Actual High/LOD placement clearance passes.
+Native3fed missing final2.042909m terrain strip at4840.939/off28.735. Actual-ray
+RED→GREEN: append exact final row for ridgeLandform only and matching sampler;
+old terrain rows/default courses exact, no analytic fallback/signature rewrite.
+Runtime1343/private34986:16native views(14sheet+2chase),0issues, actual8cars
+finish129.810/98.665/100.060s,21passes, final light.55. Actual315987B round2sheet.
+All11focused and2,545,523existing terrain checks pass; ordinary source review clear.
+Claude check7 holds round2 at lighting3/readability4/grounding3.5/consistency3.5.
 
-## Checks
+Original3fed90field attempts FAIL unchanged targets. Player finishes11/30Easy,
+14/30Medium,12/30Hard; remaining19/16/18 hit420s cap. All7CPUfinish all90.
+Each difficulty30/30opening pileups and0wins; mean crashes126.23/144.87/167.67.
+No pace/assertion waiver. Native.95 driver with avoidance, Falcone F42 and original
+seeds; full fingerprints/reports retained under integration .evidence.
 
-All five focused checks pass, including every authored actual High/LOD GLB
-placement against rendered ground and native pit clearance. Lighting/PIT/GP
-and loader source were genuinely merged; the renderer conflict retains
-Team Room snapshot cleanup plus kit retry/disposal. Independent runtime review
-is clear. Two prepared-browser issues were corrected before execution:
-in-memory Vite helpers replace missing raw module paths, and named captures
-follow genuine field progress with actual sampled light metadata.
-The real native-start regression first fails (duel instead of Grand Prix), then
-passes after adding only Panorama to the closed-road allow-list. All six focused
-checks pass; old course ids and rules stay exact. The new fixture initially
-required definition object identity; GP intentionally wraps it with grandPrix:true.
-It now checks the exact stable id, original script/kit references and GP marker;
-no existing assertion or tolerance changed. The private helper also sets
-the same QA build flag as the native app, preserving course ownership.
-Native High/Performance pass private54308:12 captures, zero warnings/errors.
-Actual road/drawn triangle heights and native Ridge chase are checked. Genuine
-laps117.483/120.176/98.667s; all8 finish with25 passes. Seed1000 has3+ distinct
-first30s crashes; no clean-field/rate pass is claimed. First submitted actual art sheet
-is269807bytes; its grounded-camera rebuild replaced the unsubmitted draft.
-Quiet frames and field balance remain pending; Claude art verdict waits.
+## Final round three, settled before code
 
-Private QA now waits for the actual native inspection camera before metadata
-and pixels. Frame sampling fixes only its presentation camera position to the
-authored grid view before the original sampler witness; no racer is moved.
-The earlier camera review ec4ef834 cleared; no frame pass was claimed.
-Genuine dcdab76a sync installs consumed-art cleanup; runtime remains exact.
+Claude check7: plain concrete/catch fence everywhere, low striped kerbs only;
+rounded rocky outcrops, slightly brighter warm-violet dusk, visible valley town
+lights and real Skyline drop/town frame. Root grants mountain-landscape hook.
+Course-only approved fence material shader replaces its entire textured finish
+with grey concrete below local.95m and neutral steel above; all approved vertices,
+placements/collision walls/fences and actual low kerb geometry stay intact.
+Existing mountain normalized height becomes sin(y*pi/2), preserving rim and peak,
+with alpine snow disabled only for Panorama. Physical features/RNG stay exact.
+Existing mountain dusk ground0x736981, hemi1.35/env.48; default palettes, timing,
+exposure and golden values stay exact. Town approved emissive panes receive a
+window name before existing reversible night lighting reads them, no real lights.
+Skyline inspection eye is above actual ridge triangles; target is actual lower
+town centre. Capture real Skyline/Conrod dusk during final native lap as well
+as existing views, no racers/state moved. Third sheet only after loader/Harbour
+sync and coherent final width. Final art/field/quiet-frame verdicts still pending.
+Geometry/material controls RED actual old crest height and missing finish helper,
+then GREEN13circuit checks plus544light checks. Shader/default resources exact;
+final sheet includes two actual dusk valley views, uncropped1280x720sources.
 
-## Round two (Claude check-in 5)
+Claude field decision: reuse Harbour opt-in settings after its merge; no second
+mechanism. Only ridge width11→13m Cutting through Forrest Elbow approved, then
+original90races against3.2. Exact settings await real merged Harbour source.
+Earlier exact-road-width statements describe round2; approved ridge supersedes
+only that interval. No unrelated geometry or target change.
 
-Before code: keep road geometry/rules exact; add shared deterministic hillside
-cut/ridge drops/valley to actual ground, near/far meshes and physical verges.
-Approved catch fences sit behind original grey collision walls; existing kerbs
-stay low. Seeded tree clusters/rocks/scrub use actual upper Float32 triangles.
-One camera-floor helper serves chase and Dossier snapshots in both qualities.
-The course-only low golden sun and brighter orange/violet dusk preserve default
-palettes and light timing. Same native views plus Murray/Esses will go to Claude.
-RED mountain bank/light tests failed original source; GREEN9 tests and544 light
-checks passed, including actual GLBs/clearance. All native tree roots pass;
-camera/dry regressions pass. Quiet native art/frame proof remains due.
-No old assertion changed and no world signature regenerated.
-The field recipe uses the approved native.95 driver, exact original seeds/targets
-and memory-only App. Three isolated30 reports need matching source/seed/index
-coverage before combined90 verdict. Actual3fed90 attempts FAIL all30/30 opening
-pileups and0wins each; player finishes11/14/12 of30, all7CPUfinish each.
-Remaining19/16/18 hit420s cap. Original limits stay; Claude correction requested.
-The old hidden mirror/HUD frame recipe had no frame pass.
-Native3fed art failed missing ground at4840.939m/offset28.735m: final2.043m
-of4m terrain ribbon omitted. New actual-ray/full-landscape regression RED,
-then GREEN after Panorama-only exact final row and matching triangle sampler.
-Road/rules and legacy terrain rows stay exact; no analytic fallback/signature edit.
-Native1343private34986PASS16views/0issues, all8finish129.81/98.665/100.06s,
-21passes/light.55; actual14view315987B round2sheet goes to Claude, no artpass.
-All11focused and2,545,523existing terrain checks pass; source review clear.
+## Whole native view recipe
 
-## Whole-view recipe, before code
-
-Card decision: fresh identical seeded eight-car grids, off/day then on/night
-and the opposite order per quality. Before the race world is built, omit only
-kitPlacements/circuitLandmarks in off; preserve complete mountain ground/road.
-Keep actual camera, all eight native poses, rear view and HUD; rendering must
-preserve race/profile/storage. Reuse frozen6e5f2d64 main-plus-rear sampler:
-120 warm-up,360 CPU/update/combined,359 delivered,GPU at least288, fixed resolution.
-Original10% CPU/GPU/delivered limits stay; combined10% and on p95<=18.5ms apply.
-RED missing full-view validators; GREEN22 numeric count/limit checks and syntax pass.
-Shared sampler bytes match6e5f2d64; no native/frame/field/art pass. Loader correction sync is due.
+Reviewed d64f8ba5 fresh metadata-only off/day and actual on/night eight-car worlds,
+complete ground/road, actual main+rear/HUD, camera/state/poses/profile/storage exact.
+Shared frozen6e main/rear sampler120warm/360CPU+update/359delivered/GPU>=288,
+fixedresolution, two opposite-order pairs per quality, no discarded samples.
+Original relative10% plus combined10%/18.5ms;22numeric checks/syntax pass.
+Claude check7 kit-only absolute policy may classify kit contribution; it does
+not waive night-light cost. Current whole-view source has no measured frame pass.
+Corrected loader and Harbour sync required before any new native capture/gate.
 
 ## Removed
 
-The road-only presentation is replaced by approved circuit kits and landmarks.
-No road geometry, existing mode or real save is removed.
-Round1sheet/note removed; verdict remains on card/round2note.
-Replace the populated hidden-kit baseline and hidden mirror/HUD main-only sampler
-with fresh metadata-only baselines and the shared full-view sampler; no limits loosened.
+Replace incomplete road-only presentation with approved kits/landmarks/landform.
+Round1 sheet/note removed with verdict above. Round2 consumed sheet/note removed
+with final packet; verdict retained. Replace populated hidden baseline and hidden
+rear/HUD sampler with fresh worlds/full actual views. Final art removes striped
+fence finish and mountain snow/ice appearance only for Panorama.

@@ -40,8 +40,8 @@ export function lightPathLook(look, theme = 'desert', palette) {
     sunOffset:{x:-100,y:21,z:73},sunColor:0xffb86f,ground:0x797450,
     horizon:'#efb98a',hemi:1.6,env:.78};
   if(palette==='mountain-sunset'&&look==='dusk') value={...value,
-    fog:0x8c808e,top:'#675278',horizon:'#df9170',ground:0x596377,
-    hemi:1.2,env:.4,exposure:1.12,cloudTint:[.59,.44,.52]};
+    fog:0x8c808e,top:'#675278',horizon:'#df9170',ground:0x736981,
+    hemi:1.35,env:.48,exposure:1.12,cloudTint:[.59,.44,.52]};
   for (const field of COLOURS) value[field] = Object.freeze(field === 'cloudTint' ? [...value[field]] : rgb(value[field]));
   value.sunOffset = Object.freeze({...value.sunOffset});
   Object.freeze(value);

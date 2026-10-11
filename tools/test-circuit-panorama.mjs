@@ -191,3 +191,21 @@ test('mountain terrain closes the final fractional strip and grounds all seeded 
   try{assert.doesNotThrow(()=>addLandscapeDetail(group,course,true));assert.ok(group.children.length>0);}
   finally{THREE.TextureLoader.prototype.load=load;disposeTree(group);}
 });
+
+// Final-round geometry/material controls, settled in Claude check-in7.
+test('Panorama rounds existing ridge geometry, removes snow and keeps defaults exact',async()=>{
+  const {buildMountainGeometry,createMountainMaterial}=await import('../src/mountain-landscape.js');
+  const a=buildMountainGeometry(0),b=buildMountainGeometry(0,{ridgeOutcrops:true});
+  try{const p=a.attributes.position,q=b.attributes.position;assert.equal(p.count,q.count);assert.deepEqual(a.index.array,b.index.array);
+    for(let i=0;i<p.count;i++){near(q.getX(i),p.getX(i));near(q.getZ(i),p.getZ(i));near(q.getY(i),Math.sin(p.getY(i)*Math.PI/2),1e-6);}
+    const dry=createMountainMaterial('alpine',new THREE.Texture()),ridge=createMountainMaterial('alpine',new THREE.Texture(),{ridgeOutcrops:true});
+    for(const [m,expected]of [[dry,1],[ridge,0]]){const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <map_fragment>\n#include <normal_fragment_maps>'};m.onBeforeCompile(shader);assert.equal(shader.uniforms.mountainSnow.value,expected);m.dispose();}
+    assert.equal(dry.customProgramCacheKey(),'connected-mountain-v2-alpine');assert.notEqual(ridge.customProgramCacheKey(),dry.customProgramCacheKey());
+  }finally{a.dispose();b.dispose();}
+});
+test('Panorama finish uses actual owner materials and leaves non-fence/default resources exact',async()=>{
+  const {finishRidgeKitMaterials}=await import('../src/circuit-landmarks.js');assert.equal(typeof finishRidgeKitMaterials,'function');
+  const group=new THREE.Group(),fence=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({map:new THREE.Texture()})),pane=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({name:'round-two-harbour-warm-amber-pane'})),other=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({name:'untouched'}));
+  fence.userData.trackKitId='catch-fence';pane.userData.trackKitId='shopfront-a';group.add(fence,pane,other);const key=other.material.customProgramCacheKey();
+  await finishRidgeKitMaterials({ready:Promise.resolve(true),group});const shader={uniforms:{},vertexShader:'#include <common>\n#include <begin_vertex>',fragmentShader:'#include <common>\n#include <map_fragment>'};fence.material.onBeforeCompile(shader);assert.match(shader.fragmentShader,/vRidgeFenceHeight/);assert.doesNotMatch(shader.fragmentShader,/#include <map_fragment>/);assert.match(pane.material.name,/window/);assert.equal(other.material.name,'untouched');assert.equal(other.material.customProgramCacheKey(),key);disposeTree(group);
+});

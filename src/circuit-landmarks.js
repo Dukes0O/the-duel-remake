@@ -131,3 +131,29 @@ export function addCircuitLandmarks(world, course) {
   world.add(group); registerSceneSystem(world, {sync: state => systems.forEach(sync => sync(state))});
   return group;
 }
+
+// Materials belong to this ready kit owner; keep source assets and placement exact.
+export function finishRidgeKitMaterials(owner) {
+  return owner.ready.then(ready=>{
+    if(!ready)return false;
+    const finished=new Set();
+    owner.group.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      for(const material of [].concat(mesh.material||[])){
+        if(mesh.userData.trackKitId==='catch-fence'&&!finished.has(material)){
+          finished.add(material);if(material.userData.ridgeFenceFinish)continue;
+          const compile=material.onBeforeCompile,key=material.customProgramCacheKey();
+          material.userData.ridgeFenceFinish=true;
+          material.onBeforeCompile=(shader,renderer)=>{
+            compile.call(material,shader,renderer);
+            shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying float vRidgeFenceHeight;').replace('#include <begin_vertex>','#include <begin_vertex>\nvRidgeFenceHeight=position.y;');
+            shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying float vRidgeFenceHeight;').replace('#include <map_fragment>','diffuseColor.rgb*=mix(vec3(.34,.38,.39),vec3(.42,.43,.40),1.0-step(.95,vRidgeFenceHeight));');
+          };
+          material.customProgramCacheKey=()=>key+':ridge-concrete-fence-v1';material.needsUpdate=true;
+        }
+        if(/^shopfront-[ab]$/.test(mesh.userData.trackKitId)&&/warm-(amber|cream)-pane/.test(material.name)&&!material.name.includes('window'))material.name+=' window';
+      }
+    });
+    return true;
+  });
+}
