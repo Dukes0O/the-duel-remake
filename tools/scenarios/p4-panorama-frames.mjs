@@ -1,10 +1,10 @@
-// Full native view: fresh seeded worlds, unchanged samples and presentation limits.
+// Full native view: full kits in fresh seeded day/dusk worlds; unchanged samples.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {nativeBundle} from './p4-panorama.mjs';
 import {measureMainRearFrames} from './track-kits.mjs';
 
-function prepare(quality, present) {
+function prepare(quality, dusk) {
   const app = window.__qaApp, api = window.__render, host = document.querySelector('#view3d');
   if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value ||
       !window.name.startsWith('__duel_qa_tab_v2:')) throw Error('Memory-only QA required');
@@ -24,26 +24,25 @@ function prepare(quality, present) {
   if (state.mode !== 'grandprix' || state.opponents.length !== 7 ||
       !original.kitPlacements?.length || !original.circuitLandmarks?.length)
     throw Error('Actual authored eight-car Grand Prix required');
-  // This synchronous metadata copy precedes the first race-world draw. Never
-  // hide an already populated owner or replace any ground, road or racer data.
-  course.def = {...original,
-    kitPlacements: present ? original.kitPlacements : [],
-    circuitLandmarks: present ? original.circuitLandmarks : [],
-    lightPath: {axis: 'race-progress', keyframes: [{at: 0, look: present ? 'night' : 'day'}]}};
-  if (Number(host.dataset.worldBuilds) !== buildsBefore) throw Error('Race world built before metadata omission');
+  // Only the fixed look changes before the first draw. Both worlds retain
+  // every authored kit and landmark; the candidate uses the final-lap palette.
+  const finalLook = original.lightPath?.keyframes.at(-1)?.look;
+  if (finalLook !== 'dusk') throw Error('Actual authored final-lap dusk required');
+  course.def = {...original, lightPath: {...original.lightPath,
+    axis: 'race-progress', keyframes: [{at: 0, look: dusk ? finalLook : 'day'}]}};
+  if (Number(host.dataset.worldBuilds) !== buildsBefore) throw Error('Race world built before fixed lighting');
   const fixedLightPath = JSON.stringify(course.def.lightPath);
   const metadataExact = () => {
     if (JSON.stringify(course.def.lightPath) !== fixedLightPath) throw Error('Frame leg lighting changed');
     if (JSON.stringify(catalog) !== catalogBefore) throw Error('Course catalog changed');
     for (const key of Object.keys(original)) {
-      if (!['kitPlacements', 'circuitLandmarks', 'lightPath'].includes(key) && course.def[key] !== original[key])
+      if (key !== 'lightPath' && course.def[key] !== original[key])
         throw Error('Complete native ground/road definition changed: ' + key);
     }
     if (Object.keys(course.def).length !== Object.keys(original).length)
       throw Error('Unexpected course definition field');
-    if (present && (course.def.kitPlacements !== original.kitPlacements ||
-        course.def.circuitLandmarks !== original.circuitLandmarks) ||
-        !present && (course.def.kitPlacements.length || course.def.circuitLandmarks.length))
+    if (course.def.kitPlacements !== original.kitPlacements ||
+        course.def.circuitLandmarks !== original.circuitLandmarks)
       throw Error('Authored presentation metadata changed');
   };
   const eye = course.groundAt(-68, -42), target = course.groundAt(-24, 0);
@@ -61,9 +60,12 @@ function prepare(quality, present) {
       throw Error('Frame leg did not construct one fresh native race world');
     const kits = api.scene.getObjectByName('Approved track kits');
     const landmarks = api.scene.getObjectByName('Authored circuit landmarks');
-    if (present ? !kits?.visible || !kits.children.length || !landmarks?.visible ||
-        !landmarks.getObjectByName('ridge-radio') || !landmarks.getObjectByName('pit-timing') : !!kits || !!landmarks)
+    if (!kits?.visible || !kits.children.length || !landmarks?.visible ||
+        !landmarks.getObjectByName('ridge-radio') || !landmarks.getObjectByName('pit-timing'))
       throw Error('Native world presentation does not match fresh metadata');
+    const constructionMs = kits.userData.trackKitStats?.presentation?.constructionMs;
+    if (!Number.isFinite(constructionMs) || constructionMs < 0)
+      throw Error('Actual kit construction timing missing');
     const visible = selector => {
       const element = document.querySelector(selector), rect = element?.getBoundingClientRect();
       const style = element && getComputedStyle(element);
@@ -84,7 +86,7 @@ function prepare(quality, present) {
     });
     return {...readOnly, models, camera: api.camera.position.toArray(),
       target: [...app.inspectionCamera.target], course: course.def.id, hud: true, rear: true,
-      kits: !!kits, landmarks: !!landmarks, lightPath: course.def.lightPath};
+      kits: !!kits, landmarks: !!landmarks, lightPath: course.def.lightPath, constructionMs};
   }};
   metadataExact(); app.onFrame?.(state, 0); api.renderFrame();
 }
@@ -115,10 +117,17 @@ export function compareFrameCosts(off, on) {
     const candidate = metric === 'combined' ? on.combined : on.pacing[metric];
     if (metric === 'gpu' && !off.gpuSupported) { costs.gpu = 'unsupported'; continue; }
     costs[metric] = {off: baseline.p95, on: candidate.p95, increase: candidate.p95 / baseline.p95 - 1,
-      passed: candidate.p95 <= baseline.p95 * 1.10};
+      informational: true, passed: candidate.p95 <= baseline.p95 * 1.10};
   }
-  const delivered = {on: on.pacing.delivered.p95, limit: 18.5, passed: on.pacing.delivered.p95 <= 18.5};
-  return {costs, delivered, passed: delivered.passed && Object.values(costs).every(value => value === 'unsupported' || value.passed)};
+  const delivered = {off: off.pacing.delivered.p95, on: on.pacing.delivered.p95, limit: 18.5,
+    passed: off.pacing.delivered.p95 <= 18.5 && on.pacing.delivered.p95 <= 18.5};
+  const construction = [off, on].map(row => {
+    const ms = row.witness?.constructionMs;
+    if (!Number.isFinite(ms) || ms < 0) throw Error('Actual paired kit construction timing missing');
+    return {look: row.look, ms, limit: 1000, passed: ms < 1000};
+  });
+  return {costs, delivered, construction,
+    passed: delivered.passed && construction.every(row => row.passed)};
 }
 
 async function frameLeg(context, bundle, quality, look, pair) {
@@ -129,7 +138,7 @@ async function frameLeg(context, bundle, quality, look, pair) {
   await context.evaluate('(' + prepare.toString() + ')(' + JSON.stringify(quality) + ',' + (look === 'on') + ')');
   await context.waitFor('(()=>{const a=window.__qaApp,v=window.__render;v.renderFrame();' +
     'return a.visualReady && document.querySelector("#view3d").dataset.trackKitAsset===' +
-    JSON.stringify(look === 'on' ? 'ready' : 'off') + ' && v.camera.position.toArray().every((x,i)=>' +
+    JSON.stringify('ready') + ' && v.camera.position.toArray().every((x,i)=>' +
     'Math.abs(x-a.inspectionCamera.position[i])<.001);})()', 'actual full race world and camera ready', 90000);
   const before = await context.evaluate('window.__panoramaFrames.witness()');
   const sample = await measureMainRearFrames(context, quality, 'Panorama pair' + pair + ' ' + look);
@@ -144,9 +153,9 @@ async function frameLeg(context, bundle, quality, look, pair) {
 export async function run(context) {
   if (process.env.P4_PANORAMA_MEASURE_FRAMES !== '1') throw Error('Director must schedule a quiet frame slot');
   const report = {passed: false,
-    scope: 'Fresh identical native eight-car grids: only kits/landmarks omitted before baseline world construction; day off versus night on. Complete mountain ground/road, main, rear and production HUD remain active. Stationary grid cost; no moving-field or art verdict.',
+    scope: 'Fresh identical native eight-car grids with all authored kits and landmarks: original day versus authored final-lap dusk. Complete mountain ground/road, main, rear and production HUD remain active. Relative costs are information; absolute delivered and construction targets are acceptance. Stationary grid cost; no moving-field or art verdict.',
     protocol: {warmup: 120, cpu: 360, update: 360, combined: 360, delivered: 359, minimumGpu: 288,
-      relativeLimit: .10, deliveredLimitMs: 18.5, sharedSamplerSource: '6e5f2d64'}, frames: [], comparisons: []};
+      relativeDiagnostic: .10, deliveredLimitMs: 18.5, constructionLimitMs: 1000, sharedSamplerSource: '6e5f2d64'}, frames: [], comparisons: []};
   const persist = () => writeFile(join(context.outputDir, 'p4-panorama-frames.json'), JSON.stringify(report, null, 2) + '\n');
   const bundle = await nativeBundle();
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
@@ -157,14 +166,14 @@ export async function run(context) {
       }
       const rows = report.frames.filter(row => row.quality === quality && row.pair === pair);
       const off = rows.find(row => row.look === 'off'), on = rows.find(row => row.look === 'on');
-      for (const key of ['raceState', 'profile', 'storage', 'models', 'camera', 'target', 'course', 'hud', 'rear']) {
+      for (const key of ['raceState', 'profile', 'storage', 'models', 'camera', 'target', 'course', 'hud', 'rear', 'kits', 'landmarks']) {
         if (JSON.stringify(off.witness[key]) !== JSON.stringify(on.witness[key]))
           throw Error('Fresh paired native witness differs: ' + key);
       }
       const comparison = {quality, pair, ...compareFrameCosts(off, on)};
       report.comparisons.push(comparison); await persist();
     }
-    if (report.comparisons.some(row => !row.passed)) throw Error('Full-view original10%/combined10%/18.5ms limit exceeded');
+    if (report.comparisons.some(row => !row.passed)) throw Error('Full-view18.5ms or kit construction under1s target exceeded');
     report.passed = true;
   } finally { await persist(); }
   console.log('Panorama quiet native full-view CPU/GPU/delivered/combined comparisons pass.');

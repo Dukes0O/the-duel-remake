@@ -31,16 +31,14 @@ Claude check7 holds round2 at lighting3/readability4/grounding3.5/consistency3.5
 Original3fed90field attempts FAIL unchanged targets. Player finishes11/30Easy,
 14/30Medium,12/30Hard; remaining19/16/18 hit420s cap. All7CPUfinish all90.
 Each difficulty30/30opening pileups and0wins; mean crashes126.23/144.87/167.67.
-No pace/assertion waiver. Native.95 driver with avoidance, Falcone F42 and original
-seeds; full fingerprints/reports retained under integration .evidence.
+No pace/assertion waiver; Native.95 driver, Falcone F42, original seeds; full fingerprints in integration .evidence.
 
 ## Final round three, settled before code
 
 Claude check7: plain concrete/catch fence everywhere, low striped kerbs only;
 rounded rocky outcrops, slightly brighter warm-violet dusk, visible valley town
 lights and real Skyline drop/town frame. Root grants mountain-landscape hook.
-Course-only approved fence material shader replaces its entire textured finish
-with grey concrete below local.95m and neutral steel above; all approved vertices,
+Approved fence shader: grey concrete below local.95m and steel above; all vertices,
 placements/collision walls/fences and actual low kerb geometry stay intact.
 Existing mountain normalized height becomes sin(y*pi/2), preserving rim and peak,
 with alpine snow disabled only for Panorama. Physical features/RNG stay exact.
@@ -57,8 +55,7 @@ Before fix: finish an already-ready owner synchronously, pending owners only aft
 genuine ready, retired/error never mutate. Actual discovery RED unbound then GREEN.
 New fixture initially checked before native update binds resources; invoke actual
 update before the unchanged identity/intensity assertions. No tolerance changed.
-Shader/default resources exact;
-final sheet includes two actual dusk valley views, uncropped1280x720sources.
+Shader/default resources exact; final sheet includes two actual dusk valley views, uncropped1280x720sources.
 
 Claude field decision: reuse Harbour opt-in settings after its merge; no second
 mechanism. Only ridge width11→13m Cutting through Forrest Elbow approved, then
@@ -73,17 +70,30 @@ complete ground/road, actual main+rear/HUD, camera/state/poses/profile/storage e
 Shared frozen6e main/rear sampler120warm/360CPU+update/359delivered/GPU>=288,
 fixedresolution, two opposite-order pairs per quality, no discarded samples.
 Original relative10% plus combined10%/18.5ms;22numeric checks/syntax pass.
-Claude check7 kit-only absolute policy may classify kit contribution; it does
-not waive night-light cost. Current whole-view source has no measured frame pass.
+No measured whole-view frame pass is claimed.
 Genuine4527 sync preserves additive eleven GP IDs and every Claude source.
-Shared loader conflict uses exact reviewed d05ed90e colour/culling union; no local
-implementation. Its genuine branch ancestry is synced next. Native final packet
-still waits accepted integration loader/Harbour and coherent final road.
+Shared loader uses exact reviewed d05 colour/culling union; ancestry sync follows
+its merge. Final packet still waits Harbour and coherent final road.
+
+## Claude 10:30 frame policy, before recipe code
+
+Claude approves every real kit/landmark in both fresh eight-car worlds, original
+day versus actual authored final-lap dusk with its mountain-sunset palette.
+Relative CPU/GPU/delivered/combined10% values remain reported diagnostics;
+acceptance is delivered p95<=18.5ms in both day/dusk High/Performance worlds
+and actual kit construction
+<1000ms in each world. This explicitly replaces the mixed empty-world10%
+assertion under Claude's policy, without changing timing samples or absolute limits.
+Original 120warm/360CPU+update+combined/359delivered/GPU>=288, positive timings,
+orders/resolution/rear/HUD and native race/profile/storage/pose guards remain.
+Construction is read from the actual owner stats, finite/nonnegative required.
+No native timing pass is claimed; numeric/source review and quiet proof pending.
 
 ## Removed
 
 Replace incomplete road-only presentation with approved kits/landmarks/landform.
 Round1 sheet/note removed with verdict above. Round2 consumed sheet/note removed
 with final packet; verdict retained. Replace populated hidden baseline and hidden
-rear/HUD sampler with fresh worlds/full actual views. Final art removes striped
+rear/HUD sampler with fresh worlds/full actual views. Replace the empty-kit
+comparison with identical full-kit day/dusk worlds under Claude10:30 policy. Final art removes striped
 fence finish and mountain snow/ice appearance only for Panorama.
