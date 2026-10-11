@@ -11,7 +11,7 @@ def main():
     parser.add_argument('--blender', type=Path, required=True)
     parser.add_argument('--browser', type=Path, required=True)
     parser.add_argument('--manifest', type=Path, required=True)
-    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True, help='Canonical docs/board/looks root')
     parser.add_argument('--round', type=int, choices=[1, 2, 3], required=True)
     parser.add_argument('--groups', help='Comma-separated completed groups; omit for all six')
     args = parser.parse_args()
@@ -81,7 +81,7 @@ def main():
             'Round verdict is written by the reviewer. A screenshot alone does not approve the art or character motion.',
         ]):
             draw.text((28, 1288 + footer + line * 31), value, font=small, fill=(181, 196, 196))
-        target = args.output / group / ('round-' + str(args.round) + '.jpg')
+        target = args.output / ('p4-kits-' + group) / ('round-' + str(args.round) + '.jpg')
         target.parent.mkdir(parents=True, exist_ok=True)
         for quality in [88, 84, 80, 76, 72, 68, 64]:
             sheet.save(target, quality=quality, optimize=True)
