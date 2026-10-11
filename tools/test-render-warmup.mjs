@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRenderWarmup } from '../src/render-warmup.js';
+import * as warmupModule from '../src/render-warmup.js';
 
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -129,5 +130,113 @@ for(const synchronous of [false,true]){
     if(oldRAF===undefined)delete globalThis.requestAnimationFrame;else globalThis.requestAnimationFrame=oldRAF;
     if(oldCancel===undefined)delete globalThis.cancelAnimationFrame;else globalThis.cancelAnimationFrame=oldCancel;
   }
+}
+// Final DAY round: submit real night variants before readiness. These tests
+// deliberately fail before the bounded adapter is implemented.
+check(typeof warmupModule.compileWarmupLighting === 'function', 'night material variants have an actual warmup entry point');
+for (const high of [false, true]) for (const failure of [null, 'reject', 'throw']) {
+  const f = fixture(), waits = [], calls = [], original = {name: 'original'}, linear = {name: 'linear'};
+  const scene = {name: 'native scene'}, camera = {name: 'native camera'};
+  const composer = {readBuffer: linear, writeBuffer: {name: 'write'}, passes: [], renderToScreen: false};
+  let target = original, face = 3, level = 2, bound = false, releases = 0;
+  const renderer = {
+    getRenderTarget: () => target, getActiveCubeFace: () => face, getActiveMipmapLevel: () => level,
+    setRenderTarget(next, nextFace = 0, nextLevel = 0) {target = next;face = nextFace;level = nextLevel;},
+    compileAsync(actual, view) {
+      equal([actual, view], [scene, camera], 'night adapter compiles the real scene/camera');
+      calls.push({bound, target});
+      if (bound && failure === 'throw' && calls.filter(row => row.bound).length === 1) throw Error('native submit failed');
+      const work = deferred();waits.push({work, bound});return work.promise;
+    },
+    render() {assert.fail('warmup must not draw');}, clear() {assert.fail('warmup must not clear');},
+  };
+  const withNightMaterials = submit => {
+    equal(bound, false, 'variant scope never nests bindings');bound = true;
+    try {return submit();} finally {bound = false;}
+  };
+  const ticket = f.controller.request('authored-day', () => warmupModule.compileWarmupLighting(
+    renderer, scene, camera, composer, {high, withNightMaterials}));
+  f.paint();await flush();
+  equal([target, face, level, bound], [original, 3, 2, false], 'first submission restores target and actual scene binding immediately');
+  equal(ticket.state.status, 'compiling', 'readiness waits for the actual initial compiler');
+  f.controller.releaseWhenSettled(ticket, () => releases++);
+  let processed = 0, rejected = false;
+  for (let step = 0; step < 12; step++) {
+    while (processed < waits.length) {
+      const row = waits[processed++];
+      if (row.bound && failure === 'reject' && !rejected) {row.work.reject(Error('native compile failed'));rejected = true;}
+      else row.work.resolve();
+    }
+    await flush();
+    equal([target, face, level, bound], [original, 3, 2, false], 'every submitted variant restores targets/bindings before yielding');
+    if (waits.length > processed) {
+      equal(ticket.state.status, 'compiling', 'a later native variant keeps the readiness gate held');
+      equal(releases, 0, 'resources survive until every requested native variant settles');
+    }
+  }
+  const state = await ticket.promise;
+  equal(state.status, failure ? 'fallback' : 'ready', 'native variant failure is retained after all work settles');
+  equal(releases, 1, 'variant resources release once after complete settlement');
+  const variantTargets = calls.filter(row => row.bound).map(row => row.target);
+  equal(variantTargets, high ? [linear] : [null, linear], 'night shaders prepare each actual main/mirror output mode');
+  equal(f.controller.request('authored-day', () => assert.fail('night progress cannot recompile')), ticket,
+    'unchanged structural readiness survives lighting progress');
+  f.controller.dispose();
+}
+// An early variant failure cannot complete the ticket while the final actual
+// native compile is deliberately unresolved (unlike the drain loop above).
+for (const failure of ['reject', 'throw']) {
+  const f = fixture(), first = deferred(), last = deferred();
+  const scene = {}, camera = {}, linear = {}, original = {};
+  let target = original, bound = false, calls = 0, lastSubmitted = false, releases = 0;
+  const renderer = {getRenderTarget: () => target, setRenderTarget: next => {target = next;},
+    compileAsync() {
+      calls++;
+      if (!bound) return first.promise;
+      if (target === null) {
+        if (failure === 'throw') throw Error('earlier submit failed');
+        return Promise.reject(Error('earlier program failed'));
+      }
+      lastSubmitted = true;return last.promise;
+    }};
+  const withNightMaterials = submit => {bound = true;try{return submit();}finally{bound = false;}};
+  const ticket = f.controller.request('authored-pending-last', () => warmupModule.compileWarmupLighting(
+    renderer, scene, camera, {readBuffer: linear}, {high: false, withNightMaterials}));
+  f.paint();f.controller.releaseWhenSettled(ticket, () => releases++);first.resolve();
+  for (let i = 0; i < 20 && !lastSubmitted; i++) await flush();
+  equal(lastSubmitted, true, 'later native variant is submitted even when the earlier variant fails');
+  await flush();await flush();
+  equal(ticket.state.status, 'compiling', 'earlier failure cannot finish readiness while final native compile is pending');
+  equal(releases, 0, 'earlier failure cannot release actual resources held by final native poll');
+  equal([target, bound], [original, false], 'pending final poll retains no temporary target or material binding');
+  last.resolve();for (let i = 0; i < 12; i++) await flush();
+  equal((await ticket.promise).status, 'fallback', 'earlier failure is reported only after last native compile settles');
+  equal(releases, 1, 'actual material resources release exactly once after final settlement');
+  equal(calls, 3, 'failure causes no implicit retry or extra scene compilation');f.controller.dispose();
+}
+// Replacing/disposal after the original submit must not bind a new world's
+// night materials through the stale job when that first promise resolves.
+check(typeof warmupModule.guardLightingWarmup === 'function', 'production night preparation has a stale-world submission guard');
+for (const dispose of [false, true]) {
+  const f = fixture(), initial = deferred(), fresh = deferred(), oldWorld = {}, newWorld = {};
+  let currentWorld = oldWorld, currentRevision = 'old', stopped = false, bound = 0, releases = 0, submissions = 0;
+  const renderer = {getRenderTarget: () => null, setRenderTarget() {},
+    compileAsync() {submissions++;return initial.promise;}};
+  const capturedWorld = currentWorld, capturedRevision = currentRevision;
+  const withNightMaterials = warmupModule.guardLightingWarmup(
+    () => !stopped && currentWorld === capturedWorld && currentRevision === capturedRevision,
+    submit => {bound++;return submit();});
+  const oldTicket = f.controller.request('old', () => warmupModule.compileWarmupLighting(
+    renderer, {}, {}, {readBuffer: {}}, {high: false, withNightMaterials}));
+  f.paint();f.controller.releaseWhenSettled(oldTicket, () => releases++);
+  if (dispose) {stopped = true;f.controller.dispose();}
+  else {currentWorld = newWorld;currentRevision = 'new';f.controller.request('new', () => fresh.promise);f.paint();}
+  equal(releases, 0, 'stale/disposed job retains its original native compiler resources');
+  initial.resolve();for (let i = 0; i < 12; i++) await flush();
+  equal(bound, 0, 'stale/disposed callback cannot bind any new active night materials');
+  equal(submissions, 1, 'stale/disposed callback submits no late output-mode variant');
+  equal(releases, 1, 'original resources release only after the old compiler settles');
+  equal((await oldTicket.promise).status, dispose ? 'disposed' : 'stale', 'old compiler cannot claim fresh readiness');
+  fresh.resolve();for (let i = 0; i < 12; i++) await flush();f.controller.dispose();
 }
 console.log(`Render warmup controller: ${checks} checks passed; one compile per actual revision, paint opportunity, stale-result isolation, bounded loading, deferred GPU-resource release and no post-disposal work.`);

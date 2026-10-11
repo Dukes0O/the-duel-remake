@@ -519,13 +519,49 @@ export function createVehicleNightLighting(vehicle) {
     fragmentShader: `varying vec2 vUv;uniform float strength;
       void main(){float edge=pow(max(0.,1.-abs(vUv.x*2.-1.)),.65);
       float reach=pow(1.-vUv.y,1.8)*smoothstep(0.,.09,vUv.y);
-      gl_FragColor=vec4(.72,.83,1.,edge*reach*strength*.12);
+      gl_FragColor=vec4(.72,.83,1.,edge*reach*strength*.21);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
       }`,
   });
   const mesh = new THREE.Mesh(geometry, beam);mesh.userData.excludeAmbientOcclusion = true;
   mesh.renderOrder = 2;cones.add(mesh);vehicle.add(cones);
+  const tailGlow = new THREE.Group();tailGlow.name = 'Night tail glow';tailGlow.visible = false;
+  tailGlow.userData.excludeAmbientOcclusion = true;
+  const tailGeometry = new THREE.PlaneGeometry(1, 1), glows = [];
+  for (const tail of tails) {
+    bounds.makeEmpty();
+    const attribute = tail.geometry.attributes.position;
+    matrix.multiplyMatrices(inverse, tail.matrixWorld);
+    for (let i = 0; i < attribute.count; i++) bounds.expandByPoint(point.fromBufferAttribute(attribute, i).applyMatrix4(matrix));
+    if (bounds.isEmpty()) continue;
+    const center = bounds.getCenter(new THREE.Vector3()), width = bounds.max.x - bounds.min.x;
+    const sides = width > 1 ? [-1, 1] : [0];
+    for (const side of sides) {
+      const glowMaterial = new THREE.ShaderMaterial({transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending, uniforms: {strength: {value: 0}},
+        vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+        fragmentShader: `varying vec2 vUv;uniform float strength;void main(){
+          float radius=length((vUv-.5)*2.);
+          float glow=pow(max(0.,1.-radius),1.8);
+          gl_FragColor=vec4(1.,.012,.006,glow*strength*.48);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`});
+      const glow = new THREE.Mesh(tailGeometry, glowMaterial);
+      glow.position.set(center.x + side * width * .36, center.y, bounds.min.z - .06);
+      glow.scale.set(Math.max(.55, side ? width * .4 : width * 1.8), Math.max(.36, (bounds.max.y - bounds.min.y) * 2.5), 1);
+      glow.renderOrder = 2;glow.userData.excludeAmbientOcclusion = true;tailGlow.add(glow);
+      // Read the existing lens wear. A damaged lamp must not regain its glow.
+      const vertices = [];
+      for (let i = 0; i < attribute.count; i++) {
+        point.fromBufferAttribute(attribute, i).applyMatrix4(matrix);
+        if (!side || (point.x - center.x) * side >= 0) vertices.push(i);
+      }
+      glows.push({material: glowMaterial, tail, vertices});
+    }
+  }
+  vehicle.add(tailGlow);
   let disposed = false;
   function restore({braking} = {}) {
     if (disposed) return;
@@ -533,7 +569,7 @@ export function createVehicleNightLighting(vehicle) {
     // This runs after the renderer's normal braking assignment. Restore that
     // current input, not the last frame's brighter night value.
     if (typeof braking === 'boolean') for (const lamp of tails) lamp.material.emissiveIntensity = braking ? 4 : 1.4;
-    cones.visible = false;
+    cones.visible = false;tailGlow.visible = false;
   }
   return {
     update({amount = 0, braking = false} = {}) {
@@ -542,15 +578,25 @@ export function createVehicleNightLighting(vehicle) {
       for (const binding of bindings) binding.mesh.material = binding.material;
       for (const [source, material] of privateMaterials) {
         const original = originals.get(source);
-        material.emissiveIntensity = original.head ? Math.max(4.2, original.intensity + 1) * level : braking ? 4.5 : .18 + 1.62 * level;
+        material.emissiveIntensity = original.head ? Math.min(2, Math.max(1.5, original.intensity + .65)) * level : braking ? 4.5 : .18 + 1.62 * level;
       }
       beam.uniforms.strength.value = level;cones.visible = level > 0 && heads.length > 0;
+      tailGlow.visible = level > 0 && glows.length > 0;
+      for (const glow of glows) {
+        const wear = glow.tail.geometry.attributes.panelWear;
+        let amount = 0;
+        if (wear) for (const index of glow.vertices) amount += Math.min(.97, Math.max(0, wear.getX(index) * 1.85));
+        const intact = 1 - (glow.vertices.length ? amount / glow.vertices.length : 0);
+        glow.material.uniforms.strength.value = level * (braking ? 1.6 : 1) * intact;
+      }
     },
     restore,
     dispose() {
       if (disposed) return;
-      restore();disposed = true;vehicle.remove(cones);
-      geometry.dispose();beam.dispose();
+      restore();disposed = true;vehicle.remove(cones, tailGlow);
+      geometry.dispose();beam.dispose();tailGeometry.dispose();
+      for (const glow of glows) glow.material.dispose();
+      glows.length = 0;
       for (const material of privateMaterials.values()) material.dispose();
       bindings.length = 0;privateMaterials.clear();originals.clear();
     },

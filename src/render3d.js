@@ -29,7 +29,7 @@ import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
-import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
+import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
 import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
@@ -745,9 +745,15 @@ export function attachRenderer(host, app) {
       if(revision!==warmupKey){
         warmupKey=revision;app.holdVisualReadiness?.(readinessOwner);firstWorldFrame=true;
         host.dataset.warmupSubmitMs='0';host.dataset.warmupWaitMs='0';
+        const preparingWorld=world;
+        const withNightMaterials=guardLightingWarmup(
+          ()=>!disposed&&warmupKey===revision&&world===preparingWorld,lighting.withNightMaterials);
         warmupTicket=warmup.request(revision,()=>{
           const started=performance.now();let compilation;
-          try{compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);}
+          try{
+            compilation=high?compileWarmupPipeline(renderer,scene,camera,composer):compileWarmupScene(renderer,scene,camera,null);
+            compilation=compileWarmupLighting(renderer,scene,camera,composer,{high,initialCompilation:compilation,withNightMaterials});
+          }
           finally{if(!disposed&&warmupKey===revision)host.dataset.warmupSubmitMs=(performance.now()-started).toFixed(0);}
           const submitted=performance.now();
           return Promise.resolve(compilation).finally(()=>{

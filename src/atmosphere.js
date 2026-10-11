@@ -58,16 +58,16 @@ export function createAtmosphericSky(){
       if(disposed)return;
       if(enabled&&!nightMaterial) {
         const fragment=material.fragmentShader.replace('uniform sampler2D cloudDensity;',
-          'uniform sampler2D cloudDensity; uniform float stars,moon;')
+          'uniform sampler2D cloudDensity; uniform float stars,moon; uniform vec3 moonDirection;')
           .replace('gl_FragColor=vec4(colour,1.0);', `
             // Fixed celestial coordinates; there is no simulation/random input.
-            vec2 celestial=vec2(atan(d.z,d.x),asin(clamp(d.y,-1.0,1.0)))*vec2(210.0,210.0);
+            vec2 celestial=vec2(atan(d.z,d.x),asin(clamp(d.y,-1.0,1.0)))*vec2(95.0,95.0);
             vec2 cell=floor(celestial),local=fract(celestial)-.5;
             float hash=fract(sin(dot(cell,vec2(127.1,311.7)))*43758.5453);
-            float star=1.0-smoothstep(.025,.10,length(local));
-            star*=step(.991,hash)*smoothstep(.02,.24,d.y)*(1.0-coverage);
+            float starAA=max(length(fwidth(celestial))*.45,.015);
+            float star=1.0-smoothstep(.055-starAA,.055+starAA,length(local));
+            star*=step(.984,hash)*smoothstep(.02,.24,d.y)*(1.0-coverage);
             colour+=vec3(.72,.82,1.0)*star*stars*1.8;
-            vec3 moonDirection=normalize(vec3(-.42,.59,-.69));
             float moonDot=dot(d,moonDirection);
             float disc=smoothstep(.99969,.99975,moonDot);
             float halo=pow(max(moonDot,0.0),420.0)*.045;
@@ -75,7 +75,8 @@ export function createAtmosphericSky(){
             colour+=vec3(.77,.84,1.0)*(disc*craters*1.9+halo)*moon*(1.0-coverage);
             gl_FragColor=vec4(colour,1.0);`);
         nightMaterial=new THREE.ShaderMaterial({side:material.side,depthWrite:false,
-          uniforms:{...material.uniforms,stars:{value:0},moon:{value:0}},
+          uniforms:{...material.uniforms,stars:{value:0},moon:{value:0},
+            moonDirection:{value:new THREE.Vector3(-.97,.18,.16).normalize()}},
           vertexShader:material.vertexShader,fragmentShader:fragment});
         nightMaterial.name='Authored day-night sky';
       }
