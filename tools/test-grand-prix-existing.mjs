@@ -10,12 +10,73 @@ import { createProfile, eventKey, isValidFinish } from '../src/progression.js';
 import { normalizeRaceSettings } from '../src/race-settings.js';
 import { grandPrixCourse, gridPose } from '../src/race-field.js';
 import { createLeaderboard, recordFinish, saveLeaderboard, loadLeaderboard, getLeaderboard } from '../src/leaderboard.js';
-import { GrandPrixLapRecorder, createGhostStore, storeGhost, findGhost, normalizeGhostStore } from '../src/ghost.js';
+import { GrandPrixLapRecorder, createGhostStore, storeGhost, findGhost, normalizeGhostStore, GhostRecorder, ghostKey, MAX_GHOST_BYTES, MAX_GHOSTS } from '../src/ghost.js';
 import { testCourseAccess } from './career-fixture.mjs';
 
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
 const equal = (a, b, message) => { assert.deepEqual(a, b, message); checks++; };
+// New GP admission cannot spend the budget by deleting existing Time Trial ghosts.
+const storagePlayer = {id: 'storage-fixture', name: 'Storage Driver'};
+const storageContext = {playerId: storagePlayer.id, stageIndex: 0, seed: 1989, laps: 2,
+  car: 'falcone_f42', mode: 'timetrial', difficulty: 'casual', cpuDifficulty: 'medium'};
+const storageRecorder = new GhostRecorder(storageContext);
+const storageState = {...storageContext, playerId: storagePlayer.id, driverId: 'club',
+  status: 'racing', racePenaltySec: 0, lateral: 0, speedMph: 80};
+for (let i = 0; i <= 1200; i++) {
+  storageState.stageTimeSec = i / 10; storageState.s = COURSE[0].lengthU * 2 * i / 1200;
+  storageRecorder.observe(storageState);
+}
+const storageTT = storageRecorder.finish({...storageContext, timeSec: 120,
+  completed: true, won: true}, storageState, storagePlayer);
+check(storageTT, 'capacity fixture is a valid old Time Trial recording');
+const byteLength = value => new TextEncoder().encode(JSON.stringify(value)).length;
+const storageRows = Array.from({length: MAX_GHOSTS}, (_, i) => {
+  const options = {...storageTT, playerId: `prior-${i}`};
+  return {...options, key: ghostKey(options.playerId, options), recordedAt: i, lastUsedAt: i};
+});
+const gpStorage = {...storageTT, mode: 'grandprix', laps: 1,
+  raceLength: COURSE[0].lengthU, timeSec: 90, recordedAt: 9999, lastUsedAt: 9999,
+  samples: storageTT.samples.map(row => [Math.round(row[0] * .75), Math.round(row[1] / 2), ...row.slice(2)])};
+gpStorage.key = ghostKey(gpStorage.playerId, gpStorage);
+const oldLayout = {...storageTT, layoutVersion: storageTT.layoutVersion - 1};
+oldLayout.key = ghostKey(oldLayout.playerId, oldLayout, oldLayout.layoutVersion, oldLayout.driverSignature);
+const countStore = normalizeGhostStore({version: 1, records: storageRows, archivedRecords: [oldLayout]});
+equal(countStore.archivedRecords.length, 1, 'count fixture retains a valid historical recording');
+equal(countStore.records.length, 12, 'count fixture retains all twelve old ghosts');
+const countBytes = JSON.stringify(countStore), countAdmission = storeGhost(countStore, gpStorage);
+check(!countAdmission.saved && countAdmission.reason === 'capacity', 'thirteenth GP ghost is visibly rejected');
+equal(JSON.stringify(countAdmission.store), countBytes, 'GP count rejection retains every old store byte');
+const denseSamples = (timeSec, length) => Array.from({length: 1800}, (_, i) =>
+  [Math.round(i * timeSec * 1000 / 1799), Math.round(i * length * 100 / 1799),
+    17999, 399999, 9999, 4999, 0, 999999, 799999, 799999, 15]);
+const byteRows = storageRows.map(row => ({...row, samples: denseSamples(row.timeSec, row.raceLength)}));
+const byteRecords = [];
+for (const row of byteRows) {
+  const candidate = {version: 1, records: [...byteRecords, row], archivedRecords: []};
+  if (byteLength(candidate) > MAX_GHOST_BYTES) break;
+  byteRecords.push(row);
+}
+const byteStore = normalizeGhostStore({version: 1, records: byteRecords, archivedRecords: []});
+equal(byteStore.records.length, byteRecords.length, 'byte fixture preserves valid old recordings below budget');
+const denseGP = {...gpStorage, samples: denseSamples(gpStorage.timeSec, gpStorage.raceLength)};
+check(byteStore.records.length < MAX_GHOSTS && byteLength({version: 1,
+  records: [...byteStore.records, denseGP], archivedRecords: []}) > MAX_GHOST_BYTES,
+  'byte fixture reaches the byte cap before the count cap');
+const beforeBytes = JSON.stringify(byteStore), byteAdmission = storeGhost(byteStore, denseGP);
+check(!byteAdmission.saved && byteAdmission.reason === 'capacity', 'over-budget GP ghost is visibly rejected');
+equal(JSON.stringify(byteAdmission.store), beforeBytes, 'GP byte rejection retains every old store byte');
+const sessionApp = {menuStage: 0, getMenuSeed: () => 1989, duel: {state: storageState},
+  profile: createProfile(), cpuDifficulty: 'medium', player: storagePlayer,
+  ghosts: countStore, grandPrixGhostCandidate: gpStorage};
+equal(App.prototype.getGrandPrixGhostRecord.call(sessionApp), gpStorage,
+  'session-only GP candidate stays usable for later Team Room query');
+check(!App.prototype.getGrandPrixGhostRecord.call(sessionApp, {seed: 42}),
+  'session-only GP candidate cannot cross event context');
+if (process.argv.includes('--storage-only')) {
+  console.log(`Grand Prix storage: ${checks} checks passed.`); process.exit(0);
+}
+
 const ids = ['pacific-canyon', 'high-country', 'harbor-highlands', 'eifel-crown',
   'alpine-serpent', 'azure-riviera', 'red-mesa', 'neon-docks', 'cloudbreak-skyway'];
 const profile = { ...createProfile(), courses: testCourseAccess() };

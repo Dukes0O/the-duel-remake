@@ -66,9 +66,13 @@ export function saveGhostEnabled(enabled,storage){try{const target=storage??glob
 export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>currentRecord(record)&&record.key===key)||null:null;}
 export function mergeGhostStores(...stores){return normalizeGhostStore({version:1,records:stores.flatMap(store=>store?.records||[]),archivedRecords:stores.flatMap(store=>store?.archivedRecords||[])});}
 export function storeGhost(store,record){
-  const valid=normalizeRecord(record);if(!valid||!currentRecord(valid))return {store,saved:false};store=normalizeGhostStore(store);const prior=store.records.find(row=>row.key===valid.key);
+  const valid=normalizeRecord(record);if(!valid||!currentRecord(valid))return {store,saved:false};const original=store;store=normalizeGhostStore(store);const prior=store.records.find(row=>row.key===valid.key);
   if(prior&&prior.timeSec<=valid.timeSec+.005)return {store,saved:false};
-  return {store:normalizeGhostStore({version:1,records:[...store.records.filter(row=>row.key!==valid.key),valid],archivedRecords:store.archivedRecords}),saved:true};
+  const candidate={version:1,records:[...store.records.filter(row=>row.key!==valid.key),valid],archivedRecords:store.archivedRecords};
+  // New GP recordings may use free capacity, never evict an existing recording.
+  if(valid.mode==='grandprix'&&(candidate.records.length>MAX_GHOSTS||
+    bytes({...candidate,archivedRecords:[]})>MAX_GHOST_BYTES))return {store:original,saved:false,reason:'capacity'};
+  return {store:normalizeGhostStore(candidate),saved:true};
 }
 function pack(state,snap=false){
   const values=[clock(state),state.s,state.lateral??0,(state.headingError??0)+(state.slipAngle??0)+(state.crashSpin??0),state.airHeight??0,state.speedMph??0];

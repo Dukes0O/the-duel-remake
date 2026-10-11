@@ -3,7 +3,7 @@ import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
 import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
-// app.js â€” owns the Duel instance, the rAF/step loop, keyboard input, the
+// app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
 
@@ -24,7 +24,7 @@ import { DRIVE, COURSE, CARS, DEFAULT_CPU_DIFFICULTY, steeringYawAuthority } fro
 import { EngineAudio } from './audio.js';
 import { loadPlayers, savePlayers, PLAYERS_KEY, playerName, activePlayer, createPlayer, selectPlayer, replacePlayerProfile, settleRace, settlePoliceFine, purchaseUpgrade, unlockCar, getUpgradeLevels, isCarUnlocked, CPU_REWARDS } from './progression.js';
 import {loadLeaderboard,saveLeaderboard,recordFinish,mergeLeaderboards} from './leaderboard.js';
-import {loadGhosts,saveGhosts,findGhost,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
+import {loadGhosts,saveGhosts,findGhost,ghostKey,mergeGhostStores,storeGhost,GhostRecorder,GrandPrixLapRecorder,sampleGhost,readGhostEnabled,saveGhostEnabled} from './ghost.js';
 import {getPaintAppearance,purchasePaint as buyPaint,applyPaint as equipPaint} from './paint-presets.js';
 import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForSeed,supportsRouteVariants} from './route-variants.js';
 import {normalizeLightingMood} from './lighting-moods.js';
@@ -151,8 +151,17 @@ export class App {
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
           const current=this.ghostSaved===false?this.ghosts:mergeGhostStores(this.ghosts,loadGhosts());
-          const saved=storeGhost(current,lap);this.ghosts=saved.store;
-          if(saved.saved)this.ghostSaved=saveGhosts(this.ghosts);
+          const session=this.grandPrixGhostCandidate;
+          const candidate=session?.key===lap.key&&session.timeSec<lap.timeSec?session:lap;
+          const saved=storeGhost(current,candidate);this.ghosts=saved.store;
+          if(saved.saved){
+            this.ghostSaved=saveGhosts(this.ghosts);
+            this.grandPrixGhostSaveStatus=this.ghostSaved?'saved':'session';
+            this.grandPrixGhostCandidate=this.ghostSaved?null:candidate;
+          }else if(saved.reason==='capacity'){
+            this.grandPrixGhostCandidate=candidate;
+            this.grandPrixGhostSaveStatus='capacity';
+          }
         }
       }
       if(event.boundaryReset||event.recovered||event.checkpointReset){this.ghostRecorder?.discontinuity();this.grandPrixLapRecorder?.discontinuity();}
@@ -401,6 +410,15 @@ export class App {
     if(COURSE[stageIndex]?.practice)return null;
     return findGhost(this.ghosts,this.player.id,{seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,driverId:getEquippedDriverId(this.profile),difficulty:this.duel.state.difficulty,cpuDifficulty:this.cpuDifficulty,...options,stageIndex,laps:COURSE[stageIndex]?.laps||2});
   }
+  getGrandPrixGhostRecord(options={}){
+    const stageIndex=options.startStage??options.stageIndex??this.menuStage;
+    const context={seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,
+      driverId:getEquippedDriverId(this.profile),difficulty:this.duel.state.difficulty,
+      cpuDifficulty:this.cpuDifficulty,...options,stageIndex,laps:1,mode:'grandprix'};
+    const saved=findGhost(this.ghosts,this.player.id,context),candidate=this.grandPrixGhostCandidate;
+    const session=candidate?.key===ghostKey(this.player.id,context)?candidate:null;
+    return session&&(!saved||session.timeSec<saved.timeSec)?session:saved;
+  }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
       {muddyHollowEnabled:true});
@@ -421,6 +439,7 @@ export class App {
     this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';
     this.grandPrixLapRecorder=null;
     if(state.mode==='grandprix'&&state.qualifying?.phase!=='driving'&&this._runPlayerId===this.player.id&&state.playerId===this.player.id){
+      this.grandPrixGhostCandidate=null;this.grandPrixGhostSaveStatus='none';
       this.grandPrixLapRecorder=new GrandPrixLapRecorder({playerId:this.player.id,seed:state.seed,
         stageIndex:state.stageIndex,car:state.car,driverId:state.driverId,difficulty:state.difficulty,
         cpuDifficulty:state.cpuDifficulty,upgrades:{...state.upgrades}},this.duel.course.length);

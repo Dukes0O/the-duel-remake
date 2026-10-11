@@ -19,7 +19,9 @@ for the later Team Room. Playback stays Time Trial only. The same course access 
 The Director granted narrow hooks in race-field, app and progression, plus
 FIELD test updates. The previous High Country rejection expectation will use
 Titan Arena instead: the test still requires unsupported events to reject GP.
-This reflects newly supported road circuits, with no tolerance change.
+This reflects newly supported road circuits, with no tolerance change. Internal
+leaderboard deduplication now includes mode so old Duel and Time Trial rows can
+coexist; their serialized event keys remain unchanged.
 
 ## Checks
 
@@ -30,7 +32,13 @@ Time Trial playback and storage caps remain exact. Native checks cover
 every grid, first corner and narrow stretch with eight cars. The focused
 246-check pass covers eligibility, state parity, mode rows and pure lap ghosts.
 The later native App run was interrupted for the four-lane cap; no verdict.
-Browser, save review, current lane/build remain pending. No art change.
+A failing twelve-valid-TT fixture proved new GP admission silently evicted an
+old recording. GP admission now rejects count/byte overflow before eviction,
+keeps the original store bytes (including archives), and retains a queryable
+session candidate. Results explicitly say storage full or save failed; no claim
+of persistence. Eleven pure storage checks pass; old TT admission is unchanged.
+Restored original UTF-8 punctuation in owned sources. Browser, save re-review,
+current lane/build remain pending. No art change.
 
 ## Removed
 
