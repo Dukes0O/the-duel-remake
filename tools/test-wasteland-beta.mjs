@@ -25,7 +25,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     'warlord-cards': 'on',
     // Phase 4 circuit road layouts (docs/CIRCUITS.md): dev until Kyle approves each.
     'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'dev',
-    'grand-prix': 'dev', // Phase 4 (P4-FIELD): a new switch, still in development
+    'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
     'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
   });
   const flags = createFeatureFlags({ storage: null, qa: false });
