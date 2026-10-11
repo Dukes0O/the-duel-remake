@@ -226,7 +226,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
   function update({state,camera,dt=0,high:quality=high,vehicles=[]}){
     if(disposed||!state)return;dt=Math.max(0,Math.min(.1,dt));time+=dt;
     const cap=quality?SNOW_LIMITS.high:SNOW_LIMITS.performance;stats.flakes=cap.flakes;geometry.setDrawRange(0,cap.flakes);
-    const active=winterWeight(course,state.s),gust=exposed.some(row=>course.phase(state.s)>=row.from&&course.phase(state.s)<=row.to);
+    const active=1,gust=exposed.some(row=>course.phase(state.s)>=row.from&&course.phase(state.s)<=row.to);
     flakes.visible=active>0;if(camera)flakes.position.copy(camera.position);
     flakes.material.uniforms.strength.value=active*(gust?.68:.48);
     for(let i=0;i<cap.flakes;i++){

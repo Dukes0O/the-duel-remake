@@ -138,6 +138,7 @@ function witness(view) {
   const limits=nativeQuality==='high'?{flakes:240,marks:512}:{flakes:72,marks:128};
   if(flakes.geometry.drawRange.count!==limits.flakes||tracks.count!==limits.marks||liveMarks>limits.marks)
     throw Error('Native effects exceeded the approved quality caps.');
+  if(!flakes.visible||flakes.material.uniforms.strength.value<=0)throw Error('The full Snow scene lacks light snowfall.');
   if(view==='tracks'&&liveMarks===0)throw Error('Actual driven wheel contacts did not leave snow tracks.');
   if(view==='ridge'&&(!flakes.visible||flakes.material.uniforms.strength.value<=.5))
     throw Error('An authored exposed ridge did not produce the bounded blowing snow.');

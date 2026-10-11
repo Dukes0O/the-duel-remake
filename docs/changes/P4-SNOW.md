@@ -46,12 +46,12 @@ Dossier snapshot/readiness/retry/disposal and Snow/PIT presentation hooks.
 Equivalent winter snapshots must rebuild with the current Course bank identities.
 Round3 final, before code: Claude holds round2 at3.5/3.5/3.5/2.5.
 Full-scene snow attributes/foliage exclusion replace range-only coverage;
-physical ranges/grip/banks stay exact. Eight seeded approved8-pine clusters.
+Physical ranges/grip/banks stay exact. Eight seeded approved8-pine clusters.
 Existing alpine shader gets Snow-only lower cap height/slope thresholds;
 mesh positions/normals and all ordinary shader calls stay exact. Pond gains
 bounded seeded uneven snow rim anchored to actual upper triangles, and native
 physical clearcoat for faint real environment reflection; no new render pass.
-Prior near-.8 albedo, positive Bloom, dry palette provenance and lifetime stay exact.
+Before code: full-scene owner uses snowfall active=1; gusts/caps/dt/life and physics exact.
 
 ## Checks
 
@@ -88,7 +88,7 @@ Single guard GREEN both qualities:0 old/308 current,new world2 to3;12 finite tar
 Static timing fixes only its native presentation camera; poses and limits stay exact.
 Round-two focused GREEN: actual assets/cluster clearance and exact dry/night palette pass.
 Original lighting1078/moods2666/lightpath544 pass; round2 sheet294380bytes sent to Claude.
-Round3 focused GREEN: dry cap shader, wider real normals,64 seeded pines,
+Round3 GREEN: outside-range lightfall RED/GREEN, dry cap shader,64 seeded pines,
 actual rim overlap/road clearance/read-only identity; native art/frames/gates pending.
 
 ## Removed

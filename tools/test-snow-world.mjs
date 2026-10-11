@@ -85,6 +85,17 @@ for(const high of [true,false]){
   const owner={placements,getPlacementPose:()=>new THREE.Matrix4(),setPlacementPose(){}};
   const snow=createSnowWorld(course,{kits:owner,high}),state={status:'racing',stageTimeSec:0,s:200,brokenScenery:[],opponents:[]};
   const witness=JSON.stringify(state),camera=new THREE.PerspectiveCamera();camera.position.set(a.x,a.y+3,a.z);
+  const outsideState={...state,s:1100},outsideBefore=JSON.stringify(outsideState),
+    flakes=snow.group.getObjectByName('Camera-local snow and ridge gusts');
+  assert.equal(winterWeight(course,outsideState.s),0,'control is outside the physical winter ranges');
+  snow.update({state:outsideState,camera,dt:0,high,vehicles:[]});
+  assert.equal(flakes.visible,true,'full-scene Snow owner has light fall outside physical ranges');
+  assert.equal(flakes.material.uniforms.strength.value,.48,'ordinary scene fall retains its original light strength');
+  assert.equal(flakes.geometry.drawRange.count,high?SNOW_LIMITS.high.flakes:SNOW_LIMITS.performance.flakes);
+  assert.equal(JSON.stringify(outsideState),outsideBefore,'outside-range snowfall stays read-only');
+  snow.update({state:{...state,s:600},camera,dt:0,high,vehicles:[]});
+  assert.equal(flakes.material.uniforms.strength.value,.68,'actual exposed ridge keeps its original gust strength');
+
   for(let n=0;n<200;n++)snow.update({state,camera,dt:1/60,high,vehicles:[]});
   assert.equal(JSON.stringify(state),witness,'weather reads native state only');
   const mesh=new THREE.Group();mesh.userData.grounding={wheels:[
