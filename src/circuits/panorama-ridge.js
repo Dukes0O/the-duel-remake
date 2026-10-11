@@ -36,7 +36,7 @@ const PANORAMA_ROAD = defineScriptedCourse({
     ['straight', 912, { climb: 55, name: 'Mountain Straight', walls: 'both' }],
     ['turn', 'R', 40, 110, { climb: 6, name: 'Griffin Bend' }],
     ['straight', 142, { climb: 10 }],
-    ['turn', 'L', 110.5, 20, { climb: 9, name: 'The Cutting', width: 11 }],
+    ['turn', 'L', 110.5, 20, { climb: 9, name: 'The Cutting', width: 13 }],
     ['straight', 196, { climb: 21 }],
     ['turn', 'R', 30, 150, { climb: 6, name: 'Reid Rise' }],
     ['straight', 218, { climb: 8 }],

@@ -57,11 +57,11 @@ New fixture initially checked before native update binds resources; invoke actua
 update before the unchanged identity/intensity assertions. No tolerance changed.
 Shader/default resources exact; final sheet includes two actual dusk valley views, uncropped1280x720sources.
 
-Claude field decision: reuse Harbour opt-in settings after its merge; no second
-mechanism. Only ridge width11→13m Cutting through Forrest Elbow approved, then
-original90races against3.2. Exact settings await real merged Harbour source.
-Earlier exact-road-width statements describe round2; approved ridge supersedes
-only that interval. No unrelated geometry or target change.
+Ridge slice before code: Cutting width11→13m inherits through Forrest Elbow;
+existing40m blends join15m approach/16m Conrod. Other width targets, entire
+centreline/turns/climbs/pit/default courses stay exact; fences follow the edge.
+Actual ridge RED: Cutting11!=13; one-line13 GREEN15/15 in5.61s, High/LOD3.91s.
+Field still reuses actual merged Harbour settings and original90/3.2; no new mechanism.
 
 ## Whole native view recipe
 
@@ -81,8 +81,7 @@ Claude approves every real kit/landmark in both fresh eight-car worlds, original
 day versus actual authored final-lap dusk with its mountain-sunset palette.
 Relative CPU/GPU/delivered/combined10% values remain reported diagnostics;
 acceptance is delivered p95<=18.5ms in both day/dusk High/Performance worlds
-and actual kit construction
-<1000ms in each world. This explicitly replaces the mixed empty-world10%
+and actual kit construction<1000ms in each world. This explicitly replaces the mixed empty-world10%
 assertion under Claude's policy, without changing timing samples or absolute limits.
 Original 120warm/360CPU+update+combined/359delivered/GPU>=288, positive timings,
 orders/resolution/rear/HUD and native race/profile/storage/pose guards remain.
@@ -96,4 +95,4 @@ Round1 sheet/note removed with verdict above. Round2 consumed sheet/note removed
 with final packet; verdict retained. Replace populated hidden baseline and hidden
 rear/HUD sampler with fresh worlds/full actual views. Replace the empty-kit
 comparison with identical full-kit day/dusk worlds under Claude10:30 policy. Final art removes striped
-fence finish and mountain snow/ice appearance only for Panorama.
+fence finish and mountain snow/ice appearance only for Panorama. Replace old11m ridge with approved13m; no signatures regenerated.

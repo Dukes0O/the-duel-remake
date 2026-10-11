@@ -3,6 +3,7 @@ import test from 'node:test';
 import * as THREE from 'three';
 import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
 import {Course} from '../src/course.js';
+import {buildTrackScript, TRACK_SCRIPT} from '../src/track-script.js';
 import {Duel} from '../src/game.js';
 import {COURSE} from '../src/config.js';
 import {sampleCourseLightPath, lightPathLook} from '../src/light-path.js';
@@ -14,6 +15,36 @@ import {readFileSync} from 'node:fs';
 const near = (a, b, e = 1e-6) => assert.ok(Math.abs(a - b) < e, a + ' != ' + b);
 const course = new Course(PANORAMA_RIDGE, 1989);
 
+test('approved 13 m ridge keeps the original centreline and other width targets', () => {
+  const originalScript = PANORAMA_RIDGE.script.map(entry => {
+    const options = entry.at(-1);
+    return options.name === 'The Cutting'
+      ? [...entry.slice(0, -1), {...options, width: 11}] : entry;
+  });
+  const originalRoad = buildTrackScript({...PANORAMA_RIDGE, script: originalScript});
+  const road = course.script, cutting = road.pieces.find(piece => piece.name === 'The Cutting');
+  const elbow = road.pieces.find(piece => piece.name === 'Forrest Elbow');
+  const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
+  assert.ok(cutting.index < elbow.index && elbow.index < conrod.index);
+  for (const piece of road.pieces) {
+    const onRidge = piece.index >= cutting.index && piece.index <= elbow.index;
+    assert.equal(piece.width, onRidge ? 13 : originalRoad.pieces[piece.index].width,
+      piece.name + ' resolved width');
+    if (onRidge) near(road.halfWidthAt(piece.s0 + (piece.s1 - piece.s0) * .9), 6.5);
+  }
+  assert.equal(conrod.width, 16);
+  const entryWidth = road.halfWidthAt(cutting.s0 + 20);
+  assert.ok(entryWidth > 6.5 && entryWidth < 7.5, 'original approach blends into 13 m ridge');
+  const exitWidth = road.halfWidthAt(conrod.s0 + 20);
+  assert.ok(exitWidth > 6.5 && exitWidth < 8, 'ridge blends into original 16 m Conrod');
+  for (let s = 0; s < road.length; s += 11) {
+    if (s < cutting.s0 - road.step || s > conrod.s0 + TRACK_SCRIPT.blendLength + road.step)
+      near(road.halfWidthAt(s), originalRoad.halfWidthAt(s));
+  }
+  assert.deepEqual(road.samples, originalRoad.samples, 'entire original centreline/height/heading stays exact');
+  for (const fence of PANORAMA_RIDGE.kitPlacements.filter(entry => entry.id === 'catch-fence'))
+    near(Math.abs(fence.lateral), road.halfWidthAt(fence.s) + 1.8);
+});
 test('Sunset remains golden on lap one and reaches dusk for the whole last lap', () => {
   for (const fraction of [0, .1, 1 / 3]) {
     const sample = sampleCourseLightPath(course, {distance: fraction * course.raceLength});
