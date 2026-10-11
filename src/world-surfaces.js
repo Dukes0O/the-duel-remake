@@ -62,7 +62,7 @@ export function terrainGeometry(course) {
 
 export function farTerrainGeometry(course) {
   if(course.def.practice)return freestyleFarGeometry(course);
-  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion?16:32;
+  const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion||course.def.terrainHalfWidth===64?16:32;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1);
   if(route.at(-1)!==last)route.push(last);
   const routeIndex=createPolylineIndex(route);
@@ -80,7 +80,7 @@ export function farTerrainGeometry(course) {
     const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,quad=[a-columns-1,a-1,a-columns,a];
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
-      if(quad.every(k=>distances[k]>(course.def.arena?18:course.def.expansion?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
+      if(quad.every(k=>distances[k]>(course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
     }
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);g.computeVertexNormals();return g;
