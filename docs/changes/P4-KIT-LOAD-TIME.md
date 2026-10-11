@@ -1,86 +1,99 @@
 # P4-KIT-LOAD-TIME
 
-Status: building; focused source checks passed; native timing remains queued.
+Status: accepted0b history; current4527 colour compatibility needs fresh native/gate/build.
 
 ## Design before code
 
-Trust is the required full build/test clearance of repo-owned offline metadata.
-Direct createTrackKits callers default to full geometric clearance. Only the
-renderer passes validateClearance:false to skip that expensive step. Metadata, real source finite
-geometry/bounds, lift, lamps/materials, actual terrain roots, readiness and
-resource ownership stay unchanged. No receipt, hash or Claude metadata burden.
+Trust is mandatory full build/test clearance of repo-owned offline metadata.
+createTrackKits defaults to full clearance; only renderer passes
+validateClearance:false. Metadata, real source finite bounds, lift, lamps,
+materials, actual terrain roots, readiness and ownership stay exact; no receipts.
 
-Full validation first checks transformed model boxes against conservative road
-segment boxes expanded by maximum road width plus4.5m. Nearby or uncertain
-placements retain every original vertex, centroid and edge-midpoint check.
-Physical bank footprints always retain full checks. The owned test CLI fully
-validates a verified circuit source module with its actual High/LOD GLBs;
-registered authored placements also run in the mandatory lane suite. Every
-track card runs this full validation before merge with:
-node tools/test-track-kits.mjs --validate-circuit <tracked circuit module>.
+Full clearance first compares transformed source boxes with conservative road
+segment boxes expanded by maximum road width plus4.5m. Near/uncertain pieces
+retain every old vertex/centroid/edge-midpoint check; physical banks always do.
+Owned --validate-circuit CLI verifies tracked local source and actual High/LOD
+GLBs. Default gate validates all registered authored courses; every track card
+runs full validation before merge.
 
-Batch by roughly100m of road. Main chooses one High/distant version per visible
-chunk using actual camera distance/frustum, keeping the160m detail boundary.
-Only actual placement matrices enter packed batches; inactive mesh.count is0.
-Rear temporarily selects nearby behind-car chunks, distant only within the
-existing220m range, then restores main counts, visibility and statistics in
-finally. It reads the real player orientation and never changes race state.
-No rear-view module edit, placement removal or new art round.
+About100m chunks choose one actual High/distant version by camera distance and
+frustum, preserving160m detail. Packed mesh.count contains only real matrices;
+no zero-scale hidden draws. Rear uses real player orientation, distant-only
+behind-car chunks within220m, nearest3. Main matrices/counts/visibility/stats
+restore in finally, including throws, nesting and retirement. No rear module edit.
 
-## Checks
+## Checks and native design
 
-Focused trust regression was RED before implementation:672 triangle projections
-instead of0. It is now GREEN, including packed counts, real camera frustum,
-near/spanning/full physical-patch clearance, moved poses, nested rear scopes,
-exact restoration on success/throw, and disposal during a rear draw.
+Original runtime-trust regression RED672 projections vs0, then GREEN.
+Meaningful checks cover actual frustum/packing, moved poses, broadphase/full
+near/spanning/physical-patch clearance, nested/throw/retired rear restoration.
+All70 real assets, original transforms/lift/countdown/readiness/lifetime and
+72 actual Float32 near/far terrain rays pass; owned full suite1.17s after fix.
+Full actual High/LOD validation passes all1969 frozen Harbour91ef placements.
+Native activity witnesses use actual visible count/indices, positive scale,
+no Performance High and genuine main/rear GPU submissions.
 
-Native activity witnesses now read visible mesh.count rather than obsolete
-nonzero hidden-matrix storage. The no-High Performance assertion stays exact;
-new checks require count/placement indices equality and no submitted zero scale.
-The functional gallery camera is80m above ground, within the actual160m detail
-range. Native GPU main/rear counts and exact main restoration are prepared.
-Full High/LOD clearance passed for all1969 placements in Claude's frozen
-Harbour91ef3e20 via the owned --validate-circuit CLI. Native timing is pending.
-Current source has no asset, road, simulation, save or placement edits.
-Focused source-only checks pass; syntax and whitespace checks pass.
+ConstructionMs measures true entry before options/getters through genuine ready,
+including load/parse/wait, validation and assembly. Disjoint activeCpuMs is only
+a diagnostic; total decides. Pending/error never fabricate ready timing.
+Real20ms asset wait regression passes. No per-frame construction clock.
 
-Owner presentation constructionMs is entry-to-genuine-ready elapsed, including
-option/default getters, actual asset wait/parse, source validation and assembly. Disjoint activeCpuMs
-sums normalization, real source validation and assembly only. Pending/failed
-owners never fabricate completed timing. Focused actual20ms asset-wait test
-passes; acceptance uses the total, with no subtraction.
+Test-only unpacked Vite QA pins clean Harbour91ef3e20 metadata; additive own
+field admission preserves our engine/jitter/form/laps. Baseline omits only
+kitPlacements before world build; each leg has fresh identical seeded8cars.
+Native .95 driver reaches old town through real rules, with no pose staging.
+Paired full state/8actor poses match; state/profile/memory storage remain exact.
+Sampler retains120 unmeasured/360 CPU/359 delivered and GPU>=288 samples,
+two pair orders and all submit/GPU/delivered/combined metrics stay recorded.
+Former10% relative guards are now informational under Claude check-in7;
+acceptance is total construction<1000ms and deliveredp95<=18.5ms in both qualities.
+Owned exports:installMainRearMeasurement,measureMainRearFrames.
 
-Dense QA config is unpacked and explicitly env-pinned to actual frozen Harbour
-91ef3e20; alias only authored definition and additive own-field QA admission.
-It preserves our engine, jitter, form and laps. No production course/flag edit.
-Fresh paired off/on native fixtures use identical seeds/rules/eight cars. Only
-kitPlacements is omitted before the baseline world builds, so CPU work is not
-masked by merely hiding the group. Exact full state and actor poses match;
-each native sample retains complete state/profile/storage before/after.
-Same120 unmeasured/360 measured frames, two pair orders, original10% limit and
-18.5ms delivered p95. Combined update+submit also has the same10% guard, so
-added culling work cannot hide outside submitMs; original checks remain exact.
-GPU timers cover genuine main plus rear; no recorded sample is discarded.
-Reusable owned exports: installMainRearMeasurement and measureMainRearFrames;
-other track recipes may import the sampler after this exact source is reviewed.
-Native actual eight-car grid/old-town witnesses are prepared; the native .95
-circuit driver reaches old town through actual rules, with no position staging.
+Functional ff86 private15540 passed0warnings/errors/8actual roots; old town
+s1330.2998 at38.4333s. That source is historical after genuine4527 sync.
+## Quiet packet verdicts
 
-Genuinely synced approved integration fbc7d76c. Functional ff86 passed private
-15540:four screenshots,0warnings/errors,8actual scene-visible car roots (field
-naturally spreads; no staging/all-in-camera claim). Total construction High
-228.4/173.5ms, Performance167.1/166.6ms; activeCPU76.0/64.2/64.4/62.4ms.
-Main High86+363/126+730, Performance0+449/0+856 unique placements; actual rear
-0High+96/176Low in3chunks, exact main restore. Actual driver reaches old town
-s1330.2998 at38.4333s both qualities. Evidence:dense-ff86-functional under
-integration .evidence/2026-10-11/P4-KIT-LOAD-TIME/. No frame pass inferred.
-Clock-entry/combined-CPU review fixes follow; lane/build/quiet frames queued.
+Original6e5:16legs/8pairs; all8 relative FAIL, combined52.63–122.50%,
+GPU27.72–72.47%; High old-town pair1 delivered18.8 also fails18.5.
+Bounded fix settled before code: actual scene/rear.camera draws only, renderer
+method restored in finally; lazily snapshot/restore touched matrix buffers and
+spheres. Cached mirrors do no owner scope. Untouched upload RED1vs0→GREEN.
+Source0b0799c9 ordinary review clear; ranges/detail/placements/art unchanged.
 
-Actual dense Harbour construction under1s and quiet High/Performance grid and
-old-town frame checks (original10%/18.5ms limits) remain queued; no pass claimed.
+Corrected0b0799:private25911,16legs/8pairs complete; all8 former-relative FAIL.
+Values are added submit/combined/GPU percent and candidate delivered p95 ms:
 
+| Quality/place/pair | Submit % | Combined % | GPU % | Delivered ms |
+| --- | ---: | ---: | ---: | ---: |
+| High grid1 |29.31|30.58|15.08|18.2|
+| High grid2 |82.83|81.73|43.19|18.2|
+| High old-town1 |72.82|73.15|49.15|18.3|
+| High old-town2 |94.79|95.05|61.14|18.2|
+| Performance grid1 |52.86|51.32|34.87|18.2|
+| Performance grid2 |35.14|37.97|33.07|18.2|
+| Performance old-town1 |76.47|76.71|33.98|18.2|
+| Performance old-town2 |60.00|60.00|30.31|18.1|
+
+Four native total construction times225.1/165.0/153.5/151.9ms, all under1s;
+activeCPU67.6/67.4/65.9/65.9ms. Actual High/LOD main, distant rear3chunks,
+exact restoration and all1969 placements retained;0warnings/errors.
+Complete ordered packets:dense-6e5-frames and dense-0b0799-frames under
+integration .evidence/2026-10-11/P4-KIT-LOAD-TIME/.
+Claude check-in7,05:15PT, explicitly accepts0b0799 and changes kit policy:
+city-versus-empty relative costs are information; absolute targets above decide.
+Changed assertion removes only relative10% rejection, preserves every metric,
+sample/witness/state/pose/asset/placement/lifecycle guard. Boundary checks reject
+1000ms construction, accept18.5ms delivered and reject18.500001ms/nonfinite.
+Retained exact0b packet reclassified separately; raw failed reports untouched.
+Policy ee4450 runtime/public were byte-equal0b; gate135pass/1fail/251notrun,
+591.67s. Explicit QA plugins property fixes unchanged failing guard:190GREEN.
+Current4527 sync preserves immutable bands; actual selected layer-colour RED
+then GREEN, lazy nested rear colour/matrix restore and untouched versions.
+Before fresh fixture:clean Harboure96d52bb actual1969placements/0bandedentries;
+metadata alias only, own4527 engine plus packed-band fix/additive admission.
+New runtime needs fresh16legs/eight pairs and mandatory lane/build; Azure first.
 ## Removed
 
-Replace the whole-route zero-scale hidden instance path in the same change.
-Remove repeated geometric clearance only from the explicitly trusted runtime
-renderer path; preserve full clearance in tests and build validation.
+Replace whole-route zero-scale hidden draws and repeated runtime triangle checks;
+full build/test clearance remains. Remove cached-rear scope work and untouched
+buffer uploads in the same fix. No placements/assets/art removed.

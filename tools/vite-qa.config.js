@@ -9,7 +9,7 @@ import {buildVersionPlugin} from './build-version-plugin.mjs';
 // Normal QA and production builds never enable this fixture.
 const harbourSource = process.env.P4_KIT_HARBOUR_SOURCE;
 const expectedHarbourSource = 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-harbour/src/circuits/harbour-lights.js';
-const harbourHead = '91ef3e2085a9327b0f3b42aa96ef90f9b3344033';
+const harbourHead = 'e96d52bb4eb1f841b7be477a3e9ec707ff415ba7';
 let aliases = [],plugins = [buildVersionPlugin()];
 if (harbourSource) {
   const source = resolve(harbourSource);
@@ -40,6 +40,6 @@ const input = Object.fromEntries([
 ].map(([name,path])=>[name,fileURLToPath(new URL(path,import.meta.url))]));
 
 export default defineConfig({
-  plugins,resolve:{alias:aliases},define:{__DUEL_QA__:'true'},
+  plugins:plugins,resolve:{alias:aliases},define:{__DUEL_QA__:'true'},
   build:{outDir:'.qa-dist',rollupOptions:{input}},server:{hmr:false},
 });

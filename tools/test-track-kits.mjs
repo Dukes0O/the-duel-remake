@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {kitConstructionAccepted,kitDeliveredAccepted} from './scenarios/track-kits.mjs';
 import * as THREE from 'three';
 import {readFile} from 'node:fs/promises';
 import {resolve,dirname,relative} from 'node:path';
@@ -16,6 +17,16 @@ import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {createRendererReadiness} from '../src/screen-readiness.js';
 import {createTrackKits, normalizeKitPlacements, TRACK_KIT_IDS} from '../src/track-kits.js';
+
+// Claude check-in7: kit thresholds are total construction and delivered p95.
+assert.equal(kitConstructionAccepted(999.999),true);
+assert.equal(kitConstructionAccepted(1000),false,'construction must be under1s');
+assert.equal(kitDeliveredAccepted(18.5),true,'delivered cap includes18.5ms');
+assert.equal(kitDeliveredAccepted(18.500001),false,'over-cap delivered fails');
+for(const value of [-1,NaN,Infinity,null,undefined,'18']){
+  assert.equal(kitConstructionAccepted(value),false,'construction must be finite measured time');
+  assert.equal(kitDeliveredAccepted(value),false,'delivered must be finite measured time');
+}
 
 if (process.argv[2] === '--validate-circuit') {
   assert.equal(process.argv.length,4,'Usage: test-track-kits.mjs --validate-circuit <tracked src/circuits/module.js>');
@@ -302,6 +313,9 @@ async function kitCullingChecks() {
   const before = meshes.map(mesh => ({mesh, count: mesh.count, visible: mesh.visible,
     matrices: Array.from(mesh.instanceMatrix.array)}));
   const beforeStats = JSON.stringify(runtime.stats);
+  const untouched = meshes.filter(mesh => mesh.userData.trackKitChunk === 8)
+    .map(mesh => ({mesh, version:mesh.instanceMatrix.version}));
+  assert.ok(untouched.length, 'actual distant batches remain outside both views');
   assert.throws(() => runtime.withRearView({position: camera.position,
     forward: new THREE.Vector3(0, 0, -1)}, () => {
     assert.equal(runtime.stats.high, 0, 'rear never submits detailed instances');
@@ -314,6 +328,8 @@ async function kitCullingChecks() {
     assert.deepEqual(Array.from(saved.mesh.instanceMatrix.array), saved.matrices);
   }
   assert.equal(JSON.stringify(runtime.stats), beforeStats, 'throw restores exact main statistics');
+  for (const saved of untouched) assert.equal(saved.mesh.instanceMatrix.version,saved.version,
+    'a rear scope must not re-upload untouched distant matrix buffers');
   assert.equal(runtime.withRearView({position:camera.position,
     forward:new THREE.Vector3(0,0,-1)},()=> 'actual draw return'),'actual draw return');
   assert.equal(JSON.stringify(runtime.stats),beforeStats,'successful scope restores main statistics');
@@ -330,6 +346,57 @@ async function kitCullingChecks() {
   });
   assert.equal(runtime.stats.high,1,'pose and main count survive the rear scope');
   runtime.dispose();
+
+  // Claude's genuine layer colour contract must follow the selected row, not
+  // the old full-route buffer slot, through main and nested rear packing.
+  const paintedRows = rows.map((row,index) => ({...row,id:'tyre-wall',
+    ...(index===2?{}:{bands:[[index/3,0,1-index/3],[0,index/3,1-index/3]]})}));
+  const painted = createTrackKits(flatCourse,{placements:paintedRows,validateClearance:false,
+    loadAsset:async()=>{
+      const scene=new THREE.Group();
+      for(let layer=1;layer<=2;layer++){
+        const geometry=new THREE.BoxGeometry(1,3,1);geometry.translate(0,1.5,0);
+        geometry.userData.fixtureLayer=layer-1;
+        const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());
+        mesh.name='layer-'+layer;scene.add(mesh);
+      }
+      return {scene,animations:[]};
+    }});
+  assert.equal(await painted.ready,true,painted.error?.message);
+  assert.ok(Object.isFrozen(painted.placements[0].bands[0]),'layer colours remain immutable');
+  const actualPaint=new THREE.Color();
+  function assertPaintedPrefix(){
+    for(const mesh of painted.group.children){
+      if(!mesh.visible||!mesh.count)continue;
+      const layer=mesh.geometry.userData.fixtureLayer;
+      mesh.userData.trackKitDrawnPlacementIndices.forEach((index,slot)=>{
+        const expected=paintedRows[index].bands?.[layer]??[1,1,1];
+        if(mesh.instanceColor)mesh.getColorAt(slot,actualPaint);else actualPaint.setRGB(1,1,1);
+        assert.ok(actualPaint.toArray().every((value,axis)=>Math.abs(value-expected[axis])<1e-6),
+          'actual selected layer colour follows its packed placement index');
+      });
+    }
+  }
+  painted.update({high:true,position:camera.position,camera});assertPaintedPrefix();
+  const paintedBefore=painted.group.children.map(mesh=>({mesh,visible:mesh.visible,count:mesh.count,
+    matrices:Array.from(mesh.instanceMatrix.array),colours:mesh.instanceColor?Array.from(mesh.instanceColor.array):null,
+    colourVersion:mesh.instanceColor?.version}));
+  painted.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,-1)},()=>{
+    assertPaintedPrefix();
+    painted.withRearView({position:camera.position,forward:new THREE.Vector3(0,0,1)},assertPaintedPrefix);
+    assertPaintedPrefix();
+  });
+  for(const saved of paintedBefore){
+    assert.equal(saved.mesh.visible,saved.visible);assert.equal(saved.mesh.count,saved.count);
+    assert.deepEqual(Array.from(saved.mesh.instanceMatrix.array),saved.matrices);
+    assert.deepEqual(saved.mesh.instanceColor?Array.from(saved.mesh.instanceColor.array):null,saved.colours,
+      'rear restores exact original layer colour buffers');
+    if(saved.mesh.userData.trackKitChunk===8)
+      assert.equal(saved.mesh.instanceColor?.version,saved.colourVersion,'untouched distant colour buffers never upload');
+  }
+  assertPaintedPrefix();painted.dispose();
+  assert.throws(()=>normalizeKitPlacements(flatCourse,[{...paintedRows[0],bands:[[0,NaN,1]]}]),/bands/);
+
   const illegal = createTrackKits(flatCourse, {placements: [{id:'armco',s:100,lateral:0}],
     loadAsset: async () => asset()});
   assert.equal(await illegal.ready, false, 'default full validation still rejects the actual road intrusion');
