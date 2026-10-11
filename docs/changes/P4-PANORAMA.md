@@ -86,7 +86,7 @@ assertion under Claude's policy, without changing timing samples or absolute lim
 Original 120warm/360CPU+update+combined/359delivered/GPU>=288, positive timings,
 orders/resolution/rear/HUD and native race/profile/storage/pose guards remain.
 Construction is read from the actual owner stats, finite/nonnegative required.
-No native timing pass is claimed; numeric/source review and quiet proof pending.
+Policy regression21 assertions passes; ordinary review clear, native timing pending.
 
 ## Removed
 

@@ -11,6 +11,7 @@ import {addCircuitLandmarks, scoreboardText} from '../src/circuit-landmarks.js';
 import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {readFileSync} from 'node:fs';
+import {compareFrameCosts} from './scenarios/p4-panorama-frames.mjs';
 
 const near = (a, b, e = 1e-6) => assert.ok(Math.abs(a - b) < e, a + ' != ' + b);
 const course = new Course(PANORAMA_RIDGE, 1989);
@@ -44,6 +45,38 @@ test('approved 13 m ridge keeps the original centreline and other width targets'
   assert.deepEqual(road.samples, originalRoad.samples, 'entire original centreline/height/heading stays exact');
   for (const fence of PANORAMA_RIDGE.kitPlacements.filter(entry => entry.id === 'catch-fence'))
     near(Math.abs(fence.lateral), road.halfWidthAt(fence.s) + 1.8);
+});
+test('approved full-kit frame policy keeps absolute boundaries and sample guards', () => {
+  const row = (look, ms) => ({look, scales: [1], ratios: [1], gpuSupported: true,
+    pacing: {cpu: {samples: 360, p95: ms}, gpu: {samples: 300, p95: ms},
+      delivered: {samples: 359, p95: ms}}, update: {samples: 360, p95: ms},
+    combined: {samples: 360, p95: ms}, witness: {constructionMs: 999.999}});
+  const off = row('off', 10), on = row('on', 18.5);
+  let result = compareFrameCosts(off, on);
+  assert.equal(result.passed, true, '18.5 ms and strict sub1000 construction meet absolute policy');
+  assert.ok(Object.values(result.costs).every(cost => cost.informational && !cost.passed),
+    'every failed relative diagnostic stays reported');
+  for (const leg of [off, on]) {
+    const delivered = leg.pacing.delivered.p95;
+    leg.pacing.delivered.p95 = 18.500001;
+    assert.equal(compareFrameCosts(off, on).passed, false, 'both day/dusk require18.5ms');
+    leg.pacing.delivered.p95 = delivered;
+    leg.witness.constructionMs = 1000;
+    assert.equal(compareFrameCosts(off, on).passed, false, 'construction is strictly under1s');
+    for (const invalid of [undefined, null, NaN, Infinity, -1]) {
+      leg.witness.constructionMs = invalid;
+      assert.throws(() => compareFrameCosts(off, on), /construction timing missing/);
+    }
+    leg.witness.constructionMs = 0;
+    assert.equal(compareFrameCosts(off, on).passed, true, 'zero construction remains valid');
+    leg.witness.constructionMs = 999.999;
+  }
+  on.pacing.cpu.samples = 359;
+  assert.throws(() => compareFrameCosts(off, on), /Incomplete full-view cpu samples/);
+  on.pacing.cpu.samples = 360; on.pacing.gpu.samples = 287;
+  assert.throws(() => compareFrameCosts(off, on), /Incomplete full-view GPU samples/);
+  on.pacing.gpu.samples = 300; off.combined.p95 = 0;
+  assert.throws(() => compareFrameCosts(off, on), /Incomplete full-view combined samples/);
 });
 test('Sunset remains golden on lap one and reaches dusk for the whole last lap', () => {
   for (const fraction of [0, .1, 1 / 3]) {
