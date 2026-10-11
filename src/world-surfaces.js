@@ -34,17 +34,17 @@ export function strip(course, left, right, y, start=0, end=course.length, ground
 
 
 // Fallen leaves on the ground (`groundLeaves` on a circuit: { colours, strength,
-// reach, far }): patches of red, gold and orange lie on the verges and thin out
+// reach, far, wood, gravel }): patches of red, gold and orange lie on the verges and thin out
 // under the far hills. Colour only; the vertex tint multiplies the grass.
 const leafSmooth = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
-function fallenLeaves(course, colour, s, off) {
+function fallenLeaves(course, colour, s, off, keep = 1) {
   const leaves = course.def.groundLeaves;
   if (!leaves) return;
   const edge = Math.abs(off) - course.roadHalfWidthAt(s);
   const reach = leafSmooth((edge - 1.5) / 6) * (1 - (1 - (leaves.far ?? .3)) * leafSmooth((edge - (leaves.reach ?? 40)) / 40));
   if (reach <= 0) return;
   const swell = Math.sin(s * .031 + off * .11) + .8 * Math.sin(s * .017 - off * .07 + 1.3) + .5 * Math.sin(s * .071 + off * .05) + .45 * Math.sin(s * 2.7 + off * 1.9);
-  const amount = reach * leafSmooth((swell + .4) / 1.9) * (leaves.strength ?? .8);
+  const amount = reach * leafSmooth((swell + .4) / 1.9) * (leaves.strength ?? .8) * keep;
   if (amount <= 0) return;
   const pick = leaves.colours[Math.floor((Math.sin(s * .013 + off * .021 + 2) * .5 + .5) * leaves.colours.length * .999)];
   colour.r *= 1 + (pick[0] - 1) * amount; colour.g *= 1 + (pick[1] - 1) * amount; colour.b *= 1 + (pick[2] - 1) * amount;
@@ -63,6 +63,41 @@ function woodland(course, colour, s, off) {
   colour.r *= 1 + (wood.green[0] + (pick[0] - wood.green[0]) * turn - 1) * weight;
   colour.g *= 1 + (wood.green[1] + (pick[1] - wood.green[1]) * turn - 1) * weight;
   colour.b *= 1 + (wood.green[2] + (pick[2] - wood.green[2]) * turn - 1) * weight;
+}
+
+// Gravel traps (`groundLeaves.gravel`: { colour, width, fade, ends, grass, to }): the
+// ground on both sides of each scripted turn, from the road edge out `width`
+// metres, is tinted darker and greyer than the grass, easing out over `fade`
+// metres and in and out over `ends` metres along the turn. Beyond it, out to `to`
+// metres, the open ground there (few trees stand beside a corner) takes
+// the `grass` tint, a dark meadow green. Colour only.
+function besideTurn(course, s, off) {
+  if (!course.script) return 0;
+  const edge = Math.abs(off) - course.roadHalfWidthAt(s);
+  if (edge <= 0) return 0;
+  const phase = course.phase(s), piece = course.script.pieceAt(phase);
+  if (piece.kind !== 'turn') return 0;
+  const ends = course.def.groundLeaves.gravel.ends ?? 25;
+  return Math.min(leafSmooth((phase - piece.s0) / ends), leafSmooth((piece.s1 - phase) / ends));
+}
+function gravelWeights(course, s, off) {
+  const gravel = course.def.groundLeaves?.gravel;
+  if (!gravel) return null;
+  const inside = besideTurn(course, s, off);
+  if (inside <= 0) return null;
+  const edge = Math.abs(off) - course.roadHalfWidthAt(s), width = gravel.width ?? 16, fade = gravel.fade ?? 10;
+  const trap = leafSmooth(edge / 2) * (1 - leafSmooth((edge - width) / fade)) * inside;
+  const meadow = leafSmooth((edge - width) / fade) * (1 - leafSmooth((edge - (gravel.to ?? 60)) / 20)) * inside;
+  return { trap, meadow };
+}
+// The tint over the leaves and wood.
+function gravelTrap(course, colour, weights) {
+  if (!weights) return;
+  const gravel = course.def.groundLeaves.gravel;
+  for (const [tint, weight] of [[gravel.colour, weights.trap], [gravel.grass, weights.meadow]]) {
+    if (!tint || weight <= 0) continue;
+    colour.r *= 1 + (tint[0] - 1) * weight; colour.g *= 1 + (tint[1] - 1) * weight; colour.b *= 1 + (tint[2] - 1) * weight;
+  }
 }
 
 export function terrainGeometry(course) {
@@ -88,7 +123,7 @@ export function terrainGeometry(course) {
     offsets.forEach((off, j) => {
       const p = course.groundAt(s,off),wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
-      col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); fallenLeaves(course, col, s, off); woodland(course, col, s, off); colors.push(col.r, col.g, col.b);
+      col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
     });
   }
@@ -113,7 +148,7 @@ export function farTerrainGeometry(course) {
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
     v.push(x,course.groundAt(roadS,off).y-.15,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
-    const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));fallenLeaves(course,col,roadS,off);woodland(course,col,roadS,off);colors.push(col.r,col.g,col.b);
+    const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
     if(i&&j){const a=j*columns+i,quad=[a-columns-1,a-1,a-columns,a];
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
       if(quad.every(k=>distances[k]>(course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);

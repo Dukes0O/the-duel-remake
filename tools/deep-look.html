@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>The Deep: look test (nothing here is in the game)</title>
+<style>
+  html, body { margin: 0; background: #02080a; color: #cfe7ea; font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }
+  #stage { width: 1280px; height: 720px; position: relative; }
+  #stage canvas { display: block; }
+  #readout { position: absolute; left: 10px; bottom: 8px; padding: 4px 8px; background: #02080acc; border-radius: 4px; white-space: pre; pointer-events: none; }
+  body.clean #readout { display: none; }
+</style>
+<div id="stage"><div id="readout"></div></div>
+<script type="module" src="./deep-look.js"></script>
+</html>

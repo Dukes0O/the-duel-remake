@@ -100,3 +100,16 @@ export function installBasins(course) {
     return height;
   };
 }
+
+// Gentler land beyond the road (`relief: { from, to, scale }` on a circuit): the
+// natural relief is kept near the road and eased down to `scale` of itself from
+// `from` to `to` metres beyond the road's edge, so the far hillsides rise more
+// slowly and the hills drawn behind them stand out. Wraps the course's relief
+// like the basins, so a course without this option never reaches this code.
+export function installReliefScale(course) {
+  const natural = course._relief.bind(course), { from = 30, to = 110, scale = .5 } = course.def.relief;
+  course._relief = (s, off) => {
+    const edge = Math.abs(off) - course.roadHalfWidthAt(course.phase(s));
+    return natural(s, off) * (1 - (1 - scale) * smooth((edge - from) / (to - from)));
+  };
+}

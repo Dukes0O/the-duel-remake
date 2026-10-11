@@ -586,14 +586,20 @@ export const REFERENCE_DYNAMICS = Object.freeze({
 export function buildRacingLine(geometry, dynamics = REFERENCE_DYNAMICS) {
   const { length, closed, count, step, samples } = geometry;
   const turns = geometry.pieces.filter(piece => piece.kind === 'turn');
-  const room = s => Math.max(0, geometry.halfWidthAt(s) - TRACK_SCRIPT.lineMargin);
+  // A circuit with walls asks for more room (`lineMargin` on its definition).
+  const margin = dynamics.lineMargin ?? TRACK_SCRIPT.lineMargin;
+  const room = s => Math.max(0, geometry.halfWidthAt(s) - margin);
   const keys = [];
   for (const piece of turns) {
     const apex = piece.s0 + (piece.s1 - piece.s0) * TRACK_SCRIPT.apexShare;
     // The apex goes to the inside edge unless the corner is tighter than the car
     // can turn: then the line runs wide to give the car a bigger circle.
     const inside = clamp((piece.radius - (dynamics.minRadius ?? 0)) / Math.max(.1, room(apex)), -1, 1);
-    keys.push({ s: piece.s0, side: -piece.dir }, { s: apex, side: piece.dir * inside }, { s: piece.s1, side: -piece.dir });
+    // A gentle bend between walls needs only a small sweep across the road: with `lineSwing` the
+    // line crosses no more than that share of the bend's sagitta (how far its arc bows from the chord).
+    const sagitta = piece.radius * (1 - Math.cos(piece.degrees * Math.PI / 360));
+    const swing = dynamics.lineSwing ? clamp(dynamics.lineSwing * sagitta / Math.max(.1, room(apex)), .2, 1) : 1;
+    keys.push({ s: piece.s0, side: -piece.dir * swing }, { s: apex, side: piece.dir * inside * swing }, { s: piece.s1, side: -piece.dir * swing });
   }
   keys.sort((a, b) => a.s - b.s);
   const merged = [];

@@ -18,6 +18,7 @@ import { createPavedRoadMaterial, createPavedShoulderMaterial } from './road-sur
 import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
 import { addTrackScriptScene } from './track-script-scene.js';
+import { addCircuitWater, addRoadGlow } from './circuit-water.js';
 import { addFreestyleScenery } from './freestyle-scene.js';
 
 import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, hollowMudTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
@@ -50,7 +51,7 @@ export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
     return group;
   }
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
-  const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night});
+  const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night,wet:!!course.def.wetRoad});
   const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
   const cream = new THREE.MeshStandardMaterial({ color: 0xe8d2a5, roughness: .8 });
   const yellow = new THREE.MeshStandardMaterial({ color: 0xd8a943, roughness: .85 });
@@ -81,6 +82,7 @@ export function buildEnvironment(course, {saltFlats,trackKits} = {}) {
     }
   }
   if(course.script)addTrackScriptScene(group,course);
+  addCircuitWater(group,course);addRoadGlow(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};

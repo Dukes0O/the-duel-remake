@@ -166,7 +166,7 @@ function paddock() {
   const out = [kit('start-gantry', START.gantry, 0, { heading: Math.PI })];
   out.push(...along('pit-garage', START.pits[0], START.pits[1], 7.4, -31));
   out.push(...along('pit-wall', START.pits[0] - 2, START.pits[1] + 2, 4.05, -22));
-  for (let s = START.stands[0]; s <= START.stands[1]; s += 15) out.push(kit('grandstand', s, 31, { heading: FACE_RIGHT, clear: 10 }));
+  for (let s = START.stands[0]; s <= START.stands[1]; s += 15) out.push(kit('grandstand', s, 31, { heading: FACE_RIGHT, clear: 10, crowd: true }));
   return out;
 }
 
@@ -186,6 +186,14 @@ function safety() {
       const s = corner.s0 - distance, board = `braking-board-${distance}`;
       if (road.pieceAt(wrap(s)).kind === 'straight') out.push(kit(board, s, side * (halfAt(s) + 2.4), { heading: Math.PI }));
     }
+  }
+  // Beaver Hairpin comes off a short spur and a kink, so the script has room for only its 50 m board.
+  // The 150 and 100 m boards stand on the outside of the hairpin, along the approach (the 100 m board
+  // is on the end of the kink).
+  const hairpin = named('Beaver Hairpin');
+  for (const distance of [150, 100]) {
+    const s = hairpin.s0 - distance;
+    out.push(kit(`braking-board-${distance}`, s, outside(hairpin) * (halfAt(s) + 2.4), { heading: Math.PI }));
   }
   // Marshal posts behind them.
   for (const [name, at] of [['Pine Drop', .5], ['Ridge Corner', .5], ['Beaver Hairpin', .3], ["Devil's Chicane 2", .6], ['Lodge Bend', .5]]) {
@@ -275,10 +283,10 @@ function backdrop() {
   // A pale run: from the summit ridge down toward the road (dv falls toward the road).
   const ski = { x: foot.x + Math.cos(foot.heading) * 310, z: foot.z - Math.sin(foot.heading) * 310, angle: foot.heading, along: 360, across: 230, height: 150, cell: 6,
     runs: [
-      { from: [-120, 6], to: [-150, -70], width: 24 }, { from: [-150, -70], to: [-205, -150], width: 26 },
-      { from: [-30, 22], to: [-10, -80], width: 28 }, { from: [-10, -80], to: [25, -170], width: 30 },
-      { from: [80, 18], to: [120, -60], width: 24 }, { from: [120, -60], to: [96, -150], width: 28 },
-      { from: [185, -10], to: [230, -90], width: 22 },
+      { from: [-185, 14], to: [-205, -95], width: 34 }, { from: [-205, -95], to: [-175, -185], width: 38 },
+      { from: [-65, 30], to: [-45, -90], width: 36 }, { from: [-45, -90], to: [-70, -205], width: 40 },
+      { from: [60, 30], to: [85, -95], width: 36 }, { from: [85, -95], to: [60, -205], width: 40 },
+      { from: [175, 14], to: [200, -85], width: 34 }, { from: [200, -85], to: [170, -170], width: 38 },
     ] };
   // A lower shoulder along the ridge, so the skyline is not one bell.
   const hills = [ski, { x: ski.x + 40, z: ski.z + 330, angle: foot.heading, along: 240, across: 190, height: 105, cell: 12 }];
@@ -297,21 +305,26 @@ function backdrop() {
 }
 
 // Leaves on the grass beside the road: red, gold and orange multipliers for the ground.
-const LEAVES = { colours: [[1.15, .55, .26], [1.0, .42, .22], [1.2, .85, .3], [.95, .5, .3]], strength: .6, reach: 38, far: .12,
+const LEAVES = { gravel: { colour: [.42, .42, .5], width: 20, fade: 12, ends: 30, grass: [.55, .75, .58], to: 70 },
+  colours: [[1.15, .55, .26], [1.0, .42, .22], [1.2, .85, .3], [.95, .5, .3]], strength: .6, reach: 38, far: .12,
   // Beyond the verge the hillsides are forest, dark green with patches of autumn.
-  wood: { green: [.62, .86, .5], colours: [[1.3, .62, .22], [1.2, .42, .2], [1.3, .92, .3], [1.05, .5, .22]], share: .35, from: 38 } };
+  wood: { green: [.46, .72, .42], colours: [[1.3, .62, .22], [1.2, .42, .2], [1.3, .92, .3], [1.05, .5, .22]], share: .35, from: 14 } };
 // Pine crowns that turn: linear colours for the shader (gold, orange, red, copper).
 const AUTUMN = { share: .4, colours: [[1, .8, .15], [1, .5, .06], [.95, .2, .06], [1, .62, .08], [.9, .34, .06]] };
-// An autumn morning: the sun low and warm on the side away from the lake, long shadows, a light haze.
+// An autumn morning: the sun about 25 degrees up and warm on the side away from the lake, long shadows, a light
+// haze. Its strength is kept modest (the open ground burns out to cream above this) and the bloom light, so
+// nothing facing the sun goes white.
 const MORNING = {
-  sunOffset: { x: -118, y: 33, z: 24 }, sunColor: 0xffbb78, sun: 6.2, hemi: 1.0, env: .5, sunStrength: 1,
+  sunOffset: { x: -118, y: 56, z: 24 }, sunColor: 0xffc48a, sun: 2.0, hemi: 1.4, env: .5, sunStrength: 1,
   fog: 0xe6c7a0, fogNear: 340, fogFar: 2100, top: '#3f73a3', horizon: '#f4c58f', ground: 0x6a5a38,
-  cloudTint: [1, .76, .52], cloudCover: .5, exposure: 1.14, bloom: .28,
+  cloudTint: [1, .76, .52], cloudCover: .5, exposure: 1.18, bloom: .1,
 };
 
 export const TREMBLANT_WOODS = defineScriptedCourse({
   ...BASE,
   markings: 'circuit', light: MORNING, groundLeaves: LEAVES,
+  // The land beyond the trees rises gently, so the hills behind it carry the skyline.
+  relief: { from: 25, to: 100, scale: .38 },
   // The forest crowds the road from 13 m beyond the edge; the pines keep out of the
   // lake, the lift's cut through the trees, the paddock and the fence between the
   // spur and Timber Straight (the hill below plants its own).
