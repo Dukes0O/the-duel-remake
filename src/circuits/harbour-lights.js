@@ -84,4 +84,31 @@ export const HARBOUR_LIGHTS = defineScriptedCourse({
     ['turn', 'R', 109, 60, { name: 'Harbour Turn' }],
     ['straight', 61, { name: 'Harbour Return' }],
   ],
+  // Team Room intel (docs/CIRCUITS.md section 7b.1), written by Claude. Target
+  // speeds and gears come from the reference lap; these notes give the line.
+  intel: {
+    sectors: [1000, 2260],
+    flags: [
+      { id: 'lantern-hairpin', kind: 'signature', s: 1990, title: 'Lantern Hairpin', camera: { back: 30, up: 1.2, ahead: 40 } },
+      { id: 'casino', kind: 'overtaking', s: 790, title: 'Seafront into Casino Corner' },
+      { id: 'harbour-turn', kind: 'overtaking', s: 3700, title: 'Harbour Road into Harbour Turn' },
+      { id: 'old-town', kind: 'corner', s: 1420, title: 'Old Town Esses' },
+      { id: 'reservoir-sweep', kind: 'corner', s: 3060, title: 'Reservoir Sweep' },
+    ],
+    notes: {
+      'lantern-kink': { line: 'Flat out. A touch left, stay off the wall.', note: 'Only scary the first time. Keep your foot down.' },
+      'casino-corner': { brakeBoard: 100, line: 'Brake straight, turn late, aim for the inside barrier.', note: 'The best place to pass. If you miss your braking point, take the escape road; do not try to make the turn.' },
+      'temple-hill': { line: 'Middle of the road up the hill.', note: 'Walls on both sides from here. Neat beats brave.' },
+      'bell-tower-bend': { line: 'Wide in, clip the inside, straight up.', note: 'The road narrows after this. Settle the car before the old town.' },
+      'old-town-esses-1': { line: 'Left, right, left, right: one smooth line through all four.', note: 'Ten metres wide. Pick a line and commit; correcting here means a wall.' },
+      'old-town-esses-2': { line: 'Kerb to kerb.', note: 'Keep the rhythm.' },
+      'old-town-esses-3': { line: 'Kerb to kerb.', note: 'Keep the rhythm.' },
+      'old-town-esses-4': { line: 'Run wide on the exit up the Hillside.', note: 'Get the exit right; the Hillside is short.' },
+      'precinct-bend': { line: 'Stay right after the bend to set up the hairpin.', note: 'Downhill now. Line up on the right for the hairpin.' },
+      'lantern-hairpin': { brakeBoard: 150, line: 'Far right on entry, turn late, use the whole road around.', note: 'The slowest corner in the game: about 30 km/h. Brake early, be patient, and drive out cleanly. Rushing it loses more than braking early.' },
+      'fishmarket-bend': { line: 'Wide exit onto the Reservoir Run.', note: 'Everything you carry out of here lasts the length of the reservoir.' },
+      'reservoir-sweep': { line: 'Turn in early and hold it, walls close on the outside.', note: 'Flat out if you are brave. A small lift if a car is alongside.' },
+      'harbour-turn': { brakeBoard: 100, line: 'Brake straight, turn in, inside kerb.', note: 'Second chance to pass, and the last on the lap.' },
+    },
+  },
 });
