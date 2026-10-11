@@ -222,7 +222,7 @@ function trees() {
     return lake || lift || start || inside || hill || Math.abs(lateral) < 26;
   };
   // Groves of three or four, on both sides of the road all the way round.
-  for (let grove = 0; out.length < 78 && grove < 400; grove++) {
+  for (let grove = 0; out.length < 36 && grove < 400; grove++) {
     const s = random() * LENGTH, side = random() < .5 ? -1 : 1, lateral = side * (28 + random() * 40);
     if (avoid(s, lateral)) continue;
     const count = 3 + Math.floor(random() * 2);
@@ -234,7 +234,7 @@ function trees() {
   }
   // And on the hill, off the ski runs.
   let onHill = 0;
-  for (let attempt = 0; onHill < 26 && attempt < 800; attempt++) {
+  for (let attempt = 0; onHill < 12 && attempt < 800; attempt++) {
     const du = (random() * 2 - 1) * HILL.along * .8, dv = (random() * 2 - 1) * HILL.across * .8;
     if (hillReach(HILL, du, dv) > .8 || runWeight(HILL, du, dv) > .02) continue;
     out.push(kit(ids[attempt % 3], HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: 1 + random() * .5, clear: 3.2, hill: 0 }));
