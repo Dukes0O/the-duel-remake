@@ -54,8 +54,9 @@ found by id first, then by the old position only when there is no usable id (old
 `activeRace.key` and `stageIndex` are rebuilt from the course found. The legacy course-access
 migration reads the id too. Proof (`tools/test-release-tremblant.mjs`, new fixture
 `tools/fixtures/saves/08-unfinished-race.json`): an old save with only a position resumes the
-right course; a new save resumes Tremblant; the id beats a stale position; an unknown id falls
-back to the position; a course inserted before Tremblant moves it one place and the saved race
+right course; a new save resumes Tremblant; the id beats a stale position; an id this build
+doesn't have drops the race (Claude's review: falling back to the position could resume the
+wrong course after a rollback or a switched-off course; that assertion was changed to match); a course inserted before Tremblant moves it one place and the saved race
 still finds it. Older builds: checked by loading the new fixture with the previous integration
 build's own code (commit 7f59e4e6): it loads, ignores `stageId`, and reads the race as before.
 The only case it drops is a Tremblant race, since that build has no such course (as for any

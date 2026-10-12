@@ -99,7 +99,7 @@ const load = activeRace => normalizeProfile({ version: 2, credits: 100, activeRa
 equal(load(race({ stageIndex: 3, key: 'run-x:3' }))?.stageId, 'titan-arena', 'an old save with only a position resumes the course at that position');
 equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }))?.stageIndex, tremblant, 'a new save resumes Tremblant');
 equal(load(race({ stageIndex: 0, stageId: 'tremblant-woods' }))?.stageId, 'tremblant-woods', 'the id wins over a stale position');
-equal(load(race({ stageIndex: 3, stageId: 'no-such-course' }))?.stageId, 'titan-arena', 'an unknown id falls back to the position');
+equal(load(race({ stageIndex: 3, stageId: 'no-such-course' })), null, 'a course id this build does not have drops the race instead of resuming whatever sits at that position');
 equal(load(race({ stageIndex: 999, stageId: 'no-such-course' })), null, 'an unknown id and position is dropped, as before');
 {
   // A course inserted before Tremblant moves it one place; the saved race must still find it.

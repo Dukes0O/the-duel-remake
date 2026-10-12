@@ -185,7 +185,9 @@ export function normalizeProfile(value) {
   const race = value.activeRace;
   // An unfinished race names its course by id first (positions move when a course is
   // added before it); saves from before the id existed fall back to the saved position.
-  const raceIndex = !race ? -1 : typeof race.stageId === 'string' && COURSE.some(stage => stage.id === race.stageId)
+  // A named course this build doesn't have (switched off, or a rollback) drops the race
+  // rather than resuming whatever course now sits at that position.
+  const raceIndex = !race ? -1 : typeof race.stageId === 'string'
     ? COURSE.findIndex(stage => stage.id === race.stageId)
     : Number.isInteger(race.stageIndex) && COURSE[race.stageIndex] ? race.stageIndex : -1;
   if (
