@@ -117,11 +117,14 @@ try {
   assert.equal(duel.state.traffic.length,0);
 } finally { COURSE[0]=original; }
 // Separate stretches must not share terrain; hairpin neighbours are exempt.
-const points=geometry.samples.filter((_,index)=>index%10===0);
-let closest=Infinity;
+const points=geometry.samples;
+let closestSquared=Infinity;
 for(let a=0;a<points.length;a++)for(let b=a+1;b<points.length;b++){
   if(points[b].s-points[a].s<=750)continue;
-  closest=Math.min(closest,Math.hypot(points[b].x-points[a].x,points[b].z-points[a].z));
+  const dx=points[b].x-points[a].x,dz=points[b].z-points[a].z;
+  if(dx*dx>=closestSquared||dz*dz>=closestSquared)continue;
+  closestSquared=Math.min(closestSquared,dx*dx+dz*dz);
 }
+const closest=Math.sqrt(closestSquared);
 assert.ok(closest>=165, `separate mountain legs leave ${closest.toFixed(1)} m`);
 console.log('Summit authored layout, climb, native finish road and separation passed.');

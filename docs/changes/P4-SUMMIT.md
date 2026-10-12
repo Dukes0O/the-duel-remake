@@ -106,6 +106,45 @@ inspection of all native 2 m samples finds a 167.6946 m minimum for pairs
 more than 750 m apart. This is no focused/native/kit acceptance pass.
 The Gallery pictures and physical inputs still use the actual approved model.
 
+The exact fitted lengths and angles are recorded below before strengthening
+or rerunning the tests. Pieces are the one-based numbers in Claude's draft.
+
+| Piece | Before | After |
+| --- | --- | --- |
+| 1 | 470 m | 460.3634 m |
+| 3 | 380 m | 372.2087 m |
+| 5 | 370 m | 362.4137 m |
+| 7 | 340 m | 333.0288 m |
+| 9 | 630 m | 617.0828 m |
+| 11 | 390 m | 382.0037 m |
+| 13 | 310 m | 303.6439 m |
+| 14 | 420 m | 411.3886 m |
+| 16 | 190 m | 171 m |
+| 18 | 560 m | 548.5181 m |
+| 20 | 210 m | 189 m |
+| 22 | 570 m | 558.3130 m |
+| 24 | 170 m | 153 m |
+| 26 | 370 m | 362.4137 m |
+| 27 | 560 m | 548.5181 m |
+| 29 | 610 m | 597.4929 m |
+| 31 | 390 m | 382.0037 m |
+| 33 | 170 m | 153 m |
+| 35 | 590 m | 577.9030 m |
+| 37 | 520 m | 509.3382 m |
+| 45 | 140 m | 126 m |
+| 49 | 160 m | 144 m |
+| 17 | 54 degrees | 59.4 degrees |
+| 19 | 172 degrees | 170 degrees |
+| 21 | 47 degrees | 51.7 degrees |
+| 25 | 50 degrees | 55 degrees |
+| 34 | 53 degrees | 58.3 degrees |
+| 46 | 38 degrees | 41.8 degrees |
+| 50 | 52 degrees | 57.2 degrees |
+
+The separation check now uses every native sample (about 2 m), keeping the
+same >750 m exclusion and >=165 m target. The earlier 20 m sampling missed
+an undersized candidate; denser coverage closes that gap without new machinery.
+
 ## Changed assertions
 
 The feature catalogue grows from 23 to 24 entries only for summit-run dev.
