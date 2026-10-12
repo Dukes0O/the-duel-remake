@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T21:03:24.190Z
+Observed at: 2026-10-12T21:06:15.084Z
 
-Observation commit: 8f9d70c26cb224ee7eea1bb8d69f5bfbc581dc84
+Observation commit: 7f051e6acc97a18f7ed2478f3f5e4c0dd82b44aa
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8f9d70c26cb224ee7eea1bb8d69f5bfbc581dc84
+Integration HEAD: 7f051e6acc97a18f7ed2478f3f5e4c0dd82b44aa
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -54,7 +54,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/fac-03 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
+| codex/fac-03 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
 | codex/fac-04 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-04 |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -72,7 +72,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/fac-03 | FAC-03 | 2026-10-12T13:54:55-07:00 | 0 | last commit 2026-10-12T13:54:55-07:00 | docs/changes/FAC-03.md, tools/browser-harness.mjs, tools/combat-balance.mjs, tools/night-shift.mjs, tools/scenarios/frame-pacing.mjs |
+| codex/fac-03 | FAC-03 | 2026-10-12T13:54:55-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/FAC-03.md, tools/browser-harness.mjs, tools/combat-balance.mjs, tools/night-shift.mjs, tools/scenarios/frame-pacing.mjs |
 | codex/fac-04 | FAC-04 | 2026-10-12T13:59:54-07:00 | 0 | last commit 2026-10-12T13:59:54-07:00 | docs/changes/FAC-04.md, src/circuit-manifests.js, src/circuits/harbour-lights.js, src/circuits/index.js, src/circuits/panorama-ridge.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | unknown | 2026-10-12T12:43:24-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
@@ -93,9 +93,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 280,942 B | +146,120 B | 5,000,000 B |
+| Added bytes in last merge | 1,350,473 B | +1,069,531 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 395,195,392 B | +782,336 B | unavailable |
+| Git objects | 395,310,080 B | +114,688 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +104,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 8f9d70c26cb224ee7eea1bb8d69f5bfbc581dc84
+- Local integration/wasteland: 7f051e6acc97a18f7ed2478f3f5e4c0dd82b44aa
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
