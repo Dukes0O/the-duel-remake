@@ -1,6 +1,6 @@
 # FAC-07
 
-Status: building. No game, scenario assertion or save changes.
+Status: ready-to-merge. No game, scenario assertion or save changes.
 
 ## Design before code
 
@@ -20,7 +20,7 @@ The card grants machinery for this runner. Named hooks granted before code: tool
 
 Tests-first RED: new runner tests fail 6/6 against missing API/old CLI; existing harness tests pass 9/9, new shared-bundle test fails on unknown --qa-bundle. No browser was launched. Pure tool GREEN: scenario orchestration 6/6; harness 12/12, including unique completed build, failed-build cleanup, project/marker validation and Recycle Bin target guard. Original nine harness cases stay exact. Named scenario discovery returns all 124 existing names.
 
-Canonical FAC-01 target plan is 22 suites and includes the unchanged real native audio-crash-peak browser capture; reported before execution and held for the Director/FAC-03 night selector. No selector or assertion bypass. Production build and ordinary source review pending; canonical lane waits approved day/night routing. Real browser/frame/balance acceptance moves to FAC-03 night shift; no daytime pass is claimed.
+The earlier canonical FAC-01 plan had 22 suites, including unchanged real native audio-crash-peak browser capture, and was held before execution. Earlier production build passed in 576 ms; Root ordinary review clears frozen source 4f3d95d3. No selector or assertion bypass was used. The accepted FAC-03 selector is now merged from integration, preserving all incoming changes and routing native browser/audio and Blender child workloads to the night full tier. Freeze this union for one canonical targeted lane jobs 4 and production build, then quick delta review. Real browser/frame/balance acceptance remains night work; no daytime pass is claimed.
 
 ## Removed
 
