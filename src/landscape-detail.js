@@ -36,7 +36,7 @@ export function addLandscapeInstanceCells(group, source, {kind='detail', wind=0,
   return meshes;
 }
 
-export function addLandscapeDetail(group,course,alpine){
+export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   const rng=makeRng(9817+course.def.stage),o=new THREE.Object3D();
   const desert=course.def.theme==='desert',coolStone=course.def.theme==='alpine'||course.def.theme==='coast';
   const city=course.def.theme==='city',cityPlacement=city?createCityDecorationPlacement(course):null;
@@ -53,9 +53,16 @@ export function addLandscapeDetail(group,course,alpine){
       if(palette==='meadow')color.setHSL(.14,.06,.75+rng.float()*.2);
       else if(palette==='stone')color.setHSL(desert?.1:.53,desert?.12:.025,.6+rng.float()*.3);
       else color.setHSL(coolStone||city ? .22 : .11,.16+rng.float()*.2,.25+rng.float()*.25);
-      mesh.setColorAt(i,color);}
+      mesh.setColorAt(i,color);
+      if(options.kind==='foliage'&&omitFoliageAt?.(o.position.x,o.position.z))omitted.add(i);}
     if(cityPlacement&&(options.kind==='foliage'||options.kind==='grit'))(group.userData.cityDecorations??=[]).push({kind:options.kind,count,relocated,omitted:omitted.size});
-    mesh.receiveShadow=true;mesh.castShadow=!!options.castShadow;return addLandscapeInstanceCells(group,mesh,{...options,omitted});
+    mesh.receiveShadow=true;mesh.castShadow=!!options.castShadow;
+    const cells=addLandscapeInstanceCells(group,mesh,{...options,omitted});
+    if(omitFoliageAt&&options.kind==='foliage'&&!cells.length){
+      geometry.dispose();material.dispose();
+      for(const value of Object.values(material))if(value?.isTexture&&!value.userData.sharedAsset)value.dispose();
+    }
+    return cells;
   }
   // Tufts use individual bent blades, with darker roots and warm sunlit tips.
   const v=[],c=[];

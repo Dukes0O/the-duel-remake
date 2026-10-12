@@ -380,7 +380,11 @@ export class Course {
   // The road surface under a place (src/race-surfaces.js): the stretch the script gives it, then any patch. Verges are asphalt-kind: the old off-road rules govern them.
   gripKindAt(s,lateral=0){
     if(!this.script)return'asphalt';
-    const p=this.phase(s);if(Math.abs(lateral)>this.script.halfWidthAt(p))return'asphalt';
+    const p=this.phase(s);
+    if(Math.abs(lateral)>this.script.halfWidthAt(p)){
+      for(const patch of this.features.surfacePatches)if(patch.snowBank&&p>=patch.s0&&p<=patch.s1&&lateral>=patch.from&&lateral<=patch.to)return patch.kind;
+      return'asphalt';
+    }
     let kind=this.script.surfaceAt(p);
     for(const patch of this.features.surfacePatches)if(p>=patch.s0&&p<=patch.s1&&lateral>=patch.from&&lateral<=patch.to)kind=patch.kind;
     return kind;

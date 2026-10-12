@@ -1,22 +1,22 @@
 # Build status
 
-Observed at: 2026-10-11T20:10:35.337Z
+Observed at: 2026-10-12T03:07:54.206Z
 
-Observation commit: 33aacf7a82929af51f315a93248aa26cfb15ded7
+Observation commit: a6496d645606fa305f2a582b5dbfb9a10e7748e1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 33aacf7a82929af51f315a93248aa26cfb15ded7
+Integration HEAD: a6496d645606fa305f2a582b5dbfb9a10e7748e1
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
-Live commit: 1046076a90623c26c76ffe623e9589dbf5717490
+Live commit: not checked
 
-Live build version: 20261010195525-87b479fc74c0
+Live build version: not checked
 
 Full tier: stale; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-11T11:36:46.755Z; tested commit: fbc7d76cbe999183cc154da665087624103c0506.
+Last recorded full run: 2026-10-12T02:00:38.772Z; tested commit: 8513dc1d3b248da7ee96ff2830c784ab4f2d6af6.
 
 ## Feature switches
 
@@ -39,10 +39,12 @@ Last recorded full run: 2026-10-11T11:36:46.755Z; tested commit: fbc7d76cbe99918
 | cpu-crews | on |
 | ambush-alley | on |
 | gunn | on |
-| grand-prix | dev |
+| grand-prix | on |
+| snow-world | dev |
 | panorama-ridge | dev |
 | harbour-lights | dev |
-| tremblant-woods | dev |
+| tremblant-woods | on |
+| the-deep | dev |
 
 ## Lane branches
 
@@ -50,11 +52,13 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
-| codex/p4-kit-load-time | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kit-load-time |
-| codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
+| codex/p4-panorama | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
-| codex/p4-snow | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow |
+| codex/p4-ready | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow |
+| codex/p4-snow | 0 | unknown | false | false | unknown |
+| codex/qa-lane-scope | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-lane-scope |
 | codex/tools/callback-diagnostics | 6 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 16 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 16 | unknown | true | false | unknown |
@@ -66,11 +70,13 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-gp-existing | unknown | 2026-10-11T09:47:58-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/app.js, src/course.js, src/ghost.js, src/leaderboard.js |
-| codex/p4-kit-load-time | unknown | 2026-10-11T12:52:48-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/board.yaml, docs/board/next-run.md, docs/changes/P4-KIT-LOAD-TIME.md, src/render3d.js, src/track-kits.js |
-| codex/p4-panorama | unknown | 2026-10-11T12:18:02-07:00 | 0 | last commit 2026-10-11T12:18:02-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-KIT-LOAD-TIME.md, docs/changes/P4-PANORAMA.md |
+| codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
+| codex/p4-gp-existing | unknown | 2026-10-11T15:28:44-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/app.js, src/course.js, src/ghost.js, src/leaderboard.js |
+| codex/p4-panorama | unknown | 2026-10-11T15:28:47-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PANORAMA.md, src/app.js |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js |
-| codex/p4-snow | unknown | 2026-10-11T12:29:22-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md, docs/board/looks/p4-snow/round-2.jpg, docs/board/looks/p4-snow/round-3-review.md |
+| codex/p4-ready | unknown | 2026-10-11T19:38:28-07:00 | 0 | last commit 2026-10-11T19:38:28-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/checks/full-tier.json, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg |
+| codex/p4-snow | unknown | 2026-10-11T15:27:35-07:00 | 0 | last commit 2026-10-11T15:27:35-07:00 | docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md, docs/board/looks/p4-snow/round-2.jpg, docs/board/looks/p4-snow/round-3-review.md |
+| codex/qa-lane-scope | unknown | 2026-10-11T19:37:21-07:00 | 0 | last commit 2026-10-11T19:37:21-07:00 | docs/changes/QA-LANE-SCOPE.md, tools/run-tests.mjs, tools/test-test-runner.mjs |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 6 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -84,24 +90,24 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 17,671,624 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 732,151 B | +504,874 B | 5,000,000 B |
+| Review `looks/` | 19,976,677 B | +2,305,053 B | 20,000,000 B |
+| Added bytes in last merge | 125,211 B | -2,216,602 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 422,153,216 B | +1,249,280 B | unavailable |
+| Git objects | 429,846,528 B | +7,251,968 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 1046076a90623c26c76ffe623e9589dbf5717490
+- Local master: 8513dc1d3b248da7ee96ff2830c784ab4f2d6af6
 - Local main: missing
-- Local integration/wasteland: 33aacf7a82929af51f315a93248aa26cfb15ded7
+- Local integration/wasteland: a6496d645606fa305f2a582b5dbfb9a10e7748e1
 
-Local rollback build (dist-previous): 20261010012052-a7177c289a56. Manifest presence does not verify the full rollback build.
+Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: behind local; cached commit e4b82b0bfaa5bdc6a587b42f842c33ac3458792d.
+- Remote origin/master: matches local; cached commit 8513dc1d3b248da7ee96ff2830c784ab4f2d6af6.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
 - Remote origin/integration/wasteland: behind local; cached commit cbb4e8975fe23911b9940499e0ae1ee17660955b.
