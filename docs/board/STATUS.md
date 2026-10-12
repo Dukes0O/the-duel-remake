@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T23:45:41.973Z
+Observed at: 2026-10-12T23:54:18.054Z
 
-Observation commit: ccbfe263775fe120b9f7f73919f62cbdbe13b537
+Observation commit: cd6308b67bca5695a1cc3c6fd1c884e7006f77a0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ccbfe263775fe120b9f7f73919f62cbdbe13b537
+Integration HEAD: cd6308b67bca5695a1cc3c6fd1c884e7006f77a0
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -39,7 +39,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-qualifying | 1 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/qa-lane-native-relief | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-lane-native-relief |
-| codex/qa-status-factory | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-status-factory |
+| codex/qa-status-factory | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-status-factory |
 | codex/tools/callback-diagnostics | 7 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 17 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 17 | unknown | true | false | unknown |
@@ -72,9 +72,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,939,412 B | +1,815,197 B | 5,000,000 B |
+| Added bytes in last merge | 1,939,412 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 400,852,992 B | +74,752 B | unavailable |
+| Git objects | 400,898,048 B | +45,056 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -83,7 +83,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: ccbfe263775fe120b9f7f73919f62cbdbe13b537
+- Local integration/wasteland: cd6308b67bca5695a1cc3c6fd1c884e7006f77a0
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

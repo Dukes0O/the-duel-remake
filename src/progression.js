@@ -1,3 +1,4 @@
+import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay} from './grand-prix-career.js';
 import { weaponSignature } from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
@@ -154,6 +155,7 @@ export function normalizeProfile(value) {
   // Reward old, fully built garages on load, before validating the selected car.
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
+  if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
   profile.cosmetics = normalizeCosmetics(value.cosmetics, profile);
   profile.drivers = getDriverState({ ...profile, drivers: value.drivers });
@@ -702,7 +704,8 @@ export function settleRace(profile, result = {}) {
   const career = applyWastelandResult(profile.wasteland, result,
     stageEventId(result.stageIndex), {finished, won});
   const updated = {
-    ...profile,
+    ...(finished && result.qualifying !== true ? countDeepFinish(profile, {enabled: result.deepEnabled === true,
+      eventId: stageEventId(result.stageIndex), mode: result.mode}) : profile),
     ...(notoriety || pacificFinish || muddyHollowFinish || career.wasteland !== profile.wasteland ? {wasteland: {
       ...career.wasteland,
       ...(notoriety ? {xp: totalXp, rank: notorietyRank,
