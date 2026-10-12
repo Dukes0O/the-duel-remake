@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T19:58:58.978Z
+Observed at: 2026-10-12T20:01:48.056Z
 
-Observation commit: 2bd7d5ca6538602fb98b4954b13e4ec9ea7c08f3
+Observation commit: cdc10b67e84baade49593abcdf2f0cee291957b8
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2bd7d5ca6538602fb98b4954b13e4ec9ea7c08f3
+Integration HEAD: cdc10b67e84baade49593abcdf2f0cee291957b8
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -57,7 +57,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/fac-02 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-02 |
 | codex/fac-03 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
 | codex/fac-06 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-06 |
-| codex/fac-07 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-07 |
+| codex/fac-07 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-07 |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -95,7 +95,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 1,912,940 B | +0 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 390,616,064 B | +493,568 B | unavailable |
+| Git objects | 390,831,104 B | +215,040 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +104,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 2bd7d5ca6538602fb98b4954b13e4ec9ea7c08f3
+- Local integration/wasteland: cdc10b67e84baade49593abcdf2f0cee291957b8
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
