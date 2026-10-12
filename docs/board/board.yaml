@@ -280,7 +280,8 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-finishing-2026-10-12"
     needs: [P4-HARBOUR, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-HARBOUR.md"
 
@@ -289,7 +290,8 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-finishing-2026-10-12"
     needs: [P4-TREMBLANT, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-TREMBLANT.md"
 
