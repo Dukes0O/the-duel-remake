@@ -11,7 +11,7 @@ player_facing: no
 
 The integrator consumes a caller-supplied JSON packet pinned to the exact clean
 lane commit. It requires the original green targeted runner result (lane,
-changed, jobs 1Ã¢â‚¬â€œ4, zero failures and unrun suites), a successful production
+changed, jobs 1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“4, zero failures and unrun suites), a successful production
 build with its retained log, and one named clear review of that commit.
 It checks both Git worktrees and their shared repository before mutation.
 It never runs tests, builds, browser checks or release commands. Two independent
@@ -34,7 +34,11 @@ Acceptance tests failed first because the module was absent. Initial seven Git
 fixture checks pass (19.14 s); two independent green fixture merges took 2.99 s.
 The Windows relative-path check was fixed; no assertion was weakened. Additional
 identity, unrelated-registration and Recycle Bin failure cases are included.
-These are script acceptance fixtures, not real feature-gate evidence. Lane/build
+These are script acceptance fixtures, not real feature-gate evidence.
+The first lane run stopped at 12 passed / 1 failed / 4 unrun (102.96 s).
+Its new retained-branch test expected display text without Git's checked-out
+“+” marker. Before editing that assertion: verify the exact surviving branch
+commit instead. This directly proves preservation, with no weakened bound. Lane/build
 and root review remain pending on the frozen implementation below.
 
 ## Behavior and test changes

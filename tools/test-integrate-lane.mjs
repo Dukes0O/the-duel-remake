@@ -141,6 +141,6 @@ test('Recycle Bin failure leaves lane and branch intact with committed merge met
   await assert.rejects(integrateLane({...options, cleanup, runId: 'today', runStartedAt: new Date(Date.now()-60_000).toISOString(),
     recycle: () => {throw Error('Recycle Bin unavailable');}}), /Recycle Bin unavailable/);
   assert.ok(existsSync(options.lane));
-  assert.equal(git(f.integration, 'branch', '--list', 'codex/recycle-failure').trim(), 'codex/recycle-failure');
+  assert.equal(git(f.integration, 'rev-parse', 'refs/heads/codex/recycle-failure'), options.evidence.commit);
   assert.equal(git(f.integration, 'status', '--porcelain'), '');
 });
