@@ -178,7 +178,10 @@ function scatterScenery(course) {
     }
   }
   for (let i = 0; i < options.trees; i++) {
-    const s = rng.range(5, course.length - 5), theme = course.themeAt(s);
+    const randomS = rng.range(5, course.length - 5);
+    // Authored clusters use the same seeded draw count and retain open exits.
+    const s = options.clusteredTrees ? Math.max(5,Math.min(course.length-5,
+      Math.round(randomS/130)*130+(i%7-3)*7)) : randomS, theme = course.themeAt(s);
     if (theme === 'city' && i % 5 || theme === 'desert' && i % 3) continue;
     const off = (i % 2 ? 1 : -1) * rng.range(13, 80), scale = rng.range(.65, 1.7);
     if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && !cleared(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));
@@ -313,6 +316,14 @@ export function trackScriptSolids(course) {
   // After the planted scenery, so the trees stand exactly where they did.
   f.kitSolids = kitSolids(course);
   f.obstacles.push(...f.kitSolids);
+  if (lane && course.def.pitLane.kitDivider === true) {
+    if (!(course.def.kitPlacements ?? []).some(piece => piece.id === 'pit-wall' && piece.solid === true))
+      throw new TrackScriptError('An authored pit divider requires solid pit-wall kits.');
+    // Keep the original divider through scenery construction above, then use
+    // only the actual kit colliders and drawing. Seeded tree placement stays exact.
+    f.walls = f.walls.filter(wall => !wall.pitWall);
+    f.obstacles = f.obstacles.filter(obstacle => !obstacle.pitWall);
+  }
   course.obstacleBuckets = new Map(); course.rockBuckets = new Map();
   const buckets = Math.ceil(course.length / 64);
   course.bucketCount = buckets;

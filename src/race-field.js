@@ -198,8 +198,10 @@ export function gridPose(slot) {
 
 export function initializeField(duel) {
   const s = duel.state, course = duel.course;
-  // Azure stages on its preceding straight; timing and the visible line stay0.
-  const gridSetback = s.mode === 'grandprix' && course.def.id === 'azure-riviera' ? -400 : 0;
+  // GP staging leaves the timing origin and visible line at zero.
+  const gridSetback = s.mode === 'grandprix'
+    ? course.def.id === 'azure-riviera' ? -400 : course.def.id === 'panorama-ridge' ? -43 : 0
+    : 0;
   const cpu = s.cpuDifficulty, tuning = FIELD_TUNING[cpu] || FIELD_TUNING.medium;
   const racers = chooseRacers(cpu, s.opponentCount);
   const fieldSeed = (s.fieldSeed ?? s.seed) >>> 0;
