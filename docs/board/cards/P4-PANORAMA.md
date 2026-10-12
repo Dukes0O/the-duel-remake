@@ -124,3 +124,22 @@ with canonical nearby lane jobs 4, build and ordinary review; do not claim
 the pending native retry or final sheet completed. busy-game-files remains
 held while shared source hooks are being integrated. Never delete this old
 retained lane.
+
+## Factory source handoff, before integration
+
+The completed runtime source may merge under panorama-ridge dev as soon as
+its corrected nearby lane, build and ordinary review are green. This is
+the source slice, not whole-card or native-art acceptance. FAC-03 runs
+against integration, so the source and existing native recipe must be there
+for the deferred night retry. Keep the card open for the real final-lap
+dusk, Skyline/Conrod frames, round-three sheet and Claude's conditional
+acceptance; no fourth round, native pass or final sheet is invented.
+Release busy-game-files after those completed shared hooks merge. Any later
+source correction reclaims only its actual named hook and gets one fresh
+lane/build/review. No release or push.
+
+Generator hook granted before edit: tools/generate-shortcut-presets.mjs
+adds only definition.script to its unsupported arena/expansion skip.
+The original no-empty-script-row and exact 15-legacy-entry guard remains
+unchanged, as do all 15 path values and fingerprints. Only its normal
+source fingerprint changes.
