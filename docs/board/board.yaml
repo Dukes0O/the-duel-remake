@@ -4195,10 +4195,11 @@ tasks:
 
     menu_copy_scope: 'Director before edit, 12 October: after the frozen Eifel run drains and after sync with accepted qualifying, fix only the two existing menu labels/distance calculations that hardcode 8 cars and 3 laps. Derive them from authored fieldSize and grandPrixLaps. Harbour must say 4 laps; all original 8-car/3-lap labels and one-run wording remain exact. No race, pay, saves, UI structure or target changes; existing named screen-menu hook only.'
 
-    waiting_on: kyle
     pause_note: 'Kyle, 12 October: finish only the already-active Red Mesa baseline on 5071e3eb, record its result, then commit board/inbox/STATUS and stop. No new card, gate, balance or other heavy job. Claude FAC-01 changes the rules; restart only on Kyle instruction. Pacific, Azure, High Country, Harbour and Highlands, Eifel and Alpine bounded runs are complete; Red Mesa baseline is the last permitted job, Neon Docks and Cloudbreak are untouched.'
 
     pause_balance_result: 'Red Mesa baseline attempt 1 on 5071e3eb finished: exit 1, 136.77 s, original 90 races, jobs 4. Wins Easy/Medium/Hard 0/0/0 of 30 fail all bands; opening pile-ups 3/3/1 of 30 fail Easy/Medium and pass Hard; Medium passes 1.2333 (0.9667 after start) fail. All 90 players complete three laps, all 630 CPUs finish; no unfinished cars or stderr. Raw .evidence/2026-10-12/P4-GP-EXISTING/red-mesa-baseline-1-5071e3eb/red-mesa-rate.json. Two attempts remain, Neon Docks and Cloudbreak untouched. No further tuning/job/source edit; retained lane note is uncommitted for restart.'
+
+    factory_hold: "Kyle restarted under FAC-01 rules. Retain all original balance caps/results. Course runtime edits wait for FAC-04/FAC-05 registry lock; heavy acceptance moves to night shift once FAC-03 lands. No new balance run during factory setup."
 
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
@@ -5153,20 +5154,27 @@ tasks:
     lane: OPS
     size: S
     needs: [FAC-01]
-    status: ready
-    owns: [docs/CODEX_PLAYBOOK.md, docs/OPERATIONS.md, docs/changes/FAC-02.md]
+    status: building
+    owns: [docs/CODEX_PLAYBOOK.md, docs/OPERATIONS.md, tools/integrate-lane.mjs, tools/test-integrate-lane.mjs, docs/changes/FAC-02.md]
     acceptance:
       - "Playbook and OPERATIONS match AGENTS rules 11 to 15: a green lane with one review merges at once; a conflict-free merge does not re-run the lane tier; the run-log line is one sentence. Remove the 5-merge/2-hour deadline, the four-versus-five lane conflict and the stale integration path. Two green lanes merge within five minutes of each other."
+    claimed_by: codex-factory-2026-10-12
+    branch: codex/fac-02
+    script_scope: "Director before code: implement FACTORY section 5 integrator in the two named tools, using explicit current green lane/build evidence and one review. No post-conflict-free gate, push, release or live access. Only caller-proven newly created clean lane folders may be recycled; retained lanes stay. Record one merge line and commit shared metadata immediately."
+
   - id: FAC-03
     title: "Night shift and morning report"
     owner: codex
     lane: TOOL
     size: M
     needs: [FAC-01]
-    status: ready
+    status: building
     owns: [tools/night-shift.mjs, tools/test-night-shift.mjs, docs/changes/FAC-03.md]
     acceptance:
       - "One command runs, alone: full tier jobs 4, frame check per AGENTS rule 8, combat balance with wasteland2 off and on, all browser scenarios. Writes docs/board/checks/night-<date>.json and a morning report under twenty lines that names, for each failure, the first merge after the last green night. Kyle creates the Windows scheduled task himself; the card writes the exact command for him."
+    claimed_by: codex-factory-2026-10-12
+    branch: codex/fac-03
+
   - id: FAC-04
     title: "Course kit: a new course is added by adding its own files"
     owner: codex
@@ -5195,20 +5203,26 @@ tasks:
     lane: OPS
     size: M
     needs: []
-    status: ready
+    status: building
     owns: [docs/board/board.yaml, docs/board/cards/, tools/board.mjs, tools/test-board.mjs, docs/changes/FAC-06.md]
     acceptance:
       - "board.yaml lists open cards only, one short entry each, and loads as standard YAML (fix line 4567). Finished cards leave at merge; details live in docs/board/cards/<id>.md. tools/board.mjs reads locks and shows a card whose lock another building card holds as waiting on that lock."
+    claimed_by: codex-factory-2026-10-12
+    branch: codex/fac-06
+
   - id: FAC-07
     title: "Browser checks: build once, run side by side"
     owner: codex
     lane: TOOL
     size: M
     needs: [FAC-01]
-    status: ready
+    status: building
     owns: [tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, docs/changes/FAC-07.md]
     acceptance:
       - "run-browser-scenarios builds the QA bundle once per run into its own folder and runs scenarios at most four at once with private ports and profiles. Lanes run only scenarios the change touches. Every scenario result is unchanged."
+    claimed_by: codex-factory-2026-10-12
+    branch: codex/fac-07
+
   - id: FAC-08
     title: "Drive-through check for new courses"
     owner: codex

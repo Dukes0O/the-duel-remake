@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Factory restart authorized by Kyle.** FAC-02, FAC-03, FAC-06 and FAC-07 start together in separate lanes; FAC-06 is the Director lane. FAC-04 takes the course locks next. Shared board/inbox/STATUS edits are committed immediately. One targeted lane, build and review per card, no rerun after a conflict-free merge. Once FAC-03 lands, frames, balance and browser acceptance wait for the idle night shift. Prior paused balance results and Panorama/Summit questions remain valid; no release or push.
+
 - **Kyle paused Codex work for FAC-01.** The already-active Red Mesa baseline on 5071e3eb has finished; its result is recorded below. Commit the board, inbox and refreshed STATUS on integration/wasteland, then stop. No new card, gate, balance, build or browser job; no end full tier under this explicit instruction. Claude is merging claude/factory and changing the rules. Codex restarts only when Kyle says. Panorama and Summit review questions below remain pending.
   **Last permitted balance result:** original 90 Red Mesa races, source 5071e3eb, exit 1 in 136.77 s, jobs 4. Wins Easy/Medium/Hard 0/0/0 of 30 fail; opening pile-ups 3/3/1 fail Easy/Medium and pass Hard; Medium passes 1.2333 (0.9667 after start) fail. All 90 players finish three laps and all 630 CPUs finish; no unfinished cars or stderr. Full JSON: .evidence/2026-10-12/P4-GP-EXISTING/red-mesa-baseline-1-5071e3eb/red-mesa-rate.json. No new setting or further job. GP lane remains frozen at 5071e3eb with its actual Alpine/Red Mesa verdicts in the uncommitted owned note; two Red Mesa attempts remain, Neon Docks and Cloudbreak untouched.
 

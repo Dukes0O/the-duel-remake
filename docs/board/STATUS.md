@@ -1,16 +1,12 @@
 # Build status
 
-Codex is paused by Kyle pending FAC-01. Only the already-active Red Mesa balance
-was allowed to finish. Its result is recorded on the board and in the inbox.
-No new gate, full tier or balance run was started under this pause.
+Observed at: 2026-10-12T19:56:48.322Z
 
-Observed at: 2026-10-12T19:51:41.004Z
-
-Observation commit: 4211bf2ec68d2ef0826f014f9aad9819d59f4183
+Observation commit: c7e36d5ee7fd60e08672983f470126ba6489b583
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4211bf2ec68d2ef0826f014f9aad9819d59f4183
+Integration HEAD: c7e36d5ee7fd60e08672983f470126ba6489b583
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -58,6 +54,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/fac-02 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-02 |
+| codex/fac-03 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
+| codex/fac-06 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-06 |
+| codex/fac-07 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-07 |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -93,9 +93,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,188,480 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 1,912,940 B | +724,460 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 389,656,576 B | +8,192 B | unavailable |
+| Git objects | 390,122,496 B | +465,920 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +104,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 4211bf2ec68d2ef0826f014f9aad9819d59f4183
+- Local integration/wasteland: c7e36d5ee7fd60e08672983f470126ba6489b583
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
