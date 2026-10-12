@@ -146,7 +146,7 @@ function addEscapeRoads(group, course) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     geometry.setIndex(indices); geometry.computeVertexNormals();
-    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ name: 'Escape road gravel', color: OVERLAY.gravel.color, roughness: 1, metalness: 0,
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ name: 'Escape road gravel', color: escape.colour ?? OVERLAY.gravel.color, roughness: 1, metalness: 0,
       polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, side: THREE.DoubleSide }));
     mesh.name = `escape-road-${escape.id}`; mesh.receiveShadow = true; group.add(mesh);
   }
