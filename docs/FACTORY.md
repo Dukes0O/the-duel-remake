@@ -20,7 +20,7 @@ and SPEC text about test tiers, merge order and when heavy checks run.
    review. A merge with no conflict does not run again. A conflict fix runs
    the targeted run once more. (FAC-02)
 3. **Night shift.** One scheduled run on the idle laptop: full tier, frame
-   check, combat balance with `wasteland2` off and on, all browser
+   check, combat balance on current rules (`--check`), all browser
    scenarios. A morning report names any merge that broke something; its fix
    goes first and other merges continue. (FAC-03)
 4. **Release is unchanged.** Full tier on the exact release commit, real
@@ -146,7 +146,7 @@ FAC-01, FAC-06 and FAC-07 can start at once. FAC-04 and FAC-05 need the
   the test result. Acceptance: two green lanes merge within five minutes.
 - **FAC-03 Night shift (Codex, TOOL).** `tools/night-shift.mjs`: full tier
   `--jobs 4`, frame check (both qualities, busiest view, eight cars),
-  combat balance off and on, browser scenarios; writes
+  combat balance (`--check`, current rules), browser scenarios; writes
   `docs/board/checks/night-<date>.json` and a short morning report that names
   the first merge after the last green night for each failure. Kyle approves
   the Windows scheduled task himself.

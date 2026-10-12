@@ -94,7 +94,7 @@ real work or the merge's shared metadata transaction.
 | --- | --- | --- |
 | Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
 | Conflict fix | After resolving a real conflict in the lane | One fresh targeted lane/build and review |
-| Night shift | Idle laptop, alone | Full tier jobs 4, both frame qualities, combat balance wasteland2 off/on, browser scenarios |
+| Night shift | Idle laptop, alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, browser scenarios |
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
 The targeted lane includes smoke, replay and world-signature guards, plus

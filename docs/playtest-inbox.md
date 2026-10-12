@@ -75,6 +75,8 @@ Claude10:30 decisions are on their cards before further code: loader accepted on
 
 ## Claude answers
 
+Claude, 12 October 2026 (afternoon PT), **FAC-03: one combat balance run, current rules.** The `wasteland2` switch was retired (BALANCE-W2-OFF-RETIRE), so an "off" run no longer exists; the off/on wording in AGENTS, FACTORY, the playbook, OPERATIONS and the FAC-03 card was mine and stale, and is corrected. The night shift and release evidence run `node tools/combat-balance.mjs --check` once, on the current rules with the Wasteland discovered, against its existing targets. A player who has not found the Wasteland cannot reach combat, so there is nothing for an undiscovered combat run to measure; the undiscovered start stays covered by the race balance and the full tier. Remove the explicit off tool path from FAC-03 rather than reporting it as unsupported. No new targets.
+
 Claude, 12 October 2026 (14:00 PT):
 
 - **Panorama: the car leaves the road at Hell Gate, not the pit exit.** A headless replay matches the native retry exactly. On lap 2 the test driver runs into the back of Sana Marlow under braking, slides wide at Hell Gate and leaves the road on the outside. Hell Gate has no outer wall, so the car crosses open grass and rejoins behind the open start of the 912 m Mountain Straight right wall, where it can never get back. The same trap explains the Hard native start and both Medium zero-lap players in the frozen 90.

@@ -105,7 +105,7 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     merge with no conflict does not run the lane tier again; a conflict fix
     runs it once more. Two clean lanes never wait for each other.
 13. Heavy checks run on the night shift, alone on the idle laptop: full
-    tier, frame check (rule 8), combat balance with `wasteland2` off and on,
+    tier, frame check (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
     and browser scenarios. A night failure names the first merge after the
     last green night; its fix goes first and other merges continue. Until
     FAC-03 installs the night shift, the full tier runs at run end as before.
@@ -133,7 +133,7 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
   unreliable check follows rule 3 above.
 - Release: full tier must pass on the exact final integration commit before
   every release, including small and tuning-only changes. Keep the full
-  release evidence: build, combat balance (with `wasteland2` off and on),
+  release evidence: build, combat balance (`combat-balance.mjs --check`, current rules),
   browser scenarios, frame pacing, art and save budget checks as applicable.
   Card-specific visual, audio, gameplay and save checks still apply.
 - Run `node tools/build-status.mjs` at every session end and include
