@@ -18,7 +18,7 @@ These are the card's detailed design, acceptance and recorded decisions.
     claimed_by: codex-factory-2026-10-12
     branch: codex/fac-03
 
-    night_hooks: "Director before code: lane selection omits only explicit proven native browser/frame, full balance and Blender-heavy suites; full discovery/acceptance stays exact, pure unit suites stay daytime. Use existing runner tests, no import-wide exclusion. Existing frame-pacing gets a night-only simple mode: released Harbour Lights night GP grid, actual eight cars, High then Performance once each, delivered p95 <=18.5 ms and construction <1 s on quiet awake idle laptop; generic mode unchanged. Existing combat-balance gets explicit --wasteland2 off|on propagated through simulationFlags, default behavior/assertions exact. Use existing combat tests for that flag; no runtime feature-flag/source edits."
+    night_hooks: "Director before code: lane selection omits only explicit proven native browser/frame, full balance and Blender-heavy suites; full discovery/acceptance stays exact, pure unit suites stay daytime. Use existing runner tests, no import-wide exclusion. Existing frame-pacing gets a night-only simple mode: released Harbour Lights night GP grid, actual eight cars, High then Performance once each, delivered p95 <=18.5 ms and construction <1 s on quiet awake idle laptop; generic mode unchanged. Combat balance is one existing `combat-balance.mjs --check` run on current rules (Claude 12 October; no wasteland2 flag exists); default behavior/assertions exact; no runtime feature-flag/source edits."
 ```
 
 ## Director scope grant, before headed frame code

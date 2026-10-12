@@ -112,7 +112,7 @@ alone at session/overnight end. Exact release provenance still matters:
 finish source and release notes before the final release full run; a later
 commit needs its own full pass before release.
 
-For release, keep build, full, combat balance off/on, all browser scenarios,
+For release, keep build, full, combat balance --check (current rules), all browser scenarios,
 frames, art intake and applicable save/storage evidence. Unmeasured is not
 passed. Frames follow AGENTS rule 8: one busiest-view run per quality with
 eight cars, delivered p95 at most 18.5 ms and construction under one second.
