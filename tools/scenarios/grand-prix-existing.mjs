@@ -10,7 +10,7 @@ const ids = ['pacific-canyon', 'high-country', 'harbor-highlands', 'eifel-crown'
   'alpine-serpent', 'azure-riviera', 'red-mesa', 'neon-docks', 'cloudbreak-skyway'];
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-async function nativeBundle() {
+export async function nativeBundle() {
   // Preview serves only the built QA bundle. Compile actual fixture functions
   // in memory; do not request raw /src or /tools modules from that server.
   const entry=join(root,'.qa-dist/gp-existing.virtual.js').replaceAll('\\','/');
@@ -28,7 +28,7 @@ async function nativeBundle() {
         'export {racingLineFor,buildSpeedProfile} from '+lines+';'+
         'export const installTestDriver='+installTestDriver.toString()+';';
     },
-  }],build:{write:false,minify:false,lib:{entry,name:'GpExistingQa',formats:['iife']}}});
+  }],build:{write:false,minify:false,lib:{entry,formats:['es']}}});
   const chunk=(Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk');
   if(!chunk)throw Error('Existing Grand Prix native helper bundle is missing.');
   return chunk.code;
@@ -51,7 +51,11 @@ export async function run(context) {
     await context.waitFor(`document.querySelector('#graphics-quality')?.value===${JSON.stringify(quality)} &&
       document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' &&
       !document.querySelector('#start-engine')?.disabled`, `${quality} menu ready`, 60000);
-    await context.evaluate(bundle);
+    await context.evaluate(`(async () => {
+      const url=URL.createObjectURL(new Blob([${JSON.stringify(bundle)}], {type:"text/javascript"}));
+      try { window.GpExistingQa=await import(url); }
+      finally { URL.revokeObjectURL(url); }
+    })()`);
     for (const id of ids) {
       const grid = await context.evaluate(`(async () => {
         const {COURSE,CARS,DRIVE,steeringYawAuthority,ownTestCourses,
