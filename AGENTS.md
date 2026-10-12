@@ -102,9 +102,10 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 11. Test by what changed. The lane tier runs the smoke set, the replay and
     world-signature guards, and the suites that import a changed file or
     name its path within two steps. Deeper effects are the night run's job.
-12. Merge as soon as it is green: one lane tier, a build and one review. A
-    merge with no conflict does not run the lane tier again; a conflict fix
-    runs it once more. Two clean lanes never wait for each other.
+12. Merge as soon as it is green: one lane tier, a build and one review where
+    rule 17 asks for one. A merge with no conflict does not run the lane tier
+    again; a conflict fix runs it once more. Two clean lanes never wait for
+    each other.
 13. Heavy checks run on the night shift, alone on the idle laptop: full
     tier, frame check (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
     and browser scenarios. A night failure names the first merge after the
