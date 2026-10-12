@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T22:10:10.821Z
+Observed at: 2026-10-12T22:12:01.526Z
 
-Observation commit: 61a3c9c9869229eee3156fd11417cf1ddf47938e
+Observation commit: bfb606a53716d0974ff8b168f63223680f209090
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 61a3c9c9869229eee3156fd11417cf1ddf47938e
+Integration HEAD: bfb606a53716d0974ff8b168f63223680f209090
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -49,7 +49,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-audio | unknown | 2026-10-12T15:08:55-07:00 | 0 | last commit 2026-10-12T15:08:55-07:00 | docs/changes/DEEP-AUDIO.md, public/assets/audio/CREDITS.md, public/assets/audio/deep/bubbles.flac, public/assets/audio/deep/cave.flac, public/assets/audio/deep/engine-muffle.ogg |
-| codex/deep-save | unknown | 2026-10-12T15:06:36-07:00 | 0 | last commit 2026-10-12T15:06:36-07:00 | docs/changes/DEEP-SAVE.md, src/app.js, src/deep/deep-discovery.js, src/deep/deep-hints.js, src/progression.js |
+| codex/deep-save | unknown | 2026-10-12T15:11:40-07:00 | 0 | last commit 2026-10-12T15:11:40-07:00 | docs/changes/DEEP-SAVE.md, src/app.js, src/deep/deep-discovery.js, src/deep/deep-hints.js, src/progression.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | unknown | 2026-10-12T15:08:52-07:00 | 0 | last commit 2026-10-12T15:08:52-07:00 | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
 | codex/p4-panorama | unknown | 2026-10-12T15:06:19-07:00 | 0 | last commit 2026-10-12T15:06:19-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/P4-PANORAMA.md, src/app.js |
@@ -69,9 +69,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 371,020 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 133,225 B | -237,795 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 398,655,488 B | +883,712 B | unavailable |
+| Git objects | 398,706,688 B | +51,200 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -80,7 +80,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 61a3c9c9869229eee3156fd11417cf1ddf47938e
+- Local integration/wasteland: bfb606a53716d0974ff8b168f63223680f209090
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

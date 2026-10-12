@@ -999,3 +999,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 FAC-08: merge c4ba526f; nearby lane 15/15, 95.56 s, jobs 4; build 578 ms; one review clear; real old/fixed Tremblant defect proof, provenance corrected, no clean-merge rerun.
 - 2026-10-12 FACTORY-RULES merged (Claude lane claude/factory-rules-2 5b988dd6): lane 12/12 in 119.91 s, build 1439 ms, review claude-subagent-reviewer clear.
 - 2026-10-12 REVIEW-TIERS merged (Claude lane claude/review-tiers 17009bec): lane 9/9 in 238.27 s, build 2460 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 FIX-LIVE-EDGES merged (Claude lane claude/finish-tracks cb432c4d): lane 14/14 in 264.77 s, build 2758 ms, review claude-subagent-reviewer clear.
