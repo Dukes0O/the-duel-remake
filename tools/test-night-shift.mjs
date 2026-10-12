@@ -1,8 +1,9 @@
-import { assertNightFrameContext, summarizeNightFrames } from './scenarios/frame-pacing.mjs';
+import { assertNightFrameContext, summarizeNightFrames, reuseNightFrames } from './scenarios/frame-pacing.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
+import { spawnSync } from 'node:child_process';
 import { parseNightArguments, nightPlan, validateFramePacket, runChild, runNight, heavyProcesses } from './night-shift.mjs';
 
 const date = '2026-10-12', head = 'a'.repeat(40), previous = 'b'.repeat(40), merge = 'c'.repeat(40);
@@ -14,13 +15,33 @@ const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true},{label:'b',passed:true}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
 function fixture({fail, missing, busy=false, change=false, lastGreen=true, inapplicable=false, fullFailures=[]}={}) {
-  const files = new Map(), calls = [], logs = [];
-  let active=0, maximum=0, heads=0;
-  const plan = nightPlan({date,root});
+  const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [];
+  let active=0, maximum=0, heads=0, invocations=0;
+  let plan = nightPlan({date,root});
   if(lastGreen)files.set(`${root}/docs/board/checks/night-2026-10-11.json`,
     JSON.stringify({schema:1,status:'passed',source:previous,date:'2026-10-11'}));
   const deps = {root, now:()=>new Date('2026-10-12T20:00:00Z'),
-    git:async args=>args[0]==='status'?'':args[0]==='rev-list'?merge+'\n':change&&heads++>0?'d'.repeat(40):head,
+    git:async args=>{
+      if(args[0]==='branch')return 'integration/wasteland';
+      if(args[0]==='status') {
+        if(args.includes('--')) {
+          const name=args.at(-1),file=root+'/'+name;
+          return files.get(file)===committedFiles.get(file)?'':(committedFiles.has(file)?' M ':'?? ')+name;
+        }
+        return '';
+      }
+      if(args[0]==='show') {const file=root+'/'+args[1].slice('HEAD:'.length);if(!committedFiles.has(file))throw Error('not in HEAD');return committedFiles.get(file);}
+      if(args[0]==='rev-list')return merge+'\n';
+      if(['add','commit','restore'].includes(args[0])) {
+        metadata.push(args);
+        if(args[0]==='commit')for(const name of args.slice(args.indexOf('--')+1))committedFiles.set(root+'/'+name,files.get(root+'/'+name));
+        return '';
+      }
+      return change&&heads++>0?'d'.repeat(40):head;
+    },
+    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root,evidence});return evidence;},
+    refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
+    recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
     processes:async()=>busy?[{pid:99,command:'node tools/run-tests.mjs --tier lane'}]:[],
     scenarioNames:async()=>['smoke-extra'], listNightFiles:async()=>lastGreen?['night-2026-10-11.json']:[],
     readText:async path=>{if(!files.has(path))throw Error('ENOENT');return files.get(path);},
@@ -49,7 +70,7 @@ function fixture({fail, missing, busy=false, change=false, lastGreen=true, inapp
       });
       return child;
     }};
-  return {deps,files,calls,logs,maximum:()=>maximum};
+  return {deps,files,committedFiles,calls,logs,metadata,maximum:()=>maximum};
 }
 const opts=()=>parseNightArguments(['--idle-awake','--no-push','--date',date]);
 
@@ -155,4 +176,155 @@ test('every failed full suite keeps attribution while the morning report stays u
   assert.deepEqual(packet.failures.map(row=>row.name),names.map(name=>'full: '+name));
   assert.ok(packet.failures.every(row=>row.firstMerge===merge));
   assert.ok(f.files.get(`${root}/docs/board/checks/night-${date}.md`).trim().split('\n').length<20);
+});
+test('child UTF-8 decoding retains a multibyte JSON and stderr character split across chunks',async()=>{
+  const writes=[], value=Buffer.from('{"name":"夜"}\n'), split=value.indexOf(Buffer.from('夜'))+1;
+  const result=await runChild('node',['controlled'],{logPath:'log',appendText:async(_,text)=>writes.push(text),
+    spawnImpl:()=>{
+      const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
+      queueMicrotask(()=>{
+        child.stdout.write(value.subarray(0,split));child.stdout.end(value.subarray(split));
+        const error=Buffer.from('é');child.stderr.write(error.subarray(0,1));child.stderr.end(error.subarray(1));
+        child.emit('close',0,null);
+      });return child;
+    }});
+  assert.equal(JSON.parse(result.stdout).name,'夜');assert.equal(result.stderr,'é');
+  assert.equal(writes.join('').includes('�'),false);
+});
+test('append rejection is handled immediately and reported after child close and queued writes',()=>{
+  const moduleUrl=new URL('./night-shift.mjs',import.meta.url).href;
+  const source=`import {runChild} from ${JSON.stringify(moduleUrl)};
+    import {EventEmitter} from 'node:events';import {PassThrough} from 'node:stream';
+    let closed=false,writes=0;
+    const result=await runChild('node',['controlled'],{logPath:'log',
+      appendText:async()=>{writes++;throw Error('disk rejected');},
+      spawnImpl:()=>{const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
+        queueMicrotask(()=>{child.stdout.write('first');setTimeout(()=>{
+          child.stdout.end('last');child.stderr.end();closed=true;child.emit('close',0,null);},20);});return child;}});
+    if(!closed||writes!==2||result.exitCode===0||!result.stderr.includes('disk rejected'))throw Error('child/write drain was lost');
+    console.log('APPEND_FAILURE_DRAINED');`;
+  const child=spawnSync(process.execPath,['--unhandled-rejections=strict','--input-type=module','-e',source],
+    {encoding:'utf8',timeout:4000});
+  assert.equal(child.error,undefined);assert.equal(child.status,0,child.stderr);
+  assert.match(child.stdout,/APPEND_FAILURE_DRAINED/);
+});
+test('child error records failure but completion still waits for its close',async()=>{
+  let closed=false;
+  const result=await runChild('node',['controlled'],{appendText:async()=>{},spawnImpl:()=>{
+    const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
+    queueMicrotask(()=>{child.emit('error',Error('stdio failed'));setTimeout(()=>{
+      child.stdout.end('late output');child.stderr.end();closed=true;child.emit('close',0,null);},20);});
+    return child;
+  }});
+  assert.equal(closed,true,'error does not release a still-live child');
+  assert.equal(result.exitCode,1);assert.match(result.stdout,/late output/);assert.match(result.stderr,/stdio failed/);
+});
+test('same-day valid stale evidence cannot stand in for a missing current packet',async()=>{
+  const f=fixture({missing:'frames'}), old=nightPlan({root,date});
+  f.files.set(old.find(row=>row.id==='frames').packet,JSON.stringify(frames()));
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'failed');
+  assert.equal(result.stages.find(row=>row.id==='frames').passed,false);
+});
+test('same-day previous green night remains the attribution source',async()=>{
+  const f=fixture({fail:'frames',lastGreen:false});
+  f.files.set(`${root}/docs/board/checks/night-${date}.json`,JSON.stringify({schema:1,status:'passed',source:previous,date}));
+  f.deps.listNightFiles=async()=>[`night-${date}.json`];
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.lastGreen,previous);assert.equal(result.failures[0].firstMerge,merge);
+});
+test('actual wrong branch refuses jobs and leaves public metadata untouched',async()=>{
+  const f=fixture(),original=f.deps.git;
+  f.deps.git=async args=>args[0]==='branch'?'codex/fac-03':original(args);
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'failed');assert.equal(f.calls.length,0);
+  assert.equal(result.publication.status,'refused');
+  assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
+});
+test('publication refreshes existing STATUS and commits only the three granted paths',async()=>{
+  const f=fixture(),result=await runNight(opts(),f.deps);
+  assert.equal(result.publication.status,'committed');
+  const commits=f.metadata.filter(args=>args[0]==='commit');assert.equal(commits.length,1);
+  const paths=commits[0].slice(commits[0].indexOf('--')+1);
+  assert.deepEqual(paths,[`docs/board/checks/night-${date}.json`,`docs/board/checks/night-${date}.md`,'docs/board/STATUS.md']);
+  assert.ok(commits[0].includes('--only'));assert.ok(f.metadata.some(args=>args[0]==='build-status'));
+});
+test('dirty source at publication keeps the failed report ignored and never writes public reports',async()=>{
+  const f=fixture(),original=f.deps.git;
+  f.deps.git=async args=>args[0]==='status'&&f.calls.length===5?'M  src/game.js':original(args);
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'failed');assert.equal(result.publication.status,'refused');
+  assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
+  assert.ok(f.files.has(result.evidence+'/night-report.json'));
+  assert.equal(f.metadata.some(args=>args[0]==='commit'),false);
+});
+test('branch changes during STATUS refresh restore only owned drafts and preserve other staged work',async()=>{
+  const f=fixture(),status=`${root}/docs/board/STATUS.md`,other=`${root}/tools/other.mjs`,original=f.deps.git;
+  f.files.set(status,'original status');f.files.set(other,'others staged source');
+  let switched=false;
+  f.deps.refreshStatus=async()=>{f.files.set(status,'our draft status');switched=true;};
+  f.deps.git=async args=>args[0]==='branch'&&switched?'codex/other':original(args);
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.publication.status,'refused');assert.equal(result.status,'failed');
+  assert.equal(f.files.get(status),'original status');assert.equal(f.files.get(other),'others staged source');
+  assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
+  assert.equal(f.metadata.some(args=>args[0]==='commit'),false);
+});
+test('two same-day invocations own distinct leaves and retain both ignored receipts',async()=>{
+  const f=fixture(),first=await runNight(opts(),f.deps),second=await runNight(opts(),f.deps);
+  assert.notEqual(first.evidence,second.evidence);
+  assert.ok(f.files.has(first.evidence+'/night-report.json'));
+  assert.ok(f.files.has(second.evidence+'/night-report.json'));
+});
+test('a failed same-day retry preserves the prior genuine green attribution for the next retry',async()=>{
+  const f=fixture({fail:'frames',lastGreen:false});
+  f.files.set(`${root}/docs/board/checks/night-${date}.json`,JSON.stringify({schema:1,status:'passed',source:previous,date}));
+  f.deps.listNightFiles=async()=>[`night-${date}.json`];
+  await runNight(opts(),f.deps);
+  const next=await runNight(opts(),f.deps);
+  assert.equal(next.lastGreen,previous);assert.equal(next.failures[0].firstMerge,merge);
+});
+test('a receipt read failure after successful commit never rolls back committed metadata',async()=>{
+  const f=fixture(),original=f.deps.git;let committed=false;
+  f.deps.git=async args=>{
+    if(committed&&args[0]==='rev-parse')throw Error('receipt read failed');
+    const result=await original(args);if(args[0]==='commit')committed=true;return result;
+  };
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.publication.status,'committed');assert.match(result.publication.receiptError,/receipt read failed/);
+  for(const name of result.publication.paths)assert.equal(f.files.get(root+'/'+name),f.committedFiles.get(root+'/'+name));
+  assert.equal(f.metadata.some(args=>args[0]==='restore'||args[0]==='recycle'),false);
+});
+test('concurrent source commit keeps its new committed STATUS during publication rollback',async()=>{
+  const f=fixture(),status=root+'/docs/board/STATUS.md',original=f.deps.git;let advanced=false;
+  f.files.set(status,'old status');f.committedFiles.set(status,'old status');
+  f.deps.refreshStatus=async()=>{
+    f.committedFiles.set(status,'new committed status');f.files.set(status,'our newer draft status');advanced=true;
+  };
+  f.deps.git=async args=>advanced&&args[0]==='rev-parse'?'d'.repeat(40):original(args);
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.publication.status,'refused');assert.equal(f.files.get(status),'new committed status');
+});
+test('Night browser frame row reuses the same leaf without measuring, and failed/missing originals fail',async()=>{
+  const outputDir=root+'/.evidence/'+date+'/FAC-03/night-owned/browser/frame-pacing';
+  const packetPath=root+'/.evidence/'+date+'/FAC-03/night-owned/frames/frame-pacing.json';
+  let measurements=0,writes=0;
+  const context={outputDir,evaluate:()=>{measurements++;throw Error('must not measure');},
+    command:()=>{measurements++;throw Error('must not render');},navigate:()=>{measurements++;throw Error('must not navigate');}};
+  const original={scenario:'frame-pacing',passed:true,headed:true,memoryOnlySaves:true,issues:[],warnings:[]};
+  const operations={packetPath,priorPassed:true,
+    readText:async file=>JSON.stringify(file.endsWith('report.json')?original:frames()),
+    writeText:async()=>{writes++;}};
+  await reuseNightFrames(context,operations);
+  assert.equal(measurements,0);assert.equal(writes,1);
+  await assert.rejects(()=>reuseNightFrames(context,{...operations,priorPassed:false}),/failed/i);
+  await assert.rejects(()=>reuseNightFrames(context,{...operations,readText:async()=>{throw Error('ENOENT');}}),/ENOENT/);
+  await assert.rejects(()=>reuseNightFrames(context,{...operations,readText:async file=>{
+    const value=file.endsWith('report.json')?{...original,passed:false}:frames();return JSON.stringify(value);
+  }}),/failed/i);
+  await assert.rejects(()=>reuseNightFrames(context,{...operations,readText:async file=>{
+    const value=file.endsWith('report.json')?original:frames();if(value.reports)value.reports[0].p95=19;return JSON.stringify(value);
+  }}),/18.5/);
+  await assert.rejects(()=>reuseNightFrames(context,{...operations,packetPath:packetPath.replace('night-owned','night-old')}),/same|owned/i);
+  assert.equal(measurements,0);assert.equal(writes,1,'only a valid original is copied');
 });

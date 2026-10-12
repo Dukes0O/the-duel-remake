@@ -1,7 +1,7 @@
 // Compare delivered frame intervals on the real HUD, mirror, and QA autopilot.
 // The QA page installs disposable in-memory saves before the App loads.
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 import { inspectNightProcesses, validateFramePacket } from '../night-shift.mjs';
 
 const entry = '/tools/menu-check.html';
@@ -102,6 +102,22 @@ async function measureNight(context, quality) {
   await context.screenshot(`night-simple-${quality}`);
   return report;
 }
+export async function reuseNightFrames(context,{packetPath,priorPassed,
+  readText=file=>readFile(file,'utf8'),writeText=writeFile}={}) {
+  const expected=resolve(context.outputDir,'..','..','frames','frame-pacing.json');
+  if(typeof packetPath!=='string'||resolve(packetPath).toLowerCase()!==expected.toLowerCase())
+    throw Error('Night frame reuse requires the same owned evidence leaf.');
+  if(priorPassed!==true)throw Error('The original simple frame stage failed; no second measurement is allowed.');
+  const packet=JSON.parse(await readText(packetPath));
+  validateFramePacket(packet);
+  const original=JSON.parse(await readText(join(dirname(packetPath),'report.json')));
+  if(original.scenario!=='frame-pacing'||original.passed!==true||original.headed!==true||
+    original.memoryOnlySaves!==true||original.issues?.length!==0||original.warnings?.length!==0)
+    throw Error('The original simple frame harness verdict failed or is incomplete.');
+  const reused={...packet,reused:true,sourcePacket:packetPath};
+  await writeText(join(context.outputDir,'frame-pacing.json'),JSON.stringify(reused,null,2)+'\n');
+  return reused;
+}
 async function runNightFrames(context) {
   assertNightFrameContext(context, process.env, inspectNightProcesses());
   const reports = [];
@@ -148,6 +164,8 @@ async function measure(context, quality) {
 }
 
 export async function run(context) {
+  if(process.env.DUEL_NIGHT_FRAME_REUSE==='1')return reuseNightFrames(context,{
+    packetPath:process.env.DUEL_NIGHT_FRAME_PACKET,priorPassed:process.env.DUEL_NIGHT_FRAME_PASSED==='1'});
   await context.command('Emulation.setDeviceMetricsOverride', {
     width: 1280, height: 720, deviceScaleFactor: 1, mobile: false,
   });

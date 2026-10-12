@@ -1,7 +1,7 @@
 // FAC-03: installed tools run serially on the declared idle, awake laptop.
 // Importing this module never starts jobs, installs a task, rewrites or pushes.
 import { spawn, spawnSync } from 'node:child_process';
-import { appendFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { namedScenarios } from './run-browser-scenarios.mjs';
@@ -28,8 +28,7 @@ export function parseNightArguments(args=[]) {
   if(!options.idleAwake||!options.noPush)throw Error(usage);
   return options;
 }
-export function nightPlan({root=ROOT,date=localDate()}={}) {
-  const evidence=path(root,'.evidence',date,'FAC-03','night');
+export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evidence',date,'FAC-03','night')}={}) {
   const frameDir=path(evidence,'frames'),browserDir=path(evidence,'browser');
   return [
     {id:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
@@ -38,6 +37,7 @@ export function nightPlan({root=ROOT,date=localDate()}={}) {
     {id:'combat-off',args:['tools/combat-balance.mjs','--check','--wasteland2','off']},
     {id:'combat-on',args:['tools/combat-balance.mjs','--check','--wasteland2','on']},
     {id:'browser',args:['tools/run-browser-scenarios.mjs','--all','--jobs','4','--output-dir',browserDir],
+      env:{DUEL_NIGHT_FRAME_REUSE:'1',DUEL_NIGHT_FRAME_PACKET:path(frameDir,'frame-pacing.json')},
       packet:path(browserDir,'summary.json')}
   ].map(row=>({...row,log:path(evidence,row.id+'.log')}));
 }
@@ -58,28 +58,37 @@ export function validateFramePacket(packet) {
 }
 export async function runChild(executable,args,{cwd,env=process.env,logPath,
   appendText=appendFile,spawnImpl=spawn}={}) {
-  let stdout='',stderr='',writes=Promise.resolve(),child;
-  const record=(kind,chunk)=>{
-    const text=chunk.toString();if(kind==='stdout')stdout+=text;else stderr+=text;
-    if(logPath)writes=writes.then(()=>appendText(logPath,kind==='stderr'?'[stderr] '+text:text));
+  let stdout='',stderr='',writes=Promise.resolve(),child,childError=false;
+  const logErrors=[];
+  const record=(kind,text)=>{
+    if(kind==='stdout')stdout+=text;else stderr+=text;
+    // Attach rejection handling now, while the child is still alive. Keep
+    // every later write queued, then report the error after close and drain.
+    if(logPath)writes=writes.then(()=>appendText(logPath,kind==='stderr'?'[stderr] '+text:text))
+      .catch(error=>{logErrors.push(error.message);});
   };
   let exitCode;
   try {
     child=spawnImpl(executable,args,{cwd,env,stdio:['ignore','pipe','pipe'],shell:false,windowsHide:true});
-    child.stdout?.on('data',chunk=>record('stdout',chunk));
-    child.stderr?.on('data',chunk=>record('stderr',chunk));
+    child.stdout?.setEncoding('utf8');child.stderr?.setEncoding('utf8');
+    child.stdout?.on('data',text=>record('stdout',text));
+    child.stderr?.on('data',text=>record('stderr',text));
     exitCode=await new Promise(done=>{
-      child.once('error',error=>{record('stderr',error.message+'\n');done(1);});
-      child.once('close',(code,signal)=>{if(signal)record('stderr',`Terminated by ${signal}\n`);done(code??1);});
+      child.on('error',error=>{childError=true;record('stderr',error.message+'\n');});
+      child.once('close',(code,signal)=>{
+        if(signal)record('stderr',`Terminated by ${signal}\n`);
+        done(childError?1:code??1);
+      });
     });
   }catch(error){record('stderr',error.message+'\n');exitCode=1;}
   await writes;
+  if(logErrors.length){exitCode=exitCode||1;stderr+='Log append failed: '+logErrors.join('; ')+'\n';}
   return {exitCode,stdout,stderr};
 }
-function gitRead(args,root) {
+function gitCommand(args,root) {
   const child=spawnSync('git',args,{cwd:root,encoding:'utf8',shell:false,windowsHide:true});
   if(child.error||child.status!==0)throw Error(child.error?.message||child.stderr||'Git read failed.');
-  return child.stdout.trim();
+  return child.stdout;
 }
 export function heavyProcesses(rows,self=process.pid) {
   return rows.filter(row=>row.pid!==self&&
@@ -119,23 +128,105 @@ function validateCombat(packet,value) {
 }
 async function previousGreen(date,dependencies) {
   const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&
-    name.slice(6,16)<date).sort().reverse();
+    name.slice(6,16)<=date).sort().reverse();
   for(const name of names) {
     try {
       const row=json(await dependencies.readText(path(dependencies.root,'docs/board/checks',name)));
       if(row.schema===1&&row.status==='passed'&&commitPattern.test(row.source))return row;
+      if(row.schema===1&&row.lastGreenNight?.status==='passed'&&commitPattern.test(row.lastGreenNight.source))return row.lastGreenNight;
     }catch{}
   }
   return null;
+}
+function refreshNightStatus(root) {
+  const child=spawnSync(process.execPath,['tools/build-status.mjs'],{cwd:root,encoding:'utf8',shell:false,windowsHide:true});
+  if(child.error||child.status!==0)throw Error('STATUS refresh failed: '+(child.error?.message||child.stderr));
+}
+function recycleNightDraft(file,root) {
+  const relative=file.slice(path(root).length+1);
+  if(!/^docs\/board\/(?:STATUS\.md|checks\/night-\d{4}-\d{2}-\d{2}\.(?:json|md))$/.test(relative))
+    throw Error('Refusing to recycle an unrelated file.');
+  const literal=file.replaceAll("'","''");
+  const script="Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile('"+
+    literal+"',[Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs,[Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)";
+  const child=spawnSync('powershell.exe',['-NoProfile','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],
+    {encoding:'utf8',shell:false,windowsHide:true});
+  if(child.error||child.status!==0)throw Error('Draft recycle failed: '+(child.error?.message||child.stderr));
+}
+async function assertNightSource(dependencies,source,allowed=[]) {
+  if((await dependencies.git(['branch','--show-current'])).trim()!=='integration/wasteland')
+    throw Error('Actual night runs and publication require integration/wasteland.');
+  if((await dependencies.git(['rev-parse','HEAD'])).trim()!==source)throw Error('Source commit changed.');
+  const status=await dependencies.git(['status','--porcelain']);
+  const unexpected=status.split(/\r?\n/).filter(Boolean).filter(line=>!allowed.includes(line.slice(3)));
+  if(unexpected.length)throw Error('Source tree is dirty: '+unexpected.join('; '));
+}
+async function maybeRead(dependencies,file) {
+  try{return await dependencies.readText(file);}
+  catch(error){if(error.code==='ENOENT'||error.message==='ENOENT')return null;throw error;}
+}
+async function publishNightReports(packet,morning,dependencies) {
+  const {root}=dependencies;
+  const names=[`docs/board/checks/night-${packet.date}.json`,`docs/board/checks/night-${packet.date}.md`,'docs/board/STATUS.md'];
+  const original=new Map(),drafts=new Map();let staged=false;
+  try {
+    await assertNightSource(dependencies,packet.source);
+    for(const name of names)original.set(path(root,name),await maybeRead(dependencies,path(root,name)));
+    await dependencies.mkdir(path(root,'docs/board/checks'));
+    // Public bytes describe the tested source. The actual commit receipt is
+    // recorded in the ignored final packet, avoiding a self-referential hash.
+    packet.publication={status:'prepared',paths:names};
+    for(const [name,text]of [[names[0],JSON.stringify(packet,null,2)+'\n'],[names[1],morning]]) {
+      const file=path(root,name);drafts.set(file,text);await dependencies.writeText(file,text);
+    }
+    try{await dependencies.refreshStatus();}
+    finally{drafts.set(path(root,names[2]),await maybeRead(dependencies,path(root,names[2])));}
+    await assertNightSource(dependencies,packet.source,names);
+    await dependencies.git(['add','--',...names]);staged=true;
+    await assertNightSource(dependencies,packet.source,names);
+    await dependencies.git(['commit','--only','-m',`Record night ${packet.date} checks and refresh status`,'--',...names]);
+    packet.publication={status:'committed',paths:names,commit:null};
+    // A successful commit is irreversible here. Receipt errors must not send
+    // already committed public metadata through draft cleanup.
+    try{packet.publication.commit=(await dependencies.git(['rev-parse','HEAD'])).trim();}
+    catch(error){packet.publication.receiptError=error.message;}
+  }catch(error) {
+    const cleanup=[];
+    if(staged)try{await dependencies.git(['restore','--staged','--',...names]);}catch(failed){cleanup.push(failed.message);}
+    let cleanupHead=null;
+    try{cleanupHead=(await dependencies.git(['rev-parse','HEAD'])).trim();}catch{}
+    for(const [file,expected]of drafts) {
+      try {
+        if(await maybeRead(dependencies,file)!==expected)continue; // Preserve somebody else's later edit.
+        const name=file.slice(path(root).length+1);
+        const state=await dependencies.git(['status','--porcelain','--',name]);
+        if(!state.trim())continue; // The current HEAD already owns these bytes.
+        let before=original.get(file);
+        if(cleanupHead!==packet.source) {
+          try{before=await dependencies.git(['show','HEAD:'+name]);}
+          catch(error){
+            if(state.trim().startsWith('?? '))before=null;
+            else {cleanup.push('Could not read current committed '+name+': '+error.message);continue;}
+          }
+        }
+        if(before===null){if(expected!==null)await dependencies.recycleText(file);}
+        else if(before!==undefined)await dependencies.writeText(file,before);
+      }catch(failed){cleanup.push(failed.message);}
+    }
+    packet.status='failed';
+    packet.publication={status:'refused',reason:error.message,...(cleanup.length?{cleanupErrors:cleanup}:{})};
+    packet.failures.push({name:'publication',error:error.message,firstMerge:null,attribution:'Publication context, not a game failure.'});
+  }
 }
 export async function runNight(options,overrides={}) {
   const root=overrides.root||ROOT;
   if(root.replaceAll('\\','/').replace(/\/$/,'').toLowerCase()==='c:/users/kyleb/dev/the-duel-remake')
     throw Error('Refusing the live folder.');
   if(options?.idleAwake!==true||options.noPush!==true)throw Error(usage);
-  const dependencies={root,now:()=>new Date(),git:args=>gitRead(args,root),processes:inspectNightProcesses,
+  const dependencies={root,now:()=>new Date(),git:args=>gitCommand(args,root),processes:inspectNightProcesses,
     scenarioNames:namedScenarios,readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
-    mkdir:dir=>mkdir(dir,{recursive:true}),
+    mkdir:dir=>mkdir(dir,{recursive:true}),makeTemp:mkdtemp,
+    refreshStatus:()=>refreshNightStatus(root),recycleText:file=>recycleNightDraft(file,root),
     listNightFiles:()=>readdir(path(root,'docs/board/checks')).catch(error=>{if(error.code==='ENOENT')return[];throw error;}),
     ...overrides};
   const source=(await dependencies.git(['rev-parse','HEAD'])).trim();
@@ -146,6 +237,7 @@ export async function runNight(options,overrides={}) {
     compaction:{status:'disabled',reason:'Separate Kyle authorization required; no history rewrite this run.'},
     push:{status:'disabled',reason:'--no-push; no push authorized this run.'}};
   const previous=await previousGreen(options.date,dependencies);packet.lastGreen=previous?.source||null;
+  packet.lastGreenNight=previous?{schema:1,status:'passed',source:previous.source,date:previous.date}:null;
   let firstMerge=null,attribution='Unknown: no previous green night.';
   if(previous) {
     try {
@@ -154,10 +246,12 @@ export async function runNight(options,overrides={}) {
     }catch(error){attribution='Unknown: '+error.message;}
   }
   const failure=(name,error)=>packet.failures.push({name,error,firstMerge,attribution});
-  const plan=nightPlan({root,date:options.date});
-  await dependencies.mkdir(path(root,'.evidence',options.date,'FAC-03','night'));
+  const evidenceParent=path(root,'.evidence',options.date,'FAC-03');
+  await dependencies.mkdir(evidenceParent);
+  packet.evidence=path(await dependencies.makeTemp(path(evidenceParent,'night-')));
+  const plan=nightPlan({root,date:options.date,evidence:packet.evidence});
   try {
-    if((await dependencies.git(['status','--porcelain'])).trim())throw Error('Source tree is dirty; no night jobs started.');
+    await assertNightSource(dependencies,source);
     const busy=await dependencies.processes();
     if(busy.length)throw Error('Laptop is busy: '+busy.map(row=>row.command).join('; '));
     packet.context.processIsolationObserved=true;
@@ -165,11 +259,12 @@ export async function runNight(options,overrides={}) {
       const row={id:stage.id,args:stage.args,log:stage.log,started:dependencies.now().toISOString(),passed:false};
       packet.stages.push(row);
       try {
-        if((await dependencies.git(['status','--porcelain'])).trim())throw Error('Source tree changed during the night.');
-        if((await dependencies.git(['rev-parse','HEAD'])).trim()!==source)throw Error('Source commit changed during the night.');
+        await assertNightSource(dependencies,source);
         if((await dependencies.processes()).length)throw Error('Another heavy job started; this stage is refused.');
         await dependencies.writeText(stage.log,'');
-        const result=await runChild(process.execPath,stage.args,{cwd:root,env:{...process.env,DUEL_NIGHT_FRAMES:'0',DUEL_NIGHT_IDLE_AWAKE:'0',...stage.env},
+        const stageEnv={...stage.env};
+        if(stage.id==='browser')stageEnv.DUEL_NIGHT_FRAME_PASSED=packet.stages.find(row=>row.id==='frames')?.passed===true?'1':'0';
+        const result=await runChild(process.execPath,stage.args,{cwd:root,env:{...process.env,DUEL_NIGHT_FRAMES:'0',DUEL_NIGHT_IDLE_AWAKE:'0',DUEL_NIGHT_FRAME_REUSE:'0',DUEL_NIGHT_FRAME_PACKET:'',DUEL_NIGHT_FRAME_PASSED:'0',...stageEnv},
           logPath:stage.log,spawnImpl:dependencies.spawnImpl||spawn,appendText:dependencies.appendText});
         row.exitCode=result.exitCode;
         if(stage.id==='full') {
@@ -191,22 +286,23 @@ export async function runNight(options,overrides={}) {
         else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames());
         else validateCombat(json(result.stdout),stage.id.endsWith('off')?'off':'on');
         if((await dependencies.processes()).length)throw Error('Heavy child or competing job remains after the stage; timing is not accepted.');
-        if((await dependencies.git(['status','--porcelain'])).trim())throw Error('Source tree changed during the night.');
-        if((await dependencies.git(['rev-parse','HEAD'])).trim()!==source)throw Error('Source commit changed during the stage.');
+        await assertNightSource(dependencies,source);
         row.passed=true;
       }catch(error){row.error=error.message;for(const name of row.failureNames?.length?row.failureNames:[stage.id])failure(name,error.message);}
       row.finished=dependencies.now().toISOString();
     }
   }catch(error){failure('context',error.message);}
   packet.finished=dependencies.now().toISOString();packet.status=packet.failures.length?'failed':'passed';
-  const reportDir=path(root,'docs/board/checks');await dependencies.mkdir(reportDir);
-  await dependencies.writeText(path(reportDir,`night-${options.date}.json`),JSON.stringify(packet,null,2)+'\n');
+
   const morning=[`Night ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
     ...packet.stages.map(row=>`${row.passed?'PASS':'FAIL'} ${row.id}: ${row.log}`),
     'First merge after last green: '+(firstMerge||attribution),
     'Compaction and push disabled; separate Kyle authorization is pending.',
     `Details: docs/board/checks/night-${options.date}.json`];
-  await dependencies.writeText(path(reportDir,`night-${options.date}.md`),morning.join('\n')+'\n');
+  await publishNightReports(packet,morning.join('\n')+'\n',dependencies);
+  morning[0]=`Night ${options.date}: ${packet.status.toUpperCase()} (${source}).`;
+  await dependencies.writeText(path(packet.evidence,'night-report.json'),JSON.stringify(packet,null,2)+'\n');
+  await dependencies.writeText(path(packet.evidence,'morning.md'),morning.join('\n')+'\n'+(packet.publication.status==='refused'?'Publication refused: '+packet.publication.reason+'\n':''));
   return packet;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {

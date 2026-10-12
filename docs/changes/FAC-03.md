@@ -11,7 +11,7 @@ frame check; combat off/on; all browser scenarios jobs 4. Write actual packets
 under docs/board/checks/night-<date>.json and a morning note under twenty lines.
 Each failed suite/scenario names the first merge after the last green night,
 or explicitly states that no prior green night exists. Complete child output
-stays in ignored .evidence/<date>/FAC-03/night logs.
+stays in a unique ignored .evidence/<date>/FAC-03/night-* leaf.
 
 The required --idle-awake declares an awake display, idle laptop and no other
 GPU workload. Node/Blender job inspection is observed before/after stages and
@@ -46,7 +46,7 @@ night-push sentence. Future command from the integration folder:
 
 Tests came first: Night import failed before implementation; the two new combat
 checks and two headed checks failed on the old tools. Controlled Night tests
-now pass 14/14; existing combat acceptance passes 36/36 (all original 34 plus
+now pass 28/28; existing combat acceptance passes 36/36 (all original 34 plus
 two actual bounded eligibility/unsupported checks); harness tests pass 14/14.
 No fixture result counts as a native night pass. Every original assertion and
 numeric target remains. Additive tests require serial children, complete real
@@ -60,6 +60,35 @@ commit full discovery retained all 401 tasks; only five proven direct native
 browser/Blender suites moved out of daytime selection. Pure browser/combat
 checks and smoke/replay/world guards remain. No import-wide exclusion exists.
 
+## Coordinator correction contract, before code
+
+Each invocation creates one unique owned ignored evidence leaf. Reused same-day
+frame/browser files cannot prove a new run. Decode stdout/stderr as UTF-8 and
+handle append failures immediately; retain their error, wait for the child's
+close and every queued write, then report failure. An error event never counts
+as child completion. Latest green attribution includes the current date.
+
+Actual runs require integration/wasteland. At publication, require the same
+clean source and branch. Refresh STATUS with the existing build-status tool,
+then commit only the two night reports and STATUS using explicit paths. Never
+include another staged file. If publication context changed, restore only our
+unchanged draft bytes to their original contents (recycle our newly created
+files), keep the failed report in the owned ignored leaf and explain refusal.
+Committed reports never roll back on a later receipt-read error. Cleanup checks
+the current HEAD and restores its STATUS after a concurrent source commit.
+The nine coordinator/publication cases, two commit-edge cases and reuse import
+failed first. All 28 controlled checks now pass. No public file was mutated.
+Controlled tests mock every metadata mutation; no actual night or public report
+is produced during implementation. Director grants report/STATUS hooks only,
+with no change to build-status itself.
+## Simple frame reuse contract, before code
+
+The Night browser batch still represents every named scenario. Its frame-pacing
+row reuses this invocation's simple packet through an explicit Night-only
+pointer and the actual earlier stage verdict. The pointer must share the same
+owned evidence leaf as that browser row. Validate both the original frame data
+and harness report; a failed or missing original stays failed. No second RAF,
+scene or quality measurement is performed. Default generic behavior is exact.
 ## Removed
 
 Only the five heavy dispatches leave daytime selection; full coverage remains.
