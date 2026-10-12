@@ -72,7 +72,11 @@ One ordinary review, changes needed, all applied:
 
 ## Behavior and test changes
 
-No existing assertion changed. New suite `tools/test-deep-water.mjs`.
+No existing assertion changed. New suite `tools/test-deep-water.mjs`. One of
+its own checks changed during review: "kelp only where the trail asks" now
+means kelp amount above zero (`!(at.kelp > 0)`) instead of under 0.05,
+matching the density rule, which allows any amount above zero; one stem in
+1,200 sat at 0.009.
 
 ## Removed
 
