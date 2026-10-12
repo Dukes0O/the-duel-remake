@@ -164,7 +164,10 @@ export async function runHeadlessLaps(options) {
     if (stageIndex < 0) throw Error(`No course called ${options.courseId}. Known: ${COURSE.map(c => c.id).join(', ')}`);
     app.profile = { ...app.profile, courses: { version: 1, unlocked: COURSE.map(c => c.id) } };
     app._saveProfile();
-    if (!app.startCampaign({ startStage: stageIndex, seed: options.seed, mode: 'duel', car: options.car, difficulty: 'casual', cpuDifficulty: 'medium' }))
+    // A course with snow or ice is reviewed on winter tyres, as a player would set up.
+    const { courseHasWinterSurfaces } = await import('../src/race-surfaces.js');
+    const winterTyre = courseHasWinterSurfaces(COURSE[stageIndex]);
+    if (!app.startCampaign({ startStage: stageIndex, seed: options.seed, mode: 'duel', car: options.car, difficulty: 'casual', cpuDifficulty: 'medium', ...(winterTyre ? { tyre: 'winter' } : {}) }))
       throw Error('The course would not start (is its switch off? try --flags).');
     app.autopilot = true;
     app._scriptedCrashDone = true;         // no scripted shoulder excursion: a clean lap
@@ -180,7 +183,7 @@ export async function runHeadlessLaps(options) {
         lateral: +state.lateral.toFixed(2), air: !!state.airborne, off: !!state.offRoad, lap: state.completedLaps });
     }
     return {
-      course, gridS, stageIndex, trace, lapTimes: [...state.lapTimes], laps, status: state.status, completed: state.completedLaps >= laps,
+      course, gridS, stageIndex, winterTyre, trace, lapTimes: [...state.lapTimes], laps, status: state.status, completed: state.completedLaps >= laps,
       opponents: state.opponents?.length ?? 0, hasRival: !!def.hasRival, courseDef: { id: def.id, name: def.name, laps, kind: def.kind ?? 'race', reviewFrames: def.reviewFrames },
       mphToWorld: DRIVE.mphToWorld, dispose: () => { try { app.dispose(); } finally { restore(); } },
     };
@@ -439,7 +442,7 @@ export async function main(args = process.argv.slice(2)) {
     subtitle: `${review.course.lengthM} m, ${review.course.laps} laps, ${review.course.car}, seed ${review.course.seed}, ${options.quality} quality`,
     lapNote: review.lap.flying ? `Lap time is the second (flying) lap of a scripted test driver on Medium; the first lap, from the grid, took ${formatLap(review.lap.lapTimes[0])}.` : 'Lap time is the first lap from the grid.',
     lapTime: review.lap.time, topMph: review.lap.topMph, topAtS: review.lap.topAtS, length: review.course.lengthM,
-    courseId: review.course.id, courseIndex: lap.stageIndex, mphToWorld: lap.mphToWorld, gridS: lap.gridS, hasField: lap.opponents > 0,
+    courseId: review.course.id, courseIndex: lap.stageIndex, winterTyre: lap.winterTyre === true, mphToWorld: lap.mphToWorld, gridS: lap.gridS, hasField: lap.opponents > 0,
     startHeading: lap.course.at(0).heading,
     points: review._profile.rows.map(row => [row.x, row.z, laneOf(review._lap, row.s, lap.course.length)?.mph ?? 0]),
     mapStart: { x: review._profile.rows[0].x, z: review._profile.rows[0].z, heading: review._profile.rows[0].heading },

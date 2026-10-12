@@ -212,13 +212,22 @@ function scatterScenery(course) {
         for (const [ox, oz] of taken.get(key(x + i * cell, z + j * cell)) ?? []) if (Math.hypot(ox - x, oz - z) < radius) return true;
       return false;
     };
-    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35 } = forest;
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = forest;
     let serial = 0;
     for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
-      const s = base + (random.float() - .5) * spacing * .9, depth = from + (to - from) * (row + random.float()) / rows;
+      const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
       // The rows thin out toward the back, so the wood has an edge.
       if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
-      const off = side * (course.roadHalfWidthAt(s) + depth), scale = random.range(.9, 1.7);
+      const off = side * (course.roadHalfWidthAt(s) + depth);
+      let scale = random.range(.9, 1.7);
+      // `scale: [least, most]` stretches the usual .9 to 1.7; `clumps: { cut, size }` groups the trees in groves
+      // with bare clearings between (a slow wave along the road and back into the wood) and grows the grove trees.
+      if (scaleRange) scale = scaleRange[0] + (scale - .9) / .8 * (scaleRange[1] - scaleRange[0]);
+      if (clumps) {
+        const grove = .5 + .28 * Math.sin(s * .021 + side * 1.9 + depth * .045) + .22 * Math.sin(s * .0083 - depth * .07 + side * 3.3) + .12 * Math.sin(s * .057 + depth * .11);
+        if (grove < clumps.cut) continue;
+        scale *= 1 + (clumps.size ?? 0) * (grove - .5);
+      }
       if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale)) continue;
       const p = course.groundAt(s, off);
       if (crowded(p.x, p.z, 3.2 * scale)) continue;
