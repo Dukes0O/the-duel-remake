@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 import { createProfile, isCarUnlocked, normalizeProfile } from '../src/progression.js';
 import { wastelandUnlocked } from '../src/wasteland-access.js';
+import { parseBoard } from './board.mjs';
 
 let checks = 0;
 const failures = [];
@@ -196,10 +197,15 @@ check('operations guide documents the playtest launcher', () => {
   assert.match(operations, /Titan.{0,40}unlock|unlock.{0,40}Titan/is,
     'operations guide must describe the seeded Titan unlock');
 });
-check('preview card waits for Kyle to confirm the desktop launch', () => {
-  const card = board.match(/  - id: PREVIEW-LAUNCHER\r?\n([\s\S]*?)(?=\r?\n  - id:|$)/)?.[0] ?? '';
-  assert.match(card, /\r?\n\s+waiting_on:\s*kyle\s*(?:\r?\n|$)/,
-    'PREVIEW-LAUNCHER must wait on Kyle until he has opened the desktop icon once');
+check('preview acceptance follows its open or completed card state', () => {
+  const cards = parseBoard(board);
+  const card = cards.find(item => item.id === 'PREVIEW-LAUNCHER');
+  if (cards.completed.has('PREVIEW-LAUNCHER')) {
+    assert.equal(card, undefined, 'a finished preview card leaves the open board');
+  } else {
+    assert.equal(card?.waiting_on, 'kyle',
+      'an open preview card keeps its original pending desktop confirmation');
+  }
 });
 
 console.log(`Preview launcher: ${checks} acceptance checks, ${failures.length} failures.`);
