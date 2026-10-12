@@ -1,3 +1,4 @@
+import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay} from './grand-prix-career.js';
 import { weaponSignature } from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import { normalizeCosmetics } from './paint-presets.js';
@@ -542,6 +543,10 @@ export function settleRace(profile, result = {}) {
     !!COURSE[result.stageIndex] &&
     typeof result.won === 'boolean';
   const key = `${result.runId}:${result.stageIndex}`;
+  const grandPrix = result.mode === 'grandprix';
+  if (grandPrix && (result.grandPrixCareerEnabled !== true || result.qualifying === true ||
+      result.abandoned !== true && (!isValidFinish(result) || !validGrandPrixPosition(result))))
+    return {profile, reward: 0, awarded: false, personalBest: false, breakdown: {}};
   if (!valid || COURSE[result.stageIndex]?.practice ||
     profile.settledResults.includes(key) ||
     profile.wasteland?.settledResults?.includes(key))
@@ -606,6 +611,7 @@ export function settleRace(profile, result = {}) {
   }
   const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy',
     base = CPU_REWARDS[cpu],
+    positionPay = grandPrix ? grandPrixPositionPay(result, base) : 0,
     finished = isCompletedRace(result),
     combatRace = result.mode === 'wasteland' && result.combatRewardsEnabled === true,
     separateCareer = combatRace && profile.wasteland?.version === 1 &&
@@ -647,7 +653,7 @@ export function settleRace(profile, result = {}) {
     ? {earned: profile.milestones, circuitWins: profile.circuitWins, awards: [], reward: 0}
     : finishMilestones(profile, result, { finished, won, improved });
   const breakdown = {
-    base: won ? base : combatRace ? 0 : -Math.round(base * 0.5),
+    base: grandPrix ? positionPay : won ? base : combatRace ? 0 : -Math.round(base * 0.5),
     clean: won && result.clean === true ? Math.round(base * 0.1) : 0,
     personalBest: personalBestStatus === 'improved' ? Math.round(base * 0.2) : 0,
     streak: won && streak >= 3 ? Math.round(base * 0.2) : 0,
@@ -657,7 +663,8 @@ export function settleRace(profile, result = {}) {
     police: Math.round(base * 0.1 * policeEscapes),
     ...(combatRace ? { combat: finished ? combatCreditBonus(result, base) : 0 } : {}),
     manual: 0,
-    milestones: milestones.reward
+    milestones: milestones.reward,
+    ...(grandPrix ? {snowmen: grandPrixSnowmanPay(result)} : {})
   };
   // Pro doubles positive recurring earnings. Loss charges and lifetime milestones
   // stay separate, including when a completed loss improves a comparable best.
@@ -670,13 +677,13 @@ export function settleRace(profile, result = {}) {
     breakdown.drift +
     breakdown.police +
     (breakdown.combat || 0);
-  breakdown.manual = result.difficulty === 'pro' ? (won ? base : 0) + recurringBonus : 0;
+  breakdown.manual = result.difficulty === 'pro' ? (grandPrix ? positionPay : won ? base : 0) + recurringBonus : 0;
   if (separateCareer) for (const name of Object.keys(breakdown)) breakdown[name] = 0;
-  const charge = won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
+  const charge = grandPrix || won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
     bonus = recurringBonus + breakdown.manual + breakdown.milestones;
-  const grossReward = (won ? base : -charge) + bonus;
+  const grossReward = (grandPrix ? positionPay : won ? base : -charge) + bonus + (breakdown.snowmen || 0);
   const pendingFines =
-    profile.activeRace?.key === key
+    !grandPrix && profile.activeRace?.key === key
       ? integer(profile.activeRace.pendingPoliceFineCount, 1_000_000) * POLICE.ticketBaseFine
       : 0;
   const policeFineCharge = separateCareer ? 0 : recordEligible

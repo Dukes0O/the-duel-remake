@@ -21,8 +21,11 @@ export function installPitLane(course) {
   if (opt.side !== undefined && !['left', 'right'].includes(opt.side))
     throw new Error('Pit side must be left or right.');
   const piece = pieces[0], side = opt.side === 'left' ? 1 : -1;
+  // A straight that runs through the start line has its first part at the end of the
+  // lap's numbers; the lane then begins just past the line, on the part that follows.
+  const first = Math.max(piece.s0, 0);
   const lane = {straight: piece.name, side, width: PIT.width,
-    entry: piece.s0 + 10, exit: piece.s1 - 10, box: (piece.s0 + piece.s1) / 2};
+    entry: first + 10, exit: piece.s1 - 10, box: (first + piece.s1) / 2};
   lane.offsetAt = s => side * (course.roadHalfWidthAt(s) + 1.3 + PIT.width / 2) *
     Math.min(smooth((course.phase(s) - lane.entry) / PIT.taper),
       smooth((lane.exit - course.phase(s)) / PIT.taper));
@@ -119,7 +122,9 @@ export function pitView(duel) {
   };
   if (pit?.phase === 'ready') return {text: 'GO', phase: pit.phase};
   if (pit) return {text: `60 KM/H · STOP IN YOUR BOX · ${fit} TYRES`, phase: 'lane'};
-  const approach = lane.entry - duel.course.phase(s.s);
+  let approach = lane.entry - duel.course.phase(s.s);
+  // A lane just past the start line is approached across the line, at the end of the lap.
+  if (approach < 0 && lane.entry < 200) approach += duel.course.length;
   return approach >= 0 && approach <= 200 ? {text: `PIT → ${fit} TYRES`, phase: 'approach'} : null;
 }
 

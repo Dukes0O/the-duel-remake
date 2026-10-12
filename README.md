@@ -2,6 +2,27 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Tremblant Snow release — 12 October 2026
+
+Tremblant Snow is the Tremblant Woods circuit in deep winter (1,800 credits):
+the same 4.4 km road, but under packed snow with two shaded patches of ice,
+each warned by an ICE board before it. Ploughed banks line the road, the lake
+is frozen with the dock standing on it, skiers come down the hill and the
+chairlift still runs. The race setup offers winter or summer tyres (winter
+tyres hold the snow best), and there is a pit lane on the start straight. It
+is a pure race track for Rival Duel, Time Trial and the Grand Prix (three
+laps); Mad Max Duel stays on the original courses. Tremblant Woods is
+unchanged, and your saves, records and unlocks carry over as they were.
+
+## Fixes — 12 October 2026
+
+Tremblant Woods: the ground no longer covers the road at the Spur and Beaver
+Kink, armco, tyre walls, catch fences and the pit wall now stop the car, the
+lodge sits on the ground and the dock in the water, and the far slope behind
+the lake is a hillside instead of a wall. Team Room: clicking a flag or a
+numbered corner on the map now selects it, and every flag's picture looks
+down the road from above the braking point so the corner is in view.
+
 ## Tremblant Woods release — 11 October 2026
 
 Tremblant Woods is a new 4.4 km autumn forest circuit (1,600 credits): the

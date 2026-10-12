@@ -61,7 +61,7 @@ const BASE = {
   intel: {
     sectors: [1240, 3330],
     flags: [
-      { id: 'chairlift', kind: 'signature', s: 2700, title: 'Timber Straight and the chairlift', camera: { back: 40, up: 1.2, ahead: 90 } },
+      { id: 'chairlift', kind: 'signature', s: 2700, title: 'Timber Straight and the chairlift', camera: { back: 40, ahead: 90 } },
       { id: 'timber', kind: 'overtaking', s: 3170, title: "Timber Straight into Devil's Chicane" },
       { id: 'pine-drop', kind: 'corner', s: 290, title: 'Pine Drop' },
       { id: 'ridge-run', kind: 'crest', s: 1050, title: 'Ridge Run crest' },
@@ -140,7 +140,7 @@ const HILL = {
 // The lake lies in a bowl dug into the ground (`basins` below); the water is laid
 // over the same outline. It lies a little lower than the road, which runs along
 // its near shore at a distance, and fills the view across Lakeshore.
-const LAKE = { s: 700, lateral: 112, along: 250, across: 84, surface: -2.4, depth: 7, bank: .11, blend: 34, colour: 0x082a36, shallow: 0x215e5c };
+const LAKE = { s: 700, lateral: 112, along: 250, across: 84, surface: -2.4, depth: 7, bank: .11, blend: 50, keep: 12, colour: 0x082a36, shallow: 0x215e5c };
 // The edge of the water at an angle round the lake, as [s, lateral].
 const shoreAt = angle => [LAKE.s + Math.cos(angle) * shoreFactor(angle) * LAKE.along, LAKE.lateral + Math.sin(angle) * shoreFactor(angle) * LAKE.across];
 const LIFT = (() => {
@@ -211,7 +211,7 @@ function lakeside() {
   const [s, shore] = shoreAt(-Math.PI / 2), out = [];
   for (const reach of [4.4, 14.2]) {
     const lateral = shore + reach, bed = basinGround(LAKE, s - LAKE.s, lateral - LAKE.lateral).height;
-    out.push(kit('wooden-dock', s, lateral, { heading: FACE_RIGHT + Math.PI, scale: [1.4, 1.4, 1.4], lift: Math.max(0, -bed) + .5, clear: 7 }));
+    out.push(kit('wooden-dock', s, lateral, { heading: FACE_RIGHT + Math.PI, scale: [1.4, 1.4, 1.4], lift: Math.max(0, -bed - .25), clear: 7 }));
   }
   return out;
 }
@@ -265,7 +265,7 @@ function trees() {
   for (let attempt = 0; onHill < 12 && attempt < 800; attempt++) {
     const du = (random() * 2 - 1) * HILL.along * .8, dv = (random() * 2 - 1) * HILL.across * .8;
     if (hillReach(HILL, du, dv) > .8 || runWeight(HILL, du, dv) > .02) continue;
-    out.push(kit(ids[attempt % 3], HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: 1.3 + random() * .6, clear: 4.5, hill: 0 }));
+    out.push(kit(ids[attempt % 3], HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: 1.3 + random() * .6, clear: 4.5, hill: 0, sink: .35 }));
     onHill++;
   }
   return out;
@@ -320,11 +320,20 @@ const MORNING = {
   cloudTint: [1, .76, .52], cloudCover: .5, exposure: 1.18, bloom: .1,
 };
 
+// What a car can reach is solid (`solid: true`, src/track-script-course.js): the barriers, the catch fence, the
+// marshal posts, the pit wall, garages and stands and the lift towers are boxes the size of the piece, so a car
+// stops against what it can see. The scenery further out (trees, the lodge, the dock) is for looking at.
+const SOLID_PIECES = new Set(['armco', 'tyre-wall', 'catch-fence', 'pit-wall', 'pit-garage', 'grandstand', 'marshal-post', 'chairlift-tower']);
+const solid = piece => SOLID_PIECES.has(piece.id) ? { ...piece, solid: true } : piece;
+
 export const TREMBLANT_WOODS = defineScriptedCourse({
   ...BASE,
   markings: 'circuit', light: MORNING, groundLeaves: LEAVES,
   // The land beyond the trees rises gently, so the hills behind it carry the skyline.
   relief: { from: 25, to: 100, scale: .38 },
+  // Halfway between the lake side and the ridge side of the lap the nearest road changes and the far ground
+  // used to step by tens of metres; it now slopes from one to the other (src/circuit-hills.js installFarGround).
+  farGround: { band: 120 },
   // The forest crowds the road from 13 m beyond the edge; the pines keep out of the
   // lake, the lift's cut through the trees, the paddock and the fence between the
   // spur and Timber Straight (the hill below plants its own).
@@ -341,5 +350,13 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
   hills: [HILL],
   basins: [LAKE],
   effects: { lake: LAKE, mist: { count: 30, height: 1, spread: .85, opacity: .3 }, lift: LIFT, backdrop: backdrop() },
-  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()].filter(Boolean),
+  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()].filter(Boolean).map(solid),
+});
+
+// The road and the scenery pieces Tremblant Snow shares (src/circuits/tremblant-snow.js): the same
+// road, lodge, lake bowl, hill, chairlift and safety kit, dressed for winter. Exported for that file
+// only; nothing above changes.
+export const TREMBLANT_SHARED = Object.freeze({
+  BASE, road, LENGTH, wrap, kit, along, named, halfAt, stream, facing, FACE_LEFT, FACE_RIGHT, TYRE_BANDS,
+  HILL, LAKE, LIFT, DIVIDE, safety, lakeside, lodge, chairlift, backdrop, shoreAt,
 });

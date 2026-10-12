@@ -13,7 +13,7 @@ import { createFeatureFlags } from '../src/feature-flags.js';
 import { installTestDriver } from './race-field-balance.mjs';
 import { ownTestCourses } from './career-fixture.mjs';
 import { Duel } from '../src/game.js';
-import { createProfile, eventKey, isValidFinish } from '../src/progression.js';
+import { createProfile, loadProfile, PLAYERS_KEY, eventKey, isValidFinish } from '../src/progression.js';
 import { normalizeRaceSettings } from '../src/race-settings.js';
 import { grandPrixCourse, gridPose, courseForGrandPrix } from '../src/race-field.js';
 import { createLeaderboard, recordFinish, saveLeaderboard, loadLeaderboard, getLeaderboard } from '../src/leaderboard.js';
@@ -23,6 +23,8 @@ import { testCourseAccess } from './career-fixture.mjs';
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
 const equal = (a, b, message) => { assert.deepEqual(a, b, message); checks++; };
+const recordSwitches = createFeatureFlags({storage: null, qa: false, search: '',
+  overrides: {'grand-prix': true, 'grand-prix-career': true}});
 // New GP admission cannot spend the budget by deleting existing Time Trial ghosts.
 const storagePlayer = {id: 'storage-fixture', name: 'Storage Driver'};
 const storageContext = {playerId: storagePlayer.id, stageIndex: 0, seed: 1989, laps: 2,
@@ -88,7 +90,7 @@ check(byteStore.records.length < MAX_GHOSTS && byteLength({version: 1,
 const beforeBytes = JSON.stringify(byteStore), byteAdmission = storeGhost(byteStore, denseGP);
 check(!byteAdmission.saved && byteAdmission.reason === 'capacity', 'over-budget GP ghost is visibly rejected');
 equal(JSON.stringify(byteAdmission.store), beforeBytes, 'GP byte rejection retains every old store byte');
-const sessionApp = {menuStage: 0, getMenuSeed: () => 1989, duel: {state: storageState},
+const sessionApp = {_switches: () => recordSwitches, menuStage: 0, getMenuSeed: () => 1989, duel: {state: storageState},
   profile: createProfile(), cpuDifficulty: 'medium', player: storagePlayer,
   ghosts: countStore, grandPrixGhostCandidate: gpStorage};
 equal(App.prototype.getGrandPrixGhostRecord.call(sessionApp), gpStorage,
@@ -126,7 +128,7 @@ try {
     'default Harbour GP key derives its authored count');
   harbourApp = new App(); ownTestCourses(harbourApp);
   harbourApp.duel.featureFlags = createFeatureFlags({storage: null, qa: false, search: '',
-    overrides: {'grand-prix': true}});
+    overrides: {'grand-prix': true, 'grand-prix-career': true}});
   check(harbourApp.startCampaign({startStage: harbourIndex, mode: 'grandprix', seed: 1989,
     fieldSeed: 1000, car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium'}),
     'native Harbour GP starts in disposable memory');
@@ -139,13 +141,13 @@ try {
   const reloaded = loadLeaderboard(globalThis.localStorage);
   check(reloaded.entries.some(row => row.eventId === HARBOUR_LIGHTS.id && row.laps === 4),
     'Harbour record survives memory-only save and reload');
-  const harbourScreen = createLeaderboardScreen({app: {leaderboard: reloaded, player: harbourApp.player,
+  const harbourScreen = createLeaderboardScreen({app: {_switches: () => recordSwitches, leaderboard: reloaded, player: harbourApp.player,
     grandPrixAvailable: () => true, getMenuSeed: () => 1989, getMenuRouteLabel: () => 'Fixed route'},
     boardFilter: {stage: harbourIndex, car: '', driverId: 'club', mode: 'grandprix'},
     escapeHTML: String, credits: String, time: value => `${value} seconds`})();
   check(harbourScreen.includes('4 LAPS') && harbourScreen.includes('All 4 laps count'),
     'Harbour GP record is visible with the actual lap-count description');
-  const emptyHarbourScreen = createLeaderboardScreen({app: {leaderboard: createLeaderboard(),
+  const emptyHarbourScreen = createLeaderboardScreen({app: {_switches: () => recordSwitches, leaderboard: createLeaderboard(),
     player: harbourApp.player, grandPrixAvailable: () => true, getMenuSeed: () => 1989,
     getMenuRouteLabel: () => 'Fixed route'}, boardFilter: {stage: harbourIndex, mode: 'grandprix'},
     escapeHTML: String, credits: String, time: String})();
@@ -424,7 +426,7 @@ for (const mode of ['duel', 'timetrial', 'grandprix']) {
 console.log(`Existing Grand Prix: ${checks} eligibility, grid, legacy replay and per-mode record checks passed.`);
 
 const boardFilter = {stage: 0, car: '', driverId: 'club', mode: 'grandprix'};
-const screen = createLeaderboardScreen({app: {leaderboard: board, player,
+const screen = createLeaderboardScreen({app: {_switches: () => recordSwitches, leaderboard: board, player,
   grandPrixAvailable: () => true, getMenuSeed: () => 1989, getMenuRouteLabel: () => 'Route A'},
   boardFilter, escapeHTML: value => String(value), credits: value => String(value),
   time: value => `${value} seconds`});
@@ -473,7 +475,7 @@ try {
   globalThis.localStorage = storage;
   globalThis.cancelAnimationFrame ??= () => {};
   app = new App(); ownTestCourses(app);
-  app.duel.featureFlags = createFeatureFlags({storage: null, qa: false, search: '', overrides: {'grand-prix': true}});
+  app.duel.featureFlags = createFeatureFlags({storage: null, qa: false, search: '', overrides: {'grand-prix': true, 'grand-prix-career': true}});
   const wallet = app.profile.credits;
   app.startCampaign({startStage: 0, seed: 1989, fieldSeed: 4242, mode: 'grandprix',
     car: 'falcone_f42', cpuDifficulty: 'medium', difficulty: 'casual'});
@@ -481,7 +483,18 @@ try {
   for (let tick = 0; tick < 24000 && ['countdown', 'racing'].includes(app.duel.state.status); tick++)
     app.advance(1 / 60, 1 / 60);
   check(app.duel.state.results?.completed, 'native App finishes three-lap GP');
-  equal(app.profile.credits, wallet, 'GP records do not settle pay or loss charges');
+  const finish = app.duel.state.results;
+  const positionPay = [1000, 750, 550, 400, 300, 200, 150, 100][finish.position - 1];
+  equal(finish.creditBreakdown.base, positionPay, 'native Medium GP pays the approved finishing-position share');
+  equal(finish.creditPositionReward, positionPay, 'native result exposes actual position credits');
+  equal(finish.creditCharge, 0, 'completed GP has no Duel loss charge');
+  equal(app.profile.credits, wallet + finish.creditReward, 'native GP banks exactly the earned credits');
+  equal(loadProfile(storage).credits, app.profile.credits, 'native GP credits survive memory-only reload');
+  const settledBytes = JSON.stringify(app.profile), bankedBytes = memory.get(PLAYERS_KEY);
+  check(typeof bankedBytes === 'string', 'native GP actually banks the named-player registry');
+  app._settleResult(finish, app.duel.state);
+  equal(JSON.stringify(app.profile), settledBytes, 'duplicate native GP settlement preserves every profile byte');
+  equal(memory.get(PLAYERS_KEY), bankedBytes, 'duplicate native GP settlement preserves every banked byte');
   check(app.leaderboard.entries.some(row => row.mode === 'grandprix' && row.laps === 3), 'native finish records GP');
   check(app.ghosts.records.some(row => row.mode === 'grandprix' && row.laps === 1), 'native admitted lap saves own GP ghost');
   check(!app.ghostPose && app.ghostStatus === 'none', 'GP never displays a ghost among the field');
@@ -491,7 +504,7 @@ try {
   if (process.argv.includes('--azure-ghost-only')) {
     app.dispose();app = new App();ownTestCourses(app);
     app.duel.featureFlags = createFeatureFlags({storage: null, qa: false, search: '',
-      overrides: {'grand-prix': true}});
+      overrides: {'grand-prix': true, 'grand-prix-career': true}});
     check(app.startCampaign({startStage: azureIndex, seed: 1989, fieldSeed: 1000,
       mode: 'grandprix', car: 'falcone_f42', cpuDifficulty: 'medium', difficulty: 'casual'}),
       'real Azure GP starts in disposable memory');

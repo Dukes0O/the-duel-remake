@@ -166,7 +166,7 @@ const BASE = defineScriptedCourse({
   intel: {
     sectors: [1000, 2260],
     flags: [
-      { id: 'lantern-hairpin', kind: 'signature', s: 1990, title: 'Lantern Hairpin', camera: { back: 30, up: 1.2, ahead: 40 } },
+      { id: 'lantern-hairpin', kind: 'signature', s: 1990, title: 'Lantern Hairpin' },
       { id: 'casino', kind: 'overtaking', s: 790, title: 'Seafront into Casino Corner' },
       { id: 'harbour-turn', kind: 'overtaking', s: 3700, title: 'Harbour Road into Harbour Turn' },
       { id: 'old-town', kind: 'corner', s: 1420, title: 'Old Town Esses' },

@@ -520,7 +520,9 @@ export function createTrackKits(course, options) {
     },
     sync:syncLights,
     withRearView,
-    setPlacementPose(index,matrix) {
+    // `refresh` false leaves the drawn selection for a later refresh(): a caller that moves many pieces in one
+    // frame (the chairs of a lift) refreshes once after the last instead of once per piece.
+    setPlacementPose(index,matrix,refresh=true) {
       if (retired || status !== 'ready' || !Number.isInteger(index) || !instances[index] ||
           !matrix?.isMatrix4 || !matrix.elements.every(finite)) return false;
       const instance = instances[index], row = rows[index];
@@ -529,8 +531,11 @@ export function createTrackKits(course, options) {
       for (const version of ['high','low'])
         instance.bounds.union(assets.get(row.id+'/'+version).bounds.clone().applyMatrix4(matrix));
       refreshChunkBounds(instance.chunk);
-      if (activeView) applyView(activeView);
+      if (refresh && activeView) applyView(activeView);
       return true;
+    },
+    refresh() {
+      if (status === 'ready' && !retired && activeView) applyView(activeView);
     },
     getPlacementPose(index) {return instances[index]?.matrix.clone() ?? null;},
     dispose() {

@@ -1,5 +1,35 @@
 # Remake verification
 
+## Tremblant Snow release — 12 October 2026
+
+Kyle approved ("Go live"); Claude was Release Manager. Installed at about 16:45
+UTC from exact commit `1a7a77e7`; live build `20261012164212-a60830f0f831`
+verified over HTTP. Full tier 399/399 in 1030.02 s, alone with four jobs, start
+and end commit unchanged; combat balance `--check` passed. Staged build listed
+Tremblant Snow last at 1,800 credits, opened the Team Room and clicked every map
+flag with no browser errors, in disposable storage. Frames (screen awake, eight
+cars): Performance p95 16.8 to 16.9 ms on Tremblant Woods and Snow; High p95
+33.4 ms with a few dropped frames on both, the same as the live Woods (follow-up).
+Overnight timing with the display asleep read about 1 ms slower per frame on
+every version and is not used. Previous build kept in `dist-previous`.
+
+## Tremblant and Team Room fixes — 12 October 2026
+
+Kyle approved both fixes for release that night ("yes, put it live tonight",
+"yes, put them live tonight too"); Claude was Release Manager. Built from
+integration 66281669 plus only TREMBLANT-FIX and TEAMROOM-FIX, so later
+integration work (Grand Prix pay) did not ship. Installed at about 07:40 UTC
+from exact commit `09fe13ef`; live build `20261012073726-ea597c79fdf7` verified
+over HTTP. Full tier 398/398 in 1294.17 s, alone with four jobs, on that commit;
+combat balance `--check` passed on the first candidate (0f40abd4), whose only
+later change is Team Room picture rendering.
+
+The first staged candidate (0f40abd4) threw a browser error from the menu camera
+after a Team Room picture with the player's car parked in frame; the live build
+before it was clean. The parked car was removed (09fe13ef) and the staged build
+then opened the Team Room, clicked every map flag and closed it with no
+errors, in disposable storage. Previous build kept in `dist-previous`.
+
 ## Tremblant Woods and arena fixes release — 11 October 2026
 
 Kyle approved Tremblant Woods with the Grand Prix on 11 October and chose to

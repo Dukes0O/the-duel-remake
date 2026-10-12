@@ -16,7 +16,7 @@ import { buildCityParking } from './city-parking-layout.js';
 import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
-import { installBasins, installReliefScale } from './circuit-hills.js';
+import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -57,6 +57,8 @@ export class Course {
     this.features={checkpoints:[],lapGates:[],rushGates:[],radarTraps:[],scenery:[],rocks:[],obstacles:[],mountains:[],stations:[],trees:[],buildings:[],barriers:[],turns:[],flocks:[],poles:[],landmarks:[],shortcuts:[],passingLanes:[],tunnels:[],ramps:[],crushables:[],signs:[],chevrons:[]};
     if(def.relief)installReliefScale(this);
     if(def.basins)installBasins(this);
+    if(def.hills?.some(hill=>hill.pads?.length))installHillPads(this);
+    if(def.farGround)installFarGround(this);
     this._build();
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
     if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);

@@ -10,9 +10,9 @@ import { supportsCombat } from '../src/combat.js';
 import { loadLeaderboard, LEADERBOARD_KEY } from '../src/leaderboard.js';
 import { loadGhosts, GHOST_KEY } from '../src/ghost.js';
 
-// RELEASE-TREMBLANT: Tremblant Woods joins the course list while its switch is on.
+// RELEASE-TREMBLANT and RELEASE-TREMBLANT-SNOW: Tremblant Woods, then Tremblant Snow, join the course list while their switches are on.
 // This pins what must not move when a course is added: the earlier events keep their
-// place and id, no old save gains or loses anything, and the new course is a paid unlock.
+// place and id, no old save gains or loses anything, and each new course is a paid unlock.
 
 const EARLIER_EVENTS = Object.freeze([
   'pacific-canyon', 'high-country', 'harbor-highlands', 'titan-arena', 'midnight-chase', 'ridge-rally',
@@ -23,10 +23,10 @@ let checks = 0;
 const equal = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 
-// 1. The earlier sixteen events keep their positions and ids; Tremblant is appended.
+// 1. The earlier sixteen events keep their positions and ids; Tremblant Woods, then Tremblant Snow, are appended.
 equal(COURSE.slice(0, EARLIER_EVENTS.length).map(event => event.id), EARLIER_EVENTS, 'earlier events keep their order and ids');
-equal(COURSE.slice(EARLIER_EVENTS.length).map(event => event.id), ['tremblant-woods'], 'Tremblant Woods is appended after them');
-ok(featureFlags.enabled('tremblant-woods'), 'the released switch is on for players, with no URL flag');
+equal(COURSE.slice(EARLIER_EVENTS.length).map(event => event.id), ['tremblant-woods', 'tremblant-snow'], 'Tremblant Woods is appended after them, then Tremblant Snow last');
+ok(featureFlags.enabled('tremblant-woods') && featureFlags.enabled('tremblant-snow'), 'the released switches are on for players, with no URL flag');
 ok(!featureFlags.enabled('panorama-ridge') && !featureFlags.enabled('harbour-lights'), 'the other two circuits stay off');
 EARLIER_EVENTS.forEach((id, index) => equal(stageEventId(index), id, `event ${index} still saves as ${id}`));
 
@@ -36,6 +36,13 @@ const key = eventKey({ stageIndex: tremblant, seed: 1989, laps: COURSE[tremblant
 ok(key.startsWith('tremblant-woods|layout:'), `Tremblant records have their own key: ${key}`);
 ok(COURSE.every((event, index) => index === tremblant || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('tremblant-woods|')),
   'no other event shares the Tremblant key');
+const snow = COURSE.findIndex(event => event.id === 'tremblant-snow');
+equal(snow, tremblant + 1, 'Tremblant Snow sits right after Tremblant Woods, last on the list');
+const snowKey = eventKey({ stageIndex: snow, seed: 1989, laps: COURSE[snow].laps });
+ok(snowKey.startsWith('tremblant-snow|layout:'), `Tremblant Snow records have their own key: ${snowKey}`);
+ok(COURSE.every((event, index) => index === snow || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('tremblant-snow|')),
+  'no other event shares the Tremblant Snow key');
+equal(stageEventId(snow), 'tremblant-snow', 'position 17 saves as tremblant-snow');
 
 // 3. Price and access: a paid unlock, shown on the course screen, never granted to old saves.
 equal(COURSE_PRICES['tremblant-woods'], 1600, 'Tremblant Woods costs 1,600 credits');
@@ -48,12 +55,25 @@ const bought = purchaseCourse(rich, 'tremblant-woods');
 ok(bought.ok && bought.cost === 1600 && bought.profile.credits === 400, 'buying charges exactly 1,600 credits');
 equal(bought.profile.courses.unlocked, [...rich.courses.unlocked, 'tremblant-woods'].filter(id => COURSE.some(event => event.id === id)),
   'buying adds only Tremblant Woods to the unlocked list');
+ok(!isCourseUnlocked(bought.profile, 'tremblant-snow'), 'buying Tremblant Woods does not give Tremblant Snow');
+equal(COURSE_PRICES['tremblant-snow'], 1800, 'Tremblant Snow costs 1,800 credits');
+ok(!isCourseUnlocked(fresh, 'tremblant-snow'), 'a new profile has Tremblant Snow locked');
+const snowPoor = purchaseCourse({ ...fresh, credits: 1799 }, 'tremblant-snow');
+ok(!snowPoor.ok && snowPoor.profile.credits === 1799, 'one credit short cannot buy Tremblant Snow');
+const snowBought = purchaseCourse({ ...fresh, credits: 2500 }, 'tremblant-snow');
+ok(snowBought.ok && snowBought.cost === 1800 && snowBought.profile.credits === 700, 'buying Tremblant Snow charges exactly 1,800 credits');
+equal(snowBought.profile.courses.unlocked, [...fresh.courses.unlocked, 'tremblant-snow'].filter(id => COURSE.some(event => event.id === id)),
+  'buying adds only Tremblant Snow to the unlocked list');
+ok(!isCourseUnlocked(snowBought.profile, 'tremblant-woods') && isCourseUnlocked(snowBought.profile, 'pacific-canyon'), 'Tremblant Snow does not give Tremblant Woods and keeps the free course');
 ok(isCourseUnlocked(bought.profile, 'tremblant-woods') && isCourseUnlocked(bought.profile, 'pacific-canyon'), 'the purchase unlocks it and keeps the free course');
 const unowned = courseAccessPanel(fresh, 0, '');
 ok(/Tremblant Woods/.test(unowned) && /1,?600 CR/.test(unowned), 'the course screen lists Tremblant Woods with its price');
 ok(!/UNLOCKED<\/span><h3>Tremblant Woods/.test(unowned), 'the course screen shows it as locked until bought');
 const owned = courseAccessPanel(bought.profile, tremblant, '');
 ok(/UNLOCKED<\/span><h3>Tremblant Woods/.test(owned), 'after buying, the course screen shows it as unlocked');
+ok(/Tremblant Snow/.test(unowned) && /1,?800 CR/.test(unowned), 'the course screen lists Tremblant Snow with its price');
+ok(!/UNLOCKED<\/span><h3>Tremblant Snow/.test(unowned), 'the course screen shows Tremblant Snow as locked until bought');
+ok(/UNLOCKED<\/span><h3>Tremblant Snow/.test(courseAccessPanel(snowBought.profile, snow, '')), 'after buying, the course screen shows Tremblant Snow as unlocked');
 
 // 4. Every historical save fixture loads exactly as before: no course gained or lost, records and ghosts intact.
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
@@ -72,7 +92,9 @@ for (const file of files) {
   const rawPlayers = rawRegistry?.players ?? [{ id: 'player-1', profile: fixture.storage[PROFILE_KEY] }];
   for (const rawPlayer of rawPlayers) {
     const loaded = players.players.find(player => player.id === rawPlayer.id).profile;
-    equal(isCourseUnlocked(loaded, 'tremblant-woods'), !!rawPlayer.profile.courses?.unlocked?.includes('tremblant-woods'), `${fixture.shape}/${rawPlayer.id}: a save owns Tremblant Woods only if it saved it`);
+    for (const id of ['tremblant-woods', 'tremblant-snow']) {
+      equal(isCourseUnlocked(loaded, id), !!rawPlayer.profile.courses?.unlocked?.includes(id), `${fixture.shape}/${rawPlayer.id}: a save owns ${id} only if it saved it`);
+    }
     if (rawPlayer.profile.courses) {
       equal(loaded.courses.unlocked, COURSE.map(event => event.id).filter(id => rawPlayer.profile.courses.unlocked.includes(id)),
         `${fixture.shape}/${rawPlayer.id}: the unlocked list is exactly the saved one`);
@@ -91,6 +113,7 @@ for (const file of files) {
 
 // 5. Pure race: the circuits do not host Mad Max Duel, raiders or the UFO. Rival Duel stays.
 ok(!supportsCombat(COURSE[tremblant]) && COURSE[tremblant].hasRival, 'Tremblant has a rival but no Mad Max Duel');
+ok(!supportsCombat(COURSE[snow]) && COURSE[snow].hasRival && COURSE[snow].noCombat === true, 'Tremblant Snow has a rival but no Mad Max Duel');
 equal(COURSE.filter(supportsCombat).length, 11, 'eleven combat courses, as before');
 
 // 6. An unfinished race is saved by course id as well as position, and found by id first.
@@ -99,6 +122,8 @@ const load = activeRace => normalizeProfile({ version: 2, credits: 100, activeRa
 equal(load(race({ stageIndex: 3, key: 'run-x:3' }))?.stageId, 'titan-arena', 'an old save with only a position resumes the course at that position');
 equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }))?.stageIndex, tremblant, 'a new save resumes Tremblant');
 equal(load(race({ stageIndex: 0, stageId: 'tremblant-woods' }))?.stageId, 'tremblant-woods', 'the id wins over a stale position');
+equal(load(race({ stageIndex: snow, stageId: 'tremblant-snow' }))?.stageIndex, snow, 'a new save resumes Tremblant Snow');
+equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-snow' }))?.stageIndex, snow, 'the id wins over a stale position for Tremblant Snow too');
 equal(load(race({ stageIndex: 3, stageId: 'no-such-course' })), null, 'a course id this build does not have drops the race instead of resuming whatever sits at that position');
 equal(load(race({ stageIndex: 999, stageId: 'no-such-course' })), null, 'an unknown id and position is dropped, as before');
 {

@@ -149,7 +149,7 @@ export class App {
       else if(event.gameover)this._settleResult(state.results||{},state);
       if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
-      if(event.lapCompleted && state.mode==='grandprix'){
+      if(event.lapCompleted && state.mode==='grandprix' && this._switches().enabled('grand-prix-career')===true){
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
           const current=this.ghostSaved===false?this.ghosts:mergeGhostStores(this.ghosts,loadGhosts());
@@ -413,6 +413,7 @@ export class App {
     return findGhost(this.ghosts,this.player.id,{seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,driverId:getEquippedDriverId(this.profile),difficulty:this.duel.state.difficulty,cpuDifficulty:this.cpuDifficulty,...options,stageIndex,laps:COURSE[stageIndex]?.laps||2});
   }
   getGrandPrixGhostRecord(options={}){
+    if(!this._switches().enabled('grand-prix-career'))return null;
     const stageIndex=options.startStage??options.stageIndex??this.menuStage;
     const context={seed:this.getMenuSeed(stageIndex),car:this.duel.state.car,
       driverId:getEquippedDriverId(this.profile),difficulty:this.duel.state.difficulty,
@@ -468,7 +469,7 @@ export class App {
   _startGhostStage(state){
     this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';
     this.grandPrixLapRecorder=null;
-    if(state.mode==='grandprix'&&state.qualifying?.phase!=='driving'&&this._runPlayerId===this.player.id&&state.playerId===this.player.id){
+    if(this._switches().enabled('grand-prix-career')===true&&state.mode==='grandprix'&&state.qualifying?.phase!=='driving'&&this._runPlayerId===this.player.id&&state.playerId===this.player.id){
       this.grandPrixGhostCandidate=null;this.grandPrixGhostSaveStatus='none';
       this.grandPrixLapRecorder=new GrandPrixLapRecorder({playerId:this.player.id,seed:state.seed,
         stageIndex:state.stageIndex,car:state.car,driverId:state.driverId,difficulty:state.difficulty,
@@ -578,31 +579,24 @@ export class App {
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
+    if(state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving')){
+      result.creditReward=0;result.creditBalance=this.profile.credits;return;
+    }
     if(state.hiddenRoadVisit)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
     this._refreshPlayer();
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
-      upgrades:{...state.upgrades},rival:state.rivalSettings,weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
+      upgrades:{...state.upgrades},...(state.mode==='grandprix'?{rival:null,rivalSettings:null}:{rival:state.rivalSettings}),weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
+      grandPrixCareerEnabled:state.mode==='grandprix'&&this._switches().enabled('grand-prix-career')===true,
       combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
-    // Existing-circuit Grand Prix records are free of wallet settlement. Career pay is separate.
-    if(state.mode==='grandprix'){
-      result.creditReward=0;result.creditBalance=this.profile.credits;
-      const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),
-        {...payload,rival:null},this.player);
-      this.leaderboard=recorded.board;
-      if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
-      result.best=recorded.best;
-      result.personalBest=recorded.recorded;
-      this.grandPrixLapRecorder=null;
-      return;
-    }
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
+      if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
       const recorded=recordFinish(mergeLeaderboards(this.leaderboard,loadLeaderboard()),payload,this.player);this.leaderboard=recorded.board;
       if(recorded.recorded)this.leaderboardSaved=saveLeaderboard(this.leaderboard);
       if(recorded.scoreBest!=null){result.driftScoreBest=recorded.scoreBest;result.driftScoreImproved=recorded.scoreImproved;}
@@ -616,6 +610,7 @@ export class App {
         result.scrapBalance = this.profile.wasteland.scrap;
       }
     }else if(result.creditReward==null)result.creditReward=0;
+    if(state.mode==='grandprix')this.grandPrixLapRecorder=null;
     this._finishGhost(payload,state,awarded,result);
     result.creditBalance=this.profile.credits;
   }
