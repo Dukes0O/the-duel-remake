@@ -360,3 +360,10 @@ export const TREMBLANT_SHARED = Object.freeze({
   BASE, road, LENGTH, wrap, kit, along, named, halfAt, stream, facing, FACE_LEFT, FACE_RIGHT, TYRE_BANDS,
   HILL, LAKE, LIFT, DIVIDE, safety, lakeside, lodge, chairlift, backdrop, shoreAt,
 });
+
+// Registration belongs to this course; generation and geometry stay unchanged.
+export const manifest = Object.freeze({
+  id: 'tremblant-woods', flag: 'tremblant-woods', state: 'on', price: 1600,
+  grandPrix: true, releaseOrder: 0,
+  driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
+});

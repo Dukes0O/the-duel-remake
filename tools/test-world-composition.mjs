@@ -1,3 +1,4 @@
+import {loadWorldSignatures} from './course-fixtures.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import * as THREE from 'three';
@@ -10,31 +11,7 @@ import {buildEnvironment,disposeTree} from '../src/world.js';
 // the old labels reproduced all sixteen prior complete-scene hashes exactly.
 // Instance parity and bounded harbor changes have separate focused tests.
 // UUIDs, allocation counters, callbacks and wall-clock values are not scene data.
-const baseline={
-  'pacific-canyon':{hash:'d6c1f3bfe80e5348f53dff6edd122e1d939a0ea6c74056efc319914f72f5c51c',nodes:523,meshes:501,instances:11981,geometries:237,materials:102,textures:33},
-  'high-country':{hash:'8baeb15a8550afdd185924439a1db15e7b2a6471d75b528bddb0e45347c18301',nodes:712,meshes:682,instances:15698,geometries:358,materials:136,textures:43},
-  'harbor-highlands':{hash:'85b7b99f02ce5364fbfb53b8904539aa5d700ee380443425839b97d8a2adbbf4',nodes:1011,meshes:967,instances:116421,geometries:384,materials:167,textures:46},
-  'titan-arena':{hash:'1f4116b50e9ca7ca933cd9b661ef5c8abe603eee711fb3bf01443235ac67c50a',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
-  'midnight-chase':{hash:'41675688e789b1fc9e98f59737e1a8236d4c82c87ce617f34716fd99bd79ed33',nodes:1262,meshes:1214,instances:171674,geometries:404,materials:129,textures:32},
-  'ridge-rally':{hash:'53931d14e95d075d9dcedf4f51ca7e7b7ae02471b806fa05d79b923d2605d7d4',nodes:438,meshes:416,instances:14087,geometries:174,materials:101,textures:33},
-  'titan-stunt-trial':{hash:'fdf58c68c62359fdd78f7d946a867fc4f12b5ef9826e6ebb5910267aefcdbf20',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
-  'neon-drift-trial':{hash:'98a7420ffad0e5173401c4ef40bca4f469102d955d215f6a15cff8e3ae96187b',nodes:1269,meshes:1222,instances:169354,geometries:402,materials:128,textures:32},
-  'timberline-rush':{hash:'2c82f4833f2ce060f490a168b43abbc869b47f1633181db9e1ce79f723fad6e4',nodes:523,meshes:484,instances:14950,geometries:239,materials:103,textures:31},
-  'eifel-crown':{hash:'c3931d0b127855bbe11315794f3fa65d5866a5851dfcd2663d46a1d7ab4aba2b',nodes:645,meshes:613,instances:20292,geometries:248,materials:140,textures:46},
-  'alpine-serpent':{hash:'be479d04c34f17132a290a6f8dd7f82bb3b32b49eef8a39b47096a0d831cfa93',nodes:578,meshes:545,instances:19015,geometries:219,materials:129,textures:41},
-  'azure-riviera':{hash:'b6696b4341a7a799bdc9c6bc52c271e056dd9ae89d0ede49e8babf623b151dc4',nodes:555,meshes:528,instances:18370,geometries:243,materials:121,textures:40},
-  'red-mesa':{hash:'6bb5b5a400ae2a8b83c7466c81e4c054092dc0fac0e4eac169c3707261b85a33',nodes:522,meshes:494,instances:6732,geometries:211,materials:116,textures:36},
-  'neon-docks':{hash:'38b59a97e9ea91d8551719f63eaf272b7a1ca18e015b20ea5fbac2d45a8da451',nodes:1432,meshes:1374,instances:229433,geometries:448,materials:174,textures:44},
-  'cloudbreak-skyway':{hash:'d37553f4af313e50f6b24ffbc1d3e0cec0e431362e572b693e4e31d79cff4c4b',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
-  // QA screenshot reviewed: open paved drag entrance, readable gantry and clear training mound; runway adds one mesh, geometry and material.
-  'titan-freestyle':{hash:'19ecd561629f7f4b3aab3709558681fd19ae543450b07081d7a7bddb1248f42f',nodes:226,meshes:161,instances:129,geometries:158,materials:37,textures:5},
-  // Tremblant Woods: ground no longer lies over the road at the hairpin, solid kit barriers, a level pad under the lodge, the dock set in the water and a gentler far ground (TREMBLANT-FIX, reviewed in frames.jpg).
-  'tremblant-woods':{hash:'52d26d6708b17d071a02e1d8774255c445c83ae805c4a74418bd013514879557',nodes:307,meshes:271,instances:23134,geometries:38,materials:23,textures:13},
-  // Tremblant Snow (RELEASE-TREMBLANT-SNOW): baseline from the reviewed round-2 art, captured twice with identical results.
-  'tremblant-snow':{hash:'1c86d730fd4d7a9d284996a9c71fb2569e57f9e9c551fc515c6f10f36da8c58c',nodes:324,meshes:304,instances:22909,geometries:66,materials:52,textures:14},
-  // Harbour Lights (RELEASE-HARBOUR): baseline from the reviewed finishing round 2 art (P4-HARBOUR-FINISH-2), captured twice with identical results.
-  'harbour-lights':{hash:'77ee8cd229d6253bf86ad7d94c3f4b01b9ee24cee5ce070cf06309387de27dfb',nodes:1141,meshes:1124,instances:225980,geometries:230,materials:61,textures:18},
-};
+const baseline=loadWorldSignatures();
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -97,7 +74,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,19,'all nineteen event scenes are covered');
+  equal(COURSE.length,Object.keys(baseline).filter(id=>COURSE.some(def=>def.id===id)).length,'every enabled event scene has its reviewed baseline');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);

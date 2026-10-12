@@ -163,3 +163,10 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
   },
   kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...hillPines()].filter(Boolean).map(solid),
 });
+
+// Registration belongs to this course; generation and geometry stay unchanged.
+export const manifest = Object.freeze({
+  id: 'tremblant-snow', flag: 'tremblant-snow', state: 'on', price: 1800,
+  grandPrix: true, releaseOrder: 1,
+  driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
+});
