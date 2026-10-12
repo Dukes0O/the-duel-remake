@@ -24,7 +24,7 @@ export async function nativeBundle() {
       },
     }],
     build: {write: false, emptyOutDir: false, minify: false,
-      lib: {entry, formats: ['es']}, rolldownOptions: {output: {inlineDynamicImports: true}}},
+      lib: {entry, formats: ['es']}, rolldownOptions: {output: {codeSplitting: false}}},
   });
   const output = (Array.isArray(result) ? result[0] : result).output;
   const chunk = output.find(row => row.type === 'chunk');
