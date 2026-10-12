@@ -4271,6 +4271,7 @@ tasks:
     size: M
     needs: [P4-PANORAMA]
     status: ready
+    locks: [save-shape]
     flag: grand-prix-career
     owns: [src/grand-prix-career.js, tools/test-grand-prix-career.mjs, docs/changes/P4-CAREER.md]
     hooks: [src/screen-courses.js, src/course-access.js, src/progression.js, src/leaderboard.js, src/app.js]
@@ -4474,6 +4475,7 @@ tasks:
     size: M
     needs: [P4-SUMMIT]
     status: ready
+    locks: [sound-bank]
     flag: summit-run
     owns: [src/circuits/summit-avalanche.js, tools/test-summit-avalanche.mjs, docs/changes/P4-AVALANCHE.md]
     hooks: [src/circuits/summit-run.js, src/race-field.js, src/sound-bank.js]
@@ -4542,6 +4544,7 @@ tasks:
     size: M
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
     status: ready
+    locks: [save-shape]
     flag: grand-prix
     owns: [src/grand-prix-cups.js, src/screen-trophies.js, tools/test-grand-prix-cups.mjs, docs/changes/P4-CUPS.md]
     hooks: [src/grand-prix-career.js, src/screen-courses.js, src/screen-garage.js, src/app.js]
@@ -5047,7 +5050,7 @@ tasks:
     flag: the-deep
     locks: [busy-game-files]
     owns: [src/deep/deep-zone.js, src/deep/deep-journey.js, src/deep/deep-ui.js, src/deep/deep-ui.css, tools/test-deep-zone.mjs, docs/changes/DEEP-ZONE.md]
-    hooks: [src/app.js, src/game.js, src/course.js, src/coastal-water.js]
+    hooks: [src/app.js, src/game.js, src/course.js, src/coastal-water.js, src/render3d.js]
     design_decision: "Claude, THE_DEEP 10 and 10.1: zone format v1 as written; ramp in the Pacific Coast cove off the racing line; pause, Dive / Turn back and ramp return copy the Hidden Road journey. A test zone lives in the test only."
     acceptance:
       - "Zone format 10.1 loads; the ramp, shoreline pause, dive choice and return work in Node; Pacific Canyon fingerprints exact with the ramp unused and with the-deep off. Lane tier, build, one review."
@@ -5061,7 +5064,7 @@ tasks:
     flag: the-deep
     owns: [tools/test-deep-surface.mjs, docs/changes/DEEP-SURFACE.md]
     hooks: [src/race-surfaces.js, src/sim-driving.js]
-    design_decision: "Claude, THE_DEEP 10.1: sea-floor grip .8, top speed 70% of the car's own, acceleration 60%, turning drag 1.4x, gravity one third, landings never damage, hint SEA FLOOR, cue deep.sand-land."
+    design_decision: "Claude, THE_DEEP 10.1: sea-floor in SURFACES only (not SURFACE_KINDS), tyre column asphalt, grip .75, top speed 70% of the car's own, acceleration 60%, turning drag 1.4x, gravity one third, landings never damage, hint SEA FLOOR, cue deep.sand-land.
     acceptance:
       - "The 10.1 numbers hold in Node for every car scaled from its own handling; every other surface and every fingerprint exact."
   - id: DEEP-SAVE
@@ -5076,7 +5079,7 @@ tasks:
     helpers: [reviewer, save_guardian]
     owns: [src/deep/deep-discovery.js, src/deep/deep-hints.js, tools/fixtures/saves/09-deep.json, tools/test-deep-save.mjs, docs/changes/DEEP-SAVE.md]
     hooks: [src/screen-garage.js, src/progression.js]
-    design_decision: "Claude, THE_DEEP 10.1: optional deep.found, deep.logged, deep.pearls, deep.kit, deep.hintsShown; first hint after five Pacific Canyon finishes, second after ten without a dive; kit 150 credits, shown after the first hint."
+    design_decision: "Claude, THE_DEEP 10.1: optional deep.found, deep.places, deep.logged, deep.pearls, deep.kit, deep.hintsShown and deep.pacificFinishes (Duel and Time Trial finishes on Pacific Canyon, stops at 10; wasteland.pacificFinishes unchanged); first hint at five, second at ten while found is empty; kit 150 credits, shown after the first hint.
     acceptance:
       - "Fields round-trip; old saves load byte for byte; memory-only save checker clear; hints and kit appear at the stated counts."
   - id: DEEP-ART-SRC
@@ -5087,7 +5090,8 @@ tasks:
     needs: []
     status: ready
     flag: the-deep
-    owns: [public/assets/models/deep/, tools/art/catalog.json, public/assets/models/CREDITS.md, docs/board/looks/deep-art/, docs/changes/DEEP-ART-SRC.md]
+    owns: [public/assets/models/deep/, docs/board/looks/deep-art/, docs/changes/DEEP-ART-SRC.md]
+    hooks: [tools/art/catalog.json, public/assets/models/CREDITS.md]
     acceptance:
       - "The 14 creatures of THE_DEEP 10.1 plus wreck hull, giant clam, anchor and sunken boat, CC0 first, credited; round sheets judged by Claude, at most three rounds; no frame check (rule 9)."
   - id: DEEP-AUDIO
@@ -5098,8 +5102,9 @@ tasks:
     needs: []
     status: ready
     flag: the-deep
+    locks: [sound-bank]
     owns: [public/assets/audio/deep/, src/deep/deep-audio.js, tools/test-deep-audio.mjs, docs/changes/DEEP-AUDIO.md]
-    hooks: [tools/audio/catalog.json, public/assets/audio/CREDITS.md]
+    hooks: [tools/audio/catalog.json, public/assets/audio/CREDITS.md, src/sound-bank.js, src/audio.js]
     acceptance:
       - "The eight cue ids of THE_DEEP 10.1 from recipes; ambience about -20 LUFS, peaks at most -1 dBTP; master mix unchanged; Claude judges one listening sheet."
   - id: DEEP-WATER
@@ -5110,9 +5115,9 @@ tasks:
     needs: [DEEP-LOOK]
     status: ready
     flag: the-deep
-    owns: [src/deep/underwater-look.js, src/deep/depth-colour.js, src/deep/light-shafts.js, src/deep/water-surface.js, tools/deep-look.js]
+    owns: [src/deep/underwater-scene.js, src/deep/underwater-look.js, src/deep/depth-colour.js, src/deep/light-shafts.js, src/deep/water-surface.js, src/deep/water-shader.js, src/deep/sea-floor.js, src/deep/sea-floor-shape.js, src/deep/kelp.js, src/deep/marine-snow.js, src/deep/headlights.js, src/deep/contact-shadow.js, src/deep/look-quality.js, tools/deep-look.js]
     acceptance:
-      - "The approved look works for any 10.1 zone at any depth on Performance and High; nothing reachable yet, so no frame check until FINISH-DEEP."
+      - "createUnderwaterScene of 10.1 draws any zone (sea floor from the trail, kelp, light, surface, marine snow) plus the waterline and bubbles on the way down, at any depth on Performance and High; nothing reachable yet, so no frame check until FINISH-DEEP."
   - id: DEEP-TRAIL
     title: "The Kelp Coast loop"
     owner: claude
@@ -5132,7 +5137,7 @@ tasks:
     needs: [DEEP-ART-SRC, DEEP-TRAIL]
     status: backlog
     flag: the-deep
-    owns: [src/deep/sea-life.js, tools/test-deep-life.mjs, docs/changes/DEEP-LIFE.md]
+    owns: [src/deep/fish-school.js, src/deep/fish-rules.js, tools/test-deep-life.mjs, docs/changes/DEEP-LIFE.md]
     acceptance:
       - "Section 5 Kelp Coast creatures instanced, capped per type, reacting to the car's position read-only; race state and random streams untouched."
   - id: DEEP-LOG
@@ -5144,9 +5149,9 @@ tasks:
     status: backlog
     flag: the-deep
     owns: [src/deep/deep-log.js, tools/test-deep-log.mjs, docs/changes/DEEP-LOG.md]
-    hooks: [src/screen-garage.js]
+    hooks: [src/screen-garage.js, src/paint-presets.js]
     acceptance:
-      - "Log a creature within 6 m under 15 km/h for one second; pearls; pearl-white finish after nine; garage log page with silhouettes."
+      - "Log a creature within 6 m of its zone spot under 15 km/h for one second (spots, not moving creatures); pearls; pearl-white finish after nine; garage log page with silhouettes. Do not edit paint-presets.js while P4-YETI is building."
   - id: FINISH-DEEP
     title: "Claude's finishing pass: the Kelp Coast"
     owner: claude
@@ -5235,6 +5240,7 @@ tasks:
     owns: [tools/night-shift.mjs, tools/test-night-shift.mjs, docs/changes/FAC-03.md]
     acceptance:
       - "One command runs, alone: full tier jobs 4, frame check per AGENTS rule 8, combat balance with wasteland2 off and on, all browser scenarios. Writes docs/board/checks/night-<date>.json and a morning report under twenty lines that names, for each failure, the first merge after the last green night. Kyle creates the Windows scheduled task himself; the card writes the exact command for him."
+      - "After a passing night full tier: compact binaries (SPEC 0.8, tools/compact-binaries.mjs) and push integration/wasteland with --force-with-lease (D8). A failing night pushes nothing."
   - id: FAC-04
     title: "Course kit: a new course is added by adding its own files"
     owner: codex

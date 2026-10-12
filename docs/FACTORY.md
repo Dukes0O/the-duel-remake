@@ -30,7 +30,8 @@ and SPEC text about test tiers, merge order and when heavy checks run.
 6. **Work in progress limits.** At most six build lanes at once across all
    lines, no more than three of them course lanes, each test run `--jobs 4`
    or fewer. The laptop has 20 threads; the night shift runs alone. A world
-   uses as many of the six as its graph allows (The Deep starts five).
+   uses as many of the six as its graph allows (The Deep starts six: five
+   Codex cards and Claude's water look).
 
 ## 2. Locks: the shared files
 
@@ -46,6 +47,7 @@ never build at the same time; the board shows the second as waiting.
 | `busy-game-files` | `src/game.js`, `src/main.js`, `src/render3d.js`, `src/app.js` | stays; one owner at a time |
 | `save-shape` | save schema, migrations, `tools/fixtures/saves/` | stays; save checker required |
 | `audio-mix` | `src/audio-output.js` mastering | stays |
+| `sound-bank` | `src/sound-bank.js` cue registry | stays; one card adding cues at a time |
 | `release` | switch flips, README, VERIFICATION, COURSE_ACCESS | stays; one release at a time, several cards per release |
 
 After FAC-04, a new course holds only `release`, and only at release time.

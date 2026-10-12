@@ -274,15 +274,15 @@ flowchart LR
 
 | Card | Owner | Starts | Owns (and locks) | Done when |
 | --- | --- | --- | --- | --- |
-| DEEP-ZONE | Codex SIM | now | `src/deep/deep-zone.js`, `src/deep/deep-journey.js`, `src/deep/deep-ui.js`, `src/deep/deep-ui.css`, `tools/test-deep-zone.mjs`; hooks in `src/app.js` and `src/game.js` (lock `busy-game-files`) | The zone format of 10.1 loads; the Pacific Canyon ramp is installed in the Pacific Coast cove; past the water's edge the race pauses, the Dive / Turn back choice works, driving back up the ramp resumes; a test zone (in the test only) drives end to end; Pacific Canyon fingerprints exact with the ramp unused and with the switch off |
+| DEEP-ZONE | Codex SIM | now | `src/deep/deep-zone.js`, `src/deep/deep-journey.js`, `src/deep/deep-ui.js`, `src/deep/deep-ui.css`, `tools/test-deep-zone.mjs`; hooks in `src/app.js`, `src/game.js` and the one scene call in `src/render3d.js` (lock `busy-game-files`) | The zone format of 10.1 loads; the Pacific Canyon ramp is installed in the Pacific Coast cove; past the water's edge the race pauses, the Dive / Turn back choice works, driving back up the ramp resumes; a test zone (in the test only) drives end to end; Pacific Canyon fingerprints exact with the ramp unused and with the switch off |
 | DEEP-SURFACE | Codex SIM | now | `sea-floor` entry in `src/race-surfaces.js`, its reader in the driving code, `tools/test-deep-surface.mjs` | The numbers in 10.1 hold in Node: speed cap, slow fall, soft landing, no damage, every car scaled from its own handling; every other surface and fingerprint exact |
 | DEEP-SAVE | Codex SAVE | now | `src/deep/deep-discovery.js`, `src/deep/deep-hints.js`, the dive kit in `src/screen-garage.js`, save fixture `tools/fixtures/saves/09-deep.json` (lock `save-shape`, save checker) | Save fields of 10.1 round-trip; old saves load byte for byte; hints appear at the counts in 10.1; the kit appears after the first hint and costs 150 credits |
 | DEEP-ART-SRC | Codex ART | now | `public/assets/models/deep/`, `tools/art/catalog.json` rows, credits, `docs/board/looks/deep-art/` | The 14 creatures of 10.1 and the set pieces (wreck hull, clam, anchor, sunken boat) sourced CC0 first, round sheets judged by Claude, at most three rounds |
-| DEEP-AUDIO | Codex AUDIO | now | `public/assets/audio/deep/`, catalog rows, `src/deep/deep-audio.js` | The eight cue ids of 10.1 exist, built from recipes, louder than nothing and quieter than the race mix (about -20 LUFS ambience, -1 dBTP peaks); no change to the master mix |
-| DEEP-WATER | Claude | now | `src/deep/` look modules, `tools/deep-look.*` | The approved look test works for any zone of the 10.1 format, at any depth, on Performance and High |
+| DEEP-AUDIO | Codex AUDIO | now | `public/assets/audio/deep/`, catalog rows, `src/deep/deep-audio.js`; hooks `src/sound-bank.js` and the engine filter in `src/audio.js` (lock `sound-bank`) | The eight cue ids of 10.1 exist, built from recipes, louder than nothing and quieter than the race mix (about -20 LUFS ambience, -1 dBTP peaks); no change to the master mix |
+| DEEP-WATER | Claude | now | `src/deep/underwater-scene.js` and the existing look modules (sea floor, kelp, light, surface, colour, snow), `tools/deep-look.*` | The approved look test works for any zone of the 10.1 format, at any depth, on Performance and High |
 | DEEP-TRAIL | Claude | after DEEP-ZONE | `src/deep/zones/kelp-coast.js` | The Kelp Coast loop (section 4) as zone data: Ramp Shallows, Kelp Forest, the Drop-off lip, pearl and creature spots |
-| DEEP-LIFE | Codex VIS | after ART-SRC, TRAIL | `src/deep/sea-life*.js`, `tools/test-deep-life.mjs` | Section 5 creatures for the Kelp Coast, instanced, reacting to the car's position read-only, capped per type |
-| DEEP-LOG | Codex UI | after SAVE, TRAIL | `src/deep/deep-log.js`, the log page in the garage, `tools/test-deep-log.mjs` | Logging by driving close and slow (within 6 m under 15 km/h for 1 s), pearls, the pearl-white finish after nine |
+| DEEP-LIFE | Codex VIS | after ART-SRC, TRAIL | extends the existing `src/deep/fish-school.js` and `fish-rules.js`, `tools/test-deep-life.mjs` | Section 5 creatures for the Kelp Coast, instanced, reacting to the car's position read-only, capped per type |
+| DEEP-LOG | Codex UI | after SAVE, TRAIL | `src/deep/deep-log.js`, the log page in the garage, the pearl-white finish in `src/paint-presets.js`, `tools/test-deep-log.mjs` | Logging by driving close and slow (within 6 m under 15 km/h for 1 s), pearls, the pearl-white finish after nine |
 | FINISH-DEEP | Claude | after all of the above | finishing fixes in owned files | Postcard sheet; drive-through check passes; night-shift frame check passes |
 
 Wreck Reef (DEEP-REEF) and Night Harbour (DEEP-NIGHT) are later course-line
@@ -307,15 +307,20 @@ the Kelp Coast. Boats (B0) stay a separate plan after FINISH-DEEP.
 The ramp sits in the Pacific Coast cove, off the racing line, with no change
 to the course's racing line, scenery positions or random stream.
 
-**Surface** `sea-floor` in `SURFACES`: grip .8, top speed 70% of the car's
-own, acceleration 60%, turning drag 1.4 times, gravity a third of normal,
-landing never damages, hint `SEA FLOOR`, cue `deep.sand-land` on landing.
+**Surface** `sea-floor` in `SURFACES` (hard-ground tyre column `asphalt`):
+grip .75 so the `SEA FLOOR` hint shows, top speed 70% of the car's own,
+acceleration 60%, turning drag 1.4 times, gravity a third of normal, landing
+never damages, cue `deep.sand-land` on landing. It is a zone surface, never
+on a circuit road, so it stays out of `SURFACE_KINDS` and the circuit
+surface tests stay exact.
 
-**Save fields** under `deep` (all optional): `found` (zone ids), `logged`
-(creature ids), `pearls` (pearl ids), `kit` (true when bought),
-`hintsShown` (hint ids). Hints read the existing finish counts per course:
-first hint after five Pacific Canyon finishes, second after ten finishes
-without a dive.
+**Save fields** under `deep` (all optional): `found` (zone ids), `places`
+(place ids already titled, so a title card shows the first time ever),
+`logged` (creature ids), `pearls` (pearl ids), `kit` (true when bought),
+`hintsShown` (hint ids) and `pacificFinishes` (whole number, stops at 10,
+counting Duel and Time Trial finishes on Pacific Canyon; the existing
+`wasteland.pacificFinishes` counts Mad Max races only and stays as it is).
+First hint at five, second at ten while `found` is empty.
 
 **Creature ids (14):** `silver-school`, `reef-fish`, `turtle`, `ray`,
 `manta`, `sea-lion`, `otter`, `crab`, `moray`, `grouper`, `reef-shark`,
@@ -327,8 +332,22 @@ without a dive.
 **Sound cue ids:** `deep.splash`, `deep.engine-muffle`, `deep.bubbles`,
 `deep.sand-land`, `deep.logged`, `deep.pearl`, `deep.whale`, `deep.cave`.
 
-**Events** the renderer and sound read (never write): `deep.enter`,
-`deep.exit`, `deep.land`, `deep.logged`, `deep.pearl`, `deep.place`.
+**Events** use the existing `duel.emit({name: payload})` style, read by the
+renderer and sound and never written by them: `deepEntered {zoneId}`,
+`deepExited {zoneId}`, `deepLanded {speed}`, `deepLogged {creature}`,
+`deepPearl {pearl}`, `deepPlace {place}`.
+
+**Coordinates:** trail and spot `x`, `z` are world metres in the circuit's
+own frame, `depth` is metres below the surface.
+
+**Scene hook:** `src/deep/underwater-scene.js` (DEEP-WATER) exports
+`createUnderwaterScene({zone, quality})` returning `{group, update(car, dt),
+dispose()}`. DEEP-ZONE adds the one call in the renderer; DEEP-WATER owns
+everything behind it, including the waterline and bubbles on the way down.
+
+**Logging** measures the car against the fixed `spots` in the zone data,
+never against the moving creatures, so the log does not depend on the
+renderer.
 
 Release: Kyle says "go live" for the Kelp Coast after FINISH-DEEP and a
 passing night shift, then each later place on its own.
