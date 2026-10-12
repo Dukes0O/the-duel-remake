@@ -199,6 +199,15 @@ export const LANE_GUARDS=Object.freeze([
   'tools/test-world-composition.mjs'
 ]);
 
+// Proven native child workloads belong to the idle night full tier. Keep this
+// explicit: importing a browser/balance helper does not make a pure test heavy.
+export const NIGHT_ONLY_SUITES=Object.freeze([
+  'tools/test-audio-crash-peak.mjs',
+  'tools/test-convoy-tanker-art.mjs',
+  'tools/test-first-person-contact.mjs',
+  'tools/test-first-person-cloth.mjs',
+  'tools/test-first-person-polish.mjs'
+]);
 const normalized=path=>path.replaceAll('\\','/').replace(/^\.\//,'');
 const relativeName=(root,path)=>normalized(relative(root,path));
 
@@ -423,7 +432,7 @@ export function selectPlan(suites,{tier=null,filters=[],changed=false,affected=[
   let selected;
   if(tier==='lane'||changed){
     const selectedNames=new Set([...SMOKE_SUITES,...LANE_GUARDS,...affected]);
-    selected=suites.filter(suite=>selectedNames.has(suite));
+    selected=suites.filter(suite=>selectedNames.has(suite)&&!NIGHT_ONLY_SUITES.includes(suite));
   }else selected=[...suites];
   if(tier==='merge')selected=selected.filter(suite=>suite!==CAMPAIGN_SUITE);
   if(filters.length)selected=selectSuites(selected,filters);
