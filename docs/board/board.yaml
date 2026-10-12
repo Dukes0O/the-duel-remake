@@ -450,6 +450,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
+    waiting_on: "claude"
     needs: []
     priority: "high"
     details: "docs/board/cards/FIX-LIVE-EDGES.md"

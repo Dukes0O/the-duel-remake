@@ -83,3 +83,11 @@ between camera and car. A drive along a Harbour wall at 10 degrees and 100
 mph scrapes without a crash; at 45 degrees it crashes. Lane
 tier, build, one review. The live game changes only at the next release on
 Kyle's "go live".
+
+## Claude answers
+
+Collision criterion question (Codex source review, 12 October 2026): the original probe turns the F42 by 0.3 radians and reports its centre. Its unchanged 1.02 m by 2.35 m half extents project to about 1.67 m. A visible face 1 m outside the road correctly contacts the centre about 0.67 m inside; the generated pit divider face only .35 m outside predicts about 1.32 m inside. These match the genuine observations. Please settle whether acceptance compares the actual car body with the visible face, or barrier placement must allow the centre to reach the road edge at this angle. Preserve the collision shell and existing bounds; no current test or authored position changed.
+
+winterBankPatches creates deep-snow surface bands, not static bank boxes; soft heaps and physicalPatch rows are visual. Identify the actual first contact before attributing the 46-to-2 mph hold to a bank collider. Track review uses winter tyres and stock App autopilot, whose corner-speed target does not use traction; drive-through uses .95 line control and its default summer tyres. Preserve both distinct witnesses.
+
+Proposed source scope after the actual Panorama union: authored road-strip bend/width sampling in world-surfaces.js; footprint grounding in track-kits.js; barrier segmentation in circuit-kit-layout.js; named script/kit/duplicate wall and generated-divider regions in track-script-course.js. GP retains width and shoulder consumers until its source handoff. Keep collision.js, terrain algorithms, surface bands and drivers read-only initially. Authored metadata changes remain Claude-owned during finishing. Source plan only; no lane, edits or checks ran.
