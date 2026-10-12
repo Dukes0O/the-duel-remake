@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Kyle authorized more parallel sessions.** Three independent Deep lanes start now: DEEP-ART-SRC, DEEP-SAVE (save-shape), and DEEP-AUDIO (sound-bank). Panorama remains active; GP and Summit wait for its shared-hook handoff. DEEP-SURFACE stays free for Summit priority on surfaces. Each new session owns its exact card files and lane; Root commits shared metadata and integrates green results. Six build lanes across teams remain the limit. Art/listening packets go to Claude; heavy checks wait for night. The Deep stays dev; no release or push.
+
 - **Panorama source review correction:** the old opt-in stationary timing scenario would throw during factory browser `--all` and measures a hidden dev course. Its unchanged pure comparison functions move outside the browser inventory; the obsolete recipe is removed. Existing limits stay exact. Source handoff waits for the corrected nearby lane/build and review; actual final native dusk art still waits for night. No release or push.
 
 - **Panorama factory handoff is a dev source slice.** When the corrected 83c58563 lane/build is green, merge its completed runtime and existing native recipe under panorama-ridge dev so FAC-03 can exercise it on integration at night. Ordinary source review is clear. Keep the card open for actual final-lap dusk/framing/sheet and your conditional round-three acceptance; no native pass, final sheet or fourth round is claimed. Release its shared game hooks after that source merge so Summit and GP can proceed. The original shortcut assertions remain exact; the generator now skips scripted courses as runtime already does. No release or push.
