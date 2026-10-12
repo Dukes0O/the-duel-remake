@@ -351,7 +351,7 @@ tasks:
     lane: "SAVE"
     size: "M"
     status: "building"
-    claimed_by: "codex-factory-session-2026-10-12"
+    claimed_by: "codex-session-01a13220-4b96-7b41-ae4f-0ede71d495d1"
     branch: "codex/deep-save"
     needs: [DEEP-LOOK]
     locks: [save-shape]
@@ -364,7 +364,7 @@ tasks:
     lane: "ART"
     size: "L"
     status: "building"
-    claimed_by: "codex-factory-session-2026-10-12"
+    claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
     branch: "codex/deep-art-src"
     needs: []
     flag: "the-deep"
@@ -376,7 +376,7 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "building"
-    claimed_by: "codex-factory-session-2026-10-12"
+    claimed_by: "codex-session-01a13220-575d-7492-a51c-43a1e08dfe70"
     branch: "codex/deep-audio"
     needs: []
     locks: [sound-bank]
