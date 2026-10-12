@@ -149,6 +149,9 @@ export class App {
       else if(event.gameover)this._settleResult(state.results||{},state);
       if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
+      if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
+      // The native final qualifying finish must be captured before stage reload.
+      if(event.qualifyingLap)this._updateLapTelemetry(state);
       if(event.lapCompleted && state.mode==='grandprix' && this._switches().enabled('grand-prix-career')===true){
         const lap=this.grandPrixLapRecorder?.complete(state,event,this.player);
         if(lap){
