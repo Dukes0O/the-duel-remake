@@ -30,7 +30,11 @@ and arena-pit ordinary replay hash consumers; Blender file-presence path;
 existing circuit-layout, Tremblant Snow, preview-launcher and reference-lap
 tests, plus new tools/test-course-kit.mjs. No FAC-05 count sweep.
 
-Course RNG sites only in src/course.js read generationStage ?? stage, so
-original generator identities stay exact while public stages follow COURSE.
+Director refinement before further generator code: preserve each authored
+definition's original stage exactly. The registry sorts the course array; actual
+COURSE positions derive from that array, as before. Do not rewrite definition
+stages or the shared generators. This also preserves the existing legacy active
+race entitlement fallback. The seven additional seed-site hooks are not needed.
+The new card test checks ordered positions and original generation separately,
+with samples, features and all original fingerprints and signatures exact.
 No runtime dependency, handling, saved id, released price or state changes.
-All original replay fingerprints and world signatures stay exact.
