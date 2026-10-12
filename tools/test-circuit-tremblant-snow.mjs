@@ -298,6 +298,7 @@ const CASES = [
 ];
 for (const mph of [70, 110]) {
   test(`a car on winter tyres driven at the barriers at ${mph} mph stops against them`, () => {
+    const before = [...COURSE], appendedIndex = COURSE.length;
     COURSE.push(TREMBLANT_SNOW);
     try {
       for (const [name, s, side] of CASES) {
@@ -305,7 +306,11 @@ for (const mph of [70, 110]) {
         assert.ok(farthest > 0, `${name}: the car did reach the edge`);
         assert.ok(farthest <= gap - .5, `${name}: the car got ${farthest.toFixed(1)} m past the road edge; the ${id} face stands ${gap.toFixed(1)} m out`);
       }
-    } finally { COURSE.splice(COURSE.findIndex(item => item.id === 'tremblant-snow'), 1); }
+    } finally {
+      assert.equal(COURSE[appendedIndex], TREMBLANT_SNOW, 'cleanup removes only this fixture entry');
+      COURSE.splice(appendedIndex, 1);
+      assert.deepEqual(COURSE, before, 'barrier fixture restores the exact original course roster');
+    }
   });
 }
 

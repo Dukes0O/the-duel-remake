@@ -27,3 +27,7 @@ Remove shared fixed roster/count and duplicated per-course metadata expectations
 Automatic review rejected broad count-only edits before they ran. The safer implementation records the ids reached by each real combat test loop and compares complete roster coverage, retaining every numeric assertion. It also preserves a generic pure-race check rather than removing that release-test section.
 
 The dev/on copied-course rehearsal also reads the actual production flag and COURSE membership after each state, with empty storage, before running both generic flag suites. Automatic review also rejected broad assertion-section removal and tail truncation before execution; the safe edits preserve roster-wide purchase/pure-race coverage and match only the known consumed migration test body.
+
+## First canonical result and fixture correction, before code
+
+Frozen 1ddf558c: 9/29 passed, one failing Snow suite, 19 unrun, 56.76 s, jobs 4. The new exact public-position check caught an existing fixture leak: each 70/110 mph barrier test appended Snow but cleanup removed the first matching id, deleting the original released entry and leaving the appended duplicate. Capture the fixture's own appended slot, remove only that slot and require the exact original roster after cleanup. Keep every speed, collision and gap assertion unchanged; no runtime change or bound relaxation. One fresh canonical candidate follows this correction.
