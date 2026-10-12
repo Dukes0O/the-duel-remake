@@ -37,7 +37,10 @@ for (const car of ['banshee_muscle', 'titan_monster'])
 // Straight jumps keep their exact flight (recorded before the change).
 const straight = [
   ['banshee_muscle', 45, 2.6101, 28.9], ['banshee_muscle', 70, 2.8181, 31.1], ['banshee_muscle', 100, 3.2181, 36.1],
-  ['titan_monster', 45, 2.0691, 24.3], ['titan_monster', 70, 2.2514, 25.6], ['titan_monster', 100, 2.6823, 29.1],
+  // SCRAPDOME-TANKER-FIX (11 October 2026): the outer wall now stands 20 m out, where the
+  // drawn face is, so the wide Titan drifts into it sooner and its landing is measured
+  // there. Flight heights are unchanged. Old lengths: 24.3, 25.6, 29.1.
+  ['titan_monster', 45, 2.0691, 19.5], ['titan_monster', 70, 2.2514, 20.2], ['titan_monster', 100, 2.6823, 28.8],
   ['viper_proto', 45, 2.6051, 29.3], ['viper_proto', 70, 2.8526, 31.6], ['viper_proto', 100, 3.0504, 35],
 ];
 for (const [car, mph, peak, landed] of straight) {

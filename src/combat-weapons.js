@@ -42,7 +42,8 @@ export function stepCpuWeaponCooldowns(actor, dt) {
 export {WEAPONS};
 const T = COMBAT_TUNING;
 
-export const supportsCombat = stage => !!stage?.hasRival && !stage.practice && !stage.stuntTrial;
+// A course can opt out with noCombat (the Grand Circuits are pure race tracks, docs/CIRCUITS.md).
+export const supportsCombat = stage => !!stage?.hasRival && !stage.practice && !stage.stuntTrial && !stage.noCombat;
 
 export function arsenalEnabled(duel) {
   return duel.state.mode === 'wasteland' && duel.state.wastelandGateDiscovered === true &&

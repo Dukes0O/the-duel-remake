@@ -982,7 +982,7 @@ export class App {
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
     const pending=this.profile.activeRace?.key===key?this.profile.activeRace:{pendingPoliceFineCount:0,pendingPoliceFines:0};
-    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
+    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;

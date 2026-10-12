@@ -15,9 +15,9 @@ equal(await shortcutSourceFingerprint(),SHORTCUT_PRESET_DATA.sourceFingerprint,'
 const saved=JSON.stringify(SHORTCUT_PRESET_DATA),reports=[];
 for(const definition of COURSE)for(const seed of supportsRouteVariants(definition)?ROUTE_VARIANTS.map(route=>route.seed):[1989]){
   const before=performance.now(),course=new Course(definition,seed),presetMs=performance.now()-before;
-  if(definition.expansion){
-    equal(course.features.shortcuts,[],'authored expansion circuits do not generate shortcuts');
-    equal(course._shortcutSource,undefined,'authored expansion circuits bypass the preset cache entirely');
+  if(definition.expansion||definition.script){
+    equal(course.features.shortcuts,[],'authored circuits do not generate shortcuts');
+    equal(course._shortcutSource,undefined,'authored circuits bypass the preset cache entirely');
     check(!SHORTCUT_PRESET_DATA.entries.some(entry=>entry.event===definition.id),'no empty expansion geometry is added to the legacy preset payload');
     continue;
   }

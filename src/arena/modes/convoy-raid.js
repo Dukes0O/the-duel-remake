@@ -4,12 +4,20 @@ import {carAlongPush, dampCarAlongPush} from '../../arsenal/car-effects.js';
 export const CONVOY_RULES = Object.freeze({
   timeLimitSec: 300, cruiseKph: 55, boardingKph: 35, boardingSeconds: 60,
   valveArmor: 150, valveCount: 3, ramReach: 3, loopOffset: -9,
-  winScrap: 700, valveScrap: 40,
+  winScrap: 700, valveScrap: 40, bodyHintSeconds: 6,
 });
 
 export const CONVOY_BODY = Object.freeze({
   mass: 12000, halfWidth: 1.5, halfLength: 5.5, height: 3.5,
 });
+
+// How much valve armor the tanker has left. The body itself cannot be
+// wrecked, so this is the only damage a player can watch go down.
+export function convoyValveArmor(convoy) {
+  const max = CONVOY_RULES.valveArmor * convoy.valves.length;
+  const left = convoy.valves.reduce((sum, armor) => sum + armor, 0);
+  return {left, max, fraction: max ? left / max : 0};
+}
 
 export function convoyRig(duel) {
   const convoy = duel.state.arena?.convoy;
@@ -29,7 +37,8 @@ export function initializeConvoyRaid(duel) {
   arena.convoy = {rigId: computers[0].id,
     valves: Array(CONVOY_RULES.valveCount).fill(CONVOY_RULES.valveArmor),
     playerValvesBroken: 0, playerBroken: Array(CONVOY_RULES.valveCount).fill(false),
-    boardingLeftSec: 0, chargePlanted: false, finished: false, attackerId: null};
+    boardingLeftSec: 0, chargePlanted: false, finished: false, attackerId: null,
+    bodyHintAfterSec: 0};
   computers.forEach((participant, index) => {
     participant.team = 'convoy';
     participant.brain = index === 0 ? 'convoy-rig' : 'guard';

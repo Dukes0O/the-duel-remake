@@ -43,7 +43,8 @@ function fixture({race = false, seeker = false, mode = 'fuel-run'} = {}) {
   state.combat.aiTimer = state.combat.pickupTimer = Infinity;
   for (const p of state.arena?.participants || []) p.protectedSec = 0;
   place(state, 100, 0);
-  state.opponents.forEach((actor, index) => place(actor, 100, index ? 20 : -20));
+  // SCRAPDOME-TANKER-FIX: the outer wall now stands at 19.5 m, so these parked cars sit at the floor edge (18) instead of inside it (was 20).
+  state.opponents.forEach((actor, index) => place(actor, 100, index ? 18 : -18));
   const events = [];
   duel.onChange((_state, event) => events.push(event));
   return {duel, state, events};

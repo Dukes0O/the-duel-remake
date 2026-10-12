@@ -11,7 +11,7 @@ for (const car of Object.keys(CARS)) for (const [startStage, event] of COURSE.en
   assert.equal(duel.car.name, CARS[car].name, `${event.id}: actual tuning belongs to ${car}`); checks++;
   assert.equal(duel.course.def, event, `${event.id}: car choice cannot silently substitute the course`); checks++;
   assert.equal(duel._vehicleSpec(duel.state).mass, CARS[car].mass || 1450, `${event.id}: collision mass belongs to the selected car`); checks++;
-  assert.equal(duel.state.lapsTotal, 2, `${event.id}: car freedom does not bypass required laps`); checks++;
+  assert.equal(duel.state.lapsTotal, event.laps || 2, `${event.id}: car freedom does not bypass required laps`); checks++;
   duel.state.status = 'racing'; duel.setInput({ throttle: 1 }); duel.step(1 / 120);
   assert.equal(duel.state.car, car, `${event.id}: the first real driving step preserves ${car}`); checks++;
   assert.ok(Number.isFinite(duel.state.speedMph) && duel.state.speedMph >= 0, `${event.id}: selected car has valid driving state`); checks++;
