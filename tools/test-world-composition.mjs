@@ -14,10 +14,10 @@ const baseline={
   'pacific-canyon':{hash:'d6c1f3bfe80e5348f53dff6edd122e1d939a0ea6c74056efc319914f72f5c51c',nodes:523,meshes:501,instances:11981,geometries:237,materials:102,textures:33},
   'high-country':{hash:'8baeb15a8550afdd185924439a1db15e7b2a6471d75b528bddb0e45347c18301',nodes:712,meshes:682,instances:15698,geometries:358,materials:136,textures:43},
   'harbor-highlands':{hash:'85b7b99f02ce5364fbfb53b8904539aa5d700ee380443425839b97d8a2adbbf4',nodes:1011,meshes:967,instances:116421,geometries:384,materials:167,textures:46},
-  'titan-arena':{hash:'c41de422a08b1ea2ece04d823beeb28ddca8a81eec892df391745b6d602bb1a7',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
+  'titan-arena':{hash:'1f4116b50e9ca7ca933cd9b661ef5c8abe603eee711fb3bf01443235ac67c50a',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
   'midnight-chase':{hash:'41675688e789b1fc9e98f59737e1a8236d4c82c87ce617f34716fd99bd79ed33',nodes:1262,meshes:1214,instances:171674,geometries:404,materials:129,textures:32},
   'ridge-rally':{hash:'53931d14e95d075d9dcedf4f51ca7e7b7ae02471b806fa05d79b923d2605d7d4',nodes:438,meshes:416,instances:14087,geometries:174,materials:101,textures:33},
-  'titan-stunt-trial':{hash:'65c3d7f8d7bc8b3a9e525b8b083bae29a144b75af6ab20dac13c6e7e3e6e6f34',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
+  'titan-stunt-trial':{hash:'fdf58c68c62359fdd78f7d946a867fc4f12b5ef9826e6ebb5910267aefcdbf20',nodes:158,meshes:120,instances:2096,geometries:112,materials:35,textures:10},
   'neon-drift-trial':{hash:'98a7420ffad0e5173401c4ef40bca4f469102d955d215f6a15cff8e3ae96187b',nodes:1269,meshes:1222,instances:169354,geometries:402,materials:128,textures:32},
   'timberline-rush':{hash:'2c82f4833f2ce060f490a168b43abbc869b47f1633181db9e1ce79f723fad6e4',nodes:523,meshes:484,instances:14950,geometries:239,materials:103,textures:31},
   'eifel-crown':{hash:'c3931d0b127855bbe11315794f3fa65d5866a5851dfcd2663d46a1d7ab4aba2b',nodes:645,meshes:613,instances:20292,geometries:248,materials:140,textures:46},
@@ -28,6 +28,7 @@ const baseline={
   'cloudbreak-skyway':{hash:'d37553f4af313e50f6b24ffbc1d3e0cec0e431362e572b693e4e31d79cff4c4b',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
   // QA screenshot reviewed: open paved drag entrance, readable gantry and clear training mound; runway adds one mesh, geometry and material.
   'titan-freestyle':{hash:'19ecd561629f7f4b3aab3709558681fd19ae543450b07081d7a7bddb1248f42f',nodes:226,meshes:161,instances:129,geometries:158,materials:37,textures:5},
+  'tremblant-woods':{hash:'9ab2fe2c864833c827ad9af7cec34c710762ecb72dfa47804f28d8444d8f30cf',nodes:307,meshes:271,instances:23200,geometries:38,materials:23,textures:13},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -43,6 +44,8 @@ globalThis.document={createElement(){
     putImageData:(image,...args)=>record('putImageData',bytes(image.data),args),
     measureText:()=>({width:40}),
     createLinearGradient:(...args)=>{record('gradient',args);return {addColorStop:(...stop)=>record('colorStop',stop)};},
+    // Authored circuits paint pebble textures with radial gradients; the older scenes never call this.
+    createRadialGradient:(...args)=>{record('radialGradient',args);return {addColorStop:(...stop)=>record('colorStop',stop)};},
   },{get:(target,key)=>target[key]??((...args)=>record(key,args)),set:(target,key,value)=>{record('set',key,value);target[key]=value;return true;}});
   canvas.getContext=()=>context;canvas.commandDigest=()=>commands.copy().digest('hex');return canvas;
 }};
@@ -89,7 +92,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,16,'all sixteen event scenes are covered');
+  equal(COURSE.length,17,'all seventeen event scenes are covered');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
@@ -98,4 +101,4 @@ try{
     disposeTree(world);
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across sixteen events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across seventeen events.`);

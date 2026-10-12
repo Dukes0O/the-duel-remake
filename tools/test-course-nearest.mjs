@@ -6,9 +6,9 @@ import { makeRng } from '../src/rng.js';
 
 // Frozen pre-index Course.nearest, including all three road-frame refinements.
 // Equality here covers final game coordinates, not only the BVH segment seed.
-const STEP=8,clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 function originalNearest(x,z,referenceS){let best=Infinity,bestS=0;
-  for(let i=1;i<this.samples.length;i++){const a=this.samples[i-1],b=this.samples[i],dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)),d=(x-a.x-t*dx)**2+(z-a.z-t*dz)**2;if(d<best){best=d;bestS=a.s+t*STEP;}}
+  for(let i=1;i<this.samples.length;i++){const a=this.samples[i-1],b=this.samples[i],dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)),d=(x-a.x-t*dx)**2+(z-a.z-t*dz)**2;if(d<best){best=d;bestS=a.s+t*this.step;}}
   for(let i=0;i<3;i++){const f=this.at(bestS),lat=(x-f.x)*Math.cos(f.heading)-(z-f.z)*Math.sin(f.heading),along=(x-f.x)*Math.sin(f.heading)+(z-f.z)*Math.cos(f.heading);bestS=this.phase(bestS+along/Math.max(.3,1-f.curvature*lat));}
   const frame=this.at(bestS),lateral=(x-frame.x)*Math.cos(frame.heading)-(z-frame.z)*Math.sin(frame.heading);
   if(Number.isFinite(referenceS))bestS+=Math.round((referenceS-bestS)/this.length)*this.length;

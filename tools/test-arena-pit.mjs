@@ -67,8 +67,10 @@ test('Twin Vultures start in the Pit, while the existing warlord stays on the ri
 test('Pit geometry: round centreline, 8–72 m floor and curvature stay physical', () => {
   const c = course(), at = centre(c), layout = c.def.scrapdome;
   assert.equal(layout.floorHalfWidth, 32);
-  assert.equal(layout.wallOffset, 35);
-  near(venueCurvatureRatio(c), .875, .01);
+  // SCRAPDOME-TANKER-FIX (11 October 2026): the wall was 35 m out (ratio .875), 1 m behind the
+  // drawn wall and 1.5 m from a car at the floor edge; it now stands at the drawn face, 34 m.
+  assert.equal(layout.wallOffset, 34);
+  near(venueCurvatureRatio(c), .85, .01);
   assert.ok(venueCurvatureRatio(c) < 1);
   for (let index = 0; index < 32; index++) {
     const s = c.length * index / 32;

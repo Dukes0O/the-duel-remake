@@ -32,9 +32,9 @@ export function addSceneryDetail(world, course) {
     for (const x of [-3, 3]) decalGeometries.push(decal(station, 2, [x, 2.10, -2.984], [.57, .235], Math.PI));
   }
   if (cityBuildings.length) {
-    refineWarehouseSurfaces(world, course, metalMap, windowMap);
+    refineWarehouseSurfaces(world, course, metalMap, windowMap, wallMap);
     cityBuildings.forEach((building, i) => {
-      warehouseDetail(batch, building, i);
+      warehouseDetail(batch, building, i, course.def.facades?.trims);
       for (const face of [-1, 1]) decalGeometries.push(decal(building, 3, [building.halfX - 1.5, 2.3, face * (building.halfZ + .071)], [1.6, .76], face < 0 ? Math.PI : 0));
     });
   }
@@ -165,9 +165,9 @@ function stationDetail(batch, s, night, coast) {
   for (const x of [-7.35, 7.35]) put('paint', [2.75, .006, .09], [x, .071, 7.6]);
 }
 
-function warehouseDetail(batch, b, index) {
+function warehouseDetail(batch, b, index, trims) {
   const put = (material, size, p, r, shape, tint) => batch.add(b, material === 'lamp' ? 'nightLamp' : material, size, p, r, shape, tint);
-  const tint = [0xb3bbc0, 0x778d98, 0xb0a48c, 0x839c9b][index % 4];
+  const tint = trims ? trims[index % trims.length] : [0xb3bbc0, 0x778d98, 0xb0a48c, 0x839c9b][index % 4];
   // Slim facade beams subdivide the existing box without enlarging its footprint.
   for (const face of [-1, 1]) {
     const z = face * (b.halfZ + .025);
@@ -239,9 +239,12 @@ function refineStationSurfaces(world, feature, { wallMap, windowMap, coast, nigh
   }
 }
 
-function refineWarehouseSurfaces(world, course, metalMap, windowMap) {
+// A circuit may paint its warehouses as a town (`facades: { palette, trims }`): plaster walls in the
+// palette's colours (src/street-facades.js then washes them in street light near the ground).
+function refineWarehouseSurfaces(world, course, metalMap, windowMap, wallMap) {
+  const facades = course.def.facades;
   const buildingIndices = new Map(course.features.buildings.map((building, index) => [building.id, index]));
-  const tint = new THREE.Color(), palette = [0x83969e, 0xb0aaa0, 0x5c7782, 0x81877b, 0x657b85];
+  const tint = new THREE.Color(), palette = facades?.palette ?? [0x83969e, 0xb0aaa0, 0x5c7782, 0x81877b, 0x657b85];
   const finishedWalls = new Set();
   for (const mesh of world.children) {
     if (!mesh.isInstancedMesh || !mesh.material?.color) continue;
@@ -252,6 +255,9 @@ function refineWarehouseSurfaces(world, course, metalMap, windowMap) {
         // Cell size cannot decide whether the wall receives its finish. Replace
         // the old view-space stripes once on the material shared by all cells.
         material.onBeforeCompile = () => {}; material.needsUpdate = true; finishedWalls.add(material);
+        if (facades) {
+          material.map = wallMap; material.bumpMap = wallMap; material.bumpScale = .02; material.roughness = .92; material.metalness = .02; material.color.set(0xffffff);
+        }
       }
       // One wall instance per building. Keep the original global tint order,
       // rather than repeating the five-colour palette at every cell boundary.

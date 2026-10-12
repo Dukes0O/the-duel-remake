@@ -164,7 +164,7 @@ function addStadium(batch, course, stadiumCourse = course) {
   for (const barrier of course.features.barriers.filter(v => v.arenaWall && !course.def.pit)) {
     batch.add('concrete', [barrier.halfX * 2, 1.8, barrier.halfZ * 2], { x: barrier.x, y: barrier.y + .9, z: barrier.z }, [0, barrier.heading, 0]);
     const side = Math.sign(barrier.off), face = { x: barrier.x - Math.cos(barrier.heading) * side * .507, y: barrier.y + .95, z: barrier.z + Math.sin(barrier.heading) * side * .507 };
-    batch.add(Math.floor(barrier.s / 8) % 2 ? 'yellow' : 'dark', [.025, .60, 7.8], face, [0, barrier.heading, 0]);
+    batch.add(Math.floor(barrier.s / 8) % 2 ? 'yellow' : 'dark', [.025, .60, barrier.halfZ * 1.857], face, [0, barrier.heading, 0]);
   }
   // The grandstand faces the outside of the oval. Its foot is 8 m beyond the
   // collision wall, keeping every seat, beam and floodlight out of the arena.

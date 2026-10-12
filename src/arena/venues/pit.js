@@ -1,10 +1,10 @@
 // The Pit keeps the released floor rules and uses one exact circular frame.
 export function createPitVenue(base) {
-  const layout = Object.freeze({...base.scrapdome, floorHalfWidth: 32, wallOffset: 35,
+  const layout = Object.freeze({...base.scrapdome, floorHalfWidth: 32, wallOffset: 34,
     rampFractions: Object.freeze([0, .5]), rampLength: 26, spawnOffset: 0,
     junk: Object.freeze(Array.from({length: 8}, (_, i) => Object.freeze([i / 8, i % 2 ? 18 : -18])))});
   return Object.freeze({...base, id: 'pit', name: 'The Pit', stage: 32,
-    lengthU: Math.PI * 80, scrapdome: layout, pit: Object.freeze({radius: 40, pileRadius: 8, wallRadius: 75}),
+    lengthU: Math.PI * 80, scrapdome: layout, pit: Object.freeze({radius: 40, pileRadius: 8, wallRadius: 74.5}),
     sections: Object.freeze([Object.freeze({theme: 'arena', name: 'The Pit', share: 1})])});
 }
 
@@ -57,9 +57,9 @@ export function pitObstacles(course) {
     x: 0, y: 0, z: 0, s: 0, off: -40, heading: 0,
     halfX: 8, halfZ: 8, height: 4.4, theme: 'arena'};
   const walls = Array.from({length: 64}, (_, index) => {
-    const s = index / 64 * course.length, pose = course.worldAt(s, 35);
-    return {id: `pit-wall-${index}`, kind: 'prop', shape: 'box', s, off: 35, ...pose,
-      halfX: .5, halfZ: Math.PI * 75 / 64 + .1, height: 3.3,
+    const s = index / 64 * course.length, pose = course.worldAt(s, 34);
+    return {id: `pit-wall-${index}`, kind: 'prop', shape: 'box', s, off: 34, ...pose,
+      halfX: .5, halfZ: Math.PI * 74 / 64 + .1, height: 3.3,
       barrier: true, arenaWall: true, theme: 'arena'};
   });
   return {pile, walls};

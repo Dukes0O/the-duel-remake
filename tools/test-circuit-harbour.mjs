@@ -134,7 +134,18 @@ test('the street has everything the card asks for', () => {
   const count = id => placements.filter(entry => entry.id === id).length;
   for (const id of ['concrete-wall', 'catch-fence', 'tyre-wall', 'shopfront-a', 'shopfront-b', 'neon-sign', 'lantern-string', 'lantern-tower', 'harbour-boat', 'start-gantry', 'pit-garage', 'grandstand'])
     assert.ok(count(id) > 0, id);
-  assert.equal(count('concrete-wall'), count('catch-fence'));
+  // Every wall carries a catch fence except where water lies beyond it (a low railing stands there instead,
+  // src/waterside-scenery.js); the walls beside the run-off roads carry theirs at their own stations.
+  const key = entry => `${entry.s.toFixed(3)}/${Math.sign(entry.lateral)}`;
+  const fenced = new Set(placements.filter(entry => entry.id === 'catch-fence').map(key));
+  const waterBeyond = wall => HARBOUR_LIGHTS.basins.some(basin => basinReach(basin, wall.s - basin.s, Math.sign(wall.lateral) * (course.roadHalfWidthAt(wall.s) + 10) - basin.lateral) < 1);
+  const besideRunOff = wall => { const w = course.worldAt(wall.s, wall.lateral); return course.escapeRoads.some(escape => { const { u } = escapeFrame(escape, w.x, w.z); return u > -2 && u < escape.run + 2; }); };
+  const walls = placements.filter(entry => entry.id === 'concrete-wall');
+  assert.ok(walls.some(waterBeyond), 'some wall has water beyond it');
+  for (const wall of walls) {
+    if (besideRunOff(wall)) continue;
+    assert.equal(fenced.has(key(wall)), !waterBeyond(wall), `the wall at ${wall.s.toFixed(0)} m has a fence only where there is no water beyond`);
+  }
   assert.equal(count('start-gantry'), 1);
   // Strings of lanterns hang over the old town and over the Lantern Hairpin.
   const hairpin = piece(course.script, 'Lantern Hairpin');
