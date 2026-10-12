@@ -70,6 +70,65 @@ test('Panorama uses its drawn kit divider once, with only the existing pit openi
   assert.ok(course.features.walls.length > 0, 'all ridge script walls remain');
 });
 
+// Native retry 12 October: a car bumped wide at Hell Gate ran onto open grass and
+// rejoined behind the open start of the Mountain Straight right wall (s 539),
+// where it could never reach the road again.
+const hellGate = course.script.pieces.find(piece => piece.name === 'Hell Gate');
+const hellWall = PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id === 'concrete-wall');
+test('a solid concrete wall closes the outside of Hell Gate up to the Mountain Straight wall', () => {
+  const outer = -hellGate.dir, boxes = course.features.kitSolids.filter(box => box.id.endsWith('-concrete-wall'));
+  assert.ok(hellWall.length > 0 && hellWall.every(piece => piece.solid === true && Math.sign(piece.lateral) === outer));
+  assert.equal(boxes.length, hellWall.length);
+  assert.ok(boxes.every(box => box.barrier && course.features.obstacles.includes(box)));
+  const firstWall = course.features.walls.filter(wall => wall.side === outer && wall.trackWall && !wall.pitWall)
+    .reduce((best, wall) => wall.s < best.s ? wall : best);
+  near(firstWall.s - firstWall.halfZ, hellGate.s1, .2);
+  for (const piece of hellWall)
+    near(Math.abs(piece.lateral) - .36, Math.abs(firstWall.off) - firstWall.halfX, 1e-9);
+  assert.ok(hellWall[0].s <= hellGate.s0 && hellWall[0].s - 2 > course.pitLane.exit, 'starts after the pit lane has merged');
+  assert.ok(hellWall.at(-1).s + 2 >= firstWall.s - firstWall.halfZ, 'reaches the first Mountain Straight wall box');
+  for (let i = 1; i < boxes.length; i++)
+    assert.ok(Math.hypot(boxes[i].x - boxes[i - 1].x, boxes[i].z - boxes[i - 1].z) < boxes[i].halfX * 2,
+      'adjacent 4 m pieces overlap around the outer arc');
+  const without = new Course({...PANORAMA_RIDGE, kitPlacements: PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id !== 'concrete-wall')}, 1989);
+  assert.deepEqual(course.features.trees, without.features.trees, 'seeded trees stay exact');
+  assert.deepEqual(course.features.rocks, without.features.rocks, 'seeded rocks stay exact');
+  assert.deepEqual(course.features.walls, without.features.walls, 'script walls stay exact');
+});
+// Placed on the road three metres in from the outer edge, aimed 0.3 rad outward with the foot down.
+function slideWide(def, share, mph) {
+  COURSE.push(def);
+  try {
+    const d = new Duel({seed: 1989, featureFlags: {'grand-prix': true}});
+    d.startCampaign({mode: 'grandprix', startStage: COURSE.length - 1,
+      car: 'stuttgart_959s', seed: 1989, fieldSeed: 1000, cpuDifficulty: 'medium'});
+    for (let frames = 0; d.state.status !== 'racing' && frames < 2000; frames++) d.step(1 / 60);
+    assert.equal(d.state.status, 'racing');
+    const state = d.state, outer = -hellGate.dir, s = hellGate.s0 + (hellGate.s1 - hellGate.s0) * share;
+    Object.assign(state, {s, lateral: outer * (d.course.roadHalfWidthAt(s) - 3), headingError: outer * .3, speedMph: mph,
+      airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0});
+    state.prevS = state.s; state.prevLateral = state.lateral;
+    d._terrainPose();
+    let farthest = -Infinity;
+    for (let frame = 0; frame < 240; frame++) {
+      d.setInput({throttle: 1, brake: 0, steer: 0, boost: false});
+      d.step(1 / 60);
+      farthest = Math.max(farthest, outer * state.lateral - d.course.roadHalfWidthAt(state.s));
+      if (state.impactTimer > 0) break;
+    }
+    return farthest;
+  } finally {COURSE.pop();}
+}
+test('a car sliding wide at Hell Gate stops against the wall instead of leaving the road', () => {
+  const open = {...PANORAMA_RIDGE, kitPlacements: PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id !== 'concrete-wall')};
+  for (const share of [.2, .5]) for (const mph of [40, 70]) {
+    const walled = slideWide(PANORAMA_RIDGE, share, mph), before = slideWide(open, share, mph);
+    assert.ok(before > TRACK_SCRIPT.wallSetback + 5, `old open run-off: ${before.toFixed(1)} m past the edge`);
+    // The face stands one metre out; the car's own half width keeps its centre on the road.
+    assert.ok(walled > -1.5 && walled <= 0, `share ${share}, ${mph} mph: centre ${walled.toFixed(2)} m past the edge`);
+  }
+});
+
 test('approved full-kit frame policy keeps absolute boundaries and sample guards', () => {
   const row = {look: 'final-dusk', scales: [1], ratios: [1], gpuSupported: true,
     pacing: {cpu: {samples: 360, p95: 18.5}, gpu: {samples: 300, p95: 18.5},

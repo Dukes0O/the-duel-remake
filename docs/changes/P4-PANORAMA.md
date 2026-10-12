@@ -180,7 +180,60 @@ service, manual inputs, real collider/grid/opening guards and seeded trees
 pass unchanged. Source review is clear after the finished-flag correction.
 Lane/build, final native art retry and reference publication remain pending.
 
+## Claude 12 October afternoon: Hell Gate run-off trap, fixed in a Claude lane
+
+Diagnosis, headless only (rule 4, about 25 minutes). The post-pit-fix native
+retry is deterministic: a headless App with the same Stuttgart, seed 1989,
+field seed 1000, Medium and the .95 driver reproduces its lap 115.108 s and its
+final stop at lateral -12.01 on Mountain Straight. On lap 2 the player arrives
+at Hell Gate at 191 mph, runs into the back of Sana Marlow at phase 445 under
+braking (27 mph closing speed, 17 mph lost) and slides into the hairpin too
+fast. It leaves the road on the outside at phase 512, runs out to lateral -29
+on open grass, steers back, and arrives behind the open start of the Mountain
+Straight right wall at s 539. That wall runs 912 m with no way back. Not a
+wall gap, not the pit exit (the lane has fully merged by 462) and not a
+surface or collider mismatch: Pit Straight and Hell Gate have no script walls,
+and both Mountain Straight walls begin where Hell Gate ends.
+The same trap stops the Hard native-style start on lap 1 (phase 627.7,
+lateral -12.01), and both Medium zero-lap players of the frozen 90 (indices 1
+and 23) on the current source (lateral -12.08). Hard index 4 already finishes
+on the current source. The frozen 90 report and its fingerprints stay as they
+are; nothing here is a new 90-race result.
+
+Fix, Panorama course file only: a solid plain concrete wall from the approved
+kit set along the outside of Hell Gate, from 6 m before the corner (after the
+pit lane has merged) to s 540.8, where it meets the first Mountain Straight
+wall box. Its face stands 8.5 m from the centre, in line with the script wall;
+4 m pieces every 2.8 m overlap around the outer arc. Kit solids are built after
+the seeded scenery, so trees, rocks and script walls stay exact, and the layout
+fingerprint stays track-v1-70170ffb (it covers road, widths, ground and
+surface, not solid objects). Reference laps need no refresh for this change.
+
+Headless results after the fix: the native setup finishes all three laps,
+115.108 / 89.358 / 87.54 s, all seven computer cars home at 365.1 s; the car
+glances along the new wall at 22 mph and rejoins. Lap 1 is identical to the
+failed run. Hard native-style start finishes; Easy keeps identical lap times
+(a computer car touches the wall, so its final state differs). Both frozen
+Medium zero-lap seeds finish three laps.
+
+Changed assertion: tools/test-circuit-barriers.mjs allowed only the pit
+divider as a Panorama kit solid; it now allows the pit divider and the Hell
+Gate concrete wall, and still requires every other Panorama piece to be
+non-solid and both counts to match. New tests in test-circuit-panorama.mjs:
+the wall closes the outer arc up to the Mountain Straight wall with seeded
+trees, rocks and walls exact, and a car slid wide at 40 and 70 mph a quarter
+and half way round stops against it (centre stays on the road), while the old
+open layout lets the same slide run more than 6 m past the edge.
+Focused: barriers 6/6; Panorama, pit lane and ground 42/42.
+
+Not changed: the inside of Hell Gate keeps its open grass. A car leaves on
+the outside of this left hairpin; if a native retry ever shows a car behind
+the left wall, the same wall goes on the inside.
+
 ## Removed
+
+Replace the open Hell Gate run-off that fed the area behind the Mountain
+Straight right wall with a solid concrete kit wall; nothing else is removed.
 
 Replace Panorama's generic pit divider boxes/drawing with its actual solid kit
 divider after scenery construction. Replace road-line steering inside an

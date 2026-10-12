@@ -17,7 +17,7 @@
 // after it +16 to +21, Skyline -12 to -5 and its crest 3 to 2.4, Esses -10, -10, -8 to -7, -7, -8,
 // Conrod -55 to -68. The climbs still add up to zero.
 // The numbers below then close with every straight within 1%.
-import { defineScriptedCourse, buildTrackScript } from '../track-script.js';
+import { defineScriptedCourse, buildTrackScript, TRACK_SCRIPT } from '../track-script.js';
 
 const PANORAMA_ROAD = defineScriptedCourse({
   id: 'panorama-ridge', name: 'Panorama Ridge', flag: 'panorama-ridge',
@@ -101,6 +101,16 @@ function panoramaPlacements(road) {
   // Match the existing 65 m entry/exit openings of the actual pit divider.
   for (let s = Math.max(0, pitStraight.s0) + 75; s < pitStraight.s1 - 75; s += 4) {
     placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2, solid: true});
+  }
+  // Hell Gate has no script wall, and both Mountain Straight walls begin where it
+  // ends. A plain concrete wall on its outside closes the run-off, so a car that
+  // slides wide stops against it instead of rejoining behind the right wall.
+  // Its face lines up with that wall; the step keeps the outer arc closed.
+  const hellGate = road.pieces.find(piece => piece.name === 'Hell Gate');
+  const outer = -hellGate.dir, face = TRACK_SCRIPT.wallSetback, depth = .72;
+  for (let s = hellGate.s0 - 6; s < hellGate.s1; s += 2.8) {
+    placements.push({id: 'concrete-wall', s, lateral: outer * (road.halfWidthAt(s) + face + depth / 2),
+      heading: outer < 0 ? Math.PI / 2 : -Math.PI / 2, solid: true});
   }
   for (const name of ['Hell Gate', 'The Cutting', 'Forrest Elbow', 'Murray Corner']) {
     const corner = road.pieces.find(piece => piece.name === name);

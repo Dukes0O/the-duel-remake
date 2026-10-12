@@ -148,9 +148,12 @@ test('Harbour Lights: every kit barrier stands at one of the circuit walls, and 
   const panorama = new Course(PANORAMA_RIDGE, 1989);
   const pitPieces = PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id === 'pit-wall');
   assert.ok(pitPieces.length > 0 && pitPieces.every(piece => piece.solid === true));
-  assert.ok(PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id !== 'pit-wall').every(piece => piece.solid !== true),
-    'only the approved Panorama dividing pit wall becomes a kit solid');
-  assert.equal(panorama.features.kitSolids.length, pitPieces.length);
-  assert.ok(panorama.features.kitSolids.every(box => box.id.endsWith('-pit-wall')));
+  // Claude 12 October: the Hell Gate concrete wall is the one other solid run.
+  const hellPieces = PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id === 'concrete-wall');
+  assert.ok(hellPieces.length > 0 && hellPieces.every(piece => piece.solid === true));
+  assert.ok(PANORAMA_RIDGE.kitPlacements.filter(piece => !['pit-wall', 'concrete-wall'].includes(piece.id)).every(piece => piece.solid !== true),
+    'only the approved Panorama pit divider and Hell Gate wall become kit solids');
+  assert.equal(panorama.features.kitSolids.length, pitPieces.length + hellPieces.length);
+  assert.ok(panorama.features.kitSolids.every(box => box.id.endsWith('-pit-wall') || box.id.endsWith('-concrete-wall')));
   assert.equal(panorama.features.walls.filter(wall => wall.pitWall).length, 0);
 });
