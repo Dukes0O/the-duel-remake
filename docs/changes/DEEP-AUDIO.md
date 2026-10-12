@@ -27,8 +27,16 @@ Total: 532,629 runtime bytes. Both decoded FLAC loop boundaries pass the existin
 
 ## Removed
 
-No old runtime assets or code replaced. Scratch source-selection JSON and review-only audio will be recycled after the review verdict is retained. External selected CC0 source cache remains because the build uses it.
+No old runtime assets or code replaced. Scratch source-selection JSON, build drafts and the listening helper have been recycled. Review-only audio is retained until its verdict can be recorded, then Root recycles it. External selected CC0 source cache remains because the build uses it.
 
 ## Deferred
 
 App wiring belongs to DEEP-ZONE. Actual browser capture, race mix masking and other heavy checks wait for the night shift. The Deep stays dev; no release, push or real saves.
+
+## First frozen review and gate — 4fbcbda5
+
+Original nearby lane result: 35 passed, one failed (`test-arsenal-core-audio`), 107 not run of 143, 301.124 s, jobs 4. Original JSON retained in `.evidence/2026-10-12/DEEP-AUDIO/lane-result.json`. Both failures are legacy whole-bank/catalog snapshot hashes including new Deep entries. No old expected hashes or bounds are changed; Director test-hook permission is requested for explicit eight-ID exclusions only. Build passed on the same source: 5,372.528 ms wall time (Vite 2.01 s), original build log and result retained there.
+
+Root's ordinary review found cold entry silently misses splash/muffle before lazy loading finishes. Correct only the adapter and its existing test: preserve ready-buffer immediate playback, queue each missing entry cue once for its current audible visit, and invalidate that queue on pause, mute, exit, switch-off, scene/context replacement or dispose. Initially inaudible events remain consumed. Add delayed fake decode acceptance without browser or framework work. Every asset, cue gain, ordinary filter/load path and numeric bound stays exact. The corrected frozen source needs one fresh nearby lane/build and review.
+
+Director granted only the historical bank/catalog projections in `test-arsenal-core-audio`, `test-arsenal-wave1-audio` and `test-p4-audio`. Add an independent literal list of the eight Deep IDs to those additions; keep all original expected SHA-256 values, individual assets, ordinary rows, exports and numeric assertions exact. No broad Deep-prefix exclusion is used. The owned Deep test independently pins those eight assets and recipes. The delayed-entry fix now passes ten fake-decode cases, including inaudible starts and stale completion; duplicate entry identities remain consumed after exit. Corrected source freezes with these related fixes and the existing real assets.

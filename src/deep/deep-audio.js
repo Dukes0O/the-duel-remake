@@ -14,12 +14,14 @@ export function deepEngineCutoff(cutoff, depth, enabled) {
 export function createDeepAudio({audio}) {
   let zoneId = null, context = null, loading = null, disposed = false;
   let whaleAfter = 0, placeSound = null, seen = new WeakSet();
+  let pendingEntry = null, latestState = {};
   const buffers = new Map(), loops = new Map(), voices = new Set();
   const enabled = () => !disposed && audio.flags.enabled('the-deep');
   const audible = state => enabled() && !audio.muted && !audio.paused && !state?.paused &&
     audio.context?.state === 'running';
 
   function stopVoices() {
+    pendingEntry = null;
     for (const voice of voices) voice.stop();
     voices.clear();
     loops.clear();
@@ -29,7 +31,6 @@ export function createDeepAudio({audio}) {
     zoneId = null;
     placeSound = null;
     whaleAfter = 0;
-    seen = new WeakSet();
   }
   function load() {
     if (!enabled() || !audio.context) return Promise.resolve([]);
@@ -103,6 +104,7 @@ export function createDeepAudio({audio}) {
   function event(ev, state = {}) {
     if (!ev || typeof ev !== 'object' || disposed || seen.has(ev)) return;
     seen.add(ev);
+    latestState = state;
     if (ev.deepExited || ev.menu || ev.stageLoaded != null || ev.arenaLoaded != null) {
       stop();
       // Keep this exit delivered even if the same object is presented again.
@@ -116,10 +118,19 @@ export function createDeepAudio({audio}) {
       zoneId = ev.deepEntered.zoneId;
       placeSound = null;
       whaleAfter = 0;
-      void load();
+      const ready = load();
       if (audible(state)) {
-        play('deep.splash');
-        play('deep.engine-muffle');
+        const missing = ['deep.splash', 'deep.engine-muffle'].filter(id => !play(id));
+        if (missing.length) {
+          const entry = {zoneId, context};
+          pendingEntry = entry;
+          void ready.then(() => {
+            if (pendingEntry !== entry) return;
+            pendingEntry = null;
+            if (zoneId !== entry.zoneId || audio.context !== entry.context || !audible(latestState)) return;
+            for (const id of missing) play(id);
+          });
+        }
       }
     }
     if (!zoneId) return;
@@ -135,6 +146,7 @@ export function createDeepAudio({audio}) {
   }
   function update(state = {}, environment = {}) {
     if (disposed) return;
+    latestState = state;
     if (!enabled() || state.status === 'menu') { stop(); return; }
     // Preload on the submerged ramp, before the Deep-entered event.
     if (Number.isFinite(environment.deepDepth) && environment.deepDepth > 0) void load();

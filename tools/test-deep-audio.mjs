@@ -158,6 +158,44 @@ assert.equal(deepEngineCutoff(2400, 8, false), 2400);
 assert.equal(deepEngineCutoff(2400, 8, true), 520);
 assert.equal(deepEngineCutoff(200, 8, true), 200);
 
+// A cold entry must await real buffer readiness, without reviving stale visits.
+async function delayedEntry(gate) {
+  const ctx = context(), resolves = [], deliveries = [];
+  let deepOn = true;
+  ctx.decodeAudioData = () => new Promise(resolve => resolves.push(() => resolve({duration: 3})));
+  const host = {context: ctx, flags: {enabled: () => deepOn}, muted: gate === 'initial-mute',
+    paused: gate === 'initial-pause',
+    mixer: {output: id => SOUND_BANK[id].bus, disconnect: node => node.disconnect(),
+      track: (id, voice) => {deliveries.push(id); return () => {}; }},
+    _connect: (node, output) => node.connect(output)};
+  globalThis.fetch = async () => ({ok: true, arrayBuffer: async () => new ArrayBuffer(1)});
+  const deep = createDeepAudio({audio: host});
+  const visit = Object.freeze({deepEntered: Object.freeze({zoneId: 'cold-kelp'})});
+  deep.event(visit, state); deep.event(visit, state);
+  await new Promise(setImmediate);
+  assert.equal(resolves.length, 8, 'cold entry lazily requests all buffers');
+  assert.deepEqual(deliveries, [], 'unready cold entry waits');
+  if (gate === 'exit') deep.event({deepExited: {zoneId: 'cold-kelp'}}, state);
+  if (gate === 'dispose') deep.dispose();
+  if (gate === 'pause') { host.paused = true; deep.update(state); host.paused = false; }
+  if (gate === 'mute') { host.muted = true; deep.update(state); host.muted = false; }
+  if (gate === 'switch') { deepOn = false; deep.update(state); deepOn = true; }
+  if (gate === 'context') host.context = context();
+  if (gate === 'menu') deep.update({status: 'menu'});
+  if (gate === 'initial-pause') host.paused = false;
+  if (gate === 'initial-mute') host.muted = false;
+  for (const resolve of resolves) resolve();
+  await deep.load();
+  await new Promise(setImmediate);
+  assert.deepEqual(deliveries, gate === 'audible' ? ['deep.splash', 'deep.engine-muffle'] : [],
+    gate + ': entry is delivered once only for its valid audible visit');
+  deep.event(visit, state);
+  assert.deepEqual(deliveries, gate === 'audible' ? ['deep.splash', 'deep.engine-muffle'] : []);
+  deep.dispose();
+}
+for (const gate of ['audible', 'exit', 'dispose', 'pause', 'mute', 'switch', 'context', 'menu', 'initial-pause', 'initial-mute'])
+  await delayedEntry(gate);
+
 // Exercise the real EngineAudio update with loaded recorded and synth paths.
 const ordinaryRequests = [];
 globalThis.fetch = async url => { ordinaryRequests.push(url); return {ok: false}; };
