@@ -19,3 +19,7 @@ These are the card's detailed design, acceptance and recorded decisions.
     acceptance:
       - "Zone format 10.1 loads; the ramp, shoreline pause, dive choice and return work in Node; Pacific Canyon fingerprints exact with the ramp unused and with the-deep off. Lane tier, build, one review."
 ```
+
+## Parallel lane interface — 12 October 2026
+
+DEEP-AUDIO owns an event/update/stop adapter in src/deep/deep-audio.js with an injected existing audio host; this card owns its App journey lifecycle wiring when busy-game-files is available. DEEP-SAVE owns discovery/hint/kit methods; coordinate its eventual narrow App hook rather than duplicating save fields or award logic. Preserve all switch-off paths.

@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Deep lane boundaries settled:** audio gets its existing-pipeline build recipe and injected event/update/stop adapter; DEEP-ZONE owns journey wiring, mastering is unchanged. Save implements its owned optional fields/hints/kit now; its narrow App wiring waits for Panorama to release busy-game-files. Source provenance and actual Claude listening/art verdicts remain required. No release or push.
+
 - **GP existing source resumes in parallel.** Panorama has finished and relinquished its race-field hook; its final correction is tool-only. GP holds only its actual field/width hooks, preserving the new manifest roster and all accepted pay/qualifying/save behavior. Source handoff follows one nearby lane/build/review; remaining Red/Neon/Cloudbreak rates and 18 native cases wait for night, with every original cap and failure retained. Summit waits for these shared field hooks. No release or push.
 
 - **Kyle authorized more parallel sessions.** Three independent Deep lanes start now: DEEP-ART-SRC, DEEP-SAVE (save-shape), and DEEP-AUDIO (sound-bank). Panorama remains active; GP and Summit wait for its shared-hook handoff. DEEP-SURFACE stays free for Summit priority on surfaces. Each new session owns its exact card files and lane; Root commits shared metadata and integrates green results. Six build lanes across teams remain the limit. Art/listening packets go to Claude; heavy checks wait for night. The Deep stays dev; no release or push.
@@ -96,6 +98,9 @@ The first loader-union gate stopped132passed/1boardfailure/255notrun: unsupporte
 Claude10:30 decisions are on their cards before further code: loader accepted on source/clearance after mandatory lane/build, Claude owns Harbour base diagnosis and later old-town cost; Azure reuses actual merged Harbour fieldFollow GP-only; Snow/Pan relative costs are information with absolute18.5ms/under1s acceptance. All observed failures remain failures. Every Claude answer below is retained. Kyle approved the sound on11October (sound approved - keep going); measured121-second partial -16.29LUFS/-2.10dBTP, no whole-recording/uncaptured-finish claim. Approval committed in33aacf7a; consumed listening284,485,319B and navigation852,173B removed after safe path/hash checks, recipes/assets kept. Previous full387/387 onfbc7d76c is historical; new end full remains required.
 
 ## Claude answers
+
+From 12 October 2026 (AGENTS rule 16), answers to a card live in that card's
+file, `docs/board/cards/<id>.md`; this section keeps notes with no card.
 
 Claude, 12 October 2026 (afternoon PT), **FAC-03: one combat balance run, current rules.** The `wasteland2` switch was retired (BALANCE-W2-OFF-RETIRE), so an "off" run no longer exists; the off/on wording in AGENTS, FACTORY, the playbook, OPERATIONS and the FAC-03 card was mine and stale, and is corrected. The night shift and release evidence run `node tools/combat-balance.mjs --check` once, on the current rules with the Wasteland discovered, against its existing targets. The original MAD MAX DUEL combat (before the Wasteland is found) is frozen: its rules no longer change and its replay fingerprints in the full tier pin it exactly, so a second balance run would only repeat a fixed result. Remove the explicit off tool path from FAC-03 rather than reporting it as unsupported. No new targets.
 
