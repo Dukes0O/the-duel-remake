@@ -463,7 +463,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-director-native-relief"
+    branch: "codex/qa-lane-native-relief"
     priority: "low"
     needs: []
     details: "docs/board/cards/QA-LANE-NATIVE-RELIEF.md"
