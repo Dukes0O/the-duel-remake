@@ -1,6 +1,12 @@
 # P4-GP-EXISTING
 
-Status: building. Nine existing circuits receive Grand Prix eligibility and bounded field tuning. No release. Remaining original circuits: Alpine Serpent (final attempt remains), Red Mesa, Neon Docks and Cloudbreak Skyway.
+Status: Factory source resumption authorized. The Red Mesa pause is preserved below; source work resumes under the narrow gp-existing-field-width lock. Six circuit verdicts are settled; Red Mesa has two attempts left, Neon Docks and Cloudbreak three each. Rates and all 18 native browser cases wait for night. Source lane/build/review are pending; no final card acceptance or release.
+
+## Factory resumption design before code
+
+Preserve the owned Alpine and Red Mesa pause facts before syncing accepted integration. Keep FAC-04 manifest discovery and authored membership spread; admit only the nine original base IDs explicitly, without restoring stale registry globals. Accepted pay, qualifying, save, ghost, reference and replay source stays exact. The six shared regions are GP admission/grid/tuning, Course.roadHalfWidthAt, shoulder material and world attributes, the two menu labels, and the two unsupported-event fixtures.
+
+The actual Panorama source handoff must land before final freeze. Combine only its GP -43 m setback with Azure -400 m and default zero; retain its landform and shared defaults. Do not change its tuning or driver. If current async manifest imports prevent the owned private browser helper from building as IIFE, change only that helper's bundle/loading format. All 18 native assertions and inputs stay exact; helper compilation launches no browser. One nearby lane with jobs 4, build and ordinary review hands off source for night exercise. The card remains open for deferred rates and native coverage.
 
 ## Current behavior and settled design
 
@@ -37,6 +43,8 @@ In the table, wins and opening pile-ups are Easy/Medium/Hard counts out of 30 ea
 | Eifel Crown 3 | 5cf0d412 | 210.74 | 23/5/10 | 1/0/0 | 1.7667 (1.3667) | OUT: Medium/Hard wins and passing; cap exhausted |
 | Alpine Serpent 1 | 5cf0d412 | 185.22 | 0/0/0 | 2/3/6 | 1.9333 (1.1333) | OUT: wins, opening and passing |
 | Alpine Serpent 2 | df78d6e5 | 172.38 | 15/0/0 | 4/5/3 | 2.6 (1.5333) | OUT: wins, opening and passing |
+| Alpine Serpent 3 | 5071e3eb | 204.00 | 20/6/4 | 0/5/1 | 2.9 (1.9333) | OUT: Medium wins/opening and passing; cap exhausted |
+| Red Mesa 1 | 5071e3eb | 136.77 | 0/0/0 | 3/3/1 | 1.2333 (.9667) | OUT: all wins, Easy/Medium opening and passing; paused |
 
 ## Retained settings and decisions before code
 
@@ -53,6 +61,10 @@ Eifel retains pace .934/.903/.881, aggression 1.4. Baseline ratios .95934/.93439
 Alpine attempt two uses GP-only pace .960/.938/.917 from measured baseline finish ratios .959377/.938122/.917437. Its zero player wins call for slower CPU pace; aggression drops from one to .85 because all opening safety targets fail. Safety takes priority over the passing deficit. Two attempts remain, and these estimates are not acceptance. No geometry, first-lap, driver, seed, target or assertion changes.
 
 Alpine final attempt uses pace .929/.902/.892 from measured ratios .967564/.961557/.973027 applied to the current pace. Aggression decreases from .85 to .6 because opening safety remains outside at every difficulty, with 12 pile-up races against baseline 11. This is the last attempt; retain the closest complete measured setting with safety first. No geometry, first-lap, driver, seed, target or assertion change.
+
+Alpine retains final .929/.902/.892 and aggression .6. Its final measurement passes Easy and Hard opening safety, with six total pile-up races versus 11 and 12 in earlier attempts; earlier settings failed all three safety bands. All runs finish every player and CPU. Easy/Hard wins pass; Medium wins/opening and passing still fail. Retain those failures and the exhausted cap; no fourth run or native assertion waiver.
+
+Red Mesa baseline completed all 90 on frozen 5071e3eb in 136.77 seconds, exit 1. Opening safety passes Hard but fails Easy and Medium; all win bands and Medium passing fail. All players and CPUs finish with no unfinished cars or stderr. Pace/aggression multipliers remain one; no next setting was selected or edited. Kyle paused new work while this job was active, so only its genuine result is recorded. The session fully drained; no further balance, gate, build, browser check, source edit or results-only commit followed. Raw rows: red-mesa-baseline-1-5071e3eb.
 
 Every choice was written and settled before its data edit. All other course settings, geometry, first-lap values, driver, seeds, assertions and targets remain exact. Immutable overlays use only existing fieldPace and fieldAggression options; no new balance mechanism.
 
