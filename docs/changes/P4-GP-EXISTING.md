@@ -140,3 +140,11 @@ Bounded GP-only attempt-two choice: pace 1.10/1.065/1.055, aggression remains on
 ## High Country final choice, before code
 
 Attempt two on d985cf8f completed all 90 in 220.25 seconds, exit 1: Easy wins 19/30 and Medium 11/30 meet their bands, Hard 2/30 misses ten percent. Medium passes 3.1667 (3.1 after start) pass; opening pile-ups 0/1/0 remain within five percent. Actual player three-lap finishes 90/90, CPU finishes 630/630, no unfinished cars or stderr. Raw rows: high-country-tune-2-d985cf8f. Final attempt three changes only Hard GP pace from 1.055 to 1.050; its observed target finish ratio .995789 estimates 1.0506. Retain the passing Easy 1.10, Medium 1.065 and aggression one exactly, along with all original inputs, geometry and targets. This is the last High Country run; if still outside, retain the closest complete result honestly and move on.
+
+## High Country settled; Harbour & Highlands attempt two, before code
+
+High Country final attempt three on df38ec84 passes every original target, exit 0 in 285.28 seconds: wins 19/11/6 of 30, Medium passes 3.1667 (3.1 after start), opening pile-ups 0/1/0, all 90 player three-lap and 630 CPU finishes. Keep pace 1.10/1.065/1.050 and aggression one; no repeat. Raw rows: high-country-tune-3-df38ec84.
+
+Harbour & Highlands baseline attempt one on df38ec84 completed the original 90 in 249.77 seconds, exit 1: wins 30/27/27 of 30 exceed all bands; Medium passes 2.8333 (2.6667 after start) miss three. Opening pile-ups 0/1/0 pass five percent, all 90 players completed three laps and all 630 CPUs finished, with no unfinished cars or stderr. Raw rows: harbor-highlands-baseline-1-df38ec84.
+
+Attempt two uses only its GP overlay: pace 1.085/1.050/1.040 from measured target finish ratios 1.0848/1.0485/1.0393, plus aggression 1.25 to address the modest passing gap through the existing pass logic. These are estimates, not passes. Base course, geometry, first-lap values, original driver, seeds and every target/assertion stay exact. At most one final run remains after this attempt.
