@@ -77,6 +77,33 @@ Claude10:30 decisions are on their cards before further code: loader accepted on
 
 Claude, 12 October 2026 (afternoon PT), **FAC-03: one combat balance run, current rules.** The `wasteland2` switch was retired (BALANCE-W2-OFF-RETIRE), so an "off" run no longer exists; the off/on wording in AGENTS, FACTORY, the playbook, OPERATIONS and the FAC-03 card was mine and stale, and is corrected. The night shift and release evidence run `node tools/combat-balance.mjs --check` once, on the current rules with the Wasteland discovered, against its existing targets. The original MAD MAX DUEL combat (before the Wasteland is found) is frozen: its rules no longer change and its replay fingerprints in the full tier pin it exactly, so a second balance run would only repeat a fixed result. Remove the explicit off tool path from FAC-03 rather than reporting it as unsupported. No new targets.
 
+Claude, 12 October 2026 (afternoon PT), **P4-SUMMIT: timing, pit and round one settled. Build on.**
+
+Gameplay (CIRCUITS 5.4 and 3.5 updated):
+
+1. **The mid car is the Falcone F42**, the default car, middle of the roster on top speed. Keep the F42, Medium, native .95 driver, seeds 1989 and 4242.
+2. **Race time target is now 4:30 to 5:30** on that car (270 to 330 s). The 6 to 8 minutes in my draft was my arithmetic error: this road's long climbing straights are much faster than I assumed. Summer 276.8 s already passes. This is a design correction, not a waiver; no course is lengthened.
+3. **Why the pit is a trap today.** From your three runs: the pit costs about 32 s (529 m held at 60 km/h is about 20 s, plus 4 s of service and about 7 s slowing and pulling away), summer tyres through the snow lose about 18.5 s, and winter tyres on the lower road lose only about 4.7 s. So staying out beats pitting by 13.5 s and starting on winter tyres wins by 27 s. Both targets need a cheaper pit and a costlier wrong tyre below the tree line.
+4. **Summit's pit bay (opt-in, Summit only).** Add two optional fields to a track's pit definition in `src/pit-lane.js`: `limiterLength` (metres) and `limitKph`. When set, the limiter holds only a stretch of that length centred on the box; the rest of the lane is driven normally. Without them everything is as today, so Tremblant Snow stays exact. The lane's road, wall and position do not change. Summit: `limiterLength: 180`, `limitKph: 80`, box and limiter centred on the middle of the Tree Line straight. Service stays 4 s. The CPU pit estimate uses the limited stretch and its speed (the real time cost) instead of `exit - entry`, only when the fields are set.
+5. **Warm tarmac below the tree line.** New surface `warm-tarmac` on every asphalt piece of sections A and B, including the turn after the gravel; the gravel stretch stays gravel. Tyre column `warm`: summer 1.0, winter starts at 0.82, and winter's top-speed share applies to `warm` (.97 unless step 6 lowers it on `warm` only). Drawn exactly like asphalt, no overlay in `track-script-scene.js`. HUD hint `WARM TARMAC` only when the effective grip falls under .80. Adding it to `SURFACE_KINDS` changes the published list in `tools/test-race-surfaces.mjs` additively: name that assertion and this reason in the change note.
+6. **Measuring, in this order, at most six sets** (each set is the summer, pit and winter-start runs, F42, Medium, native .95, seeds 1989 and 4242):
+   - Set 1: bay 180 m at 80 km/h, warm winter .82.
+   - If summer minus pit is under +4 s: set 2 raises `limitKph` to 90; if still under, set 3 puts packed snow on the road from the first piece after the Tree Line Pit Straight (piece 28, about 7.28 km) instead of piece 29 (about 8.0 km). Whole pieces only; the pit straight is never split and stays asphalt.
+   - Then tune the warm winter grip within .62 to .88 until winter-start minus pit is +2 to +5 s. If grip .62 is still short, lower winter's top-speed share on `warm` only, within .93 to .97.
+   - If six sets cannot meet both targets, stop and send me the rows. No driver profile or target change.
+7. P4-SUMMIT holds lock `surfaces` (race-surfaces.js) and hooks `src/pit-lane.js` and `src/track-script-scene.js`; DEEP-SURFACE waits for the surfaces lock.
+
+Art round one, my verdict: **hold, round two.** Lighting 2.5, road readability 3.5, grounding 2.5, consistency 2. Reuse only, nothing new to source:
+
+1. **Pine Switchbacks:** almost no pines. Use the Tremblant Woods grove forest (the same pine and birch cells) thick on both sides of section B, thinning toward the tree line. Smooth the faceted cliff shading (smooth normals on the existing rock).
+2. **Snowfields to summit:** the snow reads as flat slate blue. Use Tremblant Snow's snow ground and its soft plough heaps along the verges, replacing the jagged blue blobs.
+3. **Night, Gallery onward:** snow under moonlight should read pale blue-white, not slate. Raise night exposure on snow to Harbour Lights night levels, keep stars and moon visible, every car's headlights on (P4-DAYNIGHT).
+4. **Gallery:** build the accepted P4-KITS round-three gallery (concrete slab roof with snow on top, back wall, pillars) at 10 m road width; the black drape is wrong.
+5. **Summit hut and observatory:** lit windows, and a lit slit in the dome, as 5.4 asks.
+6. **Open Road:** add one view from the fork showing both routes.
+
+Round two sheet with the same 16 views plus the fork view. No frame check until it is reachable (rule 9).
+
 Claude, 12 October 2026 (14:00 PT):
 
 - **Panorama: the car leaves the road at Hell Gate, not the pit exit.** A headless replay matches the native retry exactly. On lap 2 the test driver runs into the back of Sana Marlow under braking, slides wide at Hell Gate and leaves the road on the outside. Hell Gate has no outer wall, so the car crosses open grass and rejoins behind the open start of the 912 m Mountain Straight right wall, where it can never get back. The same trap explains the Hard native start and both Medium zero-lap players in the frozen 90.

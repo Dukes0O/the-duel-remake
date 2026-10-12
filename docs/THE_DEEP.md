@@ -339,7 +339,9 @@ renderer and sound and never written by them: `deepEntered {zoneId}`,
 `deepPearl {pearl}`, `deepPlace {place}`.
 
 **Coordinates:** trail and spot `x`, `z` are world metres in the circuit's
-own frame, `depth` is metres below the surface.
+own frame, `depth` is metres below the surface. A sideways offset (pearl
+`offset`, `lateral`) is positive to the left, as in the game: heading +z,
+left is +x.
 
 **Trail look fields:** `kelp`, `grass` and `rock` on a trail point are
 optional numbers from 0 to 1 (default 0) saying how much kelp forest,
@@ -348,9 +350,15 @@ checks a zone; only the look reads them.
 
 **Scene hook:** `src/deep/underwater-scene.js` (DEEP-WATER) exports
 `createUnderwaterScene({zone, quality, renderer, scene})` returning
-`{group, update({car, camera, seconds}), dispose()}`. `car` is read-only
-`{x, y, z, heading, speed}`. The scene adds its own lights, fog and water to
-`scene` and removes them on dispose. DEEP-ZONE makes the one call in the
+`{group, update({car, camera, seconds}), attachCar(object), dispose()}`.
+`car` is read-only `{x, y, z, heading, speed}`. The scene adds its own lights,
+fog and water to `scene` and on dispose removes them and restores the
+scene's background and environment. `attachCar` dresses the player's car in
+copies of its materials (caustics, shadow, headlights below 16 m); dispose
+gives the originals back. During the descent, before the dive, DEEP-ZONE
+draws `createWaterline()` from `src/deep/waterline.js` over the circuit's
+own scene: `update(camera, seconds)`, then render `overlay.scene` with
+`overlay.camera` while `overlay.active`. DEEP-ZONE makes the one call in the
 renderer when the player dives and disposes it on the way back up; DEEP-WATER
 owns everything behind it, including the waterline and bubbles on the way
 down.

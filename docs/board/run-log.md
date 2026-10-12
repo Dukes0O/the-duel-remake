@@ -986,3 +986,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 FAC-06 merged source8885399a: lane18/18 in288.97s,jobs4; build1210ms, gp_existing ordinary review clear; 50 open/272 completed cards, lock conflicts fixed, FAC-02 own lane recycled; no clean-merge rerun.
 - 2026-10-12 FAC-03 merged 02790f14: lane 396/396 in 1526.07 s, build 680 ms, review Codex Director (selector only; night command unfinished) clear.
 - 2026-10-12 FAC-07 merged source3b8d72b8: lane19/19 in109.49s,jobs4, build662ms, Director review clear; one QA build and isolated children with quiet timing barriers, no clean-merge rerun.
+- 2026-10-12 P4-SUMMIT merged (Claude lane claude/summit-decision 7e1f7fdd): lane 14/14 in 152.74 s, build 1438 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 DEEP-WATER merged (Claude lane claude/deep-water 129235fa): lane 22/22 in 132.29 s, build 1457 ms, review claude-subagent-reviewer clear.

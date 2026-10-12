@@ -11,5 +11,9 @@
   body.clean #readout { display: none; }
 </style>
 <div id="stage"><div id="readout"></div></div>
-<script type="module" src="./deep-look.js"></script>
+<script type="module">
+  // ?zone=sample shows a whole zone through the game's scene hook (DEEP-WATER).
+  if (new URLSearchParams(location.search).get('zone')) import('./deep-look-zone.js');
+  else import('./deep-look.js');
+</script>
 </html>
