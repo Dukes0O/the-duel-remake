@@ -120,8 +120,8 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "L"
-    status: "building"
-    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT]
+    status: "ready"
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT, FAC-04, FAC-05]
     locks: [circuit-registry, reference-laps, busy-game-files]
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-panorama"
@@ -166,8 +166,8 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "L"
-    status: "building"
-    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
+    status: "ready"
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
     locks: [circuit-registry, busy-game-files, surfaces]
     claimed_by: "codex-overnight-2026-10-12"
     branch: "codex/p4-summit"

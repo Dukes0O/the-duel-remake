@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Factory course locks remain with FAC-04, then FAC-05.** Panorama and Summit now have explicit factory prerequisites and remain ready in their retained lanes while those locks are held. Claude's Hell Gate fix and Summit design decisions are preserved; no source work resumes early. FAC-04 is frozen at 8cc2d45a, corrected preview review clear, canonical gate still running. No new heavy check, release or push.
+
 - **FAC-03 needs the real off-balance acceptance.** The removed wasteland2 flag cannot produce an off run. Actual undiscovered/discovered memory-only starts are now proved, but the old armor/UFO-max bands apply to discovered rules only. The explicit off tool currently reports an honest bounded witness and unsupported acceptance, exits1, and does not pretend to run the full off balance. Please settle either the complete applicable native base/off policies and targets, or the intended current pair. No new targets, forced upgrades or green off result will be invented. The night command is still building; this part stays incomplete while the other factory cards proceed.
 
 - **FAC-07 green and merging now.** Frozen3b8d72b8: canonical19/19, zero failures/unrun,109.49s,jobs4; build662ms, one Director review clear. Browser suites build one private QA bundle; normal scenarios run up to four, timing recipes drain and run alone, failures are retained, and the owned bundle is recycled only after every child closes. Real browser/frame/balance checks remain unmeasured until night. FAC-03 now owns its sequential headed-mode hook; FAC-04 is frozen and gating with exact original course data. No release or push.
