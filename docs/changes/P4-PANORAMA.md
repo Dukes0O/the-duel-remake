@@ -128,6 +128,16 @@ lane; that work remains in the GP lane and committed Git text history. Sync
 actual integration solid barriers, ribbon terrain and snow while preserving
 Panorama's owned visual hooks.
 
+Morning union controls: 30/31 focused checks passed on c7695084 in 37.22 s.
+The sole failure was the upstream assertion that Panorama kitPlacements is
+undefined. The approved art adds non-solid kits while keeping its existing
+script walls. Before editing, the Director grants the narrow barrier-test hook
+and reviews this catalogue correction: assert every placement is non-solid,
+retain the actual Course kitSolids count of zero, and keep every Harbour wall
+check and its strict 1.5 m threshold unchanged. No physical guard is relaxed.
+Native skill-.95 useRacingLine is byte-exact across the sync; upstream driver
+changes only add optional winter tyres to other helpers, absent on Panorama.
+
 ## Removed
 
 Replace incomplete road-only presentation with approved kits/landmarks/landform.
