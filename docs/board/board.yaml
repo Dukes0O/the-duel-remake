@@ -168,11 +168,10 @@ tasks:
     size: "L"
     status: "building"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
-    locks: [circuit-registry, busy-game-files]
+    locks: [circuit-registry, busy-game-files, surfaces]
     claimed_by: "codex-overnight-2026-10-12"
     branch: "codex/p4-summit"
     flag: "summit-run"
-    waiting_on: "claude"
     details: "docs/board/cards/P4-SUMMIT.md"
 
   - id: P4-AVALANCHE
@@ -341,6 +340,7 @@ tasks:
     status: "ready"
     needs: [DEEP-LOOK]
     flag: "the-deep"
+    locks: [surfaces]
     details: "docs/board/cards/DEEP-SURFACE.md"
 
   - id: DEEP-SAVE

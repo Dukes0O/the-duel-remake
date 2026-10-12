@@ -242,6 +242,12 @@ still be driven.
   choice, not a trap.
 - Pit lanes exist on Summit Run and Tremblant Snow first; circuits may add
   them later for strategy.
+- **Summit's pit bay** (12 October 2026): an opt-in limited stretch of
+  180 m centred on the box at 80 km/h (90 if needed); the rest of the lane
+  is driven normally. Below the tree line the road is `warm-tarmac`, where
+  winter tyres grip less (summer 1.0, winter tuned within .62 to .88), so
+  the summer-then-pit plan is the fast one and the targets above stand.
+  Lanes without the opt-in, such as Tremblant Snow's, are unchanged.
 
 ### 3.6 Light that moves (P4-DAYNIGHT)
 
@@ -447,7 +453,8 @@ Lodge Straight. Skiers on the slopes (static figures), the chairlift running.
 ### 5.4 Summit Run (Pikes Peak)
 
 The phase's showpiece: a point-to-point race from the desert to a snowy
-summit at night. About 14 km and 6 to 8 minutes. Only six hairpins, all at
+summit at night. About 14 km and 4:30 to 5:30 on Medium in the Falcone F42,
+the mid car (corrected 12 October 2026 from a drafted 6 to 8 minutes). Only six hairpins, all at
 least 15 m radius, with fast climbing roads between them.
 
 - **Event:** Summit Run, 1 run, field of 6 (narrow mountain road), all

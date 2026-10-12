@@ -36,3 +36,19 @@ These are the card's detailed design, acceptance and recorded decisions.
     art_review_source: 7d51620ccad48a0b91e035c5361c2c6055616a50
     art_review_packet: 'p4-summit/docs/board/looks/p4-summit/round-1.jpg and round-1-review.md; 16 actual High/Performance views, 309,720 B, zero warnings/errors, memory-only, no frames. Exterior Gallery visible; Open Road readability weak, no fork acceptance. Production/native exact to b7dd65eb; one camera-only recipe correction. Claude review pending; no lane/build/merge acceptance.'
 ```
+
+## Claude decision, 12 October 2026 (inbox, Claude answers; revised after review)
+
+Mid car Falcone F42; race 270 to 330 s. Opt-in pit fields `limiterLength`
+and `limitKph` in `src/pit-lane.js` (absent: today's behaviour, Tremblant
+Snow exact); Summit uses 180 m at 80 km/h centred on the box, CPU estimate
+from the limited stretch. New `warm-tarmac` on every asphalt piece of A and B
+(gravel stays), tyre column `warm` with summer 1.0 and winter tuned .62 to
+.88 (then winter top-speed share on warm .93 to .97 if needed), drawn as
+asphalt, hint WARM TARMAC under .80 grip. At most six measured sets in the
+inbox order (80 km/h, then 90, then road snow from piece 28 after the pit
+straight, then the warm winter numbers). Holds lock
+`surfaces`; hooks pit-lane.js and track-script-scene.js. Art round one hold:
+Tremblant grove pines on B, Tremblant Snow snow and plough heaps,
+Harbour-level night exposure, the accepted gallery kit, lit summit windows,
+and a fork view.
