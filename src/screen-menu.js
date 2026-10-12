@@ -108,7 +108,11 @@ function updateMenuScene() {
   updateMenuCar();
   if(choices.mode==='grandprix'){
     text('cpu-target-label','THE FIELD');text('scene-length',`${(preview.distanceKm/preview.laps*3).toFixed(1)} KM · 3 LAPS`);
-    text('entry-reward','GRAND PRIX · SEVEN COMPUTER RACERS · START IN THE BACK HALF · NO PAY OR RECORDS YET');
+    const laps=stage.grandPrixLaps??3, lapLabel=stage.closed===false?'ONE RUN':laps===3?'THREE LAPS':`${laps} LAPS`;
+    const racers=(stage.fieldSize??8)===8?'SEVEN':String((stage.fieldSize??8)-1);
+    const payEnabled=app._switches?.().enabled('grand-prix-career')===true;
+    text('entry-reward',`GRAND PRIX · ${racers} COMPUTER RACERS · ${lapLabel} · ${payEnabled?'PAY BY POSITION · SEPARATE RECORDS':'NO PAY OR RECORDS YET'}`);
+    if(payEnabled)ui['entry-reward'].title='Every completed finishing position earns credits. A completed Grand Prix has no loss charge. Pro doubles race earnings; existing win bonuses and lifetime milestones keep their rules.';
     ui['event-brief'].hidden=false;text('event-brief','A pure race on a closed road: no traffic, police or radar. Five red lights, then go. Follow the tow behind a car for extra speed.');
     ui['rival-customization'].hidden=true;
     root.querySelector('.start-note').textContent='GRAND PRIX · 8 CARS · 3 LAPS · NO TRAFFIC OR POLICE';

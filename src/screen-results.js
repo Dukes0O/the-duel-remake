@@ -42,6 +42,11 @@ function modalScreen(s) {
     const words=fieldResultsText(r,time);
     eyebrow=`GRAND PRIX / ${escapeHTML(String(r.stageName).toUpperCase())}`;title=words.title;description=words.description;
     metrics=metric('FINISH',`${r.position} / ${r.fieldSize}`,true)+metric('RACE TIME',time(r.timeSec))+metric('BEST LAP',r.bestLapSec==null?'—':time(r.bestLapSec));
+    if(app._switches?.().enabled('grand-prix-career')===true){
+      if(Number.isSafeInteger(r.snowmen)&&r.snowmen>0)metrics+=metric('SNOWMEN',r.snowmen);
+      metrics+=metric('POSITION PAY',`${credits(r.creditPositionReward||0)} CR`)+rewardMetric(r)+metric('BALANCE',`${credits(profile().credits)} CR`);
+      if(app.profileSaved===false)description+=' Storage is unavailable; earnings last for this session.';
+    }
     arenaExtra=fieldResultsTable(r,time);
     actions=action('RACE AGAIN','restart',true)+action('MAIN MENU','menu');
   }
@@ -113,9 +118,20 @@ function modalScreen(s) {
       if(telemetry.status==='session-only')description+=' Your best lap is available for this session only.';
     }
   }
-  const bonus=r.creditBreakdown?Object.entries(r.creditBreakdown).filter(([key,value])=>key!=='base'&&key!=='milestones'&&value>0).map(([key,value])=>`${{clean:'CLEAN RACE',personalBest:'CAR BEST',streak:'WIN STREAK',jumps:'ARENA JUMPS',crush:'CRUSH BONUS',drift:'DRIFT BONUS',police:'POLICE ESCAPE',combat:'COMBAT BONUS',manual:'PRO / MANUAL BONUS'}[key]} +${credits(value)}`).join(' · '):'';
+  const bonus=r.creditBreakdown?Object.entries(r.creditBreakdown).filter(([key,value])=>key!=='base'&&key!=='milestones'&&value>0).map(([key,value])=>`${{clean:'CLEAN RACE',personalBest:'CAR BEST',streak:'WIN STREAK',jumps:'ARENA JUMPS',crush:'CRUSH BONUS',drift:'DRIFT BONUS',police:'POLICE ESCAPE',combat:'COMBAT BONUS',snowmen:'SNOWMEN',manual:'PRO / MANUAL BONUS'}[key]} +${credits(value)}`).join(' · '):'';
   const repairs=r.won&&(r.crashesRepaired>0||r.livesRestored>0)?`<p class="result-bonuses">STAGE WIN REPAIRS · ${r.crashesRepaired||0} MAJOR CRASH${r.crashesRepaired===1?'':'ES'} REPAIRED · ${r.livesRestored||0} CRASH SLOT${r.livesRestored===1?'':'S'} REFILLED</p>`:'';
-  return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
+  let grandPrixGhostNotice = '';
+  if (r.grandPrix && app._switches?.().enabled('grand-prix-career')===true) {
+    const messages = {
+      saved: 'GRAND PRIX BEST LAP SAVED',
+      capacity: 'GRAND PRIX BEST LAP · THIS SESSION ONLY · GHOST STORAGE FULL; EXISTING RECORDINGS KEPT',
+      session: 'GRAND PRIX BEST LAP · THIS SESSION ONLY · SAVE FAILED',
+    };
+    const message = messages[app.grandPrixGhostSaveStatus];
+    if (message) grandPrixGhostNotice =
+      `<p class="result-bonuses ghost-saved" role="status">${message}</p>`;
+  }
+  return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p><div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${grandPrixGhostNotice}${r.ghostRecorded?`<p class="result-bonuses ghost-saved">BEST GHOST SAVED${app.ghostSaved===false?' · THIS SESSION ONLY':''}</p>`:''}<div class="result-actions">${actions}</div>${s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
 }
   return modalScreen;
 }

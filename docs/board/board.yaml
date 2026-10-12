@@ -4005,11 +4005,12 @@ tasks:
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT]
     status: building
+    overnight_block: 'Third original attempt complete on cb35d5a7: player finishes 30/28/29 of 30 and all CPUs home, but six targets fail. Opening pile-ups 0/11/7 of 30; wins 100/86.7/86.7 percent. Three-attempt cap consumed. Native Stuttgart art start still contacts the pit lane and crawls; zero laps at 570.433 s. Claude 10:00 approved the bounded pit-wall, lane-through and grid-clearance fix; final native retry and art acceptance remain pending. No new 90-race run or merge.'
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-panorama
     flag: panorama-ridge
     owns: [src/circuits/panorama-ridge.js, tools/test-circuit-panorama.mjs, docs/changes/P4-PANORAMA.md, src/circuit-landmarks.js, tools/scenarios/p4-panorama.mjs, tools/art/p4-panorama-sheet.py, tools/scenarios/p4-panorama-frames.mjs, tools/panorama-field-rate.mjs]
-    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/world.js, tools/scenarios/p4-daynight.mjs, src/race-field.js, src/generated/reference-laps.json]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/world.js, tools/scenarios/p4-daynight.mjs, src/race-field.js, tools/test-circuit-barriers.mjs, src/generated/reference-laps.json, src/pit-lane.js, src/race-field-driver.js, tools/track-script-drive.mjs, src/app.js, tools/test-pit-lane.mjs, src/track-script-course.js]
     performance_watch: "Kyle relayed Claude, 10 October: the DAYNIGHT High CPU exception is scoped to its measured foundation view. This card measures delivered p95 with eight cars at night (Panorama Night or Harbour Lights). If delivered pacing slips, trim lighting cost in this card; do not carry the foundation exception over as a frame pass."
     acceptance:
       - "Build docs/CIRCUITS.md section 5.1 from its script in src/circuits/panorama-ridge.js: widths, walls, crests, the Sunset light path over the race, landmarks, grandstands, pit buildings, the valley town. Event appended to COURSE with a stable id."
@@ -4080,6 +4081,10 @@ tasks:
 
     current_field_verdict: "Originalaaab90 complete/exit1: pileups4/22/9 of30 and wins14/2/0; six original target failures. Players finish26/28/25, all7CPUfinish90/90. No target/driver waiver; no rerun queued; next bounded design decision waitsClaude."
     overnight_2120_decision: "Kyle overnight 11 to 12 October: follow Claude21:20. Panorama gets grid setback,15m last150m and Hell Corner, Harbour firstLap unchanged, then existing fieldPace only max3 original90-race runs. Existing circuits each get bounded fieldPace/fieldAggression max3 original90-race runs, closest honest result may merge per Claude. Team Room stays base-only. No release, push or history rewrite."
+
+    pit_fix_decision: 'Claude 12 October 10:00: make the actual pit divider solid with entry/exit openings, reuse existing limiter and pit-line behavior to drive any unrequested pit-lane car through to exit, and shorten the moved-back grid only if slots overlap entry or exit. Builder proposes exact hooks before code. Final original 90 stays frozen; rerun only the final native art recipe after the fix. No new art round or hidden-course timing.'
+
+    pit_fix_hook_decision: 'Director accepts the six narrow pit/controller/test hooks plus track-script-course. Panorama only uses its solid drawn kit divider as the final runtime source; retain the old divider during scatterScenery to preserve seeded placements, then remove only its duplicate pitWall boxes and drawing. Use a shared read-only existing pit-line/limiter target for field, demo and native controllers physically in the lane without a stop choice; no service, teleport or forced finish. Manual inputs remain manual. Actual grid centres -49 to -77 are before entry 10 and clear of exit 463, so keep setback -43. Tests cover actual grid/openings/kit boxes and limiter-speed transit to exit. Other pit lanes, pace, seeds, targets and frozen90 remain exact.'
 
   - id: P4-GRIP
     title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
@@ -4258,13 +4263,13 @@ tasks:
     size: M
     needs: [P4-PANORAMA]
     status: ready
-    flag: grand-prix
+    flag: grand-prix-career
     owns: [src/grand-prix-career.js, tools/test-grand-prix-career.mjs, docs/changes/P4-CAREER.md]
     hooks: [src/screen-courses.js, src/course-access.js, src/progression.js, src/leaderboard.js, src/app.js]
     acceptance:
       - "Build docs/CIRCUITS.md section 7 except cups: the GRAND PRIX section on the course screen, track prices, variant unlock by a top-three finish, pay by position calibrated to existing circuit wins, snowman credits, records and ghosts per event and mode. Additive save fields with defaults; old-save fixtures load unchanged. Tracks added later join the same list."
 
-    design_question: "Claude: settle finishing-position base pay before code. Proposed positions1to8 use 100/75/55/40/30/20/15/10 percent of existing difficulty win base; no Duel loss charge for a completed GP, existing eligible bonuses/milestones kept, snowmen25CR cap10, existing once-only settlement key. Kyle requires Panorama merge before this card starts."
+    design_decision: "Claude answer marked 22:10 approves position pay at 100/75/55/40/30/20/15/10 percent of the existing difficulty base, positive completed-GP pay with no Duel loss charge, existing eligible bonuses/milestones, snowmen25CR cap10 and existing once-only settlement. P4-CAREER-PAY is a separate early slice; course-screen section, variants and prices remain after Panorama merges."
 
   - id: P4-HARBOUR
     title: "Harbour Lights: the night street circuit"
@@ -4411,11 +4416,13 @@ tasks:
     lane: RACE
     size: M
     needs: [P4-TREMBLANT, P4-SNOW, P4-PIT]
-    status: building
+    status: merged
     claimed_by: "Claude builder, overnight 11 to 12 October 2026"
     branch: claude/tremblant-snow
+    merged_commit: 6f67e6f3
+    overnight_result: 'Claude02:30: stable tremblant-snow stage19 dev, noCombat, 1800CR, reference1:28.317. Snowman spots remain data-only for P4-SNOWMEN; Easy opening3/30 and Medium retune/frame checks remain with Claude.'
     flag: tremblant-snow
-    owns: [tools/test-circuit-tremblant-snow.mjs, docs/changes/P4-TREMBLANT-SNOW.md]
+    owns: [src/circuits/tremblant-snow.js, tools/test-circuit-tremblant-snow.mjs, docs/changes/P4-TREMBLANT-SNOW.md]
     hooks: [src/circuits/tremblant-woods.js, src/circuits/index.js]
     acceptance:
       - "Build the Tremblant Snow variant in docs/CIRCUITS.md section 5.3: surfaces by stretch, two ice patches with boards, tyre choice on setup, pit lane on Lodge Straight, skiers and the running chairlift, 8 snowmen once P4-SNOWMEN lands. Stable event id appended to COURSE."
@@ -4430,8 +4437,8 @@ tasks:
     claimed_by: codex-overnight-2026-10-12
     branch: codex/p4-summit
     flag: summit-run
-    owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md]
-    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs]
+    owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs, docs/board/looks/p4-summit]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs, tools/test-circuit-layouts.mjs]
     acceptance:
       - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
       - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
@@ -4455,6 +4462,8 @@ tasks:
     acceptance:
       - "Build the avalanche in docs/CIRCUITS.md section 5.4 exactly: seeded 6 to 12 s trigger after the first car passes 10.0 km, 3 s tell with rumble, plumes, camera shake, AVALANCHE! callout and Gallery arrow, 2.5 s slide with the crash-solver shove and slowdown, no wrecks, the deep-snow drift for the rest of the race, split signs, computer racers choosing by what they see. Tests for timing, shove, drift and the 1.2 s and 5 s route differences."
 
+    overnight_design_answer: 'Claude 12 October 10:00 confirms one seeded slide-start delay of 6 to 12 seconds after the first car crosses 10.0 km; its three-second tell begins three seconds before slide start.'
+
   - id: P4-SNOWMEN
     title: "Snowmen to smash"
     owner: codex
@@ -4463,7 +4472,7 @@ tasks:
     needs: [P4-SNOW, P4-SUMMIT, P4-CAREER, P4-TREMBLANT-SNOW]
     status: ready
     owns: [src/snowmen.js, src/snowmen-view.js, tools/test-snowmen.mjs, docs/changes/P4-SNOWMEN.md]
-    hooks: [src/destructibles.js, src/screen-results.js, src/grand-prix-career.js, src/circuits/summit-run.js, src/circuits/tremblant-woods.js, src/track-script-course.js, src/game.js, src/sim-contacts.js, src/track-kits.js, src/render3d.js, src/audio.js, src/feature-flags.js, tools/test-feature-flags.mjs]
+    hooks: [src/destructibles.js, src/screen-results.js, src/grand-prix-career.js, src/circuits/summit-run.js, src/circuits/tremblant-snow.js, src/track-script-course.js, src/game.js, src/sim-contacts.js, src/track-kits.js, src/render3d.js, src/audio.js, src/feature-flags.js, tools/test-feature-flags.mjs]
     acceptance:
       - "Build the snowmen in docs/CIRCUITS.md section 5.4: 12 on Summit Run and 8 on Tremblant Snow, in runoffs and outside hairpins, never on the racing line; burst with carrot and hat through the existing destructible scenery; 25 credits each, at most 10 paid per race, shown on results. Snowman model from Kyle's pick."
 
@@ -4480,6 +4489,8 @@ tasks:
     hooks: [src/circuits/summit-run.js, src/armor-kits.js, src/paint-presets.js, src/grand-prix-career.js]
     acceptance:
       - "Build the yeti in docs/CIRCUITS.md section 5.4 exactly: seeded about 1 race in 3, three ridge spots, sighting within 60 m with a clear view, roar and walk-off, YETI! callout once, career sighting count, yeti roof look at 3 and frosted paint at 5. It never touches a car or blocks the road. Model from Kyle's pick; name from Kyle and Gratian when given."
+
+    overnight_design_answer: 'Claude 12 October 10:00: count a sighting only at race finish through the existing once-only settlement; quitting does not count.'
 
   - id: P4-VARIANTS
     title: "Reverse, night and dusk variants"
@@ -5053,3 +5064,22 @@ tasks:
     flag: the-deep
     priority: after-phase4
     note: "Claude ownsD5: shallows/kelpforest/drop-offlip route."
+
+  - id: P4-CAREER-PAY
+    title: "Grand Prix position pay, records and ghosts"
+    owner: codex
+    lane: RACE
+    size: M
+    needs: [P4-FIELD]
+    status: merged
+    claimed_by: codex-overnight-2026-10-12
+    branch: codex/p4-career-pay
+    flag: grand-prix-career
+    owns: [src/grand-prix-career.js, tools/test-grand-prix-career.mjs, docs/changes/P4-CAREER-PAY.md, tools/scenarios/grand-prix-pay.mjs]
+    hooks: [src/progression.js, src/app.js, src/leaderboard.js, src/ghost.js, src/screen-results.js, src/screen-menu.js, src/screen-leaderboard.js, src/feature-flags.js, start-preview.bat, tools/test-feature-flags.mjs, tools/test-preview.mjs, tools/test-wasteland-beta.mjs]
+    design_decision: "Claude 22:10 brings this slice forward after the Panorama field fix, before Summit. Own grand-prix-career dev switch keeps it out of any other release. Include only pay and the reviewed per-event/mode record and ghost paths needed by released Pacific Canyon and Tremblant, with authored lap counts for future admitted courses. Do not include nine-course admission, Azure widening/tuning, course-screen section, variant unlocks or prices. Completed positions1to8 use approved100/75/55/40/30/20/15/10 percent of existing difficulty win base; no completed-GP loss charge. Existing eligible bonuses/milestones and settlement keys remain. Result screen shows credits for position; menu claim changes only when enabled. Fresh independent save review required."
+    acceptance:
+      - "Native completed Grand Prix earns the approved position pay once and shows it on results. Records and ghosts remain per event and mode. Feature off, old saves and other modes stay exact; malformed, duplicate, abandoned and qualifying results never create extra pay. Memory-only tests, fresh Save Guardian, ordinary review, lane jobs4 and build before merge. Kyle sees it in morning; no Codex release tonight."
+
+    gate_commit: 02d914c3
+    gate_result: 'Lane400/400, 0 failed/unrun, 1980.72 seconds, jobs4; build843ms; pure184, actual native/browser750CR, save and ordinary reviews clear. Career dev only; no release or push.'

@@ -13,6 +13,8 @@ import { HARBOUR_LIGHTS } from './harbour-lights.js';
 import { TREMBLANT_WOODS } from './tremblant-woods.js';
 import { TREMBLANT_SNOW } from './tremblant-snow.js';
 
-export const ALL_CIRCUITS = Object.freeze([PANORAMA_RIDGE, HARBOUR_LIGHTS, TREMBLANT_WOODS, TREMBLANT_SNOW, SUMMIT_RUN]);
+// In release order: a circuit switched on later joins the end of COURSE, so released
+// circuits never change position (saved careers, menu choices and records stay put).
+export const ALL_CIRCUITS = Object.freeze([TREMBLANT_WOODS, TREMBLANT_SNOW, HARBOUR_LIGHTS, PANORAMA_RIDGE, SUMMIT_RUN]);
 export const circuitsEnabled = flags => Object.freeze(ALL_CIRCUITS.filter(circuit => flags.enabled(circuit.flag)));
 export const CIRCUITS = circuitsEnabled(featureFlags);

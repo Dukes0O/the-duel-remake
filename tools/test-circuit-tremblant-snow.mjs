@@ -31,12 +31,12 @@ const piece = name => road.pieces.find(item => item.name === name);
 const placements = TREMBLANT_SNOW.kitPlacements;
 const gap = (s, lateral) => { const p = course.worldAt(s, lateral), near = course.nearest(p.x, p.z); return near.distance - course.roadHalfWidthAt(near.s); };
 
-test('Tremblant Snow is a stable event behind its own switch, last on the list, priced, race-only and in the Grand Prix', () => {
+test('Tremblant Snow is a stable event behind its own switch, right after Tremblant Woods, priced, race-only and in the Grand Prix', () => {
   assert.equal(TREMBLANT_SNOW.id, 'tremblant-snow');
   assert.equal(TREMBLANT_SNOW.flag, 'tremblant-snow');
-  assert.equal(FEATURE_STATES['tremblant-snow'], 'dev', 'dev until Kyle approves it');
+  assert.equal(FEATURE_STATES['tremblant-snow'], 'on', 'released (RELEASE-TREMBLANT-SNOW, Kyle approved it on 12 October 2026)');
   assert.equal(FEATURE_STATES['tremblant-woods'], 'on', 'the autumn circuit stays released');
-  assert.equal(ALL_CIRCUITS.at(-1), TREMBLANT_SNOW, 'appended after every other circuit');
+  assert.equal(ALL_CIRCUITS.indexOf(TREMBLANT_SNOW), ALL_CIRCUITS.findIndex(circuit => circuit.id === 'tremblant-woods') + 1, 'second in release order, right after Tremblant Woods');
   assert.ok(COURSE_PRICES['tremblant-snow'] > 0);
   assert.ok(GRAND_PRIX_COURSES.includes('tremblant-snow') && grandPrixCourse(TREMBLANT_SNOW));
   assert.equal(TREMBLANT_SNOW.noCombat, true);
@@ -45,10 +45,11 @@ test('Tremblant Snow is a stable event behind its own switch, last on the list, 
   assert.deepEqual(Object.keys(TREMBLANT_SNOW.fieldPace), ['easy', 'medium', 'hard']);
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   assert.match(bat, /PREVIEW_FLAGS=[^\r\n]*\btremblant-snow\b/);
-  // On the course list only while its switch is on, after Tremblant Woods.
-  const flags = createFeatureFlags({ storage: null, qa: true, search: '?flags=tremblant-snow' });
-  assert.equal(flags.enabled('tremblant-snow'), true);
-  assert.equal(COURSE.some(item => item.id === 'tremblant-snow'), false, 'off in the tests and for players');
+  // On the course list while its switch is on, after Tremblant Woods (Harbour Lights, released later, comes after it).
+  const flags = createFeatureFlags({ storage: null, qa: false });
+  assert.equal(flags.enabled('tremblant-snow'), true, 'on for players with no URL flag');
+  assert.equal(COURSE.at(-1).id, 'harbour-lights', 'Harbour Lights, released after it, is last on the course list');
+  assert.equal(COURSE.findIndex(item => item.id === 'tremblant-snow'), COURSE.findIndex(item => item.id === 'tremblant-woods') + 1, 'right after Tremblant Woods');
 });
 
 test('it is the same road as Tremblant Woods, and Tremblant Woods is untouched', () => {

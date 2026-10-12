@@ -18,8 +18,8 @@ function validateFixture() {
   assert.deepEqual(fixture.framesPerSecond, [30, 60, 144]);
   assert.ok(Number.isSafeInteger(fixture.seed));
   assert.ok(Number.isInteger(fixture.durationTicks) && fixture.durationTicks >= 120 * 5);
-  assert.equal(COURSE.length, 17, 'fixture must be reviewed if the event roster changes');
-  assert.equal(fixture.cases.length, 19, '17 primary events plus time trial and Mad Max');
+  assert.equal(COURSE.length, 19, 'fixture must be reviewed if the event roster changes');
+  assert.equal(fixture.cases.length, 21, '19 primary events plus time trial and Mad Max');
   const eventIds = new Set(COURSE.map(event => event.id));
   const primary = new Set();
   const ids = new Set();
@@ -131,5 +131,5 @@ if (recording) {
   writeFileSync(expectedPath, JSON.stringify(baseline, null, 2) + '\n', 'utf8');
   console.log(`Recorded ${fixture.cases.length} replay cases at 30, 60 and 144 FPS in ${expectedPath}.`);
 } else {
-  console.log(`Replay fingerprints: ${checks} checks passed across ${fixture.cases.length} cases, 17 events, eight categories, three FPS values and three runs.`);
+  console.log(`Replay fingerprints: ${checks} checks passed across ${fixture.cases.length} cases, 19 events, eight categories, three FPS values and three runs.`);
 }
