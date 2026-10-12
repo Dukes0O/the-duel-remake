@@ -364,6 +364,7 @@ tasks:
     lane: "ART"
     size: "L"
     status: "building"
+    waiting_on: "claude"
     claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
     branch: "codex/deep-art-src"
     needs: []
@@ -455,3 +456,13 @@ tasks:
     needs: []
     priority: "high"
     details: "docs/board/cards/FIX-LIVE-EDGES.md"
+
+  - id: QA-LANE-NATIVE-RELIEF
+    title: "Move the proven native relief renderer to night-only lanes"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    priority: "low"
+    needs: []
+    details: "docs/board/cards/QA-LANE-NATIVE-RELIEF.md"
