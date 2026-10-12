@@ -40,3 +40,12 @@ board conflict: current 52 open cards, 270 completed ids, and all current raw
 card blocks in the detail notes. Two superseded notes created by this lane
 (DEEP-RAMP and DEEP-DRIVE) went to the Recycle Bin after Git proved ownership.
 The current focused board suite passes 256 checks and standard YAML loads.
+
+The first canonical gate on 373f2fac failed 10/17, six unrun, 122.20 s:
+only the preview launcher's last board assertion demanded its already merged
+card remain waiting for Kyle. Before changing it, Director grants only that
+assertion and parseBoard import in tools/test-preview-launcher.mjs. Finished
+PREVIEW-LAUNCHER must now be explicit in completed and absent from open cards;
+if still open, its original pending confirmation check remains. Unknown missing
+cards fail. AGENTS rule 15 removes that old non-release wait; the other 22
+launcher, runtime and memory-only assertions stay exact. No flaky rerun claim.
