@@ -79,7 +79,7 @@ function hillPines() {
   for (let attempt = 0; out.length < 130 && attempt < 2400; attempt++) {
     const du = (random() * 2 - 1) * HILL.along * .86, dv = (random() * 2 - 1) * HILL.across * .86;
     if (hillReach(HILL, du, dv) > .86 || runWeight(HILL, du, dv) > .02) continue;
-    out.push(kit('snow-pine', HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: .8 + random() * .5, clear: 3.5, hill: 0 }));
+    out.push(kit('snow-pine', HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: .8 + random() * .5, clear: 3.5, hill: 0, sink: .35 }));
   }
   return out.filter(Boolean);
 }
@@ -100,6 +100,11 @@ function snowyBackdrop() {
     snow: { from: .26, blend: .34, colour: 0xe9f0f6, share: .94 },
   } };
 }
+
+// What a car can reach is solid (`solid: true`, src/track-script-course.js), exactly as on Tremblant Woods
+// (TREMBLANT-FIX): barriers, fence, posts, pit wall, garages, stands and lift towers.
+const SOLID_PIECES = new Set(['armco', 'tyre-wall', 'catch-fence', 'pit-wall', 'pit-garage', 'grandstand', 'marshal-post', 'chairlift-tower']);
+const solid = item => SOLID_PIECES.has(item.id) ? { ...item, solid: true } : item;
 
 const FROZEN_LAKE = { ...LAKE, frozen: true, colour: 0x7ea3c1, shallow: 0xd4e3ef };
 
@@ -122,6 +127,9 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
   mergeKitMeshes: ['pit-garage', 'pit-wall', 'ski-lodge', 'grandstand', 'chairlift-chair', 'chairlift-tower'],
   // The land beyond the trees rises gently, so the snowy hills behind it carry the skyline.
   relief: { from: 25, to: 100, scale: .38 },
+  // Halfway between the lake side and the ridge side of the lap the far ground slopes from one road's height
+  // to the other's instead of stepping (src/circuit-hills.js installFarGround, TREMBLANT-FIX).
+  farGround: { band: 120 },
   // The forest crowds the road from 13 m beyond the edge, as in Tremblant Woods; here every planted pine is
   // a snow pine. The pines keep out of the lake, the lift's cut, the paddock and the pits.
   scenery: {
@@ -143,5 +151,5 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
     // The chimney of the ski lodge (the kit's own metres: the top of its chimney stack).
     smoke: { id: 'ski-lodge', local: [4.24, 6.45, -2.3], count: 12, rise: .9, life: 11, size: [1.6, 6], wind: [.7, .3], opacity: .75 },
   },
-  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...hillPines()].filter(Boolean),
+  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...hillPines()].filter(Boolean).map(solid),
 });

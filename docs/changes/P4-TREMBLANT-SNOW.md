@@ -43,6 +43,7 @@ the live circuit is byte for byte what it was).
 | `src/circuit-winter.js` (new) | Draws the skiers and the smoke | Not loaded unless asked |
 | `src/pit-lane.js` | A straight that runs through the start line: the lane starts just past the line (before, its entry was a negative number and the lane was drawn and driven wrongly); the approach board counts across the line | Courses whose straight starts after the line: identical numbers |
 | `src/world.js` | Passes `snowWorld.drifts` to the terrain shader | Identical |
+| `src/track-kits.js`, `src/circuit-effects.js` | `setPlacementPose(index, matrix, refresh = true)` and a new `refresh()`: the lift moves all its chairs and then refreshes the drawn selection once, not once per chair. Found by the frame check: with this circuit's 3,300 snow pines in the kit chunks, twenty refreshes a frame cost 10 ms (renderer update 10.4 ms, now 1.9 ms). The picture is the same; Tremblant Woods's lift gets cheaper too | The default `refresh = true` is the old behaviour |
 | `src/circuits/index.js`, `feature-flags.js`, `race-field.js`, `course-access.js`, `start-preview.bat` | The new circuit, switch (`dev`), Grand Prix entry, price, preview flag | |
 
 ## Checks
