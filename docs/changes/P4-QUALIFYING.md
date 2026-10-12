@@ -1,7 +1,7 @@
 # P4-QUALIFYING
 
 Status: scoped final lane; focused checks and prior native/save reviews clear.
-Final lane gate and build remain pending. No release.
+The corrected lane gate and build remain pending. No release.
 
 ## Behavior and settled design
 
@@ -19,28 +19,47 @@ Closed circuits alone offer qualifying. The session-only choice defaults SKIP.
 
 ## Checks and reviews
 
-- Source starts from accepted integration2595735e: Harbour/Snow on, Career dev,
+- Source starts from accepted integration 2595735e: Harbour/Snow on, Career dev,
   accepted catalogue order, pay, records, ghosts and release fixtures preserved.
-  Exactly nine owned files differ; all21 incoming non-owned files, including
-  README, are byte-identical to259. No provisional GP tuning or Summit source.
-- d2cd309b focused Qualifying passes: native51.553/50.372 s, earned pole,
+  Nine feature files and the approved DOM fixture hook differ; all 21 incoming
+  non-owned files, including README, are byte-identical to 259. No provisional GP tuning or Summit source.
+- d2cd309b focused Qualifying passes: native 51.553/50.372 s, earned pole,
   6,131 steps, zero pay, two practice laps, quota/prior bytes and closed-grid
-  assertions intact. Race settings42 and lap telemetry19 checks pass.
-  Telemetry fingerprint06e9dba5bf807c38e49465a3bd2a9d3212146ba7e6656e389772e5a436bcc565 stays exact.
-- Retained private22510 native packet: same laps; authored pit exit490 m at
-  80 km/h, actual32.225/32.225 s in5,328 steps; fresh8-car/3-lap GP recorder,
-  default Medium skip slot5, prior layout bytes exact, five pictures, zero
+  assertions intact. Race settings 42 and lap telemetry 19 checks pass.
+  Telemetry fingerprint 06e9dba5bf807c38e49465a3bd2a9d3212146ba7e6656e389772e5a436bcc565 stays exact.
+- Retained private 22510 native packet: same laps; authored pit exit 490 m at
+  80 km/h, actual 32.225/32.225 s in 5,328 steps; fresh 8-car/3-lap GP recorder,
+  default Medium skip slot 5, prior layout bytes exact, five pictures, zero
   warnings/errors. Reuse it for unchanged production geometry/session.
 - Root source review clear; prior Save Guardian approval stands for the exact
-  retained telemetry source. Final lane --changed --jobs4 and build are queued.
+  retained telemetry source. Root owns the corrected lane jobs 4 and build.
+
+First lane on a9575dd4: 126 passed, 1 failed, 274 not run in 534.51 s; no build.
+The existing native audio suite lost first-row meter continuity and its sixth
+blast cue was 0.667 ms outside the unchanged overlap window. All six cues exist;
+the exercised arena/audio path is byte-identical to its last accepted source.
+The unchanged retry ended unexpectedly with exit -1 before audio and no final
+totals. Its last output marked arena-shove, arena-wreck-rate and arsenal-runtime
+failed; all three passed on the same source in the first lane. Detailed failure
+output was not retained, so their cause and the termination cause remain unknown.
+Root's logged unchanged lane exited normally: 400 passed, 1 failed, 0 unrun in
+1,930.95 s; no build. Native Qualifying passed in 15.91 s, Career in 29.46 s,
+audio 23/23 in 24.23 s, and all three interrupted arena suites passed. Only
+course-eligibility failed: its absent qualifying control was represented by a
+text-only stub, causing a TypeError. The approved fixture correction below
+changes no runtime code or assertions. The corrected lane and build are pending.
 
 ## Changed assertions and fixture reasons
 
-Preserve initialized grid offset for all8 poses/prevS; test real closed:false
+Preserve initialized grid offset for all 8 poses/prevS; test real closed:false
 session/menu exclusion. Recorder fixtures explicitly enable Career dev after
 accepted pay wiring; timings, zero pay and every prior-byte check stay exact.
-An absent test-race-settings-ui filename was corrected to the existing suite;
-no test source changed or Qualifying repeat ran. No thresholds were weakened.
+The course-eligibility DOM fixture now returns null for its absent
+#qualifying-choice group; every other selector keeps its original text stub.
+Every vehicle, course, ownership, restart, objective, wallet and menu assertion
+is unchanged. Existing Qualifying tests cover the real group. An absent race
+settings filename was corrected to the existing suite without a source change
+or Qualifying repeat. No thresholds were weakened.
 
 ## Removed
 
