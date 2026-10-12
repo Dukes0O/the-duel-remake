@@ -289,3 +289,9 @@ On cleanb1a23ef2 the existing nativeBundle compiler fails with unsupported top-l
 Private helper compiler GREEN: the same four imported APIs compile as an inline ES chunk inside an async wrapper and parse as a classic CDP expression. Existing browser-harness awaitPromise waits for bootstrap; no browser or native race executed, and every recipe assertion/input remains exact.
 
 Final private compiler receipt:466,876bytes, compiler and classic-expression syntax pass. Use installed Vite8 output.codeSplitting:false for the same single-chunk contract after its deprecated inlineDynamicImports alias warning. No runtime code or native assertion changed, and no browser executed.
+
+## Factory dev source integrated — 12 October 2026
+
+Exact clean source c56238e970e4ffb0ef87ca90f1a907ba3cdf51ff: final canonical nearby lane306/306,zero failures/unrun,1773.56s,jobs4; build758ms/356modules; one ordinary source/delta review clear. Original receipts: retained p4-panorama/.evidence/2026-10-12/P4-PANORAMA/factory-resume/lane-final-c562.json and build-final-c562.txt. Conflict-free source merge; no lane rerun. Earlier46/1/259 generator failure and83's306/306 remain truthful history.
+
+Completed runtime and corrected native recipe are integrated under panorama-ridge dev for night. Whole card stays open for actual final native retry, final-lap dusk/Skyline/Conrod frames and compressed round-three sheet under Claude's conditional acceptance. No fourth round, further90, native/frame/full/balance pass or final sheet is invented. Older lane, frozen90 and failed native packet stay. Current round-two sheet remains until actual round-three replacement folds its verdict and removes it in the same change. No release or push.

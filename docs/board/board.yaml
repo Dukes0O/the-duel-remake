@@ -120,7 +120,7 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "L"
-    status: "building"
+    status: "review"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT, FAC-04, FAC-05]
     locks: []
     claimed_by: "codex-overnight-2026-10-11"
@@ -156,8 +156,9 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: [P4-PANORAMA]
-    locks: [save-shape, circuit-registry, busy-game-files]
+    waiting_on: "claude"
+    needs: []
+    locks: [save-shape]
     flag: "grand-prix-career"
     details: "docs/board/cards/P4-CAREER.md"
 
@@ -376,7 +377,7 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "building"
+    status: "review"
     waiting_on: "claude"
     claimed_by: "codex-session-01a13220-575d-7492-a51c-43a1e08dfe70"
     branch: "codex/deep-audio"
