@@ -19,10 +19,14 @@ export function parseArguments(args) {
   let name = command === 'smoke' ? 'smoke' : command === 'record-race' ? 'audio-race' : null;
   let injectConsoleError = false;
   let named = false;
-  let outputDir, qaBundle;
+  let outputDir, qaBundle, headed = false;
   for (let index = 0; index < rest.length; index++) {
     const value = rest[index];
     if (value === '--inject-console-error') injectConsoleError = true;
+    else if (value === '--headed') {
+      if (headed) throw Error('--headed may be requested once.');
+      headed = true;
+    }
     else if (value === '--output-dir') {
       if (outputDir || !rest[index + 1]) throw Error('--output-dir needs one path.');
       outputDir = rest[++index];
@@ -39,7 +43,7 @@ export function parseArguments(args) {
     else throw Error(`Unknown browser harness argument: ${value}`);
   }
   if (!name) throw Error('scenario needs a simple name from tools/scenarios/.');
-  return { name, injectConsoleError, ...(outputDir ? { outputDir } : {}), ...(qaBundle ? { qaBundle } : {}) };
+  return { name, injectConsoleError, ...(outputDir ? { outputDir } : {}), ...(qaBundle ? { qaBundle } : {}), ...(headed ? {headed: true} : {}) };
 }
 
 export function evidenceOutputDir(name, date = new Date(), root = PROJECT_ROOT) {
@@ -157,9 +161,15 @@ function chromeExecutable() {
   return found;
 }
 
-export function chromeLaunchArguments(profile) {
+export function browserLaunchMetadata(args) {
+  const headless = args.some(arg => /^--headless(?:=|$)/.test(arg));
+  return {headed: !headless, launchMode: headless ? 'headless' : 'headed'};
+}
+
+export function chromeLaunchArguments(profile, {headed = false} = {}) {
+  if (typeof headed !== 'boolean') throw Error('headed must be a boolean.');
   return [
-    '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
+    ...(headed ? [] : ['--headless=new']), '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
     '--disable-extensions', '--mute-audio', '--enable-unsafe-swiftshader',
@@ -420,19 +430,21 @@ export async function main(args = process.argv.slice(2)) {
     : reviewRoundOutputDir(options.name) ?? evidenceOutputDir(options.name);
   await mkdir(outputDir, { recursive: true });
   const profile = await mkdtemp(join(tmpdir(), 'the-duel-browser-'));
-  let preview, chrome, cdp, report;
+  let preview, chrome, cdp, report, launchMetadata;
   const issues = [], warnings = [], screenshots = [];
   try {
     preview = launch(process.execPath, [VITE_CLI, 'preview', '--config', 'tools/vite-qa.config.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort', ...(qaBundle ? ['--outDir', qaBundle] : [])]);
     await waitForHttp(`${baseURL}/tools/menu-check.html`, preview.child, preview.output);
     const chromePath = chromeExecutable();
-    chrome = launch(chromePath, chromeLaunchArguments(profile));
+    const chromeArgs = chromeLaunchArguments(profile, {headed: options.headed === true});
+    chrome = launch(chromePath, chromeArgs);
+    launchMetadata = browserLaunchMetadata(chromeArgs);
     const debugPort = await waitForChromePort(profile, chrome.child, chrome.output);
     cdp = await connectDevTools(debugPort);
     const page = await openPage(cdp, issues, warnings);
     const navigation = createPageNavigation(cdp,page,baseURL);
     const context = {
-      baseURL, outputDir, issues, warnings, screenshots,
+      baseURL, outputDir, issues, warnings, screenshots, ...launchMetadata,
       navigate: navigation.navigate, reload: navigation.reload, back: navigation.back,
       evaluate: expression => evaluate(cdp, page.sessionId, expression),
       waitFor: (expression, label, timeoutMs) => waitForValue(cdp, page.sessionId, expression, label, timeoutMs),
@@ -458,6 +470,7 @@ export async function main(args = process.argv.slice(2)) {
     report = { scenario: options.name, passed: false, port, memoryOnlySaves: true, error: error.message, issues, warnings, screenshots };
     console.error(`Browser harness failed: ${error.message}`);
   } finally {
+    Object.assign(report, launchMetadata || {headed: false, launchMode: 'not-launched'});
     await writeFile(join(outputDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     for (const path of screenshots) console.log(`Screenshot: ${path}`);
     console.log(`Report: ${join(outputDir, 'report.json')}`);

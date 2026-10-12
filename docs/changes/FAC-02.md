@@ -65,3 +65,9 @@ The actual FAC-03 selector and FAC-07 merges were 5 minutes 5 seconds apart
 promptly, but this pair does not establish the five-minute acceptance.
 The controlled independent two-merge fixture does; no actual timing pass is
 claimed for that pair.
+
+Actual independent green merges now establish the factory timing: FAC-04
+(de2d0813, 309/309, build/review clear) at 14:15:14 PT and Claude's accepted
+night-balance design (469f0a1d, source 00a2b3a2, 13/13, build/review clear)
+at 14:15:44 PT were 30 seconds apart. Exact commit times and both gate
+verdicts are in Git and run-log. No queue wait or clean-merge rerun.
