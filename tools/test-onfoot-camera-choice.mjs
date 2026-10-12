@@ -72,10 +72,11 @@ await check('default first-person remains exact and overhead is genuinely behind
   assert.ok(overhead.position.y>fighter.y+1.62,'overhead eye is above standing eye');
   assert.ok(Math.hypot(dx,dz)<=8,'short bounded follow boom');
 });
-await check('all eleven combat courses retain final terrain and tunnel clearance without fighter writes',()=>{
-  const definitions=COURSE.filter(supportsCombat);assert.equal(definitions.length,11);
+await check('all combat courses retain final terrain and tunnel clearance without fighter writes',()=>{
+  const definitions=COURSE.filter(supportsCombat),visited=[];
   let tunnels=0;
   for(const definition of definitions){
+    visited.push(definition.id);
     const course=new Course(definition,1989),distances=[course.length*.23,course.length*.71];
     for(const tunnel of course.features.tunnels.slice(0,1))distances.push((tunnel.start+tunnel.end)/2);
     for(const s of distances){
@@ -93,6 +94,7 @@ await check('all eleven combat courses retain final terrain and tunnel clearance
       assert.equal(JSON.stringify(fighter),before);
     }
   }
+  assert.deepEqual(visited,COURSE.filter(supportsCombat).map(row=>row.id),'actual camera checks visit every combat course exactly once');
   assert.ok(tunnels>0,'real tunnel poses were exercised');
 });
 await check('a fighter outside the tunnel is not pulled into its distant lateral corridor',()=>{

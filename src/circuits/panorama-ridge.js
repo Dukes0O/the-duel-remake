@@ -85,3 +85,10 @@ export const PANORAMA_RIDGE = defineScriptedCourse({
     },
   },
 });
+
+// Registration belongs to this course; generation and geometry stay unchanged.
+export const manifest = Object.freeze({
+  id: 'panorama-ridge', flag: 'panorama-ridge', state: 'dev', price: 1600,
+  grandPrix: false, releaseOrder: 3,
+  driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
+});

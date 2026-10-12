@@ -1,3 +1,5 @@
+import {CIRCUIT_MANIFESTS, BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
+import {previewCircuitFlags} from './preview-flags.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -21,33 +23,31 @@ const piece = (road, name) => road.pieces.find(item => item.name === name);
 
 test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
   // In release order, so a circuit switched on later joins the end of COURSE and released ones never move (RELEASE-HARBOUR).
-  assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge']);
+  assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), CIRCUIT_MANIFESTS.map(row => row.id));
   // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW) and Harbour Lights (RELEASE-HARBOUR) are released; Panorama Ridge stays dev.
-  const released = ['tremblant-woods', 'tremblant-snow', 'harbour-lights'];
+  const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   for (const circuit of ALL_CIRCUITS) {
     assert.equal(circuit.flag, circuit.id);
-    assert.equal(FEATURE_STATES[circuit.flag], released.includes(circuit.id) ? 'on' : 'dev');
+    assert.equal(FEATURE_STATES[circuit.flag], CIRCUIT_MANIFESTS.find(row => row.id === circuit.id).state);
     assert.ok(COURSE_PRICES[circuit.id] > 0);
     assert.equal(circuit.kind, 'circuit'); assert.equal(circuit.noTraffic, true); assert.equal(circuit.hasRival, true);
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
-  assert.deepEqual([COURSE_PRICES['panorama-ridge'], COURSE_PRICES['tremblant-woods'], COURSE_PRICES['harbour-lights']], [1600, 1600, 1800]);
-  assert.equal(COURSE_PRICES['tremblant-snow'], 1800, 'Tremblant Snow costs 1,800 credits');
+  for (const manifest of CIRCUIT_MANIFESTS) assert.equal(COURSE_PRICES[manifest.id], manifest.price);
   assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
-  assert.equal(COURSE.length, 16 + released.length);
+  assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
-  assert.equal(COURSE[16].id, 'tremblant-woods', 'appended after the existing events');
-  assert.equal(COURSE[17].id, 'tremblant-snow', 'Tremblant Snow is appended after Tremblant Woods');
-  assert.equal(COURSE[18].id, 'harbour-lights', 'Harbour Lights is appended last, after Tremblant Snow');
-  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 4);
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), released, 'enabled courses append in declared order');
+  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, ALL_CIRCUITS.length);
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
-  assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights'], 'the requested circuit plus every released one, in release order');
+  assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => on.enabled(row.flag)).map(row => row.id), 'the requested circuit plus every released one, in release order');
   const withRidge = createFeatureFlags({ storage: null, qa: true, search: '?flags=panorama-ridge' });
-  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'], 'a dev circuit requested for QA goes after the released ones');
+  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => withRidge.enabled(row.flag)).map(row => row.id), 'a dev circuit requested for QA goes after the released ones');
   assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
-  for (const circuit of ALL_CIRCUITS) assert.ok(bat.includes(circuit.id), `the Preview turns ${circuit.id} on`);
+  assert.ok(bat.includes('preview-flags.mjs'), 'Preview obtains course flags from the course-owned manifests');
+  for (const circuit of ALL_CIRCUITS) assert.ok(previewCircuitFlags().includes(circuit.flag), `the Preview turns ${circuit.id} on`);
 });
 
 test('every layout closes within the rules and says what it changed', () => {

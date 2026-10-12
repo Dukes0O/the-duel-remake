@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {EventEmitter} from 'node:events';
 import {join,relative,sep} from 'node:path';
-import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
+import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,LANE_GUARDS,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
 
 let checks=0;const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;},check=(value,label)=>{assert.ok(value,label);checks++;};
 same(LEGACY_SUITE_ORDER.length,80,'all 80 original package.json commands are retained');
@@ -100,6 +100,27 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   else check(result.stderr.includes('No test suites match'),'actual unmatched CLI filter reports its failure');
 }
 
+// FAC-03: only proven native heavyweight suites leave daytime lane dispatch.
+{
+  const heavy=['tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
+    'tools/test-first-person-contact.mjs','tools/test-first-person-cloth.mjs','tools/test-first-person-polish.mjs'];
+  check(heavy.every(suite=>actual.includes(suite)),'every explicitly deferred heavy suite actually exists');
+  const lane=selectPlan(actual,{tier:'lane',affected:actual});
+  check(heavy.every(suite=>!lane.some(task=>task.suite===suite)),
+    'a fully affected daytime lane defers only the proven browser and Blender suites');
+  const day=selectPlan(actual,{changed:true,affected:actual});
+  same(day,lane,'legacy changed-only dispatch follows the same daytime policy');
+  for(const pure of ['tools/test-browser-harness.mjs','tools/test-combat-balance.mjs'])
+    check(lane.some(task=>task.suite===pure),'bounded pure '+pure+' remains in the lane');
+  check(LANE_GUARDS.every(suite=>lane.some(task=>task.suite===suite)),
+    'night deferral cannot remove replay or world-signature guards');
+  same(selectPlan(actual,{tier:'full'}),selectPlan(actual),
+    'full/default plans remain byte-for-byte equal after daytime deferral');
+  check(heavy.every(suite=>selectPlan(actual,{tier:'full'}).some(task=>task.suite===suite)),
+    'the night full tier still runs every heavy suite');
+  same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
+    'fully affected lane loses exactly the five proven heavy suites');
+}
 // New runner choices keep the complete inventory but set clear gate boundaries.
 {
   const merge=selectPlan(actual,{tier:'merge'});
@@ -110,6 +131,7 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(full.length,actual.length-1+CAMPAIGN_SHARDS,'full tier preserves every suite and expands only campaigns');
   const lane=selectPlan(actual,{tier:'lane',affected:['tools/test-speed-format.mjs']});
   check(lane.some(task=>task.suite===CORE_SUITE)&&lane.some(task=>task.suite==='tools/test-speed-format.mjs'),'lane tier includes smoke and affected tests');
+  check(LANE_GUARDS.every(guard=>lane.some(task=>task.suite===guard)),'every lane runs the replay and world-signature guards');
   check(!lane.some(task=>task.suite===CAMPAIGN_SUITE),'unchanged campaigns do not slow a lane gate');
   same(selectPlan(actual,{tier:'full',filters:['campaigns']}).map(task=>task.args[0]),
     Array.from({length:CAMPAIGN_SHARDS},(_,index)=>'--shard='+(index+1)+'/'+CAMPAIGN_SHARDS),
@@ -122,11 +144,10 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'changed selection follows local source references');
   check(suitesForChanges(actual,['tools/test-test-runner.mjs']).includes('tools/test-test-runner.mjs'),
     'changed test files select themselves');
+  // FACTORY rule 11: an unmapped game file is named for the night run instead of selecting everything.
   const computedRead=suitesForChanges(actual,['tools/unmapped-source-reader.js','src/game.js']);
-  same(computedRead,actual,
-    'an unmapped computed-URL source selects every suite even when another source has import matches');
-  check(computedRead.includes('tools/test-qa-storage.mjs'),
-    'unknown source fallback retains the source-text QA storage suite');
+  check(computedRead.length<actual.length&&computedRead.includes('tools/test-race-integrity.mjs'),
+    'an unmapped source no longer widens a lane, and importers of the mapped source still run');
   check(localDependencies('tools/test-qa-storage.mjs').has('tools/menu-check.js'),
     'the finite existing computed bootstrap reader is an explicit dependency');
   const pine=suitesForChanges(actual,['public/assets/textures/pine-bough.png']);
@@ -151,12 +172,24 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(suitesForChanges(actual,['src/style.css','public/assets/textures/pine-bough.png']),
     actual.filter(suite=>new Set([...css,...pine]).has(suite)),
     'mixed known changes select the ordered union without losing a consumer');
-  for(const unknown of ['public/assets/textures/unmapped.png','src/new-presentation.css',
-    'public/assets/models/circuits/kits/unmapped.png','public/assets/models/circuits/kits/nested/unknown.glb'])
-    same(suitesForChanges(actual,['public/assets/textures/pine-bough.png',unknown]),actual,
-      'each unknown or unaudited asset/CSS path preserves full fallback: '+unknown);
-  for(const config of ['tools/run-tests.mjs','package-lock.json','pnpm-lock.yaml','vite.config.js','tools/vite-qa.config.js','src/config.js'])
-    same(suitesForChanges(actual,[config]),actual,'runner/dependency/config edits retain full selection: '+config);
+  for(const unknown of ['public/assets/textures/unmapped.png','src/new-presentation.css','public/assets/models/circuits/kits/unmapped.png']){
+    const mixed=suitesForChanges(actual,['public/assets/textures/pine-bough.png',unknown]);
+    check(mixed.length<actual.length&&pine.every(suite=>mixed.includes(suite)),
+      'an unnamed asset or CSS path keeps the known consumers and does not select every suite: '+unknown);
+  }
+  const launcher=suitesForChanges(actual,['start-game.bat']);
+  check(launcher.length>0||launcher.unmapped.includes('start-game.bat'),'a root file is selected by its readers or reported by name');
+  const chain=suitesForChanges(actual,['tools/menu-check.html']);
+  check(chain.includes('tools/test-audio-crash-peak.mjs'),'a path in the middle of a + chain is still read');
+  check(suitesForChanges(actual,['public/assets/models/circuits/kits/nested/unknown.glb']).includes('tools/test-blender-output.mjs'),
+    'a new file under a read directory selects the readers of that directory');
+  for(const config of ['tools/run-tests.mjs','package-lock.json','pnpm-lock.yaml','vite.config.js','tools/vite-qa.config.js'])
+    same(suitesForChanges(actual,[config]),actual,'runner/dependency/build config edits retain full selection: '+config);
+  check(suitesForChanges(actual,['src/config.js']).length<actual.length,
+    'src/config.js is game data and follows its importers, not the build-config rule');
+  const audio=suitesForChanges(actual,['public/assets/audio/arsenal-wave1/new.ogg']);
+  check(audio.includes('tools/test-arsenal-wave1-audio.mjs')&&!audio.includes('tools/test-polyline-index.mjs'),
+    'a concatenated asset URL head selects its reader and leaves pure suites out');
   // Existing dependency-injection options model add/delete and incomplete reads without filesystem edits.
   const virtualRoot=join(PROJECT_ROOT,'runner dependency fixture'),
     virtualSuites=['tools/test-reader.mjs','tools/test-pine-material.mjs','tools/test-unrelated.mjs'];
@@ -180,19 +213,42 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   virtualSources.set('tools/test-filesystem.mjs',"import {readFile} from 'node:fs/promises'; const path=globalThis.assetPath; await readFile(path);");
   same(suitesForChanges(possibleSuites,[knownPath],graphOptions),[...expected,...possibleSuites.slice(3)],
     'audited assets include arbitrary computed-import and filesystem consumers without guessing targets');
-  same(suitesForChanges(possibleSuites,['public/assets/unknown.bin'],graphOptions),possibleSuites,
-    'possible-consumer inclusion never narrows an unknown asset');
+  same(suitesForChanges(possibleSuites,['public/assets/unknown.bin'],graphOptions),possibleSuites.slice(3),
+    'readers that name no bounded path still run for any game change; others wait for the night run');
   same(suitesForChanges(possibleSuites,['src/tree-leaf.js'],graphOptions),[virtualSuites[0],...possibleSuites.slice(3)],
     'mapped source includes static and every possible fs/computed consumer but omits unrelated pure suites');
-  same(suitesForChanges(possibleSuites,['src/unmapped-source.js'],graphOptions),possibleSuites,
-    'unknown source keeps full fallback even when possible readers are included');
+  same(suitesForChanges(possibleSuites,['src/unmapped-source.js'],graphOptions),possibleSuites.slice(3),
+    'unknown source selects only unbounded readers');
+  same(suitesForChanges(virtualSuites,['src/unmapped-source.js'],graphOptions).unmapped,['src/unmapped-source.js'],
+    'a game file no selected suite reaches is reported by name for the night run');
+  same(suitesForChanges(virtualSuites,['index.html'],graphOptions).unmapped,['index.html'],'an unread root file is reported by name');
+  // Named paths and distance from the suite (FACTORY rule 11).
+  const pathSuites=['tools/test-head.mjs','tools/test-join.mjs','tools/test-declared.mjs','tools/test-runtime.mjs','tools/test-deep.mjs'];
+  virtualSources.set('tools/test-head.mjs',"import {readFileSync} from 'node:fs'; readFileSync(new URL('../public/assets/audio/'+name,import.meta.url));");
+  virtualSources.set('tools/test-join.mjs',"import {join} from 'node:path'; import {readdirSync} from 'node:fs'; readdirSync(join(root,'public','models'));");
+  virtualSources.set('tools/test-declared.mjs',['// test-reads: docs/board/',"import {readFileSync} from 'node:fs'; readFileSync(globalThis.where);"].join('\n'));
+  virtualSources.set('tools/test-runtime.mjs',"import '../src/bank.js';");
+  virtualSources.set('src/bank.js',"export const url='assets/sfx/'+name;");
+  virtualSources.set('tools/test-deep.mjs',"import '../src/a.js';");
+  virtualSources.set('src/a.js',"import './b.js';");virtualSources.set('src/b.js',"import './c.js';");virtualSources.set('src/c.js','');
+  same(suitesForChanges(pathSuites,['public/assets/audio/boom.ogg'],graphOptions),['tools/test-head.mjs'],'a URL head names a prefix');
+  same(suitesForChanges(pathSuites,['public/models/car.glb'],graphOptions),['tools/test-join.mjs'],'join(root, literals) names a directory');
+  same(suitesForChanges(pathSuites,['docs/board/board.yaml'],graphOptions),['tools/test-declared.mjs'],'a test-reads line declares a computed read');
+  same(suitesForChanges(pathSuites,['public/assets/sfx/hit.ogg'],graphOptions),['tools/test-runtime.mjs'],'a runtime assets/ string maps into public/');
+  same(suitesForChanges(pathSuites,['src/b.js'],graphOptions),['tools/test-deep.mjs'],'a file two steps away is in reach');
+  same([...suitesForChanges(pathSuites,['src/c.js'],graphOptions)],[],'a file three steps away waits for the night run');
+  same(suitesForChanges(pathSuites,['src/c.js'],{...graphOptions,reach:3}),['tools/test-deep.mjs'],'reach is adjustable');
 
 
   const brokenOptions={...graphOptions,readSource:path=>{if(nameOf(path)==='src/vegetation.js')throw Error('unreadable');return graphOptions.readSource(path);}};
   same(suitesForChanges(virtualSuites,[knownPath],brokenOptions),virtualSuites,'an incomplete audited reader graph falls back full');
   virtualSources.delete('src/vegetation.js');
   same(suitesForChanges(virtualSuites,[knownPath],graphOptions),virtualSuites,'missing audited reader/import coverage falls back full');
-  same(suitesForChanges(actual,['docs/OPERATIONS.md']),[],'documentation edits do not claim unrelated import coverage');
+  same(suitesForChanges(actual,['docs/OPERATIONS.md']),['tools/test-build-status.mjs','tools/test-preview-launcher.mjs','tools/test-repo-hygiene-rules.mjs','tools/test-test-runner.mjs'],
+    'documentation edits select only the suites that name that document');
+  const unnamedDoc=suitesForChanges(actual,[['docs','NOWHERE.md'].join('/')]);
+  check(unnamedDoc.length<=5&&!unnamedDoc.includes('tools/test-preview-launcher.mjs'),
+    'an unnamed document selects only the few suites that read the whole docs folder');
   same(suitesForChanges(actual,['package.json']),actual,'dependency metadata changes conservatively select every suite');
   const calls=[];
   const git=(executable,args)=>{

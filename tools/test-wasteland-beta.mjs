@@ -1,3 +1,4 @@
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { existsSync, readFileSync } from 'node:fs';
@@ -23,8 +24,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     tollkeeper: 'on',
     blackiron: 'on',
     'warlord-cards': 'on',
-    // Phase 4 circuits: dev until Kyle approves each; Tremblant Woods, Tremblant Snow and Harbour Lights released.
-    'panorama-ridge': 'dev', 'harbour-lights': 'on', 'tremblant-woods': 'on', 'tremblant-snow': 'on',
+    ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
     'grand-prix-career': 'dev',
     'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
     'snow-world': 'dev', // Phase 4: development switch
@@ -39,7 +39,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   assert.equal(flags.enabled('fuel-run'), true);
   assert.equal(flags.enabled('tollkeeper'), true);
   assert.equal(flags.enabled('blackiron'), true);
-  assert.deepEqual(flags.betaFeatures(), []);
+  assert.deepEqual(flags.betaFeatures(), CIRCUIT_MANIFESTS.filter(manifest => manifest.state === 'beta').map(manifest => manifest.flag));
   assert.equal(existsSync(new URL('../src/experimental-ui.js', import.meta.url)), false);
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');
   const menu = readFileSync(new URL('../src/screen-menu.js', import.meta.url), 'utf8');

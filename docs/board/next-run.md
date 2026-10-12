@@ -5,6 +5,14 @@ Work in integration and isolated lanes. Nothing goes live tonight. No release,
 push, history rewrite, port 5174 or real-save access. QA storage is memory-only.
 Delete only lane folders created in this run; keep older retained lanes.
 
+## Factory first (Kyle, 12 October 2026)
+
+Read `docs/FACTORY.md` and AGENTS rules 11 to 15. Once FAC-01 is merged,
+start FAC-02, FAC-03, FAC-06 and FAC-07 as four lanes at the same time; they
+own different files. Then FAC-04 (holds the course lock; no new course starts
+until it and FAC-05 merge) and FAC-08. Each FAC card: tests first, one lane
+tier, build, one review, merge as soon as green. Existing P4 lanes continue.
+
 ## Order
 
 1. P4-PANORAMA: Claude's 21:20 field recipe, then at most three original
@@ -23,8 +31,10 @@ Delete only lane folders created in this run; keep older retained lanes.
 5. A separate janitor sweep: fold consumed earlier-round verdicts into the
    final art reviews, then delete those earlier sheets. Preserve current
    sheets, licensed sources, recipes, runtime assets and Kyle's decisions.
-6. Only after Phase 4 work is exhausted, The Deep section 10: DEEP-ART-SRC,
-   DEEP-RAMP and DEEP-DRIVE. Keep the-deep dev; send art sheets to Claude.
+6. The Deep, THE_DEEP section 10 (Claude packet 12 October): DEEP-ZONE,
+   DEEP-SURFACE, DEEP-SAVE, DEEP-ART-SRC and DEEP-AUDIO start in free lanes
+   alongside Phase 4, within the six-lane limit. Build against the 10.1
+   contracts; do not stop to ask. Keep the-deep dev; art sheets to Claude.
 
 When a card waits on Claude, move on. Read the newest Claude answers in
 playtest-inbox.md before each new card and after each merge.

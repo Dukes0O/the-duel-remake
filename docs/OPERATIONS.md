@@ -10,7 +10,7 @@ playbook defines task cards and review roles.
 | --- | --- | --- |
 | Live game | `C:\Users\kyleb\dev\the-duel-remake` | Release work only. Do not edit game source here. |
 | Live browser address | `http://localhost:5174/` | Keep this exact origin so local careers remain available. |
-| Integration | `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake` on `integration/wasteland` | Combine one reviewed change at a time. |
+| Integration | `C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake` on `integration/wasteland` | Merge each green reviewed lane promptly. |
 | Browser QA | Private port, normally 5175 or above 5190 | Use memory-only saves and a throwaway browser profile. |
 | Playtest preview | `http://127.0.0.1:5195/tools/preview.html`, served from `.preview-dist` in the integration folder | Built from integration, with memory-only saves and a visible PREVIEW badge. |
 
@@ -70,34 +70,50 @@ development switch except career backup (today: the warlord fights), so
 playtest areas can be reached at once; a test keeps that list in step with
 `src/feature-flags.js`.
 
-## Development checks
+## Development and integration
 
-Work on a task branch in an isolated worktree. Use the lane gate and change
-note described in `CODEX_PLAYBOOK.md`. The Integrator merges one task at a
-time. A failed merge check blocks further feature merges until it is fixed.
-Run the full check on the exact integration commit before a release. Record
-test results, browser scenarios, balance, frame pacing, art checks and save
-checks. A check marked not measured must be run before claiming that measure
-passed. Combat balance uses one `node tools/combat-balance.mjs --check` run
-with the discovered, released Wasteland rules; it has no Wasteland on/off pair.
+Follow AGENTS rules 11–15 and docs/FACTORY.md. Use an isolated codex lane,
+with at most six build lanes across all lines, no more than three course lanes.
+Cards name shared locks; cards with the same lock never build at once.
+Test runs use at most four jobs. Lanes may link node_modules only to integration.
 
-## Removing completed lanes on Windows
+A frozen clean lane needs one targeted lane run, production build and one clear
+review. Merge it immediately; unrelated green lanes do not wait in a queue.
+A conflict-free union does not rerun the gate. A real conflict returns to the
+lane for its fix and one fresh targeted lane/build plus review.
 
-Before `git worktree remove`, inspect the lane's `node_modules`. If it is a
-junction, verify its absolute path is inside that exact lane and record its
-target. Remove only the junction with PowerShell `Remove-Item -LiteralPath`
-without `-Recurse`; verify the target still exists. Then remove the clean,
-fully merged worktree without force. Delete its merged lane branch and that
-card's used raw evidence after the review verdict is committed. Never delete
-a branch merely because it is idle or because an agent does not recognize it.
+Use tools/integrate-lane.mjs with the explicit evidence packet described in
+CODEX_PLAYBOOK section 7. It merges source, writes one run-log sentence from
+actual evidence, refreshes STATUS and commits shared metadata immediately.
+Board, inbox and STATUS must never remain dirty on integration. The Director
+supplies those decisions; the integrator does not invent card closures.
 
-The Director handles lane cleanup. If any path check, junction unlink or Git
-command fails, stop immediately. Do not run the next removal command.
+Full tier, frames, combat balance --check (current rules) and browser scenarios run
+on the night shift, alone on the idle laptop. Until FAC-03 lands, full still
+runs alone at run end. A night failure puts its fix first while other clean
+merges continue. A release always needs full green on its exact final commit.
+Do not claim an unmeasured check passed.
 
-Git's recursive lane cleanup emptied the shared integration dependency folder
-through a junction on 24 September. The exact locked dependencies were restored
-from the local cache with `npm ci --offline --no-audit --no-fund`. No package
-version or game source changed. Detaching the junction first prevents a repeat.
+## Recycling completed lanes on Windows
+
+Only the caller's explicitly proven newly created lane from this run is eligible.
+Retained lanes, Kyle's branches and unknown folders stay. The cleanup receipt
+names the exact lane/branch, current run ID and creation time. The checkout
+must be clean and its commit fully merged. Cleanup is opt-in in the integrator;
+default integration leaves the lane intact.
+
+Before recycling, validate the absolute node_modules junction path inside that
+exact lane and its target inside integration. Remove only the junction with
+PowerShell Remove-Item -LiteralPath, without -Recurse, and verify integration's
+target remains. Move the checkout to Windows Recycle Bin, with no permanent
+recursive-delete fallback. Run git worktree prune --dry-run --verbose --expire now;
+only that missing registration may appear before running the prune. Then use
+git branch -d on the fully merged codex branch. Stop on any unexpected path,
+registration, unlink or Git result; never force cleanup or prune other lanes.
+
+Git cleanup followed a junction into shared dependencies on 24 September.
+Detaching and checking the link before recycling prevents a repeat. Do not use
+git worktree remove as a substitute for this Recycle Bin policy.
 
 ## Release
 

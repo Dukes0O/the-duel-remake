@@ -1,3 +1,4 @@
+import {supportsCombat} from '../src/combat-weapons.js';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {COURSE} from '../src/config.js';
@@ -12,9 +13,10 @@ import {stepRaiders} from '../src/raiders.js';
 import {combatResultSnapshot} from '../src/combat-scoring.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 
-test('eleven combat courses belong to exactly one territory', () => {
+test('all combat courses belong to exactly one territory', () => {
   const assigned = Object.values(TERRITORIES).flatMap(item => item.courses);
-  assert.equal(new Set(assigned).size, 11);
+  assert.equal(new Set(assigned).size, assigned.length, 'no course belongs to two territories');
+  assert.deepEqual([...assigned].sort(), COURSE.filter(supportsCombat).map(course => course.id).sort(), 'every combat course belongs to exactly one territory');
   for (const id of assigned) assert.ok(COURSE.some(course => course.id === id));
   assert.equal(territoryForCourse('pacific-canyon'), 'sal');
   assert.equal(territoryForCourse('red-mesa'), 'sal');

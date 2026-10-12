@@ -1,3 +1,4 @@
+import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
 // Racing a full field (docs/CIRCUITS.md 3.2, card P4-FIELD): who the computer
 // racers are, how the grid is laid out, the five-light start, who is in front,
 // the slipstream and the finishing order. Everything here is repeatable from
@@ -13,10 +14,11 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 
 const MPH = DRIVE.mphToWorld;
 
-// Existing closed road circuits and the authored Grand Prix circuits.
+// Existing closed road circuits and manifest-authored Grand Prix circuits.
 export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'high-country',
   'harbor-highlands', 'eifel-crown', 'alpine-serpent', 'azure-riviera', 'red-mesa',
-  'neon-docks', 'cloudbreak-skyway', 'tremblant-woods', 'harbour-lights', 'tremblant-snow']);
+  'neon-docks', 'cloudbreak-skyway',
+  ...CIRCUIT_MANIFESTS.filter(manifest => manifest.grandPrix).map(manifest => manifest.id)]);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({

@@ -1,0 +1,200 @@
+# The Duel factory: production lines as graphs
+
+Kyle, 12 October 2026: the workflow review showed the work runs in a line, one
+thing after another. This plan turns it into a factory: three production
+lines (feature, course, world), each drawn as a graph of steps with arrows
+for "must finish first". Steps without an arrow between them run at the same
+time. Shared files are named as locks, so collisions are planned instead of
+found at merge. The review page is
+https://claude.ai/artifact/Y2aWZKfpCRxsqyj8k34RtJ.
+
+This file is the design packet for the FAC cards. It wins over older playbook
+and SPEC text about test tiers, merge order and when heavy checks run.
+
+## 1. Decisions (Kyle agreed to every recommendation, 12 October 2026)
+
+1. **Test by what changed.** A lane runs the smoke set plus the suites that
+   import or read the changed files. No "run everything" fallback for an
+   unmapped game file; the night run covers it. (FAC-01)
+2. **Merge as soon as it is green.** One targeted lane run, a build and one
+   review. A merge with no conflict does not run again. A conflict fix runs
+   the targeted run once more. (FAC-02)
+3. **Night shift.** One scheduled run on the idle laptop: full tier, frame
+   check, combat balance on current rules (`--check`), all browser
+   scenarios. A morning report names any merge that broke something; its fix
+   goes first and other merges continue. (FAC-03)
+4. **Release is unchanged.** Full tier on the exact release commit, real
+   saves never touched, `dist-previous` kept. Kyle says "go live".
+5. **Kyle sets direction.** Art and sound picks are Claude's within the
+   three-round cap. Kyle can overrule anything and keeps "go live".
+6. **Work in progress limits.** At most six build lanes at once across all
+   lines, no more than three of them course lanes, each test run `--jobs 4`
+   or fewer. The laptop has 20 threads; the night shift runs alone. A world
+   uses as many of the six as its graph allows (The Deep starts six: five
+   Codex cards and Claude's water look).
+
+## 2. Locks: the shared files
+
+A card lists the locks it holds in `locks:`. Two cards holding the same lock
+never build at the same time; the board shows the second as waiting.
+
+| Lock | Files | Removed by |
+|---|---|---|
+| `circuit-registry` | `src/circuits/index.js`, circuit lines in `src/feature-flags.js`, `src/course-access.js`, `src/race-field.js`, `start-preview.bat`, stage numbers | FAC-04 (each course registers itself) |
+| `reference-laps` | `src/generated/reference-laps.json` (one line) | FAC-04 (one file per course) |
+| `replay-fixtures` | `tools/replays/recorded-inputs.json`, `expected-fingerprints.json`, the hash in `salt-flats-controls.json` | FAC-04 (one case file per course) |
+| `world-signatures` | baseline map in `tools/test-world-composition.mjs` | FAC-04 (one file per course) |
+| `busy-game-files` | `src/game.js`, `src/main.js`, `src/render3d.js`, `src/app.js` | stays; one owner at a time |
+| `save-shape` | save schema, migrations, `tools/fixtures/saves/` | stays; save checker required |
+| `audio-mix` | `src/audio-output.js` mastering | stays |
+| `sound-bank` | `src/sound-bank.js` cue registry | stays; one card adding cues at a time |
+| `surfaces` | `src/race-surfaces.js` surface and tyre tables | stays; one card changing surfaces at a time |
+| `release` | switch flips, README, VERIFICATION, COURSE_ACCESS | stays; one release at a time, several cards per release |
+
+After FAC-04, a new course holds only `release`, and only at release time.
+
+## 3. The three production lines
+
+Arrows mean "must finish first". Steps on the same row run at the same time.
+Who: **K** Kyle, **C** Claude, **X** Codex, **T** test machine.
+
+### Course line (template for one course; up to three run at once)
+
+```mermaid
+flowchart LR
+  P[C: course packet] --> S[X: art sourcing] & R[C: track script]
+  S --> K[X: kit rounds, max 3; C judges]
+  R --> B[X: circuits/id.js + its test + scenario]
+  B --> F[X: field pace + reference lap file]
+  B & K --> D[T: drive-through check]
+  F & D & K --> FP[C: finishing pass]
+  FP --> M[X: merge, dev switch]
+  M --> N[T: night shift: frames, balance]
+  N --> REL[X: release batch, lock release]
+```
+
+- The packet settles: road layout, look target, price, field pace target,
+  sound cues, whether combat is allowed, Grand Prix membership, release order.
+- The course and its art are built in parallel; the course uses existing kits
+  until its own kits pass the round cap.
+- Switch-on rehearsal: the course's own test runs with its switch on in the
+  lane, so counts and signatures move with the course.
+
+### Feature line
+
+```mermaid
+flowchart LR
+  P[C: feature packet] --> T[X: tests first]
+  P --> A[X: sound cues / art, if any]
+  T --> B[X: build]
+  A --> B
+  B --> V[T: targeted run + one review]
+  V --> M[X: merge, dev switch]
+  M --> N[T: night shift]
+  N --> REL[X: release batch]
+```
+
+- The packet answers every open question first: numbers, CPU behaviour, what
+  the switch changes, sound cues and loudness, which locks it needs.
+- A feature that needs `busy-game-files` or `save-shape` holds that lock.
+
+### World line (The Deep is the first)
+
+```mermaid
+flowchart LR
+  P[C: world packet per coast] --> L[C: look test, max 3 rounds]
+  P --> SIM[X: simulation surface]
+  P --> SAVE[X: save fields + save checker]
+  P --> SND[X: sound cues]
+  L --> ART[X: art set]
+  SIM & ART --> Z1[course line: coast 1]
+  SIM & ART --> Z2[course line: coast 2]
+  SIM & ART --> Z3[course line: coast 3]
+  SAVE & SND & Z1 --> R1[release coast 1]
+  R1 --> R2[release coast 2] --> R3[release coast 3]
+```
+
+- Art, simulation, saves and sound are separate lanes with separate files.
+- Each coast is a course-line run inside the world, reusing the course DAG.
+
+## 4. The factory build order (FAC cards)
+
+```mermaid
+flowchart LR
+  F1[FAC-01 test picker] --> F2[FAC-02 merge on green]
+  F1 --> F3[FAC-03 night shift + morning report]
+  F1 --> F4[FAC-04 course kit: register by files]
+  F4 --> F5[FAC-05 counts read from the course list]
+  F1 --> F7[FAC-07 browser checks: one build, parallel]
+  F4 --> F8[FAC-08 drive-through check]
+  F6[FAC-06 lean board + locks field]
+  F2 & F3 & F5 & F6 --> GO[three course lanes at once]
+```
+
+FAC-01, FAC-06 and FAC-07 can start at once. FAC-04 and FAC-05 need the
+`circuit-registry` lock, so no new course work starts until they merge.
+
+## 5. Cards
+
+- **FAC-01 Test picker (Claude, done in this lane).** Selection follows
+  imports plus the paths each file names (`new URL(...)`, `join(root,...)`,
+  `'../public/...'+name`, runtime `'assets/...'`) and `// test-reads:` lines.
+  Only build configs, lockfiles and the runner itself select everything.
+  `src/config.js` is game data and follows its importers.
+- **FAC-02 Merge on green (Codex, OPS).** Change AGENTS and the playbook to
+  drop the re-run on a conflict-free merge and the one-at-a-time queue wait.
+  Integrator script merges, runs the janitor and writes the run-log line from
+  the test result. Acceptance: two green lanes merge within five minutes.
+- **FAC-03 Night shift (Codex, TOOL).** `tools/night-shift.mjs`: full tier
+  `--jobs 4`, frame check (both qualities, busiest view, eight cars),
+  combat balance (`--check`, current rules), browser scenarios; writes
+  `docs/board/checks/night-<date>.json` and a short morning report that names
+  the first merge after the last green night for each failure. Kyle approves
+  the Windows scheduled task himself.
+- **FAC-04 Course kit (Claude design, Codex build, SIM).** Each circuit file
+  exports its manifest (id, flag, state, price, grandPrix, releaseOrder,
+  driver). `src/circuits/index.js` discovers circuit files and sorts by
+  releaseOrder. Flags, prices, Grand Prix list and preview flags derive from
+  the manifests. Reference laps, replay cases and world signatures become one
+  file per course. Replay fingerprints stay exact.
+- **FAC-05 Derived counts (Codex, TOOL).** The about 30 hard-coded course,
+  flag and signature counts in 14 suites read their numbers from the course
+  list. Per-course price, flag and order checks move into
+  `test-circuit-<id>.mjs`. Changed assertions are listed in the change note.
+- **FAC-06 Lean board (Codex Director).** Open cards only, one short entry
+  each, details in `docs/board/cards/<id>.md`; finished cards leave at merge.
+  `tools/board.mjs` reads `locks:` and holds a card whose lock is taken.
+  Fix the YAML error at board.yaml line 4567.
+- **FAC-07 Browser checks (Codex, TOOL).** Build the QA bundle once per run
+  and run scenarios side by side with private ports and profiles.
+- **FAC-08 Drive-through check (Codex, TOOL).** An automated lap per
+  difficulty that flags leaving the road surface, passing through solid
+  barriers, and objects floating above the ground. Runs on course cards.
+
+## 6. The packet checklist
+
+Every course, feature and world starts with a Claude packet that answers
+these before any lane starts, so builders never stop to ask:
+
+1. What the player sees and does, in a few sentences.
+2. Numbers: speeds, prices, counts, timings, thresholds.
+3. The graph: cards, who owns each, arrows, which start at once.
+4. Contracts between parallel lanes: data formats, ids, events, cue names.
+5. Locks each card holds, and the files each card owns.
+6. What stays exact: fingerprints, signatures, saves, other courses.
+7. The switch, and what turning it on changes (counts, lists, prices).
+8. Sound cues and loudness; art sources and the look target.
+9. How it is checked: the targeted tests, the night shift, the drive-through
+   check, and Kyle's "go live".
+
+The first packets written this way: `docs/FACTORY.md` itself (FAC cards)
+and `docs/THE_DEEP.md` section 10.
+
+## 7. Who runs which session
+
+- **Claude, design session:** packets, look judging, finishing passes.
+  One packet unblocks a whole course or feature graph.
+- **Claude, build sessions (Sonnet):** Claude-owned cards in their own lanes.
+- **Codex Director:** keeps every line full within the limits in section 1.
+- **Codex lanes:** one card each; three course lanes at most.
+- **Night shift:** the laptop, alone, once a night.
