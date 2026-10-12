@@ -133,8 +133,9 @@ export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
   ridgeLandform,
   scenery: Object.freeze({trees: 1600, rocks: 280, clusteredTrees: true}),
   plainSafetyWalls: true,
-  // Existing circuit safety controls; difficulty pace and variation stay at defaults.
+  // Existing circuit safety controls; only difficulty pace is tuned.
   racingLine: Object.freeze({lineMargin: 2.6, lineSwing: .6, holdRacers: true}),
+  fieldPace: Object.freeze({easy: .75, medium: .725, hard: .716}),
   fieldFollow: Object.freeze({leadBraking: 1.6, wallRoom: 1,
     firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})}),
   pitLane: Object.freeze({straight: 'Pit Straight', side: 'right'}),

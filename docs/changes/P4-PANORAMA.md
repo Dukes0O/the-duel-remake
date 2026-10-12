@@ -88,6 +88,34 @@ Claude15:00 confirms future grid8cars/paddock/kits/landmarks/main/rear/HUD view;
 globally busiest ranking unproved. No dev-hidden/art timing: art acceptance and
 player reachability precede that check. New safety/reference/native checks queued.
 
+Original aaab90 complete, exit1: player finishes26/28/25 of30; all7CPU
+finish90/90. Opening pileups4/22/9 and wins14/2/0 fail all three difficulty
+targets (six failures). Actual raw report retained; no threshold waiver or
+unchanged rerun. Next bounded field design is with Claude on the card/inbox.
+
+## Overnight 11 to 12 October: settled before code
+
+Claude 21:20: give the opening field more straight, retain the 13 m ridge,
+reuse Harbour first-lap spacing unchanged, tune only per-difficulty fieldPace
+for at most three original 90-race runs; unchanged section 3.2 targets.
+The actual Pit Straight begins at s=-80 and ends at Hell Gate s=473. Its
+width and Hell Gate already equal 15 m, including the last 150 m; the existing
+40 m width blending continues after the ridge. No redundant widening or
+centreline change is needed. The eight-car grid reaches s=-34; a -43 m
+GP-only setback puts its last centre at -77 with 3 m before the straight's
+start. Keep timing/gantry at zero and ordinary modes exact. Reuse the existing
+Azure grid-setback idiom in the granted race-field hook; additive union at merge.
+Harbour firstLap {margin:5,reaction:.5,closeIn:.8,wallRoom:1.4} remains exact.
+Initial pace uses Harbour's existing .75/.725/.716 reference; form/spread/
+aggression remain 1. Tune only these pace values from the original results.
+If the third run misses the bands, preserve the closest result and wait for
+Kyle's play judgement; do not waive targets or create a mechanism.
+Final round three uses the existing native capture/sheet recipe. No fourth
+round and no timing on this hidden course. Refresh the existing reference
+publisher once after final metadata freezes. Integration sync conflicts kept
+both Panorama rounded rocks/plain walls/landmarks and snow caps/smooth Harbour
+walls/winter owner; default resources and actor rules remain unchanged.
+
 ## Removed
 
 Replace incomplete road-only presentation with approved kits/landmarks/landform.

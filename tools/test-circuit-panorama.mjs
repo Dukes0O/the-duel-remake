@@ -168,10 +168,17 @@ test('Panorama starts a genuine native three-lap eight-car Grand Prix', () => {
     assert.equal(d.course.def.script, PANORAMA_RIDGE.script);
     assert.equal(d.course.def.kitPlacements, PANORAMA_RIDGE.kitPlacements);
     assert.equal(d.course.def.grandPrix, true);
+    const straight = d.course.script.pieces.find(piece => piece.name === 'Pit Straight');
+    const hell = d.course.script.pieces.find(piece => piece.name === 'Hell Gate');
+    const grid = [d.state, ...d.state.opponents];
+    near(Math.min(...grid.map(racer => racer.s)), -77);
+    assert.ok(grid.every(racer => racer.s - 2.5 >= straight.s0 && racer.s + 2.5 < straight.s1));
+    for (let at = straight.s1 - 150; at < hell.s1; at += 5) near(d.course.roadHalfWidthAt(at), 7.5);
+    assert.deepEqual(d.course.def.fieldPace, {easy: .75, medium: .725, hard: .716});
     assert.deepEqual(d.course.def.racingLine, {lineMargin: 2.6, lineSwing: .6, holdRacers: true});
     assert.deepEqual(d.course.def.fieldFollow, {leadBraking: 1.6, wallRoom: 1,
       firstLap: {margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4}});
-    for (const key of ['fieldPace', 'fieldForm', 'fieldSpread', 'fieldAggression'])
+    for (const key of ['fieldForm', 'fieldSpread', 'fieldAggression'])
       assert.equal(d.course.def[key] ?? 1, 1, key + ' retains standard difficulty tuning');
   } finally {if (added) COURSE.splice(COURSE.findIndex(def => def.id === PANORAMA_RIDGE.id), 1);}
 });
