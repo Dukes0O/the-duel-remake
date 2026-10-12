@@ -7,6 +7,28 @@ const time = milliseconds => `${Math.floor(milliseconds / 60000)}:${(millisecond
 const kindName = {corner: 'Corner', crest: 'Crest', overtaking: 'Passing zone', signature: 'Signature view'};
 const symbol = {corner: '•', crest: '↑', overtaking: '↗', signature: '★'};
 
+// Flags that sit close together on the map (a crest on the exit of a corner, a
+// signature view on a crest) would otherwise hide each other and could not be
+// clicked one by one. Push them apart until every flag has its own spot; the
+// true position stays in anchorX/anchorY for the thin line drawn back to it.
+export const MAP_FLAG_GAP = 46;
+export function spreadMarkers(points, {gap = MAP_FLAG_GAP, minX = 24, maxX = 976, minY = 28, maxY = 662} = {}) {
+  const spots = points.map((point, index) => ({...point, index}));
+  for (let pass = 0; pass < 80; pass++) {
+    let moved = false;
+    for (let a = 0; a < spots.length; a++) for (let b = a + 1; b < spots.length; b++) {
+      let dx = spots[b].x - spots[a].x, dy = spots[b].y - spots[a].y, distance = Math.hypot(dx, dy);
+      if (distance >= gap) continue;
+      if (distance < 1e-6) {const angle = (a * 2.399963 + b) % (Math.PI * 2);dx = Math.cos(angle);dy = Math.sin(angle);distance = 1;}
+      const push = (gap - distance) / 2 + .05, ux = dx / distance, uy = dy / distance;
+      spots[a].x -= ux * push;spots[a].y -= uy * push;spots[b].x += ux * push;spots[b].y += uy * push;moved = true;
+    }
+    for (const spot of spots) {spot.x = Math.min(maxX, Math.max(minX, spot.x));spot.y = Math.min(maxY, Math.max(minY, spot.y));}
+    if (!moved) break;
+  }
+  return spots;
+}
+
 export function teamRoomMap(dossier) {
   const {analysis} = dossier, rows = analysis.profile.rows;
   const xs = rows.map(row => row.x), zs = rows.map(row => row.z);
@@ -18,6 +40,9 @@ export function teamRoomMap(dossier) {
     const index = Math.round(wrap(distance, analysis.profile.length) / analysis.profile.spacing) % rows.length;
     return project(rows[index].x, rows[index].z);
   };
+  const flagIds = new Set(dossier.flags.filter(flag => flag.kind === 'corner').map(flag => flag.id));
+  // Each pin rides above the spot it marks, then moves aside only if it crowds another.
+  const pins = spreadMarkers(dossier.flags.map(flag => {const spot = at(flag.s);return {x: spot.x, y: spot.y - 24, anchorX: spot.x, anchorY: spot.y};}));
   return {
     segments: analysis.mapPoints.map(([x, z, mph], index) => {
       const next = analysis.mapPoints[(index + 1) % analysis.mapPoints.length];
@@ -25,8 +50,10 @@ export function teamRoomMap(dossier) {
         colour: referenceSpeedColour(mph, analysis.reference.minMph, analysis.reference.topMph)};
     }),
     corners: analysis.corners.map(corner => ({...at(corner.apexS), id: cornerId(corner),
+      flagId: flagIds.has(cornerId(corner)) ? cornerId(corner) : null,
       number: corner.number, name: corner.name || `Corner ${corner.number}`, authoredName: corner.name})),
-    flags: dossier.flags.map(flag => ({...at(flag.s), ...flag})), start: at(0),
+    flags: dossier.flags.map((flag, index) => ({...flag, x: pins[index].x, y: pins[index].y,
+      anchorX: pins[index].anchorX, anchorY: pins[index].anchorY})), start: at(0),
   };
 }
 
@@ -34,11 +61,17 @@ function mapMarkup(dossier) {
   const map = teamRoomMap(dossier);
   const segments = map.segments.map(({from, to, colour}) =>
     `<path d="M${from.x.toFixed(1)} ${from.y.toFixed(1)}L${to.x.toFixed(1)} ${to.y.toFixed(1)}" stroke="${colour}"/>`).join('');
-  return `<div class="team-map"><svg viewBox="0 0 1000 690" role="img" aria-label="${escape(dossier.name)}. Track coloured by reference speed. Numbered corners and start line.">
+  const leaders = map.flags.map(flag => `<line x1="${flag.anchorX.toFixed(1)}" y1="${flag.anchorY.toFixed(1)}" x2="${flag.x.toFixed(1)}" y2="${flag.y.toFixed(1)}"/><circle cx="${flag.anchorX.toFixed(1)}" cy="${flag.anchorY.toFixed(1)}" r="3.5"/>`).join('');
+  const corner = item => {
+    const label = item.flagId ? ` data-team-flag="${escape(item.flagId)}" role="button" tabindex="0" aria-pressed="false" aria-label="Corner ${item.number}: ${escape(item.name)}. Study the approach."` : '';
+    return `<g class="${item.flagId ? 'team-map-corner' : ''}" transform="translate(${item.x.toFixed(1)} ${item.y.toFixed(1)})"${label}><circle r="14"/><text text-anchor="middle" dy="5">${item.number}</text>${item.authoredName ? `<text x="${item.x > 500 ? -22 : 22}" dy="5" text-anchor="${item.x > 500 ? 'end' : 'start'}" class="team-map-name">${escape(item.authoredName)}</text>` : ''}<title>${escape(item.name)}</title></g>`;
+  };
+  return `<div class="team-map"><svg viewBox="0 0 1000 690" role="group" aria-label="${escape(dossier.name)}. Track coloured by reference speed. Numbered corners and start line.">
     <g fill="none" stroke-width="9" stroke-linecap="round">${segments}</g>
-    <g class="team-map-corners">${map.corners.map(corner => `<g transform="translate(${corner.x.toFixed(1)} ${corner.y.toFixed(1)})"><circle r="14"/><text text-anchor="middle" dy="5">${corner.number}</text>${corner.authoredName ? `<text x="${corner.x > 500 ? -22 : 22}" dy="5" text-anchor="${corner.x > 500 ? 'end' : 'start'}" class="team-map-name">${escape(corner.authoredName)}</text>` : ''}<title>${escape(corner.name)}</title></g>`).join('')}</g>
+    <g class="team-map-leaders" stroke-width="1.5">${leaders}</g>
+    <g class="team-map-corners">${map.corners.map(corner).join('')}</g>
     <g transform="translate(${map.start.x.toFixed(1)} ${map.start.y.toFixed(1)})"><rect x="-10" y="-7" width="20" height="14" fill="#f0ead5" stroke="#081b24" stroke-width="3"/><text x="16" y="6" class="team-map-start">START</text></g>
-    </svg>${map.flags.map(flag => `<button type="button" class="team-map-flag team-kind-${flag.kind}" data-team-flag="${escape(flag.id)}" style="left:${(flag.x / 10).toFixed(2)}%;top:${(flag.y / 6.9).toFixed(2)}%" aria-label="${escape(kindName[flag.kind])}: ${escape(flag.title)}">${symbol[flag.kind]}</button>`).join('')}</div>`;
+    </svg>${map.flags.map(flag => `<button type="button" class="team-map-flag team-kind-${flag.kind}" data-team-flag="${escape(flag.id)}" data-team-label="${escape(flag.title)}" style="left:${(flag.x / 10).toFixed(2)}%;top:${(flag.y / 6.9).toFixed(2)}%" aria-pressed="false" aria-label="${escape(kindName[flag.kind])}: ${escape(flag.title)}">${symbol[flag.kind]}</button>`).join('')}<div class="team-map-tip" data-team-tip role="presentation" hidden></div></div>`;
 }
 
 export function teamRoomMarkup(dossier) {
@@ -52,7 +85,7 @@ export function teamRoomMarkup(dossier) {
       <div class="team-speed-key"><span>${Math.round(analysis.reference.minMph * 1.609344)} km/h</span><i aria-hidden="true"></i><span>${Math.round(analysis.reference.topMph * 1.609344)} km/h</span></div>
       <div class="team-sector-strip">${reference.sectorMs.map((value, index) => `<span>SECTOR ${index + 1}<b>${time(value)}</b></span>`).join('')}</div>
       <details class="team-corner-index"><summary>All corners</summary><ol>${analysis.corners.map(corner => `<li>${escape(corner.name || `Corner ${corner.number}`)} <span>${corner.direction === 'L' ? 'Left' : 'Right'} · ${corner.radius} m radius</span></li>`).join('')}</ol></details>
-    </section><aside class="team-study-panel" aria-label="Study a track feature"><h3>Study the approach</h3><p class="team-study-intro">Choose a flag to see the road from the driver’s seat.</p>
+    </section><aside class="team-study-panel" aria-label="Study a track feature"><h3>Study the approach</h3><p class="team-study-intro">Choose a flag, on the list or on the map, to see the corner from above.</p>
       <div class="team-flag-list">${dossier.flags.map(flag => `<button type="button" data-team-flag="${escape(flag.id)}" data-team-snapshot-s="${flag.snapshotS}" data-team-camera-up="${flag.camera.up}" data-team-camera-ahead="${flag.camera.ahead}" data-team-kind="${flag.kind}" aria-pressed="false"><span class="team-flag-symbol">${symbol[flag.kind]}</span><span><small>${escape(kindName[flag.kind])} · ${Math.round(flag.s)} m</small><b>${escape(flag.title)}</b></span></button>`).join('')}</div>
       <section class="team-snapshot-panel" aria-live="polite"><h4 data-team-feature-title>Choose a flag</h4><div class="team-snapshot" data-team-snapshot></div><p class="team-snapshot-status" data-team-status role="status">The current track will be rendered when you select a feature.</p><div class="team-engineer" data-team-note></div></section>
     </aside></div><div data-team-telemetry>${telemetryMarkup(dossier)}</div></section>`;
@@ -63,7 +96,7 @@ function engineerMarkup(flag) {
   if (Number.isFinite(note.brakeBoard)) values.push(`Brake at the ${note.brakeBoard} m board.`);
   if (Number.isFinite(note.gear)) values.push(`Gear ${note.gear}.`);
   if (Number.isFinite(note.targetKph)) values.push(`Target ${note.targetKph} km/h.`);
-  return `<p class="eyebrow">YOUR ENGINEER</p>${values.length ? `<p class="team-note-values">${escape(values.join(' '))}</p>` : ''}<p>${escape(note.line)}</p><p>${escape(note.note)}</p>${flag.kind === 'corner' ? '<small>View shown from the suggested braking point.</small>' : ''}`;
+  return `<p class="eyebrow">YOUR ENGINEER</p>${values.length ? `<p class="team-note-values">${escape(values.join(' '))}</p>` : ''}<p>${escape(note.line)}</p><p>${escape(note.note)}</p>${flag.kind === 'corner' ? '<small>View shown from above and behind the suggested braking point.</small>' : ''}`;
 }
 
 // Owns only DOM and transient canvases. All course/reference data and native
@@ -73,12 +106,33 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
   layer.className = 'team-room-layer';layer.hidden = true;host.append(layer);
   const events = new AbortController();
   let dossier = null, returnFocus = null, request = 0, captureAbort = null;
+  // Bring the chosen flag into view in the list without moving the whole page.
+  function showInList(id) {
+    const list = layer.querySelector('.team-flag-list'), item = list?.querySelector(`[data-team-flag="${CSS.escape(id)}"]`);
+    if (!list || !item) return;
+    const listBox = list.getBoundingClientRect(), itemBox = item.getBoundingClientRect();
+    list.scrollTop += itemBox.top - listBox.top - (list.clientHeight - itemBox.height) / 2;
+  }
+  // One small name label for the map, shared by every marker (no clipping at the edges).
+  function showTip(marker) {
+    const tip = layer.querySelector('[data-team-tip]'), map = marker?.closest('.team-map');
+    if (!tip || !map) return;
+    const label = marker.dataset.teamLabel || marker.querySelector('title')?.textContent;
+    if (!label) return;
+    tip.textContent = label;tip.hidden = false;
+    const mapBox = map.getBoundingClientRect(), box = marker.getBoundingClientRect();
+    const x = Math.min(mapBox.width - tip.offsetWidth - 6, Math.max(6, box.left - mapBox.left + box.width / 2 - tip.offsetWidth / 2));
+    const above = box.top - mapBox.top - tip.offsetHeight - 6, below = box.bottom - mapBox.top + 6;
+    tip.style.left = `${x}px`;tip.style.top = `${above >= 4 ? above : below}px`;
+  }
+  const hideTip = () => {const tip = layer.querySelector('[data-team-tip]');if (tip) tip.hidden = true;};
   async function select(id) {
     const flag = dossier?.flags.find(item => item.id === id);
     if (!flag) return;
     const ticket = ++request;
     captureAbort?.abort();captureAbort = new AbortController();
     layer.querySelectorAll('[data-team-flag]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.teamFlag === id)));
+    showInList(id);
     layer.querySelector('[data-team-feature-title]').textContent = flag.title;
     layer.querySelector('[data-team-note]').innerHTML = engineerMarkup(flag);
     const picture = layer.querySelector('[data-team-snapshot]'), status = layer.querySelector('[data-team-status]');
@@ -86,8 +140,8 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
     try {
       const canvas = await capture(dossier, flag, {signal: captureAbort.signal});
       if (ticket !== request || layer.hidden) return;
-      canvas.setAttribute('role', 'img');canvas.setAttribute('aria-label', `${flag.title}. Driver-seat approach on ${dossier.name}.`);
-      picture.replaceChildren(canvas);status.textContent = 'Live track view · driver’s seat';
+      canvas.setAttribute('role', 'img');canvas.setAttribute('aria-label', `${flag.title}. View from above the approach on ${dossier.name}.`);
+      picture.replaceChildren(canvas);status.textContent = `Live track view · from above the ${flag.kind === 'corner' ? 'braking point' : 'approach'}`;
     } catch (error) {
       if (ticket === request && !layer.hidden) status.textContent = `Track view unavailable. ${error.message}`;
     }
@@ -102,8 +156,16 @@ export function createTeamRoom({host, getDossier, capture, clearCapture, onClose
     const flag = event.target.closest('[data-team-flag]');
     if (flag) select(flag.dataset.teamFlag);
   }, {signal: events.signal});
+  for (const [type, show] of [['pointerover', true], ['focusin', true], ['pointerout', false], ['focusout', false]])
+    layer.addEventListener(type, event => {
+      const marker = event.target.closest?.('.team-map [data-team-flag]');
+      if (marker) show ? showTip(marker) : hideTip();
+    }, {signal: events.signal});
   layer.addEventListener('keydown', event => {
     if (event.code === 'Escape') {event.preventDefault();event.stopPropagation();close();return;}
+    // The numbered corners on the map are drawn in SVG, so give them the button keys.
+    const mapCorner = event.target.closest?.('g[data-team-flag]');
+    if (mapCorner && (event.code === 'Enter' || event.code === 'Space')) {event.preventDefault();select(mapCorner.dataset.teamFlag);return;}
     if (event.code !== 'Tab') return;
     const buttons = [...layer.querySelectorAll('button:not(:disabled),summary')], first = buttons[0], last = buttons.at(-1);
     if (event.shiftKey && document.activeElement === first) {event.preventDefault();last?.focus();}

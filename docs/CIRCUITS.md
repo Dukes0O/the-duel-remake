@@ -636,10 +636,14 @@ Room brings that into the game, for every circuit, old and new.
   named corners, crests and the start line (the same picture as Claude's
   review tool, drawn by the game).
 - **Flags at hot spots**: every slow corner, every crest, the overtaking
-  zone and the signature moment. Click a flag and a **snapshot** opens: the
-  view from the driver's seat at the braking point, rendered live by the
-  game's own renderer (never stored pictures, so it always matches the
-  current art), with the engineer's note under it.
+  zone and the signature moment. Click a flag (in the list, on its marker
+  on the map, or on a numbered corner) and a **snapshot** opens: an
+  elevated chase view, 9 m up and 18 m behind the braking point, looking
+  down the road at the apex so the corner, kerbs and exit are in frame
+  (never from the driver's seat, which showed straight road; Kyle, 11
+  October 2026). It is rendered live by the game's own renderer (never
+  stored pictures, so it always matches the current art), with the
+  engineer's note under it.
 - **The engineer's notes** for that corner, in a racing engineer's voice,
   short and practical: "Brake at the 100 board. Third gear. Clip the inside
   kerb and use all the road on the way out. Lose time here and you lose it
@@ -729,11 +733,14 @@ intel: {
   sectors: [1520, 3010],
   // Hot-spot flags shown on the map. kind: 'signature' | 'overtaking' |
   // 'corner' | 'crest'. Exactly one signature and at most two overtaking
-  // flags per lap. camera is the driver-seat snapshot: metres behind the
-  // flag's point, height above the road, look-ahead distance.
+  // flags per lap. camera is the elevated chase snapshot: metres before the
+  // flag's point where the view is taken, height above the road (default
+  // 9; leave it out), look-ahead distance from that point. The eye itself
+  // stands another 18 m behind that point. A corner flag is aimed at its
+  // apex unless `ahead` is written.
   flags: [
     {id: 'skyline', kind: 'signature', s: 2480, title: 'Skyline',
-     camera: {back: 30, up: 1.2, ahead: 70}},
+     camera: {back: 30, ahead: 70}},
     {id: 'conrod', kind: 'overtaking', s: 3900, title: 'Conrod to Murray'},
   ],
   // Engineer notes by corner id: the slug of the script piece name

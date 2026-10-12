@@ -60,7 +60,7 @@ const PANORAMA_ROAD = defineScriptedCourse({
   intel: {
     sectors: [1760, 3060],
     flags: [
-      { id: 'skyline', kind: 'signature', s: 2560, title: 'Skyline', camera: { back: 30, up: 1.2, ahead: 70 } },
+      { id: 'skyline', kind: 'signature', s: 2560, title: 'Skyline', camera: { back: 30, ahead: 70 } },
       { id: 'conrod', kind: 'overtaking', s: 4120, title: 'Conrod into The Chase' },
       { id: 'murray', kind: 'overtaking', s: 4640, title: 'Murray Corner' },
       { id: 'hell-gate', kind: 'corner', s: 420, title: 'Hell Gate' },

@@ -7,6 +7,7 @@ import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces
 import { hillLocal, hillReach, hillHeight, runWeight, basinReach } from './circuit-hills.js';
 import { makeRng } from './rng.js';
 import {installPitLane, pitAt} from './pit-lane.js';
+import { KIT_FOOTPRINTS } from './kit-footprints.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
 // is stored for a reference car and computer racers scale it to their own. A
@@ -214,13 +215,22 @@ function scatterScenery(course) {
         for (const [ox, oz] of taken.get(key(x + i * cell, z + j * cell)) ?? []) if (Math.hypot(ox - x, oz - z) < radius) return true;
       return false;
     };
-    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35 } = forest;
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = forest;
     let serial = 0;
     for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
-      const s = base + (random.float() - .5) * spacing * .9, depth = from + (to - from) * (row + random.float()) / rows;
+      const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
       // The rows thin out toward the back, so the wood has an edge.
       if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
-      const off = side * (course.roadHalfWidthAt(s) + depth), scale = random.range(.9, 1.7);
+      const off = side * (course.roadHalfWidthAt(s) + depth);
+      let scale = random.range(.9, 1.7);
+      // `scale: [least, most]` stretches the usual .9 to 1.7; `clumps: { cut, size }` groups the trees in groves
+      // with bare clearings between (a slow wave along the road and back into the wood) and grows the grove trees.
+      if (scaleRange) scale = scaleRange[0] + (scale - .9) / .8 * (scaleRange[1] - scaleRange[0]);
+      if (clumps) {
+        const grove = .5 + .28 * Math.sin(s * .021 + side * 1.9 + depth * .045) + .22 * Math.sin(s * .0083 - depth * .07 + side * 3.3) + .12 * Math.sin(s * .057 + depth * .11);
+        if (grove < clumps.cut) continue;
+        scale *= 1 + (clumps.size ?? 0) * (grove - .5);
+      }
       if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale)) continue;
       const p = course.groundAt(s, off);
       if (crowded(p.x, p.z, 3.2 * scale)) continue;
@@ -236,6 +246,50 @@ function scatterScenery(course) {
     const mix = Math.sin(i * 12.9898 + tree.s * .0371) * 43758.5453, pick = mix - Math.floor(mix);
     if (pick < autumn.share) tree.tint = autumn.colours[Math.floor(pick / autumn.share * autumn.colours.length) % autumn.colours.length];
   });
+}
+
+// ---------------------------------------------------------------------------
+// Solid kit pieces (`solid: true` on a circuit's `kitPlacements`): the barriers,
+// fences, posts and buildings a circuit stands beside the road are boxes a car
+// hits, the size and place of the piece itself (the face toward the road is the
+// drawn face). The kit loader places a piece on the ground at its place with the
+// road's heading turned by the piece's `heading`, so the box is built the same
+// way. A thin piece is thickened away from the road to 0.8 m, so a fast car
+// cannot slip through it. They are not walls of the script: nothing draws them
+// (the piece is the drawing) and the walls list does not hold them.
+// ---------------------------------------------------------------------------
+const THIN_PIECE = .8;
+
+function kitSolids(course) {
+  const solids = [];
+  (course.def.kitPlacements ?? []).forEach((piece, index) => {
+    if (!piece.solid) return;
+    const foot = KIT_FOOTPRINTS[piece.id];
+    if (!foot) throw new TrackScriptError(`Kit piece "${piece.id}" is marked solid but has no footprint in src/kit-footprints.js.`);
+    const scale = Array.isArray(piece.scale) ? piece.scale : Array(3).fill(piece.scale ?? 1);
+    const ground = course.groundAt(piece.s, piece.lateral), heading = ground.heading + (piece.heading ?? 0);
+    const halfX = foot.width * scale[0] / 2;
+    let halfZ = foot.depth * scale[2] / 2, x = ground.x, z = ground.z;
+    // The piece's thickness runs across the road: thicken it on the side away from the road.
+    const away = Math.sign(piece.lateral) || 1, awayX = Math.cos(ground.heading) * away, awayZ = -Math.sin(ground.heading) * away;
+    if (halfZ * 2 < THIN_PIECE && Math.abs(Math.sin(heading) * awayX + Math.cos(heading) * awayZ) > .9) {
+      const extra = (THIN_PIECE - halfZ * 2) / 2, push = Math.sign(Math.sin(heading) * awayX + Math.cos(heading) * awayZ);
+      x += Math.sin(heading) * push * extra; z += Math.cos(heading) * push * extra; halfZ += extra;
+    }
+    // The ground under both ends and the middle, read where the piece stands.
+    const heights = [-1, 0, 1].map(k => {
+      const at = course.nearest(ground.x + Math.cos(heading) * halfX * k, ground.z - Math.sin(heading) * halfX * k);
+      return course.groundAt(at.s, at.lateral).y;
+    });
+    const low = Math.min(...heights) - .1, high = Math.max(...heights) + foot.height * scale[1];
+    const near = course.nearest(ground.x, ground.z);
+    solids.push({
+      id: `kit-solid-${index}-${piece.id}`, kind: 'prop', shape: 'box', barrier: foot.depth <= 1, kitSolid: true, side: away,
+      s: course.phase(near.s), off: near.lateral, x, y: low, z, heading, halfX, halfZ, height: high - low, minY: low, maxY: high,
+      theme: course.themeAt(near.s),
+    });
+  });
+  return solids;
 }
 
 export function trackScriptSolids(course) {
@@ -259,6 +313,9 @@ export function trackScriptSolids(course) {
   }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
+  // After the planted scenery, so the trees stand exactly where they did.
+  f.kitSolids = kitSolids(course);
+  f.obstacles.push(...f.kitSolids);
   course.obstacleBuckets = new Map(); course.rockBuckets = new Map();
   const buckets = Math.ceil(course.length / 64);
   course.bucketCount = buckets;

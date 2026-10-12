@@ -2,6 +2,15 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Fixes — 12 October 2026
+
+Tremblant Woods: the ground no longer covers the road at the Spur and Beaver
+Kink, armco, tyre walls, catch fences and the pit wall now stop the car, the
+lodge sits on the ground and the dock in the water, and the far slope behind
+the lake is a hillside instead of a wall. Team Room: clicking a flag or a
+numbered corner on the map now selects it, and every flag's picture looks
+down the road from above the braking point so the corner is in view.
+
 ## Tremblant Woods release — 11 October 2026
 
 Tremblant Woods is a new 4.4 km autumn forest circuit (1,600 credits): the

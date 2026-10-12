@@ -968,3 +968,9 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 2026-10-11 full: integration79ba1a96,388/388 passed,0failed/notrun,898.40s,jobs4alone. New Kyle rules7–10 received; Snow placement approved and work resumes; no release.
 
 - Merge P4-SNOW + QA-LANE-SCOPE (source7c60f577): lane395/395 in1552.33s/jobs4, build503ms, one review clear; accepted Snow native/art reused, hidden component not frame-timed; full rules unchanged, no release.
+
+- Janitor: removed3mergedbranches/2lane folders and owned consumed Snow/selector evidence; unfinished lanes kept. Audit1759tracked/325351760B (prior322558666B; growth2793094B for delivered code/reviews and Claude work),0module/removed-test candidates;50asset/80export/258doc candidates remain advisory. No uncertain deletion or history rewrite.
+
+- 2026-10-11 end full: integration13a0313c,395/395 passed,0failed/0notrun,1283.17s,jobs4alone; Snow and QA-LANE-SCOPE integrated, no release.
+
+- 11 October overnight: merged JANITOR-OVERNIGHT-ART after lane 7/7 (219.33 s), build 1.52 s and independent reviews; consumed 40 prior art files, looks 19,993,075 to 16,099,486 bytes, final sheets and game/replay code exact. Older lanes retained; uncertain audit candidates left for review. Ownership and current overnight scopes folded into this merge.

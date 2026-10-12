@@ -1,4 +1,5 @@
 import { farTerrainHeightSampler } from './far-terrain-surface.js';
+import { ribbonGroundAt } from './ribbon-ground.js';
 
 // Plant roots can fall between lateral terrain vertices. Read the rendered
 // Float32 triangles, not an analytic height on a surface that is not drawn.
@@ -40,7 +41,7 @@ export function renderedGroundHeight(course,point,{requireSurface=false}={}){
       if(course.def.offroad){const segments=Math.ceil(cut.halfWidth*2);for(let i=0;i<=segments;i++)offsets.push(center-cut.halfWidth+cut.halfWidth*2*i/segments);}
     }
     offsets.sort((a,b)=>a-b);
-    const points=offsets.map(off=>{const p=course.groundAt(s,off);return{x:Math.fround(p.x),y:Math.fround(p.y),z:Math.fround(p.z)};});
+    const points=offsets.map(off=>{const p=ribbonGroundAt(course,s,off);return{x:Math.fround(p.x),y:Math.fround(p.y),z:Math.fround(p.z)};});
     rows.set(s,points);return points;
   };
   const height=(a,b,c)=>{

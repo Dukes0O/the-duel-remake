@@ -26,11 +26,13 @@ export function winterLightingSettings(base) {
     const value=Array.isArray(original)?new THREE.Color().setRGB(...original):new THREE.Color(original);
     return value.lerp(new THREE.Color(winter),day).toArray();
   };
-  return {...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
+  const winter={...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
     top:colour(base.top,0x83a6bf),horizon:colour(base.horizon,0xcfdae5),
     fog:colour(base.fog,0xb9cbdc),ground:colour(base.ground,0x7896b0),
     sunColor:colour(base.sunColor,0xe3edff),
     cloudTint:base.cloudTint.map((value,i)=>value*night+[.78,.84,.9][i]*day)};
+  // A circuit's light may carry its own `winter` look (any of the fields above), laid over the shared one.
+  return base.winter?{...winter,...base.winter}:winter;
 }
 
 function shadeSnowKits(kits) {
@@ -46,7 +48,9 @@ function shadeSnowKits(kits) {
     }
   });
 }
-export function snowWorldEnabled(course,flags){return !!course?.def.snowWorld&&flags?.enabled('snow-world')===true;}
+// A course whose snowWorld says `always: true` is a winter course whenever it is on the course list;
+// any other course with snowWorld needs the shared snow-world switch.
+export function snowWorldEnabled(course,flags){return !!course?.def.snowWorld&&(course.def.snowWorld.always===true||flags?.enabled('snow-world')===true);}
 export function winterWeight(course,s){
   const p=course.phase(s);
   for(const range of ranges(course))if(p>=range.from&&p<=range.to){
@@ -89,7 +93,8 @@ export function snowWorldPlacements(course){
     heading:rock.angle,scale:Object.freeze([rock.scale[0]*2/4.4,rock.scale[1]*2/2.4,rock.scale[2]*2/3.5])});
   for(const range of ranges(course))for(let s=range.from+5;s<range.to-5;s+=18)for(const side of [-1,1])
     entries.push({id:'snow-ground',s,lateral:side*(course.roadHalfWidthAt(s)+4.5),heading:rng.range(-.08,.08),scale:1});
-  for(const patch of course.features.surfacePatches.filter(row=>row.snowBank)){
+  // `softBanks` draws the plough banks as continuous rounded heaps (softBankGeometry) instead of kit pieces.
+  if(!course.def.snowWorld.softBanks)for(const patch of course.features.surfacePatches.filter(row=>row.snowBank)){
     for(let s=patch.s0+3;s<patch.s1-3;s+=4.8)entries.push({id:'plough-bank',s,
       lateral:(patch.from+patch.to)/2,heading:Math.PI/2,scale:Object.freeze([.94,1.3,.7]),physicalPatch:patch});
   }
@@ -101,7 +106,9 @@ export function applySnowTerrain(geometry,course){
   weights.fill(course.def.snowWorld?1:0);
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }
-export function winterTerrainMaterial(material){
+// `drifts` (a course's snowWorld.drifts) adds broad soft drifts and fine wind ripples in slightly bluer
+// snow, so open ground has form instead of one flat white.
+export function winterTerrainMaterial(material,drifts=false){
   const previous=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
   material.onBeforeCompile=shader=>{
     previous.call(material,shader);
@@ -113,9 +120,13 @@ export function winterTerrainMaterial(material){
       varying float vWinterWeight;varying vec3 vWinterPosition;`)
       .replace('#include <color_fragment>',`#include <color_fragment>
       float winterGrain=.975+.0125*sin(vWinterPosition.x*29.0)*sin(vWinterPosition.z*31.0);
-      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.8,.82)*winterGrain,clamp(vWinterWeight,0.0,1.0));`);
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.8,.82)*winterGrain,clamp(vWinterWeight,0.0,1.0));${drifts?`
+      float drift=.5+.5*sin(vWinterPosition.x*.043+sin(vWinterPosition.z*.029)*2.1)*sin(vWinterPosition.z*.051+sin(vWinterPosition.x*.025)*1.8);
+      float ripple=smoothstep(.55,.95,sin(vWinterPosition.x*.9+sin(vWinterPosition.z*.37)*3.0)*sin(vWinterPosition.z*.6+vWinterPosition.x*.2));
+      vec3 cold=vec3(.84,.9,1.0);
+      diffuseColor.rgb*=mix(vec3(1.0),mix(cold,vec3(1.0),drift),clamp(vWinterWeight,0.0,1.0))*(1.0-.05*ripple*clamp(vWinterWeight,0.0,1.0));`:''}`);
   };
-  material.customProgramCacheKey=()=>key()+'-winter-v1';material.needsUpdate=true;return material;
+  material.customProgramCacheKey=()=>key()+(drifts?'-winter-v1-drifts':'-winter-v1');material.needsUpdate=true;return material;
 }
 export function winterSurfaceMaterial(material,kind){
   if(kind==='ice'){material.color.setRGB(.12,.19,.24);material.roughness=.065;material.metalness=.18;material.envMapIntensity=.9;material.emissive?.set(0);}
@@ -151,6 +162,43 @@ export function snowSceneryPose(tree,events,now,upright=null){
     if(event.outcome==='obliterate'&&age>=COMBAT_TUNING.roadside.sceneryVisibleSeconds)scale.setScalar(0);
   }
   return new THREE.Matrix4().compose(position,rotation,scale);
+}
+// Ploughed snow along both sides of the road as one continuous, rounded heap: a smooth top, steeper toward the
+// road and slightly dirty grey there, white on top and beyond. It follows the road edge and the ground, rises
+// and falls a little along its length and tapers where a winter range begins and ends. Drawing only: the
+// physical deep-snow band (winterBankPatches) lies inside it.
+export function softBankGeometry(course){
+  const positions=[],colours=[],indices=[],columns=9,step=1.5;
+  const grey=new THREE.Color(.5,.54,.6),white=new THREE.Color(.95,.97,1),mix=new THREE.Color();
+  for(const range of ranges(course))for(const side of [-1,1]){
+    const first=positions.length/3,count=Math.max(2,Math.ceil((range.to-range.from)/step));
+    for(let i=0;i<=count;i++){
+      const s=range.from+(range.to-range.from)*i/count,edge=course.roadHalfWidthAt(s)+.1;
+      const taper=smooth((s-range.from)/24)*smooth((range.to-s)/24);
+      const height=taper*(.55+.4*(.5+.5*Math.sin(s*.09+side))+.18*Math.sin(s*.31+side*2)),width=2.7+.8*Math.sin(s*.05+side*.7),
+        speckle=.04*Math.sin(s*1.9)*Math.sin(s*.77+side);
+      for(let k=0;k<columns;k++){
+        const t=k/(columns-1),off=side*(edge+width*t),ground=course.groundAt(s,off),point=course.worldAt(s,off);
+        const bump=k===0||k===columns-1?-.2:Math.pow(Math.sin(Math.PI*Math.pow(t,1.3)),.8);
+        positions.push(point.x,ground.y+height*bump,point.z);
+        mix.copy(grey).lerp(white,smooth(t/.7)).multiplyScalar(1+speckle);
+        colours.push(mix.r,mix.g,mix.b);
+      }
+    }
+    for(let i=0;i<count;i++)for(let k=0;k<columns-1;k++){
+      const a=first+i*columns+k,b=a+1,c=a+columns,d=c+1;
+      if(side>0)indices.push(a,c,b,b,c,d);else indices.push(a,b,c,b,d,c);
+    }
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,3));
+  geometry.setIndex(indices);geometry.computeVertexNormals();geometry.computeBoundingSphere();
+  return geometry;
+}
+function addSoftBanks(group,course){
+  const mesh=new THREE.Mesh(softBankGeometry(course),new THREE.MeshStandardMaterial({name:'Ploughed snow heaps',vertexColors:true,roughness:.96,side:THREE.DoubleSide}));
+  mesh.name='Ploughed snow heaps';mesh.receiveShadow=true;group.add(mesh);
 }
 function addPonds(group,course){
   const ponds=course.def.snowWorld.ponds??[];
@@ -197,7 +245,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
     !Number.isFinite(row.from)||!Number.isFinite(row.to)||row.to<=row.from||
     !ranges(course).some(range=>row.from>=range.from&&row.to<=range.to)))
     throw Error('Exposed ridges must lie within one authored winter range.');
-  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);shadeSnowKits(kits);
+  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);if(course.def.snowWorld.softBanks)addSoftBanks(group,course);shadeSnowKits(kits);
   const rng=makeRng(course.seed^0x5a0f1a),limits=SNOW_LIMITS.high,count=limits.flakes,
     position=new Float32Array(count*3),speed=new Float32Array(count),phase=new Float32Array(count);
   for(let i=0;i<count;i++){position[i*3]=rng.range(-17,17);position[i*3+1]=rng.range(-3,16);position[i*3+2]=rng.range(-18,18);speed[i]=rng.range(.7,1.8);phase[i]=rng.range(0,Math.PI*2);}

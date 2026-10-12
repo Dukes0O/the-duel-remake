@@ -15,7 +15,7 @@ const MPH = DRIVE.mphToWorld;
 
 // Actual integrated circuits plus Panorama; legacy expansion belongs to P4-GP-EXISTING.
 export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'tremblant-woods',
-  'harbour-lights', 'panorama-ridge']);
+  'harbour-lights', 'tremblant-snow', 'panorama-ridge']);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({
