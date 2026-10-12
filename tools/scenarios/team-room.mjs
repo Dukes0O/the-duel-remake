@@ -2,6 +2,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {referenceTargets} from '../build-reference-laps.mjs';
 import {ALL_CIRCUITS} from '../../src/circuits/index.js';
+import {SNAPSHOT_CHASE} from '../../src/track-analysis.js';
 
 const entry = '/tools/menu-check.html?flags=' + ['grand-prix', ...ALL_CIRCUITS.map(circuit => circuit.flag)].join(',');
 const ready = `document.readyState==='complete' && window.__qaApp && window.__render &&
@@ -17,6 +18,7 @@ async function setup(context, quality) {
     if(app._switches().state('grand-prix')==null || !app._switches().enabled('grand-prix'))
       throw Error('Native grand-prix switch is absent or disabled. Land FIELD before claiming Team Room entry acceptance.');
     app.audio.setMuted(true);app.setGraphicsQuality(${JSON.stringify(quality)});
+    document.querySelectorAll('details').forEach(node => { if (!node.closest('.team-room-layer')) node.open = false; });
     document.querySelector('[data-action="courses"]').click();
     const owned=document.querySelector('[data-team-room="pacific-canyon"]');
     const locked=[...document.querySelectorAll('[data-team-room]')].find(button=>button.disabled);
@@ -54,13 +56,15 @@ async function captureFlag(context, target, flagId) {
     const index=[...document.querySelector('#scene-select').options].map(option=>Number(option.value))
       .find(index=>app.getMenuCourse(index)?.def.id===${JSON.stringify(target.eventId)});
     const course=app.getMenuCourse(index),s=Number(button.dataset.teamSnapshotS),up=Number(button.dataset.teamCameraUp),ahead=Number(button.dataset.teamCameraAhead);
-    const at=course.at(s),ground=course.groundAt(s,0),aim=course.at(s+ahead),aimGround=course.groundAt(s+ahead,0);
+    // Elevated chase view: SNAPSHOT_CHASE metres behind the viewing point, looking at the ground ahead of it.
+    const L=course.length,wrap=value=>((value%L)+L)%L,eyeS=wrap(s-${SNAPSHOT_CHASE}),aimS=wrap(s+ahead),at=course.at(eyeS),ground=course.groundAt(eyeS,0),aim=course.at(aimS),aimGround=course.groundAt(aimS,0);
     const camera=window.__render.camera,expected=[at.x,ground.y+up,at.z],actual=camera.position.toArray();
-    if(expected.some((value,index)=>Math.abs(value-actual[index])>1e-6))throw Error('Actual native camera is not at the driver-seat approach.');
+    if(expected.some((value,index)=>Math.abs(value-actual[index])>1e-6))throw Error('Actual native camera is not above and behind the approach.');
+    if(up<8||up>10)throw Error('The Team Room camera is not 8 to 10 m above the road.');
     camera.updateMatrixWorld();
     const forward=[-camera.matrixWorld.elements[8],-camera.matrixWorld.elements[9],-camera.matrixWorld.elements[10]];
-    const delta=[aim.x-at.x,aimGround.y-ground.y,aim.z-at.z],length=Math.hypot(...delta);
-    if(forward.some((value,index)=>Math.abs(value-delta[index]/length)>1e-6))throw Error('Actual camera does not look along the native road.');
+    const delta=[aim.x-actual[0],aimGround.y-actual[1],aim.z-actual[2]],length=Math.hypot(...delta);
+    if(forward.some((value,index)=>Math.abs(value-delta[index]/length)>1e-6))throw Error('Actual camera does not look down at the feature along the native road.');
     const canvas=document.querySelector('[data-team-snapshot] canvas'),pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
     const colours=new Set();let hash=0x811c9dc5;
     for(let i=0;i<pixels.length;i+=64){colours.add((pixels[i]>>4)+','+(pixels[i+1]>>4)+','+(pixels[i+2]>>4));hash=Math.imul(hash^pixels[i],0x01000193);}
@@ -68,6 +72,42 @@ async function captureFlag(context, target, flagId) {
     if(window.__teamRoomReadOnly()!==window.__teamRoomBefore)throw Error('Studying the track changed race state, settings or profile.');
     return {flag:${JSON.stringify(flagId)},position:actual,expected,colours:colours.size,hash:hash>>>0,width:canvas.width,height:canvas.height};
   })()`);
+}
+
+// Kyle, 11 October 2026: map flags and numbered corners did nothing when clicked. Press the real
+// mouse (down, then up, as a person does) or the real Enter key on a map marker and check that it
+// behaves exactly like the same flag in the list: selected, listed in view, picture and note shown.
+async function chooseFromMap(context, target, how, selector) {
+  const spot = await context.evaluate(`(() => {
+    const marker=document.querySelector(${JSON.stringify(selector)});
+    if(!marker)throw Error('Map marker ${selector} is missing.');
+    marker.scrollIntoView({block:'center'});
+    const box=marker.getBoundingClientRect(),x=box.x+box.width/2,y=box.y+box.height/2;
+    if(!marker.contains(document.elementFromPoint(x,y)))throw Error('Something else covers map marker ${selector} at its centre.');
+    return {x,y,id:marker.dataset.teamFlag,title:marker.getAttribute('aria-label')};
+  })()`);
+  if (how === 'mouse') {
+    await context.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: spot.x, y: spot.y});
+    await context.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: spot.x, y: spot.y, button: 'left', clickCount: 1});
+    await context.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: spot.x, y: spot.y, button: 'left', clickCount: 1});
+  } else {
+    await context.evaluate(`document.querySelector(${JSON.stringify(selector)}).focus()`);
+    await context.command('Input.dispatchKeyEvent', {type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r'});
+    await context.command('Input.dispatchKeyEvent', {type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13});
+  }
+  await context.waitFor(`document.querySelector('#view3d')?.dataset.trackSnapshot===${JSON.stringify(spot.id)} &&
+    !!document.querySelector('[data-team-snapshot] canvas')`, `${target.key}/${spot.id} from the map (${how})`, 25000);
+  await context.evaluate(`(() => {
+    const id=${JSON.stringify(spot.id)},list=document.querySelector('.team-flag-list'),item=list.querySelector('[data-team-flag="'+id+'"]');
+    if(item.getAttribute('aria-pressed')!=='true')throw Error('The list did not mark the flag chosen on the map.');
+    const l=list.getBoundingClientRect(),i=item.getBoundingClientRect();
+    if(i.top<l.top-1||i.bottom>l.bottom+1)throw Error('The list did not scroll to the flag chosen on the map.');
+    if(document.querySelector('[data-team-feature-title]').textContent!==item.querySelector('b').textContent)throw Error('The title did not follow the map click.');
+    if(!document.querySelector('[data-team-note]').textContent.trim())throw Error('No engineer note after the map click.');
+    if(document.querySelectorAll('[data-team-flag][aria-pressed="true"]').length<2)throw Error('The map marker was not marked chosen.');
+    if(!document.querySelector('[data-team-status]').textContent.startsWith('Live track view · from above'))throw Error('The picture caption is not the elevated view.');
+  })()`);
+  return spot.id;
 }
 
 export async function run(context) {
@@ -89,6 +129,22 @@ export async function run(context) {
           }
           await context.screenshot(`team-room-${quality}`);
         }
+        if(target.key==='tremblant-woods|fixed') {
+          // The map must answer to the mouse and keyboard exactly as the list does.
+          const pins = await context.evaluate(`Array.from(document.querySelectorAll('.team-map-flag'),pin=>pin.dataset.teamFlag)`);
+          const corner = await context.evaluate(`document.querySelector('.team-map-corner')?.dataset.teamFlag||''`);
+          if (pins.length < 4 || !corner) throw Error(`${target.key}: the map has no clickable markers`);
+          const chosen = new Set();
+          for (const id of [pins[0], pins.at(-1), pins[Math.floor(pins.length / 2)]])
+            chosen.add(await chooseFromMap(context, target, 'mouse', `.team-map-flag[data-team-flag="${id}"]`));
+          chosen.add(await chooseFromMap(context, target, 'mouse', `.team-map-corner[data-team-flag="${corner}"]`));
+          chosen.add(await chooseFromMap(context, target, 'key', `.team-map-flag[data-team-flag="${pins[1]}"]`));
+          chosen.add(await chooseFromMap(context, target, 'key', `.team-map-corner[data-team-flag="${corner}"]`));
+          report.mapChoices = (report.mapChoices ?? 0) + 6;
+          if (chosen.size < 4) throw Error('Map clicks kept choosing the same flag.');
+          if (await context.evaluate(`window.__teamRoomReadOnly()!==window.__teamRoomBefore`)) throw Error('Choosing from the map changed race state, settings or profile.');
+          await context.screenshot(`team-room-map-${quality}`);
+        }
         await context.command('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
         await context.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
         await context.waitFor(`document.querySelector('.team-room-layer')?.hidden && !document.querySelector('#view3d')?.dataset.trackSnapshot`, 'dossier closed', 10000);
@@ -108,5 +164,5 @@ export async function run(context) {
     }
     report.passed=true;
   } finally {await writeFile(join(context.outputDir,'team-room.json'),JSON.stringify(report,null,2)+'\n');}
-  console.log(`Team Room: ${report.views.length} native driver-seat views; all ${referenceTargets().length} routes, both presets, unchanged state and profile.`);
+  console.log(`Team Room: ${report.views.length} native elevated views; all ${referenceTargets().length} routes, both presets, unchanged state and profile.`);
 }

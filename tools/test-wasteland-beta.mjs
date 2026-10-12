@@ -23,8 +23,9 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     tollkeeper: 'on',
     blackiron: 'on',
     'warlord-cards': 'on',
-    // Phase 4 circuits: dev until Kyle approves each; Tremblant Woods released.
-    'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'on',
+    // Phase 4 circuits: dev until Kyle approves each; Tremblant Woods and Tremblant Snow released.
+    'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'on', 'tremblant-snow': 'on',
+    'grand-prix-career': 'dev',
     'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
     'snow-world': 'dev', // Phase 4: development switch
     'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet

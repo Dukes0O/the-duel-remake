@@ -20,6 +20,7 @@ import { App } from '../src/app.js';
 import { COURSE, DRIVE, steeringYawAuthority } from '../src/config.js';
 import { ALL_CIRCUITS } from '../src/circuits/index.js';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
+import { courseHasWinterSurfaces } from '../src/race-surfaces.js';
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 // The three audited routes give different layouts; the field seed varies
@@ -73,7 +74,9 @@ export function runRace(cpuDifficulty, index, { car = 'falcone_f42', maxSec = nu
       app.profile = { ...app.profile, credits: 1e6 }; app._saveProfile();
       if (!app.purchaseCourse(course).ok) throw Error(`Could not unlock ${course}`);
     }
-    if (!app.startCampaign({ startStage, seed, fieldSeed, fieldSize, mode: 'grandprix', car, difficulty: 'casual', cpuDifficulty }))
+    // The test driver picks winter tyres on a course with snow or ice, as a player would on the setup.
+    const tyre = courseHasWinterSurfaces(COURSE[startStage]) ? 'winter' : undefined;
+    if (!app.startCampaign({ startStage, seed, fieldSeed, fieldSize, mode: 'grandprix', car, difficulty: 'casual', cpuDifficulty, ...(tyre ? { tyre } : {}) }))
       throw Error(`Could not start ${cpuDifficulty} race ${index}`);
     app.autopilot = true;
     app._scriptedCrashDone = true;

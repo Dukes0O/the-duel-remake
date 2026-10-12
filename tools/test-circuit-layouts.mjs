@@ -11,6 +11,7 @@ import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
 import { COURSE_PRICES } from '../src/course-access.js';
 import { buildTrackScript } from '../src/track-script.js';
 import { driveCircuit, lapTime } from './track-script-drive.mjs';
+import { courseHasWinterSurfaces } from '../src/race-surfaces.js';
 
 // The road layouts of Panorama Ridge, Harbour Lights and Tremblant Woods
 // (docs/CIRCUITS.md section 5). Art, light, landmarks and the full field are
@@ -19,9 +20,9 @@ const near = (a, b, tolerance, message = '') => assert.ok(Math.abs(a - b) <= tol
 const piece = (road, name) => road.pieces.find(item => item.name === name);
 
 test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
-  assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['panorama-ridge', 'harbour-lights', 'tremblant-woods']);
-  // Tremblant Woods is released (RELEASE-TREMBLANT); the other two stay dev until their own release.
-  const released = ['tremblant-woods'];
+  assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['panorama-ridge', 'harbour-lights', 'tremblant-woods', 'tremblant-snow']);
+  // Tremblant Woods (RELEASE-TREMBLANT) and Tremblant Snow (RELEASE-TREMBLANT-SNOW) are released; the other two stay dev.
+  const released = ['tremblant-woods', 'tremblant-snow'];
   for (const circuit of ALL_CIRCUITS) {
     assert.equal(circuit.flag, circuit.id);
     assert.equal(FEATURE_STATES[circuit.flag], released.includes(circuit.id) ? 'on' : 'dev');
@@ -30,14 +31,16 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
   assert.deepEqual([COURSE_PRICES['panorama-ridge'], COURSE_PRICES['tremblant-woods'], COURSE_PRICES['harbour-lights']], [1600, 1600, 1800]);
+  assert.equal(COURSE_PRICES['tremblant-snow'], 1800, 'Tremblant Snow costs 1,800 credits');
   assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
   assert.equal(COURSE.length, 16 + released.length);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
   assert.equal(COURSE[16].id, 'tremblant-woods', 'appended after the existing events');
-  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 3);
+  assert.equal(COURSE[17].id, 'tremblant-snow', 'Tremblant Snow is appended last, after Tremblant Woods');
+  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 4);
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
-  assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['harbour-lights', 'tremblant-woods']);
+  assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['harbour-lights', 'tremblant-woods', 'tremblant-snow'], 'the requested dev circuit plus every released one');
   assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=harbour-lights' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   for (const circuit of ALL_CIRCUITS) assert.ok(bat.includes(circuit.id), `the Preview turns ${circuit.id} on`);
@@ -120,10 +123,14 @@ test('scenery stays off the road, out of the runoff and off the inside of corner
 
 for (const circuit of ALL_CIRCUITS) {
   test(`${circuit.name}: the test driver completes every lap on Medium without a crash or getting stuck`, () => {
-    for (const reverse of [false, true]) {
+    // A winter circuit's reverse build is not driven here: its ice patches, boards and pit lane belong to the
+    // forward road, and the reversed Beaver Hairpin on packed snow is a different corner (P4-VARIANTS builds
+    // and tests reversed winter circuits with their own surfaces).
+    for (const reverse of courseHasWinterSurfaces(circuit) ? [false] : [false, true]) {
       const def = reverse ? { ...circuit, id: `${circuit.id}-reverse-test`, reverse: true } : circuit;
       // The reverse build is driven alone: the existing rival was never taught a hairpin (P4-FIELD).
-      const run = driveCircuit(def, { cpuDifficulty: 'medium', opponentCount: reverse ? 0 : 1 });
+      // A winter circuit is driven on winter tyres, as a player would choose them on the setup.
+      const run = driveCircuit(def, { cpuDifficulty: 'medium', opponentCount: reverse ? 0 : 1, tyre: courseHasWinterSurfaces(circuit) ? 'winter' : null });
       const label = `${def.id}: ${run.lapTimes.map(lapTime).join(' ')}`;
       assert.ok(run.finite && run.completed && run.laps === circuit.laps, label);
       assert.equal(run.crashes, 0, label); assert.equal(run.boundaryResets, 0, label); assert.equal(run.checkpointResets, 0, label);

@@ -113,3 +113,64 @@ export function installReliefScale(course) {
     return natural(s, off) * (1 - (1 - scale) * smooth((edge - from) / (to - from)));
   };
 }
+
+// Far ground between two stretches of road at different heights (`farGround: { band, apart }`
+// on a circuit). The far ground takes its height from the nearest road, so where the nearest road
+// changes, halfway between two stretches that run at different heights, it stepped: a wall tens of
+// metres tall under the hills behind the lake. Within `band` metres of that halfway line
+// (the difference between the distances to the two nearest stretches, `apart` metres or more
+// apart along the lap) the height now blends from one road's to the other's, meeting in the
+// middle, so the ground slopes from one to the other. Ground near the road, a hill or a
+// lake is not touched. Adds `course.farGroundY(x, z, s, off)`: the height of the far ground at
+// a place, `s` and `off` being its nearest road position. Wraps nothing: only the far ground
+// builders ask for it, so a circuit without the option never reaches this code.
+export function installFarGround(course) {
+  const { band = 120, apart = 250 } = course.def.farGround;
+  const length = course.length;
+  let points = null;
+  const hills = course.def.hills ?? [], basins = course.def.basins ?? [];
+  course.farGroundY = (x, z, s, off) => {
+    const natural = course.groundAt(s, off).y;
+    points ??= course.samples.filter((_, i) => i % 4 === 0);
+    let first = Infinity, firstS = 0;
+    for (const p of points) { const d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < first) { first = d; firstS = p.s; } }
+    let second = Infinity, other = null;
+    for (const p of points) {
+      const gap = Math.abs(p.s - firstS), d = (p.x - x) ** 2 + (p.z - z) ** 2;
+      if (Math.min(gap, length - gap) < apart || d >= second) continue;
+      second = d; other = p;
+    }
+    if (!other) return natural;
+    let weight = .5 * smooth(1 - (Math.sqrt(second) - Math.sqrt(first)) / band);
+    if (weight <= 0) return natural;
+    const phase = course.phase(s);
+    for (const hill of hills) weight *= smooth((hillReach(hill, ...hillLocal(hill, phase, off)) - 1.1) / .4);
+    for (const basin of basins) weight *= smooth((basinReach(basin, phase - basin.s, off - basin.lateral) - 1.1) / .4);
+    if (weight <= 0) return natural;
+    const across = (x - other.x) * Math.cos(other.heading) - (z - other.z) * Math.sin(other.heading);
+    return natural + (course.groundAt(other.s, across).y - natural) * weight;
+  };
+}
+
+// Level ground under a building (a hill's `pads`). The pad's dome is already level
+// (hillHeight); the land under the dome rose and fell with the ground's own relief, so a
+// building 25 m across stood on ground that varied by metres: sunk at the high side
+// and floating at the low. The ground within `radius` of the pad's middle is now held
+// at the height it has there, easing back to the natural ground over `blend` metres.
+// Wraps the course's relief, like the basins; a course whose hills have no pads never
+// reaches it.
+export function installHillPads(course) {
+  const natural = course._relief.bind(course), pads = [];
+  for (const hill of course.def.hills ?? []) for (const pad of hill.pads ?? []) pads.push({ ...pad, s: hill.s + pad.du, lateral: hill.lateral + pad.dv, level: null });
+  course._relief = (s, off) => {
+    let height = natural(s, off);
+    const phase = course.phase(s);
+    for (const pad of pads) {
+      const weight = 1 - smooth((Math.hypot(phase - pad.s, off - pad.lateral) - pad.radius) / pad.blend);
+      if (weight <= 0) continue;
+      pad.level ??= course.worldAt(pad.s, pad.lateral).y + natural(pad.s, pad.lateral);
+      height += (pad.level - (course.worldAt(s, off).y + height)) * weight;
+    }
+    return height;
+  };
+}

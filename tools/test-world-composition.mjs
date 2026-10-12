@@ -28,7 +28,10 @@ const baseline={
   'cloudbreak-skyway':{hash:'d37553f4af313e50f6b24ffbc1d3e0cec0e431362e572b693e4e31d79cff4c4b',nodes:608,meshes:577,instances:15771,geometries:252,materials:142,textures:44},
   // QA screenshot reviewed: open paved drag entrance, readable gantry and clear training mound; runway adds one mesh, geometry and material.
   'titan-freestyle':{hash:'19ecd561629f7f4b3aab3709558681fd19ae543450b07081d7a7bddb1248f42f',nodes:226,meshes:161,instances:129,geometries:158,materials:37,textures:5},
-  'tremblant-woods':{hash:'9ab2fe2c864833c827ad9af7cec34c710762ecb72dfa47804f28d8444d8f30cf',nodes:307,meshes:271,instances:23200,geometries:38,materials:23,textures:13},
+  // Tremblant Woods: ground no longer lies over the road at the hairpin, solid kit barriers, a level pad under the lodge, the dock set in the water and a gentler far ground (TREMBLANT-FIX, reviewed in frames.jpg).
+  'tremblant-woods':{hash:'52d26d6708b17d071a02e1d8774255c445c83ae805c4a74418bd013514879557',nodes:307,meshes:271,instances:23134,geometries:38,materials:23,textures:13},
+  // Tremblant Snow (RELEASE-TREMBLANT-SNOW): baseline from the reviewed round-2 art, captured twice with identical results.
+  'tremblant-snow':{hash:'1c86d730fd4d7a9d284996a9c71fb2569e57f9e9c551fc515c6f10f36da8c58c',nodes:324,meshes:304,instances:22909,geometries:66,materials:52,textures:14},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -92,7 +95,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,17,'all seventeen event scenes are covered');
+  equal(COURSE.length,18,'all eighteen event scenes are covered');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
@@ -101,4 +104,4 @@ try{
     disposeTree(world);
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across seventeen events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across eighteen events.`);

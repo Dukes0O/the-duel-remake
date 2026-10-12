@@ -1,7 +1,7 @@
 // Native menu and qualifying lifecycle. QA entry installs memory-only storage.
 // No race position, lap counter, finish result or player save is injected.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=grand-prix');
+  await context.navigate('/tools/menu-check.html?flags=grand-prix,grand-prix-career');
   await context.waitFor(`window.__qaApp && document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled`,
     'isolated menu and renderer',60000);
   await context.evaluate(`(() => {

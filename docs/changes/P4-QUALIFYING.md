@@ -97,3 +97,21 @@ will be checked after that card lands.
 
 The provisional full-lap no-pit approach is replaced by Claude's approved
 moving line start. No existing race lifecycle or save format is removed.
+
+## Accepted pay dependency sync before fixture edits
+
+Sync actual integration c80ab166 into this scoped lane. Preserve incoming Snow
+on, Grand Prix Career dev, all 25 catalogue switches and the accepted payment,
+record, recovery and ghost-capacity paths. Keep only the owned qualifying
+source delta; no provisional GP admission, tuning or Summit source is imported.
+The App event conflict retains the incoming go/lap/discontinuity recorder logic
+and adds qualifying arming and pre-reload telemetry handling alongside it.
+Closed-course eligibility and the initialized grid-origin derivation stay exact.
+
+Existing headless/browser fixtures require the fresh Grand Prix ghost recorder
+after qualifying. That accepted recorder now belongs to grand-prix-career dev,
+so these fixtures explicitly enable the switch. Qualifying itself still pays
+zero, records no GP ghost and drives the same real timed laps. Keep every
+previous timing, earned-grid, default-skip, quota and prior-byte assertion.
+This changes fixture admission, not any acceptance threshold. Focused, native,
+lane and build checks are queued; no new result is claimed by this sync.

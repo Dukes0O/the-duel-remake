@@ -160,7 +160,7 @@ try {
   globalThis.cancelAnimationFrame ??= () => {};
   const app = new App();
   try {
-    app.duel.featureFlags = createFeatureFlags({storage:null,qa:false,search:'',overrides:{'grand-prix':true}});
+    app.duel.featureFlags = createFeatureFlags({storage:null,qa:false,search:'',overrides:{'grand-prix':true,'grand-prix-career':true}});
     assert.equal(app.startCampaign({mode:'grandprix',qualifying:true,seed:1989,fieldSeed:444,
       startStage:0,car:'falcone_f42',cpuDifficulty:'medium',difficulty:'casual'}),true);
     const state = app.duel.state, nativeEvents = [];

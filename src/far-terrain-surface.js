@@ -16,7 +16,7 @@ export function farTerrainHeightSampler(course) {
     const x=i*grid,z=j*grid,{index,t,distanceSq:best}=routeIndex.query(x,z);
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
-    const result={y:Math.fround(course.groundAt(roadS,off).y-.15),distance:Math.sqrt(best)};vertices.set(key,result);return result;
+    const result={y:Math.fround((course.farGroundY?course.farGroundY(x,z,roadS,off):course.groundAt(roadS,off).y)-.15),distance:Math.sqrt(best)};vertices.set(key,result);return result;
   };
   const sample=(x,z)=>{
     const i=Math.floor(x/grid),j=Math.floor(z/grid),u=x/grid-i,v=z/grid-j;

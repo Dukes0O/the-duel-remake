@@ -6,6 +6,7 @@ import {
   analyseTrack, sampleCourse, detectCorners, detectCrests, longestStraight,
   namedPieces, nameFeatures, cornerSpeeds, markSlowCorners, referenceSpeedColour, trackSectors,
   cornerId, resolveTrackIntel, courseFingerprint, buildTrackDossier, analyseLap, trackSnapshotPose,
+  SNAPSHOT_UP, SNAPSHOT_CHASE, SNAPSHOT_MAX_APPROACH,
 } from '../src/track-analysis.js';
 import {buildReview, drawMap} from './track-review.mjs';
 import {Course} from '../src/course.js';
@@ -266,10 +267,14 @@ check(dossier.flags.some(flag => flag.kind === 'overtaking'), 'A native approach
 equal(new Set(dossier.flags.map(flag => flag.id)).size, dossier.flags.length, 'Flag identities are unique');
 check(dossier.flags.every(flag => flag.snapshotS >= 0 && flag.snapshotS < course.length), 'Every live snapshot has a bounded native approach position');
 const firstCornerFlag = dossier.flags.find(flag => flag.id === 'c1');
-const cameraPose = trackSnapshotPose(course, {snapshotS: 350, camera: {up: 1.2, ahead: 70}});
-equal(cameraPose.position, {x: 0, y: 7.2, z: 350}, 'Driver-seat snapshot rests 1.2 m above the native ground at its actual approach');
+// The Team Room picture is an elevated chase view (Kyle, 11 October 2026, replacing the driver's-seat view).
+const cameraPose = trackSnapshotPose(course, {snapshotS: 350, camera: {up: SNAPSHOT_UP, ahead: 70}});
+near(cameraPose.position.z, 350 - SNAPSHOT_CHASE, 1e-8, 'Snapshot eye stands behind the viewing point on the road');
+near(cameraPose.position.y, course.groundAt(350 - SNAPSHOT_CHASE).y + SNAPSHOT_UP, 1e-8, 'Snapshot eye floats above the native ground at its actual position');
+check(SNAPSHOT_UP >= 8 && SNAPSHOT_UP <= 10 && SNAPSHOT_CHASE >= 15 && SNAPSHOT_CHASE <= 20, 'Elevated chase view is 8 to 10 m up and 15 to 20 m back');
 near(cameraPose.target.z, 420, 1e-8, 'Snapshot looks ahead along the native course');
-check(cameraPose.target.y < cameraPose.position.y, 'Snapshot aim follows the road down beyond a crest');
+near(cameraPose.target.y, course.groundAt(420).y, 1e-8, 'Snapshot aims at the road surface, not at eye height');
+check(cameraPose.target.y < cameraPose.position.y - 5, 'Snapshot looks down at the road from above');
 assert.throws(() => trackSnapshotPose(course, {snapshotS: NaN, camera: {up: 1.2, ahead: 70}}), /snapshot/i); checks++;
 // Execute the snapshot's real renderer call against the native path sampler.
 // A menu-status App must still inspect the light at the selected road position.
@@ -291,7 +296,13 @@ equal(sampleCourseLightPath(lightCourse, snapshotInputs).settings.nightAmount, 1
 equal(sampleCourseLightPath(lightCourse, {...snapshotInputs, distance: 0}).settings.nightAmount, 0,
   'The same authored path remains daytime at the start');
 equal(JSON.stringify(menuApp), menuBefore, 'Snapshot lighting input leaves race and profile unchanged');
-equal(firstCornerFlag.snapshotS, reference.corners[0].brakeS, 'Corner snapshot uses its actual reference braking point');
+const firstCorner = reference.corners[0];
+equal(firstCornerFlag.snapshotS, firstCorner.s - SNAPSHOT_MAX_APPROACH,
+  'A corner braked for from far back is viewed from no further than the maximum approach, so the corner stays in frame');
+equal(firstCornerFlag.camera.ahead, SNAPSHOT_MAX_APPROACH, 'A corner view is aimed at its apex');
+const shortBrake = buildTrackDossier(course, {reference: {...reference, corners: reference.corners.map(row => ({...row, brakeS: row.s - 40}))}});
+equal(shortBrake.flags.find(flag => flag.id === 'c1').snapshotS, firstCorner.s - 40,
+  'A corner braked for from close by is viewed from its actual reference braking point');
 equal(firstCornerFlag.engineer.targetKph, 129, 'Generated target speed comes from the actual reference corner');
 equal(firstCornerFlag.engineer.gear, 3, 'Generated gear comes from the actual reference corner');
 equal(firstCornerFlag.engineer.brakeBoard, null, 'Generated notes do not invent a braking board');
