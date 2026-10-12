@@ -36,8 +36,8 @@ tier, build, one review, merge as soon as green. Existing P4 lanes continue.
    alongside Phase 4, within the six-lane limit. Build against the 10.1
    contracts; do not stop to ask. Keep the-deep dev; art sheets to Claude.
 
-When a card waits on Claude, move on. Read the card's "Claude answers" section before resuming it, and
-playtest-inbox.md for notes with no card.
+When a card waits on Claude, move on. Read the card's "Claude answers" section
+before resuming it, and playtest-inbox.md for notes with no card.
 
 ## Ownership and limits
 

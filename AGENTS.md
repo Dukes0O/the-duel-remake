@@ -122,9 +122,9 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     within the three-round cap; nothing waits on Kyle except a release.
 16. Claude answers a card's question in that card's own file
     (`docs/board/cards/<id>.md`, section "Claude answers") and clears its
-    `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox carries only questions
-    and notes that have no card, so two answers never collide in one place
-    (Kyle, 12 October 2026).
+    `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
+    carries only questions and notes that have no card, so two answers never
+    collide in one place (Kyle, 12 October 2026).
 
 ## Gates (SPEC 0.5)
 
