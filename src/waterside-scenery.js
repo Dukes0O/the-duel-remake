@@ -500,7 +500,7 @@ export function addWaterside(group, course) {
   for (const [zone, lamps] of lampZones) {
     const bodies = lamps.map(l => matrixOf([l.x, l.y, l.z], l.angle, [1, (l.height) / 11.5, 1]));
     const lenses = lamps.map(l => matrixOf([l.head[0], l.head[1] - .1, l.head[2]], l.angle));
-    instanced(water, `Harbour lamps ${zone}`, lampBody, lampMaterial, bodies, { cast: true }); instanced(water, `Harbour lamp lenses ${zone}`, lens, lensMaterial, lenses);
+    instanced(water, `Harbour lamps ${zone}`, lampBody, lampMaterial, bodies); instanced(water, `Harbour lamp lenses ${zone}`, lens, lensMaterial, lenses);
     counts.lamps += lamps.length;
   }
 
@@ -512,7 +512,7 @@ export function addWaterside(group, course) {
   for (const [key, list] of byBasin) {
     const kind = key.split('/')[1];
     geometries[kind] ??= yachtGeometry(kind);
-    instanced(water, `Yachts ${key}`, geometries[kind], yachtMaterial, list.map(y => matrixOf([y.x, y.y, y.z], y.heading, [y.scale, y.scale, y.scale])), { colours: list.map(y => y.tint), cast: true });
+    instanced(water, `Yachts ${key}`, geometries[kind], yachtMaterial, list.map(y => matrixOf([y.x, y.y, y.z], y.heading, [y.scale, y.scale, y.scale])), { colours: list.map(y => y.tint) });
     counts.yachts += list.length;
   }
   if (plan.pier.length) {
@@ -525,7 +525,7 @@ export function addWaterside(group, course) {
   if (plan.palms.length) {
     const material = new THREE.MeshStandardMaterial({ name: 'Palms', vertexColors: true, roughness: .85, side: THREE.DoubleSide, emissive: 0x050a05 }), geometry = palmGeometry(), zones = new Map();
     for (const palm of plan.palms) { if (!zones.has(palm.zone)) zones.set(palm.zone, []); zones.get(palm.zone).push(palm); }
-    for (const [zone, palms] of zones) instanced(water, `Palms ${zone}`, geometry, material, palms.map(p => matrixOf([p.x, p.y, p.z], p.yaw, [p.scale, p.scale, p.scale], 0, p.lean)), { cast: true });
+    for (const [zone, palms] of zones) instanced(water, `Palms ${zone}`, geometry, material, palms.map(p => matrixOf([p.x, p.y, p.z], p.yaw, [p.scale, p.scale, p.scale], 0, p.lean)));
     counts.palms += plan.palms.length;
   }
   addReflections(water, plan);
