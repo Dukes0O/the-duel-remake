@@ -1,5 +1,22 @@
 # Remake verification
 
+## Tremblant and Team Room fixes — 12 October 2026
+
+Kyle approved both fixes for release that night ("yes, put it live tonight",
+"yes, put them live tonight too"); Claude was Release Manager. Built from
+integration 66281669 plus only TREMBLANT-FIX and TEAMROOM-FIX, so later
+integration work (Grand Prix pay) did not ship. Installed at about 07:40 UTC
+from exact commit `09fe13ef`; live build `20261012073726-ea597c79fdf7` verified
+over HTTP. Full tier 398/398 in 1294.17 s, alone with four jobs, on that commit;
+combat balance `--check` passed on the first candidate (0f40abd4), whose only
+later change is Team Room picture rendering.
+
+The first staged candidate (0f40abd4) threw a browser error from the menu camera
+after a Team Room picture with the player's car parked in frame; the live build
+before it was clean. The parked car was removed (09fe13ef) and the staged build
+then opened the Team Room, clicked every map flag and closed it with no
+errors, in disposable storage. Previous build kept in `dist-previous`.
+
 ## Tremblant Woods and arena fixes release — 11 October 2026
 
 Kyle approved Tremblant Woods with the Grand Prix on 11 October and chose to

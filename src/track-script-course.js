@@ -7,6 +7,7 @@ import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces
 import { hillLocal, hillReach, hillHeight, runWeight, basinReach } from './circuit-hills.js';
 import { makeRng } from './rng.js';
 import {installPitLane, pitAt} from './pit-lane.js';
+import { KIT_FOOTPRINTS } from './kit-footprints.js';
 
 // Cars are slower than the course's top speed on tight corners; the racing line
 // is stored for a reference car and computer racers scale it to their own. A
@@ -235,6 +236,50 @@ function scatterScenery(course) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Solid kit pieces (`solid: true` on a circuit's `kitPlacements`): the barriers,
+// fences, posts and buildings a circuit stands beside the road are boxes a car
+// hits, the size and place of the piece itself (the face toward the road is the
+// drawn face). The kit loader places a piece on the ground at its place with the
+// road's heading turned by the piece's `heading`, so the box is built the same
+// way. A thin piece is thickened away from the road to 0.8 m, so a fast car
+// cannot slip through it. They are not walls of the script: nothing draws them
+// (the piece is the drawing) and the walls list does not hold them.
+// ---------------------------------------------------------------------------
+const THIN_PIECE = .8;
+
+function kitSolids(course) {
+  const solids = [];
+  (course.def.kitPlacements ?? []).forEach((piece, index) => {
+    if (!piece.solid) return;
+    const foot = KIT_FOOTPRINTS[piece.id];
+    if (!foot) throw new TrackScriptError(`Kit piece "${piece.id}" is marked solid but has no footprint in src/kit-footprints.js.`);
+    const scale = Array.isArray(piece.scale) ? piece.scale : Array(3).fill(piece.scale ?? 1);
+    const ground = course.groundAt(piece.s, piece.lateral), heading = ground.heading + (piece.heading ?? 0);
+    const halfX = foot.width * scale[0] / 2;
+    let halfZ = foot.depth * scale[2] / 2, x = ground.x, z = ground.z;
+    // The piece's thickness runs across the road: thicken it on the side away from the road.
+    const away = Math.sign(piece.lateral) || 1, awayX = Math.cos(ground.heading) * away, awayZ = -Math.sin(ground.heading) * away;
+    if (halfZ * 2 < THIN_PIECE && Math.abs(Math.sin(heading) * awayX + Math.cos(heading) * awayZ) > .9) {
+      const extra = (THIN_PIECE - halfZ * 2) / 2, push = Math.sign(Math.sin(heading) * awayX + Math.cos(heading) * awayZ);
+      x += Math.sin(heading) * push * extra; z += Math.cos(heading) * push * extra; halfZ += extra;
+    }
+    // The ground under both ends and the middle, read where the piece stands.
+    const heights = [-1, 0, 1].map(k => {
+      const at = course.nearest(ground.x + Math.cos(heading) * halfX * k, ground.z - Math.sin(heading) * halfX * k);
+      return course.groundAt(at.s, at.lateral).y;
+    });
+    const low = Math.min(...heights) - .1, high = Math.max(...heights) + foot.height * scale[1];
+    const near = course.nearest(ground.x, ground.z);
+    solids.push({
+      id: `kit-solid-${index}-${piece.id}`, kind: 'prop', shape: 'box', barrier: foot.depth <= 1, kitSolid: true, side: away,
+      s: course.phase(near.s), off: near.lateral, x, y: low, z, heading, halfX, halfZ, height: high - low, minY: low, maxY: high,
+      theme: course.themeAt(near.s),
+    });
+  });
+  return solids;
+}
+
 export function trackScriptSolids(course) {
   const f = course.features, script = course.script;
   const finishS = course.closed ? 0 : course.length;
@@ -256,6 +301,9 @@ export function trackScriptSolids(course) {
   }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
+  // After the planted scenery, so the trees stand exactly where they did.
+  f.kitSolids = kitSolids(course);
+  f.obstacles.push(...f.kitSolids);
   course.obstacleBuckets = new Map(); course.rockBuckets = new Map();
   const buckets = Math.ceil(course.length / 64);
   course.bucketCount = buckets;
