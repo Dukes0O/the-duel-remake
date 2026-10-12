@@ -413,13 +413,13 @@ for (const row of [{ ...base, mode: 'duel' }, { ...base, mode: 'timetrial', time
   const added = recordFinish(board, row, player);
   check(added.recorded, `${row.mode} finish records independently`); board = added.board;
 }
-equal(board.entries.length, 3, 'all three modes coexist');
+equal(board.entries.length, 2, 'legacy faster TimeTrial replaces Duel while GP stays separate');
 check(saveLeaderboard(board, storage), 'memory-only leaderboard save');
 board = loadLeaderboard(storage);
-equal(board.entries.length, 3, 'all mode records survive reload');
+equal(board.entries.length, 2, 'legacy combined-key and separate GP records survive reload');
 for (const mode of ['duel', 'timetrial', 'grandprix']) {
   const rows = getLeaderboard(board, { eventId: COURSE[0].id, mode });
-  equal(rows.map(row => row.mode), [mode], `${mode} query cannot mix modes`);
+  equal(rows.map(row => row.mode), mode === 'duel' ? [] : [mode], `${mode} query preserves legacy faster-row deduplication and cannot mix modes`);
 }
 console.log(`Existing Grand Prix: ${checks} eligibility, grid, legacy replay and per-mode record checks passed.`);
 
