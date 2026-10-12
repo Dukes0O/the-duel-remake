@@ -17,8 +17,8 @@ const MODEL = Object.freeze({
   historyPerPlayer: 60, // current profile loader retains the latest 60
   personalBestsPerPlayer: 128, // scenario assumption; no production cap
   settledKeysPerPlayer: 128, // scenario assumption; no production cap
-  currentRecordsPerPlayer: 28, // 14 events x 2 car/mode combinations
-  archivedRecordsPerPlayer: 14, // scenario assumption (one per event); no production cap
+  currentRecordsPerPlayer: 30, // 15 events x 2 car/mode combinations
+  archivedRecordsPerPlayer: 15, // scenario assumption (one per event); no production cap
   archivedGhosts: 1, // scenario assumption; no production cap
   legacySharedBests: 200, // OLD-02 retires this unbounded legacy key
   activeGhostBytes: MAX_GHOST_BYTES, // reserve the real active ghost cap
@@ -28,7 +28,7 @@ const cars = Object.keys(CARS);
 const upgradeTypes = Object.keys(UPGRADE_TYPES);
 const recordStages = COURSE.map((stage, index) => ({ stage, index }))
   .filter(({ stage }) => !stage.practice && !stage.stuntTrial && !['drift', 'checkpoint'].includes(stage.kind));
-assert.equal(recordStages.length, 14);
+assert.equal(recordStages.length, 15);
 assert.equal(MAX_GHOST_SAMPLES, 1800);
 
 function storage() {

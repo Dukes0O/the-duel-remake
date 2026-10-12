@@ -201,3 +201,19 @@ test('the wet look is looks only: glossier asphalt, no change to the road or its
   assert.ok(HARBOUR_LIGHTS.wetRoad && HARBOUR_LIGHTS.wetRoad.performanceShare < 1, 'Performance draws the reflections at reduced strength');
   assert.equal(course.script.surfaceAt(500), 'asphalt');
 });
+
+test('no wall stands inside the road, the Lantern Hairpin included (RELEASE-HARBOUR)', () => {
+  // The general road-clear test (test-circuits.mjs) sweeps a car along the road. This is the direct proof behind its
+  // hairpin allowance: every corner of every track wall lies outside the drivable width, with half a metre to spare.
+  let smallest = Infinity;
+  for (const wall of course.features.obstacles.filter(item => item.trackWall)) {
+    const cos = Math.cos(wall.heading), sin = Math.sin(wall.heading);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const x = wall.x + sx * wall.halfX * cos + sz * wall.halfZ * sin, z = wall.z - sx * wall.halfX * sin + sz * wall.halfZ * cos;
+      const near = course.nearest(x, z), frame = course.at(near.s);
+      const lateral = Math.abs((x - frame.x) * Math.cos(frame.heading) - (z - frame.z) * Math.sin(frame.heading));
+      smallest = Math.min(smallest, lateral - course.roadHalfWidthAt(near.s));
+    }
+  }
+  assert.ok(smallest >= .4, `the nearest wall corner is ${smallest.toFixed(2)} m beyond the road edge`);
+});
