@@ -481,7 +481,7 @@ const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 const EXISTING_GP_TUNING = Object.freeze({
   'azure-riviera': Object.freeze({
-    fieldPace: Object.freeze({easy: .80, medium: .78, hard: .77}), fieldAggression: 1.4,
+    fieldPace: Object.freeze({easy: .96, medium: .91, hard: .90}), fieldAggression: 1.8,
   }),
 });
 export function courseForGrandPrix(def) {

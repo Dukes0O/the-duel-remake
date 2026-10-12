@@ -116,3 +116,11 @@ The new regression first failed on the unchanged old source at “authored Harbo
 
 ## Fresh legacy record correction, before assertions
 Save Guardian reproduced Duel120s followed by slower TimeTrial130s: the carried unconditional mode discriminator admitted a second row where the original combined key rejects it. The Director approved restoring the original Duel/TimeTrial key; the faster TT115s replaces Duel120s, and GP180s stays separate through its mode event key. Therefore the earlier three-row coexistence assumption is corrected to two rows. No timing, byte preservation, capacity, ghost bound or record-validity check changes. This correction must remain when the retained lane later syncs the separate career-pay slice.
+
+## Settled Pacific and final Azure choice, before code
+
+Original CLI Pacific attempt 1 on 2ec80395 passed all section 3.2 targets in 197.78 seconds: wins 22/30, 13/30 and 5/30; zero opening pile-ups; 90 actual player three-lap finishes; 630/630 CPU finishes; Medium passes 3.4667 per race. Keep its GP pace and aggression multipliers at one. No repeat is needed.
+
+Azure attempt 2 on the same source ran all 90 races in 406.97 seconds. It kept zero opening pile-ups and 90 player three-lap / 630 CPU finishes, but 30/30 player wins at each difficulty exceeded every win band. Medium passes 2.4667 per race missed three. Raw reports are in integration evidence leaves pacific-baseline-1-2ec80395 and azure-tune-2-2ec80395. Original CLI emits no final-state hashes; none are claimed.
+
+The Director approves Azure GP-only pace .96/.91/.90 and aggression 1.8 for its third and final attempt. Observed best-AI/player finish-time quantiles estimate .9614/.9112/.8999 when applied to the current .80/.78/.77 values for desired win shares; this is a starting estimate, not a pass. The existing capped pass-window/dive logic gets the aggression increase from 1.4 to 1.8 to address the passing deficit. Keep original first-lap spacing, grid, width, geometry, driver, seeds and every target/assertion exact. No other circuit or mode changes. Count the earlier capacity interruption as attempt one. After this final original 90, report the closest complete result honestly and move on under Claude 21:20. New jobs wait for a fresh shared-slot check.
