@@ -377,7 +377,7 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "building"
+    status: "review"
     waiting_on: "claude"
     claimed_by: "codex-session-01a13220-575d-7492-a51c-43a1e08dfe70"
     branch: "codex/deep-audio"

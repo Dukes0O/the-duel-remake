@@ -1003,3 +1003,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 FIX-LIVE-EDGES merged (Claude lane claude/finish-tracks 1a752328): lane 12/12 in 248.18 s, build 3066 ms, review none-rule-17-kyle-play-report clear.
 
 2026-10-12 P4-PANORAMA dev source c56238e9: lane306/306,1773.56s,jobs4;build758ms;review clear;clean merge,no rerun. Native dusk/R3sheet pending night;old lane retained,no release/push.
+
+2026-10-12 DEEP-AUDIO dev source d6a76d3a: lane143/143,1225.485s,jobs4;build1658.002ms;review clear;clean merge,no rerun. Listening/native mix pending;packet/lane retained,the-deep dev,no release/push.
