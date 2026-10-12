@@ -1,3 +1,4 @@
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 import assert from 'node:assert/strict';
 import { createFeatureFlags, EXPERIMENTAL_KEY, FEATURE_STATES } from '../src/feature-flags.js';
 
@@ -19,11 +20,11 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 25
-    && ['panorama-ridge', 'harbour-lights', 'snow-world', 'the-deep', 'grand-prix-career'].every(name => FEATURE_STATES[name] === 'dev')
-    && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES['tremblant-woods'] === 'on'
-    && FEATURE_STATES['tremblant-snow'] === 'on',
-  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix, Tremblant Woods and Tremblant Snow are released; career backup, Panorama Ridge, Harbour Lights, Snow, The Deep and Grand Prix career stay dev; retired switches stay absent');
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 21 + CIRCUIT_MANIFESTS.length
+    && ['snow-world', 'the-deep', 'grand-prix-career'].every(name => FEATURE_STATES[name] === 'dev')
+    && FEATURE_STATES['grand-prix'] === 'on'
+    && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),
+  'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; career backup, Snow, The Deep and Grand Prix career stay dev; registered course switches follow their manifests; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
 // These switches were released on 9 October 2026, with seekers on 10 October. Their development-switch
 // isolation, proved earlier on the real catalog, is kept by pinning each one to dev.

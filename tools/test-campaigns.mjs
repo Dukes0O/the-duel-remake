@@ -1,6 +1,7 @@
 // Long, deterministic driving matrix split from src/test.js for parallel shards.
 import {COURSE,DRIVE} from '../src/config.js';
 import {App} from '../src/app.js';
+import {useRacingLine} from './track-script-drive.mjs';
 
 let pass=0,fail=0;
 const ok=(condition,message)=>{if(condition)pass++;else{fail++;console.error('  FAIL:',message);}};
@@ -20,6 +21,9 @@ if(process.env.DUEL_SKIP_CAMPAIGNS){
 }else{
   const selected=index=>!shard||index%shard.count===shard.index;
   const expansionEvents=COURSE.filter(course=>course.kind&&!course.practice);
+  // The stock demo driver (src/app.js) looks only 220 m ahead, so it cannot brake in time for Casino Corner at the end of Harbour Lights'
+  // long straight or for the 9 m Lantern Hairpin (RELEASE-HARBOUR). That course is driven with the racing-line driver the circuit tests use.
+  const racingLineDriven=new Set(['harbour-lights']);
   let scenarioIndex=0;
   const runs = [];
   for (const seed of [1, 42, 1989, 2026, 90517]) {
@@ -62,7 +66,7 @@ if(process.env.DUEL_SKIP_CAMPAIGNS){
     if (!selected(scenarioIndex++)) continue;
     const outcomes=[];
     for(const fps of [30,144]){
-      const app=new App();app.autopilot=true;app.duel.seed=1989;
+      const app=new App();app.autopilot=true;app.duel.seed=1989;if(racingLineDriven.has(event.id))useRacingLine(app);
       app.duel.startCampaign({startStage:COURSE.indexOf(event),car:event.requiredCar||'falcone_f42',cpuDifficulty:'easy'});app._scriptedCrashDone=true;
       let frames=0;while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<fps*400)app.advance(1/fps);
       const s=app.duel.state;outcomes.push({status:s.status,time:s.totalTimeSec,score:s.score,hits:s.majorCrashes,jumps:s.jumps,won:s.results?.won,laps:s.completedLaps});

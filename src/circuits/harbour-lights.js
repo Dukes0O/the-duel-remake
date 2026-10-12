@@ -224,3 +224,10 @@ let placements = null;
 export const HARBOUR_LIGHTS = Object.freeze(Object.defineProperty({ ...BASE }, 'kitPlacements', {
   enumerable: true, get: () => (placements ??= Object.freeze(buildKitPlacements(BASE, STREET))),
 }));
+
+// Registration belongs to this course; generation and geometry stay unchanged.
+export const manifest = Object.freeze({
+  id: 'harbour-lights', flag: 'harbour-lights', state: 'on', price: 1800,
+  grandPrix: true, releaseOrder: 2,
+  driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
+});

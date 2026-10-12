@@ -4,7 +4,7 @@ import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
 import {supportsCombat,ufoDestination} from '../src/combat.js';
 
 const stages=COURSE.map((stage,index)=>supportsCombat(stage)?index:null).filter(index=>index!==null);
-assert.equal(stages.length,11,'the landing matrix covers all 11 combat courses');
+const visited=new Set();
 let shortcutLandings=0,landings=0;
 for(let n=0;n<260&&landings<100;n++){
   const onShortcut=n%4===0,stage=onShortcut?stages[0]:stages[n%stages.length],seed=9100+n*37;
@@ -24,6 +24,7 @@ for(let n=0;n<260&&landings<100;n++){
   if(preview.kind==='blocked')continue;
   const beforeLap=player.completedLaps,beforeGate=player.nextLapGate,beforeRival=rival.s;
   assert.ok(duel.fireWeapon('ufo'),'jump fires on '+COURSE[stage].id+' seed '+seed);
+  visited.add(COURSE[stage].id);
   landings++;if(onShortcut)shortcutLandings++;
   assert.equal(player.s,preview.toS,'actual route position matches the visible preview');
   assert.equal(player.lateral,preview.lateral,'actual lane matches the visible preview');
@@ -46,6 +47,7 @@ for(let n=0;n<260&&landings<100;n++){
   assert.equal(player.stageCrashes,crashes,'no landing crash on '+COURSE[stage].id+' seed '+seed);
   assert.equal(player.boundaryResets,resets,'no landing reset on '+COURSE[stage].id+' seed '+seed);
 }
+assert.deepEqual([...visited].sort(),COURSE.filter(supportsCombat).map(stage=>stage.id).sort(),'actual safe landings reach every combat course');
 assert.equal(landings,100,'one hundred seeded safe jumps are available');
 assert.ok(shortcutLandings>=15,'matrix includes at least fifteen shortcut landings');
 console.log('UFO landing: '+landings+' safe jumps across '+stages.length+' combat courses, '+shortcutLandings+' on shortcuts, zero crashes or resets within two seconds.');

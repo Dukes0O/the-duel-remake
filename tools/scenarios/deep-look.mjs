@@ -11,7 +11,9 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const page = quality => `/tools/deep-look.html?quality=${quality}&still=1&clean=1&manual=1`;
+// DEEP_LOOK_ZONE=sample photographs a whole zone through the scene hook (DEEP-WATER).
+const ZONE = process.env.DEEP_LOOK_ZONE || '';
+const page = quality => `/tools/deep-look.html?quality=${quality}&still=1&clean=1&manual=1${ZONE ? `&zone=${encodeURIComponent(ZONE)}` : ''}`;
 
 async function open(context, quality, scale = 1) {
   await context.command('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: scale, mobile: false });
@@ -56,7 +58,7 @@ export async function run(context) {
   }
   const spec = { W: 1600, H: 4 + 3 * (448 + 4), cw: 796, ch: 448, cols: 2, gap: 4, cells, quality: 0.92 };
   const sheet = await context.evaluate(`(${pageSheet.toString()})(${JSON.stringify(spec)})`);
-  const sheetPath = join(context.outputDir, 'look-sheet.jpg');
+  const sheetPath = join(context.outputDir, ZONE ? `zone-${ZONE}-sheet.jpg` : 'look-sheet.jpg');
   writeFileSync(sheetPath, Buffer.from(sheet.slice(sheet.indexOf(',') + 1), 'base64'));
   context.screenshots.push(sheetPath);
 

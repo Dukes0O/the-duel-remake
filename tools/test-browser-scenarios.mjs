@@ -1,0 +1,119 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {join, resolve} from 'node:path';
+import * as suite from './run-browser-scenarios.mjs';
+
+const root = resolve('browser runner mock project');
+const archive = resolve(suite.PROJECT_ROOT ?? root, '.evidence', 'FAC-07-pure');
+const turn = () => new Promise(setImmediate);
+
+function fixture(names, overrides = {}) {
+  const calls = [], reports = new Map(), rows = [];
+  let active = 0, maximum = 0, bundle, summary;
+  const operations = {
+    discover: async () => names,
+    build: async () => { calls.push('build'); bundle = join(root, '.qa-dist', 'browser-suite-owned'); return bundle; },
+    mkdir: async () => { calls.push('mkdir'); },
+    scenario: async (name, outputDir, sharedBundle) => {
+      assert.equal(sharedBundle, bundle, 'every child reads the one completed bundle');
+      active++; maximum = Math.max(maximum, active); calls.push('start:' + name);
+      const quiet = suite.QUIET_SCENARIOS?.includes(name);
+      if (quiet) assert.equal(active, 1, 'timing begins only after all prior children close');
+      await turn(); await turn();
+      if (quiet) assert.equal(active, 1, 'no new scenario overlaps a timing child');
+      active--; calls.push('close:' + name);
+      const reportPath = join(outputDir, 'report.json');
+      reports.set(reportPath, {passed: true, memoryOnlySaves: true, screenshots: [name + '.png'], warnings: [], issues: []});
+      rows.push(name);
+      return {exitCode: 0, output: '', reportPath};
+    },
+    read: async path => JSON.stringify(reports.get(path)),
+    write: async (path, value) => { assert.equal(active, 0); summary = JSON.parse(value); calls.push('summary'); },
+    cleanup: async path => { assert.equal(path, bundle); assert.equal(active, 0, 'owned bundle cleanup waits for every child'); calls.push('cleanup'); },
+    log: () => {}, error: () => {},
+    ...overrides,
+  };
+  return {operations, calls, reports, rows, get maximum() {return maximum;}, get summary() {return summary;}};
+}
+
+test('suite CLI retains all/output and rejects unsafe or ambiguous input before work', () => {
+  assert.equal(typeof suite.parseSuiteArguments, 'function', 'explicit suite arguments are parsed before building');
+  assert.deepEqual(suite.parseSuiteArguments(['--all']), {all: true, names: null, jobs: 4, outputDir: null});
+  assert.deepEqual(suite.parseSuiteArguments(['--output-dir', '.evidence/test', '--scenarios', 'menu,night-race', '--jobs', '2']),
+    {all: false, names: ['menu', 'night-race'], jobs: 2, outputDir: '.evidence/test'});
+  for (const args of [[], ['--all', '--all'], ['--all', '--scenarios', 'menu'], ['--scenarios', '../private'],
+    ['--scenarios', 'menu,menu'], ['--scenarios', 'menu,'], ['--all', '--jobs', '0'], ['--all', '--jobs', '5'],
+    ['--all', '--jobs', '1.5'], ['--all', '--jobs'], ['--all', '--output-dir'], ['--all', '--unknown']])
+    assert.throws(() => suite.parseSuiteArguments(args));
+});
+
+test('one completed build feeds up to four private child runs and ordered unchanged results', async () => {
+  const names = ['one', 'two', 'three', 'four', 'five', 'six'];
+  const f = fixture(names);
+  assert.equal(await suite.main(['--all', '--jobs', '4', '--output-dir', archive], f.operations), 0);
+  assert.equal(f.maximum, 4, 'four children actually overlap, never five');
+  assert.equal(f.calls.filter(call => call === 'build').length, 1);
+  assert.equal(f.calls.at(-1), 'cleanup');
+  assert.deepEqual(f.summary.rows.map(row => row.name), names);
+  assert.deepEqual([f.summary.schema, f.summary.count, f.summary.passed, f.summary.failed], [1, 6, 6, 0]);
+  for (const row of f.summary.rows) assert.deepEqual([row.passed, row.exitCode, row.screenshots, row.warnings, row.issues, row.error],
+    [true, 0, [row.name + '.png'], 0, 0, null]);
+});
+
+test('all/jobs4 drains around timing scenarios even when an earlier child fails', async () => {
+  assert.ok(suite.QUIET_SCENARIOS?.includes('frame-pacing'));
+  assert.ok(suite.QUIET_SCENARIOS?.includes('grand-prix'), 'embedded timing is exclusive too');
+  const f = fixture(['one', 'two', 'frame-pacing', 'three', 'grand-prix', 'four']);
+  const actual = f.operations.scenario;
+  f.operations.scenario = async (...args) => {
+    const run = await actual(...args);
+    if (args[0] === 'one') run.exitCode = 1;
+    return run;
+  };
+  assert.equal(await suite.main(['--all', '--jobs', '4', '--output-dir', archive], f.operations), 1);
+  const start = f.calls.indexOf('start:frame-pacing');
+  assert.ok(f.calls.indexOf('close:one') < start && f.calls.indexOf('close:two') < start);
+  assert.ok(f.calls.indexOf('close:frame-pacing') < f.calls.indexOf('start:three'));
+  assert.equal(f.summary.count, 6, 'failure preserves every scenario result');
+  assert.equal(f.summary.failed, 1);
+});
+
+test('explicit touched-only selection uses caller order and rejects unknown names without a build', async () => {
+  const f = fixture(['one', 'two', 'three']);
+  assert.equal(await suite.main(['--scenarios', 'three,one', '--jobs', '1', '--output-dir', archive], f.operations), 0);
+  assert.equal(f.maximum, 1);
+  assert.deepEqual(f.summary.rows.map(row => row.name), ['three', 'one']);
+  const bad = fixture(['one']);
+  await assert.rejects(suite.main(['--scenarios', 'missing'], bad.operations), /Unknown scenario/);
+  assert.deepEqual(bad.calls, []);
+});
+
+test('build failure starts no scenario and propagates a runner error', async () => {
+  const f = fixture(['one'], {build: async () => {throw Error('actual build failed');}});
+  await assert.rejects(suite.main(['--all', '--output-dir', archive], f.operations), /actual build failed/);
+  assert.ok(!f.calls.some(call => call.startsWith('start:')));
+  assert.ok(!f.summary);
+});
+
+test('scenario crashes and report defects all fail without weakening acceptance or dropping rows', async () => {
+  const names = ['launch', 'missing', 'malformed', 'warnings', 'issues', 'persistent', 'exit', 'false', 'valid'];
+  const f = fixture(names);
+  const actual = f.operations.scenario;
+  f.operations.scenario = async (...args) => {
+    if (args[0] === 'launch') throw Error('child spawn failed');
+    const run = await actual(...args), report = f.reports.get(run.reportPath);
+    if (args[0] === 'missing') run.reportPath = null;
+    if (args[0] === 'warnings') report.warnings = ['real warning'];
+    if (args[0] === 'issues') report.issues = ['real issue'];
+    if (args[0] === 'persistent') report.memoryOnlySaves = false;
+    if (args[0] === 'exit') run.exitCode = 7;
+    if (args[0] === 'false') report.passed = false;
+    return run;
+  };
+  const read = f.operations.read;
+  f.operations.read = path => path.includes('malformed') ? '{invalid' : read(path);
+  assert.equal(await suite.main(['--all', '--jobs', '4', '--output-dir', archive], f.operations), 1);
+  assert.deepEqual(f.summary.rows.map(row => row.name), names);
+  assert.deepEqual([f.summary.count, f.summary.passed, f.summary.failed], [9, 1, 8]);
+  assert.equal(f.calls.at(-1), 'cleanup');
+});

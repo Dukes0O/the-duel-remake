@@ -1,3 +1,4 @@
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 // Deterministic Team Room references, built with the production App driver.
 // All storage and completion overrides belong to a disposable Node fixture.
 import {COURSE} from '../src/config.js';
@@ -7,7 +8,7 @@ import {courseHasWinterSurfaces} from '../src/race-surfaces.js';
 import {getRouteVariants, supportsRouteVariants} from '../src/route-variants.js';
 import {lapCrossing as crossing, compactLapTrace, lapSectorTimes, analyseLap} from '../src/track-analysis.js';
 import {mkdirSync, renameSync, writeFileSync} from 'node:fs';
-import {dirname, resolve} from 'node:path';
+import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -139,13 +140,19 @@ export function installReferenceFixture(app, target) {
   };
 }
 
+export function referenceDriver(target) {
+  return CIRCUIT_MANIFESTS.find(row=>row.id===target.eventId)?.driver ??
+    {car:REFERENCE_POLICY.car,driverId:REFERENCE_POLICY.driver,controller:'standard',skill:.95};
+}
+
 export function startReferenceApp(app, target) {
+  const driver = referenceDriver(target);
   const startStage = COURSE.findIndex(definition => definition.id === target.eventId);
   if (startStage < 0) throw Error(`Unknown reference event: ${target.eventId}`);
   app.profile = {...app.profile, courses: {version: 1, unlocked: COURSE.map(course => course.id)}};
   app._saveProfile();
-  const options = {startStage, seed: target.seed, mode: 'duel', car: REFERENCE_POLICY.car,
-    driverId: REFERENCE_POLICY.driver, cpuDifficulty: REFERENCE_POLICY.cpu,
+  const options = {startStage, seed: target.seed, mode: 'duel', car: driver.car,
+    driverId: driver.driverId, cpuDifficulty: REFERENCE_POLICY.cpu,
     difficulty: 'casual', opponentCount: 0, upgrades: {},
     // A course with snow or ice offers the tyre choice on the setup: the reference drives on winter tyres there.
     ...(courseHasWinterSurfaces(COURSE[startStage]) ? {tyre: 'winter'} : {})};
@@ -155,14 +162,14 @@ export function startReferenceApp(app, target) {
   // Duel through its native API with the validated setup and required seed.
   app.duel.startCampaign(options);
   const state = app.duel.state;
-  if (state.seed !== target.seed || state.driverId !== REFERENCE_POLICY.driver ||
+  if (state.seed !== target.seed || state.driverId !== driver.driverId ||
       state.cpuDifficulty !== REFERENCE_POLICY.cpu || Object.values(state.upgrades).some(level => level !== 0))
     throw Error(`Reference setup differs from the fixed policy: ${target.key}`);
   app.autopilot = true;
   app._scriptedCrashDone = true;
   // Claude 11 October: authored roads use the existing circuit driver at its
   // Medium skill. Legacy roads retain the standard App driver unchanged.
-  if (app.duel.course.script && app.duel.course.racingLine) useRacingLine(app, .95);
+  if (app.duel.course.script && app.duel.course.racingLine) useRacingLine(app, driver.skill);
   return {options, fixture: installReferenceFixture(app, target)};
 }
 
@@ -184,7 +191,7 @@ export async function buildReferenceRecord(target, {maxSeconds = 720, AppClass} 
         completedLaps: state.completedLaps, assistedLaps: state.assistedLaps});
       const metrics = analyseLap(course, {trace: lap.trace, lapMs: lap.lapMs, route: target.route});
       return {eventId: target.eventId, route: target.route, seed: target.seed,
-        car: REFERENCE_POLICY.car, driver: REFERENCE_POLICY.driver, cpu: REFERENCE_POLICY.cpu,
+        car: referenceDriver(target).car, driver: referenceDriver(target).driverId, cpu: REFERENCE_POLICY.cpu,
         fixtureVersion: REFERENCE_POLICY.fixtureVersion, ...metrics};
     } catch (error) {
       throw Error(`${target.key}: ${error.message} (native laps ${app.duel.state.completedLaps}/3, status ${app.duel.state.status})`, {cause: error});
@@ -241,19 +248,38 @@ export async function buildReferenceSet({targets = referenceTargets(), run = bui
   return records;
 }
 
+export function publishReferenceSet(records, {output= new URL('../src/generated/reference-laps/',import.meta.url),
+  makeDirectory=mkdirSync,write=writeFileSync,rename=renameSync}={}) {
+  const groups=new Map();
+  for(const [key,record]of Object.entries(records)) {
+    if(key!==`${record.eventId}|${record.route}`)throw Error('Reference record key differs from its event/route.');
+    if(!groups.has(record.eventId))groups.set(record.eventId,{});
+    groups.get(record.eventId)[key]=record;
+  }
+  const targets=referenceTargets();
+  for(const [id,rows]of groups) {
+    const expected=targets.filter(row=>row.eventId===id).map(row=>row.key).sort();
+    if(!expected.length||JSON.stringify(Object.keys(rows).sort())!==JSON.stringify(expected))
+      throw Error('Reference publish needs every route for '+id);
+  }
+  makeDirectory(output,{recursive:true});
+  for(const [id,rows]of groups) {
+    const path=fileURLToPath(new URL(id+'.json',output));
+    write(path+'.tmp',JSON.stringify(rows)+'\n');rename(path+'.tmp',path);
+  }
+  return groups.size;
+}
+
 async function main() {
   const args = process.argv.slice(2), event = args.find(arg => arg.startsWith('--event='))?.slice(8);
   const route = args.find(arg => arg.startsWith('--route='))?.slice(8), probe = args.includes('--probe');
-  if ((event || route) && !probe) throw Error('A filtered reference run needs --probe; partial data cannot be published.');
+  if (route && !probe) throw Error('A filtered reference run needs --probe; partial data cannot be published.');
   const targets = referenceTargets().filter(target => (!event || target.eventId === event) && (!route || target.route === route));
   if (!targets.length) throw Error('No reference target matched.');
   const records = await buildReferenceSet({targets,
     onRecord: (target, record) => console.log(`${target.key}: ${record.lapMs} ms, ${record.trace.length} samples, ${record.courseFingerprint}`)});
   if (probe) return;
-  const output = fileURLToPath(new URL('../src/generated/reference-laps.json', import.meta.url));
-  mkdirSync(dirname(output), {recursive: true});
-  writeFileSync(`${output}.tmp`, `${JSON.stringify(records)}\n`);
-  renameSync(`${output}.tmp`, output);
+  publishReferenceSet(records);
   console.log(`Built ${targets.length} complete reference records.`);
 }
 

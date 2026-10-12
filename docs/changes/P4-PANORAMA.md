@@ -257,3 +257,11 @@ rear/HUD sampler with fresh worlds/full actual views. Replace the empty-kit
 comparison with full-kit day/dusk worlds, then obsolete paired/relative reports
 with one full final-dusk leg under Kyle rules7–10. Final art removes striped
 Replace striped fence/mountain snow,11m ridge and unsafe line/follow only on Panorama. Remove provisional legacy GP admissions here; P4-GP-EXISTING owns them.
+
+## Factory resume: source candidate design, before code
+
+Fast-forward the retained 0a50336d lane to Claude's accepted Hell Gate fix ca160bed, then merge actual integration da236b05. Two conflicts are additive: retain FAC-04's manifest-derived Grand Prix list and the full reviewed Panorama payload, then append the incoming course-owned manifest. Admit only Panorama by setting that manifest grandPrix true; retain dev, authored stage16, 1600 CR and releaseOrder3. Preserve accepted factory, qualifying, pay and Snow fixture-restoration changes. No provisional GP-EXISTING admission is installed.
+
+Claude's existing four failures are settled: regenerate shortcut presets with the existing generator (the changed terrain source hash, no Panorama shortcuts); change only the legacy 11 m ridge assertion to the already approved 13 m, keeping its 1e-9 tolerance; publish the complete Panorama fixed-route reference through the existing --event publisher, keeping native Stuttgart959S/Club/Medium/.95/1989, one warm-up and two timed clean laps. Other reference events, replay fingerprints and scene pins stay exact. The existing Panorama registry assertion changes false to true only for the approved GP admission; state, price, stage, public absence and all other metadata stay exact.
+
+Move only Skyline's inspection lateral from -30 to +30, on the clear valley side of the radio mast. Conrod retains -30, the town target remains Conrod.s0+276/off112, and actual drawn-ground/camera-floor/unchanged-race/profile guards remain. No native browser, art packet, sheet, frame, balance, full tier or new 90 runs today. Art3 remains accepted at3.5/4/4/4; the required final native retry, dusk frames, round3 sheet and round2 evidence consumption wait for night. All original bounded pace logs and six final target failures stay intact. Never remove this retained lane.

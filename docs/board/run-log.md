@@ -976,3 +976,22 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 11 October overnight: merged JANITOR-OVERNIGHT-ART after lane 7/7 (219.33 s), build 1.52 s and independent reviews; consumed 40 prior art files, looks 19,993,075 to 16,099,486 bytes, final sheets and game/replay code exact. Older lanes retained; uncertain audit candidates left for review. Ownership and current overnight scopes folded into this merge.
 
 - 12 October morning: merged P4-CAREER-PAY source02d914c3 after lane400/400 (1980.72 s, jobs4), build843ms, pure184, actual native/browser750CR and clear save/ordinary reviews. Dev only; legacy leaderboard guard unchanged, no release or push.
+
+- 12 October: merged P4-QUALIFYING source 490c022d after lane 401/401 (1140.02 s, jobs 4), build 570 ms and clear source/native/save reviews. Two native flying laps earn pole; qualifying pays zero, accepted GP pay stays exact. Corrected only the absent-control DOM fixture; intermittent audio follow-up parked. No release or push.
+
+- 2026-10-12 merge FAC-01 (Claude): lane 400/400 in 1909 s jobs 4 before sync, build pass, independent review fixes applied; board conflict with P4-QUALIFYING resolved additively, targeted 15/15 in 144 s. Fixed FUT-PAY-BY-DISTANCE unknown status (now backlog, priority future), which the old picker never selected test-board for. Lane picks now about 19 suites for a course file, 38 for a sound file. No release.
+
+- 2026-10-12 merge DEEP-PACKET (Claude): THE_DEEP section 10 world-line graph and 10.1 contracts; six Deep cards replace the RAMP/DRIVE chain; save-shape and sound-bank locks on P4-CAREER, P4-CUPS, P4-AVALANCHE; six-lane limit; FAC-03 nightly push after green full. Lane 13/13 under the new picker, build pass, one review with fixes. No release.
+- 2026-10-12 FAC-02 merged 60ede817: lane 17/17 in 298.83 s, build 1360 ms, review Codex Director clear.
+- 2026-10-12 FAC-06 merged source8885399a: lane18/18 in288.97s,jobs4; build1210ms, gp_existing ordinary review clear; 50 open/272 completed cards, lock conflicts fixed, FAC-02 own lane recycled; no clean-merge rerun.
+- 2026-10-12 FAC-03 merged 02790f14: lane 396/396 in 1526.07 s, build 680 ms, review Codex Director (selector only; night command unfinished) clear.
+- 2026-10-12 FAC-07 merged source3b8d72b8: lane19/19 in109.49s,jobs4, build662ms, Director review clear; one QA build and isolated children with quiet timing barriers, no clean-merge rerun.
+- 2026-10-12 P4-SUMMIT merged (Claude lane claude/summit-decision 7e1f7fdd): lane 14/14 in 152.74 s, build 1438 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 DEEP-WATER merged (Claude lane claude/deep-water 129235fa): lane 22/22 in 132.29 s, build 1457 ms, review claude-subagent-reviewer clear.
+
+- 2026-10-12 FAC-04: merge 8cc2d45a; lane 309/309, 791.07 s, jobs 4; build 1.13 s; one review clear; original course data exact, no clean-merge rerun.
+- 2026-10-12 FAC-03 merged (Claude lane claude/night-balance 00a2b3a2): lane 13/13 in 100.05 s, build 1036 ms, review claude-subagent-reviewer clear.
+
+- 2026-10-12 FAC-03 final: merge 758662b5; nearby lane 20/20, 91.59 s, jobs 4; build 645 ms; one review clear; night tool available, no native night pass or clean-merge rerun.
+
+- 2026-10-12 FAC-05: merge 37fd7237; nearby lane 29/29, 132.96 s, jobs 4; build 562 ms; one review clear; derived course checks and exact Snow fixture cleanup, no clean-merge rerun.

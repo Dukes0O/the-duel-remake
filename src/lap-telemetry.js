@@ -156,6 +156,25 @@ export class LapTelemetryRecorder {
     this.previous=null;this.samples=[];this.invalid=false;this.lapIndex=null;this.lapStart=0;
   }
   discontinuity(){this.invalid=true;}
+  // Qualifying rebases distance at its first legal native line crossing. Carry
+  // the observed approach point through the same rebase, then interpolate the
+  // actual crossing. No simulated state, lap clock or validity rule is changed.
+  armQualifying(state){
+    if(this.disabled||state.paused||state.status!=='racing'||!this._matches(state)||
+      state.qualifying?.phase!=='driving'||state.qualifying.timing!=='timed'||
+      state.completedLaps!==0||!this.previous)return false;
+    const current=nativePoint(state),previous={...this.previous,s:this.previous.s-this.course.length};
+    const clock=state.lapStartedAt;
+    if(!current||!(previous.s<0&&current.s>=0)||!Number.isFinite(clock)||
+      clock<previous.clock-1e-6||clock>current.clock+1e-6)return false;
+    const elapsed=current.physicsTime-previous.physicsTime,delta=current.s-previous.s;
+    if(elapsed<=0||current.clock<previous.clock||
+      delta>Math.max(20,Math.max(Math.abs(previous.mph),Math.abs(current.mph))*DRIVE.mphToWorld*elapsed*4+12))return false;
+    const start={...crossing(previous,current,0),clock};
+    this._start(0,clock,start);this.previous=start;
+    this.observe(state);
+    return !this.invalid;
+  }
   _matches(state){
     const context=this.context;
     return state.playerId===context.playerId&&state.stageIndex===context.stageIndex&&state.seed===context.seed&&

@@ -19,10 +19,14 @@ export function parseArguments(args) {
   let name = command === 'smoke' ? 'smoke' : command === 'record-race' ? 'audio-race' : null;
   let injectConsoleError = false;
   let named = false;
-  let outputDir;
+  let outputDir, qaBundle, headed = false;
   for (let index = 0; index < rest.length; index++) {
     const value = rest[index];
     if (value === '--inject-console-error') injectConsoleError = true;
+    else if (value === '--headed') {
+      if (headed) throw Error('--headed may be requested once.');
+      headed = true;
+    }
     else if (value === '--output-dir') {
       if (outputDir || !rest[index + 1]) throw Error('--output-dir needs one path.');
       outputDir = rest[++index];
@@ -31,11 +35,15 @@ export function parseArguments(args) {
       if (outputDir || !value.slice('--output-dir='.length)) throw Error('--output-dir needs one path.');
       outputDir = value.slice('--output-dir='.length);
     }
+    else if (value === '--qa-bundle') {
+      if (qaBundle || !rest[index + 1] || rest[index + 1].startsWith('--')) throw Error('--qa-bundle needs one path.');
+      qaBundle = rest[++index];
+    }
     else if (!named && command !== 'smoke' && /^[a-z][a-z0-9-]*$/.test(value)) { name = value; named = true; }
     else throw Error(`Unknown browser harness argument: ${value}`);
   }
   if (!name) throw Error('scenario needs a simple name from tools/scenarios/.');
-  return { name, injectConsoleError, ...(outputDir ? { outputDir } : {}) };
+  return { name, injectConsoleError, ...(outputDir ? { outputDir } : {}), ...(qaBundle ? { qaBundle } : {}), ...(headed ? {headed: true} : {}) };
 }
 
 export function evidenceOutputDir(name, date = new Date(), root = PROJECT_ROOT) {
@@ -51,6 +59,60 @@ export function resolveEvidenceDir(path, root = PROJECT_ROOT) {
   if (!part || part === '..' || part.startsWith('..' + sep) || part.includes(':'))
     throw Error('Raw browser output must stay below .evidence/.');
   return target;
+}
+
+// A suite-created bundle is read-only to its scenario children.
+export function resolveQaBundle(path, root = PROJECT_ROOT) {
+  const target = resolve(root, path), part = relative(resolve(root, '.qa-dist'), target);
+  if (!/^browser-suite-[a-zA-Z0-9_-]+$/.test(part)) throw Error('QA bundle must be an owned leaf under .qa-dist/.');
+  return target;
+}
+
+export async function validateQaBundle(path, {realPath = realpath, read = readFile} = {}) {
+  const target = resolveQaBundle(path);
+  const actual = resolveQaBundle(await realPath(target));
+  const marker = JSON.parse(await read(join(actual, 'qa-bundle.json'), 'utf8'));
+  if (marker.schema !== 1 || marker.qa !== true || marker.projectRoot !== PROJECT_ROOT)
+    throw Error('QA bundle is not a completed build of this project.');
+  return actual;
+}
+
+export async function recycleQaBundle(path, {realPath = realpath, start = launch, wait = waitForExit, platform = process.platform} = {}) {
+  const owned = resolveQaBundle(path), target = resolveQaBundle(await realPath(owned));
+  if (relative(owned, target)) throw Error('QA bundle cleanup refuses a redirected target.');
+  if (platform !== 'win32') throw Error('QA bundle recycling requires the Windows Recycle Bin.');
+  // The owner supplies only its mkdtemp leaf; never recurse through another root.
+  const literal = "'" + target.replaceAll("'", "''") + "'";
+  const script = 'Add-Type -AssemblyName Microsoft.VisualBasic; ' +
+    '[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(' + literal +
+    ', [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs, [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)';
+  const encoded = Buffer.from(script, 'utf16le').toString('base64');
+  await wait(start('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded]), 'QA bundle recycle');
+}
+
+export async function buildQaBundle({
+  hasVite = () => existsSync(VITE_CLI), makeDirectory = mkdir, makeTemp = mkdtemp,
+  start = launch, wait = waitForExit, read = readFile, write = writeFile,
+  recycle = recycleQaBundle,
+} = {}) {
+  if (!hasVite()) throw Error('Vite is missing. Run npm ci in this isolated worktree.');
+  const qaRoot = join(PROJECT_ROOT, '.qa-dist');
+  await makeDirectory(qaRoot, {recursive: true});
+  const bundle = resolveQaBundle(await makeTemp(join(qaRoot, 'browser-suite-')));
+  try {
+    console.log('Building one isolated QA bundle...');
+    await wait(start(process.execPath, [VITE_CLI, 'build', '--config', 'tools/vite-qa.config.js',
+      '--outDir', bundle]), 'QA build');
+    const htmlPath = join(bundle, 'tools', 'menu-check.html');
+    const html = await read(htmlPath, 'utf8');
+    if (!html.includes('<meta charset=')) throw Error('QA bundle is missing its menu entry.');
+    await write(htmlPath, html.replace('<meta charset=', '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E"><meta charset='));
+    await write(join(bundle, 'qa-bundle.json'), JSON.stringify({schema: 1, projectRoot: PROJECT_ROOT, qa: true}) + '\n');
+    return bundle;
+  } catch (error) {
+    await recycle(bundle);
+    throw error;
+  }
 }
 
 export function reviewRoundOutputDir(name, date = new Date(), root = PROJECT_ROOT, env = process.env) {
@@ -99,9 +161,15 @@ function chromeExecutable() {
   return found;
 }
 
-export function chromeLaunchArguments(profile) {
+export function browserLaunchMetadata(args) {
+  const headless = args.some(arg => /^--headless(?:=|$)/.test(arg));
+  return {headed: !headless, launchMode: headless ? 'headless' : 'headed'};
+}
+
+export function chromeLaunchArguments(profile, {headed = false} = {}) {
+  if (typeof headed !== 'boolean') throw Error('headed must be a boolean.');
   return [
-    '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
+    ...(headed ? [] : ['--headless=new']), '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
     '--disable-extensions', '--mute-audio', '--enable-unsafe-swiftshader',
@@ -346,32 +414,37 @@ export async function main(args = process.argv.slice(2)) {
   if (!existsSync(VITE_CLI)) throw Error('Vite is missing. Run npm ci in this isolated worktree.');
   const port = await freePrivatePort();
   const baseURL = `http://127.0.0.1:${port}`;
-  const build = launch(process.execPath, [VITE_CLI, 'build', '--config', 'tools/vite-qa.config.js']);
-  console.log('Building isolated QA bundle...');
-  await waitForExit(build, 'QA build');
-  // The QA page has no favicon; keep Chrome from logging a false 404 on each navigation.
-  const qaHtmlPath = join(PROJECT_ROOT, '.qa-dist', 'tools', 'menu-check.html');
-  const qaHtml = await readFile(qaHtmlPath, 'utf8');
-  if (!qaHtml.includes('<meta charset=')) throw Error('QA bundle is missing its menu entry.');
-  await writeFile(qaHtmlPath, qaHtml.replace('<meta charset=', '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E"><meta charset='));
+  const qaBundle = options.qaBundle ? await validateQaBundle(options.qaBundle) : null;
+  if (!qaBundle) {
+    const build = launch(process.execPath, [VITE_CLI, 'build', '--config', 'tools/vite-qa.config.js']);
+    console.log('Building isolated QA bundle...');
+    await waitForExit(build, 'QA build');
+    // The QA page has no favicon; keep Chrome from logging a false 404 on each navigation.
+    const qaHtmlPath = join(PROJECT_ROOT, '.qa-dist', 'tools', 'menu-check.html');
+    const qaHtml = await readFile(qaHtmlPath, 'utf8');
+    if (!qaHtml.includes('<meta charset=')) throw Error('QA bundle is missing its menu entry.');
+    await writeFile(qaHtmlPath, qaHtml.replace('<meta charset=', '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E"><meta charset='));
+  }
   const outputDir = options.outputDir
     ? resolveEvidenceDir(options.outputDir)
     : reviewRoundOutputDir(options.name) ?? evidenceOutputDir(options.name);
   await mkdir(outputDir, { recursive: true });
   const profile = await mkdtemp(join(tmpdir(), 'the-duel-browser-'));
-  let preview, chrome, cdp, report;
+  let preview, chrome, cdp, report, launchMetadata;
   const issues = [], warnings = [], screenshots = [];
   try {
-    preview = launch(process.execPath, [VITE_CLI, 'preview', '--config', 'tools/vite-qa.config.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort']);
+    preview = launch(process.execPath, [VITE_CLI, 'preview', '--config', 'tools/vite-qa.config.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort', ...(qaBundle ? ['--outDir', qaBundle] : [])]);
     await waitForHttp(`${baseURL}/tools/menu-check.html`, preview.child, preview.output);
     const chromePath = chromeExecutable();
-    chrome = launch(chromePath, chromeLaunchArguments(profile));
+    const chromeArgs = chromeLaunchArguments(profile, {headed: options.headed === true});
+    chrome = launch(chromePath, chromeArgs);
+    launchMetadata = browserLaunchMetadata(chromeArgs);
     const debugPort = await waitForChromePort(profile, chrome.child, chrome.output);
     cdp = await connectDevTools(debugPort);
     const page = await openPage(cdp, issues, warnings);
     const navigation = createPageNavigation(cdp,page,baseURL);
     const context = {
-      baseURL, outputDir, issues, warnings, screenshots,
+      baseURL, outputDir, issues, warnings, screenshots, ...launchMetadata,
       navigate: navigation.navigate, reload: navigation.reload, back: navigation.back,
       evaluate: expression => evaluate(cdp, page.sessionId, expression),
       waitFor: (expression, label, timeoutMs) => waitForValue(cdp, page.sessionId, expression, label, timeoutMs),
@@ -397,6 +470,7 @@ export async function main(args = process.argv.slice(2)) {
     report = { scenario: options.name, passed: false, port, memoryOnlySaves: true, error: error.message, issues, warnings, screenshots };
     console.error(`Browser harness failed: ${error.message}`);
   } finally {
+    Object.assign(report, launchMetadata || {headed: false, launchMode: 'not-launched'});
     await writeFile(join(outputDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     for (const path of screenshots) console.log(`Screenshot: ${path}`);
     console.log(`Report: ${join(outputDir, 'report.json')}`);

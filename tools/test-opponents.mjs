@@ -5,10 +5,14 @@ import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
 import {RouteMap} from '../src/route-map.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {createResultsScreen} from '../src/screen-results.js';
+import {useRacingLine} from './track-script-drive.mjs';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 globalThis.cancelAnimationFrame ??= () => {};
+// The stock demo driver (src/app.js) looks only 220 m ahead, so it cannot brake in time for Casino Corner at the end of Harbour Lights'
+// long straight or for the 9 m Lantern Hairpin (RELEASE-HARBOUR). That course is driven with the racing-line driver the circuit tests use.
+const racingLineDriven = new Set(['harbour-lights']);
 
 function crossCircuit(duel, actor) {
   const {course, raceLength} = duel;
@@ -185,6 +189,7 @@ for(const [stageIndex,stage] of COURSE.entries()){
   // this check isolates real lap driving and field ranking from target tuning.
   if(app.duel.state.timeLimitSec)app.duel.state.timeLimitSec=Math.max(600,app.duel.state.timeLimitSec);
   app.autopilot=true;
+  if(racingLineDriven.has(stage.id))useRacingLine(app);
   app._scriptedCrashDone=true;
   let frames=0;
   while(!['stage_result','gameover','complete'].includes(app.duel.state.status)&&frames++<30*600)

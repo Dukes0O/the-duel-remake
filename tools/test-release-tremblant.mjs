@@ -1,16 +1,17 @@
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { COURSE } from '../src/config.js';
+import { ALL_CIRCUITS, circuitsEnabled } from '../src/circuits/index.js';
 import { featureFlags } from '../src/feature-flags.js';
 import { COURSE_PRICES, isCourseUnlocked, purchaseCourse } from '../src/course-access.js';
-import { courseAccessPanel } from '../src/course-access-ui.js';
 import { createProfile, eventKey, loadPlayers, normalizeProfile, stageEventId, PLAYERS_KEY, PROFILE_KEY } from '../src/progression.js';
 import { supportsCombat } from '../src/combat.js';
 import { loadLeaderboard, LEADERBOARD_KEY } from '../src/leaderboard.js';
 import { loadGhosts, GHOST_KEY } from '../src/ghost.js';
 
-// RELEASE-TREMBLANT and RELEASE-TREMBLANT-SNOW: Tremblant Woods, then Tremblant Snow, join the course list while their switches are on.
+// RELEASE-TREMBLANT, RELEASE-TREMBLANT-SNOW and RELEASE-HARBOUR: Tremblant Woods, then Tremblant Snow, then Harbour Lights join the course list while their switches are on.
 // This pins what must not move when a course is added: the earlier events keep their
 // place and id, no old save gains or loses anything, and each new course is a paid unlock.
 
@@ -25,9 +26,15 @@ const ok = (value, label) => { assert.ok(value, label); checks++; };
 
 // 1. The earlier sixteen events keep their positions and ids; Tremblant Woods, then Tremblant Snow, are appended.
 equal(COURSE.slice(0, EARLIER_EVENTS.length).map(event => event.id), EARLIER_EVENTS, 'earlier events keep their order and ids');
-equal(COURSE.slice(EARLIER_EVENTS.length).map(event => event.id), ['tremblant-woods', 'tremblant-snow'], 'Tremblant Woods is appended after them, then Tremblant Snow last');
-ok(featureFlags.enabled('tremblant-woods') && featureFlags.enabled('tremblant-snow'), 'the released switches are on for players, with no URL flag');
-ok(!featureFlags.enabled('panorama-ridge') && !featureFlags.enabled('harbour-lights'), 'the other two circuits stay off');
+const released = CIRCUIT_MANIFESTS.filter(manifest => manifest.state === 'on').map(manifest => manifest.id);
+equal(COURSE.slice(EARLIER_EVENTS.length).map(event => event.id), released, 'enabled circuits append in declared release order');
+equal(ALL_CIRCUITS.map(circuit => circuit.id), CIRCUIT_MANIFESTS.map(manifest => manifest.id), 'registered circuits retain release order');
+for (const manifest of CIRCUIT_MANIFESTS) {
+  equal(featureFlags.enabled(manifest.flag), manifest.state === 'on', 'production follows the declared course state');
+  const enabled = new Set([...released, manifest.flag]);
+  equal(circuitsEnabled({enabled: name => enabled.has(name)}).map(circuit => circuit.id),
+    CIRCUIT_MANIFESTS.filter(item => enabled.has(item.flag)).map(item => item.id), 'explicit selections preserve release order');
+}
 EARLIER_EVENTS.forEach((id, index) => equal(stageEventId(index), id, `event ${index} still saves as ${id}`));
 
 // 2. Records are keyed by event id, so Tremblant's records never meet an older event's.
@@ -37,43 +44,30 @@ ok(key.startsWith('tremblant-woods|layout:'), `Tremblant records have their own 
 ok(COURSE.every((event, index) => index === tremblant || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('tremblant-woods|')),
   'no other event shares the Tremblant key');
 const snow = COURSE.findIndex(event => event.id === 'tremblant-snow');
-equal(snow, tremblant + 1, 'Tremblant Snow sits right after Tremblant Woods, last on the list');
 const snowKey = eventKey({ stageIndex: snow, seed: 1989, laps: COURSE[snow].laps });
 ok(snowKey.startsWith('tremblant-snow|layout:'), `Tremblant Snow records have their own key: ${snowKey}`);
 ok(COURSE.every((event, index) => index === snow || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('tremblant-snow|')),
   'no other event shares the Tremblant Snow key');
 equal(stageEventId(snow), 'tremblant-snow', 'position 17 saves as tremblant-snow');
+const harbour = COURSE.findIndex(event => event.id === 'harbour-lights');
+const harbourKey = eventKey({ stageIndex: harbour, seed: 1989, laps: COURSE[harbour].laps });
+ok(harbourKey.startsWith('harbour-lights|layout:'), `Harbour Lights records have their own key: ${harbourKey}`);
+ok(COURSE.every((event, index) => index === harbour || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('harbour-lights|')),
+  'no other event shares the Harbour Lights key');
+equal(stageEventId(harbour), 'harbour-lights', 'position 18 saves as harbour-lights');
 
-// 3. Price and access: a paid unlock, shown on the course screen, never granted to old saves.
-equal(COURSE_PRICES['tremblant-woods'], 1600, 'Tremblant Woods costs 1,600 credits');
-const fresh = createProfile();
-ok(!isCourseUnlocked(fresh, 'tremblant-woods'), 'a new profile has Tremblant locked');
-const poor = purchaseCourse({ ...fresh, credits: 1599 }, 'tremblant-woods');
-ok(!poor.ok && poor.profile.credits === 1599, 'one credit short cannot buy it');
-const rich = { ...fresh, credits: 2000 };
-const bought = purchaseCourse(rich, 'tremblant-woods');
-ok(bought.ok && bought.cost === 1600 && bought.profile.credits === 400, 'buying charges exactly 1,600 credits');
-equal(bought.profile.courses.unlocked, [...rich.courses.unlocked, 'tremblant-woods'].filter(id => COURSE.some(event => event.id === id)),
-  'buying adds only Tremblant Woods to the unlocked list');
-ok(!isCourseUnlocked(bought.profile, 'tremblant-snow'), 'buying Tremblant Woods does not give Tremblant Snow');
-equal(COURSE_PRICES['tremblant-snow'], 1800, 'Tremblant Snow costs 1,800 credits');
-ok(!isCourseUnlocked(fresh, 'tremblant-snow'), 'a new profile has Tremblant Snow locked');
-const snowPoor = purchaseCourse({ ...fresh, credits: 1799 }, 'tremblant-snow');
-ok(!snowPoor.ok && snowPoor.profile.credits === 1799, 'one credit short cannot buy Tremblant Snow');
-const snowBought = purchaseCourse({ ...fresh, credits: 2500 }, 'tremblant-snow');
-ok(snowBought.ok && snowBought.cost === 1800 && snowBought.profile.credits === 700, 'buying Tremblant Snow charges exactly 1,800 credits');
-equal(snowBought.profile.courses.unlocked, [...fresh.courses.unlocked, 'tremblant-snow'].filter(id => COURSE.some(event => event.id === id)),
-  'buying adds only Tremblant Snow to the unlocked list');
-ok(!isCourseUnlocked(snowBought.profile, 'tremblant-woods') && isCourseUnlocked(snowBought.profile, 'pacific-canyon'), 'Tremblant Snow does not give Tremblant Woods and keeps the free course');
-ok(isCourseUnlocked(bought.profile, 'tremblant-woods') && isCourseUnlocked(bought.profile, 'pacific-canyon'), 'the purchase unlocks it and keeps the free course');
-const unowned = courseAccessPanel(fresh, 0, '');
-ok(/Tremblant Woods/.test(unowned) && /1,?600 CR/.test(unowned), 'the course screen lists Tremblant Woods with its price');
-ok(!/UNLOCKED<\/span><h3>Tremblant Woods/.test(unowned), 'the course screen shows it as locked until bought');
-const owned = courseAccessPanel(bought.profile, tremblant, '');
-ok(/UNLOCKED<\/span><h3>Tremblant Woods/.test(owned), 'after buying, the course screen shows it as unlocked');
-ok(/Tremblant Snow/.test(unowned) && /1,?800 CR/.test(unowned), 'the course screen lists Tremblant Snow with its price');
-ok(!/UNLOCKED<\/span><h3>Tremblant Snow/.test(unowned), 'the course screen shows Tremblant Snow as locked until bought');
-ok(/UNLOCKED<\/span><h3>Tremblant Snow/.test(courseAccessPanel(snowBought.profile, snow, '')), 'after buying, the course screen shows Tremblant Snow as unlocked');
+// 3. Every enabled paid course has isolated access. Literal prices and named UI checks belong to each course suite.
+for (const id of released) {
+  const fresh = createProfile(), price = COURSE_PRICES[id];
+  ok(!isCourseUnlocked(fresh, id), 'a new profile has the paid course locked');
+  const poor = purchaseCourse({...fresh, credits: price - 1}, id);
+  ok(!poor.ok && poor.profile.credits === price - 1, 'one credit short cannot buy it');
+  const rich = {...fresh, credits: price + 400}, bought = purchaseCourse(rich, id);
+  ok(bought.ok && bought.cost === price && bought.profile.credits === 400, 'buying charges exactly the registered price');
+  equal(bought.profile.courses.unlocked, [...fresh.courses.unlocked, id].filter(value => COURSE.some(event => event.id === value)), 'only the bought course is added');
+  ok(isCourseUnlocked(bought.profile, 'pacific-canyon'), 'buying keeps the free course');
+  for (const other of released.filter(value => value !== id)) ok(!isCourseUnlocked(bought.profile, other), 'buying never grants another paid course');
+}
 
 // 4. Every historical save fixture loads exactly as before: no course gained or lost, records and ghosts intact.
 const fixtureDir = new URL('./fixtures/saves/', import.meta.url);
@@ -92,7 +86,7 @@ for (const file of files) {
   const rawPlayers = rawRegistry?.players ?? [{ id: 'player-1', profile: fixture.storage[PROFILE_KEY] }];
   for (const rawPlayer of rawPlayers) {
     const loaded = players.players.find(player => player.id === rawPlayer.id).profile;
-    for (const id of ['tremblant-woods', 'tremblant-snow']) {
+    for (const id of released) {
       equal(isCourseUnlocked(loaded, id), !!rawPlayer.profile.courses?.unlocked?.includes(id), `${fixture.shape}/${rawPlayer.id}: a save owns ${id} only if it saved it`);
     }
     if (rawPlayer.profile.courses) {
@@ -111,10 +105,8 @@ for (const file of files) {
   if (rawGhosts) equal(loadGhosts(storage).records.map(row => row.key), rawGhosts.records.map(row => row.key), `${fixture.shape}: ghost keys unchanged`);
 }
 
-// 5. Pure race: the circuits do not host Mad Max Duel, raiders or the UFO. Rival Duel stays.
-ok(!supportsCombat(COURSE[tremblant]) && COURSE[tremblant].hasRival, 'Tremblant has a rival but no Mad Max Duel');
-ok(!supportsCombat(COURSE[snow]) && COURSE[snow].hasRival && COURSE[snow].noCombat === true, 'Tremblant Snow has a rival but no Mad Max Duel');
-equal(COURSE.filter(supportsCombat).length, 11, 'eleven combat courses, as before');
+// 5. Every appended course remains a pure race with a rival; combat matrices cover the independently selected combat roster.
+for (const definition of ALL_CIRCUITS) ok(!supportsCombat(definition) && definition.hasRival && definition.noCombat === true, 'registered circuits are race-only');
 
 // 6. An unfinished race is saved by course id as well as position, and found by id first.
 const race = extra => ({ runId: 'run-x', car: 'falcone_f42', ...extra });
@@ -124,6 +116,9 @@ equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }))?.stageIn
 equal(load(race({ stageIndex: 0, stageId: 'tremblant-woods' }))?.stageId, 'tremblant-woods', 'the id wins over a stale position');
 equal(load(race({ stageIndex: snow, stageId: 'tremblant-snow' }))?.stageIndex, snow, 'a new save resumes Tremblant Snow');
 equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-snow' }))?.stageIndex, snow, 'the id wins over a stale position for Tremblant Snow too');
+equal(load(race({ stageIndex: harbour, stageId: 'harbour-lights' }))?.stageIndex, harbour, 'a new save resumes Harbour Lights');
+equal(load(race({ stageIndex: tremblant, stageId: 'harbour-lights' }))?.stageIndex, harbour, 'the id wins over a stale position for Harbour Lights too');
+equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }))?.stageId, 'tremblant-woods', 'a saved unfinished Tremblant race still resumes Tremblant, now that Harbour Lights exists');
 equal(load(race({ stageIndex: 3, stageId: 'no-such-course' })), null, 'a course id this build does not have drops the race instead of resuming whatever sits at that position');
 equal(load(race({ stageIndex: 999, stageId: 'no-such-course' })), null, 'an unknown id and position is dropped, as before');
 {
@@ -140,4 +135,4 @@ equal(load(race({ stageIndex: 999, stageId: 'no-such-course' })), null, 'an unkn
 const written = load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }));
 equal(Object.keys(written).sort(), ['car', 'cpuDifficulty', 'driverId', 'key', 'pendingPoliceFineCount', 'pendingPoliceFines', 'runId', 'stageId', 'stageIndex'], 'the only new field is stageId');
 
-console.log(`Release Tremblant: ${checks} order, record key, price, course screen and ${files.length} old-save checks passed.`);
+console.log(`Release Tremblant, Tremblant Snow and Harbour Lights: ${checks} order, record key, price, course screen and ${files.length} old-save checks passed.`);

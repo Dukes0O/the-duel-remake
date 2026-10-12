@@ -87,6 +87,7 @@ const PANORAMA_ROAD = defineScriptedCourse({
 });
 
 
+
 // Static authored scenery is independent of route RNG and race state. Kit
 // dimensions are metres, Y-up; heading is an offset from the sampled road.
 function panoramaPlacements(road) {
@@ -164,4 +165,12 @@ export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
     Object.freeze({id: 'pit-timing', type: 'scoreboard', s: 45,
       lateral: 21, height: 16, title: 'PANORAMA'}),
   ]),
+});
+
+// Registration belongs to this course; generation and geometry stay unchanged.
+export const manifest = Object.freeze({
+  id: 'panorama-ridge', flag: 'panorama-ridge', state: 'dev', price: 1600,
+  grandPrix: true, releaseOrder: 3,
+  driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
+
 });
