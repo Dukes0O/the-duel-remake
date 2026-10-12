@@ -471,3 +471,13 @@ tasks:
     priority: "low"
     needs: []
     details: "docs/board/cards/QA-LANE-NATIVE-RELIEF.md"
+
+  - id: QA-TITAN-REPLAY-TIMEOUT
+    title: "Bound the unreliable nested Titan replay check"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    priority: "low"
+    needs: []
+    details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
