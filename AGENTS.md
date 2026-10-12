@@ -92,15 +92,42 @@ team's merges back for hours):
     scenario frameworks) unless a card asks for it. A tool problem gets rule
     4's 30 minutes, then a small card, then back to building.
 
+## The factory (Kyle, 12 October 2026)
+
+`docs/FACTORY.md` is the plan: three production lines (feature, course,
+world) drawn as graphs, with shared files named as locks. These rules win
+over rules 1, 2 and 7 above and over older playbook and SPEC text.
+
+11. Test by what changed. The lane tier runs the smoke set, the replay and
+    world-signature guards, and the suites that import a changed file or
+    name its path within two steps. Deeper effects are the night run's job.
+12. Merge as soon as it is green: one lane tier, a build and one review. A
+    merge with no conflict does not run the lane tier again; a conflict fix
+    runs it once more. Two clean lanes never wait for each other.
+13. Heavy checks run on the night shift, alone on the idle laptop: full
+    tier, frame check (rule 8), combat balance with `wasteland2` off and on,
+    and browser scenarios. A night failure names the first merge after the
+    last green night; its fix goes first and other merges continue. Until
+    FAC-03 installs the night shift, the full tier runs at run end as before.
+14. Limits: at most three course lanes, two feature lanes and one world lane
+    at once, each test run `--jobs 4` or fewer. A card lists the locks it
+    holds (`locks:` in the board, FACTORY section 2); two cards with the same
+    lock never build at once.
+    Edits to the board, inbox and STATUS on integration are committed at
+    once, never left uncommitted in the integration folder: an uncommitted
+    shared file blocks every other merge.
+15. Kyle sets direction and says "go live". Claude makes art and sound picks
+    within the three-round cap; nothing waits on Kyle except a release.
+
 ## Gates (SPEC 0.5)
 
 - Before **every** merge into integration, including docs-only, tuning-only
   and doc-plus-code changes: `node tools/run-tests.mjs --tier lane --changed --jobs 8`
   and `npm run build`. Run these in the lane before review and verify current
-  passing evidence before merging; rerun after changes or conflict fixes.
+  passing evidence before merging; rerun after changes or conflict fixes, not
+  after a conflict-free merge (rule 12).
 - Full tier: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`,
-  run alone, at the end of every session and overnight run and before every
-  release. A real failure stops feature merges until a fix lands; an
+  run alone, on the night shift (rule 13) and before every release. A real failure stops feature merges until a fix lands; an
   unreliable check follows rule 3 above.
 - Release: full tier must pass on the exact final integration commit before
   every release, including small and tuning-only changes. Keep the full

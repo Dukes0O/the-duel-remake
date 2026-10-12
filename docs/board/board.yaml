@@ -5113,7 +5113,8 @@ tasks:
     owner: claude
     lane: DESIGN
     size: M
-    status: future
+    status: backlog
+    priority: future
     needs: [P4-CAREER-PAY]
     waiting_on: claude
     design_decision: "Kyle, via Claude 12 October 12:00: park this card; do not build it now. Claude designs, then Codex builds after Grand Prix career pay is released. Credits and later cup prize money scale with total race distance. Proposed shape to settle when it starts: today's mode and difficulty base times race distance divided by a reference near 8 km, with a floor at today's pay and a gentle cap. Longer three-lap, 6 to 7 km per-lap and Summit events reward their extra time. Keep finishing percentages 100/75/55/40/30/20/15/10, old saves and records; additive only."
@@ -5132,3 +5133,88 @@ tasks:
     design: "Rule 3 follow-up only. On unchanged a9575dd4, the first qualifying lane failed meter continuity and the sixth blast was 0.667 ms beyond the original overlap window. The complete logged repeat passed all 23 native checks in 24.23 s. No audio/game assertion or tolerance changed; cause remains unknown. Original raw failed capture and metadata are hash-verified under .evidence/2026-10-12/QA-AUDIO-CRASH-RELIABILITY/a957-failed-capture; derived WAV/pictures are regenerable. Do not hold feature merges or start this tonight."
     acceptance:
       - "Use existing raw packets to establish a reproducible cause within 30 minutes. Preserve every assertion and threshold; scope any proposed fix before code. No new machinery unless this card is amended explicitly."
+
+  # The factory (docs/FACTORY.md, Kyle 12 October 2026). Cards are graph nodes:
+  # needs are the arrows, locks are the shared files (FACTORY section 2).
+  - id: FAC-01
+    title: "Test picker: run what the change touches"
+    owner: claude
+    lane: TOOL
+    size: M
+    needs: []
+    status: merged
+    branch: claude/factory
+    owns: [tools/run-tests.mjs, tools/test-test-runner.mjs, docs/FACTORY.md, docs/changes/FAC-01.md, AGENTS.md]
+    acceptance:
+      - "Lane selection follows imports within two steps plus the paths files name; replay and world-signature guards run in every lane; only build configs, lockfiles and the runner select everything. A course file selects about 19 suites, a sound file about 38."
+  - id: FAC-02
+    title: "Merge on green: no queue wait, no re-run after a clean merge"
+    owner: codex
+    lane: OPS
+    size: S
+    needs: [FAC-01]
+    status: ready
+    owns: [docs/CODEX_PLAYBOOK.md, docs/OPERATIONS.md, docs/changes/FAC-02.md]
+    acceptance:
+      - "Playbook and OPERATIONS match AGENTS rules 11 to 15: a green lane with one review merges at once; a conflict-free merge does not re-run the lane tier; the run-log line is one sentence. Remove the 5-merge/2-hour deadline, the four-versus-five lane conflict and the stale integration path. Two green lanes merge within five minutes of each other."
+  - id: FAC-03
+    title: "Night shift and morning report"
+    owner: codex
+    lane: TOOL
+    size: M
+    needs: [FAC-01]
+    status: ready
+    owns: [tools/night-shift.mjs, tools/test-night-shift.mjs, docs/changes/FAC-03.md]
+    acceptance:
+      - "One command runs, alone: full tier jobs 4, frame check per AGENTS rule 8, combat balance with wasteland2 off and on, all browser scenarios. Writes docs/board/checks/night-<date>.json and a morning report under twenty lines that names, for each failure, the first merge after the last green night. Kyle creates the Windows scheduled task himself; the card writes the exact command for him."
+  - id: FAC-04
+    title: "Course kit: a new course is added by adding its own files"
+    owner: codex
+    lane: SIM
+    size: L
+    needs: [FAC-01]
+    status: ready
+    locks: [circuit-registry, reference-laps, replay-fixtures, world-signatures]
+    owns: [src/circuits/index.js, src/feature-flags.js, src/course-access.js, src/race-field.js, start-preview.bat, src/generated/reference-laps.json, tools/build-reference-laps.mjs, tools/replays/, tools/test-world-composition.mjs, docs/changes/FAC-04.md]
+    design_decision: "Claude, docs/FACTORY.md section 5. Each circuit file exports {id, flag, state, price, grandPrix, releaseOrder, driver}; index.js discovers circuit files (import.meta.glob in Vite, readdir in Node) and sorts by releaseOrder; stage numbers derive from release order. Flags, prices, Grand Prix list and preview flags spread from the manifests. Reference laps, replay cases and world signatures become one file per course; the salt-flats hash covers only non-circuit fixtures. Every replay fingerprint and world signature value stays exact."
+    acceptance:
+      - "Adding a test circuit file plus its own reference lap, replay case and signature files registers it with no edit to any shared file. All existing fingerprints, signatures, prices, flags and course order are exact. Lane tier and build pass."
+  - id: FAC-05
+    title: "Course counts read from the course list"
+    owner: codex
+    lane: TOOL
+    size: M
+    needs: [FAC-04]
+    status: backlog
+    locks: [circuit-registry]
+    acceptance:
+      - "The about 30 hard-coded course, flag, record and signature counts in 14 suites (test-circuit-layouts, test-feature-flags, test-wasteland-beta, test-reference-laps, test-replays, test-world-composition, test-storage-budget, test-release-tremblant, test-circuit-tremblant-snow, test-campaigns, test-opponents and the combat-course counts) derive from the course list; per-course price, flag and order checks move into test-circuit-<id>.mjs. Each changed assertion is listed in the change note and reviewed. A course switch flipped in a lane changes no shared test."
+  - id: FAC-06
+    title: "Lean board with locks"
+    owner: codex
+    lane: OPS
+    size: M
+    needs: []
+    status: ready
+    owns: [docs/board/board.yaml, docs/board/cards/, tools/board.mjs, tools/test-board.mjs, docs/changes/FAC-06.md]
+    acceptance:
+      - "board.yaml lists open cards only, one short entry each, and loads as standard YAML (fix line 4567). Finished cards leave at merge; details live in docs/board/cards/<id>.md. tools/board.mjs reads locks and shows a card whose lock another building card holds as waiting on that lock."
+  - id: FAC-07
+    title: "Browser checks: build once, run side by side"
+    owner: codex
+    lane: TOOL
+    size: M
+    needs: [FAC-01]
+    status: ready
+    owns: [tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, docs/changes/FAC-07.md]
+    acceptance:
+      - "run-browser-scenarios builds the QA bundle once per run into its own folder and runs scenarios at most four at once with private ports and profiles. Lanes run only scenarios the change touches. Every scenario result is unchanged."
+  - id: FAC-08
+    title: "Drive-through check for new courses"
+    owner: codex
+    lane: TOOL
+    size: M
+    needs: [FAC-04]
+    status: backlog
+    acceptance:
+      - "A headless lap per difficulty on a named course flags the car leaving the road surface, passing through a solid barrier, and objects whose base floats above the ground. It catches the 11 October Tremblant faults on the pre-fix commit (grass over road, drive-through barriers, floating barn) and passes on the fixed course."

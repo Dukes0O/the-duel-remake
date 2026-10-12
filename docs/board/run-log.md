@@ -978,3 +978,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 12 October morning: merged P4-CAREER-PAY source02d914c3 after lane400/400 (1980.72 s, jobs4), build843ms, pure184, actual native/browser750CR and clear save/ordinary reviews. Dev only; legacy leaderboard guard unchanged, no release or push.
 
 - 12 October: merged P4-QUALIFYING source 490c022d after lane 401/401 (1140.02 s, jobs 4), build 570 ms and clear source/native/save reviews. Two native flying laps earn pole; qualifying pays zero, accepted GP pay stays exact. Corrected only the absent-control DOM fixture; intermittent audio follow-up parked. No release or push.
+
+- 2026-10-12 merge FAC-01 (Claude): lane 400/400 in 1909 s jobs 4 before sync, build pass, independent review fixes applied; board conflict with P4-QUALIFYING resolved additively, targeted 15/15 in 144 s. Fixed FUT-PAY-BY-DISTANCE unknown status (now backlog, priority future), which the old picker never selected test-board for. Lane picks now about 19 suites for a course file, 38 for a sound file. No release.
