@@ -15,8 +15,9 @@ function leaderboardScreen(){
   const lapLabel = oneRun ? 'one run' : `${laps} laps`;
   const event = eventKey({stageIndex:boardFilter.stage, seed:app.getMenuSeed(boardFilter.stage),
     laps, ...(grandPrix ? {mode:'grandprix'} : {})});
-  const rows=getLeaderboard(app.leaderboard,{event,car:boardFilter.car,driverId:boardFilter.driverId,
-    ...(grandPrix ? {mode:'grandprix'} : {})});
+  const rows=grandPrix
+    ? getLeaderboard(app.leaderboard,{event,mode:'grandprix',car:boardFilter.car,driverId:boardFilter.driverId})
+    : getLeaderboard(app.leaderboard,{event,car:boardFilter.car,driverId:boardFilter.driverId});
   const modeFilter = available ? `<label>RACE MODE<select data-board-filter="mode" aria-label="Leaderboard race mode">
     <option value="" ${grandPrix ? '' : 'selected'}>All existing modes</option>
     <option value="grandprix" ${grandPrix ? 'selected' : ''}>Grand Prix</option></select></label>` : '';
