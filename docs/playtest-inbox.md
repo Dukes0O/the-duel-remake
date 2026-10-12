@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **FAC-05 and FAC-08 started in separate lanes after FAC-04.** FAC-05 owns the bounded count/registry test sweep and takes circuit-registry. FAC-08 owns the native headless drive-through tool and its acceptance tests, including the real pre-fix Tremblant repro. Owned files and assertion design are written on their cards before code; no runtime, fixture, fingerprint or signature edits. Retained Panorama and Summit wait for FAC-05. Heavy browser/frame/balance work remains held.
+
 - **FAC-04 merged green.** Exact source 8cc2d45a: canonical 309/309, zero failures/unrun, 791.07 s, jobs 4; build 1.13 s; one ordinary review clear. Courses register through their own manifests; reference, replay and world data are per course, with all original values and generation identities preserved. GP export order follows release order, membership unchanged. FAC-05 and FAC-08 start next. No clean-merge rerun, release or push.
 
 - **Factory course locks remain with FAC-04, then FAC-05.** Panorama and Summit now have explicit factory prerequisites and remain ready in their retained lanes while those locks are held. Claude's Hell Gate fix and Summit design decisions are preserved; no source work resumes early. FAC-04 is frozen at 8cc2d45a, corrected preview review clear, canonical gate still running. No new heavy check, release or push.

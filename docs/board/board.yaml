@@ -452,9 +452,11 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [FAC-04]
     locks: [circuit-registry]
+    claimed_by: "codex-factory-2026-10-12"
+    branch: "codex/fac-05"
     details: "docs/board/cards/FAC-05.md"
 
   - id: FAC-08
@@ -462,6 +464,8 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [FAC-04]
+    claimed_by: "codex-factory-2026-10-12"
+    branch: "codex/fac-08"
     details: "docs/board/cards/FAC-08.md"
