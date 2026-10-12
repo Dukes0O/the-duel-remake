@@ -70,7 +70,8 @@ const snowmanScreen = createResultsScreen({app: {_switches: () => ({enabled: key
   profile: () => snowmen.profile, credits: String, escapeHTML: String, time: String, arrow: ''})({
     status: 'stage_result', stageIndex: 0, results: {...result('medium', 8), grandPrix: true,
       stageName: 'Pacific Canyon', snowmen: 12,
-      field: [{position: 1, name: 'Winner', gapSec: 0}, {position: 8, you: true, gapSec: 10}],
+      field: [{position: 1, name: 'Winner', car: 'falcone_f42', gapSec: 0},
+        {position: 8, name: 'You', car: 'falcone_f42', you: true, gapSec: 10}],
       creditPositionReward: snowmen.breakdown.base,
       creditReward: snowmen.reward, creditBreakdown: snowmen.breakdown}});
 assert.ok(snowmanScreen.includes('SNOWMEN</span><b>12</b>'), 'result shows the actual hit count');
