@@ -67,6 +67,8 @@ const BASE = defineScriptedCourse({
     { id: 'reservoir-upper', s: 2460, lateral: -57, along: 160, across: 43, surface: -2, depth: .8, bank: .1, blend: 20, keep: 4 },
     { id: 'reservoir-lower', s: 2880, lateral: -57, along: 180, across: 43, surface: -2.2, depth: .8, bank: .1, blend: 20, keep: 4 },
   ],
+  // The wall inside the Lantern Hairpin (radius 9 m) is drawn as one smooth ribbon, not as short boxes that splay into a jagged edge.
+  smoothInnerWalls: { maxRadius: 15 },
   // Straight run-offs behind openings in the wall, on the outside of the two
   // slow corners (src/track-script-course.js).
   escapeRoads: [
@@ -78,16 +80,53 @@ const BASE = defineScriptedCourse({
   // small soft halo; the boats carry masthead, stern and cabin lights (red and green on the two
   // funnels), with a dim copy on the water; neon signs and the Lantern Tower get a halo; the street
   // lamps get head halos and light pools on the road, sodium through the old town, white elsewhere.
-  kitLook: { 'lantern-string': { glow: 1.1 } },
+  // Pieces made of many small parts are joined by material: the same picture for far fewer draws.
+  mergeKitMeshes: ['shopfront-a', 'shopfront-b', 'neon-sign', 'lantern-string', 'lantern-tower', 'pit-garage'],
+  kitLook: {
+    'lantern-string': { glow: 1.1 },
+    'shopfront-a': { wash: { colour: 0xffd9a8, strength: .45, height: 9, floor: .08, tint: .9 } },
+    'shopfront-b': { wash: { colour: 0xffd9a8, strength: .45, height: 9, floor: .08, tint: .9 } },
+  },
+  // The town behind the walls (src/scenery-detail.js, src/street-facades.js): plaster walls in warm
+  // Mediterranean colours washed in street light near the ground, trim, shutters, balconies, awnings and lit shop windows.
+  facades: {
+    palette: [0xe9d6ae, 0xd9a95a, 0xd99a8a, 0xc4745a, 0xa9bfa0, 0xe2c9a0, 0x9fb4c4],
+    trims: [0xefe4cc, 0xd8c9a8, 0xcdb89a],
+    wash: { colour: 0xffd9a8, strength: .4, height: 12, floor: .08 },
+    dress: true,
+  },
   glows: [
-    { piece: 'lantern-string', points: [-3.13, -1.88, -.63, .63, 1.88, 3.13].map(x => [x, 1.85, 0]), colour: [0xff9a3c, 0xffc060], size: 1.5, strength: .9 },
+    { piece: 'lantern-string', points: [-3.13, -1.88, -.63, .63, 1.88, 3.13].map(x => [x, 1.85, 0]), colour: [0xff9a3c, 0xffc060], size: 1.2, strength: .9 },
     { piece: 'harbour-boat', points: [[-.65, 3.1, -.45], [.65, 3.1, -.45]], colour: [0xff3028, 0x28ff60], size: .55, strength: 1.1, reflect: .35 },
     { piece: 'harbour-boat', points: [[0, 1.25, -2.4], [0, 1.45, 1.0]], colour: [0xfff0d0, 0xffb860], size: .5, strength: .9, reflect: .35 },
     { piece: 'neon-sign', points: [[0, .6, .3]], colour: [0xff3a7a, 0x2fd6ff, 0xffb02e, 0x7dff6a], size: 2.6, strength: .5 },
     { piece: 'lantern-tower', points: [[0, 31.5, 0], [0, 33.4, 0]], colour: 0xffb060, size: 9, strength: 1.2 },
   ],
-  streetLight: { every: 40, sodium: { from: 880, to: 2260, colour: 0xffa23c, pool: .2 }, white: { colour: 0xcfe2ff, pool: .16 },
-    haloSize: 1.2, haloStrength: .45 },
+  // Pools are small and soft; through the old town most lamps burn warm white and every third burns sodium.
+  streetLight: { every: 40, haloSize: 1.2, haloStrength: .45, poolWidth: 6, poolLength: 13,
+    sodium: { from: 880, to: 2260, colour: 0xffa23c, pool: .1, mix: 3, warm: { colour: 0xffe2bc, pool: .12 } },
+    white: { colour: 0xcfe2ff, pool: .1 } },
+  // The waterside (src/waterside-scenery.js): a low railing instead of the catch fence where the road runs
+  // beside water, tall harbour lamps between the ordinary ones (their lights show in the water), yachts
+  // and a marina, a lighthouse at the harbour mouth, palms along the Seafront.
+  waterside: {
+    rail: { height: 1.7 },
+    lamps: [
+      { from: 140, to: 430, every: 40, side: -1 },
+      { from: 2300, to: 3060, every: 40, side: -1 },
+      { from: 3160, to: 3640, every: 40, side: -1 },
+    ],
+    palms: [
+      { from: 130, to: 430, side: -1, every: 20 },
+      { from: 140, to: 394, side: 1, every: 22 },
+      { from: 420, to: 880, side: 1, every: 22 },
+      { from: 440, to: 880, side: -1, every: 26 },
+    ],
+    yachts: [{ basin: 'seafront', count: 5 }, { basin: 'harbour-road', count: 12 }],
+    marina: { basin: 'seafront', pier: 36, length: 110, centre: 0 },
+    lighthouse: { basin: 'harbour-road', at: [.78, 0], height: 24 },
+    farLights: 14,
+  },
   script: [
     ['straight', 500, { name: 'Seafront Straight', width: 14 }],
     ['turn', 'L', 20, 300, { name: 'Lantern Kink' }],
@@ -154,7 +193,7 @@ const BASE = defineScriptedCourse({
 // The street (docs/CIRCUITS.md 5.2), laid out for the kit loader by src/circuit-kit-layout.js.
 const TINTS = [0xe9d3b0, 0xd89a8a, 0x9cc0bb, 0xdcb25a, 0xa9b4d0, 0xc98562];
 const STREET = {
-  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall' },
+  walls: { wall: 'concrete-wall', fence: 'catch-fence', tyres: 'tyre-wall', openToWater: true },
   paddock: {
     gantry: { at: -2.5 },
     garages: { side: 1, from: -92, to: 96, lane: 9 },
@@ -172,9 +211,9 @@ const STREET = {
   signs: { from: 905, to: 2250, every: 30, side: 'both', lift: 4.6 },
   // Strings of lanterns across the street, tied at the shopfronts beyond the walls.
   strings: [
-    { from: 920, to: 1040, every: 30, beyond: 2.4, lift: 4.9 },
-    { from: 1255, to: 1665, every: 27, beyond: 2.4, lift: 4.9 },
-    { from: 1985, to: 2125, every: 14, beyond: 2.4, lift: 4.9 },
+    { from: 920, to: 1040, every: 30, beyond: 2.4, lift: 4.9, bulb: .85 },
+    { from: 1255, to: 1665, every: 27, beyond: 2.4, lift: 4.9, bulb: .85 },
+    { from: 1985, to: 2125, every: 14, beyond: 2.4, lift: 4.9, bulb: .85 },
   ],
   boats: [{ basin: 'seafront', count: 11 }, { basin: 'harbour-road', count: 12 }],
 };

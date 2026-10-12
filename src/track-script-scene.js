@@ -8,6 +8,7 @@ import {PIT,otherTyre} from './pit-lane.js';
 import { SURFACES } from './race-surfaces.js';
 import {winterSurfaceMaterial} from './snow-world.js';
 import { addCircuitEffects } from './circuit-effects.js';
+import { TRACK_SCRIPT } from './track-script.js';
 
 const OVERLAY = {
   gravel: { color: 0x8c775a, roughness: 1, metalness: 0, lift: .046, tracks: false },
@@ -77,11 +78,56 @@ function addBoards(group, course) {
   }
 }
 
-// The walls: one instanced box per solid segment, the same boxes a car hits.
+// The walls: one instanced box per solid segment, the same boxes a car hits. A circuit may ask for the
+// wall on the inside of its tightest turns to be drawn as one smooth ribbon instead
+// (`smoothInnerWalls: { maxRadius }`): short boxes round a very small circle splay and overlap into a
+// jagged edge. The boxes stay in the physics; only their drawing is replaced.
+function smoothInnerSpans(course) {
+  const limit = course.def.smoothInnerWalls?.maxRadius;
+  if (!limit) return [];
+  return (course.script.walls ?? []).filter(span => { const piece = course.script.pieces[span.piece]; return piece.kind === 'turn' && piece.radius < limit && span.side === piece.dir; });
+}
+
+function addSmoothWalls(group, spans, course, material) {
+  const thick = TRACK_SCRIPT.wallThickness, setback = TRACK_SCRIPT.wallSetback, top = TRACK_SCRIPT.wallHeight;
+  const positions = [], indices = [];
+  for (const span of spans) {
+    const count = Math.max(2, Math.ceil((span.s1 - span.s0) / .4)), rows = [];
+    for (let i = 0; i <= count; i++) {
+      const s = span.s0 + (span.s1 - span.s0) * i / count, half = course.roadHalfWidthAt(s);
+      const near = course.groundAt(s, span.side * (half + setback)), far = course.groundAt(s, span.side * (half + setback + thick));
+      const base = Math.min(near.y, far.y) - .1;
+      rows.push({ near, far, base, top: Math.max(near.y, far.y) + top });
+    }
+    // Road face, top and back face, each its own strip so the edges stay crisp and the length stays smooth.
+    const strip = (pick, flip) => {
+      const first = positions.length / 3;
+      rows.forEach(row => { for (const [p, y] of pick(row)) { positions.push(p.x, y, p.z); } });
+      for (let i = 0; i < rows.length - 1; i++) {
+        const a = first + i * 2, b = a + 1, c = a + 2, d = a + 3;
+        if (flip) indices.push(a, c, b, b, c, d); else indices.push(a, b, c, b, d, c);
+      }
+    };
+    strip(row => [[row.near, row.base], [row.near, row.top]], span.side > 0);
+    strip(row => [[row.near, row.top], [row.far, row.top]], span.side < 0);
+    strip(row => [[row.far, row.top], [row.far, row.base]], span.side > 0);
+  }
+  if (!indices.length) return;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = 'track-walls-smooth'; mesh.castShadow = mesh.receiveShadow = true;
+  group.add(mesh);
+}
+
 function addWalls(group, course) {
-  const walls = course.features.walls ?? [];
+  const smooth = smoothInnerSpans(course);
+  const smoothed = wall => smooth.length > 0 && wall.trackWall && !wall.escapeRoad && smooth.some(span => wall.side === span.side && wall.s >= span.s0 - 1e-6 && wall.s <= span.s1 + 1e-6);
+  const walls = (course.features.walls ?? []).filter(wall => !smoothed(wall));
+  const material = new THREE.MeshStandardMaterial({ color: 0xaeada6, roughness: .92, metalness: 0, side: smooth.length ? THREE.DoubleSide : THREE.FrontSide });
+  if (smooth.length) addSmoothWalls(group, smooth, course, material);
   if (!walls.length) return;
-  const material = new THREE.MeshStandardMaterial({ color: 0xaeada6, roughness: .92, metalness: 0 });
   const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, walls.length);
   const matrix = new THREE.Matrix4(), rotation = new THREE.Quaternion(), position = new THREE.Vector3(), scale = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   walls.forEach((wall, i) => {

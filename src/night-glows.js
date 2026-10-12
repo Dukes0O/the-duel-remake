@@ -4,11 +4,12 @@
 // piece, `streetLight` for the street lamps); a circuit that does not ask gets nothing.
 // Drawing only: one additive point cloud, no real lights, nothing here changes race
 // state. A light never grows to a big ball close to the camera: it stops growing at
-// a few dozen pixels and fades out inside a few metres.
+// about thirty pixels and fades out inside a few metres.
 import * as THREE from 'three';
 import { renderedGroundHeight } from './rendered-ground.js';
 import { basinReach } from './circuit-hills.js';
 import { lakeLevel } from './circuit-effects.js';
+import { planWaterside } from './waterside-scenery.js';
 
 const VERTEX = `
 attribute vec3 tint; attribute float size;
@@ -21,7 +22,7 @@ void main(){
   float pixels=size*pixelScale/distance;
   // Small and far: keep two pixels and give the missing size back as less light.
   vFade=smoothstep(1.5,6.0,distance)*min(1.0,pixels/2.5);
-  gl_PointSize=clamp(pixels,2.5,44.0);
+  gl_PointSize=clamp(pixels,2.5,30.0);
   vTint=tint;
 }`;
 const FRAGMENT = `
@@ -36,6 +37,14 @@ void main(){
 }`;
 
 const colourOf = value => new THREE.Color(value);
+
+// The look of street lamp number `index` at `s`: through the sodium stretch most lamps burn warm
+// white and every `sodium.mix`-th burns sodium orange; elsewhere the cooler white.
+export function lampLook(street, s, index) {
+  const sodium = street.sodium;
+  if (sodium && s >= sodium.from && s <= sodium.to) return sodium.mix && index % sodium.mix ? sodium.warm ?? street.white : sodium;
+  return street.white;
+}
 
 // Where a point on a placed kit piece (metres in the piece's own frame) stands in the world.
 function pieceFrame(course, entry) {
@@ -54,7 +63,7 @@ const pointOf = (frame, [px, py, pz]) => {
 
 export function addNightGlows(group, course) {
   const def = course.def, rules = def.glows ?? [], street = def.streetLight;
-  if (!rules.length && !street) return null;
+  if (!rules.length && !street && !def.waterside) return null;
   const positions = [], tints = [], sizes = [];
   const colour = new THREE.Color();
   const add = (point, hex, size, strength) => {
@@ -90,14 +99,16 @@ export function addNightGlows(group, course) {
     for (let i = 0; i < count; i++) {
       const s = i * every;
       if ((course.themeAt?.(s) || def.theme) !== 'city') continue;
-      const width = course.roadHalfWidthAt(s), warm = street.sodium && s >= street.sodium.from && s <= street.sodium.to;
-      const look = warm ? street.sodium : street.white;
+      const width = course.roadHalfWidthAt(s), look = lampLook(street, s, i);
       for (const side of [-1, 1]) {
         const head = course.groundAt(s, side * (width - 2)), pole = course.groundAt(s, side * (width + 3.4));
         add([head.x, pole.y + 10.2, head.z], look.colour, street.haloSize ?? 2.4, street.haloStrength ?? .7);
       }
     }
   }
+
+  // Riding lights, pier and lighthouse lamps and the tall harbour street lamps (src/waterside-scenery.js).
+  if (def.waterside) for (const item of planWaterside(course).lights) add(item.point, item.colour, item.size, item.strength);
 
   if (!positions.length) return null;
   const geometry = new THREE.BufferGeometry();

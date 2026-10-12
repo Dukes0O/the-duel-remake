@@ -1,0 +1,4 @@
+# Harbour Lights, finishing pass, round 2 (Claude, 11 October 2026)
+
+Street light pools are small and soft (warm white, one lamp in three sodium) on dark glossy asphalt; the water is deep navy-black with broken streaks of lamp, yacht and window light, a low railing instead of the catch fence, yachts with masts and riding lights, a marina on the Seafront and a lighthouse with a sweeping beam at the harbour mouth (frames 2, 12, 13, 15, 16); the town is cream, ochre, pink and terracotta plaster with shutters, balconies, awnings, lit shopfronts and palms (frames 3 to 9); tall harbour lamps stand every 20 m beside the water; the Lantern Hairpin's inner wall is one smooth ribbon (frame 11).
+The sheet is the 16-frame chase-camera review at High. Frame check and gate: docs/changes/P4-HARBOUR-FINISH-2.md. The Lantern Tower stands above Casino Corner and shows on the Seafront (frames 3 and 4); it is behind the car on both long straights.

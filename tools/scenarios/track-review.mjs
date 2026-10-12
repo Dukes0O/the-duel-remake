@@ -91,7 +91,10 @@ export async function run(context) {
     const a=window.__qaApp,L=${data.length},M2W=${data.mphToWorld};
     const R=window.__review={};
     R.begin=()=>{
-      if(!a.startCampaign({startStage:${data.courseIndex},seed:${data.options.seed},mode:'duel',car:${JSON.stringify(data.options.car)},difficulty:'casual',cpuDifficulty:'medium'}))
+      // The browser may order courses differently from the headless run (a circuit behind a switch is placed by its stage
+      // number), so the index from the headless run is only the first guess; the course is found by its id.
+      const begin=i=>a.startCampaign({startStage:i,seed:${data.options.seed},mode:'duel',car:${JSON.stringify(data.options.car)},difficulty:'casual',cpuDifficulty:'medium'})&&a.duel.course?.def?.id===${JSON.stringify(data.courseId)};
+      if(!begin(${data.courseIndex})&&!Array.from({length:32},(_,i)=>i).some(begin))
         throw Error('The course would not start in the browser (is its switch off? pass --flags).');
       a.autopilot=false;a._scriptedCrashDone=true;a.setCamera('chase');a.stop();
       const hud=document.querySelector('#race-hud');if(hud)hud.style.visibility='hidden';

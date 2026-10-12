@@ -90,6 +90,8 @@ export function buildKitPlacements(def, spec) {
       // Long pieces on straights and wide bends, short ones round tight corners; the loader
       // checks every piece against the road, so fewer, longer pieces keep the world quick to build.
       const turn = road.pieces[span.piece];
+      // `smoothInnerWalls`: the wall inside a very tight turn is drawn as one smooth ribbon (src/track-script-scene.js), so no kit pieces there.
+      if (def.smoothInnerWalls && turn.kind === 'turn' && turn.radius < def.smoothInnerWalls.maxRadius && span.side === turn.dir) continue;
       let target = turn.kind === 'straight' ? 16 : turn.radius >= 60 ? 8 : turn.radius >= 30 ? 6 : 3.5;
       // The wall on the inside of a tight bend runs round a very small circle: its pieces must be shorter still.
       if (turn.kind === 'turn' && span.side === turn.dir) target = Math.min(target, Math.max(1.4, (turn.radius - road.halfWidthAt(span.s0) - 1.5) * 1.6));
@@ -107,7 +109,9 @@ export function buildKitPlacements(def, spec) {
         if (escapes.some(escape => inOpening(escape, c, p.x, p.z))) continue;
         const k = [(size - .1) / PIECES['concrete-wall'].size[0], 1, 1];
         place(spec.walls.wall, c, lateral - span.side * .14, -HALF_PI, k);
-        if (spec.walls.fence) place(spec.walls.fence, c, lateral + span.side * .74, -HALF_PI, k);
+        // `openToWater`: no catch fence where water lies beyond the wall (src/waterside-scenery.js puts a low railing there).
+        const waterBeyond = spec.walls.openToWater && basins.some(basin => basinReach(basin, wrapLap(c, length) - basin.s, span.side * (road.halfWidthAt(c) + 10) - basin.lateral) < 1);
+        if (spec.walls.fence && !waterBeyond) place(spec.walls.fence, c, lateral + span.side * .74, -HALF_PI, k);
       }
     }
     for (const escape of escapes) {
@@ -204,7 +208,7 @@ export function buildKitPlacements(def, spec) {
       if (!check(ends.map(e => [e.x, e.z]), -1.4)) continue;
       const count = Math.max(1, Math.ceil(total / (size[0] - .4))), step = total / count;
       // Heading 0 lays the piece's long side across the road (walls, which run along it, use -PI/2).
-      for (let i = 0; i < count; i++) place('lantern-string', s, -reach + step * (i + .5), 0, [step / size[0] * 1.04, 1, 1], { lift: string.lift ?? 5.2 });
+      for (let i = 0; i < count; i++) place('lantern-string', s, -reach + step * (i + .5), 0, [step / size[0] * 1.04, string.bulb ?? 1, string.bulb ?? 1], { lift: string.lift ?? 5.2 });
     }
   }
 
