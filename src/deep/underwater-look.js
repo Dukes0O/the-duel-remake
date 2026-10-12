@@ -59,6 +59,8 @@ export function createUnderwaterLook({ renderer, scene, quality = 'high', sunDir
   sun.shadow.normalBias = 0.04;
   const skylight = new THREE.HemisphereLight(0x8fc4d8, 0x6b5a3c, 0.8);
   scene.add(sun, sun.target, skylight);
+  // The scene may be the circuit's own: remember what it had, to put it back.
+  const before = { background: scene.background, environment: scene.environment, environmentIntensity: scene.environmentIntensity };
   scene.background = null;
 
   const environment = buildEnvironment(renderer);
@@ -124,6 +126,7 @@ export function createUnderwaterLook({ renderer, scene, quality = 'high', sunDir
     dispose() {
       environment.dispose(); dome.dispose(); surface.dispose(); shafts.dispose(); snow.dispose();
       scene.remove(sun, sun.target, skylight, dome.mesh, surface.mesh, shafts.mesh, snow.mesh);
+      Object.assign(scene, before);
     },
   };
 }

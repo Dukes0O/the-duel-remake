@@ -150,8 +150,9 @@ const CHUNK_Z = 20, CHUNK_X = 30; // metres of trail and of width per chunk
 
 // Near the camera a clump is drawn in full; farther out a cheaper copy of the
 // same clump; beyond sight not at all. The water hides the change.
-export function createKelp(uniforms, { stems = 520, seed = 1989, blades = 'full', distance = 150, nearDistance = 22, castShadow = true } = {}) {
-  const list = kelpPlacements(seed, stems);
+export function createKelp(uniforms, { stems = 520, seed = 1989, blades = 'full', distance = 150, nearDistance = 22, castShadow = true, placements = null } = {}) {
+  // A Deep zone passes its own placements (zone-floor.js); the look test uses its stretch.
+  const list = placements ?? kelpPlacements(seed, stems);
   const full = blades === 'full';
   const nearGeometry = kelpStemGeometry(full ? { stipes: 3, nodes: 12, bladeSegments: 5 } : { stipes: 2, nodes: 9, bladeSegments: 3 });
   const farGeometry = kelpStemGeometry(full ? { stipes: 3, nodes: 9, bladeSegments: 2 } : { stipes: 2, nodes: 6, bladeSegments: 2 });
@@ -210,7 +211,7 @@ export function createKelp(uniforms, { stems = 520, seed = 1989, blades = 'full'
     },
     dispose() {
       nearGeometry.dispose(); farGeometry.dispose();
-      parts.forEach(({ near, far }) => { near.geometry.dispose(); far.geometry.dispose(); });
+      parts.forEach(({ near, far }) => { near.geometry.dispose(); far.geometry.dispose(); near.dispose(); far.dispose(); });
       material.dispose(); depthMaterial.dispose();
     },
   };

@@ -29,3 +29,16 @@ in tools/test-browser-harness.mjs. Default headless behavior and every existing
 assertion stay exact. The official simple frame stage uses the existing harness
 in actual headed mode and refuses headless, hidden, busy or undeclared awake
 context. No browser-harness edit runs alongside FAC-07's ownership.
+
+## Director scope grant, before night publication fixes
+
+FAC-03 may publish its two dated reports under docs/board/checks, refresh
+STATUS with the existing build-status tool, and commit only those three
+metadata paths on integration/wasteland immediately. It must refuse public
+publication if the source, branch or worktree changed, keep a failed report
+in its owned ignored evidence instead, and never stage other people's edits.
+No build-status implementation change is authorized. Each invocation owns a
+unique evidence leaf; latest green attribution includes the current date.
+Child output preserves streamed UTF-8, reports write errors only after child
+close and all queued writes drain, and never abandons a running child.
+The original no-push and no-history-rewrite instruction remains in force.
