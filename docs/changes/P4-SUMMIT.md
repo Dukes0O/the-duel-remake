@@ -90,6 +90,22 @@ GLB supplies the picture, with no duplicate primitive wall render.
 The real asset test must detect the old centred-post and 6.292 m ceiling
 assumptions. The asset and unrelated assertions remain unchanged.
 
+## Bounded road fit before code
+
+The first focused check retained the 165 m requirement and failed at 148.7805 m
+between the Engineer approach/return. The real kit test then failed clearance:
+Gallery narrowing began at actual s10,299, leaving the first tiles on the
+12 m road. No assertion or clearance rule was waived.
+
+Fit within Claude's allowed 10 percent: each post-hairpin straight shortens
+by 10 percent, each exit kink turns 10 percent more, and Engineer's hairpin
+angle moves 172 to 170 degrees. All six radii stay exact. The remaining
+pre-Gallery straights scale by 0.9794965749 to place narrowing at s10,100,
+keeping split/avalanche coordinates exact. Total is 14,219.9546 m; source
+inspection of all native 2 m samples finds a 167.6946 m minimum for pairs
+more than 750 m apart. This is no focused/native/kit acceptance pass.
+The Gallery pictures and physical inputs still use the actual approved model.
+
 ## Changed assertions
 
 The feature catalogue grows from 23 to 24 entries only for summit-run dev.

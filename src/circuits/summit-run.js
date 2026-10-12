@@ -67,8 +67,18 @@ const road = [
   ['straight',590],
   ['straight',440,{name:'Summit Finish'}],
 ];
+// Fit the eased road within Claude's 10% allowance: turn away sooner after
+// each hairpin, retain its radius, and begin the Gallery at the actual split.
+const exits=[[15,16],[19,20],[23,24],[32,33],[44,45],[48,49]];
+for(const [post,kink] of exits){road[post][1]*=.9;road[kink][2]*=1.1;}
+road[18][2]=170;
 const starts=[0,13,26,27,37,42,51], climbs=[120,220,30,200,0,150,0];
 const draft={id:'summit-run',closed:false,scriptDefaults:{width:12},script:road};
+const fitting=buildTrackScript({...draft}),fixedPosts=new Set(exits.map(([post])=>post));
+const preGalleryStraight=road.slice(0,37).reduce((sum,row,index)=>
+  sum+(row[0]==='straight'&&!fixedPosts.has(index)?row[1]:0),0);
+const fitShare=1-(fitting.pieces[37].s0-10100)/preGalleryStraight;
+for(let index=0;index<37;index++)if(road[index][0]==='straight'&&!fixedPosts.has(index))road[index][1]*=fitShare;
 const plain=buildTrackScript(draft);
 for(let section=0;section<starts.length;section++){
   const from=starts[section],to=starts[section+1]??road.length;
