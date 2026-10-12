@@ -63,11 +63,11 @@ if(process.env.DUEL_SKIP_CAMPAIGNS){
     const outcomes=[];
     for(const fps of [30,144]){
       const app=new App();app.autopilot=true;app.duel.seed=1989;
-      app.duel.startCampaign({startStage:event.stage,car:event.requiredCar||'falcone_f42',cpuDifficulty:'easy'});app._scriptedCrashDone=true;
+      app.duel.startCampaign({startStage:COURSE.indexOf(event),car:event.requiredCar||'falcone_f42',cpuDifficulty:'easy'});app._scriptedCrashDone=true;
       let frames=0;while(!['stage_result','gameover'].includes(app.duel.state.status)&&frames++<fps*400)app.advance(1/fps);
       const s=app.duel.state;outcomes.push({status:s.status,time:s.totalTimeSec,score:s.score,hits:s.majorCrashes,jumps:s.jumps,won:s.results?.won,laps:s.completedLaps});
     }
-    ok(outcomes.every(outcome=>outcome.status==='stage_result'&&outcome.laps===2&&outcome.won),`${event.name}: its recommended/default car can win both complete laps`);
+    ok(outcomes.every(outcome=>outcome.status==='stage_result'&&outcome.laps===(event.laps||2)&&outcome.won),`${event.name}: its recommended/default car can win all ${event.laps||2} complete laps`);
     ok(outcomes.every(outcome=>Math.abs(outcome.time-outcomes[0].time)<.001&&outcome.score===outcomes[0].score&&outcome.hits===outcomes[0].hits&&outcome.jumps===outcomes[0].jumps),`${event.name}: event and jump scoring agree across display frame rates`);
     if(event.kind==='arena')eq(outcomes[0].jumps,6,'the complete arena demo scores every ramp on both laps');
   }

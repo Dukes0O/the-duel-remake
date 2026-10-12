@@ -24,14 +24,14 @@ ok(!/ferrari|porsche/i.test(JSON.stringify(CARS)), 'no real trademarks in car da
 
 // --- Mixed-biome circuits close cleanly and keep the driving lanes clear ---
 eq(COURSE.filter(course => !course.kind).length, 3, 'three mixed circuits in the campaign');
-eq(COURSE.filter(course => course.kind === 'circuit').length, 6, 'six standalone expansion circuits');
-eq(new Set(COURSE.filter(course => course.kind === 'circuit').map(course => course.id)).size, 6, 'expansion circuits have unique stable identities');
+eq(COURSE.filter(course => course.kind === 'circuit' && course.expansion).length, 6, 'six standalone expansion circuits');
+eq(new Set(COURSE.filter(course => course.kind === 'circuit' && course.expansion).map(course => course.id)).size, 6, 'expansion circuits have unique stable identities');
 ok(COURSE.some(course => course.kind === 'arena'), 'the monster arena is a separate event');
 for (const definition of COURSE) {
   const course = new Course(definition, 611);
   const start = course.at(0), finish = course.at(course.length), before = course.at(course.length - .01), after = course.at(.01);
   ok(Math.hypot(start.x - finish.x, start.z - finish.z) < .001 && Math.hypot(before.x - after.x, before.z - after.z) < .04, `${definition.name}: the circuit closes without a position jump`);
-  eq(course.raceLength, course.length * 2, `${definition.name}: a complete event covers two laps`);
+  eq(course.raceLength, course.length * (definition.laps || 2), `${definition.name}: a complete event covers its ${definition.laps || 2} laps`);
   if (!['arena', 'chase', 'drift', 'circuit'].includes(definition.kind)) ok(new Set(course.sections.map(section => section.theme)).size >= 2, `${definition.name}: several landscapes appear within one lap`);
   if (definition.kind === 'circuit') ok(course.sections.length >= 3 && course.sections.every(section => typeof section.name === 'string' && section.name.trim()), `${definition.name}: standalone circuit has named driving sections without requiring mixed biomes`);
   let clear = true;
@@ -45,7 +45,9 @@ for (const definition of COURSE) {
   const world = course.groundAt(course.length + 900, 40), recovered = course.nearest(world.x, world.z, course.length + 900);
   ok(Math.abs(recovered.s - course.length - 900) < .04 && Math.abs(recovered.lateral - 40) < .04, `${definition.name}: world contacts preserve the absolute lap phase`);
   ok(course.features.turns.every(turn => turn.signS < turn.s - 80), `${definition.name}: hard-turn signs give advance warning`);
-  if (definition.kind !== 'arena') ok(course.features.flocks.length >= 15, `${definition.name}: the stage contains many chicken flock bonuses`);
+  // An authored Grand Prix circuit (definition.script) is a pure race: no roadside chicken bonuses.
+  if (definition.script) eq(course.features.flocks.length, 0, `${definition.name}: a pure-race circuit has no chicken flock bonuses`);
+  else if (definition.kind !== 'arena') ok(course.features.flocks.length >= 15, `${definition.name}: the stage contains many chicken flock bonuses`);
 }
 
 // --- CANON stage 1 of the default course has a radar trap AND the rival ---

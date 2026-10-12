@@ -35,7 +35,7 @@ const fingerprint = duel => JSON.stringify([duel.state.stageTimeSec.toFixed(3), 
   ...duel.state.opponents.map(r => [r.s.toFixed(3), r.lateral.toFixed(3), r.speedMph.toFixed(3), r.completedLaps, !!r.knock])]);
 
 // ---- the switch and the old modes ----
-check(FEATURE_STATES['grand-prix'] === 'dev', 'the Grand Prix switch starts in dev');
+check(FEATURE_STATES['grand-prix'] === 'on', 'the Grand Prix switch is released (on, 11 October 2026)');
 {
   const off = start({ flag: false });
   equal(off.state.mode, 'duel', 'with the switch off a Grand Prix request is an ordinary Duel');

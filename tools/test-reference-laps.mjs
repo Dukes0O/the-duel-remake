@@ -32,8 +32,9 @@ equal(JSON.stringify(COURSE), definitionsBefore, 'Target discovery does not edit
 const nativeCatalog = await runReferenceWorker({catalogOnly: true});
 check(ALL_CIRCUITS.every(definition => nativeCatalog.events.includes(definition.id)),
   'Fresh worker enables authored circuits in the actual native COURSE registry');
-check(nativeCatalog.flags.every(row => row.state === 'dev' && row.enabled),
-  'Fresh worker uses real dev switches through the supported QA query');
+// Tremblant Woods is released (state on); the other circuits are still dev and need the QA query.
+check(nativeCatalog.flags.every(row => row.enabled && row.state === (row.name === 'tremblant-woods' ? 'on' : 'dev')),
+  'Fresh worker enables every circuit switch: released ones are on, the rest are real dev switches through the supported QA query');
 equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');
 await assert.rejects(() => runReferenceWorker({targets: [{key: 'missing|fixed', eventId: 'missing', route: 'fixed', seed: 1989}]}),

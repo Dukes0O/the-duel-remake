@@ -382,6 +382,9 @@ export function createPathNightDetails({world, course}) {
   const lampPools = new THREE.InstancedMesh(poolGeometry, poolMaterial, 32);
   lampPools.name = 'Night streetlamp road pools';lampPools.count = 0;lampPools.frustumCulled = false;
   lampHeads.userData.excludeAmbientOcclusion = lampPools.userData.excludeAmbientOcclusion = true;
+  // A circuit with its own street light (`streetLight`, src/night-glows.js) draws pools that follow the road's bends and climbs,
+  // so these flat ones, which cut into the road on a bend, are left out.
+  if (course.def.streetLight) lampPools.visible = false;
   group.add(lampPoles, lampArms, lampHeads, lampPools);
   world.add(group);
   const object = new THREE.Object3D();

@@ -161,6 +161,17 @@ function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) 
   return true;
 }
 
+// A circuit may turn a piece's own glow down or up (`kitLook: {'lantern-string': {glow: 1.1}}`):
+// the glow strength of every lit surface of that piece, as a number of its stored strength.
+function applyKitLook(look,model) {
+  if (!look || !finite(look.glow) || look.glow < 0 || !model?.scene?.isObject3D) return;
+  model.scene.traverse(node => {
+    if (!node.isMesh) return;
+    for (const material of [].concat(node.material || []))
+      if (material.emissive && material.emissive.getHex() !== 0 && material.emissiveIntensity > 0) material.emissiveIntensity = look.glow;
+  });
+}
+
 // Own cache and instances for one world. No module-global asset lifetime.
 export function createTrackKits(course, options) {
   const enteredAt = performance.now();
@@ -419,6 +430,7 @@ export function createTrackKits(course, options) {
       const model = await load(path);
       if (model?.scene?.isObject3D) for (const resource of resourcesOf(model.scene)) own(resource);
       if (retired || failed) return;
+      applyKitLook(course.def.kitLook?.[id],model);
       const validationStarted = performance.now();
       try {
         const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});

@@ -72,7 +72,8 @@ const [legacyWorld,legacyMountain,legacyCity]=await Promise.all(['world-surfaces
 const benchmarks=[];
 // The new world-space practice surface is covered by freestyle-course and
 // terrain tests. This audit preserves every byte of the fifteen road scenes.
-for(const def of COURSE.filter(def=>!def.practice)){
+// Only events with an audited snapshot: authored Grand Prix circuits (def.script) arrived after it and have their own tests.
+for(const def of COURSE.filter(def=>!def.practice&&!def.script)){
   const course=new Course(def,1989),samplesBefore=JSON.stringify(course.samples),featuresBefore=JSON.stringify(course.features);
   const actual=farTerrainGeometry(course,false),legacy=legacyWorld.farTerrainGeometry(course,false);
   equal(Object.keys(actual.attributes),Object.keys(legacy.attributes),'No terrain attributes added or removed');

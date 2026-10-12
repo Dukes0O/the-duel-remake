@@ -37,7 +37,7 @@ function memoryBackups(){
 }
 const dir=new URL('./fixtures/saves/',import.meta.url);
 const fixtures=readdirSync(fileURLToPath(dir)).filter(name=>name.endsWith('.json')).sort();
-assert.equal(fixtures.length,7);
+assert.equal(fixtures.length,8);
 for(const name of fixtures){
   const fixture=JSON.parse(readFileSync(new URL(name,dir),'utf8'));
   const source=memoryStorage(Object.fromEntries(Object.entries(fixture.storage).map(([key,value])=>[key,JSON.stringify(value)])));
@@ -162,7 +162,7 @@ await assert.rejects(importCareer(file,{storage:current,backupStore:memoryBackup
 assert.deepEqual(captureCareer(current),original,'quota failure rolled back');
 await assert.rejects(backupCareer(current,{save:async()=>{},load:async()=>null}),/could not be verified/);
 assert.deepEqual(captureCareer(current),original,'unverified backup did not change the save');
-console.log('career backup: seven historical fixtures, migration gate, validation, recovery, and quota rollback passed');
+console.log('career backup: eight historical fixtures, migration gate, validation, recovery, and quota rollback passed');
 
 
 // ARS-01: an older registry could already preserve these future weapon ids.

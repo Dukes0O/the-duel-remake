@@ -1,5 +1,6 @@
 import {arenaTeams} from './arena/arena-event.js';
 import {teamTotal} from './arena/warlord-event.js';
+import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
@@ -35,6 +36,7 @@ export function arenaHud(state) {
   }
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
+  const fuelDepot = fuel ? arena.fuelRun?.depots.find(depot => depot.participantId === 'player') : null;
   const convoy = arena.mode === 'convoy-raid' || arena.format === 'convoy-raid';
   const suddenDeath = arena.phase === 'sudden-death';
   const remainingSec = fuel && suddenDeath ? 0 : Math.max(0, suddenDeath ? arena.suddenDeathLimitSec - arena.suddenDeathSec
@@ -51,6 +53,7 @@ export function arenaHud(state) {
   return {
     phase: arena.phase,
     fuel,
+    fuelColor: fuelDepot?.color ?? null, fuelColorName: fuelDepot?.colorName ?? null,
     bounty,
     convoy,
     markedId: arena.bountyHunt?.pendingVictimId ? null : arena.bountyHunt?.markedId,
@@ -61,8 +64,9 @@ export function arenaHud(state) {
     placeText: ORDINALS[place - 1] || String(place),
     leaderText: tiedAtTop ? 'LEVEL AT THE TOP' : leader.id === 'player' ? 'YOU LEAD' : `${leader.name} LEADS`,
     scoreText: convoy ? arena.convoy.chargePlanted ? 'CHARGE PLANTED' : arena.convoy.boardingLeftSec > 0 ?
-      `BOARDING WINDOW ${Math.ceil(arena.convoy.boardingLeftSec)} s` : `VALVES ${arena.convoy.valves.filter(hp=>hp===0).length} / 3` :
-      bounty ? `POINTS ${me.bountyPoints} · ${arena.bountyHunt.markedId === 'player' && !arena.bountyHunt.pendingVictimId ? 'YOU CARRY THE BOUNTY' : 'HUNT THE BEACON'}` : fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? 'CARRYING FUEL' : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
+      `BOARDING WINDOW ${Math.ceil(arena.convoy.boardingLeftSec)} s` :
+      `VALVES ${arena.convoy.valves.filter(hp=>hp===0).length} / 3 BROKEN · ${Math.ceil(convoyValveArmor(arena.convoy).fraction * 100)}% ARMOR LEFT` :
+      bounty ? `POINTS ${me.bountyPoints} · ${arena.bountyHunt.markedId === 'player' && !arena.bountyHunt.pendingVictimId ? 'YOU CARRY THE BOUNTY' : 'HUNT THE BEACON'}` : fuel ? `DELIVERED ${me.fuelDelivered} / 5 · ${me.fuelCanisterId ? `TAKE IT TO THE ${fuelDepot?.colorName ?? 'MATCHING'} DEPOT` : 'FIND FUEL'}` : `WRECKS ${me.wrecks} · WRECKED ${me.wrecked}`,
     huntedBy: hunters.map(participant => participant.name),
     respawnSec: state.combatWrecking ? Math.max(1, Math.ceil(state.combatWreckTimer || 0)) : 0,
     // A warlord's pair is one row: the warlord's name and the pair's totals.
@@ -209,6 +213,7 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const winner = byId[result.winnerId];
   const fuel = arena.mode === 'fuel-run';
   const bounty = arena.mode === 'bounty-hunt';
+  const fuelDepot = fuel ? arena.fuelRun?.depots.find(depot => depot.participantId === 'player') : null;
   const convoy = arena.mode === 'convoy-raid';
   const warlord = arena.mode === 'warlord' ? WARLORDS[arena.warlordId] : null;
   const title = warlord?.victoryTitle && won ? escapeHTML(warlord.victoryTitle) : convoy ? won ? 'CONVOY<br>STOPPED.' : 'CONVOY<br>ESCAPED.' : warlord ? won ? 'YOU WIN.' : 'TRY AGAIN.' :
@@ -272,6 +277,7 @@ export function warlordIntroScreen(state, {metric, action, escapeHTML}) {
     description: escapeHTML(warlord.taunt),
     metrics: metric('CAR', escapeHTML((warlord.vehicleName || CARS[warlord.car].name).toUpperCase()), true) +
       metric('WIN', arena.format === 'convoy-raid' ? 'BOARDING CHARGE' : 'FIRST TO THREE WRECKS') +
+      (arena.format === 'convoy-raid' ? metric('WEAK SPOT', 'RED VALVES ON THE TANK') : '') +
       metric('TIME', arena.format === 'convoy-raid' ? '5:00' : '4:00 + SUDDEN DEATH'),
     extra: '',
     actions: action('BEGIN FIGHT', 'warlord-begin', true) +

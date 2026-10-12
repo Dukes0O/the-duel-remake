@@ -15,7 +15,7 @@ import { basinGround, hillLocal, hillReach, runWeight, shoreFactor } from '../ci
 const BASE = {
   id: 'tremblant-woods', name: 'Tremblant Woods', flag: 'tremblant-woods',
   theme: 'alpine', stage: 18, kind: 'circuit', layoutVersion: 1,
-  closed: true, laps: 3, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
+  closed: true, laps: 3, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
   airborne: true, terrainHalfWidth: 64, defaultMood: 'golden',
   sections: [
     { theme: 'alpine', name: 'Lodge and Lake', share: .35 },

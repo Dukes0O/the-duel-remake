@@ -19,6 +19,7 @@ import { addCitySkyline } from './city-skyline.js';
 import { addCityParking } from './city-parking.js';
 import { addTrackScriptScene } from './track-script-scene.js';
 import { addCircuitWater, addRoadGlow } from './circuit-water.js';
+import { addNightGlows } from './night-glows.js';
 import { addFreestyleScenery } from './freestyle-scene.js';
 
 import { strip, terrainGeometry, farTerrainGeometry, hiddenRoadGroundGeometry, meadowTexture, groundTexture, hollowMudTexture, surfaceTexture, addTrailShoulder } from './world-surfaces.js';
@@ -88,7 +89,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
     }
   }
   if(course.script)addTrackScriptScene(group,course,{snow:winter});
-  addCircuitWater(group,course);addRoadGlow(group,course);
+  addCircuitWater(group,course);addRoadGlow(group,course);addNightGlows(group,course);
   for(const theme of new Set(course.sections.map(s=>s.theme))){
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};

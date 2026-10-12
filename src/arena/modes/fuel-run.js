@@ -4,7 +4,10 @@ export const FUEL_RULES = Object.freeze({
   pickupMetres: 3.5, depotMetres: 4, innerOffset: -6,
   padFractions: Object.freeze([.16, .36, .57, .81]),
   walkingShare: .7, dropArmor: 25,
-  colors: Object.freeze(['#78ceff', '#ffb04d', '#a6de72', '#dba3ff']),
+  // Strong, far apart colours that still read in dust and at night. The first
+  // is always the player's own depot (and the colour of the fuel they carry).
+  colors: Object.freeze(['#00e5ff', '#ff7a00', '#7dff2e', '#ff2fd0']),
+  colorNames: Object.freeze(['CYAN', 'ORANGE', 'LIME', 'MAGENTA']),
 });
 const actorFor = (duel, id) => id === 'player' ? duel.state :
   duel.state.opponents.find(actor => actor.arenaId === id);
@@ -43,7 +46,8 @@ export function initializeFuelRun(duel) {
     participant.fuelCanisterId = null;
     const slot = arena.spawnSlots[participant.spawnSlot];
     return {participantId: participant.id, team: participant.team,
-      color: FUEL_RULES.colors[index], s: slot.s, lateral: slot.lateral};
+      color: FUEL_RULES.colors[index], colorName: FUEL_RULES.colorNames[index],
+      s: slot.s, lateral: slot.lateral};
   });
   arena.fuelRun = {pads, depots, canisters: [], serial: 0};
   for (const pad of pads) newCanister(arena.fuelRun, pad);
