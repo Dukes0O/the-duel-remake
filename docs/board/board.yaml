@@ -376,10 +376,11 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "building"
+    waiting_on: "claude"
     claimed_by: "codex-session-01a13220-575d-7492-a51c-43a1e08dfe70"
     branch: "codex/deep-audio"
     needs: []
-    locks: [sound-bank]
+    locks: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-AUDIO.md"
 
