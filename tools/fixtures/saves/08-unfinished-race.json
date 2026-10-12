@@ -1,0 +1,27 @@
+{
+  "shape": "unfinished-race-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2, "activePlayerId": "synthetic-old-race",
+      "players": [
+        {"id": "synthetic-old-race", "name": "Old Race QA", "profile": {
+          "version": 2, "credits": 1500,
+          "courses": {"version": 1, "unlocked": ["pacific-canyon", "high-country", "titan-arena"]},
+          "activeRace": {"runId": "run-old-1", "stageIndex": 3, "key": "run-old-1:3", "car": "falcone_f42", "pendingPoliceFineCount": 1}
+        }},
+        {"id": "synthetic-id-race", "name": "Id Race QA", "profile": {
+          "version": 2, "credits": 900,
+          "courses": {"version": 1, "unlocked": ["pacific-canyon", "tremblant-woods"]},
+          "activeRace": {"runId": "run-new-1", "stageIndex": 16, "stageId": "tremblant-woods", "key": "run-new-1:16", "car": "falcone_f42"}
+        }}
+      ]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.activeRace.stageIndex", "equals": 3},
+    {"path": "players.0.profile.activeRace.stageId", "equals": "titan-arena"},
+    {"path": "players.0.profile.activeRace.pendingPoliceFineCount", "equals": 1},
+    {"path": "players.1.profile.activeRace.stageIndex", "equals": 16},
+    {"path": "players.1.profile.activeRace.stageId", "equals": "tremblant-woods"}
+  ]
+}
