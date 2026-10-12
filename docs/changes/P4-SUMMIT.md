@@ -188,3 +188,22 @@ light path from Tremblant Snow, which has native static light metadata.
 Before the check, use the renderer's actual circuitLighting and clear-mood
 resolver, assert its absent light path, then retain every winter override
 assertion. Runtime and acceptance are unchanged.
+
+## Native acceptance recipe before code
+
+The Director grants tools/scenarios/summit-run.mjs and this card's look folder,
+using only the existing browser harness. It will capture the actual six-car
+grid, desert, hairpins, tree-line pits, upper snow, Gallery/Open Road and finish
+landmarks, with a sheet at most 500 KB. No frame timing or shared track-review
+change. All captures use private memory storage and the actual Summit id.
+
+The owned card test's --drive option uses App and the existing authored-road
+useRacingLine(app,.95). Three real full runs use the same Medium/Falcone F42,
+seed 1989 and six-car field: summer throughout, summer then winter in the real
+tree-line pit, and winter from setup. Only the pit strategy replaces the
+driver's legal steering/throttle/brake inputs while approaching and driving
+the existing lane and box. No pose, tyre, finish or service state is forced.
+Record the actual limiter, four-second service, single tyre change and finish.
+The original targets remain 360–480 seconds, pit 4–8 seconds faster than summer,
+and winter from setup 2–5 seconds slower than pit. The checks may fail; a failure
+will remain visible and receive one bounded investigation, not a waiver.

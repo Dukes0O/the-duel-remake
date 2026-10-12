@@ -10,7 +10,11 @@ import {applySnowTerrain,winterWeight,snowPineIds,winterLightingSettings} from '
 import {sampleCourseLightPath} from '../src/light-path.js';
 import {circuitLighting,resolveLightingSettings} from '../src/lighting-moods.js';
 import {Duel} from '../src/game.js';
-import {COURSE} from '../src/config.js';
+import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {PIT} from '../src/pit-lane.js';
+import {useRacingLine} from './track-script-drive.mjs';
 import { Course } from '../src/course.js';
 
 assert.equal(SUMMIT_RUN.id, 'summit-run');
@@ -137,3 +141,73 @@ for(let a=0;a<points.length;a++)for(let b=a+1;b<points.length;b++){
 const closest=Math.sqrt(closestSquared);
 assert.ok(closest>=165, `separate mountain legs leave ${closest.toFixed(1)} m`);
 console.log('Summit authored layout, climb, native finish road and separation passed.');
+
+if(process.argv.includes('--drive')){
+  const strategies=[];
+  for(const strategy of ['summer','pit','winter']){
+    const previousStorage=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+    const previousCancel=Object.getOwnPropertyDescriptor(globalThis,'cancelAnimationFrame');
+    const memory=new Map(),stage=COURSE.length;
+    let app;
+    COURSE.push(SUMMIT_RUN);
+    try {
+      globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
+      globalThis.cancelAnimationFrame??=()=>{};
+      app=new App();
+      app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'grand-prix':true,'summit-run':true}});
+      app.profile={...app.profile,credits:1e6};app._saveProfile();
+      assert.equal(app.purchaseCourse('summit-run').ok,true);
+      assert.equal(app.startCampaign({startStage:stage,seed:1989,fieldSeed:4242,fieldSize:5,mode:'grandprix',car:'falcone_f42',difficulty:'casual',cpuDifficulty:'medium',tyre:strategy==='winter'?'winter':'summer'}),true);
+      app.autopilot=true;app._scriptedCrashDone=true;
+      useRacingLine(app,.95);
+      const duel=app.duel,state=duel.state,lane=duel.course.pitLane,events=[];
+      assert.equal(state.field.size,6);assert.equal(state.opponents.length,5);
+      let serviceStarted=null,serviceEnded=null,changedAt=null,crashes=0,finite=true;
+      duel.onChange((s,event)=>{if(event.pitCue)events.push({cue:event.pitCue,t:s.stageTimeSec,s:s.s});if(event.crash)crashes++;});
+      if(strategy==='pit'){
+        const driveLine=app._driveAutopilot;
+        app._driveAutopilot=function(){
+          driveLine.call(this);
+          if(state.status!=='racing'||state.s<lane.entry-100||state.s>lane.exit)return;
+          const v=Math.max(0,state.speedMph)*DRIVE.mphToWorld;
+          const look=state.s+Math.max(6,v*.3),offset=lane.offsetAt(look);
+          const wanted=Math.atan((offset-state.lateral)*2.4/Math.max(15,v));
+          const yaw=(wanted-state.headingError)*6;
+          const surface=duel._drivingSurface(state.s,state.lateral);
+          const authority=Math.max(.05,steeringYawAuthority(state.speedMph,duel.car.grip,surface.traction,duel.car));
+          const remaining=lane.box-state.s;
+          const stop=Math.sqrt(2*DRIVE.brakeAccel*duel.car.braking*DRIVE.mphToWorld*Math.max(0,remaining-2))/DRIVE.mphToWorld;
+          const target=state.tyre==='winter'?PIT.limitMph:Math.min(PIT.limitMph,stop);
+          duel.setInput({throttle:state.speedMph<target?1:0,brake:state.speedMph>target?Math.min(1,(state.speedMph-target)/6):0,steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
+        };
+      }
+      for(let step=0;step<60*900&&['countdown','racing'].includes(state.status);step++){
+        app.advance(1/60,1/60);
+        finite&&=[state.s,state.lateral,state.speedMph,state.headingError].every(Number.isFinite);
+        if(state.pit?.phase==='servicing'&&serviceStarted===null)serviceStarted=state.stageTimeSec;
+        if(state.tyre==='winter'&&strategy!=='winter'&&changedAt===null){changedAt=state.s;serviceEnded=state.stageTimeSec;}
+        if(state.completedLaps>=1)break;
+      }
+      const result={strategy,status:state.status,completed:state.completedLaps,seconds:state.field.stats.playerFinish??state.stageTimeSec,tyre:state.tyre,changedAt,serviceStarted,serviceEnded,events,crashes,finite,endS:state.s};
+      strategies.push(result);console.log(JSON.stringify(result));
+      assert.equal(state.completedLaps,1,`${strategy} reaches the native endpoint`);
+      assert.equal(finite,true,`${strategy} remains finite`);
+      if(strategy==='pit'){
+        assert.equal(events.filter(event=>event.cue==='pit.go').length,1,'pit strategy receives one real service');
+        assert.equal(state.tyre,'winter');
+        assert.ok(changedAt>=lane.box-4&&changedAt<=lane.box+4,'tyres change only at the actual box');
+        assert.ok(Math.abs(serviceEnded-serviceStarted-4)<=1/60+1e-6,'actual service lasts four seconds');
+      }else assert.equal(events.filter(event=>event.cue==='pit.go').length,0,'non-pit strategies receive no service');
+    } finally {
+      try {app?.dispose();} finally {
+        COURSE.splice(stage,1);
+        if(previousStorage)Object.defineProperty(globalThis,'localStorage',previousStorage);else delete globalThis.localStorage;
+        if(previousCancel)Object.defineProperty(globalThis,'cancelAnimationFrame',previousCancel);else delete globalThis.cancelAnimationFrame;
+      }
+    }
+  }
+  const [summer,pit,winter]=strategies;
+  assert.ok(pit.seconds>=360&&pit.seconds<=480,`Medium mid-car run is ${pit.seconds.toFixed(3)} s`);
+  assert.ok(summer.seconds-pit.seconds>=4&&summer.seconds-pit.seconds<=8,`pit saves ${(summer.seconds-pit.seconds).toFixed(3)} s versus summer`);
+  assert.ok(winter.seconds-pit.seconds>=2&&winter.seconds-pit.seconds<=5,`starting winter costs ${(winter.seconds-pit.seconds).toFixed(3)} s versus pit`);
+}
