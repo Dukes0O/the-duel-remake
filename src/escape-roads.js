@@ -1,6 +1,7 @@
 // Escape roads (a circuit's `escapeRoads`): a straight run-off on the outside of a
 // named turn, behind an opening in the wall (src/track-script-course.js makes the
-// walls, src/track-script-scene.js draws the ground). Pure geometry on the road.
+// walls, src/track-script-scene.js draws the ground; `colour` is the gravel's own colour,
+// for a night circuit that wants it darker). Pure geometry on the road.
 import { TRACK_SCRIPT, TrackScriptError } from './track-script.js';
 
 export function escapeRoadsFor(course) {
@@ -14,7 +15,7 @@ export function escapeRoadsFor(course) {
     const run = spec.run ?? 70, width = spec.width ?? 10, outer = half + TRACK_SCRIPT.wallSetback, inner = outer - width;
     const forward = { x: Math.sin(frame.heading), z: Math.cos(frame.heading) }, left = { x: Math.cos(frame.heading), z: -Math.sin(frame.heading) };
     return Object.freeze({ id: spec.id, piece: piece.name, s0: piece.s0, side, run, width, inner, outer, heading: frame.heading,
-      origin: Object.freeze({ x: frame.x, y: frame.y, z: frame.z }), forward, left, tyreDepth: spec.tyreDepth ?? 1.8 });
+      origin: Object.freeze({ x: frame.x, y: frame.y, z: frame.z }), forward, left, tyreDepth: spec.tyreDepth ?? 1.8, colour: spec.colour ?? null });
   });
 }
 

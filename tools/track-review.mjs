@@ -181,7 +181,7 @@ export async function runHeadlessLaps(options) {
     }
     return {
       course, gridS, stageIndex, trace, lapTimes: [...state.lapTimes], laps, status: state.status, completed: state.completedLaps >= laps,
-      opponents: state.opponents?.length ?? 0, hasRival: !!def.hasRival, courseDef: { id: def.id, name: def.name, laps, kind: def.kind ?? 'race' },
+      opponents: state.opponents?.length ?? 0, hasRival: !!def.hasRival, courseDef: { id: def.id, name: def.name, laps, kind: def.kind ?? 'race', reviewFrames: def.reviewFrames },
       mphToWorld: DRIVE.mphToWorld, dispose: () => { try { app.dispose(); } finally { restore(); } },
     };
   } catch (error) {
@@ -224,6 +224,16 @@ export function buildReview({ course, courseDef, trace, lapTimes, gridS, options
   markSlowCorners(corners, top.mph);
   markCrestLift(crests, lap, length);
   const points = pickFramePoints({ length, gridS, corners, crests, straight });
+  // A circuit may name views it wants photographed (`reviewFrames: [{ key, label, s }]`, for water,
+  // a landmark or a lit street): they take the place of the evenly spaced fill frames.
+  const named = (courseDef.reviewFrames ?? []).filter(frame => Number.isFinite(frame.s) && frame.key && frame.label);
+  const fills = points.filter(point => point.kind === 'fill');
+  named.slice(0, fills.length).forEach((frame, index) => Object.assign(fills[index], { key: frame.key, label: frame.label, kind: 'named', s: wrap(frame.s, length) }));
+  if (named.length) {
+    const ordered = [points[0], ...points.slice(1).sort((p, q) => p.s - q.s)];
+    ordered.forEach((point, index) => { point.index = index; point.file = frameFileName(index, point.key); });
+    points.splice(0, points.length, ...ordered);
+  }
   for (const point of points) {
     const row = point.kind === 'grid' ? null : laneOf(lap, point.s, length);
     point.mph = point.kind === 'grid' ? 0 : row ? Math.round(row.mph) : 60;

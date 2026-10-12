@@ -199,11 +199,12 @@ export function buildKitPlacements(def, spec) {
   for (const string of spec.strings ?? []) {
     const from = pieceRange(road, string.from, 'start'), to = pieceRange(road, string.to, 'end'), every = string.every ?? 30, size = PIECES['lantern-string'].size;
     for (let s = from; s <= to + 1e-6; s += every) {
-      const reach = road.halfWidthAt(s) + WALL_OUT + .2, total = reach * 2;
+      const reach = road.halfWidthAt(s) + WALL_OUT + .2 + (string.beyond ?? 0), total = reach * 2;
       const ends = [-1, 1].map(side => course.worldAt(s, side * reach));
       if (!check(ends.map(e => [e.x, e.z]), -1.4)) continue;
       const count = Math.max(1, Math.ceil(total / (size[0] - .4))), step = total / count;
-      for (let i = 0; i < count; i++) place('lantern-string', s, -reach + step * (i + .5), HALF_PI, [step / size[0] * 1.04, 1, 1], { lift: string.lift ?? 5.2 });
+      // Heading 0 lays the piece's long side across the road (walls, which run along it, use -PI/2).
+      for (let i = 0; i < count; i++) place('lantern-string', s, -reach + step * (i + .5), 0, [step / size[0] * 1.04, 1, 1], { lift: string.lift ?? 5.2 });
     }
   }
 
