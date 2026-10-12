@@ -27,7 +27,7 @@ const currentRow = row => {
   return (
     stageIndex >= 0 &&
     !COURSE[stageIndex].practice &&
-    row.laps === (row.mode === 'grandprix' ? 3 : COURSE[stageIndex].laps || 2) &&
+    row.laps === (COURSE[stageIndex].laps || 2) &&
     row.eventKey === eventKey({ ...row, stageIndex }) &&
     isCurrentDriverRecord(row)
   );
@@ -36,7 +36,6 @@ const rowKey = row =>
   [
     row.playerId,
     row.eventKey,
-    row.mode || 'duel',
     row.car,
     ...(row.mode === 'wasteland' ? ['wasteland', weaponSignature(row)] : []),
     row.driverSignature ?? driverModifierSignature(row.driverId, row.car),
@@ -99,7 +98,7 @@ function normalize(value) {
       stageIndex < 0 ||
       !Number.isSafeInteger(layoutVersion) ||
       layoutVersion < 1 ||
-      row.eventKey !== eventKey({ stageIndex, seed: row.seed, laps: row.laps, mode: row.mode }, layoutVersion)
+      row.eventKey !== eventKey({ stageIndex, seed: row.seed, laps: row.laps }, layoutVersion)
     )
       continue;
     const stage = COURSE[stageIndex],
@@ -107,7 +106,7 @@ function normalize(value) {
       cpu = ['easy', 'medium', 'hard'].includes(row.cpuDifficulty) ? row.cpuDifficulty : 'easy';
     if (stage.practice) continue;
     const current = layoutVersion === (stage.layoutVersion ?? 1);
-    if (current && row.laps !== (row.mode === 'grandprix' ? 3 : stage.laps || 2)) continue;
+    if (current && row.laps !== (stage.laps || 2)) continue;
     if (
       drift &&
       (!Number.isInteger(row.driftScore) ||
@@ -177,7 +176,7 @@ function normalize(value) {
         playerName: playerName(row.playerName),
         cpuDifficulty: cpu,
         difficulty: row.difficulty === 'pro' ? 'pro' : 'casual',
-        mode: row.mode === 'grandprix' ? 'grandprix' : row.mode === 'timetrial' ? 'timetrial' : 'duel',
+        mode: row.mode === 'timetrial' ? 'timetrial' : 'duel',
         recordedAt: Number.isFinite(row.recordedAt) ? row.recordedAt : 0,
         upgrades: getUpgradeLevels({ upgrades: { [row.car]: row.upgrades } }, row.car)
       });
@@ -258,7 +257,7 @@ export function recordFinish(board, result, player) {
       driverSignature,
       mode: result.mode,
       weaponLevels: result.weaponLevels,
-      rival: result.mode === 'grandprix' ? null : result.rival
+      rival: result.rival
     });
   const index = board.entries.findIndex(row => rowKey(row) === key),
     old = board.entries[index];
@@ -291,16 +290,14 @@ export function recordFinish(board, result, player) {
       : 'easy',
     difficulty: result.difficulty === 'pro' ? 'pro' : 'casual',
     mode:
-      result.mode === 'grandprix'
-        ? 'grandprix'
-        : result.mode === 'wasteland'
+      result.mode === 'wasteland'
         ? 'wasteland'
         : result.mode === 'timetrial'
           ? 'timetrial'
           : 'duel',
     driverId,
     driverSignature,
-    ...(result.mode !== 'grandprix' && rivalSignature(result) ? { rival: normalizeRival(result.rival) } : {}),
+    ...(rivalSignature(result) ? { rival: normalizeRival(result.rival) } : {}),
     upgrades: getUpgradeLevels({ upgrades: { [result.car]: result.upgrades } }, result.car),
     lapTimes: (result.lapTimes || [])
       .filter(v => Number.isFinite(v) && v > 0)
@@ -324,14 +321,13 @@ export function recordFinish(board, result, player) {
 }
 export function getLeaderboard(
   board,
-  { eventId = '', event = '', car = '', playerId = '', driverId = DEFAULT_DRIVER, mode = '' } = {}
+  { eventId = '', event = '', car = '', playerId = '', driverId = DEFAULT_DRIVER } = {}
 ) {
   return board.entries
     .filter(
       row =>
         currentRow(row) &&
         (row.driverSignature ?? '') === driverModifierSignature(driverId, row.car) &&
-        (!mode || row.mode === mode) &&
         (!eventId || row.eventId === eventId) &&
         (!event || row.eventKey === event) &&
         (!car || row.car === car) &&

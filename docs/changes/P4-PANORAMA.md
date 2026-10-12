@@ -116,6 +116,18 @@ publisher once after final metadata freezes. Integration sync conflicts kept
 both Panorama rounded rocks/plain walls/landmarks and snow caps/smooth Harbour
 walls/winter owner; default resources and actor rules remain unchanged.
 
+Original overnight attempt one was interrupted after 50/90 observed completions
+(30 Easy and 20 Medium). At the Director's request, only the identity-checked
+Panorama process was suspended to restore the two-job limit, retaining memory.
+After the session gap the process and exec session were gone, and the recipe
+had not yet written its end-of-run report. No rate or pass is claimed. Count
+this incomplete attempt as one of the three allowed attempts. Keep the same
+.75/.725/.716 pace for attempt two; no tuning from unreported partial rows.
+Before retry, remove inherited GP-only records, ghost and menu code from this
+lane; that work remains in the GP lane and committed Git text history. Sync
+actual integration solid barriers, ribbon terrain and snow while preserving
+Panorama's owned visual hooks.
+
 ## Removed
 
 Replace incomplete road-only presentation with approved kits/landmarks/landform.
