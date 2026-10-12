@@ -36,7 +36,26 @@ passes every check and is the reference.
    sides) is the likely cause; confirm after the fix with the track review
    (lap within 1:30 to 1:45, no corner at 0 mph, race finishes).
 
+6. **Kyle, playing Harbour Lights (12 October): the camera at Lantern
+   Hairpin hides the car.** The approach and exit run side by side with a
+   wall between them, and the chase camera ends up behind that wall.
+7. **Kyle: the car crashes too easily on Harbour Lights; it should rub along
+   the walls.** The scrape rule exists (`src/sim-contacts.js`: a hit below
+   35 degrees to a wall, `GLANCING_WALL_NORMAL_FRACTION`, slides instead of
+   crashing) but it only applies to obstacles marked `barrier` or
+   `tunnelWall`. The circuit kit walls are `kitSolid`, so every touch is a
+   crash, and finding 3 makes the touches early.
+
 ## Settled rules (Claude)
+
+- **The camera always shows the car.** When a wall or solid kit piece lies
+  between the chase camera and the car, the camera pulls in and rises until
+  the line of sight is clear (`src/camera-clearance.js`), on every course.
+- **Continuous circuit linings scrape.** Kit concrete walls, catch fences,
+  armco, tyre walls and pit walls count as barriers for the existing 35
+  degree glancing rule, so a glancing touch slides with the existing scrape
+  (speed loss, sparks, scrape sound) and only a hit at 35 degrees or more is
+  a crash. Single kit objects (stands, garages, posts) stay solid as now.
 
 - Every wall, fence and barrier base sits within 0.45 m of the ground along
   its whole length, on every course.
@@ -58,6 +77,9 @@ passes every check and is the reference.
 tremblant-snow` pass; `tremblant-woods` still passes. Track review of
 Tremblant Snow (`node tools/track-review.mjs tremblant-snow`) on winter tyres: no corner below 20 mph and no stop. Track
 review of Harbour Lights: lap within 1:30 to 1:45, no corner at 0 mph, the
-race finishes. Lane
+race finishes. On Harbour Lights, the review frame at Lantern Hairpin's apex
+shows the car, and a test that sweeps the camera round the lap finds no wall
+between camera and car. A drive along a Harbour wall at 10 degrees and 100
+mph scrapes without a crash; at 45 degrees it crashes. Lane
 tier, build, one review. The live game changes only at the next release on
 Kyle's "go live".
