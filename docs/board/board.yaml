@@ -4195,6 +4195,11 @@ tasks:
 
     menu_copy_scope: 'Director before edit, 12 October: after the frozen Eifel run drains and after sync with accepted qualifying, fix only the two existing menu labels/distance calculations that hardcode 8 cars and 3 laps. Derive them from authored fieldSize and grandPrixLaps. Harbour must say 4 laps; all original 8-car/3-lap labels and one-run wording remain exact. No race, pay, saves, UI structure or target changes; existing named screen-menu hook only.'
 
+    waiting_on: kyle
+    pause_note: 'Kyle, 12 October: finish only the already-active Red Mesa baseline on 5071e3eb, record its result, then commit board/inbox/STATUS and stop. No new card, gate, balance or other heavy job. Claude FAC-01 changes the rules; restart only on Kyle instruction. Pacific, Azure, High Country, Harbour and Highlands, Eifel and Alpine bounded runs are complete; Red Mesa baseline is the last permitted job, Neon Docks and Cloudbreak are untouched.'
+
+    pause_balance_result: 'Red Mesa baseline attempt 1 on 5071e3eb finished: exit 1, 136.77 s, original 90 races, jobs 4. Wins Easy/Medium/Hard 0/0/0 of 30 fail all bands; opening pile-ups 3/3/1 of 30 fail Easy/Medium and pass Hard; Medium passes 1.2333 (0.9667 after start) fail. All 90 players complete three laps, all 630 CPUs finish; no unfinished cars or stderr. Raw .evidence/2026-10-12/P4-GP-EXISTING/red-mesa-baseline-1-5071e3eb/red-mesa-rate.json. Two attempts remain, Neon Docks and Cloudbreak untouched. No further tuning/job/source edit; retained lane note is uncommitted for restart.'
+
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
     owner: codex
@@ -4441,7 +4446,7 @@ tasks:
     branch: codex/p4-summit
     flag: summit-run
     owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs, docs/board/looks/p4-summit]
-    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs, tools/test-circuit-layouts.mjs, tools/test-wasteland-beta.mjs]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs, tools/test-circuit-layouts.mjs, tools/test-wasteland-beta.mjs, src/sim-contacts.js]
     acceptance:
       - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
       - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
@@ -4453,6 +4458,14 @@ tasks:
     review_scope: "Director grants mixed-winter lighting context, snowy Open Road material, and actual lateral Gallery roof checks in the named presentation hooks. Legacy tunnels and full-winter defaults stay exact. Existing reference assertions select closed circuits; all 27 cyclic targets remain, with Summit explicitly excluded because it is an open road. Record the reason for each changed catalogue or reference assertion. No timing on hidden dev art."
 
     catalogue_sync_scope: 'Director before edit: preserve actual Harbour union 2595735e release order and all 25 accepted switches. Append Summit after every current course and append summit-run dev to the existing beta catalogue fixture, with 26 switches. Keep production, QA isolation, defaults, thresholds and closed reference behavior exact; Summit is open and excluded from cyclic references.'
+
+    gallery_contact_scope: 'Director before code, 12 October: native8367733b stops at Gallery first roof, s 10164.4984; actual roof underside is 5.056 m above road. Existing grounded contact intentionally omits y and treats it horizontally. Grant only _staticContacts in sim-contacts.js plus existing authored Gallery collider creation: roof colliders opt into vertical clearance and receive actual previous/current ground y when missing. Preserve shared points and every unflagged/legacy grounded path exactly; pillars/back stay solid and existing airborne behavior remains. Use existing sweepObstacle bounds, no geometry, driver, input, threshold, frame or new harness change. Existing Summit test proves real grounded passage and airborne roof contact; native strategies rerun honestly.'
+
+    waiting_on: claude
+    native_design_question: 'b7dd65eb: focused roof/contact regressions and 39 High/LOD placements pass. All three real original F42/.95/Medium/1989/4242 strategy runs finish without crashes: summer 276.7833 s, pit 290.2583 s, winter 262.9417 s. One legal 4 s service at 7004.2820 m. Race target 360–480, summer-minus-pit 4–8 and winter-minus-pit 2–5 fail; measured differences -13.475 and -27.3167. Existing pit spans roughly 529 m and limiter occupies 34 s including service. Source-only diagnosis found no within-scope defect. Claude must settle the actual mid-car/course/pit/surface design before more gameplay code; no driver-only slow profile or target change. Actual round-one art is next, separate from failed gameplay acceptance.'
+
+    art_review_source: 7d51620ccad48a0b91e035c5361c2c6055616a50
+    art_review_packet: 'p4-summit/docs/board/looks/p4-summit/round-1.jpg and round-1-review.md; 16 actual High/Performance views, 309,720 B, zero warnings/errors, memory-only, no frames. Exterior Gallery visible; Open Road readability weak, no fork acceptance. Production/native exact to b7dd65eb; one camera-only recipe correction. Claude review pending; no lane/build/merge acceptance.'
 
   - id: P4-AVALANCHE
     title: "The avalanche on Summit Run"
