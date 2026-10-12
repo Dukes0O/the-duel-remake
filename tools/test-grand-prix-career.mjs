@@ -7,9 +7,19 @@ import {installTestDriver} from './race-field-balance.mjs';
 import {ownTestCourses} from './career-fixture.mjs';
 import {createResultsScreen} from '../src/screen-results.js';
 import {createLeaderboardScreen} from '../src/screen-leaderboard.js';
-import {loadLeaderboard} from '../src/leaderboard.js';
+import {loadLeaderboard, createLeaderboard, recordFinish} from '../src/leaderboard.js';
 import {loadGhosts} from '../src/ghost.js';
 import {createProfile, loadProfile, PLAYERS_KEY, settleRace, CPU_REWARDS, DRIVING_MILESTONES} from '../src/progression.js';
+
+const legacyPlayer = {id: 'legacy-compare', name: 'Legacy Driver'};
+const legacyFinish = {stageIndex: 0, completed: true, won: true, seed: 1989, laps: 2,
+  timeSec: 120, mode: 'duel', car: 'falcone_f42', driverId: 'club',
+  difficulty: 'casual', cpuDifficulty: 'medium'};
+const legacyDuel = recordFinish(createLeaderboard(), legacyFinish, legacyPlayer);
+assert.equal(legacyDuel.recorded, true);
+const slowerTrial = recordFinish(legacyDuel.board, {...legacyFinish, mode: 'timetrial', timeSec: 130}, legacyPlayer);
+assert.equal(slowerTrial.recorded, false, 'legacy slower TimeTrial cannot create a second mode-discriminated row');
+assert.equal(slowerTrial.board.entries.length, 1, 'legacy deduplication remains exact');
 
 const ratios = [1, .75, .55, .40, .30, .20, .15, .10];
 const profile = () => ({...createProfile(), credits: 5000,
