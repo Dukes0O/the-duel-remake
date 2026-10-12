@@ -14,7 +14,9 @@ Delete only lane folders created in this run; keep older retained lanes.
    fieldAggression tuning, at most three original 90-race runs. Record the
    closest honest result and merge under Claude's 21:20 decision. Team Room
    stays base-only. P4-AZURE-GP-COMPARISON is a small low-priority follow-up.
-3. P4-QUALIFYING, then P4-CAREER once Panorama has merged. Preserve the
+3. P4-QUALIFYING. Claude's 22:10 answer brings forward P4-CAREER-PAY
+   (position pay, records and ghosts) behind grand-prix-career dev. The rest
+   of P4-CAREER still waits for Panorama to merge. Preserve the
    accepted native pit/skip/telemetry evidence when its runtime stays exact.
 4. P4-SUMMIT from CIRCUITS section 5.4; its own dev switch and noCombat.
    Then P4-SNOWMEN, P4-AVALANCHE and P4-YETI. New courses append stable ids.

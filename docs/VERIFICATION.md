@@ -1,5 +1,18 @@
 # Remake verification
 
+## Tremblant Snow release — 12 October 2026
+
+Kyle approved ("Go live"); Claude was Release Manager. Installed at about 16:45
+UTC from exact commit `1a7a77e7`; live build `20261012164212-a60830f0f831`
+verified over HTTP. Full tier 399/399 in 1030.02 s, alone with four jobs, start
+and end commit unchanged; combat balance `--check` passed. Staged build listed
+Tremblant Snow last at 1,800 credits, opened the Team Room and clicked every map
+flag with no browser errors, in disposable storage. Frames (screen awake, eight
+cars): Performance p95 16.8 to 16.9 ms on Tremblant Woods and Snow; High p95
+33.4 ms with a few dropped frames on both, the same as the live Woods (follow-up).
+Overnight timing with the display asleep read about 1 ms slower per frame on
+every version and is not used. Previous build kept in `dist-previous`.
+
 ## Tremblant and Team Room fixes — 12 October 2026
 
 Kyle approved both fixes for release that night ("yes, put it live tonight",
