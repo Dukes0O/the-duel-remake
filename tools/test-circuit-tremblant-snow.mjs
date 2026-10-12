@@ -18,6 +18,9 @@ import { pitAt, pitBox } from '../src/pit-lane.js';
 import { skierSpots } from '../src/circuit-effects.js';
 import { hillReach, runWeight } from '../src/circuit-hills.js';
 import { runRace } from './race-field-balance.mjs';
+import { App } from '../src/app.js';
+import { DEFAULT_DRIVER } from '../src/drivers.js';
+import { KIT_FOOTPRINTS } from '../src/kit-footprints.js';
 
 // Tremblant Snow (card P4-TREMBLANT-SNOW, docs/CIRCUITS.md 5.3): the Tremblant Woods circuit in winter.
 // Tremblant Woods itself has its own suite (test-circuit-tremblant.mjs); this checks what the variant adds
@@ -200,3 +203,92 @@ test('the test driver completes a lap on winter tyres, and a Grand Prix brings e
   assert.equal(race.lapTimes.length, 3);
   assert.ok(race.lapTimes.every(time => time > 80 && time < 160), `laps ${race.lapTimes.map(t => t.toFixed(1)).join(' ')}`);
 });
+
+// ---- solid barriers (TREMBLANT-FIX: what a car can reach is a box where it is drawn) -----------
+
+const BARRIERS = ['armco', 'tyre-wall', 'catch-fence'];
+const half = s => course.roadHalfWidthAt(s);
+const depthOf = item => KIT_FOOTPRINTS[item.id].depth * (Array.isArray(item.scale) ? item.scale[2] : item.scale ?? 1);
+
+test('every barrier, post, wall, garage, stand and lift tower is a solid box where it is drawn', () => {
+  const solid = placements.filter(item => item.solid), boxes = course.features.kitSolids;
+  assert.equal(boxes.length, solid.length);
+  assert.ok(solid.length > 250);
+  const reachable = new Set(['armco', 'tyre-wall', 'catch-fence', 'pit-wall', 'pit-garage', 'grandstand', 'marshal-post', 'chairlift-tower']);
+  for (const item of placements) assert.equal(item.solid === true, reachable.has(item.id), `${item.id} at s ${item.s.toFixed(0)}`);
+  assert.ok(boxes.every(box => course.features.obstacles.includes(box)) && !boxes.some(box => course.features.walls.includes(box)));
+  let checked = 0;
+  solid.forEach((item, i) => {
+    const box = boxes[i];
+    if (KIT_FOOTPRINTS[item.id].depth > 1) return;
+    const centre = course.nearest(box.x, box.z), heading = course.at(centre.s).heading;
+    const across = Math.abs(Math.sin(box.heading) * Math.cos(heading) - Math.cos(box.heading) * Math.sin(heading));
+    const extent = box.halfX * Math.abs(Math.cos(box.heading) * Math.cos(heading) + Math.sin(box.heading) * Math.sin(heading)) + box.halfZ * across;
+    const face = centre.distance - extent - half(centre.s), drawn = Math.abs(item.lateral) - half(item.s) - depthOf(item) / 2;
+    assert.ok(Math.abs(face - drawn) < .05, `${item.id} at s ${item.s.toFixed(0)}: box face ${face.toFixed(2)} m, drawn face ${drawn.toFixed(2)} m`);
+    assert.ok(face > 1.5, `${item.id} at s ${item.s.toFixed(0)} keeps off the road`);
+    checked++;
+  });
+  assert.ok(checked > 200);
+  // The pit lane is clear: no solid box stands on it.
+  const lane = course.pitLane;
+  for (const box of boxes) {
+    const found = course.nearest(box.x, box.z), phase = course.phase(found.s);
+    if (phase < lane.entry || phase > lane.exit) continue;
+    assert.ok(Math.abs(found.lateral - lane.offsetAt(phase)) > lane.width / 2 + box.halfX * .5, `a solid box stands in the pit lane at s ${phase.toFixed(0)}`);
+  }
+});
+
+const memory = new Map();
+globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)), removeItem: key => memory.delete(key) };
+function startDuel() {
+  const app = new App();
+  app._refreshPlayer(); app.seed = 1989;
+  app.duel.startCampaign({ mode: 'duel', car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium', driverId: DEFAULT_DRIVER,
+    startStage: COURSE.findIndex(item => item.id === 'tremblant-snow'), seed: 1989, opponentCount: 0, playerId: app.player.id, upgrades: {}, tyre: 'winter' });
+  for (let frames = 0; app.duel.state.status !== 'racing' && frames < 2000; frames++) app.advance(1 / 60, 1 / 60);
+  assert.equal(app.duel.state.status, 'racing');
+  return app.duel;
+}
+function driveInto(duel, s, side, mph) {
+  const state = duel.state;
+  Object.assign(state, { s, lateral: side * (half(s) - 3), headingError: side * .3, speedMph: mph, airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0 });
+  state.prevS = state.s; state.prevLateral = state.lateral;
+  duel._terrainPose();
+  duel.setInput({ throttle: 1, brake: 0, steer: 0, boost: false });
+  let farthest = -Infinity;
+  for (let frame = 0; frame < 240; frame++) {
+    duel.step(1 / 60);
+    farthest = Math.max(farthest, side * state.lateral - half(state.s));
+    if (state.impactTimer > 0) break;
+  }
+  return farthest;
+}
+function faceGap(s, side) {
+  const item = placements.filter(row => BARRIERS.includes(row.id) && Math.sign(row.lateral) === side).reduce((best, row) => Math.abs(row.s - s) < Math.abs(best.s - s) ? row : best);
+  return { id: item.id, gap: Math.abs(item.lateral) - half(item.s) - depthOf(item) / 2 };
+}
+const named = (name, nth = 0) => course.script.pieces.filter(item => item.name === name)[nth];
+const middle = (item, share = .5) => item.s0 + (item.s1 - item.s0) * share;
+const fenceSide = (s0, s1) => Math.sign(placements.find(item => item.id === 'catch-fence' && item.s > s0 && item.s < s1).lateral);
+const CASES = [
+  ['Beaver Hairpin, tyre wall', middle(named('Beaver Hairpin'), .4), -named('Beaver Hairpin').dir],
+  ['Ridge Corner, tyre wall', middle(named('Ridge Corner')), -named('Ridge Corner').dir],
+  ['Pine Drop, armco', middle(named('Pine Drop')), -named('Pine Drop').dir],
+  ['Lodge Bend, armco', middle(named('Lodge Bend')), -named('Lodge Bend').dir],
+  ['Final Turn, armco', middle(named('Final Turn')), -named('Final Turn').dir],
+  ['The Spur, catch fence', 1770, fenceSide(1700, 1809)],
+  ['Timber Straight, catch fence', named('Timber Straight').s0 + 60, fenceSide(named('Timber Straight').s0, named('Timber Straight').s0 + 140)],
+];
+for (const mph of [70, 110]) {
+  test(`a car on winter tyres driven at the barriers at ${mph} mph stops against them`, () => {
+    COURSE.push(TREMBLANT_SNOW);
+    try {
+      for (const [name, s, side] of CASES) {
+        const { gap, id } = faceGap(s, side), farthest = driveInto(startDuel(), s, side, mph);
+        assert.ok(farthest > 0, `${name}: the car did reach the edge`);
+        assert.ok(farthest <= gap - .5, `${name}: the car got ${farthest.toFixed(1)} m past the road edge; the ${id} face stands ${gap.toFixed(1)} m out`);
+      }
+    } finally { COURSE.splice(COURSE.findIndex(item => item.id === 'tremblant-snow'), 1); }
+  });
+}

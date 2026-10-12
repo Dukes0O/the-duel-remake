@@ -9,6 +9,7 @@ import { lakeLevel } from '../src/circuit-effects.js';
 import { KIT_FOOTPRINTS } from '../src/kit-footprints.js';
 import { ROAD_SHOULDER_WIDTH } from '../src/config.js';
 import { TREMBLANT_WOODS } from '../src/circuits/tremblant-woods.js';
+import { TREMBLANT_SNOW } from '../src/circuits/tremblant-snow.js';
 import { HARBOUR_LIGHTS } from '../src/circuits/harbour-lights.js';
 import { PANORAMA_RIDGE } from '../src/circuits/panorama-ridge.js';
 
@@ -83,7 +84,7 @@ function coverSpots(course) {
   return spans.map(span => `${span.name} reaches ${span.over.toFixed(2)} m over the road at s ${span.s0} to ${span.s1}`);
 }
 
-for (const [name, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Harbour Lights', HARBOUR_LIGHTS], ['Panorama Ridge', PANORAMA_RIDGE]]) {
+for (const [name, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Snow', TREMBLANT_SNOW], ['Harbour Lights', HARBOUR_LIGHTS], ['Panorama Ridge', PANORAMA_RIDGE]]) {
   test(`${name}: no ground, hill or water is drawn over the road or its shoulder`, () => {
     const course = new Course(def, 1989);
     assert.deepEqual(coverSpots(course), []);
@@ -113,10 +114,10 @@ const FOOT = { 'ski-lodge': [16, 11], 'wooden-dock': [3, 7], 'autumn-tree': [1, 
 // How far a piece may float (metres, lowest ground under it to its base): 0.3, a little more for a four metre piece lying on a slope.
 const FLOAT = id => KIT_FOOTPRINTS[id]?.width >= 4 && KIT_FOOTPRINTS[id].depth < 1 || id === 'chairlift-tower' ? .45 : .3;
 
-test('Tremblant Woods: no building or piece floats above the ground, and none is sunk deep', () => {
-  const course = new Course(TREMBLANT_WOODS, 1989), ground = visibleGround(course), lake = TREMBLANT_WOODS.effects.lake, water = lakeLevel(course, lake);
+for (const [label, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Snow', TREMBLANT_SNOW]]) test(`${label}: no building or piece floats above the ground, and none is sunk deep`, () => {
+  const course = new Course(def, 1989), ground = visibleGround(course), lake = def.effects.lake, water = lakeLevel(course, lake);
   const problems = [];
-  for (const piece of TREMBLANT_WOODS.kitPlacements) {
+  for (const piece of def.kitPlacements) {
     const foot = KIT_FOOTPRINTS[piece.id] ? [KIT_FOOTPRINTS[piece.id].width, KIT_FOOTPRINTS[piece.id].depth] : FOOT[piece.id];
     if (!foot || piece.ride) continue;
     const scale = Array.isArray(piece.scale) ? piece.scale : Array(3).fill(piece.scale ?? 1), at = course.groundAt(piece.s, piece.lateral);
@@ -140,8 +141,8 @@ test('Tremblant Woods: no building or piece floats above the ground, and none is
   assert.deepEqual(problems, []);
 });
 
-test('Tremblant Woods: the ground behind the lake slopes, it is not a wall', () => {
-  const course = new Course(TREMBLANT_WOODS, 1989), worst = geometry => {
+for (const [label, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Snow', TREMBLANT_SNOW]]) test(`${label}: the ground behind the lake slopes, it is not a wall`, () => {
+  const course = new Course(def, 1989), worst = geometry => {
     const position = geometry.attributes.position, index = geometry.index;
     let steepest = 0;
     for (let i = 0; i < index.count; i += 3) {
@@ -155,5 +156,5 @@ test('Tremblant Woods: the ground behind the lake slopes, it is not a wall', () 
   // The far ground used to step by 36 m between the lake side and the ridge side of the lap (68 degrees, now at most 56 at the lake's steep west end); the ski mountain
   // stood on that step (82 degrees). Rounded hills, a lake bowl and a ski slope are all well under these.
   assert.ok(worst(farTerrainGeometry(course)) < 60, 'far ground');
-  TREMBLANT_WOODS.effects.backdrop.hills.forEach((hill, i) => assert.ok(worst(backdropGeometry(course, hill, TREMBLANT_WOODS.effects.backdrop.colours)) < 75, `backdrop hill ${i + 1}`));
+  def.effects.backdrop.hills.forEach((hill, i) => assert.ok(worst(backdropGeometry(course, hill, def.effects.backdrop.colours)) < 75, `backdrop hill ${i + 1}`));
 });

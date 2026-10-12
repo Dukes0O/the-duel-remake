@@ -67,7 +67,7 @@ const MORNING = {
 // behind the pit lane, which begins just past the line and has its boxes in the middle of Lodge Straight.
 function paddock() {
   const out = [kit('start-gantry', 0, 0, { heading: Math.PI })];
-  out.push(...along('pit-garage', 112, 206, 7.4, -31));
+  out.push(...along('pit-garage', 112, 206, 7.4, -28));
   out.push(...along('pit-wall', 110, 208, 4.05, -22));
   for (let s = 10; s <= 70; s += 15) out.push(kit('grandstand', s, 31, { heading: FACE_RIGHT, clear: 10, crowd: true }));
   return out;
