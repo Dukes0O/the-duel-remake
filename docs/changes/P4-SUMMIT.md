@@ -49,8 +49,8 @@ No measure is claimed until observed. Art sheets go to Claude.
 ## Source progress
 
 The 52-piece road, six-car start, native finish, real branch road and physical
-snow shed are implemented as source. The shed collider follows the approved
-Blender recipe's pillar positions, roof height and uphill back; approved Gallery,
+snow shed are implemented as source. The shed collider follows the actual approved
+GLB's pillar positions, roof height and uphill back; approved Gallery,
 hut and observatory meshes supply the art. Existing pit cues (limiter, wrench,
 GO) and existing field/start/jump sounds apply; no new event cue is invented.
 
@@ -182,3 +182,9 @@ The existing Summit check also reads the real accepted Tremblant Snow light
 path: each authored winter override and the full-winter context result must
 remain exact after this union. This adds compatibility coverage, not a changed
 threshold.
+
+Source review found the compatibility fixture incorrectly read a distance
+light path from Tremblant Snow, which has native static light metadata.
+Before the check, use the renderer's actual circuitLighting and clear-mood
+resolver, assert its absent light path, then retain every winter override
+assertion. Runtime and acceptance are unchanged.
