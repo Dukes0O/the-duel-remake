@@ -29,7 +29,7 @@ import { buildKitPlacements } from '../circuit-kit-layout.js';
 const BASE = defineScriptedCourse({
   id: 'harbour-lights', name: 'Harbour Lights', flag: 'harbour-lights',
   theme: 'city', timeOfDay: 'night', stage: 17, kind: 'circuit', layoutVersion: 1,
-  closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, speedLimitMph: 100,
+  closed: true, laps: 4, grandPrixLaps: 4, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
   airborne: true, terrainHalfWidth: 64, scenery: { trees: 100, rocks: 40, mountains: false },
   sections: [
     { theme: 'city', name: 'Seafront', share: .30 },

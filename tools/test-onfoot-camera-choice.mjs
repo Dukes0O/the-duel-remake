@@ -72,8 +72,8 @@ await check('default first-person remains exact and overhead is genuinely behind
   assert.ok(overhead.position.y>fighter.y+1.62,'overhead eye is above standing eye');
   assert.ok(Math.hypot(dx,dz)<=8,'short bounded follow boom');
 });
-await check('all twelve combat courses retain final terrain and tunnel clearance without fighter writes',()=>{
-  const definitions=COURSE.filter(supportsCombat);assert.equal(definitions.length,12);
+await check('all eleven combat courses retain final terrain and tunnel clearance without fighter writes',()=>{
+  const definitions=COURSE.filter(supportsCombat);assert.equal(definitions.length,11);
   let tunnels=0;
   for(const definition of definitions){
     const course=new Course(definition,1989),distances=[course.length*.23,course.length*.71];

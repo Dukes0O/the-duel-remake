@@ -183,20 +183,25 @@ export function normalizeProfile(value) {
     .slice(-60)
     .map(row => ({ ...row }));
   const race = value.activeRace;
+  // An unfinished race names its course by id first (positions move when a course is
+  // added before it); saves from before the id existed fall back to the saved position.
+  const raceIndex = !race ? -1 : typeof race.stageId === 'string' && COURSE.some(stage => stage.id === race.stageId)
+    ? COURSE.findIndex(stage => stage.id === race.stageId)
+    : Number.isInteger(race.stageIndex) && COURSE[race.stageIndex] ? race.stageIndex : -1;
   if (
     race &&
     typeof race.runId === 'string' &&
     race.runId.length > 0 &&
     race.runId.length <= 128 &&
-    Number.isInteger(race.stageIndex) &&
-    COURSE[race.stageIndex] &&
+    raceIndex >= 0 &&
     Object.hasOwn(CARS, race.car)
   ) {
     const pendingPoliceFineCount = integer(race.pendingPoliceFineCount, 1_000_000);
     profile.activeRace = {
       runId: race.runId,
-      stageIndex: race.stageIndex,
-      key: `${race.runId}:${race.stageIndex}`,
+      stageIndex: raceIndex,
+      stageId: COURSE[raceIndex].id,
+      key: `${race.runId}:${raceIndex}`,
       car: race.car,
       driverId: normalizeDriverId(race.driverId),
       cpuDifficulty: Object.hasOwn(CPU_REWARDS, race.cpuDifficulty) ? race.cpuDifficulty : 'easy',

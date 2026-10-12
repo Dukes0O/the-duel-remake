@@ -29,7 +29,7 @@ export function normalizeCourseAccess(value,legacyProfile){
       const completed=history.some(row=>row?.eventId===id&&row.completed===true&&typeof row.key==='string'&&typeof row.won==='boolean'&&Number.isFinite(row.reward));
       const best=Object.entries(legacyProfile.personalBests||{}).some(([key,time])=>key.startsWith(`${id}|layout:`)&&Number.isFinite(time)&&time>0);
       const circuitWin=wins.includes(id);
-      const race=legacyProfile.activeRace,active=race?.stageIndex===course.stage&&typeof race.runId==='string'&&race.runId.length>0&&race.runId.length<=128&&Object.hasOwn(CARS,race.car);
+      const race=legacyProfile.activeRace,active=(typeof race?.stageId==='string'?race.stageId===id:race?.stageIndex===course.stage)&&typeof race.runId==='string'&&race.runId.length>0&&race.runId.length<=128&&Object.hasOwn(CARS,race.car);
       if(previousCarEntitlement||completed||best||circuitWin||active)unlocked.add(id);
     }
   }

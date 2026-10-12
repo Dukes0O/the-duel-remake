@@ -4,7 +4,7 @@ import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
 import {supportsCombat,ufoDestination} from '../src/combat.js';
 
 const stages=COURSE.map((stage,index)=>supportsCombat(stage)?index:null).filter(index=>index!==null);
-assert.equal(stages.length,12,'the landing matrix covers all 12 combat courses');
+assert.equal(stages.length,11,'the landing matrix covers all 11 combat courses');
 let shortcutLandings=0,landings=0;
 for(let n=0;n<260&&landings<100;n++){
   const onShortcut=n%4===0,stage=onShortcut?stages[0]:stages[n%stages.length],seed=9100+n*37;

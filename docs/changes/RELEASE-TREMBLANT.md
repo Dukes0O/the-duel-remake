@@ -39,15 +39,27 @@ Tremblant on: `git diff tools/replays/expected-fingerprints.json` shows one adde
 case, because the replay test requires one primary replay per event. All 16 existing
 world-composition signatures are also identical (checked with `--capture`).
 
-## Mad Max (combat): decision for Claude
+## Mad Max (combat): the Grand Circuits are pure race tracks
 
-`docs/CIRCUITS.md` does not say whether the new circuits host Mad Max Duel, raiders and the UFO.
-Tremblant is a `hasRival` course, so the shared rule `supportsCombat` already admits it, as it admits
-the six expansion circuits. I checked it works rather than guessing: the UFO landing matrix (100 safe
-jumps), the raider camp checks, the crossbow probe and the on-foot terrain check all pass with
-Tremblant as a twelfth combat course. So the counts below went from 11 to 12 and no shared code was
-changed. If you want Tremblant race-only, the fix is one generic option (for example `noCombat: true`
-in the circuit data, read by `supportsCombat`) and the counts go back to 11.
+Decision (Claude, from Kyle's "pure races"): the circuits do not host Mad Max Duel, raiders or
+the UFO. New generic option `noCombat` in a course's data, honoured by `supportsCombat`
+(`src/combat-weapons.js`); set on Tremblant Woods, Panorama Ridge and Harbour Lights.
+Rival Duel, Time Trial and Grand Prix stay. The combat counts stay at 11 (no test count changed
+for combat). One line added to `docs/CIRCUITS.md` section 2.
+
+## Unfinished races are saved by course id
+
+An unfinished race (`activeRace`) now also saves `stageId` (the course id). On load the course is
+found by id first, then by the old position only when there is no usable id (old saves).
+`activeRace.key` and `stageIndex` are rebuilt from the course found. The legacy course-access
+migration reads the id too. Proof (`tools/test-release-tremblant.mjs`, new fixture
+`tools/fixtures/saves/08-unfinished-race.json`): an old save with only a position resumes the
+right course; a new save resumes Tremblant; the id beats a stale position; an unknown id falls
+back to the position; a course inserted before Tremblant moves it one place and the saved race
+still finds it. Older builds: checked by loading the new fixture with the previous integration
+build's own code (commit 7f59e4e6): it loads, ignores `stageId`, and reads the race as before.
+The only case it drops is a Tremblant race, since that build has no such course (as for any
+unknown course before).
 
 ## Changed assertions and the reason for each
 
@@ -60,7 +72,7 @@ Counts that grow by one with a correct new course:
 | `tools/test-world-composition.mjs` (test canvas) | no radial gradient | `createRadialGradient` recorded like the linear one | Tremblant paints pebble textures with it; older scenes never call it |
 | `tools/test-replays.mjs`, `tools/replays/recorded-inputs.json`, `expected-fingerprints.json` | 16 events, 18 cases | 17, 19 | Primary replay for the new event; older fingerprints unchanged (above) |
 | `tools/replays/salt-flats-controls.json` | file hash `b55182cb...` of the fingerprint file | `ae370b62...` | The two Scrapdome/Salt Flats tests pin the whole file hash. The only change to the file is the one added Tremblant entry |
-| `tools/test-ufo-landing.mjs`, `test-raiders.mjs`, `test-crossbow-aim.mjs`, `test-onfoot-camera-choice.mjs` | 11 combat courses (792 crossbow cases) | 12 (864) | Tremblant hosts Mad Max; the safety checks themselves pass for it |
+| `tools/test-save-fixtures.mjs`, `test-arena-settlement.mjs`, `test-career-backup.mjs` | 7 historical save fixtures | 8 | New fixture `08-unfinished-race.json` (an unfinished race, old and new shape) |
 | `tools/test-circuit-layouts.mjs` | all three circuits dev, COURSE has 16 | Tremblant on and appended as entry 17; the other two dev; players see only released circuits | The switch is on |
 | `tools/test-feature-flags.mjs`, `tools/test-wasteland-beta.mjs` | `tremblant-woods` dev | on | The switch is on |
 | `tools/test-reference-laps.mjs` | every circuit switch is dev | released ones are on, the rest dev | The switch is on |
@@ -91,17 +103,13 @@ Nothing replaced. No file removed.
 - Lane tier, run 1 (flag on, before fixes): 23 suites failed; every one is accounted for above.
 - Lane tier, run 2: 323 of 325 passed. The two failures were the Scrapdome and Salt Flats
   replay-file pin (now updated); both pass alone (`test-arena-pit`, `test-salt-flats`).
-- Final, after merging integration 9948e9dc (Grand Prix on, Harbour landed, RELEASE DONE): lane tier 326 of 326
-  suites passed, and `npm run build` passes.
+- Final, after merging integration 9948e9dc (Grand Prix on, Harbour landed, RELEASE DONE) and the
+  two decisions above: lane tier 391 suites, 389 passed on the run and the other two (the fixture
+  counts) passed on rerun after the count fix; `npm run build` passes.
 - No frame timing (Tremblant passed 16.8 ms earlier). No browser check.
 
 ## For Claude
 
-1. Combat on Tremblant: host (done) or race-only (one generic option), see above.
-2. Order of circuits: `ALL_CIRCUITS` is Panorama, Harbour, Tremblant, and `COURSE` appends only the
-   ones that are on. When Panorama or Harbour is released later, Tremblant moves up one place. Saved
-   data is by id, so nothing breaks; only an interrupted race marker (`activeRace.stageIndex`) holds
-   a position, so a race left unfinished across that release could point at the wrong course. If you
-   want it airtight, release the circuits in the order they appear, or key the marker by event id.
-3. `Tremblant.stage` is 18, not its list position. Harmless (it seeds scenery), noted because tests
+1. Circuit order is no longer a risk: the unfinished-race marker is keyed by id (above).
+2. `Tremblant.stage` is 18, not its list position. Harmless (it seeds scenery), noted because tests
    used it as a position.
