@@ -61,7 +61,7 @@ const BASE = {
   intel: {
     sectors: [1240, 3330],
     flags: [
-      { id: 'chairlift', kind: 'signature', s: 2700, title: 'Timber Straight and the chairlift', camera: { back: 40, up: 1.2, ahead: 90 } },
+      { id: 'chairlift', kind: 'signature', s: 2700, title: 'Timber Straight and the chairlift', camera: { back: 40, ahead: 90 } },
       { id: 'timber', kind: 'overtaking', s: 3170, title: "Timber Straight into Devil's Chicane" },
       { id: 'pine-drop', kind: 'corner', s: 290, title: 'Pine Drop' },
       { id: 'ridge-run', kind: 'crest', s: 1050, title: 'Ridge Run crest' },

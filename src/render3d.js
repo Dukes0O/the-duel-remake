@@ -43,7 +43,7 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
-import {trackSnapshotPose} from './track-analysis.js';
+import {trackSnapshotPose, SNAPSHOT_FOV} from './track-analysis.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -342,7 +342,7 @@ export function attachRenderer(host, app) {
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
       const ground = course.groundAt(distance, 0);
       camera.position.set(pose.position.x, pose.position.y, pose.position.z);
-      camera.up.set(0, 1, 0);camera.fov = 54;
+      camera.up.set(0, 1, 0);camera.fov = SNAPSHOT_FOV;
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined,
@@ -357,8 +357,14 @@ export function attachRenderer(host, app) {
       animateScene(world, now / 1000);
       syncScene(world, {crushedProps: []}, 0);
       trackKitsOf(world)?.update({high,position:camera.position,camera,state:{status:'menu'}});
+      // Park the player's car at the viewing point, so the picture reads like the race chase camera.
+      const showCar = !!player && player.parent === scene;
+      if (showCar) {
+        const spot = vehicleGroundPoint(course, pose.viewS, 0), slope = groundSlope(course, pose.viewS, 0, 0);
+        place(player, spot, 0, 0);player.rotation.x = slope.pitch;player.rotation.z = slope.roll;player.visible = true;
+      }
       for (const object of scene.children) {
-        if (object === world || lightingRoots.has(object) || object.isLight) continue;
+        if (object === world || lightingRoots.has(object) || object.isLight || (showCar && object === player)) continue;
         visibility.push([object, object.visible]);object.visible = false;
       }
       quality.update(high, 1);
