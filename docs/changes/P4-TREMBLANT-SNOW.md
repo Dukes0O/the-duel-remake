@@ -48,11 +48,11 @@ the live circuit is byte for byte what it was).
 
 ## Checks
 
-- Own suite `tools/test-circuit-tremblant-snow.mjs` (11 tests): registration and switch, same
+- Own suite `tools/test-circuit-tremblant-snow.mjs` (14 tests): registration and switch, same
   road as the autumn circuit, the live circuit untouched, surfaces and tyre choice, ice rules and
   boards, pit lane and boxes, winter on and banks, scenery (no autumn trees, kit pieces clear of
   the road, no pine on a ski run), snowmen unused, skiers and smoke, light, and a full Grand Prix
-  race with all seven computer racers home.
+  race with all seven computer racers home, and the solid barriers.
 - Kit clearance: `node tools/test-track-kits.mjs --validate-circuit src/circuits/tremblant-snow.js`:
   459 High/LOD placements validated.
 - Review tool and landmark pictures: `tools/track-review.mjs` now reviews a winter course on winter
@@ -84,13 +84,50 @@ of races. Targets met: easy 80% (60 to 80), medium 50% (30 to 50), medium and ha
 between runs, 0 to 3 of 30, so a fourth run could land either side). Quick 8-race trials at other
 paces informed the choice; they are not counted as results.
 
+### The Tremblant fix (TREMBLANT-FIX, merged into this lane at 69b3935b)
+
+The snow variant takes the fix's shared code (ribbon ground, hill pads, far-ground blending) and uses
+its options: `farGround: { band: 120 }`, `solid: true` on the same eight kit pieces (barriers, fence,
+pit wall, garages, stands, posts, lift towers), the hill pines sunk 0.35 m. The shared lake bowl
+and dock carry the fix by themselves. Checked, not assumed:
+
+- `tools/test-circuit-ground.mjs` now covers Tremblant Snow too (no ground, hill or water over the
+  road or its shoulder; no piece floating or sunk; the ground behind the lake slopes). The pit
+  garages floated 0.31 to 0.35 m (limit 0.3), so they stand 28 m from the road centre (was 31).
+- Barriers: `tools/test-circuit-tremblant-snow.mjs` has the same checks as `test-circuit-barriers.mjs`
+  for this circuit (solid boxes where drawn, no box in the pit lane, a car on winter tyres driven at
+  seven barrier spots at 70 and 110 mph stops against them).
+- The sheet was made after the merge: the road is clear of grass everywhere (see frames 8 to 10 at
+  Beaver Hairpin).
+- The reference lap rebuilt after the merge is identical (1:28.317).
+
 ### Frame check
 
-FRAME_CHECK_TBD
+`node tools/browser-harness.mjs scenario tremblant-snow` (12 October 2026, after the merge, no other
+gate, build or browser check running, eight cars on the grid, delivered frames):
+
+| | High p50 / p95 | Performance p50 / p95 | Draws High / Performance |
+| --- | --- | --- | --- |
+| Tremblant Snow | 17.7 / 35.9 ms (31 slow of 120) | 17.6 / 18.2 ms (0 slow) | 1,667 / 1,167 |
+| Tremblant Woods, same scenario, same minute | 17.8 / 35.6 ms (19 slow) | 17.6 / 18.2 ms (0 slow) | 1,795 / 1,251 |
+
+**Performance passes (18.2 ms, limit 18.5). High does not (35.9 ms), and neither does the live
+Tremblant Woods in this scenario** (35.1 to 35.6 over five runs): at High the graphics card needs
+about 16 ms of the 16.7 available (scene and shadows 9.4, contact shading 5, post 1.2), so every third
+frame or so slips to 33 ms. Tremblant Snow is no worse than the released circuit, but I could not
+bring High under the limit with the tools at hand (tried: merged garage, stand, lodge and chair
+meshes, which saved about 90 draws; leaving the pines out of the contact pass, which saved nothing and
+was reverted). Claude to decide whether the limit applies to High at this view.
+
+One real cost was found and fixed: the first measurement had High at 35 ms median because the lift
+refreshed the drawn selection of the 3,300 snow pines once per chair, twenty times a frame (renderer
+update 10.4 ms, now 1.9 ms; see the shared-code table).
 
 ### Lane gate
 
-GATE_TBD
+`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` on the lane after merging integration
+(69b3935b, Tremblant fix) and every change above: **399 of 399 passed, 0 failed, 0 not run**
+(1,308.8 s). `npm run build` passes (511 ms).
 
 ## Changed assertions and the reason for each
 
@@ -102,6 +139,7 @@ No tolerance was loosened and no old replay, signature or save fixture changed.
 | `tools/test-wasteland-beta.mjs` | catalogue without it | `tremblant-snow: dev` | The new switch |
 | `tools/test-circuit-layouts.mjs` | three circuits registered, stages all different (3) | four, stages 4 | The new circuit. The driven-lap tests now start a winter circuit on winter tyres (`driveCircuit` takes a `tyre`), and **the reverse build is not driven for a winter circuit**: its ice, boards and pit lane belong to the forward road, and the reversed Beaver Hairpin on packed snow slid 3 m off the road for the test driver. P4-VARIANTS builds and tests reversed winter circuits with their own surfaces. The forward lap assertions (no crash, no reset, clean laps, lap times) are unchanged and pass |
 | `tools/test-reference-laps.mjs` | 27 references | 28 | The new circuit's reference |
+| `tools/test-circuit-ground.mjs` | Tremblant Woods, Harbour, Panorama | Tremblant Snow added to the cover, floating and slope checks | Same assertions, one more circuit |
 
 ## Removed
 
@@ -112,7 +150,7 @@ start line replaces a case no course had used.
 
 1. **Price** 1,800 credits (not in the doc), and the `docs/COURSE_ACCESS.md` table has no row for it
    (dev only).
-2. Balance: the two misses above.
+2. Balance: the two misses above, and the three runs predate the merge of the Tremblant fix. An informal 10-race trial after it gave test-driver wins of 90 / 50 / 40% (easy / medium / hard) with every racer home, so hard may now be above its target: a further run at your word (hard pace .91 gave 10% earlier).
 3. Merge integration again after TREMBLANT-FIX lands (Kyle's grass and barrier faults on Tremblant
    Woods); this circuit builds none of that ground or barrier code, and the sheet shows the road
    clear of grass everywhere.
