@@ -32,7 +32,7 @@ const timber = road.pieces.filter(item => item.name === 'Timber Straight');
 test('Tremblant Woods races with the full field', () => {
   assert.ok(GRAND_PRIX_COURSES.includes('tremblant-woods'));
   assert.ok(grandPrixCourse(TREMBLANT_WOODS));
-  assert.equal(grandPrixCourse({ id: 'eifel-crown' }), false);
+  assert.equal(grandPrixCourse({ id: 'titan-arena' }), false);
   assert.equal(TREMBLANT_WOODS.closed, true);
   assert.equal(TREMBLANT_WOODS.laps, 3);
   // The racers' pace on this circuit, set per difficulty from the balance runs.
