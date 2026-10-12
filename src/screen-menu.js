@@ -86,7 +86,7 @@ function updateMenuScene() {
   // Tyres matter only on a circuit with snow or ice.
   ui['tyre-choice'].hidden=!courseHasWinterSurfaces(stage);
   syncRaceChoiceButtons(root,choices);
-  syncQualifyingChoice(root,choices);
+  syncQualifyingChoice(root,choices,stage);
   const fixedNight=stage.timeOfDay==='night'||stage.theme==='city';ui['lighting-mood'].disabled=fixedNight;ui['lighting-mood'].value=fixedNight?'night':app.lightingMood;
   app.menuStage = choices.startStage; ui['scene-select'].value = choices.startStage;ui['route-choice'].hidden=!supportsRouteVariants(stage);text('route-choice-label',app.getMenuRouteLabel()==='Custom route'?'CUSTOM ROUTE':'ROUTE');
   for(const button of root.querySelectorAll('[data-route-variant]')){const selected=getRouteVariantForSeed(app.getMenuSeed())?.id===button.dataset.routeVariant;button.classList.toggle('on',selected);button.setAttribute('aria-pressed',String(selected));}

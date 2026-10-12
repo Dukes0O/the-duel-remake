@@ -14,11 +14,11 @@ export function qualifyingChoiceMarkup() {
 }
 
 const boundQualifyingChoices = new WeakMap();
-export function syncQualifyingChoice(root, choices) {
+export function syncQualifyingChoice(root, choices, course = {}) {
   const group = root.querySelector('#qualifying-choice');
   if (!group) return;
   const grandPrixButton = root.querySelector('[data-mode="grandprix"]');
-  const available = choices.mode === 'grandprix' && !!grandPrixButton && !grandPrixButton.hidden;
+  const available = choices.mode === 'grandprix' && course.closed !== false && !!grandPrixButton && !grandPrixButton.hidden;
   group.hidden = !available;
   if (!available) choices.qualifying = false;
   for (const button of group.querySelectorAll('[data-qualifying]')) {
@@ -29,11 +29,11 @@ export function syncQualifyingChoice(root, choices) {
     if (!boundQualifyingChoices.has(button)) {
       button.addEventListener('click', () => {
         if (button.disabled) return;
-        const currentChoices = boundQualifyingChoices.get(button);
+        const {choices:currentChoices, course:currentCourse} = boundQualifyingChoices.get(button);
         currentChoices.qualifying = button.dataset.qualifying === 'drive';
-        syncQualifyingChoice(root, currentChoices);
+        syncQualifyingChoice(root, currentChoices, currentCourse);
       });
     }
-    boundQualifyingChoices.set(button, choices);
+    boundQualifyingChoices.set(button, {choices, course});
   }
 }

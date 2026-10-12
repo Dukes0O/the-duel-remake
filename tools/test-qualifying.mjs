@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { racingLineFor } from '../src/race-lines.js';
 import {TELEMETRY_KEY,MAX_TELEMETRY_BYTES,telemetryKey} from '../src/lap-telemetry.js';
+import { COURSE } from '../src/config.js';
 import { Duel } from '../src/game.js';
 import { gridPose, FIELD_TUNING } from '../src/race-field.js';
 import { beginQualifying, applyQualifyingGrid, finishQualifying, qualifyingGrid } from '../src/qualifying.js';
@@ -108,6 +109,14 @@ small.state.completedLaps=2;small.state.lapTimes=[1,2];small.state.assistedLaps=
 finishQualifying(small);
 assert.equal(small.state.opponents.length,1,'smaller field size survives the real race reload');
 assert.equal(small.state.field.size,2);
+// A genuine open-course definition cannot request two flying laps.
+const originalCourse=COURSE[0];
+try {
+  COURSE[0]={...originalCourse,closed:false,grandPrixLaps:1};
+  const open=start(true);
+  assert.equal(open.state.qualifying,undefined,'one point-to-point run skips closed-circuit qualifying');
+  assert.equal(open.state.lapsTotal,1);
+} finally { COURSE[0]=originalCourse; }
 console.log('Qualifying session, deterministic grid and skip checks passed.');
 
 // The actual choice helper is off by default and updates the start options.
@@ -128,6 +137,11 @@ assert.equal(choices.qualifying,true,'the native menu option requests a qualifyi
 assert.equal(buttons[1].pressed,'true');
 buttons[0].click();
 assert.equal(choices.qualifying,false,'Skip requests the exact normal grid');
+syncQualifyingChoice(root,choices,{closed:false});
+assert.equal(group.hidden,true,'open course never offers flying laps');
+assert.equal(choices.qualifying,false);
+syncQualifyingChoice(root,choices,{closed:true});
+buttons[1].click();assert.equal(choices.qualifying,true,'button uses the current closed-course context');
 choices.mode='duel';syncQualifyingChoice(root,choices);
 assert.equal(group.hidden,true);
 assert.ok(buttons.every(button=>button.disabled));

@@ -189,7 +189,7 @@ export class Duel {
     this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
     // A Grand Prix (docs/CIRCUITS.md 3.2) races a full field on a closed road circuit.
     const grandPrix = mode === 'grandprix' && this.featureFlags.enabled('grand-prix') && grandPrixCourse(COURSE[startStage]);
-    if (grandPrix && qualifying === true) this.state.qualifying = {phase: 'pending'};
+    if (grandPrix && COURSE[startStage].closed !== false && qualifying === true) this.state.qualifying = {phase: 'pending'};
     else delete this.state.qualifying;
     if (grandPrix && Number.isSafeInteger(fieldSeed)) this.state.fieldSeed = fieldSeed >>> 0;
     else delete this.state.fieldSeed;
