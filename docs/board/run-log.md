@@ -995,3 +995,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 FAC-03 final: merge 758662b5; nearby lane 20/20, 91.59 s, jobs 4; build 645 ms; one review clear; night tool available, no native night pass or clean-merge rerun.
 
 - 2026-10-12 FAC-05: merge 37fd7237; nearby lane 29/29, 132.96 s, jobs 4; build 562 ms; one review clear; derived course checks and exact Snow fixture cleanup, no clean-merge rerun.
+
+- 2026-10-12 FAC-08: merge c4ba526f; nearby lane 15/15, 95.56 s, jobs 4; build 578 ms; one review clear; real old/fixed Tremblant defect proof, provenance corrected, no clean-merge rerun.

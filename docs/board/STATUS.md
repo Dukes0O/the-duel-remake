@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T21:37:58.207Z
+Observed at: 2026-10-12T21:39:26.045Z
 
-Observation commit: acd0fba98efc32e1b486a6177b02d3f566657f77
+Observation commit: da236b05ae9b9ad06f524282dec868b8a76040d4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: acd0fba98efc32e1b486a6177b02d3f566657f77
+Integration HEAD: da236b05ae9b9ad06f524282dec868b8a76040d4
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -50,7 +50,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/fac-08 | FAC-08 | 2026-10-12T14:35:44-07:00 | 0 | last commit 2026-10-12T14:35:44-07:00 | docs/changes/FAC-08.md, tools/course-ground-checks.mjs, tools/drive-through.mjs, tools/test-drive-through.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | unknown | 2026-10-12T12:43:24-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
-| codex/p4-panorama | unknown | 2026-10-12T10:37:09-07:00 | 0 | last commit 2026-10-12T10:37:09-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-PANORAMA.md, src/app.js, src/circuit-landmarks.js |
+| codex/p4-panorama | unknown | 2026-10-12T14:39:23-07:00 | 0 | last commit 2026-10-12T14:39:23-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/P4-PANORAMA.md, src/app.js |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js |
 | codex/p4-summit | unknown | 2026-10-12T12:41:41-07:00 | 0 | last commit 2026-10-12T12:41:41-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuits/index.js |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 7 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -67,9 +67,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 454,717 B | -126,155 B | 5,000,000 B |
+| Added bytes in last merge | 454,717 B | +0 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 396,468,224 B | +140,288 B | unavailable |
+| Git objects | 396,673,024 B | +204,800 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -78,7 +78,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: acd0fba98efc32e1b486a6177b02d3f566657f77
+- Local integration/wasteland: da236b05ae9b9ad06f524282dec868b8a76040d4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
