@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-10-12T20:12:42.627Z
+Observed at: 2026-10-12T20:42:50.086Z
 
-Observation commit: 643b3cfc3efe236baf11af8426986c13f1f6b8ff
+Observation commit: a629584651a2fb6e6a6db7949ffb2f036ea6b9da
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 643b3cfc3efe236baf11af8426986c13f1f6b8ff
+Integration HEAD: a629584651a2fb6e6a6db7949ffb2f036ea6b9da
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -54,10 +54,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/fac-02 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-02 |
-| codex/fac-03 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
-| codex/fac-04 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-04 |
-| codex/fac-06 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-06 |
+| codex/fac-03 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
+| codex/fac-04 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-04 |
 | codex/fac-07 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-07 |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -75,10 +73,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/fac-02 | FAC-02 | 2026-10-12T13:12:38-07:00 | 0 | last commit 2026-10-12T13:12:38-07:00 | docs/CODEX_PLAYBOOK.md, docs/OPERATIONS.md, docs/changes/FAC-02.md, tools/integrate-lane.mjs, tools/test-integrate-lane.mjs |
-| codex/fac-03 | FAC-03 | 2026-10-12T13:10:01-07:00 | 0 | last commit 2026-10-12T13:10:01-07:00 | docs/changes/FAC-03.md, tools/run-tests.mjs, tools/test-test-runner.mjs |
-| codex/fac-06 | FAC-06 | 2026-10-12T13:12:12-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/board.yaml, docs/board/cards/AUD-03.md, docs/board/cards/AUD-15-P1.md, docs/board/cards/CLEAN-11.md, docs/board/cards/CREW-01.md |
-| codex/fac-07 | FAC-07 | 2026-10-12T13:04:31-07:00 | 0 | last commit 2026-10-12T13:04:31-07:00 | docs/changes/FAC-07.md, tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, tools/test-browser-harness.mjs, tools/test-browser-scenarios.mjs |
+| codex/fac-04 | FAC-04 | 2026-10-12T13:42:19-07:00 | 0 | last commit 2026-10-12T13:42:19-07:00 | docs/changes/FAC-04.md, src/circuit-manifests.js, src/circuits/harbour-lights.js, src/circuits/index.js, src/circuits/panorama-ridge.js |
+| codex/fac-07 | FAC-07 | 2026-10-12T13:40:30-07:00 | 0 | last commit 2026-10-12T13:40:30-07:00 | docs/changes/FAC-07.md, tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, tools/test-browser-harness.mjs, tools/test-browser-scenarios.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | unknown | 2026-10-12T12:43:24-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
 | codex/p4-panorama | unknown | 2026-10-12T10:37:09-07:00 | 0 | last commit 2026-10-12T10:37:09-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-PANORAMA.md, src/app.js, src/circuit-landmarks.js |
@@ -98,9 +94,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 22,641 B | -1,890,299 B | 5,000,000 B |
+| Added bytes in last merge | 134,822 B | +74,451 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 392,651,776 B | +1,820,672 B | unavailable |
+| Git objects | 394,318,848 B | +463,872 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -109,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: ebca7020da16e96d58957818e6abb73e07638854
+- Local integration/wasteland: a629584651a2fb6e6a6db7949ffb2f036ea6b9da
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

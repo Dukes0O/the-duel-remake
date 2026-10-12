@@ -100,6 +100,27 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   else check(result.stderr.includes('No test suites match'),'actual unmatched CLI filter reports its failure');
 }
 
+// FAC-03: only proven native heavyweight suites leave daytime lane dispatch.
+{
+  const heavy=['tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
+    'tools/test-first-person-contact.mjs','tools/test-first-person-cloth.mjs','tools/test-first-person-polish.mjs'];
+  check(heavy.every(suite=>actual.includes(suite)),'every explicitly deferred heavy suite actually exists');
+  const lane=selectPlan(actual,{tier:'lane',affected:actual});
+  check(heavy.every(suite=>!lane.some(task=>task.suite===suite)),
+    'a fully affected daytime lane defers only the proven browser and Blender suites');
+  const day=selectPlan(actual,{changed:true,affected:actual});
+  same(day,lane,'legacy changed-only dispatch follows the same daytime policy');
+  for(const pure of ['tools/test-browser-harness.mjs','tools/test-combat-balance.mjs'])
+    check(lane.some(task=>task.suite===pure),'bounded pure '+pure+' remains in the lane');
+  check(LANE_GUARDS.every(suite=>lane.some(task=>task.suite===suite)),
+    'night deferral cannot remove replay or world-signature guards');
+  same(selectPlan(actual,{tier:'full'}),selectPlan(actual),
+    'full/default plans remain byte-for-byte equal after daytime deferral');
+  check(heavy.every(suite=>selectPlan(actual,{tier:'full'}).some(task=>task.suite===suite)),
+    'the night full tier still runs every heavy suite');
+  same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
+    'fully affected lane loses exactly the five proven heavy suites');
+}
 // New runner choices keep the complete inventory but set clear gate boundaries.
 {
   const merge=selectPlan(actual,{tier:'merge'});
