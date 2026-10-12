@@ -480,6 +480,9 @@ const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, hal
 const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 const EXISTING_GP_TUNING = Object.freeze({
+  'high-country': Object.freeze({
+    fieldPace: Object.freeze({easy: 1.10, medium: 1.065, hard: 1.055}),
+  }),
   'azure-riviera': Object.freeze({
     fieldPace: Object.freeze({easy: .96, medium: .91, hard: .90}), fieldAggression: 1.8,
   }),
