@@ -245,7 +245,7 @@ still be driven.
 - **Summit's pit bay** (12 October 2026): an opt-in limited stretch of
   180 m centred on the box at 80 km/h (90 if needed); the rest of the lane
   is driven normally. Below the tree line the road is `warm-tarmac`, where
-  winter tyres grip less (summer 1.0, winter tuned within .72 to .88), so
+  winter tyres grip less (summer 1.0, winter tuned within .62 to .88), so
   the summer-then-pit plan is the fast one and the targets above stand.
   Lanes without the opt-in, such as Tremblant Snow's, are unchanged.
 

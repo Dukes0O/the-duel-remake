@@ -43,10 +43,11 @@ Mid car Falcone F42; race 270 to 330 s. Opt-in pit fields `limiterLength`
 and `limitKph` in `src/pit-lane.js` (absent: today's behaviour, Tremblant
 Snow exact); Summit uses 180 m at 80 km/h centred on the box, CPU estimate
 from the limited stretch. New `warm-tarmac` on every asphalt piece of A and B
-(gravel stays), tyre column `warm` with summer 1.0 and winter tuned .72 to
-.88, winter top-speed share applies, drawn as asphalt, hint WARM TARMAC under
-.80 grip. At most five measured sets in the inbox order (80 km/h, then 90,
-then road snow from 7.2 km, then the warm winter grip). Holds lock
+(gravel stays), tyre column `warm` with summer 1.0 and winter tuned .62 to
+.88 (then winter top-speed share on warm .93 to .97 if needed), drawn as
+asphalt, hint WARM TARMAC under .80 grip. At most six measured sets in the
+inbox order (80 km/h, then 90, then road snow from piece 28 after the pit
+straight, then the warm winter numbers). Holds lock
 `surfaces`; hooks pit-lane.js and track-script-scene.js. Art round one hold:
 Tremblant grove pines on B, Tremblant Snow snow and plough heaps,
 Harbour-level night exposure, the accepted gallery kit, lit summit windows,
