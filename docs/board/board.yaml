@@ -133,9 +133,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [P4-FIELD]
-    locks: [circuit-registry, busy-game-files]
+    locks: [gp-existing-field-width]
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-gp-existing"
     flag: "grand-prix"
@@ -168,7 +168,7 @@ tasks:
     size: "L"
     status: "ready"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
-    locks: [circuit-registry, busy-game-files, surfaces]
+    locks: [busy-game-files, surfaces, gp-existing-field-width]
     claimed_by: "codex-overnight-2026-10-12"
     branch: "codex/p4-summit"
     flag: "summit-run"

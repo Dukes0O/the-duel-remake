@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **GP existing source resumes in parallel.** Panorama has finished and relinquished its race-field hook; its final correction is tool-only. GP holds only its actual field/width hooks, preserving the new manifest roster and all accepted pay/qualifying/save behavior. Source handoff follows one nearby lane/build/review; remaining Red/Neon/Cloudbreak rates and 18 native cases wait for night, with every original cap and failure retained. Summit waits for these shared field hooks. No release or push.
+
 - **Kyle authorized more parallel sessions.** Three independent Deep lanes start now: DEEP-ART-SRC, DEEP-SAVE (save-shape), and DEEP-AUDIO (sound-bank). Panorama remains active; GP and Summit wait for its shared-hook handoff. DEEP-SURFACE stays free for Summit priority on surfaces. Each new session owns its exact card files and lane; Root commits shared metadata and integrates green results. Six build lanes across teams remain the limit. Art/listening packets go to Claude; heavy checks wait for night. The Deep stays dev; no release or push.
 
 - **Panorama source review correction:** the old opt-in stationary timing scenario would throw during factory browser `--all` and measures a hidden dev course. Its unchanged pure comparison functions move outside the browser inventory; the obsolete recipe is removed. Existing limits stay exact. Source handoff waits for the corrected nearby lane/build and review; actual final native dusk art still waits for night. No release or push.
