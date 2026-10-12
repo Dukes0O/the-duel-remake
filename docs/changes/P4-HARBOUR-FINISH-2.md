@@ -44,14 +44,37 @@ opt-in read from the circuit's own data (`waterside`, `facades`, `streetLight`, 
 Kit pieces made of many parts are joined by material when loaded (`mergeKitMeshes`,
 `mergeModelByMaterial` in `src/track-kits.js`: shopfronts, neon signs, lantern strings, tower, garages): the
 same picture, far fewer draws, which also shortens the contact-shading pass. Everything added here is
-excluded from that pass. Draws, eight cars, old town: High 2,502 (3,039 after round one), Performance
-1,174 (2,357); mid race High 1,852 (2,431), Performance 756 (1,830). Timing numbers are in the final
-section below.
+excluded from that pass and casts no shadow. Draws, eight cars, old town: High 2,609 (3,039 after round
+one), Performance 1,350 (2,357); mid race High 1,401 (2,431), Performance 1,240 (1,830).
+
+Frame check (`node tools/browser-harness.mjs scenario harbour-night`, 11 October 2026, 20:05, no other
+gate, build or browser check running, graphics card idle, eight cars, delivered frames):
+
+| View | High p50 / p95 | Performance p50 / p95 |
+| --- | --- | --- |
+| Mid race | 17.8 / 18.2 ms (0 slow frames) | 17.7 / 18.1 ms (0 slow) |
+| Old town | 17.9 / 18.1 ms (0 slow) | 17.6 / 18.1 ms (0 slow) |
+
+All within 18.5 ms (round one: old town High 18.5). World build 0.2 to 0.5 s.
 
 ## Look sheet
 
 `docs/board/looks/p4-harbour/round-2.jpg` replaces round 1 (and its note) in this commit: the 16-frame
 review sheet at High, chase camera, test driver.
+
+## Tool fix
+
+`tools/scenarios/track-review.mjs`: after the Tremblant release the browser lists circuits behind a
+switch by stage number, so the course index from the headless half (17) started Tremblant instead of
+Harbour. The scenario now tries that index and, if the started course is not the one asked for, finds
+the course by its id. No other review behaviour changed.
+
+## Checks
+
+Lane tier 327/327 (`--jobs 4`, with `--changed`, after merging integration at a6496d64) and `npm run build`
+pass. `test-circuit-harbour` 13/13, `test-track-review` 57, `test-p4-kits`, `test-scenery-batches`,
+`test-harbor-detail`, `test-circuit-layouts` and `test-track-kits` (harbour: 1,925 placements validated
+with the joined parts) pass. Replay fingerprints unchanged.
 
 ## Changed assertions
 
