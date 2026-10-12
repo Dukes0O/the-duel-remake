@@ -4264,6 +4264,8 @@ tasks:
     acceptance:
       - "Build docs/CIRCUITS.md section 7 except cups: the GRAND PRIX section on the course screen, track prices, variant unlock by a top-three finish, pay by position calibrated to existing circuit wins, snowman credits, records and ghosts per event and mode. Additive save fields with defaults; old-save fixtures load unchanged. Tracks added later join the same list."
 
+    design_question: "Claude: settle finishing-position base pay before code. Proposed positions1to8 use 100/75/55/40/30/20/15/10 percent of existing difficulty win base; no Duel loss charge for a completed GP, existing eligible bonuses/milestones kept, snowmen25CR cap10, existing once-only settlement key. Kyle requires Panorama merge before this card starts."
+
   - id: P4-HARBOUR
     title: "Harbour Lights: the night street circuit"
     owner: claude
@@ -4429,7 +4431,7 @@ tasks:
     branch: codex/p4-summit
     flag: summit-run
     owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md]
-    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs]
     acceptance:
       - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
       - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
@@ -4437,6 +4439,8 @@ tasks:
     overnight_design: "Director before code: build Claude5.4 actual52-piece open-road draft,720mclimb,sixhairpins,threejumps; derive scenic section/surface/light/pit from actual named-piece boundaries within permitted10percent fit. Avalanche coordinates remain exact: trigger10.0km,split10.1,slide10.42to10.58,rejoin10.9. Sixcars means5CPU,one native point-to-point run,own summit-run dev and noCombat. Reuse existing surface,pit,light,snow,kits,shortcut and tunnel paths. Narrow granted field/game hooks handle course-specific default count/open finish; branch driver/course/world hooks only for real Gallery/Open Road. No new test machinery or hidden-course frames."
 
     additional_scope: "Director before code: settled2600CR course-access id via existing normalization (fresh money/save review); additive summit-run dev catalogue/preview assertions only with old/new reason; opt-in authored mixed-winter terrain/flakes with full-winter default exact; native Summit defaultMode menu hook only. No testtolerance changes."
+
+    review_scope: "Director grants mixed-winter lighting context, snowy Open Road material, and actual lateral Gallery roof checks in the named presentation hooks. Legacy tunnels and full-winter defaults stay exact. Existing reference assertions select closed circuits; all 27 cyclic targets remain, with Summit explicitly excluded because it is an open road. Record the reason for each changed catalogue or reference assertion. No timing on hidden dev art."
 
   - id: P4-AVALANCHE
     title: "The avalanche on Summit Run"
@@ -4456,12 +4460,14 @@ tasks:
     owner: codex
     lane: RACE
     size: S
-    needs: [P4-SNOW]
+    needs: [P4-SNOW, P4-SUMMIT, P4-CAREER, P4-TREMBLANT-SNOW]
     status: ready
-    owns: [src/snowmen.js, tools/test-snowmen.mjs, docs/changes/P4-SNOWMEN.md]
-    hooks: [src/destructibles.js, src/screen-results.js, src/grand-prix-career.js]
+    owns: [src/snowmen.js, src/snowmen-view.js, tools/test-snowmen.mjs, docs/changes/P4-SNOWMEN.md]
+    hooks: [src/destructibles.js, src/screen-results.js, src/grand-prix-career.js, src/circuits/summit-run.js, src/circuits/tremblant-woods.js, src/track-script-course.js, src/game.js, src/sim-contacts.js, src/track-kits.js, src/render3d.js, src/audio.js, src/feature-flags.js, tools/test-feature-flags.mjs]
     acceptance:
       - "Build the snowmen in docs/CIRCUITS.md section 5.4: 12 on Summit Run and 8 on Tremblant Snow, in runoffs and outside hairpins, never on the racing line; burst with carrot and hat through the existing destructible scenery; 25 credits each, at most 10 paid per race, shown on results. Snowman model from Kyle's pick."
+
+    design_decision: "Director before code: use the approved snowman model and its real hat and carrot. Authored placements are outside the racing line: 12 on Summit and 8 on the actual Tremblant Snow definition. A moving car can break each snowman once; soft snow causes no crash or armor penalty. Only player hits count for pay: 25 credits each, at most 10 paid, through completed-race settlement exactly once. Quitting, restarting and qualifying pay nothing. CPUs can break them without earning player credits. Reuse the existing snowman.burst sound. The renderer reads hit poses and time to draw white snow, the hat and the carrot; it never changes counts or race state. Pure rules and presentation may split into the two owned modules. Money, caps, duplicate settlement and malformed counts need independent save review. Keep old tree/sign behavior exact, and use a dev switch until ready."
 
   - id: P4-YETI
     title: "The yeti"
