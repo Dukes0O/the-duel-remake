@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseBoard } from './board.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const LIVE_ROOT = 'C:/Users/kyleb/dev/the-duel-remake';
@@ -181,17 +182,47 @@ function fullRun(root, integration, now) {
     time: value?.time ?? null, evidence: value };
 }
 
+
+function circuitFeatureEntries(root) {
+  const folder = join(root, 'src/circuits');
+  const rows = [], names = new Set(), ids = new Set(), orders = new Set();
+  if (!existsSync(folder) || lstatSync(folder).isSymbolicLink()) throw Error('Circuit manifests directory is unavailable.');
+  for (const file of readdirSync(folder, {withFileTypes: true})) {
+    if (!file.isFile() || !/^[a-z][a-z0-9-]*\.js$/.test(file.name) || file.name === 'index.js') continue;
+    const source = readFileSync(join(folder, file.name), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+    if (!/^export\s+const\s+manifest\b/m.test(source)) continue;
+    const header = source.match(/^export\s+const\s+manifest\s*=\s*Object\.freeze\(\s*\{([\s\S]*?)\bdriver\s*:\s*Object\.freeze\(\s*\{/m);
+    const invalid = () => Error('Circuit manifest ' + file.name + ' has unknown or malformed literal metadata.');
+    if (!header) throw invalid();
+    const fields = {};
+    for (const part of header[1].split(',').map(value => value.trim()).filter(Boolean)) {
+      const match = part.match(/^(id|flag|state|price|grandPrix|releaseOrder)\s*:\s*(?:'([^']*)'|"([^"]*)"|(\d+)|(true|false))$/);
+      if (!match || Object.hasOwn(fields, match[1])) throw invalid();
+      fields[match[1]] = match[2] ?? match[3] ?? (match[4] ? Number(match[4]) : match[5] === 'true');
+    }
+    if (!/^[a-z][a-z0-9-]*$/.test(fields.id ?? '') || !/^[a-z][a-z0-9-]*$/.test(fields.flag ?? '') ||
+      !['dev', 'beta', 'on'].includes(fields.state) || !Number.isSafeInteger(fields.releaseOrder) || fields.releaseOrder < 0 ||
+      !Number.isSafeInteger(fields.price) || fields.price < 0 || typeof fields.grandPrix !== 'boolean') throw invalid();
+    if (names.has(fields.flag) || ids.has(fields.id) || orders.has(fields.releaseOrder))
+      throw Error('Circuit manifest ' + file.name + ' has a duplicate id, flag or releaseOrder.');
+    names.add(fields.flag); ids.add(fields.id); orders.add(fields.releaseOrder); rows.push(fields);
+  }
+  return rows.sort((a, b) => a.releaseOrder - b.releaseOrder).map(row => [row.flag, row.state]);
+}
+
 function featureStates(root) {
   // Read the declarative catalog, never import game code or access its storage.
   const source = readFileSync(join(root, 'src/feature-flags.js'), 'utf8');
   const catalog = source.match(/export\s+const\s+FEATURE_STATES\s*=\s*Object\.freeze\(\s*\{([^}]*)\}\s*\)/);
   if (!catalog) throw Error('Feature catalog format is unknown.');
-  const body = catalog[1].replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '').trim();
+  const body = catalog[1].replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '').trim()
+    .replace(/\.\.\.\s*Object\.fromEntries\(\s*CIRCUIT_MANIFESTS\.map\(\s*manifest\s*=>\s*\[\s*manifest\.flag\s*,\s*manifest\.state\s*\]\s*\)\s*\)/g, '__CIRCUIT_MANIFESTS__');
   const entries = body.split(',').map(entry => entry.trim()).filter(Boolean);
-  return Object.fromEntries(entries.map(entry => {
+  return Object.fromEntries(entries.flatMap(entry => {
+    if (entry === '__CIRCUIT_MANIFESTS__') return circuitFeatureEntries(root);
     const match = entry.match(/^(?:'([a-z][a-z0-9-]*)'|"([a-z][a-z0-9-]*)"|([a-z][a-z0-9-]*))\s*:\s*['"](dev|beta|on)['"]$/);
     if (!match) throw Error('Feature catalog entry is unknown: ' + entry);
-    return [match[1] || match[2] || match[3], match[4]];
+    return [[match[1] || match[2] || match[3], match[4]]];
   }));
 }
 
@@ -208,7 +239,29 @@ function worktrees(root) {
   return rows;
 }
 
-function lanes(root, liveRoot, commit, now, skipLanes) {
+
+function boardBranchCards(root, issues) {
+  const path = join(root, 'docs/board/board.yaml'), result = new Map();
+  if (!existsSync(path)) return result; // Legacy fixture/checkout without a board uses the name fallback.
+  const text = readFileSync(path, 'utf8');
+  for (const block of text.split(/(?=^  - id: )/m)) {
+    const card = parseBoard(block)[0], branchLine = block.match(/^    branch: (.*)$/m);
+    if (!card || !branchLine) continue;
+    const raw = branchLine[1].trim();
+    let branch = raw;
+    if (raw.startsWith('"')) { try { branch = JSON.parse(raw); } catch { branch = null; } }
+    else if (raw.startsWith("'")) branch = raw.match(/^'([^']*)'$/)?.[1] ?? null;
+    if (typeof branch !== 'string' || !/^[a-zA-Z0-9_./+-]+$/.test(branch)) {
+      issues.push('Card ' + card.id + ' has an unknown branch scalar.'); continue;
+    }
+    if (result.has(branch) && result.get(branch) !== card.id) {
+      issues.push('Board branch ' + branch + ' belongs to multiple cards.'); result.set(branch, null);
+    } else result.set(branch, card.id);
+  }
+  return result;
+}
+
+function lanes(root, liveRoot, commit, now, skipLanes, cardBranches) {
   const skippedBranches = new Set(skipLanes);
   const trees = worktrees(root);
   return git(root, ['for-each-ref', '--format=%(refname:short)%09%(objectname)%09%(committerdate:iso-strict)', 'refs/heads'])
@@ -228,7 +281,8 @@ function lanes(root, liveRoot, commit, now, skipLanes) {
         } catch (error) { issue = error.message; }
       }
       const protectedRoot = tree && [root, liveRoot].filter(Boolean).some(path => resolve(path) === resolve(tree.path));
-      const card = branch.match(/(?:^|\/)([a-z]+-\d+(?:-p\d+)?)(?:-|$)/i)?.[1].toUpperCase() ?? 'unknown';
+      const card = cardBranches.has(branch) ? cardBranches.get(branch) ?? 'unknown'
+        : branch.match(/(?:^|\/)([a-z]+-\d+(?:-p\d+)?)(?:-|$)/i)?.[1].toUpperCase() ?? 'unknown';
       return { branch, commit: head, ageDays: Math.max(0, Math.floor((Date.parse(now) - Date.parse(date)) / 86400000)),
         path: tree?.path ?? null, dirty, merged, card, lastCommit: date, inspectionSkipped,
         activity: inspectionSkipped ? 'inspection skipped by request; uncommitted state unknown'
@@ -309,7 +363,8 @@ export function collectStatus({ root = ROOT, liveRoot = null, now = new Date().t
   if (liveRoot && !live.version) issues.push('Live build manifest missing or invalid.');
   let features = {};
   try { features = featureStates(root); } catch (error) { issues.push(error.message); }
-  const laneRows = lanes(root, liveRoot, integration.commit, now, skipLanes);
+  const cardBranches = boardBranchCards(root, issues);
+  const laneRows = lanes(root, liveRoot, integration.commit, now, skipLanes, cardBranches);
   issues.push(...laneRows.filter(row => row.issue).map(row => `${row.branch}: ${row.issue}`));
   const sizeReport = sizes(root);
   if (sizeReport.targetIssue) issues.push(`Size targets ${sizeReport.targetIssue}.`);
