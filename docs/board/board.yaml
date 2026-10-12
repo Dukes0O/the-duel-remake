@@ -340,7 +340,9 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-session-01a1325c-da51-7ad3-90a3-dccce8964fdd"
+    branch: "codex/deep-surface"
     needs: [DEEP-LOOK]
     flag: "the-deep"
     locks: [surfaces]
