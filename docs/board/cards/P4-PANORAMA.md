@@ -143,3 +143,7 @@ adds only definition.script to its unsupported arena/expansion skip.
 The original no-empty-script-row and exact 15-legacy-entry guard remains
 unchanged, as do all 15 path values and fingerprints. Only its normal
 source fingerprint changes.
+
+## Factory source review correction — 12 October 2026
+
+Director grants `tools/panorama-frame-cost.mjs` for the unchanged pure frame comparison and validation exports, the existing Panorama test import, and removal of `tools/scenarios/p4-panorama-frames.mjs`. The obsolete scenario throws in the factory night browser inventory without its private opt-in and measures stationary dev-only art, contrary to rules 8 and 9. Preserve its existing pure assertions and limits, and fold diagnostic verdicts into the change note. No timing, new framework, skip or fabricated pass. Drain the frozen run before editing, then one fresh nearby lane, build and ordinary delta review. This corrects the earlier source-review clearance; merge waits for the correction.

@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Panorama source review correction:** the old opt-in stationary timing scenario would throw during factory browser `--all` and measures a hidden dev course. Its unchanged pure comparison functions move outside the browser inventory; the obsolete recipe is removed. Existing limits stay exact. Source handoff waits for the corrected nearby lane/build and review; actual final native dusk art still waits for night. No release or push.
+
 - **Panorama factory handoff is a dev source slice.** When the corrected 83c58563 lane/build is green, merge its completed runtime and existing native recipe under panorama-ridge dev so FAC-03 can exercise it on integration at night. Ordinary source review is clear. Keep the card open for actual final-lap dusk/framing/sheet and your conditional round-three acceptance; no native pass, final sheet or fourth round is claimed. Release its shared game hooks after that source merge so Summit and GP can proceed. The original shortcut assertions remain exact; the generator now skips scripted courses as runtime already does. No release or push.
 
 - **FAC-08 merged green; all requested factory build cards are integrated.** Frozen c4ba526f: nearby lane 15/15, zero failures/unrun, 95.56 s, jobs 4; build 578 ms; one ordinary review clear. The native checker proves the real pre-fix Tremblant grass overlap, barrier passage and floating lodge, then passes fixed Tremblant on all three difficulties and 16 contact probes. Historical source labels require actual commit provenance. FAC-02/03/04/05/06/07/08 are complete; no native night pass or scheduled task installation is claimed. Panorama source resumes in its retained lane; heavy checks wait for night. No release or push.
