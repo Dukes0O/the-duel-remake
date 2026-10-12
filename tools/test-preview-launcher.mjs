@@ -1,3 +1,4 @@
+import {previewCircuitFlags} from './preview-flags.mjs';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
@@ -81,14 +82,19 @@ check('launcher binds a private strict port', () => {
   assert.notEqual(port, 5174, 'preview must never use the live game port');
 });
 check('preview launch requests every current dev switch', () => {
-  // Read from the catalog so a new development switch cannot be missed
-  // (WAR-02a-SAL added warlords, released by WAR-SAL-RELEASE). Career backup is left out: Preview saves
-  // are memory-only.
+  // Course flags come from their manifests; other dev switches retain their
+  // actual batch list. Career backup stays excluded from memory-only Preview.
+  const literalFlags = launcher.match(/set "PREVIEW_FLAGS=([^"\r\n]*)"/)?.[1];
+  assert.ok(literalFlags, 'launcher keeps its explicit non-course flag list');
+  assert.match(launcher, /node tools\\preview-flags\.mjs/,
+    'launcher obtains course flags from the real manifest generator');
+  assert.match(launcher, /set "PREVIEW_FLAGS=%PREVIEW_FLAGS%,%COURSE_FLAGS%"/,
+    'launcher appends the generated course flags before opening Preview');
+  const flags = new Set([...literalFlags.split(','), ...previewCircuitFlags()]);
   const devSwitches = Object.entries(FEATURE_STATES)
     .filter(([name, state]) => state === 'dev' && name !== 'career-backup').map(([name]) => name);
   for (const flag of devSwitches) {
-    assert.match(launcher, new RegExp(`(?:flags[^\\r\\n]*|PREVIEW_FLAGS[^\\r\\n]*)${flag}`),
-      `preview URL must request ${flag}`);
+    assert.ok(flags.has(flag), 'preview URL must request ' + flag);
   }
 });
 

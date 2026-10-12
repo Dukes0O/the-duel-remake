@@ -2,6 +2,10 @@
 
 ## For Claude
 
+- **FAC-05 and FAC-08 started in separate lanes after FAC-04.** FAC-05 owns the bounded count/registry test sweep and takes circuit-registry. FAC-08 owns the native headless drive-through tool and its acceptance tests, including the real pre-fix Tremblant repro. Owned files and assertion design are written on their cards before code; no runtime, fixture, fingerprint or signature edits. Retained Panorama and Summit wait for FAC-05. Heavy browser/frame/balance work remains held.
+
+- **FAC-04 merged green.** Exact source 8cc2d45a: canonical 309/309, zero failures/unrun, 791.07 s, jobs 4; build 1.13 s; one ordinary review clear. Courses register through their own manifests; reference, replay and world data are per course, with all original values and generation identities preserved. GP export order follows release order, membership unchanged. FAC-05 and FAC-08 start next. No clean-merge rerun, release or push.
+
 - **Factory course locks remain with FAC-04, then FAC-05.** Panorama and Summit now have explicit factory prerequisites and remain ready in their retained lanes while those locks are held. Claude's Hell Gate fix and Summit design decisions are preserved; no source work resumes early. FAC-04 is frozen at 8cc2d45a, corrected preview review clear, canonical gate still running. No new heavy check, release or push.
 
 - **FAC-03 needs the real off-balance acceptance.** The removed wasteland2 flag cannot produce an off run. Actual undiscovered/discovered memory-only starts are now proved, but the old armor/UFO-max bands apply to discovered rules only. The explicit off tool currently reports an honest bounded witness and unsupported acceptance, exits1, and does not pretend to run the full off balance. Please settle either the complete applicable native base/off policies and targets, or the intended current pair. No new targets, forced upgrades or green off result will be invented. The night command is still building; this part stays incomplete while the other factory cards proceed.
@@ -76,6 +80,8 @@ The first loader-union gate stopped132passed/1boardfailure/255notrun: unsupporte
 Claude10:30 decisions are on their cards before further code: loader accepted on source/clearance after mandatory lane/build, Claude owns Harbour base diagnosis and later old-town cost; Azure reuses actual merged Harbour fieldFollow GP-only; Snow/Pan relative costs are information with absolute18.5ms/under1s acceptance. All observed failures remain failures. Every Claude answer below is retained. Kyle approved the sound on11October (sound approved - keep going); measured121-second partial -16.29LUFS/-2.10dBTP, no whole-recording/uncaptured-finish claim. Approval committed in33aacf7a; consumed listening284,485,319B and navigation852,173B removed after safe path/hash checks, recipes/assets kept. Previous full387/387 onfbc7d76c is historical; new end full remains required.
 
 ## Claude answers
+
+Claude, 12 October 2026 (afternoon PT), **FAC-03: one combat balance run, current rules.** The `wasteland2` switch was retired (BALANCE-W2-OFF-RETIRE), so an "off" run no longer exists; the off/on wording in AGENTS, FACTORY, the playbook, OPERATIONS and the FAC-03 card was mine and stale, and is corrected. The night shift and release evidence run `node tools/combat-balance.mjs --check` once, on the current rules with the Wasteland discovered, against its existing targets. The original MAD MAX DUEL combat (before the Wasteland is found) is frozen: its rules no longer change and its replay fingerprints in the full tier pin it exactly, so a second balance run would only repeat a fixed result. Remove the explicit off tool path from FAC-03 rather than reporting it as unsupported. No new targets.
 
 Claude, 12 October 2026 (afternoon PT), **P4-SUMMIT: timing, pit and round one settled. Build on.**
 

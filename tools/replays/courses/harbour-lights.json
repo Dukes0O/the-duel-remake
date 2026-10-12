@@ -1,0 +1,19 @@
+{
+  "eventId": "harbour-lights",
+  "cases": [
+    {
+      "id": "harbour-lights-duel",
+      "eventId": "harbour-lights",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "harbour-lights-duel": {
+      "30": "7f6d2048901e877372c36ced44c36428806a7c35dd8c5817557698a1414a421c",
+      "60": "7f6d2048901e877372c36ced44c36428806a7c35dd8c5817557698a1414a421c",
+      "144": "7f6d2048901e877372c36ced44c36428806a7c35dd8c5817557698a1414a421c"
+    }
+  }
+}

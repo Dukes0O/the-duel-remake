@@ -1,3 +1,5 @@
+import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
+
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
@@ -13,7 +15,7 @@ export const FEATURE_STATES = Object.freeze({
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
   'grand-prix': 'on', 'grand-prix-career': 'dev', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
-  'panorama-ridge': 'dev', 'harbour-lights': 'on', 'tremblant-woods': 'on', 'tremblant-snow': 'on',
+  ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
   // The Deep (docs/THE_DEEP.md): the hidden underwater world. Off; nothing reaches it yet.
   'the-deep': 'dev',
 });

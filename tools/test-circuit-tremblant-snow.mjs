@@ -1,3 +1,4 @@
+import {previewCircuitFlags} from './preview-flags.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -44,7 +45,7 @@ test('Tremblant Snow is a stable event behind its own switch, right after Trembl
   assert.ok(Object.isFrozen(TREMBLANT_SNOW) && TREMBLANT_SNOW.laps === 3 && TREMBLANT_SNOW.closed === true);
   assert.deepEqual(Object.keys(TREMBLANT_SNOW.fieldPace), ['easy', 'medium', 'hard']);
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
-  assert.match(bat, /PREVIEW_FLAGS=[^\r\n]*\btremblant-snow\b/);
+  assert.ok(bat.includes('preview-flags.mjs') && previewCircuitFlags().includes('tremblant-snow'), 'the actual manifest-derived Preview includes Tremblant Snow');
   // On the course list while its switch is on, after Tremblant Woods (Harbour Lights, released later, comes after it).
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('tremblant-snow'), true, 'on for players with no URL flag');

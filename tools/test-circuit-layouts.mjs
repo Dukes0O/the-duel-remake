@@ -1,3 +1,4 @@
+import {previewCircuitFlags} from './preview-flags.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -47,7 +48,8 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'], 'a dev circuit requested for QA goes after the released ones');
   assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
-  for (const circuit of ALL_CIRCUITS) assert.ok(bat.includes(circuit.id), `the Preview turns ${circuit.id} on`);
+  assert.ok(bat.includes('preview-flags.mjs'), 'Preview obtains course flags from the course-owned manifests');
+  for (const circuit of ALL_CIRCUITS) assert.ok(previewCircuitFlags().includes(circuit.flag), `the Preview turns ${circuit.id} on`);
 });
 
 test('every layout closes within the rules and says what it changed', () => {
