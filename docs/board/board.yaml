@@ -5228,7 +5228,7 @@ tasks:
     lane: OPS
     size: S
     needs: [FAC-01]
-    status: building
+    status: merged
     owns: [docs/CODEX_PLAYBOOK.md, docs/OPERATIONS.md, tools/integrate-lane.mjs, tools/test-integrate-lane.mjs, docs/changes/FAC-02.md]
     acceptance:
       - "Playbook and OPERATIONS match AGENTS rules 11 to 15: a green lane with one review merges at once; a conflict-free merge does not re-run the lane tier; the run-log line is one sentence. Remove the 5-merge/2-hour deadline, the four-versus-five lane conflict and the stale integration path. Two green lanes merge within five minutes of each other."
@@ -5236,6 +5236,7 @@ tasks:
     branch: codex/fac-02
     script_scope: "Director before code: implement FACTORY section 5 integrator in the two named tools, using explicit current green lane/build evidence and one review. No post-conflict-free gate, push, release or live access. Only caller-proven newly created clean lane folders may be recycled; retained lanes stay. Record one merge line and commit shared metadata immediately."
 
+    note: "Green source306468b5: lane17/17, zero failed/unrun,298.83s,jobs4; build1360ms; Director review clear. No clean-merge rerun. Actual two-lane acceptance pending second green lane."
   - id: FAC-03
     title: "Night shift and morning report"
     owner: codex
