@@ -4005,7 +4005,6 @@ tasks:
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT]
     status: building
-    waiting_on: claude
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-panorama
     flag: panorama-ridge
@@ -4064,7 +4063,6 @@ tasks:
 
     lighter_frame_design: "Before recipe code: Kyle rules7-10 replace paired day/dusk timing with one full final-dusk leg perquality, actual8cars/main/rear/HUD. Grant existing p4-panorama-frames recipe and its existing circuit-test expectations only; no runtime/art edits/new machinery/controls. Keep original perleg120warmup,360CPU,359delivered,GPU>=288, finite/positive/state/profile/storage/pose guards, delivered<=18.5 and actual finite nonnegative construction<1000. Replace paired comparison/report expectations with single-row absolute validation; remove obsolete relative packets/crossleg equality, keep genuine before/after equality. No timing until finalart accepted and actual track reachable. Existing grid has8visiblecars; globally busiest view unproved, settle intended busiest view on card from finalart evidence before measurement."
 
-    waiting_on: "claude"
 
     simple_frame_view_question: "Claude: newrule8 permits one busiestview perquality. Existing native evidence shows8visiblecars at grid andRidgeTop, but no load ranking. Proposed full final-dusk grid with paddock,allkits/landmarks/mainrear/HUD. Confirm that intended busiestview or nameone. No timing until finalart accepted/playerreachable; no extra ranking packet/measurement. Existing simplepolicy sourcea739 reviewed clear and one originalnumericcase12assertions passed."
 
@@ -4081,6 +4079,7 @@ tasks:
     integration_batch_scope: "Director, 11 October, before combined-source edits: Kyle flags over-testing and low integration throughput. Assemble Snow43a55ea4, GP4dd197ae, Panoramaaaab7a0f and Qualifying6abe1284 into one codex/p4-finish candidate in the idle Snow checkout; preserve each original branch. Resolve only additive conflicts inside these four cards owned files/named hooks, preserving actual integration ancestors, all current flags and settled metadata/defaults. Report any new hook before editing. Do not change driving rules, acceptance thresholds, saves or test machinery to make integration pass. Reuse accepted unchanged visual/native/source reviews. Finish explicitly required remaining acceptance work, then one lane jobs4 and build on coherent combined source before one integration merge; one end full alone. No source merge into integration during Claude release-full/freeze."
 
     current_field_verdict: "Originalaaab90 complete/exit1: pileups4/22/9 of30 and wins14/2/0; six original target failures. Players finish26/28/25, all7CPUfinish90/90. No target/driver waiver; no rerun queued; next bounded design decision waitsClaude."
+    overnight_2120_decision: "Kyle overnight 11 to 12 October: follow Claude21:20. Panorama gets grid setback,15m last150m and Hell Corner, Harbour firstLap unchanged, then existing fieldPace only max3 original90-race runs. Existing circuits each get bounded fieldPace/fieldAggression max3 original90-race runs, closest honest result may merge per Claude. Team Room stays base-only. No release, push or history rewrite."
 
   - id: P4-GRIP
     title: "Surfaces and tyres: gravel, packed snow, ice, deep snow; summer and winter tyres"
@@ -4135,7 +4134,6 @@ tasks:
     size: M
     needs: [P4-FIELD]
     status: building
-    waiting_on: claude
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-gp-existing
     flag: grand-prix
@@ -4187,6 +4185,7 @@ tasks:
     integration_batch_scope: "Director, 11 October, before combined-source edits: Kyle flags over-testing and low integration throughput. Assemble Snow43a55ea4, GP4dd197ae, Panoramaaaab7a0f and Qualifying6abe1284 into one codex/p4-finish candidate in the idle Snow checkout; preserve each original branch. Resolve only additive conflicts inside these four cards owned files/named hooks, preserving actual integration ancestors, all current flags and settled metadata/defaults. Report any new hook before editing. Do not change driving rules, acceptance thresholds, saves or test machinery to make integration pass. Reuse accepted unchanged visual/native/source reviews. Finish explicitly required remaining acceptance work, then one lane jobs4 and build on coherent combined source before one integration merge; one end full alone. No source merge into integration during Claude release-full/freeze."
 
     current_opening_verdict: "Actual4dd original90 exit0:0/30openingpileups eachdifficulty,30/30players3laps and all7CPUfinish eachdifficulty. This is the approved opening criterion only;0wins each and1.23Medium passes are observed, not a full3.2 balancepass. AwaitClaude finalfieldscope/basereference decision before native18/freeze; no rerun or new mechanism."
+    overnight_2120_decision: "Kyle overnight 11 to 12 October: follow Claude21:20. Panorama gets grid setback,15m last150m and Hell Corner, Harbour firstLap unchanged, then existing fieldPace only max3 original90-race runs. Existing circuits each get bounded fieldPace/fieldAggression max3 original90-race runs, closest honest result may merge per Claude. Team Room stays base-only. No release, push or history rewrite."
 
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
@@ -4314,8 +4313,6 @@ tasks:
     design_decision: "Director 11 October: opt-in snowWorld metadata specifies winter distance ranges, exposed ridge spans and frozen ponds. Reuse approved kits through P4-KIT-LOADER; real terrain coverage, snow pines/rocks/banks; bounded camera flakes/ridge gusts/short-lived wheel tracks, fewer in Performance. Generate plough-bank deep-snow bands in headless course construction, and read authored surface patches beyond the road before the existing verge default. Renderer only reads state. Cue remains surface.snow/surface.ice from existing surfaceChanged events. Shared world/render hooks wait for loader source freeze; no dry-course changes."
     renderer_identity_decision: "Winter owners rebuild when Course object changes even for the same environment key, preserving actual live surfacePatch identities. Dry reuse stays exact. Winter foliage exclusion occurs after unchanged seeded generation; native green-grass and physical-patch identity witnesses are required."
     source_commit: "ba68528f"
-    round_one_sheet: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/p4-snow/round-1.jpg"
-    round_one_review: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/p4-snow/round-1-review.md"
     review_question: "Claude: final round-three Snow sheet posted, same eight High/Performance views,269446B. Score lighting/readability/grounding/consistency against your check-in7 fixes and settle merge or stop at the three-round cap. Snow covers both grid verges; caps use existing shader; pond rim/reflection and64pines present. Root visual concern: pine cluster overlaps the pond and partly hides the ice; prominent ridge mountain still reads dark rock. Functional finite/HDR/current-bank guards pass, no appearance or timing pass inferred. Original absolute18.5ms/under1s frames remain queued; no fourth round authorized."
     frame_camera_decision: "Private static frame view sets only the native presentation camera to its chosen inspection position before the original sampler witness; same Panorama camera fix independently cleared. This prevents interpolating-before versus settled-after witnesses. No actor poses/rules or sample/10percent limits change."
     renderer_union_review: "Director clear on3004ee6c three additive render hooks: Snow vehicle buffer plus Dossier snapshot block, both snapshot/kitretry APIs, both snapshot/prepared-kit disposal. Old behaviors retained."
@@ -4326,8 +4323,6 @@ tasks:
     round_two_lighting_scope: "Director granted: scene-lighting.apply accepts optional winter settings transform, derived wholly in snow-world.js and passed only when snowWorldEnabled in normal/snapshot renderer branches. Absent winter uses the exact original settings object. Pure transform preserves base immutability, sunOffset/nightAmount/stars/moon and timing; cool daytime palette with Snow-only exposure/Bloom reduction, Bloom enabled, appropriately dark winter nights. Focused dry-equality/finite-palette/time-path checks precede implementation. No ad hoc scene traversal, new light or altered lifetime."
 
     round_two_packet_commit: "4fcf95ea"
-    round_two_sheet: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/p4-snow/round-2.jpg"
-    round_two_review: "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/docs/board/looks/p4-snow/round-2-review.md"
     round_two_native: "Exact reviewed ba68528f actual High/Performance native private49604:8 full captures,8 native cars,0warnings/errors. Real albedo.8/exposure.8528/positive Bloom.054,15 approved clustered pines,alpine shader,raised actual banks,dark ice pass. Driven marks340/128 expire0;98 pond triangle anchors,maxerror.000004895m;12 actual HalfFloat targets zeroNaN/Inf;equivalent snapshots308current/0old banks,build2to3,state/profile/memory exact. Frames explicitly NOT scheduled; no timing claim."
     whole_view_frame_design: "Before recipe changes: compare fresh identical native eight-car scenes with the existing dry-versus-snow baseline. Preserve all actual road, ground and native poses, rear view and HUD; prepare the dry or snow state before its fresh world construction. Use frozen shared main-plus-rear sampler with original 120 warm-up frames, 360 CPU and 359 delivered samples, at least 288 GPU samples, stable resolution and two opposite orders per quality. Keep original 10% limits; also gate combined update plus submit at 10% and candidate delivered p95 at most 18.5 ms. No state edits during sampling, hidden populated baseline, sample discard or overhead subtraction. No art acceptance is inferred."
 
@@ -4379,6 +4374,8 @@ tasks:
 
     gate_result: "Ready7c60f577: lane395/395,0failed,0notrun1552.33s/jobs4; build503ms; single source review clear. Final selector154 assertions passed; old gameplay thresholds and full discovery/smoke preserved. No release."
 
+    consumed_art_verdicts: "Prior Snow round1/2 sheets and separate notes consumed by JANITOR-OVERNIGHT-ART; verdicts/limits are folded into docs/board/looks/p4-snow/round-3-review.md. Final3sheet exact; Claude accepted13:40 subject6mclearance, approved14:15 correction now minimum6.44677m."
+
   - id: P4-PIT
     title: "Pit lanes and stops"
     owner: codex
@@ -4404,12 +4401,14 @@ tasks:
 
   - id: P4-TREMBLANT-SNOW
     title: "Tremblant Snow variant"
-    owner: codex
+    owner: claude
     lane: RACE
     size: M
     needs: [P4-TREMBLANT, P4-SNOW, P4-PIT]
-    status: ready
-    flag: tremblant-woods
+    status: building
+    claimed_by: "Claude builder, overnight 11 to 12 October 2026"
+    branch: claude/tremblant-snow
+    flag: tremblant-snow
     owns: [tools/test-circuit-tremblant-snow.mjs, docs/changes/P4-TREMBLANT-SNOW.md]
     hooks: [src/circuits/tremblant-woods.js, src/circuits/index.js]
     acceptance:
@@ -4421,13 +4420,19 @@ tasks:
     lane: RACE
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
-    status: ready
+    status: building
+    claimed_by: codex-overnight-2026-10-12
+    branch: codex/p4-summit
     flag: summit-run
     owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md]
-    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs]
     acceptance:
       - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
       - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
+
+    overnight_design: "Director before code: build Claude5.4 actual52-piece open-road draft,720mclimb,sixhairpins,threejumps; derive scenic section/surface/light/pit from actual named-piece boundaries within permitted10percent fit. Avalanche coordinates remain exact: trigger10.0km,split10.1,slide10.42to10.58,rejoin10.9. Sixcars means5CPU,one native point-to-point run,own summit-run dev and noCombat. Reuse existing surface,pit,light,snow,kits,shortcut and tunnel paths. Narrow granted field/game hooks handle course-specific default count/open finish; branch driver/course/world hooks only for real Gallery/Open Road. No new test machinery or hidden-course frames."
+
+    additional_scope: "Director before code: settled2600CR course-access id via existing normalization (fresh money/save review); additive summit-run dev catalogue/preview assertions only with old/new reason; opt-in authored mixed-winter terrain/flakes with full-winter default exact; native Summit defaultMode menu hook only. No testtolerance changes."
 
   - id: P4-AVALANCHE
     title: "The avalanche on Summit Run"
@@ -4944,3 +4949,95 @@ tasks:
     qa_input_compatibility_decision: "Director before config code: original test-preview-launcher demands literal preview property, while nine-entry Object.fromEntries genuinely includes the same page. Grant owned tools/vite-qa.config.js only to express all nine unchanged names/paths/order as explicit fileURLToPath(new URL(...)) properties. Plugins, pinned Harbour source/aliases/admission, normal environment and runtime exact. Preserve every preview test assertion; focused original preview check plus existing config guards, ordinary review, then mandatory fresh lane8/build. No generated report/status-only commit or page omission."
     mirror_order_compatibility_decision: "Director before test edit: test-scene-presentation has a second obsolete adjacent main/rear source regex. Grant that test file only to recognize the accepted bounded main-to-firstCPU-end block with both exact genuine rear branches and finally restoration; require negative reordered-main/missing-main/each-rear/restoration controls. Retain every real RenderPass clearing, direct/composite, throw-restoration, warmup, adaptive lifecycle and other source assertion. No runtime/helper/tolerance change. Focused original presentation plus existing frame/preview guards, root ordinary review, fresh mandatorylane8/build. Scan remaining renderer/config source guards before rerun; no result-only commit."
       merge_verdict: "Source75df10c2 ordinary review clear; mandatory lane388/388,0failed,0notrun655.23s and build525ms passed. Accepted runtime exactd05. Four genuine governance/static-layout compatibility failures fixed without numeric assertion or tolerance changes. Claude owns Harbour base diagnosis; retained13leg packet and six absolute failures are not reclassified. No release."
+
+  - id: P4-AZURE-GP-COMPARISON
+    title: "Azure Grand Prix comparison in the Team Room"
+    owner: codex
+    lane: RACE
+    size: S
+    priority: low
+    status: backlog
+    needs: [P4-GP-EXISTING]
+    owns: [docs/changes/P4-AZURE-GP-COMPARISON.md]
+    design_question: "Scope a Grand Prix geometry reference and comparison without replacing the base Azure reference used by Duel and Time Trial."
+    acceptance:
+      - "Team Room can compare Azure GP laps against a matching GP reference; base circuit records and references stay exact. Claude21:20 accepts base-only until this follow-up."
+
+  - id: JANITOR-OVERNIGHT-ART
+    title: "Consume earlier art rounds and preserve final verdicts"
+    owner: codex
+    lane: OPS
+    size: S
+    needs: []
+    status: building
+    claimed_by: codex-overnight-2026-10-12
+    branch: codex/janitor-overnight-2026-10-12
+    owns: [docs/board/looks/yard, docs/board/looks/rustwall-p2, docs/board/looks/p4-snow, docs/changes/JANITOR-OVERNIGHT-ART.md]
+    acceptance:
+      - "Fold consumed prior-round verdicts/limits into final notes, retain exact final JPGs/recipes/assets/licences and remove consumed earlier files. No folder removal or runtime/test changes. Lane jobs4 and build before merge."
+
+  - id: DEEP-LOOK
+    title: "The Deep look test"
+    owner: claude
+    lane: DEEP
+    size: L
+    needs: []
+    status: merged
+    flag: the-deep
+    priority: after-phase4
+    note: "Look test merged2e7613e5; the-deep remainsdev, no playable route."
+
+  - id: DEEP-ART-SRC
+    title: "The Deep creatures and set sources"
+    owner: codex
+    lane: ART
+    size: L
+    needs: []
+    status: backlog
+    flag: the-deep
+    priority: after-phase4
+    note: "THE_DEEP10 D1: licensed creature/set models and round-one art sheet forClaude; free sources, recipes/catalog/credits, currentruntimeassets only."
+
+  - id: DEEP-RAMP
+    title: "Pacific boat ramp and dive entry"
+    owner: codex
+    lane: DEEP
+    size: L
+    needs: []
+    status: backlog
+    flag: the-deep
+    priority: after-phase4
+    note: "THE_DEEP10 D2: genericramp/Pacificramp, shorelinepause/dive/return/hints/divekit/additive saves; fresh SaveGuardian, existingfingerprints outsideoptin exact."
+
+  - id: DEEP-DRIVE
+    title: "Driving on the sea floor"
+    owner: codex
+    lane: DEEP
+    size: L
+    needs: [DEEP-RAMP]
+    status: backlog
+    flag: the-deep
+    priority: after-phase4
+    note: "THE_DEEP10 D3 and section3: underwater surface rule, Node acceptance, exactfingerprints elsewhere; the-deep dev."
+
+  - id: DEEP-WATER
+    title: "The Deep full-zone water look"
+    owner: claude
+    lane: DEEP
+    size: L
+    needs: [DEEP-LOOK, DEEP-RAMP]
+    status: backlog
+    flag: the-deep
+    priority: after-phase4
+    note: "Claude ownsD4: make approvedlookreal forthewholezone, measurebudget whenreachable."
+
+  - id: DEEP-TRAIL
+    title: "The Kelp Coast loop"
+    owner: claude
+    lane: DEEP
+    size: L
+    needs: [DEEP-RAMP, DEEP-DRIVE]
+    status: backlog
+    flag: the-deep
+    priority: after-phase4
+    note: "Claude ownsD5: shallows/kelpforest/drop-offlip route."
