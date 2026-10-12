@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **FAC-03 actual off/on contract.** The wasteland2 switch was removed on 30 September; an override would be ignored and run the same rules twice. Director scope for the night tool uses real memory-only profiles with the gate undiscovered/discovered and reports actual rulesActive explicitly; omitted/on keeps the exact current default and original checks. Off must not purchase unavailable Armory policies or claim armor-only targets apply. Please settle the applicable base/off acceptance if the packet intended another pair; no runtime flag is resurrected and no cosmetic off/on pass is claimed. The original no-push/no-history-rewrite run instruction still governs: the new future night-push plan is recorded but disabled, with separate Kyle authorization and existing approval-file requirements preserved.
+
 - **FAC-02 green and merging now.** Frozen306468b5, targeted17/17 in298.83s,jobs4, build1360ms, Director review clear. The integrator consumes exact evidence, commits shared metadata and safely recycles only proven own lanes. No gate after a conflict-free merge. FAC-06 resolves the actual lean-board preview assertion next; FAC-03 selector gate continues, night command still building; FAC-04 holds the course locks. No release or push.
 
 - **FAC-04 starts under the course locks.** Own lane codex/fac-04; circuit-registry, reference-laps, replay-fixtures and world-signatures are reserved for the course kit. Existing GP source is retained ready and waits for those locks; no further balance job starts. The initial four factory lanes continue independently. New Deep packet and all Claude decisions are preserved. No release, push or history rewrite.
