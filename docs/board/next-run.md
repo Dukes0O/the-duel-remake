@@ -5,6 +5,14 @@ Work in integration and isolated lanes. Nothing goes live tonight. No release,
 push, history rewrite, port 5174 or real-save access. QA storage is memory-only.
 Delete only lane folders created in this run; keep older retained lanes.
 
+## Factory first (Kyle, 12 October 2026)
+
+Read `docs/FACTORY.md` and AGENTS rules 11 to 15. Once FAC-01 is merged,
+start FAC-02, FAC-03, FAC-06 and FAC-07 as four lanes at the same time; they
+own different files. Then FAC-04 (holds the course lock; no new course starts
+until it and FAC-05 merge) and FAC-08. Each FAC card: tests first, one lane
+tier, build, one review, merge as soon as green. Existing P4 lanes continue.
+
 ## Order
 
 1. P4-PANORAMA: Claude's 21:20 field recipe, then at most three original
