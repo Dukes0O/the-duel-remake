@@ -67,17 +67,18 @@ text in the playbook, SPEC or cards that asks for more checking or recording.
    and `STATUS.md` into the next real commit or the merge itself.
 6. Extra helpers (critic, second reviewer, save checker, balance analyst) only
    for work that touches saves, releases, money and pay, or art rounds. Other
-   cards: the builder's tests, the lane gate and one review.
+   cards: the builder's tests, the lane gate and one review (rule 17 says
+   which cards need it).
 
 Added 11 October 2026 (Kyle: "yes", after one shared test slot held every
 team's merges back for hours):
 
 7. Only frame timing needs a quiet laptop. Lane gates, builds, balance runs
    and browser checks that do not time frames run alongside each other, at
-   most two at once across all teams, each with `--jobs 4` or fewer. A frame
-   measurement waits until no gate, build, balance run or browser check is
-   going, and nobody starts one while it runs. The full tier still runs
-   alone (rule 2).
+   most three at once across all teams (Kyle, 12 October 2026: lane runs are
+   small now), each with `--jobs 4` or fewer. A frame measurement waits until
+   no gate, build, balance run or browser check is going, and nobody starts
+   one while it runs. The full tier still runs alone (rule 2).
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
    18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
@@ -101,9 +102,10 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 11. Test by what changed. The lane tier runs the smoke set, the replay and
     world-signature guards, and the suites that import a changed file or
     name its path within two steps. Deeper effects are the night run's job.
-12. Merge as soon as it is green: one lane tier, a build and one review. A
-    merge with no conflict does not run the lane tier again; a conflict fix
-    runs it once more. Two clean lanes never wait for each other.
+12. Merge as soon as it is green: one lane tier, a build and one review where
+    rule 17 asks for one. A merge with no conflict does not run the lane tier
+    again; a conflict fix runs it once more. Two clean lanes never wait for
+    each other.
 13. Heavy checks run on the night shift, alone on the idle laptop: full
     tier, frame check (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
     and browser scenarios. A night failure names the first merge after the
@@ -120,6 +122,17 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     merge.
 15. Kyle sets direction and says "go live". Claude makes art and sound picks
     within the three-round cap; nothing waits on Kyle except a release.
+16. Claude answers a card's question in that card's own file
+    (`docs/board/cards/<id>.md`, section "Claude answers") and clears its
+    `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
+    carries only questions and notes that have no card, so two answers never
+    collide in one place (Kyle, 12 October 2026).
+17. Reviews by kind (Kyle, 12 October 2026). Code, saves, money and pay, and
+    design numbers get one independent review. Documents and rule wording that
+    Kyle or Claude already decided get none; the lane gate and build are
+    enough. A reviewer's fixes go back for confirmation only when the review
+    found a real fault; wording and style fixes land at once. Line length and
+    style notes never hold a merge.
 
 ## Gates (SPEC 0.5)
 
