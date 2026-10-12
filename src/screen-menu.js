@@ -103,15 +103,16 @@ function updateMenuScene() {
   text('menu-location', {desert:'MOJAVE COUNTY, USA',alpine:'THE HIGH ALPINE PASS',coast:'PACIFIC COAST, USA',city:'HARBOR DISTRICT · AFTER DARK'}[stage.theme] || stage.name.toUpperCase());
   updateMenuCar();
   if(choices.mode==='grandprix'){
-    text('cpu-target-label','THE FIELD');text('scene-length',`${(preview.distanceKm/preview.laps*3).toFixed(1)} KM · 3 LAPS`);
     const laps=stage.grandPrixLaps??3, lapLabel=stage.closed===false?'ONE RUN':laps===3?'THREE LAPS':`${laps} LAPS`;
+    const lapCountLabel=stage.closed===false?'ONE RUN':`${laps} LAPS`, fieldSize=stage.fieldSize??8;
+    text('cpu-target-label','THE FIELD');text('scene-length',`${(preview.distanceKm/preview.laps*laps).toFixed(1)} KM · ${lapCountLabel}`);
     const racers=(stage.fieldSize??8)===8?'SEVEN':String((stage.fieldSize??8)-1);
     const payEnabled=app._switches?.().enabled('grand-prix-career')===true;
     text('entry-reward',`GRAND PRIX · ${racers} COMPUTER RACERS · ${lapLabel} · ${payEnabled?'PAY BY POSITION · SEPARATE RECORDS':'NO PAY OR RECORDS YET'}`);
     if(payEnabled)ui['entry-reward'].title='Every completed finishing position earns credits. A completed Grand Prix has no loss charge. Pro doubles race earnings; existing win bonuses and lifetime milestones keep their rules.';
     ui['event-brief'].hidden=false;text('event-brief','A pure race on a closed road: no traffic, police or radar. Five red lights, then go. Follow the tow behind a car for extra speed.');
     ui['rival-customization'].hidden=true;
-    root.querySelector('.start-note').textContent='GRAND PRIX · 8 CARS · 3 LAPS · NO TRAFFIC OR POLICE';
+    root.querySelector('.start-note').textContent=`GRAND PRIX · ${fieldSize} CARS · ${lapCountLabel} · NO TRAFFIC OR POLICE`;
   }
 }
   return {updateMenuCar, updateMenuScene, updatePlayers};

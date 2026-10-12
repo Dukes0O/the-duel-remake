@@ -120,9 +120,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "building"
+    status: "review"
     needs: [P4-FIELD]
-    locks: [gp-existing-field-width]
+    locks: []
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-gp-existing"
     flag: "grand-prix"
