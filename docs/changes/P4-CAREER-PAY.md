@@ -29,3 +29,7 @@ Pure/native GREEN, old-save/ghost suites, independent Save Guardian, ordinary re
 ## Save review correction, before code
 
 Fresh Save Guardian found the carried row.mode discriminator changed legacy behavior: Duel120s and slower TimeTrial130s for the same player/event/car/driver produced two rows, whereas the original leaderboard keeps only the faster row. GP event keys already contain the separate mode suffix. Restore the original row key in this slice and the retained GP source, with a direct regression proving the old slower TimeTrial is rejected. This corrects the carried feature's unintended old-mode change; no assertion or threshold is weakened. The Snowmen bonus label is already present in source989d2711 so valid250CR cannot display an undefined label.
+
+## Added money boundaries, before tests
+
+The Director requests two checks for the new positive-pay path: a near-ceiling wallet banks only its remaining room and a repeated settlement leaves it exact; a paid snowman count displays SNOWMEN and its actual bonus. Add these cases to the existing card test, preserving every prior assertion and leaving payout source unchanged during Save Guardian re-review.

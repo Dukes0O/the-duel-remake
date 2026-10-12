@@ -56,8 +56,22 @@ const manual = settleRace(profile(), result('medium', 3, {difficulty: 'pro'}));
 assert.equal(manual.reward, 1100, 'Pro doubles positive third-place earnings'); checks++;
 const clean = settleRace(profile(), result('medium', 1, {clean: true}));
 assert.equal(clean.reward, 1100, 'existing clean-win bonus stays eligible'); checks++;
+const ceilingProfile = {...profile(), credits: 999999990};
+const ceiling = settleRace(ceilingProfile, result('medium', 2));
+assert.equal(ceiling.reward, 10, 'positive GP pay banks only available wallet room');
+assert.equal(ceiling.profile.credits, 1000000000, 'positive GP pay respects the existing wallet ceiling');
+assert.equal(ceiling.charge, 0);
+assert.equal(settleRace(ceiling.profile, result('medium', 2)).profile, ceiling.profile, 'ceiling settlement is still once-only'); checks += 4;
 const snowmen = settleRace(profile(), result('medium', 8, {snowmen: 12, difficulty: 'pro'}));
 assert.equal(snowmen.reward, 450, 'ten snowmen pay25 each without doubling their fixed pay'); checks++;
+const snowmanScreen = createResultsScreen({app: {_switches: () => ({enabled: key => key === 'grand-prix-career'})},
+  profile: () => snowmen.profile, credits: String, escapeHTML: String, time: String, arrow: ''})({
+    status: 'stage_result', stageIndex: 0, results: {...result('medium', 8), grandPrix: true,
+      stageName: 'Pacific Canyon', snowmen: 12, creditPositionReward: snowmen.breakdown.base,
+      creditReward: snowmen.reward, creditBreakdown: snowmen.breakdown}});
+assert.ok(snowmanScreen.includes('SNOWMEN</span><b>12</b>'), 'result shows the actual hit count');
+assert.ok(snowmanScreen.includes('SNOWMEN +250'), 'paid snowmen display their named capped bonus');
+assert.ok(!snowmanScreen.includes('undefined'), 'every paid bonus has a visible label'); checks += 3;
 assert.equal(FEATURE_STATES['grand-prix-career'], 'dev', 'the new pay slice stays off in production');
 assert.equal(createFeatureFlags({storage: null, qa: false, search: '?flags=grand-prix-career'}).enabled('grand-prix-career'), false);
 assert.equal(createFeatureFlags({storage: null, qa: true, search: '?flags=grand-prix-career'}).enabled('grand-prix-career'), true);
