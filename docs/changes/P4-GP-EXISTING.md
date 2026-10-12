@@ -94,5 +94,15 @@ Director approves only Array.isArray before final-sample inference; valid bounds
 RED exact.at TypeError; GREEN26 mixed/capacity checks and86 TT ghost checks. Renewed save review requested.
 ## Actual Harbour sync and Azure following
 Genuine Harbour0cdf038a sync resolves only additive GP eligibility and authored grandPrixLaps hooks; actual Harbour4laps and shared defaults survive. Before code, Director settles Azure GP-only immutable fieldFollow wallRoom1, firstLap margin5/reaction.5/closeIn.8/wallRoom1.4; default leadBraking1.15, width/grid/time/ghost/save rules and all other modes remain exact. Existing overlay assertions alone add exact/frozen metadata and otherGP/Duel/TT defaults; no new mechanism, fixture or publisher. Team Room remains base-reference only pending Claude; original90/native18/current lane4/build wait source review and capacity.
+Original fieldFollow4dd90 complete/exit0: opening pileups0/30 each difficulty;
+players3laps30/30 each and all7CPUfinish90/90. Opening criterion passes.
+Observed0wins each and1.23Medium passes do not establish full3.2 balance.
+Final scope/reference decision is with Claude; native18 waits metadata freeze.
+No unchanged rerun or new mechanism.
+
 ## Removed
 No runtime asset or legacy mode is replaced. Remove the stale no-GP-recording menu claim once wired. Replace implicit staged rejection with explicit first-lap policy; replace duplicate GP shoulder width after hook grant.
+## Bounded tuning, 11 October 21:20 decision (before code)
+Claude accepts base-only Team Room; widened Azure GP comparison is a low-priority follow-up.
+Tune only GP course overlays through existing fieldPace and fieldAggression. Each of the nine existing circuits gets at most three original 90-race runs (30 original seeds per difficulty), preserving standard legal driver, eight-car field, three laps and section 3.2 targets. Stop at three; retain the closest measured result and let Kyle judge in play. Existing Duel/Time Trial metadata and authored circuits remain unchanged. Azure begins at pace .80/.78/.77 and aggression 1.4 because its current field wins all races and Medium passing is 1.23. Other circuits first measure their current pace; adjust only when the run identifies a gap. Prefer safety and completion before the smallest win-band/pass difference when choosing between measured settings.
+The Director grants the existing tools/gp-existing-rate.mjs recipe only a course-id parameter. Preserve its original memory ownership wrapper, runRace seeds/driver, state/layout hashes and targets; no new harness. Record all runs and source before selecting a result. Storage and record sources receive no new edits; prior reviewed storage verdict remains subject to exact-byte proof.

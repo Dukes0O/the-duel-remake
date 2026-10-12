@@ -479,9 +479,15 @@ export function fieldView(state) {
 const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, halfWidth: 1});
 const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
+const EXISTING_GP_TUNING = Object.freeze({
+  'azure-riviera': Object.freeze({
+    fieldPace: Object.freeze({easy: .80, medium: .78, hard: .77}), fieldAggression: 1.4,
+  }),
+});
 export function courseForGrandPrix(def) {
   // An authored circuit may set its own Grand Prix length (`grandPrixLaps`).
   return { ...def, laps: def.grandPrixLaps ?? FIELD.laps, hasRadar: false, grandPrix: true,
+    ...EXISTING_GP_TUNING[def.id],
     ...(def.id === 'azure-riviera' ? {
       grandPrixEntryWidth: AZURE_GP_ENTRY_WIDTH,
       fieldFollow: AZURE_GP_FIELD_FOLLOW,

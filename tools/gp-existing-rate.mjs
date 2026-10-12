@@ -1,4 +1,4 @@
-// Azure's opening pile-up rate: thirty complete standard races per difficulty.
+// Existing circuits' opening pile-up rate: thirty complete standard races per difficulty.
 // One process, existing legal driver/seeds, and disposable course ownership.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -13,10 +13,10 @@ import {ownTestCourses} from './career-fixture.mjs';
 import {DIFFICULTIES,TARGETS,runRace,summarize} from './race-field-balance.mjs';
 
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
-const stage=COURSE.findIndex(course=>course.id==='azure-riviera');
-assert.ok(stage>=0,'Azure Riviera must exist.');
 
-export async function runAzureRate(outputDir) {
+export async function runAzureRate(outputDir, courseId = 'azure-riviera') {
+  const stage = COURSE.findIndex(course => course.id === courseId);
+  assert.ok(stage >= 0, 'Existing circuit must exist: ' + courseId);
   const evidenceRoot=resolve(root,'.evidence');
   const output=resolve(root,outputDir);
   const inside=relative(evidenceRoot,output);
@@ -41,7 +41,7 @@ export async function runAzureRate(outputDir) {
     for(const difficulty of DIFFICULTIES)for(let index=0;index<30;index++) {
       let lastDuel;
       const result=runRace(difficulty,index,{startStage:stage,onStep:duel=>{
-        assert.equal(duel.course.def.id,'azure-riviera');
+        assert.equal(duel.course.def.id,courseId);
         assert.equal(duel.state.mode,'grandprix');
         assert.equal(duel.state.field.size,8);
         assert.equal(duel.state.lapsTotal,3);
@@ -67,14 +67,15 @@ export async function runAzureRate(outputDir) {
     rate:summary[difficulty].pileUpRate,maximumRate:TARGETS.pileUpRate,
     pass:summary[difficulty].pileUpRate<=TARGETS.pileUpRate+1e-9}]));
   await mkdir(output,{recursive:true});
-  await writeFile(join(output,'azure-rate.json'),JSON.stringify({sourceCommit,setup,summary,verdict,results},null,2)+'\n');
-  console.log(JSON.stringify({sourceCommit,verdict},null,2));
+  await writeFile(join(output,'azure-rate.json'),JSON.stringify({sourceCommit,courseId,setup,summary,verdict,results},null,2)+'\n');
+  console.log(JSON.stringify({sourceCommit,courseId,summary,verdict},null,2));
   return verdict;
 }
 
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url) {
-  if(process.argv.length!==4||process.argv[2]!=='--output-dir')
-    throw Error('Usage: node tools/gp-existing-rate.mjs --output-dir .evidence/<date>/<card>/<run>');
-  const verdict=await runAzureRate(process.argv[3]);
+  if(![4,6].includes(process.argv.length)||process.argv[2]!=='--output-dir'||
+      (process.argv.length===6&&process.argv[4]!=='--course'))
+    throw Error('Usage: node tools/gp-existing-rate.mjs --output-dir .evidence/<date>/<card>/<run> [--course ID]');
+  const verdict=await runAzureRate(process.argv[3],process.argv[5]);
   if(Object.values(verdict).some(row=>!row.pass))process.exitCode=1;
 }
