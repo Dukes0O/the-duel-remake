@@ -1,7 +1,7 @@
-# P4-AVALANCHE: The avalanche on Summit Run
+# P4-AVALANCHE
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: P4-AVALANCHE
@@ -11,6 +11,7 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     size: M
     needs: [P4-SUMMIT]
     status: ready
+    locks: [sound-bank]
     flag: summit-run
     owns: [src/circuits/summit-avalanche.js, tools/test-summit-avalanche.mjs, docs/changes/P4-AVALANCHE.md]
     hooks: [src/circuits/summit-run.js, src/race-field.js, src/sound-bank.js]

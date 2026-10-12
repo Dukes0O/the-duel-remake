@@ -1,7 +1,7 @@
-# GFX-03-P1: Armor kits with distinct fitted steel plates
+# GFX-03-P1
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: GFX-03-P1

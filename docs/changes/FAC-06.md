@@ -34,3 +34,9 @@ One review found a conflicting Claude claimant was shown active and held its
 second lock despite losing the first. A genuine failing three-card fixture now
 requires all locks or none, consistently for both teams. The correction passes
 230 focused checks; no existing lock assertion was relaxed.
+
+Claude's new Deep packet and FAC-04 lock claim were preserved during the real
+board conflict: current 52 open cards, 270 completed ids, and all current raw
+card blocks in the detail notes. Two superseded notes created by this lane
+(DEEP-RAMP and DEEP-DRIVE) went to the Recycle Bin after Git proved ownership.
+The current focused board suite passes 256 checks and standard YAML loads.

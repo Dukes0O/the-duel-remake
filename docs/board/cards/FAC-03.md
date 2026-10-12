@@ -1,7 +1,7 @@
-# FAC-03: Night shift and morning report
+# FAC-03
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: FAC-03
@@ -14,6 +14,7 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     owns: [tools/night-shift.mjs, tools/test-night-shift.mjs, tools/run-tests.mjs, tools/test-test-runner.mjs, tools/scenarios/frame-pacing.mjs, tools/combat-balance.mjs, tools/test-combat-balance.mjs, docs/changes/FAC-03.md]
     acceptance:
       - "One command runs, alone: full tier jobs 4, frame check per AGENTS rule 8, combat balance with wasteland2 off and on, all browser scenarios. Writes docs/board/checks/night-<date>.json and a morning report under twenty lines that names, for each failure, the first merge after the last green night. Kyle creates the Windows scheduled task himself; the card writes the exact command for him."
+      - "After a passing night full tier: compact binaries (SPEC 0.8, tools/compact-binaries.mjs) and push integration/wasteland with --force-with-lease (D8). A failing night pushes nothing."
     claimed_by: codex-factory-2026-10-12
     branch: codex/fac-03
 

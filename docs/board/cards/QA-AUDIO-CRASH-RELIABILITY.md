@@ -1,7 +1,7 @@
-# QA-AUDIO-CRASH-RELIABILITY: Investigate intermittent native crash-audio capture failure
+# QA-AUDIO-CRASH-RELIABILITY
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: QA-AUDIO-CRASH-RELIABILITY

@@ -1,7 +1,7 @@
-# P4-FINISH-TREMBLANT: Claude's finishing pass: Tremblant Woods and Tremblant Snow
+# P4-FINISH-TREMBLANT
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: P4-FINISH-TREMBLANT

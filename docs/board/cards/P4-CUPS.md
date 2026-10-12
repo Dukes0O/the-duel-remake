@@ -1,7 +1,7 @@
-# P4-CUPS: Cups and the trophy case
+# P4-CUPS
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: P4-CUPS
@@ -11,6 +11,7 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     size: M
     needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
     status: ready
+    locks: [save-shape]
     flag: grand-prix
     owns: [src/grand-prix-cups.js, src/screen-trophies.js, tools/test-grand-prix-cups.mjs, docs/changes/P4-CUPS.md]
     hooks: [src/grand-prix-career.js, src/screen-courses.js, src/screen-garage.js, src/app.js]

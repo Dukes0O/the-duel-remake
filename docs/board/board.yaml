@@ -1,6 +1,5 @@
-# Open factory cards. Details live in the named card files.
-# Completed ids settle prerequisites; finished cards are absent from tasks.
-completed: ["GATE-DIAGNOSTICS", "SALT-RUNTIME-CHECKS", "AUD-CRASH-PEAK", "AUD-CAPTURE-CONTINUITY", "AUD-CAPTURE-SCHEDULING", "ART-KEEP-VALVE-DONOR", "HK-RUSTWALL-ATLAS-ISOLATION", "UX-ENTRY-HINTS", "OPS-LAUNCHER-DIAG", "CLEAN-01", "CLEAN-02", "CLEAN-03", "CLEAN-04", "CLEAN-05", "CLEAN-06", "CLEAN-07", "CLEAN-08", "CLEAN-09", "CLEAN-10", "FIX-04", "TRACK-01", "TRACK-02", "BAL-01", "GFX-00", "EGG-01", "ART-W", "GFX-01", "BAL-02", "GFX-01-P1", "GFX-01-P2", "GFX-01-P3", "BETA-01", "EGG-REL", "FOOT-FIX", "CRASH-01", "GATE-REJOIN", "CRASH-03", "CRASH-04", "CRASH-05", "BALANCE-SAMPLE", "CRASH-SWITCH-REMOVE", "CRASH-PRESENTATION-ON", "BALANCE-W2-OFF-RETIRE", "ART-SRC-CREW", "ART-SRC-HANDS", "ART-SRC-RUSTWALL", "ART-FIT-CREW-M", "ART-SRC-CREW-W", "ART-FIT-CREW-W", "ART-FIT-HANDS", "ART-FIT-RUSTWALL", "ART-SRC-TANKER", "ART-SRC-TANKER-PARTS", "ART-FIT-TANKER", "SAVE-DAMAGED-FIELDS", "HK-RUSTWALL-BASELINE", "DESIGN-ARSENAL", "DESIGN-CREW", "DESIGN-ARENA-MODES", "DESIGN-FUEL-FIGHTER-HITS", "DESIGN-WARLORDS-4-8", "ARS-CORE", "AUD-ARSENAL-W1", "ARS-02", "ARS-03", "CREW-02", "CREW-03", "CREW-04", "ARENA-03", "ARENA-04", "ARENA-05", "ART-SRC-SALTFLATS", "ARENA-06", "ARENA-PIT", "ARENA-07", "CONVOY-FRAMES", "WAR-03a", "WAR-03b", "WAR-03c", "WAR-03d", "WAR-03e", "WAR-04", "FEATURE-PLAYTEST", "P3-POLISH", "CRASH-02", "TITAN-01", "EGG-03", "GFX-02", "GFX-02-P1", "GFX-02-P2", "GFX-02-P3", "EGG-02", "EGG-02-P1", "EGG-02-P2", "EGG-02-P3", "EGG-03-GATE", "EGG-04", "CAM-01", "CAR-01", "GFX-03", "GFX-04", "FND-01", "FND-02", "FND-03", "FND-04", "FIX-01", "FIX-02", "FIX-03", "FND-05", "FND-06", "FND-07", "FND-08", "FND-09", "QA-01", "QA-02", "QA-03", "FND-10", "BUG-01", "POLISH-01", "BUG-12", "BUG-09", "BUG-02", "BUG-03", "BUG-04", "BUG-05", "BUG-06", "BUG-07", "BUG-14", "BUG-13", "BUG-08", "BUG-10", "BUG-11", "OLD-01", "OLD-02", "OLD-03", "TST-01", "TST-02", "FND-11", "TOOL-01", "TST-03", "RFX-01", "RFX-02", "RFX-03", "RFX-05", "RFX-06", "RFX-07", "FOOT-00", "RFX-04", "CMB-01", "CMB-02", "CMB-04", "CMB-07", "CMB-08", "BUG-15", "AUD-10", "AUD-11", "AUD-12", "AUD-12-R1", "AUD-GATEKEEPER", "AUD-14", "AUD-01", "AUD-02", "VIS-01", "ART-A", "CMB-03", "SAVE-01", "CMB-05", "CMB-06", "VIS-02", "UI-01", "PRG-01", "PRG-02", "PRG-04", "FOOT-01", "FOOT-02", "FOOT-03", "PERF-01", "FOOT-06", "FOOT-04", "FOOT-05", "FOOT-07", "PRG-03", "ART-C", "FOOT-08", "UI-02", "RAID-01", "RAID-02", "JANITOR-P2", "FIX-STATUS-CARD", "ARENA-01", "ARENA-01-UI", "ARENA-FEEL", "ARENA-02", "ARENA-02-PAY", "FIX-RUSTWALL-CLEAN", "JANITOR-RUSTWALL-NOTE", "RALLY-CHECKPOINT", "INT-0926-MERGE", "PREVIEW-LAUNCHER", "PREVIEW-OWN-FOLDER", "CRASH-RELEASE", "COMBAT-AUDIO-SCENARIO", "WAR-SAL-ART", "WAR-02a-FORMAT", "WAR-02a-SAL", "WAR-02a-REWARD", "SCRAPDOME-PLAYTEST", "SCRAPDOME-RELEASE", "TITAN-HANDLING", "HK-LAUNCHER-PORT", "WAR-SAL-TUNE", "WAR-PAY", "ARENA-STEER", "ARENA-WRECK-RATE", "ARENA-JUNK-SHOVE", "ARENA-SHOVE", "WAR-SAL-RELEASE", "DESIGN-WAR-02b", "DESIGN-WAR-02c", "WAR-01", "WAR-02-P1", "WAR-02a", "WAR-HOOKS", "WAR-02b", "WAR-02c", "AUD-17", "AUD-18", "ARS-01", "FIX-STATUS-SCOPE", "JANITOR-AUDIO-NOTES", "JANITOR-ROOK-NOTE", "FIX-AUDIT-SCOPE", "JANITOR-HAND-NOTE", "JANITOR-UFO-NOTES", "ART-VESPER-PURITY-SCOPE", "P4-TRACK-SCRIPT", "P4-FIELD", "P4-REVIEW-TOOL", "P4-ART-SRC", "P4-KITS", "P4-KIT-LOADER", "P4-GRIP", "P4-DAYNIGHT", "P4-AUDIO", "QA-LANE-SCOPE", "P4-HARBOUR", "P4-TREMBLANT", "P4-SNOW", "P4-PIT", "P4-TREMBLANT-SNOW", "P4-INTEL-DOSSIER", "P4-INTEL-TELEMETRY", "P4-QUALIFYING", "POLISH-HEIGHT", "POLISH-SEEKERS", "POLISH-SMOKE", "POLISH-FLAME", "POLISH-ARENA", "TEST-DRIVER-BRAKING", "RELEASE-2026-10-10", "QA-STALE-COLLISION", "QA-NAVIGATION-CONTEXT", "QA-AUDIO-CAPTURE", "JANITOR-P4-ART-EVIDENCE", "FIX-P4-KERB-NORMALS", "P4-KIT-LOAD-TIME", "JANITOR-OVERNIGHT-ART", "DEEP-LOOK", "P4-CAREER-PAY", "FAC-01"]
+# Open work only. Finished prerequisites remain explicit; details live beside each card.
+completed: [GATE-DIAGNOSTICS, SALT-RUNTIME-CHECKS, AUD-CRASH-PEAK, AUD-CAPTURE-CONTINUITY, AUD-CAPTURE-SCHEDULING, ART-KEEP-VALVE-DONOR, HK-RUSTWALL-ATLAS-ISOLATION, UX-ENTRY-HINTS, OPS-LAUNCHER-DIAG, CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04, CLEAN-05, CLEAN-06, CLEAN-07, CLEAN-08, CLEAN-09, CLEAN-10, FIX-04, TRACK-01, TRACK-02, BAL-01, GFX-00, EGG-01, ART-W, GFX-01, BAL-02, GFX-01-P1, GFX-01-P2, GFX-01-P3, BETA-01, EGG-REL, FOOT-FIX, CRASH-01, GATE-REJOIN, CRASH-03, CRASH-04, CRASH-05, BALANCE-SAMPLE, CRASH-SWITCH-REMOVE, CRASH-PRESENTATION-ON, BALANCE-W2-OFF-RETIRE, ART-SRC-CREW, ART-SRC-HANDS, ART-SRC-RUSTWALL, ART-FIT-CREW-M, ART-SRC-CREW-W, ART-FIT-CREW-W, ART-FIT-HANDS, ART-FIT-RUSTWALL, ART-SRC-TANKER, ART-SRC-TANKER-PARTS, ART-FIT-TANKER, SAVE-DAMAGED-FIELDS, HK-RUSTWALL-BASELINE, DESIGN-ARSENAL, DESIGN-CREW, DESIGN-ARENA-MODES, DESIGN-FUEL-FIGHTER-HITS, DESIGN-WARLORDS-4-8, ARS-CORE, AUD-ARSENAL-W1, ARS-02, ARS-03, CREW-02, CREW-03, CREW-04, ARENA-03, ARENA-04, ARENA-05, ART-SRC-SALTFLATS, ARENA-06, ARENA-PIT, ARENA-07, CONVOY-FRAMES, WAR-03a, WAR-03b, WAR-03c, WAR-03d, WAR-03e, WAR-04, FEATURE-PLAYTEST, P3-POLISH, CRASH-02, TITAN-01, EGG-03, GFX-02, GFX-02-P1, GFX-02-P2, GFX-02-P3, EGG-02, EGG-02-P1, EGG-02-P2, EGG-02-P3, EGG-03-GATE, EGG-04, CAM-01, CAR-01, GFX-03, GFX-04, FND-01, FND-02, FND-03, FND-04, FIX-01, FIX-02, FIX-03, FND-05, FND-06, FND-07, FND-08, FND-09, QA-01, QA-02, QA-03, FND-10, BUG-01, POLISH-01, BUG-12, BUG-09, BUG-02, BUG-03, BUG-04, BUG-05, BUG-06, BUG-07, BUG-14, BUG-13, BUG-08, BUG-10, BUG-11, OLD-01, OLD-02, OLD-03, TST-01, TST-02, FND-11, TOOL-01, TST-03, RFX-01, RFX-02, RFX-03, RFX-05, RFX-06, RFX-07, FOOT-00, RFX-04, CMB-01, CMB-02, CMB-04, CMB-07, CMB-08, BUG-15, AUD-10, AUD-11, AUD-12, AUD-12-R1, AUD-GATEKEEPER, AUD-14, AUD-01, AUD-02, VIS-01, ART-A, CMB-03, SAVE-01, CMB-05, CMB-06, VIS-02, UI-01, PRG-01, PRG-02, PRG-04, FOOT-01, FOOT-02, FOOT-03, PERF-01, FOOT-06, FOOT-04, FOOT-05, FOOT-07, PRG-03, ART-C, FOOT-08, UI-02, RAID-01, RAID-02, JANITOR-P2, FIX-STATUS-CARD, ARENA-01, ARENA-01-UI, ARENA-FEEL, ARENA-02, ARENA-02-PAY, FIX-RUSTWALL-CLEAN, JANITOR-RUSTWALL-NOTE, RALLY-CHECKPOINT, INT-0926-MERGE, PREVIEW-LAUNCHER, PREVIEW-OWN-FOLDER, CRASH-RELEASE, COMBAT-AUDIO-SCENARIO, WAR-SAL-ART, WAR-02a-FORMAT, WAR-02a-SAL, WAR-02a-REWARD, SCRAPDOME-PLAYTEST, SCRAPDOME-RELEASE, TITAN-HANDLING, HK-LAUNCHER-PORT, WAR-SAL-TUNE, WAR-PAY, ARENA-STEER, ARENA-WRECK-RATE, ARENA-JUNK-SHOVE, ARENA-SHOVE, WAR-SAL-RELEASE, DESIGN-WAR-02b, DESIGN-WAR-02c, WAR-01, WAR-02-P1, WAR-02a, WAR-HOOKS, WAR-02b, WAR-02c, AUD-17, AUD-18, ARS-01, FIX-STATUS-SCOPE, JANITOR-AUDIO-NOTES, JANITOR-ROOK-NOTE, FIX-AUDIT-SCOPE, JANITOR-HAND-NOTE, JANITOR-UFO-NOTES, ART-VESPER-PURITY-SCOPE, P4-TRACK-SCRIPT, P4-FIELD, P4-REVIEW-TOOL, P4-ART-SRC, P4-KITS, P4-KIT-LOADER, P4-GRIP, P4-DAYNIGHT, P4-AUDIO, QA-LANE-SCOPE, P4-HARBOUR, P4-TREMBLANT, P4-SNOW, P4-PIT, P4-TREMBLANT-SNOW, P4-INTEL-DOSSIER, P4-INTEL-TELEMETRY, P4-QUALIFYING, POLISH-HEIGHT, POLISH-SEEKERS, POLISH-SMOKE, POLISH-FLAME, POLISH-ARENA, TEST-DRIVER-BRAKING, RELEASE-2026-10-10, QA-STALE-COLLISION, QA-NAVIGATION-CONTEXT, QA-AUDIO-CAPTURE, JANITOR-P4-ART-EVIDENCE, FIX-P4-KERB-NORMALS, P4-KIT-LOAD-TIME, JANITOR-OVERNIGHT-ART, DEEP-LOOK, P4-CAREER-PAY, FAC-01]
 tasks:
   - id: GATE-FRAME-DELIVERY
     title: "Explain variable browser frame delivery in fixed native scenes"
@@ -9,8 +8,8 @@ tasks:
     size: "S"
     status: "backlog"
     needs: []
-    locks: []
     details: "docs/board/cards/GATE-FRAME-DELIVERY.md"
+
   - id: GATE-CALLBACK-DIAGNOSTICS
     title: "Prove audio capture delivery independently of callback clocks"
     owner: "codex"
@@ -18,128 +17,131 @@ tasks:
     size: "S"
     status: "backlog"
     needs: []
-    locks: []
     claimed_by: "codex-director-2026-10-04"
     branch: "codex/tools/callback-diagnostics"
     details: "docs/board/cards/GATE-CALLBACK-DIAGNOSTICS.md"
+
   - id: JANITOR-DIAGNOSTIC-NOTES
     title: "Resolve remaining unindexed diagnostic notes"
     lane: "TOOL"
     size: "S"
     status: "backlog"
     needs: []
-    locks: []
     details: "docs/board/cards/JANITOR-DIAGNOSTIC-NOTES.md"
+
   - id: JANITOR-LANE-PATH
     title: "Keep worktree exclusions stable across branch changes"
     lane: "TOOL"
     size: "S"
     status: "backlog"
     needs: []
-    locks: []
     details: "docs/board/cards/JANITOR-LANE-PATH.md"
+
   - id: GFX-03-P1
     title: "Armor kits with distinct fitted steel plates"
     lane: "VIS"
     size: "M"
     status: "backlog"
-    needs: ["GFX-03"]
-    locks: []
-    priority: "16"
+    needs: [GFX-03]
+    priority: 16
     details: "docs/board/cards/GFX-03-P1.md"
+
   - id: GFX-04-P1
     title: "Scrapdome yard reference likeness polish"
     lane: "VIS"
     size: "M"
     status: "backlog"
-    needs: ["GFX-04"]
-    locks: []
+    needs: [GFX-04]
     flag: "hidden-road"
-    priority: "16"
+    priority: 16
     details: "docs/board/cards/GFX-04-P1.md"
+
   - id: FND-12
     title: "Autonomous run setup"
     lane: "OPS"
     size: "S"
     status: "building"
-    needs: ["FND-05"]
-    locks: []
+    needs: [FND-05]
     details: "docs/board/cards/FND-12.md"
+
   - id: TOOL-02
     title: "Feel lab and audio checks"
     lane: "TOOL"
     size: "M"
     status: "backlog"
-    needs: ["FND-08"]
-    locks: []
+    needs: [FND-08]
     details: "docs/board/cards/TOOL-02.md"
+
   - id: DISC
     title: "Discovery audits"
     lane: "Discovery"
     size: "continuous"
     status: "building"
-    needs: ["FND-05"]
-    locks: []
+    needs: [FND-05]
     details: "docs/board/cards/DISC.md"
+
   - id: AUD-03
     title: "Full-race sound mix and listening review"
     lane: "ART"
     size: "S"
     status: "backlog"
-    needs: ["AUD-01", "AUD-02", "BAL-02"]
-    locks: []
+    needs: [AUD-01, AUD-02, BAL-02]
     details: "docs/board/cards/AUD-03.md"
+
   - id: CREW-01
     title: "Remaining Jax, Cinder and Tusk perks after their mechanics"
     lane: "UI"
     size: "M"
     status: "backlog"
-    needs: ["ART-C", "FOOT-01", "FOOT-04", "PRG-02"]
-    locks: []
+    needs: [ART-C, FOOT-01, FOOT-04, PRG-02]
     details: "docs/board/cards/CREW-01.md"
+
   - id: CLEAN-11
     title: "Resolve literal-reference audit candidates against dynamic consumers"
     lane: "TOOL"
     size: "S"
     status: "backlog"
-    needs: ["CLEAN-06"]
-    locks: []
+    needs: [CLEAN-06]
     flag: "none"
     details: "docs/board/cards/CLEAN-11.md"
+
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
     owner: "Future audio lane; not started tonight"
     lane: "AUDIO"
     size: "M"
     status: "backlog"
-    needs: ["AUD-14", "AUD-17"]
-    locks: ["busy-game-files"]
+    needs: [AUD-14, AUD-17]
+    locks: [busy-game-files]
     details: "docs/board/cards/AUD-15-P1.md"
+
   - id: P4-PANORAMA
     title: "Panorama Ridge: the mountain circuit"
     owner: "codex"
     lane: "RACE"
     size: "L"
     status: "building"
-    needs: ["P4-TRACK-SCRIPT", "P4-FIELD", "P4-ART-SRC", "P4-DAYNIGHT"]
-    locks: ["circuit-registry", "reference-laps", "busy-game-files"]
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT]
+    locks: [circuit-registry, reference-laps, busy-game-files]
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-panorama"
     flag: "panorama-ridge"
     waiting_on: "claude"
     details: "docs/board/cards/P4-PANORAMA.md"
+
   - id: P4-GP-EXISTING
     title: "Grand Prix on the circuits we already have"
     owner: "codex"
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: ["P4-FIELD"]
-    locks: ["circuit-registry", "busy-game-files"]
+    needs: [P4-FIELD]
+    locks: [circuit-registry, busy-game-files]
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-gp-existing"
     flag: "grand-prix"
     details: "docs/board/cards/P4-GP-EXISTING.md"
+
   - id: QA-AUDIO-CLOCK
     title: "Native audio recorder clock diagnosis"
     owner: "codex"
@@ -147,238 +149,294 @@ tasks:
     size: "S"
     status: "ready"
     needs: []
-    locks: []
     details: "docs/board/cards/QA-AUDIO-CLOCK.md"
+
   - id: P4-CAREER
     title: "Grand Prix in the career: menu, prices, pay, records"
     owner: "codex"
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: ["P4-PANORAMA"]
-    locks: ["circuit-registry", "busy-game-files"]
+    needs: [P4-PANORAMA]
+    locks: [save-shape, circuit-registry, busy-game-files]
     flag: "grand-prix-career"
     details: "docs/board/cards/P4-CAREER.md"
+
   - id: P4-SUMMIT
     title: "Summit Run: the mountain epic"
     owner: "codex"
     lane: "RACE"
     size: "L"
     status: "building"
-    needs: ["P4-TRACK-SCRIPT", "P4-FIELD", "P4-GRIP", "P4-PIT", "P4-DAYNIGHT", "P4-SNOW"]
-    locks: ["circuit-registry", "busy-game-files"]
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
+    locks: [circuit-registry, busy-game-files]
     claimed_by: "codex-overnight-2026-10-12"
     branch: "codex/p4-summit"
     flag: "summit-run"
     waiting_on: "claude"
     details: "docs/board/cards/P4-SUMMIT.md"
+
   - id: P4-AVALANCHE
     title: "The avalanche on Summit Run"
     owner: "codex"
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: ["P4-SUMMIT"]
-    locks: ["circuit-registry"]
+    needs: [P4-SUMMIT]
+    locks: [sound-bank, circuit-registry]
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
+
   - id: P4-SNOWMEN
     title: "Snowmen to smash"
     owner: "codex"
     lane: "RACE"
     size: "S"
     status: "ready"
-    needs: ["P4-SNOW", "P4-SUMMIT", "P4-CAREER", "P4-TREMBLANT-SNOW"]
-    locks: ["busy-game-files", "circuit-registry"]
+    needs: [P4-SNOW, P4-SUMMIT, P4-CAREER, P4-TREMBLANT-SNOW]
+    locks: [circuit-registry, busy-game-files]
     details: "docs/board/cards/P4-SNOWMEN.md"
+
   - id: P4-YETI
     title: "The yeti"
     owner: "codex"
     lane: "RACE"
     size: "S"
     status: "ready"
-    needs: ["P4-SUMMIT"]
-    locks: []
+    needs: [P4-SUMMIT]
     details: "docs/board/cards/P4-YETI.md"
+
   - id: P4-VARIANTS
     title: "Reverse, night and dusk variants"
     owner: "codex"
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: ["P4-PANORAMA", "P4-HARBOUR", "P4-TREMBLANT", "P4-CAREER"]
-    locks: ["circuit-registry"]
+    needs: [P4-PANORAMA, P4-HARBOUR, P4-TREMBLANT, P4-CAREER]
+    locks: [circuit-registry]
     details: "docs/board/cards/P4-VARIANTS.md"
+
   - id: P4-SUMMIT-ATTACK
     title: "Summit Time Attack"
     owner: "codex"
     lane: "RACE"
     size: "S"
     status: "ready"
-    needs: ["P4-SUMMIT", "P4-AVALANCHE"]
-    locks: ["circuit-registry"]
+    needs: [P4-SUMMIT, P4-AVALANCHE]
+    locks: [circuit-registry]
     flag: "summit-run"
     details: "docs/board/cards/P4-SUMMIT-ATTACK.md"
+
   - id: P4-CUPS
     title: "Cups and the trophy case"
     owner: "codex"
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: ["P4-CAREER", "P4-SUMMIT", "P4-VARIANTS", "P4-TREMBLANT-SNOW", "P4-GP-EXISTING"]
-    locks: ["busy-game-files"]
+    needs: [P4-CAREER, P4-SUMMIT, P4-VARIANTS, P4-TREMBLANT-SNOW, P4-GP-EXISTING]
+    locks: [save-shape, busy-game-files]
     flag: "grand-prix"
     details: "docs/board/cards/P4-CUPS.md"
+
   - id: P4-INTEL-LEVELS
     title: "Team Room: earning intel levels and the reference ghost"
     owner: "codex"
     lane: "RACE"
     size: "S"
     status: "ready"
-    needs: ["P4-INTEL-TELEMETRY", "P4-CAREER"]
-    locks: []
+    needs: [P4-INTEL-TELEMETRY, P4-CAREER]
     flag: "grand-prix"
     details: "docs/board/cards/P4-INTEL-LEVELS.md"
+
   - id: P4-COACH
     title: "Coach markers for learning a track"
     owner: "codex"
     lane: "VIS"
     size: "S"
     status: "ready"
-    needs: ["P4-INTEL-LEVELS"]
-    locks: ["busy-game-files"]
+    needs: [P4-INTEL-LEVELS]
+    locks: [busy-game-files]
     flag: "grand-prix"
     details: "docs/board/cards/P4-COACH.md"
+
   - id: P4-FINISH-TEAMROOM
     title: "Claude's finishing pass: the Team Room"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["P4-INTEL-LEVELS"]
-    locks: []
+    needs: [P4-INTEL-LEVELS]
     details: "docs/board/cards/P4-FINISH-TEAMROOM.md"
+
   - id: P4-FINISH-PANORAMA
     title: "Claude's finishing pass: Panorama Ridge"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["P4-PANORAMA", "P4-REVIEW-TOOL"]
-    locks: []
+    needs: [P4-PANORAMA, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-PANORAMA.md"
+
   - id: P4-FINISH-HARBOUR
     title: "Claude's finishing pass: Harbour Lights"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["P4-HARBOUR", "P4-REVIEW-TOOL"]
-    locks: []
+    needs: [P4-HARBOUR, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-HARBOUR.md"
+
   - id: P4-FINISH-TREMBLANT
     title: "Claude's finishing pass: Tremblant Woods and Tremblant Snow"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["P4-TREMBLANT", "P4-REVIEW-TOOL"]
-    locks: []
+    needs: [P4-TREMBLANT, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-TREMBLANT.md"
+
   - id: P4-FINISH-SUMMIT
     title: "Claude's finishing pass: Summit Run"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["P4-SUMMIT", "P4-AVALANCHE", "P4-REVIEW-TOOL"]
-    locks: []
+    needs: [P4-SUMMIT, P4-AVALANCHE, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-SUMMIT.md"
+
   - id: P4-RELEASE
     title: "Phase 4 releases in batches"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["P4-FINISH-PANORAMA", "P4-GP-EXISTING", "P4-CAREER"]
-    locks: []
+    needs: [P4-FINISH-PANORAMA, P4-GP-EXISTING, P4-CAREER]
     details: "docs/board/cards/P4-RELEASE.md"
+
   - id: P4-AZURE-GP-COMPARISON
     title: "Azure Grand Prix comparison in the Team Room"
     owner: "codex"
     lane: "RACE"
     size: "S"
     status: "backlog"
-    needs: ["P4-GP-EXISTING"]
-    locks: []
+    needs: [P4-GP-EXISTING]
     priority: "low"
     details: "docs/board/cards/P4-AZURE-GP-COMPARISON.md"
+
+  - id: DEEP-ZONE
+    title: "The Deep zone format, Pacific ramp and dive entry"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [DEEP-LOOK]
+    locks: [busy-game-files]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-ZONE.md"
+
+  - id: DEEP-SURFACE
+    title: "Driving on the sea floor"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [DEEP-LOOK]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-SURFACE.md"
+
+  - id: DEEP-SAVE
+    title: "The Deep save fields, hints and dive kit"
+    owner: "codex"
+    lane: "SAVE"
+    size: "M"
+    status: "ready"
+    needs: [DEEP-LOOK]
+    locks: [save-shape]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-SAVE.md"
+
   - id: DEEP-ART-SRC
     title: "The Deep creatures and set sources"
     owner: "codex"
     lane: "ART"
     size: "L"
-    status: "backlog"
+    status: "ready"
     needs: []
-    locks: []
     flag: "the-deep"
-    priority: "after-phase4"
     details: "docs/board/cards/DEEP-ART-SRC.md"
-  - id: DEEP-RAMP
-    title: "Pacific boat ramp and dive entry"
+
+  - id: DEEP-AUDIO
+    title: "The Deep sounds"
     owner: "codex"
-    lane: "DEEP"
-    size: "L"
-    status: "backlog"
+    lane: "AUDIO"
+    size: "M"
+    status: "ready"
     needs: []
-    locks: []
+    locks: [sound-bank]
     flag: "the-deep"
-    priority: "after-phase4"
-    details: "docs/board/cards/DEEP-RAMP.md"
-  - id: DEEP-DRIVE
-    title: "Driving on the sea floor"
-    owner: "codex"
-    lane: "DEEP"
-    size: "L"
-    status: "backlog"
-    needs: ["DEEP-RAMP"]
-    locks: []
-    flag: "the-deep"
-    priority: "after-phase4"
-    details: "docs/board/cards/DEEP-DRIVE.md"
+    details: "docs/board/cards/DEEP-AUDIO.md"
+
   - id: DEEP-WATER
-    title: "The Deep full-zone water look"
+    title: "The Deep water look for any zone"
     owner: "claude"
-    lane: "DEEP"
+    lane: "VIS"
     size: "L"
-    status: "backlog"
-    needs: ["DEEP-LOOK", "DEEP-RAMP"]
-    locks: []
+    status: "ready"
+    needs: [DEEP-LOOK]
     flag: "the-deep"
-    priority: "after-phase4"
     details: "docs/board/cards/DEEP-WATER.md"
+
   - id: DEEP-TRAIL
     title: "The Kelp Coast loop"
     owner: "claude"
     lane: "DEEP"
     size: "L"
     status: "backlog"
-    needs: ["DEEP-RAMP", "DEEP-DRIVE"]
-    locks: []
+    needs: [DEEP-ZONE]
     flag: "the-deep"
-    priority: "after-phase4"
     details: "docs/board/cards/DEEP-TRAIL.md"
+
+  - id: DEEP-LIFE
+    title: "Kelp Coast sea life"
+    owner: "codex"
+    lane: "VIS"
+    size: "L"
+    status: "backlog"
+    needs: [DEEP-ART-SRC, DEEP-TRAIL]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-LIFE.md"
+
+  - id: DEEP-LOG
+    title: "Sea-life log and pearls"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [DEEP-SAVE, DEEP-TRAIL]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-LOG.md"
+
+  - id: FINISH-DEEP
+    title: "Claude's finishing pass: the Kelp Coast"
+    owner: "claude"
+    lane: "DEEP"
+    size: "M"
+    status: "backlog"
+    needs: [DEEP-ZONE, DEEP-SURFACE, DEEP-WATER, DEEP-TRAIL, DEEP-LIFE, DEEP-LOG, DEEP-AUDIO]
+    flag: "the-deep"
+    details: "docs/board/cards/FINISH-DEEP.md"
+
   - id: FUT-PAY-BY-DISTANCE
     title: "Rewards scale with race distance"
     owner: "claude"
     lane: "DESIGN"
     size: "M"
     status: "backlog"
-    needs: ["P4-CAREER-PAY"]
-    locks: []
+    needs: [P4-CAREER-PAY]
     waiting_on: "claude"
     priority: "future"
     details: "docs/board/cards/FUT-PAY-BY-DISTANCE.md"
+
   - id: QA-AUDIO-CRASH-RELIABILITY
     title: "Investigate intermittent native crash-audio capture failure"
     owner: "codex"
@@ -386,49 +444,53 @@ tasks:
     size: "S"
     status: "backlog"
     needs: []
-    locks: []
     priority: "low"
     details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"
+
   - id: FAC-02
     title: "Merge on green: no queue wait, no re-run after a clean merge"
     owner: "codex"
     lane: "OPS"
     size: "S"
     status: "building"
-    needs: ["FAC-01"]
-    locks: []
+    needs: [FAC-01]
     claimed_by: "codex-factory-2026-10-12"
     branch: "codex/fac-02"
     details: "docs/board/cards/FAC-02.md"
+
   - id: FAC-03
     title: "Night shift and morning report"
     owner: "codex"
     lane: "TOOL"
     size: "M"
     status: "building"
-    needs: ["FAC-01"]
-    locks: []
+    needs: [FAC-01]
     claimed_by: "codex-factory-2026-10-12"
     branch: "codex/fac-03"
     details: "docs/board/cards/FAC-03.md"
+
   - id: FAC-04
     title: "Course kit: a new course is added by adding its own files"
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
-    needs: ["FAC-01"]
-    locks: ["circuit-registry", "reference-laps", "replay-fixtures", "world-signatures"]
+    status: "building"
+    needs: [FAC-01]
+    locks: [circuit-registry, reference-laps, replay-fixtures, world-signatures]
+    claimed_by: "codex-factory-2026-10-12"
+    branch: "codex/fac-04"
     details: "docs/board/cards/FAC-04.md"
+
   - id: FAC-05
     title: "Course counts read from the course list"
     owner: "codex"
     lane: "TOOL"
     size: "M"
     status: "backlog"
-    needs: ["FAC-04"]
-    locks: ["circuit-registry"]
+    needs: [FAC-04]
+    locks: [circuit-registry]
     details: "docs/board/cards/FAC-05.md"
+
   - id: FAC-06
     title: "Lean board with locks"
     owner: "codex"
@@ -436,27 +498,26 @@ tasks:
     size: "M"
     status: "building"
     needs: []
-    locks: []
     claimed_by: "codex-factory-2026-10-12"
     branch: "codex/fac-06"
     details: "docs/board/cards/FAC-06.md"
+
   - id: FAC-07
     title: "Browser checks: build once, run side by side"
     owner: "codex"
     lane: "TOOL"
     size: "M"
     status: "building"
-    needs: ["FAC-01"]
-    locks: []
+    needs: [FAC-01]
     claimed_by: "codex-factory-2026-10-12"
     branch: "codex/fac-07"
     details: "docs/board/cards/FAC-07.md"
+
   - id: FAC-08
     title: "Drive-through check for new courses"
     owner: "codex"
     lane: "TOOL"
     size: "M"
     status: "backlog"
-    needs: ["FAC-04"]
-    locks: []
+    needs: [FAC-04]
     details: "docs/board/cards/FAC-08.md"

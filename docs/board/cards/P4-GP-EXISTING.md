@@ -1,7 +1,7 @@
-# P4-GP-EXISTING: Grand Prix on the circuits we already have
+# P4-GP-EXISTING
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: P4-GP-EXISTING
@@ -10,7 +10,8 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     lane: RACE
     size: M
     needs: [P4-FIELD]
-    status: building
+    status: ready
+    locks: [circuit-registry]
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-gp-existing
     flag: grand-prix

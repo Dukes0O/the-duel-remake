@@ -1,7 +1,7 @@
-# P4-INTEL-LEVELS: Team Room: earning intel levels and the reference ghost
+# P4-INTEL-LEVELS
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: P4-INTEL-LEVELS

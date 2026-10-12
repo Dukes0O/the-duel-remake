@@ -27,9 +27,11 @@ and SPEC text about test tiers, merge order and when heavy checks run.
    saves never touched, `dist-previous` kept. Kyle says "go live".
 5. **Kyle sets direction.** Art and sound picks are Claude's within the
    three-round cap. Kyle can overrule anything and keeps "go live".
-6. **Work in progress limits.** At most three course lanes, two feature
-   lanes and one world lane at once, each test run `--jobs 4` or fewer. The
-   laptop has 20 threads; the night shift runs alone.
+6. **Work in progress limits.** At most six build lanes at once across all
+   lines, no more than three of them course lanes, each test run `--jobs 4`
+   or fewer. The laptop has 20 threads; the night shift runs alone. A world
+   uses as many of the six as its graph allows (The Deep starts six: five
+   Codex cards and Claude's water look).
 
 ## 2. Locks: the shared files
 
@@ -45,6 +47,7 @@ never build at the same time; the board shows the second as waiting.
 | `busy-game-files` | `src/game.js`, `src/main.js`, `src/render3d.js`, `src/app.js` | stays; one owner at a time |
 | `save-shape` | save schema, migrations, `tools/fixtures/saves/` | stays; save checker required |
 | `audio-mix` | `src/audio-output.js` mastering | stays |
+| `sound-bank` | `src/sound-bank.js` cue registry | stays; one card adding cues at a time |
 | `release` | switch flips, README, VERIFICATION, COURSE_ACCESS | stays; one release at a time, several cards per release |
 
 After FAC-04, a new course holds only `release`, and only at release time.
@@ -167,7 +170,26 @@ FAC-01, FAC-06 and FAC-07 can start at once. FAC-04 and FAC-05 need the
   difficulty that flags leaving the road surface, passing through solid
   barriers, and objects floating above the ground. Runs on course cards.
 
-## 6. Who runs which session
+## 6. The packet checklist
+
+Every course, feature and world starts with a Claude packet that answers
+these before any lane starts, so builders never stop to ask:
+
+1. What the player sees and does, in a few sentences.
+2. Numbers: speeds, prices, counts, timings, thresholds.
+3. The graph: cards, who owns each, arrows, which start at once.
+4. Contracts between parallel lanes: data formats, ids, events, cue names.
+5. Locks each card holds, and the files each card owns.
+6. What stays exact: fingerprints, signatures, saves, other courses.
+7. The switch, and what turning it on changes (counts, lists, prices).
+8. Sound cues and loudness; art sources and the look target.
+9. How it is checked: the targeted tests, the night shift, the drive-through
+   check, and Kyle's "go live".
+
+The first packets written this way: `docs/FACTORY.md` itself (FAC cards)
+and `docs/THE_DEEP.md` section 10.
+
+## 7. Who runs which session
 
 - **Claude, design session:** packets, look judging, finishing passes.
   One packet unblocks a whole course or feature graph.

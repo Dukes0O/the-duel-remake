@@ -1,7 +1,7 @@
-# DEEP-ART-SRC: The Deep creatures and set sources
+# DEEP-ART-SRC
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: DEEP-ART-SRC
@@ -10,8 +10,10 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     lane: ART
     size: L
     needs: []
-    status: backlog
+    status: ready
     flag: the-deep
-    priority: after-phase4
-    note: "THE_DEEP10 D1: licensed creature/set models and round-one art sheet forClaude; free sources, recipes/catalog/credits, currentruntimeassets only."
+    owns: [public/assets/models/deep/, docs/board/looks/deep-art/, docs/changes/DEEP-ART-SRC.md]
+    hooks: [tools/art/catalog.json, public/assets/models/CREDITS.md]
+    acceptance:
+      - "The 14 creatures of THE_DEEP 10.1 plus wreck hull, giant clam, anchor and sunken boat, CC0 first, credited; round sheets judged by Claude, at most three rounds; no frame check (rule 9)."
 ```

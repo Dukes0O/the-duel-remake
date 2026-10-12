@@ -1,7 +1,7 @@
-# DEEP-TRAIL: The Kelp Coast loop
+# DEEP-TRAIL
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: DEEP-TRAIL
@@ -9,9 +9,10 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     owner: claude
     lane: DEEP
     size: L
-    needs: [DEEP-RAMP, DEEP-DRIVE]
+    needs: [DEEP-ZONE]
     status: backlog
     flag: the-deep
-    priority: after-phase4
-    note: "Claude ownsD5: shallows/kelpforest/drop-offlip route."
+    owns: [src/deep/zones/kelp-coast.js]
+    acceptance:
+      - "THE_DEEP section 4 Kelp Coast as zone data: Ramp Shallows, Kelp Forest, the Drop-off lip, three pearls and creature spots."
 ```

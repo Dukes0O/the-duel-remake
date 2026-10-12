@@ -980,3 +980,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 12 October: merged P4-QUALIFYING source 490c022d after lane 401/401 (1140.02 s, jobs 4), build 570 ms and clear source/native/save reviews. Two native flying laps earn pole; qualifying pays zero, accepted GP pay stays exact. Corrected only the absent-control DOM fixture; intermittent audio follow-up parked. No release or push.
 
 - 2026-10-12 merge FAC-01 (Claude): lane 400/400 in 1909 s jobs 4 before sync, build pass, independent review fixes applied; board conflict with P4-QUALIFYING resolved additively, targeted 15/15 in 144 s. Fixed FUT-PAY-BY-DISTANCE unknown status (now backlog, priority future), which the old picker never selected test-board for. Lane picks now about 19 suites for a course file, 38 for a sound file. No release.
+
+- 2026-10-12 merge DEEP-PACKET (Claude): THE_DEEP section 10 world-line graph and 10.1 contracts; six Deep cards replace the RAMP/DRIVE chain; save-shape and sound-bank locks on P4-CAREER, P4-CUPS, P4-AVALANCHE; six-lane limit; FAC-03 nightly push after green full. Lane 13/13 under the new picker, build pass, one review with fixes. No release.

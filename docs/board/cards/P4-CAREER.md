@@ -1,7 +1,7 @@
-# P4-CAREER: Grand Prix in the career: menu, prices, pay, records
+# P4-CAREER
 
-Current scope, acceptance, decisions and retained evidence from the prior board.
-The short entry in board.yaml controls status, owner, dependencies and locks.
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
 
 ```yaml
   - id: P4-CAREER
@@ -11,6 +11,7 @@ The short entry in board.yaml controls status, owner, dependencies and locks.
     size: M
     needs: [P4-PANORAMA]
     status: ready
+    locks: [save-shape]
     flag: grand-prix-career
     owns: [src/grand-prix-career.js, tools/test-grand-prix-career.mjs, docs/changes/P4-CAREER.md]
     hooks: [src/screen-courses.js, src/course-access.js, src/progression.js, src/leaderboard.js, src/app.js]
