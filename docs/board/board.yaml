@@ -4005,7 +4005,8 @@ tasks:
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT]
     status: building
-    overnight_block: 'Third original attempt complete on cb35d5a7: player finishes 30/28/29 of 30 and all CPUs home, but six targets fail. Opening pile-ups 0/11/7 of 30; wins 100/86.7/86.7 percent. Three-attempt cap consumed. Native Stuttgart art start still contacts the pit lane and crawls; zero laps at 570.433 s. Claude 10:00 approved the bounded pit-wall, lane-through and grid-clearance fix; final native retry and art acceptance remain pending. No new 90-race run or merge.'
+    waiting_on: claude
+    overnight_block: 'Frozen third 90-race attempt has six target failures and player finishes 30/28/29; no further 90. Claude pit fix passes focused 46/46 on accepted-pay ancestry 0a50336d. Native retry now finishes one lap, then crawls outside the Mountain Straight right wall after Hell Gate. Exact crossing remains uncertain. Diagnosis stopped after nine minutes; bounded fix and final art acceptance wait for Claude.'
     claimed_by: codex-overnight-2026-10-11
     branch: codex/p4-panorama
     flag: panorama-ridge
@@ -4191,6 +4192,8 @@ tasks:
 
     current_opening_verdict: "Actual4dd original90 exit0:0/30openingpileups eachdifficulty,30/30players3laps and all7CPUfinish eachdifficulty. This is the approved opening criterion only;0wins each and1.23Medium passes are observed, not a full3.2 balancepass. AwaitClaude finalfieldscope/basereference decision before native18/freeze; no rerun or new mechanism."
     overnight_2120_decision: "Kyle overnight 11 to 12 October: follow Claude21:20. Panorama gets grid setback,15m last150m and Hell Corner, Harbour firstLap unchanged, then existing fieldPace only max3 original90-race runs. Existing circuits each get bounded fieldPace/fieldAggression max3 original90-race runs, closest honest result may merge per Claude. Team Room stays base-only. No release, push or history rewrite."
+
+    menu_copy_scope: 'Director before edit, 12 October: after the frozen Eifel run drains and after sync with accepted qualifying, fix only the two existing menu labels/distance calculations that hardcode 8 cars and 3 laps. Derive them from authored fieldSize and grandPrixLaps. Harbour must say 4 laps; all original 8-car/3-lap labels and one-run wording remain exact. No race, pay, saves, UI structure or target changes; existing named screen-menu hook only.'
 
   - id: P4-AUDIO
     title: "Phase 4 sound cues"
@@ -4438,7 +4441,7 @@ tasks:
     branch: codex/p4-summit
     flag: summit-run
     owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs, docs/board/looks/p4-summit]
-    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs, tools/test-circuit-layouts.mjs]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs, tools/test-circuit-layouts.mjs, tools/test-wasteland-beta.mjs]
     acceptance:
       - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
       - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
@@ -4448,6 +4451,8 @@ tasks:
     additional_scope: "Director before code: settled2600CR course-access id via existing normalization (fresh money/save review); additive summit-run dev catalogue/preview assertions only with old/new reason; opt-in authored mixed-winter terrain/flakes with full-winter default exact; native Summit defaultMode menu hook only. No testtolerance changes."
 
     review_scope: "Director grants mixed-winter lighting context, snowy Open Road material, and actual lateral Gallery roof checks in the named presentation hooks. Legacy tunnels and full-winter defaults stay exact. Existing reference assertions select closed circuits; all 27 cyclic targets remain, with Summit explicitly excluded because it is an open road. Record the reason for each changed catalogue or reference assertion. No timing on hidden dev art."
+
+    catalogue_sync_scope: 'Director before edit: preserve actual Harbour union 2595735e release order and all 25 accepted switches. Append Summit after every current course and append summit-run dev to the existing beta catalogue fixture, with 26 switches. Keep production, QA isolation, defaults, thresholds and closed reference behavior exact; Summit is open and excluded from cyclic references.'
 
   - id: P4-AVALANCHE
     title: "The avalanche on Summit Run"
@@ -4597,12 +4602,12 @@ tasks:
     lane: RACE
     size: S
     needs: [P4-FIELD]
-    status: building
+    status: merged
     claimed_by: codex-overnight-2026-10-11
-    branch: codex/p4-qualifying
+    branch: codex/p4-qualifying-final
     flag: grand-prix
     owns: [src/qualifying.js, tools/test-qualifying.mjs, docs/changes/P4-QUALIFYING.md, tools/scenarios/qualifying.mjs]
-    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js, src/screen-menu.js, src/screen-router.js, src/app.js, src/lap-telemetry.js]
+    hooks: [src/race-field.js, src/race-settings-ui.js, src/game.js, src/screen-menu.js, src/screen-router.js, src/app.js, src/lap-telemetry.js, tools/test-course-eligibility.mjs]
     acceptance:
       - "Build optional qualifying in docs/CIRCUITS.md section 7b: two timed laps alone, best lap sets your grid slot among the computer racers' seeded times; skipping keeps the default start. Practice laps count toward intel level 2."
 
@@ -4614,6 +4619,13 @@ tasks:
     telemetry_decision: "Claude check-in 3: save qualifying best clean lap now, per event, route and named player; observe genuine native finishes before GP reload. Both clean laps count future Intel2 practice. Source6abe1284 and SaveGuardian clear; native pit and lane/build queued."
 
     integration_batch_scope: "Director, 11 October, before combined-source edits: Kyle flags over-testing and low integration throughput. Assemble Snow43a55ea4, GP4dd197ae, Panoramaaaab7a0f and Qualifying6abe1284 into one codex/p4-finish candidate in the idle Snow checkout; preserve each original branch. Resolve only additive conflicts inside these four cards owned files/named hooks, preserving actual integration ancestors, all current flags and settled metadata/defaults. Report any new hook before editing. Do not change driving rules, acceptance thresholds, saves or test machinery to make integration pass. Reuse accepted unchanged visual/native/source reviews. Finish explicitly required remaining acceptance work, then one lane jobs4 and build on coherent combined source before one integration merge; one end full alone. No source merge into integration during Claude release-full/freeze."
+
+    final_slice_source: '490c022d: accepted 2595735e ancestry, original nine feature files plus approved absent-control fixture. Every runtime/assertion blob is exact to the passing candidate; Career dev and released catalogue order preserved.'
+
+    eligibility_fixture_scope: 'Director before edit: actual logged gate exposed a TypeError in the legacy eligibility DOM stub, which invents a text node for every selector and lacks querySelectorAll for the new optional qualifying group. Correct only that existing fixture so absent qualifying-choice returns null, or provide the real group shape. Every existing vehicle, course, ownership, restart, objective, wallet and menu assertion stays exact; qualifying controls retain their owned native and DOM checks. No runtime change, tolerance change or new machinery. Apply after the frozen current gate drains, then required lane and build on corrected source.'
+
+    gate_commit: 490c022d5a255db3c5fbe4389331e2aa1284f69f
+    gate_result: 'Lane 401/401, zero failed/unrun, 1140.02 s, jobs 4; build 570 ms, 335 modules. Native two laps 51.553/50.372 s, pole, 6131 steps; pay 750 CR and race fingerprint exact. Source review and retained save/native reviews clear. No release.'
 
   - id: P4-COACH
     title: "Coach markers for learning a track"
@@ -5083,6 +5095,31 @@ tasks:
 
     gate_commit: 02d914c3
     gate_result: 'Lane400/400, 0 failed/unrun, 1980.72 seconds, jobs4; build843ms; pure184, actual native/browser750CR, save and ordinary reviews clear. Career dev only; no release or push.'
+  - id: FUT-PAY-BY-DISTANCE
+    title: "Rewards scale with race distance"
+    owner: claude
+    lane: DESIGN
+    size: M
+    status: backlog
+    priority: future
+    needs: [P4-CAREER-PAY]
+    waiting_on: claude
+    design_decision: "Kyle, via Claude 12 October 12:00: park this card; do not build it now. Claude designs, then Codex builds after Grand Prix career pay is released. Credits and later cup prize money scale with total race distance. Proposed shape to settle when it starts: today's mode and difficulty base times race distance divided by a reference near 8 km, with a floor at today's pay and a gentle cap. Longer three-lap, 6 to 7 km per-lap and Summit events reward their extra time. Keep finishing percentages 100/75/55/40/30/20/15/10, old saves and records; additive only."
+    acceptance:
+      - "Settle the distance formula and its floor, cap and reference before code. This is future work, not an update for the current run."
+
+  - id: QA-AUDIO-CRASH-RELIABILITY
+    title: "Investigate intermittent native crash-audio capture failure"
+    owner: codex
+    lane: TOOL
+    size: S
+    needs: []
+    status: backlog
+    priority: low
+    owns: [tools/scenarios/audio-crash-peak.mjs, tools/test-audio-crash-peak.mjs, docs/changes/QA-AUDIO-CRASH-RELIABILITY.md]
+    design: "Rule 3 follow-up only. On unchanged a9575dd4, the first qualifying lane failed meter continuity and the sixth blast was 0.667 ms beyond the original overlap window. The complete logged repeat passed all 23 native checks in 24.23 s. No audio/game assertion or tolerance changed; cause remains unknown. Original raw failed capture and metadata are hash-verified under .evidence/2026-10-12/QA-AUDIO-CRASH-RELIABILITY/a957-failed-capture; derived WAV/pictures are regenerable. Do not hold feature merges or start this tonight."
+    acceptance:
+      - "Use existing raw packets to establish a reproducible cause within 30 minutes. Preserve every assertion and threshold; scope any proposed fix before code. No new machinery unless this card is amended explicitly."
 
   # The factory (docs/FACTORY.md, Kyle 12 October 2026). Cards are graph nodes:
   # needs are the arrows, locks are the shared files (FACTORY section 2).
@@ -5092,7 +5129,7 @@ tasks:
     lane: TOOL
     size: M
     needs: []
-    status: ready-to-merge
+    status: merged
     branch: claude/factory
     owns: [tools/run-tests.mjs, tools/test-test-runner.mjs, docs/FACTORY.md, docs/changes/FAC-01.md, AGENTS.md]
     acceptance:
