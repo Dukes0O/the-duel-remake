@@ -122,7 +122,7 @@ tasks:
     size: "L"
     status: "building"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT, FAC-04, FAC-05]
-    locks: [busy-game-files]
+    locks: []
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-panorama"
     flag: "panorama-ridge"
@@ -354,7 +354,7 @@ tasks:
     claimed_by: "codex-session-01a13220-4b96-7b41-ae4f-0ede71d495d1"
     branch: "codex/deep-save"
     needs: [DEEP-LOOK]
-    locks: [save-shape]
+    locks: [save-shape, busy-game-files]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-SAVE.md"
 
