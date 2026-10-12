@@ -17,6 +17,7 @@ const MPH = DRIVE.mphToWorld;
 // Circuits that offer a Grand Prix. P4-GP-EXISTING adds the others.
 export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon',
   ...CIRCUIT_MANIFESTS.filter(manifest => manifest.grandPrix).map(manifest => manifest.id)]);
+
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({
@@ -196,6 +197,7 @@ export function gridPose(slot) {
 
 export function initializeField(duel) {
   const s = duel.state, course = duel.course;
+  const gridSetback = s.mode === 'grandprix' && course.def.id === 'panorama-ridge' ? -43 : 0;
   const cpu = s.cpuDifficulty, tuning = FIELD_TUNING[cpu] || FIELD_TUNING.medium;
   const racers = chooseRacers(cpu, s.opponentCount);
   const fieldSeed = (s.fieldSeed ?? s.seed) >>> 0;
@@ -225,7 +227,7 @@ export function initializeField(duel) {
       id: `gp-${index + 1}`, name: racer.name, racerId: racer.id, driverId: racer.driverId, paint: { ...racer.paint },
       car: cars[index].car, upgrades,
       ...(course.pitLane?{tyre:normalizeTyre(s.tyre)}:{}),
-      s: pose.s, lateral: pose.lateral, speedMph: 0, finished: false, finishTime: null,
+      s: pose.s + gridSetback, lateral: pose.lateral, speedMph: 0, finished: false, finishTime: null,
       headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost: 1, boosting: false,
       damageZones: freshDamageZones(), damageCooldown: 0,
       airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
@@ -240,7 +242,7 @@ export function initializeField(duel) {
     };
   });
   const playerPose = gridPose(playerSlot);
-  s.s = playerPose.s; s.lateral = playerPose.lateral; s.prevS = s.s; s.prevLateral = s.lateral;
+  s.s = playerPose.s + gridSetback; s.lateral = playerPose.lateral; s.prevS = s.s; s.prevLateral = s.lateral;
   s.opponentCount = racers.length;
   duel.rivalSpec = s.opponents.length ? racerSpec(s.opponents[0].car, s.opponents[0].upgrades, s.opponents[0].driverId) : null;
   s.field = {

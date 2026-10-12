@@ -44,7 +44,7 @@ export function addPineTrees(group, trees, course) {
       entries.forEach(({ feature }, i) => { if (feature.tint) leaves.instanceColor.setXYZ(i, ...feature.tint); });
     }
     entries.forEach(({ feature: tree }, i) => {
-      const groundY=course?.def.expansion?renderedGroundHeight(course,tree):tree.y;
+      const groundY=course?.def.expansion||course?.def.ridgeLandform?renderedGroundHeight(course,tree):tree.y;
       object.position.set(tree.x, groundY - .24, tree.z); object.rotation.set(0, tree.heading, 0); object.scale.setScalar(tree.scale); object.updateMatrix();
       trunks.setMatrixAt(i, object.matrix); leaves.setMatrixAt(i, object.matrix);
       instances.set(tree.id, {tree, index:i, meshes:[trunks,leaves], root:object.position.clone(), upright:object.matrix.clone(), progress:null});

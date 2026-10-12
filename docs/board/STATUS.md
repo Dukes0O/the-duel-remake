@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T22:33:02.382Z
+Observed at: 2026-10-12T22:40:49.275Z
 
-Observation commit: d96757111d920158bc245cb6568fffd8b5d3bc66
+Observation commit: a667c423557d5b1338323c5fb75912ff0db22e45
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: d96757111d920158bc245cb6568fffd8b5d3bc66
+Integration HEAD: a667c423557d5b1338323c5fb75912ff0db22e45
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -50,7 +50,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | unknown | 2026-10-12T15:14:54-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
 | codex/deep-audio | unknown | 2026-10-12T15:31:37-07:00 | 0 | last commit 2026-10-12T15:31:37-07:00 | docs/changes/DEEP-AUDIO.md, public/assets/audio/CREDITS.md, public/assets/audio/deep/bubbles.flac, public/assets/audio/deep/cave.flac, public/assets/audio/deep/engine-muffle.ogg |
-| codex/deep-save | unknown | 2026-10-12T15:26:22-07:00 | 0 | last commit 2026-10-12T15:26:22-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/DEEP-SAVE.md, docs/changes/P4-PANORAMA.md |
+| codex/deep-save | unknown | 2026-10-12T15:37:38-07:00 | 0 | last commit 2026-10-12T15:37:38-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/DEEP-SAVE.md, docs/changes/P4-PANORAMA.md |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | unknown | 2026-10-12T15:26:38-07:00 | 0 | last commit 2026-10-12T15:26:38-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PANORAMA.md |
 | codex/p4-panorama | unknown | 2026-10-12T15:06:19-07:00 | 0 | last commit 2026-10-12T15:06:19-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/P4-PANORAMA.md, src/app.js |
@@ -69,10 +69,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
+| Review `looks/` | 16,840,032 B | +319,885 B | 20,000,000 B |
 | Added bytes in last merge | 108,830 B | +0 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 399,653,888 B | +44,032 B | unavailable |
+| Git objects | 399,692,800 B | +38,912 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -81,7 +81,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: d96757111d920158bc245cb6568fffd8b5d3bc66
+- Local integration/wasteland: a667c423557d5b1338323c5fb75912ff0db22e45
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
