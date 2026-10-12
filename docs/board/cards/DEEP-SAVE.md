@@ -20,3 +20,7 @@ These are the card's detailed design, acceptance and recorded decisions.
     acceptance:
       - "Fields round-trip; old saves load byte for byte; memory-only save checker clear; hints and kit appear at the stated counts."
 ```
+
+## App wiring request — 12 October 2026
+
+The lane has settled the 10.1 save/hint/kit design and may implement its existing owned files and hooks now. Its requested app.js imports, switch-gated award payload, memory-only Time Trial finish callback, discovery/hint methods and kit purchase method are pending Director grant after Panorama releases busy-game-files. No app.js edits before that claim is committed. Garage button dispatch can use its existing granted handler; no main.js hook is needed. Coordinate the Deep journey integration through DEEP-ZONE and preserve the accepted GP pay/qualifying paths.

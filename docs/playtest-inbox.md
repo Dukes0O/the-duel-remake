@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Deep lane boundaries settled:** audio gets its existing-pipeline build recipe and injected event/update/stop adapter; DEEP-ZONE owns journey wiring, mastering is unchanged. Save implements its owned optional fields/hints/kit now; its narrow App wiring waits for Panorama to release busy-game-files. Source provenance and actual Claude listening/art verdicts remain required. No release or push.
+
 - **GP existing source resumes in parallel.** Panorama has finished and relinquished its race-field hook; its final correction is tool-only. GP holds only its actual field/width hooks, preserving the new manifest roster and all accepted pay/qualifying/save behavior. Source handoff follows one nearby lane/build/review; remaining Red/Neon/Cloudbreak rates and 18 native cases wait for night, with every original cap and failure retained. Summit waits for these shared field hooks. No release or push.
 
 - **Kyle authorized more parallel sessions.** Three independent Deep lanes start now: DEEP-ART-SRC, DEEP-SAVE (save-shape), and DEEP-AUDIO (sound-bank). Panorama remains active; GP and Summit wait for its shared-hook handoff. DEEP-SURFACE stays free for Summit priority on surfaces. Each new session owns its exact card files and lane; Root commits shared metadata and integrates green results. Six build lanes across teams remain the limit. Art/listening packets go to Claude; heavy checks wait for night. The Deep stays dev; no release or push.
