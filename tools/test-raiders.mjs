@@ -18,12 +18,13 @@ function race(stageIndex = 0, discovered = true, seed = 1989) {
   return duel;
 }
 
-test('all 11 combat courses get three seeded, roadside three-raider camps', () => {
+test('all combat courses get three seeded, roadside three-raider camps', () => {
   const combatStages = COURSE.map((stage, index) => ({stage, index}))
     .filter(({stage}) => supportsCombat(stage));
-  assert.equal(combatStages.length, 11);
+  const visited = [];
   for (const {index} of combatStages) {
     const duel = race(index), zones = duel.state.raids.zones;
+    visited.push(duel.stageDef.id);
     assert.equal(zones.length, 3);
     for (const zone of zones) {
       assert.equal(zone.raiders.length, 3);
@@ -52,6 +53,7 @@ test('all 11 combat courses get three seeded, roadside three-raider camps', () =
       }
     }
   }
+  assert.deepEqual(visited, COURSE.filter(supportsCombat).map(stage => stage.id), 'actual camp checks visit every combat course exactly once');
   const first = race(), repeated = race(), changed = race(0, true, 1990);
   assert.deepEqual(first.state.raids, repeated.state.raids);
   assert.notDeepEqual(first.state.raids.zones.map(zone => zone.s),

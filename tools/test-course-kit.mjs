@@ -27,9 +27,7 @@ test('manifests derive current registration, flags, prices and GP membership wit
   const {FEATURE_STATES, createFeatureFlags} = await import('../src/feature-flags.js');
   const {COURSE_PRICES} = await import('../src/course-access.js');
   const {GRAND_PRIX_COURSES} = await import('../src/race-field.js');
-  assert.deepEqual(ALL_CIRCUITS.map(row => row.id), originals.map(row => row.id));
-  assert.deepEqual(api.CIRCUIT_MANIFESTS.map(row => [row.state, row.price, row.grandPrix]),
-    [['on', 1600, true], ['on', 1800, true], ['on', 1800, true], ['dev', 1600, false]]);
+  assert.deepEqual(ALL_CIRCUITS.map(row => row.id), api.CIRCUIT_MANIFESTS.map(row => row.id));
   for (const manifest of api.CIRCUIT_MANIFESTS) {
     assert.ok(Object.isFrozen(manifest));
     assert.equal(FEATURE_STATES[manifest.flag], manifest.state);
@@ -37,10 +35,12 @@ test('manifests derive current registration, flags, prices and GP membership wit
     assert.equal(GRAND_PRIX_COURSES.includes(manifest.id), manifest.grandPrix);
   }
   const off = createFeatureFlags({storage: null, qa: false});
-  assert.deepEqual(circuitsEnabled(off).map((row,index) => [row.id, 16+index]),
-    [['tremblant-woods', 16], ['tremblant-snow', 17], ['harbour-lights', 18]]);
-  const on = createFeatureFlags({storage: null, qa: true, search: '?flags=panorama-ridge'});
-  assert.deepEqual(circuitsEnabled(on).map((row,index) => 16+index), [16, 17, 18, 19]);
+  const {COURSE} = await import('../src/config.js');
+  const released = api.CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
+  assert.deepEqual(circuitsEnabled(off).map(row => row.id), released);
+  assert.deepEqual(circuitsEnabled(off).map(row => COURSE.indexOf(row)), released.map((_, index) => api.BASE_COURSE_COUNT + index));
+  const on = createFeatureFlags({storage: null, qa: true, search: '?flags=' + api.CIRCUIT_MANIFESTS.map(row => row.flag).join(',')});
+  assert.deepEqual(circuitsEnabled(on).map(row => row.id), api.CIRCUIT_MANIFESTS.map(row => row.id));
 });
 
 test('derived public stage preserves exact authored generation, physical features and reference identity', async () => {
@@ -92,17 +92,21 @@ test('adding only one course and its own reference/replay/signature files regist
     await cp(join(root, 'tools/replays'), join(fixtureRoot, 'tools/replays'), {recursive: true});
     await cp(join(root, 'tools/fixtures/world-signatures'), join(fixtureRoot, 'tools/fixtures/world-signatures'), {recursive: true});
     await cp(join(root, 'tools/course-fixtures.mjs'), join(fixtureRoot, 'tools/course-fixtures.mjs'));
+    for (const name of ['test-feature-flags.mjs', 'test-wasteland-beta.mjs'])
+      await cp(join(root, 'tools', name), join(fixtureRoot, 'tools', name));
+    await cp(join(root, 'tools/scenarios'), join(fixtureRoot, 'tools/scenarios'), {recursive: true});
     await mkdir(join(fixtureRoot, 'tools/blender'), {recursive: true});
     await cp(join(root, 'tools/blender/gunn-turret.json'), join(fixtureRoot, 'tools/blender/gunn-turret.json'));
     await own(paths[0], `import {TREMBLANT_WOODS} from './tremblant-woods.js';
 export const circuit=Object.freeze({...TREMBLANT_WOODS,id:${JSON.stringify(id)},flag:${JSON.stringify(id)}});
-export const manifest=Object.freeze({id:${JSON.stringify(id)},flag:${JSON.stringify(id)},state:'dev',price:1900,grandPrix:true,releaseOrder:999,driver:{car:'stuttgart_959s',driverId:'club',controller:'racing-line',skill:.95}});
+export const manifest=Object.freeze({id:${JSON.stringify(id)},flag:${JSON.stringify(id)},state:'dev',price:1900,grandPrix:true,releaseOrder:${Math.max(...api.CIRCUIT_MANIFESTS.map(row => row.releaseOrder)) + 1},driver:{car:'stuttgart_959s',driverId:'club',controller:'racing-line',skill:.95}});
 `);
     await own(paths[1], JSON.stringify({[id + '|fixed']: {eventId: id, route: 'fixed', marker: 'own reference'}}));
     await own(paths[2], JSON.stringify({eventId: id, cases: [{id: id + '-duel', eventId: id, category: 'duel', mode: 'duel', car: 'falcone_f42'}], fingerprints: {[id + '-duel']: {'30': 'own fingerprint', '60': 'own fingerprint', '144': 'own fingerprint'}}}));
     await own(paths[3], JSON.stringify({[id]: {hash: 'own signature'}}));
     const code = `
 const {FEATURE_STATES,createFeatureFlags}=await import('./src/feature-flags.js');
+const {COURSE}=await import('./src/config.js');
 const {circuitsEnabled}=await import('./src/circuits/index.js');
 const {COURSE_PRICES}=await import('./src/course-access.js');
 const {GRAND_PRIX_COURSES}=await import('./src/race-field.js');
@@ -112,12 +116,28 @@ const flags=createFeatureFlags({storage:null,qa:true,search:'?flags=${id}'});
 const definitions=circuitsEnabled(flags);
 const replay=loadReplayCatalog({definitions});
 console.log(JSON.stringify({state:FEATURE_STATES['${id}'],price:COURSE_PRICES['${id}'],gp:GRAND_PRIX_COURSES.includes('${id}'),
-course:16+definitions.findIndex(row=>row.id==='${id}'),ref:referenceLap('${id}')?.marker,
-replay:replay.fixture.cases.some(row=>row.eventId==='${id}'),fingerprint:replay.expected.fingerprints['${id}-duel']?.['30'],world:loadWorldSignatures()['${id}']?.hash}));`;
+course:${api.BASE_COURSE_COUNT}+definitions.findIndex(row=>row.id==='${id}'),ref:referenceLap('${id}')?.marker,
+replay:replay.fixture.cases.some(row=>row.eventId==='${id}'),fingerprint:replay.expected.fingerprints['${id}-duel']?.['30'],world:loadWorldSignatures()['${id}']?.hash,production:createFeatureFlags({storage:null,qa:false}).enabled('${id}'),listed:COURSE.some(row=>row.id==='${id}')}));`;
     const child = spawnSync(process.execPath, ['--input-type=module', '-e', code], {cwd: fixtureRoot, encoding: 'utf8', windowsHide: true});
     assert.equal(child.status, 0, child.stderr);
-    assert.deepEqual(JSON.parse(child.stdout), {state: 'dev', price: 1900, gp: true, course: 19,
-      ref: 'own reference', replay: true, fingerprint: 'own fingerprint', world: 'own signature'});
+    assert.deepEqual(JSON.parse(child.stdout), {state: 'dev', price: 1900, gp: true, course: api.BASE_COURSE_COUNT + api.CIRCUIT_MANIFESTS.filter(row => row.state === 'on').length,
+      ref: 'own reference', replay: true, fingerprint: 'own fingerprint', world: 'own signature', production:false, listed:false});
+    for (const state of ['dev', 'on']) {
+      if (state === 'on') {
+        const {readFile} = await import('node:fs/promises');
+        await writeFile(paths[0], (await readFile(paths[0], 'utf8')).replace("state:'dev'", "state:'on'"));
+      }
+      const catalog = spawnSync(process.execPath, ['--input-type=module', '-e', code], {cwd: fixtureRoot, encoding: 'utf8', windowsHide: true});
+      assert.equal(catalog.status, 0, catalog.stderr);
+      const result = JSON.parse(catalog.stdout);
+      assert.equal(result.state, state);
+      assert.equal(result.production, state === 'on');
+      assert.equal(result.listed, state === 'on');
+      for (const name of ['test-feature-flags.mjs', 'test-wasteland-beta.mjs']) {
+        const flags = spawnSync(process.execPath, ['tools/' + name], {cwd: fixtureRoot, encoding: 'utf8', windowsHide: true});
+        assert.equal(flags.status, 0, `${state} course must need no shared flag test edit: ${flags.stdout} ${flags.stderr}`);
+      }
+    }
   } finally {
     assert.equal(process.platform, 'win32', 'test cleanup requires the authorized Recycle Bin');
     const part = relative(join(root, '.qa-dist'), fixtureRoot);
@@ -131,15 +151,5 @@ replay:replay.fixture.cases.some(row=>row.eventId==='${id}'),fingerprint:replay.
 });
 
 
-test('splitting fixture storage preserves every original reference, replay and world value', async () => {
-  requireApi();
-  const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object'
-    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
-  const hash = value => createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');
-  const {REFERENCE_LAPS} = await import('../src/reference-laps.js');
-  const replay = fixtureApi.loadReplayCatalog();
-  assert.equal(hash(REFERENCE_LAPS), '26e62174c7b15d8bc2f8134081066aff6d062aab486e1a64df356afa06343a15');
-  assert.equal(hash(replay.fixture), '81eadfd7e1e3359d5fbc7cdd5ba1bab8209c227a2a3a9f1cfcc57884e81870b6');
-  assert.equal(hash(replay.expected), 'c64ca15708357a28b1d4b55a7f1dccf9407a008155b2a8b7d95b58b5cd2ea3ba');
-  assert.equal(hash(fixtureApi.loadWorldSignatures()), 'c7417f373e57aa5b1a84ead1d00d36778b6eba3c80647ec3e1f1ff7fd9d20241');
-});
+// FAC-04's consumed one-time migration proof is retained in docs/changes/FAC-04.md.
+// Per-event reference, replay and world guards remain in their existing suites.

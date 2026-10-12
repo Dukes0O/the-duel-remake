@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **FAC-05 merged green; course lock released.** Frozen 37fd7237: nearby lane 29/29, zero failures/unrun, 132.96 s, jobs 4; build 562 ms; one ordinary review clear. Counts follow registered courses, independent per-course expectations remain, and actual combat visits cover the full roster. Corrected an existing Snow fixture cleanup leak without changing barrier bounds. No runtime or fixture changes. Panorama and Summit source resumes are next; native heavy checks remain for night. FAC-08 is gating independently. No release or push.
+
 - **FAC-03 night command merged green.** Frozen 758662b5: canonical 20/20, zero failures/unrun, 91.59 s, jobs 4; build 645 ms; one ordinary review clear. Serial full, one simple headed check per quality, one accepted current-rules balance, then all named browsers; frame row reuses the actual same-run metrics. Unique evidence leaves and guarded immediate reports/STATUS commit preserve failures and concurrent edits. No actual native night pass or task installation is claimed. Heavy full/frame/browser/balance work now waits for night. Kyle creates the task; command and safety limits are in docs/changes/FAC-03.md. No push or release.
 
 - **FAC-05 and FAC-08 started in separate lanes after FAC-04.** FAC-05 owns the bounded count/registry test sweep and takes circuit-registry. FAC-08 owns the native headless drive-through tool and its acceptance tests, including the real pre-fix Tremblant repro. Owned files and assertion design are written on their cards before code; no runtime, fixture, fingerprint or signature edits. Retained Panorama and Summit wait for FAC-05. Heavy browser/frame/balance work remains held.

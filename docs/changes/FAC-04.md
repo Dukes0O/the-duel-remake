@@ -50,3 +50,12 @@ Conflict-free integration merge; no post-merge gate, native frame, balance,
 browser, release or push claim. FAC-05 takes the registry lock next.
 The consumed open-card detail is recycled after its scope and verdict have
 been retained here.
+
+## Consumed migration proof (FAC-05)
+
+The passing FAC-04 5/5 focused and 309/309 final lane proved these canonical SHA256 values against the unchanged pre-split data. FAC-05 retires only the aggregate one-time assertions; per-event native reference, replay and world checks remain exact. No value is regenerated.
+
+- Reference records: 26e62174c7b15d8bc2f8134081066aff6d062aab486e1a64df356afa06343a15
+- Replay inputs/cases: 81eadfd7e1e3359d5fbc7cdd5ba1bab8209c227a2a3a9f1cfcc57884e81870b6
+- Replay fingerprints: c64ca15708357a28b1d4b55a7f1dccf9407a008155b2a8b7d95b58b5cd2ea3ba
+- World baselines: c7417f373e57aa5b1a84ead1d00d36778b6eba3c80647ec3e1f1ff7fd9d20241
