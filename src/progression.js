@@ -369,7 +369,7 @@ export function stageEventId(index) {
 export function eventKey({ stageIndex, seed = 1989, laps, mode } = {}, layoutVersion) {
   const stage = COURSE[stageIndex];
   return stage
-    ? `${stageEventId(stageIndex)}|layout:${layoutVersion ?? stage.layoutVersion ?? 1}|seed:${seed >>> 0}|laps:${laps || (mode === 'grandprix' ? 3 : stage.laps) || 2}${mode === 'grandprix' ? '|mode:grandprix' : ''}`
+    ? `${stageEventId(stageIndex)}|layout:${layoutVersion ?? stage.layoutVersion ?? 1}|seed:${seed >>> 0}|laps:${laps || (mode === 'grandprix' ? (stage.grandPrixLaps ?? 3) : stage.laps) || 2}${mode === 'grandprix' ? '|mode:grandprix' : ''}`
     : '';
 }
 export function bestKey(
@@ -400,7 +400,7 @@ function isCompletedRace(result) {
     Number.isFinite(result.timeSec) &&
     result.timeSec > 0 &&
     Number.isInteger(result.laps) &&
-    result.laps === (result.mode === 'grandprix' ? 3 : stage.laps || 2) &&
+    result.laps === (result.mode === 'grandprix' ? (stage.grandPrixLaps ?? 3) : stage.laps || 2) &&
     Object.hasOwn(CARS, result.car) &&
     (result.driverId == null || Object.hasOwn(DRIVERS, result.driverId))
   );

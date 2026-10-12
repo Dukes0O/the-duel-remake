@@ -6,6 +6,7 @@ import {courseFingerprint} from '../src/track-analysis.js';
 import {buildEnvironment, disposeTree} from '../src/world.js';
 import {pavedShoulderWidthAt} from '../src/road-surface.js';
 import { COURSE, CARS } from '../src/config.js';
+import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import { createLeaderboardScreen } from '../src/screen-leaderboard.js';
 import { App } from '../src/app.js';
 import { createFeatureFlags } from '../src/feature-flags.js';
@@ -98,6 +99,69 @@ if (process.argv.includes('--storage-only')) {
   console.log(`Grand Prix storage: ${checks} checks passed.`); process.exit(0);
 }
 
+// The authored Harbour four-lap event must remain valid through records and UI.
+const priorCourseCount = COURSE.length;
+let harbourIndex = COURSE.findIndex(def => def.id === HARBOUR_LIGHTS.id);
+if (harbourIndex < 0) harbourIndex = COURSE.push(HARBOUR_LIGHTS) - 1;
+const harbourStorageBefore = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+const harbourCancelBefore = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
+const harbourMemory = new Map();
+let harbourApp;
+try {
+  globalThis.localStorage = {getItem: key => harbourMemory.get(key) ?? null,
+    setItem: (key, value) => harbourMemory.set(key, String(value)),
+    removeItem: key => harbourMemory.delete(key)};
+  globalThis.cancelAnimationFrame ??= () => {};
+  const finishContext = {stageIndex: harbourIndex, mode: 'grandprix', completed: true,
+    laps: courseForGrandPrix(HARBOUR_LIGHTS).laps, seed: 1989, timeSec: 480,
+    car: 'falcone_f42', driverId: 'club', difficulty: 'casual', cpuDifficulty: 'medium'};
+  equal(finishContext.laps, 4, 'actual authored Harbour GP asks for four laps');
+  check(isValidFinish(finishContext), 'authored Harbour four-lap completion is valid');
+  check(!isValidFinish({...finishContext, laps: 3}), 'three laps cannot complete Harbour GP');
+  check(!isValidFinish({...finishContext, stageIndex: 0}), 'malformed Pacific four-lap GP cannot finish');
+  check(!recordFinish(createLeaderboard(), {...finishContext, stageIndex: 0},
+    {id: 'malformed-four', name: 'Malformed Driver'}).recorded,
+    'malformed Pacific four-lap GP cannot enter records');
+  check(eventKey({stageIndex: harbourIndex, mode: 'grandprix'}).includes('|laps:4|mode:grandprix'),
+    'default Harbour GP key derives its authored count');
+  harbourApp = new App(); ownTestCourses(harbourApp);
+  harbourApp.duel.featureFlags = createFeatureFlags({storage: null, qa: false, search: '',
+    overrides: {'grand-prix': true}});
+  check(harbourApp.startCampaign({startStage: harbourIndex, mode: 'grandprix', seed: 1989,
+    fieldSeed: 1000, car: 'falcone_f42', difficulty: 'casual', cpuDifficulty: 'medium'}),
+    'native Harbour GP starts in disposable memory');
+  harbourApp.autopilot = true; harbourApp._scriptedCrashDone = true; installTestDriver(harbourApp);
+  for (let tick = 0; tick < 60000 && ['countdown', 'racing'].includes(harbourApp.duel.state.status); tick++)
+    harbourApp.advance(1 / 60, 1 / 60);
+  equal(harbourApp.duel.state.completedLaps, 4, 'native legal controls finish all four Harbour laps');
+  check(harbourApp.leaderboard.entries.some(row => row.eventId === HARBOUR_LIGHTS.id && row.laps === 4),
+    'native Harbour finish records the actual four-lap race');
+  const reloaded = loadLeaderboard(globalThis.localStorage);
+  check(reloaded.entries.some(row => row.eventId === HARBOUR_LIGHTS.id && row.laps === 4),
+    'Harbour record survives memory-only save and reload');
+  const harbourScreen = createLeaderboardScreen({app: {leaderboard: reloaded, player: harbourApp.player,
+    grandPrixAvailable: () => true, getMenuSeed: () => 1989, getMenuRouteLabel: () => 'Fixed route'},
+    boardFilter: {stage: harbourIndex, car: '', driverId: 'club', mode: 'grandprix'},
+    escapeHTML: String, credits: String, time: value => `${value} seconds`})();
+  check(harbourScreen.includes('4 LAPS') && harbourScreen.includes('All 4 laps count'),
+    'Harbour GP record is visible with the actual lap-count description');
+  const emptyHarbourScreen = createLeaderboardScreen({app: {leaderboard: createLeaderboard(),
+    player: harbourApp.player, grandPrixAvailable: () => true, getMenuSeed: () => 1989,
+    getMenuRouteLabel: () => 'Fixed route'}, boardFilter: {stage: harbourIndex, mode: 'grandprix'},
+    escapeHTML: String, credits: String, time: String})();
+  check(emptyHarbourScreen.includes('Finish all 4 laps'), 'empty Harbour GP board asks for four laps');
+} finally {
+  harbourApp?.dispose();
+  COURSE.length = priorCourseCount;
+  if (harbourStorageBefore) Object.defineProperty(globalThis, 'localStorage', harbourStorageBefore);
+  else delete globalThis.localStorage;
+  if (harbourCancelBefore) Object.defineProperty(globalThis, 'cancelAnimationFrame', harbourCancelBefore);
+  else delete globalThis.cancelAnimationFrame;
+}
+if (process.argv.includes('--harbour-records-only')) {
+  console.log(`Authored Grand Prix records: ${checks} checks passed.`); process.exit(0);
+}
+
 const ids = ['pacific-canyon', 'high-country', 'harbor-highlands', 'eifel-crown',
   'alpine-serpent', 'azure-riviera', 'red-mesa', 'neon-docks', 'cloudbreak-skyway'];
 const profile = { ...createProfile(), courses: testCourseAccess() };
@@ -120,6 +184,7 @@ equal(widenedDef.fieldFollow, {wallRoom: 1,
   'Azure GP reuses only the approved Harbour first-lap gap and wall room');
 check(Object.isFrozen(widenedDef.fieldFollow) && Object.isFrozen(widenedDef.fieldFollow.firstLap),
   'Azure GP following metadata and its first-lap overlay are immutable');
+check(Object.isFrozen(widenedDef.fieldPace), 'Azure GP difficulty pace overlay is immutable');
 const widenedAzure = new Course(widenedDef, 1989);
 equal(widenedAzure.samples, baselineAzure.samples, 'GP entry width cannot change actual road center or elevation');
 for (const [s, extra] of [[224, 0], [225, 0], [242.5, .5], [260, 1], [277.5, .5], [295, 0], [296, 0]]) {
@@ -166,6 +231,8 @@ for (const mode of ['duel', 'timetrial']) {
   const legacy = start(azureIndex, mode);
   check(!legacy.course.def.grandPrixEntryWidth, mode + ': Azure has no GP patch');
   equal(legacy.course.def.fieldFollow, azureDef.fieldFollow, mode + ': Azure following defaults remain exact');
+  equal(legacy.course.def.fieldPace, azureDef.fieldPace, mode + ': GP pace cannot leak into legacy mode');
+  equal(legacy.course.def.fieldAggression, azureDef.fieldAggression, mode + ': GP aggression cannot leak into legacy mode');
   for (const s of [225, 242.5, 260, 277.5, 295])
     equal(legacy.course.roadHalfWidthAt(s), baselineAzure.roadHalfWidthAt(s), mode + ': width remains exact');
 }
