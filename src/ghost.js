@@ -8,11 +8,15 @@ const archiveViews=new WeakMap();
 export const MAX_GHOSTS=12,MAX_GHOST_SAMPLES=1800,MAX_GHOST_BYTES=1_250_000;
 const round=(value,scale)=>Math.round(value*scale),clock=state=>(state.stageTimeSec??0)+(state.racePenaltySec??0);
 const bytes=value=>new TextEncoder().encode(JSON.stringify(value)).length;
-export const ghostKey=(playerId,options,layoutVersion,driverSignature)=>options?.mode==='timetrial'&&playerId&&!COURSE[options.stageIndex]?.practice?`${playerId}|${bestKey(options,layoutVersion,driverSignature)}`:'';
+export const ghostKey = (playerId, options, layoutVersion, driverSignature) =>
+  ['timetrial', 'grandprix'].includes(options?.mode) && playerId &&
+  !COURSE[options.stageIndex]?.practice
+    ? `${playerId}|${bestKey(options, layoutVersion, driverSignature)}` : '';
+const ghostLaps = (mode, stage) => mode === 'grandprix' ? 1 : stage.laps || 2;
 export function createGhostStore(){return {version:1,records:[],archivedRecords:[]};}
 const validId=id=>typeof id==='string'&&/^[\w-]{1,80}$/.test(id);
-const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===(stage.laps||2)&&isCurrentDriverRecord(record)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
-function validSamples(samples,timeSec,raceLength,car){
+const currentRecord=record=>{const stageIndex=COURSE.findIndex((stage,index)=>stageEventId(index)===record.eventId),stage=COURSE[stageIndex];return !!stage&&record.layoutVersion===(stage.layoutVersion??1)&&record.laps===ghostLaps(record.mode,stage)&&isCurrentDriverRecord(record)&&record.key===ghostKey(record.playerId,{...record,stageIndex});};
+function validSamples(samples,timeSec,raceLength,car,mode){
   if(!Array.isArray(samples)||samples.length<12||samples.length>MAX_GHOST_SAMPLES)return false;
   // A driver may reverse through the start and onto the preceding circuit.
   // Keep the old 80m recovery allowance, plus the most reverse travel physically
@@ -23,20 +27,21 @@ function validSamples(samples,timeSec,raceLength,car){
   for(const row of samples){if(!Array.isArray(row)||![7,11].includes(row.length)||!row.every(Number.isSafeInteger)||row[0]<=prior||row[0]<0||row[0]>(timeSec+.03)*1000||row[1]<minPosition||row[1]>maxPosition||Math.abs(row[2])>maxLateral||Math.abs(row[3])>400000||row[4]<0||row[4]>10000||Math.abs(row[5])>5000||![0,1].includes(row[6]))return false;
     if(row.length===11&&(Math.abs(row[7])>1_000_000||Math.abs(row[8])>800_000||Math.abs(row[9])>800_000||row[10]<0||row[10]>15))return false;
     prior=row[0];}
-  return samples[0][0]===0&&Math.abs(samples[0][1])<=300&&Math.abs(samples.at(-1)[0]-timeSec*1000)<=30&&samples.at(-1)[1]>=raceLength*100-10;
+  return samples[0][0]===0&&Math.abs(samples[0][1])<=(mode==='grandprix'?4000:300)&&Math.abs(samples.at(-1)[0]-timeSec*1000)<=30&&samples.at(-1)[1]>=raceLength*100-10;
 }
 function normalizeRecord(row){
-  if(!row||!validId(row.playerId)||!playerName(row.playerName)||row.mode!=='timetrial'||!Object.hasOwn(CARS,row.car)||!Number.isFinite(row.timeSec)||row.timeSec<=0||row.timeSec>3600)return null;
+  if(!row||!validId(row.playerId)||!playerName(row.playerName)||!['timetrial','grandprix'].includes(row.mode)||!Object.hasOwn(CARS,row.car)||!Number.isFinite(row.timeSec)||row.timeSec<=0||row.timeSec>3600)return null;
   const driver=driverRecordMetadata(row);if(!driver)return null;
   const stageIndex=COURSE.findIndex((def,index)=>stageEventId(index)===row.eventId),stage=COURSE[stageIndex];
   if(!stage||stage.practice||!Number.isSafeInteger(row.laps)||row.laps<1||!Number.isSafeInteger(row.layoutVersion)||row.layoutVersion<1||!['casual','pro'].includes(row.difficulty)||!['easy','medium','hard'].includes(row.cpuDifficulty))return null;
   const current=row.layoutVersion===(stage.layoutVersion??1);
-  if(current&&row.laps!==(stage.laps||2))return null;
+  if(current&&row.laps!==ghostLaps(row.mode,stage))return null;
   const context={...row,...driver,stageIndex,seed:row.seed>>>0},key=ghostKey(row.playerId,context,row.layoutVersion,driver.driverSignature);
+  if(!Array.isArray(row.samples))return null;
   // Legacy ghosts did not retain the old route length. Their final sample is
   // the only available old finish position; never validate it against new roads.
   const raceLength=current?stage.lengthU*row.laps:row.raceLength??row.samples?.at(-1)?.[1]/100;
-  if(!Number.isFinite(raceLength)||raceLength<=0||key!==row.key||!validSamples(row.samples,row.timeSec,raceLength,row.car))return null;
+  if(!Number.isFinite(raceLength)||raceLength<=0||key!==row.key||!validSamples(row.samples,row.timeSec,raceLength,row.car,row.mode))return null;
   return {key,playerId:row.playerId,playerName:playerName(row.playerName),stageIndex,eventId:row.eventId,layoutVersion:row.layoutVersion,seed:context.seed,laps:row.laps,raceLength,car:row.car,mode:row.mode,difficulty:row.difficulty,cpuDifficulty:row.cpuDifficulty,...driver,timeSec:row.timeSec,samples:row.samples,upgrades:getUpgradeLevels({upgrades:{[row.car]:row.upgrades}},row.car),recordedAt:Number.isFinite(row.recordedAt)?row.recordedAt:0,lastUsedAt:Number.isFinite(row.lastUsedAt)?row.lastUsedAt:0};
 }
 export function normalizeGhostStore(value){
@@ -62,9 +67,13 @@ export function saveGhostEnabled(enabled,storage){try{const target=storage??glob
 export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>currentRecord(record)&&record.key===key)||null:null;}
 export function mergeGhostStores(...stores){return normalizeGhostStore({version:1,records:stores.flatMap(store=>store?.records||[]),archivedRecords:stores.flatMap(store=>store?.archivedRecords||[])});}
 export function storeGhost(store,record){
-  const valid=normalizeRecord(record);if(!valid||!currentRecord(valid))return {store,saved:false};store=normalizeGhostStore(store);const prior=store.records.find(row=>row.key===valid.key);
+  const valid=normalizeRecord(record);if(!valid||!currentRecord(valid))return {store,saved:false};const original=store;store=normalizeGhostStore(store);const prior=store.records.find(row=>row.key===valid.key);
   if(prior&&prior.timeSec<=valid.timeSec+.005)return {store,saved:false};
-  return {store:normalizeGhostStore({version:1,records:[...store.records.filter(row=>row.key!==valid.key),valid],archivedRecords:store.archivedRecords}),saved:true};
+  const candidate={version:1,records:[...store.records.filter(row=>row.key!==valid.key),valid],archivedRecords:store.archivedRecords};
+  // New GP recordings may use free capacity, never evict an existing recording.
+  if(valid.mode==='grandprix'&&(candidate.records.length>MAX_GHOSTS||
+    bytes({...candidate,archivedRecords:[]})>MAX_GHOST_BYTES))return {store:original,saved:false,reason:'capacity'};
+  return {store:normalizeGhostStore(candidate),saved:true};
 }
 function pack(state,snap=false){
   const values=[clock(state),state.s,state.lateral??0,(state.headingError??0)+(state.slipAngle??0)+(state.crashSpin??0),state.airHeight??0,state.speedMph??0];
@@ -121,4 +130,73 @@ export function sampleGhost(record,timeSec,out={}){
   const flagsA=a.length===11?a[10]:0,flagsB=b.length===11?b[10]:0;
   const pose=(index,bit,scale)=>flagsA&bit?((flagsB&bit?a[index]+(b[index]-a[index])*blend:a[index])/scale):blend>0&&(flagsB&bit)?b[index]/scale:null;
   Object.assign(out,{s:mix(1)/100,lateral:mix(2)/100,headingError:angleA+Math.atan2(Math.sin(angleB-angleA),Math.cos(angleB-angleA))*blend,airHeight:mix(4)/100,speedMph:mix(5)/10,groundHeight:pose(7,1,100),terrainPitch:pose(8,2,10000),terrainRoll:pose(9,4,10000),tumble:!!(flagsA&8),car:record.car,playerId:record.playerId,timeSec,recordTimeSec:record.timeSec,upgrades:record.upgrades});return out;
+}
+
+
+// Owns a lap-sized recording only; it never changes the race or its clock.
+// Grand Prix ghosts feed the Team Room. App playback remains Time Trial only.
+export class GrandPrixLapRecorder {
+  constructor(context, courseLength) {
+    this.context = { ...context, mode: 'grandprix', laps: 1 };
+    this.courseLength = courseLength;
+    this.lap = 0;
+    this.startedAt = 0;
+    this.recorder = new GhostRecorder(this.context);
+    this.previous = null;
+    this.stagedFirstLap = false;
+  }
+  local(state) {
+    return { ...state, mode: 'timetrial',
+      s: state.s - this.lap * this.courseLength,
+      stageTimeSec: clock(state) - this.startedAt, racePenaltySec: 0 };
+  }
+  observe(state) {
+    if (state.qualifying?.phase === 'driving' || state.paused ||
+        !['countdown', 'racing', 'ticket'].includes(state.status)) return;
+    if (this.lap === 0 && this.previous === null) {
+      // Only Azure's actual staged grid exceeds the unchanged40m GP start bound.
+      this.stagedFirstLap = COURSE[this.context.stageIndex]?.id === 'azure-riviera' && state.s < -40;
+    }
+    this.recorder.observe(this.local(state));
+    this.previous = { ...state };
+  }
+  discontinuity() { this.recorder.discontinuity(); }
+  complete(state, event, player) {
+    if (event.qualifyingLap || state.qualifying?.phase === 'driving' ||
+        event.lapCompleted !== this.lap + 1) return null;
+    const time = state.lapStartedAt;
+    const before = this.previous ?? state;
+    const span = clock(state) - clock(before);
+    const blend = span > 0 ? Math.max(0, Math.min(1, (time - clock(before)) / span)) : 1;
+    const crossing = { ...state, s: event.lapCompleted * this.courseLength,
+      stageTimeSec: time, racePenaltySec: 0 };
+    for (const key of ['lateral', 'headingError', 'slipAngle', 'crashSpin',
+      'airHeight', 'speedMph', 'groundHeight', 'terrainPitch', 'terrainRoll']) {
+      if (Number.isFinite(before[key]) && Number.isFinite(state[key]))
+        crossing[key] = before[key] + (state[key] - before[key]) * blend;
+    }
+    const local = this.local(crossing);
+    this.recorder.observe(local, true);
+    // Native lap admission is authoritative. One-lap GP records are not race finishes.
+    let record = null;
+    if (!this.stagedFirstLap && !event.assisted && !this.recorder.invalid && player?.id === state.playerId &&
+        player.id === this.context.playerId && playerName(player.name) &&
+        state.car === this.context.car && state.stageIndex === this.context.stageIndex &&
+        Number.isFinite(event.lapTimeSec) && event.lapTimeSec > 0) {
+      const stage = COURSE[state.stageIndex];
+      const candidate = { ...this.recorder.context, mode: 'grandprix', laps: 1,
+        key: ghostKey(player.id, this.context), playerName: player.name,
+        eventId: stageEventId(state.stageIndex), layoutVersion: stage.layoutVersion ?? 1,
+        raceLength: this.courseLength, timeSec: time - this.startedAt,
+        samples: this.recorder.samples, recordedAt: Date.now(), lastUsedAt: Date.now() };
+      record = normalizeRecord(candidate);
+    }
+    this.lap = event.lapCompleted;
+    this.stagedFirstLap = false;
+    this.startedAt = time;
+    this.recorder = new GhostRecorder(this.context);
+    this.recorder.observe(this.local(crossing), true);
+    this.previous = crossing;
+    return record;
+  }
 }

@@ -19,8 +19,8 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 24
-    && ['panorama-ridge', 'harbour-lights', 'tremblant-snow', 'snow-world', 'the-deep'].every(name => FEATURE_STATES[name] === 'dev')
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 25
+    && ['panorama-ridge', 'harbour-lights', 'tremblant-snow', 'snow-world', 'the-deep', 'grand-prix-career'].every(name => FEATURE_STATES[name] === 'dev')
     && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES['tremblant-woods'] === 'on',
   'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix and Tremblant Woods are released; career backup, Panorama Ridge, Harbour Lights, Snow and The Deep stay dev; retired switches stay absent');
 const productionFlags = createFeatureFlags({ storage: null, qa: false });
