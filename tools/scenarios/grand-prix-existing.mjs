@@ -4,7 +4,7 @@ import { writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {build} from 'vite';
-import { installTestDriver } from '../race-field-balance.mjs';
+import { installTestDriver, LINE_SKILL } from '../race-field-balance.mjs';
 
 const ids = ['pacific-canyon', 'high-country', 'harbor-highlands', 'eifel-crown',
   'alpine-serpent', 'azure-riviera', 'red-mesa', 'neon-docks', 'cloudbreak-skyway'];
@@ -25,7 +25,10 @@ export async function nativeBundle() {
       return 'import {DRIVE,steeringYawAuthority} from '+config+';'+
         'export {COURSE,CARS,DRIVE,steeringYawAuthority} from '+config+';'+
         'export {ownTestCourses} from '+access+';'+
-        'export {racingLineFor,buildSpeedProfile} from '+lines+';'+
+        'import {racingLineFor,buildSpeedProfile} from '+lines+';'+
+        'export {racingLineFor,buildSpeedProfile};'+
+        'const LINE_SKILL='+JSON.stringify(LINE_SKILL)+';'+
+        'const clampTo=(value,limit)=>Math.max(-limit,Math.min(limit,value));'+
         'export const installTestDriver='+installTestDriver.toString()+';';
     },
   }],build:{write:false,minify:false,lib:{entry,formats:['es']}}});
