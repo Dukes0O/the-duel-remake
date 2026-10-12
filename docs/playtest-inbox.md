@@ -2,6 +2,10 @@
 
 ## For Claude
 
+- **FAC-03 needs the real off-balance acceptance.** The removed wasteland2 flag cannot produce an off run. Actual undiscovered/discovered memory-only starts are now proved, but the old armor/UFO-max bands apply to discovered rules only. The explicit off tool currently reports an honest bounded witness and unsupported acceptance, exits1, and does not pretend to run the full off balance. Please settle either the complete applicable native base/off policies and targets, or the intended current pair. No new targets, forced upgrades or green off result will be invented. The night command is still building; this part stays incomplete while the other factory cards proceed.
+
+- **FAC-07 green and merging now.** Frozen3b8d72b8: canonical19/19, zero failures/unrun,109.49s,jobs4; build662ms, one Director review clear. Browser suites build one private QA bundle; normal scenarios run up to four, timing recipes drain and run alone, failures are retained, and the owned bundle is recycled only after every child closes. Real browser/frame/balance checks remain unmeasured until night. FAC-03 now owns its sequential headed-mode hook; FAC-04 is frozen and gating with exact original course data. No release or push.
+
 - **FAC-03 selector slice is green and merging; night command unfinished.** Frozen5685d556: canonical396/396, zero failures/unrun,1526.07s,jobs4; build680ms; Director review clear. Exactly five proven native browser/Blender suites leave daytime lanes; full/default selection and all original assertions remain exact. FAC-03 stays building; no night-install, frame, balance or full-pass claim. FAC-07 can now run its canonical nearby gate without launching the actual audio browser. A headed private Chrome option is reserved for FAC-03 only after FAC-07 merges; current headless Chrome cannot establish the official visible-window frame pass. No release, push or history rewrite.
 
 - **FAC-06 is green and merging.** Frozen8885399a, canonical18/18 in288.97s,jobs4, build1.21s, one ordinary review clear. Board now holds only50 open cards and272 completed ids; current Deep/P4 design and ownership details live in each card note. All-or-none locks apply to both teams. The obsolete finished-preview-card assertion now follows explicit completion; all22 launcher/runtime/memory checks stay exact. FAC-04 holds its four course locks with the minimal granted consumer/test hooks. FAC-02 has merged and its own clean lane is recycled. FAC-03 is still building, so no night-install/full-pass claim. No release or push.
@@ -70,6 +74,33 @@ The first loader-union gate stopped132passed/1boardfailure/255notrun: unsupporte
 Claude10:30 decisions are on their cards before further code: loader accepted on source/clearance after mandatory lane/build, Claude owns Harbour base diagnosis and later old-town cost; Azure reuses actual merged Harbour fieldFollow GP-only; Snow/Pan relative costs are information with absolute18.5ms/under1s acceptance. All observed failures remain failures. Every Claude answer below is retained. Kyle approved the sound on11October (sound approved - keep going); measured121-second partial -16.29LUFS/-2.10dBTP, no whole-recording/uncaptured-finish claim. Approval committed in33aacf7a; consumed listening284,485,319B and navigation852,173B removed after safe path/hash checks, recipes/assets kept. Previous full387/387 onfbc7d76c is historical; new end full remains required.
 
 ## Claude answers
+
+Claude, 12 October 2026 (afternoon PT), **P4-SUMMIT: timing, pit and round one settled. Build on.**
+
+Gameplay (CIRCUITS 5.4 and 3.5 updated):
+
+1. **The mid car is the Falcone F42**, the default car, middle of the roster on top speed. Keep the F42, Medium, native .95 driver, seeds 1989 and 4242.
+2. **Race time target is now 4:30 to 5:30** on that car (270 to 330 s). The 6 to 8 minutes in my draft was my arithmetic error: this road's long climbing straights are much faster than I assumed. Summer 276.8 s already passes. This is a design correction, not a waiver; no course is lengthened.
+3. **Why the pit is a trap today.** From your three runs: the pit costs about 32 s (529 m held at 60 km/h is about 20 s, plus 4 s of service and about 7 s slowing and pulling away), summer tyres through the snow lose about 18.5 s, and winter tyres on the lower road lose only about 4.7 s. So staying out beats pitting by 13.5 s and starting on winter tyres wins by 27 s. Both targets need a cheaper pit and a costlier wrong tyre below the tree line.
+4. **Summit's pit bay (opt-in, Summit only).** Add two optional fields to a track's pit definition in `src/pit-lane.js`: `limiterLength` (metres) and `limitKph`. When set, the limiter holds only a stretch of that length centred on the box; the rest of the lane is driven normally. Without them everything is as today, so Tremblant Snow stays exact. The lane's road, wall and position do not change. Summit: `limiterLength: 180`, `limitKph: 80`, box and limiter centred on the middle of the Tree Line straight. Service stays 4 s. The CPU pit estimate uses the limited stretch and its speed (the real time cost) instead of `exit - entry`, only when the fields are set.
+5. **Warm tarmac below the tree line.** New surface `warm-tarmac` on every asphalt piece of sections A and B, including the turn after the gravel; the gravel stretch stays gravel. Tyre column `warm`: summer 1.0, winter starts at 0.82, and winter's top-speed share applies to `warm` (.97 unless step 6 lowers it on `warm` only). Drawn exactly like asphalt, no overlay in `track-script-scene.js`. HUD hint `WARM TARMAC` only when the effective grip falls under .80. Adding it to `SURFACE_KINDS` changes the published list in `tools/test-race-surfaces.mjs` additively: name that assertion and this reason in the change note.
+6. **Measuring, in this order, at most six sets** (each set is the summer, pit and winter-start runs, F42, Medium, native .95, seeds 1989 and 4242):
+   - Set 1: bay 180 m at 80 km/h, warm winter .82.
+   - If summer minus pit is under +4 s: set 2 raises `limitKph` to 90; if still under, set 3 puts packed snow on the road from the first piece after the Tree Line Pit Straight (piece 28, about 7.28 km) instead of piece 29 (about 8.0 km). Whole pieces only; the pit straight is never split and stays asphalt.
+   - Then tune the warm winter grip within .62 to .88 until winter-start minus pit is +2 to +5 s. If grip .62 is still short, lower winter's top-speed share on `warm` only, within .93 to .97.
+   - If six sets cannot meet both targets, stop and send me the rows. No driver profile or target change.
+7. P4-SUMMIT holds lock `surfaces` (race-surfaces.js) and hooks `src/pit-lane.js` and `src/track-script-scene.js`; DEEP-SURFACE waits for the surfaces lock.
+
+Art round one, my verdict: **hold, round two.** Lighting 2.5, road readability 3.5, grounding 2.5, consistency 2. Reuse only, nothing new to source:
+
+1. **Pine Switchbacks:** almost no pines. Use the Tremblant Woods grove forest (the same pine and birch cells) thick on both sides of section B, thinning toward the tree line. Smooth the faceted cliff shading (smooth normals on the existing rock).
+2. **Snowfields to summit:** the snow reads as flat slate blue. Use Tremblant Snow's snow ground and its soft plough heaps along the verges, replacing the jagged blue blobs.
+3. **Night, Gallery onward:** snow under moonlight should read pale blue-white, not slate. Raise night exposure on snow to Harbour Lights night levels, keep stars and moon visible, every car's headlights on (P4-DAYNIGHT).
+4. **Gallery:** build the accepted P4-KITS round-three gallery (concrete slab roof with snow on top, back wall, pillars) at 10 m road width; the black drape is wrong.
+5. **Summit hut and observatory:** lit windows, and a lit slit in the dome, as 5.4 asks.
+6. **Open Road:** add one view from the fork showing both routes.
+
+Round two sheet with the same 16 views plus the fork view. No frame check until it is reachable (rule 9).
 
 Claude, 12 October 2026 (14:00 PT):
 

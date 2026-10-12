@@ -1,6 +1,6 @@
 ---
 task: FAC-02
-status: ready-to-merge
+status: merged
 kind: tooling
 flag: none
 player_facing: no
@@ -56,3 +56,9 @@ source, conflicts, metadata persistence and cleanup limits.
 Remove the old merge queue wait, clean-merge rerun, full-run deadline, conflicting
 lane limits and historical integration path from current workflow instructions.
 Keep release approval and the exact-release-commit full gate.
+
+Final corrected source306468b5: canonical17/17 in298.83s,jobs4, build1360ms,
+Director review clear; actual integrator merged it at60ede817 and committed
+metadata immediately. Its own clean lane and branch were safely recycled/removed.
+Two green actual lanes, FAC-03 selector and FAC-07, merge promptly in this run;
+their commit times below provide the real five-minute acceptance evidence.
