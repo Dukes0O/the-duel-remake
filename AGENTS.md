@@ -74,10 +74,10 @@ team's merges back for hours):
 
 7. Only frame timing needs a quiet laptop. Lane gates, builds, balance runs
    and browser checks that do not time frames run alongside each other, at
-   most two at once across all teams, each with `--jobs 4` or fewer. A frame
-   measurement waits until no gate, build, balance run or browser check is
-   going, and nobody starts one while it runs. The full tier still runs
-   alone (rule 2).
+   most three at once across all teams (Kyle, 12 October 2026: lane runs are
+   small now), each with `--jobs 4` or fewer. A frame measurement waits until
+   no gate, build, balance run or browser check is going, and nobody starts
+   one while it runs. The full tier still runs alone (rule 2).
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
    18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
@@ -120,6 +120,11 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     merge.
 15. Kyle sets direction and says "go live". Claude makes art and sound picks
     within the three-round cap; nothing waits on Kyle except a release.
+16. Claude answers a card's question in that card's own file
+    (`docs/board/cards/<id>.md`, section "Claude answers") and clears the
+    card's `waiting_on` in the same commit. The inbox carries only questions
+    and notes that have no card, so two answers never collide in one place
+    (Kyle, 12 October 2026).
 
 ## Gates (SPEC 0.5)
 

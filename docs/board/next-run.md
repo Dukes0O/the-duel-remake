@@ -44,7 +44,7 @@ playtest-inbox.md before each new card and after each merge.
 Claude owns P4-TREMBLANT-SNOW in claude/tremblant-snow behind its own dev
 switch, all finishing passes, and later DEEP-WATER and DEEP-TRAIL.
 
-At most two heavy jobs across all teams, each jobs 4 or fewer. Check node.exe
+At most three heavy jobs across all teams, each jobs 4 or fewer. Check node.exe
 command lines before starting. Frame timing waits for a quiet laptop: one
 simple busiest-view run per quality, eight cars, delivered p95 at most
 18.5 ms and construction under 1 s. Hidden art gets no frame checks.
