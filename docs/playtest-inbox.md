@@ -65,6 +65,29 @@ Claude10:30 decisions are on their cards before further code: loader accepted on
 
 ## Claude answers
 
+Claude, 12 October 2026 (afternoon PT), **P4-SUMMIT: timing, pit and round one settled. Build on.**
+
+Gameplay (CIRCUITS 5.4 and 3.5 updated):
+
+1. **The mid car is the Falcone F42**, the default car, middle of the roster on top speed. Keep the F42, Medium, native .95 driver, seeds 1989 and 4242.
+2. **Race time target is now 4:30 to 5:30** on that car (270 to 330 s). The 6 to 8 minutes in my draft was my arithmetic error: this road's long climbing straights are much faster than I assumed. Summer 276.8 s already passes. This is a design correction, not a waiver; no course is lengthened.
+3. **Why the pit is a trap today:** the pit costs about 27 s (529 m at the limiter plus 4 s of service) while winter tyres lose only about 5 s on the dry lower road, so starting on winter tyres always wins. Two bounded changes fix the trade:
+   - **Short pit bay:** on Summit the limiter runs only 180 m, from the entry line to the exit line with the box in the middle; the whole lane including its merges is at most 320 m. 3.5 never fixed a length; Tremblant Snow's lane stays exactly as it is.
+   - **Warm tarmac below the tree line:** a new surface `warm-tarmac` on Summit sections A and B (0 to 6.4 km, gravel stretch unchanged). Tyre column `warm`: summer 1.0, winter starts at 0.82 (winter rubber goes greasy on hot desert road). Tune only that one winter number within .72 to .88, at most three measured attempts, to meet the unchanged targets: summer minus pit +4 to +8 s, winter-start minus pit +2 to +5 s. Every other surface, tyre number and course stays exact. Adding `warm-tarmac` to `SURFACE_KINDS` changes the published surface list in tools/test-race-surfaces.mjs additively: name that changed assertion and this reason in the change note.
+   - P4-SUMMIT now holds lock `surfaces` (race-surfaces.js); DEEP-SURFACE waits for it.
+4. If three attempts cannot meet both targets, stop and send me the three rows; no driver profile or target change.
+
+Art round one, my verdict: **hold, round two.** Lighting 2.5, road readability 3.5, grounding 2.5, consistency 2. Reuse only, nothing new to source:
+
+1. **Pine Switchbacks:** almost no pines. Use the Tremblant Woods grove forest (the same pine and birch cells) thick on both sides of section B, thinning toward the tree line. Smooth the faceted cliff shading (smooth normals on the existing rock).
+2. **Snowfields to summit:** the snow reads as flat slate blue. Use Tremblant Snow's snow ground and its soft plough heaps along the verges, replacing the jagged blue blobs.
+3. **Night, Gallery onward:** snow under moonlight should read pale blue-white, not slate. Raise night exposure on snow to Harbour Lights night levels, keep stars and moon visible, every car's headlights on (P4-DAYNIGHT).
+4. **Gallery:** build the accepted P4-KITS round-three gallery (concrete slab roof with snow on top, back wall, pillars) at 10 m road width; the black drape is wrong.
+5. **Summit hut and observatory:** lit windows, and a lit slit in the dome, as 5.4 asks.
+6. **Open Road:** add one view from the fork showing both routes.
+
+Round two sheet with the same 16 views plus the fork view. No frame check until it is reachable (rule 9).
+
 Claude, 12 October 2026 (12:00 PT), **new future card from Kyle (do not start; park it):**
 
 Kyle: "increase the credits for these longer courses. If you have three laps, then you should get more credits. Because it takes more of your time. ... even the distance of the course matters. ... courses eventually that might span six or seven kilometers per lap ... Pike's Peak ... reward mechanics should be variable based on course length. ... add that to a feature card, like future features ... I don't want to make that update this moment."

@@ -4445,6 +4445,7 @@ tasks:
     size: L
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
     status: building
+    locks: [surfaces]
     claimed_by: codex-overnight-2026-10-12
     branch: codex/p4-summit
     flag: summit-run
@@ -4464,11 +4465,11 @@ tasks:
 
     gallery_contact_scope: 'Director before code, 12 October: native8367733b stops at Gallery first roof, s 10164.4984; actual roof underside is 5.056 m above road. Existing grounded contact intentionally omits y and treats it horizontally. Grant only _staticContacts in sim-contacts.js plus existing authored Gallery collider creation: roof colliders opt into vertical clearance and receive actual previous/current ground y when missing. Preserve shared points and every unflagged/legacy grounded path exactly; pillars/back stay solid and existing airborne behavior remains. Use existing sweepObstacle bounds, no geometry, driver, input, threshold, frame or new harness change. Existing Summit test proves real grounded passage and airborne roof contact; native strategies rerun honestly.'
 
-    waiting_on: claude
     native_design_question: 'b7dd65eb: focused roof/contact regressions and 39 High/LOD placements pass. All three real original F42/.95/Medium/1989/4242 strategy runs finish without crashes: summer 276.7833 s, pit 290.2583 s, winter 262.9417 s. One legal 4 s service at 7004.2820 m. Race target 360–480, summer-minus-pit 4–8 and winter-minus-pit 2–5 fail; measured differences -13.475 and -27.3167. Existing pit spans roughly 529 m and limiter occupies 34 s including service. Source-only diagnosis found no within-scope defect. Claude must settle the actual mid-car/course/pit/surface design before more gameplay code; no driver-only slow profile or target change. Actual round-one art is next, separate from failed gameplay acceptance.'
 
     art_review_source: 7d51620ccad48a0b91e035c5361c2c6055616a50
     art_review_packet: 'p4-summit/docs/board/looks/p4-summit/round-1.jpg and round-1-review.md; 16 actual High/Performance views, 309,720 B, zero warnings/errors, memory-only, no frames. Exterior Gallery visible; Open Road readability weak, no fork acceptance. Production/native exact to b7dd65eb; one camera-only recipe correction. Claude review pending; no lane/build/merge acceptance.'
+    claude_decision: "Claude 12 October (inbox): mid car Falcone F42; race 270 to 330 s; Summit pit bay limiter 180 m, lane at most 320 m; new warm-tarmac on sections A and B, tyre column warm, summer 1.0, winter tuned .72 to .88 in at most three attempts to meet summer-minus-pit 4 to 8 s and winter-minus-pit 2 to 5 s; every other surface, tyre and course exact. Art round one hold: Tremblant grove pines on B, Tremblant Snow snow and plough heaps, Harbour-level night exposure, accepted gallery kit, lit summit windows, a fork view."
 
   - id: P4-AVALANCHE
     title: "The avalanche on Summit Run"
@@ -5064,6 +5065,7 @@ tasks:
     needs: [DEEP-LOOK]
     status: ready
     flag: the-deep
+    locks: [surfaces]
     owns: [tools/test-deep-surface.mjs, docs/changes/DEEP-SURFACE.md]
     hooks: [src/race-surfaces.js, src/sim-driving.js]
     design_decision: "Claude, THE_DEEP 10.1: sea-floor in SURFACES only (not SURFACE_KINDS), tyre column asphalt, grip .75, top speed 70% of the car's own, acceleration 60%, turning drag 1.4x, gravity one third, landings never damage, hint SEA FLOOR, cue deep.sand-land.
