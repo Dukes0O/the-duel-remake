@@ -3,6 +3,7 @@
 import {COURSE} from '../src/config.js';
 import {useRacingLine} from './track-script-drive.mjs';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import {courseHasWinterSurfaces} from '../src/race-surfaces.js';
 import {getRouteVariants, supportsRouteVariants} from '../src/route-variants.js';
 import {lapCrossing as crossing, compactLapTrace, lapSectorTimes, analyseLap} from '../src/track-analysis.js';
 import {mkdirSync, renameSync, writeFileSync} from 'node:fs';
@@ -145,7 +146,9 @@ export function startReferenceApp(app, target) {
   app._saveProfile();
   const options = {startStage, seed: target.seed, mode: 'duel', car: REFERENCE_POLICY.car,
     driverId: REFERENCE_POLICY.driver, cpuDifficulty: REFERENCE_POLICY.cpu,
-    difficulty: 'casual', opponentCount: 0, upgrades: {}};
+    difficulty: 'casual', opponentCount: 0, upgrades: {},
+    // A course with snow or ice offers the tyre choice on the setup: the reference drives on winter tyres there.
+    ...(courseHasWinterSurfaces(COURSE[startStage]) ? {tyre: 'winter'} : {})};
   if (!app.startCampaign(options)) throw Error(`Reference event would not start: ${target.key}`);
   // Production App intentionally uses 1989 for fixed menu events. CIRCUITS
   // 7b.1 requires layoutSeed for the fixed reference. Restart this disposable

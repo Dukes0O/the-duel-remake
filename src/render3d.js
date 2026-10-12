@@ -43,7 +43,7 @@ import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTankerModel} from './arena/tanker-model.js';
-import {trackSnapshotPose} from './track-analysis.js';
+import {trackSnapshotPose, SNAPSHOT_FOV} from './track-analysis.js';
 
 const markerWorld = new THREE.Vector3();
 const markerView = new THREE.Vector3();
@@ -342,7 +342,7 @@ export function attachRenderer(host, app) {
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
       const ground = course.groundAt(distance, 0);
       camera.position.set(pose.position.x, pose.position.y, pose.position.z);
-      camera.up.set(0, 1, 0);camera.fov = 54;
+      camera.up.set(0, 1, 0);camera.fov = SNAPSHOT_FOV;
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined,

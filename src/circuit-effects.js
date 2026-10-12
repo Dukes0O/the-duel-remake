@@ -19,6 +19,22 @@
 //     Each stands at a point on the map (x, z), is turned `angle` radians (its
 //     `along` axis runs toward +z at angle 0) and carries forest colour with
 //     patches of autumn (`colours.forest`, `colours.autumn`) and pale ski runs.
+//   effects.lake.frozen  true: the lake is a frozen sheet (glossy blue-grey ice, snow-white toward the
+//     shore, no mist) instead of water; `colour` and `shallow` then colour the ice and the snow on it.
+//   hills[].palette  { floor, litter, run, runDry }: the colours of a hill and its ski runs (a winter hill).
+//   effects.backdrop.colours.snow  { from, blend, colour, share }: snow lies on the hills above `from`
+//     (a share of their height), fading in over `blend`; `share` is how much of the colour it takes.
+//   effects.backdrop.colours.patches  [{ colour, from, to, scale, seed, cut, share }]: patches of that colour (dark rock,
+//     dark forest) on the band of the slope from `from` to `to` (shares of its height), laid over the snow.
+//   effects.plainHills  true: the hills carry only their own colours, without the tile of tree crowns (a snowy hill).
+//   effects.skiers  { seed, hill: { count, scale }, backdrop: { count, scale } }
+//     Small skiers standing on the ski runs of the hills beside the road and of the far ski mountain
+//     (the first backdrop hill that has runs). Still figures, drawn once (circuit-winter.js).
+//   effects.birches  { seed, groves, depth: [from, to] }
+//     A few bare birches in small groves among the pines, `depth` metres beyond the road edge, off the circuit's
+//     `scenery.clear` zones and clear of every planted tree (circuit-winter.js draws them).
+//   effects.smoke  { id, local: [x, y, z], count, rise, life, size, wind, opacity }
+//     Smoke rising from the kit piece `id` (its own metres, `local` the chimney top).
 //   kitPlacements[].crowd  true on a `grandstand`: it fills with seated spectators (stand-crowd.js).
 //   effects.lift  { s, towers, lines, height, spacing, speed }
 //     A chairlift across the road. The towers, cable spans and chairs are kit
@@ -31,6 +47,7 @@ import { registerSceneSystem } from './scene-systems.js';
 import { trackKitsOf } from './track-kits.js';
 import { hillHeight, hillLocal, hillReach, runWeight, shoreFactor } from './circuit-hills.js';
 import { addStandCrowds } from './stand-crowd.js';
+import { addSkiers, addBirches, addChimneySmoke } from './circuit-winter.js';
 
 const TAU = Math.PI * 2;
 const smooth = x => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
@@ -65,8 +82,10 @@ export function lakeGeometry(course, lake) {
 }
 
 function lakeMesh(course, lake) {
-  const material = new THREE.MeshStandardMaterial({ name: 'Lake water', vertexColors: true, transparent: true, roughness: .9, metalness: 0,
-    envMapIntensity: .2, depthWrite: false, side: THREE.DoubleSide });
+  // Ice is matte here: a low sun on a glossy sheet gives a warm glare that hides its blue.
+  const material = lake.frozen
+    ? new THREE.MeshLambertMaterial({ name: 'Frozen lake', vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide })
+    : new THREE.MeshStandardMaterial({ name: 'Lake water', vertexColors: true, transparent: true, roughness: .9, metalness: 0, envMapIntensity: .2, depthWrite: false, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(lakeGeometry(course, lake), material);
   mesh.name = 'Lake'; mesh.receiveShadow = true; mesh.renderOrder = 1;
   return mesh;
@@ -144,7 +163,8 @@ function crownTexture() {
 // A hill: a dome following the ground, dark forest floor, with the ski runs paler.
 export function hillGeometry(course, hill) {
   const nu = 72, nv = 64, positions = [], colours = [], uvs = [], indices = [];
-  const floor = new THREE.Color(0x3f6a2e), litter = new THREE.Color(0x6e6230), run = new THREE.Color(0xd0e698), runDry = new THREE.Color(0xe0e6a0), mix = new THREE.Color();
+  const palette = hill.palette ?? {};
+  const floor = new THREE.Color(palette.floor ?? 0x3f6a2e), litter = new THREE.Color(palette.litter ?? 0x6e6230), run = new THREE.Color(palette.run ?? 0xd0e698), runDry = new THREE.Color(palette.runDry ?? 0xe0e6a0), mix = new THREE.Color();
   for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
     const du = (i / nu * 2 - 1) * hill.along, dv = (j / nv * 2 - 1) * hill.across;
     const s = hill.s + du, lateral = hill.lateral + dv, rise = hillHeight(hill, du, dv);
@@ -205,20 +225,29 @@ export function backdropGeometry(course, hill, colours = {}) {
   const forest = (colours.forest ?? [0x2f4a2a, 0x3b5a2d, 0x27412a]).map(c => new THREE.Color(c));
   const autumn = (colours.autumn ?? [0xb4631c, 0x9b3a24, 0xc59a2c]).map(c => new THREE.Color(c));
   const run = new THREE.Color(colours.run ?? 0xcbd08e), mix = new THREE.Color(), centre = hill;
+  const patches = (colours.patches ?? []).map(item => ({ ...item, colour: new THREE.Color(item.colour) }));
+  const cover = colours.snow ? { ...colours.snow, colour: new THREE.Color(colours.snow.colour ?? 0xe8eff5) } : null;
   const angle = hill.angle ?? 0, cos = Math.cos(angle), sin = Math.sin(angle);
   const positions = [], colourData = [], uvs = [], indices = [], used = [];
   for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
     const du = (i / nu * 2 - 1) * hill.along, dv = (j / nv * 2 - 1) * hill.across;
     const x = centre.x + sin * du + cos * dv, z = centre.z + cos * du - sin * dv;
     const near = course.nearest(x, z), rise = backdropRise(hill, du, dv);
-    positions.push(x, course.groundAt(near.s, near.lateral).y + .1 + rise, z); uvs.push(x / CROWN_TILE, z / CROWN_TILE);
+    positions.push(x, (course.farGroundY ? course.farGroundY(x, z, near.s, near.lateral) : course.groundAt(near.s, near.lateral).y) + .1 + rise, z); uvs.push(x / CROWN_TILE, z / CROWN_TILE);
     // Forest floor in big clumps, autumn where a slow swell is high, speckle from the cell.
     const clump = noise(x * .03, z * .03), swell = noise(x * .012 + 7, z * .012 + 3) + .5 * (noise(x * .04, z * .04) - .5);
     mix.copy(forest[Math.floor(clump * forest.length * .999)]).multiplyScalar(.82 + .36 * hash(Math.round(x / cell), Math.round(z / cell)));
     const turn = smooth((swell - (colours.cut ?? .5)) / .16) * (colours.share ?? .85);
     if (turn > 0) mix.lerp(autumn[Math.floor(noise(x * .011 + 40, z * .011) * autumn.length * .999)], turn * (.6 + .4 * clump));
+    // Snow lies on the high ground (a little noise keeps its edge uneven).
+    if (cover) mix.lerp(cover.colour, smooth((rise / hill.height - cover.from + (clump - .5) * .12) / (cover.blend ?? .25)) * (cover.share ?? 1));
+    // Patches of another colour on a band of the slope (dark rock, dark forest): noise decides where they lie.
+    for (const item of patches) {
+      const high = rise / hill.height, band = smooth((high - item.from) / .1) * (1 - smooth((high - item.to) / .1));
+      mix.lerp(item.colour, smooth((noise(x * (item.scale ?? .02) + (item.seed ?? 0), z * (item.scale ?? .02)) - item.cut) / .12) * band * (item.share ?? 1));
+    }
     const onRun = runWeight(hill, du, dv);
-    if (onRun > 0) mix.lerp(run, onRun * .85).multiplyScalar(1 + .8 * onRun);
+    if (onRun > 0) mix.lerp(run, onRun * .85).multiplyScalar(1 + (cover ? .12 : .8) * onRun);
     colourData.push(mix.r, mix.g, mix.b);
     used.push(hillReach(hill, du, dv));
   }
@@ -261,7 +290,8 @@ function addKitMotion(group, course) {
     if (piece.ride?.role === 'cable') cables.push({ piece, index });
     if (piece.ride?.role === 'chair') chairs.push({ piece, index });
   });
-  if (!raised.length && !(lift && towers.length)) return;
+  const smokeAt = course.def.effects?.smoke, smoke = smokeAt && placements.some(piece => piece.id === smokeAt.id) ? addChimneySmoke(group, smokeAt) : null;
+  if (!raised.length && !(lift && towers.length) && !smoke) return;
   let prepared = false, tops = null;
   const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), rotation = new THREE.Quaternion(), scale = new THREE.Vector3(1, 1, 1), roll = new THREE.Quaternion();
   const tangent = lift ? course.at(lift.s).heading : 0;
@@ -310,15 +340,78 @@ function addKitMotion(group, course) {
       // Chairs shrink away at the ends of the line rather than popping out.
       const grow = smooth(Math.min(travel, total - travel) / 8);
       position.copy(point); position.y -= CHAIR_HANGER * grow;
-      kits.setPlacementPose(index, matrix.compose(position, rotation, scale.setScalar(Math.max(.001, grow))));
+      kits.setPlacementPose(index, matrix.compose(position, rotation, scale.setScalar(Math.max(.001, grow))), false);
     }
+    kits.refresh();
   };
   registerSceneSystem(group, { animate(seconds) {
     const kits = trackKitsOf(group);
     if (!kits || kits.status !== 'ready') return;
-    if (!prepared) { prepared = true; prepare(kits); }
+    if (!prepared) {
+      prepared = true; prepare(kits);
+      // The chimney top, in the world, once the lodge stands where it will stay.
+      if (smoke) smoke.place(new THREE.Vector3(...smokeAt.local).applyMatrix4(kits.getPlacementPose(placements.findIndex(piece => piece.id === smokeAt.id))));
+    }
     if (lift && chairs.length) moveChairs(seconds);
+    smoke?.animate(seconds);
   } });
+}
+
+// Where the skiers stand: on the runs of a hill, down the slope toward its foot, each a little off the
+// middle of the run and turned a little across it. A stream of its own keeps every other choice the same.
+export function skierSpots(course, config) {
+  let seed = config.seed ?? 0x5c1e5;
+  const random = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const spots = [];
+  const along = (hill, count, scale, place) => {
+    const runs = hill.runs ?? [], total = runs.reduce((sum, run) => sum + Math.hypot(run.to[0] - run.from[0], run.to[1] - run.from[1]), 0);
+    for (let n = 0; n < count && total > 0; n++) {
+      let pick = random() * total, run = runs[0];
+      for (const item of runs) { pick -= Math.hypot(item.to[0] - item.from[0], item.to[1] - item.from[1]); if (pick <= 0) { run = item; break; } }
+      const t = .06 + random() * .88, ex = run.to[0] - run.from[0], ey = run.to[1] - run.from[1], length = Math.hypot(ex, ey) || 1;
+      const side = (random() - .5) * run.width * .6, du = run.from[0] + ex * t - ey / length * side, dv = run.from[1] + ey * t + ex / length * side;
+      if (hillReach(hill, du, dv) > .97) continue;
+      const here = place(du, dv), ahead = place(du + ex / length * 3, dv + ey / length * 3);
+      spots.push({ x: here.x, y: here.y, z: here.z, yaw: Math.atan2(ahead.x - here.x, ahead.z - here.z) + (random() - .5) * .7,
+        scale: scale * (.92 + random() * .2), jacket: Math.floor(random() * 64) });
+    }
+  };
+  const near = config.hill;
+  if (near) (course.def.hills ?? []).forEach(hill => along(hill, near.count ?? 30, near.scale ?? 1, (du, dv) => {
+    const s = hill.s + du, lateral = hill.lateral + dv, point = course.worldAt(s, lateral);
+    return { x: point.x, z: point.z, y: course.groundAt(s, lateral).y + hillHeight(hill, du, dv) };
+  }));
+  const far = config.backdrop, ski = far && course.def.effects?.backdrop?.hills.find(hill => hill.runs?.length);
+  if (ski) {
+    const cos = Math.cos(ski.angle ?? 0), sin = Math.sin(ski.angle ?? 0);
+    along(ski, far.count ?? 40, far.scale ?? 3, (du, dv) => {
+      const x = ski.x + sin * du + cos * dv, z = ski.z + cos * du - sin * dv, found = course.nearest(x, z);
+      return { x, z, y: course.groundAt(found.s, found.lateral).y + .1 + backdropRise(ski, du, dv) };
+    });
+  }
+  return spots;
+}
+
+export function birchSpots(course, config) {
+  let seed = config.seed ?? 0xb1c4;
+  const random = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const [near, far] = config.depth ?? [14, 34], zones = course.def.scenery?.clear ?? [], spots = [];
+  for (let grove = 0, tries = 0; grove < (config.groves ?? 14) && tries < 400; tries++) {
+    const s = random() * course.length, side = random() < .5 ? -1 : 1, lateral = side * (course.roadHalfWidthAt(s) + near + random() * (far - near));
+    const phase = course.phase(s);
+    if (zones.some(zone => phase >= zone.s0 - 12 && phase <= zone.s1 + 12 && lateral >= zone.from - 12 && lateral <= zone.to + 12)) continue;
+    const found = course.worldAt(s, lateral), road = course.nearest(found.x, found.z);
+    const piece = course.script?.pieceAt(road.s);
+    if (piece?.kind === 'turn' && Math.sign(road.lateral) === piece.dir) continue;
+    grove++;
+    for (let i = 0, count = 3 + Math.floor(random() * 3); i < count; i++) {
+      const ds = (random() - .5) * 14, dl = (random() - .5) * 10, point = course.worldAt(s + ds, lateral + dl), nearest = course.nearest(point.x, point.z);
+      if (nearest.distance < course.roadHalfWidthAt(nearest.s) + 12) continue;
+      if (course.features.trees.some(tree => Math.hypot(tree.x - point.x, tree.z - point.z) < 2.2 * (tree.scale ?? 1))) continue;
+      spots.push({ x: point.x, z: point.z, y: course.groundAt(s + ds, lateral + dl).y, yaw: random() * Math.PI * 2, scale: .8 + random() * .55 });
+    }
+  }
+  return spots;
 }
 
 export function addCircuitEffects(group, course) {
@@ -328,10 +421,12 @@ export function addCircuitEffects(group, course) {
     group.add(mesh);
     if (effects.mist) addMist(group, course, effects.lake, mesh.geometry.userData.level, effects.mist);
   }
-  const hills = course.def.hills ?? [], crowns = hills.length || effects.backdrop ? crownTexture() : null;
+  const hills = course.def.hills ?? [], crowns = (hills.length || effects.backdrop) && !effects.plainHills ? crownTexture() : null;
   hills.forEach((hill, index) => group.add(hillMesh(course, hill, index, crowns)));
   if (effects.backdrop) addBackdrop(group, course, effects.backdrop, crowns);
   if (crowns) registerSceneSystem(group, { dispose() { crowns.dispose(); } });
   addKitMotion(group, course);
+  if (effects.skiers) addSkiers(group, skierSpots(course, effects.skiers));
+  if (effects.birches) addBirches(group, birchSpots(course, effects.birches));
   addStandCrowds(group, course);
 }

@@ -293,15 +293,43 @@ export function cornerId(corner) {
   return slug || `c${corner.number}`;
 }
 
+// The Team Room picture is an elevated chase view, like the race camera pulled
+// up and back: the eye floats `up` metres above the road and CHASE metres behind
+// the viewing point (the braking point for a corner), looking down the road at
+// the feature. A corner is aimed at its apex; a crest or passing zone looks
+// `ahead` metres past the viewing point. Nothing in this file touches race state.
+export const SNAPSHOT_UP = 9;          // metres above the road
+export const SNAPSHOT_CHASE = 18;      // metres behind the viewing point
+export const SNAPSHOT_CLEARANCE = 9;     // metres the eye stays above any other road passing close by (a deck over the road below)
+export const SNAPSHOT_FOV = 58;         // vertical field of view in degrees, a little wider than the race camera
+export const SNAPSHOT_MAX_APPROACH = 60; // furthest the apex may be from the viewing point, so the corner stays big in frame
+
+// Another stretch of the same lap can pass right beside this one on higher ground (the road below a
+// hairpin runs under the approach to it). Report the highest road within `radius` metres sideways
+// that is not just the neighbouring road metres along this one.
+function highestNearbyRoad(course, eye, s, radius = 32) {
+  let top = -Infinity;
+  for (let along = 0; along < course.length; along += 8) {
+    const gap = Math.abs(wrap(along - s + course.length / 2, course.length) - course.length / 2);
+    if (gap < 90) continue;
+    const point = course.at(along);
+    if (Math.hypot(point.x - eye.x, point.z - eye.z) < radius) top = Math.max(top, course.groundAt(along, 0).y);
+  }
+  return top;
+}
+
 export function trackSnapshotPose(course, flag) {
   const {snapshotS, camera} = flag ?? {};
   if (![snapshotS, camera?.up, camera?.ahead].every(Number.isFinite) || camera.up <= 0 || camera.ahead <= 0)
     throw Error('Track snapshot needs a finite approach position and positive camera height/look-ahead.');
-  const s = wrap(snapshotS, course.length), ahead = wrap(s + camera.ahead, course.length);
-  const eye = course.at(s), target = course.at(ahead);
-  return {position: {x: eye.x, y: course.groundAt(s, 0).y + camera.up, z: eye.z},
-    target: {x: target.x, y: course.groundAt(ahead, 0).y + camera.up, z: target.z},
-    heading: eye.heading, s};
+  const s = wrap(snapshotS - SNAPSHOT_CHASE, course.length), aimS = wrap(snapshotS + camera.ahead, course.length);
+  const eye = course.at(s), target = course.at(aimS);
+  // Inside a tunnel the eye stays under the roof.
+  const roof = course.tunnelAt?.(s)?.height, up = roof ? Math.min(camera.up, roof - 1.5) : camera.up;
+  const ground = course.groundAt(s, 0).y, above = highestNearbyRoad(course, eye, s) + SNAPSHOT_CLEARANCE;
+  return {position: {x: eye.x, y: Math.max(ground + up, roof ? -Infinity : above), z: eye.z},
+    target: {x: target.x, y: course.groundAt(aimS, 0).y, z: target.z},
+    heading: eye.heading, s, viewS: wrap(snapshotS, course.length)};
 }
 
 // Interpolate an actual forward crossing. The caller keeps the native lap
@@ -438,14 +466,19 @@ export function buildTrackDossier(course, {route = 'fixed', reference, authored}
   const measured = new Map(reference.corners.map(corner => [corner.id, corner]));
   const notes = new Map(analysis.corners.map(corner => [cornerId(corner),
     engineerNote(corner, measured.get(cornerId(corner)), intel.notes[cornerId(corner)])]));
+  // A corner is viewed from its braking point, but never from so far back that it shrinks to a speck,
+  // and always aimed at its real apex (an authored flag may sit earlier on the road than the apex).
+  const cornerViews = new Map(analysis.corners.map(corner => {
+    const brakeS = measured.get(cornerId(corner))?.brakeS ?? corner.brakeS;
+    const braking = wrap(corner.apexS - brakeS, course.length), approach = Math.min(braking, SNAPSHOT_MAX_APPROACH);
+    return [cornerId(corner), {approach, viewS: braking > approach ? wrap(corner.apexS - approach, course.length) : wrap(brakeS, course.length)}];
+  }));
   const generated = [];
   for (const corner of analysis.corners) {
-    const id = cornerId(corner), sample = measured.get(id);
+    const id = cornerId(corner);
     if (!corner.slow) continue;
-    const brakeS = sample?.brakeS ?? corner.brakeS;
     generated.push({id, kind: 'corner', s: corner.apexS, title: corner.name || `Corner ${corner.number}`,
-      snapshotS: wrap(brakeS, course.length), engineer: notes.get(id),
-      camera: {back: wrap(corner.apexS - brakeS, course.length), up: 1.2, ahead: 70}, generated: true});
+      engineer: notes.get(id), generated: true});
   }
   for (const crest of analysis.crests) generated.push({id: `crest-${crest.number}`, kind: 'crest',
     s: crest.s, title: crest.label, engineer: {note: 'Settle the car before the crest. Keep steering smooth as the road drops away.'}, generated: true});
@@ -480,7 +513,13 @@ export function buildTrackDossier(course, {route = 'fixed', reference, authored}
   const list = [...flags.values()].map(flag => {
     if (!flag.id || !['corner', 'crest', 'signature', 'overtaking'].includes(flag.kind) || !Number.isFinite(flag.s))
       throw Error('Authored flag needs an id, known kind and finite lap position.');
-    const camera = {back: 30, up: 1.2, ahead: 70, ...flag.camera};
+    // Any flag that stands for an analysed corner (even a signature view of a hairpin) is aimed at its apex.
+    const cornerView = cornerViews.get(flag.id) ?? null;
+    const writtenCamera = authoredFlags.some(item => item.id === flag.id && Object.keys(item.camera ?? {}).length > 0);
+    if (cornerView && !writtenCamera) return {...flag, s: wrap(flag.s, course.length), snapshotS: cornerView.viewS,
+      camera: {back: cornerView.approach, up: SNAPSHOT_UP, ahead: cornerView.approach, ...flag.camera}};
+    // Anything else looks `ahead` metres past its viewing point.
+    const camera = {back: 30, up: SNAPSHOT_UP, ahead: 70, ...flag.camera};
     if (![camera.back, camera.up, camera.ahead].every(Number.isFinite) || camera.back < 0 || camera.up <= 0 || camera.ahead <= 0)
       throw Error('Snapshot camera needs non-negative back and positive height/look-ahead distances.');
     const hasWrittenView = authoredFlags.some(item => item.id === flag.id &&

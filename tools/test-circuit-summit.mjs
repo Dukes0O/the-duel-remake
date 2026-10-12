@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import { SUMMIT_RUN, SUMMIT_GALLERY_BOUNDS } from '../src/circuits/summit-run.js';
+import { TREMBLANT_SNOW } from '../src/circuits/tremblant-snow.js';
 import { buildTrackScript } from '../src/track-script.js';
 import * as THREE from 'three';
 import {roadBranchMaterial} from '../src/world.js';
@@ -64,6 +65,12 @@ assert.equal(sampleCourseLightPath(course,{distance:11000}).settings.nightAmount
 const baseLight=sampleCourseLightPath(course,{distance:0}).settings;
 assert.equal(winterLightingSettings(baseLight,{course,distance:1000}),baseLight,'dry desert lighting retains the original object and values');
 assert.deepEqual(winterLightingSettings(baseLight,{course,distance:12000}),winterLightingSettings(baseLight),'full snowy range retains the full winter transform');
+const snowCourse=new Course(TREMBLANT_SNOW,1989);
+const authoredSnowLight=sampleCourseLightPath(snowCourse,{distance:0}).settings;
+assert.ok(authoredSnowLight.winter,'accepted Snow carries an authored winter look');
+const transformedSnowLight=winterLightingSettings(authoredSnowLight,{course:snowCourse,distance:1000});
+assert.deepEqual(transformedSnowLight,winterLightingSettings(authoredSnowLight),'legacy full-winter context retains exact values');
+for(const [key,value] of Object.entries(authoredSnowLight.winter))assert.deepEqual(transformedSnowLight[key],value,'accepted Snow winter overrides stay exact');
 const beforeLight=structuredClone(baseLight);
 const edgeLight=winterLightingSettings(baseLight,{course,distance:SUMMIT_RUN.snowWorld.ranges[0].from+6});
 assert.ok(edgeLight.exposure<baseLight.exposure&&edgeLight.exposure>winterLightingSettings(baseLight).exposure);

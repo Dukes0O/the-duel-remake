@@ -71,7 +71,7 @@ forward. The branch uses the actual winter surface material on its own clone.
 Lighting receives readonly course/distance context: zero winter weight returns
 the original base object exactly, full weight keeps the previous transform.
 Gallery queries use its actual 7.8 m roof half-width; the Open Road at -18 m
-is outside it. Gallery roof cameras use the flat 6.292 m underside. Legacy
+is outside it. Gallery roof cameras use the actual flat 5.0561127 m underside. Legacy
 tunnel range queries and arch constraints remain unchanged. The Director grants
 these narrow scene-lighting.js, render3d.js and camera-clearance.js hooks.
 Card tests add real dry/snow/material/roof controls; runs still await capacity.
@@ -163,3 +163,22 @@ excludes closed:false. All 27 closed targets and published keys stay unchanged.
 ## Removed
 
 None. This appends one dev course and bounded opt-ins to existing owners.
+
+## Accepted integration dependency sync
+
+Before resolving this lane's dependency merge, integration has accepted Claude's
+Tremblant Snow (stage 19), solid kit, ribbon-ground and winter-look fixes.
+Keep these exact paths and append Summit at stage 20 after Snow. The catalogue
+assertions change from four to five authored IDs/stages and from 24 to 25
+switches; both new courses stay dev. Closed reference targets change from 27
+to 28 because Snow is closed; Summit still supplies no cyclic target. Existing
+closed-road tolerances and published reference coverage remain unchanged.
+The winter lighting union preserves Claude's full-winter override exactly;
+only Summit's explicit mixed ranges blend the result with the dry base.
+This is dependency assembly inside the unfinished lane, not admission to
+integration. Focused, kit, native, art and lane/build checks remain pending.
+
+The existing Summit check also reads the real accepted Tremblant Snow light
+path: each authored winter override and the full-winter context result must
+remain exact after this union. This adds compatibility coverage, not a changed
+threshold.

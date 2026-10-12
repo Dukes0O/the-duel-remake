@@ -17,7 +17,7 @@ equal(REFERENCE_POLICY, {car: 'stuttgart_959s', driver: 'club', cpu: 'medium',
 const definitionsBefore = JSON.stringify(COURSE);
 const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(row => [row.id, row])).values()];
 const targets = referenceTargets();
-equal(targets.length, 27, 'Every current closed event/route, including native dev circuits, receives its own reference');
+equal(targets.length, 28, 'Every current closed event/route, including native dev circuits, receives its own reference');
 check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => targets.some(target => target.eventId === definition.id &&
   target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),

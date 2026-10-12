@@ -13,7 +13,7 @@ export const FEATURE_STATES = Object.freeze({
   // Phase 4 (docs/CIRCUITS.md): racing a full field in a Grand Prix.
   'grand-prix': 'on', 'snow-world': 'dev',
   // Phase 4 circuits (docs/CIRCUITS.md): road layouts only until Codex finishes each.
-  'summit-run': 'dev', 'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'on',
+  'panorama-ridge': 'dev', 'harbour-lights': 'dev', 'tremblant-woods': 'on', 'tremblant-snow': 'dev', 'summit-run': 'dev',
   // The Deep (docs/THE_DEEP.md): the hidden underwater world. Off; nothing reaches it yet.
   'the-deep': 'dev',
 });

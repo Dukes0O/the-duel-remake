@@ -11,7 +11,8 @@ import { SUMMIT_RUN } from './summit-run.js';
 import { PANORAMA_RIDGE } from './panorama-ridge.js';
 import { HARBOUR_LIGHTS } from './harbour-lights.js';
 import { TREMBLANT_WOODS } from './tremblant-woods.js';
+import { TREMBLANT_SNOW } from './tremblant-snow.js';
 
-export const ALL_CIRCUITS = Object.freeze([PANORAMA_RIDGE, HARBOUR_LIGHTS, TREMBLANT_WOODS, SUMMIT_RUN]);
+export const ALL_CIRCUITS = Object.freeze([PANORAMA_RIDGE, HARBOUR_LIGHTS, TREMBLANT_WOODS, TREMBLANT_SNOW, SUMMIT_RUN]);
 export const circuitsEnabled = flags => Object.freeze(ALL_CIRCUITS.filter(circuit => flags.enabled(circuit.flag)));
 export const CIRCUITS = circuitsEnabled(featureFlags);

@@ -8,7 +8,7 @@ export const COURSE_PRICES=Object.freeze({
   'eifel-crown':1400,'alpine-serpent':1800,'azure-riviera':1400,
   'red-mesa':1600,'neon-docks':1800,'cloudbreak-skyway':2200,'titan-freestyle':900,
   // Phase 4 circuits, behind their switches (docs/CIRCUITS.md section 7).
-  'panorama-ridge':1600,'tremblant-woods':1600,'harbour-lights':1800,'summit-run':2600,
+  'panorama-ridge':1600,'tremblant-woods':1600,'harbour-lights':1800,'tremblant-snow':1800,'summit-run':2600,
 });
 const included=()=>COURSE.filter(course=>COURSE_PRICES[course.id]===0).map(course=>course.id);
 const known=id=>typeof id==='string'&&COURSE.some(course=>course.id===id)&&Object.hasOwn(COURSE_PRICES,id);
