@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {EventEmitter} from 'node:events';
-import {join} from 'node:path';
+import {join,relative,sep} from 'node:path';
 import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
 
 let checks=0;const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;},check=(value,label)=>{assert.ok(value,label);checks++;};
@@ -122,11 +122,76 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'changed selection follows local source references');
   check(suitesForChanges(actual,['tools/test-test-runner.mjs']).includes('tools/test-test-runner.mjs'),
     'changed test files select themselves');
-  const computedRead=suitesForChanges(actual,['tools/menu-check.js','src/game.js']);
+  const computedRead=suitesForChanges(actual,['tools/unmapped-source-reader.js','src/game.js']);
   same(computedRead,actual,
     'an unmapped computed-URL source selects every suite even when another source has import matches');
   check(computedRead.includes('tools/test-qa-storage.mjs'),
-    'changed menu-check source retains the source-text QA storage suite');
+    'unknown source fallback retains the source-text QA storage suite');
+  check(localDependencies('tools/test-qa-storage.mjs').has('tools/menu-check.js'),
+    'the finite existing computed bootstrap reader is an explicit dependency');
+  const pine=suitesForChanges(actual,['public/assets/textures/pine-bough.png']);
+  check(pine.includes('tools/test-pine-material.mjs')&&pine.includes('tools/test-vegetation-cells.mjs'),
+    'known pine bytes include their real direct and transitive rendering consumers');
+  check(pine.length<actual.length&&!pine.includes(CAMPAIGN_SUITE)&&!pine.includes('tools/test-polyline-index.mjs'),
+    'known texture changes do not select unrelated campaigns or pure spatial indexing solely for being public');
+  const css=suitesForChanges(actual,['src/style.css']);
+  check(css.includes('tools/test-driver-ui.mjs')&&css.includes('tools/test-build-update.mjs')&&
+    css.includes('tools/test-course-access.mjs')&&css.includes('tools/test-jump-height-hud.mjs'),
+    'known screen CSS retains every direct source-text CSS check');
+  check(css.length<actual.length&&!css.includes(CAMPAIGN_SUITE),
+    'known presentation CSS no longer triggers the blanket full fallback');
+  const kits=suitesForChanges(actual,['public/assets/models/circuits/kits/pit-garage.glb']);
+  check(['tools/test-p4-kits.mjs','tools/test-track-kits.mjs','tools/test-blender-output.mjs'].every(suite=>kits.includes(suite)),
+    'computed runtime and manifest/directory kit readers remain in the affected set');
+  check(kits.length<actual.length&&!kits.includes(CAMPAIGN_SUITE),
+    'known kit GLB changes exclude unrelated campaigns');
+  const manifest=suitesForChanges(actual,['public/assets/models/circuits/kits/manifest.json']);
+  check(['tools/test-p4-kits.mjs','tools/test-circuit-harbour.mjs','tools/test-circuit-tremblant.mjs'].every(suite=>manifest.includes(suite)),
+    'manifest changes retain all existing direct and computed manifest readers');
+  same(suitesForChanges(actual,['src/style.css','public/assets/textures/pine-bough.png']),
+    actual.filter(suite=>new Set([...css,...pine]).has(suite)),
+    'mixed known changes select the ordered union without losing a consumer');
+  for(const unknown of ['public/assets/textures/unmapped.png','src/new-presentation.css',
+    'public/assets/models/circuits/kits/unmapped.png','public/assets/models/circuits/kits/nested/unknown.glb'])
+    same(suitesForChanges(actual,['public/assets/textures/pine-bough.png',unknown]),actual,
+      'each unknown or unaudited asset/CSS path preserves full fallback: '+unknown);
+  for(const config of ['tools/run-tests.mjs','package-lock.json','pnpm-lock.yaml','vite.config.js','tools/vite-qa.config.js','src/config.js'])
+    same(suitesForChanges(actual,[config]),actual,'runner/dependency/config edits retain full selection: '+config);
+  // Existing dependency-injection options model add/delete and incomplete reads without filesystem edits.
+  const virtualRoot=join(PROJECT_ROOT,'runner dependency fixture'),
+    virtualSuites=['tools/test-reader.mjs','tools/test-pine-material.mjs','tools/test-unrelated.mjs'];
+  const virtualSources=new Map([
+    ['tools/test-reader.mjs',"import '../src/vegetation.js';"],
+    ['tools/test-pine-material.mjs',"new URL('../public/assets/textures/pine-bough.png',import.meta.url);"],
+    ['tools/test-unrelated.mjs',''],['src/vegetation.js',"import './tree-leaf.js';"],['src/tree-leaf.js','']
+  ]);
+  const nameOf=path=>relative(virtualRoot,path).split(sep).join('/');
+  const graphOptions={projectRoot:virtualRoot,hasFile:path=>virtualSources.has(nameOf(path)),
+    readSource:path=>{const name=nameOf(path);if(!virtualSources.has(name))throw Error('missing '+name);return virtualSources.get(name);}};
+  const knownPath='public/assets/textures/pine-bough.png',expected=virtualSuites.slice(0,2);
+  virtualSources.set(knownPath,'binary bytes');
+  same(suitesForChanges(virtualSuites,[knownPath],graphOptions),expected,'known added asset includes all proven consumers');
+  virtualSources.delete(knownPath);
+  same(suitesForChanges(virtualSuites,[knownPath],graphOptions),expected,'known deleted asset keeps literal and computed readers');
+  same(suitesForChanges(virtualSuites,['src/tree-leaf.js'],graphOptions),[virtualSuites[0]],
+    'source dependency selection follows the complete transitive chain');
+  const possibleSuites=[...virtualSuites,'tools/test-computed.mjs','tools/test-filesystem.mjs'];
+  virtualSources.set('tools/test-computed.mjs','const file=globalThis.modulePath; await import(file);');
+  virtualSources.set('tools/test-filesystem.mjs',"import {readFile} from 'node:fs/promises'; const path=globalThis.assetPath; await readFile(path);");
+  same(suitesForChanges(possibleSuites,[knownPath],graphOptions),[...expected,...possibleSuites.slice(3)],
+    'audited assets include arbitrary computed-import and filesystem consumers without guessing targets');
+  same(suitesForChanges(possibleSuites,['public/assets/unknown.bin'],graphOptions),possibleSuites,
+    'possible-consumer inclusion never narrows an unknown asset');
+  same(suitesForChanges(possibleSuites,['src/tree-leaf.js'],graphOptions),[virtualSuites[0],...possibleSuites.slice(3)],
+    'mapped source includes static and every possible fs/computed consumer but omits unrelated pure suites');
+  same(suitesForChanges(possibleSuites,['src/unmapped-source.js'],graphOptions),possibleSuites,
+    'unknown source keeps full fallback even when possible readers are included');
+
+
+  const brokenOptions={...graphOptions,readSource:path=>{if(nameOf(path)==='src/vegetation.js')throw Error('unreadable');return graphOptions.readSource(path);}};
+  same(suitesForChanges(virtualSuites,[knownPath],brokenOptions),virtualSuites,'an incomplete audited reader graph falls back full');
+  virtualSources.delete('src/vegetation.js');
+  same(suitesForChanges(virtualSuites,[knownPath],graphOptions),virtualSuites,'missing audited reader/import coverage falls back full');
   same(suitesForChanges(actual,['docs/OPERATIONS.md']),[],'documentation edits do not claim unrelated import coverage');
   same(suitesForChanges(actual,['package.json']),actual,'dependency metadata changes conservatively select every suite');
   const calls=[];

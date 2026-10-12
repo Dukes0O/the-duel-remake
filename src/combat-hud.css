@@ -56,6 +56,10 @@
 
 .bounty-screen-arrow{position:absolute;transform:translate(-50%,-100%);display:grid;justify-items:center;gap:2px;color:#ffd773;pointer-events:none;text-shadow:0 2px 4px #000;font-weight:800;font-size:11px;z-index:3}
 .bounty-screen-arrow[hidden]{display:none}
+.fuel-screen-arrow{position:absolute;left:50%;top:20%;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;pointer-events:none;font-weight:800;font-size:13px;z-index:3;text-shadow:0 2px 5px #000}
+.fuel-screen-arrow[hidden]{display:none}
+.fuel-screen-arrow span{display:block;font-size:72px;line-height:1;-webkit-text-stroke:3px #101010;paint-order:stroke fill;filter:drop-shadow(0 0 8px currentColor)}
+.fuel-screen-arrow b{padding:3px 9px;background:#101010e8;border:2px solid currentColor;white-space:nowrap;letter-spacing:.04em}
 .bounty-screen-arrow span{display:block;font-size:29px;line-height:1}
 .bounty-screen-arrow b{padding:3px 6px;background:#251b10e0;border:1px solid #ffb52e99;white-space:nowrap}
 .combat-opponent-marker.is-marked{border-color:#ffb52e;box-shadow:0 0 0 1px #ffb52e}

@@ -84,25 +84,26 @@ the numbers after merging Tremblant's test driver (the first pass with it
 needed new paces; before the merge the same targets held with the older driver).
 The Medium run here is 3.0 passes, right on the limit.
 
-## Frame cost (not yet within the limit)
+## Frame cost (within the limit)
 
-`node tools/browser-harness.mjs scenario harbour-night`, 1280x720, quiet slot,
-eight cars at night, High preset, delivered frames (p50 / p95):
+An earlier High reading of about 33 ms (p95 50 ms) was taken while other
+lane gates were running on the same laptop and was not a real result. The
+culling card has since merged. Clean rerun of
+`node tools/browser-harness.mjs scenario harbour-night` (11 October 2026, 23:40
+UTC, 1280x720, no other gate, build or browser check running, graphics card
+idle), eight cars at night, delivered frames:
 
-| View | Without any kit pieces | With the full street |
+| View | High p50 / p95 | Performance p50 / p95 |
 | --- | --- | --- |
-| Start grid, 8 cars | 18.0 / 18.1 ms (3.4 M triangles, 1,502 draws) | 18.0 / **35.5 ms**, 11 frames over 33 ms (10.7 M triangles, 1,840 draws) |
-| Old town, 8 cars | 17.6 / 18.1 ms | 17.7 / 18.2 ms, 5 frames over 33 ms (16.7 M triangles, 2,569 draws) |
+| Mid race (after the start), 8 cars | 17.8 / 18.2 ms (3,001 draws, 4.5 M triangles, 0 slow frames) | 17.6 / 18.1 ms (1,836 draws, 2.9 M triangles) |
+| Old town, 8 cars | 18.0 / 18.1 ms (3,780 draws, 5.7 M triangles, 3 frames over 33 ms) | 17.5 / 18.1 ms (1,826 draws, 2.8 M triangles) |
 
-The night lighting, water and wet road cost nothing measurable. The kit adds
-7 to 13 M triangles because the shared loader draws every placement's
-detailed and distant version in both views whether near or not, so cost grows
-with the circuit's placement count. Codex has the culling card (chunks along
-the road, only near chunks drawn, a cheaper rear view); the full street stays.
-Performance has not been measured with the street yet. A race start with the
-current loader takes about 30 s (per-triangle clearance check of 1,969
-placements, tested in Node); the same card targets under 1 s.
-**Re-measure High then Performance with the scenario once that card merges.**
+All four are within the 18.5 ms limit, so no code change was needed. Where the
+High time goes (one-off probe, not kept): the contact-shading pass redraws the
+opaque scene a second time (about 1,400 draws, roughly half of High's render
+work on this street); shadows add under 300 draws. If Harbour ever needs more
+headroom on High, limiting that second pass to nearby pieces is the first
+thing to try.
 
 ## Checks
 

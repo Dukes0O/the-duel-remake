@@ -34,6 +34,9 @@ finishing pass and Kyle's play in the Preview.
    rule for phase 4 only (Kyle's decision).
 2. **A pure race.** Grand Prix events have no oncoming traffic, no police and
    no radar traps: you against a full field on a closed road.
+   The Grand Circuits do not host Mad Max Duel, raiders or the UFO (Kyle, 11
+   October 2026): each sets `noCombat`, which `supportsCombat` honours. Rival
+   Duel, Time Trial and Grand Prix stay.
 3. **Keyboard first.** Every corner can be driven well on the arrow keys.
    Only one corner in the whole phase is tighter than 14 m radius (Harbour
    Lights' hairpin, the signature). Every slow corner has braking boards and

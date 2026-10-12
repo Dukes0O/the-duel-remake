@@ -3,7 +3,7 @@
 // Pit's builder, this runs only for definitions that carry a `script`.
 import { TRACK_SCRIPT, TrackScriptError, buildRacingLine } from './track-script.js';
 import { escapeRoadsFor, escapeFrame } from './escape-roads.js';
-import { checkSurfaceRules, iceBoards } from './race-surfaces.js';
+import { checkSurfaceRules, iceBoards, winterBankPatches } from './race-surfaces.js';
 import { hillLocal, hillReach, hillHeight, runWeight, basinReach } from './circuit-hills.js';
 import { makeRng } from './rng.js';
 import {installPitLane, pitAt} from './pit-lane.js';
@@ -21,6 +21,7 @@ export function installTrackScript(course, dynamics) {
   f.boards = script.boards.map(board => ({ ...board }));
   // Surface patches (ice, a drift of deep snow...) lie on top of the script's stretches.
   f.surfacePatches = (course.def.surfacePatches || []).map(patch => ({ from: -Infinity, to: Infinity, ...patch }));
+  f.surfacePatches.push(...winterBankPatches(script, course.def.snowWorld));
   const problems = checkSurfaceRules(script, f.surfacePatches);
   if (problems.length) throw new TrackScriptError(`Track script "${script.id}" breaks the surface rules: ${problems.join(' ')}`);
   f.boards.push(...iceBoards(script, f.surfacePatches));

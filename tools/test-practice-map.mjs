@@ -10,7 +10,8 @@ let checks=0;const check=(v,label)=>{assert.ok(v,label);checks++;},equal=(a,b,la
 // Captured before this practice-only patch: preserve every public map/preview
 // value, every Float32 path and every marker on the original fifteen courses.
 const legacy=createHash('sha256');
-for(const def of COURSE.filter(def=>!def.practice)){const c=new Course(def,1989);legacy.update(JSON.stringify([buildRouteMapGeometry(c),buildCoursePreview(c)]));}
+// Authored Grand Prix circuits (def.script) came later; the digest covers the original fifteen.
+for(const def of COURSE.filter(def=>!def.practice&&!def.script)){const c=new Course(def,1989);legacy.update(JSON.stringify([buildRouteMapGeometry(c),buildCoursePreview(c)]));}
 equal(legacy.digest('hex'),'4a35afd7b957069ab89f165f5b01e2c3371ceb8f638a554fd899962348411f4a','all fifteen race maps and previews remain byte-identical');
 const course=new Course(COURSE.find(def=>def.practice),1989),before=JSON.stringify(course.features),layout=freestyleLayout(course),preview=buildCoursePreview(course),map=preview.map;
 equal(preview.biomes.map(b=>b.label),['Quarry'],'practice is Quarry, not Stadium');equal(preview.laps,0,'practice has no lap objective');equal(preview.distanceKm,0,'practice does not claim a race distance');

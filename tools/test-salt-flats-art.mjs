@@ -148,6 +148,22 @@ for(const car of Object.keys(CARS))check(car+': exact inherited floor containmen
 check('all native visible solid envelopes retain actual Course collision correspondence',()=>{
   for(const solid of solids){
     assert.ok(solid.obstacle,solid.feature.id+': native obstacle corresponds to visible source');
+    // SCRAPDOME-TANKER-FIX: a piece placed along the ring is drawn turned, so its
+    // collision is the turned box, not the map-aligned box around it. It must
+    // keep the drawn centre and stay inside the map-aligned bounds; the turned
+    // fit itself is measured in tools/test-arena-wall-fit.mjs.
+    if(/boundary-|salvage-island-/.test(solid.feature.id)){
+      const o=solid.obstacle,cosine=Math.abs(Math.cos(o.heading)),sine=Math.abs(Math.sin(o.heading));
+      assert.ok(Math.abs(o.x-(solid.bounds.min.x+solid.bounds.max.x)/2)<=precision&&
+        Math.abs(o.z-(solid.bounds.min.z+solid.bounds.max.z)/2)<=precision,solid.feature.id+': turned collider keeps the drawn centre');
+      // Ends run on into the slots between pieces (up to 1.6 m) to close the wall.
+      assert.ok(cosine*o.halfX+sine*o.halfZ<=(solid.bounds.max.x-solid.bounds.min.x)/2+1.6&&
+        sine*o.halfX+cosine*o.halfZ<=(solid.bounds.max.z-solid.bounds.min.z)/2+1.6,solid.feature.id+': turned collider stays near the drawn bounds');
+      const sweepFrom={x:o.x-Math.cos(o.heading)*(o.halfX+body.halfWidth+1),y:0,z:o.z+Math.sin(o.heading)*(o.halfX+body.halfWidth+1)};
+      assert.ok(sweepObstacle(sweepFrom,{x:o.x,y:0,z:o.z},o,o.heading,body),solid.feature.id+': actual ground-level car sweep is solid');
+      assert.ok(solid.polygons.length,'solid contact is backed by actual body-height source triangles');
+      continue;
+    }
     for(const [axis,half]of [['x','halfX'],['z','halfZ']]){
       assert.ok(Math.abs(solid.obstacle[axis]-(solid.bounds.min[axis]+solid.bounds.max[axis])/2)<=precision);
       const index=axis==='x'?0:2;

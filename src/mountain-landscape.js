@@ -24,11 +24,13 @@ export function rockTexture(theme) {
   return textureCache.get(name);
 }
 
-export function createMountainMaterial(theme,texture,{ridgeOutcrops=false}={}) {
+export function createMountainMaterial(theme,texture,{ridgeOutcrops=false,winterCaps=false}={}) {
   const material=new THREE.MeshStandardMaterial({map:texture,bumpMap:texture,bumpScale:.24,roughness:.96,color:theme==='desert'?0xe0cabb:theme==='coast'?0xb9bdad:0xbac2c5});
   material.name=`World mapped ${theme} rock`;
+  const caps=winterCaps&&theme==='alpine';
+  material.userData.winterCaps=caps;
   material.userData.ridgeOutcrops=ridgeOutcrops;
-  material.customProgramCacheKey=()=>`connected-mountain-v2-${theme}`+(ridgeOutcrops?'-ridge-outcrops':'');
+  material.customProgramCacheKey=()=>`connected-mountain-v2-${theme}`+(caps?'-snow-caps':'')+(ridgeOutcrops?'-ridge-outcrops':'');
   material.onBeforeCompile=shader=>{
     shader.uniforms.mountainSnow={value:theme==='alpine'&&!ridgeOutcrops?1:0};
     shader.uniforms.mountainMoss={value:theme==='coast'?1:0};
@@ -61,7 +63,7 @@ export function createMountainMaterial(theme,texture,{ridgeOutcrops=false}={}) {
       float moss=mountainMoss*(1.0-smoothstep(.12,.43,vMountainHeight))*smoothstep(.42,.85,mountainNormal.y);
       diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.67,.79,.46),moss*.7);
       float mountainSnowLine=vMountainHeight+.042*sin(vMountainPosition.x*.071+vMountainPosition.z*.054)+.035*(mountainRock.r-.5);
-      float snow=mountainSnow*smoothstep(.54,.81,mountainSnowLine)*smoothstep(.24,.73,mountainNormal.y);
+      float snow=mountainSnow*smoothstep(${caps?'.38,.64':'.54,.81'},mountainSnowLine)*smoothstep(${caps?'.04,.32':'.24,.73'},mountainNormal.y);
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.83,.88,.91),snow*.95);
       float mountainBump=bumpScale*dot(mountainRock.rgb,vec3(.3333))*(1.0-snow*.86);`);
     shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`normal=perturbNormalArb(-vViewPosition,normal,vec2(dFdx(mountainBump),dFdy(mountainBump)),faceDirection);`);
@@ -71,7 +73,7 @@ export function createMountainMaterial(theme,texture,{ridgeOutcrops=false}={}) {
 
 export function addMountainLandscape(group,course) {
   if(!course.features.mountains.length)return;
-  const theme=course.def.theme,ridgeOutcrops=!!course.def.ridgeLandform,material=createMountainMaterial(theme,rockTexture(theme),{ridgeOutcrops});
+  const theme=course.def.theme,ridgeOutcrops=!!course.def.ridgeLandform,material=createMountainMaterial(theme,rockTexture(theme),{ridgeOutcrops,winterCaps:course.def.winterMountainCaps===true});
   for(let variant=0;variant<4;variant++){
     const features=course.features.mountains.filter((_,index)=>index%4===variant);if(!features.length)continue;
     const mesh=new THREE.InstancedMesh(buildMountainGeometry(variant,{ridgeOutcrops}),material,features.length);mesh.name=`${theme} ridge range ${variant+1}`;

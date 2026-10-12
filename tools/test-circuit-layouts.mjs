@@ -18,23 +18,27 @@ import { driveCircuit, lapTime } from './track-script-drive.mjs';
 const near = (a, b, tolerance, message = '') => assert.ok(Math.abs(a - b) <= tolerance, `${message} ${a} differs from ${b}`);
 const piece = (road, name) => road.pieces.find(item => item.name === name);
 
-test('each circuit is registered, behind its own dev switch, priced, and absent from COURSE until switched on', () => {
+test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
   assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['panorama-ridge', 'harbour-lights', 'tremblant-woods']);
+  // Tremblant Woods is released (RELEASE-TREMBLANT); the other two stay dev until their own release.
+  const released = ['tremblant-woods'];
   for (const circuit of ALL_CIRCUITS) {
     assert.equal(circuit.flag, circuit.id);
-    assert.equal(FEATURE_STATES[circuit.flag], 'dev');
+    assert.equal(FEATURE_STATES[circuit.flag], released.includes(circuit.id) ? 'on' : 'dev');
     assert.ok(COURSE_PRICES[circuit.id] > 0);
     assert.equal(circuit.kind, 'circuit'); assert.equal(circuit.noTraffic, true); assert.equal(circuit.hasRival, true);
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
   assert.deepEqual([COURSE_PRICES['panorama-ridge'], COURSE_PRICES['tremblant-woods'], COURSE_PRICES['harbour-lights']], [1600, 1600, 1800]);
-  assert.equal(CIRCUITS.length, 0, 'no switch on in the tests: COURSE is as released');
-  assert.equal(COURSE.length, 16);
+  assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
+  assert.equal(COURSE.length, 16 + released.length);
+  assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
+  assert.equal(COURSE[16].id, 'tremblant-woods', 'appended after the existing events');
   assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 3);
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['harbour-lights', 'tremblant-woods']);
-  assert.deepEqual([...circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=harbour-lights' }))], [], 'players never see a dev circuit');
+  assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=harbour-lights' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   for (const circuit of ALL_CIRCUITS) assert.ok(bat.includes(circuit.id), `the Preview turns ${circuit.id} on`);
 });
