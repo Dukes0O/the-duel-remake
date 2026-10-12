@@ -1,6 +1,6 @@
 # P4-SUMMIT
 
-Status: source built; actual reruns, native strategy, art and lane/build pending.
+Status: focused and actual kit checks pass; native strategy, art and lane/build pending.
 Own summit-run dev, stage 20 after Snow 19, stable id, 2,600 CR and noCombat.
 No release, frames, accepted art or final merge is claimed.
 
@@ -62,7 +62,7 @@ Total 14,219.9546 m; static all native 2 m inspection found 167.6946 m for pairs
 Root reviewed the 971449f2 source union; actual focused/High-LOD reruns remain pending.
 The existing focused test measures all 37 actual rendered-ground anchors before
 any correction. Real transformed roof portal coverage also needs observation.
-Native --drive uses existing useRacingLine(app, .95), same Medium / Falcone / 1989 / 
+Native --drive uses existing useRacingLine(app, .95), same Medium / Falcone / 1989 /
 4242 / six cars and legal pit inputs for summer, summer-to-winter pit, and winter
 from setup. Targets remain 360-480 s, pit 4-8 s faster than summer and starting
 winter 2-5 s slower than pit; actual full runs remain pending. No forced finishes.
@@ -72,6 +72,17 @@ No sheet exists yet; Claude acceptance and lane jobs 4 and build remain required
 Frames are deferred under Kyle rule 9, not passed. Price source/save review is
 clear pending actual fixtures. Avalanche, snowmen, yeti and finishing stay later.
 
+Actual 8367733b focused and target kit checks pass (39 High/LOD placements).
+All 37 Gallery anchors differ from rendered Float32 ground by at most 0.0000164 m.
+The summer native run stopped at 10,164.3991 m; zero runs completed after
+894.5583 racing seconds. Pit and winter were not reached. The unchanged-input
+first-collision witness proves a grounded front strike at 184.367 s against
+the first raised roof, with 5.056 m clearance; pillars/back/scenery miss.
+Before code, the Director grants only _staticContacts in sim-contacts: an
+explicit Gallery-roof vertical-clearance opt-in supplies missing ground y to
+existing sweeps through local cached copies. Unflagged/airborne paths stay exact.
+Add real grounded passage, airborne roof, pillar and unflagged regressions;
+keep every native target and driver input unchanged. Reruns remain pending.
 ## Accepted integration sync and changed assertions
 
 Sync accepted integration 4211bf2e, including Qualifying 401/401 and build 570 ms.

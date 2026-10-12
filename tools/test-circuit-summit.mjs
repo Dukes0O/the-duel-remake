@@ -136,6 +136,29 @@ try {
   assert.ok([duel.state,...duel.state.opponents].every(actor=>actor.s>0&&actor.s<45),'six real staggered grid poses fit the first straight');
   assert.equal(duel.state.combat,null);
   assert.equal(duel.state.traffic.length,0);
+  const state=duel.state,roof=duel.course.features.obstacles.find(actor=>actor.sourceBounds==='gallery-heavy-concrete-roof'&&actor.kitS===10176);
+  assert.equal(roof.verticalClearance,true,'only the authored overhead roof opts into missing ground height');
+  const contactPose={status:'racing',prevS:10160,s:10180,prevLateral:0,lateral:0,headingError:0,
+    speedMph:100,airborne:false,airHeight:0,prevAirHeight:0,groundHeight:null,prevGroundHeight:null,
+    invulnerableSec:0,impactTimer:0,damageCooldown:0,pushVelocity:0};
+  Object.assign(state,contactPose);
+  duel._staticContacts(state,true);
+  assert.equal(state.s,10180,'real grounded static contacts pass through the Gallery entrance');
+  assert.equal(state.impactTimer,0,'the raised roof does not crash a grounded car');
+  Object.assign(state,contactPose,{airborne:true,airHeight:5,prevAirHeight:5});
+  duel._staticContacts(state,true);
+  assert.ok(state.s<10170,'an airborne car still strikes the actual roof face');
+  assert.ok(state.impactTimer>0,'airborne roof contact reaches the native crash path');
+  const pillar=duel.course.features.obstacles.find(actor=>actor.sourceBounds==='gallery-concrete-pillar'&&actor.kitS===10176);
+  Object.assign(state,contactPose,{prevLateral:pillar.off,lateral:pillar.off});
+  duel._staticContacts(state,true);
+  assert.ok(state.s<10170,'the real Gallery entrance pillar remains solid');
+  roof.verticalClearance=false;
+  try {
+    Object.assign(state,contactPose);
+    duel._staticContacts(state,true);
+    assert.ok(state.s<10170,'unflagged grounded obstacles retain their historical horizontal contact');
+  } finally {roof.verticalClearance=true;}
 } finally { COURSE[0]=original; }
 // Separate stretches must not share terrain; hairpin neighbours are exempt.
 const points=geometry.samples;

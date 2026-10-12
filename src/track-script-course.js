@@ -331,6 +331,7 @@ export function trackScriptSolids(course) {
       const height=(bounds.max[1]-bounds.min[1])*scale[1];
       f.obstacles.push({id:`gallery-${bounds.name}-${row.s}`,kind:'prop',shape:'box',trackWall:true,
         sourceBounds:bounds.name,kitS:row.s,s:near.s,off:near.lateral,x,z,y,heading,
+        ...(bounds.name==='gallery-heavy-concrete-roof'?{verticalClearance:true}:{}),
         halfX:(bounds.max[0]-bounds.min[0])*.5*scale[0],halfZ:(bounds.max[2]-bounds.min[2])*.5*scale[2],
         height,minY:y,maxY:y+height,theme:course.themeAt(near.s)});
     }
