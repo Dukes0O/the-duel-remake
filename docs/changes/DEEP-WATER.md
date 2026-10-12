@@ -32,7 +32,7 @@ player_facing: false
 - `src/deep/sea-floor.js`, `src/deep/kelp.js`: builders accept ready
   `placements`; the floor grid is shared by the look test's single mesh and
   the zone tiles (`createFloorTiles`).
-- `tools/deep-zone-look.js`, `tools/fixtures/deep-sample-zone.js`, and
+- `tools/deep-look-zone.js`, `tools/fixtures/deep-sample-zone.js`, and
   `tools/deep-look.html?zone=sample`: a 2.1 km sample loop photographed
   through the scene hook. `tools/scenarios/deep-look.mjs` takes
   `DEEP_LOOK_ZONE=sample`.
@@ -41,7 +41,7 @@ player_facing: false
 
 ## Evidence
 
-- `node tools/test-deep-water.mjs`: 439 checks, under 1 s. The approved look
+- `node tools/test-deep-look-zone.mjs`: 439 checks, under 1 s. The approved look
   test is byte for byte unchanged (floor mesh and all four placement hashes).
 - Picture round one on the sample loop (High): shallows, kelp forest with
   the trail clear between stands, canopy, the deep stretch with headlights,
@@ -72,7 +72,7 @@ One ordinary review, changes needed, all applied:
 
 ## Behavior and test changes
 
-No existing assertion changed. New suite `tools/test-deep-water.mjs`. One of
+No existing assertion changed. New suite `tools/test-deep-look-zone.mjs`. One of
 its own checks changed during review: "kelp only where the trail asks" now
 means kelp amount above zero (`!(at.kelp > 0)`) instead of under 0.05,
 matching the density rule, which allows any amount above zero; one stem in
