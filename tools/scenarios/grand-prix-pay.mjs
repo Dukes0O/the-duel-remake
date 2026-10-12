@@ -56,6 +56,10 @@ export async function run(context) {
       positionPay:r.creditPositionReward,wallet:app.profile.credits,
       resultHeight:panel.getBoundingClientRect().height,viewportHeight:innerHeight};
   })()`);
+  await context.evaluate(`document.querySelectorAll('details').forEach(panel=>{
+    if(panel.querySelector('summary')?.textContent.startsWith('MENU QA'))panel.hidden=true;
+    else panel.open=false;
+  })`);
   await context.screenshot('grand-prix-paid-results');
   console.log('Actual paid GP result: '+JSON.stringify(report));
 }

@@ -41,3 +41,7 @@ The Director requires the precise retained-card GP storage and lap fixtures on t
 ## Browser scope, before code
 
 The Director grants tools/scenarios/grand-prix-pay.mjs using the existing private harness: one actual Pacific three-lap race, the existing legal driver serialized without rewriting its controls, memory storage, career dev enabled, actual result screenshot, positive-credit and duplicate-byte checks. Pacific is unscripted, so its driver does not call the scripted-course line helpers. No shortened target, forced result, frame sample, paired packet or shared harness edit. Run after the save/ghost checks in one available heavy slot.
+
+## Browser fixture correction
+
+The first native browser check passed all payment assertions with three laps, second place and 750 CR. The screenshot showed the late-created MENU QA tools panel covering part of the result. Hide only that QA-only panel after the finish before capture; keep the real metrics, table, buttons, scroll behavior, driver and all assertions unchanged. No runtime or style correction is needed.
