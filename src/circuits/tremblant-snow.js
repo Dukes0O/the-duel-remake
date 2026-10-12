@@ -45,20 +45,22 @@ const ICE = (() => {
 const WINTER = (() => {
   const lodgeStraight = piece('Lodge Straight'), ridge = piece('Ridge Run');
   return {
-    always: true, drifts: true,
+    always: true, drifts: true, softBanks: true,
     ranges: [{ from: lodgeStraight.s1, to: LENGTH + lodgeStraight.s0 }],
     exposed: [{ from: ridge.s0 + 30, to: ridge.s1 - 30 }],
   };
 })();
 
 // ---- the light: a winter morning ------------------------------------------------------------------
-// The sun is about 16 degrees up, pale and a little warm, so the long shadows fall cold and blue from
-// the sky's fill light. `winter` is laid over the shared winter look (snow-world.js).
+// A low sun, about 20 degrees up, warm and strong: it lights the snow faces that turn toward it (banks, pine
+// sides, the lodge) and leaves everything else in the sky's blue fill, so the shadows are clear and cold.
+// The fill is kept modest so the snow keeps its form instead of washing out. The sky is a clear pale blue,
+// paler toward the horizon. `winter` is laid over the shared winter look (snow-world.js).
 const MORNING = {
-  sunOffset: { x: -118, y: 34, z: 24 }, sunColor: 0xfff0dc, sun: 2.25, hemi: 1.65, env: .6, sunStrength: 1,
-  fog: 0xc6d4e2, fogNear: 320, fogFar: 2000, top: '#4f7fb3', horizon: '#e9e2da', ground: 0x6f93b8,
-  cloudTint: [.9, .88, .86], cloudCover: .45, exposure: 1.12, bloom: .12,
-  winter: { sunColor: 0xfff0dc, top: '#6e9cc9', horizon: '#eae3dc', fog: 0xc6d4e2, ground: 0x6c8fb6, cloudTint: [.9, .88, .86] },
+  sunOffset: { x: -118, y: 44, z: 24 }, sunColor: 0xffd9a8, sun: 3.0, hemi: 1.0, env: .5, sunStrength: 1,
+  fog: 0xbcd3ea, fogNear: 360, fogFar: 2300, top: '#3d78c2', horizon: '#cfe3f4', ground: 0x4a74ad,
+  cloudTint: [.95, .96, 1], cloudCover: .3, exposure: 1.1, bloom: .1,
+  winter: { sunColor: 0xffd9a8, top: '#4a85cc', horizon: '#d4e6f5', fog: 0xbcd3ea, ground: 0x4a74ad, cloudTint: [.95, .96, 1] },
 };
 
 // ---- the scenery ----------------------------------------------------------------------------------
@@ -97,7 +99,9 @@ function snowyBackdrop() {
   return { ...far, colours: {
     forest: [0x35523a, 0x2c4733, 0x3f5d3f, 0x34503a],
     autumn: [0xaec2d2, 0x9fb5c8, 0xc2d1de], run: 0xf6f9fc, share: .5, cut: .5,
-    snow: { from: .26, blend: .34, colour: 0xe9f0f6, share: .94 },
+    snow: { from: .3, blend: .34, colour: 0xe9f0f6, share: .86 },
+    // Dark rock showing on the upper slopes and dark forest on the lower, so the hills are not plain white mounds.
+    patches: [{ colour: 0x474a50, from: .16, to: .85, scale: .017, seed: 3, cut: .6, share: .9 }, { colour: 0x2b4632, from: 0, to: .55, scale: .02, seed: 11, cut: .48, share: .92 }],
   } };
 }
 
@@ -114,7 +118,9 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
   defaultMood: 'clear',
   // The racers drive this much of their usual pace here, per difficulty (src/race-field-driver.js).
   // Found with tools/race-field-balance.mjs --course tremblant-snow (see docs/changes/P4-TREMBLANT-SNOW.md).
-  fieldPace: { easy: .92, medium: .90, hard: .90 },
+  fieldPace: { easy: .94, medium: .90, hard: .905 },
+  // The first lap, with the whole field bunched at Pine Drop on packed snow, keeps a longer gap (as Harbour Lights does).
+  fieldFollow: { firstLap: { margin: 5, reaction: .5, closeIn: .8 } },
   surfacePatches: ICE,
   pitLane: { straight: 'Lodge Straight', side: 'right' },
   snowWorld: WINTER,
@@ -133,7 +139,9 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
   // The forest crowds the road from 13 m beyond the edge, as in Tremblant Woods; here every planted pine is
   // a snow pine. The pines keep out of the lake, the lift's cut, the paddock and the pits.
   scenery: {
-    mountains: false, forest: { from: 13, to: 31, spacing: 4.6, rows: 4 },
+    mountains: false,
+    // Groves of every size with bare clearings between them, going back deep into the wood.
+    forest: { from: 13, to: 56, spacing: 5.2, rows: 7, thin: .5, jitter: 1.7, scale: [.45, 2.1], clumps: { cut: .36, size: 1.2 } },
     clear: [
       { s0: LAKE.s - LAKE.along - 10, s1: LAKE.s + LAKE.along + 10, from: 8, to: LAKE.lateral + LAKE.across + 10 },
       { s0: T.LIFT.s - 7, s1: T.LIFT.s + 7, from: -135, to: 135 },
@@ -147,6 +155,8 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
   basins: [LAKE],
   effects: {
     lake: FROZEN_LAKE, lift: T.LIFT, backdrop: snowyBackdrop(), plainHills: true,
+    // A few bare birches in small groves among the pines.
+    birches: { seed: 0xb1c4, groves: 16, depth: [14, 36] },
     skiers: { seed: 0x5c1e5, hill: { count: 40, scale: 1 }, backdrop: { count: 70, scale: 3 } },
     // The chimney of the ski lodge (the kit's own metres: the top of its chimney stack).
     smoke: { id: 'ski-lodge', local: [4.24, 6.45, -2.3], count: 12, rise: .9, life: 11, size: [1.6, 6], wind: [.7, .3], opacity: .75 },

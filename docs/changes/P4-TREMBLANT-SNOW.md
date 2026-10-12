@@ -1,7 +1,7 @@
 # P4-TREMBLANT-SNOW: Tremblant Snow
 
 Claude (Sonnet agent), 11 and 12 October 2026, lane `claude/tremblant-snow`. Not merged;
-Claude reviews the sheet and merges. Behind its own new switch `tremblant-snow` (dev).
+Claude reviews the sheet and merges. Round 2 (Claude's four art notes) is described under "Round 2". Behind its own new switch `tremblant-snow` (dev).
 
 ## Design, before code
 
@@ -42,13 +42,16 @@ the live circuit is byte for byte what it was).
 | `src/circuit-effects.js` | `lake.frozen`, `hills[].palette`, `backdrop.colours.snow`, `effects.plainHills`, `effects.skiers`, `effects.smoke` | The same drawn world as before |
 | `src/circuit-winter.js` (new) | Draws the skiers and the smoke | Not loaded unless asked |
 | `src/pit-lane.js` | A straight that runs through the start line: the lane starts just past the line (before, its entry was a negative number and the lane was drawn and driven wrongly); the approach board counts across the line | Courses whose straight starts after the line: identical numbers |
+| `src/snow-world.js` | `snowWorld.softBanks`: the plough banks are one continuous rounded heap along each side (`softBankGeometry`, one draw), grey on the road side, instead of 1,600 kit pieces | Kit banks as before |
+| `src/track-script-course.js` | `scenery.forest` takes `scale: [least, most]`, `jitter` and `clumps: { cut, size }` (groves with clearings, bigger trees in the groves); no extra random draws, so a forest without them is placed exactly as before | The old even rows |
+| `src/circuit-effects.js`, `src/circuit-winter.js` | `effects.birches` (bare birches in groves, one instanced mesh), `effects.plainHills`, `backdrop.colours.patches` (dark rock and forest patches on the far hills) | Unchanged |
 | `src/world.js` | Passes `snowWorld.drifts` to the terrain shader | Identical |
 | `src/track-kits.js`, `src/circuit-effects.js` | `setPlacementPose(index, matrix, refresh = true)` and a new `refresh()`: the lift moves all its chairs and then refreshes the drawn selection once, not once per chair. Found by the frame check: with this circuit's 3,300 snow pines in the kit chunks, twenty refreshes a frame cost 10 ms (renderer update 10.4 ms, now 1.9 ms). The picture is the same; Tremblant Woods's lift gets cheaper too | The default `refresh = true` is the old behaviour |
 | `src/circuits/index.js`, `feature-flags.js`, `race-field.js`, `course-access.js`, `start-preview.bat` | The new circuit, switch (`dev`), Grand Prix entry, price, preview flag | |
 
 ## Checks
 
-- Own suite `tools/test-circuit-tremblant-snow.mjs` (14 tests): registration and switch, same
+- Own suite `tools/test-circuit-tremblant-snow.mjs` (16 tests): registration and switch, same
   road as the autumn circuit, the live circuit untouched, surfaces and tyre choice, ice rules and
   boards, pit lane and boxes, winter on and banks, scenery (no autumn trees, kit pieces clear of
   the road, no pine on a ski run), snowmen unused, skiers and smoke, light, and a full Grand Prix
@@ -64,25 +67,27 @@ the live circuit is byte for byte what it was).
   byte for byte unchanged (checked). `build-reference-laps.mjs` drives a winter course on winter tyres.
 - Test driver, Medium, winter tyres: 1:34.5 laps, no crash, no wall, no reset.
 
-### Field balance (`tools/race-field-balance.mjs --course tremblant-snow`, 30 races per difficulty, three runs)
+### Field balance (`tools/race-field-balance.mjs --course tremblant-snow`, 30 races per difficulty)
 
 The test driver and the field both race on winter tyres (the balance tool now picks them on a winter
 course). Starting from Tremblant Woods's pace (.87/.85/.85) the computer racers were far too slow
 (test driver won 100/93/73%), so `fieldPace` went up.
 
-| Run | fieldPace easy / medium / hard | Test driver wins | First-lap pile-ups |
+| Run | `fieldPace` easy / medium / hard | Test driver wins | First-lap pile-ups |
 | --- | --- | --- | --- |
 | 1 | .87 / .85 / .85 | 100 / 93 / 73% | 0 / 1 / 2 |
 | 2 | .92 / .91 / .91 | 80 / 27 / 10% | 3 / 0 / 3 |
 | 3 | .91 / .90 / .90 | 90 / 50 / 27% | 2 / 1 / 0 |
+| 4 (Claude's nudge, with `fieldFollow.firstLap` added) | .92 / - / .905 | 87 / - / 23% | 2 / - / 1 |
+| 5 (final code, new forest) | .94 / - / .905 | 70 / - / 23% | 3 / - / 1 |
 
-Final `fieldPace` is **.92 / .90 / .90**: easy from run 2, medium and hard from run 3 (each
-difficulty is raced independently, so the results combine). Every computer racer finished in 100%
-of races. Targets met: easy 80% (60 to 80), medium 50% (30 to 50), medium and hard pile-ups
-(at most 1 in 20). **Still missing**: easy first-lap pile-ups 3 of 30 (10%), hard test-driver wins
-27% (target 10 to 25). Three runs are used; more tuning needs Claude's word (pile-ups move at random
-between runs, 0 to 3 of 30, so a fourth run could land either side). Quick 8-race trials at other
-paces informed the choice; they are not counted as results.
+Final `fieldPace` is **.94 / .90 / .905** with `fieldFollow: { firstLap: { margin: 5, reaction: .5, closeIn: .8 } }`
+(Harbour's first-lap care; Tremblant Woods has none). Every computer racer finished in 100% of races.
+Targets met: Easy wins 70% (60 to 80), Hard wins 23% (10 to 25) and Hard pile-ups 1 of 30. **Still
+missing**: Easy first-lap pile-ups, 3 of 30 (10%, target at most 1 in 20); they moved 3, 2, 3 across runs
+whatever the pace, so pace alone does not fix them. **Not rerun**: Medium (.90, 50% wins and 1 pile-up
+in run 3, before the round-2 forest and the first-lap care). Quick 8 to 10 race trials informed the
+choices; they are not counted as results.
 
 ### The Tremblant fix (TREMBLANT-FIX, merged into this lane at 69b3935b)
 
@@ -101,33 +106,37 @@ and dock carry the fix by themselves. Checked, not assumed:
   Beaver Hairpin).
 - The reference lap rebuilt after the merge is identical (1:28.317).
 
+### Round 2 (Claude's four art notes, same lane)
+
+1. **Plough banks**: continuous rounded heaps with smooth tops, 0.5 to 1.2 m, slightly grey toward the road
+   (`softBanks`). The kit pieces are no longer placed; the physical deep-snow band is unchanged and lies inside the heap.
+2. **Pines**: groves of every size (0.45 to 2.1 times) with bare clearings, loose spacing, going back 56 m
+   from the road (was 31), plus bare birches in groves (about 50, a white trunk, dark bands, thin branches).
+3. **Light**: sun 20 degrees up, warm (`#ffd9a8`) and strong (3.0), the fill cut to 1.0 with a blue ground
+   colour so shadows are clear and blue; sky clear and pale blue toward the horizon, fewer clouds. Exposure
+   unchanged, so the snow keeps its form.
+4. **Far hills**: dark rock patches on the upper slopes and dark forest on the lower, over the snow.
+
+Changed assertions in my own new test: the sun is 15 to 26 degrees (was 10 to 20) and "warm" (red well above blue)
+instead of "pale". The sheet is `docs/board/looks/p4-tremblant-snow/round-2.jpg` (replaces round 1).
+
 ### Frame check
 
-`node tools/browser-harness.mjs scenario tremblant-snow` (12 October 2026, after the merge, no other
-gate, build or browser check running, eight cars on the grid, delivered frames):
+**Pending, for the morning** (Claude: the laptop display is asleep overnight, which made the live
+Tremblant Woods read 35.8 ms too). Last numbers, before round 2, display state unknown: Performance
+17.6 / 18.2 ms; High 17.7 / 35.9 ms and Tremblant Woods in the same scenario 35.6 ms. Round 2 changes
+the draw count (the 1,600 kit banks became one mesh; more pines, birches, one more ground mesh); measure
+again with `node tools/browser-harness.mjs scenario tremblant-snow` (add
+`TREMBLANT_SNOW_COURSE=tremblant-woods` for the comparison).
 
-| | High p50 / p95 | Performance p50 / p95 | Draws High / Performance |
-| --- | --- | --- | --- |
-| Tremblant Snow | 17.7 / 35.9 ms (31 slow of 120) | 17.6 / 18.2 ms (0 slow) | 1,667 / 1,167 |
-| Tremblant Woods, same scenario, same minute | 17.8 / 35.6 ms (19 slow) | 17.6 / 18.2 ms (0 slow) | 1,795 / 1,251 |
-
-**Performance passes (18.2 ms, limit 18.5). High does not (35.9 ms), and neither does the live
-Tremblant Woods in this scenario** (35.1 to 35.6 over five runs): at High the graphics card needs
-about 16 ms of the 16.7 available (scene and shadows 9.4, contact shading 5, post 1.2), so every third
-frame or so slips to 33 ms. Tremblant Snow is no worse than the released circuit, but I could not
-bring High under the limit with the tools at hand (tried: merged garage, stand, lodge and chair
-meshes, which saved about 90 draws; leaving the pines out of the contact pass, which saved nothing and
-was reverted). Claude to decide whether the limit applies to High at this view.
-
-One real cost was found and fixed: the first measurement had High at 35 ms median because the lift
-refreshed the drawn selection of the 3,300 snow pines once per chair, twenty times a frame (renderer
-update 10.4 ms, now 1.9 ms; see the shared-code table).
+One real cost was found and fixed earlier: the lift refreshed the drawn selection of the snow pines once
+per chair, twenty times a frame (renderer update 10.4 ms, now 1.9 ms; see the shared-code table).
 
 ### Lane gate
 
 `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` on the lane after merging integration
 (69b3935b, Tremblant fix) and every change above: **399 of 399 passed, 0 failed, 0 not run**
-(1,308.8 s). `npm run build` passes (511 ms).
+(1,308.8 s). After round 2 the same gate again: **399 of 399** (1,298.3 s, jobs 4); `npm run build` passes.
 
 ## Changed assertions and the reason for each
 
@@ -148,11 +157,8 @@ start line replaces a case no course had used.
 
 ## Left open for Claude
 
-1. **Price** 1,800 credits (not in the doc), and the `docs/COURSE_ACCESS.md` table has no row for it
-   (dev only).
-2. Balance: the two misses above, and the three runs predate the merge of the Tremblant fix. An informal 10-race trial after it gave test-driver wins of 90 / 50 / 40% (easy / medium / hard) with every racer home, so hard may now be above its target: a further run at your word (hard pace .91 gave 10% earlier).
-3. Merge integration again after TREMBLANT-FIX lands (Kyle's grass and barrier faults on Tremblant
-   Woods); this circuit builds none of that ground or barrier code, and the sheet shows the road
-   clear of grass everywhere.
-4. Ice reads quiet from the driver's seat (a glossy patch with the board): say if it needs more.
-5. The look sheet `docs/board/looks/p4-tremblant-snow/round-1.jpg` is round 1 of three.
+1. Price 1,800 credits approved; `docs/COURSE_ACCESS.md` has no row for it (dev only).
+2. Balance: Easy first-lap pile-ups (3 of 30); Medium not rerun since the new forest.
+3. Frame check pending for the morning (above).
+4. Ice reads quiet from the driver's seat (a glossy patch with the board), the lodge smoke is faint on snow
+   and the lake is a smooth sheet: say if any needs more. Look sheet `round-2.jpg` is round 2 of three.

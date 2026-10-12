@@ -12,10 +12,10 @@ import { COURSE_PRICES } from '../src/course-access.js';
 import { GRAND_PRIX_COURSES, grandPrixCourse } from '../src/race-field.js';
 import { supportsCombat } from '../src/combat-weapons.js';
 import { courseHasWinterSurfaces, gripFor, ICE_MAX_LENGTH, ICE_BOARD_DISTANCE } from '../src/race-surfaces.js';
-import { snowWorldEnabled, winterLightingSettings, snowWorldPlacements } from '../src/snow-world.js';
+import { snowWorldEnabled, winterLightingSettings, snowWorldPlacements, softBankGeometry } from '../src/snow-world.js';
 import { circuitLighting, resolveLightingSettings } from '../src/lighting-moods.js';
 import { pitAt, pitBox } from '../src/pit-lane.js';
-import { skierSpots } from '../src/circuit-effects.js';
+import { skierSpots, birchSpots } from '../src/circuit-effects.js';
 import { hillReach, runWeight } from '../src/circuit-hills.js';
 import { runRace } from './race-field-balance.mjs';
 import { App } from '../src/app.js';
@@ -126,7 +126,20 @@ test('winter is the course\'s own: on whenever it is on the list, off for Trembl
   const lodge = piece('Lodge Straight');
   assert.equal(banks.filter(item => item.s0 < lodge.s1 || item.s1 > road.length + lodge.s0).length, 0);
   const made = snowWorldPlacements(course), count = id => made.filter(item => item.id === id).length;
-  assert.ok(count('plough-bank') > 600 && count('snow-pine') === course.features.trees.length && count('snow-rock') === course.features.rocks.length);
+  // The plough banks are continuous soft heaps, not kit pieces.
+  assert.ok(TREMBLANT_SNOW.snowWorld.softBanks === true && count('plough-bank') === 0);
+  assert.ok(count('snow-pine') === course.features.trees.length && count('snow-rock') === course.features.rocks.length);
+  const heaps = softBankGeometry(course), position = heaps.attributes.position;
+  assert.ok(position.count > 20000 && heaps.attributes.color.count === position.count);
+  let highest = 0;
+  for (let i = 0; i < position.count; i++) {
+    const found = course.nearest(position.getX(i), position.getZ(i));
+    assert.ok(Number.isFinite(position.getY(i)));
+    // Beside the road, never on it; its top is a smooth heap under 1.5 m.
+    assert.ok(found.distance > course.roadHalfWidthAt(found.s) - .01, 'a heap lies on the road');
+    highest = Math.max(highest, position.getY(i) - course.groundAt(found.s, found.lateral).y);
+  }
+  assert.ok(highest > .8 && highest < 1.5, `heaps rise ${highest.toFixed(2)} m`);
   assert.ok(TREMBLANT_SNOW.snowWorld.exposed.every(row => TREMBLANT_SNOW.snowWorld.ranges.some(range => row.from >= range.from && row.to <= range.to)));
 });
 
@@ -181,13 +194,13 @@ test('skiers and chimney smoke: still, seeded, on the ski runs, and off in Tremb
   assert.deepEqual(skierSpots(new Course(TREMBLANT_WOODS, 1989), {}), [], 'no skiers unless asked');
 });
 
-test('the light is a winter morning: a low pale sun, cold shadows, and Tremblant Woods keeps its autumn light', () => {
+test('the light is a winter morning: a low warm sun, cold shadows, and Tremblant Woods keeps its autumn light', () => {
   const clear = resolveLightingSettings('alpine', { mood: 'clear' }), look = circuitLighting(clear, TREMBLANT_SNOW.light);
   const degrees = Math.atan2(look.sunOffset.y, Math.hypot(look.sunOffset.x, look.sunOffset.z)) * 180 / Math.PI;
-  assert.ok(degrees > 10 && degrees < 20, `a sun ${degrees.toFixed(1)} degrees up`);
+  assert.ok(degrees > 15 && degrees < 26, `a sun ${degrees.toFixed(1)} degrees up`);
   const winter = winterLightingSettings(look);
   assert.equal(winter.sunColor, TREMBLANT_SNOW.light.winter.sunColor, 'the circuit\'s own winter sun colour');
-  assert.ok(winter.sunColor >> 16 > 0xf0 && (winter.sunColor & 255) > 0xd0, 'a pale sun');
+  assert.ok(winter.sunColor >> 16 > 0xf0 && (winter.sunColor >> 16) - (winter.sunColor & 255) > 40, 'a warm, low sun');
   assert.ok((winter.ground & 255) > (winter.ground >> 16 & 255) + 30, 'the fill light is blue, so shadows are cold');
   assert.ok(winter.exposure < look.exposure && winter.bloom < look.bloom, 'the shared winter dimming still applies');
   // Without the circuit's own winter look the shared one is used exactly as before.
@@ -292,3 +305,37 @@ for (const mph of [70, 110]) {
     } finally { COURSE.splice(COURSE.findIndex(item => item.id === 'tremblant-snow'), 1); }
   });
 }
+
+// ---- the forest: groves, clearings, mixed sizes, a few birches --------------------------------
+
+test('the pines grow in groves of every size with bare clearings, deep into the wood, and a few birches stand among them', () => {
+  const trees = course.features.trees.filter(item => item.id.startsWith('forest-'));
+  assert.ok(trees.length > 1800, `${trees.length} forest pines`);
+  const scales = trees.map(item => item.scale), mean = scales.reduce((a, b) => a + b, 0) / scales.length;
+  const spread = Math.sqrt(scales.reduce((a, b) => a + (b - mean) ** 2, 0) / scales.length);
+  assert.ok(Math.min(...scales) < .6 && Math.max(...scales) > 1.9 && spread > .35, `sizes ${Math.min(...scales).toFixed(2)} to ${Math.max(...scales).toFixed(2)}, spread ${spread.toFixed(2)}`);
+  // Depth: pines stand from 13 m out to well past 40 m beyond the road edge.
+  const edge = item => { const found = course.nearest(item.x, item.z); return found.distance - course.roadHalfWidthAt(found.s); };
+  assert.ok(trees.filter(item => edge(item) > 40).length > 100, 'the wood goes back in depth');
+  // Clearings: stretches of 100 m of one side with almost no pine in the first 35 m of the wood.
+  let clearings = 0;
+  for (const side of [-1, 1]) for (let s = 400; s < course.length - 400; s += 100) {
+    const near = trees.filter(item => Math.sign(item.off) === side && item.s >= s && item.s < s + 100 && edge(item) < 35).length;
+    if (near < 6) clearings++;
+  }
+  assert.ok(clearings >= 4, `${clearings} bare clearings`);
+  const birches = birchSpots(course, TREMBLANT_SNOW.effects.birches);
+  assert.ok(birches.length >= 30 && birches.length <= 90, `${birches.length} birches`);
+  assert.deepEqual(birchSpots(course, TREMBLANT_SNOW.effects.birches), birches, 'the same birches every build');
+  for (const birch of birches) {
+    assert.ok(course.nearest(birch.x, birch.z).distance - 7 > 11, 'a birch is off the road');
+    assert.ok(course.features.trees.every(item => Math.hypot(item.x - birch.x, item.z - birch.z) > 2), 'a birch is clear of every pine');
+  }
+  // Tremblant Woods keeps its even forest: no scale range, no groves.
+  assert.equal(TREMBLANT_WOODS.scenery.forest.clumps, undefined);
+});
+
+test('the far hills carry dark rock and dark forest patches over their snow', () => {
+  const colours = TREMBLANT_SNOW.effects.backdrop.colours;
+  assert.ok(colours.patches.length >= 2 && colours.snow.share < .95);
+});

@@ -93,7 +93,8 @@ export function snowWorldPlacements(course){
     heading:rock.angle,scale:Object.freeze([rock.scale[0]*2/4.4,rock.scale[1]*2/2.4,rock.scale[2]*2/3.5])});
   for(const range of ranges(course))for(let s=range.from+5;s<range.to-5;s+=18)for(const side of [-1,1])
     entries.push({id:'snow-ground',s,lateral:side*(course.roadHalfWidthAt(s)+4.5),heading:rng.range(-.08,.08),scale:1});
-  for(const patch of course.features.surfacePatches.filter(row=>row.snowBank)){
+  // `softBanks` draws the plough banks as continuous rounded heaps (softBankGeometry) instead of kit pieces.
+  if(!course.def.snowWorld.softBanks)for(const patch of course.features.surfacePatches.filter(row=>row.snowBank)){
     for(let s=patch.s0+3;s<patch.s1-3;s+=4.8)entries.push({id:'plough-bank',s,
       lateral:(patch.from+patch.to)/2,heading:Math.PI/2,scale:Object.freeze([.94,1.3,.7]),physicalPatch:patch});
   }
@@ -162,6 +163,43 @@ export function snowSceneryPose(tree,events,now,upright=null){
   }
   return new THREE.Matrix4().compose(position,rotation,scale);
 }
+// Ploughed snow along both sides of the road as one continuous, rounded heap: a smooth top, steeper toward the
+// road and slightly dirty grey there, white on top and beyond. It follows the road edge and the ground, rises
+// and falls a little along its length and tapers where a winter range begins and ends. Drawing only: the
+// physical deep-snow band (winterBankPatches) lies inside it.
+export function softBankGeometry(course){
+  const positions=[],colours=[],indices=[],columns=9,step=1.5;
+  const grey=new THREE.Color(.5,.54,.6),white=new THREE.Color(.95,.97,1),mix=new THREE.Color();
+  for(const range of ranges(course))for(const side of [-1,1]){
+    const first=positions.length/3,count=Math.max(2,Math.ceil((range.to-range.from)/step));
+    for(let i=0;i<=count;i++){
+      const s=range.from+(range.to-range.from)*i/count,edge=course.roadHalfWidthAt(s)+.1;
+      const taper=smooth((s-range.from)/24)*smooth((range.to-s)/24);
+      const height=taper*(.55+.4*(.5+.5*Math.sin(s*.09+side))+.18*Math.sin(s*.31+side*2)),width=2.7+.8*Math.sin(s*.05+side*.7),
+        speckle=.04*Math.sin(s*1.9)*Math.sin(s*.77+side);
+      for(let k=0;k<columns;k++){
+        const t=k/(columns-1),off=side*(edge+width*t),ground=course.groundAt(s,off),point=course.worldAt(s,off);
+        const bump=k===0||k===columns-1?-.2:Math.pow(Math.sin(Math.PI*Math.pow(t,1.3)),.8);
+        positions.push(point.x,ground.y+height*bump,point.z);
+        mix.copy(grey).lerp(white,smooth(t/.7)).multiplyScalar(1+speckle);
+        colours.push(mix.r,mix.g,mix.b);
+      }
+    }
+    for(let i=0;i<count;i++)for(let k=0;k<columns-1;k++){
+      const a=first+i*columns+k,b=a+1,c=a+columns,d=c+1;
+      if(side>0)indices.push(a,c,b,b,c,d);else indices.push(a,b,c,b,d,c);
+    }
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,3));
+  geometry.setIndex(indices);geometry.computeVertexNormals();geometry.computeBoundingSphere();
+  return geometry;
+}
+function addSoftBanks(group,course){
+  const mesh=new THREE.Mesh(softBankGeometry(course),new THREE.MeshStandardMaterial({name:'Ploughed snow heaps',vertexColors:true,roughness:.96,side:THREE.DoubleSide}));
+  mesh.name='Ploughed snow heaps';mesh.receiveShadow=true;group.add(mesh);
+}
 function addPonds(group,course){
   const ponds=course.def.snowWorld.ponds??[];
   if(!Array.isArray(ponds)||ponds.length>8)throw Error('Winter ponds need at most eight off-road ellipses.');
@@ -207,7 +245,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
     !Number.isFinite(row.from)||!Number.isFinite(row.to)||row.to<=row.from||
     !ranges(course).some(range=>row.from>=range.from&&row.to<=range.to)))
     throw Error('Exposed ridges must lie within one authored winter range.');
-  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);shadeSnowKits(kits);
+  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);if(course.def.snowWorld.softBanks)addSoftBanks(group,course);shadeSnowKits(kits);
   const rng=makeRng(course.seed^0x5a0f1a),limits=SNOW_LIMITS.high,count=limits.flakes,
     position=new Float32Array(count*3),speed=new Float32Array(count),phase=new Float32Array(count);
   for(let i=0;i<count;i++){position[i*3]=rng.range(-17,17);position[i*3+1]=rng.range(-3,16);position[i*3+2]=rng.range(-18,18);speed[i]=rng.range(.7,1.8);phase[i]=rng.range(0,Math.PI*2);}

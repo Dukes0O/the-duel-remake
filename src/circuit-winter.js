@@ -55,6 +55,49 @@ export function addSkiers(group, spots) {
   registerSceneSystem(group, { dispose() { gear.dispose(); jacket.dispose(); gearMaterial.dispose(); jacketMaterial.dispose(); } });
 }
 
+// A bare birch in metres, standing on the ground: a white trunk with dark bands, thin grey-brown branches
+// and a little frost on their ends. One vertex-coloured mesh for every birch (drawn instanced).
+export function birchGeometry() {
+  const part = (source, colour, move, turn = [0, 0, 0]) => {
+    // The icosahedron is not indexed; the rest are. Merging needs all of one kind.
+    const geometry = source.index ? source.toNonIndexed() : source;
+    geometry.rotateX(turn[0]); geometry.rotateZ(turn[2]); geometry.translate(...move);
+    const count = geometry.attributes.position.count, tint = new THREE.Color(colour), data = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) { data[i * 3] = tint.r; data[i * 3 + 1] = tint.g; data[i * 3 + 2] = tint.b; }
+    geometry.setAttribute('color', new THREE.BufferAttribute(data, 3));
+    return geometry;
+  };
+  const parts = [part(new THREE.CylinderGeometry(.08, .15, 8, 6), 0xece9e2, [0, 4, 0])];
+  for (const y of [1.1, 2.6, 4.4, 6]) parts.push(part(new THREE.CylinderGeometry(.155 - y * .008, .155 - y * .008, .1, 6), 0x2b2927, [0, y, 0]));
+  for (let i = 0; i < 7; i++) {
+    const yaw = i * 2.4 + .5, y = 3.6 + i * .6, length = 2.6 - i * .15, lean = .9 + (i % 3) * .12;
+    const branch = new THREE.CylinderGeometry(.025, .05, length, 4);
+    branch.translate(0, length / 2, 0); branch.rotateZ(-lean); branch.rotateY(yaw); branch.translate(0, y, 0);
+    const tip = [Math.sin(lean) * length * Math.cos(yaw), y + Math.cos(lean) * length, -Math.sin(lean) * length * Math.sin(yaw)];
+    parts.push(part(branch, 0x6b5f55, [0, 0, 0]));
+    parts.push(part(new THREE.IcosahedronGeometry(.26, 0), 0xdde3ea, tip));
+  }
+  const merged = mergeGeometries(parts);
+  parts.forEach(item => item.dispose());
+  merged.computeBoundingSphere();
+  return merged;
+}
+
+// spots: [{ x, y, z, yaw, scale }]
+export function addBirches(group, spots) {
+  if (!spots.length) return;
+  const geometry = birchGeometry(), material = new THREE.MeshStandardMaterial({ name: 'Birches', vertexColors: true, roughness: .9 });
+  const mesh = new THREE.InstancedMesh(geometry, material, spots.length);
+  const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), rotation = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), scale = new THREE.Vector3();
+  spots.forEach((spot, i) => {
+    rotation.setFromAxisAngle(up, spot.yaw); position.set(spot.x, spot.y - .1, spot.z); scale.setScalar(spot.scale);
+    mesh.setMatrixAt(i, matrix.compose(position, rotation, scale));
+  });
+  mesh.computeBoundingSphere(); mesh.name = 'Birches'; mesh.castShadow = false; mesh.receiveShadow = false;
+  group.add(mesh);
+  registerSceneSystem(group, { dispose() { geometry.dispose(); material.dispose(); } });
+}
+
 // A soft round puff, made in code (no image to load).
 function puffTexture() {
   const size = 48, data = new Uint8Array(size * size * 4);
