@@ -138,3 +138,44 @@ export function iceBoards(script, patches = []) {
 
 // Sound cue named for a surface; audio plays it (P4-AUDIO).
 export const surfaceCue = kind => SURFACES[kind]?.cue ?? null;
+
+
+// Explicit winter ranges are shared by headless bank physics and scenery.
+// The visual feature switch never decides where a car can drive.
+export function winterRanges(script, config) {
+  if (!config) return [];
+  if (!script || !Array.isArray(config.ranges) || !config.ranges.length || config.ranges.length > 16) {
+    throw new Error('snowWorld needs 1 to 16 distance ranges on a track script.');
+  }
+  const ranges = config.ranges.map(({from, to}) => {
+    if (!Number.isFinite(from) || !Number.isFinite(to) || from < 0 || to <= from || to > script.length) {
+      throw new Error('A winter range must lie inside the track.');
+    }
+    return {from, to};
+  }).sort((a, b) => a.from - b.from);
+  for (let i = 1; i < ranges.length; i++) if (ranges[i].from < ranges[i - 1].to) {
+    throw new Error('Winter ranges must not overlap.');
+  }
+  return ranges;
+}
+
+export function winterBankPatches(script, config) {
+  const ranges = winterRanges(script, config), patches = [];
+  if (config?.banks === false) return patches;
+  for (const [rangeIndex, range] of ranges.entries()) for (const piece of script.pieces) {
+    const s0 = Math.max(range.from, piece.s0), s1 = Math.min(range.to, piece.s1);
+    if (s1 <= s0) continue;
+    // A constant band stays clear of the widest road in this piece. Sampling
+    // includes both ends and all short transitions; no renderer creates it.
+    let edge = 0;
+    for (let s = s0; s < s1; s += 4) edge = Math.max(edge, script.halfWidthAt(s));
+    edge = Math.max(edge, script.halfWidthAt(s1)) + .25;
+    for (const side of [-1, 1]) patches.push({
+      id: 'snow-bank-' + rangeIndex + '-' + piece.index + '-' + side,
+      kind: 'deep-snow', snowBank: true, s0, s1,
+      from: side > 0 ? edge : -edge - 1.6,
+      to: side > 0 ? edge + 1.6 : -edge,
+    });
+  }
+  return patches;
+}

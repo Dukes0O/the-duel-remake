@@ -16,7 +16,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
 } = {}) {
   let stopped = false, disposed = false, course, naturalEnvironment, pmremReleased = false, pathSample = null;
   const sampleBuffer = {}, sampleInputs = {}, vehicleUpdate = {}, worldUpdate = {}, vehicleLights = new Map(), vehicleInputs = new Map(), worldDetails = new Map();
-  let activeWorld = null;
+  let activeWorld = null, activeWinter = false, winterDryPalette = null;
   const pmrem = createPMREM(), room = createRoom();
   const releasePMREM = () => { if (!pmremReleased) { pmremReleased = true; pmrem.dispose(); } };
   const environment = pmrem.fromScene(room, .04);
@@ -58,18 +58,49 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
   const targetSun = new THREE.Vector3();
   const colour = value => Array.isArray(value) ? lightColor.setRGB(value[0], value[1], value[2]) : lightColor.set(value);
 
+  const paletteFields = ['fog','top','horizon','cloudTint','ground','sunColor'];
+  const paletteComponents = ['r','g','b'], dryPaletteKey = new Float64Array(18);
+  let hasDryPalette = false;
+  function paletteKey(settings, key, write = false) {
+    let index = 0;
+    for (const field of paletteFields) {
+      const value = field === 'cloudTint'
+        ? lightColor.setRGB(settings.cloudTint[0],settings.cloudTint[1],settings.cloudTint[2])
+        : colour(settings[field]);
+      for (const component of paletteComponents) {
+        if (write) key[index++] = value[component];
+        else if (key[index++] !== value[component]) return false;
+      }
+    }
+    return true;
+  }
+
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter }) {
       if (stopped) return;
       course = next;
       const night = theme === 'city' || course.def.timeOfDay === 'night';
       sampleInputs.distance = distance;sampleInputs.raceLength = raceLength;sampleInputs.theme = theme;
       sampleInputs.tunnel = tunnel;sampleInputs.menu = menu;
       pathSample = sampleCourseLightPath(course, sampleInputs, sampleBuffer);
-      let settings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
-      if (!pathSample && !night && !tunnel && mood !== 'overcast') settings = circuitLighting(settings, course.def.light);
+      let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
+      if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, course.def.light);
+      const settings = winter ? winter(baseSettings) : baseSettings;
       const amount = pathSample ? 1 : blend;
+      if (winter && !activeWinter) {
+        winterDryPalette = {key:hasDryPalette ? dryPaletteKey.slice() : null,colours:{
+          fog:(scene.fog?.color ?? colour(baseSettings.fog)).toArray(),
+          top:sky.material.uniforms.top.value.toArray(),horizon:sky.material.uniforms.horizon.value.toArray(),
+          cloudTint:sky.material.uniforms.cloudTint.value.toArray(),
+          ground:hemi.groundColor.toArray(),sun:sun.color.toArray(),
+        }};
+      }
+      const restoreWinter = activeWinter && !winter && amount === 1;
+      const savedPalette = restoreWinter && winterDryPalette?.key && paletteKey(baseSettings,winterDryPalette.key)
+        ? winterDryPalette.colours : null;
+      activeWinter = !!winter;
+      if (!winter) {winterDryPalette = null;paletteKey(baseSettings,dryPaletteKey,true);hasDryPalette = true;}
       atmosphere.setLightPath(!!pathSample);
       if (!scene.fog) scene.fog = new THREE.Fog(colour(settings.fog), 260, 1650);
       scene.fog.color.lerp(colour(settings.fog), amount);
@@ -91,6 +122,19 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       scene.environmentIntensity = THREE.MathUtils.lerp(scene.environmentIntensity, settings.env, amount);
       renderer.toneMappingExposure = THREE.MathUtils.lerp(renderer.toneMappingExposure, settings.exposure, amount);
       bloom.strength = settings.bloom;
+      if (restoreWinter) {
+        if (savedPalette) {
+          scene.fog.color.fromArray(savedPalette.fog);
+          uniforms.top.value.fromArray(savedPalette.top);uniforms.horizon.value.fromArray(savedPalette.horizon);
+          uniforms.cloudTint.value.fromArray(savedPalette.cloudTint);
+          hemi.groundColor.fromArray(savedPalette.ground);sun.color.fromArray(savedPalette.sun);
+        } else {
+          scene.fog.color.copy(colour(settings.fog));
+          uniforms.top.value.copy(colour(settings.top));uniforms.horizon.value.copy(colour(settings.horizon));
+          uniforms.cloudTint.value.setRGB(...settings.cloudTint);
+          hemi.groundColor.copy(colour(settings.ground));sun.color.copy(colour(settings.sunColor));
+        }
+      }
       host.dataset.theme = theme;
       host.dataset.tunnel = String(tunnel);
       host.dataset.lightingMood = pathSample ? 'light-path' : night ? 'night' : mood || 'clear';

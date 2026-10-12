@@ -3,6 +3,7 @@ import {spawnSync,spawn} from 'node:child_process';
 import {resolve,join,dirname,relative} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {sourceState,writeFullTierEvidence} from './build-status.mjs';
+import {parseAst} from 'rolldown/parseAst';
 
 export const PROJECT_ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 export const CORE_SUITE='src/test.js';
@@ -211,51 +212,131 @@ export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync}={}){
   ])];
 }
 
-const IMPORT_PATTERNS=[
-  /\b(?:import|export)\s+(?:[^'";]*?\s+from\s*)?['"]([^'"]+)['"]/g,
-  /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-  /\bnew\s+URL\s*\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url\s*\)/g
-];
-export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=readFileSync,hasFile=isFile}={}){
+function moduleReferences(source,file){
+  const references=[];
+  let possibleReader=false,computedImports=false;
+  const literal=node=>node?.type==='Literal'&&typeof node.value==='string'?node.value:
+    node?.type==='TemplateLiteral'&&node.expressions.length===0?node.quasis[0].value.cooked:null;
+  const add=(node,kind)=>{
+    const specifier=literal(node);
+    if(specifier!==null){
+      references.push({specifier,kind});
+      if(['fs','node:fs','fs/promises','node:fs/promises'].includes(specifier))possibleReader=true;
+    }else if(kind==='import'){possibleReader=true;computedImports=true;}
+  };
+  const walk=node=>{
+    if(!node||typeof node.type!=='string')return;
+    if(node.type==='ImportDeclaration'||node.type==='ExportAllDeclaration'||node.type==='ExportNamedDeclaration'){
+      if(node.source)add(node.source,'import');
+    }else if(node.type==='ImportExpression')add(node.source,'import');
+    else if(node.type==='CallExpression'&&node.callee?.type==='Identifier'&&node.callee.name==='require')
+      add(node.arguments[0],'import');
+    else if(node.type==='NewExpression'&&node.callee?.name==='URL'&&
+      node.arguments[1]?.type==='MemberExpression'&&node.arguments[1].property?.name==='url'&&
+      node.arguments[1].object?.type==='MetaProperty'&&node.arguments[1].object.meta?.name==='import')
+      add(node.arguments[0],'url');
+    for(const value of Object.values(node)){
+      if(Array.isArray(value))value.forEach(walk);
+      else if(value&&typeof value==='object')walk(value);
+    }
+  };
+  walk(parseAst(source,null,file));
+  return {references,complete:true,possibleReader,computedImports};
+}
+// Audited non-import readers. These are additive edges, not filename guesses.
+const EXPLICIT_READS=Object.freeze({
+  'tools/test-qa-storage.mjs': ['visual-check','reward-check','reverse-check','contact-check',
+    'jump-height-check','update-check','menu-check'].map(name=>'tools/'+name+'.js')
+});
+// Only these current presentation paths have a complete consumer mapping.
+const PRESENTATION_CONSUMERS=Object.freeze([
+  {files:['public/assets/textures/pine-bough.png','public/assets/textures/pine-bark.png'],
+    readers:['src/vegetation.js','tools/test-pine-material.mjs']},
+  {directory:'public/assets/models/circuits/kits/',extensions:['.glb'],
+    readers:['src/track-kits.js','tools/test-track-kits.mjs','tools/test-p4-kits.mjs','tools/test-blender-output.mjs']},
+  {files:['public/assets/models/circuits/kits/manifest.json'],
+    readers:['tools/test-p4-kits.mjs','tools/test-circuit-harbour.mjs','tools/test-circuit-tremblant.mjs']},
+  {files:['style','screen-card-wall','screen-team-room','screen-menu','screen-players',
+    'screen-leaderboard','screen-garage','screen-armory','screen-yard-home','screen-arena',
+    'screen-territory','screen-courses','screen-results','screen-hud'].map(name=>'src/'+name+'.css'),
+    readers:['src/screen-router.js']}
+]);
+const presentationConsumers=path=>PRESENTATION_CONSUMERS.find(row=>row.files?.includes(path)||
+  (row.directory&&path.startsWith(row.directory)&&!path.slice(row.directory.length).includes('/')&&
+    row.extensions.some(extension=>path.endsWith(extension))));
+const fullScope=path=>{
+  const name=path.slice(path.lastIndexOf('/')+1);
+  return path==='tools/run-tests.mjs'||path==='tools/test-test-runner.mjs'||
+    /^(?:package(?:-lock)?\.json|.*\.lock|.*(?:^|[.-])lock(?:file)?\.[^.]+|(?:.*[.-])?config\.[^.]+|tsconfig.*\.json)$/.test(name);
+};
+
+export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=readFileSync,hasFile=isFile,
+  dependencyCache=new Map()}={}){
+  let complete=true,possibleReader=false,computedImports=false;
   const found=new Set(),visit=file=>{
     const name=relativeName(projectRoot,file);
     if(found.has(name)||!hasFile(file))return;
     found.add(name);
-    if(!/\.(?:m?js|json)$/.test(file))return;
-    let source;
-    try{source=readSource(file,'utf8');}catch{return;}
-    for(const pattern of IMPORT_PATTERNS){
-      pattern.lastIndex=0;
-      for(const match of source.matchAll(pattern)){
-        const specifier=match[1];
-        if(!specifier.startsWith('.'))continue;
-        const base=resolve(dirname(file),specifier);
-        const candidates=[base,base+'.js',base+'.mjs',join(base,'index.js')];
-        const target=candidates.find(hasFile);
-        if(target)visit(target);
+    if(!/\.m?js$/.test(file))return;
+    let parsed=dependencyCache.get(file);
+    if(!parsed){
+      try{parsed=moduleReferences(readSource(file,'utf8'),file);}
+      catch{parsed={references:[],complete:false};}
+      dependencyCache.set(file,parsed);
+    }
+    if(!parsed.complete)complete=false;
+    possibleReader ||= parsed.possibleReader;computedImports ||= parsed.computedImports;
+    for(const readerPath of EXPLICIT_READS[name]??[]){
+      if(hasFile(resolve(projectRoot,readerPath)))visit(resolve(projectRoot,readerPath));
+      else {found.add(readerPath);complete=false;}
+    }
+    for(const {specifier,kind} of parsed.references){
+      if(!specifier.startsWith('.'))continue;
+      const base=resolve(dirname(file),specifier.split(/[?#]/,1)[0]);
+      const candidates=[base,base+'.js',base+'.mjs',join(base,'index.js')];
+      const target=candidates.find(hasFile);
+      if(target)visit(target);
+      else {
+        found.add(relativeName(projectRoot,base));
+        // Missing asset/CSS URLs still select their reader on deletion.
+        if(kind==='import'&&!specifier.endsWith('.css'))complete=false;
       }
     }
   };
   visit(resolve(projectRoot,entry));
+  Object.defineProperties(found,{complete:{value:complete},possibleReader:{value:possibleReader},
+    computedImports:{value:computedImports}});
   return found;
 }
 export function suitesForChanges(suites,paths,options={}){
   const changed=new Set(paths.map(normalized));
   if(!changed.size)return [];
-  if([...changed].some(path=>path==='package.json'||path==='package-lock.json'||path==='vite.config.js'||path.startsWith('public/')||path.endsWith('.css')))
-    return [...suites];
-  const mapped=new Set();
-  const affected=suites.filter(suite=>{
+  if([...changed].some(fullScope))return [...suites];
+  const presentation=new Map();
+  for(const path of changed){
+    if(!path.startsWith('public/')&&!path.endsWith('.css'))continue;
+    const row=presentationConsumers(path);
+    if(!row)return [...suites];
+    presentation.set(path,row);
+  }
+  const mapped=new Set(),requiredReaders=new Set([...presentation.values()].flatMap(row=>row.readers));
+  const affected=[],dependencyCache=new Map(),
+    sourceChange=[...changed].some(path=>(path.startsWith('src/')||path.startsWith('tools/'))&&!presentation.has(path));
+  for(const suite of suites){
     mapped.add(suite);
-    const dependencies=localDependencies(suite,options);
+    const dependencies=localDependencies(suite,{...options,dependencyCache});
     for(const path of dependencies)mapped.add(path);
-    if(changed.has(suite))return true;
-    return [...dependencies].some(path=>changed.has(path));
-  });
-  // A source-text or computed-path test may read a file without importing it.
-  // Fall back per changed path, even if another changed file already found suites.
-  if([...changed].some(path=>(path.startsWith('src/')||path.startsWith('tools/'))&&!mapped.has(path)))
-    return [...suites];
+    const readsPresentation=[...requiredReaders].some(reader=>dependencies.has(reader)),
+      readsChange=[...changed].some(path=>dependencies.has(path)),
+      possibleConsumer=(presentation.size>0||sourceChange)&&dependencies.possibleReader;
+    if(!dependencies.complete)return [...suites];
+    if(changed.has(suite)||readsPresentation||readsChange||possibleConsumer)affected.push(suite);
+  }
+  // Explicit mappings must have their real readers in this inventory.
+  if([...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
+  // Fall back per path, even when another changed file already found consumers.
+  if([...changed].some(path=>(path.startsWith('src/')||path.startsWith('tools/'))&&
+    !mapped.has(path)&&!presentation.has(path)))return [...suites];
   return affected;
 }
 

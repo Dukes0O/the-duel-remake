@@ -1,4 +1,5 @@
 import {createTrackKits,trackKitsOf} from './track-kits.js';
+import {snowWorldEnabled,snowWorldPlacements,SNOW_KIT_IDS,snowWorldOf,winterLightingSettings} from './snow-world.js';
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
 import {createFirstPersonGear} from './first-person-gear.js';
@@ -156,8 +157,9 @@ export function attachRenderer(host, app) {
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   let preparedTrackKits = null, preparedTrackKitKey = null;
+  const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
   function prepareKitWorld(next, {retry=false}={}) {
-    if (!next.def.kitPlacements?.length) {
+    if (!next.def.kitPlacements?.length && !winterEnabled(next)) {
       preparedTrackKits?.dispose();preparedTrackKits=null;preparedTrackKitKey=null;
       host.dataset.trackKitAsset = 'off';host.dataset.trackKitError = '';return true;
     }
@@ -165,7 +167,7 @@ export function attachRenderer(host, app) {
       host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';return true;
     }
     const key = environmentKey(next);
-    if (world && worldKey === key) {
+    if (world && worldKey === key && !winterEnabled(next)) {
       host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';
       host.dataset.trackKitError = '';
       return true;
@@ -174,7 +176,7 @@ export function attachRenderer(host, app) {
       preparedTrackKits.dispose(); preparedTrackKits = null; preparedTrackKitKey = null;
     }
     if (!preparedTrackKits) {
-      preparedTrackKits = createTrackKits(next,{validateClearance:false}); preparedTrackKitKey = key;
+      preparedTrackKits = createTrackKits(next,{validateClearance:false,...(winterEnabled(next)?{extraPlacements:snowWorldPlacements(next),requiredIds:SNOW_KIT_IDS}:{})}); preparedTrackKitKey = key;
     }
     host.dataset.trackKitAsset = preparedTrackKits.status;
     host.dataset.trackKitError = preparedTrackKits.error?.message ?? '';
@@ -295,8 +297,8 @@ export function attachRenderer(host, app) {
     worldKey=environmentKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
-    lighting.apply({course,mood:app.lightingMood});
-    world = buildEnvironment(course,{trackKits:preparedTrackKits});
+    lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});
+    world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
     lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
@@ -308,6 +310,7 @@ export function attachRenderer(host, app) {
   const camTarget = new THREE.Vector3(), lookTarget = new THREE.Vector3();
   const rearKitForward = new THREE.Vector3();
   const nightWorldInput = {};
+  const snowVehicles=Array.from({length:8},()=>({state:null,mesh:null}));
   let trackSnapshot = null;
   const snapshotLightPose = {rotation: {y: 0}};
   function clearTrackSnapshot() {
@@ -333,7 +336,7 @@ export function attachRenderer(host, app) {
       if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
       if (!prepareKitWorld(view.course)) return;
       if (course !== view.course) {
-        if (world && worldKey === environmentKey(view.course)) course = view.course;
+        if (world && worldKey === environmentKey(view.course) && !winterEnabled(view.course)) course = view.course;
         else build(view.course);
       }
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
@@ -342,6 +345,7 @@ export function attachRenderer(host, app) {
       camera.up.set(0, 1, 0);camera.fov = 54;
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+        winter:winterEnabled(course)?winterLightingSettings:undefined,
         tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: false});
       lighting.followCamera(camera, ground, now / 1000);
       snapshotLightPose.rotation.y = pose.heading;
@@ -419,7 +423,7 @@ export function attachRenderer(host, app) {
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next) {
-      if(world&&worldKey===environmentKey(next)){course=next;lighting.apply({course,mood:app.lightingMood});}
+      if(world&&worldKey===environmentKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
       else build(next);
       syncScene(world,menu?{crushedProps:[]}:st,0);
       ready = false;
@@ -505,6 +509,7 @@ export function attachRenderer(host, app) {
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
+        winter:winterEnabled(course)?winterLightingSettings:undefined,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});
@@ -767,6 +772,16 @@ export function attachRenderer(host, app) {
     lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
+    const snowOwner=snowWorldOf(world);
+    if(snowOwner){
+      snowVehicles.length=menu?0:Math.min(8,opponents.length+1);
+      for(let i=0;i<snowVehicles.length;i++){
+        const entry=snowVehicles[i]??(snowVehicles[i]={state:null,mesh:null});
+        entry.state=i===0?st:opponents[i-1];entry.mesh=i===0?player:i===1?rival:extraOpponents[i-2]?.mesh;
+      }
+      snowOwner.update({state:menu?{status:'menu',s:distance,brokenScenery:[]}:st,camera,
+        dt:st.paused?0:dt,high,vehicles:snowVehicles});
+    }
     trackKitsOf(world)?.update({high,position:camera.position,camera,state:menu?{status:'menu'}:st});
     quality.update(high,adaptiveResolution.scale);host.dataset.ambientShading=String(ambientShading.enabled);
     const ratio=renderer.getPixelRatio();

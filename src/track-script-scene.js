@@ -6,6 +6,7 @@ import { strip, worldAtExtended } from './world-surfaces.js';
 import {createOnFootFigures} from './onfoot-figures.js';
 import {PIT,otherTyre} from './pit-lane.js';
 import { SURFACES } from './race-surfaces.js';
+import {winterSurfaceMaterial} from './snow-world.js';
 import { addCircuitEffects } from './circuit-effects.js';
 
 const OVERLAY = {
@@ -29,10 +30,11 @@ export function surfaceRuns(course) {
   return runs;
 }
 
-function overlayMaterial(kind) {
+function overlayMaterial(kind, winter = false) {
   const look = OVERLAY[kind];
-  return new THREE.MeshStandardMaterial({ name: `${SURFACES[kind].name} road`, color: look.color, roughness: look.roughness, metalness: look.metalness,
+  const material = new THREE.MeshStandardMaterial({ name: `${SURFACES[kind].name} road`, color: look.color, roughness: look.roughness, metalness: look.metalness,
     emissive: look.emissive ?? 0x000000, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  return winter && ['snow','ice','deep-snow'].includes(kind) ? winterSurfaceMaterial(material,kind) : material;
 }
 
 function plateTexture(text, background, ink) {
@@ -221,17 +223,18 @@ function addPit(group, course) {
   group.userData.updatePitCrew({tyre: 'summer'});
 }
 
-export function addTrackScriptScene(group, course) {
+export function addTrackScriptScene(group, course, {snow = false} = {}) {
   for (const run of surfaceRuns(course)) {
     const look = OVERLAY[run.kind];
     if (!look) continue;
     const left = s => Math.max(run.from, -course.roadHalfWidthAt(s)), right = s => Math.min(run.to, course.roadHalfWidthAt(s));
-    const mesh = new THREE.Mesh(strip(course, left, right, look.lift, run.s0, run.s1), overlayMaterial(run.kind));
+    if (left((run.s0 + run.s1) / 2) >= right((run.s0 + run.s1) / 2)) continue;
+    const mesh = new THREE.Mesh(strip(course, left, right, look.lift, run.s0, run.s1), overlayMaterial(run.kind,snow));
     mesh.receiveShadow = true; mesh.name = `surface-${run.kind}`;
     group.add(mesh);
     if (look.tracks) {
       // Two pairs of darker wheel tracks, tyre-worn into the snow.
-      const trackMaterial = new THREE.MeshStandardMaterial({ color: 0x8e979d, roughness: 1, transparent: true, opacity: .55, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, depthWrite: false });
+      const trackMaterial = new THREE.MeshStandardMaterial({ color: snow?0x596b78:0x8e979d, roughness: 1, transparent: true, opacity: .55, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, depthWrite: false });
       let narrowest = Infinity;
       for (let s = run.s0; s <= run.s1; s += 8) narrowest = Math.min(narrowest, course.roadHalfWidthAt(s));
       for (const centre of [-4.25, -2.55, 2.55, 4.25].filter(value => Math.abs(value) + .5 < narrowest)) {

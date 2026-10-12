@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {sampleCourseLightPath} from '../src/light-path.js';
+import {snowWorldEnabled, winterLightingSettings} from '../src/snow-world.js';
 import {
   analyseTrack, sampleCourse, detectCorners, detectCrests, longestStraight,
   namedPieces, nameFeatures, cornerSpeeds, markSlowCorners, referenceSpeedColour, trackSectors,
@@ -282,7 +283,9 @@ const lightCourse = freeze({...course, raceLength: course.length * 3,
   themeAt: () => 'coast', tunnelAt: () => false});
 const menuApp = freeze({duel: {state: {status: 'menu', s: 12}}, profile: {name: 'Memory player'}, lightingMood: 'clear'});
 const menuBefore = JSON.stringify(menuApp);
-const snapshotInputs = new Function('course', 'app', 'distance', `return (${lightingCall});`)(lightCourse, menuApp, 900);
+const winterEnabled = next => snowWorldEnabled(next, menuApp._switches?.() ?? menuApp.duel.featureFlags);
+const snapshotInputs = new Function('course', 'app', 'distance', 'winterEnabled', 'winterLightingSettings',
+  `return (${lightingCall});`)(lightCourse, menuApp, 900, winterEnabled, winterLightingSettings);
 equal(sampleCourseLightPath(lightCourse, snapshotInputs).settings.nightAmount, 1,
   'A late-course snapshot samples actual night lighting despite menu race status');
 equal(sampleCourseLightPath(lightCourse, {...snapshotInputs, distance: 0}).settings.nightAmount, 0,
