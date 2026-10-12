@@ -2,6 +2,17 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Harbour Lights release — 12 October 2026
+
+Harbour Lights is a night street circuit through a Mediterranean harbour town
+(1,800 credits), four laps of about 4 km. Paper lantern strings hang across the
+street, the road climbs through the old town between walls, and the Lantern
+Hairpin turns you for home. Down at the harbour there are yachts, a marina and
+a lighthouse sweeping its beam across the water. It is a pure race track for
+Rival Duel, Time Trial and the Grand Prix; Mad Max Duel stays on the original
+courses. It joins the end of the course list, so every other course keeps its
+place, and your saves, records and unlocks carry over as they were.
+
 ## Tremblant Snow release — 12 October 2026
 
 Tremblant Snow is the Tremblant Woods circuit in deep winter (1,800 credits):
