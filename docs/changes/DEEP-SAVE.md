@@ -53,3 +53,22 @@ Save adapter imports. Every other import still fails; both development-switch
 assertions and all look/numeric bounds remain exact. No Audio runtime or asset
 is adopted here. Root confirmed this exact guard review, while both Save reviews
 remain valid on unchanged runtime. One corrected final lane/build follows.
+## Bounded failure repair
+
+The b486aaf0 canonical lane completed 321 of 324 suites, with three failures,
+zero unrun, 2,104.171 seconds, jobs 4. Its complete original JSON is retained.
+Arena settlement and career backup each still expected eight save fixtures.
+Director c02fee6c grants only those counts from eight to nine for required
+09-deep.json. All arena awards, wallet, export-byte, backup/recovery and legacy
+assertions are unchanged; both suites now also exercise the new Deep fixture.
+
+Titan climbing's nested replay returned null with no output under its existing
+180,000 ms timeout. The direct replay suite passed in the same canonical run.
+One standalone rerun on the unchanged b486aaf0 passed all eight Titan checks;
+the timeout, fingerprints, inputs and assertions stayed exact. Its separate
+rerun log and the original failure are both kept. Root will track this unreliable
+nested check in a small follow-up card. No runtime or save code changed in repair.
+
+Same reviewers confirm the exact count delta before the corrected canonical and
+build. Final result facts are folded by Root in the real source merge, preserving
+the clean frozen lane rather than making a results-only commit.
