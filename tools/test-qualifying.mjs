@@ -72,15 +72,13 @@ assert.deepEqual([duel.state.s,duel.state.lateral], [gridPose(0).s,gridPose(0).l
 const positions = [duel.state, ...duel.state.opponents].map(r=>`${r.s}:${r.lateral}`);
 assert.equal(new Set(positions).size, 8, 'all qualified grid positions are unique');
 // The earned order keeps the authored field's opening safety setback.
-const gridDef = duel.course.def;
-duel.course.def = {...gridDef, gridSetback:-400};
+duel.state.s = gridPose(duel.state.field.playerSlot).s-400;
 assert.equal(applyQualifyingGrid(duel), true);
 for (const row of duel.state.qualifying.grid) {
   const actor = row.you ? duel.state : duel.state.opponents.find(racer=>racer.id===row.id);
   assert.equal(actor.s, gridPose(row.slot).s-400, 'earned slot preserves the course setback');
   assert.equal(actor.prevS, actor.s, 'earned grid has no artificial position jump');
 }
-duel.course.def = gridDef;
 assert.ok(events.some(event=>event.qualifyingComplete));
 assert.ok(!events.some(event=>event.stageResult), 'qualifying never pays a race result');
 assert.equal(finishQualifying(duel), false, 'session finishes once');

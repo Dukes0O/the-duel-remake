@@ -54,7 +54,7 @@ export function beginQualifying(duel) {
 export function applyQualifyingGrid(duel) {
   const s = duel.state, q = s.qualifying;
   if (q?.phase !== 'complete' || !s.field || !q.grid) return false;
-  const gridSetback = duel.course.def.gridSetback ?? 0;
+  const gridSetback = s.s - gridPose(s.field.playerSlot).s;
   for (const row of q.grid) {
     const actor = row.you ? s : s.opponents.find(racer => racer.id === row.id);
     if (!actor) continue;
