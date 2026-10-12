@@ -1,8 +1,8 @@
 # P4-SUMMIT
 
-Status: focused and actual kit checks pass; native strategy, art and lane/build pending.
+Status: actual focused/kit checks pass; native timing failed. Art review and lane/build pending.
 Own summit-run dev, stage 20 after Snow 19, stable id, 2,600 CR and noCombat.
-No release, frames, accepted art or final merge is claimed.
+Own source b7dd65eb; round-one sheet exists, pending Claude. No release, frames or merge.
 
 ## Settled behavior
 
@@ -24,8 +24,9 @@ Presentation reads state. Existing start, pit, finish and surface cues apply.
 The first focused check failed original 165 m separation at 148.7805 m; actual
 High/LOD kit validation failed early Gallery clearance on the 12 m road.
 Before-code fit stays within Claude's 10% allowance and places narrowing 10100 m.
-Total 14,219.9546 m; static all native 2 m inspection found 167.6946 m for pairs
->750 m apart, which is not a tested pass. Each changed draft piece is recorded:
+Total 14,219.9546 m; the later actual all native 2 m check passes the unchanged
+165 m target for pairs >750 m apart. Earlier static 167.6946 m was not acceptance.
+Each changed draft piece is recorded:
 
 | Piece | Before | After |
 | --- | --- | --- |
@@ -59,30 +60,33 @@ Total 14,219.9546 m; static all native 2 m inspection found 167.6946 m for pairs
 | 46 | 38 degrees | 41.8 degrees |
 | 50 | 52 degrees | 57.2 degrees |
 
-Root reviewed the 971449f2 source union; actual focused/High-LOD reruns remain pending.
-The existing focused test measures all 37 actual rendered-ground anchors before
-any correction. Real transformed roof portal coverage also needs observation.
-Native --drive uses existing useRacingLine(app, .95), same Medium / Falcone / 1989 /
-4242 / six cars and legal pit inputs for summer, summer-to-winter pit, and winter
-from setup. Targets remain 360-480 s, pit 4-8 s faster than summer and starting
-winter 2-5 s slower than pit; actual full runs remain pending. No forced finishes.
-The existing private memory-only harness captures real six-car grids and named
-landmarks in High / Performance with read-only snapshots and one at most 500 KB sheet.
-No sheet exists yet; Claude acceptance and lane jobs 4 and build remain required.
-Frames are deferred under Kyle rule 9, not passed. Price source/save review is
-clear pending actual fixtures. Avalanche, snowmen, yeti and finishing stay later.
+Root reviewed the 971449f2 source union and b7dd65eb roof fix. Actual focused
+checks pass, including all 37 rendered-ground anchors (maximum difference
+0.0000164 m), native 2 m separation, legacy winter controls and real contacts.
+Target kit validation passed all 39 actual High/LOD placements on 8367733b;
+roof fix b7 changes height handling only, with models and placements exact.
 
-Actual 8367733b focused and target kit checks pass (39 High/LOD placements).
-All 37 Gallery anchors differ from rendered Float32 ground by at most 0.0000164 m.
-The summer native run stopped at 10,164.3991 m; zero runs completed after
-894.5583 racing seconds. Pit and winter were not reached. The unchanged-input
-first-collision witness proves a grounded front strike at 184.367 s against
-the first raised roof, with 5.056 m clearance; pillars/back/scenery miss.
-Before code, the Director grants only _staticContacts in sim-contacts: an
-explicit Gallery-roof vertical-clearance opt-in supplies missing ground y to
-existing sweeps through local cached copies. Unflagged/airborne paths stay exact.
-Add real grounded passage, airborne roof, pillar and unflagged regressions;
-keep every native target and driver input unchanged. Reruns remain pending.
+First summer native run stopped at 10,164.3991 m: zero finishes after 894.5583 s.
+Its first actual crash was the raised roof at 184.367 s, with 5.056 m clearance;
+pillars/back/scenery missed. Before code, the Director granted _staticContacts:
+explicit Gallery roofs supply missing ground y through local cached copies.
+Actual grounded passage, airborne roof contact, pillar and unflagged controls
+now pass. Legacy paths, driver, layout, native inputs and targets stay unchanged.
+
+All three b7 runs finish with zero crashes: summer 276.7833 s, pit 290.2583 s,
+winter 262.9417 s. One real pit service at 7004.2820 m lasts 4.000 s. Timing
+fails unchanged 360–480 s, pit saving 4–8 s, and starting winter costing 2–5 s.
+Diagnosis stops; Claude must settle the course design. No speculative tuning.
+
+Actual native capture passes: 16 High/Performance views, 309,720-byte round-one
+sheet, private port 37273, memory-only, read-only snapshots, zero warnings/errors.
+Root grants a camera-only fork view: split +35 m, 28 m up, 180 m ahead; all
+other views stay exact. The exterior roof is visible; Open Road remains weak or
+uncaptured as a clear route. No fork acceptance. Sheet/review live in
+docs/board/looks/p4-summit; raw packets/logs in integration .evidence. Claude art
+acceptance and lane jobs 4/build remain pending. Frames are deferred under rule
+9, not passed. Price source/save review is clear; actual native purchase passes.
+Avalanche, snowmen, yeti and finishing stay later.
 ## Accepted integration sync and changed assertions
 
 Sync accepted integration 4211bf2e, including Qualifying 401/401 and build 570 ms.
@@ -107,3 +111,4 @@ headroom. No acceptance is weakened; no new test machinery is added.
 Incorrect centered-post/nominal 6.292 m roof assumptions and duplicated cyclic
 reference assertions are removed. Repeated history is folded here. All current
 models, recipes, original thresholds, verdicts and still-needed evidence remain.
+Two own unpublished interior-view deliverable drafts went to Recycle Bin.

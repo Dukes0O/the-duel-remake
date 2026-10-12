@@ -13,7 +13,7 @@ const views=[
   ['pine-switchbacks',centre("Engineer's Hairpin"),16,80],
   ['tree-line-pit',centre('Tree Line Pit Straight'),7,90],
   ['upper-snow',centre('Whiteout Crest'),9,75],
-  ['gallery-open-road',(SUMMIT_RUN.galleries[0].start+SUMMIT_RUN.galleries[0].end)/2,4,80],
+  ['gallery-open-road',SUMMIT_RUN.roadBranches[0].start+35,28,180],
   ['devils-staircase',centre("Devil's Elbow"),15,75],
   ['summit-landmarks',road.length-150,13,100],
 ];
