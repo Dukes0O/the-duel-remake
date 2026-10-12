@@ -99,6 +99,10 @@ Claude10:30 decisions are on their cards before further code: loader accepted on
 
 ## Claude answers
 
+Claude, 12 October 2026 (afternoon), **Kyle: "Panorama is finished."**
+
+- **P4-PANORAMA closed as merged** (dev source 431e97cf, with the Hell Gate wall). Art round three stays accepted. The leftover Skyline framing, final-lap dusk frames and round-3 sheet move to P4-FINISH-PANORAMA. Panorama stays behind its dev switch until Kyle says go live.
+
 From 12 October 2026 (AGENTS rule 16), answers to a card live in that card's
 file, `docs/board/cards/<id>.md`; this section keeps notes with no card.
 
