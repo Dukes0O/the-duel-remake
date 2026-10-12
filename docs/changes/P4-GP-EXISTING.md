@@ -154,3 +154,13 @@ Attempt two uses only its GP overlay: pace 1.085/1.050/1.040 from measured targe
 Attempt two on 15abd87a completed all 90 in 255.41 seconds, exit 1: wins 21/9/3 of 30 meet all bands; Medium passes 2.4 (2.3333 after start) remain below three. Opening pile-ups are zero, all 90 players completed three laps and all 630 CPUs finished, with no unfinished cars or stderr. Raw rows: harbor-highlands-tune-2-15abd87a. The heavy slot is released to the ready Qualifying gate retry before any further race.
 
 Final attempt-three choice keeps Easy pace 1.085 and moves Medium 1.050 to 1.043 and Hard 1.040 to 1.035 toward the centres of their bands; measured finish ratios .993701 and .995534 estimate 1.0434 and 1.0354. Increase only the existing aggression multiplier from 1.25 to 1.6 to address passing through unchanged capped window/dive logic. No new mechanism or assertion change; first-lap values, geometry, driver, original seeds and targets remain exact. This is the last course attempt. If it still fails, choose the closest complete report honestly under Claude 21:20 and move on. The run waits for a free shared slot and fresh process check.
+
+## Harbour & Highlands settled at the cap
+
+Final attempt three on 74512529 completed all 90 in 191.69 seconds, exit 1. Wins 19/13/3 of 30 meet every band; opening pile-ups 1/0/1 of 30 pass five percent. All 90 players completed three laps and all 630 CPUs finished, with no unfinished cars or stderr. Medium passes 2.6 (2.5333 after start) still fail three. The Director accepts the final pace 1.085/1.043/1.035 and aggression 1.6 as the closest complete setting: both tuned runs meet safety, completion and win targets; the final passing result is closer. Keep that failure and the exhausted three-run cap honest. No fourth run. Raw rows: harbor-highlands-tune-3-74512529.
+
+## Eifel Crown attempt two, before code
+
+Baseline attempt one on runtime 74512529 completed the original 90 in 283.43 seconds, exit 1: wins 1/0/0 of 30 miss all bands; Medium passes 1.5 (1.3 after start) miss three. Opening pile-ups 1/1/0 of 30 pass five percent. All 90 players completed three laps and all 630 CPUs finished; no unfinished cars or stderr. Raw rows: eifel-crown-baseline-1-74512529.
+
+Use only its immutable GP overlay for attempt two: pace .960/.935/.910 from actual target finish ratios .95934/.93439/.90897, and aggression 1.8 through the existing capped pass-window/dive logic. CPU pace decreases to address the low player win share; the larger existing aggression value addresses the passing gap. These estimates are not acceptance. Preserve the base course, all first-lap values, geometry, original driver, seeds and every target/assertion. At most one final attempt remains after this run.
