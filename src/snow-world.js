@@ -26,11 +26,13 @@ export function winterLightingSettings(base) {
     const value=Array.isArray(original)?new THREE.Color().setRGB(...original):new THREE.Color(original);
     return value.lerp(new THREE.Color(winter),day).toArray();
   };
-  return {...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
+  const winter={...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
     top:colour(base.top,0x83a6bf),horizon:colour(base.horizon,0xcfdae5),
     fog:colour(base.fog,0xb9cbdc),ground:colour(base.ground,0x7896b0),
     sunColor:colour(base.sunColor,0xe3edff),
     cloudTint:base.cloudTint.map((value,i)=>value*night+[.78,.84,.9][i]*day)};
+  // A circuit's light may carry its own `winter` look (any of the fields above), laid over the shared one.
+  return base.winter?{...winter,...base.winter}:winter;
 }
 
 function shadeSnowKits(kits) {
@@ -46,7 +48,9 @@ function shadeSnowKits(kits) {
     }
   });
 }
-export function snowWorldEnabled(course,flags){return !!course?.def.snowWorld&&flags?.enabled('snow-world')===true;}
+// A course whose snowWorld says `always: true` is a winter course whenever it is on the course list;
+// any other course with snowWorld needs the shared snow-world switch.
+export function snowWorldEnabled(course,flags){return !!course?.def.snowWorld&&(course.def.snowWorld.always===true||flags?.enabled('snow-world')===true);}
 export function winterWeight(course,s){
   const p=course.phase(s);
   for(const range of ranges(course))if(p>=range.from&&p<=range.to){
@@ -101,7 +105,9 @@ export function applySnowTerrain(geometry,course){
   weights.fill(course.def.snowWorld?1:0);
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }
-export function winterTerrainMaterial(material){
+// `drifts` (a course's snowWorld.drifts) adds broad soft drifts and fine wind ripples in slightly bluer
+// snow, so open ground has form instead of one flat white.
+export function winterTerrainMaterial(material,drifts=false){
   const previous=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
   material.onBeforeCompile=shader=>{
     previous.call(material,shader);
@@ -113,9 +119,13 @@ export function winterTerrainMaterial(material){
       varying float vWinterWeight;varying vec3 vWinterPosition;`)
       .replace('#include <color_fragment>',`#include <color_fragment>
       float winterGrain=.975+.0125*sin(vWinterPosition.x*29.0)*sin(vWinterPosition.z*31.0);
-      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.8,.82)*winterGrain,clamp(vWinterWeight,0.0,1.0));`);
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.8,.82)*winterGrain,clamp(vWinterWeight,0.0,1.0));${drifts?`
+      float drift=.5+.5*sin(vWinterPosition.x*.043+sin(vWinterPosition.z*.029)*2.1)*sin(vWinterPosition.z*.051+sin(vWinterPosition.x*.025)*1.8);
+      float ripple=smoothstep(.55,.95,sin(vWinterPosition.x*.9+sin(vWinterPosition.z*.37)*3.0)*sin(vWinterPosition.z*.6+vWinterPosition.x*.2));
+      vec3 cold=vec3(.84,.9,1.0);
+      diffuseColor.rgb*=mix(vec3(1.0),mix(cold,vec3(1.0),drift),clamp(vWinterWeight,0.0,1.0))*(1.0-.05*ripple*clamp(vWinterWeight,0.0,1.0));`:''}`);
   };
-  material.customProgramCacheKey=()=>key()+'-winter-v1';material.needsUpdate=true;return material;
+  material.customProgramCacheKey=()=>key()+(drifts?'-winter-v1-drifts':'-winter-v1');material.needsUpdate=true;return material;
 }
 export function winterSurfaceMaterial(material,kind){
   if(kind==='ice'){material.color.setRGB(.12,.19,.24);material.roughness=.065;material.metalness=.18;material.envMapIntensity=.9;material.emissive?.set(0);}

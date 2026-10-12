@@ -343,3 +343,11 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
   effects: { lake: LAKE, mist: { count: 30, height: 1, spread: .85, opacity: .3 }, lift: LIFT, backdrop: backdrop() },
   kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()].filter(Boolean),
 });
+
+// The road and the scenery pieces Tremblant Snow shares (src/circuits/tremblant-snow.js): the same
+// road, lodge, lake bowl, hill, chairlift and safety kit, dressed for winter. Exported for that file
+// only; nothing above changes.
+export const TREMBLANT_SHARED = Object.freeze({
+  BASE, road, LENGTH, wrap, kit, along, named, halfAt, stream, facing, FACE_LEFT, FACE_RIGHT, TYRE_BANDS,
+  HILL, LAKE, LIFT, DIVIDE, safety, lakeside, lodge, chairlift, backdrop, shoreAt,
+});
