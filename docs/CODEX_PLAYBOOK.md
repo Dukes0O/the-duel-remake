@@ -1,744 +1,231 @@
-# Codex playbook: building the Wasteland expansion with a team of agents
+# Codex playbook: The Duel factory
 
-This is the operating manual for running the plan in `SPEC.md` with Codex. It covers who does what, where each agent works, how work moves from an idea to the game your players open, and the files to install. The design goal is quality: agents check each other, automatic tests decide what's finished, and nothing reaches the live game unless it passes.
-
-The integration worktree and task board are active under Kyle's approval of D2
-on 23 September 2026. The live game still follows the full release gate in
-section 7.
-
-Read `SPEC.md` section 0 first, then use `docs/README.md` to find current
-instructions. The cleanup cards in `docs/board/next-run.md` come before the
-feature order in SPEC 0.6. Section 7 here implements the minimum gate in SPEC
-0.5. D8 permits pushing `integration/wasteland` after a passing full tier and
-approved compaction. Kyle's written approval is still required for a history
-rewrite or release. D4 permits pushing `master` after an approved release.
+Read SPEC section 0, AGENTS.md and docs/FACTORY.md first. Factory rules 11–15
+win over older gate, queue and lane instructions. Use docs/README.md and the
+current board to find a card. Kyle sets direction and says “go live”; Claude
+chooses art and sound within the three-round cap.
 
 ## 1. The short version
 
-**Kyle, 4 October 2026: "Build more, record less" in `AGENTS.md` wins over
-anything below that asks for more checking, helpers or recording.**
-
-- **One planner, several builders, independent checkers.** A Director thread plans and assigns. Up to four builder threads ("lanes") work at the same time, each in its own copy of the project. The agent that writes code never grades its own work: separate agents write the tests, review the change and check the game in a browser.
-- **Nobody works in the live folder.** `C:\Users\kyleb\dev\the-duel-remake` is what the desktop shortcut runs. Only the Release Manager touches it, and only to install a finished, tested build.
-- **Automatic checks replace phase sign-offs.** Every merge needs the lane tier and build. Full tests run at every session and overnight-run end, and on the exact release commit. Card-specific checks and the full release evidence in section 7 still apply. Unfinished features ship behind a feature switch.
-- **You steer without blocking.** You answer the standing decisions once, play the "Experimental" builds when you like, and drop notes in the play-test inbox. Agents turn notes into tasks.
+Build in isolated lanes. Keep at most three course lanes, two feature lanes
+and one world lane active. A card owns files and names shared locks; cards
+holding the same lock never build at once. Each test run uses at most four jobs.
+A clean green lane with a build and one clear review merges immediately.
+There is no queue wait for an unrelated lane and no rerun after a clean merge.
+Heavy checks belong to the night shift, alone on the idle laptop.
 
 ## 2. Words used here
 
 | Word | Meaning |
 | --- | --- |
-| Worktree | A separate working copy of the project folder, on its own branch, sharing the same history. Codex's app creates one per thread when you pick "Worktree" |
-| Lane | One builder thread that owns a set of files, such as combat code or menus |
-| Task card | A short entry on the board: what to build, which files, what "done" means, how to check it |
-| Gate | An automatic check a change must pass before it moves on |
-| Feature switch | A setting that keeps unfinished features hidden in the player build and visible in test builds |
-| Fingerprint | A short code computed from a replayed race. If code changes and the fingerprint doesn't, the race behaved exactly the same |
-| Integration branch | `integration/wasteland`, where finished lane work is combined and tested together before release |
-| Change note | A small file per task in `docs/changes/` describing what changed and the evidence. The Release Manager folds needed facts into release notes, then the janitor deletes superseded task notes. Lanes never edit root `README.md` or `docs/VERIFICATION.md`. |
+| Worktree | A separate checkout on its own branch, sharing Git history |
+| Lane | One card's builder and checkout |
+| Lock | A named group of shared files with one active owner |
+| Gate | A check required before a change moves on |
+| Fingerprint | A code from a replay; an unchanged code means unchanged behavior |
+| Integration | integration/wasteland, where reviewed lane changes meet |
+| Change note | docs/changes/<id>.md, holding design, verdict and removals |
 
-## 3. How the team is arranged
+## 3. Production lines
 
-```
- Kyle ── standing decisions, play-test notes, veto ───────────────┐
-                                                                  ▼
- ┌───────────────────────── Director thread ───────────────────────────┐
- │ Owns SPEC.md and docs/board/board.yaml. Plans, slices, assigns.     │
- │ Never edits game code.                                              │
- └────┬───────────────┬───────────────┬───────────────┬────────────────┘
-      │ task cards    │               │               │
-      ▼               ▼               ▼               ▼
- Lane thread     Lane thread     Lane thread     Lane thread       Art lane
- (own worktree)  (own worktree)  (own worktree)  (own worktree)    (images, sounds)
-  │ inside each lane, helper agents run one after another:
-  │  test_author → builder (the lane itself) → test_runner → reviewer
-  │  + save_guardian / browser_qa / balance_analyst when the card says so
-  ▼
- Integrator thread (own worktree on integration/wasteland)
-  merge queue, one change at a time, merge gate
-  ▼
- Full tier (Integrator, session end, exact release commit)
-  release also needs balance, browser, frame pacing, art and save evidence
-  ▼
- Release Manager thread
-  under your standing release rule: master + build + live game
-  (the menu offers "Reload" when the new build is ready; races are never interrupted)
-
- Discovery thread (read-only, runs in the background): hunts bugs, files task cards
-```
-
-### Why this shape
-
-- **Separate worktrees for builders.** Codex's helper agents inside one thread share the same folder, so two of them writing code at once would collide. Parallel building therefore happens in separate threads, each in its own worktree. Helpers inside a thread do reading, testing and reviewing, or write only to files the builder isn't touching.
-- **Tests written before the code, by someone else.** The test_author writes the acceptance tests from the task card before the builder starts. The builder can't bend a test to fit its code without the reviewer seeing it.
-- **Fresh eyes for review.** A helper agent starts with a clean context, so it reviews the change without the builder's assumptions.
-- **Files have owners.** Each lane owns a set of files. The busiest files (`src/game.js`, `src/main.js`, `src/render3d.js`, `src/app.js`) have exactly one owner lane at a time. Other lanes may add only small hook lines that their task card lists.
-- **At most five builder lanes at once** in phase 2 (four plus the audio lane, SPEC 0.9); four otherwise. More than that and review becomes the bottleneck.
+The course, feature and world graphs in FACTORY section 3 show dependencies.
+Steps with no dependency arrow can run together. Course art and layout can be
+built in parallel. World art, simulation, saves and sound use separate lanes.
+The Director keeps these lines supplied within their limits and lock ownership.
 
 ## 4. Roles
 
-| Role | How it runs in Codex | Effort | Writes | Job |
-| --- | --- | --- | --- | --- |
-| Director | Your main local thread | high | `SPEC.md`, `docs/board/`, `docs/playtest-inbox.md` | Plans waves, writes task cards, keeps lanes fed, answers lane questions from the spec, decides and logs what the spec doesn't cover |
-| Lane builder | App thread, Worktree mode, one per lane | medium | Files its card owns | Builds one task at a time, runs its tests, fixes review findings |
-| test_author | Helper agent (`.codex/agents/test_author.toml`) | high | `tools/test-*.mjs`, fixtures | Turns the card's acceptance lines into failing tests before building starts |
-| test_runner | Helper agent | low | Nothing in the repo | Runs the right test tier and reports failures briefly and precisely |
-| reviewer | Helper agent, read-only | high | Nothing | Reviews the diff against the card, the spec and the rules. Every finding names a file, a line and a failing scenario |
-| save_guardian | Helper agent, read-only | high | Nothing | Required whenever saves, rewards or records change. Checks migrations against the fixture saves |
-| browser_qa | Helper agent | medium | Screenshots in a scratch folder | Runs browser scenarios on a private port with memory-only saves. Reports errors and screenshots |
-| balance_analyst | Helper agent | medium | `src/wasteland-tuning.js` only | Runs the balance report and tunes numbers within the spec's targets |
-| art_critic | Helper agent, read-only | high | Nothing | Scores screenshots against the look rubric (SPEC 10.1) and names the fixes that matter most |
-| audio_qa | Helper agent | high | Nothing in the repo | Records a scripted race's audio and judges it against the race's events: sync, engine pitch against revs, loudness, balance between sounds, panning |
-| art_director | Art lane thread | medium | `public/assets/**`, `docs/WASTELAND_ART.md`, credits | Writes prompts, generates images with Codex's image tool, runs the art check |
-| debt_hunter | Discovery thread, read-only | high | Nothing (files cards through the Director) | Audits one system at a time, proves each bug with a small repro, proposes a card |
-| Integrator | App thread, worktree on `integration/wasteland` | medium | Merges, `docs/changes/` cleanup | Merge queue, conflict fixes, merge gate, stop-the-line |
-| Release Manager | App thread, runs in the live folder only | high | `master`, `dist`, release notes | Full check result → release under the standing rule, rollback when needed |
+| Role | Responsibility |
+| --- | --- |
+| Kyle | Direction, play notes, release approval |
+| Claude | Design packets, art and sound picks, finishing passes |
+| Director | Cards, ownership, locks and immediate shared metadata commits |
+| Builder | Card files, meaningful tests, implementation and targeted gate/build |
+| Reviewer | One independent review of the frozen change |
+| Integrator | Validate evidence, merge immediately, commit metadata and safe cleanup |
+| Night shift | Full tests, frames, combat balance and browser scenarios alone |
+| Release Manager | Exact release gate and approved live installation |
 
-## 5. The lanes and what they own
+Extra helpers are for saves, money, pay, releases and art rounds, as AGENTS
+rule 6 requires. Other work needs the builder's tests, targeted gate and one
+review. Existing helper configurations live in .codex/agents/; do not copy old
+configuration templates over them.
 
-| Lane | Owns | Typical work |
-| --- | --- | --- |
-| OPS | Launcher, `docs/OPERATIONS.md`, `.gitattributes`, `AGENTS.md`, `.codex/` | Live game safety, branches, release process |
-| TOOL | `tools/run-tests.mjs`, `tools/browser-harness.mjs`, `tools/replays/`, `tools/combat-balance.mjs`, `tools/check-art-intake.mjs`, `src/feature-flags.js` | Test tiers, fingerprints, browser checks, balance and art checks |
-| SIM | `src/game.js` and the systems split from it, `src/collision.js`, `src/npc-*.js`, `src/course*.js`, `src/config.js` | Race rules, refactors, opponents list, ambush zones |
-| CMB | `src/combat*.js`, `src/onfoot*.js`, `src/raiders.js`, `src/scrapdome.js`, `src/wasteland-tuning.js` | Weapons, armor, CPU combat, on-foot rules, arena rules |
-| VIS | `src/render3d.js`, `src/combat-scene.js`, `src/vehicle-sockets.js`, `src/armor-kit-meshes.js`, `src/fighter-figure.js`, `src/combat-effects.js`, `src/photo-mode.js`, `src/war-paint.js` | Everything drawn in 3D |
-| UI | `src/main.js` and the screens split from it, `src/app.js`, `src/keyboard-steering.js`, `src/combat-hud.js`, `src/wasteland-ui.js`, `src/style.css` | Menus, HUD, input |
-| SAVE | `src/progression.js`, `src/leaderboard.js`, `src/wasteland-progress.js`, `src/gallery-store.js`, `src/challenges.js`, data catalogs | Saves, rewards, records, unlocks |
-| ART | `public/assets/**`, `docs/WASTELAND_ART.md`, audio sources, credits | Images and sounds |
+## 5. Ownership
+
+A card's owns and hooks are its editing boundary. Ask the Director to add a
+hook before touching another file. Read locks from the current board and
+FACTORY section 2. Respect other builders' changes. A dependency junction
+may point only to integration's node_modules, never to the live checkout.
+New branch names use codex/. Retained lanes keep their work until accepted,
+replaced or explicitly dropped; being idle is not permission to remove one.
 
 ## 6. How one task flows
 
-1. **Pick.** Run `node tools/board.mjs`: its first list, CODEX CAN START NOW, is the only work Codex starts. A card is Codex's when its `owner` is `codex` or unset; a card with `owner: claude` or `owner: kyle` is never started by Codex, even when it looks ready. A codex card can start when its status is `ready`, it has no `waiting_on`, and everything in its `needs` is merged (or `spike-complete` for a throwaway research spike). Claim it by setting `status: building` and `claimed_by` on integration before starting. When a card needs Claude's review or Kyle's go-ahead, set `waiting_on: claude` or `waiting_on: kyle` and move on to another card. A design question goes to Claude in writing (the card's change note and `docs/playtest-inbox.md`); never invent a rule to get unstuck.
-2. **Start clean.** New worktree from the latest `integration/wasteland`, branch `lane/<lane>/<task-id>-<short-name>`. Run `npm ci`. Use this lane's private port (section 11).
-3. **Tests first.** Spawn `test_author` with the card. It adds failing tests and reports which fail and why. The lane confirms they fail for the right reason. Docs-only cards need independent review and the lane/build gate, without new tests that merely check wording.
-4. **Build.** The lane implements, staying inside the card's `owns` and `hooks` files. If the task needs another file, stop and ask the Director to re-slice.
-5. **Check.** Spawn `test_runner` for `node tools/run-tests.mjs --tier lane --changed --jobs 8` and `npm run build`. Fix until green. These are required before every merge, including docs-only, tuning-only and doc-plus-code changes.
-6. **Refine.** If the card changes anything seen or heard, run its browser, look and/or sound checks. For the eight asset families in SPEC 0.3, use that Blender fidelity loop (at least 3 rounds before beta); elsewhere use the look and sound loops in SPEC 10.1 (two to five rounds). Gameplay cards run the feel lab with `balance_analyst`.
-7. **Review.** Spawn `reviewer`, plus `save_guardian`, `browser_qa` or `balance_analyst` when the card lists them. Fix every finding or answer it with evidence. Repeat review until clean. After three rounds without a clean result, stop and hand the card back to the Director.
-8. **Hand off.** Write `docs/changes/<task-id>.md` with `status: ready-to-merge` and the evidence. Commit on the lane branch. The thread's final message is the change note.
-9. **Merge and clean.** The Integrator verifies the current lane/build gate and independent review before each merge, then merges one lane at a time. Changes or conflict fixes need the gate again before completion. After the merge verdict is recorded, delete that card's used evidence, unlink its integration-only dependency junction, remove its clean worktree with ordinary `git worktree remove`, and delete its merged lane branch. Run `node tools/build-status.mjs` and record sizes after every merge. A failed gate returns the branch to its lane with the failure.
+1. Pick only a Codex card shown by node tools/board.mjs as ready to start.
+   The Director claims it and commits board/inbox/STATUS changes immediately.
+   A design question goes to Claude in writing; move to another card while waiting.
+2. Start from current integration in an isolated lane. Settle the card's design
+   in its change note before code. Use meaningful acceptance tests first when
+   the behavior needs tests. A docs-only card does not need wording tests.
+3. Build inside owned files and granted hooks. Keep seed/input behavior
+   repeatable and views unable to change race state. Never touch real saves.
+4. Freeze the source commit. Run node tools/run-tests.mjs --tier lane --changed
+   --jobs 4 and npm run build once in the lane. Keep the original result and
+   build log pinned to that clean commit. Fix a real failure in the lane.
+5. Get one clear review. Use additional required save/art helpers only when
+   rule 6 or the card calls for them. Claude judges art within three rounds.
+   Daytime builds do not add full, frame, browser or balance checks; the night
+   shift owns those checks. Until FAC-03 lands, the full tier still runs at run end.
+6. Hand the exact source, green lane/build evidence and review to the Integrator.
+   An independent clean lane can merge after another lane without syncing
+   or rerunning solely because integration advanced.
+7. Merge immediately. A clean merge does not rerun the lane tier. A conflict
+   returns to the builder for resolution, one fresh targeted lane/build and review.
+   Commit board/inbox/STATUS at once and add one run-log sentence per merge.
 
-## 7. Gates
+Record design, test or behavior changes, verdicts and Removed in the change
+note. Do not make a commit solely to record a test result. Fold verdicts into
+real work or the merge's shared metadata transaction.
 
-| Gate | When | What must pass | Time target |
-| --- | --- | --- | --- |
-| Lane / merge floor | Before review and every merge, including docs-only, tuning-only and doc-plus-code changes | `node tools/run-tests.mjs --tier lane --changed --jobs 8` and `npm run build`; current evidence for the reviewed change | about 5 min |
-| Full tier | At every session and overnight-run end | `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`, with all suites including campaigns | about 6 min |
-| Release gate | Before every release and before touching the live folder | Full tier green on the exact final integration commit, including small and tuning-only releases; full release evidence below; change notes compiled into `README.md` and `docs/VERIFICATION.md`; feature switch list reviewed | depends on checks |
+## 7. Gates and evidence
 
-**Feature and release evidence.** The minimum merge floor does not replace
-card-specific browser, visual, audio, gameplay, fingerprint or save checks.
-Before release, retain the full check: production build, combat balance within
-targets with `wasteland2` both off and on, all browser scenarios, frame pacing
-against the last release, art checks and save/storage budgets as applicable.
-Record results or a reason a check does not apply; unmeasured evidence is not
-a pass. The older merge tier is available for a specific concern, but is not
-an additional mandatory gate for every merge.
+| Gate | When | Command or evidence |
+| --- | --- | --- |
+| Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
+| Conflict fix | After resolving a real conflict in the lane | One fresh targeted lane/build and review |
+| Night shift | Idle laptop, alone | Full tier jobs 4, both frame qualities, combat balance wasteland2 off/on, browser scenarios |
+| Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
-**Status and provenance.** Run `node tools/build-status.mjs` on integration
-after every merge and at the end of every session. It updates
-`docs/board/STATUS.md`; the full runner records its commit and result in
-`docs/board/checks/full-tier.json`. Finish source and release-note commits
-before the release full run. Committing a generated status page or other
-metadata creates a new commit that needs its own full run before release.
-Keep the last full-run time and merge count in the run log so a resumed
-session preserves the 5-merge / 2-hour deadline.
+The targeted lane includes smoke, replay and world-signature guards, plus
+suites that import or read changed paths within two steps. Unmapped game
+files do not trigger a full daytime run; deeper effects belong to the night.
+A failing lane blocks that lane. A night failure puts its fix first while
+other merges continue. A suite failing without changed game code gets one
+same-commit rerun under AGENTS rule 3; a passing rerun becomes a small unreliable
+check card, with no changed assertion or tolerance.
 
-**End-of-run janitor sweep.** At the end of every run and after every ten
-merges, list idle unmerged branches with their card, last commit and retained
-work; leave those branches in place. Fold needed facts from old notes and
-handoffs into current docs, then delete the old files. Run `node
-tools/repo-audit.mjs`; remove only proven-unused code and assets through a
-gated cleanup lane with unchanged replay fingerprints, and turn uncertain
-findings into cards. Compare current sizes with `tools/size-targets.json`,
-explain real growth and write one before/after janitor line in `run-log.md`.
-Never force-remove a worktree or rewrite history without Kyle's written
-approval. Status generation is read-only outside `STATUS.md` and does not
-inspect the live checkout unless an explicit `--live-root` is supplied.
+Run node tools/build-status.mjs after merges and at session end. Commit its
+STATUS output and all board/inbox edits immediately. There is no merge-count
+or elapsed-time full deadline. Until FAC-03 is installed, run the full tier
+alone at session/overnight end. Exact release provenance still matters:
+finish source and release notes before the final release full run; a later
+commit needs its own full pass before release.
 
-**Stop the line.** A failing pre-merge gate blocks that merge. If integration
-itself is red or a full run fails, the Integrator puts a fix card first and
-stops feature merges. Only fixes merge until the full tier passes again.
-A suite that fails with no game code changed since it last passed gets one
-rerun on the same commit; if it passes, merges continue and the unreliable
-check becomes its own card (AGENTS.md, Build more, record less).
-Lanes may keep building on their own branches.
+For release, keep build, full, combat balance off/on, all browser scenarios,
+frames, art intake and applicable save/storage evidence. Unmeasured is not
+passed. Frames follow AGENTS rule 8: one busiest-view run per quality with
+eight cars, delivered p95 at most 18.5 ms and construction under one second.
+Never time an art round or hidden unfinished content. Do not alter existing
+assertions or fingerprints without a reviewed reason.
 
-**Fingerprint changes are behavior changes.** A card that changes how races behave must say so. The reviewer approves the new fingerprint with a written reason in the change note. A refactor card must leave every fingerprint unchanged.
+### Integrator command
 
-**Test changes are behavior changes.** Editing an existing assertion needs the reviewer's approval and a reason in the change note. This rule exists because the D-key tests were edited to protect a bug.
+Run tools/integrate-lane.mjs from the factory checkout with explicit
+--integration ROOT --lane ROOT --card ID --evidence JSON. The JSON packet has:
+
+- schema: 1, card and the exact clean lane commit;
+- lane: that commit, the targeted command as an argument array, and the original
+  --json runner result (complete green lane, jobs at most four);
+- build: that commit, command [“npm”, “run”, “build”], exitCode 0, durationMs
+  and a nonempty log path under the lane's .evidence/;
+- review: that commit, reviewer name and passed: true.
+
+Optional --metadata JSON is a map of new file contents for board.yaml,
+playtest-inbox.md and STATUS.md only. The caller owns those decisions.
+After FAC-06, closing a card removes its open entry and adds its ID to completed;
+supply that board change in the same metadata map. The script refreshes STATUS,
+adds one sentence from the actual gate/build/review and commits metadata at once.
+It never runs a gate, build, browser check, release or push. A failure after the
+source merge requires repairing its pending metadata before the next merge.
+
+Cleanup is opt-in: --recycle-owned RECEIPT --run-id ID --run-started-at ISO.
+The receipt supplies newlyCreated: true, exact lane and branch, matching runId
+and createdAt within this run. It is the caller's proof of ownership, not an
+inferred age test. Only a clean fully merged codex lane can be recycled.
+The integration-only node_modules junction is detached first. Recycle Bin has
+no permanent-delete fallback. A dry-run prune must name only this missing
+registration; otherwise stop. Retained or unrelated lanes stay.
+
+### Janitor sweep
+
+Keep sweep work separate from feature cards. Fold consumed evidence verdicts
+into current notes, then remove only owned consumed output. Run repo-audit for
+proven unused files; uncertain findings become cards. Compare sizes with
+size-targets.json. Leave idle unmerged lanes and Kyle's branches in place.
+Never force-remove a worktree or rewrite history without explicit authorization.
 
 ## 8. Feature switches and releases
 
-Every new feature ships behind a switch in `src/feature-flags.js`:
+New features remain dev until their accepted design and applicable checks are
+complete. Claude makes art and sound picks; nothing waits on Kyle except a
+release. Kyle can overrule a pick and must say “go live” before live installation.
+The Release Manager follows OPERATIONS: exact release full, master fast-forward,
+staged build, one dist-previous, hashed assets before index/manifest, and no
+forced reload of an open race. Push or history changes require their applicable
+authorization; this integrator performs neither.
 
-| State | Where it shows | How it moves on |
-| --- | --- | --- |
-| `dev` | Test builds and `?flags=` only | Its acceptance tests and browser scenario pass two full checks in a row → `beta` |
-| `beta` | The player build, behind **Menu → Experimental** | You play it, or three days pass with no serious play-test note → `on` (standing rule D3) |
-| `on` | Everyone | The switch is deleted once the feature has been `on` for a release with no problems |
+## 9. Player touchpoints
 
-The Release Manager follows the standing release rule you approve once (D3). A release:
+Kyle can play Preview, leave notes in playtest-inbox or stop work at any time.
+The Director routes notes into cards. Lost progress, crashes and broken races
+go first. After release, the inbox states what changed in plain language.
 
-1. Checks the full check result for the exact integration commit.
-2. Fast-forwards `master` in the live folder, builds, keeps the previous `dist` as `dist-previous` for rollback.
-3. The running game shows its menu-only "Reload" notice. Races are never interrupted and saves stay on the same address.
-4. Writes a plain-language summary to `docs/playtest-inbox.md` ("What's new to try").
+## 10. Files and notes
 
-Rollback: restore `dist-previous`, or switch the feature off and release again.
-
-## 9. Your touchpoints
-
-- **Once:** answer the standing decisions in `SPEC.md` section 15.
-- **Whenever you like:** play. Turn on Menu → Experimental to try `beta` features.
-- **Notes:** tell the Director, or add a line to `docs/playtest-inbox.md`. Serious problems (lost progress, crashes, a broken race) jump to the top of the board.
-- **Weekly:** the Director writes a one-page plain-language summary: what shipped, what's in beta, what's next, what needs you.
-- **Anytime:** "stop" or "roll back" is always honored.
-
-## 10. Files to install
-
-FND-05 installed these on integration. Keep examples aligned with the current
-root `AGENTS.md` and SPEC section 0; they are not a second set of gates.
-
-### 10.1 `AGENTS.md` (repository root)
-
-```markdown
-# The Duel: rules for every agent
-
-Read SPEC.md section 0 first; it wins over conflicting later text. Finish the ordered
-0.6 cards before other new work, allowing its listed existing cards when lanes are free.
-Read docs/CODEX_PLAYBOOK.md for how work flows.
-Your task card is in docs/board/board.yaml. Stay inside its `owns` and `hooks` files.
-
-## Never
-- Never edit, build in, or serve from C:\Users\kyleb\dev\the-duel-remake unless you are the
-  Release Manager. That folder is the live game.
-- Never use port 5174. It is the live game and holds real player saves.
-- Never read, write or reset real player saves. QA pages use tools/qa-storage.js.
-- Never add npm dependencies, network requests, accounts or API keys.
-- Never weaken or delete a test to get green. Changing an assertion needs reviewer approval
-  and a reason in your change note.
-- Never regenerate world composition signatures without a reviewed visual difference.
-- Never edit README.md or docs/VERIFICATION.md in a lane. Write docs/changes/<task-id>.md.
-
-## Always
-- Keep race rules inside Duel.step, repeatable from seed and inputs, runnable without graphics.
-- The renderer, HUD and menus read race state and never change it.
-- Use the seeded generator in src/rng.js for any random choice in the simulation.
-- New features go behind a switch in src/feature-flags.js.
-- Write new code in the readable style of src/game.js. When you rewrite a packed file, unpack it.
-- Line endings are LF.
-- Docs use plain language: short sentences, common words, no em dashes.
-
-## Commands
-- Before every merge: node tools/run-tests.mjs --tier lane --changed --jobs 8
-  and npm run build, including docs-only, tuning-only and doc-plus-code changes.
-- Full tier: node tools/run-tests.mjs --tier full --jobs 4 --keep-going
-  at every session and overnight-run end. A failed full run stops feature merges until fixed and green.
-- Release: full tier on the exact final commit, plus the full release evidence in
-  playbook section 7 (build, balance off/on, browser, frame pacing, art and save checks).
-  Card-specific checks still apply.
-- After every merge and session end: node tools/build-status.mjs updates docs/board/STATUS.md.
-  A later metadata commit does not inherit an earlier full pass.
-- List suites: node tools/run-tests.mjs --list
-- D8 permits an `integration/wasteland` push only after a passing full tier and
-  approved binary-history compaction. Do not rewrite history or release without
-  Kyle's written approval. D4 permits pushing master after an approved release.
-
-## Done means
-- The card's acceptance lines are shown by tests or independent review for docs-only work.
-- The lane gate passes. Reviewer findings are fixed or answered with evidence.
-- docs/changes/<task-id>.md lists what changed, commands run with results, and any
-  fingerprint or test changes with reasons.
-```
-
-### 10.2 Helper agents (`.codex/agents/*.toml`)
-
-These leave `model` unset so they use your default Codex model.
-
-`.codex/agents/test_author.toml`
-
-```toml
-name = "test_author"
-description = "Writes failing acceptance tests from a task card before any implementation starts."
-model_reasoning_effort = "high"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-You write tests only. Input: a task card from docs/board/board.yaml and the linked SPEC.md section.
-- Turn every acceptance line into at least one check in tools/test-<area>.mjs, using node:assert/strict
-  and the style of the existing suites. Print one summary line with the check count.
-- Tests must fail now for the reason the card describes. Run them and report each failure message.
-- Prefer checks on game rules and results over checks on private helper functions.
-- For behavior that must not change, add or extend a fingerprint in tools/replays/.
-- Never edit files under src/. Never change existing assertions. If an existing test contradicts
-  the card, report it instead.
-"""
-```
-
-`.codex/agents/test_runner.toml`
-
-```toml
-name = "test_runner"
-description = "Runs the requested test tier and reports failures briefly and precisely."
-model_reasoning_effort = "low"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Run exactly the command you are given (a tier from AGENTS.md). Do not edit any file.
-Report: PASS or FAIL, total time, and for each failing suite the first assertion message, the file
-and line, and the shortest command that reproduces it. Report any suites that were skipped
-(including DUEL_SKIP_CAMPAIGNS). Keep the report under 30 lines.
-"""
-```
-
-`.codex/agents/reviewer.toml`
-
-```toml
-name = "reviewer"
-description = "Independent code reviewer for correctness, repeatability, save safety and performance."
-model_reasoning_effort = "high"
-sandbox_mode = "read-only"
-developer_instructions = """
-Review the diff of the current branch against integration/wasteland, the task card and SPEC.md.
-Check, in order:
-1. Correctness: does it meet every acceptance line? Find inputs that break it.
-2. Repeatability: race rules stay in Duel.step, use simulation time and the seeded generator,
-   and give the same result at 30, 60 and 144 FPS.
-3. Boundaries: renderer and HUD never write race state; files outside the card's owns/hooks are
-   untouched; no dependency, network or storage-key changes unless the card says so.
-4. Saves and rewards: old saves still load; credits are never taken by combat; records stay separate.
-5. Performance: no allocation per frame in pools, HUD writes only on change, budgets in SPEC.md.
-6. Tests: do they prove the acceptance lines? Were existing assertions changed, and is the reason sound?
-7. Docs: the change note is accurate and uses plain language without em dashes.
-Every finding needs a file:line, a concrete failing scenario, and a suggested fix. If you find
-nothing, say so plainly. Do not report style preferences as defects.
-"""
-```
-
-`.codex/agents/save_guardian.toml`
-
-```toml
-name = "save_guardian"
-description = "Required reviewer for any change to saves, rewards, records or storage."
-model_reasoning_effort = "high"
-sandbox_mode = "read-only"
-developer_instructions = """
-You protect player progress. For the current diff:
-- Load every fixture in tools/fixtures/saves/ through the new code (run the migration suite) and
-  confirm credits, cars, upgrades, drivers, courses, paint, weapon levels, records and ghosts survive.
-- Confirm normalizing never throws on damaged or partial data.
-- Confirm saved credits can never go down because of combat, fines, quitting or reloads.
-- Confirm new storage stays within the budget test and failures are shown to the player.
-- Confirm a backup is written before any migration that changes the save shape.
-Report findings with file:line and the fixture that fails. You may run tests; do not edit files.
-"""
-```
-
-`.codex/agents/browser_qa.toml`
-
-```toml
-name = "browser_qa"
-description = "Checks the game in headless Chrome on a private port with memory-only saves."
-model_reasoning_effort = "medium"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Use node tools/browser-harness.mjs with the scenario named in the task card. It builds the QA
-bundle, serves it on the lane's private port, runs Chrome headless with a throwaway profile, and
-saves screenshots to the scratch folder it prints.
-- Never use port 5174 and never open the live folder's server.
-- Report console errors and warnings, failed requests, scenario assertion results, and the
-  screenshot paths. Describe what each screenshot shows in one line and flag anything that looks
-  wrong: floating parts, missing textures, clipped HUD, overlaps.
-- Do not edit source files.
-"""
-```
-
-`.codex/agents/balance_analyst.toml`
-
-```toml
-name = "balance_analyst"
-description = "Runs the combat balance report and tunes numbers within SPEC.md targets."
-model_reasoning_effort = "medium"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Run node tools/combat-balance.mjs --runs 12 and compare every metric with the targets in SPEC.md.
-You may edit only src/wasteland-tuning.js. Change one number at a time, rerun, and keep a short
-table of before and after results. Stop when all targets pass or after five attempts, and report
-which targets still fail and why.
-"""
-```
-
-`.codex/agents/art_director.toml`
-
-```toml
-name = "art_director"
-description = "Writes image prompts, generates art with the built-in image tool, and checks it in."
-model_reasoning_effort = "medium"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-Follow docs/WASTELAND_ART.md and the style of docs/IMAGE_PROMPTS.md.
-- Original characters and vehicles only. No likeness, costume or symbol from the Mad Max films,
-  no real brands or logos, no readable text, no gore.
-- Record the full prompt, date, tool, and exactly how the image is used before checking it in.
-- Save to the path, size and transparency listed for that image. Run node tools/check-art-intake.mjs.
-- Keep the original output outside the repo; commit only the runtime copy.
-- Add or update the credits file.
-"""
-```
-
-`.codex/agents/debt_hunter.toml`
-
-```toml
-name = "debt_hunter"
-description = "Read-only bug and legacy-code auditor that proves each finding with a repro."
-model_reasoning_effort = "high"
-sandbox_mode = "read-only"
-developer_instructions = """
-Audit the one system you are given (for example: crash rules, saves, police, HUD, input, audio).
-- Look for old rules that still run beside new ones, state that is written but never read, storage
-  that is not separated by player, tests that assert a known bug, and docs that point to old paths.
-- Prove each finding with a small script idea or an existing test command and its actual output.
-- Rank findings: lost progress > wrong race result > visible glitch > tidy-up.
-- Output proposed task cards in the board format. Do not edit files.
-"""
-```
-
-`.codex/agents/art_critic.toml`
-
-```toml
-name = "art_critic"
-description = "Scores screenshots against the look rubric and names the fixes that matter most."
-model_reasoning_effort = "high"
-sandbox_mode = "read-only"
-developer_instructions = """
-You judge how the game looks. Input: the card, the shot list, and screenshots from this round and
-the previous round (if any), plus public/assets/reference/ art direction boards.
-Score every shot from 1 to 5 on each rubric item in SPEC.md 10.1: art direction match, reads at
-racing speed, grounded, materials and lighting, motion and timing, doesn't hide road/HUD/rival,
-frame cost. For every score below 4, say exactly what is wrong, where in the image, and the most
-likely fix in the code or asset. Say whether this round is better or worse than the last one.
-End with the three fixes that would raise the lowest scores most. Be strict: 5 means you would
-put it in a trailer. Do not edit files.
-"""
-```
-
-`.codex/agents/audio_qa.toml`
-
-```toml
-name = "audio_qa"
-description = "Records a scripted race's audio and judges it against what happened in the race."
-model_reasoning_effort = "high"
-sandbox_mode = "workspace-write"
-developer_instructions = """
-You judge how the game sounds against what is happening in it.
-1. Run node tools/browser-harness.mjs record-race <scenario>. It records the full mix and each
-   part (engine, tires, weapons and impacts, ambience, UI) plus an event log with explosions,
-   hits, gear shifts, landings, pickups, crashes, and per-frame revs, speed, throttle and rival
-   position.
-2. Run node tools/audio-analysis.mjs on the recording. Report every measurement against the
-   targets in SPEC.md 10.1: sync to events, engine pitch following the revs, loudness over time per
-   part, weapons over engine, clipping, clicks and loop gaps, panning and distance, variety, and
-   the stress mix.
-3. Open the spectrogram and loudness images with event markers and look for what the numbers can
-   miss: sounds early or late against their events, engine tone flattening while revs climb,
-   blasts buried under tire noise, harsh spikes, abrupt jumps in level.
-4. For each problem give the time in the race, the part, what is wrong, and the most likely fix in
-   audio.js or the asset. End with the three fixes that matter most, and a one-line "listen to"
-   note for Kyle for each new sound. Do not edit source files.
-"""
-```
-
-Suggested settings in your own `~/.codex/config.toml` (yours to change):
-
-```toml
-[agents]
-max_concurrent_threads_per_session = 4
-```
-
-### 10.3 Board format (`docs/board/board.yaml`)
-
-```yaml
-# Only the Director edits this file, on integration/wasteland.
-tasks:
-  - id: BUG-02
-    title: UFO swaps keep lap history
-    lane: CMB
-    size: S
-    needs: [FND-06, FND-07]
-    owns: [src/combat.js, tools/test-combat.mjs]
-    hooks: [src/game.js]          # small edits allowed, listed in the change note
-    helpers: [reviewer]           # add save_guardian, browser_qa, balance_analyst as needed
-    flag: none                    # or the feature switch name
-    behavior_change: yes          # fingerprints may change, with a reason
-    status: ready                 # blocked | ready | building | review | ready-to-merge | merged | released | spike-complete (throwaway research only)
-    spec: "SPEC.md, task BUG-02"
-```
-
-### 10.4 Change note (`docs/changes/<task-id>.md`)
-
-```markdown
----
-task: BUG-02
-status: ready-to-merge
-kind: fix            # fix | feature | refactor | tooling | art
-flag: none
-player_facing: yes
----
-## What changed
-Plain-language lines for README.md.
-
-## Evidence
-Commands run and their results, for docs/VERIFICATION.md.
-
-## Behavior and test changes
-Fingerprints that changed and why. Assertions that changed and why. "None" if none.
-```
+Current AGENTS.md is the rule source; do not paste an older duplicate template.
+The board names ownership, dependencies and locks; FAC-06 moves open details
+under docs/board/cards/. A change note contains task/status/kind/flag, settled
+design, a short evidence verdict, reviewed behavior/assertion changes and Removed.
+Evidence lives in ignored .evidence/<date>/<card>/; keep recipes, not raw output.
+Only runtime assets go in public/. Lanes never edit README or VERIFICATION.
 
 ## 11. Ports and folders
 
-| What | Where |
+| Purpose | Location |
 | --- | --- |
-| Live game | `C:\Users\kyleb\dev\the-duel-remake`, port 5174. Release Manager only |
-| Integration | A worktree on `integration/wasteland`, for example `C:\Users\kyleb\dev\the-duel-integration`, port 5176 |
-| Lanes | Codex app worktrees under `C:\Users\kyleb\.codex\worktrees\`. Ports: OPS 5180, TOOL 5181, SIM 5182, CMB 5183, VIS 5184, UI 5185, SAVE 5186, ART 5187 |
-| Full check | Runs in the integration worktree, port 5188 |
-| Browser harness | Picks its own free port above 5190 when none is given, with a throwaway Chrome profile |
+| Live game | C:/Users/kyleb/dev/the-duel-remake, localhost:5174, Release Manager only |
+| Integration | C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake, integration/wasteland |
+| Lanes | Separate codex branches under C:/Users/kyleb/.codex/worktrees/wasteland-integration/ |
+| Preview | Integration .preview-dist, 127.0.0.1:5195, memory-only |
+| Browser QA | Harness-selected private port/profile and memory-only storage |
 
-Each browser origin (host and port) has its own saves, so private ports can never touch real careers.
+A private port alone is not save isolation: QA must install memory-only storage.
+Never refresh the live race, use 5174 for QA or link to live dependencies.
 
 ## 12. Thread prompts
 
-Paste these to start each thread. Replace the parts in angle brackets.
+Director: read the current board and FACTORY graphs, claim ready cards, enforce
+three course/two feature/one world lane limits and shared locks, and commit
+shared metadata immediately. Keep independent green lanes moving.
 
-### Director
+Builder: read the card and SPEC/AGENTS/FACTORY, settle design before code,
+write meaningful tests when needed, stay in owned files, freeze source, run
+one targeted lane/build and obtain one review. Hand current evidence to the
+Integrator. Do not add daytime night-shift work.
 
-```
-You are the Director for the Wasteland expansion. Read SPEC.md section 0 first; it wins
-over conflicting later text. Read docs/README.md, docs/board/next-run.md,
-docs/CODEX_PLAYBOOK.md and your task card in docs/board/board.yaml.
-You plan; you do not write game code. Keep at most five builder lanes busy in phase 2 (the fifth is audio), four otherwise.
-Finish the cleanup cards in `docs/board/next-run.md` before SPEC 0.6 features;
-its listed existing cards may continue when a lane is free. Enforce section 7:
-before EVERY integration merge,
-node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
-Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end.
-Failed full runs stop feature merges until fixed and green. Release needs full on the exact
-final commit and the complete section 7 release evidence. Run node tools/build-status.mjs
-after every merge and at session end. D8 requires a passing full tier and
-approved compaction before an integration push. D4 permits master pushes after
-an approved release.
-Each time a lane finishes or a note arrives:
-1. Update board statuses from merged branches and change notes.
-2. Mark cards ready when everything in `needs` is merged.
-3. Turn new play-test notes into cards. Serious problems (lost progress, crash, broken race) go first.
-4. If a card came back after three review rounds, split it into smaller cards.
-5. Answer lane questions from SPEC.md. When the spec has no answer, decide, log the decision in
-   docs/board/decisions.md with reasons and how to reverse it, and carry on (SPEC.md 4.7).
-Once a week, write a one-page plain-language summary to docs/playtest-inbox.md.
-```
+Integrator: validate exact clean lane evidence, same repository and one review;
+merge promptly. A clean union keeps its existing green evidence. Send a conflict
+back for one fresh lane/build after its fix. Commit one run-log sentence and
+shared metadata immediately. Recycle only caller-proven newly created clean lanes.
 
-### Lane builder
+Night shift: run FAC-03 alone on the idle laptop; report the first merge after
+the last green night for a failure, put its fix first and allow other merges.
+Release Manager: only after Kyle says “go live”, require full on the exact
+release commit and all applicable evidence, then follow OPERATIONS safely.
 
-```
-You are the <LANE> lane. Work only in this worktree, on port <PORT>.
-Take the top ready card for <LANE> from docs/board/board.yaml on integration/wasteland.
-Read SPEC section 0 first and follow docs/CODEX_PLAYBOOK.md section 6: branch, npm ci,
-test_author first except for docs-only cards, build inside
-the card's files, test_runner lane gate, reviewer plus the card's helpers, fix until clean,
-write docs/changes/<id>.md with status ready-to-merge, commit. Then take the next ready card.
-If you need a file outside the card, stop and ask the Director.
-```
+## 13. Foundation history
 
-### Integrator
+The September foundation and cleanup sequence is finished. Its task history is
+in Git; use the current board and FACTORY for new work.
 
-```
-You are the Integrator. Work in the integration worktree on integration/wasteland, port 5176.
-Read SPEC section 0 first; it wins. Respect the ordered cards in 0.6 and section 7's gates.
-Loop:
-1. List lane branches whose docs/changes/<id>.md says ready-to-merge, oldest first.
-2. Before EVERY merge, verify current passing independent evidence for
-   node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build, including
-   docs-only, tuning-only and doc-plus-code changes. Keep the card's specific checks.
-3. Merge one. Resolve conflicts only when the resolution is obvious from both change notes;
-   otherwise send the branch back to its lane with the conflict described.
-   Changes or conflict fixes need the lane/build gate again before completing the merge.
-   Failed gate: return the branch to its lane. Green: set the note to merged.
-4. Commit the merge verdict, delete that card's used evidence, unlink its integration-only
-   dependency junction, remove its clean lane worktree without force, and delete its merged
-   lane branch. Run node tools/build-status.mjs and record sizes, merge count and full-run time.
-5. Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end.
-   If integration or full is red, stop feature merges; only fixes merge until full is green.
-6. Before release, run full on the exact final integration commit and collect section 7's
-   full release evidence. Refresh STATUS at session end. D8 permits an integration push
-   only after a passing full tier and approved binary compaction. History rewrite and
-   release still require Kyle's written approval.
-```
+## 14. Autonomous sessions
 
-### Full tier and release evidence (run by the Integrator)
-
-```
-In integration/wasteland, run node tools/run-tests.mjs --tier full --jobs 4 --keep-going
-at every session and overnight-run end, run alone.
-Before every release run it on the exact final commit. Install locked
-dependencies with npm ci if needed. Record the commit, timings and pass/fail; the runner
-writes docs/board/checks/full-tier.json. A failed full run stops feature merges until fixed
-and a full rerun passes.
-For release, also collect section 7's full evidence: build, combat balance off and on,
-node tools/run-browser-scenarios.mjs --all, frame pacing against the last release,
-node tools/check-art-intake.mjs, and save/storage checks as applicable. Record evidence in
-docs/board/checks/<date>-<commit>.md, including screenshots and any fix proposals.
-Run node tools/build-status.mjs at session end. Later commits need their own full run.
-```
-
-### Release Manager
-
-```
-You are the Release Manager, the only agent allowed in C:\Users\kyleb\dev\the-duel-remake.
-Follow the standing release rule in SPEC.md section 15 (D3).
-1. Summarize the current indexed docs, board, run log and exact gate evidence in README.md and docs/VERIFICATION.md on integration. Fold any still-present new task notes into those sources before the janitor deletes them, then commit.
-2. Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going on that exact final
-   integration commit. Confirm all section 7 release evidence is green; no exception for
-   small or tuning-only releases. Refresh STATUS after merges and at session end.
-3. In the live folder: confirm a clean working tree and fast-forward master to that commit.
-   Build dist-next, check it on a private port, back up dist as dist-previous, then install
-   hashed assets before index.html and build-version.json as docs/OPERATIONS.md describes.
-4. Do not restart or refresh the running game. Its menu offers Reload when it sees the new build.
-5. Push master to GitHub as the approved D4 backup after an approved release.
-   D8 allows an integration push only after a passing full tier and approved
-   compaction; never rewrite history without Kyle's written approval.
-6. Add "What's new to try" to docs/playtest-inbox.md in plain language.
-Rollback on request: restore dist-previous, or switch the feature off and release again.
-```
-
-### Discovery
-
-```
-You are the Discovery thread, read-only. Spawn debt_hunter once per system, one at a time:
-crash rules, saves and migration, records, police, rival and traffic, HUD, input, audio, rendering
-lifecycle, storage. Collect proven findings as proposed cards and hand them to the Director.
-Never edit files.
-```
-
-## 13. First day
-
-Historical foundation sequence. For current work, follow
-`docs/board/next-run.md`: finish cleanup before SPEC 0.6 features.
-
-1. You answer the standing decisions in `SPEC.md` section 15.
-2. OPS lane: FND-01 (live game safety) and FND-02 (operations doc).
-3. OPS lane: FND-04 (line endings), the first commit on the new base.
-4. Three small fixes that turn the suite green, one lane each: FIX-01 (SIM), FIX-02 (VIS), FIX-03 (UI).
-5. OPS lane: FND-05 opens `integration/wasteland` from the green result and installs the board, change notes, `AGENTS.md` and helper agents. Every lane branches from here.
-6. TOOL lanes, two threads with separate files: FND-06 (test tiers and parallel runs) and FND-08 (browser harness). Then FND-07 (fingerprints) and FND-09 (feature switches).
-7. SAVE lane: FND-10 (save fixtures and storage budget).
-8. The Discovery thread starts its first audit. The art lane starts batch A prompts.
-9. When FND-06 is merged, the CMB, UI and VIS lanes start the Wave 1 bug fixes. Restructuring (Wave 2) waits for FND-07.
-
-## 14. Autonomous mode: one session that keeps going
-
-Use this when you want Codex to work through wave after wave with nobody at the keyboard. SPEC section 0 takes precedence over section 4.7 and the older wave plan.
-
-### 14.1 Why one session
-
-A Codex app thread stops when its task ends, and nothing starts the next thread for you. Codex's helper agents share their parent's folder and may not be allowed to start helpers of their own. So autonomous mode runs as **one long Director session in the integration folder**. The Director:
-
-- creates one Git worktree per lane at `.lanes/<lane>` inside the integration folder (listed in `.git/info/exclude`, so Git ignores it);
-- starts every helper itself (test_author, builder, test_runner, critics, reviewer), telling each one which lane folder and port to use;
-- merges finished lanes into `integration/wasteland` itself, following the Integrator steps;
-- runs the full check and releases under D3, following the Release Manager steps.
-
-The separate threads in section 12 still work when you want to watch or steer by hand. Both modes use the same board, change notes and gates, so you can switch between them.
-
-### 14.2 Setup (task FND-12)
-
-A Codex profile is a separate file next to `~/.codex/config.toml` in this
-installed CLI. First create `~/.codex/duel-dry-run.config.toml` with only the
-isolated integration worktree writable. Use TOML literal strings for Windows
-paths so backslashes stay intact:
-
-```toml
-approval_policy = "never"
-sandbox_mode = "workspace-write"
-
-[sandbox_workspace_write]
-network_access = true
-writable_roots = [
-  'C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake',
-]
-```
-
-Test it with `codex sandbox --profile duel-dry-run -C <integration folder>`:
-prove a write inside the worktree, a rejected write outside it, the locked
-install, and private Chrome QA. Then take a small card through the gates and
-release to a throwaway copy of the live folder. Record every result and any
-approval prompt. Only after that dry run passes, install
-`~/.codex/duel-autopilot.config.toml` with the same settings and the live
-folder added to `writable_roots` for releases. Start from the integration
-folder with `codex --profile duel-autopilot`. Never use the CLI's unrestricted
-sandbox bypass flag.
-
-### 14.3 The loop
-
-```
-repeat until: no card is ready, the budget is nearly spent, or Kyle says stop
-  1. Read SPEC section 0, board.yaml, run-log.md, decisions.md, playtest-inbox.md
-  2. Follow the cleanup order in docs/board/next-run.md before SPEC 0.6
-     features. Turn notes into cards; expand one-line cards; mark ready cards
-  3. Fill free lanes (at most 5 in phase 2, including audio) with the top ready card each
-  4. For each lane with a card, next step of section 6:
-       tests as needed → builder → test_runner → refine loops → reviewer (+ helpers) → change note
-  5. Before EVERY merge, verify node tools/run-tests.mjs --tier lane --changed --jobs 8
-     and npm run build, then merge one
-     lane at a time. Run node tools/build-status.mjs after every merge
-  6. Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end,
-     run alone. Failed full stops feature merges until fixed and full is green
-  7. Wave finish line met? Write docs/board/waves/<wave>.md; start its polish wave;
-     move switches only under SPEC section 0 and section 8, then release only after the
-     exact-final-commit full tier and all section 7 release evidence pass
-  8. Append one line per event to run-log.md (card started, merged, parked, decision, release)
-  9. Check the budget before taking a new card. At every session and overnight-run end,
-     run node tools/run-tests.mjs --tier full --jobs 4 --keep-going and node tools/build-status.mjs
-```
-
-### 14.4 Start prompt
-
-```
-You are the Director in autonomous mode for the Wasteland expansion. Work in this folder
-(integration/wasteland). Read SPEC.md section 0 first; it wins over later text (4.7, 10.1,
-12 and 12.4). Read AGENTS.md, docs/README.md, docs/board/next-run.md,
-docs/CODEX_PLAYBOOK.md (especially 6, 7 and 14), and your task card.
-Budget for this run: <for example "until milestone M2" or "about 30% of my Codex usage">.
-Follow playbook 14.3 and finish the cleanup cards in docs/board/next-run.md
-before SPEC 0.6 features. Follow the approved standing decisions. D8 permits
-an integration push only after a passing full tier and approved compaction;
-history rewrite or release still needs Kyle's written approval. Before EVERY
-merge require
-node tools/run-tests.mjs --tier lane --changed --jobs 8 and npm run build.
-Run node tools/run-tests.mjs --tier full --jobs 4 --keep-going at every session and overnight-run end. Failed full stops feature merges
-until fixed and full is green. Run node tools/build-status.mjs after each merge and session end.
-When the spec has no answer, decide, log it in docs/board/decisions.md, and continue. Park only
-what SPEC.md 4.7 says to park, and keep going with other cards. Run helpers yourself, one lane
-folder each under .lanes/, at most four lanes at once. Never touch port 5174 or real saves.
-Release only under D3 with full green on the exact final commit and all section 7 release
-evidence. Keep run-log.md current, including the full-run time and merge count. When the
-budget is nearly spent: finish cards in progress, run full and refresh STATUS, write a
-handoff at the end of run-log.md and stop.
-```
-
-### 14.5 Resume prompt
-
-```
-Resume the autonomous Wasteland run. Read SPEC section 0 first, then docs/board/run-log.md
-from the last handoff and preserve its merge count and full-run deadline. Then read
-board.yaml, decisions.md and waves/. Check each .lanes/ worktree: finish or discard half-done
-work as the log describes, never losing committed work. Then continue the loop in playbook 14.3
-with this budget: <budget>.
-```
-
-### 14.6 What you'll see without asking
-
-- `docs/playtest-inbox.md`: "What's new to try" after each release, and the weekly summary.
-- `docs/board/STATUS.md`: build, full-run, feature, lane and backup state after each merge and session end.
-- `docs/board/decisions.md`: every choice the Director made that the spec didn't cover, with how to reverse it.
-- `docs/board/looks/<card>/`: one compact JPG and its review verdict per look round.
-- `docs/board/waves/`: evidence that each wave met its finish line.
-- `docs/board/parked.md`: anything waiting for you, with the reason. It never blocks the run.
+One Director can keep the factory running through successive ready cards.
+Separate lanes share history, not editing ownership. Follow the same limits,
+locks and gate rules as manual sessions. Resume by reading the current board,
+FACTORY, inbox and retained lane notes. Preserve pending work and decisions;
+there is no old four/five-lane limit, merge queue or full-run deadline to restore.
+When Kyle pauses work, drain existing jobs and stop new work. When a session
+ends, commit shared status/inbox/board immediately; use the night shift once
+installed, or the existing end full alone until FAC-03 lands.
