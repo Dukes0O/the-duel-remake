@@ -65,7 +65,8 @@ export function createZoneFloor(zone) {
   });
 
   // Where a point sits relative to the trail: distance along it, signed distance
-  // across it (positive to the left), and the trail's numbers at that spot.
+  // across it (positive to the left, as in the game: heading +z, left is +x),
+  // and the trail's numbers at that spot.
   function sample(x, z) {
     const list = grid.get(`${Math.floor(x / CELL)}:${Math.floor(z / CELL)}`);
     if (!list) return null;
@@ -78,7 +79,9 @@ export function createZoneFloor(zone) {
       if (d < bestD) { bestD = d; best = { s, t }; }
     }
     const { s, t } = best;
-    const lateral = s.tx * (z - s.a.z) - s.tz * (x - s.a.x);
+    // Side from the segment, size from the true distance (round the outside of a bend).
+    const side = s.tz * (x - s.a.x) - s.tx * (z - s.a.z);
+    const lateral = (side < 0 ? -1 : 1) * bestD;
     const mix = key => s.a[key] + (s.b[key] - s.a[key]) * t;
     return { along: s.start + s.len * t, lateral, distance: bestD, depth: mix('depth'), width: mix('width'),
       kelp: mix('kelp'), grass: mix('grass'), rock: mix('rock') };
@@ -95,7 +98,7 @@ export function createZoneFloor(zone) {
   // A point beside the trail: `lateral` metres to the left of the heading.
   function pointAt(along, lateral) {
     const f = frameAt(along);
-    return { x: f.x - f.tz * lateral, z: f.z + f.tx * lateral };
+    return { x: f.x + f.tz * lateral, z: f.z - f.tx * lateral };
   }
 
   function rockiness(x, z, at = sample(x, z)) {

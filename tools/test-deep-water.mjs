@@ -79,7 +79,7 @@ const shape = createZoneFloor(zone);
   for (const s of kelp) {
     const at = shape.sample(s.x, s.z);
     if (Math.abs(at.lateral) < at.width * 0.5 + 2) onTrail++;
-    if (at.kelp < 0.05) outsideForest++;
+    if (!(at.kelp > 0)) outsideForest++;
   }
   eq(onTrail, 0, 'no kelp on the drivable width');
   eq(outsideForest, 0, 'kelp only where the trail asks for it');
@@ -114,13 +114,32 @@ const shape = createZoneFloor(zone);
   let worst = 0;
   for (let i = 0; i < pos.count; i += 97) worst = Math.max(worst, Math.abs(pos.getY(i) - shape.floorHeight(pos.getX(i), pos.getZ(i))));
   ok(worst < 1e-4, 'tile heights are the ground heights');
-  // Driving away builds two tiles a frame and hides the ones behind.
+  // Driving away: tiles far behind are freed, and new ones build a few rows
+  // a frame inside the time budget (the clock here moves 1 ms per reading).
+  let clock = 0;
+  const budgeted = createFloorTiles(uniforms, shape, { cell: 2, budgetMs: 2, now: () => clock++ });
+  budgeted.prime(start);
   const camera = new THREE.PerspectiveCamera();
   const far = shape.frameAt(shape.length / 2);
   camera.position.set(far.x, -8, far.z);
-  tiles.update(camera);
-  eq(tiles.builtCount, primed + 2, 'at most two new tiles per frame');
-  ok(tiles.group.children.slice(0, primed).every(m => !m.visible), 'tiles far behind are hidden');
+  budgeted.update(camera);
+  eq(budgeted.builtCount, 0, 'tiles far behind are freed, and one frame of budget does not finish a tile');
+  let frames = 1;
+  while (budgeted.builtCount === 0 && frames < 200) { budgeted.update(camera); frames++; }
+  ok(frames > 2 && budgeted.builtCount === 1, `a tile is built across ${frames} frames inside the budget`);
+  for (let i = 0; i < 400; i++) budgeted.update(camera);
+  ok(budgeted.builtCount > 4, `the ground around the new spot fills in (${budgeted.builtCount} tiles)`);
+  budgeted.dispose();
+  eq(budgeted.group.children.length, 0, 'dispose frees the budgeted tiles');
+  // Sides match the game: heading +z, left is +x.
+  const straight = createZoneFloor({ id: 'side', trail: [{ x: 0, z: 0, depth: 6, width: 12 }, { x: 0, z: 100, depth: 6, width: 12 },
+    { x: -100, z: 100, depth: 6, width: 12 }, { x: -100, z: 0, depth: 6, width: 12 }] });
+  ok(straight.pointAt(30, 5).x > 0, 'pointAt +lateral is to the left (+x heading +z)');
+  ok(straight.sample(5, 30).lateral > 0 && straight.sample(-5, 30).lateral < 0, 'sample gives +lateral on the left');
+  // Round the outside of a corner the distance is the true distance, so banks do not step.
+  const outside = straight.sample(8, 108);
+  ok(Math.abs(outside.distance - Math.hypot(8, 8)) < 1e-9 && Math.abs(Math.abs(outside.lateral) - outside.distance) < 1e-9,
+    'outside a corner the sideways distance is the true distance');
   tiles.dispose();
   eq(tiles.group.children.length, 0, 'dispose removes every tile');
 }

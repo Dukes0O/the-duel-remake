@@ -52,7 +52,7 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
   floor.prime({ x: start.x, z: start.z });
 
   const cars = [];
-  const focus = new THREE.Vector3();
+  const focus = new THREE.Vector3(), tint = [1, 1, 1];
   let disposed = false;
 
   return {
@@ -60,23 +60,35 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
     counts: { kelp: kelp.count, seagrass: seagrass.count, rocks: rocks.count, pebbles: pebbles.count, floorTiles: floor.tileCount },
     get builtTiles() { return floor.builtCount; },
     // A car under water: caustics on the paint, a soft shadow under it, and
-    // headlights that switch on in the dark. The car object is only dressed,
-    // never moved.
+    // headlights that switch on in the dark. The car wears copies of its own
+    // materials while it is down here; dispose gives it back its originals and
+    // shadow flags, so it surfaces exactly as it went in. Never moved.
     attachCar(object) {
-      look.applyTo(object, { fragmentExtra: CAUSTIC_ON_PAINT });
+      if (cars.some(c => c.object === object)) return;
+      const restore = [];
       object.traverse(o => {
         if (!o.isMesh) return;
+        const original = o.material;
+        restore.push({ mesh: o, material: original, castShadow: o.castShadow, receiveShadow: o.receiveShadow });
+        const copy = m => {
+          if (!m?.isMeshStandardMaterial) return m;
+          const c = m.clone();
+          c.envMapIntensity = 1.8;
+          return c;
+        };
+        o.material = Array.isArray(original) ? original.map(copy) : copy(original);
         o.castShadow = true; o.receiveShadow = true;
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m?.isMeshStandardMaterial) m.envMapIntensity = 1.8; });
       });
+      look.applyTo(object, { fragmentExtra: CAUSTIC_ON_PAINT });
       const shadow = createContactShadow(object);
       const lights = createHeadlights(object, look.uniforms, { direct: profile.pipeline === 'direct' });
-      cars.push({ object, shadow, lights });
+      cars.push({ object, shadow, lights, restore });
     },
     update({ car = null, camera, seconds }) {
       // Under the kelp the water takes an olive-green cast; in open water none.
       const shade = shape.forestShade(camera.position.x, camera.position.z);
-      look.setTint([1 - 0.18 * shade, 1 - 0.02 * shade, 1 - 0.38 * shade]);
+      tint[0] = 1 - 0.18 * shade; tint[1] = 1 - 0.02 * shade; tint[2] = 1 - 0.38 * shade;
+      look.setTint(tint);
       look.update(camera, seconds);
       const cy = car ? car.y : camera.position.y;
       focus.set(car ? (camera.position.x + car.x) / 2 : camera.position.x, Math.max(cy, camera.position.y - 4),
@@ -91,7 +103,16 @@ export function createUnderwaterScene({ zone, quality = 'high', renderer, scene 
     dispose() {
       if (disposed) return;
       disposed = true;
-      for (const c of cars) { c.shadow.dispose(); c.lights.dispose?.(); }
+      for (const c of cars) {
+        c.shadow.dispose(); c.lights.dispose();
+        for (const r of c.restore) {
+          const worn = Array.isArray(r.mesh.material) ? r.mesh.material : [r.mesh.material];
+          const own = new Set(Array.isArray(r.material) ? r.material : [r.material]);
+          worn.forEach(m => { if (m && !own.has(m)) m.dispose(); });
+          Object.assign(r.mesh, { material: r.material, castShadow: r.castShadow, receiveShadow: r.receiveShadow });
+        }
+      }
+      cars.length = 0;
       floor.dispose(); kelp.dispose(); seagrass.dispose?.(); rocks.dispose?.(); pebbles.dispose?.();
       scene.remove(group);
       look.dispose();

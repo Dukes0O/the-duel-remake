@@ -211,7 +211,7 @@ export function createKelp(uniforms, { stems = 520, seed = 1989, blades = 'full'
     },
     dispose() {
       nearGeometry.dispose(); farGeometry.dispose();
-      parts.forEach(({ near, far }) => { near.geometry.dispose(); far.geometry.dispose(); });
+      parts.forEach(({ near, far }) => { near.geometry.dispose(); far.geometry.dispose(); near.dispose(); far.dispose(); });
       material.dispose(); depthMaterial.dispose();
     },
   };

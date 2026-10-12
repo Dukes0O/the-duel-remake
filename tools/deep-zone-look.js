@@ -67,7 +67,7 @@ function placeCar(share, lateral = 0) {
   return { along, f, p, y };
 }
 // A point relative to the car: forward, left and up in metres.
-const rel = (at, forward, left, up) => [at.p.x + at.f.tx * forward - at.f.tz * left, at.y + up, at.p.z + at.f.tz * forward + at.f.tx * left];
+const rel = (at, forward, left, up) => [at.p.x + at.f.tx * forward + at.f.tz * left, at.y + up, at.p.z + at.f.tz * forward - at.f.tx * left];
 
 const VIEWS = [
   { name: 'Ramp shallows, seagrass in sun', share: 0.03, time: 3.2, fov: 62,

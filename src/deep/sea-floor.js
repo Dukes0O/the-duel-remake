@@ -19,10 +19,21 @@ function softNoise(x, z) {
 
 // A grid of ground from (x0, z0), cols by rows points, cell metres apart. The
 // shape gives the height and how rocky each point is.
-function floorGeometry({ x0, z0, cols, rows, cell, height, rock: rockAt }) {
-  const positions = new Float32Array(cols * rows * 3), colours = new Float32Array(cols * rows * 3), sand = new Float32Array(cols * rows);
-  const tint = new THREE.Color();
-  for (let r = 0; r < rows; r++) {
+function floorGeometry(spec) {
+  const job = startFloor(spec);
+  fillFloorRows(job, spec.rows);
+  return finishFloor(job);
+}
+// The same grid in pieces, so a tile can be built a few rows per frame.
+function startFloor(spec) {
+  const n = spec.cols * spec.rows;
+  return { spec, row: 0, positions: new Float32Array(n * 3), colours: new Float32Array(n * 3), sand: new Float32Array(n), tint: new THREE.Color() };
+}
+function fillFloorRows(job, count) {
+  const { x0, z0, cols, rows, cell, height, rock: rockAt } = job.spec;
+  const { positions, colours, sand, tint } = job;
+  const end = Math.min(rows, job.row + count);
+  for (let r = job.row; r < end; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c, x = x0 + c * cell, z = z0 + r * cell;
       positions[i * 3] = x; positions[i * 3 + 1] = height(x, z); positions[i * 3 + 2] = z;
@@ -36,6 +47,11 @@ function floorGeometry({ x0, z0, cols, rows, cell, height, rock: rockAt }) {
       sand[i] = 1 - Math.min(1, rock * 1.4);
     }
   }
+  job.row = end;
+  return job.row >= rows;
+}
+function finishFloor(job) {
+  const { cols, rows } = job.spec, { positions, colours, sand } = job;
   const index = new Uint32Array((cols - 1) * (rows - 1) * 6);
   let k = 0;
   for (let r = 0; r < rows - 1; r++) {
@@ -76,7 +92,7 @@ export function createFloorMesh(uniforms, { cell = 1, zFrom = -14, zTo = 440 } =
 // trail exist, and only tiles near the camera are built and drawn: the water
 // hides everything past about 140 m, so a 4 km loop costs what 300 m does.
 export const TILE_SIZE = 48;
-export function createFloorTiles(uniforms, shape, { cell = 1, reach = 170, buildPerUpdate = 2 } = {}) {
+export function createFloorTiles(uniforms, shape, { cell = 1, reach = 170, budgetMs = 2, now = () => performance.now() } = {}) {
   const material = floorMaterial(uniforms);
   const group = new THREE.Group();
   group.name = `Sea floor: ${shape.id}`;
@@ -86,36 +102,57 @@ export function createFloorTiles(uniforms, shape, { cell = 1, reach = 170, build
   for (let tx = Math.floor(minX / TILE_SIZE); tx <= Math.floor(maxX / TILE_SIZE); tx++) {
     for (let tz = Math.floor(minZ / TILE_SIZE); tz <= Math.floor(maxZ / TILE_SIZE); tz++) {
       const cx = (tx + 0.5) * TILE_SIZE, cz = (tz + 0.5) * TILE_SIZE, at = shape.sample(cx, cz);
-      if (at && at.distance < at.width * 0.5 + 90 + TILE_SIZE * 0.71) tiles.set(`${tx}:${tz}`, { tx, tz, cx, cz, mesh: null });
+      if (at && at.distance < at.width * 0.5 + 90 + TILE_SIZE * 0.71) tiles.set(`${tx}:${tz}`, { tx, tz, cx, cz, mesh: null, job: null });
     }
   }
-  function build(tile) {
-    const geometry = floorGeometry({ x0: tile.tx * TILE_SIZE, z0: tile.tz * TILE_SIZE, cols: steps + 1, rows: steps + 1, cell,
-      height: shape.floorHeight, rock: shape.rockiness });
+  const spec = tile => ({ x0: tile.tx * TILE_SIZE, z0: tile.tz * TILE_SIZE, cols: steps + 1, rows: steps + 1, cell,
+    height: shape.floorHeight, rock: shape.rockiness });
+  function place(tile, geometry) {
     tile.mesh = new THREE.Mesh(geometry, material);
     tile.mesh.name = `Sea floor tile ${tile.tx}:${tile.tz}`;
     tile.mesh.receiveShadow = true;
+    tile.job = null;
     group.add(tile.mesh);
   }
-  const near = (tile, point) => Math.hypot(tile.cx - point.x, tile.cz - point.z) < reach + TILE_SIZE * 0.71;
+  function free(tile) {
+    if (tile.mesh) { tile.mesh.geometry.dispose(); group.remove(tile.mesh); tile.mesh = null; }
+    tile.job = null;
+  }
+  const gap = (tile, point) => Math.hypot(tile.cx - point.x, tile.cz - point.z);
+  const near = (tile, point) => gap(tile, point) < reach + TILE_SIZE * 0.71;
+  // Far behind: freed, and rebuilt if the car comes back.
+  const far = (tile, point) => gap(tile, point) > reach * 1.8 + TILE_SIZE;
+  let building = null;
   return {
     group, tileCount: tiles.size,
     get builtCount() { let n = 0; for (const t of tiles.values()) if (t.mesh) n++; return n; },
     // Build every tile around a point at once, before the first frame.
-    prime(point) { for (const tile of tiles.values()) if (!tile.mesh && near(tile, point)) build(tile); },
+    prime(point) { for (const tile of tiles.values()) if (!tile.mesh && near(tile, point)) place(tile, floorGeometry(spec(tile))); },
+    // Each frame: show the near tiles, free the far ones, and build the nearest
+    // missing tile a few rows at a time within the time budget.
     update(camera) {
       const point = camera.position;
-      const missing = [];
+      let next = null, best = Infinity;
       for (const tile of tiles.values()) {
-        const close = near(tile, point);
-        if (tile.mesh) tile.mesh.visible = close;
-        else if (close) missing.push(tile);
+        if (tile.mesh) {
+          tile.mesh.visible = near(tile, point);
+          if (far(tile, point)) free(tile);
+        } else if (near(tile, point)) {
+          const d = gap(tile, point);
+          if (d < best) { best = d; next = tile; }
+        }
       }
-      missing.sort((a, b) => Math.hypot(a.cx - point.x, a.cz - point.z) - Math.hypot(b.cx - point.x, b.cz - point.z));
-      missing.slice(0, buildPerUpdate).forEach(build);
+      if (building && !near(building, point)) { building.job = null; building = null; }
+      if (!building && next) { building = next; building.job = startFloor(spec(next)); }
+      const start = now();
+      while (building) {
+        if (fillFloorRows(building.job, 4)) { place(building, finishFloor(building.job)); building = null; break; }
+        if (now() - start >= budgetMs) break;
+      }
     },
     dispose() {
-      for (const tile of tiles.values()) if (tile.mesh) { tile.mesh.geometry.dispose(); group.remove(tile.mesh); tile.mesh = null; }
+      for (const tile of tiles.values()) free(tile);
+      building = null;
       material.dispose();
     },
   };
@@ -213,7 +250,7 @@ export function createSeagrass(uniforms, { tufts = 1100, seed = 1989, distance =
     update(camera) {
       for (const { mesh, sphere } of parts) mesh.visible = camera.position.distanceTo(sphere.center) - sphere.radius < distance;
     },
-    dispose() { geometry.dispose(); material.dispose(); },
+    dispose() { geometry.dispose(); material.dispose(); group.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); },
   };
 }
 
@@ -290,7 +327,7 @@ export function createRocks(uniforms, { count = 90, seed = 1989, detail = 3, pla
     group.add(mesh);
     return mesh;
   });
-  return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); } };
+  return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); group.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); } };
 }
 
 // Pebbles and cobbles: many small rough stones from the same three shapes, one
@@ -319,5 +356,5 @@ export function createPebbles(uniforms, { count = 900, seed = 1989, placements =
     mesh.frustumCulled = false;
     group.add(mesh);
   });
-  return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); } };
+  return { group, count: list.length, dispose() { geometries.forEach(g => g.dispose()); material.dispose(); group.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); } };
 }

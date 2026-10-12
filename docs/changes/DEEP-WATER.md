@@ -54,6 +54,22 @@ player_facing: false
   FINISH-DEEP. Sheet sent to Kyle; raw captures deleted, verdict kept here.
 - No frame check: nothing is reachable yet (rule 9); FINISH-DEEP measures.
 
+## Review
+
+One ordinary review, changes needed, all applied:
+
+- The look now restores the scene's background, environment and its
+  intensity on dispose, so the circuit's sky comes back on surfacing.
+- `attachCar` dresses the car in copies of its materials and gives back the
+  originals and shadow flags on dispose; a second attach is ignored.
+- Sideways offsets are positive to the left as in the game (+x heading +z);
+  outside a bend the distance is the true distance, so banks do not step.
+- Floor tiles build a few rows a frame inside a 2 ms budget instead of two
+  whole tiles (median 6 ms, worst 22 ms before), and tiles far behind are
+  freed. Kelp, seagrass, rock and pebble dispose free their instanced
+  meshes. Per-frame allocations in `update` and the waterline removed.
+- Contract 10.1 now names `attachCar` and the waterline overlay.
+
 ## Behavior and test changes
 
 No existing assertion changed. New suite `tools/test-deep-water.mjs`.

@@ -13,10 +13,11 @@ const BUBBLE_LIFE = 1.7; // seconds
 
 // The share of the screen's height that is under water, looking straight down
 // the middle column of the near plane. Pure maths, so it can be tested.
+const probe = new THREE.Vector3();
 export function waterlineShare(camera, surface = 0) {
   camera.updateMatrixWorld();
   const inverse = camera.projectionMatrixInverse, world = camera.matrixWorld;
-  const at = ndcY => new THREE.Vector3(0, ndcY, -1).applyMatrix4(inverse).applyMatrix4(world).y - surface;
+  const at = ndcY => probe.set(0, ndcY, -1).applyMatrix4(inverse).applyMatrix4(world).y - surface;
   const bottom = at(-1), top = at(1);
   if (bottom >= 0 && top >= 0) return 0;
   if (bottom < 0 && top < 0) return 1;
