@@ -107,6 +107,47 @@ check('CLI rejects unsupported flags and malformed values', () => {
     }));
   }
 }
+check('explicit legacy off/on options report real disposable gate eligibility', () => {
+  const parse = required('parseArgs');
+  assert.equal(Object.hasOwn(parse([]), 'wasteland2'), false, 'omitted CLI keeps its original default shape');
+  for (const value of ['off', 'on']) assert.equal(parse(['--wasteland2', value]).wasteland2, value);
+  for (const args of [['--wasteland2'], ['--wasteland2', 'dev'], ['--wasteland2', 'on', '--wasteland2', 'off']])
+    assert.throws(() => parse(args));
+  const run = required('run'), original = Duel.prototype.startCampaign;
+  const starts = [];
+  Duel.prototype.startCampaign = function (...args) {
+    const result = original.apply(this, args);
+    starts.push({discovered: this.state.wastelandGateDiscovered, loadout: this.state.weaponLoadout,
+      crew: this.state.crewId, mode: this.state.mode});
+    return result;
+  };
+  try {
+    for (const value of ['off', 'on']) {
+      const row = run('none', 'medium', 1989, {wasteland2: value, maxFrames: 1});
+      assert.equal(row.wasteland2.value, value);
+      assert.equal(row.wasteland2.eligibility, value === 'on');
+      assert.equal(row.wasteland2.rulesActive, value === 'on');
+      assert.equal(row.completed, false, 'one-frame witness never claims a balanced race');
+    }
+    assert.deepEqual(starts.map(row => row.discovered), [false, true], 'both actual native starts differ');
+    assert.equal(starts[0].loadout, null, 'undiscovered start has no Armory loadout');
+    assert.equal(starts[0].crew, null, 'undiscovered start has no crew');
+    assert.equal(starts[0].mode, 'wasteland', 'actual base combat policy remains available');
+    assert.throws(() => run('ufo-max', 'medium', 1989, {wasteland2: 'off', maxFrames: 1}), /unavailable|undiscovered/i);
+  } finally { Duel.prototype.startCampaign = original; }
+});
+check('explicit off check reports inapplicable targets and exits nonzero', () => {
+  const child = spawnSync(process.execPath, [toolPath, '--check', '--wasteland2', 'off'],
+    {encoding: 'utf8', timeout: 4000});
+  assert.equal(child.error, undefined, 'off limitation exits after a bounded real start');
+  assert.notEqual(child.status, 0, 'inapplicable targets cannot pass');
+  const packet = JSON.parse(child.stdout);
+  assert.equal(packet.wasteland2.value, 'off');
+  assert.equal(packet.wasteland2.eligibility, false);
+  assert.equal(packet.wasteland2.rulesActive, false);
+  assert.equal(packet.wasteland2.acceptance, 'inapplicable');
+  assert.match(child.stderr, /inapplicable|unsupported/i);
+});
 check('default and explicit empty options use the same released rules', () => {
   const run = required('run');
   assert.deepEqual(run('none', 'easy', 1989, { maxFrames: 1 }),

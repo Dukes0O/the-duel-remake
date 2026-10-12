@@ -206,3 +206,24 @@ test('bundle cleanup recycles only the exact owned leaf and refuses redirected t
   await assert.rejects(browserHarness.recycleQaBundle(resolve(browserHarness.PROJECT_ROOT, '.qa-dist'), operations), /QA bundle/);
   assert.equal(calls.length, 0);
 });
+
+test('explicit headed night launch preserves every default headless argument', () => {
+  const profile = 'C:/qa-private-profile';
+  assert.deepEqual(parseArguments(['scenario', 'frame-pacing', '--headed']),
+    {name: 'frame-pacing', injectConsoleError: false, headed: true});
+  assert.throws(() => parseArguments(['scenario', 'frame-pacing', '--headed', '--headed']), /headed/);
+  const original = browserHarness.chromeLaunchArguments(profile);
+  const headed = browserHarness.chromeLaunchArguments(profile, {headed: true});
+  assert.deepEqual(headed, original.filter(arg => arg !== '--headless=new'));
+  assert.ok(original.includes('--headless=new'), 'all ordinary scenarios retain headless mode');
+  assert.ok(headed.includes(`--user-data-dir=${profile}`), 'headed mode retains disposable profile');
+  assert.throws(() => browserHarness.chromeLaunchArguments(profile, {headed: 'yes'}), /headed/);
+});
+test('launch metadata follows the actual Chrome argv, not tab visibility', () => {
+  const metadata = browserHarness.browserLaunchMetadata;
+  assert.equal(typeof metadata, 'function');
+  assert.deepEqual(metadata(browserHarness.chromeLaunchArguments('private')),
+    {headed: false, launchMode: 'headless'});
+  assert.deepEqual(metadata(browserHarness.chromeLaunchArguments('private', {headed: true})),
+    {headed: true, launchMode: 'headed'});
+});

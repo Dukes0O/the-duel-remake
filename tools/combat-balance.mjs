@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
 import { createFeatureFlags } from '../src/feature-flags.js';
+import { wastelandRulesActive } from '../src/wasteland-access.js';
 import { App } from '../src/app.js';
 import { Duel } from '../src/game.js';
 import { stepCombat, supportsCombat } from '../src/combat.js';
@@ -25,7 +26,7 @@ const repeatSeeds = baselineSeeds.slice(0, 6);
 // bands (easy 0-3, medium 2-6, hard 4-10) came from one race; the live game
 // itself averages 7.3 on Medium over thirty (CRASH-RELEASE).
 export const CPU_HIT_BANDS = Object.freeze({ easy: [1, 4], medium: [4, 9], hard: [4, 10] });
-const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews,seeker-rockets] [--check] [--verbose] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only | --seeker-pair';
+const usage = 'Usage: node tools/combat-balance.mjs [--flags arsenal,arsenal-wave3,cpu-crews,seeker-rockets] [--check] [--verbose] [--wasteland2 off|on] | --baseline-only | --probe=DIFFICULTY,SEED | --wave-two-only | --wave-three-only | --seeker-pair';
 const BALANCE_FLAGS = ['arsenal', 'arsenal-wave3', 'cpu-crews', 'seeker-rockets'];
 
 function selectedFlags(flags = []) {
@@ -47,6 +48,10 @@ export function parseArgs(args = []) {
       const value = args[++index];
       if (!value) throw Error(usage);
       options.flags = selectedFlags(value.split(','));
+    } else if (argument === '--wasteland2') {
+      const value = args[++index];
+      if (!['off', 'on'].includes(value)) throw Error(usage);
+      options.wasteland2 = value;
     } else if (argument === '--check') options.check = true;
     else if (argument === '--verbose') options.verbose = true;
     else if (argument === '--baseline-only') options.baselineOnly = true;
@@ -97,13 +102,13 @@ function memoryStorage() {
   };
 }
 
-function saveBalanceCareer(storage, arsenalRank) {
+function saveBalanceCareer(storage, arsenalRank, discoveredGate = true) {
   const profile = createProfile();
   const xp = arsenalRank > 1 ? Array.from({length: arsenalRank - 1}, (_, index) =>
     400 + 150 * index).reduce((sum, amount) => sum + amount, 0) : 0;
   profile.wasteland = normalizeWasteland({...profile.wasteland,
     xp, scrap: arsenalRank >= 13 ? 4000 : arsenalRank > 1 ? 3000 : 0,
-    discoveredGate: true});
+    discoveredGate});
   const registry = createPlayerRegistry(profile);
   registry.players[0].name = 'Arsenal Balance';
   if (!savePlayers(registry, storage)) throw Error('Could not save the memory-only Arsenal career.');
@@ -398,8 +403,11 @@ function driveRearDefense(app, goalGap = 18, shadowSec = Infinity) {
 }
 
 export function run(policy, cpuDifficulty, seed = 1989,
-  { flags = [], maxFrames = 30 * 600, arsenalRank = 6 } = {}) {
+  { flags = [], maxFrames = 30 * 600, arsenalRank = 6, wasteland2 } = {}) {
   flags = selectedFlags(flags);
+  if (wasteland2 !== undefined && !['off', 'on'].includes(wasteland2)) throw Error('Expected wasteland2 off or on.');
+  if (wasteland2 === 'off' && !['none', 'ufo', 'bomb', 'crossbow', 'star', 'all', 'pursuit'].includes(policy))
+    throw Error('Policy is unavailable to an undiscovered profile.');
   if (!(policies.includes(policy) || ['pursuit', 'rear-defense', 'wave-two', 'wave-two-close',
       'wave-three', 'wave-three-close', 'wave-three-decoy'].includes(policy)) || !difficulties.includes(cpuDifficulty) ||
       !Number.isSafeInteger(seed) || !Number.isSafeInteger(maxFrames) || maxFrames < 0)
@@ -417,10 +425,10 @@ export function run(policy, cpuDifficulty, seed = 1989,
   try {
     globalThis.localStorage = memoryStorage();
     globalThis.cancelAnimationFrame ??= () => {};
-    saveBalanceCareer(globalThis.localStorage, flags.includes('arsenal') ? arsenalRank : 1);
+    saveBalanceCareer(globalThis.localStorage, flags.includes('arsenal') ? arsenalRank : 1, wasteland2 !== 'off');
     app = new App();
     app.duel.featureFlags = simulationFlags(flags);
-    if (flags.includes('arsenal')) equipArsenalPolicy(app, policy);
+    if (flags.includes('arsenal') && wasteland2 !== 'off') equipArsenalPolicy(app, policy);
     if (!app.startCampaign({ startStage: 0, seed, mode: 'wasteland', discoveredGate: true, car: 'falcone_f42',
       difficulty: 'casual', cpuDifficulty, driverId: DEFAULT_DRIVER })) {
       throw Error(`Could not start ${policy}/${cpuDifficulty}`);
@@ -513,6 +521,12 @@ export function run(policy, cpuDifficulty, seed = 1989,
     const state = duel.state;
     const result = {
       policy, cpuDifficulty, seed, flags, arsenalRank, wrecks, playerOpponentWrecks, status: state.status,
+      ...(wasteland2 === undefined ? {} : {wasteland2: {
+        legacyOption: 'wasteland2', value: wasteland2,
+        eligibility: app.wastelandUnlocked(), rulesActive: wastelandRulesActive(state),
+        acceptance: wasteland2 === 'off' ? 'inapplicable' : 'applicable',
+        ...(wasteland2 === 'off' ? {reason: 'Released armor, maximum-UFO and wreck targets require a discovered profile; no undiscovered target was approved.'} : {}),
+      }}),
       ...(flags.includes('cpu-crews') ? {cpuCrew} : {}),
       ...(cpuLoadout ? {cpuLoadout} : {}),
       completed: state.results?.completed === true,
@@ -717,8 +731,18 @@ export function reportFailures(report, runs, baselineRuns) {
 }
 
 function main(args) {
-  const { flags, check, verbose, baselineOnly, waveTwoOnly, waveThreeOnly, seekerPair, probe } = parseArgs(args);
-  const options = { flags };
+  const { flags, check, verbose, baselineOnly, waveTwoOnly, waveThreeOnly, seekerPair, probe, wasteland2 } = parseArgs(args);
+  const options = { flags, ...(wasteland2 === undefined ? {} : {wasteland2}) };
+  const witness = wasteland2 === undefined ? null : run('none', 'medium', 1989, {...options, maxFrames: 1});
+  const print = report => console.log(JSON.stringify({...report,
+    ...(witness ? {wasteland2: witness.wasteland2} : {})}, null, 2));
+  if (wasteland2 === 'off') {
+    print({flags, scope: 'One-frame native undiscovered start only; no balanced race or target pass is claimed.',
+      status: 'inapplicable', start: witness});
+    console.error('Undiscovered combat balance acceptance is inapplicable: released armor, maximum-UFO and wreck targets need a discovered profile.');
+    process.exitCode = 1;
+    return;
+  }
   if (seekerPair) {
     if (!flags.includes('arsenal')) throw Error('Seeker paired report needs --flags arsenal.');
     const started = performance.now(), off = [], on = [];
@@ -730,7 +754,7 @@ function main(args) {
     }
     const report = buildSeekerDamageReport(off, on);
     report.elapsedSec = rounded((performance.now() - started) / 1000);
-    console.log(JSON.stringify(report, null, 2));
+    print(report);
     if (check && !report.passed) {
       console.error('Seeker paired report requires complete attributed samples and average actual armor damage per firing no greater than 1.3 times off.');
       process.exitCode = 1;
@@ -755,7 +779,7 @@ function main(args) {
       unattributedWeaponUses: all.reduce((sum, race) => sum +
         Object.values(race.unattributedWeaponUses).reduce((a, b) => a + b, 0), 0),
       elapsedSec: rounded((performance.now() - started) / 1000)};
-    console.log(JSON.stringify(report, null, 2));
+    print(report);
     if (check && (report.completed !== 30 || report.incomplete.length || report.unattributedWeaponUses ||
         ['mortar', 'tesla', 'decoy', 'nitro'].some(id => !(weaponUses.cpu[id] > 0)))) {
       console.error('Wave-three report needs thirty completions, complete supplements, actor attribution and native CPU use of all four weapons.');
@@ -791,7 +815,7 @@ function main(args) {
       cpuHits: races.reduce((sum, race) => sum + (race.cpuHits || 0), 0),
       rivalHits: races.reduce((sum, race) => sum + race.rivalHits, 0),
       elapsedSec: rounded((performance.now() - started) / 1000) };
-    console.log(JSON.stringify(report, null, 2));
+    print(report);
     if (check && (report.completed !== 30 || !closeRange.completed ||
         report.unattributedWeaponUses ||
         Object.values(closeRange.unattributedWeaponUses).some(count => count > 0) ||
@@ -802,7 +826,7 @@ function main(args) {
     return;
   }
   if (probe) {
-    console.log(JSON.stringify(run('none', probe.cpuDifficulty, probe.seed, options), null, 2));
+    print(run('none', probe.cpuDifficulty, probe.seed, options));
     return;
   }
   if (baselineOnly) {
@@ -813,7 +837,7 @@ function main(args) {
         races: rows.length, results: rows.map(({ seed, won, timeSec, rivalTimeSec, cpuHits, majorCrashes, wrecks }) =>
           ({ seed, won, timeSec, rivalTimeSec, cpuHits, majorCrashes, wrecks })) }];
     }));
-    console.log(JSON.stringify({ flags, ...summary }, null, 2));
+    print({ flags, ...summary });
     return;
   }
   const started = performance.now();
@@ -841,7 +865,7 @@ function main(args) {
     races: pursuitRuns,
   };
   report.elapsedSec = rounded((performance.now() - started) / 1000);
-  console.log(JSON.stringify(report, null, 2));
+  print(report);
   if (verbose) console.log(JSON.stringify({ policyRaces: runs, baselineRaces: baselineRuns,
     crossbowCases: crossbowAim.cases, bombCases: ownBombs.cases }, null, 2));
   if (check) {

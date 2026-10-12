@@ -1,41 +1,67 @@
 # FAC-03: night shift and morning report
 
-Status: building. The selector slice alone does not install the night shift.
+Status: building. Full off-balance acceptance is incomplete pending Claude's
+applicable targets. No actual night/frame/browser/full-balance run is claimed.
+No scheduled task, release, compaction, history rewrite or push was performed.
 
-## Settled design, before code
+## Settled contracts, before code
 
-Use existing tools serially: full tier jobs 4, one High and one Performance
-frame sample on the released eight-car Harbour Lights night Grand Prix grid,
-combat balance with explicit wasteland2 off/on, then all browser scenarios.
-Frames require idle, awake, exclusive context; invalid or busy timing is refused.
-Keep p95 at most 18.5 ms and construction below one second. Generic frame
-recipe, default combat behavior and all old assertions remain exact.
-Write docs/board/checks/night-<date>.json and a morning report under 20 lines.
-Every failure names the first merge after the last green night, or states when
-no green night exists. Kyle creates the scheduled task; no task is installed.
+Use installed tools serially: full tier jobs 4 with keep-going; official headed
+frame check; combat off/on; all browser scenarios jobs 4. Write actual packets
+under docs/board/checks/night-<date>.json and a morning note under twenty lines.
+Each failed suite/scenario names the first merge after the last green night,
+or explicitly states that no prior green night exists. Complete child output
+stays in ignored .evidence/<date>/FAC-03/night logs.
 
-## Explicit heavy selection slice
+The required --idle-awake declares an awake display, idle laptop and no other
+GPU workload. Node/Blender job inspection is observed before/after stages and
+frame qualities; display power is not measured. Refuse busy, hidden or headless
+frames. Keep the normal App simulation, HUD/audio and renderer loops running
+through the actual Harbour Lights night eight-car countdown with idle inputs.
+Use normal kits, main/rear views and one 120-interval sample each on High and
+Performance. Delivered p95 must be <=18.5 ms without rounding a failure away;
+complete native scene initialization, including assets/kits/world, must be <1 s.
+Generic frame behavior and default headless browser arguments remain unchanged.
+The headed harness hook was granted before code and began only after FAC-07
+merged at c2dcc973; its shared QA bundle and private audio anchors remain intact.
 
-Before code, Director c5a4d4ea grants run-tests and its test only to exclude
-proven heavy suites from daytime lanes. Full/default/merge selection stays exact.
-The five actual heavy suites are audio-crash-peak (native browser),
-convoy-tanker-art and first-person-contact/cloth/polish (actual Blender builds).
-Each has a direct native child launch in its existing source. No import-wide
-exclusion: pure browser-harness and bounded combat-balance tests stay in lanes.
-Smoke, replay and world-signature guards stay. No suite or assertion is removed.
+The retired wasteland2 name is a tool-only legacy option. Explicit off/on uses
+an undiscovered/discovered memory profile and reports actual eligibility and
+rulesActive. Omitted options preserve the original discovered default. Off
+allows only native base policies, never Armory purchases or forced maximum UFO
+levels. Released armor/maximum-UFO/wreck acceptance is inapplicable before gate
+discovery: the CLI reports a bounded native start witness and exits 1. This is
+not a completed full off balance and cannot give a green night. No target band,
+runtime flag, driver or original assertion changes. Claude's off target answer
+is required before this acceptance can finish.
+
+Kyle creates the Windows scheduled task himself after the card is accepted.
+The command does not install it. This run's explicit --no-push keeps compaction
+and push disabled pending Kyle's separate authorization, overriding the card's
+night-push sentence. Future command from the integration folder:
+
+    node tools/night-shift.mjs --idle-awake --no-push
 
 ## Checks and changed assertions
 
-New acceptance checks must fail before the selector change: explicit heavy
-suites deferred in a fully affected lane, every full suite retained, pure
-browser/combat checks and all guards retained, actual CLI --list agrees.
-Selector acceptance failed first, then the existing runner suite passed 176
-checks. Real canonical --list selects 396 tasks, no five deferred heavy suites,
-and retains pure browser/combat checks. Full still selects all 401 tasks.
-No actual night/browser/balance/frame run is claimed; controlled child fixtures
-will test the new command. Canonical lane jobs 4, build and one review pending.
+Tests came first: Night import failed before implementation; the two new combat
+checks and two headed checks failed on the old tools. Controlled Night tests
+now pass 14/14; existing combat acceptance passes 36/36 (all original 34 plus
+two actual bounded eligibility/unsupported checks); harness tests pass 14/14.
+No fixture result counts as a native night pass. Every original assertion and
+numeric target remains. Additive tests require serial children, complete real
+packets, native loop/rear-view progress, strict frame limits, process isolation,
+source consistency, truthful inapplicability and per-failure merge attribution.
+Canonical nearby lane and build for this new slice remain pending review.
+
+Selector infrastructure already merged separately: 5685d556 passed 396/396,
+zero failures/unrun in 1526.07 s, build 680 ms and one source review. At that
+commit full discovery retained all 401 tasks; only five proven direct native
+browser/Blender suites moved out of daytime selection. Pure browser/combat
+checks and smoke/replay/world guards remain. No import-wide exclusion exists.
 
 ## Removed
 
-Only heavy-suite dispatch leaves daytime lane selection; its full coverage stays.
-No game, save, original fixture or existing generic recipe is removed.
+Only the five heavy dispatches leave daytime selection; full coverage remains.
+No game, save, original test or generic frame recipe is removed. No evidence
+has been consumed yet, and no original or deliverable was deleted.
