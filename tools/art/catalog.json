@@ -2525,6 +2525,778 @@
         12
       ],
       "attribution": "YETI by THE CUBE GUY (@mishrau60), via https://sketchfab.com/3d-models/yeti-dc7ae2194c504a79bbe20fa450be6ad6, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). State actual modifications when made."
+    },
+    {
+      "id": "deep-silver-school",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "silver-school",
+      "sourcePage": "https://poly.pizza/m/uassUTYYae",
+      "previewImage": "https://static.poly.pizza/66fbd4f3-2901-4fc0-8ee1-9e21a96efc7c.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "1e56926aa21c7cdab721937d35caf77fa13356a27e1a814f4b82212e1d0bc6b8",
+      "downloadedFrom": "https://static.poly.pizza/66fbd4f3-2901-4fc0-8ee1-9e21a96efc7c.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\silver-school",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "1e56926aa21c7cdab721937d35caf77fa13356a27e1a814f4b82212e1d0bc6b8"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "94be2da8eb6e24a88c3d9285f160d557a5c7b9f42af46d919c469e598be64923"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "cfc7c57f37bd1170f7431d1f501a74a985b88190f9440ac64f6a9719cd61e64b"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "b88ff11aabe5160682f74efa4bf61fa6f38db42b968e00272872d1ce1446d958"
+        }
+      ],
+      "fit": "Fish Mackerel donor, shown unmodified.",
+      "risk": "Natural silhouette; instance; silver paint",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 888,
+      "sourceBytes": 45428,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-reef-fish",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "reef-fish",
+      "sourcePage": "https://poly.pizza/m/aEyLrUMMoUK",
+      "previewImage": "https://static.poly.pizza/55537d5f-d9f2-45f0-8740-6357ca7784df.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "1f91914d26c1680ebb73a9be87b7936528adb5f2ddb32cc787ef4e73c32f8bdf",
+      "downloadedFrom": "https://static.poly.pizza/55537d5f-d9f2-45f0-8740-6357ca7784df.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\reef-fish",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "1f91914d26c1680ebb73a9be87b7936528adb5f2ddb32cc787ef4e73c32f8bdf"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "520fd0a85aee5f41faaf43bee14cfb94e1321c0ed849afcad73ed2439515098e"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "dbb139f60dd51e23d5f2d4c79779b2fb4a0aa54bb64b912d21284c00780b5894"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "da35f82c7ad7f0325d977f1627d62ad950e5f40ad45c55584c05982821f7b34e"
+        }
+      ],
+      "fit": "Fish donor, shown unmodified.",
+      "risk": "Generic fish donor; reef colours pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 506,
+      "sourceBytes": 35940,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-turtle",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "turtle",
+      "sourcePage": "https://poly.pizza/m/fklSEvGm1Q8",
+      "previewImage": "https://static.poly.pizza/7c64cc2c-b9aa-4edd-bc32-9e95d66ca5e0.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "96f9cb7c678810f77c69fa697fd17f76905d09276566856beea6e54d4d10b590",
+      "downloadedFrom": "https://static.poly.pizza/7c64cc2c-b9aa-4edd-bc32-9e95d66ca5e0.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\turtle",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "96f9cb7c678810f77c69fa697fd17f76905d09276566856beea6e54d4d10b590"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "c3536a534b11838fb3517183854a0ffae1b8ced2b94973f6bef8191f8613579b"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "f9d917e3308183246e0b30b37b4dd8df09ab7bd1bbde566c523775bff4323926"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "85e1b0a0e949a221d02fb93ec57aca75f187226a6a15986206fe7a6dc5a7cc5d"
+        }
+      ],
+      "fit": "Turtle donor, shown unmodified.",
+      "risk": "Sea flippers; mute yellow; strokes pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 1788,
+      "sourceBytes": 101888,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-ray",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "ray",
+      "sourcePage": "https://poly.pizza/m/675H-fzHW3-",
+      "previewImage": "https://static.poly.pizza/c48e30c6-7b5b-4553-a478-bd7de50d10b6.jpg",
+      "author": "Steren Giannini",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "571ad53d47ca16a9ff61e75721d47706be15d6ad66628a127fca097f7febf059",
+      "downloadedFrom": "https://static.poly.pizza/c48e30c6-7b5b-4553-a478-bd7de50d10b6.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\ray",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "571ad53d47ca16a9ff61e75721d47706be15d6ad66628a127fca097f7febf059"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "88866cbd176bf9fb3252c8b8b8d76f7b10a9bd1b6dc7c99b385840d9422653e6"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "46cf54df66f5cbcaa59efd2224cce25052b7d87bb74ee715d11d2e0dfc298276"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "19368fe4b0302b92ab198cf90a7c77e83602d1628fee2ccbec704596952d28fa"
+        }
+      ],
+      "fit": "Eagle ray donor, shown unmodified.",
+      "risk": "Eagle ray donor; sand-rest pose pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 480,
+      "sourceBytes": 33388,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-manta",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "manta",
+      "sourcePage": "https://poly.pizza/m/yzD8b7ZHZm",
+      "previewImage": "https://static.poly.pizza/32b4e08e-4605-4356-8bd3-e0cf32335a0f.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "32597a7752bac30dfceec15d2702e1fe4065f1f5cccc7ddd8e8196cb6fc2d51b",
+      "downloadedFrom": "https://static.poly.pizza/32b4e08e-4605-4356-8bd3-e0cf32335a0f.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\manta",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "32597a7752bac30dfceec15d2702e1fe4065f1f5cccc7ddd8e8196cb6fc2d51b"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "22ed1c81b7e80bc01da08217ba90eecf71fdf2f28d1d4ad7cd910d48824e05ee"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "06cff2cdaa07ec17b40c6498512d7af059372ae2af04097a39b8ef4f79bb6961"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "9db9eeee25fc50ba66ec1347fcd2b82f126f9f7dad00ef41593b03f803a7a4ab"
+        }
+      ],
+      "fit": "Manta ray donor, shown unmodified.",
+      "risk": "CC0; Swim clip; natural silhouette",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 696,
+      "sourceBytes": 101788,
+      "sourceClips": [
+        "Armature|Swim"
+      ],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-sea-lion",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "sea-lion",
+      "sourcePage": "https://poly.pizza/m/45HRvXYpvUG",
+      "previewImage": "https://static.poly.pizza/570f5f67-006c-4483-a05e-14d0400587dd.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "acc5c8a6b14c643827a7cda2931ea09a7a467a5245a8f2f6fe86e607ed53b6e4",
+      "downloadedFrom": "https://static.poly.pizza/570f5f67-006c-4483-a05e-14d0400587dd.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\sea-lion",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "acc5c8a6b14c643827a7cda2931ea09a7a467a5245a8f2f6fe86e607ed53b6e4"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "8e75704fdb41b31b9a1444881eef12a4d5595b1fd444fd4206404b613ea603f1"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "94f2d232cfeb0e8c6e907a8fca5ab457b2aea919599e97d4ebe94eebb77f6460"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "d0b2b14c28876c3b2c53a6b75f4ce1b1f22f35e02ba1628b3fc88facb9664c7a"
+        }
+      ],
+      "fit": "Sea lion donor, shown unmodified.",
+      "risk": "Static mesh; swimming pose/rig pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 714,
+      "sourceBytes": 431424,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-otter",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "otter",
+      "sourcePage": "https://poly.pizza/m/dJW3JeUWXQ-",
+      "previewImage": "https://static.poly.pizza/0e2b9d01-1c86-401c-9eb6-9a7907b0dfda.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "198369b506a6068585d0962236a50cb8eaeaeaff3a47a8e05edab0659e710efa",
+      "downloadedFrom": "https://static.poly.pizza/0e2b9d01-1c86-401c-9eb6-9a7907b0dfda.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\otter",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "198369b506a6068585d0962236a50cb8eaeaeaff3a47a8e05edab0659e710efa"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "df2e3b434062971586e7f8f5e3c49086ce42e88c8a52dfee8be3964db098198d"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "7e7cda7a1c88c265d79cccd8683c91b02a0966df32d54358788afc3dc878347a"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "0867bd78b9867d03c6b7822501783ac2b03e7f2ce791e7da622dff9a2e8752af"
+        }
+      ],
+      "fit": "River otter donor, shown unmodified.",
+      "risk": "RIVER otter; sea anatomy/pose unresolved",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 1084,
+      "sourceBytes": 1559136,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-crab",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "crab",
+      "sourcePage": "https://poly.pizza/m/2DgM36qZW2u",
+      "previewImage": "https://static.poly.pizza/1acf95b5-2e6b-4c9d-bd37-8384b88bdbea.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "db4f63d5337c468da09eb2236d45ec77e950af9919eec7cc7ba144cc59bfeb06",
+      "downloadedFrom": "https://static.poly.pizza/1acf95b5-2e6b-4c9d-bd37-8384b88bdbea.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\crab",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "db4f63d5337c468da09eb2236d45ec77e950af9919eec7cc7ba144cc59bfeb06"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "8eff9b7dfa13899968a4fa67b828caede9ee00459a45d22cbe827ff1f8ed021f"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "034c03a14ad190c1632f4741e609dd79acbc2a824207a1a60ba055e4e1b5e317"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "4bb323e55338d1a9cd1a1da744cb9bf60e3b28329e3b28d189b888be3c75ecd5"
+        }
+      ],
+      "fit": "Crab donor, shown unmodified.",
+      "risk": "Static donor; mute red; scuttle pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 624,
+      "sourceBytes": 45092,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-moray",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "moray",
+      "sourcePage": "https://sketchfab.com/3d-models/cc0-brutal-moray-gymnothorax-kidako-f7b2e7e06e454392bf7d7ab739658d57",
+      "previewImage": "https://media.sketchfab.com/models/f7b2e7e06e454392bf7d7ab739658d57/thumbnails/73e29efe099c493c8145c12c3a8a5e2c/9f433a9be829439996f7aa76df99bd99.jpeg",
+      "author": "ffish.asia / floraZia.com",
+      "license": "CC0-1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Official Sketchfab model API license.slug=cc0; source page also labels CC0.",
+      "status": "blocked",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-12",
+      "fit": "CC0 ウツボ 🐟 Brutal Moray, Gymnothorax kidako",
+      "risk": "CC0 true moray lead; download 401; scan needs reduction and animation/fitting.",
+      "sourceTriangles": 1987725,
+      "downloadEndpoint": "https://api.sketchfab.com/v3/models/f7b2e7e06e454392bf7d7ab739658d57/download",
+      "downloadHttpStatus": 401,
+      "changes": "No original mesh downloaded. Preview and metadata only.",
+      "runtime": [],
+      "decision": "Download authentication and source choice unresolved; no finished asset claimed.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\moray",
+      "evidenceFiles": [
+        {
+          "path": "metadata.json",
+          "sha256": "4cdf43245db9ecb796a46885b4dc05c49d558ee74e4892ddfc597c11c4e39a6c"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "a362533902b3f8b949717033c38752861540b060a801f01adae9670a662285b3"
+        }
+      ]
+    },
+    {
+      "id": "deep-grouper",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "grouper",
+      "sourcePage": "https://sketchfab.com/3d-models/cc0-hong-kong-grouper-e-akaara-4ddbc1a350904a8e9ea2f4985e55edee",
+      "previewImage": "https://media.sketchfab.com/models/4ddbc1a350904a8e9ea2f4985e55edee/thumbnails/c9097953904443dd8c49604a7de35bf4/342a3743f7fc40b685c70cb9ea9a2f15.jpeg",
+      "author": "ffish.asia / floraZia.com",
+      "license": "CC0-1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Official Sketchfab model API license.slug=cc0; source page also labels CC0.",
+      "status": "blocked",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-12",
+      "fit": "CC0 キジハタ 🐟 Hong Kong Grouper, E. akaara",
+      "risk": "CC0 true grouper lead; download 401; scan needs reduction and animation/fitting.",
+      "sourceTriangles": 1533064,
+      "downloadEndpoint": "https://api.sketchfab.com/v3/models/4ddbc1a350904a8e9ea2f4985e55edee/download",
+      "downloadHttpStatus": 401,
+      "changes": "No original mesh downloaded. Preview and metadata only.",
+      "runtime": [],
+      "decision": "Download authentication and source choice unresolved; no finished asset claimed.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\grouper",
+      "evidenceFiles": [
+        {
+          "path": "metadata.json",
+          "sha256": "7491168f4de21ceb6f5524c2cba4e90835a4658209d2e5e0a03a01d2882e962b"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "809a5513c2516763b77e07f41c0a985ff0f283d35c243e4118a840b6fc7da8d0"
+        }
+      ]
+    },
+    {
+      "id": "deep-reef-shark",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "reef-shark",
+      "sourcePage": "https://poly.pizza/m/AyHTK3zUSG",
+      "previewImage": "https://static.poly.pizza/d2d374ea-eb1d-4659-8cc7-816a83b82470.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "6d5cf3cd7ea749583b622a306cfcae4de85432efcc74a1ec6f52e5430cf13aff",
+      "downloadedFrom": "https://static.poly.pizza/d2d374ea-eb1d-4659-8cc7-816a83b82470.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\reef-shark",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "6d5cf3cd7ea749583b622a306cfcae4de85432efcc74a1ec6f52e5430cf13aff"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "17d475a018515fb63e717301f4c7e9edd28013b01d74fa132f4d4644105fb366"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "50038b52237d332732aab9b39600563790b5a5576d48ac1527ce1adf4441e120"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "f0fca87da8b13496649aedab561e5c7852eee5015078baf2c5877f67e50cd0e3"
+        }
+      ],
+      "fit": "Shark donor, shown unmodified.",
+      "risk": "Generic shark donor; reef species pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 644,
+      "sourceBytes": 77732,
+      "sourceClips": [
+        "Armature|Swim"
+      ],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-jellyfish",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "jellyfish",
+      "sourcePage": "https://poly.pizza/m/dA5osnS0Rzj",
+      "previewImage": "https://static.poly.pizza/5025e994-da02-45bc-9b98-fde96366b0ca.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "c8c8bb4c67aa0b1cdd6a2cca44608a28ea2cf62ad329d619069579ea2c66a5ea",
+      "downloadedFrom": "https://static.poly.pizza/5025e994-da02-45bc-9b98-fde96366b0ca.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\jellyfish",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "c8c8bb4c67aa0b1cdd6a2cca44608a28ea2cf62ad329d619069579ea2c66a5ea"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "aac5df5ab6e3062c449ee38f80148ad521ce6ae41081738fc2534dd9c0d95a21"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "795fd0cf7ea250b920cee801136de5ad5bb4c08efc3a04d5658a183c17eb3972"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "aa64a68101ccb0b352b2365455fb09240949eb2b7bbaa7f446e1eaa690777ade"
+        }
+      ],
+      "fit": "Jellyfish donor, shown unmodified.",
+      "risk": "Shape only; pink paint/glow need fitting",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 3704,
+      "sourceBytes": 219312,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-whale",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "whale",
+      "sourcePage": "https://poly.pizza/m/JGFwp6xWgk",
+      "previewImage": "https://static.poly.pizza/7300e697-2543-4a9a-a77d-dedf29251fd7.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "153d6814c67039378fce22d4c347ed35d7febf2bedac866de91cf9b5dd7945f2",
+      "downloadedFrom": "https://static.poly.pizza/7300e697-2543-4a9a-a77d-dedf29251fd7.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\whale",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "153d6814c67039378fce22d4c347ed35d7febf2bedac866de91cf9b5dd7945f2"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "ad20edd9301721301c8e9cb82e775782dfe04c0c8dcec3d59b13100d6b13f5cc"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "abf6754c0b737b5d7d3db65cc19a369b6d2e761630b7607a6c17dc8929d57458"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "e059d2f420f722475ab7875de1e1a3c5cf24cbdc9f0b0b1bc0874abe9e4258fa"
+        }
+      ],
+      "fit": "Whale donor, shown unmodified.",
+      "risk": "CC0; Swim clip; muted whale silhouette",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 447,
+      "sourceBytes": 68764,
+      "sourceClips": [
+        "Armature|Swim"
+      ],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-octopus",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-creature",
+      "deepId": "octopus",
+      "sourcePage": "https://poly.pizza/m/9-b6-yqrwEe",
+      "previewImage": "https://static.poly.pizza/d87e72b2-5b68-416a-99ce-1206acec3fd7.jpg",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "f8f2efc419b77b078c83537256343db34db9c78e6629175347c992ce46087161",
+      "downloadedFrom": "https://static.poly.pizza/d87e72b2-5b68-416a-99ce-1206acec3fd7.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\octopus",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "f8f2efc419b77b078c83537256343db34db9c78e6629175347c992ce46087161"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "66bbca9d6c5b330d03c9afd76a2be4f443f9f527381f53eebdff6fd49b410771"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "db225565a868aaee47c778d73c4cf275c79da37564b9ad25fdb76b5b270072c2"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "30822c8d12b13d16d27c6c79656695b132f9ebab0c106f9843d73fcce7211d69"
+        }
+      ],
+      "fit": "Octopus donor, shown unmodified.",
+      "risk": "Static donor; pose/colour change pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 754,
+      "sourceBytes": 1337252,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-wreck-hull",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-set",
+      "deepId": "wreck-hull",
+      "sourcePage": "https://kenney.nl/assets/watercraft-kit",
+      "previewImage": "C:\\Users\\kyleb\\dev\\art-library\\p4-boats\\unpacked\\Previews\\ship-cargo-a.png",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Watercraft Kit 2.1 bundled License.txt states CC0, matching source page.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "db3bbb076894cee821ec9b24951e5537ebbdc5ab5413d6c17ffb7d4e649c14fb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\p4-boats\\unpacked",
+      "files": [
+        {
+          "path": "Models/GLB format/ship-cargo-a.glb",
+          "sha256": "db3bbb076894cee821ec9b24951e5537ebbdc5ab5413d6c17ffb7d4e649c14fb"
+        },
+        {
+          "path": "License.txt",
+          "sha256": "f5f520f81277128fb422aebe334d2f08e6d8e5f7face6008885d8ff920253724"
+        },
+        {
+          "path": "Models/GLB format/Textures/colormap.png",
+          "sha256": "311138350e74e35c5497a1bd8076a01740b7c302bed11027639fa553459a68de"
+        }
+      ],
+      "fit": "ship-cargo-a original donor.",
+      "risk": "CC0 cargo donor; breach/interior pending",
+      "changes": "None; reuses existing external source pack. No runtime asset promoted.",
+      "runtime": [],
+      "sourceBytes": 98052,
+      "decision": "Pending Claude round-one source verdict.",
+      "sourceTriangles": 1060
+    },
+    {
+      "id": "deep-giant-clam",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-set",
+      "deepId": "giant-clam",
+      "sourcePage": "https://sketchfab.com/3d-models/cc0-boring-clam-tridacna-crocea-af688a0ed6044ab99d0ec20c57fd3b18",
+      "previewImage": "https://media.sketchfab.com/models/af688a0ed6044ab99d0ec20c57fd3b18/thumbnails/39e89169f5da4abfacd3a3d310e39624/724c528be8154f90942475e54484d93e.jpeg",
+      "author": "ffish.asia / floraZia.com",
+      "license": "CC0-1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Official Sketchfab model API license.slug=cc0; source page also labels CC0.",
+      "status": "blocked",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-12",
+      "fit": "CC0 ヒメシャコガイ Boring Clam, Tridacna crocea",
+      "risk": "CC0 Tridacna lead; download 401; scan needs reduction and animation/fitting.",
+      "sourceTriangles": 945861,
+      "downloadEndpoint": "https://api.sketchfab.com/v3/models/af688a0ed6044ab99d0ec20c57fd3b18/download",
+      "downloadHttpStatus": 401,
+      "changes": "No original mesh downloaded. Preview and metadata only.",
+      "runtime": [],
+      "decision": "Download authentication and source choice unresolved; no finished asset claimed.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\giant-clam",
+      "evidenceFiles": [
+        {
+          "path": "metadata.json",
+          "sha256": "c0461619f2f2a5bf04dc56b0366537badcd3bc385e09f85b6410f9436a2fc65f"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "87b805c95aad3731a86702da3558c6018f52f7450c9f217a080cf6548728db5e"
+        }
+      ]
+    },
+    {
+      "id": "deep-anchor",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-set",
+      "deepId": "anchor",
+      "sourcePage": "https://poly.pizza/m/ejWQny9Gcz",
+      "previewImage": "https://static.poly.pizza/c98455e8-6458-44c3-93c5-53f4244497fd.jpg",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "313b9a8e77950b447053d0711f807661ce4682ff1a13b2120243bef768072283",
+      "downloadedFrom": "https://static.poly.pizza/c98455e8-6458-44c3-93c5-53f4244497fd.glb",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\anchor",
+      "files": [
+        {
+          "path": "source.glb",
+          "sha256": "313b9a8e77950b447053d0711f807661ce4682ff1a13b2120243bef768072283"
+        },
+        {
+          "path": "source-page.html",
+          "sha256": "024eb71b73e0e2d2ccf345ebfede0075768a57e56254c6e5d256feee045726cf"
+        },
+        {
+          "path": "metadata.json",
+          "sha256": "d10d8aae7495610655463e2e899a59bc8313e537fb328d906f9e56e28a469533"
+        },
+        {
+          "path": "preview.jpg",
+          "sha256": "1455a202a081b6d7bdafbcca0fd19a12068ff3c2366ec5b8278a55fb7be93d95"
+        }
+      ],
+      "fit": "Anchor donor, shown unmodified.",
+      "risk": "CC0; fit scale and aged metal pending",
+      "changes": "None; original source bytes. No runtime asset or adaptation promoted.",
+      "runtime": [],
+      "sourceTriangles": 544,
+      "sourceBytes": 42536,
+      "sourceClips": [],
+      "embeddedOnly": true,
+      "decision": "Pending Claude round-one source verdict."
+    },
+    {
+      "id": "deep-sunken-boat",
+      "card": "DEEP-ART-SRC",
+      "family": "deep-set",
+      "deepId": "sunken-boat",
+      "sourcePage": "https://kenney.nl/assets/watercraft-kit",
+      "previewImage": "C:\\Users\\kyleb\\dev\\art-library\\p4-boats\\unpacked\\Previews\\boat-fishing-small.png",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Watercraft Kit 2.1 bundled License.txt states CC0, matching source page.",
+      "status": "candidate",
+      "downloaded": true,
+      "sha256": "f6a03c86e7147764de6aac135433a428ee503d42852ecd101c1795a278480742",
+      "checked": "2026-10-12",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\p4-boats\\unpacked",
+      "files": [
+        {
+          "path": "Models/GLB format/boat-fishing-small.glb",
+          "sha256": "f6a03c86e7147764de6aac135433a428ee503d42852ecd101c1795a278480742"
+        },
+        {
+          "path": "License.txt",
+          "sha256": "f5f520f81277128fb422aebe334d2f08e6d8e5f7face6008885d8ff920253724"
+        },
+        {
+          "path": "Models/GLB format/Textures/colormap.png",
+          "sha256": "311138350e74e35c5497a1bd8076a01740b7c302bed11027639fa553459a68de"
+        }
+      ],
+      "fit": "boat-fishing-small original donor.",
+      "risk": "CC0 fishing donor; weathering pending",
+      "changes": "None; reuses existing external source pack. No runtime asset promoted.",
+      "runtime": [],
+      "sourceBytes": 22948,
+      "decision": "Pending Claude round-one source verdict.",
+      "sourceTriangles": 237
     }
   ]
 }

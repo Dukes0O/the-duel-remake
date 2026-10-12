@@ -54,3 +54,38 @@ for the three handwheel valves.
 adds the boarding plate and paired roof lamps, and supplies the approved wear
 and hazard markings. The kept donor choices and checksums are in
 `tools/art/tanker-fit.json` and `tools/art/catalog.json`.
+
+## The Deep — source candidates, not runtime models
+
+DEEP-ART-SRC round one keeps original downloaded donors in the external art
+library; no Deep runtime GLB is promoted yet. Full source URLs, license URLs,
+checksums, clips and unresolved fitting work are in `tools/art/catalog.json`
+(the `deep-*` entries) and `docs/board/looks/deep-art/round-1-review.md`.
+
+- **Quaternius**, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/):
+  [Fish Mackerel](https://poly.pizza/m/uassUTYYae),
+  [Manta ray](https://poly.pizza/m/yzD8b7ZHZm),
+  [Shark](https://poly.pizza/m/AyHTK3zUSG),
+  [Whale](https://poly.pizza/m/JGFwp6xWgk) and
+  [Anchor](https://poly.pizza/m/ejWQny9Gcz).
+- **Poly by Google**, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
+  [Fish](https://poly.pizza/m/aEyLrUMMoUK),
+  [Turtle](https://poly.pizza/m/fklSEvGm1Q8),
+  [Sea lion](https://poly.pizza/m/45HRvXYpvUG),
+  [River otter](https://poly.pizza/m/dJW3JeUWXQ-),
+  [Crab](https://poly.pizza/m/2DgM36qZW2u),
+  [Jellyfish](https://poly.pizza/m/dA5osnS0Rzj) and
+  [Octopus](https://poly.pizza/m/9-b6-yqrwEe). Original bytes, no changes;
+  the river otter is an unresolved donor, not a finished sea otter.
+- **Steren Giannini**, [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/):
+  [Eagle ray](https://poly.pizza/m/675H-fzHW3-). Original bytes, no changes.
+- **Kenney**, [Watercraft Kit 2.1](https://kenney.nl/assets/watercraft-kit),
+  [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/):
+  `ship-cargo-a.glb` and `boat-fishing-small.glb`, reused from the existing
+  external pack. No breach, hold or sunken weathering has been fitted.
+- **ffish.asia / floraZia.com**, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/):
+  [Brutal Moray](https://sketchfab.com/3d-models/f7b2e7e06e454392bf7d7ab739658d57),
+  [Hong Kong Grouper](https://sketchfab.com/3d-models/4ddbc1a350904a8e9ea2f4985e55edee) and
+  [Tridacna crocea clam](https://sketchfab.com/3d-models/af688a0ed6044ab99d0ec20c57fd3b18).
+  These are licensed leads only: public metadata and published previews
+  checked; mesh downloads return HTTP 401 and are not in the game/cache.
