@@ -32,6 +32,15 @@ export function convoyBlastDistance(duel, actor, point) {
     ? Math.min(...convoyValvePoints(duel, actor).map(at => distance(at, point))) : Infinity;
 }
 
+// The tank body cannot be wrecked, so a player hit that misses every valve
+// does nothing. Say so, at most once every six seconds, so it never reads
+// as a broken weapon.
+function noteConvoyBodyHit(duel, convoy, options) {
+  if (options.owner !== 'player' || duel.state.stageTimeSec < convoy.bodyHintAfterSec) return;
+  convoy.bodyHintAfterSec = duel.state.stageTimeSec + CONVOY_RULES.bodyHintSeconds;
+  duel._callout('TANK BODY TAKES NO DAMAGE / HIT THE RED VALVES', 2.4);
+}
+
 // Central armor damage calls this after ordinary protection/team checks and
 // damage scaling. No point means a body hit: it can shove, never drain armor.
 export function damageConvoyValves(duel, actor, damage, source, options = {}) {
@@ -39,7 +48,10 @@ export function damageConvoyValves(duel, actor, damage, source, options = {}) {
   const convoy = duel.state.arena.convoy;
   if (convoy.finished || convoy.chargePlanted) return 0;
   const point = source === 'ram' ? options.contactPoint : options.hitPosition;
-  if (!validPoint(point)) return 0;
+  if (!validPoint(point)) {
+    noteConvoyBodyHit(duel, convoy, options);
+    return 0;
+  }
   if (options.owner) convoy.attackerId = options.owner;
   const points = convoyValvePoints(duel, actor);
   const distances = points.map(at => distance(at, point));
@@ -50,6 +62,7 @@ export function damageConvoyValves(duel, actor, damage, source, options = {}) {
     const nearest = distances.indexOf(Math.min(...distances));
     indices = source === 'ram' && distances[nearest] > CONVOY_RULES.ramReach ? [] : [nearest];
   }
+  if (!indices.length) noteConvoyBodyHit(duel, convoy, options);
   let removed = 0;
   for (const index of indices) {
     const before = convoy.valves[index];
@@ -62,6 +75,8 @@ export function damageConvoyValves(duel, actor, damage, source, options = {}) {
       convoy.playerBroken[index] = true;
       convoy.playerValvesBroken++;
     }
+    if (before > 0 && convoy.valves[index] === 0 && options.owner === 'player')
+      duel._callout(`VALVE BROKEN / ${convoy.valves.filter(armor => armor === 0).length} OF ${convoy.valves.length}`, 2);
   }
   if (removed > 0) convoy.attackerId = options.owner || convoy.attackerId;
   if (removed > 0) warlordFight(duel, actor)?.valvesDamaged?.(duel, actor);

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "capturedCommit": "360192cb9225317a52dd92b28be63d783b6247e6",
-  "scope": "ARENA-03 current pre-Fuel integration engine controls at 664a207, including reviewed ARENA-STEER 723ad61. Historical capture 60c20f0 predates steering; only Last Car Rolling and Sal hashes migrated after independent native review. Fixed 120 Hz, ten seconds, unchanged literal scripted input. Fuel switch off and on must preserve these traces. ARENA-WRECK-RATE: only the Last Car Rolling pin changes after approved ordinary armor tuning from 0.5 to 1.2; paired old/current native runs preserve all road and Sal traces, Fuel off and on. Inputs, sample shape and assertions are unchanged. POLISH-HEIGHT: Kyle approved ordinary arena armor 1.20 to 1.21 on 10 October 2026. Paired native traces differ only in 30 rival armor readings; all non-armor state, road pins and Sal pin remain exact.",
+  "scope": "ARENA-03 current pre-Fuel integration engine controls at 664a207, including reviewed ARENA-STEER 723ad61. Historical capture 60c20f0 predates steering; only Last Car Rolling and Sal hashes migrated after independent native review. Fixed 120 Hz, ten seconds, unchanged literal scripted input. Fuel switch off and on must preserve these traces. ARENA-WRECK-RATE: only the Last Car Rolling pin changes after approved ordinary armor tuning from 0.5 to 1.2; paired old/current native runs preserve all road and Sal traces, Fuel off and on. Inputs, sample shape and assertions are unchanged. POLISH-HEIGHT: Kyle approved ordinary arena armor 1.20 to 1.21 on 10 October 2026. Paired native traces differ only in 30 rival armor readings; all non-armor state, road pins and Sal pin remain exact. SCRAPDOME-TANKER-FIX (11 October 2026): Kyle asked for walls that meet the visible face, so the Scrapdome ring outer wall moved from 21 m to 20 m; only the Last Car Rolling and Sal pins change, the three road pins stay exact.",
   "cases": [
     {
       "kind": "road",
@@ -27,12 +27,12 @@
     {
       "kind": "last-car-rolling",
       "seed": 1989,
-      "fingerprint": "cc5505d413bd09af32d02e2b6854163bafb8f9940eaa3a14812700f046a7a9e6"
+      "fingerprint": "9594c8796fba9c65479f1f9a0310facc14f1bb6dd31c09d9c009a053f8c74d1f"
     },
     {
       "kind": "sal",
       "seed": 1989,
-      "fingerprint": "78b67f5087f4fbd80c483cc760934e4227e7d57c3ad9bb35884d070a4c68f314"
+      "fingerprint": "5bbede543d2c1218a026560394c2e84fc09b0fddc6c198919d7fba224926cdca"
     }
   ]
 }
