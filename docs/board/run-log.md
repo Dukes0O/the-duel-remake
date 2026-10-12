@@ -964,3 +964,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 2026-10-11 janitor: clean merged navigation lane/branch removed after verified dependency unlink; committed Kyle sound approval permits consumed listening284,485,319B and navigation852,173B removal (285,337,492B total). Recipes/assets/licensed inputs and held KIT/GP packets retained.
 
 2026-10-11 KIT-LOAD-TIME merge: source75df10c2; lane388/388655.23s, build525ms, ordinary review clear. Accepted d05runtime exact; prior frame failures retained for Claude Harbour diagnosis. No release.
+
+2026-10-11 full: integration79ba1a96,388/388 passed,0failed/notrun,898.40s,jobs4alone. New Kyle rules7–10 received; Snow placement approved and work resumes; no release.

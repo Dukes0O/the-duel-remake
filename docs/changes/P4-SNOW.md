@@ -91,6 +91,11 @@ actual rim overlap/road clearance/read-only identity. e6ac2080 final native8view
 Claude13:40 accepts final cap2.5/4/3/3.5 subject to everypine6moutsidepond; all remaining look toClaude, no fourth round.
 Before placement code: new106pine acceptance uses original1989native fixture and actual seededFloat32 outer polygons, with signed inside/near/outside and invalid-math controls; Claude14:15 approves onlypond2 s600→650 and firstpositivecluster s180→205; everypine>=6.4m, all else exact. Original RED12violations (2physical/10authored), min-8.254607m. GREEN106pines min6.446767m,0violations; physicalfeatures/RNG exact.
 
+Ready source genuinely includes8513dc1d: GP and Tremblant stay on, Snow/Deep
+stay dev, exact catalogue23. World preserves Snow script options plus upstream
+night glows; this fixture has no new night-glow opt-in. Accepted placement/native
+evidence reused. One ready lane/build, no repeated art/native/frame checks.
+
 ## Removed
 
 Snow-scene ordinary pine, rock and summer-grass instances are removed from the copied presentation views. Snow switches replace the flat winter road

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-11T20:10:35.337Z
+Observed at: 2026-10-11T20:29:44.167Z
 
-Observation commit: 33aacf7a82929af51f315a93248aa26cfb15ded7
+Observation commit: 79ba1a96d8c01044900d3c1c56368adaf21ae80d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 33aacf7a82929af51f315a93248aa26cfb15ded7
+Integration HEAD: 79ba1a96d8c01044900d3c1c56368adaf21ae80d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: 1046076a90623c26c76ffe623e9589dbf5717490
 
 Live build version: 20261010195525-87b479fc74c0
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: dirty; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-11T11:36:46.755Z; tested commit: fbc7d76cbe999183cc154da665087624103c0506.
+Last recorded full run: 2026-10-11T20:28:51.997Z; tested commit: 79ba1a96d8c01044900d3c1c56368adaf21ae80d.
 
 ## Feature switches
 
@@ -51,7 +51,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
-| codex/p4-kit-load-time | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-kit-load-time |
 | codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-snow | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snow |
@@ -66,11 +65,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-gp-existing | unknown | 2026-10-11T09:47:58-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/app.js, src/course.js, src/ghost.js, src/leaderboard.js |
-| codex/p4-kit-load-time | unknown | 2026-10-11T12:52:48-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/board.yaml, docs/board/next-run.md, docs/changes/P4-KIT-LOAD-TIME.md, src/render3d.js, src/track-kits.js |
-| codex/p4-panorama | unknown | 2026-10-11T12:18:02-07:00 | 0 | last commit 2026-10-11T12:18:02-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-KIT-LOAD-TIME.md, docs/changes/P4-PANORAMA.md |
+| codex/p4-gp-existing | unknown | 2026-10-11T13:12:34-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/app.js, src/course.js, src/ghost.js, src/leaderboard.js |
+| codex/p4-panorama | unknown | 2026-10-11T13:12:42-07:00 | 0 | last commit 2026-10-11T13:12:42-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PANORAMA.md, src/app.js |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js |
-| codex/p4-snow | unknown | 2026-10-11T12:29:22-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md, docs/board/looks/p4-snow/round-2.jpg, docs/board/looks/p4-snow/round-3-review.md |
+| codex/p4-snow | unknown | 2026-10-11T13:16:23-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md, docs/board/looks/p4-snow/round-2.jpg, docs/board/looks/p4-snow/round-3-review.md |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 6 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -85,9 +83,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,671,624 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 732,151 B | +504,874 B | 5,000,000 B |
+| Added bytes in last merge | 2,341,813 B | +1,609,662 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 422,153,216 B | +1,249,280 B | unavailable |
+| Git objects | 422,594,560 B | +441,344 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +94,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 1046076a90623c26c76ffe623e9589dbf5717490
 - Local main: missing
-- Local integration/wasteland: 33aacf7a82929af51f315a93248aa26cfb15ded7
+- Local integration/wasteland: 79ba1a96d8c01044900d3c1c56368adaf21ae80d
 
 Local rollback build (dist-previous): 20261010012052-a7177c289a56. Manifest presence does not verify the full rollback build.
 

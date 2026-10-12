@@ -23,7 +23,7 @@ No competing job observed through drain; controls slow too, cause unproved.
 Preserve both packets and monitors. The bounded investigation has stopped;
 no more frame rerun or diagnosis. Current frozen75df10c2 also fixes consumed
 board status and obsolete source guards without numeric/tolerance changes.
-Exact mandatory lane jobs8/build precedes merge;
+Loader79ba1a96 is merged after passing lane/build; future lane jobs are capped at4.
 Claude owns the Harbour base-scene diagnosis and later old-town cost.
 Earlier accepted 0b figures are historical; current absolute failures remain failures.
 
@@ -54,9 +54,9 @@ accepts the look at cap (2.5/4/3/3.5), subject everypine6m outsidepond rim.
 Two converted immutable physical trees also violate. Proposed authored fix:
 only secondpond s600to650 and positivefirstcluster s180to205, all106pines
 minimum6.44677m, all64clusters/physicalfeatures/pond dimensions/RNG exact.
-Actualnear/far/overlap/1e-4anchors pass. Await Claude's scope answer before
-edits; no fourth round or runtime relocation mechanism. Then genuine KITsync,
-native placement witness and original absolute frames18.5ms/construction<1s;
+Actualnear/far/overlap/1e-4anchors pass. Claude14:15 approves the exact fix.
+Frozenf67e56aa has106pines minimum6.44677m; no fourth round. Native placement
+verification passes on cfcf4b24; final lanejobs4/build follow three narrow launcher/catalog/snapshot fixture repairs. Rule9 defers timing: Snow is QA-only;
 relative kit/effects costs are information, allsample/finite/state guards stay.
 Remaining shading/peak/pines/sky belongs to Claude's finishing track passes.
 
@@ -74,13 +74,15 @@ The consumed card is removed, as dropped is not a supported board status. Claude
 Harbour/Tremblant polish. Claude10:30 says Kyle approved the Deep plan. Its new Codex cards go below all
 Phase4 work only after the plan merges; no Deep card starts during this run.
 
-Claude10:30 yields the shared slot after the current Tremblant gate, holding
-all captures, frames, gates, balance and builds until inbox says slot released.
-Queue: accepted loader frozen75 lane/build/merge, Snow approved-placement
-answer and absolute frames, then full alone. Azure/Pan field checks await actual Harbour integration. Check every team's current processes, including gp-existing-rate,
+Claude10:30's exclusive-slot rule is superseded by Kyle rules7–10, posted14:15.
+At most two non-frame heavy jobs across all teams, eachjobs4; frames/full alone.
+Queue: loader merged79ba; Snow approvedplacementf67 native/lane4/build.
+Full79ba passed388/388898.40s; next end full follows later actual merges. Azure/Pan field checks await actual Harbour integration. Check every team's current processes, including gp-existing-rate,
 panorama-field-rate and browser-harness, before reserving heavy work. Full
 runs alone with four jobs, with no gates, builds, balance or browser checks.
 End with a new full tier --jobs 4 --keep-going, janitor sweep and status page.
 Earlier 387/387 full on fbc7d76c covers only that merged game. Fold run-log,
 status and governance into the next real change or merge; no results-only
 commit, release, live refresh, real-save access or history rewrite.
+
+Current continuation: loader merged79ba1a96 after388/388655.23s/build525ms; merged lane removed non-forced. GP genuinely syncedd0de68e9 and Panorama85564faa without own rule/recipe changes; actual Harbour engine still required. Snow original106pine RED12 now GREEN at frozenf67 after Claude14:15 approval. Full79ba completed388/388898.40s alone; newrules7–10 active. Remaining cards stay open.

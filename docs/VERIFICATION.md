@@ -1,5 +1,23 @@
 # Remake verification
 
+## Tremblant Woods and arena fixes release — 11 October 2026
+
+Kyle approved Tremblant Woods with the Grand Prix on 11 October and chose to
+release Kyle's arena fixes with it. Claude was Release Manager. Installed at
+about 02:10 UTC on 12 October from exact commit `8513dc1d`. Live build
+`20261012020501-10e60a89f4dd` is verified over HTTP on the live port. The full
+tier passed 394/394 in 834.05 s, alone with four jobs, start and end commit
+unchanged; combat balance `--check` passed. The staged build listed Tremblant
+Woods last, locked at 1,600 credits, with no browser errors, in disposable
+storage. Real saves were not accessed and no open race was refreshed.
+Previous build kept in `dist-previous`; `dist-next` removed; master pushed.
+
+Contents: `tremblant-woods` on; the three Phase 4 circuits are race-only
+(`noCombat`); an unfinished race is saved by course id with the old position as
+a fallback only for saves without an id (old save fixtures load unchanged);
+tanker valve armour on the HUD; arena wall collision at the drawn face with the
+outer-wall gaps closed; one fuel-run beam at a time and a depot arrow.
+
 ## Grand Prix release — 11 October 2026
 
 Kyle approved on 11 October ("the Grand Prix is good. we could merge that into
