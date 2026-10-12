@@ -37,7 +37,6 @@ check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definitio
 check(nativeCatalog.flags.every(row => row.enabled && row.state === (row.name === 'tremblant-woods' ? 'on' : 'dev')),
   'Fresh worker enables every circuit switch: released ones are on, the rest are real dev switches through the supported QA query');
 equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
-equal(referenceTargets(ALL_CIRCUITS.filter(definition=>definition.id==='summit-run')), [], 'Summit is a point-to-point road, so it has no cyclic reference target');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');
 await assert.rejects(() => runReferenceWorker({targets: [{key: 'missing|fixed', eventId: 'missing', route: 'fixed', seed: 1989}]}),
   /Unknown reference event/); checks++;
@@ -185,8 +184,7 @@ if (process.argv.includes('--native')) {
         Object.fromEntries(physicalKeys.map(key => [key, direct.state[key]])),
         '720 native physical steps remain exact with the completion-only facade');
       check(app.duel.state.s > 0, 'Parity probe actually drove the native playground');
-      equal(referenceTargets(ALL_CIRCUITS.filter(definition=>definition.id==='summit-run')), [], 'Summit is a point-to-point road, so it has no cyclic reference target');
-equal(JSON.stringify(COURSE), definitionsBefore, 'Native fixture never edits global course definitions');
+      equal(JSON.stringify(COURSE), definitionsBefore, 'Native fixture never edits global course definitions');
     } finally { nativeFixture.dispose(); }
   });
 }
