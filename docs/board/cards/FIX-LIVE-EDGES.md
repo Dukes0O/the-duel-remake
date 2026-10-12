@@ -29,6 +29,12 @@ passes every check and is the reference.
    Beaver ice patch out of the braking zone did not change it (tried and
    reverted), so the cause is the line or what sits beside the road, most
    likely the plough banks' collision.
+5. **Harbour Lights pace.** The test driver's flying lap is 2:26 against the
+   design's 1:34; it stops at Casino Corner and Lantern Hairpin (0 mph in
+   the review) and its race ends in a game over. Finding 3 (walls that
+   collide 0.7 m inside the drawn edge on a street circuit walled on both
+   sides) is the likely cause; confirm after the fix with the track review
+   (lap within 1:30 to 1:45, no corner at 0 mph, race finishes).
 
 ## Settled rules (Claude)
 
@@ -50,6 +56,8 @@ passes every check and is the reference.
 
 `node tools/drive-through.mjs --course harbour-lights` and `--course
 tremblant-snow` pass; `tremblant-woods` still passes. Track review of
-Tremblant Snow on winter tyres: no corner below 20 mph and no stop. Lane
+Tremblant Snow on winter tyres: no corner below 20 mph and no stop. Track
+review of Harbour Lights: lap within 1:30 to 1:45, no corner at 0 mph, the
+race finishes. Lane
 tier, build, one review. The live game changes only at the next release on
 Kyle's "go live".
