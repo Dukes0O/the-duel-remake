@@ -974,3 +974,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-11 end full: integration13a0313c,395/395 passed,0failed/0notrun,1283.17s,jobs4alone; Snow and QA-LANE-SCOPE integrated, no release.
 
 - 11 October overnight: merged JANITOR-OVERNIGHT-ART after lane 7/7 (219.33 s), build 1.52 s and independent reviews; consumed 40 prior art files, looks 19,993,075 to 16,099,486 bytes, final sheets and game/replay code exact. Older lanes retained; uncertain audit candidates left for review. Ownership and current overnight scopes folded into this merge.
+
+- 12 October morning: merged P4-CAREER-PAY source02d914c3 after lane400/400 (1980.72 s, jobs4), build843ms, pure184, actual native/browser750CR and clear save/ordinary reviews. Dev only; legacy leaderboard guard unchanged, no release or push.
