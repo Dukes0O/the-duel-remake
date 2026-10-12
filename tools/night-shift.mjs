@@ -34,8 +34,7 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
     {id:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
     {id:'frames',args:['tools/browser-harness.mjs','scenario','frame-pacing','--headed','--output-dir',frameDir],
       env:{DUEL_NIGHT_FRAMES:'1',DUEL_NIGHT_IDLE_AWAKE:'1'},packet:path(frameDir,'frame-pacing.json')},
-    {id:'combat-off',args:['tools/combat-balance.mjs','--check','--wasteland2','off']},
-    {id:'combat-on',args:['tools/combat-balance.mjs','--check','--wasteland2','on']},
+    {id:'combat',args:['tools/combat-balance.mjs','--check']},
     {id:'browser',args:['tools/run-browser-scenarios.mjs','--all','--jobs','4','--output-dir',browserDir],
       env:{DUEL_NIGHT_FRAME_REUSE:'1',DUEL_NIGHT_FRAME_PACKET:path(frameDir,'frame-pacing.json')},
       packet:path(browserDir,'summary.json')}
@@ -120,13 +119,15 @@ function validateBrowser(packet,names) {
     packet.failed!==0||packet.rows?.length!==packet.count||packet.rows.some(row=>row.passed!==true)||
     packet.rows.map(row=>row.name).join('|')!==names.join('|'))throw Error('Browser acceptance has failures or missing named scenarios.');
 }
-function validateCombat(packet,value) {
-  const row=packet?.wasteland2,active=value==='on';
-  if(row?.value!==value||row.eligibility!==active||row.rulesActive!==active)
-    throw Error(`Combat ${value}: missing actual gate eligibility and rulesActive.`);
-  if(row.acceptance!=='applicable')throw Error(`Combat ${value}: ${row.acceptance||'unsupported'} acceptance; ${row.reason||'no accepted targets for these rules'}.`);
-}
-async function previousGreen(date,dependencies) {
+function validateCombat(packet) {
+  // The installed --check owns every original band and gameplay assertion.
+  // Require its actual current-rules aggregate, not an empty success packet.
+  if(!Array.isArray(packet?.flags)||packet.flags.length!==0||
+    !Number.isInteger(packet.policyRuns)||packet.policyRuns<1||
+    !Number.isInteger(packet.baselineRaces)||packet.baselineRaces<1||
+    !Number.isFinite(packet.crossbowAim?.hitRate)||!Number.isFinite(packet.ownBombs?.maxSpeedLossPct))
+    throw Error('Missing actual current-rules combat balance aggregate.');
+}async function previousGreen(date,dependencies) {
   const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&
     name.slice(6,16)<=date).sort().reverse();
   for(const name of names) {
@@ -284,7 +285,7 @@ export async function runNight(options,overrides={}) {
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
         else if(stage.id==='frames')validateFramePacket(json(await dependencies.readText(stage.packet)));
         else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames());
-        else validateCombat(json(result.stdout),stage.id.endsWith('off')?'off':'on');
+        else validateCombat(json(result.stdout));
         if((await dependencies.processes()).length)throw Error('Heavy child or competing job remains after the stage; timing is not accepted.');
         await assertNightSource(dependencies,source);
         row.passed=true;

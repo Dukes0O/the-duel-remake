@@ -1,96 +1,76 @@
 # FAC-03: night shift and morning report
 
-Status: building. Full off-balance acceptance is incomplete pending Claude's
-applicable targets. No actual night/frame/browser/full-balance run is claimed.
-No scheduled task, release, compaction, history rewrite or push was performed.
+Status: building; canonical nearby lane/build and final review are pending.
+No actual night, frame, browser or full-balance run is claimed. No task,
+release, compaction, history rewrite or push was performed.
 
 ## Settled contracts, before code
 
-Use installed tools serially: full tier jobs 4 with keep-going; official headed
-frame check; combat off/on; all browser scenarios jobs 4. Write actual packets
-under docs/board/checks/night-<date>.json and a morning note under twenty lines.
-Each failed suite/scenario names the first merge after the last green night,
-or explicitly states that no prior green night exists. Complete child output
-stays in a unique ignored .evidence/<date>/FAC-03/night-* leaf.
+Claude's accepted correction 469f0a1d requires one existing
+combat-balance.mjs --check on current discovered rules. Both combat files are
+exact integration bytes; all original 34 assertions and targets remain. The
+Night plan is serial: full tier jobs 4 with keep-going, simple headed frames,
+one current-rules balance, then all named browser scenarios jobs 4.
 
-The required --idle-awake declares an awake display, idle laptop and no other
-GPU workload. Node/Blender job inspection is observed before/after stages and
-frame qualities; display power is not measured. Refuse busy, hidden or headless
-frames. Keep the normal App simulation, HUD/audio and renderer loops running
-through the actual Harbour Lights night eight-car countdown with idle inputs.
-Use normal kits, main/rear views and one 120-interval sample each on High and
-Performance. Delivered p95 must be <=18.5 ms without rounding a failure away;
-complete native scene initialization, including assets/kits/world, must be <1 s.
-Generic frame behavior and default headless browser arguments remain unchanged.
-The headed harness hook was granted before code and began only after FAC-07
-merged at c2dcc973; its shared QA bundle and private audio anchors remain intact.
+Actual runs require integration/wasteland and clean, unchanged source.
+--idle-awake declares an awake display, idle laptop and no other GPU workload.
+Actual Node/Blender inspection occurs before/after stages and frame qualities;
+display power is not measured. Hidden, headless or busy timing is refused.
 
-The retired wasteland2 name is a tool-only legacy option. Explicit off/on uses
-an undiscovered/discovered memory profile and reports actual eligibility and
-rulesActive. Omitted options preserve the original discovered default. Off
-allows only native base policies, never Armory purchases or forced maximum UFO
-levels. Released armor/maximum-UFO/wreck acceptance is inapplicable before gate
-discovery: the CLI reports a bounded native start witness and exits 1. This is
-not a completed full off balance and cannot give a green night. No target band,
-runtime flag, driver or original assertion changes. Claude's off target answer
-is required before this acceptance can finish.
+Start the released Harbour Lights night eight-car Grand Prix through App and
+keep its normal simulation, HUD/audio and renderer loops running through the
+native countdown with idle inputs. Use normal kits and main/rear views. Take
+one 120-interval sample per quality. Raw delivered p95 must be <=18.5 ms;
+complete scene initialization, including assets/kits/world, must be <1 s.
+Generic frame behavior and default headless browser arguments stay exact.
+Headed hooks began only after FAC-07 merged; shared QA bundle and private audio
+recipe anchors remain. No race poses, driver rules or runtime flags change.
 
-Kyle creates the Windows scheduled task himself after the card is accepted.
-The command does not install it. This run's explicit --no-push keeps compaction
-and push disabled pending Kyle's separate authorization, overriding the card's
-night-push sentence. Future command from the integration folder:
+The later browser frame row reuses this invocation's simple packet and actual
+prior stage verdict. It validates the same owned leaf, original metrics and
+harness report. Failed or missing originals remain failed. No second frame
+measurement occurs, and every named browser scenario remains represented.
+
+Each invocation owns a unique ignored .evidence/<date>/FAC-03/night-* leaf.
+Decode streamed UTF-8, handle append rejection immediately, wait for child
+close and all queued writes, then report failures. Error events do not abandon
+live children. Each failed suite/scenario records the first merge after the
+latest green night, including a same-day green, or states unknown attribution.
+A failed retry carries the genuine prior green record forward.
+
+On clean integration, write the two dated reports under docs/board/checks,
+refresh STATUS with existing build-status, and commit only those three explicit
+paths immediately. Never include another staged file. Refuse changed source
+or branch; keep the failed report ignored and restore only demonstrably owned,
+uncommitted drafts, recycling newly created files. Preserve somebody else's
+later bytes and current committed STATUS. A successful commit never rolls back
+on a later receipt-read failure. Morning reports remain under twenty lines.
+Publication was granted before code; tests mock every metadata mutation.
+
+Kyle creates the scheduled task after acceptance. The tool does not install it.
+This run's --no-push disables compaction and push pending separate authorization,
+overriding the card's night-push sentence. Future integration command:
 
     node tools/night-shift.mjs --idle-awake --no-push
 
 ## Checks and changed assertions
 
-Tests came first: Night import failed before implementation; the two new combat
-checks and two headed checks failed on the old tools. Controlled Night tests
-now pass 28/28; existing combat acceptance passes 36/36 (all original 34 plus
-two actual bounded eligibility/unsupported checks); harness tests pass 14/14.
-No fixture result counts as a native night pass. Every original assertion and
-numeric target remains. Additive tests require serial children, complete real
-packets, native loop/rear-view progress, strict frame limits, process isolation,
-source consistency, truthful inapplicability and per-failure merge attribution.
-Canonical nearby lane and build for this new slice remain pending review.
+Tests came first: original Night import and headed checks failed, coordinator
+fixtures reproduced six errors, publication fixtures reproduced three errors,
+and two commit-edge fixtures reproduced rollback failures. Reuse import and
+the exact single-balance plan failed before their code. Current controlled
+Night tests pass 27/27; headed harness tests passed 14/14. These are controlled
+fixtures, never native Night passes. No original numeric target is changed.
+Removed only obsolete temporary witness assertions under Claude's accepted
+correction; original combat tool/tests are byte-identical to be776e50.
 
-Selector infrastructure already merged separately: 5685d556 passed 396/396,
-zero failures/unrun in 1526.07 s, build 680 ms and one source review. At that
-commit full discovery retained all 401 tasks; only five proven direct native
-browser/Blender suites moved out of daytime selection. Pure browser/combat
-checks and smoke/replay/world guards remain. No import-wide exclusion exists.
+Selector infrastructure already merged: 5685d556 passed 396/396, zero
+failures/unrun in 1526.07 s, build 680 ms and one source review. At that commit
+full discovery retained all 401 tasks; only five proven native browser/Blender
+dispatches left daytime selection. Pure checks and all guards remain.
 
-## Coordinator correction contract, before code
-
-Each invocation creates one unique owned ignored evidence leaf. Reused same-day
-frame/browser files cannot prove a new run. Decode stdout/stderr as UTF-8 and
-handle append failures immediately; retain their error, wait for the child's
-close and every queued write, then report failure. An error event never counts
-as child completion. Latest green attribution includes the current date.
-
-Actual runs require integration/wasteland. At publication, require the same
-clean source and branch. Refresh STATUS with the existing build-status tool,
-then commit only the two night reports and STATUS using explicit paths. Never
-include another staged file. If publication context changed, restore only our
-unchanged draft bytes to their original contents (recycle our newly created
-files), keep the failed report in the owned ignored leaf and explain refusal.
-Committed reports never roll back on a later receipt-read error. Cleanup checks
-the current HEAD and restores its STATUS after a concurrent source commit.
-The nine coordinator/publication cases, two commit-edge cases and reuse import
-failed first. All 28 controlled checks now pass. No public file was mutated.
-Controlled tests mock every metadata mutation; no actual night or public report
-is produced during implementation. Director grants report/STATUS hooks only,
-with no change to build-status itself.
-## Simple frame reuse contract, before code
-
-The Night browser batch still represents every named scenario. Its frame-pacing
-row reuses this invocation's simple packet through an explicit Night-only
-pointer and the actual earlier stage verdict. The pointer must share the same
-owned evidence leaf as that browser row. Validate both the original frame data
-and harness report; a failed or missing original stays failed. No second RAF,
-scene or quality measurement is performed. Default generic behavior is exact.
 ## Removed
 
-Only the five heavy dispatches leave daytime selection; full coverage remains.
-No game, save, original test or generic frame recipe is removed. No evidence
-has been consumed yet, and no original or deliverable was deleted.
+Temporary undiscovered-profile witness code and its two tests are removed;
+the original combat files are restored. No game, save, original test or generic
+frame recipe is removed. No evidence has been consumed or deliverable deleted.

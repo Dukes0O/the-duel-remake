@@ -14,7 +14,7 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true},{label:'b',passed:true}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, lastGreen=true, inapplicable=false, fullFailures=[]}={}) {
+function fixture({fail, missing, busy=false, change=false, lastGreen=true, fullFailures=[]}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [];
   let active=0, maximum=0, heads=0, invocations=0;
   let plan = nightPlan({date,root});
@@ -63,9 +63,8 @@ function fixture({fail, missing, busy=false, change=false, lastGreen=true, inapp
         }
         if(stage.id==='frames'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(frames()));
         if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(browser()));
-        if(stage.id.startsWith('combat'))text=JSON.stringify({wasteland2:{value:stage.id.endsWith('off')?'off':'on',
-          eligibility:stage.id.endsWith('on'),rulesActive:stage.id.endsWith('on'),acceptance:inapplicable&&stage.id==='combat-off'?'inapplicable':'applicable'}})+'\n';
-        child.stdout.end(text);child.stderr.end(fail===stage.id?'actual fixture error\n':'');
+        if(stage.id==='combat')text=JSON.stringify({flags:[],policyRuns:51,baselineRaces:90,
+          crossbowAim:{hitRate:.5},ownBombs:{maxSpeedLossPct:10}})+'\n';        child.stdout.end(text);child.stderr.end(fail===stage.id?'actual fixture error\n':'');
         active--;child.emit('close',fail===stage.id||stage.id==='full'&&fullFailures.length?1:0,null);
       });
       return child;
@@ -82,8 +81,9 @@ test('night command requires the operator context and keeps push disabled',()=>{
 });
 test('real plan runs every required stage serially with jobs at most four',()=>{
   const plan=nightPlan({root,date});
-  assert.deepEqual(plan.map(row=>row.id),['full','frames','combat-off','combat-on','browser']);
+  assert.deepEqual(plan.map(row=>row.id),['full','frames','combat','browser']);
   assert.deepEqual(plan[0].args,['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']);
+  assert.deepEqual(plan[2].args,['tools/combat-balance.mjs','--check']);
   assert.ok(plan[1].args.includes('--headed'));
   assert.equal(plan[1].env.DUEL_NIGHT_FRAMES,'1');
   assert.ok(plan.at(-1).args.includes('--all'));
@@ -114,16 +114,16 @@ test('controlled child process drains streams and retains real nonzero output',a
 test('controlled full night writes genuine stage packets and a short morning report',async()=>{
   const f=fixture(), packet=await runNight(opts(),f.deps);
   assert.equal(packet.status,'passed',JSON.stringify(packet.failures));assert.equal(f.maximum(),1);
-  assert.deepEqual(f.calls,['full','frames','combat-off','combat-on','browser']);
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
   assert.equal(packet.push.status,'disabled');assert.equal(packet.compaction.status,'disabled');
   assert.ok(f.files.has(`${root}/docs/board/checks/night-${date}.json`));
   assert.ok(f.files.get(`${root}/docs/board/checks/night-${date}.md`).trim().split('\n').length<20);
 });
 test('a real stage failure keeps later checks, names the first merge and fails the night',async()=>{
-  const f=fixture({fail:'combat-on'}),packet=await runNight(opts(),f.deps);
-  assert.equal(packet.status,'failed');assert.equal(f.calls.length,5);
+  const f=fixture({fail:'combat'}),packet=await runNight(opts(),f.deps);
+  assert.equal(packet.status,'failed');assert.equal(f.calls.length,4);
   assert.equal(packet.failures[0].firstMerge,merge);
-  assert.match(packet.stages.find(row=>row.id==='combat-on').error,/actual fixture error/);
+  assert.match(packet.stages.find(row=>row.id==='combat').error,/actual fixture error/);
 });
 test('missing real packets, source changes and busy laptops never pass',async()=>{
   for(const settings of [{missing:'frames'},{missing:'browser'},{change:true},{busy:true}]){
@@ -150,11 +150,6 @@ test('process selection refuses real heavy work and preserves unrelated idle ser
     {pid:5,command:'node vite/bin/vite.js build'},
     {pid:6,command:'node vite/bin/vite.js preview --port 5311'}];
   assert.deepEqual(heavyProcesses(rows,1).map(row=>row.pid),[2,3,4,5]);
-});
-test('inapplicable off acceptance is an actual night failure, never a green pair',async()=>{
-  const result=await runNight(opts(),fixture({inapplicable:true}).deps);
-  assert.equal(result.status,'failed');
-  assert.match(result.stages.find(row=>row.id==='combat-off').error,/inapplicable/);
 });
 test('official frame mode refuses headless, undeclared awake or busy context',()=>{
   const env={DUEL_NIGHT_FRAMES:'1',DUEL_NIGHT_IDLE_AWAKE:'1'};
@@ -251,7 +246,7 @@ test('publication refreshes existing STATUS and commits only the three granted p
 });
 test('dirty source at publication keeps the failed report ignored and never writes public reports',async()=>{
   const f=fixture(),original=f.deps.git;
-  f.deps.git=async args=>args[0]==='status'&&f.calls.length===5?'M  src/game.js':original(args);
+  f.deps.git=async args=>args[0]==='status'&&f.calls.length===4?'M  src/game.js':original(args);
   const result=await runNight(opts(),f.deps);
   assert.equal(result.status,'failed');assert.equal(result.publication.status,'refused');
   assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
