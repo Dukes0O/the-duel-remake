@@ -18,6 +18,7 @@ import {initializeFootTransition, stepFootTransition,
 import {validArmorKit} from './armor-kits.js';
 import {initializeFootWeapons, selectFootGear} from './onfoot-weapons.js';
 import {CREW, crewMember} from './crew.js';
+import {beginQualifying, applyQualifyingGrid, finishQualifying, qualifyingLapEvent} from './qualifying.js';
 import {grandPrixCourse, courseForGrandPrix, initializeField, stepStartSequence, stepField} from './race-field.js';
 // Duel owns the simulation state, lifecycle and fixed-step call order. The
 // sim-* modules implement each system against this same instance.
@@ -128,6 +129,7 @@ export class Duel {
 
   onChange(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(ev) {
+    ev = qualifyingLapEvent(this, ev);
     if (ev.stageResult || ev.gameover || ev.arenaResult || ev.menu || ev.complete)
       clearArsenalState(this);
     for (const fn of this.listeners) fn(this.state, ev);
@@ -169,7 +171,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this.state.arena = null;
@@ -187,6 +189,8 @@ export class Duel {
     this.state.opponentCount = Number.isSafeInteger(opponentCount) ? Math.max(0, Math.min(3, opponentCount)) : 1;
     // A Grand Prix (docs/CIRCUITS.md 3.2) races a full field on a closed road circuit.
     const grandPrix = mode === 'grandprix' && this.featureFlags.enabled('grand-prix') && grandPrixCourse(COURSE[startStage]);
+    if (grandPrix && COURSE[startStage].closed !== false && qualifying === true) this.state.qualifying = {phase: 'pending'};
+    else delete this.state.qualifying;
     if (grandPrix && Number.isSafeInteger(fieldSeed)) this.state.fieldSeed = fieldSeed >>> 0;
     else delete this.state.fieldSeed;
     if (grandPrix) this.state.opponentCount = Number.isSafeInteger(fieldSize) ? Math.max(1, Math.min(7, fieldSize)) : Math.max(1, Math.min(7, (COURSE[startStage].fieldSize ?? 8)-1));
@@ -294,7 +298,9 @@ export class Duel {
     initializeHiddenRoadJourney(this);
     initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
+    if (grandPrix) { applyQualifyingGrid(this); beginQualifying(this); }
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
+      : s.qualifying?.phase === 'driving' ? {stageLoaded: idx, qualifyingStarted: true}
       : {stageLoaded: idx, countdown: 3});
   }
 
@@ -469,7 +475,7 @@ export class Duel {
       if (s.field) { stepStartSequence(this, dt); return; }
       const beat = Math.ceil(s.countdown);
       s.countdown -= dt;
-      if (s.countdown <= 0) { s.status = 'racing'; this._callout('GO. MAKE IT COUNT.', 2); this.emit({ go: true }); }
+      if (s.countdown <= 0) { s.status = 'racing'; this._callout(s.qualifying?.phase === 'driving' ? 'QUALIFYING / LAP 1 OF 2' : 'GO. MAKE IT COUNT.', 2); this.emit({ go: true }); }
       else if (Math.ceil(s.countdown) !== beat) this.emit({ countdown: Math.ceil(s.countdown) });
       return;
     }
@@ -561,7 +567,7 @@ export class Duel {
     if (this._deadline()) return;
 
     this._advanceLaps(s, dt);
-    if (s.completedLaps >= s.lapsTotal) this._finishStage();
+    if (s.completedLaps >= s.lapsTotal && !finishQualifying(this)) this._finishStage();
   }
 
   _commitDrift(...args) { return simDriving._commitDrift.apply(this, args); }

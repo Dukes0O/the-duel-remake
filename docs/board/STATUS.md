@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T17:35:17.740Z
+Observed at: 2026-10-12T19:26:22.418Z
 
-Observation commit: be74dbfefa5a4385b286ee7df3dbcfc3f6c3f903
+Observation commit: 2595735e55c2dad0d66fde8d5ea68fe60bf842d5
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: be74dbfefa5a4385b286ee7df3dbcfc3f6c3f903
+Integration HEAD: 2595735e55c2dad0d66fde8d5ea68fe60bf842d5
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -43,7 +43,7 @@ Last recorded full run: 2026-10-12T16:37:15.724Z; tested commit: 1a7a77e77c55a48
 | grand-prix-career | dev |
 | snow-world | dev |
 | panorama-ridge | dev |
-| harbour-lights | dev |
+| harbour-lights | on |
 | tremblant-woods | on |
 | tremblant-snow | on |
 | the-deep | dev |
@@ -54,13 +54,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/p4-career-pay | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-pay |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 1 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-qualifying-final | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying-final |
-| codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
+| codex/p4-summit | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/tools/callback-diagnostics | 7 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 17 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 17 | unknown | true | false | unknown |
@@ -72,13 +71,12 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-career-pay | unknown | 2026-10-12T09:58:59-07:00 | 0 | last commit 2026-10-12T09:58:59-07:00 | docs/changes/P4-CAREER-PAY.md, src/app.js, src/feature-flags.js, src/ghost.js, src/grand-prix-career.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
-| codex/p4-gp-existing | unknown | 2026-10-12T10:13:33-07:00 | 0 | last commit 2026-10-12T10:13:33-07:00 | docs/changes/P4-GP-EXISTING.md, src/app.js, src/course.js, src/ghost.js, src/leaderboard.js |
-| codex/p4-panorama | unknown | 2026-10-12T10:30:42-07:00 | 0 | last commit 2026-10-12T10:30:42-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-PANORAMA.md, src/app.js, src/circuit-landmarks.js |
+| codex/p4-gp-existing | unknown | 2026-10-12T12:18:41-07:00 | 0 | last commit 2026-10-12T12:18:41-07:00 | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/world.js |
+| codex/p4-panorama | unknown | 2026-10-12T10:37:09-07:00 | 0 | last commit 2026-10-12T10:37:09-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-PANORAMA.md, src/app.js, src/circuit-landmarks.js |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js |
-| codex/p4-qualifying-final | unknown | 2026-10-11T21:23:39-07:00 | 0 | last commit 2026-10-11T21:23:39-07:00 | docs/changes/P4-QUALIFYING.md, src/app.js, src/game.js, src/lap-telemetry.js, src/qualifying.js |
-| codex/p4-summit | unknown | 2026-10-12T08:43:04-07:00 | 0 | last commit 2026-10-12T08:43:04-07:00 | docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuits/index.js, src/circuits/summit-run.js, src/course-access.js |
+| codex/p4-qualifying-final | unknown | 2026-10-12T12:02:55-07:00 | 0 | last commit 2026-10-12T12:02:55-07:00 | docs/changes/P4-QUALIFYING.md, src/app.js, src/game.js, src/lap-telemetry.js, src/qualifying.js |
+| codex/p4-summit | unknown | 2026-10-12T11:05:29-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuits/index.js, src/circuits/summit-run.js, src/course-access.js |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 7 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -92,24 +90,24 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 16,520,147 B | +420,661 B | 20,000,000 B |
-| Added bytes in last merge | 127,066 B | -3,080,988 B | 5,000,000 B |
+| Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 234,961 B | +0 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 386,013,184 B | -47,126,528 B | unavailable |
+| Git objects | 388,007,936 B | +792,576 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 1a7a77e77c55a481edc766e97e4a60fdb7c28ced
+- Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: be74dbfefa5a4385b286ee7df3dbcfc3f6c3f903
+- Local integration/wasteland: 2595735e55c2dad0d66fde8d5ea68fe60bf842d5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 1a7a77e77c55a481edc766e97e4a60fdb7c28ced.
+- Remote origin/master: matches local; cached commit 161e01a0aae942e25359ce3b7ae1e1963fc12e4c.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
 - Remote origin/integration/wasteland: behind local; cached commit cbb4e8975fe23911b9940499e0ae1ee17660955b.
