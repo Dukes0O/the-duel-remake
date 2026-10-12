@@ -11,7 +11,7 @@ import {addCircuitLandmarks, scoreboardText} from '../src/circuit-landmarks.js';
 import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {readFileSync} from 'node:fs';
-import {compareFrameCosts} from './scenarios/p4-panorama-frames.mjs';
+import {compareFrameCosts} from './panorama-frame-cost.mjs';
 import {PIT} from '../src/pit-lane.js';
 
 const near = (a, b, e = 1e-6) => assert.ok(Math.abs(a - b) < e, a + ' != ' + b);
