@@ -31,8 +31,10 @@ tier, build, one review, merge as soon as green. Existing P4 lanes continue.
 5. A separate janitor sweep: fold consumed earlier-round verdicts into the
    final art reviews, then delete those earlier sheets. Preserve current
    sheets, licensed sources, recipes, runtime assets and Kyle's decisions.
-6. Only after Phase 4 work is exhausted, The Deep section 10: DEEP-ART-SRC,
-   DEEP-RAMP and DEEP-DRIVE. Keep the-deep dev; send art sheets to Claude.
+6. The Deep, THE_DEEP section 10 (Claude packet 12 October): DEEP-ZONE,
+   DEEP-SURFACE, DEEP-SAVE, DEEP-ART-SRC and DEEP-AUDIO start in free lanes
+   alongside Phase 4, within the six-lane limit. Build against the 10.1
+   contracts; do not stop to ask. Keep the-deep dev; art sheets to Claude.
 
 When a card waits on Claude, move on. Read the newest Claude answers in
 playtest-inbox.md before each new card and after each merge.

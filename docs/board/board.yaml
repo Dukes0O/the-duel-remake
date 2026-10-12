@@ -5035,60 +5035,128 @@ tasks:
     priority: after-phase4
     note: "Look test merged2e7613e5; the-deep remainsdev, no playable route."
 
+  # The Deep on the world line (docs/THE_DEEP.md section 10, Claude packet 12 October 2026).
+  # Six cards start at once; contracts in section 10.1 are the agreement between lanes.
+  - id: DEEP-ZONE
+    title: "The Deep zone format, Pacific ramp and dive entry"
+    owner: codex
+    lane: SIM
+    size: L
+    needs: [DEEP-LOOK]
+    status: ready
+    flag: the-deep
+    locks: [busy-game-files]
+    owns: [src/deep/deep-zone.js, src/deep/deep-journey.js, src/deep/deep-ui.js, src/deep/deep-ui.css, tools/test-deep-zone.mjs, docs/changes/DEEP-ZONE.md]
+    hooks: [src/app.js, src/game.js, src/course.js, src/coastal-water.js]
+    design_decision: "Claude, THE_DEEP 10 and 10.1: zone format v1 as written; ramp in the Pacific Coast cove off the racing line; pause, Dive / Turn back and ramp return copy the Hidden Road journey. A test zone lives in the test only."
+    acceptance:
+      - "Zone format 10.1 loads; the ramp, shoreline pause, dive choice and return work in Node; Pacific Canyon fingerprints exact with the ramp unused and with the-deep off. Lane tier, build, one review."
+  - id: DEEP-SURFACE
+    title: "Driving on the sea floor"
+    owner: codex
+    lane: SIM
+    size: M
+    needs: [DEEP-LOOK]
+    status: ready
+    flag: the-deep
+    owns: [tools/test-deep-surface.mjs, docs/changes/DEEP-SURFACE.md]
+    hooks: [src/race-surfaces.js, src/sim-driving.js]
+    design_decision: "Claude, THE_DEEP 10.1: sea-floor grip .8, top speed 70% of the car's own, acceleration 60%, turning drag 1.4x, gravity one third, landings never damage, hint SEA FLOOR, cue deep.sand-land."
+    acceptance:
+      - "The 10.1 numbers hold in Node for every car scaled from its own handling; every other surface and every fingerprint exact."
+  - id: DEEP-SAVE
+    title: "The Deep save fields, hints and dive kit"
+    owner: codex
+    lane: SAVE
+    size: M
+    needs: [DEEP-LOOK]
+    status: ready
+    flag: the-deep
+    locks: [save-shape]
+    helpers: [reviewer, save_guardian]
+    owns: [src/deep/deep-discovery.js, src/deep/deep-hints.js, tools/fixtures/saves/09-deep.json, tools/test-deep-save.mjs, docs/changes/DEEP-SAVE.md]
+    hooks: [src/screen-garage.js, src/progression.js]
+    design_decision: "Claude, THE_DEEP 10.1: optional deep.found, deep.logged, deep.pearls, deep.kit, deep.hintsShown; first hint after five Pacific Canyon finishes, second after ten without a dive; kit 150 credits, shown after the first hint."
+    acceptance:
+      - "Fields round-trip; old saves load byte for byte; memory-only save checker clear; hints and kit appear at the stated counts."
   - id: DEEP-ART-SRC
     title: "The Deep creatures and set sources"
     owner: codex
     lane: ART
     size: L
     needs: []
-    status: backlog
+    status: ready
     flag: the-deep
-    priority: after-phase4
-    note: "THE_DEEP10 D1: licensed creature/set models and round-one art sheet forClaude; free sources, recipes/catalog/credits, currentruntimeassets only."
-
-  - id: DEEP-RAMP
-    title: "Pacific boat ramp and dive entry"
+    owns: [public/assets/models/deep/, tools/art/catalog.json, public/assets/models/CREDITS.md, docs/board/looks/deep-art/, docs/changes/DEEP-ART-SRC.md]
+    acceptance:
+      - "The 14 creatures of THE_DEEP 10.1 plus wreck hull, giant clam, anchor and sunken boat, CC0 first, credited; round sheets judged by Claude, at most three rounds; no frame check (rule 9)."
+  - id: DEEP-AUDIO
+    title: "The Deep sounds"
     owner: codex
-    lane: DEEP
-    size: L
+    lane: AUDIO
+    size: M
     needs: []
-    status: backlog
+    status: ready
     flag: the-deep
-    priority: after-phase4
-    note: "THE_DEEP10 D2: genericramp/Pacificramp, shorelinepause/dive/return/hints/divekit/additive saves; fresh SaveGuardian, existingfingerprints outsideoptin exact."
-
-  - id: DEEP-DRIVE
-    title: "Driving on the sea floor"
-    owner: codex
-    lane: DEEP
-    size: L
-    needs: [DEEP-RAMP]
-    status: backlog
-    flag: the-deep
-    priority: after-phase4
-    note: "THE_DEEP10 D3 and section3: underwater surface rule, Node acceptance, exactfingerprints elsewhere; the-deep dev."
-
+    owns: [public/assets/audio/deep/, src/deep/deep-audio.js, tools/test-deep-audio.mjs, docs/changes/DEEP-AUDIO.md]
+    hooks: [tools/audio/catalog.json, public/assets/audio/CREDITS.md]
+    acceptance:
+      - "The eight cue ids of THE_DEEP 10.1 from recipes; ambience about -20 LUFS, peaks at most -1 dBTP; master mix unchanged; Claude judges one listening sheet."
   - id: DEEP-WATER
-    title: "The Deep full-zone water look"
+    title: "The Deep water look for any zone"
     owner: claude
-    lane: DEEP
+    lane: VIS
     size: L
-    needs: [DEEP-LOOK, DEEP-RAMP]
-    status: backlog
+    needs: [DEEP-LOOK]
+    status: ready
     flag: the-deep
-    priority: after-phase4
-    note: "Claude ownsD4: make approvedlookreal forthewholezone, measurebudget whenreachable."
-
+    owns: [src/deep/underwater-look.js, src/deep/depth-colour.js, src/deep/light-shafts.js, src/deep/water-surface.js, tools/deep-look.js]
+    acceptance:
+      - "The approved look works for any 10.1 zone at any depth on Performance and High; nothing reachable yet, so no frame check until FINISH-DEEP."
   - id: DEEP-TRAIL
     title: "The Kelp Coast loop"
     owner: claude
     lane: DEEP
     size: L
-    needs: [DEEP-RAMP, DEEP-DRIVE]
+    needs: [DEEP-ZONE]
     status: backlog
     flag: the-deep
-    priority: after-phase4
-    note: "Claude ownsD5: shallows/kelpforest/drop-offlip route."
+    owns: [src/deep/zones/kelp-coast.js]
+    acceptance:
+      - "THE_DEEP section 4 Kelp Coast as zone data: Ramp Shallows, Kelp Forest, the Drop-off lip, three pearls and creature spots."
+  - id: DEEP-LIFE
+    title: "Kelp Coast sea life"
+    owner: codex
+    lane: VIS
+    size: L
+    needs: [DEEP-ART-SRC, DEEP-TRAIL]
+    status: backlog
+    flag: the-deep
+    owns: [src/deep/sea-life.js, tools/test-deep-life.mjs, docs/changes/DEEP-LIFE.md]
+    acceptance:
+      - "Section 5 Kelp Coast creatures instanced, capped per type, reacting to the car's position read-only; race state and random streams untouched."
+  - id: DEEP-LOG
+    title: "Sea-life log and pearls"
+    owner: codex
+    lane: UI
+    size: M
+    needs: [DEEP-SAVE, DEEP-TRAIL]
+    status: backlog
+    flag: the-deep
+    owns: [src/deep/deep-log.js, tools/test-deep-log.mjs, docs/changes/DEEP-LOG.md]
+    hooks: [src/screen-garage.js]
+    acceptance:
+      - "Log a creature within 6 m under 15 km/h for one second; pearls; pearl-white finish after nine; garage log page with silhouettes."
+  - id: FINISH-DEEP
+    title: "Claude's finishing pass: the Kelp Coast"
+    owner: claude
+    lane: DEEP
+    size: M
+    needs: [DEEP-ZONE, DEEP-SURFACE, DEEP-WATER, DEEP-TRAIL, DEEP-LIFE, DEEP-LOG, DEEP-AUDIO]
+    status: backlog
+    flag: the-deep
+    acceptance:
+      - "Postcard sheet; drive-through check; night-shift frame check at the kelp forest with a full school. Then Kyle says go live."
 
   - id: P4-CAREER-PAY
     title: "Grand Prix position pay, records and ghosts"

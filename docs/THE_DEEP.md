@@ -9,8 +9,8 @@ race." Then: "how about planning out the underwater world too. maybe we can
 start on that in parallel."
 
 Status: approved by Kyle on 11 October 2026 ("this all looks good"),
-with Kyle's answers in section 11. Phase 4 work keeps
-priority; Deep cards start when a builder is free of Phase 4 cards.
+with Kyle's answers in section 11. Section 10 is the build graph (12
+October 2026): its six first cards start in free lanes alongside Phase 4.
 
 ## 1. The feeling
 
@@ -217,7 +217,8 @@ plan before any build. The idea, to be settled with Kyle:
   `public/assets/models/CREDITS.md` and `tools/art/catalog.json`. Recipes in
   `tools/blender/`. Kelp, seagrass, coral and sand ripples should be
   procedural or instanced from a few small meshes. At most three art rounds
-  per card; sheets go to Kyle with a pick.
+  per card; Claude judges the sheets (AGENTS rule 15) and Kyle sees the
+  result.
 - **Sound:** every new event names its cue: dive splash, muffled engine,
   bubbles, sand landing, creature logged, pearl found, whale song, cave
   ambience.
@@ -244,25 +245,93 @@ plan before any build. The idea, to be settled with Kyle:
 - **Never:** cartoon fish, neon colours, a flat blue tint over everything,
   or a hard fog wall.
 
-## 10. Cards
+## 10. The build as a graph (Claude packet, 12 October 2026)
 
-| Card | Owner | What | Needs |
-| --- | --- | --- | --- |
-| D0 DEEP-LOOK | Claude | A look test: a short stretch of sea floor behind the switch (sand, seagrass, kelp, fog, colour with depth, god rays, caustics, marine snow, surface from below, one fish school). A picture sheet for Kyle. Nothing reachable in the game | none |
-| D1 DEEP-ART-SRC | Codex | Source and prepare creature and set models (turtle, ray, manta, sea lion, otter, crab, moray, grouper, reef shark, jellyfish, whale, wreck, clam), with licences; round-one art sheet | none |
-| D2 DEEP-RAMP | Codex | The generic ramp zone and the Pacific Canyon ramp, the shoreline pause, the dive choice, the return, hints, dive kit in the garage, save fields | none |
-| D3 DEEP-DRIVE | Codex | The underwater surface rule (section 3) with Node tests; exact fingerprints elsewhere | D2 |
-| D4 DEEP-WATER | Claude agent | The underwater look from D0 made real for the whole zone, with frame budget | D0, D2 |
-| D5 DEEP-TRAIL | Claude agent | The Kelp Coast loop: shallows, kelp forest and the drop-off lip | D2, D3 |
-| D6 DEEP-LIFE | Codex | Sea life: instanced schools, turtles, rays, the whale pass, reactions to the car | D1, D5 |
-| D7 DEEP-LOG | Codex | The sea-life log page and the pearls with the pearl-white finish | D6 |
-| D8 DEEP-AUDIO | Codex | Underwater sound (section 8 cues) | D4 |
-| D9 FINISH-DEEP | Claude | Claude's finishing pass on the Kelp Coast with the review tool | D4 to D8 |
-| D10 DEEP-REEF | Claude agent | Wreck Reef: the High Country ramp, coral garden, the wreck and Manta Point, with its sea life and pearls | D9, Kyle has played the Kelp Coast |
-| D11 DEEP-NIGHT | Claude agent | Night Harbour: the Harbor & Highlands ramp, the harbour wall, Jellyfish Cave and Glow Bay, with its sea life and pearls | D10 |
-| B0 BOATS-DESIGN | Claude | The boats plan (section 7) for Kyle | D9 |
+The Deep is the first job on the world line in `docs/FACTORY.md`. The first
+plan put almost every card behind one large ramp card. This packet splits the
+work by the files each part owns and settles every shared name and number
+below, so six lanes start at once and nobody stops to ask. The contracts in
+10.1 are the agreement between lanes: build against them, never around them.
 
-Release: only with Kyle's written approval: the Kelp Coast after D9, then each later place on its own.
+```mermaid
+flowchart LR
+  P[C: this packet] --> Z[X: DEEP-ZONE]
+  P --> SF[X: DEEP-SURFACE]
+  P --> SV[X: DEEP-SAVE]
+  P --> AS[X: DEEP-ART-SRC]
+  P --> AU[X: DEEP-AUDIO]
+  P --> W[C: DEEP-WATER]
+  Z --> T[C: DEEP-TRAIL]
+  AS --> L[X: DEEP-LIFE]
+  T --> L
+  SV --> LG[X: DEEP-LOG]
+  T --> LG
+  Z & SF & W & T & L & LG & AU --> F[C: FINISH-DEEP]
+  F --> N[T: night shift: frames]
+  N --> R[Kyle: go live, Kelp Coast]
+  R --> RF[C: DEEP-REEF] --> NH[C: DEEP-NIGHT]
+```
+
+| Card | Owner | Starts | Owns (and locks) | Done when |
+| --- | --- | --- | --- | --- |
+| DEEP-ZONE | Codex SIM | now | `src/deep/deep-zone.js`, `src/deep/deep-journey.js`, `src/deep/deep-ui.js`, `src/deep/deep-ui.css`, `tools/test-deep-zone.mjs`; hooks in `src/app.js` and `src/game.js` (lock `busy-game-files`) | The zone format of 10.1 loads; the Pacific Canyon ramp is installed in the Pacific Coast cove; past the water's edge the race pauses, the Dive / Turn back choice works, driving back up the ramp resumes; a test zone (in the test only) drives end to end; Pacific Canyon fingerprints exact with the ramp unused and with the switch off |
+| DEEP-SURFACE | Codex SIM | now | `sea-floor` entry in `src/race-surfaces.js`, its reader in the driving code, `tools/test-deep-surface.mjs` | The numbers in 10.1 hold in Node: speed cap, slow fall, soft landing, no damage, every car scaled from its own handling; every other surface and fingerprint exact |
+| DEEP-SAVE | Codex SAVE | now | `src/deep/deep-discovery.js`, `src/deep/deep-hints.js`, the dive kit in `src/screen-garage.js`, save fixture `tools/fixtures/saves/09-deep.json` (lock `save-shape`, save checker) | Save fields of 10.1 round-trip; old saves load byte for byte; hints appear at the counts in 10.1; the kit appears after the first hint and costs 150 credits |
+| DEEP-ART-SRC | Codex ART | now | `public/assets/models/deep/`, `tools/art/catalog.json` rows, credits, `docs/board/looks/deep-art/` | The 14 creatures of 10.1 and the set pieces (wreck hull, clam, anchor, sunken boat) sourced CC0 first, round sheets judged by Claude, at most three rounds |
+| DEEP-AUDIO | Codex AUDIO | now | `public/assets/audio/deep/`, catalog rows, `src/deep/deep-audio.js` | The eight cue ids of 10.1 exist, built from recipes, louder than nothing and quieter than the race mix (about -20 LUFS ambience, -1 dBTP peaks); no change to the master mix |
+| DEEP-WATER | Claude | now | `src/deep/` look modules, `tools/deep-look.*` | The approved look test works for any zone of the 10.1 format, at any depth, on Performance and High |
+| DEEP-TRAIL | Claude | after DEEP-ZONE | `src/deep/zones/kelp-coast.js` | The Kelp Coast loop (section 4) as zone data: Ramp Shallows, Kelp Forest, the Drop-off lip, pearl and creature spots |
+| DEEP-LIFE | Codex VIS | after ART-SRC, TRAIL | `src/deep/sea-life*.js`, `tools/test-deep-life.mjs` | Section 5 creatures for the Kelp Coast, instanced, reacting to the car's position read-only, capped per type |
+| DEEP-LOG | Codex UI | after SAVE, TRAIL | `src/deep/deep-log.js`, the log page in the garage, `tools/test-deep-log.mjs` | Logging by driving close and slow (within 6 m under 15 km/h for 1 s), pearls, the pearl-white finish after nine |
+| FINISH-DEEP | Claude | after all of the above | finishing fixes in owned files | Postcard sheet; drive-through check passes; night-shift frame check passes |
+
+Wreck Reef (DEEP-REEF) and Night Harbour (DEEP-NIGHT) are later course-line
+runs that reuse every part above with new zone data, after Kyle has played
+the Kelp Coast. Boats (B0) stay a separate plan after FINISH-DEEP.
+
+### 10.1 Contracts between lanes
+
+**Zone format** (`src/deep/deep-zone.js` exports `defineZone` and
+`ZONE_FORMAT_VERSION = 1`). A zone is plain data:
+
+```js
+{ id: 'kelp-coast', circuit: 'pacific-canyon', switch: 'the-deep',
+  ramp: { atDistance: <metres along the course>, side: 'left' | 'right',
+          length: 120, endDepth: 8 },
+  trail: [ { x, z, depth, width, surface: 'sea-floor' } ],   // closed loop, metres
+  places: [ { id, name, fromIndex, toIndex } ],              // title cards
+  pearls: [ { id, trailIndex, offset } ],
+  spots:  [ { creature, trailIndex, count } ] }
+```
+
+The ramp sits in the Pacific Coast cove, off the racing line, with no change
+to the course's racing line, scenery positions or random stream.
+
+**Surface** `sea-floor` in `SURFACES`: grip .8, top speed 70% of the car's
+own, acceleration 60%, turning drag 1.4 times, gravity a third of normal,
+landing never damages, hint `SEA FLOOR`, cue `deep.sand-land` on landing.
+
+**Save fields** under `deep` (all optional): `found` (zone ids), `logged`
+(creature ids), `pearls` (pearl ids), `kit` (true when bought),
+`hintsShown` (hint ids). Hints read the existing finish counts per course:
+first hint after five Pacific Canyon finishes, second after ten finishes
+without a dive.
+
+**Creature ids (14):** `silver-school`, `reef-fish`, `turtle`, `ray`,
+`manta`, `sea-lion`, `otter`, `crab`, `moray`, `grouper`, `reef-shark`,
+`jellyfish`, `whale`, `octopus`.
+
+**Pearl ids:** `kelp-1` to `kelp-3`, `reef-1` to `reef-3`, `night-1` to
+`night-3`.
+
+**Sound cue ids:** `deep.splash`, `deep.engine-muffle`, `deep.bubbles`,
+`deep.sand-land`, `deep.logged`, `deep.pearl`, `deep.whale`, `deep.cave`.
+
+**Events** the renderer and sound read (never write): `deep.enter`,
+`deep.exit`, `deep.land`, `deep.logged`, `deep.pearl`, `deep.place`.
+
+Release: Kyle says "go live" for the Kelp Coast after FINISH-DEEP and a
+passing night shift, then each later place on its own.
 
 ## 11. Settled with Kyle (11 October 2026)
 
