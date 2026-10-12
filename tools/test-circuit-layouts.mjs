@@ -19,7 +19,7 @@ const near = (a, b, tolerance, message = '') => assert.ok(Math.abs(a - b) <= tol
 const piece = (road, name) => road.pieces.find(item => item.name === name);
 
 test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
-  assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['panorama-ridge', 'harbour-lights', 'tremblant-woods']);
+  assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['panorama-ridge', 'harbour-lights', 'tremblant-woods', 'summit-run']);
   // Tremblant Woods is released (RELEASE-TREMBLANT); the other two stay dev until their own release.
   const released = ['tremblant-woods'];
   for (const circuit of ALL_CIRCUITS) {
@@ -34,7 +34,7 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.equal(COURSE.length, 16 + released.length);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
   assert.equal(COURSE[16].id, 'tremblant-woods', 'appended after the existing events');
-  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 3);
+  assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 4);
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['harbour-lights', 'tremblant-woods']);
@@ -43,8 +43,8 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   for (const circuit of ALL_CIRCUITS) assert.ok(bat.includes(circuit.id), `the Preview turns ${circuit.id} on`);
 });
 
-test('every layout closes within the rules and says what it changed', () => {
-  for (const circuit of ALL_CIRCUITS) {
+test('every closed layout closes within the rules and says what it changed', () => {
+  for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
     const road = buildTrackScript(circuit), report = road.report;
     assert.equal(road.length, circuit.lengthU);
     assert.ok(Math.abs(Math.abs(report.turnSumDeg) - 360) <= 2, `${circuit.id}: turns add up to a lap`);
@@ -118,7 +118,7 @@ test('scenery stays off the road, out of the runoff and off the inside of corner
   }
 });
 
-for (const circuit of ALL_CIRCUITS) {
+for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
   test(`${circuit.name}: the test driver completes every lap on Medium without a crash or getting stuck`, () => {
     for (const reverse of [false, true]) {
       const def = reverse ? { ...circuit, id: `${circuit.id}-reverse-test`, reverse: true } : circuit;

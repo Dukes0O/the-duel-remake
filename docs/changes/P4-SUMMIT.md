@@ -79,6 +79,11 @@ The feature catalogue grows from 23 to 24 entries only for summit-run dev.
 The dev-state list gains that same name. All existing state checks remain.
 Preview still requests every dev switch except career-backup; appending
 summit-run satisfies its existing computed list. No threshold changes.
+The authored registry assertion grows from three ids/stages to four, adding
+Summit. Closed-loop closure and reverse-lap driving checks now apply to actual
+closed definitions only, with their original assertions and tolerances intact.
+All four courses still receive registry, pricing and scenery checks; Summit's
+card adds the actual open endpoint and one-run checks.
 Two reference assertions now apply to actual closed authored definitions;
 Summit gets an explicit no-cyclic-reference assertion. The publisher already
 excludes closed:false. All 27 closed targets and published keys stay unchanged.

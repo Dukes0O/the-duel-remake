@@ -19,6 +19,7 @@ assert.equal(SUMMIT_RUN.fieldSize, 6);
 const geometry = buildTrackScript(SUMMIT_RUN);
 assert.ok(geometry.length >= 13000 && geometry.length <= 15000);
 assert.equal(geometry.pieces.length, 52);
+assert.ok(Math.hypot(geometry.samples.at(-1).x-geometry.samples[0].x,geometry.samples.at(-1).z-geometry.samples[0].z)>1000,'Summit ends at a separate mountain summit, rather than closing a loop');
 assert.deepEqual(geometry.pieces.filter(p=>p.name.includes('Hairpin') || ['Devil\'s Elbow','Last Breath'].includes(p.name)).map(p=>p.radius), [16,16,18,16,15,15]);
 assert.deepEqual(geometry.pieces.filter(p=>p.crest>0).map(p=>p.crest), [2.5,2.5,1.5]);
 assert.ok(Math.abs(geometry.heightAt(geometry.length)-geometry.heightAt(0)-720)<1e-5);
