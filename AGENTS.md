@@ -109,13 +109,15 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     and browser scenarios. A night failure names the first merge after the
     last green night; its fix goes first and other merges continue. Until
     FAC-03 installs the night shift, the full tier runs at run end as before.
-14. Limits: at most three course lanes, two feature lanes and one world lane
-    at once, each test run `--jobs 4` or fewer. A card lists the locks it
-    holds (`locks:` in the board, FACTORY section 2); two cards with the same
-    lock never build at once.
-    Edits to the board, inbox and STATUS on integration are committed at
-    once, never left uncommitted in the integration folder: an uncommitted
-    shared file blocks every other merge.
+14. Limits: at most six build lanes at once across all lines, no more than
+    three of them course lanes, each test run `--jobs 4` or fewer. A lane is
+    one card's own folder; the lane tag (SIM, UI, ART) names a file area, not
+    a single slot, so two SIM cards with different files run at once. A card
+    lists the locks it holds (`locks:` in the board, FACTORY section 2); two
+    cards with the same lock never build at once. Edits to the board, inbox
+    and STATUS on integration are committed at once, never left uncommitted in
+    the integration folder: an uncommitted shared file blocks every other
+    merge.
 15. Kyle sets direction and says "go live". Claude makes art and sound picks
     within the three-round cap; nothing waits on Kyle except a release.
 

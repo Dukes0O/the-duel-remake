@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T19:58:58.978Z
+Observed at: 2026-10-12T20:39:27.976Z
 
-Observation commit: 2bd7d5ca6538602fb98b4954b13e4ec9ea7c08f3
+Observation commit: 02790f147ef0aed776fe864041943ed0930f1ff7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2bd7d5ca6538602fb98b4954b13e4ec9ea7c08f3
+Integration HEAD: 02790f147ef0aed776fe864041943ed0930f1ff7
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -54,10 +54,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/fac-02 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-02 |
 | codex/fac-03 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-03 |
-| codex/fac-06 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-06 |
-| codex/fac-07 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-07 |
+| codex/fac-04 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-04 |
+| codex/fac-07 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-07 |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -74,6 +73,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/fac-04 | FAC-04 | 2026-10-12T13:21:32-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/FAC-04.md, tools/test-course-kit.mjs, src/circuits/harbour-lights.js, src/circuits/index.js, src/circuits/panorama-ridge.js |
+| codex/fac-07 | FAC-07 | 2026-10-12T13:04:31-07:00 | 0 | last commit 2026-10-12T13:04:31-07:00 | docs/changes/FAC-07.md, tools/browser-harness.mjs, tools/run-browser-scenarios.mjs, tools/test-browser-harness.mjs, tools/test-browser-scenarios.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | unknown | 2026-10-12T12:43:24-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
 | codex/p4-panorama | unknown | 2026-10-12T10:37:09-07:00 | 0 | last commit 2026-10-12T10:37:09-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/changes/P4-PANORAMA.md, src/app.js, src/circuit-landmarks.js |
@@ -93,9 +94,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,912,940 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 60,371 B | -22,166 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 390,616,064 B | +493,568 B | unavailable |
+| Git objects | 393,854,976 B | +399,360 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 2bd7d5ca6538602fb98b4954b13e4ec9ea7c08f3
+- Local integration/wasteland: 02790f147ef0aed776fe864041943ed0930f1ff7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
