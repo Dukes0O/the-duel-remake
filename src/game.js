@@ -189,7 +189,7 @@ export class Duel {
     const grandPrix = mode === 'grandprix' && this.featureFlags.enabled('grand-prix') && grandPrixCourse(COURSE[startStage]);
     if (grandPrix && Number.isSafeInteger(fieldSeed)) this.state.fieldSeed = fieldSeed >>> 0;
     else delete this.state.fieldSeed;
-    if (grandPrix) this.state.opponentCount = Number.isSafeInteger(fieldSize) ? Math.max(1, Math.min(7, fieldSize)) : 7;
+    if (grandPrix) this.state.opponentCount = Number.isSafeInteger(fieldSize) ? Math.max(1, Math.min(7, fieldSize)) : Math.max(1, Math.min(7, (COURSE[startStage].fieldSize ?? 8)-1));
     // Winter tyres only on request; summer is the unmarked default (src/race-surfaces.js).
     if (tyre === 'winter') this.state.tyre = 'winter'; else delete this.state.tyre;
     this.state.upgrades = Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[this.state.car].factoryMaxed ? 3 : Number.isFinite(upgrades[key]) ? clamp(Math.floor(upgrades[key]), 0, 3) : 0]));

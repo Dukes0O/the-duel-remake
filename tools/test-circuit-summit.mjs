@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict';
+import { SUMMIT_RUN } from '../src/circuits/summit-run.js';
+import { buildTrackScript } from '../src/track-script.js';
+import * as THREE from 'three';
+import {applySnowTerrain,winterWeight,snowPineIds} from '../src/snow-world.js';
+import {sampleCourseLightPath} from '../src/light-path.js';
+import {Duel} from '../src/game.js';
+import {COURSE} from '../src/config.js';
+import { Course } from '../src/course.js';
+
+assert.equal(SUMMIT_RUN.id, 'summit-run');
+assert.equal(SUMMIT_RUN.flag, 'summit-run');
+assert.equal(SUMMIT_RUN.noCombat, true);
+assert.equal(SUMMIT_RUN.closed, false);
+assert.equal(SUMMIT_RUN.laps, 1);
+assert.equal(SUMMIT_RUN.fieldSize, 6);
+const geometry = buildTrackScript(SUMMIT_RUN);
+assert.ok(geometry.length >= 13000 && geometry.length <= 15000);
+assert.equal(geometry.pieces.length, 52);
+assert.deepEqual(geometry.pieces.filter(p=>p.name.includes('Hairpin') || ['Devil\'s Elbow','Last Breath'].includes(p.name)).map(p=>p.radius), [16,16,18,16,15,15]);
+assert.deepEqual(geometry.pieces.filter(p=>p.crest>0).map(p=>p.crest), [2.5,2.5,1.5]);
+assert.ok(Math.abs(geometry.heightAt(geometry.length)-geometry.heightAt(0)-720)<1e-5);
+assert.deepEqual(geometry.samples, buildTrackScript(SUMMIT_RUN).samples);
+const course = new Course(SUMMIT_RUN, 1989);
+assert.equal(course.raceLength, course.length);
+assert.equal(course.pitLane.straight, 'Tree Line Pit Straight');
+assert.ok(course.gripKindAt(8200,0)==='snow');
+assert.ok(course.features.shortcuts.some(branch=>branch.id==='summit-open-road'));
+assert.ok(course.features.tunnels.some(tunnel=>tunnel.id==='summit-gallery'));
+assert.ok(course.features.walls.some(wall=>wall.id.startsWith('gallery-pillar-')));
+assert.ok(course.features.obstacles.some(wall=>wall.id.startsWith('gallery-roof-')&&wall.minY>course.worldAt(wall.s).y+6));
+const open=course.features.shortcuts.find(branch=>branch.id==='summit-open-road');
+assert.equal(course.surfaceAt(10500,course.shortcutOffset(open,10500)).road,true,'the Open Road is real driveable road');
+assert.equal(course.gripKindAt(10500,course.shortcutOffset(open,10500)),'snow','branch road uses the native snow surface');
+assert.equal(sampleCourseLightPath(course,{distance:0}).settings.nightAmount,0);
+assert.equal(sampleCourseLightPath(course,{distance:11000}).settings.nightAmount,1);
+const samples=[course.groundAt(1000,15),course.groundAt(12000,15)];
+const terrain=new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(samples.flatMap(p=>[p.x,p.y,p.z]),3));
+applySnowTerrain(terrain,course);
+assert.equal(terrain.attributes.winterWeight.getX(0),0,'desert terrain stays dry');
+assert.equal(terrain.attributes.winterWeight.getX(1),1,'upper terrain is snowy');
+assert.equal(winterWeight(course,1000),0);
+assert.equal(winterWeight(course,12000),1);
+for(const tree of course.features.trees)assert.equal(snowPineIds(course).has(tree.id),winterWeight(course,tree.s)>0,'only upper trees become snow kit pines');
+const allWinterCourse={...course,def:{...course.def,snowWorld:{...SUMMIT_RUN.snowWorld,mixed:false}}};
+applySnowTerrain(terrain,allWinterCourse);
+assert.deepEqual(Array.from(terrain.attributes.winterWeight.array),[1,1],'legacy all-winter terrain remains exact');
+terrain.dispose();
+// Real open course metadata goes through the existing campaign loader.
+const original=COURSE[0];
+try {
+  COURSE[0]=SUMMIT_RUN;
+  const duel=new Duel({seed:1989,featureFlags:{'grand-prix':true,'summit-run':true}});
+  duel.startCampaign({startStage:0,mode:'grandprix',car:'falcone_f42',cpuDifficulty:'medium'});
+  assert.equal(duel.state.field.size,6);
+  assert.equal(duel.state.opponents.length,5);
+  assert.equal(duel.state.lapsTotal,1);
+  assert.equal(duel.course.closed,false);
+  assert.ok([duel.state,...duel.state.opponents].every(actor=>actor.s>0&&actor.s<45),'six real staggered grid poses fit the first straight');
+  assert.equal(duel.state.combat,null);
+  assert.equal(duel.state.traffic.length,0);
+} finally { COURSE[0]=original; }
+// Separate stretches must not share terrain; hairpin neighbours are exempt.
+const points=geometry.samples.filter((_,index)=>index%10===0);
+let closest=Infinity;
+for(let a=0;a<points.length;a++)for(let b=a+1;b<points.length;b++){
+  if(points[b].s-points[a].s<=750)continue;
+  closest=Math.min(closest,Math.hypot(points[b].x-points[a].x,points[b].z-points[a].z));
+}
+assert.ok(closest>=165, `separate mountain legs leave ${closest.toFixed(1)} m`);
+console.log('Summit authored layout, climb, native finish road and separation passed.');

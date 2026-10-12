@@ -1,0 +1,72 @@
+# P4-SUMMIT
+
+Status: source build in a new isolated lane; no release.
+
+## Design before code
+
+Build Claude's exact 52-piece point-to-point draft in CIRCUITS.md 5.4.
+Keep the six hairpin radii (16, 16, 18, 16, 15, 15 m) and three authored
+crests (2.5, 2.5, 1.5 m). Distribute 720 m of climb through the seven scenic
+sections: 120, 220, 30, 200, 0, 150, 0 m. Derive section, pit and light
+markers from the actual named pieces. The draft distances differ from the
+section overview; Claude's confirmation is requested through the inbox.
+Keep avalanche trigger 10.0 km, split 10.1 km, slide 10.42–10.58 km and
+rejoin 10.9 km exact. Allowed fitting stays within 10 percent of the draft.
+
+Summit is one run with six cars. All cars can enter. Append stable id
+summit-run to the authored registry, gated by its own dev switch and noCombat.
+Use the existing seeded field, native checkpoint finish, surface rules,
+Tree Line Pit Straight, distance lighting, snow presentation and approved
+Gallery, summit hut and observatory kits. No simulated lap completion.
+The protected Gallery remains a real road beside the faster Open Road; use
+the existing shortcut road model and real collision/tunnel envelope.
+Avalanche rules, snowmen rewards and yeti sightings belong to their cards.
+
+Director grants narrow shared hooks in race-field.js, game.js,
+track-script-course.js and race-field-driver.js, plus course.js/world.js only
+where the existing branch model needs authored script support. Existing
+modes and circuits retain their defaults.
+
+## Acceptance before implementation
+
+The focused card test was written before the course source. Its first run
+awaits shared capacity; no failing run is claimed. Checks cover
+repeatable script geometry, 13–15 km road length, 720 m endpoint climb,
+six hairpin radii, three crests, named tree-line pit, native point-to-point
+six-car field, surfaces and light progression, real branch roads and the
+165 m separation for road points more than 750 m apart. Race time, pit
+strategy, pictures and actual frame checks remain measured acceptance:
+Medium mid-car 6–8 minutes; winter pit 4–8 s faster than summer throughout;
+starting winter 2–5 s slower than the pit choice; busiest playable view
+High and Performance delivered p95 at most 18.5 ms, construction under 1 s.
+Under Kyle rule 9 no frames run for this hidden dev card; that measurement
+belongs to the later finishing/release step and is deferred, not passed.
+No measure is claimed until observed. Art sheets go to Claude.
+
+## Source progress
+
+The 52-piece road, six-car start, native finish, real branch road and physical
+snow shed are implemented as source. The shed collider follows the approved
+Blender recipe's pillar positions, roof height and uphill back; approved Gallery,
+hut and observatory meshes supply the art. Existing pit cues (limiter, wrench,
+GO) and existing field/start/jump sounds apply; no new event cue is invented.
+
+Director's additional grants cover stable Summit access at 2,600 CR,
+partial winter coverage in snow-world.js, default Race setup/briefing in
+screen-menu.js and the additive feature catalogue assertion. Access uses the
+current course entitlement schema; money/save review remains required.
+
+No test, full race, pit strategy, browser picture or art score is claimed yet.
+The original Qualifying lane remains untouched; its scoped final lane owns
+the closed-course qualifying guard and retained field-grid origin.
+
+## Changed assertions
+
+The feature catalogue grows from 23 to 24 entries only for summit-run dev.
+The dev-state list gains that same name. All existing state checks remain.
+Preview still requests every dev switch except career-backup; appending
+summit-run satisfies its existing computed list. No threshold changes.
+
+## Removed
+
+None. This appends one dev course and bounded opt-ins to existing owners.

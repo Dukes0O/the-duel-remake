@@ -381,7 +381,8 @@ export class Course {
   gripKindAt(s,lateral=0){
     if(!this.script)return'asphalt';
     const p=this.phase(s);
-    if(Math.abs(lateral)>this.script.halfWidthAt(p)){
+    const branch=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
+    if(Math.abs(lateral)>this.script.halfWidthAt(p)&&!branch){
       for(const patch of this.features.surfacePatches)if(patch.snowBank&&p>=patch.s0&&p<=patch.s1&&lateral>=patch.from&&lateral<=patch.to)return patch.kind;
       return'asphalt';
     }

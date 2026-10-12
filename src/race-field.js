@@ -15,7 +15,7 @@ const MPH = DRIVE.mphToWorld;
 
 // Circuits that offer a Grand Prix. P4-GP-EXISTING adds the others.
 export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'tremblant-woods', 'harbour-lights']);
-export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
+export const grandPrixCourse = def => !!def && (GRAND_PRIX_COURSES.includes(def.id) || def.defaultMode === 'grandprix');
 
 export const FIELD = Object.freeze({
   maxRacers: 7,        // computer racers; with you that is eight cars
@@ -211,6 +211,7 @@ export function initializeField(duel) {
   const slotOf = new Array(racers.length);
   if (poleFirst >= 0) slotOf[poleFirst] = slots.shift();
   rest.forEach(index => { slotOf[index] = slots.shift(); });
+  const gridStart = course.def.gridStartS ?? 0;
   const line = racingLineFor(course);
   const hold = FIELD.holdMin + rng.float() * (FIELD.holdMax - FIELD.holdMin);
   s.opponents = racers.map((racer, index) => {
@@ -223,7 +224,7 @@ export function initializeField(duel) {
       id: `gp-${index + 1}`, name: racer.name, racerId: racer.id, driverId: racer.driverId, paint: { ...racer.paint },
       car: cars[index].car, upgrades,
       ...(course.pitLane?{tyre:normalizeTyre(s.tyre)}:{}),
-      s: pose.s, lateral: pose.lateral, speedMph: 0, finished: false, finishTime: null,
+      s: pose.s + gridStart, lateral: pose.lateral, speedMph: 0, finished: false, finishTime: null,
       headingError: 0, yawVelocity: 0, pushVelocity: 0, offRoad: false, contactCooldown: 0, boost: 1, boosting: false,
       damageZones: freshDamageZones(), damageCooldown: 0,
       airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
@@ -238,7 +239,7 @@ export function initializeField(duel) {
     };
   });
   const playerPose = gridPose(playerSlot);
-  s.s = playerPose.s; s.lateral = playerPose.lateral; s.prevS = s.s; s.prevLateral = s.lateral;
+  s.s = playerPose.s + gridStart; s.lateral = playerPose.lateral; s.prevS = s.s; s.prevLateral = s.lateral;
   s.opponentCount = racers.length;
   duel.rivalSpec = s.opponents.length ? racerSpec(s.opponents[0].car, s.opponents[0].upgrades, s.opponents[0].driverId) : null;
   s.field = {

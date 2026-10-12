@@ -57,14 +57,14 @@ export function winterWeight(course,s){
   return 0;
 }
 const winterAt=(course,s)=>ranges(course).some(row=>course.phase(s)>=row.from&&course.phase(s)<=row.to);
-export function snowPineIds(course){return new Set(course.def.snowWorld?course.features.trees.map(tree=>tree.id):[]);}
-export function snowRockFeatures(course){return new Set(course.def.snowWorld?course.features.rocks:[]);}
+export function snowPineIds(course){return new Set(course.def.snowWorld?course.features.trees.filter(tree=>!course.def.snowWorld.mixed||winterAt(course,tree.s)).map(tree=>tree.id):[]);}
+export function snowRockFeatures(course){return new Set(course.def.snowWorld?course.features.rocks.filter(rock=>!course.def.snowWorld.mixed||winterAt(course,rock.s)):[]);}
 const placementsCache=new WeakMap();
 export function snowWorldPlacements(course){
   if(placementsCache.has(course))return placementsCache.get(course);
   if(!course.def.snowWorld)return [];
   const entries=[],rng=makeRng(course.seed^0x51a0a77);
-  for(const tree of course.features.trees)entries.push({
+  for(const tree of course.features.trees)if(!course.def.snowWorld.mixed||winterAt(course,tree.s))entries.push({
     id:'snow-pine',s:tree.s,lateral:tree.off,heading:tree.heading-course.at(tree.s).heading,
     scale:tree.scale*.7,scenery:Object.freeze({kind:'tree',id:tree.id})});
   const clusters=course.def.snowWorld.pineClusters??[];
@@ -99,6 +99,10 @@ export function snowWorldPlacements(course){
 export function applySnowTerrain(geometry,course){
   const position=geometry.attributes.position,weights=new Float32Array(position.count);
   weights.fill(course.def.snowWorld?1:0);
+  if(course.def.snowWorld?.mixed)for(let index=0;index<position.count;index++){
+    const near=course.nearest(position.getX(index),position.getZ(index));
+    weights[index]=winterWeight(course,near.s);
+  }
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }
 export function winterTerrainMaterial(material){
@@ -226,7 +230,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
   function update({state,camera,dt=0,high:quality=high,vehicles=[]}){
     if(disposed||!state)return;dt=Math.max(0,Math.min(.1,dt));time+=dt;
     const cap=quality?SNOW_LIMITS.high:SNOW_LIMITS.performance;stats.flakes=cap.flakes;geometry.setDrawRange(0,cap.flakes);
-    const active=1,gust=exposed.some(row=>course.phase(state.s)>=row.from&&course.phase(state.s)<=row.to);
+    const active=course.def.snowWorld.mixed?winterWeight(course,state.s):1,gust=exposed.some(row=>course.phase(state.s)>=row.from&&course.phase(state.s)<=row.to);
     flakes.visible=active>0;if(camera)flakes.position.copy(camera.position);
     flakes.material.uniforms.strength.value=active*(gust?.68:.48);
     for(let i=0;i<cap.flakes;i++){

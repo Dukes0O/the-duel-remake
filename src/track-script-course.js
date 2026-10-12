@@ -14,6 +14,14 @@ import {installPitLane, pitAt} from './pit-lane.js';
 export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
+  // Authored branches use the same real lateral road model as older shortcuts.
+  for (const branch of course.def.roadBranches ?? []) {
+    if (!(branch.start >= 0 && branch.end > branch.start && branch.end <= course.length &&
+      Number.isFinite(branch.offset) && branch.halfWidth > 0 && [1,-1].includes(branch.side)))
+      throw new TrackScriptError('An authored branch needs a bounded road range and width.');
+    f.shortcuts.push({...branch,offset:branch.offset*branch.side,transition:.15});
+  }
+  f.tunnels.push(...(course.def.galleries ?? []).map(gallery=>({...gallery})));
   installPitLane(course);
   course.racingLine = buildRacingLine(script, { ...dynamics, ...(course.def.racingLine ?? {}) });
   f.walls = [];
@@ -253,6 +261,24 @@ export function trackScriptSolids(course) {
       f.walls.push({id:`pit-wall-${s}`,kind:'prop',shape:'box',barrier:true,trackWall:true,pitWall:true,
         s,off,x:p.x,y:y-.1,z:p.z,heading:p.heading,halfX:.3,halfZ:2,height:1.15,minY:y-.1,maxY:y+1.05,theme:course.themeAt(s)});
     }
+  }
+  // Collider dimensions follow the approved gallery recipe (p4-kits.py):
+  // pillars at +/-5.7 m, 1 m wide, roof underside at 5.72 m, uphill back at 6.1 m.
+  for(const gallery of course.def.galleries ?? [])for(let s=gallery.start+6;s<gallery.end;s+=18){
+    for(const side of [-1,1]){
+      const off=side*5.7*1.2,p=course.worldAt(s,off);
+      f.walls.push({id:`gallery-pillar-${s}-${side}`,kind:'prop',shape:'box',trackWall:true,
+        s,off,x:p.x,z:p.z,y:p.y,heading:p.heading,halfX:.6,halfZ:1.425,
+        height:5.72*1.1,minY:p.y,maxY:p.y+5.72*1.1,theme:course.themeAt(s)});
+    }
+    const back=course.worldAt(s,6.1*1.2);
+    f.walls.push({id:`gallery-back-${s}`,kind:'prop',shape:'box',trackWall:true,s,off:6.1*1.2,
+      x:back.x,z:back.z,y:back.y,heading:back.heading,halfX:.4*1.2,halfZ:9,
+      height:4.62*1.1,minY:back.y,maxY:back.y+4.62*1.1,theme:course.themeAt(s)});
+    const p=course.worldAt(s),height=5.72*1.1;
+    f.obstacles.push({id:`gallery-roof-${s}`,kind:'prop',shape:'box',s,off:0,
+      x:p.x,z:p.z,y:p.y+height,heading:p.heading,halfX:6.5*1.2,halfZ:9.05,
+      height:.28*1.1,minY:p.y+height,maxY:p.y+6*1.1,theme:course.themeAt(s)});
   }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
