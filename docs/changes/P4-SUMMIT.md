@@ -207,3 +207,7 @@ Record the actual limiter, four-second service, single tyre change and finish.
 The original targets remain 360–480 seconds, pit 4–8 seconds faster than summer,
 and winter from setup 2–5 seconds slower than pit. The checks may fail; a failure
 will remain visible and receive one bounded investigation, not a waiver.
+
+The native art viewpoints now derive from the real named jump, hairpins, pit
+straight, crest, authored Gallery bounds and endpoint before capture. Approximate
+draft-distance labels are removed; existing scene snapshots remain read-only.

@@ -2,16 +2,20 @@
 // storage, no frame timing. node tools/browser-harness.mjs scenario summit-run
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {SUMMIT_RUN} from '../../src/circuits/summit-run.js';
+import {buildTrackScript} from '../../src/track-script.js';
 
 const entry='/tools/menu-check.html?flags=grand-prix,snow-world,summit-run';
+const road=buildTrackScript(SUMMIT_RUN);
+const centre=name=>{const piece=road.pieces.find(piece=>piece.name===name);if(!piece)throw Error('Missing actual Summit piece '+name);return (piece.s0+piece.s1)/2;};
 const views=[
-  ['desert-foothills',900,12,100],
-  ['pine-switchbacks',5100,16,80],
-  ['tree-line-pit',7000,7,90],
-  ['upper-snow',8700,9,75],
-  ['gallery-open-road',10480,4,80],
-  ['devils-staircase',12200,15,75],
-  ['summit-landmarks',14000,13,80],
+  ['desert-foothills',centre('Cattle Grid Jump'),12,100],
+  ['pine-switchbacks',centre("Engineer's Hairpin"),16,80],
+  ['tree-line-pit',centre('Tree Line Pit Straight'),7,90],
+  ['upper-snow',centre('Whiteout Crest'),9,75],
+  ['gallery-open-road',(SUMMIT_RUN.galleries[0].start+SUMMIT_RUN.galleries[0].end)/2,4,80],
+  ['devils-staircase',centre("Devil's Elbow"),15,75],
+  ['summit-landmarks',road.length-150,13,100],
 ];
 
 export async function run(context){
@@ -67,7 +71,7 @@ export async function run(context){
   const sheet=await context.evaluate(`(async()=>{
     const photos=${JSON.stringify(photos)},canvas=document.createElement('canvas'),columns=4,tile=480,h=270,pad=5,label=23;
     canvas.width=columns*(tile+pad)+pad;canvas.height=45+Math.ceil(photos.length/columns)*(h+label+pad)+pad;
-    const ctx=canvas.getContext('2d');ctx.fillStyle='#101920';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f0eee1';ctx.font='22px sans-serif';ctx.fillText('Summit Run — round one / actual High and Performance views',12,31);
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#101920';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f0eee1';ctx.font='22px sans-serif';ctx.fillText('Summit Run - round one / actual High and Performance views',12,31);
     for(const [i,photo] of photos.entries()){
       const image=new Image();image.src=photo.url;await image.decode();const x=pad+(i%columns)*(tile+pad),y=45+pad+Math.floor(i/columns)*(h+label+pad);
       ctx.drawImage(image,x,y,tile,h);ctx.font='15px sans-serif';ctx.fillText(photo.label,x+4,y+h+17);
