@@ -7,8 +7,8 @@ chooses art and sound within the three-round cap.
 
 ## 1. The short version
 
-Build in isolated lanes. Keep at most three course lanes, two feature lanes
-and one world lane active. A card owns files and names shared locks; cards
+Build in isolated lanes. Keep at most six build lanes active across all lines,
+with no more than three course lanes. A card owns files and names shared locks; cards
 holding the same lock never build at once. Each test run uses at most four jobs.
 A clean green lane with a build and one clear review merges immediately.
 There is no queue wait for an unrelated lane and no rerun after a clean merge.
@@ -196,7 +196,7 @@ Never refresh the live race, use 5174 for QA or link to live dependencies.
 ## 12. Thread prompts
 
 Director: read the current board and FACTORY graphs, claim ready cards, enforce
-three course/two feature/one world lane limits and shared locks, and commit
+six total build lanes, at most three course lanes and shared locks, and commit
 shared metadata immediately. Keep independent green lanes moving.
 
 Builder: read the card and SPEC/AGENTS/FACTORY, settle design before code,

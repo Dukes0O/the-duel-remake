@@ -73,7 +73,7 @@ playtest areas can be reached at once; a test keeps that list in step with
 ## Development and integration
 
 Follow AGENTS rules 11–15 and docs/FACTORY.md. Use an isolated codex lane,
-with at most three course lanes, two feature lanes and one world lane active.
+with at most six build lanes across all lines, no more than three course lanes.
 Cards name shared locks; cards with the same lock never build at once.
 Test runs use at most four jobs. Lanes may link node_modules only to integration.
 

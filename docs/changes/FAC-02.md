@@ -11,7 +11,7 @@ player_facing: no
 
 The integrator consumes a caller-supplied JSON packet pinned to the exact clean
 lane commit. It requires the original green targeted runner result (lane,
-changed, jobs 1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“4, zero failures and unrun suites), a successful production
+changed, jobs 1 to 4, zero failures and unrun suites), a successful production
 build with its retained log, and one named clear review of that commit.
 It checks both Git worktrees and their shared repository before mutation.
 It never runs tests, builds, browser checks or release commands. Two independent
@@ -38,8 +38,12 @@ These are script acceptance fixtures, not real feature-gate evidence.
 The first lane run stopped at 12 passed / 1 failed / 4 unrun (102.96 s).
 Its new retained-branch test expected display text without Git's checked-out
 “+” marker. Before editing that assertion: verify the exact surviving branch
-commit instead. This directly proves preservation, with no weakened bound. Lane/build
-and root review remain pending on the frozen implementation below.
+commit instead. This directly proves preservation, with no weakened bound. First green candidate d4c3aee5: canonical targeted lane 17/17, zero failed
+or unrun, 149.10 s, jobs 4; integrator fixtures 10/10; production build
+1210 ms. Root review clears the script and acceptance tests. Current accepted
+AGENTS/FACTORY now allow six build lanes across all lines, at most three course
+lanes. Correct only those stale doc limits and the note encoding, then freeze
+the review correction for one fresh targeted lane/build and quick delta review.
 
 ## Behavior and test changes
 
