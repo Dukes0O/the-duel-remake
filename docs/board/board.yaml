@@ -120,9 +120,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT, FAC-04, FAC-05]
-    locks: [circuit-registry, reference-laps, busy-game-files]
+    locks: [busy-game-files]
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-panorama"
     flag: "panorama-ridge"

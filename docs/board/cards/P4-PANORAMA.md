@@ -95,3 +95,32 @@ These are the card's detailed design, acceptance and recorded decisions.
     hellgate_decision: "Claude 12 October 14:00, settled and built in claude/p4-panorama-hellgate ca160bed on 0a50336d (fast-forward for codex/p4-panorama). Cause, headless: lap 2 the player runs into Sana Marlow under braking at phase 445, slides wide at Hell Gate, leaves the outside at 512 and rejoins behind the open start of the 912 m Mountain Straight right wall (s 539); Hell Gate has no outer wall. Not a wall gap, pit exit or collider mismatch. Same trap stops the Hard native start (lap 1) and both frozen Medium zero-lap seeds on current source. Fix: solid plain concrete kit wall on the outside of Hell Gate, s0-6 to s 540.8, face in line with the script wall; seeded scenery, walls and layout fingerprint exact. Native setup now finishes 3 laps headlessly. Lane tier 397/401, build pass; the 4 failures (shortcut preset hash, 11 m layouts assertion, stale reference row x2) fail identically on 0a50336d. Codex: merge the branch, fix those four with the existing generator/publisher, rerun only the final native art recipe, no 90-race run."
     art_round_three_verdict: "Claude 12 October: art accepted on the round-three golden views (3.5/4/4/4); cap reached, no fourth round. Remaining is framing and evidence only: move the Skyline inspection camera clear of the radio mast, take the final-lap dusk frames on the retry, build round-3.jpg (500 KB at most) and remove the round-2 files. Verdict note: docs/board/looks/p4-panorama/round-3-review.md on the Claude branch."
 ```
+
+## Factory resume grant, before code
+
+FAC-04 and FAC-05 are merged. Resume the retained codex/p4-panorama lane:
+first fast-forward its clean 0a50336d to Claude ca160bed, then sync current
+integration and preserve every accepted factory/qualifying/pay change.
+Keep authored stage 16, panorama-ridge dev and 1600 CR; admit only Panorama
+to GP through its own manifest. Preserve every accepted existing admission,
+and do not install provisional GP-EXISTING legacy admissions.
+Own the existing physical field/pit hooks and native/art recipe. Grant
+manifest export and tools/test-circuit-panorama-registry.mjs for the actual
+dev GP admission; src/generated-shortcut-presets.js through the existing
+generator; only the approved 11-to-13 m ridge assertion in
+tools/test-circuit-layouts.mjs; and the complete per-event Panorama reference
+file through the existing --event publisher. No filtered probe publication.
+Keep all unmodified replay/scene values exact. A Panorama-only scene pin
+may change only for the actual visually reviewed round-three differences,
+with the exact before/after reason and existing capture tool.
+
+Move only the Skyline inspection camera from off -30 to the clear valley
+side +30; retain the other golden camera coordinates and existing clearance
+bounds. Claude accepted round three (3.5/4/4/4); no fourth art round or new
+90-race run. Keep all three original bounded pace verdicts. Heavy final
+native browser/art capture, dusk frames and sheet generation wait for the
+night shift now that FAC-03 is merged. Prepare one green source candidate
+with canonical nearby lane jobs 4, build and ordinary review; do not claim
+the pending native retry or final sheet completed. busy-game-files remains
+held while shared source hooks are being integrated. Never delete this old
+retained lane.
