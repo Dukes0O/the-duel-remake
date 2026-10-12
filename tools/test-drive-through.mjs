@@ -9,6 +9,15 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const before='5092a01865887432ce609be0eed942f60605a2ba';
 const fix='977efad9fc720329243b40c1557859b5b433eea3';
 const api=await import('./drive-through.mjs').catch(()=>null);
+
+function printVerdict(label,report){
+  console.log(JSON.stringify({label,profile:report.profile,source:report.source,passed:report.passed,
+    laps:report.laps.map(row=>({cpuDifficulty:row.cpuDifficulty,seconds:row.seconds,completedLaps:row.completedLaps,nativeLapsTotal:row.nativeLapsTotal,issues:row.issues})),
+    groundOverRoad:report.ground.issues.filter(row=>row.kind==='ground-over-road'),
+    lodge:report.ground.issues.filter(row=>row.id==='ski-lodge'),
+    barrierFailures:report.probes.filter(row=>!row.passed).map(row=>({name:row.name,mph:row.mph,farthest:row.farthest,limit:row.limit}))}));
+}
+
 function required(){assert.equal(typeof api?.runDriveThrough,'function','native drive-through API is missing');}
 
 async function historical(run){
@@ -50,6 +59,7 @@ test('CLI rejects unknown courses/options and cannot select an outside source tr
 test('actual fixed Tremblant passes one observed native lap per difficulty and real grounding/contact checks',async()=>{
   required();
   const report=await api.runDriveThrough({courseId:'tremblant-woods',seed:1989});
+  printVerdict('fixed',report);
   assert.equal(report.passed,true,JSON.stringify(report.issues));
   assert.deepEqual(report.issues,[]);
   assert.deepEqual(report.laps.map(row=>row.cpuDifficulty),['easy','medium','hard']);
@@ -69,6 +79,7 @@ test('real pre-fix source exposes grass over road, drive-through barriers and fl
   required();
   await historical(async sourceRoot=>{
     const report=await api.runDriveThrough({courseId:'tremblant-woods',seed:1989,sourceRoot,sourceCommit:before});
+    printVerdict('actual-pre-fix',report);
     assert.equal(report.passed,false);
     assert.equal(report.source.commit,before);
     assert.ok(report.issues.some(row=>row.kind==='ground-over-road'&&row.over>.4),'real original grass overlap');
@@ -85,4 +96,28 @@ test('a genuine unfinished native observation is never reported green',async()=>
   assert.equal(report.passed,false);
   assert.ok(report.laps.every(row=>!row.observedLap&&row.completedLaps===0));
   assert.equal(report.issues.filter(row=>row.kind==='unfinished-lap').length,3);
+});
+
+
+test('swept solid-barrier observer retains a crossing across multiple native steps',async()=>{
+  required();
+  const {observeBarrierPassages}=await import('./course-ground-checks.mjs');
+  const collision=await import('../src/collision.js');
+  assert.equal(typeof observeBarrierPassages,'function','multi-step passage observer missing');
+  const box={id:'actual-box-envelope',shape:'box',x:0,z:0,heading:0,halfX:.4,halfZ:4,y:0,height:3};
+  const points=[{x:-2,y:0,z:0},{x:-.2,y:0,z:0},{x:.2,y:0,z:0},{x:2,y:0,z:0}],entries=new Map(),hits=[];
+  for(let i=1;i<points.length;i++)hits.push(...observeBarrierPassages(points[i-1],points[i],[box],collision,entries));
+  assert.deepEqual(hits.map(row=>row.id),[box.id],'slow complete passage cannot disappear between steps');
+  const backedOut=new Map();
+  assert.deepEqual(observeBarrierPassages(points[0],points[1],[box],collision,backedOut),[]);
+  assert.deepEqual(observeBarrierPassages(points[1],points[0],[box],collision,backedOut),[],'same-face return is not a complete through-passage');
+});
+
+
+test('a named dev circuit remains reachable after an earlier source import',async()=>{
+  required();
+  const report=await api.runDriveThrough({courseId:'panorama-ridge',seed:1989,maxSeconds:0});
+  assert.equal(report.courseId,'panorama-ridge');
+  assert.equal(report.laps.length,3);
+  assert.ok(report.laps.every(row=>row.nativeLapsTotal===3&&!row.observedLap));
 });
