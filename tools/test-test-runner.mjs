@@ -125,8 +125,8 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'changed test files select themselves');
   // FACTORY rule 11: an unmapped game file is named for the night run instead of selecting everything.
   const computedRead=suitesForChanges(actual,['tools/unmapped-source-reader.js','src/game.js']);
-  check(computedRead.length<actual.length&&computedRead.length>0,
-    'an unmapped source no longer widens a lane to every suite');
+  check(computedRead.length<actual.length&&computedRead.includes('tools/test-race-integrity.mjs'),
+    'an unmapped source no longer widens a lane, and importers of the mapped source still run');
   check(localDependencies('tools/test-qa-storage.mjs').has('tools/menu-check.js'),
     'the finite existing computed bootstrap reader is an explicit dependency');
   const pine=suitesForChanges(actual,['public/assets/textures/pine-bough.png']);
@@ -151,9 +151,15 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(suitesForChanges(actual,['src/style.css','public/assets/textures/pine-bough.png']),
     actual.filter(suite=>new Set([...css,...pine]).has(suite)),
     'mixed known changes select the ordered union without losing a consumer');
-  for(const unknown of ['public/assets/textures/unmapped.png','src/new-presentation.css'])
-    check(suitesForChanges(actual,['public/assets/textures/pine-bough.png',unknown]).length<actual.length,
-      'an asset or CSS path nothing names no longer selects every suite: '+unknown);
+  for(const unknown of ['public/assets/textures/unmapped.png','src/new-presentation.css','public/assets/models/circuits/kits/unmapped.png']){
+    const mixed=suitesForChanges(actual,['public/assets/textures/pine-bough.png',unknown]);
+    check(mixed.length<actual.length&&pine.every(suite=>mixed.includes(suite)),
+      'an unnamed asset or CSS path keeps the known consumers and does not select every suite: '+unknown);
+  }
+  const launcher=suitesForChanges(actual,['start-game.bat']);
+  check(launcher.length>0||launcher.unmapped.includes('start-game.bat'),'a root file is selected by its readers or reported by name');
+  const chain=suitesForChanges(actual,['tools/menu-check.html']);
+  check(chain.includes('tools/test-audio-crash-peak.mjs'),'a path in the middle of a + chain is still read');
   check(suitesForChanges(actual,['public/assets/models/circuits/kits/nested/unknown.glb']).includes('tools/test-blender-output.mjs'),
     'a new file under a read directory selects the readers of that directory');
   for(const config of ['tools/run-tests.mjs','package-lock.json','pnpm-lock.yaml','vite.config.js','tools/vite-qa.config.js'])
@@ -194,6 +200,7 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'unknown source selects only unbounded readers');
   same(suitesForChanges(virtualSuites,['src/unmapped-source.js'],graphOptions).unmapped,['src/unmapped-source.js'],
     'a game file no selected suite reaches is reported by name for the night run');
+  same(suitesForChanges(virtualSuites,['index.html'],graphOptions).unmapped,['index.html'],'an unread root file is reported by name');
   // Named paths and distance from the suite (FACTORY rule 11).
   const pathSuites=['tools/test-head.mjs','tools/test-join.mjs','tools/test-declared.mjs','tools/test-runtime.mjs','tools/test-deep.mjs'];
   virtualSources.set('tools/test-head.mjs',"import {readFileSync} from 'node:fs'; readFileSync(new URL('../public/assets/audio/'+name,import.meta.url));");
@@ -216,9 +223,11 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(suitesForChanges(virtualSuites,[knownPath],brokenOptions),virtualSuites,'an incomplete audited reader graph falls back full');
   virtualSources.delete('src/vegetation.js');
   same(suitesForChanges(virtualSuites,[knownPath],graphOptions),virtualSuites,'missing audited reader/import coverage falls back full');
-  same(suitesForChanges(actual,['docs/OPERATIONS.md']),['tools/test-preview-launcher.mjs','tools/test-test-runner.mjs'],
+  same(suitesForChanges(actual,['docs/OPERATIONS.md']),['tools/test-build-status.mjs','tools/test-preview-launcher.mjs','tools/test-repo-hygiene-rules.mjs','tools/test-test-runner.mjs'],
     'documentation edits select only the suites that name that document');
-  same([...suitesForChanges(actual,[['docs','NOWHERE.md'].join('/')])],[],'an unnamed document selects nothing beyond the smoke set');
+  const unnamedDoc=suitesForChanges(actual,[['docs','NOWHERE.md'].join('/')]);
+  check(unnamedDoc.length<=5&&!unnamedDoc.includes('tools/test-preview-launcher.mjs'),
+    'an unnamed document selects only the few suites that read the whole docs folder');
   same(suitesForChanges(actual,['package.json']),actual,'dependency metadata changes conservatively select every suite');
   const calls=[];
   const git=(executable,args)=>{

@@ -59,14 +59,26 @@ change from Kyle's decision, not a loosened check:
   follows importers.
 - Possible-reader cases: a reader naming no path still runs for any game
   change; an unknown asset or source selects only those readers.
-- `docs/OPERATIONS.md` now selects the two suites that read it.
+- `docs/OPERATIONS.md` now selects the four suites that name it; an unnamed
+  document selects at most the few suites that read the whole docs folder.
 
 New checks: URL heads, `join` literals, `test-reads` lines, runtime asset
 strings, reach two versus three, the unmapped report and the lane guards.
 
+## Review
+
+Independent review: one fix needed and applied. A `+` chain was read only at
+its head and its last term, so paths in middle terms were lost (for example
+`tools/menu-check.html` in `test-audio-crash-peak`); the whole chain is now
+walked. Root files such as `start-game.bat` are now read by name, and any
+changed path outside `docs/` that no selected suite reaches is reported.
+Tightened checks: the mixed asset cases keep every pine consumer, the
+unmapped source still selects importers of the mapped source, and the
+`kits/unmapped.png` case is restored. Counts in the table are unchanged.
+
 ## Evidence
 
-- `node tools/test-test-runner.mjs`: 163 checks pass.
+- `node tools/test-test-runner.mjs`: 167 checks pass.
 - Lane tier and build: see the merge line in run-log.md.
 
 ## Removed

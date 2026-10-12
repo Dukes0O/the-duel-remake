@@ -221,7 +221,7 @@ export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync}={}){
 
 // Path text a file names: './x', '../public/a/', 'src/x.js', runtime 'assets/x'.
 // A read is a path or a path prefix (the literal head of a joined or added path).
-const PATH_TEXT=/^(?:\.\.?\/|(?:src|public|tools|docs|audio-src)\/)/;
+const PATH_TEXT=/^(?:\.\.?\/|(?:src|public|tools|docs|audio-src)\/|[\w-]+\.(?:bat|ps1|html|json)$)/;
 const RUNTIME_ASSET=/^\/?assets\//;
 function moduleReferences(source,file){
   const references=[],reads=[],specifiers=new Set();
@@ -277,7 +277,7 @@ function moduleReferences(source,file){
     else if(node.type==='TemplateLiteral'){const start=head(node);if(start)read(start.text,start.exact);}
     else if(node.type==='BinaryExpression'&&node.operator==='+'){
       const start=head(node);
-      if(start){read(start.text,false);walk(node.right);return;}
+      if(start)read(start.text,false);
     }
     for(const value of Object.values(node)){
       if(Array.isArray(value))value.forEach(walk);
@@ -414,7 +414,7 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,...options}={}){
   if([...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
   // A changed game file no selected suite reaches is named, not a reason to run everything.
   // The night full tier and the release full tier still cover it.
-  const unmapped=[...changed].filter(path=>(/^(?:src|public|tools)\//.test(path)||path.endsWith('.css'))&&
+  const unmapped=[...changed].filter(path=>!path.startsWith('docs/')&&!path.endsWith('.md')&&
     !covered.has(path)&&!presentation.has(path));
   return Object.defineProperty(affected,'unmapped',{value:unmapped});
 }
