@@ -122,7 +122,7 @@ tasks:
     size: "L"
     status: "building"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-ART-SRC, P4-DAYNIGHT, FAC-04, FAC-05]
-    locks: [busy-game-files]
+    locks: []
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-panorama"
     flag: "panorama-ridge"
@@ -133,9 +133,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [P4-FIELD]
-    locks: [circuit-registry, busy-game-files]
+    locks: [gp-existing-field-width]
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-gp-existing"
     flag: "grand-prix"
@@ -168,7 +168,7 @@ tasks:
     size: "L"
     status: "ready"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
-    locks: [circuit-registry, busy-game-files, surfaces]
+    locks: [busy-game-files, surfaces, gp-existing-field-width]
     claimed_by: "codex-overnight-2026-10-12"
     branch: "codex/p4-summit"
     flag: "summit-run"
@@ -350,9 +350,11 @@ tasks:
     owner: "codex"
     lane: "SAVE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-session-01a13220-4b96-7b41-ae4f-0ede71d495d1"
+    branch: "codex/deep-save"
     needs: [DEEP-LOOK]
-    locks: [save-shape]
+    locks: [save-shape, busy-game-files]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-SAVE.md"
 
@@ -361,7 +363,9 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
+    branch: "codex/deep-art-src"
     needs: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-ART-SRC.md"
@@ -371,7 +375,9 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-session-01a13220-575d-7492-a51c-43a1e08dfe70"
+    branch: "codex/deep-audio"
     needs: []
     locks: [sound-bank]
     flag: "the-deep"

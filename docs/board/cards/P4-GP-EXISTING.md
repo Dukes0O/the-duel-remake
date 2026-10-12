@@ -73,3 +73,9 @@ These are the card's detailed design, acceptance and recorded decisions.
 
     factory_hold: "Kyle restarted under FAC-01 rules. Retain all original balance caps/results. Course runtime edits wait for FAC-04/FAC-05 registry lock; heavy acceptance moves to night shift once FAC-03 lands. No new balance run during factory setup."
 ```
+
+## Factory source resumption — 12 October 2026
+
+Panorama relinquished its frozen race-field hook on 83c58563; its remaining correction is tool-only. GP now holds `gp-existing-field-width`, not the removed registry or unrelated busy-game-files locks. Director scope is its four owned note/test/rate/scenario files and only GP admission/grid/tuning in race-field.js, roadHalfWidthAt in course.js, shoulder material in road-surface.js, shoulder attributes in world.js, the two GP menu label lines, and two unsupported-event test fixtures. Preserve FAC-04 manifest imports and authored membership spread, adding only the nine original base IDs. Preserve accepted pay, qualifying, saves, ghosts, records, fixtures and references. Commit the existing owned pause note before synchronizing current integration; never discard it.
+
+The existing private scenario may fix its own helper bundling for current async manifest imports, with every native assertion exact and no shared harness change. No actual browser, balance or frame run during daytime. The six exhausted/settled circuit caps remain as recorded; Red Mesa has two attempts left and Neon/Cloudbreak three each, all at night. One corrected source freeze, nearby lane/build and ordinary review can hand off the completed source on integration under the existing flag so the night command can exercise it. The card stays open for remaining bounded tuning and 18 actual browser cases. Release its hook lock after that source handoff; no final native or rate acceptance is invented.
