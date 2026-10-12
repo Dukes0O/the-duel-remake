@@ -67,7 +67,9 @@ assert.equal(snowmen.reward, 450, 'ten snowmen pay25 each without doubling their
 const snowmanScreen = createResultsScreen({app: {_switches: () => ({enabled: key => key === 'grand-prix-career'})},
   profile: () => snowmen.profile, credits: String, escapeHTML: String, time: String, arrow: ''})({
     status: 'stage_result', stageIndex: 0, results: {...result('medium', 8), grandPrix: true,
-      stageName: 'Pacific Canyon', snowmen: 12, creditPositionReward: snowmen.breakdown.base,
+      stageName: 'Pacific Canyon', snowmen: 12,
+      field: [{position: 1, name: 'Winner', gapSec: 0}, {position: 8, you: true, gapSec: 10}],
+      creditPositionReward: snowmen.breakdown.base,
       creditReward: snowmen.reward, creditBreakdown: snowmen.breakdown}});
 assert.ok(snowmanScreen.includes('SNOWMEN</span><b>12</b>'), 'result shows the actual hit count');
 assert.ok(snowmanScreen.includes('SNOWMEN +250'), 'paid snowmen display their named capped bonus');
