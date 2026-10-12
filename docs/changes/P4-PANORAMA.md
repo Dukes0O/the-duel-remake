@@ -225,6 +225,17 @@ trees, rocks and walls exact, and a car slid wide at 40 and 70 mph a quarter
 and half way round stops against it (centre stays on the road), while the old
 open layout lets the same slide run more than 6 m past the edge.
 Focused: barriers 6/6; Panorama, pit lane and ground 42/42.
+Lane tier on de83dd5a (jobs 4, keep-going): 397 passed, 4 failed, 0 not run in
+1369.80 s; build passed. All four fail identically on 0a50336d without this
+change, so they belong to the lane, not to the wall:
+test-shortcut-presets (the ridgeLandform terrain hook in src/course.js changed
+the hashed source without a refreshed src/generated-shortcut-presets.js;
+Panorama has no shortcuts, so saved paths are unaffected), test-circuit-layouts
+(still expects the old 11 m ridge; update it to the approved 13 m and note the
+changed assertion), test-reference-laps and test-team-room-views (the saved
+Panorama reference row is track-v1-4239cf69 from the 11 m road; the current
+layout, unchanged by this wall, is track-v1-70170ffb). Codex fixes these with
+the existing generator and publisher before the lane merges.
 
 Not changed: the inside of Hell Gate keeps its open grass. A car leaves on
 the outside of this left hairpin; if a native retry ever shows a car behind
