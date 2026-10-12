@@ -156,8 +156,9 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "ready"
-    needs: [P4-PANORAMA]
-    locks: [save-shape, circuit-registry, busy-game-files]
+    waiting_on: "claude"
+    needs: []
+    locks: [save-shape]
     flag: "grand-prix-career"
     details: "docs/board/cards/P4-CAREER.md"
 
