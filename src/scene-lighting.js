@@ -86,7 +86,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       pathSample = sampleCourseLightPath(course, sampleInputs, sampleBuffer);
       let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
       if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, course.def.light);
-      const settings = winter ? winter(baseSettings) : baseSettings;
+      const settings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {
         winterDryPalette = {key:hasDryPalette ? dryPaletteKey.slice() : null,colours:{
@@ -157,7 +157,7 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       if (stopped) return;
       for (const { light, side } of headlights) {
         const heading = player.rotation.y, c = Math.cos(heading), sn = Math.sin(heading);
-        light.intensity = current.tunnelAt(distance) ? 125 : pathSample ? 38 * pathSample.headlights : current.def.timeOfDay === 'night' || current.themeAt(distance) === 'city' ? 78 : 0;
+        light.intensity = current.tunnelAt(distance,current.def.galleries?current.nearest(position.x,position.z,distance).lateral:0) ? 125 : pathSample ? 38 * pathSample.headlights : current.def.timeOfDay === 'night' || current.themeAt(distance) === 'city' ? 78 : 0;
         light.position.set(position.x + c * side * .65 + sn * 1.8, position.y + (tall ? 2.2 : .72), position.z - sn * side * .65 + c * 1.8);
         light.target.position.set(position.x + sn * 40, position.y - 1, position.z + c * 40);
         light.target.updateMatrixWorld();

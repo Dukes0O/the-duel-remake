@@ -346,7 +346,7 @@ export function attachRenderer(host, app) {
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined,
-        tunnel: !!course.tunnelAt(distance), distance, raceLength: course.raceLength, menu: false});
+        tunnel: !!course.tunnelAt(distance,course.def.galleries?course.nearest(pose.position.x,pose.position.z,distance).lateral:0), distance, raceLength: course.raceLength, menu: false});
       lighting.followCamera(camera, ground, now / 1000);
       snapshotLightPose.rotation.y = pose.heading;
       // Keep chase/police lights in menu mode; only the authored road-light
@@ -510,7 +510,7 @@ export function attachRenderer(host, app) {
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined,
-      blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance), distance,
+      blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});
     // Arena event weather only closes the fog in.
@@ -589,7 +589,7 @@ export function attachRenderer(host, app) {
       const view=directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
       if(view){
         camTarget.set(view.position.x,view.position.y,view.position.z);lookTarget.set(view.target.x,view.target.y,view.target.z);
-        const near=course.nearest(camTarget.x,camTarget.z,distance),tunnel=course.tunnelAt(near.s);
+        const near=course.nearest(camTarget.x,camTarget.z,distance),tunnel=course.tunnelAt(near.s,near.lateral);
         if(tunnel){const limit=tunnel.width-.65,p=course.worldAt(near.s,Math.max(-limit,Math.min(limit,near.lateral)));camTarget.x=p.x;camTarget.z=p.z;}
         camTarget.y=Math.max(camTarget.y,course.groundAt(near.s,near.lateral).y+.65);
       }

@@ -1,5 +1,5 @@
 import {createTrackKits,bindTrackKits} from './track-kits.js';
-import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,winterWeight,createSnowWorld,bindSnowWorld} from './snow-world.js';
+import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,winterWeight,createSnowWorld,bindSnowWorld,winterSurfaceMaterial} from './snow-world.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
 import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
@@ -44,6 +44,12 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 // Composition order is deliberate: surfaces, biome detail, physical-feature
 // shells, then their visual refinements and race markers. No new wrapper groups
 // are inserted, so material refinement, render order and batching stay stable.
+export function roadBranchMaterial(course,cut,base,winter=false){
+  const kind=cut.gripKind;
+  if(!winter||!['snow','ice','deep-snow'].includes(kind))return base;
+  return winterSurfaceMaterial(base.clone(),kind);
+}
+
 export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) {
   if(course.def.pit)return createPitEnvironment(course);
   if(course.def.id==='salt-flats'){
@@ -106,7 +112,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   addFurniture(group, course, metal);
   const crushables=addArenaCrushables(group,course);if(crushables)registerSceneSystem(group,{sync:crushables.userData.updateSimulation});
   for(const cut of course.features.shortcuts){
-    const paved=cut.surface==='paved',gravel=paved?roadMat:trailMat;
+    const paved=cut.surface==='paved',gravel=roadBranchMaterial(course,cut,paved?roadMat:trailMat,winter);
     const path=new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)-cut.halfWidth,s=>course.shortcutOffset(cut,s)+cut.halfWidth,.065,cut.start,cut.end,true),gravel);path.receiveShadow=true;group.add(path);
     if(paved)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.35),s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.2),.078,cut.start,cut.end,true),cream));
     for(let s=cut.start+25;s<cut.end-20;s+=40)for(const side of[-1,1]){const p=course.groundAt(s,course.shortcutOffset(cut,s)+side*(cut.halfWidth+.7));box(group,[.13,1.25,.13],[p.x,p.y+.625,p.z],yellow);}

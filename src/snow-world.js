@@ -19,18 +19,28 @@ function ranges(course){
   return rangeCache.get(course);
 }
 // Optional transform consumed by the existing lighting owner only for Snow.
-export function winterLightingSettings(base) {
+export function winterLightingSettings(base,{course,distance=0}={}) {
+  const weight=course?.def.snowWorld?.mixed?winterWeight(course,distance):1;
+  if(weight===0)return base;
   const night=Math.max(0,Math.min(1,base.nightAmount ?? (base.sun<.3?1:0)));
   const day=1-night;
   const colour=(original,winter)=>{
     const value=Array.isArray(original)?new THREE.Color().setRGB(...original):new THREE.Color(original);
     return value.lerp(new THREE.Color(winter),day).toArray();
   };
-  return {...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
+  const changed={...base,exposure:base.exposure*.82,bloom:base.bloom*.3,env:base.env*.82,
     top:colour(base.top,0x83a6bf),horizon:colour(base.horizon,0xcfdae5),
     fog:colour(base.fog,0xb9cbdc),ground:colour(base.ground,0x7896b0),
     sunColor:colour(base.sunColor,0xe3edff),
     cloudTint:base.cloudTint.map((value,i)=>value*night+[.78,.84,.9][i]*day)};
+  if(weight===1)return changed;
+  for(const key of ['exposure','bloom','env'])changed[key]=base[key]+(changed[key]-base[key])*weight;
+  for(const key of ['top','horizon','fog','ground','sunColor']){
+    const original=Array.isArray(base[key])?new THREE.Color().setRGB(...base[key]):new THREE.Color(base[key]);
+    changed[key]=original.lerp(new THREE.Color().setRGB(...changed[key]),weight).toArray();
+  }
+  changed.cloudTint=base.cloudTint.map((value,index)=>value+(changed.cloudTint[index]-value)*weight);
+  return changed;
 }
 
 function shadeSnowKits(kits) {

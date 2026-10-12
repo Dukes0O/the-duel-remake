@@ -18,7 +18,7 @@ const definitionsBefore = JSON.stringify(COURSE);
 const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(row => [row.id, row])).values()];
 const targets = referenceTargets();
 equal(targets.length, 27, 'Every current closed event/route, including native dev circuits, receives its own reference');
-check(ALL_CIRCUITS.every(definition => targets.some(target => target.eventId === definition.id &&
+check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => targets.some(target => target.eventId === definition.id &&
   target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),
   [['route_a', 1989], ['route_b', 42], ['route_c', 17]], 'Legacy routes retain their real seeds');
@@ -28,14 +28,16 @@ equal(referenceTargets([{id: 'authored-fixture', closed: true, layoutSeed: 9012}
   [{key: 'authored-fixture|fixed', eventId: 'authored-fixture', route: 'fixed', seed: 9012}],
   'Authored fixed events use their layout seed');
 equal(referenceTargets([{id: 'open-road', closed: false, layoutSeed: 1}]), [], 'Open roads do not become cyclic references');
+equal(referenceTargets(ALL_CIRCUITS.filter(definition=>definition.id==='summit-run')), [], 'Summit is a point-to-point road, so it has no cyclic reference target');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Target discovery does not edit global definitions');
 const nativeCatalog = await runReferenceWorker({catalogOnly: true});
-check(ALL_CIRCUITS.every(definition => nativeCatalog.events.includes(definition.id)),
+check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => nativeCatalog.events.includes(definition.id)),
   'Fresh worker enables authored circuits in the actual native COURSE registry');
 // Tremblant Woods is released (state on); the other circuits are still dev and need the QA query.
 check(nativeCatalog.flags.every(row => row.enabled && row.state === (row.name === 'tremblant-woods' ? 'on' : 'dev')),
   'Fresh worker enables every circuit switch: released ones are on, the rest are real dev switches through the supported QA query');
 equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
+equal(referenceTargets(ALL_CIRCUITS.filter(definition=>definition.id==='summit-run')), [], 'Summit is a point-to-point road, so it has no cyclic reference target');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');
 await assert.rejects(() => runReferenceWorker({targets: [{key: 'missing|fixed', eventId: 'missing', route: 'fixed', seed: 1989}]}),
   /Unknown reference event/); checks++;
@@ -183,7 +185,8 @@ if (process.argv.includes('--native')) {
         Object.fromEntries(physicalKeys.map(key => [key, direct.state[key]])),
         '720 native physical steps remain exact with the completion-only facade');
       check(app.duel.state.s > 0, 'Parity probe actually drove the native playground');
-      equal(JSON.stringify(COURSE), definitionsBefore, 'Native fixture never edits global course definitions');
+      equal(referenceTargets(ALL_CIRCUITS.filter(definition=>definition.id==='summit-run')), [], 'Summit is a point-to-point road, so it has no cyclic reference target');
+equal(JSON.stringify(COURSE), definitionsBefore, 'Native fixture never edits global course definitions');
     } finally { nativeFixture.dispose(); }
   });
 }

@@ -60,12 +60,28 @@ No test, full race, pit strategy, browser picture or art score is claimed yet.
 The original Qualifying lane remains untouched; its scoped final lane owns
 the closed-course qualifying guard and retained field-grid origin.
 
+## Initial source review corrections
+
+Root's independent review found dry-looking Open Road material, global winter
+lighting on the desert and a range-only Gallery tunnel query. These are fixed
+forward. The branch uses the actual winter surface material on its own clone.
+Lighting receives readonly course/distance context: zero winter weight returns
+the original base object exactly, full weight keeps the previous transform.
+Gallery queries use its actual 7.8 m roof half-width; the Open Road at -18 m
+is outside it. Gallery roof cameras use the flat 6.292 m underside. Legacy
+tunnel range queries and arch constraints remain unchanged. The Director grants
+these narrow scene-lighting.js, render3d.js and camera-clearance.js hooks.
+Card tests add real dry/snow/material/roof controls; runs still await capacity.
+
 ## Changed assertions
 
 The feature catalogue grows from 23 to 24 entries only for summit-run dev.
 The dev-state list gains that same name. All existing state checks remain.
 Preview still requests every dev switch except career-backup; appending
 summit-run satisfies its existing computed list. No threshold changes.
+Two reference assertions now apply to actual closed authored definitions;
+Summit gets an explicit no-cyclic-reference assertion. The publisher already
+excludes closed:false. All 27 closed targets and published keys stay unchanged.
 
 ## Removed
 
