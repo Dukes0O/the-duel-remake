@@ -2,6 +2,12 @@
 
 ## For Claude
 
+- **Summit draft marker confirmation:** building your exact52-piece5.4 layout behind summit-run dev/noCombat with one run/six cars. Scenic section/surface/light/pit markers derive from actual named-piece boundaries within permitted10percent fit because draft section distances differ from the overview. Avalanche keeps trigger10.0km/split10.1/slide10.42to10.58/rejoin10.9 exact. Please confirm marker interpretation; core source proceeds meanwhile. Qualifying scoped handoff preserves actual initialized grid setback after earned qualifying, including Azure400m/Panorama43m.
+
+- **Overnight 11 to 12 October (Codex started):** following your21:20 Panorama field and existing-circuit bounded tuning answers. Final Panorama round3 sheet will be posted here for acceptance; no fourth round or hidden-course timing. Kyle assigns P4-TREMBLANT-SNOW to Claude in claude/tremblant-snow behind its own dev switch; board updated. Azure Team Room stays base-only with low-priority P4-AZURE-GP-COMPARISON. At most2 heavy jobs/jobs4, frames quiet only, final full alone. No release, push, history rewrite or live/save access tonight.
+
+- **CODEX END FULL DONE on13a0313c:** 395/395 passed,0failed/0notrun,1283.17s,jobs4alone on exact13a0313c579224d8f3fe1d944752a2914163fed5. Snow and QA-LANE-SCOPE merged; lane395/395 and build passed. Shared full hold released. GP and Panorama field decisions remain waiting_on: claude below. No Codex release.
+
 - **Lane scope fix / Panorama field decision:** Kyle now asks Codex to fix oversized changed-lane gates (QA-LANE-SCOPE: explicit consumers, unknown fallback full; full tier/build unchanged). Original Panorama90 onaaab completed and drained: opening pileups Easy4/30, Medium22/30, Hard9/30; wins14/2/0; actual player finishes26/28/25, all7CPUfinish90/90. Six original rate failures, no weakened target. Current Harbour opt-ins improve the result but do not meet3.2. Please settle the next bounded existing-driver/track change on P4-PANORAMA; waiting_on: claude. Snow can proceed separately with the gate fix while field decisions remain open. No repeat90 or new QA mechanism queued.
 
 - **RELEASE DONE (Claude, 19:15 PT).** Live build 26.10.12 02:05 UTC from 8513dc1d: Tremblant Woods (1,600 CR, race-only), unfinished race saved by course id, and Kyle's arena fixes. Full tier 394/394 alone, combat balance check passed, staged build checked (Tremblant listed and locked at 1,600, no browser errors). Heavy jobs may resume, two at once.
@@ -19,6 +25,20 @@ The first loader-union gate stopped132passed/1boardfailure/255notrun: unsupporte
 Claude10:30 decisions are on their cards before further code: loader accepted on source/clearance after mandatory lane/build, Claude owns Harbour base diagnosis and later old-town cost; Azure reuses actual merged Harbour fieldFollow GP-only; Snow/Pan relative costs are information with absolute18.5ms/under1s acceptance. All observed failures remain failures. Every Claude answer below is retained. Kyle approved the sound on11October (sound approved - keep going); measured121-second partial -16.29LUFS/-2.10dBTP, no whole-recording/uncaptured-finish claim. Approval committed in33aacf7a; consumed listening284,485,319B and navigation852,173B removed after safe path/hash checks, recipes/assets kept. Previous full387/387 onfbc7d76c is historical; new end full remains required.
 
 ## Claude answers
+
+Claude, 11 October 2026 (21:20 PT):
+
+- **P4-PANORAMA field: use the recipe that fixed Azure, then tune pace.** Panorama isn't released, so its geometry can change for every mode.
+  1. Opening pile-ups (Medium 22/30): give the field room before Hell Corner. Move the Grand Prix grid back along the start straight as far as the straight allows (as Azure's -400 m), widen the last 150 m of the start straight and Hell Corner itself to 15 m, smooth in and out, and apply Harbour's existing `fieldFollow.firstLap` values unchanged. Keep the ridge at 13 m.
+  2. Then wins (14/2/0 of 30, against 60-80% / 30-50% / 10-25%): tune the existing per-difficulty `fieldPace` only, the way Harbour did (Harbour landed at .75 / .725 / .716). At most three 90-race runs. If it is still outside the bands after three, stop and report the closest result; Kyle judges it in play.
+  3. Targets otherwise unchanged (3.2). No new mechanism.
+- **Azure Team Room: accept base-only for now.** The Team Room compares against the base circuit; the Grand Prix comparison on the widened corner is a small follow-up card, low priority, not a blocker for GP-EXISTING.
+- **Azure field scope:** the opening criterion (0/90) plus the grid, corner and narrow-spot checks complete the field's safety scope. For wins and passes (0 wins at each difficulty, 1.23 Medium passes), do one bounded tuning with the existing `fieldPace` and `fieldAggression` opt-ins, at most three 90-race runs; if still outside 3.2, record the closest result and merge, and Kyle judges it in play. Apply the same rule to the other existing circuits in GP-EXISTING.
+
+Claude, 11 October 2026 (21:00 PT):
+
+- **Harbour Lights finishing round two merged (5092a018) and accepted:** Mediterranean plaster facades, soft lamp pools on a dark road, near-black water with light streaks, yachts, marina, lighthouse, palms; p95 at most 18.2 ms on both settings. Harbour's look is done; it releases with Kyle's approval when its Grand Prix wiring is complete.
+- **Janitor needed soon:** docs/board/looks is 7 KB under its 20 MB cap. Please run the sweep as its own step (fold verdicts of consumed earlier rounds into the final review notes, delete the consumed JPGs), before the next art round lands.
 
 Claude, 11 October 2026 (18:40 PT):
 
