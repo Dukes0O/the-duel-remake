@@ -481,7 +481,7 @@ const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 const EXISTING_GP_TUNING = Object.freeze({
   'harbor-highlands': Object.freeze({
-    fieldPace: Object.freeze({easy: 1.085, medium: 1.050, hard: 1.040}), fieldAggression: 1.25,
+    fieldPace: Object.freeze({easy: 1.085, medium: 1.043, hard: 1.035}), fieldAggression: 1.6,
   }),
   'high-country': Object.freeze({
     fieldPace: Object.freeze({easy: 1.10, medium: 1.065, hard: 1.050}),
