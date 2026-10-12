@@ -6,6 +6,8 @@
 import * as THREE from 'three';
 import { registerSceneSystem } from './scene-systems.js';
 import { lakeGeometry } from './circuit-effects.js';
+import { lampLook } from './night-glows.js';
+import { planWaterside } from './waterside-scenery.js';
 
 // The moon of P4-DAYNIGHT (src/atmosphere.js): fixed in the sky, west and low.
 const MOON = new THREE.Vector3(-.97, .18, .16).normalize();
@@ -13,7 +15,7 @@ const MOON = new THREE.Vector3(-.97, .18, .16).normalize();
 function waterMaterial(night, glitter = true) {
   const time = { value: 0 }, moon = { value: MOON };
   const material = new THREE.MeshStandardMaterial({ name: 'Harbour water', roughness: .16, metalness: .55,
-    transparent: true, vertexColors: true, depthWrite: false, side: THREE.DoubleSide, color: 0xffffff, emissive: night ? 0x030a12 : 0x000000 });
+    transparent: true, vertexColors: true, depthWrite: false, side: THREE.DoubleSide, color: 0xffffff, emissive: night ? 0x010306 : 0x000000 });
   material.customProgramCacheKey = () => `circuit-water-v2-${night}-${glitter}`;
   material.onBeforeCompile = shader => {
     shader.uniforms.waterTime = time; shader.uniforms.waterMoon = moon;
@@ -34,7 +36,7 @@ function waterMaterial(night, glitter = true) {
         ${night ? `// The night sky and the far town mirrored in the water: bluest and brightest where the water lies
         // flat to the eye, with a slow warm shimmer of town lights on it.
         float grazing=pow(1.0-clamp(toCamera.y,0.0,1.0),2.5);
-        totalEmissiveRadiance+=vec3(.007,.017,.042)*(.6+grazing*1.6);
+        totalEmissiveRadiance+=vec3(.003,.007,.017)*(.5+grazing*1.4);
         float shimmer=pow(max(sin(sea.x*.8+a*1.4)*sin(sea.y*.5-b*1.2),0.0),8.0);
         totalEmissiveRadiance+=vec3(.9,.55,.26)*shimmer*grazing*.07;` : ''}
       `);
@@ -51,7 +53,7 @@ export function addCircuitWater(group, course) {
   const night = course.def.timeOfDay === 'night' || course.def.lightPath?.keyframes?.[0]?.look === 'night';
   const { material, time } = waterMaterial(night, course.def.water.glitter !== false);
   for (const basin of basins) {
-    const mesh = new THREE.Mesh(lakeGeometry(course, { ...basin, colour: night ? 0x082032 : 0x1d5c6e, shallow: night ? 0x143a50 : 0x3a8590 }), material);
+    const mesh = new THREE.Mesh(lakeGeometry(course, { ...basin, colour: night ? 0x03070c : 0x1d5c6e, shallow: night ? 0x07131c : 0x3a8590 }), material);
     mesh.name = `water-${basin.id}`; mesh.receiveShadow = false; mesh.renderOrder = 1;
     group.add(mesh);
   }
@@ -77,19 +79,22 @@ export function addRoadGlow(group, course) {
     const isString = placement.id === 'lantern-string';
     // A string is several pieces side by side across the road: one pool for the whole string.
     if (isString) { const key = Math.round(placement.s); if (strings.has(key)) continue; strings.add(key); }
-    list.push({ s: placement.s, lateral: isString ? 0 : placement.lateral * .45, width: isString ? 10 : 4.5, length: isString ? 12 : 9,
-      color: colours[(isString ? string++ : neon++) % colours.length], strength: isString ? .12 : .07 });
+    list.push({ s: placement.s, lateral: isString ? 0 : placement.lateral * .45, width: isString ? 8 : 3.6, length: isString ? 9 : 7,
+      color: colours[(isString ? string++ : neon++) % colours.length], strength: isString ? .075 : .045 });
   }
-  // Pools under the street lamps, warm sodium or white (`streetLight`, src/night-glows.js), where
-  // the ordinary lamp pools of the night path are too faint to show on a wet black road.
+  // Pools under the street lamps (`streetLight`, src/night-glows.js `lampLook`): small and soft, so a
+  // lamp reads as a pool of light on dark glossy asphalt and not as a coloured road.
   const lamp = course.def.streetLight;
   if (lamp) for (let i = 0, count = Math.floor(course.length / (lamp.every ?? 40)); i < count; i++) {
     const s = i * (lamp.every ?? 40);
     if ((course.themeAt?.(s) || course.def.theme) !== 'city') continue;
-    const look = lamp.sodium && s >= lamp.sodium.from && s <= lamp.sodium.to ? lamp.sodium : lamp.white, half = course.roadHalfWidthAt(s);
+    const look = lampLook(lamp, s, i), half = course.roadHalfWidthAt(s);
     for (const side of [-1, 1])
-      list.push({ s, lateral: side * Math.max(1, half - 3.3), width: Math.min(half * 1.2, 9), length: 22, color: look.colour, strength: look.pool ?? .25 });
+      list.push({ s, lateral: side * Math.max(1, half - 3.3), width: Math.min(half * .8, lamp.poolWidth ?? 6), length: lamp.poolLength ?? 13, color: look.colour, strength: look.pool ?? .1 });
   }
+  // Pools under the tall harbour lamps (src/waterside-scenery.js).
+  if (course.def.waterside) for (const lamp of planWaterside(course).lamps)
+    list.push({ s: lamp.s, lateral: lamp.side * Math.max(1, course.roadHalfWidthAt(lamp.s) - 3.3), width: Math.min(course.roadHalfWidthAt(lamp.s) * .8, 6), length: 13, color: lamp.colour, strength: lamp.pool });
   if (!list.length) return null;
   const positions = [], colors = [], uvs = [], indices = [], color = new THREE.Color();
   for (const glow of list) {
@@ -114,7 +119,7 @@ export function addRoadGlow(group, course) {
   const material = new THREE.ShaderMaterial({ name: 'Road glow', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     vertexColors: true, uniforms: { reduction }, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6,
     vertexShader: 'varying vec2 vUv; varying vec3 vColour; void main(){vUv=uv;vColour=color;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader: 'uniform float reduction; varying vec2 vUv; varying vec3 vColour; void main(){float d=length(vUv);float a=exp(-d*d*3.0)*(1.0-smoothstep(.55,1.0,d));gl_FragColor=vec4(vColour*a*reduction,1.0);}' });
+    fragmentShader: 'uniform float reduction; varying vec2 vUv; varying vec3 vColour; void main(){float d=length(vUv);float a=exp(-d*d*4.5)*(1.0-smoothstep(.5,1.0,d));gl_FragColor=vec4(vColour*a*reduction,1.0);}' });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'road-glow'; mesh.renderOrder = 3; mesh.frustumCulled = false;
   mesh.onBeforeRender = renderer => { reduction.value = renderer.getRenderTarget() ? 1 : wet.performanceShare ?? .5; };

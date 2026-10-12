@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import {renderedGroundHeight} from './rendered-ground.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
+import {applyNightWash} from './night-wash.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const TRACK_KIT_IDS = Object.freeze([
   'start-gantry','pit-garage','pit-wall','grandstand','armco','concrete-wall',
@@ -161,14 +163,74 @@ function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) 
   return true;
 }
 
+// A circuit may ask for a piece's parts to be joined by material (`mergeKitMeshes: ['shopfront-a']`):
+// a model of many small parts then costs a few draws instead of one per part, in every view and in
+// the contact-shading pass. The picture is unchanged. Pieces with a skeleton are left alone.
+function mergeModelByMaterial(model) {
+  const scene = model?.scene;
+  if (!scene?.isObject3D) return;
+  scene.updateMatrixWorld(true);
+  const meshes = [];
+  let skinned = false;
+  scene.traverse(node => {if (node.isSkinnedMesh) skinned = true; else if (node.isMesh) meshes.push(node);});
+  if (skinned || meshes.length < 2) return;
+  const inverse = scene.matrixWorld.clone().invert(), groups = new Map();
+  for (const mesh of meshes) {
+    if (Array.isArray(mesh.material)) return;
+    if (!groups.has(mesh.material)) groups.set(mesh.material,[]);
+    groups.get(mesh.material).push(mesh);
+  }
+  const merged = [];
+  for (const [material,list] of groups) {
+    // Vertex colours must be on every part of the joined mesh or on none (the material reads them).
+    const colourSize = Math.max(0,...list.map(mesh => mesh.geometry.attributes.color?.itemSize ?? 0));
+    const geometries = list.map(mesh => {
+      const source = mesh.geometry, geometry = new THREE.BufferGeometry(), count = source.attributes.position.count;
+      // Plain floats, whatever the file stored (quantised attributes cannot be moved by a matrix).
+      const copy = (name,size,fill) => {
+        const attribute = source.attributes[name], array = new Float32Array(count*size);
+        for (let i=0;i<count;i++) for (let k=0;k<size;k++) array[i*size+k] = attribute && k < attribute.itemSize ? attribute.getComponent(i,k) : fill;
+        geometry.setAttribute(name,new THREE.BufferAttribute(array,size));
+      };
+      copy('position',3,0); copy('normal',3,0); copy('uv',2,0);
+      if (colourSize) copy('color',colourSize,1);
+      if (source.index) geometry.setIndex(source.index.clone());
+      geometry.applyMatrix4(inverse.clone().multiply(mesh.matrixWorld));
+      return geometry;
+    });
+    const indexed = geometries.every(geometry => geometry.index);
+    const joined = mergeGeometries(indexed ? geometries : geometries.map(geometry => geometry.index ? geometry.toNonIndexed() : geometry),false);
+    for (const geometry of geometries) geometry.dispose();
+    if (!joined) return;
+    const mesh = new THREE.Mesh(joined,material);
+    mesh.name = (list[0].name || 'part')+' (joined)';
+    merged.push(mesh);
+  }
+  for (const mesh of meshes) mesh.geometry.dispose();
+  scene.clear();
+  for (const mesh of merged) scene.add(mesh);
+  scene.updateMatrixWorld(true);
+}
+
 // A circuit may turn a piece's own glow down or up (`kitLook: {'lantern-string': {glow: 1.1}}`):
-// the glow strength of every lit surface of that piece, as a number of its stored strength.
+// the glow strength of every lit surface of that piece, as a number of its stored strength. It may
+// also wash the piece's unlit surfaces in street light (`wash`, src/night-wash.js; `tint` colours
+// only the plaster, a different wall colour for each placement).
 function applyKitLook(look,model) {
-  if (!look || !finite(look.glow) || look.glow < 0 || !model?.scene?.isObject3D) return;
+  if (!look || !model?.scene?.isObject3D) return;
+  const glow = finite(look.glow) && look.glow >= 0;
+  if (!glow && !look.wash) return;
+  const washed = new Set();
   model.scene.traverse(node => {
     if (!node.isMesh) return;
-    for (const material of [].concat(node.material || []))
-      if (material.emissive && material.emissive.getHex() !== 0 && material.emissiveIntensity > 0) material.emissiveIntensity = look.glow;
+    for (const material of [].concat(node.material || [])) {
+      const lit = material.emissive && material.emissive.getHex() !== 0 && material.emissiveIntensity > 0;
+      if (lit && glow) material.emissiveIntensity = look.glow;
+      if (!lit && look.wash && !washed.has(material)) {
+        washed.add(material);
+        applyNightWash(material,{...look.wash,tint:/plaster|wall|render/i.test(material.name) ? look.wash.tint ?? 0 : 0});
+      }
+    }
   });
 }
 
@@ -428,6 +490,7 @@ export function createTrackKits(course, options) {
     Promise.all(ids.flatMap(id => ['high','low'].map(async version => {
       const path = '/assets/models/circuits/kits/'+id+(version === 'low' ? '-lod' : '')+'.glb';
       const model = await load(path);
+      if (course.def.mergeKitMeshes?.includes(id)) mergeModelByMaterial(model);
       if (model?.scene?.isObject3D) for (const resource of resourcesOf(model.scene)) own(resource);
       if (retired || failed) return;
       applyKitLook(course.def.kitLook?.[id],model);
