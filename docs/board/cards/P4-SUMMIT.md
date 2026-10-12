@@ -37,13 +37,17 @@ These are the card's detailed design, acceptance and recorded decisions.
     art_review_packet: 'p4-summit/docs/board/looks/p4-summit/round-1.jpg and round-1-review.md; 16 actual High/Performance views, 309,720 B, zero warnings/errors, memory-only, no frames. Exterior Gallery visible; Open Road readability weak, no fork acceptance. Production/native exact to b7dd65eb; one camera-only recipe correction. Claude review pending; no lane/build/merge acceptance.'
 ```
 
-## Claude decision, 12 October 2026 (inbox, Claude answers)
+## Claude decision, 12 October 2026 (inbox, Claude answers; revised after review)
 
-Mid car Falcone F42; race 270 to 330 s. Summit pit bay: limiter 180 m,
-whole lane at most 320 m. New `warm-tarmac` on sections A and B, tyre column
-`warm`: summer 1.0, winter tuned within .72 to .88 in at most three attempts
-to meet summer minus pit +4 to +8 s and winter-start minus pit +2 to +5 s;
-every other surface, tyre and course exact; holds lock `surfaces`. Art round
-one hold: Tremblant grove pines on B, Tremblant Snow snow and plough heaps,
+Mid car Falcone F42; race 270 to 330 s. Opt-in pit fields `limiterLength`
+and `limitKph` in `src/pit-lane.js` (absent: today's behaviour, Tremblant
+Snow exact); Summit uses 180 m at 80 km/h centred on the box, CPU estimate
+from the limited stretch. New `warm-tarmac` on every asphalt piece of A and B
+(gravel stays), tyre column `warm` with summer 1.0 and winter tuned .72 to
+.88, winter top-speed share applies, drawn as asphalt, hint WARM TARMAC under
+.80 grip. At most five measured sets in the inbox order (80 km/h, then 90,
+then road snow from 7.2 km, then the warm winter grip). Holds lock
+`surfaces`; hooks pit-lane.js and track-script-scene.js. Art round one hold:
+Tremblant grove pines on B, Tremblant Snow snow and plough heaps,
 Harbour-level night exposure, the accepted gallery kit, lit summit windows,
 and a fork view.
