@@ -56,7 +56,7 @@ passes every check and is the reference.
 
 `node tools/drive-through.mjs --course harbour-lights` and `--course
 tremblant-snow` pass; `tremblant-woods` still passes. Track review of
-Tremblant Snow on winter tyres: no corner below 20 mph and no stop. Track
+Tremblant Snow (`node tools/track-review.mjs tremblant-snow`) on winter tyres: no corner below 20 mph and no stop. Track
 review of Harbour Lights: lap within 1:30 to 1:45, no corner at 0 mph, the
 race finishes. Lane
 tier, build, one review. The live game changes only at the next release on
