@@ -444,3 +444,13 @@ tasks:
     priority: "low"
     details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"
 
+
+  - id: FIX-LIVE-EDGES
+    title: "Live course edges: floating walls, road gaps, early collision, snow run-wide"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    priority: "high"
+    details: "docs/board/cards/FIX-LIVE-EDGES.md"
