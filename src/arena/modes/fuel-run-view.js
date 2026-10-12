@@ -46,38 +46,24 @@ export function createFuelRunView(duel) {
   // Pickup markers retain their established geometry as delivery depots grow.
   const pickupRingGeometry = new THREE.RingGeometry(2 - .22, 2, 40);
   const pickupBaseGeometry = new THREE.CylinderGeometry(2, 2, .08, 40);
-  // A depot is a lit disc with a thick ring. Only the player's own depot also
-  // gets a tall light column, so the right one can be found from across the
-  // floor: bright while carrying fuel, dimmer while looking for it. Basic
-  // (unlit, untoned) materials keep the colours strong in dust and at night.
+  // A depot is a lit disc with a thick ring. Only one tall column matters at a
+  // time: carrying fuel, the player's own depot shows one in its colour and the
+  // other depots show none; not carrying, only loaded fuel pads show one (warm
+  // white). A column brightens and pulses within 40 m. Basic (unlit, untoned)
+  // materials keep the colours strong in dust and at night.
   const discGeometry = new THREE.CircleGeometry(FUEL_RULES.depotMetres - .5, 40);
   const heavyRingGeometry = new THREE.RingGeometry(FUEL_RULES.depotMetres - .7, FUEL_RULES.depotMetres, 40);
   const BEAM_STEPS = [[.5, 14], [.32, 14], [.2, 14], [.1, 14]];
   const beamGeometries = BEAM_STEPS.map(([, height]) =>
     new THREE.CylinderGeometry(1.1, 1.5, height, 20, 1, true));
-  // A thick flat arrow floating above the cargo, tip toward +z.
-  const arrowGeometry = (() => {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 1.9); shape.lineTo(1.2, .5); shape.lineTo(.4, .5); shape.lineTo(.4, -1.3);
-    shape.lineTo(-.4, -1.3); shape.lineTo(-.4, .5); shape.lineTo(-1.2, .5); shape.closePath();
-    // Given some thickness, so it still shows from the low chase camera.
-    const geometry = new THREE.ExtrudeGeometry(shape, {depth: .6, bevelEnabled: false});
-    geometry.translate(0, 0, -.3);
-    geometry.rotateX(Math.PI / 2);
-    return geometry;
-  })();
-  const arrowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, toneMapped: false,
-    depthTest: false, transparent: true, opacity: .8, side: THREE.DoubleSide});
-  const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-  arrow.name = 'Depot arrow'; arrow.scale.setScalar(.5); arrow.visible = false; arrow.renderOrder = 10; arrow.frustumCulled = false;
-  group.add(arrow);
   const beams = [], padBeams = [];
-  const padBeamGeometry = new THREE.CylinderGeometry(.5, .8, 10, 12, 1, true);
+  const padBeamGeometry = new THREE.CylinderGeometry(.6, .9, 26, 14, 1, true);
   const dummy = new THREE.Object3D(), local = new THREE.Matrix4();
-  const color = new THREE.Color(), arrowFrom = new THREE.Vector3();
+  const NEAR_METRES = 40;
+  const color = new THREE.Color();
   let cargo, capacity = 0, activeArena = null;
   const depotMaterials = [], labelTextures = [];
-  const padGround = [], looseGround = new Map(), depotAt = new Map();
+  const padGround = [], looseGround = new Map();
   function reserve(count) {
     if (count <= capacity) return;
     capacity = Math.max(256, capacity * 2, count);
@@ -91,7 +77,7 @@ export function createFuelRunView(duel) {
     group.add(cargo);
   }
   function clearPads() {
-    pads.clear(); beams.length = 0; padBeams.length = 0; depotAt.clear();
+    pads.clear(); beams.length = 0; padBeams.length = 0;
     for (const mat of depotMaterials) mat.dispose();
     for (const texture of labelTextures) texture.dispose();
     depotMaterials.length = labelTextures.length = 0;
@@ -110,21 +96,21 @@ export function createFuelRunView(duel) {
     if (fuelPad) { base.scale.setScalar(.65); ring.scale.setScalar(.65); }
     holder.add(base); depotMaterials.push(baseMat);
     if (fuelPad) {
-      // Fuel waiting on a pad shows a short pale column, so it reads from afar.
-      const padBeamMaterial = new THREE.MeshBasicMaterial({color: '#fff2a8', toneMapped: false,
-        transparent: true, opacity: .4, side: THREE.DoubleSide, depthWrite: false,
+      // Fuel waiting on a pad shows a warm white column, so it reads from afar.
+      const padBeamMaterial = new THREE.MeshBasicMaterial({color: '#ffe3a3', toneMapped: false,
+        transparent: true, opacity: .55, side: THREE.DoubleSide, depthWrite: false,
         blending: THREE.AdditiveBlending});
       const padBeam = new THREE.Mesh(padBeamGeometry, padBeamMaterial);
-      padBeam.position.y = 5; padBeam.frustumCulled = false;
-      holder.add(padBeam); depotMaterials.push(padBeamMaterial); padBeams.push(padBeam);
+      padBeam.position.y = 13; padBeam.frustumCulled = false;
+      holder.add(padBeam); depotMaterials.push(padBeamMaterial); padBeams.push({mesh: padBeam, at});
     } else {
       const glow = new THREE.MeshBasicMaterial({color: shade, toneMapped: false,
         transparent: true, opacity: own ? .38 : .22, side: THREE.DoubleSide, depthWrite: false});
       const disc = new THREE.Mesh(discGeometry, glow);
       disc.rotation.x = -Math.PI / 2; disc.position.y = .01;
       holder.add(disc); depotMaterials.push(glow);
-      // Rivals get a short column in their own colour; the player's is tall.
-      const steps = own ? BEAM_STEPS : BEAM_STEPS.slice(0, 1);
+      // Only the player's own depot has a column (rivals show just their pad).
+      const steps = own ? BEAM_STEPS : [];
       let y = 0;
       steps.forEach(([opacity, height], step) => {
         const beamMaterial = new THREE.MeshBasicMaterial({color: shade, toneMapped: false,
@@ -133,7 +119,7 @@ export function createFuelRunView(duel) {
         const beam = new THREE.Mesh(beamGeometries[step], beamMaterial);
         beam.position.y = y + height / 2; beam.frustumCulled = false;
         y += height; holder.add(beam); depotMaterials.push(beamMaterial);
-        beams.push({material: beamMaterial, opacity, own});
+        beams.push({material: beamMaterial, opacity, at});
       });
     }
     const sign = label(text, shade, own); holder.add(sign);
@@ -152,8 +138,8 @@ export function createFuelRunView(duel) {
       for (const depot of arena.fuelRun.depots) {
         const participant = arena.participants.find(p => p.id === depot.participantId);
         const own = participant.id === 'player';
-        depotAt.set(participant.id, marker(duel.course, depot,
-          own ? `YOUR DEPOT · ${depot.colorName}` : participant.name, depot.color, false, own));
+        marker(duel.course, depot,
+          own ? `YOUR DEPOT · ${depot.colorName}` : participant.name, depot.color, false, own);
       }
     }
     // These objects belong to presentation and are prepared only at events.
@@ -200,7 +186,7 @@ export function createFuelRunView(duel) {
             local.makeTranslation(0, height, (roof?.position.z || 0) + .55);
             dummy.matrix.multiplyMatrices(entry.mesh.matrixWorld, local);
           }
-          if (canister.carriedBy === 'player') { carrying = true; arrowFrom.setFromMatrixPosition(dummy.matrix); }
+          if (canister.carriedBy === 'player') carrying = true;
         } else {
           let at = looseGround.get(canister.id);
           if (!at) {
@@ -220,28 +206,22 @@ export function createFuelRunView(duel) {
         color.set(shade);
         cargo.setColorAt(count++, color);
       }
-      // Presentation only: the player's column is bright while carrying fuel,
-      // and an arrow floats above the cargo pointing at the player's depot.
-      const pulse = .88 + .12 * Math.sin(state.stageTimeSec * 4);
-      const home = fuel.depots.find(depot => depot.participantId === 'player'), target = depotAt.get('player');
-      // Fade the player's column out close up, so it never fills the view
-      // when sitting in the depot.
-      let near = 1;
-      if (target) {
-        const foot = state.onFoot && state.fighter;
-        const mine = foot ? state.fighter : entries.find(entry => entry.id === 'player')?.mesh?.position;
-        if (mine) near = Math.max(.12, Math.min(1, (Math.hypot(mine.x - target.x, mine.z - target.z) - 5) / 20));
+      // Presentation only. Where the player is, in the world (car or fighter).
+      const foot = state.onFoot && state.fighter;
+      const mine = foot ? state.fighter : entries.find(entry => entry.id === 'player')?.mesh?.position;
+      const t = state.stageTimeSec;
+      const glow = at => {
+        const near = mine && Math.hypot(mine.x - at.x, mine.z - at.z) < NEAR_METRES;
+        return near ? 1.3 * (.8 + .2 * Math.sin(t * 5)) : .9 + .1 * Math.sin(t * 2);
+      };
+      for (const beam of beams) {
+        beam.material.visible = carrying;
+        beam.material.opacity = beam.opacity * glow(beam.at);
       }
-      for (const beam of beams)
-        beam.material.opacity = beam.opacity * pulse * (beam.own ? near * (carrying ? 1 : .6) : 1);
-      padBeams.forEach((beam, index) => { beam.visible = !!fuel.pads[index]?.canisterId; });
-      const dx = target && carrying ? target.x - arrowFrom.x : 0, dz = target && carrying ? target.z - arrowFrom.z : 0;
-      arrow.visible = !!home && carrying && Math.hypot(dx, dz) > FUEL_RULES.depotMetres * 3;
-      if (arrow.visible) {
-        arrow.material.color.set(home.color);
-        arrow.position.set(arrowFrom.x, arrowFrom.y + 3, arrowFrom.z);
-        arrow.rotation.set(0, Math.atan2(dx, dz), 0);
-      }
+      padBeams.forEach(({mesh, at}, index) => {
+        mesh.visible = !carrying && !!fuel.pads[index]?.canisterId;
+        mesh.material.opacity = .55 * glow(at);
+      });
       cargo.count = count; cargo.instanceMatrix.needsUpdate = true;
       if (cargo.instanceColor) cargo.instanceColor.needsUpdate = true;
       group.userData.available=available;group.userData.carried=carried;
@@ -251,7 +231,6 @@ export function createFuelRunView(duel) {
       material.dispose(); baseGeometry.dispose();
       pickupRingGeometry.dispose(); pickupBaseGeometry.dispose();
       discGeometry.dispose(); heavyRingGeometry.dispose(); padBeamGeometry.dispose();
-      arrowGeometry.dispose(); arrowMaterial.dispose();
       for (const geometry of beamGeometries) geometry.dispose();
       group.removeFromParent(); },
   };

@@ -6,6 +6,8 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {Course} from '../src/course.js';
 import {ARENA_VENUES} from '../src/arena/venues.js';
 import {sweepObstacle} from '../src/collision.js';
+import {Duel} from '../src/game.js';
+import {buildEnvironment} from '../src/world.js';
 
 // SCRAPDOME-TANKER-FIX: the Salt Flats boundary containers, tyre walls and
 // salvage cars are drawn turned along the ring. Their collision used to be
@@ -117,4 +119,53 @@ test('every arena wall is closed all the way round: no thin shot or footstep sli
       equal(open, 0, `${id} ${side > 0 ? 'outer' : 'inner'} wall: ${open} open paths in ${checked} (the Scrapdome outer wall had 780)`);
     }
   }
+});
+
+test('a car pressed against the floor edge is within half a metre of the drawn wall face, in every venue', () => {
+  const body = 1.02; // Falcone half width
+  for (const [id, allowed] of [['scrapdome', .5], ['pit', .5], ['salt-flats', .55]]) {
+    const ring = new Course(ARENA_VENUES[id], SEED);
+    const edge = ring.def.scrapdome.floorHalfWidth + body;
+    const face = Math.min(...ring.features.barriers.filter(wall => wall.off > 0)
+      .map(wall => wall.off - wall.halfX));
+    ok(edge <= face, `${id}: the car edge ${edge.toFixed(2)} m is not inside the wall face ${face.toFixed(2)} m`);
+    ok(face - edge <= allowed, `${id}: gap to the drawn face is ${(face - edge).toFixed(2)} m (was 1.5 m on the ring and the Pit)`);
+  }
+});
+
+test('the Pit drawn hulk wall is within half a metre of a car pressed against the floor edge', () => {
+  const context = new Proxy({measureText: text => ({width: String(text).length * 8}),
+    createLinearGradient: () => ({addColorStop() {}}), createRadialGradient: () => ({addColorStop() {}}),
+    getImageData: () => ({data: new Uint8ClampedArray(4)}),
+    createImageData: (w, h) => ({data: new Uint8ClampedArray(w * h * 4)})},
+  {get: (target, key) => key in target ? target[key] : () => {}});
+  const duel = new Duel({seed: SEED});
+  duel.state.wastelandGateDiscovered = true;
+  equal(duel.startArenaEvent({venueId: 'pit', car: 'falcone_f42', seed: SEED, opponents: [{car: 'dusthawk_rally'}]}), true, 'Pit starts');
+  const priorDocument = globalThis.document, priorLoad = THREE.TextureLoader.prototype.load;
+  globalThis.document = {createElement: () => ({width: 0, height: 0, getContext: () => context})};
+  THREE.TextureLoader.prototype.load = function() { return new THREE.Texture(); };
+  try {
+    const world = buildEnvironment(duel.course);
+    world.updateMatrixWorld(true);
+    const hulks = world.getObjectByName('Pit hulk wall, centre pile and oval-end scrap');
+    const radii = [], point = new THREE.Vector3(), matrix = new THREE.Matrix4();
+    hulks.traverse(mesh => {
+      if (!mesh.isMesh) return;
+      const position = mesh.geometry.attributes.position, count = mesh.isInstancedMesh ? mesh.count : 1;
+      for (let instance = 0; instance < count; instance++) {
+        if (mesh.isInstancedMesh) mesh.getMatrixAt(instance, matrix); else matrix.identity();
+        const world = mesh.matrixWorld.clone().multiply(matrix);
+        for (let index = 0; index < position.count; index += 3) {
+          point.fromBufferAttribute(position, index).applyMatrix4(world);
+          const radius = Math.hypot(point.x, point.z);
+          if (point.y > .2 && point.y < 1.5 && radius > 60 && radius < 80) radii.push(radius);
+        }
+      }
+    });
+    const face = Math.min(...radii), layout = duel.course.def.scrapdome;
+    const carEdge = duel.course.def.pit.radius + layout.floorHalfWidth + 1.02;
+    ok(face >= carEdge - .05, `the drawn wall face ${face.toFixed(2)} m is not inside the car edge ${carEdge.toFixed(2)} m`);
+    ok(face - carEdge <= .5, `gap ${(face - carEdge).toFixed(2)} m (was 0.98 m)`);
+  } finally { globalThis.document = priorDocument; THREE.TextureLoader.prototype.load = priorLoad; }
 });

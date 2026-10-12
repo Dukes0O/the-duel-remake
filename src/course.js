@@ -332,7 +332,7 @@ export class Course {
       for(let s=0;s<this.length;s+=8)for(const side of[-1,1]){
         // Pieces sit every 8 m along the centre line. Where the ring bends, the outer
         // side is longer, so each piece grows to meet its neighbours (no open gaps).
-        const off=side*(this.def.scrapdome?.wallOffset??22);
+        const layout=this.def.scrapdome,off=side*((side>0?layout?.outerWallOffset:null)??layout?.wallOffset??22);
         f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,4.2*Math.max(1,1-this.at(s).curvature*off),0,{barrier:true,arenaWall:true}));
       }
     }

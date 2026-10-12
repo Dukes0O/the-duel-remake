@@ -5,6 +5,7 @@ import {Duel} from '../src/game.js';
 import {FUEL_RULES} from '../src/arena/modes/fuel-run.js';
 import {createFuelRunView} from '../src/arena/modes/fuel-run-view.js';
 import {arenaHud} from '../src/screen-arena.js';
+import {fuelArrowPresentation} from '../src/combat-hud.js';
 
 // SCRAPDOME-TANKER-FIX: Kyle could not tell which delivery pad was his.
 let checks = 0;
@@ -44,47 +45,73 @@ test('the four depot colours are saturated and far apart, with plain names', () 
   eq(depots[0].participantId, 'player', 'the player always owns the first colour');
 });
 
-test('only the player depot gets a tall light column; rivals get a short one', () => {
-  const duel = start();
-  withCanvasStub(() => {
-    const view = createFuelRunView(duel);
-    try {
-      const pads = view.group.children.find(group => group.type === 'Group');
-      const columns = holder => holder.children.filter(mesh => mesh.material?.blending === THREE.AdditiveBlending);
-      const height = holder => Math.max(...columns(holder).map(mesh => mesh.position.y + mesh.geometry.parameters.height / 2));
-      const depots = pads.children.slice(4);
-      ok(height(depots[0]) >= 50, `the player's column is ${height(depots[0])} m tall`);
-      for (const holder of depots.slice(1)) ok(height(holder) <= 14, `a rival's column is ${height(holder)} m tall`);
-      for (const holder of pads.children.slice(0, 4)) ok(height(holder) <= 10, 'a fuel pad has only a short pale column');
-      const padBeams = pads.children.slice(0, 4).map(holder => columns(holder)[0]);
-      eq(padBeams.map(beam => beam.visible), [true, true, true, true], 'every loaded pad shows its column');
-    } finally { view.dispose(); }
-  });
-});
+const additive = holder => holder.children.filter(mesh => mesh.material?.blending === THREE.AdditiveBlending);
+const shown = mesh => mesh.visible && mesh.material.visible !== false;
 
-test('the arrow shows only while carrying fuel far from the depot, and points at it', () => {
+test('only one tall column matters at a time', () => {
   const duel = start(), state = duel.state, fuel = state.arena.fuelRun;
   withCanvasStub(() => {
     const view = createFuelRunView(duel), mesh = new THREE.Object3D();
     try {
-      const arrow = view.group.getObjectByName('Depot arrow');
+      const pads = view.group.children.find(group => group.type === 'Group');
+      const padHolders = pads.children.slice(0, 4), depots = pads.children.slice(4);
+      const own = additive(depots[0]);
+      const height = list => Math.max(...list.map(item => item.position.y + item.geometry.parameters.height / 2));
+      ok(height(own) >= 50, `the player's depot column is ${height(own)} m tall`);
+      for (const holder of depots.slice(1)) eq(additive(holder).length, 0, 'a rival depot never has a column');
+      mesh.position.set(1000, 0, 1000); mesh.updateMatrixWorld(true);
       view.update(state, duel.course, [{id: 'player', mesh}]);
-      eq(arrow.visible, false, 'no arrow without cargo');
+      eq(own.map(shown), own.map(() => false), 'not carrying: the own depot column is hidden');
+      eq(padHolders.map(holder => shown(additive(holder)[0])), [true, true, true, true], 'not carrying: every loaded pad shows a warm white column');
+      eq(additive(padHolders[0])[0].material.color.getHexString(), 'ffe3a3', 'pad columns are warm white');
       const canister = fuel.canisters[0];
       canister.carriedBy = 'player'; state.arena.participants[0].fuelCanisterId = canister.id;
-      const depot = duel.course.groundAt(fuel.depots[0].s, fuel.depots[0].lateral);
-      mesh.position.set(depot.x + 40, 0, depot.z - 10); mesh.updateMatrixWorld(true);
       view.update(state, duel.course, [{id: 'player', mesh}]);
-      eq(arrow.visible, true, 'the arrow shows when carrying fuel far from the depot');
-      const forward = new THREE.Vector3(0, 0, 1).applyEuler(arrow.rotation);
-      const want = new THREE.Vector3(depot.x - arrow.position.x, 0, depot.z - arrow.position.z).normalize();
-      ok(forward.dot(want) > .999, 'the arrow points at the player depot');
-      eq(arrow.material.color.getHexString(), new THREE.Color(fuel.depots[0].color).getHexString(), 'the arrow takes the depot colour');
-      mesh.position.set(depot.x + 3, 0, depot.z); mesh.updateMatrixWorld(true);
+      eq(own.map(shown), own.map(() => true), 'carrying: the own depot column shows');
+      eq(own[0].material.color.getHexString(), new THREE.Color(fuel.depots[0].color).getHexString(), 'in the depot colour');
+      eq(padHolders.map(holder => shown(additive(holder)[0])), [false, false, false, false], 'carrying: pad columns are hidden');
+      for (const holder of depots.slice(1)) eq(additive(holder).length, 0, 'carrying: rivals still show no column');
+      fuel.pads[0].canisterId = null; canister.carriedBy = null; state.arena.participants[0].fuelCanisterId = null;
       view.update(state, duel.course, [{id: 'player', mesh}]);
-      eq(arrow.visible, false, 'the arrow hides once the depot is close');
+      eq(shown(additive(padHolders[0])[0]), false, 'a pad with no fuel shows no column');
     } finally { view.dispose(); }
   });
+});
+
+test('a column brightens when the player is within 40 m', () => {
+  const duel = start(), state = duel.state, fuel = state.arena.fuelRun;
+  withCanvasStub(() => {
+    const view = createFuelRunView(duel), mesh = new THREE.Object3D();
+    try {
+      const pads = view.group.children.find(group => group.type === 'Group');
+      const beam = additive(pads.children[0])[0];
+      const pad = duel.course.groundAt(fuel.pads[0].s, fuel.pads[0].lateral);
+      mesh.position.set(pad.x + 120, 0, pad.z); mesh.updateMatrixWorld(true);
+      view.update(state, duel.course, [{id: 'player', mesh}]);
+      const far = beam.material.opacity;
+      mesh.position.set(pad.x + 30, 0, pad.z); mesh.updateMatrixWorld(true);
+      view.update(state, duel.course, [{id: 'player', mesh}]);
+      ok(beam.material.opacity > far * 1.1, `near ${beam.material.opacity.toFixed(3)} vs far ${far.toFixed(3)}`);
+    } finally { view.dispose(); }
+  });
+});
+
+test('the screen arrow shows only when carrying and points at the player depot', () => {
+  const duel = start(), state = duel.state, fuel = state.arena.fuelRun, course = duel.course;
+  eq(fuelArrowPresentation(course, state), null, 'no arrow without fuel');
+  state.arena.participants[0].fuelCanisterId = fuel.canisters[0].id;
+  const depot = course.worldAt(fuel.depots[0].s, fuel.depots[0].lateral);
+  const pose = {s: (fuel.depots[0].s + 100) % course.length, lateral: 0};
+  Object.assign(state, pose);
+  const here = course.worldAt(pose.s, pose.lateral);
+  const bearing = Math.atan2(depot.x - here.x, depot.z - here.z), base = course.at(pose.s).heading;
+  const angleFor = facing => { state.headingError = facing - base; return fuelArrowPresentation(course, state); };
+  const ahead = angleFor(bearing);
+  eq(ahead.angle, 0, 'facing the depot: the arrow points up');
+  eq(angleFor(bearing - Math.PI / 2).angle, 90, 'depot on the right: the arrow points right');
+  eq(angleFor(bearing + Math.PI / 2).angle, -90, 'depot on the left: the arrow points left');
+  eq(Math.abs(angleFor(bearing + Math.PI).angle), 180, 'depot behind: the arrow points down');
+  eq([ahead.color, ahead.text.startsWith('CYAN DEPOT')], [FUEL_RULES.colors[0], true], 'depot colour and name');
 });
 
 test('the HUD names the player colour and says where to take the fuel', () => {
@@ -93,26 +120,4 @@ test('the HUD names the player colour and says where to take the fuel', () => {
   ok(/FIND FUEL/.test(hud.scoreText), 'looking for fuel reads plainly');
   duel.state.arena.participants[0].fuelCanisterId = 'fuel-1';
   ok(/TAKE IT TO THE CYAN DEPOT/.test(arenaHud(duel.state).scoreText), 'carrying fuel names the depot colour');
-});
-
-test('the player column fades up close and an emptied pad drops its column', () => {
-  const duel = start(), state = duel.state, fuel = state.arena.fuelRun;
-  withCanvasStub(() => {
-    const view = createFuelRunView(duel), mesh = new THREE.Object3D();
-    try {
-      const pads = view.group.children.find(group => group.type === 'Group');
-      const own = pads.children[4].children.filter(item => item.material?.blending === THREE.AdditiveBlending);
-      const depot = duel.course.groundAt(fuel.depots[0].s, fuel.depots[0].lateral);
-      mesh.position.set(depot.x, 0, depot.z); mesh.updateMatrixWorld(true);
-      view.update(state, duel.course, [{id: 'player', mesh}]);
-      const close = own[0].material.opacity;
-      mesh.position.set(depot.x + 60, 0, depot.z); mesh.updateMatrixWorld(true);
-      view.update(state, duel.course, [{id: 'player', mesh}]);
-      ok(own[0].material.opacity > close * 4, 'the column is much fainter when the car sits in its own depot');
-      fuel.pads[0].canisterId = null;
-      view.update(state, duel.course, [{id: 'player', mesh}]);
-      eq(pads.children[0].children.find(item => item.material?.blending === THREE.AdditiveBlending).visible, false,
-        'a pad with no fuel hides its column');
-    } finally { view.dispose(); }
-  });
 });

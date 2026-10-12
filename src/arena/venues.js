@@ -12,6 +12,10 @@ export const SCRAPDOME_LAYOUT = Object.freeze({
   floorSpeedMph: 70, floorSpeedReferenceMph: 200, floorSpeedExponent: .35,
   floorTraction: .95, floorScrub: .02, floorRoughness: .12,
   wallOffset: 21,
+  // The outer (stadium) wall stands 20 m out, so a car pressed against the floor
+  // edge (18 m, car edge 19 m) is within half a metre of its face. The inner wall
+  // keeps 21: it bends the other way, and a long car would snag a closer one.
+  outerWallOffset: 20,
   rampFractions: Object.freeze([.08, .42, .75]),
   rampLength: 34,
   rampHeight: 2.4,

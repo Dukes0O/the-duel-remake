@@ -58,24 +58,64 @@ edge stops them at 18 m on all three venues, checked headlessly on both cars
 at full speed with boost), so the visible fault was gaps you could see through
 and slip a shot or a footstep through.
 
-Left as is: on the Scrapdome ring and the Pit the floor edge stops a car 1.5 m
-short of the wall face (Salt Flats is now 0.6 m). Moving it means changing the
-frozen floor width and the arena fingerprints; it is a choice for Claude.
+The Scrapdome ring and Pit gap (1.5 m) is fixed in round 2 below.
 
-## Fuel Run: finding your pad
+## Fuel Run: finding your pad (round 2)
 
-- Depot colours are now strong and far apart: cyan (yours, always first),
-  orange, lime, magenta (`FUEL_RULES.colors`, with `colorNames`).
-- The depot is a lit disc with a thick ring. Yours also has a tall light column
-  (56 m, brighter while you carry fuel, fainter when you are close so it never
-  fills the view). Rivals get a short column in their own colour. A thick arrow
-  floats above your cargo pointing at your depot while you carry fuel.
-- Loaded fuel pads show a short pale column so pickups read from afar.
-- HUD: the objective line is in your depot colour and names it (`BRING FUEL TO
-  YOUR CYAN DEPOT`, replacing the fixed word BLUE); the top line says
-  `TAKE IT TO THE CYAN DEPOT` while carrying. The carried can already took the
-  depot colour.
-- Pictures and review notes: `docs/board/looks/fuel-run/`.
+- Depot colours are strong and far apart: cyan (yours, always first), orange,
+  lime, magenta (`FUEL_RULES.colors`, with `colorNames`). The depot is a lit
+  disc with a thick ring.
+- One tall beam at a time (Claude's rule). Not carrying: only loaded fuel pads
+  show a warm white beam, and no depot does. Carrying: only your own depot
+  shows a beam, in its colour; rival depots show just their coloured pad. A
+  beam brightens and pulses gently within 40 m.
+- A large screen arrow in the depot colour (top-centre, `src/combat-hud.js`,
+  `src/combat-hud.css`) points to your depot, turned to the way you face, with
+  `CYAN DEPOT · 122 m`, whenever you carry fuel. The round-1 floating 3D arrow
+  was removed.
+- HUD: the objective line is in your depot colour and names it; the top line
+  says `TAKE IT TO THE CYAN DEPOT` while carrying.
+- Pictures and notes: `docs/board/looks/fuel-run/` (round 2 replaces round 1).
+
+## Wall hit box on the Scrapdome ring and the Pit (round 2)
+
+The floor edge stops a car's centre 18 m out (Pit 32), so its side is at 19.02
+and the wall face was 20.5 (Pit 34.5): a 1.5 m gap, which is Kyle's "far too
+wide". Moving the floor edge is not an option: it is also the road width, and
+jump landings, the ramp-side launch check and other pins depend on it (tried
+19: the ramp-side test goes 4.1 m against its 4 m limit). So the wall moved in
+instead:
+
+- Scrapdome outer wall: `outerWallOffset: 20` (`src/arena/venues.js`,
+  `src/course.js`); face 19.5, gap 0.48 m. The inner wall stays at 21: it bends
+  the other way and a long car already touches its piece ends 1 m early; a
+  closer wall would snag it.
+- Pit: collision wall 35 to 34 and the drawn hulk wall 75 to 74.5
+  (`src/arena/venues/pit.js`); drawn face 73.46, a car at the floor edge reaches
+  73.02, gap 0.44 m (was 0.98 m), collision face 73.5.
+- Salt Flats: unchanged (0.5 m).
+
+Pins and fixtures updated, each because Kyle asked for the walls to meet the
+visible face (not a tolerance change): `tools/replays/salt-flats-controls.json`
+(ring physical hash), `tools/replays/arena-fuel-run-controls.json` (Last Car
+Rolling and Sal pins; the three road pins are exact), `tools/test-arena-pit.mjs`
+(wall offset 35 to 34, curvature ratio .875 to .85) and
+`tools/test-rocket-fighter-contacts.mjs` (two parked cars moved from 20 m to the 18 m floor edge: 20 is now inside the wall) and
+`tools/test-arena-ramp-side.mjs` (the three Titan straight-jump landings 24.3,
+25.6, 29.1 to 19.5, 20.2, 28.8: the wide Titan drifts into the closer wall;
+flight heights are unchanged).
+
+## Wreck rate (round 2)
+
+`test-arena-wreck-rate` (limit 10 to 14, untouched) now reads 13.17 (round 1:
+14.42, baseline 13.83). Cause, found by comparing a round step by step: in round
+1 the first difference was a car at the 18 m floor edge brushing the end of a
+wall piece where a slot used to be; wall-hit counts per round did not change.
+The wall change makes cars take a slightly different path and three of twelve
+rounds went differently, so the mean drifted. A glancing-wall rule was tried
+and had no effect on the number, so it was not kept. The number now sits at
+13.17 after the Scrapdome outer wall moved in; it is a chaotic measure, so any
+later arena change can move it again.
 
 ## Tests
 
@@ -83,11 +123,14 @@ New, each failing before the fix and passing after:
 
 - `tools/test-arena-tanker-feedback.mjs` (5): body-miss message and its 6 s
   hold, valve-broken count, HUD armor percent, tanker bar on valves, intro.
-- `tools/test-arena-wall-fit.mjs` (4): every boundary piece against the
+- `tools/test-arena-wall-fit.mjs` (6): every boundary piece against the
   committed model (face within 0.5 m, centred), no solid reaching into the
   floor (13.75 m before, 19.4 m after), straight-in contact at the drawn face,
-  and every wall closed on thin paths in all three venues.
-- `tools/test-arena-fuel-beacon.mjs` (5): colours, columns, arrow, fade, HUD.
+  every wall closed on thin paths in all three venues, a car at the floor edge
+  within 0.5 m of the drawn face in all three venues, and the drawn Pit hulk
+  wall measured in the built scene.
+- `tools/test-arena-fuel-beacon.mjs` (5): colours, one tall column at a time,
+  40 m brightening, screen arrow direction, HUD colour name.
 - `tools/scenarios/arena-fuel-look.mjs`: private browser pictures, both
   graphics modes, both venues (a recipe; the pictures are not kept).
 
@@ -123,25 +166,25 @@ fix, and three pins were updated with that reason:
 Also the Titan arena and Titan stunt trial courses use the same ring walls, so
 their walls are now closed too.
 
-OPEN: `tools/test-arena-wreck-rate.mjs` (Medium full-field mean must be 10 to
-14) now reads 14.42, was 13.83. Three of the twelve rounds took a different
-path (viper 1989 and 7, banshee 2024) because cars can no longer slip into the
-old slots. Wall-hit counts per round are unchanged, so this is the simulation
-moving, not more wall damage. I did not touch the limit. Claude to decide:
-accept and rebalance, or re-seed the rounds.
+The wreck-rate drift this caused in round 1 is explained under "Wreck rate"
+above and now passes.
 
 ## Removed
 
 - The thin 0.22 m depot ring geometry and the fixed `BLUE DEPOT` text, replaced
   by the thicker ring and the real colour name.
+- The round-1 floating 3D depot arrow and the rival depot columns, replaced by
+  the screen arrow and the one-beam-at-a-time rule.
 - The map-aligned collision for Salt Flats ring pieces (kept only as the
   Blender fit input, not as what anything collides with).
 
 ## Gate results
 
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`):
-  390 of 391 suites pass. The one failure is `test-arena-wreck-rate.mjs`
-  (OPEN above). An earlier run also showed `src/test.js`, `test-terrain`,
-  `test-shortcuts` and `test-audio` failing at 5 to 32 s while the machine was
-  loaded; each passed on its own and in this run.
-- `npm run build`: passes (run after the release full tier finished).
+- Lane tier (`--jobs 4 --keep-going`): 391 of 391 after the one fixture fix above
+  (the first run of the final code showed 390 of 391 with only that suite).
+  `test-arena-wreck-rate` passes at 13.17.
+- Earlier suites rerun on the final code: Salt Flats (61 and 16 checks), Salt
+  Flats art (29, Blender), Pit, Pit render, ramp side, ambush alley, shove, fuel
+  run, depot, beacon, wall fit.
+- `npm run build`: passes.
+- Pictures: `docs/board/looks/fuel-run/round-2.jpg`; no frame timing.

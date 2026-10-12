@@ -113,6 +113,26 @@ export function bountyArrowPresentation(course, state, projected = []) {
     text: `BOUNTY · ${name}${exact ? '' : ' · ' + position.direction}`};
 }
 
+// While carrying fuel, a large arrow in the depot colour points to the player's
+// own depot, turned to the way the car (or fighter) is facing, so it reads at a glance.
+export function fuelArrowPresentation(course, state) {
+  const arena = state.arena, fuel = arena?.mode === 'fuel-run' && arena.fuelRun;
+  const me = fuel && arena.participants.find(p => p.id === 'player');
+  const depot = fuel && fuel.depots.find(d => d.participantId === 'player');
+  if (!me?.fuelCanisterId || !depot) return null;
+  const target = course.worldAt(depot.s, depot.lateral);
+  const foot = state.onFoot && state.fighter;
+  const at = foot ? state.fighter : course.worldAt(state.s, state.lateral || 0);
+  const heading = foot ? (state.fighter.yaw || 0) :
+    Number.isFinite(state.yaw) ? state.yaw : (at.heading || 0) + (state.headingError || 0);
+  const x = target.x - at.x, z = target.z - at.z;
+  const right = x * Math.cos(heading) - z * Math.sin(heading);
+  const forward = x * Math.sin(heading) + z * Math.cos(heading);
+  const distance = Math.round(Math.hypot(x, z));
+  return {angle: Math.round(Math.atan2(right, forward) * 180 / Math.PI), distance, color: depot.color,
+    text: `${depot.colorName} DEPOT · ${distance} m`};
+}
+
 export function footAmmoPresentation(state) {
   const gear = state?.footGear;
   if (!gear || typeof gear.name !== 'string')
@@ -184,6 +204,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   host.setAttribute('aria-label', 'Combat information');
   host.innerHTML = `<div class="combat-opponent-layer" aria-label="Opponent armor and positions"></div>
     <div class="bounty-screen-arrow" role="status" hidden><span aria-hidden="true">▲</span><b></b></div>
+    <div class="fuel-screen-arrow" role="status" hidden><span aria-hidden="true">▲</span><b></b></div>
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
     <div class="combat-edge-cue" data-side="left" aria-hidden="true"></div>
@@ -211,6 +232,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
 
   const layer = host.querySelector('.combat-opponent-layer');
   const bountyArrow = host.querySelector('.bounty-screen-arrow');
+  const fuelArrow = host.querySelector('.fuel-screen-arrow');
   const markers = [];
   const buttons = [...host.querySelectorAll('[data-combat-weapon]')];
   const hitMarker = host.querySelector('.combat-hit-marker');
@@ -333,6 +355,13 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
 
     const opponents = state.opponents || [];
     const projected = projectOpponents();
+    const fuelPointer = fuelArrowPresentation(app.duel.course, state);
+    fuelArrow.hidden = !fuelPointer || fuelPointer.distance < 6;
+    if (!fuelArrow.hidden) {
+      fuelArrow.style.color = fuelPointer.color;
+      fuelArrow.querySelector('span').style.transform = `rotate(${fuelPointer.angle}deg)`;
+      setText(fuelArrow.querySelector('b'), fuelPointer.text);
+    }
     const bounty = bountyArrowPresentation(app.duel.course, state, projected);
     bountyArrow.hidden = !bounty;
     if (bounty) {

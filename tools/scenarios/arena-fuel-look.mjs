@@ -18,7 +18,7 @@ async function start(context, quality, venue) {
     a.duel.state.wastelandGateDiscovered=true;
     a.setGraphicsQuality(${JSON.stringify(quality)});
     for(const d of document.querySelectorAll('details'))if(d.querySelector('summary')?.textContent.startsWith('MENU QA'))d.open=false;
-    if(!a.duel.startArenaEvent({venueId:${JSON.stringify(venue)},mode:'fuel-run',seed:1989,
+    if(!a.duel.startArenaEvent({venueId:${JSON.stringify(venue)},mode:${JSON.stringify(venue==='pit'?'last-car-rolling':'fuel-run')},seed:1989,
       car:'falcone_f42',cpuDifficulty:'medium',opponents:[{car:'dusthawk_rally'},{car:'aurora_gt'},{car:'stuttgart_959s'}]}))
       throw Error('Native Fuel Run entry failed');
     a.duel.state.countdown=0;
@@ -45,17 +45,19 @@ export async function run(context) {
   const report={captures:[]};
   try {
     for (const quality of ['high','performance']) {
-      for (const venue of ['scrapdome','salt-flats']) {
+      for (const venue of ['scrapdome','salt-flats','pit']) {
         await context.navigate('/tools/menu-check.html?flags=fuel-run,salt-flats&harness=fuel-look-'+quality+'-'+venue);
         await context.waitFor('!!window.__qaApp&&!!window.__render','Fuel QA menu',60_000);
         await start(context, quality, venue);
         const key = quality+'-'+venue;
+        if (venue !== 'pit') {
         report.captures.push(await shot(context, key+'-1-start', `L.tick(1)`));
         report.captures.push(await shot(context, key+'-2-pickup',
           `const pad=d.state.arena.fuelRun.pads[0];L.pose({s:pad.s-14,lateral:pad.lateral});L.tick(2);`));
         report.captures.push(await shot(context, key+'-3-depots',
           `const pad=d.state.arena.fuelRun.pads[0];L.pose(pad);L.tick(2);
            const depot=d.state.arena.fuelRun.depots[0];L.pose({s:depot.s-30,lateral:depot.lateral+2});L.tick(1);`));
+        }
         report.captures.push(await shot(context, key+'-4-wall',
           `L.pose({s:d.course.length*.3,lateral:d.course.def.scrapdome.floorHalfWidth-.2},0);L.tick(2);`));
         report.captures.push(await shot(context, key+'-5-full',
