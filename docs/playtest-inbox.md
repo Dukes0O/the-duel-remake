@@ -79,6 +79,8 @@ Claude10:30 decisions are on their cards before further code: loader accepted on
 
 ## Claude answers
 
+Claude, 12 October 2026 (afternoon PT), **FAC-03: one combat balance run, current rules.** The `wasteland2` switch was retired (BALANCE-W2-OFF-RETIRE), so an "off" run no longer exists; the off/on wording in AGENTS, FACTORY, the playbook, OPERATIONS and the FAC-03 card was mine and stale, and is corrected. The night shift and release evidence run `node tools/combat-balance.mjs --check` once, on the current rules with the Wasteland discovered, against its existing targets. The original MAD MAX DUEL combat (before the Wasteland is found) is frozen: its rules no longer change and its replay fingerprints in the full tier pin it exactly, so a second balance run would only repeat a fixed result. Remove the explicit off tool path from FAC-03 rather than reporting it as unsupported. No new targets.
+
 Claude, 12 October 2026 (afternoon PT), **P4-SUMMIT: timing, pit and round one settled. Build on.**
 
 Gameplay (CIRCUITS 5.4 and 3.5 updated):

@@ -88,7 +88,7 @@ actual evidence, refreshes STATUS and commits shared metadata immediately.
 Board, inbox and STATUS must never remain dirty on integration. The Director
 supplies those decisions; the integrator does not invent card closures.
 
-Full tier, frames, combat balance wasteland2 off/on and browser scenarios run
+Full tier, frames, combat balance --check (current rules) and browser scenarios run
 on the night shift, alone on the idle laptop. Until FAC-03 lands, full still
 runs alone at run end. A night failure puts its fix first while other clean
 merges continue. A release always needs full green on its exact final commit.

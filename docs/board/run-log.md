@@ -990,3 +990,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 DEEP-WATER merged (Claude lane claude/deep-water 129235fa): lane 22/22 in 132.29 s, build 1457 ms, review claude-subagent-reviewer clear.
 
 - 2026-10-12 FAC-04: merge 8cc2d45a; lane 309/309, 791.07 s, jobs 4; build 1.13 s; one review clear; original course data exact, no clean-merge rerun.
+- 2026-10-12 FAC-03 merged (Claude lane claude/night-balance 00a2b3a2): lane 13/13 in 100.05 s, build 1036 ms, review claude-subagent-reviewer clear.

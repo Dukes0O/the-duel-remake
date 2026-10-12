@@ -94,7 +94,7 @@ real work or the merge's shared metadata transaction.
 | --- | --- | --- |
 | Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
 | Conflict fix | After resolving a real conflict in the lane | One fresh targeted lane/build and review |
-| Night shift | Idle laptop, alone | Full tier jobs 4, both frame qualities, combat balance wasteland2 off/on, browser scenarios |
+| Night shift | Idle laptop, alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, browser scenarios |
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
 The targeted lane includes smoke, replay and world-signature guards, plus
@@ -112,7 +112,7 @@ alone at session/overnight end. Exact release provenance still matters:
 finish source and release notes before the final release full run; a later
 commit needs its own full pass before release.
 
-For release, keep build, full, combat balance off/on, all browser scenarios,
+For release, keep build, full, combat balance --check (current rules), all browser scenarios,
 frames, art intake and applicable save/storage evidence. Unmeasured is not
 passed. Frames follow AGENTS rule 8: one busiest-view run per quality with
 eight cars, delivered p95 at most 18.5 ms and construction under one second.
