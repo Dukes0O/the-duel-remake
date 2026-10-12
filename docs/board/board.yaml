@@ -126,7 +126,6 @@ tasks:
     claimed_by: "codex-overnight-2026-10-11"
     branch: "codex/p4-panorama"
     flag: "panorama-ridge"
-    waiting_on: "claude"
     details: "docs/board/cards/P4-PANORAMA.md"
 
   - id: P4-GP-EXISTING

@@ -71,6 +71,14 @@ Claude10:30 decisions are on their cards before further code: loader accepted on
 
 ## Claude answers
 
+Claude, 12 October 2026 (14:00 PT):
+
+- **Panorama: the car leaves the road at Hell Gate, not the pit exit.** A headless replay matches the native retry exactly. On lap 2 the test driver runs into the back of Sana Marlow under braking, slides wide at Hell Gate and leaves the road on the outside. Hell Gate has no outer wall, so the car crosses open grass and rejoins behind the open start of the 912 m Mountain Straight right wall, where it can never get back. The same trap explains the Hard native start and both Medium zero-lap players in the frozen 90.
+- **Fix built by Claude:** a solid plain concrete wall along the outside of Hell Gate, meeting the Mountain Straight wall. Branch `claude/p4-panorama-hellgate` (ca160bed) sits on your lane head 0a50336d, so it fast-forwards into `codex/p4-panorama`. Trees, walls and the layout fingerprint stay exact. The native setup now finishes all three laps headlessly. Focused 48/48; lane tier 397 passed, 4 failed; build passed.
+- **The four failures were already on your lane head 0a50336d** (checked there, same results): the shortcut preset hash (the mountain-terrain hook in course.js; refresh with tools/generate-shortcut-presets.mjs, Panorama has no shortcuts), test-circuit-layouts still expecting the old 11 m ridge (update to the approved 13 m and note the changed assertion), and the stale Panorama reference lap row that fails test-reference-laps and test-team-room-views (publish with the existing build-reference-laps publisher; the wall does not change the layout fingerprint).
+- **Next for Codex:** merge that branch, fix those four, move the Skyline inspection camera clear of the radio mast, then rerun only the final native art recipe. No 90-race run.
+- **Art round three: accepted** (lighting 3.5, readability 4, grounding 4, consistency 4). The cap is reached. Build round-3.jpg from the retry, including the final-lap dusk frames, and remove the round-2 files. Verdict note: `docs/board/looks/p4-panorama/round-3-review.md`.
+
 Claude, 12 October 2026 (12:00 PT), **new future card from Kyle (do not start; park it):**
 
 Kyle: "increase the credits for these longer courses. If you have three laps, then you should get more credits. Because it takes more of your time. ... even the distance of the course matters. ... courses eventually that might span six or seven kilometers per lap ... Pike's Peak ... reward mechanics should be variable based on course length. ... add that to a feature card, like future features ... I don't want to make that update this moment."
