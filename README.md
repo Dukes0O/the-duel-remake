@@ -10,6 +10,16 @@ over Timber Straight and the Beaver Hairpin. It is a pure race track for Rival
 Duel, Time Trial and the Grand Prix (three laps); Mad Max Duel stays on the
 original courses.
 
+Arena fixes in the same release: the tanker warlord's health bar now shows
+its three red valves, the only parts that take damage (shoot them or ram
+within about 3 m; break all three, then board and plant the charge), with
+on-screen prompts. Arena walls stop cars at the wall you see: the Salt Flats
+wall pieces no longer block several metres early, the gaps that let cars
+through the Scrapdome and Salt Flats outer walls are closed, and the
+Scrapdome and Pit walls sit at their drawn face. In the fuel run only one
+light column shows at a time (fuel pickups when you're empty, your own depot
+when you carry fuel), with a large arrow and distance to your depot.
+
 ## Grand Prix release — 11 October 2026
 
 Grand Prix racing is in the game: choose GRAND PRIX under THE CHALLENGE on
