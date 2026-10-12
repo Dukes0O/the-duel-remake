@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T22:04:30.586Z
+Observed at: 2026-10-12T22:10:10.821Z
 
-Observation commit: 93b42642f26c71dd775b31c82003ae5d8a014873
+Observation commit: 61a3c9c9869229eee3156fd11417cf1ddf47938e
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 93b42642f26c71dd775b31c82003ae5d8a014873
+Integration HEAD: 61a3c9c9869229eee3156fd11417cf1ddf47938e
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,12 +29,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/deep-audio | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio |
-| codex/deep-save | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-save |
+| codex/deep-art-src | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
+| codex/deep-audio | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio |
+| codex/deep-save | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-save |
 | codex/p4-finish | 0 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
-| codex/p4-panorama | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
+| codex/p4-panorama | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 1 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/tools/callback-diagnostics | 7 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -48,9 +48,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/deep-audio | unknown | 2026-10-12T15:08:55-07:00 | 0 | last commit 2026-10-12T15:08:55-07:00 | docs/changes/DEEP-AUDIO.md, public/assets/audio/CREDITS.md, public/assets/audio/deep/bubbles.flac, public/assets/audio/deep/cave.flac, public/assets/audio/deep/engine-muffle.ogg |
+| codex/deep-save | unknown | 2026-10-12T15:06:36-07:00 | 0 | last commit 2026-10-12T15:06:36-07:00 | docs/changes/DEEP-SAVE.md, src/app.js, src/deep/deep-discovery.js, src/deep/deep-hints.js, src/progression.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 0 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
-| codex/p4-gp-existing | unknown | 2026-10-12T15:03:54-07:00 | 0 | last commit 2026-10-12T15:03:54-07:00 | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
-| codex/p4-panorama | unknown | 2026-10-12T15:01:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/P4-PANORAMA.md, src/app.js |
+| codex/p4-gp-existing | unknown | 2026-10-12T15:08:52-07:00 | 0 | last commit 2026-10-12T15:08:52-07:00 | docs/changes/P4-GP-EXISTING.md, src/course.js, src/race-field.js, src/road-surface.js, src/screen-menu.js |
+| codex/p4-panorama | unknown | 2026-10-12T15:06:19-07:00 | 0 | last commit 2026-10-12T15:06:19-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-panorama/round-3-review.md, docs/changes/P4-PANORAMA.md, src/app.js |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-GP-EXISTING.md, docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js |
 | codex/p4-summit | unknown | 2026-10-12T12:41:41-07:00 | 0 | last commit 2026-10-12T12:41:41-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuits/index.js |
 | codex/tools/callback-diagnostics | unknown | 2026-10-04T20:18:20-07:00 | 7 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -67,9 +69,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 371,020 B | +70,826 B | 5,000,000 B |
+| Added bytes in last merge | 371,020 B | +0 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 397,771,776 B | +162,816 B | unavailable |
+| Git objects | 398,655,488 B | +883,712 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -78,7 +80,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 93b42642f26c71dd775b31c82003ae5d8a014873
+- Local integration/wasteland: 61a3c9c9869229eee3156fd11417cf1ddf47938e
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
