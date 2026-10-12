@@ -127,7 +127,9 @@ function validateCombat(packet) {
     !Number.isInteger(packet.baselineRaces)||packet.baselineRaces<1||
     !Number.isFinite(packet.crossbowAim?.hitRate)||!Number.isFinite(packet.ownBombs?.maxSpeedLossPct))
     throw Error('Missing actual current-rules combat balance aggregate.');
-}async function previousGreen(date,dependencies) {
+}
+
+async function previousGreen(date,dependencies) {
   const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&
     name.slice(6,16)<=date).sort().reverse();
   for(const name of names) {

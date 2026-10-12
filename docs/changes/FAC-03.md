@@ -20,7 +20,8 @@ display power is not measured. Hidden, headless or busy timing is refused.
 Start the released Harbour Lights night eight-car Grand Prix through App and
 keep its normal simulation, HUD/audio and renderer loops running through the
 native countdown with idle inputs. Use normal kits and main/rear views. Take
-one 120-interval sample per quality. Raw delivered p95 must be <=18.5 ms;
+one 120-interval sample per quality. Attempt both qualities once even if the first
+throws; retain its actual error and fail the frame stage, with no retry. Raw delivered p95 must be <=18.5 ms;
 complete scene initialization, including assets/kits/world, must be <1 s.
 Generic frame behavior and default headless browser arguments stay exact.
 Headed hooks began only after FAC-07 merged; shared QA bundle and private audio
@@ -58,8 +59,9 @@ overriding the card's night-push sentence. Future integration command:
 Tests came first: original Night import and headed checks failed, coordinator
 fixtures reproduced six errors, publication fixtures reproduced three errors,
 and two commit-edge fixtures reproduced rollback failures. Reuse import and
-the exact single-balance plan failed before their code. Current controlled
-Night tests pass 27/27; headed harness tests passed 14/14. These are controlled
+the exact single-balance plan failed before their code. A genuine native-error fixture
+proved the old loop skipped Performance, then both-quality handling passed. Current controlled
+Night tests pass 28/28; headed harness tests passed 14/14. These are controlled
 fixtures, never native Night passes. No original numeric target is changed.
 Removed only obsolete temporary witness assertions under Claude's accepted
 correction; original combat tool/tests are byte-identical to be776e50.

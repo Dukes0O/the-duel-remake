@@ -1,4 +1,4 @@
-import { assertNightFrameContext, summarizeNightFrames, reuseNightFrames } from './scenarios/frame-pacing.mjs';
+import { assertNightFrameContext, summarizeNightFrames, reuseNightFrames, runNightFrames } from './scenarios/frame-pacing.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { EventEmitter } from 'node:events';
@@ -322,4 +322,21 @@ test('Night browser frame row reuses the same leaf without measuring, and failed
   }}),/18.5/);
   await assert.rejects(()=>reuseNightFrames(context,{...operations,packetPath:packetPath.replace('night-owned','night-old')}),/same|owned/i);
   assert.equal(measurements,0);assert.equal(writes,1,'only a valid original is copied');
+});
+test('each official quality is attempted once and a first native error stays failed',async()=>{
+  const qualities=[],packets=[];
+  await assert.rejects(()=>runNightFrames({outputDir:root+'/owned-night'}, {
+    measure:async(_,quality)=>{
+      qualities.push(quality);
+      if(quality==='high')throw Error('High native scene initialization failed');
+      return report('Performance');
+    },
+    writeText:async(_,text)=>packets.push(JSON.parse(text)),
+  }),/High native scene initialization failed/);
+  assert.deepEqual(qualities,['high','performance'],'no quality is skipped or retried');
+  assert.equal(packets.length,1);assert.equal(packets[0].reports.length,2);
+  assert.equal(packets[0].reports[0].passed,false);
+  assert.match(packets[0].reports[0].error,/native scene initialization failed/);
+  assert.equal(packets[0].reports[1].quality,'Performance');
+  assert.throws(()=>validateFramePacket(packets[0]),'the partial real packet cannot pass');
 });

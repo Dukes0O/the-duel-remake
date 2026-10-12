@@ -118,14 +118,22 @@ export async function reuseNightFrames(context,{packetPath,priorPassed,
   await writeText(join(context.outputDir,'frame-pacing.json'),JSON.stringify(reused,null,2)+'\n');
   return reused;
 }
-async function runNightFrames(context) {
-  assertNightFrameContext(context, process.env, inspectNightProcesses());
-  const reports = [];
-  for (const quality of ['high', 'performance']) reports.push(await measureNight(context, quality));
-  const packet = {schema: 1, mode: 'night-simple', reports};
-  await writeFile(join(context.outputDir, 'frame-pacing.json'), JSON.stringify(packet, null, 2) + '\n');
+export async function runNightFrames(context,{measure=measureNight,writeText=writeFile}={}) {
+  const reports=[],failures=[];
+  for(const quality of ['high','performance']) {
+    try{reports.push(await measure(context,quality));}
+    catch(error) {
+      const failed={quality:quality==='high'?'High':'Performance',passed:false,error:error.message||String(error)};
+      reports.push(failed);failures.push(failed);
+    }
+  }
+  const packet={schema:1,mode:'night-simple',reports,failures};
+  await writeText(join(context.outputDir,'frame-pacing.json'),JSON.stringify(packet,null,2)+'\n');
+  if(failures.length)throw Error(failures.map(row=>row.quality+': '+row.error).join('; '));
   validateFramePacket(packet);
+  return packet;
 }
+
 async function measure(context, quality) {
   await context.navigate(`${entry}?frame-pacing=${quality}`);
   await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
