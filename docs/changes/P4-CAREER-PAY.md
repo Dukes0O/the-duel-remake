@@ -37,3 +37,7 @@ The Director requests two checks for the new positive-pay path: a near-ceiling w
 ## Carried ghost safety cases, before tests
 
 The Director requires the precise retained-card GP storage and lap fixtures on this pay source. Carry count and byte capacity rejection, exact old current/archive bytes, damaged legacy sample rejection, native lap start/end clocks, quicker flying lap replacement and qualifying exclusion unchanged. The session query gets the explicit grand-prix-career override required by this slice. Add direct partial-race and invalid-capture rejection cases; no admission limit, timing bound, legacy-byte assertion or shared test machinery changes.
+
+## Browser scope, before code
+
+The Director grants tools/scenarios/grand-prix-pay.mjs using the existing private harness: one actual Pacific three-lap race, the existing legal driver serialized without rewriting its controls, memory storage, career dev enabled, actual result screenshot, positive-credit and duplicate-byte checks. Pacific is unscripted, so its driver does not call the scripted-course line helpers. No shortened target, forced result, frame sample, paired packet or shared harness edit. Run after the save/ghost checks in one available heavy slot.
