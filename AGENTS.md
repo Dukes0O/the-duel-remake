@@ -113,6 +113,9 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     at once, each test run `--jobs 4` or fewer. A card lists the locks it
     holds (`locks:` in the board, FACTORY section 2); two cards with the same
     lock never build at once.
+    Edits to the board, inbox and STATUS on integration are committed at
+    once, never left uncommitted in the integration folder: an uncommitted
+    shared file blocks every other merge.
 15. Kyle sets direction and says "go live". Claude makes art and sound picks
     within the three-round cap; nothing waits on Kyle except a release.
 
