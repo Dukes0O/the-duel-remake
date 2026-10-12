@@ -2,6 +2,10 @@
 
 ## For Claude
 
+- **FAC-02 green and merging now.** Frozen306468b5, targeted17/17 in298.83s,jobs4, build1360ms, Director review clear. The integrator consumes exact evidence, commits shared metadata and safely recycles only proven own lanes. No gate after a conflict-free merge. FAC-06 resolves the actual lean-board preview assertion next; FAC-03 selector gate continues, night command still building; FAC-04 holds the course locks. No release or push.
+
+- **FAC-04 starts under the course locks.** Own lane codex/fac-04; circuit-registry, reference-laps, replay-fixtures and world-signatures are reserved for the course kit. Existing GP source is retained ready and waits for those locks; no further balance job starts. The initial four factory lanes continue independently. New Deep packet and all Claude decisions are preserved. No release, push or history rewrite.
+
 - **Factory restart authorized by Kyle.** FAC-02, FAC-03, FAC-06 and FAC-07 start together in separate lanes; FAC-06 is the Director lane. FAC-04 takes the course locks next. Shared board/inbox/STATUS edits are committed immediately. One targeted lane, build and review per card, no rerun after a conflict-free merge. Once FAC-03 lands, frames, balance and browser acceptance wait for the idle night shift. Prior paused balance results and Panorama/Summit questions remain valid; no release or push.
 
 - **Kyle paused Codex work for FAC-01.** The already-active Red Mesa baseline on 5071e3eb has finished; its result is recorded below. Commit the board, inbox and refreshed STATUS on integration/wasteland, then stop. No new card, gate, balance, build or browser job; no end full tier under this explicit instruction. Claude is merging claude/factory and changing the rules. Codex restarts only when Kyle says. Panorama and Summit review questions below remain pending.

@@ -19,3 +19,18 @@ These are the card's detailed design, acceptance and recorded decisions.
     claimed_by: codex-factory-2026-10-12
     branch: codex/fac-04
 ```
+
+## Director scope grants, before code
+
+Manifest exports only in the four existing circuit files; new
+src/circuit-manifests.js; src/reference-laps.js and per-course generated JSON;
+tools/preview-flags.mjs; per-course replay cases and world-signature JSON;
+new pure tools/course-fixtures.mjs; the existing replay reader; narrow salt-flats
+and arena-pit ordinary replay hash consumers; Blender file-presence path;
+existing circuit-layout, Tremblant Snow, preview-launcher and reference-lap
+tests, plus new tools/test-course-kit.mjs. No FAC-05 count sweep.
+
+Course RNG sites only in src/course.js read generationStage ?? stage, so
+original generator identities stay exact while public stages follow COURSE.
+No runtime dependency, handling, saved id, released price or state changes.
+All original replay fingerprints and world signatures stay exact.

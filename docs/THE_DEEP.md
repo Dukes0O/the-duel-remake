@@ -298,7 +298,8 @@ the Kelp Coast. Boats (B0) stay a separate plan after FINISH-DEEP.
 { id: 'kelp-coast', circuit: 'pacific-canyon', switch: 'the-deep',
   ramp: { atDistance: <metres along the course>, side: 'left' | 'right',
           length: 120, endDepth: 8 },
-  trail: [ { x, z, depth, width, surface: 'sea-floor' } ],   // closed loop, metres
+  trail: [ { x, z, depth, width, surface: 'sea-floor',      // closed loop, metres
+              kelp, grass, rock } ],                     // optional look, 0 to 1
   places: [ { id, name, fromIndex, toIndex } ],              // title cards
   pearls: [ { id, trailIndex, offset } ],
   spots:  [ { creature, trailIndex, count } ] }
@@ -340,10 +341,19 @@ renderer and sound and never written by them: `deepEntered {zoneId}`,
 **Coordinates:** trail and spot `x`, `z` are world metres in the circuit's
 own frame, `depth` is metres below the surface.
 
+**Trail look fields:** `kelp`, `grass` and `rock` on a trail point are
+optional numbers from 0 to 1 (default 0) saying how much kelp forest,
+seagrass and bare rock surround that stretch. DEEP-ZONE keeps them when it
+checks a zone; only the look reads them.
+
 **Scene hook:** `src/deep/underwater-scene.js` (DEEP-WATER) exports
-`createUnderwaterScene({zone, quality})` returning `{group, update(car, dt),
-dispose()}`. DEEP-ZONE adds the one call in the renderer; DEEP-WATER owns
-everything behind it, including the waterline and bubbles on the way down.
+`createUnderwaterScene({zone, quality, renderer, scene})` returning
+`{group, update({car, camera, seconds}), dispose()}`. `car` is read-only
+`{x, y, z, heading, speed}`. The scene adds its own lights, fog and water to
+`scene` and removes them on dispose. DEEP-ZONE makes the one call in the
+renderer when the player dives and disposes it on the way back up; DEEP-WATER
+owns everything behind it, including the waterline and bubbles on the way
+down.
 
 **Logging** measures the car against the fixed `spots` in the zone data,
 never against the moving creatures, so the log does not depend on the
