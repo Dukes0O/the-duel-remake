@@ -16,6 +16,7 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {PIT} from '../src/pit-lane.js';
 import {useRacingLine} from './track-script-drive.mjs';
 import { Course } from '../src/course.js';
+import {renderedGroundHeight} from '../src/rendered-ground.js';
 
 assert.equal(SUMMIT_RUN.id, 'summit-run');
 assert.equal(SUMMIT_RUN.flag, 'summit-run');
@@ -57,6 +58,13 @@ for(const bounds of SUMMIT_GALLERY_BOUNDS){
   assert.equal(actor.height,(accessor.max[1]-accessor.min[1])*row.scale[1]);
   if(bounds.name.includes('pillar'))assert.ok(Math.abs(zLocal)>7,'visible pillars are at the tile ends, not the old centre collider');
 }
+const galleryAnchors=SUMMIT_RUN.kitPlacements.filter(row=>row.id==='gallery').map(row=>{
+  const ground=course.groundAt(row.s,row.lateral);
+  const rendered=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
+  assert.ok(Number.isFinite(rendered),'every actual Gallery placement has rendered ground');
+  return {s:row.s,ground:ground.y,rendered,delta:rendered-ground.y};
+});
+console.log('Gallery actual anchor witness: '+JSON.stringify({count:galleryAnchors.length,maxDelta:Math.max(...galleryAnchors.map(row=>Math.abs(row.delta))),anchors:galleryAnchors}));
 const actualRoof=SUMMIT_GALLERY_BOUNDS.find(bounds=>bounds.name==='gallery-heavy-concrete-roof');
 assert.equal(course.features.tunnels[0].height,actualRoof.min[1]*1.1,'camera underside agrees with the actual thick fascia');
 assert.ok(actualRoof.min[1]*1.1>=4.5,'approved road headroom stays at least 4.5 m');

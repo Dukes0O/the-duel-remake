@@ -211,3 +211,14 @@ will remain visible and receive one bounded investigation, not a waiver.
 The native art viewpoints now derive from the real named jump, hairpins, pit
 straight, crest, authored Gallery bounds and endpoint before capture. Approximate
 draft-distance labels are removed; existing scene snapshots remain read-only.
+
+The source side review confirms negative lateral is the driver's right:
+Course.worldAt maps positive lateral to local +X; the vehicle convention names
++X driver-left. ArrowRight supplies positive steer, which produces negative
+yaw and then negative lateral in native driving. The right pit uses the same
+-1 convention. Open Road at -18 is therefore right of the Gallery; no layout
+change or marker change is required.
+
+Before a grounding fix, the existing focused test measures all actual Gallery
+kit anchors through the renderer's pure renderedGroundHeight path and reports
+their differences from groundAt. No agreement or failure is claimed in advance.
