@@ -131,7 +131,7 @@ for (const mph of [70, 110]) {
 
 // ---- the other circuits ------------------------------------------------------
 
-test('Harbour Lights: every kit barrier stands at one of the circuit walls, and Panorama Ridge adds no extra solids', () => {
+test('Harbour Lights: every kit barrier stands at one of the circuit walls, and Panorama Ridge uses its actual pit kit divider', () => {
   const harbour = new Course(HARBOUR_LIGHTS, 1989), boxes = harbour.features.obstacles.filter(item => item.barrier);
   const reach = (x, z) => boxes.reduce((best, box) => {
     const dx = x - box.x, dz = z - box.z, c = Math.cos(box.heading), s = Math.sin(box.heading);
@@ -145,7 +145,12 @@ test('Harbour Lights: every kit barrier stands at one of the circuit walls, and 
   // The pieces beside the run-off roads are cut to their own lengths and stand within a metre and a half of a wall box.
   assert.ok(worst < 1.5, `a barrier piece stands ${worst.toFixed(2)} m from the nearest solid wall`);
   assert.equal(harbour.features.kitSolids.length, 0, 'it marks no piece solid: its walls are the script walls');
-  assert.ok(PANORAMA_RIDGE.kitPlacements.every(piece => piece.solid !== true),
-    'approved Panorama art adds no extra solids beside its script walls');
-  assert.equal(new Course(PANORAMA_RIDGE, 1989).features.kitSolids.length, 0);
+  const panorama = new Course(PANORAMA_RIDGE, 1989);
+  const pitPieces = PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id === 'pit-wall');
+  assert.ok(pitPieces.length > 0 && pitPieces.every(piece => piece.solid === true));
+  assert.ok(PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id !== 'pit-wall').every(piece => piece.solid !== true),
+    'only the approved Panorama dividing pit wall becomes a kit solid');
+  assert.equal(panorama.features.kitSolids.length, pitPieces.length);
+  assert.ok(panorama.features.kitSolids.every(box => box.id.endsWith('-pit-wall')));
+  assert.equal(panorama.features.walls.filter(wall => wall.pitWall).length, 0);
 });

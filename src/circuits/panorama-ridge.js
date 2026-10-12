@@ -97,8 +97,10 @@ function panoramaPlacements(road) {
   for (let s = 70; s <= 420; s += 55) {
     placements.push({id: 'grandstand', s, lateral: 25, heading: -Math.PI / 2});
   }
-  for (let s = 100; s <= 380; s += 4) {
-    placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2});
+  const pitStraight = road.pieces.find(piece => piece.name === 'Pit Straight');
+  // Match the existing 65 m entry/exit openings of the actual pit divider.
+  for (let s = Math.max(0, pitStraight.s0) + 75; s < pitStraight.s1 - 75; s += 4) {
+    placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2, solid: true});
   }
   for (const name of ['Hell Gate', 'The Cutting', 'Forrest Elbow', 'Murray Corner']) {
     const corner = road.pieces.find(piece => piece.name === name);
@@ -138,7 +140,7 @@ export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
   fieldPace: Object.freeze({easy: .75, medium: .725, hard: .716}),
   fieldFollow: Object.freeze({leadBraking: 1.6, wallRoom: 1,
     firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})}),
-  pitLane: Object.freeze({straight: 'Pit Straight', side: 'right'}),
+  pitLane: Object.freeze({straight: 'Pit Straight', side: 'right', kitDivider: true}),
   lightPath: Object.freeze({axis: 'race-progress', palette: 'mountain-sunset', keyframes: Object.freeze([
     Object.freeze({at: 0, look: 'golden'}),
     Object.freeze({at: 1 / 3, look: 'golden'}),

@@ -316,6 +316,14 @@ export function trackScriptSolids(course) {
   // After the planted scenery, so the trees stand exactly where they did.
   f.kitSolids = kitSolids(course);
   f.obstacles.push(...f.kitSolids);
+  if (lane && course.def.pitLane.kitDivider === true) {
+    if (!(course.def.kitPlacements ?? []).some(piece => piece.id === 'pit-wall' && piece.solid === true))
+      throw new TrackScriptError('An authored pit divider requires solid pit-wall kits.');
+    // Keep the original divider through scenery construction above, then use
+    // only the actual kit colliders and drawing. Seeded tree placement stays exact.
+    f.walls = f.walls.filter(wall => !wall.pitWall);
+    f.obstacles = f.obstacles.filter(obstacle => !obstacle.pitWall);
+  }
   course.obstacleBuckets = new Map(); course.rockBuckets = new Map();
   const buckets = Math.ceil(course.length / 64);
   course.bucketCount = buckets;

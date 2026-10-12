@@ -12,6 +12,7 @@ import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {readFileSync} from 'node:fs';
 import {compareFrameCosts} from './scenarios/p4-panorama-frames.mjs';
+import {PIT} from '../src/pit-lane.js';
 
 const near = (a, b, e = 1e-6) => assert.ok(Math.abs(a - b) < e, a + ' != ' + b);
 const course = new Course(PANORAMA_RIDGE, 1989);
@@ -46,6 +47,29 @@ test('approved 13 m ridge keeps the original centreline and other width targets'
   for (const fence of PANORAMA_RIDGE.kitPlacements.filter(entry => entry.id === 'catch-fence'))
     near(Math.abs(fence.lateral), road.halfWidthAt(fence.s) + 1.8);
 });
+test('Panorama uses its drawn kit divider once, with only the existing pit openings', () => {
+  const pits = PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id === 'pit-wall');
+  const solids = course.features.kitSolids.filter(box => box.id.endsWith('-pit-wall'));
+  const lane = course.pitLane;
+  assert.equal(PANORAMA_RIDGE.pitLane.kitDivider, true);
+  assert.ok(pits.length > 0 && pits.every(piece => piece.solid === true));
+  assert.equal(solids.length, pits.length);
+  assert.ok(solids.every(box => course.features.obstacles.includes(box)));
+  assert.ok(solids.every(box => [...course.obstacleBuckets.values()].some(bucket => bucket.includes(box))),
+    'actual pit kit boxes participate in native collision queries');
+  assert.equal(course.features.walls.filter(wall => wall.pitWall).length, 0);
+  assert.equal(course.features.obstacles.filter(wall => wall.pitWall).length, 0);
+  assert.ok(pits[0].s - 2 >= lane.entry + PIT.taper);
+  assert.ok(pits.at(-1).s + 2 <= lane.exit - PIT.taper);
+  for (let i = 1; i < pits.length; i++) near(pits[i].s - pits[i - 1].s, 4);
+  const legacy = new Course({...PANORAMA_RIDGE,
+    pitLane: {...PANORAMA_RIDGE.pitLane, kitDivider: false},
+    kitPlacements: PANORAMA_RIDGE.kitPlacements.map(piece => ({...piece, solid: false}))}, 1989);
+  assert.deepEqual(course.features.trees, legacy.features.trees, 'divider replacement keeps seeded trees exact');
+  assert.deepEqual(pits.map(piece => piece.s), legacy.features.walls.filter(wall => wall.pitWall).map(wall => wall.s));
+  assert.ok(course.features.walls.length > 0, 'all ridge script walls remain');
+});
+
 test('approved full-kit frame policy keeps absolute boundaries and sample guards', () => {
   const row = {look: 'final-dusk', scales: [1], ratios: [1], gpuSupported: true,
     pacing: {cpu: {samples: 360, p95: 18.5}, gpu: {samples: 300, p95: 18.5},
@@ -173,6 +197,11 @@ test('Panorama starts a genuine native three-lap eight-car Grand Prix', () => {
     const grid = [d.state, ...d.state.opponents];
     near(Math.min(...grid.map(racer => racer.s)), -77);
     assert.ok(grid.every(racer => racer.s - 2.5 >= straight.s0 && racer.s + 2.5 < straight.s1));
+    for (const racer of grid) for (const body of [-2.5, 2.5]) {
+      const phase = d.course.phase(racer.s + body);
+      assert.ok(phase < d.course.pitLane.entry || phase > d.course.pitLane.exit,
+        'the whole native grid stays clear of both pit openings');
+    }
     for (let at = straight.s1 - 150; at < hell.s1; at += 5) near(d.course.roadHalfWidthAt(at), 7.5);
     assert.deepEqual(d.course.def.fieldPace, {easy: .75, medium: .725, hard: .716});
     assert.deepEqual(d.course.def.racingLine, {lineMargin: 2.6, lineSwing: .6, holdRacers: true});

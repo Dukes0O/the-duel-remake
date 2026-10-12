@@ -138,7 +138,53 @@ check and its strict 1.5 m threshold unchanged. No physical guard is relaxed.
 Native skill-.95 useRacingLine is byte-exact across the sync; upstream driver
 changes only add optional winter tyres to other helpers, absent on Panorama.
 
+## Claude 12 October 10:00: pit transit, settled before code
+
+The final original 90 races remain frozen on cb35d5a7: player finishes
+30/28/29, all 630 computer finishes, opening pile-ups 0/11/7, wins
+100/86.7/86.7 percent, Medium 2.1 passes. Six unchanged target failures.
+The three-attempt cap is consumed. Keep the raw report and its fingerprints;
+no additional 90 races or changes to pace, skill, cars, seeds or targets.
+The final native art attempt failed honestly: the Stuttgart was knocked into
+the pit lane near s83 and crawled there before rejoining. No final sheet exists.
+
+Claude approves a physical divider and unplanned pit transit. Root grants
+src/pit-lane.js, src/race-field-driver.js, src/app.js,
+tools/track-script-drive.mjs, tools/test-pit-lane.mjs and the existing narrow
+barrier-test hook before code. Reuse pitAt, lane.offsetAt and PIT.limitMph.
+A read-only shared target guides only automatic controllers already in the
+lane, without a chosen stop. Existing planned stops, servicing, legal manual
+inputs, ordinary road steering and all random draws stay unchanged.
+
+Only Panorama uses pitLane.kitDivider: true. Its approved pit-wall kit spans
+the existing usable divider (centres 75 through 395 m), solid:true; openings
+at entry/exit remain. Keep the generic divider during scenery construction,
+then remove only its duplicate final pitWall boxes/drawing after actual kit
+solids exist. This preserves seeded trees and uses one real dividing wall.
+Actual grid centres -49/-53/-57/-61/-65/-69/-73/-77 remain before pit entry10,
+clear of exit463, so keep setback-43 and the original timing line.
+Source review found a stale chosen-stop flag on finished racers: their early
+finished branch returns before the later pitChoice cleanup. Before changing
+code, the Director approves ignoring that flag only for a finished racer.
+Racing chosen stops and servicing remain untouched. The existing transit
+fixture gains finished+stale-stop with the same limiter-length bound and a
+check that the retained flag itself is not mutated.
+Existing tests gain real divider/grid/opening and limiter-speed transit cases.
+The old no-extra-solids assertion now permits only the approved pit divider;
+all Harbour checks and physical thresholds stay exact. The final native art
+recipe may retry after source review/checks; no new art round or frames.
+Focused verification: all 46/46 existing pit, Panorama, barrier and ground
+checks pass in 44.906 s, no failures/skips. Limiter-length transit succeeds for
+native/demo players and racing/finished/stale-stop computer cars; planned
+service, manual inputs, real collider/grid/opening guards and seeded trees
+pass unchanged. Source review is clear after the finished-flag correction.
+Lane/build, final native art retry and reference publication remain pending.
+
 ## Removed
+
+Replace Panorama's generic pit divider boxes/drawing with its actual solid kit
+divider after scenery construction. Replace road-line steering inside an
+unchosen pit lane with the existing lane line and limiter; no new recovery.
 
 Replace incomplete road-only presentation with approved kits/landmarks/landform.
 Round1 sheet/note removed with verdict above. Round2 consumed sheet/note removed
