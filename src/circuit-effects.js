@@ -329,8 +329,9 @@ function addKitMotion(group, course) {
       // Chairs shrink away at the ends of the line rather than popping out.
       const grow = smooth(Math.min(travel, total - travel) / 8);
       position.copy(point); position.y -= CHAIR_HANGER * grow;
-      kits.setPlacementPose(index, matrix.compose(position, rotation, scale.setScalar(Math.max(.001, grow))));
+      kits.setPlacementPose(index, matrix.compose(position, rotation, scale.setScalar(Math.max(.001, grow))), false);
     }
+    kits.refresh();
   };
   registerSceneSystem(group, { animate(seconds) {
     const kits = trackKitsOf(group);

@@ -118,6 +118,8 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
     'beaver-hairpin': { brakeBoard: 100, line: 'Brake on the spur, before the ice if you can.', note: 'The second ice patch is on the spur just before the hairpin. Winter tyres hold; summer tyres do not.' },
   } },
   markings: 'circuit', light: MORNING,
+  // The many-part pieces are joined by material when loaded: the same picture in far fewer draws.
+  mergeKitMeshes: ['pit-garage', 'pit-wall', 'ski-lodge', 'grandstand', 'chairlift-chair', 'chairlift-tower'],
   // The land beyond the trees rises gently, so the snowy hills behind it carry the skyline.
   relief: { from: 25, to: 100, scale: .38 },
   // The forest crowds the road from 13 m beyond the edge, as in Tremblant Woods; here every planted pine is

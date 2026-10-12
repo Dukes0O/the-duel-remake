@@ -9,7 +9,8 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const entry = '/tools/menu-check.html?flags=tremblant-woods,tremblant-snow,grand-prix';
-const COURSE_ID = 'tremblant-snow';
+// TREMBLANT_SNOW_COURSE=tremblant-woods measures the autumn circuit the same way, for comparison.
+const COURSE_ID = process.env.TREMBLANT_SNOW_COURSE || 'tremblant-snow';
 // Card limit (Claude, 11 October): delivered 95th percentile frame at most 18.5 ms with eight cars on the grid.
 const P95_LIMIT_MS = 18.5;
 const PACING = process.env.TREMBLANT_SNOW_PACING !== '0';
@@ -104,7 +105,7 @@ export async function run(context) {
     // Landmark views from a free camera (High only; the pictures are for Claude's finishing pass).
     if (quality === 'high') {
       await startRace(context, 'duel');
-      await context.evaluate(`(() => { const hud = document.querySelector('#race-hud'); if (hud) hud.style.visibility = 'hidden'; document.querySelectorAll('details').forEach(node => { node.open = false; }); })()`);
+      await context.evaluate(`(() => { const hud = document.querySelector('#race-hud'); if (hud) hud.style.visibility = 'hidden'; document.querySelectorAll('details').forEach(node => { node.open = false; node.style.display = 'none'; }); })()`);
       for (const [name, from, to] of VIEWS) {
         await context.evaluate(`window.__views.look(${JSON.stringify(from)}, ${JSON.stringify(to)})`);
         await context.screenshot(`tremblant-snow-view-${name}`);
@@ -121,7 +122,7 @@ export async function run(context) {
       const s = window.__qaApp.duel.state;
       return {cars: s.opponents.length + 1, lights: s.field.start.lights, tyre: s.tyre};
     })()`);
-    if (lamps.cars !== 8 || lamps.tyre !== 'winter') throw Error(`${quality}: the grid is wrong ${JSON.stringify(lamps)}`);
+    if (lamps.cars !== 8 || (COURSE_ID === 'tremblant-snow' && lamps.tyre !== 'winter')) throw Error(`${quality}: the grid is wrong ${JSON.stringify(lamps)}`);
     // Hold the lights on while measuring: a sample is cancelled if the race changes state under it.
     await context.evaluate(`(() => { const s = window.__qaApp.duel.state; s.field.hold = 1e6; s.countdown = 1e6; })()`);
     await context.screenshot(`tremblant-snow-grid-lamps-${quality}`);
