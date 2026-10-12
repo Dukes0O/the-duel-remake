@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **FAC-04 merged green.** Exact source 8cc2d45a: canonical 309/309, zero failures/unrun, 791.07 s, jobs 4; build 1.13 s; one ordinary review clear. Courses register through their own manifests; reference, replay and world data are per course, with all original values and generation identities preserved. GP export order follows release order, membership unchanged. FAC-05 and FAC-08 start next. No clean-merge rerun, release or push.
+
 - **Factory course locks remain with FAC-04, then FAC-05.** Panorama and Summit now have explicit factory prerequisites and remain ready in their retained lanes while those locks are held. Claude's Hell Gate fix and Summit design decisions are preserved; no source work resumes early. FAC-04 is frozen at 8cc2d45a, corrected preview review clear, canonical gate still running. No new heavy check, release or push.
 
 - **FAC-03 needs the real off-balance acceptance.** The removed wasteland2 flag cannot produce an off run. Actual undiscovered/discovered memory-only starts are now proved, but the old armor/UFO-max bands apply to discovered rules only. The explicit off tool currently reports an honest bounded witness and unsupported acceptance, exits1, and does not pretend to run the full off balance. Please settle either the complete applicable native base/off policies and targets, or the intended current pair. No new targets, forced upgrades or green off result will be invented. The night command is still building; this part stays incomplete while the other factory cards proceed.

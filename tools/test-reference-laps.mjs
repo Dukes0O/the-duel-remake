@@ -1,3 +1,4 @@
+import {publishReferenceSet} from './build-reference-laps.mjs';
 import assert from 'node:assert/strict';
 import {COURSE} from '../src/config.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
@@ -216,3 +217,17 @@ for (const target of targets) {
 }
 
 console.log(`Reference laps: ${checks} checks.`);
+
+// Per-course publication must remain complete and atomic, without native reruns.
+{
+  const rows=Object.fromEntries(Object.entries(REFERENCE_LAPS).filter(([key])=>key.startsWith('pacific-canyon|')));
+  const writes=[],renames=[],directories=[];
+  const output=new URL('../.qa-dist/reference-publication-fixture/',import.meta.url);
+  const operations={output,makeDirectory:path=>directories.push(path),write:(path,bytes)=>writes.push([path,bytes]),rename:(from,to)=>renames.push([from,to])};
+  await assert.rejects(async()=>publishReferenceSet({'pacific-canyon|route_a':rows['pacific-canyon|route_a']},operations),/every route/);
+  equal(writes,[],'a partial route set cannot publish any course');
+  equal(publishReferenceSet(rows,operations),1,'complete event publishes just its own course file');
+  equal(writes.length,1,'one course uses one atomic temporary file');
+  equal(renames.length,1,'completed data replaces the course file atomically');
+  equal(JSON.parse(writes[0][1]),rows,'publisher preserves every measured record value');
+}

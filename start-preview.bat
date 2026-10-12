@@ -8,7 +8,14 @@ rem its own folder, emptied on every build, so test runs never touch it and
 rem old builds never pile up.
 set "PREVIEW_PORT=5195"
 set "PREVIEW_DIR=.preview-dist"
-set "PREVIEW_FLAGS=seeker-rockets,warlords,fuel-run,arsenal,arsenal-wave3,salt-flats,bounty-hunt,crew-gear,fight-voices,cpu-crews,ambush-alley,convoy-raid,gunn,tollkeeper,blackiron,warlord-cards,panorama-ridge,harbour-lights,tremblant-woods,tremblant-snow,grand-prix,grand-prix-career,snow-world,the-deep"
+set "PREVIEW_FLAGS=seeker-rockets,warlords,fuel-run,arsenal,arsenal-wave3,salt-flats,bounty-hunt,crew-gear,fight-voices,cpu-crews,ambush-alley,convoy-raid,gunn,tollkeeper,blackiron,warlord-cards,grand-prix,grand-prix-career,snow-world,the-deep"
+set "COURSE_FLAGS="
+for /f "delims=" %%f in ('node tools\preview-flags.mjs') do set "COURSE_FLAGS=%%f"
+if not defined COURSE_FLAGS (
+  echo Course manifest flags could not be loaded.
+  exit /b 1
+)
+set "PREVIEW_FLAGS=%PREVIEW_FLAGS%,%COURSE_FLAGS%"
 set "PREVIEW_PATH=/tools/preview.html?flags=%PREVIEW_FLAGS%"
 set "PREVIEW_COMMIT=unknown"
 for /f %%c in ('git rev-parse HEAD 2^>nul') do set "PREVIEW_COMMIT=%%c"

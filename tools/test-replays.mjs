@@ -1,13 +1,12 @@
+import {loadReplayCatalog,writeReplayFingerprints} from './course-fixtures.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { COURSE } from '../src/config.js';
 import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 
-const fixturePath = fileURLToPath(new URL('./replays/recorded-inputs.json', import.meta.url));
 const expectedPath = fileURLToPath(new URL('./replays/expected-fingerprints.json', import.meta.url));
-const fixture = JSON.parse(readFileSync(fixturePath, 'utf8'));
+const catalog = loadReplayCatalog(), fixture = catalog.fixture;
 const expectedCategories = ['duel', 'time trial', 'Mad Max', 'chase', 'drift', 'checkpoint rush', 'stunt', 'practice'];
 const number = value => Number.isFinite(value) ? +value.toFixed(5) : value ?? null;
 const pick = (object, keys) => object ? Object.fromEntries(keys.map(key => [key, number(object[key])])) : null;
@@ -18,8 +17,8 @@ function validateFixture() {
   assert.deepEqual(fixture.framesPerSecond, [30, 60, 144]);
   assert.ok(Number.isSafeInteger(fixture.seed));
   assert.ok(Number.isInteger(fixture.durationTicks) && fixture.durationTicks >= 120 * 5);
-  assert.equal(COURSE.length, 19, 'fixture must be reviewed if the event roster changes');
-  assert.equal(fixture.cases.length, 21, '19 primary events plus time trial and Mad Max');
+  assert.equal(COURSE.length, new Set(fixture.cases.map(race=>race.eventId)).size, 'every enabled event has its reviewed fixture');
+  assert.equal(fixture.cases.length, COURSE.length + 2, 'one primary event each plus time trial and Mad Max');
   const eventIds = new Set(COURSE.map(event => event.id));
   const primary = new Set();
   const ids = new Set();
@@ -104,7 +103,7 @@ validateFixture();
 const recording = process.argv.length === 3 && process.argv[2] === '--record';
 assert.ok(recording || process.argv.length === 2, 'usage: node tools/test-replays.mjs [--record]');
 const baseline = recording ? { version: 1, fixtureVersion: fixture.version, stepHz: fixture.stepHz, fingerprints: {} }
-  : JSON.parse(readFileSync(expectedPath, 'utf8'));
+  : catalog.expected;
 if (!recording) {
   assert.equal(baseline.version, 1);
   assert.equal(baseline.fixtureVersion, fixture.version);
@@ -128,7 +127,7 @@ for (const race of fixture.cases) {
   }
 }
 if (recording) {
-  writeFileSync(expectedPath, JSON.stringify(baseline, null, 2) + '\n', 'utf8');
+  writeReplayFingerprints(baseline);
   console.log(`Recorded ${fixture.cases.length} replay cases at 30, 60 and 144 FPS in ${expectedPath}.`);
 } else {
   console.log(`Replay fingerprints: ${checks} checks passed across ${fixture.cases.length} cases, 19 events, eight categories, three FPS values and three runs.`);

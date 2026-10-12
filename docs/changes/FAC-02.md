@@ -60,5 +60,8 @@ Keep release approval and the exact-release-commit full gate.
 Final corrected source306468b5: canonical17/17 in298.83s,jobs4, build1360ms,
 Director review clear; actual integrator merged it at60ede817 and committed
 metadata immediately. Its own clean lane and branch were safely recycled/removed.
-Two green actual lanes, FAC-03 selector and FAC-07, merge promptly in this run;
-their commit times below provide the real five-minute acceptance evidence.
+The actual FAC-03 selector and FAC-07 merges were 5 minutes 5 seconds apart
+(02790f14 at 13:39:27 PT; c2dcc973 at 13:44:32 PT). Both green lanes merged
+promptly, but this pair does not establish the five-minute acceptance.
+The controlled independent two-merge fixture does; no actual timing pass is
+claimed for that pair.

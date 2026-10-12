@@ -1,0 +1,19 @@
+{
+  "eventId": "tremblant-snow",
+  "cases": [
+    {
+      "id": "tremblant-snow-duel",
+      "eventId": "tremblant-snow",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "tremblant-snow-duel": {
+      "30": "6e986962fd92a547535f5c1d93a43779419985d9efc36834a4a17c063f73f81d",
+      "60": "6e986962fd92a547535f5c1d93a43779419985d9efc36834a4a17c063f73f81d",
+      "144": "6e986962fd92a547535f5c1d93a43779419985d9efc36834a4a17c063f73f81d"
+    }
+  }
+}

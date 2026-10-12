@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-12T21:09:44.159Z
+Observed at: 2026-10-12T21:15:12.347Z
 
-Observation commit: 416c475ed9b81d45941ddd5b508870c79a2182ee
+Observation commit: 357001408e91d27ff2731c062b64e183ba6798d5
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 416c475ed9b81d45941ddd5b508870c79a2182ee
+Integration HEAD: 357001408e91d27ff2731c062b64e183ba6798d5
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -22,31 +22,6 @@ Last recorded full run: 2026-10-12T16:37:15.724Z; tested commit: 1a7a77e77c55a48
 
 | Switch | State |
 | --- | --- |
-| seeker-rockets | on |
-| convoy-raid | on |
-| tollkeeper | on |
-| blackiron | on |
-| warlord-cards | on |
-| arsenal-wave3 | on |
-| career-backup | dev |
-| hidden-road | on |
-| fuel-run | on |
-| bounty-hunt | on |
-| arsenal | on |
-| salt-flats | on |
-| crew-gear | on |
-| fight-voices | on |
-| cpu-crews | on |
-| ambush-alley | on |
-| gunn | on |
-| grand-prix | on |
-| grand-prix-career | dev |
-| snow-world | dev |
-| panorama-ridge | dev |
-| harbour-lights | on |
-| tremblant-woods | on |
-| tremblant-snow | on |
-| the-deep | dev |
 
 ## Lane branches
 
@@ -95,7 +70,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 16,520,147 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 312,082 B | +0 B | 5,000,000 B |
 | All `public/` | 288,151,563 B | +0 B | unavailable |
-| Git objects | 395,422,720 B | +8,192 B | unavailable |
+| Git objects | 395,555,840 B | +133,120 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +79,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 416c475ed9b81d45941ddd5b508870c79a2182ee
+- Local integration/wasteland: 357001408e91d27ff2731c062b64e183ba6798d5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -113,3 +88,5 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/master: matches local; cached commit 161e01a0aae942e25359ce3b7ae1e1963fc12e4c.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
 - Remote origin/integration/wasteland: behind local; cached commit cbb4e8975fe23911b9940499e0ae1ee17660955b.
+
+Issue: Feature catalog entry is unknown: ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag
