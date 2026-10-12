@@ -6,6 +6,7 @@ import {
   AMBIENCE,
   CAR_VOICES,
 } from './sound-bank.js';
+import { deepEngineCutoff } from './deep/deep-audio.js';
 import { SoundMixer } from './sound-mixer.js';
 import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
@@ -260,6 +261,7 @@ export class EngineAudio {
       Object.entries(SOUND_BANK)
         .filter(
           ([, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
+            cue.flag !== 'the-deep' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
             (cue.flag !== 'grand-prix' || grandPrix),
@@ -1085,6 +1087,9 @@ export class EngineAudio {
     if (!ctx || ctx.state !== 'running') return;
     if (this.paused !== st.paused) this.setPaused(st.paused);
     const t = ctx.currentTime;
+    const engineCutoff = cutoff => deepEngineCutoff(
+      cutoff, environment.deepDepth, this.flags.enabled('the-deep'),
+    );
     this._updateAmbience(st, environment, t);
     const dt = clamp(t - this.lastUpdateTime, 0, 0.1);
     this.lastUpdateTime = t;
@@ -1154,12 +1159,12 @@ export class EngineAudio {
         pitchResponse,
       );
     this.engineFilter.frequency.setTargetAtTime(
-      Math.min(
+      engineCutoff(Math.min(
         3000,
         (500 + rpm * 1700 + (throttleInput ? 600 : 0)) *
           voice.brightness *
           perspective.brightness,
-      ),
+      )),
       t,
       0.08,
     );
@@ -1204,12 +1209,12 @@ export class EngineAudio {
       const rate = engineRate(targetTone, band.toneHz, carPitch);
       sample.source.playbackRate.setTargetAtTime(rate, t, pitchResponse);
       sample.filter.frequency.setTargetAtTime(
-        Math.min(
+        engineCutoff(Math.min(
           3400,
           (700 + rpm * 1300 + load * 1000) *
             voice.brightness *
             perspective.brightness,
-        ),
+        )),
         t,
         0.06,
       );
@@ -1222,7 +1227,8 @@ export class EngineAudio {
         t,
         0.05,
       );
-      sample.body.filter.frequency.setTargetAtTime(145 + rpm * 135, t, 0.1);
+      sample.body.filter.frequency.setTargetAtTime(
+        engineCutoff(145 + rpm * 135), t, 0.1);
       sample.body.gain.gain.setTargetAtTime(
         running
           ? volume *
@@ -1234,7 +1240,8 @@ export class EngineAudio {
         t,
         0.075,
       );
-      sample.intake.filter.frequency.setTargetAtTime(820 + rpm * 980, t, 0.09);
+      sample.intake.filter.frequency.setTargetAtTime(
+        engineCutoff(820 + rpm * 980), t, 0.09);
       sample.intake.gain.gain.setTargetAtTime(
         running
           ? volume *
@@ -1258,7 +1265,7 @@ export class EngineAudio {
         pitchResponse,
       );
       sample.filter.frequency.setTargetAtTime(
-        (420 + rpm * 1150) * voice.brightness * perspective.brightness,
+        engineCutoff((420 + rpm * 1150) * voice.brightness * perspective.brightness),
         t,
         0.07,
       );
@@ -1268,7 +1275,8 @@ export class EngineAudio {
         t,
         0.065,
       );
-      sample.body.filter.frequency.setTargetAtTime(130 + rpm * 110, t, 0.1);
+      sample.body.filter.frequency.setTargetAtTime(
+        engineCutoff(130 + rpm * 110), t, 0.1);
       sample.body.gain.gain.setTargetAtTime(
         running
           ? coastVolume * voice.exhaust * perspective.exhaust * 0.45 * shiftCut
@@ -1286,12 +1294,12 @@ export class EngineAudio {
         pitchResponse,
       );
       sample.filter.frequency.setTargetAtTime(
-        Math.min(
+        engineCutoff(Math.min(
           3400,
           (700 + rpm * 1300 + load * 1000) *
             voice.brightness *
             perspective.brightness,
-        ),
+        )),
         t,
         0.06,
       );
@@ -1301,7 +1309,8 @@ export class EngineAudio {
         t,
         0.08,
       );
-      sample.body.filter.frequency.setTargetAtTime(145 + rpm * 135, t, 0.1);
+      sample.body.filter.frequency.setTargetAtTime(
+        engineCutoff(145 + rpm * 135), t, 0.1);
       sample.body.gain.gain.setTargetAtTime(
         running
           ? fallbackVolume * voice.exhaust * perspective.exhaust * shiftCut
@@ -1309,7 +1318,8 @@ export class EngineAudio {
         t,
         0.09,
       );
-      sample.intake.filter.frequency.setTargetAtTime(820 + rpm * 980, t, 0.09);
+      sample.intake.filter.frequency.setTargetAtTime(
+        engineCutoff(820 + rpm * 980), t, 0.09);
       sample.intake.gain.gain.setTargetAtTime(
         running
           ? fallbackVolume * voice.intake * perspective.intake * load * shiftCut

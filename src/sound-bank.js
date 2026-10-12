@@ -37,6 +37,15 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   type,
 });
 export const SOUND_BANK = {
+  // The Deep adapter lazy-loads these only during a submerged visit.
+  'deep.splash': cue('vehicle', {flag: 'the-deep', file: 'deep/splash.ogg', volume: .9, priority: 60, limit: 1}),
+  'deep.engine-muffle': cue('engine', {flag: 'the-deep', file: 'deep/engine-muffle.ogg', volume: .65, priority: 50, limit: 1}),
+  'deep.bubbles': cue('ambience', {flag: 'the-deep', file: 'deep/bubbles.flac', volume: .6, loop: true, priority: 30, limit: 1}),
+  'deep.sand-land': cue('vehicle', {flag: 'the-deep', file: 'deep/sand-land.ogg', volume: .7, priority: 50, limit: 2}),
+  'deep.logged': cue('interface', {flag: 'the-deep', file: 'deep/logged.ogg', volume: .75, priority: 65, limit: 1}),
+  'deep.pearl': cue('interface', {flag: 'the-deep', file: 'deep/pearl.ogg', volume: .75, priority: 65, limit: 1}),
+  'deep.whale': cue('ambience', {flag: 'the-deep', file: 'deep/whale.ogg', volume: .45, priority: 35, limit: 1}),
+  'deep.cave': cue('ambience', {flag: 'the-deep', file: 'deep/cave.flac', volume: .4, loop: true, priority: 30, limit: 1}),
   // P4 assets remain dormant until their owning race events land.
   'race.start.light': cue('interface', {flag: 'grand-prix', file: 'p4/race-start-light.ogg',
     volume: 1, priority: 80, limit: 2}),
