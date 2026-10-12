@@ -1,6 +1,6 @@
 # P4-GP-EXISTING
 
-Status: building. Nine existing circuits receive Grand Prix eligibility and bounded field tuning. No release. Remaining original circuits: Alpine Serpent (two attempts remain), Red Mesa, Neon Docks and Cloudbreak Skyway.
+Status: building. Nine existing circuits receive Grand Prix eligibility and bounded field tuning. No release. Remaining original circuits: Alpine Serpent (final attempt remains), Red Mesa, Neon Docks and Cloudbreak Skyway.
 
 ## Current behavior and settled design
 
@@ -36,6 +36,7 @@ In the table, wins and opening pile-ups are Easy/Medium/Hard counts out of 30 ea
 | Eifel Crown 2 | dc273258 | 357.24 | 8/0/0 | 0/2/1 | 1.8333 (1.5333) | OUT: wins, Medium opening and passing |
 | Eifel Crown 3 | 5cf0d412 | 210.74 | 23/5/10 | 1/0/0 | 1.7667 (1.3667) | OUT: Medium/Hard wins and passing; cap exhausted |
 | Alpine Serpent 1 | 5cf0d412 | 185.22 | 0/0/0 | 2/3/6 | 1.9333 (1.1333) | OUT: wins, opening and passing |
+| Alpine Serpent 2 | df78d6e5 | 172.38 | 15/0/0 | 4/5/3 | 2.6 (1.5333) | OUT: wins, opening and passing |
 
 ## Retained settings and decisions before code
 
@@ -50,6 +51,8 @@ Harbour & Highlands retains pace 1.085/1.043/1.035, aggression 1.6. Baseline rat
 Eifel retains pace .934/.903/.881, aggression 1.4. Baseline ratios .95934/.93439/.90897 led to attempt two's .960/.935/.910 and aggression 1.8. Attempt two's .972887/.965342/.968122 ratios gave the final pace; reducing aggression addressed its Medium opening failure. Final safety passes and wins/passing are closer than the safety-passing baseline. Medium/Hard wins and passing still fail. Cap exhausted. Estimates never count as acceptance.
 
 Alpine attempt two uses GP-only pace .960/.938/.917 from measured baseline finish ratios .959377/.938122/.917437. Its zero player wins call for slower CPU pace; aggression drops from one to .85 because all opening safety targets fail. Safety takes priority over the passing deficit. Two attempts remain, and these estimates are not acceptance. No geometry, first-lap, driver, seed, target or assertion changes.
+
+Alpine final attempt uses pace .929/.902/.892 from measured ratios .967564/.961557/.973027 applied to the current pace. Aggression decreases from .85 to .6 because opening safety remains outside at every difficulty, with 12 pile-up races against baseline 11. This is the last attempt; retain the closest complete measured setting with safety first. No geometry, first-lap, driver, seed, target or assertion change.
 
 Every choice was written and settled before its data edit. All other course settings, geometry, first-lap values, driver, seeds, assertions and targets remain exact. Immutable overlays use only existing fieldPace and fieldAggression options; no new balance mechanism.
 
