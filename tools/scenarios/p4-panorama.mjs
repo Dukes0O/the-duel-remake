@@ -16,19 +16,20 @@ export async function nativeBundle() {
       },
       load(id) {
         if (id !== '\0panorama') return;
-        return 'export {useRacingLine} from ' + source('tools/track-script-drive.mjs') +
-          ';export {ownTestCourses} from ' + source('tools/career-fixture.mjs') +
-          ';export {sampleCourseLightPath} from ' + source('src/light-path.js') +
-          ';export {renderedGroundHeight} from ' + source('src/rendered-ground.js') + ';';
+        return 'import {useRacingLine} from ' + source('tools/track-script-drive.mjs') +
+          ';import {ownTestCourses} from ' + source('tools/career-fixture.mjs') +
+          ';import {sampleCourseLightPath} from ' + source('src/light-path.js') +
+          ';import {renderedGroundHeight} from ' + source('src/rendered-ground.js') +
+          ';globalThis.__panQa={useRacingLine,ownTestCourses,sampleCourseLightPath,renderedGroundHeight};';
       },
     }],
     build: {write: false, emptyOutDir: false, minify: false,
-      lib: {entry, name: 'PanQa', formats: ['iife']}},
+      lib: {entry, formats: ['es']}, rolldownOptions: {output: {inlineDynamicImports: true}}},
   });
   const output = (Array.isArray(result) ? result[0] : result).output;
   const chunk = output.find(row => row.type === 'chunk');
   if (!chunk) throw Error('Native helper bundle missing');
-  return chunk.code;
+  return '(async()=>{'+chunk.code+'})()';
 }
 
 export async function run(context) {
@@ -40,7 +41,7 @@ export async function run(context) {
     for(const quality of ['high','performance']) {
       await context.navigate('/tools/menu-check.html?flags=grand-prix,panorama-ridge');
       await context.waitFor('window.__qaApp?.visualReady && !!window.__render','memory-only menu',60000);
-      await context.evaluate(bundle+';globalThis.__panQa=PanQa;');
+      await context.evaluate(bundle);
       const setup=await context.evaluate('(async()=>{'+
         'const {ownTestCourses,useRacingLine}=window.__panQa;'+
         'const app=window.__qaApp;'+
