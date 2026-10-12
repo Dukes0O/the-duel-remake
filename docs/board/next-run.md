@@ -36,15 +36,15 @@ tier, build, one review, merge as soon as green. Existing P4 lanes continue.
    alongside Phase 4, within the six-lane limit. Build against the 10.1
    contracts; do not stop to ask. Keep the-deep dev; art sheets to Claude.
 
-When a card waits on Claude, move on. Read the newest Claude answers in
-playtest-inbox.md before each new card and after each merge.
+When a card waits on Claude, move on. Read the card's "Claude answers" section
+before resuming it, and playtest-inbox.md for notes with no card.
 
 ## Ownership and limits
 
 Claude owns P4-TREMBLANT-SNOW in claude/tremblant-snow behind its own dev
 switch, all finishing passes, and later DEEP-WATER and DEEP-TRAIL.
 
-At most two heavy jobs across all teams, each jobs 4 or fewer. Check node.exe
+At most three heavy jobs across all teams, each jobs 4 or fewer. Check node.exe
 command lines before starting. Frame timing waits for a quiet laptop: one
 simple busiest-view run per quality, eight cars, delivered p95 at most
 18.5 ms and construction under 1 s. Hidden art gets no frame checks.
