@@ -32,6 +32,8 @@ const baseline={
   'tremblant-woods':{hash:'52d26d6708b17d071a02e1d8774255c445c83ae805c4a74418bd013514879557',nodes:307,meshes:271,instances:23134,geometries:38,materials:23,textures:13},
   // Tremblant Snow (RELEASE-TREMBLANT-SNOW): baseline from the reviewed round-2 art, captured twice with identical results.
   'tremblant-snow':{hash:'1c86d730fd4d7a9d284996a9c71fb2569e57f9e9c551fc515c6f10f36da8c58c',nodes:324,meshes:304,instances:22909,geometries:66,materials:52,textures:14},
+  // Harbour Lights (RELEASE-HARBOUR): baseline from the reviewed finishing round 2 art (P4-HARBOUR-FINISH-2), captured twice with identical results.
+  'harbour-lights':{hash:'77ee8cd229d6253bf86ad7d94c3f4b01b9ee24cee5ce070cf06309387de27dfb',nodes:1141,meshes:1124,instances:225980,geometries:230,materials:61,textures:18},
 };
 let checks=0;
 const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
@@ -95,7 +97,7 @@ function sceneSignature(world){
   return {hash,nodes,meshes,instances,geometries:geometries.size,materials:materials.size,textures:textures.size};
 }
 try{
-  equal(COURSE.length,18,'all eighteen event scenes are covered');
+  equal(COURSE.length,19,'all nineteen event scenes are covered');
   for(const def of COURSE){
     const course=new Course(def,1989),before=JSON.stringify(course.features),world=buildEnvironment(course),signature=sceneSignature(world);
     equal(JSON.stringify(course.features),before,`${def.id}: scene assembly never changes physical feature placement`);
@@ -104,4 +106,4 @@ try{
     disposeTree(world);
   }
 }finally{THREE.TextureLoader.prototype.load=oldLoad;if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;}
-console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across eighteen events.`);
+console.log(`World composition: ${checks} immutable-feature and exact complete-scene checks passed across nineteen events.`);

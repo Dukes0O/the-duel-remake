@@ -22,6 +22,7 @@ Pacific Canyon is included. Each local player buys other courses with earned cre
 | Titan Freestyle Playground | 900 CR |
 | Tremblant Woods | 1,600 CR |
 | Tremblant Snow | 1,800 CR |
+| Harbour Lights | 1,800 CR |
 
 Prices are reachable from a few clean starter wins. Courses and vehicles are separate purchases. Unlocking a car does not unlock new courses under the current rules. Normal objective targets remain unchanged: light cars may enter the arena, but cannot crush wrecks or satisfy the Stunt Trial's four-crush target.
 
