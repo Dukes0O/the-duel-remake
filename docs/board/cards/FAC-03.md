@@ -20,3 +20,12 @@ These are the card's detailed design, acceptance and recorded decisions.
 
     night_hooks: "Director before code: lane selection omits only explicit proven native browser/frame, full balance and Blender-heavy suites; full discovery/acceptance stays exact, pure unit suites stay daytime. Use existing runner tests, no import-wide exclusion. Existing frame-pacing gets a night-only simple mode: released Harbour Lights night GP grid, actual eight cars, High then Performance once each, delivered p95 <=18.5 ms and construction <1 s on quiet awake idle laptop; generic mode unchanged. Existing combat-balance gets explicit --wasteland2 off|on propagated through simulationFlags, default behavior/assertions exact. Use existing combat tests for that flag; no runtime feature-flag/source edits."
 ```
+
+## Director scope grant, before headed frame code
+
+After FAC-07 merges, FAC-03 may add only a headed option and actual launch,
+context and report metadata to tools/browser-harness.mjs, with additive checks
+in tools/test-browser-harness.mjs. Default headless behavior and every existing
+assertion stay exact. The official simple frame stage uses the existing harness
+in actual headed mode and refuses headless, hidden, busy or undeclared awake
+context. No browser-harness edit runs alongside FAC-07's ownership.
