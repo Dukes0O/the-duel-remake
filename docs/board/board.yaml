@@ -468,3 +468,16 @@ tasks:
     priority: "low"
     needs: []
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
+
+  - id: QA-STATUS-FACTORY
+    title: "Read factory manifests and lane cards on the status page"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "building"
+    priority: "low"
+    claimed_by: "codex-director-status-factory"
+    branch: "codex/qa-status-factory"
+    locks: [status-tool]
+    needs: [FAC-04, FAC-06]
+    details: "docs/board/cards/QA-STATUS-FACTORY.md"
