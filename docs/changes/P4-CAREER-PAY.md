@@ -45,3 +45,11 @@ The Director grants tools/scenarios/grand-prix-pay.mjs using the existing privat
 ## Browser fixture correction
 
 The first native browser check passed all payment assertions with three laps, second place and 750 CR. The screenshot showed the late-created MENU QA tools panel covering part of the result. Hide only that QA-only panel after the finish before capture; keep the real metrics, table, buttons, scroll behavior, driver and all assertions unchanged. No runtime or style correction is needed.
+
+## Accepted baseline sync, before merge
+
+Kyle prioritizes ready pay at 9am. Merge accepted integration 1a7a77e7 into this isolated lane, preserving Tremblant Snow on, its accepted tests and stable course ids, and grand-prix-career dev. Do not add retained GP admissions, geometry or tuning. Keep the already passed actual-result browser check; its late QA tools overlay is a fixture limitation. The corrected capture recipe remains, but no further picture run is required. Mandatory lane and build wait for the release hold to end.
+
+Current pay source passed 184 pure settlement and GP ghost-safety checks. Actual native Pacific finished three laps in second place at 156.93 seconds: pay off banked 0; pay on banked 750 CR with no charge, reload and exact duplicate saved bytes. Both race traces match SHA-256 de5e5cfd5d1860757a5f5048b3a5376cdb75c2521787ed043a01be88b744e2ce. The real browser result on private port 8230 showed 750 CR position pay, earnings and balance with zero warnings/errors. No frame timing was measured. Save/ghost preservation suites are in the selected 400-suite lane inventory; those gate results and the build remain pending.
+
+Sync conflicts were limited to the two exact feature catalog assertions. Preserve incoming Tremblant Snow on and all its release assertions; add only career dev and the additive total of 25 flags. Runtime flags merged cleanly. No payout, record, ghost, timing, capacity or validity assertion changed in this sync. Accepted incoming README and replay fixtures are imported ancestry; this lane does not author them.

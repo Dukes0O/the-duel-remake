@@ -21,8 +21,8 @@ const piece = (road, name) => road.pieces.find(item => item.name === name);
 
 test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
   assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), ['panorama-ridge', 'harbour-lights', 'tremblant-woods', 'tremblant-snow']);
-  // Tremblant Woods is released (RELEASE-TREMBLANT); the other two stay dev until their own release.
-  const released = ['tremblant-woods'];
+  // Tremblant Woods (RELEASE-TREMBLANT) and Tremblant Snow (RELEASE-TREMBLANT-SNOW) are released; the other two stay dev.
+  const released = ['tremblant-woods', 'tremblant-snow'];
   for (const circuit of ALL_CIRCUITS) {
     assert.equal(circuit.flag, circuit.id);
     assert.equal(FEATURE_STATES[circuit.flag], released.includes(circuit.id) ? 'on' : 'dev');
@@ -31,14 +31,16 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
   assert.deepEqual([COURSE_PRICES['panorama-ridge'], COURSE_PRICES['tremblant-woods'], COURSE_PRICES['harbour-lights']], [1600, 1600, 1800]);
+  assert.equal(COURSE_PRICES['tremblant-snow'], 1800, 'Tremblant Snow costs 1,800 credits');
   assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
   assert.equal(COURSE.length, 16 + released.length);
   assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
   assert.equal(COURSE[16].id, 'tremblant-woods', 'appended after the existing events');
+  assert.equal(COURSE[17].id, 'tremblant-snow', 'Tremblant Snow is appended last, after Tremblant Woods');
   assert.equal(new Set(ALL_CIRCUITS.map(circuit => circuit.stage)).size, 4);
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
-  assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['harbour-lights', 'tremblant-woods']);
+  assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), ['harbour-lights', 'tremblant-woods', 'tremblant-snow'], 'the requested dev circuit plus every released one');
   assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=harbour-lights' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   for (const circuit of ALL_CIRCUITS) assert.ok(bat.includes(circuit.id), `the Preview turns ${circuit.id} on`);
