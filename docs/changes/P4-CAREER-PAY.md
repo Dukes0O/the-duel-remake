@@ -33,3 +33,7 @@ Fresh Save Guardian found the carried row.mode discriminator changed legacy beha
 ## Added money boundaries, before tests
 
 The Director requests two checks for the new positive-pay path: a near-ceiling wallet banks only its remaining room and a repeated settlement leaves it exact; a paid snowman count displays SNOWMEN and its actual bonus. Add these cases to the existing card test, preserving every prior assertion and leaving payout source unchanged during Save Guardian re-review.
+
+## Carried ghost safety cases, before tests
+
+The Director requires the precise retained-card GP storage and lap fixtures on this pay source. Carry count and byte capacity rejection, exact old current/archive bytes, damaged legacy sample rejection, native lap start/end clocks, quicker flying lap replacement and qualifying exclusion unchanged. The session query gets the explicit grand-prix-career override required by this slice. Add direct partial-race and invalid-capture rejection cases; no admission limit, timing bound, legacy-byte assertion or shared test machinery changes.
