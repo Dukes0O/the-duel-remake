@@ -91,7 +91,8 @@ Nothing replaced. No file removed.
 - Lane tier, run 1 (flag on, before fixes): 23 suites failed; every one is accounted for above.
 - Lane tier, run 2: 323 of 325 passed. The two failures were the Scrapdome and Salt Flats
   replay-file pin (now updated); both pass alone (`test-arena-pit`, `test-salt-flats`).
-- Final lane tier and `npm run build` on the merged commit: see the run log line.
+- Final, after merging integration 9948e9dc (Grand Prix on, Harbour landed, RELEASE DONE): lane tier 326 of 326
+  suites passed, and `npm run build` passes.
 - No frame timing (Tremblant passed 16.8 ms earlier). No browser check.
 
 ## For Claude
