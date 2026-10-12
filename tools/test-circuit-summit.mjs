@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { SUMMIT_RUN } from '../src/circuits/summit-run.js';
+import {readFileSync} from 'node:fs';
+import { SUMMIT_RUN, SUMMIT_GALLERY_BOUNDS } from '../src/circuits/summit-run.js';
 import { buildTrackScript } from '../src/track-script.js';
 import * as THREE from 'three';
 import {roadBranchMaterial} from '../src/world.js';
@@ -30,8 +31,31 @@ assert.equal(course.pitLane.straight, 'Tree Line Pit Straight');
 assert.ok(course.gripKindAt(8200,0)==='snow');
 assert.ok(course.features.shortcuts.some(branch=>branch.id==='summit-open-road'));
 assert.ok(course.features.tunnels.some(tunnel=>tunnel.id==='summit-gallery'));
-assert.ok(course.features.walls.some(wall=>wall.id.startsWith('gallery-pillar-')));
-assert.ok(course.features.obstacles.some(wall=>wall.id.startsWith('gallery-roof-')&&wall.minY>course.worldAt(wall.s).y+6));
+const galleryBytes=readFileSync(new URL('../public/assets/models/circuits/kits/gallery.glb',import.meta.url));
+const galleryModel=JSON.parse(galleryBytes.subarray(20,20+galleryBytes.readUInt32LE(12)).toString('utf8'));
+for(const bounds of SUMMIT_GALLERY_BOUNDS){
+  const node=galleryModel.nodes.find(node=>node.name===bounds.name);
+  assert.ok(node,`${bounds.name} is a real approved mesh`);
+  assert.ok(!node.matrix&&!node.translation&&!node.rotation&&!node.scale,'runtime gallery mesh coordinates have applied transforms');
+  const accessor=galleryModel.accessors[galleryModel.meshes[node.mesh].primitives[0].attributes.POSITION];
+  assert.deepEqual(bounds.min,accessor.min,`${bounds.name} physical minimum matches the actual GLB`);
+  assert.deepEqual(bounds.max,accessor.max,`${bounds.name} physical maximum matches the actual GLB`);
+  const row=SUMMIT_RUN.kitPlacements.find(row=>row.id==='gallery'),frame=course.groundAt(row.s,row.lateral);
+  const actor=course.features.obstacles.find(actor=>actor.sourceBounds===bounds.name&&actor.kitS===row.s);
+  assert.ok(actor,`${bounds.name} has a real physical collider`);
+  const xLocal=(accessor.min[0]+accessor.max[0])*.5*row.scale[0],zLocal=(accessor.min[2]+accessor.max[2])*.5*row.scale[2];
+  const x=frame.x+Math.cos(frame.heading)*xLocal+Math.sin(frame.heading)*zLocal;
+  const z=frame.z-Math.sin(frame.heading)*xLocal+Math.cos(frame.heading)*zLocal;
+  assert.ok(Math.hypot(actor.x-x,actor.z-z)<1e-8,'actual post/roof position follows the displayed tile transform');
+  assert.equal(actor.minY,frame.y+accessor.min[1]*row.scale[1]);
+  assert.equal(actor.height,(accessor.max[1]-accessor.min[1])*row.scale[1]);
+  if(bounds.name.includes('pillar'))assert.ok(Math.abs(zLocal)>7,'visible pillars are at the tile ends, not the old centre collider');
+}
+const actualRoof=SUMMIT_GALLERY_BOUNDS.find(bounds=>bounds.name==='gallery-heavy-concrete-roof');
+assert.equal(course.features.tunnels[0].height,actualRoof.min[1]*1.1,'camera underside agrees with the actual thick fascia');
+assert.ok(actualRoof.min[1]*1.1>=4.5,'approved road headroom stays at least 4.5 m');
+assert.ok(!course.features.walls.some(wall=>wall.id.startsWith('gallery-')),'actual kit colliders do not draw substitute wall boxes');
+
 const open=course.features.shortcuts.find(branch=>branch.id==='summit-open-road');
 assert.equal(course.surfaceAt(10500,course.shortcutOffset(open,10500)).road,true,'the Open Road is real driveable road');
 assert.equal(course.gripKindAt(10500,course.shortcutOffset(open,10500)),'snow','branch road uses the native snow surface');
@@ -57,7 +81,7 @@ assert.equal(course.tunnelAt(10500,7.7)?.id,'summit-gallery','roof covers the ro
 assert.equal(course.tunnelAt(10500,course.shortcutOffset(open,10500)),null,'Open Road is outside the Gallery');
 const roofCamera=course.worldAt(10500,7.7);roofCamera.y+=10;
 assert.equal(constrainTunnelCamera(course,roofCamera,10500),true);
-assert.ok(Math.abs(roofCamera.y-(course.at(10500).y+5.72*1.1-.45))<1e-6);
+assert.ok(Math.abs(roofCamera.y-(course.groundAt(10500,0).y+actualRoof.min[1]*1.1-.45))<1e-6);
 const openCamera=course.worldAt(10500,course.shortcutOffset(open,10500));openCamera.y+=10;
 const openHeight=openCamera.y;
 assert.equal(constrainTunnelCamera(course,openCamera,10500),false);

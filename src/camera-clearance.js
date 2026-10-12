@@ -6,7 +6,8 @@ export function constrainTunnelCamera(course,position,referenceS){
   const frame=course.nearest(position.x,position.z,referenceS),tunnel=course.tunnelAt(frame.s,frame.lateral);
   if(!tunnel)return false;
   const ratio=Math.min(.995,Math.abs(frame.lateral)/tunnel.width);
-  const ceiling=course.at(frame.s).y+(tunnel.flatRoof?tunnel.height:3.6+(tunnel.height-3.6)*Math.sqrt(1-ratio*ratio))-.45;
+  const floor=tunnel.flatRoof?course.groundAt(frame.s,0).y:course.at(frame.s).y;
+  const ceiling=floor+(tunnel.flatRoof?tunnel.height:3.6+(tunnel.height-3.6)*Math.sqrt(1-ratio*ratio))-.45;
   if(position.y<=ceiling)return false;
   position.y=ceiling;return true;
 }

@@ -262,23 +262,24 @@ export function trackScriptSolids(course) {
         s,off,x:p.x,y:y-.1,z:p.z,heading:p.heading,halfX:.3,halfZ:2,height:1.15,minY:y-.1,maxY:y+1.05,theme:course.themeAt(s)});
     }
   }
-  // Collider dimensions follow the approved gallery recipe (p4-kits.py):
-  // pillars at +/-5.7 m, 1 m wide, roof underside at 5.72 m, uphill back at 6.1 m.
-  for(const gallery of course.def.galleries ?? [])for(let s=gallery.start+6;s<gallery.end;s+=18){
-    for(const side of [-1,1]){
-      const off=side*5.7*1.2,p=course.worldAt(s,off);
-      f.walls.push({id:`gallery-pillar-${s}-${side}`,kind:'prop',shape:'box',trackWall:true,
-        s,off,x:p.x,z:p.z,y:p.y,heading:p.heading,halfX:.6,halfZ:1.425,
-        height:5.72*1.1,minY:p.y,maxY:p.y+5.72*1.1,theme:course.themeAt(s)});
+  // Physical bounds share the actual approved model's placement transform.
+  // The model draws itself; these boxes are simulation obstacles only.
+  for(const gallery of course.def.galleries ?? [])for(const row of course.def.kitPlacements ?? []){
+    if(row.id!=='gallery'||row.s<gallery.start||row.s>gallery.end)continue;
+    const scale=Array.isArray(row.scale)?row.scale:Array(3).fill(row.scale??1);
+    const frame=course.groundAt(row.s,row.lateral),heading=frame.heading+(row.heading??0);
+    const cs=Math.cos(heading),sn=Math.sin(heading);
+    for(const bounds of gallery.collisions ?? []){
+      const off=(bounds.min[0]+bounds.max[0])*.5*scale[0];
+      const along=(bounds.min[2]+bounds.max[2])*.5*scale[2];
+      const x=frame.x+cs*off+sn*along,z=frame.z-sn*off+cs*along;
+      const near=course.nearest(x,z,row.s),y=frame.y+bounds.min[1]*scale[1]+(row.lift??0);
+      const height=(bounds.max[1]-bounds.min[1])*scale[1];
+      f.obstacles.push({id:`gallery-${bounds.name}-${row.s}`,kind:'prop',shape:'box',trackWall:true,
+        sourceBounds:bounds.name,kitS:row.s,s:near.s,off:near.lateral,x,z,y,heading,
+        halfX:(bounds.max[0]-bounds.min[0])*.5*scale[0],halfZ:(bounds.max[2]-bounds.min[2])*.5*scale[2],
+        height,minY:y,maxY:y+height,theme:course.themeAt(near.s)});
     }
-    const back=course.worldAt(s,6.1*1.2);
-    f.walls.push({id:`gallery-back-${s}`,kind:'prop',shape:'box',trackWall:true,s,off:6.1*1.2,
-      x:back.x,z:back.z,y:back.y,heading:back.heading,halfX:.4*1.2,halfZ:9,
-      height:4.62*1.1,minY:back.y,maxY:back.y+4.62*1.1,theme:course.themeAt(s)});
-    const p=course.worldAt(s),height=5.72*1.1;
-    f.obstacles.push({id:`gallery-roof-${s}`,kind:'prop',shape:'box',s,off:0,
-      x:p.x,z:p.z,y:p.y+height,heading:p.heading,halfX:6.5*1.2,halfZ:9.05,
-      height:.28*1.1,minY:p.y+height,maxY:p.y+6*1.1,theme:course.themeAt(s)});
   }
   f.obstacles.push(...f.walls);
   scatterScenery(course);

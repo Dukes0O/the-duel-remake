@@ -76,6 +76,20 @@ tunnel range queries and arch constraints remain unchanged. The Director grants
 these narrow scene-lighting.js, render3d.js and camera-clearance.js hooks.
 Card tests add real dry/snow/material/roof controls; runs still await capacity.
 
+## Actual Gallery asset correction before code
+
+Root approved replacing the unrun 6 m roof assumption with exact agreement
+with the current approved GLB, keeping the existing 4.5 m road headroom.
+Its thick fascia reaches y=4.5964661 m (5.0561127 m at the actual 1.1 scale).
+The four actual posts lie at x=+/-5.7000008, z=+/-2.4444814 m: at this tile
+scale they stand 7.333444 m before/after the tile centre, not at its centre.
+Use the actual post/roof/back bounds in course metadata, transform each by
+the same placement frame as the actual model, and bind the camera ceiling
+to that same underside. Physics colliders enter obstacles only: the approved
+GLB supplies the picture, with no duplicate primitive wall render.
+The real asset test must detect the old centred-post and 6.292 m ceiling
+assumptions. The asset and unrelated assertions remain unchanged.
+
 ## Changed assertions
 
 The feature catalogue grows from 23 to 24 entries only for summit-run dev.

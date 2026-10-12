@@ -2,6 +2,17 @@
 // Scenic markers follow the actual draft; avalanche coordinates stay exact.
 import {buildTrackScript, defineScriptedCourse} from '../track-script.js';
 
+// Current approved gallery.glb accessor bounds, all mesh transforms applied.
+// These small physical inputs are checked against the actual runtime asset.
+export const SUMMIT_GALLERY_BOUNDS=Object.freeze([
+  {name:'gallery-concrete-pillar',min:[-6.191241264343262,0,-2.911437511444092],max:[-5.2087602615356445,4.680518627166748,-1.977525234222412]},
+  {name:'gallery-concrete-pillar.001',min:[-6.191241264343262,0,1.977525234222412],max:[-5.2087602615356445,4.680518627166748,2.911437511444092]},
+  {name:'gallery-concrete-pillar.002',min:[5.2087602615356445,0,-2.911437511444092],max:[6.191241264343262,4.680518627166748,-1.977525234222412]},
+  {name:'gallery-concrete-pillar.003',min:[5.2087602615356445,0,1.977525234222412],max:[6.191241264343262,4.680518627166748,2.911437511444092]},
+  {name:'gallery-heavy-concrete-roof',min:[-6.5,4.596466064453125,-3.0346884727478027],max:[6.5,5.82415771484375,2.9990103244781494]},
+  {name:'gallery-solid-uphill-back',min:[5.699999809265137,0,-3],max:[6.5,4.619999885559082,3]},
+].map(row=>Object.freeze({...row,min:Object.freeze(row.min),max:Object.freeze(row.max)})));
+const galleryRoof=SUMMIT_GALLERY_BOUNDS.find(row=>row.name==='gallery-heavy-concrete-roof');
 const road = [
   ['straight',470,{name:'Start Straight'}],
   ['turn','L',26.5,200],
@@ -90,7 +101,7 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {id:'snowfield-ice-3',kind:'ice',shaded:true,s0:at(36)+60,s1:at(36)+80},
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'snow'}],
-  galleries:[{id:'summit-gallery',start:10170,end:10830,width:5,roofWidth:7.8,flatRoof:true,height:5.72*1.1}],
+  galleries:[{id:'summit-gallery',start:10170,end:10830,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,collisions:SUMMIT_GALLERY_BOUNDS}],
   scenery:{trees:120,rocks:100,mountains:false},
   mergeKitMeshes:['gallery'],
   kitPlacements:[
