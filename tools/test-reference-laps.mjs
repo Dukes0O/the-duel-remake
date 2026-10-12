@@ -1,3 +1,5 @@
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
+import {getRouteVariants, supportsRouteVariants} from '../src/route-variants.js';
 import {publishReferenceSet} from './build-reference-laps.mjs';
 import assert from 'node:assert/strict';
 import {COURSE} from '../src/config.js';
@@ -18,7 +20,9 @@ equal(REFERENCE_POLICY, {car: 'stuttgart_959s', driver: 'club', cpu: 'medium',
 const definitionsBefore = JSON.stringify(COURSE);
 const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(row => [row.id, row])).values()];
 const targets = referenceTargets();
-equal(targets.length, 28, 'Every current closed event/route, including native dev circuits, receives its own reference');
+const expectedKeys = definitions.filter(definition => definition.closed !== false).flatMap(definition =>
+  (supportsRouteVariants(definition) ? getRouteVariants(definition).map(route => route.id) : ['fixed']).map(route => definition.id + '|' + route));
+equal(targets.map(target => target.key).sort(), expectedKeys.sort(), 'Every closed event and actual route has exactly one reference target');
 check(ALL_CIRCUITS.every(definition => targets.some(target => target.eventId === definition.id &&
   target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),
@@ -34,7 +38,7 @@ const nativeCatalog = await runReferenceWorker({catalogOnly: true});
 check(ALL_CIRCUITS.every(definition => nativeCatalog.events.includes(definition.id)),
   'Fresh worker enables authored circuits in the actual native COURSE registry');
 // Tremblant Woods, Tremblant Snow and Harbour Lights are released (state on); Panorama Ridge is still dev and needs the QA query.
-check(nativeCatalog.flags.every(row => row.enabled && row.state === (['tremblant-woods', 'tremblant-snow', 'harbour-lights'].includes(row.name) ? 'on' : 'dev')),
+check(nativeCatalog.flags.every(row => row.enabled && row.state === CIRCUIT_MANIFESTS.find(manifest => manifest.flag === row.name)?.state),
   'Fresh worker enables every circuit switch: released ones are on, the rest are real dev switches through the supported QA query');
 equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');

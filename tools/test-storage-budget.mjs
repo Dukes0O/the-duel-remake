@@ -12,13 +12,15 @@ import {prepareCareerBudget,originStorageBytes} from '../src/career-budget.js';
 // A measured planning envelope, not a cap on a player's career. Players,
 // record keys and archived ghosts remain unbounded in IndexedDB. The raw
 // boundary probe explains why moving only the old archives was insufficient.
+const recordStages = COURSE.map((stage, index) => ({ stage, index }))
+  .filter(({ stage }) => !stage.practice && !stage.stuntTrial && !['drift', 'checkpoint'].includes(stage.kind));
 const MODEL = Object.freeze({
   players: 8,
   historyPerPlayer: 60, // current profile loader retains the latest 60
   personalBestsPerPlayer: 128, // scenario assumption; no production cap
   settledKeysPerPlayer: 128, // scenario assumption; no production cap
-  currentRecordsPerPlayer: 30, // 15 events x 2 car/mode combinations
-  archivedRecordsPerPlayer: 15, // scenario assumption (one per event); no production cap
+  currentRecordsPerPlayer: recordStages.length * 2, // two car/mode combinations per eligible event
+  archivedRecordsPerPlayer: recordStages.length, // scenario assumption: one per eligible event
   archivedGhosts: 1, // scenario assumption; no production cap
   legacySharedBests: 200, // OLD-02 retires this unbounded legacy key
   activeGhostBytes: MAX_GHOST_BYTES, // reserve the real active ghost cap
@@ -26,9 +28,6 @@ const MODEL = Object.freeze({
 const BUDGET = 4_000_000; // SPEC.md uses decimal MB, not binary MiB
 const cars = Object.keys(CARS);
 const upgradeTypes = Object.keys(UPGRADE_TYPES);
-const recordStages = COURSE.map((stage, index) => ({ stage, index }))
-  .filter(({ stage }) => !stage.practice && !stage.stuntTrial && !['drift', 'checkpoint'].includes(stage.kind));
-assert.equal(recordStages.length, 15);
 assert.equal(MAX_GHOST_SAMPLES, 1800);
 
 function storage() {
