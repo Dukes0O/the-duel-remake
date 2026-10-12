@@ -33,7 +33,7 @@ export async function run(context){
       app.stop();app.autopilot=false;app._scriptedCrashDone=true;app.setCamera('chase');
       for(const node of document.querySelectorAll('details'))node.style.display='none';
     })()`);
-    await context.waitFor(`(()=>{const app=window.__qaApp;app.onFrame?.(app.duel.state,0);window.__render.renderFrame();return app.visualReady&&!document.querySelector('#renderer-loading')?.hidden===false;})()`,'native Summit grid prepared',90000);
+    await context.waitFor(`(()=>{const app=window.__qaApp;app.onFrame?.(app.duel.state,0);window.__render.renderFrame();return app.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`,'native Summit grid prepared',90000);
     const grid=await context.evaluate(`(()=>{
       const app=window.__qaApp,s=app.duel.state;
       if(app.duel.course.def.id!=='summit-run'||app.duel.course.closed||s.field?.size!==6||s.opponents.length!==5||s.lapsTotal!==1||s.combat||s.traffic.length)throw Error('Real Summit setup differs from the card');
