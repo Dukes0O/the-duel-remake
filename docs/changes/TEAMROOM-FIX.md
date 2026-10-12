@@ -85,3 +85,11 @@ viewing point so the frame reads like the race view (`drawTrackSnapshot`, `src/r
 ## Left open
 
 - Pictures are taken with the player's currently selected car and paint.
+
+## Release review (Claude, 12 October 2026)
+
+The staged production build threw "Cannot read properties of undefined (reading 's')" from the
+menu camera after a Team Room picture rendered with the player's car parked in frame (not seen in
+the dev server; the live build before this change was clean). The parked car is removed; the
+picture shows the road only. Verified on a private production build: map flags select, pictures
+render, no browser errors.

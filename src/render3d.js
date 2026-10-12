@@ -357,14 +357,8 @@ export function attachRenderer(host, app) {
       animateScene(world, now / 1000);
       syncScene(world, {crushedProps: []}, 0);
       trackKitsOf(world)?.update({high,position:camera.position,camera,state:{status:'menu'}});
-      // Park the player's car at the viewing point, so the picture reads like the race chase camera.
-      const showCar = !!player && player.parent === scene;
-      if (showCar) {
-        const spot = vehicleGroundPoint(course, pose.viewS, 0), slope = groundSlope(course, pose.viewS, 0, 0);
-        place(player, spot, 0, 0);player.rotation.x = slope.pitch;player.rotation.z = slope.roll;player.visible = true;
-      }
       for (const object of scene.children) {
-        if (object === world || lightingRoots.has(object) || object.isLight || (showCar && object === player)) continue;
+        if (object === world || lightingRoots.has(object) || object.isLight) continue;
         visibility.push([object, object.visible]);object.visible = false;
       }
       quality.update(high, 1);
