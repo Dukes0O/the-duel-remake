@@ -67,7 +67,8 @@ text in the playbook, SPEC or cards that asks for more checking or recording.
    and `STATUS.md` into the next real commit or the merge itself.
 6. Extra helpers (critic, second reviewer, save checker, balance analyst) only
    for work that touches saves, releases, money and pay, or art rounds. Other
-   cards: the builder's tests, the lane gate and one review.
+   cards: the builder's tests, the lane gate and one review (rule 17 says
+   which cards need it).
 
 Added 11 October 2026 (Kyle: "yes", after one shared test slot held every
 team's merges back for hours):
@@ -125,6 +126,12 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
     carries only questions and notes that have no card, so two answers never
     collide in one place (Kyle, 12 October 2026).
+17. Reviews by kind (Kyle, 12 October 2026). Code, saves, money and pay, and
+    design numbers get one independent review. Documents and rule wording that
+    Kyle or Claude already decided get none; the lane gate and build are
+    enough. A reviewer's fixes go back for confirmation only when the review
+    found a real fault; wording and style fixes land at once. Line length and
+    style notes never hold a merge.
 
 ## Gates (SPEC 0.5)
 
