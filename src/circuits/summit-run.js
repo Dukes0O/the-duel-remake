@@ -68,7 +68,7 @@ for(let section=0;section<starts.length;section++){
   }
 }
 const base={
-  ...draft,name:'Summit Run',flag:'summit-run',stage:19,kind:'circuit',layoutVersion:1,
+  ...draft,name:'Summit Run',flag:'summit-run',stage:20,kind:'circuit',layoutVersion:1,
   theme:'alpine',laps:1,grandPrixLaps:1,fieldSize:6,gridStartS:45,defaultMode:'grandprix',
   hasRival:true,hasRadar:false,noTraffic:true,noCombat:true,airborne:true,
   terrainHalfWidth:64,speedLimitMph:100,

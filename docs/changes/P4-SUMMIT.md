@@ -5,6 +5,9 @@ Status: source build in a new isolated lane; no release.
 ## Design before code
 
 Build Claude's exact 52-piece point-to-point draft in CIRCUITS.md 5.4.
+Director reserves authored stage 20 for Summit before any capture; Claude's
+Tremblant Snow owns stage 19. Stable id summit-run stays unchanged. The
+registry union appends Summit after Snow when that actual source lands.
 Keep the six hairpin radii (16, 16, 18, 16, 15, 15 m) and three authored
 crests (2.5, 2.5, 1.5 m). Distribute 720 m of climb through the seven scenic
 sections: 120, 220, 30, 200, 0, 150, 0 m. Derive section, pit and light
