@@ -103,6 +103,15 @@ export async function runDriveThrough({courseId,seed=1989,maxSeconds=1200,source
   if(typeof courseId!=='string'||!/^[a-z][a-z0-9-]*$/.test(courseId))throw Error('A named course id is required.');
   if(!Number.isSafeInteger(seed)||seed<0||!Number.isFinite(maxSeconds)||maxSeconds<0)throw Error('Invalid seed or time cap.');
   sourceRoot=validatedRoot(sourceRoot);
+  const historical=relative(realpathSync(ROOT),sourceRoot)!=='';
+  if(historical&&(typeof sourceCommit!=='string'||!/^[a-f0-9]{40}$/i.test(sourceCommit)))
+    throw Error('Historical source root needs its proven source commit.');
+  const sourceRef=sourceCommit??'HEAD';
+  const proven=spawnSync('git',['rev-parse','--verify',sourceRef+'^{commit}'],
+    {cwd:ROOT,encoding:'utf8',windowsHide:true});
+  if(proven.status!==0||!/^[a-f0-9]{40}$/.test(proven.stdout.trim()))
+    throw Error('Cannot prove source commit: '+sourceRef);
+  const sourceLabel=proven.stdout.trim();
   const names=['localStorage','__DUEL_QA__','location','cancelAnimationFrame'],previous=new Map(names.map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
   try{
     globalThis.localStorage=memoryStorage();globalThis.__DUEL_QA__=true;
@@ -116,8 +125,7 @@ export async function runDriveThrough({courseId,seed=1989,maxSeconds=1200,source
     for(const mph of[70,110])for(const[name,s,side]of barrierCases(course))
       probes.push(contactProbe(runtime,def,seed,name,s,side,mph,runtime.footprints));
     const issues=[...ground.issues,...laps.flatMap(row=>row.issues),...probes.filter(row=>!row.passed).map(row=>({kind:'barrier-passage',...row}))];
-    const git=spawnSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8',windowsHide:true});
-    const source={commit:sourceCommit??git.stdout.trim(),driverSha256:hash(readFileSync(join(sourceRoot,'tools/track-script-drive.mjs'))),
+    const source={commit:sourceLabel,driverSha256:hash(readFileSync(join(sourceRoot,'tools/track-script-drive.mjs'))),
       courseSha256:hash(readFileSync(join(sourceRoot,'src/course.js'))),definitionSha256:def.kind==='circuit'?hash(readFileSync(join(sourceRoot,'src/circuits',courseId+'.js'))):null};
     return{schema:1,courseId,profile:{...PROFILE,seed},source,passed:issues.length===0,ground,laps,probes,issues};
   }finally{
@@ -128,7 +136,7 @@ export function parseArguments(args){
   const options={};
   for(let i=0;i<args.length;i++){
     const name=args[i];if(name==='--json'){options.json=true;continue;}
-    const key={'--course':'courseId','--seed':'seed','--max-seconds':'maxSeconds','--source-root':'sourceRoot'}[name];
+    const key={'--course':'courseId','--seed':'seed','--max-seconds':'maxSeconds','--source-root':'sourceRoot','--source-commit':'sourceCommit'}[name];
     if(!key)throw Error('Unknown option '+name);
     const value=args[++i];if(!value||value.startsWith('--'))throw Error('Missing value for '+name);
     options[key]=key==='seed'||key==='maxSeconds'?Number(value):value;

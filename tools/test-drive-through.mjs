@@ -78,6 +78,11 @@ test('actual fixed Tremblant passes one observed native lap per difficulty and r
 test('real pre-fix source exposes grass over road, drive-through barriers and floating lodge',async()=>{
   required();
   await historical(async sourceRoot=>{
+    await assert.rejects(()=>api.runDriveThrough({courseId:'tremblant-woods',seed:1989,sourceRoot}),
+      /Historical source root needs its proven source commit/,'missing provenance is rejected before native imports');
+    await assert.rejects(()=>api.runDriveThrough({courseId:'tremblant-woods',seed:1989,sourceRoot,sourceCommit:'0'.repeat(40)}),
+      /Cannot prove source commit/,'an unknown hash cannot label historical gameplay');
+    assert.equal(api.parseArguments(['--course','tremblant-woods','--source-root',sourceRoot,'--source-commit',before]).sourceCommit,before);
     const report=await api.runDriveThrough({courseId:'tremblant-woods',seed:1989,sourceRoot,sourceCommit:before});
     printVerdict('actual-pre-fix',report);
     assert.equal(report.passed,false);
