@@ -181,6 +181,18 @@ export class Course {
     const baseFor=type=>type==='city'?-.06+Math.min(.8,edge*.015):-.06+Math.sin(wave(.012)+off*.017)*Math.cos(wave(.004)-off*.031)*Math.min(type==='alpine'?14:7,edge*.075)+edge*.012+hills*(type==='alpine'?1.4:type==='coast'?(off<0?.8:0):.65);
     const sec=this.sectionAt(p),previous=this.sections[(this.sections.indexOf(sec)-1+this.sections.length)%this.sections.length];
     let h=lerp(baseFor(previous.theme),baseFor(theme),smooth((p-sec.start)/100));
+    const landform=this.def.ridgeLandform;
+    if(landform){
+      // Only the authored mountain's verge changes. The full road and shoulder
+      // remain on the original surface, including every width/crest transition.
+      const span=range=>smooth((p-range[0])/80)*smooth((range[1]-p)/80);
+      const hillside=span(landform.hillside),ridge=span(landform.ridge);
+      const floor=landform.valleyFloor-this.worldAt(p).y;
+      const bank=off<0?Math.min(110,edge*landform.hillsideGrade):Math.max(floor,-edge*landform.hillsideGrade);
+      const drop=Math.max(floor,-Math.min(110,edge*landform.ridgeGrade));
+      const target=lerp(bank,drop,ridge);
+      h=lerp(h,target,Math.max(hillside,ridge)*smooth(edge/8));
+    }
     if(this.def.offroad)h+=Math.sin(wave(.13))*.12+Math.sin(wave(.038)+off*.07)*.2;
     if(theme==='coast'&&off>28){const sec=this.sectionAt(s),coastFade=smooth((p-sec.start)/120)*smooth((sec.end-p)/120);
       const headland=Math.exp(-(((p-(sec.start+(sec.end-sec.start)*.58))/50)**2+((off-73)/24)**2));

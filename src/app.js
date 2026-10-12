@@ -34,6 +34,7 @@ import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForS
 import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {grandPrixCourse} from './race-field.js';
+import {pitTransitTarget} from './pit-lane.js';
 import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
 import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
@@ -1373,8 +1374,10 @@ export class App {
     const frame = d.course.at(st.s);
     const halfWidth=d.course.roadHalfWidthAt?.(st.s)??DRIVE.roadHalfWidth;
     const cruisingLane=-Math.min(DRIVE.laneOffset,halfWidth*.48);
-    let targetLat = cruisingLane;
-    if(st.objective?.kind==='stuntTrial'){
+    const metresPerSec = st.speedMph * DRIVE.mphToWorld;
+    const transit = pitTransitTarget(d.course, st, st.s + Math.max(12, metresPerSec * .45));
+    let targetLat = transit?.lateral ?? cruisingLane;
+    if(!transit && st.objective?.kind==='stuntTrial'){
       const targets=d.course.features.crushables.filter(prop=>!st.crushedProps.includes(prop.id)).map(prop=>({prop,gap:d.relativeS(prop.s,st.s)-st.s})).filter(item=>item.gap>=-10&&item.gap<=105).sort((a,b)=>a.gap-b.gap);
       if(targets.length)targetLat=targets[0].prop.off;
     }
@@ -1382,7 +1385,7 @@ export class App {
     // before returning. The center offers a safe gap to two-way traffic.
     const opponents=st.opponents|| (st.rival?[st.rival]:[]);
     const obstacles=opponents.length?[...st.traffic,...opponents.map(opponent=>({...opponent,alive:true,dir:1}))]:st.traffic;
-    for (const c of obstacles) {
+    for (const c of transit ? [] : obstacles) {
       if (!c.alive) continue;
       const ahead = (d.relativeS?d.relativeS(c.s,st.s):c.s)-st.s;
       const closingSpeed = Math.max(0, st.speedMph - c.dir * c.speedMph) * DRIVE.mphToWorld;
@@ -1390,7 +1393,6 @@ export class App {
         targetLat = Math.min(halfWidth-1.8, Math.max(0, c.lateral + 3.2)); break;
       }
     }
-    const metresPerSec = st.speedMph * DRIVE.mphToWorld;
     const headingTarget = Math.atan((targetLat - st.lateral) * 2.5 / Math.max(15, metresPerSec));
     const look = d.course.at(st.s + metresPerSec * .18);
     const desiredYaw = look.curvature * metresPerSec + (headingTarget - st.headingError) * 6;
@@ -1399,7 +1401,7 @@ export class App {
     const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     const bend = Math.max(Math.abs(frame.curvature), Math.abs(d.course.at(st.s + 100).curvature), Math.abs(d.course.at(st.s + 220).curvature));
     const cornerSpeed = Math.min(d.car.topSpeed * .94, .85 * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
-    const targetSpeed = Math.min(drivingSurface.speedLimit,cornerSpeed);
+    const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
     d.setInput({ throttle, brake, steer, boost: false });

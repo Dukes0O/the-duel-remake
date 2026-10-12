@@ -12,10 +12,10 @@ test('panorama-ridge retains its accepted registry identity and access', () => {
   const id = 'panorama-ridge', definition = PANORAMA_RIDGE;
   assert.deepEqual([definition.id, definition.flag, definition.stage], [id, id, 16]);
   assert.deepEqual([ownedManifest.id, ownedManifest.flag, ownedManifest.state, ownedManifest.price, ownedManifest.grandPrix, ownedManifest.releaseOrder],
-    [id, id, 'dev', 1600, false, 3]);
+    [id, id, 'dev', 1600, true, 3]);
   assert.equal(FEATURE_STATES[id], 'dev');
   assert.equal(COURSE_PRICES[id], 1600);
-  assert.equal(GRAND_PRIX_COURSES.includes(id), false);
+  assert.equal(GRAND_PRIX_COURSES.includes(id), true);
   assert.equal(createFeatureFlags({storage:null, qa:false}).enabled(id), false);
   assert.equal(supportsCombat(definition), false);
   assert.equal(definition.noCombat, true); assert.equal(definition.hasRival, true);

@@ -1,3 +1,4 @@
+import {addCircuitLandmarks,finishRidgeKitMaterials} from './circuit-landmarks.js';
 import {createTrackKits,bindTrackKits} from './track-kits.js';
 import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,createSnowWorld,bindSnowWorld} from './snow-world.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
@@ -141,8 +142,10 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   addRallyDetail(group,course);
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
+  addCircuitLandmarks(group,course);
   if (trackKits || course.def.kitPlacements?.length || winter) {
     const kits = trackKits ?? createTrackKits(course);
+    if(course.def.ridgeLandform)finishRidgeKitMaterials(kits);
     bindTrackKits(group,kits);
     registerSceneSystem(group,{sync:kits.sync,dispose:kits.dispose});
     if(winter){const snowOwner=createSnowWorld(course,{kits});bindSnowWorld(group,snowOwner);

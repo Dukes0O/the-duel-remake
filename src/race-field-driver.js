@@ -8,7 +8,7 @@ import { DRIVE, steeringYawAuthority } from './config.js';
 import { clamp } from './sim-common.js';
 import { stepKnock } from './vehicle-knock.js';
 import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-lines.js';
-import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed} from './pit-lane.js';
+import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
 const MPH = DRIVE.mphToWorld;
@@ -165,9 +165,12 @@ export function stepFieldRacer(duel, r, dt) {
   if (r.finished) {
     // Finished cars roll on to the outside edge, out of the race and out of the way.
     r.contactExempt = true;
+    const transit = pitTransitTarget(duel.course, r, look);
     const edge = (surface.roadHalfWidth - 2) * (f.index % 2 ? 1 : -1);
-    f.intent += clamp(edge - f.intent, -3 * dt, 3 * dt);
-    move(duel, r, run, dt, FIELD.coolDownMph, f.intent, surface, look);
+    if (transit) f.intent = transit.lateral;
+    else f.intent += clamp(edge - f.intent, -3 * dt, 3 * dt);
+    move(duel, r, run, dt, transit?.speedMph ?? FIELD.coolDownMph, f.intent, surface, look);
+    if (transit) limitPitSpeed(duel.course, r);
     if (!duel._ramFlight(r, dt)) duel._jump(r, dt);
     duel._staticContacts(r, false); duel._boundary(r);
     return;
@@ -180,16 +183,21 @@ export function stepFieldRacer(duel, r, dt) {
     const phase = duel.course.phase(r.s);
     if (phase >= lane.entry - 180 && phase <= lane.exit && !f.pitChoice)
       f.pitChoice = choosePit(duel, r, run);
-    if (f.pitChoice?.stop && phase >= lane.entry && phase <= lane.exit) {
-      if (stepPitService(duel, r, dt)) { f.stuck = 0; f.offSec = 0; return; }
-      const box = pitBox(lane, r), serviced = !!f.pitServiced;
-      const remaining = box - phase;
-      const stopMph = Math.sqrt(2 * DRIVE.brakeAccel * run.spec.braking * MPH *
-        Math.max(0, remaining - 1)) / MPH;
-      let target = serviced ? PIT.limitMph : Math.min(PIT.limitMph, stopMph);
-      if (!serviced && remaining < 2 && Math.abs(r.lateral - lane.offsetAt(phase)) > 1.6)
-        target = 3;
-      move(duel, r, run, dt, target, lane.offsetAt(look), surface, look);
+    const selectedStop = f.pitChoice?.stop && phase >= lane.entry && phase <= lane.exit;
+    const transit = pitTransitTarget(duel.course, r, look);
+    if (selectedStop || transit) {
+      if (selectedStop && stepPitService(duel, r, dt)) { f.stuck = 0; f.offSec = 0; return; }
+      let target = PIT.limitMph;
+      if (selectedStop) {
+        const box = pitBox(lane, r), serviced = !!f.pitServiced;
+        const remaining = box - phase;
+        const stopMph = Math.sqrt(2 * DRIVE.brakeAccel * run.spec.braking * MPH *
+          Math.max(0, remaining - 1)) / MPH;
+        target = serviced ? PIT.limitMph : Math.min(PIT.limitMph, stopMph);
+        if (!serviced && remaining < 2 && Math.abs(r.lateral - lane.offsetAt(phase)) > 1.6)
+          target = 3;
+      }
+      move(duel, r, run, dt, target, transit?.lateral ?? lane.offsetAt(look), surface, look);
       limitPitSpeed(duel.course, r);
       duel._staticContacts(r, false);
       duel._boundary(r);

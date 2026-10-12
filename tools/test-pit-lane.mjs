@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from 'three';
 import {Course} from '../src/course.js';
+import {App} from '../src/app.js';
+import {useRacingLine} from './track-script-drive.mjs';
 import {Duel} from '../src/game.js';
-import {COURSE} from '../src/config.js';
-import {PIT, pitAt, pitBox, pitView, stepPitService,choosePit,pitEstimate} from '../src/pit-lane.js';
+import {COURSE, DRIVE} from '../src/config.js';
+import {PIT, pitAt, pitBox, pitView, stepPitService,choosePit,pitEstimate,pitTransitTarget} from '../src/pit-lane.js';
 import {initializeField} from '../src/race-field.js';
 import {stepFieldRacer,runtimeOf} from '../src/race-field-driver.js';
 import {addTrackScriptScene} from '../src/track-script-scene.js';
@@ -146,4 +148,70 @@ test('Grand Prix player uses the centre box despite its race-wide field object',
   assert.equal(state.pit.phase,'ready');
   assert.equal(state.tyre,'winter');
   assert.equal(state.boost,1);
+});
+
+
+test('unplanned pit target is read-only and leaves chosen stops and the road unchanged', () => {
+  const course = new Course(def, 1989), lane = course.pitLane;
+  const actor = {s: lane.entry + 80, lateral: lane.offsetAt(lane.entry + 80),
+    field: {pitChoice: {stop: false}}, speedMph: PIT.limitMph};
+  const before = JSON.stringify(actor), look = actor.s + 12;
+  assert.deepEqual(pitTransitTarget(course, actor, look),
+    {lateral: lane.offsetAt(look), speedMph: PIT.limitMph});
+  assert.equal(JSON.stringify(actor), before);
+  assert.equal(pitTransitTarget(course, {...actor, lateral: 0}, look), null);
+  assert.equal(pitTransitTarget(course, {...actor, field: {pitChoice: {stop: true}}}, look), null);
+  assert.equal(pitTransitTarget(course, {...actor, pit: {phase: 'servicing'}}, look), null);
+});
+
+for (const native of [false, true]) test((native ? 'native circuit' : 'demo') +
+  ' automatic player drives an unchosen pit lane to exit within its limiter-length time', () => {
+  const {duel, done} = race();
+  try {
+    const lane = duel.course.pitLane, state = duel.state;
+    const start = lane.entry + PIT.taper + 5;
+    const app = Object.create(App.prototype);
+    app.duel = duel; app._scriptedCrashDone = true;
+    if (native) useRacingLine(app, .95);
+    Object.assign(state, {s: start, prevS: start, lateral: lane.offsetAt(start),
+      prevLateral: lane.offsetAt(start), speedMph: PIT.limitMph, headingError: 0});
+    const tyre = state.tyre, budget = (lane.exit - lane.entry) / (PIT.limitMph * DRIVE.mphToWorld);
+    let elapsed = 0, serviced = false;
+    while (state.s <= lane.exit && elapsed < budget) {
+      app._driveAutopilot(dt); duel.step(dt); elapsed += dt;
+      serviced ||= state.pit?.phase === 'servicing';
+      if (pitAt(duel.course, state.s, state.lateral))
+        assert.ok(state.speedMph <= PIT.limitMph, 'actual pit limiter remains active');
+    }
+    assert.ok(state.s > lane.exit, `${state.s} at ${elapsed} s, limit ${budget} s`);
+    assert.ok(Math.abs(state.lateral) <= duel.course.roadHalfWidthAt(state.s));
+    assert.equal(serviced, false); assert.equal(state.tyre, tyre);
+  } finally {done();}
+});
+
+for (const [finished, staleStop] of [[false, false], [true, false], [true, true]])
+  test((finished ? 'finished' : 'racing') + (staleStop ? ' with a previous stop choice' : '') +
+  ' computer car already in the pit lane follows it through at the limiter', () => {
+  const {duel, done} = race();
+  try {
+    Object.assign(duel.state, {opponentCount: 1, cpuDifficulty: 'easy', fieldSeed: 4242});
+    initializeField(duel); duel.state.status = 'racing'; duel.state.stageTimeSec = 0;
+    const r = duel.state.opponents[0], lane = duel.course.pitLane;
+    const start = lane.entry + PIT.taper + 5;
+    Object.assign(r, {s: start, lateral: lane.offsetAt(start), speedMph: PIT.limitMph,
+      headingError: 0, finished});
+    r.field.pitChoice = {stop: staleStop}; r.field.reaction = 0;
+    const tyre = r.tyre, budget = (lane.exit - lane.entry) / (PIT.limitMph * DRIVE.mphToWorld);
+    let elapsed = 0;
+    while (r.s <= lane.exit && elapsed < budget) {
+      stepFieldRacer(duel, r, dt); duel.state.stageTimeSec += dt; elapsed += dt;
+      assert.notEqual(r.pit?.phase, 'servicing');
+      if (pitAt(duel.course, r.s, r.lateral)) assert.ok(r.speedMph <= PIT.limitMph);
+    }
+    assert.ok(r.s > lane.exit, `${r.s} at ${elapsed} s, limit ${budget} s`);
+    assert.ok(Math.abs(r.lateral) <= duel.course.roadHalfWidthAt(r.s));
+    assert.equal(r.tyre, tyre); assert.equal(r.field.pitServiced, undefined);
+    assert.equal(r.field.recoveries, 0);
+    assert.equal(r.field.pitChoice.stop, staleStop, 'transit does not rewrite the previous stop choice');
+  } finally {done();}
 });

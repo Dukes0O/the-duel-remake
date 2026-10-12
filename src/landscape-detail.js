@@ -4,6 +4,7 @@ import { makeRng } from './rng.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createDesertStoneMaterial } from './desert-detail.js';
 import { vegetationCells, VEGETATION_CELL_SIZE } from './vegetation.js';
+import { renderedGroundHeight } from './rendered-ground.js';
 import { createCityDecorationPlacement } from './city-decoration-placement.js';
 
 // Partition only after the original deterministic placement/color sequence.
@@ -41,7 +42,12 @@ export function addLandscapeDetail(group,course,alpine,{omitFoliageAt}={}){
   const desert=course.def.theme==='desert',coolStone=course.def.theme==='alpine'||course.def.theme==='coast';
   const city=course.def.theme==='city',cityPlacement=city?createCityDecorationPlacement(course):null;
   const color=new THREE.Color();
-  const point=(s,off)=>course.groundAt(s,off);
+  const point=(s,off)=>{
+    const p=course.groundAt(s,off);
+    if(course.def.ridgeLandform)p.y=renderedGroundHeight(course,{...p,s,off},{requireSurface:true});
+    if(!Number.isFinite(p.y))throw Error('Circuit scenery has no rendered ground.');
+    return p;
+  };
   const sections=course.detailSections||course.sections,total=sections.reduce((n,s)=>n+s.end-s.start,0),fraction=total/course.length;
   const sampleS=()=>{let pick=rng.range(0,total);for(const sec of sections){if(pick<=sec.end-sec.start)return sec.start+pick;pick-=sec.end-sec.start;}return sections.at(-1).end-1;};
   const foliagePoint=(s,off)=>{const side=Math.sign(off)||1;for(let i=0;i<5&&(course.surfaceAt(s,off).road||course.tunnelAt(s)&&Math.abs(off)<35);i++)off+=side*9;return point(s,off);};

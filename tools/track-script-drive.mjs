@@ -4,6 +4,7 @@
 import { App } from '../src/app.js';
 import { COURSE, DEFAULT_CPU_DIFFICULTY, DRIVE, steeringYawAuthority } from '../src/config.js';
 import { DEFAULT_DRIVER } from '../src/drivers.js';
+import {pitTransitTarget} from '../src/pit-lane.js';
 
 // The stock demo driver (src/app.js) judges a corner from three points ahead
 // of the car, which is not enough to brake for a hairpin at the end of a long
@@ -18,8 +19,9 @@ export function useRacingLine(app, skill = .95) {
     if (st.impactTimer > 0) { d.setInput({ throttle: 0, brake: 0, steer: 0, boost: false }); return; }
     if (!d.diff.autoShift) d.setInput({ shiftUp: st.revs > .95, shiftDown: st.revs < .48 && st.gear > 0 });
     const v = Math.max(0, st.speedMph) * DRIVE.mphToWorld, halfWidth = course.roadHalfWidthAt(st.s);
-    let targetLat = line.offsetAt(st.s + Math.max(12, v * .45));
-    for (const other of st.opponents || []) {
+    const transit = pitTransitTarget(course, st, st.s + Math.max(12, v * .45));
+    let targetLat = transit?.lateral ?? line.offsetAt(st.s + Math.max(12, v * .45));
+    for (const other of transit ? [] : st.opponents || []) {
       const ahead = d.relativeS(other.s, st.s) - st.s;
       if (ahead > -10 && ahead < 28 + v * .8 && Math.abs(other.lateral - targetLat) < 2.8) {
         targetLat = clampTo(other.lateral + (other.lateral > 0 ? -3.4 : 3.4), halfWidth - 1.8);
@@ -34,7 +36,7 @@ export function useRacingLine(app, skill = .95) {
     const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     // The profile is for a car of grip 1; speed in a corner goes with the square root of grip.
     const target = Math.min(surface.speedLimit, d.car.topSpeed * .97,
-      line.speedAt(st.s) * skill * Math.sqrt(d.car.grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
+      transit?.speedMph ?? line.speedAt(st.s) * skill * Math.sqrt(d.car.grip / .82 * (surface.traction || 1)) / DRIVE.mphToWorld);
     d.setInput({ throttle: st.speedMph < target ? 1 : 0, brake: st.speedMph > target + 3 ? Math.min(1, (st.speedMph - target) / 14) : 0, steer, boost: false });
   };
 }

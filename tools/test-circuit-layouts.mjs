@@ -70,7 +70,7 @@ test('Panorama Ridge: widths, the walled ridge, crests, boards', () => {
   near(road.length, 4842, 5);
   assert.equal(PANORAMA_RIDGE.laps, 3);
   near(road.halfWidthAt(piece(road, 'Pit Straight').s1 - 100) * 2, 15, 1e-9);
-  near(road.halfWidthAt(cutting.s1 + 100) * 2, 11, 1e-9, 'the narrow ridge width carries on past The Cutting');
+  near(road.halfWidthAt(cutting.s1 + 100) * 2, 13, 1e-9, 'the approved ridge width carries on past The Cutting');
   near(road.halfWidthAt((conrod.s0 + conrod.s1) / 2) * 2, 16, 1e-9);
   assert.equal(piece(road, 'Mountain Straight').walls, 'both'); assert.equal(piece(road, 'Forrest Elbow').walls, 'both');
   assert.equal(conrod.walls, 'none'); assert.equal(piece(road, 'Hell Gate').walls, 'none');
