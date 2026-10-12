@@ -102,7 +102,7 @@ const HELP=[
   '                  Use "core" to select src/test.js.',
   '  --jobs N        Run up to N suites at once (1-32; default 1).',
   '  --keep-going    Run every selected suite after failures.',
-  '  --tier NAME     lane: changed imports and smoke; merge: all short suites; full: all suites.',
+  '  --tier NAME     lane: near imports and reads of changed files, smoke and replay guards; merge: all short suites; full: all suites.',
   '  --changed       Select suites affected by Git changes and the smoke set.',
   '  --json          Emit one machine-readable result object, including captured suite output.',
   '  --help, -h      Show this help.',
@@ -192,6 +192,13 @@ export const SMOKE_SUITES=Object.freeze([
   'tools/test-race-integrity.mjs'
 ]);
 
+// Every lane also proves races replay exactly and course scenery has not moved.
+export const LANE_GUARDS=Object.freeze([
+  'tools/test-replays.mjs',
+  'tools/test-combat-replays.mjs',
+  'tools/test-world-composition.mjs'
+]);
+
 const normalized=path=>path.replaceAll('\\','/').replace(/^\.\//,'');
 const relativeName=(root,path)=>normalized(relative(root,path));
 
@@ -212,17 +219,39 @@ export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync}={}){
   ])];
 }
 
+// Path text a file names: './x', '../public/a/', 'src/x.js', runtime 'assets/x'.
+// A read is a path or a path prefix (the literal head of a joined or added path).
+const PATH_TEXT=/^(?:\.\.?\/|(?:src|public|tools|docs|audio-src)\/)/;
+const RUNTIME_ASSET=/^\/?assets\//;
 function moduleReferences(source,file){
-  const references=[];
+  const references=[],reads=[],specifiers=new Set();
   let possibleReader=false,computedImports=false;
   const literal=node=>node?.type==='Literal'&&typeof node.value==='string'?node.value:
     node?.type==='TemplateLiteral'&&node.expressions.length===0?node.quasis[0].value.cooked:null;
+  // Literal start of '../a/'+name or `../a/${name}`; exact when nothing follows.
+  const head=node=>{
+    const value=literal(node);
+    if(value!==null)return {text:value,exact:true};
+    if(node?.type==='TemplateLiteral')return {text:node.quasis[0].value.cooked,exact:false};
+    if(node?.type==='BinaryExpression'&&node.operator==='+'){
+      const left=head(node.left);
+      return left&&{text:left.text,exact:false};
+    }
+    return null;
+  };
+  const read=(text,exact,base,joined=false)=>{
+    if(!text)return;
+    if(RUNTIME_ASSET.test(text))reads.push({path:'public/'+text.replace(/^\//,''),exact,base:'root'});
+    else if(PATH_TEXT.test(joined&&!text.endsWith('/')?text+'/':text))reads.push({path:text,exact,base:base??(text.startsWith('.')?'file':'root')});
+  };
   const add=(node,kind)=>{
     const specifier=literal(node);
     if(specifier!==null){
       references.push({specifier,kind});
+      if(kind==='import')specifiers.add(node);
       if(['fs','node:fs','fs/promises','node:fs/promises'].includes(specifier))possibleReader=true;
     }else if(kind==='import'){possibleReader=true;computedImports=true;}
+    else if(kind==='url'){const start=head(node);if(start)read(start.text,false,'file');}
   };
   const walk=node=>{
     if(!node||typeof node.type!=='string')return;
@@ -235,13 +264,31 @@ function moduleReferences(source,file){
       node.arguments[1]?.type==='MemberExpression'&&node.arguments[1].property?.name==='url'&&
       node.arguments[1].object?.type==='MetaProperty'&&node.arguments[1].object.meta?.name==='import')
       add(node.arguments[0],'url');
+    else if(node.type==='CallExpression'&&['join','resolve'].includes(node.callee?.name??node.callee?.property?.name)){
+      // join(root,'public','assets',name): the literal run after the root names a path or prefix.
+      const parts=[];let exact=true;
+      for(const argument of node.arguments.slice(1)){
+        const value=literal(argument);
+        if(value===null){exact=false;break;}
+        parts.push(value);
+      }
+      if(parts.length)read(parts.join('/').replace(/^\.\//,''),exact,'root',true);
+    }else if(node.type==='Literal'&&typeof node.value==='string'&&!specifiers.has(node))read(node.value,true);
+    else if(node.type==='TemplateLiteral'){const start=head(node);if(start)read(start.text,start.exact);}
+    else if(node.type==='BinaryExpression'&&node.operator==='+'){
+      const start=head(node);
+      if(start){read(start.text,false);walk(node.right);return;}
+    }
     for(const value of Object.values(node)){
       if(Array.isArray(value))value.forEach(walk);
       else if(value&&typeof value==='object')walk(value);
     }
   };
   walk(parseAst(source,null,file));
-  return {references,complete:true,possibleReader,computedImports};
+  // Declared reads for paths the code builds at run time: // test-reads: public/a/, docs/b.md
+  for(const match of source.matchAll(/\/\/\s*test-reads:\s*(.+)$/gm))
+    for(const text of match[1].split(/[\s,]+/).filter(Boolean))reads.push({path:text,exact:false,base:'root'});
+  return {references,reads,complete:true,possibleReader,computedImports};
 }
 // Audited non-import readers. These are additive edges, not filename guesses.
 const EXPLICIT_READS=Object.freeze({
@@ -266,18 +313,23 @@ const presentationConsumers=path=>PRESENTATION_CONSUMERS.find(row=>row.files?.in
     row.extensions.some(extension=>path.endsWith(extension))));
 const fullScope=path=>{
   const name=path.slice(path.lastIndexOf('/')+1);
-  return path==='tools/run-tests.mjs'||path==='tools/test-test-runner.mjs'||
-    /^(?:package(?:-lock)?\.json|.*\.lock|.*(?:^|[.-])lock(?:file)?\.[^.]+|(?:.*[.-])?config\.[^.]+|tsconfig.*\.json)$/.test(name);
+  // Build and tool configs only; src/config.js is game data and follows its importers.
+  const buildConfig=(!path.includes('/')||path.startsWith('tools/'))&&/^(?:.*[.-])?config\.[^.]+$/.test(name);
+  return path==='tools/run-tests.mjs'||path==='tools/test-test-runner.mjs'||buildConfig||
+    /^(?:package(?:-lock)?\.json|.*\.lock|.*(?:^|[.-])lock(?:file)?\.[^.]+|tsconfig.*\.json)$/.test(name);
 };
 
 export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=readFileSync,hasFile=isFile,
   dependencyCache=new Map()}={}){
   let complete=true,possibleReader=false,computedImports=false;
-  const found=new Set(),visit=file=>{
-    const name=relativeName(projectRoot,file);
-    if(found.has(name)||!hasFile(file))return;
-    found.add(name);
-    if(!/\.m?js$/.test(file))return;
+  // Breadth-first so each file keeps its shortest import distance from the suite.
+  const reads=new Map(),found=new Set(),depths=new Map(),queue=[[resolve(projectRoot,entry),0]];
+  const enqueue=(file,depth)=>{const name=relativeName(projectRoot,file);if(!found.has(name)&&hasFile(file)){found.add(name);depths.set(name,depth);queue.push([file,depth]);}};
+  found.add(relativeName(projectRoot,queue[0][0]));depths.set(relativeName(projectRoot,queue[0][0]),0);
+  if(!hasFile(queue[0][0]))queue.length=0;
+  while(queue.length){
+    const [file,depth]=queue.shift(),name=relativeName(projectRoot,file);
+    if(!/\.m?js$/.test(file))continue;
     let parsed=dependencyCache.get(file);
     if(!parsed){
       try{parsed=moduleReferences(readSource(file,'utf8'),file);}
@@ -286,64 +338,91 @@ export function localDependencies(entry,{projectRoot=PROJECT_ROOT,readSource=rea
     }
     if(!parsed.complete)complete=false;
     possibleReader ||= parsed.possibleReader;computedImports ||= parsed.computedImports;
+    for(const {path,exact,base} of parsed.reads??[]){
+      const target=relativeName(projectRoot,base==='file'?resolve(dirname(file),path):resolve(projectRoot,path));
+      // A head that resolves to the root or outside it names no bounded path.
+      if(!target||target==='.'||target.startsWith('..'))continue;
+      const read=(exact?'=':'^')+target+(path.endsWith('/')&&!target.endsWith('/')?'/':'');
+      if(!reads.has(read)||reads.get(read)>depth)reads.set(read,depth);
+    }
     for(const readerPath of EXPLICIT_READS[name]??[]){
-      if(hasFile(resolve(projectRoot,readerPath)))visit(resolve(projectRoot,readerPath));
-      else {found.add(readerPath);complete=false;}
+      if(hasFile(resolve(projectRoot,readerPath)))enqueue(resolve(projectRoot,readerPath),depth+1);
+      else {found.add(readerPath);depths.set(readerPath,depth+1);complete=false;}
     }
     for(const {specifier,kind} of parsed.references){
       if(!specifier.startsWith('.'))continue;
       const base=resolve(dirname(file),specifier.split(/[?#]/,1)[0]);
       const candidates=[base,base+'.js',base+'.mjs',join(base,'index.js')];
       const target=candidates.find(hasFile);
-      if(target)visit(target);
+      if(target)enqueue(target,depth+1);
       else {
-        found.add(relativeName(projectRoot,base));
+        const missing=relativeName(projectRoot,base);
+        if(!found.has(missing)){found.add(missing);depths.set(missing,depth+1);}
         // Missing asset/CSS URLs still select their reader on deletion.
         if(kind==='import'&&!specifier.endsWith('.css'))complete=false;
       }
     }
-  };
-  visit(resolve(projectRoot,entry));
+  }
   Object.defineProperties(found,{complete:{value:complete},possibleReader:{value:possibleReader},
-    computedImports:{value:computedImports}});
+    computedImports:{value:computedImports},reads:{value:reads},depths:{value:depths}});
   return found;
 }
-export function suitesForChanges(suites,paths,options={}){
+// Exact reads also cover a directory's contents; prefix reads cover anything they start.
+export function readsPath(reads,path,within=Infinity){
+  for(const [read,depth] of reads){
+    if(depth>within)continue;
+    const target=read.slice(1);
+    if(read[0]==='^'?path.startsWith(target):path===target||path.startsWith(target.endsWith('/')?target:target+'/'))return true;
+  }
+  return false;
+}
+// A suite runs for a file it imports, or a file one step further, or a path those name.
+// Deeper chains through shared modules (config.js reaches every course) wait for the
+// night full tier; replay fingerprints run in every lane and guard race rules.
+export const LANE_REACH=2;
+export function suitesForChanges(suites,paths,{reach=LANE_REACH,...options}={}){
   const changed=new Set(paths.map(normalized));
   if(!changed.size)return [];
   if([...changed].some(fullScope))return [...suites];
   const presentation=new Map();
   for(const path of changed){
-    if(!path.startsWith('public/')&&!path.endsWith('.css'))continue;
     const row=presentationConsumers(path);
-    if(!row)return [...suites];
-    presentation.set(path,row);
+    if(row)presentation.set(path,row);
   }
   const mapped=new Set(),requiredReaders=new Set([...presentation.values()].flatMap(row=>row.readers));
-  const affected=[],dependencyCache=new Map(),
-    sourceChange=[...changed].some(path=>(path.startsWith('src/')||path.startsWith('tools/'))&&!presentation.has(path));
+  const affected=[],covered=new Set(),dependencyCache=new Map(),
+    gameChange=[...changed].some(path=>/^(?:src|public|tools)\//.test(path)||path.endsWith('.css'));
   for(const suite of suites){
     mapped.add(suite);
     const dependencies=localDependencies(suite,{...options,dependencyCache});
-    for(const path of dependencies)mapped.add(path);
-    const readsPresentation=[...requiredReaders].some(reader=>dependencies.has(reader)),
-      readsChange=[...changed].some(path=>dependencies.has(path)),
-      possibleConsumer=(presentation.size>0||sourceChange)&&dependencies.possibleReader;
     if(!dependencies.complete)return [...suites];
-    if(changed.has(suite)||readsPresentation||readsChange||possibleConsumer)affected.push(suite);
+    for(const path of dependencies)mapped.add(path);
+    const near=path=>(dependencies.depths.get(path)??Infinity)<=reach;
+    [...changed].filter(path=>readsPath(dependencies.reads,path)).forEach(path=>mapped.add(path));
+    const reading=[...changed].filter(path=>near(path)||readsPath(dependencies.reads,path,reach-1));
+    // A file reader that names no bounded path could read anything it is handed.
+    const unbounded=(dependencies.possibleReader||dependencies.computedImports)&&!dependencies.reads.size;
+    const readsPresentation=[...requiredReaders].some(reader=>dependencies.has(reader)),
+      readsChange=reading.length>0;
+    if(changed.has(suite)||readsPresentation||readsChange||(gameChange&&unbounded)){
+      affected.push(suite);
+      reading.forEach(path=>covered.add(path));
+      if(changed.has(suite))covered.add(suite);
+    }
   }
   // Explicit mappings must have their real readers in this inventory.
   if([...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
-  // Fall back per path, even when another changed file already found consumers.
-  if([...changed].some(path=>(path.startsWith('src/')||path.startsWith('tools/'))&&
-    !mapped.has(path)&&!presentation.has(path)))return [...suites];
-  return affected;
+  // A changed game file no selected suite reaches is named, not a reason to run everything.
+  // The night full tier and the release full tier still cover it.
+  const unmapped=[...changed].filter(path=>(/^(?:src|public|tools)\//.test(path)||path.endsWith('.css'))&&
+    !covered.has(path)&&!presentation.has(path));
+  return Object.defineProperty(affected,'unmapped',{value:unmapped});
 }
 
 export function selectPlan(suites,{tier=null,filters=[],changed=false,affected=[]}={}){
   let selected;
   if(tier==='lane'||changed){
-    const selectedNames=new Set([...SMOKE_SUITES,...affected]);
+    const selectedNames=new Set([...SMOKE_SUITES,...LANE_GUARDS,...affected]);
     selected=suites.filter(suite=>selectedNames.has(suite));
   }else selected=[...suites];
   if(tier==='merge')selected=selected.filter(suite=>suite!==CAMPAIGN_SUITE);
@@ -421,6 +500,8 @@ export async function main(args=process.argv.slice(2),{discover=discoverSuites,r
     const suites=discover({projectRoot:root});
     const paths=options.tier==='lane'||options.changed?getChanges({cwd:root}):[];
     const impacted=paths.length?affected(suites,paths,{projectRoot:root}):[];
+    if(impacted.unmapped?.length)
+      log('No suite imports or reads '+impacted.unmapped.join(', ')+'; the night full tier covers it.');
     const plan=selectPlan(suites,{...options,affected:impacted});
     if(!plan.length)throw Error('No test suites match: '+(options.filters.join(', ')||'(none)'));
     if(options.list){
