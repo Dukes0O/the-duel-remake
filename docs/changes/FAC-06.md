@@ -29,3 +29,8 @@ Finished entries and their duplicated implementation history leave board.yaml;
 Git and existing change notes keep text history. Open facts move to their named
 current cards, not an archive. The malformed old combined gate fields cannot
 break the new standard YAML. No original lane, evidence or runtime file is deleted.
+
+One review found a conflicting Claude claimant was shown active and held its
+second lock despite losing the first. A genuine failing three-card fixture now
+requires all locks or none, consistently for both teams. The correction passes
+230 focused checks; no existing lock assertion was relaxed.

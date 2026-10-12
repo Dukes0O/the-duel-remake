@@ -53,8 +53,11 @@ export function workSplit(cards) {
   const needsDone = card => card.needs.every(settled);
   const open = cards.filter(card => OPEN.has(card.status));
   const holders = new Map();
-  for (const card of open.filter(card => WORKING.has(card.status) && !card.waiting_on))
-    for (const lock of card.locks || []) if (!holders.has(lock)) holders.set(lock, card.id);
+  for (const card of open.filter(card => WORKING.has(card.status) && !card.waiting_on)) {
+    const locks = card.locks || [];
+    if (locks.some(lock => holders.has(lock))) continue;
+    for (const lock of locks) holders.set(lock, card.id);
+  }
   const lockedBy = card => (card.locks || []).filter(lock => holders.has(lock) && holders.get(lock) !== card.id)
     .map(lock => ({lock, holder: holders.get(lock)}));
   const unlocked = card => lockedBy(card).length === 0;
@@ -67,7 +70,7 @@ export function workSplit(cards) {
     codexCanStart: codex.filter(card => card.status === 'ready' && !card.waiting_on && needsDone(card) && unlocked(card)).map(line),
     codexWorking: codex.filter(card => WORKING.has(card.status) && !card.waiting_on && unlocked(card)).map(line),
     codexWaiting: codex.filter(card => card.status === 'ready' && !needsDone(card)).map(line),
-    claudeWorking: claude.filter(card => WORKING.has(card.status)).map(line),
+    claudeWorking: claude.filter(card => WORKING.has(card.status) && !card.waiting_on && unlocked(card)).map(line),
     claudeNext: claude.filter(card => !WORKING.has(card.status)).map(line),
     waitingOnLocks: open.filter(card => !card.waiting_on && !unlocked(card)).map(line),
     waitingOnClaude: open.filter(card => card.waiting_on === 'claude').map(line),

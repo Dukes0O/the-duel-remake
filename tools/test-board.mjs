@@ -124,4 +124,27 @@ tasks:
 assert.deepEqual(workSplit(doneHolder).codexCanStart.map(row=>row.id),['NEXT']);
 checks+=4;
 
+// A claimant must acquire all of its locks before it holds any of them.
+const collision=parseBoard(`tasks:
+  - id: A
+    owner: codex
+    status: building
+    locks: [X]
+  - id: B
+    owner: claude
+    status: building
+    claimed_by: Claude
+    locks: [X, Y]
+  - id: C
+    owner: codex
+    status: ready
+    locks: [Y]
+`);
+const collisionSplit=workSplit(collision);
+assert.deepEqual(collisionSplit.codexWorking.map(row=>row.id),['A']);
+assert.deepEqual(collisionSplit.claudeWorking,[]);
+assert.deepEqual(collisionSplit.waitingOnLocks.map(row=>[row.id,row.lockedBy]),[['B',[{lock:'X',holder:'A'}]]]);
+assert.deepEqual(collisionSplit.codexCanStart.map(row=>row.id),['C']);
+checks+=4;
+
 console.log(`Work board: ${checks} checks passed; Codex can start ${split.codexCanStart.length} card(s).`);
