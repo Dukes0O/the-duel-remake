@@ -96,9 +96,11 @@ test('two shaded ice patches, short, off every hairpin apex, each with its ICE b
     assert.equal(course.gripKindAt((patch.s0 + patch.s1) / 2, 0), 'ice');
     assert.equal(course.gripKindAt(patch.s0 - 5, 0), 'snow');
   }
-  // One just past the Fir Esses, the other on the spur before Beaver Hairpin.
+  // One just past the Fir Esses, the other at the end of Beaver Run, out of every braking zone.
   assert.ok(ice[0].s0 > piece('Fir Esses 2').s1 && ice[0].s0 - piece('Fir Esses 2').s1 < 30);
-  assert.ok(piece('Beaver Hairpin').s0 - ice[1].s1 < 40 && ice[1].s0 > piece('The Spur').s0);
+  // Claude's finishing pass, 12 October 2026: the second patch moved off the spur (all braking
+  // for Beaver Hairpin) to the end of Beaver Run, ending at least 50 m before Beaver Kink.
+  assert.ok(ice[1].s0 > piece('Beaver Run').s0 && piece('Beaver Kink').s0 - ice[1].s1 >= 50);
 });
 
 test('a pit lane on Lodge Straight with its boxes in front of the garages', () => {

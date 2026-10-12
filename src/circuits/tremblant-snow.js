@@ -7,7 +7,7 @@
 //   - Surfaces by stretch: packed snow on most of the lap; asphalt on Lodge
 //     Straight and Timber Straight, ploughed and sunny; two ice patches in the
 //     forest, each with its ICE board 100 m before (Fir Esses exit, and the
-//     spur before Beaver Hairpin). Plough banks (deep snow) line the road.
+//     end of Beaver Run before Beaver Kink). Plough banks (deep snow) line the road.
 //   - Winter tyres on the race setup; a pit lane on Lodge Straight (P4-PIT).
 //   - A low pale sun and cold blue shadows, snow-laden pines, a frozen lake,
 //     skiers on the ski runs, the chairlift running and smoke from the lodge.
@@ -31,12 +31,14 @@ const script = BASE.script.map(entry => {
 });
 
 // Two shaded ice patches, 50 m each. The first lies just past the Fir Esses, on the start of
-// Ridge Run; the second on the short spur before Beaver Hairpin (never on a hairpin apex).
+// Ridge Run; the second at the end of Beaver Run, before Beaver Kink. Never in a braking zone:
+// the 80 m spur is all braking for Beaver Hairpin, and ice there sent careful drivers into the
+// plough bank for eight seconds a lap (Claude's finishing pass, 12 October 2026).
 const ICE = (() => {
-  const esses = piece('Fir Esses 2'), hairpin = piece('Beaver Hairpin');
+  const esses = piece('Fir Esses 2'), run = piece('Beaver Run');
   return [
     { id: 'fir-esses-ice', kind: 'ice', shaded: true, s0: esses.s1 + 12, s1: esses.s1 + 62 },
-    { id: 'beaver-spur-ice', kind: 'ice', shaded: true, s0: hairpin.s0 - 70, s1: hairpin.s0 - 20 },
+    { id: 'beaver-run-ice', kind: 'ice', shaded: true, s0: run.s1 - 110, s1: run.s1 - 60 },
   ];
 })();
 
