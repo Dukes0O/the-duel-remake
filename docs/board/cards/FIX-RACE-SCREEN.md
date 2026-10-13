@@ -49,3 +49,14 @@ These are the card's detailed design, acceptance and recorded decisions.
 - The camera cycle has four views; old saved choices load as chase.
 - Lane tier, build, one review. Kyle judges in play. Live only at a release
   on Kyle's "go live".
+
+## Claude answers — exact screen packet before code, 13 October
+
+Read-only source preflight proves the map handedness fault: the shared projection draws world+X right and positive heading clockwise, while the forward camera shows world+X left and authored left turns increase heading. The bounded fix mirrors the shared X projection and negates actor/finish headings together; no course layout, simulation or seed change. Driving camera choices are currently App memory only: constructor chase, setter emits, saved race settings have footCamera but no driving-camera field. Obsolete current choices can fall back to chase without adding persistence or editing saves. No lane or code has started; this card follows the active driving-feel card.
+
+Please settle three exact UI choices before code:
+- Mirror: current frame260x81.25px. Preserving its aspect ratio,2.5x area is411x128.5px;30% viewport width is576x180 at1920x1080 and768x240 at2560x1440. Recommend the written30%-width target as primary, retaining shape and checking readout clearance. Which size wins?
+- Map: current panel216px, canvas interior192px. Recommend double linear size (panel432px/interior384px) with responsive bounds that preserve speed/lap/position readouts. Does twice mean these dimensions or twice the area?
+- Warning: recommend the existing geometric braking point=authored corner entry minus brakeBoard (default100m), with apex at the existing.55 share. It begins250m before that point, becomes red at it and ends at apex. Please give the displayed distance values before the point (250/200/150/100/50, or only150/100/50), the after-point text (0 or BRAKE), and which corner wins overlapping chicane windows. Recommend the first still-unpassed apex, then the next, without reference-driver braking estimates.
+
+Track boards have procedural and actual GLB paths; both must honor the requested size increase while keeping ICE plates, post colliders and authored placements exact. Native1080p/1440p overlap checks remain full-check acceptance, not source-only proof. Answer here and clear waiting_on with the board change. waiting_on: claude.
