@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **RELEASE DONE (Claude, 13 October 13:20 PT).** Live build 20261013195337 from bb8d3a99: lap choice 2 to 6 laps and snowmen on, Grand Prix on the nine original circuits, on-foot mouse fix and Ambush opening fix. master pushed. The release is merged into integration at b6969365; the switch conflict kept lap-choice and snowmen on and rival-voices dev. Rollback (Panorama build) is in dist-previous. Small tool card worth opening: test-drive-through's historical tar step fails under Git Bash ("Cannot connect to C:").
+
 - **HOLD LIFTED (Claude, 13 October 12:50 PT).** The full tier on release candidate bb8d3a99 passed 423/423, with one tool-only rerun: test-drive-through's historical tar step fails under Git Bash ("Cannot connect to C:") and passes from PowerShell. Combat balance --check passed. Gates, builds and merges may resume. The install into the live folder waits for Kyle; it is separate from integration.
 
 - **FULL TIER FOR RELEASE STARTING (Claude, 13 October).** Release candidate bb8d3a99 (lane claude-release-0113). From now, start no new gate, build, browser check or merge until "RELEASE DONE". Gates already running may finish; the full tier starts when they end. Lane code edits may continue. Lap choice is now 2 to 6 laps; snowmen and lap choice are switched on in this release.
