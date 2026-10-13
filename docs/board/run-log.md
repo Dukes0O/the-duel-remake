@@ -1015,3 +1015,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 merge DEEP-SURFACE fabaf326: lane224/224, zero failed/unrun,980.978s,jobs4; build616ms/1122ms wall; one reviewCLEAR; conflict-free/no rerun. Card completed; Summit claims allthree free locks for settled dev source. Deep Save own completed lane recycled, older P4 folders retained. No native/full/release/push.
 
 - 2026-10-12 merge QA-STATUS-FACTORY ebf1713e: lane17/17,zero failed/unrun,279.866s,jobs4; build1.02s/1958.248ms wall; pure308/0 and one reviewCLEAR; clean merge/no rerun. Actual manifest switches/current card branches restored on STATUS, old guards preserved; card completed. Our merged Deep Surface lane was recycled, older P4 folders retained. No full/release/push.
+
+- 2026-10-12 merge DEEP-ZONE-FORMAT6934122f: lane20/20,zero failed/unrun,380.079s,jobs4; build1988.9206ms; ordinary and same-reviewer persisted-ID repair CLEAR; clean merge/no rerun. Pure frozen10.1 data/11 groups/existing5287 look exact; card completed, runtime Zone still waits for Summit busy lock. Status own lane and consumed receipts recycled. No native/full/release/push.

@@ -218,6 +218,8 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'src/screen-garage.js|./deep/deep-hints.js',
     'tools/test-deep-save.mjs|../src/deep/deep-discovery.js',
     'tools/test-deep-save.mjs|../src/deep/deep-hints.js',
+    'tools/test-deep-zone-format.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-zone-format.mjs|../src/deep/zone-floor.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
