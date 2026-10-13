@@ -5,6 +5,8 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPus
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
+import {observeSummitRoute} from './summit-avalanche.js';
+import {RACERS,FIELD_TUNING} from './race-field.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
@@ -170,10 +172,12 @@ export function _rival(dt, opponent = this.state.rival) {
   const easyWasteland = s.mode === 'wasteland' && s.cpuDifficulty === 'easy';
   const cruiseSkill = easyWasteland ? .875 : skill.skill;
   const cornerSkill = easyWasteland ? .895 : skill.cornerSkill;
-  if (s.cpuDifficulty !== 'easy' && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
+  const traits=RACERS.find(row=>row.id===r.driverId)?.traits ?? RACERS.find(row=>row.id==='club').traits;
+  const summitChoice=observeSummitRoute(this,r,traits.aggression*(FIELD_TUNING[s.cpuDifficulty]?.aggression??1)*(this.course.def.fieldAggression??1));
+  if ((s.cpuDifficulty !== 'easy' || summitChoice!==undefined) && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
     this._npcRoutePlanner = new NpcRoutePlanner(this.course, { car, surfaceAt: (distance, lateral) => this._drivingSurface(distance, lateral, car) });
   }
-  const route = s.cpuDifficulty === 'easy' ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents });
+  const route = s.cpuDifficulty === 'easy' && summitChoice===undefined ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents, ...(summitChoice!==undefined?{summitChoice}:{}) });
   r.routeId = route?.routeId || null; r.routeLap = route?.routeLap || null;
   const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
   const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?

@@ -4,6 +4,7 @@ import {createWaterline} from './deep/waterline.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
 import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
 import {createSnowmenView} from './snowmen-view.js';
+import {createSummitAvalancheView,summitAvalancheShake} from './summit-avalanche-view.js';
 import {snowWorldEnabled,snowWorldPlacements,SNOW_KIT_IDS,snowWorldOf,winterLightingSettings} from './snow-world.js';
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
@@ -185,9 +186,10 @@ export function attachRenderer(host, app) {
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
-  let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null;
+  let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
-  const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'');
+  const hasAvalanche=next=>next.def.id==='summit-run' && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
+  const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'')+(hasAvalanche(next)?':avalanche':'');
   const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
   function prepareKitWorld(next, {retry=false}={}) {
     if (!next.def.kitPlacements?.length && !winterEnabled(next) && !hasSnowmen(next)) {
@@ -325,7 +327,7 @@ export function attachRenderer(host, app) {
   function build(next) {
     const buildStart=performance.now();
     worldReadyStarted=buildStart;host.dataset.worldReadyMs='0';
-    snowmenView?.dispose();snowmenView=null;
+    snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;
     if (world) retireObject(world);
     course = next;
     worldKey=kitWorldKey(next);
@@ -335,6 +337,7 @@ export function attachRenderer(host, app) {
     world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
     if(hasSnowmen(course)){snowmenView=createSnowmenView(trackKitsOf(world));world.add(snowmenView.group);}
+    if(hasAvalanche(course)){avalancheView=createSummitAvalancheView(course);world.add(avalancheView.group);}
     lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
@@ -632,7 +635,7 @@ export function attachRenderer(host, app) {
         camTarget.y=Math.max(camTarget.y,course.groundAt(near.s,near.lateral).y+.65);
       }
       camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(speed / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
-      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10;
+      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10 + (avalancheView?summitAvalancheShake(st):0);
       camTarget.x += Math.sin(motionTime * 81) * shake;
       camTarget.y += Math.cos(motionTime * 93) * shake * .62;
       if(st.catastrophic){
@@ -813,6 +816,7 @@ export function attachRenderer(host, app) {
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
     snowmenView?.update(menu?null:st,high);
+    avalancheView?.update(menu?null:st,high);
     const snowOwner=snowWorldOf(world);
     if(snowOwner){
       snowVehicles.length=menu?0:Math.min(8,opponents.length+1);
@@ -952,7 +956,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;disposed=true;stopDeepEvents();deepView.dispose();snowmenView?.dispose();snowmenView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;disposed=true;stopDeepEvents();deepView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);
