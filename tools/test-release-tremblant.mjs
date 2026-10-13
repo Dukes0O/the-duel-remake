@@ -8,10 +8,11 @@ import { featureFlags } from '../src/feature-flags.js';
 import { COURSE_PRICES, isCourseUnlocked, purchaseCourse } from '../src/course-access.js';
 import { createProfile, eventKey, loadPlayers, normalizeProfile, stageEventId, PLAYERS_KEY, PROFILE_KEY } from '../src/progression.js';
 import { supportsCombat } from '../src/combat.js';
+import { courseAccessPanel } from '../src/course-access-ui.js';
 import { loadLeaderboard, LEADERBOARD_KEY } from '../src/leaderboard.js';
 import { loadGhosts, GHOST_KEY } from '../src/ghost.js';
 
-// RELEASE-TREMBLANT, RELEASE-TREMBLANT-SNOW and RELEASE-HARBOUR: Tremblant Woods, then Tremblant Snow, then Harbour Lights join the course list while their switches are on.
+// RELEASE-TREMBLANT, RELEASE-TREMBLANT-SNOW, RELEASE-HARBOUR and RELEASE-PANORAMA: Tremblant Woods, Tremblant Snow, Harbour Lights, then Panorama Ridge join the course list while their switches are on.
 // This pins what must not move when a course is added: the earlier events keep their
 // place and id, no old save gains or loses anything, and each new course is a paid unlock.
 
@@ -55,6 +56,18 @@ ok(harbourKey.startsWith('harbour-lights|layout:'), `Harbour Lights records have
 ok(COURSE.every((event, index) => index === harbour || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('harbour-lights|')),
   'no other event shares the Harbour Lights key');
 equal(stageEventId(harbour), 'harbour-lights', 'position 18 saves as harbour-lights');
+const panorama = COURSE.findIndex(event => event.id === 'panorama-ridge');
+equal([tremblant, snow, harbour, panorama], [16, 17, 18, 19], 'the released courses keep their places (Tremblant Woods 17th, Tremblant Snow 18th, Harbour Lights 19th) and Panorama Ridge is 20th');
+equal(panorama, COURSE.length - 1, 'Panorama Ridge is the last entry on the course list');
+equal(CIRCUIT_MANIFESTS.map(row => row.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'], 'circuits are listed in release order');
+const liveBeforePanorama = new Set(['tremblant-woods', 'tremblant-snow', 'harbour-lights']);
+equal(circuitsEnabled({ enabled: name => liveBeforePanorama.has(name) }).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights'],
+  "with the switches that were live before Panorama Ridge the course list is identical to the live build's");
+const panoramaKey = eventKey({ stageIndex: panorama, seed: 1989, laps: COURSE[panorama].laps });
+ok(panoramaKey.startsWith('panorama-ridge|layout:'), `Panorama Ridge records have their own key: ${panoramaKey}`);
+ok(COURSE.every((event, index) => index === panorama || !eventKey({ stageIndex: index, seed: 1989, laps: event.laps }).startsWith('panorama-ridge|')),
+  'no other event shares the Panorama Ridge key');
+equal(stageEventId(panorama), 'panorama-ridge', 'position 19 saves as panorama-ridge');
 
 // 3. Every enabled paid course has isolated access. Literal prices and named UI checks belong to each course suite.
 for (const id of released) {
@@ -67,6 +80,25 @@ for (const id of released) {
   equal(bought.profile.courses.unlocked, [...fresh.courses.unlocked, id].filter(value => COURSE.some(event => event.id === value)), 'only the bought course is added');
   ok(isCourseUnlocked(bought.profile, 'pacific-canyon'), 'buying keeps the free course');
   for (const other of released.filter(value => value !== id)) ok(!isCourseUnlocked(bought.profile, other), 'buying never grants another paid course');
+}
+
+// 3b. Panorama Ridge in particular: a paid unlock at exactly 1,600 credits, shown on the course screen.
+equal(COURSE_PRICES['panorama-ridge'], 1600, 'Panorama Ridge costs 1,600 credits (docs/CIRCUITS.md section 7)');
+{
+  const fresh = createProfile();
+  const poor = purchaseCourse({ ...fresh, credits: 1599 }, 'panorama-ridge');
+  ok(!poor.ok && poor.profile.credits === 1599, 'one credit short cannot buy Panorama Ridge');
+  const bought = purchaseCourse({ ...fresh, credits: 2500 }, 'panorama-ridge');
+  ok(bought.ok && bought.cost === 1600 && bought.profile.credits === 900, 'buying Panorama Ridge charges exactly 1,600 credits');
+  equal(bought.profile.courses.unlocked, [...fresh.courses.unlocked, 'panorama-ridge'].filter(id => COURSE.some(event => event.id === id)), 'buying adds only Panorama Ridge to the unlocked list');
+  ok(['tremblant-woods', 'tremblant-snow', 'harbour-lights'].every(id => !isCourseUnlocked(bought.profile, id)) && isCourseUnlocked(bought.profile, 'pacific-canyon'),
+    'Panorama Ridge gives none of the other paid courses and keeps the free course');
+  for (const id of ['tremblant-woods', 'tremblant-snow', 'harbour-lights'])
+    ok(!isCourseUnlocked(purchaseCourse({ ...fresh, credits: 2500 }, id).profile, 'panorama-ridge'), `buying ${id} does not give Panorama Ridge`);
+  const unowned = courseAccessPanel(fresh, 0, '');
+  ok(/Panorama Ridge/.test(unowned) && /1,?600 CR/.test(unowned), 'the course screen lists Panorama Ridge with its price');
+  ok(!/UNLOCKED<\/span><h3>Panorama Ridge/.test(unowned), 'the course screen shows Panorama Ridge as locked until bought');
+  ok(/UNLOCKED<\/span><h3>Panorama Ridge/.test(courseAccessPanel(bought.profile, panorama, '')), 'after buying, the course screen shows Panorama Ridge as unlocked');
 }
 
 // 4. Every historical save fixture loads exactly as before: no course gained or lost, records and ghosts intact.
@@ -107,6 +139,8 @@ for (const file of files) {
 
 // 5. Every appended course remains a pure race with a rival; combat matrices cover the independently selected combat roster.
 for (const definition of ALL_CIRCUITS) ok(!supportsCombat(definition) && definition.hasRival && definition.noCombat === true, 'registered circuits are race-only');
+ok(!supportsCombat(COURSE[panorama]) && COURSE[panorama].hasRival && COURSE[panorama].noCombat === true, 'Panorama Ridge has a rival but no Mad Max Duel');
+equal(COURSE.filter(supportsCombat).length, 11, 'eleven combat courses, as before');
 
 // 6. An unfinished race is saved by course id as well as position, and found by id first.
 const race = extra => ({ runId: 'run-x', car: 'falcone_f42', ...extra });
@@ -119,6 +153,9 @@ equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-snow' }))?.stageInd
 equal(load(race({ stageIndex: harbour, stageId: 'harbour-lights' }))?.stageIndex, harbour, 'a new save resumes Harbour Lights');
 equal(load(race({ stageIndex: tremblant, stageId: 'harbour-lights' }))?.stageIndex, harbour, 'the id wins over a stale position for Harbour Lights too');
 equal(load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }))?.stageId, 'tremblant-woods', 'a saved unfinished Tremblant race still resumes Tremblant, now that Harbour Lights exists');
+equal(load(race({ stageIndex: panorama, stageId: 'panorama-ridge' }))?.stageIndex, panorama, 'a new save resumes Panorama Ridge');
+equal(load(race({ stageIndex: tremblant, stageId: 'panorama-ridge' }))?.stageIndex, panorama, 'the id wins over a stale position for Panorama Ridge too');
+equal(load(race({ stageIndex: harbour, stageId: 'harbour-lights' }))?.stageId, 'harbour-lights', 'a saved unfinished Harbour Lights race still resumes Harbour Lights, now that Panorama Ridge exists');
 equal(load(race({ stageIndex: 3, stageId: 'no-such-course' })), null, 'a course id this build does not have drops the race instead of resuming whatever sits at that position');
 equal(load(race({ stageIndex: 999, stageId: 'no-such-course' })), null, 'an unknown id and position is dropped, as before');
 {
@@ -135,4 +172,4 @@ equal(load(race({ stageIndex: 999, stageId: 'no-such-course' })), null, 'an unkn
 const written = load(race({ stageIndex: tremblant, stageId: 'tremblant-woods' }));
 equal(Object.keys(written).sort(), ['car', 'cpuDifficulty', 'driverId', 'key', 'pendingPoliceFineCount', 'pendingPoliceFines', 'runId', 'stageId', 'stageIndex'], 'the only new field is stageId');
 
-console.log(`Release Tremblant, Tremblant Snow and Harbour Lights: ${checks} order, record key, price, course screen and ${files.length} old-save checks passed.`);
+console.log(`Release Tremblant, Tremblant Snow, Harbour Lights and Panorama Ridge: ${checks} order, record key, price, course screen and ${files.length} old-save checks passed.`);

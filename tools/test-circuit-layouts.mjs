@@ -24,7 +24,7 @@ const piece = (road, name) => road.pieces.find(item => item.name === name);
 test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
   // In release order, so a circuit switched on later joins the end of COURSE and released ones never move (RELEASE-HARBOUR).
   assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), CIRCUIT_MANIFESTS.map(row => row.id));
-  // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW) and Harbour Lights (RELEASE-HARBOUR) are released; Panorama Ridge stays dev.
+  // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW), Harbour Lights (RELEASE-HARBOUR) and Panorama Ridge (RELEASE-PANORAMA) are released.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   for (const circuit of ALL_CIRCUITS) {
     assert.equal(circuit.flag, circuit.id);
@@ -42,9 +42,11 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => on.enabled(row.flag)).map(row => row.id), 'the requested circuit plus every released one, in release order');
-  const withRidge = createFeatureFlags({ storage: null, qa: true, search: '?flags=panorama-ridge' });
-  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => withRidge.enabled(row.flag)).map(row => row.id), 'a dev circuit requested for QA goes after the released ones');
-  assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
+  // Every circuit is released now, so the two dev-circuit rules are checked with Panorama Ridge held back as a dev switch in a test catalogue.
+  const held = { ...FEATURE_STATES, 'panorama-ridge': 'dev' }, heldReleased = released.filter(id => id !== 'panorama-ridge');
+  const withRidge = createFeatureFlags({ catalog: held, storage: null, qa: true, search: '?flags=panorama-ridge' });
+  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), [...heldReleased, 'panorama-ridge'], 'a dev circuit requested for QA goes after the released ones');
+  assert.deepEqual(circuitsEnabled(createFeatureFlags({ catalog: held, storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), heldReleased, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   assert.ok(bat.includes('preview-flags.mjs'), 'Preview obtains course flags from the course-owned manifests');
   for (const circuit of ALL_CIRCUITS) assert.ok(previewCircuitFlags().includes(circuit.flag), `the Preview turns ${circuit.id} on`);
