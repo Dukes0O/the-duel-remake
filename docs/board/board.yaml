@@ -155,12 +155,10 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "building"
+    status: "blocked"
     waiting_on: "claude"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
-    claimed_by: "codex-avalanche-rejoin-2026-10-13"
-    branch: "codex/avalanche-rejoin"
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
 

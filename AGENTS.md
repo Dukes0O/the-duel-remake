@@ -135,6 +135,15 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
     carries only questions and notes that have no card, so two answers never
     collide in one place (Kyle, 12 October 2026).
+    If a card has waited on Claude for more than an hour while Kyle is
+    away, Codex's lead may settle a small question itself, within the rules
+    already written on the card and its design document: under the heading
+    "Codex decided (Claude to review)" on the card, it says what it chose
+    and why, then clears `waiting_on`. Claude reviews each one at the next
+    check-in and may reverse it. Art and sound verdicts, money and pay,
+    saves, anything Kyle decided, and anything that would change a released
+    course stay waiting; Codex moves to other cards instead (Kyle, 13
+    October 2026).
 17. Reviews by kind (Kyle, 12 October 2026). Code, saves, money and pay, and
     design numbers get one independent review. Documents and rule wording that
     Kyle or Claude already decided get none; the lane gate and build are
