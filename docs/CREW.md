@@ -66,6 +66,13 @@ raiders), using the fighter's own body, not a car's box:
 - A car running into a fighter already knocks them down (vehicle sweeps);
   unchanged.
 
+## On-foot controls (Kyle, 12 October 2026)
+
+The fighter steers like the car: W / Up and S / Down walk, A / D and Left /
+Right turn, Q / E step sideways, Shift sprints (turn rate 2.4 rad/s). The
+mouse still looks around, and the mouse is captured as soon as the fighter
+steps out. On a gamepad the left stick moves, the right stick turns.
+
 ## 2. Boarding (CREW-03)
 
 Boarding is the on-foot finishing move. It must feel daring but stay simple.
@@ -74,6 +81,11 @@ Boarding is the on-foot finishing move. It must feel daring but stay simple.
   landing on its roof. Jax can grapple onto a car moving under 90 km/h from
   up to 25 m. Only enemy cars can be boarded (rival, computer cars, the
   convoy), never traffic or your own car.
+- **The stopped tanker (Convoy Raid and Tollkeeper, 12 October 2026).** Its
+  roof is 3 m up, out of reach of a 1.1 m jump, so on foot within 3 m of the
+  stopped tanker one press of F climbs aboard. F or the left mouse button held
+  for 1 s plants the charge (F must be let go and pressed again after the
+  climb). The rig never throws a fighter off; the roof limit there is 20 s.
 - **On the roof.** The fighter holds on to the roof mount point and moves
   with the car. A computer driver swerves to shake them off. The fighter is
   thrown clear (no damage, lands beside the car) if the car turns hard

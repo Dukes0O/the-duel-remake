@@ -29,10 +29,13 @@ export const INPUT_CONTEXTS = Object.freeze({
     Space: 'jump', KeyC: 'foot-camera-cycle', Digit1: 'gear:1', Digit2: 'gear:2', Digit3: 'gear:3' }),
     gamepad: Object.freeze([[9, 'pause'], [8, 'help'], [2, 'enter-car'], [0, 'jump'], [7, 'fire'], [6, 'aim'],
       [12, 'gear:1'], [15, 'gear:2'], [13, 'gear:3']]),
-    // Arrows move on foot as they drive the car (Kyle, 1 October 2026); WASD
-    // stays for players who hold the mouse in their right hand.
+    // On foot the arrows and WASD work like the car: up and down walk, left
+    // and right turn (Kyle, 12 October 2026: the fighter could not turn).
+    // Q and E strafe. The mouse still looks around.
     held: Object.freeze({ forward: Object.freeze(['KeyW', 'ArrowUp']), back: Object.freeze(['KeyS', 'ArrowDown']),
-      left: Object.freeze(['KeyA', 'ArrowLeft']), right: Object.freeze(['KeyD', 'ArrowRight']), sprint: Object.freeze(['ShiftLeft']),
+      turnLeft: Object.freeze(['KeyA', 'ArrowLeft']), turnRight: Object.freeze(['KeyD', 'ArrowRight']),
+      left: Object.freeze(['KeyQ']), right: Object.freeze(['KeyE']),
+      sprint: Object.freeze(['ShiftLeft', 'ShiftRight']),
       interact: Object.freeze(['KeyF']) }) }),
   photo: Object.freeze({ keyboard: Object.freeze({ Escape: 'photo-exit', Space: 'photo-capture',
     ArrowUp: 'photo-forward', ArrowDown: 'photo-back', ArrowLeft: 'photo-left', ArrowRight: 'photo-right' }),
@@ -86,6 +89,8 @@ export function footControlInput(keys, pad, pointer = {}) {
     back: heldInput('foot', 'back', keys) || !!pad.back,
     left: heldInput('foot', 'left', keys) || !!pad.left,
     right: heldInput('foot', 'right', keys) || !!pad.right,
+    turnLeft: heldInput('foot', 'turnLeft', keys),
+    turnRight: heldInput('foot', 'turnRight', keys),
     sprint: heldInput('foot', 'sprint', keys) || !!pad.sprint,
     jump: !!keys.Space || !!pad.jump,
     interact: heldInput('foot', 'interact', keys) || !!pad.interact,

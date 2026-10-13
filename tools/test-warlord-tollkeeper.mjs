@@ -21,6 +21,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {decodeAudioBytes} from './audio/codec.mjs';
 import {createTankerModel} from '../src/arena/tanker-model.js';
+import {convoyPrompt} from '../src/convoy-prompt.js';
 import {Group, Mesh, BoxGeometry, MeshStandardMaterial} from 'three';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {ownsArmorKit, armorKitBonus, armorKitMass, equipArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
@@ -315,36 +316,227 @@ test('the first broken valve, not escort wrecks, starts phase two once', () => {
   equal(f.duel.state.arena.warlordPhase, 2, 'the first real broken valve triggers phase two');
 });
 
-test('the first valve resets both real escorts once, then ordinary wreck returns continue', () => {
+// Kyle, 12 October 2026: "tollkeeper cannot be beaten". The escorts stay out
+// 30 s after a knock-out, the first valve no longer brings them back, and the
+// last valve takes them all out for the 60 s boarding window.
+function knockOut(f, escort) {
+  escort.armor = 1;
+  applyArmorDamage(f.duel, escort, 'fixed', {owner: 'player', amount: 10});
+  f.duel.step(DT);
+  equal(escort.combatWrecking, true, 'a real hit wrecks the escort');
+}
+function breakEveryValve(f) {
+  const points = convoyValvePoints(f.duel, f.rig);
+  for (let n = 0; n < 10 && f.duel.state.arena.convoy.valves.some(hp => hp > 0); n++)
+    applyArmorDamage(f.duel, f.rig, 'bomb', {owner: 'player', damageMultiplier: 100,
+      hitPosition: points[0], blastRadius: 20});
+  equal(f.duel.state.arena.convoy.valves, [0, 0, 0], 'every real valve is broken');
+  f.duel.step(DT);
+}
+
+test('a knocked-out escort stays out for 30 seconds and the first valve does not bring it back', () => {
   const f = fight(), [one, two] = f.duel.state.opponents.slice(1);
   f.rig.tollGate.nextGateSec = Infinity;
-  one.armor = 1; two.armor = two.maxArmor - 12;
-  applyArmorDamage(f.duel, one, 'fixed', {owner: 'player', amount: 10});
-  f.duel.step(DT);
-  equal(one.combatWrecking, true, 'one real escort is waiting for its ordinary return');
+  two.armor = two.maxArmor - 12;
+  knockOut(f, one);
   equal(f.duel.state.arena.participants[0].wrecks, 0, 'an actual escort wreck never scores');
   equal(f.duel.state.combat.scoring.wrecksCaused, 0, 'a real escort wreck grants no combat wreck score');
   equal(f.duel.state.arena.warlordPhase, 1, 'an escort wreck cannot trigger phase two');
   damageConvoyValves(f.duel, f.rig, 150, 'fixed', {owner: 'player',
     hitPosition: convoyValvePoints(f.duel, f.rig)[2]});
   f.duel.step(DT);
-  equal([one.armor, two.armor], [one.maxArmor, two.maxArmor], 'the first real broken valve resets both escorts at full armor');
-  equal([one.combatWrecking, two.combatWrecking], [false, false], 'waiting and damaged escorts both return once');
-  for (const p of f.duel.state.arena.participants) p.protectedSec = 0;
-  two.armor -= 15;
-  damageConvoyValves(f.duel, f.rig, 150, 'fixed', {owner: 'player',
-    hitPosition: convoyValvePoints(f.duel, f.rig)[1]});
-  f.duel.step(DT);
-  equal(two.armor, two.maxArmor - 15, 'a later broken valve never grants another phase reset');
-  one.armor = 1;
-  applyArmorDamage(f.duel, one, 'fixed', {owner: 'player', amount: 10});
-  f.duel.step(DT);
-  equal(one.combatWrecking, true, 'a phase-two escort wreck enters the ordinary return path');
-  advance(f.duel, 3.4);
-  equal(one.combatWrecking, true, 'ordinary escort return still waits for 3.5 seconds');
-  advance(f.duel, .2);
-  equal(one.combatWrecking, false, 'ordinary escort return continues after the one-time reset');
-  equal(one.armor, one.maxArmor, 'ordinary escort return restores its normal armor');
+  equal(f.duel.state.arena.warlordPhase, 2, 'the first broken valve still starts phase two');
+  equal(one.combatWrecking, true, 'the first broken valve no longer brings a waiting escort back');
+  equal(two.armor, two.maxArmor - 12, 'the first broken valve no longer repairs a damaged escort');
+  advance(f.duel, 29);
+  equal(one.combatWrecking, true, 'the escort is still out after 29 seconds');
+  advance(f.duel, 1.2);
+  equal(one.combatWrecking, false, 'the escort returns after 30 seconds');
+  equal(one.armor, one.maxArmor, 'the returning escort has full armor');
+});
+
+test('the last valve knocks out the driving escorts and nobody returns for 60 seconds', () => {
+  const f = fight(), [one, two] = f.duel.state.opponents.slice(1);
+  f.rig.tollGate.nextGateSec = Infinity;
+  knockOut(f, one);
+  advance(f.duel, 10);
+  equal([one.combatWrecking, two.combatWrecking], [true, false], 'one escort is out and one is still driving');
+  breakEveryValve(f);
+  equal([one.combatWrecking, two.combatWrecking], [true, true],
+    'the driving escort is knocked out at once when the last valve breaks');
+  ok(one.combatWreckTimer > 59 && two.combatWreckTimer > 59,
+    'a waiting escort and a freshly knocked-out escort both stay out for the full minute');
+  equal(f.duel.state.arena.participants[0].wrecks, 0, 'knocking the escorts out scores nothing');
+  advance(f.duel, 58);
+  equal([one.combatWrecking, two.combatWrecking], [true, true], 'both are still out 58 seconds later');
+  equal(f.duel.state.arena.convoy.chargePlanted, false, 'the window is still open');
+  advance(f.duel, 2.5);
+  equal([one.combatWrecking, two.combatWrecking], [false, false], 'both return after the minute');
+  equal(f.duel.state.arena.convoy.valves, [75, 75, 75], 'the unplanted window closes as it always did');
+});
+
+test('the tanker rolls to a stop within four seconds and stays stopped for the minute', () => {
+  const f = fight();
+  f.rig.tollGate.nextGateSec = Infinity;
+  const cruise = f.rig.speedMph;
+  breakEveryValve(f);
+  ok(f.rig.speedMph > 0 && f.rig.speedMph < cruise, 'the tanker starts slowing, it does not stop dead');
+  let last = f.rig.speedMph;
+  for (let n = 0; n < Math.round(4.1 / DT); n++) {
+    f.duel.step(DT);
+    ok(f.rig.speedMph <= last + 1e-9, 'the tanker only ever slows');
+    last = f.rig.speedMph;
+  }
+  equal(f.rig.speedMph, 0, 'the tanker is stopped within four seconds');
+  const s = f.rig.s;
+  advance(f.duel, 20);
+  equal(f.rig.s, s, 'the stopped tanker does not creep along the loop');
+  ok(f.duel.state.arena.convoy.boardingLeftSec > 30, 'it stays stopped through the window');
+});
+
+function nearTanker(f, gap) {
+  const state = f.duel.state, rig = f.rig;
+  state.onFoot = true; state.crewId = 'rook';
+  state.fighter = createFighter(f.duel.course, state, {s: rig.s,
+    lateral: rig.lateral + CONVOY_BODY.halfWidth + gap});
+  state.fighterInput = {};
+  return state;
+}
+
+test('on foot beside the stopped tanker one press of F climbs aboard and holding F plants', () => {
+  const f = fight();
+  f.rig.tollGate.nextGateSec = Infinity;
+  breakEveryValve(f); advance(f.duel, 4.2);
+  const state = nearTanker(f, 4.5);
+  state.input.interact = true;
+  stepFootTransition(f.duel, DT);
+  equal(state.boarding, null, 'too far from the tanker: F does not climb');
+  state.input.interact = false; stepFootTransition(f.duel, DT);
+  nearTanker(f, 2.2);
+  state.input.interact = true;
+  stepFootTransition(f.duel, DT);
+  equal(state.boarding?.phase, 'roof', 'within three metres one press of F puts the fighter on the roof');
+  equal(state.boarding.method, 'climb', 'no jump was needed');
+  const plate = CONVOY_ROOF_PLATE, roof = convoyPoint(f.duel, f.rig, [plate.x, plate.y, plate.z]);
+  ok(Math.abs(state.fighter.y - roof.y) < .05 && Math.abs(state.fighter.x - roof.x) < .1,
+    'the fighter stands on the lit plate');
+  // The press that climbed does not plant: F must be let go and pressed again.
+  for (let n = 0; n < Math.round(1.5 / DT); n++) stepFootTransition(f.duel, DT);
+  equal(state.boarding?.phase, 'roof', 'holding the climbing press alone never plants');
+  state.input.interact = false; stepFootTransition(f.duel, DT);
+  state.input.interact = true;
+  for (let n = 0; n < Math.round(.9 / DT); n++) stepFootTransition(f.duel, DT);
+  equal(state.boarding?.phase, 'roof', 'a short hold of F does not plant');
+  for (let n = 0; n < Math.round(.2 / DT); n++) stepFootTransition(f.duel, DT);
+  equal(state.boarding?.phase, 'charge', 'holding F for one second plants the charge');
+  equal(state.arena.convoy.chargePlanted, true, 'the tanker charge is planted');
+});
+
+test('the left mouse button still plants from the roof', () => {
+  const f = fight();
+  f.rig.tollGate.nextGateSec = Infinity;
+  breakEveryValve(f); advance(f.duel, 4.2);
+  const state = nearTanker(f, 2);
+  state.input.interact = true; stepFootTransition(f.duel, DT);
+  equal(state.boarding?.phase, 'roof', 'climbing works');
+  state.input.interact = false; stepFootTransition(f.duel, DT);
+  state.fighterInput.fire = true;
+  for (let n = 0; n < Math.round(1.05 / DT); n++) stepFootTransition(f.duel, DT);
+  equal(state.boarding?.phase, 'charge', 'fire for one second plants as before');
+});
+
+test('a tanker that is still rolling cannot be climbed', () => {
+  const f = fight();
+  f.rig.tollGate.nextGateSec = Infinity;
+  breakEveryValve(f);
+  const state = nearTanker(f, 1.5);
+  state.input.interact = true; stepFootTransition(f.duel, DT);
+  equal(state.boarding, null, 'a tanker still rolling at speed cannot be climbed');
+});
+
+test('the big prompt walks the player through getting out, running, climbing and planting', () => {
+  const f = fight(), state = f.duel.state;
+  f.rig.tollGate.nextGateSec = Infinity;
+  equal(convoyPrompt(f.duel), null, 'no prompt while the valves are intact');
+  breakEveryValve(f);
+  advance(f.duel, 4.2);
+  ok(convoyPrompt(f.duel).title.startsWith('DRIVE TO THE TANKER'), 'far away the prompt says to drive to it');
+  const spot = f.duel.course.worldAt(f.rig.s - 25, f.rig.lateral);
+  const near = f.duel.course.nearest(spot.x, spot.z, f.rig.s);
+  placeActor(f.duel, state, {...near, headingError: 0}, 0);
+  state.speedMph = 0; f.duel.step(DT);
+  equal(convoyPrompt(f.duel).title, 'PRESS F TO GET OUT', 'within 40 m the prompt names the get-out key');
+  nearTanker(f, 12);
+  const run = convoyPrompt(f.duel);
+  ok(run.title.startsWith('RUN TO THE TANKER'), 'on foot, far from the tanker, the prompt says to run');
+  ok(Number.isFinite(run.angle), 'and shows which way to go');
+  nearTanker(f, 2);
+  equal(convoyPrompt(f.duel).title, 'PRESS F TO CLIMB ABOARD', 'within three metres the prompt says to climb');
+  state.input.interact = true; stepFootTransition(f.duel, DT);
+  state.input.interact = false; stepFootTransition(f.duel, DT);
+  state.input.interact = true;
+  stepFootTransition(f.duel, DT);
+  ok(convoyPrompt(f.duel).title.includes('HOLD F OR LEFT MOUSE'), 'on the roof the prompt says how to plant');
+  for (let n = 0; n < 60; n++) stepFootTransition(f.duel, DT);
+  ok(convoyPrompt(f.duel).progress > .3, 'and the ring fills while F is held');
+});
+
+test('a scripted player on Medium breaks the valves, gets out, climbs, plants and wins in normal time', () => {
+  const f = fight({difficulty: 'medium', seed: 2024}), {duel} = f, state = duel.state;
+  f.rig.tollGate.nextGateSec = Infinity;
+  // Phase 1: one rocket hit on the nearest unbroken valve every 1.5 s.
+  while (state.arena.convoy.valves.some(hp => hp > 0) && state.stageTimeSec < 200) {
+    const index = state.arena.convoy.valves.findIndex(hp => hp > 0);
+    applyArmorDamage(duel, f.rig, 'rocket', {owner: 'player',
+      hitPosition: convoyValvePoints(duel, f.rig)[index]});
+    advance(duel, 1.5);
+  }
+  equal(state.arena.convoy.valves, [0, 0, 0], 'the scripted player breaks every valve');
+  const brokenAt = state.stageTimeSec;
+  ok(brokenAt < 120, 'the valves break well inside the five minutes: ' + brokenAt.toFixed(1) + ' s');
+  // Phase 2: park 30 m behind the tanker and get out with a real short hold of F.
+  advance(duel, 4.2);
+  equal(f.rig.speedMph, 0, 'the tanker has stopped');
+  const spot = duel.course.worldAt(f.rig.s - 30, f.rig.lateral + 4);
+  const near = duel.course.nearest(spot.x, spot.z, f.rig.s);
+  placeActor(duel, state, {...near, headingError: 0}, 0);
+  state.speedMph = 0; state.invulnerableSec = 99;
+  duel.setInput({interact: true});
+  advance(duel, 1);
+  equal(state.onFoot, true, 'one short hold of F gets the fighter out of the stopped car');
+  duel.setInput({interact: false});
+  advance(duel, .1);
+  // Phase 3: walk to the tanker with the keyboard only (turn keys, forward key, sprint).
+  const rig = f.rig;
+  let walked = 0;
+  while (!state.boarding && walked < 40) {
+    const fighter = state.fighter;
+    const at = duel.course.groundAt(rig.s, rig.lateral);
+    const want = Math.atan2(at.x - fighter.x, at.z - fighter.z);
+    const error = Math.atan2(Math.sin(want - fighter.yaw), Math.cos(want - fighter.yaw));
+    duel.setFighterInput({turnLeft: error > .05, turnRight: error < -.05,
+      forward: Math.abs(error) < .6, sprint: true});
+    if (convoyPrompt(duel)?.title === 'PRESS F TO CLIMB ABOARD') {
+      duel.setFighterInput({forward: false, turnLeft: false, turnRight: false, sprint: false});
+      duel.setInput({interact: true});
+      advance(duel, .05);
+      duel.setInput({interact: false});
+      advance(duel, .05);
+      break;
+    }
+    advance(duel, DT * 4); walked += DT * 4;
+  }
+  equal(state.boarding?.phase, 'roof', 'the walker reached the tanker and climbed on with F');
+  // Phase 4: press F again and hold it to plant.
+  duel.setInput({interact: true});
+  advance(duel, 1.2);
+  equal(state.arena.convoy.chargePlanted, true, 'holding F on the roof plants the charge');
+  duel.setInput({interact: false});
+  advance(duel, 3);
+  equal(state.status, 'arena_result', 'the charge blows and the fight ends');
+  equal(state.arena.result.reason, 'charge', 'the win is the boarding charge');
+  equal(state.arena.result.winnerId, 'player', 'the player beat the Tollkeeper');
+  ok(state.stageTimeSec < 180, 'a normal time: ' + state.stageTimeSec.toFixed(1) + ' s');
 });
 
 test('ordinary Convoy escort wreck scoring stays unchanged', () => {
@@ -411,6 +603,7 @@ test('only a real roof crossing, one-second plant and finishing fuse win the fig
   damageConvoyValves(f.duel, f.rig, 450, 'bomb', {owner: 'player',
     hitPosition: convoyValvePoints(f.duel, f.rig)[0], blastRadius: 20});
   f.duel.step(DT);
+  f.rig.speedMph = 0; // the tanker has already rolled to its stop (see the stopping test below)
   equal(state.status, 'racing', 'broken valves alone never win a Warlord charge fight');
   const plate = CONVOY_ROOF_PLATE, ground = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
   const at = convoyPoint(f.duel, f.rig, [plate.x, plate.y, plate.z]);
