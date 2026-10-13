@@ -16,7 +16,7 @@ globalThis.document={createElement(tag){
   canvas.getContext=()=>context;return canvas;
 }};
 const matrix=new THREE.Matrix4(),parent=new THREE.Object3D(),child=new THREE.Object3D(),expected=new THREE.Matrix4(),actualPoint=new THREE.Vector3(),expectedPoint=new THREE.Vector3();
-const reference={boards:new THREE.BoxGeometry(1.2,1.35,.08),posts:new THREE.BoxGeometry(.1,1.8,.1)};
+const reference={boards:new THREE.BoxGeometry(1.8,2.025,.08),posts:new THREE.BoxGeometry(.1,1.8,.1)};
 const frustum=new THREE.Frustum(),projection=new THREE.Matrix4();
 function visibleDraws(meshes,camera){
   camera.updateMatrixWorld(true);camera.updateProjectionMatrix();frustum.setFromProjectionMatrix(projection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));

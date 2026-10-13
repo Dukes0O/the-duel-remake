@@ -37,3 +37,13 @@
 .field-gap[hidden]{display:none}
 .tow-marker{align-self:flex-end;margin:0 auto 7px;padding:3px 9px;border:1px solid #8fe3c8;background:#0e2b2399;color:#c0f5e2;font-size:10px;font-weight:850;letter-spacing:2.4px;border-radius:2px;text-shadow:none}
 .tow-marker[hidden]{display:none}
+
+/* Mirror and warning share viewport sizing; clocks remain beside them. */
+.in-race .race-clock{left:auto;right:35px;top:30px;transform:none;align-items:flex-end}
+.corner-warning{position:absolute;left:50%;top:calc(90px + 30vw / 3.2 + 12px);transform:translateX(-50%);height:10.1851851852vh;min-width:150px;padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:14px;background:#231d0de8;border:2px solid #edb744;border-radius:6px;color:#ffce72;z-index:3;text-shadow:0 1px 3px #000}
+.corner-warning>b{font-size:clamp(36px,6vh,88px);line-height:1}
+.corner-warning>span{font-size:clamp(22px,3.4vh,50px);font-weight:800;font-variant-numeric:tabular-nums}
+.corner-warning[data-color="red"]{border-color:#ff6856;background:#3d1715ed;color:#ff9a83}
+@media(max-width:900px){.route-hud{width:min(40vh,calc(100vw - 335px));padding-inline:11px}.corner-warning{min-width:100px;padding-inline:10px;gap:8px}.in-race .race-clock{right:20px}}
+
+.in-race .race-callout{top:calc(90px + 30vw / 3.2 + 10.1851851852vh + 32px)}

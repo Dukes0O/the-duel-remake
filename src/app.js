@@ -8,7 +8,7 @@ import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfi
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
 import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook, getRoadRoofLook, equipRoadRoof} from './armor-kits.js';
-import {CAMERA_MODES} from './camera-views.js';
+import {CAMERA_MODES,normalizeCameraMode} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
 // DOM HUD (main.js) are views that read state and call these verbs.
@@ -1388,12 +1388,15 @@ export class App {
     return this.setFootCamera(this.footCameraMode === 'first-person' ? 'overhead' : 'first-person');
   }
   setCamera(mode) {
+    this.cameraMode=normalizeCameraMode(this.cameraMode);
+    if(['front','right','left'].includes(mode))mode='chase';
     if(!CAMERA_MODES.includes(mode))return this.cameraMode;
     this.cameraMode=mode;
     this.duel.emit({ camera: this.cameraMode });
     return this.cameraMode;
   }
   cycleCamera() {
+    if(!CAMERA_MODES.includes(this.cameraMode))return this.setCamera('chase');
     return this.setCamera(CAMERA_MODES[(CAMERA_MODES.indexOf(this.cameraMode)+1)%CAMERA_MODES.length]);
   }
 

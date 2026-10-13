@@ -393,12 +393,10 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "M"
-    status: "building"
-    claimed_by: "codex-race-screen-2026-10-13"
-    branch: "codex/fix-race-screen"
+    status: "review"
     needs: []
     priority: "high"
-    locks: [busy-game-files]
+    locks: []
     details: "docs/board/cards/FIX-RACE-SCREEN.md"
 
   - id: FIX-LIVE-EDGES

@@ -7,12 +7,12 @@ import {buildCoursePreview,CoursePreview} from '../src/course-preview.js';
 import {buildRouteMapGeometry,projectRoutePoint,RouteMap,PRACTICE_MAP_LEGEND} from '../src/route-map.js';
 
 let checks=0;const check=(v,label)=>{assert.ok(v,label);checks++;},equal=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
-// Captured before this practice-only patch: preserve every public map/preview
-// value, every Float32 path and every marker on the original fifteen courses.
+// Exact coordinate pin after the approved shared map handedness correction;
+// every Float32 path and marker on the original fifteen courses stays checked.
 const legacy=createHash('sha256');
 // Authored Grand Prix circuits (def.script) came later; the digest covers the original fifteen.
 for(const def of COURSE.filter(def=>!def.practice&&!def.script)){const c=new Course(def,1989);legacy.update(JSON.stringify([buildRouteMapGeometry(c),buildCoursePreview(c)]));}
-equal(legacy.digest('hex'),'4a35afd7b957069ab89f165f5b01e2c3371ceb8f638a554fd899962348411f4a','all fifteen race maps and previews remain byte-identical');
+equal(legacy.digest('hex'),'fc5bf66989f7831b1d8a237715e5e6ac50f740b407292f27745c5a18228f91e4','all fifteen race maps and previews match the approved shared handedness correction');
 const course=new Course(COURSE.find(def=>def.practice),1989),before=JSON.stringify(course.features),layout=freestyleLayout(course),preview=buildCoursePreview(course),map=preview.map;
 equal(preview.biomes.map(b=>b.label),['Quarry'],'practice is Quarry, not Stadium');equal(preview.laps,0,'practice has no lap objective');equal(preview.distanceKm,0,'practice does not claim a race distance');
 check(!preview.showElevation&&preview.elevation.length===0&&preview.reliefMeters===null,'practice does not claim relief from its flat centerline');equal(map.finish,null,'no practice finish geometry');
@@ -37,4 +37,4 @@ commands.length=0;const rCanvas=canvas(),route=new RouteMap(rCanvas),state={s:18
 check(!commands.some(c=>c[0]==='fillRect'),'in-game practice map draws no checkered finish');check(rCanvas['aria-label'].includes('Untimed')&&!/Lap \d|Checkered/.test(rCanvas['aria-label']),'in-game map has no lap objective');equal(rCanvas.dataset.lap,'0','practice map lap metadata stays zero');
 for(const entry of PRACTICE_MAP_LEGEND)check(rCanvas['aria-label'].includes(entry.description),'in-game screen-reader legend matches preview');
 const cached=route.current;commands.length=0;route.update(course,{...state,s:460},70);equal(route.current,cached,'moving in practice reuses cached activity layer');check(!commands.some(c=>c[0]==='fillText'),'dynamic frame does not redraw the static legend');route.dispose();
-console.log(`Practice map: ${checks} untimed/marker/accessibility/cache checks, with all fifteen race map/preview outputs unchanged.`);
+console.log(`Practice map: ${checks} untimed/marker/accessibility/cache checks, with all fifteen race map/preview outputs matching the corrected shared projection.`);
