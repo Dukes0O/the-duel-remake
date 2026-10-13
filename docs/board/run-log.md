@@ -1053,3 +1053,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 04:34 PT FAC-FULL-CHECK repair merged: b569a6ed nearby16/16/build540ms/reviewCLEAR; consume only verified copied runner report; prior422 pass was failed batch, remaining stages unrun; real-fix retry follows; no release/push.
 
 - 2026-10-13 janitor sweep: own merged lanes/consumed source evidence recycled; looks17,152,350B/20MB unchanged, total323,813,992B before own log correction;47 assets/84 exports/333 docs advisory,0 unused modules/removed-feature tests; uncertain and foreign files retained.
+
+- 2026-10-13 06:18 PT: P4-AVALANCHE optional diagnostic86082572 merged; nearby16/16, build704ms, ordinary review CLEAR. Native route FAILED, waiting Claude; no repeated gate or release.
