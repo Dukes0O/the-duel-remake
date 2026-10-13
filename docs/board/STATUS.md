@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T05:48:58.268Z
+Observed at: 2026-10-13T05:51:27.229Z
 
-Observation commit: 75f65f53f1f8d06b1d208d8e4e11711961ca6ab2
+Observation commit: 61c711dcd04e3474645cd2b021985d676e9150e5
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 75f65f53f1f8d06b1d208d8e4e11711961ca6ab2
+Integration HEAD: 61c711dcd04e3474645cd2b021985d676e9150e5
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -61,6 +61,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
 | codex/p4-qualifying | 1 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
+| codex/p4-snowmen | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-snowmen |
 | codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/tools/callback-diagnostics | 8 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 17 | unknown | true | false | unknown |
@@ -93,7 +94,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 359,780 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 408,083,456 B | +104,448 B | unavailable |
+| Git objects | 408,103,936 B | +20,480 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -102,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 75f65f53f1f8d06b1d208d8e4e11711961ca6ab2
+- Local integration/wasteland: 61c711dcd04e3474645cd2b021985d676e9150e5
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
