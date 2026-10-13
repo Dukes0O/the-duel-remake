@@ -16,6 +16,7 @@ const views=[
   ['gallery-open-road',SUMMIT_RUN.roadBranches[0].start+35,28,180],
   ['devils-staircase',centre("Devil's Elbow"),15,75],
   ['summit-landmarks',road.length-150,13,100],
+  ['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+15,40,220],
 ];
 
 export async function run(context){
@@ -50,7 +51,7 @@ export async function run(context){
       const app=window.__qaApp;app.returnToMenu();app.stop();
       window.__summitReadOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,storage:Array.from({length:localStorage.length},(_,i)=>{const key=localStorage.key(i);return [key,localStorage.getItem(key)];})});
     })()`);
-    const capturedViews=quality==='high'?[...views,['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+15,40,220]]:views;
+    const capturedViews=views;
     for(const [name,s,up,ahead] of capturedViews){
       await context.evaluate(`(()=>{
         window.__summitSnapshot={before:window.__summitReadOnly(),settled:false};

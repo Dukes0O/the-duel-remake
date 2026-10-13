@@ -149,3 +149,7 @@ Keep current assets, original thresholds, round-one hold and needed evidence.
 ## Integration source handoff, 12 October evening
 
 Merged after FIX-FOOT-MOUSE without conflicts; no repeated gate. P4-SUMMIT-RUNTIME records only this completed development source milestone. The parent card stays open for the six-set native strategy cap and round-two art, with the original failed timing and round-one hold retained. Runtime locks are released; any later code correction must reacquire its affected locks. No release or push. The older retained Summit lane is not a folder created in this run and is preserved.
+
+## Round-two art design before capture
+
+Art-only resumption from accepted integration da75bdc16015e9f59dcb24d55ea3e797128de53d. Keep the original 16 native grid/location photos and their camera parameters. The already authored High fork approach (actual branch start +15 m, camera up40/ahead220) joins the common view list so Performance captures that same real fork too: 18 photos, one formal round-two sheet, maximum500KB. Use the existing memory-only native photo harness and read-only snapshot guard; no frame timing, drive measurements, runtime, model, fixture or simulation changes. Claude's round-one grove/snow/night/window/fork hold and original failed strategy gaps remain facts, not acceptance. Their verdict folds into the round-two review before removing the consumed round-one sheet; preserve this older lane.
