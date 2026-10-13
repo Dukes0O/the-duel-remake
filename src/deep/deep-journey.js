@@ -41,7 +41,7 @@ export function installDeepCourse(course, { providers = [], enabled = false, kit
     }
   } catch (error) {
     // Fail closed and expose the actual content error; no substitute location.
-    Object.defineProperty(course, 'deepProviderProblem', { value: String(error.message), configurable: true });
+    Object.defineProperty(course, 'deepProviderProblem', { value: String(error?.message ?? error), configurable: true });
   }
 }
 export function rampAt(ramp, progress, lateral = 0) {

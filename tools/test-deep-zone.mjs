@@ -106,6 +106,17 @@ test('no provider, invalid provider, flag off, kit off and Mad Max retain physic
   }
 });
 
+test('non-Error provider throws fail closed and preserve the diagnostic', () => {
+  for(const thrown of [null,undefined,'provider unavailable']){
+    let duel;
+    assert.doesNotThrow(()=>{duel=race({providers:[()=>{throw thrown;}]});});
+    assert.equal(duel.course.deepRamp,undefined);
+    assert.equal(duel.deepRuntime,null);
+    assert.equal(duel.course.deepProviderProblem,String(thrown));
+    assert.equal(duel.state.deepJourney,undefined);
+  }
+});
+
 test('off and unused-ramp simulation packets and old environment keys stay exact', () => {
   for (const route of ROUTE_VARIANTS) {
     const ordinary = race({ seed: route.seed, providers: [], enabled: false });

@@ -20,6 +20,12 @@ First actual red: 1/8 passed, 7/8 failed on the absent journey/provider/runtime/
 
 GP first entry, qualifying, practice, objectives and combat remain excluded. GP revisits require this named player's normalized found list to contain the actual resolved zone id. Model visuals retain their existing wheel/ground offsets, pitch and heading and receive only the sea-level translation; simulation/support heights remain coast-world values.
 
+## Independent review repair
+
+Ordinary review cleared e7af0526. The fresh save reviewer found that a provider throwing null or undefined crashed startup through the catch's error.message read; thrown strings also lost their diagnostic. New assertions failed 10/11 before the source fix. Optional access now preserves null, undefined and string diagnostics and leaves entry inactive. Focused acceptance is 11/11 (5712.3438 ms). The original e7af0526 lane gate was canceled solely for this source repair, not a test failure or pass; its honest receipt is retained for integration. Confirmation review and corrected-source lane/build results remain pending.
+
+The save review independently passed 9 fixtures / 286 assertions, App progression146 assertions, Deep save17 groups, backup and storage budget (2,500,604 / 4,000,000 bytes), using memory-only data and no real saves. It found no new schema/default/normalizer/record/ghost/storage changes or save loss. Root folds final gate/build/confirmation facts into the merge.
+
 ## Changed assertions
 
 Only the Director's exact new literal import pairs are added to test-deep-look. Preserve all current pairs and the complete rejection assertion; old preflight counts are historical. No original assertion or fingerprint is changed.
