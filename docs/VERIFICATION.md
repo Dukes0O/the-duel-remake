@@ -1,5 +1,21 @@
 # Remake verification
 
+## Panorama Ridge release, 12 October 2026
+
+Kyle approved ("go live"); Claude was Release Manager. Installed at about 02:57
+UTC on 13 October from exact commit `36d7613f`, which also carries the
+Tollkeeper fix released earlier that evening (`bf1ac981`); live build
+`20261013025710-9bb819fa7c33` verified over HTTP. Full tier 415/415 in 935.76 s,
+alone with four jobs, start and end commit unchanged (an earlier 415/415 pass on
+`1f9f4f53` was superseded when the Tollkeeper merge landed). Combat balance
+`--check` passed. Native Panorama browser race passed on High and Performance:
+eight cars, three laps (115.108 / 89.358 / 87.54 s), no pile-up, no warnings or
+errors. Staged build listed Panorama Ridge Sunset 20th at 1,600 credits, locked
+until bought, with no browser errors. Frames (screen awake, graphics card idle,
+eight-car grid): High p95 18.3 ms, Performance p95 18.2 ms; world build 0.38 to
+0.39 s; first start in an empty browser cache waits 3.2 to 4.0 s for files.
+Previous build (Tollkeeper) kept in `dist-previous`. `master` not yet pushed.
+
 ## Tremblant Snow release — 12 October 2026
 
 Kyle approved ("Go live"); Claude was Release Manager. Installed at about 16:45
