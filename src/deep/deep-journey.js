@@ -33,7 +33,19 @@ export function installDeepCourse(course, { providers = [], enabled = false, kit
           zone.ramp.endDepth !== 8 || Math.hypot(first.x - end.x, first.z - end.z) > 1e-6 || first.depth !== 8)
         throw new Error('Deep provider must match the resolved ramp and its bottom in this route frame.');
       if (mode === 'grandprix' && !found.includes(zone.id)) continue;
+      const original={surfaceAt:course.surfaceAt,groundAt:course.groundAt,gripKindAt:course.gripKindAt};
       Object.defineProperties(course, {
+        surfaceAt:{configurable:true,value:function(distance,lateral=0){
+          const rampPoint=deepRampGround(this,distance,lateral);
+          return rampPoint?{road:true,mainRoad:false,shortcutId:'deep-ramp',roadHalfWidth:this.roadHalfWidthAt(distance),deepRamp:true}:original.surfaceAt.call(this,distance,lateral);
+        }},
+        groundAt:{configurable:true,value:function(distance,lateral=0){
+          return deepRampGround(this,distance,lateral)??original.groundAt.call(this,distance,lateral);
+        }},
+        gripKindAt:{configurable:true,value:function(distance,lateral=0){
+          const rampPoint=deepRampGround(this,distance,lateral);
+          return rampPoint&&rampPoint.progress>=this.deepRamp.shoreline.center.progress?'sea-floor':original.gripKindAt.call(this,distance,lateral);
+        }},
         deepRamp: { value: ramp, configurable: true },
         deepZone: { value: Object.freeze({ zone, floor: createZoneFloor(zone) }), configurable: true },
       });

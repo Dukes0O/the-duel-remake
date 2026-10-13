@@ -210,6 +210,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   };
   // Director-granted contracts; every other Deep module/specifier stays isolated.
   const approvedImports = new Set([
+    'src/deep/deep-ramp.js|../pacific-coast-layout.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-ui.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-zone.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-journey.js',

@@ -26,10 +26,16 @@ Ordinary review cleared e7af0526. The fresh save reviewer found that a provider 
 
 The save review independently passed 9 fixtures / 286 assertions, App progression146 assertions, Deep save17 groups, backup and storage budget (2,500,604 / 4,000,000 bytes), using memory-only data and no real saves. It found no new schema/default/normalizer/record/ghost/storage changes or save loss. Root folds final gate/build/confirmation facts into the merge.
 
+## Original lane repair
+
+The original corrected source e2d0e843 returned 312/316, four failures, zero unrun, 768458.8361 ms. No failing assertion changed. The two render checks now retain their exact ordinary main/mirror submission window, while a separate private Deep arm measures its own submission and hides the mirror; measured waterline/preparation and ordinary costs feed the shared metrics tail.
+
+Director grant469bc301 permits pure Pacific placement extraction and import/reexport changes only. All three placement functions, full Pacific graphics tail, and ramp algorithm bytes compare exact to e2d0e843, except the granted ramp import. This removes incidental vegetation imports from simulation; pine selects94 relevant suites and excludes campaigns/polyline. Ramp readers now install only on actually resolved enabled Course instances, leaving the legacy hashed method bodies exact. Original source hash da246bb1012fed5ee27090078d64d58a944fae8bf64f9afc1434a9eb309915a3 is restored; no preset/hash patch or geometry generation occurred. Targeted existing checks pass 10/10 (73002.0291 ms), covering all four failures, Deep journey/ramp/look and Pacific coast. Final frozen original lane/build/review confirmation remain pending.
+
 ## Changed assertions
 
-Only the Director's exact new literal import pairs are added to test-deep-look. Preserve all current pairs and the complete rejection assertion; old preflight counts are historical. No original assertion or fingerprint is changed.
+Only the Director's exact new literal import pairs, including the repair grant's deep-ramp to pure Pacific layout pair, are added to test-deep-look. Preserve all current pairs and the complete rejection assertion; old preflight counts are historical. No original assertion or fingerprint is changed.
 
 ## Removed
 
-Nothing replaced. No pure module duplicate, new runtime dependency, global registry, shipped test content or new test machinery. Root owns integration metadata, merge and created-lane cleanup.
+The three pure Pacific placement definitions move to one shared layout module; their duplicate definitions are removed from the graphics module and its public exports remain. No pure module duplicate, new runtime dependency, global registry, shipped test content or new test machinery. Root owns integration metadata, merge and created-lane cleanup.

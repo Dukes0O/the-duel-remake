@@ -858,25 +858,37 @@ export function attachRenderer(host, app) {
     }
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
-    const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();
-    const deepRendered=deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
-    if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
-    if(!deepRendered){renderMainView(renderer,composer,high);deepView.drawOverlay();}
-    const kits = trackKitsOf(world);
-    if(deepRendered)rearView.hide();
-    else if (kits) {
-      const previousRender = renderer.render;
-      renderer.render = function(renderedScene, renderedCamera, ...args) {
-        if (renderedScene !== scene || renderedCamera !== rearView.camera)
-          return previousRender.call(this,renderedScene,renderedCamera,...args);
-        rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
-        return kits.withRearView({position:player.position,forward:rearKitForward},
-          () => previousRender.call(this,renderedScene,renderedCamera,...args));
-      };
-      try {rearView.render({state:st,player,course,now:ambientNow});}
-      finally {renderer.render = previousRender;}
-    } else rearView.render({state:st,player,course,now:ambientNow});
-    const cpuRenderMs=performance.now()-renderStarted;
+    const loadingFrame=firstWorldFrame||metricsChanged;
+    let submittedCpuMs;
+    if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
+      const privateRenderStarted=performance.now();
+      deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
+      if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
+      rearView.hide();submittedCpuMs=performance.now()-privateRenderStarted;
+    } else {
+      const preparationStarted=performance.now();
+      deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
+      if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
+      const preparationMs=performance.now()-preparationStarted;
+      const renderStarted=performance.now();renderMainView(renderer,composer,high);
+      const kits = trackKitsOf(world);
+      if (kits) {
+        const previousRender = renderer.render;
+        renderer.render = function(renderedScene, renderedCamera, ...args) {
+          if (renderedScene !== scene || renderedCamera !== rearView.camera)
+            return previousRender.call(this,renderedScene,renderedCamera,...args);
+          rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
+          return kits.withRearView({position:player.position,forward:rearKitForward},
+            () => previousRender.call(this,renderedScene,renderedCamera,...args));
+        };
+        try {rearView.render({state:st,player,course,now:ambientNow});}
+        finally {renderer.render = previousRender;}
+      } else rearView.render({state:st,player,course,now:ambientNow});
+      const cpuRenderMs=performance.now()-renderStarted;
+      const overlayStarted=performance.now();deepView.drawOverlay();
+      submittedCpuMs=preparationMs+cpuRenderMs+(performance.now()-overlayStarted);
+    }
+    const cpuRenderMs=submittedCpuMs;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
     if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
     if(worldReadyStarted){host.dataset.worldReadyMs=(performance.now()-worldReadyStarted).toFixed(0);worldReadyStarted=0;}
