@@ -151,12 +151,27 @@ try{
     await audio._loadCueBuffers();equal(requested,['/assets/audio/p4/snowman-burst.ogg'],'late ordinary activation loads only snowman cue');
   }finally{globalThis.fetch=fetchBefore;}
   const played=[];
-  Object.assign(audio,{_syncMixer(){},_runCue(id){played.push(id);return{};},fightVoices:{event(){}},_grandPrixEvent(){},_spatialOutput(){return{level:{},disconnect(){}};}});
+  Object.assign(audio,{_syncMixer(){},_runCue(id){played.push(id);return{};},fightVoices:{event(){},mute(){},clear(){}},activeShots:[],_volume(){},_clearGrandPrixVoices(){},_clearProjectiles(){},_clearArsenalFields(){},_stopHiddenRoadVoices(){},_grandPrixEvent(){},_spatialOutput(){return{level:{},disconnect(){}};}});
   audio._playCue('snowman.burst');equal(played,['snowman.burst'],'Snowmen admits its existing cue without GP');audio._playCue('race.start.light');equal(played.length,1,'unrelated GP cue stays off');
   played.length=0;audio.event({snowmanHit:hit},state,course);audio.event({snowmanHit:hit},state,course);equal(played,['snowman.burst'],'real hit cue consumed once');
   const pendingHit={...hit,id:'late-hit'};delete audio.cueBuffers['snowman.burst'];
   let finishLoad;audio._loadCueBuffers=()=>new Promise(resolve=>{finishLoad=resolve;});
   audio.event({snowmanHit:pendingHit},state,course);audio._snowmanAudioStage=(audio._snowmanAudioStage ?? 0)+1;audio._snowmanAudioHits=new Set();audio.cueBuffers['snowman.burst']={};finishLoad();await Promise.resolve();equal(played.length,1,'stage reset cancels a pending late cue');
+  const storageBefore=globalThis.localStorage;
+  globalThis.localStorage={setItem(){},getItem(){return null;}};
+  try{
+    for(const kind of ['Paused','Muted']){
+      delete audio.cueBuffers['snowman.burst'];
+      const queued={...hit,id:'queued-'+kind};
+      audio.event({snowmanHit:queued},state,course);
+      audio['set'+kind](true);audio['set'+kind](false);
+      audio.cueBuffers['snowman.burst']={};finishLoad();await Promise.resolve();
+      equal(played.length,1,kind+' entering and leaving cancels an already queued burst');
+      check(audio._snowmanAudioHits.has(queued.id),'consumed id stays consumed after '+kind);
+    }
+  }finally{
+    if(storageBefore===undefined)delete globalThis.localStorage;else globalThis.localStorage=storageBefore;
+  }
   enabled=false;audio._playCue('snowman.burst');equal(played.length,1,'disabled cue remains rejected');
   check(SOUND_BANK['snowman.burst'].file==='p4/snowman-burst.ogg');
 }finally{COURSE.splice(originalLength);}

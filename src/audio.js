@@ -1034,6 +1034,7 @@ export class EngineAudio {
 
   setMuted(muted) {
     this.muted = !!muted;
+    if (this.muted) this._snowmanAudioStage = (this._snowmanAudioStage ?? 0) + 1;
     try {
       localStorage.setItem('duel_audio_muted', String(this.muted));
     } catch (_) {}
@@ -1055,6 +1056,7 @@ export class EngineAudio {
   }
   setPaused(paused) {
     this.paused = !!paused;
+    if (this.paused) this._snowmanAudioStage = (this._snowmanAudioStage ?? 0) + 1;
     this._volume();
     if (this.paused) {
       for (const voice of this.activeShots) this._stopShot(voice);
