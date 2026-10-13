@@ -206,7 +206,11 @@ export const NIGHT_ONLY_SUITES=Object.freeze([
   'tools/test-convoy-tanker-art.mjs',
   'tools/test-first-person-contact.mjs',
   'tools/test-first-person-cloth.mjs',
-  'tools/test-first-person-polish.mjs'
+  'tools/test-first-person-polish.mjs',
+  'tools/test-rustwall-p2-relief.mjs',
+  'tools/test-rook-p2-candidate.mjs',
+  'tools/test-rustwall-p2.mjs',
+  'tools/test-rustwall-atlas-isolation.mjs'
 ]);
 const normalized=path=>path.replaceAll('\\','/').replace(/^\.\//,'');
 const relativeName=(root,path)=>normalized(relative(root,path));
