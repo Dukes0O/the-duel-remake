@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T07:15:35.239Z
+Observed at: 2026-10-13T08:32:12.618Z
 
-Observation commit: a8f3dad7e691e750074713c2bcb276838fdc5efa
+Observation commit: adbc4789ad486d47e63b68e1a801bbc5270ee2ba
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a8f3dad7e691e750074713c2bcb276838fdc5efa
+Integration HEAD: adbc4789ad486d47e63b68e1a801bbc5270ee2ba
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -58,7 +58,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/deep-zone | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-zone |
+| codex/deep-zone | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-zone |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -76,6 +76,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:38:28-07:00 | 0 | last commit 2026-10-12T22:38:28-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
+| codex/deep-zone | DEEP-ZONE | 2026-10-13T01:14:55-07:00 | 0 | last commit 2026-10-13T01:14:55-07:00 | docs/changes/DEEP-ZONE.md, src/app.js, src/coastal-water.js, src/course.js, src/deep/deep-journey.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-12T22:21:43-07:00 | 0 | last commit 2026-10-12T22:21:43-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs |
@@ -95,7 +96,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 647,343 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 408,512,512 B | +11,264 B | unavailable |
+| Git objects | 408,782,848 B | +270,336 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: a8f3dad7e691e750074713c2bcb276838fdc5efa
+- Local integration/wasteland: adbc4789ad486d47e63b68e1a801bbc5270ee2ba
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
