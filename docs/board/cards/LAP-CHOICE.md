@@ -72,3 +72,13 @@ FUT-PAY-BY-DISTANCE is closed into this card.
 ## Director start — 12 October 2026
 
 The control-fix chat owns this next core card under Kyle’s approved shared plan. Mouse and Ambush fixes are integrated; both new lane folders, their consumed output and their merged branch registrations were recycled/removed. Hold busy-game-files and save-shape for runtime, pay and record validation. No new saved lap preference. Before code, map existing runtime/pay/ghost hooks and grant only the additional files actually required. Preserve all default replays and existing single-lap Grand Prix ghost semantics unless Claude explicitly changes that design. No new test machinery, art, cue or dependency. One independent money/save review, one targeted lane/jobs4 and a build. Heavy browser/full checks belong to the scheduled full check.
+
+## Director scope grant — 12 October 2026
+
+Eligible events are ordinary closed Duel races (including circuit/rally courses) and Grand Prix. Time Trial, Mad Max, combat, objective trials and point-to-point events retain their rules. The existing Grand Prix ghost is a best single lap and keeps laps: 1.
+
+Scale only the existing finishing component before its existing Pro duplication. Bonus duplication, milestones, fines, loss charges and once-only settlement remain unchanged. Incomplete runs receive no positive finishing pay; existing loss charges remain. At factor 1 preserve pay exactly without rounding; above 1 use nearest-five rounding with the old finishing component as the minimum.
+
+Keep the choice in an App runtime map keyed by player, event and mode, never saved raceSettings. Preserve restart/qualifying choices and normalize for each campaign stage. Previously saved offered-lap records remain valid with the switch off; runtime choices and distance pay require the switch.
+
+Additional proven hooks granted: src/game.js, src/feature-flags.js, src/screen-menu.js, src/screen-router.js, src/screen-results.js, src/screen-hud.js, src/screen-leaderboard.js. Existing catalog/launcher expectations may be updated additively in tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs and start-preview.bat. No race-field or ghost implementation changes. Do not weaken existing assertions or regenerate fingerprints.
