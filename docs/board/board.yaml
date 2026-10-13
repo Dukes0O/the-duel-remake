@@ -179,8 +179,8 @@ tasks:
     lane: "RACE"
     size: "S"
     status: "ready"
-    needs: [P4-SNOW, P4-SUMMIT, P4-CAREER, P4-TREMBLANT-SNOW]
-    locks: [circuit-registry, busy-game-files]
+    needs: [P4-SNOW, P4-SUMMIT, P4-CAREER-PAY, P4-TREMBLANT-SNOW]
+    locks: [busy-game-files, save-shape]
     details: "docs/board/cards/P4-SNOWMEN.md"
 
   - id: P4-YETI
