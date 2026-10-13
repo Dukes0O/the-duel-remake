@@ -23,7 +23,10 @@ const game=(on=true,mode='duel',seed=1989,stage=summit)=>{
 };
 const pose=(actor,s,lateral,speed=0)=>Object.assign(actor,{s,prevS:s,lateral,prevLateral:lateral,speedMph:speed,headingError:0,pushVelocity:0});
 try{
+  equal(SUMMIT_RUN.galleries[0].end,10800,'Gallery shed ends before the open rejoin');
   const duel=game(),event=duel.state.avalanche;
+  const gallerySolids=duel.course.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-'));
+  check(gallerySolids.every(row=>row.s+Math.hypot(row.halfX,row.halfZ)<=10800),'all actual Gallery roofs, walls and pillars finish by 10.80 km');
   equal(event.phase,'waiting','actual Summit initializes the event');
   check(event.delaySec>=6&&event.delaySec<=12,'seeded slide-start delay');
   equal(event.delaySec,game().state.avalanche.delaySec,'same seed repeats');
@@ -141,9 +144,10 @@ if(process.argv.includes('--drive')){
   const {execFileSync}=await import('node:child_process');
   const {sweepObstacle}=await import('../src/collision.js');
   const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
-  // Select only by the existing isolated delay, not by running extra races.
-  const candidates=[1989,1000,6].map(seed=>({seed,delay:makeRng(seed^0x4156414c).range(6,12)}));
-  const seeds={clear:candidates.reduce((a,b)=>a.delay>=b.delay?a:b),drift:candidates.reduce((a,b)=>a.delay<=b.delay?a:b)};
+  // Claude's road comparison fixes its condition once at native race start.
+  // Normal play and the controlled event tests retain the seeded clock.
+  const reference={seed:1989,delay:makeRng(1989^0x4156414c).range(6,12)};
+  const seeds={clear:reference,drift:reference};
   const results=[],savedLength=COURSE.length;
   if(!COURSE.some(def=>def.id==='summit-run'))COURSE.push(SUMMIT_RUN);
   const stage=COURSE.findIndex(def=>def.id==='summit-run');
@@ -168,7 +172,12 @@ if(process.argv.includes('--drive')){
         app.autopilot=true;app._scriptedCrashDone=true;useRacingLine(app,.95);
         const duel=app.duel,state=duel.state,course=duel.course,line=course.racingLine;
         assert.equal(state.opponents.length,0);assert.equal(state.tyre,'winter');
-        assert.equal(state.avalanche.delaySec,selected.delay,'native controller uses the selected isolated delay');
+        assert.equal(state.avalanche.delaySec,selected.delay,'native controller uses the original isolated delay');
+        // Test-only initialization in this --drive tool; no Game/App option is
+        // exposed to normal races and no event clock is changed during driving.
+        Object.assign(state.avalanche,condition==='clear'
+          ? {phase:'waiting',crossedAt:Infinity,tellAt:Infinity,slideAt:Infinity,endAt:Infinity}
+          : {phase:'after',crossedAt:0,tellAt:-5.5,slideAt:-2.5,endAt:0});
         const cut=course.features.shortcuts.find(row=>row.id==='summit-open-road');
         const begin=AVALANCHE.trigger,end=cut.end+140;
         const offsetAt=s=>s<cut.start?line.offsetAt(s)*(1-smooth((s-begin)/(cut.start-begin))):
@@ -230,6 +239,7 @@ if(process.argv.includes('--drive')){
         const crossing=(a,b,at)=>{const f=(at-a.s)/(b.s-a.s);return {s:at,t:a.t+(b.t-a.t)*f,lateral:a.lateral+(b.lateral-a.lateral)*f,mph:a.mph+(b.mph-a.mph)*f,heading:a.heading+(b.heading-a.heading)*f,tyre:b.tyre,phase:b.phase};};
         for(let tick=0;tick<120*900&&['countdown','racing'].includes(state.status);tick++){
           const before=observe();app.advance(1/120,1/120);const after=observe();
+          assert.equal(after.phase,condition==='clear'?'waiting':'after','test-only condition stays fixed without a runtime override');
           finite&&=[after.s,after.t,after.lateral,after.mph,after.heading].every(Number.isFinite);
           if(phases.at(-1)?.phase!==after.phase)phases.push({phase:after.phase,t:after.t,s:after.s});
           if(entry===null&&before.s<begin&&after.s>=begin)entry=crossing(before,after,begin);
@@ -239,7 +249,7 @@ if(process.argv.includes('--drive')){
               speedLimit:surface.speedLimit,grip:surface.grip,x:ground.x,y:ground.y,z:ground.z});}
         }
         const facts={source,condition,route,seed:selected.seed,delaySec:selected.delay,skill:.95,car:'falcone_f42',tyre:state.tyre,solo:state.opponents.length===0,
-          preparation:'none',entry,exit,seconds:entry&&exit?exit.t-entry.t:null,phases,strip,events,hits:state.avalanche.hits,
+          preparation:'test-only fixed event condition at race start',entry,exit,seconds:entry&&exit?exit.t-entry.t:null,phases,strip,events,hits:state.avalanche.hits,
           crashes,resets,finite,firstCrash,firstScrape,terminal:contactWitness(),status:state.status,completed:state.results?.completed===true,laps:state.completedLaps,endS:state.s};
         results.push(facts);console.log(JSON.stringify({nativeAvalanche:facts}));
       }finally{
