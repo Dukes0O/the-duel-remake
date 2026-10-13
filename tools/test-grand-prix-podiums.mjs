@@ -132,7 +132,7 @@ test('invalid, non-member, off, practice, abandoned and duplicate requests add n
     {fieldSize: 2, position: 3}, {position: 2, won: true},
     {grandPrixCareerEnabled: false}, {grandPrixCareerEnabled: undefined},
     {qualifying: true}, {practice: true}, {abandoned: true}, {completed: false},
-    {timeout: true}, {timeSec: 0}, {timeSec: NaN}, {laps: 2}, {car: 'missing'},
+    {timeout: true}, {timeSec: 0}, {timeSec: NaN}, {laps: 7}, {car: 'missing'},
     {driverId: 'missing'}, {runId: ''}, {stageIndex: -1},
     {stageIndex: practice}, {stageIndex: nonMember, laps: COURSE[nonMember].grandPrixLaps ?? 3},
     ...['duel', 'timetrial', 'wasteland'].map(mode => ({mode, laps: COURSE[0].laps || 2})),
