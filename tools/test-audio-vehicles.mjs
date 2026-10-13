@@ -37,6 +37,12 @@ const state={status:'racing',paused:false,opponents:[actor(50,'b'),actor(50,'a')
 const owner={_switches:()=>flags};
 const snapshot=()=>App.prototype._vehicleAudioSnapshot.call(owner,state,course,listener);
 check(FEATURE_STATES['rival-voices']==='dev','new rival voices stay dev');
+equal(SOUND_BANK['vehicle.rival-engine'],{bus:'engine',volume:.35,pitchRange:[1,1],volumeRange:[1,1],
+  priority:40,limit:3,spatial:{refDistance:15,maxDistance:250,rolloff:1},duck:null,
+  flag:'rival-voices',donor:'loadHigh',toneHz:86,loop:true},'complete approved rival cue descriptor');
+equal(SOUND_BANK['vehicle.traffic-engine'],{bus:'engine',volume:.25,pitchRange:[1,1],volumeRange:[1,1],
+  priority:30,limit:4,spatial:{refDistance:15,maxDistance:250,rolloff:1},duck:null,
+  flag:'rival-voices',donor:'engine',toneHz:86,loop:true},'complete approved traffic cue descriptor');
 const before=JSON.stringify(state),selected=snapshot();
 equal(selected.rivals.map(row=>row.id),['a','b','c'],'three nearest rivals tie by authored id');
 equal(selected.traffic.map(row=>row.id),['0','1','2','3'],'four traffic retain original spawn identity');

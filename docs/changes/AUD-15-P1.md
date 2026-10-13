@@ -21,3 +21,11 @@ The final owned acceptance passes 95 controlled checks, including actual App wir
 Independent review found a real late-decode menu fault before any broad gate: status changes to menu without another audio frame started seven old voices. The existing owned test reproduced 7 versus 0 before repair. Decode binding now checks current live status and paused state; the actual menu event immediately retires active/fading sources and marks pending reservations canceled. Pending budget stays occupied until decode completion. The new cases cover menu/paused changes before the next audio frame and real menu-event cleanup of active, pending and already-fading resources. All original controlled checks and legacy defaults remain unchanged.
 
 The corrected affected acceptance passes 107 controlled checks; no native or broad gate has run before the correction confirmation.
+
+## Historical bank guards
+
+The original unfiltered lane on e9ab0fd6 completed 250/253 passed, three failed and zero unrun; exit 1, suite aggregate 1,186,525.8628 ms and wall receipt 1,192,665.4548 ms. No build ran. Only the historical bank projections in test-arsenal-core-audio, test-arsenal-wave1-audio and test-p4-audio failed because they included the two approved new vehicle cue rows.
+
+Actual base/current object proof confirms all 153 prior rows and their order and every other export are byte-exact. Removing only vehicle.rival-engine and vehicle.traffic-engine reproduces the original core cc6d14d4b734baeff5104526ef4e3841fa24c6cc3051e59c37f488f5734afeb9, wave-one b63edbe579c7709c32af22b2467fa8706aee2585ed957c20fde8062064f7f2b4 and pre-P4 df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba hashes.
+
+Director grant 7fbc87b9 adds only those two literal IDs to the existing core/wave-one later-feature lists and excludes them only from the pre-P4 bank projection. Every original hash literal, assertion, old-flag reconstruction, catalog/recipe filter and waveform comparator remains unchanged. The owned acceptance pins both complete new descriptors, so the additions remain guarded. No runtime, source recipe, asset, mastering or tolerance change. Native mix/listening/frame and comparator execution remain unrun.
