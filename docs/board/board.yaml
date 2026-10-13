@@ -241,7 +241,7 @@ tasks:
     size: "S"
     status: "ready"
     needs: [P4-INTEL-LEVELS]
-    locks: [busy-game-files]
+    locks: [busy-game-files, save-shape]
     flag: "grand-prix"
     details: "docs/board/cards/P4-COACH.md"
 
