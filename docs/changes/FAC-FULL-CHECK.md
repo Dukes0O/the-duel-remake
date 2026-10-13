@@ -31,3 +31,13 @@ Corrected frozen5dfd5f3365eae5f6a85642b1bd53605d850a7b3a passes one fresh origin
 Kyle's new scheduled command is node tools/full-check.mjs --idle-awake --no-push. Kyle owns reinstalling the Windows task. Tonight's direct03:45 whole-check hold remains, resume Record-night/06:30. Root must avoid a duplicate scheduled job and can run the newly named authorized batch at04:00 if the old scheduled command cannot start.
 
 Verified cleanup complete: Root's clean newly created full-check lane and consumed source evidence recycled; exact dependency Junction unlinked by PowerShell7 Remove-Item with integration target preserved; nonforced worktree removal and normal merged-branch deletion succeeded.
+
+## Bounded generated-report repair, 13 October
+
+The actual 04:00 batch completed all 422 full-tier suites, exit 0, but the copy guard then refused frames, combat, browsers and cleanup because the runner wrote its own tracked full-tier.json. Record night retained a failed whole-batch verdict; a green full tier is not a green batch.
+
+Consume only the runner's one unstaged generated report when HEAD remains the exact copied source and no other file changed. Require a complete stdout result with consistent row exit codes, unique labels, passed/failure counts and actual child exit; require the report's schema, source/end commit, clean flags, completeness, counts and failures to match. Retain its exact text in the owned ignored evidence leaf, recheck source and report bytes, then restore only that file's pre-run source text. Never broadly restore or ignore changes. A complete failed-suite report may be consumed for clean-copy handling but keeps the real failure verdict. Partial, malformed, changed-source or mismatched output stays refused and retained.
+
+Existing-style acceptance first reproduced two failures: the report mutation blocked the green controlled batch, and a complete failed report left extra copy/context failures. After the repair, 36/36 tests pass in 4.543 s, including original tests and new unrelated-file/source mismatch, incomplete/dirty/count/failure mismatch and complete failed-suite cases. Controlled full stdout fixtures now include the real per-row exit codes and actual nonzero aggregate code for failed suites; no assertion or pass limit was removed or relaxed. No actual full, frame, combat or browser stage was repeated here. Original nearby lane and build remain required on the frozen repair.
+
+Removed: the blanket rejection of this one verified runner-owned generated report. All other dirty-copy rejection and nonforced cleanup behavior remain.

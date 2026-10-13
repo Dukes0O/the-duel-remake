@@ -16,11 +16,13 @@ const report = quality => ({quality, course:'harbour-lights', cars:8, night:true
   appRunning:true,rearView:'ready',countdownBefore:0,countdownAfter:2,frames:120, p95:18.5, constructionMs:999, headed:true, visible:true, memoryOnlySaves:true});
 const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),report('Performance')]});
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
-  failures:[],notRun:0,total:2,results:[{label:'a',passed:true},{label:'b',passed:true}]});
+  failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[]}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [];
-  const copyRoot=root+'-copy/source';
+  const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
+  const sourceReport='original copied report\n';
+  files.set(copyRoot+'/'+reportName,sourceReport);
   let active=0, maximum=0, heads=0, invocations=0;
   let plan = nightPlan({date,root});
   if(lastGreen)files.set(`${root}/docs/board/checks/night-2026-10-11.json`,
@@ -28,7 +30,9 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
   const deps = {root, now:()=>new Date('2026-10-12T20:00:00Z'),
     git:async (args,cwd=root)=>{
       if(cwd===copyRoot) {
-        if(args[0]==='status')return '';
+        if(args[0]==='status')return [files.get(copyRoot+'/'+reportName)!==sourceReport?' M '+reportName:'',
+          files.has(copyRoot+'/src/game.js')?' M src/game.js':''].filter(Boolean).join('\n');
+        if(args[0]==='show'&&args[1]===head+':'+reportName)return sourceReport;
         if(args[0]==='branch')return '';
         return copyChange&&calls.length>0?'e'.repeat(40):head;
       }
@@ -50,7 +54,10 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
       return change&&heads++>0?'d'.repeat(40):head;
     },
     createCopy:async source=>{copies.push(['create',source]);return {root:copyRoot,source};},
-    removeCopy:async copy=>copies.push(['remove',copy.source]),
+    removeCopy:async copy=>{
+      if(files.get(copyRoot+'/'+reportName)!==sourceReport||files.has(copyRoot+'/src/game.js'))throw Error('Copy is changed; nonforced cleanup refused.');
+      copies.push(['remove',copy.source]);
+    },
     makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1)});return evidence;},
     refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
     recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
@@ -70,8 +77,14 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
         let text='';
         if(stage.id==='full') {
           const packet=full();
-          if(fullFailures.length)Object.assign(packet,{passed:0,total:fullFailures.length,failures:fullFailures,
-            results:fullFailures.map(label=>({label,passed:false}))});
+          if(fullFailures.length)Object.assign(packet,{exitCode:1,passed:0,total:fullFailures.length,failures:fullFailures,
+            results:fullFailures.map(label=>({label,passed:false,exitCode:1}))});
+          if(partialFull)packet.notRun=1;
+          if(reportMutation)files.set(copyRoot+'/'+reportName,JSON.stringify({schema:1,commit:head,
+            time:'2026-10-12T20:00:00Z',tier:'full',passed:!fullFailures.length,dirty:false,
+            startDirty:false,endDirty:false,endCommit:head,complete:true,total:packet.total,
+            completed:packet.total,failures:packet.failures,...reportPatch})+'\n');
+          if(otherMutation)files.set(copyRoot+'/src/game.js','unexpected game edit');
           text=JSON.stringify(packet)+'\n';
         }
         if(stage.id==='frames'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(frames()));
@@ -132,6 +145,37 @@ test('controlled full night writes genuine stage packets and a short morning rep
   assert.ok(f.files.has(`${root}/docs/board/checks/night-${date}.json`));
   assert.ok(f.files.get(`${root}/docs/board/checks/night-${date}.md`).trim().split('\n').length<20);
 });
+test('the actual full report mutation is retained as evidence and only its copied source bytes are restored',async()=>{
+  const f=fixture({reportMutation:true}),packet=await runNight(opts(),f.deps);
+  assert.equal(packet.status,'passed',JSON.stringify(packet.failures));
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
+  assert.equal(f.files.get(root+'-copy/source/docs/board/checks/full-tier.json'),'original copied report\n');
+  const record=JSON.parse(f.files.get(packet.evidence+'/full-tier.json'));
+  assert.equal(record.commit,head);assert.equal(record.endCommit,head);assert.equal(record.complete,true);
+  assert.deepEqual(f.copies,[['create',head],['remove',head]]);
+});
+test('a complete failed full record may clean its own output without losing the actual suite failure',async()=>{
+  const f=fixture({reportMutation:true,fullFailures:['tools/test-real-failure.mjs']}),packet=await runNight(opts(),f.deps);
+  assert.equal(packet.status,'failed');assert.equal(packet.stages[0].passed,false);
+  assert.deepEqual(packet.failures.map(row=>row.name),['full: tools/test-real-failure.mjs']);
+  assert.equal(JSON.parse(f.files.get(packet.evidence+'/full-tier.json')).passed,false);
+  assert.deepEqual(f.calls,['full','frames','combat','browser']);
+  assert.equal(f.files.get(root+'-copy/source/docs/board/checks/full-tier.json'),'original copied report\n');
+});
+test('unrelated copied source changes and mismatched or incomplete full output are never restored',async()=>{
+  for(const settings of [{otherMutation:true},{reportPatch:{commit:previous}},{reportPatch:{endCommit:previous}},
+    {reportPatch:{dirty:true}},{reportPatch:{startDirty:true}},{reportPatch:{endDirty:true}},
+    {reportPatch:{total:3}},{reportPatch:{completed:1}},{reportPatch:{failures:['invented']}},
+    {reportPatch:{passed:false}},{reportPatch:{complete:false}},{reportPatch:{schema:2}},{partialFull:true}]){
+    const f=fixture({reportMutation:true,...settings}),packet=await runNight(opts(),f.deps);
+    assert.equal(packet.status,'failed',JSON.stringify(settings));
+    assert.deepEqual(f.calls,['full'],'refused copied source cannot reach later tools');
+    assert.notEqual(f.files.get(root+'-copy/source/docs/board/checks/full-tier.json'),'original copied report\n');
+    if(settings.otherMutation)assert.equal(f.files.get(root+'-copy/source/src/game.js'),'unexpected game edit');
+    assert.deepEqual(f.copies,[['create',head]],'changed copy is retained');
+  }
+});
+
 test('a real stage failure keeps later checks, names the first merge and fails the night',async()=>{
   const f=fixture({fail:'combat'}),packet=await runNight(opts(),f.deps);
   assert.equal(packet.status,'failed');assert.equal(f.calls.length,4);
