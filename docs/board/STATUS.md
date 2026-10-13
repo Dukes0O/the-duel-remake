@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T00:57:35.478Z
+Observed at: 2026-10-13T00:59:16.454Z
 
-Observation commit: 6c90eee11092bd8a3df44759f0fe9d21d0cd3bfe
+Observation commit: 8f6b094bbd20a987eb9213f4758864458fd4bb26
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6c90eee11092bd8a3df44759f0fe9d21d0cd3bfe
+Integration HEAD: 8f6b094bbd20a987eb9213f4758864458fd4bb26
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -56,7 +56,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/deep-audio | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio |
-| codex/p4-career-podium | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-podium |
+| codex/p4-career-podium | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-podium |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -75,6 +75,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T15:14:54-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
+| codex/p4-career-podium | P4-CAREER-PODIUM | 2026-10-12T17:58:41-07:00 | 0 | last commit 2026-10-12T17:58:41-07:00 | docs/changes/P4-CAREER-PODIUM.md, src/grand-prix-career.js, src/progression.js, src/race-field.js, tools/test-deep-save.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-12T17:24:10-07:00 | 0 | last commit 2026-10-12T17:24:10-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuit-effects.js |
@@ -95,7 +96,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 188,038 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 402,221,056 B | +13,312 B | unavailable |
+| Git objects | 402,295,808 B | +74,752 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -104,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 6c90eee11092bd8a3df44759f0fe9d21d0cd3bfe
+- Local integration/wasteland: 8f6b094bbd20a987eb9213f4758864458fd4bb26
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
