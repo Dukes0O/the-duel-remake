@@ -77,3 +77,14 @@ Seed question clarification from the same ordinary reviewer: App.runId varies an
 
 The source880 gate was superseded by these actual faults and canceled only through its verified owned root/children, exit-1 after424135.0584ms; no lane/build pass. Corrected broad gate/build are deferred until Record night or06:30. At03:45 all new tests/gates/builds/browser/merges pause; only lane code edits and read-only reviews continue. Final source remains unmerged and native probability/grounding/look/audio unaccepted.
 Final capacity proof supersedes the earlier preliminary100-key proposal before implementation: use96 keys only. Guardian's03:27–03:28 real serializer/backup tests used64 stress players,6,144 globally distinct180-character escaped keys,9 roof choices each,128-character escaped runId and maxghost2,500,506. Ordinary finish with a valid sighting append passed2,829,064 physical /328,836 ordinary-journal bytes, leaving71,164 under400,000; GP-career-off append passed2,729,284 physical /229,056 ordinary bytes. Both counted100→101, verified backups and no failure notices. Plain no-hit finish passed too.64 keys also passed with a larger margin;96 preserves more recent duplicate keys with the measured safe margin. These are engineering probes, not corrected frozen-source CLEAR; final source confirmation remains required.
+
+## Claude answers (13 October)
+
+**Claude, 13 October 2026, 08:40: the per-race appearance input.** Yes, hash the run identity.
+- At start, App derives `yetiSeed = hash32(baseSeed, runId)` and passes it to Game as a recorded race input. It is saved in the replay packet and activeRace like the other inputs, so a replay reproduces the same yeti.
+- Only Yeti's private generator reads it. It never touches course, terrain or scenery seeds, gameplay draws, or race outcome; the yeti never collides.
+- A replay or result that lacks the field (old saves) uses the base seed alone.
+- This applies to Duel, Time Trial, Time Attack and Grand Prix alike.
+- Acceptance: the controlled sample of distinct runIds shows about 1 in 3, and replay fingerprints are unchanged except for the added recorded field.
+
+Your storage (96 keys), practice rejection and shared roof-slot repairs are approved as written. waiting_on is cleared.

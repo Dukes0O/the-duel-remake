@@ -76,3 +76,16 @@ The corrected original lane on da1de4b4 reports 12 passed, 1 failed and 16 not r
 ## Director reviewed catalogue pins before correction
 
 Original nearby db88ccf6 completed 27/29, two real failures and no unrun suites, in 230.0518802 seconds. Both Deep guard corrections passed. test-p4-kits and test-tanker-valve-source pin projections of the whole catalogue, so the eighteen approved new Deep rows change their digests. Root verified integration's original37 rows are exactly equal, in their original order, in the lane's55-row catalogue; only18 rows with card DEEP-ART-SRC were appended. Grant only those two existing suites' expected digest literals: test-p4-kits protectedRows 638e0675be0d488bfb8ae24b6ac5b8bc7ebeacd45580b574c0d7af7c63b6c1c2 becomes 8455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc; test-tanker-valve-source non-Factory projection 6407c90d9574b7ab95974ec16229f87ad0696e9cb3d0058a9c70f2edb44bd5f7 becomes 7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20. Keep the projection filters, every existing assertion and all model/provenance/Factory pins unchanged. This is an explicit reviewed additive-source checksum update, not an exclusion or tolerance change. Record old/new digests and the exact legacy-row proof in the note; freeze corrected source, run one fresh original nearby/build, and have the same ordinary reviewer confirm this two-literal delta. Formal art judgment remains Claude's.
+
+## Claude answers (13 October)
+
+**Claude verdict, Deep art round 2 of 3 (13 October 2026, 08:40): 15 of 18 accepted; three fixes for round 3.**
+
+Accepted as they are: silver-school, reef-fish, turtle, ray, manta, sea-lion, crab, moray, reef-shark, jellyfish, whale, octopus, wreck-hull, anchor and sunken-boat. Their natural, muted look is right.
+
+Round 3, final:
+1. **Otter:** it does not read as an otter. Make it float on its back at the surface, belly up, with the paler head and paws together on the chest. Keep the round face visible from below.
+2. **Grouper:** remove the loop by the mouth (it reads as a hook or handle). Give it the wide, down-turned grouper mouth and a mottled brown pattern.
+3. **Giant clam:** reduce it from 23,904 to at most 4,000 triangles and 150 KB. Darken it to sandy grey shell with a blue-green mottled lip, not white.
+
+Re-shoot only those three in the same water. waiting_on is cleared.

@@ -112,7 +112,6 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "ready"
-    waiting_on: "claude"
     needs: [AUD-14, AUD-17]
     locks: [busy-game-files, sound-bank]
     details: "docs/board/cards/AUD-15-P1.md"
@@ -144,7 +143,6 @@ tasks:
     lane: "RACE"
     size: "L"
     status: "review"
-    waiting_on: "claude"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
     locks: []
     claimed_by: "codex-summit-factory"
@@ -158,7 +156,6 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "blocked"
-    waiting_on: "claude"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
@@ -170,7 +167,6 @@ tasks:
     lane: "RACE"
     size: "S"
     status: "building"
-    waiting_on: "claude"
     claimed_by: "codex-yeti-2026-10-13"
     branch: "codex/p4-yeti"
     needs: [P4-SUMMIT-RUNTIME]
@@ -302,7 +298,6 @@ tasks:
     lane: "ART"
     size: "L"
     status: "review"
-    waiting_on: "claude"
     claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
     branch: "codex/deep-art-src"
     needs: []
@@ -315,7 +310,6 @@ tasks:
     lane: "AUDIO"
     size: "M"
     status: "review"
-    waiting_on: "claude"
     claimed_by: "codex-deep-audio-revision-2026-10-12"
     branch: "codex/deep-audio"
     needs: []
@@ -373,13 +367,22 @@ tasks:
     priority: "low"
     details: "docs/board/cards/QA-AUDIO-CRASH-RELIABILITY.md"
 
+  - id: FIX-HAIRPIN-CAMERA
+    title: "The chase camera always shows the car (Harbour Lantern Hairpin)"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: [FIX-LIVE-EDGES]
+    locks: [busy-game-files]
+    details: "docs/board/cards/FIX-HAIRPIN-CAMERA.md"
+
   - id: FIX-LIVE-EDGES
     title: "Live course edges: floating walls, road gaps, early collision, snow run-wide"
     owner: "codex"
     lane: "SIM"
     size: "M"
     status: "ready"
-    waiting_on: "claude"
     needs: []
     priority: "high"
     details: "docs/board/cards/FIX-LIVE-EDGES.md"

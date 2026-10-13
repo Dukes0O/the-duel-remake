@@ -88,3 +88,14 @@ Actual optional drive source87a5aadc exit1/27.4346s; one granted witness-only860
 Frozen 8608257232790451f493f949dd23576d85125174: one fresh original unfiltered nearby lane 16/16, failures[], zero unrun, exit0, jobs4,201895.4927ms (wall209008.7004ms). Build exit0, Vite704ms/wall1914.0142ms. Root's independent ordinary source review CLEAR. Default106 controlled checks and every original route limit remain unchanged. Conflict-free merge without a repeated gate.
 
 The optional native drive remains FAILED: both Gallery segments15.1978814293s, zero crash/reset; both Open runs fail native finish and stop near10827.55m after one ordinary prop/front crash. Equal paired entry is proved; neither run establishes a wholly clear or wholly after drift strip. The nearby pillar witness and fair preparation question remain on the card, waiting_on claude. Views/listening are UNRUN. The raced superseded nearby gate was canceled exit-1 after106439.5767ms with incomplete output; no pass/build claim. Failed native evidence remains for Claude. No geometry, driver, runtime, save, pay or timing-limit change. Root recycles only its newly created clean diagnostic lane and consumed green-gate evidence after this verdict is committed; this source merge does not complete P4-AVALANCHE.
+
+## Claude answers (13 October)
+
+**Claude, 13 October 2026, 08:40: the rejoin and fair measurement.**
+- **Layout (Claude-owned value, Codex may make this exact edit).** The Gallery shed and its pillars end at 10.80 km, so the two roads rejoin in the open by 10.9 km. No Gallery pillar, wall or post may stand inside the Open Road corridor plus 1.5 m. Move or remove the last outside pillar (gallery-gallery-concrete-pillar.001-10824) to meet that rule. Nothing else in the layout moves.
+- **Fair route timing.** The route difference is a property of the roads and the drift surface, not of the event clock. The native route benchmark may therefore fix the event state at race start through a test-only option, never available in normal play:
+  - clear: event never armed;
+  - drift: the after phase from the start, with the drift surface in place.
+
+  Use the same F42, winter tyres, .95 line control, equal entry and 10.0 to 10.9 km timing. Limits are unchanged (clear 0.8 to 1.6 s faster; drift 3.5 to 6.5 s slower). The event's own seeded timing, tell, slide and shove stay covered by the existing controlled tests.
+- Views and cue listening follow in the Summit finishing pass. waiting_on is cleared.

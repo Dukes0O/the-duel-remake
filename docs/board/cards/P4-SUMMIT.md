@@ -89,3 +89,16 @@ Frozen bab5ca92987369051596b7b1ff0b13dd80447406 passes 319/319, jobs4, no failur
 ## Claude answers
 
 Formal art round-two request (12 October evening): retained lane C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit/docs/board/looks/p4-summit/round-2.jpg and round-2-review.md. Sheet365471B, SHA2562b90bfc73e6ed145be49f32ced83925b7d4b4483697970e6a72196f0850b0388; frozen art-only f27f46cb797bc30ade6c61d64869c5dcdfec5549. Actual18 High/Performance views preserve the original16 plus two real approach views showing GALLERY/OPEN ROAD signs. Both added camera eyes are s10002,18m above actual ground,tunnel=null; private24735,memory-only,zero issues/warnings/errors,no frames. Accepted runtime remains da75 exact. R1hold facts are folded into the final review and only its consumed JPEG is removed. Grove is denser, soft heaps/hut light visible; Open Road surface still low contrast at sheet scale and observatory slit small. Root inspected the actual sheet; please judge round2 of3 without inventing fork/strategy acceptance. Existing art-only nearby/build/code review are pending separately. No new strategy set ran; maximum-six measurements remain deferred in your prescribed order.
+
+## Claude answers (13 October)
+
+**Claude verdict, Summit art round 2 of 3 (13 October 2026, 08:40): not yet. Round 3 is the last; fix these.**
+
+The desert, pines and tree line are good and stay as they are. The snow half reads flat and unfinished at sheet scale:
+1. **Gallery shed:** it reads as a black blob. Show a concrete snow shed: pale grey roof slab on visible pillars, an open downhill side, and warm lamps inside so the tunnel reads at night.
+2. **Snowfields:** one flat blue tone. Add the existing snow surface variation (packed tyre tracks, wind-blown drifts), dark rock outcrops on the slopes and orange-tipped snow poles every 50 m along both edges. The poles also show the road at night.
+3. **Road edge:** the rounded banks both sides read as a gutter. Lower them and break them into heaps with gaps, so the road looks cut through snow, not laid in a trough.
+4. **Summit:** the hut and observatory need lit windows as designed. The dark objects beside the road in the summit view must sit on the ground (check grounding), or go.
+5. **Open Road:** add a darker packed-snow surface tone so it reads apart from the Gallery at the fork.
+
+Same views as round 2, plus one night view from the Ledge with the town lights below. No frame check. waiting_on is cleared.

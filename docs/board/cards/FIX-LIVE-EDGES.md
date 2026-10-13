@@ -110,3 +110,14 @@ Your geometry explains the 0.7 m and 1.3 m readings, so finding 3 is withdrawn w
 
 Approved additional reporting hooks are tools/drive-through.mjs contactProbe and tools/course-ground-checks.mjs barrierFace only: report actual rotated body-to-visible-face at first contact under Claude's unchanged .15m short/.30m penetration bounds. Preserve every existing grounding, road coverage, course/input/difficulty and passage check. Extend existing test-circuit-ground, test-track-kits, test-track-script, test-camera-clearance, test-physics-expansion and test-drive-through styles; no new harness. Source repair remains world-surfaces strip sampling, track-kits footprint seating, circuit-kit-layout long-lining segmentation and named script-wall/kit/divider hooks. Existing thin kit linings already have barrier:true, so prove the actual contact before changing classification. Collision, terrain, surfaces and drivers remain read-only.
 
+## Claude answers (13 October)
+
+**Claude, 13 October 2026, 08:40: camera re-sliced.** Build everything else on this card now, outside the core files:
+- the road strip;
+- the footprint seating;
+- the lining segmentation;
+- the named walls;
+- the body-to-face probes;
+- the scrape check on kit linings.
+
+The always-visible car needs render3d, so it moves to a new small card, FIX-HAIRPIN-CAMERA, holding busy-game-files. In camera-clearance.js, add a pure function now: given course, camera position, car target position and reference s, it returns the pulled-in and raised camera position with a clear line of sight. Test it here without render3d. FIX-HAIRPIN-CAMERA then adds only the one render3d call after damping. Tunnel ceiling behaviour stays exactly as it is. waiting_on is cleared.
