@@ -161,6 +161,45 @@ function fullPacket(text) {
   const rows=text.trim().split(/\r?\n/).filter(Boolean);
   return json(rows.at(-1)||'null');
 }
+const fullReportName='docs/board/checks/full-tier.json';
+async function consumeFullReport(dependencies,copy,source,original,result,evidence) {
+  const status=await dependencies.git(['status','--porcelain'],copy.root);
+  if(!status.trim())return null;
+  const entries=status.split(/\r?\n/).filter(Boolean);
+  if((await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source ||
+    entries.length!==1 || entries[0]!==' M '+fullReportName)
+    throw Error('Copied source changed outside the full runner report; consumption refused.');
+  const target=path(copy.root,fullReportName),text=await dependencies.readText(target);
+  const record=json(text),actual=fullPacket(result.stdout);
+  const rows=actual?.results;
+  if(actual?.schema!==1 || actual.kind!=='result' || actual.tier!=='full' || actual.jobs!==4 ||
+    !Number.isSafeInteger(actual.total) || actual.total<1 || actual.notRun!==0 ||
+    !Array.isArray(rows) || rows.length!==actual.total ||
+    rows.some(row=>typeof row.label!=='string' || !row.label || typeof row.passed!=='boolean' ||
+      !Number.isSafeInteger(row.exitCode) || row.exitCode<0 || row.passed!==(row.exitCode===0)) ||
+    new Set(rows.map(row=>row.label)).size!==rows.length ||
+    actual.passed!==rows.filter(row=>row.passed).length ||
+    !Array.isArray(actual.failures) ||
+    JSON.stringify(actual.failures)!==JSON.stringify(rows.filter(row=>!row.passed).map(row=>row.label)) ||
+    actual.exitCode!==result.exitCode || actual.exitCode!==(rows.find(row=>!row.passed)?.exitCode??0))
+    throw Error('Full runner stdout is incomplete or inconsistent; report consumption refused.');
+  if(record?.schema!==1 || record.tier!=='full' || record.commit!==source || record.endCommit!==source ||
+    record.dirty!==false || record.startDirty!==false || record.endDirty!==false || record.complete!==true ||
+    typeof record.time!=='string' || !Number.isFinite(Date.parse(record.time)) ||
+    Date.parse(record.time)>dependencies.now().getTime() || record.total!==actual.total ||
+    record.completed!==actual.total || record.passed!==(actual.exitCode===0) ||
+    JSON.stringify(record.failures)!==JSON.stringify(actual.failures) || typeof original!=='string')
+    throw Error('Full runner report does not match exact clean source and complete stdout; consumption refused.');
+  const retained=path(evidence,'full-tier.json');
+  await dependencies.writeText(retained,text);
+  // Recheck immediately before replacing only this verified generated file.
+  if(await dependencies.readText(target)!==text ||
+    await dependencies.git(['status','--porcelain'],copy.root)!==status ||
+    (await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source)
+    throw Error('Copied source changed while retaining the full report; consumption refused.');
+  await dependencies.writeText(target,original);
+  return retained;
+}
 function validateFull(packet) {
   if(packet?.schema!==1||packet.kind!=='result'||packet.tier!=='full'||packet.jobs!==4||
     !Number.isInteger(packet.total)||packet.total<1||packet.passed!==packet.total||
@@ -334,6 +373,7 @@ export async function runNight(options,overrides={}) {
             if((await dependencies.processes()).length)timingError='Competing heavy work appeared during frame timing; packet discarded.';
           }).catch(error=>{timingError='Frame process inspection failed: '+error.message;});
         },dependencies.framePollMs);
+        const originalFullReport=stage.id==='full'?await dependencies.readText(path(copy.root,fullReportName)):null;
         let result;
         try {result=await runChild(process.execPath,stage.args,{cwd:copy.root,env:{...process.env,DUEL_NIGHT_FRAMES:'0',DUEL_NIGHT_IDLE_AWAKE:'0',DUEL_NIGHT_FRAME_REUSE:'0',DUEL_NIGHT_FRAME_PACKET:'',DUEL_NIGHT_FRAME_PASSED:'0',...stageEnv},
           logPath:log,spawnImpl:dependencies.spawnImpl||spawn,appendText:dependencies.appendText});
@@ -354,6 +394,7 @@ export async function runNight(options,overrides={}) {
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
           }catch{}
         }
+        if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
         if(result.exitCode!==0)throw Error(result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
         else if(stage.id==='frames')validateFramePacket(json(await dependencies.readText(stage.packet)));
