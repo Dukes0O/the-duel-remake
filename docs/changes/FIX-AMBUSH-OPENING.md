@@ -11,3 +11,7 @@ New acceptance reproduced the opening collapse in both venues and missing entry 
 Replaced immediate first-wave fire and wear, rapid first-wave rocket reload, and the instruction-free Ambush entry panel. No extra mechanism, asset, dependency, save field, reward or test harness.
 
 Development run:37/39 passed, including both native30-second openings. Two new fixtures needed the real discovered-gate eligibility and the actual simulation start deadline; their acceptance stayed exact. Final lane verifies the corrections.
+
+First lane:177/178 passed, zero unrun,723.87s; build withheld. The only failure was the new cadence fixture assuming a clear shot from native spawn. Terrain correctly blocks that path. Both native30-second survival cases and entry help passed. Cadence now reuses the existing rocket-flight test’s clear65m pose in each wave; all timing/count/damage assertions stay exact. A fresh required lane follows this fixture correction.
+
+Bounded diagnosis: the Pit65m ray crosses a2.37m mound, correctly rejecting both shots until enemies move. The same65m fixture on Salt Flats has a clear ray and produces both native group shots. Cadence uses that flat venue, preserving its exact two-group count and6.6/2.2 deadlines. Both venues retain their separate full native30-second acceptance. No assertion or tolerance was weakened.

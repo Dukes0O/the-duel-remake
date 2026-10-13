@@ -619,7 +619,12 @@ test('the entry panel teaches Ambush controls before its start button', () => {
 
 
 test('wave-one rockets are spaced apart and wave two keeps its existing cadence', () => {
-  const f = fight();
+  const f = fight({venueId: 'salt-flats'});
+  // The producer may reject terrain-blocked spawn shots. Reuse the clear
+  // 65m firing pose on the flat Salt Flats to isolate cadence from Pit mounds.
+  const fort = alley(f).fort;
+  for (const zone of f.state.raids.zones)
+    moveRaider(f, zone.raiders[0], {...fort, x: fort.x + 65});
   const opening = alley(f).attackStartsAt;
   f.state.stageTimeSec = opening;
   stepRaiders(f.duel, 0);
@@ -632,7 +637,10 @@ test('wave-one rockets are spaced apart and wave two keeps its existing cadence'
   finishWave(f); advance(f, 10 + 2 * DT);
   equal(alley(f).wave, 2, 'the ordinary next wave still starts');
   const at = f.state.stageTimeSec;
-  for (const zone of f.state.raids.zones) zone.nextShotAt = at;
+  for (const zone of f.state.raids.zones) {
+    moveRaider(f, zone.raiders[0], {...fort, x: fort.x + 65});
+    zone.nextShotAt = at;
+  }
   stepRaiders(f.duel, 0);
   for (const zone of f.state.raids.zones) near(zone.nextShotAt, at + 2.2, 'later waves keep the released reload');
 });
