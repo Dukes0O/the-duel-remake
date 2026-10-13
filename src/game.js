@@ -673,7 +673,7 @@ export class Duel {
   setFighterInput(partial = {}) {
     if (!this.state.onFoot || !this.state.fighter) return false;
     const input = this.state.fighterInput;
-    for (const key of ['forward', 'back', 'left', 'right', 'sprint', 'jump',
+    for (const key of ['forward', 'back', 'left', 'right', 'turnLeft', 'turnRight', 'sprint', 'jump',
       'fire', 'aim'])
       if (partial[key] != null) input[key] = !!partial[key];
     for (const key of ['lookX', 'lookY'])

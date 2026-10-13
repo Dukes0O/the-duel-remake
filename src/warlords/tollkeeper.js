@@ -94,8 +94,6 @@ export function tollkeeperValvesDamaged(duel, actor) {
   if (!isConvoyRig(duel, actor) || arena.warlordPhase !== 1 ||
       !arena.convoy.valves.some(armor => armor === 0)) return;
   arena.warlordPhase = 2;
-  arena.respawnRequests = arena.participants.filter(participant => participant.wreckScorable === false)
-    .map(participant => participant.id);
   duel.emit({warlordPhase: {warlordId: arena.warlordId, phase: 2}});
 }
 

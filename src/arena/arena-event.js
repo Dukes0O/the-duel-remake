@@ -294,14 +294,6 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
-  const requested = arena.respawnRequests || [];
-  delete arena.respawnRequests;
-  for (const id of new Set(requested)) {
-    const participant = arena.participants.find(item => item.id === id && item.kind === 'cpu');
-    const actor = participant && arenaActor(duel, id);
-    if (actor) respawn(duel, participant, actor);
-  }
-
   const onFoot = (['fuel-run', 'convoy-raid'].includes(arena.mode) ||
     arena.format === 'convoy-raid' || ambush) && stepFootTransition(duel, dt);
   if (ambush) {

@@ -267,8 +267,8 @@ for(const [crew,capacity] of [['nell',3],['dune',8],['wren',2],['tusk',2]]) chec
 check('Rook gear-enabled car re-entry refills his existing RPG',()=>{
   const duel=race('rook');fire(duel);assert.equal(duel.state.footWeapons.ammo,2);reenter(duel);assert.equal(duel.state.footWeapons.ammo,3,'Rook existing gear follows the new refilling rule');
 });
-check('current right/left controls move in the matching camera direction without changing car progress',()=>{
-  for(const [key,sign] of [['KeyD',1],['ArrowRight',1],['KeyA',-1],['ArrowLeft',-1]]) {
+check('strafe controls (Q/E since 12 October 2026) move in the matching camera direction without changing car progress',()=>{
+  for(const [key,sign] of [['KeyE',1],['KeyQ',-1]]) {
     const duel=race('nell'),f=duel.state.fighter,start={...f},pose=onFootCameraPose(duel.course,f),carS=duel.state.s;
     const camera=new PerspectiveCamera(pose.fov,16/9,.15,1000);camera.position.set(pose.position.x,pose.position.y,pose.position.z);camera.lookAt(pose.target.x,pose.target.y,pose.target.z);camera.updateMatrixWorld();
     duel.setFighterInput(footControlInput({[key]:true},{},{}));ticks(duel,12);

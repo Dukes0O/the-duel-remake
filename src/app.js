@@ -156,6 +156,12 @@ export class App {
         this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
         if(event.fighterEntered && typeof document!=='undefined' &&
             document.pointerLockElement) document.exitPointerLock();
+        // Capture the mouse as soon as the fighter steps out, so the mouse
+        // looks around without a first click. The F press that got him out
+        // still counts as a user action; if the browser refuses, a click works.
+        if(event.fighterExited && typeof document!=='undefined' && !document.pointerLockElement){
+          try{document.querySelector('#view3d canvas')?.requestPointerLock?.()?.catch?.(()=>{});}catch{}
+        }
         this._keyboardSteering.reset();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
