@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "date": "2026-10-13",
+  "source": "c03777d06621d0eaa1d5f051f30461a5571ecaa2",
+  "started": "2026-10-13T11:00:29.529Z",
+  "status": "failed",
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": false
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-13/FAC-03/night-3YS7Qx/full.log",
+      "started": "2026-10-13T11:00:31.801Z",
+      "passed": false,
+      "exitCode": 0,
+      "counts": {
+        "passed": 422,
+        "failed": 0,
+        "unrun": 0,
+        "total": 422
+      },
+      "failureNames": [],
+      "error": "Copied source changed.",
+      "finished": "2026-10-13T11:16:39.120Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/browser-harness.mjs",
+        "scenario",
+        "frame-pacing",
+        "--headed",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-XjBtWd/source/.evidence/2026-10-13/FAC-03/night-3YS7Qx/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-13/FAC-03/night-3YS7Qx/frames.log",
+      "started": "2026-10-13T11:16:39.120Z",
+      "passed": false,
+      "error": "Copied source changed.",
+      "finished": "2026-10-13T11:16:39.200Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-13/FAC-03/night-3YS7Qx/combat.log",
+      "started": "2026-10-13T11:16:39.200Z",
+      "passed": false,
+      "error": "Copied source changed.",
+      "finished": "2026-10-13T11:16:39.281Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--all",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-XjBtWd/source/.evidence/2026-10-13/FAC-03/night-3YS7Qx/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-13/FAC-03/night-3YS7Qx/browser.log",
+      "started": "2026-10-13T11:16:39.281Z",
+      "passed": false,
+      "error": "Copied source changed.",
+      "finished": "2026-10-13T11:16:39.361Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "full",
+      "error": "Copied source changed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "frames",
+      "error": "Copied source changed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "combat",
+      "error": "Copied source changed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser",
+      "error": "Copied source changed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "copy-cleanup",
+      "error": "Copy is changed; nonforced cleanup refused.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-13/FAC-03/night-3YS7Qx",
+  "finished": "2026-10-13T11:16:39.505Z",
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-10-13.json",
+      "docs/board/checks/night-2026-10-13.md",
+      "docs/board/STATUS.md"
+    ]
+  }
+}
