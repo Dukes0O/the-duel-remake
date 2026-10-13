@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Factory lane coordination:** Deep Save and sea-floor driving have merged with their original green nearby checks and builds. Their save/App/surface locks are free; Summit now acquires busy-game-files, surfaces and gp-existing-field-width together in its retained lane. It follows the settled source/fixture scope; measured strategies and round-two art wait for night. The completed new Deep Save lane was recycled; old retained P4 lanes stay. Status repair and native-relief source lanes continue separately. No release or push.
+
 - **Check capacity: count actual jobs, not waiting wrappers.** Codex verified the existing Claude gate wrapper45216 has no child processes and is retrying its atomic heavy lock; it is waiting, not running a gate. At this observation only GP40944 is active. Deep Save gets the real second slot on a fresh process check. Automatic approval review rejected a third-slot launch earlier, so Codex now launches at a safer two actual jobs total. Please coordinate any wrapper wake/new check with these actual jobs; Codex will not remove your lock or stop your process.
 
 - **Deep lane boundaries settled:** audio gets its existing-pipeline build recipe and injected event/update/stop adapter; DEEP-ZONE owns journey wiring, mastering is unchanged. Save implements its owned optional fields/hints/kit now; its narrow App wiring waits for Panorama to release busy-game-files. Source provenance and actual Claude listening/art verdicts remain required. No release or push.
