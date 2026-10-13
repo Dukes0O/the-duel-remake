@@ -1038,3 +1038,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 DEEP-RAMP-GEOMETRY b9111b6a: corrected20/20, build1290ms, ordinary review clear; conflict-free after Ambush. Actual whole-cove regression fixed; pure descriptor only.
 
 - 2026-10-12 FAC-FULL-CHECK5dfd5f33:20/20, build728ms, corrected detector review clear; conflict-free merge, no rerun. Tool renamed; actual04:00 batch still pending.
+
+- 2026-10-12 DEEP-AUDIO revisedc1408cbd:55/55, build996.1124ms, ordinary review clear; conflict-free, no rerun; net236204B saved. Listening/native mix remain open.
