@@ -12,6 +12,7 @@ import {disposeTree} from '../src/world.js';
 import {registerSceneSystem} from '../src/scene-systems.js';
 import {Course} from '../src/course.js';
 import {PANORAMA_RIDGE} from '../src/circuits/panorama-ridge.js';
+import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import {COURSE} from '../src/config.js';
 import {terrainGeometry,farTerrainGeometry} from '../src/world-surfaces.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
@@ -229,6 +230,35 @@ assert.equal(real.placements.length,35);real.update({high:false,position:{x:nati
 assert.equal(real.stats.low,35);assert.ok(real.group.children.some(node=>node.isInstancedMesh));
 assert.ok(real.group.children.some(node=>node.name==='yeti low'));real.dispose();
 console.log('Track kits: 70 real assets, metadata, transforms, quality, countdown, clearance, readiness and exact lifetime passed.');
+
+// Actual model matrices must meet the same nine footprint samples as the ground report.
+{
+  const harbour=new Course(HARBOUR_LIGHTS,1989),before=JSON.stringify(harbour.features);
+  const rows=[1160,1780,2140].map(s=>HARBOUR_LIGHTS.kitPlacements.filter(row=>
+    row.id==='concrete-wall'||row.id==='catch-fence').reduce((best,row)=>Math.abs(row.s-s)<Math.abs(best.s-s)?row:best));
+  const assets=new Map(),seated=createTrackKits(harbour,{placements:rows,loadAsset:async path=>{
+    const bytes=await readFile(new URL('../public'+path,import.meta.url));
+    const asset=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+    assets.set(path,new THREE.Box3().setFromObject(asset.scene));return asset;
+  }});
+  try{
+    assert.equal(await seated.ready,true,seated.error?.message);
+    for(let i=0;i<rows.length;i++){
+      const row=rows[i],matrix=seated.getPlacementPose(i),bounds=assets.get('/assets/models/circuits/kits/'+row.id+'.glb');
+      assert.ok(bounds,'actual High model bounds exist');
+      for(const x of [bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x])
+        for(const z of [bounds.min.z,(bounds.min.z+bounds.max.z)/2,bounds.max.z]){
+          const base=new THREE.Vector3(x,bounds.min.y,z).applyMatrix4(matrix),at=harbour.nearest(base.x,base.z,row.s);
+          const ground=renderedGroundHeight(harbour,{...harbour.groundAt(at.s,at.lateral),s:at.s,off:at.lateral},{requireSurface:true});
+          assert.ok(Number.isFinite(ground),'actual drawn ground exists');
+          assert.ok(base.y-ground<=.45,'actual model base float retains .45 m bound');
+          assert.ok(ground-base.y<=1.5,'actual model base sink retains 1.5 m bound');
+        }
+    }
+    assert.equal(JSON.stringify(harbour.features),before,'seating cannot alter physical geometry');
+  }finally{seated.dispose();}
+}
+
 
 // Compare against the actual Float32 indexed triangles, independently of the
 // grounding helper. The far witness lies beyond the authored 64 m ribbon.

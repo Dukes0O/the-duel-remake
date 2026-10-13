@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Course } from '../src/course.js';
-import { terrainGeometry, farTerrainGeometry } from '../src/world-surfaces.js';
+import { terrainGeometry, farTerrainGeometry, strip } from '../src/world-surfaces.js';
 import { hillGeometry, backdropGeometry, lakeGeometry } from '../src/circuit-effects.js';
 import { renderedGroundHeight } from '../src/rendered-ground.js';
+import {kitBaseHeight} from '../src/track-kits.js';
 import { hillHeight, hillLocal } from '../src/circuit-hills.js';
 import { lakeLevel } from '../src/circuit-effects.js';
 import { KIT_FOOTPRINTS } from '../src/kit-footprints.js';
@@ -84,6 +85,29 @@ function coverSpots(course) {
   return spans.map(span => `${span.name} reaches ${span.over.toFixed(2)} m over the road at s ${span.s0} to ${span.s1}`);
 }
 
+for (const [name, def, s, lateral] of [
+  ['Harbour Lights', HARBOUR_LIGHTS, 2059, 4.67],
+  ['Tremblant Snow', TREMBLANT_SNOW, 396, 6.94],
+]) test(name + ': drawn triangles cover the observed native driven road', () => {
+  const course = new Course(def, 1989);
+  assert.equal(course.surfaceAt(s, lateral).road, true, 'observed actor remains on the native road');
+  const geometry = strip(course, at => -course.roadHalfWidthAt(at), at => course.roadHalfWidthAt(at), ROAD_LIFT);
+  const bins = indexTriangles(geometry), point = course.worldAt(s, lateral);
+  try {
+    assert.notEqual(drawnHeight(bins, point.x, point.z), null, 'actual native road point must be drawn');
+    const rows = Math.ceil(course.length / 2), rowStep = course.length / rows;
+    for (let row = 0; row < rows; row++) for (const share of [.25, .5, .75]) for (const side of [-1, 1]) {
+      const along = (row + share) * rowStep, edge = course.worldAt(along, side * course.roadHalfWidthAt(along));
+      assert.notEqual(drawnHeight(bins, edge.x, edge.z), null, 'quarter/mid native edge must be drawn at s ' + along + ', side ' + side);
+    }
+    for (let along = .5; along < course.length; along += 2) for (const side of [-1, 1]) {
+      const edge = course.worldAt(along, side * course.roadHalfWidthAt(along));
+      assert.notEqual(drawnHeight(bins, edge.x, edge.z), null, 'full native edge must be drawn at s ' + along + ', side ' + side);
+    }
+  }
+  finally { geometry.dispose(); }
+});
+
 for (const [name, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Snow', TREMBLANT_SNOW], ['Harbour Lights', HARBOUR_LIGHTS], ['Panorama Ridge', PANORAMA_RIDGE]]) {
   test(`${name}: no ground, hill or water is drawn over the road or its shoulder`, () => {
     const course = new Course(def, 1989);
@@ -114,15 +138,15 @@ const FOOT = { 'ski-lodge': [16, 11], 'wooden-dock': [3, 7], 'autumn-tree': [1, 
 // How far a piece may float (metres, lowest ground under it to its base): 0.3, a little more for a four metre piece lying on a slope.
 const FLOAT = id => KIT_FOOTPRINTS[id]?.width >= 4 && KIT_FOOTPRINTS[id].depth < 1 || id === 'chairlift-tower' ? .45 : .3;
 
-for (const [label, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Snow', TREMBLANT_SNOW]]) test(`${label}: no building or piece floats above the ground, and none is sunk deep`, () => {
-  const course = new Course(def, 1989), ground = visibleGround(course), lake = def.effects.lake, water = lakeLevel(course, lake);
+for (const [label, def] of [['Tremblant Woods', TREMBLANT_WOODS], ['Tremblant Snow', TREMBLANT_SNOW], ['Harbour Lights', HARBOUR_LIGHTS]]) test(`${label}: no building or piece floats above the ground, and none is sunk deep`, () => {
+  const course = new Course(def, 1989), ground = visibleGround(course), lake = def.effects?.lake, water = lake ? lakeLevel(course, lake) : null;
   const problems = [];
   for (const piece of def.kitPlacements) {
     const foot = KIT_FOOTPRINTS[piece.id] ? [KIT_FOOTPRINTS[piece.id].width, KIT_FOOTPRINTS[piece.id].depth] : FOOT[piece.id];
     if (!foot || piece.ride) continue;
     const scale = Array.isArray(piece.scale) ? piece.scale : Array(3).fill(piece.scale ?? 1), at = course.groundAt(piece.s, piece.lateral);
     // Where the loader sets the piece down (src/track-kits.js), and the hill lift circuit-effects.js adds.
-    let base = renderedGroundHeight(course, { ...at, s: piece.s, off: piece.lateral }, { requireSurface: true }) + (piece.lift ?? 0);
+    let base = kitBaseHeight(course, piece, {min:{x:-foot[0]/2,z:-foot[1]/2},max:{x:foot[0]/2,z:foot[1]/2}});
     if (piece.hill !== undefined) { const hill = course.def.hills[piece.hill]; base += hillHeight(hill, ...hillLocal(hill, piece.s, piece.lateral)) - (piece.sink ?? 0); }
     const heading = at.heading + (piece.heading ?? 0), hx = foot[0] * scale[0] / 2, hz = foot[1] * scale[2] / 2, under = [];
     for (const [a, b] of [[0, 0], [-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1], [0, 1], [-1, 0], [1, 0]])

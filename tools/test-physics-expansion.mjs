@@ -188,3 +188,28 @@ same(runs[0], runs[1], '30/144 FPS produce bit-identical fixed-step road flight'
   }
 }
 console.log(`Physics expansion: ${checks} glancing-wall, solid-impact, natural-crest, NPC, reset, driver-cache and frame-rate checks passed; fixture peak ${fast.peak.toFixed(3)} m; real crest peaks ${actualCrests.map(crest => `${crest.course}:${crest.peak}`).join(', ')}.`);
+
+
+// Actual authored kit lining, using the existing static-contact path.
+{
+ const [{Course},{HARBOUR_LIGHTS},{KIT_FOOTPRINTS}]=await Promise.all([
+   import('../src/course.js'),import('../src/circuits/harbour-lights.js'),import('../src/kit-footprints.js')]);
+ const course=new Course(HARBOUR_LIGHTS,1989),index=HARBOUR_LIGHTS.kitPlacements.findIndex(row=>row.id==='concrete-wall'&&row.s>100&&row.s<400&&row.lateral>0);
+ const row=HARBOUR_LIGHTS.kitPlacements[index],wall=course.features.walls.filter(value=>value.trackWall&&value.side===1).reduce((best,value)=>Math.abs(value.s-row.s)<Math.abs(best.s-row.s)?value:best);
+ check(wall?.barrier===true,'actual named lining already uses the existing scrape rule');
+ for(const angle of [10,45]){
+   const d=fixture(),state=d.state;d.course=course;d._obstacleQueryCache.clear();d._obstacleArray=course.features.obstacles;
+   const theta=angle*Math.PI/180,projected=1.02*Math.cos(theta)+2.35*Math.sin(theta),depth=KIT_FOOTPRINTS[row.id].depth/2;
+   const at=course.groundAt(row.s,row.lateral),roadward={x:-Math.cos(at.heading),z:Math.sin(at.heading)};
+   const face={x:at.x+roadward.x*depth,z:wall.z};
+   const before={x:face.x+roadward.x*(projected+.2),z:face.z+roadward.z*(projected+.2)};
+   const after={x:before.x-roadward.x*.4+Math.sin(at.heading)*(.4/Math.tan(theta)),
+     z:before.z-roadward.z*.4+Math.cos(at.heading)*(.4/Math.tan(theta))};
+   const a=course.nearest(before.x,before.z,row.s),b=course.nearest(after.x,after.z,row.s);
+   Object.assign(state,{prevS:a.s,prevLateral:a.lateral,s:b.s,lateral:b.lateral,speedMph:100,headingError:theta});
+   d._staticContacts(state,true);
+   same(state.stageCrashes,angle===10?0:1,'actual kit lining '+angle+' degree hit retains settled scrape/crash boundary');
+   check(state.speedMph<100,'actual contact loses speed');
+ }
+ console.log('Actual Harbour kit lining: 10-degree scrape and 45-degree crash checks passed.');
+}

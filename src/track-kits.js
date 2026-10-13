@@ -97,13 +97,36 @@ function validateSource(asset, id) {
   return bounds;
 }
 
+const CONTINUOUS_LININGS = new Set(['armco','concrete-wall','catch-fence','tyre-wall','pit-wall']);
+
+// The base height is shared with the geometry report; model/collider rows stay
+// read only. Lower a continuous lining only when its footprint would float.
+export function kitBaseHeight(course,row,bounds) {
+  const ground=course.groundAt(row.s,row.lateral);
+  const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
+  if(!finite(height))return height;
+  if(!course.script||!CONTINUOUS_LININGS.has(row.id))return height+(row.lift??0);
+  const scale=Array.isArray(row.scale)?row.scale:Array(3).fill(row.scale??1);
+  const heading=ground.heading+(row.heading??0),cs=Math.cos(heading),sn=Math.sin(heading);
+  const x=[bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x];
+  const z=[bounds.min.z,(bounds.min.z+bounds.max.z)/2,bounds.max.z];
+  let lowest=height;
+  for(const a of x)for(const b of z){
+    const px=ground.x+cs*a*scale[0]+sn*b*scale[2],pz=ground.z-sn*a*scale[0]+cs*b*scale[2];
+    const at=course.nearest(px,pz,row.s);
+    const under=renderedGroundHeight(course,{x:px,z:pz,s:at.s,off:at.lateral},{requireSurface:true});
+    if(finite(under))lowest=Math.min(lowest,under);
+  }
+  return Math.min(height,lowest+.449)+(row.lift??0);
+}
+
 function placementMatrix(course, row, bounds) {
   const ground = course.groundAt(row.s,row.lateral);
   if (![ground.x,ground.y,ground.z,ground.heading].every(finite)) fail('terrain anchor is invalid.');
-  const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
+  const height=kitBaseHeight(course,row,bounds);
   if (!finite(height)) fail('placement has no rendered terrain beneath its anchor.');
   return new THREE.Matrix4().compose(
-    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1]+row.lift,ground.z),
+    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1],ground.z),
     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),ground.heading+row.heading),
     new THREE.Vector3(...row.scale));
 }
