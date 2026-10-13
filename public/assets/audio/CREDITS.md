@@ -144,8 +144,9 @@ All sources below use [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.
 
 Selected public HQ previews, all [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 The recipes in `tools/audio/build-deep.mjs` cut, filter, fade and loudness-match
-the eight cues. Bubbles and cave use crossfaded lossless FLAC loops; the six
-accents use mono Vorbis. Source and runtime hashes are in the audio catalog.
+the eight cues. Bubbles and cave use crossfaded mono Vorbis loops; the six
+accents use mono Vorbis. The pearl uses ascending layers of its same source.
+Source and runtime hashes are in the audio catalog.
 No author endorsement is implied.
 
 - [Big Water Splash](https://freesound.org/people/qubodup/sounds/442773/), by **qubodup**: dive splash.
@@ -153,6 +154,6 @@ No author endorsement is implied.
 - [Aquatic sound of some bubble in a swimming pool](https://freesound.org/people/felix.blume/sounds/208816/), by **felix.blume**: exhaust bubble bed.
 - [Hard Impact on Snow](https://freesound.org/people/Elements-Library/sounds/683786/), by **Elements-Library**: filtered soft landing.
 - [2016.07.22 Bell Single 01.wav](https://freesound.org/people/RP1312/sounds/350616/), by **RP1312**: creature log note.
-- [GASP_Chimes_Success_1.wav](https://freesound.org/people/Rob_Marion/sounds/541982/), by **Rob_Marion**: pearl chime.
+- [GASP_Chimes_Success_1.wav](https://freesound.org/people/Rob_Marion/sounds/541982/), by **Rob_Marion**: rising pearl shimmer.
 - [Diving with whales.wav](https://freesound.org/people/KEVOY/sounds/82325/), by **KEVOY**: distant whale song.
 - [Underwater Ambience](https://freesound.org/people/Fission9/sounds/504641/), by **Fission9**: low cave bed.
