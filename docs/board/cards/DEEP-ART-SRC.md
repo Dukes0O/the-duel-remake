@@ -97,3 +97,7 @@ Resume retained clean deep-art-src after an automatic current-integration union;
 ## Director existing final-sheet hook, 13 October
 
 Grant tools/blender/deep-art-sheet.py only an optional round3 composer for the three changed roles; preserve its original default and paths-only round2 output/guards. No new helper/framework. The two whole-catalogue expected digest literals remain ungranted until actual old/new projection values, original37-row equality and15 accepted-model byte equality are supplied for independent review. No filter, assertion or old-source pin changes.
+
+## Director final-role camera correction, 13 October
+
+Grant only the existing final-round photography role values: otter centre from0.5m below water to0.02m above it, with a below-surface eye to show the real face; grouper front eye to show its real mouth. These are three-role photography controls in the existing recipe, with water/lights/materials/scale/render pipeline exact. Flatten only otter donor cross-section centres with original topology to meet the approved belly-up pose. Record the actual draft's submerged/arched defect honestly; no formal round3 acceptance or fourth round. Final content hashes and the two complete-catalogue digests are supplied after the last actual export before a pin grant/gate.
