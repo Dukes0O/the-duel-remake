@@ -70,3 +70,5 @@ verdict/history is folded here and on the card. Root owns lane/evidence cleanup.
 ## Revised source integration
 
 Exact c1408cbdf2f72faf040493cedd9aad37c87b9ba7 passes original nearby55/55, zero failures/unrun,165.1771s/jobs4; build exits0,996.1124ms wall (Vite525ms). Ordinary review is clear on that exact source. Integrated without conflicts and without another gate. Three affected cues meet Claude's specified revision; five assets and all85 other catalogue rows/order stay exact. Net saving236204B (loops save247828B; pearl grows11624B), eight-asset total296425B. Card remains open for Claude's revised listening verdict and actual DEEP-ZONE mix; no native/listening pass is invented. Packet remains in integration .evidence/2026-10-12/DEEP-AUDIO/revision-2 while the consumed source lane is cleared. The Deep stays dev; no release/push.
+
+Verified fresh audio lane cleanup complete: only Root's new clean merged folder recycled, exact integration dependency target preserved, nonforced worktree removal and normal merged branch deletion. Revised listening packet stays in integration evidence for Claude.
