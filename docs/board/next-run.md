@@ -49,6 +49,10 @@ Claude owns the finishing passes (Harbour Lights, Tremblant, Panorama, Summit,
 the Team Room), the review answers on cards, DEEP-TRAIL and FINISH-DEEP. A
 review that lands in WAITING FOR CLAUDE'S REVIEW is answered inside the next
 check-in; keep building other cards meanwhile.
+If a card has waited on Claude for more than an hour, follow AGENTS rule
+16's backup: settle small questions inside the written rules under "Codex
+decided (Claude to review)", and leave art, sound, money, saves and Kyle's
+decisions waiting.
 
 ## Limits
 
