@@ -1049,3 +1049,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 DEEP-ZONE sourcea4306cde:316/316, build1322.7529ms, ordinary and fresh save repair confirmations CLEAR; conflict-free, no rerun. Journey wiring dev only, production awaits actual Trail provider.
 
 - 2026-10-13 P4-AVALANCHE source05383cbd:282/282, build2575.2799ms, ordinary crossing-repair confirmation CLEAR; conflict-free, no rerun. Core lock released; actual native timing/views/listening remain open, dev only.
+
+- 2026-10-13 04:34 PT FAC-FULL-CHECK repair merged: b569a6ed nearby16/16/build540ms/reviewCLEAR; consume only verified copied runner report; prior422 pass was failed batch, remaining stages unrun; real-fix retry follows; no release/push.

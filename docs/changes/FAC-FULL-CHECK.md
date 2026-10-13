@@ -45,3 +45,7 @@ Removed: the blanket rejection of this one verified runner-owned generated repor
 ## Verified repair integration, 13 October 04:34 PT
 
 Frozen b569a6ed4a855a94f7e990c739679909233e0176: controlled36/36; original unfiltered nearby16/16, failures[], zero unrun,102.4211925s/jobs4, exit0. Build exit0, Vite540ms, wall1050.6185ms. Same independent ordinary review CLEAR on exact clean source. Conflict-free merge without a repeated gate. Only the verified intentional generated report is consumed; failed suites retain their failure verdict and all unrelated dirty-source guards remain. The earlier actual422 full-tier pass remains a failed whole batch with frames/combat/browsers unrun. Retry the unfinished daily batch after this real reviewed fix; no scheduler change, push or release. Root removes only its newly created repair lane and consumed repair evidence after this verdict is committed.
+
+## Log placement correction
+
+Root initially wrote its new merge line to run-log.md at the repository root. Move that exact owned line to docs/board/run-log.md and recycle the mistakenly created file. No tool/game/test change. The running retry remains pinned to fce56ce4 and must report its source-hygiene result honestly; this correction does not grant it a pass. End-run read-only janitor sweep:1950 tracked files,323813992B before this correction; looks17152350B/20MB unchanged;47 advisory assets,84 exports,333 unindexed docs, zero unused modules/removed-feature tests. Own merged lanes were recycled; uncertain/foreign files and old lanes retained.
