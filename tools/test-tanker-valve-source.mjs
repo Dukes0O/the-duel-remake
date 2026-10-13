@@ -220,7 +220,7 @@ check('existing Factory catalogue records actual valve inspection', () => {
     'actual 456-triangle valve inspection is missing from the existing catalogue');
 });
 check('reviewed non-Factory catalogue includes the approved Flame source', () => {
-  assert.equal(digest(catalog.assets.filter(asset => asset.id !== 'kenney-factory-kit')), '6407c90d9574b7ab95974ec16229f87ad0696e9cb3d0058a9c70f2edb44bd5f7');
+  assert.equal(digest(catalog.assets.filter(asset => asset.id !== 'kenney-factory-kit')), '7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20');
 });
 check('existing Factory provenance and other source uses stay exact', () => {
   const retained = structuredClone(factory);

@@ -130,3 +130,30 @@ Freeze this correction before one original nearby lane with `--jobs 4`
 and `--keep-going`, then a build. Keep final results in ignored receipts
 for the Director to fold into integration. Ordinary source review and
 Claude's formal round-two art verdict remain pending; no merge clearance.
+
+## Reviewed additive catalogue checksum correction
+
+The original complete lane on db88ccf6fcde077f5b0f6aaa4e3bed73def99371
+failed, exit 1: 27 passed, 2 failed, 0 not run, total 29, 230,051.8802 ms.
+The two failures were test-p4-kits and test-tanker-valve-source catalogue
+projections. Both Deep guard corrections passed. Build passed on the same
+clean source, Vite 689 ms, 361 modules. Full receipts remain ignored.
+
+Read-only proof against initial lane base 874bc0e3 and Root's integration
+comparison: every original 37 catalogue rows is exactly equal, in original
+order; only the 18 approved DEEP-ART-SRC rows were appended (55 total).
+Without those additions, both old projection hashes match exactly. Root
+reviewed that proof and granted only these two expected literal updates:
+
+- P4-KITS: 638e0675be0d488bfb8ae24b6ac5b8bc7ebeacd45580b574c0d7af7c63b6c1c2
+  becomes 8455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc.
+- Tanker non-Factory: 6407c90d9574b7ab95974ec16229f87ad0696e9cb3d0058a9c70f2edb44bd5f7
+  becomes 7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20.
+
+Every projection filter, assertion, asset/provenance pin and negative check
+remains unchanged. The approved new Deep rows are included in the pinned
+projections; no exclusion or tolerance change was applied. The original
+source review is CLEAR on db88ccf6; the same reviewer must confirm this
+exact two-literal delta. Freeze before one fresh original nearby lane/build.
+Models, recipes and the actual-water sheet are unchanged; no capture repeat.
+Claude's formal round-two verdict remains required before integration.
