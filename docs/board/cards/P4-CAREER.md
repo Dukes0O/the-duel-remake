@@ -36,3 +36,5 @@ P4-CAREER-MENU now owns the known Grand Prix course grouping, existing prices an
 Menu source 74fa442a is now integrated after lane31/31, build and one clear review. Grouping, existing prices and guarded mode selection are complete behind the dev switch. This parent retains podium tracking, variant eligibility and the unanswered cost decision.
 
 Director splits the settled prospective podium set into P4-CAREER-PODIUM, holding save-shape. Parent variant eligibility still waits for Claude's cost answer and depends on this slice. No free/paid future rule is assumed. The parent must not edit this slice's helper/normalization/settlement hooks concurrently.
+
+Prospective podium source205d71bd is now integrated after original239/239, build1654.9281ms, ordinary correction review and fresh save review. The optional per-player stable-id set is complete; old profiles without it remain exact. Future variant prices/eligibility still wait for Claude's answer above. The source slice releases save-shape; no unlock, release or full/night pass is implied.

@@ -62,13 +62,22 @@ check('Off, other modes/courses, qualifying, abandon, timeout and partial finish
     assert(!Object.hasOwn(settleRace(profile, finish(extra)).profile, 'deep'), JSON.stringify(extra));
   }
 });
-check('Off settlement preserves every pre-card result byte, including Grand Prix and qualifying', () => {
+check('Deep-off settlement preserves all pre-card fields and only adds the prospective GP podium', () => {
   const now = Date.now; Date.now = () => 123456;
   try {
     for (const mode of ['duel', 'timetrial', 'wasteland', 'grandprix']) for (const extra of [{}, {won: true}, {abandoned: true}, {qualifying: true}]) {
       const result = finish({deepEnabled: false, mode, grandPrixCareerEnabled: true, position: 1, laps: mode === 'grandprix' ? 3 : 2, ...extra});
       const profile = {...createProfile(), credits: 5000};
-      assert.equal(JSON.stringify(settleRace(profile, result)), JSON.stringify(previous.settleRace(profile, result)));
+      const current = settleRace(profile, result);
+      if (mode === 'grandprix' && extra.won === true) {
+        assert.deepEqual(current.profile.grandPrixPodiums, ['pacific-canyon']);
+        const comparable = {...current, profile: {...current.profile}};
+        delete comparable.profile.grandPrixPodiums;
+        assert.equal(JSON.stringify(comparable), JSON.stringify(previous.settleRace(profile, result)));
+      } else {
+        assert(!Object.hasOwn(current.profile, 'grandPrixPodiums'));
+        assert.equal(JSON.stringify(current), JSON.stringify(previous.settleRace(profile, result)));
+      }
     }
   } finally { Date.now = now; }
 });
