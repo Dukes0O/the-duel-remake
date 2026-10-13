@@ -443,3 +443,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
 
+
+  - id: P4-CAREER-MENU
+    title: "Grand Prix section and mode selection on the course screen"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "building"
+    needs: [P4-PANORAMA]
+    locks: []
+    claimed_by: "codex-career-menu"
+    branch: "codex/p4-career-menu"
+    flag: "grand-prix-career"
+    details: "docs/board/cards/P4-CAREER-MENU.md"

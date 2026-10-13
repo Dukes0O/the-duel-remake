@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T00:18:09.130Z
+Observed at: 2026-10-13T00:28:45.007Z
 
-Observation commit: a5924ceebd144a461c9b0bba31049abb572518f6
+Observation commit: bae2f3463df144ff6a236da018cb28620e16c269
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a5924ceebd144a461c9b0bba31049abb572518f6
+Integration HEAD: bae2f3463df144ff6a236da018cb28620e16c269
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -56,7 +56,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/deep-audio | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio |
-| codex/deep-zone-format | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-zone-format |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -75,10 +74,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T15:14:54-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
-| codex/deep-zone-format | unknown | 2026-10-12T17:08:28-07:00 | 0 | last commit 2026-10-12T17:08:28-07:00 | docs/changes/DEEP-ZONE-FORMAT.md, src/deep/deep-zone.js, tools/test-deep-look.mjs, tools/test-deep-zone-format.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-summit | P4-SUMMIT | 2026-10-12T17:12:26-07:00 | 0 | last commit 2026-10-12T17:12:26-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuit-effects.js |
+| codex/p4-summit | P4-SUMMIT | 2026-10-12T17:24:10-07:00 | 0 | last commit 2026-10-12T17:24:10-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuit-effects.js |
 | codex/qa-lane-native-relief | QA-LANE-NATIVE-RELIEF | 2026-10-12T16:05:06-07:00 | 0 | last commit 2026-10-12T16:05:06-07:00 | docs/changes/QA-LANE-NATIVE-RELIEF.md, tools/run-tests.mjs, tools/test-test-runner.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 7 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -94,9 +92,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 188,790 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 183,120 B | -5,670 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 401,740,800 B | +200,704 B | unavailable |
+| Git objects | 401,931,264 B | +190,464 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -105,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: a5924ceebd144a461c9b0bba31049abb572518f6
+- Local integration/wasteland: bae2f3463df144ff6a236da018cb28620e16c269
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
