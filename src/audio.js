@@ -252,13 +252,15 @@ export class EngineAudio {
   _loadCueBuffers() {
     const grandPrix = this.flags.enabled('grand-prix'), snowmen=this.flags.enabled('snowmen');
     const addSnowmen=snowmen && !this._snowmanCueStarted;
-    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted) && !addSnowmen)
+    const avalanche=this.flags.enabled('summit-run'),addAvalanche=avalanche && !this._avalancheCueStarted;
+    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted) && !addSnowmen && !addAvalanche)
       return this._cueBuffersPromise;
     const pending = this._cueBuffersPromise;
     // A later Grand Prix activation adds only its own batch. Existing cue and
     // fight-voice loading retains the selection made at ordinary audio startup.
     if (grandPrix) this._p4CueBuffersStarted = true;
     if(snowmen || grandPrix)this._snowmanCueStarted=true;
+    if(avalanche || grandPrix)this._avalancheCueStarted=true;
     const loading = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
@@ -266,7 +268,7 @@ export class EngineAudio {
             cue.flag !== 'the-deep' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
-            (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen),
+            (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -910,7 +912,8 @@ export class EngineAudio {
       ['weapon.tesla.charge', 'weapon.tesla.pulse'].includes(id) &&
       this.flags.enabled('warlord-cards') && this.flags.enabled('crew-gear');
     const admittedSnowman=id==='snowman.burst' && this.flags.enabled('snowmen');
-    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman) return null;
+    const admittedAvalanche=['avalanche.rumble','avalanche.slide'].includes(id) && this.flags.enabled('summit-run');
+    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche) return null;
     if (def.flag === 'arsenal-wave3' && !this.flags.enabled('arsenal')) return null;
     return this._runCue(
       id,
@@ -1509,6 +1512,7 @@ export class EngineAudio {
     if (ev?.stageLoaded != null) {
       this._snowmanAudioStage=(this._snowmanAudioStage ?? 0)+1;
       this._snowmanAudioHits=new Set();
+      this._avalancheAudioHits=new Set();
       this._clearProjectiles();
       this._clearArsenalFields();
       this.mixer?.stopAll();
@@ -1552,6 +1556,22 @@ export class EngineAudio {
         };
         if(this.cueBuffers['snowman.burst'])play();
         else this._loadCueBuffers().then(play);
+      }
+    }
+    if(ev.summitAvalanche && course?.def.id==='summit-run' && this.flags.enabled('summit-run')){
+      const hit=ev.summitAvalanche,key=hit.id+':'+hit.phase,seen=this._avalancheAudioHits ??= new Set();
+      const expected='avalanche.'+(hit.phase==='tell'?'rumble':'slide');
+      if(['tell','slide'].includes(hit.phase) && hit.cue===expected && state?.avalanche?.id===hit.id &&
+        [hit.point?.x,hit.point?.y,hit.point?.z].every(Number.isFinite) && !seen.has(key)){
+        seen.add(key);const epoch=this._snowmanAudioStage??0;
+        const play=()=>{
+          if(epoch!==(this._snowmanAudioStage??0) || this.muted || this.paused || this.context?.state!=='running' ||
+            !this.flags.enabled('summit-run') || !this.cueBuffers[hit.cue] || state.status!=='racing' ||
+            state.avalanche?.id!==hit.id || state.avalanche.phase!==hit.phase)return;
+          const output=this._spatialOutput({combatHit:true,hitPosition:hit.point},state,course);
+          const voice=this._playCue(hit.cue,{destination:output.level,onEnd:output.disconnect});if(!voice)output.disconnect();
+        };
+        if(this.cueBuffers[hit.cue])play();else this._loadCueBuffers().then(play);
       }
     }
     if (['pit.limiter','pit.wrench','pit.go'].includes(ev.pitCue)) this._playCue(ev.pitCue);

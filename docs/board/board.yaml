@@ -169,10 +169,9 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "building"
-    claimed_by: "codex-avalanche-2026-10-13"
-    branch: "codex/p4-avalanche"
+    claimed_by: "codex-full-check-2026-10-13"
     needs: [P4-SUMMIT-RUNTIME]
-    locks: [busy-game-files]
+    locks: []
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
 

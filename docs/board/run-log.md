@@ -1047,3 +1047,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 Janitor separate inventory after14 merges since2c6d316d: own merged lane/evidence already recycled with verdicts; no uncertain deletion. Advisory47 assets/81 exports and existing diagnostic notes retained, no unused module/removed-feature-test candidate. Looks17,152,350→17,152,350B, below20MB; older unmerged lanes retained and listed in STATUS.
 
 - 2026-10-13 DEEP-ZONE sourcea4306cde:316/316, build1322.7529ms, ordinary and fresh save repair confirmations CLEAR; conflict-free, no rerun. Journey wiring dev only, production awaits actual Trail provider.
+
+- 2026-10-13 P4-AVALANCHE source05383cbd:282/282, build2575.2799ms, ordinary crossing-repair confirmation CLEAR; conflict-free, no rerun. Core lock released; actual native timing/views/listening remain open, dev only.

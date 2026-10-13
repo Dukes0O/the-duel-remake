@@ -297,3 +297,24 @@ export function addTrackScriptScene(group, course, {snow = false} = {}) {
   addPit(group, course);
   addCircuitEffects(group, course);
 }
+
+// Opt-in Summit presentation only: no authored geometry or collider mutation.
+export function createSummitForkSigns(course) {
+  const group=new THREE.Group();group.name='Gallery / Open Road fork signs';
+  const postGeometry=new THREE.BoxGeometry(.12,2.2,.12),plateGeometry=new THREE.BoxGeometry(3.2,1.1,.08);
+  const postMaterial=new THREE.MeshStandardMaterial({color:0x4a4d50,roughness:.8});
+  for(const [text,lateral] of [['GALLERY <',8.5],['OPEN ROAD >',-8.5]]){
+    const p=course.groundAt(10090,lateral),texture=plateTexture(text,'#1d4f7a','#ffffff');
+    const material=new THREE.MeshStandardMaterial({map:texture,color:texture?0xffffff:0x1d4f7a,roughness:.6});
+    const mast=new THREE.Mesh(postGeometry,postMaterial),face=new THREE.Mesh(plateGeometry,material);
+    mast.position.set(p.x,p.y+1.1,p.z);face.position.set(p.x,p.y+2.2,p.z);
+    mast.rotation.y=face.rotation.y=p.heading+Math.PI;face.name=text;group.add(mast,face);
+  }
+  return group;
+}
+export function createSummitDrift(course) {
+  const cut=course.features.shortcuts.find(row=>row.id==='summit-open-road');
+  const mesh=new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)-cut.halfWidth,
+    s=>course.shortcutOffset(cut,s)+cut.halfWidth,.16,10420,10580,true),overlayMaterial('deep-snow',true));
+  mesh.name='Summit avalanche drift';mesh.receiveShadow=true;return mesh;
+}

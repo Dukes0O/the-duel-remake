@@ -41,6 +41,7 @@ import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeSnowmen} from './snowmen.js';
+import {initializeSummitAvalanche,resetSummitAvalanche,stepSummitAvalanche,observeSummitAvalanche} from './summit-avalanche.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
 import {initializeAmbushAlley} from './arena/modes/ambush-alley.js';
@@ -314,6 +315,7 @@ export class Duel {
     initializeHiddenRoadJourney(this);
     initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
+    initializeSummitAvalanche(this);
     if (grandPrix) { applyQualifyingGrid(this); beginQualifying(this); }
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
       : s.qualifying?.phase === 'driving' ? {stageLoaded: idx, qualifyingStarted: true}
@@ -323,6 +325,7 @@ export class Duel {
   // Driving, crash and scoring state for a fresh stage or arena event.
   _resetStageDriving() {
     clearDeepJourney(this);
+    resetSummitAvalanche(this);
     const s = this.state;
     s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0; s.reverseHoldSec = 0;
     s.paused = false; s.offRoad = false; s.steerVisual = 0;
@@ -536,6 +539,7 @@ export class Duel {
       if (checkMuddyHollowDeparture(this) || s.status !== 'racing') return;
     }
     s.stageTimeSec += dt;
+    stepSummitAvalanche(this);
     if (s.timeLimitSec) s.timeRemaining = Math.max(0, s.timeLimitSec - s.stageTimeSec - s.racePenaltySec);
     s.lapTimeSec = s.stageTimeSec + s.racePenaltySec - s.lapStartedAt;
     s.totalTimeSec += dt;
@@ -562,6 +566,7 @@ export class Duel {
       this._traffic(dt);
       for (const opponent of s.opponents) this._rival(dt, opponent);
       this._collisions();
+      observeSummitAvalanche(this);
       this._tickDrift(dt);
       this._police(dt, false);
       return; // A crash must play out before a ticket or finish can replace it.
@@ -583,6 +588,7 @@ export class Duel {
     this._traffic(dt);
     for (const opponent of s.opponents) this._rival(dt, opponent);
     this._collisions();
+    observeSummitAvalanche(this);
     this._tickDrift(dt);
     this._flockBonuses();
     if (s.status !== 'racing' || s.impactTimer > 0) return;

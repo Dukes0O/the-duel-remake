@@ -5,6 +5,8 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPus
 import {oilThreat} from './arsenal/oil.js';
 import { makeRng } from './rng.js';
 import { NpcRoutePlanner } from './npc-route.js';
+import {observeSummitRoute,avalancheEnabled} from './summit-avalanche.js';
+import {RACERS,FIELD_TUNING} from './race-field.js';
 import { vehicleContactEnvelope, planNpcYield } from './npc-yielding.js';
 import { clamp, freshDamageZones } from './sim-common.js';
 import {completeCombatRecovery} from './combat-armor.js';
@@ -106,6 +108,9 @@ export function _rival(dt, opponent = this.state.rival) {
   if (!r) return;
   // A Grand Prix racer drives by the field rules (src/race-field-driver.js).
   if (s.field) return stepFieldRacer(this, r, dt);
+  const summitAggression=avalancheEnabled(this)
+    ? (RACERS.find(row=>row.id===r.driverId)?.traits ?? RACERS.find(row=>row.id==='club').traits).aggression*
+      (FIELD_TUNING[s.cpuDifficulty]?.aggression??1)*(this.course.def.fieldAggression??1) : 0;
   if (r.combatWrecking) {
     // A wreck made at speed skids to rest first, and recovers where it
     // stopped (CRASH-04).
@@ -122,6 +127,7 @@ export function _rival(dt, opponent = this.state.rival) {
   if (r.crushed || r.drone) return;
   if (r.knock) {
     stepKnock(this, r, dt);
+    observeSummitRoute(this,r,summitAggression);
     this._staticContacts(r, false); this._boundary(r);
     if (!r.finished) this._advanceLaps(r, dt);
     return;
@@ -170,10 +176,11 @@ export function _rival(dt, opponent = this.state.rival) {
   const easyWasteland = s.mode === 'wasteland' && s.cpuDifficulty === 'easy';
   const cruiseSkill = easyWasteland ? .875 : skill.skill;
   const cornerSkill = easyWasteland ? .895 : skill.cornerSkill;
-  if (s.cpuDifficulty !== 'easy' && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
+  const summitChoice=observeSummitRoute(this,r,summitAggression);
+  if ((s.cpuDifficulty !== 'easy' || summitChoice!==undefined) && (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {
     this._npcRoutePlanner = new NpcRoutePlanner(this.course, { car, surfaceAt: (distance, lateral) => this._drivingSurface(distance, lateral, car) });
   }
-  const route = s.cpuDifficulty === 'easy' ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents });
+  const route = s.cpuDifficulty === 'easy' && summitChoice===undefined ? null : this._npcRoutePlanner.update(r, { difficulty: s.cpuDifficulty, lapsTotal: s.lapsTotal, player: s, traffic: s.traffic, opponents: s.opponents, ...(summitChoice!==undefined?{summitChoice}:{}) });
   r.routeId = route?.routeId || null; r.routeLap = route?.routeLap || null;
   const rivalSurface = this._drivingSurface(r.s, r.lateral, car);
   const mediumCatchup = s.mode === 'wasteland' && s.cpuDifficulty === 'medium' ?
@@ -328,6 +335,7 @@ export function _rival(dt, opponent = this.state.rival) {
   }
   r.lateral += (Math.sin(r.headingError) * r.speedMph * DRIVE.mphToWorld + r.pushVelocity) * dt;
   r.s += (Math.cos(r.headingError) * r.speedMph * DRIVE.mphToWorld + carAlongPush(r)) * dt / Math.max(.25, 1 - this.course.at(r.s).curvature * r.lateral);
+  observeSummitRoute(this,r,summitAggression);
   const pushDamping = Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
   r.pushVelocity *= pushDamping;
   dampCarAlongPush(r, pushDamping);
