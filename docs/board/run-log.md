@@ -1071,3 +1071,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 - 2026-10-13: AUD-15-P1 4d5e5cad source merged; original nearby253/253/jobs4, build1.37s, independent review CLEAR including real menu-decode correction and exact historical guards. Seven resource cap, dev stays dev; native mix/listening/frame/comparator remain UNRUN, core and bank locks released. No repeated gate, release or push.
 - 2026-10-13 janitor: own merged new edge/camera lanes and consumed green packets recycled; own audio lane and all consumed source packets recycled, older lanes/pending art/failed native retained. Looks17152350B/20MB; tracked1957/324593766B before this audio merge to1960/324635383B before final metadata.47asset/84export/338doc advisory candidates flagged,0unusedmodules/removedtests; no uncertain deletion.
+
+- 2026-10-13: FIX-DRIVING-FEEL e7c1ed51 source merged; corrected original nearby137/137/jobs4, build810ms, independent review CLEAR. Road keyboard curves in; arenas unchanged. Native Harbour/feel still open, core lock released. No repeated gate, release or push.
