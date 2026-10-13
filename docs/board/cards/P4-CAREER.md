@@ -34,3 +34,5 @@ Panorama's required source merge is fulfilled by431e97cf, while its separate nat
 P4-CAREER-MENU now owns the known Grand Prix course grouping, existing prices and guarded mode selection in screen-courses/course-access-ui plus the narrow router options. This parent depends on that slice and retains the prospective podium set, future variant eligibility and Claude cost question. No menu builder changes price/ownership/pay/save rules or assumes a free/paid future variant. Avoid concurrent edits to its owned UI.
 
 Menu source 74fa442a is now integrated after lane31/31, build and one clear review. Grouping, existing prices and guarded mode selection are complete behind the dev switch. This parent retains podium tracking, variant eligibility and the unanswered cost decision.
+
+Director splits the settled prospective podium set into P4-CAREER-PODIUM, holding save-shape. Parent variant eligibility still waits for Claude's cost answer and depends on this slice. No free/paid future rule is assumed. The parent must not edit this slice's helper/normalization/settlement hooks concurrently.

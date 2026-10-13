@@ -444,3 +444,16 @@ tasks:
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
 
 
+
+  - id: P4-CAREER-PODIUM
+    title: "Prospective Grand Prix podium records per player"
+    owner: "codex"
+    lane: "SAVE"
+    size: "S"
+    status: "building"
+    claimed_by: "codex-session-01a13220-4b96-7b41-ae4f-0ede71d495d1"
+    branch: "codex/p4-career-podium"
+    needs: [P4-CAREER-MENU]
+    locks: [save-shape]
+    flag: "grand-prix-career"
+    details: "docs/board/cards/P4-CAREER-PODIUM.md"
