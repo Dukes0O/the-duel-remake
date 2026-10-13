@@ -1,5 +1,6 @@
+import {addCircuitLandmarks,finishRidgeKitMaterials} from './circuit-landmarks.js';
 import {createTrackKits,bindTrackKits} from './track-kits.js';
-import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,createSnowWorld,bindSnowWorld} from './snow-world.js';
+import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,winterWeight,createSnowWorld,bindSnowWorld,winterSurfaceMaterial} from './snow-world.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
 import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
@@ -44,6 +45,12 @@ export { addTurnSigns, addHarbor } from './world-props.js';
 // Composition order is deliberate: surfaces, biome detail, physical-feature
 // shells, then their visual refinements and race markers. No new wrapper groups
 // are inserted, so material refinement, render order and batching stay stable.
+export function roadBranchMaterial(course,cut,base,winter=false){
+  const kind=cut.gripKind;
+  if(!winter||!['snow','ice','deep-snow'].includes(kind))return base;
+  return winterSurfaceMaterial(base.clone(),kind);
+}
+
 export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) {
   if(course.def.pit)return createPitEnvironment(course);
   if(course.def.id==='salt-flats'){
@@ -56,7 +63,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
   const winter=snow&&!!course.def.snowWorld;
   if(winter&&trackKits?.status!=='ready')throw Error('Winter world needs its prepared approved track kits.');
-  const omitFoliageAt=winter?()=>true:undefined;
+  const omitFoliageAt=winter?(course.def.snowWorld.mixed?(x,z)=>winterWeight(course,course.nearest(x,z).s)>0:()=>true):undefined;
   const winterTrees=winter?snowPineIds(course):null,winterRocks=winter?snowRockFeatures(course):null;
   const roadMat = createPavedRoadMaterial({asphalt:surfaceTexture('asphalt'),night,wet:!!course.def.wetRoad});
   const groundMat=course.def.practice?new THREE.MeshStandardMaterial({map:surfaceTexture('gravel'),bumpMap:surfaceTexture('gravel'),bumpScale:.06,color:0xd0b28a,roughness:1,vertexColors:true}):createTerrainMaterial({earth:groundTexture('color'),grass:meadowTexture(),city:surfaceTexture('asphalt'),rock:rockTexture('alpine'),normal:groundTexture('normal'),roughness:groundTexture('roughness')});
@@ -75,8 +82,12 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
     if(course.def.offroad||course.def.arena)addTrailShoulder(group,course,side,trailMat);
     else{
       const shoulderStrip=strip(course, s=>side*course.roadHalfWidthAt(s), s=>side*(course.roadHalfWidthAt(s)+ROAD_SHOULDER_WIDTH), .018);
-      // Authored circuits vary in width: the shoulder shader reads each vertex's road edge.
-      if(course.script){const uv=shoulderStrip.attributes.uv,edge=new Float32Array(uv.count);for(let i=0;i<uv.count;i++)edge[i]=course.roadHalfWidthAt(uv.getY(i)*10);shoulderStrip.setAttribute('shoulderEdge',new THREE.BufferAttribute(edge,1));}
+      // Authored circuits and opt-in GP entry widths share their actual vertex road edge.
+      if (course.script || (course.def.grandPrix && course.def.grandPrixEntryWidth)) {
+        const uv = shoulderStrip.attributes.uv, edge = new Float32Array(uv.count);
+        for (let i = 0; i < uv.count; i++) edge[i] = course.roadHalfWidthAt(uv.getY(i) * 10);
+        shoulderStrip.setAttribute('shoulderEdge', new THREE.BufferAttribute(edge, 1));
+      }
       group.add(new THREE.Mesh(shoulderStrip, shoulder));
     }
     if(!course.def.arena&&!course.def.offroad){
@@ -96,7 +107,7 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
     if(theme==='arena')continue;
     const view=Object.create(course);view.def={...course.def,theme};view.features={...course.features};
     for(const field of ['mountains','trees','rocks'])view.features[field]=course.features[field].filter(p=>p.theme===theme);
-    if(winter){view.def={...view.def,theme:'alpine',winterMountainCaps:true};view.features.trees=view.features.trees.filter(tree=>!winterTrees.has(tree.id));
+    if(winter){view.def={...view.def,...(!course.def.snowWorld.mixed||theme==='alpine'?{theme:'alpine',winterMountainCaps:true}:{})};view.features.trees=view.features.trees.filter(tree=>!winterTrees.has(tree.id));
       view.features.rocks=view.features.rocks.filter(rock=>!winterRocks.has(rock));}
     view.features.mountains=filterMuddyHollowMountains(course,view.features.mountains);
     view.detailSections=course.sections.filter(s=>s.theme===theme);
@@ -106,10 +117,17 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   addFurniture(group, course, metal);
   const crushables=addArenaCrushables(group,course);if(crushables)registerSceneSystem(group,{sync:crushables.userData.updateSimulation});
   for(const cut of course.features.shortcuts){
-    const paved=cut.surface==='paved',gravel=paved?roadMat:trailMat;
+    const paved=cut.surface==='paved',gravel=roadBranchMaterial(course,cut,paved?roadMat:trailMat,winter);
     const path=new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)-cut.halfWidth,s=>course.shortcutOffset(cut,s)+cut.halfWidth,.065,cut.start,cut.end,true),gravel);path.receiveShadow=true;group.add(path);
     if(paved)for(const side of[-1,1])group.add(new THREE.Mesh(strip(course,s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.35),s=>course.shortcutOffset(cut,s)+side*(cut.halfWidth-.2),.078,cut.start,cut.end,true),cream));
     for(let s=cut.start+25;s<cut.end-20;s+=40)for(const side of[-1,1]){const p=course.groundAt(s,course.shortcutOffset(cut,s)+side*(cut.halfWidth+.7));box(group,[.13,1.25,.13],[p.x,p.y+.625,p.z],yellow);}
+  }
+  for(const branch of course.def.roadBranches ?? []){
+    const s=branch.start-45;
+    for(const [off,top,bottom] of [[8,'GALLERY','LEFT / SHELTER'],[-8,'OPEN ROAD','RIGHT / EXPOSED']]){
+      const p=course.groundAt(s,off);
+      addSign(group,{...p,id:`${branch.id}-sign-${off}`,s,off,top,bottom,bg:'#294c54',posts:[-1.8,1.8].map(localX=>({localX,y:p.y,halfX:.1,halfZ:.1,height:4}))});
+    }
   }
   if(course.hiddenRoad){
     addHiddenRoad(group,course);const hint=createHiddenRoadHint(course);group.add(hint);
@@ -141,8 +159,10 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   addRallyDetail(group,course);
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
+  addCircuitLandmarks(group,course);
   if (trackKits || course.def.kitPlacements?.length || winter) {
     const kits = trackKits ?? createTrackKits(course);
+    if(course.def.ridgeLandform)finishRidgeKitMaterials(kits);
     bindTrackKits(group,kits);
     registerSceneSystem(group,{sync:kits.sync,dispose:kits.dispose});
     if(winter){const snowOwner=createSnowWorld(course,{kits});bindSnowWorld(group,snowOwner);

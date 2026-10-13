@@ -15,6 +15,14 @@ import { KIT_FOOTPRINTS } from './kit-footprints.js';
 export function installTrackScript(course, dynamics) {
   const script = course.script, f = course.features;
   course.samples = script.samples.map(sample => ({ ...sample }));
+  // Authored branches use the same real lateral road model as older shortcuts.
+  for (const branch of course.def.roadBranches ?? []) {
+    if (!(branch.start >= 0 && branch.end > branch.start && branch.end <= course.length &&
+      Number.isFinite(branch.offset) && branch.halfWidth > 0 && [1,-1].includes(branch.side)))
+      throw new TrackScriptError('An authored branch needs a bounded road range and width.');
+    f.shortcuts.push({...branch,offset:branch.offset*branch.side,transition:.15});
+  }
+  f.tunnels.push(...(course.def.galleries ?? []).map(gallery=>({...gallery})));
   installPitLane(course);
   course.racingLine = buildRacingLine(script, { ...dynamics, ...(course.def.racingLine ?? {}) });
   f.walls = [];
@@ -178,7 +186,10 @@ function scatterScenery(course) {
     }
   }
   for (let i = 0; i < options.trees; i++) {
-    const s = rng.range(5, course.length - 5), theme = course.themeAt(s);
+    const randomS = rng.range(5, course.length - 5);
+    // Authored clusters use the same seeded draw count and retain open exits.
+    const s = options.clusteredTrees ? Math.max(5,Math.min(course.length-5,
+      Math.round(randomS/130)*130+(i%7-3)*7)) : randomS, theme = course.themeAt(s);
     if (theme === 'city' && i % 5 || theme === 'desert' && i % 3) continue;
     const off = (i % 2 ? 1 : -1) * rng.range(13, 80), scale = rng.range(.65, 1.7);
     if (roadClear(s, off, 2.1 * scale, 3) && vacant(s, off, 2.1 * scale) && !cleared(s, off, 2.1 * scale) && course.groundAt(s, off).y > -12) f.trees.push(add(`tree-${i}`, 'tree', s, off, .23 * scale, .23 * scale, rng.range(0, TAU), { scale }));
@@ -213,9 +224,18 @@ function scatterScenery(course) {
       return false;
     };
     const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = forest;
+    const authoredRanges=forest.ranges;
+    if(authoredRanges&&(!Array.isArray(authoredRanges)||!authoredRanges.length||authoredRanges.some(range=>
+      !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
+      throw new TrackScriptError('Forest ranges must lie on their authored course.');
     let serial = 0;
     for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
       const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
+      if(authoredRanges){
+        const range=authoredRanges.find(range=>s>=range.from&&s<=range.to);
+        if(!range)continue;
+        if(range.fadeOut>0&&random.float()>Math.min(1,(range.to-s)/range.fadeOut))continue;
+      }
       // The rows thin out toward the back, so the wood has an edge.
       if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
       const off = side * (course.roadHalfWidthAt(s) + depth);
@@ -308,11 +328,39 @@ export function trackScriptSolids(course) {
         s,off,x:p.x,y:y-.1,z:p.z,heading:p.heading,halfX:.3,halfZ:2,height:1.15,minY:y-.1,maxY:y+1.05,theme:course.themeAt(s)});
     }
   }
+  // Physical bounds share the actual approved model's placement transform.
+  // The model draws itself; these boxes are simulation obstacles only.
+  for(const gallery of course.def.galleries ?? [])for(const row of course.def.kitPlacements ?? []){
+    if(row.id!=='gallery'||row.s<gallery.start||row.s>gallery.end)continue;
+    const scale=Array.isArray(row.scale)?row.scale:Array(3).fill(row.scale??1);
+    const frame=course.groundAt(row.s,row.lateral),heading=frame.heading+(row.heading??0);
+    const cs=Math.cos(heading),sn=Math.sin(heading);
+    for(const bounds of gallery.collisions ?? []){
+      const off=(bounds.min[0]+bounds.max[0])*.5*scale[0];
+      const along=(bounds.min[2]+bounds.max[2])*.5*scale[2];
+      const x=frame.x+cs*off+sn*along,z=frame.z-sn*off+cs*along;
+      const near=course.nearest(x,z,row.s),y=frame.y+bounds.min[1]*scale[1]+(row.lift??0);
+      const height=(bounds.max[1]-bounds.min[1])*scale[1];
+      f.obstacles.push({id:`gallery-${bounds.name}-${row.s}`,kind:'prop',shape:'box',trackWall:true,
+        sourceBounds:bounds.name,kitS:row.s,s:near.s,off:near.lateral,x,z,y,heading,
+        ...(bounds.name==='gallery-heavy-concrete-roof'?{verticalClearance:true}:{}),
+        halfX:(bounds.max[0]-bounds.min[0])*.5*scale[0],halfZ:(bounds.max[2]-bounds.min[2])*.5*scale[2],
+        height,minY:y,maxY:y+height,theme:course.themeAt(near.s)});
+    }
+  }
   f.obstacles.push(...f.walls);
   scatterScenery(course);
   // After the planted scenery, so the trees stand exactly where they did.
   f.kitSolids = kitSolids(course);
   f.obstacles.push(...f.kitSolids);
+  if (lane && course.def.pitLane.kitDivider === true) {
+    if (!(course.def.kitPlacements ?? []).some(piece => piece.id === 'pit-wall' && piece.solid === true))
+      throw new TrackScriptError('An authored pit divider requires solid pit-wall kits.');
+    // Keep the original divider through scenery construction above, then use
+    // only the actual kit colliders and drawing. Seeded tree placement stays exact.
+    f.walls = f.walls.filter(wall => !wall.pitWall);
+    f.obstacles = f.obstacles.filter(obstacle => !obstacle.pitWall);
+  }
   course.obstacleBuckets = new Map(); course.rockBuckets = new Map();
   const buckets = Math.ceil(course.length / 64);
   course.bucketCount = buckets;

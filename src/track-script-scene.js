@@ -22,7 +22,7 @@ export function surfaceRuns(course) {
   const runs = [], script = course.script;
   let open = null;
   for (const piece of script.pieces) {
-    if (piece.surface !== 'asphalt') {
+    if (piece.surface !== 'asphalt' && piece.surface !== 'warm-tarmac') {
       if (open && open.kind === piece.surface && Math.abs(open.s1 - piece.s0) < 1e-6) open.s1 = piece.s1;
       else { open = { kind: piece.surface, s0: piece.s0, s1: piece.s1, from: -Infinity, to: Infinity }; runs.push(open); }
     } else open = null;
@@ -125,9 +125,10 @@ function addWalls(group, course) {
   const smooth = smoothInnerSpans(course);
   const smoothed = wall => smooth.length > 0 && wall.trackWall && !wall.escapeRoad && smooth.some(span => wall.side === span.side && wall.s >= span.s0 - 1e-6 && wall.s <= span.s1 + 1e-6);
   const walls = (course.features.walls ?? []).filter(wall => !smoothed(wall));
-  const material = new THREE.MeshStandardMaterial({ color: 0xaeada6, roughness: .92, metalness: 0, side: smooth.length ? THREE.DoubleSide : THREE.FrontSide });
+  const material = new THREE.MeshStandardMaterial({ color: course.def.plainSafetyWalls ? 0x747975 : 0xaeada6, roughness: .92, metalness: 0, side: smooth.length ? THREE.DoubleSide : THREE.FrontSide });
   if (smooth.length) addSmoothWalls(group, smooth, course, material);
   if (!walls.length) return;
+
   const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), material, walls.length);
   const matrix = new THREE.Matrix4(), rotation = new THREE.Quaternion(), position = new THREE.Vector3(), scale = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   walls.forEach((wall, i) => {

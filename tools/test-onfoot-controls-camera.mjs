@@ -57,3 +57,41 @@ test('WASD and gamepad feed fixed-step fighter movement and terrain-safe camera'
   assert.ok(Number.isFinite(pose.target.x));
   assert.equal(onFootCameraPose(duel.course,null),null);
 });
+
+// Kyle, 12 October 2026: "they do not turn left and right". With the keyboard
+// alone, Left/Right and A/D turn the fighter and the camera follows; Q/E step
+// sideways without turning.
+test('holding Right turns the fighter right and the camera follows, Left turns left, Q and E only strafe',()=>{
+  const fresh=()=>{
+    const duel=new LegacyRoadsideDuel({seed:1989});
+    duel.startCampaign({mode:'wasteland',car:'falcone_f42',seed:1989,discoveredGate:true,startStage:0});
+    const state=duel.state;
+    Object.assign(state,{status:'racing',countdown:0,s:500,prevS:500,lateral:0,prevLateral:0,traffic:[],opponents:[]});
+    state.combat.aiTimer=Infinity;state.combat.pickupTimer=Infinity;
+    duel.setInput({interact:true});ticks(duel,48);
+    duel.setInput({interact:false});ticks(duel,1);
+    assert.equal(state.onFoot,true);
+    return duel;
+  };
+  const heading=pose=>Math.atan2(pose.target.x-pose.position.x,pose.target.z-pose.position.z);
+  for(const [keys,sign] of [[{ArrowRight:true},-1],[{KeyD:true},-1],[{ArrowLeft:true},1],[{KeyA:true},1]]){
+    const duel=fresh(),f=duel.state.fighter,start={yaw:f.yaw,x:f.x,z:f.z};
+    const before=heading(onFootCameraPose(duel.course,f));
+    duel.setFighterInput(footControlInput(keys,{},{}));
+    ticks(duel,60);
+    // Yaw falls when turning right, as it does for the mouse.
+    assert.ok((f.yaw-start.yaw)*sign>1,Object.keys(keys)[0]+' turns about 1.2 rad in half a second: '+(f.yaw-start.yaw));
+    assert.ok(Math.abs(f.yaw-start.yaw-sign*2.4*.5)<1e-6,'turn rate is 2.4 rad/s');
+    const after=heading(onFootCameraPose(duel.course,f));
+    assert.ok(Math.abs(Math.atan2(Math.sin(after-before),Math.cos(after-before))-(f.yaw-start.yaw))<1e-6,
+      'the camera turns with the fighter');
+    assert.equal(Math.hypot(f.x-start.x,f.z-start.z),0,'turning alone does not walk');
+  }
+  const duel=fresh(),f=duel.state.fighter,start={yaw:f.yaw,x:f.x,z:f.z};
+  duel.setFighterInput(footControlInput({KeyE:true},{},{}));ticks(duel,60);
+  assert.equal(f.yaw,start.yaw,'E strafes without turning');
+  assert.ok(Math.hypot(f.x-start.x,f.z-start.z)>1,'E steps sideways');
+  const walker=fresh(),w=walker.state.fighter,from={x:w.x,z:w.z,yaw:w.yaw};
+  walker.setFighterInput(footControlInput({KeyW:true,ArrowRight:true},{},{}));ticks(walker,120);
+  assert.ok(Math.hypot(w.x-from.x,w.z-from.z)>3&&w.yaw<from.yaw-2,'walking while turning curves the path');
+});

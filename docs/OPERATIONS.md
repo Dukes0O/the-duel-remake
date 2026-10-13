@@ -89,9 +89,11 @@ Board, inbox and STATUS must never remain dirty on integration. The Director
 supplies those decisions; the integrator does not invent card closures.
 
 Full tier, frames, combat balance --check (current rules) and browser scenarios run
-on the night shift, alone on the idle laptop. Until FAC-03 lands, full still
-runs alone at run end. A night failure puts its fix first while other clean
-merges continue. A release always needs full green on its exact final commit.
+as the full check, once a day, on a copy of one commit, so builders keep merging
+while it runs; only its frame step needs the laptop to itself. Until
+FAC-FULL-CHECK lands, `tools/night-shift.mjs` needs the laptop to itself and an
+unchanged integration folder for its whole run. A full-check failure puts its fix
+first while other clean merges continue. A release always needs full green on its exact final commit.
 Do not claim an unmeasured check passed.
 
 ## Recycling completed lanes on Windows

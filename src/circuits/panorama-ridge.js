@@ -17,9 +17,9 @@
 // after it +16 to +21, Skyline -12 to -5 and its crest 3 to 2.4, Esses -10, -10, -8 to -7, -7, -8,
 // Conrod -55 to -68. The climbs still add up to zero.
 // The numbers below then close with every straight within 1%.
-import { defineScriptedCourse } from '../track-script.js';
+import { defineScriptedCourse, buildTrackScript, TRACK_SCRIPT } from '../track-script.js';
 
-export const PANORAMA_RIDGE = defineScriptedCourse({
+const PANORAMA_ROAD = defineScriptedCourse({
   id: 'panorama-ridge', name: 'Panorama Ridge', flag: 'panorama-ridge',
   theme: 'alpine', stage: 16, kind: 'circuit', layoutVersion: 1,
   closed: true, laps: 3, hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, speedLimitMph: 100,
@@ -36,7 +36,7 @@ export const PANORAMA_RIDGE = defineScriptedCourse({
     ['straight', 912, { climb: 55, name: 'Mountain Straight', walls: 'both' }],
     ['turn', 'R', 40, 110, { climb: 6, name: 'Griffin Bend' }],
     ['straight', 142, { climb: 10 }],
-    ['turn', 'L', 110.5, 20, { climb: 9, name: 'The Cutting', width: 11 }],
+    ['turn', 'L', 110.5, 20, { climb: 9, name: 'The Cutting', width: 13 }],
     ['straight', 196, { climb: 21 }],
     ['turn', 'R', 30, 150, { climb: 6, name: 'Reid Rise' }],
     ['straight', 218, { climb: 8 }],
@@ -86,9 +86,91 @@ export const PANORAMA_RIDGE = defineScriptedCourse({
   },
 });
 
+
+
+// Static authored scenery is independent of route RNG and race state. Kit
+// dimensions are metres, Y-up; heading is an offset from the sampled road.
+function panoramaPlacements(road) {
+  const placements = [{id: 'start-gantry', s: 0, lateral: 0, scale: [1.06, 1, 1]}];
+  for (let s = 120; s <= 400; s += 35) {
+    placements.push({id: 'pit-garage', s, lateral: -27, heading: Math.PI / 2});
+  }
+  for (let s = 70; s <= 420; s += 55) {
+    placements.push({id: 'grandstand', s, lateral: 25, heading: -Math.PI / 2});
+  }
+  const pitStraight = road.pieces.find(piece => piece.name === 'Pit Straight');
+  // Match the existing 65 m entry/exit openings of the actual pit divider.
+  for (let s = Math.max(0, pitStraight.s0) + 75; s < pitStraight.s1 - 75; s += 4) {
+    placements.push({id: 'pit-wall', s, lateral: -8.4, heading: Math.PI / 2, solid: true});
+  }
+  // Hell Gate has no script wall, and both Mountain Straight walls begin where it
+  // ends. A plain concrete wall on its outside closes the run-off, so a car that
+  // slides wide stops against it instead of rejoining behind the right wall.
+  // Its face lines up with that wall; the step keeps the outer arc closed.
+  const hellGate = road.pieces.find(piece => piece.name === 'Hell Gate');
+  const outer = -hellGate.dir, face = TRACK_SCRIPT.wallSetback, depth = .72;
+  for (let s = hellGate.s0 - 6; s < hellGate.s1; s += 2.8) {
+    placements.push({id: 'concrete-wall', s, lateral: outer * (road.halfWidthAt(s) + face + depth / 2),
+      heading: outer < 0 ? Math.PI / 2 : -Math.PI / 2, solid: true});
+  }
+  for (const name of ['Hell Gate', 'The Cutting', 'Forrest Elbow', 'Murray Corner']) {
+    const corner = road.pieces.find(piece => piece.name === name);
+    const s = Math.max(0, corner.s0 - 30);
+    placements.push({id: 'marshal-post', s, lateral: road.halfWidthAt(s) + 6, heading: Math.PI});
+  }
+  // The approved fence sits behind the unchanged physical ridge walls.
+  for (let s = road.pieces.find(p => p.name === 'The Cutting').s0; s < road.pieces.find(p => p.name === 'Forrest Elbow').s1; s += 8) {
+    for (const side of [-1, 1]) placements.push({id: 'catch-fence', s,
+      lateral: side * (road.halfWidthAt(s) + 1.8), heading: Math.PI / 2, scale: [2, 1, 1], lift: 1.05});
+  }
+  // A real lower town on the descent: two staggered streets, with an open
+  // foreground below Skyline rather than houses on its crest or racing line.
+  const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
+  for (let i = 0; i < 16; i++) for (const row of [0, 1]) {
+    placements.push({id: (i + row) % 2 ? 'shopfront-a' : 'shopfront-b',
+      s: conrod.s0 + 180 + i * 12, lateral: 100 + row * 24,
+      heading: row ? Math.PI : 0, scale: .9 + (i % 3) * .05});
+  }
+  return Object.freeze(placements.map(Object.freeze));
+}
+const road = buildTrackScript(PANORAMA_ROAD);
+const ridge = road.pieces.find(piece => piece.name === 'Ridge Top');
+const named = name => road.pieces.find(piece => piece.name === name);
+const ridgeLandform = Object.freeze({
+  hillside: Object.freeze([named('Mountain Straight').s0, named('The Cutting').s0 + 80]),
+  ridge: Object.freeze([named('The Cutting').s0 - 80, named('Forrest Elbow').s1 + 80]),
+  valleyFloor: 0, hillsideGrade: .8, ridgeGrade: 1.25,
+});
+export const PANORAMA_RIDGE = Object.freeze({...PANORAMA_ROAD,
+  name: 'Panorama Ridge Sunset',
+  ridgeLandform,
+  scenery: Object.freeze({trees: 1600, rocks: 280, clusteredTrees: true}),
+  plainSafetyWalls: true,
+  // Existing circuit safety controls; only difficulty pace is tuned.
+  racingLine: Object.freeze({lineMargin: 2.6, lineSwing: .6, holdRacers: true}),
+  fieldPace: Object.freeze({easy: .75, medium: .725, hard: .716}),
+  fieldFollow: Object.freeze({leadBraking: 1.6, wallRoom: 1,
+    firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})}),
+  pitLane: Object.freeze({straight: 'Pit Straight', side: 'right', kitDivider: true}),
+  lightPath: Object.freeze({axis: 'race-progress', palette: 'mountain-sunset', keyframes: Object.freeze([
+    Object.freeze({at: 0, look: 'golden'}),
+    Object.freeze({at: 1 / 3, look: 'golden'}),
+    Object.freeze({at: 2 / 3, look: 'dusk'}),
+    Object.freeze({at: 1, look: 'dusk'}),
+  ])}),
+  kitPlacements: panoramaPlacements(road),
+  circuitLandmarks: Object.freeze([
+    Object.freeze({id: 'ridge-radio', type: 'radio-mast', s: ridge.s1 - 24,
+      lateral: -24, height: 28}),
+    Object.freeze({id: 'pit-timing', type: 'scoreboard', s: 45,
+      lateral: 21, height: 16, title: 'PANORAMA'}),
+  ]),
+});
+
 // Registration belongs to this course; generation and geometry stay unchanged.
 export const manifest = Object.freeze({
-  id: 'panorama-ridge', flag: 'panorama-ridge', state: 'dev', price: 1600,
-  grandPrix: false, releaseOrder: 3,
+  id: 'panorama-ridge', flag: 'panorama-ridge', state: 'on', price: 1600,
+  grandPrix: true, releaseOrder: 3,
   driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
+
 });

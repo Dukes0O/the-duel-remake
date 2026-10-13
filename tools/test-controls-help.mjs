@@ -63,6 +63,10 @@ check('the list matches the controls: weapons and stepping out in Wasteland, foo
   const foot = controlsHelp(app.duel);
   assert.equal(foot.title, 'ON FOOT');
   assert.ok(keys(foot.rows).includes('SHIFT') && keys(foot.rows).includes('HOLD F'), 'foot keys');
+  const turn = foot.rows.find(([keys]) => keys.includes('LEFT RIGHT'));
+  assert.ok(turn && turn[1] === 'Turn', 'help says the left and right arrows and A D turn');
+  assert.ok(foot.rows.some(([keys, what]) => keys === 'Q / E' && what.startsWith('Step')), 'help says Q and E step sideways');
+  assert.ok(foot.rows.some(([keys]) => keys === 'F'), 'help names F for climbing aboard');
   assert.ok(controlsHelpMarkup(app.duel).startsWith('<h3>ON FOOT</h3>'), 'markup');
   app.dispose();
 });

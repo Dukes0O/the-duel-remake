@@ -6,7 +6,7 @@
 // still be driven. Asphalt on summer tyres is exactly 1, so every course that
 // has no other surface drives as it always has.
 
-export const SURFACE_KINDS = Object.freeze(['asphalt', 'gravel', 'snow', 'ice', 'deep-snow']);
+export const SURFACE_KINDS = Object.freeze(['asphalt', 'gravel', 'snow', 'ice', 'deep-snow', 'warm-tarmac']);
 export const TYRE_KINDS = Object.freeze(['summer', 'winter']);
 export const GRIP_FLOOR = .4;
 export const HINT_BELOW = .8;      // the HUD names the surface when grip falls under this
@@ -27,13 +27,18 @@ export const SURFACES = Object.freeze({
     look: 'Glossy blue-grey patches with a faint sparkle' }),
   'deep-snow': Object.freeze({ id: 'deep-snow', name: 'Deep snow', grip: .55, column: 'snow', hint: 'DEEP SNOW', cue: 'surface.snow',
     topSpeedMph: 45, look: 'Heaped soft snow' }),
+  'warm-tarmac': Object.freeze({id:'warm-tarmac',name:'Warm tarmac',grip:1,column:'warm',hint:'WARM TARMAC',cue:null,look:'Dry road'}),
+  // Zone-only handling; circuit authors still use SURFACE_KINDS.
+  'sea-floor': Object.freeze({ id: 'sea-floor', name: 'Sea floor', grip: .75, column: 'asphalt',
+    hint: 'SEA FLOOR', cue: null, topSpeedShare: .7, accelerationShare: .6, turningDragShare: 1.4,
+    gravityShare: 1 / 3, landingCue: 'deep.sand-land', look: 'Submerged sand and rock' }),
 });
 
 // Tyre multipliers by the surface's column. Gravel counts as hard ground (the
 // asphalt column) and deep snow as snow (the packed snow column).
 export const TYRES = Object.freeze({
-  summer: Object.freeze({ id: 'summer', name: 'Summer', icon: 'sun', asphalt: 1, snow: .75, ice: .55, topSpeedShare: 1 }),
-  winter: Object.freeze({ id: 'winter', name: 'Winter', icon: 'snowflake', asphalt: .94, snow: 1, ice: .85, topSpeedShare: .97 }),
+  summer: Object.freeze({ id: 'summer', name: 'Summer', icon: 'sun', asphalt: 1, snow: .75, ice: .55, warm: 1, warmTopSpeedShare: 1, topSpeedShare: 1 }),
+  winter: Object.freeze({ id: 'winter', name: 'Winter', icon: 'snowflake', asphalt: .94, snow: 1, ice: .85, warm: .82, warmTopSpeedShare: .97, topSpeedShare: .97 }),
 });
 
 export const isSurface = kind => Object.hasOwn(SURFACES, kind);
@@ -54,6 +59,7 @@ export function effectiveGrip(kind, tyre = 'summer', car = null) {
 // Top speed share of the tyre applies on asphalt only (winter rubber gives
 // 3% away on dry road); on snow and ice other limits already govern.
 export function tyreTopSpeedShare(kind, tyre = 'summer') {
+  if(kind==='warm-tarmac')return (TYRES[tyre] ?? TYRES.summer).warmTopSpeedShare;
   return kind === 'asphalt' || kind === 'gravel' ? (TYRES[tyre] ?? TYRES.summer).topSpeedShare : 1;
 }
 
@@ -64,6 +70,10 @@ const NEUTRAL = Object.freeze({ kind: 'asphalt', grip: 1, topSpeedMph: null, top
 export function gripFor(kind, tyre = 'summer', car = null) {
   if (kind === 'asphalt' && tyre === 'summer') return NEUTRAL;
   const surface = SURFACES[kind] ?? SURFACES.asphalt, grip = effectiveGrip(kind, tyre, car);
+  if (kind === 'sea-floor') return { kind, grip, topSpeedMph: null, topShare: surface.topSpeedShare,
+    accelerationShare: surface.accelerationShare, turningDragShare: surface.turningDragShare,
+    gravityShare: surface.gravityShare, landingCue: surface.landingCue,
+    hint: surface.hint, cue: surface.cue, active: true };
   return { kind: surface.id, grip, topSpeedMph: surface.topSpeedMph ?? null, topShare: tyreTopSpeedShare(kind, tyre),
     hint: grip < HINT_BELOW ? surface.hint : '', cue: surface.cue, active: true };
 }
@@ -73,7 +83,8 @@ export function gripFor(kind, tyre = 'summer', car = null) {
 export function gripReadout(duel) {
   const course = duel.course, state = duel.state;
   if (!course || state.status === 'menu') return { tyre: null, hint: '', grip: 1 };
-  const tyre = normalizeTyre(state.tyre), kind = course.gripKindAt?.(state.s, state.lateral) ?? 'asphalt';
+  const tyre = normalizeTyre(state.tyre), readKind = course.gripKindAt?.(state.s, state.lateral) ?? 'asphalt';
+  const kind = readKind === 'sea-floor' && duel.featureFlags?.enabled('the-deep') !== true ? 'asphalt' : readKind;
   const grip = gripFor(kind, tyre, duel.car);
   return { tyre: courseHasWinterSurfaces(course) ? TYRES[tyre] : null, hint: grip.hint, grip: grip.grip, kind };
 }
@@ -96,13 +107,13 @@ export function checkSurfaceRules(script, patches = []) {
   const stretches = [];
   let open = null;
   for (const piece of script.pieces) {
-    if (!isSurface(piece.surface)) problems.push(`Piece ${piece.index + 1} (${piece.name || piece.kind}) names the unknown surface "${piece.surface}".`);
+    if (!SURFACE_KINDS.includes(piece.surface)) problems.push(`Piece ${piece.index + 1} (${piece.name || piece.kind}) names the unknown surface "${piece.surface}".`);
     if (piece.surface === 'ice') {
       if (open && Math.abs(open.s1 - piece.s0) < 1e-6) open.s1 = piece.s1; else { open = { s0: piece.s0, s1: piece.s1, name: piece.name || `piece ${piece.index + 1}`, shaded: true }; stretches.push(open); }
     } else open = null;
   }
   for (const patch of patches) {
-    if (!isSurface(patch.kind)) problems.push(`Surface patch "${patch.id ?? '?'}" names the unknown surface "${patch.kind}".`);
+    if (!SURFACE_KINDS.includes(patch.kind)) problems.push(`Surface patch "${patch.id ?? '?'}" names the unknown surface "${patch.kind}".`);
     if (!(patch.s1 > patch.s0)) problems.push(`Surface patch "${patch.id ?? '?'}" must end after it starts.`);
     if (patch.kind === 'ice') stretches.push({ s0: patch.s0, s1: patch.s1, name: `patch "${patch.id ?? '?'}"`, shaded: patch.shaded === true });
   }

@@ -24,7 +24,7 @@ const piece = (road, name) => road.pieces.find(item => item.name === name);
 test('each circuit is registered, behind its own switch, priced, and on COURSE only while its switch is on', () => {
   // In release order, so a circuit switched on later joins the end of COURSE and released ones never move (RELEASE-HARBOUR).
   assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), CIRCUIT_MANIFESTS.map(row => row.id));
-  // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW) and Harbour Lights (RELEASE-HARBOUR) are released; Panorama Ridge stays dev.
+  // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW), Harbour Lights (RELEASE-HARBOUR) and Panorama Ridge (RELEASE-PANORAMA) are released.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   for (const circuit of ALL_CIRCUITS) {
     assert.equal(circuit.flag, circuit.id);
@@ -42,16 +42,18 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => on.enabled(row.flag)).map(row => row.id), 'the requested circuit plus every released one, in release order');
-  const withRidge = createFeatureFlags({ storage: null, qa: true, search: '?flags=panorama-ridge' });
-  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => withRidge.enabled(row.flag)).map(row => row.id), 'a dev circuit requested for QA goes after the released ones');
-  assert.deepEqual(circuitsEnabled(createFeatureFlags({ storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), released, 'players never see a dev circuit, only the released ones');
+  // Every circuit is released now, so the two dev-circuit rules are checked with Panorama Ridge held back as a dev switch in a test catalogue.
+  const held = { ...FEATURE_STATES, 'panorama-ridge': 'dev' }, heldReleased = released.filter(id => id !== 'panorama-ridge');
+  const withRidge = createFeatureFlags({ catalog: held, storage: null, qa: true, search: '?flags=panorama-ridge' });
+  assert.deepEqual(circuitsEnabled(withRidge).map(circuit => circuit.id), [...heldReleased, 'panorama-ridge'], 'a dev circuit requested for QA goes after the released ones');
+  assert.deepEqual(circuitsEnabled(createFeatureFlags({ catalog: held, storage: null, qa: false, search: '?flags=panorama-ridge' })).map(circuit => circuit.id), heldReleased, 'players never see a dev circuit, only the released ones');
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
   assert.ok(bat.includes('preview-flags.mjs'), 'Preview obtains course flags from the course-owned manifests');
   for (const circuit of ALL_CIRCUITS) assert.ok(previewCircuitFlags().includes(circuit.flag), `the Preview turns ${circuit.id} on`);
 });
 
-test('every layout closes within the rules and says what it changed', () => {
-  for (const circuit of ALL_CIRCUITS) {
+test('every closed layout closes within the rules and says what it changed', () => {
+  for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
     const road = buildTrackScript(circuit), report = road.report;
     assert.equal(road.length, circuit.lengthU);
     assert.ok(Math.abs(Math.abs(report.turnSumDeg) - 360) <= 2, `${circuit.id}: turns add up to a lap`);
@@ -70,7 +72,7 @@ test('Panorama Ridge: widths, the walled ridge, crests, boards', () => {
   near(road.length, 4842, 5);
   assert.equal(PANORAMA_RIDGE.laps, 3);
   near(road.halfWidthAt(piece(road, 'Pit Straight').s1 - 100) * 2, 15, 1e-9);
-  near(road.halfWidthAt(cutting.s1 + 100) * 2, 11, 1e-9, 'the narrow ridge width carries on past The Cutting');
+  near(road.halfWidthAt(cutting.s1 + 100) * 2, 13, 1e-9, 'the approved ridge width carries on past The Cutting');
   near(road.halfWidthAt((conrod.s0 + conrod.s1) / 2) * 2, 16, 1e-9);
   assert.equal(piece(road, 'Mountain Straight').walls, 'both'); assert.equal(piece(road, 'Forrest Elbow').walls, 'both');
   assert.equal(conrod.walls, 'none'); assert.equal(piece(road, 'Hell Gate').walls, 'none');
@@ -125,7 +127,7 @@ test('scenery stays off the road, out of the runoff and off the inside of corner
   }
 });
 
-for (const circuit of ALL_CIRCUITS) {
+for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
   test(`${circuit.name}: the test driver completes every lap on Medium without a crash or getting stuck`, () => {
     // A winter circuit's reverse build is not driven here: its ice patches, boards and pit lane belong to the
     // forward road, and the reversed Beaver Hairpin on packed snow is a different corner (P4-VARIANTS builds

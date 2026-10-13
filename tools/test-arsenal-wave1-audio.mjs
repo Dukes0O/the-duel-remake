@@ -53,7 +53,10 @@ const P4_CUES = [
   "ambient.forest-morning",
   "ambient.mountain-wind"
 ];
-const BANK_ADDITIONS = new Set([...P4_CUES, ...CUES, ...WAVE_TWO_CUES, 'weapon.rockets.lock', 'arena.bounty-mark',
+// DEEP-AUDIO adds only these eight IDs; the original historical hashes stay exact.
+const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sand-land',
+  'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave'];
+const BANK_ADDITIONS = new Set([...DEEP_CUES, ...P4_CUES, ...CUES, ...WAVE_TWO_CUES, 'weapon.rockets.lock', 'arena.bounty-mark',
   ...CREW_CUES, ...FIGHT_VOICE_CUES, ...WAVE_THREE_CUES, 'arena.gunn-barrage', 'arena.toll-gate',
   'arena.blackiron-barrage', 'warlord.nitroTell', 'warlord.nitroSpent']);
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -250,7 +253,7 @@ check('released sound-bank entries and other exports stay exact', () => {
 check('released catalog records and metadata stay exact', () => {
   assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row =>
     !CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue) &&
-    !WAVE_THREE_CUES.includes(row.cue) && !P4_CUES.includes(row.cue) && row.cue !== 'arena.toll-gate' && row.cue !== 'warlord.nitroSpent')}),
+    !WAVE_THREE_CUES.includes(row.cue) && !P4_CUES.includes(row.cue) && !DEEP_CUES.includes(row.cue) && row.cue !== 'arena.toll-gate' && row.cue !== 'warlord.nitroSpent')}),
     '48c3d4170b202ed4abf0c2dcaf268d6c1f2b98b162d62301702d94aa3da803d6',
     'all released source recipes and voice accounting remain exact');
 });

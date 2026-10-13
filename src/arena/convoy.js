@@ -82,9 +82,12 @@ export function damageConvoyValves(duel, actor, damage, source, options = {}) {
   if (removed > 0) warlordFight(duel, actor)?.valvesDamaged?.(duel, actor);
   if (removed > 0 && convoy.valves.every(armor => armor === 0)) {
     convoy.boardingLeftSec = CONVOY_RULES.boardingSeconds;
-    actor.speedMph = CONVOY_RULES.boardingKph / 1.609344;
+    convoy.resuming = false;
+    // combat-armor.js knocks the escorts out and keeps them out for the window.
+    convoy.standDownEscorts = true;
     duel.emit({convoyWindow: {open: true, soundCue: 'interface.go'}});
-    duel._callout('TANKER SLOWED / BOARD NOW', 3);
+    duel._callout(duel.state.arena.mode === 'warlord' ?
+      'TANKER STOPPING / ESCORTS DOWN FOR 60 s' : 'TANKER STOPPING / GET OUT AND CLIMB ABOARD', 3);
   }
   return removed;
 }

@@ -8,7 +8,7 @@ import {resetFootWeaponUser, stepFootWeapons} from './onfoot-weapons.js';
 import {crewGearEnabled, refillCrewGear, resetCrewGearUser, stepGearGrapple}
   from './crew-gear/signature.js';
 import {actorForTarget} from './arsenal/targeting.js';
-import {startBoarding, stepBoarding, releaseBoardingGrapple}
+import {startBoarding, stepBoarding, releaseBoardingGrapple, climbAboard}
   from './crew-gear/boarding.js';
 
 const T = COMBAT_TUNING.foot;
@@ -108,11 +108,15 @@ function stepFighterInFixedTime(duel, dt) {
     }
     const boardingBefore = state.boarding?.phase;
     if (state.boarding) {
+      // A held F counts toward planting only after F was let go since the climb.
+      state.boarding.interactReady = !!state.input.interact && !transition.needsRelease;
       stepBoarding(duel, FIGHTER_STEP_SECONDS, motion);
       steppedBoarding = true;
     }
-    if (boardingBefore === 'roof' && state.boarding?.phase === 'charge')
+    if (boardingBefore === 'roof' && state.boarding?.phase === 'charge') {
       transition.boardingNeedsFireRelease = true;
+      transition.needsRelease = true;
+    }
     if (!state.fighterInput.fire) transition.boardingNeedsFireRelease = false;
     if (boardingBefore !== 'roof' &&
         !(transition.boardingNeedsFireRelease && state.fighterInput.fire))
@@ -154,6 +158,13 @@ export function stepFootTransition(duel, dt) {
 
   if (state.onFoot) {
     stepFighterInFixedTime(duel, dt);
+    // One press of F climbs onto the stopped tanker; it wins over getting
+    // back into a car parked beside it.
+    if (!state.boarding && held && !transition.needsRelease && climbAboard(duel)) {
+      transition.needsRelease = true;
+      transition.heldSeconds = 0;
+      return true;
+    }
     if (state.boarding?.phase === 'roof') {transition.heldSeconds = 0; return true;}
     if (transition.needsRelease || !held || state.fighter.knockedDown ||
         state.fighter.bailTumbleSeconds > 0 ||

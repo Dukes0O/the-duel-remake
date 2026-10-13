@@ -997,3 +997,38 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 FAC-05: merge 37fd7237; nearby lane 29/29, 132.96 s, jobs 4; build 562 ms; one review clear; derived course checks and exact Snow fixture cleanup, no clean-merge rerun.
 
 - 2026-10-12 FAC-08: merge c4ba526f; nearby lane 15/15, 95.56 s, jobs 4; build 578 ms; one review clear; real old/fixed Tremblant defect proof, provenance corrected, no clean-merge rerun.
+- 2026-10-12 FACTORY-RULES merged (Claude lane claude/factory-rules-2 5b988dd6): lane 12/12 in 119.91 s, build 1439 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 REVIEW-TIERS merged (Claude lane claude/review-tiers 17009bec): lane 9/9 in 238.27 s, build 2460 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 FIX-LIVE-EDGES merged (Claude lane claude/finish-tracks cb432c4d): lane 14/14 in 264.77 s, build 2758 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 FIX-LIVE-EDGES merged (Claude lane claude/finish-tracks 1a752328): lane 12/12 in 248.18 s, build 3066 ms, review none-rule-17-kyle-play-report clear.
+
+2026-10-12 P4-PANORAMA dev source c56238e9: lane306/306,1773.56s,jobs4;build758ms;review clear;clean merge,no rerun. Native dusk/R3sheet pending night;old lane retained,no release/push.
+
+2026-10-12 DEEP-AUDIO dev source d6a76d3a: lane143/143,1225.485s,jobs4;build1658.002ms;review clear;clean merge,no rerun. Listening/native mix pending;packet/lane retained,the-deep dev,no release/push.
+
+- 2026-10-12 factory janitor sweep: read-only audit1888 tracked files; looks16,840,032B before/after, under20MB. Recycled313,798B of our consumed Deep Audio handoff/final-note scratch; committed note hashDE01C009 exact. Actual listening packet/current sheets/assets/licensed sources and retained P4 lanes stay needed. Literal47asset/85export/309doc candidates are uncertain and remain with existing CLEAN-11/JANITOR-DIAGNOSTIC-NOTES; no modules or removed-feature tests flagged, no runtime removal. STATUS still has legacy manifest/lean-board projection warnings; not a new game failure. No history rewrite/push/release.
+
+- 2026-10-12 merge P4-GP-EXISTING dev source8812a093: lane301/301, zero failed/unrun,1136.957s,jobs4; build700ms/1393ms wall; one reviewCLEAR; conflict-free/no rerun. Shared width lock released; original caps/failures and Red2/Neon3/Cloud3/native18 night tail retained, older lane kept. No release/push.
+
+- 2026-10-12 merge DEEP-SAVE d83c38b6: corrected lane324/324, zero failed/unrun,979.026s,jobs4; build1347.9813ms; code/save reviewsCLEAR; conflict-free/no rerun. Optional fields,5/10 hints,150CR kit and allnine memory fixtures pass; old8 bytes/rollback/records/ghosts preserved. Card completed, save/App locks released; original321/324 failure and Titan8/0 same-source rerun retained in note/QA follow-up. No native/full/release/push.
+
+- 2026-10-12 merge DEEP-SURFACE fabaf326: lane224/224, zero failed/unrun,980.978s,jobs4; build616ms/1122ms wall; one reviewCLEAR; conflict-free/no rerun. Card completed; Summit claims allthree free locks for settled dev source. Deep Save own completed lane recycled, older P4 folders retained. No native/full/release/push.
+
+- 2026-10-12 merge QA-STATUS-FACTORY ebf1713e: lane17/17,zero failed/unrun,279.866s,jobs4; build1.02s/1958.248ms wall; pure308/0 and one reviewCLEAR; clean merge/no rerun. Actual manifest switches/current card branches restored on STATUS, old guards preserved; card completed. Our merged Deep Surface lane was recycled, older P4 folders retained. No full/release/push.
+
+- 2026-10-12 merge DEEP-ZONE-FORMAT6934122f: lane20/20,zero failed/unrun,380.079s,jobs4; build1988.9206ms; ordinary and same-reviewer persisted-ID repair CLEAR; clean merge/no rerun. Pure frozen10.1 data/11 groups/existing5287 look exact; card completed, runtime Zone still waits for Summit busy lock. Status own lane and consumed receipts recycled. No native/full/release/push.
+
+- 2026-10-12 merge P4-CAREER-MENU 74fa442a: lane31/31, zero failed/unrun,441.850s,jobs4; build1.36s/2465.848ms wall; one review CLEAR; conflict-free/no rerun. GP grouping and guarded selection behind Career dev switch; parent cost question remains. No browser/full/release/push.
+
+- 2026-10-12 separate janitor sweep: recycled only our consumed Career menu card and empty evidence parent after their complete verdict/contracts were folded into the accepted change note and parent. Looks 16840032 to 16840032 bytes against20MB; current/unaccepted art, licensed sources, runtime assets and older retained lanes stay. Earlier unused-asset/export/doc uncertainties remain CLEAN-11/JANITOR-DIAGNOSTIC-NOTES; no runtime removal or new check while foreign full is active.
+
+- 2026-10-12 merge QA-LANE-NATIVE-RELIEF e9d33f5: original405/405,zero failed/unrun,2268.762s,jobs4; build723ms; same-reviewer repair CLEAR; clean merge/no rerun. Nine proven render suites wait for night; pure exports/full/default/native assertions exact. Stopped09 incomplete, not a pass. Source freeze/build waited foreign full/slots; no release/push.
+
+- 2026-10-12 janitor closure: recycled our clean merged native-classification lane, dependency junction and consumed stopped/green evidence after their final verdict was committed28eb32d2; branch removed without force. Retained old P4 lanes and current art untouched.
+
+- 2026-10-12 merge P4-CAREER-PODIUM205d71bd: original239/239, zero failures/unrun,1966.677s,jobs4; build1654.9281ms; ordinary correction and fresh save review clear. Clean merge, no rerun; prospective optional per-player podium ids, legacy save/pay exact. Two canceled gates remain cancellations, not failures/passes; no release/push.
+
+- 2026-10-12 podium janitor closure: recycled only our clean merged new lane, consumed acceptance/canceled receipts and redundant own card after complete facts were committed e22022fd. Unlinked only its verified integration dependency junction first; worktree and merged branch removed without force. Older retained P4 lanes and current art stay.
+- 2026-10-13 FIX-FOOT-MOUSE merged 46220b09: lane 129/129 in 1082.96 s, build 1534 ms, review lighting independent code review and menu-fault confirmation clear.
+
+- 2026-10-12 P4-SUMMIT dev source: bab5ca92 merged after mouse; 319/319, build1479.6255ms, ordinary/save review clear; no conflict rerun. Native strategy and art tail stays open.

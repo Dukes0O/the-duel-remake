@@ -3,7 +3,7 @@
 // that nothing in the game reaches the new code yet.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   DAYLIGHT_FADE, SIGHT_FADE, causticStrengthAt, daylightAt, depthTable, exposureAt, lightShaftStrengthAt,
@@ -197,7 +197,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   assert.deepEqual([...kelpStemGeometry().attributes.position.array], [...stem.attributes.position.array]); checks++;
 }
 
-// ---- nothing in the game reaches it ------------------------------------
+// ---- only approved development adapters reach it -----------------------
 {
   check(FEATURE_STATES['the-deep'] === 'dev', 'the-deep is a development switch (off in the game)');
   const root = fileURLToPath(new URL('../', import.meta.url));
@@ -208,10 +208,30 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     }
     return out;
   };
+  // Director-granted contracts; every other Deep module/specifier stays isolated.
+  const approvedImports = new Set([
+    'src/audio.js|./deep/deep-audio.js',
+    'tools/test-deep-audio.mjs|../src/deep/deep-audio.js',
+    'src/app.js|./deep/deep-discovery.js',
+    'src/app.js|./deep/deep-hints.js',
+    'src/progression.js|./deep/deep-discovery.js',
+    'src/screen-garage.js|./deep/deep-hints.js',
+    'tools/test-deep-save.mjs|../src/deep/deep-discovery.js',
+    'tools/test-deep-save.mjs|../src/deep/deep-hints.js',
+    'tools/test-deep-zone-format.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-zone-format.mjs|../src/deep/zone-floor.js',
+  ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
-    .filter(path => /from\s+['"][^'"]*\/deep\/|import\(\s*['"][^'"]*\/deep\/|src\/deep\//.test(readFileSync(path, 'utf8')));
-  assert.deepEqual(importers, [], `nothing else imports src/deep: ${importers.join(', ')}`); checks++;
+    .filter(path => {
+      const importer = relative(root, path).replaceAll('\\', '/');
+      const source = readFileSync(path, 'utf8').replace(
+        /(?:from\s+|import\(\s*)['"]([^'"]*\/deep\/[^'"]+)['"]/g,
+        (statement, specifier) => approvedImports.has(importer + '|' + specifier) ? '' : statement,
+      );
+      return /from\s+['"][^'"]*\/deep\/|import\(\s*['"][^'"]*\/deep\/|src\/deep\//.test(source);
+    });
+  assert.deepEqual(importers, [], `no unapproved src/deep imports: ${importers.join(', ')}`); checks++;
   const flags = readFileSync(join(root, 'src/feature-flags.js'), 'utf8');
   check(/'the-deep':\s*'dev'/.test(flags), 'the switch is declared in src/feature-flags.js');
 }
