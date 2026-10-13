@@ -153,7 +153,7 @@ export class EngineAudio {
     this.mixer = new SoundMixer(ctx, this.master, {
       vehicle: this.vehicleBus,
       enabled: this.wastelandAudioEnabled === true,
-      voiceEnabled: this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices'),
+      voiceEnabled: this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices') || this.flags.enabled('rival-voices'),
     });
     this.buses = this.mixer.buses;
     this.hiddenRoadBus = ctx.createGain();
@@ -716,8 +716,91 @@ export class EngineAudio {
     if (state) this.wastelandAudioEnabled = wastelandRulesActive(state);
     if (!this.mixer?.update) return;
     this.mixer.enabled = this.wastelandAudioEnabled === true;
-    this.mixer.voiceEnabled = this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices');
+    this.mixer.voiceEnabled = this.flags.enabled('hidden-road') || this.flags.enabled('fight-voices') || this.flags.enabled('rival-voices');
     this.mixer.update();
+  }
+
+  _playerEngineLevel() {
+    const levels = [this.engineGain?.gain?.value || 0];
+    for (const key of [...ENGINE_BANDS.map(band => band.key), 'coast', 'engine']) {
+      const sample = this.samples[key];
+      if (!sample) continue;
+      levels.push(sample.gain?.gain?.value || 0, sample.body?.gain?.gain?.value || 0,
+        sample.intake?.gain?.gain?.value || 0);
+    }
+    return Math.sqrt(levels.reduce((sum, gain) => sum + gain * gain, 0));
+  }
+
+  _retireVehicleVoice(entry, immediate = false) {
+    if (entry.retiring) {
+      if (immediate) entry.voice?.stop({immediate: true});
+      return;
+    }
+    entry.retiring = true;
+    entry.voice?.stop({immediate});
+    // Pending decoding still owns a reservation until its promise settles.
+  }
+
+  _clearVehicleVoices() {
+    for (const entry of this.vehicleVoices || []) this._retireVehicleVoice(entry, true);
+  }
+
+  _updateVehicleVoices(state, environment) {
+    const snapshot = environment.vehicles, listener = environment.listener;
+    if (!this.flags.enabled('rival-voices') || !this.context || this.context.state !== 'running' ||
+        this.muted || this.paused || state.paused || !['countdown', 'racing', 'exploring'].includes(state.status) ||
+        !snapshot || !listener) {
+      this._clearVehicleVoices();
+      return;
+    }
+    this.vehicleVoices ??= new Set();
+    const targets = [...snapshot.rivals.map(row => ({...row, kind: 'rival'})),
+      ...snapshot.traffic.map(row => ({...row, kind: 'traffic'}))];
+    const same = (entry, target) => entry.stage === snapshot.stage && entry.group === target.group &&
+      entry.actor === target.actor && entry.id === target.id && entry.kind === target.kind;
+    for (const entry of [...this.vehicleVoices].sort((a, b) => b.distance - a.distance)) {
+      if (entry.stage !== snapshot.stage) this._retireVehicleVoice(entry, true);
+      else if (!targets.some(target => same(entry, target))) this._retireVehicleVoice(entry);
+    }
+    const level = this._playerEngineLevel();
+    const rateFor = (row, cue) => engineRate(engineTone(Number.isFinite(row.revs) ? row.revs :
+      clamp(Math.abs(row.speedMph || 0) / 200, 0, 1)), cue.toneHz,
+      row.kind === 'rival' ? (CAR_VOICES[row.car] || CAR_VOICES.falcone_f42).pitch : 1);
+    for (const target of targets) {
+      const cueId = target.kind === 'rival' ? 'vehicle.rival-engine' : 'vehicle.traffic-engine';
+      const cue = bank(cueId);
+      const entry = [...this.vehicleVoices].find(row => !row.retiring && same(row, target));
+      if (entry) {
+        Object.assign(entry, target, {listener});
+        entry.voice?.update(target.position, listener, {rate: rateFor(target, cue), volume: level});
+        continue;
+      }
+      if (this.vehicleVoices.size >= 7 || [...this.vehicleVoices].filter(row => row.kind === target.kind).length >= cue.limit) continue;
+      const reservation = {...target, listener, stage: snapshot.stage, retiring: false, voice: null};
+      this.vehicleVoices.add(reservation);
+      const bind = () => {
+        if (reservation.retiring || reservation.group !== (reservation.kind === 'rival' ? state.opponents : state.traffic) ||
+            !reservation.group.includes(reservation.actor) || reservation.actor.alive === false ||
+            reservation.actor.wrecked || reservation.actor.crushed || reservation.actor.finished ||
+            this.context.state !== 'running' || this.muted || this.paused || state.paused ||
+            !['countdown', 'racing', 'exploring'].includes(state.status) || !this.flags.enabled('rival-voices')) {
+          this.vehicleVoices.delete(reservation);
+          return;
+        }
+        const buffer = this.samples[cue.donor]?.source?.buffer ||
+          (reservation.kind === 'rival' ? this.samples.engine?.source?.buffer : null);
+        if (!buffer) { this.vehicleVoices.delete(reservation); return; }
+        const donorCue = this.samples[cue.donor]?.source?.buffer ? cue : {...cue, toneHz: 86};
+        reservation.voice = this.mixer.playMoving(cueId, buffer, reservation.position, reservation.listener, {
+          loop: true, rate: rateFor(reservation, donorCue), volume: this._playerEngineLevel(),
+          fadeIn: .4, fadeOut: .4, admitted: true,
+          onEnded: () => this.vehicleVoices.delete(reservation),
+        });
+        if (!reservation.voice) this.vehicleVoices.delete(reservation);
+      };
+      if (this.samples[cue.donor]?.source?.buffer || this.samples.engine?.source?.buffer) bind();
+      else Promise.resolve(this._samplesPromise).then(bind, () => this.vehicleVoices.delete(reservation));
+    }
   }
 
   _cueBuffer(id) {
@@ -1046,6 +1129,7 @@ export class EngineAudio {
     this._volume();
     if (this.muted) for (const voice of this.activeShots) this._stopShot(voice);
     if (this.muted) {
+      this._clearVehicleVoices();
       this._clearGrandPrixVoices();
       this.fightVoices.mute();
       this._stopHiddenRoadVoices();
@@ -1069,6 +1153,7 @@ export class EngineAudio {
       this.shiftStarted = this.shiftUntil = 0;
     }
     if (this.paused) {
+      this._clearVehicleVoices();
       this._clearGrandPrixVoices();
       this.fightVoices.clear();
       this._stopHiddenRoadVoices();
@@ -1094,7 +1179,7 @@ export class EngineAudio {
     this._updateProjectiles(st, environment);
     this._updateArsenalFields(st, environment);
     const ctx = this.context;
-    if (!ctx || ctx.state !== 'running') return;
+    if (!ctx || ctx.state !== 'running') { this._clearVehicleVoices(); return; }
     if (this.paused !== st.paused) this.setPaused(st.paused);
     const t = ctx.currentTime;
     const engineCutoff = cutoff => deepEngineCutoff(
@@ -1468,6 +1553,7 @@ export class EngineAudio {
       this._playCue('interface.radar');
       this.nextRadar = t + 1.2 - st.police.beep * 1.05;
     }
+    this._updateVehicleVoices(st, environment);
     if (st.paused || this.muted || st.hiddenRoadJourney?.controlsLocked) {
       this.nextBeat = t + 0.15;
       return;
@@ -1497,6 +1583,7 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
+    if (ev?.menu) this._clearVehicleVoices();
     this.fightVoices.event(ev, state);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
@@ -1512,6 +1599,7 @@ export class EngineAudio {
     if (ev?.hiddenRoadPhase?.phase === 'opening')
       this.pendingGatekeeper = ev.hiddenRoadPhase.journeyId;
     if (ev?.stageLoaded != null) {
+      this._clearVehicleVoices();
       this._snowmanAudioStage=(this._snowmanAudioStage ?? 0)+1;
       this._snowmanAudioHits=new Set();
       this._avalancheAudioHits=new Set();

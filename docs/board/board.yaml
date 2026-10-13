@@ -111,11 +111,9 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "building"
-    claimed_by: "codex-rival-voices-2026-10-13"
-    branch: "codex/aud-15-p1"
+    status: "review"
     needs: [AUD-14, AUD-17]
-    locks: [busy-game-files, sound-bank]
+    locks: []
     details: "docs/board/cards/AUD-15-P1.md"
 
 

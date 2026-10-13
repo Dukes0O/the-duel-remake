@@ -20,8 +20,8 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 24 + CIRCUIT_MANIFESTS.length
-    && ['snow-world', 'the-deep', 'grand-prix-career', 'lap-choice', 'snowmen', 'yeti'].every(name => FEATURE_STATES[name] === 'dev')
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 25 + CIRCUIT_MANIFESTS.length
+    && ['snow-world', 'the-deep', 'grand-prix-career', 'lap-choice', 'snowmen', 'yeti', 'rival-voices'].every(name => FEATURE_STATES[name] === 'dev')
     && FEATURE_STATES['grand-prix'] === 'on'
     && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),
   'the Wasteland features and seekers are released (on, 10 October 2026); Grand Prix is released; career backup, Snow, The Deep and Grand Prix career stay dev; registered course switches follow their manifests; retired switches stay absent');

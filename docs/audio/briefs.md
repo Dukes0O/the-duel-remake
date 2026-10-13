@@ -19,3 +19,9 @@ near and far over full throttle. Human ratings are pending.
 Approved recordings are checked against catalog SHA-256 before rebuilding.
 The formulas, cut points, variants and conditioning live in the build script.
 Legacy placeholder recipes remain only for switch-off and missing-file fallback.
+
+## AUD-15-P1: bounded vehicle voices
+
+Claude approved the current engine loops as donors on 13 October at 08:40. The dev rival-voices switch admits three nearest live rivals and four nearest live traffic cars within 250 m. Authored identity or original spawn index breaks distance ties. No actor/save field changes. Rivals use engine-load-high.flac and actual per-car pitch; generic traffic uses engine-loop.flac. Gain is .35/.25 of current player engine gain levels, below player/impact/weapon priorities, with .4 s entrance/exit fades. Pending and fading reservations count toward the seven-resource cap.
+
+The existing audio-vehicles scenario prepares one memory-only native full-throttle near/far packet and actual resource witnesses. It is not run during source implementation. No human listening rating, native spatial/mix pass or frame budget is claimed. One Claude listening round is sufficient, at most three; Kyle's play is the final ear. Existing donor files, legacy comparator and mastering remain unchanged.
