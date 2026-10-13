@@ -182,11 +182,16 @@ function appInputRun(difficulty,fps,controller){
 }
 try{
   for(const difficulty of ['casual','pro']){
-    let reference=null;
+    let keyboardReference=null,padReference=null;
     for(const controller of ['wasd','arrows','gamepad'])for(const fps of [30,144]){
       const run=appInputRun(difficulty,fps,controller);
-      if(reference)same(run,reference,`${difficulty}: ${controller} at ${fps} FPS has the identical per-step driving trajectory`);else reference=run;
+      if(controller==='gamepad'){
+        if(padReference)same(run,padReference,`${difficulty}: gamepad at ${fps} FPS has the identical per-step driving trajectory`);else padReference=run;
+      }else{
+        if(keyboardReference)same(run,keyboardReference,`${difficulty}: ${controller} at ${fps} FPS has the identical per-step driving trajectory`);else keyboardReference=run;
+      }
     }
+    check(keyboardReference.hash!==padReference.hash,`${difficulty}: the road keyboard throttle ramp differs from the unchanged instant gamepad pedal`);
   }
   for(const difficulty of ['casual','pro']){
     memory.clear();const app=new App();app.startCampaign({startStage:stageIndex,mode:'timetrial',difficulty});straight(app.duel);app.advance(3.1);

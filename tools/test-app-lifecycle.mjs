@@ -35,7 +35,8 @@ const inputApp = Object.create(App.prototype);
 Object.assign(inputApp, {
   duel: {state: {onFoot: true, paused: false, status: 'racing'}}, audio: {unlock() {}}, keys: {},
   _footPointer: {lookX: 0, lookY: 0, fire: false, aim: false},
-  _keyboardSteering: {reset() {}}, togglePause() { this.duel.state.paused = true; }
+  _keyboardSteering: {reset() {}}, _arenaKeyboardSteering: {reset() {}},
+  _keyboardThrottle: {reset() {}}, togglePause() { this.duel.state.paused = true; }
 });
 inputApp._bindKeys();
 const mouse = (type, button, movementX = 0, movementY = 0) => {
