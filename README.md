@@ -2,6 +2,19 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Panorama Ridge release – 12 October 2026
+
+Panorama Ridge is a mountain circuit (1,600 credits), three laps of about
+4.5 km, raced from a golden late afternoon into dusk. The road climbs from the
+start straight up the mountain, crosses a narrow ridge between walls, tips over
+the blind crest at Skyline with only sky in front of you, then drops through
+the Esses past a radio mast and the lights of the valley town to Conrod, the
+longest straight in the game. A full field of eight cars races you. It is a
+pure race track for Rival Duel, Time Trial and the Grand Prix; Mad Max Duel
+stays on the original courses. It joins the end of the course list, so every
+other course keeps its place, and your saves, records and unlocks carry over
+as they were.
+
 ## Harbour Lights release — 12 October 2026
 
 Harbour Lights is a night street circuit through a Mediterranean harbour town

@@ -4,14 +4,14 @@ import {actorForTarget, targetIdentity} from '../arsenal/targeting.js';
 import {damageGearCar} from './contacts.js';
 import {applyArmorDamage} from '../combat-armor.js';
 import {CONVOY_ROOF_PLATE, convoyPoint} from '../arena/convoy.js';
-import {CONVOY_BODY, isConvoyRig, convoyBoardingOpen, plantConvoyCharge}
-  from '../arena/modes/convoy-raid.js';
+import {CONVOY_BODY, CONVOY_RULES, isConvoyRig, convoyBoardingOpen, convoyBodyGap,
+  convoyStopped, plantConvoyCharge} from '../arena/modes/convoy-raid.js';
 
 // All durations are accumulated by the fixed fighter step, never by rendering.
 export const BOARDING_RULES = Object.freeze({
   roofMaximumKph: 50, grappleMaximumKph: 90, grappleReach: 25,
   shakeAcceleration: 9, shakeSeconds: .3, crashDeltaMph: 10,
-  roofLimitSeconds: 6, plantHoldSeconds: 1, fuseSeconds: 2,
+  roofLimitSeconds: 6, convoyRoofLimitSeconds: 20, plantHoldSeconds: 1, fuseSeconds: 2,
   armorDamage: 35, weaponDisableSeconds: .8,
 });
 const EPS = 1e-9;
@@ -57,6 +57,13 @@ function grappleArrived(duel, actor) {
     (!Number.isFinite(pull.launchDistance) ||
       pull.launchDistance <= BOARDING_RULES.grappleReach + EPS);
 }
+// On foot beside the stopped tanker: pressing F climbs aboard, no jump needed
+// (a 1.1 m jump cannot reach a 3 m roof). Kyle, 12 October 2026.
+function climbReachable(duel, actor) {
+  const fighter = duel.state.fighter;
+  return !!fighter && !fighter.knockedDown && convoyStopped(duel, actor) &&
+    convoyBodyGap(duel, actor, fighter) <= CONVOY_RULES.climbReach + EPS;
+}
 export function canBoardTarget(duel, actor, method = 'roof') {
   if (!active(duel) || !actor || actor === duel.state ||
       !duel.state.opponents?.includes(actor) ||
@@ -64,7 +71,7 @@ export function canBoardTarget(duel, actor, method = 'roof') {
       !Number.isFinite(actor.speedMph) || duel.state.boarding) return false;
   if (isConvoyRig(duel, actor) && !convoyBoardingOpen(duel, actor)) return false;
   const kph = Math.abs(actor.speedMph) * 1.609344;
-  return method === 'roof' ? kph < BOARDING_RULES.roofMaximumKph :
+  return method === 'roof' || method === 'climb' ? kph < BOARDING_RULES.roofMaximumKph :
     method === 'grapple' && kph < BOARDING_RULES.grappleMaximumKph;
 }
 function safeLanding(duel, actor) {
@@ -115,6 +122,7 @@ function landFighter(duel, landing) {
 export function startBoarding(duel, actor, {method = 'roof', previousY} = {}) {
   if (!canBoardTarget(duel, actor, method)) return false;
   if (method === 'roof' ? !onRoof(duel, actor, previousY) :
+      method === 'climb' ? !climbReachable(duel, actor) :
       !grappleArrived(duel, actor)) return false;
   const landing = safeLanding(duel, actor);
   if (!landing) return false;
@@ -128,6 +136,10 @@ export function startBoarding(duel, actor, {method = 'roof', previousY} = {}) {
     hitPosition: {x: duel.state.fighter.x, y: duel.state.fighter.y,
       z: duel.state.fighter.z}});
   return true;
+}
+export function climbAboard(duel) {
+  const rig = (duel.state.opponents || []).find(actor => isConvoyRig(duel, actor));
+  return !!rig && startBoarding(duel, rig, {method: 'climb'});
 }
 function leaveRoof(duel, boarding, reason) {
   const actor = actorForTarget(duel, boarding.targetId);
@@ -169,11 +181,14 @@ export function stepBoarding(duel, dt, {sidewaysAcceleration = 0,
       ? boarding.shakeSeconds + dt : 0;
     if (crashDeltaMph > BOARDING_RULES.crashDeltaMph ||
         boarding.shakeSeconds + EPS >= BOARDING_RULES.shakeSeconds ||
-        boarding.roofSeconds + EPS >= BOARDING_RULES.roofLimitSeconds) {
+        boarding.roofSeconds + EPS >= (isConvoyRig(duel, actor)
+          ? BOARDING_RULES.convoyRoofLimitSeconds : BOARDING_RULES.roofLimitSeconds)) {
       leaveRoof(duel, boarding, 'throw'); return true;
     }
-    boarding.fireSeconds = state.fighterInput?.fire
-      ? boarding.fireSeconds + dt : 0;
+    // On the tanker, a held F plants the charge as well as fire does.
+    const planting = state.fighterInput?.fire ||
+      isConvoyRig(duel, actor) && boarding.interactReady === true;
+    boarding.fireSeconds = planting ? boarding.fireSeconds + dt : 0;
     if (boarding.fireSeconds + EPS >= BOARDING_RULES.plantHoldSeconds) {
       boarding.phase = 'charge'; boarding.chargesPlanted = 1;
       boarding.fuseSeconds = BOARDING_RULES.fuseSeconds;

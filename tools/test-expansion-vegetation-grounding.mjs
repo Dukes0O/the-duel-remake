@@ -35,7 +35,8 @@ try{
     for(const surface of terrain)surface.geometry.dispose();
     for(const root of[group,cached]){const geometries=new Set(),materials=new Set();root.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material);});for(const geometry of geometries)geometry.dispose();for(const mat of materials){mat.map?.dispose();mat.dispose();}}
   }
-  for(const def of COURSE.filter(def=>!def.expansion)){
+  // Ridge-landform courses (Panorama Ridge) root their trees on the drawn mountain, like expansion courses, so they are not legacy; test-circuit-panorama checks their roots.
+  for(const def of COURSE.filter(def=>!def.expansion&&!def.ridgeLandform)){
     const course=new Course(def,1989),features=course.features.trees.filter(tree=>tree.theme!=='desert'),group=new THREE.Group();
     course.groundAt=()=>{throw new Error('Legacy pine construction must not resample or move roots');};addPineTrees(group,features,course);
     for(const mesh of group.children)for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);const tree=mesh.userData.vegetationCell.entries[i].feature;

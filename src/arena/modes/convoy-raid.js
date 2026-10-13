@@ -2,9 +2,14 @@ import {arenaActor} from '../../combat-teams.js';
 import {carAlongPush, dampCarAlongPush} from '../../arsenal/car-effects.js';
 
 export const CONVOY_RULES = Object.freeze({
-  timeLimitSec: 300, cruiseKph: 55, boardingKph: 35, boardingSeconds: 60,
+  timeLimitSec: 300, cruiseKph: 55, boardingSeconds: 60,
   valveArmor: 150, valveCount: 3, ramReach: 3, loopOffset: -9,
   winScrap: 700, valveScrap: 40, bodyHintSeconds: 6,
+  // Kyle, 12 October 2026: the tanker rolls to a stop once the last valve
+  // breaks and stays stopped for the boarding window. The Tollkeeper's
+  // escorts stay out 30 s after a knock-out, and 60 s after the last valve.
+  stopSeconds: 4, stoppedKph: 2, climbReach: 3, promptRange: 40,
+  escortOutSeconds: 30,
 });
 
 export const CONVOY_BODY = Object.freeze({
@@ -37,7 +42,7 @@ export function initializeConvoyRaid(duel) {
   arena.convoy = {rigId: computers[0].id,
     valves: Array(CONVOY_RULES.valveCount).fill(CONVOY_RULES.valveArmor),
     playerValvesBroken: 0, playerBroken: Array(CONVOY_RULES.valveCount).fill(false),
-    boardingLeftSec: 0, chargePlanted: false, finished: false, attackerId: null,
+    boardingLeftSec: 0, resuming: false, chargePlanted: false, finished: false, attackerId: null,
     bodyHintAfterSec: 0};
   computers.forEach((participant, index) => {
     participant.team = 'convoy';
@@ -97,8 +102,16 @@ export function stepConvoyRig(duel, actor, dt) {
   if (!isConvoyRig(duel, actor)) return false;
   const convoy = duel.state.arena.convoy;
   actor.prevS = actor.s; actor.prevLateral = actor.lateral;
-  actor.speedMph = (convoy.valves.every(armor => armor === 0)
-    ? CONVOY_RULES.boardingKph : CONVOY_RULES.cruiseKph) / 1.609344;
+  const cruise = CONVOY_RULES.cruiseKph / 1.609344;
+  const rate = cruise / CONVOY_RULES.stopSeconds;
+  if (convoy.valves.every(armor => armor === 0)) {
+    actor.speedMph = Math.max(0, actor.speedMph - rate * dt);
+  } else if (convoy.resuming && actor.speedMph < cruise - 1e-9) {
+    actor.speedMph = Math.min(cruise, actor.speedMph + rate * dt);
+  } else {
+    convoy.resuming = false;
+    actor.speedMph = cruise;
+  }
   // The -9 m loop clears both narrow ramps and the kept perimeter props.
   // Offset curves cover a different distance from their centreline.
   actor.lateral += (CONVOY_RULES.loopOffset - actor.lateral) * (1 - Math.exp(-dt));
@@ -134,8 +147,7 @@ export function stepConvoyRaid(duel, dt) {
     if (convoy.boardingLeftSec < 1e-9) {
       convoy.boardingLeftSec = 0;
       convoy.valves.fill(CONVOY_RULES.valveArmor / 2);
-      const rig = convoyRig(duel);
-      rig.speedMph = CONVOY_RULES.cruiseKph / 1.609344;
+      convoy.resuming = true;
       duel.emit({convoyWindow: {open: false, soundCue: 'interface.lose'}});
       duel._callout('TANKER VALVES RESET', 2);
     }
@@ -144,4 +156,32 @@ export function stepConvoyRaid(duel, dt) {
   arena.clockSec = Math.min(CONVOY_RULES.timeLimitSec, arena.clockSec + dt);
   return arena.clockSec >= CONVOY_RULES.timeLimitSec
     ? {reason: 'time', winnerId: convoy.rigId} : null;
+}
+
+// The Tollkeeper's escorts (the cars that never score) stay out 30 s after a
+// knock-out. Null for every other car, so ordinary wrecks keep their usual
+// short recovery. Read by the wreck code in combat-armor.js.
+export function convoyEscortOutSeconds(duel, actor) {
+  const arena = duel.state.arena;
+  if (arena?.mode !== 'warlord' || arena.format !== 'convoy-raid' || !actor?.arenaId) return null;
+  const participant = arena.participants.find(item => item.id === actor.arenaId);
+  if (participant?.brain !== 'guard' || participant.wreckScorable !== false) return null;
+  return CONVOY_RULES.escortOutSeconds;
+}
+
+// True once the tanker has rolled to a halt inside an open boarding window.
+export function convoyStopped(duel, rig) {
+  return convoyBoardingOpen(duel, rig) &&
+    Math.abs(rig.speedMph) * 1.609344 < CONVOY_RULES.stoppedKph;
+}
+
+// Metres from a point to the tanker's body outline on the ground (0 inside).
+export function convoyBodyGap(duel, rig, point) {
+  const at = duel.course.groundAt(rig.s, rig.lateral);
+  const heading = at.heading + (rig.headingError || 0);
+  const dx = point.x - at.x, dz = point.z - at.z;
+  const across = dx * Math.cos(heading) - dz * Math.sin(heading);
+  const along = dx * Math.sin(heading) + dz * Math.cos(heading);
+  return Math.hypot(Math.max(0, Math.abs(across) - CONVOY_BODY.halfWidth),
+    Math.max(0, Math.abs(along) - CONVOY_BODY.halfLength));
 }

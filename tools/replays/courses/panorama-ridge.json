@@ -1,0 +1,19 @@
+{
+  "eventId": "panorama-ridge",
+  "cases": [
+    {
+      "id": "panorama-ridge-duel",
+      "eventId": "panorama-ridge",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "panorama-ridge-duel": {
+      "30": "95277c25eb8e289df27972c2a204b113ea31ca7f0431311a2016939aa5506927",
+      "60": "95277c25eb8e289df27972c2a204b113ea31ca7f0431311a2016939aa5506927",
+      "144": "95277c25eb8e289df27972c2a204b113ea31ca7f0431311a2016939aa5506927"
+    }
+  }
+}

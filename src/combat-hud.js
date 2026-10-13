@@ -9,6 +9,7 @@ import {readFightSubtitle} from './fight-voices.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {carEffect} from './arsenal/car-effects.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
+import {convoyPrompt} from './convoy-prompt.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 // Rectangles include the pointer below the label. Stable actor order keeps
@@ -205,6 +206,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   host.innerHTML = `<div class="combat-opponent-layer" aria-label="Opponent armor and positions"></div>
     <div class="bounty-screen-arrow" role="status" hidden><span aria-hidden="true">▲</span><b></b></div>
     <div class="fuel-screen-arrow" role="status" hidden><span aria-hidden="true">▲</span><b></b></div>
+    <div class="convoy-prompt" role="status" hidden><span aria-hidden="true">▲</span><b></b><em></em><i><u></u></i></div>
     <div class="combat-hit-marker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <div class="combat-damage-direction" aria-hidden="true"><span>▲</span></div>
     <div class="combat-edge-cue" data-side="left" aria-hidden="true"></div>
@@ -233,6 +235,7 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const layer = host.querySelector('.combat-opponent-layer');
   const bountyArrow = host.querySelector('.bounty-screen-arrow');
   const fuelArrow = host.querySelector('.fuel-screen-arrow');
+  const convoyBanner = host.querySelector('.convoy-prompt');
   const markers = [];
   const buttons = [...host.querySelectorAll('[data-combat-weapon]')];
   const hitMarker = host.querySelector('.combat-hit-marker');
@@ -361,6 +364,18 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       fuelArrow.style.color = fuelPointer.color;
       fuelArrow.querySelector('span').style.transform = `rotate(${fuelPointer.angle}deg)`;
       setText(fuelArrow.querySelector('b'), fuelPointer.text);
+    }
+    const prompt = convoyPrompt(app.duel);
+    convoyBanner.hidden = !prompt;
+    if (prompt) {
+      const arrow = convoyBanner.querySelector('span');
+      arrow.hidden = prompt.angle === null;
+      arrow.style.transform = `rotate(${prompt.angle ?? 0}deg)`;
+      setText(convoyBanner.querySelector('b'), prompt.title);
+      setText(convoyBanner.querySelector('em'), prompt.sub);
+      const track = convoyBanner.querySelector('i');
+      track.hidden = prompt.progress === null;
+      convoyBanner.querySelector('u').style.transform = `scaleX(${clamp(prompt.progress)})`;
     }
     const bounty = bountyArrowPresentation(app.duel.course, state, projected);
     bountyArrow.hidden = !bounty;
