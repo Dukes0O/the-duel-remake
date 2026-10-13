@@ -1034,3 +1034,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 P4-SUMMIT dev source: bab5ca92 merged after mouse; 319/319, build1479.6255ms, ordinary/save review clear; no conflict rerun. Native strategy and art tail stays open.
 
 - 2026-10-12 FIX-AMBUSH-OPENING source352eb25d:178/178, build1412ms, code/design review clear; conflict-free after mouse/Summit, no rerun; creating controller owns lane cleanup.
+
+- 2026-10-12 DEEP-RAMP-GEOMETRY b9111b6a: corrected20/20, build1290ms, ordinary review clear; conflict-free after Ambush. Actual whole-cove regression fixed; pure descriptor only.
