@@ -33,7 +33,7 @@ globalThis.document = new EventTarget();
 document.pointerLockElement = null;
 const inputApp = Object.create(App.prototype);
 Object.assign(inputApp, {
-  duel: {state: {onFoot: true, paused: false}}, audio: {unlock() {}}, keys: {},
+  duel: {state: {onFoot: true, paused: false, status: 'racing'}}, audio: {unlock() {}}, keys: {},
   _footPointer: {lookX: 0, lookY: 0, fire: false, aim: false},
   _keyboardSteering: {reset() {}}, togglePause() { this.duel.state.paused = true; }
 });

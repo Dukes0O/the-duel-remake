@@ -9,3 +9,5 @@ The existing App lifecycle fixture reproduced the pre-shot look failure. Added e
 ## Removed
 
 Replaced the on-foot pointerdown/up handlers that dropped the second mouse button and the unconditional pointer-lock requirement for mouse look. No new setting, dependency, harness, ammo rule, reward, save field or asset.
+
+Development: pre-shot look failure reproduced; after source fix all new button/look assertions passed up to blur. The new event fixture omitted its racing status, so the existing blur guard correctly did not pause. Added the real racing status; the exact pause assertion stays. Final nearby lane verifies it.
