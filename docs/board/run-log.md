@@ -1051,3 +1051,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 P4-AVALANCHE source05383cbd:282/282, build2575.2799ms, ordinary crossing-repair confirmation CLEAR; conflict-free, no rerun. Core lock released; actual native timing/views/listening remain open, dev only.
 
 - 2026-10-13 04:34 PT FAC-FULL-CHECK repair merged: b569a6ed nearby16/16/build540ms/reviewCLEAR; consume only verified copied runner report; prior422 pass was failed batch, remaining stages unrun; real-fix retry follows; no release/push.
+
+- 2026-10-13 janitor sweep: own merged lanes/consumed source evidence recycled; looks17,152,350B/20MB unchanged, total323,813,992B before own log correction;47 assets/84 exports/333 docs advisory,0 unused modules/removed-feature tests; uncertain and foreign files retained.

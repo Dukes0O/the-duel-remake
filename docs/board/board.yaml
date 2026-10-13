@@ -169,7 +169,8 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "building"
-    claimed_by: "codex-full-check-2026-10-13"
+    claimed_by: "codex-avalanche-native-2026-10-13"
+    branch: "codex/p4-avalanche-native"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
