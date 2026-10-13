@@ -1029,3 +1029,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 merge P4-CAREER-PODIUM205d71bd: original239/239, zero failures/unrun,1966.677s,jobs4; build1654.9281ms; ordinary correction and fresh save review clear. Clean merge, no rerun; prospective optional per-player podium ids, legacy save/pay exact. Two canceled gates remain cancellations, not failures/passes; no release/push.
 
 - 2026-10-12 podium janitor closure: recycled only our clean merged new lane, consumed acceptance/canceled receipts and redundant own card after complete facts were committed e22022fd. Unlinked only its verified integration dependency junction first; worktree and merged branch removed without force. Older retained P4 lanes and current art stay.
+- 2026-10-13 FIX-FOOT-MOUSE merged 46220b09: lane 129/129 in 1082.96 s, build 1534 ms, review lighting independent code review and menu-fault confirmation clear.
