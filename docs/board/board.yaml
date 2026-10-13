@@ -317,7 +317,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: [DEEP-LOOK]
+    needs: [DEEP-LOOK, DEEP-ZONE-FORMAT]
     locks: [busy-game-files]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-ZONE.md"
@@ -455,3 +455,16 @@ tasks:
     locks: [status-tool]
     needs: [FAC-04, FAC-06]
     details: "docs/board/cards/QA-STATUS-FACTORY.md"
+
+  - id: DEEP-ZONE-FORMAT
+    title: "The Deep validated zone data format"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "building"
+    needs: [DEEP-LOOK]
+    locks: []
+    claimed_by: "codex-deep-format"
+    branch: "codex/deep-zone-format"
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-ZONE-FORMAT.md"

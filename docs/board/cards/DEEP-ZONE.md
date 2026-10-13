@@ -23,3 +23,7 @@ These are the card's detailed design, acceptance and recorded decisions.
 ## Parallel lane interface — 12 October 2026
 
 DEEP-AUDIO owns an event/update/stop adapter in src/deep/deep-audio.js with an injected existing audio host; this card owns its App journey lifecycle wiring when busy-game-files is available. DEEP-SAVE owns discovery/hint/kit methods; coordinate its eventual narrow App hook rather than duplicating save fields or award logic. Preserve all switch-off paths.
+
+## Director independent format slice — 12 October 2026
+
+DEEP-ZONE-FORMAT owns deep-zone.js and its pure Node acceptance independently while Summit holds busy-game-files. This card now depends on that slice and retains journey/UI/ramp/runtime wiring ownership; do not duplicate its validator or edit its files concurrently. Its10.1 contract and exact runtime/replay acceptance stay. No new production zone or changed ramp position is implied.
