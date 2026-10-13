@@ -67,6 +67,13 @@ try {
   check(!inputApp._footPointer.aim && inputApp._footPointer.lookX === look,
     'paused gameplay cannot aim, fire or consume mouse look');
   inputApp.duel.state.paused = false;
+  inputApp.duel.state.status = 'menu';
+  const captures = requests;
+  mouse('mousedown', 2); mouse('mousedown', 0); mouse('mousemove', 0, 9, 9);
+  check(requests === captures && !inputApp._footPointer.aim && !inputApp._footPointer.fire &&
+      inputApp._footPointer.lookX === look,
+    'returning to the menu keeps stale onFoot state from capturing or accepting mouse input');
+  inputApp.duel.state.status = 'racing';
   mouse('mousedown', 2); mouse('mousedown', 0);
   window.dispatchEvent(new Event('blur'));
   check(!inputApp._footPointer.aim && !inputApp._footPointer.fire && inputApp.duel.state.paused,

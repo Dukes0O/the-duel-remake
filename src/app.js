@@ -1434,6 +1434,7 @@ export class App {
     // the first button, losing left-click while right-click is already held.
     window.addEventListener('mousedown', e => {
       if (!this.duel.state.onFoot || this.duel.state.paused ||
+          !['racing', 'countdown', 'exploring'].includes(this.duel.state.status) ||
           ![0, 2].includes(e.button) || !(e.target instanceof Element)) return;
       const canvas = e.target.closest('#view3d canvas');
       if (!canvas) return;
@@ -1449,7 +1450,8 @@ export class App {
       if (e.button === 2) this._footPointer.aim = false;
     }, {signal});
     window.addEventListener('mousemove', e => {
-      if (!this.duel.state.onFoot || this.duel.state.paused) return;
+      if (!this.duel.state.onFoot || this.duel.state.paused ||
+          !['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) return;
       // Canvas movement remains usable before the first click and when the
       // browser refuses pointer lock. Menus and the rest of the page stay inert.
       if (document.pointerLockElement == null &&
