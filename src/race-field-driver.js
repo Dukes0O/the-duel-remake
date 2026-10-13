@@ -137,6 +137,7 @@ function move(duel, r, run, dt, target, intent, surface, look, route = null) {
   r.headingError += (yaw - frame.curvature * progress) * dt;
   r.lateral += (Math.sin(r.headingError) * travel + r.pushVelocity) * dt;
   r.s += progress * dt;
+  observeSummitRoute(duel,r,f.traits.aggression*run.tuning.aggression);
   const damping = Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
   r.pushVelocity *= damping;
 }
@@ -149,6 +150,7 @@ export function stepFieldRacer(duel, r, dt) {
   if (r.knock) {
     // A knocked car is a free body until its tyres bite; the shared rules apply.
     stepKnock(duel, r, dt);
+    observeSummitRoute(duel,r,f.traits.aggression*run.tuning.aggression);
     duel._staticContacts(r, false); duel._boundary(r);
     if (!r.finished) duel._advanceLaps(r, dt);
     noteIncidents(duel, r);

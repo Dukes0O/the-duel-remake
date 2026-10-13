@@ -89,6 +89,17 @@ try{
     pose(cpu,10280,-16,40);const before=cpu.lateral;native.step(1/120);
     check(cpu.lateral<before,'actual native CPU steering follows the right-hand Open Road');
   }
+  // Cross in the last waiting step: next-step tell must not change the choice.
+  for(const mode of ['duel','grandprix'])for(const knocked of [false,true]){
+    const crossing=game(true,mode),cpu=crossing.state.opponents[0],e=crossing.state.avalanche;
+    crossing.state.stageTimeSec=2;pose(crossing.state,9900,0);pose(cpu,9949.95,-2,50);
+    if(mode==='duel')cpu.driverId='jules_reyes';else cpu.field.traits={...cpu.field.traits,aggression:.95};
+    Object.assign(e,{crossedAt:0,tellAt:2+1/120+.001,slideAt:5+1/120+.001,endAt:7.5+1/120+.001});
+    if(knocked){const body=actorBody(crossing,cpu);startKnock(cpu,{vx:body.vx,vz:body.vz,spin:0,severity:'nudge',heading:body.heading});}
+    crossing.step(1/120);check(cpu.s>=9950,'fixture crosses actual decision point');
+    equal(e.phase,'waiting');equal(cpu.summitRoute,'summit-open-road',mode+' commits actual '+(knocked?'knock':'normal')+' crossing phase');
+    crossing.step(1/120);equal(e.phase,'tell');equal(cpu.summitRoute,'summit-open-road','following tell retains the crossing choice');
+  }
   const replayA=game(true,'duel',6),replayB=game(true,'duel',6);
   for(const replay of [replayA,replayB]){
     pose(replay.state,10500,-18,55);const e=replay.state.avalanche;
