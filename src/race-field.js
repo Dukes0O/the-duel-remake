@@ -14,10 +14,11 @@ import { racingLineFor, buildSpeedProfile } from './race-lines.js';
 
 const MPH = DRIVE.mphToWorld;
 
-// Circuits that offer a Grand Prix. P4-GP-EXISTING adds the others.
-export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon',
+// Existing closed road circuits and manifest-authored Grand Prix circuits.
+export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'high-country',
+  'harbor-highlands', 'eifel-crown', 'alpine-serpent', 'azure-riviera', 'red-mesa',
+  'neon-docks', 'cloudbreak-skyway',
   ...CIRCUIT_MANIFESTS.filter(manifest => manifest.grandPrix).map(manifest => manifest.id)]);
-
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 export const FIELD = Object.freeze({
@@ -197,7 +198,10 @@ export function gridPose(slot) {
 
 export function initializeField(duel) {
   const s = duel.state, course = duel.course;
-  const gridSetback = s.mode === 'grandprix' && course.def.id === 'panorama-ridge' ? -43 : 0;
+  // GP staging leaves the timing origin and visible line at zero.
+  const gridSetback = s.mode === 'grandprix'
+    ? course.def.id === 'azure-riviera' ? -400 : course.def.id === 'panorama-ridge' ? -43 : 0
+    : 0;
   const cpu = s.cpuDifficulty, tuning = FIELD_TUNING[cpu] || FIELD_TUNING.medium;
   const racers = chooseRacers(cpu, s.opponentCount);
   const fieldSeed = (s.fieldSeed ?? s.seed) >>> 0;
@@ -476,7 +480,32 @@ export function fieldView(state) {
     ahead: f.ahead, behind: f.behind, finalLap: f.finalLap, lights: f.start.lights, lightsOut: f.start.out };
 }
 
+const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, halfWidth: 1});
+const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
+  firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
+const EXISTING_GP_TUNING = Object.freeze({
+  'alpine-serpent': Object.freeze({
+    fieldPace: Object.freeze({easy: .929, medium: .902, hard: .892}), fieldAggression: .6,
+  }),
+  'eifel-crown': Object.freeze({
+    fieldPace: Object.freeze({easy: .934, medium: .903, hard: .881}), fieldAggression: 1.4,
+  }),
+  'harbor-highlands': Object.freeze({
+    fieldPace: Object.freeze({easy: 1.085, medium: 1.043, hard: 1.035}), fieldAggression: 1.6,
+  }),
+  'high-country': Object.freeze({
+    fieldPace: Object.freeze({easy: 1.10, medium: 1.065, hard: 1.050}),
+  }),
+  'azure-riviera': Object.freeze({
+    fieldPace: Object.freeze({easy: .96, medium: .91, hard: .90}), fieldAggression: 1.8,
+  }),
+});
 export function courseForGrandPrix(def) {
   // An authored circuit may set its own Grand Prix length (`grandPrixLaps`).
-  return { ...def, laps: def.grandPrixLaps ?? FIELD.laps, hasRadar: false, grandPrix: true };
+  return { ...def, laps: def.grandPrixLaps ?? FIELD.laps, hasRadar: false, grandPrix: true,
+    ...EXISTING_GP_TUNING[def.id],
+    ...(def.id === 'azure-riviera' ? {
+      grandPrixEntryWidth: AZURE_GP_ENTRY_WIDTH,
+      fieldFollow: AZURE_GP_FIELD_FOLLOW,
+    } : {}) };
 }

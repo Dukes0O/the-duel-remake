@@ -1,3 +1,5 @@
+import {deepDiscoverySnapshot} from './deep/deep-discovery.js';
+import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
@@ -596,6 +598,7 @@ export class App {
       grandPrixCareerEnabled:state.mode==='grandprix'&&this._switches().enabled('grand-prix-career')===true,
       combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
+      deepEnabled:this._switches().enabled('the-deep')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
@@ -860,6 +863,29 @@ export class App {
   }
   getMuddyHollowProgress() {
     return muddyHollowSnapshot(this.profile, this.player?.id, true);
+  }
+  getDeepDiscovery() {
+    return deepDiscoverySnapshot(this.profile, this.player?.id,
+      !!this.player && this._switches().enabled('the-deep') === true);
+  }
+  showDeepGarageHints() {
+    if (!this.player || this.duel.state.status !== 'menu' || !this._switches().enabled('the-deep')) return;
+    this._refreshPlayer();
+    const updated = markDeepHintsShown(this.profile, {enabled: true});
+    if (updated !== this.profile) { this.profile = updated; this._saveProfile(); }
+  }
+  purchaseDeepKit() {
+    if (!this.player || this.duel.state.status !== 'menu')
+      return {ok: false, reason: 'Return to the garage before buying a dive kit.', cost: 0};
+    this._refreshPlayer();
+    const previous = this.profile;
+    const result = buyDeepKit(previous, {enabled: this._switches().enabled('the-deep') === true});
+    if (result.ok) {
+      this.profile = result.profile;
+      if (!this._saveShopProfile(previous)) return {ok: false, reason: 'Could not save this dive kit purchase. Your credits were kept.', cost: 0};
+      this.duel.emit({garage: true});
+    }
+    return result;
   }
   getHiddenRoadDiscovery() {
     const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;

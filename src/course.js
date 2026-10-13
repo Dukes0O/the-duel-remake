@@ -157,8 +157,24 @@ export class Course {
     const u=Math.min(1,Math.min(t,1-t)/(cut.transition||.5));return cut.offset*Math.sin(Math.PI*.5*u)**2;
   }
   halfWidthAt(s){return this.roadHalfWidthAt(s);}
-  roadHalfWidthAt(s){if(this.script)return this.script.halfWidthAt(s);if(this.def.practice)return 24;if(this.def.scrapdome)return this.def.scrapdome.floorHalfWidth;if(this.def.arena)return 13;if(this.def.offroad)return 5.5;const p=this.phase(s);let width=7;
-    for(const lane of this.features.passingLanes)if(p>=lane.start&&p<=lane.end)width+=3.5*smooth((p-lane.start)/45)*smooth((lane.end-p)/45);return width;}
+  roadHalfWidthAt(s) {
+    if (this.script) return this.script.halfWidthAt(s);
+    if (this.def.practice) return 24;
+    if (this.def.scrapdome) return this.def.scrapdome.floorHalfWidth;
+    if (this.def.arena) return 13;
+    if (this.def.offroad) return 5.5;
+    const p = this.phase(s); let width = 7;
+    for (const lane of this.features.passingLanes)
+      if (p >= lane.start && p <= lane.end)
+        width += 3.5 * smooth((p - lane.start) / 45) * smooth((lane.end - p) / 45);
+    const entry = this.def.grandPrix && this.def.grandPrixEntryWidth;
+    if (entry && p > entry.start && p < entry.end) {
+      const taper = p <= entry.peak ? (p - entry.start) / (entry.peak - entry.start) :
+        (entry.end - p) / (entry.end - entry.peak);
+      width += entry.halfWidth * smooth(taper);
+    }
+    return width;
+  }
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
     if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);

@@ -21,7 +21,8 @@ export function _surface(distance, lateral) {
 // What the road under a car does to its grip (docs/CIRCUITS.md 3.4). Asphalt on
 // summer tyres is the shared neutral answer, so ordinary courses are untouched.
 export function _roadGrip(distance, lateral, car = this.car, tyre) {
-  const kind = this.course.gripKindAt?.(distance, lateral) ?? 'asphalt';
+  const readKind = this.course.gripKindAt?.(distance, lateral) ?? 'asphalt';
+  const kind = readKind === 'sea-floor' && this.featureFlags?.enabled('the-deep') !== true ? 'asphalt' : readKind;
   return gripFor(kind, normalizeTyre(tyre ?? (car === this.car ? this.state.tyre : undefined)), car);
 }
 
@@ -35,6 +36,10 @@ export function _drivingSurface(distance, lateral, car = this.car, hasContact = 
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
   const road = this._roadGrip(distance, lateral, car, tyre);
+  if (road.kind === 'sea-floor') return { ...surface, road: true, mainRoad: true, preparedGravel: false,
+    boostAllowed: !surface.pitLane, mud: 0, waterDepth: 0, gripKind: road.kind, grip: road.grip,
+    gripTopSpeedMph: null, gripTopShare: road.topShare, traction: road.grip,
+    speedLimit: car.topSpeed * road.topShare, scrub: 0, roughness: null };
   const mud = hasContact ? clamp(Number(surface.mud) || 0, 0, 1) : 0;
   const waterDepth = hasContact ? clamp(Number(surface.waterDepth) || 0, 0, 1) : 0;
   const traction = surface.mainRoad ? 1 : preparedGravel ? clamp(.6 + .4 * (car.offRoadGrip ?? DRIVE.offRoadGrip), .82, .995) : car.offRoadGrip ?? DRIVE.offRoadGrip;
@@ -80,7 +85,7 @@ export function _drive(dt) {
   if(stepPitService(this,s,dt))return;
   // A Grand Prix slipstream lifts top speed and push; it is exactly 1 elsewhere.
   const towTop = s.field ? 1 + FIELD.towTopSpeed * s.field.tow : 1, towPush = s.field ? 1 + FIELD.towAccel * s.field.tow : 1;
-  const accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
+  let accelerationShare = (arsenalEnabled(this) ? carAcceleration(s) : 1) * towPush;
   const nitroSpeedShare = (arsenalEnabled(this) ? carEffect(s, 'nitro')?.topSpeed || 1 : 1) * towTop;
   // A crash that knocked the car loose: it slides and spins until the tyres
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
@@ -109,6 +114,8 @@ export function _drive(dt) {
   } else s.reverseHoldSec = 0;
   const reversing = s.gear < 0;
   const road = this._roadGrip(s.s, s.lateral, car);
+  const seaFloor = road.kind === 'sea-floor';
+  if (seaFloor) accelerationShare *= road.accelerationShare;
   if (this._gripCourse !== this.course) { this._gripCourse = this.course; this._gripKind = 'asphalt'; }
   if (road.kind !== this._gripKind) { this._gripKind = road.kind; this.emit({ surfaceChanged: { kind: road.kind, cue: road.cue } }); }
   const gmax = reversing ? DRIVE.reverseMaxMph : car.gears[s.gear] * nitroSpeedShare;
@@ -129,7 +136,9 @@ export function _drive(dt) {
     if (s.input.throttle > 0) {
       s.speedMph = Math.min(0, s.speedMph + DRIVE.brakeAccel * car.braking * s.input.throttle * road.grip * dt);
       if (s.speedMph === 0) { s.gear = 0; s.reverseHoldSec = 0; }
-    } else if (s.input.brake > 0) s.speedMph -= DRIVE.reverseAccel * s.input.brake * dt;
+    } else if (s.input.brake > 0) s.speedMph -= seaFloor
+      ? DRIVE.reverseAccel * s.input.brake * dt * road.accelerationShare
+      : DRIVE.reverseAccel * s.input.brake * dt;
     s.speedMph = Math.min(0, s.speedMph + DRIVE.dragCoeff * dt * (s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1));
   } else {
     if (s.input.throttle > 0) {
@@ -138,6 +147,11 @@ export function _drive(dt) {
     }
     if (s.input.brake > 0) s.speedMph -= DRIVE.brakeAccel * car.braking * s.input.brake * road.grip * dt;
     s.speedMph = Math.max(0, s.speedMph - DRIVE.dragCoeff * dt * (s.input.throttle > 0 ? 0.2 : 1));
+  }
+  if (seaFloor) {
+    const turnDrag = DRIVE.dragCoeff * (road.turningDragShare - 1) * Math.min(1, Math.abs(s.input.steer)) * dt
+      * (reversing ? s.input.brake > 0 && s.input.throttle === 0 ? .2 : 1 : s.input.throttle > 0 ? .2 : 1);
+    s.speedMph = Math.sign(s.speedMph) * Math.max(0, Math.abs(s.speedMph) - turnDrag);
   }
   if (s.gear !== previousGear) this.emit({ shift: s.gear });
 
@@ -225,6 +239,7 @@ export function _drive(dt) {
     const waterLoss=surfaceEntrySpeed*(1-Math.exp(-waterDrag*dt));
     s.speedMph=Math.sign(s.speedMph)*Math.max(0,Math.abs(s.speedMph)-waterLoss);
   }
+  if (seaFloor) s.speedMph = Math.sign(s.speedMph) * Math.min(Math.abs(s.speedMph), car.topSpeed * road.topShare);
   s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[s.gear]);
   limitPitSpeed(this.course,s);
   const metresPerSec = s.speedMph * DRIVE.mphToWorld, alongPush = carAlongPush(s);
@@ -340,8 +355,11 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     setCarMortarHop(actor, false);
   }
   const arena = this.course.def.kind === 'arena';
+  const road = actor === this.state && this.featureFlags?.enabled('the-deep') === true
+    ? this._roadGrip(actor.s, actor.lateral) : null;
+  const seaFloor = road?.kind === 'sea-floor';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
-  if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain) || !Number.isFinite(dt) || dt <= 0) {
+  if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain && !seaFloor) || !Number.isFinite(dt) || dt <= 0) {
     // On the prepared road or a shortcut the all-terrain rules sleep. Forget
     // the height they last tracked, or the next step off the road measures
     // from a stale height and drops the car from the air (DUSTHAWK-AIR).
@@ -364,7 +382,7 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   // only the older average would detach at half gravity and create repeated
   // tiny hops on ordinary rolling crests. Keep authored arena timing exact.
   const verticalSpeed = !arena && !actor.airborne ? (actor._verticalSpeed + groundVelocity) * .5 : actor._verticalSpeed;
-  const gravity = 18, predicted = actor._jumpY + verticalSpeed * dt - gravity * dt * dt * .5;
+  const gravity = seaFloor ? 18 * road.gravityShare : 18, predicted = actor._jumpY + verticalSpeed * dt - gravity * dt * dt * .5;
   if (!actor.airborne) {
     // A descending convex crest can leave the road too: the car keeps its
     // signed tangent velocity while the road falls away faster. The arena
@@ -397,6 +415,10 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   // roads would manufacture a second hop on the next downhill step.
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
+  if (seaFloor) {
+    this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });
+    return;
+  }
   if (!arena || actor !== this.state || !origin || origin.lap !== actor.completedLaps + 1 || origin.s < actor.completedLaps * this.course.length) return;
   const key = `${origin.rampId}:lap-${origin.lap}`;
   if (actor.collectedJumps.includes(key)) return;

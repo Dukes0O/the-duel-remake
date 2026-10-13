@@ -1,0 +1,5 @@
+# QA-TITAN-REPLAY-TIMEOUT
+
+DEEP-SAVE b486aaf0 canonical321/324 includes a real test-titan-climb failure: nested test-replays spawn returned statusnull/no output under its existing180000ms timeout; direct replay passed in that same gate. One unchanged-b486 standalone rerun reports8checks/0failures in titan-rerun.log; the builder retains final exit/timing receipt. Original failure is not erased and the whole save gate still needs its two fixture repairs.
+
+This unreliable-check follow-up never holds merges under AGENTS3. Before code identify the contention/duplicate-dispatch cause in the existing runner and nested test, within30minutes. Own only tools/test-titan-climb.mjs, named existing replay-dispatch hook if independently justified before edit, and docs/changes/QA-TITAN-REPLAY-TIMEOUT.md. Keep every climbing assertion and actual recorded replay fingerprint verification exact; no tolerance, timeout or signature change to manufacture a pass, no new test machinery. Settle the specific repair in writing first, then nearby lane/build/independent code review. Real native/heavy acceptance remains night-only.

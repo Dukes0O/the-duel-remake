@@ -1005,3 +1005,15 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 2026-10-12 P4-PANORAMA dev source c56238e9: lane306/306,1773.56s,jobs4;build758ms;review clear;clean merge,no rerun. Native dusk/R3sheet pending night;old lane retained,no release/push.
 
 2026-10-12 DEEP-AUDIO dev source d6a76d3a: lane143/143,1225.485s,jobs4;build1658.002ms;review clear;clean merge,no rerun. Listening/native mix pending;packet/lane retained,the-deep dev,no release/push.
+
+- 2026-10-12 factory janitor sweep: read-only audit1888 tracked files; looks16,840,032B before/after, under20MB. Recycled313,798B of our consumed Deep Audio handoff/final-note scratch; committed note hashDE01C009 exact. Actual listening packet/current sheets/assets/licensed sources and retained P4 lanes stay needed. Literal47asset/85export/309doc candidates are uncertain and remain with existing CLEAN-11/JANITOR-DIAGNOSTIC-NOTES; no modules or removed-feature tests flagged, no runtime removal. STATUS still has legacy manifest/lean-board projection warnings; not a new game failure. No history rewrite/push/release.
+
+- 2026-10-12 merge P4-GP-EXISTING dev source8812a093: lane301/301, zero failed/unrun,1136.957s,jobs4; build700ms/1393ms wall; one reviewCLEAR; conflict-free/no rerun. Shared width lock released; original caps/failures and Red2/Neon3/Cloud3/native18 night tail retained, older lane kept. No release/push.
+
+- 2026-10-12 merge DEEP-SAVE d83c38b6: corrected lane324/324, zero failed/unrun,979.026s,jobs4; build1347.9813ms; code/save reviewsCLEAR; conflict-free/no rerun. Optional fields,5/10 hints,150CR kit and allnine memory fixtures pass; old8 bytes/rollback/records/ghosts preserved. Card completed, save/App locks released; original321/324 failure and Titan8/0 same-source rerun retained in note/QA follow-up. No native/full/release/push.
+
+- 2026-10-12 merge DEEP-SURFACE fabaf326: lane224/224, zero failed/unrun,980.978s,jobs4; build616ms/1122ms wall; one reviewCLEAR; conflict-free/no rerun. Card completed; Summit claims allthree free locks for settled dev source. Deep Save own completed lane recycled, older P4 folders retained. No native/full/release/push.
+
+- 2026-10-12 merge QA-STATUS-FACTORY ebf1713e: lane17/17,zero failed/unrun,279.866s,jobs4; build1.02s/1958.248ms wall; pure308/0 and one reviewCLEAR; clean merge/no rerun. Actual manifest switches/current card branches restored on STATUS, old guards preserved; card completed. Our merged Deep Surface lane was recycled, older P4 folders retained. No full/release/push.
+
+- 2026-10-12 merge DEEP-ZONE-FORMAT6934122f: lane20/20,zero failed/unrun,380.079s,jobs4; build1988.9206ms; ordinary and same-reviewer persisted-ID repair CLEAR; clean merge/no rerun. Pure frozen10.1 data/11 groups/existing5287 look exact; card completed, runtime Zone still waits for Summit busy lock. Status own lane and consumed receipts recycled. No native/full/release/push.
