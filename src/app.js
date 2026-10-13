@@ -1,3 +1,4 @@
+import {velocity as audioActorVelocity} from './combat-weapons.js';
 import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
@@ -273,6 +274,35 @@ export class App {
     this.audio.setPaused(true);this.audio.context?.close?.()?.catch?.(()=>{});
     if(typeof window!=='undefined'&&window.__game?.duel===this.duel)delete window.__game;
   }
+  _vehicleAudioSnapshot(state, course, listener) {
+    if (!this._switches().enabled('rival-voices') || !course || !listener) return null;
+    this._vehicleAudioIdentities ??= new WeakMap();
+    const nearest = (actors, limit) => {
+      if (!Array.isArray(actors)) return [];
+      let indices = this._vehicleAudioIdentities.get(actors);
+      if (!indices) {
+        indices = new WeakMap();
+        actors.forEach((actor, index) => indices.set(actor, index));
+        this._vehicleAudioIdentities.set(actors, indices);
+      }
+      const rows = [];
+      actors.forEach((actor, index) => {
+        if (!indices.has(actor)) indices.set(actor, index);
+        if (actor.alive === false || actor.wrecked || actor.crushed || actor.finished) return;
+        const at = course.groundAt(actor.s, actor.lateral);
+        const movement = audioActorVelocity(actor, at);
+        const position = {x: at.x, y: at.y + 1.3 + (actor.airHeight || 0), z: at.z,
+          vx: movement.x, vy: actor._verticalSpeed || 0, vz: movement.z};
+        const distance = Math.hypot(position.x - listener.x, position.y - listener.y, position.z - listener.z);
+        if (!Number.isFinite(distance) || distance > 250) return;
+        rows.push({id: String(actor.id ?? indices.get(actor)), actor, group: actors,
+          car: actor.car, revs: actor.revs, speedMph: actor.speedMph, position, distance});
+      });
+      return rows.sort((a, b) => a.distance - b.distance || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).slice(0, limit);
+    };
+    return {stage: course, rivals: nearest(state.opponents, 3), traffic: nearest(state.traffic, 4)};
+  }
+
   _updateAudio() {
     const state = this.duel.state;
     const course = this.duel.course;
@@ -303,6 +333,7 @@ export class App {
       ...deepEnvironment,
       course,
       listener,
+      ...(this._switches().enabled('rival-voices') ? {vehicles: this._vehicleAudioSnapshot(state, course, listener)} : {}),
       tunnel: tunnelMix,
       looseSurface: !!course?.def.offroad || !!course?.def.arena,
       biome: course?.themeAt(state.s),

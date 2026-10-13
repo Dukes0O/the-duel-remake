@@ -248,6 +248,16 @@ export const SOUND_BANK = {
     duck: 'voice',
     flag: 'hidden-road',
   }),
+  'vehicle.rival-engine': cue('engine', {
+    flag: 'rival-voices', donor: 'loadHigh', toneHz: 86,
+    volume: .35, priority: 40, limit: 3, loop: true,
+    spatial: {refDistance: 15, maxDistance: 250, rolloff: 1},
+  }),
+  'vehicle.traffic-engine': cue('engine', {
+    flag: 'rival-voices', donor: 'engine', toneHz: 86,
+    volume: .25, priority: 30, limit: 4, loop: true,
+    spatial: {refDistance: 15, maxDistance: 250, rolloff: 1},
+  }),
   'engine.fallback': cue('engine', {
     sample: 'engine',
     file: 'engine-loop.flac',
