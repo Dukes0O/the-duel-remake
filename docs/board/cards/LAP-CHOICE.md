@@ -82,3 +82,9 @@ Scale only the existing finishing component before its existing Pro duplication.
 Keep the choice in an App runtime map keyed by player, event and mode, never saved raceSettings. Preserve restart/qualifying choices and normalize for each campaign stage. Previously saved offered-lap records remain valid with the switch off; runtime choices and distance pay require the switch.
 
 Additional proven hooks granted: src/game.js, src/feature-flags.js, src/screen-menu.js, src/screen-router.js, src/screen-results.js, src/screen-hud.js, src/screen-leaderboard.js. Existing catalog/launcher expectations may be updated additively in tools/test-feature-flags.mjs, tools/test-wasteland-beta.mjs and start-preview.bat. No race-field or ghost implementation changes. Do not weaken existing assertions or regenerate fingerprints.
+
+## Claude decision after the release review (13 October 2026)
+
+The independent pay review of bb8d3a99 found one design-level gap. Fixed per-race bonuses (clean race, win streak, police escapes and snowmen) are not cut when a race is shorter than its default. So a 2-lap race on a longer-default event earns 16 to 23% more per lap than the default race. This affects only Harbour Lights, both Tremblant tracks and Panorama Ridge in Duels.
+
+Accepted as designed: those bonuses reward something done in the race (a clean race, a streak, an escape, a find), not its distance, and the finishing pay itself always falls with fewer laps. No change.
