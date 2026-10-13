@@ -883,3 +883,5 @@ The Director will add a short summary when work reaches its first checkpoint.
 
 Seekers merged from f0989887 after lane 366/366 (599.22 s), build (516 ms)
 and source review passed. Kyle's 8-damage exception above is retained.
+
+- **Resolved cleanup tool issue:** the factory merge helper’s Windows PowerShell5 junction unlink prompted in NonInteractive mode after the mouse source/status commits had succeeded. Both owned merged control lanes were then cleaned safely with the current PowerShell, verified junction targets and Recycle Bin; integration dependencies and foreign lanes stayed intact. The helper needs a small future noninteractive unlink fix; no game failure or extra gate came from cleanup.

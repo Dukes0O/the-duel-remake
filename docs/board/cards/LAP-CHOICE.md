@@ -68,3 +68,7 @@ is folded in here and that card is closed (replace means remove).
 ## Removed
 
 FUT-PAY-BY-DISTANCE is closed into this card.
+
+## Director start — 12 October 2026
+
+The control-fix chat owns this next core card under Kyle’s approved shared plan. Mouse and Ambush fixes are integrated; both new lane folders, their consumed output and their merged branch registrations were recycled/removed. Hold busy-game-files and save-shape for runtime, pay and record validation. No new saved lap preference. Before code, map existing runtime/pay/ghost hooks and grant only the additional files actually required. Preserve all default replays and existing single-lap Grand Prix ghost semantics unless Claude explicitly changes that design. No new test machinery, art, cue or dependency. One independent money/save review, one targeted lane/jobs4 and a build. Heavy browser/full checks belong to the scheduled full check.

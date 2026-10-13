@@ -393,9 +393,11 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-controls-and-laps-2026-10-12"
+    branch: "codex/lap-choice"
     needs: []
-    locks: [busy-game-files]
+    locks: [busy-game-files, save-shape]
     flag: "lap-choice"
     details: "docs/board/cards/LAP-CHOICE.md"
 
