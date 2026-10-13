@@ -1066,3 +1066,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13: FIX-LIVE-EDGES sourcecdf55a11 merged; nearby94/94/jobs4, build576ms, independent review CLEAR. Parent native pace fails remain with Claude; completed source prerequisite unblocks later camera wiring. No repeated gate, release or push.
 
 - 2026-10-13: P4-YETI ace5cb5f source merged; nearby289/289/jobs4, build571ms, source/save reviews CLEAR. Recorded input all4modes,89/300 controlled appearances; native grounding/look/audio remain open, dev stays dev. Own merged road-edge lane recycled/nonforced unregister; older Yeti lane retained. No repeated gate, release or push.
+
+- 2026-10-13: Hairpin camera389ee8bd source merged; nearby34/34/jobs4, build547ms, independent review CLEAR. Actual renderer wiring is in; native apex/lap sweep still open, core lock released. No repeated gate, browser/full/frame run, release or push.

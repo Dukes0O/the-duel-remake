@@ -371,11 +371,9 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "building"
-    claimed_by: "codex-hairpin-2026-10-13"
-    branch: "codex/fix-hairpin-camera"
+    status: "review"
     needs: [FIX-LIVE-EDGES-SOURCE]
-    locks: [busy-game-files]
+    locks: []
     details: "docs/board/cards/FIX-HAIRPIN-CAMERA.md"
 
   - id: FIX-LIVE-EDGES
