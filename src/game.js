@@ -41,7 +41,7 @@ import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeSnowmen} from './snowmen.js';
-import {initializeYeti,stepYeti} from './yeti.js';
+import {initializeYeti,stepYeti,validYetiSeed,yetiEnabled} from './yeti.js';
 import {initializeSummitAvalanche,resetSummitAvalanche,stepSummitAvalanche,observeSummitAvalanche} from './summit-avalanche.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
@@ -178,7 +178,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
     this._deepKit = deepKit === true;
@@ -215,6 +215,8 @@ export class Duel {
       normalizeCarLoadout(weaponLoadout,arsenalEnabled(this) ? [...WEAPON_IDS,
         ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS):null;
     this.state.stageIndex = Number.isFinite(startStage) ? clamp(Math.floor(startStage), 0, COURSE.length - 1) : 0;
+    if(COURSE[this.state.stageIndex]?.id==='summit-run'&&this.featureFlags.enabled('summit-run')&&this.featureFlags.enabled('yeti')&&validYetiSeed(yetiSeed))this.state.yetiSeed=yetiSeed;
+    else delete this.state.yetiSeed;
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
       wastelandRulesActive(this.state) ? validArmorKit(combatArmorKit) : null;
@@ -317,6 +319,7 @@ export class Duel {
     initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
     initializeSummitAvalanche(this);
+    if(!yetiEnabled(this))delete s.yetiSeed;
     initializeYeti(this);
     if (grandPrix) { applyQualifyingGrid(this); beginQualifying(this); }
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}

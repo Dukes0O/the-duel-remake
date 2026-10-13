@@ -3,6 +3,13 @@ import {CARS} from './config.js';
 import {sweepObstacle} from './collision.js';
 import {bodyHeading} from './vehicle-knock.js';
 
+export const validYetiSeed=seed=>Number.isSafeInteger(seed)&&seed>=0&&seed<=0xffffffff;
+export const isYetiGrandPrixInput=record=>record?.mode==='grandprix'&&record.stageId==='summit-run'&&validYetiSeed(record.yetiSeed);
+export function hash32(baseSeed,runId){
+  let hash=(2166136261^(baseSeed>>>0))>>>0;
+  for(let index=0;index<runId.length;index++)hash=Math.imul(hash^runId.charCodeAt(index),16777619);
+  return hash>>>0;
+}
 export const YETI=Object.freeze({eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
 export const yetiEnabled=duel=>duel.course?.def.id==='summit-run' &&
   duel.featureFlags?.enabled('summit-run')===true && duel.featureFlags?.enabled('yeti')===true;
@@ -38,7 +45,7 @@ export function yetiSites(course){
 }
 export function initializeYeti(duel) {
   if(!yetiEnabled(duel))return;
-  const rng=makeRng(duel.seed^0x59455449),appears=rng.chance(1/3);
+  const rng=makeRng((validYetiSeed(duel.state.yetiSeed)?duel.state.yetiSeed:duel.seed)^0x59455449),appears=rng.chance(1/3);
   const sites=yetiSites(duel.course);
   const site=sites[rng.int(0,sites.length-1)];
   duel.state.yeti={appears,site:{...site},seen:false,seenAt:null};
@@ -71,5 +78,6 @@ export function stepYeti(duel) {
 }
 export function yetiResult(duel) {
   return yetiEnabled(duel) && !duel.course.def.practice && !duel.state.qualifying
-    ? {yetiEnabled:true,yetiSeen:duel.state.yeti?.seen===true} : {};
+    ? {yetiEnabled:true,yetiSeen:duel.state.yeti?.seen===true,
+      ...(validYetiSeed(duel.state.yetiSeed)?{yetiSeed:duel.state.yetiSeed}:{})} : {};
 }

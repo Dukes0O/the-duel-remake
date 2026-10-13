@@ -2,7 +2,7 @@
 
 Yeti is dev and requires enabled Summit. Three ridge sites lie 25–40 m off Devil's Staircase/Summit, derived from actual named-piece boundaries; no course, geometry or fixture changes. Sighting uses the simulation eye +1.2 m, chest +1.8 m, 60 m, 75 degrees, terrain samples every 2 m and actual solid boxes. No collider or camera input. One callout and existing roar, then accepted clips walk away.
 
-Appearance input remains open with Claude. App fixes normal Summit to seed 1989, so repeated starts repeat the private draw. The controlled 300-seed sample tests the generator only; it does not prove one appearance in three actual races. No clock, counter, course RNG or replay input change was introduced.
+Claude's 13 October 08:40 answer settles optional yetiSeed = hash32(baseSeed, runId), derived from the existing run identity at App start and retained as a recorded input. Only the private Yeti generator reads it; old packets without it retain the original base-seed draw. No new clock, counter, course RNG draw or geometry seed is introduced.
 
 Only valid completed named-player Summit Duel, Time Trial, Time Attack and GP finishes count, including GP career off. Optional fields are normalized only when present. Invalid, incomplete, timeout, quit, qualifying, marked practice and recent duplicate results do not count. Existing pay, records, lap rules and old absent/off bytes remain exact.
 
@@ -16,8 +16,23 @@ Tests first: the actual GP-career-off award failed before implementation. The ne
 
 Review found marked-practice counting, unbounded keys and Yeti/Turret overlap. Each has a real failing regression before repair. The final existing affected acceptance passes 147 controlled checks in 2.839 s, including the 96-key normalization/live append, cap identity, both roof directions, loaded conflict and actual normalized Scrapper plating retained during a Chrome-to-Yeti choice. The new plating fixture was corrected from an invalid invented ID to the existing Scrapper kit; no production assertion was relaxed. Original model, terrain/solid ray, finish/App, source isolation, stale disposal, combat and audio checks remain.
 
-The original 8801676b nearby gate was canceled only in its verified owned tree and drained with exit -1 after 424.135 s; no aggregate pass or build. Corrected nearby/build wait until Record night or 06:30. No source merge occurs before Claude settles the actual appearance input and required reviews/gate/build finish. No native, browser, frame or balance acceptance is claimed.
+The original 8801676b nearby gate was canceled only in its verified owned tree and drained with exit -1 after 424.135 s; no aggregate pass or build. That superseded gate has no pass. Claude has now answered the input contract; its real input revision requires fresh source/save reviews and one original nearby/build. No native, browser, frame or balance acceptance is claimed.
 
 ## Removed
 
 Unbounded optional Yeti settlement retention and conflicting Yeti/Turret selection behavior were replaced in this fix. Existing earned cosmetics and models remain; no new binary asset.
+
+
+## Recorded input: contract before code
+
+The clean automatic integration union is 824eb7b2. Preserve all reviewed 96-key, practice, cap and roof repairs. Hash only the existing base seed and immutable run identity; fixed-width integer hashing stays in the owned Yeti module. App starts all four modes with the optional input only on enabled real Summit. Game validates uint32 and records it without touching its base seed or any shared generator. The existing replay test adapter passes only a present recorded field, with absent fixtures and all fingerprint bytes unchanged; no fixture regeneration.
+
+ActiveRace retains the optional input. The existing GP path normally has no pending record, so the Director's 4ea39dc0 grant permits only an enabled real Summit record with valid input and explicit Grand Prix mode/identity. Normalization preserves that mode; narrowly tagged recovery/early-return completion clears its own pending record without new charge or award authority. Ordinary interruption and police behavior remain exact. Actual App/save acceptance covers both GP career states, malformed/off/other-course rejection, distinct run identities and replay roundtrip. Fresh save review remains required.
+
+The meaningful actual-App regression failed before input implementation: actual Duel start records no private Yeti input. No broad gate/build, frame/browser/balance/full or real-save action is part of this correction.
+
+The new active-input fixture initially advanced a fixed 3.1 seconds, which can end before the actual GP light sequence reaches GO. It now waits through the actual bounded countdown and asserts racing before recording; no clock/state forcing or saved-input assertion was removed.
+
+The final affected acceptance passes 271 controlled checks. It covers actual cold memory reload and abandonment for starts with both GP career states. A narrow tag guard retains the original GP no-marker early return without even refreshing its profile; an existing-style call regression pins that legacy seam.
+
+The recorded-run sample has 89 appearances in 300 distinct identities with base seed 1989 unchanged. Actual start, packet replay and saved-input tests pass for all four modes. Additional stable-ID checks reject missing/mismatched/unavailable Summit and keep Grand Prix mode when only a saved numeric course position moved; the disposable catalogue change is restored in finally.

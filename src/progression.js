@@ -1,6 +1,6 @@
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
-import {normalizeYeti,countYetiFinish} from './yeti.js';
+import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
 import { weaponSignature } from './weapon-upgrades.js';
@@ -205,7 +205,8 @@ export function normalizeProfile(value) {
     race.runId.length > 0 &&
     race.runId.length <= 128 &&
     raceIndex >= 0 &&
-    Object.hasOwn(CARS, race.car)
+    Object.hasOwn(CARS, race.car) &&
+    (race.mode!=='grandprix'||isYetiGrandPrixInput(race))
   ) {
     const pendingPoliceFineCount = integer(race.pendingPoliceFineCount, 1_000_000);
     profile.activeRace = {
@@ -217,7 +218,9 @@ export function normalizeProfile(value) {
       driverId: normalizeDriverId(race.driverId),
       cpuDifficulty: Object.hasOwn(CPU_REWARDS, race.cpuDifficulty) ? race.cpuDifficulty : 'easy',
       pendingPoliceFineCount,
-      pendingPoliceFines: pendingPoliceFineCount * POLICE.ticketBaseFine
+      pendingPoliceFines: pendingPoliceFineCount * POLICE.ticketBaseFine,
+      ...(COURSE[raceIndex].id==='summit-run'&&validYetiSeed(race.yetiSeed)?{yetiSeed:race.yetiSeed,
+        ...(race.mode==='grandprix'?{mode:'grandprix'}:{})}:{})
     };
   }
   return profile;
@@ -559,8 +562,11 @@ export function settleRace(profile, result = {}) {
   profile=yeti.profile;
   const yetiAward=yeti.counted?{yetiAwarded:true,yetiSightings:profile.yeti.sightings}:{};
   if (grandPrix && (result.grandPrixCareerEnabled !== true || result.qualifying === true ||
-      result.abandoned !== true && (!isValidFinish(result) || !validGrandPrixPosition(result))))
+      result.abandoned !== true && (!isValidFinish(result) || !validGrandPrixPosition(result)))){
+    if(valid&&isYetiGrandPrixInput(profile.activeRace)&&profile.activeRace.key===key&&COURSE[result.stageIndex]?.id==='summit-run')
+      profile={...profile,activeRace:null};
     return {profile, reward: 0, awarded: false, personalBest: false, breakdown: {},...yetiAward};
+  }
   if (!valid || COURSE[result.stageIndex]?.practice ||
     profile.settledResults.includes(key) ||
     profile.wasteland?.settledResults?.includes(key))

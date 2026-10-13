@@ -1,3 +1,4 @@
+import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
@@ -346,6 +347,8 @@ export class App {
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
+    const yetiSeed=stage.id==='summit-run'&&this._switches().enabled('summit-run')&&this._switches().enabled('yeti')
+      ?hash32(this.seed,this.runId):undefined;
     const difficulty=options.difficulty??this.duel.state.difficulty;
     const laps=this.getLapChoice(stageIndex,mode,options.laps);
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
@@ -363,7 +366,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,laps,tyre,weaponLevels:getProfileWeapons(this.profile).levels,
+    this.duel.startCampaign({...options,laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
@@ -643,6 +646,14 @@ export class App {
       this.duel.course?.def.id==='summit-run' && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
     const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
     if(gpWithoutPay&&!yetiFinish){
+      if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&
+        this._runPlayerId===this.player.id&&state.playerId===this._runPlayerId){
+        this._refreshPlayer();const pending=this.profile.activeRace;
+        if(isYetiGrandPrixInput(pending)&&pending.key===`${this.runId}:${state.stageIndex}`&&
+          this.duel.course?.def.id==='summit-run'&&pending.yetiSeed===state.yetiSeed){
+          this.profile={...this.profile,activeRace:null};this._saveProfile();
+        }
+      }
       result.creditReward=0;result.creditBalance=this.profile.credits;return;
     }
     if(state.hiddenRoadVisit)return;
@@ -669,7 +680,10 @@ export class App {
       if(!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
       result.yetiSightings=awarded.yetiSightings;
     }
-    if(gpWithoutPay){result.creditReward=0;result.creditBalance=this.profile.credits;return;}
+    if(gpWithoutPay){
+      if(awarded.profile!==this.profile&&this.profile.activeRace&&awarded.profile.activeRace===null){this.profile=awarded.profile;this._saveProfile();}
+      result.creditReward=0;result.creditBalance=this.profile.credits;return;
+    }
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
@@ -1136,12 +1150,15 @@ export class App {
     return true;
   }
   _markActiveRace(state){
-    if(state.arena||state.mode==='grandprix')return;
+    const yetiInput=COURSE[state.stageIndex]?.id==='summit-run'&&validYetiSeed(state.yetiSeed)&&
+      this._switches().enabled('summit-run')&&this._switches().enabled('yeti');
+    if(state.arena||state.mode==='grandprix'&&!yetiInput)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
     const pending=this.profile.activeRace?.key===key?this.profile.activeRace:{pendingPoliceFineCount:0,pendingPoliceFines:0};
-    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
+    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
+      ...(yetiInput?{yetiSeed:state.yetiSeed,...(state.mode==='grandprix'?{mode:'grandprix'}:{})}:{})}};this._saveProfile();
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;

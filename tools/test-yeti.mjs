@@ -7,7 +7,7 @@ import {COURSE,CARS} from '../src/config.js';
 import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
 import {Duel} from '../src/game.js';
 import {createFeatureFlags,FEATURE_STATES} from '../src/feature-flags.js';
-import {yetiVisible,yetiSites,initializeYeti,YETI,yetiRewards} from '../src/yeti.js';
+import {yetiVisible,yetiSites,initializeYeti,YETI,yetiRewards,hash32} from '../src/yeti.js';
 import {getRoadRoofLook,equipRoadRoof,equipArmorKit,getEquippedRoofLook} from '../src/armor-kits.js';
 import {PAINT_PRESETS,paintPresetsFor,applyPaint,getPaintAppearance} from '../src/paint-presets.js';
 import {createYetiAssets,createYetiRoof,createYetiView} from '../src/yeti-view.js';
@@ -92,6 +92,88 @@ try{
   check(paintPresetsFor(profile,'stuttgart_959s',{yetiEnabled:true}).some(p=>p.id==='frost'),'reward on every owned car');
   const painted=applyPaint(profile,'stuttgart_959s','frost',{yetiEnabled:true});check(painted.ok);equal(painted.cost,0);equal(painted.profile.credits,profile.credits);equal(getPaintAppearance(painted.profile,'stuttgart_959s',{yetiEnabled:true}).id,'frost');
   equal(getPaintAppearance(painted.profile,'stuttgart_959s'),null,'off paint restores factory appearance without deleting choice');equal(normalizeProfile(painted.profile).cosmetics.stuttgart_959s.selected,'frost');
+  const storageBefore=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+  const cancelBefore=Object.getOwnPropertyDescriptor(globalThis,'cancelAnimationFrame');
+  const uuidBefore=Object.getOwnPropertyDescriptor(globalThis.crypto,'randomUUID');
+  const startMemory=new Map();let starter;
+  try{
+    globalThis.localStorage={getItem:key=>startMemory.get(key)??null,setItem:(key,value)=>startMemory.set(key,String(value)),removeItem:key=>startMemory.delete(key)};
+    globalThis.cancelAnimationFrame??=()=>{};
+    starter=new App();starter.duel.featureFlags=flags();starter.profile={...starter.profile,credits:4000};starter._saveProfile();
+    check(starter.purchaseCourse('summit-run').ok);
+    const reachGo=()=>{
+      for(let tick=0;tick<120*10&&starter.duel.state.status==='countdown';tick++)starter.advance(1/120,1/120);
+      equal(starter.duel.state.status,'racing','actual native start sequence reaches GO');starter.advance(1/120,1/120);
+    };
+    for(const mode of ['duel','timetrial','timeattack','grandprix']){
+      Object.defineProperty(globalThis.crypto,'randomUUID',{configurable:true,value:()=>`yeti-input-${mode}`});
+      check(starter.startCampaign({startStage:summit,mode,seed:1989,car:'falcone_f42',fieldSeed:4242,tyre:'winter'}),'actual App start '+mode);
+      const recorded=starter.duel.state;
+      check(Number.isSafeInteger(recorded.yetiSeed),'actual '+mode+' start records a private Yeti input');
+      equal(recorded.yetiSeed,hash32(1989,starter.runId),'actual App hashes the existing run identity');
+      equal(recorded.seed,1989);equal(starter.duel.course.seed,1989,'authored geometry retains the base seed');
+      const packet=JSON.parse(JSON.stringify({startStage:summit,seed:recorded.seed,yetiSeed:recorded.yetiSeed,
+        mode,car:recorded.car,driverId:recorded.driverId,playerId:recorded.playerId,fieldSeed:4242,tyre:'winter',difficulty:recorded.difficulty,cpuDifficulty:recorded.cpuDifficulty}));
+      const replay=new Duel({featureFlags:flags()});replay.startCampaign(packet);
+      equal(replay.state.yeti,recorded.yeti,'serialized recorded input reproduces the encounter');
+      const oldReplay=new Duel({featureFlags:flags()});const {yetiSeed,...oldPacket}=packet;oldReplay.startCampaign(oldPacket);
+      check(!Object.hasOwn(oldReplay.state,'yetiSeed'),'old replay remains an absent-input shape');
+      const projection=state=>{const {yeti,yetiSeed,...old}=state;return old;};
+      equal(JSON.stringify(replay.course.features),JSON.stringify(oldReplay.course.features),'private input never changes scenery draws');
+      for(let tick=0;tick<120;tick++){replay.setInput({throttle:1});oldReplay.setInput({throttle:1});replay.step(1/120);oldReplay.step(1/120);}
+      equal(projection(replay.state),projection(oldReplay.state),'private input leaves actual driving/CPU/clock state exact');
+      reachGo();
+      equal(starter.profile.activeRace?.yetiSeed,recorded.yetiSeed,'actual saved active input retains private seed');
+      const loaded=normalizeProfile(JSON.parse(JSON.stringify(starter.profile)));
+      equal(loaded.activeRace.yetiSeed,recorded.yetiSeed,'input survives save normalization');
+      if(mode==='grandprix')equal(loaded.activeRace.mode,'grandprix','saved GP cannot reload as Duel');
+    }
+    const sampleCourse=starter.duel.course;let distinct=0;
+    for(let i=0;i<300;i++){
+      const fixture={course:sampleCourse,seed:1989,state:{yetiSeed:hash32(1989,'yeti-run-'+i)},featureFlags:flags()};
+      initializeYeti(fixture);if(fixture.state.yeti.appears)distinct++;
+    }
+    check(distinct>=75&&distinct<=125,'distinct recorded run identities give approximately one third');
+    console.log(`Yeti recorded-run sample: ${distinct}/300 appearances at unchanged base seed 1989.`);
+    const legacyInput=game();for(const value of [null,NaN,-1,0x100000000,'1',1.5]){
+      const invalid=new Duel({featureFlags:flags()});invalid.startCampaign({startStage:summit,seed:1989,yetiSeed:value});
+      check(!Object.hasOwn(invalid.state,'yetiSeed'),'malformed private input remains absent');
+      equal(invalid.state.yeti,legacyInput.state.yeti,'malformed/old input uses the original base-seed draw');
+    }
+    const zeroInput=new Duel({featureFlags:flags()});zeroInput.startCampaign({startStage:summit,seed:1989,yetiSeed:0});equal(zeroInput.state.yetiSeed,0,'zero is a valid recorded input');
+    const foreignInput=new Duel({featureFlags:flags()});foreignInput.startCampaign({startStage:0,seed:1989,yetiSeed:7});check(!Object.hasOwn(foreignInput.state,'yetiSeed'),'other courses do not retain Yeti input');
+    for(const career of [false,true]){
+      starter.dispose();startMemory.clear();starter=new App();
+      starter.duel.featureFlags=createFeatureFlags({storage:null,overrides:{yeti:true,'summit-run':true,'grand-prix':true,'grand-prix-career':career}});
+      starter.profile={...starter.profile,credits:4000};starter._saveProfile();check(starter.purchaseCourse('summit-run').ok);
+      Object.defineProperty(globalThis.crypto,'randomUUID',{configurable:true,value:()=>`yeti-reload-${career}`});
+      check(starter.startCampaign({startStage:summit,mode:'grandprix',car:'falcone_f42',fieldSeed:4242}));reachGo();
+      const pending=starter.profile.activeRace,credits=starter.profile.credits,history=starter.profile.history;
+      equal(pending.mode,'grandprix');check(Number.isSafeInteger(pending.yetiSeed));
+      const reloaded=new App();
+      try{equal(reloaded.profile.activeRace,null,'actual cold memory reload clears tagged GP');equal(reloaded.profile.credits,credits,'GP recovery creates no charge or award');equal(reloaded.profile.history,history,'GP recovery creates no ordinary history');equal(reloaded.interruptedRaceCharge,0);check(!Object.hasOwn(reloaded.profile,'yeti'),'interruption never creates sighting ledger');}finally{reloaded.dispose();}
+      starter._refreshPlayer();Object.defineProperty(globalThis.crypto,'randomUUID',{configurable:true,value:()=>`yeti-abandon-${career}`});
+      check(starter.startCampaign({startStage:summit,mode:'grandprix',car:'falcone_f42',fieldSeed:4242}));reachGo();
+      starter._settleAbandoned();equal(starter.profile.activeRace,null,'actual GP abandonment clears only its own record');equal(starter.profile.credits,credits,'GP abandonment grants no new charge/award');check(!Object.hasOwn(starter.profile,'yeti'));
+      for(const patch of [{yetiSeed:-1},{yetiSeed:0x100000000},{yetiSeed:undefined},{stageId:COURSE[0].id},{stageId:undefined},{stageId:'unavailable-summit'},{stageId:17}])
+        equal(normalizeProfile({...starter.profile,activeRace:{...pending,...patch}}).activeRace,null,'malformed or other-course GP marker is rejected');
+      const moved=normalizeProfile({...starter.profile,activeRace:{...pending,stageIndex:0}}).activeRace;
+      equal(moved.stageIndex,summit,'saved stable course identity wins over a moved position');equal(moved.mode,'grandprix','stable identity normalization never strips GP mode');
+      const unavailable=COURSE.splice(summit,1)[0];
+      try{equal(normalizeProfile({...starter.profile,activeRace:pending}).activeRace,null,'unavailable Summit drops the GP input instead of reclassifying another course');}
+      finally{COURSE.splice(summit,0,unavailable);}
+
+      starter.duel.featureFlags=createFeatureFlags({storage:null,overrides:{yeti:false,'summit-run':true,'grand-prix':true,'grand-prix-career':career}});
+      check(starter.startCampaign({startStage:summit,mode:'grandprix',car:'falcone_f42',fieldSeed:4242}));reachGo();
+      check(!Object.hasOwn(starter.duel.state,'yetiSeed'));equal(starter.profile.activeRace,null,'off GP retains original no-active-record path');
+    }
+  }finally{
+    try{starter?.dispose();}finally{
+      if(storageBefore)Object.defineProperty(globalThis,'localStorage',storageBefore);else delete globalThis.localStorage;
+      if(cancelBefore)Object.defineProperty(globalThis,'cancelAnimationFrame',cancelBefore);else delete globalThis.cancelAnimationFrame;
+      if(uuidBefore)Object.defineProperty(globalThis.crypto,'randomUUID',uuidBefore);else delete globalThis.crypto.randomUUID;
+    }
+  }
   const duel=game(),course=duel.course,sites=yetiSites(course),oldObstacles=JSON.stringify(course.features.obstacles),oldTrees=JSON.stringify(course.features.trees);
   equal(sites.length,3);check(sites.every(site=>Math.abs(site.lateral)>=25&&Math.abs(site.lateral)<=40));
   let appearances=0;const selected=new Set();for(let seed=1;seed<=300;seed++){
@@ -125,6 +207,10 @@ try{
     _runPlayerId:'player-1',runId:'app-yeti',_stageStartCrashes:0,_switches:()=>flags(),_refreshPlayer(){},_saveProfile(){saves++;return true;}});
   App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'real App persists GP career-off sighting');equal(app.profile.yeti.sightings,1);equal(app.profile.credits,owned.credits);equal(app.profile.history,owned.history);equal(app.profile.personalBests,owned.personalBests);
   App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'duplicate App result cannot write/count again');
+  const legacyGp=Object.create(App.prototype);Object.assign(legacyGp,{duel:gp,profile:owned,player:{id:'player-1'},
+    _runPlayerId:'player-1',runId:'legacy-gp',_switches:()=>flags(false),_refreshPlayer(){throw Error('legacy GP early return must not refresh');}});
+  App.prototype._settleResult.call(legacyGp,gp.state.results,gp.state);check(legacyGp.profile===owned,'legacy GP with no pending input keeps identical profile');
+
   app.player={id:'player-2'};app.runId='foreign';App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'foreign named player cannot persist');
   const finished=game();finished.state.yeti.seen=true;finished.state.s=finished.raceLength;finished.state.completedLaps=1;finished.state.stageTimeSec=420;finished._finishStage();equal(finished.state.results.yetiSeen,true,'actual ordinary finish forwards sighting');
   const gpFinish=game(true,summit,1989,'grandprix');gpFinish.state.yeti.seen=true;
