@@ -184,4 +184,33 @@ for(let tick=0;tick<6;tick++){
   ctx.advance(.4);update();
 }
 audio.setPaused(true);ctx.advance(.001);equal(graphResources(),0,'all actual source graphs end after cleanup');
+// Real menu/pause state changes can happen before another audio update.
+for(const reason of ['menu-state','paused-state']){
+  flags.on=true;state.status='racing';state.paused=false;
+  ({audio,ctx}=audioFixture());audio.samples={};
+  let ready;audio._samplesPromise=new Promise(done=>{ready=done;});update();
+  equal(audio.vehicleVoices.size,7,reason+' starts with seven pending reservations');
+  if(reason==='menu-state')state.status='menu';else state.paused=true;
+  audio.samples={loadHigh:{source:{buffer:{duration:5}}},engine:{source:{buffer:{duration:5}}}};ready();
+  await Promise.resolve();await Promise.resolve();
+  equal(ctx.nodes.filter(node=>node.type==='source').length,0,reason+' cannot bind before next audio frame');
+  equal(audio.vehicleVoices.size,0,reason+' pending reservations drain on decode completion');
+}
+state.status='racing';state.paused=false;
+({audio,ctx}=audioFixture());update();
+state.traffic[0].s=300;update();
+check([...audio.vehicleVoices].some(row=>row.retiring),'menu event fixture contains a genuine already-fading voice');
+state.status='menu';audio.event({menu:true},state,course);ctx.advance(.001);
+equal(audio.vehicleVoices.size,0,'real menu event clears active and already-fading resources without another audio update');
+equal(ctx.nodes.filter(node=>node.type==='source'&&node.started!=null&&!node.ended).length,0,'menu event ends every actual source graph');
+state.traffic[0].s=20;state.status='racing';
+({audio,ctx}=audioFixture());audio.samples={};
+let menuReady;audio._samplesPromise=new Promise(done=>{menuReady=done;});update();
+state.status='menu';audio.event({menu:true},state,course);
+equal(audio.vehicleVoices.size,7,'menu event retains canceled pending budget until actual completion');
+audio.samples={loadHigh:{source:{buffer:{duration:5}}},engine:{source:{buffer:{duration:5}}}};menuReady();
+await Promise.resolve();await Promise.resolve();
+equal(audio.vehicleVoices.size,0,'menu event pending reservations drain only after decode');
+equal(ctx.nodes.filter(node=>node.type==='source').length,0,'menu event never creates a late source');
+state.status='racing';state.paused=false;
 console.log(`Vehicle audio: ${checks} controlled snapshot, moving-loop and resource checks passed; native mix/listening remain pending.`);

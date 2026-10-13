@@ -782,7 +782,8 @@ export class EngineAudio {
         if (reservation.retiring || reservation.group !== (reservation.kind === 'rival' ? state.opponents : state.traffic) ||
             !reservation.group.includes(reservation.actor) || reservation.actor.alive === false ||
             reservation.actor.wrecked || reservation.actor.crushed || reservation.actor.finished ||
-            this.context.state !== 'running' || this.muted || this.paused || !this.flags.enabled('rival-voices')) {
+            this.context.state !== 'running' || this.muted || this.paused || state.paused ||
+            !['countdown', 'racing', 'exploring'].includes(state.status) || !this.flags.enabled('rival-voices')) {
           this.vehicleVoices.delete(reservation);
           return;
         }
@@ -1582,6 +1583,7 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
+    if (ev?.menu) this._clearVehicleVoices();
     this.fightVoices.event(ev, state);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.

@@ -17,3 +17,7 @@ Nothing replaced. Legacy player engine and existing moving voices remain exact w
 The new App receiver fixture initially omitted the existing Course.def/themeAt interface; only that new fixture was completed, with no runtime guard or assertion reduction. The existing audio brief has legacy encoded punctuation, so its new ASCII section is appended without rewriting any old bytes.
 
 The final owned acceptance passes 95 controlled checks, including actual App wiring, current-array checks before the next audio frame, latest-listener pending binds, repeated identity replacements and actual source completion accounting. The deferred native scenario passes syntax checking only. No native mix, waveform comparator, frame check or listening verdict is claimed.
+
+Independent review found a real late-decode menu fault before any broad gate: status changes to menu without another audio frame started seven old voices. The existing owned test reproduced 7 versus 0 before repair. Decode binding now checks current live status and paused state; the actual menu event immediately retires active/fading sources and marks pending reservations canceled. Pending budget stays occupied until decode completion. The new cases cover menu/paused changes before the next audio frame and real menu-event cleanup of active, pending and already-fading resources. All original controlled checks and legacy defaults remain unchanged.
+
+The corrected affected acceptance passes 107 controlled checks; no native or broad gate has run before the correction confirmation.
