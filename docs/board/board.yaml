@@ -469,7 +469,10 @@ tasks:
     owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-full-check-2026-10-12"
+    branch: "codex/fac-full-check"
+    locks: []
     needs: []
     details: "docs/board/cards/FAC-FULL-CHECK.md"
 
