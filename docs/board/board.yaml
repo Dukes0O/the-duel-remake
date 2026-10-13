@@ -178,7 +178,7 @@ tasks:
     size: "L"
     status: "building"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
-    locks: [busy-game-files, surfaces, gp-existing-field-width]
+    locks: [surfaces, gp-existing-field-width]
     claimed_by: "codex-summit-factory"
     branch: "codex/p4-summit"
     flag: "summit-run"

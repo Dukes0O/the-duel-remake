@@ -11,3 +11,7 @@ Own only the on-foot mouse handlers in src/app.js, the existing input lifecycle 
 ## Claude answers
 
 No open art/sound decision. Shared-file handoff is the only current hold.
+
+## Director lock handoff
+
+Summit’s bab5ca92 shared source is clean and frozen; the latest correction only changes the Deep surface test catalogue. Its card now releases busy-game-files for this bounded mouse repair. Start after the board confirms CODEX CAN START NOW, then claim the lock before creating the lane.
