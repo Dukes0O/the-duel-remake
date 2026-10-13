@@ -31,7 +31,7 @@ smooth cloned normals and actual Harbour night exposure 1.02.
 Light only real hut windows and observatory aperture-side material faces.
 Mixed winter affects only authored ranges; legacy full-winter paths stay exact.
 Keep Gallery geometry/colliders. Round two retains the original 16 views
-and adds one real High fork approach outside the roof; capture waits for night.
+and adds the genuine fork approach in both qualities; no frame timing.
 
 ## Changed assertions and source union
 
@@ -135,8 +135,8 @@ use a separate fresh CIM read. No passing check is repeated for this mistake.
 
 Round one has 16 real views, 309,720 B, memory-only, zero warnings/errors.
 Claude holds it for grove/snow/night/window/fork fixes; route readability remains
-weak, with no fork acceptance. Sheet and review stay in docs/board/looks/p4-summit.
-Round-two native capture/acceptance and new strategies remain unrun.
+weak, with no fork acceptance. The consumed round-one verdict is folded into round-2-review.md before its old sheet is removed.
+Round-two native photographs are complete; formal art/fork acceptance and new strategies remain pending.
 No hidden-course frame timing; eventual reachable-course timing is deferred.
 
 ## Removed
@@ -157,3 +157,7 @@ Art-only resumption from accepted integration da75bdc16015e9f59dcb24d55ea3e79712
 The first actual round-two draft on 8c1f7daf passed the native photo guards: 18 photos,365535B,private port21111,zero warnings/errors,memory-only,no frames. Visual inspection showed the added fork photos mostly framed the Gallery roof; this is not a clear fork verdict. Before one bounded recipe correction, keep all original16 exact and move only the added fork snapshots to branch start+40 m,up90,ahead150. Existing snapshot semantics place the eye18m behind that position,still before the real roof, and aim150m ahead at the separated routes. Retry the same formal round two in a fresh owned evidence leaf; no gameplay/runtime change or extra art round.
 
 The aa8203c2 retry also passed photo guards (18 views,364473B,port32392,zero warnings/errors) but its fork rows still read as roof. Existing pure pose APIs on the actual fixed-route1989 Course show eyeS10097/up40 and eyeS10122/up90 both have tunnelAt null; the suspected tunnel clamp is ruled out. Existing fork signs are at10055,behind both eyes. Director approved one final bounded camera correction before code: branch start-80=10020,up18,ahead240,eye10002 before the signs/split,aim10260. Record the actual native eye position/nearest s/ground clearance/tunnel in the existing packet for only these added photographs. Preserve all original16 and runtime. If route clarity remains weak, report it and stop this camera problem; no further iteration or presentation edit.
+
+## Actual round-two art packet
+
+Final recipe62442820 passes the existing native photo harness on private port24735:18 real views,365471B,1945x1540,quality.85,memory-only,zero issues/warnings/errors,no frames or --drive. All16 original views/cameras remain; the two added real approach views include both GALLERY/OPEN ROAD signs. Native camera evidence in both qualities is eyeS10002/lateral0,18m above actual ground,tunnelAt null. Open Road contrast remains weak at sheet scale; no formal art/fork pass is claimed. Round-two sheet/review are docs/board/looks/p4-summit/round-2.jpg and round-2-review.md. Consumed round-one hold and packet facts are folded into that review before deleting only its old sheet. Original failed strategy gaps remain exact; new six-set measurements wait for full check. Existing photo capture and all owned processes drained. Nearby lane/build and independent code review pending; Claude formal judgment pending.
