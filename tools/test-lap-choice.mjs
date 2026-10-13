@@ -19,7 +19,7 @@ const start=(mode,laps,on=true,extra={})=>{const duel=new Duel({featureFlags:swi
 const profile=()=>({...createProfile(),credits:5000,milestones:Object.keys(DRIVING_MILESTONES)});
 const finish=(extra={})=>({runId:'lap-choice-test',stageIndex:0,car:'falcone_f42',driverId:'club',mode:'duel',difficulty:'casual',cpuDifficulty:'easy',seed:1989,laps:5,completed:true,won:true,timeSec:400,lapChoiceEnabled:true,...extra});
 
-for(const mode of ['duel','grandprix'])for(const laps of [5,10]){
+for(const mode of ['duel','grandprix'])for(const laps of [4,6]){
   const duel=start(mode,laps,true,{opponentCount:3});
   equal(duel.state.lapsTotal,laps,'Chosen length reaches the shared player and CPU target');
   equal(duel.raceLength,4000*laps,'The real race finish moves to the chosen length');
@@ -38,12 +38,13 @@ for(const mode of ['duel','grandprix'])for(const laps of [5,10]){
 }
 for(const mode of ['duel','grandprix']){
   const initial=mode==='grandprix'?3:2;
-  const off=start(mode,10,false),normal=start(mode,initial,true);
+  const off=start(mode,6,false),normal=start(mode,initial,true);
   equal(off.state.lapsTotal,initial,'Disabled switch ignores an explicit long race');
   equal(off.state,normal.state,'Default native race state stays exact across the switch');
   for(let i=0;i<60;i++){off.step(1/120);normal.step(1/120);}
   equal(off.state,normal.state,'Identical default inputs retain exact replay state');
-  equal(chosenRaceLaps(COURSE[0],mode,4,true),initial,'Unapproved shorter/intermediate choices return the default');
+  equal(chosenRaceLaps(COURSE[0],mode,7,true),initial,'Unapproved choices (7 laps) return the default');
+  equal(chosenRaceLaps(COURSE[0],mode,1,true),initial,'A one-lap choice returns the default');
 }
 for(const stage of COURSE)for(const mode of ['duel','grandprix','timetrial','wasteland']){
   if(stage.closed===false||stage.practice||stage.arena||stage.stuntTrial||['chase','drift','checkpoint'].includes(stage.kind)||['timetrial','wasteland'].includes(mode)){
@@ -51,12 +52,41 @@ for(const stage of COURSE)for(const mode of ['duel','grandprix','timetrial','was
     equal(offeredRaceLaps(stage,mode).length,1,'Excluded events offer no alternate length');
   }
 }
-equal(offeredRaceLaps({closed:true,laps:6},'duel'),[6,10],'Never offer fewer laps than the authored default');
+equal(offeredRaceLaps({closed:true,laps:6},'duel'),[2,3,4,5,6],'A default of 6 offers 2 to 6 laps');
+equal(offeredRaceLaps({closed:true,laps:8},'duel'),[2,3,4,5,6,8],'A default of 8 keeps its own default beside 2 to 6');
+equal(offeredRaceLaps(COURSE[0],'grandprix'),[2,3,4,5,6],'A Grand Prix (default 3) offers 2 laps and up to 6');
+equal(offeredRaceLaps(COURSE[0],'duel'),[2,3,4,5,6],'A Duel (default 2) offers 2 to 6 laps');
+{
+  const gp={closed:true,lengthU:2000,grandPrixLaps:3};
+  const atDefault=distanceFinishingPay(100,gp,3,'grandprix',true),two=distanceFinishingPay(100,gp,2,'grandprix',true);
+  equal(atDefault,100,'Default length with a factor of one pays exactly the old amount');
+  ok(two<atDefault,'2 laps on a default-3 event pays less than the default');
+  ok(two<=atDefault*2/3+2.5,'2 laps pays no more than two thirds of the default pay, before rounding to 5');
+  equal(two,65,'2 laps on a 6 km default-3 event pays two thirds, rounded to 5');
+  const real=distanceFinishingPay(100,COURSE[0],2,'grandprix',true),realDefault=distanceFinishingPay(100,COURSE[0],3,'grandprix',true);
+  ok(real<realDefault&&real<=realDefault*2/3+2.5,'A real default-3 Grand Prix pays at most two thirds for 2 laps');
+}
+{
+  const pays=[2,3,4,5,6].map(laps=>distanceFinishingPay(100,COURSE[0],laps,'duel',true));
+  equal(pays,[100,150,200,250,300],'Pay rises step by step from 2 to 6 laps on one event');
+  ok(pays.every((pay,i)=>i===0||pay>pays[i-1]),'Every extra lap pays strictly more');
+  const short=[2,3,4,5,6].map(laps=>distanceFinishingPay(100,{closed:true,lengthU:1000,laps:6},laps,'duel',true));
+  ok(short.every((pay,i)=>i===0||pay>=short[i-1])&&short[0]<short[4],'Pay never falls as laps rise on a short-lap event');
+}
+for(const stage of [{arena:true},{stuntTrial:{}},{kind:'checkpoint'},{practice:true}]){
+  const fixed={closed:true,laps:2,lengthU:1000,...stage};
+  equal(offeredRaceLaps(fixed,'duel'),[2],'Excluded event offers only its default');
+  equal(distanceFinishingPay(100,fixed,6,'duel',true),100,'Excluded event pay is unchanged');
+}
+for(const mode of ['timetrial','wasteland']){
+  equal(offeredRaceLaps(COURSE[0],mode),[2],`${mode} offers only its default`);
+  equal(distanceFinishingPay(100,COURSE[0],6,mode,true),100,`${mode} pay is unchanged`);
+}
 equal(distanceFinishingPay(47,{closed:true,lengthU:1000},5,'duel',true),47,'Floor-one pay is byte-exact, without rounding');
 equal(distanceFinishingPay(1,{closed:true,lengthU:1700},5,'duel',true),1,'Nearest-five rounding never lowers the old component');
-equal(raceDistanceLabel({lengthU:4200},10,'duel'),'10 laps · 42.0 km · x5.25','Distance display uses kilometres and the actual factor');
+equal(raceDistanceLabel({lengthU:4200},6,'duel'),'6 laps · 25.2 km · x3.15','Distance display uses kilometres and the actual factor');
 
-for(const [cpu,base]of Object.entries(CPU_REWARDS))for(const difficulty of ['casual','pro'])for(const laps of [2,5,10]){
+for(const [cpu,base]of Object.entries(CPU_REWARDS))for(const difficulty of ['casual','pro'])for(const laps of [2,4,6]){
   const payload=finish({cpuDifficulty:cpu,difficulty,laps,clean:true,policeEscapes:2});
   const old=settleRace(profile(),{...payload,lapChoiceEnabled:false});
   const scaled=settleRace(profile(),payload);
@@ -74,14 +104,14 @@ for(const [cpu,base]of Object.entries(CPU_REWARDS))for(let position=1;position<=
   equal(scaled.breakdown.snowmen,50,'Snowman bonus stays fixed');
   equal(scaled.reward-old.reward,(expected-old.breakdown.base)*(difficulty==='pro'?2:1),'GP Pro order and bonuses stay exact');
 }
-for(const extra of [{completed:false,won:true},{timeout:true},{abandoned:true},{laps:4}]){
+for(const extra of [{completed:false,won:true},{timeout:true},{abandoned:true},{laps:7}]){
   const payload=finish(extra),scaled=settleRace(profile(),payload),old=settleRace(profile(),{...payload,lapChoiceEnabled:false});
   equal(scaled.reward,old.reward,'Incomplete/invalid runs gain no distance earnings and retain loss rules');
   equal(isValidFinish(payload),false,'Incomplete/invalid finishes cannot enter records');
 }
 const board=createLeaderboard(),player={id:'lap-owner',name:'Lap Owner'};
 let records=board;
-for(const laps of [2,5,10]){
+for(const laps of [2,4,6]){
   const payload=finish({laps,timeSec:100*laps});
   const added=recordFinish(records,payload,player);ok(added.recorded,'Each offered lap count stores a valid separate finish');records=added.board;
 }
@@ -99,11 +129,11 @@ globalThis.localStorage=storage;memory.clear();
 const app=new App();app.duel.featureFlags=switches(true);ownTestCourses(app);
 const originalPlayer=app.player.id;
 app.setRaceSettings({startStage:0,mode:'duel'});
-const before=memory.get(PLAYERS_KEY);app.setLapChoice(10);
+const before=memory.get(PLAYERS_KEY);app.setLapChoice(6);
 equal(memory.get(PLAYERS_KEY),before,'Choosing laps writes no saved preference');
-equal(app.getRaceChoices().laps,10,'Menu choices expose the current session length');
+equal(app.getRaceChoices().laps,6,'Menu choices expose the current session length');
 app.setRaceSettings({startStage:1});equal(app.getRaceChoices().laps,2,'Another event starts at its own default');
-app.setRaceSettings({startStage:0});equal(app.getRaceChoices().laps,10,'Returning to an event restores its session choice');
+app.setRaceSettings({startStage:0});equal(app.getRaceChoices().laps,6,'Returning to an event restores its session choice');
 app.setRaceSettings({mode:'grandprix'});equal(app.getRaceChoices().laps,3,'GP has a separate choice from Duel');
 app.setLapChoice(5);app.startCampaign({mode:'grandprix',qualifying:true,fieldSeed:42});
 equal(app.duel.state.lapsTotal,2,'Optional qualifying retains its two-lap target');
@@ -114,14 +144,14 @@ app.restart();equal(app.duel.state.lapsTotal,5,'Restart preserves the session ch
 app.returnToMenu();app.setRaceSettings({mode:'duel'});
 const newPlayer=app.addPlayer('Other Driver');ok(newPlayer.ok,'Existing local player operation works');ownTestCourses(app);
 equal(app.getRaceChoices().laps,2,'Another player does not inherit the first choice');
-app.selectPlayer(originalPlayer);equal(app.getRaceChoices().laps,10,'Switching back restores only this player choice');
+app.selectPlayer(originalPlayer);equal(app.getRaceChoices().laps,6,'Switching back restores only this player choice');
 const reloaded=new App();reloaded.duel.featureFlags=switches(true);equal(reloaded.getRaceChoices().laps,2,'Reload starts a fresh session at default');
 
 const renderApp={duel:{state:{mode:'duel',stageIndex:0}},_switches:()=>switches(true),player,profile:profile(),getMenuSeed:()=>1989,getMenuRouteLabel:()=> 'Route A',grandPrixAvailable:()=>true,leaderboard:records};
-const result={...finish({laps:10}),creditReward:3000,creditBalance:8000};
-const state={stageIndex:0,mode:'duel',status:'stage_result',results:result,lapsTotal:10};
+const result={...finish({laps:6}),creditReward:3000,creditBalance:8000};
+const state={stageIndex:0,mode:'duel',status:'stage_result',results:result,lapsTotal:6};
 const markup=createResultsScreen({app:renderApp,profile:()=>renderApp.profile,credits:String,escapeHTML:String,time:String})(state);
-ok(markup.includes('10 laps · 40.0 km · x5.00'),'Results show the chosen distance directly under pay');
-const leaderboardMarkup=createLeaderboardScreen({app:renderApp,boardFilter:{stage:0,laps:10,car:'',driverId:'club'},escapeHTML:String,credits:String,time:String})();
+ok(markup.includes('6 laps · 24.0 km · x3.00'),'Results show the chosen distance directly under pay');
+const leaderboardMarkup=createLeaderboardScreen({app:renderApp,boardFilter:{stage:0,laps:6,car:'',driverId:'club'},escapeHTML:String,credits:String,time:String})();
 ok(leaderboardMarkup.includes('Lap Owner')&&leaderboardMarkup.includes('data-board-filter="laps"'),'Leaderboard exposes the chosen-length record');
 console.log(`PASS LAP-CHOICE: ${checks} assertions`);

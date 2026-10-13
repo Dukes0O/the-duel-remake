@@ -2,6 +2,18 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Laps, snowmen and fixes release – 13 October 2026
+
+Choose your race length: Rival Duel and Grand Prix races on the circuits now
+offer 2 to 6 laps. Longer races pay more, by distance driven, and a race on a
+long course now pays more than before even at its normal length; fewer laps
+than normal pays proportionally less. Records are kept separately for each lap
+count. Eight snowmen wait near the Tremblant Snow lodge: smash them for 25
+credits each, paid when you finish the race. Grand Prix now runs on all nine
+original circuits as well as the new ones. On foot, you can aim and fire with
+the mouse at the same time, and Ambush Alley gives you time to get ready before
+the first shots.
+
 ## Panorama Ridge release – 12 October 2026
 
 Panorama Ridge is a mountain circuit (1,600 credits), three laps of about
