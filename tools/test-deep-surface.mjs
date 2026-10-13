@@ -26,8 +26,8 @@ function start(car, { kind = 'sea-floor', enabled = true, tyre = 'summer' } = {}
 const damage = state => structuredClone({ lives: state.lives, damageZones: state.damageZones,
   majorCrashes: state.majorCrashes, stageCrashes: state.stageCrashes, score: state.score });
 
-test('sea-floor data and asphalt tyres leave circuit surfaces and ordinary readouts exact', () => {
-  assert.deepEqual(SURFACE_KINDS, ['asphalt', 'gravel', 'snow', 'ice', 'deep-snow']);
+test('sea-floor data and asphalt tyres keep legacy surfaces, appended warm tarmac and ordinary readouts exact', () => {
+  assert.deepEqual(SURFACE_KINDS, ['asphalt', 'gravel', 'snow', 'ice', 'deep-snow', 'warm-tarmac']);
   assert.equal(SURFACES['sea-floor'].column, 'asphalt');
   const sea = gripFor('sea-floor');
   near(sea.grip, .75, 'summer grip');
@@ -36,7 +36,7 @@ test('sea-floor data and asphalt tyres leave circuit surfaces and ordinary reado
   assert.equal(sea.topShare, .7);
   assert.deepEqual(gripFor('asphalt'), { kind: 'asphalt', grip: 1, topSpeedMph: null,
     topShare: 1, hint: '', cue: null, active: false });
-  assert.deepEqual(SURFACE_KINDS.map(kind => SURFACES[kind].grip), [1, .85, .7, .5, .55]);
+  assert.deepEqual(SURFACE_KINDS.map(kind => SURFACES[kind].grip), [1, .85, .7, .5, .55, 1]);
   assert.throws(() => buildTrackScript({ ...def, script: [['straight', 4000, { surface: 'sea-floor' }]] }), TrackScriptError);
   assert.throws(() => new Course({ ...def, surfacePatches: [{ id: 'zone-on-road', kind: 'sea-floor',
     s0: 400, s1: 450, from: -3, to: 3 }] }), /unknown surface/);

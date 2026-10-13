@@ -39,6 +39,11 @@ The release test formerly required the complete registry to contain exactly four
 released circuits. Summit adds a fifth dev entry. The approved correction checks
 only state-on manifests against those same four IDs in the same order. Generic
 registry coverage and explicit dev selection assertions remain unchanged.
+The Deep surface test also pinned the former complete five-kind catalogue and
+its five summer grips. The approved fixture correction appends warm-tarmac
+and grip 1 while retaining the original names, order and values. Sea-floor,
+asphalt, tyre, driving, gravity, landing and switch controls remain unchanged.
+
 The clean release/Tollkeeper sync retains both shared Game changes and Claude's
 approved Panorama fixture updates; no fixture or signature is regenerated.
 
@@ -119,7 +124,10 @@ Raw logs and byte proofs: integration .evidence/2026-10-12/P4-SUMMIT/
 factory-source-881700c8. Fresh save review on 65224d3 passed nine fixtures and
 286 assertions. The first 319-suite gate was canceled before a newly identified
 night-only Blender invocation; exit -1, no final counts and no build. The accepted
-classifier repair is adopted. Corrected nearby lane and build await receipts.
+classifier repair is adopted. The corrected gate on 32cdadc2 completed in
+2170.3812 s: 318 passed, one failed, zero unrun. Only the stale Deep catalogue
+assertion failed; its three other tests passed. No build ran on that failure.
+The approved two-array correction now awaits the normal nearby lane and build.
 
 Scheduling mistake: a combined CIM/launch call ran one 2.5 s focused check
 briefly as a third job after another parent appeared; it drained. Future launches
