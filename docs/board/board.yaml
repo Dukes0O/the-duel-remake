@@ -156,6 +156,7 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "building"
+    waiting_on: "claude"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     claimed_by: "codex-avalanche-rejoin-2026-10-13"
