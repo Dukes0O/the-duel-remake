@@ -469,11 +469,14 @@ Flats. The fight is the Convoy Raid with these additions.
 | Toll Gate | Tell: a klaxon and flashing rig lights. Then the rig drops a spike strip 12 m wide across his path (caltrops rules). Two lights mark a 4 m gap, whose centre is seeded between 3 and 9 m across the strip. At most every 14, 11, 9 s |
 | Counter | Drive through the lit gap |
 | Window | After each gate the rear valve's existing lamps flash for 3 s; hits on that valve deal 2 times damage. No doors open |
-| Phase two | First broken valve resets both escorts to full armor once, even if damaged or waiting to return. Ordinary 3.5 s escort returns then continue; gates 20% more often |
-| Win | Break the valves and plant the finishing charge by boarding (CREW-03), as in every Convoy Raid |
+| Escorts | Kyle, 12 October 2026 ("cannot be beaten"): a knocked-out escort stays out for 30 s before it returns (was 3.5 s). The first broken valve no longer resets them |
+| Phase two | First broken valve: gates 20% more often. Nothing else changes |
+| Last valve | The Tollkeeper "goes to zero". Escorts still driving are knocked out at once, escorts already out stay out, and none return for 60 s. That minute is also the boarding window. The tanker rolls to a stop within 4 s and stays stopped, its roof plate lit |
+| Win | Break the valves, get out, climb aboard and plant the finishing charge (CREW-03 and the finish below), as in every Convoy Raid |
 | Pay | Escorts do not score. Loss: 40 per broken valve times difficulty. First win: ladder pay and territory claim. Rematch win: ordinary warlord pay. Existing warlord settlement pays once |
 | Reward | The convoy kit: the Warlord plated look, earned on any car, +30 armor and +270 kg; no new art. Also his story card |
-| Callouts | `TOLL GATE!`, `CORE LIT. HIT THE REAR VALVE!` |
+| Callouts | `TOLL GATE!`, `CORE LIT. HIT THE REAR VALVE!`, `TANKER STOPPING / ESCORTS DOWN FOR 60 s` |
+| Prompts | Large on-screen prompts, always on, no H key needed: `PRESS F TO GET OUT` (within 40 m of the stopped tanker; slow below 40 km/h or the exit is a bail-out), `RUN TO THE TANKER` with an arrow and distance, `PRESS F TO CLIMB ABOARD` (within 3 m), `HOLD F OR LEFT MOUSE TO PLANT THE CHARGE` with a filling bar, `CHARGE PLANTED` |
 
 ### Settled for build: Baron Blackiron (WAR-03e)
 
@@ -839,11 +842,17 @@ at least 60 m away. Ambush Alley is not on the Scrapdome ring.
   treats it as a very heavy body), with two escort cars (guard brain: ram
   whoever attacks the rig).
 - **Weak points:** three fuel valves on the tank, 150 armor each, hit by
-  weapons and rams. When all three are broken the rig slows to 35 km/h and the
-  boarding plate on the tank roof lights up (warning lamps; nothing opens).
-- **The finish:** board the rig (CREW-03; at 35 km/h anyone can) and plant
-  the finishing charge on the lit plate. If nobody does within 60 s, the lamps
-  go out and the valves come back at half armor.
+  weapons and rams. When all three are broken the rig rolls to a stop within
+  4 s (it no longer drives on at 35 km/h) and the boarding plate on the tank
+  roof lights up (warning lamps; nothing opens). It stays stopped for 60 s.
+- **The finish (Kyle, 12 October 2026: the on-foot finish could not be done):**
+  get out of the car (F) within 40 m of the stopped rig, run to within 3 m of
+  its body and press F to climb aboard (a 1.1 m jump cannot reach the 3 m
+  roof, so climbing replaced the jump; jumping onto the roof still counts),
+  then hold F or the left mouse button for 1 s to plant the finishing charge
+  on the lit plate. The fighter stays on the roof up to 20 s on this rig.
+  If nobody plants within 60 s, the lamps go out, the valves come back at half
+  armor and the rig pulls away again over 4 s.
 - **Pay:** the largest arena payout, since it is the hardest.
 - **The Tollkeeper's fight** (section 5) is this mode with his tells added.
 

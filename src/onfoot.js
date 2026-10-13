@@ -4,6 +4,8 @@ export const FIGHTER_STEP_SECONDS = 1 / 120;
 export const FIGHTER_RULES = Object.freeze({
   walkMetersPerSecond: 4.5,
   sprintMetersPerSecond: 7.5,
+  // Keyboard turning, like steering a car: A/D and the left and right arrows.
+  turnRadiansPerSecond: 2.4,
   jumpMeters: 1.1,
   gravity: 9.8,
   maximumSlopeDegrees: 40,
@@ -195,6 +197,9 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
 
   const startX = fighter.x, startZ = fighter.z;
   applyFootLook(fighter, input);
+  // Keyboard turn: right lowers yaw, the same way as mouse right.
+  fighter.yaw += ((input.turnLeft ? 1 : 0) - (input.turnRight ? 1 : 0)) *
+    T.turnRadiansPerSecond * dt;
   if (input.jump && !fighter.jumpHeld && fighter.airHeight === 0)
     fighter.verticalSpeed = JUMP_SPEED;
   fighter.jumpHeld = !!input.jump;

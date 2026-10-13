@@ -9,10 +9,17 @@ assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'photo']);
 assert.equal(keyboardAction('car', 'KeyC'), 'camera-cycle');
 assert.equal(keyboardAction('menu', 'KeyC'), 'camera-cycle');
 for (const code of ['KeyD', 'KeyB', 'KeyV', 'KeyX']) assert.equal(keyboardAction('car', code), null, `${code} is not a camera key`);
-assert.equal(keyboardAction('foot', 'KeyD'), null, 'D strafes on foot and cannot change car camera');
-assert.equal(heldInput('foot', 'right', { KeyD: true }), true);
-for (const [name, code] of [['forward', 'ArrowUp'], ['back', 'ArrowDown'], ['left', 'ArrowLeft'], ['right', 'ArrowRight']])
+// 12 October 2026 (Kyle: "they do not turn left and right"): on foot A, D and the
+// left and right arrows turn the fighter; Q and E step sideways.
+assert.equal(keyboardAction('foot', 'KeyD'), null, 'D turns on foot and cannot change car camera');
+assert.equal(heldInput('foot', 'turnRight', { KeyD: true }), true);
+for (const [name, code] of [['forward', 'ArrowUp'], ['back', 'ArrowDown'], ['turnLeft', 'ArrowLeft'],
+  ['turnRight', 'ArrowRight'], ['forward', 'KeyW'], ['back', 'KeyS'], ['turnLeft', 'KeyA'],
+  ['left', 'KeyQ'], ['right', 'KeyE']])
   assert.equal(heldInput('foot', name, { [code]: true }), true, `${code} moves the fighter ${name}`);
+assert.equal(heldInput('foot', 'left', { ArrowLeft: true }), false, 'the left arrow turns, it does not strafe');
+assert.equal(keyboardAction('foot', 'KeyQ'), null, 'Q is a held strafe key on foot, not an action');
+assert.equal(keyboardAction('foot', 'KeyE'), null, 'E is a held strafe key on foot, not an action');
 assert.equal(keyboardAction('car', 'Digit1'), 'weapon:ufo');
 assert.equal(keyboardAction('foot', 'Digit1'), 'gear:1');
 assert.equal(keyboardAction('photo', 'Digit1'), null, 'photo mode cannot fire a car weapon');
