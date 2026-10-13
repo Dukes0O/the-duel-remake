@@ -488,3 +488,35 @@ test('real temporary Git copy stays detached at starting source and safely unlin
     assert.equal(git(['worktree','list','--porcelain']).includes('detached'),false);
   }finally {if(copy)await removeCheckCopy(copy);await rm(parent,{recursive:true,force:true});}
 });
+
+test('consecutive frame qualities buy courses for distinct memory-only native players', async()=>{
+  const {App}=await import('../src/app.js');
+  const {COURSE}=await import('../src/config.js');
+  const {ALL_CIRCUITS}=await import('../src/circuits/index.js');
+  const {isCourseUnlocked}=await import('../src/course-access.js');
+  const names=['localStorage','__DUEL_QA__','cancelAnimationFrame'];
+  const globals=new Map(names.map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
+  const memory=new Map(),originalLength=COURSE.length;
+  let app;
+  try{
+    globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
+    globalThis.__DUEL_QA__=true;
+    globalThis.cancelAnimationFrame=()=>{};
+    if(!COURSE.some(row=>row.id==='harbour-lights'))COURSE.push(ALL_CIRCUITS.find(row=>row.id==='harbour-lights'));
+    app=new App();
+    prepareNightPlayer(app,'high');
+    const highId=app.player.id,highProfile=JSON.stringify(app.profile);
+    assert.equal(isCourseUnlocked(app.profile,'harbour-lights'),true);
+    assert.equal(app.purchaseCourse('harbour-lights').ok,false,'native duplicate purchase remains refused');
+    prepareNightPlayer(app,'performance');
+    assert.notEqual(app.player.id,highId,'second quality uses its own temporary named player');
+    assert.equal(isCourseUnlocked(app.profile,'harbour-lights'),true);
+    assert.equal(JSON.stringify(app.players.players.find(row=>row.id===highId).profile),highProfile,'earlier funded QA profile remains exact');
+    assert.equal(app.duel.state.status,'menu');
+  }finally{
+    try{app?.dispose();}finally{
+      COURSE.splice(originalLength);
+      for(const[name,descriptor]of globals)if(descriptor)Object.defineProperty(globalThis,name,descriptor);else delete globalThis[name];
+    }
+  }
+});
