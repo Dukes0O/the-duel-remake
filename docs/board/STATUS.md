@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T15:29:04.429Z
+Observed at: 2026-10-13T15:31:18.493Z
 
-Observation commit: 295c1f8416bf4ea28b7e6376a616bcffb9e24900
+Observation commit: 57ab0cc5f616846a0b6533246e6fa04f43c0cd25
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 295c1f8416bf4ea28b7e6376a616bcffb9e24900
+Integration HEAD: 57ab0cc5f616846a0b6533246e6fa04f43c0cd25
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -57,6 +57,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/avalanche-rejoin | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/avalanche-rejoin |
 | codex/deep-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/fix-live-edges | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-live-edges |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
@@ -97,7 +98,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 504,177 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 411,139,072 B | +150,528 B | unavailable |
+| Git objects | 411,181,056 B | +41,984 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -106,7 +107,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 295c1f8416bf4ea28b7e6376a616bcffb9e24900
+- Local integration/wasteland: 57ab0cc5f616846a0b6533246e6fa04f43c0cd25
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

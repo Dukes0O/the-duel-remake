@@ -299,7 +299,8 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "L"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
     branch: "codex/deep-art-src"
     needs: []
