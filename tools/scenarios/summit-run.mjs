@@ -16,7 +16,7 @@ const views=[
   ['gallery-open-road',SUMMIT_RUN.roadBranches[0].start+35,28,180],
   ['devils-staircase',centre("Devil's Elbow"),15,75],
   ['summit-landmarks',road.length-150,13,100],
-  ['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+40,90,150],
+  ['gallery-fork-approach',SUMMIT_RUN.roadBranches[0].start-80,18,240],
 ];
 
 export async function run(context){
@@ -66,6 +66,14 @@ export async function run(context){
         if(!shot.canvas||document.querySelector('#view3d')?.dataset.trackKitAsset!=='ready')throw Error('Actual approved Summit kits are not ready');
         return shot.canvas.toDataURL('image/jpeg',.88);
       })()`);
+      if(name==='gallery-fork-approach')facts.push(await context.evaluate(`(()=>{
+        const course=window.__summitCourse,eye=window.__render.camera.position;
+        const nearest=course.nearest(eye.x,eye.z),tunnel=course.tunnelAt(nearest.s);
+        return {quality:${JSON.stringify(quality)},view:'gallery-fork-approach',requested:{snapshotS:${s},up:${up},ahead:${ahead}},
+          eye:{x:eye.x,y:eye.y,z:eye.z,s:nearest.s,lateral:nearest.lateral},
+          eyeAboveGround:eye.y-course.groundAt(nearest.s,nearest.lateral).y,
+          tunnel:tunnel?{id:tunnel.id,start:tunnel.start,end:tunnel.end,height:tunnel.height}:null};
+      })()`));
       photos.push({label:quality+' '+name,url:photo});
       await context.evaluate('window.__render.clearTrackSnapshot()');
     }
