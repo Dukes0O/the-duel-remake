@@ -1,5 +1,6 @@
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
-import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay} from './grand-prix-career.js';
+import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
+  normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
 import { weaponSignature } from './weapon-upgrades.js';
 import { CARS, COURSE, DEFAULT_CAR, DRIVE, CPU_DIFFICULTY, POLICE } from './config.js';
 import { normalizeCosmetics } from './paint-presets.js';
@@ -156,6 +157,8 @@ export function normalizeProfile(value) {
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
+  if (Object.hasOwn(value, 'grandPrixPodiums'))
+    profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
   profile.cosmetics = normalizeCosmetics(value.cosmetics, profile);
   profile.drivers = getDriverState({ ...profile, drivers: value.drivers });
@@ -703,9 +706,11 @@ export function settleRace(profile, result = {}) {
     profile.wasteland?.version === 1 && profile.wasteland.discoveredGate === true;
   const career = applyWastelandResult(profile.wasteland, result,
     stageEventId(result.stageIndex), {finished, won});
+  const podiumProfile = grandPrix && recordEligible && result.practice !== true && result.position <= 3
+    ? recordGrandPrixPodium(profile, stageEventId(result.stageIndex)) : profile;
   const updated = {
-    ...(finished && result.qualifying !== true ? countDeepFinish(profile, {enabled: result.deepEnabled === true,
-      eventId: stageEventId(result.stageIndex), mode: result.mode}) : profile),
+    ...(finished && result.qualifying !== true ? countDeepFinish(podiumProfile, {enabled: result.deepEnabled === true,
+      eventId: stageEventId(result.stageIndex), mode: result.mode}) : podiumProfile),
     ...(notoriety || pacificFinish || muddyHollowFinish || career.wasteland !== profile.wasteland ? {wasteland: {
       ...career.wasteland,
       ...(notoriety ? {xp: totalXp, rank: notorietyRank,
