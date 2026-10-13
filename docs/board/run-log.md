@@ -1057,3 +1057,6 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 06:18 PT: P4-AVALANCHE optional diagnostic86082572 merged; nearby16/16, build704ms, ordinary review CLEAR. Native route FAILED, waiting Claude; no repeated gate or release.
 
 - 2026-10-13 06:20 PT: FAC-FULL-CHECK memory-only quality setup4de64ff2 merged; nearby19/19, build847ms, same review CLEAR. Daily batch on bedd902a FAILED despite full422/422/combat pass; High35.5ms/4535.5ms, Performance unmeasured, browsers105/127. No repeat timing or release.
+
+- 2026-10-13: P4-GP-EXISTING abc761fd merged; nearby219/219/jobs4, build590ms, independent review CLEAR, native18/18 with zero corner crashes. All nine tuning caps complete; residual targets remain explicit. No release/push/repeated gate.
+- 2026-10-13 janitor: own merged new lanes/consumed green evidence recycled; old lanes, pending art and failed native evidence retained. Looks17152350B/20MB unchanged; tracked1950/323813992B before log correction to1949/324432150B before final merge;47asset/84export/333doc advisory candidates flagged,0unusedmodules/removedtests, no uncertain deletion.
