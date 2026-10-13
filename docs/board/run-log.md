@@ -1043,3 +1043,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 LAP-CHOICE merged 30d2604f: lane 269/269 in 807.02 s, build 1929.3158 ms, review lighting independent code-money-save review and real-fault confirmation clear.
 
 - 2026-10-12 P4-SNOWMEN source0be79396:313/313, build1030.4691ms, ordinary and fresh save reviews CLEAR; conflict-free, no rerun; twenty soft once-hit snowmen/capped pay, dev only. Native checks deferred.
+
+- 2026-10-13 Janitor separate inventory after14 merges since2c6d316d: own merged lane/evidence already recycled with verdicts; no uncertain deletion. Advisory47 assets/81 exports and existing diagnostic notes retained, no unused module/removed-feature-test candidate. Looks17,152,350→17,152,350B, below20MB; older unmerged lanes retained and listed in STATUS.
