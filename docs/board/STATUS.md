@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T01:33:53.132Z
+Observed at: 2026-10-13T01:37:44.799Z
 
-Observation commit: 28eb32d24c8cacff882650f3bc6d29e8eb1c1c14
+Observation commit: 2c028462cc31ddcd0b4679bbd5c8510dc1825ef8
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 28eb32d24c8cacff882650f3bc6d29e8eb1c1c14
+Integration HEAD: 2c028462cc31ddcd0b4679bbd5c8510dc1825ef8
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -45,7 +45,7 @@ Last recorded full run: 2026-10-12T16:37:15.724Z; tested commit: 1a7a77e77c55a48
 | tremblant-woods | on |
 | tremblant-snow | on |
 | harbour-lights | on |
-| panorama-ridge | dev |
+| panorama-ridge | on |
 | the-deep | dev |
 
 ## Lane branches
@@ -92,9 +92,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 247,417 B | +59,379 B | 5,000,000 B |
+| Added bytes in last merge | 125,570 B | -121,847 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 402,611,200 B | +112,640 B | unavailable |
+| Git objects | 402,778,112 B | +166,912 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 28eb32d24c8cacff882650f3bc6d29e8eb1c1c14
+- Local integration/wasteland: 2c028462cc31ddcd0b4679bbd5c8510dc1825ef8
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
