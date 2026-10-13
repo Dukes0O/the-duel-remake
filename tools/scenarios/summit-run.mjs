@@ -51,7 +51,7 @@ export async function run(context){
       const app=window.__qaApp;app.returnToMenu();app.stop();
       window.__summitReadOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,storage:Array.from({length:localStorage.length},(_,i)=>{const key=localStorage.key(i);return [key,localStorage.getItem(key)];})});
     })()`);
-    const capturedViews=quality==='high'?[...views,['night-ledge-town',centre('The Ledge'),18,road.length-centre('The Ledge')+5800]]:views;
+    const capturedViews=quality==='high'?[...views,['night-ledge-town',centre('The Ledge'),90,road.length-centre('The Ledge')+5800]]:views;
     for(const [name,s,up,ahead] of capturedViews){
       await context.evaluate(`(()=>{
         window.__summitSnapshot={before:window.__summitReadOnly(),settled:false};
