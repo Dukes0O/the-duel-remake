@@ -29,7 +29,7 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera } from './camera-clearance.js';
+import { constrainTunnelCamera, clearCameraSightline } from './camera-clearance.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
@@ -690,6 +690,9 @@ export function attachRenderer(host, app) {
     if(!menu&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     if(!menu&&!deepPose)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+      camera.position.copy(clearCameraSightline(course,camera.position,
+        {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
