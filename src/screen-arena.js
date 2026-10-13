@@ -1,3 +1,4 @@
+import {AMBUSH_RULES} from './arena/modes/ambush-alley.js';
 import {arenaTeams} from './arena/arena-event.js';
 import {teamTotal} from './arena/warlord-event.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
@@ -151,6 +152,13 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
   if (ambush) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
     <p class="arena-yard-mode">AMBUSH ALLEY / FIVE WAVES</p>
     <p class="arena-yard-difficulty">Difficulty ${String(difficulty).toUpperCase()}</p>
+    <ul class="arena-yard-rules">
+      <li>Defend the fort on foot through five waves. Wave one gives you ${AMBUSH_RULES.firstWaveApproachSec} seconds before raiders damage it. Shoot them while they approach.</li>
+      <li>W / S: move. A / D: turn. Q / E: sidestep. Shift: sprint. Mouse: look.</li>
+      <li>1: RPG. Right-click: aim. Left-click: fire, with a separate click for each rocket. Reload is automatic.</li>
+      <li>2: wrench. Stand beside scrap cover and hold left-click to repair ${AMBUSH_RULES.repairAmount} health over ${AMBUSH_RULES.repairSeconds} seconds. Use the ten-second breaks between waves.</li>
+      <li>Hold F beside your parked car to get in and refill ammunition; hold F again to get out. 3: crew gear. H for help; Esc / P to pause.</li>
+    </ul>
     <button type="button" class="start-button arena-start" data-action="arena-start"><span>${enterLabel}</span></button></div>`;
   if (bounty) return `<div class="yard-home-intro arena-yard">${modes}${venueChoice}
     <p class="arena-yard-mode">BOUNTY HUNT · MOST POINTS · 3:00</p>
