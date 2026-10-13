@@ -49,7 +49,8 @@ export async function run(context){
     window.__deepArtBaseLights=d.scene.children.filter(o=>o.isLight).map(o=>({uuid:o.uuid,type:o.type,intensity:o.intensity,colour:o.color.toArray()}));
     return {...q,exposure:d.renderer.toneMappingExposure,lights:window.__deepArtBaseLights};})()`);
   try{
-    for(const model of manifest.models){
+    const selected=process.env.DUEL_DEEP_ART_ROUND==='3'?manifest.models.filter(row=>['otter','grouper','giant-clam'].includes(row.id)):manifest.models;
+    for(const model of selected){
       const path=join(root,'public/assets/models/deep',model.id+'.glb');
       if(digest(await readFile(path))!==model.sha256)throw Error('Changed GLB before photography: '+model.id);
       const view=await context.evaluate(`(async()=>{
@@ -67,7 +68,7 @@ export async function run(context){
         d.setView(deep?5:forest?2:4,{time:9.5});d.car.visible=false;d.school.mesh.visible=false;
         const x=forest?35:0,z=row.id==='wreck-hull'?250:row.id==='whale'?230:forest?48:66;
         const floorY=floorHeight(x,z);let rise=['ray','crab','moray','octopus','giant-clam','anchor','sunken-boat','wreck-hull'].includes(row.id)?0:.8;
-        if(row.id==='otter')rise=Math.max(.5,-floorY-baseSize.y-.5);
+        if(row.id==='otter')rise=Math.max(.5,-floorY-baseSize.y+.02);
         object.position.add(new THREE.Vector3(x-baseCentre.x,floorY-base.min.y+rise+.015,z-baseCentre.z));
         let instances=1;
         if(row.id==='silver-school'){
@@ -82,7 +83,7 @@ export async function run(context){
         if(instances>1)box=new THREE.Box3(new THREE.Vector3(x-1.4,floorY+.7,z-1.4),new THREE.Vector3(x+1.4,floorY+1.5,z+1.4));
         const size=box.getSize(new THREE.Vector3()),target=box.getCenter(new THREE.Vector3()),span=Math.max(size.x,size.z,size.y);
         const distance=Math.max(.32,span*(row.id==='wreck-hull'?.67:.9));d.camera.fov=row.id==='wreck-hull'?70:48;
-        const front=row.id==='wreck-hull'?-.76:-.96,up=row.id==='otter'?.62:.48;
+        const front=row.id==='grouper'?1.10:row.id==='otter'?1.05:row.id==='wreck-hull'?-.76:-.96,up=row.id==='otter'?-.30:.48;
         d.camera.position.copy(target).add(new THREE.Vector3(distance*.78,distance*up,distance*front));
         // Stay inside the actual water even when framing the biggest vessel.
         d.camera.position.y=Math.min(-.25,Math.max(floorHeight(d.camera.position.x,d.camera.position.z)+.20,d.camera.position.y));d.camera.lookAt(target);d.camera.updateProjectionMatrix();
@@ -114,7 +115,7 @@ export async function run(context){
         const capture=await context.command('Page.captureScreenshot',{format:'jpeg',quality:93,clip:{x:0,y:0,width:1280,height:720,scale:1}});
         const file='wreck-hull-detail.jpg';await writeFile(join(context.outputDir,file),Buffer.from(capture.data,'base64'));context.screenshots.push(join(context.outputDir,file));view.detail={...detail,photo:file};
       }
-      report.views.push({...view,photo});await persist();console.log('Actual-water art '+report.views.length+'/18: '+model.id);
+      report.views.push({...view,photo});await persist();console.log('Actual-water art '+report.views.length+'/'+selected.length+': '+model.id);
     }
     report.complete=true;
   }finally{await persist();}

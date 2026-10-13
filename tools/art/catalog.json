@@ -2941,9 +2941,9 @@
           "sha256": "0867bd78b9867d03c6b7822501783ac2b03e7f2ce791e7da622dff9a2e8752af"
         }
       ],
-      "fit": "Claude-approved round-two fit; River donor fitted back-up, with paws drawn onto chest, flattened broader tail, dark brown coat/pale head and surface-breath morph.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
-      "changes": "River donor fitted back-up, with paws drawn onto chest, flattened broader tail, dark brown coat/pale head and surface-breath morph.",
+      "fit": "Final round-three belly-up sea otter; dark body, pale round head, paired forepaws on chest and flat tail.",
+      "risk": "Final round-three Claude art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "changes": "Final round-three belly-up sea otter; dark body, pale round head, paired forepaws on chest and flat tail.",
       "runtime": [
         "public/assets/models/deep/otter.glb"
       ],
@@ -2951,17 +2951,17 @@
       "sourceBytes": 1559136,
       "sourceClips": [],
       "embeddedOnly": true,
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Claude final corrections settled 13 October 2026 at 08:40; only this rejected role changed.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/otter.glb",
-          "sha256": "1432b65447b133dccaff4de79f8ff17b54ec501a23eef54f4f8fc0f5b5d88c52",
-          "bytes": 162100,
-          "triangles": 1084,
+          "sha256": "79a6ce481e208776ef78b6ff5f4f999411bf8ffcf316bebc1531eb48effd5666",
+          "bytes": 171332,
+          "triangles": 1324,
           "dimensionsMetres": [
-            0.23844487965106964,
+            0.2767370939254761,
             1.2000000476837158,
-            0.29970216751098633
+            0.400371789932251
           ],
           "clips": [
             "surface-breath"
@@ -3121,14 +3121,14 @@
       "downloaded": true,
       "sha256": "1f91914d26c1680ebb73a9be87b7936528adb5f2ddb32cc787ef4e73c32f8bdf",
       "checked": "2026-10-12",
-      "fit": "Claude-approved round-two fit; Reef-fish donor widened/deepened, enlarged head, actual boolean mouth cavity, broad lip and mottled brown paint.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "fit": "Final round-three broad down-turned recessed mouth without torus loop; mottled brown donor adaptation.",
+      "risk": "Final round-three Claude art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
       "sourceTriangles": 506,
-      "changes": "Reef-fish donor widened/deepened, enlarged head, actual boolean mouth cavity, broad lip and mottled brown paint.",
+      "changes": "Final round-three broad down-turned recessed mouth without torus loop; mottled brown donor adaptation.",
       "runtime": [
         "public/assets/models/deep/grouper.glb"
       ],
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Claude final corrections settled 13 October 2026 at 08:40; only this rejected role changed.",
       "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\reef-fish",
       "evidenceFiles": [
         {
@@ -3184,12 +3184,12 @@
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/grouper.glb",
-          "sha256": "e91cdc883b61fa2f3a1955ef238d2a8f55f5a3f7fb24aed2262a72317a753d82",
-          "bytes": 80180,
-          "triangles": 1446,
+          "sha256": "f8954bd6ead2f74297a0bba534435b28fea1d93c51eccd48bad9bc62e100b964",
+          "bytes": 39096,
+          "triangles": 823,
           "dimensionsMetres": [
             0.41207435727119446,
-            1.2238399982452393,
+            1.2000000476837158,
             0.6198853254318237
           ],
           "clips": []
@@ -3525,14 +3525,14 @@
       "downloaded": false,
       "sha256": null,
       "checked": "2026-10-12",
-      "fit": "Claude-approved round-two fit; Original scripted scalloped/fluted paired valves and separate living mantle. CC0 scan preview is colour reference only.",
-      "risk": "Formal round-two art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
+      "fit": "Final round-three 3000-triangle scalloped sandy-grey shell and blue-green mottled mantle; 92800-byte GLB.",
+      "risk": "Final round-three Claude art verdict pending; no reachable runtime placement, frame or behavior acceptance.",
       "sourceTriangles": null,
-      "changes": "Original scripted scalloped/fluted paired valves and separate living mantle. CC0 scan preview is colour reference only.",
+      "changes": "Final round-three 3000-triangle scalloped sandy-grey shell and blue-green mottled mantle; 92800-byte GLB.",
       "runtime": [
         "public/assets/models/deep/giant-clam.glb"
       ],
-      "decision": "Claude approved donor/fitting direction on 12 October 2026 at 21:40; fitted round two awaits formal sheet verdict.",
+      "decision": "Claude final corrections settled 13 October 2026 at 08:40; only this rejected role changed.",
       "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\giant-clam",
       "evidenceFiles": [
         {
@@ -3569,12 +3569,12 @@
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/giant-clam.glb",
-          "sha256": "df9099892e0aa12e23810929ad0e43e28208c6c2b9321dc1b1bfc1fc5431d9c8",
-          "bytes": 596768,
-          "triangles": 23904,
+          "sha256": "4442eb25db7a17af7f6d5bd09286386e414d6f02cd38f1e45787ef5eabc68f14",
+          "bytes": 92800,
+          "triangles": 3000,
           "dimensionsMetres": [
-            1.4692021608352661,
-            1.0265781879425049,
+            1.4675264358520508,
+            1.0274031162261963,
             0.7101640701293945
           ],
           "clips": []

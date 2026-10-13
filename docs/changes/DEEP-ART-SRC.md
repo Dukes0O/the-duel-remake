@@ -157,3 +157,17 @@ source review is CLEAR on db88ccf6; the same reviewer must confirm this
 exact two-literal delta. Freeze before one fresh original nearby lane/build.
 Models, recipes and the actual-water sheet are unchanged; no capture repeat.
 Claude's formal round-two verdict remains required before integration.
+
+
+## Final round-three correction
+
+Claude accepted fifteen roles on 13 October at 08:40 and requested only otter, grouper and giant clam corrections. Their final counts are 1,324 / 823 / 3,000 triangles and 171,332 / 39,096 / 92,800 bytes. The clam is below the 4,000-triangle / 150,000-byte limits. Eighteen GLBs now total 1,936,104 bytes and 25,793 triangles. All fifteen accepted GLBs and provenance rows remain byte/content exact; the original thirty-seven catalogue rows remain exact in order. Only three runtimeFiles/fitting/verdict rows change. Donor source hashes and credits remain exact.
+
+The existing fit recipe flattens the otter donor's arch into horizontal cross-sections, rolls its belly up, preserves its pale head and adds paired chest paws. The grouper loses its rejected torus and gains a wide down-turned inset. Clam tessellation decreases while the scallops and mantle remain, with sandy-grey shell and blue-green lip. Existing photography selects only these three; the Director granted surface placement/below-face otter and front grouper camera corrections. Original water/light/shader/pipeline settings remain exact. The optional existing composer --round 3 writes only the final three-role sheet; default/paths-only round-two behavior remains exact.
+
+Final actual-water capture: private54607, memory-only, three photos, zero errors/issues, one duplicate-Three.js warning retained honestly. Sheet round-3.jpg:123189B,1800x540,SHA25686be5cacd87b0df605ebc333011822345da96c0c14f5bdc1bf1af1dd9c3806df. Claude alone judges this final round3 of3; the angular otter source is presented honestly. Formal final art, canonical nearby/build and ordinary source review remain pending; no frame/gameplay acceptance claimed.
+
+Removed: grouper mouth torus, excessive clam tessellation and prior standing otter arch. Earlier verdicts are folded into round-3-review.md; prior sheets/evidence made by other owners remain for Root's authorized cleanup. Own draft photo output and duplicate Blender backups will be recycled; current final photos remain for the art verdict.
+
+
+Director independently recomputed and granted the exact final catalogue pins: P48455623df877f5485d97197bfa780f4ccd2f105513fed9f8c0e40bf4944134dc becomes91fcc5b3740744c6a6e9e543fba9ce62a3dd21322a8e4e0ca5e5692de4d2aec6; Tanker7cb026655ca6168d71d8bfd89c19ec954a464456b079fd0040cba1fa89bd1c20 becomes530d258c3980ff47d7dd6746a44218e85974cc0e182f37331563fa2b247d81f2. Only those literal expectations change; the filters and every assertion remain exact. No exclusions or tolerance changes. Photography selects three roles only with DUEL_DEEP_ART_ROUND=3; default still photographs all eighteen.

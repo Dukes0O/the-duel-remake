@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "round": 2,
+  "round": 3,
   "coordinates": "metres; glTF Y up; Blender -Y forward maps to glTF +Z",
   "models": [
     {
@@ -174,30 +174,30 @@
     {
       "id": "otter",
       "path": "assets/models/deep/otter.glb",
-      "sha256": "1432b65447b133dccaff4de79f8ff17b54ec501a23eef54f4f8fc0f5b5d88c52",
-      "bytes": 162100,
-      "triangles": 1084,
+      "sha256": "79a6ce481e208776ef78b6ff5f4f999411bf8ffcf316bebc1531eb48effd5666",
+      "bytes": 171332,
+      "triangles": 1324,
       "boundsBlender": {
         "min": [
-          -0.11922243982553482,
+          -0.13836854696273804,
           -0.6000000238418579,
-          -0.15003810822963715
+          -0.2565649151802063
         ],
         "max": [
-          0.11922243982553482,
+          0.13836854696273804,
           0.6000000238418579,
-          0.149664044380188
+          0.14380687475204468
         ]
       },
       "dimensionsMetres": [
-        0.23844487965106964,
+        0.2767370939254761,
         1.2000000476837158,
-        0.29970216751098633
+        0.400371789932251
       ],
       "clips": [
         "surface-breath"
       ],
-      "primitives": 1,
+      "primitives": 3,
       "authored": false
     },
     {
@@ -259,13 +259,13 @@
     {
       "id": "grouper",
       "path": "assets/models/deep/grouper.glb",
-      "sha256": "e91cdc883b61fa2f3a1955ef238d2a8f55f5a3f7fb24aed2262a72317a753d82",
-      "bytes": 80180,
-      "triangles": 1446,
+      "sha256": "f8954bd6ead2f74297a0bba534435b28fea1d93c51eccd48bad9bc62e100b964",
+      "bytes": 39096,
+      "triangles": 823,
       "boundsBlender": {
         "min": [
           -0.20603717863559723,
-          -0.6238400340080261,
+          -0.6000000238418579,
           -0.3062167167663574
         ],
         "max": [
@@ -276,11 +276,11 @@
       },
       "dimensionsMetres": [
         0.41207435727119446,
-        1.2238399982452393,
+        1.2000000476837158,
         0.6198853254318237
       ],
       "clips": [],
-      "primitives": 3,
+      "primitives": 2,
       "authored": false
     },
     {
@@ -427,24 +427,24 @@
     {
       "id": "giant-clam",
       "path": "assets/models/deep/giant-clam.glb",
-      "sha256": "df9099892e0aa12e23810929ad0e43e28208c6c2b9321dc1b1bfc1fc5431d9c8",
-      "bytes": 596768,
-      "triangles": 23904,
+      "sha256": "4442eb25db7a17af7f6d5bd09286386e414d6f02cd38f1e45787ef5eabc68f14",
+      "bytes": 92800,
+      "triangles": 3000,
       "boundsBlender": {
         "min": [
-          -0.7346010804176331,
-          -0.5132890939712524,
+          -0.7337632179260254,
+          -0.5137015581130981,
           -0.16174998879432678
         ],
         "max": [
-          0.7346010804176331,
-          0.5132890939712524,
+          0.7337632179260254,
+          0.5137015581130981,
           0.5484141111373901
         ]
       },
       "dimensionsMetres": [
-        1.4692021608352661,
-        1.0265781879425049,
+        1.4675264358520508,
+        1.0274031162261963,
         0.7101640701293945
       ],
       "clips": [],

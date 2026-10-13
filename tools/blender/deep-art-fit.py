@@ -140,10 +140,10 @@ def authored_moray():
     return [o,fin,head]
 
 def authored_clam():
-    shell=material('clam / chalk worn shell',(.54,.48,.34),.91);mantle=material('clam / olive blue mantle',(.115,.22,.17),.69)
+    shell=material('clam / sandy grey shell',(.25,.26,.23),.91);mantle=material('clam / blue green mantle',(.065,.20,.17),.69)
     result=[]
     for top in [False,True]:
-        verts=[];faces=[];rings=30;slices=80
+        verts=[];faces=[];rings=6;slices=40
         # Elliptic cup with ten fluted radial ridges and a wavy scalloped rim.
         for i in range(rings+1):
             r=max(.0001,i/rings)
@@ -159,13 +159,13 @@ def authored_clam():
         for i in range(rings):
             for j in range(slices):a=i*slices+j;b=i*slices+(j+1)%slices;faces.append((a,b,b+slices,a+slices))
         o=mesh('clam / '+('open upper valve' if top else 'lower valve'),verts,faces,shell);sol=o.modifiers.new('shell thickness','SOLIDIFY');sol.thickness=.028
-        vertex_paint(o,lambda p:mottled((.57,.51,.37),p,34));result.append(o)
+        vertex_paint(o,lambda p:mottled((.29,.30,.26),p,34));result.append(o)
     # Living mantle is clearly separate from the ridged mineral shell.
-    m=sphere('clam / soft mantle', (0,-.035,.13),(.57,.425,.08),mantle,48,20)
-    vertex_paint(m,lambda p:mottled((.13,.25,.20),p,43));result.append(m)
+    m=sphere('clam / soft mantle', (0,-.035,.13),(.57,.425,.08),mantle,20,8)
+    vertex_paint(m,lambda p:mottled((.085,.24,.20),p,43));result.append(m)
     for j in range(10):
         ang=j*2*math.pi/10;at=(.53*math.cos(ang),.38*math.sin(ang),.16)
-        sphere('clam / mantle fold',at,(.09,.065,.043),mantle,16,8)
+        sphere('clam / mantle fold',at,(.09,.065,.043),mantle,8,4)
     return result
 
 # Shape adaptation uses imported source topology and UVs; it never replaces a
@@ -258,11 +258,22 @@ def fit_static(role,objects):
         for v in o.data.vertices:
             p=v.co.copy();lift=max(0,p.z+.10);v.co.y-=lift*.68;v.co.z=.20*p.z+.10*math.sin(p.y*2)
     if role=='otter':
+        # Flatten the donor's standing arch into a horizontal floating spine.
+        # Preserve each cross-section, nose, face and original donor topology.
+        sections={}
         for v in o.data.vertices:
-            p=v.co.copy();v.co.z=-.55*p.z
-            if p.y>.28:v.co.z*=.24;v.co.x*=1.28  # flatter sea-otter tail
+            key=round(v.co.y/.075);sections.setdefault(key,[]).append(v.co.z)
+        centres={key:(min(z)+max(z))*.5 for key,z in sections.items()}
+        for v in o.data.vertices:
+            p=v.co.copy();v.co.z=-.85*(p.z-centres[round(p.y/.075)])
+            # The source back rolls down; its belly and folded forepaws face up.
+            if p.y>.28:v.co.z*=.18;v.co.x*=1.40
             if p.y<-.05 and p.z<-.10 and abs(p.x)>.04:
-                w=min(1,(-p.z-.1)/.10);v.co.x=p.x*(1-.48*w);v.co.y=p.y*(1-.43*w);v.co.z=.10*w+v.co.z*(1-w) # paws to chest
+                w=min(1,(-p.z-.1)/.10);v.co.x=p.x*(1-.76*w);v.co.y=p.y*(1-.30*w);v.co.z=.105*w+v.co.z*(1-w)
+            if p.y<-.32:
+                v.co.x*=1.18;v.co.z-=.025  # round pale face remains readable below
+        paws=material('otter / chest forepaws',(.19,.15,.105),.8)
+        for sign in [-1,1]:sphere('otter / folded chest paw',(.038*sign,-.19,.105),(.039,.055,.026),paws,12,6)
     if role=='octopus':
         for v in o.data.vertices:
             p=v.co;r=math.hypot(p.x,p.y)
@@ -390,14 +401,14 @@ def fit_vessel(role,o):
     return o
 
 def fit_grouper_mouth(o):
-    lo,hi=bounds([o]);dark=material('grouper / open mouth',(.018,.017,.010),.90)
-    lip=material('grouper / thick lip',(.26,.20,.12),.78)
-    # Genuine cavity cut in the existing donor head, with inset shadow and lip.
-    centre=(0,lo.y+.015,.04)
-    cut=sphere('mouth cutter',centre,(.12,.10,.11),dark,24,12);subtract(o,cut,'grouper mouth cavity')
-    sphere('grouper / mouth recess',(0,lo.y+.07,.04),(.103,.035,.083),dark,20,10)
-    bpy.ops.mesh.primitive_torus_add(major_segments=32,minor_segments=8,location=(0,lo.y-.008,.04),rotation=(math.pi/2,0,0),major_radius=.10,minor_radius=.018)
-    ring=bpy.context.object;ring.name='grouper / broad mouth lip';ring.scale=(1.12,1,.88);ring.data.materials.append(lip)
+    lo,hi=bounds([o]);dark=material('grouper / down turned mouth shadow',(.018,.017,.010),.90)
+    # A broad shallow inset in the donor face, without the rejected torus/loop.
+    centre=(0,lo.y+.014,.012)
+    cut=sphere('mouth cutter',centre,(.17,.085,.060),dark,24,12);subtract(o,cut,'grouper wide mouth cavity')
+    recess=sphere('grouper / down turned mouth recess',(0,lo.y+.055,.004),(.149,.020,.044),dark,20,8)
+    for v in recess.data.vertices:
+        v.co.z-=.026*min(1,abs(v.co.x)/.149)**2
+
 
 def role_build(role,rows):
     clear()
@@ -438,6 +449,7 @@ def export_role(root,evidence,role,rows):
     import struct
     n=struct.unpack_from('<I',data,12)[0];g=json.loads(data[20:20+n])
     tris=sum(g['accessors'][p['indices']]['count']//3 for m in g['meshes'] for p in m['primitives'] if p.get('mode',4)==4)
+    if role=='giant-clam' and (tris>4000 or len(data)>150000):raise RuntimeError('Clam exceeds Claude final budget')
     if not g.get('meshes') or not all(math.isfinite(c) for c in [*lo,*hi]):raise RuntimeError('Invalid export '+role)
     if role in ['manta','whale'] and not g.get('animations'):raise RuntimeError('Lost source Swim clip '+role)
     if any('uri' in x and not x['uri'].startswith('data:') for x in g.get('images',[])+g.get('buffers',[])):raise RuntimeError('External runtime dependency '+role)
