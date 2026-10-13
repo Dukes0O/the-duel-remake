@@ -224,9 +224,18 @@ function scatterScenery(course) {
       return false;
     };
     const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = forest;
+    const authoredRanges=forest.ranges;
+    if(authoredRanges&&(!Array.isArray(authoredRanges)||!authoredRanges.length||authoredRanges.some(range=>
+      !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
+      throw new TrackScriptError('Forest ranges must lie on their authored course.');
     let serial = 0;
     for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
       const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
+      if(authoredRanges){
+        const range=authoredRanges.find(range=>s>=range.from&&s<=range.to);
+        if(!range)continue;
+        if(range.fadeOut>0&&random.float()>Math.min(1,(range.to-s)/range.fadeOut))continue;
+      }
       // The rows thin out toward the back, so the wood has an edge.
       if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
       const off = side * (course.roadHalfWidthAt(s) + depth);

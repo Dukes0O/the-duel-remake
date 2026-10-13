@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import { SUMMIT_RUN, SUMMIT_GALLERY_BOUNDS } from '../src/circuits/summit-run.js';
+import { SUMMIT_RUN, SUMMIT_GALLERY_BOUNDS, manifest } from '../src/circuits/summit-run.js';
 import { TREMBLANT_SNOW } from '../src/circuits/tremblant-snow.js';
+import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import { buildTrackScript } from '../src/track-script.js';
 import * as THREE from 'three';
 import {roadBranchMaterial} from '../src/world.js';
@@ -13,11 +14,27 @@ import {Duel} from '../src/game.js';
 import {COURSE,DRIVE,steeringYawAuthority} from '../src/config.js';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {PIT} from '../src/pit-lane.js';
+import {PIT,pitSpeedLimitAt} from '../src/pit-lane.js';
 import {useRacingLine} from './track-script-drive.mjs';
 import { Course } from '../src/course.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
+import {birchSpots} from '../src/circuit-effects.js';
+import {surfaceRuns} from '../src/track-script-scene.js';
+import {referenceTargets,runReferenceWorker} from './build-reference-laps.mjs';
+import {CIRCUIT_ENTRIES,BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
 
+assert.deepEqual(manifest,{id:'summit-run',flag:'summit-run',state:'dev',price:2600,grandPrix:true,releaseOrder:4,
+  driver:{car:'falcone_f42',driverId:'club',controller:'racing-line',skill:.95}},'course-owned price/state/driver contract');
+assert.ok(Object.isFrozen(manifest)&&Object.isFrozen(manifest.driver));
+const registered=CIRCUIT_ENTRIES.find(entry=>entry.manifest.id==='summit-run');
+assert.equal(registered.definition,SUMMIT_RUN,'registry keeps the exact authored definition');
+assert.equal(registered.generationStage,20);assert.equal(SUMMIT_RUN.stage,20);
+const actualCatalog=await runReferenceWorker({catalogOnly:true});
+assert.equal(actualCatalog.events.indexOf('summit-run'),BASE_COURSE_COUNT+manifest.releaseOrder,'actual QA COURSE appends Summit after the four authored events');
+assert.equal(actualCatalog.events.filter(id=>id==='summit-run').length,1,'stable id appears once');
+assert.equal(actualCatalog.storageLength,0,'catalogue fixture has only empty memory storage');
+assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.state,'dev');
+assert.equal(actualCatalog.flags.find(flag=>flag.name==='summit-run')?.enabled,true);
 assert.equal(SUMMIT_RUN.id, 'summit-run');
 assert.equal(SUMMIT_RUN.flag, 'summit-run');
 assert.equal(SUMMIT_RUN.noCombat, true);
@@ -35,6 +52,22 @@ assert.deepEqual(geometry.samples, buildTrackScript(SUMMIT_RUN).samples);
 const course = new Course(SUMMIT_RUN, 1989);
 assert.equal(course.raceLength, course.length);
 assert.equal(course.pitLane.straight, 'Tree Line Pit Straight');
+assert.equal(course.pitLane.limiterEnd-course.pitLane.limiterStart,180);
+assert.equal(course.pitLane.limitMph,80/1.609344);
+for(const piece of geometry.pieces.slice(0,26))assert.equal(piece.surface,piece.name==='Graded Gravel'?'gravel':'warm-tarmac');
+assert.equal(geometry.pieces[26].surface,'asphalt','whole pit straight stays asphalt');
+assert.deepEqual(referenceTargets([SUMMIT_RUN]),[],'an open road has no cyclic reference');
+assert.ok(!surfaceRuns(course).some(run=>run.kind==='warm-tarmac'),'warm tarmac has no overlay');
+const forestRange=SUMMIT_RUN.scenery.forest.ranges[0];
+const groves=course.features.trees.filter(tree=>tree.id.startsWith('forest-'));
+assert.ok(groves.length>100,'reused grove forest makes the Pine Switchbacks dense');
+assert.ok(groves.every(tree=>tree.s>=forestRange.from&&tree.s<=forestRange.to));
+assert.ok(groves.some(tree=>tree.off<0)&&groves.some(tree=>tree.off>0),'forest stands on both sides');
+const birches=birchSpots(course,SUMMIT_RUN.effects.birches);
+assert.ok(birches.length>0,'reused birch cells exist among the pines');
+assert.ok(birches.every(tree=>{const near=course.nearest(tree.x,tree.z);return near.s>=forestRange.from-8&&near.s<=forestRange.to+8;}));
+assert.equal(SUMMIT_RUN.snowWorld.softBanks,true);
+assert.equal(SUMMIT_RUN.snowWorld.drifts,true);
 assert.ok(course.gripKindAt(8200,0)==='snow');
 assert.ok(course.features.shortcuts.some(branch=>branch.id==='summit-open-road'));
 assert.ok(course.features.tunnels.some(tunnel=>tunnel.id==='summit-gallery'));
@@ -57,6 +90,29 @@ for(const bounds of SUMMIT_GALLERY_BOUNDS){
   assert.equal(actor.minY,frame.y+accessor.min[1]*row.scale[1]);
   assert.equal(actor.height,(accessor.max[1]-accessor.min[1])*row.scale[1]);
   if(bounds.name.includes('pillar'))assert.ok(Math.abs(zLocal)>7,'visible pillars are at the tile ends, not the old centre collider');
+}
+// The authored slit mask selects real aperture-side vertices in both delivered LODs.
+const slit=SUMMIT_RUN.kitLook.observatory.slit;
+for(const suffix of ['', '-lod']){
+  const bytes=readFileSync(new URL('../public/assets/models/circuits/kits/observatory'+suffix+'.glb',import.meta.url));
+  const jsonLength=bytes.readUInt32LE(12),model=JSON.parse(bytes.subarray(20,20+jsonLength).toString('utf8')),bin=20+jsonLength+8;
+  let selected=0,all=0;
+  const component=(index,vertex,axis)=>{
+    const accessor=model.accessors[index],view=model.bufferViews[accessor.bufferView];
+    assert.equal(accessor.componentType,5126,'actual aperture attributes are full-precision floats');
+    return bytes.readFloatLE(bin+(view.byteOffset??0)+(accessor.byteOffset??0)+vertex*(view.byteStride??12)+axis*4);
+  };
+  for(const node of model.nodes)for(const primitive of model.meshes[node.mesh].primitives){
+    const positions=primitive.attributes.POSITION,normals=primitive.attributes.NORMAL,count=model.accessors[positions].count;
+    all+=count;if(!slit.nodes.includes(node.name))continue;
+    for(let vertex=0;vertex<count;vertex++){
+      const x=component(positions,vertex,0),y=component(positions,vertex,1),z=component(positions,vertex,2);
+      const nx=component(normals,vertex,0),ny=component(normals,vertex,1),nz=component(normals,vertex,2);
+      if(Math.abs(x)<=slit.halfWidth&&y>=slit.minY&&z>=slit.minZ&&Math.abs(nx/Math.hypot(nx,ny,nz))>=slit.normalX)selected++;
+    }
+  }
+  assert.ok(selected>0,'the actual dome has aperture-side faces to light');
+  assert.ok(selected<all*.1,'the real slit mask cannot light the whole dome/base');
 }
 const galleryAnchors=SUMMIT_RUN.kitPlacements.filter(row=>row.id==='gallery').map(row=>{
   const ground=course.groundAt(row.s,row.lateral);
@@ -85,6 +141,10 @@ assert.ok(authoredSnowLight.winter,'accepted Snow carries an authored winter loo
 const transformedSnowLight=winterLightingSettings(authoredSnowLight,{course:snowCourse,distance:1000});
 assert.deepEqual(transformedSnowLight,winterLightingSettings(authoredSnowLight),'legacy full-winter context retains exact values');
 for(const [key,value] of Object.entries(authoredSnowLight.winter))assert.deepEqual(transformedSnowLight[key],value,'accepted Snow winter overrides stay exact');
+const harbourNight=sampleCourseLightPath(new Course(HARBOUR_LIGHTS,1989),{distance:1000,theme:'city',menu:false,tunnel:false}).settings;
+assert.equal(SUMMIT_RUN.snowWorld.nightExposure,harbourNight.exposure,'authored night exposure comes from the real Harbour palette');
+const nightLight=sampleCourseLightPath(course,{distance:12000,raceLength:course.raceLength,theme:'alpine',tunnel:false,menu:false}).settings;
+assert.equal(winterLightingSettings(nightLight,{course,distance:12000}).exposure,nightLight.exposure,'Summit night snow uses the same exposure as the native Harbour night palette');
 const beforeLight=structuredClone(baseLight);
 const edgeLight=winterLightingSettings(baseLight,{course,distance:SUMMIT_RUN.snowWorld.ranges[0].from+6});
 assert.ok(edgeLight.exposure<baseLight.exposure&&edgeLight.exposure>winterLightingSettings(baseLight).exposure);
@@ -208,7 +268,9 @@ if(process.argv.includes('--drive')){
           const authority=Math.max(.05,steeringYawAuthority(state.speedMph,duel.car.grip,surface.traction,duel.car));
           const remaining=lane.box-state.s;
           const stop=Math.sqrt(2*DRIVE.brakeAccel*duel.car.braking*DRIVE.mphToWorld*Math.max(0,remaining-2))/DRIVE.mphToWorld;
-          const target=state.tyre==='winter'?PIT.limitMph:Math.min(PIT.limitMph,stop);
+          const normal=duel.course.racingLine.speedAt(state.s)*.95*Math.sqrt(duel.car.grip/.82*(surface.traction||1))/DRIVE.mphToWorld;
+          const laneTarget=pitSpeedLimitAt(duel.course,state.s,state.lateral)??Math.min(surface.speedLimit,duel.car.topSpeed*.97,normal);
+          const target=state.tyre==='winter'?laneTarget:Math.min(laneTarget,stop);
           duel.setInput({throttle:state.speedMph<target?1:0,brake:state.speedMph>target?Math.min(1,(state.speedMph-target)/6):0,steer:Math.max(-1,Math.min(1,-yaw/authority)),boost:false});
         };
       }
@@ -238,7 +300,7 @@ if(process.argv.includes('--drive')){
     }
   }
   const [summer,pit,winter]=strategies;
-  assert.ok(pit.seconds>=360&&pit.seconds<=480,`Medium mid-car run is ${pit.seconds.toFixed(3)} s`);
+  assert.ok(pit.seconds>=270&&pit.seconds<=330,`Medium mid-car run is ${pit.seconds.toFixed(3)} s`);
   assert.ok(summer.seconds-pit.seconds>=4&&summer.seconds-pit.seconds<=8,`pit saves ${(summer.seconds-pit.seconds).toFixed(3)} s versus summer`);
   assert.ok(winter.seconds-pit.seconds>=2&&winter.seconds-pit.seconds<=5,`starting winter costs ${(winter.seconds-pit.seconds).toFixed(3)} s versus pit`);
 }

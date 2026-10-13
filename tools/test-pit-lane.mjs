@@ -5,7 +5,7 @@ import {Course} from '../src/course.js';
 import {App} from '../src/app.js';
 import {useRacingLine} from './track-script-drive.mjs';
 import {Duel} from '../src/game.js';
-import {COURSE, DRIVE} from '../src/config.js';
+import {COURSE, DRIVE, CARS} from '../src/config.js';
 import {PIT, pitAt, pitBox, pitView, stepPitService,choosePit,pitEstimate,pitTransitTarget} from '../src/pit-lane.js';
 import {initializeField} from '../src/race-field.js';
 import {stepFieldRacer,runtimeOf} from '../src/race-field-driver.js';
@@ -214,4 +214,83 @@ for (const [finished, staleStop] of [[false, false], [true, false], [true, true]
     assert.equal(r.field.recoveries, 0);
     assert.equal(r.field.pitChoice.stop, staleStop, 'transit does not rewrite the previous stop choice');
   } finally {done();}
+});
+
+
+test('opt-in bay limits only its centred 180 metres and leaves legacy lane arithmetic exact',()=>{
+  const legacy=new Course(def,1989),course=new Course({...def,pitLane:{...def.pitLane,limiterLength:180,limitKph:80}},1989);
+  const lane=course.pitLane;
+  assert.equal(lane.limiterStart,lane.box-90);assert.equal(lane.limiterEnd,lane.box+90);
+  assert.equal(lane.limitMph,80/1.609344);
+  assert.deepEqual(course.samples,legacy.samples,'bay metadata cannot change the lane road');
+  for(const key of ['entry','exit','box','width','side'])assert.equal(lane[key],legacy.pitLane[key]);
+  const events=[],actor={s:lane.entry+80,lateral:lane.offsetAt(lane.entry+80),speedMph:100,boosting:true};
+  const duel={course,state:actor,emit:event=>events.push(event)};
+  stepPitService(duel,actor,dt);
+  assert.equal(actor.speedMph,100,'outside the bay the lane is driven normally');
+  assert.equal(events.length,0,'no limiter tone before the real bay');
+  assert.equal(pitTransitTarget(course,actor).speedMph,null,'existing controllers fall back to their normal profile outside the bay');
+  actor.s=lane.limiterStart;actor.lateral=lane.offsetAt(actor.s);
+  stepPitService(duel,actor,dt);
+  assert.equal(actor.speedMph,lane.limitMph);assert.equal(actor.boosting,false);
+  assert.equal(events.filter(event=>event.pitCue==='pit.limiter').length,1);
+  actor.status='racing';assert.ok(pitView(duel).text.startsWith('80 KM/H'));
+  const run={spec:CARS.falcone_f42,profile:{at:()=>100}},r={tyre:'summer',completedLaps:0};
+  const oldEstimate=pitEstimate({course:legacy,state:{lapsTotal:1}},r,run);
+  const newEstimate=pitEstimate({course,state:{lapsTotal:1}},r,run);
+  const normal=100*DRIVE.mphToWorld;
+  const oldTransit=(legacy.pitLane.exit-legacy.pitLane.entry)*(1/(PIT.limitMph*DRIVE.mphToWorld)-1/normal);
+  const newTransit=180*(1/(lane.limitMph*DRIVE.mphToWorld)-1/normal);
+  assert.ok(Math.abs((newEstimate.saved-oldEstimate.saved)-(oldTransit-newTransit))<1e-10,'CPU estimate uses only the real limited span/speed');
+  assert.equal(newEstimate.suits,oldEstimate.suits);
+  const oldActor={s:legacy.pitLane.entry+80,lateral:legacy.pitLane.offsetAt(legacy.pitLane.entry+80),speedMph:100};
+  stepPitService({course:legacy,state:oldActor,emit:()=>{}},oldActor,dt);
+  assert.equal(oldActor.speedMph,PIT.limitMph);
+  assert.deepEqual(pitTransitTarget(legacy,oldActor),{lateral:legacy.pitLane.offsetAt(oldActor.s),speedMph:PIT.limitMph});
+});
+
+test('opt-in bay still requires the real box and exactly four seconds of service',()=>{
+  const course=new Course({...def,pitLane:{...def.pitLane,limiterLength:180,limitKph:80}},1989),lane=course.pitLane;
+  const actor={s:lane.box,lateral:lane.offsetAt(lane.box),speedMph:0,boost:.1};
+  const events=[],duel={course,state:actor,emit:event=>events.push(event)};
+  for(let tick=0;tick<479;tick++)stepPitService(duel,actor,dt);
+  assert.equal(actor.pit.phase,'servicing');assert.equal(actor.tyre,undefined);
+  stepPitService(duel,actor,dt);
+  assert.equal(actor.pit.phase,'ready');assert.equal(actor.tyre,'winter');assert.equal(actor.boost,1);
+  assert.equal(events.filter(event=>event.pitCue==='pit.go').length,1);
+});
+
+
+for(const native of [false,true])test('opt-in bay '+(native?'native line':'demo')+' controller uses its normal target before the limiter',()=>{
+  const bayDef={...def,pitLane:{...def.pitLane,limiterLength:180,limitKph:80}};
+  COURSE.push(bayDef);
+  try{
+    const duel=new Duel({seed:1989});duel.startCampaign({startStage:COURSE.length-1,car:'falcone_f42',opponentCount:0});
+    const actor=duel.state,lane=duel.course.pitLane,app=Object.create(App.prototype);
+    app.duel=duel;app._scriptedCrashDone=true;if(native)useRacingLine(app,.95);
+    Object.assign(actor,{status:'racing',countdown:0,s:lane.entry+80,lateral:lane.offsetAt(lane.entry+80),speedMph:70,impactTimer:0});
+    app._driveAutopilot(dt);
+    assert.equal(actor.input.throttle,1,'null transit speed preserves the original normal speed target');
+    assert.equal(actor.input.brake,0);
+    actor.s=lane.limiterStart;actor.lateral=lane.offsetAt(actor.s);
+    app._driveAutopilot(dt);
+    assert.equal(actor.input.throttle,0);assert.ok(actor.input.brake>0,'actual bay speed is requested');
+  }finally{COURSE.pop();}
+});
+
+test('opt-in bay computer stop branch retains normal profile outside the limiter',()=>{
+  const bayDef={...def,pitLane:{...def.pitLane,limiterLength:180,limitKph:80}};
+  COURSE.push(bayDef);
+  try{
+    const duel=new Duel({seed:1989});duel.startCampaign({startStage:COURSE.length-1,car:'falcone_f42',opponentCount:0});
+    Object.assign(duel.state,{opponentCount:1,cpuDifficulty:'easy',fieldSeed:4242});initializeField(duel);
+    duel.state.status='racing';duel.state.stageTimeSec=10;
+    const actor=duel.state.opponents[0],lane=duel.course.pitLane;
+    Object.assign(actor,{s:lane.entry+80,lateral:lane.offsetAt(lane.entry+80),speedMph:70});
+    actor.field.reaction=0;actor.field.pitChoice={stop:true};actor.field.pitServiced=true;
+    stepFieldRacer(duel,actor,dt);
+    assert.ok(actor.speedMph>PIT.limitMph,'outside-bay stop departure is not held to legacy 60 km/h');
+    assert.ok(actor.s>lane.entry+80,'legal CPU driving advances');
+    assert.equal(actor.pit?.phase,'lane','no forced service or finish');
+  }finally{COURSE.pop();}
 });

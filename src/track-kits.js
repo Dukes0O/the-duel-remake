@@ -216,13 +216,56 @@ function mergeModelByMaterial(model) {
 // the glow strength of every lit surface of that piece, as a number of its stored strength. It may
 // also wash the piece's unlit surfaces in street light (`wash`, src/night-wash.js; `tint` colours
 // only the plaster, a different wall colour for each placement).
-function applyKitLook(look,model) {
+function applyKitLook(look,model,own) {
   if (!look || !model?.scene?.isObject3D) return;
   const glow = finite(look.glow) && look.glow >= 0;
-  if (!glow && !look.wash) return;
+  if (!glow && !look.wash && !look.smoothNormals && !look.slit) return;
   const washed = new Set();
   model.scene.traverse(node => {
     if (!node.isMesh) return;
+    if(look.smoothNormals){
+      const geometry=node.geometry.clone();
+      geometry.computeVertexNormals();
+      const positions=geometry.attributes.position,normals=geometry.attributes.normal,groups=new Map();
+      for(let index=0;index<positions.count;index++){
+        const key=[positions.getX(index),positions.getY(index),positions.getZ(index)].join(',');
+        if(!groups.has(key))groups.set(key,[]);groups.get(key).push(index);
+      }
+      const normal=new THREE.Vector3();
+      for(const indices of groups.values()){
+        normal.set(0,0,0);
+        for(const index of indices)normal.add(new THREE.Vector3(normals.getX(index),normals.getY(index),normals.getZ(index)));
+        normal.normalize();
+        for(const index of indices)normals.setXYZ(index,normal.x,normal.y,normal.z);
+      }
+      normals.needsUpdate=true;node.geometry=geometry;own(geometry);
+    }
+    // Light the existing aperture-side cover faces, never the dome or its base.
+    if(look.slit?.nodes.includes(node.name)){
+      const slit=look.slit;
+      if(![slit.halfWidth,slit.minY,slit.minZ,slit.normalX,slit.strength].every(finite))fail('slit look has invalid authored bounds.');
+      const materials=[].concat(node.material||[]).map(source=>{
+        const material=source.clone(),previous=source.onBeforeCompile,key=source.customProgramCacheKey.bind(source);
+        const colour=new THREE.Color(slit.colour);
+        material.onBeforeCompile=shader=>{
+          previous.call(material,shader);
+          shader.vertexShader=shader.vertexShader.replace('#include <common>',
+            '#include <common>\nvarying vec3 kitSlitPosition;varying vec3 kitSlitNormal;')
+            .replace('#include <begin_vertex>',
+              '#include <begin_vertex>\nkitSlitPosition=position;kitSlitNormal=normal;');
+          shader.fragmentShader=shader.fragmentShader.replace('#include <common>',
+            '#include <common>\nvarying vec3 kitSlitPosition;varying vec3 kitSlitNormal;')
+            .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+              float slit=step(abs(kitSlitPosition.x),${slit.halfWidth.toFixed(6)})*
+                step(${slit.minY.toFixed(6)},kitSlitPosition.y)*step(${slit.minZ.toFixed(6)},kitSlitPosition.z)*
+                step(${slit.normalX.toFixed(6)},abs(normalize(kitSlitNormal).x));
+              totalEmissiveRadiance+=vec3(${colour.toArray().map(v=>v.toFixed(6)).join(',')})*${slit.strength.toFixed(6)}*slit;`);
+        };
+        material.customProgramCacheKey=()=>key()+':summit-aperture:'+JSON.stringify(slit);
+        own(material);return material;
+      });
+      node.material=Array.isArray(node.material)?materials:materials[0];
+    }
     for (const material of [].concat(node.material || [])) {
       const lit = material.emissive && material.emissive.getHex() !== 0 && material.emissiveIntensity > 0;
       if (lit && glow) material.emissiveIntensity = look.glow;
@@ -493,7 +536,7 @@ export function createTrackKits(course, options) {
       if (course.def.mergeKitMeshes?.includes(id)) mergeModelByMaterial(model);
       if (model?.scene?.isObject3D) for (const resource of resourcesOf(model.scene)) own(resource);
       if (retired || failed) return;
-      applyKitLook(course.def.kitLook?.[id],model);
+      applyKitLook(course.def.kitLook?.[id],model,own);
       const validationStarted = performance.now();
       try {
         const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});

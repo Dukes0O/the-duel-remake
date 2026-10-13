@@ -67,6 +67,13 @@ const road = [
   ['straight',590],
   ['straight',440,{name:'Summit Finish'}],
 ];
+// Warm asphalt ends before the unchanged tree-line pit straight.
+for(let index=0;index<26;index++){
+  const slot=road[index][0]==='turn'?4:2;
+  road[index][slot]={...road[index][slot],surface:index===8?'gravel':'warm-tarmac'};
+}
+road[26][2]={...road[26][2],surface:'asphalt'};
+
 // Fit the eased road within Claude's 10% allowance: turn away sooner after
 // each hairpin, retain its radius, and begin the Gallery at the actual split.
 const exits=[[15,16],[19,20],[23,24],[32,33],[44,45],[48,49]];
@@ -95,7 +102,7 @@ const base={
   terrainHalfWidth:64,speedLimitMph:100,
   racingLine:{roadShare:.85,maxSlope:.08,lineMargin:1.8},
   fieldFollow:{leadBraking:1.6,wallRoom:1,firstLap:{margin:5,reaction:.5,closeIn:.8,wallRoom:1.4}},
-  pitLane:{straight:'Tree Line Pit Straight',side:'right'},
+  pitLane:{straight:'Tree Line Pit Straight',side:'right',limiterLength:180,limitKph:80},
 };
 const geometry=buildTrackScript(base),at=index=>geometry.pieces[index].s0;
 const names=['Desert Foothills','Pine Switchbacks','Tree Line','Snowfields','Avalanche Gallery',"Devil's Staircase",'Summit'];
@@ -104,7 +111,7 @@ const finish=geometry.length;
 export const SUMMIT_RUN=defineScriptedCourse({
   ...base,sections,
   lightPath:{axis:'distance',keyframes:[{at:0,look:'day'},{at:at(26),look:'golden'},{at:at(29),look:'dusk'},{at:10100,look:'night'}]},
-  snowWorld:{mixed:true,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],pineClusters:[]},
+  snowWorld:{mixed:true,softBanks:true,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],pineClusters:[]},
   surfacePatches:[
     {id:'snowfield-ice-1',kind:'ice',shaded:true,s0:at(30)+60,s1:at(30)+80},
     {id:'snowfield-ice-2',kind:'ice',shaded:true,s0:at(32)+60,s1:at(32)+80},
@@ -112,7 +119,16 @@ export const SUMMIT_RUN=defineScriptedCourse({
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'snow'}],
   galleries:[{id:'summit-gallery',start:10170,end:10830,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,collisions:SUMMIT_GALLERY_BOUNDS}],
-  scenery:{trees:120,rocks:100,mountains:false},
+  scenery:{trees:120,rocks:100,mountains:false,
+    forest:{from:13,to:56,spacing:5.2,rows:7,thin:.5,jitter:1.7,scale:[.45,2.1],clumps:{cut:.36,size:1.2},
+      ranges:[{from:at(13),to:at(27),fadeOut:at(27)-at(26)+200}]}},
+  effects:{birches:{seed:0xb1c4,groves:26,depth:[14,36],ranges:[{from:at(13),to:at(27)}]}},
+  kitLook:{
+    gallery:{wash:{colour:0xcbd5e4,strength:.45,height:8,floor:.12}},
+    'snow-rock':{smoothNormals:true},
+    'summit-hut':{glow:1.4},
+    observatory:{slit:{nodes:['observatory-cover','observatory-cover.001'],halfWidth:1.4,minY:3.38,minZ:.65,normalX:.9,colour:0xffdfaa,strength:1.4}},
+  },
   mergeKitMeshes:['gallery'],
   kitPlacements:[
     ...Array.from({length:37},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3]})),

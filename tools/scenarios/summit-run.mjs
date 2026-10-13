@@ -50,7 +50,8 @@ export async function run(context){
       const app=window.__qaApp;app.returnToMenu();app.stop();
       window.__summitReadOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,storage:Array.from({length:localStorage.length},(_,i)=>{const key=localStorage.key(i);return [key,localStorage.getItem(key)];})});
     })()`);
-    for(const [name,s,up,ahead] of views){
+    const capturedViews=quality==='high'?[...views,['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+15,40,220]]:views;
+    for(const [name,s,up,ahead] of capturedViews){
       await context.evaluate(`(()=>{
         window.__summitSnapshot={before:window.__summitReadOnly(),settled:false};
         window.__render.captureTrackSnapshot({course:window.__summitCourse,flag:{id:${JSON.stringify(name)},snapshotS:${s},camera:{up:${up},ahead:${ahead}}}}).then(canvas=>{window.__summitSnapshot.canvas=canvas;window.__summitSnapshot.settled=true;},error=>{window.__summitSnapshot.error=error.message;window.__summitSnapshot.settled=true;});
@@ -71,7 +72,7 @@ export async function run(context){
   const sheet=await context.evaluate(`(async()=>{
     const photos=${JSON.stringify(photos)},canvas=document.createElement('canvas'),columns=4,tile=480,h=270,pad=5,label=23;
     canvas.width=columns*(tile+pad)+pad;canvas.height=45+Math.ceil(photos.length/columns)*(h+label+pad)+pad;
-    const ctx=canvas.getContext('2d');ctx.fillStyle='#101920';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f0eee1';ctx.font='22px sans-serif';ctx.fillText('Summit Run - round one / actual High and Performance views',12,31);
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#101920';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f0eee1';ctx.font='22px sans-serif';ctx.fillText('Summit Run - round two / actual High and Performance views',12,31);
     for(const [i,photo] of photos.entries()){
       const image=new Image();image.src=photo.url;await image.decode();const x=pad+(i%columns)*(tile+pad),y=45+pad+Math.floor(i/columns)*(h+label+pad);
       ctx.drawImage(image,x,y,tile,h);ctx.font='15px sans-serif';ctx.fillText(photo.label,x+4,y+h+17);
@@ -79,7 +80,7 @@ export async function run(context){
     for(const quality of [.85,.75,.65,.55,.45,.35]){const url=canvas.toDataURL('image/jpeg',quality);if(url.length*3/4<=490000)return {url,width:canvas.width,height:canvas.height,quality};}
     throw Error('Actual sheet exceeds 500 KB');
   })()`);
-  const sheetPath=join(context.outputDir,'round-1.jpg'),bytes=Buffer.from(sheet.url.split(',')[1],'base64');
+  const sheetPath=join(context.outputDir,'round-2.jpg'),bytes=Buffer.from(sheet.url.split(',')[1],'base64');
   if(bytes.length>500000)throw Error('Actual sheet exceeds 500 KB');
   await writeFile(sheetPath,bytes);context.screenshots.push(sheetPath);
   await writeFile(join(context.outputDir,'summit-run.json'),JSON.stringify({memoryOnly:true,frameMeasurement:false,facts,views:photos.map(photo=>photo.label),sheet:{bytes:bytes.length,width:sheet.width,height:sheet.height,quality:sheet.quality}},null,2)+'\n');

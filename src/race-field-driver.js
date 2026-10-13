@@ -8,7 +8,7 @@ import { DRIVE, steeringYawAuthority } from './config.js';
 import { clamp } from './sim-common.js';
 import { stepKnock } from './vehicle-knock.js';
 import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-lines.js';
-import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget} from './pit-lane.js';
+import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
 
 const MPH = DRIVE.mphToWorld;
@@ -187,13 +187,16 @@ export function stepFieldRacer(duel, r, dt) {
     const transit = pitTransitTarget(duel.course, r, look);
     if (selectedStop || transit) {
       if (selectedStop && stepPitService(duel, r, dt)) { f.stuck = 0; f.offSec = 0; return; }
-      let target = PIT.limitMph;
+      const limit=lane.limiterStart===undefined ? PIT.limitMph : pitSpeedLimitAt(duel.course,r.s,r.lateral);
+      const normal=run.profile.at(r.s+mps*.05)*Math.sqrt(surface.grip??1)*(surface.gripTopShare??1);
+      const laneTarget=lane.limiterStart===undefined ? PIT.limitMph : limit??normal;
+      let target = laneTarget;
       if (selectedStop) {
         const box = pitBox(lane, r), serviced = !!f.pitServiced;
         const remaining = box - phase;
         const stopMph = Math.sqrt(2 * DRIVE.brakeAccel * run.spec.braking * MPH *
           Math.max(0, remaining - 1)) / MPH;
-        target = serviced ? PIT.limitMph : Math.min(PIT.limitMph, stopMph);
+        target = serviced ? laneTarget : Math.min(laneTarget, stopMph);
         if (!serviced && remaining < 2 && Math.abs(r.lateral - lane.offsetAt(phase)) > 1.6)
           target = 3;
       }

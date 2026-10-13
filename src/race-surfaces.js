@@ -6,7 +6,7 @@
 // still be driven. Asphalt on summer tyres is exactly 1, so every course that
 // has no other surface drives as it always has.
 
-export const SURFACE_KINDS = Object.freeze(['asphalt', 'gravel', 'snow', 'ice', 'deep-snow']);
+export const SURFACE_KINDS = Object.freeze(['asphalt', 'gravel', 'snow', 'ice', 'deep-snow', 'warm-tarmac']);
 export const TYRE_KINDS = Object.freeze(['summer', 'winter']);
 export const GRIP_FLOOR = .4;
 export const HINT_BELOW = .8;      // the HUD names the surface when grip falls under this
@@ -27,6 +27,7 @@ export const SURFACES = Object.freeze({
     look: 'Glossy blue-grey patches with a faint sparkle' }),
   'deep-snow': Object.freeze({ id: 'deep-snow', name: 'Deep snow', grip: .55, column: 'snow', hint: 'DEEP SNOW', cue: 'surface.snow',
     topSpeedMph: 45, look: 'Heaped soft snow' }),
+  'warm-tarmac': Object.freeze({id:'warm-tarmac',name:'Warm tarmac',grip:1,column:'warm',hint:'WARM TARMAC',cue:null,look:'Dry road'}),
   // Zone-only handling; circuit authors still use SURFACE_KINDS.
   'sea-floor': Object.freeze({ id: 'sea-floor', name: 'Sea floor', grip: .75, column: 'asphalt',
     hint: 'SEA FLOOR', cue: null, topSpeedShare: .7, accelerationShare: .6, turningDragShare: 1.4,
@@ -36,8 +37,8 @@ export const SURFACES = Object.freeze({
 // Tyre multipliers by the surface's column. Gravel counts as hard ground (the
 // asphalt column) and deep snow as snow (the packed snow column).
 export const TYRES = Object.freeze({
-  summer: Object.freeze({ id: 'summer', name: 'Summer', icon: 'sun', asphalt: 1, snow: .75, ice: .55, topSpeedShare: 1 }),
-  winter: Object.freeze({ id: 'winter', name: 'Winter', icon: 'snowflake', asphalt: .94, snow: 1, ice: .85, topSpeedShare: .97 }),
+  summer: Object.freeze({ id: 'summer', name: 'Summer', icon: 'sun', asphalt: 1, snow: .75, ice: .55, warm: 1, warmTopSpeedShare: 1, topSpeedShare: 1 }),
+  winter: Object.freeze({ id: 'winter', name: 'Winter', icon: 'snowflake', asphalt: .94, snow: 1, ice: .85, warm: .82, warmTopSpeedShare: .97, topSpeedShare: .97 }),
 });
 
 export const isSurface = kind => Object.hasOwn(SURFACES, kind);
@@ -58,6 +59,7 @@ export function effectiveGrip(kind, tyre = 'summer', car = null) {
 // Top speed share of the tyre applies on asphalt only (winter rubber gives
 // 3% away on dry road); on snow and ice other limits already govern.
 export function tyreTopSpeedShare(kind, tyre = 'summer') {
+  if(kind==='warm-tarmac')return (TYRES[tyre] ?? TYRES.summer).warmTopSpeedShare;
   return kind === 'asphalt' || kind === 'gravel' ? (TYRES[tyre] ?? TYRES.summer).topSpeedShare : 1;
 }
 

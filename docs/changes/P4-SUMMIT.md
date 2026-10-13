@@ -1,8 +1,8 @@
 # P4-SUMMIT
 
-Status: actual focused/kit checks pass; native timing failed. Art review and lane/build pending.
+Status: Factory source in progress. Original native strategy gaps failed; Claude corrected the race target and held art round one. New native strategies and round-two art wait for night.
 Own summit-run dev, stage 20 after Snow 19, stable id, 2,600 CR and noCombat.
-Own source b7dd65eb; round-one sheet exists, pending Claude. No release, frames or merge.
+Original b7dd65eb native evidence and round-one sheet remain retained. Claude holds round one for the approved reuse fixes. No release or hidden-course frame check.
 
 ## Settled behavior
 
@@ -118,3 +118,11 @@ Two own unpublished interior-view deliverable drafts went to Recycle Bin.
 Claude corrected the F42 Medium race target to 270-330 s; strategy differences remain 4-8 s and 2-5 s. Start the opt-in 180 m limiter bay at 80 km/h, keep service four seconds, and use warm-tarmac only on asphalt pieces of A/B (summer 1.0, winter .82, warm winter top share .97). Existing lane roads, legacy tyres and Deep sea-floor remain exact. Dense B groves, existing soft snow heaps, brighter Summit-only night snow and the real kit windows/slit reuse approved assets. All native strategies and round-two art wait for night; at most six measured sets with original F42/.95/Medium/1989/4242. No timing or driving pass is claimed.
 
 Integration sync conflicts: keep FAC-04 registry/flags/prices/Preview and FAC-05 catalogue fixtures byte-exact; drop obsolete central Summit additions. Preserve GP nine-base admission and Azure -400/Panorama -43 staging, adding only Summit gridStartS. Keep incoming derived menu counts, pay and qualifying controls, with Summit-only native briefing/default mode. Existing closure/reverse-lap and reference-target assertions select closed circuits with unchanged tolerances; full native catalogue coverage includes Summit. SURFACE_KINDS adds warm-tarmac by Claude decision; all old values remain. Append-only actual Summit replay/world rows will preserve every old byte, with no cyclic reference row.
+
+## Current focused checks and deferred work
+
+Three new controlled bay/warm tests pass. The existing Summit source/geometry/contact check caught authored night exposure 1.12 versus actual Harbour 1.02; source corrected to 1.02 with the assertion unchanged and an actual Harbour palette check added. That source check passes. New controlled demo/native/CPU bay consumer checks and actual aperture High/LOD geometry mask coverage are written and await the next allowed check. These are source fixtures, not native strategy or art acceptance.
+
+Scheduling mistake: a new second lane parent appeared in the returned CIM output of a combined inspection/launch call; the 2.5 s focused check ran briefly as a third job and drained. Further checks use a separate fresh CIM read before deciding to launch. No passing check is repeated for this mistake.
+
+The Gallery asset, collider transforms, road length and geometry remain exact. Current art source reuses B groves/birches, soft banks, snow-ground kits, existing smooth rock normals and real aperture-side material faces. Round-two recipe preserves all 16 original views and adds one High fork approach outside the roof. Pictures are unrun and unaccepted; the original hold and route-readability limitation remain. Initial world signature will be a new-course baseline only, distinct from art acceptance; all old scene/replay/reference values remain exact.

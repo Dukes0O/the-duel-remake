@@ -49,13 +49,14 @@ test('every surface and tyre pairing: grip is surface times tyre, never under 40
     snow: { summer: .7 * .75, winter: .7 },
     ice: { summer: GRIP_FLOOR, winter: .5 * .85 },        // .275 would be under the floor
     'deep-snow': { summer: .55 * .75, winter: .55 },
+    'warm-tarmac': { summer: 1, winter: .82 },
   };
   for (const kind of SURFACE_KINDS) for (const tyre of Object.keys(TYRES)) {
     near(effectiveGrip(kind, tyre), Math.max(GRIP_FLOOR, expected[kind][tyre]), 1e-12, `${kind} on ${tyre}`);
     assert.ok(effectiveGrip(kind, tyre) >= GRIP_FLOOR);
   }
   // The published surface and tyre tables.
-  assert.deepEqual(SURFACE_KINDS.map(kind => SURFACES[kind].grip), [1, .85, .7, .5, .55]);
+  assert.deepEqual(SURFACE_KINDS.map(kind => SURFACES[kind].grip), [1, .85, .7, .5, .55, 1]);
   assert.equal(SURFACES['deep-snow'].topSpeedMph, 45);
   assert.deepEqual([TYRES.summer.asphalt, TYRES.summer.snow, TYRES.summer.ice], [1, .75, .55]);
   assert.deepEqual([TYRES.winter.asphalt, TYRES.winter.snow, TYRES.winter.ice], [.94, 1, .85]);
@@ -236,4 +237,23 @@ test('the renderer draws every surface, the ice board and the braking boards, an
   for (const child of group.children) if (child.geometry) assert.ok(Number.isFinite(child.geometry.boundingSphere?.radius ?? (child.geometry.computeBoundingSphere(), child.geometry.boundingSphere.radius)));
   assert.ok(group.children.length > 8, 'overlays, tracks and boards');
   assert.equal(JSON.stringify([course.features.obstacles, course.features.boards, course.features.surfacePatches]), before);
+});
+
+
+test('warm tarmac keeps summer neutral handling and winter penalties off legacy surfaces', () => {
+  assert.equal(effectiveGrip('warm-tarmac','summer'),1);
+  assert.equal(effectiveGrip('warm-tarmac','winter'),.82);
+  assert.equal(tyreTopSpeedShare('warm-tarmac','winter'),.97);
+  assert.equal(tyreTopSpeedShare('warm-tarmac','summer'),1);
+  assert.equal(gripFor('warm-tarmac','winter').hint,'','the .82 starting setting is above the .80 hint threshold');
+  assert.equal(SURFACES['warm-tarmac'].hint,'WARM TARMAC');
+  assert.equal(surfaceCue('warm-tarmac'),null,'ordinary asphalt sound, no new event cue');
+  assert.equal(effectiveGrip('asphalt','winter'),.94);
+  assert.equal(tyreTopSpeedShare('asphalt','winter'),.97);
+  assert.equal(effectiveGrip('snow','winter'),.7);
+  const course=new Course(rect('warm-tarmac'),1989),group=new THREE.Group();
+  addTrackScriptScene(group,course);
+  const overlays=[];group.traverse(node=>{if(node.material?.name==='Warm tarmac road')overlays.push(node);});
+  assert.equal(overlays.length,0,'warm tarmac draws as the existing asphalt with no overlay');
+  assert.equal(course.gripKindAt(300,0),'warm-tarmac');
 });

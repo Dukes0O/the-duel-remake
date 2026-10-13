@@ -22,7 +22,7 @@ export function surfaceRuns(course) {
   const runs = [], script = course.script;
   let open = null;
   for (const piece of script.pieces) {
-    if (piece.surface !== 'asphalt') {
+    if (piece.surface !== 'asphalt' && piece.surface !== 'warm-tarmac') {
       if (open && open.kind === piece.surface && Math.abs(open.s1 - piece.s0) < 1e-6) open.s1 = piece.s1;
       else { open = { kind: piece.surface, s0: piece.s0, s1: piece.s1, from: -Infinity, to: Infinity }; runs.push(open); }
     } else open = null;

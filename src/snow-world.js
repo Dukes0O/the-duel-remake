@@ -35,6 +35,11 @@ export function winterLightingSettings(base,{course,distance=0}={}) {
     cloudTint:base.cloudTint.map((value,i)=>value*night+[.78,.84,.9][i]*day)};
   // A circuit's authored winter look retains the accepted full-winter defaults.
   const changed=base.winter?{...winter,...base.winter}:winter;
+  if(course?.def.snowWorld?.nightExposure!==undefined){
+    const exposure=course.def.snowWorld.nightExposure;
+    if(!Number.isFinite(exposure)||exposure<=0)throw Error('Authored night snow exposure must be positive.');
+    changed.exposure+=(exposure-changed.exposure)*night;
+  }
   if(weight===1)return changed;
   for(const key of ['exposure','bloom','env'])changed[key]=base[key]+(changed[key]-base[key])*weight;
   for(const key of ['top','horizon','fog','ground','sunColor']){
