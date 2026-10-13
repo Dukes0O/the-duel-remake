@@ -1,8 +1,10 @@
+import {copyDeepProviders,clearDeepJourney,initializeDeepJourney,deepProtected,checkDeepDeparture,stepDeepJourney,queueDeepChoice,deepEnvironment} from './deep/deep-journey.js';
 import * as simDriving from './sim-driving.js';
 import * as simContacts from './sim-contacts.js';
 import * as simRival from './sim-rival.js';
 import * as simPolice from './sim-police.js';
 import * as simLaps from './sim-laps.js';
+import {chosenRaceLaps, supportsLapChoice} from './lap-choice.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
@@ -38,6 +40,8 @@ import {upgradedCar} from './progression.js';
 import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
+import {initializeSnowmen} from './snowmen.js';
+import {initializeSummitAvalanche,resetSummitAvalanche,stepSummitAvalanche,observeSummitAvalanche} from './summit-avalanche.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
 import {initializeAmbushAlley} from './arena/modes/ambush-alley.js';
@@ -60,6 +64,8 @@ export class Duel {
     this.featureFlags = opts.featureFlags?.enabled ? opts.featureFlags :
       opts.featureFlags ? createFeatureFlags({overrides: opts.featureFlags, storage: null, qa: false}) :
       raceFeatureFlags(featureFlags, () => this.state);
+    Object.defineProperty(this,'deepProviders',{value:copyDeepProviders(opts.deepProviders)});
+    this.deepRuntime = null;
     this.listeners = new Set();
     this.state = this._freshState();
   }
@@ -171,9 +177,12 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
+    this._deepKit = deepKit === true;
+    this._deepFound = Object.freeze(Array.isArray(deepFound) ? deepFound.filter(id=>typeof id==='string') : []);
+    this._requestedLaps = laps;
     this.state.arena = null;
     this._hiddenRoadAutomaticEntry = discoveredGate === true;
     this.state.wastelandGateDiscovered = discoveredGate === true;
@@ -236,19 +245,26 @@ export class Duel {
   }
 
   _loadStage(idx) {
+    clearDeepJourney(this);
     clearArsenalState(this);
     const s = this.state;
     s.stageIndex = idx;
     const grandPrix = s.mode === 'grandprix' && grandPrixCourse(COURSE[idx]);
     if (s.mode === 'grandprix' && !grandPrix) s.mode = 'duel';
-    this.course = new Course(grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx], this.seed, {
+    const original = grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx];
+    const laps = this.featureFlags.enabled('lap-choice') && supportsLapChoice(COURSE[idx],s.mode)
+      ? chosenRaceLaps(COURSE[idx],s.mode,this._requestedLaps,true) : original.laps;
+    const definition = laps === original.laps ? original : {...original, laps};
+    this.course = new Course(definition, this.seed, {
       hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
       muddyHollow: s.wastelandGateDiscovered === true,
+      ...(this.deepProviders.length ? {deep:{providers:this.deepProviders,enabled:this.featureFlags.enabled('the-deep'),kit:this._deepKit,mode:s.mode,found:this._deepFound,qualifying:!!s.qualifying&&s.qualifying.phase!=='complete'}} : {}),
     });
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
     this._resetStageDriving();
+    initializeSnowmen(this);
     s.racePenaltySec = 0; s.lap = s.currentLap = 1; s.completedLaps = 0; s.lapsTotal = this.course.def.laps || 1;
     s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0; s.assistedLaps = []; s.assistedLap = false;
     const stunt = this.course.def.stuntTrial, drift = this.course.def.driftTrial, rush = this.course.def.checkpointRush;
@@ -295,9 +311,11 @@ export class Duel {
     initializeRaiders(this);
     initializeFootTransition(this);
     initializeFootWeapons(this);
+    initializeDeepJourney(this);
     initializeHiddenRoadJourney(this);
     initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
+    initializeSummitAvalanche(this);
     if (grandPrix) { applyQualifyingGrid(this); beginQualifying(this); }
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
       : s.qualifying?.phase === 'driving' ? {stageLoaded: idx, qualifyingStarted: true}
@@ -306,6 +324,8 @@ export class Duel {
 
   // Driving, crash and scoring state for a fresh stage or arena event.
   _resetStageDriving() {
+    clearDeepJourney(this);
+    resetSummitAvalanche(this);
     const s = this.state;
     s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0; s.reverseHoldSec = 0;
     s.paused = false; s.offRoad = false; s.steerVisual = 0;
@@ -324,6 +344,8 @@ export class Duel {
     s.brokenScenery = []; this._brokenSceneryIds = new Set();
     s.roadsideBursts = [];
     s.roadsideBurstSerial = 0;
+    delete s.snowmenEnabled;delete s.snowmen;delete s.snowmanBursts;
+    this._brokenSnowmanIds=null;
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.bombImpactCooldown = 0;
@@ -460,6 +482,10 @@ export class Duel {
   // ---- the core step ---------------------------------------------------
   fireWeapon(weapon){return fireWeapon(this,weapon);}
   selectFootGear(slot){return selectFootGear(this,slot);}
+  deepEnvironment() { return deepEnvironment(this); }
+  clearDeep() { clearDeepJourney(this); }
+  _deepProtected() { return deepProtected(this); }
+  chooseDeep(choice) { return queueDeepChoice(this,choice); }
   chooseHiddenRoad(choice) { return queueHiddenRoadChoice(this, choice); }
 
   step(dt) {
@@ -486,6 +512,7 @@ export class Duel {
       }
       return;
     }
+    if (stepDeepJourney(this,dt) || checkDeepDeparture(this)) return;
     if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this) ||
         s.status === 'exploring') {
       s.calloutTimer = Math.max(0, s.calloutTimer - dt);
@@ -499,6 +526,8 @@ export class Duel {
 
     // Within the actual spur, motion decides departure before race outcomes.
     // Ordinary and flag-off racing retain their established call order.
+    const droveDeep = this._deepProtected();
+    if(droveDeep){this._drive(dt);if(checkDeepDeparture(this)||s.status!=='racing')return;}
     const droveSpur = !!s.hiddenRoadJourney && !s.onFoot && s.impactTimer <= 0 && onHiddenRoad(this.course, s);
     const droveHollowApproach = nearMuddyHollowDeparture(this);
     if (droveSpur) {
@@ -510,6 +539,7 @@ export class Duel {
       if (checkMuddyHollowDeparture(this) || s.status !== 'racing') return;
     }
     s.stageTimeSec += dt;
+    stepSummitAvalanche(this);
     if (s.timeLimitSec) s.timeRemaining = Math.max(0, s.timeLimitSec - s.stageTimeSec - s.racePenaltySec);
     s.lapTimeSec = s.stageTimeSec + s.racePenaltySec - s.lapStartedAt;
     s.totalTimeSec += dt;
@@ -536,6 +566,7 @@ export class Duel {
       this._traffic(dt);
       for (const opponent of s.opponents) this._rival(dt, opponent);
       this._collisions();
+      observeSummitAvalanche(this);
       this._tickDrift(dt);
       this._police(dt, false);
       return; // A crash must play out before a ticket or finish can replace it.
@@ -550,13 +581,14 @@ export class Duel {
     // each sub-step can end the run (gameover crash, ticket); once the status
     // leaves 'racing' the rest of the frame must not keep simulating, or a
     // finish-line crossing could overwrite the gameover/ticket state
-    if (!droveSpur && !droveHollowApproach) this._drive(dt);
+    if (!droveDeep && !droveSpur && !droveHollowApproach) this._drive(dt);
     if (checkMuddyHollowDeparture(this) || checkHiddenRoadDeparture(this)) return;
     if (s.status !== 'racing' || s.impactTimer > 0) { this._tickDrift(dt); return; }
     this._jump(s, dt);
     this._traffic(dt);
     for (const opponent of s.opponents) this._rival(dt, opponent);
     this._collisions();
+    observeSummitAvalanche(this);
     this._tickDrift(dt);
     this._flockBonuses();
     if (s.status !== 'racing' || s.impactTimer > 0) return;
@@ -666,6 +698,7 @@ export class Duel {
   // ---- input helpers ---------------------------------------------------
   _callout(text, seconds = 2.2) { this.state.callout = text; this.state.calloutTimer = seconds; }
   setInput(partial) {
+    if(this.state.deepJourney?.controlsLocked)partial={throttle:0,brake:0,steer:0,boost:false,shiftUp:false,shiftDown:false,interact:false};
     const input = this.state.input;
     for (const key of ['throttle', 'brake', 'steer']) {
       if (Number.isFinite(partial[key])) input[key] = Math.max(key === 'steer' ? -1 : 0, Math.min(1, partial[key]));

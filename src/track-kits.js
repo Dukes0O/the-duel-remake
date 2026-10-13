@@ -33,6 +33,8 @@ export function normalizeKitPlacements(course, entries) {
     const scale = Array.isArray(entry.scale) ? [...entry.scale] : Array(3).fill(entry.scale ?? 1);
     if (scale.length !== 3 || !scale.every(value => finite(value) && value > 0))
       fail('scale must contain three positive finite values.');
+    const snowmanId=entry.snowmanId;
+    if(snowmanId && (entry.id!=='snowman' || typeof snowmanId!=='string'))fail('snowman binding is invalid.');
     const scenery = entry.scenery;
     if (scenery && (scenery.kind !== 'tree' || typeof scenery.id !== 'string' || !scenery.id))
       fail('scenery binding must name an existing tree.');
@@ -51,6 +53,7 @@ export function normalizeKitPlacements(course, entries) {
       heading:entry.heading ?? 0,scale:Object.freeze(scale),lift:entry.lift ?? 0,
       ...(bands ? {bands:Object.freeze(bands.map(band => Object.freeze([...band])))} : {}),
       ...(scenery ? {scenery:Object.freeze({...scenery})} : {}),
+      ...(snowmanId ? {snowmanId} : {}),
       ...(patch ? {physicalPatch:patch} : {})});
   }));
 }
@@ -286,6 +289,7 @@ export function createTrackKits(course, options) {
   const resources = new Set(), released = new WeakSet(), assets = new Map();
   const skeletons = new Set(), batches = [], instances = [], chunks = new Map();
   let activeView = null;
+  let brokenSnowmen = new Set();
   const rearScopes = [];
   let retired = false, failed = false, status = 'loading', error = null, rows = [];
   const loader = loadAsset ? null : new GLTFLoader();
@@ -458,7 +462,8 @@ export function createTrackKits(course, options) {
     for (const chunk of chunks.values()) {
       const version = !view.rear && view.high && position &&
         chunk.bounds.distanceToPoint(position) <= LOD_DISTANCE ? 'high' : 'low';
-      const selected = chosen.has(chunk) ? chunk.entries.filter(({instance}) => {
+      const selected = chosen.has(chunk) ? chunk.entries.filter(({instance,row}) => {
+        if(row.snowmanId && brokenSnowmen.has(row.snowmanId))return false;
         if (frustum && !frustum.intersectsBox(instance.bounds)) return false;
         if (!position) return true;
         if (instance.bounds.distanceToPoint(position) > (view.rear ? REAR_DISTANCE : MAIN_DISTANCE)) return false;
@@ -559,6 +564,7 @@ export function createTrackKits(course, options) {
     update({high=true,position,camera,state}={}) {
       if (status !== 'ready' || retired) return;
       activeView = {high,position:position ? new THREE.Vector3(position.x,finite(position.y)?position.y:0,position.z) : null,camera};
+      brokenSnowmen=new Set((state?.snowmanBursts ?? []).map(hit=>hit.id));
       applyView(activeView); syncLights(state);
     },
     sync:syncLights,
@@ -581,6 +587,14 @@ export function createTrackKits(course, options) {
       if (status === 'ready' && !retired && activeView) applyView(activeView);
     },
     getPlacementPose(index) {return instances[index]?.matrix.clone() ?? null;},
+    // Clones share the approved owner resources; presentation must retire before this owner.
+    snowmanPart(name,high=true) {
+      if(retired || status!== 'ready' || !['hat','carrot'].includes(name))return null;
+      const node=assets.get('snowman/'+(high?'high':'low'))?.model.scene.getObjectByName(name);
+      if(!node?.isMesh)return null;
+      const mesh=node.clone();mesh.matrix.copy(node.matrixWorld);mesh.matrixAutoUpdate=false;
+      return mesh;
+    },
     dispose() {
       if (retired) return;retired = true;status = 'retired';clear();
     },

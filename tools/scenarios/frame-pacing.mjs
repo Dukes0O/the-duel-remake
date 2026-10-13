@@ -19,6 +19,14 @@ export function summarizeNightFrames(values) {
   const sorted = [...values].sort((a, b) => a - b);
   return {frames: 120, p50: sorted[59], p95: sorted[113], max: sorted[119]};
 }
+export function prepareNightPlayer(app, quality) {
+  app.returnToMenu();
+  if (!app.addPlayer('Frame QA ' + quality).ok)
+    throw Error('Memory-only native temporary player creation failed.');
+  app.profile = {...app.profile, credits: 50000};
+  if (!app._saveProfile() || !app.purchaseCourse('harbour-lights').ok)
+    throw Error('Memory-only native course purchase failed.');
+}
 async function measureNight(context, quality) {
   assertNightFrameContext(context, process.env, inspectNightProcesses());
   await context.navigate(`${entry}?frame-pacing=night-${quality}`);
@@ -41,8 +49,7 @@ async function measureNight(context, quality) {
     const stage = [...document.querySelector('#scene-select').options].map(option => Number(option.value))
       .find(index => app.getMenuCourse(index).def.id === 'harbour-lights');
     if (!Number.isInteger(stage)) throw Error('Released Harbour Lights is absent from the real menu.');
-    app.profile = {...app.profile, credits: 50000};
-    if (!app._saveProfile() || !app.purchaseCourse('harbour-lights').ok) throw Error('Memory-only native course purchase failed.');
+    (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)});
     app.setLightingMood('clear');
     const previousBuild = view.dataset.worldBuilds, started = performance.now();
     if (!app.startCampaign({startStage: stage, seed: 1989, fieldSeed: 12, fieldSize: 7,

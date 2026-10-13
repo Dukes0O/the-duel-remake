@@ -1,8 +1,6 @@
-// Geometry is deterministic from the complete course definition and seed.
-// Keep only one rendered world; this key avoids rebuilding it merely because
-// the menu preview and live simulation own separate, equivalent Course objects.
+// Absent ramps retain the exact ordinary, Hidden Road and Muddy Hollow keys.
 export function environmentKey(course) {
-  if (course.hiddenRoad) return JSON.stringify([course.seed, course.def, 'hidden-road-v1']);
-  if (course.muddyHollow) return JSON.stringify([course.seed, course.def, 'muddy-hollow-v1']);
-  return JSON.stringify([course.seed,course.def]);
+  const marker=course.hiddenRoad?'hidden-road-v1':course.muddyHollow?'muddy-hollow-v1':null;
+  const key=JSON.stringify(marker?[course.seed,course.def,marker]:[course.seed,course.def]);
+  return course.deepRamp?key+':deep-ramp-v1:'+course.deepRamp.atDistance:key;
 }

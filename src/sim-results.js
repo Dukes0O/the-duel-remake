@@ -1,3 +1,4 @@
+import {snowmanResult} from './snowmen.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, CPU_DIFFICULTY, COURSE, LIVES, DRIVE, SCORING } from './config.js';
 import { finishDrift } from './drift-scoring.js';
@@ -89,6 +90,7 @@ export function _finishStage() {
     ...(opponents.length > 1 ? { opponentCount: opponents.length, position, beatAllOpponents } : {}),
     ...objective, ...(s.objective ? { objectiveMissed: !objective.targetsMet } : {}),
     ...combatResultSnapshot(this),
+    ...snowmanResult(this),
   };
   if (s.lives <= 0) { s.status = 'gameover'; s.results.gameover = true; this.emit({ gameover: true }); return; }
   s.status = 'stage_result';

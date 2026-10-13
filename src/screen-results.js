@@ -1,3 +1,4 @@
+import {raceDistanceLabel} from './lap-choice.js';
 import {wantedPosterScreen} from './screen-card-wall.js';
 import {COURSE} from './config.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
@@ -16,10 +17,14 @@ export function createResultsScreen({app, profile, credits, escapeHTML, time, ar
   let lastEventResult=null;
   const metric=metricView;
   const action=actionView||((label,verb,primary=false)=>screenAction(label,verb,primary,arrow));
-  const rewardMetric=result=>Number.isSafeInteger(result.scrapEarned)
-    ? metric('SCRAP EARNED',`+${credits(result.scrapEarned)}`,true)
-    : metric(result.creditReward<0?'CREDITS LOST':'CREDITS EARNED',
-      `${result.creditReward<0?'−':'+'}${credits(Math.abs(result.creditReward||0))}`,true);
+  const distanceLine=result=>result.lapChoiceEnabled===true?`<p class="event-brief">${raceDistanceLabel(COURSE[result.stageIndex??app.duel.state.stageIndex],result.laps,app.duel.state.mode)}</p>`:'';
+  const rewardMetric=result=>{
+    const pay=Number.isSafeInteger(result.scrapEarned)
+      ? metric('SCRAP EARNED',`+${credits(result.scrapEarned)}`,true)
+      : metric(result.creditReward<0?'CREDITS LOST':'CREDITS EARNED',
+        `${result.creditReward<0?'−':'+'}${credits(Math.abs(result.creditReward||0))}`,true);
+    return result.lapChoiceEnabled===true ? `<div>${pay}${distanceLine(result)}</div>` : pay;
+  };
 function modalScreen(s) {
   const r = s.results || {};
   const scrapResult = Number.isSafeInteger(r.scrapEarned);
@@ -54,7 +59,7 @@ function modalScreen(s) {
     lastEventResult={state:s,stageIndex:s.stageIndex,runId:app.runId,result:r};
     const stage=COURSE[s.stageIndex],drift=stage.kind==='drift',rush=stage.kind==='checkpoint',stunt=r.objective==='stuntTrial',kind=rush?'CHECKPOINT RUSH':drift?'DRIFT TRIAL':stunt?'STUNT TRIAL':stage.kind==='chase'?'PURSUIT':stage.arena?'ARENA':stage.kind==='rally'?'RALLY':'CIRCUIT';
     eyebrow=`${kind} / ${r.won?'VICTORY':r.completed?'COMPLETE':'DNF'}`;title=r.timeout?'TIME RAN<br>OUT.':r.objectiveMissed?(rush?'GATES<br>MISSED.':drift?'TARGET<br>MISSED.':'STUNTS NOT<br>DONE.'):r.won?'OWN THE<br>FINISH.':'SO CLOSE.';
-    description=r.won?`${!scrapResult&&r.winStreak>=3?`${r.winStreak} wins in a row. Streak bonus earned.`:'Both laps are in the books.'}`:r.timeout?'The pursuit deadline passed. The car survives, but this run does not enter the leaderboard.':s.mode==='timetrial'?'You finished both laps but missed the target time.':'Your rival took this one.';
+    description=r.won?`${!scrapResult&&r.winStreak>=3?`${r.winStreak} wins in a row. Streak bonus earned.`:`${s.lapsTotal} laps are in the books.`}`:r.timeout?'The pursuit deadline passed. The car survives, but this run does not enter the leaderboard.':s.mode==='timetrial'?`You finished ${s.lapsTotal} laps but missed the target time.`:'Your rival took this one.';
     if(stunt)description=`${r.timeout?'The stunt deadline passed.':r.objectiveMissed?'Both laps finished, but the stunt targets were missed.':'Both laps and the stunt targets are complete.'} ${r.jumps||0} / ${r.targets?.jumps||s.objective?.targetJumps||4} landed jumps · ${r.crushCount||0} / ${r.targets?.crushes||s.objective?.targetCrushes||4} cars crushed.`;
     if(drift)description=`${r.timeout?'The deadline passed.':r.objectiveMissed?'Both laps finished, but the drift target was missed.':'Both laps and the drift target are complete.'} Banked ${credits(r.driftScore)} / ${credits(r.driftTarget||s.objective?.targetScore)} points. Best chain ${credits(r.driftBestChain)}. Time ${time(r.timeSec??r.stageTimeSec)}.${r.driftScoreImproved?' A new car score best.':''}${r.won?'':' Only successful trials set a car best.'}`;
     if(rush)description=`${r.timeout?'The checkpoint clock ran out.':r.objectiveMissed?'Both laps finished, but some gates were missed.':'Every gate cleared. Both laps complete.'} ${r.checkpointsPassed||0} / ${r.checkpointsRequired||s.checkpointRush?.total||12} gates passed. ${r.checkpointMisses||0} missed. Time ${time(r.timeSec??r.stageTimeSec)}.${r.won?'':' Only successful runs set a car best.'}`;
@@ -71,6 +76,7 @@ function modalScreen(s) {
       if(!r.won)description+=Object.hasOwn(r.creditBreakdown||{},'combat')?' Combat runs never debit saved credits.':' The loss charge is half the CPU base reward, down to zero credits.';
     }
     metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+rewardMetric(r);
+    if(r.snowmenEnabled===true && r.completed===true && Number.isSafeInteger(r.snowmen) && r.snowmen>0)metrics+=metric('SNOWMEN',r.snowmen);
     if(r.opponentCount>1)metrics+=metric('FINISH POSITION',`${r.position} / ${r.opponentCount+1}`);
     if(Number.isFinite(r.hitsLanded)){
       const damage=Number(r.damageDealt.toFixed(1)).toLocaleString();
@@ -98,7 +104,7 @@ function modalScreen(s) {
       const won=result.won===true,known=typeof result.won==='boolean',rush=stage.kind==='checkpoint',drift=stage.kind==='drift',stunt=!!stage.stuntTrial;
       eyebrow=`${escapeHTML(stage.name.toUpperCase())} / ${known&&won?'VICTORY':'COMPLETE'}`;
       title=!won?'RUN<br>COMPLETE.':rush?'GATES<br>CLEARED.':drift?'DRIFT<br>MASTERED.':stunt?'STUNTS<br>COMPLETE.':stage.kind==='chase'?'CITY<br>ESCAPED.':stage.kind==='rally'?'TRAIL<br>CONQUERED.':stage.arena?'ARENA<br>CONQUERED.':'CIRCUIT<br>CONQUERED.';
-      description=!won?`${escapeHTML(stage.name)} is complete.${known?' The winning target was not met. Try another run.':''}`:rush?'Every checkpoint passed in order. Both laps complete before the clock ran out.':drift?'Drift target reached. Both city laps complete before the deadline.':stunt?'Both laps, the landed jumps and the crush targets are complete.':stage.kind==='chase'?'Both city laps complete. You escaped the pursuit before the deadline.':stage.kind==='rally'?'Both gravel laps complete. You conquered Ridge Rally.':stage.arena?'Both stadium laps complete. The arena is yours.':`Both laps complete. You beat ${s.mode==='timetrial'?'the Time Trial target':'your rival'} at ${escapeHTML(stage.name)}.`;
+      description=!won?`${escapeHTML(stage.name)} is complete.${known?' The winning target was not met. Try another run.':''}`:rush?'Every checkpoint passed in order. Both laps complete before the clock ran out.':drift?'Drift target reached. Both city laps complete before the deadline.':stunt?'Both laps, the landed jumps and the crush targets are complete.':stage.kind==='chase'?'Both city laps complete. You escaped the pursuit before the deadline.':stage.kind==='rally'?`${s.lapsTotal} gravel laps complete. You conquered Ridge Rally.`:stage.arena?'Both stadium laps complete. The arena is yours.':`${s.lapsTotal} laps complete. You beat ${s.mode==='timetrial'?'the Time Trial target':'your rival'} at ${escapeHTML(stage.name)}.`;
       metrics=metric('RACE TIME',time(result.timeSec??s.stageTimeSec+(s.racePenaltySec||0)),true);
       metrics+=rush?metric('GATES PASSED',`${result.checkpointsPassed??s.checkpointRush?.passed??0} / ${result.checkpointsRequired??s.checkpointRush?.total??12}`):drift?metric('BANKED POINTS',credits(result.driftScore??s.drift?.bankedScore??0)):stunt?metric('LANDED JUMPS',result.jumps??s.jumps??0)+metric('CARS CRUSHED',result.crushCount??s.crushCount??0):metric('LAPS COMPLETE',`${s.completedLaps} / ${s.lapsTotal}`);
       if(result.opponentCount>1)metrics+=metric('FINISH POSITION',`${result.position} / ${result.opponentCount+1}`);

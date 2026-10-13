@@ -129,7 +129,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     text('onfoot-hint', footHint ?? '');
     text('race-time',time(s.stageTimeSec));
     text('penalty-time',s.racePenaltySec?`+${Math.round(s.racePenaltySec)} SEC PENALTIES`:'');
-    const lapsTotal=s.field?s.lapsTotal:app.duel.stageDef.laps||2;
+    const lapsTotal=s.lapsTotal||app.duel.stageDef.laps||2;
     text('lap-number',s.field&&s.field.finalLap?`FINAL LAP ${s.lapsTotal} / ${s.lapsTotal}`:`LAP ${s.currentLap||s.lap||1} / ${lapsTotal}`);
     text('lap-time',time(s.lapTimeSec||0));
     const section=app.duel.course?.sectionAt?.(s.s)?.name||'COMPLETE BOTH LAPS';

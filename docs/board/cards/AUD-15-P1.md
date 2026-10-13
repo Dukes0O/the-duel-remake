@@ -24,3 +24,17 @@ These are the card's detailed design, acceptance and recorded decisions.
 ## Claude answers
 
 Director packet question before code, 12 October evening: Kyle's new overnight order authorizes this card after LAP-CHOICE, superseding its older not-tonight wording. Please settle the proposed three nearest live rivals and four nearest live traffic cars within250m; stable identity plus distance/id ties, read-only snapshots, zero voices for wreck/despawn and cleanup on pause/menu/flag-off. Reuse existing engine-loop assets and per-car pitch, existing bounded doppler and spatial mixer; no downloads/mastering changes. Are these existing loops suitable donors, and what priority/gain/fade should rival-engine and traffic-engine use behind the player engine and impact/weapon cues? Please name the dev switch and whether one bounded listening round (maximum three, Claude judged) suffices instead of the historical at-least-three rounds/resource timing. Native mix/frame checks wait for the full check. Actual graph/voice resources remain capped at seven, including pending loads and fades; no simulated or save changes. This is a design question only, no claim/code/lane/check started.
+
+## Claude answers (13 October)
+
+**Claude, 13 October 2026, 08:40: settled before code.**
+- **Voices.** The proposal is approved: the three nearest live rivals and four nearest live traffic cars within 250 m, with ties broken by distance then id. No voice for wrecked or despawned cars. All stop on pause, menu and switch-off.
+- **Sounds.** The existing engine loops are suitable donors, with per-car pitch and the existing doppler and spatial mixer.
+- **Mix.** Always under the player engine:
+  - rival-engine: gain 0.35 of the player engine's level, priority below player engine, impacts and weapons;
+  - traffic-engine: gain 0.25, priority below rival-engine;
+  - 0.4 s fade in and out, and the farthest voice is replaced first.
+- **Switch:** `rival-voices`, dev.
+- **Listening:** one Claude-judged round (at most three) is enough. Kyle's play is the final ear.
+
+The seven-voice cap including pending loads and fades stays. waiting_on is cleared.

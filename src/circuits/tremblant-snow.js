@@ -90,7 +90,7 @@ function hillPines() {
 // the destructible scenery that makes them smashable does not land until P4-SNOWMEN, so these are
 // placement data only: nothing here is drawn. When P4-SNOWMEN lands it reads this list; until then
 // it stays out of `kitPlacements`. Each stands in the runoff, well off the racing line.
-export const SNOWMAN_SPOTS = Object.freeze([100, 130, 165, 200, 230, 260, 285, 305].map((s, i) => Object.freeze({ s, lateral: i % 2 ? 25 : 18 })));
+export const SNOWMAN_SPOTS = Object.freeze([100, 130, 165, 200, 230, 260, 285, 310].map((s, i) => Object.freeze({ s, lateral: i === 3 ? 20 : i === 5 ? 28 : i % 2 ? 25 : 18 })));
 
 // Pale ski runs on the far mountain, and the pale ski mountain itself: snow over the high ground, dark
 // pines on the lower slopes, blue-white patches where the snow lies in the trees.
@@ -124,6 +124,7 @@ export const TREMBLANT_SNOW = defineScriptedCourse({
   surfacePatches: ICE,
   pitLane: { straight: 'Lodge Straight', side: 'right' },
   snowWorld: WINTER,
+  snowmen: SNOWMAN_SPOTS,
   intel: { ...BASE.intel, notes: { ...BASE.intel.notes,
     'fir-esses-2': { line: 'Be straight before the crest, then let the car roll over the ice.', note: 'Ice on the exit, past the corner and under the trees. The ICE board gives you 100 m of warning; lift before it, not on it.' },
     'beaver-hairpin': { brakeBoard: 100, line: 'Brake on the spur, before the ice if you can.', note: 'The second ice patch is on the spur just before the hairpin. Winter tyres hold; summer tyres do not.' },

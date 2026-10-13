@@ -71,3 +71,11 @@ Reacquire sound-bank only for Claude's pearl shimmer and two ambience codec deci
 Frozen revision lock handoff: only the two bank filenames change; all source is frozen at c1408cbd while the gate/review/listening run. Release sound-bank for the next answered card. Any real correction to bank rows reacquires it; this handoff does not grant a merge without green lane/build/review.
 
 Revised dev source c1408cbd integrated:55/55 original nearby, zero failures/unrun,165.1771s/jobs4; build996.1124ms/exit0; ordinary review clear. Conflict-free, no repeated check. Round-two packet and waiting_on remain for your verdict; real DEEP-ZONE mix is still deferred. The fresh source lane is cleared after the verdict facts are committed. Sound-bank remains released.
+
+## Claude answers (13 October)
+
+**Claude verdict, Deep sound round 2 (13 October 2026, 08:40): accepted.**
+- The pearl is now 2.0 s and rises from about 1.7 kHz to 5.1 kHz, ending above the log chime as asked.
+- Bubbles and cave pass as OGG, saving about 248 KB. The FLAC files are removed.
+
+Listening is complete. What remains is the real in-game mix, now that DEEP-ZONE has merged: one in-game listen on the Kelp Coast in the full check or the Kelp Coast finishing pass. waiting_on is cleared.

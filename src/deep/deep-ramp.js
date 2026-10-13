@@ -1,6 +1,6 @@
 // Uninstalled Pacific ramp geometry. DEEP-ZONE owns gated journey/scene wiring.
 import { SEA_LEVEL, shoreOffset } from '../coastal-water.js';
-import { buildPacificRockLayout, offshoreClearance } from '../pacific-coast.js';
+import { buildPacificRockLayout, offshoreClearance } from '../pacific-coast-layout.js';
 import { sweepObstacle } from '../collision.js';
 
 const LENGTH = 120, WIDTH = 6, TARGET = SEA_LEVEL - 8;

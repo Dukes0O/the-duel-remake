@@ -1,3 +1,5 @@
+import {createDeepUi} from './deep/deep-ui.js';
+import './deep/deep-ui.css';
 import {createWarlordCardArt} from './warlord-card-art.js';
 import './screen-card-wall.css';
 import {hiddenRoadHints,hiddenRoadMapKey} from './hidden-road-hints.js';
@@ -70,6 +72,7 @@ const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;'
 root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
+const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
 // Presentation-only QA switch, absent from normal production builds.
 const hiddenRoadUiQa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__?{skipUpdate:false}:null;
 if(hiddenRoadUiQa)window.__hiddenRoadUiQa=hiddenRoadUiQa;
@@ -100,7 +103,7 @@ const buildUpdates=createBuildUpdateChecker({
 const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -130,7 +133,8 @@ const {ensureRenderer, syncRendererReadiness} = readiness;
 const courseScreen = (playerProfile, selectedStage, message) => courseScreenMarkup(playerProfile,
   selectedStage, message, {teamRoomEnabled: app._switches().enabled('grand-prix'),
     grandPrixCareerEnabled: app._switches().enabled('grand-prix-career'),
-    grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode});
+    grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode,
+    lapChoiceFor: app._switches().enabled('lap-choice') ? (course,mode)=>app.getLapChoice(COURSE.indexOf(course),mode) : undefined});
 let teamRoomPlayerId = null;
 const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
@@ -216,6 +220,7 @@ root.addEventListener('click',e => {
   if(handleDriverAction(button,{app,refreshGarage,root,garageCar,credits}))return;
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
+  if(button.dataset.laps){const laps=Number(button.dataset.laps);app.setLapChoice(laps);updateMenuScene();root.querySelector(`[data-laps="${laps}"]`)?.focus({preventScroll:true});return;}
   for (const key of ['car','difficulty','mode','cpuDifficulty','tyre']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
   if(button.dataset.arsenalPurchase){const result=app.purchaseArsenalWeapon(button.dataset.arsenalPurchase);refreshGarage(result.ok?'Weapon purchased.':result.reason);return;}
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
@@ -273,7 +278,7 @@ root.addEventListener('click',e => {
     case 'career-import':
       if(app.duel.state.status!=='menu'||!playersOpen)return;
       root.querySelector('#career-import-file')?.click();return;
-    case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
+    case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.laps=choices.laps;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
     case 'armory': if(app.duel.state.status!=='menu')return;armoryOpen=true;armoryCar=choices.car;garageOpen=coursesOpen=playersOpen=leaderboardOpen=false;garageMessage='';lastScreen=null;break;
     case 'armory-close':if(app.isYardHomeActive())yardPanel='home';else armoryOpen=false;lastScreen=null;break;
@@ -399,7 +404,7 @@ function renderState(s) {
     if(menu&&garageOpen&&app.wastelandUnlocked())
       ui['modal-layer'].querySelector('.driver-panel')?.insertAdjacentHTML(
         'afterend',crewPanel(profile(),escapeHTML,{gearEnabled:app._switches().enabled('crew-gear')===true,warlordCardsEnabled:app._switches().enabled('warlord-cards')===true && app._switches().enabled('crew-gear')===true}));
-    const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER TWO LAPS`):s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
+    const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER ${s.lapsTotal} LAPS`):s.rival?`BEAT YOUR RIVAL OVER ${s.lapsTotal} LAPS`:'CHASE YOUR CAR PERSONAL BEST');
     ui['pause-button'].setAttribute('aria-label',s.paused?'Resume race':'Pause race');
     if(modal){
       const selectedYardAction=`yard-${yardPanel==='home'?'career':yardPanel}`;
@@ -417,6 +422,9 @@ function renderState(s) {
   combatHud.update(s);
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);
   lastHiddenRoadView=journeyView;
+  const deepView=deepUi.update(app.duel);
+  ui.stage.classList.toggle('deep-active',!!deepView);
+  ui.stage.style.setProperty('--deep-hud-opacity',String(deepView?.hudOpacity??1));
   ui.stage.classList.toggle('hidden-road-active',!!journeyView?.active);
   const hudOpacity=String(journeyView?.hudOpacity??1);
   if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)

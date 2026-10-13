@@ -1,4 +1,6 @@
-import {deepDiscoverySnapshot} from './deep/deep-discovery.js';
+import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
+import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
+import {createDeepAudio} from './deep/deep-audio.js';
 import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
@@ -87,7 +89,7 @@ export const ROUTE_PREFERENCE_KEY='duel_route_variant';
 function readRoutePreference(){try{const value=globalThis.localStorage?.getItem(ROUTE_PREFERENCE_KEY);return isRouteVariant(value)?value:DEFAULT_ROUTE_VARIANT;}catch{return DEFAULT_ROUTE_VARIANT;}}
 
 export class App {
-  constructor() {
+  constructor({deepProviders=[]}={}) {
     const url = (typeof window !== 'undefined') ? new URLSearchParams(window.location.search) : new URLSearchParams('');
     const urlSeed=url.has('seed')?seedFromUrl():null,urlRoute=getRouteVariantForSeed(urlSeed);
     this.menuRouteId=urlRoute?.id||readRoutePreference();this._customMenuSeed=urlSeed!=null&&!urlRoute?urlSeed:null;
@@ -98,6 +100,7 @@ export class App {
     const raceFlags = raceFeatureFlags(featureFlags, () => this.duel?.state);
     this.duel = new Duel({
       featureFlags: raceFlags,
+      deepProviders,
       seed: this.seed,
       difficulty: url.get('diff') || undefined,
       car: url.get('car') || undefined,
@@ -115,6 +118,7 @@ export class App {
       this.player=activePlayer(this.players);this.profile=this.player.profile;this.profileSaved=savePlayers(this.players);
     }
     this._rememberWarlordOwner();
+    this._lapChoices = new Map();
     this.leaderboard=loadLeaderboard();this.cpuDifficulty=DEFAULT_CPU_DIFFICULTY;
     this.lapTelemetry=new LapTelemetryStore();this.lapTelemetryRecorder=null;this.ghosts=loadGhosts();this.ghostEnabled=readGhostEnabled();this.ghostPose=null;this.ghostRecord=null;this.ghostRecorder=null;this.ghostStatus='none';this._ghostPoseBuffer={};
     this.ambientOcclusionEnabled=readGraphicsQuality()!=='performance';
@@ -131,9 +135,14 @@ export class App {
     this._recoverInterruptedRace();
     this.cameraMode = 'chase';
     this.audio = new EngineAudio({flags: raceFlags});
+    this.deepAudio = createDeepAudio({audio:this.audio});
     this.duel.onChange((state, event) => {
       this._syncHiddenRoadDiscovery();
       this.audio.event(event,state,this.duel.course);
+      this.deepAudio.event(event,state);
+      if(event.deepPhase&&state.deepJourney?.controlsLocked)this._clearHiddenRoadInput();
+      if(event.deepCommitted)this._settleDeepDeparture(event.deepCommitted,state);
+      if(event.deepReturn)this.returnToMenu();
       if (event.hiddenRoadPhase) this._discoverHiddenRoadGate(event.hiddenRoadPhase, state);
       if (event.hiddenRoadCommitted) this._settleHiddenRoadDeparture(event.hiddenRoadCommitted, state);
       if (event.muddyHollowDeparted)
@@ -253,6 +262,8 @@ export class App {
     return !gate||gate.ready&&gate.state===this.duel.state&&gate.course===this.duel.course;
   }
   dispose(){
+    this.deepAudio.dispose();
+    this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
     this.stop();this._inputEvents?.abort();this.keys={};this._keyboardSteering.reset();this.onFrame=null;
     this.frameDiagnostics?.stop();this.frameDiagnostics=null;
@@ -285,7 +296,10 @@ export class App {
       vy: 0,
       vz: Math.cos(heading) * speed,
     };
+    const deepEnvironment=this.duel.deepEnvironment();
+    this.deepAudio.update(state,deepEnvironment);
     this.audio.update(state, {
+      ...deepEnvironment,
       course,
       listener,
       tunnel: tunnelMix,
@@ -333,6 +347,9 @@ export class App {
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
     const difficulty=options.difficulty??this.duel.state.difficulty;
+    const laps=this.getLapChoice(stageIndex,mode,options.laps);
+    if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
+      this._lapChoices.set(this._lapChoiceKey(stageIndex,mode),laps);
     const rival=Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
     // A new field seed for every Grand Prix, so the same circuit does not always play out the same way.
     if(mode==='grandprix'&&options.fieldSeed==null)options={...options,fieldSeed:Math.floor(Math.random()*4294967296)>>>0};
@@ -346,7 +363,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,tyre,weaponLevels:getProfileWeapons(this.profile).levels,
+    this.duel.startCampaign({...options,laps,tyre,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
@@ -354,6 +371,7 @@ export class App {
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
       muddyHollowHubcaps:this.profile.wasteland?.muddyHollow?.hubcaps,
+      deepKit:this.getDeepDiscovery().kit===true,deepFound:Object.freeze([...(this.getDeepDiscovery().found||[])]),
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     return true;
   }
@@ -362,9 +380,26 @@ export class App {
     const next=!COURSE[state.stageIndex]?.kind?COURSE[state.stageIndex+1]:null;
     this._refreshPlayer();
     if(next&&!next.kind&&!isCourseUnlocked(this.profile,next)){this.courseAccessMessage=`Unlock ${next.name} from the menu to continue. Completed race credits are safe.`;return false;}
-    this.courseAccessMessage='';this.duel.nextStage();return true;
+    this.courseAccessMessage='';
+    if(next)this.duel._requestedLaps=this.getLapChoice(state.stageIndex+1,state.mode);
+    this.duel.nextStage();return true;
   }
-  getRaceChoices(){return raceSettingsChoices(this._raceSettings);}
+  _lapChoiceKey(stageIndex,mode){return `${this.player.id}|${COURSE[stageIndex]?.id}|${mode}`;}
+  getLapChoice(stageIndex=this.menuStage,mode=this._raceSettings.mode,requested){
+    return chosenRaceLaps(COURSE[stageIndex],mode,requested??this._lapChoices?.get(this._lapChoiceKey(stageIndex,mode)),this._switches().enabled('lap-choice'));
+  }
+  setLapChoice(laps){
+    const {startStage,mode}=raceSettingsChoices(this._raceSettings);
+    if(this.duel.state.status!=='menu'||!this._switches().enabled('lap-choice')||!supportsLapChoice(COURSE[startStage],mode))return false;
+    this._lapChoices.set(this._lapChoiceKey(startStage,mode),this.getLapChoice(startStage,mode,laps));
+    return this.getRaceChoices();
+  }
+  getRaceChoices(){
+    const choices=raceSettingsChoices(this._raceSettings);
+    if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[choices.startStage],choices.mode))
+      choices.laps=this.getLapChoice(choices.startStage,choices.mode);
+    return choices;
+  }
   _restoreRaceSettings({defaultsOnly=false,overrides={},customSeed=null}={}){
     const saved=defaultsOnly?DEFAULT_RACE_SETTINGS:this.profile.raceSettings||this._legacyRaceDefaults;
     this._applyRaceSettings(normalizeRaceSettings({...saved,...overrides},this.profile),customSeed);
@@ -385,7 +420,8 @@ export class App {
   setRaceSettings(patch={}){
     if(this.duel.state.status!=='menu'||!patch||typeof patch!=='object')return false;
     this._refreshPlayer();const values={...patch};if(Object.hasOwn(values,'startStage'))values.eventId=COURSE[values.startStage]?.id||COURSE[0].id;
-    const settings=this._rememberRaceSettings(values),customSeed=Object.hasOwn(values,'routeVariant')?null:this._customMenuSeed;
+    const settings=this._rememberRaceSettings(values);
+    const customSeed=Object.hasOwn(values,'routeVariant')?null:this._customMenuSeed;
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
   }
   restart() {
@@ -399,7 +435,7 @@ export class App {
       return this.visitWasteland();
     }
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
-    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,rival:this.duel.state.rivalSettings,
+    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,laps:this._lapChoices?.get(this._lapChoiceKey(this._campaignStart||0,mode)),rival:this.duel.state.rivalSettings,
       opponentCount:this.duel.state.opponentCount,fieldSize:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
@@ -606,6 +642,11 @@ export class App {
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
       deepEnabled:this._switches().enabled('the-deep')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
+    if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
+      payload.lapChoiceEnabled=true;
+      if(result.completed===true)Object.assign(result,{lapChoiceEnabled:true,
+        raceDistance:raceDistance(COURSE[state.stageIndex],payload.laps,state.mode)});
+    }
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
@@ -824,7 +865,28 @@ export class App {
   }
   _settleAbandoned(){
     const state=this.duel.state;
-    if(this.runId&&['racing','ticket','countdown'].includes(state.status)&&(state.stageTimeSec>0||this.profile.activeRace?.key===`${this.runId}:${state.stageIndex}`))this._settleResult({won:false,completed:false,abandoned:true},state);
+    if(this.runId&&(['racing','ticket','countdown'].includes(state.status)||state.status==='exploring'&&state.deepJourney&&!state.deepJourney.committed)&&(state.stageTimeSec>0||this.profile.activeRace?.key===`${this.runId}:${state.stageIndex}`))this._settleResult({won:false,completed:false,abandoned:true},state);
+  }
+  _settleDeepDeparture(event,state) {
+    const journey=state?.deepJourney,runtime=this.duel.deepRuntime;
+    if(!this.runId||state!==this.duel.state||state.status!=='exploring'||!journey?.committed||
+      !runtime||event?.journeyId!==journey.id||event.zoneId!==runtime.zone.id||
+      state.playerId!==this._runPlayerId||this._runPlayerId!==this.player.id||
+      this._settledDeepJourney===journey||!this._switches().enabled('the-deep'))return false;
+    this._settleResult({won:false,completed:false,abandoned:true},state);
+    this._settledDeepJourney=journey;
+    this._refreshPlayer();
+    const discovered=rememberDeep(this.profile,'found',runtime.zone.id,{enabled:true});
+    if(discovered!==this.profile){this.profile=discovered;this._saveProfile();}
+    this.ghostRecorder=this.grandPrixLapRecorder=this.lapTelemetryRecorder=null;
+    this.ghostPose=null;this.driftNotice=this.checkpointNotice=null;
+    return true;
+  }
+  chooseDeep(choice) {
+    const state=this.duel.state;
+    if(!this.runId||state.playerId!==this._runPlayerId||this._runPlayerId!==this.player.id||
+      !this.duel.chooseDeep(choice))return false;
+    this._clearHiddenRoadInput();return true;
   }
   _settleHiddenRoadDeparture(event, state) {
     const journey = state?.hiddenRoadJourney;
@@ -1219,6 +1281,7 @@ export class App {
     this.keys = {};
     this._keyboardSteering.reset();
     const st = this.duel.state;
+    this.duel.clearDeep();this.deepAudio.stop();
     st.paused = false; st.status = 'menu'; st.boosting = false;
     const wasVisit = !!st.hiddenRoadVisit;
     st.hiddenRoadJourney = null; st.hiddenRoadVisit = null;
@@ -1308,7 +1371,7 @@ export class App {
     const pad = this._readGamepad(dt);
     const context = this.activeInputContext();
     if (st.paused) {this._keyboardSteering.reset();return;}
-    if (st.status === 'exploring' && st.hiddenRoadJourney?.controlsLocked) {
+    if (st.status === 'exploring' && (st.hiddenRoadJourney?.controlsLocked||st.deepJourney?.controlsLocked)) {
       this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
         shiftUp: false, shiftDown: false, interact: false});
       this._keyboardSteering.reset();
