@@ -1,0 +1,15 @@
+# P4-YETI
+
+Yeti is dev and also requires enabled Summit. Three authored ridge sites lie 25–40 m off Devil's Staircase/Summit, derived from those actual named-piece boundaries in yeti.js; no authored course/geometry/fixture changes. One isolated seeded draw appears about one race in three; sighting uses the simulation eye +1.2 m, chest +1.8 m, 60 m, 75 degrees, terrain samples every 2 m and actual solid boxes. No collider or camera input. One callout and existing roar, then accepted clips walk away.
+
+Only valid completed named-player Summit Duel/Time Trial/Time Attack/GP finishes count, including GP career off. Optional ledger and selection fields are normalized only when present. Invalid, incomplete, timeout, quit, qualifying, practice and duplicate results never allocate/count. Existing pay, settlement, records, lap rules and old absent/off bytes remain exact.
+
+Three sightings unlock the accepted seated static LOD roof, about .45 m; five unlock Frost (#DCE8F0, metalness .1, roughness .55). Every owned car is eligible; earning never equips. Garage changes are menu-only; Yeti/Chrome use one real roof slot with original Chrome ownership. No stats, mass, armor or prices change. Existing paint route has no flake setting, so none is added.
+
+The existing dev catalogue assertion adds only yeti and increases its count by one; all old names/states remain. Preview appends yeti with old flag order, port 5195 and memory-only behavior intact. Source tests cannot prove native grounding/appearance/listening; those remain deferred. Accepted high/LOD assets and five clips are untouched. The granted pure Crown helper extracts the existing fit/stretch calculation; road loading uses only the same existing per-car kit sources, independently owned cache/clones and actual roof sockets. Combat loading/update/stat behavior stays unchanged. Node model tests reuse the existing headless texture convention and do not claim native look.
+
+Tests first: actual GP-career-off settlement failed (undefined versus 1), then passed after the optional ledger. The new malformed fixture was corrected to reject size 9 and use position 2 for a completed GP loss, preserving the unchanged helper’s valid sizes 2–8 and win/position agreement. Existing assertions are untouched. The affected acceptance passes 128 controlled checks (2.88 s): each real ridge sightline and 2 m terrain/solid ray, actual finish/App persistence, malformed/duplicate/named-player/car isolation, rewards, actual 43-joint/five-clip high/LOD geometry, .45 m seated roof, Crown source isolation, stale async disposal and the existing combat consumer. GLTFLoader sanitizes the accepted bone labels to UpperLegL/LowerLegL/FootL and their right-side equivalents; bindings use those actual names. The async fixture drains the real promise chain before asserting one disposal. Original nearby/build pending after source freeze; no native/browser/frame/balance work.
+
+## Removed
+
+None. Existing earned cosmetics and models remain; no new binary asset.

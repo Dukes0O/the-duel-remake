@@ -1,4 +1,5 @@
 import {snowmanResult} from './snowmen.js';
+import {yetiResult} from './yeti.js';
 export {GRAND_PRIX_COURSES, grandPrixCourse} from './grand-prix-career.js';
 // Racing a full field (docs/CIRCUITS.md 3.2, card P4-FIELD): who the computer
 // racers are, how the grid is laid out, the five-light start, who is in front,
@@ -456,6 +457,7 @@ export function finishGrandPrix(duel) {
     bestLapSec: you.bestLapSec, fastestLap: best ? { name: best.name, timeSec: best.bestLapSec, you: best.you } : null,
     passes: field.stats.passes,
     ...snowmanResult(duel),
+    ...yetiResult(duel),
   };
   s.status = 'stage_result';
   duel.emit({ stageResult: s.results });

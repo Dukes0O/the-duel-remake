@@ -27,6 +27,7 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
     ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
     'lap-choice': 'dev',
     snowmen: 'dev',
+    yeti: 'dev',
     'grand-prix-career': 'dev',
     'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
     'snow-world': 'dev', // Phase 4: development switch

@@ -5,7 +5,7 @@ import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hin
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
-import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
+import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook, getRoadRoofLook, equipRoadRoof} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
@@ -339,7 +339,7 @@ export class App {
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
     const selectedSeed=isRouteVariant(options.routeVariant)?getRouteVariant(options.routeVariant).seed:explicitSeed??legacySeed??this.getMenuSeed(stageIndex);
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
-    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true});this._racePaintCar=car;
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
@@ -472,15 +472,26 @@ export class App {
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:true});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     return car===this._racePaintCar?this._racePaint:null;
+  }
+  getRoofLook(car,{menu=false}={}){
+    if(!this._switches().enabled('yeti'))return null;
+    return menu||this.duel.state.status==='menu'?getRoadRoofLook(this.profile,car,{yetiEnabled:true}):
+      car===this._racePaintCar?this._raceRoof:null;
+  }
+  selectRoofLook(car,id){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing roof looks.'};
+    this._refreshPlayer();const selected=equipRoadRoof(this.profile,car,id,{yetiEnabled:this._switches().enabled('yeti')});
+    if(selected.ok&&selected.profile!==this.profile){this.profile=selected.profile;this._saveProfile();this.duel.emit({garage:true});}
+    return selected;
   }
   purchasePaint(car,id){return this._paintOperation(car,id,true);}
   applyPaint(car,id){return this._paintOperation(car,id,false);}
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
     this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
-      {muddyHollowEnabled:true});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
   setGhostEnabled(enabled){
@@ -627,7 +638,11 @@ export class App {
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
-    if(state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving')){
+    const yetiFinish=state===this.duel.state && result===state.results && !state.qualifying &&
+      result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
+      this.duel.course?.def.id==='summit-run' && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
+    const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
+    if(gpWithoutPay&&!yetiFinish){
       result.creditReward=0;result.creditBalance=this.profile.credits;return;
     }
     if(state.hiddenRoadVisit)return;
@@ -647,7 +662,14 @@ export class App {
       if(result.completed===true)Object.assign(result,{lapChoiceEnabled:true,
         raceDistance:raceDistance(COURSE[state.stageIndex],payload.laps,state.mode)});
     }
+    if(yetiFinish)Object.assign(payload,{ownerPlayerId:this._runPlayerId,playerId:state.playerId,
+      yetiEnabled:true,yetiSeen:true});
     const awarded=settleRace(this.profile,payload);
+    if(awarded.yetiAwarded){
+      if(!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
+      result.yetiSightings=awarded.yetiSightings;
+    }
+    if(gpWithoutPay){result.creditReward=0;result.creditBalance=this.profile.credits;return;}
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
@@ -1061,7 +1083,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true}); this._racePaintCar = car;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     const options = {mode, venueId, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
@@ -1092,7 +1114,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true}); this._racePaintCar = car;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),

@@ -1,5 +1,6 @@
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
+import {normalizeYeti,countYetiFinish} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
 import { weaponSignature } from './weapon-upgrades.js';
@@ -158,6 +159,7 @@ export function normalizeProfile(value) {
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
+  if (Object.hasOwn(value,'yeti')) profile.yeti=normalizeYeti(value.yeti,profile);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
@@ -550,9 +552,15 @@ export function settleRace(profile, result = {}) {
     typeof result.won === 'boolean';
   const key = `${result.runId}:${result.stageIndex}`;
   const grandPrix = result.mode === 'grandprix';
+  const yeti=countYetiFinish(profile,result,valid && COURSE[result.stageIndex]?.id==='summit-run' &&
+    !COURSE[result.stageIndex].practice && isValidFinish(result) &&
+    !profile.settledResults.includes(key) && !profile.wasteland?.settledResults?.includes(key) &&
+    (!grandPrix || validGrandPrixPosition(result)));
+  profile=yeti.profile;
+  const yetiAward=yeti.counted?{yetiAwarded:true,yetiSightings:profile.yeti.sightings}:{};
   if (grandPrix && (result.grandPrixCareerEnabled !== true || result.qualifying === true ||
       result.abandoned !== true && (!isValidFinish(result) || !validGrandPrixPosition(result))))
-    return {profile, reward: 0, awarded: false, personalBest: false, breakdown: {}};
+    return {profile, reward: 0, awarded: false, personalBest: false, breakdown: {},...yetiAward};
   if (!valid || COURSE[result.stageIndex]?.practice ||
     profile.settledResults.includes(key) ||
     profile.wasteland?.settledResults?.includes(key))
@@ -766,6 +774,7 @@ export function settleRace(profile, result = {}) {
   };
   return {
     profile: updated,
+    ...yetiAward,
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
     charge,

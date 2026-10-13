@@ -41,6 +41,7 @@ import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
 import {initializeSnowmen} from './snowmen.js';
+import {initializeYeti,stepYeti} from './yeti.js';
 import {initializeSummitAvalanche,resetSummitAvalanche,stepSummitAvalanche,observeSummitAvalanche} from './summit-avalanche.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
@@ -316,6 +317,7 @@ export class Duel {
     initializeMuddyHollowDeparture(this, s.muddyHollowSavedHubcaps);
     if (s.hiddenRoadVisit) prepareHiddenRoadVisit(this);
     initializeSummitAvalanche(this);
+    initializeYeti(this);
     if (grandPrix) { applyQualifyingGrid(this); beginQualifying(this); }
     this.emit(s.hiddenRoadVisit ? {stageLoaded: idx, hiddenRoadVisit: true}
       : s.qualifying?.phase === 'driving' ? {stageLoaded: idx, qualifyingStarted: true}
@@ -326,6 +328,7 @@ export class Duel {
   _resetStageDriving() {
     clearDeepJourney(this);
     resetSummitAvalanche(this);
+    delete this.state.yeti;
     const s = this.state;
     s.s = 0; s.lateral = 0; s.speedMph = 0; s.gear = 0; s.revs = 0; s.overrevSec = 0; s.reverseHoldSec = 0;
     s.paused = false; s.offRoad = false; s.steerVisual = 0;
@@ -540,6 +543,7 @@ export class Duel {
     }
     s.stageTimeSec += dt;
     stepSummitAvalanche(this);
+    stepYeti(this);
     if (s.timeLimitSec) s.timeRemaining = Math.max(0, s.timeLimitSec - s.stageTimeSec - s.racePenaltySec);
     s.lapTimeSec = s.stageTimeSec + s.racePenaltySec - s.lapStartedAt;
     s.totalTimeSec += dt;

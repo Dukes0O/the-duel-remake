@@ -1,0 +1,138 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createProfile,settleRace,normalizeProfile,isCarUnlocked} from '../src/progression.js';
+import {COURSE,CARS} from '../src/config.js';
+import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
+import {Duel} from '../src/game.js';
+import {createFeatureFlags,FEATURE_STATES} from '../src/feature-flags.js';
+import {yetiVisible,yetiSites,initializeYeti,YETI,yetiRewards} from '../src/yeti.js';
+import {getRoadRoofLook,equipRoadRoof,equipArmorKit,getEquippedRoofLook} from '../src/armor-kits.js';
+import {PAINT_PRESETS,paintPresetsFor,applyPaint,getPaintAppearance} from '../src/paint-presets.js';
+import {createYetiAssets,createYetiRoof,createYetiView} from '../src/yeti-view.js';
+import {cloneChromeCrown,createArmorKitMeshes} from '../src/armor-kit-meshes.js';
+import {createVehicleAttachmentRegistry,createRoadRoofOwner} from '../src/vehicle-attachments.js';
+import {vehicleSocketLayout} from '../src/vehicle-sockets.js';
+import {EngineAudio} from '../src/audio.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
+import {App} from '../src/app.js';
+import {purchaseCourse} from '../src/course-access.js';
+let checks=0;
+const equal=(a,b,message)=>{assert.deepEqual(a,b,message);checks++;};
+const check=(value,message)=>{assert.ok(value,message);checks++;};
+const length=COURSE.length;
+if(!COURSE.some(def=>def.id==='summit-run'))COURSE.push(SUMMIT_RUN);
+const summit=COURSE.findIndex(def=>def.id==='summit-run');
+const payload=(extra={})=>({runId:'yeti-first',stageIndex:summit,car:'falcone_f42',mode:'grandprix',grandPrixCareerEnabled:false,
+  won:true,completed:true,timeSec:420,laps:1,position:1,fieldSize:6,yetiEnabled:true,yetiSeen:true,
+  ownerPlayerId:'player-1',playerId:'player-1',...extra});
+const flags=(on=true)=>createFeatureFlags({storage:null,overrides:{yeti:on,'summit-run':true,'grand-prix':true}});
+const game=(on=true,stage=summit,seed=1989,mode='duel')=>{const duel=new Duel({seed,featureFlags:flags(on)});duel.startCampaign({startStage:stage,car:'falcone_f42',mode});duel.state.status='racing';return duel;};
+try{
+  equal(FEATURE_STATES.yeti,'dev');equal(YETI,{eye:1.2,chest:1.8,distance:60,angle:75*Math.PI/180,rayStep:2});
+  let profile=createProfile(),original=JSON.stringify(profile);
+  const first=settleRace(profile,payload());equal(first.profile.yeti.sightings,1,'actual GP career-off named sighting counts');check(first.yetiAwarded);
+  const {yeti,...legacy}=first.profile;equal(JSON.stringify(legacy),original,'GP career-off keeps all old bank/record/history fields exact');equal(first.reward,0);equal(first.awarded,false);
+  equal(settleRace(first.profile,payload()).profile,first.profile,'duplicate same run cannot count');
+  for(const extra of [{completed:false},{abandoned:true},{timeout:true},{qualifying:true},{yetiEnabled:false},{yetiSeen:false},
+    {timeSec:0},{timeSec:NaN},{laps:0},{laps:2},{car:'no-car'},{car:'aurora_gt'},
+    {stageIndex:0,laps:2},{position:7},{fieldSize:9},{mode:'wasteland'},
+    {runId:''},{won:1},{ownerPlayerId:'player-2'},{ownerPlayerId:' '},{playerId:null}]){
+    const result=settleRace(profile,payload(extra));check(!Object.hasOwn(result.profile,'yeti'),'invalid/off/foreign result never allocates ledger: '+JSON.stringify(extra));
+  }
+  for(const mode of ['duel','timetrial','timeattack','grandprix']){
+    const result=settleRace(profile,payload({mode,runId:'mode-'+mode,won:false,position:2}));equal(result.profile.yeti.sightings,1,'valid completed loss/mode counts');
+  }
+  for(let sighting=1;sighting<=5;sighting++){
+    profile=settleRace(profile,payload({runId:'sighting-'+sighting})).profile;
+    equal(yetiRewards(profile),{roof:sighting>=3,frost:sighting>=5});check(!profile.yeti.roof,'earning never equips');
+  }
+  equal(normalizeProfile(profile).yeti,profile.yeti,'off load preserves earned optional fields');
+  check(!Object.hasOwn(normalizeProfile(createProfile()),'yeti'),'legacy normalization stays absent');
+  const corrupt=normalizeProfile({...profile,yeti:{sightings:3,settled:['ok','ok',null],roof:{falcone_f42:'yeti',aurora_gt:'yeti',wrong:'yeti',stuttgart_959s:'invented'}}});
+  equal(corrupt.yeti,{sightings:3,settled:['ok'],roof:{falcone_f42:'yeti'}},'known owned car/choice normalization');
+  const other=createProfile();equal(yetiRewards(other),{roof:false,frost:false},'named profile rewards isolated');
+  const roof=equipRoadRoof(profile,'falcone_f42','yeti',{yetiEnabled:true});check(roof.ok);equal(getRoadRoofLook(roof.profile,'falcone_f42',{yetiEnabled:true}),'yeti');
+  equal(getRoadRoofLook(roof.profile,'stuttgart_959s',{yetiEnabled:true}),null,'per-car selection isolated');equal(getRoadRoofLook(roof.profile,'falcone_f42'),null,'off selected look stays inactive');
+  check(!equipRoadRoof(profile,'aurora_gt','yeti',{yetiEnabled:true}).ok,'unowned car rejected');check(!equipRoadRoof(other,'falcone_f42','yeti',{yetiEnabled:true}).ok,'unearned look rejected');
+  const withChrome={...roof.profile,wasteland:{...roof.profile.wasteland,kits:{falcone_f42:{owned:['chrome-crown'],equipped:null,roofLook:null}}}};
+  const chrome=equipArmorKit(withChrome,'falcone_f42','chrome-crown');check(chrome.ok);equal(getRoadRoofLook(chrome.profile,'falcone_f42',{yetiEnabled:true}),'chrome-crown');check(!chrome.profile.yeti.roof.falcone_f42,'Chrome clears the Yeti slot');
+  const back=equipRoadRoof(chrome.profile,'falcone_f42','yeti',{yetiEnabled:true});equal(getEquippedRoofLook(back.profile,'falcone_f42'),null);equal(back.profile.wasteland.kits.falcone_f42.roofLook,null,'Yeti clears Chrome selection only');equal(back.profile.wasteland.kits.falcone_f42.owned,['chrome-crown'],'Chrome ownership retained');
+  equal(PAINT_PRESETS.frost.appearance,{id:'frost',name:'Frost',color:0xdce8f0,metalness:.1,roughness:.55});
+  check(paintPresetsFor(profile,'stuttgart_959s',{yetiEnabled:true}).some(p=>p.id==='frost'),'reward on every owned car');
+  const painted=applyPaint(profile,'stuttgart_959s','frost',{yetiEnabled:true});check(painted.ok);equal(painted.cost,0);equal(painted.profile.credits,profile.credits);equal(getPaintAppearance(painted.profile,'stuttgart_959s',{yetiEnabled:true}).id,'frost');
+  equal(getPaintAppearance(painted.profile,'stuttgart_959s'),null,'off paint restores factory appearance without deleting choice');equal(normalizeProfile(painted.profile).cosmetics.stuttgart_959s.selected,'frost');
+  const duel=game(),course=duel.course,sites=yetiSites(course),oldObstacles=JSON.stringify(course.features.obstacles),oldTrees=JSON.stringify(course.features.trees);
+  equal(sites.length,3);check(sites.every(site=>Math.abs(site.lateral)>=25&&Math.abs(site.lateral)<=40));
+  let appearances=0;const selected=new Set();for(let seed=1;seed<=300;seed++){
+    const fixture={course,seed,state:{},featureFlags:flags()};initializeYeti(fixture);if(fixture.state.yeti.appears){appearances++;selected.add(JSON.stringify(fixture.state.yeti.site));}
+  }
+  check(appearances>=75&&appearances<=125,'isolated seeded approximately one third');equal(selected.size,3,'all three authored ridge sites used');
+  // Existing-style controlled visibility geometry; the actual Course/ground sampler is still used.
+  let visiblePose=null;
+  for(const site of sites){visiblePose=null;duel.state.yeti={appears:true,site,seen:false,seenAt:null};
+    for(const lead of [40,30,20,10]){duel.state.s=site.s-lead;duel.state.lateral=0;duel.state.headingError=0;if(yetiVisible(duel)){visiblePose={s:duel.state.s,site};break;}}
+    check(visiblePose,'actual authored ridge has a reachable clear forward sightline');
+  }
+  duel.state.yeti={appears:true,site:visiblePose.site,seen:false,seenAt:null};duel.state.s=visiblePose.s;duel.state.headingError=0;
+  check(yetiVisible(duel));duel.state.headingError=Math.PI;check(!yetiVisible(duel),'rearward target outside 75 degrees');duel.state.headingError=0;
+  const eye=course.groundAt(duel.state.s,0),target=course.groundAt(visiblePose.site.s,visiblePose.site.lateral);
+  const distance=Math.hypot(target.x-eye.x,target.z-eye.z,target.y+1.8-eye.y-1.2);
+  const ray=course.nearest(eye.x+(target.x-eye.x)*2/distance,eye.z+(target.z-eye.z)*2/distance,
+    duel.state.s+(visiblePose.site.s-duel.state.s)*2/distance);
+  const groundAt=course.groundAt;course.groundAt=function(s,off){const point=groundAt.call(this,s,off);if(Math.abs(s-ray.s)<1e-7&&Math.abs(off-ray.lateral)<1e-7)point.y+=100;return point;};
+  try{check(!yetiVisible(duel),'actual terrain at first 2 m ray sample occludes');}finally{course.groundAt=groundAt;}
+  const wall={x:(eye.x+target.x)/2,z:(eye.z+target.z)/2,y:Math.min(eye.y,target.y)-2,minY:Math.min(eye.y,target.y)-2,maxY:Math.max(eye.y,target.y)+8,halfX:3,halfZ:3,heading:0,shape:'box'};
+  course.features.obstacles.push(wall);check(!yetiVisible(duel),'actual solid sweep occludes chest ray');course.features.obstacles.pop();
+  const events=[];duel.onChange((_s,ev)=>{if(ev.yetiSighting)events.push(ev.yetiSighting);});duel.step(1/120);check(duel.state.yeti.seen);equal(events.length,1);equal(duel.state.callout,'YETI!');duel.step(1/120);equal(events.length,1,'one roar/callout');
+  equal(JSON.stringify(course.features.obstacles),oldObstacles);equal(JSON.stringify(course.features.trees),oldTrees,'no scenery RNG or collider changes');
+  const off=game(false);check(!Object.hasOwn(off.state,'yeti'));const a=game(true,0,6),b=game(false,0,6);for(let n=0;n<60;n++){a.step(1/120);b.step(1/120);}equal(a.state,b.state,'unrelated off/on state bytes exact');
+  duel._loadStage(summit);check(!duel.state.yeti.seen,'restart clears encounter without granting it');
+  const owned=purchaseCourse({...createProfile(),credits:4000},'summit-run').profile;
+  const gp=game();gp.state.mode='grandprix';gp.state.playerId='player-1';gp.state.yeti.seen=true;
+  gp.state.results={...payload(),stageTimeSec:420};gp.state.completedLaps=1;
+  let saves=0;const app=Object.create(App.prototype);Object.assign(app,{duel:gp,profile:owned,player:{id:'player-1'},
+    _runPlayerId:'player-1',runId:'app-yeti',_stageStartCrashes:0,_switches:()=>flags(),_refreshPlayer(){},_saveProfile(){saves++;return true;}});
+  App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'real App persists GP career-off sighting');equal(app.profile.yeti.sightings,1);equal(app.profile.credits,owned.credits);equal(app.profile.history,owned.history);equal(app.profile.personalBests,owned.personalBests);
+  App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'duplicate App result cannot write/count again');
+  app.player={id:'player-2'};app.runId='foreign';App.prototype._settleResult.call(app,gp.state.results,gp.state);equal(saves,1,'foreign named player cannot persist');
+  const finished=game();finished.state.yeti.seen=true;finished.state.s=finished.raceLength;finished.state.completedLaps=1;finished.state.stageTimeSec=420;finished._finishStage();equal(finished.state.results.yetiSeen,true,'actual ordinary finish forwards sighting');
+  const gpFinish=game(true,summit,1989,'grandprix');gpFinish.state.yeti.seen=true;
+  gpFinish.state.s=gpFinish.raceLength;gpFinish.state.completedLaps=1;gpFinish.state.stageTimeSec=420;gpFinish.state.lapStartedAt=420;
+  gpFinish._finishStage();equal(gpFinish.state.results.yetiSeen,true,'actual native GP finish forwards sighting');equal(gpFinish.state.results.fieldSize,6);
+  const audio=Object.create(EngineAudio.prototype),requested=[];let enabled=false;
+  Object.assign(audio,{flags:{enabled:name=>name==='summit-run'||name==='yeti'&&enabled},cueBuffers:{},context:{decodeAudioData:async()=>({}),state:'running'},muted:false,paused:false});
+  const fetchBefore=globalThis.fetch;globalThis.fetch=async url=>{requested.push(url);return{ok:true,arrayBuffer:async()=>new ArrayBuffer(1)};};
+  try{await audio._loadCueBuffers();requested.length=0;enabled=true;await audio._loadCueBuffers();equal(requested,['/assets/audio/'+SOUND_BANK['yeti.roar'].file],'late Yeti loads only existing roar with GP off');}finally{globalThis.fetch=fetchBefore;}
+  const played=[];Object.assign(audio,{_syncMixer(){},_runCue(id){played.push(id);return{};},fightVoices:{event(){},mute(){},clear(){}},activeShots:[],_volume(){},_clearGrandPrixVoices(){},_clearProjectiles(){},_clearArsenalFields(){},_stopHiddenRoadVoices(){},_grandPrixEvent(){},_spatialOutput(){return{level:{},disconnect(){}};}});
+  const event={yetiSighting:{id:'yeti-'+finished.seed,cue:'yeti.roar',point:course.groundAt(sites[0].s,sites[0].lateral)}},audioState={...finished.state,status:'racing'};
+  audio.event(event,audioState,course);audio.event(event,audioState,course);equal(played,['yeti.roar'],'existing roar once with GP off');audio._playCue('race.start.light');equal(played.length,1,'other GP cue remains off');
+  played.length=0;delete audio.cueBuffers['yeti.roar'];let finishLoad;audio._loadCueBuffers=()=>new Promise(resolve=>finishLoad=resolve);audio._yetiAudioHits=new Set();audio.event(event,audioState,course);
+  audio._snowmanAudioStage=(audio._snowmanAudioStage??0)+1;audio.cueBuffers['yeti.roar']={};finishLoad();await Promise.resolve();equal(played,[],'existing reset/pause/mute epoch prevents late roar');
+  // Same headless texture convention as existing track-kit tests; geometry only, no look claim.
+  const parser=new GLTFLoader();parser.register(()=>({name:'P4_HEADLESS_TEXTURE',loadTexture:()=>Promise.resolve(new THREE.Texture())}));
+  const loaded=[],load=async path=>{const bytes=readFileSync(new URL('../public'+path,import.meta.url));const model=await parser.parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');loaded.push(model);return model;};
+  const assets=createYetiAssets({loadAsset:load});await assets.load();equal(assets.status,'ready',assets.error);
+  for(const model of loaded){equal(model.animations.map(clip=>clip.name).sort(),['chest-beat','idle','lope','roar','walk-off']);const bones=new Set();model.scene.traverse(node=>{if(node.isSkinnedMesh)for(const bone of node.skeleton.bones)bones.add(bone);});equal(bones.size,43,'actual accepted high/LOD rig');}
+  const mini=createYetiRoof(assets);const box=new THREE.Box3().setFromObject(mini.group,true);check(Math.abs(box.max.y-box.min.y-.45)<1e-6,'real posed LOD roof is .45 m');mini.dispose();
+  for(const car of Object.keys(CARS)){check(vehicleSocketLayout(car,{width:2,length:4,height:1.5}).roof.every(Number.isFinite),'every actual car roof socket');}
+  const view=createYetiView(assets),state={status:'racing',stageTimeSec:1,yeti:{appears:true,site:sites[0],seen:false,seenAt:null}},snapshot=JSON.stringify(state);
+  view.update(state,course,true);view.update(state,course,false);for(const age of [0,2,4,7])view.update({...state,stageTimeSec:age,yeti:{...state.yeti,seen:true,seenAt:0}},course,true);equal(JSON.stringify(state),snapshot,'model update never advances sighting');view.dispose();
+  const source=await load('/assets/models/wasteland/kits/falcone_f42.glb'),clone=cloneChromeCrown(source.scene,{privateMaterials:true});check(clone);
+  let originalGeometry;source.scene.getObjectByName('kit-crown').traverse(node=>{if(node.geometry&&!originalGeometry)originalGeometry=node.geometry;});check(originalGeometry,'actual Crown mesh geometry');const positionBytes=Array.from(originalGeometry.attributes.position.array);
+  clone.spikes.traverse(node=>{if(node.material?.color)node.material.color.setHex(0xff0000);});equal(Array.from(originalGeometry.attributes.position.array),positionBytes,'Chrome clone leaves accepted source vertices exact');clone.dispose();clone.dispose();
+  let sourceDisposals=0;originalGeometry.addEventListener('dispose',()=>sourceDisposals++);
+  const attachments=createVehicleAttachmentRegistry();let resolveKit,requests=0;const owner=createRoadRoofOwner(attachments,{yetiAssets:assets,loadAsset:()=>{requests++;return new Promise(resolve=>resolveKit=resolve);}});
+  const vehicle=()=>{const mesh=new THREE.Group();mesh.userData={vehicleKey:'falcone_f42',size:{width:2,length:4,height:1.5}};return mesh;};
+  const car1=vehicle(),car2=vehicle();owner.select(car1,'chrome-crown');await Promise.resolve();equal(requests,1);owner.select(car2,'yeti');resolveKit(source);await new Promise(resolve=>setImmediate(resolve));equal(attachments.size,1,'stale Crown cannot replace current seated Yeti');check(car2.getObjectByName('Yeti roof look'));check(!car1.getObjectByName('Chrome Crown road look'));owner.dispose();equal(attachments.size,0);equal(sourceDisposals,1,'late stale private source released exactly once');
+  const combatSource=await load('/assets/models/wasteland/kits/falcone_f42.glb'),combatAttachments=createVehicleAttachmentRegistry(),combatCar=vehicle();
+  const combatKit=createArmorKitMeshes(combatAttachments,{loadKitAsset:async()=>combatSource});
+  const combatState={mode:'wasteland',status:'racing',combat:{},wastelandGateDiscovered:true,opponents:[],
+    combatRoofLook:'chrome-crown',combatArmorKit:null,armor:100,maxArmor:100,stageTimeSec:0};
+  const beforeCombat=JSON.stringify(combatState);combatKit.update({state:combatState},{player:combatCar},false);
+  await new Promise(resolve=>setImmediate(resolve));combatKit.update({state:combatState},{player:combatCar},false);
+  const combatSpikes=combatCar.getObjectByName('chrome-crown-spikes');check(combatSpikes?.visible,'unchanged combat Crown remains visible');
+  equal(JSON.stringify(combatState),beforeCombat,'shared clone helper never changes combat stats');combatKit.dispose();assets.dispose();
+}finally{COURSE.splice(length);}
+console.log(`Yeti: ${checks} controlled simulation, settlement and actual-model checks passed; native grounding/look/audio remain pending.`);
