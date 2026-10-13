@@ -26,6 +26,12 @@ export function installPitLane(course) {
   const first = Math.max(piece.s0, 0);
   const lane = {straight: piece.name, side, width: PIT.width,
     entry: first + 10, exit: piece.s1 - 10, box: (first + piece.s1) / 2};
+  if(opt.limiterLength!==undefined || opt.limitKph!==undefined){
+    if(!Number.isFinite(opt.limiterLength)||opt.limiterLength<=0||opt.limiterLength>lane.exit-lane.entry||
+      !Number.isFinite(opt.limitKph)||opt.limitKph<=0)throw Error('An authored pit bay needs a contained length and positive speed.');
+    lane.limiterStart=lane.box-opt.limiterLength/2;lane.limiterEnd=lane.box+opt.limiterLength/2;
+    lane.limitMph=opt.limitKph/1.609344;
+  }
   lane.offsetAt = s => side * (course.roadHalfWidthAt(s) + 1.3 + PIT.width / 2) *
     Math.min(smooth((course.phase(s) - lane.entry) / PIT.taper),
       smooth((lane.exit - course.phase(s)) / PIT.taper));
@@ -48,12 +54,20 @@ export function pitAt(course, s, off) {
   if (Math.abs(off) <= course.roadHalfWidthAt(p)) return null;
   return lane;
 }
+// The road/service lane stays whole; only opted-in bays limit its speed.
+export function pitSpeedLimitAt(course,s,off){
+  const lane=pitAt(course,s,off);if(!lane)return null;
+  const phase=course.phase(s);
+  if(lane.limiterStart!==undefined&&(phase<lane.limiterStart||phase>lane.limiterEnd))return null;
+  return lane.limitMph ?? PIT.limitMph;
+}
+
 // Automatic drivers that were pushed into the lane follow its line to the exit.
 // This only describes a target; it never takes manual input or starts service.
 export function pitTransitTarget(course, actor, look = actor.s) {
   if ((!actor.finished && actor.field?.pitChoice?.stop) || actor.pit?.phase === 'servicing') return null;
   const lane = pitAt(course, actor.s, actor.lateral);
-  return lane ? {lateral: lane.offsetAt(look), speedMph: PIT.limitMph} : null;
+  return lane ? {lateral: lane.offsetAt(look), speedMph: pitSpeedLimitAt(course,actor.s,actor.lateral)} : null;
 }
 
 export function pitBox(lane, actor) {
@@ -80,14 +94,23 @@ export function stepPitService(duel, actor, dt) {
     if (pit && pit.phase !== 'servicing') actor.pit = null;
     return false;
   }
+  const limit=pitSpeedLimitAt(duel.course,actor.s,actor.lateral);
+  const opted=lane.limiterStart!==undefined;
   if (!pit) {
     pit = actor.pit = {phase: 'lane', elapsed: 0, tone: 0, fit: otherTyre(actor.tyre)};
-    emit('pit.limiter');
+    if(!opted)emit('pit.limiter');
   }
-  pit.tone += dt;
-  if (pit.tone >= 1) { pit.tone -= 1; emit('pit.limiter'); }
-  actor.speedMph = Math.max(-PIT.limitMph, Math.min(PIT.limitMph, actor.speedMph));
-  actor.boosting = false;
+  if(opted){
+    if(limit!==null&&!pit.limiterActive)emit('pit.limiter');
+    pit.limiterActive=limit!==null;
+    if(limit===null)pit.tone=0;
+  }
+  if(limit!==null){
+    pit.tone += dt;
+    if (pit.tone >= 1) { pit.tone -= 1; emit('pit.limiter'); }
+    actor.speedMph = Math.max(-limit, Math.min(limit, actor.speedMph));
+    actor.boosting = false;
+  }
   const box = Math.floor(actor.s / duel.course.length) * duel.course.length + pitBox(lane, actor);
   if (pit.phase === 'lane' && !actor.knock && !actor.airborne &&
       Math.abs(actor.s - box) <= 4 && Math.abs(actor.lateral - lane.offsetAt(actor.s)) <= 1.6 &&
@@ -117,8 +140,9 @@ export function stepPitService(duel, actor, dt) {
 }
 
 export function limitPitSpeed(course, actor) {
-  if (!pitAt(course, actor.s, actor.lateral)) return;
-  actor.speedMph = Math.max(-PIT.limitMph, Math.min(PIT.limitMph, actor.speedMph));
+  const limit=pitSpeedLimitAt(course,actor.s,actor.lateral);
+  if(limit===null)return;
+  actor.speedMph = Math.max(-limit, Math.min(limit, actor.speedMph));
   actor.boosting = false;
 }
 export function pitView(duel) {
@@ -129,6 +153,10 @@ export function pitView(duel) {
     text: `FITTING ${fit} TYRES · ${(PIT.serviceSec - pit.elapsed).toFixed(1)} S`, phase: pit.phase,
   };
   if (pit?.phase === 'ready') return {text: 'GO', phase: pit.phase};
+  if(pit&&lane.limiterStart!==undefined){
+    const limit=pitSpeedLimitAt(duel.course,s.s,s.lateral);
+    return {text:`${limit===null?'PIT LANE':`${Math.round(limit*1.609344)} KM/H`} · STOP IN YOUR BOX · ${fit} TYRES`,phase:'lane'};
+  }
   if (pit) return {text: `60 KM/H · STOP IN YOUR BOX · ${fit} TYRES`, phase: 'lane'};
   let approach = lane.entry - duel.course.phase(s.s);
   // A lane just past the start line is approached across the line, at the end of the lap.
@@ -156,8 +184,10 @@ export function pitEstimate(duel, actor, run) {
       benefit += distance / speed(piece, actor.tyre) - distance / speed(piece, fit);
     }
   }
-  const span = lane.exit - lane.entry, normal = run.profile.at(lane.box) * DRIVE.mphToWorld;
-  const transit = span / (PIT.limitMph * DRIVE.mphToWorld) - span / Math.max(2, normal);
+  const span = lane.limiterStart===undefined ? lane.exit-lane.entry : lane.limiterEnd-lane.limiterStart;
+  const normal = run.profile.at(lane.box) * DRIVE.mphToWorld;
+  const limit=lane.limitMph ?? PIT.limitMph;
+  const transit = span / (limit * DRIVE.mphToWorld) - span / Math.max(2, normal);
   const next = course.script.pieces.find(p => p.s1 > lane.exit && p.surface !== 'asphalt');
   const suits = !!next && speed(next, fit) > speed(next, actor.tyre);
   return {saved: benefit - Math.max(0, transit) - PIT.serviceSec, suits};

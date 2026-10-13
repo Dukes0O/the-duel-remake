@@ -59,7 +59,7 @@ equal(stageEventId(harbour), 'harbour-lights', 'position 18 saves as harbour-lig
 const panorama = COURSE.findIndex(event => event.id === 'panorama-ridge');
 equal([tremblant, snow, harbour, panorama], [16, 17, 18, 19], 'the released courses keep their places (Tremblant Woods 17th, Tremblant Snow 18th, Harbour Lights 19th) and Panorama Ridge is 20th');
 equal(panorama, COURSE.length - 1, 'Panorama Ridge is the last entry on the course list');
-equal(CIRCUIT_MANIFESTS.map(row => row.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'], 'circuits are listed in release order');
+equal(CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights', 'panorama-ridge'], 'released circuits are listed in release order');
 const liveBeforePanorama = new Set(['tremblant-woods', 'tremblant-snow', 'harbour-lights']);
 equal(circuitsEnabled({ enabled: name => liveBeforePanorama.has(name) }).map(circuit => circuit.id), ['tremblant-woods', 'tremblant-snow', 'harbour-lights'],
   "with the switches that were live before Panorama Ridge the course list is identical to the live build's");

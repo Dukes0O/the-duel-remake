@@ -81,3 +81,7 @@ The original corrected32cd gate completed318/319, one failure, zero unrun, in217
 ## Director shared-file handoff — 12 October 2026
 
 Actual bab5ca92 is clean; the final correction is the Deep warm-surface test catalogue, with no outstanding App/main/game/render edits. Release busy-game-files to FIX-FOOT-MOUSE for the bounded App._bindKeys repair Kyle requested. Summit may finish its frozen source/test handoff with surfaces and gp-existing-field-width held; do not make new busy-game-files edits until reacquiring that lock after the mouse handoff. This does not claim its pending gate is green or change its acceptance. Both private lanes retain exact sources; disjoint clean merges reuse their original gates.
+
+## Source handoff after mouse fix — 12 October evening
+
+Frozen bab5ca92987369051596b7b1ff0b13dd80447406 passes 319/319, jobs4, no failures/unrun; build1479.6255ms, ordinary review clear, unchanged runtime save review nine fixtures/286 assertions. Integrated without conflicts after FIX-FOOT-MOUSE. P4-SUMMIT-RUNTIME is complete and unblocks only runtime consumers (Snowmen/Avalanche/Yeti). This whole card remains open for actual strategy acceptance and round-two art; no native or art pass is claimed. Runtime locks are released; reacquire before further source changes. Older retained lane stays.

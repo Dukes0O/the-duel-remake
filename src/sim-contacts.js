@@ -297,7 +297,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
     useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;
   for (let attempt = 0; attempt < 4; attempt++) {
-    let first = null;
+    let first = null, verticalStart, verticalEnd;
     for (let index = 0; index < obstacles.length + (journeyColliders?.length || 0); index++) {
       const obstacle = index < obstacles.length ? obstacles[index] : journeyColliders[index - obstacles.length];
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
@@ -308,7 +308,16 @@ export function _staticContacts(car, player, journeyColliders = null) {
       // Older/custom courses without measurements keep their scale-aware shell.
       const collider = cactus && (!dimensions.useModelBounds || !Number.isFinite(obstacle.modelMaxY)) && Number.isFinite(start.y)
         ? {...obstacle, height: 3.1 * (obstacle.scale || 1)} : obstacle;
-      const hit = sweepObstacle(start, end, collider, heading, dimensions);
+      // Authored overhead roofs need height even when a grounded car has none.
+      // Local copies leave every unflagged obstacle's historical sweep exact.
+      let hit;
+      if (obstacle.verticalClearance && (!Number.isFinite(start.y) || !Number.isFinite(end.y))) {
+        verticalStart ??= {...start, y: Number.isFinite(start.y) ? start.y :
+          (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0)};
+        verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
+          (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
+        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, dimensions);
+      } else hit = sweepObstacle(start, end, collider, heading, dimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
     if (!first) break;

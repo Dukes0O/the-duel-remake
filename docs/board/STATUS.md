@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T04:23:11.778Z
+Observed at: 2026-10-13T04:27:02.887Z
 
-Observation commit: 46220b09654abe18cbd61b1afddf4b61cb0d6107
+Observation commit: cb2bbd95a6dee5f6646715987231928b63e73bf0
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 46220b09654abe18cbd61b1afddf4b61cb0d6107
+Integration HEAD: cb2bbd95a6dee5f6646715987231928b63e73bf0
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -46,6 +46,7 @@ Last recorded full run: 2026-10-13T02:29:11.268Z; tested commit: 36d7613f86620c1
 | tremblant-snow | on |
 | harbour-lights | on |
 | panorama-ridge | on |
+| summit-run | dev |
 | the-deep | dev |
 
 ## Lane branches
@@ -58,7 +59,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/deep-audio | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio |
 | codex/deep-ramp-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-ramp-geometry |
 | codex/fix-ambush-opening | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-ambush-opening |
-| codex/fix-foot-mouse | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-foot-mouse |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -94,10 +94,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 200,908 B | +105,611 B | 5,000,000 B |
+| Review `looks/` | 17,152,350 B | +312,318 B | 20,000,000 B |
+| Added bytes in last merge | 200,908 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 404,380,672 B | +21,504 B | unavailable |
+| Git objects | 404,474,880 B | +94,208 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -106,7 +106,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 46220b09654abe18cbd61b1afddf4b61cb0d6107
+- Local integration/wasteland: cb2bbd95a6dee5f6646715987231928b63e73bf0
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

@@ -52,8 +52,8 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   for (const circuit of ALL_CIRCUITS) assert.ok(previewCircuitFlags().includes(circuit.flag), `the Preview turns ${circuit.id} on`);
 });
 
-test('every layout closes within the rules and says what it changed', () => {
-  for (const circuit of ALL_CIRCUITS) {
+test('every closed layout closes within the rules and says what it changed', () => {
+  for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
     const road = buildTrackScript(circuit), report = road.report;
     assert.equal(road.length, circuit.lengthU);
     assert.ok(Math.abs(Math.abs(report.turnSumDeg) - 360) <= 2, `${circuit.id}: turns add up to a lap`);
@@ -127,7 +127,7 @@ test('scenery stays off the road, out of the runoff and off the inside of corner
   }
 });
 
-for (const circuit of ALL_CIRCUITS) {
+for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
   test(`${circuit.name}: the test driver completes every lap on Medium without a crash or getting stuck`, () => {
     // A winter circuit's reverse build is not driven here: its ice patches, boards and pit lane belong to the
     // forward road, and the reversed Beaver Hairpin on packed snow is a different corner (P4-VARIANTS builds

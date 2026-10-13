@@ -181,7 +181,7 @@ export class Course {
     const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
     if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
     return surface;}
-  tunnelAt(s){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end)||null;}
+  tunnelAt(s,lateral=0){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end&&(t.roofWidth==null||Math.abs(lateral)<=t.roofWidth))||null;}
   jumpAt(s){if(this.def.pit)return pitRampHeight(this,s);
     if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
     const p=this.phase(s),r=this.features.ramps.find(r=>p>=r.start&&p<=r.end);if(!r)return 0;
@@ -411,7 +411,8 @@ export class Course {
   gripKindAt(s,lateral=0){
     if(!this.script)return'asphalt';
     const p=this.phase(s);
-    if(Math.abs(lateral)>this.script.halfWidthAt(p)){
+    const branch=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
+    if(Math.abs(lateral)>this.script.halfWidthAt(p)&&!branch){
       for(const patch of this.features.surfacePatches)if(patch.snowBank&&p>=patch.s0&&p<=patch.s1&&lateral>=patch.from&&lateral<=patch.to)return patch.kind;
       return'asphalt';
     }

@@ -23,7 +23,7 @@ const targets = referenceTargets();
 const expectedKeys = definitions.filter(definition => definition.closed !== false).flatMap(definition =>
   (supportsRouteVariants(definition) ? getRouteVariants(definition).map(route => route.id) : ['fixed']).map(route => definition.id + '|' + route));
 equal(targets.map(target => target.key).sort(), expectedKeys.sort(), 'Every closed event and actual route has exactly one reference target');
-check(ALL_CIRCUITS.every(definition => targets.some(target => target.eventId === definition.id &&
+check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => targets.some(target => target.eventId === definition.id &&
   target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),
   [['route_a', 1989], ['route_b', 42], ['route_c', 17]], 'Legacy routes retain their real seeds');

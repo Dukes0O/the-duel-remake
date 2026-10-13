@@ -19,7 +19,9 @@ function ranges(course){
   return rangeCache.get(course);
 }
 // Optional transform consumed by the existing lighting owner only for Snow.
-export function winterLightingSettings(base) {
+export function winterLightingSettings(base,{course,distance=0}={}) {
+  const weight=course?.def.snowWorld?.mixed?winterWeight(course,distance):1;
+  if(weight===0)return base;
   const night=Math.max(0,Math.min(1,base.nightAmount ?? (base.sun<.3?1:0)));
   const day=1-night;
   const colour=(original,winter)=>{
@@ -31,8 +33,21 @@ export function winterLightingSettings(base) {
     fog:colour(base.fog,0xb9cbdc),ground:colour(base.ground,0x7896b0),
     sunColor:colour(base.sunColor,0xe3edff),
     cloudTint:base.cloudTint.map((value,i)=>value*night+[.78,.84,.9][i]*day)};
-  // A circuit's light may carry its own `winter` look (any of the fields above), laid over the shared one.
-  return base.winter?{...winter,...base.winter}:winter;
+  // A circuit's authored winter look retains the accepted full-winter defaults.
+  const changed=base.winter?{...winter,...base.winter}:winter;
+  if(course?.def.snowWorld?.nightExposure!==undefined){
+    const exposure=course.def.snowWorld.nightExposure;
+    if(!Number.isFinite(exposure)||exposure<=0)throw Error('Authored night snow exposure must be positive.');
+    changed.exposure+=(exposure-changed.exposure)*night;
+  }
+  if(weight===1)return changed;
+  for(const key of ['exposure','bloom','env'])changed[key]=base[key]+(changed[key]-base[key])*weight;
+  for(const key of ['top','horizon','fog','ground','sunColor']){
+    const original=Array.isArray(base[key])?new THREE.Color().setRGB(...base[key]):new THREE.Color(base[key]);
+    changed[key]=original.lerp(new THREE.Color().setRGB(...changed[key]),weight).toArray();
+  }
+  changed.cloudTint=base.cloudTint.map((value,index)=>value+(changed.cloudTint[index]-value)*weight);
+  return changed;
 }
 
 function shadeSnowKits(kits) {
@@ -61,14 +76,14 @@ export function winterWeight(course,s){
   return 0;
 }
 const winterAt=(course,s)=>ranges(course).some(row=>course.phase(s)>=row.from&&course.phase(s)<=row.to);
-export function snowPineIds(course){return new Set(course.def.snowWorld?course.features.trees.map(tree=>tree.id):[]);}
-export function snowRockFeatures(course){return new Set(course.def.snowWorld?course.features.rocks:[]);}
+export function snowPineIds(course){return new Set(course.def.snowWorld?course.features.trees.filter(tree=>!course.def.snowWorld.mixed||winterAt(course,tree.s)).map(tree=>tree.id):[]);}
+export function snowRockFeatures(course){return new Set(course.def.snowWorld?course.features.rocks.filter(rock=>!course.def.snowWorld.mixed||winterAt(course,rock.s)):[]);}
 const placementsCache=new WeakMap();
 export function snowWorldPlacements(course){
   if(placementsCache.has(course))return placementsCache.get(course);
   if(!course.def.snowWorld)return [];
   const entries=[],rng=makeRng(course.seed^0x51a0a77);
-  for(const tree of course.features.trees)entries.push({
+  for(const tree of course.features.trees)if(!course.def.snowWorld.mixed||winterAt(course,tree.s))entries.push({
     id:'snow-pine',s:tree.s,lateral:tree.off,heading:tree.heading-course.at(tree.s).heading,
     scale:tree.scale*.7,scenery:Object.freeze({kind:'tree',id:tree.id})});
   const clusters=course.def.snowWorld.pineClusters??[];
@@ -104,6 +119,10 @@ export function snowWorldPlacements(course){
 export function applySnowTerrain(geometry,course){
   const position=geometry.attributes.position,weights=new Float32Array(position.count);
   weights.fill(course.def.snowWorld?1:0);
+  if(course.def.snowWorld?.mixed)for(let index=0;index<position.count;index++){
+    const near=course.nearest(position.getX(index),position.getZ(index));
+    weights[index]=winterWeight(course,near.s);
+  }
   geometry.setAttribute('winterWeight',new THREE.BufferAttribute(weights,1));return geometry;
 }
 // `drifts` (a course's snowWorld.drifts) adds broad soft drifts and fine wind ripples in slightly bluer
@@ -274,7 +293,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
   function update({state,camera,dt=0,high:quality=high,vehicles=[]}){
     if(disposed||!state)return;dt=Math.max(0,Math.min(.1,dt));time+=dt;
     const cap=quality?SNOW_LIMITS.high:SNOW_LIMITS.performance;stats.flakes=cap.flakes;geometry.setDrawRange(0,cap.flakes);
-    const active=1,gust=exposed.some(row=>course.phase(state.s)>=row.from&&course.phase(state.s)<=row.to);
+    const active=course.def.snowWorld.mixed?winterWeight(course,state.s):1,gust=exposed.some(row=>course.phase(state.s)>=row.from&&course.phase(state.s)<=row.to);
     flakes.visible=active>0;if(camera)flakes.position.copy(camera.position);
     flakes.material.uniforms.strength.value=active*(gust?.68:.48);
     for(let i=0;i<cap.flakes;i++){

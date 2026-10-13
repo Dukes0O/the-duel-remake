@@ -33,6 +33,7 @@ return `<div id="stage" class="in-menu"><div id="view3d" aria-label="Three-dimen
 export function createMenuScreen(ctx) {
   const {app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time} = ctx;
   const refreshEntryReward=ctx.onEntryReward||updateEntryReward;
+  let previousSetupCourse;
 function updateMenuCar() {
   if (!isCarUnlocked(profile(), choices.car)) choices.car = 'falcone_f42';
   const car = applyDriverModifiers(upgradedCar(CARS[choices.car], getUpgradeLevels(profile(), choices.car)),getEquippedDriverId(profile()),choices.car);
@@ -70,6 +71,10 @@ function updatePlayers(){
 function updateMenuScene() {
   const savedChoices=app.setRaceSettings(choices)||app.getRaceChoices();delete choices.rival;delete choices.tyre;Object.assign(choices,savedChoices);
   const stage = COURSE[choices.startStage] || COURSE[0];
+  if(stage.id!==previousSetupCourse&&stage.defaultMode==='grandprix'&&app.grandPrixAvailable?.(stage)){
+    choices.mode='grandprix';app.setRaceSettings(choices);
+  }
+  previousSetupCourse=stage.id;
   ui['rival-customization'].hidden=!stage.hasRival||!!stage.practice||choices.mode==='timetrial';
   ui['rival-car'].value=choices.rival?.car||'match';ui['rival-driver'].value=choices.rival?.driverId||'club';
   const rivalCar=choices.rival?.car&&choices.rival.car!=='match'?choices.rival.car:choices.car;
@@ -79,7 +84,7 @@ function updateMenuScene() {
   if(stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial)choices.mode='duel';
   // The Grand Prix choice appears only where the switch is on and the circuit has one.
   const grandPrix=app.grandPrixAvailable?.(stage)===true;
-  for(const button of root.querySelectorAll('[data-mode="grandprix"]'))button.hidden=!grandPrix;
+  for(const button of root.querySelectorAll('[data-mode="grandprix"]')){button.hidden=!grandPrix;button.textContent=stage.closed===false?'RACE':'GRAND PRIX';}
   if(choices.mode==='grandprix'&&!grandPrix)choices.mode='duel';
   for(const button of root.querySelectorAll('[data-mode]')){button.disabled=(stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||!!stage.stuntTrial)&&button.dataset.mode==='timetrial'||button.dataset.mode==='wasteland'&&!supportsCombat(stage);button.classList.toggle('on',button.dataset.mode===choices.mode);button.setAttribute('aria-pressed',String(button.dataset.mode===choices.mode));if(button.dataset.mode==='duel')button.textContent=stage.practice?'FREE PRACTICE':stage.checkpointRush?'CHECKPOINT RUSH':stage.driftTrial?'DRIFT TRIAL':stage.stuntTrial?'STUNT TRIAL':stage.kind==='chase'?'ESCAPE THE PURSUIT':'RIVAL DUEL';}
   for(const button of root.querySelectorAll('[data-cpu-difficulty]'))button.disabled=!!stage.practice;
@@ -113,6 +118,10 @@ function updateMenuScene() {
     ui['event-brief'].hidden=false;text('event-brief','A pure race on a closed road: no traffic, police or radar. Five red lights, then go. Follow the tow behind a car for extra speed.');
     ui['rival-customization'].hidden=true;
     root.querySelector('.start-note').textContent=`GRAND PRIX · ${fieldSize} CARS · ${lapCountLabel} · NO TRAFFIC OR POLICE`;
+    if(stage.id==='summit-run'&&stage.closed===false){
+      text('event-brief','Climb from the desert to the snowy summit. Choose winter tyres at the tree-line pit. The Gallery shelters you; the Open Road runs beneath the avalanche slope.');
+      root.querySelector('.start-note').textContent=`SUMMIT RUN · ${fieldSize} CARS · ONE RUN · NO TRAFFIC OR POLICE`;
+    }
   }
 }
   return {updateMenuCar, updateMenuScene, updatePlayers};

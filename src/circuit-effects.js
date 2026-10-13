@@ -396,8 +396,13 @@ export function birchSpots(course, config) {
   let seed = config.seed ?? 0xb1c4;
   const random = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const [near, far] = config.depth ?? [14, 34], zones = course.def.scenery?.clear ?? [], spots = [];
+  const ranges=config.ranges;
+  if(ranges&&(!Array.isArray(ranges)||!ranges.length||ranges.some(range=>
+    !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
+    throw Error('Birch groves need bounded authored ranges.');
   for (let grove = 0, tries = 0; grove < (config.groves ?? 14) && tries < 400; tries++) {
-    const s = random() * course.length, side = random() < .5 ? -1 : 1, lateral = side * (course.roadHalfWidthAt(s) + near + random() * (far - near));
+    const range=ranges?.[grove%ranges.length];
+    const s = range?range.from+random()*(range.to-range.from):random() * course.length, side = random() < .5 ? -1 : 1, lateral = side * (course.roadHalfWidthAt(s) + near + random() * (far - near));
     const phase = course.phase(s);
     if (zones.some(zone => phase >= zone.s0 - 12 && phase <= zone.s1 + 12 && lateral >= zone.from - 12 && lateral <= zone.to + 12)) continue;
     const found = course.worldAt(s, lateral), road = course.nearest(found.x, found.z);
@@ -405,7 +410,9 @@ export function birchSpots(course, config) {
     if (piece?.kind === 'turn' && Math.sign(road.lateral) === piece.dir) continue;
     grove++;
     for (let i = 0, count = 3 + Math.floor(random() * 3); i < count; i++) {
-      const ds = (random() - .5) * 14, dl = (random() - .5) * 10, point = course.worldAt(s + ds, lateral + dl), nearest = course.nearest(point.x, point.z);
+      const ds = (random() - .5) * 14, dl = (random() - .5) * 10;
+      if(range&&(s+ds<range.from||s+ds>range.to))continue;
+      const point = course.worldAt(s + ds, lateral + dl), nearest = course.nearest(point.x, point.z);
       if (nearest.distance < course.roadHalfWidthAt(nearest.s) + 12) continue;
       if (course.features.trees.some(tree => Math.hypot(tree.x - point.x, tree.z - point.z) < 2.2 * (tree.scale ?? 1))) continue;
       spots.push({ x: point.x, z: point.z, y: course.groundAt(s + ds, lateral + dl).y, yaw: random() * Math.PI * 2, scale: .8 + random() * .55 });
