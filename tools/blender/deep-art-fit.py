@@ -19,10 +19,23 @@ def arguments():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--root',required=True)
     p.add_argument('--evidence',required=True)
+    p.add_argument('--paths-only',action='store_true')
     p.add_argument('--inspect',action='store_true')
     p.add_argument('--only',choices=ROLES)
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else None)
-    return a,Path(a.root).resolve(),Path(a.evidence).resolve()
+    root=Path(a.root).resolve()
+    return a,root,Path(a.evidence).resolve()
+
+# Existing Blender pipeline's pure output planner: no bpy, input reads or writes.
+if '--paths-only' in sys.argv:
+    a,root,evidence=arguments();roles=[a.only] if a.only else ROLES
+    if not evidence.is_relative_to(root/'.evidence') or evidence==root/'.evidence':
+        raise ValueError('Blend sources require an owned ignored .evidence leaf inside the requested root')
+    print(json.dumps({'blend':[str(evidence/(role+'.blend')) for role in roles],
+        'glb':[str(root/'public/assets/models/deep'/(role+'.glb')) for role in roles],
+        'json':[] if a.only else [str(root/'public/assets/models/deep/manifest.json')],
+        'evidence':[],'summary':[]}))
+    raise SystemExit(0)
 
 import bpy
 from mathutils import Vector, Matrix

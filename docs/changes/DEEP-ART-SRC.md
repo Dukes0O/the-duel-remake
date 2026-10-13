@@ -76,3 +76,33 @@ No frame timing, balance, gameplay browser, full tier, release, push or
 real-save pass. Runtime sea-life scene/behaviour/placement and performance
 belong to DEEP-LIFE and FINISH-DEEP. Maximum three art rounds stays exact;
 formal verdict pending, no fourth round or placeholder.
+
+
+## Actual frozen-source gate/build result
+
+Frozen `1fb800b11bb703631a301c3f684527a315a152ea`: original unfiltered lane
+`--tier lane --changed --jobs 4 --json` **failed**, exit1: 8 passed, 1 failed,
+20 not run, total29, 63,993.9002 ms (shell68.337 s). Failure is
+`tools/test-blender-output.mjs`: its unchanged all-generators-covered
+assertion correctly finds the two new Deep recipes missing from registration.
+The suite itself ran44 checks with1 failure. This is a real missing pipeline
+integration, not an unreliable rerun, visual verdict or passing lane.
+No old assertion or test was weakened, skipped, filtered or changed.
+
+Build on the same unchanged clean source passed, exit0, Vite793 ms,
+361 modules; the existing large-chunk warning remains. Exact full lane JSON,
+invocation and build logs are pinned in the native evidence folder.
+
+Root granted the exact registration hook before correction. The guard now
+registers all18 Deep GLBs and their manifest, checks the18 exact Blend paths
+in the explicitly requested ignored evidence leaf across both existing fixture
+roots, and adds the pure sheet planner. Every old generator, output and
+negative assertion retains its behavior; the complete coverage guard remains.
+Both recipe early exits use only standard-library Python, before Blender/PIL
+imports and donor, manifest or capture reads/writes. The normal fitting and
+composition bodies remain exact; no model or photograph changed.
+
+The actual water capture remains on1fb800b1. This CLI-only correction does
+not rerun assets or native capture. One fresh original lane/build will run
+on the corrected frozen source; receipts stay ignored. Ordinary code review
+and Claude's formal round-two art verdict are still required.

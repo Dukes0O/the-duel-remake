@@ -5,10 +5,15 @@ This file does no rendering, alteration, runtime integration or timing.
 """
 import argparse,hashlib,json
 from pathlib import Path
-from PIL import Image,ImageDraw,ImageFont,ImageOps
 
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',required=True);p.add_argument('--evidence',required=True);a=p.parse_args()
-root=Path(a.root).resolve();evidence=Path(a.evidence).resolve();receipt=json.loads((evidence/'deep-art-native.json').read_text());manifest=json.loads((root/'public/assets/models/deep/manifest.json').read_text());models={m['id']:m for m in manifest['models']}
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',required=True);p.add_argument('--evidence');p.add_argument('--paths-only',action='store_true');a=p.parse_args()
+root=Path(a.root).resolve();evidence=Path(a.evidence).resolve() if a.evidence else root/'.evidence/deep-art/round-2-native'
+if a.paths_only:
+    print(json.dumps({'blend':[],'glb':[],'evidence':[],'summary':[str(root/'docs/board/looks/deep-art/round-2.jpg')]}))
+    raise SystemExit(0)
+if not a.evidence:p.error('--evidence is required for composing the actual capture')
+from PIL import Image,ImageDraw,ImageFont,ImageOps
+receipt=json.loads((evidence/'deep-art-native.json').read_text());manifest=json.loads((root/'public/assets/models/deep/manifest.json').read_text());models={m['id']:m for m in manifest['models']}
 if not receipt.get('actualLookTest') or not receipt.get('complete') or len(receipt['views'])!=18:raise RuntimeError('A complete actual look-test capture is required')
 W,H=1800,2140;sheet=Image.new('RGB',(W,H),(10,22,27));d=ImageDraw.Draw(sheet);fonts=Path('C:/Windows/Fonts');title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),30);head=ImageFont.truetype(str(fonts/'segoeuib.ttf'),24);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),19)
 d.text((26,18),'THE DEEP | ACTUAL LOOK-TEST WATER | ROUND 2 | 18 ROLES',font=title,fill=(234,218,168))
