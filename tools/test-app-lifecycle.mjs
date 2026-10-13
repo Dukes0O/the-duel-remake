@@ -20,3 +20,63 @@ check(secondUnlocks===2&&second.keys.ArrowRight,'the current App still receives 
 second.dispose();check(window.__game===undefined,'disposing the current owner removes its debug handle');
 check(!second.running&&cancelled===2,'a current App without a started loop still disposes safely');
 console.log(`App lifecycle: ${checks} frame, input, audio and debug ownership checks passed.`);
+
+// Use the existing real App bindings and EventTarget fixture; no browser or saves.
+const originalDocument = globalThis.document;
+let requests = 0;
+class Canvas extends Element {
+  closest(selector) { return selector === '#view3d canvas' ? this : null; }
+  requestPointerLock() { requests++; throw Error('Pointer lock refused'); }
+}
+const canvas = new Canvas();
+globalThis.document = new EventTarget();
+document.pointerLockElement = null;
+const inputApp = Object.create(App.prototype);
+Object.assign(inputApp, {
+  duel: {state: {onFoot: true, paused: false}}, audio: {unlock() {}}, keys: {},
+  _footPointer: {lookX: 0, lookY: 0, fire: false, aim: false},
+  _keyboardSteering: {reset() {}}, togglePause() { this.duel.state.paused = true; }
+});
+inputApp._bindKeys();
+const mouse = (type, button, movementX = 0, movementY = 0) => {
+  const event = new Event(type, {cancelable: true});
+  Object.defineProperty(event, 'target', {value: canvas});
+  Object.assign(event, {button, movementX, movementY});
+  window.dispatchEvent(event);
+};
+try {
+  mouse('mousemove', 0, 12, -7);
+  check(inputApp._footPointer.lookX === 12 && inputApp._footPointer.lookY === -7,
+    'mouse look works over the live canvas before locking or firing a round');
+  mouse('mousedown', 2);
+  check(requests === 1 && inputApp._footPointer.aim && !inputApp._footPointer.fire,
+    'right-click alone activates aim and tries to capture the mouse without shooting');
+  mouse('mousedown', 0);
+  check(inputApp._footPointer.aim && inputApp._footPointer.fire,
+    'left-click fires while the right mouse button remains held');
+  mouse('mouseup', 0);
+  check(inputApp._footPointer.aim && !inputApp._footPointer.fire,
+    'releasing fire preserves the held aim button');
+  mouse('mousedown', 0); mouse('mouseup', 2);
+  check(!inputApp._footPointer.aim && inputApp._footPointer.fire,
+    'releasing aim preserves the held fire button');
+  mouse('mouseup', 0);
+  inputApp.duel.state.paused = true;
+  const look = inputApp._footPointer.lookX;
+  mouse('mousedown', 2); mouse('mousemove', 0, 9, 9);
+  check(!inputApp._footPointer.aim && inputApp._footPointer.lookX === look,
+    'paused gameplay cannot aim, fire or consume mouse look');
+  inputApp.duel.state.paused = false;
+  mouse('mousedown', 2); mouse('mousedown', 0);
+  window.dispatchEvent(new Event('blur'));
+  check(!inputApp._footPointer.aim && !inputApp._footPointer.fire && inputApp.duel.state.paused,
+    'losing focus clears both held buttons and pauses');
+  inputApp._inputEvents.abort(); inputApp.duel.state.paused = false;
+  mouse('mousedown', 0);
+  check(!inputApp._footPointer.fire, 'disposed mouse handlers cannot fire again');
+} finally {
+  inputApp._inputEvents.abort();
+  if (originalDocument === undefined) delete globalThis.document;
+  else globalThis.document = originalDocument;
+}
+console.log('Mouse aim/fire chord and pre-shot look acceptance passed.');

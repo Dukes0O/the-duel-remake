@@ -1430,22 +1430,33 @@ export class App {
     },{signal});
     window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset(); },{signal});
     window.addEventListener('pointerdown', () => this.audio.unlock(), { passive: true,signal });
-    window.addEventListener('pointerdown', e=>{
-      if(!this.duel.state.onFoot || this.duel.state.paused ||
-          !(e.target instanceof Element) || !e.target.closest('#view3d canvas'))return;
-      if(!document.pointerLockElement)e.target.requestPointerLock?.();
-      if(e.button===0)this._footPointer.fire=true;
-      if(e.button===2)this._footPointer.aim=true;
-    },{signal});
-    window.addEventListener('pointerup',e=>{
-      if(e.button===0)this._footPointer.fire=false;
-      if(e.button===2)this._footPointer.aim=false;
-    },{signal});
-    window.addEventListener('mousemove',e=>{
-      if(!this.duel.state.onFoot || document.pointerLockElement==null)return;
-      this._footPointer.lookX+=Math.max(-300,Math.min(300,e.movementX||0));
-      this._footPointer.lookY+=Math.max(-300,Math.min(300,e.movementY||0));
-    },{signal});
+    // Mouse events report each button in a chord; pointerdown only reports
+    // the first button, losing left-click while right-click is already held.
+    window.addEventListener('mousedown', e => {
+      if (!this.duel.state.onFoot || this.duel.state.paused ||
+          ![0, 2].includes(e.button) || !(e.target instanceof Element)) return;
+      const canvas = e.target.closest('#view3d canvas');
+      if (!canvas) return;
+      e.preventDefault();
+      if (!document.pointerLockElement) {
+        try { canvas.requestPointerLock?.()?.catch?.(() => {}); } catch {}
+      }
+      if (e.button === 0) this._footPointer.fire = true;
+      if (e.button === 2) this._footPointer.aim = true;
+    }, {signal});
+    window.addEventListener('mouseup', e => {
+      if (e.button === 0) this._footPointer.fire = false;
+      if (e.button === 2) this._footPointer.aim = false;
+    }, {signal});
+    window.addEventListener('mousemove', e => {
+      if (!this.duel.state.onFoot || this.duel.state.paused) return;
+      // Canvas movement remains usable before the first click and when the
+      // browser refuses pointer lock. Menus and the rest of the page stay inert.
+      if (document.pointerLockElement == null &&
+          !(e.target instanceof Element && e.target.closest('#view3d canvas'))) return;
+      this._footPointer.lookX += Math.max(-300, Math.min(300, e.movementX || 0));
+      this._footPointer.lookY += Math.max(-300, Math.min(300, e.movementY || 0));
+    }, {signal});
     window.addEventListener('contextmenu',e=>{
       if(this.duel.state.onFoot && e.target instanceof Element &&
           e.target.closest('#view3d canvas'))e.preventDefault();
