@@ -159,10 +159,10 @@ export function normalizeProfile(value) {
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
-  if (Object.hasOwn(value,'yeti')) profile.yeti=normalizeYeti(value.yeti,profile);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
+  if (Object.hasOwn(value,'yeti')) profile.yeti=normalizeYeti(value.yeti,profile);
   profile.cosmetics = normalizeCosmetics(value.cosmetics, profile);
   profile.drivers = getDriverState({ ...profile, drivers: value.drivers });
   profile.courses = normalizeCourseAccess(value.courses, value);

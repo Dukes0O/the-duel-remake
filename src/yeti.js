@@ -13,9 +13,9 @@ export function normalizeYeti(value,profile) {
   const result={};
   if(Object.hasOwn(value,'sightings'))result.sightings=Number.isSafeInteger(value.sightings)?Math.max(0,Math.min(1000000,value.sightings)):0;
   if(Object.hasOwn(value,'settled'))result.settled=[...new Set((Array.isArray(value.settled)?value.settled:[])
-    .filter(key=>typeof key==='string' && key.length>0 && key.length<=180))];
+    .filter(key=>typeof key==='string' && key.length>0 && key.length<=180).reverse())].reverse().slice(-96);
   if(Object.hasOwn(value,'roof'))result.roof=Object.fromEntries(Object.entries(value.roof&&typeof value.roof==='object'?value.roof:{})
-    .filter(([car,look])=>ownsCar(profile,car) && look==='yeti' && result.sightings>=3));
+    .filter(([car,look])=>ownsCar(profile,car) && look==='yeti' && result.sightings>=3 && profile.wasteland?.kits?.[car]?.equipped!=='turret-look'));
   return result;
 }
 export const yetiRewards=profile=>({roof:Number.isSafeInteger(profile?.yeti?.sightings)&&profile.yeti.sightings>=3,
@@ -26,11 +26,11 @@ export function countYetiFinish(profile,result,eligible) {
   if(!eligible || result.yetiEnabled!==true || result.yetiSeen!==true ||
     typeof result.ownerPlayerId!=='string' || !result.ownerPlayerId || result.ownerPlayerId.length>128 || result.ownerPlayerId.trim()!==result.ownerPlayerId || /[\u0000-\u001f\u007f]/.test(result.ownerPlayerId) ||
     result.playerId!==result.ownerPlayerId || !['duel','timetrial','timeattack','grandprix'].includes(result.mode) ||
-    result.qualifying===true || result.abandoned===true || result.timeout===true || !ownsCar(profile,result.car))return ignored;
+    result.qualifying===true || result.practice===true || result.abandoned===true || result.timeout===true || !ownsCar(profile,result.car))return ignored;
   const key=result.runId+':summit-run',old=normalizeYeti(profile.yeti,profile);
-  if(old.settled?.includes(key))return ignored;
+  if(old.sightings>=1000000 || old.settled?.includes(key))return ignored;
   return {profile:{...profile,yeti:{...old,sightings:Math.min(1000000,(old.sightings??0)+1),
-    settled:[...(old.settled??[]),key]}},counted:true};
+    settled:[...(old.settled??[]),key].slice(-96)}},counted:true};
 }
 export function yetiSites(course){
   const staircase=course.script.pieces.find(piece=>piece.name==="Devil's Staircase"),summit=course.script.pieces.find(piece=>piece.name==='Summit Finish');

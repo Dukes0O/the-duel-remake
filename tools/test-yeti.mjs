@@ -35,7 +35,7 @@ try{
   const first=settleRace(profile,payload());equal(first.profile.yeti.sightings,1,'actual GP career-off named sighting counts');check(first.yetiAwarded);
   const {yeti,...legacy}=first.profile;equal(JSON.stringify(legacy),original,'GP career-off keeps all old bank/record/history fields exact');equal(first.reward,0);equal(first.awarded,false);
   equal(settleRace(first.profile,payload()).profile,first.profile,'duplicate same run cannot count');
-  for(const extra of [{completed:false},{abandoned:true},{timeout:true},{qualifying:true},{yetiEnabled:false},{yetiSeen:false},
+  for(const extra of [{completed:false},{abandoned:true},{timeout:true},{qualifying:true},{practice:true},{yetiEnabled:false},{yetiSeen:false},
     {timeSec:0},{timeSec:NaN},{laps:0},{laps:2},{car:'no-car'},{car:'aurora_gt'},
     {stageIndex:0,laps:2},{position:7},{fieldSize:9},{mode:'wasteland'},
     {runId:''},{won:1},{ownerPlayerId:'player-2'},{ownerPlayerId:' '},{playerId:null}]){
@@ -52,6 +52,17 @@ try{
   check(!Object.hasOwn(normalizeProfile(createProfile()),'yeti'),'legacy normalization stays absent');
   const corrupt=normalizeProfile({...profile,yeti:{sightings:3,settled:['ok','ok',null],roof:{falcone_f42:'yeti',aurora_gt:'yeti',wrong:'yeti',stuttgart_959s:'invented'}}});
   equal(corrupt.yeti,{sightings:3,settled:['ok'],roof:{falcone_f42:'yeti'}},'known owned car/choice normalization');
+  const keys=Array.from({length:120},(_,i)=>'retained-'+i);
+  const recent=normalizeProfile({...profile,yeti:{sightings:100,settled:[...keys,'retained-0',null,'x'.repeat(181)]}});
+  equal(recent.yeti.settled,[...keys.slice(25),'retained-0'],'retain the 96 most-recent unique valid keys');
+  const appended=settleRace(recent,payload({runId:'bounded-new'}));
+  equal(appended.profile.yeti.settled,[...recent.yeti.settled.slice(1),'bounded-new:summit-run'],'live append uses the same 96-key bound');
+  equal(appended.profile.yeti.sightings,101,'bounded valid finish still counts');
+  equal(settleRace(appended.profile,payload({runId:'bounded-new'})).profile,appended.profile,'recent duplicate retains identical profile');
+  const capped={...recent,yeti:{...recent.yeti,sightings:1000000}};
+  const atCap=settleRace(capped,payload({runId:'cap-new'}));
+  check(atCap.profile===capped,'sighting cap returns identical profile without key append');
+  check(!atCap.yetiAwarded,'capped sighting is not counted');
   const other=createProfile();equal(yetiRewards(other),{roof:false,frost:false},'named profile rewards isolated');
   const roof=equipRoadRoof(profile,'falcone_f42','yeti',{yetiEnabled:true});check(roof.ok);equal(getRoadRoofLook(roof.profile,'falcone_f42',{yetiEnabled:true}),'yeti');
   equal(getRoadRoofLook(roof.profile,'stuttgart_959s',{yetiEnabled:true}),null,'per-car selection isolated');equal(getRoadRoofLook(roof.profile,'falcone_f42'),null,'off selected look stays inactive');
@@ -59,6 +70,24 @@ try{
   const withChrome={...roof.profile,wasteland:{...roof.profile.wasteland,kits:{falcone_f42:{owned:['chrome-crown'],equipped:null,roofLook:null}}}};
   const chrome=equipArmorKit(withChrome,'falcone_f42','chrome-crown');check(chrome.ok);equal(getRoadRoofLook(chrome.profile,'falcone_f42',{yetiEnabled:true}),'chrome-crown');check(!chrome.profile.yeti.roof.falcone_f42,'Chrome clears the Yeti slot');
   const back=equipRoadRoof(chrome.profile,'falcone_f42','yeti',{yetiEnabled:true});equal(getEquippedRoofLook(back.profile,'falcone_f42'),null);equal(back.profile.wasteland.kits.falcone_f42.roofLook,null,'Yeti clears Chrome selection only');equal(back.profile.wasteland.kits.falcone_f42.owned,['chrome-crown'],'Chrome ownership retained');
+  const gunnOwned={...back.profile,wasteland:{...back.profile.wasteland,warlords:{...back.profile.wasteland.warlords,gunn:{defeated:true}},
+    kits:{falcone_f42:{...back.profile.wasteland.kits.falcone_f42,owned:['chrome-crown','turret-look']}}}};
+  const turret=equipArmorKit(gunnOwned,'falcone_f42','turret-look');check(turret.ok);
+  equal(getRoadRoofLook(turret.profile,'falcone_f42',{yetiEnabled:true}),null,'Turret selection clears this car Yeti roof');
+  const fromTurret=equipRoadRoof(turret.profile,'falcone_f42','yeti',{yetiEnabled:true});check(fromTurret.ok);
+  equal(fromTurret.profile.wasteland.kits.falcone_f42.equipped,null,'Yeti selection clears only zero-stat Turret');
+  equal(fromTurret.profile.wasteland.kits.falcone_f42.owned,['chrome-crown','turret-look'],'both earned ownerships retained');
+  const conflicting=normalizeProfile({...gunnOwned,wasteland:turret.profile.wasteland,yeti:{...gunnOwned.yeti,roof:{falcone_f42:'yeti'}}});
+  check(!conflicting.yeti.roof.falcone_f42,'loaded malformed double roof retains Turret and rejects Yeti');
+  equal(conflicting.wasteland.kits.falcone_f42.equipped,'turret-look','validated existing Turret remains selected on load');
+  equal(getRoadRoofLook({...turret.profile,yeti:{...turret.profile.yeti,roof:{falcone_f42:'yeti'}}},'falcone_f42',{yetiEnabled:true}),null,'raw double roof is not rendered');
+  const plated=normalizeProfile({...gunnOwned,yeti:{...gunnOwned.yeti,roof:{}},wasteland:{...gunnOwned.wasteland,kits:{...gunnOwned.wasteland.kits,
+    falcone_f42:{...gunnOwned.wasteland.kits.falcone_f42,owned:['scrapper','chrome-crown','turret-look'],equipped:'scrapper',roofLook:'chrome-crown'}}}});
+  const platedYeti=equipRoadRoof(plated,'falcone_f42','yeti',{yetiEnabled:true});check(platedYeti.ok);
+  equal(platedYeti.profile.wasteland.kits.falcone_f42.equipped,'scrapper','Yeti leaves actual paid plating selected');
+  equal(platedYeti.profile.wasteland.kits.falcone_f42.owned,['scrapper','chrome-crown','turret-look'],'Yeti retains all kit ownership');
+  equal(platedYeti.profile.wasteland.kits.falcone_f42.roofLook,null,'Yeti clears the old roof while retaining paid plating');
+
   equal(PAINT_PRESETS.frost.appearance,{id:'frost',name:'Frost',color:0xdce8f0,metalness:.1,roughness:.55});
   check(paintPresetsFor(profile,'stuttgart_959s',{yetiEnabled:true}).some(p=>p.id==='frost'),'reward on every owned car');
   const painted=applyPaint(profile,'stuttgart_959s','frost',{yetiEnabled:true});check(painted.ok);equal(painted.cost,0);equal(painted.profile.credits,profile.credits);equal(getPaintAppearance(painted.profile,'stuttgart_959s',{yetiEnabled:true}).id,'frost');

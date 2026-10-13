@@ -125,6 +125,7 @@ export function equipArmorKit(profile, car, id = null) {
   if (installed.equipped === id && (id !== null || !getEquippedRoofLook(profile, car)))
     return result(profile, id ? 'This kit is already equipped.' : 'This car is already stock.');
   const clearsRoof = id === null || id === 'side-saws' || id === 'turret-look';
+  if(id==='turret-look')profile=clearYetiRoof(profile,car);
   return {
     profile: {...profile, wasteland: {...wasteland, kits: {...wasteland.kits,
       [car]: {...installed, owned: Object.hasOwn(EARNED_ARMOR_KITS, id) || earnedOnAnyCar(profile, id)
@@ -140,7 +141,8 @@ function clearYetiRoof(profile,car){
 }
 export function getRoadRoofLook(profile,car,{yetiEnabled=false}={}){
   if(!yetiEnabled || !isCarUnlocked(profile,car))return null;
-  return profile?.yeti?.roof?.[car]==='yeti' && yetiRewards(profile).roof ? 'yeti' : getEquippedRoofLook(profile,car);
+  return profile?.yeti?.roof?.[car]==='yeti' && yetiRewards(profile).roof &&
+    profile.wasteland?.kits?.[car]?.equipped!=='turret-look' ? 'yeti' : getEquippedRoofLook(profile,car);
 }
 export function equipRoadRoof(profile,car,id,{yetiEnabled=false}={}){
   if(!yetiEnabled || !Object.hasOwn(CARS,car) || !isCarUnlocked(profile,car))return result(profile,'Unlock this car before choosing its roof look.');
@@ -151,7 +153,10 @@ export function equipRoadRoof(profile,car,id,{yetiEnabled=false}={}){
   if(selected===id)return {profile,ok:true,cost:0,changed:false};
   let updated=id==='yeti'?{...profile,yeti:{...profile.yeti,roof:{...profile.yeti?.roof,[car]:'yeti'}}}:clearYetiRoof(profile,car);
   const installed=updated.wasteland?.kits?.[car];
-  if(installed?.roofLook==='chrome-crown')updated={...updated,wasteland:{...updated.wasteland,
-    kits:{...updated.wasteland.kits,[car]:{...installed,roofLook:null}}}};
+  const clearsChrome=installed?.roofLook==='chrome-crown';
+  const clearsTurret=id==='yeti' && installed?.equipped==='turret-look';
+  if(clearsChrome || clearsTurret)updated={...updated,wasteland:{...updated.wasteland,
+    kits:{...updated.wasteland.kits,[car]:{...installed,...(clearsChrome?{roofLook:null}:{}),
+      ...(clearsTurret?{equipped:null}:{})}}}};
   return {profile:updated,ok:true,cost:0,changed:updated!==profile};
 }
