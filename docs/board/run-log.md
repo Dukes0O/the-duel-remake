@@ -1041,3 +1041,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 - 2026-10-12 DEEP-AUDIO revisedc1408cbd:55/55, build996.1124ms, ordinary review clear; conflict-free, no rerun; net236204B saved. Listening/native mix remain open.
 - 2026-10-13 LAP-CHOICE merged 30d2604f: lane 269/269 in 807.02 s, build 1929.3158 ms, review lighting independent code-money-save review and real-fault confirmation clear.
+
+- 2026-10-12 P4-SNOWMEN source0be79396:313/313, build1030.4691ms, ordinary and fresh save reviews CLEAR; conflict-free, no rerun; twenty soft once-hit snowmen/capped pay, dev only. Native checks deferred.

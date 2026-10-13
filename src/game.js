@@ -39,6 +39,7 @@ import {upgradedCar} from './progression.js';
 import {createFeatureFlags, featureFlags} from './feature-flags.js';
 import {hiddenRoadInRace, raceFeatureFlags, wastelandRulesActive} from './wasteland-access.js';
 import {clamp, freshDamageZones} from './sim-common.js';
+import {initializeSnowmen} from './snowmen.js';
 import {initializeFuelRun} from './arena/modes/fuel-run.js';
 import {initializeBountyHunt} from './arena/modes/bounty-hunt.js';
 import {initializeAmbushAlley} from './arena/modes/ambush-alley.js';
@@ -255,6 +256,7 @@ export class Duel {
     const rawGates = this.course.features.lapGates?.map(gate => typeof gate === 'number' ? gate : gate.s) || [this.course.length * .25, this.course.length * .5, this.course.length * .75];
     this._lapGates = [...new Set(rawGates.filter(distance => distance > 0 && distance < this.course.length))].sort((a, b) => a - b);
     this._resetStageDriving();
+    initializeSnowmen(this);
     s.racePenaltySec = 0; s.lap = s.currentLap = 1; s.completedLaps = 0; s.lapsTotal = this.course.def.laps || 1;
     s.lapTimeSec = 0; s.lapTimes = []; s.lapStartedAt = 0; s.nextLapGate = 0; s.assistedLaps = []; s.assistedLap = false;
     const stunt = this.course.def.stuntTrial, drift = this.course.def.driftTrial, rush = this.course.def.checkpointRush;
@@ -330,6 +332,8 @@ export class Duel {
     s.brokenScenery = []; this._brokenSceneryIds = new Set();
     s.roadsideBursts = [];
     s.roadsideBurstSerial = 0;
+    delete s.snowmenEnabled;delete s.snowmen;delete s.snowmanBursts;
+    this._brokenSnowmanIds=null;
     s._jumpY = null; s._verticalSpeed = 0; s._jumpOrigin = null; s.prevAirHeight = 0;
     s.crashSite = null; s.impactTimer = 0; s.impactDuration = 0; s.impactStrength = 0; s.impactSide = 1; s.crashSpin = 0;
     s.bombImpactCooldown = 0;

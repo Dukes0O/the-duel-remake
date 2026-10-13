@@ -1,4 +1,6 @@
 import {createTrackKits,trackKitsOf} from './track-kits.js';
+import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
+import {createSnowmenView} from './snowmen-view.js';
 import {snowWorldEnabled,snowWorldPlacements,SNOW_KIT_IDS,snowWorldOf,winterLightingSettings} from './snow-world.js';
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
@@ -166,18 +168,20 @@ export function attachRenderer(host, app) {
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
-  let preparedTrackKits = null, preparedTrackKitKey = null;
+  let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null;
+  const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
+  const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'');
   const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
   function prepareKitWorld(next, {retry=false}={}) {
-    if (!next.def.kitPlacements?.length && !winterEnabled(next)) {
+    if (!next.def.kitPlacements?.length && !winterEnabled(next) && !hasSnowmen(next)) {
       preparedTrackKits?.dispose();preparedTrackKits=null;preparedTrackKitKey=null;
       host.dataset.trackKitAsset = 'off';host.dataset.trackKitError = '';return true;
     }
-    if (world && next === course) {
+    if (world && next === course && worldKey===kitWorldKey(next)) {
       host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';return true;
     }
-    const key = environmentKey(next);
-    if (world && worldKey === key && !winterEnabled(next)) {
+    const key = kitWorldKey(next);
+    if (world && worldKey === key && !winterEnabled(next) && !hasSnowmen(next)) {
       host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';
       host.dataset.trackKitError = '';
       return true;
@@ -186,7 +190,9 @@ export function attachRenderer(host, app) {
       preparedTrackKits.dispose(); preparedTrackKits = null; preparedTrackKitKey = null;
     }
     if (!preparedTrackKits) {
-      preparedTrackKits = createTrackKits(next,{validateClearance:false,...(winterEnabled(next)?{extraPlacements:snowWorldPlacements(next),requiredIds:SNOW_KIT_IDS}:{})}); preparedTrackKitKey = key;
+      preparedTrackKits = createTrackKits(next,{validateClearance:false,
+        extraPlacements:[...(winterEnabled(next)?snowWorldPlacements(next):[]),...(hasSnowmen(next)?snowmanPlacements(next):[])],
+        requiredIds:[...(winterEnabled(next)?SNOW_KIT_IDS:[]),...(hasSnowmen(next)?['snowman']:[])]}); preparedTrackKitKey = key;
     }
     host.dataset.trackKitAsset = preparedTrackKits.status;
     host.dataset.trackKitError = preparedTrackKits.error?.message ?? '';
@@ -302,14 +308,16 @@ export function attachRenderer(host, app) {
   function build(next) {
     const buildStart=performance.now();
     worldReadyStarted=buildStart;host.dataset.worldReadyMs='0';
+    snowmenView?.dispose();snowmenView=null;
     if (world) retireObject(world);
     course = next;
-    worldKey=environmentKey(next);
+    worldKey=kitWorldKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});
     world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
+    if(hasSnowmen(course)){snowmenView=createSnowmenView(trackKitsOf(world));world.add(snowmenView.group);}
     lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
@@ -345,8 +353,8 @@ export function attachRenderer(host, app) {
     try {
       if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
       if (!prepareKitWorld(view.course)) return;
-      if (course !== view.course) {
-        if (world && worldKey === environmentKey(view.course) && !winterEnabled(view.course)) course = view.course;
+      if (course !== view.course || worldKey!==kitWorldKey(view.course)) {
+        if (world && worldKey === kitWorldKey(view.course) && !winterEnabled(view.course)) course = view.course;
         else build(view.course);
       }
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
@@ -433,8 +441,8 @@ export function attachRenderer(host, app) {
     if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
-    if (course !== next) {
-      if(world&&worldKey===environmentKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
+    if (course !== next || worldKey!==kitWorldKey(next)) {
+      if(world&&worldKey===kitWorldKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
       else build(next);
       syncScene(world,menu?{crushedProps:[]}:st,0);
       ready = false;
@@ -784,6 +792,7 @@ export function attachRenderer(host, app) {
     lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
+    snowmenView?.update(menu?null:st,high);
     const snowOwner=snowWorldOf(world);
     if(snowOwner){
       snowVehicles.length=menu?0:Math.min(8,opponents.length+1);
@@ -907,7 +916,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;disposed=true;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;disposed=true;snowmenView?.dispose();snowmenView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

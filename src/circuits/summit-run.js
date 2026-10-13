@@ -110,6 +110,9 @@ const sections=starts.map((from,index)=>({theme:index===0?'desert':'alpine',name
 const finish=geometry.length;
 export const SUMMIT_RUN=defineScriptedCourse({
   ...base,sections,
+  snowmen:Object.freeze([27,29,31,33,35,36,42,43,45,47,49,50].map((index,i)=>
+    Object.freeze({s:at(index)+35,lateral:geometry.pieces[index].kind==='turn'
+      ? -geometry.pieces[index].dir*17 : i%2?-17:17}))),
   lightPath:{axis:'distance',keyframes:[{at:0,look:'day'},{at:at(26),look:'golden'},{at:at(29),look:'dusk'},{at:10100,look:'night'}]},
   snowWorld:{mixed:true,softBanks:true,drifts:true,nightExposure:1.02,ranges:[{from:at(27),to:finish}],exposed:[{from:at(42),to:finish}],pineClusters:[]},
   surfacePatches:[
