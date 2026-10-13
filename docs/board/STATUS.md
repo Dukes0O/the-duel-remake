@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T01:24:39.180Z
+Observed at: 2026-10-13T01:32:37.343Z
 
-Observation commit: 290c428995e0cb04b452cfbcad7c05d19fc65d24
+Observation commit: d9d2bac7a332fc3306f5d4c5fcd3c258e7d5b90b
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 290c428995e0cb04b452cfbcad7c05d19fc65d24
+Integration HEAD: d9d2bac7a332fc3306f5d4c5fcd3c258e7d5b90b
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -79,7 +79,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-12T17:24:10-07:00 | 0 | last commit 2026-10-12T17:24:10-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuit-effects.js |
-| codex/qa-lane-native-relief | QA-LANE-NATIVE-RELIEF | 2026-10-12T17:33:56-07:00 | 0 | last commit 2026-10-12T17:33:56-07:00 | docs/changes/QA-LANE-NATIVE-RELIEF.md, tools/run-tests.mjs, tools/test-test-runner.mjs |
+| codex/qa-lane-native-relief | unknown | 2026-10-12T17:33:56-07:00 | 0 | last commit 2026-10-12T17:33:56-07:00 | docs/changes/QA-LANE-NATIVE-RELIEF.md, tools/run-tests.mjs, tools/test-test-runner.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 7 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -96,7 +96,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 188,038 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 402,413,568 B | +14,336 B | unavailable |
+| Git objects | 402,498,560 B | +84,992 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -105,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
 - Local main: missing
-- Local integration/wasteland: 290c428995e0cb04b452cfbcad7c05d19fc65d24
+- Local integration/wasteland: d9d2bac7a332fc3306f5d4c5fcd3c258e7d5b90b
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
