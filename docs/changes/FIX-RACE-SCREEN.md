@@ -29,3 +29,11 @@ The actual legacy composite UI map/preview SHA changed from 4a35afd7b957069ab89f
 Focused implementation checks: warning 8/8 groups; all-course map direction/actor/finish 490 checks pass; camera 38 checks pass; keyboard 443 checks pass with unchanged trajectory70b86b3eec039dc4. Real-kit original checks passed before the appended actual face-only RED. Corrected final face transforms remain pending the required nearby. Native1080p/1440p remains UNRUN.
 
 Final focused practice-map acceptance passed981 checks on the exact new UI pin. Its old console summary said outputs were unchanged; only that summary is corrected to describe the approved shared projection. Native pixels remain UNRUN.
+
+## Actual lane guard correction
+
+The original unfiltered lane on c0ae657b completed205/209, four failures, zero not run,1241762.6074 ms; no build. Runtime/new acceptance, actual High/LOD face matrices and clearance, all443 keyboard checks and original replay/save/ghost checks passed. The four failures were superseded exact visual/UI expectations: old chevron vertices, two consumers of the same three map-containing geometry hashes, and the complete-scene pin.
+
+Before literals changed, swapping ONLY the old/current route-map implementation in the identical current ordinaryGeometry projection reproduced every old hash and current failure value. All non-map projection bytes match; seed, roadFollowing, historical metadata and every other baseline key stay exact. The one unmodified world-composition capture on c0ae657b gave20 enabled rows:17 changed hashes, all102 changed-row counts exact, and three Titan rows entirely exact. Root reviewed the intended visual face geometry and full old/new rows; grants ced2b31e/677 allow only those17 hash keys, three routes.geometry keys and chevron reference1.8x2.025 with depth.08. UV, post/collider, culling, budget, replay and all other assertions/limits stay unchanged. No baseline recorder, new recipe, native photo or fitted tolerance.
+
+The dev Summit row was not captured and is untouched, not proved unchanged. Its six tight hairpins also receive the approved global procedural-face enlargement when enabled. That future scene/native/full acceptance remains open with Summit's art source union. Native1080p/1440p pixels remain UNRUN. The corrected original nearby and build remain pending.
