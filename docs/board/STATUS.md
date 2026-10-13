@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T05:31:20.255Z
+Observed at: 2026-10-13T05:35:18.066Z
 
-Observation commit: 6d9754323ff28f78c192c1e72bba286218cae75f
+Observation commit: fe80dd0a71afffc381e91e8010743cecc5099416
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6d9754323ff28f78c192c1e72bba286218cae75f
+Integration HEAD: fe80dd0a71afffc381e91e8010743cecc5099416
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -56,7 +56,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/lap-choice | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lap-choice |
+| codex/lap-choice | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lap-choice |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -73,8 +73,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:25:06-07:00 | 0 | last commit 2026-10-12T22:25:06-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
-| codex/lap-choice | LAP-CHOICE | 2026-10-12T22:14:16-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/LAP-CHOICE.md, src/app.js, src/course-access-ui.js, src/feature-flags.js, src/game.js |
+| codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:32:01-07:00 | 0 | last commit 2026-10-12T22:32:01-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
+| codex/lap-choice | LAP-CHOICE | 2026-10-12T22:32:10-07:00 | 0 | last commit 2026-10-12T22:32:10-07:00 | docs/changes/LAP-CHOICE.md, src/app.js, src/course-access-ui.js, src/feature-flags.js, src/game.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-12T22:21:43-07:00 | 0 | last commit 2026-10-12T22:21:43-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs |
@@ -94,7 +94,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 445,169 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 407,824,384 B | +73,728 B | unavailable |
+| Git objects | 407,902,208 B | +77,824 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 6d9754323ff28f78c192c1e72bba286218cae75f
+- Local integration/wasteland: fe80dd0a71afffc381e91e8010743cecc5099416
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

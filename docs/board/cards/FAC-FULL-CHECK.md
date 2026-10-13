@@ -50,3 +50,6 @@ Root claims this tools-only card alongside the four open source handoffs. Own th
 ## Completed tool handoff
 
 Corrected5dfd5f33:20/20 nearby, no failures/unrun,122.9078s/jobs4, build728ms/exit0, same ordinary reviewer confirms actual race-field-balance detection repair CLEAR. Conflict-free integration; no repeated gate. Only source-tool acceptance is complete; the actual daily batch remains scheduled04:00. Tonight03:45 hold and Kyle-owned Windows task change stay.
+## Observed overnight entry point, 12 October 22:35 PT
+
+The existing Windows task "The Duel full check" is Ready but its action still names removed tools/night-shift.mjs, in the correct integration folder. This is an observed task configuration, not a tool failure or a successful full run. Root will leave Kyle's task unchanged. At 04:00, after the mandatory 03:45 pause and a fresh process/clean-folder check, Root will check whether a full check is already running and start the accepted node tools/full-check.mjs --idle-awake --no-push once if the old task has not started it. No duplicate batch, task installation, push or release. Any measured frames still require the declared awake, quiet context and honest evidence; source and context failures stay visible in the report.
