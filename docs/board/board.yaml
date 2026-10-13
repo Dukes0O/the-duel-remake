@@ -351,11 +351,9 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "review"
-    claimed_by: "codex-session-01a13220-575d-7492-a51c-43a1e08dfe70"
-    branch: "codex/deep-audio"
+    status: "ready"
     needs: []
-    locks: []
+    locks: [sound-bank]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-AUDIO.md"
 
