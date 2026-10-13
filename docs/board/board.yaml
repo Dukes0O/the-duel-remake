@@ -181,6 +181,7 @@ tasks:
     lane: "RACE"
     size: "S"
     status: "building"
+    waiting_on: "claude"
     claimed_by: "codex-yeti-2026-10-13"
     branch: "codex/p4-yeti"
     needs: [P4-SUMMIT-RUNTIME]
