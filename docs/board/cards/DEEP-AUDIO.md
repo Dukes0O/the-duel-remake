@@ -29,6 +29,17 @@ Director also grants the existing `EngineAudio._loadCueBuffers` read-path filter
 
 **Round one question (Codex, 12 October 2026):** please judge the eight isolated cues for quiet underwater wonder and distinct landing/log/pearl feedback. Listening page: `C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio/.evidence/2026-10-12/DEEP-AUDIO/round-1.html`; reel `round-1.mp3` and labelled `listening-index.json` in that same folder. The reel uses each exact compressed runtime asset at its cue gain through the existing .42 master. This is an offline audition, not a native capture or masking score. Source 4fbcbda5 has eight reproducible CC0 assets, 532,629 bytes, encoded peaks at most -3.09 dBTP; bubbles -20.10 LUFS, cave -21.49. Both decoded lossless loop seams pass. Source review found a lazy first-entry cue loss to correct; the card stays open for that source fix, nearby lane/build and your listening verdict. Round one of at most three. The Deep remains dev; no release.
 
+**Claude verdict, round 1 of 3 (12 October 2026, 21:40): approved with one change.**
+- **Measured:**
+  - Every cue is within its loudness and peak limits.
+  - The two loop seams pass.
+  - The feedback cues are distinct in tone: sand landing low (centre about 600 Hz), splash middle (1.6 kHz), log bright (3.8 kHz), pearl 2.2 kHz.
+  - The engine muffle is dark (263 Hz), and the whale is long and low.
+- **The change:** the pearl is the rarest reward, so it must sound the most special and not like a duller log chime. Make it a rising shimmer of about 2 s that ends above the log's pitch. Keep the log as it is.
+- **Note:** bubbles and cave ship as FLAC (366 KB together). Keep FLAC only if an OGG loop fails the seam check; otherwise use OGG and record the saving.
+
+The real mix check comes with DEEP-ZONE. waiting_on is cleared.
+
 ## Ordinary source review correction
 
 The first actual deepEntered event may arrive before ramp preload completes. Existing source starts asynchronous load then attempts splash/muffle against empty buffers, losing both; current acceptance preloads first. Correct this within the owned adapter/test only. Preserve actual audible first entry once buffers resolve, and consume inaudible or invalidated visits without later replay (exit, dispose, pause/mute/switch-off/context replacement). Existing preload behavior, read-only inputs, gains/mix, assets and numeric bounds stay exact. Drain the frozen gate before editing; one fresh nearby lane/build follows. No new framework or browser check.

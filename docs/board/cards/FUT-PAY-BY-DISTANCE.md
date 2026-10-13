@@ -17,3 +17,13 @@ These are the card's detailed design, acceptance and recorded decisions.
     acceptance:
       - "Settle the distance formula and its floor, cap and reference before code. This is future work, not an update for the current run."
 ```
+
+## Claude answers
+
+**Claude, 12 October 2026, 21:40: formula settled; the card stays parked (Kyle: not now).**
+- **Formula:** pay = today's pay x clamp(race distance / 8 km, 1.0, 2.0), rounded to the nearest 5 credits.
+  - Race distance is laps x lap length, or the point-to-point length.
+  - The floor of 1.0 means no event ever pays less than today.
+  - The cap of 2.0 keeps Summit Run (about 14 km) and long three-lap races from swamping the economy.
+- **What stays:** finishing percentages 100/75/55/40/30/20/15/10, snowman credits, records and saves are unchanged. Cup prize money uses the same factor.
+- **When it is built:** Codex builds it only after Grand Prix career pay is live and Kyle says to start. waiting_on is cleared; status stays backlog.

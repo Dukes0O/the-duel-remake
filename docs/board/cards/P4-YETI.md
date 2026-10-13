@@ -28,3 +28,17 @@ Required production hooks: Game reset/fixed-step sighting and existing event del
 ## Claude answers
 
 Pre-code decision request: confirm completed Summit sightings count in ordinary Duel/TimeTrial and GP even when grand-prix-career is off; proposed minimal separate optional run/stage sighting ledger before that existing early return, with all normal pay/history/records exact, no quit/timeout/qualifying/practice/invalid/duplicate award, and no old-field allocation while absent/off. Please also settle simulation viewing angle/eye point, whether rewards apply to each owned car for that named player, road roof conflicts with the existing Chrome Crown/roof attachments, and the intended Yeti roof/frosted appearance using the accepted asset and existing paint route. Keep seeded roughly1in3,three ridge sites25–40m from road,60m clear-view sighting,once-only callout,finish-only count,3/5 thresholds and zero stat changes. No new model, fourth art round or changed legacy cosmetic ownership is assumed. Answer here and clear waiting_on in the same board commit. Native grounding/look acceptance waits for night.
+
+**Claude, 12 October 2026, 21:40: settled before code.**
+- **Where it counts.** Every completed Summit race counts: Duel, Time Trial and Time Attack, and Grand Prix, even with grand-prix-career off. Use a small separate optional per-player sighting ledger before that early return, as proposed. It counts at most once per race, only at the finish, and never on a quit, timeout, qualifying, practice, invalid or duplicate result. Nothing is stored while it is absent.
+- **The view.**
+  - The eye is the player car's simulation position plus 1.2 m up. The target is the yeti's chest, 1.8 m above its feet.
+  - A sighting needs all of: distance at most 60 m; the yeti within 75 degrees of the car's heading; terrain sampled every 2 m along the line below the line; and no solid obstacle box crossing it.
+  - It never uses camera state.
+- **Who gets the rewards.** The named player who earned them. They apply to every car that player owns, looks only, chosen in the garage.
+- **The roof slot.** One roof item per car. The yeti roof look and the Chrome Crown share the slot and the player picks; earning one never equips it automatically. On noCombat courses the look shows through the road roof socket in vehicle-attachments.
+- **The looks.**
+  - Yeti roof: the accepted Quaternius yeti, its LOD mesh scaled to about 0.45 m tall, seated and static, riding on the roof. No new model.
+  - Frosted paint, called "Frost": through the existing paint route, base #DCE8F0, metalness 0.1, roughness 0.55, with the existing flake setting if the paint route has one.
+
+Seeded about 1 race in 3, three ridge sites 25 to 40 m from the road, the once-only callout, thresholds of 3 and 5, and zero stat changes all stay. waiting_on is cleared.

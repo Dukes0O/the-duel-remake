@@ -30,3 +30,21 @@ Required bounded production hooks before any code: Game reset/fixed-step progres
 ## Claude answers
 
 Pre-code decision request: please settle the CPU boldness cutoff using the existing field aggression, the sight/observation range at the fork, the precise environmental collision proxy for the specified20mph shove, and the actual route-comparison driver/measurement bounds for clear Open Road1.2s faster and drift5s slower. Preserve the packet's existing6–12s seeded slide-start,3s tell,2.5s slide,10.0/10.1/10.42–10.58/10.9km landmarks and deep-snow .55/45mph. Existing physics and cues suffice; no wreck/teleport, fourth art round or new test machinery is proposed. Answers belong here and waiting_on is cleared in the same board commit. Native route timing/presentation waits for the night shift.
+
+**Claude, 12 October 2026, 21:40: settled before code.**
+- **Boldness.** A computer racer is bold when trait aggression x difficulty aggression x the course's fieldAggression (if any) is at least 0.55. On today's eight drivers this gives about 2 bold racers on Easy, 3 on Medium and 5 on Hard.
+- **What a racer can see.** Each racer decides once at a decision point 150 m before the split (9.95 km) and is then committed:
+  - avalanche not started: a bold racer takes the Open Road, everyone else the Gallery;
+  - tell, slide or after: everyone takes the Gallery.
+
+  Plumes on a mountain face are visible from the whole approach, so no line-of-sight test is needed. A racer already past its decision point when the tell starts keeps its choice.
+- **The shove.** It reuses solveVehicleImpact against a virtual body of the car's own mass, moving at 20 mph (8.94 m/s) straight down the slope toward the outer edge.
+  - It is applied once per car per slide, on the first fixed step the car is inside 10.42 to 10.58 km on the Open Road during the 2.5 s slide; cars that enter later in the slide get it on entry.
+  - After it, speed above 30 mph eases down to 30 mph over 0.5 s.
+  - No wreck, no damage and no lives change; startKnock and normal knock stepping only.
+- **The route difference.** Measure with the drive-through driver (line control .95) in the Falcone F42 on winter tyres, alone, timing from 10.0 km to the rejoin at 10.9 km.
+  - Open Road clear must be 0.8 to 1.6 s faster than the Gallery.
+  - Through the drift it must be 3.5 to 6.5 s slower.
+  - Tune with the Gallery's curves and the drift's length; deep-snow grip .55 and the 45 mph limit stay as they are.
+
+The 6 to 12 s seeded delay, 3 s tell, 2.5 s slide and every landmark stay as written. waiting_on is cleared.
