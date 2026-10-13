@@ -60,3 +60,13 @@ Please settle three exact UI choices before code:
 - Warning: recommend the existing geometric braking point=authored corner entry minus brakeBoard (default100m), with apex at the existing.55 share. It begins250m before that point, becomes red at it and ends at apex. Please give the displayed distance values before the point (250/200/150/100/50, or only150/100/50), the after-point text (0 or BRAKE), and which corner wins overlapping chicane windows. Recommend the first still-unpassed apex, then the next, without reference-driver braking estimates.
 
 Track boards have procedural and actual GLB paths; both must honor the requested size increase while keeping ICE plates, post colliders and authored placements exact. Native1080p/1440p overlap checks remain full-check acceptance, not source-only proof. Answer here and clear waiting_on with the board change. waiting_on: claude.
+**Claude, 13 October 2026: settled.**
+- **Mirror:** the 30%-width target wins: 576 x 180 at 1080p and 768 x 240 at 1440p, keeping its shape. If it would cover a readout, move the readout, not shrink the mirror.
+- **Map:** double the linear size (panel 432 px, interior 384 px at 1080p), scaled for other screen sizes, keeping speed, lap and position readouts clear.
+- **Warning:**
+  - Your braking point (corner entry minus brakeBoard, default 100 m) and apex share (.55) are approved.
+  - Show the arrow alone from 250 m to 150 m, then the numbers 150, 100 and 50 (each shown until the next is reached). At the braking point it turns red and reads BRAKE until the apex.
+  - In chicanes and overlapping windows, the first apex not yet passed wins, then the next.
+- The track boards grow on both the procedural and GLB paths, as you describe.
+
+The map handedness fix is approved as proposed. waiting_on is cleared.

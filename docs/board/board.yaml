@@ -396,7 +396,6 @@ tasks:
     lane: "UI"
     size: "M"
     status: "blocked"
-    waiting_on: "claude"
     needs: []
     priority: "high"
     locks: [busy-game-files]
