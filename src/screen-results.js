@@ -76,6 +76,7 @@ function modalScreen(s) {
       if(!r.won)description+=Object.hasOwn(r.creditBreakdown||{},'combat')?' Combat runs never debit saved credits.':' The loss charge is half the CPU base reward, down to zero credits.';
     }
     metrics=(rush?metric('GATES PASSED',`${r.checkpointsPassed||0} / ${r.checkpointsRequired||12}`,true)+metric('RACE TIME',time(r.timeSec??r.stageTimeSec)):drift?metric('BANKED POINTS',credits(r.driftScore),true)+metric('TARGET',credits(r.driftTarget||s.objective?.targetScore)):metric('RACE TIME',time(r.timeSec??r.stageTimeSec),true)+metric('CAR BEST',r.best==null?'—':time(r.best)))+rewardMetric(r);
+    if(r.snowmenEnabled===true && r.completed===true && Number.isSafeInteger(r.snowmen) && r.snowmen>0)metrics+=metric('SNOWMEN',r.snowmen);
     if(r.opponentCount>1)metrics+=metric('FINISH POSITION',`${r.position} / ${r.opponentCount+1}`);
     if(Number.isFinite(r.hitsLanded)){
       const damage=Number(r.damageDealt.toFixed(1)).toLocaleString();

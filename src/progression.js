@@ -673,7 +673,11 @@ export function settleRace(profile, result = {}) {
     ...(combatRace ? { combat: finished ? combatCreditBonus(result, base) : 0 } : {}),
     manual: 0,
     milestones: milestones.reward,
-    ...(grandPrix ? {snowmen: grandPrixSnowmanPay(result)} : {})
+    ...(grandPrix ? {snowmen: grandPrixSnowmanPay(result)} :
+      result.snowmenEnabled===true && COURSE[result.stageIndex]?.snowmen?.length &&
+      ['duel','timetrial'].includes(result.mode) && result.qualifying!==true &&
+      result.practice!==true && recordEligible && result.snowmen<=COURSE[result.stageIndex].snowmen.length
+        ? {snowmen:grandPrixSnowmanPay(result)} : {})
   };
   // Pro doubles positive recurring earnings. Loss charges and lifetime milestones
   // stay separate, including when a completed loss improves a comparable best.
