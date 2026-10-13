@@ -52,9 +52,9 @@ text in the playbook, SPEC or cards that asks for more checking or recording.
 
 1. Keep the lane tier and build before every merge, and the full tier on the
    exact commit before every release. They protect the live game and saves.
-2. Run the full tier at the end of each session or overnight run and before a
-   release, not on a merge count or clock. Run it alone (no other gates,
-   browser checks or builds at the same time) with `--jobs 4`.
+2. Run the full tier inside the full check (rule 13) and, alone (no other
+   gates, browser checks or builds at the same time), before every release,
+   not on a merge count or clock. Always with `--jobs 4`.
 3. A suite that fails with no game code changed since it last passed gets one
    rerun of that suite on the same commit. If the rerun passes, carry on and
    open a small card for the unreliable check; it never holds merges. Never
@@ -78,7 +78,7 @@ team's merges back for hours):
    most three at once across all teams (Kyle, 12 October 2026: lane runs are
    small now), each with `--jobs 4` or fewer. A frame measurement waits until
    no gate, build, balance run or browser check is going, and nobody starts
-   one while it runs. The full tier still runs alone (rule 2).
+   one while it runs. The full tier on a release commit still runs alone (rule 1).
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
    18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
@@ -101,16 +101,24 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 
 11. Test by what changed. The lane tier runs the smoke set, the replay and
     world-signature guards, and the suites that import a changed file or
-    name its path within two steps. Deeper effects are the night run's job.
+    name its path within two steps. Deeper effects are the full check's job.
 12. Merge as soon as it is green: one lane tier, a build and one review where
     rule 17 asks for one. A merge with no conflict does not run the lane tier
     again; a conflict fix runs it once more. Two clean lanes never wait for
     each other.
-13. Heavy checks run on the night shift, alone on the idle laptop: full
-    tier, frame check (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
-    and browser scenarios. A night failure names the first merge after the
-    last green night; its fix goes first and other merges continue. Until
-    FAC-03 installs the night shift, the full tier runs at run end as before.
+13. Heavy checks run as one batch, the full check: full tier, frame check
+    (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
+    all browser scenarios, then a short report. It runs once a day, by default
+    while Kyle sleeps, on a copy of one commit, so merges and building
+    continue while it runs. Only its frame step needs the laptop to itself;
+    builders pause gates, builds and browser checks for that step only, about
+    15 minutes. Its other stages run alongside builders and each counts as one
+    of the three heavy jobs (rule 7). A full-check failure names the first
+    merge after the last green full check; its fix goes first and other
+    merges continue. Until FAC-FULL-CHECK lands, `tools/night-shift.mjs`
+    needs the laptop to itself and an unchanged integration folder for its
+    whole run: builders hold gates, builds, browser checks and merges while
+    it runs.
 14. Limits: at most six build lanes at once across all lines, no more than
     three of them course lanes, each test run `--jobs 4` or fewer. A lane is
     one card's own folder; the lane tag (SIM, UI, ART) names a file area, not
@@ -142,7 +150,7 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
   passing evidence before merging; rerun after changes or conflict fixes, not
   after a conflict-free merge (rule 12).
 - Full tier: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`,
-  run alone, on the night shift (rule 13) and before every release. A real failure stops feature merges until a fix lands; an
+  inside the full check (rule 13), and alone before every release. A real failure stops feature merges until a fix lands; an
   unreliable check follows rule 3 above.
 - Release: full tier must pass on the exact final integration commit before
   every release, including small and tuning-only changes. Keep the full

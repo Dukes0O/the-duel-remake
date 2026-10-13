@@ -12,7 +12,9 @@ with no more than three course lanes. A card owns files and names shared locks; 
 holding the same lock never build at once. Each test run uses at most four jobs.
 A clean green lane with a build and one clear review merges immediately.
 There is no queue wait for an unrelated lane and no rerun after a clean merge.
-Heavy checks belong to the night shift, alone on the idle laptop.
+Heavy checks belong to the full check: one batch a day, by default while Kyle
+sleeps, on a copy of one commit. Builders keep building and merging while it
+runs; only its frame step needs the laptop to itself.
 
 ## 2. Words used here
 
@@ -43,7 +45,7 @@ The Director keeps these lines supplied within their limits and lock ownership.
 | Builder | Card files, meaningful tests, implementation and targeted gate/build |
 | Reviewer | One independent review of the frozen change |
 | Integrator | Validate evidence, merge immediately, commit metadata and safe cleanup |
-| Night shift | Full tests, frames, combat balance and browser scenarios alone |
+| Full check | Full tests, frames, combat balance and browser scenarios, once a day on a copy of one commit |
 | Release Manager | Exact release gate and approved live installation |
 
 Extra helpers are for saves, money, pay, releases and art rounds, as AGENTS
@@ -75,8 +77,10 @@ replaced or explicitly dropped; being idle is not permission to remove one.
    build log pinned to that clean commit. Fix a real failure in the lane.
 5. Get one clear review. Use additional required save/art helpers only when
    rule 6 or the card calls for them. Claude judges art within three rounds.
-   Daytime builds do not add full, frame, browser or balance checks; the night
-   shift owns those checks. Until FAC-03 lands, the full tier still runs at run end.
+   Daytime builds do not add full, frame, browser or balance checks; the full
+   check owns those checks. Until FAC-FULL-CHECK lands, `tools/night-shift.mjs`
+   needs the laptop to itself and an unchanged integration folder for its whole
+   run, so builders hold gates, builds, browser checks and merges while it runs.
 6. Hand the exact source, green lane/build evidence and review to the Integrator.
    An independent clean lane can merge after another lane without syncing
    or rerunning solely because integration advanced.
@@ -94,20 +98,20 @@ real work or the merge's shared metadata transaction.
 | --- | --- | --- |
 | Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
 | Conflict fix | After resolving a real conflict in the lane | One fresh targeted lane/build and review |
-| Night shift | Idle laptop, alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, browser scenarios |
+| Full check | Once a day, on a copy of one commit; only the frame step needs the laptop alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, browser scenarios |
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
 The targeted lane includes smoke, replay and world-signature guards, plus
 suites that import or read changed paths within two steps. Unmapped game
-files do not trigger a full daytime run; deeper effects belong to the night.
-A failing lane blocks that lane. A night failure puts its fix first while
+files do not trigger a full daytime run; deeper effects belong to the full check.
+A failing lane blocks that lane. A full-check failure puts its fix first while
 other merges continue. A suite failing without changed game code gets one
 same-commit rerun under AGENTS rule 3; a passing rerun becomes a small unreliable
 check card, with no changed assertion or tolerance.
 
 Run node tools/build-status.mjs after merges and at session end. Commit its
 STATUS output and all board/inbox edits immediately. There is no merge-count
-or elapsed-time full deadline. Until FAC-03 is installed, run the full tier
+or elapsed-time full deadline. Until FAC-FULL-CHECK lands, run the full tier
 alone at session/overnight end. Exact release provenance still matters:
 finish source and release notes before the final release full run; a later
 commit needs its own full pass before release.
@@ -202,15 +206,16 @@ shared metadata immediately. Keep independent green lanes moving.
 Builder: read the card and SPEC/AGENTS/FACTORY, settle design before code,
 write meaningful tests when needed, stay in owned files, freeze source, run
 one targeted lane/build and obtain one review. Hand current evidence to the
-Integrator. Do not add daytime night-shift work.
+Integrator. Do not add daytime full-check work.
 
 Integrator: validate exact clean lane evidence, same repository and one review;
 merge promptly. A clean union keeps its existing green evidence. Send a conflict
 back for one fresh lane/build after its fix. Commit one run-log sentence and
 shared metadata immediately. Recycle only caller-proven newly created clean lanes.
 
-Night shift: run FAC-03 alone on the idle laptop; report the first merge after
-the last green night for a failure, put its fix first and allow other merges.
+Full check: run the full-check tool (`tools/night-shift.mjs` until FAC-FULL-CHECK
+lands) once a day; report the first merge after the last green full check for a
+failure, put its fix first and allow other merges.
 Release Manager: only after Kyle says “go live”, require full on the exact
 release commit and all applicable evidence, then follow OPERATIONS safely.
 
@@ -227,5 +232,5 @@ locks and gate rules as manual sessions. Resume by reading the current board,
 FACTORY, inbox and retained lane notes. Preserve pending work and decisions;
 there is no old four/five-lane limit, merge queue or full-run deadline to restore.
 When Kyle pauses work, drain existing jobs and stop new work. When a session
-ends, commit shared status/inbox/board immediately; use the night shift once
-installed, or the existing end full alone until FAC-03 lands.
+ends, commit shared status/inbox/board immediately; use the full check once
+installed, or the existing end full alone until FAC-FULL-CHECK lands.
