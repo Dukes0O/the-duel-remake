@@ -13,6 +13,7 @@ import {canLeaveCar, initializeFootTransition, stepFootTransition} from '../src/
 import {stepCombatAI} from '../src/combat-ai.js';
 import {createAmbushAlleyView} from '../src/arena/modes/ambush-alley-view.js';
 import {CREW} from '../src/crew.js';
+import {arenaYardPanel} from '../src/screen-arena.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 
 // ARENA-05: native acceptance. Kyle's 4 October answer replaces the
@@ -314,6 +315,7 @@ test('ten-second gaps hold the next wave until the native deadline', () => {
 test('each live raider within ten metres drains five fort health per second; outsiders do not', () => {
   for (const distance of [10.1, 9.9]) {
     const f = fight(), fort = alley(f).fort;
+  f.state.stageTimeSec = 20; // Exercise active pressure after the new approach window.
     for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
     const cover = fort.cover[0], radius = Math.hypot(cover.x - fort.x, cover.z - fort.z);
     for (const member of raiders(f)) moveRaider(f, member, {...cover,
@@ -327,6 +329,7 @@ test('each live raider within ten metres drains five fort health per second; out
 
 test('a live raider near outside fort cover wears it down beyond ten metres from the centre', () => {
   const f = fight(), fort = alley(f).fort, member = raiders(f)[0], cover = fort.cover[0];
+  f.state.stageTimeSec = 20; // Exercise active pressure after the new approach window.
   for (const other of raiders(f).slice(1)) damageRaider(f.duel, other, other.health);
   for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
   const length = Math.hypot(cover.x - fort.x, cover.z - fort.z);
@@ -339,6 +342,7 @@ test('a live raider near outside fort cover wears it down beyond ten metres from
 
 test('native raider RPG production and flight can damage the fort from outside wear range', () => {
   const f = fight(), fort = alley(f).fort, member = raiders(f)[0];
+  f.state.stageTimeSec = 20; // Exercise active pressure after the new approach window.
   for (const other of raiders(f).slice(1)) damageRaider(f.duel, other, other.health);
   moveRaider(f, member, {...fort, x: fort.x + 65});
   const hits = [];
@@ -360,6 +364,7 @@ test('native raider RPG production and flight can damage the fort from outside w
 
 test('the real wrench repairs forty fort health over four seconds without repairing a full car', () => {
   const f = fight(), fort = alley(f).fort;
+  f.state.stageTimeSec = 20; // Exercise active pressure after the new approach window.
   for (const zone of f.state.raids.zones) zone.nextShotAt = Infinity;
   for (const member of raiders(f)) moveRaider(f, member, {...fort, x: fort.x + 9});
   advance(f, 3); downRaiders(f); advance(f, DT);
@@ -586,4 +591,56 @@ test('real enemy raid RPG hits never credit the player; real player RPG hits sti
     equal(events[0].enemy, enemy, 'the native hit event retains its actual owner');
     equal(f.state.combat.hits - before, enemy ? 0 : 1, 'only the actual player earns a direct hit');
   }
+});
+
+for (const venueId of ['pit', 'salt-flats']) test(venueId + ': the first wave gives a native learning window and survives thirty seconds', () => {
+  const f = fight({venueId});
+  advance(f, 19);
+  equal(alley(f).fort.health, 300, 'approaching raiders cannot damage the fort during the first twenty seconds');
+  equal(f.state.raids.shots, 0, 'neither group fires during the approach window');
+  const time = f.state.stageTimeSec;
+  f.state.paused = true; f.duel.step(30);
+  equal(f.state.stageTimeSec, time, 'pause does not spend the learning window');
+  f.state.paused = false; advance(f, 11);
+  equal(f.state.status, 'racing', 'doing nothing for thirty seconds no longer ends the opening');
+  ok(alley(f).fort.health > 0, 'the fort survives the opening without input or synthetic health');
+  ok(f.state.raids.shots > 0, 'the first wave remains a real fight after its approach');
+});
+
+test('the entry panel teaches Ambush controls before its start button', () => {
+  const featureFlags = {enabled: () => true};
+  const profile = {wasteland: {rank: 30, discoveredGate: true}};
+  const html = arenaYardPanel({mode: 'ambush-alley', profile, featureFlags});
+  for (const words of ['20 seconds', 'Q / E', 'A / D', 'separate click', '40 health', 'Hold F', 'H for help']) {
+    ok(html.includes(words), 'the entry instructions include ' + words);
+    ok(html.indexOf(words) < html.indexOf('data-action="arena-start"'), 'the instructions appear before entering');
+  }
+});
+
+
+test('wave-one rockets are spaced apart and wave two keeps its existing cadence', () => {
+  const f = fight({venueId: 'salt-flats'});
+  // The producer may reject terrain-blocked spawn shots. Reuse the clear
+  // 65m firing pose on the flat Salt Flats to isolate cadence from Pit mounds.
+  const fort = alley(f).fort;
+  for (const zone of f.state.raids.zones)
+    moveRaider(f, zone.raiders[0], {...fort, x: fort.x + 65});
+  const opening = alley(f).attackStartsAt;
+  f.state.stageTimeSec = opening;
+  stepRaiders(f.duel, 0);
+  equal(f.state.raids.shots, 2, 'one rocket per existing group at the end of the approach');
+  for (const zone of f.state.raids.zones) near(zone.nextShotAt, opening + 6.6, 'wave-one reload leaves time to respond');
+  f.state.stageTimeSec = opening + 6.5; stepRaiders(f.duel, 0);
+  equal(f.state.raids.shots, 2, 'neither group fires before its new deadline');
+  f.state.stageTimeSec = opening + 6.6; stepRaiders(f.duel, 0);
+  equal(f.state.raids.shots, 4, 'both groups remain active when the reload finishes');
+  finishWave(f); advance(f, 10 + 2 * DT);
+  equal(alley(f).wave, 2, 'the ordinary next wave still starts');
+  const at = f.state.stageTimeSec;
+  for (const zone of f.state.raids.zones) {
+    moveRaider(f, zone.raiders[0], {...fort, x: fort.x + 65});
+    zone.nextShotAt = at;
+  }
+  stepRaiders(f.duel, 0);
+  for (const zone of f.state.raids.zones) near(zone.nextShotAt, at + 2.2, 'later waves keep the released reload');
 });

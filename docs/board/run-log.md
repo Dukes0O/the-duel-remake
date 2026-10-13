@@ -1032,3 +1032,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 FIX-FOOT-MOUSE merged 46220b09: lane 129/129 in 1082.96 s, build 1534 ms, review lighting independent code review and menu-fault confirmation clear.
 
 - 2026-10-12 P4-SUMMIT dev source: bab5ca92 merged after mouse; 319/319, build1479.6255ms, ordinary/save review clear; no conflict rerun. Native strategy and art tail stays open.
+
+- 2026-10-12 FIX-AMBUSH-OPENING source352eb25d:178/178, build1412ms, code/design review clear; conflict-free after mouse/Summit, no rerun; creating controller owns lane cleanup.

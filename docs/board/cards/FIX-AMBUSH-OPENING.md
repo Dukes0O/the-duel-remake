@@ -21,3 +21,7 @@ No open art or sound decision. Kyle authorized the gameplay fix; the bounded tim
 ## Current handoff, Codex control-fix chat
 
 Owner chat01a12965-cccd-7533-acc7-f11164e302b5 owns source352eb25d65b22ae2acf81df9e01b6bee41b2c2cf in fix-ambush-opening. First source2e4a gate ended177/178, one new cadence fixture failure, zero unrun,723.87s; no build. Actual Pit terrain blocks the assumed ray; the corrected fixture uses the proven clear Salt Flats65m pose and keeps every two-group count/deadline assertion. Corrected focused case passes16 assertions; independent review confirms the actual fixture delta and unchanged game source. Final targeted gate/jobs4 plus build are running on352e; no final green claim yet. Receipts: .evidence/FIX-AMBUSH-OPENING/lane.log (original failure), lane-final.log and evidence.json (final). Merge after FIX-FOOT-MOUSE and the Director’s Summit handoff, following Kyle’s new shared order. No release or push.
+
+## Completed source handoff
+
+Root integrates reviewed frozen352eb25d after mouse/Summit:178/178, zero failures/unrun,546.1328s/jobs4; build1412ms; independent code/design review and fixture correction confirmation clear. Conflict-free merge needs no rerun. The creating controller recycles its own lane. Earlier real177/178 failure and unchanged final cadence/survival assertions are recorded in the source note. No release/push.

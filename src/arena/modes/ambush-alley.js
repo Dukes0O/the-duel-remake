@@ -8,6 +8,7 @@ import {crewPerks} from '../../crew.js';
 export const AMBUSH_RULES = Object.freeze({
   rank: 12, timeLimitSec: Infinity, suddenDeathSec: 0, maxOpponents: 1,
   waveCounts: Object.freeze([3, 4, 5, 6, 8]), gapSec: 10,
+  firstWaveApproachSec: 20, firstWaveRocketGapSec: 6.6,
   fortHealth: 300, wearRangeMetres: 10, wearPerSecond: 5,
   repairAmount: 40, repairSeconds: 4, scrapPerWave: 60,
   fullWinScrap: 150, holdPerWave: 5, spawnClearMetres: 60,
@@ -144,12 +145,16 @@ function startWave(duel, wave) {
   const alley = native(duel);
   alley.wave = wave;
   alley.gapLeftSec = 0;
+  alley.attackStartsAt = duel.state.stageTimeSec +
+    (wave === 1 ? AMBUSH_RULES.firstWaveApproachSec : 0);
   alley.waveSpawn = ambushSpawnPlan(duel, wave);
   const templates = createRaidZones(duel.course, duel.seed).flatMap(zone => zone.raiders);
   const zones = [0, 1].map(index => ({id: `ambush-${wave}-${index}`,
     s: alley.waveSpawn.fighters[index].s, side: index ? 1 : -1,
     raiders: [], salvage: null, warning: null, warnedLap: duel.state.currentLap,
-    nextShotAt: duel.state.stageTimeSec, shotCount: 0, ambushWave: wave}));
+    nextShotAt: alley.attackStartsAt, shotCount: 0, ambushWave: wave,
+    shotGapSec: wave === 1 ? AMBUSH_RULES.firstWaveRocketGapSec :
+      COMBAT_TUNING.foot.rpgReloadSeconds}));
   for (const [index, pose] of alley.waveSpawn.fighters.entries()) {
     const raider = {...templates[index % templates.length],
       ...createFighter(duel.course, duel.state, pose), ...pose,
@@ -258,7 +263,8 @@ export function stepAmbushAlley(duel, dt) {
   const targets = ambushFortTargets(duel);
   const nearby = alive.filter(raider => targets.some(cover =>
     distance(raider, cover) <= AMBUSH_RULES.wearRangeMetres));
-  damageAmbushFort(duel, nearby.length * AMBUSH_RULES.wearPerSecond * dt, {source: 'wear'});
+  if (state.stageTimeSec >= alley.attackStartsAt)
+    damageAmbushFort(duel, nearby.length * AMBUSH_RULES.wearPerSecond * dt, {source: 'wear'});
   if (alley.fort.health <= 0) return {reason: 'fort-fell', winnerId: 'raiders'};
   const buggy = state.opponents.find(actor => actor.arenaRole === 'ambush-buggy' &&
     actor.ambushWave === alley.wave);

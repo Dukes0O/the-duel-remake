@@ -284,7 +284,8 @@ function stepAmbushRaiders(duel, zone, dt) {
     enemy: true, raid: true, owner: 'raider', ownerId: 'raiders', raidZone: zone.id,
     targetIndex: null, level: 0, age: 0, x: raider.x, y: originY, z: raider.z,
     launchX: raider.x, launchZ: raider.z, vx: dx * scale, vy: dy * scale, vz: dz * scale});
-  zone.nextShotAt = state.stageTimeSec + COMBAT_TUNING.foot.rpgReloadSeconds;
+  zone.nextShotAt = state.stageTimeSec +
+    (zone.shotGapSec ?? COMBAT_TUNING.foot.rpgReloadSeconds);
   zone.shotCount++; state.raids.shots++;
   duel.emit({raiderShot: true, audioWeapon: 'rpg', zone: zone.id,
     hitPosition: {x: raider.x, y: originY, z: raider.z}});
