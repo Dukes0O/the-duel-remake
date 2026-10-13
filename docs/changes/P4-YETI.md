@@ -40,3 +40,7 @@ The recorded-run sample has 89 appearances in 300 distinct identities with base 
 ## Existing paint-test correction
 
 The original unfiltered lane on cc5d5d19 completed 288/289 passed, one failed and zero unrun; exit 1 after 1,167,822.5282 ms wall time (suite aggregate 1,163,140.6408 ms). No build ran. Its only failure was the old four-preset catalogue count. Director grant 1b759bf1 permits five presets: the same three ordinary finishes and two reward finishes. The same finite 0..1 material bounds still check every original field on the original four presets; Frost uses only its two authored finish fields and its exact settled descriptor. The existing renderer retains factory values for omitted finish fields. No production material, value, tolerance, purchase, ownership, save or performance assertion changes.
+
+## Final integrated source verdict
+
+Final ace5cb5f source passed original nearby289/289, failures empty/notRun0/jobs4,1558086.503ms wall; build571ms/wall1128.7403ms, source and actual same Save Guardian confirmations CLEAR. Conflict-free integrationcb6aef9e needs no repeat. Native grounding/look/audio remain open, dev stays dev, core/save locks released, older retained lane preserved.

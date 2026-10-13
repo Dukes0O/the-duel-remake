@@ -41,3 +41,7 @@ Director e42fce5a grants only these five complete scene rows from the existing r
 No runtime asset removed. Superseded centre-only body reporting and any replaced drawing/seating path will be removed in the same change. The old tunnel clamp remains for FIX-HAIRPIN-CAMERA's later wiring; no duplicate renderer path is introduced.
 
 The first new body fixture incorrectly requested a Harbour kit-solid even though this authored course has no solid kit rows. Its actual contacts are named script linings; the fixture now uses those real barrier colliders and the unchanged drawn kit face. No production classification changes follow from that fixture failure. Added exact quarter/mid strip-row road-edge observations to check the drawing allowance, including native centreline interpolation.
+
+## Final integrated source verdict
+
+Final cdf55a11 source passed original nearby94/94, failures empty/notRun0/jobs4,652101.8272ms; build576ms/wall1115.8817ms, independent review CLEAR. Conflict-free integration118501b1 needs no repeat. Native Harbour/Snow pace and actual camera wiring remain open; parent is not complete. Own clean new lane recycled after verified dependency unlink and normal unregister; all actual pending failed-native evidence remains.
