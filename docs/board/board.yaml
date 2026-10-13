@@ -169,7 +169,7 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "waiting"
+    status: "blocked"
     waiting_on: "claude"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
