@@ -14,7 +14,7 @@ errors. Staged build listed Panorama Ridge Sunset 20th at 1,600 credits, locked
 until bought, with no browser errors. Frames (screen awake, graphics card idle,
 eight-car grid): High p95 18.3 ms, Performance p95 18.2 ms; world build 0.38 to
 0.39 s; first start in an empty browser cache waits 3.2 to 4.0 s for files.
-Previous build (Tollkeeper) kept in `dist-previous`. `master` not yet pushed.
+Previous build (Tollkeeper) kept in `dist-previous`. `master` pushed to GitHub at Kyle's request.
 
 ## Tremblant Snow release — 12 October 2026
 
