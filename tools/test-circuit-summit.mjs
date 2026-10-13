@@ -154,7 +154,7 @@ const asphalt=new THREE.MeshStandardMaterial({color:0x222222,roughness:.6});
 assert.equal(roadBranchMaterial(course,open,asphalt,false),asphalt,'dry branch retains original material');
 const snowMaterial=roadBranchMaterial(course,open,asphalt,true);
 assert.notEqual(snowMaterial,asphalt);
-assert.deepEqual(snowMaterial.color.toArray(),[.34,.38,.42]);
+assert.deepEqual(snowMaterial.color.toArray(),new THREE.Color(SUMMIT_RUN.snowWorld.branchTone).toArray(),'Summit branch draws its reviewed darker packed-snow tone');
 assert.equal(snowMaterial.roughness,.94);
 assert.equal(asphalt.roughness,.6,'branch winter material never changes shared asphalt');
 snowMaterial.dispose();asphalt.dispose();
