@@ -308,7 +308,9 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-deep-zone-2026-10-12"
+    branch: "codex/deep-zone"
     needs: [DEEP-LOOK, DEEP-ZONE-FORMAT, DEEP-RAMP-GEOMETRY]
     locks: [busy-game-files]
     flag: "the-deep"
