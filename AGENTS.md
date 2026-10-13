@@ -115,10 +115,10 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     15 minutes. Its other stages run alongside builders and each counts as one
     of the three heavy jobs (rule 7). A full-check failure names the first
     merge after the last green full check; its fix goes first and other
-    merges continue. Until FAC-FULL-CHECK lands, `tools/night-shift.mjs`
-    needs the laptop to itself and an unchanged integration folder for its
-    whole run: builders hold gates, builds, browser checks and merges while
-    it runs.
+    merges continue. Run `node tools/full-check.mjs --idle-awake --no-push`.
+    The tool checks a detached copy of the starting integration commit;
+    only frames require no competing heavy jobs. Tonight's 03:45 to
+    Record night/06:30 pause remains in force (next-run.md).
 14. Limits: at most six build lanes at once across all lines, no more than
     three of them course lanes, each test run `--jobs 4` or fewer. A lane is
     one card's own folder; the lane tag (SIM, UI, ART) names a file area, not

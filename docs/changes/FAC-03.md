@@ -52,7 +52,7 @@ Kyle creates the scheduled task after acceptance. The tool does not install it.
 This run's --no-push disables compaction and push pending separate authorization,
 overriding the card's night-push sentence. Future integration command:
 
-    node tools/night-shift.mjs --idle-awake --no-push
+    node tools/full-check.mjs --idle-awake --no-push
 
 ## Checks and changed assertions
 

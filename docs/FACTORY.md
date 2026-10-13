@@ -147,14 +147,17 @@ FAC-01, FAC-06 and FAC-07 can start at once. FAC-04 and FAC-05 need the
   drop the re-run on a conflict-free merge and the one-at-a-time queue wait.
   Integrator script merges, runs the janitor and writes the run-log line from
   the test result. Acceptance: two green lanes merge within five minutes.
-- **FAC-03 The full check (Codex, TOOL).** `tools/night-shift.mjs`: full tier
+- **FAC-03 The full check (Codex, TOOL).** `tools/full-check.mjs`: full tier
   `--jobs 4`, frame check (both qualities, busiest view, eight cars),
   combat balance (`--check`, current rules), browser scenarios; writes
   `docs/board/checks/night-<date>.json` and a short report that names
   the first merge after the last green full check for each failure. Kyle
-  approves the Windows scheduled task himself. FAC-FULL-CHECK renames the
-  tool to `tools/full-check.mjs` and lets it run on a copy of one commit
-  while builders keep merging (see `docs/board/cards/FAC-FULL-CHECK.md`).
+  approves the Windows scheduled task himself. FAC-FULL-CHECK runs the
+  stages in a detached sibling copy of one commit while builders keep
+  merging. Only frames need the laptop alone; other stages count toward
+  the three-heavy-job limit. The command is
+  `node tools/full-check.mjs --idle-awake --no-push`. Tonight's direct pause
+  remains in force (see `docs/board/next-run.md`).
 - **FAC-04 Course kit (Claude design, Codex build, SIM).** Each circuit file
   exports its manifest (id, flag, state, price, grandPrix, releaseOrder,
   driver). `src/circuits/index.js` discovers circuit files and sorts by

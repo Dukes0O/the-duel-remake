@@ -4,7 +4,11 @@ import test from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { spawnSync } from 'node:child_process';
-import { parseNightArguments, nightPlan, validateFramePacket, runChild, runNight, heavyProcesses } from './night-shift.mjs';
+import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { parseNightArguments, nightPlan, validateFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy } from './full-check.mjs';
 
 const date = '2026-10-12', head = 'a'.repeat(40), previous = 'b'.repeat(40), merge = 'c'.repeat(40);
 const root = 'C:/qa/the-duel-remake';
@@ -14,14 +18,20 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true},{label:'b',passed:true}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, lastGreen=true, fullFailures=[]}={}) {
-  const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [];
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[]}={}) {
+  const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [];
+  const copyRoot=root+'-copy/source';
   let active=0, maximum=0, heads=0, invocations=0;
   let plan = nightPlan({date,root});
   if(lastGreen)files.set(`${root}/docs/board/checks/night-2026-10-11.json`,
     JSON.stringify({schema:1,status:'passed',source:previous,date:'2026-10-11'}));
   const deps = {root, now:()=>new Date('2026-10-12T20:00:00Z'),
-    git:async args=>{
+    git:async (args,cwd=root)=>{
+      if(cwd===copyRoot) {
+        if(args[0]==='status')return '';
+        if(args[0]==='branch')return '';
+        return copyChange&&calls.length>0?'e'.repeat(40):head;
+      }
       if(args[0]==='branch')return 'integration/wasteland';
       if(args[0]==='status') {
         if(args.includes('--')) {
@@ -39,7 +49,9 @@ function fixture({fail, missing, busy=false, change=false, lastGreen=true, fullF
       }
       return change&&heads++>0?'d'.repeat(40):head;
     },
-    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root,evidence});return evidence;},
+    createCopy:async source=>{copies.push(['create',source]);return {root:copyRoot,source};},
+    removeCopy:async copy=>copies.push(['remove',copy.source]),
+    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1)});return evidence;},
     refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
     recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
     processes:async()=>busy?[{pid:99,command:'node tools/run-tests.mjs --tier lane'}]:[],
@@ -50,6 +62,7 @@ function fixture({fail, missing, busy=false, change=false, lastGreen=true, fullF
     spawnImpl:(exe,args,opts)=>{
       const stage=plan.find(row=>row.args.join('|')===args.join('|'));
       assert.ok(stage,'spawn receives the real installed command');
+      assert.equal(opts.cwd,copyRoot,'every installed tool runs in the detached copy');
       assert.equal(opts.shell,false);assert.equal(opts.windowsHide,true);
       calls.push(stage.id);active++;maximum=Math.max(maximum,active);
       const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
@@ -69,7 +82,7 @@ function fixture({fail, missing, busy=false, change=false, lastGreen=true, fullF
       });
       return child;
     }};
-  return {deps,files,committedFiles,calls,logs,metadata,maximum:()=>maximum};
+  return {deps,files,committedFiles,calls,logs,metadata,copies,maximum:()=>maximum};
 }
 const opts=()=>parseNightArguments(['--idle-awake','--no-push','--date',date]);
 
@@ -125,11 +138,11 @@ test('a real stage failure keeps later checks, names the first merge and fails t
   assert.equal(packet.failures[0].firstMerge,merge);
   assert.match(packet.stages.find(row=>row.id==='combat').error,/actual fixture error/);
 });
-test('missing real packets, source changes and busy laptops never pass',async()=>{
-  for(const settings of [{missing:'frames'},{missing:'browser'},{change:true},{busy:true}]){
+test('missing packets, changed copied source and competing frame work never pass',async()=>{
+  for(const settings of [{missing:'frames'},{missing:'browser'},{copyChange:true},{busy:true}]){
     const f=fixture(settings), packet=await runNight(opts(),f.deps);
     assert.notEqual(packet.status,'passed');
-    if(settings.busy)assert.equal(f.calls.length,0);
+    if(settings.busy)assert.deepEqual(f.calls,['full','combat','browser']);
   }
 });
 test('no previous green night reports unknown attribution rather than inventing a merge',async()=>{
@@ -143,7 +156,7 @@ test('tool refuses the live folder before launching children',async()=>{
   assert.equal(f.calls.length,0);
 });
 test('process selection refuses real heavy work and preserves unrelated idle services',()=>{
-  const rows=[{pid:1,command:'node tools/night-shift.mjs'},
+  const rows=[{pid:1,command:'node tools/full-check.mjs'},
     {pid:2,command:'node tools/run-tests.mjs --tier lane --jobs 4'},
     {pid:3,command:'blender.exe --background recipe.blend'},
     {pid:4,command:'node tools/run-browser-scenarios.mjs --all'},
@@ -187,7 +200,7 @@ test('child UTF-8 decoding retains a multibyte JSON and stderr character split a
   assert.equal(writes.join('').includes('�'),false);
 });
 test('append rejection is handled immediately and reported after child close and queued writes',()=>{
-  const moduleUrl=new URL('./night-shift.mjs',import.meta.url).href;
+  const moduleUrl=new URL('./full-check.mjs',import.meta.url).href;
   const source=`import {runChild} from ${JSON.stringify(moduleUrl)};
     import {EventEmitter} from 'node:events';import {PassThrough} from 'node:stream';
     let closed=false,writes=0;
@@ -230,7 +243,7 @@ test('same-day previous green night remains the attribution source',async()=>{
 });
 test('actual wrong branch refuses jobs and leaves public metadata untouched',async()=>{
   const f=fixture(),original=f.deps.git;
-  f.deps.git=async args=>args[0]==='branch'?'codex/fac-03':original(args);
+  f.deps.git=async (args,cwd)=>!cwd&&args[0]==='branch'?'codex/fac-03':original(args,cwd);
   const result=await runNight(opts(),f.deps);
   assert.equal(result.status,'failed');assert.equal(f.calls.length,0);
   assert.equal(result.publication.status,'refused');
@@ -246,7 +259,7 @@ test('publication refreshes existing STATUS and commits only the three granted p
 });
 test('dirty source at publication keeps the failed report ignored and never writes public reports',async()=>{
   const f=fixture(),original=f.deps.git;
-  f.deps.git=async args=>args[0]==='status'&&f.calls.length===4?'M  src/game.js':original(args);
+  f.deps.git=async (args,cwd)=>!cwd&&args[0]==='status'&&f.calls.length===4?'M  src/game.js':original(args,cwd);
   const result=await runNight(opts(),f.deps);
   assert.equal(result.status,'failed');assert.equal(result.publication.status,'refused');
   assert.equal(f.files.has(`${root}/docs/board/checks/night-${date}.json`),false);
@@ -258,7 +271,7 @@ test('branch changes during STATUS refresh restore only owned drafts and preserv
   f.files.set(status,'original status');f.files.set(other,'others staged source');
   let switched=false;
   f.deps.refreshStatus=async()=>{f.files.set(status,'our draft status');switched=true;};
-  f.deps.git=async args=>args[0]==='branch'&&switched?'codex/other':original(args);
+  f.deps.git=async (args,cwd)=>!cwd&&args[0]==='branch'&&switched?'codex/other':original(args,cwd);
   const result=await runNight(opts(),f.deps);
   assert.equal(result.publication.status,'refused');assert.equal(result.status,'failed');
   assert.equal(f.files.get(status),'original status');assert.equal(f.files.get(other),'others staged source');
@@ -281,9 +294,9 @@ test('a failed same-day retry preserves the prior genuine green attribution for 
 });
 test('a receipt read failure after successful commit never rolls back committed metadata',async()=>{
   const f=fixture(),original=f.deps.git;let committed=false;
-  f.deps.git=async args=>{
+  f.deps.git=async (args,cwd)=>{
     if(committed&&args[0]==='rev-parse')throw Error('receipt read failed');
-    const result=await original(args);if(args[0]==='commit')committed=true;return result;
+    const result=await original(args,cwd);if(args[0]==='commit')committed=true;return result;
   };
   const result=await runNight(opts(),f.deps);
   assert.equal(result.publication.status,'committed');assert.match(result.publication.receiptError,/receipt read failed/);
@@ -296,7 +309,10 @@ test('concurrent source commit keeps its new committed STATUS during publication
   f.deps.refreshStatus=async()=>{
     f.committedFiles.set(status,'new committed status');f.files.set(status,'our newer draft status');advanced=true;
   };
-  f.deps.git=async args=>advanced&&args[0]==='rev-parse'?'d'.repeat(40):original(args);
+  f.deps.git=async (args,cwd)=>{
+    if(!cwd&&advanced&&args[0]==='branch')return 'codex/other';
+    return !cwd&&advanced&&args[0]==='rev-parse'?'d'.repeat(40):original(args,cwd);
+  };
   const result=await runNight(opts(),f.deps);
   assert.equal(result.publication.status,'refused');assert.equal(f.files.get(status),'new committed status');
 });
@@ -339,4 +355,88 @@ test('each official quality is attempted once and a first native error stays fai
   assert.match(packets[0].reports[0].error,/native scene initialization failed/);
   assert.equal(packets[0].reports[1].quality,'Performance');
   assert.throws(()=>validateFramePacket(packets[0]),'the partial real packet cannot pass');
+});
+
+
+test('moving integration keeps the original copied SHA and publishes on current integration',async()=>{
+  const f=fixture({change:true}),result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'passed',JSON.stringify(result.failures));
+  assert.equal(result.source,head);assert.equal(result.publication.commit,'d'.repeat(40));
+  assert.deepEqual(f.copies,[['create',head],['remove',head]]);
+  assert.equal(JSON.parse(f.files.get(root+'/docs/board/checks/night-'+date+'.json')).source,head);
+});
+
+test('three foreign job trees refuse nonframe stages; two permit them but never frames',async()=>{
+  for(const count of [2,3]) {
+    const f=fixture();f.deps.processes=async()=>Array.from({length:count},(_,index)=>({pid:90+index,command:'node tools/run-tests.mjs --tier lane'}));
+    const result=await runNight(opts(),f.deps);
+    assert.equal(result.status,'failed');
+    assert.deepEqual(f.calls,count===2?['full','combat','browser']:[]);
+    assert.equal(result.stages.find(row=>row.id==='frames').passed,false);
+  }
+});
+
+test('foreign heavy work appearing only during frames discards the actual timing packet',async()=>{
+  const f=fixture(),spawn=f.deps.spawnImpl;let during=false,observed=false;
+  f.deps.framePollMs=1;
+  f.deps.processes=async()=>{if(during){observed=true;return [{pid:91,command:'node vite/bin/vite.js build'}];}return [];};
+  f.deps.spawnImpl=(exe,args,options)=>{
+    if(!args.includes('frame-pacing'))return spawn(exe,args,options);
+    const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
+    during=true;
+    setTimeout(()=>{
+      const leaf=[...f.files.keys()].find(name=>name.endsWith('/full.log')).split('/').at(-2);
+      f.files.set(root+'-copy/source/.evidence/'+date+'/FAC-03/'+leaf+'/frames/frame-pacing.json',JSON.stringify(frames()));
+      during=false;child.stdout.end();child.stderr.end();child.emit('close',0,null);
+    },25);
+    return child;
+  };
+  const result=await runNight(opts(),f.deps);
+  assert.equal(observed,true);assert.equal(result.stages.find(row=>row.id==='frames').passed,false);
+  assert.match(result.stages.find(row=>row.id==='frames').error,/competing|heavy|timing/i);
+});
+
+test('process inspection counts foreign trees once and excludes the running check descendants',()=>{
+  const rows=[{pid:1,parent:0,command:'node tools/full-check.mjs'},
+    {pid:2,parent:1,command:'node tools/browser-harness.mjs'},
+    {pid:3,parent:0,command:'node tools/run-tests.mjs --jobs 4'},
+    {pid:4,parent:3,command:'blender.exe --background render.py'},
+    {pid:5,parent:0,command:'node vite/bin/vite.js build'}];
+  assert.deepEqual(heavyProcesses(rows,1).map(row=>row.pid),[3,5]);
+});
+
+test('real temporary Git copy stays detached at starting source and safely unlinks its Junction',async()=>{
+  const parent=await mkdtemp(join(tmpdir(),'duel-full-check-')),integration=join(parent,'integration');
+  let copy;
+  const git=args=>{const row=spawnSync('git',args,{cwd:integration,encoding:'utf8'});assert.equal(row.status,0,row.stderr);return row.stdout.trim();};
+  try {
+    await mkdir(integration);git(['init','-b','integration/wasteland']);git(['config','user.name','Full check fixture']);git(['config','user.email','fixture@example.invalid']);
+    await writeFile(join(integration,'.gitignore'),'node_modules/\n.evidence/\n');
+    await writeFile(join(integration,'source.txt'),'starting source');git(['add','.']);git(['commit','-m','starting']);
+    const source=git(['rev-parse','HEAD']);await mkdir(join(integration,'node_modules'));
+    await writeFile(join(integration,'node_modules','kept.txt'),'integration dependency');
+    copy=await createCheckCopy(integration,source);
+    assert.equal(git(['-C',copy.root,'branch','--show-current']),'');
+    assert.equal(git(['-C',copy.root,'rev-parse','HEAD']),source);
+    await writeFile(join(integration,'source.txt'),'later merge');git(['add','source.txt']);git(['commit','-m','later']);
+    assert.equal(await readFile(join(copy.root,'source.txt'),'utf8'),'starting source');
+    await assert.rejects(()=>removeCheckCopy({...copy}),/owned|receipt/i);
+    assert.equal(Object.isFrozen(copy),true);
+    const foreign=join(parent,'foreign-evidence');await mkdir(foreign);
+    await writeFile(join(foreign,'kept.txt'),'foreign evidence');
+    const evidenceLink=join(copy.root,'.evidence');
+    const relink=target=>{
+      const row=spawnSync('pwsh',['-NoProfile','-NonInteractive','-Command',
+        "Remove-Item -LiteralPath $env:DUEL_TEST_LINK -ErrorAction Stop; New-Item -ItemType Junction -Path $env:DUEL_TEST_LINK -Target $env:DUEL_TEST_TARGET -ErrorAction Stop | Out-Null"],
+        {encoding:'utf8',env:{...process.env,DUEL_TEST_LINK:evidenceLink,DUEL_TEST_TARGET:target}});
+      assert.equal(row.status,0,row.stderr);
+    };
+    relink(foreign);await assert.rejects(()=>removeCheckCopy(copy),/target mismatch/i);
+    assert.equal(existsSync(join(copy.root,'node_modules')),true,'verify all targets before unlinking either');
+    assert.equal(await readFile(join(foreign,'kept.txt'),'utf8'),'foreign evidence');
+    relink(join(integration,'.evidence'));
+    await removeCheckCopy(copy);copy=null;
+    assert.equal(await readFile(join(integration,'node_modules','kept.txt'),'utf8'),'integration dependency');
+    assert.equal(git(['worktree','list','--porcelain']).includes('detached'),false);
+  }finally {if(copy)await removeCheckCopy(copy);await rm(parent,{recursive:true,force:true});}
 });
