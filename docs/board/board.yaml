@@ -154,7 +154,8 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "L"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
     locks: []
     claimed_by: "codex-summit-factory"
