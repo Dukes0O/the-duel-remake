@@ -43,11 +43,34 @@ field is removed from a cloned profile before the full original equality with
 requires field absence. No blanket stripping, implementation-derived eligibility,
 fixture change, tolerance change or unrelated Deep assertion is included.
 
-The modified Deep memory regression and existing GP pure-pay regression have
-not run: their fresh capacity preflight held before either command launched.
-Canonical lane/build wait for the merged QA classifier and a free test slot.
-Independent ordinary and fresh save reviews follow this source freeze. Final
-exact results are folded by Root in the real merge; no results-only commit.
+Ordinary and fresh save reviews cleared production source 39d7e531. The merged
+QA classifier was adopted at a467c1bf with all six reviewed blobs unchanged.
+The 239-suite original canonical was canceled after Root discovered a
+pre-existing release freeze; only the owned tree stopped, exec exit -1,
+original stdout/stderr empty, no result JSON or suite totals claimed.
+
+After Kyle cleared the freeze, the unchanged source resumed an original gate.
+Root's final-union review found a real acceptance assumption: it selected a
+manifest absent from default COURSE, but Panorama's release now admits all
+current manifests. That owned resumed tree also stopped and drained exit -1,
+with empty original stdout/stderr and no result totals. Both cancellations
+remain separate ignored receipts; neither is a source failure or passing gate.
+
+Under Root's written correction grant, only the owned test import and lookup
+proof change: actual Panorama is explicitly held off through the existing
+createFeatureFlags override (its real flag false, qa false, storage null), and
+existing circuitDefinitions proves it is excluded from runtime selection while
+known immutable GP membership retains the id. All original normalization,
+deduplication, unknown-id and mutability assertions remain exact. There is no
+skip, fake registered event, production catalogue mutation or Summit dependency.
+
+The actual clean postrelease integration context was merged conflict-free.
+All three production blobs remain exact to reviewed 39d7e531. This narrow
+acceptance diff goes back for ordinary confirmation before the corrected nearby
+lane/build; no duplicate save tests or prior focused acceptance replay. The
+modified Deep and GP pay regressions remain unrun separately and will be
+covered by the selected canonical. Root folds final exact facts into the real
+source merge; no results-only source commit.
 
 ## Removed
 

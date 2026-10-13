@@ -4,7 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync, readdirSync} from 'node:fs';
 import {App} from '../src/app.js';
 import {COURSE} from '../src/config.js';
-import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
+import {CIRCUIT_MANIFESTS, circuitDefinitions} from '../src/circuit-manifests.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {ownTestCourses, testCourseAccess} from './career-fixture.mjs';
 import * as career from '../src/grand-prix-career.js';
@@ -76,9 +76,15 @@ for (const file of readdirSync(fixtures).filter(name => name.endsWith('.json')).
 }
 
 test('optional owned podium fields normalize known ids in first-occurrence order', () => {
-  const disabled = CIRCUIT_MANIFESTS.find(manifest => manifest.grandPrix &&
-    !COURSE.some(stage => stage.id === manifest.id));
-  assert.ok(disabled, 'acceptance includes a known currently disabled manifest id');
+  const disabled = CIRCUIT_MANIFESTS.find(manifest => manifest.id === 'panorama-ridge' && manifest.grandPrix);
+  assert.ok(disabled, 'the authored Panorama Grand Prix manifest is known');
+  const heldOff = createFeatureFlags({storage: null, qa: false, search: '',
+    overrides: {[disabled.flag]: false}});
+  assert.equal(heldOff.enabled(disabled.flag), false);
+  assert.equal(circuitDefinitions(heldOff).some(stage => stage.id === disabled.id), false,
+    'the supported runtime filter excludes the explicitly held-off circuit');
+  assert.ok(career.GRAND_PRIX_COURSES.includes(disabled.id),
+    'immutable known membership retains the held-off authored id');
   const source = {...createProfile(), grandPrixPodiums: ['high-country', disabled.id,
     'high-country', 'pacific-canyon', '', null, 4, {}, 'UNKNOWN', 'unknown', ' pacific-canyon']};
   const bytes = JSON.stringify(source), expected = ['high-country', disabled.id, 'pacific-canyon'];
