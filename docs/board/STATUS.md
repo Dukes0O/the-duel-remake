@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T08:32:12.618Z
+Observed at: 2026-10-13T08:51:24.809Z
 
-Observation commit: adbc4789ad486d47e63b68e1a801bbc5270ee2ba
+Observation commit: 469bc301c5c82951b4a1b0340397367f72c998f4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: adbc4789ad486d47e63b68e1a801bbc5270ee2ba
+Integration HEAD: 469bc301c5c82951b4a1b0340397367f72c998f4
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -65,7 +65,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-qualifying | 2 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/tools/callback-diagnostics | 8 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
-| lane/audio/aud-10 | 17 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 18 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 18 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 17 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
@@ -76,7 +76,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:38:28-07:00 | 0 | last commit 2026-10-12T22:38:28-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
-| codex/deep-zone | DEEP-ZONE | 2026-10-13T01:14:55-07:00 | 0 | last commit 2026-10-13T01:14:55-07:00 | docs/changes/DEEP-ZONE.md, src/app.js, src/coastal-water.js, src/course.js, src/deep/deep-journey.js |
+| codex/deep-zone | unknown | 2026-10-13T01:36:34-07:00 | 0 | last commit 2026-10-13T01:36:34-07:00 | docs/changes/DEEP-ZONE.md, src/app.js, src/coastal-water.js, src/course.js, src/deep/deep-journey.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-12T22:21:43-07:00 | 0 | last commit 2026-10-12T22:21:43-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs |
@@ -96,7 +96,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 647,343 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 408,782,848 B | +270,336 B | unavailable |
+| Git objects | 408,891,392 B | +108,544 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -105,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: adbc4789ad486d47e63b68e1a801bbc5270ee2ba
+- Local integration/wasteland: 469bc301c5c82951b4a1b0340397367f72c998f4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

@@ -1,3 +1,5 @@
+import {createDeepUi} from './deep/deep-ui.js';
+import './deep/deep-ui.css';
 import {createWarlordCardArt} from './warlord-card-art.js';
 import './screen-card-wall.css';
 import {hiddenRoadHints,hiddenRoadMapKey} from './hidden-road-hints.js';
@@ -70,6 +72,7 @@ const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;'
 root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
+const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
 // Presentation-only QA switch, absent from normal production builds.
 const hiddenRoadUiQa=typeof __DUEL_QA__!=='undefined'&&__DUEL_QA__?{skipUpdate:false}:null;
 if(hiddenRoadUiQa)window.__hiddenRoadUiQa=hiddenRoadUiQa;
@@ -100,7 +103,7 @@ const buildUpdates=createBuildUpdateChecker({
 const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadDiscovery?.()});
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -419,6 +422,9 @@ function renderState(s) {
   combatHud.update(s);
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);
   lastHiddenRoadView=journeyView;
+  const deepView=deepUi.update(app.duel);
+  ui.stage.classList.toggle('deep-active',!!deepView);
+  ui.stage.style.setProperty('--deep-hud-opacity',String(deepView?.hudOpacity??1));
   ui.stage.classList.toggle('hidden-road-active',!!journeyView?.active);
   const hudOpacity=String(journeyView?.hudOpacity??1);
   if(ui.stage.style.getPropertyValue('--hidden-road-hud-opacity')!==hudOpacity)
