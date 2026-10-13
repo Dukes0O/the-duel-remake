@@ -1040,3 +1040,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-12 FAC-FULL-CHECK5dfd5f33:20/20, build728ms, corrected detector review clear; conflict-free merge, no rerun. Tool renamed; actual04:00 batch still pending.
 
 - 2026-10-12 DEEP-AUDIO revisedc1408cbd:55/55, build996.1124ms, ordinary review clear; conflict-free, no rerun; net236204B saved. Listening/native mix remain open.
+- 2026-10-13 LAP-CHOICE merged 30d2604f: lane 269/269 in 807.02 s, build 1929.3158 ms, review lighting independent code-money-save review and real-fault confirmation clear.
