@@ -386,6 +386,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "building"
+    waiting_on: "claude"
     needs: []
     locks: []
     claimed_by: "codex-live-edges-2026-10-13"
