@@ -1,0 +1,510 @@
+{
+  "formatVersion": 1,
+  "round": 2,
+  "coordinates": "metres; glTF Y up; Blender -Y forward maps to glTF +Z",
+  "models": [
+    {
+      "id": "silver-school",
+      "path": "assets/models/deep/silver-school.glb",
+      "sha256": "7b8180bf0e648fb3c5d05378de635bcfb4b2f330acebbbb44ac7d4c7debbbb39",
+      "bytes": 44380,
+      "triangles": 888,
+      "boundsBlender": {
+        "min": [
+          -0.025515133515000343,
+          -0.1599999964237213,
+          -0.06438298523426056
+        ],
+        "max": [
+          0.025515133515000343,
+          0.1599999964237213,
+          0.06438298523426056
+        ]
+      },
+      "dimensionsMetres": [
+        0.05103026703000069,
+        0.3199999928474426,
+        0.12876597046852112
+      ],
+      "clips": [],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "reef-fish",
+      "path": "assets/models/deep/reef-fish.glb",
+      "sha256": "62949d1cd05b6fc2291c64ec8dc6e4bf922d2e5f84dbe28699470263e5169a94",
+      "bytes": 46652,
+      "triangles": 506,
+      "boundsBlender": {
+        "min": [
+          -0.03127674758434296,
+          -0.14000000059604645,
+          -0.04725506529211998
+        ],
+        "max": [
+          0.03127674758434296,
+          0.14000000059604645,
+          0.04725506529211998
+        ]
+      },
+      "dimensionsMetres": [
+        0.06255349516868591,
+        0.2800000011920929,
+        0.09451013058423996
+      ],
+      "clips": [],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "turtle",
+      "path": "assets/models/deep/turtle.glb",
+      "sha256": "38d536d060295340ff0e0659fdd30e4836ee065399953cb4af5a4d96aa23ef3e",
+      "bytes": 212664,
+      "triangles": 1788,
+      "boundsBlender": {
+        "min": [
+          -0.49485352635383606,
+          -0.5249999761581421,
+          -0.14917410910129547
+        ],
+        "max": [
+          0.49485352635383606,
+          0.5249999761581421,
+          0.14917410910129547
+        ]
+      },
+      "dimensionsMetres": [
+        0.9897070527076721,
+        1.0499999523162842,
+        0.29834821820259094
+      ],
+      "clips": [
+        "slow-flipper-stroke"
+      ],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "ray",
+      "path": "assets/models/deep/ray.glb",
+      "sha256": "03054954fafc16e0a7e177bba3bec152230eb74e58dbfb08f0619f977230e268",
+      "bytes": 43692,
+      "triangles": 480,
+      "boundsBlender": {
+        "min": [
+          -0.7250000238418579,
+          -0.7713437080383301,
+          -0.048016320914030075
+        ],
+        "max": [
+          0.7250000238418579,
+          0.7713437080383301,
+          0.048016324639320374
+        ]
+      },
+      "dimensionsMetres": [
+        1.4500000476837158,
+        1.5426874160766602,
+        0.09603264927864075
+      ],
+      "clips": [],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "manta",
+      "path": "assets/models/deep/manta.glb",
+      "sha256": "c7d6c95e7b3d9d106ab4af2e1d11a6cb542704f5b9aa5ce83718dea10e9b4495",
+      "bytes": 101908,
+      "triangles": 696,
+      "boundsBlender": {
+        "min": [
+          -2.1000001430511475,
+          -2.93058180809021,
+          -0.3563697636127472
+        ],
+        "max": [
+          2.0999999046325684,
+          2.93058180809021,
+          0.2182624638080597
+        ]
+      },
+      "dimensionsMetres": [
+        4.199999809265137,
+        5.86116361618042,
+        0.5746322274208069
+      ],
+      "clips": [
+        "Armature|Swim"
+      ],
+      "primitives": 2,
+      "authored": false
+    },
+    {
+      "id": "sea-lion",
+      "path": "assets/models/deep/sea-lion.glb",
+      "sha256": "b96f32e99a96827c3da3e6102a3baca1fcbe7fe49352224f0ceeacd16994a29c",
+      "bytes": 105748,
+      "triangles": 714,
+      "boundsBlender": {
+        "min": [
+          -1.2099812030792236,
+          -1.8123562335968018,
+          -0.2898474633693695
+        ],
+        "max": [
+          1.2099812030792236,
+          1.125,
+          0.10895819216966629
+        ]
+      },
+      "dimensionsMetres": [
+        2.4199624061584473,
+        2.9373562335968018,
+        0.3988056480884552
+      ],
+      "clips": [
+        "glide-body-wave"
+      ],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "otter",
+      "path": "assets/models/deep/otter.glb",
+      "sha256": "1432b65447b133dccaff4de79f8ff17b54ec501a23eef54f4f8fc0f5b5d88c52",
+      "bytes": 162100,
+      "triangles": 1084,
+      "boundsBlender": {
+        "min": [
+          -0.11922243982553482,
+          -0.6000000238418579,
+          -0.15003810822963715
+        ],
+        "max": [
+          0.11922243982553482,
+          0.6000000238418579,
+          0.149664044380188
+        ]
+      },
+      "dimensionsMetres": [
+        0.23844487965106964,
+        1.2000000476837158,
+        0.29970216751098633
+      ],
+      "clips": [
+        "surface-breath"
+      ],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "crab",
+      "path": "assets/models/deep/crab.glb",
+      "sha256": "1dca48704d2366023c6b435d3b845c62906da70cb707c18b48f0c6c433d8e770",
+      "bytes": 86092,
+      "triangles": 624,
+      "boundsBlender": {
+        "min": [
+          -0.14999999105930328,
+          -0.1178547739982605,
+          -0.029055587947368622
+        ],
+        "max": [
+          0.14999999105930328,
+          0.1178547739982605,
+          0.029055587947368622
+        ]
+      },
+      "dimensionsMetres": [
+        0.29999998211860657,
+        0.235709547996521,
+        0.058111175894737244
+      ],
+      "clips": [
+        "side-scuttle"
+      ],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "moray",
+      "path": "assets/models/deep/moray.glb",
+      "sha256": "ad95efd234a0a4cdfac7c71346b6e529d27f8e58221f2efd5932ea3e9f010df9",
+      "bytes": 136172,
+      "triangles": 5424,
+      "boundsBlender": {
+        "min": [
+          -0.182422935962677,
+          -0.7919999957084656,
+          0.08790158480405807
+        ],
+        "max": [
+          0.11412839591503143,
+          0.8626402020454407,
+          0.31739506125450134
+        ]
+      },
+      "dimensionsMetres": [
+        0.29655134677886963,
+        1.6546401977539062,
+        0.22949346899986267
+      ],
+      "clips": [],
+      "primitives": 7,
+      "authored": true
+    },
+    {
+      "id": "grouper",
+      "path": "assets/models/deep/grouper.glb",
+      "sha256": "e91cdc883b61fa2f3a1955ef238d2a8f55f5a3f7fb24aed2262a72317a753d82",
+      "bytes": 80180,
+      "triangles": 1446,
+      "boundsBlender": {
+        "min": [
+          -0.20603717863559723,
+          -0.6238400340080261,
+          -0.3062167167663574
+        ],
+        "max": [
+          0.20603717863559723,
+          0.6000000238418579,
+          0.3136685788631439
+        ]
+      },
+      "dimensionsMetres": [
+        0.41207435727119446,
+        1.2238399982452393,
+        0.6198853254318237
+      ],
+      "clips": [],
+      "primitives": 3,
+      "authored": false
+    },
+    {
+      "id": "reef-shark",
+      "path": "assets/models/deep/reef-shark.glb",
+      "sha256": "be769d6668b1442003fb12870dd03975c0bc3910c3abc7c8401a8b9aa2be00dd",
+      "bytes": 91656,
+      "triangles": 644,
+      "boundsBlender": {
+        "min": [
+          -0.33615192770957947,
+          -0.9000000357627869,
+          -0.2945690453052521
+        ],
+        "max": [
+          0.33615192770957947,
+          0.8999999761581421,
+          0.2945690155029297
+        ]
+      },
+      "dimensionsMetres": [
+        0.6723038554191589,
+        1.7999999523162842,
+        0.5891380310058594
+      ],
+      "clips": [
+        "Armature|Swim"
+      ],
+      "primitives": 2,
+      "authored": false
+    },
+    {
+      "id": "jellyfish",
+      "path": "assets/models/deep/jellyfish.glb",
+      "sha256": "4831dac1e31accd4ad0d0b3580b3cba27c8a0d408ec80347ec0bf55b1ac339db",
+      "bytes": 449812,
+      "triangles": 3704,
+      "boundsBlender": {
+        "min": [
+          -0.22415101528167725,
+          -0.17673981189727783,
+          -0.32499998807907104
+        ],
+        "max": [
+          0.22415101528167725,
+          0.17673981189727783,
+          0.32499998807907104
+        ]
+      },
+      "dimensionsMetres": [
+        0.4483020305633545,
+        0.35347962379455566,
+        0.6499999761581421
+      ],
+      "clips": [
+        "gentle-bell-pulse"
+      ],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "whale",
+      "path": "assets/models/deep/whale.glb",
+      "sha256": "5be16b84467631a9a35d2d33850a5270ad6233d69c5ac7a11468211ef0e1da77",
+      "bytes": 70920,
+      "triangles": 444,
+      "boundsBlender": {
+        "min": [
+          -2.8010706901550293,
+          -7.0,
+          -2.2426533699035645
+        ],
+        "max": [
+          2.8010706901550293,
+          6.999999523162842,
+          2.2407925128936768
+        ]
+      },
+      "dimensionsMetres": [
+        5.602141380310059,
+        14.0,
+        4.48344612121582
+      ],
+      "clips": [
+        "Armature|Swim"
+      ],
+      "primitives": 2,
+      "authored": false
+    },
+    {
+      "id": "octopus",
+      "path": "assets/models/deep/octopus.glb",
+      "sha256": "dfce0e93e6b472ad0624fdd5fec31964df326686bf6cb41f4966c5774c747d00",
+      "bytes": 75324,
+      "triangles": 754,
+      "boundsBlender": {
+        "min": [
+          -0.7348068952560425,
+          -0.536695122718811,
+          -0.4261692762374878
+        ],
+        "max": [
+          0.7207216024398804,
+          0.7288868427276611,
+          0.4261692762374878
+        ]
+      },
+      "dimensionsMetres": [
+        1.4555284976959229,
+        1.2655819654464722,
+        0.8523385524749756
+      ],
+      "clips": [],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "wreck-hull",
+      "path": "assets/models/deep/wreck-hull.glb",
+      "sha256": "5606054d307b515db0e468830cad2b8210f3b4916826a2e07a2847351d82f863",
+      "bytes": 80272,
+      "triangles": 1873,
+      "boundsBlender": {
+        "min": [
+          -5.941502094268799,
+          -16.0,
+          -5.127164363861084
+        ],
+        "max": [
+          5.941502094268799,
+          16.0,
+          5.127164363861084
+        ]
+      },
+      "dimensionsMetres": [
+        11.883004188537598,
+        32.0,
+        10.254328727722168
+      ],
+      "clips": [],
+      "primitives": 24,
+      "authored": false
+    },
+    {
+      "id": "giant-clam",
+      "path": "assets/models/deep/giant-clam.glb",
+      "sha256": "df9099892e0aa12e23810929ad0e43e28208c6c2b9321dc1b1bfc1fc5431d9c8",
+      "bytes": 596768,
+      "triangles": 23904,
+      "boundsBlender": {
+        "min": [
+          -0.7346010804176331,
+          -0.5132890939712524,
+          -0.16174998879432678
+        ],
+        "max": [
+          0.7346010804176331,
+          0.5132890939712524,
+          0.5484141111373901
+        ]
+      },
+      "dimensionsMetres": [
+        1.4692021608352661,
+        1.0265781879425049,
+        0.7101640701293945
+      ],
+      "clips": [],
+      "primitives": 13,
+      "authored": true
+    },
+    {
+      "id": "anchor",
+      "path": "assets/models/deep/anchor.glb",
+      "sha256": "e34cfe36283bc158d07da3df89317ad0daad50a2aa64006138d9d677225556fd",
+      "bytes": 35256,
+      "triangles": 544,
+      "boundsBlender": {
+        "min": [
+          -0.7390236854553223,
+          -0.8999999761581421,
+          -0.08819984644651413
+        ],
+        "max": [
+          0.7390236854553223,
+          0.8999999761581421,
+          0.08819984644651413
+        ]
+      },
+      "dimensionsMetres": [
+        1.4780473709106445,
+        1.7999999523162842,
+        0.17639969289302826
+      ],
+      "clips": [],
+      "primitives": 1,
+      "authored": false
+    },
+    {
+      "id": "sunken-boat",
+      "path": "assets/models/deep/sunken-boat.glb",
+      "sha256": "23ec6e9436c680093b5ef13cc2e42b2e6698bf69cae6a0fc4562bbe21b73a6b4",
+      "bytes": 52328,
+      "triangles": 1563,
+      "boundsBlender": {
+        "min": [
+          -1.383720874786377,
+          -3.0,
+          -2.0155038833618164
+        ],
+        "max": [
+          1.383720874786377,
+          3.0,
+          2.0155038833618164
+        ]
+      },
+      "dimensionsMetres": [
+        2.767441749572754,
+        6.0,
+        4.031007766723633
+      ],
+      "clips": [],
+      "primitives": 5,
+      "authored": false
+    }
+  ],
+  "failures": []
+}
