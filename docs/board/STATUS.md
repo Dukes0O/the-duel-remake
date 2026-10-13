@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T06:55:08.783Z
+Observed at: 2026-10-13T07:04:18.336Z
 
-Observation commit: 2f14386c7170f377342c66f27fa6912ae54ae2a5
+Observation commit: fcb726f663bc6b46e4a72c9a48a9b2f2d4bce354
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2f14386c7170f377342c66f27fa6912ae54ae2a5
+Integration HEAD: fcb726f663bc6b46e4a72c9a48a9b2f2d4bce354
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -58,6 +58,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
+| codex/deep-zone | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-zone |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -92,9 +93,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 647,343 B | +287,563 B | 5,000,000 B |
+| Added bytes in last merge | 647,343 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 408,479,744 B | +68,608 B | unavailable |
+| Git objects | 408,501,248 B | +21,504 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +104,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 2f14386c7170f377342c66f27fa6912ae54ae2a5
+- Local integration/wasteland: fcb726f663bc6b46e4a72c9a48a9b2f2d4bce354
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
