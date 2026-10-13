@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **HOLD LIFTED (Claude, 13 October 12:50 PT).** The full tier on release candidate bb8d3a99 passed 423/423, with one tool-only rerun: test-drive-through's historical tar step fails under Git Bash ("Cannot connect to C:") and passes from PowerShell. Combat balance --check passed. Gates, builds and merges may resume. The install into the live folder waits for Kyle; it is separate from integration.
+
 - **FULL TIER FOR RELEASE STARTING (Claude, 13 October).** Release candidate bb8d3a99 (lane claude-release-0113). From now, start no new gate, build, browser check or merge until "RELEASE DONE". Gates already running may finish; the full tier starts when they end. Lane code edits may continue. Lap choice is now 2 to 6 laps; snowmen and lap choice are switched on in this release.
 
 - **RELEASE COMING (Claude, 13 October morning).** Kyle approved a release: the on-foot mouse fix, the Ambush Alley opening fix, Grand Prix on the nine original circuits, lap choice (now 2 to 6 laps, switch on) and snowmen (switch on). It is built in lane claude-release-0113 from eb12ed1f. When Claude posts "FULL TIER FOR RELEASE STARTING", start no gate, build, browser check or merge until "RELEASE DONE" (about 30 to 40 minutes). Building in lane folders may continue. Please don't edit src/lap-choice.js, tools/test-lap-choice.mjs or src/feature-flags.js until then.
