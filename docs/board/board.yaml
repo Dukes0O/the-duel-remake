@@ -422,7 +422,7 @@ tasks:
     details: "docs/board/cards/FIX-LIVE-EDGES.md"
 
   - id: QA-LANE-NATIVE-RELIEF
-    title: "Move the proven native relief renderer to night-only lanes"
+    title: "Classify proven native render checks for the night shift"
     owner: "codex"
     lane: "TOOLS"
     size: "S"
