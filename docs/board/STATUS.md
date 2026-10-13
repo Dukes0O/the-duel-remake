@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T05:20:37.806Z
+Observed at: 2026-10-13T05:22:11.162Z
 
-Observation commit: da75bdc16015e9f59dcb24d55ea3e797128de53d
+Observation commit: f611fb9ddd8ed74092065c18d66a5884fad1f983
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: da75bdc16015e9f59dcb24d55ea3e797128de53d
+Integration HEAD: f611fb9ddd8ed74092065c18d66a5884fad1f983
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -55,7 +55,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
+| codex/deep-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/lap-choice | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lap-choice |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -73,11 +73,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:08:38-07:00 | 0 | last commit 2026-10-12T22:08:38-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
+| codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:08:38-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
 | codex/lap-choice | LAP-CHOICE | 2026-10-12T22:14:16-07:00 | 0 | last commit 2026-10-12T22:14:16-07:00 | docs/changes/LAP-CHOICE.md, src/app.js, src/course-access-ui.js, src/feature-flags.js, src/game.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-summit | P4-SUMMIT | 2026-10-12T22:18:30-07:00 | 0 | last commit 2026-10-12T22:18:30-07:00 | docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs |
+| codex/p4-summit | P4-SUMMIT | 2026-10-12T22:21:43-07:00 | 0 | last commit 2026-10-12T22:21:43-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 8 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -94,7 +94,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 445,169 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 407,334,912 B | +1,795,072 B | unavailable |
+| Git objects | 407,735,296 B | +400,384 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: da75bdc16015e9f59dcb24d55ea3e797128de53d
+- Local integration/wasteland: f611fb9ddd8ed74092065c18d66a5884fad1f983
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
