@@ -1,3 +1,4 @@
+import {hash32,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {deepDiscoverySnapshot,rememberDeep} from './deep/deep-discovery.js';
 import {createDeepAudio} from './deep/deep-audio.js';
@@ -5,7 +6,7 @@ import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hin
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
-import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
+import {purchaseArmorKit, equipArmorKit, getEquippedArmorKit, getEquippedRoofLook, getRoadRoofLook, equipRoadRoof} from './armor-kits.js';
 import {CAMERA_MODES} from './camera-views.js';
 // app.js — owns the Duel instance, the rAF/step loop, keyboard input, the
 // scripted autopilot, dev hooks, and window.__game. Rendering (render3d.js) and
@@ -339,13 +340,15 @@ export class App {
     const legacySeed=this.duel.state.status==='menu'&&this.duel.seed!==this.seed?this.duel.seed>>>0:null;
     const selectedSeed=isRouteVariant(options.routeVariant)?getRouteVariant(options.routeVariant).seed:explicitSeed??legacySeed??this.getMenuSeed(stageIndex);
     this.seed=supportsRouteVariants(stage)?selectedSeed:1989;
-    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true});this._racePaintCar=car;
+    this._racePaint=getPaintAppearance(this.profile,car,{muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});this._racePaintCar=car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.runId=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
     const mode=stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
+    const yetiSeed=stage.id==='summit-run'&&this._switches().enabled('summit-run')&&this._switches().enabled('yeti')
+      ?hash32(this.seed,this.runId):undefined;
     const difficulty=options.difficulty??this.duel.state.difficulty;
     const laps=this.getLapChoice(stageIndex,mode,options.laps);
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
@@ -363,7 +366,7 @@ export class App {
     this._keyboardSteering.reset();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,laps,tyre,weaponLevels:getProfileWeapons(this.profile).levels,
+    this.duel.startCampaign({...options,laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
@@ -472,15 +475,26 @@ export class App {
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:true});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     return car===this._racePaintCar?this._racePaint:null;
+  }
+  getRoofLook(car,{menu=false}={}){
+    if(!this._switches().enabled('yeti'))return null;
+    return menu||this.duel.state.status==='menu'?getRoadRoofLook(this.profile,car,{yetiEnabled:true}):
+      car===this._racePaintCar?this._raceRoof:null;
+  }
+  selectRoofLook(car,id){
+    if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing roof looks.'};
+    this._refreshPlayer();const selected=equipRoadRoof(this.profile,car,id,{yetiEnabled:this._switches().enabled('yeti')});
+    if(selected.ok&&selected.profile!==this.profile){this.profile=selected.profile;this._saveProfile();this.duel.emit({garage:true});}
+    return selected;
   }
   purchasePaint(car,id){return this._paintOperation(car,id,true);}
   applyPaint(car,id){return this._paintOperation(car,id,false);}
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
     this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
-      {muddyHollowEnabled:true});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});}return result;
   }
   setGhostEnabled(enabled){
@@ -627,7 +641,19 @@ export class App {
   _settleResult(result,state){
     // Scrapdome events settle through their own result, never as races.
     if(state.arena)return;
-    if(state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving')){
+    const yetiFinish=state===this.duel.state && result===state.results && !state.qualifying &&
+      result.yetiEnabled===true && result.yetiSeen===true && state.yeti?.seen===true &&
+      this.duel.course?.def.id==='summit-run' && this._switches().enabled('yeti') && this._switches().enabled('summit-run');
+    const gpWithoutPay=state.mode==='grandprix'&&(!this._switches().enabled('grand-prix-career')||state.qualifying?.phase==='driving');
+    if(gpWithoutPay&&!yetiFinish){
+      if(isYetiGrandPrixInput(this.profile.activeRace)&&state===this.duel.state&&(result===state.results||result.abandoned===true)&&
+        this._runPlayerId===this.player.id&&state.playerId===this._runPlayerId){
+        this._refreshPlayer();const pending=this.profile.activeRace;
+        if(isYetiGrandPrixInput(pending)&&pending.key===`${this.runId}:${state.stageIndex}`&&
+          this.duel.course?.def.id==='summit-run'&&pending.yetiSeed===state.yetiSeed){
+          this.profile={...this.profile,activeRace:null};this._saveProfile();
+        }
+      }
       result.creditReward=0;result.creditBalance=this.profile.credits;return;
     }
     if(state.hiddenRoadVisit)return;
@@ -647,7 +673,17 @@ export class App {
       if(result.completed===true)Object.assign(result,{lapChoiceEnabled:true,
         raceDistance:raceDistance(COURSE[state.stageIndex],payload.laps,state.mode)});
     }
+    if(yetiFinish)Object.assign(payload,{ownerPlayerId:this._runPlayerId,playerId:state.playerId,
+      yetiEnabled:true,yetiSeen:true});
     const awarded=settleRace(this.profile,payload);
+    if(awarded.yetiAwarded){
+      if(!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
+      result.yetiSightings=awarded.yetiSightings;
+    }
+    if(gpWithoutPay){
+      if(awarded.profile!==this.profile&&this.profile.activeRace&&awarded.profile.activeRace===null){this.profile=awarded.profile;this._saveProfile();}
+      result.creditReward=0;result.creditBalance=this.profile.credits;return;
+    }
     if(awarded.awarded){
       this.profile=awarded.profile;this._saveProfile();
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
@@ -1061,7 +1097,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true}); this._racePaintCar = car;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     const options = {mode, venueId, car, driverId: getEquippedDriverId(this.profile),
       upgrades: getUpgradeLevels(this.profile, car), difficulty: this._raceSettings.difficulty,
@@ -1092,7 +1128,7 @@ export class App {
     this.driftNotice = this.checkpointNotice = null;
     this._clearHiddenRoadInput(); this._stepAccumulator = 0;
     this._racePaint = getPaintAppearance(this.profile, car,
-      {muddyHollowEnabled:true}); this._racePaintCar = car;
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti')}); this._racePaintCar = car;this._raceRoof=getRoadRoofLook(this.profile,car,{yetiEnabled:this._switches().enabled('yeti')});
     this.audio.unlock(); this.audio.setPaused(false);
     return this.duel.startHiddenRoadVisit({playerId: this.player.id, car, driverId,
       upgrades: getUpgradeLevels(this.profile, car), seed: this.getMenuSeed(0),
@@ -1114,12 +1150,15 @@ export class App {
     return true;
   }
   _markActiveRace(state){
-    if(state.arena||state.mode==='grandprix')return;
+    const yetiInput=COURSE[state.stageIndex]?.id==='summit-run'&&validYetiSeed(state.yetiSeed)&&
+      this._switches().enabled('summit-run')&&this._switches().enabled('yeti');
+    if(state.arena||state.mode==='grandprix'&&!yetiInput)return;
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     const key=`${this.runId}:${state.stageIndex}`;
     if(!this.runId||this._markedRaceKey===key||this.profile.settledResults.includes(key))return;
     const pending=this.profile.activeRace?.key===key?this.profile.activeRace:{pendingPoliceFineCount:0,pendingPoliceFines:0};
-    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty}};this._saveProfile();
+    this._markedRaceKey=key;this.profile={...this.profile,activeRace:{...pending,key,runId:this.runId,stageIndex:state.stageIndex,stageId:COURSE[state.stageIndex]?.id,car:state.car,driverId:state.driverId,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
+      ...(yetiInput?{yetiSeed:state.yetiSeed,...(state.mode==='grandprix'?{mode:'grandprix'}:{})}:{})}};this._saveProfile();
   }
   requestNavigation(action){
     if(!['restart','menu'].includes(action))return false;

@@ -163,48 +163,8 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         authored.updateMatrixWorld(true);
         authored.attach(turretMount);
       }
-      const crown = authored.getObjectByName('kit-crown');
-      const crossbar = authored.getObjectByName('warlord-crossbar');
-      if (crown && crossbar) {
-        authored.updateMatrixWorld(true);
-        const spikes = crown.clone(true);
-        spikes.name = 'chrome-crown-spikes';
-        const fitted = authored.matrixWorld.clone().invert().multiply(crown.matrixWorld);
-        fitted.decompose(spikes.position, spikes.quaternion, spikes.scale);
-        spikes.userData.crownBindScale = spikes.scale.toArray();
-        authored.add(spikes);
-        // Stretch only cloned geometry in authored coordinates. Its lowest edge
-        // stays fitted to the crossbar; the cached and historical Crown stay exact.
-        authored.updateMatrixWorld(true);
-        const inverse = authored.matrixWorld.clone().invert();
-        const nodes = [], bounds = new THREE.Box3(), originalMatrices = [];
-        crown.traverse(node => {
-          if (node.isMesh && node.geometry) originalMatrices.push(inverse.clone().multiply(node.matrixWorld));
-        });
-        spikes.traverse(node => {
-          if (!node.isMesh || !node.geometry) return;
-          const matrix = inverse.clone().multiply(node.matrixWorld);
-          const originalMatrix = originalMatrices[nodes.length];
-          const position = node.geometry.attributes.position;
-          const point = new THREE.Vector3();
-          for (let i = 0; i < position.count; i++)
-            bounds.expandByPoint(point.fromBufferAttribute(position, i).applyMatrix4(originalMatrix));
-          nodes.push({node, matrix, originalMatrix});
-        });
-        const stretch = new THREE.Matrix4().makeScale(1, 1.5, 1);
-        stretch.elements[13] = -bounds.min.y * .5;
-        rig.crownGeometries = [];
-        for (const {node, matrix, originalMatrix} of nodes) {
-          node.geometry = node.geometry.clone();
-          node.geometry.applyMatrix4(matrix.clone().invert().multiply(stretch).multiply(originalMatrix));
-          rig.crownGeometries.push(node.geometry);
-        }
-        const base = crossbar.clone(true);
-        base.name = 'chrome-crown-base';
-        const matrix = authored.matrixWorld.clone().invert().multiply(crossbar.matrixWorld);
-        matrix.decompose(base.position, base.quaternion, base.scale);
-        authored.add(base);
-      }
+      const crown=cloneChromeCrown(authored);
+      if(crown){authored.add(crown.spikes,crown.base);rig.crownGeometries=crown.geometries;}
       // Reuse the reviewed streak geometry in a distinct tell effect. The
       // original spark node remains reserved for the missed-sweep window.
       const sal = authored.getObjectByName('kit-sal-saws');
@@ -582,4 +542,68 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
   }
 
   return {group, update, detachVehicle, dispose};
+}
+
+// Pure clone of the reviewed fitted Crown; cached source resources stay untouched.
+export function cloneChromeCrown(source,{privateMaterials=false}={}) {
+  const authored=source.clone(true),geometries=[];
+  const crown = authored.getObjectByName('kit-crown');
+  const crossbar = authored.getObjectByName('warlord-crossbar');
+  if (crown && crossbar) {
+    authored.updateMatrixWorld(true);
+    const spikes = crown.clone(true);
+    spikes.name = 'chrome-crown-spikes';
+    const fitted = authored.matrixWorld.clone().invert().multiply(crown.matrixWorld);
+    fitted.decompose(spikes.position, spikes.quaternion, spikes.scale);
+    spikes.userData.crownBindScale = spikes.scale.toArray();
+    authored.add(spikes);
+    // Stretch only cloned geometry in authored coordinates. Its lowest edge
+    // stays fitted to the crossbar; the cached and historical Crown stay exact.
+    authored.updateMatrixWorld(true);
+    const inverse = authored.matrixWorld.clone().invert();
+    const nodes = [], bounds = new THREE.Box3(), originalMatrices = [];
+    crown.traverse(node => {
+      if (node.isMesh && node.geometry) originalMatrices.push(inverse.clone().multiply(node.matrixWorld));
+    });
+    spikes.traverse(node => {
+      if (!node.isMesh || !node.geometry) return;
+      const matrix = inverse.clone().multiply(node.matrixWorld);
+      const originalMatrix = originalMatrices[nodes.length];
+      const position = node.geometry.attributes.position;
+      const point = new THREE.Vector3();
+      for (let i = 0; i < position.count; i++)
+        bounds.expandByPoint(point.fromBufferAttribute(position, i).applyMatrix4(originalMatrix));
+      nodes.push({node, matrix, originalMatrix});
+    });
+    const stretch = new THREE.Matrix4().makeScale(1, 1.5, 1);
+    stretch.elements[13] = -bounds.min.y * .5;
+    geometries.length=0;
+    for (const {node, matrix, originalMatrix} of nodes) {
+      node.geometry = node.geometry.clone();
+      node.geometry.applyMatrix4(matrix.clone().invert().multiply(stretch).multiply(originalMatrix));
+      geometries.push(node.geometry);
+    }
+    const base = crossbar.clone(true);
+    base.name = 'chrome-crown-base';
+    const matrix = authored.matrixWorld.clone().invert().multiply(crossbar.matrixWorld);
+    matrix.decompose(base.position, base.quaternion, base.scale);
+    authored.add(base);
+  }
+  const spikes=authored.getObjectByName('chrome-crown-spikes'),base=authored.getObjectByName('chrome-crown-base');
+  if(!spikes||!base)return null;
+  const group=new THREE.Group();group.name='Chrome Crown road look';group.add(spikes,base);
+  const materials=[];
+  if(privateMaterials)for(const [part,chrome] of [[spikes,true],[base,false]])part.traverse(node=>{
+    if(!node.material)return;
+    const own=material=>{
+      const copy=material.clone();materials.push(copy);copy.color.setHex(chrome?0xf6f8fa:0x15191b);
+      copy.roughness=chrome ? .13 : .65;copy.metalness=chrome?1:.95;
+      if(chrome){copy.envMapIntensity=1.9;copy.roughnessMap=copy.roughnessMap||copy.map;copy.map=null;}
+      return copy;
+    };
+    node.material=Array.isArray(node.material)?node.material.map(own):own(node.material);
+  });
+  let disposed=false;
+  return {group,spikes,base,geometries,materials,dispose(){if(disposed)return;disposed=true;
+    group.removeFromParent();for(const item of geometries)item.dispose();for(const item of materials)item.dispose();}};
 }

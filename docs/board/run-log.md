@@ -1064,3 +1064,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13: Avalanche rejoin8ee201c8 merged; nearby33/33, build587ms, independent review CLEAR. All4native races finish/crash0, but timing+2.394/+8.252s FAIL; Claude question retained. No repeated gate/drive or release.
 
 - 2026-10-13: FIX-LIVE-EDGES sourcecdf55a11 merged; nearby94/94/jobs4, build576ms, independent review CLEAR. Parent native pace fails remain with Claude; completed source prerequisite unblocks later camera wiring. No repeated gate, release or push.
+
+- 2026-10-13: P4-YETI ace5cb5f source merged; nearby289/289/jobs4, build571ms, source/save reviews CLEAR. Recorded input all4modes,89/300 controlled appearances; native grounding/look/audio remain open, dev stays dev. Own merged road-edge lane recycled/nonforced unregister; older Yeti lane retained. No repeated gate, release or push.

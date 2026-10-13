@@ -252,8 +252,9 @@ export class EngineAudio {
   _loadCueBuffers() {
     const grandPrix = this.flags.enabled('grand-prix'), snowmen=this.flags.enabled('snowmen');
     const addSnowmen=snowmen && !this._snowmanCueStarted;
+    const yeti=this.flags.enabled('yeti'),addYeti=yeti&&!this._yetiCueStarted;
     const avalanche=this.flags.enabled('summit-run'),addAvalanche=avalanche && !this._avalancheCueStarted;
-    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted) && !addSnowmen && !addAvalanche)
+    if (this._cueBuffersPromise && (!grandPrix || this._p4CueBuffersStarted) && !addSnowmen && !addAvalanche && !addYeti)
       return this._cueBuffersPromise;
     const pending = this._cueBuffersPromise;
     // A later Grand Prix activation adds only its own batch. Existing cue and
@@ -261,6 +262,7 @@ export class EngineAudio {
     if (grandPrix) this._p4CueBuffersStarted = true;
     if(snowmen || grandPrix)this._snowmanCueStarted=true;
     if(avalanche || grandPrix)this._avalancheCueStarted=true;
+    if(yeti || grandPrix)this._yetiCueStarted=true;
     const loading = Promise.allSettled(
       Object.entries(SOUND_BANK)
         .filter(
@@ -268,7 +270,7 @@ export class EngineAudio {
             cue.flag !== 'the-deep' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
-            (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche),
+            (cue.flag !== 'grand-prix' || grandPrix || id==='snowman.burst' && addSnowmen || ['avalanche.rumble','avalanche.slide'].includes(id) && addAvalanche || id==='yeti.roar' && addYeti),
         )
         .map(async ([id, cue]) => {
           const buffers = await Promise.all(
@@ -913,7 +915,7 @@ export class EngineAudio {
       this.flags.enabled('warlord-cards') && this.flags.enabled('crew-gear');
     const admittedSnowman=id==='snowman.burst' && this.flags.enabled('snowmen');
     const admittedAvalanche=['avalanche.rumble','avalanche.slide'].includes(id) && this.flags.enabled('summit-run');
-    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche) return null;
+    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
     if (def.flag === 'arsenal-wave3' && !this.flags.enabled('arsenal')) return null;
     return this._runCue(
       id,
@@ -1513,6 +1515,7 @@ export class EngineAudio {
       this._snowmanAudioStage=(this._snowmanAudioStage ?? 0)+1;
       this._snowmanAudioHits=new Set();
       this._avalancheAudioHits=new Set();
+      this._yetiAudioHits=new Set();
       this._clearProjectiles();
       this._clearArsenalFields();
       this.mixer?.stopAll();
@@ -1572,6 +1575,21 @@ export class EngineAudio {
           const voice=this._playCue(hit.cue,{destination:output.level,onEnd:output.disconnect});if(!voice)output.disconnect();
         };
         if(this.cueBuffers[hit.cue])play();else this._loadCueBuffers().then(play);
+      }
+    }
+    if(ev.yetiSighting && state?.yeti?.seen===true && course?.def.id==='summit-run' &&
+      this.flags.enabled('yeti') && this.flags.enabled('summit-run')){
+      const hit=ev.yetiSighting,seen=this._yetiAudioHits??=new Set();
+      if(hit.cue==='yeti.roar' && typeof hit.id==='string' && !seen.has(hit.id) &&
+        [hit.point?.x,hit.point?.y,hit.point?.z].every(Number.isFinite)){
+        seen.add(hit.id);const epoch=this._snowmanAudioStage??0;
+        const play=()=>{
+          if(epoch!==(this._snowmanAudioStage??0)||this.muted||this.paused||this.context?.state!=='running'||
+            !this.flags.enabled('yeti')||!this.flags.enabled('summit-run')||!this.cueBuffers['yeti.roar']||state.status!=='racing')return;
+          const output=this._spatialOutput({combatHit:true,hitPosition:hit.point},state,course);
+          const voice=this._playCue('yeti.roar',{destination:output.level,onEnd:output.disconnect});if(!voice)output.disconnect();
+        };
+        if(this.cueBuffers['yeti.roar'])play();else this._loadCueBuffers().then(play);
       }
     }
     if (['pit.limiter','pit.wrench','pit.go'].includes(ev.pitCue)) this._playCue(ev.pitCue);

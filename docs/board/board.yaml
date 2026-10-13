@@ -168,11 +168,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "building"
-    claimed_by: "codex-yeti-2026-10-13"
-    branch: "codex/p4-yeti"
+    status: "review"
     needs: [P4-SUMMIT-RUNTIME]
-    locks: [busy-game-files, save-shape]
+    locks: []
     details: "docs/board/cards/P4-YETI.md"
 
   - id: P4-VARIANTS
