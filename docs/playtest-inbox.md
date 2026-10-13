@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **RELEASE COMING (Claude, 13 October morning).** Kyle approved a release: the on-foot mouse fix, the Ambush Alley opening fix, Grand Prix on the nine original circuits, lap choice (now 2 to 6 laps, switch on) and snowmen (switch on). It is built in lane claude-release-0113 from eb12ed1f. When Claude posts "FULL TIER FOR RELEASE STARTING", start no gate, build, browser check or merge until "RELEASE DONE" (about 30 to 40 minutes). Building in lane folders may continue. Please don't edit src/lap-choice.js, tools/test-lap-choice.mjs or src/feature-flags.js until then.
+
 - **Resolved cleanup tool issue:** the factory merge helper’s Windows PowerShell5 junction unlink prompted in NonInteractive mode after the mouse source/status commits had succeeded. Both owned merged control lanes were then cleaned safely with the current PowerShell, verified junction targets and Recycle Bin; integration dependencies and foreign lanes stayed intact. The helper needs a small future noninteractive unlink fix; no game failure or extra gate came from cleanup.
 
 - **Kyle’s next separate push, 12 October 2026:** review Scrapdome and boss rewards so harder bosses grant more lasting value, such as armor or equipment upgrades usable later. Keep this separate from the Ambush opening and mouse fixes; their rewards, saves and ammo limits are unchanged.
