@@ -159,3 +159,27 @@ The actual water capture remains on1fb800b1. This CLI-only correction does
 not rerun assets or native capture. One fresh original lane/build will run
 on the corrected frozen source; receipts stay ignored. Ordinary code review
 and Claude's formal round-two art verdict are still required.
+
+
+## Exact photography source-access correction
+
+The original unfiltered lane on `da1de4b40b799e163ef5af34ba0e0ca211fd0445`
+failed, exit 1: 12 passed, 1 failed, 16 not run, total 29, 84,940.5947 ms.
+The Blender placement fix passed all 48 checks. The remaining failure was
+`tools/test-deep-look.mjs`: the photography helper's literal floor-shape
+source access lacked an entry in the isolation contract. The build on that
+same clean source passed, Vite 839 ms, 361 modules. Both complete failed
+gate receipts and build invocations remain in the native evidence folder.
+
+The Director granted this exact test hook before correction. The guard
+recognizes only `tools/scenarios/deep-art.mjs` and only its literal
+`source('src/deep/sea-floor-shape.js')` expression. Every other importer,
+Deep path, approved import pair and final isolation assertion is unchanged.
+This is the required photography access to the existing floor-height
+function. No recipe, runtime model or image changed. The actual water
+capture and sheet remain byte-identical on 1fb800b1.
+
+Freeze this correction before one original nearby lane with `--jobs 4`
+and `--keep-going`, then a build. Keep final results in ignored receipts
+for the Director to fold into integration. Ordinary source review and
+Claude's formal round-two art verdict remain pending; no merge clearance.

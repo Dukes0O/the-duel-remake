@@ -225,7 +225,10 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
     .filter(path => {
       const importer = relative(root, path).replaceAll('\\', '/');
-      const source = readFileSync(path, 'utf8').replace(
+      // Exact photography helper source access; all other Deep paths remain guarded.
+      const source = readFileSync(path, 'utf8')
+        .replace(importer === 'tools/scenarios/deep-art.mjs'
+          ? "source('src/deep/sea-floor-shape.js')" : '\0', '').replace(
         /(?:from\s+|import\(\s*)['"]([^'"]*\/deep\/[^'"]+)['"]/g,
         (statement, specifier) => approvedImports.has(importer + '|' + specifier) ? '' : statement,
       );
