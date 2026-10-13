@@ -157,6 +157,59 @@ try {
     check(result.markdown.includes('## Size targets'), 'status reports size targets');
   });
 
+
+  await test('factory manifest spread stays data-only and release ordered', () => {
+    const f = fixture('factory-manifests');
+    put(join(f.root, 'src/feature-flags.js'), "throw Error('feature game source must not execute');\nexport const FEATURE_STATES = Object.freeze({ 'hidden-road': 'dev', crew: 'beta', ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])), arena: 'on' });\n");
+    for (const [file, flag, state, order] of [['alpha', 'fixture-on', 'on', 2], ['zeta', 'fixture-dev', 'dev', 0]]) {
+      put(join(f.root, 'src/circuits/' + file + '.js'), "throw Error('circuit game source must not execute');\nexport const manifest = Object.freeze({ id: '" + file + "', flag: '" + flag + "', state: '" + state + "', price: 1600, grandPrix: true, releaseOrder: " + order + ", driver: Object.freeze({ car: 'falcone_f42', driverId: 'club', controller: 'racing-line', skill: .95 }) });\n");
+    }
+    put(join(f.root, 'src/circuits/helper.js'), "export function helper() { throw Error('helper must not execute'); }\n");
+    const before = snapshot(f.home, new Set([f.statusPath]));
+    const result = report(f);
+    same(result.features, {'hidden-road': 'dev', crew: 'beta', 'fixture-dev': 'dev', 'fixture-on': 'on', arena: 'on'}, 'literal and manifest states are complete');
+    same(Object.keys(result.features), ['hidden-road', 'crew', 'fixture-dev', 'fixture-on', 'arena'], 'spread follows release order at its authored position');
+    check(!result.issues.some(issue => /catalog|manifest/i.test(issue)), 'current factory format and helpers have no invented warning');
+    same(snapshot(f.home, new Set([f.statusPath])), before, 'source inspection writes only STATUS and never executes game modules');
+  });
+
+  for (const [label, header] of [
+    ['invalid state', "flag: 'fixture', state: 'unknown', releaseOrder: 0"],
+    ['computed state', "flag: 'fixture', state: chooseState(), releaseOrder: 0"],
+    ['missing flag', "state: 'dev', releaseOrder: 0"],
+  ]) await test('factory manifest ' + label + ' stays visibly unknown', () => {
+    const f = fixture('factory-invalid-' + label.replaceAll(' ', '-'));
+    put(join(f.root, 'src/feature-flags.js'), 'export const FEATURE_STATES = Object.freeze({ ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])) });\n');
+    put(join(f.root, 'src/circuits/fixture.js'), "export const manifest = Object.freeze({ id: 'fixture', " + header + ", price: 1, grandPrix: true, driver: Object.freeze({ car: 'falcone_f42', driverId: 'club', controller: 'racing-line', skill: .95 }) });\n");
+    const result = report(f);
+    same(result.features, {}, 'malformed source does not invent a feature state');
+    check(result.issues.some(issue => /Circuit manifest\b/i.test(issue)), 'malformed manifest issue is visible');
+  });
+  await test('unknown feature spread is not evaluated or accepted', () => {
+    const f = fixture('factory-unknown-spread');
+    put(join(f.root, 'src/feature-flags.js'), 'export const FEATURE_STATES = Object.freeze({ ...chooseCatalog() });\n');
+    const result = report(f);
+    same(result.features, {}, 'unsupported expressions cannot become a catalog');
+    check(result.issues.some(issue => /catalog/i.test(issue)), 'unknown catalog expression reports an issue');
+  });
+
+  await test('Leanboard branches identify exact current cards before legacy names', () => {
+    const f = fixture('factory-board');
+    put(join(f.root, 'docs/board/board.yaml'), 'completed: [FAC-04]\ncards:\n  - id: P4-GP-EXISTING\n    branch: "codex/p4-gp-existing"\n  - id: DEEP-SAVE\n    branch: \'codex/deep-save\'\n  - id: QA-STATUS-FACTORY\n    branch: codex/qa-status-factory\n  - id: QA-EXPLICIT\n    branch: "codex/bal-02"\n');
+    for (const name of ['codex/p4-gp-existing', 'codex/deep-save', 'codex/qa-status-factory', 'codex/bal-02', 'codex/gfx-01-p2']) git(f.root, 'branch', name, f.base);
+    const result = report(f), lane = name => result.lanes.find(row => row.branch === name);
+    for (const [branch, id] of [['codex/p4-gp-existing', 'P4-GP-EXISTING'], ['codex/deep-save', 'DEEP-SAVE'], ['codex/qa-status-factory', 'QA-STATUS-FACTORY'], ['codex/bal-02', 'QA-EXPLICIT']]) same(lane(branch).card, id, 'exact current board association wins for ' + branch);
+    same(lane('codex/gfx-01-p2').card, 'GFX-01-P2', 'unmapped legacy phase branch retains its full fallback');
+  });
+  await test('ambiguous board branch stays unknown with an issue', () => {
+    const f = fixture('factory-board-ambiguous');
+    put(join(f.root, 'docs/board/board.yaml'), 'completed: []\ncards:\n  - id: DEEP-A\n    branch: "codex/deep-shared"\n  - id: DEEP-B\n    branch: "codex/deep-shared"\n');
+    git(f.root, 'branch', 'codex/deep-shared', f.base);
+    const result = report(f);
+    same(result.lanes.find(row => row.branch === 'codex/deep-shared').card, 'unknown', 'ambiguous association cannot choose a card');
+    check(result.issues.some(issue => /branch.*codex\/deep-shared|codex\/deep-shared.*branch/i.test(issue)), 'ambiguous branch issue is visible');
+  });
+
   await test('size changes compare with the previous observation', () => {
     const f = fixture('size-delta'); f.evidence();
     const first = report(f);
