@@ -190,7 +190,8 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "ready"
+    status: "blocked"
+    waiting_on: "claude"
     needs: [P4-SUMMIT, P4-AVALANCHE]
     locks: [circuit-registry]
     flag: "summit-run"
