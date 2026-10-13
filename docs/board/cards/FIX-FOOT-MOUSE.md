@@ -16,6 +16,6 @@ No open art/sound decision. Shared-file handoff is the only current hold.
 
 Summit’s bab5ca92 shared source is clean and frozen; the latest correction only changes the Deep surface test catalogue. Its card now releases busy-game-files for this bounded mouse repair. Start after the board confirms CODEX CAN START NOW, then claim the lock before creating the lane.
 
-## Current handoff, Codex control-fix chat
+## Green handoff, Codex control-fix chat
 
-Owner chat01a12965-cccd-7533-acc7-f11164e302b5 owns source4d48a1b6b245d832556235a55ea6542c9312c844 in fix-foot-mouse. Independent code review and real menu-fault correction confirmed clear. Its single targeted lane/jobs4 and following build are still running; no green receipt or build is claimed yet. Evidence will be .evidence/FIX-FOOT-MOUSE/evidence.json in that lane. This chat merges the mouse fix first when green, preserves Summit App hooks with a normal disjoint merge, releases its busy-game-files lock, then recycles its newly created lane. No release or push.
+Owner chat01a12965-cccd-7533-acc7-f11164e302b5 completed source4d48a1b6b245d832556235a55ea6542c9312c844 in fix-foot-mouse: targeted lane129/129, zero failures/unrun,1082.96seconds/jobs4; production build1534ms. Real App event acceptance passes pre-shot look, held right aim plus left fire, separate button releases, refused capture, menu/pause/blur and disposal. One independent code review, including confirmation of the real menu guard correction, is clear. This chat integrates the source immediately using its exact evidence.json, restores busy-game-files to Summit and recycles only its newly created lane. Actual integration commit is recorded by the normal merge tool in run-log.md. No release or push.
