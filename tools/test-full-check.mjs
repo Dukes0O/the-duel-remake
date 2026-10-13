@@ -1,4 +1,4 @@
-import { assertNightFrameContext, summarizeNightFrames, reuseNightFrames, runNightFrames } from './scenarios/frame-pacing.mjs';
+import { assertNightFrameContext, summarizeNightFrames, reuseNightFrames, runNightFrames, prepareNightPlayer } from './scenarios/frame-pacing.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { EventEmitter } from 'node:events';
