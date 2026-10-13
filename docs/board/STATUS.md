@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T03:02:12.494Z
+Observed at: 2026-10-13T03:05:28.743Z
 
-Observation commit: 36d7613f86620c143dbec13db28fca9e58ec6988
+Observation commit: 5c4ce84c290f3ae526bd89e5d01254f21b3d4d14
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 36d7613f86620c143dbec13db28fca9e58ec6988
+Integration HEAD: 5c4ce84c290f3ae526bd89e5d01254f21b3d4d14
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,7 +14,7 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: dirty; exact HEAD passed: no.
+Full tier: stale; exact HEAD passed: no.
 
 Last recorded full run: 2026-10-13T02:29:11.268Z; tested commit: 36d7613f86620c143dbec13db28fca9e58ec6988.
 
@@ -86,15 +86,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 293,583,685 B | +23,535,762 B | 250,000,000 B |
+| Build `dist/` | 293,583,685 B | +0 B | 250,000,000 B |
 | Wasteland models | 112,189,772 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 122,709 B | -2,861 B | 5,000,000 B |
+| Added bytes in last merge | 122,709 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 403,131,392 B | +353,280 B | unavailable |
+| Git objects | 403,187,712 B | +56,320 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 36d7613f86620c143dbec13db28fca9e58ec6988
+- Local integration/wasteland: 5c4ce84c290f3ae526bd89e5d01254f21b3d4d14
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
