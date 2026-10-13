@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T04:28:54.278Z
+Observed at: 2026-10-13T04:30:48.905Z
 
-Observation commit: 837d6ad6ee9204de42f7b1accc2cd3496c47dc41
+Observation commit: 89b4b0955ca89f4ecf056c7c2f6e33fd799605dd
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 837d6ad6ee9204de42f7b1accc2cd3496c47dc41
+Integration HEAD: 89b4b0955ca89f4ecf056c7c2f6e33fd799605dd
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -57,7 +57,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/deep-ramp-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-ramp-geometry |
-| codex/fac-full-check | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-full-check |
+| codex/fac-full-check | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-full-check |
 | codex/fix-ambush-opening | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-ambush-opening |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -75,7 +75,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T15:14:54-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
+| codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T21:29:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
 | codex/deep-ramp-geometry | DEEP-RAMP-GEOMETRY | 2026-10-12T21:11:31-07:00 | 0 | last commit 2026-10-12T21:11:31-07:00 | docs/changes/DEEP-RAMP-GEOMETRY.md, src/deep/deep-ramp.js, tools/test-deep-look.mjs, tools/test-deep-ramp.mjs |
 | codex/fix-ambush-opening | FIX-AMBUSH-OPENING | 2026-10-12T21:09:33-07:00 | 0 | last commit 2026-10-12T21:09:33-07:00 | docs/changes/FIX-AMBUSH-OPENING.md, src/arena/modes/ambush-alley.js, src/raiders.js, src/screen-arena.js, tools/test-arena-ambush-alley.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -96,7 +96,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 2,395,689 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 404,568,064 B | +21,504 B | unavailable |
+| Git objects | 404,624,384 B | +56,320 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -105,7 +105,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 837d6ad6ee9204de42f7b1accc2cd3496c47dc41
+- Local integration/wasteland: 89b4b0955ca89f4ecf056c7c2f6e33fd799605dd
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

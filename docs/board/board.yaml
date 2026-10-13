@@ -119,12 +119,13 @@ tasks:
 
   - id: AUD-15-P1
     title: "Bounded rival and traffic engine voices"
-    owner: "Future audio lane; not started tonight"
+    owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "backlog"
+    status: "ready"
+    waiting_on: "claude"
     needs: [AUD-14, AUD-17]
-    locks: [busy-game-files]
+    locks: [busy-game-files, sound-bank]
     details: "docs/board/cards/AUD-15-P1.md"
 
   - id: P4-GP-EXISTING
