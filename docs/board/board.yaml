@@ -297,7 +297,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "L"
-    status: "review"
+    status: "building"
     claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
     branch: "codex/deep-art-src"
     needs: []
@@ -382,8 +382,11 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
+    locks: []
+    claimed_by: "codex-live-edges-2026-10-13"
+    branch: "codex/fix-live-edges"
     priority: "high"
     details: "docs/board/cards/FIX-LIVE-EDGES.md"
 
