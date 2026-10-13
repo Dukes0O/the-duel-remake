@@ -63,3 +63,7 @@ The completed source may merge under the existing the-deep dev switch. This is a
 ### Final removals and deferred work
 
 The temporary build drafts, source-selection JSON and listening helper were recycled. The generated lane dist is recycled after gate completion. Required source, compressed runtime assets, exact failed/green gate records, build logs and pending listening evidence remain. Root folds this final text into the owned change note in the merge transaction, then recycles consumed review evidence. Copy the pending listening packet to integration evidence and update its card path before removing this lane if Claude has not yet judged it. No lane or branch is removed by this builder.
+
+## Consumed round-one verdict and lane cleanup — 12 October evening
+
+Claude approves round one with one required revision: pearl becomes a rising shimmer of about2s ending above the unchanged log pitch. Bubbles/cave use OGG if the unchanged seam analyzer passes; retain FLAC only on actual OGG failure and record the byte saving. Real mix belongs to DEEP-ZONE. The merged d6a76d3a lane and consumed review evidence are recycled before another lane opens. Card remains unfinished and ready for that bounded revision; reacquire sound-bank before cue edits. Keep current runtime audio and licensed recipe inputs. Earlier143/143/build/review evidence remains the source handoff, not a pass for the future revision.
