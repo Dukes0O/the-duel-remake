@@ -131,3 +131,124 @@ try{
   audio._snowmanAudioStage=(audio._snowmanAudioStage??0)+1;audio.cueBuffers['avalanche.rumble']={};finish();await Promise.resolve();equal(played,[],'existing pause/mute/restart epoch cancels late decode');
 }finally{COURSE.splice(length);}
 console.log(`Summit Avalanche: ${checks} controlled simulation, route, view and audio checks passed; native timing deferred.`);
+
+
+if(process.argv.includes('--drive')){
+  const {App}=await import('../src/app.js');
+  const {useRacingLine}=await import('./track-script-drive.mjs');
+  const {steeringYawAuthority}=await import('../src/config.js');
+  const {makeRng}=await import('../src/rng.js');
+  const {execFileSync}=await import('node:child_process');
+  const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  // Select only by the existing isolated delay, not by running extra races.
+  const candidates=[1989,1000,6].map(seed=>({seed,delay:makeRng(seed^0x4156414c).range(6,12)}));
+  const seeds={clear:candidates.reduce((a,b)=>a.delay>=b.delay?a:b),drift:candidates.reduce((a,b)=>a.delay<=b.delay?a:b)};
+  const results=[],savedLength=COURSE.length;
+  if(!COURSE.some(def=>def.id==='summit-run'))COURSE.push(SUMMIT_RUN);
+  const stage=COURSE.findIndex(def=>def.id==='summit-run');
+  const angle=(a,b=0)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+  const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
+  const smooth=value=>{value=clamp(value,0,1);return value*value*(3-2*value);};
+  try{
+    for(const condition of ['clear','drift'])for(const route of ['gallery','summit-open-road']){
+      const storage=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+      const cancel=Object.getOwnPropertyDescriptor(globalThis,'cancelAnimationFrame');
+      const memory=new Map();let app;
+      try{
+        globalThis.localStorage={get length(){return memory.size;},key:i=>[...memory.keys()][i]??null,
+          getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value)),removeItem:key=>memory.delete(key)};
+        globalThis.cancelAnimationFrame??=()=>{};
+        app=new App();app._refreshPlayer();
+        app.duel.featureFlags=createFeatureFlags({storage:null,overrides:{'summit-run':true,'grand-prix':false}});
+        const selected=seeds[condition];
+        // Same direct native start as driveCircuit: no shop fixture or saved race state.
+        app.duel.startCampaign({startStage:stage,seed:selected.seed,mode:'duel',opponentCount:0,
+          car:'falcone_f42',driverId:'club',difficulty:'casual',cpuDifficulty:'medium',tyre:'winter',playerId:app.player.id,upgrades:{}});
+        app.autopilot=true;app._scriptedCrashDone=true;useRacingLine(app,.95);
+        const duel=app.duel,state=duel.state,course=duel.course,line=course.racingLine;
+        assert.equal(state.opponents.length,0);assert.equal(state.tyre,'winter');
+        assert.equal(state.avalanche.delaySec,selected.delay,'native controller uses the selected isolated delay');
+        const cut=course.features.shortcuts.find(row=>row.id==='summit-open-road');
+        const begin=AVALANCHE.trigger,end=cut.end+140;
+        const offsetAt=s=>s<cut.start?line.offsetAt(s)*(1-smooth((s-begin)/(cut.start-begin))):
+          s<=cut.end?course.shortcutOffset(cut,s):line.offsetAt(s)*smooth((s-cut.end)/(end-cut.end));
+        // Native reference-line corner, brake and acceleration arithmetic, on
+        // the actual branch points. The immutable course/line is never edited.
+        const count=Math.ceil((end-begin)/line.step),step=(end-begin)/count,dynamics=line.dynamics;
+        const points=Array.from({length:count+1},(_,i)=>course.worldAt(begin+i*step,offsetAt(begin+i*step)));
+        const speeds=[],gaps=[];
+        for(let i=0;i<=count;i++){
+          const a=points[Math.max(0,i-1)],b=points[i],c=points[Math.min(count,i+1)];
+          const abx=b.x-a.x,abz=b.z-a.z,bcx=c.x-b.x,bcz=c.z-b.z,acx=c.x-a.x,acz=c.z-a.z;
+          const lab=Math.hypot(abx,abz),lbc=Math.hypot(bcx,bcz),lac=Math.hypot(acx,acz);
+          const curvature=lab*lbc*lac>1e-9?2*Math.abs(abx*bcz-abz*bcx)/(lab*lbc*lac):0;
+          speeds[i]=Math.min(dynamics.topSpeed,Math.sqrt(dynamics.lateralAccel/Math.max(curvature,1e-6)),(dynamics.yawRate??Infinity)/Math.max(curvature,1e-6));
+          gaps[i]=Math.max(.01,lbc);
+        }
+        speeds[0]=Math.min(speeds[0],line.speedAt(begin));speeds[count]=Math.min(speeds[count],line.speedAt(end));
+        for(let i=count-1;i>=0;i--)speeds[i]=Math.min(speeds[i],Math.sqrt(speeds[i+1]**2+2*dynamics.brake*gaps[i]));
+        for(let i=1;i<=count;i++)speeds[i]=Math.min(speeds[i],Math.sqrt(speeds[i-1]**2+2*dynamics.accel*gaps[i-1]));
+        const referenceSpeed=s=>{const position=clamp((s-begin)/step,0,count),i=Math.min(count-1,Math.floor(position));return speeds[i]+(speeds[i+1]-speeds[i])*(position-i);};
+        const originalDrive=app._driveAutopilot;
+        if(route==='summit-open-road')app._driveAutopilot=function(){
+          originalDrive.call(this);
+          if(state.status!=='racing'||state.s<begin||state.s>end||state.impactTimer>0)return;
+          const v=Math.max(0,state.speedMph)*DRIVE.mphToWorld,look=state.s+Math.max(12,v*.45);
+          const at=clamp(state.s+v*.18,begin,end),before=course.worldAt(at-.75,offsetAt(at-.75)),after=course.worldAt(at+.75,offsetAt(at+.75));
+          const tangent=Math.atan2(after.x-before.x,after.z-before.z);
+          const farther=course.worldAt(at+1.5,offsetAt(at+1.5));
+          const curvature=angle(Math.atan2(farther.x-after.x,farther.z-after.z),tangent)/Math.max(.01,Math.hypot(farther.x-before.x,farther.z-before.z)*.5);
+          const wanted=angle(tangent,course.at(at).heading)+Math.atan((offsetAt(clamp(look,begin,end))-state.lateral)*2.5/Math.max(15,v));
+          const yaw=curvature*v+(wanted-state.headingError)*6,surface=duel._drivingSurface(state.s,state.lateral);
+          const authority=Math.max(.05,steeringYawAuthority(state.speedMph,duel.car.grip,surface.traction,duel.car));
+          const target=Math.min(surface.speedLimit,duel.car.topSpeed*.97,referenceSpeed(state.s)*.95*Math.sqrt(duel.car.grip/.82*(surface.traction||1))/DRIVE.mphToWorld);
+          duel.setInput({throttle:state.speedMph<target?1:0,brake:state.speedMph>target+3?Math.min(1,(state.speedMph-target)/14):0,steer:clamp(-yaw/authority,-1,1),boost:false});
+        };
+        const events=[],strip=[],phases=[];let entry=null,exit=null,crashes=0,resets=0,finite=true;
+        duel.onChange((s,event)=>{
+          if(event.crash)crashes++;
+          if(event.boundaryReset||event.checkpointReset)resets++;
+          if(event.summitAvalanche)events.push({t:s.stageTimeSec,...event.summitAvalanche});
+        });
+        const observe=()=>({s:state.s,t:state.stageTimeSec,lateral:state.lateral,mph:state.speedMph,heading:state.headingError,tyre:state.tyre,phase:state.avalanche.phase});
+        const crossing=(a,b,at)=>{const f=(at-a.s)/(b.s-a.s);return {s:at,t:a.t+(b.t-a.t)*f,lateral:a.lateral+(b.lateral-a.lateral)*f,mph:a.mph+(b.mph-a.mph)*f,heading:a.heading+(b.heading-a.heading)*f,tyre:b.tyre,phase:b.phase};};
+        for(let tick=0;tick<120*900&&['countdown','racing'].includes(state.status);tick++){
+          const before=observe();app.advance(1/120,1/120);const after=observe();
+          finite&&=[after.s,after.t,after.lateral,after.mph,after.heading].every(Number.isFinite);
+          if(phases.at(-1)?.phase!==after.phase)phases.push({phase:after.phase,t:after.t,s:after.s});
+          if(entry===null&&before.s<begin&&after.s>=begin)entry=crossing(before,after,begin);
+          if(exit===null&&before.s<AVALANCHE.rejoin&&after.s>=AVALANCHE.rejoin)exit=crossing(before,after,AVALANCHE.rejoin);
+          if(after.s>=AVALANCHE.from&&after.s<=AVALANCHE.to){const surface=duel._drivingSurface(after.s,after.lateral),ground=course.groundAt(after.s,after.lateral);
+            strip.push({...after,shortcutId:surface.shortcutId??null,kind:surface.gripKind,road:surface.road,
+              speedLimit:surface.speedLimit,grip:surface.grip,x:ground.x,y:ground.y,z:ground.z});}
+        }
+        const facts={source,condition,route,seed:selected.seed,delaySec:selected.delay,skill:.95,car:'falcone_f42',tyre:state.tyre,solo:state.opponents.length===0,
+          preparation:'none',entry,exit,seconds:entry&&exit?exit.t-entry.t:null,phases,strip,events,hits:state.avalanche.hits,
+          crashes,resets,finite,status:state.status,completed:state.results?.completed===true,laps:state.completedLaps,endS:state.s};
+        results.push(facts);console.log(JSON.stringify({nativeAvalanche:facts}));
+      }finally{
+        try{app?.dispose();}finally{
+          if(storage)Object.defineProperty(globalThis,'localStorage',storage);else delete globalThis.localStorage;
+          if(cancel)Object.defineProperty(globalThis,'cancelAnimationFrame',cancel);else delete globalThis.cancelAnimationFrame;
+        }
+      }
+    }
+    for(const row of results){
+      assert.ok(row.completed&&row.laps===1,`${row.condition} ${row.route} completes the actual native race`);
+      assert.ok(row.finite&&row.solo&&row.tyre==='winter'&&row.crashes===0&&row.resets===0,`${row.condition} ${row.route} has no collision/reset or invalid setup`);
+      assert.ok(row.entry&&row.exit&&row.strip.length,`${row.condition} ${row.route} supplies actual segment witnesses`);
+      assert.equal(row.hits.length,0,'route difference excludes active-slide knock');
+      if(row.route==='summit-open-road'){
+        assert.ok(row.strip.every(s=>s.road&&s.shortcutId==='summit-open-road'),'native car stays on the actual Open corridor');
+        assert.ok(row.strip.every(s=>row.condition==='drift'?s.phase==='after'&&s.kind==='deep-snow'&&s.speedLimit===45:s.kind!=='deep-snow'&&!['slide','after'].includes(s.phase)),`${row.condition} is witnessed throughout the actual strip`);
+      }else assert.ok(row.strip.every(s=>s.road&&s.shortcutId!=='summit-open-road'&&s.kind!=='deep-snow'),'Gallery stays on its actual protected road');
+    }
+    for(const condition of ['clear','drift']){
+      const [gallery,open]=results.filter(row=>row.condition===condition);
+      for(const key of ['mph','lateral','heading'])assert.ok(Math.abs(gallery.entry[key]-open.entry[key])<1e-8,'both routes have equal actual entry '+key);
+      const difference=open.seconds-gallery.seconds;
+      console.log(JSON.stringify({nativeAvalancheComparison:{condition,seed:open.seed,openSeconds:open.seconds,gallerySeconds:gallery.seconds,difference}}));
+      assert.ok(condition==='clear'?difference>=-1.6&&difference<=-.8:difference>=3.5&&difference<=6.5,`${condition} actual route difference is ${difference.toFixed(6)} s`);
+    }
+  }finally{COURSE.splice(savedLength);}
+}
