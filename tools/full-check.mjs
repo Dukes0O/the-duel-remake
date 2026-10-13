@@ -95,7 +95,7 @@ export function heavyProcesses(rows,self=process.pid) {
   const ancestors=pid=>{const found=new Set();while(byPid.has(pid)&&!found.has(pid)){found.add(pid);pid=byPid.get(pid).parent;}return found;};
   const own=ancestors(self);
   const heavy=rows.filter(row=>!own.has(row.pid)&&!ancestors(row.pid).has(self)&&
-    /tools\/(?:full-check|run-tests|combat-balance|browser-harness|run-browser-scenarios|[^\s"]*field-rate)\.mjs|vite[^\r\n]*\bbuild\b|blender/i
+    /tools\/(?:full-check|run-tests|combat-balance|race-field-balance|browser-harness|run-browser-scenarios|[^\s"]*field-rate)\.mjs|vite[^\r\n]*\bbuild\b|blender/i
       .test(String(row.command||'').replaceAll('\\','/')));
   const ids=new Set(heavy.map(row=>row.pid));
   return heavy.filter(row=>![...ancestors(row.parent)].some(pid=>ids.has(pid)));

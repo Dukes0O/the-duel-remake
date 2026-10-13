@@ -401,8 +401,12 @@ test('process inspection counts foreign trees once and excludes the running chec
     {pid:2,parent:1,command:'node tools/browser-harness.mjs'},
     {pid:3,parent:0,command:'node tools/run-tests.mjs --jobs 4'},
     {pid:4,parent:3,command:'blender.exe --background render.py'},
-    {pid:5,parent:0,command:'node vite/bin/vite.js build'}];
-  assert.deepEqual(heavyProcesses(rows,1).map(row=>row.pid),[3,5]);
+    {pid:5,parent:0,command:'node vite/bin/vite.js build'},
+    {pid:6,parent:0,command:'node tools/race-field-balance.mjs --course red-mesa --jobs 4'},
+    {pid:7,parent:6,command:'node tools/race-field-balance.mjs --worker'}];
+  assert.deepEqual(heavyProcesses(rows,1).map(row=>row.pid),[3,5,6]);
+  assert.deepEqual(heavyProcesses([rows[0],rows.at(-1)],1).map(row=>row.pid),[7],
+    'a real same-file worker remains visible if its parent leaves the snapshot');
 });
 
 test('real temporary Git copy stays detached at starting source and safely unlinks its Junction',async()=>{
