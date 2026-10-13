@@ -39,7 +39,7 @@ import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {grandPrixCourse} from './race-field.js';
 import {pitTransitTarget} from './pit-lane.js';
-import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
+import {createKeyboardSteering,createKeyboardThrottle,keyboardSteeringDirection} from './keyboard-steering.js';
 import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
 import {getEquippedDriverId,isDriverUnlocked,normalizeDriverId,purchaseDriver as buyDriver,selectDriver as equipDriver} from './drivers.js';
@@ -111,6 +111,9 @@ export class App {
     this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
     this._footPointerReleasedAt=-Infinity;
     this._keyboardSteering=createKeyboardSteering();
+    this._arenaKeyboardSteering=createKeyboardSteering({arena:true});
+    this._keyboardThrottle=createKeyboardThrottle();
+    this._keyboardArena=null;
     this.players=loadPlayers();this.player=activePlayer(this.players);this.profile=this.player.profile;
     this._legacyRaceDefaults={...DEFAULT_RACE_SETTINGS,routeVariant:readRoutePreference(),lightingMood:readLightingMood(),ghostEnabled:readGhostEnabled()};
     // Capture old browser preferences once for every existing legacy player.
@@ -161,7 +164,7 @@ export class App {
         this._settleResult(event.stageResult,state);
       }
       else if(event.gameover)this._settleResult(state.results||{},state);
-      if(event.stageLoaded!=null){this._keyboardSteering.reset();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
+      if(event.stageLoaded!=null){this._resetKeyboardInput();this._stageStartCrashes=state.majorCrashes;this._markedRaceKey=null;this.driftNotice=null;this.checkpointNotice=null;this._startGhostStage(state);this._startLapTelemetry(state);}
       if(event.go){this._markActiveRace(state);this.ghostRecorder?.observe(state);this.grandPrixLapRecorder?.observe(state);this.lapTelemetryRecorder?.observe(state);}
       if(event.qualifyingFlyingStart)this.lapTelemetryRecorder?.armQualifying(state);
       // The native final qualifying finish must be captured before stage reload.
@@ -196,7 +199,7 @@ export class App {
         if(event.fighterExited && typeof document!=='undefined' && !document.pointerLockElement){
           try{document.querySelector('#view3d canvas')?.requestPointerLock?.()?.catch?.(()=>{});}catch{}
         }
-        this._keyboardSteering.reset();
+        this._resetKeyboardInput();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
     });
@@ -243,11 +246,11 @@ export class App {
   // loading never changes the user's pause or replays elapsed loading time.
   claimVisualReadiness(owner){
     if(owner==null)return false;
-    this._visualReadiness={owner,ready:false,state:null,course:null};this._stepAccumulator=0;this._keyboardSteering.reset();return true;
+    this._visualReadiness={owner,ready:false,state:null,course:null};this._stepAccumulator=0;this._resetKeyboardInput();return true;
   }
   holdVisualReadiness(owner){
     if(this._visualReadiness?.owner!==owner)return false;
-    this._visualReadiness.ready=false;this._stepAccumulator=0;this._keyboardSteering.reset();return true;
+    this._visualReadiness.ready=false;this._stepAccumulator=0;this._resetKeyboardInput();return true;
   }
   presentVisualFrame(owner,state,course){
     const gate=this._visualReadiness;
@@ -267,7 +270,7 @@ export class App {
     this.deepAudio.dispose();
     this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
-    this.stop();this._inputEvents?.abort();this.keys={};this._keyboardSteering.reset();this.onFrame=null;
+    this.stop();this._inputEvents?.abort();this.keys={};this._resetKeyboardInput();this.onFrame=null;
     this.frameDiagnostics?.stop();this.frameDiagnostics=null;
     this._visualReadiness=null;
     this._menuCourses.clear();this.ghostRecorder=this.ghostRecord=this.ghostPose=null;this.lapTelemetryRecorder=null;
@@ -344,10 +347,10 @@ export class App {
 
   _simulate(seconds) {
     this._syncHiddenRoadDiscovery();
-    if(!this.visualReady){this._stepAccumulator=0;this._keyboardSteering.reset();return;}
+    if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();return;}
     this._stepAccumulator += seconds;
     while (this._stepAccumulator + 1e-10 >= SIMULATION_STEP) {
-      if(!this.visualReady){this._stepAccumulator=0;this._keyboardSteering.reset();break;}
+      if(!this.visualReady){this._stepAccumulator=0;this._resetKeyboardInput();break;}
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
       this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
@@ -394,7 +397,7 @@ export class App {
     this.audio.unlock();
     this.audio.setPaused(false);
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
     this.duel.startCampaign({...options,laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
@@ -1167,7 +1170,7 @@ export class App {
   }
   _clearHiddenRoadInput() {
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this._footPointer.lookX = this._footPointer.lookY = 0;
     this._footPointer.fire = this._footPointer.aim = false;
     this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
@@ -1322,7 +1325,7 @@ export class App {
     if(st.paused && st.onFoot && typeof document!=='undefined' &&
         document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     st.boosting = false;
     this.audio.setPaused(st.paused);
@@ -1349,7 +1352,7 @@ export class App {
     if (this.duel.state.onFoot && typeof document !== 'undefined' &&
         document.pointerLockElement) document.exitPointerLock();
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     const st = this.duel.state;
     this.duel.clearDeep();this.deepAudio.stop();
     st.paused = false; st.status = 'menu'; st.boosting = false;
@@ -1414,7 +1417,7 @@ export class App {
     if (context !== null && !INPUT_CONTEXTS[context]) throw new Error(`Unknown input context: ${context}`);
     this.inputContext = context;
     this.keys = {};
-    this._keyboardSteering.reset();
+    this._resetKeyboardInput();
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false,
       shiftUp: false, shiftDown: false, interact: false });
   }
@@ -1436,19 +1439,25 @@ export class App {
     else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }
+  _resetKeyboardInput() {
+    this._keyboardSteering.reset();
+    this._arenaKeyboardSteering.reset();
+    this._keyboardThrottle.reset();
+    this._keyboardArena=null;
+  }
   _applyInput(dt) {
     const st = this.duel.state;
     const pad = this._readGamepad(dt);
     const context = this.activeInputContext();
-    if (st.paused) {this._keyboardSteering.reset();return;}
+    if (st.paused) {this._resetKeyboardInput();return;}
     if (st.status === 'exploring' && (st.hiddenRoadJourney?.controlsLocked||st.deepJourney?.controlsLocked)) {
       this.duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false,
         shiftUp: false, shiftDown: false, interact: false});
-      this._keyboardSteering.reset();
+      this._resetKeyboardInput();
       return;
     }
     if (context === 'foot') {
-      this._keyboardSteering.reset();
+      this._resetKeyboardInput();
       const foot=footControlInput(this.keys,pad,this._footPointer);
       this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,
         interact:foot.interact});
@@ -1456,12 +1465,17 @@ export class App {
       this._footPointer.lookX=this._footPointer.lookY=0;
       return;
     }
-    if (context !== 'car') {this._keyboardSteering.reset();return;}
-    if (this.autopilot) {this._keyboardSteering.reset();this._driveAutopilot(dt);return;}
+    if (context !== 'car') {this._resetKeyboardInput();return;}
+    if (this.autopilot) {this._resetKeyboardInput();this._driveAutopilot(dt);return;}
     const k = this.keys;
-    const keyboardSteer = this._keyboardSteering.update(keyboardSteeringDirection(k),dt);
+    const arena=this.duel.course?.def.venue===true&&this.duel.course?.def.arena===true;
+    if(this._keyboardArena!==arena){this._resetKeyboardInput();this._keyboardArena=arena;}
+    const steering=arena?this._arenaKeyboardSteering:this._keyboardSteering;
+    const keyboardSteer = steering.update(keyboardSteeringDirection(k),dt,st.speedMph);
+    const pressedThrottle=heldInput(context,'throttle',k);
+    const keyboardThrottle=arena?(pressedThrottle?1:0):this._keyboardThrottle.update(pressedThrottle,dt);
     this.duel.setInput({
-      throttle: heldInput(context, 'throttle', k) ? 1 : pad.throttle,
+      throttle: pressedThrottle ? keyboardThrottle : pad.throttle,
       brake: heldInput(context, 'brake', k) ? 1 : pad.brake,
       steer: keyboardSteer || pad.steer,
       boost: heldInput(context, 'boost', k) || pad.boost,
@@ -1558,10 +1572,12 @@ export class App {
       this.audio.unlock();
       if (!e.repeat) this._inputAction(keyboardAction(this.activeInputContext(), e.code));
       this.keys[e.code] = true;
-      if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset();
+      if(!keyboardSteeringDirection(this.keys)){this._keyboardSteering.reset();this._arenaKeyboardSteering.reset();}
+      if(!heldInput('car','throttle',this.keys))this._keyboardThrottle.reset();
       if (preventCarKeyDefault(e.code, e.target instanceof Element && !!e.target.closest('button'))) e.preventDefault();
     },{signal});
-    window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys))this._keyboardSteering.reset(); },{signal});
+    window.addEventListener('keyup', (e) => { this.keys[e.code] = false;if(!keyboardSteeringDirection(this.keys)){this._keyboardSteering.reset();this._arenaKeyboardSteering.reset();}
+      if(!heldInput('car','throttle',this.keys))this._keyboardThrottle.reset(); },{signal});
     window.addEventListener('pointerdown', () => this.audio.unlock(), { passive: true,signal });
     // Mouse events report each button in a chord; pointerdown only reports
     // the first button, losing left-click while right-click is already held.
@@ -1606,7 +1622,7 @@ export class App {
     window.addEventListener('blur', () => {
       this.keys = {};
       this._footPointer.fire=this._footPointer.aim=false;
-      this._keyboardSteering.reset();
+      this._resetKeyboardInput();
       if (!this.duel.state.paused && ['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) this.togglePause();
     },{signal});
   }
