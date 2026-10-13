@@ -1,3 +1,4 @@
+import {installDeepCourse,deepRampGround} from './deep/deep-journey.js';
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
 import { makeRng } from './rng.js';
@@ -44,7 +45,7 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
     this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
@@ -63,6 +64,7 @@ export class Course {
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
     if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);
     installSceneryBounds(this);
+    if(deep)installDeepCourse(this,deep);
   }
   phase(s){return this.closed?((s%this.length)+this.length)%this.length:clamp(s,0,this.length);}
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}
@@ -175,7 +177,7 @@ export class Course {
     }
     return width;
   }
-  surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
+  surfaceAt(s,lateral=0){const deep=deepRampGround(this,s,lateral);if(deep)return {road:true,mainRoad:false,shortcutId:'deep-ramp',roadHalfWidth:this.roadHalfWidthAt(s),deepRamp:true};const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
     if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
     const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
@@ -227,7 +229,7 @@ export class Course {
       p.y=lerp(p.y,hidden.y,blend);
     }
     return p;}
-  groundAt(s,off=0){const p=this._baseGroundAt(s,off);
+  groundAt(s,off=0){const deep=deepRampGround(this,s,off);if(deep)return deep;const p=this._baseGroundAt(s,off);
     if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
     return p;}
   _solidScenery(){
@@ -409,6 +411,7 @@ export class Course {
     return{...frame,s:bestS,lateral,distance:Math.hypot(x-frame.x,z-frame.z)};}
   // The road surface under a place (src/race-surfaces.js): the stretch the script gives it, then any patch. Verges are asphalt-kind: the old off-road rules govern them.
   gripKindAt(s,lateral=0){
+    const deep=deepRampGround(this,s,lateral);if(deep&&deep.progress>=this.deepRamp.shoreline.center.progress)return'sea-floor';
     if(!this.script)return'asphalt';
     const p=this.phase(s);
     const branch=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
