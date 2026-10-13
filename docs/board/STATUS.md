@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T04:45:59.837Z
+Observed at: 2026-10-13T04:47:15.240Z
 
-Observation commit: 9e88b5db3e546d339dc38aef0c7f6bf64266bc35
+Observation commit: e272b1bb33302450cf357f6b10550dba292bb2a7
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9e88b5db3e546d339dc38aef0c7f6bf64266bc35
+Integration HEAD: e272b1bb33302450cf357f6b10550dba292bb2a7
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -75,7 +75,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T21:29:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
-| codex/fac-full-check | FAC-FULL-CHECK | 2026-10-12T21:42:24-07:00 | 0 | last commit 2026-10-12T21:42:24-07:00 | AGENTS.md, docs/CODEX_PLAYBOOK.md, docs/FACTORY.md, docs/OPERATIONS.md, docs/board/cards/FAC-FULL-CHECK.md |
+| codex/fac-full-check | unknown | 2026-10-12T21:42:24-07:00 | 0 | last commit 2026-10-12T21:42:24-07:00 | AGENTS.md, docs/CODEX_PLAYBOOK.md, docs/FACTORY.md, docs/OPERATIONS.md, docs/board/cards/FAC-FULL-CHECK.md |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 8 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -94,7 +94,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 191,521 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 405,040,128 B | +16,384 B | unavailable |
+| Git objects | 405,074,944 B | +34,816 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 9e88b5db3e546d339dc38aef0c7f6bf64266bc35
+- Local integration/wasteland: e272b1bb33302450cf357f6b10550dba292bb2a7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

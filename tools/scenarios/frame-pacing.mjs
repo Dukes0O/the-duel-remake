@@ -2,7 +2,7 @@
 // The QA page installs disposable in-memory saves before the App loads.
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { inspectNightProcesses, validateFramePacket } from '../night-shift.mjs';
+import { inspectNightProcesses, validateFramePacket } from '../full-check.mjs';
 
 const entry = '/tools/menu-check.html';
 

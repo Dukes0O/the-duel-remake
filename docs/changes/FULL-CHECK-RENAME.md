@@ -19,9 +19,8 @@ about 15 minutes). The other stages run alongside builders, each counting as
 one of the at-most-three heavy jobs at `--jobs 4`. The full tier on an exact
 release commit still runs alone before a release.
 
-`tools/night-shift.mjs` does not do this yet. Until the new card FAC-FULL-CHECK
-lands, the old behaviour applies: the whole check needs the laptop to itself
-and the integration folder unchanged. Tonight only, builders pause from 03:45
+`tools/full-check.mjs` implements this in FAC-FULL-CHECK. Tonight only,
+builders still pause from 03:45
 until the "Record night" commit lands or 06:30 (see `docs/board/next-run.md`).
 
 ## Files touched
@@ -38,9 +37,10 @@ until the "Record night" commit lands or 06:30 (see `docs/board/next-run.md`).
 - `docs/board/cards/FAC-FULL-CHECK.md` and a `docs/board/board.yaml` entry:
   the new Codex card that renames the tool and makes the new behaviour real.
 
-Tool file names (`tools/night-shift.mjs`, `night-<date>.json`) are unchanged;
-FAC-FULL-CHECK renames them. Kyle's scheduled task command changes when that
-card merges.
+FAC-FULL-CHECK renames the tool to `tools/full-check.mjs`; the existing
+`night-<date>.json` record names and fields remain compatible. Kyle changes
+his scheduled task to `node tools/full-check.mjs --idle-awake --no-push`
+after acceptance.
 
 ## Removed
 
