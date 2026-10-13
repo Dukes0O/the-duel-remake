@@ -340,11 +340,12 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "codex-deep-audio-revision-2026-10-12"
     branch: "codex/deep-audio"
     needs: []
-    locks: [sound-bank]
+    locks: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-AUDIO.md"
 
