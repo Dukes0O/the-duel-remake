@@ -16,7 +16,7 @@ const views=[
   ['gallery-open-road',SUMMIT_RUN.roadBranches[0].start+35,28,180],
   ['devils-staircase',centre("Devil's Elbow"),15,75],
   ['summit-landmarks',road.length-150,13,100],
-  ['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+15,40,220],
+  ['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+40,90,150],
 ];
 
 export async function run(context){
