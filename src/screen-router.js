@@ -130,7 +130,8 @@ const {ensureRenderer, syncRendererReadiness} = readiness;
 const courseScreen = (playerProfile, selectedStage, message) => courseScreenMarkup(playerProfile,
   selectedStage, message, {teamRoomEnabled: app._switches().enabled('grand-prix'),
     grandPrixCareerEnabled: app._switches().enabled('grand-prix-career'),
-    grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode});
+    grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode,
+    lapChoiceFor: app._switches().enabled('lap-choice') ? (course,mode)=>app.getLapChoice(COURSE.indexOf(course),mode) : undefined});
 let teamRoomPlayerId = null;
 const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
@@ -216,6 +217,7 @@ root.addEventListener('click',e => {
   if(handleDriverAction(button,{app,refreshGarage,root,garageCar,credits}))return;
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
   if (button.dataset.car && !isCarUnlocked(profile(), button.dataset.car)) { openGarage(button.dataset.car); return; }
+  if(button.dataset.laps){const laps=Number(button.dataset.laps);app.setLapChoice(laps);updateMenuScene();root.querySelector(`[data-laps="${laps}"]`)?.focus({preventScroll:true});return;}
   for (const key of ['car','difficulty','mode','cpuDifficulty','tyre']) if (button.dataset[key]) { choices[key] = button.dataset[key];updateMenuScene();return; }
   if(button.dataset.arsenalPurchase){const result=app.purchaseArsenalWeapon(button.dataset.arsenalPurchase);refreshGarage(result.ok?'Weapon purchased.':result.reason);return;}
   if(button.dataset.weaponUpgrade){const result=app.purchaseWeapon(button.dataset.weaponUpgrade);refreshGarage(result.ok?'Weapon upgraded.':result.reason);return;}
@@ -273,7 +275,7 @@ root.addEventListener('click',e => {
     case 'career-import':
       if(app.duel.state.status!=='menu'||!playersOpen)return;
       root.querySelector('#career-import-file')?.click();return;
-    case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
+    case 'leaderboard':leaderboardOpen=true;coursesOpen=playersOpen=garageOpen=false;boardFilter.stage=choices.startStage;boardFilter.laps=choices.laps;boardFilter.driverId=getEquippedDriverId(profile());lastScreen=null;break;
     case 'leaderboard-close':leaderboardOpen=false;lastScreen=null;break;
     case 'armory': if(app.duel.state.status!=='menu')return;armoryOpen=true;armoryCar=choices.car;garageOpen=coursesOpen=playersOpen=leaderboardOpen=false;garageMessage='';lastScreen=null;break;
     case 'armory-close':if(app.isYardHomeActive())yardPanel='home';else armoryOpen=false;lastScreen=null;break;
@@ -399,7 +401,7 @@ function renderState(s) {
     if(menu&&garageOpen&&app.wastelandUnlocked())
       ui['modal-layer'].querySelector('.driver-panel')?.insertAdjacentHTML(
         'afterend',crewPanel(profile(),escapeHTML,{gearEnabled:app._switches().enabled('crew-gear')===true,warlordCardsEnabled:app._switches().enabled('warlord-cards')===true && app._switches().enabled('crew-gear')===true}));
-    const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER TWO LAPS`):s.rival?'BEAT YOUR RIVAL OVER TWO LAPS':'CHASE YOUR CAR PERSONAL BEST');
+    const challengeLabel=app.duel.stageDef?.kind==='chase'?'PURSUIT':s.objective||s.mode==='timetrial'?'TARGET':'CPU',routeLabel=supportsRouteVariants(app.duel.stageDef)?` · ${(getRouteVariantForSeed(s.seed)?.label||'Custom route').toUpperCase()}`:'';text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||choices.cpuDifficulty).toUpperCase()} ${challengeLabel}${routeLabel}`); text('stage-name',app.duel.stageDef?.name||'The open road'); text('stage-objective',s.opponents?.length>1?(s.objective?.kind==='checkpointRush'?'PASS THE LIT CHECKPOINTS':s.objective?.kind==='driftTrial'?'BANK THE DRIFT TARGET':s.objective?.kind==='stuntTrial'?'COMPLETE THE STUNT TARGETS':app.duel.stageDef?.kind==='chase'?'ESCAPE THE PURSUIT':`BEAT ${s.opponents.length} OPPONENTS OVER ${s.lapsTotal} LAPS`):s.rival?`BEAT YOUR RIVAL OVER ${s.lapsTotal} LAPS`:'CHASE YOUR CAR PERSONAL BEST');
     ui['pause-button'].setAttribute('aria-label',s.paused?'Resume race':'Pause race');
     if(modal){
       const selectedYardAction=`yard-${yardPanel==='home'?'career':yardPanel}`;

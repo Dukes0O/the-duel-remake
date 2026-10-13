@@ -3,6 +3,7 @@ import * as simContacts from './sim-contacts.js';
 import * as simRival from './sim-rival.js';
 import * as simPolice from './sim-police.js';
 import * as simLaps from './sim-laps.js';
+import {chosenRaceLaps, supportsLapChoice} from './lap-choice.js';
 import * as simCrash from './sim-crash.js';
 import * as simResults from './sim-results.js';
 import {normalizeWeapons, WEAPON_IDS} from './weapon-upgrades.js';
@@ -171,9 +172,10 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], _hiddenRoadVisit = false } = {}) {
     if (Number.isFinite(seed) && Number.isInteger(seed)) this.seed = seed >>> 0;
     this.state.seed = this.seed;
+    this._requestedLaps = laps;
     this.state.arena = null;
     this._hiddenRoadAutomaticEntry = discoveredGate === true;
     this.state.wastelandGateDiscovered = discoveredGate === true;
@@ -241,7 +243,11 @@ export class Duel {
     s.stageIndex = idx;
     const grandPrix = s.mode === 'grandprix' && grandPrixCourse(COURSE[idx]);
     if (s.mode === 'grandprix' && !grandPrix) s.mode = 'duel';
-    this.course = new Course(grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx], this.seed, {
+    const original = grandPrix ? courseForGrandPrix(COURSE[idx]) : COURSE[idx];
+    const laps = this.featureFlags.enabled('lap-choice') && supportsLapChoice(COURSE[idx],s.mode)
+      ? chosenRaceLaps(COURSE[idx],s.mode,this._requestedLaps,true) : original.laps;
+    const definition = laps === original.laps ? original : {...original, laps};
+    this.course = new Course(definition, this.seed, {
       hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
       muddyHollow: s.wastelandGateDiscovered === true,
     });

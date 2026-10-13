@@ -7,25 +7,25 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({
 const credits = value => Math.floor(value || 0).toLocaleString();
 const kilometres = course => (course.lengthU / 1000).toFixed(2).replace(/0$/, '');
 
-export function grandPrixCourseDescription(course) {
+export function grandPrixCourseDescription(course,laps=course.grandPrixLaps||3) {
   const fieldSize = course.fieldSize || 8;
   if (course.closed === false) return `${kilometres(course)} km · ${fieldSize} cars · ONE RUN.`;
-  return `${kilometres(course)} km per lap · ${fieldSize} cars · ${course.grandPrixLaps || 3} laps.`;
+  return `${kilometres(course)} km per lap · ${fieldSize} cars · ${laps} laps.`;
 }
 
-function classicDescription(course) {
+function classicDescription(course,laps) {
   if (course.practice) return 'Untimed free driving. No credits, records or finish line.';
   if (course.stuntTrial) return 'Two laps, four landed jumps and four crushes.';
   if (course.kind === 'drift') return 'Bank the drift target and finish before the deadline.';
   if (course.kind === 'checkpoint') return 'Pass all twelve timed gates over two laps.';
   if (course.kind === 'chase') return 'Escape pursuit and finish before the deadline.';
-  return `${kilometres(course)} km per lap · Two-lap ${course.kind ? 'standalone event' : 'campaign circuit'}.`;
+  return `${kilometres(course)} km per lap · ${laps==null?'Two-lap':`${laps}-lap`} ${course.kind ? 'standalone event' : 'campaign circuit'}.`;
 }
 
-function courseCard(profile, course, selected, {teamRoomEnabled, grandPrix}) {
+function courseCard(profile, course, selected, {teamRoomEnabled, grandPrix, lapChoiceFor}) {
   const owned = isCourseUnlocked(profile, course);
   const price = COURSE_PRICES[course.id];
-  const description = grandPrix ? grandPrixCourseDescription(course) : classicDescription(course);
+  const description = grandPrix ? grandPrixCourseDescription(course,lapChoiceFor?.(course,'grandprix')) : classicDescription(course,lapChoiceFor?.(course,'duel'));
   const teamRoom = teamRoomEnabled && course.closed !== false
     ? `<button type="button" data-team-room="${escape(course.id)}" aria-label="${owned ? 'Study' : 'Unlock to study'} ${escape(course.name)} in the Team Room" ${owned ? '' : 'disabled'}>TEAM ROOM ↗</button>` : '';
   const mode = grandPrix ? ' data-course-mode="grandprix"' : '';
@@ -37,12 +37,13 @@ export function courseAccessPanel(profile, selectedStage = 0, message = '', {
   grandPrixCareerEnabled = false,
   grandPrixAvailable = () => false,
   selectedMode = 'duel',
+  lapChoiceFor,
 } = {}) {
   const groups = {grandPrix: [], classic: []};
   for (const [index, course] of COURSE.entries()) {
     const grandPrix = grandPrixCareerEnabled === true && grandPrixAvailable(course) === true;
     const selected = index === selectedStage && (!grandPrix || selectedMode === 'grandprix');
-    groups[grandPrix ? 'grandPrix' : 'classic'].push(courseCard(profile, course, selected, {teamRoomEnabled, grandPrix}));
+    groups[grandPrix ? 'grandPrix' : 'classic'].push(courseCard(profile, course, selected, {teamRoomEnabled, grandPrix, lapChoiceFor}));
   }
   const grid = cards => `<div class="course-access-grid">${cards.join('')}</div>`;
   const group = (label, cards) => cards.length
