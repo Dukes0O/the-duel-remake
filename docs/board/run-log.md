@@ -1062,3 +1062,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 janitor: own merged new lanes/consumed green evidence recycled; old lanes, pending art and failed native evidence retained. Looks17152350B/20MB unchanged; tracked1950/323813992B before log correction to1949/324432150B before final merge;47asset/84export/333doc advisory candidates flagged,0unusedmodules/removedtests, no uncertain deletion.
 
 - 2026-10-13: Avalanche rejoin8ee201c8 merged; nearby33/33, build587ms, independent review CLEAR. All4native races finish/crash0, but timing+2.394/+8.252s FAIL; Claude question retained. No repeated gate/drive or release.
+
+- 2026-10-13: FIX-LIVE-EDGES sourcecdf55a11 merged; nearby94/94/jobs4, build576ms, independent review CLEAR. Parent native pace fails remain with Claude; completed source prerequisite unblocks later camera wiring. No repeated gate, release or push.

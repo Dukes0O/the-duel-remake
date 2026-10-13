@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T16:26:28.725Z
+Observed at: 2026-10-13T16:52:15.315Z
 
-Observation commit: e42fce5afeef568e8923dfedf2ab55f511422d78
+Observation commit: 4406a20307d6ebc3dc1ba5f47558f1b27fba451f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e42fce5afeef568e8923dfedf2ab55f511422d78
+Integration HEAD: 4406a20307d6ebc3dc1ba5f47558f1b27fba451f
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -77,7 +77,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-13T08:32:41-07:00 | 0 | last commit 2026-10-13T08:32:41-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/board/looks/deep-art/round-3-review.md, docs/board/looks/deep-art/round-3.jpg, docs/changes/DEEP-ART-SRC.md |
-| codex/fix-live-edges | FIX-LIVE-EDGES | 2026-10-13T09:22:19-07:00 | 0 | last commit 2026-10-13T09:22:19-07:00 | docs/changes/FIX-LIVE-EDGES.md, src/camera-clearance.js, src/track-kits.js, src/world-surfaces.js, tools/course-ground-checks.mjs |
+| codex/fix-live-edges | unknown | 2026-10-13T09:27:47-07:00 | 0 | last commit 2026-10-13T09:27:47-07:00 | docs/changes/FIX-LIVE-EDGES.md, src/camera-clearance.js, src/track-kits.js, src/world-surfaces.js, tools/course-ground-checks.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-13T09:23:33-07:00 | 0 | last commit 2026-10-13T09:23:33-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
@@ -98,7 +98,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 206,466 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 413,180,928 B | +35,840 B | unavailable |
+| Git objects | 413,245,440 B | +64,512 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -107,7 +107,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: e42fce5afeef568e8923dfedf2ab55f511422d78
+- Local integration/wasteland: 4406a20307d6ebc3dc1ba5f47558f1b27fba451f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
