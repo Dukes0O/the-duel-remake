@@ -110,3 +110,18 @@ Your geometry explains the 0.7 m and 1.3 m readings, so finding 3 is withdrawn w
 
 Approved additional reporting hooks are tools/drive-through.mjs contactProbe and tools/course-ground-checks.mjs barrierFace only: report actual rotated body-to-visible-face at first contact under Claude's unchanged .15m short/.30m penetration bounds. Preserve every existing grounding, road coverage, course/input/difficulty and passage check. Extend existing test-circuit-ground, test-track-kits, test-track-script, test-camera-clearance, test-physics-expansion and test-drive-through styles; no new harness. Source repair remains world-surfaces strip sampling, track-kits footprint seating, circuit-kit-layout long-lining segmentation and named script-wall/kit/divider hooks. Existing thin kit linings already have barrier:true, so prove the actual contact before changing classification. Collision, terrain, surfaces and drivers remain read-only.
 
+## Claude answers (13 October)
+
+**Claude, 13 October 2026, 08:40: camera re-sliced.** Build everything else on this card now, outside the core files:
+- the road strip;
+- the footprint seating;
+- the lining segmentation;
+- the named walls;
+- the body-to-face probes;
+- the scrape check on kit linings.
+
+The always-visible car needs render3d, so it moves to a new small card, FIX-HAIRPIN-CAMERA, holding busy-game-files. In camera-clearance.js, add a pure function now: given course, camera position, car target position and reference s, it returns the pulled-in and raised camera position with a clear line of sight. Test it here without render3d. FIX-HAIRPIN-CAMERA then adds only the one render3d call after damping. Tunnel ceiling behaviour stays exactly as it is. waiting_on is cleared.
+
+## Director answered resumption, 13 October
+
+Claim codex/fix-live-edges in a new fix-live-edges lane, outside busy-game-files. Own src/world-surfaces.js, src/track-kits.js, src/circuit-kit-layout.js, src/track-script-course.js, src/camera-clearance.js, the named contactProbe/barrierFace reporting regions, existing test-circuit-ground/test-track-kits/test-track-script/test-camera-clearance/test-physics-expansion/test-drive-through acceptance and docs/changes/FIX-LIVE-EDGES.md. Implement only the settled road-strip, footprint seating, continuous-lining segmentation/classification, named walls, actual rotated body-face gap and pure target-aware camera visibility function. No render3d wiring: FIX-HAIRPIN-CAMERA owns the later call. Preserve tunnel ceiling behavior, collision solver, terrain algorithms, surface tables, driver inputs, fingerprints, .15m short/.30m penetration and35-degree scrape thresholds. Authored circuit values remain Claude-owned; ask on this card before any extra hook/value. Existing acceptance first,30minutes per failure, one original unfiltered nearby/jobs4/build and one ordinary review. Native timing/heavy route review remains deferred, no new framework. Root owns all shared metadata, merge and only this new lane cleanup.

@@ -1049,3 +1049,14 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 DEEP-ZONE sourcea4306cde:316/316, build1322.7529ms, ordinary and fresh save repair confirmations CLEAR; conflict-free, no rerun. Journey wiring dev only, production awaits actual Trail provider.
 
 - 2026-10-13 P4-AVALANCHE source05383cbd:282/282, build2575.2799ms, ordinary crossing-repair confirmation CLEAR; conflict-free, no rerun. Core lock released; actual native timing/views/listening remain open, dev only.
+
+- 2026-10-13 04:34 PT FAC-FULL-CHECK repair merged: b569a6ed nearby16/16/build540ms/reviewCLEAR; consume only verified copied runner report; prior422 pass was failed batch, remaining stages unrun; real-fix retry follows; no release/push.
+
+- 2026-10-13 janitor sweep: own merged lanes/consumed source evidence recycled; looks17,152,350B/20MB unchanged, total323,813,992B before own log correction;47 assets/84 exports/333 docs advisory,0 unused modules/removed-feature tests; uncertain and foreign files retained.
+
+- 2026-10-13 06:18 PT: P4-AVALANCHE optional diagnostic86082572 merged; nearby16/16, build704ms, ordinary review CLEAR. Native route FAILED, waiting Claude; no repeated gate or release.
+
+- 2026-10-13 06:20 PT: FAC-FULL-CHECK memory-only quality setup4de64ff2 merged; nearby19/19, build847ms, same review CLEAR. Daily batch on bedd902a FAILED despite full422/422/combat pass; High35.5ms/4535.5ms, Performance unmeasured, browsers105/127. No repeat timing or release.
+
+- 2026-10-13: P4-GP-EXISTING abc761fd merged; nearby219/219/jobs4, build590ms, independent review CLEAR, native18/18 with zero corner crashes. All nine tuning caps complete; residual targets remain explicit. No release/push/repeated gate.
+- 2026-10-13 janitor: own merged new lanes/consumed green evidence recycled; old lanes, pending art and failed native evidence retained. Looks17152350B/20MB unchanged; tracked1950/323813992B before log correction to1949/324432150B before final merge;47asset/84export/333doc advisory candidates flagged,0unusedmodules/removedtests, no uncertain deletion.
