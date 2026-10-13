@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T13:16:24.053Z
+Observed at: 2026-10-13T13:17:02.165Z
 
-Observation commit: 1e911ef5e379e9db6ab00186ef07104e9120c6a2
+Observation commit: e5162c905e871e6ec2975b67f34889874b94bfea
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 1e911ef5e379e9db6ab00186ef07104e9120c6a2
+Integration HEAD: e5162c905e871e6ec2975b67f34889874b94bfea
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -59,7 +59,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/fac-frame-setup | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-frame-setup |
-| codex/p4-avalanche-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-native |
+| codex/p4-avalanche-native | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-native |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -78,8 +78,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T22:38:28-07:00 | 0 | last commit 2026-10-12T22:38:28-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, public/assets/models/deep/anchor.glb |
-| codex/fac-frame-setup | FAC-FULL-CHECK | 2026-10-13T05:15:56-07:00 | 0 | last commit 2026-10-13T05:15:56-07:00 | docs/changes/FAC-FULL-CHECK.md, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/p4-avalanche-native | P4-AVALANCHE | 2026-10-13T05:06:51-07:00 | 0 | last commit 2026-10-13T05:06:51-07:00 | docs/changes/P4-AVALANCHE.md, tools/test-summit-avalanche.mjs |
+| codex/fac-frame-setup | unknown | 2026-10-13T05:15:56-07:00 | 0 | last commit 2026-10-13T05:15:56-07:00 | docs/changes/FAC-FULL-CHECK.md, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-gp-existing | P4-GP-EXISTING | 2026-10-13T06:14:40-07:00 | 0 | last commit 2026-10-13T06:14:40-07:00 | docs/changes/P4-GP-EXISTING.md, src/race-field.js |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
@@ -99,9 +98,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 105,898 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 199,474 B | +93,576 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 410,232,832 B | +113,664 B | unavailable |
+| Git objects | 410,324,992 B | +92,160 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -110,7 +109,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 1e911ef5e379e9db6ab00186ef07104e9120c6a2
+- Local integration/wasteland: e5162c905e871e6ec2975b67f34889874b94bfea
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
