@@ -37,4 +37,4 @@ commands.length=0;const rCanvas=canvas(),route=new RouteMap(rCanvas),state={s:18
 check(!commands.some(c=>c[0]==='fillRect'),'in-game practice map draws no checkered finish');check(rCanvas['aria-label'].includes('Untimed')&&!/Lap \d|Checkered/.test(rCanvas['aria-label']),'in-game map has no lap objective');equal(rCanvas.dataset.lap,'0','practice map lap metadata stays zero');
 for(const entry of PRACTICE_MAP_LEGEND)check(rCanvas['aria-label'].includes(entry.description),'in-game screen-reader legend matches preview');
 const cached=route.current;commands.length=0;route.update(course,{...state,s:460},70);equal(route.current,cached,'moving in practice reuses cached activity layer');check(!commands.some(c=>c[0]==='fillText'),'dynamic frame does not redraw the static legend');route.dispose();
-console.log(`Practice map: ${checks} untimed/marker/accessibility/cache checks, with all fifteen race map/preview outputs unchanged.`);
+console.log(`Practice map: ${checks} untimed/marker/accessibility/cache checks, with all fifteen race map/preview outputs matching the corrected shared projection.`);
