@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T03:05:28.743Z
+Observed at: 2026-10-13T03:06:46.544Z
 
-Observation commit: 5c4ce84c290f3ae526bd89e5d01254f21b3d4d14
+Observation commit: fa67a4e35802ae54a23e3a10b51db8d869941004
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 5c4ce84c290f3ae526bd89e5d01254f21b3d4d14
+Integration HEAD: fa67a4e35802ae54a23e3a10b51db8d869941004
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -77,7 +77,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-career-podium | P4-CAREER-PODIUM | 2026-10-12T18:33:41-07:00 | 0 | last commit 2026-10-12T18:33:41-07:00 | docs/changes/P4-CAREER-PODIUM.md, src/grand-prix-career.js, src/progression.js, src/race-field.js, tools/test-deep-save.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-summit | P4-SUMMIT | 2026-10-12T18:33:30-07:00 | 0 | last commit 2026-10-12T18:33:30-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuit-effects.js |
+| codex/p4-summit | P4-SUMMIT | 2026-10-12T20:06:12-07:00 | 0 | last commit 2026-10-12T20:06:12-07:00 | docs/board/looks/p4-summit/round-1-review.md, docs/board/looks/p4-summit/round-1.jpg, docs/changes/P4-SUMMIT.md, src/camera-clearance.js, src/circuit-effects.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 7 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -94,7 +94,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 122,709 B | +0 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 403,187,712 B | +56,320 B | unavailable |
+| Git objects | 403,259,392 B | +71,680 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +103,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 5c4ce84c290f3ae526bd89e5d01254f21b3d4d14
+- Local integration/wasteland: fa67a4e35802ae54a23e3a10b51db8d869941004
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
