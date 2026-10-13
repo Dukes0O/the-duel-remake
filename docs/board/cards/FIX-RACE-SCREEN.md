@@ -90,3 +90,11 @@ The actual three High/LOD braking-board GLBs contain steel post mesh distance-bo
 ## Director exact existing main-test camera expectation, 13 October
 
 Grant only src/test.js existing camera-cycle array after hood: replace [wide,front,back,right,left,chase] with [wide,back,chase] under the approved four-view cycle. Preserve its same App.cycleCamera and equality checks and every surrounding state/input/pay/save assertion. This is an existing acceptance expectation, not a runtime test hook or new machinery; record the exact change in the note.
+
+## Director bounded existing visual guards after the original gate, 13 October
+
+Frozen c0ae657b original unfiltered nearby passed205/209, zero unrun, exit1, jobs4,1241762.6074ms. Only turn-sign-cells, hidden-road, rustwall-scene and world-composition failed. Actual High/LOD face/clearance suite passed, along with new UI, all443 driving and recorded replay/save checks; no build ran.
+
+Grant only tools/test-turn-sign-cells.mjs its existing board reference BoxGeometry width/height1.2/1.35 to1.8/2.025, the approved1.5 enlargement. Preserve thickness.08, posts, UVs, all cell/frustum/collider/resource assertions and limits. Root has reviewed the actual visual-geometry difference: shared chevron faces1.8x2.025, procedural braking faces2x width/height with ICE/post exact, and actual three GLB High/LOD face/letter matrices centred on their panel with anchors/posts/colliders exact. This is source/geometry review, not native pixel acceptance.
+
+The three ordinary hidden-road geometry values include the shared UI map. Supply exact old/current projection proof using the same physical course/NPC data and only the old/current route-map implementation; do not run --record-baseline or alter roadFollowing. Any fixture pin grant follows that proof. Run the existing unchanged world-composition --capture once on frozen c0 with fresh process/hold check, then supply every affected row/count and all unaffected row equality before an exact signature grant. No browser/photo/frame run or new capture machinery; actual1080p/1440p pixels remain UNRUN. Preserve all existing simulation/replay/collision guards and tolerances. Corrected source then gets the same independent confirmation and one corrected original nearby/jobs4 plus build.
