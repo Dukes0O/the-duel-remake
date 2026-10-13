@@ -139,6 +139,7 @@ if(process.argv.includes('--drive')){
   const {steeringYawAuthority}=await import('../src/config.js');
   const {makeRng}=await import('../src/rng.js');
   const {execFileSync}=await import('node:child_process');
+  const {sweepObstacle}=await import('../src/collision.js');
   const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
   // Select only by the existing isolated delay, not by running extra races.
   const candidates=[1989,1000,6].map(seed=>({seed,delay:makeRng(seed^0x4156414c).range(6,12)}));
@@ -204,9 +205,24 @@ if(process.argv.includes('--drive')){
           const target=Math.min(surface.speedLimit,duel.car.topSpeed*.97,referenceSpeed(state.s)*.95*Math.sqrt(duel.car.grip/.82*(surface.traction||1))/DRIVE.mphToWorld);
           duel.setInput({throttle:state.speedMph<target?1:0,brake:state.speedMph>target+3?Math.min(1,(state.speedMph-target)/14):0,steer:clamp(-yaw/authority,-1,1),boost:false});
         };
-        const events=[],strip=[],phases=[];let entry=null,exit=null,crashes=0,resets=0,finite=true;
+        const events=[],strip=[],phases=[];let entry=null,exit=null,crashes=0,resets=0,finite=true,firstCrash=null,firstScrape=null;
+        const contactWitness=()=>{
+          const ground=course.groundAt(state.s,state.lateral),surface=duel._drivingSurface(state.s,state.lateral);
+          const point={...ground,y:(state.groundHeight??ground.y)+(state.airHeight??0)};
+          const heading=course.at(state.s).heading+(state.headingError??0)+(state.slipAngle??0),dimensions=duel._vehicleSpec(state);
+          const solids=duel._obstacles(state.s-5,state.s+5).map(obstacle=>{
+            const hit=sweepObstacle(point,point,obstacle,heading,dimensions);
+            return {id:obstacle.id,kind:obstacle.kind,s:obstacle.s,off:obstacle.off,x:obstacle.x,y:obstacle.y,z:obstacle.z,
+              halfX:obstacle.halfX,halfZ:obstacle.halfZ,height:obstacle.height,minY:obstacle.minY,maxY:obstacle.maxY,
+              heading:obstacle.heading,verticalClearance:obstacle.verticalClearance===true,
+              overlap:hit?{inside:hit.inside,t:hit.t,nx:hit.nx,nz:hit.nz,penetration:hit.penetration}:null};
+          });
+          return {t:state.stageTimeSec,s:state.s,lateral:state.lateral,mph:state.speedMph,heading:state.headingError,slipAngle:state.slipAngle,
+            gear:state.gear,input:{...state.input},phase:state.avalanche.phase,ground,point,dimensions,surface,solids};
+        };
         duel.onChange((s,event)=>{
-          if(event.crash)crashes++;
+          if(event.crash){crashes++;firstCrash??={event:{...event},...contactWitness()};}
+          if(event.scrape)firstScrape??={event:{...event},...contactWitness()};
           if(event.boundaryReset||event.checkpointReset)resets++;
           if(event.summitAvalanche)events.push({t:s.stageTimeSec,...event.summitAvalanche});
         });
@@ -224,7 +240,7 @@ if(process.argv.includes('--drive')){
         }
         const facts={source,condition,route,seed:selected.seed,delaySec:selected.delay,skill:.95,car:'falcone_f42',tyre:state.tyre,solo:state.opponents.length===0,
           preparation:'none',entry,exit,seconds:entry&&exit?exit.t-entry.t:null,phases,strip,events,hits:state.avalanche.hits,
-          crashes,resets,finite,status:state.status,completed:state.results?.completed===true,laps:state.completedLaps,endS:state.s};
+          crashes,resets,finite,firstCrash,firstScrape,terminal:contactWitness(),status:state.status,completed:state.results?.completed===true,laps:state.completedLaps,endS:state.s};
         results.push(facts);console.log(JSON.stringify({nativeAvalanche:facts}));
       }finally{
         try{app?.dispose();}finally{
