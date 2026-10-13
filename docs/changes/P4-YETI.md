@@ -36,3 +36,7 @@ The new active-input fixture initially advanced a fixed 3.1 seconds, which can e
 The final affected acceptance passes 271 controlled checks. It covers actual cold memory reload and abandonment for starts with both GP career states. A narrow tag guard retains the original GP no-marker early return without even refreshing its profile; an existing-style call regression pins that legacy seam.
 
 The recorded-run sample has 89 appearances in 300 distinct identities with base seed 1989 unchanged. Actual start, packet replay and saved-input tests pass for all four modes. Additional stable-ID checks reject missing/mismatched/unavailable Summit and keep Grand Prix mode when only a saved numeric course position moved; the disposable catalogue change is restored in finally.
+
+## Existing paint-test correction
+
+The original unfiltered lane on cc5d5d19 completed 288/289 passed, one failed and zero unrun; exit 1 after 1,167,822.5282 ms wall time (suite aggregate 1,163,140.6408 ms). No build ran. Its only failure was the old four-preset catalogue count. Director grant 1b759bf1 permits five presets: the same three ordinary finishes and two reward finishes. The same finite 0..1 material bounds still check every original field on the original four presets; Frost uses only its two authored finish fields and its exact settled descriptor. The existing renderer retains factory values for omitted finish fields. No production material, value, tolerance, purchase, ownership, save or performance assertion changes.
