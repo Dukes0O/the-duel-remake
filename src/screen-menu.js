@@ -97,9 +97,14 @@ function updateMenuScene() {
   const lapChoiceOn=app._switches?.().enabled('lap-choice')===true&&supportsLapChoice(stage,choices.mode);
   const raceLaps=lapChoiceOn?app.getLapChoice(choices.startStage,choices.mode):choices.mode==='grandprix'?stage.grandPrixLaps??3:stage.laps||2;
   if(lapChoiceOn)choices.laps=raceLaps;else delete choices.laps;
-  root.querySelector('.menu-description').innerHTML=lapChoiceOn?`${raceLaps} laps. New horizons.<br>Build your way to the arena.`:'Two laps. New horizons.<br>Build your way to the arena.';
-  ui['lap-choice'].hidden=!lapChoiceOn;
-  ui['lap-choice'].querySelector('.segmented').innerHTML=lapChoiceOn?offeredRaceLaps(stage,choices.mode).map(laps=>`<button class="choice${laps===raceLaps?' on':''}" data-laps="${laps}" aria-pressed="${laps===raceLaps}">${laps}</button>`).join(''):'';
+  const intro=root.querySelector('.menu-description');
+  if(intro)intro.innerHTML=lapChoiceOn?`${raceLaps} laps. New horizons.<br>Build your way to the arena.`:'Two laps. New horizons.<br>Build your way to the arena.';
+  const lapControl=ui['lap-choice'];
+  if(lapControl){
+    lapControl.hidden=!lapChoiceOn;
+    const buttons=lapControl.querySelector?.('.segmented');
+    if(buttons)buttons.innerHTML=lapChoiceOn?offeredRaceLaps(stage,choices.mode).map(laps=>`<button class="choice${laps===raceLaps?' on':''}" data-laps="${laps}" aria-pressed="${laps===raceLaps}">${laps}</button>`).join(''):'';
+  }
   const fixedNight=stage.timeOfDay==='night'||stage.theme==='city';ui['lighting-mood'].disabled=fixedNight;ui['lighting-mood'].value=fixedNight?'night':app.lightingMood;
   app.menuStage = choices.startStage; ui['scene-select'].value = choices.startStage;ui['route-choice'].hidden=!supportsRouteVariants(stage);text('route-choice-label',app.getMenuRouteLabel()==='Custom route'?'CUSTOM ROUTE':'ROUTE');
   for(const button of root.querySelectorAll('[data-route-variant]')){const selected=getRouteVariantForSeed(app.getMenuSeed())?.id===button.dataset.routeVariant;button.classList.toggle('on',selected);button.setAttribute('aria-pressed',String(selected));}

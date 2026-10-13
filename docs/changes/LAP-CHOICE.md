@@ -26,7 +26,13 @@ Menu options, chosen distance/pay preview, course descriptions, HUD denominator,
 result copy/distance-under-pay and leaderboard lap filter use the chosen length.
 Changed assertions: catalog count 21→22 plus manifests, add lap-choice dev to
 required dev membership and exact beta catalog. All other old assertions exact.
-Independent money/save review and canonical lane/jobs4 + build remain pending.
+First canonical lane on 47b58cb0: 268/269 passed, one genuine compatibility
+fault, 0 unrun, 777.260 s. Existing partial course-menu fixture lacked the new
+optional LAPS block. Guarded its container/buttons and optional intro access;
+fixture and original assertions remain exact. The previous source built green.
+Fix-forward focused checks: original course eligibility 2522 PASS;
+LAP-CHOICE acceptance 516 PASS. No other suites were repeated.
+Corrected source needs one fresh lane/jobs4 + build and reviewer confirmation.
 
 ## Removed
 Replaced fixed default-only finish/record acceptance and eligible fixed-lap UI.
