@@ -344,7 +344,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: [DEEP-LOOK, DEEP-ZONE-FORMAT]
+    needs: [DEEP-LOOK, DEEP-ZONE-FORMAT, DEEP-RAMP-GEOMETRY]
     locks: [busy-game-files]
     flag: "the-deep"
     details: "docs/board/cards/DEEP-ZONE.md"
@@ -458,5 +458,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-TITAN-REPLAY-TIMEOUT.md"
 
-
+  - id: DEEP-RAMP-GEOMETRY
+    title: "Pacific Deep ramp geometry from actual coast bounds"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "building"
+    claimed_by: "codex-session-01a1325c-da51-7ad3-90a3-dccce8964fdd"
+    branch: "codex/deep-ramp-geometry"
+    needs: [DEEP-ZONE-FORMAT]
+    locks: []
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-RAMP-GEOMETRY.md"
 

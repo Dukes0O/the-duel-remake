@@ -95,3 +95,5 @@ evidence remains for review; Root owns cleanup after the accepted merge.
 Future variant eligibility and free/paid choices remain the parent card.
 Browser, balance, frame and full checks belong to night. No App/UI edits,
 live checkout, port 5174, real saves, release, push or history rewrite.
+
+After acceptance e22022fd, Root recycled the clean new lane and consumed original/canceled evidence, removed its merged branch without force, and folded the redundant own card into this note and the parent. Runtime source and all final verdicts remain committed. Older P4 lanes were retained.
