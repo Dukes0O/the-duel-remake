@@ -1,8 +1,10 @@
+import {previewCircuitFlags} from './preview-flags.mjs';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { createFeatureFlags, FEATURE_STATES } from '../src/feature-flags.js';
 import { createProfile, isCarUnlocked, normalizeProfile } from '../src/progression.js';
 import { wastelandUnlocked } from '../src/wasteland-access.js';
+import { parseBoard } from './board.mjs';
 
 let checks = 0;
 const failures = [];
@@ -80,14 +82,19 @@ check('launcher binds a private strict port', () => {
   assert.notEqual(port, 5174, 'preview must never use the live game port');
 });
 check('preview launch requests every current dev switch', () => {
-  // Read from the catalog so a new development switch cannot be missed
-  // (WAR-02a-SAL added warlords, released by WAR-SAL-RELEASE). Career backup is left out: Preview saves
-  // are memory-only.
+  // Course flags come from their manifests; other dev switches retain their
+  // actual batch list. Career backup stays excluded from memory-only Preview.
+  const literalFlags = launcher.match(/set "PREVIEW_FLAGS=([^"\r\n]*)"/)?.[1];
+  assert.ok(literalFlags, 'launcher keeps its explicit non-course flag list');
+  assert.match(launcher, /node tools\\preview-flags\.mjs/,
+    'launcher obtains course flags from the real manifest generator');
+  assert.match(launcher, /set "PREVIEW_FLAGS=%PREVIEW_FLAGS%,%COURSE_FLAGS%"/,
+    'launcher appends the generated course flags before opening Preview');
+  const flags = new Set([...literalFlags.split(','), ...previewCircuitFlags()]);
   const devSwitches = Object.entries(FEATURE_STATES)
     .filter(([name, state]) => state === 'dev' && name !== 'career-backup').map(([name]) => name);
   for (const flag of devSwitches) {
-    assert.match(launcher, new RegExp(`(?:flags[^\\r\\n]*|PREVIEW_FLAGS[^\\r\\n]*)${flag}`),
-      `preview URL must request ${flag}`);
+    assert.ok(flags.has(flag), 'preview URL must request ' + flag);
   }
 });
 
@@ -196,10 +203,15 @@ check('operations guide documents the playtest launcher', () => {
   assert.match(operations, /Titan.{0,40}unlock|unlock.{0,40}Titan/is,
     'operations guide must describe the seeded Titan unlock');
 });
-check('preview card waits for Kyle to confirm the desktop launch', () => {
-  const card = board.match(/  - id: PREVIEW-LAUNCHER\r?\n([\s\S]*?)(?=\r?\n  - id:|$)/)?.[0] ?? '';
-  assert.match(card, /\r?\n\s+waiting_on:\s*kyle\s*(?:\r?\n|$)/,
-    'PREVIEW-LAUNCHER must wait on Kyle until he has opened the desktop icon once');
+check('preview acceptance follows its open or completed card state', () => {
+  const cards = parseBoard(board);
+  const card = cards.find(item => item.id === 'PREVIEW-LAUNCHER');
+  if (cards.completed.has('PREVIEW-LAUNCHER')) {
+    assert.equal(card, undefined, 'a finished preview card leaves the open board');
+  } else {
+    assert.equal(card?.waiting_on, 'kyle',
+      'an open preview card keeps its original pending desktop confirmation');
+  }
 });
 
 console.log(`Preview launcher: ${checks} acceptance checks, ${failures.length} failures.`);

@@ -1,3 +1,6 @@
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
+import {getRouteVariants, supportsRouteVariants} from '../src/route-variants.js';
+import {publishReferenceSet} from './build-reference-laps.mjs';
 import assert from 'node:assert/strict';
 import {COURSE} from '../src/config.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
@@ -17,7 +20,9 @@ equal(REFERENCE_POLICY, {car: 'stuttgart_959s', driver: 'club', cpu: 'medium',
 const definitionsBefore = JSON.stringify(COURSE);
 const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(row => [row.id, row])).values()];
 const targets = referenceTargets();
-equal(targets.length, 28, 'Every current closed event/route, including native dev circuits, receives its own reference');
+const expectedKeys = definitions.filter(definition => definition.closed !== false).flatMap(definition =>
+  (supportsRouteVariants(definition) ? getRouteVariants(definition).map(route => route.id) : ['fixed']).map(route => definition.id + '|' + route));
+equal(targets.map(target => target.key).sort(), expectedKeys.sort(), 'Every closed event and actual route has exactly one reference target');
 check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => targets.some(target => target.eventId === definition.id &&
   target.seed === (definition.layoutSeed ?? 1989))), 'Authored circuits retain their declared layout seed or native fixed fallback while switches are off');
 equal(targets.filter(target => target.eventId === 'pacific-canyon').map(target => [target.route, target.seed]),
@@ -28,13 +33,12 @@ equal(referenceTargets([{id: 'authored-fixture', closed: true, layoutSeed: 9012}
   [{key: 'authored-fixture|fixed', eventId: 'authored-fixture', route: 'fixed', seed: 9012}],
   'Authored fixed events use their layout seed');
 equal(referenceTargets([{id: 'open-road', closed: false, layoutSeed: 1}]), [], 'Open roads do not become cyclic references');
-equal(referenceTargets(ALL_CIRCUITS.filter(definition=>definition.id==='summit-run')), [], 'Summit is a point-to-point road, so it has no cyclic reference target');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Target discovery does not edit global definitions');
 const nativeCatalog = await runReferenceWorker({catalogOnly: true});
-check(ALL_CIRCUITS.filter(definition=>definition.closed!==false).every(definition => nativeCatalog.events.includes(definition.id)),
+check(ALL_CIRCUITS.every(definition => nativeCatalog.events.includes(definition.id)),
   'Fresh worker enables authored circuits in the actual native COURSE registry');
 // Tremblant Woods, Tremblant Snow and Harbour Lights are released (state on); Panorama Ridge is still dev and needs the QA query.
-check(nativeCatalog.flags.every(row => row.enabled && row.state === (['tremblant-woods', 'tremblant-snow', 'harbour-lights'].includes(row.name) ? 'on' : 'dev')),
+check(nativeCatalog.flags.every(row => row.enabled && row.state === CIRCUIT_MANIFESTS.find(manifest => manifest.flag === row.name)?.state),
   'Fresh worker enables every circuit switch: released ones are on, the rest are real dev switches through the supported QA query');
 equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');
@@ -217,3 +221,17 @@ for (const target of targets) {
 }
 
 console.log(`Reference laps: ${checks} checks.`);
+
+// Per-course publication must remain complete and atomic, without native reruns.
+{
+  const rows=Object.fromEntries(Object.entries(REFERENCE_LAPS).filter(([key])=>key.startsWith('pacific-canyon|')));
+  const writes=[],renames=[],directories=[];
+  const output=new URL('../.qa-dist/reference-publication-fixture/',import.meta.url);
+  const operations={output,makeDirectory:path=>directories.push(path),write:(path,bytes)=>writes.push([path,bytes]),rename:(from,to)=>renames.push([from,to])};
+  await assert.rejects(async()=>publishReferenceSet({'pacific-canyon|route_a':rows['pacific-canyon|route_a']},operations),/every route/);
+  equal(writes,[],'a partial route set cannot publish any course');
+  equal(publishReferenceSet(rows,operations),1,'complete event publishes just its own course file');
+  equal(writes.length,1,'one course uses one atomic temporary file');
+  equal(renames.length,1,'completed data replaces the course file atomically');
+  equal(JSON.parse(writes[0][1]),rows,'publisher preserves every measured record value');
+}

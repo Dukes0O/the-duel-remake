@@ -109,7 +109,10 @@ export function terrainGeometry(course) {
   const baseOffsets = course.def.arena?[-42,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,42]:(course.def.terrainHalfWidth===64||course.def.kind==='chase'||course.def.layout==='city')?[-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64]:[-140,-120,-100,-80,-72,-64,-56,-48,-40,-32,-24,-18,-14,-10,-7,0,7,10,14,18,24,32,40,48,56,64,72,80,100,120,140];
   const base = new THREE.Color(groundTint(course)), col = new THREE.Color(); let row = 0;
   const terrainStep=course.def.offroad||course.def.arena?2:4;
-  for (let s = 0; s <= course.length; s += terrainStep, row++) {
+  const terrainRows=Math.floor(course.length/terrainStep)+1+
+    (course.def.ridgeLandform && course.length%terrainStep!==0 ? 1 : 0);
+  for (; row < terrainRows; row++) {
+    const s=Math.min(row*terrainStep,course.length);
     // Match the branch's flattened bed exactly. A fixed coarse cross-section
     // can interpolate the hillside through an otherwise clear shortcut.
     const offsets=[...baseOffsets];

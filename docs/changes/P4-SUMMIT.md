@@ -112,3 +112,9 @@ Incorrect centered-post/nominal 6.292 m roof assumptions and duplicated cyclic
 reference assertions are removed. Repeated history is folded here. All current
 models, recipes, original thresholds, verdicts and still-needed evidence remain.
 Two own unpublished interior-view deliverable drafts went to Recycle Bin.
+
+## Factory resumption design before code
+
+Claude corrected the F42 Medium race target to 270-330 s; strategy differences remain 4-8 s and 2-5 s. Start the opt-in 180 m limiter bay at 80 km/h, keep service four seconds, and use warm-tarmac only on asphalt pieces of A/B (summer 1.0, winter .82, warm winter top share .97). Existing lane roads, legacy tyres and Deep sea-floor remain exact. Dense B groves, existing soft snow heaps, brighter Summit-only night snow and the real kit windows/slit reuse approved assets. All native strategies and round-two art wait for night; at most six measured sets with original F42/.95/Medium/1989/4242. No timing or driving pass is claimed.
+
+Integration sync conflicts: keep FAC-04 registry/flags/prices/Preview and FAC-05 catalogue fixtures byte-exact; drop obsolete central Summit additions. Preserve GP nine-base admission and Azure -400/Panorama -43 staging, adding only Summit gridStartS. Keep incoming derived menu counts, pay and qualifying controls, with Summit-only native briefing/default mode. Existing closure/reverse-lap and reference-target assertions select closed circuits with unchanged tolerances; full native catalogue coverage includes Summit. SURFACE_KINDS adds warm-tarmac by Claude decision; all old values remain. Append-only actual Summit replay/world rows will preserve every old byte, with no cyclic reference row.

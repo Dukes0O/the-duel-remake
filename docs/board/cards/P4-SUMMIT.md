@@ -1,0 +1,72 @@
+# P4-SUMMIT
+
+The short board entry controls current state, ownership, dependencies and locks.
+These are the card's detailed design, acceptance and recorded decisions.
+
+```yaml
+  - id: P4-SUMMIT
+    title: "Summit Run: the mountain epic"
+    owner: codex
+    lane: RACE
+    size: L
+    needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW]
+    status: building
+    claimed_by: codex-overnight-2026-10-12
+    branch: codex/p4-summit
+    flag: summit-run
+    owns: [src/circuits/summit-run.js, tools/test-circuit-summit.mjs, docs/changes/P4-SUMMIT.md, tools/scenarios/summit-run.mjs, docs/board/looks/p4-summit]
+    hooks: [src/circuits/index.js, src/feature-flags.js, start-preview.bat, src/race-field.js, src/game.js, src/track-script-course.js, src/race-field-driver.js, src/course.js, src/world.js, src/course-access.js, src/snow-world.js, src/screen-menu.js, tools/test-feature-flags.mjs, tools/test-preview.mjs, src/scene-lighting.js, src/render3d.js, src/camera-clearance.js, tools/test-reference-laps.mjs, tools/test-circuit-layouts.mjs, tools/test-wasteland-beta.mjs, src/sim-contacts.js]
+    acceptance:
+      - "Build docs/CIRCUITS.md section 5.4 in src/circuits/summit-run.js as a point-to-point road of about 14 km: sections A to G with their surfaces, six hairpins at the stated radii, three jumps, the tree-line pit lane, the light path along the road, the Gallery and Open Road split (avalanche itself in P4-AVALANCHE), the summit hut and observatory. Field of 6, all cars."
+      - "Race time 6 to 8 minutes on Medium in a mid car. The pit-stop balance target in section 3.5 met and recorded. Frame cost within the usual limit, including night with snowfall. Then P4-FINISH-SUMMIT."
+
+    overnight_design: "Director before code: build Claude5.4 actual52-piece open-road draft,720mclimb,sixhairpins,threejumps; derive scenic section/surface/light/pit from actual named-piece boundaries within permitted10percent fit. Avalanche coordinates remain exact: trigger10.0km,split10.1,slide10.42to10.58,rejoin10.9. Sixcars means5CPU,one native point-to-point run,own summit-run dev and noCombat. Reuse existing surface,pit,light,snow,kits,shortcut and tunnel paths. Narrow granted field/game hooks handle course-specific default count/open finish; branch driver/course/world hooks only for real Gallery/Open Road. No new test machinery or hidden-course frames."
+
+    additional_scope: "Director before code: settled2600CR course-access id via existing normalization (fresh money/save review); additive summit-run dev catalogue/preview assertions only with old/new reason; opt-in authored mixed-winter terrain/flakes with full-winter default exact; native Summit defaultMode menu hook only. No testtolerance changes."
+
+    review_scope: "Director grants mixed-winter lighting context, snowy Open Road material, and actual lateral Gallery roof checks in the named presentation hooks. Legacy tunnels and full-winter defaults stay exact. Existing reference assertions select closed circuits; all 27 cyclic targets remain, with Summit explicitly excluded because it is an open road. Record the reason for each changed catalogue or reference assertion. No timing on hidden dev art."
+
+    catalogue_sync_scope: 'Director before edit: preserve actual Harbour union 2595735e release order and all 25 accepted switches. Append Summit after every current course and append summit-run dev to the existing beta catalogue fixture, with 26 switches. Keep production, QA isolation, defaults, thresholds and closed reference behavior exact; Summit is open and excluded from cyclic references.'
+
+    gallery_contact_scope: 'Director before code, 12 October: native8367733b stops at Gallery first roof, s 10164.4984; actual roof underside is 5.056 m above road. Existing grounded contact intentionally omits y and treats it horizontally. Grant only _staticContacts in sim-contacts.js plus existing authored Gallery collider creation: roof colliders opt into vertical clearance and receive actual previous/current ground y when missing. Preserve shared points and every unflagged/legacy grounded path exactly; pillars/back stay solid and existing airborne behavior remains. Use existing sweepObstacle bounds, no geometry, driver, input, threshold, frame or new harness change. Existing Summit test proves real grounded passage and airborne roof contact; native strategies rerun honestly.'
+
+    waiting_on: claude
+    native_design_question: 'b7dd65eb: focused roof/contact regressions and 39 High/LOD placements pass. All three real original F42/.95/Medium/1989/4242 strategy runs finish without crashes: summer 276.7833 s, pit 290.2583 s, winter 262.9417 s. One legal 4 s service at 7004.2820 m. Race target 360–480, summer-minus-pit 4–8 and winter-minus-pit 2–5 fail; measured differences -13.475 and -27.3167. Existing pit spans roughly 529 m and limiter occupies 34 s including service. Source-only diagnosis found no within-scope defect. Claude must settle the actual mid-car/course/pit/surface design before more gameplay code; no driver-only slow profile or target change. Actual round-one art is next, separate from failed gameplay acceptance.'
+
+    art_review_source: 7d51620ccad48a0b91e035c5361c2c6055616a50
+    art_review_packet: 'p4-summit/docs/board/looks/p4-summit/round-1.jpg and round-1-review.md; 16 actual High/Performance views, 309,720 B, zero warnings/errors, memory-only, no frames. Exterior Gallery visible; Open Road readability weak, no fork acceptance. Production/native exact to b7dd65eb; one camera-only recipe correction. Claude review pending; no lane/build/merge acceptance.'
+```
+
+## Claude decision, 12 October 2026 (inbox, Claude answers; revised after review)
+
+Mid car Falcone F42; race 270 to 330 s. Opt-in pit fields `limiterLength`
+and `limitKph` in `src/pit-lane.js` (absent: today's behaviour, Tremblant
+Snow exact); Summit uses 180 m at 80 km/h centred on the box, CPU estimate
+from the limited stretch. New `warm-tarmac` on every asphalt piece of A and B
+(gravel stays), tyre column `warm` with summer 1.0 and winter tuned .62 to
+.88 (then winter top-speed share on warm .93 to .97 if needed), drawn as
+asphalt, hint WARM TARMAC under .80 grip. At most six measured sets in the
+inbox order (80 km/h, then 90, then road snow from piece 28 after the pit
+straight, then the warm winter numbers). Holds lock
+`surfaces`; hooks pit-lane.js and track-script-scene.js. Art round one hold:
+Tremblant grove pines on B, Tremblant Snow snow and plough heaps,
+Harbour-level night exposure, the accepted gallery kit, lit summit windows,
+and a fork view.
+
+## Director source scope before resumption — 12 October 2026
+
+Resume only after Deep Save releases busy-game-files and GP existing releases gp-existing-field-width; acquire all locks together, including surfaces. Career has a real variant-cost question with Claude, so Summit is next available Phase4 work. Retain the older lane and exact52-piece layout/road length, gallery fork coordinates, six cars, one run, noCombat, own dev switch, immutable generation stage20. Own manifest summit-run/dev/2600/grandPrix/releaseOrder4/F42-Club-racing-line.95. Drop obsolete central registry/flags/price/preview/count edits, preserving accepted factory/Pay/Qual/Panorama/Deep source.
+
+Additional exact grants: pit-lane.js optional limiterLength/limitKph bay and CPU estimate; race-field-driver.js normal driving outside that optional bay; race-surfaces.js warm-tarmac/tyre warm column; track-script-scene.js warm draws as ordinary asphalt with no overlay. Start180m/80kmh and warm winter.82/.97; preserve every legacy lane, road, service4s and tyre/surface path. Existing test-race-surfaces and test-pit-lane cover additions and legacy exactness. Explain additive SURFACE_KINDS and Claude's corrected270–330 timing assertion; strategy differences4–8 and2–5 stay exact. Actual measured sets (maximumsix, existing F42/Medium/.95/1989/4242 roles) wait for night, in Claude's exact order.
+
+Art reuse grants: existing forest block in track-script-course.js and birch block in circuit-effects.js gain Summit-only placement ranges for dense sectionB thinning at TreeLine; smooth existing rock normals only on owned cloned geometry; existing snow soft banks/verges and Harbour-level Summit-only night exposure. In track-kits.js treat only the actual observatory opening materials/geometry as a lit slit and real hut windows; no whole-dome glow, new substitute model or geometry/collision change. Preserve the accepted Gallery asset/transforms and10m road clearance. Native roundtwo keeps the original16 views plus a genuine fork view, at night, no hidden-course frame measurement.
+
+Shared test grants are limited to test-circuit-layouts closure/reverse-lap loops selecting closed circuits and test-reference-laps declared-seed target coverage selecting closed circuits; native catalogue coverage still covers ALL circuits including open Summit. Keep existing per-event publishers/generators and fixtures; no replay/world signature regeneration without its required reviewed difference. No new machinery. One completed source freeze/nearby lane/build/code review plus required paid-course save review; dev source handoff can precede deferred measured strategy/art acceptance, with the card open and failures honest. No release or push.
+
+## Director append-only fixture scope before code — 12 October 2026
+
+FAC-04 registration preflight confirms open Summit requires two new owned files when its dev flag is enabled in QA: tools/replays/courses/summit-run.json (one actual primary Duel case using the existing recorded inputs, actual30/60/144 fingerprints) and tools/fixtures/world-signatures/summit-run.json (actual scene hash and resource counts). Existing loaders discover them; preserve every prior row/byte. No reference-lap file: closed:false is excluded by the current declared target selector, not by a new exception. No central registry, base replay envelope or publisher change.
+
+The existing test-world-composition --capture command checks baseline coverage before emitting a new row. Grant a TEMPORARY capture-only exclusion of ONLY missing summit-run from that coverage roster, using the existing --capture flag. Every other course's coverage stays required. Capture the real new scene, prove every old emitted signature equals its unchanged baseline, write only the new per-course row, then restore the guard file byte-exact in the SAME source change. Normal guards and the final tool source remain unchanged; no provisional fixture/stub, new command, general missing-row permission or machinery. Keep an honest initial-signature/visual-difference note: this is the new authored14km open course and approved Gallery/forest/snow arrangement; existing real round-one review and later night art verdict remain distinct from a source signature. No old signature is regenerated.
+
+If the named Course geometry hooks invalidate shortcutSourceFingerprint, grant only the existing generator plus separate --verify-solvers and its generated-shortcut-presets.js output, conditional on all15 original entries/order/numeric paths/version2 staying byte-identical. Do not edit the fingerprint assertion or any expected world/replay value. Use these existing tools only after Summit acquires all its locks; current GP/Save/Surface source gates retain priority and ownership until green handoff.

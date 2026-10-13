@@ -1,3 +1,5 @@
+import {deepDiscoverySnapshot} from './deep/deep-discovery.js';
+import {markDeepHintsShown, purchaseDeepKit as buyDeepKit} from './deep/deep-hints.js';
 import {purchaseWeaponUpgrade,purchaseArsenalWeapon as buyArsenalWeapon,getProfileWeapons,WEAPON_IDS} from './weapon-upgrades.js';
 import {getCarLoadout,equipCarWeapon as equipCarWeaponSlot} from './car-loadout.js';
 import {selectedCrewId,selectCrew as chooseCrew} from './crew.js';
@@ -32,6 +34,7 @@ import {DEFAULT_ROUTE_VARIANT,isRouteVariant,getRouteVariant,getRouteVariantForS
 import {normalizeLightingMood} from './lighting-moods.js';
 import {DEFAULT_RACE_SETTINGS,normalizeRaceSettings,raceSettingsChoices,raceSettingsStage} from './race-settings.js';
 import {grandPrixCourse} from './race-field.js';
+import {pitTransitTarget} from './pit-lane.js';
 import {createKeyboardSteering,keyboardSteeringDirection} from './keyboard-steering.js';
 import {INPUT_CONTEXTS,keyboardAction,heldInput,gamepadEdgeActions,carGamepadDrive,
   footGamepadInput,footControlInput,preventCarKeyDefault} from './input-contexts.js';
@@ -595,6 +598,7 @@ export class App {
       grandPrixCareerEnabled:state.mode==='grandprix'&&this._switches().enabled('grand-prix-career')===true,
       combatRewardsEnabled:state.mode==='wasteland'&&wastelandRulesActive(state),
       muddyHollowEnabled:state.wastelandGateDiscovered===true,
+      deepEnabled:this._switches().enabled('the-deep')===true,
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     const awarded=settleRace(this.profile,payload);
     if(awarded.awarded){
@@ -859,6 +863,29 @@ export class App {
   }
   getMuddyHollowProgress() {
     return muddyHollowSnapshot(this.profile, this.player?.id, true);
+  }
+  getDeepDiscovery() {
+    return deepDiscoverySnapshot(this.profile, this.player?.id,
+      !!this.player && this._switches().enabled('the-deep') === true);
+  }
+  showDeepGarageHints() {
+    if (!this.player || this.duel.state.status !== 'menu' || !this._switches().enabled('the-deep')) return;
+    this._refreshPlayer();
+    const updated = markDeepHintsShown(this.profile, {enabled: true});
+    if (updated !== this.profile) { this.profile = updated; this._saveProfile(); }
+  }
+  purchaseDeepKit() {
+    if (!this.player || this.duel.state.status !== 'menu')
+      return {ok: false, reason: 'Return to the garage before buying a dive kit.', cost: 0};
+    this._refreshPlayer();
+    const previous = this.profile;
+    const result = buyDeepKit(previous, {enabled: this._switches().enabled('the-deep') === true});
+    if (result.ok) {
+      this.profile = result.profile;
+      if (!this._saveShopProfile(previous)) return {ok: false, reason: 'Could not save this dive kit purchase. Your credits were kept.', cost: 0};
+      this.duel.emit({garage: true});
+    }
+    return result;
   }
   getHiddenRoadDiscovery() {
     const old = this._hiddenRoadDiscovery, value = this.profile?.wasteland;
@@ -1347,8 +1374,10 @@ export class App {
     const frame = d.course.at(st.s);
     const halfWidth=d.course.roadHalfWidthAt?.(st.s)??DRIVE.roadHalfWidth;
     const cruisingLane=-Math.min(DRIVE.laneOffset,halfWidth*.48);
-    let targetLat = cruisingLane;
-    if(st.objective?.kind==='stuntTrial'){
+    const metresPerSec = st.speedMph * DRIVE.mphToWorld;
+    const transit = pitTransitTarget(d.course, st, st.s + Math.max(12, metresPerSec * .45));
+    let targetLat = transit?.lateral ?? cruisingLane;
+    if(!transit && st.objective?.kind==='stuntTrial'){
       const targets=d.course.features.crushables.filter(prop=>!st.crushedProps.includes(prop.id)).map(prop=>({prop,gap:d.relativeS(prop.s,st.s)-st.s})).filter(item=>item.gap>=-10&&item.gap<=105).sort((a,b)=>a.gap-b.gap);
       if(targets.length)targetLat=targets[0].prop.off;
     }
@@ -1356,7 +1385,7 @@ export class App {
     // before returning. The center offers a safe gap to two-way traffic.
     const opponents=st.opponents|| (st.rival?[st.rival]:[]);
     const obstacles=opponents.length?[...st.traffic,...opponents.map(opponent=>({...opponent,alive:true,dir:1}))]:st.traffic;
-    for (const c of obstacles) {
+    for (const c of transit ? [] : obstacles) {
       if (!c.alive) continue;
       const ahead = (d.relativeS?d.relativeS(c.s,st.s):c.s)-st.s;
       const closingSpeed = Math.max(0, st.speedMph - c.dir * c.speedMph) * DRIVE.mphToWorld;
@@ -1364,7 +1393,6 @@ export class App {
         targetLat = Math.min(halfWidth-1.8, Math.max(0, c.lateral + 3.2)); break;
       }
     }
-    const metresPerSec = st.speedMph * DRIVE.mphToWorld;
     const headingTarget = Math.atan((targetLat - st.lateral) * 2.5 / Math.max(15, metresPerSec));
     const look = d.course.at(st.s + metresPerSec * .18);
     const desiredYaw = look.curvature * metresPerSec + (headingTarget - st.headingError) * 6;
@@ -1373,7 +1401,7 @@ export class App {
     const steer = Math.max(-1, Math.min(1, -desiredYaw / authority));
     const bend = Math.max(Math.abs(frame.curvature), Math.abs(d.course.at(st.s + 100).curvature), Math.abs(d.course.at(st.s + 220).curvature));
     const cornerSpeed = Math.min(d.car.topSpeed * .94, .85 * Math.sqrt(DRIVE.maxLateralAccel * d.car.grip / Math.max(.0001, bend)) / DRIVE.mphToWorld);
-    const targetSpeed = Math.min(drivingSurface.speedLimit,cornerSpeed);
+    const targetSpeed = Math.min(drivingSurface.speedLimit,transit?.speedMph ?? cornerSpeed);
     const throttle = st.speedMph < targetSpeed ? 1 : 0;
     const brake = st.speedMph > targetSpeed + 4 ? Math.min(1, (st.speedMph - targetSpeed) / 20) : 0;
     d.setInput({ throttle, brake, steer, boost: false });

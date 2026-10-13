@@ -1,14 +1,18 @@
+import {CIRCUIT_MANIFESTS, BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
+import {createProfile} from '../src/progression.js';
+import {courseAccessPanel} from '../src/course-access-ui.js';
+import {previewCircuitFlags} from './preview-flags.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { Course } from '../src/course.js';
 import { COURSE } from '../src/config.js';
 import { TREMBLANT_WOODS } from '../src/circuits/tremblant-woods.js';
-import { TREMBLANT_SNOW, SNOWMAN_SPOTS } from '../src/circuits/tremblant-snow.js';
+import { manifest as ownedManifest, TREMBLANT_SNOW, SNOWMAN_SPOTS } from '../src/circuits/tremblant-snow.js';
 import { ALL_CIRCUITS } from '../src/circuits/index.js';
 import { buildTrackScript } from '../src/track-script.js';
 import { FEATURE_STATES, createFeatureFlags } from '../src/feature-flags.js';
-import { COURSE_PRICES } from '../src/course-access.js';
+import { COURSE_PRICES, isCourseUnlocked, purchaseCourse } from '../src/course-access.js';
 import { GRAND_PRIX_COURSES, grandPrixCourse } from '../src/race-field.js';
 import { supportsCombat } from '../src/combat-weapons.js';
 import { courseHasWinterSurfaces, gripFor, ICE_MAX_LENGTH, ICE_BOARD_DISTANCE } from '../src/race-surfaces.js';
@@ -35,7 +39,6 @@ test('Tremblant Snow is a stable event behind its own switch, right after Trembl
   assert.equal(TREMBLANT_SNOW.id, 'tremblant-snow');
   assert.equal(TREMBLANT_SNOW.flag, 'tremblant-snow');
   assert.equal(FEATURE_STATES['tremblant-snow'], 'on', 'released (RELEASE-TREMBLANT-SNOW, Kyle approved it on 12 October 2026)');
-  assert.equal(FEATURE_STATES['tremblant-woods'], 'on', 'the autumn circuit stays released');
   assert.equal(ALL_CIRCUITS.indexOf(TREMBLANT_SNOW), ALL_CIRCUITS.findIndex(circuit => circuit.id === 'tremblant-woods') + 1, 'second in release order, right after Tremblant Woods');
   assert.ok(COURSE_PRICES['tremblant-snow'] > 0);
   assert.ok(GRAND_PRIX_COURSES.includes('tremblant-snow') && grandPrixCourse(TREMBLANT_SNOW));
@@ -44,11 +47,10 @@ test('Tremblant Snow is a stable event behind its own switch, right after Trembl
   assert.ok(Object.isFrozen(TREMBLANT_SNOW) && TREMBLANT_SNOW.laps === 3 && TREMBLANT_SNOW.closed === true);
   assert.deepEqual(Object.keys(TREMBLANT_SNOW.fieldPace), ['easy', 'medium', 'hard']);
   const bat = readFileSync(new URL('../start-preview.bat', import.meta.url), 'utf8');
-  assert.match(bat, /PREVIEW_FLAGS=[^\r\n]*\btremblant-snow\b/);
+  assert.ok(bat.includes('preview-flags.mjs') && previewCircuitFlags().includes('tremblant-snow'), 'the actual manifest-derived Preview includes Tremblant Snow');
   // On the course list while its switch is on, after Tremblant Woods (Harbour Lights, released later, comes after it).
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('tremblant-snow'), true, 'on for players with no URL flag');
-  assert.equal(COURSE.at(-1).id, 'harbour-lights', 'Harbour Lights, released after it, is last on the course list');
   assert.equal(COURSE.findIndex(item => item.id === 'tremblant-snow'), COURSE.findIndex(item => item.id === 'tremblant-woods') + 1, 'right after Tremblant Woods');
 });
 
@@ -296,6 +298,7 @@ const CASES = [
 ];
 for (const mph of [70, 110]) {
   test(`a car on winter tyres driven at the barriers at ${mph} mph stops against them`, () => {
+    const before = [...COURSE], appendedIndex = COURSE.length;
     COURSE.push(TREMBLANT_SNOW);
     try {
       for (const [name, s, side] of CASES) {
@@ -303,7 +306,11 @@ for (const mph of [70, 110]) {
         assert.ok(farthest > 0, `${name}: the car did reach the edge`);
         assert.ok(farthest <= gap - .5, `${name}: the car got ${farthest.toFixed(1)} m past the road edge; the ${id} face stands ${gap.toFixed(1)} m out`);
       }
-    } finally { COURSE.splice(COURSE.findIndex(item => item.id === 'tremblant-snow'), 1); }
+    } finally {
+      assert.equal(COURSE[appendedIndex], TREMBLANT_SNOW, 'cleanup removes only this fixture entry');
+      COURSE.splice(appendedIndex, 1);
+      assert.deepEqual(COURSE, before, 'barrier fixture restores the exact original course roster');
+    }
   });
 }
 
@@ -339,4 +346,34 @@ test('the pines grow in groves of every size with bare clearings, deep into the 
 test('the far hills carry dark rock and dark forest patches over their snow', () => {
   const colours = TREMBLANT_SNOW.effects.backdrop.colours;
   assert.ok(colours.patches.length >= 2 && colours.snow.share < .95);
+});
+
+// Independent accepted metadata belongs to this course, so another course can join without a shared edit.
+test('tremblant-snow retains its accepted registry identity and access', () => {
+  const id = 'tremblant-snow', definition = TREMBLANT_SNOW;
+  assert.deepEqual([definition.id, definition.flag, definition.stage], [id, id, 19]);
+  assert.deepEqual([ownedManifest.id, ownedManifest.flag, ownedManifest.state, ownedManifest.price, ownedManifest.grandPrix, ownedManifest.releaseOrder],
+    [id, id, 'on', 1800, true, 1]);
+  assert.equal(FEATURE_STATES[id], 'on');
+  assert.equal(COURSE_PRICES[id], 1800);
+  assert.equal(GRAND_PRIX_COURSES.includes(id), true);
+  assert.equal(createFeatureFlags({storage:null, qa:false}).enabled(id), true);
+  assert.equal(supportsCombat(definition), false);
+  assert.equal(definition.noCombat, true); assert.equal(definition.hasRival, true);
+  const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on');
+  const publicIndex = COURSE.findIndex(row => row.id === id);
+  assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
+  const fresh = createProfile();
+  assert.equal(isCourseUnlocked(fresh, id), false);
+  const poor = purchaseCourse({...fresh, credits:1799}, id);
+  assert.equal(poor.ok, false); assert.equal(poor.profile.credits, 1799);
+  const rich = {...fresh, credits:2500}, bought = purchaseCourse(rich, id);
+  assert.equal(bought.ok, true); assert.equal(bought.cost, 1800); assert.equal(bought.profile.credits, 700);
+  assert.deepEqual(bought.profile.courses.unlocked, [...rich.courses.unlocked, id].filter(value => COURSE.some(row => row.id === value)));
+  assert.equal(isCourseUnlocked(bought.profile, id), true); assert.equal(isCourseUnlocked(bought.profile, 'pacific-canyon'), true);
+  for (const other of CIRCUIT_MANIFESTS.filter(row => row.id !== id)) assert.equal(isCourseUnlocked(bought.profile, other.id), false, 'buying this course never grants another paid course');
+  const unowned = courseAccessPanel(fresh, 0, ''), owned = courseAccessPanel(bought.profile, publicIndex, '');
+  assert.match(unowned, /Tremblant Snow/); assert.match(unowned, /1,?800 CR/);
+  assert.doesNotMatch(unowned, /UNLOCKED<\/span><h3>Tremblant Snow/);
+  assert.match(owned, /UNLOCKED<\/span><h3>Tremblant Snow/);
 });

@@ -48,6 +48,14 @@ export function pitAt(course, s, off) {
   if (Math.abs(off) <= course.roadHalfWidthAt(p)) return null;
   return lane;
 }
+// Automatic drivers that were pushed into the lane follow its line to the exit.
+// This only describes a target; it never takes manual input or starts service.
+export function pitTransitTarget(course, actor, look = actor.s) {
+  if ((!actor.finished && actor.field?.pitChoice?.stop) || actor.pit?.phase === 'servicing') return null;
+  const lane = pitAt(course, actor.s, actor.lateral);
+  return lane ? {lateral: lane.offsetAt(look), speedMph: PIT.limitMph} : null;
+}
+
 export function pitBox(lane, actor) {
   const index = actor.field?.index;
   if (!Number.isInteger(index)) return lane.box;

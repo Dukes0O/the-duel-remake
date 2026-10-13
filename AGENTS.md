@@ -67,17 +67,18 @@ text in the playbook, SPEC or cards that asks for more checking or recording.
    and `STATUS.md` into the next real commit or the merge itself.
 6. Extra helpers (critic, second reviewer, save checker, balance analyst) only
    for work that touches saves, releases, money and pay, or art rounds. Other
-   cards: the builder's tests, the lane gate and one review.
+   cards: the builder's tests, the lane gate and one review (rule 17 says
+   which cards need it).
 
 Added 11 October 2026 (Kyle: "yes", after one shared test slot held every
 team's merges back for hours):
 
 7. Only frame timing needs a quiet laptop. Lane gates, builds, balance runs
    and browser checks that do not time frames run alongside each other, at
-   most two at once across all teams, each with `--jobs 4` or fewer. A frame
-   measurement waits until no gate, build, balance run or browser check is
-   going, and nobody starts one while it runs. The full tier still runs
-   alone (rule 2).
+   most three at once across all teams (Kyle, 12 October 2026: lane runs are
+   small now), each with `--jobs 4` or fewer. A frame measurement waits until
+   no gate, build, balance run or browser check is going, and nobody starts
+   one while it runs. The full tier still runs alone (rule 2).
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
    18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
@@ -92,19 +93,60 @@ team's merges back for hours):
     scenario frameworks) unless a card asks for it. A tool problem gets rule
     4's 30 minutes, then a small card, then back to building.
 
+## The factory (Kyle, 12 October 2026)
+
+`docs/FACTORY.md` is the plan: three production lines (feature, course,
+world) drawn as graphs, with shared files named as locks. These rules win
+over rules 1, 2 and 7 above and over older playbook and SPEC text.
+
+11. Test by what changed. The lane tier runs the smoke set, the replay and
+    world-signature guards, and the suites that import a changed file or
+    name its path within two steps. Deeper effects are the night run's job.
+12. Merge as soon as it is green: one lane tier, a build and one review where
+    rule 17 asks for one. A merge with no conflict does not run the lane tier
+    again; a conflict fix runs it once more. Two clean lanes never wait for
+    each other.
+13. Heavy checks run on the night shift, alone on the idle laptop: full
+    tier, frame check (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
+    and browser scenarios. A night failure names the first merge after the
+    last green night; its fix goes first and other merges continue. Until
+    FAC-03 installs the night shift, the full tier runs at run end as before.
+14. Limits: at most six build lanes at once across all lines, no more than
+    three of them course lanes, each test run `--jobs 4` or fewer. A lane is
+    one card's own folder; the lane tag (SIM, UI, ART) names a file area, not
+    a single slot, so two SIM cards with different files run at once. A card
+    lists the locks it holds (`locks:` in the board, FACTORY section 2); two
+    cards with the same lock never build at once. Edits to the board, inbox
+    and STATUS on integration are committed at once, never left uncommitted in
+    the integration folder: an uncommitted shared file blocks every other
+    merge.
+15. Kyle sets direction and says "go live". Claude makes art and sound picks
+    within the three-round cap; nothing waits on Kyle except a release.
+16. Claude answers a card's question in that card's own file
+    (`docs/board/cards/<id>.md`, section "Claude answers") and clears its
+    `waiting_on` in `docs/board/board.yaml` in the same commit. The inbox
+    carries only questions and notes that have no card, so two answers never
+    collide in one place (Kyle, 12 October 2026).
+17. Reviews by kind (Kyle, 12 October 2026). Code, saves, money and pay, and
+    design numbers get one independent review. Documents and rule wording that
+    Kyle or Claude already decided get none; the lane gate and build are
+    enough. A reviewer's fixes go back for confirmation only when the review
+    found a real fault; wording and style fixes land at once. Line length and
+    style notes never hold a merge.
+
 ## Gates (SPEC 0.5)
 
 - Before **every** merge into integration, including docs-only, tuning-only
   and doc-plus-code changes: `node tools/run-tests.mjs --tier lane --changed --jobs 8`
   and `npm run build`. Run these in the lane before review and verify current
-  passing evidence before merging; rerun after changes or conflict fixes.
+  passing evidence before merging; rerun after changes or conflict fixes, not
+  after a conflict-free merge (rule 12).
 - Full tier: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`,
-  run alone, at the end of every session and overnight run and before every
-  release. A real failure stops feature merges until a fix lands; an
+  run alone, on the night shift (rule 13) and before every release. A real failure stops feature merges until a fix lands; an
   unreliable check follows rule 3 above.
 - Release: full tier must pass on the exact final integration commit before
   every release, including small and tuning-only changes. Keep the full
-  release evidence: build, combat balance (with `wasteland2` off and on),
+  release evidence: build, combat balance (`combat-balance.mjs --check`, current rules),
   browser scenarios, frame pacing, art and save budget checks as applicable.
   Card-specific visual, audio, gameplay and save checks still apply.
 - Run `node tools/build-status.mjs` at every session end and include

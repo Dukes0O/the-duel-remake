@@ -120,3 +120,9 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {id:'observatory',s:finish-60,lateral:-40,heading:Math.PI/2,scale:1},
   ],
 });
+
+// Course-owned registration preserves generation identity and release order.
+export const manifest=Object.freeze({
+  id:'summit-run',flag:'summit-run',state:'dev',price:2600,grandPrix:true,releaseOrder:4,
+  driver:Object.freeze({car:'falcone_f42',driverId:'club',controller:'racing-line',skill:.95}),
+});

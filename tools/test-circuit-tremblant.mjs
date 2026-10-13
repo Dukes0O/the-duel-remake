@@ -1,8 +1,15 @@
+import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
+import {COURSE_PRICES, isCourseUnlocked, purchaseCourse} from '../src/course-access.js';
+import {COURSE} from '../src/config.js';
+import {supportsCombat} from '../src/combat-weapons.js';
+import {CIRCUIT_MANIFESTS, BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
+import {createProfile} from '../src/progression.js';
+import {courseAccessPanel} from '../src/course-access-ui.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { Course } from '../src/course.js';
-import { TREMBLANT_WOODS } from '../src/circuits/tremblant-woods.js';
+import { manifest as ownedManifest, TREMBLANT_WOODS } from '../src/circuits/tremblant-woods.js';
 import { buildTrackScript } from '../src/track-script.js';
 import { GRAND_PRIX_COURSES, grandPrixCourse } from '../src/race-field.js';
 import { racingLineFor, buildSpeedProfile } from '../src/race-lines.js';
@@ -25,7 +32,7 @@ const timber = road.pieces.filter(item => item.name === 'Timber Straight');
 test('Tremblant Woods races with the full field', () => {
   assert.ok(GRAND_PRIX_COURSES.includes('tremblant-woods'));
   assert.ok(grandPrixCourse(TREMBLANT_WOODS));
-  assert.equal(grandPrixCourse({ id: 'eifel-crown' }), false);
+  assert.equal(grandPrixCourse({ id: 'titan-arena' }), false);
   assert.equal(TREMBLANT_WOODS.closed, true);
   assert.equal(TREMBLANT_WOODS.laps, 3);
   // The racers' pace on this circuit, set per difficulty from the balance runs.
@@ -326,4 +333,34 @@ test('the ground beside each corner is greyer and darker gravel, and no other gr
   assert.ok(changed > 200, `${changed} vertices re-tinted`);
   assert.equal(brighter, 0, 'only ever darker overall');
   assert.ok(changed < a.count * .35, 'only the ground beside the corners');
+});
+
+// Independent accepted metadata belongs to this course, so another course can join without a shared edit.
+test('tremblant-woods retains its accepted registry identity and access', () => {
+  const id = 'tremblant-woods', definition = TREMBLANT_WOODS;
+  assert.deepEqual([definition.id, definition.flag, definition.stage], [id, id, 18]);
+  assert.deepEqual([ownedManifest.id, ownedManifest.flag, ownedManifest.state, ownedManifest.price, ownedManifest.grandPrix, ownedManifest.releaseOrder],
+    [id, id, 'on', 1600, true, 0]);
+  assert.equal(FEATURE_STATES[id], 'on');
+  assert.equal(COURSE_PRICES[id], 1600);
+  assert.equal(GRAND_PRIX_COURSES.includes(id), true);
+  assert.equal(createFeatureFlags({storage:null, qa:false}).enabled(id), true);
+  assert.equal(supportsCombat(definition), false);
+  assert.equal(definition.noCombat, true); assert.equal(definition.hasRival, true);
+  const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on');
+  const publicIndex = COURSE.findIndex(row => row.id === id);
+  assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
+  const fresh = createProfile();
+  assert.equal(isCourseUnlocked(fresh, id), false);
+  const poor = purchaseCourse({...fresh, credits:1599}, id);
+  assert.equal(poor.ok, false); assert.equal(poor.profile.credits, 1599);
+  const rich = {...fresh, credits:2000}, bought = purchaseCourse(rich, id);
+  assert.equal(bought.ok, true); assert.equal(bought.cost, 1600); assert.equal(bought.profile.credits, 400);
+  assert.deepEqual(bought.profile.courses.unlocked, [...rich.courses.unlocked, id].filter(value => COURSE.some(row => row.id === value)));
+  assert.equal(isCourseUnlocked(bought.profile, id), true); assert.equal(isCourseUnlocked(bought.profile, 'pacific-canyon'), true);
+  for (const other of CIRCUIT_MANIFESTS.filter(row => row.id !== id)) assert.equal(isCourseUnlocked(bought.profile, other.id), false, 'buying this course never grants another paid course');
+  const unowned = courseAccessPanel(fresh, 0, ''), owned = courseAccessPanel(bought.profile, publicIndex, '');
+  assert.match(unowned, /Tremblant Woods/); assert.match(unowned, /1,?600 CR/);
+  assert.doesNotMatch(unowned, /UNLOCKED<\/span><h3>Tremblant Woods/);
+  assert.match(owned, /UNLOCKED<\/span><h3>Tremblant Woods/);
 });

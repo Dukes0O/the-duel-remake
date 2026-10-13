@@ -1,7 +1,14 @@
+import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
+import {COURSE_PRICES, isCourseUnlocked, purchaseCourse} from '../src/course-access.js';
+import {COURSE} from '../src/config.js';
+import {supportsCombat} from '../src/combat-weapons.js';
+import {CIRCUIT_MANIFESTS, BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
+import {createProfile} from '../src/progression.js';
+import {courseAccessPanel} from '../src/course-access-ui.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Course } from '../src/course.js';
-import { HARBOUR_LIGHTS } from '../src/circuits/harbour-lights.js';
+import { manifest as ownedManifest, HARBOUR_LIGHTS } from '../src/circuits/harbour-lights.js';
 import { GRAND_PRIX_COURSES, courseForGrandPrix, grandPrixCourse, FIELD } from '../src/race-field.js';
 import { escapeFrame } from '../src/escape-roads.js';
 import { buildTrackScript } from '../src/track-script.js';
@@ -216,4 +223,34 @@ test('no wall stands inside the road, the Lantern Hairpin included (RELEASE-HARB
     }
   }
   assert.ok(smallest >= .4, `the nearest wall corner is ${smallest.toFixed(2)} m beyond the road edge`);
+});
+
+// Independent accepted metadata belongs to this course, so another course can join without a shared edit.
+test('harbour-lights retains its accepted registry identity and access', () => {
+  const id = 'harbour-lights', definition = HARBOUR_LIGHTS;
+  assert.deepEqual([definition.id, definition.flag, definition.stage], [id, id, 17]);
+  assert.deepEqual([ownedManifest.id, ownedManifest.flag, ownedManifest.state, ownedManifest.price, ownedManifest.grandPrix, ownedManifest.releaseOrder],
+    [id, id, 'on', 1800, true, 2]);
+  assert.equal(FEATURE_STATES[id], 'on');
+  assert.equal(COURSE_PRICES[id], 1800);
+  assert.equal(GRAND_PRIX_COURSES.includes(id), true);
+  assert.equal(createFeatureFlags({storage:null, qa:false}).enabled(id), true);
+  assert.equal(supportsCombat(definition), false);
+  assert.equal(definition.noCombat, true); assert.equal(definition.hasRival, true);
+  const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on');
+  const publicIndex = COURSE.findIndex(row => row.id === id);
+  assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
+  const fresh = createProfile();
+  assert.equal(isCourseUnlocked(fresh, id), false);
+  const poor = purchaseCourse({...fresh, credits:1799}, id);
+  assert.equal(poor.ok, false); assert.equal(poor.profile.credits, 1799);
+  const rich = {...fresh, credits:2500}, bought = purchaseCourse(rich, id);
+  assert.equal(bought.ok, true); assert.equal(bought.cost, 1800); assert.equal(bought.profile.credits, 700);
+  assert.deepEqual(bought.profile.courses.unlocked, [...rich.courses.unlocked, id].filter(value => COURSE.some(row => row.id === value)));
+  assert.equal(isCourseUnlocked(bought.profile, id), true); assert.equal(isCourseUnlocked(bought.profile, 'pacific-canyon'), true);
+  for (const other of CIRCUIT_MANIFESTS.filter(row => row.id !== id)) assert.equal(isCourseUnlocked(bought.profile, other.id), false, 'buying this course never grants another paid course');
+  const unowned = courseAccessPanel(fresh, 0, ''), owned = courseAccessPanel(bought.profile, publicIndex, '');
+  assert.match(unowned, /Harbour Lights/); assert.match(unowned, /1,?800 CR/);
+  assert.doesNotMatch(unowned, /UNLOCKED<\/span><h3>Harbour Lights/);
+  assert.match(owned, /UNLOCKED<\/span><h3>Harbour Lights/);
 });

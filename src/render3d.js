@@ -22,6 +22,7 @@ import { createVehicleAssets } from './vehicle-assets.js';
 import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
+import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera } from './camera-clearance.js';
 import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
 import { createRenderQuality } from './render-quality.js';
@@ -112,6 +113,15 @@ export function installCrashPresentationEvents({duel, enabled, effects,
 }
 
 // This layer only reads simulation state. Asset replacement never changes race rules.
+export function constrainMountainCamera(course,position,distance){
+  if(!course.def.ridgeLandform)return position;
+  const near=course.nearest(position.x,position.z,distance);
+  const ground=renderedGroundHeight(course,{x:position.x,z:position.z,s:near.s,off:near.lateral},{requireSurface:true});
+  if(!Number.isFinite(ground))throw Error('Mountain camera has no rendered terrain.');
+  position.y=Math.max(position.y,ground+.7);
+  return position;
+}
+
 export function attachRenderer(host, app) {
   const rendererAttachedAt=performance.now();let firstPresentation=true;
   let disposed=false,raf,sceneRevision=0,warmupTicket=null,warmupKey=null,readinessClaimed=false;
@@ -342,6 +352,7 @@ export function attachRenderer(host, app) {
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
       const ground = course.groundAt(distance, 0);
       camera.position.set(pose.position.x, pose.position.y, pose.position.z);
+      constrainMountainCamera(course,camera.position,distance);
       camera.up.set(0, 1, 0);camera.fov = SNAPSHOT_FOV;
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);camera.updateProjectionMatrix();
       lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
@@ -630,6 +641,7 @@ export function attachRenderer(host, app) {
     }
     if(!menu&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
+    if(!menu)constrainMountainCamera(course,camera.position,distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;

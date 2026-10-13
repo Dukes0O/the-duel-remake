@@ -1,0 +1,49 @@
+# FAC-08: native course drive-through
+
+Status: merged. Own drive-through.mjs, test-drive-through.mjs, this note and the granted pure course-ground-checks.mjs. No runtime, existing test, course, asset, save, reference, replay or world-signature changes.
+
+## Design before tests or code
+
+The historical witness is actual commit 5092a01865887432ce609be0eed942f60605a2ba. Git proves it is the first parent of the full Tremblant fix 977efad9fc720329243b40c1557859b5b433eea3. The fixed acceptance source is the current isolated lane at be776e50. Tests archive historical src/package plus named driver and JSON dependencies into a uniquely owned .qa-dist fixture. Its dependency junction points only to integration. No runtime file is overlaid with a fix. Each archived source and the driver hash are reported; the owned fixture is recycled after its junction is unlinked.
+
+The lap recipe follows existing driveCircuit: Falcone F42, club driver, casual transmission rules, easy/medium/hard CPU, seed 1989, one native rival, no upgrades, 60 Hz App.advance. Authored roads use the existing useRacingLine at .95; legacy roads keep the stock App autopilot. Memory-only storage and QA globals are installed before dynamic game imports. Native configured race length remains unchanged. Observe until the first actual completed lap (or native endpoint for an open road), without shortening lapsTotal, forcing a result or paying a completion. Non-finish at the existing 1200-second driveCircuit cap is a failure. No slowed driver, driver retune or hidden recovery is allowed.
+
+Director correction before code: at each native physics step, flag the source course.surfaceAt(s,lateral).road becoming false and a grounded car centre leaving actual drawn road triangles. A shoulder counts as off-road for the native lap. Shoulder triangles remain in the static cover scan only; they cannot exempt the lap verdict. Native shortcut/surface semantics remain authoritative. Keep a swept centre-segment check against actual solid obstacle boxes; report complete through-passage rather than a legal contact stopped at the face. Read actual geometry from the selected source, never analytic-only terrain. Ground cover scans the complete lap every 2 m at nine road offsets and six shoulder offsets, exactly as test-circuit-ground: road lift .035 m, shoulder lift .018 m, cover threshold surface minus .001 m. Near/far ground, authored hills, backdrop hills and lake triangles are all included.
+
+Object grounding reuses the same real visible-ground triangles and nine rotated footprint points. Use the source's KIT_FOOTPRINTS; the historical source predates that file, so its actual kit manifest supplies only the same measured solid-piece sizes, without adding collision. The existing special footprints remain exact. Float limits stay .3 m (.45 m for long thin pieces or lift towers), sink limit 1.5 m, dock-water distance .4 m. Read the source's renderedGroundHeight and actual hill lift/sink placement. This catches the original ski lodge/barn without installing the fix.
+
+Normal centre-line driving may never reach a broken barrier. Separate bounded native contact probes reproduce the existing eight Tremblant sites at both 70 and 110 mph. Each starts a fresh native race, positions the car three metres inside that road edge, heading error side x .3, full throttle, and advances at most four seconds or the first native impact. The car must reach the edge and remain at most gap minus .5 m past it. The same contact recipe can sample authored drawn barrier placements on other named courses; no visual piece is declared solid by the checker. Ordinary lap faults and these intentional probe excursions are reported separately.
+
+The CLI accepts a named course, seed, time cap and JSON output. Source-root selection is restricted to this checkout or its own .qa-dist historical fixtures. Exit 0 means all three native lap observations and all real ground/barrier checks pass; exit 1 retains actual acceptance failures; exit 2 reports invalid input or tool errors. No browser, frame or balance command is added.
+
+Owned observer refinement before code: a centre may enter and leave a solid box over several native steps, so retain its entry point until it exits. A same-face return is not a complete through-passage. The new pure three-step case first fails on the absent observer API; it uses the existing production sweep function and actual box envelopes, without runtime or bound changes.
+
+Owned API correction before code: a repeated call can encounter cached game imports whose dev-course catalogue was built before the requested switch. A new real named-Panorama case first fails on that missing native stage (the other five cases pass). Before importing any game catalogue, load the independent FAC-04 manifests and request their actual course flags through the existing QA query, as the reference worker does. This keeps later named dev courses reachable without mutating COURSE or any runtime file. Historical source predates manifests and keeps its real selected-course QA query. The test uses a zero-time observation to prove admission and honestly remains unfinished; no Panorama lap or feature acceptance is claimed.
+
+Review correction before code: c2e17104 could label an owned historical source tree with the current lane HEAD when sourceCommit was omitted. The recorded historical acceptance remains valid because it supplied the proven 5092a018 parent explicitly. Refuse a historical root without an explicit full source-commit hash before game imports or any native observation; verify that hash resolves to a Git commit. Expose the existing sourceCommit field through --source-commit so --source-root cannot silently fall back to current HEAD. Default/current calls and every native input/bound remain unchanged. Add missing-provenance and unknown-commit rejection inside the existing historical case, before its one existing native run; no extra native run or framework.
+
+## Checks
+
+Tests-first RED: all four new acceptance cases fail on the absent native checker API before creating historical fixtures. Require real fixed-source ground and barrier pass, one observed native lap per difficulty with the native multi-lap target intact, all three original faults on the actual historical source, and invalid/unfinished results that cannot report green. Existing assertions and all fixture values stay unchanged. Focused implementation: 6/6 GREEN in 12.77 s. Actual fixed and historical Easy/Medium/Hard observations each complete one native lap at 84.6416666666801 s, while lapsTotal remains 3 and status remains racing. Fixed source has no off-road, cover, float/sink or passage issues; all 16 probes pass. Historical source has near-ground cover at s 1700–1812 (+1.6621013995429497 m) and s 2000–2020 (+.4596480621693235 m), ski lodge float .6499825976209515 m against .3 and sink 2.5764308743173743 m against 1.5. All 16 historical probes fail, worst car centre 20.51879511771208 m beyond the edge. The archived source was recycled; no synthetic runtime fixes were copied into it.
+
+Measured fixed game bytes are exact to be776e50: Course SHA256 745940a626d74561225582e21b1592c8ea2639bb2394af1b759a9d8036dc90dc; definition f53532d18c10b65fb39b60e6d49f8924f78febc5a57901d2f40259ca96a2a3fa; original driver file f18e0ab3a19018e5dbc79404d353da56d7fbb677974a6be5cd11c718a66ab79a. Historical driver file 2c8776a821bde72ee62647c310be86b4b494bfb8d398da962fa6d0081c0a2cd0 and definition 4641a0d76c39a48aee5c7eb26a5c8020a838a00177ef518c009033939ea8cca7. Each source uses its own actual existing driver; no file-hash equality claim is made. Final canonical nearby lane, build and one review are pending.
+
+## Removed
+
+No existing checker or runtime path is replaced. Temporary historical source and generated test outputs created by this card are recycled after their verdict is recorded. Existing measured ground/barrier suites remain unchanged.
+
+## Final merge verdict
+
+Frozen c4ba526f94e3c65e6d7f62ce5fa8040e3ea436c2: canonical nearby lane
+15/15, zero failures or unrun, 95.56 s, jobs 4; production build passed
+in 578 ms (355 modules). One ordinary source review and provenance delta
+are clear. The first c2e17104 candidate was also 15/15, 97.31 s, build
+524 ms; review then found the historical-source label defect and the
+corrected source received the fresh gate above. Existing native inputs
+and every geometry bound remain exact. The actual pre-fix parent exposes
+all three faults; fixed Tremblant passes all three native lap observations
+and all 16 barrier probes. Source hashes and measured numbers are above.
+No runtime, original suite, asset, save, replay or signature change; no
+clean-merge rerun, native browser/frame/balance/full, release or push.
+The consumed open-card detail is recycled; its scope and verdict remain
+here. Temporary historical source fixtures were already recycled.

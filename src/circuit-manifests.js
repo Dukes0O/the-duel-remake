@@ -1,0 +1,44 @@
+// Course-owned metadata. This module never imports feature flags or config.
+const NAME = /^[a-z][a-z0-9-]*$/;
+export const BASE_COURSE_COUNT = 16;
+
+export function registerCircuits(modules) {
+  const ids = new Set(), flags = new Set(), order = new Set();
+  const entries = modules.filter(module => module.manifest !== undefined ||
+    Object.values(module).some(value => value?.kind === 'circuit')).map(module => {
+    const m = module.manifest;
+    if (!m || typeof m.id !== 'string' || typeof m.flag !== 'string' || !NAME.test(m.id) || !NAME.test(m.flag) || !['dev', 'beta', 'on'].includes(m.state) ||
+      !Number.isSafeInteger(m.price) || m.price < 0 || typeof m.grandPrix !== 'boolean' ||
+      !Number.isSafeInteger(m.releaseOrder) || m.releaseOrder < 0 ||
+      !m.driver || typeof m.driver.car !== 'string' || !/^[a-z][a-z0-9_]*$/.test(m.driver.car) ||
+      typeof m.driver.driverId !== 'string' || !/^[a-z][a-z0-9_]*$/.test(m.driver.driverId) ||
+      m.driver.controller !== 'racing-line' || !Number.isFinite(m.driver.skill) || m.driver.skill < 0 || m.driver.skill > 1)
+      throw Error('Invalid circuit manifest.');
+    if (ids.has(m.id) || flags.has(m.flag) || order.has(m.releaseOrder)) throw Error('Duplicate circuit manifest id, flag or releaseOrder.');
+    ids.add(m.id); flags.add(m.flag); order.add(m.releaseOrder);
+    const definition = Object.values(module).find(value => value !== m && value?.id === m.id && value.kind === 'circuit');
+    const generationStage = definition?.stage;
+    if (!definition || definition.flag !== m.flag || !Number.isSafeInteger(generationStage) || generationStage < 0)
+      throw Error('Circuit manifest needs its matching authored definition and generation identity.');
+    const manifest = Object.freeze({...m, driver: Object.freeze({...m.driver})});
+    return Object.freeze({manifest, definition, generationStage});
+  });
+  return Object.freeze(entries.sort((a, b) => a.manifest.releaseOrder - b.manifest.releaseOrder));
+}
+
+async function modulesFromFiles() {
+  if (import.meta.env) {
+    const modules = import.meta.glob(['./circuits/*.js', '!./circuits/index.js'], {eager: true});
+    return Object.values(modules);
+  }
+  const {readdir} = await import(/* @vite-ignore */ 'node:fs/promises');
+  const files = (await readdir(new URL('./circuits/', import.meta.url)))
+    .filter(name => NAME.test(name.slice(0, -3)) && name.endsWith('.js') && name !== 'index.js').sort();
+  return Promise.all(files.map(name => import(new URL('./circuits/' + name, import.meta.url).href)));
+}
+
+export const CIRCUIT_ENTRIES = registerCircuits(await modulesFromFiles());
+export const CIRCUIT_MANIFESTS = Object.freeze(CIRCUIT_ENTRIES.map(row => row.manifest));
+export function circuitDefinitions(flags, entries = CIRCUIT_ENTRIES) {
+  return Object.freeze(entries.filter(row => !flags || flags.enabled(row.manifest.flag)).map(row => row.definition));
+}

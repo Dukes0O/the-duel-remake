@@ -1,3 +1,4 @@
+import {addCircuitLandmarks,finishRidgeKitMaterials} from './circuit-landmarks.js';
 import {createTrackKits,bindTrackKits} from './track-kits.js';
 import {applySnowTerrain,winterTerrainMaterial,snowPineIds,snowRockFeatures,winterWeight,createSnowWorld,bindSnowWorld,winterSurfaceMaterial} from './snow-world.js';
 import {createHiddenRoadHint} from './hidden-road-hints.js';
@@ -81,8 +82,12 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
     if(course.def.offroad||course.def.arena)addTrailShoulder(group,course,side,trailMat);
     else{
       const shoulderStrip=strip(course, s=>side*course.roadHalfWidthAt(s), s=>side*(course.roadHalfWidthAt(s)+ROAD_SHOULDER_WIDTH), .018);
-      // Authored circuits vary in width: the shoulder shader reads each vertex's road edge.
-      if(course.script){const uv=shoulderStrip.attributes.uv,edge=new Float32Array(uv.count);for(let i=0;i<uv.count;i++)edge[i]=course.roadHalfWidthAt(uv.getY(i)*10);shoulderStrip.setAttribute('shoulderEdge',new THREE.BufferAttribute(edge,1));}
+      // Authored circuits and opt-in GP entry widths share their actual vertex road edge.
+      if (course.script || (course.def.grandPrix && course.def.grandPrixEntryWidth)) {
+        const uv = shoulderStrip.attributes.uv, edge = new Float32Array(uv.count);
+        for (let i = 0; i < uv.count; i++) edge[i] = course.roadHalfWidthAt(uv.getY(i) * 10);
+        shoulderStrip.setAttribute('shoulderEdge', new THREE.BufferAttribute(edge, 1));
+      }
       group.add(new THREE.Mesh(shoulderStrip, shoulder));
     }
     if(!course.def.arena&&!course.def.offroad){
@@ -154,8 +159,10 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false} = {}) 
   addRallyDetail(group,course);
   if(!course.def.practice)addFinish(group, course);
   addCheckpointGates(group,course);
+  addCircuitLandmarks(group,course);
   if (trackKits || course.def.kitPlacements?.length || winter) {
     const kits = trackKits ?? createTrackKits(course);
+    if(course.def.ridgeLandform)finishRidgeKitMaterials(kits);
     bindTrackKits(group,kits);
     registerSceneSystem(group,{sync:kits.sync,dispose:kits.dispose});
     if(winter){const snowOwner=createSnowWorld(course,{kits});bindSnowWorld(group,snowOwner);

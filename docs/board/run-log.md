@@ -978,3 +978,38 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 12 October morning: merged P4-CAREER-PAY source02d914c3 after lane400/400 (1980.72 s, jobs4), build843ms, pure184, actual native/browser750CR and clear save/ordinary reviews. Dev only; legacy leaderboard guard unchanged, no release or push.
 
 - 12 October: merged P4-QUALIFYING source 490c022d after lane 401/401 (1140.02 s, jobs 4), build 570 ms and clear source/native/save reviews. Two native flying laps earn pole; qualifying pays zero, accepted GP pay stays exact. Corrected only the absent-control DOM fixture; intermittent audio follow-up parked. No release or push.
+
+- 2026-10-12 merge FAC-01 (Claude): lane 400/400 in 1909 s jobs 4 before sync, build pass, independent review fixes applied; board conflict with P4-QUALIFYING resolved additively, targeted 15/15 in 144 s. Fixed FUT-PAY-BY-DISTANCE unknown status (now backlog, priority future), which the old picker never selected test-board for. Lane picks now about 19 suites for a course file, 38 for a sound file. No release.
+
+- 2026-10-12 merge DEEP-PACKET (Claude): THE_DEEP section 10 world-line graph and 10.1 contracts; six Deep cards replace the RAMP/DRIVE chain; save-shape and sound-bank locks on P4-CAREER, P4-CUPS, P4-AVALANCHE; six-lane limit; FAC-03 nightly push after green full. Lane 13/13 under the new picker, build pass, one review with fixes. No release.
+- 2026-10-12 FAC-02 merged 60ede817: lane 17/17 in 298.83 s, build 1360 ms, review Codex Director clear.
+- 2026-10-12 FAC-06 merged source8885399a: lane18/18 in288.97s,jobs4; build1210ms, gp_existing ordinary review clear; 50 open/272 completed cards, lock conflicts fixed, FAC-02 own lane recycled; no clean-merge rerun.
+- 2026-10-12 FAC-03 merged 02790f14: lane 396/396 in 1526.07 s, build 680 ms, review Codex Director (selector only; night command unfinished) clear.
+- 2026-10-12 FAC-07 merged source3b8d72b8: lane19/19 in109.49s,jobs4, build662ms, Director review clear; one QA build and isolated children with quiet timing barriers, no clean-merge rerun.
+- 2026-10-12 P4-SUMMIT merged (Claude lane claude/summit-decision 7e1f7fdd): lane 14/14 in 152.74 s, build 1438 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 DEEP-WATER merged (Claude lane claude/deep-water 129235fa): lane 22/22 in 132.29 s, build 1457 ms, review claude-subagent-reviewer clear.
+
+- 2026-10-12 FAC-04: merge 8cc2d45a; lane 309/309, 791.07 s, jobs 4; build 1.13 s; one review clear; original course data exact, no clean-merge rerun.
+- 2026-10-12 FAC-03 merged (Claude lane claude/night-balance 00a2b3a2): lane 13/13 in 100.05 s, build 1036 ms, review claude-subagent-reviewer clear.
+
+- 2026-10-12 FAC-03 final: merge 758662b5; nearby lane 20/20, 91.59 s, jobs 4; build 645 ms; one review clear; night tool available, no native night pass or clean-merge rerun.
+
+- 2026-10-12 FAC-05: merge 37fd7237; nearby lane 29/29, 132.96 s, jobs 4; build 562 ms; one review clear; derived course checks and exact Snow fixture cleanup, no clean-merge rerun.
+
+- 2026-10-12 FAC-08: merge c4ba526f; nearby lane 15/15, 95.56 s, jobs 4; build 578 ms; one review clear; real old/fixed Tremblant defect proof, provenance corrected, no clean-merge rerun.
+- 2026-10-12 FACTORY-RULES merged (Claude lane claude/factory-rules-2 5b988dd6): lane 12/12 in 119.91 s, build 1439 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 REVIEW-TIERS merged (Claude lane claude/review-tiers 17009bec): lane 9/9 in 238.27 s, build 2460 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 FIX-LIVE-EDGES merged (Claude lane claude/finish-tracks cb432c4d): lane 14/14 in 264.77 s, build 2758 ms, review claude-subagent-reviewer clear.
+- 2026-10-12 FIX-LIVE-EDGES merged (Claude lane claude/finish-tracks 1a752328): lane 12/12 in 248.18 s, build 3066 ms, review none-rule-17-kyle-play-report clear.
+
+2026-10-12 P4-PANORAMA dev source c56238e9: lane306/306,1773.56s,jobs4;build758ms;review clear;clean merge,no rerun. Native dusk/R3sheet pending night;old lane retained,no release/push.
+
+2026-10-12 DEEP-AUDIO dev source d6a76d3a: lane143/143,1225.485s,jobs4;build1658.002ms;review clear;clean merge,no rerun. Listening/native mix pending;packet/lane retained,the-deep dev,no release/push.
+
+- 2026-10-12 factory janitor sweep: read-only audit1888 tracked files; looks16,840,032B before/after, under20MB. Recycled313,798B of our consumed Deep Audio handoff/final-note scratch; committed note hashDE01C009 exact. Actual listening packet/current sheets/assets/licensed sources and retained P4 lanes stay needed. Literal47asset/85export/309doc candidates are uncertain and remain with existing CLEAN-11/JANITOR-DIAGNOSTIC-NOTES; no modules or removed-feature tests flagged, no runtime removal. STATUS still has legacy manifest/lean-board projection warnings; not a new game failure. No history rewrite/push/release.
+
+- 2026-10-12 merge P4-GP-EXISTING dev source8812a093: lane301/301, zero failed/unrun,1136.957s,jobs4; build700ms/1393ms wall; one reviewCLEAR; conflict-free/no rerun. Shared width lock released; original caps/failures and Red2/Neon3/Cloud3/native18 night tail retained, older lane kept. No release/push.
+
+- 2026-10-12 merge DEEP-SAVE d83c38b6: corrected lane324/324, zero failed/unrun,979.026s,jobs4; build1347.9813ms; code/save reviewsCLEAR; conflict-free/no rerun. Optional fields,5/10 hints,150CR kit and allnine memory fixtures pass; old8 bytes/rollback/records/ghosts preserved. Card completed, save/App locks released; original321/324 failure and Titan8/0 same-source rerun retained in note/QA follow-up. No native/full/release/push.
+
+- 2026-10-12 merge DEEP-SURFACE fabaf326: lane224/224, zero failed/unrun,980.978s,jobs4; build616ms/1122ms wall; one reviewCLEAR; conflict-free/no rerun. Card completed; Summit claims allthree free locks for settled dev source. Deep Save own completed lane recycled, older P4 folders retained. No native/full/release/push.
