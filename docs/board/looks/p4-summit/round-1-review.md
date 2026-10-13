@@ -1,6 +1,8 @@
 # P4-SUMMIT round one - gameplay timing failed
 
-Claude review pending. No art, gameplay, fork, merge, release or frame pass.
+Claude holds round one for denser grove pines, reused soft snow heaps, Harbour-level
+night light, lit real windows/slit and a clear fork view. No art, gameplay,
+fork, merge, release or frame pass. The numbers below describe this original packet.
 
 Runtime: b7dd65eb. Sheet: round-1.jpg, 309,720 bytes, 1945 by 1242 pixels.
 The existing native harness captured 16 actual High and Performance views on

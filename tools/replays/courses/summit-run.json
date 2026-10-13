@@ -1,0 +1,19 @@
+{
+  "eventId": "summit-run",
+  "cases": [
+    {
+      "id": "summit-run-duel",
+      "eventId": "summit-run",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "summit-run-duel": {
+      "30": "29eb3db7429e6ecf0e2881ca6ba965aae2f080c94acd8c428c362397135b9190",
+      "60": "29eb3db7429e6ecf0e2881ca6ba965aae2f080c94acd8c428c362397135b9190",
+      "144": "29eb3db7429e6ecf0e2881ca6ba965aae2f080c94acd8c428c362397135b9190"
+    }
+  }
+}

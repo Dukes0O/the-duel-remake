@@ -1,32 +1,50 @@
 # P4-SUMMIT
 
-Status: Factory source in progress. Original native strategy gaps failed; Claude corrected the race target and held art round one. New native strategies and round-two art wait for night.
-Own summit-run dev, stage 20 after Snow 19, stable id, 2,600 CR and noCombat.
-Original b7dd65eb native evidence and round-one sheet remain retained. Claude holds round one for the approved reuse fixes. No release or hidden-course frame check.
+Dev source candidate; gameplay and art acceptance remain open. No release.
+The immutable course manifest is summit-run/dev, 2,600 CR, Grand Prix,
+release order 4, generation stage 20 and Falcone F42/Club/racing-line .95.
+It appends after the accepted courses and allows all cars, six racers,
+one point-to-point run and no combat. Saves, pay, records and ghosts are unchanged.
 
-## Settled behavior
+## Behavior and design before code
 
-Use Claude's actual 52-piece open mountain road, six cars, one run and all cars.
-Retain six radii 16 / 16 / 18 / 16 / 15 / 15 m, crests 2.5 / 2.5 / 1.5 m and 720 m climb.
-Named-piece boundaries set sections, surfaces, light and Tree Line pits;
-Claude's marker confirmation remains requested. Exact avalanche coordinates:
-trigger 10000, split 10100, slide 10420-10580, rejoin 10900 m. Gallery and Open
-Road are real road/snow surfaces; negative lateral is driver-right, matching
-ArrowRight/yaw, the +X driver-left asset convention and existing right pits.
-Use actual approved Gallery/hut/observatory assets, real GLB collision bounds,
-flat roof underside 5.0561127 m and at least 4.5 m road headroom. No substitute models.
-Mixed winter ranges alone affect terrain/pines/flakes/light; dry and legacy
-full-winter paths stay exact, including Snow's actual static winter override.
-Presentation reads state. Existing start, pit, finish and surface cues apply.
+Keep Claude's 52-piece, 14,219.9546 m road, 720 m climb, six hairpins
+(16/16/18/16/15/15 m) and three crests (2.5/2.5/1.5 m).
+Avalanche markers stay 10000/10100/10420-10580/10900 m.
+Negative lateral is driver-right, confirmed by native steering and asset axes.
+Gallery uses the approved actual GLB, exact roof/post transforms and a
+5.0561127 m underside with the original minimum 4.5 m road headroom.
+Only authored Gallery roofs opt into vertical collision clearance;
+grounded passage, airborne roof contact, solid posts and legacy contacts remain.
 
-## Actual checks and bounded fit
+Claude's revised F42 Medium target is 270-330 s. Summit alone starts with
+a 180 m, 80 km/h bay centred on the real pit box and four-second service.
+Outside the bay, demo/native/CPU controllers use normal driving targets.
+Absent bay fields retain the legacy full-lane 60 km/h limiter and arithmetic.
+Warm tarmac replaces only asphalt pieces in A/B: summer grip 1.0,
+winter .82 and warm winter top-speed share .97; gravel and the pit stay exact.
+Legacy tyres/surfaces and Deep sea-floor stay exact. Warm draws as asphalt;
+its WARM TARMAC hint applies below .80 grip, with no new cue.
 
-The first focused check failed original 165 m separation at 148.7805 m; actual
-High/LOD kit validation failed early Gallery clearance on the 12 m road.
-Before-code fit stays within Claude's 10% allowance and places narrowing 10100 m.
-Total 14,219.9546 m; the later actual all native 2 m check passes the unchanged
-165 m target for pairs >750 m apart. Earlier static 167.6946 m was not acceptance.
-Each changed draft piece is recorded:
+Reuse dense B pine/birch groves, soft snow heaps, existing rock meshes with
+smooth cloned normals and actual Harbour night exposure 1.02.
+Light only real hut windows and observatory aperture-side material faces.
+Mixed winter affects only authored ranges; legacy full-winter paths stay exact.
+Keep Gallery geometry/colliders. Round two retains the original 16 views
+and adds one real High fork approach outside the roof; capture waits for night.
+
+## Changed assertions and source union
+
+Keep FAC-04 registration and FAC-05 fixtures, Pay/Qualifying/Panorama/Deep,
+GP nine-base admission, Azure -400 and Panorama -43 staging. Drop obsolete
+central Summit registry/flags/prices/Preview/count edits; use its own manifest.
+Additive day tests pin its manifest, native appended identity and empty storage.
+Cyclic closure/reverse-drive/reference assertions apply to closed courses only;
+native catalogue coverage still includes every course. Old targets/tolerances stay.
+SURFACE_KINDS adds warm-tarmac; every prior value stays exact.
+Claude corrected only the race-time target; strategy gaps remain 4-8 and 2-5 s.
+Replace the unrun 6 m roof assumption with actual GLB agreement and >=4.5 m.
+The bounded fit stays within Claude's 10% allowance; changed draft pieces:
 
 | Piece | Before | After |
 | --- | --- | --- |
@@ -60,69 +78,52 @@ Each changed draft piece is recorded:
 | 46 | 38 degrees | 41.8 degrees |
 | 50 | 52 degrees | 57.2 degrees |
 
-Root reviewed the 971449f2 source union and b7dd65eb roof fix. Actual focused
-checks pass, including all 37 rendered-ground anchors (maximum difference
-0.0000164 m), native 2 m separation, legacy winter controls and real contacts.
-Target kit validation passed all 39 actual High/LOD placements on 8367733b;
-roof fix b7 changes height handling only, with models and placements exact.
+## Actual checks and remaining work
 
-First summer native run stopped at 10,164.3991 m: zero finishes after 894.5583 s.
-Its first actual crash was the raised roof at 184.367 s, with 5.056 m clearance;
-pillars/back/scenery missed. Before code, the Director granted _staticContacts:
-explicit Gallery roofs supply missing ground y through local cached copies.
-Actual grounded passage, airborne roof contact, pillar and unflagged controls
-now pass. Legacy paths, driver, layout, native inputs and targets stay unchanged.
+Original separation failed at 148.7805 m; static 167.6946 m was not acceptance.
+The unchanged >=165 m check now passes every native 2 m sample for pairs
+>750 m apart. All 37 ground anchors agree (maximum difference 0.0000164 m).
+Earlier actual High/LOD validation passed all 39 placements on 8367733b.
+The first native run stopped at 10164.3991 m after 894.5583 s; its first roof
+crash at 184.367 s led to the reviewed b7dd65eb height-aware contact fix.
 
-All three b7 runs finish with zero crashes: summer 276.7833 s, pit 290.2583 s,
-winter 262.9417 s. One real pit service at 7004.2820 m lasts 4.000 s. Timing
-fails unchanged 360–480 s, pit saving 4–8 s, and starting winter costing 2–5 s.
-Diagnosis stops; Claude must settle the course design. No speculative tuning.
+Original b7 native runs finish with zero crashes: summer 276.7833 s,
+pit 290.2583 s and winter 262.9417 s; real service lasts 4.000 s.
+The original 360-480 s target failed; strategy gaps -13.4750/-27.3167 s
+still fail the required 4-8/2-5 s. Retain the original evidence.
+New measured sets wait for night: maximum six, original F42/.95/Medium/
+1989/4242, in Claude's 80 -> 90 -> snow-start -> warm-grip/top-share order.
 
-Actual native capture passes: 16 High/Performance views, 309,720-byte round-one
-sheet, private port 37273, memory-only, read-only snapshots, zero warnings/errors.
-Root grants a camera-only fork view: split +35 m, 28 m up, 180 m ahead; all
-other views stay exact. The exterior roof is visible; Open Road remains weak or
-uncaptured as a clear route. No fork acceptance. Sheet/review live in
-docs/board/looks/p4-summit; raw packets/logs in integration .evidence. Claude art
-acceptance and lane jobs 4/build remain pending. Frames are deferred under rule
-9, not passed. Price source/save review is clear; actual native purchase passes.
-Avalanche, snowmen, yeti and finishing stay later.
-## Accepted integration sync and changed assertions
+Six controlled bay/warm tests pass, including both player controllers and CPU.
+Owned source checks pass manifest/catalogue, actual High/LOD aperture masks,
+geometry/separation, roof contacts, winter controls and anchors.
+The source check caught exposure 1.12 versus actual Harbour 1.02;
+source corrected, original assertion retained. No native strategy or art pass.
 
-Sync accepted integration 4211bf2e, including Qualifying 401/401 and build 570 ms.
-Automatic union keeps Qualifying's closed-only guard, menu context, telemetry,
-fixture and zero pay exact; only approved Summit field/menu hooks differ there.
-App, pay, records, ghosts and all other Qualifying files match accepted bytes.
-Preserve accepted release order Woods, Snow, Harbour, Panorama; append Summit.
-Harbour/Snow stay on, Career dev; the catalogue grows 25 to 26 only for Summit.
-Director grants the existing test-wasteland-beta exact-catalogue fixture to
-append summit-run: dev with all 25 existing states and every isolation check exact.
-Existing feature/preview/registry fixtures add the same dev id and fifth stage.
-Closed-reference targets follow actual accepted Harbour source (28); Summit is
-open and excluded. Published cyclic references and original tolerances stay.
-Existing cyclic closure/reverse-drive assertions select closed definitions;
-positive Summit endpoint/one-run coverage remains in its card test. Separation
-checks every native 2 m sample, same >=165 m and >750 m exclusion. The unrun 6 m
-roof assumption is replaced by exact actual GLB agreement and original 4.5 m
-headroom. No acceptance is weakened; no new test machinery is added.
+Existing replay --record passed in 60.280 s and world --capture in 50.855 s.
+Append only the real Summit replay/world leaves. All 24 old fixture files and
+19 old scene rows remain exact; restore the temporary capture guard byte-exact.
+Replay 29eb3db7...b9190 matches at 30/60/144 FPS; world 8d222297...d01e is
+the new authored-course baseline, distinct from art acceptance.
+The conditional shortcut generator and separate --verify-solvers pass:
+250 checks, 18 selectable layouts, 15 comparisons. Only source fingerprint
+72be2323 -> da246bb1 changes; all other generated bytes and version 2 stay exact.
+Raw logs and byte proofs: integration .evidence/2026-10-12/P4-SUMMIT/
+factory-source-881700c8. Final nearby lane, build and save fixtures await receipts.
+
+Scheduling mistake: a combined CIM/launch call ran one 2.5 s focused check
+briefly as a third job after another parent appeared; it drained. Future launches
+use a separate fresh CIM read. No passing check is repeated for this mistake.
+
+Round one has 16 real views, 309,720 B, memory-only, zero warnings/errors.
+Claude holds it for grove/snow/night/window/fork fixes; route readability remains
+weak, with no fork acceptance. Sheet and review stay in docs/board/looks/p4-summit.
+Round-two native capture/acceptance and new strategies remain unrun.
+No hidden-course frame timing; eventual reachable-course timing is deferred.
 
 ## Removed
 
-Incorrect centered-post/nominal 6.292 m roof assumptions and duplicated cyclic
-reference assertions are removed. Repeated history is folded here. All current
-models, recipes, original thresholds, verdicts and still-needed evidence remain.
-Two own unpublished interior-view deliverable drafts went to Recycle Bin.
-
-## Factory resumption design before code
-
-Claude corrected the F42 Medium race target to 270-330 s; strategy differences remain 4-8 s and 2-5 s. Start the opt-in 180 m limiter bay at 80 km/h, keep service four seconds, and use warm-tarmac only on asphalt pieces of A/B (summer 1.0, winter .82, warm winter top share .97). Existing lane roads, legacy tyres and Deep sea-floor remain exact. Dense B groves, existing soft snow heaps, brighter Summit-only night snow and the real kit windows/slit reuse approved assets. All native strategies and round-two art wait for night; at most six measured sets with original F42/.95/Medium/1989/4242. No timing or driving pass is claimed.
-
-Integration sync conflicts: keep FAC-04 registry/flags/prices/Preview and FAC-05 catalogue fixtures byte-exact; drop obsolete central Summit additions. Preserve GP nine-base admission and Azure -400/Panorama -43 staging, adding only Summit gridStartS. Keep incoming derived menu counts, pay and qualifying controls, with Summit-only native briefing/default mode. Existing closure/reverse-lap and reference-target assertions select closed circuits with unchanged tolerances; full native catalogue coverage includes Summit. SURFACE_KINDS adds warm-tarmac by Claude decision; all old values remain. Append-only actual Summit replay/world rows will preserve every old byte, with no cyclic reference row.
-
-## Current focused checks and deferred work
-
-Three new controlled bay/warm tests pass. The existing Summit source/geometry/contact check caught authored night exposure 1.12 versus actual Harbour 1.02; source corrected to 1.02 with the assertion unchanged and an actual Harbour palette check added. That source check passes. New controlled demo/native/CPU bay consumer checks and actual aperture High/LOD geometry mask coverage are written and await the next allowed check. These are source fixtures, not native strategy or art acceptance.
-
-Scheduling mistake: a new second lane parent appeared in the returned CIM output of a combined inspection/launch call; the 2.5 s focused check ran briefly as a third job and drained. Further checks use a separate fresh CIM read before deciding to launch. No passing check is repeated for this mistake.
-
-The Gallery asset, collider transforms, road length and geometry remain exact. Current art source reuses B groves/birches, soft banks, snow-ground kits, existing smooth rock normals and real aperture-side material faces. Round-two recipe preserves all 16 original views and adds one High fork approach outside the roof. Pictures are unrun and unaccepted; the original hold and route-readability limitation remain. Initial world signature will be a new-course baseline only, distinct from art acceptance; all old scene/replay/reference values remain exact.
+Obsolete central registration/count edits, duplicated cyclic assertions and
+incorrect nominal collider assumptions are removed. Repeated note history is
+folded here. Two own unpublished sheet drafts went to Recycle Bin.
+Keep current assets, original thresholds, round-one hold and needed evidence.
