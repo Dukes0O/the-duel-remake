@@ -7,7 +7,7 @@ import { buildTrackScript } from '../src/track-script.js';
 import * as THREE from 'three';
 import {roadBranchMaterial} from '../src/world.js';
 import {constrainTunnelCamera} from '../src/camera-clearance.js';
-import {applySnowTerrain,winterWeight,snowPineIds,winterLightingSettings} from '../src/snow-world.js';
+import {applySnowTerrain,winterWeight,snowPineIds,winterLightingSettings,createSnowWorld,softBankGeometry} from '../src/snow-world.js';
 import {sampleCourseLightPath} from '../src/light-path.js';
 import {circuitLighting,resolveLightingSettings} from '../src/lighting-moods.js';
 import {Duel} from '../src/game.js';
@@ -19,6 +19,7 @@ import {useRacingLine} from './track-script-drive.mjs';
 import { Course } from '../src/course.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {birchSpots} from '../src/circuit-effects.js';
+import {addNightGlows} from '../src/night-glows.js';
 import {surfaceRuns} from '../src/track-script-scene.js';
 import {referenceTargets,runReferenceWorker} from './build-reference-laps.mjs';
 import {CIRCUIT_ENTRIES,BASE_COURSE_COUNT} from '../src/circuit-manifests.js';
@@ -303,4 +304,36 @@ if(process.argv.includes('--drive')){
   assert.ok(pit.seconds>=270&&pit.seconds<=330,`Medium mid-car run is ${pit.seconds.toFixed(3)} s`);
   assert.ok(summer.seconds-pit.seconds>=4&&summer.seconds-pit.seconds<=8,`pit saves ${(summer.seconds-pit.seconds).toFixed(3)} s versus summer`);
   assert.ok(winter.seconds-pit.seconds>=2&&winter.seconds-pit.seconds<=5,`starting winter costs ${(winter.seconds-pit.seconds).toFixed(3)} s versus pit`);
+}
+
+
+// Final art controls are visual only and leave the course/seed untouched.
+{
+  const before=JSON.stringify(course.features),seedControl=new Course(SUMMIT_RUN,1989);
+  const snow=createSnowWorld(course),poles=snow.group.getObjectByName('Grounded 50 m snow poles');
+  assert.ok(poles?.isInstancedMesh&&poles.count>0,'orange-tip poles are actually constructed');
+  const poses=poles.userData.groundPoses;
+  assert.ok(poses.every(row=>row.s%50===0&&Math.abs(row.off)===course.roadHalfWidthAt(row.s)+1),'actual poles line both road edges at 50 m stations');
+  for(const p of poses){
+    const ground=course.groundAt(p.s,p.off);
+    assert.equal(p.y,renderedGroundHeight(course,{...ground,s:p.s,off:p.off},{requireSurface:true}),'every pole anchors to actual rendered ground');
+  }
+  assert.ok(poses.every((p,i)=>i%2===0?poses[i+1].s===p.s&&poses[i+1].off===-p.off:true),'both sides have matching road guidance');
+  assert.equal(JSON.stringify(course.features),before,'visual snow never writes physical features');
+  assert.equal(course.rng.float(),seedControl.rng.float(),'snow visual controls never consume simulation RNG');
+  const branchBase=new THREE.MeshStandardMaterial({color:0xffffff}),branch=roadBranchMaterial(course,open,branchBase,true);
+  assert.equal(branch.color.getHex(),SUMMIT_RUN.snowWorld.branchTone,'Open Road actually draws the authored darker packed-snow tone');
+  assert.equal(branchBase.color.getHex(),0xffffff,'branch look leaves shared road material unchanged');
+  const ordinary=roadBranchMaterial({def:{snowWorld:{} }},open,branchBase,true);
+  assert.deepEqual(ordinary.color.toArray(),[.34,.38,.42],'absent branch tone keeps legacy snow values');
+  const lightGroup=new THREE.Group(),glows=addNightGlows(lightGroup,course);
+  assert.equal(glows.groundLightRows.length,48,'town view owns its forty-eight actual grounded lights');
+  for(const row of glows.groundLightRows){
+    const point=course.groundAt(row.s,row.lateral),groundY=renderedGroundHeight(course,{...point,s:row.s,off:row.lateral},{requireSurface:true});
+    assert.equal(row.groundY,groundY,'town light uses the actual rendered triangle height');
+    assert.equal(row.position[1],groundY+.15,'ground lights are anchored rather than floating');
+  }
+  assert.ok(glows.groundLightRows.every(row=>row.groundY<course.groundAt(course.script.pieces.find(p=>p.name==='The Ledge').s0,0).y),'town actually lies below the Ledge');
+  lightGroup.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
+  branch.dispose();ordinary.dispose();branchBase.dispose();snow.dispose();
 }
