@@ -39,6 +39,9 @@ Kyle approved this order for tonight.
 
 ## Kyle's fixes lane (standing)
 
+Now, ahead of every other busy-game-files card: FIX-DRIVING-FEEL, then
+FIX-RACE-SCREEN (Kyle, 13 October; Harbour Lights is too hard to enjoy).
+
 Every overnight run keeps one lane for small repairs and updates Kyle asks for
 from playing (the inbox and cards he names). It goes ahead of new features
 when it needs a shared lock. Tonight that lane is LAP-CHOICE.
