@@ -29,12 +29,19 @@ Kyle approved this order for tonight.
    of one commit.
 3. When Claude's answers land on the cards: DEEP-ART-SRC round 2 and
    FIX-LIVE-EDGES. Both stay outside `busy-game-files`.
-4. Then `busy-game-files`, one owner at a time: AUD-15-P1, P4-SNOWMEN,
+4. Then `busy-game-files`, one owner at a time: LAP-CHOICE first (Kyle's
+   request, 12 October evening), then AUD-15-P1, P4-SNOWMEN,
    DEEP-ZONE, then P4-AVALANCHE, P4-YETI and P4-SUMMIT-ATTACK once Claude has
    answered them; then P4-CUPS and P4-COACH when their needs are met.
 5. Hold until items 1 to 3 have merged: QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT
    and DISC. No new lanes beyond these. Each of the QA cards gets the 30
    minute limit, then a note and back to building.
+
+## Kyle's fixes lane (standing)
+
+Every overnight run keeps one lane for small repairs and updates Kyle asks for
+from playing (the inbox and cards he names). It goes ahead of new features
+when it needs a shared lock. Tonight that lane is LAP-CHOICE.
 
 ## Claude, not Codex
 

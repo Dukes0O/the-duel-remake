@@ -411,15 +411,16 @@ tasks:
     flag: "the-deep"
     details: "docs/board/cards/FINISH-DEEP.md"
 
-  - id: FUT-PAY-BY-DISTANCE
-    title: "Rewards scale with race distance"
-    owner: "claude"
-    lane: "DESIGN"
+  - id: LAP-CHOICE
+    title: "Choose how many laps; longer races pay more"
+    owner: "codex"
+    lane: "RACE"
     size: "M"
-    status: "backlog"
-    needs: [P4-CAREER-PAY]
-    priority: "future"
-    details: "docs/board/cards/FUT-PAY-BY-DISTANCE.md"
+    status: "ready"
+    needs: []
+    locks: [busy-game-files]
+    flag: "lap-choice"
+    details: "docs/board/cards/LAP-CHOICE.md"
 
   - id: QA-AUDIO-CRASH-RELIABILITY
     title: "Investigate intermittent native crash-audio capture failure"
