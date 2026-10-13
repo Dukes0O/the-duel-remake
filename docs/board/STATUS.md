@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T04:47:15.240Z
+Observed at: 2026-10-13T04:47:47.107Z
 
-Observation commit: e272b1bb33302450cf357f6b10550dba292bb2a7
+Observation commit: 964780a045324a92463809beba26960163a7c3aa
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e272b1bb33302450cf357f6b10550dba292bb2a7
+Integration HEAD: 964780a045324a92463809beba26960163a7c3aa
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -57,7 +57,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/deep-audio | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-audio |
-| codex/fac-full-check | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fac-full-check |
 | codex/p4-finish | 1 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -75,7 +74,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-12T21:29:37-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/looks/deep-art/round-1-review.md, docs/board/looks/deep-art/round-1.jpg, docs/changes/DEEP-ART-SRC.md, public/assets/models/CREDITS.md, tools/art/catalog.json |
-| codex/fac-full-check | unknown | 2026-10-12T21:42:24-07:00 | 0 | last commit 2026-10-12T21:42:24-07:00 | AGENTS.md, docs/CODEX_PLAYBOOK.md, docs/FACTORY.md, docs/OPERATIONS.md, docs/board/cards/FAC-FULL-CHECK.md |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 1 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 1 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 8 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
@@ -92,9 +90,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 17,152,350 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 191,521 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 326,633 B | +135,112 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 405,074,944 B | +34,816 B | unavailable |
+| Git objects | 405,139,456 B | +64,512 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -103,7 +101,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: e272b1bb33302450cf357f6b10550dba292bb2a7
+- Local integration/wasteland: 964780a045324a92463809beba26960163a7c3aa
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
