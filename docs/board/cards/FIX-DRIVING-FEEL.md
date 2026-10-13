@@ -26,22 +26,25 @@ records and combat balance are unchanged.
 - **Throttle key:**
   - It rises from 0 to full over 0.6 s instead of jumping. Releasing is
     instant, and braking is unchanged.
-- **After a crash or a reset to the road:**
-  - For 4 s the throttle is capped at 60%, rising back to full over the
-    last 1 s, so the car does not shoot off again.
-  - A HUD word, "STEADY", shows while the cap is on.
-  - Braking and steering are not limited.
-- Applies on every course and in every mode where the player drives a car,
-  not on foot.
+- **Arenas keep today's sharp steering** (Kyle, 13 October 2026: "in the
+  Scrapdome we do need sensitive steering"). In the Scrapdome and every other
+  combat arena (`course.def.venue === true && course.def.arena === true`,
+  the test `steeringYawAuthority` already uses), keyboard steering and
+  throttle stay exactly as they are today.
+- **No after-crash throttle limit and no "STEADY" message** (Kyle, 13
+  October 2026: "that's just annoying").
+- Applies to road races only (Duel, Grand Prix, Time Trial and the circuits),
+  not to arenas or on foot.
 
 ## Acceptance
 
 - Unit tests for each curve:
   - tap value, hold time to full, speed limit at 40, 80 and 120 mph;
-  - throttle ramp, the recovery cap and its end;
+  - throttle ramp;
   - instant release.
 - Gamepad steering and throttle are unchanged, and computer racers are
-  unchanged.
+  unchanged. Arena keyboard steering and throttle are byte-identical to today
+  (test on the Scrapdome).
 - Replays of recorded inputs reproduce. Fingerprints of recorded CPU-only
   races are unchanged.
 - The track review of Harbour Lights with the stock autopilot is unchanged

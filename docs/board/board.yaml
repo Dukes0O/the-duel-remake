@@ -378,7 +378,7 @@ tasks:
     details: "docs/board/cards/FIX-HAIRPIN-CAMERA.md"
 
   - id: FIX-DRIVING-FEEL
-    title: "Gentler steering keys and throttle, steady after a crash (Kyle)"
+    title: "Gentler steering keys and throttle on road races; arenas unchanged (Kyle)"
     owner: "codex"
     lane: "UI"
     size: "S"
