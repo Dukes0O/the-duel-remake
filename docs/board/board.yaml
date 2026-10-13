@@ -470,4 +470,12 @@ tasks:
     locks: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-RAMP-GEOMETRY.md"
+  - id: FAC-FULL-CHECK
+    title: "The full check: run on a copy of one commit, tool renamed to full-check.mjs"
+    owner: "codex"
+    lane: "TOOL"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/FAC-FULL-CHECK.md"
 

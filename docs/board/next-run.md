@@ -12,19 +12,29 @@ Start from `node tools/board.mjs`: CODEX CAN START NOW first, then whatever a
 merge unblocks. Cards waiting on Claude are skipped; read the card's "Claude
 answers" section before resuming it.
 
-1. In progress, continue: P4-SUMMIT (holds `busy-game-files`), P4-GP-EXISTING,
-   FIX-AMBUSH-OPENING, FND-12 (copy-only dry run; the permission profile is
-   Kyle's choice, so do not install one), DISC.
-2. Ready now, start in free lanes: QA-AUDIO-CLOCK and QA-TITAN-REPLAY-TIMEOUT.
-   Each gets the 30 minute limit, then a note and back to building.
-3. When P4-SUMMIT merges and `busy-game-files` frees up, one owner at a time:
-   FIX-FOOT-MOUSE, then AUD-15-P1, then P4-SNOWMEN, then DEEP-ZONE. P4-AVALANCHE
-   and P4-YETI follow Claude's review answers. Then P4-SUMMIT-ATTACK.
-4. After P4-CAREER is accepted: P4-VARIANTS, P4-INTEL-LEVELS, then P4-CUPS and
-   P4-COACH. These need `busy-game-files` too, so they queue behind item 3.
-5. The Deep, THE_DEEP section 10: DEEP-ART-SRC and DEEP-AUDIO continue under
-   the 10.1 contracts; art sheets go to Claude. DEEP-ZONE starts when its lock
-   frees. Build against the contracts; do not stop to ask.
+Kyle approved this order for tonight.
+
+1. Finish and merge what is open, in this order:
+   - FIX-FOOT-MOUSE (holds `busy-game-files` now);
+   - P4-SUMMIT (takes `busy-game-files` back after the mouse fix);
+   - FIX-AMBUSH-OPENING;
+   - DEEP-RAMP-GEOMETRY (Codex is already building it, outside the core game
+     files).
+   Also still open: P4-GP-EXISTING (source merged; its browser cases wait
+   for the full check), DEEP-AUDIO (source merged; waits for Claude's
+   listening verdict) and FND-12 (copy-only dry run; the permission profile is
+   Kyle's choice, so do not install one).
+2. FAC-FULL-CHECK. It touches only tools, so it runs alongside item 1. It
+   renames the night shift tool to the full check and lets it run on a copy
+   of one commit.
+3. When Claude's answers land on the cards: DEEP-ART-SRC round 2 and
+   FIX-LIVE-EDGES. Both stay outside `busy-game-files`.
+4. Then `busy-game-files`, one owner at a time: AUD-15-P1, P4-SNOWMEN,
+   DEEP-ZONE, then P4-AVALANCHE, P4-YETI and P4-SUMMIT-ATTACK once Claude has
+   answered them; then P4-CUPS and P4-COACH when their needs are met.
+5. Hold until items 1 to 3 have merged: QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT
+   and DISC. No new lanes beyond these. Each of the QA cards gets the 30
+   minute limit, then a note and back to building.
 
 ## Claude, not Codex
 
@@ -42,16 +52,29 @@ and a build are green, with one review where rule 17 asks for one. Spend at
 most 30 minutes on any one failure or tool problem, then record the known
 result and move on. No new test machinery without a card. One short run-log
 line per merge. Commit board, inbox and STATUS edits on integration at once.
+Clear merged lane folders (janitor) before opening new ones. A dev server on
+port 5311 is still running from the removed p4-circuits folder; stop it if it
+is yours.
 
-## The night shift
+## The full check
 
-Heavy checks wait for the night shift: full tier, frame check, combat balance
-and all browser scenarios, run alone on the idle laptop by
-`node tools/night-shift.mjs --idle-awake --no-push`. No builder starts a heavy
-job after 23:00 PT. The morning report names the first merge after the last
-green night for any failure; that fix goes first and other merges continue.
-Until a night run has passed on the current head, the full tier on the exact
-release commit is still required before any release.
+Heavy checks wait for the full check: full tier, frame check, combat balance
+and all browser scenarios, then a short report. It runs once a day, by default
+while Kyle sleeps, on a copy of one commit, so builders keep building and
+merging while it runs. Only its frame step needs the laptop to itself, and
+builders pause gates, builds and browser checks for that step only, about 15
+minutes. Its other stages run alongside builders and each counts as one of the
+three heavy jobs. The report names the first merge after the last green full
+check for any failure; that fix goes first and other merges continue. The full
+tier on the exact release commit still runs alone before any release.
+
+Tonight only (the tool is unchanged until FAC-FULL-CHECK lands): Kyle schedules
+`node tools/night-shift.mjs --idle-awake --no-push` for 04:00. From 03:45
+nobody starts a gate, build, browser check or merge. By 03:45 every board,
+inbox and status edit on integration is committed. The check refuses to start
+if the integration folder has uncommitted changes. Builders resume when the
+"Record night" check commit lands on integration, or at 06:30 at the latest.
+Building in lane folders (editing code without running gates) may continue.
 
 ## Retained facts
 

@@ -15,21 +15,23 @@ and SPEC text about test tiers, merge order and when heavy checks run.
 
 1. **Test by what changed.** A lane runs the smoke set plus the suites that
    import or read the changed files. No "run everything" fallback for an
-   unmapped game file; the night run covers it. (FAC-01)
+   unmapped game file; the full check covers it. (FAC-01)
 2. **Merge as soon as it is green.** One targeted lane run, a build and one
    review. A merge with no conflict does not run again. A conflict fix runs
    the targeted run once more. (FAC-02)
-3. **Night shift.** One scheduled run on the idle laptop: full tier, frame
-   check, combat balance on current rules (`--check`), all browser
-   scenarios. A morning report names any merge that broke something; its fix
-   goes first and other merges continue. (FAC-03)
+3. **The full check.** One batch once a day, by default while Kyle sleeps:
+   full tier, frame check, combat balance on current rules (`--check`), all
+   browser scenarios. It checks a copy of one commit, so builders keep
+   building and merging while it runs; only its frame step needs the laptop
+   to itself. A short report names any merge that broke something; its fix
+   goes first and other merges continue. (FAC-03, then FAC-FULL-CHECK)
 4. **Release is unchanged.** Full tier on the exact release commit, real
    saves never touched, `dist-previous` kept. Kyle says "go live".
 5. **Kyle sets direction.** Art and sound picks are Claude's within the
    three-round cap. Kyle can overrule anything and keeps "go live".
 6. **Work in progress limits.** At most six build lanes at once across all
    lines, no more than three of them course lanes, each test run `--jobs 4`
-   or fewer. The laptop has 20 threads; the night shift runs alone. A world
+   or fewer. The laptop has 20 threads; the full check's frame step runs alone. A world
    uses as many of the six as its graph allows (The Deep starts six: five
    Codex cards and Claude's water look).
 
@@ -69,7 +71,7 @@ flowchart LR
   B & K --> D[T: drive-through check]
   F & D & K --> FP[C: finishing pass]
   FP --> M[X: merge, dev switch]
-  M --> N[T: night shift: frames, balance]
+  M --> N[T: full check: frames, balance]
   N --> REL[X: release batch, lock release]
 ```
 
@@ -90,7 +92,7 @@ flowchart LR
   A --> B
   B --> V[T: targeted run + one review]
   V --> M[X: merge, dev switch]
-  M --> N[T: night shift]
+  M --> N[T: full check]
   N --> REL[X: release batch]
 ```
 
@@ -122,7 +124,7 @@ flowchart LR
 ```mermaid
 flowchart LR
   F1[FAC-01 test picker] --> F2[FAC-02 merge on green]
-  F1 --> F3[FAC-03 night shift + morning report]
+  F1 --> F3[FAC-03 full check + report]
   F1 --> F4[FAC-04 course kit: register by files]
   F4 --> F5[FAC-05 counts read from the course list]
   F1 --> F7[FAC-07 browser checks: one build, parallel]
@@ -145,12 +147,14 @@ FAC-01, FAC-06 and FAC-07 can start at once. FAC-04 and FAC-05 need the
   drop the re-run on a conflict-free merge and the one-at-a-time queue wait.
   Integrator script merges, runs the janitor and writes the run-log line from
   the test result. Acceptance: two green lanes merge within five minutes.
-- **FAC-03 Night shift (Codex, TOOL).** `tools/night-shift.mjs`: full tier
+- **FAC-03 The full check (Codex, TOOL).** `tools/night-shift.mjs`: full tier
   `--jobs 4`, frame check (both qualities, busiest view, eight cars),
   combat balance (`--check`, current rules), browser scenarios; writes
-  `docs/board/checks/night-<date>.json` and a short morning report that names
-  the first merge after the last green night for each failure. Kyle approves
-  the Windows scheduled task himself.
+  `docs/board/checks/night-<date>.json` and a short report that names
+  the first merge after the last green full check for each failure. Kyle
+  approves the Windows scheduled task himself. FAC-FULL-CHECK renames the
+  tool to `tools/full-check.mjs` and lets it run on a copy of one commit
+  while builders keep merging (see `docs/board/cards/FAC-FULL-CHECK.md`).
 - **FAC-04 Course kit (Claude design, Codex build, SIM).** Each circuit file
   exports its manifest (id, flag, state, price, grandPrix, releaseOrder,
   driver). `src/circuits/index.js` discovers circuit files and sorts by
@@ -184,7 +188,7 @@ these before any lane starts, so builders never stop to ask:
 6. What stays exact: fingerprints, signatures, saves, other courses.
 7. The switch, and what turning it on changes (counts, lists, prices).
 8. Sound cues and loudness; art sources and the look target.
-9. How it is checked: the targeted tests, the night shift, the drive-through
+9. How it is checked: the targeted tests, the full check, the drive-through
    check, and Kyle's "go live".
 
 The first packets written this way: `docs/FACTORY.md` itself (FAC cards)
@@ -197,4 +201,5 @@ and `docs/THE_DEEP.md` section 10.
 - **Claude, build sessions (Sonnet):** Claude-owned cards in their own lanes.
 - **Codex Director:** keeps every line full within the limits in section 1.
 - **Codex lanes:** one card each; three course lanes at most.
-- **Night shift:** the laptop, alone, once a night.
+- **The full check:** once a day, by default while Kyle sleeps, on a copy of
+  one commit; only its frame step takes the laptop alone.
