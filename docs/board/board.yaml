@@ -179,7 +179,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-overnight-2026-10-12"
+    branch: "codex/p4-snowmen"
     needs: [P4-SNOW, P4-SUMMIT-RUNTIME, P4-CAREER-PAY, P4-TREMBLANT-SNOW]
     locks: [busy-game-files, save-shape]
     details: "docs/board/cards/P4-SNOWMEN.md"
