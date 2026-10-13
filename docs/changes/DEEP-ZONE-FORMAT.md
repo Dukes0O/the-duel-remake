@@ -9,7 +9,9 @@ kelp, grass and rock values default to zero. The independent copy is deeply
 frozen. There are no production coast coordinates, registry or runtime hooks.
 
 Validation covers lowercase slug zone/circuit/place ids; the-deep switch;
-finite ramp distance/depth, positive length and left/right side; at least three
+zone/place ids capped at the existing persisted 80-character boundary (circuit
+metadata has no such bound here); finite ramp distance/depth, positive length
+and left/right side; at least three
 trail points with finite signed coordinates, nonnegative depth, positive width,
 sea-floor surface and optional look amounts from zero to one. Neighboring x/z
 positions must differ, including the implicit last-to-first closure. Places
@@ -22,13 +24,20 @@ arbitrary course length, geometry bound or count cap was invented.
 ## Checks
 
 Tests were written first and failed because the module did not exist. After
-implementation, all ten pure Node contract groups pass. They check complete
+implementation and review fix, all eleven pure Node contract groups pass. They check complete
 metadata, every creature/pearl id, defaults, malformed metadata, wrapped place
 ranges, independent frozen data, and the actual existing createZoneFloor loop.
 The test-only loop has identical length, ground, look and seeded placement
 results before/after validation, including positive-left offsets and closure.
 No geometry or RNG implementation changed. A real diagnostic fault found by
 the new test was fixed: duplicate segments now name both authored endpoints.
+
+Independent review found a real interoperability fault: the initial validator
+accepted zone/place ids longer than deep-discovery could remember. Under the
+Director's exact card grant, only those two ids now match the existing maximum
+of 80 characters. The new boundary regression failed first, then passed with
+80 accepted and 81 rejected; an 81-character circuit id remains unchanged.
+No discovery, save, count cap or other authored contract changed.
 
 The existing test-deep-look passes all 5,287 checks. The card authorizes only
 two new literal approved import pairs: test-deep-zone-format to deep-zone.js

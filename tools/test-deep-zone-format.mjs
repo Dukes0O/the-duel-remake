@@ -55,6 +55,18 @@ test('version 1 preserves the complete authored contract and defaults only absen
   frozen(zone);
 });
 
+test('zone and place ids fit the existing persisted 80-character boundary', () => {
+  const source = authoredZone(), eighty = 'a'.repeat(80);
+  source.id = eighty;
+  source.places[0].id = eighty;
+  source.circuit = 'c'.repeat(81);
+  const zone = defineZone(source);
+  assert.equal(zone.id, eighty);
+  assert.equal(zone.places[0].id, eighty);
+  assert.equal(zone.circuit, source.circuit, 'circuit metadata has no persisted id bound');
+  rejected(data => { data.id = 'a'.repeat(81); }, 'id');
+  rejected(data => { data.places[0].id = 'a'.repeat(81); }, 'places[0].id');
+});
 test('the frozen copy shares no mutable data with its caller', () => {
   const source = authoredZone(), zone = defineZone(source), expected = structuredClone(zone);
   assert.equal(Object.isFrozen(source), false);

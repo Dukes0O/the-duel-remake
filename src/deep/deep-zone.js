@@ -27,9 +27,10 @@ function number(value, path, minimum = -Infinity, positive = false) {
       minimum === 0 ? 'must be a finite nonnegative number' : 'must be a finite number');
   return value;
 }
-function slug(value, path) {
+function slug(value, path, maximum = Infinity) {
   if (typeof value !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value))
     invalid(path, 'must be a lowercase slug');
+  if (value.length > maximum) invalid(path, 'must be at most 80 characters for persisted discovery');
   return value;
 }
 function index(value, length, path) {
@@ -49,7 +50,7 @@ function unique(id, seen, path) {
 
 export function defineZone(data) {
   record(data, ['id', 'circuit', 'switch', 'ramp', 'trail', 'places', 'pearls', 'spots'], 'zone');
-  const id = slug(data.id, 'id'), circuit = slug(data.circuit, 'circuit');
+  const id = slug(data.id, 'id', 80), circuit = slug(data.circuit, 'circuit');
   if (data.switch !== 'the-deep') invalid('switch', 'must be the-deep');
 
   const rampData = record(data.ramp, ['atDistance', 'side', 'length', 'endDepth'], 'ramp');
@@ -86,7 +87,7 @@ export function defineZone(data) {
   const placeIds = new Set();
   const places = list(data.places, 'places', (value, path) => {
     record(value, ['id', 'name', 'fromIndex', 'toIndex'], path);
-    const placeId = unique(slug(value.id, `${path}.id`), placeIds, `${path}.id`);
+    const placeId = unique(slug(value.id, `${path}.id`, 80), placeIds, `${path}.id`);
     if (typeof value.name !== 'string' || !value.name.trim()) invalid(`${path}.name`, 'must be nonempty text');
     return Object.freeze({ id: placeId, name: value.name,
       fromIndex: index(value.fromIndex, trail.length, `${path}.fromIndex`),
