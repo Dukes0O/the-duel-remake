@@ -10,6 +10,7 @@ import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
 import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongPush,carMortarHop,setCarMortarHop} from './arsenal/car-effects.js';
 import {FIELD} from './race-field.js';
+import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
 
 export function _surface(distance, lateral) {
@@ -21,7 +22,7 @@ export function _surface(distance, lateral) {
 // What the road under a car does to its grip (docs/CIRCUITS.md 3.4). Asphalt on
 // summer tyres is the shared neutral answer, so ordinary courses are untouched.
 export function _roadGrip(distance, lateral, car = this.car, tyre) {
-  const readKind = this.course.gripKindAt?.(distance, lateral) ?? 'asphalt';
+  const readKind = avalancheDriftAt(this,distance,lateral) ? 'deep-snow' : this.course.gripKindAt?.(distance, lateral) ?? 'asphalt';
   const kind = readKind === 'sea-floor' && this.featureFlags?.enabled('the-deep') !== true ? 'asphalt' : readKind;
   return gripFor(kind, normalizeTyre(tyre ?? (car === this.car ? this.state.tyre : undefined)), car);
 }
@@ -36,6 +37,7 @@ export function _drivingSurface(distance, lateral, car = this.car, hasContact = 
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
   const rally = car.kind === 'rally', roughnessScale = car.roughnessScale ?? 1;
   const road = this._roadGrip(distance, lateral, car, tyre);
+  const avalancheSnow = avalancheDriftAt(this,distance,lateral);
   if (road.kind === 'sea-floor') return { ...surface, road: true, mainRoad: true, preparedGravel: false,
     boostAllowed: !surface.pitLane, mud: 0, waterDepth: 0, gripKind: road.kind, grip: road.grip,
     gripTopSpeedMph: null, gripTopShare: road.topShare, traction: road.grip,
@@ -48,8 +50,8 @@ export function _drivingSurface(distance, lateral, car = this.car, hasContact = 
   return { ...surface, preparedGravel, boostAllowed: !surface.pitLane && (surface.road || this.course.def.practice),
     mud, waterDepth,
     ...(road.active ? { gripKind: road.kind, grip: road.grip, gripTopSpeedMph: road.topSpeedMph, gripTopShare: road.topShare } : {}),
-    traction: (road.active && surface.mainRoad ? traction * road.grip : traction) * (1 - mud * .45),
-    speedLimit: mud > 0 ? Math.min(speedLimit, 42 + (1 - mud) * 32) : speedLimit,
+    traction: (road.active && (surface.mainRoad || avalancheSnow) ? traction * road.grip : traction) * (1 - mud * .45),
+    speedLimit: avalancheSnow ? Math.min(speedLimit,road.topSpeedMph) : mud > 0 ? Math.min(speedLimit, 42 + (1 - mud) * 32) : speedLimit,
     scrub: scrub + mud * .42,
     roughness: preparedGravel ? (rally ? .14 : .2) * roughnessScale : null };
 }
@@ -247,7 +249,7 @@ export function _drive(dt) {
   else if (s.hiddenRoadDriving && surface.mainRoad && Math.abs(s.headingError) < 1.3) s.hiddenRoadDriving = false;
   // A returning road car may join the asphalt facing back along the circuit.
   // Keep its physical heading until the driver has steered into the race lane.
-  const freeHeading = !!s.arena || this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
+  const freeHeading = this._deepProtected?.() === true || !!s.arena || this.course.hiddenRoad && s.hiddenRoadDriving || this.course.def.practice || offroadCapability(car) && (!surface.road || Math.abs(s.headingError) > 1.45);
   if (freeHeading) {
     const heading = frame.heading + s.headingError + s.yawVelocity * dt;
     const old = this.course.worldAt(s.s, s.lateral);

@@ -78,6 +78,18 @@ export function addCoastalWater(group,course){
   // Draw the Pacific ocean before either transparent foam layer. Keep depth
   // testing so the terrain and solid sea stacks still occlude the surf.
   if(showcase){water.renderOrder=-2;foam.renderOrder=-1;}
+  if(course.deepRamp){
+    const ramp=course.deepRamp,positions=[],indices=[];
+    for(const point of ramp.points)for(const side of [-1,1])positions.push(
+      point.x+Math.cos(ramp.heading)*ramp.width/2*side,point.y+.035,
+      point.z-Math.sin(ramp.heading)*ramp.width/2*side);
+    for(let row=1;row<ramp.points.length;row++){const a=(row-1)*2,b=row*2;indices.push(a,b,a+1,a+1,b,b+1);}
+    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    geometry.setIndex(indices);geometry.computeVertexNormals();
+    const boatRamp=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:0x92988b,roughness:.96,side:THREE.DoubleSide}));
+    boatRamp.name='Pacific Deep boat ramp';boatRamp.receiveShadow=true;group.add(boatRamp);
+  }
+
   registerSceneSystem(group, { animate: t => { time.value = t; } });
   return {water,foam};
 }

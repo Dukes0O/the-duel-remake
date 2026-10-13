@@ -78,9 +78,9 @@ replaced or explicitly dropped; being idle is not permission to remove one.
 5. Get one clear review. Use additional required save/art helpers only when
    rule 6 or the card calls for them. Claude judges art within three rounds.
    Daytime builds do not add full, frame, browser or balance checks; the full
-   check owns those checks. Until FAC-FULL-CHECK lands, `tools/night-shift.mjs`
-   needs the laptop to itself and an unchanged integration folder for its whole
-   run, so builders hold gates, builds, browser checks and merges while it runs.
+   check owns those checks. `tools/full-check.mjs` uses a detached source copy;
+   builders keep merging and only its frame step requires a quiet laptop.
+   Tonight's direct pause in next-run.md remains in force.
 6. Hand the exact source, green lane/build evidence and review to the Integrator.
    An independent clean lane can merge after another lane without syncing
    or rerunning solely because integration advanced.
@@ -111,8 +111,8 @@ check card, with no changed assertion or tolerance.
 
 Run node tools/build-status.mjs after merges and at session end. Commit its
 STATUS output and all board/inbox edits immediately. There is no merge-count
-or elapsed-time full deadline. Until FAC-FULL-CHECK lands, run the full tier
-alone at session/overnight end. Exact release provenance still matters:
+or elapsed-time full deadline. The full check uses a detached copy of one
+commit; only its frame step runs alone. Exact release provenance still matters:
 finish source and release notes before the final release full run; a later
 commit needs its own full pass before release.
 
@@ -213,8 +213,7 @@ merge promptly. A clean union keeps its existing green evidence. Send a conflict
 back for one fresh lane/build after its fix. Commit one run-log sentence and
 shared metadata immediately. Recycle only caller-proven newly created clean lanes.
 
-Full check: run the full-check tool (`tools/night-shift.mjs` until FAC-FULL-CHECK
-lands) once a day; report the first merge after the last green full check for a
+Full check: run `node tools/full-check.mjs --idle-awake --no-push` once a day; report the first merge after the last green full check for a
 failure, put its fix first and allow other merges.
 Release Manager: only after Kyle says “go live”, require full on the exact
 release commit and all applicable evidence, then follow OPERATIONS safely.
@@ -232,5 +231,5 @@ locks and gate rules as manual sessions. Resume by reading the current board,
 FACTORY, inbox and retained lane notes. Preserve pending work and decisions;
 there is no old four/five-lane limit, merge queue or full-run deadline to restore.
 When Kyle pauses work, drain existing jobs and stop new work. When a session
-ends, commit shared status/inbox/board immediately; use the full check once
-installed, or the existing end full alone until FAC-FULL-CHECK lands.
+ends, commit shared status/inbox/board immediately; use the scheduled full
+check. Tonight's 03:45 to Record night/06:30 pause still applies.

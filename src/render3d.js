@@ -1,4 +1,10 @@
+import {createDeepView,deepPresentation} from './deep/deep-ui.js';
+import {createUnderwaterScene} from './deep/underwater-scene.js';
+import {createWaterline} from './deep/waterline.js';
 import {createTrackKits,trackKitsOf} from './track-kits.js';
+import {snowmenEnabled,snowmanPlacements} from './snowmen.js';
+import {createSnowmenView} from './snowmen-view.js';
+import {createSummitAvalancheView,summitAvalancheShake} from './summit-avalanche-view.js';
 import {snowWorldEnabled,snowWorldPlacements,SNOW_KIT_IDS,snowWorldOf,winterLightingSettings} from './snow-world.js';
 import {createCombatScene} from './combat-scene.js';
 import {createCombatEffects} from './combat-effects.js';
@@ -160,24 +166,41 @@ export function attachRenderer(host, app) {
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
   const lighting=createSceneLighting({scene,renderer,bloom,host});
+  const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,
+    createPipeline(privateScene,privateCamera,ambient,high){
+      const privateComposer=new EffectComposer(renderer);
+      privateComposer.addPass(new RenderPass(privateScene,privateCamera));
+      privateComposer.addPass(ambient);
+      if(high)privateComposer.addPass(new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9));
+      privateComposer.addPass(new OutputPass());
+      return {setSize:(width,height)=>{privateComposer.setPixelRatio(renderer.getPixelRatio());privateComposer.setSize(width,height);},
+        render:()=>renderMainView(renderer,privateComposer,high),
+        dispose(){privateComposer.passes.forEach(pass=>{if(pass!==ambient)pass.dispose?.();});privateComposer.dispose();}};
+    }});
+  const stopDeepEvents=app.duel.onChange((_state,event)=>{if(event.menu||event.stageLoaded!=null||event.arenaLoaded!=null||event.deepExited)deepView.reset();});
+  let deepRevision=deepView.revision;
+
   const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
-  let preparedTrackKits = null, preparedTrackKitKey = null;
+  let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
+  const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
+  const hasAvalanche=next=>next.def.id==='summit-run' && (app._switches?.()??app.duel.featureFlags).enabled('summit-run');
+  const kitWorldKey=next=>environmentKey(next)+(hasSnowmen(next)?':snowmen':'')+(hasAvalanche(next)?':avalanche':'');
   const winterEnabled=next=>snowWorldEnabled(next,app._switches?.()??app.duel.featureFlags);
   function prepareKitWorld(next, {retry=false}={}) {
-    if (!next.def.kitPlacements?.length && !winterEnabled(next)) {
+    if (!next.def.kitPlacements?.length && !winterEnabled(next) && !hasSnowmen(next)) {
       preparedTrackKits?.dispose();preparedTrackKits=null;preparedTrackKitKey=null;
       host.dataset.trackKitAsset = 'off';host.dataset.trackKitError = '';return true;
     }
-    if (world && next === course) {
+    if (world && next === course && worldKey===kitWorldKey(next)) {
       host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';return true;
     }
-    const key = environmentKey(next);
-    if (world && worldKey === key && !winterEnabled(next)) {
+    const key = kitWorldKey(next);
+    if (world && worldKey === key && !winterEnabled(next) && !hasSnowmen(next)) {
       host.dataset.trackKitAsset = trackKitsOf(world)?.status ?? 'off';
       host.dataset.trackKitError = '';
       return true;
@@ -186,7 +209,9 @@ export function attachRenderer(host, app) {
       preparedTrackKits.dispose(); preparedTrackKits = null; preparedTrackKitKey = null;
     }
     if (!preparedTrackKits) {
-      preparedTrackKits = createTrackKits(next,{validateClearance:false,...(winterEnabled(next)?{extraPlacements:snowWorldPlacements(next),requiredIds:SNOW_KIT_IDS}:{})}); preparedTrackKitKey = key;
+      preparedTrackKits = createTrackKits(next,{validateClearance:false,
+        extraPlacements:[...(winterEnabled(next)?snowWorldPlacements(next):[]),...(hasSnowmen(next)?snowmanPlacements(next):[])],
+        requiredIds:[...(winterEnabled(next)?SNOW_KIT_IDS:[]),...(hasSnowmen(next)?['snowman']:[])]}); preparedTrackKitKey = key;
     }
     host.dataset.trackKitAsset = preparedTrackKits.status;
     host.dataset.trackKitError = preparedTrackKits.error?.message ?? '';
@@ -302,14 +327,17 @@ export function attachRenderer(host, app) {
   function build(next) {
     const buildStart=performance.now();
     worldReadyStarted=buildStart;host.dataset.worldReadyMs='0';
+    snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;
     if (world) retireObject(world);
     course = next;
-    worldKey=environmentKey(next);
+    worldKey=kitWorldKey(next);
     host.dataset.worldBuilds=String(++worldBuildCount);
     sceneRevision++;
     lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});
     world = buildEnvironment(course,{trackKits:preparedTrackKits,snow:winterEnabled(course)});
     preparedTrackKits = null; preparedTrackKitKey = null; scene.add(world);
+    if(hasSnowmen(course)){snowmenView=createSnowmenView(trackKitsOf(world));world.add(snowmenView.group);}
+    if(hasAvalanche(course)){avalancheView=createSummitAvalancheView(course);world.add(avalancheView.group);}
     lighting.setWorld(world);
     rustwallPresentation=world.getObjectByName('Rustwall')?.userData;
     yardPresentation=world.getObjectByName('Scrapdome yard')?.userData;
@@ -345,8 +373,8 @@ export function attachRenderer(host, app) {
     try {
       if (!view.settled && now > view.deadline) throw Error('Track view took too long to prepare. Select the flag again.');
       if (!prepareKitWorld(view.course)) return;
-      if (course !== view.course) {
-        if (world && worldKey === environmentKey(view.course) && !winterEnabled(view.course)) course = view.course;
+      if (course !== view.course || worldKey!==kitWorldKey(view.course)) {
+        if (world && worldKey === kitWorldKey(view.course) && !winterEnabled(view.course)) course = view.course;
         else build(view.course);
       }
       const {pose} = view, distance = pose.s, high = app.ambientOcclusionEnabled !== false;
@@ -421,8 +449,8 @@ export function attachRenderer(host, app) {
     const capture=measure&&!document.hidden;
     if(!capture)frameMetrics.suspend();
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
-    const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.course;
-    const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused;
+    const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.deepRuntime?.raceCourse??app.duel.course;
+    const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
@@ -433,8 +461,8 @@ export function attachRenderer(host, app) {
     if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
-    if (course !== next) {
-      if(world&&worldKey===environmentKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
+    if (course !== next || worldKey!==kitWorldKey(next)) {
+      if(world&&worldKey===kitWorldKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
       else build(next);
       syncScene(world,menu?{crushedProps:[]}:st,0);
       ready = false;
@@ -513,7 +541,9 @@ export function attachRenderer(host, app) {
       host.dataset.opponentExplosionWarmupMs=(performance.now()-warmupStart).toFixed(2);
     }
     const distance = menu ? 172 : st.s, lateral = menu ? -2.8 : st.lateral;
-    const pp = vehicleGroundPoint(course,distance,lateral);
+    const deepPose=!menu?deepPresentation(app.duel):null;
+    const physicalCourse=deepPose?app.duel.course:course;
+    const pp = vehicleGroundPoint(physicalCourse,distance,lateral);
     const journeyView=hiddenRoadPresentation(st,course);
     const spurCamera=!menu&&(!journeyView.camera||journeyView.camera.blend<1)?
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
@@ -547,10 +577,10 @@ export function attachRenderer(host, app) {
     const motionTime = st.stageTimeSec;
     player.rotation.y += menu ? 0 : (st.headingError || 0) + (st.slipAngle || 0) + (st.crashSpin || 0);
     player.rotation.z = steering * Math.min(speed / 160, 1) * .045;
-    const slope=groundSlope(course,distance,lateral,player.rotation.y-pp.heading);
+    const slope=groundSlope(physicalCourse,distance,lateral,player.rotation.y-pp.heading);
     player.rotation.x=slope.pitch;player.rotation.z+=slope.roll;
     if (!menu) {
-      applyVehicleTerrainPose(player,course,st);
+      applyVehicleTerrainPose(player,physicalCourse,st);
       player.position.y+=st.airHeight||0;
       if(!st.tumble){
       player.position.y += rough * Math.abs(Math.sin(motionTime * 35)) * .15;
@@ -605,7 +635,7 @@ export function attachRenderer(host, app) {
         camTarget.y=Math.max(camTarget.y,course.groundAt(near.s,near.lateral).y+.65);
       }
       camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(speed / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
-      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10;
+      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10 + (avalancheView?summitAvalancheShake(st):0);
       camTarget.x += Math.sin(motionTime * 81) * shake;
       camTarget.y += Math.cos(motionTime * 93) * shake * .62;
       if(st.catastrophic){
@@ -623,6 +653,7 @@ export function attachRenderer(host, app) {
       if(blend>.15)player.visible=true;
       firstPersonView=false;
     }
+    if(deepPose){camTarget.set(deepPose.camera.position.x,deepPose.camera.position.y,deepPose.camera.position.z);lookTarget.set(deepPose.camera.target.x,deepPose.camera.target.y,deepPose.camera.target.z);player.visible=true;firstPersonView=false;}
     const yardHomePose=yardPresentation?.homeCamera?.();
     if(yardHomePose){
       camTarget.set(yardHomePose.position.x,yardHomePose.position.y,yardHomePose.position.z);
@@ -632,16 +663,16 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
-    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose) camera.position.copy(camTarget);
+    if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
       // Follow longitudinal motion immediately: world-space damping otherwise
       // adds a speed-dependent camera gap and makes the car shrink at speed.
       camera.position.x = camTarget.x; camera.position.z = camTarget.z;
     }
-    if(!menu&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
+    if(!menu&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
-    if(!menu)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!deepPose)constrainMountainCamera(course,camera.position,distance);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
@@ -784,6 +815,8 @@ export function attachRenderer(host, app) {
     lighting.updateWorld(nightWorldInput);
     host.dataset.driver=player.userData.driver?'ready':'absent';
     const high=app.ambientOcclusionEnabled!==false;
+    snowmenView?.update(menu?null:st,high);
+    avalancheView?.update(menu?null:st,high);
     const snowOwner=snowWorldOf(world);
     if(snowOwner){
       snowVehicles.length=menu?0:Math.min(8,opponents.length+1);
@@ -829,21 +862,37 @@ export function attachRenderer(host, app) {
     }
     renderer.info.autoReset=false;renderer.info.reset();
     const updateEnded=phaseProbe?phaseProbe.now():0;
-    const loadingFrame=firstWorldFrame||metricsChanged,renderStarted=performance.now();renderMainView(renderer,composer,high);
-    const kits = trackKitsOf(world);
-    if (kits) {
-      const previousRender = renderer.render;
-      renderer.render = function(renderedScene, renderedCamera, ...args) {
-        if (renderedScene !== scene || renderedCamera !== rearView.camera)
-          return previousRender.call(this,renderedScene,renderedCamera,...args);
-        rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
-        return kits.withRearView({position:player.position,forward:rearKitForward},
-          () => previousRender.call(this,renderedScene,renderedCamera,...args));
-      };
-      try {rearView.render({state:st,player,course,now:ambientNow});}
-      finally {renderer.render = previousRender;}
-    } else rearView.render({state:st,player,course,now:ambientNow});
-    const cpuRenderMs=performance.now()-renderStarted;
+    const loadingFrame=firstWorldFrame||metricsChanged;
+    let submittedCpuMs;
+    if(deepPose&&st.deepJourney.committed&&st.deepJourney.phase!=='ascending'){
+      const privateRenderStarted=performance.now();
+      deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
+      if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
+      rearView.hide();submittedCpuMs=performance.now()-privateRenderStarted;
+    } else {
+      const preparationStarted=performance.now();
+      deepView.render({duel:app.duel,car:player,camera,seconds:presentationSeconds,high,width:host.clientWidth,height:host.clientHeight});
+      if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
+      const preparationMs=performance.now()-preparationStarted;
+      const renderStarted=performance.now();renderMainView(renderer,composer,high);
+      const kits = trackKitsOf(world);
+      if (kits) {
+        const previousRender = renderer.render;
+        renderer.render = function(renderedScene, renderedCamera, ...args) {
+          if (renderedScene !== scene || renderedCamera !== rearView.camera)
+            return previousRender.call(this,renderedScene,renderedCamera,...args);
+          rearKitForward.set(0,0,-1).applyQuaternion(player.quaternion).normalize();
+          return kits.withRearView({position:player.position,forward:rearKitForward},
+            () => previousRender.call(this,renderedScene,renderedCamera,...args));
+        };
+        try {rearView.render({state:st,player,course,now:ambientNow});}
+        finally {renderer.render = previousRender;}
+      } else rearView.render({state:st,player,course,now:ambientNow});
+      const cpuRenderMs=performance.now()-renderStarted;
+      const overlayStarted=performance.now();deepView.drawOverlay();
+      submittedCpuMs=preparationMs+cpuRenderMs+(performance.now()-overlayStarted);
+    }
+    const cpuRenderMs=submittedCpuMs;
     phaseProbe?.recordRendererFrame(now,updateEnded-updateStarted,cpuRenderMs);
     if(firstWorldFrame){host.dataset.firstFrameMs=cpuRenderMs.toFixed(0);firstWorldFrame=false;}
     if(worldReadyStarted){host.dataset.worldReadyMs=(performance.now()-worldReadyStarted).toFixed(0);worldReadyStarted=0;}
@@ -907,7 +956,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;disposed=true;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;disposed=true;stopDeepEvents();deepView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

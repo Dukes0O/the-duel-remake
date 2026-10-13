@@ -13,6 +13,16 @@ const expected = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.san
   'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave'];
 assert.deepEqual(DEEP_CUE_IDS, expected);
 assert.deepEqual(DEEP_RECIPES.map(spec => spec.id), expected);
+const unchangedAssets = {
+  'deep.splash': '2a4349b58158aebbacaa8dee13d13b6bef58d58570e520c01cda59468b519952',
+  'deep.engine-muffle': '6e7f0f76b7e99e03d6343f24b78230f55a09aef3812f1fd79a65d2e24686cd8e',
+  'deep.sand-land': 'bf8164226453ca63deab29542787d05cb1ac512ac3321fe5f54efa4ae722f0e1',
+  'deep.logged': '26152630abf1172af42f43da71cacdebee0606cfda29aa6d237c7e3c7f39a628',
+  'deep.whale': 'cdaf930e454f219657af5579a30f75b92ba335d87a4e6a50395284035b56f2c3',
+};
+const loopHeaders = {'deep.bubbles': 'OggS', 'deep.cave': 'OggS'};
+assert.equal(DEEP_RECIPES.find(spec => spec.id === 'deep.pearl').duration, 2,
+  'the revised rare-reward shimmer is authored for two seconds');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 const rows = catalog.sounds.filter(row => row.cue?.startsWith('deep.'));
 assert.equal(rows.length, 8);
@@ -30,11 +40,14 @@ for (const spec of DEEP_RECIPES) {
   const bytes = readFileSync(new URL('../' + row.runtime.file, import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), row.runtime.sha256);
   assert.equal(bytes.length, row.runtime.bytes);
+  if (spec.id === 'deep.pearl') assert.equal(row.runtime.duration, 2, 'encoded pearl lasts two seconds');
+  if (unchangedAssets[spec.id]) assert.equal(row.runtime.sha256, unchangedAssets[spec.id],
+    spec.id + ' unchanged approved runtime bytes');
   const measured = measureLoudness(bytes);
   assert(measured.available && measured.truePeakDbtp <= -1, spec.id + ' encoded true peak');
   assert(Math.abs(measured.integratedLufs - spec.loudness) <= 2, spec.id + ' encoded loudness');
   if (spec.loop) {
-    assert.equal(bytes.toString('ascii', 0, 4), 'fLaC', 'seamless lossless loop');
+    assert.equal(bytes.toString('ascii', 0, 4), loopHeaders[spec.id], 'approved measured loop codec');
     const pcm = ffmpeg(['-i', 'pipe:0', '-ac', '1', '-ar', '48000', '-f', 'f32le', 'pipe:1'], {input: bytes});
     const samples = Float32Array.from({length: pcm.length / 4}, (_, i) => pcm.readFloatLE(i * 4));
     assert(loopSeam([samples], 48000).pass, spec.id + ' decoded loop boundary');

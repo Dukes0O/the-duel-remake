@@ -2447,29 +2447,30 @@
         "highpass": 100,
         "lowpass": 2800,
         "loudness": -20,
+        "format": "ogg",
         "loopOverlapSec": 0.18,
         "fadeInSec": 0,
         "fadeOutSec": 0,
         "normalization": "FFmpeg loudnorm, TP -3, LRA 11; limiter .70 without auto-level",
-        "codec": "FLAC s16"
+        "codec": "Vorbis q5"
       },
       "runtime": {
-        "file": "public/assets/audio/deep/bubbles.flac",
-        "sha256": "90c0b1698f581a119dc4054096df617e15dfd138d1d60b72d07f7ccb77eafb7e",
-        "bytes": 184495,
+        "file": "public/assets/audio/deep/bubbles.ogg",
+        "sha256": "5b296702f6a63ba3aaa67088cd902c9556227e5d21c05033399386d8bbc5d32c",
+        "bytes": 72875,
         "sampleRate": 48000,
         "channels": 1,
         "duration": 9.82,
-        "integratedLufs": -20.1,
-        "truePeakDbtp": -3.1,
+        "integratedLufs": -20.07,
+        "truePeakDbtp": -3.01,
         "loopSeam": {
           "available": true,
           "pass": true,
           "channels": [
             {
-              "jump": 0.000823974609375,
-              "slopeRms": 0.0014735629204072215,
-              "limit": 0.005894251681628886,
+              "jump": 0.005029305815696716,
+              "slopeRms": 0.0014711680998272744,
+              "limit": 0.005884672399309098,
               "pass": true
             }
           ],
@@ -2588,12 +2589,43 @@
         "id": "deep.pearl",
         "source": "541982",
         "start": 0,
-        "duration": 1.4,
-        "rate": 0.9,
+        "duration": 2,
+        "rate": 0.72,
         "loop": false,
         "highpass": 250,
         "lowpass": 4500,
         "loudness": -22,
+        "shimmer": {
+          "layerSec": 0.68,
+          "fadeSec": 0.08,
+          "layers": [
+            {
+              "at": 0,
+              "pitch": 1,
+              "gain": 0.7
+            },
+            {
+              "at": 0.33,
+              "pitch": 1.4,
+              "gain": 0.7
+            },
+            {
+              "at": 0.66,
+              "pitch": 1.8,
+              "gain": 0.7
+            },
+            {
+              "at": 0.99,
+              "pitch": 2.3,
+              "gain": 0.7
+            },
+            {
+              "at": 1.32,
+              "pitch": 3,
+              "gain": 0.7
+            }
+          ]
+        },
         "loopOverlapSec": 0,
         "fadeInSec": 0.012,
         "fadeOutSec": 0.16,
@@ -2602,13 +2634,13 @@
       },
       "runtime": {
         "file": "public/assets/audio/deep/pearl.ogg",
-        "sha256": "daebcb407049d9d9c7f7449540c3fb4082f5dd0991414e19acad4e0179b72cfe",
-        "bytes": 14271,
+        "sha256": "6c721272ccd53a425da27daf1e13a5601fda33c860db6cebbb5f66fc802a3d8b",
+        "bytes": 25895,
         "sampleRate": 48000,
         "channels": 1,
-        "duration": 1.4,
-        "integratedLufs": -21.98,
-        "truePeakDbtp": -9.62,
+        "duration": 2,
+        "integratedLufs": -22.09,
+        "truePeakDbtp": -11.66,
         "loopSeam": null
       }
     },
@@ -2684,29 +2716,30 @@
         "highpass": 45,
         "lowpass": 900,
         "loudness": -20,
+        "format": "ogg",
         "loopOverlapSec": 0.18,
         "fadeInSec": 0,
         "fadeOutSec": 0,
         "normalization": "FFmpeg loudnorm, TP -3, LRA 11; limiter .70 without auto-level",
-        "codec": "FLAC s16"
+        "codec": "Vorbis q5"
       },
       "runtime": {
-        "file": "public/assets/audio/deep/cave.flac",
-        "sha256": "efa90eb219388922a1558090e91ccf94abd083afad9f907898072a5159c885b1",
-        "bytes": 181879,
+        "file": "public/assets/audio/deep/cave.ogg",
+        "sha256": "7ea00354738bf80d31c2df4e52e072d9b7ce4675c63402ad21efdeb58420db9b",
+        "bytes": 45671,
         "sampleRate": 48000,
         "channels": 1,
         "duration": 11.82,
-        "integratedLufs": -21.49,
-        "truePeakDbtp": -4.17,
+        "integratedLufs": -21.56,
+        "truePeakDbtp": -4.19,
         "loopSeam": {
           "available": true,
           "pass": true,
           "channels": [
             {
-              "jump": 0.00537109375,
-              "slopeRms": 0.0030991609580214457,
-              "limit": 0.012396643832085783,
+              "jump": 0.009215537458658218,
+              "slopeRms": 0.003066864681484867,
+              "limit": 0.012267458725939468,
               "pass": true
             }
           ],

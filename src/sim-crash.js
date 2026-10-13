@@ -75,6 +75,7 @@ export function _rollover(dt) {
 }
 
 export function _boundary(car) {
+  if(car===this.state&&this._deepProtected?.()===true){car.boundaryWarning=false;return;}
   // Arena walls contain every car (src/arena/arena-floor.js); nothing resets.
   if (this.state.arena) { if (car === this.state) car.boundaryWarning = false; return; }
   if (car === this.state && onHiddenRoad(this.course, car)) {

@@ -210,6 +210,18 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   };
   // Director-granted contracts; every other Deep module/specifier stays isolated.
   const approvedImports = new Set([
+    'src/deep/deep-ramp.js|../pacific-coast-layout.js',
+    'tools/test-deep-zone.mjs|../src/deep/deep-ui.js',
+    'tools/test-deep-zone.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-zone.mjs|../src/deep/deep-journey.js',
+    'src/screen-router.js|./deep/deep-ui.css',
+    'src/screen-router.js|./deep/deep-ui.js',
+    'src/render3d.js|./deep/underwater-scene.js',
+    'src/render3d.js|./deep/waterline.js',
+    'src/render3d.js|./deep/deep-ui.js',
+    'src/app.js|./deep/deep-audio.js',
+    'src/game.js|./deep/deep-journey.js',
+    'src/course.js|./deep/deep-journey.js',
     'src/audio.js|./deep/deep-audio.js',
     'tools/test-deep-audio.mjs|../src/deep/deep-audio.js',
     'src/app.js|./deep/deep-discovery.js',
@@ -220,6 +232,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'tools/test-deep-save.mjs|../src/deep/deep-hints.js',
     'tools/test-deep-zone-format.mjs|../src/deep/deep-zone.js',
     'tools/test-deep-zone-format.mjs|../src/deep/zone-floor.js',
+    'tools/test-deep-ramp.mjs|../src/deep/deep-ramp.js',
   ]);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))

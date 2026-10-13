@@ -1,3 +1,4 @@
+import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
@@ -406,7 +407,7 @@ function isCompletedRace(result) {
     Number.isFinite(result.timeSec) &&
     result.timeSec > 0 &&
     Number.isInteger(result.laps) &&
-    result.laps === (result.mode === 'grandprix' ? (stage.grandPrixLaps ?? 3) : stage.laps || 2) &&
+    validRaceLaps(stage, result.mode, result.laps) &&
     Object.hasOwn(CARS, result.car) &&
     (result.driverId == null || Object.hasOwn(DRIVERS, result.driverId))
   );
@@ -616,7 +617,8 @@ export function settleRace(profile, result = {}) {
   }
   const cpu = Object.hasOwn(CPU_REWARDS, result.cpuDifficulty) ? result.cpuDifficulty : 'easy',
     base = CPU_REWARDS[cpu],
-    positionPay = grandPrix ? grandPrixPositionPay(result, base) : 0,
+    positionPay = grandPrix ? distanceFinishingPay(grandPrixPositionPay(result, base),
+      COURSE[result.stageIndex], result.laps, result.mode, result.lapChoiceEnabled === true) : 0,
     finished = isCompletedRace(result),
     combatRace = result.mode === 'wasteland' && result.combatRewardsEnabled === true,
     separateCareer = combatRace && profile.wasteland?.version === 1 &&
@@ -657,8 +659,10 @@ export function settleRace(profile, result = {}) {
   const milestones = separateCareer
     ? {earned: profile.milestones, circuitWins: profile.circuitWins, awards: [], reward: 0}
     : finishMilestones(profile, result, { finished, won, improved });
+  const finishingPay = won ? distanceFinishingPay(base, COURSE[result.stageIndex],
+    result.laps, result.mode, result.lapChoiceEnabled === true) : 0;
   const breakdown = {
-    base: grandPrix ? positionPay : won ? base : combatRace ? 0 : -Math.round(base * 0.5),
+    base: grandPrix ? positionPay : won ? finishingPay : combatRace ? 0 : -Math.round(base * 0.5),
     clean: won && result.clean === true ? Math.round(base * 0.1) : 0,
     personalBest: personalBestStatus === 'improved' ? Math.round(base * 0.2) : 0,
     streak: won && streak >= 3 ? Math.round(base * 0.2) : 0,
@@ -669,7 +673,11 @@ export function settleRace(profile, result = {}) {
     ...(combatRace ? { combat: finished ? combatCreditBonus(result, base) : 0 } : {}),
     manual: 0,
     milestones: milestones.reward,
-    ...(grandPrix ? {snowmen: grandPrixSnowmanPay(result)} : {})
+    ...(grandPrix ? {snowmen: grandPrixSnowmanPay(result)} :
+      result.snowmenEnabled===true && COURSE[result.stageIndex]?.snowmen?.length &&
+      ['duel','timetrial'].includes(result.mode) && result.qualifying!==true &&
+      result.practice!==true && recordEligible && result.snowmen<=COURSE[result.stageIndex].snowmen.length
+        ? {snowmen:grandPrixSnowmanPay(result)} : {})
   };
   // Pro doubles positive recurring earnings. Loss charges and lifetime milestones
   // stay separate, including when a completed loss improves a comparable best.
@@ -682,11 +690,11 @@ export function settleRace(profile, result = {}) {
     breakdown.drift +
     breakdown.police +
     (breakdown.combat || 0);
-  breakdown.manual = result.difficulty === 'pro' ? (grandPrix ? positionPay : won ? base : 0) + recurringBonus : 0;
+  breakdown.manual = result.difficulty === 'pro' ? (grandPrix ? positionPay : finishingPay) + recurringBonus : 0;
   if (separateCareer) for (const name of Object.keys(breakdown)) breakdown[name] = 0;
   const charge = grandPrix || won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
     bonus = recurringBonus + breakdown.manual + breakdown.milestones;
-  const grossReward = (grandPrix ? positionPay : won ? base : -charge) + bonus + (breakdown.snowmen || 0);
+  const grossReward = (grandPrix ? positionPay : won ? finishingPay : -charge) + bonus + (breakdown.snowmen || 0);
   const pendingFines =
     !grandPrix && profile.activeRace?.key === key
       ? integer(profile.activeRace.pendingPoliceFineCount, 1_000_000) * POLICE.ticketBaseFine

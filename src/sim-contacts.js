@@ -1,5 +1,6 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
+import {hitSnowman} from './snowmen.js';
 import { sweepBox, sweepObstacle, contactZone, CAR_HALF_WIDTH, CAR_HALF_LENGTH } from './collision.js';
 import { vehicleContactEnvelope, npcYieldContactNormal } from './npc-yielding.js';
 import { offroadCapability, rockHeight, rockSupportHeight, canCrushVehicle, crushedVehicleSupport } from './offroad-physics.js';
@@ -238,6 +239,7 @@ export function _obstacles(fromS, toS) {
           first * 64, (last + 1) * 64));
       this._obstacleQueryCache.set(key, obstacles.filter(obstacle =>
         !this._brokenSceneryIds?.has(sceneryIdentity(obstacle)) &&
+        !this._brokenSnowmanIds?.has(obstacle.snowmanId) &&
         !(this.roadsideKnockAwayEnabled() && this._fallenCactusIds?.has(obstacle.id))));
     }
     return this._obstacleQueryCache.get(key);
@@ -301,6 +303,8 @@ export function _staticContacts(car, player, journeyColliders = null) {
     for (let index = 0; index < obstacles.length + (journeyColliders?.length || 0); index++) {
       const obstacle = index < obstacles.length ? obstacles[index] : journeyColliders[index - obstacles.length];
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
+      if(obstacle.snowmanId && (this._brokenSnowmanIds?.has(obstacle.snowmanId) ||
+        Math.hypot(end.x-start.x,end.z-start.z)<.0001))continue;
       if (capability && (obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight
         || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) continue;
       const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
@@ -321,6 +325,9 @@ export function _staticContacts(car, player, journeyColliders = null) {
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
     if (!first) break;
+    if(!journeyColliders && hitSnowman(this,first.obstacle,player,start,end,first.t)){
+      attempt--; continue; // Search the unchanged sweep again: a wall behind snow remains solid.
+    }
     if (player && !journeyColliders) this._breakDrift('hit');
     const { nx, nz, t, penetration, obstacle } = first;
     const dx = end.x - start.x, dz = end.z - start.z;

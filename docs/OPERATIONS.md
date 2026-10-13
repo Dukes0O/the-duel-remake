@@ -90,9 +90,11 @@ supplies those decisions; the integrator does not invent card closures.
 
 Full tier, frames, combat balance --check (current rules) and browser scenarios run
 as the full check, once a day, on a copy of one commit, so builders keep merging
-while it runs; only its frame step needs the laptop to itself. Until
-FAC-FULL-CHECK lands, `tools/night-shift.mjs` needs the laptop to itself and an
-unchanged integration folder for its whole run. A full-check failure puts its fix
+while it runs; only its frame step needs the laptop to itself. Run
+`node tools/full-check.mjs --idle-awake --no-push` from clean integration.
+The tool checks a detached sibling copy and records its starting SHA even
+when integration advances. Kyle changes the Windows task himself. Tonight's
+03:45 to Record night/06:30 pause still applies (next-run.md). A full-check failure puts its fix
 first while other clean merges continue. A release always needs full green on its exact final commit.
 Do not claim an unmeasured check passed.
 

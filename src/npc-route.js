@@ -130,9 +130,18 @@ export class NpcRoutePlanner {
     const difficulty = context.difficulty || 'easy', lapsTotal = context.lapsTotal || 2;
     let state = this.actors.get(actor);
     if (!state) { state = { choice: null, attempted: new Set() }; this.actors.set(actor, state); }
-    if (difficulty === 'easy' || actor.s >= this.course.length * lapsTotal) { state.choice = null; return null; }
+    // Summit's observed once-only decision uses the existing physical branch path.
+    if (this.course.def.id==='summit-run' && context.summitChoice!==undefined) {
+      const cut=this.cuts.find(row=>row.id==='summit-open-road');
+      if(context.summitChoice!==cut?.id || !cut || actor.s>cut.end+EXIT_LEAD){state.choice=null;return null;}
+      if(!state.choice){
+        if(actor.s>cut.start && this.surfaceAt(actor.s,actor.lateral).shortcutId!==cut.id)return null;
+        const profile=this.profile(cut.id,difficulty);
+        state.choice={routeId:cut.id,lap:1,lapBase:0,entryS:profile.entry,exitS:profile.exit,profile};
+      }
+    } else if (difficulty === 'easy' || actor.s >= this.course.length * lapsTotal) { state.choice = null; return null; }
     if (state.choice && actor.s > state.choice.exitS) state.choice = null;
-    if (!state.choice) {
+    if (!state.choice && context.summitChoice===undefined) {
       const lap = Math.max(0, Math.floor(actor.s / this.course.length)), lapBase = lap * this.course.length, phase = actor.s - lapBase;
       if (difficulty === 'medium' && lap !== 1) return null;
       const threshold = difficulty === 'medium' ? .6 : .25;

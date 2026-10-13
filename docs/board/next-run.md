@@ -75,8 +75,10 @@ three heavy jobs. The report names the first merge after the last green full
 check for any failure; that fix goes first and other merges continue. The full
 tier on the exact release commit still runs alone before any release.
 
-Tonight only (the tool is unchanged until FAC-FULL-CHECK lands): Kyle schedules
-`node tools/night-shift.mjs --idle-awake --no-push` for 04:00. From 03:45
+Tonight only: Kyle schedules
+`node tools/full-check.mjs --idle-awake --no-push` for 04:00 after acceptance.
+This direct pause remains mandatory even though the tool normally lets
+builders continue outside its frame step. From 03:45
 nobody starts a gate, build, browser check or merge. By 03:45 every board,
 inbox and status edit on integration is committed. The check refuses to start
 if the integration folder has uncommitted changes. Builders resume when the

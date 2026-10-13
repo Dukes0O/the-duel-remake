@@ -1032,3 +1032,31 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 FIX-FOOT-MOUSE merged 46220b09: lane 129/129 in 1082.96 s, build 1534 ms, review lighting independent code review and menu-fault confirmation clear.
 
 - 2026-10-12 P4-SUMMIT dev source: bab5ca92 merged after mouse; 319/319, build1479.6255ms, ordinary/save review clear; no conflict rerun. Native strategy and art tail stays open.
+
+- 2026-10-12 FIX-AMBUSH-OPENING source352eb25d:178/178, build1412ms, code/design review clear; conflict-free after mouse/Summit, no rerun; creating controller owns lane cleanup.
+
+- 2026-10-12 DEEP-RAMP-GEOMETRY b9111b6a: corrected20/20, build1290ms, ordinary review clear; conflict-free after Ambush. Actual whole-cove regression fixed; pure descriptor only.
+
+- 2026-10-12 FAC-FULL-CHECK5dfd5f33:20/20, build728ms, corrected detector review clear; conflict-free merge, no rerun. Tool renamed; actual04:00 batch still pending.
+
+- 2026-10-12 DEEP-AUDIO revisedc1408cbd:55/55, build996.1124ms, ordinary review clear; conflict-free, no rerun; net236204B saved. Listening/native mix remain open.
+- 2026-10-13 LAP-CHOICE merged 30d2604f: lane 269/269 in 807.02 s, build 1929.3158 ms, review lighting independent code-money-save review and real-fault confirmation clear.
+
+- 2026-10-12 P4-SNOWMEN source0be79396:313/313, build1030.4691ms, ordinary and fresh save reviews CLEAR; conflict-free, no rerun; twenty soft once-hit snowmen/capped pay, dev only. Native checks deferred.
+
+- 2026-10-13 Janitor separate inventory after14 merges since2c6d316d: own merged lane/evidence already recycled with verdicts; no uncertain deletion. Advisory47 assets/81 exports and existing diagnostic notes retained, no unused module/removed-feature-test candidate. Looks17,152,350→17,152,350B, below20MB; older unmerged lanes retained and listed in STATUS.
+
+- 2026-10-13 DEEP-ZONE sourcea4306cde:316/316, build1322.7529ms, ordinary and fresh save repair confirmations CLEAR; conflict-free, no rerun. Journey wiring dev only, production awaits actual Trail provider.
+
+- 2026-10-13 P4-AVALANCHE source05383cbd:282/282, build2575.2799ms, ordinary crossing-repair confirmation CLEAR; conflict-free, no rerun. Core lock released; actual native timing/views/listening remain open, dev only.
+
+- 2026-10-13 04:34 PT FAC-FULL-CHECK repair merged: b569a6ed nearby16/16/build540ms/reviewCLEAR; consume only verified copied runner report; prior422 pass was failed batch, remaining stages unrun; real-fix retry follows; no release/push.
+
+- 2026-10-13 janitor sweep: own merged lanes/consumed source evidence recycled; looks17,152,350B/20MB unchanged, total323,813,992B before own log correction;47 assets/84 exports/333 docs advisory,0 unused modules/removed-feature tests; uncertain and foreign files retained.
+
+- 2026-10-13 06:18 PT: P4-AVALANCHE optional diagnostic86082572 merged; nearby16/16, build704ms, ordinary review CLEAR. Native route FAILED, waiting Claude; no repeated gate or release.
+
+- 2026-10-13 06:20 PT: FAC-FULL-CHECK memory-only quality setup4de64ff2 merged; nearby19/19, build847ms, same review CLEAR. Daily batch on bedd902a FAILED despite full422/422/combat pass; High35.5ms/4535.5ms, Performance unmeasured, browsers105/127. No repeat timing or release.
+
+- 2026-10-13: P4-GP-EXISTING abc761fd merged; nearby219/219/jobs4, build590ms, independent review CLEAR, native18/18 with zero corner crashes. All nine tuning caps complete; residual targets remain explicit. No release/push/repeated gate.
+- 2026-10-13 janitor: own merged new lanes/consumed green evidence recycled; old lanes, pending art and failed native evidence retained. Looks17152350B/20MB unchanged; tracked1950/323813992B before log correction to1949/324432150B before final merge;47asset/84export/333doc advisory candidates flagged,0unusedmodules/removedtests, no uncertain deletion.

@@ -1,3 +1,4 @@
+import {installDeepCourse} from './deep/deep-journey.js';
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
 import { makeRng } from './rng.js';
@@ -44,7 +45,7 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
     this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
@@ -63,6 +64,7 @@ export class Course {
     if(hiddenRoad && def.id === 'pacific-canyon') installHiddenRoad(this);
     if(muddyHollow && def.id === 'high-country') installMuddyHollow(this);
     installSceneryBounds(this);
+    if(deep)installDeepCourse(this,deep);
   }
   phase(s){return this.closed?((s%this.length)+this.length)%this.length:clamp(s,0,this.length);}
   sectionAt(s){const p=this.phase(s);return this.sections.find(v=>p>=v.start&&p<v.end)||this.sections.at(-1);}

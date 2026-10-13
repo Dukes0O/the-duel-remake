@@ -1,3 +1,4 @@
+import {validRaceLaps} from './lap-choice.js';
 import { weaponSignature, normalizeWeapons } from './weapon-upgrades.js';
 import { CARS, COURSE } from './config.js';
 import {
@@ -27,7 +28,7 @@ const currentRow = row => {
   return (
     stageIndex >= 0 &&
     !COURSE[stageIndex].practice &&
-    row.laps === (row.mode === 'grandprix' ? (COURSE[stageIndex].grandPrixLaps ?? 3) : COURSE[stageIndex].laps || 2) &&
+    validRaceLaps(COURSE[stageIndex], row.mode, row.laps) &&
     row.eventKey === eventKey({ ...row, stageIndex }) &&
     isCurrentDriverRecord(row)
   );
@@ -106,7 +107,7 @@ function normalize(value) {
       cpu = ['easy', 'medium', 'hard'].includes(row.cpuDifficulty) ? row.cpuDifficulty : 'easy';
     if (stage.practice) continue;
     const current = layoutVersion === (stage.layoutVersion ?? 1);
-    if (current && row.laps !== (row.mode === 'grandprix' ? (stage.grandPrixLaps ?? 3) : stage.laps || 2)) continue;
+    if (current && !validRaceLaps(stage, row.mode, row.laps)) continue;
     if (
       drift &&
       (!Number.isInteger(row.driftScore) ||

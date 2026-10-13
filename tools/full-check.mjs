@@ -1,14 +1,14 @@
-// FAC-03: installed tools run serially on the declared idle, awake laptop.
+// Full check: installed tools run serially on one detached source commit.
 // Importing this module never starts jobs, installs a task, rewrites or pushes.
 import { spawn, spawnSync } from 'node:child_process';
-import { appendFile, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { appendFile, mkdir, mkdtemp, readFile, readdir, writeFile, rmdir } from 'node:fs/promises';
+import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { namedScenarios } from './run-browser-scenarios.mjs';
+
 
 const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const path=(...parts)=>join(...parts).replaceAll('\\','/');
-const usage='Usage: node tools/night-shift.mjs --idle-awake --no-push [--date YYYY-MM-DD]';
+const usage='Usage: node tools/full-check.mjs --idle-awake --no-push [--date YYYY-MM-DD]';
 const commitPattern=/^[a-f0-9]{40}$/;
 function localDate(now=new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -89,24 +89,116 @@ function gitCommand(args,root) {
   if(child.error||child.status!==0)throw Error(child.error?.message||child.stderr||'Git read failed.');
   return child.stdout;
 }
+// Count actual foreign job trees, not their Blender or harness descendants.
 export function heavyProcesses(rows,self=process.pid) {
-  return rows.filter(row=>row.pid!==self&&
-    /tools\/(?:run-tests|combat-balance|browser-harness|run-browser-scenarios|[^\s"]*field-rate)\.mjs|vite[^\r\n]*\bbuild\b|blender/i
+  const byPid=new Map(rows.map(row=>[row.pid,row]));
+  const ancestors=pid=>{const found=new Set();while(byPid.has(pid)&&!found.has(pid)){found.add(pid);pid=byPid.get(pid).parent;}return found;};
+  const own=ancestors(self);
+  const heavy=rows.filter(row=>!own.has(row.pid)&&!ancestors(row.pid).has(self)&&
+    /tools\/(?:full-check|run-tests|combat-balance|race-field-balance|browser-harness|run-browser-scenarios|[^\s"]*field-rate)\.mjs|vite[^\r\n]*\bbuild\b|blender/i
       .test(String(row.command||'').replaceAll('\\','/')));
+  const ids=new Set(heavy.map(row=>row.pid));
+  return heavy.filter(row=>![...ancestors(row.parent)].some(pid=>ids.has(pid)));
 }
 export function inspectNightProcesses() {
-  if(process.platform!=='win32')throw Error('The installed night command requires Windows process inspection.');
-  const script="Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('node.exe','blender.exe') } | ForEach-Object { @{pid=$_.ProcessId;command=$_.CommandLine} } | ConvertTo-Json -Compress";
+  if(process.platform!=='win32')throw Error('The installed full check requires Windows process inspection.');
+  const script="Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('node.exe','blender.exe') } | ForEach-Object { @{pid=$_.ProcessId;parent=$_.ParentProcessId;command=$_.CommandLine} } | ConvertTo-Json -Compress";
   const child=spawnSync('powershell.exe',['-NoProfile','-Command',script],
     {encoding:'utf8',shell:false,windowsHide:true});
-  if(child.error||child.status!==0)throw Error('Cannot verify quiet laptop: '+(child.error?.message||child.stderr));
+  if(child.error||child.status!==0)throw Error('Cannot inspect competing work: '+(child.error?.message||child.stderr));
   const rows=child.stdout.trim()?JSON.parse(child.stdout):[];
   return heavyProcesses(Array.isArray(rows)?rows:[rows]);
+}
+
+const ownedCopies=new WeakSet();
+function junctionCommand(link,target,operation='verify') {
+  const inspect="if($PSVersionTable.PSVersion.Major -lt 7){throw 'Junction cleanup requires PowerShell 7'}; $item=Get-Item -LiteralPath $env:DUEL_CHECK_LINK -Force -ErrorAction Stop; if($item.LinkType -ne 'Junction'){throw 'Expected Junction'}; $actual=[IO.Path]::GetFullPath(@($item.Target)[0]).TrimEnd('\\'); $expected=[IO.Path]::GetFullPath($env:DUEL_CHECK_TARGET).TrimEnd('\\'); if($actual -ine $expected){throw 'Junction target mismatch'}; ";
+  const script=(operation==='create'?"New-Item -ItemType Junction -Path $env:DUEL_CHECK_LINK -Target $env:DUEL_CHECK_TARGET -ErrorAction Stop | Out-Null; ":'')+inspect+
+    (operation==='remove'?"Remove-Item -LiteralPath $env:DUEL_CHECK_LINK -ErrorAction Stop":'');
+  const row=spawnSync('pwsh',['-NoProfile','-NonInteractive','-Command',script],
+    {encoding:'utf8',shell:false,windowsHide:true,env:{...process.env,DUEL_CHECK_LINK:link,DUEL_CHECK_TARGET:target}});
+  if(row.error||row.status!==0)throw Error(row.error?.message||row.stderr||'Junction operation failed.');
+}
+export async function createCheckCopy(integration,source) {
+  if(!commitPattern.test(source))throw Error('Copy requires an exact source commit.');
+  integration=path(resolve(integration));
+  if(integration.toLowerCase()==='c:/users/kyleb/dev/the-duel-remake')throw Error('Refusing the live folder.');
+  const container=path(await mkdtemp(path(dirname(integration),'full-check-')));
+  const copy=Object.freeze({integration,source,container,root:path(container,'source')});
+  try {
+    gitCommand(['worktree','add','--detach',copy.root,source],integration);
+    for(const name of ['node_modules','.evidence']) {
+      await mkdir(path(integration,name),{recursive:true});
+      junctionCommand(path(copy.root,name),path(integration,name),'create');
+    }
+    ownedCopies.add(copy);return copy;
+  }catch(error) {
+    // Preserve a partially prepared checkout. Never guess which path is safe
+    // to delete when setup failed; the actual retained path makes it reviewable.
+    throw Error('Copy setup failed; retained '+container+': '+error.message);
+  }
+}
+export async function removeCheckCopy(copy) {
+  if(!ownedCopies.has(copy)||path(copy.root)!==path(copy.container,'source')||
+    path(dirname(copy.container))!==path(dirname(copy.integration)))throw Error('Missing owned copy receipt.');
+  if(gitCommand(['rev-parse','HEAD'],copy.root).trim()!==copy.source||
+    gitCommand(['branch','--show-current'],copy.root).trim()||gitCommand(['status','--porcelain'],copy.root).trim())
+    throw Error('Copy is changed; nonforced cleanup refused.');
+  if(gitCommand(['rev-parse','--path-format=absolute','--git-common-dir'],copy.root).trim()!==
+    gitCommand(['rev-parse','--path-format=absolute','--git-common-dir'],copy.integration).trim())
+    throw Error('Copy no longer belongs to integration.');
+  // Verify both exact resolved link/target pairs before unlinking either.
+  for(const name of ['node_modules','.evidence']) {
+    const link=path(resolve(copy.root,name)),target=path(resolve(copy.integration,name));
+    junctionCommand(link,target);
+  }
+  for(const name of ['node_modules','.evidence'])junctionCommand(path(copy.root,name),path(copy.integration,name),'remove');
+  gitCommand(['worktree','remove',copy.root],copy.integration);
+  await rmdir(copy.container);ownedCopies.delete(copy);
 }
 const json=text=>JSON.parse(text);
 function fullPacket(text) {
   const rows=text.trim().split(/\r?\n/).filter(Boolean);
   return json(rows.at(-1)||'null');
+}
+const fullReportName='docs/board/checks/full-tier.json';
+async function consumeFullReport(dependencies,copy,source,original,result,evidence) {
+  const status=await dependencies.git(['status','--porcelain'],copy.root);
+  if(!status.trim())return null;
+  const entries=status.split(/\r?\n/).filter(Boolean);
+  if((await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source ||
+    entries.length!==1 || entries[0]!==' M '+fullReportName)
+    throw Error('Copied source changed outside the full runner report; consumption refused.');
+  const target=path(copy.root,fullReportName),text=await dependencies.readText(target);
+  const record=json(text),actual=fullPacket(result.stdout);
+  const rows=actual?.results;
+  if(actual?.schema!==1 || actual.kind!=='result' || actual.tier!=='full' || actual.jobs!==4 ||
+    !Number.isSafeInteger(actual.total) || actual.total<1 || actual.notRun!==0 ||
+    !Array.isArray(rows) || rows.length!==actual.total ||
+    rows.some(row=>typeof row.label!=='string' || !row.label || typeof row.passed!=='boolean' ||
+      !Number.isSafeInteger(row.exitCode) || row.exitCode<0 || row.passed!==(row.exitCode===0)) ||
+    new Set(rows.map(row=>row.label)).size!==rows.length ||
+    actual.passed!==rows.filter(row=>row.passed).length ||
+    !Array.isArray(actual.failures) ||
+    JSON.stringify(actual.failures)!==JSON.stringify(rows.filter(row=>!row.passed).map(row=>row.label)) ||
+    actual.exitCode!==result.exitCode || actual.exitCode!==(rows.find(row=>!row.passed)?.exitCode??0))
+    throw Error('Full runner stdout is incomplete or inconsistent; report consumption refused.');
+  if(record?.schema!==1 || record.tier!=='full' || record.commit!==source || record.endCommit!==source ||
+    record.dirty!==false || record.startDirty!==false || record.endDirty!==false || record.complete!==true ||
+    typeof record.time!=='string' || !Number.isFinite(Date.parse(record.time)) ||
+    Date.parse(record.time)>dependencies.now().getTime() || record.total!==actual.total ||
+    record.completed!==actual.total || record.passed!==(actual.exitCode===0) ||
+    JSON.stringify(record.failures)!==JSON.stringify(actual.failures) || typeof original!=='string')
+    throw Error('Full runner report does not match exact clean source and complete stdout; consumption refused.');
+  const retained=path(evidence,'full-tier.json');
+  await dependencies.writeText(retained,text);
+  // Recheck immediately before replacing only this verified generated file.
+  if(await dependencies.readText(target)!==text ||
+    await dependencies.git(['status','--porcelain'],copy.root)!==status ||
+    (await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source)
+    throw Error('Copied source changed while retaining the full report; consumption refused.');
+  await dependencies.writeText(target,original);
+  return retained;
 }
 function validateFull(packet) {
   if(packet?.schema!==1||packet.kind!=='result'||packet.tier!=='full'||packet.jobs!==4||
@@ -159,7 +251,7 @@ function recycleNightDraft(file,root) {
 async function assertNightSource(dependencies,source,allowed=[]) {
   if((await dependencies.git(['branch','--show-current'])).trim()!=='integration/wasteland')
     throw Error('Actual night runs and publication require integration/wasteland.');
-  if((await dependencies.git(['rev-parse','HEAD'])).trim()!==source)throw Error('Source commit changed.');
+  if(source&&(await dependencies.git(['rev-parse','HEAD'])).trim()!==source)throw Error('Starting source commit changed.');
   const status=await dependencies.git(['status','--porcelain']);
   const unexpected=status.split(/\r?\n/).filter(Boolean).filter(line=>!allowed.includes(line.slice(3)));
   if(unexpected.length)throw Error('Source tree is dirty: '+unexpected.join('; '));
@@ -173,7 +265,7 @@ async function publishNightReports(packet,morning,dependencies) {
   const names=[`docs/board/checks/night-${packet.date}.json`,`docs/board/checks/night-${packet.date}.md`,'docs/board/STATUS.md'];
   const original=new Map(),drafts=new Map();let staged=false;
   try {
-    await assertNightSource(dependencies,packet.source);
+    await assertNightSource(dependencies,null);
     for(const name of names)original.set(path(root,name),await maybeRead(dependencies,path(root,name)));
     await dependencies.mkdir(path(root,'docs/board/checks'));
     // Public bytes describe the tested source. The actual commit receipt is
@@ -184,9 +276,9 @@ async function publishNightReports(packet,morning,dependencies) {
     }
     try{await dependencies.refreshStatus();}
     finally{drafts.set(path(root,names[2]),await maybeRead(dependencies,path(root,names[2])));}
-    await assertNightSource(dependencies,packet.source,names);
+    await assertNightSource(dependencies,null,names);
     await dependencies.git(['add','--',...names]);staged=true;
-    await assertNightSource(dependencies,packet.source,names);
+    await assertNightSource(dependencies,null,names);
     await dependencies.git(['commit','--only','-m',`Record night ${packet.date} checks and refresh status`,'--',...names]);
     packet.publication={status:'committed',paths:names,commit:null};
     // A successful commit is irreversible here. Receipt errors must not send
@@ -226,8 +318,9 @@ export async function runNight(options,overrides={}) {
   if(root.replaceAll('\\','/').replace(/\/$/,'').toLowerCase()==='c:/users/kyleb/dev/the-duel-remake')
     throw Error('Refusing the live folder.');
   if(options?.idleAwake!==true||options.noPush!==true)throw Error(usage);
-  const dependencies={root,now:()=>new Date(),git:args=>gitCommand(args,root),processes:inspectNightProcesses,
-    scenarioNames:namedScenarios,readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
+  const dependencies={root,now:()=>new Date(),git:(args,cwd=root)=>gitCommand(args,cwd),processes:inspectNightProcesses,
+    createCopy:source=>createCheckCopy(root,source),removeCopy:removeCheckCopy,framePollMs:1000,
+    scenarioNames:async copyRoot=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).namedScenarios(),readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
     mkdir:dir=>mkdir(dir,{recursive:true}),makeTemp:mkdtemp,
     refreshStatus:()=>refreshNightStatus(root),recycleText:file=>recycleNightDraft(file,root),
     listNightFiles:()=>readdir(path(root,'docs/board/checks')).catch(error=>{if(error.code==='ENOENT')return[];throw error;}),
@@ -252,24 +345,42 @@ export async function runNight(options,overrides={}) {
   const evidenceParent=path(root,'.evidence',options.date,'FAC-03');
   await dependencies.mkdir(evidenceParent);
   packet.evidence=path(await dependencies.makeTemp(path(evidenceParent,'night-')));
-  const plan=nightPlan({root,date:options.date,evidence:packet.evidence});
+  let copy;
   try {
-    await assertNightSource(dependencies,source);
-    const busy=await dependencies.processes();
-    if(busy.length)throw Error('Laptop is busy: '+busy.map(row=>row.command).join('; '));
-    packet.context.processIsolationObserved=true;
+    await assertNightSource(dependencies,null);
+    copy=await dependencies.createCopy(source);
+    const copyEvidence=path(copy.root,'.evidence',options.date,'FAC-03',packet.evidence.split('/').at(-1));
+    const plan=nightPlan({root:copy.root,date:options.date,evidence:copyEvidence});
+    const assertCopy=async()=>{
+      if((await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source||
+        (await dependencies.git(['status','--porcelain'],copy.root)).trim())throw Error('Copied source changed.');
+    };
     for(const stage of plan) {
-      const row={id:stage.id,args:stage.args,log:stage.log,started:dependencies.now().toISOString(),passed:false};
+      const log=path(packet.evidence,stage.id+'.log');
+      const row={id:stage.id,args:stage.args,log,started:dependencies.now().toISOString(),passed:false};
       packet.stages.push(row);
       try {
-        await assertNightSource(dependencies,source);
-        if((await dependencies.processes()).length)throw Error('Another heavy job started; this stage is refused.');
-        await dependencies.writeText(stage.log,'');
+        await assertCopy();
+        const busy=await dependencies.processes();
+        if(stage.id==='frames'?busy.length>0:busy.length>=3)throw Error(stage.id==='frames'?'Competing heavy work: frame timing refused.':'Three heavy jobs already running; stage refused.');
+        if(stage.id==='frames')packet.context.processIsolationObserved=true;
+        await dependencies.writeText(log,'');
         const stageEnv={...stage.env};
         if(stage.id==='browser')stageEnv.DUEL_NIGHT_FRAME_PASSED=packet.stages.find(row=>row.id==='frames')?.passed===true?'1':'0';
-        const result=await runChild(process.execPath,stage.args,{cwd:root,env:{...process.env,DUEL_NIGHT_FRAMES:'0',DUEL_NIGHT_IDLE_AWAKE:'0',DUEL_NIGHT_FRAME_REUSE:'0',DUEL_NIGHT_FRAME_PACKET:'',DUEL_NIGHT_FRAME_PASSED:'0',...stageEnv},
-          logPath:stage.log,spawnImpl:dependencies.spawnImpl||spawn,appendText:dependencies.appendText});
+        let timer,observations=Promise.resolve(),timingError=null;
+        if(stage.id==='frames')timer=setInterval(()=>{
+          observations=observations.then(async()=>{
+            if((await dependencies.processes()).length)timingError='Competing heavy work appeared during frame timing; packet discarded.';
+          }).catch(error=>{timingError='Frame process inspection failed: '+error.message;});
+        },dependencies.framePollMs);
+        const originalFullReport=stage.id==='full'?await dependencies.readText(path(copy.root,fullReportName)):null;
+        let result;
+        try {result=await runChild(process.execPath,stage.args,{cwd:copy.root,env:{...process.env,DUEL_NIGHT_FRAMES:'0',DUEL_NIGHT_IDLE_AWAKE:'0',DUEL_NIGHT_FRAME_REUSE:'0',DUEL_NIGHT_FRAME_PACKET:'',DUEL_NIGHT_FRAME_PASSED:'0',...stageEnv},
+          logPath:log,spawnImpl:dependencies.spawnImpl||spawn,appendText:dependencies.appendText});
+        }finally{clearInterval(timer);await observations;}
         row.exitCode=result.exitCode;
+        if(stage.id==='frames'&&(await dependencies.processes()).length)timingError='Competing heavy work remains after frame timing; packet discarded.';
+        if(timingError)throw Error(timingError);
         if(stage.id==='full') {
           try {
             const actual=fullPacket(result.stdout);
@@ -283,21 +394,22 @@ export async function runNight(options,overrides={}) {
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
           }catch{}
         }
+        if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
         if(result.exitCode!==0)throw Error(result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
         else if(stage.id==='frames')validateFramePacket(json(await dependencies.readText(stage.packet)));
-        else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames());
+        else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames(copy.root));
         else validateCombat(json(result.stdout));
-        if((await dependencies.processes()).length)throw Error('Heavy child or competing job remains after the stage; timing is not accepted.');
-        await assertNightSource(dependencies,source);
+        await assertCopy();
         row.passed=true;
       }catch(error){row.error=error.message;for(const name of row.failureNames?.length?row.failureNames:[stage.id])failure(name,error.message);}
       row.finished=dependencies.now().toISOString();
     }
   }catch(error){failure('context',error.message);}
+  finally {if(copy)try{await dependencies.removeCopy(copy);}catch(error){failure('copy-cleanup',error.message);}}
   packet.finished=dependencies.now().toISOString();packet.status=packet.failures.length?'failed':'passed';
 
-  const morning=[`Night ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
+  const morning=[`Full check ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
     ...packet.stages.map(row=>`${row.passed?'PASS':'FAIL'} ${row.id}: ${row.log}`),
     'First merge after last green: '+(firstMerge||attribution),
     'Compaction and push disabled; separate Kyle authorization is pending.',
@@ -310,7 +422,7 @@ export async function runNight(options,overrides={}) {
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
   runNight(parseNightArguments(process.argv.slice(2))).then(packet=>{
-    console.log(`Night ${packet.date}: ${packet.status}; docs/board/checks/night-${packet.date}.json`);
+    console.log(`Full check ${packet.date}: ${packet.status}; docs/board/checks/night-${packet.date}.json`);
     process.exitCode=packet.status==='passed'?0:1;
   }).catch(error=>{console.error(error.message);process.exitCode=2;});
 }

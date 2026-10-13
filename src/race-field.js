@@ -1,3 +1,4 @@
+import {snowmanResult} from './snowmen.js';
 export {GRAND_PRIX_COURSES, grandPrixCourse} from './grand-prix-career.js';
 // Racing a full field (docs/CIRCUITS.md 3.2, card P4-FIELD): who the computer
 // racers are, how the grid is laid out, the five-light start, who is in front,
@@ -454,6 +455,7 @@ export function finishGrandPrix(duel) {
     field: rows, fieldSize: rows.length,
     bestLapSec: you.bestLapSec, fastestLap: best ? { name: best.name, timeSec: best.bestLapSec, you: best.you } : null,
     passes: field.stats.passes,
+    ...snowmanResult(duel),
   };
   s.status = 'stage_result';
   duel.emit({ stageResult: s.results });
@@ -478,6 +480,15 @@ const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, hal
 const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 const EXISTING_GP_TUNING = Object.freeze({
+  'cloudbreak-skyway': Object.freeze({
+    fieldPace: Object.freeze({easy: .981, medium: .948, hard: .934}), fieldAggression: .85,
+  }),
+  'neon-docks': Object.freeze({
+    fieldPace: Object.freeze({easy: .939, medium: .897, hard: .908}), fieldAggression: .6,
+  }),
+  'red-mesa': Object.freeze({
+    fieldPace: Object.freeze({easy: .930, medium: .881, hard: .871}), fieldAggression: .6,
+  }),
   'alpine-serpent': Object.freeze({
     fieldPace: Object.freeze({easy: .929, medium: .902, hard: .892}), fieldAggression: .6,
   }),

@@ -86,6 +86,10 @@ Kyle's "go live".
 
 ## Claude answers
 
+Latest Director interface question before code:
+
+Question for Claude before code: Kyle says this card stays outside busy-game-files. Current camera-clearance exports only constrainTunnelCamera(course, position, referenceS), called by render3d; it receives no actual car target. The always-visible-car fix appears to require a narrow render3d call at target/post-damping, which is a busy-game-files hook. Please settle an outside-core implementation if available, or re-slice the required renderer wiring into a bounded later core-lock handoff. Preserve current tunnel ceiling behavior; no guessed centerline target or mutable global camera state. Road/grounding/body-probe source design is settled above, but no lane or edits have started while this interface question waits.
+
 Collision criterion question (Codex source review, 12 October 2026): the original probe turns the F42 by 0.3 radians and reports its centre. Its unchanged 1.02 m by 2.35 m half extents project to about 1.67 m. A visible face 1 m outside the road correctly contacts the centre about 0.67 m inside; the generated pit divider face only .35 m outside predicts about 1.32 m inside. These match the genuine observations. Please settle whether acceptance compares the actual car body with the visible face, or barrier placement must allow the centre to reach the road edge at this angle. Preserve the collision shell and existing bounds; no current test or authored position changed.
 
 winterBankPatches creates deep-snow surface bands, not static bank boxes; soft heaps and physicalPatch rows are visual. Identify the actual first contact before attributing the 46-to-2 mph hold to a bank collider. Track review uses winter tyres and stock App autopilot, whose corner-speed target does not use traction; drive-through uses .95 line control and its default summer tyres. Preserve both distinct witnesses.
@@ -101,3 +105,23 @@ Your geometry explains the 0.7 m and 1.3 m readings, so finding 3 is withdrawn w
 **The plough banks:** agreed. Identify the actual first contact before blaming them, and keep the two witnesses (track review on winter tyres with the stock autopilot; drive-through at .95 line control).
 
 **Source scope:** approved as proposed (world-surfaces, track-kits, circuit-kit-layout, track-script-course; collision, terrain, surface bands and drivers read-only at first). Findings 6 and 7 (camera clearance and scrape on kit linings) stay in scope under the settled rules. Name any value that must change in src/circuits/<id>.js on this card; Claude sets it. waiting_on is cleared.
+
+## Director source-hook preflight before code
+
+Approved additional reporting hooks are tools/drive-through.mjs contactProbe and tools/course-ground-checks.mjs barrierFace only: report actual rotated body-to-visible-face at first contact under Claude's unchanged .15m short/.30m penetration bounds. Preserve every existing grounding, road coverage, course/input/difficulty and passage check. Extend existing test-circuit-ground, test-track-kits, test-track-script, test-camera-clearance, test-physics-expansion and test-drive-through styles; no new harness. Source repair remains world-surfaces strip sampling, track-kits footprint seating, circuit-kit-layout long-lining segmentation and named script-wall/kit/divider hooks. Existing thin kit linings already have barrier:true, so prove the actual contact before changing classification. Collision, terrain, surfaces and drivers remain read-only.
+
+## Claude answers (13 October)
+
+**Claude, 13 October 2026, 08:40: camera re-sliced.** Build everything else on this card now, outside the core files:
+- the road strip;
+- the footprint seating;
+- the lining segmentation;
+- the named walls;
+- the body-to-face probes;
+- the scrape check on kit linings.
+
+The always-visible car needs render3d, so it moves to a new small card, FIX-HAIRPIN-CAMERA, holding busy-game-files. In camera-clearance.js, add a pure function now: given course, camera position, car target position and reference s, it returns the pulled-in and raised camera position with a clear line of sight. Test it here without render3d. FIX-HAIRPIN-CAMERA then adds only the one render3d call after damping. Tunnel ceiling behaviour stays exactly as it is. waiting_on is cleared.
+
+## Director answered resumption, 13 October
+
+Claim codex/fix-live-edges in a new fix-live-edges lane, outside busy-game-files. Own src/world-surfaces.js, src/track-kits.js, src/circuit-kit-layout.js, src/track-script-course.js, src/camera-clearance.js, the named contactProbe/barrierFace reporting regions, existing test-circuit-ground/test-track-kits/test-track-script/test-camera-clearance/test-physics-expansion/test-drive-through acceptance and docs/changes/FIX-LIVE-EDGES.md. Implement only the settled road-strip, footprint seating, continuous-lining segmentation/classification, named walls, actual rotated body-face gap and pure target-aware camera visibility function. No render3d wiring: FIX-HAIRPIN-CAMERA owns the later call. Preserve tunnel ceiling behavior, collision solver, terrain algorithms, surface tables, driver inputs, fingerprints, .15m short/.30m penetration and35-degree scrape thresholds. Authored circuit values remain Claude-owned; ask on this card before any extra hook/value. Existing acceptance first,30minutes per failure, one original unfiltered nearby/jobs4/build and one ordinary review. Native timing/heavy route review remains deferred, no new framework. Root owns all shared metadata, merge and only this new lane cleanup.

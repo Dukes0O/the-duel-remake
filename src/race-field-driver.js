@@ -7,6 +7,8 @@
 import { DRIVE, steeringYawAuthority } from './config.js';
 import { clamp } from './sim-common.js';
 import { stepKnock } from './vehicle-knock.js';
+import {observeSummitRoute,isAvalancheKnock} from './summit-avalanche.js';
+import {NpcRoutePlanner} from './npc-route.js';
 import { racingLineFor, buildSpeedProfile, nextCorner, accelAt } from './race-lines.js';
 import {PIT,pitAt,pitBox,choosePit,stepPitService,limitPitSpeed,pitTransitTarget,pitSpeedLimitAt} from './pit-lane.js';
 import { FIELD, FIELD_TUNING, catchUpFactor, racerSpec, performanceIndex } from './race-field.js';
@@ -91,7 +93,7 @@ export function followLimitMph(run, blocker, follow = run.follow ?? FOLLOW) {
 // Note a spin-out or a hard knock for the race statistics.
 function noteIncidents(duel, r) {
   const f = r.field, stats = duel.state.field.stats;
-  if (r.knock && !f.knocked) {
+  if (r.knock && !isAvalancheKnock(duel,r) && !f.knocked) {
     f.knocked = true; f.crashes++;
     stats.crashes.push({ index: r.field.index, t: +duel.state.stageTimeSec.toFixed(2) });
     duel.emit({ fieldCrash: { index: f.index, t: duel.state.stageTimeSec } });
@@ -112,7 +114,7 @@ function noteIncidents(duel, r) {
 // Steer toward `intent` (a lateral position) along the racing line, hold the
 // target speed with the car's own braking and acceleration, and move. This is
 // the same yaw, grip and road-frame model the other computer cars use.
-function move(duel, r, run, dt, target, intent, surface, look) {
+function move(duel, r, run, dt, target, intent, surface, look, route = null) {
   const { spec, line } = run;
   const f = r.field;
   const speed = r.speedMph, mps = Math.max(0, speed) * MPH;
@@ -127,14 +129,15 @@ function move(duel, r, run, dt, target, intent, surface, look) {
   if (r.offRoad) r.speedMph *= Math.exp(-surface.scrub * dt * (surface.preparedGravel ? .25 : 1));
   const frame = duel.course.at(r.s);
   const authority = steeringYawAuthority(r.speedMph, spec.grip, surface.traction, spec);
-  const wanted = line.relHeadingAt(look) + Math.atan((intent - r.lateral) * 2.4 / Math.max(15, mps));
+  const wanted = route?.headingTarget ?? line.relHeadingAt(look) + Math.atan((intent - r.lateral) * 2.4 / Math.max(15, mps));
   const error = wrap(clamp(wanted, -1.2, 1.2) - r.headingError);
-  const yaw = clamp(line.curvatureAt(look) * mps + error * 6, -authority, authority);
+  const yaw = clamp((route?.curvature ?? line.curvatureAt(look)) * mps + error * 6, -authority, authority);
   const travel = Math.max(0, r.speedMph) * MPH;
   const progress = Math.cos(r.headingError) * travel / Math.max(.25, 1 - frame.curvature * r.lateral);
   r.headingError += (yaw - frame.curvature * progress) * dt;
   r.lateral += (Math.sin(r.headingError) * travel + r.pushVelocity) * dt;
   r.s += progress * dt;
+  observeSummitRoute(duel,r,f.traits.aggression*run.tuning.aggression);
   const damping = Math.exp(-(r.offRoad ? .9 : 1.5) * dt);
   r.pushVelocity *= damping;
 }
@@ -147,6 +150,7 @@ export function stepFieldRacer(duel, r, dt) {
   if (r.knock) {
     // A knocked car is a free body until its tyres bite; the shared rules apply.
     stepKnock(duel, r, dt);
+    observeSummitRoute(duel,r,f.traits.aggression*run.tuning.aggression);
     duel._staticContacts(r, false); duel._boundary(r);
     if (!r.finished) duel._advanceLaps(r, dt);
     noteIncidents(duel, r);
@@ -211,6 +215,22 @@ export function stepFieldRacer(duel, r, dt) {
     if (phase > lane.exit && f.pitChoice?.stop) { f.pitChoice.stop = false; f.pitDone = true; }
   }
 
+  const summitChoice=observeSummitRoute(duel,r,f.traits.aggression*run.tuning.aggression);
+  if(summitChoice!==undefined){
+    run.summitPlanner ??= new NpcRoutePlanner(duel.course,{car:run.spec,
+      surfaceAt:(distance,lateral)=>duel._drivingSurface(distance,lateral,run.spec,true,r.tyre)});
+    const route=run.summitPlanner.update(r,{difficulty:s.cpuDifficulty,lapsTotal:s.lapsTotal,
+      player:s,traffic:s.traffic,opponents:s.opponents,summitChoice});
+    if(route){
+      const target=Math.min(route.targetSpeedMph,run.profile.topMph,surface.speedLimit,surface.gripTopSpeedMph??Infinity);
+      f.intent=route.targetLateral;
+      move(duel,r,run,dt,target,f.intent,surface,look,route);
+      f.moveSpeed=r.speedMph;
+      if(!duel._ramFlight(r,dt))duel._jump(r,dt);
+      duel._staticContacts(r,false);duel._boundary(r);duel._advanceLaps(r,dt);
+      return;
+    }
+  }
   const { profile, line, tuning } = run;
   const follow = r.completedLaps === 0 ? run.followStart : run.follow;
   const t = f.traits, now = s.stageTimeSec;

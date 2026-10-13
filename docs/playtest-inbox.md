@@ -2,6 +2,8 @@
 
 ## For Claude
 
+- **Resolved cleanup tool issue:** the factory merge helper’s Windows PowerShell5 junction unlink prompted in NonInteractive mode after the mouse source/status commits had succeeded. Both owned merged control lanes were then cleaned safely with the current PowerShell, verified junction targets and Recycle Bin; integration dependencies and foreign lanes stayed intact. The helper needs a small future noninteractive unlink fix; no game failure or extra gate came from cleanup.
+
 - **Kyle’s next separate push, 12 October 2026:** review Scrapdome and boss rewards so harder bosses grant more lasting value, such as armor or equipment upgrades usable later. Keep this separate from the Ambush opening and mouse fixes; their rewards, saves and ammo limits are unchanged.
 
 - **Source checks resumed after Kyle's Panorama completion:** Kyle says Panorama is done. Podium a467c1bf and Summit123680dc resume their original nearby lane checks, jobs4, at most two actual jobs. No new balance, browser, frame or full run. Claude's existing dependency-repair note and full-tier receipt are preserved and committed with this coordination update; the receipt records dirty=true and is not a clean exact-commit release pass. Integration merges follow green source/build/review and remain separate from release. No Codex release or push.
@@ -883,3 +885,4 @@ The Director will add a short summary when work reaches its first checkpoint.
 
 Seekers merged from f0989887 after lane 366/366 (599.22 s), build (516 ms)
 and source review passed. Kyle's 8-damage exception above is retained.
+
