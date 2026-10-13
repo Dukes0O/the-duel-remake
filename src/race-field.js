@@ -481,7 +481,7 @@ const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 const EXISTING_GP_TUNING = Object.freeze({
   'red-mesa': Object.freeze({
-    fieldPace: Object.freeze({easy: .944, medium: .924, hard: .901}), fieldAggression: .85,
+    fieldPace: Object.freeze({easy: .930, medium: .881, hard: .871}), fieldAggression: .6,
   }),
   'alpine-serpent': Object.freeze({
     fieldPace: Object.freeze({easy: .929, medium: .902, hard: .892}), fieldAggression: .6,
