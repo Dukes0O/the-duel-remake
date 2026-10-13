@@ -168,8 +168,9 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "ready"
+    waiting_on: "claude"
     needs: [P4-SUMMIT]
-    locks: [sound-bank, circuit-registry]
+    locks: [busy-game-files]
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
@@ -189,7 +190,9 @@ tasks:
     lane: "RACE"
     size: "S"
     status: "ready"
+    waiting_on: "claude"
     needs: [P4-SUMMIT]
+    locks: [busy-game-files, save-shape]
     details: "docs/board/cards/P4-YETI.md"
 
   - id: P4-VARIANTS
