@@ -20,6 +20,10 @@ Kyle approved this order for tonight.
    - FIX-AMBUSH-OPENING;
    - DEEP-RAMP-GEOMETRY (Codex is already building it, outside the core game
      files).
+   Also still open: P4-GP-EXISTING (source merged; its browser cases wait
+   for the full check), DEEP-AUDIO (source merged; waits for Claude's
+   listening verdict) and FND-12 (copy-only dry run; the permission profile is
+   Kyle's choice, so do not install one).
 2. FAC-FULL-CHECK. It touches only tools, so it runs alongside item 1. It
    renames the night shift tool to the full check and lets it run on a copy
    of one commit.
