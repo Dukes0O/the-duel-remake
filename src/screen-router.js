@@ -128,7 +128,9 @@ const combatHud = createCombatHud({root, app,
   projectOpponents:()=>readiness.handle?.projectOpponents?.() || []});
 const {ensureRenderer, syncRendererReadiness} = readiness;
 const courseScreen = (playerProfile, selectedStage, message) => courseScreenMarkup(playerProfile,
-  selectedStage, message, {teamRoomEnabled: app._switches().enabled('grand-prix')});
+  selectedStage, message, {teamRoomEnabled: app._switches().enabled('grand-prix'),
+    grandPrixCareerEnabled: app._switches().enabled('grand-prix-career'),
+    grandPrixAvailable: course => app.grandPrixAvailable(course), selectedMode: choices.mode});
 let teamRoomPlayerId = null;
 const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
@@ -152,7 +154,9 @@ const teamRoom = createTeamRoom({host: root,
   },
   clearCapture: () => readiness.handle?.clearTrackSnapshot(),
 });
-const courseActions = createCourseActions({app, choices, setMessage:value=>courseMessage=value, setOpen:value=>coursesOpen=value, updateMenuScene, invalidate:()=>lastScreen=null, renderState:()=>renderState(app.duel.state)});
+const courseActions = createCourseActions({app, choices,
+  careerEnabled: () => app._switches().enabled('grand-prix-career'),
+  grandPrixAvailable: course => app.grandPrixAvailable(course), setMessage:value=>courseMessage=value, setOpen:value=>coursesOpen=value, updateMenuScene, invalidate:()=>lastScreen=null, renderState:()=>renderState(app.duel.state)});
 
 function refreshRaceSetup(){
   delete choices.rival;Object.assign(choices,app.getRaceChoices());garageCar=choices.car;updatePlayers();updateMenuScene();lastScreen=null;renderState(app.duel.state);
