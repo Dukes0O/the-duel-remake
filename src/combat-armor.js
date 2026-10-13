@@ -12,7 +12,8 @@ import {burstDrone, noteDroneHit, clearDroneHistory} from './arsenal/decoy-drone
 import {actorForTarget} from './arsenal/targeting.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {damageConvoyValves} from './arena/convoy.js';
-import {isConvoyRig, completeConvoyCharge} from './arena/modes/convoy-raid.js';
+import {isConvoyRig, completeConvoyCharge, convoyEscortOutSeconds, CONVOY_RULES}
+  from './arena/modes/convoy-raid.js';
 
 const T = COMBAT_TUNING.armor;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -95,7 +96,8 @@ function startCombatWreck(duel, actor, source, owner) {
   else actor.knock = null;
   recordCombatWreck(duel, actor, owner);
   actor.combatWreckTimer = player && state.onFoot ?
-    COMBAT_TUNING.foot.parkedWreckSeconds : T.wreckDuration;
+    COMBAT_TUNING.foot.parkedWreckSeconds :
+    convoyEscortOutSeconds(duel, actor) ?? T.wreckDuration;
   actor.impactTimer = actor.combatWreckTimer;
   actor.combatWreckSite = {
     s: actor.s, lateral: actor.lateral, headingError: actor.headingError || 0,
@@ -119,6 +121,24 @@ function startCombatWreck(duel, actor, source, owner) {
   duel.emit({combatWreck: true, victim: player ? 'player' : 'rival', owner,
     ...(player ? {} : {opponentIndex}), source, hitPosition});
   if (source !== 'bomb') duel.emit({combatExplosion: true, hitPosition});
+}
+
+// The last valve is gone: the Tollkeeper's escorts still driving are knocked
+// out at once, and every escort stays out for the whole 60 s boarding window.
+function standDownConvoyEscorts(duel) {
+  const arena = duel.state.arena;
+  if (arena.mode !== 'warlord') return;
+  for (const participant of arena.participants) {
+    if (participant.brain !== 'guard' || participant.wreckScorable !== false) continue;
+    const actor = arenaActor(duel, participant.id);
+    if (!actor) continue;
+    if (!actor.combatWrecking) {
+      actor.armor = 0;
+      startCombatWreck(duel, actor, 'fixed', undefined);
+    }
+    actor.combatWreckTimer = Math.max(actor.combatWreckTimer, CONVOY_RULES.boardingSeconds);
+    actor.impactTimer = actor.combatWreckTimer;
+  }
 }
 
 export function applyArmorDamage(duel, actor, source, options = {}) {
@@ -152,6 +172,10 @@ export function applyArmorDamage(duel, actor, source, options = {}) {
   if (isConvoyRig(duel, actor)) {
     const removed = damageConvoyValves(duel, actor, damage,
       source === 'ram-dv' ? 'ram' : source, options);
+    if (duel.state.arena.convoy.standDownEscorts) {
+      delete duel.state.arena.convoy.standDownEscorts;
+      standDownConvoyEscorts(duel);
+    }
     noteArenaDamage(duel, actor, removed, options.owner);
     recordCombatHit(duel, actor, removed, options.owner, options.styleHit !== false);
     return removed;

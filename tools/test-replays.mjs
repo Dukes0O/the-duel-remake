@@ -130,5 +130,5 @@ if (recording) {
   writeReplayFingerprints(baseline);
   console.log(`Recorded ${fixture.cases.length} replay cases at 30, 60 and 144 FPS in ${expectedPath}.`);
 } else {
-  console.log(`Replay fingerprints: ${checks} checks passed across ${fixture.cases.length} cases, 19 events, eight categories, three FPS values and three runs.`);
+  console.log(`Replay fingerprints: ${checks} checks passed across ${fixture.cases.length} cases, 20 events, eight categories, three FPS values and three runs.`);
 }

@@ -73,6 +73,10 @@ function breakAll(f) {
 const PLATE = {x: -.0000006035, y: 3.02, z: -2.4441381118,
   halfWidth: .69862524, halfLength: 1.24205031};
 function roofCrossing(f, local = PLATE) {
+  // The tanker rolls to a stop 4 s after the last valve breaks (12 October
+  // 2026). These fixtures cross the roof straight after breaking valves, so
+  // they start with the tanker already stopped.
+  if (f.duel.state.arena.convoy.valves.every(hp => hp === 0)) f.rig.speedMph = 0;
   const state = f.duel.state, ground = f.duel.course.groundAt(f.rig.s, f.rig.lateral);
   const at = convoyPoint(f.duel, f.rig, [local.x, local.y, local.z]);
   state.onFoot = true; state.crewId = 'rook';
@@ -127,14 +131,19 @@ test('rams farther than three metres from every valve cannot damage a weak point
 
 test('breaking all valves slows the real rig, opens a sixty-second boarding window and restores half armor', () => {
   const f = exposedFight(); breakAll(f);
-  ok(Math.abs(f.rig.speedMph * 1.609344 - 35) < .01, 'all broken valves slow the native loop to 35 km/h');
+  ok(f.rig.speedMph * 1.609344 > 40, 'the tanker is still rolling the moment the last valve breaks');
   ok(f.duel.state.arena.convoy.boardingLeftSec > 59.9, 'all broken valves grant sixty seconds to board');
+  advance(f.duel, CONVOY_RULES.stopSeconds + .05);
+  equal(f.rig.speedMph, 0, 'all broken valves bring the tanker to a full stop within four seconds');
   equal(f.duel.state.status, 'racing', 'breaking valves alone is not a win');
-  for (let n = 0; n < Math.round(59.8 / DT); n++) f.duel.step(DT);
+  for (let n = 0; n < Math.round((59.8 - CONVOY_RULES.stopSeconds - .05) / DT); n++) f.duel.step(DT);
   equal(f.duel.state.arena.convoy.valves, [0, 0, 0], 'valves remain broken before the deadline');
+  equal(f.rig.speedMph, 0, 'the tanker stays stopped for the whole window');
   for (let n = 0; n < 60; n++) f.duel.step(DT);
   equal(f.duel.state.arena.convoy.valves, [75, 75, 75], 'an unplanted deadline restores each valve at half armor');
   equal(f.duel.state.arena.convoy.boardingLeftSec, 0, 'expired boarding lamps switch off');
+  ok(f.rig.speedMph > 0 && f.rig.speedMph * 1.609344 < 55, 'the restored rig pulls away rather than jumping to speed');
+  advance(f.duel, CONVOY_RULES.stopSeconds + .05);
   ok(Math.abs(f.rig.speedMph * 1.609344 - 55) < .01, 'the restored rig returns to 55 km/h');
 });
 

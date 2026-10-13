@@ -10,8 +10,11 @@ export function controlsHelp(duel) {
   const state = duel?.state;
   if (state?.onFoot) {
     return {title: 'ON FOOT', rows: [
-      ['ARROWS / WASD', 'Move'], ['MOUSE', 'Look'], ['L / R CLICK', 'Fire / aim'],
+      ['W / UP', 'Walk forward'], ['S / DOWN', 'Walk back'],
+      ['A D / LEFT RIGHT', 'Turn'], ['Q / E', 'Step left / right'],
+      ['MOUSE', 'Look'], ['L / R CLICK', 'Fire / aim'],
       ['SHIFT', 'Sprint'], ['SPACE', 'Jump'], ['1  2  3', 'Choose your gear'],
+      ['F', 'Climb aboard the stopped tanker'],
       ['HOLD F', 'Get back in your car'],
       ['C', 'Change camera'], ['ESC / P', 'Pause'], ['H', 'Hide this help']]};
   }

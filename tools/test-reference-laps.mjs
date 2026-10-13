@@ -37,9 +37,9 @@ equal(JSON.stringify(COURSE), definitionsBefore, 'Target discovery does not edit
 const nativeCatalog = await runReferenceWorker({catalogOnly: true});
 check(ALL_CIRCUITS.every(definition => nativeCatalog.events.includes(definition.id)),
   'Fresh worker enables authored circuits in the actual native COURSE registry');
-// Tremblant Woods, Tremblant Snow and Harbour Lights are released (state on); Panorama Ridge is still dev and needs the QA query.
+// All four circuits are released (state on): Tremblant Woods, Tremblant Snow, Harbour Lights and Panorama Ridge. A circuit still in development would be a real dev switch reached through the QA query.
 check(nativeCatalog.flags.every(row => row.enabled && row.state === CIRCUIT_MANIFESTS.find(manifest => manifest.flag === row.name)?.state),
-  'Fresh worker enables every circuit switch: released ones are on, the rest are real dev switches through the supported QA query');
+  'Fresh worker enables every circuit switch: released ones are on, any circuit still in development is a real dev switch through the supported QA query');
 equal(nativeCatalog.storageLength, 0, 'Worker begins with empty memory-only storage');
 equal(JSON.stringify(COURSE), definitionsBefore, 'Worker does not change the parent native catalog');
 await assert.rejects(() => runReferenceWorker({targets: [{key: 'missing|fixed', eventId: 'missing', route: 'fixed', seed: 1989}]}),
