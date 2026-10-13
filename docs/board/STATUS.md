@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-13T01:37:44.799Z
+Observed at: 2026-10-13T03:02:12.494Z
 
-Observation commit: 2c028462cc31ddcd0b4679bbd5c8510dc1825ef8
+Observation commit: 36d7613f86620c143dbec13db28fca9e58ec6988
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2c028462cc31ddcd0b4679bbd5c8510dc1825ef8
+Integration HEAD: 36d7613f86620c143dbec13db28fca9e58ec6988
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -14,9 +14,9 @@ Live commit: not checked
 
 Live build version: not checked
 
-Full tier: stale; exact HEAD passed: no.
+Full tier: dirty; exact HEAD passed: no.
 
-Last recorded full run: 2026-10-12T16:37:15.724Z; tested commit: 1a7a77e77c55a481edc766e97e4a60fdb7c28ced.
+Last recorded full run: 2026-10-13T02:29:11.268Z; tested commit: 36d7613f86620c143dbec13db28fca9e58ec6988.
 
 ## Feature switches
 
@@ -86,29 +86,29 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 270,047,923 B | +0 B | 250,000,000 B |
+| Build `dist/` | 293,583,685 B | +23,535,762 B | 250,000,000 B |
 | Wasteland models | 112,189,772 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 16,840,032 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 125,570 B | -121,847 B | 5,000,000 B |
+| Added bytes in last merge | 122,709 B | -2,861 B | 5,000,000 B |
 | All `public/` | 288,685,549 B | +0 B | unavailable |
-| Git objects | 402,778,112 B | +166,912 B | unavailable |
+| Git objects | 403,131,392 B | +353,280 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 161e01a0aae942e25359ce3b7ae1e1963fc12e4c
+- Local master: 36d7613f86620c143dbec13db28fca9e58ec6988
 - Local main: missing
-- Local integration/wasteland: 2c028462cc31ddcd0b4679bbd5c8510dc1825ef8
+- Local integration/wasteland: 36d7613f86620c143dbec13db28fca9e58ec6988
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 161e01a0aae942e25359ce3b7ae1e1963fc12e4c.
+- Remote origin/master: behind local; cached commit bf1ac981bcb6f5ba1e2d123d9aa638a6454bea38.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
 - Remote origin/integration/wasteland: behind local; cached commit cbb4e8975fe23911b9940499e0ae1ee17660955b.
