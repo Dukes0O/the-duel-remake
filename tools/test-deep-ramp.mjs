@@ -39,6 +39,13 @@ function clearance(course, ramp) {
     const nearest = course.nearest(corner.x, corner.z);
     assert.ok(course.groundAt(nearest.s, nearest.lateral).y < SEA_LEVEL, 'cove is genuinely submerged');
   }
+  // Denser independent sampling also covers the cove's interior.
+  for (let side = -3; side <= 3; side += .5) for (let along = -6; along <= 6; along += .5) {
+    const x = last.x + Math.cos(ramp.heading) * side + Math.sin(ramp.heading) * along;
+    const z = last.z - Math.sin(ramp.heading) * side + Math.cos(ramp.heading) * along;
+    const nearest = course.nearest(x, z);
+    assert.ok(course.groundAt(nearest.s, nearest.lateral).y < SEA_LEVEL, 'whole actual cove is submerged');
+  }
 }
 
 test('actual Pacific A/B/C ramps have 120 m of sampled grounded geometry to -23 and preserve generation', () => {
@@ -105,6 +112,34 @@ test('a bound crossing the first full strip or cove rejects that candidate', () 
   const blockedStack = { ...stacks[0], x: first.cove.center.x, z: first.cove.center.z, halfX: 3, halfZ: 6 };
   const next = buildDeepRamp(course, { buildPacificRockLayout: () => [...stacks, blockedStack] });
   assert.ok(next && next.atDistance > first.atDistance, 'actual stack rectangle contract blocks the first cove');
+});
+
+test('an interior headland rejects a cove even when its four corners and offshore clearance pass', () => {
+  const course = new Course(definition, ROUTE_VARIANTS[0].seed), first = buildDeepRamp(course);
+  assert.ok(first);
+  // An isolated emergence beyond the ramp end lies inside the original cove,
+  // away from its center and four corners. Only this actual Course instance's
+  // terrain reader is wrapped; feature records and generators are unchanged.
+  const interior = {
+    x: first.cove.center.x + Math.cos(first.heading) * 2 + Math.sin(first.heading) * 3,
+    z: first.cove.center.z - Math.sin(first.heading) * 2 + Math.cos(first.heading) * 3,
+  };
+  const originalGroundAt = course.groundAt;
+  course.groundAt = function(s, lateral) {
+    const point = originalGroundAt.call(this, s, lateral);
+    return Math.hypot(point.x - interior.x, point.z - interior.z) < .45
+      ? { ...point, y: SEA_LEVEL + 1 } : point;
+  };
+  for (const corner of first.cove.corners) {
+    const nearest = course.nearest(corner.x, corner.z);
+    assert.ok(course.groundAt(nearest.s, nearest.lateral).y < SEA_LEVEL, 'all old corner tests still pass');
+  }
+  assert.equal(offshoreClearance(course, first.cove.center.x, first.cove.center.z, Math.hypot(3, 6)), true);
+  const inside = course.nearest(interior.x, interior.z);
+  assert.ok(course.groundAt(inside.s, inside.lateral).y > SEA_LEVEL, 'the interior genuinely emerges above water');
+  const next = buildDeepRamp(course);
+  assert.ok(next && next.atDistance > first.atDistance, 'interior emergence rejects the otherwise-clear first cove');
+  clearance(course, next);
 });
 
 test('unavailable descending shores and offshore clearance return null without fabricated geometry', () => {

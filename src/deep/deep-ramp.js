@@ -119,6 +119,19 @@ function clearStrip(course, ramp) {
   }
   return edges;
 }
+function clearCove(course, cove) {
+  // Corners alone cannot rule out a non-planar headland inside the footprint.
+  // Scan the same complete 6 by 12 m bounds at half-metre intervals.
+  for (let side = -cove.halfWidth; side <= cove.halfWidth; side += .5) {
+    for (let along = -cove.halfLength; along <= cove.halfLength; along += .5) {
+      const point = ground(course,
+        cove.center.x + Math.cos(cove.heading) * side + Math.sin(cove.heading) * along,
+        cove.center.z - Math.sin(cove.heading) * side + Math.cos(cove.heading) * along);
+      if (!point || point.y >= SEA_LEVEL) return false;
+    }
+  }
+  return true;
+}
 function blocked(first, last, obstacles, heading, halfLength = 0) {
   // Measured modelMinY/modelMaxY are retained explicitly. Omitting
   // vertical vehicle dimensions deliberately excludes the whole horizontal bound.
@@ -155,7 +168,7 @@ export function buildDeepRamp(course, options = {}) {
       const cove = rectangle(course, last, ramp.heading, WIDTH / 2, 6);
       if (!cove || blocked(last, last, bounds, ramp.heading, 6)
           || !clearOffshore(course, last.x, last.z, Math.hypot(WIDTH / 2, 6))
-          || cove.corners.some(point => point.y >= SEA_LEVEL)) continue;
+          || cove.corners.some(point => point.y >= SEA_LEVEL) || !clearCove(course, cove)) continue;
       const horizontal = last.horizontal;
       const center = ramp.pointAt(horizontal / 2);
       const footprint = center && rectangle(course, center, ramp.heading, WIDTH / 2, horizontal / 2);
