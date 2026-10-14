@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T18:07:22.415Z
+Observed at: 2026-10-14T18:09:02.449Z
 
-Observation commit: bdd7fdcff1bea7cc0a0ba7bd0ed6a250eb9f8c09
+Observation commit: 2d50220b06344956e3c1d60310d8b66bfb63b040
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: bdd7fdcff1bea7cc0a0ba7bd0ed6a250eb9f8c09
+Integration HEAD: 2d50220b06344956e3c1d60310d8b66bfb63b040
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -63,6 +63,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
+| codex/p4-career-access | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-career-access |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -106,7 +107,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 250,773 B | +0 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 404,997,120 B | +31,744 B | unavailable |
+| Git objects | 405,014,528 B | +17,408 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -115,7 +116,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: bdd7fdcff1bea7cc0a0ba7bd0ed6a250eb9f8c09
+- Local integration/wasteland: 2d50220b06344956e3c1d60310d8b66bfb63b040
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
