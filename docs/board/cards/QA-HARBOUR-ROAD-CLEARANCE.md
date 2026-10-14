@@ -47,3 +47,8 @@ Fix, in this order:
    test: explain it in the change note and give it one review.
 Then rerun `test-circuits.mjs`, the lane tier and the build. Owner moves to
 Codex for this fix; Claude reviews the world signature if 1 changes it.
+
+
+## Codex implementation scope — 14 October
+
+The existing wall layout has no per-corner setback: track-script-course.js uses global TRACK_SCRIPT.wallSetback for every wall, while smoothInnerWalls only changes drawing. Use Claude's approved option 2. The lane owns only tools/test-circuits.mjs and docs/changes/QA-HARBOUR-ROAD-CLEARANCE.md. Read the heading at s + 2 for each existing 4 m sweep. Keep all contact assertions, seeds, course lists, probe positions, hairpin allowance, body sizes and tolerances unchanged. No runtime or released course edit. One independent review and the original nearby lane tier and build are required.

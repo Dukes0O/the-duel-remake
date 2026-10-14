@@ -4,9 +4,11 @@ tasks:
   - id: QA-HARBOUR-ROAD-CLEARANCE
     title: "Current Harbour road-clearance guard hits wall-right-1105"
     owner: "codex"
-    lane: "DESIGN"
+    lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-harbour-clearance-2026-10-14"
+    branch: "codex/qa-harbour-clearance"
     needs: []
     details: "docs/board/cards/QA-HARBOUR-ROAD-CLEARANCE.md"
 
