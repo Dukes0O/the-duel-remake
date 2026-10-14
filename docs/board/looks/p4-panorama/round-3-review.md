@@ -44,3 +44,12 @@ are small at that distance, so they read as a few orange points. Brighter or
 larger town lights need new code or art, so they are a proposed small card.
 
 Any later nit is a finishing note for Kyle's play review, not a new art round.
+
+## Claude verdict, 14 October 2026
+
+Accepted. Ridge Top, the Esses and Murray Corner are the postcards. Two weak
+spots, neither a reason to hold: the Skyline view shows the bank and the fence
+more than the road and the drop (review framing only), and the valley town
+reads as a grid of small boxes with a few orange points at dusk, which is
+toy-like next to the rest of the course. The town goes to PANORAMA-TOWN.
+

@@ -1079,3 +1079,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13: Controls native eab3b136 merged; nearby30/30/jobs4/build1.34s/reviewCLEAR. Harbour keyboard90.258s/zero crashes or stops;4nativeviews/480warnings clear, actual clock fix in. Kyle approvedClaude release/push afterexactfull; sourcechecks drained, releaseevidence retained, ownQA lane recycling. No postmerge gate.
 
 - 2026-10-14: P4-SUMMIT6b6831d1 accepted dev source merged; original nearby103/103/jobs4, build937ms, reviewCLEAR;20other scene rows exact/Galleryrejoin retained. No clean-merge rerun; older lane retained; Avalanche timing/Claude finishing next, no release/push.
+
+- 2026-10-14: P4-FINISH-PANORAMA merged (Claude lane): lane 40/40, build, native High/Performance scenario pass, Claude review. Two floating marshal posts grounded, final-lap dusk views, round-3 sheet; round-2 removed. Road, records and world signature unchanged. New card PANORAMA-TOWN.
