@@ -211,9 +211,12 @@ checked. Three in a row passes the lesson.
 
 On both lesson corners the tyres, not the steering, set the corner speed.
 With TYRE-SLIP, braking at the red board leaves you two bad choices: keep
-braking into the turn, which leaves only 80% of the cornering grip, or turn
-in too fast. Either way the tyres go past their best grip, they slide, the
-car runs wide and the slide rubs off speed. The screech is that slide. The
+braking into the turn, or turn in too fast. Braking while turning leaves
+only 80% of the cornering grip, so the tyres go past their best grip, slide,
+run wide and rub off speed; the screech is that slide. Turning in too fast
+without braking runs wide; on the keyboard it does not slide by itself,
+because a held key never steers harder than today (TYRE-SLIP amendment 5),
+so the screech in the late try comes from braking into the turn. The
 lesson's own test (section 10) requires the late try to screech at least
 0.5 s and either lose at least 0.25 s or end against the wall or off the road,
 on both corners; TYRE-SLIP's test 8
