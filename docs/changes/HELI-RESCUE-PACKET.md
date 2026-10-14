@@ -14,11 +14,16 @@ Design only: no game code.
   winch stays for the medevac skin). Sites on H1's three destinations, the
   beacon's beeps, the hiker's flare, the hold beside a steep slope, crates
   for the lodge, a car recovery job after a hoist rescue, pay and the rescue
-  badge, 24 lines, 5 cues, save fields, files, locks, tests and two Codex
-  art cards.
+  badge, 24 lines, 5 cues, save fields, files, locks, tests and two art
+  cards.
+- At the main design session's request: the supply run goes up Summit Run
+  (cut off by P4-AVALANCHE), which becomes a helicopter destination with
+  its switch; a gear table names what H3's skins add (winch, stretcher,
+  searchlight, heat camera); the people and props are Claude Blender
+  cards; every build card needs FIRE-MISSIONS.
 - Ten cards in `docs/board/cards/RESCUE-*.md` and their board entries. Each
-  Claude build card waits for the H2 card that last edits its files;
-  RESCUE-SITES, RESCUE-ART-PEOPLE and RESCUE-ART-KIT can start now.
+  build card waits for FIRE-MISSIONS and the H2 card that last edits its
+  files; RESCUE-PEOPLE and RESCUE-PROPS can start now.
 - `docs/HELI_FIRE.md`: points at the rescue engine, and a leftover `smoke`
   kind removed from its save fields.
 - `docs/HELICOPTER.md` section 12 and `docs/README.md`: one pointer each.

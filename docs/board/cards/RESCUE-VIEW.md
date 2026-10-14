@@ -7,4 +7,5 @@ state, needs and locks.
 
 Packet sections 5, 7 and 13. Files: `src/heli/heli-rescue-view.js` (new),
 `src/heli/heli-scene.js`, `src/heli/heli-ui.js`, `src/heli/heli-ui.css`.
-Drawing only. Frame check (rule 8) hovering over the avalanche.
+Drawing only, plus Summit Run's from-the-air check (section 5.5). Frame
+check (rule 8) hovering over the avalanche.

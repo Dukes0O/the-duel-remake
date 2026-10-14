@@ -7,9 +7,11 @@ page Kyle owns) and Kyle's answers that day. It builds on H1 First flight
 cable, fuel, crashes, radio, save field and mission engine. Read those
 first; this packet only adds to them. Design only: no game code.
 
-Who builds: Claude owns the Flying line, design and build. Codex makes the
-two art cards in section 13, which can start now. Every Claude build card
-waits for the H2 card that last touches the same files.
+Who builds: Claude owns the Flying line, design and build, and the main
+design session makes the people and props as original Blender recipes
+(section 13); those start now. Every Claude build card waits for H2's
+FIRE-MISSIONS (the engine it joins) and for the H2 card that last touches
+the same files.
 
 ## 1. Kyle's decisions this packet follows
 
@@ -21,6 +23,8 @@ waits for the H2 card that last touches the same files.
 | Missed calls (storyboard) | Rescues left too long go to another pilot, and you miss the pay |
 | Voices (storyboard) | Mountain rescue, fire calls and the lodge: Roger; park rangers: Sarah; the instructor: Brian |
 | Skins (storyboard, H3) | Medevac after 5 hoist rescues (a stretcher and a winch); search and rescue after 5 searches (a searchlight and a heat camera) |
+| Supply run (storyboard) | The road to the avalanche course is cut off: Summit Run, whose avalanche (P4-AVALANCHE) cuts the road at the Gallery |
+| One helicopter (Kyle) | Kestrel One does every rescue; no second helicopter yet |
 | Lessons (storyboard) | Hoist rescue teaches a steady hover and the swing; the beacon teaches that signals weaken with distance; the hiker teaches search patterns; the supply run teaches weight and thin air |
 
 ## 2. H4 in one paragraph
@@ -28,7 +32,7 @@ waits for the H2 card that last touches the same files.
 The radio crackles. A skier is buried under an avalanche on the ski hill at
 Tremblant Snow, or a driver has gone off the road below the ridge at
 Panorama Ridge, or a hiker is lost in the woods and it will soon be dark, or
-the lodge is cut off by snow. You answer, fit the rescue line at the pad
+the avalanche on Summit Run has cut the road to the summit hut. You answer, fit the rescue line at the pad
 with the rescuer clipped on, and fly. Over the avalanche you follow the
 beacon's beeps, faster and faster, and lower the rescuer onto the spot to
 dig. Below the ridge you hold a steady hover beside a steep slope while the
@@ -46,18 +50,18 @@ adds four kinds and two rules.
 
 ### 3.1 The kinds and where they happen
 
-H4 uses H1's three destinations. When the pilot's map (Cockpit T-008) makes
-more courses destinations, each kind gains rows in its site table: Summit
-Run for the supply run and avalanches, Cloudbreak Skyway for hoist rescues,
-as the storyboard has them.
+H4 uses H1's three destinations and adds a fourth, **Summit Run** (section
+5.5), so the supply run can go where the storyboard puts it. Cloudbreak
+Skyway, the storyboard's hoist rescue road, joins when the pilot's map
+(Cockpit T-008) makes it a destination; the hoist table then gains a row.
 
 | Kind | Caller | Where in H4 | Condition |
 | --- | --- | --- | --- |
 | `fire` (H2) | Roger | A course that can burn | As in H2 |
 | `hiker` | Sarah | Tremblant Woods, Panorama Ridge | Always (forest destinations) |
-| `avalanche` | Roger | Tremblant Snow's ski hill | Always |
+| `avalanche` | Roger | Tremblant Snow's ski hill; Summit Run's snowfields | Always |
 | `hoist` | Roger | Panorama Ridge, below The Ridge and Mountain Climb | Always |
-| `supply` | Roger (the lodge) | Home pad to the lodge at Tremblant Snow | Always |
+| `supply` | Roger (the lodge) | Summit Run, from its start area up to the summit hut; Tremblant Snow's lodge while Summit Run is not a destination | Always |
 
 Rescues do not need the player to own the course: anyone can fly anywhere.
 
@@ -219,21 +223,45 @@ rescues.
 
 ### 5.4 Supply run (Roger, for the lodge)
 
-- **The story.** Snow has shut the road to the lodge at Tremblant Snow.
-  Three crates wait beside the home pad: food 400 kg, medicine and blankets
-  500 kg, fuel drums 900 kg.
-- **The job.** Carry each on the H1 cable to the lodge yard, a clear 10 m
-  circle the game finds near the lodge (H1's clear circle test), and set it
-  down gently. Any order. Choosing the order and the fuel to carry is the
-  weight lesson: with a full tank and the 900 kg drums Kestrel One weighs
-  2,530 kg, inside its lift at 250 m but slow to climb.
+- **The story.** The avalanche on Summit Run (P4-AVALANCHE) has cut the road
+  above the Gallery, and the summit hut is running low. Three crates wait
+  in Summit Run's start area, where the road is still open.
+- **The job.** Carry each on the H1 cable up the mountain to the hut yard, a
+  clear 10 m circle the game finds near the summit hut (H1's clear circle
+  test), and set it down gently. Any order.
+- **Thin air is the lesson.** Kestrel One lifts less the higher it goes
+  (H1: thrust times e to the minus altitude over 8,500 m). Summit Run starts
+  at 2,860 m and the hut is far above that, so a full tank and the heaviest
+  crate do not climb out of the start area together; half a tank does. The
+  crates are food 300 kg, medicine 200 kg and fuel drums 450 kg as starting
+  values: RESCUE-SITES reads the hut's real height from the course and tunes
+  the drums so that this holds, and records the numbers on its card.
+- **Fuel.** The pump stays at the home pad (H1), and the cruise leg to
+  Summit Run is long (section 5.5), so the player plans: arrive with enough
+  fuel for three climbs, but light enough to lift.
+- **Without Summit Run** (its switch off), the same run goes from the home
+  pad to the yard by Tremblant Snow's lodge, with crates of 400, 500 and 900
+  kg: snow has shut the road there instead.
 - **Pay.** 300 credits a crate, and 100 more when all three are down before
   the clock ends (1,000 in all). A crate released from higher than 1 m
   counts but pays 150 less (H1's drop rule, applied to the pay instead of a
   repair).
-- **Thin air later.** When Summit Run becomes a destination (T-008), the
-  supply run gains its summit hut, where the air is thin enough that full
-  tanks and heavy crates do not mix.
+
+### 5.5 Summit Run, a new destination
+
+- Added to the destinations table in `heli-jobs.js` while the `summit-run`
+  switch is on (the course is in dev today): base altitude 2,860 m (the
+  real start of the Pikes Peak road), placed on the small map north-west of
+  Panorama Ridge. Cruise fuel: 160 kg from Tremblant Woods, 150 kg from
+  Tremblant Snow, 90 kg from Panorama Ridge.
+- Its landing zone is found by H1's search beside the start line, as for
+  every destination. HELI-VIEW's rule holds: where the edge of the world
+  shows from the air, the flying area's ceiling comes down.
+- The dispatch board's everyday jobs stay on H1's three routes, so H1's job
+  tests and fingerprints do not move. Summit Run is for flying your own car
+  (special cars too) and for missions.
+- Avalanche searches there use its Snowfields and Avalanche Gallery slopes,
+  never the race road.
 
 ## 6. Rewards and badges
 
@@ -252,6 +280,22 @@ rescues.
   saved."
 - The counts are what H3's skins read: medevac after 5 hoist rescues,
   search and rescue after 5 searches, supply after 5 supply runs.
+
+### 6.1 Gear, and what H3's skins add
+
+Kyle: one helicopter, Kestrel One, for everything. Every rescue can be done
+with the kit Kestrel One has in H4. The gear below makes a rescue easier or
+opens more of it, and comes with H3's skins (Kyle's skin table), so H3 ties
+each skin to it without changing these rescues.
+
+| Gear | Comes with | What it does | In H4 without it |
+| --- | --- | --- | --- |
+| Rescue line and harness | H4, for everyone | A rescuer rides H1's 15 m cable | (the base kit) |
+| Winch | Medevac skin | Reels the line from 5 to 40 m at 1.5 m/s, so you can hover higher above trees and cliffs | The fixed 15 m line: hover closer |
+| Stretcher | Medevac skin | The casualty lies on a stretcher: bumps cost half, hoist rescues pay 200 more | A harness |
+| Searchlight | Search and rescue skin | The hiker search runs 8 minutes on into the night | The search ends at dark |
+| Heat camera | Search and rescue skin | The panel shows warm people within 150 m: the hiker under trees, a buried skier within 30 m | The flare and the beacon only |
+| Avalanche receiver | H4, for everyone | Hears the beacon (section 5.2) | (the base kit) |
 
 ## 7. What the player sees and does
 
@@ -361,7 +405,7 @@ wreck: null | {courseId, carId, x, z, day}
 | `src/heli/heli-save.js` | The new mission fields and helpers | RESCUE-SAVE |
 | `src/heli/heli-search.js` | Site picks, the hiker's flare, the beacon | RESCUE-SITES |
 | `src/heli/heli-rescue.js` | The rescue line, set-down and hold, bumps, handover, crates | RESCUE-LINE |
-| `src/heli/heli-missions.js`, `src/heli/heli-jobs.js` | New kinds, seasons, waiting calls, clocks; the car recovery job | RESCUE-ENGINE |
+| `src/heli/heli-missions.js`, `src/heli/heli-jobs.js` | New kinds, seasons, waiting calls, clocks; Summit Run as a destination; the car recovery job | RESCUE-ENGINE |
 | `src/heli/heli-radio-lines.js`, `heli-audio.js` | Lines and cues | RESCUE-RADIO |
 | `src/heli/heli-session.js`, `heli-board.js` | Wiring | RESCUE-HOOKS |
 | `src/heli/heli-rescue-view.js`, `heli-scene.js`, `heli-ui.js`, `heli-ui.css` | Drawing only | RESCUE-VIEW |
@@ -393,7 +437,11 @@ wreck: null | {courseId, carId, x, z, day}
   cruise legs; leaving the helicopter hands the rescue on; the quiet spell
   after every kind; switches filter kinds.
 - `tools/test-heli-jobs.mjs` (extended): the car recovery job appears the
-  next play day, pays 500, leaves after 3 play days.
+  next play day, pays 500, leaves after 3 play days; Summit Run is a
+  destination only with its switch on, and the day's jobs are unchanged.
+- `tools/test-heli-mode.mjs` (extended): a landing zone at Summit Run, and
+  the thin-air supply run: the heaviest crate and a full tank do not leave
+  the start area, half a tank does.
 - `tools/test-heli-save.mjs` (extended) with the save checker and fixture 12.
 - `tools/test-heli-rescue-session.mjs`: one of each rescue flown headless by
   script, from the call to the pay, plus a clock running out. Same
@@ -406,51 +454,60 @@ wreck: null | {courseId, carId, x, z, day}
   the beacon search, the hover beside the slope, the handover), and the
   release waits for Kyle's word, after H2's.
 
-## 13. Art cards for Codex (can start now)
+## 13. Art cards (can start now)
 
-SPEC 0.11: CC0 first, then CC-BY with credit, at most three rounds, one
-comparison sheet per round (JPG, 500 KB at most) under
-`docs/board/looks/heli-rescue/`, judged by Claude. Gritty and real, never
-toy-like. Blender files are rebuilt from scripts in `tools/blender/`.
+The main design session makes these as original Blender recipes in
+`tools/blender/`, judged in at most three rounds (SPEC 0.11), one comparison
+sheet per round (JPG, 500 KB at most) under `docs/board/looks/heli-rescue/`.
+Gritty and real, never toy-like. Nothing here needs a download; animals stay
+with Codex in H3.
 
-**RESCUE-ART-PEOPLE: six people.** From the Quaternius packs already in
-`C:/Users/kyleb/dev/art-library` (modular men, modular women, universal base
-characters, CC0): a rescuer (red and black suit, helmet, harness), a hiker
-(orange jacket, backpack), a skier (ski suit, helmet), a driver (everyday
-clothes) and two paramedics (green uniforms). `public/assets/heli/people/`,
-one file each, metres, +Y up, origin at the feet, with a `harness` empty at
-the clip point. Poses, as separate files or named animations: hanging in a
-harness (the rescuer alone, and rescuer with casualty clipped together),
-standing and waving, sitting on a slope, walking (a loop for the hiker and
-the paramedics). At most 6,000 triangles a person and 1K textures. Real
-proportions and plain colours; no cartoon faces.
+**RESCUE-PEOPLE: six people.** A rescuer (red and black suit, helmet,
+harness), a hiker (orange jacket, backpack), a skier (ski suit, helmet), a
+stranded driver (everyday clothes) and two paramedics (green uniforms).
+`public/assets/heli/people/`, one file each, metres, +Y up, origin at the
+feet, with a `harness` empty at the clip point. Poses, as separate files or
+named animations: hanging in a harness (the rescuer alone, and rescuer with
+casualty clipped together), standing and waving, sitting on a slope, lying
+on a stretcher, walking (a loop for the hiker and the paramedics). At most
+6,000 triangles a person and 1K textures. Real proportions and plain
+colours; no cartoon faces. The Quaternius people in the art library (CC0)
+may serve as a base.
 
-**RESCUE-ART-KIT: the scene pieces.** Under `public/assets/heli/rescue/`:
-avalanche debris (a set of rough snow blocks for instancing, at most 3,000
-triangles together), three supply crates (food 400 kg, medicine 500 kg, a
-pallet of fuel drums 900 kg; each with the H1 crate's origin at its top
-centre, at most 1,500 triangles each), and a folded stretcher for the
-paramedics to carry. The hiker's orange flare smoke reuses H2's fire and
-smoke atlas, tinted.
+**RESCUE-PROPS: the gear and the scene.** Under `public/assets/heli/rescue/`:
+
+- The winch (a side-mounted hoist with its arm, origin where it bolts to the
+  fuselage, a `line_out` empty where the line leaves it), the stretcher (a
+  rescue litter with four lift straps meeting at a `harness` empty), and the
+  searchlight (a belly light with a `beam` empty pointing down and forward).
+  These three are the H3 skins' gear (section 6.1); made now so H3 can
+  simply fit them.
+- An avalanche beacon (a small transceiver, for the skier and the dig) and
+  avalanche debris (rough snow blocks for instancing, at most 3,000
+  triangles together).
+- Three supply crates (food, medicine, a pallet of fuel drums), each with the
+  H1 crate's origin at its top centre, at most 1,500 triangles each; the
+  game scales nothing, the masses live in code.
+- The hiker's orange flare smoke reuses H2's fire and smoke atlas, tinted.
 
 ## 14. Cards and order
 
 ```mermaid
 flowchart LR
-  P[C: HELI-RESCUE-PACKET] --> AP[X: RESCUE-ART-PEOPLE]
-  P --> AK[X: RESCUE-ART-KIT]
-  P --> ST[C: RESCUE-SITES]
-  FS[C: FIRE-SAVE] --> SV[C: RESCUE-SAVE]
-  FB[C: FIRE-BUCKET] --> LN[C: RESCUE-LINE]
-  FM[C: FIRE-MISSIONS] & SV --> EN[C: RESCUE-ENGINE]
-  FR[C: FIRE-RADIO] --> RD[C: RESCUE-RADIO]
+  P[C: HELI-RESCUE-PACKET] --> PE[C: RESCUE-PEOPLE]
+  P --> PR[C: RESCUE-PROPS]
+  FM[C: FIRE-MISSIONS] --> ST[C: RESCUE-SITES]
+  FS[C: FIRE-SAVE] & FM --> SV[C: RESCUE-SAVE]
+  FB[C: FIRE-BUCKET] & FM --> LN[C: RESCUE-LINE]
+  FM & SV --> EN[C: RESCUE-ENGINE]
+  FR[C: FIRE-RADIO] & FM --> RD[C: RESCUE-RADIO]
   FH[C: FIRE-HOOKS] & EN & LN & ST & RD --> HK[C: RESCUE-HOOKS]
-  HK & FV[C: FIRE-VIEW] & AP & AK --> VW[C: RESCUE-VIEW]
+  HK & FV[C: FIRE-VIEW] & PE & PR --> VW[C: RESCUE-VIEW]
   VW & FF[C: FIRE-FINISH] --> FN[C: RESCUE-FINISH]
 ```
 
-The two art cards and RESCUE-SITES (a new file of its own) start now. The
-rest each follow the H2 card that last touches the same files, so H4 builds
+The people and props start now. Every build card needs FIRE-MISSIONS, the
+engine it joins, and the H2 card that last touches its files, so H4 builds
 alongside H2 without two builders in one file. H4 releases after H2.
 
 ## 15. Questions for Kyle

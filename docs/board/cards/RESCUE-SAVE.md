@@ -10,3 +10,4 @@ Packet section 10. Files: `src/heli/heli-save.js`, the `rescue` switch line in
 fixture `tools/fixtures/saves/12-heli-rescue.json`, `tools/test-heli-save.mjs`.
 Holds `save-shape`; the save checker runs. Waits for FIRE-SAVE, which last
 edits `heli-save.js`.
+Also waits for FIRE-MISSIONS, the engine H4 joins.

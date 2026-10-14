@@ -620,7 +620,7 @@ tasks:
     lane: "SAVE"
     size: "S"
     status: "backlog"
-    needs: [FIRE-SAVE]
+    needs: [FIRE-SAVE, FIRE-MISSIONS]
     locks: [save-shape]
     flag: "rescue"
     details: "docs/board/cards/RESCUE-SAVE.md"
@@ -630,8 +630,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
-    needs: []
+    status: "backlog"
+    needs: [FIRE-MISSIONS]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-SITES.md"
@@ -642,7 +642,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "backlog"
-    needs: [FIRE-BUCKET]
+    needs: [FIRE-BUCKET, FIRE-MISSIONS]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-LINE.md"
@@ -664,7 +664,7 @@ tasks:
     lane: "AUD"
     size: "S"
     status: "backlog"
-    needs: [FIRE-RADIO]
+    needs: [FIRE-RADIO, FIRE-MISSIONS]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-RADIO.md"
@@ -686,7 +686,7 @@ tasks:
     lane: "UI"
     size: "M"
     status: "backlog"
-    needs: [RESCUE-HOOKS, FIRE-VIEW, RESCUE-ART-PEOPLE, RESCUE-ART-KIT]
+    needs: [RESCUE-HOOKS, FIRE-VIEW, RESCUE-PEOPLE, RESCUE-PROPS]
     locks: []
     flag: "rescue"
     details: "docs/board/cards/RESCUE-VIEW.md"
@@ -702,27 +702,27 @@ tasks:
     flag: "rescue"
     details: "docs/board/cards/RESCUE-FINISH.md"
 
-  - id: RESCUE-ART-PEOPLE
-    title: "Six people for the rescues"
-    owner: "codex"
+  - id: RESCUE-PEOPLE
+    title: "Six people for the rescues (Blender recipes)"
+    owner: "claude"
     lane: "ART"
     size: "M"
     status: "ready"
     needs: []
     locks: []
     flag: "rescue"
-    details: "docs/board/cards/RESCUE-ART-PEOPLE.md"
+    details: "docs/board/cards/RESCUE-PEOPLE.md"
 
-  - id: RESCUE-ART-KIT
-    title: "Avalanche debris, supply crates and a stretcher"
-    owner: "codex"
+  - id: RESCUE-PROPS
+    title: "Winch, stretcher, searchlight, beacon, debris and crates (Blender recipes)"
+    owner: "claude"
     lane: "ART"
     size: "S"
     status: "ready"
     needs: []
     locks: []
     flag: "rescue"
-    details: "docs/board/cards/RESCUE-ART-KIT.md"
+    details: "docs/board/cards/RESCUE-PROPS.md"
 
   - id: WILD-ART-SRC
     title: "Source local animals for every course (North woods first)"
