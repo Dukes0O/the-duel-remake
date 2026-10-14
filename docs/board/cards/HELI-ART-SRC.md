@@ -21,7 +21,7 @@ decisions of 14 October 2026). The board entry holds state, needs and locks.
 ## Rounds
 
 At most three rounds (SPEC 0.11). Each round: one comparison sheet (JPG,
-500 KB at most) under `docs/board/looks/heli/`, judged by Claude.
+500 KB at most) under `docs/board/looks/kestrel-one/`, judged by Claude.
 
 ## Done
 
@@ -107,3 +107,11 @@ retry after 18:00, else Kyle's R22 download). Round 1 puts both on one
 sheet; Claude picks, and only the pick goes to
 `public/assets/heli/kestrel-one.glb`. Codex keeps the hook, helipad and
 pump recipes; Claude does not touch `tools/blender/heli-accessories.py`.
+
+## Claude answers - the helicopter pick, 14 October evening
+
+Picked: Claude's original Kestrel One (`tools/blender/kestrel-one.py`,
+`public/assets/heli/kestrel-one.glb`), three rounds closed, review in
+`docs/board/looks/kestrel-one/round-3-review.md`. Drop the donor route: no
+retry, no R22 download needed. Codex's part of this card is now the cargo
+hook, helipad and fuel pump only.
