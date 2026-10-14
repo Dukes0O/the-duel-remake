@@ -29,3 +29,11 @@ Source inspection also found that the native Grand Prix adapter defaults to thre
 Current integration 82c0f7bb was merged into the retained lane at 89d11e08. The only conflict was additive model credits: all current integration credits were preserved byte for byte and the original Ardennes paragraph appended once. Protected game, renderer, other-course and Deep runtime/catalogue files match integration. Dependency and evidence junctions point only to integration.
 
 The existing Blender recipe ran once with threads 4 and exited 0. Its measured High/LOD triangle counts and pair sizes are: stone bridge 1356/324 and 127060 bytes; footbridge 1980/708 and 196560 bytes; timing tower 888/696 and 120644 bytes. Each is within its granted triangle and 250 KB pair budget. Actual hashes, dimensions and files are in tools/art/ardennes-landmarks.json. This proves export budgets, not native clearance, picture acceptance or timing. Native views follow before Root's picture review; no final sheet or signature is claimed.
+
+## Native pit-divider correction, 14 October
+
+The first native view packet failed before any picture: it timed out waiting for High kits. The existing circuit-kit validator then failed at its unchanged clearance assertion with `Track kit pit-wall violates road clearance`. The authored duplicate visual kit sat at the native divider centre, but its face entered the existing road clearance margin.
+
+Under Root's narrow correction grant, only these duplicate visual pit-wall kit rows are removed. The existing native divider continues to draw and collide at its original positions; road, pit options, simulation and all clearance assertions remain exact. This avoids a second visual wall instead of moving the native divider or loosening a guard. A corrected validator and view packet remain pending.
+
+Removed: the duplicate Ardennes visual pit-wall kit rows. The original native divider is retained.

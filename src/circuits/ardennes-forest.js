@@ -82,10 +82,8 @@ function paddock() {
     out.push(row('pit-garage', s, -31, {heading: Math.PI / 2, solid: true}));
   for (let s = 55; s < PIT_END - 30; s += 15)
     out.push(row('grandstand', s, 31, {heading: -Math.PI / 2, solid: true, crowd: true}));
-  // Draw the divider at the exact native pit-wall positions. Its original
-  // collider remains the owner; no second solid wall or changed pit option.
-  for (let s = 75; s < PIT_END - 75; s += 4)
-    out.push(row('pit-wall', s, -(road.halfWidthAt(s) + .65), {heading: Math.PI / 2}));
+  // The existing native pit divider owns both drawing and collision.
+  // Do not duplicate its wall with a second kit face.
   return out;
 }
 
