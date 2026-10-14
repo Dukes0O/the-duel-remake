@@ -120,6 +120,32 @@ height and heading, flies to the chosen destination's approach point at
 stops in a hover 20 m above the landing zone. You land or set down yourself
 in H1. Any control input beyond 30% hands control back to you.
 
+**Settled while building HELI-FLIGHT (14 October 2026).** These fill gaps
+the numbers above left open; `tools/test-heli-flight.mjs` checks each one.
+
+- Drag is sized so Assisted (20 degrees) tops out at 60 m/s with a full
+  tank and no load. Above 60 m/s drag climbs steeply (the retreating blade
+  stalls), so Real's 25 degrees reaches about 61 m/s, not 68.
+- Full collective with no load climbs at about 10 m/s; a hover burns about
+  0.52 kg/s, so a full tank hovers about 13 minutes.
+- Assisted slows its own descent near the ground: holding S lands at about
+  0.6 m/s.
+- Touchdown also counts tilt and sliding: tilt 10 to 20 degrees or a slide
+  of 3 to 8 m/s turns a good landing hard; more than 20 degrees or 8 m/s is
+  a crash.
+- Autorotation keeps the rotor's stored energy. Full collective gives lift
+  of 1.5 times the weight for about 2.5 seconds; with the lever down the
+  rushing air spins the rotor back up. Assisted flares for you while W is
+  held below 15 m and lands at under 1 m/s. In Real a flare started about
+  8 m up lands well; one started at 14 m runs out of rotor and crashes.
+- The autopilot keeps at least 30 m (plus the hanging load) above the
+  highest ground or obstacle on the next 10 seconds of its path, and slows
+  to 8 m/s when it is more than 10 m short of that height. It limits the
+  combined tilt to 10 degrees.
+- The rotor and the body strike trees, buildings, rocks and mountains at
+  any height; mountains count as cones. Landing on a roof is not part of
+  H1: coming down onto one is a crash.
+
 ## 4. Controls (one keyboard)
 
 | Key | Action |
@@ -174,6 +200,30 @@ damped pendulum (no new library; it borrows the tether ideas in
   T-013) join the list later. With the switch on, a special car races only
   on the course where it was last set down, and it starts at the home pad.
   Existing saves keep the car; it simply starts at Tremblant Woods.
+
+**Settled while building HELI-CABLE (14 October 2026).** Checked in
+`tools/test-heli-cable.mjs`:
+
+- Hooking: hover with the hook (15 m below the skids) within 3 m of the
+  load sideways and 2 m up or down, moving under 1.5 m/s, and press H. H
+  again lets go.
+- The helicopter is free to move, so it swings back against the car: a
+  1,300 kg car swings about once every 5.8 seconds, not the 7.8 of a fixed
+  hook. Air drag and a little swing damping settle it.
+- The car turns nose first into the way it flies once it moves faster than
+  5 m/s. At 30 m/s the air trails it about 7 degrees back.
+- The autopilot builds speed gently (0.7 m/s2) and leans the hook toward a
+  swinging car; carrying the Jesko at 30 m/s the cable stays within about
+  10 degrees of straight down.
+- Cargo hits by speed: light from 4 to 8 m/s, heavy from 8 to 14 m/s,
+  wreck above 14 m/s. One strike is charged once: a tree is hit once, then
+  lies down; a building or rock pushes the car back out, and the same one
+  can be charged again only after the car has come away from it.
+- Released at 1 m or lower the car simply settles with no charge. A
+  hooked car on the ground can be dragged (grip 0.7 of its weight); it
+  never anchors the helicopter. A set-down is counted once per hook-up.
+- The cable's pull is capped at four times the hook limit's weight, so a
+  stretched cable never flings the load.
 
 ## 6. The dispatch board and flights between courses
 
@@ -264,11 +314,15 @@ guard test like The Deep's enforces it):
   playDay: {last, count}, jobs: {day, taken, done}, carsAt: {carId: courseId},
   refuels, flights}`. One line in `normalizeProfile`, a fixture
   `tools/fixtures/saves/10-heli.json`, and the save checker.
-- **`busy-game-files`:** `app.js` (a `visitHeli()` verb, the session in
-  `_simulate` and `_applyInput`, `returnToMenu`, dispose, "Race here") and
-  `render3d.js` (a private scene hook like the Deep's). Held by HELI-MODE
-  and HELI-DISPATCH, one at a time.
-- **`sound-bank`:** the cues above, held by HELI-RADIO.
+- **`busy-game-files` and `sound-bank`:** held once, together, by one
+  short wiring card, HELI-HOOKS: `app.js` (a `visitHeli()` verb, the
+  session in `_simulate` and `_applyInput`, `returnToMenu`, dispose, "Race
+  here"), `render3d.js` (a private scene hook like the Deep's) and one line
+  in `sound-bank.js` that maps the helicopter's cue list (kept in
+  `heli-audio.js`, the way `fight-voices.js` keeps its lines). Every other
+  helicopter card builds against those hooks without a lock. (Re-sliced
+  14 October 2026 while AUD-15-P1 held both locks: one short turn instead
+  of three, which also leaves TYRE-SLIP a single wait.)
 - **Unlocked shared files:** `input-contexts.js` (a `heli` context),
   `screen-router.js` and `screen-menu.js` (a menu entry shown only with the
   switch on).
@@ -285,9 +339,10 @@ flowchart LR
   P --> RD[C: HELI-RADIO]
   FL --> CB[C: HELI-CABLE]
   FL & SV --> MD[C: HELI-MODE]
-  MD & ART --> VW[C: HELI-VIEW]
+  MD & RD --> HK[C: HELI-HOOKS]
+  HK & ART --> VW[C: HELI-VIEW]
   MD & RD & VW --> LS[C: HELI-LESSONS]
-  CB & MD --> DP[C: HELI-DISPATCH]
+  CB & HK --> DP[C: HELI-DISPATCH]
   LS & DP --> FN[C: HELI-FINISH]
 ```
 

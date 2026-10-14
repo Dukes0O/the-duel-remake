@@ -117,3 +117,25 @@ test('scenario crashes and report defects all fail without weakening acceptance 
   assert.deepEqual([f.summary.count, f.summary.passed, f.summary.failed], [9, 1, 8]);
   assert.equal(f.calls.at(-1), 'cleanup');
 });
+
+
+test('default discovery retires consumed art but retains current Salt and explicit manual frames',async()=>{
+  const ordinary=await suite.namedScenarios(),manual=await suite.namedScenarios({includeManual:true});
+  assert.ok(ordinary.includes('salt-flats'),'reachable Salt gameplay stays in all');
+  for(const consumed of ['vesper-art','convoy-tanker-art','first-person-polish'])assert.ok(!manual.includes(consumed),consumed+' consumed recipe is removed');
+  assert.ok(!ordinary.includes('rustwall-frame'),'dedicated manual frame recipe is not all-browser work');
+  assert.ok(manual.includes('rustwall-frame'),'manual recipe remains discoverable for explicit use');
+  assert.deepEqual(ordinary,manual.filter(name=>name!=='rustwall-frame'),'no other current scenario is hidden');
+});
+
+test('all omits manual frame while explicit selection preserves its original quiet execution',async()=>{
+  for(const explicit of [false,true]){
+    const f=fixture(['salt-flats','rustwall-frame']);let discovery;
+    f.operations.discover=async options=>{discovery=options;return options?.includeManual?['salt-flats','rustwall-frame']:['salt-flats'];};
+    const args=explicit?['--scenarios','rustwall-frame','--jobs','4','--output-dir',archive]:['--all','--jobs','4','--output-dir',archive];
+    assert.equal(await suite.main(args,f.operations),0);
+    assert.deepEqual(discovery,{includeManual:explicit});
+    assert.deepEqual(f.summary.rows.map(row=>row.name),[explicit?'rustwall-frame':'salt-flats']);
+    assert.equal(f.maximum,1);assert.equal(f.calls.at(-1),'cleanup');
+  }
+});

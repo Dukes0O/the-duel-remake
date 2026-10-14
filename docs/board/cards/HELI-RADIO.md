@@ -9,4 +9,6 @@ Sections 7 and 8 of the packet. Lines through `tools/audio/elevenlabs.mjs`
 (stock voice Brian, fitted to the month's credits), library sounds through
 `tools/audio/freesound.mjs` (CC0 first). Files: `src/heli/heli-audio.js`,
 cue lines in `src/sound-bank.js` (holds `sound-bank`), catalog rows,
-`audio-src/` takes. Never touches mastering (`audio-mix`).
+`audio-src/` takes. Never touches mastering (`audio-mix`). No lock: the
+cue list lives in `heli-audio.js` and HELI-HOOKS adds the one line that
+maps it into `src/sound-bank.js` (re-sliced 14 October 2026).
