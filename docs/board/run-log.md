@@ -1124,3 +1124,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: HELI-FIRE-PACKET merged (H2 Fire packet docs/HELI_FIRE.md and twelve FIRE cards; board conflict on the completed list resolved); lane 14/14 jobs4 366.50 s, build passed, lane 9/9 jobs4 on the merged commit; lane deleted.
 14 October: HELI-FIRE-BUCKET and FIRE-BURNT-LOOK part 1 merged (bucket to the H2 contract, burnt props and fireweed; one squashed commit, one version of each model); lane 29/29 jobs4, build passed; lane deleted.
 14 October: HELI-FIRE-PACKET revision merged (Kyle's answers: no smoke check, quiet spell between emergencies, courses burn by rule, FACTORY checklist item 10 water and trees); lane 14/14 jobs4 224.76 s, build passed; lane deleted.
+14 October: FIRE-BURNT-LOOK part 2 merged (tiling burnt ground textures; charred pines handed to FIRE-VIEW); lane 26/26 jobs4, build passed; lane deleted.
