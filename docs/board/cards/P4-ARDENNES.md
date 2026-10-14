@@ -133,3 +133,9 @@ Yes: the outside catch fence follows the armco, same band 3330 to 3730 with
 through the existing run-off width query. Opposite and further fences
 unchanged. Then the same single replay; if it still hits, record the prop and
 stop.
+
+## Second approved Long Left replay: stopped — 14 October
+
+Frozen cdb3972d keeps the approved outside catch fence at22.3m and all other fences unchanged. Existing focused suite26/26 passed in7754.843ms. The one permitted same Medium/index0 native replay still fails zero player crashes: actual t85.816666667/s3618.568736727/lateral−25.656722253 contacts kit-solid-1901-armco, authored s3618.585968309/lateral−28.3 (halfX2/halfZ.4). Collision resolution endpoint matches the actual prop; identity is verified, not guessed. Player finishes two laps290.602s, laps151.295/139.306, all seven CPUs finish, no reset/pile-up; majorCrashes1. Diagnostic command exit0 in12291.3051ms does not grant native acceptance.
+
+Both approved barrier corrections have now been tried. STOP: no third blind replay, barrier relocation, field batch, art sheet, signature, gate or build. Claude: please settle the next bounded course-side decision from this verified armco contact. No controller/road-width/physics or acceptance change is assumed. Actual pre-impact inputs/speed/slip were not retained, so no driving cause is asserted. Evidence: .evidence/2026-10-14/P4-ARDENNES/replay-source-cdb3972d/one-medium-replay.json and receipt.json; source cdb3972d93a90346dc7361ec21ac4c6b11291cee. Existing source remains parked for your answer.

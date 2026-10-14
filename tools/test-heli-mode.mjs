@@ -319,7 +319,9 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   // Approved importers: the save normalizer and the helicopter's own tests.
   // HELI-HOOKS adds the app, renderer, menu and sound bank lines. Any text
   // naming a helicopter file counts, whatever form the import takes.
-  const approved = new Set(['src/progression.js|heli/heli-save.js']);
+  const approved = new Set(['src/progression.js|heli/heli-save.js',
+    // HELI-RADIO's sound build reads the radio line list to copy the takes.
+    'tools/audio/build-heli.mjs|heli/heli-radio-lines.js']);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {

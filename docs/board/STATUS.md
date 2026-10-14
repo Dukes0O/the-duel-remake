@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T18:40:01.762Z
+Observed at: 2026-10-14T19:20:11.961Z
 
-Observation commit: 10ce7e9882529760de1fcfe4e91644e69d80166f
+Observation commit: 8b3b2423ffbfdb10c52b2c9d7c51749679652006
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 10ce7e9882529760de1fcfe4e91644e69d80166f
+Integration HEAD: 8b3b2423ffbfdb10c52b2c9d7c51749679652006
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -72,7 +72,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-qualifying | 3 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
-| codex/p4-yeti-grounding | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
+| codex/p4-yeti-grounding | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -88,12 +88,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/heli-art-src | HELI-ART-SRC | 2026-10-14T11:35:16-07:00 | 0 | last commit 2026-10-14T11:35:16-07:00 | docs/changes/HELI-ART-SRC.md, tools/art/heli-source-candidates.json |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T11:39:39-07:00 | 0 | last commit 2026-10-14T11:39:39-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
-| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T11:01:48-07:00 | 0 | last commit 2026-10-14T11:01:48-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, tools/test-summit-avalanche.mjs |
+| codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T12:14:48-07:00 | 0 | last commit 2026-10-14T12:14:48-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, src/track-kits.js, src/track-script-course.js |
 | codex/p4-career-access | P4-CAREER | 2026-10-14T11:22:25-07:00 | 0 | last commit 2026-10-14T11:22:25-07:00 | docs/changes/P4-CAREER.md, src/circuit-manifests.js, src/course-access-ui.js, src/course-access.js, src/screen-router.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/p4-yeti-grounding | P4-YETI | 2026-10-14T11:21:19-07:00 | 0 | last commit 2026-10-14T11:21:19-07:00 | docs/changes/P4-YETI.md, src/yeti-view.js, tools/test-yeti.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -109,9 +108,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 240,233 B | +137,112 B | 5,000,000 B |
-| All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 405,872,640 B | +236,544 B | unavailable |
+| Added bytes in last merge | 16,755 B | +0 B | 5,000,000 B |
+| All `public/` | 291,982,013 B | +0 B | unavailable |
+| Git objects | 406,701,056 B | +44,032 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -120,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 10ce7e9882529760de1fcfe4e91644e69d80166f
+- Local integration/wasteland: 8b3b2423ffbfdb10c52b2c9d7c51749679652006
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -128,4 +127,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit 27d9cf3b2c3b4b9748e56b37ed61bc1c26acca95.
+- Remote origin/integration/wasteland: behind local; cached commit 4fe6d085c4785385a839f3d5485df32982fdbdc5.
