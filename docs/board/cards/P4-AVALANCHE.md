@@ -207,3 +207,9 @@ is the Open Road's clear surface, not the Gallery.
   banks at the edges) using existing materials; Claude judges it in the
   Summit finishing pass. The entrance pillar answer stands.
 
+
+## Director answered clear-surface slice — 14 October
+
+Claude's latest answer supersedes the failed 60 m curve proposal and retires only the 18.4–19.2 s Gallery target. Resume the same owned lane without a new card. Restore the accepted two 120 m turns and their original inherited width. The exact existing course field is roadBranches[0].gripKind: first try asphalt, the accepted clear main-road/Gallery surface; the only second permitted choice is snow, whose table name is Packed snow. Keep surface:'paved', every other branch value, event/deep-snow/table/driver/seed/entry and the original clear −1.6 to −0.8 s and drift +3.5 to +6.5 s limits exact. No new surface or runtime speed lever. Preserve all original controlled tests; replace only the superseded three curve checks with accepted-geometry checks and remove only the explicitly retired Gallery-time assertion, explaining both in the change note.
+
+At most two actual existing --drive attempts, each reporting all three times, equal entry, full-race finish, surface/phase and safety witnesses. Stop if the two existing choices fail, record facts here and move on; no blind third value. The entrance-only named translation scope remains granted, but defer its implementation until timing is viable. Ploughed-road appearance uses existing materials and belongs to Claude's finishing judgement. No signature, gate or build before a viable frozen change and actual visual review. Root owns metadata and independent review; no release or push.
