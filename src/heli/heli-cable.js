@@ -55,11 +55,15 @@ export function liftCheck(carId) {
 
 const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 
-// A load sitting on the ground at (x, z), ready to hook.
-export function createLoad({id, massKg, x = 0, z = 0, heading = 0, ground = null}) {
+// A load sitting on the ground at (x, z), ready to hook. A load may carry its
+// own restHeight (the bucket's top ring rides higher than a car's roof);
+// without one it uses the cable's 0.7 m.
+export function createLoad({id, massKg, x = 0, z = 0, heading = 0, ground = null, restHeight}) {
   const groundY = ground ? ground.height(x, z) : 0;
-  return {id, massKg, x, y: groundY + CABLE.restHeight, z, vx: 0, vy: 0, vz: 0, heading,
+  const load = {id, massKg, x, y: groundY + (restHeight ?? CABLE.restHeight), z, vx: 0, vy: 0, vz: 0, heading,
     hooked: false, onGround: true, falling: false, dropFrom: 0, settled: true};
+  if (restHeight !== undefined) load.restHeight = restHeight;
+  return load;
 }
 
 // The hook hangs at the end of the cable, straight below the helicopter
@@ -92,7 +96,7 @@ export function release(load, ground = null) {
   if (!load.hooked) return {ok: false};
   load.hooked = false;
   const below = ground ? ground.height(load.x, load.z) : 0;
-  const height = Math.max(0, load.y - CABLE.restHeight - below);
+  const height = Math.max(0, load.y - (load.restHeight ?? CABLE.restHeight) - below);
   if (!load.onGround) {
     load.falling = true;
     load.dropFrom = height > CABLE.dropFrom ? height : 0;
@@ -176,7 +180,7 @@ export function stepCable(load, heli, {ground = null, zone = null, fallen = null
     load.heading += Math.atan2(Math.sin(want - load.heading), Math.cos(want - load.heading)) * Math.min(1, dt * 1.5);
   }
 
-  const groundY = (ground ? ground.height(load.x, load.z) : 0) + CABLE.restHeight;
+  const groundY = (ground ? ground.height(load.x, load.z) : 0) + (load.restHeight ?? CABLE.restHeight);
   if (!load.onGround && load.y <= groundY) {
     const impact = Math.max(0, -load.vy);
     const slide = Math.hypot(load.vx, load.vz);
