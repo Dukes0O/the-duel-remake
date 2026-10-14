@@ -486,7 +486,7 @@ after one that already carries that change (H1's own release, if the H1
 finishing pass picks it up first).
 
 ```
-missions: {seed, draws, need, count, last: 'fire' | 'smoke' | null,
+missions: {seed, draws, need, count, last: 'fire' | null,
   call: null | {kind, id, courseId, day, answered},
   quiet: {untilDay, engineSeconds}, firesOut, badges: ['firefighter']}
 fire: null | {id, courseId, seed, startDay, steps, engineSeconds,

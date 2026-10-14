@@ -35,6 +35,9 @@ export function createHeli() {
     carsAt: {}, refuels: 0, flights: 0};
 }
 
+// Every field this game knows, so only a newer game's fields are copied as they are.
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket']);
+
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
   const heli = createHeli();
@@ -54,10 +57,13 @@ export function normalizeHeli(value) {
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
   normalizeFireFields(value, heli);
-  // Keys from a newer game are kept as they are, so going back one release
-  // loses nothing (docs/HELI_FIRE.md section 12).
-  for (const key of Object.keys(value))
-    if (!Object.hasOwn(heli, key) && key !== '__proto__' && value[key] !== undefined) heli[key] = value[key];
+  // Keys from a newer game are kept as they are (a copy), so going back one
+  // release loses nothing (docs/HELI_FIRE.md section 12). A known field that
+  // failed its checks is dropped, never copied.
+  for (const key of Object.keys(value)) {
+    if (KNOWN_KEYS.has(key) || key === '__proto__' || value[key] === undefined) continue;
+    try { heli[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
+  }
   return heli;
 }
 
@@ -283,15 +289,19 @@ function normalizeFire(value) {
     steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp};
 }
 
+// A burn or scar with a broken day is dropped, never moved to day 0, so the
+// loaded save reads the same as course-closures.js reads the stored one.
+const validDay = value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_COUNT;
+
 function normalizeBurnt(value) {
   const out = {};
   for (const [courseId, entry] of Object.entries(value))
-    if (validCourse(courseId) && isObject(entry)) out[courseId] = {day: count(entry.day), boughtBack: entry.boughtBack === true};
+    if (validCourse(courseId) && isObject(entry) && validDay(entry.day)) out[courseId] = {day: entry.day, boughtBack: entry.boughtBack === true};
   return out;
 }
 
-const normalizeScars = value => value.filter(scar => isObject(scar) && validCourse(scar.courseId))
-  .map(scar => ({courseId: scar.courseId, day: count(scar.day), cells: cellList(scar.cells).slice(0, MAX_FIRE_CELLS)}))
+const normalizeScars = value => value.filter(scar => isObject(scar) && validCourse(scar.courseId) && validDay(scar.day))
+  .map(scar => ({courseId: scar.courseId, day: scar.day, cells: cellList(scar.cells).slice(0, MAX_FIRE_CELLS)}))
   .slice(-MAX_SCARS);
 
 const bucketDamage = value => Number.isSafeInteger(value?.damage) && value.damage >= 0 && value.damage <= 3 ? value.damage : 0;
@@ -326,29 +336,56 @@ export function setFire(profile, fire, {enabled} = {}) {
   return {ok: true, profile: withHeli(profile, {...heliOf(profile), fire: stored})};
 }
 
-// A fire put out pays 1,500 credits, capped like every other credit change
-// (section 7). The mission record counts the fire and gives the badge.
-export function payFire(profile, {enabled} = {}) {
-  if (enabled !== true) return fireOff(profile);
-  const wallet = credits(profile), total = Math.min(MAX_CREDITS, wallet + FIRE_MONEY.firePay);
-  return {ok: true, profile: {...profile, credits: total}, paid: total - wallet};
-}
+// A burn or scar is dated on a play day that has come: never later than today.
+const dayOk = (heli, day) => validDay(day) && day <= heli.playDay.count;
+const withBurn = (heli, courseId, day) => ({...heli, burnt: {...heli.burnt, [courseId]: {day, boughtBack: false}}});
+const withScar = (heli, courseId, day, cells) => {
+  const scar = {courseId, day, cells: cellList(cells).slice(0, MAX_FIRE_CELLS)};
+  return scar.cells.length ? {...heli, scars: [...(heli.scars ?? []), scar].slice(-MAX_SCARS)} : heli;
+};
 
-// A fire lost: the course burns on this play day (section 8.1).
+// The course burns on a play day (section 8.1). Use loseFire for a fire in the save.
 export function burnCourse(profile, courseId, day, {enabled} = {}) {
   if (enabled !== true) return fireOff(profile);
-  if (!validCourse(courseId) || !Number.isSafeInteger(day) || day < 0) return failure(profile, 'That course or day is not known.');
   const heli = heliOf(profile);
-  return {ok: true, profile: withHeli(profile, {...heli, burnt: {...heli.burnt, [courseId]: {day: Math.min(MAX_COUNT, day), boughtBack: false}}})};
+  if (!validCourse(courseId) || !dayOk(heli, day)) return failure(profile, 'That course or day is not known.');
+  return {ok: true, profile: withHeli(profile, withBurn(heli, courseId, day))};
 }
 
-// A fire put out leaves its burnt cells as a scar; the oldest of more than four goes.
+// Burnt cells kept as a scar; the oldest of more than four goes (section 8.5).
 export function addScar(profile, courseId, day, cells, {enabled} = {}) {
   if (enabled !== true) return fireOff(profile);
-  if (!validCourse(courseId) || !Number.isSafeInteger(day) || day < 0 || !Array.isArray(cells)) return failure(profile, 'That scar is not valid.');
-  const heli = heliOf(profile), scar = {courseId, day: Math.min(MAX_COUNT, day), cells: cellList(cells).slice(0, MAX_FIRE_CELLS)};
-  if (!scar.cells.length) return {ok: true, profile};
-  return {ok: true, profile: withHeli(profile, {...heli, scars: [...(heli.scars ?? []), scar].slice(-MAX_SCARS)})};
+  const heli = heliOf(profile);
+  if (!validCourse(courseId) || !dayOk(heli, day) || !Array.isArray(cells)) return failure(profile, 'That scar is not valid.');
+  const next = withScar(heli, courseId, day, cells);
+  return {ok: true, profile: next === heli ? profile : withHeli(profile, next)};
+}
+
+// The fire in the save is out (section 7): in one new profile it pays 1,500
+// credits (capped like every credit change), leaves its burnt cells as a
+// scar dated today, leaves the save, and the mission record counts it and
+// gives the firefighter badge with the first. The fire's id must match, so
+// it can never pay twice.
+export function putOutFire(profile, fireId, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const heli = heliOf(profile), fire = heli.fire;
+  if (!fire || fire.id !== fireId) return failure(profile, 'That fire is not burning.');
+  if (fire.burning.length) return failure(profile, 'That fire is still burning.');
+  const missions = heli.missions ?? createMissions(), firstBadge = !missions.badges.includes('firefighter');
+  const counted = {...missions, firesOut: Math.min(MAX_COUNT, missions.firesOut + 1),
+    badges: firstBadge ? [...missions.badges, 'firefighter'] : missions.badges};
+  const next = {...withScar(heli, fire.courseId, heli.playDay.count, fire.burnt), fire: null, missions: counted};
+  const wallet = credits(profile), total = Math.min(MAX_CREDITS, wallet + FIRE_MONEY.firePay);
+  return {ok: true, profile: {...withHeli(profile, next), credits: total}, paid: total - wallet, firstBadge, firesOut: counted.firesOut};
+}
+
+// The fire in the save is lost: the course burns today and the fire leaves
+// the save. No pay and no charge.
+export function loseFire(profile, fireId, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const heli = heliOf(profile), fire = heli.fire;
+  if (!fire || fire.id !== fireId) return failure(profile, 'That fire is not burning.');
+  return {ok: true, profile: withHeli(profile, {...withBurn(heli, fire.courseId, heli.playDay.count), fire: null}), courseId: fire.courseId};
 }
 
 // Buying a burnt course back early: a purchase, so the whole price or nothing.

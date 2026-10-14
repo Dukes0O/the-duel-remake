@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {courseClosed, burnStage} from '../src/course-closures.js';
 import {createProfile, normalizeProfile, loadProfile, saveProfile, loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {HELI_SAVE_VERSION, HELI_MONEY, HELI_LESSONS, createHeli, normalizeHeli, heliOf, buyFuel, setFuel,
   chargeRepair, repairCost, fuelTruck, notePlayDay, finishLesson, placeCar, carAt, countFlight,
   takeJob, dropJob, finishJob, FIRE_MONEY, MISSION_KINDS, BADGES, BUCKET_DAMAGE, heliHash, createMissions, missionsOf, fireOf,
-  bucketDamageOf, setMissions, setFire, payFire, burnCourse, addScar, buyBack, damageBucket, repairBucket} from '../src/heli/heli-save.js';
+  bucketDamageOf, setMissions, setFire, putOutFire, loseFire, burnCourse, addScar, buyBack, damageBucket, repairBucket} from '../src/heli/heli-save.js';
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
@@ -343,6 +344,23 @@ check('the H2 fields normalize: counts, cells, courses, kinds and badges', () =>
   assert.deepEqual(normalizeHeli(normalizeHeli(heli)), normalizeHeli(heli));
 });
 
+check('a known H2 field of the wrong type is dropped, never copied, and helpers on it do not throw', () => {
+  const heli = normalizeHeli({version: 1, playDay: {last: '2026-10-20', count: 3}, missions: 'garbage', burnt: [1, 2], scars: {a: 1}, bucket: 7, fire: 'x',
+    lessons: 'x', jobs: [], carsAt: 5});
+  for (const field of ['missions', 'burnt', 'scars', 'bucket']) assert.equal(Object.hasOwn(heli, field), false, field);
+  assert.equal(heli.fire, null);
+  const profile = withHeli(heli);
+  assert.deepEqual(missionsOf(profile), createMissions());
+  assert.equal(addScar(profile, 'tremblant-woods', 1, [5], on).ok, true);
+  assert.deepEqual(heliOf(burnCourse(profile, 'tremblant-woods', 2, on).profile).burnt, {'tremblant-woods': {day: 2, boughtBack: false}});
+  const days = normalizeHeli({version: 1, burnt: {'tremblant-woods': {day: 'x'}, 'tremblant-snow': {day: -1}, 'panorama-ridge': {day: 1.5}, 'harbour-lights': {day: 2}},
+    scars: [{courseId: 'tremblant-woods', day: 'x', cells: [1]}, {courseId: 'tremblant-woods', day: 4, cells: [2]}]});
+  assert.deepEqual([days.burnt, days.scars.map(scar => scar.day)], [{'harbour-lights': {day: 2, boughtBack: false}}, [4]],
+    'a broken day is dropped, not moved to day 0');
+  const later = {version: 1, future: {list: [1]}};
+  assert.notEqual(normalizeHeli(later).future, later.future, 'a newer field is copied, not shared');
+});
+
 check('the fire fixture keeps every H2 field through the real load and save', () => {
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/saves/11-heli-fire.json', import.meta.url), 'utf8'));
   const raw = fixture.storage[PLAYERS_KEY].players[0].profile.heli;
@@ -365,7 +383,7 @@ check('mission and fire records store, and the switch off refuses every H2 helpe
   assert.equal(fireOf(setFire(burning.profile, null, on).profile), null);
   assert.equal(setFire(withHeli(), {id: 'x'}, on).ok, false);
   const profile = withHeli({}, 500);
-  for (const call of [p => setMissions(p, missions, {enabled: false}), p => setFire(p, fire), p => payFire(p, {enabled: 'yes'}),
+  for (const call of [p => setMissions(p, missions, {enabled: false}), p => setFire(p, fire), p => putOutFire(p, 'fire-1', {enabled: 'yes'}), p => loseFire(p, 'fire-1', {}),
     p => burnCourse(p, 'tremblant-woods', 1, {}), p => addScar(p, 'tremblant-woods', 1, [1], {enabled: false}),
     p => buyBack(p, 'tremblant-woods', {enabled: 1}), p => damageBucket(p, 2, {}), p => repairBucket(p, {enabled: false})]) {
     const result = call(profile);
@@ -373,11 +391,33 @@ check('mission and fire records store, and the switch off refuses every H2 helpe
   }
 });
 
-check('a fire put out pays 1,500, capped like every credit change', () => {
-  assert.deepEqual([payFire(withHeli({}, 100), on).profile.credits, payFire(withHeli({}, 100), on).paid], [1600, 1500]);
-  const rich = payFire(withHeli({}, 999_999_000), on);
+const fireDay = (credits, extra = {}) => withHeli({playDay: {last: '2026-10-20', count: 9},
+  fire: {id: 'fire-4', courseId: 'tremblant-woods', seed: 3, startDay: 8, steps: 6, engineSeconds: 400, burning: [], burnt: [7, 8], damp: []},
+  ...extra}, credits);
+
+check('a fire put out pays 1,500 once, leaves a scar and counts toward the badge, in one step', () => {
+  const out = putOutFire(fireDay(100), 'fire-4', on);
+  assert.deepEqual([out.ok, out.paid, out.firstBadge, out.firesOut, out.profile.credits], [true, 1500, true, 1, 1600]);
+  const heli = heliOf(out.profile);
+  assert.equal(heli.fire, null);
+  assert.deepEqual(heli.scars, [{courseId: 'tremblant-woods', day: 9, cells: [7, 8]}]);
+  assert.deepEqual([heli.missions.firesOut, heli.missions.badges], [1, ['firefighter']]);
+  assert.deepEqual([putOutFire(out.profile, 'fire-4', on).ok, putOutFire(out.profile, 'fire-4', on).profile], [false, out.profile], 'it can never pay twice');
+  assert.equal(putOutFire(fireDay(100), 'fire-3', on).ok, false, 'only the fire in the save');
+  const still = fireDay(100, {fire: {...fireDay(0).heli.fire, burning: [[9, 25]]}});
+  assert.match(putOutFire(still, 'fire-4', on).reason, /still burning/);
+  const second = putOutFire(fireDay(100, {missions: {...createMissions(), firesOut: 2, badges: ['firefighter']}}), 'fire-4', on);
+  assert.deepEqual([second.firstBadge, second.firesOut, heliOf(second.profile).missions.badges], [false, 3, ['firefighter']]);
+  const rich = putOutFire(fireDay(999_999_000), 'fire-4', on);
   assert.deepEqual([rich.profile.credits, rich.paid], [1_000_000_000, 1000]);
-  assert.equal(payFire(deepFreeze({...createProfile(), credits: NaN}), on).profile.credits, 1500);
+  assert.equal(putOutFire(deepFreeze({...fireDay(0), credits: NaN}), 'fire-4', on).profile.credits, 1500);
+});
+
+check('a fire lost burns its course today and leaves the save, with no pay and no charge', () => {
+  const lost = loseFire(fireDay(300, {fire: {...fireDay(0).heli.fire, burning: [[9, 100]]}}), 'fire-4', on);
+  assert.deepEqual([lost.ok, lost.courseId, lost.profile.credits], [true, 'tremblant-woods', 300]);
+  assert.deepEqual([heliOf(lost.profile).fire, heliOf(lost.profile).burnt], [null, {'tremblant-woods': {day: 9, boughtBack: false}}]);
+  assert.equal(loseFire(lost.profile, 'fire-4', on).ok, false);
 });
 
 check('the bucket only gets worse until repaired, and a repair forgives what the player lacks', () => {
@@ -398,16 +438,42 @@ check('the bucket only gets worse until repaired, and a repair forgives what the
 });
 
 check('scars keep four, burns record the day, and bad input is refused', () => {
-  let profile = withHeli();
+  let profile = withHeli({playDay: {last: '2026-10-20', count: 10}});
   for (let day = 1; day <= 6; day++) profile = addScar(profile, 'tremblant-woods', day, [day + 10, day + 10, day + 20], on).profile;
   assert.deepEqual(heliOf(profile).scars.map(scar => [scar.day, scar.cells]), [[3, [13, 23]], [4, [14, 24]], [5, [15, 25]], [6, [16, 26]]]);
   assert.equal(addScar(withHeli(), 'tremblant-woods', 1, [], on).profile.heli.scars, undefined, 'an empty scar is not kept');
   for (const bad of [['nowhere', 1, [1]], ['tremblant-woods', -1, [1]], ['tremblant-woods', 1, 'x']])
     assert.equal(addScar(withHeli(), ...bad, on).ok, false, JSON.stringify(bad));
-  const burnt = burnCourse(withHeli(), 'tremblant-woods', 7, on).profile;
+  const burnt = burnCourse(profile, 'tremblant-woods', 7, on).profile;
   assert.deepEqual(heliOf(burnt).burnt, {'tremblant-woods': {day: 7, boughtBack: false}});
-  for (const bad of [['nowhere', 1], ['tremblant-woods', -2], ['tremblant-woods', 1.5]])
-    assert.equal(burnCourse(withHeli(), ...bad, on).ok, false, JSON.stringify(bad));
+  for (const bad of [['nowhere', 1], ['tremblant-woods', -2], ['tremblant-woods', 1.5], ['tremblant-woods', 11]])
+    assert.equal(burnCourse(profile, ...bad, on).ok, false, JSON.stringify(bad));
+  assert.equal(addScar(profile, 'tremblant-woods', 11, [1], on).ok, false, 'never dated after today');
+});
+
+const closureProfile = day => ({...createProfile(), credits: 20_000, heli: {...createHeli(), playDay: {last: '2026-10-20', count: day}}});
+check('burning, buying back, scars and healing work through the save helpers', () => {
+  let profile = burnCourse(closureProfile(4), 'tremblant-woods', 4, on).profile;
+  assert.equal(courseClosed(profile, 'tremblant-woods', undefined, on), true);
+  profile = {...profile, credits: 9_999};
+  const short = buyBack(profile, 'tremblant-woods', on);
+  assert.deepEqual([short.ok, short.reason, short.profile], [false, 'You need 1 more credit.', profile]);
+  profile = {...profile, credits: 10_000};
+  const bought = buyBack(profile, 'tremblant-woods', on);
+  assert.deepEqual([bought.ok, bought.price, bought.profile.credits], [true, 10_000, 0]);
+  assert.equal(courseClosed(bought.profile, 'tremblant-woods', undefined, on), false, 'buying back reopens it at once');
+  assert.equal(burnStage(bought.profile, 'tremblant-woods', undefined, on), 'black');
+  assert.equal(buyBack(bought.profile, 'tremblant-woods', on).ok, false, 'an open course cannot be bought');
+  assert.equal(buyBack(closureProfile(4), 'tremblant-woods', {enabled: false}).ok, false);
+  // A new play day forgets a burn at 60 days and a scar at 40.
+  let healed = addScar(burnCourse(closureProfile(30), 'tremblant-woods', 0, on).profile, 'tremblant-woods', 25, [5, 6], on).profile;
+  healed = {...healed, heli: {...healed.heli, playDay: {last: '2026-10-20', count: 59}}};
+  const day60 = notePlayDay(healed, '2026-10-21', on).profile;
+  assert.deepEqual([day60.heli.playDay.count, day60.heli.burnt, day60.heli.scars.length], [60, {}, 1]);
+  const scarHealed = notePlayDay({...day60, heli: {...day60.heli, playDay: {last: '2026-10-21', count: 64}}}, '2026-10-22', on).profile;
+  assert.deepEqual(scarHealed.heli.scars, []);
+  const kept = notePlayDay({...healed, heli: {...healed.heli, playDay: {last: '2026-10-20', count: 50}}}, '2026-10-21', on).profile;
+  assert.deepEqual(Object.keys(kept.heli.burnt), ['tremblant-woods']);
 });
 
 check('the mission hash is a fixed 32-bit FNV-1a with parts kept apart', () => {
@@ -425,8 +491,9 @@ check('the mission hash is a fixed 32-bit FNV-1a with parts kept apart', () => {
 check('no H2 helper changes the profile it was given', () => {
   const fire = {id: 'fire-1', courseId: 'tremblant-woods', seed: 9, startDay: 2, steps: 0, engineSeconds: 0, burning: [[3, 75]], burnt: [], damp: []};
   const profile = withHeli({burnt: {'tremblant-woods': {day: 0, boughtBack: false}}, scars: [], bucket: {damage: 2}, fire}, 20_000);
-  setMissions(profile, createMissions(), on); setFire(profile, null, on); payFire(profile, on); burnCourse(profile, 'tremblant-snow', 1, on);
-  addScar(profile, 'tremblant-woods', 1, [1], on); buyBack(profile, 'tremblant-woods', on); damageBucket(profile, 3, on); repairBucket(profile, on);
+  setMissions(profile, createMissions(), on); setFire(profile, null, on); putOutFire(profile, 'fire-1', on); loseFire(profile, 'fire-1', on);
+  burnCourse(profile, 'tremblant-snow', 0, on);
+  addScar(profile, 'tremblant-woods', 0, [1], on); buyBack(profile, 'tremblant-woods', on); damageBucket(profile, 3, on); repairBucket(profile, on);
   notePlayDay(profile, '2026-12-01', on);
   assert.equal(profile.credits, 20_000);
 });

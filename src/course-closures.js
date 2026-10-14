@@ -22,7 +22,8 @@ export const SCAR_STAGES = Object.freeze([
 ]);
 
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const whole = value => Number.isSafeInteger(value) && value >= 0 ? value : null;
+// The save's own limit for a count (heli-save.js), so a stored and a loaded save read alike.
+const whole = value => Number.isSafeInteger(value) && value >= 0 && value <= 1_000_000 ? value : null;
 const heliField = profile => isObject(profile?.heli) ? profile.heli : null;
 
 // Today's play day number: the helicopter's play day count.

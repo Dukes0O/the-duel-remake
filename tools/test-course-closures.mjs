@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {CLOSURE, BURN_STAGES, SCAR_STAGES, playDayOf, daysSinceBurn, courseClosed, buybackPrice, burnStage,
   burnSmoke, scarLooks, closureCard} from '../src/course-closures.js';
-import {createHeli, burnCourse, buyBack, addScar, notePlayDay} from '../src/heli/heli-save.js';
 import {createProfile} from '../src/progression.js';
+
+// Plain helicopter fields, written here so this suite reads no src/heli file.
+const createHeli = () => ({version: 1, fuelKg: 0, lessons: {liftoff: false, hover: false, landing: false, carry: false},
+  playDay: {last: null, count: 0}, jobs: {day: 0, taken: null, done: []}, carsAt: {}, refuels: 0, flights: 0});
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
@@ -102,30 +105,6 @@ check('damaged or missing fields read as open', () => {
   }
   assert.equal(playDayOf(null), 0);
   assert.equal(playDayOf({heli: {playDay: {count: 12}}}), 12);
-});
-
-check('burning, buying back, scars and healing work through the save helpers', () => {
-  let profile = burnCourse(profileOn(4), 'tremblant-woods', 4, on).profile;
-  assert.equal(courseClosed(profile, 'tremblant-woods', undefined, on), true);
-  profile = {...profile, credits: 9_999};
-  const short = buyBack(profile, 'tremblant-woods', on);
-  assert.deepEqual([short.ok, short.reason, short.profile], [false, 'You need 1 more credit.', profile]);
-  profile = {...profile, credits: 10_000};
-  const bought = buyBack(profile, 'tremblant-woods', on);
-  assert.deepEqual([bought.ok, bought.price, bought.profile.credits], [true, 10_000, 0]);
-  assert.equal(courseClosed(bought.profile, 'tremblant-woods', undefined, on), false, 'buying back reopens it at once');
-  assert.equal(burnStage(bought.profile, 'tremblant-woods', undefined, on), 'black');
-  assert.equal(buyBack(bought.profile, 'tremblant-woods', on).ok, false, 'an open course cannot be bought');
-  assert.equal(buyBack(profileOn(4), 'tremblant-woods', {enabled: false}).ok, false);
-  // A new play day forgets a burn at 60 days and a scar at 40.
-  let healed = addScar(burnCourse(profileOn(10), 'tremblant-woods', 0, on).profile, 'tremblant-woods', 25, [5, 6], on).profile;
-  healed = {...healed, heli: {...healed.heli, playDay: {last: '2026-10-20', count: 59}}};
-  const day60 = notePlayDay(healed, '2026-10-21', on).profile;
-  assert.deepEqual([day60.heli.playDay.count, day60.heli.burnt, day60.heli.scars.length], [60, {}, 1]);
-  const scarHealed = notePlayDay({...day60, heli: {...day60.heli, playDay: {last: '2026-10-21', count: 64}}}, '2026-10-22', on).profile;
-  assert.deepEqual(scarHealed.heli.scars, []);
-  const kept = notePlayDay({...healed, heli: {...healed.heli, playDay: {last: '2026-10-20', count: 50}}}, '2026-10-21', on).profile;
-  assert.deepEqual(Object.keys(kept.heli.burnt), ['tremblant-woods']);
 });
 
 console.log(`Course closures: ${checks} groups passed.`);
