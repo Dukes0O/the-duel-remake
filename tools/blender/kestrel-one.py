@@ -330,7 +330,7 @@ set_origin(tail_rotor, TAIL_HUB)
 # ---------------------------------------------------------------- empties and hierarchy
 root_empty = bpy.data.objects.new('kestrel_one', None); scene.collection.objects.link(root_empty)
 hook = bpy.data.objects.new('cable_hook', None); hook.location = (0, 0, 0.62); scene.collection.objects.link(hook)
-eye = bpy.data.objects.new('pilot_eye', None); eye.location = (-0.33, -1.10, 1.45); scene.collection.objects.link(eye)
+eye = bpy.data.objects.new('pilot_eye', None); eye.location = (-0.33, -1.10, 1.70); scene.collection.objects.link(eye)
 for ob in (body, main_rotor, tail_rotor, skids, hook, eye):
     ob.parent = root_empty
 
