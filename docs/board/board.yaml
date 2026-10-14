@@ -437,3 +437,14 @@ tasks:
     claimed_by: claude-heli-2026-10-14
     branch: claude/heli-finish
     details: "docs/board/cards/HELI-FINISH.md"
+
+  - id: WILD-ART-SRC
+    title: "Source local animals for every course (North woods first)"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wildlife"
+    details: "docs/board/cards/WILD-ART-SRC.md"
