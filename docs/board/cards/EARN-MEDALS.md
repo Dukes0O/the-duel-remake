@@ -50,8 +50,13 @@ This file holds the settled design, the tests and the acceptance. Design:
     `result.won && isValidFinish(result)`), not qualifying, not practice and
     `medalRowFor(result)` is not null, call `countMedalWin`, then
     `grantMedalCars`. Add `medal` (the new medal, or null) and `earnedCars`
-    (ids newly owned) to the returned object. Credits, history, records and
-    every other field are unchanged.
+    (ids newly owned) to the returned object.
+  - The medal bonus (packet 2.1): a new medal adds `breakdown.medal`, a
+    quarter of `CPU_REWARDS` for that difficulty (150, 250, 375), paid once
+    per box. It joins the race's gross like `breakdown.milestones`: outside
+    the Pro doubling and the lap scaling, inside the police-fine cover, and
+    zero in the separate Wasteland career. Every other credit, record and
+    field is unchanged.
 - `src/feature-flags.js`: `'earned-cars': 'dev'`, beside the other Phase 4
   switches, with its additive assertion in `tools/test-feature-flags.mjs`.
 
@@ -79,7 +84,13 @@ This file holds the settled design, the tests and the acceptance. Design:
    copy in the scratch tree) keeps `medals`; loading it back in the new build
    restores the earned car.
 7. Named players: one player's wins never reach another's sheet.
-8. The new fixture `11-medals.json` (medals for real cars, one malformed
+8. Medal bonus: exact credits for bronze, silver and gold in a Duel and a
+   Grand Prix; paid once per box (a second win and a repeated run key pay
+   no bonus); Pro does not double it; a 5- or 10-lap race does not scale it;
+   a police fine can take from it as from a milestone; zero in the separate
+   Wasteland career; nothing with the switch off. Every existing pay test
+   passes unchanged.
+9. The new fixture `11-medals.json` (medals for real cars, one malformed
    entry, no earned car: none exists yet, and the fixture test would drop its
    id; EARN-CAR-1 adds it); `tools/test-save-fixtures.mjs` roster 10 to 11, explained in the
    change note.
@@ -90,4 +101,5 @@ This file holds the settled design, the tests and the acceptance. Design:
   (the save checker) and an ordinary code review are recorded in
   `docs/changes/EARN-MEDALS.md`.
 - With the switch off, no race and no save changes in any way.
-- No credits, prices, pay, records, ghosts or replays change.
+- Apart from the medal bonus, no credits, prices, pay, records, ghosts or
+  replays change.

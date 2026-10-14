@@ -38,8 +38,10 @@ This file holds the settled design, the tests and the acceptance. Design:
   the stat bars; the car-list label "MEDALS 4/6" (car 3 adds "· GOLD 4/6");
   the locked page's unlock card; the "MEDAL REWARD" note on an owned earned
   car. The Jesko's label, card and note stay exactly as today.
-- Results (`src/screen-results.js`): the new-medal and new-car lines, and the
-  existing `interface.bonus` cue once when either shows.
+- Results (`src/screen-results.js`): the new-medal line with its credits
+  ("· +250 CR") and the new-car line, and the existing `interface.bonus` cue
+  once when either shows. The general bonus list skips `medal`, so the
+  amount shows once.
 - `src/heli/heli-jobs.js`: `AIR_ONLY_CARS` becomes the Jesko plus every car
   whose `unlockRequirement` is a medal rule. With today's cars it is exactly
   `['koenigsegg_jesko']`. `JOB_CARS` already leaves them out.
