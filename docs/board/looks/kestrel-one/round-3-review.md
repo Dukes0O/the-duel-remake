@@ -1,6 +1,6 @@
 # Kestrel One, Claude's original model: rounds 1 to 3 (14 October 2026)
 
-Sheet: `kestrel-one-round-3.jpg` (three-quarter, side, rear three-quarter,
+Sheet: `round-3.jpg` (three-quarter, side, rear three-quarter,
 cockpit close-up). Recipe: `tools/blender/kestrel-one.py`. 12,580 triangles,
 no textures (PBR colours only), 539 KB.
 
