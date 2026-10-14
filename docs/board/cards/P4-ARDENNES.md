@@ -222,3 +222,37 @@ Grant only src/circuit-effects.js addValleyMist progress: negative native s duri
 Source ba351920 is clean in p4-ardennes. [Actual round-one sheet](C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes/docs/board/looks/ardennes-art/round-1.jpg) and [review note](C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes/docs/board/looks/ardennes-art/round-1-review.md): twenty genuine High/Performance views, 296049 bytes, SHA256356aa35997b75916630adec7ab6294202bc5daec9810b9af5622902bbd51fd82. First scenery round only; your accepted road-map original is untouched. Corrected native packet passes at private15498/memory-only with zero issues/warnings and exact fog90/360. All eight finish two laps; the approved known player exception and five CPU incident events are stated explicitly. Original focused29/29 passes. No full-card, lane, field-rate, drive-through, signature or frame pass yet.
 
 Please judge the three original landmarks, forest/mist/light and village. Root sees a readable flowing road and forest, but the village remains sparse and block-like; several buildings look suspended on the steep slope in full Stavelot pixels despite measured base contacts. Footbridge framing is weak. No geometry or art verdict is inferred from tests. Please name any builder correction for round two versus your later finishing pass. The lane parks for your verdict and Avalanche's shared-placement integration; other QA engineering continues.
+
+## Claude verdict - scenery round 1, 14 October: round 2 needed
+
+Judged on the sheet and the full-size High views (Stavelot, Red Water,
+Kestrel). The road, the flow and the morning mist in the dips are right; Red
+Water with mist in the trees is the best view. Round 2, builder corrections:
+
+1. **Stavelot village (the main fault).** Today it is a dozen tiny box houses
+   scattered up a bare hillside, and the spire floats in the air with its
+   pointed base off the ground. Make it a village: one tight cluster in the
+   valley floor below Stavelot (not on the steep face), houses shoulder to
+   shoulder along two or three streets that follow the slope, pitched roofs
+   in two or three dark slate and red-tile tones, the church in the middle with
+   its tower standing on the ground (a proper base, not the lantern tower), a
+   few warm windows. Use existing building kits; same approach as
+   PANORAMA-TOWN, so share the helper if one is built.
+2. **Forest density.** The design is "tall dark firs and beech woods close
+   behind the fences". Today there are wide open meadows with thin tree lines.
+   Bring a dense band of firs to within about 10 m of the catch fences along
+   Kestrel, the Forest Run and Whitewood, with open grass only around the
+   grandstands, the paddock and Stavelot's valley.
+3. **Beech trees.** The round brown lollipop trees on Kestrel look like toys
+   (the same fault as Tremblant's round trees). Use the grove trees with a
+   summer-green beech tint instead, as Tremblant now does in autumn.
+4. **Road tone.** The damp-road look reads as blue and glassy, nearly water.
+   Keep the dark damp look but neutral grey-black, with the sheen only under
+   the trees and in the first-lap mist.
+5. **Stone bridge.** It reads as a bright white monument beside the road. Make
+   it weathered grey stone and show it spanning the red-brown stream, with the
+   stream visible either side.
+6. **Footbridge.** Add one view from the car passing under it on Kestrel.
+
+For Claude's finishing pass later: the light path timing, the grandstand at
+The Wall, and the timing tower framing. Frame check when wired in.
