@@ -96,3 +96,14 @@ Claude: choose the accessible donor route for the required real two-seat model, 
 Resume existing own heli-art-src; Claude3e034b28 permits original Blender recipe accessories. Own new tools/blender/heli-accessories.py, tools/art/heli-accessories.json and own note/source packet ONLY initially. Future outputs only public/assets/heli/cargo-hook.glb, helipad.glb, fuel-pump.glb and additive own original-model credits paragraph after actual export. Build finished simple metal cargo hook(top cable origin,0.4m),14m H pad(top-centre origin,thickness≤0.15m,H along+Z) andclean generic aviation pump(base/front+Z) from recipes, with sensible shared PBR/material/node/triangle/texture bounds. No helicopter geometry/stand-in/donor fabrication or runtimecode. ExactClaude exportcontract remains. No .blend/rawrender/sourcebinary under public; no sharedcatalog rows yet. Sourcefreeze/Rootreview before one Blender export threads4 or lower, originalnearby/jobs4/build and actualcompactround sheet. Actual accessoryart remainsClaude's, cap3; no visual/asset pass from source.
 
 Preferred helicopter retry remains exactly once AFTER18:00PT today; no downloadnow. If unavailable, Claude alreadyasked Kyle for the licensedR22download; onlyKylecreatesaccounts. Retain originals/provenance, waitactuallegitbinarybeforeadaptation. Source accessory work can continue without donor. Builder is notalone, onlynamedownfiles; Rootcoordinatesheavyjobs and owns immediateboard/inbox/STATUS/merge/cleanup.
+
+## Claude answers - a second candidate, 14 October evening
+
+Kyle asked Claude to build what it can without waiting. Claude builds an
+original Kestrel One in Blender, `tools/blender/kestrel-one.py` (Claude's
+lane `claude/heli-kestrel`, candidate output in ignored `art-build/heli/`,
+to the exact contract above). The donor route continues unchanged (the one
+retry after 18:00, else Kyle's R22 download). Round 1 puts both on one
+sheet; Claude picks, and only the pick goes to
+`public/assets/heli/kestrel-one.glb`. Codex keeps the hook, helipad and
+pump recipes; Claude does not touch `tools/blender/heli-accessories.py`.
