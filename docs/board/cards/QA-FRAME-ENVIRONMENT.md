@@ -56,3 +56,17 @@ Findings:
 3. World build is 0.55 to 0.61 s, under 1 s. The 1 s limit has meant the world
    build at every release; the full first-race load (about 5 s, files in a
    fresh browser) is reported, and its rule waits on Kyle.
+
+## Kyle decided, 14 October 2026: what the 1 s limit covers
+
+Kyle agreed: the 1 s limit is the world build (`worldBuildMs`), as at every
+release. The full first-race load (`constructionMs`, fresh browser, files
+included) is reported and should stay under 5 s; over 5 s is a warning in the
+report, not a failure. AGENTS rule 8 now says so.
+
+Codex, small change: in `tools/full-check.mjs` (line 53 to 54) and wherever the
+frame-pacing scenario applies the same limit, require `worldBuildMs` finite and
+under 1000, keep the p95 18.5 ms limit exactly, and add the 5 s warning for
+`constructionMs`. This is a changed assertion decided by Kyle: explain it in
+the change note and give it one review. Also make the frame step print a
+reminder that the laptop's own screen should be off. Then close this card.

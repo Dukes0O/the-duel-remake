@@ -420,10 +420,10 @@ tasks:
 
   - id: QA-FRAME-ENVIRONMENT
     title: "Frame check reads 33 ms p95 and 5 s construction on every build (13 October)"
-    owner: "claude"
+    owner: "codex"
     lane: "TOOL"
     size: "S"
-    status: "building"
+    status: "ready"
     needs: []
     details: "docs/board/cards/QA-FRAME-ENVIRONMENT.md"
 
