@@ -107,7 +107,16 @@ expectation pins asphalt at the actual branch offset and adds an unchanged
 snow assertion on the main road at the same station. Every other predicate,
 assertion, tolerance, production byte, native result and scene pin stays exact.
 This updates a retired design expectation, rather than relaxing a guard for
-an unexplained failure. Corrected focused Summit acceptance is UNRUN at freeze.
+an unexplained failure. Root's focused run on 2fe3234d passed those new surface
+assertions, then failed the next legacy snow-material fixture at line 158:
+it expected a snow clone from actual Open, which now correctly returns the
+original asphalt material. The renderer's real selector is cut.gripKind.
+The corrected test additionally pins actual Open/winter asphalt identity,
+then uses Object.freeze({...open,surface:'snow',gripKind:'snow'}) only for the
+existing historical positive snow-helper case. Its clone identity, reviewed
+tone, .94 roughness, unchanged source .6 roughness and disposal assertions are
+all retained. This historical descriptor is not a runtime course, placeholder
+or production mutation. The next corrected focused suite is UNRUN at freeze.
 
 The other failure is test-circuits:45, Harbour seed 1989 wall-right-1105 near
 2056 m/lateral -3.5. Root reproduced that exact failure on integration baseline

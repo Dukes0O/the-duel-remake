@@ -154,7 +154,10 @@ assert.ok(edgeLight.exposure<baseLight.exposure&&edgeLight.exposure>winterLighti
 assert.deepEqual(baseLight,beforeLight,'winter blending does not change the source palette');
 const asphalt=new THREE.MeshStandardMaterial({color:0x222222,roughness:.6});
 assert.equal(roadBranchMaterial(course,open,asphalt,false),asphalt,'dry branch retains original material');
-const snowMaterial=roadBranchMaterial(course,open,asphalt,true);
+assert.equal(roadBranchMaterial(course,open,asphalt,true),asphalt,'actual clear Open retains asphalt with winter presentation enabled');
+// Preserve the historical snow helper case without changing the actual course.
+const historicalSnowBranch=Object.freeze({...open,surface:'snow',gripKind:'snow'});
+const snowMaterial=roadBranchMaterial(course,historicalSnowBranch,asphalt,true);
 assert.notEqual(snowMaterial,asphalt);
 assert.deepEqual(snowMaterial.color.toArray(),new THREE.Color(SUMMIT_RUN.snowWorld.branchTone).toArray(),'Summit branch draws its reviewed darker packed-snow tone');
 assert.equal(snowMaterial.roughness,.94);
