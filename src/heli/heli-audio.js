@@ -60,7 +60,8 @@ export const HELI_CUES = Object.freeze({...HELI_RADIO_CUES, ...HELI_LIBRARY_CUES
 // scale and rate change the cue's volume and pitch for that one play.
 const sinkScale = event => clamp(.2 + (Number(event.sink) || 0) / 4, .2, 1);
 export const HELI_EVENT_CUES = Object.freeze({
-  touchdown: event => [['heli.setdown.thud', {scale: event.result === 'crash' ? 1 : sinkScale(event)}]],
+  // A crash on touchdown sounds once, from the crash event that follows.
+  touchdown: event => event.result === 'crash' ? [] : [['heli.setdown.thud', {scale: sinkScale(event)}]],
   liftoff: () => [],
   lowFuel: () => [['heli.fuel.low']],
   engineOut: () => [['heli.rotor.low']],
@@ -221,13 +222,17 @@ const GAP_SEC = .3;    // a breath between two lines
 const REPEAT_SEC = 6;  // the same line is not repeated this soon
 const MAX_QUEUE = 8;
 
+// A short text of the readout, to tell a frozen crashed helicopter from a new one.
+const readoutSignature = readout => ['altitudeM', 'fuelKg', 'headingDeg', 'weightKg', 'rotorPct',
+  'airspeedKts', 'climbMs', 'pitchDeg', 'rollDeg', 'engine'].map(key => readout[key]).join('|');
+
 export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, autoRadio = true}) {
   const isEnabled = enabled || (() => { try { return !!audio.flags?.enabled('helicopter'); } catch { return false; } });
-  const buffers = new Map(), pending = new Map(), active = new Map(), loops = new Map();
+  const buffers = new Map(), pending = new Map(), failed = new Set(), active = new Map(), loops = new Map();
   const lastLine = new Map(), seen = new WeakSet();
   let context = null, chain = null, disposed = false, preloaded = null;
   let queue = [], current = null, nextAt = 0;
-  let engineWas = null, crashHold = false, lastHorn = -Infinity, lastCreak = -Infinity;
+  let engineWas = null, crashHold = null, lastHorn = -Infinity, lastCreak = -Infinity;
 
   const audible = () => !disposed && isEnabled() && !audio.muted && !audio.paused &&
     audio.context?.state === 'running';
@@ -256,6 +261,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     context = audio.context;
     buffers.clear();
     pending.clear();
+    failed.clear();
   }
   function ensureChain() {
     if (!chain) chain = createRadioChain(context, destination('heli.radio.welcome').node);
@@ -264,9 +270,16 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
 
   async function fetchBuffer(id) {
     const captured = context, request = fetchImpl || globalThis.fetch;
-    const response = await request('/assets/audio/' + cues[id].file);
-    if (!response.ok) throw Error(`Helicopter cue unavailable: ${id}`);
-    const buffer = await captured.decodeAudioData(await response.arrayBuffer());
+    let buffer;
+    try {
+      const response = await request('/assets/audio/' + cues[id].file);
+      if (!response.ok) throw Error(`Helicopter cue unavailable: ${id}`);
+      buffer = await captured.decodeAudioData(await response.arrayBuffer());
+    } catch (error) {
+      // A file that will not load is not asked for again every frame.
+      if (context === captured) failed.add(id);
+      throw error;
+    }
     if (!disposed && context === captured) buffers.set(id, buffer);
     return buffer;
   }
@@ -274,7 +287,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     if (disposed || !audio.context) return Promise.resolve([]);
     follow();
     const wanted = ids || Object.keys(cues).filter(id => cues[id].file && !id.startsWith('heli.radio.'));
-    return Promise.allSettled(wanted.filter(id => cues[id]?.file).map(id => {
+    return Promise.allSettled(wanted.filter(id => cues[id]?.file && !failed.has(id)).map(id => {
       if (buffers.has(id)) return Promise.resolve(buffers.get(id));
       if (!pending.has(id)) pending.set(id, fetchBuffer(id).finally(() => pending.delete(id)));
       return pending.get(id);
@@ -482,11 +495,18 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     if (!readout) return;
     const engine = readout.engine === true;
     if (engineWas === false && engine) {
-      crashHold = false;
+      crashHold = null;
       const sound = play('heli.engine.start');
       if (!sound) void load(['heli.engine.start']);
     } else if (engineWas === true && !engine && !crashHold) play('heli.engine.stop');
     engineWas = engine;
+    // After a crash the loops stay off until the flight is made new: the session's
+    // entered event, an engine start, or a readout that is no longer the frozen one.
+    if (crashHold) {
+      const signature = readoutSignature(readout);
+      if (crashHold.signature === null) crashHold.signature = signature;
+      else if (crashHold.signature !== signature) crashHold = null;
+    }
     if (crashHold) { stopLoops(); return; }
     const rotor = rotorVoice(readout, {loadKg}), wind = windVoice(readout);
     steer(bed('heli.rotor', rotor.gain > 0, rotor), rotor, cues['heli.rotor']);
@@ -497,6 +517,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
     if (Array.isArray(ev)) { for (const item of ev) event(item, state); return; }
     if (!ev || typeof ev !== 'object' || disposed || seen.has(ev)) return;
     seen.add(ev);
+    if (ev.type === 'entered') { crashHold = null; return; }
     const sounds = HELI_EVENT_CUES[ev.type];
     if (!sounds || !isEnabled()) return;
     const time = now();
@@ -509,7 +530,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
         if (id === 'heli.cable.creak') lastCreak = time;
       } else if (cues[id]?.file) void load([id]);
     }
-    if (ev.type === 'crash') crashHold = true;
+    if (ev.type === 'crash') crashHold = {signature: null};
     if (autoRadio) {
       const line = HELI_EVENT_LINES[ev.type]?.(ev, state);
       if (line) say(line);
@@ -531,7 +552,7 @@ export function createHeliAudio({audio, cues = HELI_CUES, fetchImpl, enabled, au
   function stop() {
     stopAll();
     engineWas = null;
-    crashHold = false;
+    crashHold = null;
   }
   function dispose() {
     if (disposed) return;

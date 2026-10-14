@@ -140,6 +140,12 @@ assert(slower.lowpass < slow.lowpass && slow.lowpass < light.lowpass, 'and dulls
 assert.equal(rotorVoice({...base, rotorPct: 0}).gain, 0, 'silent when the rotor is stopped');
 assert.equal(rotorVoice({...base, rotorPct: 1}).gain, 0);
 assert.equal(rotorVoice({}).gain, 0, 'a missing readout is silent');
+let previousGain = -1;
+for (const pct of [0, 1, 2, 3, 5, 10, 20, 35, 60, 100]) {
+  const gain = rotorVoice({...base, rotorPct: pct}).gain;
+  assert(gain >= previousGain, 'the rotor fades out as it stops: ' + pct);
+  previousGain = gain;
+}
 assert(rotorVoice({...base, rotorPct: 100}, {loadKg: -50}).rate === light.rate, 'a negative load counts as none');
 for (const pct of [3, 10, 50, 100, 110, 400]) {
   const voice = rotorVoice({...base, rotorPct: pct}, {loadKg: 3000});
@@ -400,15 +406,23 @@ const voices = context => context.sources.filter(source => source.buffer?.decode
   await flush();
   assert(heli.busy || heli.subtitle(), 'the instructor speaks after the warnings');
   heli.clearRadio();
-  // Crash.
-  assert(fire({type: 'crash', cause: 'touchdown'}) >= 1);
+  // Crash, the way the session sends it: a touchdown event and a crash event, the
+  // engine still on, the readout frozen; then a respawn that announces itself.
+  assert.equal(fire({type: 'touchdown', result: 'crash', sink: 6}), 0, 'a crash on touchdown sounds once');
+  assert(fire({type: 'crash', cause: 'touchdown'}) >= 1, 'from the crash event');
+  heli.update(readout);
   heli.update(readout);
   assert.equal(voices(context).filter(s => s.loop).length, 0, 'loops stay off after a crash');
-  heli.update({...readout, engine: false});
-  heli.update({...readout, engine: true});
-  await flush();
+  heli.event({type: 'entered', courseId: 'tremblant-woods', arrived: false});
   heli.update(readout);
-  assert.equal(voices(context).filter(s => s.loop).length >= 1, true, 'and return with the next engine start');
+  assert(voices(context).filter(s => s.loop).length >= 1, 'the entered event brings the rotor back');
+  // Without that event, a readout that is no longer the frozen one does the same.
+  fire({type: 'crash', cause: 'rotor'});
+  heli.update(readout);
+  heli.update(readout);
+  assert.equal(voices(context).filter(s => s.loop).length, 0, 'a second crash silences them again');
+  heli.update({...readout, fuelKg: 123});
+  assert(voices(context).filter(s => s.loop).length >= 1, 'a fresh readout brings them back');
   // Several events at once.
   heli.event([{type: 'setDown'}, {type: 'released'}]);
   heli.dispose();
@@ -440,18 +454,42 @@ const voices = context => context.sources.filter(source => source.buffer?.decode
 // A new audio context starts the player over.
 {
   const {audio, heli} = setup();
-  heli.update({rotorPct: 100, engine: false, weightKg: 1630, airspeedKts: 0});
+  heli.update({rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0});
   await flush();
-  heli.update({rotorPct: 100, engine: false, weightKg: 1630, airspeedKts: 0});
+  heli.update({rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0});
   const old = audio.context;
   assert(voices(old).some(source => source.loop), 'the rotor loop is sounding on the first context');
   audio.context = fakeContext();
-  const hum = {rotorPct: 100, engine: false, weightKg: 1630, airspeedKts: 0};
+  const hum = {rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 0};
   heli.update(hum);
   await flush();
   heli.update(hum);
   assert(voices(audio.context).some(source => source.loop), 'the loops start again on the new context');
   assert.equal(voices(old).length, 0, 'the old context is left quiet');
+  heli.dispose();
+}
+
+// A file that will not load is asked for once, not every frame.
+{
+  const {audio} = setup();
+  const urls = [];
+  const heli = createHeliAudio({audio, fetchImpl: async url => {
+    urls.push(url);
+    return url.endsWith('rotor.ogg') ? {ok: false} : {ok: true, arrayBuffer: async () => new ArrayBuffer(3000)};
+  }});
+  const readout = {rotorPct: 100, engine: true, weightKg: 1630, airspeedKts: 40};
+  for (let frame = 0; frame < 8; frame++) { heli.update(readout); await flush(); }
+  assert.equal(urls.filter(url => url.endsWith('rotor.ogg')).length, 1, 'the missing rotor file is fetched once');
+  assert(voices(audio.context).some(source => source.loop), 'the wind still plays');
+  heli.dispose();
+}
+
+// A parked helicopter with a stopped rotor is silent.
+{
+  const {context, heli} = setup();
+  const stopped = {rotorPct: 0, engine: false, weightKg: 1630, airspeedKts: 0};
+  for (let frame = 0; frame < 4; frame++) { heli.update(stopped); await flush(); }
+  assert.equal(voices(context).length, 0, 'nothing sounds on a parked helicopter with a stopped rotor');
   heli.dispose();
 }
 

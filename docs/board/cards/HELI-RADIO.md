@@ -26,8 +26,10 @@ Choices made while building, in plain words. Change any of them after listening.
 - **Wind.** Silent when standing still, louder and brighter as airspeed
   rises, and it stops getting louder at 60 metres per second (the top speed).
 - **Engine start** plays when the engine turns on. **Engine stop** plays when
-  it turns off, except after a crash (the thud covers it) and the loops stay
-  off until the next engine start.
+  it turns off, except after a crash (the thud covers it); the loops then stay off until
+  the session announces a new flight (the entered event), the engine starts
+  again, or the readout changes from the frozen crash one. A parked helicopter
+  with a stopped rotor is silent.
 - **Radio.** Voice band 300 to 3,000 Hz, a gentle soft clip for crackle, a faint
   hiss while the radio is keyed, and a 14 millisecond click on and off. One line
   at a time, in order, with a short breath between lines. A line asked for twice

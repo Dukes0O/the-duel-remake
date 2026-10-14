@@ -367,4 +367,41 @@ assert.equal(touchdownClass({sink: 1, slide: 9}), 'crash'); checks++;
   ok(Number.isFinite(courseGround.height(start.x + 3000, start.z + 3000)), 'ground far from the road still reads');
 }
 
+// A rotor with no engine behind it: a tank that starts empty reads a stopped
+// rotor; after an engine-out landing it spins down to 0 within 20 s on the
+// ground (about 15 s); in the air autorotation is exactly as before.
+{
+  const parked = createHeliState({fuelKg: 0});
+  ok(!parked.engine && parked.onGround, 'an empty-tank helicopter sits with its engine off');
+  near(heliReadout(parked).rotorPct, 0, 1e-9, 'and its rotor reads stopped');
+  fly(parked, 5);
+  near(parked.rotor, 0, 1e-9, 'a parked dead engine stays stopped');
+  ok(parked.rotor === 0 && !types(fly(parked, 2)).includes('lowRotor'), 'no low rotor horn for a rotor that is already stopped');
+  refuelHeli(parked, 100);
+  ok(parked.engine && parked.rotor >= 0.7, 'refuelling restarts the rotor');
+  fly(parked, 3);
+  near(parked.rotor, 1, 1e-9, 'and the engine spins it back to full speed');
+  const full = createHeliState({});
+  near(full.rotor, 1, 1e-9, 'a full tank still starts at full rotor speed');
+
+  const glide = airborne({height: 200, fuelKg: 0});
+  const events = fly(glide, 60, s => ({lift: s.y - s.groundY < 15 ? 1 : 0}));
+  const touch = events.find(event => event.type === 'touchdown');
+  ok(touch?.result === 'good' && glide.onGround, 'the engine-out flare lands');
+  near(touch.sink, 0.8578, 0.001, 'autorotation flare sink is unchanged');
+  ok(types(events).includes('lowRotor'), 'and its low rotor horn is unchanged');
+  const settled = glide.t;
+  const before = glide.rotor;
+  fly(glide, 6);
+  near(glide.rotor, Math.max(0, before - 0.07 * (glide.t - settled)), 0.02, 'on the ground the rotor winds down about 0.07 a second');
+  fly(glide, 20);
+  near(glide.rotor, 0, 1e-9, 'it is stopped within 20 s of an engine-out landing');
+  const noFlare = airborne({height: 200, fuelKg: 0});
+  const sink = fly(noFlare, 60).find(event => event.type === 'touchdown');
+  ok(sink?.result === 'crash' && Math.abs(sink.sink - 8) < 0.001, 'an unflared autorotation arrival is unchanged');
+  const air = airborne({height: 400, fuelKg: 0});
+  fly(air, 30);
+  ok(air.rotor > 0.98, 'airborne autorotation keeps the rotor turning');
+}
+
 console.log(`test-heli-flight: ${checks} checks passed`);

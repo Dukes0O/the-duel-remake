@@ -35,6 +35,38 @@ line in `src/sound-bank.js` and the App wiring. The helicopter switch stays off.
   attribution). No Creative Commons Attribution sound was used, so no
   other credit is owed.
 
+## Review fixes (second turn)
+
+- **Crash silence.** After a crash the rotor and wind stayed off for good,
+  because only an engine off-to-on change cleared the hold and a respawn keeps
+  the engine on. The hold now also clears on the session's `entered` event and
+  when a readout arrives that is no longer the frozen crash one. The test now
+  uses the real sequence: touchdown and crash events, frozen updates, then
+  `entered`, and separately a fresh readout.
+- **A dead engine on the ground.** In `src/heli/heli-flight.js` a helicopter
+  created with an empty tank now starts with `rotor: 0`; with the engine off and
+  on the ground the rotor winds down by 0.07 a second (about 15 s from full)
+  instead of being set to 0.7 + 0.3 x energy. In the air nothing changed (the
+  same flights give the same touchdown sinks and events, checked against the
+  old file). The low rotor horn is no longer raised on the ground, where it
+  would sound for a rotor winding down or one that is already stopped.
+  `refuelHeli` and the engine-on branch are as before. The new constant is
+  `KESTREL.groundSpinDown`. `rotorVoice` already fades to silence as the rotor
+  stops; a test now checks that.
+- **Flight checks added** to `tools/test-heli-flight.mjs` (103 to 117 checks): an
+  empty tank reads rotor 0 and stays stopped; refuelling restores the rotor; a full
+  tank still starts at 1; after an engine-out landing the rotor winds down at
+  about 0.07 a second and is 0 within 20 s; the autorotation flare sink
+  (0.8578 m/s), the unflared crash (8 m/s) and the airborne rotor speed are
+  unchanged. No existing flight assertion changed.
+- **Minors.** A crash on touchdown plays the thud once (the crash event plays
+  it; the touchdown event is silent for a crash). A file that fails to load is
+  remembered for that audio context and not fetched again every frame.
+  `heliReadout` already counts the load in `weightKg` when it is called with
+  `loadKg`; `rotorVoice` adds its own `loadKg` to `weightKg`, so HELI-HOOKS must
+  pass a readout taken without the load, or pass no `loadKg` to `rotorVoice`,
+  never both.
+
 ## ElevenLabs credits
 
 | | Used | Left |
@@ -103,10 +135,21 @@ maps the cues.
 
 ## Gates
 
-- Lane tier, `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 57 suites passed, 0 failed, 0 not run, 350 seconds.
+- Lane tier, `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 58 suites passed, 0 failed, 0 not run, 332 seconds (second turn; the first turn passed 57 in 350 seconds).
 - `npm run build`: passed (built in under one second).
-- `node tools/test-heli-audio.mjs`: passed. The full tier was not run in this lane.
+- `node tools/test-heli-flight.mjs`: 117 checks passed.
+- `node tools/test-heli-audio.mjs`: passed (now also covers the crash sequence, a failed file and a stopped parked rotor). The full tier was not run in this lane.
 - The fight voices suite counted every ElevenLabs catalog row as a fight voice; it now skips rows whose cue begins `heli.` (`tools/test-fight-voices.mjs`, one line, all its hashes unchanged). This is the fourth changed suite, besides the three listed above.
+
+## Claude's round-one sound verdict
+
+Accepted by measurement. The wind wanders within 3 LU with no sharp traffic
+spikes. The rotor loop is steady at about -20.5 LUFS. The engine stop fades
+smoothly from -19 to -53 LUFS. Kyle hears them at HELI-FINISH.
+
+## For HELI-HOOKS
+
+Create the player with `autoRadio: false` and play only the session's `radio` events through `say()`, and add a crash line to the session. Pass the `entered` event (and every other flight and cable event) to `event()`.
 
 ## Removed
 

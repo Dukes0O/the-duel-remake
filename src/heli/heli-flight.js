@@ -41,6 +41,7 @@ export const KESTREL = Object.freeze({
   burnPerCollective: 0.55,
   lowFuelShare: 0.15,
   autorotationSink: 8,
+  groundSpinDown: 0.07,
   flareLift: 1.5,
   flareSpend: 0.4,
   flareHeight: 15,
@@ -94,7 +95,7 @@ export function createHeliState({x = 0, y = 0, z = 0, heading = 0, fuelKg = KEST
   return {
     t: 0, x, y: startY, z, vx: 0, vy: 0, vz: 0,
     heading, pitch: 0, roll: 0, yawRate: 0,
-    collective: 0, rotor: 1, rotorEnergy: 1,
+    collective: 0, rotor: fuelKg > 0 ? 1 : 0, rotorEnergy: 1,
     fuelKg: clamp(finite(fuelKg), 0, KESTREL.tankKg),
     engine: fuelKg > 0, mode: mode === 'real' ? 'real' : 'assisted',
     altitudeOffset: finite(altitudeOffset),
@@ -235,10 +236,15 @@ export function stepHeli(state, controls = {}, env = {}, dt = HELI_STEP) {
     state.rotorEnergy += (state.collective > 0.05 ? -KESTREL.flareSpend * state.collective
       : 0.3 * Math.min(1, sink / KESTREL.autorotationSink) * (1 - state.rotorEnergy)) * dt;
     state.rotorEnergy = clamp(state.rotorEnergy, 0, 1);
-    state.rotor = 0.7 + 0.3 * state.rotorEnergy;
+    // On the ground with the engine off nothing drives the rotor: it spins
+    // down to a stop in about 15 s (1 / 0.07). In the air the stored energy
+    // above decides its speed, as before.
+    state.rotor = state.onGround ? Math.max(0, state.rotor - KESTREL.groundSpinDown * dt)
+      : 0.7 + 0.3 * state.rotorEnergy;
   }
 
-  if (state.rotor < 0.9 && !state.lowRotorWarned) {
+  // No horn for a rotor winding down or spinning up on the ground.
+  if (state.rotor < 0.9 && !state.lowRotorWarned && !state.onGround) {
     state.lowRotorWarned = true;
     events.push({type: 'lowRotor', rotor: state.rotor});
   } else if (state.rotor >= 0.95) state.lowRotorWarned = false;
