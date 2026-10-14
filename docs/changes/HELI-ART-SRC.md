@@ -1,23 +1,68 @@
 # HELI-ART-SRC
 
-## Source packet
+## Helicopter source remains pending
 
-Two plausible helicopter leads are recorded in tools/art/heli-source-candidates.json. Neither is picked or adapted. The existing library was checked first within the catalog-verified art-library root. No current pack provides the required two-seat helicopter. Primary source licences were checked before downloads: the light piston lead is CC0; Galih Pamungkas / Lopo3D's R22 is CC BY 4.0. The publisher's AI-assisted origin for 3D Assets is disclosed; no new image-to-3D job was requested.
+The candidate packet keeps the verified CC0/CC BY primary receipts, original
+pictures, checksums and actual access failures. Neither preferred helicopter
+binary is available locally. The CC0 source's published 17,460 triangles and
+R22's published 9,902 triangles are not measured mesh compliance. No helicopter
+geometry, stand-in, download, account, key or source adaptation is added here.
 
-The R22 author picture shows two seats, skid gear, rotors and a panel pod. Its public metadata reports 9,902 triangles; actual nodes, dimensions, textures and pivots remain unknown. Its anonymous download-metadata endpoint returned HTTP 401, so no donor binary was obtained and no account or key was created. The CC0 piston page advertises 17,460 triangles and two seats with animated pivots, but its download host fails DNS and the source page GET returned 503. Those are published claims, not measured mesh compliance. The bounded access diagnosis stopped; no account, service, key or workaround was added. The older z3eus CC0 archive and real author pictures are preserved but screened out of the preferred shortlist because its essential cabin and tail-rotor requirements are unproven.
+Claude 3e034b28 permits exactly one retry of the preferred CC0 two-seat source
+after 18:00 PT on 14 October. If it remains unavailable, Claude has already
+asked Kyle to download the licensed Galih Pamungkas / Lopo3D R22. Only Kyle
+creates that account. This source slice performs no download or retry.
 
-CC0 hook block, H pad and pump options are recorded with published dimensions, counts and concrete fitting gaps. Their actual mesh inspection is blocked by the same CDN access problem. The industrial hook's static rope is not a ready 15 m helicopter cable. There is no finished placeholder or guessed geometry.
+The exact contract remains metres, +Y up, +Z nose, ground origin below the
+main mast, clean unbranded Kestrel One, separate rotors/skids, cockpit/panel,
+right-seat eye and cable attachment. The candidate packet retains all named
+nodes, dimensions, pivots, 20,000-triangle and 2K limits and unverified gaps.
+Original licensed cache files remain in the existing external library.
 
-Claude settled the export contract in 8065f3d6. The packet now records the exact lowercase body, main_rotor, tail_rotor, skids, cable_hook, pilot_eye and instrument_panel nodes. Metres, +Y up and +Z nose; ground origin under the main mast, skid bottom Y=0 and centre line X=0. Main rotor pivots about its own +Y near 2.85 m, with 5 m blades; tail rotor about its own X. The right-seat eye is near 1.45 m. Fuselage about 8.5 m long and 1.7 m wide, at most 20,000 triangles, 2K PBR textures and clean Kestrel One paint with no marks.
+## Original accessory source
 
-The cargo-hook model is about 0.4 m high with its origin at the top. The cable is drawn in code as a line. The painted-H pad is 14 m square or circular, at most 0.15 m thick, with origin at its top centre and H strokes along +Z. Fuel pump or small fuel truck is based at its centre with front +Z. These are settled requirements, not measured donor compliance. Source choice and accessible binaries still wait for Claude; no adaptation starts. All primary licence receipts, source metadata, pictures, checksums and unverified mesh gaps remain unchanged.
+Director 8c912a66 authorizes the original recipe Claude chose for the three
+accessories. tools/blender/heli-accessories.py and tools/art/heli-accessories.json
+prepare only cargo-hook.glb, helipad.glb and fuel-pump.glb at their settled
+future public/assets/heli paths. They do not make a helicopter or cable model.
+The existing Blender recipe style supplies metre geometry, scalar PBR surfaces,
+geometric normals, named meshes and glTF Y-up export. No texture, library,
+shared catalogue row, runtime consumer, dependency or new test machinery.
+
+The hook has a forged curved body, attachment eye, swivel and safety latch,
+uniformly fitted to 0.4 m below its top origin. The 14 m circular pad has a
+0.12 m slab and a separate painted H at top y=0, with long strokes along +Z.
+Its 1 mm paint separation avoids coplanar faces and stays below 0.15 m overall.
+The clean aviation pump has a base-centre origin and front +Z, a meter window,
+generic JET A label, hose and nozzle. No manufacturer or operator marks.
+Declared mesh ceilings are 4,000/1,500/6,000 triangles; textures are absent.
+These are source budgets, not measured exports or an art verdict.
+
+The generator will measure actual finished mesh bounds, triangles, names and
+used textures before each export. It exports only the three selected prop
+roots/meshes, never cameras, lights, animation, .blend files or raw renders.
+Its source clamps Blender threads to four after every scene reset. The
+original paths-only recipe mode declares outputs without importing Blender.
 
 ## Evidence and checks
 
-Original licensed files, source pictures and licence receipts are only in the newly created C:/Users/kyleb/dev/art-library/heli-source-packet. The small committed receipt records their checksums and primary URLs. No candidate binary ships under public, no shared catalogue or credit row changed, and no game code changed. Source-only preparation: no Blender, render, native, gate, build or timing job; no formal art round used and no visual acceptance claimed.
+Normal integration union d9748201 completed without conflicts and preserved
+the original source packet before these edits. Workspace Catalog was fresh,
+not stale; recipe inspection used only this authorized integration worktree.
+All previous donor provenance and eight cache receipt rows remain intact.
+The old accessory donor proposals are marked as superseded by the original
+recipe, without deleting licensed originals or pretending those donors shipped.
 
-Changed assertions: none.
+Source preparation only. Blender/export/render, model measurements, pictures,
+formal art round, native views, lane gate and build are UNRUN. No public asset
+or credits paragraph is written before Root's explicit export GO. Claude still
+judges the actual accessory pictures within the three-round cap. No release,
+push, live folder/port or real save access. Changed assertions: none.
 
 ## Removed
 
-No runtime replacement. Earlier proposed uppercase nodes, skid-midpoint origin and cable-model suggestion are replaced by Claude's exact contract. Two temporary extracted thumbnail buffers are recycled; original licensed archive, author pictures and licence receipts remain needed for Claude's source choice. No foreign cache, lane or deliverable removed.
+Replace the pending accessory donor question with Claude's original-recipe
+decision. Preserve those unselected candidates' provenance and every original
+licensed cache file. Earlier uppercase/skid-midpoint/cable-model suggestions
+remain superseded by Claude's exact export contract. No runtime asset is
+replaced or removed, and no foreign folder or retained lane is cleaned.

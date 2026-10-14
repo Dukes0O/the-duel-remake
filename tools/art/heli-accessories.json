@@ -1,0 +1,57 @@
+{
+  "card": "HELI-ART-SRC",
+  "recipe": "tools/blender/heli-accessories.py",
+  "source": "Original Blender geometry under Claude's 14 October donor-route decision",
+  "author": "The Duel project",
+  "license": "Original project geometry; no third-party donor",
+  "units": "metres",
+  "axes": "+Y up, +Z front; Blender conversion (x,-z,y), glTF export_yup=true",
+  "state": "source-prepared; exports and art verdict unrun",
+  "textures": "none; geometric normals and scalar PBR materials",
+  "materials": {
+    "steel": {"color": [0.32, 0.36, 0.38, 1], "metallic": 0.82, "roughness": 0.31},
+    "bright-steel": {"color": [0.58, 0.62, 0.63, 1], "metallic": 0.9, "roughness": 0.24},
+    "safety-orange": {"color": [0.8, 0.19, 0.035, 1], "metallic": 0.1, "roughness": 0.46},
+    "concrete": {"color": [0.19, 0.21, 0.22, 1], "metallic": 0, "roughness": 0.94},
+    "white-paint": {"color": [0.86, 0.87, 0.83, 1], "metallic": 0, "roughness": 0.82},
+    "yellow-paint": {"color": [0.74, 0.53, 0.035, 1], "metallic": 0, "roughness": 0.78},
+    "pump-paint": {"color": [0.62, 0.67, 0.64, 1], "metallic": 0.12, "roughness": 0.46},
+    "rubber": {"color": [0.018, 0.021, 0.025, 1], "metallic": 0, "roughness": 0.83},
+    "display": {"color": [0.026, 0.047, 0.048, 1], "metallic": 0, "roughness": 0.23}
+  },
+  "assets": {
+    "cargo-hook": {
+      "path": "public/assets/heli/cargo-hook.glb",
+      "node": "cargo_hook",
+      "origin": "Top cable attachment, y=0; the hook hangs below it",
+      "heightM": 0.4,
+      "trianglesMax": 4000,
+      "parts": ["attachment_eye", "swivel", "forged_hook", "safety_latch"],
+      "cable": "No cable mesh; the game draws its existing line"
+    },
+    "helipad": {
+      "path": "public/assets/heli/helipad.glb",
+      "node": "helipad",
+      "origin": "Centre of top painted surface, y=0",
+      "diameterM": 14,
+      "slabThicknessM": 0.12,
+      "paintRiseM": 0.001,
+      "thicknessMaxM": 0.15,
+      "trianglesMax": 1500,
+      "h": {"widthM": 4.2, "lengthM": 5.4, "strokeM": 0.7, "longAxis": "+Z"},
+      "ring": {"radiusM": 6.1, "strokeM": 0.18}
+    },
+    "fuel-pump": {
+      "path": "public/assets/heli/fuel-pump.glb",
+      "node": "fuel_pump",
+      "origin": "Base centre, y=0; meter and nozzle face +Z",
+      "trianglesMax": 6000,
+      "baseM": [0.9, 0.12, 0.7],
+      "cabinetM": [0.62, 1.35, 0.5],
+      "meterM": [0.82, 0.5, 0.58],
+      "hoseRadiusM": 0.023,
+      "parts": ["pump_base", "pump_cabinet", "meter_head", "display_window", "fuel_hose", "nozzle_spout", "nozzle_grip", "nozzle_trigger_guard"],
+      "markings": "Generic JET A fuel label only; no manufacturer or operator marks"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
   "card": "HELI-ART-SRC",
-  "status": "source-choice-pending",
+  "status": "helicopter-binary-pending",
   "sourceBase": "db58e449",
   "checkedDate": "2026-10-14",
   "cacheRoot": "C:/Users/kyleb/dev/art-library/heli-source-packet",
@@ -197,8 +197,7 @@
     }
   ],
   "questions": [
-    "Choose an accessible real two-seat donor route under the settled contract; neither preferred donor is approved runtime art yet.",
-    "Approve hook/pad/pump donor direction under the settled sizes/origins; current CDN access prevents actual accessory mesh verification."
+    "Actual helicopter binary and measured contract compliance remain pending; Claude settled the donor route and original accessory recipes."
   ],
   "cacheFiles": [
     {
@@ -243,7 +242,7 @@
     }
   ],
   "exportContract": {
-    "status": "Claude settled; source choice and binary access still pending",
+    "status": "Claude settled; helicopter binary pending and original accessory source prepared, all exports unrun",
     "sourceCommit": "8065f3d6",
     "sourceCard": "docs/board/cards/HELI-ART-SRC.md",
     "units": "metres",
@@ -287,5 +286,24 @@
       "front": "+Z"
     },
     "note": "Requirements only, not measured donor compliance. No runtime consumer or renderer change. Ask on the card if the selected source cannot meet a line."
+  },
+  "accessoryRecipe": {
+    "recipe": "tools/blender/heli-accessories.py",
+    "parameters": "tools/art/heli-accessories.json",
+    "decision": "Claude 3e034b28 / Director 8c912a66",
+    "state": "source-prepared",
+    "exported": false,
+    "artAccepted": false,
+    "donorsUsed": false,
+    "supersedes": "Only the unselected hook-block, helipad-h and fuel-pump donor suggestions; their provenance is retained."
+  },
+  "helicopterDownloadPlan": {
+    "preferred": "light-piston",
+    "retryNotBefore": "2026-10-14T18:00:00-07:00",
+    "retriesMax": 1,
+    "retryUsed": false,
+    "fallback": "r22-lopo3d",
+    "fallbackAccount": "Kyle only; Claude has already asked for the licensed download",
+    "downloadsDuringThisSourceSlice": 0
   }
 }
