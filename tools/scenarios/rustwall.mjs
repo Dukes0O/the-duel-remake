@@ -10,6 +10,10 @@ import {renderMainView} from '../../src/scene-presentation.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+const ACCEPTED_RUNTIME_ASSETS={
+  wall:{path:'public/assets/models/wasteland/rustwall/wall.glb',sha256:'f834469c33e2d6798f9c3a4393f535abb0ac0b488e72b265adfd87bc07bb7c58'},
+  wash:{path:'public/assets/models/wasteland/rustwall/wash.glb',sha256:'09e75a486978129950d58ebecb9ff0e580ff3c1d7767bbef4cc767923fafd8b4'},
+};
 const READY=`(() => {
   const r=window.__render,app=window.__qaApp;if(!r||!app)return false;
   r.renderFrame();const rig=r.scene.getObjectByName('Rustwall');
@@ -19,22 +23,30 @@ const READY=`(() => {
 
 export async function run(context) {
   const round=Number(process.env.EGG_RUSTWALL_ROUND || 1);
+  const legacyTiming=process.env.DUEL_BROWSER_LEGACY_TIMING==='1';
   if(!Number.isInteger(round)||round<1||round>10)throw Error('Rustwall round must be 1..10');
   const directory=context.outputDir,relative=pathRelative(ROOT,directory).replaceAll('\\','/');
   const path=join(directory,'captures.json');
   try{await access(path);throw Error('Completed Rustwall evidence is immutable');}
   catch(error){if(error.code!=='ENOENT')throw error;}
-  let blenderText;
-  try{blenderText=await readFile(join(directory,'blender-manifest.json'),'utf8');}
+  let blenderText,localManifest=false;
+  try{blenderText=await readFile(join(directory,'blender-manifest.json'),'utf8');localManifest=true;}
   catch(error){
     if(error.code!=='ENOENT')throw error;
     blenderText=await readFile(join(ROOT,`tools/fixtures/art-review/rustwall/round-${round}/blender-manifest.json`),'utf8');
   }
   const blender=JSON.parse(blenderText);
+  const acceptedRuntime=process.env.EGG_RUSTWALL_ROUND===undefined&&!localManifest;
+  const runtimeAssets=acceptedRuntime?ACCEPTED_RUNTIME_ASSETS:blender.assets;
+  const cameraManifest=localManifest?'supplied local blender-manifest.json':`tools/fixtures/art-review/rustwall/round-${round}/blender-manifest.json`;
   const evidence={round,observationCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
-    assets:blender.assets,reference:blender.reference,captures:[],context:[],placement:[],cost:{},loadErrors:[],
+    assets:runtimeAssets,reference:blender.reference,
+    cameraRecipe:{round,manifest:cameraManifest},runtimeAcceptance:acceptedRuntime?
+      {family:'rustwall-p2',round:10,source:'a51a3c89/d0e26a1f',merge:'71398d8a',review:'docs/board/looks/rustwall-p2/round-10-review.md'}:
+      {kind:'historical-manifest',round,manifest:cameraManifest},
+    timing:{status:legacyTiming?'legacy-manual':'not-run',reason:'Separate quiet manual measurement; no frame acceptance'},captures:[],context:[],placement:[],cost:{},loadErrors:[],
     baseline:'EGG-01 greybox scenery on the newly widened salt-flat geometry. Visibility toggles isolate model cost, not the complete EGG-02 change.'};
-  for(const asset of Object.values(blender.assets))if(sha(await readFile(join(ROOT,asset.path)))!==asset.sha256)
+  for(const asset of Object.values(runtimeAssets))if(sha(await readFile(join(ROOT,asset.path)))!==asset.sha256)
     throw Error('Frozen Rustwall asset changed: '+asset.path);
   // Geometry-only estimate of the separately authorized support widening.
   // This is not a previous-commit whole-scene cost measurement.
@@ -54,6 +66,7 @@ export async function run(context) {
     await context.navigate('/tools/menu-check.html?flags=hidden-road');
     await context.waitFor('!!window.__qaApp?.visualReady&&!!window.__render','private Rustwall menu',60000);
     await start(context,quality,1989);
+    if(legacyTiming){
     await context.evaluate(`(() => {
       const r=window.__render;
       window.__rustwallReview={raf:window.requestAnimationFrame.bind(window)};
@@ -62,9 +75,11 @@ export async function run(context) {
       window.__rustwallReview.rig=r.scene.getObjectByName('Rustwall');
       window.__rustwallReview.greybox=r.scene.getObjectByName('Dry wash banks');
     })()`);
+    }
     evidence.cost[quality]={};
     for(const [view,progress] of [['wash',350],['approach',960]]) {
       await courseView(context,progress);
+      if(legacyTiming){
       evidence.cost[quality][view]=await context.evaluate(`(async () => {
         const r=window.__render,q=window.__rustwallReview;
         const measure=async()=>{
@@ -90,6 +105,7 @@ export async function run(context) {
           cpuP50Ratio:loaded.renderCpu.p50/baseline.renderCpu.p50,cpuP95Ratio:loaded.renderCpu.p95/baseline.renderCpu.p95,
           scope:'120 measured RAF intervals and full production renderFrame CPU submissions, after 20 warm frames; same stopped course/camera/quality/support, greybox versus loaded models. CPU submission is not GPU time.'};
       })()`);
+      }else evidence.cost[quality][view]={status:'not-run',reason:'Separate quiet manual measurement; no frame acceptance'};
       const png=await context.evaluate(coursePicture());
       evidence.context.push(await save(context,relative,`course-${quality}-${view}`,png,{quality,view,route:'a'}));
     }
@@ -115,7 +131,7 @@ export async function run(context) {
     }
   }
   await writeFile(path,JSON.stringify(evidence,null,2)+'\n',{flag:'wx'});
-  console.log(`Rustwall round ${round}: ${evidence.captures.length} matched views, ${evidence.context.length} course views, six all-route placements. Timing ratios are retained for review, not rounded into a pass.`);
+  console.log(`Rustwall round ${round}: ${evidence.captures.length} matched views, ${evidence.context.length} course views, six all-route placements. ${legacyTiming?'Manual timing ratios are retained for review, not rounded into a pass.':'Timing not run; separate quiet manual measurement.'}`);
 }
 
 async function start(context,quality,seed) {
