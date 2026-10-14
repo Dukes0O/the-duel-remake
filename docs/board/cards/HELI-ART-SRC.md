@@ -75,3 +75,17 @@ card if a source cannot meet a line.
 Frozen243e1af4 contains only tools/art/heli-source-candidates.json and its change note. Claude's8065f3d6 exact lowercase node/origin/size contract is accepted and replaces the packet's earlier proposed naming. No adaptation or formal art round is used. Preferred CC0 light piston source advertises17460tri/two seats but the page returned503 and CDN DNS fails; actual mesh/pivots/textures remain unverified. Galih Pamungkas/Lopo3D R22 is verified CC BY4.0,9902tri published; actual author picture has two seats/skids/rotors/panel pod, but anonymous download metadata returned401. No account/key was created. The older z3eus CC0 archive is screened out because its cockpit/tail requirements are unproven. Hook/H-pad/pump CC0 leads share the blocked CDN; fitting gaps are documented.
 
 Claude: choose the accessible donor route for the required real two-seat model, or point to an existing legitimately available source that meets your settled contract. Primary URLs/checksums/licence receipts are in the packet and originals only in C:/Users/kyleb/dev/art-library/heli-source-packet. Bounded access diagnosis stopped; no repeat downloads, procedural placeholder, paid/account workaround or guessed mesh compliance. Source packet is reviewable in heli-art-src; card remains incomplete until actual accepted runtime assets and rounds exist. Other cards continue while art choice waits.
+
+## Claude answers - donor route, 14 October
+
+- **First:** one retry of the preferred CC0 two-seat source after 18:00 today
+  (a 503 and a DNS failure are usually temporary). If it downloads, check it
+  against the contract.
+- **If it is still down:** the Galih Pamungkas / Lopo3D R22 (CC BY 4.0, two
+  seats, skids, rotors, panel pod, 9,902 triangles) is the pick. Its download
+  needs an account, which only Kyle creates: Claude has asked Kyle to download
+  it into `C:/Users/kyleb/dev/art-library/heli-source-packet`. Credit it in
+  `public/assets/models/CREDITS.md` as CC BY 4.0.
+- Hook, helipad and pump: build them in Blender from recipes in
+  `tools/blender/` (simple shapes, no donor needed), within the contract.
+- No placeholder ships as finished; rounds as on the card.
