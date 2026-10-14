@@ -111,7 +111,7 @@ export async function run(context) {
         const phase=age===null?'idle':age<1.7?'roar':age<3.5?'chest-beat':age<6?'lope':age<12?'walk-off':null;
         const near=state.yeti&&Math.abs(state.s-state.yeti.site.s)<=130;
         const terminal=state.stageTimeSec>600||!['countdown','racing'].includes(state.status);
-        if(!near||!phase)return {phase:null,done:age>=12,terminal,status:state.status,stageTime:state.stageTimeSec};
+        if((!state.yeti?.seen&&!near)||!phase)return {phase:null,done:age>=12,terminal,status:state.status,stageTime:state.stageTimeSec};
         const before=JSON.stringify(state);window.__render.renderFrame();
         const group=window.__render.scene.getObjectByName('The yeti'),actor=group?.children.find(child=>child.visible);
         if(!group?.visible||!actor||!app.visualReady)return {phase:null,done:false,terminal,status:state.status,stageTime:state.stageTimeSec};
@@ -163,28 +163,40 @@ export async function run(context) {
     if(phases.some(phase=>!packet.views.some(view=>view.phase===phase)))throw Error('Actual phase pictures are incomplete');
     packet.mechanicalPacketComplete=true;
   } catch(error) {
-    packet.error=error.message;
-    throw error;
+    packet.mechanicalPacketComplete=false;packet.error=error.message;
   } finally {
     if(started) {
-      const capture=await context.evaluate(`(()=>{
-        const app=window.__qaApp,capture=window.__yetiCapture;app.stop();app.onFrame=capture.original;capture.unsubscribe();
-        if(capture.processor){app.audio.output.disconnect(capture.processor);capture.processor.disconnect();capture.silent.disconnect();capture.processor.onaudioprocess=null;}
-        const pcm=new Int16Array(capture.chunks.reduce((sum,chunk)=>sum+chunk.length,0));let offset=0;
-        for(const chunk of capture.chunks){pcm.set(chunk,offset);offset+=chunk.length;}
-        const bytes=new Uint8Array(pcm.buffer);let binary='';
-        for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-        const result={rows:capture.rows,events:capture.events,rate:app.audio.context.sampleRate,pcm:btoa(binary),
-          audioStart:capture.audioStart,recordedInput:app.profile.activeRace?.yetiSeed,
-          memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value};
-        app.returnToMenu();app.stop();return result;
-      })()`);
-      const wave=wavFromPcm(Buffer.from(capture.pcm,'base64'),capture.rate);delete capture.pcm;
-      Object.assign(packet,capture);packet.loudness=measureLoudness(wave);
-      await writeFile(join(context.outputDir,'yeti-roar-native.wav'),wave);
-      if(packet.mechanicalPacketComplete&&(packet.events.length!==1||packet.events[0].cue!=='yeti.roar'||
-        packet.events[0].callout!=='YETI!'||!packet.memoryOnly||!capture.rows.some(row=>row.activeRaceSeed===FIXTURE.yetiSeed))) {
-        packet.mechanicalPacketComplete=false;packet.error='Actual once-only roar/callout or saved recorded input witness is missing';
+      try {
+        const capture=await context.evaluate(`(()=>{
+          const app=window.__qaApp,capture=window.__yetiCapture;app.stop();app.onFrame=capture.original;capture.unsubscribe();
+          if(capture.processor){app.audio.output.disconnect(capture.processor);capture.processor.disconnect();capture.silent.disconnect();capture.processor.onaudioprocess=null;}
+          const pcm=new Int16Array(capture.chunks.reduce((sum,chunk)=>sum+chunk.length,0));let offset=0;
+          for(const chunk of capture.chunks){pcm.set(chunk,offset);offset+=chunk.length;}
+          const bytes=new Uint8Array(pcm.buffer);let binary='';
+          for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+          const result={rows:capture.rows,events:capture.events,rate:app.audio.context.sampleRate,pcm:btoa(binary),
+            pcmSamples:pcm.length,pcmFrames:pcm.length/2,
+            audioStart:capture.audioStart,recordedInput:app.profile.activeRace?.yetiSeed,
+            memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value};
+          app.returnToMenu();app.stop();return result;
+        })()`);
+        const pcm=Buffer.from(capture.pcm,'base64');delete capture.pcm;
+        Object.assign(packet,capture);
+        if(!capture.pcmSamples||pcm.length!==capture.pcmSamples*2) {
+          packet.mechanicalPacketComplete=false;
+          packet.error??='Actual roar PCM capture is empty or incomplete';
+        } else {
+          const wave=wavFromPcm(pcm,capture.rate);
+          await writeFile(join(context.outputDir,'yeti-roar-native.wav'),wave);
+          packet.loudness=measureLoudness(wave);
+        }
+        if(packet.mechanicalPacketComplete&&(packet.events.length!==1||packet.events[0].cue!=='yeti.roar'||
+          packet.events[0].callout!=='YETI!'||!packet.memoryOnly||!capture.rows.some(row=>row.activeRaceSeed===FIXTURE.yetiSeed))) {
+          packet.mechanicalPacketComplete=false;packet.error??='Actual once-only roar/callout or saved recorded input witness is missing';
+        }
+      } catch(error) {
+        packet.mechanicalPacketComplete=false;packet.cleanupError=error.message;
+        packet.error??='Native cleanup or audio processing failed: '+error.message;
       }
     }
     await persist();

@@ -80,3 +80,12 @@ saved reward changes. This one card-specific scenario reuses the existing
 harness, line driver and PCM helpers; it adds no generic framework. The
 retained lane stays in place. Checks/build/browser execution wait for the
 release hold to clear and Root's ordered dispatch.
+
+The ordinary review found two real observer faults before execution. The
+130 m camera admission now applies only to unseen idle: after a real
+sighting, all active phases remain observable as the unchanged driver
+continues. The packet records actual PCM sample/frame counts and requires
+nonempty audio; empty recordings never enter the loudness analyzer. Cleanup
+and audio-processing errors mark the packet incomplete while preserving
+the original failure reason and recorded facts before final persistence.
+These are observer corrections only; native execution remains UNRUN.
