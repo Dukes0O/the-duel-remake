@@ -32,4 +32,5 @@ course" table, copied here.
 ## Done
 
 Picked models in `public/assets/wildlife/`, credits added, round notes
-committed. Placing animals on courses is a later H3 card (Claude).
+committed. Placing animals on courses is WILD-PLACE and WILD-VIEW (Claude),
+designed in `docs/HELI_WILDLIFE.md` section 3.

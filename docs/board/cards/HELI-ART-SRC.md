@@ -117,3 +117,25 @@ Picked: Claude's original Kestrel One (`tools/blender/kestrel-one.py`,
 `docs/board/looks/kestrel-one/round-3-review.md`. Drop the donor route: no
 retry, no R22 download needed. Codex's part of this card is now the cargo
 hook, helipad and fuel pump only.
+
+
+## Codex lane handoff — accessories only
+
+The second Codex lead may take the existing heli-art-src folder / codex/heli-art-src source from bb40c3eacfaee15ea05f66b5b30774d69faa9590 when the six-lane inventory has room. No builder from this chat is active there. The first lead remains sole integration/metadata/merge and heavy-job scheduler for retained work; request checks on this card before running them. Do not take TYRE-SLIP's shared game files while Claude's steering work and the priority Summit Attack queue need them.
+
+The three original accessory recipes and actual GLBs are already exported and source-reviewed: tools/blender/heli-accessories.py, tools/art/heli-accessories.json, cargo-hook.glb/helipad.glb/fuel-pump.glb, source packet and own change note. Export receipt and independent GLTF inspection are under .evidence/2026-10-14/HELI-ART-SRC/accessories-fbe27f80. Hook2108tri/41748bytes, pad1346tri/84492bytes, pump2133tri/98140bytes; all exact origins/dimensions/PBR guards passed. No accessory art sheet, lane gate or build has run. Do not repeat the export merely to resume.
+
+Read Claude's latest pick first: his original Kestrel One is accepted, three model rounds closed, and the donor route is dropped. No download retry, R22 or fourth helicopter round. Keep licensed originals. Own only accessory recipes/parameters, these three runtime GLBs, the original accessory credit paragraph, the accessory source packet and this card's change note/review sheet. Merge current integration normally before changes; preserve Claude's Kestrel model, recipes, credits and runtime code. Prepare the compact actual accessory review with existing tools, then freeze source for first-lead review and Claude's art verdict. No new general harness or helicopter scene/view code. No heavy job or merge until the first lead schedules the slot; follow the shared six-lane and three-job limits.
+
+
+The second lead's proposed accessory-only Blender review is within that handoff: extend only heli-accessories.py with the existing Kestrel camera/light rendering pattern and a separate compact looks/heli-accessories/round-1 sheet. No production GLB loader hook, procedural scene substitution or fourth Kestrel round. Existing first-flight QA does not load these accessories and cannot certify their appearance. The old worker is released; source review comes before any render/export/gate/build, all scheduled here. Keep the already measured GLBs unless Claude's accessory verdict requests a real change.
+
+
+## Accessory source handoff held for capacity
+
+Second authorized Codex chat prepared clean db6f04d18f86b14a09e9b04394e8567e8b7710b1 in the retained heli-art-src lane, after normal integration merge 77033b64. Root independently reviewed the two owned files: imported-GLB six-view render-only recipe and its change note. Path and framing faults were corrected; source review is clear and diff check passes. All three current GLBs remain unchanged. No Python, Blender, sheet, gate or build ran on this slice. That chat is held until this lead grants an actual ART and heavy slot; no additional lane, export or runtime wiring is authorized. Prior exact render-only request and source-view labels remain binding.
+
+
+## Conditional single render admission
+
+Kyle renewed the accessory completion instruction in the authorized second chat. Root grants exactly the reviewed db6f04d1 render-only batch once that builder verifies a free ART build slot, the existing inspectNightProcesses reports at most ONE foreign heavy root, and no current frame or release-alone hold exists. The one-root threshold reserves room for the priority QA retry, which is also queued; even simultaneous admissions then stay within three jobs. Recheck immediately before launch and send start/end notices. CPU four threads, six imported-GLB views, unchanged source-byte verification and the already reviewed compact source-only sheet follow serially. No new export, gate, build, card, source scope or runtime wiring is granted. If the lane inventory is unclear, ask this lead and remain held. Root reviews actual output and routes Claude's art verdict on this card. Shared metadata and merges stay with this lead.
