@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T05:15:07.322Z
+Observed at: 2026-10-14T12:17:31.983Z
 
-Observation commit: 032390f2c689851ff2d2cdfd902b42876a6c4179
+Observation commit: 7ee1958a0100e8b0a39d70f4cf2d191f7a459aff
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 032390f2c689851ff2d2cdfd902b42876a6c4179
+Integration HEAD: 7ee1958a0100e8b0a39d70f4cf2d191f7a459aff
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -66,11 +66,12 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
-| codex/p4-qualifying | 2 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
+| codex/p4-qualifying | 3 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
-| codex/p4-yeti | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
+| codex/p4-yeti | 0 | unknown | false | false | unknown |
+| codex/p4-yeti-native | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
-| lane/audio/aud-10 | 18 | unknown | true | false | unknown |
+| lane/audio/aud-10 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 18 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
@@ -84,9 +85,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/fix-hairpin-native | FIX-HAIRPIN-CAMERA | 2026-10-13T21:20:33-07:00 | 0 | last commit 2026-10-13T21:20:33-07:00 | docs/changes/FIX-HAIRPIN-CAMERA.md, tools/scenarios/track-review.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-13T21:34:14-07:00 | 0 | last commit 2026-10-13T21:34:14-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, src/circuit-effects.js, src/circuits/ardennes-forest.js, src/light-path.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
-| codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
+| codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-13T09:23:33-07:00 | 0 | last commit 2026-10-13T09:23:33-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
-| codex/p4-yeti | unknown | 2026-10-13T21:59:44-07:00 | 0 | last commit 2026-10-13T21:59:44-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
+| codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -103,7 +104,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,273,482 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 24,433 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 396,870,656 B | +9,216 B | unavailable |
+| Git objects | 396,956,672 B | +86,016 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -112,7 +113,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 032390f2c689851ff2d2cdfd902b42876a6c4179
+- Local integration/wasteland: 7ee1958a0100e8b0a39d70f4cf2d191f7a459aff
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
