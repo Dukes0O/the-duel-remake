@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T19:19:01.714Z
+Observed at: 2026-10-14T19:20:11.961Z
 
-Observation commit: 4fe6d085c4785385a839f3d5485df32982fdbdc5
+Observation commit: 8b3b2423ffbfdb10c52b2c9d7c51749679652006
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 4fe6d085c4785385a839f3d5485df32982fdbdc5
+Integration HEAD: 8b3b2423ffbfdb10c52b2c9d7c51749679652006
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -108,9 +108,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 16,755 B | -2,236,512 B | 5,000,000 B |
+| Added bytes in last merge | 16,755 B | +0 B | 5,000,000 B |
 | All `public/` | 291,982,013 B | +0 B | unavailable |
-| Git objects | 406,657,024 B | +494,592 B | unavailable |
+| Git objects | 406,701,056 B | +44,032 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -119,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 4fe6d085c4785385a839f3d5485df32982fdbdc5
+- Local integration/wasteland: 8b3b2423ffbfdb10c52b2c9d7c51749679652006
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -127,4 +127,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 4fe6d085c4785385a839f3d5485df32982fdbdc5.
+- Remote origin/integration/wasteland: behind local; cached commit 4fe6d085c4785385a839f3d5485df32982fdbdc5.

@@ -359,7 +359,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-qa-admission-2026-10-14"
+    branch: "codex/qa-browser-admission"
     needs: []
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"
 
@@ -431,6 +433,7 @@ tasks:
     status: "building"
     claimed_by: "codex-heli-art-2026-10-14"
     branch: "codex/heli-art-src"
+    waiting_on: "claude"
     needs: [HELI-PACKET]
     locks: []
     flag: "helicopter"
