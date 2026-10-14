@@ -131,3 +131,8 @@ Under the exact 0423d9cb grant, only negative native stations now select initial
 An additive existing-test case was written first using the actual native countdown grid for lap choices 2 through 6, frozen countdown/early-racing states and a negative station just before the line. It requires unchanged state and anchors, exact initial mist and native-distance light, and retains menu behavior. All prior first-lap and lap-choice cases remain intact. No execution has run on this correction; corrected focused/native acceptance and actual initial-mist pixels await Root review and GO.
 
 Removed: wrapped negative-grid presentation progress in the mist fade and photographer's lighting sample only. No runtime race rule or accepted reference changed.
+
+
+## Actual first scenery round
+
+Root confirmed 1eeca647's negative-grid correction. The original focused suite passes 29/29 in 12681.555 ms wall. One corrected native run passes in 89325.3781 ms, private15498/memory-only, twenty High/Performance pictures with no issues or warnings. Both qualities retain all eight finishers/two laps, one verified known player exception, five CPU incident events, no reset and no opening pile-up. Exact grid fog90 and second-lap360 checks now pass. The first formal scenery sheet is 296049 bytes, SHA256356aa35997b75916630adec7ab6294202bc5daec9810b9af5622902bbd51fd82, with pending-Claude review under looks/ardennes-art. No art, lane, build, field-rate, drive-through, signature or quiet-frame verdict is invented. Root notes the sparse village and apparently suspended structures for Claude's actual-picture review. Source production bytes remain exact to 1eeca647.
