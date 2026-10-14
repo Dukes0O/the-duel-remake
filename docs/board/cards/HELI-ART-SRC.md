@@ -134,3 +134,8 @@ The second lead's proposed accessory-only Blender review is within that handoff:
 ## Accessory source handoff held for capacity
 
 Second authorized Codex chat prepared clean db6f04d18f86b14a09e9b04394e8567e8b7710b1 in the retained heli-art-src lane, after normal integration merge 77033b64. Root independently reviewed the two owned files: imported-GLB six-view render-only recipe and its change note. Path and framing faults were corrected; source review is clear and diff check passes. All three current GLBs remain unchanged. No Python, Blender, sheet, gate or build ran on this slice. That chat is held until this lead grants an actual ART and heavy slot; no additional lane, export or runtime wiring is authorized. Prior exact render-only request and source-view labels remain binding.
+
+
+## Conditional single render admission
+
+Kyle renewed the accessory completion instruction in the authorized second chat. Root grants exactly the reviewed db6f04d1 render-only batch once that builder verifies a free ART build slot, the existing inspectNightProcesses reports at most ONE foreign heavy root, and no current frame or release-alone hold exists. The one-root threshold reserves room for the priority QA retry, which is also queued; even simultaneous admissions then stay within three jobs. Recheck immediately before launch and send start/end notices. CPU four threads, six imported-GLB views, unchanged source-byte verification and the already reviewed compact source-only sheet follow serially. No new export, gate, build, card, source scope or runtime wiring is granted. If the lane inventory is unclear, ask this lead and remain held. Root reviews actual output and routes Claude's art verdict on this card. Shared metadata and merges stay with this lead.
