@@ -113,6 +113,7 @@ tasks:
     status: "review"
     needs: [AUD-14, AUD-17]
     locks: []
+    waiting_on: "claude"
     details: "docs/board/cards/AUD-15-P1.md"
 
 
@@ -189,6 +190,7 @@ tasks:
     status: "review"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
+    branch: "codex/p4-yeti-native"
     details: "docs/board/cards/P4-YETI.md"
 
   - id: P4-VARIANTS
