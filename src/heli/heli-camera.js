@@ -4,7 +4,8 @@
 export const HELI_CAMERA_VIEWS = Object.freeze(['behind', 'cockpit', 'cable', 'side']);
 // The pilot's eye in Kestrel One's model (its pilot_eye node): the right-hand
 // seat, metres from the origin under the mast (+X is the left side, +Z the nose).
-export const PILOT_EYE = Object.freeze({x: -0.33, y: 1.45, z: 1.10});
+// A seated pilot's eye: seat 0.95 m up, eye about 0.75 m above it.
+export const PILOT_EYE = Object.freeze({x: -0.33, y: 1.70, z: 1.10});
 
 // A point in the helicopter's own frame (model axes) turned into the world
 // with the same attitude the scene draws: roll, then pitch, then heading

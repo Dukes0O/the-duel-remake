@@ -53,7 +53,9 @@ card if a source cannot meet a line.
   its own +Y; blades reach 5 m from the pivot), `tail_rotor` (pivot at the
   tail rotor hub; spins about its own X), `skids`, and two empties:
   `cable_hook` (belly under the mast, where the cable hangs from) and
-  `pilot_eye` (the right-hand seat, about 1.45 m up, for the cockpit view).
+  `pilot_eye` (the right-hand seat, about 1.70 m up: seat 0.95 m, eye about
+  0.75 m above it; raised from 1.45 on 14 October so the glare shield clears
+  the cockpit view).
   An `instrument_panel` mesh inside the cockpit; the readings are drawn
   separately in the page.
 - **Size:** fuselage about 8.5 m nose to tail rotor, 1.7 m wide; at most
