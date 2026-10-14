@@ -10,7 +10,7 @@
 // Lodge Bend and the climb north to the Final Turn. Closest separate stretches
 // of road: 66 m centre to centre, at the hairpin spur (wall between).
 import { buildTrackScript, defineScriptedCourse } from '../track-script.js';
-import { basinGround, hillLocal, hillReach, runWeight, shoreFactor } from '../circuit-hills.js';
+import { basinGround, shoreFactor } from '../circuit-hills.js';
 
 const BASE = {
   id: 'tremblant-woods', name: 'Tremblant Woods', flag: 'tremblant-woods',
@@ -178,9 +178,10 @@ function safety() {
   // Painted bands, one colour for each of the three layers: white, red, white.
   out.push(...barrier('tyre-wall', 'Beaver Hairpin', -30, 4.4, { bands: TYRE_BANDS }));
   out.push(...barrier('tyre-wall', 'Ridge Corner', -34, 5, { bands: TYRE_BANDS }));
-  // Braking boards (150, 100, 50 m) at the two corners the track script leaves without them;
-  // the script's own board already stands before Beaver Hairpin. They face the oncoming cars.
-  for (const name of ['Ridge Corner', "Devil's Chicane 1"]) {
+  // Braking boards (150, 100, 50 m) at the corners the track script leaves without them (Lodge Bend and
+  // Final Turn added in the finishing pass); the script's own board already stands before Beaver Hairpin.
+  // They face the oncoming cars.
+  for (const name of ['Ridge Corner', "Devil's Chicane 1", 'Lodge Bend', 'Final Turn']) {
     const corner = named(name), side = outside(corner);
     for (const distance of [150, 100, 50]) {
       const s = corner.s0 - distance, board = `braking-board-${distance}`;
@@ -234,40 +235,6 @@ function chairlift() {
     const span = towers.at(-1) - towers[0], count = Math.floor(span / spacing);
     for (let k = 0; k < count; k++) out.push(kit('chairlift-chair', LIFT.s + ds, 40, { ride: { role: 'chair', line, k, count } }));
   });
-  return out;
-}
-
-function trees() {
-  const random = stream(0x7e11), ids = ['autumn-tree', 'autumn-tree-golden', 'autumn-tree-copper'], out = [];
-  const avoid = (s, lateral) => {
-    const p = wrap(s);
-    const lake = Math.abs(p - LAKE.s) < LAKE.along + 20 && lateral > 0 && lateral < LAKE.lateral + LAKE.across + 24;
-    const lift = Math.abs(p - LIFT.s) < 16;
-    const start = p < 240 || p > LENGTH - 80;
-    const bend = road.pieceAt(p);
-    const inside = bend.kind === 'turn' && Math.sign(lateral) === bend.dir && Math.abs(lateral) < halfAt(p) + 40;
-    const hill = hillReach(HILL, ...hillLocal(HILL, p, lateral)) < 1.1;
-    return lake || lift || start || inside || hill || Math.abs(lateral) < 20;
-  };
-  // Groves of three or four in the front rows of the forest, on both sides of the road all the way round.
-  for (let grove = 0; out.length < 36 && grove < 400; grove++) {
-    const s = random() * LENGTH, side = random() < .5 ? -1 : 1, lateral = side * (22 + random() * 22);
-    if (avoid(s, lateral)) continue;
-    const count = 3 + Math.floor(random() * 2);
-    for (let i = 0; i < count; i++) {
-      const ts = s + (random() - .5) * 22, tl = lateral + (random() - .5) * 16;
-      if (avoid(ts, tl)) continue;
-      out.push(kit(ids[(grove + i) % 3], ts, tl, { heading: random() * Math.PI * 2, scale: 1.05 + random() * .7, clear: 4.5 }));
-    }
-  }
-  // And on the hill, off the ski runs.
-  let onHill = 0;
-  for (let attempt = 0; onHill < 12 && attempt < 800; attempt++) {
-    const du = (random() * 2 - 1) * HILL.along * .8, dv = (random() * 2 - 1) * HILL.across * .8;
-    if (hillReach(HILL, du, dv) > .8 || runWeight(HILL, du, dv) > .02) continue;
-    out.push(kit(ids[attempt % 3], HILL.s + du, HILL.lateral + dv, { heading: random() * Math.PI * 2, scale: 1.3 + random() * .6, clear: 4.5, hill: 0, sink: .35 }));
-    onHill++;
-  }
   return out;
 }
 
@@ -338,7 +305,7 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
   // lake, the lift's cut through the trees, the paddock and the fence between the
   // spur and Timber Straight (the hill below plants its own).
   scenery: {
-    mountains: false, forest: { from: 13, to: 31, spacing: 4.6, rows: 4 }, autumn: AUTUMN,
+    mountains: false, forest: { from: 13, to: 36, spacing: 4.4, rows: 5 }, autumn: AUTUMN,
     clear: [
       { s0: LAKE.s - LAKE.along - 10, s1: LAKE.s + LAKE.along + 10, from: 8, to: LAKE.lateral + LAKE.across + 10 },
       { s0: LIFT.s - 7, s1: LIFT.s + 7, from: -135, to: 135 },
@@ -350,7 +317,7 @@ export const TREMBLANT_WOODS = defineScriptedCourse({
   hills: [HILL],
   basins: [LAKE],
   effects: { lake: LAKE, mist: { count: 30, height: 1, spread: .85, opacity: .3 }, lift: LIFT, backdrop: backdrop() },
-  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift(), ...trees()].filter(Boolean).map(solid),
+  kitPlacements: [...paddock(), ...safety(), ...lakeside(), ...lodge(), ...chairlift()].filter(Boolean).map(solid),
 });
 
 // The road and the scenery pieces Tremblant Snow shares (src/circuits/tremblant-snow.js): the same
