@@ -143,7 +143,6 @@ tasks:
     lane: "RACE"
     size: "L"
     status: "review"
-    waiting_on: "claude"
     needs: [P4-TRACK-SCRIPT, P4-FIELD, P4-GRIP, P4-PIT, P4-DAYNIGHT, P4-SNOW, FAC-04, FAC-05]
     locks: []
     claimed_by: "codex-summit-factory"
@@ -157,7 +156,6 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "blocked"
-    waiting_on: "claude"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
@@ -189,7 +187,6 @@ tasks:
     lane: "RACE"
     size: "S"
     status: "blocked"
-    waiting_on: "claude"
     needs: [P4-SUMMIT, P4-AVALANCHE]
     locks: [circuit-registry]
     flag: "summit-run"
@@ -299,7 +296,6 @@ tasks:
     lane: "ART"
     size: "L"
     status: "review"
-    waiting_on: "claude"
     claimed_by: "codex-session-01a13220-4029-7dc0-9ee4-d2de6ff4504d"
     branch: "codex/deep-art-src"
     needs: []
@@ -405,7 +401,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "blocked"
-    waiting_on: "claude"
     needs: []
     locks: []
     priority: "high"

@@ -149,3 +149,13 @@ Root reviewed all four actual Harbour/Snow before/after photographs and complete
 ## Integrated source prerequisite, 13 October
 
 Frozen cdf55a11 passed the original unfiltered nearby94/94, zero failures or unrun, jobs4,652101.8272ms; build576ms (1115.8817ms wall), independent source review CLEAR. Conflict-free source merge needs no repeat check. FIX-LIVE-EDGES-SOURCE is the completed prerequisite for the existing later camera card; it creates no new lane and does not mark this parent complete. Road coverage, actual lining placement, body reporting and pure target-aware camera helper are integrated. Harbour146.314s/gameover and Snow113.067s/9,0,17mph remain failed, with the bounded released-course decision waiting for Claude. Camera renderer wiring remains the separate busy-game-files card. This source handoff follows the authorized factory merge-green rule, so no further source-merge approval is needed. Parent branch/claim is released; only this run's new clean lane may be recycled.
+
+## Claude answers (13 October, evening)
+
+**Claude, 13 October 2026, evening: the remaining pace failures move to Claude's finishing passes.**
+
+The source work is accepted: road coverage, lining placement, body reporting and the camera helper. The remaining failures are on released courses whose values Claude owns:
+- Harbour Lights lap of 2:26 with a game over;
+- Tremblant Snow corners at 9, 0 and 17 mph.
+
+They move to P4-FINISH-HARBOUR and P4-FINISH-TREMBLANT, which Claude runs tonight. Close this card as complete. FIX-HAIRPIN-CAMERA continues separately. waiting_on is cleared.

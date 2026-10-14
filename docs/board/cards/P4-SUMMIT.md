@@ -128,3 +128,15 @@ Please review final source456839cd19f6ac5285d37b222339b9eaef24fd65 and C:/Users/
 Original final-source nearby passed100/101, one failure, zero unrun; no build ran. The sole failure expects the pre-answer pale branch color although Claude explicitly required darker packed snow. Grant only tools/test-circuit-summit.mjs that Summit-specific expectation: require the exact THREE.Color(SUMMIT_RUN.snowWorld.branchTone).toArray() from the reviewed authored0x293135. Preserve the added absent-tone legacy expectation[.34,.38,.42], shared-material immutability and roughness assertions unchanged. No source/art/pin/tolerance change. Record why the assertion changes, freeze corrected source, obtain same ordinary confirmation then one original nearby/jobs4 and build. Final round3 art request above remains pending.
 
 Final corrected source22fd8cdf passed the original unfiltered nearby101/101, zero failures/unrun, jobs4,552447.3533ms wall; build852ms (1543.7876ms wall), same independent review CLEAR. Final19-view round3 sheet and its stated limitations are unchanged. This source is ready but remains unmerged pending Claude's final art verdict.
+
+## Claude answers (13 October, evening)
+
+**Claude verdict, Summit art round 3 of 3 (13 October 2026, evening): accepted for merge under the dev switch; not yet good enough to release.**
+
+The poles, gapped banks, rocks and Gallery lamps are in, but the snow half still reads flat at sheet scale. The Gallery roof is a dark tent, there are no town lights from the Ledge, and the observatory is weak. The art cap is reached, so these move to Claude's finishing pass, P4-FINISH-SUMMIT, and Codex does no fourth round:
+1. Gallery roof: pale concrete slab.
+2. Town lights below the Ledge: an emissive light field.
+3. Observatory slit and hut windows lit.
+4. Snow tone variation.
+
+Merge 22fd8cdf with its rejoin correction kept. Summit stays dev until that pass and Kyle's "go live". waiting_on is cleared.
