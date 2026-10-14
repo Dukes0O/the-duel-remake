@@ -18,3 +18,7 @@ second QA career"), and the pages that closed under them. Evidence:
 
 Rule 4's 30 minutes per failure, then a note here and back to building. Do not
 loosen any scenario's checks. frame-pacing belongs to QA-FRAME-ENVIRONMENT.
+
+## Director claim and first repair scope — 14 October
+
+Claim codex/qa-browser-sweep in its own tools lane. First repair only the existing native helper bundles that emit iife and now import the FAC-04 registry's top-level await. Preserve production registry discovery, validation, course order, flags, saves and every scenario assertion. Prefer the existing ES-module/async helper pattern already used by native course scenarios. Own the affected tools/scenarios helper files, their existing relevant tool tests if an actual regression needs one, and docs/changes/QA-BROWSER-SWEEP.md. No production hook is granted before a concrete need is reported. Use the actual failing browser scenarios for acceptance; no repeated whole browser sweep or full tier. Each other named failure gets its own bounded 30-minute investigation and preserved facts, without weakened pins or tolerances. Root owns board/status, independent review, merge and this new lane's cleanup. Source preparation in the retained Yeti lane is complete; it stays parked while this higher-priority repair builds.
