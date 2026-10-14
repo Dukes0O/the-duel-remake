@@ -1105,3 +1105,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 14Oct P4-YETI completed47a035d8:331controlled/37of37/jobs4/build816ms/review, actual5phases/private21136/feet≤1e-6/acceptedroar, dev; olderfolder retained, ownbranch+receiptsconsumed, cleanmerge no rerun.
 14 October: HELI-RADIO merged (27 Brian radio lines, 1,545 voice credits, 7,875 left; 7 CC0 library sounds; radio filter and heli-audio player; rotor spins down on the ground; four audio suites leave heli rows out of their pins as for the Deep); lane 60/60 jobs4 281.77 s, build passed; review found 3 faults over three turns, fixed and confirmed; Claude's round-one sound verdict by measurement, Kyle hears at HELI-FINISH; lane deleted.
+- 2026-10-14: Harbour Team Room hairpin note corrected to about 55 km/h (Claude lane, lane 37/37, build).
