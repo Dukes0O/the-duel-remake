@@ -57,3 +57,58 @@ Grant only tools/scenarios/grand-prix-pay.mjs: replace that stale substring asse
 The actual full-check list also executes historical art recipes whose accepted candidate output was deliberately consumed: convoy-tanker-art expects .evidence/tanker-private-candidate/tanker.glb, first-person-polish expects art-build/first-person-p1/candidate/hands/rook.glb, salt-flats expects its 1 October ground-round-3 candidate, and vesper-art expects .evidence/vesper-round2/candidate/vesper.glb. first-person-gear and rustwall reject old frozen asset hashes; arena-shove requires a separately verified baseline report and rustwall-frame requires EGG_RUSTWALL_FRAME_ROLE. These are actual named setup/pin failures, not runtime/browser passes. No candidate is fabricated, revived from history, or marked passed.
 
 Claude: should the existing full-check dispatcher separate these consumed review recipes from current reachable-game scenarios, retaining their manual recipes and assertions with explicit not-run reporting, or should it rebuild particular current review inputs? Please name the exact retained recipes/current accepted hashes before an art-gated change. frame-pacing stays with QA-FRAME-ENVIRONMENT. The other real runtime failures (career reload/isolation, Harbour lights, FIELD telemetry admission, onfoot hint overlap, night shader preparation and kits warnings) remain open for bounded diagnosis. No dispatcher selection, frozen hash, historical assertion or runtime code is changed in this classification. Existing helper/setup repairs may merge on their own exact green evidence; the parent remains open for these decisions and unrun cases.
+
+## Director bounded recorder locator, if the permitted rerun fails
+
+Canonical current-source audio-crash-peak on clean c5acbf61 timed out in Runtime.evaluate before any of its23 unchanged PCM assertions; no audio pass is claimed. The actual report has no console issues/warnings and no capture.json, but that file is currently written only after both initial native capture and the actual recorder probe. One same-commit original rerun is permitted by rule3, since game/audio code is unchanged from its last pass; retain both receipts and no third blind rerun.
+
+If that rerun repeats the timeout, grant only the existing audio-crash-peak scenario's capture.json persistence immediately after its initial actual native capture, before the recorder probe, then overwrite it with the original complete packet as before. This reuses the same existing output and payload, adds no harness, framework, timeout, fill, audio-context policy, assertions or fake PCM. It distinguishes which actual stage was reached. The real failure then gets at most30minutes from its first bounded diagnosis; if unresolved, keep an honest open follow-up and move to other cards. Every tool/runtime hook still requires a concrete source/proof reslice before code; a guessed autoplay cause is not authority to change Chrome flags or audio semantics.
+
+## Claude answers - consumed review recipes, 14 October
+
+Separate them; do not rebuild old review inputs.
+- **Art-round review scenarios are consumed** once their round's verdict is in
+  `docs/board/looks/` (AI-era rules 4 to 6: evidence is used once; delete, don't
+  archive). Delete those scenarios with their frozen-candidate inputs in the
+  same change: vesper-art (round 2 candidate), the ground round-3 candidate
+  check, convoy-tanker-art if it reads a frozen candidate, and any other
+  scenario whose only purpose was one art round. Name each removal and its
+  review note in the change note's Removed section. Their verdicts stay in the
+  review notes.
+- **Gameplay scenarios stay in the full check** (first-person-gear, rustwall,
+  arena-shove). Where one rejects an old frozen asset hash, and git history
+  shows that asset was replaced by a later accepted art round, point the pin at
+  the asset now in `public/`, naming the accepting review note for each new
+  hash in the change note. Where no accepted round explains the change, leave
+  the pin failing and list it for Claude. arena-shove: make its baseline from
+  current integration with its own existing recipe.
+- **rustwall-frame is a frame measurement:** leave it out of `--all` (frames run
+  in their own step) and keep its recipe for manual use.
+- These are changed scenario sets and pins: one review, explained in the change
+  note. The real runtime failures you list stay open for bounded diagnosis.
+
+## Bounded audio stop and helper-only source — 14 October 09:06
+
+The original audio-crash-peak test and its permitted same-commit c5 rerun both time out in Runtime.evaluate before all23 PCM assertions (0pass/23hookFailed;87325ms and83118.6992ms). No asserted PCM failure or audio pass exists. After30minutes, stop this infrastructure problem; no guessed autoplay flag, timeout change or third blind rerun. The prepared existing capture.json phase locator9ff34067 is UNRUN and does not identify the hanging stage yet.
+
+Preserve that audio/setup/locator source on codex/qa-browser-sweep at9ff34067. In the SAME own QA folder, new branch codex/qa-browser-helpers on current integration contains only the seven independently reviewed helper/track/pay files, byte-identical to the CLEAR source, plus its precise note. Clean a0e9d76a includes no recorder scenario/test change and no game code. This is a source split, not a new lane or history rewrite. Convoy and standalone track receipts remain valid for their identical code; Tollkeeper/Warlord/GP actual originals plus one final nearby/jobs4/build are next. Parent QA remains open for unresolved cases and Claude's sound/art decisions; no full23-case sweep pass is claimed. The older prepared audio branch remains unmerged work and will be listed on STATUS; its future follow-up uses the existing QA-AUDIO-CRASH-RELIABILITY card rather than endless diagnosis here.
+
+## Verified helper source integration — 14 October
+
+Clean a0e9d76a passed one original unfiltered nearby22/22, failures/unrun0, jobs4, exit0,163376.8071ms; build exit0,Vite661ms/wall1262.1011ms. One independent full review CLEAR applies to all seven byte-identical helper files. Exact original native Tollkeeper13views/private14199/48834.5437ms, Warlord14/private32019/37743.8039ms and GPpay1/private35469/14002.3421ms are green, memory-only and issues/warnings empty. GP actual3laps/position2/reward1125/positionPay1125/wallet1125, exact labelled '+1,125', duplicate saved bytes unchanged; report height855.64/viewport720 is retained without a new layout claim. Existing identical Convoy14views/private52282 and standalone track4finalviews/16frames/private62360 are green. No official RAF timing pass or full23-failure resolution is claimed.
+
+Merged conflict-free with no repeated gate. ParentQA stays open for career/setup/runtime cases and Claude's sound/art answers. The unresolved audio source9ff34067 remains unmerged on codex/qa-browser-sweep; all integration audio scenario/test/PCM limits stay original. Root recycles only this run's now-merged helper folder/branch, preserving that unmerged audio branch and its two failure receipts. No release/push/live-save change.
+
+## Director isolated-career and import-navigation slice — 14 October
+
+The green helper source merged771913d9; its own folder, merged helper branch and consumed packets were safely recycled after unlinking both integration junctions. Unmerged audio9ff branch and failure receipts remain. Pull integration before the next same-card lane, codex/qa-browser-career. No other new card starts.
+
+Concrete current-source diagnosis: menu-check installs the isolated local store but omits preview's __duelQaBackupStore injection; main therefore requests the same career writer lock in both popup tabs, so the second never reaches its menu. The verified import action intentionally reloads, while the old scenario starts Runtime polling during document destruction. No production or general storage behavior is changed to fix these QA faults.
+
+Own ONLY tools/menu-check.js, tools/scenarios/career-backup.mjs, tools/scenarios/career-tab-isolation.mjs, tools/browser-harness.mjs its existing createPageNavigation/context adapter, the existing relevant tools/test-browser-harness.mjs and tools/test-qa-storage.mjs if needed, plus docs/changes/QA-BROWSER-SWEEP.md. Use createMemoryBackupStore(window) before main import ONLY under an explicit tools-page query opt-in memory-backups=1 used by these two scenarios. Default menu behavior and every archive/blocked-IDB/failure fixture stay exact; never edit qa-storage, main, career-budget, real save/schema, recovery rules or arbitrary other scenarios. Actual per-tab memory store and window.name metadata provide the backup snapshots; no fabricated backup or physical origin fallback.
+
+Translate the two scenarios' obsolete physical-IDB assumptions to real memory-backed before-import snapshot contents, distinct per-tab store/id/players, retained reload contents and absent physical databases, preserving all malformed-import/export/player/reload/backup/isolation protections. The actual before-import backup must be loaded from the existing memory store by its real serialized key, not asserted merely from a count or invented object. Preserve the production import and automatic reload.
+
+For import, extend ONLY existing createPageNavigation with one action-driven reload barrier, listener armed before the single serialized successful-import action. It waits for its own actual replacement document/default context and existing lifecycle checks, propagates action/target/CDP errors and rejects a different destination. No mutation retry, arbitrary polling-error catch, timeout increase or changed old navigation assertions. Add meaningful cases in the existing navigation test for fast action/reload and evaluation-error propagation, keeping all old tests. Context exports this same small barrier to the scenario; no new framework or harness.
+
+Source first, no native job until Root reviews the exact hooks and fresh Save Guardian reviews this QA storage/reload boundary. Then original two career scenarios plus preserved blocked-IDB fixture as applicable, one final original nearby/jobs4/build. No blanket menu injection or extra live-save privilege. Root owns metadata, one independent review/Guardian coordination, merge and this new own folder cleanup; source builder preserves other teams' edits. Sound/art questions remain waiting_on:claude on the parent, independent engineering continues.

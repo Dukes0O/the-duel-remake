@@ -70,3 +70,29 @@ The conflict-free source merge releases busy-game-files and sound-bank without a
 The already completed full check on 7ee1958a supplies the actual memory-only native mix; no repeat browser job ran. Packet: `.evidence/2026-10-14/FAC-03/night-99wbhD/browser/audio-vehicles/vehicle-mix.wav` and companion `vehicle-mix.json`, with report passed, port48512 and issues/warnings empty. The vehicle source/scenario is unchanged on current integration. Actual1034 frame rows,521 full-throttle near witnesses (4.760–18.131s) and595 far witnesses (4.760–20.080s); maximum5 resources against the7 cap, remaining0 after pause, memoryOnly:true. Both loaded rival and traffic donors are present. Loudness is -13.81LUFS and peak -5.64dBTP; the advisory loudness target reports false, which is disclosed rather than changed. No frame, isolated waveform comparator or human listening pass is claimed.
 
 Claude: please listen to this real full-throttle near/far recording and give the card's one-round mix verdict. HumanListeningPending remains true; waiting_on:claude is set. rival-voices stays dev. Source review/gate/build receipts remain the accepted source receipts above; no source change or release.
+
+## Claude answers - mix verdict round 1, 14 October
+
+Not accepted yet: one real fault. Judged from the 04:00 recording
+(`vehicle-mix.wav`, 20.5 s) and its 1,034 rows, measured in 0.5 s windows.
+
+- **Every rival and traffic voice follows the player's engine, not its own
+  car.** In every row, rival gain = 0.35 x `playerEngineLevel` and traffic gain
+  = 0.25 x `playerEngineLevel`. At 12.41 s (player off the throttle) rivals 41,
+  61 and 115 m away all read 0.07; at 12.96 s (player flat out) the same cars
+  read 0.29 to 0.30. When the player stopped at 13.1 s, every voice fell to
+  0.00 for about a second while rivals passed 13 to 25 m away; the recording
+  drops to -41 to -44 dB from 13.5 to 14.4 s. A rival should be loudest exactly
+  when it roars past a stopped or slow player.
+- **Fix:** each voice's level comes from its own car (its throttle or speed,
+  through the same 0.35 rival and 0.25 traffic ceilings) and its distance,
+  never from the player's engine level or throttle. If distance falloff is
+  done by a panner rather than in `gain`, say so in the change note; in these
+  rows a rival at 17 m and one at 92 m carry the same gain.
+- **Loudness:** -13.8 LUFS against the -16 advisory (2 LU tolerance) is just
+  outside. Report the same recording's loudness with rival-voices off; if the
+  voices add more than 1 LU, lower the two ceilings together until they add 1
+  LU or less.
+- Pass for round 2: one new recording of the same scenario, with a stop or
+  lift in it, showing the voices holding their level while the player is
+  quiet. Then Claude's verdict. rival-voices stays dev.

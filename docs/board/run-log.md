@@ -1081,3 +1081,8 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-14: P4-SUMMIT6b6831d1 accepted dev source merged; original nearby103/103/jobs4, build937ms, reviewCLEAR;20other scene rows exact/Galleryrejoin retained. No clean-merge rerun; older lane retained; Avalanche timing/Claude finishing next, no release/push.
 
 - 2026-10-14: P4-FINISH-PANORAMA merged (Claude lane): lane 40/40, build, native High/Performance scenario pass, Claude review. Two floating marshal posts grounded, final-lap dusk views, round-3 sheet; round-2 removed. Road, records and world signature unchanged. New card PANORAMA-TOWN.
+- 2026-10-14: P4-FINISH-1014 merged (Claude lane): lane 43/43, build, Claude review of both round-3 sheets. Harbour layout 2 (Kyle accepts fresh Harbour times), reviewed world signatures harbour-lights e5478941 and tremblant-woods e41e7dea. New cards QA-STOCK-SNOW, FIX-ROAD-SEAM.
+
+- 2026-10-14: QA-BROWSER-SWEEP helpers a0e9d76a merged; nearby22/22/jobs4, build661ms, reviewCLEAR;5nativecase receipts green, actualpay/saveguards preserved. No clean-merge rerun. Parentfailures/audio9ff remain open; ownhelperfolder recycling, no release/push.
+
+- 2026-10-14: DEEP-ART-SRCac5a6dc6 working17 source merged; nearby31/31/jobs4, build669ms, reviewCLEAR; heldotter removed, legacy catalogue/modelbytes retained. Cap3closed/finishedart notaccepted; olderlane retained, no postmerge rerun/release/push.

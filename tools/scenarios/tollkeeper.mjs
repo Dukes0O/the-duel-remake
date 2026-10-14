@@ -12,13 +12,14 @@ async function helpers() {
     'src/combat-armor.js': ['applyArmorDamage'],
     'src/arena/convoy.js': ['convoyPoint', 'convoyValvePoints', 'CONVOY_ROOF_PLATE'],
     'src/onfoot.js': ['createFighter'],
+    'src/arena/modes/convoy-raid.js': ['CONVOY_RULES'],
   };
   const result = await build({root, configFile: false, logLevel: 'silent', plugins: [{
     name: 'tollkeeper-native-fixture',
     resolveId: id => id === entry ? '\0tollkeeper-fixture' : null,
     load: id => id === '\0tollkeeper-fixture' ? Object.entries(modules).map(([file, names]) =>
       `export {${names.join(',')}} from ${JSON.stringify(resolve(root, file))};`).join('\n') : null,
-  }], build: {write: false, minify: false, lib: {entry, name: 'TollkeeperNative', formats: ['iife']}}});
+  }], build: {write: false, minify: false, lib: {entry, name: 'TollkeeperNative', formats: ['es']}}});
   const output = Array.isArray(result) ? result[0].output : result.output;
   return output.find(item => item.type === 'chunk').code;
 }
@@ -162,7 +163,11 @@ export async function run(context) {
   await context.screenshot('tollkeeper-released-default-intro');
   for (const quality of ['high', 'performance']) {
     await yard(context, quality);
-    await context.evaluate(native + ';window.__tollkeeperNative=TollkeeperNative;');
+    await context.evaluate(`(async () => {
+      const url = URL.createObjectURL(new Blob([${JSON.stringify(native)}], {type: 'text/javascript'}));
+      try { window.__tollkeeperNative = await import(url); }
+      finally { URL.revokeObjectURL(url); }
+    })()`);
     await click(context, '[data-warlord="tollkeeper"]'); await ready(context);
     await context.evaluate(`(()=>{const s=window.__qaApp.duel.state;
       if(s.status!=='warlord_intro'||s.arena.mode!=='warlord'||s.arena.format!=='convoy-raid')
@@ -196,8 +201,10 @@ export async function run(context) {
       a.advance(1/120);if(s.arena.convoy.valves.some(v=>v!==0))throw Error('Real valves did not open boarding');
       a.onFrame?.(s,0);window.__render.renderFrame();})()`);
     await context.screenshot(quality + '-tollkeeper-boarding-window');
-    await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=s.opponents[0],n=window.__tollkeeperNative,p=n.CONVOY_ROOF_PLATE,
-      at=n.convoyPoint(a.duel,r,[p.x,p.y,p.z]),ground=a.duel.course.groundAt(r.s,r.lateral);
+    await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=s.opponents[0],n=window.__tollkeeperNative;
+      for(let i=0;i<Math.round((n.CONVOY_RULES.stopSeconds+.05)*120);i++)a.duel.step(1/120);
+      if(r.speedMph!==0)throw Error('Native Tollkeeper tanker did not stop before the roof crossing');
+      const p=n.CONVOY_ROOF_PLATE,at=n.convoyPoint(a.duel,r,[p.x,p.y,p.z]),ground=a.duel.course.groundAt(r.s,r.lateral);
       window.__tollkeeperScrapBefore=s.arena.result?null:a.profile.wasteland.scrap;
       window.__tollkeeperSettledBefore=a.profile.wasteland.settledResults.length;
       s.onFoot=true;s.fighter=n.createFighter(a.duel.course,s,{s:r.s,lateral:r.lateral});
