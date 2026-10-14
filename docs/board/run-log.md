@@ -1136,3 +1136,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: HELI-WILDLIFE-PACKET merged (H3 Wildlife and skins packet docs/HELI_WILDLIFE.md and thirteen WILD and SKIN cards); lane 14/14 jobs4 527.18 s, build passed, clean merge; lane deleted.
 14 October: RESCUE-PROPS merged (winch, stretcher, searchlight, beacon, debris, three supply loads; two rounds); lane 29/29 jobs4, build passed; board conflict fixed (completed line, kept the H3 cards); lane deleted.
 14 October: PANORAMA-TOWN merged (code-drawn country town, 64 houses, church, 13 lamps; review CLEAR after fixes; world signature recaptured from the reviewed sheet); lane 88/88 jobs4 from PowerShell, build passed; board conflict fixed (completed line); lane deleted.
+14 October: HELI-WILDLIFE-PACKET answers merged (Kyle: gear with its skin; TV camera flights parked); lane 12/12 jobs4 272.61 s, build passed, clean merge; lane deleted.
