@@ -198,6 +198,16 @@ test('real lattice mast and timing tower stand on terrain outside the road', () 
   assert.ok(town.getObjectByName('town houses').count >= 50 && town.children.length <= 12);
   assert.ok(town.getObjectByName('town lit windows').count > town.getObjectByName('town dark windows').count);
   assert.equal(PANORAMA_RIDGE.kitPlacements.filter(piece => piece.id.startsWith('shopfront')).length, 0);
+  // No two houses share ground (footprint with veranda and eaves), and no lamp stands in a house or the church.
+  const spec = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'town'), churchSpec = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'church');
+  const boxes = spec.houses.map(h => ({s: h.s, lateral: h.lateral, along: h.width / 2 + .5, across: (h.depth + 2.3) / 2 + .4}));
+  boxes.push({s: churchSpec.s, lateral: churchSpec.lateral, along: 10, across: 5.5});
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j];
+    assert.ok(Math.abs(a.s - b.s) >= a.along + b.along || Math.abs(a.lateral - b.lateral) >= a.across + b.across, `town footprints ${i} and ${j} overlap`);
+  }
+  for (const lamp of spec.lamps) for (const box of boxes)
+    assert.ok(Math.abs(lamp.s - box.s) >= box.along || Math.abs(lamp.lateral - box.lateral) >= box.across, 'a street lamp stands inside a building');
   // PANORAMA-TOWN: the valley town's church stands on terrain with windows the dusk lighting can find.
   const church = landmarks.getObjectByName('town-church'); church.updateWorldMatrix(true, true);
   const steeple = new THREE.Box3().setFromObject(church);
@@ -224,6 +234,9 @@ test('real lattice mast and timing tower stand on terrain outside the road', () 
   disposeTree(world); assert.equal(releases, resources.size);
 });
 test('landmark metadata cannot put structures on the road or silently substitute unknown types', () => {
+  const town = PANORAMA_RIDGE.circuitLandmarks.find(l => l.type === 'town');
+  const onRoad = new Course({...PANORAMA_RIDGE, circuitLandmarks: [{...town, houses: [...town.houses, {...town.houses[0], lateral: 2}]}]}, 1989);
+  assert.throws(() => addCircuitLandmarks(new THREE.Group(), onRoad), /town hides the road/);
   for (const patch of [{lateral: 0}, {type: 'hut'}, {height: NaN}, {s: -1}]) {
     const bad = new Course({...PANORAMA_RIDGE, circuitLandmarks: [{...PANORAMA_RIDGE.circuitLandmarks[0], ...patch}]}, 1989);
     assert.throws(() => addCircuitLandmarks(new THREE.Group(), bad), /landmark|road/);

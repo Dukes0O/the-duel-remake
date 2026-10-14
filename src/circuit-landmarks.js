@@ -113,7 +113,12 @@ function town(course, spec) {
     put(rows.walls, 0, floor + wall / 2, 0, width, wall, depth, {colour: TOWN_WALLS[Math.floor(hash(i) * TOWN_WALLS.length)]});
     put(rows.roofs, 0, floor + wall, 0, depth + .8, Math.min(depth, width) * .42, width + .8, {colour: roofColour, spin: Math.PI / 2});
     put(rows.verandas, 0, floor + 2.75, depth / 2 + 1.1, width + .2, .12, 2.3, {colour: roofColour});
-    for (const x of [-width / 2 + .2, 0, width / 2 - .2]) put(rows.posts, x, floor + 1.35, depth / 2 + 2.1, 1, 2.7, 1);
+    // A deck at floor height under the veranda; on a slope its posts run down to the ground like stilts.
+    put(rows.doors, 0, floor - .06, depth / 2 + 1.1, width + .2, .12, 2.3);
+    for (const x of [-width / 2 + .2, 0, width / 2 - .2]) {
+      const z = depth / 2 + 2.1, ground = heightAt(centre.x + x * cos + z * sin, centre.z - x * sin + z * cos) - .1;
+      put(rows.posts, x, (ground + floor + 2.7) / 2, z, 1, floor + 2.7 - ground, 1);
+    }
     put(rows.doors, width * .18, floor + 1.05, depth / 2 + .03, .95, 2.1, .08);
     const across = width > 7.5 ? [-width * .32, -width * .02] : [-width * .28];
     for (let storey = 0; storey < storeys; storey++) for (const x of storey ? [...across, width * .3] : [...across, width * .4]) {
@@ -124,7 +129,10 @@ function town(course, spec) {
     // Back windows: the lower street's houses turn their backs to Conrod Straight, so the town glows from the road.
     for (let storey = 0; storey < storeys; storey++) for (const x of [-width * .25, width * .25])
       put(hash(i * 13 + storey * 5 + (x > 0 ? 1 : 0)) < .6 ? rows.lit : rows.dark, x, floor + 1.55 + storey * 3, -depth / 2 - .03, 1.15, 1.45, .08);
-    put(rows.chimneys, -width / 2 + .9, floor + wall + Math.min(depth, width) * .3, -depth * .15, .65, 2.2, .65);
+    // The chimney rises from the wall top through the roof slope and stands about 0.9 m clear of it.
+    const ridge = Math.min(depth, width) * .42, eave = (width + .8) / 2, chimneyX = -width / 2 + .9;
+    const throughRoof = ridge * (1 - Math.abs(chimneyX) / eave) + 1.0;
+    put(rows.chimneys, chimneyX, floor + wall - .1 + throughRoof / 2, -depth * .15, .65, throughRoof, .65);
   });
   lamps.forEach(lamp => {
     if (![lamp.s, lamp.lateral].every(Number.isFinite)) throw new Error('Invalid circuit landmark town lamp.');

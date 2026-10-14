@@ -92,8 +92,8 @@ const PANORAMA_ROAD = defineScriptedCourse({
 // dimensions are metres, Y-up; heading is an offset from the sampled road.
 // The valley town's streets, metres along Conrod Straight from its start and beside the road.
 const TOWN_STREETS = Object.freeze([
-  Object.freeze({from: 170, to: 470, lateral: 84, bend: 8, wave: 95, phase: 0}),
-  Object.freeze({from: 215, to: 505, lateral: 114, bend: 7, wave: 120, phase: 1.4, square: 330}),
+  Object.freeze({from: 170, to: 470, lateral: 80, bend: 6, wave: 95, phase: 0}),
+  Object.freeze({from: 215, to: 505, lateral: 118, bend: 5, wave: 120, phase: 1.4, square: 330}),
 ]);
 function panoramaPlacements(road) {
   const placements = [{id: 'start-gantry', s: 0, lateral: 0, scale: [1.06, 1, 1]}];
@@ -149,7 +149,12 @@ function panoramaPlacements(road) {
 function valleyTown(road) {
   const conrod = road.pieces.find(piece => piece.name === 'Conrod Straight');
   const hash = n => {const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x);};
-  const houses = [], lamps = [];
+  const houses = [], lamps = [], taken = [];
+  // Nothing stands on another thing: houses, lamps and the church each keep their own ground.
+  // Footprints are rectangles along the road (houses face across it): half length along, half depth across.
+  const free = (s, lateral, along, across) => taken.every(t =>
+    Math.abs(t.s - s) >= t.along + along || Math.abs(t.lateral - lateral) >= t.across + across);
+  taken.push({s: conrod.s0 + TOWN_STREETS[1].square, lateral: TOWN_STREETS[1].lateral, along: 11, across: 6});
   let n = 0;
   for (const street of TOWN_STREETS) {
     const lateralAt = along => street.lateral + street.bend * Math.sin(along / street.wave + street.phase);
@@ -161,14 +166,22 @@ function valleyTown(road) {
         if (Math.abs(along - TOWN_STREETS[1].square) < 22 && (street.square || side > 0)) continue;
         if (hash(k + 900) < .15) continue;                        // a yard or a lane between houses
         const width = 6 + 3 * hash(k + 1300), depth = 7 + 3 * hash(k + 1700);
-        houses.push(Object.freeze({s: conrod.s0 + along + (hash(k + 2500) - .5) * 3,
-          lateral: centre + side * (7.5 + depth / 2 + 1.5 * hash(k + 2900)),
+        const s = conrod.s0 + along + (hash(k + 2500) - .5) * 3, lateral = centre + side * (6.5 + depth / 2 + hash(k + 2900));
+        // The footprint includes the veranda on the street side and half a metre of eaves all round.
+        const halfAlong = width / 2 + .6, halfAcross = (depth + 2.3) / 2 + .5;
+        if (!free(s, lateral, halfAlong, halfAcross)) continue;
+        taken.push({s, lateral, along: halfAlong, across: halfAcross});
+        houses.push(Object.freeze({s, lateral,
           heading: side * -Math.PI / 2 + turn + (hash(k + 3300) - .5) * .14,  // front door to the street
           width, depth, storeys: hash(k + 2100) < .3 ? 2 : 1}));
       }
     }
-    for (let along = street.from + 20; along < street.to; along += 44)
-      lamps.push(Object.freeze({s: conrod.s0 + along, lateral: lateralAt(along) + 6}));
+    for (let along = street.from + 20; along < street.to; along += 44) {
+      const s = conrod.s0 + along, lateral = lateralAt(along) + 5;
+      if (!free(s, lateral, .6, .6)) continue;
+      taken.push({s, lateral, along: .6, across: .6});
+      lamps.push(Object.freeze({s, lateral}));
+    }
   }
   return {houses: Object.freeze(houses), lamps: Object.freeze(lamps)};
 }
