@@ -1,0 +1,474 @@
+// HELI-DISPATCH (docs/HELICOPTER.md section 6): the day's jobs, the dispatch
+// board, taking a job at the home pad, delivering a customer's car for pay,
+// a dropped car, Race here, and the board's markup. Memory-only: no real
+// save is read or written.
+import assert from 'node:assert/strict';
+import {Course} from '../src/course.js';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import {CARS} from '../src/config.js';
+import {createProfile, normalizeProfile} from '../src/progression.js';
+import {groundFromCourse} from '../src/heli/heli-ground.js';
+import {liftCheck} from '../src/heli/heli-cable.js';
+import {heliOf, carAt} from '../src/heli/heli-save.js';
+import {HELI_RADIO_LINES} from '../src/heli/heli-radio-lines.js';
+import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, dayJobs, jobPay, jobTitle} from '../src/heli/heli-jobs.js';
+import {createHeliSession} from '../src/heli/heli-session.js';
+import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
+
+let checks = 0;
+const ok = (value, label) => { assert.ok(value, label); checks++; };
+const same = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
+const near = (actual, expected, tolerance, label) => {
+  assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: ${actual} not within ${tolerance} of ${expected}`);
+  checks++;
+};
+
+const worlds = new Map();
+function loadCourse(id) {
+  if (!worlds.has(id)) {
+    const course = new Course(ALL_CIRCUITS.find(def => def.id === id), 1989);
+    worlds.set(id, {course, ground: groundFromCourse(course)});
+  }
+  return worlds.get(id);
+}
+
+// The same steady test pilot as tools/test-heli-mode.mjs. In Assisted the
+// cyclic sets the tilt and the collective lever sets the climb; in Real the
+// cyclic sets how fast the tilt changes and the lever how fast the
+// collective changes, so the Real pilot steers toward the tilt it wants and
+// uses height, climb and the change in climb together.
+let lastVy = 0;
+function pilot(view, target, {speed = 6} = {}) {
+  const h = view.heli;
+  const fwdX = Math.sin(h.heading), fwdZ = Math.cos(h.heading), rightX = -fwdZ, rightZ = fwdX;
+  const dx = target.x - h.x, dz = target.z - h.z, distance = Math.hypot(dx, dz);
+  const want = Math.min(speed, distance * 0.4);
+  const wx = distance > 0.01 ? dx / distance * want : 0, wz = distance > 0.01 ? dz / distance * want : 0;
+  const ex = wx - h.vx, ez = wz - h.vz;
+  const clamp = v => Math.max(-1, Math.min(1, v));
+  let pitch = clamp((ex * fwdX + ez * fwdZ) * 0.25), roll = clamp((ex * rightX + ez * rightZ) * 0.25);
+  let lift = clamp((target.y - h.y) * 0.3 - h.vy * 0.3);
+  if (h.mode === 'real') {
+    pitch = clamp((pitch * 20 * Math.PI / 180 - h.pitch) * 10);
+    roll = clamp((roll * 20 * Math.PI / 180 - h.roll) * 10);
+    const accel = (h.vy - lastVy) * 120;
+    lift = clamp(0.125 * Math.max(-6, Math.min(6, target.y - h.y)) - 0.375 * h.vy - 0.375 * accel);
+  }
+  lastVy = h.vy;
+  return {pitch, roll, lift, yaw: 0};
+}
+
+function run(session, seconds, controls = () => ({}), until = null) {
+  const events = [];
+  for (let i = 0; i < Math.round(seconds * 120); i++) {
+    events.push(...session.step(controls(session.view())));
+    if (until?.(session.view(), events)) break;
+  }
+  return events;
+}
+
+const OWNED = ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'];
+// A pilot who has finished the lessons (HELI-LESSONS opens the board and
+// carrying cars with them; tools/test-heli-lessons.mjs covers a new pilot).
+const TRAINED = Object.freeze({liftoff: true, hover: true, landing: true, carry: true});
+function profileWith({credits = 3000, owned = [], heli = null} = {}) {
+  return normalizeProfile({...createProfile(), credits, courses: {version: 1, unlocked: owned},
+    heli: {version: 1, fuelKg: 0, ...(heli || {}), lessons: TRAINED}});
+}
+const DAY1 = '2026-10-14', DAY2 = '2026-10-15';
+
+function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'assisted', today = DAY1, saves = null} = {}) {
+  const session = createHeliSession({profile, enabled: true, loadCourse, carId, mode, today, persist: p => saves?.push(p)});
+  session.start();
+  session.buyFuel();
+  session.takeEvents();
+  return session;
+}
+
+// ---- the day's jobs --------------------------------------------------------
+{
+  same(JOB_ROUTES.map(r => [r.from, r.to, r.pay]), [['tremblant-woods', 'tremblant-snow', 300], ['tremblant-snow', 'panorama-ridge', 450],
+    ['tremblant-woods', 'panorama-ridge', 600]], 'the three routes and their pay');
+  ok(JOB_CARS.length >= 3 && JOB_CARS.every(id => liftCheck(id).ok), 'customers ask only for cars the helicopter can lift');
+  ok(!JOB_CARS.some(id => AIR_ONLY_CARS.includes(id)), 'a customer\'s car is never a special car');
+  ok(!JOB_CARS.includes('koenigsegg_jesko') && !JOB_CARS.includes('banshee_muscle') && !JOB_CARS.includes('titan_monster'), 'not the Jesko, Banshee or Titan');
+  same(dayJobs(7), dayJobs(7), 'same day, same jobs');
+  const seen = new Set();
+  for (let day = 0; day < 60; day++) {
+    const jobs = dayJobs(day);
+    assert.equal(jobs.length, 3); checks++;
+    same(jobs.map(j => j.id), [1, 2, 3].map(n => `d${day}-${n}`), `day ${day}: the job ids`);
+    same(jobs.map(j => `${j.from}|${j.to}|${j.pay}`).sort(), JOB_ROUTES.map(r => `${r.from}|${r.to}|${r.pay}`).sort(), `day ${day}: one job on each route`);
+    ok(jobs.every(j => JOB_CARS.includes(j.carId)), `day ${day}: only liftable customer cars`);
+    ok(new Set(jobs.map(j => j.carId)).size === 3, `day ${day}: three different cars`);
+    ok(jobs.every(j => /^d\d+-\d$/.test(j.id) && Object.isFrozen(j)), `day ${day}: ids are save-safe`);
+    seen.add(JSON.stringify(jobs.map(j => [j.carId, j.to, j.from])));
+  }
+  ok(seen.size > 40, `different days differ (${seen.size} different boards in 60 days)`);
+  ok(dayJobs(1).some(j => j.id === 'd1-1'), 'ids carry the day');
+  ok(dayJobs(-1).length === 3 && dayJobs(NaN).length === 3, 'a damaged day number still gives a board');
+  same([jobPay({pay: 300}, 'assisted'), jobPay({pay: 450}, 'assisted'), jobPay({pay: 600}, 'assisted')], [300, 450, 600], 'Assisted pays the listed amounts');
+  same([jobPay({pay: 300}, 'real'), jobPay({pay: 450}, 'real'), jobPay({pay: 600}, 'real')], [375, 563, 750], 'Real pays 25% more');
+  const title = jobTitle({carId: 'falcone_f42', to: 'tremblant-snow'});
+  assert.equal(title, `Fly the ${CARS.falcone_f42.name} to ${HELI_DESTINATIONS['tremblant-snow'].name}`); checks++;
+}
+
+// ---- the board, taking a job -------------------------------------------------
+{
+  const saves = [];
+  const session = newSession({saves});
+  const board = session.boardJobs();
+  assert.equal(board.length, 4); checks++;
+  same({...board[0]}, {id: 'own', own: true, carId: 'falcone_f42', title: 'Fly my car', pay: 0}, 'Fly my car is always first');
+  same(board.slice(1).map(j => ({id: j.id, carId: j.carId, from: j.from, to: j.to, pay: j.pay})),
+    dayJobs(1).map(j => ({id: j.id, carId: j.carId, from: j.from, to: j.to, pay: j.pay})), 'then today\'s three jobs (play day 1)');
+  ok(board.slice(1).every(j => !j.taken && !j.done && j.payNow === j.pay), 'none taken or done yet');
+  ok(newSession({mode: 'real'}).boardJobs().slice(1).every(j => j.payNow === jobPay(j, 'real')), 'Real shows the bigger pay');
+
+  const own = session.takeJob('own');
+  ok(own.ok && own.own && session.destination === null, 'Fly my car sets no destination');
+  ok(!session.takeJob('d9-1').ok && !session.takeJob('nope').ok, 'a job that is not on today\'s board is refused');
+  const homeJob = board.find(j => j.from === HOME_COURSE && j.to === 'tremblant-snow');
+  const savesBefore = saves.length;
+  const taken = session.takeJob(homeJob.id);
+  ok(taken.ok && taken.job.id === homeJob.id, 'a job is taken at the home pad');
+  same(session.takeEvents().map(e => e.type === 'radio' ? e.line : e.type), ['jobTaken', 'heli.radio.job.taken'], 'the job and the radio line');
+  ok(saves.length === savesBefore + 1 && heliOf(session.profile).jobs.taken === homeJob.id && heliOf(session.profile).jobs.day === 1, 'the job in hand is saved');
+  assert.equal(session.destination, 'tremblant-snow', 'the pick-up is here, so the destination is the drop-off'); checks++;
+  ok(HELI_RADIO_LINES['heli.radio.job.taken'] && HELI_RADIO_LINES['heli.radio.job.done'], 'both job radio lines exist');
+  ok(session.boardJobs().find(j => j.id === homeJob.id).taken, 'the board shows it taken');
+  const view = session.view();
+  assert.equal(view.loads.length, 2); checks++;
+  const jobLoad = view.loads.find(l => l.job === homeJob.id), ownLoad = view.loads.find(l => l.own);
+  ok(jobLoad && ownLoad && jobLoad.id === homeJob.carId && ownLoad.id === 'falcone_f42', 'both cars wait at the pad');
+  ok(Math.hypot(jobLoad.x - ownLoad.x, jobLoad.z - ownLoad.z) > 8, 'the customer\'s car is not on top of the player\'s');
+  ok(view.load.own, 'the single load the renderer draws is the player\'s car');
+  assert.equal(view.job.id, homeJob.id); checks++;
+  ok(session.takeJob(homeJob.id).ok && session.takeEvents().length === 0, 'taking the same job again is quiet');
+  const other = board.find(j => j.id !== homeJob.id && j.id !== 'own');
+  const refused = session.takeJob(other.id);
+  ok(!refused.ok && /drop/.test(refused.reason), 'one job at a time');
+  const dropped = session.dropJob();
+  ok(dropped.ok && dropped.dropped && heliOf(session.profile).jobs.taken === null && session.view().loads.length === 1, 'dropping hands it back and the car leaves');
+  ok(session.takeEvents().some(e => e.type === 'jobDropped'), 'and says so');
+  ok(session.takeJob(other.id).ok, 'then another can be taken');
+
+  // Not in the air.
+  run(session, 4, () => ({lift: 1}));
+  ok(!session.view().heli.onGround, 'in the air');
+  const air = session.takeJob('own');
+  ok(!air.ok && !session.dropJob().ok && !session.takeJob(homeJob.id).ok, 'the board works only on the ground at the home pad');
+}
+
+// A job that starts elsewhere: the destination is its pick-up, the car waits in
+// that zone, and hooking it points the way to the drop-off.
+{
+  const session = newSession();
+  const job = session.boardJobs().find(j => j.from === 'tremblant-snow');
+  ok(session.takeJob(job.id).ok, 'take the Snow to Panorama Ridge job at home');
+  assert.equal(session.destination, 'tremblant-snow', 'first to the pick-up'); checks++;
+  ok(session.view().loads.every(l => !l.job), 'its car is not here');
+  run(session, 4, () => ({lift: 1}));
+  const area = session.view().area;
+  run(session, 120, () => ({lift: 1}), v => v.heli.y > area.ceiling - 0.5);
+  run(session, 20, () => ({lift: 1}), () => session.cruiseOffered);
+  ok(session.acceptCruise(), 'cruise to the pick-up');
+  run(session, 2);
+  assert.equal(session.courseId, 'tremblant-snow'); checks++;
+  const v = session.view(), car = v.loads.find(l => l.job === job.id);
+  ok(car && car.id === job.carId && car.onGround, 'the customer\'s car waits at Tremblant Snow');
+  near(Math.hypot(car.x - v.zone.x, car.z - v.zone.z), 0, 0.01, 'in the landing zone');
+  ok(session.pressAutopilot() || session.autopilotOn, 'the autopilot is on');
+  run(session, 300, () => ({}), (view, seen) => seen.some(e => e.type === 'autopilotArrived'));
+  if (session.autopilotOn) session.pressAutopilot();
+  run(session, 60, view => pilot(view, {x: car.x, z: car.z, y: car.y + 15.2}, {speed: 4}),
+    view => Math.hypot(view.heli.x - car.x, view.heli.z - car.z) < 1 && Math.abs(view.heli.y - car.y - 15.2) < 0.6 &&
+      Math.hypot(view.heli.vx, view.heli.vy, view.heli.vz) < 0.5);
+  session.takeEvents();
+  const hooked = session.pressHook();
+  ok(hooked?.type === 'hooked' && hooked.job === job.id, 'the customer\'s car is hooked');
+  assert.equal(session.destination, 'panorama-ridge', 'hooking it sets the drop-off as the destination'); checks++;
+  ok(session.view().load.job === job.id && session.view().load.hooked, 'the car on the cable is the one the view reports');
+}
+
+// The same car for the job and the player: two cars, told apart.
+{
+  const session = newSession({carId: 'aurora_gt'});
+  const job = session.boardJobs().find(j => !j.own && j.carId === 'aurora_gt');
+  ok(job, 'day 1 has an Aurora job');
+  ok(session.takeJob(job.id).ok);
+  const loads = session.view().loads;
+  ok(loads.length === 2 && loads.every(l => l.id === 'aurora_gt') && loads.filter(l => l.own).length === 1 && loads.filter(l => l.job).length === 1,
+    'two Auroras, one the player\'s and one the customer\'s');
+  const customer = () => session.view().loads.find(l => l.job);
+  run(session, 40, v => pilot(v, {x: customer().x, z: customer().z, y: customer().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - customer().x, v.heli.z - customer().z) < 1 && Math.abs(v.heli.y - customer().y - 15.2) < 0.6 &&
+      Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.5);
+  session.takeEvents();
+  ok(session.pressHook()?.job === job.id, 'the hook takes the one under it');
+  ok(session.view().loads.find(l => l.job).hooked && !session.view().loads.find(l => l.own).hooked, 'and not the other');
+  const release = session.pressHook();
+  ok(release?.type === 'released', 'let go on the ground beside the pad');
+  ok(!session.takeEvents().some(e => e.type === 'delivered'), 'a customer\'s car is never "delivered" as the player\'s');
+  assert.equal(carAt(session.profile, 'aurora_gt'), HOME_COURSE); checks++;
+}
+
+// ---- flights ----------------------------------------------------------------
+const loadOf = (session, key) => session.view().loads.find(l => key === 'job' ? l.job : l.own);
+
+// Fly to a waiting car and hook it.
+function hookCar(session, key) {
+  const car = () => loadOf(session, key);
+  run(session, 60, v => pilot(v, {x: car().x, z: car().z, y: car().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - car().x, v.heli.z - car().z) < 1 && Math.abs(v.heli.y - car().y - 15.2) < 0.6 &&
+      Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.5);
+  return session.pressHook();
+}
+// With a car on the cable at home: up, autopilot to the edge, cruise, autopilot over the zone, off.
+function carryAcross(session, log) {
+  log.push(...run(session, 12, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.zone.y + 60})));
+  ok(session.pressAutopilot(), 'the autopilot takes the car toward the destination');
+  log.push(...run(session, 300, () => ({}), () => session.cruiseOffered));
+  ok(session.cruiseOffered, 'cruise is offered at the edge of the area');
+  ok(session.acceptCruise(), 'cruise');
+  log.push(...run(session, 2));
+  log.push(...run(session, 300, () => ({}), (v, seen) => seen.some(e => e.type === 'autopilotArrived')));
+  ok(session.view().load.hooked, 'the car came along');
+  session.pressAutopilot();
+}
+// Down onto the zone gently (or hold 6 m up), then H.
+function setDownAndRelease(session, log, {height = 0} = {}) {
+  const final = view => view.zone.y + 0.7 + 14.6 + height;
+  const hover = view => pilot(view, {x: view.zone.x, z: view.zone.z, y: height === 0 && view.heli.mode === 'real' ? Math.max(final(view), view.heli.y - 1.2) : final(view)}, {speed: 1});
+  if (height === 0) {
+    log.push(...run(session, 60, hover, view => view.load.onGround));
+    log.push(...run(session, 1, view => pilot(view, {x: view.heli.x, z: view.heli.z, y: view.heli.y})));
+  } else {
+    log.push(...run(session, 40, hover, view => Math.abs(view.heli.y - view.zone.y - 15.3 - height) < 0.4 && Math.hypot(view.heli.vx, view.heli.vy, view.heli.vz) < 0.3));
+  }
+  const released = session.pressHook();
+  log.push(...session.takeEvents());
+  return released;
+}
+
+function flyJob({mode = 'assisted', high = false} = {}) {
+  const saves = [];
+  const session = newSession({mode, saves});
+  const job = session.boardJobs().find(j => j.from === HOME_COURSE && j.to === 'tremblant-snow');
+  ok(session.takeJob(job.id).ok, 'take the Tremblant Woods to Tremblant Snow job');
+  const log = [...session.takeEvents()];
+  const hk = hookCar(session, 'job'); if (hk?.job !== job.id) console.log('HK', hk, job, JSON.stringify(session.view().loads));
+  ok(hk?.job === job.id, 'hook the customer car at the home parking spot');
+  carryAcross(session, log);
+  assert.equal(session.courseId, 'tremblant-snow'); checks++;
+  const creditsBefore = session.profile.credits;
+  if (high) {
+    const released = setDownAndRelease(session, log, {height: 6});
+    ok(released?.type === 'releasedHigh', 'released 6 m up');
+    log.push(...run(session, 10, () => ({}), (v, seen) => seen.some(e => e.type === 'drop')));
+    const drop = log.find(e => e.type === 'drop'), charge = log.find(e => e.type === 'charged' && e.kind === 'drop');
+    ok(drop && charge && charge.charged > 400 && charge.charged < 800, `a drop of ${drop?.dropMetres.toFixed(1)} m is charged ${charge?.charged}`);
+    ok(!log.some(e => e.type === 'jobDone'), 'a car dropped from height does not finish the job');
+    ok(heliOf(session.profile).jobs.taken === job.id && heliOf(session.profile).jobs.done.length === 0, 'the job stays in hand');
+    assert.equal(session.profile.credits, creditsBefore - charge.charged); checks++;
+    // Hook it again and set it down properly.
+    session.takeEvents();
+    run(session, 2, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.heli.y}));
+    ok(hookCar(session, 'job')?.type === 'hooked', 'hook the dropped car again');
+    run(session, 40, v => pilot(v, {x: v.zone.x, z: v.zone.z, y: v.zone.y + 22}, {speed: 2}),
+      v => Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 1 && Math.abs(v.heli.y - v.zone.y - 22) < 0.5 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < 0.3);
+    session.takeEvents();
+    log.length = 0;
+  }
+  const released = setDownAndRelease(session, log);
+  ok(log.some(e => e.type === 'setDown'), 'a gentle set-down in the zone');
+  assert.equal(released?.type, 'released'); checks++;
+  const done = log.find(e => e.type === 'jobDone');
+  ok(done && done.job.id === job.id, 'the job is done');
+  ok(log.some(e => e.type === 'radio' && e.line === 'heli.radio.job.done'), 'with the radio line');
+  ok(!log.some(e => e.type === 'delivered'), 'the player\'s own car is not involved');
+  ok(!log.some(e => e.type === 'charged'), 'a clean set-down costs no repairs');
+  return {session, job, done, saves, creditsBefore};
+}
+
+{
+  const {session, job, done, creditsBefore} = flyJob();
+  assert.equal(done.pay, 300); checks++;
+  assert.equal(session.profile.credits, creditsBefore + 300, 'credits rise by 300'); checks++;
+  same(heliOf(session.profile).jobs, {day: 1, taken: null, done: [job.id]}, 'the save marks it done and clears the job in hand');
+  ok(session.boardJobs().find(j => j.id === job.id).done, 'the board shows it done');
+  ok(session.view().loads.some(l => l.id === job.carId && !l.job && !l.own), 'the customer\'s car stays where it was set down');
+  ok(carAt(session.profile, job.carId) === HOME_COURSE && !Object.hasOwn(heliOf(session.profile).carsAt, job.carId), 'nothing is saved about where it is');
+  ok(session.raceHereOffer() === null, 'no Race here for a customer\'s car');
+  ok(!session.takeJob(job.id).ok, 'and the board is only at home anyway');
+  // Next visit, same day: the job cannot be taken again.
+  const kept = session.leave();
+  const again = newSession({profile: kept});
+  const refused = again.takeJob(job.id);
+  ok(!refused.ok && /done/.test(refused.reason), 'a done job cannot be taken again that day');
+  ok(again.boardJobs().find(j => j.id === job.id).done, 'and shows as done');
+  ok(again.takeJob(again.boardJobs().find(j => j.id !== job.id && j.id !== 'own').id).ok, 'but the other two can be');
+  // Next play day: new jobs and nothing taken.
+  const tomorrow = newSession({profile: kept, today: DAY2});
+  const jobs2 = tomorrow.boardJobs();
+  same(jobs2.slice(1).map(j => j.id), ['d2-1', 'd2-2', 'd2-3'], 'a new play day, new jobs');
+  ok(jobs2.slice(1).every(j => !j.done && !j.taken), 'none done or taken');
+  ok(JSON.stringify(jobs2.slice(1).map(j => [j.carId, j.from, j.to])) !== JSON.stringify(again.boardJobs().slice(1).map(j => [j.carId, j.from, j.to])), 'and they differ from yesterday\'s');
+  ok(tomorrow.takeJob('d2-1').ok, 'a new job can be taken');
+}
+
+{
+  const {session, done, creditsBefore} = flyJob({mode: 'real'});
+  assert.equal(done.pay, 375); checks++;
+  assert.equal(session.profile.credits, creditsBefore + 375, 'Real: credits rise by 375'); checks++;
+}
+
+{
+  // A drop from height charges the repair and leaves the job in hand; hooking
+  // the car again and setting it down properly finishes it.
+  const {session, job, done} = flyJob({high: true});
+  assert.equal(done.pay, 300); checks++;
+  same(heliOf(session.profile).jobs, {day: 1, taken: null, done: [job.id]}, 'finished after the second, gentle set-down');
+}
+
+// A crash with the customer's car on the cable sends it back to its pick-up.
+{
+  const session = newSession({mode: 'real'});
+  const job = session.boardJobs().find(j => j.from === HOME_COURSE && j.to === 'tremblant-snow');
+  session.takeJob(job.id);
+  ok(hookCar(session, 'job')?.type === 'hooked', 'hooked');
+  const before = session.view().loads.find(l => l.job);
+  const spot = {x: before.x, z: before.z};
+  run(session, 20, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.zone.y + 40}));
+  ok(session.view().load.hooked && !session.view().load.onGround, 'the customer car is in the air');
+  const events = run(session, 60, () => ({lift: -1}), (v, seen) => seen.some(e => e.type === 'crashed' || e.type === 'touchdown'));
+  ok(events.some(e => e.type === 'crashed'), 'the helicopter crashes');
+  run(session, 4);
+  ok(session.courseId === HOME_COURSE && session.phase === 'flying', 'back at the home pad');
+  const back = session.view().loads.find(l => l.job);
+  ok(back && !back.hooked && Math.hypot(back.x - spot.x, back.z - spot.z) < 0.5, 'the customer\'s car is back where it waited');
+  assert.equal(heliOf(session.profile).jobs.taken, job.id, 'and the job is still in hand'); checks++;
+  assert.equal(session.destination, 'tremblant-snow', 'pointing at the drop-off again'); checks++;
+}
+
+// A job left in hand is picked up again in the next visit.
+{
+  const first = newSession();
+  const job = first.boardJobs().find(j => j.from === 'tremblant-snow');
+  first.takeJob(job.id);
+  const kept = first.leave();
+  const next = newSession({profile: kept});
+  assert.equal(next.view().job.id, job.id); checks++;
+  assert.equal(next.destination, 'tremblant-snow', 'a new visit points at the pick-up'); checks++;
+  const stale = newSession({profile: kept, today: DAY2});
+  ok(stale.view().job === null && stale.destination === null, 'a job from an earlier play day is out of date');
+  ok(stale.takeJob('d2-1').ok, 'and does not block a new one');
+}
+
+// ---- Race here ---------------------------------------------------------------
+function flyOwnCar({owned}) {
+  const session = newSession({profile: profileWith({owned})});
+  ok(session.raceHereOffer() === null, 'no offer before anything is delivered');
+  ok(session.takeJob('own').ok);
+  session.setDestination('tremblant-snow');
+  const log = [];
+  ok(hookCar(session, 'own')?.type === 'hooked', 'hook the player\'s own car');
+  carryAcross(session, log);
+  const released = setDownAndRelease(session, log);
+  ok(released?.type === 'released' && log.some(e => e.type === 'delivered' && e.courseId === 'tremblant-snow'), 'the car is delivered to Tremblant Snow');
+  return {session, log};
+}
+{
+  const {session} = flyOwnCar({owned: OWNED});
+  same(session.raceHereOffer(), {courseId: 'tremblant-snow', carId: 'falcone_f42'}, 'Race here is offered on an owned course');
+  assert.equal(carAt(session.profile, 'falcone_f42'), 'tremblant-snow'); checks++;
+  // Hooking it again takes the offer back.
+  run(session, 2, v => pilot(v, {x: v.heli.x, z: v.heli.z, y: v.heli.y}));
+  ok(hookCar(session, 'own')?.type === 'hooked' && session.raceHereOffer() === null, 'lifting the car again withdraws the offer');
+}
+{
+  const {session} = flyOwnCar({owned: []});
+  assert.equal(session.raceHereOffer(), null, 'no offer on a course that is not owned'); checks++;
+  assert.equal(carAt(session.profile, 'falcone_f42'), 'tremblant-snow', 'the car is still delivered'); checks++;
+}
+
+// ---- the board in the page --------------------------------------------------
+{
+  const session = newSession({mode: 'real'});
+  const view = session.view();
+  ok(atHomePad(view), 'on the home pad on the ground');
+  const markup = dispatchBoardMarkup(view, {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode});
+  ok(markup.includes('class="heli-board"') && markup.includes('Dispatch board'), 'the panel');
+  ok(/Fly my car/.test(markup) && markup.includes('data-heli-board="take:own"'), 'Fly my car is listed with a button');
+  for (const job of session.boardJobs().slice(1)) {
+    ok(markup.includes(jobTitle(job)) && markup.includes(`data-heli-board="take:${job.id}"`), `${job.id} is listed: ${jobTitle(job)}`);
+    ok(markup.includes(`${jobPay(job, 'real')} credits`), `${job.id} shows ${jobPay(job, 'real')} credits in Real`);
+  }
+  ok(markup.includes('+25% in Real'), 'Real shows the bonus');
+  ok(!markup.includes('Race here'), 'no Race here without an offer');
+  const assisted = dispatchBoardMarkup(view, {jobs: newSession().boardJobs(), mode: 'assisted'});
+  ok(!assisted.includes('+25% in Real') && assisted.includes('300 credits'), 'Assisted shows the plain pay');
+  ok([...markup.matchAll(/class="([^"]*)"/g)].every(m => m[1].split(" ").every(name => name.startsWith("heli-board"))), "every class name starts with heli-board");
+  // Only on the home pad's ground.
+  const flying = {...view, heli: {...view.heli, onGround: false}};
+  assert.equal(dispatchBoardMarkup(flying, {jobs: session.boardJobs()}), ''); checks++;
+  assert.equal(dispatchBoardMarkup({...view, courseId: 'tremblant-snow'}, {jobs: session.boardJobs()}), ''); checks++;
+  assert.equal(dispatchBoardMarkup({...view, phase: 'cruise'}, {jobs: session.boardJobs()}), ''); checks++;
+  assert.equal(dispatchBoardMarkup(null, {jobs: session.boardJobs()}), ''); checks++;
+  assert.equal(dispatchBoardMarkup(view, {jobs: []}), ''); checks++;
+  // Race here shows wherever the offer is.
+  const race = dispatchBoardMarkup(flying, {jobs: session.boardJobs(), offer: {courseId: 'tremblant-snow', carId: 'falcone_f42'}});
+  ok(race.includes('data-heli-board="race-here"') && race.includes('Tremblant Snow') && !race.includes('Dispatch board'), 'Race here away from the pad');
+  // A taken job offers to drop; a done job shows done; names are escaped.
+  session.takeJob(session.boardJobs()[1].id);
+  const taken = dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), mode: 'real'});
+  ok(taken.includes('data-heli-board="drop"') && taken.includes('heli-board-taken'), 'a taken job offers Drop job');
+  const odd = dispatchBoardMarkup(view, {jobs: [{id: 'own', own: true, carId: 'falcone_f42', title: 'x', pay: 0},
+    {id: 'a"b', carId: 'falcone_f42', from: 'tremblant-woods', to: 'tremblant-snow', pay: 1, payNow: 1, done: true}]});
+  ok(!odd.includes('a"b') && odd.includes('Done today'), 'markup is escaped');
+
+  // The click handler drives the real session through the app's own hooks.
+  const fresh = newSession();
+  const log = [];
+  let raced = null;
+  const app = {heliSession: fresh, heliView: () => fresh.view(), _heliEvents: events => log.push(...events), raceHere: offer => { raced = offer; return true; }};
+  const target = fresh.boardJobs()[2];
+  ok(handleBoardAction(`take:${target.id}`, app).ok && heliOf(fresh.profile).jobs.taken === target.id, 'the Take job button takes the job');
+  ok(log.some(e => e.type === 'jobTaken') && log.some(e => e.type === 'radio' && e.line === 'heli.radio.job.taken'), 'and its events reach the app');
+  ok(!handleBoardAction(`take:${fresh.boardJobs()[3].id}`, app).ok, 'a second job is refused');
+  ok(handleBoardAction('drop', app).dropped && heliOf(fresh.profile).jobs.taken === null, 'Drop job hands it back');
+  ok(handleBoardAction('take:own', app).ok, 'Fly my car');
+  assert.equal(handleBoardAction('race-here', app), false); checks++;
+  assert.equal(raced, null, 'no Race here without an offer'); checks++;
+  ok(!handleBoardAction('nonsense', app).ok && !handleBoardAction('take:own', {}).ok && !handleBoardAction(undefined, app).ok, 'unknown actions and no helicopter visit are refused');
+  const flown = flyOwnCar({owned: OWNED}).session;
+  handleBoardAction('race-here', {heliSession: flown, raceHere: offer => { raced = offer; return true; }});
+  same(raced, {courseId: 'tremblant-snow', carId: 'falcone_f42'}, 'Race here hands the offer to the app');
+
+  // createDispatchBoard with a minimal fake root.
+  const handlers = [];
+  const root = {innerHTML: '', hidden: true, addEventListener: (type, fn) => handlers.push([type, fn]), removeEventListener: () => {}};
+  const board = createDispatchBoard({root, app});
+  const drawn = board.render();
+  ok(drawn.includes('Dispatch board') && root.innerHTML === drawn && root.hidden === false, 'the board draws into its root');
+  const before = root.innerHTML;
+  board.render();
+  assert.equal(root.innerHTML, before); checks++;
+  const click = {target: {closest: () => ({dataset: {heliBoard: `take:${fresh.boardJobs()[1].id}`}})}};
+  handlers.find(([type]) => type === 'click')[1](click);
+  ok(heliOf(fresh.profile).jobs.taken === fresh.boardJobs()[1].id && root.innerHTML.includes('Drop job'), 'a click takes the job and redraws');
+  handlers.find(([type]) => type === 'click')[1]({target: {closest: () => null}});
+  const away = {...app, heliSession: null, heliView: () => null};
+  const gone = createDispatchBoard({root: {innerHTML: 'x', addEventListener() {}, removeEventListener() {}}, app: away});
+  assert.equal(gone.render(), ''); checks++;
+}
+
+// The board never changes race state: it takes and reads the session only.
+{
+  const session = newSession();
+  const before = JSON.stringify({...session.profile, heli: undefined, credits: undefined});
+  dispatchBoardMarkup(session.view(), {jobs: session.boardJobs(), offer: session.raceHereOffer(), mode: session.mode});
+  assert.equal(JSON.stringify({...session.profile, heli: undefined, credits: undefined}), before); checks++;
+}
+
+console.log(`test-heli-jobs: ${checks} checks passed`);

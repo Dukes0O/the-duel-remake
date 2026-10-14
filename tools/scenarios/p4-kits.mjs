@@ -5,32 +5,16 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
-import {build} from 'vite';
 import {COURSE} from '../../src/config.js';
 
 const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const home = join(root, 'public/assets/models/circuits/kits');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 
-async function nativeBundle() {
-  const entry = join(root, '.qa-dist/p4-kits.virtual.js').replaceAll('\\', '/');
-  const result = await build({root, configFile: false, logLevel: 'silent', plugins: [{
-    name: 'p4-kits-private',
-    resolveId(id) {if (id.replaceAll('\\', '/') === entry) return '\0p4-kits';},
-    load(id) {
-      if (id === '\0p4-kits') return "export {Group,Box3,Vector3,AnimationMixer,Raycaster,LoopOnce} from 'three';" +
-        "export {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';";
-    },
-  }], build: {write: false, minify: false,
-    lib: {entry, name: 'P4KitsQa', formats: ['iife']}}});
-  return (Array.isArray(result) ? result[0] : result).output.find(row => row.type === 'chunk').code;
-}
-
-
-async function captureYetiNight(context, {quality, bundle, piece}) {
+async function captureYetiNight(context, {quality, piece}) {
   const stageIndex = COURSE.findIndex(course => course.id === 'harbor-highlands');
   assert.ok(stageIndex >= 0 && COURSE[stageIndex].timeOfDay === 'night');
-  await context.navigate('/tools/menu-check.html');
+  await context.navigate('/tools/menu-check.html?p4-kits-native=1');
   await context.waitFor('window.__qaApp?.visualReady && !!window.__render', 'night character renderer ready', 60000);
   await context.evaluate(`(() => {
     const app=window.__qaApp;
@@ -46,7 +30,6 @@ async function captureYetiNight(context, {quality, bundle, piece}) {
   })()`);
   await context.waitFor(`(() => {const a=window.__qaApp;a.onFrame?.(a.duel.state,0);window.__render.renderFrame();
     return a.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`, 'native alpine night ready', 60000);
-  await context.evaluate(bundle);
   const file = quality === 'high' ? piece.high : piece.low;
   const bytes = readFileSync(join(home, file));
   const setup = await context.evaluate(`(async () => {
@@ -246,12 +229,11 @@ export async function run(context) {
       basis: 'Other groups retain their prior verified captures only after exact GLB SHA-256, id, file and quality checks.'};
   }
   persist();
-  const bundle = await nativeBundle();
   const stageIndex = COURSE.findIndex(course => course.id === 'pacific-canyon');
   assert.ok(stageIndex >= 0);
   for (const quality of ['high', 'performance']) {
     await context.command('Emulation.setDeviceMetricsOverride', {width: 1400, height: 900, deviceScaleFactor: 1, mobile: false});
-    await context.navigate('/tools/menu-check.html');
+    await context.navigate('/tools/menu-check.html?p4-kits-native=1');
     await context.waitFor('window.__qaApp?.visualReady && !!window.__render', 'kit renderer ready', 60000);
     await context.evaluate(`(() => {
       const app=window.__qaApp;
@@ -268,7 +250,6 @@ export async function run(context) {
     })()`);
     await context.waitFor(`(() => {const a=window.__qaApp;a.onFrame?.(a.duel.state,0);window.__render.renderFrame();
       return a.visualReady&&document.querySelector('#renderer-loading')?.hidden;})()`, 'ordinary circuit ready', 60000);
-    await context.evaluate(bundle);
     for (const group of groups) {
       const pieces = manifest.pieces.filter(p => p.group === group);
       const payload = pieces.map(p => {
@@ -375,7 +356,7 @@ export async function run(context) {
         await context.screenshot('p4-kits-yeti-' + clip + '-' + quality);
       }
     }
-    report.yetiNight.push(await captureYetiNight(context, {quality, bundle, piece: manifest.pieces.find(piece => piece.id === 'yeti')}));
+    report.yetiNight.push(await captureYetiNight(context, {quality, piece: manifest.pieces.find(piece => piece.id === 'yeti')}));
     persist();
   }
   assert.equal(report.yetiNight.length, 2);

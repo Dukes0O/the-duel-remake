@@ -84,3 +84,58 @@ Frozen aa7c0f80 is a clean conflict-free union of reviewed14915 pin/manualtiming
 Corrected originalRustwall native actualprivate51749 (not5174), memory,39914.3589ms/exit0, errors/warnings/loadErrors0, twelve matchedviews/eightcourseviews/twentyscreenshots, allsix routesa/b/c*High/Performance exact gateendpoint/support/179banks guards pass. Packet separately identifies round1 cameraRecipe and accepted P2round10 runtime wall/wash hashes as proven by the named accepting review; explicit historical/localmanifestprecedence is retained. Root inspected actualcurrent Rustwall approach and first-person capture pixels; neither is blank, no new art verdict is implied. Global timing and bothfirst-person/fourRustwall costentries explicitlynot-run; no frame/legacy timingpass or whole129-scenario sweep claim.
 
 InitialRustwall readinessfailure66879.272ms/private33823 has a proved current-rule cause: oldDuel entry cannot construct HiddenRoad; onlythetool entry changed. Firstfailure retained through this correction, its verdict now consumed. Conflict-free source merge needs no repeatedlane/build/native. Root recycles only this ownqa-browser-pins folder/branch and consumed pins-final-234493ef/pins-corrected-aa7c0f80 evidence after facts are committed. Currentassets/historicalmanifests/acceptingartnotes/manualtiming exact; dedicatedmanualrustwall-frame staleDuel entry is flagged for its laterquietrecipe work, untouched here. ParentQA remains open for originalaudio-recorder/baseline and other realruntime faults. No release/push/realsaves/livefolder/port5174.
+## Settled current Harbour and telemetry admission
+
+Director grant f7ada315 repairs two stale QA entry assumptions. Harbour's former index 16 now names Tremblant Woods. Resolve Harbour Lights from the actual menu options and getMenuCourse by stable id; require startCampaign success and the real Harbour Grand Prix field, with the authored four-lap request. Keep every original five-light, eight-car, eight-row, four-lap, zero-traffic, running-order, hidden-police and photo guard in both qualities.
+
+Telemetry no longer requires the Grand Prix switch to be dev: it is released on. Require enabled exactly true. Keep the real named-player purchase, isolated physical/backup stores, route C, seed 17, track-v1-6eceb630, Time Trial finish, durable saved bytes and read-only/focus assertions unchanged.
+
+Harbour's original two-car baseline and frame measurement/comparison bodies remain unchanged behind DUEL_BROWSER_LEGACY_TIMING=1. Default gameplay skips those timing calls and records not-run / separate quiet manual measurement / no frame acceptance. Historical 33.5 ms and 12 slow-frame observation values and pacingMisses remain unchanged; they never become a thrown or official frame pass. All original gameplay and photograph steps remain.
+
+Changed assertions: only the stale switch-state admission is replaced by actual enabled admission; Harbour gains actual stable-id/start/course/Grand Prix field checks. No gameplay guard, metric or tolerance is relaxed. No production, harness, dispatcher, physics, storage, asset or pin change. Source-only preparation; native, lane gate and build are unrun pending Root review and GO.
+
+Removed: stale numeric Harbour stage admission, obsolete dev-only telemetry admission and unconditional Harbour legacy timing. Manual timing bodies remain available explicitly; no legacy scenario or evidence is deleted.
+
+
+## Current admission slice actual acceptance — 14 October
+
+Frozen02b26308 contains reviewedf6dcd2be recipe bytes exactly. Original nearby19/19/jobs4/notRun0/exit0,duration258045.3187ms/wall274570.8864ms; build1.14s/wall2048.9349ms. ActualHarbour42172/memory124480.0285ms,eightHigh/Performance images/errorswarnings0, unchanged sampledfive-light/eight-car/eight-row/four-lap/zero-traffic and HUD guards pass; defaulttimingexplicitnot-run. Rootreviewedactualviewportpixels; no fullfield/handling/race-finish/frame claim from thosepictures.
+
+Existing actualtelemetry59272/memory58859.2691ms, twoHigh/Performance pictures/errorswarnings0. Bothnamedplayers: writer1/nativeDbOpens0/completedLaps2/bestLap54270ms/221samples/3sectors/2losses/2traces/focusReadOnlytrue. Originalrealpurchase/routeC/seed17/track-v1-6eceb630/nativefinish/exactdurable-byte isolation pass. RootviewedrealHightelemetryspeedgraph/sector/lossUI. All27referenceacceptance stays separate. Same independentreviewCLEAR; cleanintegrationmerge no rerun. Sourceparent remainsopen for other runtime/audio cases, no whole129/23-failure resolution or frame/release/push claim. Consumed own receipts recycled after verdict commits.
+
+## Settled kit module identity repair
+
+Director grant 3760b089 follows the original p4-kits packet: all gameplay guards completed with 40 pictures, but the dispatcher correctly rejected four duplicate-Three warnings. The private IIFE bundled another Three/GLTFLoader copy and evaluated it once for the ordinary kit view and once for Yeti night in each quality. The installed Three module warns when its code runs again after the native page already registered it.
+
+Reuse the existing P4KitsQa API through an explicit p4-kits-native=1 query in tools/menu-check.js. Its seven original exports import through the same Vite QA module graph as the native renderer, after isolated storage setup. Default menu startup and all memory-backup, blocked-IDB, archive and origin fixtures retain their exact source. The kit recipe changes only its two existing menu URLs and removes its private bundler/injections; all other API uses, predicates, pins, High/LOD decoding, animation, grounding, framing, read-only state, disposal and photo steps remain exact. No marker deletion, warning suppression, hashed export guess, dependency, harness or production seam is added.
+
+Changed assertions: none. The dispatcher still requires zero warnings. Source-only preparation: original nearby gate, build and one current native are unrun pending Root review and GO. No full-sweep, frame or new art verdict is claimed.
+
+Removed: the duplicate private Vite IIFE bundle and its four per-run evaluations. The existing namespace and current model/photo recipe remain; no source asset or foreign file removed.
+
+
+## Kit module-sharing actual acceptance — 14 October
+
+Reviewedf61881b2 originalnearby19/19/notRun0/jobs4/155341.3453ms/wall168495.5983ms, build589ms/wall1114.9892ms. ONEoriginalp4-kits native63165/memory/85465.7074ms/exit0: all35acceptedmodels eachHigh/Performance(70rows),12groupcaptures+2Yeti-nightlegs,40actualpictures, issues[]/warnings[]. AllfourduplicateThreewarnings eliminatedbysharedmoduleidentity, nevermarkerhiding/suppression/dispatcherwaiver. Originalpins/animation/grounding/framing/readOnly/disposalguards pass; actualmanifestSHA36c8ce04de78d12d262cc9b8232d60f880ebd987ba30c85fb096800c3ca1e72f. RootviewedactualHighsafetyandPerformanceforest photos; no new art or frameverdict. Cleanmerge no repeatgate; parentopenforremaining6originalfailures, manualrustwallframeaccountednotpassed. ConsumeownQAkit-final-f61881b2 packetaftercommittedverdict; no game/model/harness/defaultstorage change.
+
+
+## Current Arena baseline source
+
+Claude's current-integration control now uses the existing public-only Arena recipe automatically when no explicit input report is supplied. The captured base must be in integration's first-parent history; a detached full-check source keeps its own captured base even if integration advances. Committed and actual candidate src/public bytes must match. Every archived blob is verified before the sole owned recipe overlay; the archive manifest and overlay hash are recorded and rechecked after the child closes. Current controls are labelled repeatability checks, never the historical pre-card regression.
+
+The child runs the same eight High/Performance native cases before candidate navigation. Its real browser report, native inputs, logs, pictures and provenance are copied to the candidate packet before only its verified snapshot/junction are recycled. Failure propagates; a retention failure leaves the owned snapshot for recovery. Parent environment is untouched. Explicit input reports, no-options preparation and three-argument comparison retain the strict 0f934845 contract.
+
+Changed assertions: additive pure provenance cases reject wrong source/tree/archive/overlay identities, missing provenance, incomplete/duplicate matrix rows and empty inputs. All original native inputs, actor/spawn comparisons, contact/restoration checks, crossing classifier, shove minima, wreck/protection and wall guards remain unchanged. The existing 150-RAF diagnostic body is unchanged behind DUEL_BROWSER_LEGACY_TIMING=1; ordinary output says not run and grants no frame pass.
+
+Checks: source preparation only. New pure cases were authored first and remain UNRUN; no executed RED, native, lane, build or timing result is claimed. Root's independent source review and execution release are pending.
+
+Removed: the ordinary path's manual baseline-input prerequisite and unconditional legacy timing. Historical preparation/comparison and the explicit quiet timing recipe remain available. No runtime, asset, physics, storage or general harness change.
+
+
+## Current Arena baseline acceptance
+
+Source 96bb1d47 passed the original nearby tier 20/20, notRun0/jobs4, 204324.7453 ms (214370.4409 ms wall), build823 ms (1541.8228 ms wall), and Root's independent source review. One original native run passed in 558988.1511 ms on private14136/memory-only, 202 candidate pictures, no browser issues or warnings. Its automatic public-only baseline also passed at private46212, 24 pictures, all eight cases. All1545 archived files were verified, source/public trees matched, and only the owned recipe was overlaid. The checked temporary snapshot was recycled after genuine outputs were retained.
+
+The candidate passes eight exact public controls, sixteen attacker-role cases, eight additional walls, four obliques, sixteen ordinary shove cases and four normal-wall cases. All eight baseline/candidate traces and measured geometries match exactly. Six samples retain the explicitly classified inherited body/rail crossing; the existing centre containment and original predicates pass. This is captured-source repeatability, not historical pre-card regression or new whole-body containment clearance. Root viewed actual High world and Performance close controls. Both timing rows explicitly say not run. No global physics, assets, save or frame claim.
+
+This conflict-free merge consumes the exact existing evidence without another gate. The parent remains open for the answered audio comparator and the two scoped UI/world-identity repairs, plus separate recorder and quiet-frame failures. Its owned Arena lane and consumed packet can now be cleared. No release or push.

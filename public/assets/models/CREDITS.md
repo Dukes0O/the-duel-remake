@@ -118,3 +118,7 @@ aviation pump use scalar PBR materials and no external mesh or texture donor.
 No helicopter donor is included in these three accessories. Their source and
 export measurements are recorded in `tools/art/heli-source-candidates.json`;
 actual accessory art acceptance is still pending.
+
+`heli/fire-fx.png` (the H2 fire, smoke, steam and spray atlas) is coloured
+and packed from sprites in the **Kenney** [Particle Pack](https://kenney.nl/assets/particle-pack),
+CC0, by `tools/art/fire-fx.py`. The ember frame is drawn by the same script.

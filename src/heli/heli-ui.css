@@ -1,0 +1,59 @@
+/* Kestrel One's instruments (docs/HELICOPTER.md section 8). While flying the
+   race HUD steps aside; the panel sits along the bottom like a cockpit. */
+.heli-active #race-hud,.heli-active .weapon-hud,.heli-active .combat-upgraded-hud,.heli-active .rear-view-frame{display:none}
+.heli-panel{position:absolute;inset:0;z-index:6;pointer-events:none;color:var(--ink,#f3eddf);text-shadow:0 2px 10px #0008}
+.heli-panel[hidden]{display:none}
+.heli-top{position:absolute;left:24px;right:24px;bottom:22px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.heli-instruments{display:flex;align-items:stretch;gap:6px;padding:10px 12px;background:#0f1614d9;border:1px solid #ffffff1f;
+  border-radius:6px;backdrop-filter:blur(6px)}
+.heli-gauge{min-width:88px;padding:4px 8px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid #ffffff14}
+.heli-gauge:last-child{border-right:0}
+.heli-gauge span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
+.heli-gauge strong{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.heli-gauge small{font-size:10px;color:var(--muted,#b6b1a5);font-variant-numeric:tabular-nums}
+.heli-gauge.warn strong{color:#ff7a4d}
+.heli-gauge.warn span{color:#ff9a75}
+.heli-horizon{position:relative;width:74px;height:74px;margin:0 6px;border-radius:50%;overflow:hidden;border:2px solid #d8d2c2;background:#5b4a32;flex:none}
+.heli-horizon-ball{position:absolute;left:-50%;right:-50%;top:-50%;bottom:50%;transform-origin:50% 100%;background:#3d6f99;border-bottom:2px solid #f3eddf}
+.heli-horizon-mark{position:absolute;left:18px;right:18px;top:50%;height:3px;margin-top:-1px;background:#ffcf3f;border-radius:2px;box-shadow:0 0 0 1px #0006}
+.heli-status{display:flex;gap:18px;padding:4px 12px;font-size:10px;letter-spacing:2px;font-weight:700;color:#d8d2c2;background:#0f1614cc;border-radius:4px}
+.heli-panel kbd{display:inline-block;margin-left:4px;padding:0 5px;border:1px solid #ffffff4d;border-radius:3px;font:inherit;color:var(--ink,#f3eddf)}
+.heli-side{position:absolute;top:96px;right:28px;bottom:150px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;overflow:auto;pointer-events:auto}
+.heli-controls{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.heli-lessons,section.heli-board{width:300px;padding:10px;background:#0f1614d9;border:1px solid #ffffff1f;border-radius:6px}
+.heli-lessons>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
+.heli-lessons ul,.heli-board ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.heli-lessons li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.heli-lessons li.heli-lesson-locked{color:#ffffff66}
+.heli-lessons li.heli-lesson-done span{color:#9fd49a}
+.heli-lessons p{margin:6px 0;font-size:14px;line-height:1.35}
+.heli-lessons button,.heli-board button{padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.heli-lessons button:hover,.heli-board button:hover{background:#ffffff26}
+.heli-lessons small{font-size:10px;color:#ffffff66}
+.heli-skip{margin-top:8px;width:100%}
+.heli-lesson-hold{height:6px;margin:4px 0 8px;background:#ffffff1a;border-radius:3px;overflow:hidden}
+.heli-lesson-hold span{display:block;height:100%;background:#ffcf3f}
+.heli-board li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:12px;padding:5px 0;border-top:1px solid #ffffff14}
+.heli-board li:first-child{border-top:0}
+.heli-board .heli-board-text{font-weight:650}
+.heli-board .heli-board-pay,.heli-board .heli-board-pickup{grid-column:1;color:var(--muted,#b6b1a5);font-size:11px}
+.heli-board .heli-board-button,.heli-board .heli-board-note{grid-column:2;grid-row:1 / span 2;align-self:center}
+.heli-board .heli-board-done{opacity:.6}
+.heli-board-title{margin:0;font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
+.heli-board-race{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:13px}
+.heli-board-host[hidden]{display:none}
+.heli-route{display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:10px;background:#0f1614d9;border:1px solid #ffffff1f;border-radius:6px;min-width:230px}
+.heli-route>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
+.heli-route button{padding:7px 10px;text-align:left;font:600 12px/1.2 inherit;letter-spacing:.5px;color:var(--ink,#f3eddf);background:#ffffff0f;
+  border:1px solid #ffffff26;border-radius:4px;cursor:pointer}
+.heli-route button:hover{background:#ffffff1f}
+.heli-route button.on{border-color:var(--accent,#ff5429);background:#ff54291f}
+.heli-route .heli-pump{margin-top:6px;border-color:#ffcf3f80}
+.heli-route button:disabled{opacity:.5;cursor:default}
+.heli-prompt{padding:8px 12px;font-size:13px;font-weight:650;background:#ff5429d9;border-radius:4px}
+.heli-notices{position:absolute;top:110px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px}
+.heli-notices p{margin:0;padding:7px 14px;font-size:14px;font-weight:650;background:#0f1614e6;border:1px solid #ffffff26;border-radius:4px}
+.heli-radio{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);max-width:min(640px,80%);padding:8px 14px;font-size:15px;
+  line-height:1.35;background:#0f1614e6;border-left:3px solid #ffcf3f;border-radius:3px}
+.heli-radio b{margin-right:8px;font-size:10px;letter-spacing:2.5px;color:#ffcf3f}
+.heli-radio[hidden]{display:none}
