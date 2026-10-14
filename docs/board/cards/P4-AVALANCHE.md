@@ -149,3 +149,13 @@ Report all three times. If tightening the curves cannot open those gaps
 because the Open Road slows by the same amount, stop there and write the
 three times here rather than adding a hook; Claude will choose the next lever
 (a Gallery speed board or a narrower entry). The entrance pillar answer stands.
+
+## Director answered geometry claim — 14 October
+
+P4-SUMMIT's accepted round-three/current-signature source merged green ab9b84e9 (103/103/build/review); integration was pulled before this new own lane, codex/p4-avalanche-geometry. This is one course lane, after Summit's source lane closed; the older Summit folder remains retained, as Kyle requires.
+
+Own src/circuits/summit-run.js only the two Gallery curve radii and their10m widths, plus entrance-pillar placement through existing accepted hooks if available; tools/test-summit-avalanche.mjs only relevant existing assertions; docs/changes/P4-AVALANCHE.md. Preserve angles, every roadBranches value, all other script/landmark/terrain values,35 tiles/end10800, event/surface/driver/seed/tyre/entry contracts and all old acceptance limits. Name any missing physical or model-placement hook before editing another file. Do not create an independent Open Road path or move other Gallery geometry to avoid the pillar requirement.
+
+Use the existing actual memory-only native F42/winter/.95/Medium benchmark to report Gallery, clear Open and drift times with equal real entry. Targets remain18.4–19.2s Gallery, clear0.8–1.6s faster and drift3.5–6.5s slower. Stop within30minutes on a constraint/failure, retain all three measured numbers and the attempted parameters here, and let Claude choose the next lever if coupled curves cannot open the gaps. No driver/surface/event tweak or invented T. Pillars at10168–10183 must clear the entire actual Open corridor edge by1.5m; use real rendered/collider geometry, ask for an exact hook if needed.
+
+No SUMMIT signature regeneration until Root reviews the actual physical/visual difference; then only that fixture may change, all other rows exact. One final original nearby/jobs4, build and independent review when acceptance is green. Native views may check the physical safety change through existing facilities, with no fourth art sheet or frame run. Questions stay on this card. Root owns shared metadata/merge/own-lane cleanup. Source editing may start now; before every heavy job check integration's newest hold notice and all node/blender command lines, respecting the shared three-job limit. No release/push/liveport/real saves.
