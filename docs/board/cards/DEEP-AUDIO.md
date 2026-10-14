@@ -79,3 +79,7 @@ Revised dev source c1408cbd integrated:55/55 original nearby, zero failures/unru
 - Bubbles and cave pass as OGG, saving about 248 KB. The FLAC files are removed.
 
 Listening is complete. What remains is the real in-game mix, now that DEEP-ZONE has merged: one in-game listen on the Kelp Coast in the full check or the Kelp Coast finishing pass. waiting_on is cleared.
+
+## Native mix dependency — 13 October evening
+
+The eight cues and round-two listening are accepted. The remaining real Kelp Coast mix is blocked on DEEP-TRAIL, which waits for Kyle's storyboard. Production main creates App without Deep providers; App defaults to an empty list, and installDeepCourse returns before installing a journey when no provider is supplied. The test-only kelp provider is not authored playable content. Real place, log and pearl events therefore cannot be exercised in a Kelp Coast journey yet. Keep the native mix check open; do not add placeholder content or claim the isolated listening reel proves it. Existing source, assets, gains and mastering remain unchanged.

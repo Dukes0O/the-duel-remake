@@ -340,8 +340,8 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "review"
-    needs: []
+    status: "blocked"
+    needs: [DEEP-TRAIL]
     locks: []
     flag: "the-deep"
     details: "docs/board/cards/DEEP-AUDIO.md"

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T04:23:39.087Z
+Observed at: 2026-10-14T04:46:42.036Z
 
-Observation commit: 3b0a095d21908719861af626ef99271a6ea236f6
+Observation commit: 6d79705f4ab70f10ff0ab6da521c8c6f0d06d5ae
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 3b0a095d21908719861af626ef99271a6ea236f6
+Integration HEAD: 6d79705f4ab70f10ff0ab6da521c8c6f0d06d5ae
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -62,7 +62,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
 | codex/fix-hairpin-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-hairpin-native |
-| codex/p4-ardennes | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
+| codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
 | codex/p4-panorama | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-panorama |
@@ -82,6 +82,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/deep-art-src | DEEP-ART-SRC | 2026-10-13T20:56:46-07:00 | 0 | last commit 2026-10-13T20:56:46-07:00 | docs/board/looks/deep-art/round-2-review.md, docs/board/looks/deep-art/round-2.jpg, docs/board/looks/deep-art/round-3-review.md, docs/board/looks/deep-art/round-3.jpg, docs/changes/DEEP-ART-SRC.md |
 | codex/fix-hairpin-native | FIX-HAIRPIN-CAMERA | 2026-10-13T21:20:33-07:00 | 0 | last commit 2026-10-13T21:20:33-07:00 | docs/changes/FIX-HAIRPIN-CAMERA.md, tools/scenarios/track-review.mjs |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-13T21:34:14-07:00 | 0 | last commit 2026-10-13T21:34:14-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, src/circuit-effects.js, src/circuits/ardennes-forest.js, src/light-path.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 2 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-summit | P4-SUMMIT | 2026-10-13T09:23:33-07:00 | 0 | last commit 2026-10-13T09:23:33-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
@@ -101,7 +102,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,273,482 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 24,433 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 417,504,256 B | +100,352 B | unavailable |
+| Git objects | 396,741,632 B | -20,762,624 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -110,7 +111,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 3b0a095d21908719861af626ef99271a6ea236f6
+- Local integration/wasteland: 6d79705f4ab70f10ff0ab6da521c8c6f0d06d5ae
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
