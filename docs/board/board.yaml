@@ -496,12 +496,12 @@ tasks:
     owner: "claude"
     lane: "FINISH"
     size: "S"
-    status: "review"
+    status: "building"
     needs: [HELI-LESSONS, HELI-DISPATCH, HELI-ART-SRC]
-    locks: []
+    locks: [release]
     flag: "helicopter"
     claimed_by: claude-heli-2026-10-14
-    waiting_on: kyle
+    branch: claude/release-heli
     details: "docs/board/cards/HELI-FINISH.md"
 
   - id: FIRE-SAVE
