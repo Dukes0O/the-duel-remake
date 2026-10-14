@@ -343,7 +343,7 @@ test('every actual two-to-six-lap choice clears after lap one and keeps clear li
   if (added) COURSE.push(ARDENNES_FOREST);
   try {
     for (const laps of [2, 3, 4, 5, 6]) {
-      const duel = new Duel({seed: 1989, featureFlags: {'grand-prix': true}});
+      const duel = new Duel({seed: 1989, featureFlags: {'grand-prix': true, 'lap-choice': true}});
       duel.startCampaign({mode: 'grandprix', laps, startStage: COURSE.findIndex(def => def.id === ARDENNES_FOREST.id),
         car: 'stuttgart_959s', seed: 1989, fieldSeed: 1000, cpuDifficulty: 'medium'});
       const course = duel.course;

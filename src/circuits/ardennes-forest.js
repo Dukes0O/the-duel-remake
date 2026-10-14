@@ -143,7 +143,7 @@ function landmarks() {
 
 export const ARDENNES_FOREST = Object.freeze({
   ...ARDENNES_ROAD,
-  fieldSize: 8,
+  fieldSize: 8, grandPrixLaps: 2,
   lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
     Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: road.length, look: 'day'}),
   ])}),
