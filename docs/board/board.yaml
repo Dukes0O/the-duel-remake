@@ -514,7 +514,7 @@ tasks:
     details: "docs/board/cards/FIRE-SAVE.md"
 
   - id: FIRE-MISSIONS
-    title: "Mission engine: secret refuel count, radio call, kinds, smoke check"
+    title: "Mission engine: secret refuel count, radio call, the quiet spell"
     owner: "claude"
     lane: "SIM"
     size: "M"

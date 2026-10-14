@@ -17,12 +17,14 @@ H1 finishing pass is still changing.
 | Topic | Decision (storyboard, 14 October 2026) |
 | --- | --- |
 | How missions arrive | Over the radio, mid-flight, after a secret random number of refuels, 3 to 6 |
-| Never | During a race, in the opening, or the same kind of mission twice in a row |
+| Never | During a race or in the opening |
+| How often (Kyle, 14 October, later the same day) | The same kind may come twice in a row (wildfire season); what matters is that missions do not come so often that a racing session turns into firefighting. No smoke check |
 | Answering | Now, or finish what you are doing; a fire grows while you wait |
 | Dispatch board | Everyday jobs only; emergencies come only by radio |
 | Forest fire | Fit the bucket, scoop from a lake, drop on the fire until it is out |
 | Reward | About 1,500 credits and a firefighter badge |
-| Where | Forest courses only; snow courses cannot burn; first one picked at random |
+| Where | Forest courses with water nearby; snow courses cannot burn; first one picked at random |
+| New courses (Kyle, 14 October) | Every new course gets a lake or other body of water somewhere; a course with enough trees can burn |
 | Growth | Over your next few flights; faster uphill and with the wind |
 | Days | Play days, not calendar days: a week away burns nothing |
 | Neglect | The course burns and closes 10 play days, never lost; buyback 10,000 credits, 1,000 less each play day, free on day 10 |
@@ -47,9 +49,8 @@ then green, then pink with fireweed.
 
 ## 3. The mission engine
 
-New file `src/heli/heli-missions.js`, pure and repeatable. H2 has two kinds:
-**fire**, and a small **smoke check** (section 3.5, and question 1 in section
-17).
+New file `src/heli/heli-missions.js`, pure and repeatable. H2 has one kind,
+**fire**. Rescues (H4) and other emergencies join the same engine later.
 
 ### 3.1 The secret count
 
@@ -80,33 +81,38 @@ New file `src/heli/heli-missions.js`, pure and repeatable. H2 has two kinds:
   "later": the call waits in the save, R answers it at any time in the air or
   on the ground, and the board shows it with an Answer button.
 
-### 3.3 Which kind
+### 3.3 How often: the quiet spell
 
-- A kind can be picked when its condition holds. **Fire:** the player owns a
-  burnable course (section 4.1) that is open, not regrowing and not already
-  burning. **Smoke check:** always.
-- Kyle's rule: never the same kind as the last mission. With two kinds this
-  means fire and smoke checks take turns; the one exception is that a smoke
-  check may follow a smoke check when no fire can start (every burnable
-  course closed or regrowing). When rescues and supply runs arrive (H4), the
-  pick becomes a seeded pick among the kinds left.
+Kyle: a mission now and then is welcome; firefighting every time you sit
+down to race is not. Three rules keep the rate down, with no rule about
+which kind came last:
 
-### 3.4 After a mission
+- **Only while flying.** Calls come only in the air, after the secret
+  count of 3 to 6 refuels. Opening the game to race never brings one.
+- **The quiet spell (the timer).** After an emergency ends, no new call
+  comes for the rest of that play day and the whole next play day, and not
+  before 20 more minutes of engine time. So a player gets at most one
+  emergency every other play day, however much they fly.
+- **One at a time.** While a call waits or a mission is open, the count
+  stands still.
 
-A mission ends when the fire is out, the course is lost, the smoke is checked
-or the smoke check is taken by another pilot. Then count goes to 0, a new
-need is drawn and the kind is remembered as the last one.
+At those rates a player who flies every day meets a fire about every second
+to fourth play day, and a player who mostly races meets almost none.
 
-### 3.5 The smoke check
+### 3.4 Which kind
 
-Sarah, the park ranger: someone reported smoke. A thin smoke column rises at
-a seeded spot on any owned H1 destination. Hover within 80 m of it, under
-150 m above the ground, for 5 seconds: it is campers with a cook fire. Pays
-400 credits. Unanswered, it goes to another pilot after 2 play days or 3
-flights, whichever comes first: no pay, and the count starts again. It
-reuses the fire's smoke and the radio, so it costs almost nothing to build,
-and it keeps Kyle's "never twice in a row" rule true while fire is the only
-emergency.
+- A kind can be picked when its condition holds. **Fire:** a course that can
+  burn (section 4.1), that the player owns, is open, not regrowing and not
+  already burning.
+- The pick is a seeded random pick among the kinds whose condition holds.
+  The same kind may come twice or more in a row (wildfire season). In H2
+  fire is the only kind; when nothing can burn (every burnable course
+  closed or regrowing), the count stands still until something can.
+
+### 3.5 After a mission
+
+A mission ends when the fire is out or the course is lost. Then count goes
+to 0, a new need is drawn and the quiet spell starts.
 
 ## 4. The forest fire
 
@@ -114,11 +120,27 @@ New file `src/heli/heli-fire.js`, pure and repeatable, no graphics.
 
 ### 4.1 Where fires start
 
-- **Burnable courses in H2: Tremblant Woods only.** It is forest, it has the
-  lake for scooping, the home pad is there, and one burnt look keeps the art
-  to one course (Kyle: "start with one"). The list is a table in
-  `heli-fire.js`; adding a course later is one row plus its burnt art.
-  Question 2 in section 17 covers the random first pick.
+- **Which courses can burn.** A course can burn when all four hold:
+  1. it is forest, not snow: at least 150 forest cells (6 hectares, cells
+     below);
+  2. it is a helicopter destination, so it has a flying area;
+  3. a lake or other body of water the bucket can scoop from lies inside
+     its flying area (a `basins` lake in its definition, or later a river,
+     reservoir or sea marked for scooping);
+  4. its burnt look has been made (section 14).
+- **Today only Tremblant Woods passes all four.** Panorama Ridge has trees
+  but no water; Tremblant Snow is snow; the other courses are not helicopter
+  destinations yet. The rule is a check in `heli-fire.js`, not a list of
+  names, so a course joins by meeting it.
+- **More courses.** Kyle (14 October): every new course gets a lake or other
+  body of water somewhere, and its packet says whether its forest can burn
+  (FACTORY section 6, item 10). A burnable course orders its burnt look with
+  the rest of its art. Older courses join when they become helicopter
+  destinations (the pilot's map, Cockpit T-008) and get water and a burnt
+  look.
+- **The first to burn** is a seeded random pick among the courses that pass
+  (Kyle). With one today it is Tremblant Woods; the pick is truly random as
+  soon as a second course passes.
 - Tremblant Snow shares the road but is a snow course: it never burns and
   stays open.
 - **The fire grid.** The course is split into 20 m square cells. A cell is
@@ -294,7 +316,6 @@ bucket.
 - **The firefighter badge** with the first fire put out, shown on the
   dispatch board's header and the pilot panel with the count: "Firefighter.
   Fires out: 3". The count is what H3's fire service skin (5 fires) reads.
-- **Smoke check:** 400 credits.
 - **Lost fire:** nothing, and no charge.
 
 ## 8. The burnt course
@@ -359,8 +380,9 @@ The look follows the play days since the burn, also after a buyback:
 Sarah says so on the radio at the first helicopter visit of each stage
 (reopened, shoots, fireweed). The look shows in races and from the air. It
 is drawing only: race state, replays and world signatures never see it.
-Fires never start on a course that is closed or regrowing, so with one
-burnable course a lost fire means smoke checks only until day 60.
+Fires never start on a course that is closed or regrowing, so while
+Tremblant Woods is the only burnable course, a lost fire means no fires
+until day 60. Every course that joins makes that gap rarer.
 
 ### 8.5 Scars
 
@@ -373,12 +395,12 @@ scar.
 
 Tremblant Woods' burnt look is one set (FIRE-BURNT-LOOK): charred versions of
 the tree models it uses, three ground looks (ash, shoots, green) and one
-fireweed clump. The same set draws scars. A second burnable course costs one
-more set; question 2.
+fireweed clump. The same set draws scars. Each further burnable course
+costs one more set, ordered in its own course packet.
 
 ## 9. Board, radio and controls
 
-- **The dispatch board never lists fires or smoke checks.** It gains a
+- **The dispatch board never lists fires.** It gains a
   "Radio" box: a waiting call with its Answer button, or the mission in hand
   ("Fire at Tremblant Woods: 40% out, wind north-west 7 m/s"). Bucket
   buttons (fit, take off, repair) sit with the pump, on the home pad's
@@ -417,9 +439,6 @@ names the course.
 | `heli.radio.fire.half` | Roger | Good work, Kestrel One. It is half out. |
 | `heli.radio.fire.out` | Roger | That is the last of it. Fire is out. Great flying, Kestrel One. |
 | `heli.radio.fire.lost` | Roger | We have lost those woods. The course is closed. Nobody was hurt. |
-| `heli.radio.smoke.call` | Sarah | Kestrel One, park rangers here. Someone reported smoke. Could you fly over and take a look? |
-| `heli.radio.smoke.seen` | Sarah | Thanks. It is only campers with a cook fire. All good. |
-| `heli.radio.smoke.taken` | Sarah | Never mind, Kestrel One. Another pilot checked that smoke. |
 | `heli.radio.fire.thanks` | Sarah | From all of us at the park, thank you. The animals thank you too. |
 | `heli.radio.burn.reopen` | Sarah | The burnt woods are open again. All black for now, but it will come back. |
 | `heli.radio.burn.shoots` | Sarah | Green shoots are coming up in the burn. |
@@ -430,7 +449,7 @@ names the course.
 | `heli.radio.drop.tip` | Brian | Hold H to let the water go. Drop low, and a little short. The water keeps moving as it falls. |
 | `heli.radio.bucket.dented` | Brian | You dented the bucket. It will leak until the shop fixes it. |
 
-22 lines, made once each through `tools/audio/elevenlabs.mjs` and fitted to
+19 lines, made once each through `tools/audio/elevenlabs.mjs` and fitted to
 the month's voice credits; if credits run short, the three regrowth lines
 wait (the menu text carries the news). Brian's first two bucket lines play
 only on the first fitting and first fill.
@@ -451,7 +470,7 @@ Added to the cue tables in `heli-audio.js`. HELI-HOOKS already maps
 | `heli.fire.hiss` | ambience | Steam hiss where water lands on fire, scaled by litres |
 | `heli.bucket.dent` | vehicle | A bucket hit: a dull metal clank |
 | `heli.aim.lock` | interface | Short tick when the ring locks |
-| `heli.badge` | interface | Short rising chime with the badge and with a smoke check paid (tones) |
+| `heli.badge` | interface | Short rising chime with the badge (tones) |
 
 Loudness: the crackle sits under the rotor (volume 0.5 before distance), the
 alert at the H1 radio click's level. Round one listening goes with
@@ -468,8 +487,8 @@ finishing pass picks it up first).
 
 ```
 missions: {seed, draws, need, count, last: 'fire' | 'smoke' | null,
-  call: null | {kind, id, courseId, day, answered, spot: [x, z] | null, flights},
-  firesOut, smokeChecks, badges: ['firefighter']}
+  call: null | {kind, id, courseId, day, answered},
+  quiet: {untilDay, engineSeconds}, firesOut, badges: ['firefighter']}
 fire: null | {id, courseId, seed, startDay, steps, engineSeconds,
   burning: [[cell, percent]], burnt: [cell], damp: [[cell, steps]]}
 burnt: {courseId: {day, boughtBack}}
@@ -501,7 +520,7 @@ bucket: {damage: 0 | 1 | 2 | 3}
 | --- | --- | --- |
 | `src/course-closures.js` | Closure, buyback price, regrowth stage; pure, outside `src/heli/` so the course menu can read it | FIRE-SAVE |
 | `src/heli/heli-save.js` | The new fields, normalizer, mission and fire records, bucket repair, buyback | FIRE-SAVE |
-| `src/heli/heli-missions.js` | Count, need, call timing, kinds, smoke check | FIRE-MISSIONS |
+| `src/heli/heli-missions.js` | Count, need, call timing, the quiet spell, kinds | FIRE-MISSIONS |
 | `src/heli/heli-fire.js` | Grid, start, spread, wind, water, out, lost, scars | FIRE-SPREAD |
 | `src/heli/heli-bucket.js`, water query in `heli-ground.js` | Fitting, scoop, pour, parcels, aim ring, damage | FIRE-BUCKET |
 | `src/heli/heli-radio-lines.js`, `heli-audio.js` | Lines with voices, cues | FIRE-RADIO |
@@ -601,10 +620,13 @@ passes, FIRE-VIEW may draw plain stand-ins in dev builds only.
 
 - `tools/test-heli-missions.mjs`: need is always 3 to 6; the same save gives
   the same needs and call times; only pump purchases count, and not during a
-  mission; never a call in a lesson, the opening or a cruise fade; the kind
-  never repeats except the smoke-after-smoke case; answer now, answer later,
-  smoke check paid and taken by another pilot.
-- `tools/test-heli-fire.mjs`: start cell rules; spread faster uphill and
+  mission; never a call in a lesson, the opening or a cruise fade; the quiet
+  spell (no call that play day or the next, nor within 20 minutes of engine
+  time); the same kind may repeat; no call when nothing can burn; answer
+  now and answer later.
+- `tools/test-heli-fire.mjs`: the four rules for a course that can burn
+  (Tremblant Woods passes, Panorama Ridge and Tremblant Snow do not); start
+  cell rules; spread faster uphill and
   downwind; roads and the lake never burn; damp cells; out and lost; the
   section 4.5 targets across 50 seeds; same drops give the same fire.
 - `tools/test-heli-bucket.mjs`: fill rates by depth and speed; mass follows
@@ -629,14 +651,12 @@ passes, FIRE-VIEW may draw plain stand-ins in dev builds only.
   pictures of the fire, the drop and each regrowth stage, and the release
   waits for Kyle's word.
 
-## 17. Questions for Kyle
+## 17. Kyle's answers (14 October 2026)
 
-1. **Never twice in a row.** Fire is H2's only emergency, so to keep your
-   rule a small "smoke check" (fly over, 400 credits) takes turns with fires.
-   The other choice is to let fire follow fire until rescues arrive in H4.
-   Recommendation: the smoke check.
-2. **The first course to burn.** H2 has burnt art for one course, Tremblant
-   Woods (the lake and the pad are there), so the random pick only matters
-   once a second burnt look exists (Panorama Ridge, with a portable water
-   tank since it has no lake). Recommendation: Tremblant Woods alone in H2,
-   and the random pick from the release that adds the second burnt look.
+- No smoke check. The same kind may come twice in a row; the quiet spell
+  (section 3.3) keeps missions from taking over racing time.
+- Any forest course with water nearby can burn, picked at random; every new
+  course gets a body of water. Tremblant Woods is simply the only one that
+  qualifies today (section 4.1).
+- Search and rescue is H4 Rescue (Cockpit T-037). It joins this mission
+  engine as a second emergency when its packet is written.
