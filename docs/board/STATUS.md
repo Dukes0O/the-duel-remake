@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T17:19:32.213Z
+Observed at: 2026-10-14T17:19:55.285Z
 
-Observation commit: 2b9929dfd71170969e9b49d063c5316494a3db05
+Observation commit: 43832069534193e5e0a861727e3ecf078aa12852
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2b9929dfd71170969e9b49d063c5316494a3db05
+Integration HEAD: 43832069534193e5e0a861727e3ecf078aa12852
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -62,7 +62,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/aud-15-p1-mix | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/aud-15-p1-mix |
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/fix-hairpin-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-hairpin-native |
+| codex/fix-hairpin-native | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/fix-hairpin-native |
 | codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
@@ -86,7 +86,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/aud-15-p1-mix | AUD-15-P1 | 2026-10-14T09:54:55-07:00 | 0 | last commit 2026-10-14T09:54:55-07:00 | docs/changes/AUD-15-P1.md, src/audio.js, tools/scenarios/audio-vehicles.mjs, tools/test-audio-vehicles.mjs |
-| codex/fix-hairpin-native | unknown | 2026-10-14T09:59:50-07:00 | 0 | last commit 2026-10-14T09:59:50-07:00 | docs/changes/FIX-HAIRPIN-CAMERA.md, src/camera-clearance.js, src/render3d.js, tools/scenarios/track-review.mjs, tools/test-camera-clearance.mjs |
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-14T10:13:39-07:00 | 0 | last commit 2026-10-14T10:13:39-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T09:45:34-07:00 | 0 | last commit 2026-10-14T09:45:34-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, tools/test-summit-avalanche.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
@@ -109,9 +108,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 64,121 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 67,108 B | +0 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 401,548,288 B | +167,936 B | unavailable |
+| Git objects | 401,717,248 B | +0 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -120,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 2b9929dfd71170969e9b49d063c5316494a3db05
+- Local integration/wasteland: 43832069534193e5e0a861727e3ecf078aa12852
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
