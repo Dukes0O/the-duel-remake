@@ -172,8 +172,8 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 - Pushing (Kyle, 13 October 2026, replacing D8 of 24 September): the Release
   Manager pushes `integration/wasteland` to GitHub after every release, as a
   plain fast-forward with no history rewrite, so the work is never only on the
-  laptop. Compaction (SPEC 0.8) becomes an occasional tidy-up that needs
-  Kyle's approval each time; it no longer holds back a push. D4 still covers
+  laptop. Compaction (SPEC 0.8) becomes an occasional tidy-up that Claude runs
+  without asking (see the janitor section); it never holds back a push. D4 still covers
   `master`. The branch was pushed on 13 October after eleven days unpushed.
 
 See playbook section 7 for the gate and evidence workflow.
@@ -261,7 +261,11 @@ small context matter. These rules win over habit:
      happened, and propose new targets when the game has grown.
   5. Write one janitor line in `run-log.md`: what went, what was flagged,
      sizes before and after.
-- Never force-remove a worktree or rewrite history without Kyle.
+- Never force-remove a worktree. Never rewrite history without Kyle, with one
+  standing exception (Kyle, 13 October 2026): Claude may run the SPEC 0.8
+  binary compaction of `integration/wasteland` and force-push it without
+  asking, in a window when Codex has paused merges, and must announce it in
+  the inbox. `master` is never rewritten.
 - History was rewritten on 24 September 2026 (SPEC 0.7, CLEAN-09). Never merge
   a branch that still contains pre-rewrite commits; rebase it first using
   `docs/history/history-rewrite-2026-09-24-map.txt`.
