@@ -119,3 +119,10 @@ The otter still reads as an angular lump, not an otter. The cap is reached and w
 - the otter returns only if a better source turns up, judged in FINISH-DEEP.
 
 Merge the 17 accepted models with their credits. Remove the otter GLB and its catalogue row in the same change, or mark the row held with no runtime file, whichever the catalogue rules allow. waiting_on is cleared.
+
+**Kyle, 13 October evening: "some of those underwater images are pretty crappy. The otter definitely doesn't look like an otter."** This replaces Claude's verdict above.
+
+- The 17 models merge as **working art only**, under the-deep dev switch. They are there so the zone and its creatures can be built and tested. None of them is accepted as finished art, and The Deep cannot go live with them.
+- This card closes at the three-round cap (stop rule): the low-poly donors cannot reach the natural look, and fitting cannot fix that.
+- A new art pass, DEEP-ART-FINAL, starts after Kyle's storyboard with Gratian settles which creatures the story needs. It sources better models: the CC0 photogrammetry scans (Kyle downloads them with his own account) and fuller CC0 or credited packs. Kyle picks from the sheets.
+- The otter is held in any case.

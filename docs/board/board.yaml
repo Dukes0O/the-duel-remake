@@ -290,6 +290,16 @@ tasks:
     priority: "low"
     details: "docs/board/cards/P4-AZURE-GP-COMPARISON.md"
 
+  - id: DEEP-ART-FINAL
+    title: "The Deep: finished creature art, after the storyboard (Kyle picks)"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "backlog"
+    needs: [DEEP-ART-SRC]
+    flag: "the-deep"
+    details: "docs/board/cards/DEEP-ART-SRC.md"
+
   - id: DEEP-ART-SRC
     title: "The Deep creatures and set sources"
     owner: "codex"
