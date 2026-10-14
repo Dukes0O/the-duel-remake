@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T20:09:35.915Z
+Observed at: 2026-10-14T20:12:53.571Z
 
-Observation commit: 925062a196d098d8ea22c40d4341ba6a508fd6fb
+Observation commit: 88be708596359ea737473d424fffc092a8b9ea04
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 925062a196d098d8ea22c40d4341ba6a508fd6fb
+Integration HEAD: 88be708596359ea737473d424fffc092a8b9ea04
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -73,7 +73,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | unknown | true | false | unknown |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
-| codex/qa-kit-module | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-kit-module |
+| codex/qa-kit-module | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-kit-module |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 19 | unknown | true | false | unknown |
@@ -92,7 +92,6 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-kit-module | unknown | 2026-10-14T13:00:45-07:00 | 0 | last commit 2026-10-14T13:00:45-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/menu-check.js, tools/scenarios/p4-kits.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -107,9 +106,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 294,998 B | +138,504 B | 5,000,000 B |
+| Added bytes in last merge | 175,480 B | -119,518 B | 5,000,000 B |
 | All `public/` | 291,982,013 B | +0 B | unavailable |
-| Git objects | 408,342,528 B | +82,944 B | unavailable |
+| Git objects | 408,548,352 B | +205,824 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -118,7 +117,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 925062a196d098d8ea22c40d4341ba6a508fd6fb
+- Local integration/wasteland: 88be708596359ea737473d424fffc092a8b9ea04
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

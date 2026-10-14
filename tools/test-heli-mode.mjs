@@ -328,6 +328,8 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
     'src/app.js|heli/heli-save.js', 'src/app.js|heli/heli-jobs.js',
     'src/sound-bank.js|heli/heli-audio.js',
     'src/render3d.js|heli/heli-scene.js', 'src/render3d.js|heli/heli-camera.js',
+    // HELI-VIEW: the instruments panel and its styles in the page.
+    'src/screen-router.js|heli/heli-ui.js', 'src/screen-router.js|heli/heli-ui.css',
     'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
     'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js']);
   const offenders = [];
