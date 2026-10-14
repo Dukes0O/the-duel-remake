@@ -186,6 +186,7 @@ tasks:
     size: "M"
     status: "blocked"
     needs: [P4-SUMMIT-RUNTIME]
+    waiting_on: claude
     locks: []
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
