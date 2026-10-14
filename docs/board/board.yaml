@@ -402,10 +402,12 @@ tasks:
 
   - id: EARN-MEDALS
     title: "Medal sheets in the save and the earned-car rule"
-    owner: "codex"
+    owner: "claude"
     lane: "SAVE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-earn-medals-2026-10-14"
+    branch: "claude/earn-medals"
     needs: [EARN-PACKET]
     locks: [save-shape]
     flag: "earned-cars"
