@@ -258,7 +258,7 @@ tasks:
     owner: "claude"
     lane: "DESIGN"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [P4-PANORAMA, P4-REVIEW-TOOL]
     details: "docs/board/cards/P4-FINISH-PANORAMA.md"
 
@@ -418,10 +418,10 @@ tasks:
 
   - id: QA-FRAME-ENVIRONMENT
     title: "Frame check reads 33 ms p95 and 5 s construction on every build (13 October)"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOL"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     details: "docs/board/cards/QA-FRAME-ENVIRONMENT.md"
 
