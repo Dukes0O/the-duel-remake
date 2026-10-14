@@ -326,9 +326,12 @@ async function waitForValue(cdp, sessionId, expression, label, timeoutMs = 45_00
 
 // A command acknowledgement can precede document/context replacement.
 export function createPageNavigation(cdp, page, baseURL) {
-  async function transition(method, params) {
+  async function transition(method, params, actionReload = false) {
     const {frameTree} = await cdp.send('Page.getFrameTree', {}, page.sessionId);
     const mainId = frameTree.frame.id, previousLoader = frameTree.frame.loaderId;
+    const expectedUrl = actionReload ? frameTree.frame.url : null;
+    if(actionReload && (!expectedUrl?.startsWith(baseURL+'/tools/') || typeof params.expression!=='string' || !params.expression.trim()))
+      throw Error('Import reload requires the current QA tools URL and one action.');
     return new Promise((resolve, reject) => {
       let commit = null, execution = null, expectedLoader = null;
       let accepted = false, restored = false, checking = false, finished = false;
@@ -368,6 +371,7 @@ export function createPageNavigation(cdp, page, baseURL) {
         if (event === 'Runtime.executionContextCreated' && value.context.auxData?.isDefault &&
           value.context.auxData.frameId === mainId) execution = value.context;
         if (event === 'Page.frameNavigated' && value.frame.id === mainId && !value.frame.parentId) {
+          if(actionReload && value.frame.url!==expectedUrl){complete(Error('Import reload changed its destination.'));return;}
           // The writer's restored document synchronously reloads on pageshow.
           restored = value.type === 'BackForwardCacheRestore';
           if (restored) {commit = null;execution = null;}
@@ -375,8 +379,10 @@ export function createPageNavigation(cdp, page, baseURL) {
         }
         if (event === 'Page.lifecycleEvent' && value.frameId === mainId && value.name === 'DOMContentLoaded')
           loaded.add(value.loaderId);
-        if (event === 'Page.navigatedWithinDocument' && value.frameId === mainId)
+        if (event === 'Page.navigatedWithinDocument' && value.frameId === mainId) {
+          if(actionReload){complete(Error('Import reload requires a replacement document.'));return;}
           commit = {sameDocument:true};
+        }
         ready();
       });
       const timer = setTimeout(() => complete(Error('Timed out waiting for navigation document/context.')), TIMEOUT_MS);
@@ -384,6 +390,7 @@ export function createPageNavigation(cdp, page, baseURL) {
       // Listener is installed before the one mutation, including fast events.
       cdp.send(method, params, page.sessionId).then(result => {
         if (result.errorText) {complete(Error('Navigation failed: '+result.errorText));return;}
+        if(actionReload && result.exceptionDetails){complete(Error('Import action failed: '+result.exceptionDetails.text+' '+(result.exceptionDetails.exception?.description??'')));return;}
         expectedLoader = result.loaderId ?? null;accepted = true;ready();
       }, complete);
     });
@@ -394,6 +401,7 @@ export function createPageNavigation(cdp, page, baseURL) {
       return transition('Page.navigate', {url:baseURL+path});
     },
     reload: (params = {}) => transition('Page.reload', params),
+    reloadAfterAction: expression => transition('Runtime.evaluate', {expression,awaitPromise:false,returnByValue:true,userGesture:true}, true),
     async back() {
       const history = await cdp.send('Page.getNavigationHistory', {}, page.sessionId);
       if (history.currentIndex < 1) throw Error('No previous QA history entry.');
@@ -446,6 +454,7 @@ export async function main(args = process.argv.slice(2)) {
     const context = {
       baseURL, outputDir, issues, warnings, screenshots, ...launchMetadata,
       navigate: navigation.navigate, reload: navigation.reload, back: navigation.back,
+      reloadAfterAction: navigation.reloadAfterAction,
       evaluate: expression => evaluate(cdp, page.sessionId, expression),
       waitFor: (expression, label, timeoutMs) => waitForValue(cdp, page.sessionId, expression, label, timeoutMs),
       command: (method, params) => cdp.send(method, params, page.sessionId),

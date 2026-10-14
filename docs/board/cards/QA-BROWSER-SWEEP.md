@@ -112,3 +112,8 @@ Translate the two scenarios' obsolete physical-IDB assumptions to real memory-ba
 For import, extend ONLY existing createPageNavigation with one action-driven reload barrier, listener armed before the single serialized successful-import action. It waits for its own actual replacement document/default context and existing lifecycle checks, propagates action/target/CDP errors and rejects a different destination. No mutation retry, arbitrary polling-error catch, timeout increase or changed old navigation assertions. Add meaningful cases in the existing navigation test for fast action/reload and evaluation-error propagation, keeping all old tests. Context exports this same small barrier to the scenario; no new framework or harness.
 
 Source first, no native job until Root reviews the exact hooks and fresh Save Guardian reviews this QA storage/reload boundary. Then original two career scenarios plus preserved blocked-IDB fixture as applicable, one final original nearby/jobs4/build. No blanket menu injection or extra live-save privilege. Root owns metadata, one independent review/Guardian coordination, merge and this new own folder cleanup; source builder preserves other teams' edits. Sound/art questions remain waiting_on:claude on the parent, independent engineering continues.
+
+
+## Isolated-career slice merged — 14 October
+
+3bed13bb passed both source reviews, original21/21/jobs4/build828ms and all three actual memory-only natives (backup/import, two tabs, unchanged blocked-IDB), with no errors or warnings. Merge is conflict-free with no repeated gate. Parent remains open for Claude's answered consumed-art cleanup and unresolved sound/runtime cases; no full-sweep pass is claimed. Own career lane is cleared before the next slice.

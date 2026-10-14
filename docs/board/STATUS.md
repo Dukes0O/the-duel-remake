@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T16:49:00.114Z
+Observed at: 2026-10-14T16:49:57.980Z
 
-Observation commit: aecde8c263c5df9442523323aeabb6f0c6a6f4e0
+Observation commit: cc9300e360d45115c22a77a7cafaf07573e1240e
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: aecde8c263c5df9442523323aeabb6f0c6a6f4e0
+Integration HEAD: cc9300e360d45115c22a77a7cafaf07573e1240e
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -92,7 +92,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/p4-yeti-native | P4-YETI | 2026-10-14T08:01:05-07:00 | 0 | last commit 2026-10-14T08:01:05-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-career | QA-BROWSER-SWEEP | 2026-10-14T09:37:20-07:00 | 0 | last commit 2026-10-14T09:37:20-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/browser-harness.mjs, tools/menu-check.js, tools/scenarios/career-backup.mjs, tools/scenarios/career-tab-isolation.mjs |
+| codex/qa-browser-career | unknown | 2026-10-14T09:37:20-07:00 | 0 | last commit 2026-10-14T09:37:20-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/browser-harness.mjs, tools/menu-check.js, tools/scenarios/career-backup.mjs, tools/scenarios/career-tab-isolation.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -110,7 +110,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 5,142,284 B | +0 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 400,654,336 B | +83,968 B | unavailable |
+| Git objects | 400,675,840 B | +21,504 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -119,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: aecde8c263c5df9442523323aeabb6f0c6a6f4e0
+- Local integration/wasteland: cc9300e360d45115c22a77a7cafaf07573e1240e
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
