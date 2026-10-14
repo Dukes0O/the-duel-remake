@@ -16,7 +16,7 @@ import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
-import {createTrackKits} from '../src/track-kits.js';
+import {createTrackKits, normalizeKitPlacements, kitBaseHeight} from '../src/track-kits.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -413,4 +413,88 @@ test('gravel-only terrain builds finite native vertex colours without fallen lea
     } finally {geometry.dispose();}
   }
   assert.equal(JSON.stringify(ARDENNES_FOREST.groundLeaves), before, 'native terrain does not change authored metadata');
+});
+
+
+test('village footprint grounding validates its opt-in and retains all other placement defaults', () => {
+  const course = new Course(ARDENNES_FOREST, 1989);
+  const village = ARDENNES_FOREST.kitPlacements.filter(row => row.grounding !== undefined);
+  assert.equal(village.length, 13);
+  assert.equal(village.filter(row => row.id === 'shopfront-a' || row.id === 'shopfront-b').length, 12);
+  assert.equal(village.filter(row => row.id === 'lantern-tower').length, 1);
+  assert.ok(village.every(row => row.grounding === 'footprint' && Object.isFrozen(row)));
+  const before = JSON.stringify(village);
+  const normalized = normalizeKitPlacements(course, village);
+  assert.ok(Object.isFrozen(normalized) && normalized.every(row => Object.isFrozen(row) && row.grounding === 'footprint'));
+  for (const value of [null, false, true, 0, 'anchor', {}, []])
+    assert.throws(() => normalizeKitPlacements(course, [{...village[0], grounding: value}]), /grounding/);
+  const ordinary = normalizeKitPlacements(course, [{id: 'shopfront-a', s: 4600, lateral: 100}])[0];
+  assert.equal(Object.hasOwn(ordinary, 'grounding'), false, 'legacy rows acquire no grounding descriptor');
+  const bounds = new THREE.Box3(new THREE.Vector3(-3, 0, -3), new THREE.Vector3(3, 8, 3));
+  const point = course.groundAt(ordinary.s, ordinary.lateral);
+  const ground = renderedGroundHeight(course, {...point, s: ordinary.s, off: ordinary.lateral}, {requireSurface: true});
+  assert.equal(kitBaseHeight(course, ordinary, bounds), ground, 'unannotated kit keeps exact centre-anchor height');
+  const lining = {...ordinary, id: 'armco'};
+  assert.equal(kitBaseHeight(course, {...lining, grounding: 'footprint'}, bounds), kitBaseHeight(course, lining, bounds),
+    'continuous-lining seating remains exact even with the new descriptor');
+  assert.equal(JSON.stringify(village), before, 'normalization does not mutate authored rows');
+});
+
+test('actual village High and LOD footprints contact the drawn hillside without moving terrain or donors', async () => {
+  const course = new Course(ARDENNES_FOREST, 1989);
+  const rows = ARDENNES_FOREST.kitPlacements.filter(row => row.grounding === 'footprint');
+  assert.equal(rows.length, 13);
+  const before = JSON.stringify({definition: ARDENNES_FOREST, features: course.features});
+  const material = new THREE.MeshBasicMaterial({side: THREE.DoubleSide});
+  const terrain = [terrainGeometry, farTerrainGeometry].map(build => new THREE.Mesh(build(course), material));
+  const loader = new GLTFLoader();
+  loader.register(() => ({name: 'ARDENNES_HEADLESS_TEXTURE', loadTexture: () => Promise.resolve(new THREE.Texture())}));
+  const assets = new Map();
+  const donorSnapshot = asset => {
+    const nodes = [];
+    asset.scene.traverse(node => nodes.push({matrix: node.matrix.toArray(),
+      geometry: node.geometry?.attributes.position?.array ? [...node.geometry.attributes.position.array] : null,
+      colours: [].concat(node.material || []).map(material => material.color?.toArray())}));
+    return JSON.stringify(nodes);
+  };
+  const owner = createTrackKits(course, {placements: rows, loadAsset: async path => {
+    const bytes = readFileSync(new URL('../public' + path, import.meta.url));
+    const model = await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+    model.scene.updateMatrixWorld(true);
+    assets.set(path, {model, bounds: new THREE.Box3().setFromObject(model.scene), snapshot: donorSnapshot(model)});
+    return model;
+  }});
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+  const measurements = [];
+  try {
+    assert.equal(await owner.ready, true, owner.error?.message);
+    for (const [index, row] of rows.entries()) {
+      const matrix = owner.getPlacementPose(index);
+      for (const suffix of ['', '-lod']) {
+        const asset = assets.get('/assets/models/circuits/kits/' + row.id + suffix + '.glb');
+        assert.ok(asset, 'actual High and LOD donor loaded');
+        const bounds = asset.bounds, gaps = [];
+        for (const x of [bounds.min.x, (bounds.min.x + bounds.max.x) / 2, bounds.max.x])
+          for (const z of [bounds.min.z, (bounds.min.z + bounds.max.z) / 2, bounds.max.z]) {
+            const base = new THREE.Vector3(x, bounds.min.y, z).applyMatrix4(matrix);
+            ray.set(new THREE.Vector3(base.x, 2000, base.z), down);
+            const hit = ray.intersectObjects(terrain, false)[0];
+            assert.ok(hit, 'every actual village footprint sample has drawn terrain');
+            gaps.push(base.y - hit.point.y);
+          }
+        assert.ok(gaps.every(gap => gap <= 1e-4), 'no actual High or LOD footprint point floats above drawn ground');
+        assert.ok(Math.max(...gaps) >= -1e-4, 'each actual model has ground contact instead of a guessed excessive sink');
+        assert.equal(donorSnapshot(asset.model), asset.snapshot, 'source geometry and transforms remain exact');
+        measurements.push({id: row.id, s: row.s, lateral: row.lateral, version: suffix ? 'LOD' : 'High',
+          maxFloat: Math.max(...gaps), maxSink: -Math.min(...gaps)});
+      }
+    }
+    assert.equal(JSON.stringify({definition: ARDENNES_FOREST, features: course.features}), before,
+      'visual seating cannot change authored rows or native geometry');
+    console.log('Ardennes actual village footprint measurements: ' + JSON.stringify(measurements));
+  } finally {
+    owner.dispose();
+    for (const mesh of terrain) mesh.geometry.dispose();
+    material.dispose();
+  }
 });

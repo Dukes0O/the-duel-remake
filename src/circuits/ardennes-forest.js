@@ -122,9 +122,10 @@ function landmarks() {
   out.push(row('forest-footbridge', kestrel.s0 + (kestrel.s1 - kestrel.s0) * .58, 0, {clear: 38}));
   const stavelot = named('Stavelot');
   for (let i = 0; i < 12; i++) out.push(row(i % 2 ? 'shopfront-a' : 'shopfront-b', stavelot.s0 + 30 + i * 14,
-    92 + i % 3 * 14, {heading: Math.PI, scale: .8, clear: 9}));
+    92 + i % 3 * 14, {heading: Math.PI, scale: .8, clear: 9, grounding: 'footprint'}));
   // The accepted pointed lantern tower forms the village spire above its roofs.
-  out.push(row('lantern-tower', stavelot.s0 + 98, 108, {scale: Object.freeze([.75, 1.5, .75]), clear: 10}));
+  out.push(row('lantern-tower', stavelot.s0 + 98, 108,
+    {scale: Object.freeze([.75, 1.5, .75]), clear: 10, grounding: 'footprint'}));
   out.push(row('forest-timing-tower', named('Bus Stop Exit').s0, -42, {heading: Math.PI, clear: 12}));
   // Existing leafy trees beside the darker fir rows. Their actual leaves use
   // the course-owned material colour; no donor GLB is regenerated.

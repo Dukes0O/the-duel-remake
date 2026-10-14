@@ -43,3 +43,16 @@ Removed: the duplicate Ardennes visual pit-wall kit rows. The original native di
 After duplicate divider removal, all 2298 actual High/LOD placements passed the unchanged kit validator. The corrected native packet still produced no pictures: actual environment construction threw at fallenLeaves in world-surfaces.js because this course authored gravel without a fallen-leaf palette. The optional block defaults to leaf strength .8 when its strength is absent.
 
 Under Root's exact metadata grant, Ardennes explicitly sets strength 0 and retains its gravel object unchanged. All shared terrain code and other-course defaults stay exact. A new existing-test case builds the actual near and far terrain, checks every native vertex colour is finite, and proves authored metadata remains unchanged. Neither previous native failure is a pass. The corrected targeted test and native views remain pending.
+
+
+## Stavelot village footprint grounding
+
+Root reviewed all ten actual High pictures and found the twelve Stavelot houses and lantern-tower spire visibly floating. Under the committed 28f26907 grant, exactly these thirteen rows now opt into grounding: footprint. Their positions, heading, scale, road, hillside and every other course remain unchanged. The normalized optional enum is validated and the returned rows remain frozen.
+
+The existing nine-point rendered-ground sampler now seats an annotated non-lining kit on its lowest actual footprint sample. It adds no guessed offset or negative authored lift. Unannotated kits keep their exact centre-anchor height, and continuous linings keep their original .449 m seating rule, even if annotated. No donor or cached model changes.
+
+The one granted concrete measurement ran the two newly authored existing-test cases: 2 passed, exit 0, 3.922 seconds. All 26 actual High/LOD footprints contact independent rays against the native near and far Float32 terrain meshes within the existing 0.0001 m comparison. Measured maximum float was about 0.00000000000026 m; slope-related sink across a footprint ranged from 1.636 to 4.083 m, including 3.998 m for the spire. These values describe the steep original hillside, not a changed tolerance or an art verdict. Actual village pictures at both qualities still need review; no original lane tier or build has run.
+
+The earlier High field packet remains failed: one player prop crash at Long Left, reproduced by one memory-only Medium/index0 diagnostic at time 85.55 s, station 3610.814, lateral -17.668. Its exact 150.99/139.305 lap times matched native. All eight finished, with zero boundary resets. The crash question waits on Claude. No driver, road, safety or zero-crash acceptance changed, and Performance remains unrun. Both startup failures, the failed native field packet and the concrete grounding log remain in integration evidence.
+
+Removed: centre-only seating for the thirteen explicitly annotated village pieces. The shared default and original continuous-lining behavior are retained. No old assertion, donor model, terrain rule, replay fingerprint or signature changed.
