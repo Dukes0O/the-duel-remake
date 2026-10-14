@@ -24,6 +24,19 @@ sprint, H2 Fire, and its board cards. Design only: no game code.
   and Tremblant Woods as the only burnable course in H2), each with a
   recommendation.
 
+## Kyle's answers, folded in the same day
+
+- No smoke check: the same kind of mission may repeat. A quiet spell (no
+  call that play day or the next, nor within 20 minutes of engine time) and
+  calls only while flying keep missions from taking over racing time.
+- Courses burn by a rule (forest, a helicopter destination, water to scoop
+  inside its flying area, a burnt look made), not a fixed list; the first
+  to burn is a random pick among them. Tremblant Woods is the only one that
+  qualifies today.
+- `docs/FACTORY.md` section 6 gains item 10: every new course packet says
+  where its body of water is and whether its forest can burn.
+- Sarah's three smoke-check lines are gone (19 lines).
+
 ## Checks
 
 - `node tools/run-tests.mjs --tier lane --changed --jobs 4` and
