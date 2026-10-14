@@ -62,6 +62,146 @@ function radioMast(height) {
     new THREE.MeshStandardMaterial({name: 'radio beacon', color: 0xb51f16, emissive: 0xb51f16, emissiveIntensity: .7, roughness: .4}));
   beacon.position.y = height; group.add(beacon); return group;
 }
+// A country town drawn from authored houses (Panorama's valley town, PANORAMA-TOWN, Claude 14 October 2026):
+// painted weatherboard houses of one or two storeys under pitched iron roofs, a veranda on posts across the
+// front, a brick chimney, a stone footing that takes up the slope, windows that glow at dusk (some stay dark),
+// and street lamps. Each part is one instanced mesh, so the whole town is a handful of draw calls. Every house
+// stands on the rendered ground at its corners and must clear every road segment.
+const TOWN_WALLS = [0xe2d9c3, 0xd8c99a, 0xf0ece2, 0xa9b59a, 0x9fb0b8, 0xb5654d, 0xcfc2a8, 0xe6dfcf];
+const TOWN_ROOFS = [0x7d8388, 0x8c4a35, 0x4f5b4c, 0x6b7177, 0x9a9c98];
+function gableGeometry() {
+  // A unit gable roof: ridge along x at height 1, eaves at y = 0, from z = -0.5 to 0.5, x from -0.5 to 0.5.
+  const shape = new THREE.Shape(); shape.moveTo(-.5, 0); shape.lineTo(.5, 0); shape.lineTo(0, 1); shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {depth: 1, bevelEnabled: false});
+  geometry.translate(0, 0, -.5); geometry.rotateY(Math.PI / 2);
+  return geometry;
+}
+function town(course, spec) {
+  const group = new THREE.Group(), houses = spec.houses || [], lamps = spec.lamps || [];
+  if (!houses.length || houses.length > 120 || lamps.length > 40) throw new Error('Invalid circuit landmark town.');
+  const box = new THREE.BoxGeometry(1, 1, 1), gable = gableGeometry(), post = new THREE.CylinderGeometry(.07, .07, 1, 6);
+  const walls = weatheredMaterial('town weatherboard', 0xffffff), roofs = weatheredMaterial('town roof iron', 0xffffff, .45);
+  const stone = weatheredMaterial('town stone footing', 0x77726a), timber = weatheredMaterial('town dark timber', 0x3b2e25);
+  const brick = weatheredMaterial('town chimney brick', 0x7a4232), steel = weatheredMaterial('town lamp post', 0x4d555b, .6);
+  const lit = new THREE.MeshStandardMaterial({name: 'town window', color: 0x34302a, roughness: .3});
+  const dark = new THREE.MeshStandardMaterial({name: 'town unlit pane', color: 0x1f2326, roughness: .25, metalness: .2});
+  const lampGlass = new THREE.MeshStandardMaterial({name: 'town lamp window', color: 0x8a7a5a, roughness: .4});
+  const rows = {footings: [], walls: [], roofs: [], verandas: [], posts: [], doors: [], chimneys: [], lit: [], dark: [], poles: [], heads: []};
+  const hash = n => {const x = Math.sin(n * 91.7 + 17.3) * 24634.6345; return x - Math.floor(x);};
+  const heightAt = (x, z) => {
+    const near = course.nearest(x, z);
+    if (near.distance < course.roadHalfWidthAt(near.s) + 3) throw new Error('Circuit landmark town hides the road.');
+    return renderedGroundHeight(course, {x, z, s: near.s, off: near.lateral});
+  };
+  houses.forEach((house, i) => {
+    const {s, lateral, heading = 0, width = 7, depth = 8, storeys = 1} = house;
+    if (![s, lateral, heading, width, depth].every(Number.isFinite) || s < 0 || s >= course.length || !(storeys === 1 || storeys === 2))
+      throw new Error('Invalid circuit landmark town house.');
+    const centre = course.groundAt(s, lateral), turn = centre.heading + heading;
+    const cos = Math.cos(turn), sin = Math.sin(turn);
+    let low = Infinity, high = -Infinity;
+    for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) {
+      const x = a * width / 2, z = b * (depth / 2 + (b > 0 ? 2.3 : 0));
+      const y = heightAt(centre.x + x * cos + z * sin, centre.z - x * sin + z * cos);
+      low = Math.min(low, y); high = Math.max(high, y);
+    }
+    const footing = Math.max(.35, high - low + .35), floor = low + footing, wall = storeys * 3.0;
+    const frame = {x: centre.x, z: centre.z, turn};
+    const put = (list, x, y, z, sx, sy, sz, more = {}) => list.push({frame, x, y, z, sx, sy, sz, ...more});
+    const roofColour = TOWN_ROOFS[Math.floor(hash(i + 40) * TOWN_ROOFS.length)];
+    put(rows.footings, 0, low + footing / 2 - .2, 0, width + .3, footing + .4, depth + .3);
+    put(rows.walls, 0, floor + wall / 2, 0, width, wall, depth, {colour: TOWN_WALLS[Math.floor(hash(i) * TOWN_WALLS.length)]});
+    put(rows.roofs, 0, floor + wall, 0, depth + .8, Math.min(depth, width) * .42, width + .8, {colour: roofColour, spin: Math.PI / 2});
+    put(rows.verandas, 0, floor + 2.75, depth / 2 + 1.1, width + .2, .12, 2.3, {colour: roofColour});
+    // A deck at floor height under the veranda; on a slope its posts run down to the ground like stilts.
+    put(rows.doors, 0, floor - .06, depth / 2 + 1.1, width + .2, .12, 2.3);
+    for (const x of [-width / 2 + .2, 0, width / 2 - .2]) {
+      const z = depth / 2 + 2.1, ground = heightAt(centre.x + x * cos + z * sin, centre.z - x * sin + z * cos) - .1;
+      put(rows.posts, x, (ground + floor + 2.7) / 2, z, 1, floor + 2.7 - ground, 1);
+    }
+    put(rows.doors, width * .18, floor + 1.05, depth / 2 + .03, .95, 2.1, .08);
+    const across = width > 7.5 ? [-width * .32, -width * .02] : [-width * .28];
+    for (let storey = 0; storey < storeys; storey++) for (const x of storey ? [...across, width * .3] : [...across, width * .4]) {
+      const glow = hash(i * 7 + storey * 3 + (x > 0 ? 1 : 0)) < .62;
+      put(glow ? rows.lit : rows.dark, x, floor + 1.55 + storey * 3, depth / 2 + .03, 1.15, 1.45, .08);
+    }
+    for (const side of [-1, 1]) put(hash(i * 11 + side) < .5 ? rows.lit : rows.dark, side * (width / 2 + .03), floor + 1.55, 0, .08, 1.45, 1.25);
+    // Back windows: the lower street's houses turn their backs to Conrod Straight, so the town glows from the road.
+    for (let storey = 0; storey < storeys; storey++) for (const x of [-width * .25, width * .25])
+      put(hash(i * 13 + storey * 5 + (x > 0 ? 1 : 0)) < .6 ? rows.lit : rows.dark, x, floor + 1.55 + storey * 3, -depth / 2 - .03, 1.15, 1.45, .08);
+    // The chimney rises from the wall top through the roof slope and stands about 0.9 m clear of it.
+    const ridge = Math.min(depth, width) * .42, eave = (width + .8) / 2, chimneyX = -width / 2 + .9;
+    const throughRoof = ridge * (1 - Math.abs(chimneyX) / eave) + 1.0;
+    put(rows.chimneys, chimneyX, floor + wall - .1 + throughRoof / 2, -depth * .15, .65, throughRoof, .65);
+  });
+  lamps.forEach(lamp => {
+    if (![lamp.s, lamp.lateral].every(Number.isFinite)) throw new Error('Invalid circuit landmark town lamp.');
+    const at = course.groundAt(lamp.s, lamp.lateral), y = heightAt(at.x, at.z), frame = {x: at.x, z: at.z, turn: 0};
+    rows.poles.push({frame, x: 0, y: y + 3, z: 0, sx: 1.6, sy: 6, sz: 1.6});
+    rows.heads.push({frame, x: 0, y: y + 6.15, z: 0, sx: .75, sy: .35, sz: .75});
+  });
+  const object = new THREE.Object3D(), colour = new THREE.Color();
+  const build = (name, geometry, material, list, shadows = true) => {
+    if (!list.length) return;
+    const mesh = new THREE.InstancedMesh(geometry, material, list.length);
+    list.forEach((row, i) => {
+      const {frame} = row, cos = Math.cos(frame.turn), sin = Math.sin(frame.turn);
+      object.position.set(frame.x + row.x * cos + row.z * sin, row.y, frame.z - row.x * sin + row.z * cos);
+      object.rotation.set(0, frame.turn + (row.spin || 0), 0); object.scale.set(row.sx, row.sy, row.sz); object.updateMatrix();
+      mesh.setMatrixAt(i, object.matrix);
+      if (row.colour !== undefined) mesh.setColorAt(i, colour.set(row.colour));
+    });
+    mesh.name = name; mesh.castShadow = shadows; mesh.receiveShadow = true;
+    mesh.computeBoundingBox(); mesh.computeBoundingSphere(); group.add(mesh);
+  };
+  build('town footings', box, stone, rows.footings);
+  build('town houses', box, walls, rows.walls);
+  build('town roofs', gable, roofs, rows.roofs);
+  build('town verandas', box, roofs, rows.verandas);
+  build('town veranda posts', post, timber, rows.posts);
+  build('town doors', box, timber, rows.doors, false);
+  build('town chimneys', box, brick, rows.chimneys);
+  build('town lit windows', box, lit, rows.lit, false);
+  build('town dark windows', box, dark, rows.dark, false);
+  build('town lamp posts', post, steel, rows.poles);
+  build('town lamp heads', box, lampGlass, rows.heads, false);
+  return group;
+}
+// A country town church (Panorama's valley town, PANORAMA-TOWN): painted weatherboard nave under a pitched
+// corrugated-iron roof, a square tower at the road end with a shingled spire, tall windows that glow at dusk
+// (the world lighting lights any material named 'window'), a dark timber door. Faces the road like the mast.
+function church(height) {
+  const group = new THREE.Group();
+  const boards = weatheredMaterial('church weatherboard', 0xd8d0bf), iron = weatheredMaterial('church roof iron', 0x6b7177, .45);
+  const trim = weatheredMaterial('church dark timber', 0x3a2c22), stone = weatheredMaterial('church stone footing', 0x7a756b);
+  const glass = new THREE.MeshStandardMaterial({name: 'church window', color: 0x2d2a26, roughness: .3});
+  const nave = {width: 7.2, wall: 5.6, length: 14};
+  block(group, nave.width + .6, .5, nave.length + .6, 0, .25, 0, stone);
+  block(group, nave.width, nave.wall, nave.length, 0, .5 + nave.wall / 2, 0, boards);
+  // Pitched roof: a triangular prism along the nave, eaves a little proud of the walls.
+  const gable = new THREE.Shape();
+  gable.moveTo(-nave.width / 2 - .45, 0); gable.lineTo(nave.width / 2 + .45, 0); gable.lineTo(0, 3.4); gable.closePath();
+  const roofGeometry = new THREE.ExtrudeGeometry(gable, {depth: nave.length + .8, bevelEnabled: false});
+  roofGeometry.translate(0, .5 + nave.wall, -(nave.length + .8) / 2);
+  const roof = new THREE.Mesh(roofGeometry, iron); roof.castShadow = roof.receiveShadow = true; group.add(roof);
+  // Tall windows down both sides, and a door under the tower.
+  for (const side of [-1, 1]) for (let i = 0; i < 4; i++)
+    block(group, .08, 2.4, 1.0, side * (nave.width / 2 + .02), .5 + 2.9, -nave.length / 2 + 2.6 + i * 3, glass);
+  // The tower at the road end (+z), with louvred belfry openings and a spire.
+  const tower = {size: 3.4, top: height - 6.5}, front = nave.length / 2 + tower.size / 2 - .4;
+  block(group, tower.size + .4, .5, tower.size + .4, 0, .25, front, stone);
+  block(group, tower.size, tower.top, tower.size, 0, .5 + tower.top / 2, front, boards);
+  block(group, 1.5, 2.6, .1, 0, 1.8, front + tower.size / 2 + .03, trim);
+  block(group, 1.0, 1.8, .1, 0, 4.6, front + tower.size / 2 + .03, glass);
+  for (const [x, z] of [[0, 1], [0, -1], [1, 0], [-1, 0]])
+    block(group, x ? .1 : 1.1, 1.3, z ? .1 : 1.1, x * (tower.size / 2 + .03), tower.top - 1.2, front + z * (tower.size / 2 + .03), trim);
+  const spire = new THREE.Mesh(new THREE.ConeGeometry(tower.size * .78, 6.5, 4), iron);
+  spire.rotation.y = Math.PI / 4; spire.position.set(0, .5 + tower.top + 3.25, front);
+  spire.castShadow = spire.receiveShadow = true; group.add(spire);
+  block(group, .12, 1.2, .12, 0, .5 + tower.top + 7.0, front, trim);
+  block(group, .7, .12, .12, 0, .5 + tower.top + 7.2, front, trim);
+  return group;
+}
 export function scoreboardText(state, title = 'CIRCUIT') {
   const order = state?.field?.order || [];
   const lines = [title, 'RACE CONTROL'];
@@ -113,16 +253,21 @@ export function addCircuitLandmarks(world, course) {
   if (!Array.isArray(definitions) || definitions.length > 16) throw new Error('Too many circuit landmarks.');
   const group = new THREE.Group(); group.name = 'Authored circuit landmarks';
   for (const spec of definitions) {
-    if (!spec.id || ids.has(spec.id) || !['radio-mast', 'scoreboard'].includes(spec.type) || !Number.isFinite(spec.s) || spec.s < 0 || spec.s >= course.length ||
+    if (!spec.id || ids.has(spec.id) || !['radio-mast', 'scoreboard', 'church', 'town'].includes(spec.type) || !Number.isFinite(spec.s) || spec.s < 0 || spec.s >= course.length ||
       !Number.isFinite(spec.lateral) || !(spec.height >= 12 && spec.height <= 40)) throw new Error('Invalid circuit landmark.');
     ids.add(spec.id);
-    const halfWidth = spec.type === 'radio-mast' ? 6 : 3;
+    if (spec.type === 'town') {
+      // The town grounds and clears each of its own houses and lamps.
+      const placed = town(course, spec); placed.name = spec.id; group.add(placed); continue;
+    }
+    const halfWidth = spec.type === 'radio-mast' ? 6 : spec.type === 'church' ? 10 : 3;
     if (Math.abs(spec.lateral) - halfWidth < course.roadHalfWidthAt(spec.s) + 1) throw new Error('Circuit landmark hides the road.');
     for (const along of [-halfWidth, 0, halfWidth]) for (const side of [-halfWidth, 0, halfWidth]) {
       const at = course.worldAt(spec.s + along, spec.lateral + side), nearest = course.nearest(at.x, at.z);
       if (nearest.distance < course.roadHalfWidthAt(nearest.s) + 1) throw new Error('Circuit landmark hides another road segment.');
     }
-    const detail = spec.type === 'radio-mast' ? {group: radioMast(spec.height)} : scoreboard(spec.height, spec.title || 'CIRCUIT');
+    const detail = spec.type === 'radio-mast' ? {group: radioMast(spec.height)} :
+      spec.type === 'church' ? {group: church(spec.height)} : scoreboard(spec.height, spec.title || 'CIRCUIT');
     const base = course.groundAt(spec.s, spec.lateral);
     detail.group.position.set(base.x, renderedGroundHeight(course, {...base, s: spec.s, off: spec.lateral}), base.z);
     detail.group.rotation.y = base.heading; detail.group.name = spec.id; group.add(detail.group);
@@ -151,7 +296,6 @@ export function finishRidgeKitMaterials(owner) {
           };
           material.customProgramCacheKey=()=>key+':ridge-concrete-fence-v1';material.needsUpdate=true;
         }
-        if(/^shopfront-[ab]$/.test(mesh.userData.trackKitId)&&/warm-(amber|cream)-pane/.test(material.name)&&!material.name.includes('window'))material.name+=' window';
       }
     });
     return true;
