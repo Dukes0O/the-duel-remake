@@ -1125,3 +1125,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: HELI-FIRE-BUCKET and FIRE-BURNT-LOOK part 1 merged (bucket to the H2 contract, burnt props and fireweed; one squashed commit, one version of each model); lane 29/29 jobs4, build passed; lane deleted.
 14 October: HELI-FIRE-PACKET revision merged (Kyle's answers: no smoke check, quiet spell between emergencies, courses burn by rule, FACTORY checklist item 10 water and trees); lane 14/14 jobs4 224.76 s, build passed; lane deleted.
 14 October: FIRE-BURNT-LOOK part 2 merged (tiling burnt ground textures; charred pines handed to FIRE-VIEW); lane 26/26 jobs4, build passed; lane deleted.
+14 October: BARELY-NEWS-LOGO merged (H3 TV station logo, pending Gratian); lane 20/20 jobs4, build passed; lane deleted.
