@@ -171,7 +171,7 @@ function addValleyMist(group, course, entries) {
   }
   let previous = -1;
   registerSceneSystem(group, {sync(state) {
-    const progress = state?.status === 'menu' ? 0 : Math.max(0, Math.min(1,
+    const progress = state?.status === 'menu' || (state?.s ?? 0) < 0 ? 0 : Math.max(0, Math.min(1,
       (state?.completedLaps ?? 0) + course.phase(state?.s ?? 0) / course.length));
     if (progress === previous) return;
     previous = progress;

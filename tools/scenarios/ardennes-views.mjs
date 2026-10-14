@@ -200,7 +200,7 @@ export async function run(context) {
         const facts = await context.evaluate(`(() => {
           const a = window.__qaApp, d = a.duel, s = d.state, c = d.course, before = JSON.stringify(s), profile = JSON.stringify(a.profile);
           window.__render.renderFrame(); if (JSON.stringify(s) !== before || JSON.stringify(a.profile) !== profile) throw Error('Photo changed native state');
-          const distance = s.completedLaps * c.length + c.phase(s.s), light = window.__panQa.sampleCourseLightPath(c, {distance});
+          const distance = s.s, light = window.__panQa.sampleCourseLightPath(c, {distance});
           const cars = window.__render.scene.children.filter(node => node.visible && node.userData.vehicleKey);
           return {s: s.s, time: s.stageTimeSec, laps: s.completedLaps, distance, fogNear: light.settings.fogNear,
             nativeFieldSize: 1 + s.opponents.length, nativeCars: cars.length,

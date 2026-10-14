@@ -677,3 +677,47 @@ test('native player exception rejects incomplete or inconsistent field incident 
     assert.equal(ardennesPlayerCrashAccepted(row.setup, row.final, row.observer), false);
   }
 });
+
+
+test('actual negative native grid keeps initial mist and light during countdown and the first metres', () => {
+  const added = !COURSE.some(def => def.id === ARDENNES_FOREST.id);
+  if (added) COURSE.push(ARDENNES_FOREST);
+  let world;
+  try {
+    for (const laps of [2, 3, 4, 5, 6]) {
+      const duel = new Duel({seed: 1989, featureFlags: {'grand-prix': true, 'lap-choice': true}});
+      duel.startCampaign({mode: 'grandprix', laps, startStage: COURSE.findIndex(def => def.id === ARDENNES_FOREST.id),
+        car: 'stuttgart_959s', seed: 1989, fieldSeed: 1000, cpuDifficulty: 'medium'});
+      assert.equal(duel.state.status, 'countdown');
+      assert.ok(duel.state.s < 0, 'the actual eighth-car grid is behind the start line');
+      const course = duel.course;
+      world = new THREE.Group();
+      const originalLoad = THREE.TextureLoader.prototype.load;
+      THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+      try {addCircuitEffects(world, course);} finally {THREE.TextureLoader.prototype.load = originalLoad;}
+      const banks = []; world.traverse(node => {if (node.name === 'Ardennes valley mist') banks.push(node);});
+      assert.ok(banks.length >= 12);
+      const positions = banks.map(bank => bank.position.toArray());
+      syncScene(world, Object.freeze({status: 'racing', s: 0, completedLaps: 0, lapsTotal: laps}), 1 / 60);
+      const initial = banks.map(bank => bank.material.opacity);
+      assert.ok(initial.every(value => value > 0));
+      const countdown = Object.freeze(structuredClone(duel.state));
+      for (const state of [countdown, Object.freeze({...countdown, status: 'racing'}),
+        Object.freeze({...countdown, status: 'racing', s: -.001})]) {
+        const before = JSON.stringify(state);
+        syncScene(world, state, 1 / 60);
+        assert.deepEqual(banks.map(bank => bank.material.opacity), initial, 'negative grid retains exactly the initial mist');
+        assert.equal(sampleCourseLightPath(course, {distance: state.s}).settings.fogNear, 90,
+          'photographer uses the same unwrapped native distance as production lighting');
+        assert.equal(JSON.stringify(state), before, 'presentation cannot write frozen native state');
+      }
+      syncScene(world, Object.freeze({...countdown, status: 'menu', s: course.length / 2, completedLaps: 1}), 1 / 60);
+      assert.deepEqual(banks.map(bank => bank.material.opacity), initial, 'menu behavior stays initial');
+      assert.deepEqual(banks.map(bank => bank.position.toArray()), positions);
+      disposeTree(world); world = null;
+    }
+  } finally {
+    if (world) disposeTree(world);
+    if (added) COURSE.splice(COURSE.findIndex(def => def.id === ARDENNES_FOREST.id), 1);
+  }
+});

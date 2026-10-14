@@ -118,3 +118,16 @@ Removed: only the superseded unconditional zero-player-crash operand in the nati
 Root found a real validation gap before execution: the pure predicate did not inspect field incident rows, and the sheet did not tie its player partition to the actual event count or stage count. Additive cases were written first for unknown indices, altered partitions, missing/extra player rows and mismatched/missing stage counts; consistent known-one and zero-player receipts retain CPU incidents without a zero-CPU target. No checks have run.
 
 The native final now records actual stageCrashes. Both the predicate and independent sheet require integer indices -1 through 6, exact copied player/CPU partitions and player-row count equal to observed player events and actual stageCrashes before the unchanged zero/known-one major-crash rules. All actor pile-up calculation, endpoint verification, setup, placement, runtime, driver, body and tolerance bytes remain unchanged. Removed: acceptance of incomplete or inconsistent incident receipts. Source awaits Root's correction confirmation before execution.
+
+
+## Actual field result and negative-grid mist correction
+
+Root confirmed dd2a26b6 and ran the original focused suite: 28/28 passed (7176.8224 ms wall). Its one native High/Performance packet passed in 94525.9544 ms on private port 41724 with memory-only saves, twenty actual pictures and zero issues or warnings. Each quality completed all eight racers and two laps, with one verified known player incident, five CPU incident events, zero resets and no opening pile-up. This is not a clean-player or zero-CPU claim.
+
+The composer correctly refused the initial fogNear 359.987775 against its exact 90 requirement. At the actual grid s=-26, the photographer wrapped distance to 6657.9235 instead of using the unwrapped native s passed by production lighting. The mist fade independently wrapped that negative station and hid the initial mist. No JPG was produced and no formal art round was spent.
+
+Under the exact 0423d9cb grant, only negative native stations now select initial valley-mist progress zero; menu and every nonnegative calculation remain exact. The photographer samples lighting at actual unwrapped s. Existing exact morning 90/day 360 composer guards, light-path engine, renderer, camera, native motion, input, placement and tolerances stay unchanged.
+
+An additive existing-test case was written first using the actual native countdown grid for lap choices 2 through 6, frozen countdown/early-racing states and a negative station just before the line. It requires unchanged state and anchors, exact initial mist and native-distance light, and retains menu behavior. All prior first-lap and lap-choice cases remain intact. No execution has run on this correction; corrected focused/native acceptance and actual initial-mist pixels await Root review and GO.
+
+Removed: wrapped negative-grid presentation progress in the mist fade and photographer's lighting sample only. No runtime race rule or accepted reference changed.
