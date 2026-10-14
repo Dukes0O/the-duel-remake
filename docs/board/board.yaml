@@ -165,6 +165,7 @@ tasks:
     lane: "RACE"
     size: "M"
     status: "ready"
+    waiting_on: "claude"
     needs: [P4-PANORAMA, P4-HARBOUR, P4-TREMBLANT, P4-CAREER]
     locks: [circuit-registry]
     details: "docs/board/cards/P4-VARIANTS.md"
