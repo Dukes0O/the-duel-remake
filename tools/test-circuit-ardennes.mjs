@@ -210,7 +210,9 @@ test('morning light clears by lap two and reuses the renderer buffer', () => {
 
 test('real grounded valley mist clears from native lap progress without race writes', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
-  addCircuitEffects(world, course);
+  const originalLoad = THREE.TextureLoader.prototype.load;
+  THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+  try {addCircuitEffects(world, course);} finally {THREE.TextureLoader.prototype.load = originalLoad;}
   const banks = []; world.traverse(node => {if (node.name === 'Ardennes valley mist') banks.push(node);});
   assert.ok(banks.length >= 12);
   const originalPositions = banks.map(bank => bank.position.toArray());
@@ -237,7 +239,9 @@ test('real grounded valley mist clears from native lap progress without race wri
 
 test('the stream uses actual ground and leaves the whole road and shoulder uncovered', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
-  addCircuitEffects(world, course);
+  const originalLoad = THREE.TextureLoader.prototype.load;
+  THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+  try {addCircuitEffects(world, course);} finally {THREE.TextureLoader.prototype.load = originalLoad;}
   const stream = world.getObjectByName('Ardennes red-brown stream');
   assert.ok(stream?.isMesh);
   const position = stream.geometry.attributes.position;
@@ -308,11 +312,15 @@ test('three original landmarks have actual grounded High and LOD meshes within b
 
 test('the three real landmarks retain all original triangle clearance rules', async () => {
   const course = new Course(ARDENNES_FOREST, 1989), loader = new GLTFLoader();
+  const loadedBounds = new Map();
   const ids = new Set(['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower']);
   const owner = createTrackKits(course, {placements: ARDENNES_FOREST.kitPlacements.filter(row => ids.has(row.id)),
     loadAsset: async path => {
       const bytes = readFileSync(new URL('../public' + path, import.meta.url));
-      return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+      const asset = await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+      asset.scene.updateMatrixWorld(true);
+      loadedBounds.set(path, new THREE.Box3().setFromObject(asset.scene));
+      return asset;
     }});
   try {
     assert.equal(await owner.ready, true, owner.error?.message);
@@ -321,7 +329,12 @@ test('the three real landmarks retain all original triangle clearance rules', as
     for (let index = 0; index < owner.placements.length; index++) {
       const row = owner.placements[index], matrix = owner.getPlacementPose(index), point = course.groundAt(row.s, row.lateral);
       const ground = renderedGroundHeight(course, {...point, s: row.s, off: row.lateral}, {requireSurface: true});
-      near(matrix.elements[13], ground, 1e-6, 'actual ground pivot');
+      for (const suffix of ['', '-lod']) {
+        const bounds = loadedBounds.get('/assets/models/circuits/kits/' + row.id + suffix + '.glb');
+        assert.ok(bounds, 'actual High and LOD model bounds exist');
+        const transformed = bounds.clone().applyMatrix4(matrix);
+        near(transformed.min.y, ground, 1e-6, 'actual transformed High/LOD mesh base');
+      }
     }
   } finally {owner.dispose();}
 });
@@ -377,7 +390,9 @@ test('ordinary closed distance paths still wrap and reject invalid wrap metadata
 
 test('native first-lap mist endpoints do not depend on lap choice or presentation FPS', () => {
   const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
-  addCircuitEffects(world, course);
+  const originalLoad = THREE.TextureLoader.prototype.load;
+  THREE.TextureLoader.prototype.load = () => new THREE.Texture();
+  try {addCircuitEffects(world, course);} finally {THREE.TextureLoader.prototype.load = originalLoad;}
   const banks = []; world.traverse(node => {if (node.name === 'Ardennes valley mist') banks.push(node);});
   const positions = banks.map(bank => bank.position.toArray());
   for (const lapsTotal of [2, 3, 4, 5, 6]) for (const fps of [30, 60, 144]) {

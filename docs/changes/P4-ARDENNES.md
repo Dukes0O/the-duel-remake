@@ -78,3 +78,12 @@ Meaningful existing course cases were authored before implementation. They cover
 The last complete native packet on 4101ce01 produced all twenty actual pictures but failed both retained field guards with the same one-player-crash result. Village appearance remains for Claude's art judgment. All earlier failure and measurement receipts are preserved. No ninety-race batch, frame check, signature, final sheet, lane tier or build has run.
 
 Removed: the close Long Left outside armco position and the global-only limitation for this explicitly authored run-off band. All unannotated course defaults, other barrier positions, source models, footprint seating and field/photo assertions remain exact.
+
+
+## Existing focused-test fixture correction
+
+Root ran all 26 existing Ardennes cases on 02b2caff: 22 passed and four failed. All four new run-off cases passed. Cases 11, 12 and 19 reached the real stand-crowd texture loader in a headless test with no document. Their tests now reuse the established scoped TextureLoader fixture from existing render tests only while constructing those graphical effects, and restore the original loader in finally. All original mist, stream, timing, FPS, state and disposal assertions remain unchanged; browser pixels still use actual textures.
+
+Case 15 compared a placement pivot with the ground instead of the loaded model's base. Static inspection of the actual GLBs measured footbridge High and LOD minimum Y at -0.011846780776977539 m, exactly the failed pivot difference. The production placement already compensates for that source minimum. The corrected assertion transforms the actual loaded High and LOD bounds through the existing native placement matrix and compares the model base with actual rendered ground at the same original 0.000001 m tolerance. It changes no model, placement, collider or clearance guard and hardcodes no offset. Root will run the same complete 26 cases after confirmation; no corrected pass is claimed yet.
+
+Removed: three unscoped browser-image loads in headless effect fixtures, and the incorrect pivot-as-base expectation. The true base, source bounds, scale and both runtime qualities are now checked. No original tolerance or run-off, field, road, mist or input predicate changed.
