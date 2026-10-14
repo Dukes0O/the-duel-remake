@@ -35,6 +35,7 @@ try{
   equal(duel._drivingSurface(10500,-18,duel.car,true,'winter').gripKind,open.gripKind,'player reads the authored clear branch');
   equal(duel._drivingSurface(10500,-18,duel.state.opponents[0].car??duel.car,true,'winter').gripKind,open.gripKind,'shared CPU query reads the same branch');
   equal(duel.course.gripKindAt(10500,0),duel.course.script.surfaceAt(10500),'protected Gallery surface is unchanged');
+  for(let at=10100;at<=10900;at+=10)equal(duel.course.gripKindAt(at,0),duel.course.script.surfaceAt(at),'main road stays exact through the whole branch overlap');
   equal(duel.course.gripKindAt(10500,-40),'asphalt','outside branch retains ordinary verge query');
   const gallerySolids=duel.course.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-'));
   check(gallerySolids.every(row=>row.s+Math.hypot(row.halfX,row.halfZ)<=10800),'all actual Gallery roofs, walls and pillars finish by 10.80 km');
