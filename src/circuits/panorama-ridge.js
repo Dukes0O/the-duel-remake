@@ -115,8 +115,19 @@ function panoramaPlacements(road) {
   }
   for (const name of ['Hell Gate', 'The Cutting', 'Forrest Elbow', 'Murray Corner']) {
     const corner = road.pieces.find(piece => piece.name === name);
-    const s = Math.max(0, corner.s0 - 30);
-    placements.push({id: 'marshal-post', s, lateral: road.halfWidthAt(s) + 6, heading: Math.PI});
+    // On the walled ridge the slope outside the fence is too steep for a post's feet (they floated 1.4 to
+    // 1.6 m). The Cutting's post stands on the hill side behind the fence; Forrest Elbow's stands on the
+    // outside of the exit, past the walls, where the ground is gentle. Both clear the 0.3 m float check.
+    if (name === 'The Cutting') {
+      const s = corner.s0 - 40;
+      placements.push({id: 'marshal-post', s, lateral: -(road.halfWidthAt(s) + 4.5), heading: Math.PI});
+    } else if (name === 'Forrest Elbow') {
+      const s = corner.s1 + 38;
+      placements.push({id: 'marshal-post', s, lateral: -(road.halfWidthAt(s) + 6), heading: Math.PI});
+    } else {
+      const s = Math.max(0, corner.s0 - 30);
+      placements.push({id: 'marshal-post', s, lateral: road.halfWidthAt(s) + 6, heading: Math.PI});
+    }
   }
   // The approved fence sits behind the unchanged physical ridge walls.
   for (let s = road.pieces.find(p => p.name === 'The Cutting').s0; s < road.pieces.find(p => p.name === 'Forrest Elbow').s1; s += 8) {
