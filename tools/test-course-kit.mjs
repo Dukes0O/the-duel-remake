@@ -73,6 +73,35 @@ test('duplicate ids/flags/order and malformed manifests cannot silently register
     assert.throws(() => api.registerCircuits([{circuit, manifest: {...manifest, ...change}}]), /manifest/i);
 });
 
+
+test('future free variants require a valid default GP manifest without changing old metadata', () => {
+  requireApi();
+  const original=api.CIRCUIT_ENTRIES[0];
+  const parent={manifest:original.manifest,circuit:original.definition};
+  const descriptor={kind:'default-gp-podium',defaultEventId:original.manifest.id};
+  const child={manifest:{...original.manifest,id:'career-test-night',flag:'career-test-night',price:0,
+    releaseOrder:1000,unlock:descriptor},circuit:{...original.definition,id:'career-test-night',flag:'career-test-night',stage:1000}};
+  const before=JSON.stringify([parent,child]);
+  const registered=api.registerCircuits([parent,child]);
+  assert.deepEqual(registered[1].manifest.unlock,descriptor);
+  assert.ok(Object.isFrozen(registered[1].manifest.unlock));
+  assert.notEqual(registered[1].manifest.unlock,descriptor,'registry owns the frozen descriptor clone');
+  assert.equal(JSON.stringify([parent,child]),before,'registration never mutates authored inputs');
+  assert.deepEqual(registered[0].manifest,original.manifest,'old default manifest stays exact');
+  for(const unlock of [null,{},[],{kind:'other',defaultEventId:original.manifest.id},
+    {kind:'default-gp-podium',defaultEventId:'missing-default'},
+    {kind:'default-gp-podium',defaultEventId:'career-test-night'},
+    {...descriptor,extra:true}])
+    assert.throws(()=>api.registerCircuits([parent,{...child,manifest:{...child.manifest,unlock}}]),/unlock|default/i);
+  assert.throws(()=>api.registerCircuits([parent,{...child,manifest:{...child.manifest,price:1}}]),/unlock|price/i);
+  assert.throws(()=>api.registerCircuits([{...parent,manifest:{...parent.manifest,grandPrix:false}},child]),/default|Grand Prix/i);
+  const next={manifest:{...child.manifest,id:'career-test-reverse',flag:'career-test-reverse',releaseOrder:1001,
+    unlock:{kind:'default-gp-podium',defaultEventId:'career-test-night'}},
+    circuit:{...child.circuit,id:'career-test-reverse',flag:'career-test-reverse',stage:1001}};
+  assert.throws(()=>api.registerCircuits([parent,child,next]),/default|chain/i);
+  assert.throws(()=>api.registerCircuits([{...child,manifest:{...child.manifest,
+    unlock:{kind:'default-gp-podium',defaultEventId:'career-test-reverse'}}},next]),/default|chain|cycle/i);
+});
 test('adding only one course and its own reference/replay/signature files registers every consumer', async () => {
   requireApi();
   const id = 'fac04-test-' + randomUUID().replaceAll('-', '');
@@ -138,6 +167,106 @@ replay:replay.fixture.cases.some(row=>row.eventId==='${id}'),fingerprint:replay.
         assert.equal(flags.status, 0, `${state} course must need no shared flag test edit: ${flags.stdout} ${flags.stderr}`);
       }
     }
+
+    // Extend this existing disposable FAC04 tree, never the runtime catalogue.
+    const variantId=id+'-night';
+    await own(join(fixtureRoot,'src/circuits',variantId+'.js'), `import {circuit as base} from './${id}.js';
+export const circuit=Object.freeze({...base,id:'${variantId}',flag:'${variantId}',name:'Fixture Night'});
+export const manifest=Object.freeze({id:'${variantId}',flag:'${variantId}',state:'on',price:0,grandPrix:true,
+releaseOrder:${Math.max(...api.CIRCUIT_MANIFESTS.map(row=>row.releaseOrder))+2},
+unlock:{kind:'default-gp-podium',defaultEventId:'${id}'},
+driver:{car:'stuttgart_959s',driverId:'club',controller:'racing-line',skill:.95}});
+`);
+    const accessCode=`
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const memory=new Map();globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value))};
+const {COURSE}=await import('./src/config.js');
+const {createProfile,normalizeProfile,settleRace}=await import('./src/progression.js');
+const {COURSE_PRICES,normalizeCourseAccess,isCourseUnlocked,purchaseCourse,courseUnlockRequirement}=await import('./src/course-access.js');
+const {normalizeRaceSettings}=await import('./src/race-settings.js');
+const {courseAccessPanel}=await import('./src/course-access-ui.js');
+const {App}=await import('./src/app.js');
+const parent=COURSE.find(course=>course.id==='${id}'),variant=COURSE.find(course=>course.id==='${variantId}');
+assert.ok(parent&&variant,'actual scratch registration supplies both authored definitions');
+const parentIndex=COURSE.indexOf(parent),variantIndex=COURSE.indexOf(variant),fresh=createProfile();
+assert.equal(COURSE_PRICES[variant.id],0);
+assert.ok(!fresh.courses.unlocked.includes(variant.id),'zero price cannot include a gated variant');
+const owned={...fresh,credits:10000,courses:{version:1,unlocked:[...fresh.courses.unlocked,parent.id]}};
+const prospective={...fresh,grandPrixPodiums:[parent.id]};
+const earned={...owned,grandPrixPodiums:[parent.id]};
+for(const profile of [fresh,owned,prospective,{...fresh,courses:{version:1,unlocked:[variant.id]}},
+  {...owned,grandPrixPodiums:[variant.id]}, {...owned,grandPrixPodiums:'bad'},
+  {...owned,history:[{eventId:parent.id,completed:true,position:1,won:true,reward:100,key:'old'}]},
+  {...owned,personalBests:{[parent.id+'|layout:1']:1}}, {...owned,circuitWins:[parent.id]}]){
+ assert.equal(isCourseUnlocked(profile,variant),false,'only owned default plus prospective default podium grants access');
+ const bytes=JSON.stringify(profile),attempt=purchaseCourse(profile,variant.id);
+ assert.equal(attempt.ok,false);assert.equal(attempt.cost,0);assert.equal(attempt.profile,profile);assert.equal(JSON.stringify(profile),bytes);
+ assert.equal(normalizeRaceSettings({eventId:variant.id},profile).eventId,COURSE[0].id,'saved settings cannot enter a locked child');
+}
+for(const raw of [{courses:{version:1,unlocked:[variant.id]}},
+ {history:[{eventId:variant.id,completed:true,won:true,reward:10,key:'old-child'}]},
+ {personalBests:{[variant.id+'|layout:1']:1}}, {circuitWins:[variant.id]},
+ {activeRace:{runId:'old-child-active',stageId:variant.id,stageIndex:variantIndex,car:'falcone_f42'}}]){
+ assert.ok(!normalizeCourseAccess(raw.courses,raw).unlocked.includes(variant.id),'migration never stores a child entitlement');
+ assert.equal(isCourseUnlocked(normalizeProfile({...fresh,...raw}),variant),false);
+}
+assert.equal(isCourseUnlocked(earned,variant),true);
+assert.equal(normalizeRaceSettings({eventId:variant.id},earned).eventId,variant.id);
+assert.ok(!normalizeProfile({...earned,courses:{version:1,unlocked:[...owned.courses.unlocked,variant.id]}}).courses.unlocked.includes(variant.id));
+assert.equal(isCourseUnlocked(normalizeProfile(earned),variant),true,'derived access survives normal profile reload without a child ledger');
+const earnedBytes=JSON.stringify(earned),freeAttempt=purchaseCourse(earned,variant);
+assert.equal(freeAttempt.ok,false);assert.equal(freeAttempt.cost,0);assert.equal(freeAttempt.profile,earned);assert.equal(JSON.stringify(earned),earnedBytes);
+const result={runId:'future-default-podium',stageIndex:parentIndex,car:'falcone_f42',mode:'grandprix',
+ grandPrixCareerEnabled:true,position:3,fieldSize:8,won:false,completed:true,laps:parent.grandPrixLaps??3,
+ timeSec:100,difficulty:'casual',cpuDifficulty:'medium',driverId:'club',clean:false,seed:1989,layoutVersion:parent.layoutVersion??1};
+const settled=settleRace(owned,result);assert.equal(settled.awarded,true);assert.equal(isCourseUnlocked(settled.profile,variant),true,'real validated future default podium grants free access');
+const afterRace=JSON.stringify(settled.profile);isCourseUnlocked(settled.profile,variant);normalizeCourseAccess(settled.profile.courses,settled.profile);
+assert.equal(JSON.stringify(settled.profile),afterRace,'access reads never award money or rewrite records');
+const duplicate=settleRace(settled.profile,result);assert.equal(duplicate.awarded,false);assert.equal(JSON.stringify(duplicate.profile),afterRace);
+const previouslySettled={...owned,settledResults:[result.runId+':'+parentIndex]};
+assert.equal(isCourseUnlocked(settleRace(previouslySettled,result).profile,variant),false,'replaying an already settled result cannot fabricate its missing podium');
+for(const changes of [{mode:'duel'},{mode:'timetrial'},{position:4},{completed:false},{qualifying:true},{practice:true},
+ {grandPrixCareerEnabled:false},{laps:1},{stageIndex:variantIndex}]){
+ const rejected=settleRace(owned,{...result,...changes,runId:'rejected-'+JSON.stringify(changes)});
+ assert.equal(isCourseUnlocked(rejected.profile,variant),false,'only a validated prospective DEFAULT GP top-three finish counts');
+}
+const requirement=courseUnlockRequirement(variant);
+assert.equal(requirement.defaultEventId,parent.id);assert.ok(requirement.condition.includes(parent.name));
+const card=profile=>courseAccessPanel(profile,variantIndex,'',{teamRoomEnabled:true}).split('<article').find(row=>row.includes('<h3>'+variant.name+'</h3>')).split('</article>')[0];
+const lockedCard=card(owned),openCard=card(settled.profile);
+assert.ok(lockedCard.includes(requirement.condition));assert.ok(!lockedCard.includes('data-course-unlock')&&!lockedCard.includes(' CR'));
+assert.ok(openCard.includes('data-course-select="'+variant.id+'"'));assert.ok(!lockedCard.includes('data-team-room')&&!openCard.includes('data-team-room'));
+// Execute the actual existing router admission body; a missed guard reaches an unavailable dependency and fails.
+const router=readFileSync('./src/screen-router.js','utf8');
+const newline=String.fromCharCode(10);
+const dossierBody=router.split('getDossier(eventId) {')[1].split(newline+'  },'+newline+'  async capture')[0];
+const getDossier=new Function('app','COURSE','isCourseUnlocked','courseUnlockRequirement','profile','eventId',dossierBody);
+assert.equal(getDossier({duel:{state:{status:'menu'}},_switches:()=>({enabled:()=>true})},COURSE,isCourseUnlocked,courseUnlockRequirement,()=>settled.profile,variant.id),null);
+const app=new App();app.profile=owned;app._saveProfile();
+assert.equal(app.selectCourse(variant.id),false);assert.equal(app.startCampaign({startStage:variantIndex}),false);
+app.profile=settled.profile;app._saveProfile();assert.equal(app.selectCourse(variant.id),true);
+assert.equal(app.startCampaign({startStage:variantIndex,mode:'duel'}),true);app.returnToMenu();
+assert.equal(new App().getRaceChoices().startStage,variantIndex,'real App reload retains earned selection');
+assert.equal(app.addPlayer('Variant second player').ok,true);assert.equal(isCourseUnlocked(app.profile,variant),false);
+console.log(JSON.stringify({variantAccess:true,temporaryOnly:true}));`;
+    const access=spawnSync(process.execPath,['--input-type=module','-e',accessCode],{cwd:fixtureRoot,encoding:'utf8',windowsHide:true});
+    assert.equal(access.status,0,access.stdout+' '+access.stderr);
+    assert.deepEqual(JSON.parse(access.stdout),{variantAccess:true,temporaryOnly:true});
+    // Availability is the actual current COURSE, not merely a known manifest ID.
+    const parentBytes=await import('node:fs/promises').then(fs=>fs.readFile(paths[0],'utf8'));
+    await writeFile(paths[0],parentBytes.replace("state:'on'","state:'dev'"));
+    const unavailableCode=`import assert from 'node:assert/strict';
+const {COURSE}=await import('./src/config.js');
+const {createProfile}=await import('./src/progression.js');
+const {isCourseUnlocked,purchaseCourse}=await import('./src/course-access.js');
+assert.ok(!COURSE.some(course=>course.id==='${id}'));
+assert.ok(COURSE.some(course=>course.id==='${variantId}'));
+const profile={...createProfile(),credits:10000,courses:{version:1,unlocked:['pacific-canyon','${id}','${variantId}']},grandPrixPodiums:['${id}']};
+assert.equal(isCourseUnlocked(profile,'${variantId}'),false,'an unavailable default cannot grant a listed child');
+const result=purchaseCourse(profile,'${variantId}');assert.equal(result.ok,false);assert.equal(result.profile,profile);assert.equal(result.cost,0);`;
+    const unavailable=spawnSync(process.execPath,['--input-type=module','-e',unavailableCode],{cwd:fixtureRoot,encoding:'utf8',windowsHide:true});
+    assert.equal(unavailable.status,0,unavailable.stdout+' '+unavailable.stderr);
   } finally {
     assert.equal(process.platform, 'win32', 'test cleanup requires the authorized Recycle Bin');
     const part = relative(join(root, '.qa-dist'), fixtureRoot);
