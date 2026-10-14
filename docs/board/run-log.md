@@ -1089,3 +1089,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 14 October: QA-BROWSER-SWEEP isolated career3bed13bb merged;21/21/jobs4/build828ms, ordinary+Guardian clear, three real memory-only natives green; parent runtime/sound/art work open.
 14 October: HELI-PACKET merged (docs/HELICOPTER.md, ten H1 cards, next-run release of the helicopter); lane 14/14 jobs4, build passed; lane deleted.
+
+14 October: FIX-HAIRPIN-CAMERA c8c4a52e merged;41/41/jobs4/build1.27s/review clear; actual270poses/16200frames zero misses/blockers/errors, corrected apex picture accepted. Core returns to audio; no release.
