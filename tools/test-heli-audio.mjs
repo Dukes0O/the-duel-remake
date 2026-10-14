@@ -69,6 +69,7 @@ for (const [id, line] of Object.entries(HELI_RADIO_LINES)) {
   assert(cue, id + ' has a cue');
   assert.equal(cue.bus, 'voice');
   assert.equal(cue.file, 'voices/' + line.file);
+  assert.equal(cue.volume, line.gain || 1, id + ' plays at its gain');
   const bytes = read('public/assets/audio/' + cue.file);
   const take = read('audio-src/voices/' + line.file);
   assert(bytes.length > 8000, id + ' has a real recording');
@@ -92,7 +93,11 @@ assert.deepEqual(Object.keys(HELI_TONE_CUES).sort(), [
   'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low',
   'heli.fire.alert', 'heli.aim.lock', 'heli.badge'].sort());
 assert.equal(HELI_CUES['heli.fire.crackle'].volume, .5, 'the crackle sits under the rotor');
-assert.equal(HELI_CUES['heli.fire.alert'].volume, HELI_CUES['heli.radio.click'].volume, "the alert at the radio click's level");
+// The alert stays no louder than the low-fuel chime: the click cue it was first
+// matched to is never played (the radio chain makes its own click).
+const peak = id => HELI_CUES[id].volume * Math.max(...HELI_CUES[id].layers.map(layer => layer.volume));
+assert(peak('heli.fire.alert') <= peak('heli.fuel.low') && HELI_CUES['heli.fire.alert'].layers.every(layer => layer.type !== 'square'),
+  'the alert is no louder than the low-fuel chime');
 for (const id of ['heli.fire.alert', 'heli.aim.lock', 'heli.badge'])
   assert(HELI_CUES[id].layers.every(layer => layer.kind === 'tone'), id + ' is made from tones');
 assert.deepEqual(HELI_RECIPES.map(spec => spec.id).sort(), Object.keys(HELI_LIBRARY_CUES).sort());

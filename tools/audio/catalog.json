@@ -1106,8 +1106,8 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 375,
-      "creditsEstimated": false,
+      "creditsUsed": 48,
+      "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/heli-radio-wind-breeze.mp3",
       "sha256": "a1d4cafe17c099f42621bc48d4dbedd6353dcdb5333104d45d57a74908baddf7",

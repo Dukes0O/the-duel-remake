@@ -19,6 +19,9 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
   style 0.35, speaker boost), kept in `audio-src/voices/`, catalogued, and
   copied to `public/assets/audio/voices/` by `tools/audio/build-heli.mjs
   --voices`. No line was left out: the three regrowth lines are in.
+- **Credits pages:** `public/assets/audio/CREDITS.md` and `credits.html`
+  name Sarah and Roger, the 46 lines, the five new CC0 recordings and the
+  new tones (SPEC asks every catalogued sound to be credited in the game).
 - **Credits:** about 1,250 of the month's ElevenLabs credits used; the
   account read 7,875 left before and about 6,600 after (its counter lags,
   so the per-line figures in the catalog are estimates). Two requests hit
@@ -27,7 +30,7 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
 - **Even levels.** Sarah's takes came out about 7 dB louder than the H1
   lines, so her four lines play with `gain: .5`; Roger's "fire is out" was
   about 2 dB quiet and plays with `gain: 1.25`. A new test keeps every H2
-  line within the H1 lines' loudness, after gain, with 1.5 LU to spare.
+  line within the H1 lines' loudness range, after gain, allowing 1.5 LU either side.
 - **Cues** in `src/heli/heli-audio.js` (section 11):
 
   | Cue | Bus | Made from |
@@ -37,13 +40,17 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
   | `heli.bucket.pour` | vehicle, loop | Freesound 690224 "Ambiance_Waterfall_Big_Skogafoss_Loop_Stereo", Nox_Sound, CC0 |
   | `heli.bucket.dent` | vehicle | Freesound 513797 "metallic tube is hitting metallic bucket", lartti, CC0 (the second, harder hit, darkened) |
   | `heli.fire.hiss` | ambience | Freesound 479296 "R19-39-Steam Hiss", craigsmith, CC0 |
-  | `heli.fire.alert` | interface | two alternating tones, at the radio click's level |
+  | `heli.fire.alert` | interface | two soft alternating triangle tones, no louder than the low-fuel chime |
   | `heli.aim.lock` | interface | a short two-tone tick |
   | `heli.badge` | interface | a short rising four-note chime |
 
   The steam hiss is a recording, not noise: the tone player only plays
   tones. The cues keep the `helicopter` switch like every H1 cue (the fire
-  code that plays them runs only with `forest-fire` on). They reach
+  code that plays them runs only with the fire switch on; FIRE-SAVE names it
+  `forest-fire`, since switch names are lower case with hyphens; the packet
+  writes `forestFire`). The five fire recordings are left out of a flight's
+  preload: `preloadFire()` loads them when a fire needs them (FIRE-HOOKS),
+  so an H1 flight downloads nothing new. They reach
   `src/sound-bank.js` through HELI-HOOKS' existing line; that file and
   mastering are untouched. No event is wired yet: FIRE-HOOKS does that.
 
@@ -86,6 +93,22 @@ The helicopter's library sounds stay under the 400 KB the H1 test allows
   H2 lines); the catalog voice check reads each line's own voice instead of
   Brian's for all, and now also checks the settings; the library and tone
   cue lists, buses and loops gain the eight H2 cues. No limit was loosened.
+- `public/assets/audio/CREDITS.md` and `credits.html` are outside the
+  card's file list; they change because every catalogued sound must be
+  credited in the game.
+
+## Review (rule 17)
+
+One independent reviewer checked every line against the packet, every
+catalog row, file and hash, H1 playback and the gain and peaks: all
+correct. Fixed from its findings: the credits pages now name Sarah, Roger
+and the five new recordings; one catalog row counted 375 credits for a
+48-character line (the account counter caught up mid-request), now 48 and
+marked an estimate; the fire recordings are no longer preloaded by every
+H1 flight; the alert was copied from a click cue that never plays and
+would have been far louder than the low-fuel chime, so it is now soft
+triangle tones tested against that chime; a test now pins each line's cue
+volume to its gain.
 
 ## Removed
 
