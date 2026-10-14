@@ -51,6 +51,7 @@ never build at the same time; the board shows the second as waiting.
 | `audio-mix` | `src/audio-output.js` mastering | stays |
 | `sound-bank` | `src/sound-bank.js` cue registry | stays; one card adding cues at a time |
 | `surfaces` | `src/race-surfaces.js` surface and tyre tables | stays; one card changing surfaces at a time |
+| `track-kit-placement` | `src/track-kits.js`, named kit collision transforms in `src/track-script-course.js` | stays; one placement-hook builder at a time, frozen readers do not edit |
 | `release` | switch flips, README, VERIFICATION, COURSE_ACCESS | stays; one release at a time, several cards per release |
 
 After FAC-04, a new course holds only `release`, and only at release time.

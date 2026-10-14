@@ -164,11 +164,11 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "blocked"
+    status: "building"
     claimed_by: "codex-avalanche-geometry-2026-10-14"
     branch: "codex/p4-avalanche-geometry"
     needs: [P4-SUMMIT-RUNTIME]
-    locks: []
+    locks: [track-kit-placement]
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
