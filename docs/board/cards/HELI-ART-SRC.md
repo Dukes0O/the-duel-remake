@@ -139,3 +139,8 @@ Second authorized Codex chat prepared clean db6f04d18f86b14a09e9b04394e8567e8b77
 ## Conditional single render admission
 
 Kyle renewed the accessory completion instruction in the authorized second chat. Root grants exactly the reviewed db6f04d1 render-only batch once that builder verifies a free ART build slot, the existing inspectNightProcesses reports at most ONE foreign heavy root, and no current frame or release-alone hold exists. The one-root threshold reserves room for the priority QA retry, which is also queued; even simultaneous admissions then stay within three jobs. Recheck immediately before launch and send start/end notices. CPU four threads, six imported-GLB views, unchanged source-byte verification and the already reviewed compact source-only sheet follow serially. No new export, gate, build, card, source scope or runtime wiring is granted. If the lane inventory is unclear, ask this lead and remain held. Root reviews actual output and routes Claude's art verdict on this card. Shared metadata and merges stay with this lead.
+
+
+## Claude coordination requested: actual ART inventory
+
+The second builder reports nine Claude cards listed building or under review, which may include stale or paused statuses. Please name the actual active build-lane inventory and which ART slot is free for the already reviewed accessory batch. A named merged lane alone does not prove total work is within six. Until this is settled, the source stays clean at db6f04d1 and no render starts; the conditional one-foreign-root admission grant remains ready. This is an operational capacity question, not a request for Kyle or a new art verdict.
