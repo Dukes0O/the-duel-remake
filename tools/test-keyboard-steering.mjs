@@ -2,17 +2,18 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {App} from '../src/app.js';
 import {Duel} from '../src/game.js';
-import {createKeyboardSteering,keyboardSteeringDirection,KEYBOARD_STEERING_START,KEYBOARD_STEERING_RISE_SEC,keyboardSteeringLimit,createKeyboardThrottle} from '../src/keyboard-steering.js';
+import {createKeyboardSteering,keyboardSteeringDirection,KEYBOARD_STEERING_START,KEYBOARD_STEERING_RISE_SEC,KEYBOARD_STEERING_SPEED_DROP,keyboardSteeringLimit,createKeyboardThrottle} from '../src/keyboard-steering.js';
 
 let checks=0;
 const check=(value,label)=>{assert(value,label);checks++;};
 const equal=(a,b,label)=>{assert.deepEqual(a,b,label);checks++;};
 const near=(a,b,tolerance,label)=>check(Math.abs(a-b)<=tolerance,`${label}: ${a} vs ${b}`);
-const dt=1/120,firstAuthority=.30+.70*(dt/2)/.45;
-equal([KEYBOARD_STEERING_START,KEYBOARD_STEERING_RISE_SEC],[.30,.45],'road keyboard curve starts at 30% and reaches full in 450 ms');
+const dt=1/120,firstAuthority=.55+.45*(dt/2)/.30;
+// Kyle, 14 October 2026: the 30% / 450 ms / 40% curve steered too slowly; the road curve is now 55% / 300 ms / 30%.
+equal([KEYBOARD_STEERING_START,KEYBOARD_STEERING_RISE_SEC,KEYBOARD_STEERING_SPEED_DROP],[.55,.30,.30],'road keyboard curve starts at 55%, reaches full in 300 ms and gives up 30% at speed');
 for(const [keys,want]of [[{},0],[{KeyA:true},0],[{ArrowLeft:true},-1],[{KeyD:true},0],[{ArrowRight:true},1],[{KeyA:true,ArrowRight:true},1],[{ArrowLeft:true,ArrowRight:true},0],[{KeyD:true,KeyA:true},0],[{KeyD:true,ArrowLeft:true},-1]])
   equal(keyboardSteeringDirection(keys),want,'only arrow keys steer; A and D never steer');
-for(const [duration,want]of [[.025,.3194444444444444],[.05,.3388888888888889],[.1,.37777777777777777],[.2,.45555555555555555],[.5,.685]]){
+for(const [duration,want]of [[.025,.56875],[.05,.5875],[.1,.625],[.2,.7],[.5,.865]]){
   const steering=createKeyboardSteering();let integral=0;
   for(let i=0;i<Math.round(duration/dt);i++)integral+=steering.update(1,dt)*dt;
   near(integral/duration,want,1e-12,`${duration*1000} ms keyboard hold has the exact integrated authority`);
@@ -29,7 +30,7 @@ for(const [duration,want]of [[.025,.3194444444444444],[.05,.3388888888888889],[.
   equal(steering.update(NaN,dt),0,'invalid direction is neutral');
 }
 
-for(const [speed,limit]of [[0,1],[40,1],[80,.8],[120,.6],[200,.6],[-80,.8]]){
+for(const [speed,limit]of [[0,1],[40,1],[80,.85],[120,.7],[200,.7],[-80,.85]]){
   near(keyboardSteeringLimit(speed),limit,1e-12,'road keyboard speed cap uses absolute mph');
   const steering=createKeyboardSteering();
   for(let i=0;i<54;i++)steering.update(1,dt,speed);
@@ -91,8 +92,8 @@ function physicalTap({duration=.05,legacy=false,neutral=false,fps=60,keyCode='Ar
     integral+=app.duel.state.input.steer*seconds;
     const pressed=keyboardSteeringDirection(app.keys)!==0,previousS=app.duel.state.s;
     if(pressed){
-      const mph=Math.abs(app.duel.state.speedMph),cap=1-.4*Math.min(1,Math.max(0,(mph-40)/80));
-      predicted+=(.30+.70*(frames+.5)*seconds/.45)*cap*seconds;
+      const mph=Math.abs(app.duel.state.speedMph),cap=1-.3*Math.min(1,Math.max(0,(mph-40)/80));
+      predicted+=Math.min(1,.55+.45*(frames+.5)*seconds/.30)*cap*seconds;
     }
     frames++;const result=step(seconds);
     if(pressed){

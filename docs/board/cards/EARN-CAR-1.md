@@ -82,3 +82,22 @@ Write the stats in this file and get Claude's yes before building:
 
 The settled numbers, the model, the checks above, the lane tier and the build
 pass; one ordinary code review; Claude's look verdict recorded.
+
+## Claude answers (14 October): Claude builds the Enzo
+
+Kyle asked Claude to keep every line busy and liked Claude's original models,
+so Claude takes this card. The model and its look rounds come first, in
+`src/enzo-vehicle.js` on branch `claude/enzo-model`, unregistered (nothing in
+the game loads it) until EARN-SCREEN merges; then the registration, config,
+voice, kit, tests and save fixture follow on this card as written.
+
+## Question for Kyle (14 October): a fourth round for the Enzo?
+
+Three rounds are done (sheet and notes on branch `claude/enzo-model`,
+`docs/board/looks/earned-cars/round-3.jpg`). From the rear and side it reads as
+an Enzo: four round tail lamps, glass engine cover, side scoops, the beak
+between raised fenders. From the front the headlamps still look like white
+stickers and the flanks are too flat. SPEC 0.11 caps art at three rounds, so
+it stops here. Recommendation: allow one more round, building the lamp
+clusters as real recessed geometry and adding a waist line along the doors.
+Nothing is merged or registered until it passes.
