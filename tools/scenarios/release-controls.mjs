@@ -137,6 +137,10 @@ async function screenCase(context,id,width,height){
   const first=course.corners[0];
   await context.evaluate(`window.__qaApp.duel.state.s=window.__qaApp.duel.state.prevS=${first.brake};ControlsQaPaint()`);
   const layout=await context.evaluate(`(()=>{
+    const debug=[...document.querySelectorAll('details')].filter(node=>{const label=node.querySelector(':scope > summary')?.textContent||'';return label==='MENU QA · TEMPORARY SAVES'||label.startsWith('Performance samples (');});
+    if(debug.length!==2)throw Error('Both QA debug panels must exist before capture');
+    for(const node of debug)node.style.display='none';
+    if(debug.some(node=>getComputedStyle(node).display!=='none'))throw Error('QA debug panels still obscure native HUD');
     const visible=e=>e&&!e.hidden&&getComputedStyle(e).display!=='none'&&getComputedStyle(e).visibility!=='hidden'&&e.getClientRects().length>0;
     const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
     const selectors=['.route-hud','#route-map','.rear-view-frame','#corner-warning','.speedometer','.race-clock','.race-position','.race-heading','.race-health','#field-board','#race-callout','#style-score-panel','#tow-marker','.utility-controls'];
