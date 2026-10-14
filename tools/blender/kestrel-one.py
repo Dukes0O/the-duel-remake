@@ -13,10 +13,17 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--out', default='art-build/heli/kestrel-one.glb')
+parser.add_argument('--out', default='public/assets/heli/kestrel-one.glb')
+parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render', default='', help='folder for the four review renders')
 options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(options.root).resolve()
+OUT = root / options.out
+NATIVE = root / 'art-build/heli/kestrel-one.blend'
+if options.paths_only:
+    import json
+    print(json.dumps({'blend': [str(NATIVE)], 'glb': [str(OUT)], 'json': []}))
+    sys.exit(0)
 
 import bpy, bmesh
 from mathutils import Vector, Matrix
@@ -338,9 +345,9 @@ tri = triangles()
 print(f'kestrel-one: {tri} triangles')
 assert tri <= 20000, f'over the 20,000 triangle budget: {tri}'
 
-out = root / options.out
-out.parent.mkdir(parents=True, exist_ok=True)
-bpy.ops.wm.save_as_mainfile(filepath=str(out.with_suffix('.blend')))
+out = OUT
+out.parent.mkdir(parents=True, exist_ok=True); NATIVE.parent.mkdir(parents=True, exist_ok=True)
+bpy.ops.wm.save_as_mainfile(filepath=str(NATIVE))
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=str(out), export_format='GLB', use_selection=True,
                           export_apply=True, export_yup=True, export_cameras=False, export_lights=False)
