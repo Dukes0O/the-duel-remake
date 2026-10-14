@@ -1,0 +1,275 @@
+{
+  "card": "HELI-ART-SRC",
+  "status": "source-choice-pending",
+  "sourceBase": "db58e449",
+  "checkedDate": "2026-10-14",
+  "cacheRoot": "C:/Users/kyleb/dev/art-library/heli-source-packet",
+  "noAdaptation": true,
+  "formalArtRoundsUsed": 0,
+  "libraryDiscovery": {
+    "catalogFresh": "20261014T090009Z",
+    "stale": false,
+    "helicopterMatches": 0,
+    "verifiedScope": "C:/Users/kyleb/dev/art-library",
+    "existingPacks": "Known Kenney car/factory/racing packs inspected; no matching two-seat helicopter or complete cargo hook donor found."
+  },
+  "helicopters": [
+    {
+      "id": "light-piston",
+      "author": "3D Assets",
+      "source": "https://3dassets.dev/assets/aircraft-fleet-and-airfield-light-piston-helicopter-829e9bcf",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Primary asset page labels CC0, author 3D Assets; made with AI tools, contributor-reported claude-opus-5. No new generation requested.",
+      "modelURL": "https://cdn.3dassets.dev/assets/32804/v1/model.glb",
+      "sourcePictureURL": "https://cdn.3dassets.dev/assets/32804/v1/poster.webp",
+      "published": {
+        "dimensionsM": [
+          7.7,
+          3.215,
+          8.636
+        ],
+        "triangles": 17460,
+        "materials": 11,
+        "textures": "None: flat colour materials",
+        "seats": 2,
+        "skids": true,
+        "mainRotorPivot": [
+          0,
+          2.88,
+          1.72
+        ],
+        "tailRotorPivot": [
+          0.24,
+          1.95,
+          -3.92
+        ],
+        "clips": [
+          "rotor-spin",
+          "tail-rotor-spin",
+          "open",
+          "close",
+          "rudder-steer"
+        ],
+        "axes": "metres, +Y up, +Z nose, X span",
+        "marks": "Publisher states no manufacturer, livery, registration or operator marks"
+      },
+      "binaryVerified": false,
+      "unknown": [
+        "actual mesh/pivot bounds",
+        "rotor diameter",
+        "cockpit instrumentation and pilot eye clearance",
+        "skid node separation",
+        "texture/material inspection",
+        "visual realism in both game qualities"
+      ],
+      "accessIssue": "Page HTTP 503; CDN DNS lookup failed. No local model or source picture downloaded. Stop this access problem rather than fit a placeholder.",
+      "fit": "First CC0 lead by published two-seat proportions; 10 m rotor and clean Kestrel paint require a reviewed adaptation, not an assumed scale."
+    },
+    {
+      "id": "r22-lopo3d",
+      "author": "Galih Pamungkas (Lopo3D)",
+      "source": "https://sketchfab.com/3d-models/low-poly-helicopter-7677d87826f449ebadb6cccba2af38ca",
+      "metadataURL": "https://api.sketchfab.com/v3/models/7677d87826f449ebadb6cccba2af38ca",
+      "license": "CC-BY-4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseEvidence": "Primary publisher API identifies author, CC Attribution / by / CC BY 4.0 URL and permits commercial use with credit.",
+      "published": {
+        "triangles": 9902,
+        "vertices": 5403,
+        "isDownloadable": true,
+        "basis": "Robinson R22"
+      },
+      "sourcePicture": "r22-source.jpg",
+      "sourcePictureURL": "https://media.sketchfab.com/models/7677d87826f449ebadb6cccba2af38ca/thumbnails/24822d1c72bb4f2293c2a1c9740a2abc/08302397b1074f01b0f6f6d11249579d.jpeg",
+      "pictureObservation": "Author picture shows two side-by-side seats, panel pod, skid landing gear, main and tail rotors. This does not prove nodes, units or texture dimensions.",
+      "binaryVerified": false,
+      "unknown": [
+        "download availability without account",
+        "dimensions and main rotor diameter",
+        "separate pivot/skid nodes",
+        "mesh triangle count rather than published count",
+        "texture resolutions",
+        "cockpit visibility and absence of all brand marks"
+      ],
+      "fit": "Closest cabin/panel source picture. Needs generic clean paint, source credit and actual donor inspection; no real Robinson branding would ship."
+    },
+    {
+      "id": "z3eus-reserve",
+      "author": "z3eus",
+      "source": "https://opengameart.org/content/helicopter-4",
+      "modelURL": "https://opengameart.org/sites/default/files/helicopter_0.zip",
+      "license": "CC0-1.0",
+      "licenseURL": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseEvidence": "Primary author submission explicitly CC0.",
+      "archive": "oga-helicopter.zip",
+      "archiveSHA256": "a2f68f2c5b5c2d34dbb3627324ca0b577b59b8d2751d8522c8c681f836661b7d",
+      "archiveMembers": [
+        "HelicopterBody.blend",
+        "HelicopterBody.blend1",
+        "HelicopterBody.fbx",
+        "HelicopterWings.blend",
+        "HelicopterWings.blend1",
+        "HelicopterWings.fbx"
+      ],
+      "sourcePictures": [
+        "oga-body-source.png",
+        "oga-rotor-source.png"
+      ],
+      "binaryVerified": "Archive contents only; no import or conversion",
+      "pictureObservation": "Coarse faceted body and six-blade rotor; two seats, instrument panel and tail rotor are not established. Body and rotor are separate source files.",
+      "unknown": [
+        "dimensions",
+        "triangles",
+        "texture dimensions",
+        "cockpit",
+        "tail rotor",
+        "usable pivots"
+      ],
+      "fit": "Screened out of preferred shortlist: too many essential gaps. Retain original licensed archive, not a finished or selected placeholder."
+    }
+  ],
+  "accessories": [
+    {
+      "id": "hook-block",
+      "source": "https://3dassets.dev/assets/nuclear-power-station-and-control-room-crane-hook-bloc-ec178e30",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "modelURL": "https://cdn.3dassets.dev/assets/36891/v1/model.glb",
+      "sourcePictureURL": "https://cdn.3dassets.dev/assets/36891/v1/poster.webp",
+      "published": {
+        "triangles": 940,
+        "dimensionsM": [
+          0.7,
+          2.874,
+          0.6
+        ],
+        "pivot": "hook",
+        "clips": [
+          "open",
+          "close"
+        ],
+        "rope": "static"
+      },
+      "binaryVerified": false,
+      "gap": "Industrial two-sheave block is a hook donor, not already a helicopter belly sling. Inspect safety catch and remove badge if selected. Cable must remain a separately deformable visual, not frozen donor rope."
+    },
+    {
+      "id": "helipad-h",
+      "source": "https://3dassets.dev/assets/aircraft-fleet-and-airfield-helipad-ca0cfeb1",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "modelURL": "https://cdn.3dassets.dev/assets/32821/v1/model.glb",
+      "sourcePictureURL": "https://cdn.3dassets.dev/assets/32821/v1/poster.webp",
+      "published": {
+        "triangles": 784,
+        "dimensionsM": [
+          10,
+          0.33,
+          10
+        ],
+        "paint": "circle and H",
+        "textures": "none",
+        "lights": 8
+      },
+      "binaryVerified": false,
+      "gap": "Source pad top is +0.18 m. Landing-zone dimensions are HELI-MODE, not an art assumption; fit after source choice."
+    },
+    {
+      "id": "fuel-pump",
+      "source": "https://3dassets.dev/assets/roadside-survival-stops-manual-fuel-pump-9fe6eb80",
+      "author": "3D Assets",
+      "license": "CC0-1.0",
+      "modelURL": "https://cdn.3dassets.dev/assets/23530/v1/model.glb",
+      "sourcePictureURL": "https://cdn.3dassets.dev/assets/23530/v1/poster.webp",
+      "published": {
+        "triangles": 252,
+        "dimensionsM": [
+          0.479,
+          1.369,
+          0.401
+        ],
+        "animations": 0
+      },
+      "binaryVerified": false,
+      "gap": "Weathered survival pump; clean aviation refuelling treatment and actual hose/nozzle suitability need Claude choice and donor inspection."
+    }
+  ],
+  "proposedExportContract": {
+    "status": "Claude to settle before adaptation",
+    "units": "metres",
+    "axes": "+Y up, +Z forward, +X right",
+    "root": "KestrelOne at skid contact midpoint; skids grounded at local Y=0",
+    "mainRotor": "RotorMain independent pivot at spindle, rotates about +Y, measured diameter 10 m",
+    "tailRotor": "RotorTail independent pivot at spindle; axis recorded after donor inspection, no guessed spin sign",
+    "separateNodes": [
+      "Body",
+      "Skids",
+      "Cockpit",
+      "InstrumentPanel",
+      "RotorMain",
+      "RotorTail"
+    ],
+    "sockets": [
+      "PilotEye",
+      "CableAttach"
+    ],
+    "accessoryNodes": [
+      "CargoHook",
+      "CableVisual",
+      "HelipadH",
+      "FuelPump"
+    ],
+    "texturesMax": 2048,
+    "helicopterTriangleCap": 20000,
+    "paint": "new and clean Kestrel One; no source logos/registration marks",
+    "note": "No runtime consumer or renderer contract changed. Socket positions and tail axis stay unset until donor measurements."
+  },
+  "questions": [
+    "Choose the CC0 piston lead or CC-BY R22, subject to accessible original binary and measured compliance; neither is approved runtime art yet.",
+    "Confirm proposed node/axis/root contract with HELI-VIEW, especially skid-plane root and CableAttach/PilotEye sockets.",
+    "Approve hook/pad/pump donor direction; current CDN access prevents actual accessory mesh verification."
+  ],
+  "cacheFiles": [
+    {
+      "file": "cc-by-deed.html",
+      "bytes": 31950,
+      "sha256": "8dda1ccec4be91fc80821d4e4fd5c568072b9a3a74b2fdc07c249a27e920ef01"
+    },
+    {
+      "file": "cc0-deed.html",
+      "bytes": 30248,
+      "sha256": "abb4d48fc8b85de52b377dd105532c6c549f515d492a8e1712bc99e7316a1f12"
+    },
+    {
+      "file": "oga-body-source.png",
+      "bytes": 27844,
+      "sha256": "0b68a463672e983d59017089c09bc943ee34e3dd91ecf2f74d2ae52cf041cc08"
+    },
+    {
+      "file": "oga-helicopter.zip",
+      "bytes": 634669,
+      "sha256": "a2f68f2c5b5c2d34dbb3627324ca0b577b59b8d2751d8522c8c681f836661b7d"
+    },
+    {
+      "file": "oga-rotor-source.png",
+      "bytes": 141587,
+      "sha256": "038a33fe1ffae27d89f6d019889a57bc44a7eab3290531285d4e5c8b28157983"
+    },
+    {
+      "file": "oga-source.html",
+      "bytes": 19779,
+      "sha256": "c36c281431f75f0ede0b56219e0bb25c8aabccc8d030439e5f5a175f006104a9"
+    },
+    {
+      "file": "r22-source.jpg",
+      "bytes": 131877,
+      "sha256": "92a85faad5f28d8567587f28e86727c382c31860c98e8b2d7cec98f71fc364d7"
+    },
+    {
+      "file": "r22-source.json",
+      "bytes": 4634,
+      "sha256": "6b99b6d9e5601c529d7d249a09fc6e3a949b0381f32dae4163e2654a3fcbc90e"
+    }
+  ]
+}
