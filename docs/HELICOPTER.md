@@ -464,6 +464,15 @@ the art passes, HELI-VIEW may draw a plain stand-in in dev builds only.
 - HELI-FINISH: Claude flies the whole slice, sends Kyle pictures, and the
   release waits for Kyle's word.
 
+**Where H1 stands (14 October 2026, HELI-FINISH).** Every acceptance line
+above is met in development builds: lessons 1 to 4, fuel, jobs and the
+player's own car to Tremblant Snow or Panorama Ridge, set down and raced;
+repairs and the fuel truck; the autopilot; four views; instruments tested
+against the simulation; replays, signatures and balance untouched (lane
+guards); the frame check passed at 16.8 ms p95 on both qualities with the
+stand-in model. The release waits for HELI-ART-SRC's model and Kyle's
+word.
+
 ## 12. After H1
 
 Cockpit project "The Duel" holds the later sprints: H2 Fire (T-035),

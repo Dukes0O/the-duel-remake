@@ -158,6 +158,13 @@ const lessonEvent = (events, type) => events.find(e => e.type === type);
   ok(events.some(e => e.type === 'lessonRetry' && e.lesson === 'liftoff') && events.some(e => e.line === 'heli.radio.retry'), 'a crash: try again');
   run(session, 4);
   ok(session.lesson?.id === 'liftoff' && session.phase === 'flying', 'back on the pad, lesson 1 starts over');
+  // Stop during the wait after a crash: no restart.
+  run(session, 3, () => ({lift: 1}));
+  const second = run(session, 30, () => ({lift: -1, pitch: 1}), (v, seen) => seen.some(e => e.type === 'crashed'));
+  ok(second.some(e => e.type === 'crashed') && session.phase === 'crashed', 'the second dive crashes too');
+  ok(session.stopLesson(), 'Stop during the crash wait');
+  run(session, 4);
+  ok(session.lesson === null, 'the stopped lesson does not start again after the respawn');
 }
 
 // A hop on the H is not a landing; a crate let go outside its circle or
