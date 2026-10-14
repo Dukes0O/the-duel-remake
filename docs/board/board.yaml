@@ -147,7 +147,6 @@ tasks:
     claimed_by: "codex-ardennes-2026-10-13"
     branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
-    waiting_on: claude
     flag: "ardennes-forest"
     details: "docs/board/cards/P4-ARDENNES.md"
 
@@ -170,7 +169,6 @@ tasks:
     branch: "codex/p4-avalanche-geometry"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
-    waiting_on: claude
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
 

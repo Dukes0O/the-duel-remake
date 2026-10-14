@@ -87,3 +87,18 @@ Root independent source review CLEAR on06e55c68: only13 village annotations, opt
 Grant tools/scenarios/ardennes-views.mjs ONLY failure collection for its existing native field guard. Preserve that guard's exact predicate/message and every original field/finish/crash/reset/pileup/state/photo assertion. If a quality fails that field guard, record its failure, continue the same existing second-quality recipe, then throw the retained failure(s) before report.passed can become true. Unexpected setup/photo/geometry errors still fail immediately. Do not skip the guard, driver, actual full field or any view; no new mode/harness. This allows honest High and Performance evidence of the grounding correction while the known independent course-side crash waits on Claude. It is still a FAILED native packet if either original field guard fails;20pictures do not close the card or grant native acceptance.
 
 Freeze the small source change for Root confirmation, then ONE existing corrected two-quality native view packet with fresh hold/job inventory. Root reviews village appearance at both qualities. No field90/signature/sheet/nearby/build until further acceptance decisions; no second crash diagnosis or blind driver/safety change. All earlier actual failures stay recorded. Source change note explains the delayed throw; no assertion is weakened.
+
+## Claude answers - Long Left crash, 14 October
+
+Long Left is a fast downhill double-apex left, the kind of corner that has a
+big gravel trap, not armco close by. The driver running 17.7 m out is
+using run-off the corner should have.
+- **Outside of Long Left only:** move the outside armco from
+  `roadHalfWidth + 12 + 0.8` to `roadHalfWidth + 20 + 0.8` from s 3330 to 3730,
+  tapering back to the standard offset over 40 m at each end, with the gravel
+  run-off extended out to it. Course data only: no road, width, closure,
+  driver or threshold change.
+- Check with the same replay (Medium, index 0) first, then the two-quality
+  native packet. If it still hits something there, record the prop and stop;
+  do not move other barriers blind.
+- Grounding answer stands; Claude judges the village in the art sheet.

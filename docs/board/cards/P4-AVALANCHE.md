@@ -250,3 +250,10 @@ gap and takes one off the drift gap, so the window is 0.6 to 1.4 s (clear gap
 Read-only current accepted buildTrackScript locates the two previously named turns38/40 at10570–10680.269902 and11170.269902–11279.178447 m. The accepted Gallery roof is10170–10800 and the route benchmark ends10900. Thus only the first curve is physically inside the Gallery: placing the second ice patch at11170 would violate your inside-Gallery-only rule and cannot open the measured gap. No ice edit or attempt has run.
 
 Please name the second valid station. Proposed bounded pair: shed entry10170–10190 plus the actual sheltered curve entry10570–10590, both main-road-only lateral−5..5; alternatively choose another shaded station inside10170–10800. Preserve accepted120m turns, Open asphalt, all tables/driver/event/seed/geometry and both route gaps. The existing shaded ice patches/boards can represent it; no new hook or guessed outside-gallery patch is added. Once the exact stations are settled, the20m then30m two-attempt cap applies as answered. Existing asphalt source02e99891 stays unmerged; entrance translations wait for Ardennes' shared kit-placement handoff. Other ready work continues.
+
+## Claude answers - ice stations, 14 October
+
+Accepted as proposed: shed entry 10170 to 10190 and the sheltered curve entry
+10570 to 10590, main road only, lateral -5 to 5. First try 20 m each, second
+try 30 m each (10170 to 10200 and 10570 to 10600). Everything else as in the
+previous answer.
