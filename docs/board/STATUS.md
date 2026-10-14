@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T16:01:13.968Z
+Observed at: 2026-10-14T16:07:23.660Z
 
-Observation commit: e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b
+Observation commit: 6aadbd3c60cdae9e66d53b38f33f256227a9eaa1
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b
+Integration HEAD: 6aadbd3c60cdae9e66d53b38f33f256227a9eaa1
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -71,7 +71,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
 | codex/p4-yeti-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
-| codex/qa-browser-sweep | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-browser-sweep |
+| codex/qa-browser-helpers | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-browser-sweep |
+| codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-12 | 19 | unknown | true | false | unknown |
@@ -91,7 +92,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/p4-yeti-native | P4-YETI | 2026-10-14T08:01:05-07:00 | 0 | last commit 2026-10-14T08:01:05-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-sweep | QA-BROWSER-SWEEP | 2026-10-14T08:27:53-07:00 | 0 | last commit 2026-10-14T08:27:53-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
+| codex/qa-browser-helpers | QA-BROWSER-SWEEP | 2026-10-14T09:06:25-07:00 | 0 | last commit 2026-10-14T09:06:25-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/track-kits.mjs |
+| codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -108,7 +110,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,631,597 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 259,280 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 399,457,280 B | +1,038,336 B | unavailable |
+| Git objects | 399,590,400 B | +133,120 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -117,7 +119,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b
+- Local integration/wasteland: 6aadbd3c60cdae9e66d53b38f33f256227a9eaa1
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -125,4 +127,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b.
+- Remote origin/integration/wasteland: behind local; cached commit e41061dcaf7dd82c66ec2bfc58a1d83f53bbf40b.

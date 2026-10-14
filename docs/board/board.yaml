@@ -415,7 +415,7 @@ tasks:
     size: "S"
     status: "building"
     claimed_by: "codex-browser-sweep-2026-10-14"
-    branch: "codex/qa-browser-sweep"
+    branch: "codex/qa-browser-helpers"
     needs: []
     waiting_on: "claude"
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"

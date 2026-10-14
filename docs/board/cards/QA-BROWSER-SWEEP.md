@@ -86,3 +86,9 @@ Separate them; do not rebuild old review inputs.
   in their own step) and keep its recipe for manual use.
 - These are changed scenario sets and pins: one review, explained in the change
   note. The real runtime failures you list stay open for bounded diagnosis.
+
+## Bounded audio stop and helper-only source — 14 October 09:06
+
+The original audio-crash-peak test and its permitted same-commit c5 rerun both time out in Runtime.evaluate before all23 PCM assertions (0pass/23hookFailed;87325ms and83118.6992ms). No asserted PCM failure or audio pass exists. After30minutes, stop this infrastructure problem; no guessed autoplay flag, timeout change or third blind rerun. The prepared existing capture.json phase locator9ff34067 is UNRUN and does not identify the hanging stage yet.
+
+Preserve that audio/setup/locator source on codex/qa-browser-sweep at9ff34067. In the SAME own QA folder, new branch codex/qa-browser-helpers on current integration contains only the seven independently reviewed helper/track/pay files, byte-identical to the CLEAR source, plus its precise note. Clean a0e9d76a includes no recorder scenario/test change and no game code. This is a source split, not a new lane or history rewrite. Convoy and standalone track receipts remain valid for their identical code; Tollkeeper/Warlord/GP actual originals plus one final nearby/jobs4/build are next. Parent QA remains open for unresolved cases and Claude's sound/art decisions; no full23-case sweep pass is claimed. The older prepared audio branch remains unmerged work and will be listed on STATUS; its future follow-up uses the existing QA-AUDIO-CRASH-RELIABILITY card rather than endless diagnosis here.
