@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import {createHeliState, heliReadout, stepHeli} from '../src/heli/heli-flight.js';
 import {flatGround} from '../src/heli/heli-ground.js';
-import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel} from '../src/heli/heli-ui.js';
+import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel, lessonsMarkup, holdShare} from '../src/heli/heli-ui.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {buyFuel} from '../src/heli/heli-save.js';
 import {heliCameraPose, HELI_CAMERA_VIEWS} from '../src/heli/heli-camera.js';
@@ -80,6 +80,28 @@ for (const [fuelKg, credits, refuels] of [[300, 1000, 2], [300.64, 1000, 2], [12
     const kg = /BUY ([\d.]+) KG/.exec(label.text)?.[1];
     if (kg) eq(Number(kg), result.kg, `${label.text}: the amount shown is the amount sold`);
   }
+}
+
+// The instructor's panel: on the pad, the lessons with their state and the
+// opening's skip; during a lesson, its goal and the hold bar.
+{
+  const zone = {x: 0, z: 0, y: 10, radius: 12};
+  const pad = {phase: 'flying', courseId: 'tremblant-woods', zone, heli: {x: 0, z: 0, y: 10, onGround: true}};
+  const fresh = [{id: 'liftoff', open: true, done: false}, {id: 'hover', open: false, done: false},
+    {id: 'landing', open: false, done: false}, {id: 'carry', open: false, done: false}];
+  const html = lessonsMarkup(pad, fresh, {opening: true});
+  ok(html.includes('INSTRUCTOR') && html.includes('data-heli-lesson="start:liftoff"'), 'lesson 1 can start');
+  ok(!html.includes('start:hover') && html.includes('Opens later'), 'lesson 2 waits');
+  ok(html.includes('data-heli-lesson="skip"'), 'the opening can be skipped');
+  const later = lessonsMarkup(pad, fresh.map(item => ({...item, open: true, done: item.id !== 'carry'})));
+  ok(later.includes('Retake') && !later.includes('skip'), 'finished lessons can be retaken; no skip once begun');
+  eq(lessonsMarkup({...pad, heli: {...pad.heli, onGround: false}}, fresh), '', 'no board in the air');
+  const running = lessonsMarkup({...pad, lesson: {id: 'hover', held: 5}}, fresh);
+  ok(running.includes('LESSON 2 HOVER') && running.includes('heli-lesson-hold') && running.includes('data-heli-lesson="stop"'), 'a running lesson shows its goal, its bar and Stop');
+  eq(running, lessonsMarkup({...pad, lesson: {id: 'hover', held: 7}}, fresh), 'the panel does not change as the bar moves (no rebuild under the mouse)');
+  eq(holdShare({lesson: {id: 'hover', held: 5}}), 0.5, 'the bar is half full at 5 of 10 seconds');
+  eq(holdShare({lesson: {id: 'landing', held: 3}}), 0, 'no bar for the landing');
+  eq(noticeText({type: 'lessonPassed', lesson: 'carry'}), 'Lesson passed: 4 Carry and set down', 'passed notice');
 }
 
 // The four camera views.

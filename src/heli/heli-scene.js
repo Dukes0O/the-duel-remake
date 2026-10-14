@@ -5,6 +5,7 @@
 // allowed in dev builds until Codex's HELI-ART-SRC model passes (HELI-VIEW
 // swaps it for the picked model). Never at release.
 import {heliCameraPose} from './heli-camera.js';
+import {createVehicleAssets} from '../vehicle-assets.js';
 
 const CABLE_LENGTH = 15;
 
@@ -63,7 +64,23 @@ function ring(THREE, radius, color) {
   return mesh;
 }
 
-export function createHeliView({THREE, scene}) {
+function buildCrate(THREE) {
+  const wood = new THREE.MeshStandardMaterial({color: 0x7a5a36, roughness: .85});
+  const band = new THREE.MeshStandardMaterial({color: 0x2a2c2e, roughness: .6, metalness: .5});
+  const crate = new THREE.Group();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.2, 1.4), wood);
+  box.position.y = .6;
+  crate.add(box);
+  for (const y of [.25, .95]) {
+    const strap = new THREE.Mesh(new THREE.BoxGeometry(1.44, .08, 1.44), band);
+    strap.position.y = y;
+    crate.add(strap);
+  }
+  crate.traverse(object => { if (object.isMesh) object.castShadow = true; });
+  return crate;
+}
+
+export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets()}) {
   const group = new THREE.Group();
   group.name = 'Helicopter';
   group.visible = false;
@@ -80,7 +97,28 @@ export function createHeliView({THREE, scene}) {
     bar.position.x = x;
     padMark.add(bar);
   }
-  group.add(cable, hookMesh, zoneRing, padMark);
+  const hoverRing = ring(THREE, 4, 0x9fd4ff), targetRing = ring(THREE, 10, 0xffcf3f);
+  group.add(cable, hookMesh, zoneRing, padMark, hoverRing, targetRing);
+  // Cars and crates other than the player's own car (the race renderer
+  // draws that one): the game's own car models, made on demand.
+  const others = new Map();
+  function otherMesh(load) {
+    // One model per car type, reused from job to job.
+    const key = load.id;
+    let mesh = others.get(key);
+    if (mesh) return mesh;
+    if (load.id === 'crate') mesh = buildCrate(THREE);
+    else {
+      const status = vehicleAssets.status(load.id);
+      if (status === 'error') return null;
+      if (status !== 'ready') { if (status === 'idle') void vehicleAssets.load(load.id); return null; }
+      mesh = vehicleAssets.create(load.id);
+      if (!mesh) return null;
+    }
+    others.set(key, mesh);
+    group.add(mesh);
+    return mesh;
+  }
   scene.add(group);
   let spin = 0;
   const points = cableGeometry.attributes.position;
@@ -97,8 +135,24 @@ export function createHeliView({THREE, scene}) {
       spin += (h.rotor || 0) * 42 * dt;
       standIn.rotor.rotation.y = spin;
       standIn.tail.rotation.x = spin * 5.5;
-      const load = view.load;
-      const end = load?.hooked ? {x: load.x, y: load.y + .7, z: load.z} : {x: h.x, y: h.y - CABLE_LENGTH, z: h.z};
+      const loads = view.loads ?? (view.load ? [view.load] : []);
+      const load = loads.find(item => item.hooked) ?? null;
+      const end = load ? {x: load.x, y: load.y + .7, z: load.z} : {x: h.x, y: h.y - CABLE_LENGTH, z: h.z};
+      const seen = new Set();
+      for (const item of loads) {
+        if (item.own) continue;
+        const mesh = otherMesh(item);
+        if (!mesh) continue;
+        seen.add(item.id);
+        mesh.visible = true;
+        mesh.position.set(item.x, item.y - .7, item.z);
+        mesh.rotation.set(0, item.heading || 0, 0);
+      }
+      for (const [key, mesh] of others) if (!seen.has(key)) mesh.visible = false;
+      hoverRing.visible = view.lesson?.id === 'hover' || view.lesson?.id === 'landing';
+      targetRing.visible = view.lesson?.id === 'carry' && !!view.lesson.target;
+      if (view.zone) hoverRing.position.set(view.zone.x, view.zone.y + .12, view.zone.z);
+      if (targetRing.visible) targetRing.position.set(view.lesson.target.x, view.lesson.target.y + .1, view.lesson.target.z);
       points.setXYZ(0, h.x, h.y - .2, h.z);
       points.setXYZ(1, end.x, end.y, end.z);
       points.needsUpdate = true;
@@ -109,10 +163,14 @@ export function createHeliView({THREE, scene}) {
         padMark.position.set(view.zone.x, view.zone.y + .1, view.zone.z);
         padMark.visible = view.courseId === 'tremblant-woods';
       }
-      return {camera: heliCameraPose(view, cameraIndex), load: load ?? null};
+      // The player's own car, wherever it is, for the race renderer to draw.
+      return {camera: heliCameraPose(view, cameraIndex), load: loads.find(item => item.own) ?? null};
     },
     hide() { group.visible = false; },
     dispose() {
+      // Car models share their geometry and materials with the race's own
+      // cars, so only the helicopter's own parts are freed.
+      for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);
       scene.remove(group);
       group.traverse(object => { object.geometry?.dispose?.(); object.material?.dispose?.(); });
     },

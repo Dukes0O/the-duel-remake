@@ -68,8 +68,12 @@ function run(session, seconds, controls = () => ({}), until = null) {
 }
 
 const OWNED = ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'];
+// A pilot who has finished the lessons (HELI-LESSONS opens the board and
+// carrying cars with them; tools/test-heli-lessons.mjs covers a new pilot).
+const TRAINED = Object.freeze({liftoff: true, hover: true, landing: true, carry: true});
 function profileWith({credits = 3000, owned = [], heli = null} = {}) {
-  return normalizeProfile({...createProfile(), credits, courses: {version: 1, unlocked: owned}, ...(heli ? {heli} : {})});
+  return normalizeProfile({...createProfile(), credits, courses: {version: 1, unlocked: owned},
+    heli: {version: 1, fuelKg: 0, ...(heli || {}), lessons: TRAINED}});
 }
 const DAY1 = '2026-10-14', DAY2 = '2026-10-15';
 

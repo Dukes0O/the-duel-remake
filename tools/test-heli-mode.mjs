@@ -52,8 +52,12 @@ function pilot(view, target, {speed = 6} = {}) {
   };
 }
 
+// A pilot who has finished the instructor's lessons (HELI-LESSONS gates
+// the pump after the free tank, the dispatch board and carrying cars on
+// them; tools/test-heli-lessons.mjs covers a new pilot).
+const TRAINED = Object.freeze({liftoff: true, hover: true, landing: true, carry: true});
 function freshProfile() {
-  return normalizeProfile({...createProfile(), credits: 3000});
+  return normalizeProfile({...createProfile(), credits: 3000, heli: {version: 1, lessons: TRAINED, fuelKg: 0, lessons: TRAINED}});
 }
 
 function run(session, seconds, controls = () => ({}), until = null) {
@@ -163,7 +167,7 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
 
 // Cruise refused without enough fuel.
 {
-  const session = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, fuelKg: 100, refuels: 3}}),
+  const session = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, lessons: TRAINED, fuelKg: 100, refuels: 3}}),
     enabled: true, loadCourse});
   session.start();
   run(session, 4, () => ({lift: 1}));
@@ -211,20 +215,20 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
   ok(session.view().heli.fuelKg < 400 - burned + 0.5, 'back home without a free refill');
 }
 {
-  const broke = normalizeProfile({...freshProfile(), credits: 0, heli: {version: 1, fuelKg: 0, refuels: 4}});
+  const broke = normalizeProfile({...freshProfile(), credits: 0, heli: {version: 1, lessons: TRAINED, fuelKg: 0, refuels: 4}});
   const session = createHeliSession({profile: broke, enabled: true, loadCourse});
   const events = [...session.start(), ...run(session, 0.1)];
   ok(events.some(e => e.type === 'charged' && e.kind === 'fuelTruck'), 'broke and empty at home: the fuel truck comes');
   ok(session.view().heli.fuelKg > 399.9 && session.view().heli.engine && session.profile.credits === 0, 'full tank, engine running, nothing charged below zero');
-  const poor = createHeliSession({profile: normalizeProfile({...freshProfile(), credits: 50, heli: {version: 1, fuelKg: 0, refuels: 4}}),
+  const poor = createHeliSession({profile: normalizeProfile({...freshProfile(), credits: 50, heli: {version: 1, lessons: TRAINED, fuelKg: 0, refuels: 4}}),
     enabled: true, loadCourse});
   const poorEvents = [...poor.start(), ...poor.step()];
   const poorTruck = poorEvents.find(e => e.type === 'charged' && e.kind === 'fuelTruck');
   ok(poorTruck?.charged === 50 && poor.profile.credits === 0, 'with 50 credits (under a 60 kg reserve) the truck comes and takes the 50');
-  const able = createHeliSession({profile: normalizeProfile({...freshProfile(), credits: 90, heli: {version: 1, fuelKg: 0, refuels: 4}}),
+  const able = createHeliSession({profile: normalizeProfile({...freshProfile(), credits: 90, heli: {version: 1, lessons: TRAINED, fuelKg: 0, refuels: 4}}),
     enabled: true, loadCourse});
   ok(![...able.start(), ...able.step()].some(e => e.kind === 'fuelTruck'), 'with 90 credits the pump sells the reserve instead');
-  const away = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, fuelKg: 3, refuels: 2}}), enabled: true, loadCourse});
+  const away = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, lessons: TRAINED, fuelKg: 3, refuels: 2}}), enabled: true, loadCourse});
   away.start('tremblant-snow');
   const dry = run(away, 30);
   ok(dry.some(e => e.type === 'engineOut') && dry.some(e => e.type === 'charged' && e.kind === 'fuelTruck'), 'running dry on the ground away from home calls the truck');
@@ -234,7 +238,7 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
 }
 {
   let saves = 0;
-  const session = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, fuelKg: 400, refuels: 1}}),
+  const session = createHeliSession({profile: normalizeProfile({...freshProfile(), heli: {version: 1, lessons: TRAINED, fuelKg: 400, refuels: 1}}),
     enabled: true, loadCourse, carId: 'banshee_muscle', persist: () => saves++});
   session.start();
   const full = session.buyFuel();

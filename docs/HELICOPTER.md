@@ -348,6 +348,24 @@ steps, praise and retries, low fuel, out of fuel, hard landing, crash, job
 taken, job done, cruise refused. Lines are written in HELI-RADIO to fit the
 month's voice credits.
 
+**Settled while building HELI-LESSONS (14 October 2026).** Checked in
+`tools/test-heli-lessons.mjs`, which flies all four lessons headless:
+
+- A new pilot (no lesson done) hears the opening (welcome and the
+  controls) on the pad; the instructor's board offers lesson 1 and "Skip
+  the opening", which marks lessons 1 and 2 done.
+- Lesson 1 passes at 2.5 to 4.5 m above the ground held 5 s. Lesson 2:
+  within 4 m of the H, 2 to 5 m up, for 10 s. Lesson 3: a good touchdown
+  under 1 m/s within 3 m of the H, after lifting off. Lesson 4: the 500 kg
+  crate waits 18 m from the pad; its circle (10 m from the centre) is
+  about 200 m out, clear and level; a clean release inside it passes. A
+  hard landing, a crash or a dropped crate means "try again"; the crate
+  goes back beside the pad. Lessons start on the pad and can be retaken.
+- What they open: the pump after the free first tank opens with lesson 3
+  (a tank below 15% can always be filled, so nobody is stuck); the
+  dispatch board opens with lesson 3; carrying cars (the player's or a
+  customer's) opens with lesson 4.
+
 ## 8. What the player sees and hears
 
 - **Camera views (C):** behind the helicopter, cockpit, straight down the
