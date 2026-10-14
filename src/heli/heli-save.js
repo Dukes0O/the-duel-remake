@@ -52,6 +52,10 @@ export function normalizeHeli(value) {
   }
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
+  // Keys from a newer game are kept as they are, so going back one release
+  // loses nothing (docs/HELI_FIRE.md section 12).
+  for (const key of Object.keys(value))
+    if (!Object.hasOwn(heli, key) && key !== '__proto__' && value[key] !== undefined) heli[key] = value[key];
   return heli;
 }
 

@@ -41,10 +41,10 @@ check('normalizing clamps and rounds every field', () => {
   const heli = normalizeHeli({version: 1, fuelKg: 123.456, lessons: {liftoff: true, hover: 'yes', landing: 1, carry: true, extra: true},
     playDay: {last: '2026-10-14', count: 5}, jobs: {day: 12, taken: 'job:a-1', done: ['a', 'a', 'b', 'Bad Id', 7, 'c']},
     carsAt: {koenigsegg_jesko: 'panorama-ridge', falcone_f42: 'tremblant-woods', nope: 'tremblant-woods', stuttgart_959s: 'nowhere', aurora_gt: 4},
-    refuels: 2, flights: 9, unknown: 'dropped'});
+    refuels: 2, flights: 9, unknown: 'kept'});
   assert.deepEqual(heli, {version: 1, fuelKg: 123.5, lessons: {liftoff: true, hover: false, landing: false, carry: true},
     playDay: {last: '2026-10-14', count: 5}, jobs: {day: 12, taken: 'job:a-1', done: ['a', 'b', 'c']},
-    carsAt: {koenigsegg_jesko: 'panorama-ridge', falcone_f42: 'tremblant-woods'}, refuels: 2, flights: 9});
+    carsAt: {koenigsegg_jesko: 'panorama-ridge', falcone_f42: 'tremblant-woods'}, refuels: 2, flights: 9, unknown: 'kept'});
   assert.equal(normalizeHeli({version: 1, fuelKg: 9999}).fuelKg, 400);
   assert.equal(normalizeHeli({version: 1, fuelKg: -5}).fuelKg, 0);
   for (const bad of [NaN, Infinity, '50', null, {}]) assert.equal(normalizeHeli({version: 1, fuelKg: bad}).fuelKg, 0, String(bad));
@@ -64,6 +64,20 @@ check('normalizing clamps and rounds every field', () => {
   assert.deepEqual(normalizeHeli({version: 1, jobs: {done: many}}).jobs.done, many.slice(0, 10));
   assert.deepEqual(normalizeHeli({version: 1, carsAt: ['falcone_f42']}).carsAt, {});
   assert.deepEqual(normalizeHeli(normalizeHeli({version: 1, fuelKg: 33.33})), normalizeHeli({version: 1, fuelKg: 33.33}));
+});
+
+check('keys from a newer game survive normalizing and a save and load', () => {
+  const later = {version: 1, fuelKg: 10, futureField: {deep: [1, 2, {x: 'y'}]}, laterList: [3, 4], laterFlag: false, laterZero: 0};
+  const heli = normalizeHeli(later);
+  for (const key of ['futureField', 'laterList', 'laterFlag', 'laterZero']) assert.deepEqual(heli[key], later[key], key);
+  assert.deepEqual(normalizeHeli(JSON.parse(JSON.stringify(heli))), heli, 'normalizing twice changes nothing');
+  const store = memoryStorage();
+  assert(saveProfile({...createProfile(), heli}, store));
+  assert.deepEqual(loadProfile(store).heli.futureField, later.futureField);
+  const hostile = normalizeHeli(JSON.parse('{"version": 1, "__proto__": {"polluted": true}}'));
+  assert.equal(Object.getPrototypeOf(hostile), Object.prototype, 'a stored __proto__ key never changes the object');
+  assert.equal(hostile.polluted, undefined);
+  assert.deepEqual(normalizeHeli({version: 2, futureField: 1}), createHeli(), 'a wrong version still starts fresh');
 });
 
 check('a profile keeps its helicopter through the real load and save, and an old save gains none', () => {
