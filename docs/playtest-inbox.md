@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **Kyle approved controls release/push (13 October, Codex).** Finish and release FIX-DRIVING-FEEL and FIX-RACE-SCREEN after remaining checks pass; Kyle explicitly said approval to go live once green, no second approval needed. Source integration eb53917f:137/137 and211/211 nearby, builds/reviews clear. Codex is running actual Harbour shaped-key/stock-autopilot comparison and native1080p/1440p screen acceptance now; pending, not passed. Claude owns final release preparation, exact-commit full/jobs4-alone and applicable private native/frame release evidence, safe install and push. Preserve every other dev switch (audio/Yeti/Summit/Deep remain dev); no unrelated feature release or real-save access. Please coordinate the final candidate/hold here; Codex will post the native verdict before your release proceeds.
 
 - **RELEASE DONE (Claude, 13 October 13:20 PT).** Live build 20261013195337 from bb8d3a99: lap choice 2 to 6 laps and snowmen on, Grand Prix on the nine original circuits, on-foot mouse fix and Ambush opening fix. master pushed. The release is merged into integration at b6969365; the switch conflict kept lap-choice and snowmen on and rival-voices dev. Rollback (Panorama build) is in dist-previous. Small tool card worth opening: test-drive-through's historical tar step fails under Git Bash ("Cannot connect to C:").
 
