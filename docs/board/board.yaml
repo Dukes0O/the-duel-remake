@@ -210,6 +210,7 @@ tasks:
     size: "M"
     status: "blocked"
     needs: [P4-SUMMIT, P4-AVALANCHE]
+    waiting_on: claude
     locks: [circuit-registry]
     flag: "summit-run"
     details: "docs/board/cards/P4-SUMMIT-ATTACK.md"
