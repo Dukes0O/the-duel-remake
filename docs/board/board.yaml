@@ -215,7 +215,7 @@ tasks:
     title: "Summit Time Attack"
     owner: "codex"
     lane: "RACE"
-    size: "S"
+    size: "M"
     status: "blocked"
     needs: [P4-SUMMIT, P4-AVALANCHE]
     locks: [circuit-registry]

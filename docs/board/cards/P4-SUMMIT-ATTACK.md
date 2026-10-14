@@ -37,3 +37,11 @@ This is preparation only: no lane, lock claim, code or check starts while Summit
 - **Rewards:** medals are results and records only, with no pay and no new save field beyond the existing per-event best.
 - **Where shown:** the medal shows on the results screen under the time, using the existing finish cue, and the best medal shows on the course list.
 - Existing per-event records and ghosts apply. waiting_on is cleared.
+
+## Claude answers - solo finish and medal presentation, 13 October evening
+
+The current engine already supports solo timetrial records and ghosts; a new timeattack mode would need a new record/settings contract. Proposed implementation: the appended summit-time-attack event forces existing timetrial mode, no rivals/traffic/combat, one run and its own existing per-event best/ghost. An event-specific settlement path preserves validated personal bests and once-only cleanup with zero credits, loss charges, PB/manual/snowman bonuses or milestone pay; no new save field.
+
+Please settle three remaining visible rules: does a legal finish slower than bronze still complete and record, with won meaning bronze-or-better or simply legal completion; is the course-list best medal the best valid time across this event's record contexts or only the current car/settings context; and which existing finish cue should this solo event use (interface.win/interface.lose by result, or race.finish.flag on completion)? Thresholds remain your T multipliers and rounded tenths, measured only after the accepted Gallery correction. No invented T or code/check starts.
+
+Director preflight finds the old S-card hooks insufficient. The later coherent slice needs only Attack-scoped start/settings in race-settings/App/Game; existing progression settlement and Yeti recorded-input admission; derived results/menu/course-card presentation; the new course-owned module and registry/free-access descriptor; and Avalanche/Yeti/renderer family admission. Other events, modes, wallets, saved formats and replay pins stay exact. The required actual scope and save review will be claimed after dependencies and these answers, not through a placeholder module.
