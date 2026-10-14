@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {RouteMap,buildRouteMapGeometry,projectRoutePoint,routeActorPose,routePhase} from '../src/route-map.js';
 let checks=0;const check=(value,label)=>{assert(value,label);checks++;};
 const near=(a,b,tolerance=.001)=>Math.abs(a-b)<tolerance;
@@ -38,4 +39,21 @@ const state={s:130,lateral:2,headingError:.15,lap:1,currentLap:1,shortcutId:null
 mapView.update(course,state,0);const cached=mapView.current;check(canvases===1,'static canvas built once for first course');worldCalls=0;mapView.update(course,state,70);check(mapView.current===cached&&canvases===1,'successive frames reuse cached geometry and raster');check(worldCalls===3,'dynamic draw projects only player, rival and patrol');check(canvas['aria-label'].includes('police patrol')&&canvas['aria-label'].includes('heading'),'map has useful accessible actor text');
 mapView.update(courses[1],state,140);mapView.update(course,{...state,currentLap:2,s:course.length+130},210);check(mapView.current===cached&&canvases===2,'returning to a cached Course does not rebuild its geometry');check(canvas.dataset.lap==='2','lap display follows second lap');
 mapView.dispose();check(mapView.current===null&&mapView.context===null&&mapView.canvas===null,'dispose releases current geometry and canvas references');
-console.log(`Route map: ${checks} projection, branch and cache checks passed.`);
+
+// Course heading grows to the driver's left; canvas clockwise is positive.
+for(const def of new Map([...COURSE,...ALL_CIRCUITS].map(d=>[d.id,d])).values()){
+ const c=new Course(def,1989),g=buildRouteMapGeometry(c);
+ const corners=c.script?.pieces.filter(p=>p.kind==='turn'&&p.name)??c.features.turns.map(t=>({name:`bend ${t.s}`,s0:t.s-3,s1:t.s+3}));
+ for(const corner of corners){
+  const mid=((corner.s0+corner.s1)/2%c.length+c.length)%c.length;
+  const samples=c.samples.slice(0,-1),index=samples.reduce((best,row,i)=>Math.abs(row.s-mid)<Math.abs(samples[best].s-mid)?i:best,0);
+  const a=samples[(index-1+samples.length)%samples.length],b=samples[index],d=samples[(index+1)%samples.length],pa=projectRoutePoint(g,a),pb=projectRoutePoint(g,b),pd=projectRoutePoint(g,d);
+  const cross=(pb.x-pa.x)*(pd.y-pb.y)-(pb.y-pa.y)*(pd.x-pb.x),curvature=b.curvature;
+  check(Math.abs(curvature)>1e-7,`${def.id}: ${corner.name} samples contain its actual bend`);
+  check(cross*curvature<0,`${def.id}: ${corner.name} map follows actual road turn direction`);
+ }
+ const pose=routeActorPose(c,g,{s:120,lateral:0,headingError:.2});check(near(pose.heading,-(c.worldAt(120).heading+.2)),`${def.id}: actor heading follows mirrored road`);
+ if(g.finish)check(near(g.finishHeading,-c.at(c.closed?0:c.length).heading),`${def.id}: finish follows mirrored road`);
+}
+
+console.log(`Route map: ${checks} projection, branch, cache and actual-corner handedness checks passed.`);

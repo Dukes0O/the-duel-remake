@@ -11,3 +11,37 @@ export function constrainTunnelCamera(course,position,referenceS){
   if(position.y<=ceiling)return false;
   position.y=ceiling;return true;
 }
+
+// Return a new chase-camera position with the actual target in clear view.
+// Simulation obstacle bounds are read only; the renderer wires this after damping.
+function sightlineHit(start,end,box) {
+  const cs=Math.cos(box.heading||0),sn=Math.sin(box.heading||0);
+  const local=p=>({x:(p.x-box.x)*cs-(p.z-box.z)*sn,y:p.y,z:(p.x-box.x)*sn+(p.z-box.z)*cs});
+  const a=local(start),b=local(end),low=box.minY??box.y,high=box.maxY??(box.y+box.height);
+  if(![box.halfX,box.halfZ,low,high].every(Number.isFinite))return false;
+  let enter=0,leave=1;
+  for(const[key,min,max]of[['x',-box.halfX,box.halfX],['y',low,high],['z',-box.halfZ,box.halfZ]]){
+    const delta=b[key]-a[key];
+    if(Math.abs(delta)<1e-9){if(a[key]<min||a[key]>max)return false;continue;}
+    let near=(min-a[key])/delta,far=(max-a[key])/delta;
+    if(near>far)[near,far]=[far,near];
+    enter=Math.max(enter,near);leave=Math.min(leave,far);
+    if(enter>leave)return false;
+  }
+  return leave>1e-6&&enter<1-1e-6;
+}
+export function clearCameraSightline(course,position,target,referenceS) {
+  const original={...position};
+  const blockers=(course.features?.obstacles??[]).filter(row=>row.barrier||row.tunnelWall||row.kitSolid||row.trackWall);
+  const blocked=p=>blockers.some(row=>sightlineHit(target,p,row));
+  if(!blocked(original))return original;
+  const rise=Math.max(1,Math.hypot(position.x-target.x,position.z-target.z)*.25);
+  for(let step=1;step<=20;step++){
+    const share=1-step/20;
+    const candidate={...position,x:target.x+(position.x-target.x)*share,
+      z:target.z+(position.z-target.z)*share,y:position.y+rise*(1-share)};
+    if(course.features?.tunnels?.length)constrainTunnelCamera(course,candidate,referenceS);
+    if(!blocked(candidate))return candidate;
+  }
+  throw new Error('Camera target has no clear sightline through solid bounds.');
+}

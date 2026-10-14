@@ -18,7 +18,7 @@ export function worldAtExtended(course, s, lateral = 0) {
 export function strip(course, left, right, y, start=0, end=course.length, ground=false) {
   const verts = [], uvs = [], indices = [];
   const followsGround=ground||course.def.arena||course.def.offroad;
-  const steps=Math.ceil((end-start)/(followsGround||course.def.expansion?2:8));
+  const steps=Math.ceil((end-start)/(followsGround||course.def.expansion||course.script?2:8));
   let maxWidth=0;
   for(let n=0;n<=steps;n++){const s=start+(end-start)*n/steps;maxWidth=Math.max(maxWidth,Math.abs((typeof right==='function'?right(s):right)-(typeof left==='function'?left(s):left)));}
   // Thin painted lines and feathered shoulders retain their two edge columns.
@@ -26,6 +26,16 @@ export function strip(course, left, right, y, start=0, end=course.length, ground
   const columns=followsGround&&maxWidth>2.5?Math.ceil(maxWidth)+1:2;
   for (let n=0;n<=steps;n++) {const s=start+(end-start)*n/steps;
     const edges=[typeof left==='function'?left(s):left,typeof right==='function'?right(s):right].sort((a,b)=>a-b);
+    if(course.script&&!followsGround&&maxWidth>2.5){
+      const frame=course.at(s),step=(end-start)/steps;
+      const angle=at=>Math.abs(Math.atan2(Math.sin(course.at(at).heading-frame.heading),Math.cos(course.at(at).heading-frame.heading)));
+      // Circumscribe the rotating road edge between authored rows, then allow
+      // for Float32 world-coordinate rounding. Native widths remain unchanged.
+      const turn=Math.max(angle(s-step),angle(s+step));
+      const rounding=Math.max(1,Math.abs(frame.x),Math.abs(frame.z))*2**-22;
+      const allowance=Math.max(Math.abs(edges[0]),Math.abs(edges[1]))*(1/Math.cos(turn/2)-1)+rounding;
+      edges[0]-=allowance;edges[1]+=allowance;
+    }
     for(let j=0;j<columns;j++){const off=THREE.MathUtils.lerp(edges[0],edges[1],j/(columns-1)),p=followsGround?course.groundAt(s,off):worldAtExtended(course,s,off);verts.push(p.x,p.y+y,p.z);uvs.push(off/5,s/10);
       if(n&&j){const a=n*columns+j;indices.push(a-columns-1,a-1,a-columns,a-columns,a-1,a);}}
   }

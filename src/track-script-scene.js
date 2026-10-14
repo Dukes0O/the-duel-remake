@@ -70,6 +70,7 @@ function addBoards(group, course) {
   for (const board of boards) {
     const off = board.side * (course.roadHalfWidthAt(board.s) + 2.4), p = course.groundAt(board.s, off);
     const mast = new THREE.Mesh(post, postMaterial), face = new THREE.Mesh(plate, materialFor(board));
+    if (board.kind !== 'ice') face.scale.set(2, 2, 1);
     mast.position.set(p.x, p.y + .95, p.z);
     face.position.set(p.x, p.y + 1.95, p.z);
     // Face the oncoming car: the plate's front looks back along the road.

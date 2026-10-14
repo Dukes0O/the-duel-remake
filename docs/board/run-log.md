@@ -1062,3 +1062,18 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-13 janitor: own merged new lanes/consumed green evidence recycled; old lanes, pending art and failed native evidence retained. Looks17152350B/20MB unchanged; tracked1950/323813992B before log correction to1949/324432150B before final merge;47asset/84export/333doc advisory candidates flagged,0unusedmodules/removedtests, no uncertain deletion.
 
 - 2026-10-13: Avalanche rejoin8ee201c8 merged; nearby33/33, build587ms, independent review CLEAR. All4native races finish/crash0, but timing+2.394/+8.252s FAIL; Claude question retained. No repeated gate/drive or release.
+
+- 2026-10-13: FIX-LIVE-EDGES sourcecdf55a11 merged; nearby94/94/jobs4, build576ms, independent review CLEAR. Parent native pace fails remain with Claude; completed source prerequisite unblocks later camera wiring. No repeated gate, release or push.
+
+- 2026-10-13: P4-YETI ace5cb5f source merged; nearby289/289/jobs4, build571ms, source/save reviews CLEAR. Recorded input all4modes,89/300 controlled appearances; native grounding/look/audio remain open, dev stays dev. Own merged road-edge lane recycled/nonforced unregister; older Yeti lane retained. No repeated gate, release or push.
+
+- 2026-10-13: Hairpin camera389ee8bd source merged; nearby34/34/jobs4, build547ms, independent review CLEAR. Actual renderer wiring is in; native apex/lap sweep still open, core lock released. No repeated gate, browser/full/frame run, release or push.
+
+- 2026-10-13: AUD-15-P1 4d5e5cad source merged; original nearby253/253/jobs4, build1.37s, independent review CLEAR including real menu-decode correction and exact historical guards. Seven resource cap, dev stays dev; native mix/listening/frame/comparator remain UNRUN, core and bank locks released. No repeated gate, release or push.
+- 2026-10-13 janitor: own merged new edge/camera lanes and consumed green packets recycled; own audio lane and all consumed source packets recycled, older lanes/pending art/failed native retained. Looks17152350B/20MB; tracked1957/324593766B before this audio merge to1960/324635383B before final metadata.47asset/84export/338doc advisory candidates flagged,0unusedmodules/removedtests; no uncertain deletion.
+
+- 2026-10-13: FIX-DRIVING-FEEL e7c1ed51 source merged; corrected original nearby137/137/jobs4, build810ms, independent review CLEAR. Road keyboard curves in; arenas unchanged. Native Harbour/feel still open, core lock released. No repeated gate, release or push.
+
+- 2026-10-13: FIX-RACE-SCREEN514ca4b9 source merged; corrected original nearby211/211/jobs4, build699ms, independent review CLEAR. Actual face/post/clearance, map/camera/warning checks pass; native1080/1440UNRUN, core released. Own driving lane/consumed packets recycled; own screen lane/packets recycle after verdict, older art/native retained. No repeated gate, release or push.
+
+- 2026-10-13: Controls native eab3b136 merged; nearby30/30/jobs4/build1.34s/reviewCLEAR. Harbour keyboard90.258s/zero crashes or stops;4nativeviews/480warnings clear, actual clock fix in. Kyle approvedClaude release/push afterexactfull; sourcechecks drained, releaseevidence retained, ownQA lane recycling. No postmerge gate.

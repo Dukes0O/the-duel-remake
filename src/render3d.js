@@ -29,8 +29,9 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera } from './camera-clearance.js';
-import { createVehicleAttachmentRegistry } from './vehicle-attachments.js';
+import { constrainTunnelCamera, clearCameraSightline } from './camera-clearance.js';
+import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
+import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
 import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { renderMainView } from './scene-presentation.js';
@@ -253,6 +254,8 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
+  const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets);scene.add(yetiView.group);
+  const roadRoof=createRoadRoofOwner(vehicleAttachments,{yetiAssets});
   const combatScene=createCombatScene(vehicleAttachments, {
     loadFlameTexture: path => new THREE.TextureLoader().load(path),
   });scene.add(combatScene.group);
@@ -455,6 +458,14 @@ export function attachRenderer(host, app) {
     const selectedCar=(menu&&app.menuCar)||st.car,carKey=Object.hasOwn(CARS,selectedCar)?selectedCar:'falcone_f42';
     if(!prepareVehicle(carKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!prepareKitWorld(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    const selectedRoof=app.getRoofLook?.(carKey,{menu})??null;
+    const needsYeti=(next.def.id==='summit-run'&&(app._switches?.()??app.duel.featureFlags).enabled('yeti')&&
+      (app._switches?.()??app.duel.featureFlags).enabled('summit-run')) || selectedRoof==='yeti';
+    if(needsYeti&&yetiAssets.status!=='ready'){
+      if(yetiAssets.status==='idle')yetiAssets.load();host.dataset.yetiAsset=yetiAssets.status;host.dataset.yetiError=yetiAssets.error;
+      if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}app.holdVisualReadiness?.(readinessOwner);
+      frameMetrics.suspend();adaptiveResolution.reset();return;
+    }
     const opponents = st.opponents || (st.rival ? [st.rival] : []);
     const convoy=!menu&&(st.arena?.mode==='convoy-raid'||st.arena?.format==='convoy-raid');
     const rivalCarKey=convoy?'convoy-tanker':!menu&&st.rival?.car||carKey;
@@ -470,7 +481,7 @@ export function attachRenderer(host, app) {
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
     if (carKey !== loadedCar) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
-      if (player) retireObject(player);
+      if (player) {roadRoof.detachVehicle(player);retireObject(player);}
       if(rival){retireObject(rival);rival=null;}
       for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
@@ -569,6 +580,12 @@ export function attachRenderer(host, app) {
       wastelandRulesActive(st);
     updateVehicleDamage(player,menu?0:st.majorCrashes, !menu&&st.catastrophic, wreckAge,
       menu?null:st.damageZones,menu?0:st.crushDamage,combatVehicleWear(st,combatWearEnabled));
+    const roofStatus=roadRoof.select(player,selectedRoof==='chrome-crown'&&combatWearEnabled?null:selectedRoof);
+    host.dataset.roofAsset=roofStatus;host.dataset.roofError=roadRoof.error;
+    if(selectedRoof && !(selectedRoof==='chrome-crown'&&combatWearEnabled) && roofStatus!=='ready'){
+      if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}app.holdVisualReadiness?.(readinessOwner);
+      frameMetrics.suspend();adaptiveResolution.reset();return;
+    }
     const steering = menu ? 0 : st.steerVisual || 0;
     updateDriver(player.userData.driver,steering,menu?0:st.slipAngle,!menu&&st.catastrophic);
     if(player.userData.steeringPivot)player.userData.steeringPivot.rotation.z=steering*.7;
@@ -673,6 +690,9 @@ export function attachRenderer(host, app) {
     if(!menu&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!(st.onFoot&&app.footCameraMode==='overhead'))constrainTunnelCamera(course,camera.position,
       st.onFoot&&st.fighter?st.fighter.s:distance);
     if(!menu&&!deepPose)constrainMountainCamera(course,camera.position,distance);
+    if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+      camera.position.copy(clearCameraSightline(course,camera.position,
+        {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
@@ -817,6 +837,7 @@ export function attachRenderer(host, app) {
     const high=app.ambientOcclusionEnabled!==false;
     snowmenView?.update(menu?null:st,high);
     avalancheView?.update(menu?null:st,high);
+    yetiView.update(menu?null:st,course,high);
     const snowOwner=snowWorldOf(world);
     if(snowOwner){
       snowVehicles.length=menu?0:Math.min(8,opponents.length+1);
@@ -956,7 +977,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;disposed=true;stopDeepEvents();deepView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

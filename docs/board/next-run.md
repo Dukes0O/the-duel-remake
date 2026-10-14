@@ -1,97 +1,101 @@
-# Overnight run, 12 to 13 October 2026
+# Overnight run, 13 to 14 October 2026
 
-Kyle's order, AGENTS.md Build more, record less rules 1 to 10 and the factory
-rules 11 to 17 govern this run. Read `docs/FACTORY.md` first. Work in
-integration and isolated lanes. Nothing goes live tonight. No release, push,
-history rewrite, port 5174 or real-save access. QA storage is memory-only.
-Delete only lane folders created in this run; keep older retained lanes.
+Kyle's order, AGENTS.md rules 1 to 18 and `docs/FACTORY.md` govern this run.
+Work in integration and isolated lanes. Nothing goes live overnight: Claude
+releases only on Kyle's word. No push except Claude's release and compaction
+pushes, no port 5174, no real saves. QA storage is memory-only. Delete only
+lane folders created in this run.
 
-## Order
+## Order (Kyle approved, 13 October evening)
 
-Start from `node tools/board.mjs`: CODEX CAN START NOW first, then whatever a
-merge unblocks. Cards waiting on Claude are skipped; read the card's "Claude
-answers" section before resuming it.
+Start from `node tools/board.mjs`. Read each card's "Claude answers" first.
 
-Kyle approved this order for tonight.
+1. **Kyle's fixes lane, first:** FIX-HAIRPIN-CAMERA (Harbour Lantern Hairpin
+   camera). It goes ahead of every other `busy-game-files` card.
+2. **Finish and merge what is open:**
+   - AUD-15-P1 (rival voices, dev);
+   - P4-YETI;
+   - DEEP-AUDIO;
+   - DEEP-ART-SRC as working art only (Kyle: not finished art; otter held).
+3. **Summit Run, in order:**
+   - merge P4-SUMMIT's round-3 source (Claude accepted it for dev);
+   - P4-AVALANCHE: slow the Gallery to 18.4 to 19.2 s and move the entrance
+     pillars;
+   - then P4-SUMMIT-ATTACK (medals settled).
+4. **Grand Prix career, then variants:** P4-CAREER (variant unlock rule
+   settled), holding `save-shape`, then P4-VARIANTS (Panorama Night and
+   Reverse, Harbour Dusk and Reverse, Tremblant Reverse). Summit items in 3
+   take priority over these whenever they need the same lock.
+5. **New course, Ardennes Forest (Kyle: "make that one a beauty!").** When
+   Claude's road layout (P4-ARDENNES-ROAD) merges tonight, start P4-ARDENNES
+   in a course lane. It needs no `busy-game-files`, so it runs alongside
+   items 3 and 4. Design: `docs/CIRCUITS.md` section 5.5.
+6. **Hold:** QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT and DISC wait until items
+   1 to 5 are merged.
+   - The Deep beyond its art and sound waits for Kyle's storyboard with
+     Gratian: no DEEP-TRAIL, DEEP-LIFE or DEEP-LOG work.
+   - The helicopter and the Lab wait for it too.
 
-1. Finish and merge what is open, in this order:
-   - FIX-FOOT-MOUSE (holds `busy-game-files` now);
-   - P4-SUMMIT (takes `busy-game-files` back after the mouse fix);
-   - FIX-AMBUSH-OPENING;
-   - DEEP-RAMP-GEOMETRY (Codex is already building it, outside the core game
-     files).
-   Also still open: P4-GP-EXISTING (source merged; its browser cases wait
-   for the full check), DEEP-AUDIO (source merged; waits for Claude's
-   listening verdict) and FND-12 (copy-only dry run; the permission profile is
-   Kyle's choice, so do not install one).
-2. FAC-FULL-CHECK. It touches only tools, so it runs alongside item 1. It
-   renames the night shift tool to the full check and lets it run on a copy
-   of one commit.
-3. When Claude's answers land on the cards: DEEP-ART-SRC round 2 and
-   FIX-LIVE-EDGES. Both stay outside `busy-game-files`.
-4. Then `busy-game-files`, one owner at a time: LAP-CHOICE first (Kyle's
-   request, 12 October evening), then AUD-15-P1, P4-SNOWMEN,
-   DEEP-ZONE, then P4-AVALANCHE, P4-YETI and P4-SUMMIT-ATTACK once Claude has
-   answered them; then P4-CUPS and P4-COACH when their needs are met.
-5. Hold until items 1 to 3 have merged: QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT
-   and DISC. No new lanes beyond these. Each of the QA cards gets the 30
-   minute limit, then a note and back to building.
+Cards waiting on Claude are skipped while other work exists. After an hour
+without an answer, AGENTS rule 16's backup applies.
 
-## Kyle's fixes lane (standing)
+## Claude, overnight
 
-Every overnight run keeps one lane for small repairs and updates Kyle asks for
-from playing (the inbox and cards he names). It goes ahead of new features
-when it needs a shared lock. Tonight that lane is LAP-CHOICE.
+- Check-ins about every 30 minutes. Claude tests that its wake-up fires
+  before Kyle goes to bed.
+- **Release before Kyle sleeps:** FIX-DRIVING-FEEL and FIX-RACE-SCREEN,
+  approved by Kyle once green. Claude runs the full tier alone on the exact
+  release commit and announces the short hold in the inbox.
+- **Finishing passes:**
+  - P4-FINISH-HARBOUR: the test driver's lap is 2:26 with a game over;
+    target 1:30 to 1:45 with no stop.
+  - P4-FINISH-TREMBLANT: Snow corners at 9, 0 and 17 mph; target no corner
+    under 20 mph.
 
-## Claude, not Codex
+  - P4-FINISH-SUMMIT, as soon as P4-SUMMIT and the avalanche timing merge:
+    pale Gallery roof, town lights below the Ledge, lit hut and observatory
+    windows, snow tone, views and cue listening, then the frame check. The aim
+    is Summit Run ready for Kyle's "go live" on 14 October.
 
-Claude owns the finishing passes (Harbour Lights, Tremblant, Panorama, Summit,
-the Team Room), the review answers on cards, DEEP-TRAIL and FINISH-DEEP. A
-review that lands in WAITING FOR CLAUDE'S REVIEW is answered inside the next
-check-in; keep building other cards meanwhile.
-If a card has waited on Claude for more than an hour, follow AGENTS rule
-16's backup: settle small questions inside the written rules under "Codex
-decided (Claude to review)", and leave art, sound, money, saves and Kyle's
-decisions waiting.
+  Claude owns these course values. A Claude helper works in its own lane
+  and counts as one of the six build lanes.
+- **History compaction at 06:30 (Kyle: no approval needed).** From 06:15
+  Codex opens no new lane and pauses merges. Claude:
+  1. compacts superseded binaries out of `integration/wasteland` (SPEC 0.8);
+  2. pushes it to GitHub;
+  3. posts "COMPACTION DONE" in the inbox.
 
-## Limits
-
-At most six build lanes across all lines, no more than three course lanes. At
-most three heavy jobs at once across all teams, each `--jobs 4` or fewer;
-check node.exe command lines before starting. Merge as soon as one lane tier
-and a build are green, with one review where rule 17 asks for one. Spend at
-most 30 minutes on any one failure or tool problem, then record the known
-result and move on. No new test machinery without a card. One short run-log
-line per merge. Commit board, inbox and STATUS edits on integration at once.
-Clear merged lane folders (janitor) before opening new ones. A dev server on
-port 5311 is still running from the removed p4-circuits folder; stop it if it
-is yours.
+  Codex then rebases any open lane onto the new history before its next
+  merge; never merge a lane that still holds pre-compaction commits.
 
 ## The full check
 
-Heavy checks wait for the full check: full tier, frame check, combat balance
-and all browser scenarios, then a short report. It runs once a day, by default
-while Kyle sleeps, on a copy of one commit, so builders keep building and
-merging while it runs. Only its frame step needs the laptop to itself, and
-builders pause gates, builds and browser checks for that step only, about 15
-minutes. Its other stages run alongside builders and each counts as one of the
-three heavy jobs. The report names the first merge after the last green full
-check for any failure; that fix goes first and other merges continue. The full
-tier on the exact release commit still runs alone before any release.
+`node tools/full-check.mjs --idle-awake --no-push` runs once at 04:00 (a
+one-time scheduled task). It checks a copy of one commit, so building and
+merging continue. **From 04:00 to 04:30 nobody starts a gate, build or
+browser check**, so the frame step has the laptop to itself. Commit every
+board, inbox and status edit on integration before 04:00. A failure names the
+first merge after the last green full check; its fix goes first.
 
-Tonight only: Kyle schedules
-`node tools/full-check.mjs --idle-awake --no-push` for 04:00 after acceptance.
-This direct pause remains mandatory even though the tool normally lets
-builders continue outside its frame step. From 03:45
-nobody starts a gate, build, browser check or merge. By 03:45 every board,
-inbox and status edit on integration is committed. The check refuses to start
-if the integration folder has uncommitted changes. Builders resume when the
-"Record night" check commit lands on integration, or at 06:30 at the latest.
-Building in lane folders (editing code without running gates) may continue.
+## Limits
+
+At most six build lanes across all teams, no more than three course lanes.
+At most three heavy jobs at once, each `--jobs 4` or fewer. Check node.exe
+command lines first.
+
+Merge as soon as one lane tier and a build are green, with one review where
+rule 17 asks for one. Spend at most 30 minutes on any one failure or tool
+problem, then note it and move on. No new test machinery without a card. One
+short run-log line per merge.
+
+Commit board, inbox and STATUS edits at once. Clear merged lane folders
+before opening new ones.
 
 ## Retained facts
 
-Sound was approved by Kyle on 11 October; recipes and current runtime audio
-remain. Snow's final accepted pine clearance is at least 6.44677 m; there is
-no fourth shared-snow art round. Claude owns Harbour base and finishing cost.
-The older full-tier result is not a pass for the current integration commit.
+- Sound was approved by Kyle on 11 October; recipes and current runtime audio
+  remain.
+- Snow's accepted pine clearance is at least 6.44677 m; there is no fourth
+  shared-snow art round.
+- Claude owns Harbour base and finishing cost.
+- An older full-tier result is not a pass for the current commit.

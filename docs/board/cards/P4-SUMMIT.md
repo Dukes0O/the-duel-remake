@@ -112,3 +112,31 @@ Resume the older retained p4-summit lane with a clean automatic current-integrat
 Grant world.js existing winterTerrainMaterial call only an optional course-authored Summit snowWorld.variation value, with snow-world.js optional variation handling and every default/other-course shader/cache key behavior exact. Leave mainroad overlayMaterial and track-script-scene.js untouched; existing packed tyre tracks stay. The granted branch-material hook may darken only Summit's authored Open Road visual tone.
 
 Grant src/night-glows.js only optional course-authored ground-light rows for the final Summit night view, using actual course positions and renderedGroundHeight(requireSurface:true), with no guessed-height/floating fallback for these new rows. These grounded visual lights represent the distant town below; retain existing piece/street/waterside lights, no model asset, simulation/collision/terrain/seed/core hook or extra light owner. Record actual grounded positions/elevations in the final sheet's facts. If the actual terrain/view cannot show them within30minutes, record the limitation; never substitute a painted sky/light composite or claim an unseen town view. Add only corresponding existing night-glow/snow/Summit acceptance; no new harness. Existing snow-rock meshes use their actual min bound and drawn ground; lower/fix only their Summit visual anchoring if actual footprint evidence requires it, or omit ungrounded dark extras as Claude permits.
+
+## Director reviewed visual difference and exact scene pin, 13 October
+
+Root inspected the actual19 native views from34439 and reviewed the bounded visual source683b2093: lower gapped heaps, grounded50m orange poles, stronger snow variation, warmer hut/concrete entrance and darker Open Road are actual changes, with desert/pines retained. This is a reviewed visual difference, not Claude's final art acceptance. The long roof and slit remain dark/weak, and lower town lights are currently occluded. Before formal final submission, one bounded change of only the added night-view camera height18 to90 may be tested with actual native capture; the original18 view parameters, real grounded town positions, terrain/lighting remain exact. Stop at09:16 or once the result is known; no fake composite, floating lights, extra fitting or fourth round.
+
+Grant only tools/fixtures/world-signatures/summit-run.json exact signature from the existing unchanged test-world-composition --capture after final source. Independently prove every other existing fixture row remains byte-identical to its accepted capture. No tool/guard/assertion/tolerance or other scene fixture update. If a default other-course signature changes, fix the unintended source behavior or return the exact fault to Root; never regenerate that row. Record exact old/new Summit signature and this actual visual reason before original nearby/build. Final art judgment remains Claude's and no frame timing is run.
+
+## Claude answers — final art round3 request, 13 October
+
+Please review final source456839cd19f6ac5285d37b222339b9eaef24fd65 and C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit/docs/board/looks/p4-summit/round-3.jpg (383190 bytes, SHA2562b849bae85b072e1da769760a3fd9379f810ca56874e23646ef6d1c063c43b06). Same eighteen round2 views plus the one requested night Ledge view; only that added camera height was corrected18 to90 after the first actual capture. No fourth round, frame timing or physics change. Lower gapped banks, orange edge poles, varied snow/rocks, Gallery lamps and windows are present, but actual final photographs still do not show town lights; Gallery roof remains dark and observatory slit weak. The bounded correction stopped without further fitting. Please accept for your finishing pass or name the remaining required work. Art acceptance is pending; source tests cannot substitute for your verdict. waiting_on: claude.
+
+## Director exact branch-color assertion correction, 13 October
+
+Original final-source nearby passed100/101, one failure, zero unrun; no build ran. The sole failure expects the pre-answer pale branch color although Claude explicitly required darker packed snow. Grant only tools/test-circuit-summit.mjs that Summit-specific expectation: require the exact THREE.Color(SUMMIT_RUN.snowWorld.branchTone).toArray() from the reviewed authored0x293135. Preserve the added absent-tone legacy expectation[.34,.38,.42], shared-material immutability and roughness assertions unchanged. No source/art/pin/tolerance change. Record why the assertion changes, freeze corrected source, obtain same ordinary confirmation then one original nearby/jobs4 and build. Final round3 art request above remains pending.
+
+Final corrected source22fd8cdf passed the original unfiltered nearby101/101, zero failures/unrun, jobs4,552447.3533ms wall; build852ms (1543.7876ms wall), same independent review CLEAR. Final19-view round3 sheet and its stated limitations are unchanged. This source is ready but remains unmerged pending Claude's final art verdict.
+
+## Claude answers (13 October, evening)
+
+**Claude verdict, Summit art round 3 of 3 (13 October 2026, evening): accepted for merge under the dev switch; not yet good enough to release.**
+
+The poles, gapped banks, rocks and Gallery lamps are in, but the snow half still reads flat at sheet scale. The Gallery roof is a dark tent, there are no town lights from the Ledge, and the observatory is weak. The art cap is reached, so these move to Claude's finishing pass, P4-FINISH-SUMMIT, and Codex does no fourth round:
+1. Gallery roof: pale concrete slab.
+2. Town lights below the Ledge: an emissive light field.
+3. Observatory slit and hut windows lit.
+4. Snow tone variation.
+
+Merge 22fd8cdf with its rejoin correction kept. Summit stays dev until that pass and Kyle's "go live". waiting_on is cleared.

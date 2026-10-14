@@ -21,3 +21,21 @@ camera state, no guessed centreline target.
 The review frame at Lantern Hairpin's apex shows the car; a sweep of the
 camera round the Harbour lap finds no wall between camera and car. Lane tier,
 build, one review. Live only at a release on Kyle's "go live".
+
+## Director claim and exact source hook, 13 October
+
+The source prerequisite merged118501b1 and its own new lane was recycled; integration pull is current. Kyle's standing small-repairs priority puts this requested hairpin repair before new audio. Claim busy-game-files only in a new fix-hairpin-camera lane, branch codex/fix-hairpin-camera. Own src/render3d.js only its camera-clearance import and one call after damping and existing camera constraints, before final lookAt; own docs/changes/FIX-HAIRPIN-CAMERA.md. The helper returns a new position, which the actual camera copies. Target the actual placed player vehicle world position with the existing camera body-height values (tall1.65, ordinary1.05), never the26m-ahead lookTarget or guessed centreline. Preserve existing menu, hood, on-foot, submarine/journey/spur/home camera overrides and tunnel ceiling behavior. The normal third-person vehicle views use the same helper on every course. No simulation/save/terrain/geometry/flag change or extra core hook.
+
+Use existing camera tests and one original unfiltered nearby/jobs4/build, fresh all-team Node/Blender inventory before each heavy job and one independent code review. No new harness or tests mirroring the call. The actual Lantern Hairpin apex picture/lap-sweep acceptance remains open for the full check unless its existing bounded recipe can run under the authorized night policy; pure source proof cannot claim that picture. Stop any real tool/source failure at30minutes and record it. Root owns board/status, merge and only this newly created lane cleanup. You are not alone: preserve Yeti, road-edge, Summit/Deep and Claude work.
+
+## Integrated source, native review still open
+
+Frozen389ee8bd passed one original unfiltered nearby34/34, zero failures/unrun, jobs4,244711.1481ms wall; build547ms (1013.8245ms wall), independent code review CLEAR. Conflict-free source merge needs no repeat check. The actual post-damping renderer call is integrated; native Lantern Hairpin apex photography and full-lap sightline sweep remain UNRUN for the full check/finishing evidence. This parent is in review, not completed; busy-game-files is released and only this run's new lane may be recycled. No source proof is called a native picture, and no release/push/live save action occurred.
+
+## Director bounded native observer, 13 October evening
+
+Prepare only new fix-hairpin-native, branch codex/fix-hairpin-native. Own tools/scenarios/track-review.mjs only a DUEL_HAIRPIN_CAMERA=1 opt-in observer and docs/changes/FIX-HAIRPIN-CAMERA.md. No production, driver, harness or new test machinery. Preserve the existing16 photographs and original stock-driver recipe/trace. The new packet labels its full-course controlled geometric camera sweep separately from the stock driver's unfinished race.
+
+Use the actual post-render camera and actual placed F42 scene-root position plus the renderer's ordinary1.05m target height. Check original solid bounds independently via existing sweepObstacle, never call the clearance helper again or use inspection/capture overrides. Sample the whole actual course at25m and the complete named Lantern approach/turn/exit plus26m at1m, including the existing precise apex. Allow fixed60 actual animation-frame turns per controlled pose; retain every blocker intersection/frame error and record transient projections separately from final settled projection acceptance. Capture the actual visible apex car. These are native settling frames, not frame timing. Preserve tunnel constraints and all native errors; no fitted tolerance, fake completed lap or repeated accepted controls keyboard lap.
+
+No gate/build/browser/merge/rebase until RELEASE DONE. Six active build lanes at most: camera, Ardennes, frozen Summit/Deep art, Claude's finishing lane and any active cockpit tool lane; older idle retained lanes are not new builders. Root owns shared metadata, review, merging and only this newly created lane cleanup. Source checks/native execution begin first after the hold lifts; any actual failure follows the30-minute stop and exact source-hook reslice.

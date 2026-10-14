@@ -126,3 +126,30 @@ test('a named dev circuit remains reachable after an earlier source import',asyn
   assert.equal(report.laps.length,3);
   assert.ok(report.laps.every(row=>row.nativeLapsTotal===3&&!row.observedLap));
 });
+
+
+test('actual rotated F42 body reaches the visible kit face without centre-edge assumptions',async()=>{
+  const [{Course},{HARBOUR_LIGHTS},{KIT_FOOTPRINTS},collision,{barrierFace}]=await Promise.all([
+    import('../src/course.js'),import('../src/circuits/harbour-lights.js'),import('../src/kit-footprints.js'),
+    import('../src/collision.js'),import('./course-ground-checks.mjs')]);
+  const course=new Course(HARBOUR_LIGHTS,1989),index=HARBOUR_LIGHTS.kitPlacements.findIndex(row=>
+    row.id==='concrete-wall'&&row.s>100&&row.s<400&&row.lateral>0);
+  assert.ok(index>=0,'actual long Seafront lining exists');
+  const row=HARBOUR_LIGHTS.kitPlacements[index],wall=course.features.walls.filter(value=>value.trackWall&&value.side===1).reduce((best,value)=>Math.abs(value.s-row.s)<Math.abs(best.s-row.s)?value:best);
+  assert.ok(wall?.barrier,'actual named lining already carries barrier classification');
+  const frame=course.at(row.s),normal={x:-Math.cos(frame.heading),z:Math.sin(frame.heading)};
+  const point=course.groundAt(row.s,row.lateral),halfDepth=KIT_FOOTPRINTS[row.id].depth*(Array.isArray(row.scale)?row.scale[2]:row.scale??1)/2;
+  const face={x:point.x+normal.x*halfDepth,z:wall.z};
+  for(const angle of [0,10,17.1887338539,35,45,90]){
+    const heading=frame.heading+angle*Math.PI/180,extent=1.02*Math.abs(Math.cos(heading-frame.heading))+2.35*Math.abs(Math.sin(heading-frame.heading));
+    const start={x:face.x+normal.x*(extent+2),z:face.z+normal.z*(extent+2)};
+    const end={x:face.x-normal.x*2,z:face.z-normal.z*2};
+    const hit=collision.sweepObstacle(start,end,wall,heading,{halfWidth:1.02,halfLength:2.35});
+    assert.ok(hit,'real collision shell contacts at angle '+angle);
+    const centre={x:start.x+(end.x-start.x)*hit.t,z:start.z+(end.z-start.z)*hit.t};
+    const report=barrierFace(course,row.s,1,KIT_FOOTPRINTS,{centre,heading,halfWidth:1.02,halfLength:2.35,normal:{x:hit.nx,z:hit.nz},obstacleId:wall.id});
+    assert.ok(Number.isFinite(report.bodyFaceGap),'report actual rotated body gap at angle '+angle);
+    assert.ok(report.bodyFaceGap<=.15&&report.bodyFaceGap>=-.30,'unchanged body-to-visible-face limits at angle '+angle);
+    assert.equal(report.contactId,wall.id,'identify the real first contact');
+  }
+});

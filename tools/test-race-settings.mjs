@@ -10,18 +10,18 @@ let checks=0;const ok=(v,label)=>{assert.ok(v,label);checks++;},same=(a,b,label)
 const memory=new Map(),storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value))};globalThis.localStorage=storage;
 const setup={startStage:1,car:'stuttgart_959s',difficulty:'pro',cpuDifficulty:'medium',mode:'timetrial'};
 let app=new App();const first=app.player.id;
-same(app.getRaceChoices(),raceSettingsChoices(DEFAULT_RACE_SETTINGS),'Fresh player uses canonical defaults');
+same(app.getRaceChoices(),{...raceSettingsChoices(DEFAULT_RACE_SETTINGS),laps:2},'Fresh player uses canonical defaults');
 ownTestCourses(app);app.setRaceSettings(setup);app.setRouteVariant('route_b');app.setLightingMood('golden');app.setGhostEnabled(false);
 const saved=JSON.parse(memory.get(PLAYERS_KEY)).players[0].profile.raceSettings;
 same(saved,{version:1,eventId:COURSE[1].id,car:'stuttgart_959s',difficulty:'pro',cpuDifficulty:'medium',mode:'timetrial',routeVariant:'route_b',lightingMood:'golden',ghostEnabled:false,footCamera:'first-person'},'Every setup change saves before starting a race');
 same(new App().getRaceChoices(),setup,'Reload restores full race choices');
 const added=app.addPlayer('Second Driver');ok(added.ok,'Second player created');const second=app.player.id;
-same(app.getRaceChoices(),raceSettingsChoices(DEFAULT_RACE_SETTINGS),'New player does not inherit another setup');same([app.menuRouteId,app.lightingMood,app.ghostEnabled],['route_a','clear',true],'New route and visual defaults are independent');
+same(app.getRaceChoices(),{...raceSettingsChoices(DEFAULT_RACE_SETTINGS),laps:2},'New player does not inherit another setup');same([app.menuRouteId,app.lightingMood,app.ghostEnabled],['route_a','clear',true],'New route and visual defaults are independent');
 ownTestCourses(app);app.setRaceSettings({startStage:2,cpuDifficulty:'hard',difficulty:'casual',mode:'duel'});app.setRouteVariant('route_c');app.setLightingMood('overcast');
 app.selectPlayer(first);same(app.getRaceChoices(),setup,'Player switch restores car, event, CPU, mode and transmission');same([app.menuRouteId,app.getMenuSeed(),app.lightingMood,app.ghostEnabled],['route_b',42,'golden',false],'Player switch restores route, lighting and ghost');
 app.startCampaign();same([app.duel.state.stageIndex,app.duel.state.car,app.duel.state.difficulty,app.duel.state.cpuDifficulty,app.duel.state.mode,app.duel.state.seed],[1,'stuttgart_959s','pro','medium','timetrial',42],'Start without explicit options uses the visible restored setup');
 const activeBefore=JSON.stringify(app.duel.state);ok(!app.setRaceSettings({car:'falcone_f42',startStage:0}),'Race settings cannot mutate a started simulation');same(JSON.stringify(app.duel.state),activeBefore,'Rejected menu change leaves the race untouched');
-app.returnToMenu();app.selectPlayer(second);same(app.getRaceChoices(),{startStage:2,car:'falcone_f42',difficulty:'casual',cpuDifficulty:'hard',mode:'duel'},'Second setup survives first player racing');
+app.returnToMenu();app.selectPlayer(second);same(app.getRaceChoices(),{startStage:2,car:'falcone_f42',difficulty:'casual',cpuDifficulty:'hard',mode:'duel',laps:2},'Second setup survives first player racing');
 same(new App().getRaceChoices(),app.getRaceChoices(),'Active player and preferences survive reload together');
 
 // Challenge selections keep the chosen owned car and a natural route
@@ -57,6 +57,6 @@ syncRaceChoiceButtons({querySelectorAll:()=>buttons},setup);
 for(const button of buttons){const[key,value]=Object.entries(button.dataset)[0];same(button.state,{on:value===setup[key],'aria-pressed':String(value===setup[key])},'Restored control matches actual race option');}
 
 globalThis.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};app=new App();const sessionFirst=app.player.id;ownTestCourses(app);app.setRaceSettings(setup);app.setRouteVariant('route_b');app.addPlayer('Session Two');app.setRaceSettings({cpuDifficulty:'hard'});app.selectPlayer(sessionFirst);
-same(app.getRaceChoices(),setup,'Storage failure preserves each session-only setup');same(app.menuRouteId,'route_b','Session-only route remains per-player');ok(app.profileSaved===false,'Save failure stays visible to the app');same(new App().getRaceChoices(),raceSettingsChoices(DEFAULT_RACE_SETTINGS),'Unavailable storage cannot invent cross-session persistence');
+same(app.getRaceChoices(),setup,'Storage failure preserves each session-only setup');same(app.menuRouteId,'route_b','Session-only route remains per-player');ok(app.profileSaved===false,'Save failure stays visible to the app');same(new App().getRaceChoices(),{...raceSettingsChoices(DEFAULT_RACE_SETTINGS),laps:2},'Unavailable storage cannot invent cross-session persistence');
 delete globalThis.localStorage;
 console.log(`Race settings: ${checks} per-player save/switch/reload, vehicle ownership, open course choice, route context, legacy migration, UI and session-only checks passed.`);

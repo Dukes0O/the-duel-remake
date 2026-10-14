@@ -37,3 +37,9 @@
 .field-gap[hidden]{display:none}
 .tow-marker{align-self:flex-end;margin:0 auto 7px;padding:3px 9px;border:1px solid #8fe3c8;background:#0e2b2399;color:#c0f5e2;font-size:10px;font-weight:850;letter-spacing:2.4px;border-radius:2px;text-shadow:none}
 .tow-marker[hidden]{display:none}
+
+/* The mirror is centred; clocks remain beside it. */
+.in-race .race-clock{left:auto;right:35px;top:70px;transform:none;align-items:flex-end}
+@media(max-width:900px){.route-hud{width:min(40vh,calc(100vw - 335px));padding-inline:11px}.in-race .race-clock{right:20px}}
+
+.in-race .race-callout{top:calc(90px + 30vw / 3.2 + 24px)}

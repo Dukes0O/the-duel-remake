@@ -238,17 +238,21 @@ export class SoundMixer {
     buffer,
     position,
     listener,
-    { rate = 1, volume = 1, loop = false } = {},
+    { rate = 1, volume = 1, loop = false, fadeIn = 0, fadeOut = .04, onEnded = null, admitted = false } = {},
   ) {
-    if (!this.enabled) return null;
+    if (!this.enabled && !admitted) return null;
     this._updateRouting();
     const cue = SOUND_BANK[id];
     if (!cue) throw Error('Unknown audio cue: ' + id);
+    if (!this.enabled && cue.flag !== 'rival-voices') return null;
     const source = this.context.createBufferSource(),
       gain = this.context.createGain();
     source.buffer = buffer;
     source.loop = loop;
-    gain.gain.value = cue.volume * volume;
+    gain.gain.value = fadeIn > 0 ? 0 : cue.volume * volume;
+    const fadeUntil = this.context.currentTime + fadeIn;
+    if (fadeIn > 0) gain.gain.linearRampToValueAtTime(cue.volume * volume, fadeUntil);
+    let baseRate = rate;
     const output = this.movingOutput(id, position, listener);
     source.connect(gain);
     gain.connect(output.input);
@@ -262,23 +266,40 @@ export class SoundMixer {
       gain.disconnect();
       output.disconnect();
       release?.();
+      onEnded?.();
     };
     source.onended = cleanup;
     const voice = {
       source,
       gain,
       output,
-      update: (next, ear) => {
-        if (!finished && !stopping)
-          output.update(next, ear, source.playbackRate, rate);
-      },
-      stop: () => {
+      update: (next, ear, controls) => {
         if (finished || stopping) return;
+        if (Number.isFinite(controls?.rate)) baseRate = controls.rate;
+        if (Number.isFinite(controls?.volume)) {
+          const now = this.context.currentTime;
+          gain.gain.cancelScheduledValues(now);
+          if (now < fadeUntil) {
+            gain.gain.setValueAtTime(gain.gain.value, now);
+            gain.gain.linearRampToValueAtTime(cue.volume * controls.volume, fadeUntil);
+          } else gain.gain.setTargetAtTime(cue.volume * controls.volume, now, .025);
+        }
+        output.update(next, ear, source.playbackRate, baseRate);
+      },
+      stop: ({immediate = false} = {}) => {
+        if (finished || stopping && !immediate) return;
         stopping = true;
         const now = this.context.currentTime;
-        gain.gain.setTargetAtTime(0, now, 0.008);
+        if (immediate) {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(0, now);
+        } else if (fadeOut !== .04) {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.linearRampToValueAtTime(0, now + fadeOut);
+        } else gain.gain.setTargetAtTime(0, now, 0.008);
         try {
-          source.stop(now + 0.04);
+          source.stop(now + (immediate ? 0 : fadeOut));
         } catch {
           cleanup();
         }

@@ -97,15 +97,59 @@ function validateSource(asset, id) {
   return bounds;
 }
 
+const CONTINUOUS_LININGS = new Set(['armco','concrete-wall','catch-fence','tyre-wall','pit-wall']);
+
+// The base height is shared with the geometry report; model/collider rows stay
+// read only. Lower a continuous lining only when its footprint would float.
+export function kitBaseHeight(course,row,bounds) {
+  const ground=course.groundAt(row.s,row.lateral);
+  const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
+  if(!finite(height))return height;
+  if(!course.script||!CONTINUOUS_LININGS.has(row.id))return height+(row.lift??0);
+  const scale=Array.isArray(row.scale)?row.scale:Array(3).fill(row.scale??1);
+  const heading=ground.heading+(row.heading??0),cs=Math.cos(heading),sn=Math.sin(heading);
+  const x=[bounds.min.x,(bounds.min.x+bounds.max.x)/2,bounds.max.x];
+  const z=[bounds.min.z,(bounds.min.z+bounds.max.z)/2,bounds.max.z];
+  let lowest=height;
+  for(const a of x)for(const b of z){
+    const px=ground.x+cs*a*scale[0]+sn*b*scale[2],pz=ground.z-sn*a*scale[0]+cs*b*scale[2];
+    const at=course.nearest(px,pz,row.s);
+    const under=renderedGroundHeight(course,{x:px,z:pz,s:at.s,off:at.lateral},{requireSurface:true});
+    if(finite(under))lowest=Math.min(lowest,under);
+  }
+  return Math.min(height,lowest+.449)+(row.lift??0);
+}
+
 function placementMatrix(course, row, bounds) {
   const ground = course.groundAt(row.s,row.lateral);
   if (![ground.x,ground.y,ground.z,ground.heading].every(finite)) fail('terrain anchor is invalid.');
-  const height=renderedGroundHeight(course,{...ground,s:row.s,off:row.lateral},{requireSurface:true});
+  const height=kitBaseHeight(course,row,bounds);
   if (!finite(height)) fail('placement has no rendered terrain beneath its anchor.');
   return new THREE.Matrix4().compose(
-    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1]+row.lift,ground.z),
+    new THREE.Vector3(ground.x,height-bounds.min.y*row.scale[1],ground.z),
     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),ground.heading+row.heading),
     new THREE.Vector3(...row.scale));
+}
+
+// Keep source/placement bounds and ground anchors exact. Only the approved
+// sign's two panels and its separate lettering get a visual XY enlargement.
+const brakingBoardIds = new Set(['braking-board-150', 'braking-board-100', 'braking-board-50']);
+function brakingBoardFaceMatrix(model, id, node) {
+  const local = node.matrixWorld.clone();
+  if (!brakingBoardIds.has(id) || ![id + '-distance-board_1', id + '-distance-board_2',
+    'distance-' + id.slice('braking-board-'.length)].includes(node.name)) return local;
+  const panel = model.scene.getObjectByName(id + '-distance-board_1');
+  if (!panel) return local;
+  const center = new THREE.Box3().setFromObject(panel).getCenter(new THREE.Vector3());
+  return new THREE.Matrix4().makeScale(2, 2, 1).setPosition(-center.x, -center.y, 0).multiply(local);
+}
+function brakingBoardVisualBounds(model, id) {
+  const bounds = new THREE.Box3();
+  model.scene.traverse(node => {
+    if (node.isMesh) bounds.union(new THREE.Box3().setFromBufferAttribute(node.geometry.attributes.position)
+      .applyMatrix4(brakingBoardFaceMatrix(model, id, node)));
+  });
+  return bounds;
 }
 
 // A road segment box is deliberately broader than the actual clearance guard.
@@ -150,7 +194,7 @@ function checkPlacementClearance(course, row, asset, matrix, bounds, roadBoxes) 
   };
   asset.scene.traverse(node => {
     if (!node.isMesh) return;
-    const transform = new THREE.Matrix4().multiplyMatrices(matrix,node.matrixWorld);
+    const transform = new THREE.Matrix4().multiplyMatrices(matrix,brakingBoardFaceMatrix(asset,row.id,node));
     const position = node.geometry.attributes.position, indices = node.geometry.index;
     const count = indices?.count ?? position.count;
     for (let i=0;i<count;i+=3) {
@@ -335,9 +379,9 @@ export function createTrackKits(course, options) {
       const placedBounds = new THREE.Box3();
       for (const version of ['high','low']) {
         const asset = assets.get(row.id+'/'+version);
-        placedBounds.union(asset.bounds.clone().applyMatrix4(matrix));
+        placedBounds.union((asset.visualBounds ?? asset.bounds).clone().applyMatrix4(matrix));
         if (!validateClearance) stats.clearance.runtimeSkipped++;
-        else if (checkPlacementClearance(course,row,asset.model,matrix,asset.bounds,roadBoxes))
+        else if (checkPlacementClearance(course,row,asset.model,matrix,asset.visualBounds ?? asset.bounds,roadBoxes))
           stats.clearance.trianglePlacements++;
         else stats.clearance.broadPhaseSkipped++;
       }
@@ -390,7 +434,7 @@ export function createTrackKits(course, options) {
             trackKitChunk:chunk.index,
             trackKitPlacementIndices:Object.freeze(entries.map(entry=>entry.index)),
             trackKitDrawnPlacementIndices:Object.freeze([])});
-          const local = node.matrixWorld.clone();
+          const local = brakingBoardFaceMatrix(asset.model,id,node);
           const layer = Number(/layer-(\d+)/.exec(node.name)?.[1] ?? 1) - 1;
           // Preserve Claude's painted layers while retaining owned chunk batches.
           if (entries.some(({row}) => row.bands)) {
@@ -544,7 +588,8 @@ export function createTrackKits(course, options) {
       applyKitLook(course.def.kitLook?.[id],model,own);
       const validationStarted = performance.now();
       try {
-        const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds});
+        const bounds = validateSource(model,id);assets.set(id+'/'+version,{model,bounds,
+          ...(brakingBoardIds.has(id) ? {visualBounds:brakingBoardVisualBounds(model,id)} : {})});
       } finally {stats.presentation.activeCpuMs += performance.now()-validationStarted;}
     }))).then(() => {
       if (retired || failed) return false;
@@ -577,8 +622,10 @@ export function createTrackKits(course, options) {
       const instance = instances[index], row = rows[index];
       instance.matrix.copy(matrix); instance.revision++;
       instance.bounds.makeEmpty();
-      for (const version of ['high','low'])
-        instance.bounds.union(assets.get(row.id+'/'+version).bounds.clone().applyMatrix4(matrix));
+      for (const version of ['high','low']) {
+        const asset=assets.get(row.id+'/'+version);
+        instance.bounds.union((asset.visualBounds ?? asset.bounds).clone().applyMatrix4(matrix));
+      }
       refreshChunkBounds(instance.chunk);
       if (refresh && activeView) applyView(activeView);
       return true;

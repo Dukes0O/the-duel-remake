@@ -68,6 +68,7 @@ function replay(race, fps) {
   duel.startCampaign({
     startStage: index, seed: fixture.seed, mode: race.mode, car: race.car,
     difficulty: 'casual', cpuDifficulty: 'easy',
+    ...(Object.hasOwn(race,'yetiSeed')?{yetiSeed:race.yetiSeed}:{}),
   });
   assert.equal(duel.state.stageIndex, index, `${race.id}: wrong event`);
   assert.equal(duel.state.car, race.car, `${race.id}: wrong car`);

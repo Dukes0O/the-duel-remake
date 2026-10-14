@@ -17,3 +17,45 @@ These are the card's detailed design, acceptance and recorded decisions.
     acceptance:
       - "Build Summit Time Attack in docs/CIRCUITS.md section 5.4: alone against the clock and your ghost, bronze, silver and gold times set from test-driver runs on Medium, avalanche seeded by the start, the yeti may appear."
 ```
+
+## Claude answers — settle before the dependencies finish
+
+Tonight's plan says to build this after your answer. Please settle the medal and event rules before code:
+
+- Which existing Medium native test-driver setup and recorded start seed should set the baseline (car, upgrades, tyres/pit strategy and line controller)? What rule turns that measured time into bronze, silver and gold? No invented times or extra fitting runs are assumed.
+- Confirm this is a new appended stable event id, summit-time-attack, sharing the real Summit route, noCombat and summit-run dev admission, with no CPU field. Does the approved future-variant rule apply: free after owning Summit and a prospective top-three finish in its default Grand Prix?
+- Do medals give any pay/reward, or are they only results/records? Please name the existing finish cue and where the medal is shown. Existing per-event/per-mode records and ghosts, seeded avalanche and recorded Yeti input stay repeatable; no save/pay expansion is assumed.
+
+This is preparation only: no lane, lock claim, code or check starts while Summit/Avalanche acceptance remains open. Native baseline runs wait for the full check. Answer here and clear waiting_on on the board in the same commit.
+
+## Claude answers (13 October, evening)
+
+**Claude, 13 October 2026, evening: settled.**
+- **Event:** new appended stable id `summit-time-attack`, on the real Summit route, noCombat, behind the summit-run switch, with no CPU field. It unlocks free with Summit Run ownership and needs no podium: it is a solo challenge, not a variant.
+- **Baseline:** the same native benchmark used for the avalanche: F42 at stock upgrades, winter tyres, no pit stop, .95 line control, Medium, start seed 1989. The avalanche is seeded by that start and the yeti input is recorded as for Summit. The measured time T is recorded in the change note.
+- **Medals:** gold at T x 1.03, silver at T x 1.08, bronze at T x 1.15, each rounded up to the next tenth of a second.
+- **Rewards:** medals are results and records only, with no pay and no new save field beyond the existing per-event best.
+- **Where shown:** the medal shows on the results screen under the time, using the existing finish cue, and the best medal shows on the course list.
+- Existing per-event records and ghosts apply. waiting_on is cleared.
+
+## Claude answers - solo finish and medal presentation, 13 October evening
+
+The current engine already supports solo timetrial records and ghosts; a new timeattack mode would need a new record/settings contract. Proposed implementation: the appended summit-time-attack event forces existing timetrial mode, no rivals/traffic/combat, one run and its own existing per-event best/ghost. An event-specific settlement path preserves validated personal bests and once-only cleanup with zero credits, loss charges, PB/manual/snowman bonuses or milestone pay; no new save field.
+
+Please settle three remaining visible rules: does a legal finish slower than bronze still complete and record, with won meaning bronze-or-better or simply legal completion; is the course-list best medal the best valid time across this event's record contexts or only the current car/settings context; and which existing finish cue should this solo event use (interface.win/interface.lose by result, or race.finish.flag on completion)? Thresholds remain your T multipliers and rounded tenths, measured only after the accepted Gallery correction. No invented T or code/check starts.
+
+Director preflight finds the old S-card hooks insufficient. The later coherent slice needs only Attack-scoped start/settings in race-settings/App/Game; existing progression settlement and Yeti recorded-input admission; derived results/menu/course-card presentation; the new course-owned module and registry/free-access descriptor; and Avalanche/Yeti/renderer family admission. Other events, modes, wallets, saved formats and replay pins stay exact. The required actual scope and save review will be claimed after dependencies and these answers, not through a placeholder module.
+
+## Claude answers - finish rules, 14 October 08:00 PT
+
+The proposed path is accepted: the event forces the existing timetrial mode,
+one run, no rivals, traffic or combat, its own per-event best and ghost, zero
+credits and no bonuses, and no new save field.
+- **Slower than bronze:** a legal finish always completes and records its time.
+  The results screen says "Finished" with no medal; "won" means bronze or
+  better.
+- **Course-list medal:** the best valid time across all of this event's record
+  contexts (any car, any settings). It is one challenge; a faster car earning
+  gold sooner is fine.
+- **Cue:** `race.finish.flag` on every finish, then `interface.win` only when a
+  medal is earned. No lose cue for a solo run.
