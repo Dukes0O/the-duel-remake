@@ -169,7 +169,6 @@ tasks:
     branch: "codex/p4-avalanche-geometry"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
-    waiting_on: claude
     flag: "summit-run"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
