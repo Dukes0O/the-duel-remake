@@ -11,6 +11,7 @@ import {yetiVisible,yetiSites,initializeYeti,YETI,yetiRewards,hash32} from '../s
 import {getRoadRoofLook,equipRoadRoof,equipArmorKit,getEquippedRoofLook} from '../src/armor-kits.js';
 import {PAINT_PRESETS,paintPresetsFor,applyPaint,getPaintAppearance} from '../src/paint-presets.js';
 import {createYetiAssets,createYetiRoof,createYetiView} from '../src/yeti-view.js';
+import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {cloneChromeCrown,createArmorKitMeshes} from '../src/armor-kit-meshes.js';
 import {createVehicleAttachmentRegistry,createRoadRoofOwner} from '../src/vehicle-attachments.js';
 import {vehicleSocketLayout} from '../src/vehicle-sockets.js';
@@ -233,7 +234,37 @@ try{
   const mini=createYetiRoof(assets);const box=new THREE.Box3().setFromObject(mini.group,true);check(Math.abs(box.max.y-box.min.y-.45)<1e-6,'real posed LOD roof is .45 m');mini.dispose();
   for(const car of Object.keys(CARS)){check(vehicleSocketLayout(car,{width:2,length:4,height:1.5}).roof.every(Number.isFinite),'every actual car roof socket');}
   const view=createYetiView(assets),state={status:'racing',stageTimeSec:1,yeti:{appears:true,site:sites[0],seen:false,seenAt:null}},snapshot=JSON.stringify(state);
-  view.update(state,course,true);view.update(state,course,false);for(const age of [0,2,4,7])view.update({...state,stageTimeSec:age,yeti:{...state.yeti,seen:true,seenAt:0}},course,true);equal(JSON.stringify(state),snapshot,'model update never advances sighting');view.dispose();
+  view.update(state,course,true);view.update(state,course,false);for(const age of [0,2,4,7])view.update({...state,stageTimeSec:age,yeti:{...state.yeti,seen:true,seenAt:0}},course,true);equal(JSON.stringify(state),snapshot,'model update never advances sighting');
+  // Real accepted High/LOD feet on the authored slope: one contact, no floating foot.
+  for(const high of [true,false])for(const age of [null,.05,1.8,3.6,6.1]){
+    const observed={...state,stageTimeSec:age??1,yeti:{...state.yeti,seen:age!==null,seenAt:age===null?null:0}};
+    const before=JSON.stringify(observed);view.update(observed,course,high);
+    const actor=view.group.children.find(child=>child.visible),gaps=new Map();
+    const bonePoint=new THREE.Vector3(),vertex=new THREE.Vector3();
+    actor.traverse(mesh=>{
+      if(!mesh.isSkinnedMesh)return;
+      const weights=mesh.geometry.attributes.skinWeight,indices=mesh.geometry.attributes.skinIndex;
+      for(const name of ['FootL','FootR']){
+        const joint=mesh.skeleton.bones.findIndex(bone=>bone.name===name);if(joint<0)continue;
+        let low=Infinity,count=0;
+        for(let index=0;index<weights.count;index++)for(let part=0;part<4;part++){
+          if(indices.getComponent(index,part)!==joint||weights.getComponent(index,part)<=.25)continue;
+          mesh.getVertexPosition(index,vertex).applyMatrix4(mesh.matrixWorld);low=Math.min(low,vertex.y);count++;break;
+        }
+        if(!count)continue;
+        mesh.skeleton.bones[joint].getWorldPosition(bonePoint);
+        const nearest=course.nearest(bonePoint.x,bonePoint.z,state.yeti.site.s),ground=course.groundAt(nearest.s,nearest.lateral);
+        const height=renderedGroundHeight(course,{x:bonePoint.x,z:bonePoint.z,y:ground.y},{requireSurface:true});
+        check(Number.isFinite(low)&&Number.isFinite(height),'actual skinned foot and drawn terrain exist');
+        gaps.set(name,Math.min(gaps.get(name)??Infinity,low-height));
+      }
+    });
+    check(gaps.has('FootL')&&gaps.has('FootR'),'both actual accepted feet are observed');
+    check([...gaps.values()].every(gap=>gap<=1e-6),'neither actual foot floats above the rendered snow');
+    check([...gaps.values()].some(gap=>Math.abs(gap)<=1e-6),'one actual foot retains terrain contact');
+    equal(JSON.stringify(observed),before,'slope seating does not advance the native race');
+  }
+  view.dispose();
   const source=await load('/assets/models/wasteland/kits/falcone_f42.glb'),clone=cloneChromeCrown(source.scene,{privateMaterials:true});check(clone);
   let originalGeometry;source.scene.getObjectByName('kit-crown').traverse(node=>{if(node.geometry&&!originalGeometry)originalGeometry=node.geometry;});check(originalGeometry,'actual Crown mesh geometry');const positionBytes=Array.from(originalGeometry.attributes.position.array);
   clone.spikes.traverse(node=>{if(node.material?.color)node.material.color.setHex(0xff0000);});equal(Array.from(originalGeometry.attributes.position.array),positionBytes,'Chrome clone leaves accepted source vertices exact');clone.dispose();clone.dispose();
