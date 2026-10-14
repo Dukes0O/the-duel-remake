@@ -43,10 +43,11 @@ export function noteRefuel(missions, {fireOpen = false} = {}) {
   return {...missions, count: missions.count + 1};
 }
 
-// Engine time run down the quiet spell's engine seconds.
+// Engine time run down the quiet spell's engine seconds. Not rounded here,
+// so a frame at a time runs it down too (the save keeps tenths).
 export function runEngine(missions, seconds) {
   if (!(seconds > 0) || missions.quiet.engineSeconds <= 0) return missions;
-  const left = Math.max(0, Math.round((missions.quiet.engineSeconds - seconds) * 10) / 10);
+  const rest = missions.quiet.engineSeconds - seconds, left = rest > 1e-6 ? rest : 0;
   return {...missions, quiet: {...missions.quiet, engineSeconds: left}};
 }
 
@@ -68,10 +69,11 @@ export function callTime(missions) {
 }
 
 // The call: a seeded pick of a kind, then of a course for it. The same kind
-// may come twice or more in a row.
-export function openCall(missions, {playDay, conditions}) {
+// may come twice or more in a row. Only when a call is due, so a second ring
+// can never reopen or reset a call.
+export function openCall(missions, {playDay, conditions, fireOpen = false}) {
+  if (!callDue(missions, {playDay, conditions, fireOpen})) return {missions, call: null};
   const kinds = possible(conditions);
-  if (!kinds.length) return {missions, call: null};
   const rng = draw(missions, 'pick');
   const kind = kinds[rng.int(0, kinds.length - 1)];
   const courses = [...conditions[kind]].sort();

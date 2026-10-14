@@ -101,6 +101,9 @@ check('answer now or later: the call waits in the save until answered', () => {
   assert.equal(answerCall(answered), answered);
   assert.equal(answerCall(full), full, 'no call, nothing to answer');
   assert.deepEqual(openCall(full, {playDay: 4, conditions: nothing}), {missions: full, call: null});
+  assert.deepEqual(openCall(answered, {playDay: 5, conditions: canBurn}), {missions: answered, call: null}, 'a second ring never reopens a call');
+  assert.equal(openCall(full, {playDay: 4, conditions: canBurn, fireOpen: true}).call, null, 'not with a fire burning');
+  assert.equal(openCall({...full, count: full.need - 1}, {playDay: 4, conditions: canBurn}).call, null, 'not before the count is reached');
 });
 
 check('the quiet spell: no call that play day or the next, nor within 20 minutes of engine time', () => {
@@ -118,6 +121,9 @@ check('the quiet spell: no call that play day or the next, nor within 20 minutes
   assert.equal(callDue(after, {playDay: 11, conditions: canBurn}), false, 'engine time alone is not enough');
   assert.equal(callDue(after, {playDay: 12, conditions: canBurn}), true);
   assert.equal(runEngine(after, 50), after, 'nothing to run down');
+  let framed = refuel(endMission(answerCall(missions), {playDay: 10}), 6);
+  for (let n = 0; n < 72_000 && framed.quiet.engineSeconds > 0; n++) framed = runEngine(framed, 1 / 60);
+  assert.equal(framed.quiet.engineSeconds, 0, 'a frame at a time runs the 20 minutes down too');
   assert.equal(runEngine(after, -5), after);
 });
 
