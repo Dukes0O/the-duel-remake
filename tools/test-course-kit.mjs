@@ -245,7 +245,10 @@ const getDossier=new Function('app','COURSE','isCourseUnlocked','courseUnlockReq
 assert.equal(getDossier({duel:{state:{status:'menu'}},_switches:()=>({enabled:()=>true})},COURSE,isCourseUnlocked,courseUnlockRequirement,()=>settled.profile,variant.id),null);
 const app=new App();app.profile=owned;app._saveProfile();
 assert.equal(app.selectCourse(variant.id),false);assert.equal(app.startCampaign({startStage:variantIndex}),false);
-app.profile=settled.profile;app._saveProfile();assert.equal(app.selectCourse(variant.id),true);
+app.profile=settled.profile;app._saveProfile();
+const selected=app.selectCourse(variant.id);
+assert.deepEqual(selected,app.getRaceChoices(),'earned selection returns the actual settings, matching the existing App contract');
+assert.equal(selected.startStage,variantIndex,'earned selection admits the actual registered variant');
 assert.equal(app.startCampaign({startStage:variantIndex,mode:'duel'}),true);app.returnToMenu();
 assert.equal(new App().getRaceChoices().startStage,variantIndex,'real App reload retains earned selection');
 assert.equal(app.addPlayer('Variant second player').ok,true);assert.equal(isCourseUnlocked(app.profile,variant),false);
