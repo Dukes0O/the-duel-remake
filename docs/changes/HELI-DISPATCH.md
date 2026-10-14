@@ -124,3 +124,16 @@ Nothing was replaced.
 Job taken and job done play the radio lines that HELI-RADIO already made
 (`heli.radio.job.taken`, `heli.radio.job.done`). Pay and the board add no
 other sound.
+
+## Review
+
+One independent review (rule 17; code, money and the save): CLEAR, no
+faults. It flew extra deliveries against the real session (a second
+release pays nothing, the wrong zone or 30 m outside pays nothing, a crash
+returns the job car with the job still in hand), checked the pay values,
+the cap, the frozen inputs, the normalizer limits, the switch refusals and
+the unchanged headless flight fingerprint. Notes carried forward: the page
+draws only one car, so a customer's car and the player's parked car must
+both be drawn (HELI-LESSONS draws every car in `view.loads`); the Real
+bonus follows the mode at delivery.
+
