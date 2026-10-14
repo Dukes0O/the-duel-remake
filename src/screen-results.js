@@ -31,6 +31,15 @@ function modalScreen(s) {
   let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='',arenaExtra='';
   const arenaScreen=s.arena&&(s.paused?arenaPauseScreen(s,{metric,action,time}):s.status==='arena_result'?arenaResultsScreen(s,{metric,action,escapeHTML}):s.status==='warlord_intro'?warlordIntroScreen(s,{metric,action,escapeHTML}):null);
   if (arenaScreen) ({eyebrow,title,description,metrics,actions,extra:arenaExtra}=arenaScreen);
+  else if (s.paused && s.status === 'heli') {
+    // The helicopter (docs/HELICOPTER.md): no run to restart, only back to
+    // flying or to the main menu (the fuel left is kept).
+    eyebrow='KESTREL ONE';
+    title='HOVER<br>ON HOLD.';
+    description='The flight is paused. Pick up where you left off, or land at the main menu; your fuel is kept.';
+    metrics=metric('OVER',COURSE[s.stageIndex].name);
+    actions=action('BACK TO FLYING','resume',true)+action('MAIN MENU','menu');
+  }
   else if (s.paused) {
     const practice=!!COURSE[s.stageIndex]?.practice;
     eyebrow=practice?'FREE PRACTICE':'TAKE A BREATH';
