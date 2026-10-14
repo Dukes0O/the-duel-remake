@@ -157,3 +157,17 @@ hairpin radius stays 9.
   beside the hairpin escape road are placed by a nearest-road round trip that drifts by up to 1.3 m.
 - Stock autopilot: lookahead and surface blindness (cards above). With those fixed the review tool would show
   Harbour and Snow inside the card targets.
+
+## Claude review and Kyle's decision (14 October 2026)
+
+Kyle chose the easier Harbour road with fresh Harbour best times (layout
+version 2; old rows and ghosts archived by the existing layout-version path).
+Claude reviewed both round-3 sheets and approved the visual differences, then
+captured the world signatures with `test-world-composition.mjs --capture`
+(stable across two captures): harbour-lights e5478941 (1,122 nodes, 223,087
+instances), tremblant-woods e41e7dea (305 nodes, 24,982 instances). The
+Harbour reference lap's drop from 88.05 to 77.70 s is genuine: the reference
+car carries 20 to 40 km/h more through Temple Hill, Bell Tower and the Old
+Town Esses (sector 2 39.7 to 32.6 s); the hairpin minimum is unchanged (58
+and 57 km/h).
+
