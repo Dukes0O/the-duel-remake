@@ -188,3 +188,27 @@ Root reviewed the actual visible difference before the exact existing capture. U
 
 
 The first original nearby on456839cd completed100/101, failed only test-circuit-summit, zero unrun, exit1,426425.2687ms. Its old Summit branch assertion still expected generic winter RGB[.34,.38,.42], whereas Claude explicitly requested a darker Open Road and reviewed authored0x293135 produces the actual linear RGB[.02217388478862708,.030713443727452196,.035601314869097636]. Root granted only that assertion's expected colour to new THREE.Color(SUMMIT_RUN.snowWorld.branchTone).toArray(). The additive absent-tone legacy assertion keeps exact[.34,.38,.42]; clone immutability and roughness checks stay unchanged. This is an explained authored visual-contract correction, not a threshold/tolerance relaxation. No source/photo/signature changes or build/pass claim for the failed freeze. Corrected original nearby/build and same ordinary confirmation remain required.
+
+## Current released-source union and exact Summit signature
+
+Current integration bde9458b is merged into the retained lane without
+history rewriting. The only conflict was the Summit scene fixture; incoming
+b36430dc3c3119840076fa2c3b7f0f1b74284e32daf8093fa346354202bda78a was
+retained as the baseline before actual capture. Accepted Gallery end
+10,800 m and all 35 tiles remain, with every reviewed visual source byte
+exact to 22fd8cdf and current controls exact to integration. Claude accepts
+round three for dev only; P4-FINISH-SUMMIT retains the stated roof, town,
+slit/window and snow limitations. No fourth round or physical tuning occurs.
+
+The first capture invocation incorrectly enabled the separate Ardennes dev
+course too and stopped at the unchanged coverage guard, actual 22 versus
+21 baselines, before emitting scenes. Its failed receipt remains. Correcting
+only the invocation to the existing Summit QA opt-in passed 22 coverage
+and immutable-feature checks across 21 scenes, exit 0, 14,142.6539 ms.
+Every other 20 emitted rows equals its accepted baseline, and all other
+fixture file bytes equal bde9458b. Only Summit changes from the hash above
+to 4e30db187ac75a8feb0215365b665db53e664e4c5f0267e25ad4b461b194ebf4: 667
+nodes, 642 meshes, 21,123 instances, 113 geometries, 62 materials, 19 textures.
+This is the actual reviewed visual/rejoin/current-runtime union, not a
+new art round or gameplay pass. Existing capture tool and all guards stay
+unchanged. Original nearby lane and build follow on the frozen source.
