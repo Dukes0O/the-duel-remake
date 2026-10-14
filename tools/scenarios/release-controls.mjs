@@ -162,6 +162,7 @@ async function screenCase(context,id,width,height){
     await context.command('Input.dispatchKeyEvent',{type:'keyUp',code:'KeyC',key:'c',windowsVirtualKeyCode:67});
     const camera=await context.evaluate(`(ControlsQaPaint(),{mode:window.__qaApp.cameraMode,label:document.querySelector('#camera-label').textContent})`);
     cameras.push({expected,...camera});if(camera.mode!==expected||camera.label!==expected.toUpperCase()+' CAM')failures.push('C camera '+expected);
+    if(id==='harbour-lights'&&width===1920){await new Promise(done=>setTimeout(done,350));await context.evaluate('ControlsQaPaint()');await context.screenshot('harbour-camera-'+expected+'-1920x1080');}
   }
   return{id,width,height,grid,warnings,layout,cameras,failures,passed:failures.length===0};
 }
