@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T17:59:57.930Z
+Observed at: 2026-10-14T18:01:12.600Z
 
-Observation commit: 958ff53cd3021ae3a43355ea5102ac0fe0f7211a
+Observation commit: 5f06ec12db651050cd546d7a24d1a79bafcebaef
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 958ff53cd3021ae3a43355ea5102ac0fe0f7211a
+Integration HEAD: 5f06ec12db651050cd546d7a24d1a79bafcebaef
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -61,7 +61,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/deep-art-src | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/deep-art-src |
-| codex/p4-ardennes | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
+| codex/p4-ardennes | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-ardennes |
 | codex/p4-avalanche-geometry | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-avalanche-geometry |
 | codex/p4-finish | 2 | unknown | false | false | unknown |
 | codex/p4-gp-existing | 1 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-gp-existing |
@@ -69,7 +69,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-qualifying | 3 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-qualifying |
 | codex/p4-summit | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-summit |
 | codex/p4-yeti | 0 | unknown | false | false | unknown |
-| codex/p4-yeti-native | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
+| codex/p4-yeti-native | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
 | codex/qa-browser-pins | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-browser-pins |
 | codex/qa-browser-sweep | 0 | unknown | false | false | unknown |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
@@ -83,13 +83,12 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T10:23:59-07:00 | 0 | last commit 2026-10-14T10:23:59-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
+| codex/p4-ardennes | P4-ARDENNES | 2026-10-14T10:23:59-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, public/assets/models/circuits/kits/forest-footbridge-lod.glb, public/assets/models/circuits/kits/forest-footbridge.glb, public/assets/models/circuits/kits/forest-timing-tower-lod.glb |
 | codex/p4-avalanche-geometry | P4-AVALANCHE | 2026-10-14T10:57:59-07:00 | 0 | last commit 2026-10-14T10:57:59-07:00 | docs/changes/P4-AVALANCHE.md, src/circuits/summit-run.js, src/course.js, tools/test-summit-avalanche.mjs |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/p4-yeti-native | unknown | 2026-10-14T10:43:05-07:00 | 0 | last commit 2026-10-14T10:43:05-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-pins | QA-BROWSER-SWEEP | 2026-10-14T10:58:46-07:00 | 0 | last commit 2026-10-14T10:58:46-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs |
+| codex/qa-browser-pins | QA-BROWSER-SWEEP | 2026-10-14T11:00:55-07:00 | 0 | last commit 2026-10-14T11:00:55-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/first-person-gear.mjs, tools/scenarios/rustwall.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
@@ -105,9 +104,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 297,964 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 250,773 B | -47,191 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 404,617,216 B | +131,072 B | unavailable |
+| Git objects | 404,729,856 B | +112,640 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -116,7 +115,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 958ff53cd3021ae3a43355ea5102ac0fe0f7211a
+- Local integration/wasteland: 5f06ec12db651050cd546d7a24d1a79bafcebaef
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
