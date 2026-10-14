@@ -41,8 +41,7 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
   const bend=[0,4,8].map(step=>course.at(s+step).curvature).reduce((worst,k)=>Math.abs(k)>Math.abs(worst)?k:worst),hairpin=Math.abs(bend)>1/15;
   for(const lateral of[-1,0,1].map(side=>side*(Math.min(5,width-2)-(hairpin&&side&&Math.sign(bend)===side?1:0)))){
    const a=course.worldAt(s,lateral),b=course.worldAt(s+4,lateral);
-   // The midpoint heading follows the road through each existing 4 m sweep.
-   const contact=course.obstaclesNear(s,s+4).find(o=>sweepObstacle(a,b,o,course.worldAt(s+2,lateral).heading,{halfWidth:1.1,halfLength:2.45}));
+   const contact=course.obstaclesNear(s,s+4).find(o=>sweepObstacle(a,b,o,a.heading,{halfWidth:1.1,halfLength:2.45}));
    check(!contact,`${tag}: ${contact?.id} blocks the road at ${s}/${lateral}`);
   }
  }

@@ -88,7 +88,7 @@ test('Harbour Lights: walls everywhere, the Lantern Hairpin, night', () => {
   const road = buildTrackScript(HARBOUR_LIGHTS), course = new Course(HARBOUR_LIGHTS, 1989), hairpin = piece(road, 'Lantern Hairpin');
   assert.equal(HARBOUR_LIGHTS.laps, 4); assert.equal(HARBOUR_LIGHTS.timeOfDay, 'night'); assert.equal(HARBOUR_LIGHTS.theme, 'city');
   assert.ok(road.pieces.every(item => item.walls === 'both'));
-  assert.equal(hairpin.radius, 9); assert.ok(hairpin.degrees > 170);
+  assert.equal(hairpin.radius, 10); assert.ok(hairpin.degrees > 170);
   assert.ok(road.halfWidthAt((hairpin.s0 + hairpin.s1) / 2) >= 6, 'at least 12 m wide at the hairpin');
   near(road.halfWidthAt(piece(road, 'Seafront Straight').s0 + 300) * 2, 14, 1e-9);
   assert.ok(course.features.walls.length > 600);
