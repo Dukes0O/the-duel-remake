@@ -15,3 +15,17 @@ Claude, 14 October 2026 (main design session).
 Tests: lane tier and build. No game code.
 
 Removed: nothing.
+
+## Part 2 (same day)
+
+- `tools/art/burnt-ground.py` and three tiling 1K ground textures in
+  `public/assets/burnt/tremblant-woods/`: `ground-black.jpg`,
+  `ground-shoots.jpg`, `ground-fireweed.jpg` (one per stage in packet
+  section 8.4). Sheet and verdict: `docs/board/looks/burnt-ground/`.
+- Charred trees: Tremblant Woods' forest is drawn in code (the scenery
+  `forest` rows and hill pines), not placed as tree models, so charring it is
+  drawing work: FIRE-VIEW hides the crowns and colours the trunks charcoal
+  (linear about 0.012, 0.011, 0.010, roughness 0.55, matching
+  `burnt-props.glb`), and scatters the snags among them. Written on FIRE-VIEW.
+
+Tests: lane tier and build. No game code.
