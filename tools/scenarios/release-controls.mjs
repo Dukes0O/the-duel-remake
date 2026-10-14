@@ -13,8 +13,7 @@ async function bindings(){
   const result=await build({root,configFile:false,logLevel:'silent',plugins:[{
     name:'release-controls-private',resolveId(id){if(id.replaceAll('\\','/')===entry)return '\0release-controls';},
     load(id){if(id==='\0release-controls')return 'export {COURSE} from '+absolute('src/config.js')+';'+
-      'export {useRacingLine} from '+absolute('tools/track-script-drive.mjs')+';'+
-      'export {resolveTrackIntel,cornerId} from '+absolute('src/track-analysis.js')+';';},
+      'export {useRacingLine} from '+absolute('tools/track-script-drive.mjs')+';';},
   }],build:{write:false,minify:false,lib:{entry,formats:['es']}}});
   const chunk=(Array.isArray(result)?result[0]:result).output.find(row=>row.type==='chunk');
   if(!chunk)throw Error('Native controls helper did not compile');
@@ -93,49 +92,18 @@ async function keyboardLap(context){
   return result;
 }
 
-// Independent authored-coordinate expectations; the actual HUD is the observed output.
-function expectedAt(corners,s,length){
-  const phase=value=>((value%length)+length)%length;
-  const eligible=corners.map(row=>({...row,ahead:phase(row.apex-s)})).filter(row=>row.ahead>0)
-    .sort((a,b)=>a.ahead-b.ahead);
-  for(const row of eligible){
-    let before=row.brake-phase(s); if(before>row.ahead)before-=length; else if(before+length<=row.ahead)before+=length;
-    if(before>250)continue;
-    return{...row,distance:before<=0?'BRAKE':before<=50?'50':before<=100?'100':before<=150?'150':'',color:before<=0?'red':'amber',before};
-  }
-  return null;
-}
 async function screenCase(context,id,width,height){
   await context.command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
   const grid=await context.evaluate(`ControlsQaStart(${JSON.stringify(id)},'grandprix')`);
   await ready(context);
-  const course=await context.evaluate(`(()=>{
-    const a=window.__qaApp,d=a.duel,s=d.state;
+  const failures=[];
+  await context.evaluate(`(()=>{
+    const a=window.__qaApp,s=a.duel.state;
     for(let i=0;i<900&&s.status!=='racing';i++)a.advance(1/60,1/60);
     if(s.status!=='racing')throw Error('Native countdown did not end');
-    const notes=ControlsQa.resolveTrackIntel(d.course).notes||{};const coordinate=value=>((value%d.course.length)+d.course.length)%d.course.length;
-    return{length:d.course.length,corners:d.course.script.pieces.filter(row=>row.kind==='turn').map((row,index)=>{
-      const board=notes[ControlsQa.cornerId({...row,number:index+1})]?.brakeBoard??100;
-      return{name:row.name,direction:row.dir>0?'L':'R',hairpin:row.radius<40,entry:row.s0,brake:coordinate(row.s0-board),apex:coordinate(row.s0+(row.s1-row.s0)*.55),toApex:board+(row.s1-row.s0)*.55,board};})};
+    ControlsQaPaint();
   })()`);
-  const warnings=[];const failures=[];
-  for(const corner of course.corners){
-    for(const sample of [{label:'outside',s:corner.brake-251},{label:'250',s:corner.brake-250},{label:'151',s:corner.brake-151},{label:'150',s:corner.brake-150},{label:'100',s:corner.brake-100},{label:'50',s:corner.brake-50},{label:'brake',s:corner.brake},{label:'before-apex',s:corner.apex-.001},{label:'apex',s:corner.apex},{label:'after-apex',s:corner.apex+.001}]){
-      const expectation=expectedAt(course.corners,sample.s,course.length);
-      const observed=await context.evaluate(`(()=>{
-        const a=window.__qaApp,s=a.duel.state;s.s=s.prevS=${sample.s};s.lateral=s.prevLateral=0;s.speedMph=45;s.headingError=0;
-        ControlsQaPaint();const e=document.querySelector('#corner-warning');
-        return{hidden:e.hidden,label:e.getAttribute('aria-label'),distance:document.querySelector('#corner-warning-distance').textContent,arrow:document.querySelector('#corner-warning-arrow').textContent,color:e.dataset.color};
-      })()`);
-      const arrow=expectation?(expectation.direction==='L'?(expectation.hairpin?'⇇':'←'):(expectation.hairpin?'⇉':'→')):null;
-      const passed=expectation?!observed.hidden&&observed.distance===expectation.distance&&observed.color===expectation.color&&observed.arrow===arrow:observed.hidden;
-      warnings.push({corner:corner.name,sample:sample.label,s:sample.s,expected:expectation,observed,passed});
-      if(!passed)failures.push('Warning '+corner.name+' '+sample.label);
-    }
-  }
-  // Photograph an actual warning with every GP readout present.
-  const first=course.corners[0];
-  await context.evaluate(`window.__qaApp.duel.state.s=window.__qaApp.duel.state.prevS=${first.brake};ControlsQaPaint()`);
+  // Photograph the race screen with every GP readout present.
   const layout=await context.evaluate(`(()=>{
     const debug=[...document.querySelectorAll('details')].filter(node=>{const label=node.querySelector(':scope > summary')?.textContent||'';return label==='MENU QA · TEMPORARY SAVES'||label.startsWith('Performance samples (');});
     if(debug.length!==2)throw Error('Both QA debug panels must exist before capture');
@@ -143,19 +111,18 @@ async function screenCase(context,id,width,height){
     if(debug.some(node=>getComputedStyle(node).display!=='none'))throw Error('QA debug panels still obscure native HUD');
     const visible=e=>e&&!e.hidden&&getComputedStyle(e).display!=='none'&&getComputedStyle(e).visibility!=='hidden'&&e.getClientRects().length>0;
     const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
-    const selectors=['.route-hud','#route-map','.rear-view-frame','#corner-warning','.speedometer','.race-clock','.race-position','.race-heading','.race-health','#field-board','#race-callout','#style-score-panel','#tow-marker','.utility-controls'];
+    const selectors=['.route-hud','#route-map','.rear-view-frame','.speedometer','.race-clock','.race-position','.race-heading','.race-health','#field-board','#race-callout','#style-score-panel','#tow-marker','.utility-controls'];
     const rows=Object.fromEntries(selectors.map(selector=>[selector,document.querySelector(selector)]).filter(([,e])=>visible(e)).map(([selector,e])=>[selector,{...rect(e),text:e.textContent.trim()}]));
-    const overlaps=[];for(const a of ['.route-hud','.rear-view-frame','#corner-warning'])for(const b of Object.keys(rows)){
+    const overlaps=[];for(const a of ['.route-hud','.rear-view-frame'])for(const b of Object.keys(rows)){
       if(a===b||b==='#route-map')continue;const p=rows[a],q=rows[b];if(p&&q&&Math.min(p.right,q.right)>Math.max(p.x,q.x)&&Math.min(p.bottom,q.bottom)>Math.max(p.y,q.y))overlaps.push([a,b]);}
     for(const b of ['.utility-controls','.race-position']){const p=rows['.race-clock'],q=rows[b];if(p&&q&&Math.min(p.right,q.right)>Math.max(p.x,q.x)&&Math.min(p.bottom,q.bottom)>Math.max(p.y,q.y))overlaps.push(['.race-clock',b]);} return{viewport:{width:innerWidth,height:innerHeight},rows,overlaps,canvas:{width:document.querySelector('#route-map').width,height:document.querySelector('#route-map').height}};
   })()`);
-  const panel=layout.rows['.route-hud'],map=layout.rows['#route-map'],mirror=layout.rows['.rear-view-frame'],warning=layout.rows['#corner-warning'];
+  const panel=layout.rows['.route-hud'],map=layout.rows['#route-map'],mirror=layout.rows['.rear-view-frame'];
   const near=(actual,expected)=>Math.abs(actual-expected)<=1;
-  if(!panel||!map||!mirror||!warning)failures.push('Required native UI absent');
+  if(!panel||!map||!mirror)failures.push('Required native UI absent');
   else{
     if(!near(panel.width,432*height/1080)||!near(map.width,384*height/1080))failures.push('Map dimensions');
     if(!near(mirror.width,width*.3)||!near(mirror.width/mirror.height,3.2)||!near(mirror.x+mirror.width/2,width/2))failures.push('Mirror dimensions/center');
-    if(!near(warning.height,110*height/1080)||warning.y<mirror.bottom)failures.push('Warning dimensions/under mirror');
   }
   if(layout.overlaps.length)failures.push('Readout overlap '+JSON.stringify(layout.overlaps));
   await context.screenshot(id+'-'+width+'x'+height);
@@ -168,7 +135,7 @@ async function screenCase(context,id,width,height){
     cameras.push({expected,...camera});if(camera.mode!==expected||camera.label!==expected.toUpperCase()+' CAM')failures.push('C camera '+expected);
     if(id==='harbour-lights'&&width===1920){await new Promise(done=>setTimeout(done,350));await context.evaluate('ControlsQaPaint()');await context.screenshot('harbour-camera-'+expected+'-1920x1080');}
   }
-  return{id,width,height,grid,warnings,layout,cameras,failures,passed:failures.length===0};
+  return{id,width,height,grid,layout,cameras,failures,passed:failures.length===0};
 }
 export async function run(context){
   const bundle=await bindings();await prepare(context,bundle);

@@ -1,4 +1,3 @@
-import {cornerWarning} from './corner-warning.js';
 import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
@@ -30,7 +29,6 @@ export function hudMarkup() {
   <section id="arena-board" class="arena-board" aria-label="Scrapdome scoreboard" hidden><p class="arena-board-title"><span>SCRAPDOME</span><b id="arena-board-hunted"></b></p>
     <ol id="arena-board-rows"></ol>
     </section>
-  <aside id="corner-warning" class="corner-warning" aria-label="Upcoming corner" hidden><b id="corner-warning-arrow"></b><span id="corner-warning-distance"></span></aside>
   <div class="route-hud">
     <div class="route-hud-top"><span class="field-label">CIRCUIT / LIVE</span><b id="route-percent">0%</b>
     </div>
@@ -115,16 +113,6 @@ export function presentJumpHeight(readout, s, app, ui, text) {
 }
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
   function updateHud(s) {
-    const warning = cornerWarning(app.duel.course, s);
-    if (ui['corner-warning']) {
-      ui['corner-warning'].hidden = !warning;
-      if (warning) {
-        ui['corner-warning'].dataset.color = warning.color;
-        ui['corner-warning'].setAttribute?.('aria-label', `${warning.name}: ${warning.direction === 'L' ? 'left' : 'right'}${warning.hairpin ? ' hairpin' : ' turn'}, ${warning.distance === 'BRAKE' ? 'brake now' : warning.distance ? warning.distance + ' metres to braking point' : 'approaching braking point'}`);
-        text('corner-warning-arrow', warning.arrow);
-        text('corner-warning-distance', warning.distance);
-      }
-    }
     // Controls are shown only on request (the H key), never by themselves.
     const helpShown = app.helpVisible === true && !s.paused &&
       ['racing', 'countdown', 'exploring'].includes(s.status);
