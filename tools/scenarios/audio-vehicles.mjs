@@ -53,7 +53,7 @@ export async function run(context) {
     const length=capture.chunks.reduce((n,chunk)=>n+chunk.length,0),pcm=new Int16Array(length);let offset=0;
     for(const chunk of capture.chunks){pcm.set(chunk,offset);offset+=chunk.length;}
     const bytes=new Uint8Array(pcm.buffer);let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-    return {rate:capture.ctx.sampleRate,pcm:btoa(binary),rows:capture.rows,remaining:app.audio.vehicleVoices.size,
+    return {rate:capture.ctx.sampleRate,pcm:btoa(binary),rows:capture.rows,remaining:app.audio.vehicleVoices?.size??0,
       memoryOnly:!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value};
   })()`);
   const wave=wavFromPcm(Buffer.from(packet.pcm,'base64'),packet.rate);delete packet.pcm;

@@ -44,3 +44,9 @@ Author the existing own-level tests first: replace only the superseded player-le
 The same native recipe retains its seed/stock driver and20-second capture. After the original driver sets inputs, stageTimeSec8 to10 applies brake1/throttle0;10 to12 lifts with brake0/throttle0. Only input is changed, never actor/state/pose. Rows record actual actor speed, selected own level and actual panner properties. DUEL_VEHICLE_VOICES_OFF=1 selects its matching disabled leg; enabled near/far/donor checks stay exact and the off leg requires zero vehicle resources. Both WAV/JSON outputs retain real measured loudness; no sound acceptance or ceiling adjustment is inferred before Claude's next verdict.
 
 Camera's real native fault now takes priority. Freeze this bounded source preparation and park: focused tests, gate, build, native pair and round-two listening remain UNRUN. Removed in this source: only the two player-engine gain dependencies and their superseded gain assertion; no bank row, asset, original resource guard or default moving-audio behavior is removed.
+
+## Voices-off receipt correction before execution, 14 October
+
+Root review found that the disabled native leg never creates vehicleVoices. Its final cleanup receipt must use optional size with a zero fallback rather than dereference an absent Set. This changes only the receipt read. Enabled resource, near/far, donor, input schedule and isolation checks remain exact. No production gain, mixer, mastering, asset or waveform path changes in this correction.
+
+Current integration was adopted by a normal conflict-free merge. All four parked audio files stayed byte-exact before this narrow receipt/note repair. Source is frozen for the same reviewer confirmation; focused checks, matching native on/off packets, corrected nearby tier, build and Claude round-two listening remain UNRUN.
