@@ -142,7 +142,9 @@ tasks:
     owner: "codex"
     lane: "COURSE"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-ardennes-2026-10-13"
+    branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
     flag: "ardennes-forest"
     details: "docs/board/cards/P4-ARDENNES.md"
