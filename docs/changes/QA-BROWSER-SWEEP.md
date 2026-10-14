@@ -117,3 +117,16 @@ Removed: the duplicate private Vite IIFE bundle and its four per-run evaluations
 ## Kit module-sharing actual acceptance — 14 October
 
 Reviewedf61881b2 originalnearby19/19/notRun0/jobs4/155341.3453ms/wall168495.5983ms, build589ms/wall1114.9892ms. ONEoriginalp4-kits native63165/memory/85465.7074ms/exit0: all35acceptedmodels eachHigh/Performance(70rows),12groupcaptures+2Yeti-nightlegs,40actualpictures, issues[]/warnings[]. AllfourduplicateThreewarnings eliminatedbysharedmoduleidentity, nevermarkerhiding/suppression/dispatcherwaiver. Originalpins/animation/grounding/framing/readOnly/disposalguards pass; actualmanifestSHA36c8ce04de78d12d262cc9b8232d60f880ebd987ba30c85fb096800c3ca1e72f. RootviewedactualHighsafetyandPerformanceforest photos; no new art or frameverdict. Cleanmerge no repeatgate; parentopenforremaining6originalfailures, manualrustwallframeaccountednotpassed. ConsumeownQAkit-final-f61881b2 packetaftercommittedverdict; no game/model/harness/defaultstorage change.
+
+
+## Current Arena baseline source
+
+Claude's current-integration control now uses the existing public-only Arena recipe automatically when no explicit input report is supplied. The captured base must be in integration's first-parent history; a detached full-check source keeps its own captured base even if integration advances. Committed and actual candidate src/public bytes must match. Every archived blob is verified before the sole owned recipe overlay; the archive manifest and overlay hash are recorded and rechecked after the child closes. Current controls are labelled repeatability checks, never the historical pre-card regression.
+
+The child runs the same eight High/Performance native cases before candidate navigation. Its real browser report, native inputs, logs, pictures and provenance are copied to the candidate packet before only its verified snapshot/junction are recycled. Failure propagates; a retention failure leaves the owned snapshot for recovery. Parent environment is untouched. Explicit input reports, no-options preparation and three-argument comparison retain the strict 0f934845 contract.
+
+Changed assertions: additive pure provenance cases reject wrong source/tree/archive/overlay identities, missing provenance, incomplete/duplicate matrix rows and empty inputs. All original native inputs, actor/spawn comparisons, contact/restoration checks, crossing classifier, shove minima, wreck/protection and wall guards remain unchanged. The existing 150-RAF diagnostic body is unchanged behind DUEL_BROWSER_LEGACY_TIMING=1; ordinary output says not run and grants no frame pass.
+
+Checks: source preparation only. New pure cases were authored first and remain UNRUN; no executed RED, native, lane, build or timing result is claimed. Root's independent source review and execution release are pending.
+
+Removed: the ordinary path's manual baseline-input prerequisite and unconditional legacy timing. Historical preparation/comparison and the explicit quiet timing recipe remain available. No runtime, asset, physics, storage or general harness change.
