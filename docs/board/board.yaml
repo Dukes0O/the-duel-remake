@@ -436,10 +436,12 @@ tasks:
 
   - id: EARN-CAR-1
     title: "Earned car 1: Ferrari Enzo (6 medals)"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-design-2026-10-14"
+    branch: "claude/enzo-model"
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"
