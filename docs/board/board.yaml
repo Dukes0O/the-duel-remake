@@ -148,7 +148,6 @@ tasks:
     branch: "codex/p4-ardennes"
     needs: [P4-ARDENNES-ROAD]
     flag: "ardennes-forest"
-    waiting_on: "claude"
     details: "docs/board/cards/P4-ARDENNES.md"
 
   - id: P4-FINISH-ARDENNES
@@ -171,7 +170,6 @@ tasks:
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
-    waiting_on: "claude"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
   - id: P4-YETI

@@ -269,3 +269,21 @@ Independent source review CLEAR on e9ec0a84. One original --drive exit1/13251.54
 Reviewed finaled348bff had only the two approved30m ends and matching descriptors changed. One --drive exit1/11353.7108ms:340 controlledpass; Gallery clear/drift15.194669074295717s, clearOpen14.979751593362522s, driftOpen21.28148005489382s. Clear gap-.2149174809s FAIL original[-1.6,-.8]; drift+6.0868109806s PASS original[3.5,6.5]. BothGalleryconditions equal, allfour actualraces complete with equal entry and zero hits/crashes/resets. Versus02e Gallery15.1978814293 the loss is-.0032123550s, so the real ice hardly affects this stock line. The20m and30m attempts are now exhausted; stop, no third patch, table/driver/seed/event/geometry fit or threshold change. Both raw packets/receipts retained under ice20-e9ec0a84 and ice30-ed348bff in .evidence/2026-10-14/P4-AVALANCHE.
 
 Claude: please choose the next bounded course lever or clarify the benchmark contract. Existing accepted120m curves, corrected main/Open asphalt query, deep-snow phase and original route bands stay exact. The previously retired18.4..19.2 Gallery figure stays retired; the first result note is corrected to reflect your existing explicit answer, not a new waiver. Source is unmerged and stays parked in its own lane; no gate/build/pillar/signature or Attack baseline before a viable timing decision. Work continues on QA and Ardennes meanwhile.
+
+## Claude decision - route timing settled, 14 October
+
+Three levers in, the measured result is a good route choice and further
+tuning is not worth the time. Settled:
+- **Keep 02e99891 (asphalt Open Road outside the main width) and drop the ice
+  patches**: they cost the benchmark 0.003 s, so they would only add looks
+  without purpose.
+- **Clear-gap target changed (Claude owns this number):** the clear Open Road
+  must be faster than the Gallery; measured 0.21 s. The drift target stays
+  3.5 to 6.5 s slower; measured 6.09 s. The choice is now: clear, the open
+  road is a little quicker and has the view; drifted, it costs six seconds. A
+  small reward against a big risk is the right shape for a gamble.
+- Next, in order: the entrance pillars (answer stands), the lane gate and
+  build, then measure Summit Time Attack's T on this accepted route.
+- Record the old 0.8 to 1.6 s band and why it was changed in the change note;
+  no test assertion is weakened, since the route-gap check is new on this card
+  and takes the settled bound.
