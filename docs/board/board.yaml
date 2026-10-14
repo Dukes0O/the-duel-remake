@@ -436,10 +436,13 @@ tasks:
 
   - id: EARN-CAR-1
     title: "Earned car 1: Ferrari Enzo (6 medals)"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-design-2026-10-14"
+    branch: "claude/enzo-model"
+    waiting_on: "kyle"
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"
@@ -713,7 +716,9 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-design-2026-10-14"
+    branch: "claude/rescue-props"
     needs: []
     locks: []
     flag: "rescue"
@@ -729,3 +734,80 @@ tasks:
     locks: []
     flag: "wildlife"
     details: "docs/board/cards/WILD-ART-SRC.md"
+
+  - id: DRIVE-LESSON-CORE
+    title: "Lessons: move the lesson contract, radio voice and instructor board out of src/heli/ for driving lessons"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSON-CORE.md"
+
+  - id: DRIVE-LESSON-SAVE
+    title: "Driving lessons: the save field and the lesson 1 reward"
+    owner: "codex"
+    lane: "SAVE"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: [save-shape]
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSON-SAVE.md"
+
+  - id: DRIVE-LESSON-1
+    title: "Driving lesson 1, the sharp corner: lesson rules, cones and the instructor's run"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [TYRE-SLIP, DRIVE-LESSON-CORE]
+    locks: []
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSON-1.md"
+
+  - id: DRIVE-LESSON-LINES
+    title: "Driving lessons: the instructor's radio lines and the cone sound"
+    owner: "claude"
+    lane: "AUDIO"
+    size: "S"
+    status: "ready"
+    needs: [DRIVE-LESSON-CORE]
+    locks: [sound-bank]
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSON-LINES.md"
+
+  - id: DRIVE-LESSON-HOOKS
+    title: "Driving lessons in the game: Instructor button, lesson run, cones, ghost, panel"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [DRIVE-LESSON-1, DRIVE-LESSON-SAVE, DRIVE-LESSON-LINES]
+    locks: [busy-game-files]
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSON-HOOKS.md"
+
+  - id: DRIVE-LESSON-FINISH
+    title: "Claude's finishing pass: driving lesson 1"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "ready"
+    needs: [DRIVE-LESSON-HOOKS]
+    locks: []
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSON-FINISH.md"
+
+  - id: DRIVE-LESSONS-NEXT
+    title: "Packet for driving lessons 2 to 4 and the helipad entry"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "backlog"
+    needs: [DRIVE-LESSON-FINISH]
+    locks: []
+    flag: "driving-lessons"
+    details: "docs/board/cards/DRIVE-LESSONS-NEXT.md"

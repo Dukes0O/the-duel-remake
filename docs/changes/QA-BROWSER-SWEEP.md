@@ -162,3 +162,6 @@ The first original focused render-reuse run on b61842ba failed after 3561.3832 m
 Only the new fixture now explicitly sets timeOfDay: 'day'. Every assertion, including the separate existing-night case, and all runtime code, suffixes and limits stay unchanged. The correction is unrun pending Root review and one corrected focused run. No passing result is claimed.
 
 Removed: the new daytime fixture's accidental inherited night setting. No source asset or other worker's edit was removed.
+
+
+Root confirmed 57c53ddf changes only the new synthetic water fixture to explicit daytime, matching circuit-water's existing OR condition. All assertions, the independent already-night case and runtime source remain exact. The corrected existing focused suite passed: 361 checks, exit 0, wall 5020.5237 ms. This resolves the fixture fault within the bounded investigation. Canonical nearby gate, build, recorder and three native scenarios remain unrun on this source. Current integration is merged normally before them.

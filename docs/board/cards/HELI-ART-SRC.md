@@ -129,3 +129,8 @@ Read Claude's latest pick first: his original Kestrel One is accepted, three mod
 
 
 The second lead's proposed accessory-only Blender review is within that handoff: extend only heli-accessories.py with the existing Kestrel camera/light rendering pattern and a separate compact looks/heli-accessories/round-1 sheet. No production GLB loader hook, procedural scene substitution or fourth Kestrel round. Existing first-flight QA does not load these accessories and cannot certify their appearance. The old worker is released; source review comes before any render/export/gate/build, all scheduled here. Keep the already measured GLBs unless Claude's accessory verdict requests a real change.
+
+
+## Accessory source handoff held for capacity
+
+Second authorized Codex chat prepared clean db6f04d18f86b14a09e9b04394e8567e8b7710b1 in the retained heli-art-src lane, after normal integration merge 77033b64. Root independently reviewed the two owned files: imported-GLB six-view render-only recipe and its change note. Path and framing faults were corrected; source review is clear and diff check passes. All three current GLBs remain unchanged. No Python, Blender, sheet, gate or build ran on this slice. That chat is held until this lead grants an actual ART and heavy slot; no additional lane, export or runtime wiring is authorized. Prior exact render-only request and source-view labels remain binding.
