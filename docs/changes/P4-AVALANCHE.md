@@ -89,3 +89,9 @@ No SUMMIT fixture capture occurs before Root reviews the real difference.
 Only the two former 120 m curve radii are replaced. No model, surface,
 controller, branch path, other tile, save or production API is removed.
 No fourth art round, new harness or independent Open Road path is added.
+
+## Answered ploughed Open Road, first surface attempt
+
+Claude supersedes the 60 m curve proposal. Restore the accepted 120 m turns with inherited 10 m widths. Set only roadBranches[0].gripKind to asphalt, the clear main road surface. Course.gripKindAt now consumes that existing field only for actual Summit Open Road membership; all other routes retain the original query. The existing avalanche override still supplies deep-snow during the drift. No driver, event, table, seed, tyre or branch geometry change. This first actual timing attempt remains pending.
+
+Removed: superseded 60 m radii and proposal checks; only the explicitly retired 18.4–19.2 s Gallery assertion is removed. Both original route-gap limits and all controlled timing/shove/off-state/replay safeguards remain. Added actual authored Course/player/shared-CPU surface and Gallery/verge identity witnesses. Entrance pillar translation remains unimplemented until timing is viable. No source completion, picture, signature, gate, build or native pass is claimed.

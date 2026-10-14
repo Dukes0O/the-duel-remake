@@ -25,11 +25,17 @@ const game=(on=true,mode='duel',seed=1989,stage=summit)=>{
 const pose=(actor,s,lateral,speed=0)=>Object.assign(actor,{s,prevS:s,lateral,prevLateral:lateral,speedMph:speed,headingError:0,pushVelocity:0});
 try{
   const curves=buildTrackScript(SUMMIT_RUN).pieces;
-  equal([curves[38].radius,curves[40].radius],[60,60],'bounded Gallery curves use the approved first proposal');
+  equal([curves[38].radius,curves[40].radius],[120,120],'accepted Gallery curves remain unchanged');
   equal([curves[38].degrees,curves[40].degrees],[40.5,40],'Gallery angles are unchanged');
   equal([curves[38].width,curves[40].width],[10,10],'both Gallery curves retain their designed ten-metre width');
   equal(SUMMIT_RUN.galleries[0].end,10800,'Gallery shed ends before the open rejoin');
   const duel=game(),event=duel.state.avalanche;
+  const open=duel.course.features.shortcuts.find(row=>row.id==='summit-open-road');
+  equal(duel.course.gripKindAt(10500,-18),open.gripKind,'actual authored clear branch kind reaches Course');
+  equal(duel._drivingSurface(10500,-18,duel.car,true,'winter').gripKind,open.gripKind,'player reads the authored clear branch');
+  equal(duel._drivingSurface(10500,-18,duel.state.opponents[0].car??duel.car,true,'winter').gripKind,open.gripKind,'shared CPU query reads the same branch');
+  equal(duel.course.gripKindAt(10500,0),duel.course.script.surfaceAt(10500),'protected Gallery surface is unchanged');
+  equal(duel.course.gripKindAt(10500,-40),'asphalt','outside branch retains ordinary verge query');
   const gallerySolids=duel.course.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-'));
   check(gallerySolids.every(row=>row.s+Math.hypot(row.halfX,row.halfZ)<=10800),'all actual Gallery roofs, walls and pillars finish by 10.80 km');
   equal(event.phase,'waiting','actual Summit initializes the event');
@@ -286,6 +292,6 @@ if(process.argv.includes('--drive')){
       console.log(JSON.stringify({nativeAvalancheComparison:{condition,seed:open.seed,openSeconds:open.seconds,gallerySeconds:gallery.seconds,difference}}));
       assert.ok(condition==='clear'?difference>=-1.6&&difference<=-.8:difference>=3.5&&difference<=6.5,`${condition} actual route difference is ${difference.toFixed(6)} s`);
     }
-    assert.ok(galleryTime>=18.4&&galleryTime<=19.2,'actual Gallery segment stays within the settled 18.4 to 19.2 seconds');
+
   }finally{COURSE.splice(savedLength);}
 }
