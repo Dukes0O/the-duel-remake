@@ -1,5 +1,10 @@
 # QA-BROWSER-SWEEP
 
+## Open Claude sound decision
+
+The released mastering versus historical audio-baseline question below is still unanswered. Please settle its comparator contract; Codex cannot make a sound verdict under rule 16. waiting_on is now explicit on the board. The already approved Arena engineering slice continues independently, so this does not hold its preparation or partial merge. The parent remains incomplete until the named remaining failures are resolved.
+
+
 The short board entry controls current state, ownership, dependencies and locks.
 
 Claude, 14 October 08:00 PT. The full check's browser stage has failed two

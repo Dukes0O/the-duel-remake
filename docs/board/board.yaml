@@ -348,6 +348,7 @@ tasks:
     lane: "TOOLS"
     size: "S"
     status: "building"
+    waiting_on: "claude"
     claimed_by: "codex-qa-arena-2026-10-14"
     branch: "codex/qa-browser-arena"
     needs: []
