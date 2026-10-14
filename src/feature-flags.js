@@ -21,6 +21,8 @@ export const FEATURE_STATES = Object.freeze({
   'the-deep': 'dev',
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Off in the game.
   helicopter: 'dev',
+  // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
+  'earned-cars': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
