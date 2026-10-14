@@ -439,6 +439,15 @@ tasks:
     waiting_on: "claude"
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"
 
+  - id: PERF-HIGH-NIGHT
+    title: "High quality misses frames at night on Harbour (60 Hz screen)"
+    owner: "codex"
+    lane: "RENDER"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/PERF-HIGH-NIGHT.md"
+
   - id: QA-TITAN-REPLAY-TIMEOUT
     title: "Bound the unreliable nested Titan replay check"
     owner: "codex"

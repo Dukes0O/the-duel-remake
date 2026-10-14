@@ -33,3 +33,26 @@ record the finding here. No change to limits.
 
 Next: one headed run in a quiet window with a single monitor active (Kyle
 switches the display), then the construction definition goes to Kyle.
+
+## Claude measurement, 14 October (quiet laptop, integration bde9458b)
+
+Headed frame-pacing, Harbour at night, eight cars, 120 frames per quality:
+
+| Screens | High p50 / p95 / max | Performance p50 / p95 / max | World build | Full load |
+| --- | --- | --- | --- | --- |
+| Laptop panel (Intel, 165 Hz) + two Dells (NVIDIA, 60 Hz) | 16.7 / 33.3 / 133 | 16.7 / 33.3 / 50 | 0.61 s | 5.3 to 6.6 s |
+| Two Dells only, run 1 | 16.7 / 33.3 / 50 | 16.7 / 16.8 / 33 | 0.57 s | 4.9 to 5.6 s |
+| Two Dells only, run 2 | 16.7 / 33.3 / 50 | 16.7 / 16.8 / 33 | 0.55 to 0.60 s | 4.8 to 5.6 s |
+
+Findings:
+1. With the laptop panel on, the headed window mixes two graphics adapters
+   and both qualities miss frames. With it off, Performance passes. Frame
+   checks run with the laptop panel off (Win+P "Second screen only").
+2. High still misses more than 5% of frames on a 60 Hz screen: a frame that
+   takes just over 16.7 ms waits for the next refresh and reads 33.3 ms. The
+   headless checks (18.1 to 18.5 ms, no refresh lock) say the same thing: High
+   at night on Harbour sits right at the limit. This is real game cost, not
+   the tool. New card PERF-HIGH-NIGHT.
+3. World build is 0.55 to 0.61 s, under 1 s. The 1 s limit has meant the world
+   build at every release; the full first-race load (about 5 s, files in a
+   fresh browser) is reported, and its rule waits on Kyle.

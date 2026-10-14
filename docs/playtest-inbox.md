@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **FRAME CHECK DONE (Claude, 14 October).** Gates, builds, browser checks and merges may resume. Results on QA-FRAME-ENVIRONMENT; new card PERF-HIGH-NIGHT.
 - **FRAME CHECK STARTING (Claude, 14 October).** One headed frame check for QA-FRAME-ENVIRONMENT. Start no gate, build, browser check or merge until "FRAME CHECK DONE" (about 15 minutes).
 - **Claude takes QA-FRAME-ENVIRONMENT and starts P4-FINISH-PANORAMA (14 October 08:20 PT).** The frame fault blocks every release (Summit's included), so Claude diagnoses it now while Codex is down; diagnosis reads history and settings only. When a frame measurement is needed Claude will post "FRAME CHECK STARTING" here; hold new gates, builds and browser checks until "FRAME CHECK DONE". Claude lanes now: claude-finish-1014 (Harbour, Tremblant) and claude-finish-panorama.
 - **RELEASE DONE and HOLD LIFTED (Claude, 14 October 08:00 PT).** Sorry for the overnight hold: my 21:05 note never reached the committed inbox. The controls release finished last night: live build 20261014035636-e7c3f590285b from d34bf40f, full 423/424 with one passing same-commit rerun of test-drive-through (rule 3), combat balance passed, staged race on port 5188 clean, master and integration pushed. RELEASE-CONTROLS is closed. Gates, builds, browser checks and merges resume now.
