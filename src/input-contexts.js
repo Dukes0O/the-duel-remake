@@ -37,6 +37,16 @@ export const INPUT_CONTEXTS = Object.freeze({
       left: Object.freeze(['KeyQ']), right: Object.freeze(['KeyE']),
       sprint: Object.freeze(['ShiftLeft', 'ShiftRight']),
       interact: Object.freeze(['KeyF']) }) }),
+  // Kestrel One (docs/HELICOPTER.md section 4). W/S collective, arrows
+  // cyclic, A/D pedals; H hook, P autopilot, C camera, Esc pause. The race
+  // keys never reach the car while this context is active.
+  heli: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', KeyH: 'heli-hook', KeyP: 'heli-autopilot',
+    KeyC: 'heli-camera', KeyM: 'mute', Enter: 'heli-cruise' }),
+    gamepad: Object.freeze([[9, 'pause'], [2, 'heli-hook'], [3, 'heli-camera'], [1, 'heli-autopilot'], [0, 'heli-cruise']]),
+    held: Object.freeze({ liftUp: Object.freeze(['KeyW']), liftDown: Object.freeze(['KeyS']),
+      pitchForward: Object.freeze(['ArrowUp']), pitchBack: Object.freeze(['ArrowDown']),
+      rollLeft: Object.freeze(['ArrowLeft']), rollRight: Object.freeze(['ArrowRight']),
+      yawLeft: Object.freeze(['KeyA']), yawRight: Object.freeze(['KeyD']) }) }),
   photo: Object.freeze({ keyboard: Object.freeze({ Escape: 'photo-exit', Space: 'photo-capture',
     ArrowUp: 'photo-forward', ArrowDown: 'photo-back', ArrowLeft: 'photo-left', ArrowRight: 'photo-right' }),
     gamepad: Object.freeze([[1, 'photo-exit'], [0, 'photo-capture']]), held: Object.freeze({}) }),
@@ -104,4 +114,21 @@ export function footControlInput(keys, pad, pointer = {}) {
 export function preventCarKeyDefault(code, targetIsButton = false) {
   return ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(code)
     && !(code === 'Space' && targetIsButton);
+}
+
+// Kestrel One's controls from the keyboard, and from a gamepad: left stick
+// cyclic, right stick up and down collective, right stick left and right
+// pedals (docs/HELICOPTER.md section 4). Each axis is -1..1.
+export function heliControls(keys = {}, pad = null) {
+  const axis = (plus, minus) => (heldInput('heli', plus, keys) ? 1 : 0) - (heldInput('heli', minus, keys) ? 1 : 0);
+  const controls = {lift: axis('liftUp', 'liftDown'), pitch: axis('pitchForward', 'pitchBack'),
+    roll: axis('rollRight', 'rollLeft'), yaw: axis('yawRight', 'yawLeft')};
+  if (pad?.axes) {
+    const choose = (key, value) => { if (Math.abs(value) > Math.abs(controls[key])) controls[key] = value; };
+    choose('roll', stick(pad.axes[0]));
+    choose('pitch', -stick(pad.axes[1]));
+    choose('yaw', stick(pad.axes[2]));
+    choose('lift', -stick(pad.axes[3]));
+  }
+  return controls;
 }
