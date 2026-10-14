@@ -603,10 +603,12 @@ tasks:
 
   - id: FIRE-ART-FX
     title: "Fire, smoke, steam and spray atlas from the Kenney particle pack"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude-design-2026-10-14"
+    branch: "claude/fire-fx"
     needs: []
     locks: []
     flag: "forestFire"
