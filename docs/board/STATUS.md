@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T05:05:33.281Z
+Observed at: 2026-10-14T05:15:07.322Z
 
-Observation commit: b858a34918265f3527b363c0a7988d842ed40aa9
+Observation commit: 032390f2c689851ff2d2cdfd902b42876a6c4179
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b858a34918265f3527b363c0a7988d842ed40aa9
+Integration HEAD: 032390f2c689851ff2d2cdfd902b42876a6c4179
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -71,7 +71,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/p4-yeti | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-yeti |
 | codex/tools/callback-diagnostics | 9 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/callback-diagnostics |
 | lane/audio/aud-10 | 18 | unknown | true | false | unknown |
-| lane/audio/aud-12 | 18 | unknown | true | false | unknown |
+| lane/audio/aud-12 | 19 | unknown | true | false | unknown |
 | lane/audio/aud-17-picks | 18 | false | true | true | C:/Users/kyleb/.codex/worktrees/audio-lane/the-duel-remake |
 
 ## Unmerged branches for idle review
@@ -103,7 +103,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 17,273,482 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 24,433 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 396,861,440 B | +93,184 B | unavailable |
+| Git objects | 396,870,656 B | +9,216 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -112,7 +112,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: b858a34918265f3527b363c0a7988d842ed40aa9
+- Local integration/wasteland: 032390f2c689851ff2d2cdfd902b42876a6c4179
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
