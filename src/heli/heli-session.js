@@ -633,6 +633,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       return {ok: true};
     },
     stopLesson() {
+      // Stopping during the wait after a crash also cancels the retry.
+      retryAfterCrash = null;
       if (!lesson) return false;
       endLesson();
       emit({type: 'lessonStopped'});
