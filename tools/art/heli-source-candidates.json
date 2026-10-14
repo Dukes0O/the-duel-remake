@@ -92,7 +92,8 @@
         "texture resolutions",
         "cockpit visibility and absence of all brand marks"
       ],
-      "fit": "Closest cabin/panel source picture. Needs generic clean paint, source credit and actual donor inspection; no real Robinson branding would ship."
+      "fit": "Closest cabin/panel source picture. Needs generic clean paint, source credit and actual donor inspection; no real Robinson branding would ship.",
+      "accessIssue": "Primary public download-metadata endpoint returned HTTP 401 without authentication. No account or key created, no donor binary downloaded."
     },
     {
       "id": "z3eus-reserve",
