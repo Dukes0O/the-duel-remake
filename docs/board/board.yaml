@@ -369,9 +369,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "building"
-    branch: codex/qa-browser-recipes
-    claimed_by: codex-browser-recipes-2026-10-14
+    status: "ready"
     needs: []
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"
 
