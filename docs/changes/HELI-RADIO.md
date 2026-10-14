@@ -186,3 +186,10 @@ on every first take-off after a refuel, while the rotor was still spinning
 up. The horn now sounds only with the engine out, which is the only time a
 falling rotor is a danger. A new flight check covers a first take-off at
 full and half lift (test-heli-flight: 119 checks).
+
+## Final gate
+
+After the third fix and with HELI-MODE merged in:
+`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`
+60 passed, 0 failed, 0 not run in 281.77 s; `npm run build` passed in
+655 ms. The reviewer confirmed all fixes.
