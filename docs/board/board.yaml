@@ -463,10 +463,12 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [HELI-PACKET]
     locks: []
     flag: "helicopter"
+    claimed_by: claude-heli-2026-10-14
+    branch: claude/heli-flight
     details: "docs/board/cards/HELI-FLIGHT.md"
 
   - id: HELI-SAVE
@@ -474,10 +476,12 @@ tasks:
     owner: "claude"
     lane: "SAVE"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: [HELI-PACKET]
     locks: [save-shape]
     flag: "helicopter"
+    claimed_by: claude-heli-2026-10-14
+    branch: claude/heli-save
     details: "docs/board/cards/HELI-SAVE.md"
 
   - id: HELI-RADIO
