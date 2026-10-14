@@ -2,6 +2,7 @@
 // Pure functions: no screen, no clock, no random. A profile goes in and a new
 // profile comes out; nothing is changed in place. Dates are passed in.
 import {CARS, COURSE} from '../config.js';
+import {CLOSURE, buybackPrice, playDayOf} from '../course-closures.js';
 
 export const HELI_SAVE_VERSION = 1;
 export const HELI_MONEY = Object.freeze({tankKg: 400, creditsPerKg: 1.5, hardLanding: 150, crash: 800,
@@ -52,6 +53,7 @@ export function normalizeHeli(value) {
   }
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
+  normalizeFireFields(value, heli);
   // Keys from a newer game are kept as they are, so going back one release
   // loses nothing (docs/HELI_FIRE.md section 12).
   for (const key of Object.keys(value))
@@ -129,7 +131,17 @@ export function notePlayDay(profile, dateString, {enabled} = {}) {
   const heli = heliOf(profile);
   if (heli.playDay.last === dateString) return {ok: true, newDay: false, profile};
   const playDay = {last: dateString, count: Math.min(MAX_COUNT, heli.playDay.count + 1)};
-  return {ok: true, newDay: true, profile: withHeli(profile, {...heli, playDay})};
+  return {ok: true, newDay: true, profile: withHeli(profile, healed({...heli, playDay}))};
+}
+
+// A new play day forgets burns that have healed: a burnt course after 60
+// play days, a scar after 40 (docs/HELI_FIRE.md sections 8.4 and 8.5).
+function healed(heli) {
+  const today = heli.playDay.count, next = {...heli};
+  if (isObject(heli.burnt)) next.burnt = Object.fromEntries(Object.entries(heli.burnt)
+    .filter(([, entry]) => today - entry.day < CLOSURE.healedDay));
+  if (Array.isArray(heli.scars)) next.scars = heli.scars.filter(scar => today - scar.day < CLOSURE.scarHealedDay);
+  return next;
 }
 
 export function finishLesson(profile, lesson, {enabled} = {}) {
@@ -194,4 +206,179 @@ export function finishJob(profile, jobId, pay, {enabled} = {}) {
   const wallet = credits(profile), total = Math.min(MAX_CREDITS, wallet + pay);
   const jobs = {...heli.jobs, taken: null, done: [...new Set([...heli.jobs.done, jobId])].slice(-10)};
   return {ok: true, profile: {...withHeli(profile, {...heli, jobs}), credits: total}, paid: total - wallet};
+}
+
+// ---- H2 Fire (docs/HELI_FIRE.md sections 7, 8 and 12) ----------------------
+// Every field is optional: it appears the first time it is used, so an H1
+// save stays exactly as it was. Every helper takes {enabled}, the
+// forest-fire switch (effective only with the helicopter switch on).
+
+export const FIRE_MONEY = Object.freeze({firePay: 1500, bucketRepair: Object.freeze([0, 100, 250, 600])});
+export const MISSION_KINDS = Object.freeze(['fire']);
+export const BADGES = Object.freeze(['firefighter']);
+export const BUCKET_DAMAGE = Object.freeze(['whole', 'dented', 'torn', 'ruined']);
+export const MAX_SCARS = 4;
+// A fire holds at most 80 burning and burnt cells; damp lasts at most 2 steps.
+export const MAX_FIRE_CELLS = 80;
+const MAX_DAMP_STEPS = 2;
+const FIRE_OFF = 'Forest fires are not available yet.';
+// A cell is (i + 512) x 1024 + (j + 512) for grid column i and row j.
+const MAX_CELL = 1024 * 1024 - 1;
+const validCell = value => Number.isSafeInteger(value) && value >= 0 && value <= MAX_CELL;
+const seed32 = value => Number.isSafeInteger(value) && value >= 0 && value <= 0xffffffff ? value : 0;
+const tenth = (value, max) => Number.isFinite(value) ? Math.round(Math.max(0, Math.min(max, value)) * 10) / 10 : 0;
+
+// A 32-bit FNV-1a hash of strings and numbers, for the mission and fire
+// seeds (section 3.1). Parts are kept apart, so ('ab', 'c') and ('a', 'bc')
+// differ.
+export function heliHash(...parts) {
+  let hash = 2166136261;
+  for (const part of parts) {
+    const text = String(part);
+    for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+    hash = Math.imul(hash ^ 0x1f, 16777619);
+  }
+  return hash >>> 0;
+}
+
+// The mission engine's record before it arms: no seed, nothing counted.
+export function createMissions() {
+  return {seed: 0, draws: 0, need: 0, count: 0, last: null, call: null,
+    quiet: {untilDay: 0, engineSeconds: 0}, firesOut: 0, badges: []};
+}
+
+function normalizeMissions(value) {
+  const call = value.call;
+  const quiet = isObject(value.quiet) ? value.quiet : {};
+  return {seed: seed32(value.seed), draws: count(value.draws), need: Math.min(count(value.need), 99), count: count(value.count),
+    last: MISSION_KINDS.includes(value.last) ? value.last : null,
+    call: isObject(call) && MISSION_KINDS.includes(call.kind) && validId(call.id) && validCourse(call.courseId)
+      ? {kind: call.kind, id: call.id, courseId: call.courseId, day: count(call.day), answered: call.answered === true} : null,
+    quiet: {untilDay: count(quiet.untilDay), engineSeconds: tenth(quiet.engineSeconds, MAX_COUNT)},
+    firesOut: count(value.firesOut),
+    badges: [...new Set((Array.isArray(value.badges) ? value.badges : []).filter(badge => BADGES.includes(badge)))]};
+}
+
+const cellList = list => [...new Set((Array.isArray(list) ? list : []).filter(validCell))].sort((a, b) => a - b);
+function cellPairs(list, value) {
+  const seen = new Set(), out = [];
+  for (const pair of Array.isArray(list) ? list : []) {
+    if (!Array.isArray(pair) || !validCell(pair[0]) || seen.has(pair[0])) continue;
+    seen.add(pair[0]);
+    out.push([pair[0], value(pair[1])]);
+  }
+  return out.sort((a, b) => a[0] - b[0]);
+}
+
+function normalizeFire(value) {
+  if (!isObject(value) || !validId(value.id) || !validCourse(value.courseId)) return null;
+  const burnt = cellList(value.burnt).slice(0, MAX_FIRE_CELLS);
+  const gone = new Set(burnt);
+  const burning = cellPairs(value.burning, p => tenth(p, 100)).filter(([cell, p]) => p > 0 && !gone.has(cell))
+    .slice(0, MAX_FIRE_CELLS - burnt.length);
+  const lit = new Set([...gone, ...burning.map(([cell]) => cell)]);
+  const damp = cellPairs(value.damp, steps => Number.isSafeInteger(steps) ? Math.max(1, Math.min(MAX_DAMP_STEPS, steps)) : 1)
+    .filter(([cell]) => !lit.has(cell)).slice(0, MAX_FIRE_CELLS);
+  return {id: value.id, courseId: value.courseId, seed: seed32(value.seed), startDay: count(value.startDay),
+    steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp};
+}
+
+function normalizeBurnt(value) {
+  const out = {};
+  for (const [courseId, entry] of Object.entries(value))
+    if (validCourse(courseId) && isObject(entry)) out[courseId] = {day: count(entry.day), boughtBack: entry.boughtBack === true};
+  return out;
+}
+
+const normalizeScars = value => value.filter(scar => isObject(scar) && validCourse(scar.courseId))
+  .map(scar => ({courseId: scar.courseId, day: count(scar.day), cells: cellList(scar.cells).slice(0, MAX_FIRE_CELLS)}))
+  .slice(-MAX_SCARS);
+
+const bucketDamage = value => Number.isSafeInteger(value?.damage) && value.damage >= 0 && value.damage <= 3 ? value.damage : 0;
+
+// The H2 fields of a stored helicopter, each only when it is there.
+function normalizeFireFields(value, heli) {
+  if (isObject(value.missions)) heli.missions = normalizeMissions(value.missions);
+  if (Object.hasOwn(value, 'fire')) heli.fire = normalizeFire(value.fire);
+  if (isObject(value.burnt)) heli.burnt = normalizeBurnt(value.burnt);
+  if (Array.isArray(value.scars)) heli.scars = normalizeScars(value.scars);
+  if (isObject(value.bucket)) heli.bucket = {damage: bucketDamage(value.bucket)};
+}
+
+const fireOff = profile => ({ok: false, reason: FIRE_OFF, profile});
+
+export const missionsOf = profile => heliOf(profile).missions ?? createMissions();
+export const fireOf = profile => heliOf(profile).fire ?? null;
+export const bucketDamageOf = profile => heliOf(profile).bucket?.damage ?? 0;
+
+// Stores the mission engine's record (heli-missions.js makes it).
+export function setMissions(profile, missions, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  if (!isObject(missions)) return failure(profile, 'That is not a mission record.');
+  return {ok: true, profile: withHeli(profile, {...heliOf(profile), missions: normalizeMissions(missions)})};
+}
+
+// Stores the fire burning now (heli-fire.js makes it), or null when there is none.
+export function setFire(profile, fire, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const stored = fire === null ? null : normalizeFire(fire);
+  if (fire !== null && !stored) return failure(profile, 'That is not a fire record.');
+  return {ok: true, profile: withHeli(profile, {...heliOf(profile), fire: stored})};
+}
+
+// A fire put out pays 1,500 credits, capped like every other credit change
+// (section 7). The mission record counts the fire and gives the badge.
+export function payFire(profile, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const wallet = credits(profile), total = Math.min(MAX_CREDITS, wallet + FIRE_MONEY.firePay);
+  return {ok: true, profile: {...profile, credits: total}, paid: total - wallet};
+}
+
+// A fire lost: the course burns on this play day (section 8.1).
+export function burnCourse(profile, courseId, day, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  if (!validCourse(courseId) || !Number.isSafeInteger(day) || day < 0) return failure(profile, 'That course or day is not known.');
+  const heli = heliOf(profile);
+  return {ok: true, profile: withHeli(profile, {...heli, burnt: {...heli.burnt, [courseId]: {day: Math.min(MAX_COUNT, day), boughtBack: false}}})};
+}
+
+// A fire put out leaves its burnt cells as a scar; the oldest of more than four goes.
+export function addScar(profile, courseId, day, cells, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  if (!validCourse(courseId) || !Number.isSafeInteger(day) || day < 0 || !Array.isArray(cells)) return failure(profile, 'That scar is not valid.');
+  const heli = heliOf(profile), scar = {courseId, day: Math.min(MAX_COUNT, day), cells: cellList(cells).slice(0, MAX_FIRE_CELLS)};
+  if (!scar.cells.length) return {ok: true, profile};
+  return {ok: true, profile: withHeli(profile, {...heli, scars: [...(heli.scars ?? []), scar].slice(-MAX_SCARS)})};
+}
+
+// Buying a burnt course back early: a purchase, so the whole price or nothing.
+export function buyBack(profile, courseId, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const heli = heliOf(profile), price = buybackPrice({heli}, courseId, playDayOf({heli}), {enabled});
+  if (price === null) return failure(profile, 'That course is open.');
+  const wallet = credits(profile);
+  const short = price - wallet;
+  if (short > 0) return failure(profile, `You need ${short.toLocaleString('en-US')} more credit${short === 1 ? '' : 's'}.`);
+  const burnt = {...heli.burnt, [courseId]: {...heli.burnt[courseId], boughtBack: true}};
+  return {ok: true, profile: {...withHeli(profile, {...heli, burnt}), credits: wallet - price}, price};
+}
+
+// A bucket hit: damage only gets worse until it is repaired (section 5.1).
+export function damageBucket(profile, damage, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  if (!Number.isSafeInteger(damage) || damage < 0 || damage > 3) return failure(profile, 'That is not a bucket state.');
+  const heli = heliOf(profile), now = heli.bucket?.damage ?? 0;
+  if (damage <= now) return {ok: true, worse: false, profile};
+  return {ok: true, worse: true, profile: withHeli(profile, {...heli, bucket: {damage}})};
+}
+
+// The repair at the pad: like every H1 repair it takes what the player has
+// and forgives the rest, so nobody is left without a bucket.
+export function repairBucket(profile, {enabled} = {}) {
+  if (enabled !== true) return fireOff(profile);
+  const heli = heliOf(profile), damage = heli.bucket?.damage ?? 0;
+  if (damage === 0) return {ok: true, repaired: false, charged: 0, forgiven: 0, profile};
+  const charge = chargeRepair(profile, FIRE_MONEY.bucketRepair[damage], {enabled});
+  return {ok: true, repaired: true, charged: charge.charged, forgiven: charge.forgiven,
+    profile: withHeli(charge.profile, {...heli, bucket: {damage: 0}})};
 }

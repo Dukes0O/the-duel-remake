@@ -3,7 +3,8 @@ import {readFileSync} from 'node:fs';
 import {createProfile, normalizeProfile, loadProfile, saveProfile, loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {HELI_SAVE_VERSION, HELI_MONEY, HELI_LESSONS, createHeli, normalizeHeli, heliOf, buyFuel, setFuel,
   chargeRepair, repairCost, fuelTruck, notePlayDay, finishLesson, placeCar, carAt, countFlight,
-  takeJob, dropJob, finishJob} from '../src/heli/heli-save.js';
+  takeJob, dropJob, finishJob, FIRE_MONEY, MISSION_KINDS, BADGES, BUCKET_DAMAGE, heliHash, createMissions, missionsOf, fireOf,
+  bucketDamageOf, setMissions, setFire, payFire, burnCourse, addScar, buyBack, damageBucket, repairBucket} from '../src/heli/heli-save.js';
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
@@ -297,6 +298,137 @@ check('no helper changes the profile it was given', () => {
   assert.equal(profile.heli.fuelKg, 50);
   assert.equal(profile.credits, 500);
   assert.equal(Object.hasOwn(bare, 'heli'), false);
+});
+
+// ---- H2 Fire fields (docs/HELI_FIRE.md section 12) ----
+check('H2 fields are optional: a new or H1 helicopter gains none', () => {
+  assert.deepEqual(Object.keys(createHeli()), ['version', 'fuelKg', 'lessons', 'playDay', 'jobs', 'carsAt', 'refuels', 'flights']);
+  const h1 = normalizeHeli({version: 1, fuelKg: 10});
+  for (const field of ['missions', 'fire', 'burnt', 'scars', 'bucket']) assert.equal(Object.hasOwn(h1, field), false, field);
+  assert.deepEqual(missionsOf(withHeli()), createMissions());
+  assert.equal(fireOf(withHeli()), null);
+  assert.equal(bucketDamageOf(withHeli()), 0);
+  assert.deepEqual([...MISSION_KINDS], ['fire']);
+  assert.deepEqual([...BADGES], ['firefighter']);
+  assert.deepEqual([...BUCKET_DAMAGE], ['whole', 'dented', 'torn', 'ruined']);
+  assert.deepEqual([FIRE_MONEY.firePay, ...FIRE_MONEY.bucketRepair], [1500, 0, 100, 250, 600]);
+});
+
+check('the H2 fields normalize: counts, cells, courses, kinds and badges', () => {
+  const heli = normalizeHeli({version: 1,
+    missions: {seed: 2 ** 33, draws: -1, need: 4.5, count: 3, last: 'smoke', call: {kind: 'fire', id: 'fire-1', courseId: 'nowhere', day: 2},
+      quiet: {untilDay: 9, engineSeconds: 1200.04}, firesOut: 2, badges: ['firefighter', 'firefighter', 'mayor', 7], extra: 1},
+    fire: {id: 'fire-1', courseId: 'tremblant-woods', seed: 77, startDay: 3, steps: 5, engineSeconds: 12.34,
+      burning: [[5, 100.04], [5, 50], [6, 0], [7, 140], [8, -3], ['x', 50], [9], [-1, 50], [3, 25]], burnt: [9, 9, 2, 'y', 1.5, 7],
+      damp: [[11, 5], [12, 0], [13, 1.5], [2, 2]]},
+    burnt: {'tremblant-woods': {day: 4, boughtBack: 'yes'}, nowhere: {day: 1}, 'panorama-ridge': 'bad'},
+    scars: [1, 2, 3, 4, 5].map(day => ({courseId: 'tremblant-woods', day, cells: [day, day, -4]})).concat([{courseId: 'nowhere', day: 9, cells: [1]}]),
+    bucket: {damage: 4}});
+  assert.deepEqual(heli.missions, {seed: 0, draws: 0, need: 0, count: 3, last: null, call: null,
+    quiet: {untilDay: 9, engineSeconds: 1200}, firesOut: 2, badges: ['firefighter']});
+  assert.deepEqual(heli.fire, {id: 'fire-1', courseId: 'tremblant-woods', seed: 77, startDay: 3, steps: 5, engineSeconds: 12.3,
+    // Duplicates, bad pairs and unlit cells go; a cell both burning and burnt is burnt.
+    burning: [[3, 25], [5, 100]], burnt: [2, 7, 9],
+    damp: [[11, 2], [12, 1], [13, 1]]});
+  assert.deepEqual(heli.burnt, {'tremblant-woods': {day: 4, boughtBack: false}});
+  assert.deepEqual(heli.scars.map(scar => scar.day), [2, 3, 4, 5], 'at most four scars, the oldest goes');
+  assert.deepEqual(heli.scars[0].cells, [2]);
+  assert.deepEqual(heli.bucket, {damage: 0});
+  assert.equal(normalizeHeli({version: 1, fire: {id: 'x'}}).fire, null, 'a broken fire reads as none');
+  const call = normalizeHeli({version: 1, missions: {call: {kind: 'fire', id: 'fire-3', courseId: 'tremblant-woods', day: 6, answered: true}}}).missions.call;
+  assert.deepEqual(call, {kind: 'fire', id: 'fire-3', courseId: 'tremblant-woods', day: 6, answered: true});
+  const big = normalizeHeli({version: 1, fire: {id: 'f', courseId: 'tremblant-woods', burnt: Array.from({length: 60}, (_, i) => i),
+    burning: Array.from({length: 60}, (_, i) => [100 + i, 50])}}).fire;
+  assert.deepEqual([big.burnt.length, big.burning.length], [60, 20], 'a fire holds at most 80 cells');
+  assert.deepEqual(normalizeHeli(normalizeHeli(heli)), normalizeHeli(heli));
+});
+
+check('the fire fixture keeps every H2 field through the real load and save', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/saves/11-heli-fire.json', import.meta.url), 'utf8'));
+  const raw = fixture.storage[PLAYERS_KEY].players[0].profile.heli;
+  const players = loadPlayers(memoryStorage(fixture.storage));
+  assert.deepEqual(players.players[0].profile.heli, raw, 'written in createHeli() order and already clean');
+  assert.equal(Object.hasOwn(players.players[1].profile.heli, 'fire'), false);
+  const store = memoryStorage();
+  assert(saveProfile(players.players[0].profile, store));
+  assert.deepEqual(loadProfile(store).heli, raw);
+});
+
+check('mission and fire records store, and the switch off refuses every H2 helper', () => {
+  const missions = {...createMissions(), seed: 5, draws: 1, need: 3, count: 1};
+  const stored = setMissions(withHeli(), missions, on);
+  assert.deepEqual(missionsOf(stored.profile), missions);
+  assert.equal(setMissions(withHeli(), 'x', on).ok, false);
+  const fire = {id: 'fire-1', courseId: 'tremblant-woods', seed: 9, startDay: 2, steps: 0, engineSeconds: 0, burning: [[3, 75]], burnt: [], damp: []};
+  const burning = setFire(withHeli(), fire, on);
+  assert.deepEqual(fireOf(burning.profile), fire);
+  assert.equal(fireOf(setFire(burning.profile, null, on).profile), null);
+  assert.equal(setFire(withHeli(), {id: 'x'}, on).ok, false);
+  const profile = withHeli({}, 500);
+  for (const call of [p => setMissions(p, missions, {enabled: false}), p => setFire(p, fire), p => payFire(p, {enabled: 'yes'}),
+    p => burnCourse(p, 'tremblant-woods', 1, {}), p => addScar(p, 'tremblant-woods', 1, [1], {enabled: false}),
+    p => buyBack(p, 'tremblant-woods', {enabled: 1}), p => damageBucket(p, 2, {}), p => repairBucket(p, {enabled: false})]) {
+    const result = call(profile);
+    assert.deepEqual([result.ok, result.reason, result.profile], [false, 'Forest fires are not available yet.', profile]);
+  }
+});
+
+check('a fire put out pays 1,500, capped like every credit change', () => {
+  assert.deepEqual([payFire(withHeli({}, 100), on).profile.credits, payFire(withHeli({}, 100), on).paid], [1600, 1500]);
+  const rich = payFire(withHeli({}, 999_999_000), on);
+  assert.deepEqual([rich.profile.credits, rich.paid], [1_000_000_000, 1000]);
+  assert.equal(payFire(deepFreeze({...createProfile(), credits: NaN}), on).profile.credits, 1500);
+});
+
+check('the bucket only gets worse until repaired, and a repair forgives what the player lacks', () => {
+  let profile = withHeli({}, 180);
+  profile = damageBucket(profile, 1, on).profile;
+  assert.equal(bucketDamageOf(profile), 1);
+  const lighter = damageBucket(profile, 1, on);
+  assert.deepEqual([lighter.worse, lighter.profile], [false, profile]);
+  profile = damageBucket(profile, 2, on).profile;
+  assert.equal(damageBucket(profile, 1, on).profile, profile, 'a light hit does not mend a tear');
+  for (const bad of [-1, 4, 1.5, '2', null]) assert.equal(damageBucket(profile, bad, on).ok, false, String(bad));
+  const torn = repairBucket(profile, on);
+  assert.deepEqual([torn.repaired, torn.charged, torn.forgiven, torn.profile.credits, bucketDamageOf(torn.profile)], [true, 180, 70, 0, 0]);
+  const ruined = repairBucket(damageBucket(withHeli({}, 1000), 3, on).profile, on);
+  assert.deepEqual([ruined.charged, ruined.profile.credits], [600, 400]);
+  const whole = repairBucket(withHeli({}, 50), on);
+  assert.deepEqual([whole.repaired, whole.charged, whole.profile.credits], [false, 0, 50]);
+});
+
+check('scars keep four, burns record the day, and bad input is refused', () => {
+  let profile = withHeli();
+  for (let day = 1; day <= 6; day++) profile = addScar(profile, 'tremblant-woods', day, [day + 10, day + 10, day + 20], on).profile;
+  assert.deepEqual(heliOf(profile).scars.map(scar => [scar.day, scar.cells]), [[3, [13, 23]], [4, [14, 24]], [5, [15, 25]], [6, [16, 26]]]);
+  assert.equal(addScar(withHeli(), 'tremblant-woods', 1, [], on).profile.heli.scars, undefined, 'an empty scar is not kept');
+  for (const bad of [['nowhere', 1, [1]], ['tremblant-woods', -1, [1]], ['tremblant-woods', 1, 'x']])
+    assert.equal(addScar(withHeli(), ...bad, on).ok, false, JSON.stringify(bad));
+  const burnt = burnCourse(withHeli(), 'tremblant-woods', 7, on).profile;
+  assert.deepEqual(heliOf(burnt).burnt, {'tremblant-woods': {day: 7, boughtBack: false}});
+  for (const bad of [['nowhere', 1], ['tremblant-woods', -2], ['tremblant-woods', 1.5]])
+    assert.equal(burnCourse(withHeli(), ...bad, on).ok, false, JSON.stringify(bad));
+});
+
+check('the mission hash is a fixed 32-bit FNV-1a with parts kept apart', () => {
+  assert.equal(heliHash(), 2166136261);
+  assert.equal(heliHash('a'), heliHash('a'));
+  assert.notEqual(heliHash('ab', 'c'), heliHash('a', 'bc'));
+  assert.notEqual(heliHash('missions', '2026-10-14', 'Kyle'), heliHash('missions', '2026-10-14', 'Kai'));
+  for (const parts of [['x'], [1, 2, 3], ['missions', '2026-10-14', 'Player 1']]) {
+    const hash = heliHash(...parts);
+    assert(Number.isSafeInteger(hash) && hash >= 0 && hash <= 0xffffffff);
+  }
+  assert.equal(heliHash('missions', '2026-10-14', 'Player 1'), 819056117, 'pinned: a changed hash would change every saved mission');
+});
+
+check('no H2 helper changes the profile it was given', () => {
+  const fire = {id: 'fire-1', courseId: 'tremblant-woods', seed: 9, startDay: 2, steps: 0, engineSeconds: 0, burning: [[3, 75]], burnt: [], damp: []};
+  const profile = withHeli({burnt: {'tremblant-woods': {day: 0, boughtBack: false}}, scars: [], bucket: {damage: 2}, fire}, 20_000);
+  setMissions(profile, createMissions(), on); setFire(profile, null, on); payFire(profile, on); burnCourse(profile, 'tremblant-snow', 1, on);
+  addScar(profile, 'tremblant-woods', 1, [1], on); buyBack(profile, 'tremblant-woods', on); damageBucket(profile, 3, on); repairBucket(profile, on);
+  notePlayDay(profile, '2026-12-01', on);
+  assert.equal(profile.credits, 20_000);
 });
 
 console.log(`Heli save: ${checks} groups passed using memory storage.`);
