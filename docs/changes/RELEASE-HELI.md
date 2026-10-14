@@ -39,20 +39,35 @@ later sprints (H2 Fire and after).
 
 ## What else the release carries
 
-Everything merged on integration since the last release that stays behind
-its own development switch (unchanged for players), and any fixes merged
-since then, as recorded in their own change notes.
+Three items Kyle approved, recorded in their own change notes:
+
+- STEER-055 (8fd3e494).
+- P4-FINISH-1014 (bc85df40).
+- P4-FINISH-PANORAMA (c458cf29).
+
+Everything else merged on integration since the last release stays behind
+its own development switch (unchanged for players).
 
 ## Changed code
 
 - `src/feature-flags.js`: `helicopter: 'on'`.
 - `README.md`: the release paragraph.
+- Fix from the release review: the "travels only by air" message never
+  reached the screen. `src/heli/heli-jobs.js` gains `airOnlyNote`, and
+  `src/screen-readiness.js` shows it in the menu's start note and closes
+  START ENGINE while an air-only car is away from the chosen course.
+  `tools/test-heli-mode.mjs` approves that one import;
+  `tools/test-heli-hooks.mjs` checks the note matches the game's own refusal;
+  the `heli-first-flight` scenario checks it on the real menu.
 
 ## Changed assertions (reviewed)
 
 - `tools/test-heli-mode.mjs`: the switch is expected `on` instead of `dev`.
 - `tools/test-wasteland-beta.mjs`: the pinned switch table expects
   `helicopter: 'on'`.
+- `tools/test-heli-mode.mjs`: the import guard approves
+  `src/screen-readiness.js` reading `heli/heli-jobs.js` (one new entry; the
+  guard is otherwise unchanged).
 
 ## Checks
 
