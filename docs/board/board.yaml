@@ -113,7 +113,6 @@ tasks:
     status: "review"
     needs: [AUD-14, AUD-17]
     locks: []
-    waiting_on: claude
     details: "docs/board/cards/AUD-15-P1.md"
 
 
@@ -131,7 +130,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-career-access-2026-10-14"
+    branch: "codex/p4-career-access"
     needs: [P4-CAREER-PODIUM]
     locks: [save-shape]
     flag: "grand-prix-career"
@@ -169,6 +170,7 @@ tasks:
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
+    waiting_on: "claude"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
   - id: P4-YETI
@@ -176,10 +178,11 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "S"
-    status: "review"
+    status: "building"
+    claimed_by: "codex-yeti-grounding-2026-10-14"
+    branch: "codex/p4-yeti-grounding"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
-    waiting_on: "claude"
     details: "docs/board/cards/P4-YETI.md"
 
   - id: P4-VARIANTS
