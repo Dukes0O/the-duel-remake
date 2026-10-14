@@ -98,8 +98,24 @@ After visual review, existing --capture compared20scene rows; ALL remain exact,
 including Summit4e30db18. No signature is regenerated: the scene guard does not
 need a new pin for these owned asynchronous loaded mesh variants. Actual drawn
 mesh changes are checked by dedicated existing kit tests and native pictures.
-Original nearby gate and build remain pending; Attack T and finishing pass
-remain separate. No quiet frame or release claim.
+The original unfiltered nearby gate on 3f15b6fa completed 313/315, zero unrun,
+exit 1: aggregate 1948848.6143 ms / wall 1955570.2267 ms, including about 297 s
+of reversible capacity pauses. No canceled or restarted run, no gate/build pass.
+The Summit fixture still expected clear Open snow at 10500 m, but Claude's
+settled design explicitly makes that real branch asphalt. The corrected
+expectation pins asphalt at the actual branch offset and adds an unchanged
+snow assertion on the main road at the same station. Every other predicate,
+assertion, tolerance, production byte, native result and scene pin stays exact.
+This updates a retired design expectation, rather than relaxing a guard for
+an unexplained failure. Corrected focused Summit acceptance is UNRUN at freeze.
+
+The other failure is test-circuits:45, Harbour seed 1989 wall-right-1105 near
+2056 m/lateral -3.5. Root reproduced that exact failure on integration baseline
+3760b089 without Avalanche. QA-HARBOUR-ROAD-CLEARANCE owns the released-course
+decision. No Harbour source, road probe or inherited guard changes here.
+A corrected nearby gate, build and merge wait for that fix; the actual four
+routes and accepted entrance pictures remain separate valid facts. Attack T
+and finishing pass remain separate. No quiet frame or release claim.
 
 ## Removed
 

@@ -130,7 +130,8 @@ assert.ok(!course.features.walls.some(wall=>wall.id.startsWith('gallery-')),'act
 
 const open=course.features.shortcuts.find(branch=>branch.id==='summit-open-road');
 assert.equal(course.surfaceAt(10500,course.shortcutOffset(open,10500)).road,true,'the Open Road is real driveable road');
-assert.equal(course.gripKindAt(10500,course.shortcutOffset(open,10500)),'snow','branch road uses the native snow surface');
+assert.equal(course.gripKindAt(10500,course.shortcutOffset(open,10500)),'asphalt','clear Open Road uses Claude\'s settled ploughed asphalt surface');
+assert.equal(course.gripKindAt(10500,0),'snow','same-station main road retains its unchanged snow surface');
 assert.equal(sampleCourseLightPath(course,{distance:0}).settings.nightAmount,0);
 assert.equal(sampleCourseLightPath(course,{distance:11000}).settings.nightAmount,1);
 const baseLight=sampleCourseLightPath(course,{distance:0}).settings;
