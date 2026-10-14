@@ -321,7 +321,15 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   // naming a helicopter file counts, whatever form the import takes.
   const approved = new Set(['src/progression.js|heli/heli-save.js',
     // HELI-RADIO's sound build reads the radio line list to copy the takes.
-    'tools/audio/build-heli.mjs|heli/heli-radio-lines.js']);
+    'tools/audio/build-heli.mjs|heli/heli-radio-lines.js',
+    // HELI-HOOKS: the game's hooks, and three sound bank pins that leave out
+    // exactly the helicopter's cue list.
+    'src/app.js|heli/heli-session.js', 'src/app.js|heli/heli-ground.js', 'src/app.js|heli/heli-audio.js',
+    'src/app.js|heli/heli-save.js', 'src/app.js|heli/heli-jobs.js',
+    'src/sound-bank.js|heli/heli-audio.js',
+    'src/render3d.js|heli/heli-scene.js', 'src/render3d.js|heli/heli-camera.js',
+    'tools/test-p4-audio.mjs|heli/heli-audio.js', 'tools/test-arsenal-core-audio.mjs|heli/heli-audio.js',
+    'tools/test-arsenal-wave1-audio.mjs|heli/heli-audio.js']);
   const offenders = [];
   const pages = readdirSync(root).filter(name => name.endsWith('.html')).map(name => join(root, name));
   for (const path of walk(join(root, 'src')).concat(walk(join(root, 'tools')), pages)) {
