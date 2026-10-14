@@ -589,6 +589,87 @@ gets 8 near the lodge.
 with bronze, silver and gold times; the avalanche still falls (seeded by
 your start), and the yeti may appear.
 
+### 5.5 Ardennes Forest (Spa-Francorchamps)
+
+Kyle, 13 October 2026: "make that one a beauty!" The successor to Panorama
+Ridge: a fast, flowing forest circuit with big height changes, and the longest
+lap in the game.
+
+- **Event:** Ardennes Forest. 2 laps by default (lap choice 2 to 6), about
+  6.7 km a lap, a field of 8, race-only (noCombat). Price 2,000 credits. It
+  joins the end of the course list after Summit Run.
+- **Light:** morning mist in the valleys on lap one, clearing to bright
+  late-morning sun. Low cloud hangs on the forest at the top of Kestrel
+  Straight. The tarmac under the trees looks dark and damp (looks only: grip is
+  normal).
+- **Width:** 15 m; 16 m on Kestrel Straight; 13 m through the Bus Stop. Armco
+  and catch fences with gravel and grass run-off rather than walls. Trees stand
+  close behind the fences in the forest sections.
+- **Height:** 93 m from the lowest point (Stavelot) to the highest (Les Combes).
+- **Signature: Red Water and The Wall.** You come down The Plunge flat out,
+  cross the stream at the bottom (a compression you feel), then turn right and
+  climb a 23% wall with the car squashed into the road. It ends at a blind
+  crest with only sky and treetops ahead. Brave drivers take it flat out.
+- **Overtaking:** the slipstream up Kestrel Straight into Les Combes; the late
+  lunge into the Bus Stop.
+- **Commitment:** Whitewood, a long fast left through the trees, flat out in a
+  good car.
+- **Landmarks:**
+  - pit building, garages and the main grandstand on Pit Straight;
+  - a café terrace on the outside of La Fontaine;
+  - a small stone bridge over the red-brown stream at Red Water;
+  - a big hillside grandstand full of people looking down The Wall;
+  - a footbridge across Kestrel Straight;
+  - the roofs and church spire of a village seen from Stavelot;
+  - a tall timing tower at the Bus Stop;
+  - tall dark firs and beech woods everywhere, with mist in the dips.
+- **Sound:** existing cues, with the Tremblant forest bed (birds, wind in the
+  trees).
+
+Claude's fitted layout (13 October 2026). It closes with the fit tool, is
+6.68 km, runs clockwise, and its closest separate stretches of road are 103 m
+apart (Malmedy and the run back from Riverside). The steepest grade is 23.2% on
+The Wall; the tightest radius is 16 m (La Fontaine). Map:
+`docs/board/looks/ardennes/layout.jpg`.
+
+| # | Piece | Name | Notes |
+| --- | --- | --- | --- |
+| 1 | straight 417, climb -6 | Pit Straight | start line 60 m in; pit lane on the right |
+| 2 | turn R 132, r 16, climb -2 | La Fontaine | tight right, first-lap scramble |
+| 3 | straight 331, climb -26 | The Plunge | flat-out downhill |
+| 4 | turn L 30.5, r 80, climb -4 | Red Water | the stream and the compression |
+| 5 | turn R 39, r 90, climb +11 | The Wall | 23% climb |
+| 6 | turn L 20.5, r 120, crest 2.5, climb +6 | Wall Crest | blind crest, light |
+| 7 | straight 1010, climb +34 | Kestrel Straight | 16 m wide; slipstream; footbridge |
+| 8 | turn R 69.5, r 40, climb +1 | Les Combes | heavy braking, overtaking |
+| 9 | straight 50 | | |
+| 10 | turn L 60, r 40, climb -1 | Combes Exit | |
+| 11 | straight 204, climb -10 | | |
+| 12 | turn R 66, r 50, climb -4 | Malmedy | |
+| 13 | straight 254, climb -16 | | |
+| 14 | turn R 159.5, r 20, climb -4 | Riverside | downhill hairpin |
+| 15 | straight 180, climb -10 | | |
+| 16 | turn L 78.5, r 60, climb -6 | Woodland Left | |
+| 17 | straight 282, climb -18 | | |
+| 18 | turn L 121.5, r 120, climb -6 | Long Left | fast double-apex left, downhill |
+| 19 | straight 286, climb -6 | | |
+| 20 | turn R 62, r 60, climb -2 | Fagnes | |
+| 21 | turn L 48.5, r 60, climb -2 | Fagnes Exit | |
+| 22 | straight 181, climb -4 | | |
+| 23 | turn R 63, r 50, climb -2 | Campus | |
+| 24 | straight 146, climb -2 | | |
+| 25 | turn R 80, r 60 | Stavelot | lowest point; village view |
+| 26 | straight 330, climb +20 | Forest Run | |
+| 27 | turn R 35.5, r 300, climb +8 | Woodcutter | flat out |
+| 28 | straight 390, climb +14 | | |
+| 29 | turn L 29.5, r 400, climb +10 | Whitewood | flat out in a good car |
+| 30 | straight 358, climb +22 | | braking boards |
+| 31 | turn R 83.5, r 25, climb +1 | Bus Stop | chicane, last-corner lunge |
+| 32 | turn L 71.5, r 25 | Bus Stop 2 | |
+| 33 | straight 40 | | |
+| 34 | turn R 29.5, r 60 | Bus Stop Exit | timing tower |
+| 35 | straight 180, climb +4 | | onto Pit Straight |
+
 ## 6. Variations (P4-VARIANTS)
 
 | Track | Events |
@@ -608,7 +689,7 @@ finish its default event in the top three. Each event is its own entry in
 
 - **Where:** a GRAND PRIX section on the course screen, listing the new
   tracks and the Grand Prix versions of existing circuits (3.3).
-- **Unlocks:** Panorama Ridge 1,600 credits, Tremblant Woods 1,600, Harbour
+- **Unlocks:** Ardennes Forest 2,000 credits (13 October 2026), Panorama Ridge 1,600 credits, Tremblant Woods 1,600, Harbour
   Lights 1,800, Summit Run 2,600 (bought like other courses). Grand Prix on
   existing circuits is open on any circuit you own.
 - **Pay:** by finishing position, scaled so a Medium Grand Prix win pays like

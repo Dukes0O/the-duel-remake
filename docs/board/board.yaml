@@ -137,6 +137,35 @@ tasks:
     flag: "grand-prix-career"
     details: "docs/board/cards/P4-CAREER.md"
 
+  - id: P4-ARDENNES
+    title: "Ardennes Forest: the Spa-style forest circuit"
+    owner: "codex"
+    lane: "COURSE"
+    size: "L"
+    status: "ready"
+    needs: [P4-ARDENNES-ROAD]
+    flag: "ardennes-forest"
+    details: "docs/board/cards/P4-ARDENNES.md"
+
+  - id: P4-ARDENNES-ROAD
+    title: "Ardennes Forest road layout (Claude helper)"
+    owner: "claude"
+    lane: "COURSE"
+    size: "S"
+    status: "building"
+    needs: []
+    flag: "ardennes-forest"
+    details: "docs/board/cards/P4-ARDENNES.md"
+
+  - id: P4-FINISH-ARDENNES
+    title: "Claude's finishing pass: Ardennes Forest"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "M"
+    status: "ready"
+    needs: [P4-ARDENNES]
+    details: "docs/board/cards/P4-ARDENNES.md"
+
   - id: P4-SUMMIT
     title: "Summit Run: the mountain epic"
     owner: "codex"

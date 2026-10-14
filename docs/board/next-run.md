@@ -26,8 +26,12 @@ Start from `node tools/board.mjs`. Read each card's "Claude answers" first.
    settled), holding `save-shape`, then P4-VARIANTS (Panorama Night and
    Reverse, Harbour Dusk and Reverse, Tremblant Reverse). Summit items in 3
    take priority over these whenever they need the same lock.
-5. **Hold:** QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT and DISC wait until items
-   1 to 4 are merged.
+5. **New course, Ardennes Forest (Kyle: "make that one a beauty!").** When
+   Claude's road layout (P4-ARDENNES-ROAD) merges tonight, start P4-ARDENNES
+   in a course lane. It needs no `busy-game-files`, so it runs alongside
+   items 3 and 4. Design: `docs/CIRCUITS.md` section 5.5.
+6. **Hold:** QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT and DISC wait until items
+   1 to 5 are merged.
    - The Deep beyond its art and sound waits for Kyle's storyboard with
      Gratian: no DEEP-TRAIL, DEEP-LIFE or DEEP-LOG work.
    - The helicopter and the Lab wait for it too.
