@@ -1,8 +1,13 @@
-// Where Kestrel One flies in H1 and what the legs cost (docs/HELICOPTER.md
-// sections 2, 3 and 6). Board data only: HELI-DISPATCH adds the day's jobs.
+// Where Kestrel One flies in H1, what the legs cost and the dispatch board's
+// jobs (docs/HELICOPTER.md sections 2, 3 and 6). Board data only; the rules
+// that use it live in heli-session.js and heli-save.js.
 //
 // mapKm places each course on a small map so departures and arrivals face
 // the right way; real distances are not flown (the cruise leg skips them).
+import {CARS} from '../config.js';
+import {makeRng} from '../rng.js';
+import {liftCheck} from './heli-cable.js';
+
 export const HOME_COURSE = 'tremblant-woods';
 
 export const HELI_DESTINATIONS = Object.freeze({
@@ -51,4 +56,49 @@ export function isAirOnlyCar(carId) {
 
 export function isDestination(courseId) {
   return Object.hasOwn(HELI_DESTINATIONS, courseId);
+}
+
+// ---- the dispatch board ------------------------------------------------
+// Three routes, each paying a fixed number of credits (Real pays a quarter
+// more). The board offers one job on each route every play day.
+export const JOB_ROUTES = Object.freeze([
+  Object.freeze({from: 'tremblant-woods', to: 'tremblant-snow', pay: 300}),
+  Object.freeze({from: 'tremblant-snow', to: 'panorama-ridge', pay: 450}),
+  Object.freeze({from: 'tremblant-woods', to: 'panorama-ridge', pay: 600}),
+]);
+export const REAL_PAY_BONUS = 1.25;
+export const JOBS_PER_DAY = 3;
+
+// The customers' cars: every car Kestrel One can lift in H1, except the
+// special cars that travel only by air, so a customer's car is never one.
+export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => liftCheck(id).ok && !isAirOnlyCar(id)));
+
+const JOB_SEED = 0x4b455354;
+
+// The day's jobs, the same every time for the same play day number. Each is
+// {id: 'd<day>-<n>', carId, from, to, pay}, pay before the Real bonus. The
+// routes are shuffled so the board's order changes from day to day, and no
+// car is asked for twice on one board.
+export function dayJobs(day) {
+  const number = Number.isSafeInteger(day) && day >= 0 ? day : 0;
+  const rng = makeRng((JOB_SEED ^ number) >>> 0);
+  const routes = [...JOB_ROUTES];
+  for (let i = routes.length - 1; i > 0; i--) {
+    const j = rng.int(0, i);
+    [routes[i], routes[j]] = [routes[j], routes[i]];
+  }
+  const cars = [...JOB_CARS];
+  return Object.freeze(routes.map((route, index) => {
+    const carId = cars.splice(rng.int(0, cars.length - 1), 1)[0];
+    return Object.freeze({id: `d${number}-${index + 1}`, carId, from: route.from, to: route.to, pay: route.pay});
+  }));
+}
+
+export function jobPay(job, mode = 'assisted') {
+  return mode === 'real' ? Math.round(job.pay * REAL_PAY_BONUS) : job.pay;
+}
+
+// "Fly the Falcone F42 to Tremblant Snow".
+export function jobTitle(job) {
+  return `Fly the ${CARS[job.carId]?.name ?? job.carId} to ${HELI_DESTINATIONS[job.to]?.name ?? job.to}`;
 }
