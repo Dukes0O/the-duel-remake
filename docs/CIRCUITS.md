@@ -364,8 +364,9 @@ back. Redrawn by Claude on 10 October 2026 (the first draft did not close);
 
 - **Event:** Harbour Lights Night, 4 laps, about 4.05 km a lap (test driver
   1:34), field of 8.
-- **Width:** 14 m on the seafront, reservoir and harbour roads; 10 m in the
-  old town; 12 m at the hairpin. Walls both sides everywhere (concrete
+- **Width:** 14 m on the seafront, reservoir and harbour roads; 12 m in the
+  old town; 13 m at the hairpin and the road after it (eased pass, 14
+  October 2026: 10 m and 12 m before). Walls both sides everywhere (concrete
   blocks with catch fences); escape roads at Casino Corner and the hairpin.
 - **Signature:** Lantern Hairpin, radius 9 m, about 30 km/h, under strings
   of paper lanterns; its approach and exit run side by side with a wall
@@ -382,24 +383,24 @@ back. Redrawn by Claude on 10 October 2026 (the first draft did not close);
 | 1 | straight 500 | Seafront Straight | start line 100 m in |
 | 2 | turn L 20, r 300 | Lantern Kink | flat out between walls |
 | 3 | straight 294 | Casino Approach | boards |
-| 4 | turn R 104, r 22 | Casino Corner | heavy braking, escape road |
+| 4 | turn R 104, r 27 | Casino Corner | heavy braking, escape road (r 22 before the 14 October easing) |
 | 5 | straight 150, climb +6 | | |
 | 6 | turn L 40, r 60, climb +6 | Temple Hill | |
 | 7 | straight 78, climb +6 | | |
 | 8 | turn R 60, r 35, climb +5 | Bell Tower Bend | |
-| 9 | straight 192, climb +4 | | width 10 from here |
+| 9 | straight 192, climb +4 | | width 12 from here |
 | 10 to 13 | L 46.5 r 32, R 51.5 r 30, L 43 r 36, R 40 r 41 | Old Town Esses | |
-| 14 | straight 103 | Hillside | |
-| 15 | turn L 29.5, r 60, climb -6 | Precinct Bend | turns further from home |
-| 16 | straight 220, climb -6 | Hairpin Approach | width 12, boards |
-| 17 | turn R 175, r 9, climb -2 | Lantern Hairpin | the slowest corner in the game |
-| 18 | straight 99, climb -8 | | |
+| 14 | straight 103, climb -4 | Hillside | |
+| 15 | turn L 29.5, r 60, climb -3 | Precinct Bend | turns further from home; the descent starts gently |
+| 16 | straight 220, climb -2 | Hairpin Approach | width 13, boards |
+| 17 | turn R 175, r 9 | Lantern Hairpin | the slowest corner in the game; level |
+| 18 | straight 99 | | |
 | 19 | turn L 60, r 45, climb -4 | Fishmarket Bend | width 14 from here |
-| 20 | straight 827, climb -4 | Reservoir Run | |
+| 20 | straight 827, climb -17 | Reservoir Run | |
 | 21 | turn R 59, r 120 | Reservoir Sweep | fast, walls close |
 | 22 | straight 500 | Harbour Road | boards |
 | 23 | turn R 109, r 60 | Harbour Turn | |
-| 24 | straight 61 | Harbour Return | onto the Seafront |
+| 24 | straight 63 | Harbour Return | onto the Seafront |
 
 ### 5.3 Tremblant Woods (Mont-Tremblant)
 
