@@ -54,4 +54,31 @@ for(const file of ['visual-check','reward-check','reverse-check','contact-check'
   assert.ok(install>=0&&appImport>install,`${file} isolates saves before loading App`);checks++;
   assert.ok(!/import\s*\{[^}]*App[^}]*\}\s*from/.test(source),`${file} cannot eagerly import App`);checks++;
 }
+const menuSource=readFileSync(new URL('./menu-check.js',import.meta.url),'utf8');
+const optIn=menuSource.match(/if\(qaParams\.get\('memory-backups'\)===\'1\'\)\{([^}]+)\}/);
+assert.ok(optIn,'menu memory backups require the exact explicit query opt-in');checks++;
+const installMemoryProvider=new Function('qaParams','createMemoryBackupStore','window',optIn[0]);
+for(const query of ['', '?career-archive=1', '?career-archive-missing=1', '?career-backup-failure=1', '?career-origin-missing=1', '?memory-backups=0']){
+  const target={};let providers=0;
+  installMemoryProvider(new URLSearchParams(query),()=>{providers++;return{};},target);
+  same(providers,0,'default/archive/blocked fixtures retain their original provider: '+query);
+  same(target.__duelQaBackupStore,undefined,'no blanket menu provider: '+query);
+}
+const memoryTarget={name:'',crypto:{randomUUID:()=> 'career-opt-in'}};
+installIsolatedStorage(memoryTarget);
+installMemoryProvider(new URLSearchParams('?memory-backups=1'),createMemoryBackupStore,memoryTarget);
+const recovery={id:'actual-recovery-key',reason:'before-import',entries:{'the-duel-players-v2':'original career'}};
+await memoryTarget.__duelQaBackupStore.save(recovery);
+const serializedMemory=JSON.parse(memoryTarget.name.slice('__duel_qa_tab_v2:'.length));
+same(await memoryTarget.__duelQaBackupStore.load(serializedMemory.backups[0][0]),recovery,
+  'opt-in loads actual serialized recovery identity and contents');
+const reloadedMemory={name:memoryTarget.name};installIsolatedStorage(reloadedMemory);
+installMemoryProvider(new URLSearchParams('?memory-backups=1'),createMemoryBackupStore,reloadedMemory);
+same(await reloadedMemory.__duelQaBackupStore.load(serializedMemory.backups[0][0]),recovery,
+  'opt-in recovery survives same-tab reload');
+const separateMemory={name:'',crypto:{randomUUID:()=> 'separate-career'}};installIsolatedStorage(separateMemory);
+installMemoryProvider(new URLSearchParams('?memory-backups=1'),createMemoryBackupStore,separateMemory);
+same(await separateMemory.__duelQaBackupStore.load(serializedMemory.backups[0][0]),undefined,
+  'second opt-in tab cannot load first tab recovery');
+assert.ok(menuSource.indexOf(optIn[0])<menuSource.indexOf("await import('../src/main.js')"));checks++;
 console.log(`QA storage: ${checks} isolation, fail-closed and fixture bootstrap checks passed.`);

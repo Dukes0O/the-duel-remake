@@ -1086,3 +1086,9 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 2026-10-14: QA-BROWSER-SWEEP helpers a0e9d76a merged; nearby22/22/jobs4, build661ms, reviewCLEAR;5nativecase receipts green, actualpay/saveguards preserved. No clean-merge rerun. Parentfailures/audio9ff remain open; ownhelperfolder recycling, no release/push.
 
 - 2026-10-14: DEEP-ART-SRCac5a6dc6 working17 source merged; nearby31/31/jobs4, build669ms, reviewCLEAR; heldotter removed, legacy catalogue/modelbytes retained. Cap3closed/finishedart notaccepted; olderlane retained, no postmerge rerun/release/push.
+
+14 October: QA-BROWSER-SWEEP isolated career3bed13bb merged;21/21/jobs4/build828ms, ordinary+Guardian clear, three real memory-only natives green; parent runtime/sound/art work open.
+14 October: HELI-PACKET merged (docs/HELICOPTER.md, ten H1 cards, next-run release of the helicopter); lane 14/14 jobs4, build passed; lane deleted.
+
+14 October: FIX-HAIRPIN-CAMERA c8c4a52e merged;41/41/jobs4/build1.27s/review clear; actual270poses/16200frames zero misses/blockers/errors, corrected apex picture accepted. Core returns to audio; no release.
+14 October: HELI-FLIGHT merged (src/heli flight, autopilot, ground; test-heli-flight 103 checks); lane 20/20 jobs4 267.85 s, build passed; review found 3 faults, fixed and confirmed; lane deleted.

@@ -137,6 +137,52 @@ test('navigation barrier propagates evaluation and target errors without mutatio
 });
 
 
+test('one import action waits for fast real same-URL replacement before acknowledgement',async()=>{
+  const f=navigationFixture(),send=f.cdp.send,url='http://127.0.0.1:5191/tools/menu-check.html?memory-backups=1';let actions=0;
+  f.cdp.send=async(method,params={},sessionId)=>{
+    if(method==='Page.getFrameTree')return{frameTree:{frame:{id:'main',loaderId:'old',url}}};
+    if(method==='Runtime.evaluate'&&params.expression==='importCareerOnce()'){
+      actions++;
+      f.emit('Page.frameNavigated',{frame:{id:'main',loaderId:'new',url}});
+      f.execution();f.loaded();
+      return{result:{type:'undefined'}};
+    }
+    return send(method,params,sessionId);
+  };
+  const nav=browserHarness.createPageNavigation(f.cdp,{sessionId:'session',targetId:'target'},'http://127.0.0.1:5191');
+  assert.equal(typeof nav.reloadAfterAction,'function');
+  await nav.reloadAfterAction('importCareerOnce()');
+  assert.equal(actions,1,'the serialized import action runs exactly once');
+  assert.equal(f.calls.filter(c=>c.method==='Page.reload').length,0,'production import owns its one real reload');
+  const probes=f.calls.filter(c=>c.method==='Runtime.evaluate');
+  assert.equal(probes.length,1,'only the final selected context is probed after the action');
+  assert.equal(probes[0].params.uniqueContextId,'fresh');
+  assert.equal(f.listeners.size,0);
+});
+
+test('import action errors and unexpected destination are rejected without retries',async()=>{
+  for(const failure of ['action-exception','action-protocol','destination','detach']){
+    const f=navigationFixture(),send=f.cdp.send,url='http://127.0.0.1:5191/tools/menu-check.html?memory-backups=1';let actions=0;
+    f.cdp.send=async(method,params={},sessionId)=>{
+      if(method==='Page.getFrameTree')return{frameTree:{frame:{id:'main',loaderId:'old',url}}};
+      if(method==='Runtime.evaluate'&&params.expression==='importCareerOnce()'){
+        actions++;
+        if(failure==='action-exception')return{exceptionDetails:{text:'real import exception'}};
+        if(failure==='action-protocol')throw Error('real action protocol error');
+        if(failure==='detach')f.emit('Target.detachedFromTarget',{sessionId:'session'},undefined);
+        else f.emit('Page.frameNavigated',{frame:{id:'main',loaderId:'new',url:url+'&different=1'}});
+        return{result:{type:'undefined'}};
+      }
+      return send(method,params,sessionId);
+    };
+    const nav=browserHarness.createPageNavigation(f.cdp,{sessionId:'session',targetId:'target'},'http://127.0.0.1:5191');
+    assert.equal(typeof nav.reloadAfterAction,'function');
+    await assert.rejects(nav.reloadAfterAction('importCareerOnce()'),/import exception|action protocol|destination|detached/);
+    assert.equal(actions,1);assert.equal(f.calls.filter(c=>c.method==='Page.reload').length,0);assert.equal(f.listeners.size,0);
+  }
+});
+
+
 test('shared QA bundles are explicitly requested and restricted to owned project QA leaves', async () => {
   assert.deepEqual(parseArguments(['scenario', 'night-race', '--qa-bundle', '.qa-dist/browser-suite-one']),
     {name: 'night-race', injectConsoleError: false, qaBundle: '.qa-dist/browser-suite-one'});

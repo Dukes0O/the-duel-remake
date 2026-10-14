@@ -1,11 +1,14 @@
 // Real production UI with disposable in-memory careers. Never import this
 // entry from production; it cannot read or modify the origin's saved players.
-import {installIsolatedStorage} from './qa-storage.js';
+import {createMemoryBackupStore,installIsolatedStorage} from './qa-storage.js';
 import {installPerformanceReview} from './performance-review.js';
 import archiveFixtureText from './fixtures/saves/07-records-and-ghosts.json?raw';
 installIsolatedStorage();
 window.__qaPhysicalStorage=window.localStorage;
 const qaParams=new URLSearchParams(window.location.search);
+if(qaParams.get('memory-backups')==='1'){
+  window.__duelQaBackupStore=createMemoryBackupStore(window);
+}
 if(qaParams.has('career-archive')||qaParams.has('career-archive-missing')){
   // Seed only the disposable QA store before production startup migrates it.
   const fixture=JSON.parse(archiveFixtureText);

@@ -45,3 +45,11 @@ export function clearCameraSightline(course,position,target,referenceS) {
   }
   throw new Error('Camera target has no clear sightline through solid bounds.');
 }
+
+// Keep the forward aim unless the actual body falls outside the native frustum.
+// Return an existing input; projection and both targets remain read only.
+export function selectCameraAim(projected,forward,body) {
+  const inside=[projected.x,projected.y,projected.z].every(Number.isFinite)&&
+    Math.abs(projected.x)<=1&&Math.abs(projected.y)<=1&&projected.z>=-1&&projected.z<=1;
+  return inside?forward:body;
+}

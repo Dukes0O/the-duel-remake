@@ -21,7 +21,22 @@ write this card checks the numbers in sections 2 to 6 against the code (the
 worked tables below are reproducible from the formulas) and records CLEAR or
 the changes here. Codex starts only after that line is written.
 
-## 0. What the game does today (checked on integration 82c0f7bb)
+**Review, 14 October 2026 (independent reviewer, integration e4617818):
+CHANGES NEEDED, then applied in this file.** Every number in sections 2, 4,
+5, 6 and 9 reproduced (grip and scrub tables, `ask` .80/1.006/1.207/1.25,
+`brakeShare` .80/.954 and 1.5625, squeal gain .051/.221/.400, keyboard
+columns, tap yaw equal to today, 1.0625 at 100 mph full brake, 6.72 mph/s
+at 1.12, Neon numbers). Section 0 facts and the lock list confirmed. Four
+real errors were corrected: the snow claim (sections 2, 5, test 2), the
+autopilot not drifting on its own (sections 6, 9), the Titan events not
+covered by the arena test (section 7), and two test thresholds that could
+not pass (section 11). Smaller points folded in: gamepad from 62 mph, squeal
+wording, exact switch-off rules, new state fields and whole-state hashes,
+the reset list, more slip readers, the "nothing gets faster" sentence, the
+autopilot on snow, and its shoulder swerve. With these corrections the
+numbers are CLEAR to build.
+
+## 0. What the game does today (checked on integration 82c0f7bb; lines unchanged at e4617818)
 
 - Cornering is a yaw rate. `steeringYawAuthority` (`src/config.js:199-215`)
   takes the smaller of a steering limit (`DRIVE.yawRate` 1.35 rad/s, scaled
@@ -37,7 +52,11 @@ the changes here. Codex starts only after that line is written.
   speed. `drifting` is `|slipAngle| > .075` above 40 mph. It is read by drift
   scoring, the squeal and road-scrub sounds, smoke and skid marks, the drawn
   car and camera, ghosts, police and collision footprints (contacts use
-  heading plus slip, so slip already reaches race state through contacts).
+  heading plus slip, so slip already reaches race state through contacts),
+  traffic yielding (`npc-yielding.js:6`), car-to-car contact
+  (`sim-contacts.js:480`), weapon and hazard hits (`arsenal/hazards.js:40`,
+  `combat-projectiles.js:129`), the sound's direction (`audio.js:69`) and the
+  driver's head turn (`render3d.js:590`).
 - The squeal (`src/audio.js:1282-1297`) rises from slip, from steering times
   speed and from braking times speed, so hard steering or hard straight-line
   braking screech whether or not anything slides.
@@ -79,8 +98,12 @@ have. Braking hard while turning also uses up some grip, so braking late into
 the corner makes the slide worse. Brake in a straight line, turn in at the
 right speed, and the tyres stay at their best.
 
-Nothing gets faster than today: the most a tyre can grip is today's limit.
-Sliding is now slower than today; clean driving is the same as today.
+The car itself gets no faster than today: the most a tyre can grip is
+today's limit. Sliding is now slower than today; clean driving is the same as
+today. One exception is on purpose: on the keyboard a held key can now reach
+the full grip between 50 and 100 mph, where today it stops at 70% to 95%
+(section 5), so a keyboard player who drives cleanly can corner a little
+harder than before.
 
 ## 2. The grip curve (settled numbers)
 
@@ -145,9 +168,13 @@ Where slip can come from, asphalt, grip 1 (full steering, no brake):
 | 60 | 1.00 | 1.21 |
 | 80 and above | 1.00 | 1.25 |
 
-So on dry asphalt nothing slides below about 50 mph; on snow (grip 0.7) and
-ice the tyre limit arrives at lower speed, so slides start earlier, as they
-should. With full brake, `ask` at full steering rises to 1.56 at speed: a full
+So nothing slides below about 50 mph from steering alone. This `ask` at full
+steering is the same on every surface, because the steering limit and the
+tyre limit both scale with grip and traction. What changes on snow (grip 0.7)
+and ice is the corner: a given corner at a given speed needs more of the
+smaller grip, so the driver reaches the peak at a lower corner speed and
+slides sooner when coming in too fast, as on a real snowy road. With full
+brake, `ask` at full steering rises to 1.56 at speed: a full
 slide.
 
 ## 3. Braking while turning, speed loss, throttle
@@ -184,10 +211,12 @@ is what costs time.
   unchanged (same maxima), but its values follow the new slip.
 - **Sound** (no new cue, no `sound-bank` change). The existing
   `vehicle.tires` loop (`src/sound-bank.js:318-322`) is driven only by the
-  slide: `rawSlip = clamp((slip − 0.9) / 0.35, 0, 1)` replaces both of
-  today's terms (steering times speed, and braking times speed). Today's
-  smoothing, the `(x − .08) / .92` mapping, the smoothstep, gain `× .4`,
-  pitch and filter formulas stay. Resulting loop gain: 0 below slip 0.9;
+  slide: `rawSlip` is exactly `clamp((slip − 0.9) / 0.35, 0, 1)`. All of
+  today's `rawSlip` expression goes: the slip angle times 4.3 and steering
+  times speed (both in its first term, `audio.js:1286`) and braking times
+  speed. Today's smoothing, the `(x − .08) / .92` mapping, the smoothstep,
+  gain `× .4`, pitch and filter formulas stay. Resulting loop gain: 0 up to
+  slip 0.93;
   about 0.05 at the peak (a short soft squeal that says "at the limit");
   0.22 at slip 1.10; 0.40 in a full slide. So a long loud screech means
   speed is being lost every moment it lasts. Straight-line braking is quiet
@@ -212,6 +241,9 @@ In shares of the tyres' best grip on dry asphalt (`u`), with today's
 - Ceiling `C(v)` = `min(1.10, kcap(v) × Q(v) + bonus(v))`, where `bonus` is
   0.30 up to 80 mph, falling in a straight line to 0 at 120 mph.
 - The steering value sent to the race is `min(u, C) / R(v)`, never above 1.
+  With the switch off, and with it on below 40 mph, the adapter runs today's
+  exact code path (dividing and multiplying back is not always exact in
+  floating point).
   Taps and releases behave exactly as today (fresh ramp per direction,
   instant release, reset hooks unchanged). Throttle is unchanged.
 
@@ -223,17 +255,17 @@ In shares of the tyres' best grip on dry asphalt (`u`), with today's
 | 100 | 0.70 | 0.85 | never | 0.21 |
 | 120 | 0.60 | 0.60 (identical) | never | 0.18 |
 
-Below 40 mph the keyboard is byte-identical to today. Above 100 mph a held
+Below 40 mph the keyboard is byte-identical to today (today's code path).
+Tap yaw at higher speeds equals today's within rounding (1e-12). Above 100 mph a held
 key alone does not slide on dry asphalt, but braking while holding it does
 (at full brake 0.85 becomes 1.06 of the reduced grip), which is the late
-braking the lesson is about. `R(v)` uses dry asphalt and grip 1 so the adapter
-needs only speed, as today; on snow the same key asks for more of the smaller
-grip and slides sooner, which is right.
+braking the lesson is about. `R(v)` depends only on speed (section 2: it is
+the same on every surface), so the adapter needs only speed, as today, and is
+exact on snow and ice too.
 
 **Gamepad:** the stick is a share of `steerGain`, so from 50 mph the stick
-grows more sensitive than today, reaching 25% more from about 65 mph: there
-80% stick gives today's full turn,
-and the last 20% of travel is past the peak. This is the price of letting a
+grows more sensitive than today, reaching 25% more from 62 mph: there 80%
+stick gives today's full turn, and the last 20% of travel is past the peak. This is the price of letting a
 driver ask for more than the tyres hold. Kyle and Gratian judge it in play;
 a stick curve is a follow-up only if they ask.
 
@@ -258,23 +290,47 @@ a stick curve is a follow-up only if they ask.
   and the test copies in test-opponents, test-stunt-trial, test-jump-distance,
   test-jump-height, test-ufo-landing, test-circuit-summit and
   test-summit-avalanche. With the switch off each replacement must be
-  byte-identical, so no existing pin moves.
-- **Drift events:** in a `kind: 'drift'` event, the autopilot's ceiling is
-  `ask` ≤ **1.12** in corners above 45 mph (it drifts on purpose; at 1.12 it
-  scores and loses about 6.7 mph/s Pro while sliding). Everywhere else 1.0.
+  byte-identical, so no existing pin moves: each site passes exactly the
+  arguments it passes today (several omit `car`: test-opponents.mjs:165,
+  test-stunt-trial.mjs:56, test-ufo-landing.mjs:43,
+  benchmark-shortcut-pace.mjs:28; none pass `course` or the arsenal grip).
+  The autopilot's one-off shoulder swerve (`app.js` about 1524, `steer: 1`)
+  also goes through the helper, so it cannot slide with the switch on.
+- **Autopilot on snow:** its corner speed ignores surface traction
+  (`app.js` about 1558), so on snow it already corners at about 103% of the
+  grip. With the switch on it will run a little wide there. That is known
+  and covered by the wider snow band in section 12; QA-STOCK-SNOW is the card
+  that fixes its corner speed.
+- **Drift events: the autopilot drifts on purpose.** A ceiling alone is not
+  enough: the review ran today's autopilot on Neon (medium, Pro, seed 1989)
+  and its switch-on `ask` passed 1.0 in only 503 of 11,795 steps (highest
+  1.065), so it would barely score. In a `kind: 'drift'` event, through every
+  corner taken above 45 mph, the autopilot holds `ask` at **1.12** (yaw then
+  `g(1.12) × peakYaw`, Pro 0.914 of the peak) and sets its corner speed so
+  that slide follows the line: `sqrt(g(1.12) × 30 × grip / bend)`. It keeps
+  its line with throttle and brake, never by dropping `ask` below 1.0
+  mid-corner. At 1.12 it loses about 6.7 mph/s Pro while sliding.
+  Everywhere else the ceiling is 1.0.
 
 ## 7. Where it applies
 
 - Road races: Duel, Grand Prix, Time Trial, the circuits, Wasteland road
   duels, the drift trial, hidden road and The Deep sea floor (its grip and
   turning drag feed the same terms).
-- Not in arenas (`course.def.venue === true && course.def.arena === true`,
-  the predicate `steeringYawAuthority` already uses): today's path exactly,
-  so the Scrapdome keeps its sharp handling and combat arenas are unchanged.
+- Not on any course with `course.def.arena === true`: today's path exactly.
+  That covers the Scrapdome and Salt Flats (which also carry `venue`) and
+  the Titan Monster Arena and Titan Stunt Trial (`config.js:127, 130`,
+  `arena` without `venue`), so stunts and combat arenas are unchanged. This
+  is wider than the `venue && arena` test `steeringYawAuthority` uses, on
+  purpose.
 - Not on foot, not during a crash knock (unchanged), not airborne.
-- `s.tyreSlip` resets to 0 everywhere `slipAngle` resets today (game.js:341,
-  sim-crash.js:183 and 235, arena-event.js:88-89, convoy-raid.js:126,
-  combat-weapons.js:162, hidden-road-journey.js:137, deep-journey.js:180).
+- Muddy Hollow (`muddy-hollow.js:392`) and the step back into the car after
+  walking (`onfoot-transition.js:267`) also run `_drive` on road courses, so
+  the slide applies there too.
+- `s.tyreSlip` starts at 0 with the rest of race state (`game.js:95`) and
+  resets to 0 everywhere `slipAngle` resets today (game.js:341,
+  sim-crash.js:183 and 235, arena-event.js:88-89, combat-weapons.js:162,
+  hidden-road-journey.js:137, deep-journey.js:180).
 
 ## 8. The switch and repeatability
 
@@ -289,7 +345,11 @@ a stick curve is a follow-up only if they ask.
   30, 60 and 144 FPS.
 - **Switch off:** every existing replay, combat replay, course replay, world
   signature and salt-flats pin is byte-identical. Not one fixture is
-  re-recorded in this card.
+  re-recorded in this card. The two new state fields (`tyreSlip`,
+  `tyreSlipRules`) do change hashes of the whole race state taken by some
+  measuring tools (`gp-existing-rate.mjs:53`, `panorama-field-rate.mjs:60`,
+  `arsenal-balance.mjs:136`); nothing pins those, and the replay tests hash
+  named fields only, so only the named fixtures promise to stay identical.
 - **Switch on:** the card's own fixture `tools/replays/tyre-slip.json` pins
   fingerprints for three cases (a classic Duel stage with the recorded
   inputs, Harbour Lights, Tremblant Snow), each at 30, 60 and 144 FPS, three
@@ -313,6 +373,9 @@ sliding that costs time, so both move. The method, not a guess:
 2. New target = old target × (median score on ÷ median score off), rounded
    down to 100. New time limit = old limit × (median time on ÷ median time
    off), rounded up to 5 s.
+   **Stop rule:** if the on/off score ratio is below 0.6 at any level, or the
+   one-crash recovery run never builds a drift chain (it crashes only once
+   `chainScore > 40`), stop and ask Claude. Do not adopt the numbers.
 3. Put them beside the old ones as `driftTrial.tyreSlip: {targets,
    timeLimitSec}` and read both through one helper `driftTrialRules(stage,
    tyreSlipRules)` in `src/config.js`, used by every reader of
@@ -341,9 +404,10 @@ Owns:
 
 Hooks (named lines only, byte-identical with the switch off):
 - `src/app.js`: keyboard adapter construction, `_driveAutopilot` steering
-  through `steerForYaw` and the drift ceiling.
-- `src/game.js`: latch `s.tyreSlipRules` at race start, reset at :341, the
-  drift objective read.
+  (including the shoulder swerve) through `steerForYaw`, and the drift-event
+  driving of section 6.
+- `src/game.js`: start `s.tyreSlip` at :95, latch `s.tyreSlipRules` at race
+  start, reset at :341, the drift objective read.
 - `src/audio.js` about 1282-1291: the squeal input.
 - The slip reset lines listed in section 7; `src/sim-results.js`,
   `src/progression.js` and `src/leaderboard.js` drift-target reads.
@@ -362,22 +426,25 @@ Locks: `busy-game-files` (app.js, game.js). No `sound-bank`, `surfaces`,
 2. Real `Duel`, flat straight, switch on, Pro:
    - 100 mph, steer 0.7: `ask` 0.875, slip settles below 1, no speed lost to
      sliding, yaw equals `0.7 × steerGain`.
-   - 80 mph, steer 1.0: slip reaches 1.25 within 0.5 s, yaw settles at
-     `0.82 × peakYaw`, speed loss per step equals the formula.
+   - 80 mph, steer 1.0: slip at least 1.24 within 0.5 s (it approaches 1.25
+     and never quite reaches it); after 1 s yaw is within 1% of
+     `0.82 × peakYaw`; speed loss per step equals the formula.
    - Same at Casual with 0.90 and 8 mph/s.
-   - Steer from 1.0 to 0.75 at 80 mph: slip below 1.0 within 0.25 s.
+   - Steer from 1.0 to 0.75 at 80 mph: slip below 1.0 within 0.30 s.
    - 30 mph full steer on asphalt: slip stays below 1, no loss.
-   - Snow (grip 0.7): slip passes 1.0 at a lower speed than on asphalt.
+   - Snow (grip 0.7): on the same fixed-radius curve, steering to follow
+     the curve, slip passes 1.0 at a lower speed than on asphalt.
    - Full brake plus full steer at 100 mph: slip at least 1.25.
 3. Switch off: `_drive` output, `steerForYaw`, the keyboard adapter and the
    squeal input equal today's formulas over a grid of speeds, grips, brake
    and steer values (exact).
-4. Arena: a Scrapdome run is byte-identical with the switch on and off.
+4. Arenas: a Scrapdome run and a Titan Monster Arena run are each
+   byte-identical with the switch on and off.
 5. Rivals: a CPU-only race hash is identical with the switch on and off;
    Grand Prix field positions identical over 60 s with a neutral player.
 6. Repeatability: the three pinned switch-on fingerprints at 30, 60 and
    144 FPS, three runs each.
-7. Keyboard: tap yaw identical to today at 60, 80 and 120 mph; ceilings and
+7. Keyboard: tap yaw equal to today's within 1e-12 at 60, 80 and 120 mph; ceilings and
    peak times from the table; identical below 40 mph; arena keyboard
    identical; throttle identical.
 8. The lesson, on Harbour Lights' Lantern Hairpin with the line driver:
@@ -386,7 +453,7 @@ Locks: `busy-game-files` (app.js, game.js). No `sound-bank`, `surfaces`,
    is at least 0.25 s faster over the stretch from 60 m before turn-in to
    80 m past the apex, and late shows slip above 1.0 for at least 0.5 s. Both
    numbers are also recorded with the switch off, for the change note only.
-9. Squeal: loop gain 0 below slip 0.9, about 0.05 at 1.0, 0.40 at 1.25 and
+9. Squeal: loop gain 0 up to slip 0.9, about 0.05 at 1.0, 0.40 at 1.25 and
    above; no squeal from straight-line full braking at 100 mph.
 
 Existing suites must pass unchanged with the switch off: test-replays,
@@ -399,8 +466,10 @@ test-drift-trial, test-drift-scoring, test-reference-laps, src/test.js (its
 - **Lap times per course**, App autopilot, the reference-lap policy
   (`node tools/build-reference-laps.mjs --event=ID --probe`, writing nothing):
   every course within −0.5% to +1.5% of switch off; snow and ice courses
-  within −0.5% to +3%. The autopilot corners at 85% of the limit, so a bigger
-  change means a fault, not tuning.
+  within −0.5% to +3%. On dry roads the autopilot corners at 85% of the
+  limit, so a bigger change means a fault, not tuning. On snow it already
+  corners past the grip (section 6), so if a snow course misses +3%, report
+  it with the QA-STOCK-SNOW link rather than tuning this card.
 - **Line driver** (`tools/track-script-drive.mjs`, each circuit): within
   −0.5% to +2%, with no new wall contact or off-road excursion.
 - **Keyboard-shaped lap** on Harbour Lights (the FIX-DRIVING-FEEL recipe:
@@ -432,8 +501,76 @@ with this card named as the reviewed reason.
 
 ## 14. Risks named
 
-- Gamepad steering is up to 25% sharper above 50 mph (section 5).
+- Gamepad steering is up to 25% sharper above 50 mph, fully from 62 mph
+  (section 5).
 - The rivals measure against the autopilot, which never slides, so the
   balance tools show little change; how human races feel is judged in play.
 - Keyboard players can reach more of the grip between 50 and 100 mph than
   today. That is part of the change; the keyboard lap acceptance watches it.
+
+## Independent review: CHANGES, settled by Claude (14 October 2026)
+
+An independent reviewer recomputed every worked number in sections 2 to 6
+from the card's formulas: all match except the items below. The slip update
+is an exact exponential, so it is stable at 120 Hz, at the 8 m/s floor and at
+top speed; a held full-lock slide from 80 mph settles at 49.7 mph (ask back to
+1.0). "Nothing faster than today" holds, braking included. Section 0 is
+accurate. Codex builds to the card as amended here; these amendments win over
+the text above.
+
+1. **Snow wording.** Grip and traction cancel out of `ask`, so full lock
+   slides at the same speed on every surface; what changes on snow is that a
+   given corner at a given speed needs a higher `ask`. Reword sections 2 and 5
+   to say that. Test 2's snow case becomes: desired yaw 0.8 rad/s at 60 mph
+   gives ask 0.715 on grip 1 and 1.02 on grip 0.7.
+2. **Audio.** The tyre loop reads a new variable (`tyreSlipSmoothed`). The
+   road-scrub (audio.js about 1493 to 1495) and gravel (about 1513) layers keep
+   reading today's `smoothedSlip` unchanged. Loop gain is 0 below slip 0.928
+   (the (x - 0.08) / 0.92 step), not 0.9.
+3. **Drift autopilot.** Give the drift-event autopilot a target, not only a
+   ceiling: corner speed factor 1.058 (ask 1.12), so it actually slides and
+   scores.
+4. **Drift records.** Add an optional `tyreSlipRules: true` on new results and
+   leaderboard rows (absent means old rules). `src/leaderboard.js` about line
+   128 must keep old drift rows instead of dropping them for a different
+   `driftTarget`, showing them under old rules. Readers to include in the
+   hooks: `src/progression.js` about 456 to 457 and 658, `src/screen-menu.js`
+   about 60. This takes the `save-shape` lock and gets the save review.
+5. **Keyboard.** "Above 100 mph a held key alone does not slide" becomes
+   "above 88 mph" (ceiling 2.1 - 0.0125 x mph). And Kyle approved today's
+   gentler keyboard on 13 October: **a held key must never give more yaw than
+   today at any speed.** Keep each speed's keyboard ceiling at or below
+   today's cap (today 0.80 to 0.90 of peak from 60 to 88 mph, not 0.93), and
+   keep 40 to 50 mph at today's value too. Taps unchanged within 1e-9. The
+   gamepad at full stick above 62 mph sliding is intended: full stick is
+   asking for too much.
+6. **Tests.** Slip settles "within 1% of 1.25" (1.2447 at 0.5 s; crosses 1.0 at
+   0.175 s); give the yaw-settles and speed-loss checks a stated tolerance. The
+   1.0 to 0.75 drop test limit is 0.3 s at a pinned speed (measures 0.242 s).
+   "Full brake plus steer at 100 mph" checks slip at least 1.25 within the
+   first 0.3 s.
+7. **Hooks to add:** `tools/scenarios/grand-prix-pay.mjs` and
+   `grand-prix-existing.mjs` (inject `steerForYaw` and `TYRE_SLIP` with the
+   pasted helpers); a switch option for `tools/build-reference-laps.mjs`,
+   `tools/track-script-drive.mjs` and `tools/race-field-balance.mjs`;
+   `tools/combat-balance.mjs` `--flags` must accept `tyre-slip`.
+8. **`steeringGrip`** is computed inside `steeringYawAuthority` (`max(grip,1)`
+   for assisted cars under 45 mph). Export it; `peakYaw` uses that same value.
+9. **Keyboard rules per race:** the adapter is built once in the App
+   constructor, so pass the rules into `update()`.
+10. **Off-road:** `tyreSlip` runs everywhere in a road race (the drawn angle
+    needs it) and `g(slip)` applies off-road too; no new speed cost off-road
+    beyond today's.
+11. **Which events:** Titan Monster Arena and Titan Stunt Trial keep today's
+    steering, like the venue arenas (Kyle wants sharp steering in arenas).
+    Ridge Rally gets the new rules.
+12. **Smaller points:** in `steerForYaw` compute brake before steer; keep each
+    caller's argument list. Keyboard identity checks use 1e-9 tolerance. In
+    section 5, apply the speed ceiling after averaging the ramp. Simulate
+    Lantern Hairpin entry before freezing its "late entry shows slip for 0.5 s"
+    check. The drawn slip angle must be 0 at slip 0 and must not flip sign
+    while counter-steering through zero.
+
+Review: CLEAR to build with these amendments. Police are unaffected (they
+use a speed target only).
+
