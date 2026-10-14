@@ -441,7 +441,6 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    waiting_on: "claude"
     needs: []
     locks: [busy-game-files]
     flag: "tyre-slip"
