@@ -412,12 +412,35 @@
     "inspection": "One Blender export passed unchanged original recipe guards; existing GLTFLoader world bounds/triangles/names/materials agree. Visual acceptance remains unrun."
   },
   "helicopterDownloadPlan": {
-    "preferred": "light-piston",
-    "retryNotBefore": "2026-10-14T18:00:00-07:00",
-    "retriesMax": 1,
-    "retryUsed": false,
-    "fallback": "r22-lopo3d",
-    "fallbackAccount": "Kyle only; Claude has already asked for the licensed download",
-    "downloadsDuringThisSourceSlice": 0
+    "status": "superseded-by-claude-original-kestrel",
+    "pickedRecipe": "tools/blender/kestrel-one.py",
+    "pickedRuntime": "public/assets/heli/kestrel-one.glb",
+    "scheduledRetriesCancelled": true,
+    "downloadsDuringThisSourceSlice": 0,
+    "licensedOriginalsAndCandidateProvenanceRetained": true
+  },
+  "accessoryReview": {
+    "round": 1,
+    "status": "awaiting-Claude-art-verdict-after-2026-10-14T17:40:00-07:00",
+    "kind": "BLENDER IMPORTED GLB / NOT GAME",
+    "sourceCommit": "db6f04d18f86b14a09e9b04394e8567e8b7710b1",
+    "sheet": "docs/board/looks/heli-accessories/round-1.jpg",
+    "sheetBytes": 156226,
+    "sheetSha256": "ac9f430bf139076117da400c4c025b16d7649a8ca0da905f0cbe03b2a0246e06",
+    "actualViews": 6,
+    "sourceSha256": {
+      "cargo-hook": "0d9b8524390d901aff67d35f945a03a713a0e3bd7709beb1411a39ead157e3df",
+      "helipad": "e2fba42ee52fa5b1922c825aa7f4fb9f44b22d6ada5da4b63c45d7881276685c",
+      "fuel-pump": "d50c46cf94dafeeca9993def01ac344c1b5371fc16612a628554f806dd5757f7"
+    },
+    "render": {
+      "engine": "CYCLES",
+      "device": "CPU",
+      "samples": 48,
+      "threads": 4,
+      "viewTransform": "AgX",
+      "gameAxes": "+Y up, +Z front, metres"
+    },
+    "runtimeAppearanceOrFrameAcceptance": false
   }
 }

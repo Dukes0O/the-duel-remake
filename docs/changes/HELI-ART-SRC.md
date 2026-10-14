@@ -86,12 +86,12 @@ Raw export stdout/receipt and actual GLB inspection are in integration
 recipe geometry or source input changed; no repeated export. Only these three
 runtime GLBs and their original-geometry credits paragraph are added after
 Root's explicit GO. No shared catalogue row or helicopter asset is added.
-Render, comparison sheet, formal art round, native views, lane gate and build
-remain UNRUN. Numeric/source compliance is not Claude's art acceptance, which
+At that export checkpoint, render, comparison sheet, formal art round, native
+views, lane gate and build were UNRUN. The actual first accessory round follows below. Numeric/source compliance is not Claude's art acceptance, which
 remains pending within the three-round cap. No release, push, live folder/port
 or real save access. Changed assertions: none.
 
-## Held source checkpoint
+## Held source checkpoint before round 1
 
 The second lead reviewed this source and corrected two camera framings and the
 shared evidence-junction image path before freezing it. Existing GLBs remain
@@ -100,6 +100,14 @@ superseded by Claude's original Kestrel pick. All recipe execution, renders,
 sheet composition, lane tests and build remain UNRUN. The first lead holds
 all six build slots and must release an ART slot before this lane resumes.
 No gate or art acceptance follows from this source review.
+
+## Actual imported-GLB accessory round 1
+
+The standing render grant was used on clean db6f04d1 after the existing scheduler reported zero foreign jobs. Kyle's quota notice confirmed Claude source builders were paused until 17:40; the other retained Codex lanes stayed frozen. One CPU-four-thread render-only batch passed in 37643.3489 ms. Six genuine imported-GLB frames and the approved serial compositor produced the 156226-byte sheet under docs/board/looks/heli-accessories/round-1.jpg, SHA256 ac9f430bf139076117da400c4c025b16d7649a8ca0da905f0cbe03b2a0246e06.
+
+Before/after SHA256 values match for all three GLBs; the existing measured origin, bounds, part, triangle and texture guards passed on import. The second lead viewed the whole sheet and original hook-oblique/pad-edge/pump-front images. Every object is fully framed and the intended parts are visible. This is a packet check, not an art verdict, native renderer pass or frame measurement. The recipe and runtime asset bytes remain unchanged after source review.
+
+The separate round review requests Claude's verdict when quota returns. No second round, gate, build, source-code or runtime-loader change has run. The source packet cancels its obsolete donor retry plan, preserves original licences/provenance, and records the actual sheet/hashes. All first-round raw frames and receipts remain available for review; cleanup follows the recorded verdict.
 
 ## Removed
 
