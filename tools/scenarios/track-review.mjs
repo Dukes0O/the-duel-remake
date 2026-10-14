@@ -110,7 +110,7 @@ async function observeHairpinPose(pose) {
       for(let index=0;index<blockers.length;index++){
         const obstacle=blockers[index];
         const hit=window.__hairpinBindings.sweepObstacle(target,camera,obstacle,0,
-          {halfWidth:0,halfLength:0,height:0});
+          {halfWidth:0,halfLength:0,height:0,useModelBounds:false});
         if(hit)row.hits.push({index,id:obstacle.id??null,kind:obstacle.kind??null,t:hit.t});
       }
       row.inFrame=player.visible&&Math.abs(projected.x)<=1&&Math.abs(projected.y)<=1&&projected.z>=-1&&projected.z<=1;

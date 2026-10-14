@@ -37,3 +37,7 @@ Both own junctions were checked against plain integration directories: node_modu
 ## Native observer Removed
 
 No production code, asset, old photo, assertion or trace is removed. The optional observer runs only when explicitly requested; default track review stays intact. Existing harness owns its temporary QA bundle cleanup; Root owns new lane/evidence cleanup after the verdict.
+
+## Observer bounds correction before execution
+
+Ordinary review found the native observer's zero-size sweep defaulted to measured modelMinY/modelMaxY, while the actual camera helper reads authored minY/maxY (falling back to y/height). scenery-bounds preserves separate model envelopes from measured model ranges, so these fields can differ. Director grants only useModelBounds:false on that independent observer query. This matches the helper's original authored box policy; it changes no game bounds, blocker filter, assertion, height, tolerance or camera behavior. No test, native check or build has run on either observer source during the release hold.
