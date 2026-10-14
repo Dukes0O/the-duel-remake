@@ -112,7 +112,7 @@ tasks:
     size: "M"
     status: "building"
     needs: [AUD-14, AUD-17]
-    locks: [busy-game-files, sound-bank]
+    locks: [sound-bank]
     claimed_by: codex-aud-mix-2026-10-14
     branch: codex/aud-15-p1-mix
     details: "docs/board/cards/AUD-15-P1.md"
@@ -354,7 +354,7 @@ tasks:
     claimed_by: "codex-hairpin-native-2026-10-13"
     branch: "codex/fix-hairpin-native"
     needs: [FIX-LIVE-EDGES-SOURCE]
-    locks: []
+    locks: [busy-game-files]
     details: "docs/board/cards/FIX-HAIRPIN-CAMERA.md"
 
   - id: FIX-LIVE-EDGES
