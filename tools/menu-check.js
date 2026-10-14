@@ -24,6 +24,12 @@ if(qaParams.has('career-backup-failure')){
 if(qaParams.has('career-origin-missing')){
   localStorage.setItem('__the_duel_origin_pointer_v1',JSON.stringify({version:1,id:'origin-primary-v1'}));
 }
+if(qaParams.get('p4-kits-native')==='1'){
+  const [{Group,Box3,Vector3,AnimationMixer,Raycaster,LoopOnce},{GLTFLoader}]=await Promise.all([
+    import('three'),import('three/addons/loaders/GLTFLoader.js'),
+  ]);
+  window.P4KitsQa=Object.freeze({Group,Box3,Vector3,AnimationMixer,Raycaster,LoopOnce,GLTFLoader});
+}
 const {app,refreshRaceSetup}=await import('../src/main.js');
 window.__qaApp=app;
 const {CARS}=await import('../src/config.js');

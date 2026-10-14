@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T20:09:20.515Z
+Observed at: 2026-10-14T20:09:35.915Z
 
-Observation commit: e9fccad61f75ee7c72b5ba37851c29bc41cb9a93
+Observation commit: 925062a196d098d8ea22c40d4341ba6a508fd6fb
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e9fccad61f75ee7c72b5ba37851c29bc41cb9a93
+Integration HEAD: 925062a196d098d8ea22c40d4341ba6a508fd6fb
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -92,7 +92,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/qa-browser-sweep | unknown | 2026-10-14T09:01:33-07:00 | 0 | last commit 2026-10-14T09:01:33-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
-| codex/qa-kit-module | QA-BROWSER-SWEEP | 2026-10-14T13:00:45-07:00 | 0 | last commit 2026-10-14T13:00:45-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/menu-check.js, tools/scenarios/p4-kits.mjs |
+| codex/qa-kit-module | unknown | 2026-10-14T13:00:45-07:00 | 0 | last commit 2026-10-14T13:00:45-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/menu-check.js, tools/scenarios/p4-kits.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -107,9 +107,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 156,494 B | -71,469 B | 5,000,000 B |
+| Added bytes in last merge | 294,998 B | +138,504 B | 5,000,000 B |
 | All `public/` | 291,982,013 B | +0 B | unavailable |
-| Git objects | 408,259,584 B | +118,784 B | unavailable |
+| Git objects | 408,342,528 B | +82,944 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -118,7 +118,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: e9fccad61f75ee7c72b5ba37851c29bc41cb9a93
+- Local integration/wasteland: 925062a196d098d8ea22c40d4341ba6a508fd6fb
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
