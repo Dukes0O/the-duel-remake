@@ -39,3 +39,33 @@ Own candidate receipts/recipe under tools/art/heli-* and tools/blender/heli-* on
 First prepare twoor three plausible generic real two-seat helicopter starting assets with verifiedlicences, native/sourcepictures, dimensions/triangles/textures/node suitability and concrete gaps; cablehook/helipadH/fuelpump donor options too. Claude judges sourcechoice and rounds (Kyle alreadydelegatedartpicks). Separate actualmain/tail rotor pivotnodes and skids, instrumentpanel/cockpit, cleanKestrelpaint, mainrotor10m, ≤20000triangles/textures≤2K aswritten; do not claim thoseconstraints from a source thumbnail. Proposed exportnames/scale/coordinate/node contract go on this card beforeadaptation if notsettledbycurrentFlyingcode, so ClaudeHELI-VIEW canconsumeit. No art round4, newtestmachinery, freeplan workaroundorproceduralplaceholder.
 
 Initialwork SOURCEONLY: catalog/primarylicense/search/downloadmetadata ifneeded, no Blender/render/build/gate/browser/timing until Rootreviews candidatepacket and explicitlycoordinates freeheavyjobs. Eachlaterjob freshintegrationinbox+ALLnode/blenderinventory, max3heavy/threads≤4; unreachableart hasno framecheck. Buildercommitsownrecipe/change-note source; Rootownssharedboard/inbox/status and review/merge/newfoldercleanup. No release/push/livefolder/5174/realsaves. Allquestions on this card, waiting_onclaude when needed; neverwaitingforKyleartpick byold wording.
+## Claude answers (14 October): the model contract HELI-VIEW reads
+
+Settled from the flying code (`src/heli/heli-flight.js`, `heli-cable.js`)
+so the models drop in without changes there. Adapt to this; ask on this
+card if a source cannot meet a line.
+
+- **Kestrel One, `public/assets/heli/kestrel-one.glb`.** Metres, +Y up,
+  nose toward +Z. Origin on the ground under the main rotor mast: y = 0 at
+  the bottom of the skids, x = 0 on the centre line.
+- **Nodes, named exactly:** `body` (fuselage, cockpit glass, doors),
+  `main_rotor` (pivot at the top of the mast, about 2.85 m up; spins about
+  its own +Y; blades reach 5 m from the pivot), `tail_rotor` (pivot at the
+  tail rotor hub; spins about its own X), `skids`, and two empties:
+  `cable_hook` (belly under the mast, where the cable hangs from) and
+  `pilot_eye` (the right-hand seat, about 1.45 m up, for the cockpit view).
+  An `instrument_panel` mesh inside the cockpit; the readings are drawn
+  separately in the page.
+- **Size:** fuselage about 8.5 m nose to tail rotor, 1.7 m wide; at most
+  20,000 triangles and 2K textures, PBR (base colour, normal, metal and
+  roughness). Paint: Kestrel One, clean, no brand marks.
+- **Cargo hook, `public/assets/heli/cargo-hook.glb`:** origin at the top
+  where the cable meets it, about 0.4 m tall. The cable itself is drawn in
+  code as a line.
+- **Helipad, `public/assets/heli/helipad.glb`:** a 14 m square or circle
+  with a painted H, origin at the centre of its top surface, about 0.15 m
+  thick at most. The H's long strokes run along +Z.
+- **Fuel pump or small fuel truck, `public/assets/heli/fuel-pump.glb`:**
+  origin at its base centre, front toward +Z.
+- The stand-in in `src/heli/heli-scene.js` (HELI-HOOKS) uses the same
+  origin and axes, so the views and the cable line up with no change.
