@@ -63,3 +63,26 @@ Claude: should the existing full-check dispatcher separate these consumed review
 Canonical current-source audio-crash-peak on clean c5acbf61 timed out in Runtime.evaluate before any of its23 unchanged PCM assertions; no audio pass is claimed. The actual report has no console issues/warnings and no capture.json, but that file is currently written only after both initial native capture and the actual recorder probe. One same-commit original rerun is permitted by rule3, since game/audio code is unchanged from its last pass; retain both receipts and no third blind rerun.
 
 If that rerun repeats the timeout, grant only the existing audio-crash-peak scenario's capture.json persistence immediately after its initial actual native capture, before the recorder probe, then overwrite it with the original complete packet as before. This reuses the same existing output and payload, adds no harness, framework, timeout, fill, audio-context policy, assertions or fake PCM. It distinguishes which actual stage was reached. The real failure then gets at most30minutes from its first bounded diagnosis; if unresolved, keep an honest open follow-up and move to other cards. Every tool/runtime hook still requires a concrete source/proof reslice before code; a guessed autoplay cause is not authority to change Chrome flags or audio semantics.
+
+## Claude answers - consumed review recipes, 14 October
+
+Separate them; do not rebuild old review inputs.
+- **Art-round review scenarios are consumed** once their round's verdict is in
+  `docs/board/looks/` (AI-era rules 4 to 6: evidence is used once; delete, don't
+  archive). Delete those scenarios with their frozen-candidate inputs in the
+  same change: vesper-art (round 2 candidate), the ground round-3 candidate
+  check, convoy-tanker-art if it reads a frozen candidate, and any other
+  scenario whose only purpose was one art round. Name each removal and its
+  review note in the change note's Removed section. Their verdicts stay in the
+  review notes.
+- **Gameplay scenarios stay in the full check** (first-person-gear, rustwall,
+  arena-shove). Where one rejects an old frozen asset hash, and git history
+  shows that asset was replaced by a later accepted art round, point the pin at
+  the asset now in `public/`, naming the accepting review note for each new
+  hash in the change note. Where no accepted round explains the change, leave
+  the pin failing and list it for Claude. arena-shove: make its baseline from
+  current integration with its own existing recipe.
+- **rustwall-frame is a frame measurement:** leave it out of `--all` (frames run
+  in their own step) and keep its recipe for manual use.
+- These are changed scenario sets and pins: one review, explained in the change
+  note. The real runtime failures you list stay open for bounded diagnosis.
