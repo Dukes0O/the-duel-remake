@@ -120,8 +120,8 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {id:'snowfield-ice-2',kind:'ice',shaded:true,s0:at(32)+60,s1:at(32)+80},
     {id:'snowfield-ice-3',kind:'ice',shaded:true,s0:at(36)+60,s1:at(36)+80},
     // Meltwater freezes in the Gallery's shade, on the main road only.
-    {id:'gallery-ice-entry',kind:'ice',shaded:true,s0:10170,s1:10190,from:-5,to:5},
-    {id:'gallery-ice-curve',kind:'ice',shaded:true,s0:10570,s1:10590,from:-5,to:5},
+    {id:'gallery-ice-entry',kind:'ice',shaded:true,s0:10170,s1:10200,from:-5,to:5},
+    {id:'gallery-ice-curve',kind:'ice',shaded:true,s0:10570,s1:10600,from:-5,to:5},
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'asphalt'}],
   galleries:[{id:'summit-gallery',start:10170,end:10800,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,collisions:SUMMIT_GALLERY_BOUNDS}],

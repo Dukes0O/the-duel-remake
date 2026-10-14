@@ -36,11 +36,11 @@ try{
   equal(duel._drivingSurface(10500,-18,duel.state.opponents[0].car??duel.car,true,'winter').gripKind,open.gripKind,'shared CPU query reads the same branch');
   equal(duel.course.gripKindAt(10500,0),duel.course.script.surfaceAt(10500),'protected Gallery surface is unchanged');
   const galleryIce=[
-    {id:'gallery-ice-entry',kind:'ice',shaded:true,s0:10170,s1:10190,from:-5,to:5},
-    {id:'gallery-ice-curve',kind:'ice',shaded:true,s0:10570,s1:10590,from:-5,to:5},
+    {id:'gallery-ice-entry',kind:'ice',shaded:true,s0:10170,s1:10200,from:-5,to:5},
+    {id:'gallery-ice-curve',kind:'ice',shaded:true,s0:10570,s1:10600,from:-5,to:5},
   ];
   equal(SUMMIT_RUN.surfacePatches.filter(row=>row.id.startsWith('gallery-ice-')),galleryIce,
-    'first bounded attempt is exactly two shaded twenty-metre main-road patches');
+    'second and final bounded attempt is exactly two shaded thirty-metre main-road patches');
   const inGalleryIce=at=>galleryIce.some(patch=>at>=patch.s0&&at<=patch.s1);
   for(let at=10100;at<=10900;at+=10)equal(duel.course.gripKindAt(at,0),
     inGalleryIce(at)?'ice':duel.course.script.surfaceAt(at),'main road differs only at the two approved ice stations');

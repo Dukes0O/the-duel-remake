@@ -109,3 +109,15 @@ Root must review before any native benchmark. Report Gallery, clear Open and dri
 ### Removed
 
 Only the main-road assertion's superseded dry expectation inside the two expressly approved ice intervals is replaced. Every sample and its old expectation elsewhere remains. No table, model, old patch, physical geometry, driver or failure evidence is removed.
+
+## First ice result and second, final proposal
+
+Root's single native attempt on e9ec0a84 passed 340 controlled checks, then exited 1 in 13251.5411 ms. Gallery was 15.189181150571443 s in both conditions, clear Open 14.979751593362522 s and drift Open 21.28148005489382 s. The clear difference -0.20942955720892087 s fails the unchanged -1.6 to -0.8 s band. The drift difference +6.092298904322377 s passes its unchanged 3.5 to 6.5 s band. All four races completed with equal paired entry and no crashes, resets or hits. Actual clear/after corridor witnesses are retained in ice20-e9ec0a84. No timing acceptance is claimed.
+
+Gallery was about 0.0087 s faster than the corrected asphalt baseline, so its loss is below Claude's 0.6 s condition for the second attempt. Extend only gallery-ice-entry.s1 from 10190 to 10200 and gallery-ice-curve.s1 from 10590 to 10600. Starts, lateral -5 to 5, shaded ice kind and every other authored/shared value remain exact. The existing descriptor expectations and their attempt label change to the same thirty-metre ranges; all boundary, main/Open, after-phase, route and safety checks remain. This is the second and final attempt; no third guess follows.
+
+The broader plan's 18.4–19.2 s Gallery figure also remains unmet; this proposal does not claim it passed or silently waive it. The current card's clear/drift route-gap assertions remain exact. Second-source checks, native benchmark, nearby gate, build and fixture capture are UNRUN at freeze, pending Root review and GO. No new art, pillar hook, table, driver, event, seed or geometry change.
+
+### Removed
+
+Only the first attempt's two twenty-metre end values and matching descriptor expectations are replaced. Its original failed packet remains for the decision; no old assertion, target or other source path is removed.
