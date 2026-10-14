@@ -6,7 +6,7 @@
   "license": "Original project geometry; no third-party donor",
   "units": "metres",
   "axes": "+Y up, +Z front; Blender conversion (x,-z,y), glTF export_yup=true",
-  "state": "source-prepared; exports and art verdict unrun",
+  "state": "exports measured; art verdict unrun",
   "textures": "none; geometric normals and scalar PBR materials",
   "materials": {
     "steel": {"color": [0.32, 0.36, 0.38, 1], "metallic": 0.82, "roughness": 0.31},

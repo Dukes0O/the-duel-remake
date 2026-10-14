@@ -291,11 +291,125 @@
     "recipe": "tools/blender/heli-accessories.py",
     "parameters": "tools/art/heli-accessories.json",
     "decision": "Claude 3e034b28 / Director 8c912a66",
-    "state": "source-prepared",
-    "exported": false,
+    "state": "exported-review-pending",
+    "exported": true,
     "artAccepted": false,
     "donorsUsed": false,
-    "supersedes": "Only the unselected hook-block, helipad-h and fuel-pump donor suggestions; their provenance is retained."
+    "supersedes": "Only the unselected hook-block, helipad-h and fuel-pump donor suggestions; their provenance is retained.",
+    "exports": [
+      {
+        "id": "cargo-hook",
+        "path": "public/assets/heli/cargo-hook.glb",
+        "bytes": 41748,
+        "sha256": "0d9b8524390d901aff67d35f945a03a713a0e3bd7709beb1411a39ead157e3df",
+        "min": [
+          -0.115129254758358,
+          -0.4000000059604645,
+          -0.02502809837460518
+        ],
+        "max": [
+          0.09477625042200089,
+          0,
+          0.02502809837460518
+        ],
+        "sizeM": [
+          0.2099055051803589,
+          0.4000000059604645,
+          0.05005619674921036
+        ],
+        "triangles": 2108,
+        "nodes": [
+          "Scene",
+          "cargo_hook",
+          "attachment_eye",
+          "forged_hook",
+          "safety_latch",
+          "swivel"
+        ],
+        "textures": 0,
+        "images": 0,
+        "animations": 0
+      },
+      {
+        "id": "helipad",
+        "path": "public/assets/heli/helipad.glb",
+        "bytes": 84492,
+        "sha256": "e2fba42ee52fa5b1922c825aa7f4fb9f44b22d6ada5da4b63c45d7881276685c",
+        "min": [
+          -7,
+          -0.12099999934434891,
+          -7
+        ],
+        "max": [
+          7,
+          0,
+          7
+        ],
+        "sizeM": [
+          14,
+          0.12099999934434891,
+          14
+        ],
+        "triangles": 1346,
+        "nodes": [
+          "Scene",
+          "helipad",
+          "pad_base",
+          "paint_H_bridge",
+          "paint_H_left",
+          "paint_H_right",
+          "paint_ring"
+        ],
+        "textures": 0,
+        "images": 0,
+        "animations": 0
+      },
+      {
+        "id": "fuel-pump",
+        "path": "public/assets/heli/fuel-pump.glb",
+        "bytes": 98140,
+        "sha256": "d50c46cf94dafeeca9993def01ac344c1b5371fc16612a628554f806dd5757f7",
+        "min": [
+          -0.44999998807907104,
+          0,
+          -0.3499999940395355
+        ],
+        "max": [
+          0.789376437664032,
+          1.8700000047683716,
+          0.5723533630371094
+        ],
+        "sizeM": [
+          1.239376425743103,
+          1.8700000047683716,
+          0.9223533570766449
+        ],
+        "triangles": 2133,
+        "nodes": [
+          "Scene",
+          "fuel_pump",
+          "base_bolt_1",
+          "base_bolt_2",
+          "base_bolt_3",
+          "base_bolt_4",
+          "display_window",
+          "fuel_hose",
+          "fuel_label",
+          "meter_digits",
+          "meter_head",
+          "nozzle_grip",
+          "nozzle_spout",
+          "nozzle_trigger_guard",
+          "pump_base",
+          "pump_cabinet",
+          "stainless_kick"
+        ],
+        "textures": 0,
+        "images": 0,
+        "animations": 0
+      }
+    ],
+    "inspection": "One Blender export passed unchanged original recipe guards; existing GLTFLoader world bounds/triangles/names/materials agree. Visual acceptance remains unrun."
   },
   "helicopterDownloadPlan": {
     "preferred": "light-piston",

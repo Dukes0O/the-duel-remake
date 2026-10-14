@@ -107,3 +107,14 @@ shipped in `public/`.
   is also a colour reference, not the grouper mesh donor. Those optional
   scan downloads remain unavailable (401). Kyle may supply better sources
   for DEEP-ART-FINAL; these authored/refitted assets remain working art.
+
+## Original helicopter accessories (HELI-ART-SRC)
+
+`public/assets/heli/cargo-hook.glb`, `helipad.glb` and `fuel-pump.glb` are
+original geometry for The Duel, made from the rebuildable Blender recipe
+`tools/blender/heli-accessories.py` and its parameters in
+`tools/art/heli-accessories.json`. The forged hook, painted H pad and clean
+aviation pump use scalar PBR materials and no external mesh or texture donor.
+No helicopter donor is included in these three accessories. Their source and
+export measurements are recorded in `tools/art/heli-source-candidates.json`;
+actual accessory art acceptance is still pending.

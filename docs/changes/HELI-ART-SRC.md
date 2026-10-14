@@ -38,7 +38,7 @@ generic JET A label, hose and nozzle. No manufacturer or operator marks.
 Declared mesh ceilings are 4,000/1,500/6,000 triangles; textures are absent.
 These are source budgets, not measured exports or an art verdict.
 
-The generator will measure actual finished mesh bounds, triangles, names and
+The generator measures actual finished mesh bounds, triangles, names and
 used textures before each export. It exports only the three selected prop
 roots/meshes, never cameras, lights, animation, .blend files or raw renders.
 Its source clamps Blender threads to four after every scene reset. The
@@ -53,11 +53,26 @@ All previous donor provenance and eight cache receipt rows remain intact.
 The old accessory donor proposals are marked as superseded by the original
 recipe, without deleting licensed originals or pretending those donors shipped.
 
-Source preparation only. Blender/export/render, model measurements, pictures,
-formal art round, native views, lane gate and build are UNRUN. No public asset
-or credits paragraph is written before Root's explicit export GO. Claude still
-judges the actual accessory pictures within the three-round cap. No release,
-push, live folder/port or real save access. Changed assertions: none.
+Root reviewed fbe27f80 and granted one export. Actual Blender 4.5.13 LTS export
+passed all unchanged contract guards, exit 0 in 1612.7317 ms, threads four.
+The actual GLBs also loaded through the existing GLTFLoader: world bounds,
+primitive triangle counts, named parts and scalar PBR materials agree. All
+three have zero textures/images/animations. The hook is 2108 triangles and
+41748 bytes, height .400000006 m below top y=0. The pad is 1346 triangles and
+84492 bytes, size 14 × .120999999 × 14 m, top y=0; real H bars are .7 m wide
+and 5.4 m long along +Z. The pump is 2133 triangles and 98140 bytes, size
+1.2393764 × 1.8700000 × .9223534 m, base y=0 and meter/label facing +Z.
+Hashes, actual node lists and bounds are in the owned candidate packet.
+
+Raw export stdout/receipt and actual GLB inspection are in integration
+.evidence/2026-10-14/HELI-ART-SRC/accessories-fbe27f80. No guard, threshold,
+recipe geometry or source input changed; no repeated export. Only these three
+runtime GLBs and their original-geometry credits paragraph are added after
+Root's explicit GO. No shared catalogue row or helicopter asset is added.
+Render, comparison sheet, formal art round, native views, lane gate and build
+remain UNRUN. Numeric/source compliance is not Claude's art acceptance, which
+remains pending within the three-round cap. No release, push, live folder/port
+or real save access. Changed assertions: none.
 
 ## Removed
 
