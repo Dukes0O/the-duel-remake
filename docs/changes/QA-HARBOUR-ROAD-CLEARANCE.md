@@ -20,3 +20,8 @@ Removed only this lane's failed midpoint-heading sweep override, restoring the i
 ## Radius 10 geometry and approved scene capture
 
 Root's independent source review is clear. The original focused test-circuits.mjs passed on 4a2c1c9e: 116894 checks across 20 events and four seeds, exit 0, wall 64227.7844 ms under concurrent foreign gates. Every original assertion and probe remains intact. The existing world-composition --capture completed with immutable features, exit 0, wall 37578.8062 ms. All 19 other captured scene rows match their existing fixtures exactly. Only Claude's pre-approved Harbour fixture changes, to hash 0ec4194da979120d71138537d38a0f34ab87abf9dbe0a02c41f2b6b2adab4d9c (1134 nodes, 1117 meshes, 223085 instances; geometry/material/texture counts unchanged). This is a measured radius change, not blind signature regeneration or new visual acceptance. Outputs are in this lane's ignored .qa-dist/harbour-radius10-* logs and receipts. The reference rebuild, canonical nearby tier and build remain UNRUN pending the shared check slot.
+
+
+## Complete native reference rebuilt
+
+The existing single-event build-reference-laps tool completed unchanged on 634573f5, exit 0, wall 6888.8496 ms. It validated its required three native laps and published only Harbour's complete fixed record: 77613 ms, 204 samples, track-v1-f64d259d. Car, Club driver, Medium, seed 1989 and fixture version 1 retain the tool's ordinary policy. The previous record was 77700 ms, track-v1-0873f8fe. No partial/probe record, fitted time, other course output or driver setting changes. Source, own measured reference and approved scene fixture are now ready for the canonical nearby gate and build; neither has run yet. No merge, frame or release pass is claimed.
