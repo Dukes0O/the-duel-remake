@@ -110,9 +110,11 @@ tasks:
     owner: "codex"
     lane: "AUDIO"
     size: "M"
-    status: "review"
+    status: "building"
     needs: [AUD-14, AUD-17]
-    locks: []
+    locks: [busy-game-files, sound-bank]
+    claimed_by: codex-aud-mix-2026-10-14
+    branch: codex/aud-15-p1-mix
     details: "docs/board/cards/AUD-15-P1.md"
 
 
