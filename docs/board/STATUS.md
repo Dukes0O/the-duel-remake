@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T15:25:27.991Z
+Observed at: 2026-10-14T15:42:35.265Z
 
-Observation commit: 6b8f5769ea2201a42605f4218cbbaa056f14231b
+Observation commit: 70e9761e9066deaf56e12689968310a0b317ad22
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 6b8f5769ea2201a42605f4218cbbaa056f14231b
+Integration HEAD: 70e9761e9066deaf56e12689968310a0b317ad22
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -87,10 +87,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/p4-ardennes | P4-ARDENNES | 2026-10-13T21:34:14-07:00 | 0 | last commit 2026-10-13T21:34:14-07:00 | docs/changes/P4-ARDENNES.md, public/assets/models/CREDITS.md, src/circuit-effects.js, src/circuits/ardennes-forest.js, src/light-path.js |
 | codex/p4-finish | unknown | 2026-10-11T16:22:18-07:00 | 2 | last commit 2026-10-11T16:22:18-07:00 | docs/board/looks/p4-panorama/round-2-review.md, docs/board/looks/p4-panorama/round-2.jpg, docs/board/looks/p4-snow/round-1-review.md, docs/board/looks/p4-snow/round-1.jpg, docs/board/looks/p4-snow/round-2-review.md |
 | codex/p4-qualifying | unknown | 2026-10-10T23:41:37-07:00 | 3 | uncommitted changes; exact activity time unknown | docs/changes/P4-PIT.md, docs/changes/P4-QUALIFYING.md, src/app.js, src/audio.js, src/game.js |
-| codex/p4-summit | P4-SUMMIT | 2026-10-14T08:11:30-07:00 | 0 | last commit 2026-10-14T08:11:30-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
+| codex/p4-summit | unknown | 2026-10-14T08:28:38-07:00 | 0 | last commit 2026-10-14T08:28:38-07:00 | docs/board/looks/p4-summit/round-1.jpg, docs/board/looks/p4-summit/round-2-review.md, docs/board/looks/p4-summit/round-2.jpg, docs/board/looks/p4-summit/round-3-review.md, docs/board/looks/p4-summit/round-3.jpg |
 | codex/p4-yeti | unknown | 2026-10-13T22:46:01-07:00 | 0 | last commit 2026-10-13T22:46:01-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
 | codex/p4-yeti-native | P4-YETI | 2026-10-14T08:01:05-07:00 | 0 | last commit 2026-10-14T08:01:05-07:00 | docs/changes/P4-YETI.md, tools/scenarios/yeti.mjs |
-| codex/qa-browser-sweep | QA-BROWSER-SWEEP | 2026-10-14T08:21:23-07:00 | 0 | last commit 2026-10-14T08:21:23-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/tollkeeper.mjs, tools/scenarios/track-kits.mjs |
+| codex/qa-browser-sweep | QA-BROWSER-SWEEP | 2026-10-14T08:27:53-07:00 | 0 | last commit 2026-10-14T08:27:53-07:00 | docs/changes/QA-BROWSER-SWEEP.md, tools/scenarios/audio-crash-peak.mjs, tools/scenarios/convoy-raid.mjs, tools/scenarios/grand-prix-pay.mjs, tools/scenarios/tollkeeper.mjs |
 | codex/tools/callback-diagnostics | GATE-CALLBACK-DIAGNOSTICS | 2026-10-04T20:18:20-07:00 | 9 | last commit 2026-10-04T20:18:20-07:00 | docs/changes/GATE-CALLBACK-DIAGNOSTICS.md, tools/scenarios/audio-crash-peak.mjs, tools/test-audio-callback-diagnostics.mjs |
 
 ## Size targets
@@ -104,10 +104,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 17,273,843 B | +0 B | 20,000,000 B |
+| Review `looks/` | 17,721,088 B | +447,245 B | 20,000,000 B |
 | Added bytes in last merge | 24,433 B | +0 B | 5,000,000 B |
 | All `public/` | 288,449,404 B | +0 B | unavailable |
-| Git objects | 397,690,880 B | +128,000 B | unavailable |
+| Git objects | 397,870,080 B | +179,200 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -116,7 +116,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 6b8f5769ea2201a42605f4218cbbaa056f14231b
+- Local integration/wasteland: 70e9761e9066deaf56e12689968310a0b317ad22
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -124,4 +124,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: matches local; cached commit 6b8f5769ea2201a42605f4218cbbaa056f14231b.
+- Remote origin/integration/wasteland: matches local; cached commit 70e9761e9066deaf56e12689968310a0b317ad22.

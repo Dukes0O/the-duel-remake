@@ -50,12 +50,16 @@ export function winterLightingSettings(base,{course,distance=0}={}) {
   return changed;
 }
 
-function shadeSnowKits(kits) {
+function shadeSnowKits(kits,course) {
   const materials=new Set();
   kits?.group?.traverse(node=>{
     if(!SNOW_KIT_IDS.includes(node.userData.trackKitId))return;
     for(const material of [].concat(node.material??[])){
-      if(materials.has(material)||!material.name.includes('worn snow'))continue;
+      if(materials.has(material))continue;
+      if(node.userData.trackKitId==='snow-rock'&&course?.def.snowWorld?.rockTint&&material.name.includes('worn stone')){
+        materials.add(material);material.color.set(course.def.snowWorld.rockTint);material.roughness=.96;continue;
+      }
+      if(!material.name.includes('worn snow'))continue;
       materials.add(material);
       // These decoded materials belong solely to this real kit owner.
       material.color.setRGB(.78,.8,.82);material.roughness=.94;
@@ -127,7 +131,7 @@ export function applySnowTerrain(geometry,course){
 }
 // `drifts` (a course's snowWorld.drifts) adds broad soft drifts and fine wind ripples in slightly bluer
 // snow, so open ground has form instead of one flat white.
-export function winterTerrainMaterial(material,drifts=false){
+export function winterTerrainMaterial(material,drifts=false,variation=false){
   const previous=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
   material.onBeforeCompile=shader=>{
     previous.call(material,shader);
@@ -143,9 +147,11 @@ export function winterTerrainMaterial(material,drifts=false){
       float drift=.5+.5*sin(vWinterPosition.x*.043+sin(vWinterPosition.z*.029)*2.1)*sin(vWinterPosition.z*.051+sin(vWinterPosition.x*.025)*1.8);
       float ripple=smoothstep(.55,.95,sin(vWinterPosition.x*.9+sin(vWinterPosition.z*.37)*3.0)*sin(vWinterPosition.z*.6+vWinterPosition.x*.2));
       vec3 cold=vec3(.84,.9,1.0);
-      diffuseColor.rgb*=mix(vec3(1.0),mix(cold,vec3(1.0),drift),clamp(vWinterWeight,0.0,1.0))*(1.0-.05*ripple*clamp(vWinterWeight,0.0,1.0));`:''}`);
+      diffuseColor.rgb*=mix(vec3(1.0),mix(cold,vec3(1.0),drift),clamp(vWinterWeight,0.0,1.0))*(1.0-.05*ripple*clamp(vWinterWeight,0.0,1.0));`:''}${variation?`
+      float blown=.5+.5*sin(vWinterPosition.x*.071+vWinterPosition.z*.037)*cos(vWinterPosition.z*.061);
+      diffuseColor.rgb*=mix(.68,1.08,blown)*clamp(vWinterWeight,0.0,1.0)+(1.0-clamp(vWinterWeight,0.0,1.0));`:''}`);
   };
-  material.customProgramCacheKey=()=>key()+(drifts?'-winter-v1-drifts':'-winter-v1');material.needsUpdate=true;return material;
+  material.customProgramCacheKey=()=>key()+(drifts?'-winter-v1-drifts':'-winter-v1')+(variation?'-authored-variation':'');material.needsUpdate=true;return material;
 }
 export function winterSurfaceMaterial(material,kind){
   if(kind==='ice'){material.color.setRGB(.12,.19,.24);material.roughness=.065;material.metalness=.18;material.envMapIntensity=.9;material.emissive?.set(0);}
@@ -189,12 +195,16 @@ export function snowSceneryPose(tree,events,now,upright=null){
 export function softBankGeometry(course){
   const positions=[],colours=[],indices=[],columns=9,step=1.5;
   const grey=new THREE.Color(.5,.54,.6),white=new THREE.Color(.95,.97,1),mix=new THREE.Color();
-  for(const range of ranges(course))for(const side of [-1,1]){
+  const heaps=course.def.snowWorld?.bankHeaps;
+  const spans=heaps?ranges(course).flatMap(range=>{
+    const rows=[];for(let s=range.from;s<range.to;s+=28)rows.push({from:s,to:Math.min(range.to,s+17)});return rows;
+  }):ranges(course);
+  for(const range of spans)for(const side of [-1,1]){
     const first=positions.length/3,count=Math.max(2,Math.ceil((range.to-range.from)/step));
     for(let i=0;i<=count;i++){
       const s=range.from+(range.to-range.from)*i/count,edge=course.roadHalfWidthAt(s)+.1;
-      const taper=smooth((s-range.from)/24)*smooth((range.to-s)/24);
-      const height=taper*(.55+.4*(.5+.5*Math.sin(s*.09+side))+.18*Math.sin(s*.31+side*2)),width=2.7+.8*Math.sin(s*.05+side*.7),
+      const taper=smooth((s-range.from)/(heaps?3:24))*smooth((range.to-s)/(heaps?3:24));
+      const height=taper*(.55+.4*(.5+.5*Math.sin(s*.09+side))+.18*Math.sin(s*.31+side*2))*(heaps?.35:1),width=(2.7+.8*Math.sin(s*.05+side*.7))*(heaps?.7:1),
         speckle=.04*Math.sin(s*1.9)*Math.sin(s*.77+side);
       for(let k=0;k<columns;k++){
         const t=k/(columns-1),off=side*(edge+width*t),ground=course.groundAt(s,off),point=course.worldAt(s,off);
@@ -218,6 +228,28 @@ export function softBankGeometry(course){
 function addSoftBanks(group,course){
   const mesh=new THREE.Mesh(softBankGeometry(course),new THREE.MeshStandardMaterial({name:'Ploughed snow heaps',vertexColors:true,roughness:.96,side:THREE.DoubleSide}));
   mesh.name='Ploughed snow heaps';mesh.receiveShadow=true;group.add(mesh);
+}
+function addSnowPoles(group,course){
+  if(course.def.snowWorld.snowPoles!==true)return [];
+  const poses=[];
+  for(const range of ranges(course))for(let s=Math.ceil(range.from/50)*50;s<range.to;s+=50)for(const side of [-1,1]){
+    const off=side*(course.roadHalfWidthAt(s)+1.0),ground=course.groundAt(s,off);
+    const y=renderedGroundHeight(course,{...ground,s,off},{requireSurface:true});
+    if(!Number.isFinite(y))throw Error('Snow poles require actual rendered ground.');
+    poses.push({s,off,x:ground.x,y,z:ground.z});
+  }
+  const stem=new THREE.InstancedMesh(new THREE.CylinderGeometry(.045,.055,1.25,6),
+    new THREE.MeshStandardMaterial({color:0xc7c2b2,roughness:.9}),poses.length);
+  const tip=new THREE.InstancedMesh(new THREE.CylinderGeometry(.065,.065,.35,6),
+    new THREE.MeshStandardMaterial({color:0xf36c18,emissive:0xf36c18,emissiveIntensity:.6,roughness:.85}),poses.length);
+  const matrix=new THREE.Matrix4();
+  for(const [i,p] of poses.entries()){
+    stem.setMatrixAt(i,matrix.makeTranslation(p.x,p.y+.625,p.z));
+    tip.setMatrixAt(i,matrix.makeTranslation(p.x,p.y+1.425,p.z));
+  }
+  stem.name='Grounded 50 m snow poles';tip.name='Orange snow pole tips';
+  stem.userData.groundPoses=poses;tip.userData.groundPoses=poses;
+  stem.computeBoundingSphere();tip.computeBoundingSphere();group.add(stem,tip);return [stem,tip];
 }
 function addPonds(group,course){
   const ponds=course.def.snowWorld.ponds??[];
@@ -264,7 +296,7 @@ export function createSnowWorld(course,{kits,high=true}={}){
     !Number.isFinite(row.from)||!Number.isFinite(row.to)||row.to<=row.from||
     !ranges(course).some(range=>row.from>=range.from&&row.to<=range.to)))
     throw Error('Exposed ridges must lie within one authored winter range.');
-  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);if(course.def.snowWorld.softBanks)addSoftBanks(group,course);shadeSnowKits(kits);
+  const group=new THREE.Group();group.name='Authored snow world';addPonds(group,course);if(course.def.snowWorld.softBanks)addSoftBanks(group,course);shadeSnowKits(kits,course);const poles=addSnowPoles(group,course);
   const rng=makeRng(course.seed^0x5a0f1a),limits=SNOW_LIMITS.high,count=limits.flakes,
     position=new Float32Array(count*3),speed=new Float32Array(count),phase=new Float32Array(count);
   for(let i=0;i<count;i++){position[i*3]=rng.range(-17,17);position[i*3+1]=rng.range(-3,16);position[i*3+2]=rng.range(-18,18);speed[i]=rng.range(.7,1.8);phase[i]=rng.range(0,Math.PI*2);}
@@ -329,6 +361,6 @@ export function createSnowWorld(course,{kits,high=true}={}){
     marks.count=cap.marks;stats.liveMarks=0;for(let i=0;i<cap.marks;i++)if(alpha[i]>0)stats.liveMarks++;marks.visible=stats.liveMarks>0;
     marks.instanceMatrix.needsUpdate=true;markGeometry.attributes.snowAlpha.needsUpdate=true;
   }
-  function dispose(){if(disposed)return;disposed=true;previous.clear();group.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});marks.dispose();group.removeFromParent();group.clear();}
+  function dispose(){if(disposed)return;disposed=true;previous.clear();group.traverse(mesh=>{mesh.geometry?.dispose();mesh.material?.dispose();});marks.dispose();for(const mesh of poles)mesh.dispose();group.removeFromParent();group.clear();}
   return {group,stats,update,dispose};
 }
