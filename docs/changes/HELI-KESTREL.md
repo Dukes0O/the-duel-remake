@@ -10,7 +10,7 @@ CC BY R22 needs an account only Kyle can make).
 - `public/assets/heli/kestrel-one.glb` (539 KB, 12,580 triangles). Not yet
   loaded by the game: `src/heli/heli-scene.js` still draws the stand-in
   until the H1 finishing pass wires the model (handed to that session).
-- Round sheet and review: `docs/board/looks/heli/` (three rounds, closed).
+- Round sheet and review: `docs/board/looks/kestrel-one/` (three rounds, closed).
 
 Tests: lane tier and build. No game code, no assertions changed.
 
