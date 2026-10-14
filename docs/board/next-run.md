@@ -22,8 +22,10 @@ Start from `node tools/board.mjs`. Read each card's "Claude answers" first.
    - P4-AVALANCHE: slow the Gallery to 18.4 to 19.2 s and move the entrance
      pillars;
    - then P4-SUMMIT-ATTACK (medals settled).
-4. **Grand Prix career:** P4-CAREER (variant unlock rule settled), holding
-   `save-shape`. If it merges with time to spare, start P4-VARIANTS.
+4. **Grand Prix career, then variants:** P4-CAREER (variant unlock rule
+   settled), holding `save-shape`, then P4-VARIANTS (Panorama Night and
+   Reverse, Harbour Dusk and Reverse, Tremblant Reverse). Summit items in 3
+   take priority over these whenever they need the same lock.
 5. **Hold:** QA-AUDIO-CLOCK, QA-TITAN-REPLAY-TIMEOUT and DISC wait until items
    1 to 4 are merged.
    - The Deep beyond its art and sound waits for Kyle's storyboard with
@@ -45,6 +47,11 @@ without an answer, AGENTS rule 16's backup applies.
     target 1:30 to 1:45 with no stop.
   - P4-FINISH-TREMBLANT: Snow corners at 9, 0 and 17 mph; target no corner
     under 20 mph.
+
+  - P4-FINISH-SUMMIT, as soon as P4-SUMMIT and the avalanche timing merge:
+    pale Gallery roof, town lights below the Ledge, lit hut and observatory
+    windows, snow tone, views and cue listening, then the frame check. The aim
+    is Summit Run ready for Kyle's "go live" on 14 October.
 
   Claude owns these course values. A Claude helper works in its own lane
   and counts as one of the six build lanes.
