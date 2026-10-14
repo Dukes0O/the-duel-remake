@@ -480,6 +480,7 @@ tasks:
     branch: "codex/heli-art-src"
     needs: [HELI-PACKET]
     locks: []
+    waiting_on: claude
     flag: "helicopter"
     details: "docs/board/cards/HELI-ART-SRC.md"
 
