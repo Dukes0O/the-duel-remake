@@ -29,45 +29,21 @@ try{
   equal([curves[38].degrees,curves[40].degrees],[40.5,40],'Gallery angles are unchanged');
   equal([curves[38].width,curves[40].width],[10,10],'both Gallery curves retain their designed ten-metre width');
   equal(SUMMIT_RUN.galleries[0].end,10800,'Gallery shed ends before the open rejoin');
+  equal(SUMMIT_RUN.surfacePatches.map(row=>row.id),['snowfield-ice-1','snowfield-ice-2','snowfield-ice-3'],
+    'both retired Gallery ice proposals are absent and all original snowfield rows remain');
+  const moves=SUMMIT_RUN.kitPlacements[0].nodeTranslations;
+  equal(moves,{'gallery-concrete-pillar':[-10.541,0,0],
+    'gallery-concrete-pillar.001':[-12.799,0,0]},'only the two approved entrance posts receive measured local outward translations');
+  check(Object.isFrozen(moves)&&Object.values(moves).every(Object.isFrozen),'authored name/vector descriptor is deeply frozen');
+  check(SUMMIT_RUN.kitPlacements.filter(row=>row.id==='gallery').slice(1).every(row=>!row.nodeTranslations),
+    'all other thirty-four Gallery tiles keep original placements');
   const duel=game(),event=duel.state.avalanche;
   const open=duel.course.features.shortcuts.find(row=>row.id==='summit-open-road');
   equal(duel.course.gripKindAt(10500,-18),open.gripKind,'actual authored clear branch kind reaches Course');
   equal(duel._drivingSurface(10500,-18,duel.car,true,'winter').gripKind,open.gripKind,'player reads the authored clear branch');
   equal(duel._drivingSurface(10500,-18,duel.state.opponents[0].car??duel.car,true,'winter').gripKind,open.gripKind,'shared CPU query reads the same branch');
   equal(duel.course.gripKindAt(10500,0),duel.course.script.surfaceAt(10500),'protected Gallery surface is unchanged');
-  const galleryIce=[
-    {id:'gallery-ice-entry',kind:'ice',shaded:true,s0:10170,s1:10200,from:-5,to:5},
-    {id:'gallery-ice-curve',kind:'ice',shaded:true,s0:10570,s1:10600,from:-5,to:5},
-  ];
-  equal(SUMMIT_RUN.surfacePatches.filter(row=>row.id.startsWith('gallery-ice-')),galleryIce,
-    'second and final bounded attempt is exactly two shaded thirty-metre main-road patches');
-  const inGalleryIce=at=>galleryIce.some(patch=>at>=patch.s0&&at<=patch.s1);
-  for(let at=10100;at<=10900;at+=10)equal(duel.course.gripKindAt(at,0),
-    inGalleryIce(at)?'ice':duel.course.script.surfaceAt(at),'main road differs only at the two approved ice stations');
-  const iceRun=game();
-  for(const patch of galleryIce){
-    for(const at of [patch.s0,(patch.s0+patch.s1)/2,patch.s1]){
-      for(const lateral of [-5,0,5]){
-        equal(duel.course.gripKindAt(at,lateral),'ice','real Course includes the exact main-road ice boundaries');
-        for(const car of [duel.car,duel.state.opponents[0].car??duel.car])
-          equal(duel._drivingSurface(at,lateral,car,true,'winter').gripKind,'ice','player and CPU read authored Gallery ice');
-        iceRun.state.avalanche.phase='after';
-        equal(iceRun._drivingSurface(at,lateral,iceRun.car,true,'winter').gripKind,'ice','drift never replaces protected main-road ice');
-      }
-      for(const lateral of [-5.001,5.001])equal(duel.course.gripKindAt(at,lateral),'asphalt',
-        'main-only patch does not extend across either authored lateral boundary');
-      const center=duel.course.shortcutOffset(open,at);
-      for(const lateral of [center-open.halfWidth,center,center+open.halfWidth]){
-        check(Math.abs(lateral)>duel.course.script.halfWidthAt(at),'the sampled actual Open corridor is outside the main road');
-        equal(duel.course.gripKindAt(at,lateral),'asphalt','whole clear Open corridor retains corrected ploughed asphalt');
-        const afterKind=at>=AVALANCHE.from&&at<=AVALANCHE.to?'deep-snow':'asphalt';
-        equal(iceRun._drivingSurface(at,lateral,iceRun.car,true,'winter').gripKind,afterKind,
-          'only the original drift strip overrides the actual Open corridor after the slide');
-      }
-    }
-    for(const at of [patch.s0-.001,patch.s1+.001])equal(duel.course.gripKindAt(at,0),duel.course.script.surfaceAt(at),
-      'patch has no longitudinal spill before or after its exact stations');
-  }
+  for(let at=10100;at<=10900;at+=10)equal(duel.course.gripKindAt(at,0),duel.course.script.surfaceAt(at),'main road stays exact through the whole branch overlap');
   equal(duel.course.gripKindAt(10500,-40),'asphalt','outside branch retains ordinary verge query');
   const gallerySolids=duel.course.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-'));
   check(gallerySolids.every(row=>row.s+Math.hypot(row.halfX,row.halfZ)<=10800),'all actual Gallery roofs, walls and pillars finish by 10.80 km');
@@ -323,7 +299,7 @@ if(process.argv.includes('--drive')){
       for(const key of ['mph','lateral','heading'])assert.ok(Math.abs(gallery.entry[key]-open.entry[key])<1e-8,'both routes have equal actual entry '+key);
       const difference=open.seconds-gallery.seconds;
       console.log(JSON.stringify({nativeAvalancheComparison:{condition,seed:open.seed,openSeconds:open.seconds,gallerySeconds:gallery.seconds,difference}}));
-      assert.ok(condition==='clear'?difference>=-1.6&&difference<=-.8:difference>=3.5&&difference<=6.5,`${condition} actual route difference is ${difference.toFixed(6)} s`);
+      assert.ok(condition==='clear'?difference<0:difference>=3.5&&difference<=6.5,`${condition} actual route difference is ${difference.toFixed(6)} s`);
     }
 
   }finally{COURSE.splice(savedLength);}

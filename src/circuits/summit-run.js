@@ -13,6 +13,12 @@ export const SUMMIT_GALLERY_BOUNDS=Object.freeze([
   {name:'gallery-solid-uphill-back',min:[5.699999809265137,0,-3],max:[6.5,4.619999885559082,3]},
 ].map(row=>Object.freeze({...row,min:Object.freeze(row.min),max:Object.freeze(row.max)})));
 const galleryRoof=SUMMIT_GALLERY_BOUNDS.find(row=>row.name==='gallery-heavy-concrete-roof');
+// Actual High/LOD outer posts clear the Open edge by at least 1.5 m.
+// Keep the original whole-tile anchor and every other named face unchanged.
+const galleryEntranceTranslations=Object.freeze({
+  'gallery-concrete-pillar':Object.freeze([-10.541,0,0]),
+  'gallery-concrete-pillar.001':Object.freeze([-12.799,0,0]),
+});
 const road = [
   ['straight',470,{name:'Start Straight'}],
   ['turn','L',26.5,200],
@@ -119,9 +125,6 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {id:'snowfield-ice-1',kind:'ice',shaded:true,s0:at(30)+60,s1:at(30)+80},
     {id:'snowfield-ice-2',kind:'ice',shaded:true,s0:at(32)+60,s1:at(32)+80},
     {id:'snowfield-ice-3',kind:'ice',shaded:true,s0:at(36)+60,s1:at(36)+80},
-    // Meltwater freezes in the Gallery's shade, on the main road only.
-    {id:'gallery-ice-entry',kind:'ice',shaded:true,s0:10170,s1:10200,from:-5,to:5},
-    {id:'gallery-ice-curve',kind:'ice',shaded:true,s0:10570,s1:10600,from:-5,to:5},
   ],
   roadBranches:[{id:'summit-open-road',start:10100,end:10900,side:-1,offset:18,halfWidth:6,surface:'paved',gripKind:'asphalt'}],
   galleries:[{id:'summit-gallery',start:10170,end:10800,width:5,roofWidth:7.8,flatRoof:true,height:galleryRoof.min[1]*1.1,collisions:SUMMIT_GALLERY_BOUNDS}],
@@ -140,7 +143,8 @@ export const SUMMIT_RUN=defineScriptedCourse({
     {piece:'summit-hut',points:[[0,1.5,1.1]],colour:0xffd392,size:1.2,strength:.8}],
   mergeKitMeshes:['gallery'],
   kitPlacements:[
-    ...Array.from({length:35},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3]})),
+    ...Array.from({length:35},(_,index)=>({id:'gallery',s:10176+index*18,lateral:0,heading:0,scale:[1.2,1.1,3],
+      ...(index===0?{nodeTranslations:galleryEntranceTranslations}:{})})),
     {id:'summit-hut',s:finish-130,lateral:28,heading:-Math.PI/2,scale:1},
     {id:'observatory',s:finish-60,lateral:-40,heading:Math.PI/2,scale:1},
   ],

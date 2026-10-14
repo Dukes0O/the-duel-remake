@@ -84,11 +84,12 @@ for(const bounds of SUMMIT_GALLERY_BOUNDS){
   const row=SUMMIT_RUN.kitPlacements.find(row=>row.id==='gallery'),frame=course.groundAt(row.s,row.lateral);
   const actor=course.features.obstacles.find(actor=>actor.sourceBounds===bounds.name&&actor.kitS===row.s);
   assert.ok(actor,`${bounds.name} has a real physical collider`);
-  const xLocal=(accessor.min[0]+accessor.max[0])*.5*row.scale[0],zLocal=(accessor.min[2]+accessor.max[2])*.5*row.scale[2];
+  const move=row.nodeTranslations?.[bounds.name]??[0,0,0];
+  const xLocal=((accessor.min[0]+accessor.max[0])*.5+move[0])*row.scale[0],zLocal=((accessor.min[2]+accessor.max[2])*.5+move[2])*row.scale[2];
   const x=frame.x+Math.cos(frame.heading)*xLocal+Math.sin(frame.heading)*zLocal;
   const z=frame.z-Math.sin(frame.heading)*xLocal+Math.cos(frame.heading)*zLocal;
   assert.ok(Math.hypot(actor.x-x,actor.z-z)<1e-8,'actual post/roof position follows the displayed tile transform');
-  assert.equal(actor.minY,frame.y+accessor.min[1]*row.scale[1]);
+  assert.equal(actor.minY,frame.y+(accessor.min[1]+move[1])*row.scale[1]);
   assert.equal(actor.height,(accessor.max[1]-accessor.min[1])*row.scale[1]);
   if(bounds.name.includes('pillar'))assert.ok(Math.abs(zLocal)>7,'visible pillars are at the tile ends, not the old centre collider');
 }
