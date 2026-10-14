@@ -15,6 +15,7 @@ import {addCircuitEffects} from '../src/circuit-effects.js';
 import {syncScene} from '../src/scene-systems.js';
 import {disposeTree} from '../src/world.js';
 import {renderedGroundHeight} from '../src/rendered-ground.js';
+import {terrainGeometry, farTerrainGeometry} from '../src/world-surfaces.js';
 import {createTrackKits} from '../src/track-kits.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {readFileSync} from 'node:fs';
@@ -396,4 +397,20 @@ test('native first-lap mist endpoints do not depend on lap choice or presentatio
   }
   assert.deepEqual(banks.map(bank => bank.position.toArray()), positions);
   disposeTree(world);
+});
+
+test('gravel-only terrain builds finite native vertex colours without fallen leaves', () => {
+  const course = new Course(ARDENNES_FOREST, 1989);
+  const before = JSON.stringify(ARDENNES_FOREST.groundLeaves);
+  assert.equal(ARDENNES_FOREST.groundLeaves.strength, 0);
+  assert.equal(ARDENNES_FOREST.groundLeaves.colours, undefined, 'no extra fallen-leaf palette is authored');
+  for (const build of [terrainGeometry, farTerrainGeometry]) {
+    const geometry = build(course);
+    try {
+      const colours = geometry.getAttribute('color');
+      assert.ok(colours?.count > 0, 'the actual native terrain has vertex colours');
+      assert.ok([...colours.array].every(Number.isFinite), 'every actual native colour component is finite');
+    } finally {geometry.dispose();}
+  }
+  assert.equal(JSON.stringify(ARDENNES_FOREST.groundLeaves), before, 'native terrain does not change authored metadata');
 });

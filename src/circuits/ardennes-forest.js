@@ -168,7 +168,7 @@ export const ARDENNES_FOREST = Object.freeze({
     ]),
   }),
   // Gravel and grass colour only. The road and run-off grip stay unchanged.
-  groundLeaves: Object.freeze({gravel: Object.freeze({colour: Object.freeze([.64, .61, .54]),
+  groundLeaves: Object.freeze({strength: 0, gravel: Object.freeze({colour: Object.freeze([.64, .61, .54]),
     width: 12, fade: 8, ends: 24, grass: Object.freeze([.56, .76, .52]), to: 55})}),
   kitPlacements: Object.freeze([...paddock(), ...safety(), ...landmarks()]),
 });

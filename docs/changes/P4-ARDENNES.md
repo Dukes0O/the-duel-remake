@@ -37,3 +37,9 @@ The first native view packet failed before any picture: it timed out waiting for
 Under Root's narrow correction grant, only these duplicate visual pit-wall kit rows are removed. The existing native divider continues to draw and collide at its original positions; road, pit options, simulation and all clearance assertions remain exact. This avoids a second visual wall instead of moving the native divider or loosening a guard. A corrected validator and view packet remain pending.
 
 Removed: the duplicate Ardennes visual pit-wall kit rows. The original native divider is retained.
+
+## Native gravel-only metadata correction
+
+After duplicate divider removal, all 2298 actual High/LOD placements passed the unchanged kit validator. The corrected native packet still produced no pictures: actual environment construction threw at fallenLeaves in world-surfaces.js because this course authored gravel without a fallen-leaf palette. The optional block defaults to leaf strength .8 when its strength is absent.
+
+Under Root's exact metadata grant, Ardennes explicitly sets strength 0 and retains its gravel object unchanged. All shared terrain code and other-course defaults stay exact. A new existing-test case builds the actual near and far terrain, checks every native vertex colour is finite, and proves authored metadata remains unchanged. Neither previous native failure is a pass. The corrected targeted test and native views remain pending.
