@@ -215,7 +215,8 @@ braking into the turn, which leaves only 80% of the cornering grip, or turn
 in too fast. Either way the tyres go past their best grip, they slide, the
 car runs wide and the slide rubs off speed. The screech is that slide. The
 lesson's own test (section 10) requires the late try to screech at least
-0.5 s and either lose at least 0.25 s or leave the road, on both corners; TYRE-SLIP's test 8
+0.5 s and either lose at least 0.25 s or end against the wall or off the road,
+on both corners; TYRE-SLIP's test 8
 checks a similar late entry. Without TYRE-SLIP the lesson would show a
 screech that costs nothing, which is why lesson 1 waits for it.
 
