@@ -368,7 +368,9 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-browser-pins-2026-10-14"
+    branch: "codex/qa-browser-pins"
     needs: []
     details: "docs/board/cards/QA-BROWSER-SWEEP.md"
 
