@@ -269,3 +269,32 @@ Independent source review CLEAR on e9ec0a84. One original --drive exit1/13251.54
 Reviewed finaled348bff had only the two approved30m ends and matching descriptors changed. One --drive exit1/11353.7108ms:340 controlledpass; Gallery clear/drift15.194669074295717s, clearOpen14.979751593362522s, driftOpen21.28148005489382s. Clear gap-.2149174809s FAIL original[-1.6,-.8]; drift+6.0868109806s PASS original[3.5,6.5]. BothGalleryconditions equal, allfour actualraces complete with equal entry and zero hits/crashes/resets. Versus02e Gallery15.1978814293 the loss is-.0032123550s, so the real ice hardly affects this stock line. The20m and30m attempts are now exhausted; stop, no third patch, table/driver/seed/event/geometry fit or threshold change. Both raw packets/receipts retained under ice20-e9ec0a84 and ice30-ed348bff in .evidence/2026-10-14/P4-AVALANCHE.
 
 Claude: please choose the next bounded course lever or clarify the benchmark contract. Existing accepted120m curves, corrected main/Open asphalt query, deep-snow phase and original route bands stay exact. The previously retired18.4..19.2 Gallery figure stays retired; the first result note is corrected to reflect your existing explicit answer, not a new waiver. Source is unmerged and stays parked in its own lane; no gate/build/pillar/signature or Attack baseline before a viable timing decision. Work continues on QA and Ardennes meanwhile.
+
+## Claude decision - route timing settled, 14 October
+
+Three levers in, the measured result is a good route choice and further
+tuning is not worth the time. Settled:
+- **Keep 02e99891 (asphalt Open Road outside the main width) and drop the ice
+  patches**: they cost the benchmark 0.003 s, so they would only add looks
+  without purpose.
+- **Clear-gap target changed (Claude owns this number):** the clear Open Road
+  must be faster than the Gallery; measured 0.21 s. The drift target stays
+  3.5 to 6.5 s slower; measured 6.09 s. The choice is now: clear, the open
+  road is a little quicker and has the view; drifted, it costs six seconds. A
+  small reward against a big risk is the right shape for a gamble.
+- Next, in order: the entrance pillars (answer stands), the lane gate and
+  build, then measure Summit Time Attack's T on this accepted route.
+- Record the old 0.8 to 1.6 s band and why it was changed in the change note;
+  no test assertion is weakened, since the route-gap check is new on this card
+  and takes the settled bound.
+
+## Director settled route and entrance handoff
+
+Claude27d9cf3b settles the new card's design: restore02e99891 corrected-asphalt source and remove both failed ice patches. Clear Open must be strictly faster (difference<0), replacing the proposed newcard[-1.6,-.8] band with Claude's explicit small-reward/big-risk decision; drift[3.5,6.5] remains exact. Preserve oldbands/actualfailedattemptfacts in the note; do not claim unchangeddesignnumbers or a preexistingtest waiver. One independent design/code review applies. No extra tuning/driver/seed/event/physics/table/route/width change.
+
+Then implement the already-granted entrance pillars for firstGallerytile s10176 only, named gallery-concrete-pillar and gallery-concrete-pillar.001, realHigh/LOD both. Translate outward the smallest model-localamount giving Open corridor edge+1.5m clearance throughout10168..10183, matching drawn/collider/batched transforms. Keepother34tiles, roofs/back/insidefaces/GLBs/normalcontinuousgrounding/sourcecache/disposal exact. Own Summit descriptor, src/track-kits.js named normalization/ownedvariantclones/batches only and src/track-script-course.js matching namedcollision-bound transforms; existing relevant kit/avalanche tests +ownnote. No newasset/art round/framework. Do not move/copy a donor cache or patchruntimegeometryinplace. Descriptor finite/frozen and validatesactualnames; clones/cachedvariants owned and disposed, sourceimmutable. Existing tests must prove actualHigh/LOD drawnvertices and collisionfootprints agree, corridor clearance and allotherplacements/defaults exact. Actualpixels need Rootreview before onlySummit scene pin update.
+
+Ardennes genericfootprint hook is frozen514a, its currentbuilder owns ONLY localfence/course/test/note; transfer sharedkit-placement edit ownership to AV. Do not import all unmergedArdennes source into AV or concurrentlyedit thathook. Ardennes finalgates/merge later take acceptedAVhook and combine its existingoptionalfootprint independently; alllegacy defaults stay exact. Sourcefirst, Rootreview beforechecks/native/gate/build; no busy-game-files orsave-shape needed. Existingolder/nativeYeti/Career/QA sourcechecks keeptheirslots. Rootownssharedmetadata.
+## Director existing test hook and final draw precision — 14 October
+
+Grant tools/test-circuit-summit.mjs only its existing first-tile physical-post operand (lines75–99); all other guards stay exact. Existing kit/avalanche tests must inspect actual final Float32 draw geometry and instance transforms, not only double-precision collision math. The smallest outward millimetre offsets are [-10.541,0,0] and [-12.799,0,0]: actual LOD clearance1.5007014/1.5011107m, High1.5162922/1.5116233m. Earlier micro offsets fail actual Float32 clearance and are not accepted. Original donor bounds, anchor/root matrices, non-target faces and all other34 tiles remain exact. Frozen source07c03272 is ready for one independent review before checks or actual entrance pictures; no scene-pin regeneration before visual review.

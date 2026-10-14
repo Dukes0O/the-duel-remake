@@ -39,3 +39,60 @@ Own candidate receipts/recipe under tools/art/heli-* and tools/blender/heli-* on
 First prepare twoor three plausible generic real two-seat helicopter starting assets with verifiedlicences, native/sourcepictures, dimensions/triangles/textures/node suitability and concrete gaps; cablehook/helipadH/fuelpump donor options too. Claude judges sourcechoice and rounds (Kyle alreadydelegatedartpicks). Separate actualmain/tail rotor pivotnodes and skids, instrumentpanel/cockpit, cleanKestrelpaint, mainrotor10m, ≤20000triangles/textures≤2K aswritten; do not claim thoseconstraints from a source thumbnail. Proposed exportnames/scale/coordinate/node contract go on this card beforeadaptation if notsettledbycurrentFlyingcode, so ClaudeHELI-VIEW canconsumeit. No art round4, newtestmachinery, freeplan workaroundorproceduralplaceholder.
 
 Initialwork SOURCEONLY: catalog/primarylicense/search/downloadmetadata ifneeded, no Blender/render/build/gate/browser/timing until Rootreviews candidatepacket and explicitlycoordinates freeheavyjobs. Eachlaterjob freshintegrationinbox+ALLnode/blenderinventory, max3heavy/threads≤4; unreachableart hasno framecheck. Buildercommitsownrecipe/change-note source; Rootownssharedboard/inbox/status and review/merge/newfoldercleanup. No release/push/livefolder/5174/realsaves. Allquestions on this card, waiting_onclaude when needed; neverwaitingforKyleartpick byold wording.
+## Claude answers (14 October): the model contract HELI-VIEW reads
+
+Settled from the flying code (`src/heli/heli-flight.js`, `heli-cable.js`)
+so the models drop in without changes there. Adapt to this; ask on this
+card if a source cannot meet a line.
+
+- **Kestrel One, `public/assets/heli/kestrel-one.glb`.** Metres, +Y up,
+  nose toward +Z. Origin on the ground under the main rotor mast: y = 0 at
+  the bottom of the skids, x = 0 on the centre line.
+- **Nodes, named exactly:** `body` (fuselage, cockpit glass, doors),
+  `main_rotor` (pivot at the top of the mast, about 2.85 m up; spins about
+  its own +Y; blades reach 5 m from the pivot), `tail_rotor` (pivot at the
+  tail rotor hub; spins about its own X), `skids`, and two empties:
+  `cable_hook` (belly under the mast, where the cable hangs from) and
+  `pilot_eye` (the right-hand seat, about 1.45 m up, for the cockpit view).
+  An `instrument_panel` mesh inside the cockpit; the readings are drawn
+  separately in the page.
+- **Size:** fuselage about 8.5 m nose to tail rotor, 1.7 m wide; at most
+  20,000 triangles and 2K textures, PBR (base colour, normal, metal and
+  roughness). Paint: Kestrel One, clean, no brand marks.
+- **Cargo hook, `public/assets/heli/cargo-hook.glb`:** origin at the top
+  where the cable meets it, about 0.4 m tall. The cable itself is drawn in
+  code as a line.
+- **Helipad, `public/assets/heli/helipad.glb`:** a 14 m square or circle
+  with a painted H, origin at the centre of its top surface, about 0.15 m
+  thick at most. The H's long strokes run along +Z.
+- **Fuel pump or small fuel truck, `public/assets/heli/fuel-pump.glb`:**
+  origin at its base centre, front toward +Z.
+- The stand-in in `src/heli/heli-scene.js` (HELI-HOOKS) uses the same
+  origin and axes, so the views and the cable line up with no change.
+
+## Candidate packet: accessible donor decision needed — 14 October
+
+Frozen243e1af4 contains only tools/art/heli-source-candidates.json and its change note. Claude's8065f3d6 exact lowercase node/origin/size contract is accepted and replaces the packet's earlier proposed naming. No adaptation or formal art round is used. Preferred CC0 light piston source advertises17460tri/two seats but the page returned503 and CDN DNS fails; actual mesh/pivots/textures remain unverified. Galih Pamungkas/Lopo3D R22 is verified CC BY4.0,9902tri published; actual author picture has two seats/skids/rotors/panel pod, but anonymous download metadata returned401. No account/key was created. The older z3eus CC0 archive is screened out because its cockpit/tail requirements are unproven. Hook/H-pad/pump CC0 leads share the blocked CDN; fitting gaps are documented.
+
+Claude: choose the accessible donor route for the required real two-seat model, or point to an existing legitimately available source that meets your settled contract. Primary URLs/checksums/licence receipts are in the packet and originals only in C:/Users/kyleb/dev/art-library/heli-source-packet. Bounded access diagnosis stopped; no repeat downloads, procedural placeholder, paid/account workaround or guessed mesh compliance. Source packet is reviewable in heli-art-src; card remains incomplete until actual accepted runtime assets and rounds exist. Other cards continue while art choice waits.
+
+## Claude answers - donor route, 14 October
+
+- **First:** one retry of the preferred CC0 two-seat source after 18:00 today
+  (a 503 and a DNS failure are usually temporary). If it downloads, check it
+  against the contract.
+- **If it is still down:** the Galih Pamungkas / Lopo3D R22 (CC BY 4.0, two
+  seats, skids, rotors, panel pod, 9,902 triangles) is the pick. Its download
+  needs an account, which only Kyle creates: Claude has asked Kyle to download
+  it into `C:/Users/kyleb/dev/art-library/heli-source-packet`. Credit it in
+  `public/assets/models/CREDITS.md` as CC BY 4.0.
+- Hook, helipad and pump: build them in Blender from recipes in
+  `tools/blender/` (simple shapes, no donor needed), within the contract.
+- No placeholder ships as finished; rounds as on the card.
+
+
+## Director answered accessory source scope — 14 October
+
+Resume existing own heli-art-src; Claude3e034b28 permits original Blender recipe accessories. Own new tools/blender/heli-accessories.py, tools/art/heli-accessories.json and own note/source packet ONLY initially. Future outputs only public/assets/heli/cargo-hook.glb, helipad.glb, fuel-pump.glb and additive own original-model credits paragraph after actual export. Build finished simple metal cargo hook(top cable origin,0.4m),14m H pad(top-centre origin,thickness≤0.15m,H along+Z) andclean generic aviation pump(base/front+Z) from recipes, with sensible shared PBR/material/node/triangle/texture bounds. No helicopter geometry/stand-in/donor fabrication or runtimecode. ExactClaude exportcontract remains. No .blend/rawrender/sourcebinary under public; no sharedcatalog rows yet. Sourcefreeze/Rootreview before one Blender export threads4 or lower, originalnearby/jobs4/build and actualcompactround sheet. Actual accessoryart remainsClaude's, cap3; no visual/asset pass from source.
+
+Preferred helicopter retry remains exactly once AFTER18:00PT today; no downloadnow. If unavailable, Claude alreadyasked Kyle for the licensedR22download; onlyKylecreatesaccounts. Retain originals/provenance, waitactuallegitbinarybeforeadaptation. Source accessory work can continue without donor. Builder is notalone, onlynamedownfiles; Rootcoordinatesheavyjobs and owns immediateboard/inbox/STATUS/merge/cleanup.

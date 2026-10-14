@@ -247,6 +247,20 @@ export class Duel {
     return !!this.state.hiddenRoadVisit;
   }
 
+  // The helicopter (docs/HELICOPTER.md): load a course to fly over, with no
+  // race. The 'heli' status holds every race rule still; the helicopter
+  // session runs on its own, outside the race.
+  startHeliVisit(options = {}) {
+    if (!this.featureFlags.enabled('helicopter')) return false;
+    const startStage = COURSE.findIndex(course => course.id === options.courseId);
+    if (startStage < 0) return false;
+    const {courseId, ...race} = options;
+    this.startCampaign({...race, startStage, mode: 'timetrial', opponentCount: 0});
+    this.state.status = 'heli';
+    this.state.heliVisit = {courseId};
+    return true;
+  }
+
   _loadStage(idx) {
     clearDeepJourney(this);
     clearArsenalState(this);
@@ -497,6 +511,7 @@ export class Duel {
   step(dt) {
     const s = this.state;
     if (!Number.isFinite(dt) || dt <= 0 || s.paused) return;
+    if (s.status === 'heli') return;
     // Substeps retain swept collision detection and stable handling after a slow frame.
     if (dt > 0.05) {
       let remaining = Math.min(dt, 1);

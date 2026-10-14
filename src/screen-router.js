@@ -50,7 +50,7 @@ import {createJumpHeightReadout} from './jump-height.js';
 import {createBuildUpdateChecker} from './build-update.js';
 import {DRIVERS, getEquippedDriverId} from './drivers.js';
 import {driverMenuMarkup} from './driver-ui.js';
-import {isCourseUnlocked} from './course-access.js';
+import {isCourseUnlocked,courseUnlockRequirement} from './course-access.js';
 import {parseCareerExport} from './career-backup.js';
 import {importBudgetCareer} from './career-budget.js';
 
@@ -140,7 +140,7 @@ const teamRoom = createTeamRoom({host: root,
   getDossier(eventId) {
     if (!app._switches().enabled('grand-prix') || !['menu', 'stage_result', 'complete'].includes(app.duel.state.status)) return null;
     const definition = COURSE.find(course => course.id === eventId);
-    if (!definition || definition.closed === false || !isCourseUnlocked(profile(), definition)) return null;
+    if (!definition || definition.closed === false || courseUnlockRequirement(definition) || !isCourseUnlocked(profile(), definition)) return null;
     const selectedRoute = app.duel.state.status === 'menu' ? app.menuRouteId
       : getRouteVariantForSeed(app.duel.state.seed)?.id ?? app.menuRouteId;
     const route = supportsRouteVariants(definition) ? selectedRoute : 'fixed';
@@ -266,6 +266,7 @@ root.addEventListener('click',e => {
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
+    case 'heli-visit': if(app.duel.state.status!=='menu'||!app.heliAvailable?.())return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitHeli();lastScreen=null;break;
     case 'start': armoryOpen = coursesOpen = garageOpen = playersOpen = leaderboardOpen = false; app.startCampaign(choices); break;
     case 'courses':if(app.duel.state.status!=='menu')return;coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='';lastScreen=null;break;
     case 'courses-close':coursesOpen=false;lastScreen=null;break;
