@@ -1096,3 +1096,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 14 October: HELI-CABLE merged (src/heli/heli-cable.js, autopilot speed ramp and anti-sway; test-heli-cable 87 checks); lane 21/21 jobs4 250.04 s, build passed; review found 2 faults, fixed and confirmed; lane deleted.
 
 14 October: QA consumed recipes03146282 merged;19/19/jobs4/build838ms/review clear, current Salt four actual gameplay entries/eight images green; three old art recipes removed, manual frame excluded from all.
+
+14 October: AUD own-car mix c3a8ad3c merged;148/148/jobs4/build596ms/review clear, real on/off recordings green/add0.02LU/max5of7; round2 listening with Claude, dev/locks released.
