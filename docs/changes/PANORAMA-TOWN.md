@@ -13,7 +13,7 @@ shopfronts. It is now a country town drawn in code:
   and throws if any part comes within 3 m of a road. `church` draws a
   weatherboard church with a steeple. Window and lamp materials carry
   "window" in their names, so the existing night lighting lights them.
-- `src/circuits/panorama-ridge.js`: `valleyTown()` lays out 60 houses and 8
+- `src/circuits/panorama-ridge.js`: `valleyTown()` lays out 64 houses and 13
   lamps on two streets that bend with the slope (fixed hash, same every
   load), with a square for the church; the 32 shopfront kit placements are
   gone. Looks only: no road, field, rule or record change.

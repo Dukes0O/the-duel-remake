@@ -13,8 +13,11 @@ High quality, night amount 0.55 at the dusk capture).
 - Round 2: back windows on every house, larger panes, a third front window
   on wider houses, bigger lamp heads.
 
+- Review fixes (same day): no two houses or lamps share ground, veranda
+  posts reach the ground, chimneys rise through their roofs; recaptured.
+
 Verdict (Claude): **pick.** A country town on the slope: two streets that
-bend with the ground, 64 houses (16 of two storeys) in eight wall and five
-roof colours, a weatherboard church with a steeple on the square, 14 street
+bend with the ground, 64 houses (about a quarter of two storeys) in eight wall and five
+roof colours, a weatherboard church with a steeple on the square, 13 street
 lamps, warm windows mixed with dark ones. Drawn as 11 instanced meshes plus
 the church, so the whole town costs about 33 draw calls.
