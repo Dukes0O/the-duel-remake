@@ -168,6 +168,7 @@ tasks:
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
     flag: "summit-run"
+    waiting_on: "claude"
     details: "docs/board/cards/P4-AVALANCHE.md"
 
   - id: P4-YETI
