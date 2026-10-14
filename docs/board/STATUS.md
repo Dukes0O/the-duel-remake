@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-14T17:07:07.811Z
+Observed at: 2026-10-14T17:09:28.319Z
 
-Observation commit: 7b11ee19bc639d748602449452aa022a98eb2551
+Observation commit: 9c226c8e5d0ba1e8fc96e603e93f4ff2dc7b05a9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7b11ee19bc639d748602449452aa022a98eb2551
+Integration HEAD: 9c226c8e5d0ba1e8fc96e603e93f4ff2dc7b05a9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -111,7 +111,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 19,126,478 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 64,121 B | +0 B | 5,000,000 B |
 | All `public/` | 290,229,319 B | +0 B | unavailable |
-| Git objects | 401,341,440 B | +29,696 B | unavailable |
+| Git objects | 401,380,352 B | +38,912 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -120,7 +120,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d34bf40f6ef6b0525ead5229e55b2f09d2338852
 - Local main: missing
-- Local integration/wasteland: 7b11ee19bc639d748602449452aa022a98eb2551
+- Local integration/wasteland: 9c226c8e5d0ba1e8fc96e603e93f4ff2dc7b05a9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -128,4 +128,4 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d34bf40f6ef6b0525ead5229e55b2f09d2338852.
 - Remote origin/main: local branch missing; cached commit 8cf7979fa83218d5e15360253e7841ddd18db743.
-- Remote origin/integration/wasteland: behind local; cached commit ceb1b71f555a7f3874ff87a7875680fff1ce20cf.
+- Remote origin/integration/wasteland: matches local; cached commit 9c226c8e5d0ba1e8fc96e603e93f4ff2dc7b05a9.
