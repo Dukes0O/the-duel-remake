@@ -61,6 +61,7 @@ export function lightPathLook(look, theme = 'desert', palette) {
 
 function validPath(path) {
   if (!path || typeof path !== 'object' || path.palette!==undefined&&path.palette!=='mountain-sunset'&&path.palette!=='forest-morning') return false;
+  if (path.wrap !== undefined && (path.axis !== 'distance' || typeof path.wrap !== 'boolean')) return false;
   if (pathCache.has(path)) return pathCache.get(path);
   const frames = path.keyframes;
   let valid = (path.axis === 'distance' || path.axis === 'race-progress') && Array.isArray(frames) && frames.length > 0;
@@ -109,7 +110,8 @@ function sampleAt(path, position, theme, tunnel, output) {
 }
 
 // Native owner entry point: s remains unwrapped for race progress. Only a
-// closed-road distance path wraps; an open-road finish keeps its final look.
+// closed-road distance path wraps by default. An authored wrap:false keeps
+// elapsed distance; an open-road finish keeps its final look.
 export function sampleCourseLightPath(course, {distance = 0, raceLength = course?.raceLength, theme = course?.def?.theme,
   tunnel = false, menu = false} = {}, output) {
   const path = course?.def?.lightPath;
@@ -117,7 +119,7 @@ export function sampleCourseLightPath(course, {distance = 0, raceLength = course
   let at = menu ? 0 : Math.max(0, distance);
   if (path.axis === 'distance') {
     if (!(Number.isFinite(course.length) && course.length > 0)) return null;
-    at = course.closed === false || course.def.closed === false ? Math.min(at, course.length) : at % course.length;
+    if (path.wrap !== false) at = course.closed === false || course.def.closed === false ? Math.min(at, course.length) : at % course.length;
   }
   if (path.axis === 'race-progress' && !(Number.isFinite(raceLength) && raceLength > 0)) return null;
   const position = path.axis === 'race-progress' ? clamp(at / raceLength) : at;

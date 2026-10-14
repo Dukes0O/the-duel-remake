@@ -171,9 +171,8 @@ function addValleyMist(group, course, entries) {
   }
   let previous = -1;
   registerSceneSystem(group, {sync(state) {
-    const laps = state?.lapsTotal ?? course.def.laps;
     const progress = state?.status === 'menu' ? 0 : Math.max(0, Math.min(1,
-      ((state?.completedLaps ?? 0) + course.phase(state?.s ?? 0) / course.length) / Math.max(1, laps)));
+      (state?.completedLaps ?? 0) + course.phase(state?.s ?? 0) / course.length));
     if (progress === previous) return;
     previous = progress;
     for (const bank of banks) bank.material.opacity = bank.opacity * (1 - smooth(progress / bank.fadeEnd));

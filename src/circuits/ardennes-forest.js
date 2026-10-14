@@ -144,18 +144,18 @@ function landmarks() {
 export const ARDENNES_FOREST = Object.freeze({
   ...ARDENNES_ROAD,
   fieldSize: 8,
-  lightPath: Object.freeze({axis: 'race-progress', palette: 'forest-morning', keyframes: Object.freeze([
-    Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: .5, look: 'day'}), Object.freeze({at: 1, look: 'day'}),
+  lightPath: Object.freeze({axis: 'distance', wrap: false, palette: 'forest-morning', keyframes: Object.freeze([
+    Object.freeze({at: 0, look: 'golden'}), Object.freeze({at: road.length, look: 'day'}),
   ])}),
   kitLook: Object.freeze({'autumn-tree': Object.freeze({leafColour: 0x38592c}),
     'lantern-tower': Object.freeze({glow: .15})}),
   effects: Object.freeze({
     stream: Object.freeze({s: (named('Red Water').s0 + named('Red Water').s1) / 2, width: 5, reach: 68, colour: 0x704033}),
     valleyMist: Object.freeze([
-      Object.freeze({s: named('Red Water').s0, lateral: 42, along: 75, across: 25, count: 12, height: 2, opacity: .23, colour: 0xd1ddda, fadeEnd: .5}),
-      Object.freeze({s: named('Riverside').s0, lateral: -42, along: 100, across: 26, count: 12, height: 2, opacity: .2, colour: 0xd1ddda, fadeEnd: .5}),
-      Object.freeze({s: named('Stavelot').s0, lateral: -38, along: 95, across: 22, count: 10, height: 2.5, opacity: .18, colour: 0xd1ddda, fadeEnd: .5}),
-      Object.freeze({s: named('Kestrel Straight').s1 - 70, lateral: 44, along: 110, across: 26, count: 10, height: 22, opacity: .18, colour: 0xe4e9e7, fadeEnd: .5}),
+      Object.freeze({s: named('Red Water').s0, lateral: 42, along: 75, across: 25, count: 12, height: 2, opacity: .23, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Riverside').s0, lateral: -42, along: 100, across: 26, count: 12, height: 2, opacity: .2, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Stavelot').s0, lateral: -38, along: 95, across: 22, count: 10, height: 2.5, opacity: .18, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Kestrel Straight').s1 - 70, lateral: 44, along: 110, across: 26, count: 10, height: 22, opacity: .18, colour: 0xe4e9e7, fadeEnd: 1}),
     ]),
   }),
   // Existing damp asphalt presentation. No tyre or surface-grip change.

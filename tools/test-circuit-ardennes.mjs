@@ -336,3 +336,64 @@ test('courses without Ardennes effects retain their existing scene and owned inp
   assert.equal(JSON.stringify(course.def), before);
   disposeTree(world);
 });
+
+
+test('every actual two-to-six-lap choice clears after lap one and keeps clear light afterward', () => {
+  const added = !COURSE.some(def => def.id === ARDENNES_FOREST.id);
+  if (added) COURSE.push(ARDENNES_FOREST);
+  try {
+    for (const laps of [2, 3, 4, 5, 6]) {
+      const duel = new Duel({seed: 1989, featureFlags: {'grand-prix': true}});
+      duel.startCampaign({mode: 'grandprix', laps, startStage: COURSE.findIndex(def => def.id === ARDENNES_FOREST.id),
+        car: 'stuttgart_959s', seed: 1989, fieldSeed: 1000, cpuDifficulty: 'medium'});
+      const course = duel.course;
+      assert.equal(duel.state.lapsTotal, laps, 'actual native lap admission');
+      assert.equal(sampleCourseLightPath(course, {distance: 0}).settings.fogNear, 90);
+      assert.equal(sampleCourseLightPath(course, {distance: course.length}).settings.fogNear, 360);
+      assert.equal(sampleCourseLightPath(course, {distance: course.length * 1.25}).settings.fogNear, 360);
+      assert.equal(sampleCourseLightPath(course, {distance: course.length * laps}).settings.fogNear, 360);
+      assert.equal(sampleCourseLightPath(course, {distance: course.length * laps, menu: true}).settings.fogNear, 90);
+    }
+  } finally {
+    if (added) COURSE.splice(COURSE.findIndex(def => def.id === ARDENNES_FOREST.id), 1);
+  }
+});
+
+test('ordinary closed distance paths still wrap and reject invalid wrap metadata', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), {wrap, ...ordinaryPath} = ARDENNES_FOREST.lightPath;
+  assert.equal(wrap, false);
+  const ordinary = {...course, def: {...course.def, lightPath: Object.freeze(ordinaryPath)}};
+  const before = JSON.stringify(ordinary.def);
+  const initial = sampleCourseLightPath(ordinary, {distance: 0});
+  assert.deepEqual(sampleCourseLightPath(ordinary, {distance: course.length}).settings, initial.settings);
+  assert.deepEqual(sampleCourseLightPath(ordinary, {distance: course.length * 4}).settings, initial.settings);
+  assert.equal(JSON.stringify(ordinary.def), before);
+  for (const invalid of ['false', 0, null, {}])
+    assert.equal(sampleCourseLightPath({...ordinary, def: {...ordinary.def, lightPath: {...ordinaryPath, wrap: invalid}}}, {distance: 0}), null);
+  assert.equal(sampleCourseLightPath({...ordinary, def: {...ordinary.def,
+    lightPath: {axis: 'race-progress', wrap: false, keyframes: [{at: 0, look: 'golden'}, {at: 1, look: 'day'}]}}}, {distance: 0}), null);
+});
+
+test('native first-lap mist endpoints do not depend on lap choice or presentation FPS', () => {
+  const course = new Course(ARDENNES_FOREST, 1989), world = new THREE.Group();
+  addCircuitEffects(world, course);
+  const banks = []; world.traverse(node => {if (node.name === 'Ardennes valley mist') banks.push(node);});
+  const positions = banks.map(bank => bank.position.toArray());
+  for (const lapsTotal of [2, 3, 4, 5, 6]) for (const fps of [30, 60, 144]) {
+    const start = Object.freeze({status: 'racing', lapsTotal, completedLaps: 0, s: 0});
+    syncScene(world, start, 1 / fps);
+    const opacity = banks.map(bank => bank.material.opacity);
+    const midpoint = Object.freeze({...start, s: course.length / 2});
+    const before = JSON.stringify(midpoint); syncScene(world, midpoint, 1 / fps);
+    assert.equal(JSON.stringify(midpoint), before);
+    banks.forEach((bank, index) => near(bank.material.opacity, opacity[index] / 2, 1e-12, 'same native first-lap midpoint'));
+    const after = Object.freeze({...start, completedLaps: 1});
+    const afterBefore = JSON.stringify(after); syncScene(world, after, 1 / fps);
+    assert.equal(JSON.stringify(after), afterBefore);
+    assert.ok(banks.every(bank => bank.material.opacity === 0), 'first lap clears regardless of total laps');
+    syncScene(world, Object.freeze({...after, completedLaps: lapsTotal - 1, s: course.length / 2}), 1 / fps);
+    assert.ok(banks.every(bank => bank.material.opacity === 0), 'later laps stay clear');
+  }
+  assert.deepEqual(banks.map(bank => bank.position.toArray()), positions);
+  disposeTree(world);
+});

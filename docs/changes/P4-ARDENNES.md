@@ -15,3 +15,9 @@ No assets or road code were replaced. No existing assertion was removed or weake
 ## Changed assertion
 
 The existing track-kit admission count is 38 because three original Ardennes IDs are appended. A new exact list proves the original 35 IDs and order are unchanged. The prior 35-model loading, transform, LOD, geometry, lifetime and count assertions still use those same 35 inputs. New models are checked in the Ardennes test. No old tolerance, fingerprint or source pin changed.
+
+## First-lap review correction
+
+Review found a real fault in 7003448e: light and mist cleared at half the race, which meant three laps for a six-lap choice. Under grant 6d79705f, Ardennes now uses an unwrapped distance light path from the initial morning to clear day at the actual end of lap one. It stays clear on later laps, and the menu keeps the initial morning. Ordinary closed distance paths still wrap by default. The new mist reads elapsed native laps directly instead of dividing by the total lap choice.
+
+Added acceptance covers actual native lap choices 2 to 6, first-lap endpoints, later light and menu light, invalid wrap values, old default wrapping, frozen race state and the same mist endpoints at 30, 60 and 144 presentation FPS. These tests remain unrun under RELEASE HOLD. No old assertion, palette, road, renderer hook, simulation clock, asset budget or source pin changed.
