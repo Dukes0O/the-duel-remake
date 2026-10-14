@@ -81,7 +81,11 @@ team's merges back for hours):
    one while it runs. The full tier on a release commit still runs alone (rule 1).
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
-   18.5 ms and construction under 1 s. Paired on/off packets, repeated legs
+   18.5 ms and the world build under 1 s (the full first-race load in a fresh
+   browser is reported and should stay under 5 s; slower is a warning, not a
+   failure: Kyle, 14 October 2026). Run it with the laptop's own screen off
+   (Win+P "Second screen only"), since a window spanning both graphics chips
+   misses frames. Paired on/off packets, repeated legs
    and extra controls are used only to find the cause after a simple check
    fails, inside rule 4's 30 minutes. Before timing, check that no other
    program (a browser window, a game tab) is using the graphics card heavily;

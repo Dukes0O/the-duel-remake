@@ -16,6 +16,7 @@ const views=[
   ['gallery-open-road',SUMMIT_RUN.roadBranches[0].start+35,28,180],
   ['devils-staircase',centre("Devil's Elbow"),15,75],
   ['summit-landmarks',road.length-150,13,100],
+  ['gallery-fork-approach',SUMMIT_RUN.roadBranches[0].start-80,18,240],
 ];
 
 export async function run(context){
@@ -50,7 +51,7 @@ export async function run(context){
       const app=window.__qaApp;app.returnToMenu();app.stop();
       window.__summitReadOnly=()=>JSON.stringify({state:app.duel.state,profile:app.profile,storage:Array.from({length:localStorage.length},(_,i)=>{const key=localStorage.key(i);return [key,localStorage.getItem(key)];})});
     })()`);
-    const capturedViews=quality==='high'?[...views,['gallery-fork-both-routes',SUMMIT_RUN.roadBranches[0].start+15,40,220]]:views;
+    const capturedViews=quality==='high'?[...views,['night-ledge-town',centre('The Ledge'),90,road.length-centre('The Ledge')+5800]]:views;
     for(const [name,s,up,ahead] of capturedViews){
       await context.evaluate(`(()=>{
         window.__summitSnapshot={before:window.__summitReadOnly(),settled:false};
@@ -65,6 +66,18 @@ export async function run(context){
         if(!shot.canvas||document.querySelector('#view3d')?.dataset.trackKitAsset!=='ready')throw Error('Actual approved Summit kits are not ready');
         return shot.canvas.toDataURL('image/jpeg',.88);
       })()`);
+      if(name==='gallery-fork-approach')facts.push(await context.evaluate(`(()=>{
+        const course=window.__summitCourse,eye=window.__render.camera.position;
+        const nearest=course.nearest(eye.x,eye.z),tunnel=course.tunnelAt(nearest.s);
+        return {quality:${JSON.stringify(quality)},view:'gallery-fork-approach',requested:{snapshotS:${s},up:${up},ahead:${ahead}},
+          eye:{x:eye.x,y:eye.y,z:eye.z,s:nearest.s,lateral:nearest.lateral},
+          eyeAboveGround:eye.y-course.groundAt(nearest.s,nearest.lateral).y,
+          tunnel:tunnel?{id:tunnel.id,start:tunnel.start,end:tunnel.end,height:tunnel.height}:null};
+      })()`));
+      if(name==='night-ledge-town')facts.push(await context.evaluate(`(()=>{
+        const d=window.__render,course=window.__summitCourse,lights=d.scene.getObjectByName('night-glows');
+        return {quality:'high',view:'night-ledge-town',requestedS:${s},eye:d.camera.position.toArray(),groundLights:lights?.userData.groundLightRows??[],lighting:'authored distance-path night'};
+      })()`));
       photos.push({label:quality+' '+name,url:photo});
       await context.evaluate('window.__render.clearTrackSnapshot()');
     }
@@ -72,7 +85,7 @@ export async function run(context){
   const sheet=await context.evaluate(`(async()=>{
     const photos=${JSON.stringify(photos)},canvas=document.createElement('canvas'),columns=4,tile=480,h=270,pad=5,label=23;
     canvas.width=columns*(tile+pad)+pad;canvas.height=45+Math.ceil(photos.length/columns)*(h+label+pad)+pad;
-    const ctx=canvas.getContext('2d');ctx.fillStyle='#101920';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f0eee1';ctx.font='22px sans-serif';ctx.fillText('Summit Run - round two / actual High and Performance views',12,31);
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#101920';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f0eee1';ctx.font='22px sans-serif';ctx.fillText('Summit Run - final round three / actual High and Performance views',12,31);
     for(const [i,photo] of photos.entries()){
       const image=new Image();image.src=photo.url;await image.decode();const x=pad+(i%columns)*(tile+pad),y=45+pad+Math.floor(i/columns)*(h+label+pad);
       ctx.drawImage(image,x,y,tile,h);ctx.font='15px sans-serif';ctx.fillText(photo.label,x+4,y+h+17);
@@ -80,7 +93,7 @@ export async function run(context){
     for(const quality of [.85,.75,.65,.55,.45,.35]){const url=canvas.toDataURL('image/jpeg',quality);if(url.length*3/4<=490000)return {url,width:canvas.width,height:canvas.height,quality};}
     throw Error('Actual sheet exceeds 500 KB');
   })()`);
-  const sheetPath=join(context.outputDir,'round-2.jpg'),bytes=Buffer.from(sheet.url.split(',')[1],'base64');
+  const sheetPath=join(context.outputDir,'round-3.jpg'),bytes=Buffer.from(sheet.url.split(',')[1],'base64');
   if(bytes.length>500000)throw Error('Actual sheet exceeds 500 KB');
   await writeFile(sheetPath,bytes);context.screenshots.push(sheetPath);
   await writeFile(join(context.outputDir,'summit-run.json'),JSON.stringify({memoryOnly:true,frameMeasurement:false,facts,views:photos.map(photo=>photo.label),sheet:{bytes:bytes.length,width:sheet.width,height:sheet.height,quality:sheet.quality}},null,2)+'\n');

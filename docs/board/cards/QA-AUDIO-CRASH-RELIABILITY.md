@@ -20,3 +20,7 @@ These are the card's detailed design, acceptance and recorded decisions.
   # The factory (docs/FACTORY.md, Kyle 12 October 2026). Cards are graph nodes:
   # needs are the arrows, locks are the shared files (FACTORY section 2).
 ```
+
+## Current actual setup fault,14 October
+
+QA-BROWSER-SWEEP's two unchanged-game canonical c5 runs time out in Runtime.evaluate before23 PCM assertions;0pass/23hookFailed, no threshold waiver or actualaudio pass. Prepared tools-only standard-recorder/ES-loader plus existingcapture.json stage locator at9ff34067 on preserved codex/qa-browser-sweep remains UNRUN/unmerged. Start no repeat here until this existing card's priority allows it; retain both actualreceipt folders under .evidence/2026-10-14/QA-BROWSER-SWEEP/native-c5acbf61/audio and audio-rerun. No cause is proved yet, and QA-AUDIO-CLOCK is a different problem.

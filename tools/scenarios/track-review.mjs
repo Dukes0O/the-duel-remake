@@ -10,7 +10,7 @@
 // only inside its own private browser tab.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { drawMap, drawSpeed, INPUT_ENV } from '../track-review.mjs';
+import { drawMap, drawSpeed, INPUT_ENV, main as prepareReview } from '../track-review.mjs';
 
 const entry = '/tools/menu-check.html';
 
@@ -200,7 +200,15 @@ async function checkHairpinCamera(context,data) {
 }
 
 export async function run(context) {
-  const data = JSON.parse(readFileSync(process.env[INPUT_ENV], 'utf8'));
+  let inputPath = process.env[INPUT_ENV];
+  if (!inputPath) {
+    // A generic sweep has no dedicated wrapper. Generate the normal real lap
+    // under the harness-owned evidence directory without invoking a browser.
+    const code = await prepareReview(['pacific-canyon', '--no-browser', '--output-dir', context.outputDir]);
+    if (code !== 0) throw Error('Track review preparation failed.');
+    inputPath = join(context.outputDir, 'review-input.json');
+  }
+  const data = JSON.parse(readFileSync(inputPath, 'utf8'));
   const dir = data.outputDir;
   const result = { pack: null, frameErrors: {}, browserErrors: [], warnings: [] };
   const flags = data.options.flags.length ? `flags=${data.options.flags.join(',')}&` : '';

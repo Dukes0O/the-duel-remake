@@ -7,6 +7,12 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const generators = [
+  { script: 'tools/blender/deep-art-fit.py', args: [],
+    evidence: '.evidence/2026-10-12/DEEP-ART-SRC/round-2-native',
+    glb: ['silver-school','reef-fish','turtle','ray','manta','sea-lion','crab',
+      'moray','grouper','reef-shark','jellyfish','whale','octopus','wreck-hull','giant-clam','anchor','sunken-boat']
+      .map(name => `public/assets/models/deep/${name}.glb`),
+    json: ['public/assets/models/deep/manifest.json'] },
   { script: 'tools/blender/rook-p2.py', args: ['--stage', 'neutral'], glb: [] },
   { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
@@ -36,6 +42,7 @@ const nativeGenerators = [
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
 const reviewHelpers = [
+  {script:'tools/blender/deep-art-sheet.py',args:[],render:false,summary:['docs','board','looks','deep-art','round-2.jpg']},
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
   {script:'tools/blender/kit-sheet.py', args:['--round','1','--blender','missing-blender.png','--high','missing-high.png','--performance','missing-performance.png'], render:false},
 ];
@@ -68,7 +75,7 @@ function relativePaths(folder, paths, extension) {
   }).sort();
 }
 function pathPlan(generator, fixtureRoot) {
-  const call = spawnSync('python', [join(root, generator.script), '--', '--root', fixtureRoot, ...generator.args, '--paths-only'],
+  const call = spawnSync('python', [join(root, generator.script), '--', '--root', fixtureRoot, ...generator.args, ...(generator.evidence ? ['--evidence', join(fixtureRoot, generator.evidence)] : []), '--paths-only'],
     { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
   assert.equal(call.error, undefined, call.error?.message);
   assert.equal(call.status, 0, `${generator.script} --paths-only failed: ${(call.stderr || call.stdout || '').trim()}`);
@@ -255,10 +262,11 @@ try {
       fixtureRoots.forEach(fixtureRoot => assert.deepEqual(readdirSync(fixtureRoot), [], 'path planning created output files'));
     });
     if (!plans) continue;
-    check(`${generator.script} keeps editable sources in ignored art-build`, () => {
+    check(`${generator.script} keeps editable sources in ignored ${generator.evidence || 'art-build'}`, () => {
       for (const [index, plan] of plans.entries()) {
         const blends = relativePaths(fixtureRoots[index], plan.blend, '.blend');
-        assert.ok(blends.every(path => path.startsWith('art-build/')), `Blend outputs outside art-build: ${blends.join(', ')}`);
+        assert.ok(blends.every(path => path.startsWith((generator.evidence || 'art-build') + '/')), `Blend outputs outside ${generator.evidence || 'art-build'}: ${blends.join(', ')}`);
+        if (generator.evidence) assert.deepEqual(blends, generator.glb.map(path => `${generator.evidence}/${path.split('/').pop().replace(/\.glb$/, '.blend')}`).sort(), 'exact Deep editable source paths');
         assert.equal(new Set(blends).size, blends.length, 'duplicate Blend output');
       }
     });
@@ -329,7 +337,7 @@ try {
       assert.deepEqual(plan.glb,[],'review helper never emits a runtime model');
       assert.deepEqual(plan.blend,[],'review helper never authors a model source');
       assert.deepEqual(plan.evidence,helper.render?[join(fixtureRoot,'.evidence','kits','review.png')]:[]);
-      assert.deepEqual(plan.summary,helper.render?[]:[join(fixtureRoot,'docs','board','looks','kits','round-1.jpg')]);
+      assert.deepEqual(plan.summary,helper.render?[]:[join(fixtureRoot,...(helper.summary || ['docs','board','looks','kits','round-1.jpg']))]);
       assert.deepEqual(readdirSync(fixtureRoot),[],'planning creates no output');
     }
   });
