@@ -50,7 +50,8 @@ then green, then pink with fireweed.
 ## 3. The mission engine
 
 New file `src/heli/heli-missions.js`, pure and repeatable. H2 has one kind,
-**fire**. Rescues (H4) and other emergencies join the same engine later.
+**fire**. Rescues join the same engine in H4 (`docs/HELI_RESCUE.md` section
+3), with dispatch seasons that weight which kind comes.
 
 ### 3.1 The secret count
 
@@ -486,7 +487,7 @@ after one that already carries that change (H1's own release, if the H1
 finishing pass picks it up first).
 
 ```
-missions: {seed, draws, need, count, last: 'fire' | 'smoke' | null,
+missions: {seed, draws, need, count, last: 'fire' | null,
   call: null | {kind, id, courseId, day, answered},
   quiet: {untilDay, engineSeconds}, firesOut, badges: ['firefighter']}
 fire: null | {id, courseId, seed, startDay, steps, engineSeconds,

@@ -79,3 +79,10 @@ exactly as it was. Fix the course instead, with a design number Claude owns:
   this radius in advance; record the new hash.
 - If radius 10 still hits wall-right at the hairpin, stop and write the contact
   numbers here; the per-corner wall hook is the fallback, not a third blind try.
+
+
+## Answered radius implementation lease
+
+Continue the existing own qa-harbour-clearance lane. Merge current integration normally, then remove only this lane's failed midpoint correction by restoring tools/test-circuits.mjs exactly from integration. Own src/circuits/harbour-lights.js only Lantern Hairpin radius9 to10 and truthful local comments; keep175 degrees, widths, layoutVersion2, field/grid and all other design numbers exact. Own the exact existing radius-design expectation in tools/test-circuit-layouts.mjs; identify any second explicit pin before editing its file. The slowest flying-lap 12..35mph and all other safety/handling/tolerance checks remain exact. Keep the failed midpoint facts in the change note.
+
+Future measured outputs are limited to Harbour's own generated reference JSON and world-signature fixture after the original focused geometry succeeds, as Claude approved; no shared fixture, other course row or blind regeneration. Source freezes for Root review before any focused run. If radius10 still hits the hairpin wall, stop at that actual contact and return to Claude without another geometry guess. Root coordinates all jobs (currently three Claude jobs occupy capacity), reference/signature validation, original nearby/jobs4/build and merge. No heavy work from this builder.

@@ -53,7 +53,9 @@ card if a source cannot meet a line.
   its own +Y; blades reach 5 m from the pivot), `tail_rotor` (pivot at the
   tail rotor hub; spins about its own X), `skids`, and two empties:
   `cable_hook` (belly under the mast, where the cable hangs from) and
-  `pilot_eye` (the right-hand seat, about 1.45 m up, for the cockpit view).
+  `pilot_eye` (the right-hand seat, about 1.70 m up: seat 0.95 m, eye about
+  0.75 m above it; raised from 1.45 on 14 October so the glare shield clears
+  the cockpit view).
   An `instrument_panel` mesh inside the cockpit; the readings are drawn
   separately in the page.
 - **Size:** fuselage about 8.5 m nose to tail rotor, 1.7 m wide; at most
@@ -115,3 +117,15 @@ Picked: Claude's original Kestrel One (`tools/blender/kestrel-one.py`,
 `docs/board/looks/kestrel-one/round-3-review.md`. Drop the donor route: no
 retry, no R22 download needed. Codex's part of this card is now the cargo
 hook, helipad and fuel pump only.
+
+
+## Codex lane handoff — accessories only
+
+The second Codex lead may take the existing heli-art-src folder / codex/heli-art-src source from bb40c3eacfaee15ea05f66b5b30774d69faa9590 when the six-lane inventory has room. No builder from this chat is active there. The first lead remains sole integration/metadata/merge and heavy-job scheduler for retained work; request checks on this card before running them. Do not take TYRE-SLIP's shared game files while Claude's steering work and the priority Summit Attack queue need them.
+
+The three original accessory recipes and actual GLBs are already exported and source-reviewed: tools/blender/heli-accessories.py, tools/art/heli-accessories.json, cargo-hook.glb/helipad.glb/fuel-pump.glb, source packet and own change note. Export receipt and independent GLTF inspection are under .evidence/2026-10-14/HELI-ART-SRC/accessories-fbe27f80. Hook2108tri/41748bytes, pad1346tri/84492bytes, pump2133tri/98140bytes; all exact origins/dimensions/PBR guards passed. No accessory art sheet, lane gate or build has run. Do not repeat the export merely to resume.
+
+Read Claude's latest pick first: his original Kestrel One is accepted, three model rounds closed, and the donor route is dropped. No download retry, R22 or fourth helicopter round. Keep licensed originals. Own only accessory recipes/parameters, these three runtime GLBs, the original accessory credit paragraph, the accessory source packet and this card's change note/review sheet. Merge current integration normally before changes; preserve Claude's Kestrel model, recipes, credits and runtime code. Prepare the compact actual accessory review with existing tools, then freeze source for first-lead review and Claude's art verdict. No new general harness or helicopter scene/view code. No heavy job or merge until the first lead schedules the slot; follow the shared six-lane and three-job limits.
+
+
+The second lead's proposed accessory-only Blender review is within that handoff: extend only heli-accessories.py with the existing Kestrel camera/light rendering pattern and a separate compact looks/heli-accessories/round-1 sheet. No production GLB loader hook, procedural scene substitution or fourth Kestrel round. Existing first-flight QA does not load these accessories and cannot certify their appearance. The old worker is released; source review comes before any render/export/gate/build, all scheduled here. Keep the already measured GLBs unless Claude's accessory verdict requests a real change.
