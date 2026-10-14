@@ -130,7 +130,9 @@ tasks:
     owner: "codex"
     lane: "RACE"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "codex-career-access-2026-10-14"
+    branch: "codex/p4-career-access"
     needs: [P4-CAREER-PODIUM]
     locks: [save-shape]
     flag: "grand-prix-career"
