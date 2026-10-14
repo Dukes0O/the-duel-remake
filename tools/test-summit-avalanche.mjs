@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {COURSE,DRIVE} from '../src/config.js';
 import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
+import {buildTrackScript} from '../src/track-script.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {AVALANCHE,stepSummitAvalanche,observeSummitAvalanche,observeSummitRoute,avalancheDriftAt} from '../src/summit-avalanche.js';
 import {actorBody,startKnock,stepKnock} from '../src/vehicle-knock.js';
@@ -23,6 +24,10 @@ const game=(on=true,mode='duel',seed=1989,stage=summit)=>{
 };
 const pose=(actor,s,lateral,speed=0)=>Object.assign(actor,{s,prevS:s,lateral,prevLateral:lateral,speedMph:speed,headingError:0,pushVelocity:0});
 try{
+  const curves=buildTrackScript(SUMMIT_RUN).pieces;
+  equal([curves[38].radius,curves[40].radius],[60,60],'bounded Gallery curves use the approved first proposal');
+  equal([curves[38].degrees,curves[40].degrees],[40.5,40],'Gallery angles are unchanged');
+  equal([curves[38].width,curves[40].width],[10,10],'both Gallery curves retain their designed ten-metre width');
   equal(SUMMIT_RUN.galleries[0].end,10800,'Gallery shed ends before the open rejoin');
   const duel=game(),event=duel.state.avalanche;
   const gallerySolids=duel.course.features.obstacles.filter(row=>row.sourceBounds?.startsWith('gallery-'));
@@ -269,6 +274,11 @@ if(process.argv.includes('--drive')){
         assert.ok(row.strip.every(s=>row.condition==='drift'?s.phase==='after'&&s.kind==='deep-snow'&&s.speedLimit===45:s.kind!=='deep-snow'&&!['slide','after'].includes(s.phase)),`${row.condition} is witnessed throughout the actual strip`);
       }else assert.ok(row.strip.every(s=>s.road&&s.shortcutId!=='summit-open-road'&&s.kind!=='deep-snow'),'Gallery stays on its actual protected road');
     }
+    const galleryTime=results.find(row=>row.condition==='clear'&&row.route==='gallery').seconds;
+    console.log(JSON.stringify({nativeGalleryGeometryTimes:{gallerySeconds:galleryTime,
+      galleryDriftSeconds:results.find(row=>row.condition==='drift'&&row.route==='gallery').seconds,
+      clearOpenSeconds:results.find(row=>row.condition==='clear'&&row.route==='summit-open-road').seconds,
+      driftOpenSeconds:results.find(row=>row.condition==='drift'&&row.route==='summit-open-road').seconds}}));
     for(const condition of ['clear','drift']){
       const [gallery,open]=results.filter(row=>row.condition===condition);
       for(const key of ['mph','lateral','heading'])assert.ok(Math.abs(gallery.entry[key]-open.entry[key])<1e-8,'both routes have equal actual entry '+key);
@@ -276,5 +286,6 @@ if(process.argv.includes('--drive')){
       console.log(JSON.stringify({nativeAvalancheComparison:{condition,seed:open.seed,openSeconds:open.seconds,gallerySeconds:gallery.seconds,difference}}));
       assert.ok(condition==='clear'?difference>=-1.6&&difference<=-.8:difference>=3.5&&difference<=6.5,`${condition} actual route difference is ${difference.toFixed(6)} s`);
     }
+    assert.ok(galleryTime>=18.4&&galleryTime<=19.2,'actual Gallery segment stays within the settled 18.4 to 19.2 seconds');
   }finally{COURSE.splice(savedLength);}
 }

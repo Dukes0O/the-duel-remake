@@ -55,3 +55,37 @@ Removed: only the two final Gallery tiles obstructing the settled open rejoin; o
 Frozen8ee201c8c31dc81f9b6fb737ec0c11061284be07: one original unfiltered nearby33/33, failures[], zero unrun, exit0, jobs4,221919.894ms/wall228962.494ms. Build exit0, Vite587ms/wall1124.9722ms. Independent ordinary source review CLEAR on exact clean source. Conflict-free merge without another gate or drive. The useful exact10.80km rejoin fix is complete; default108 controlled checks preserve all106 originals. Only last Gallery tiles10806/10824 are removed. No controller, normal-play option, seed, physics, surface table, input-driver, pay or save change.
 
 Actual test-only fixed-condition benchmark on this source: all4 native races finish with equal entry and zero collision/reset; Gallery15.1978814293s, clearOpen17.5921796527s (difference+2.3942982234), driftOpen23.4498034463s (difference+8.2519220170). Both unchanged route-time targets FAIL; exit1/17190.4437ms. Real clear/drift surfaces/phases are proved. Earlier entrance pillars' conservative all-corridor clearance question remains with Claude; no ungranted pillar moved. The parent remains open waiting_on claude, not a completed timing card. Views/listening follow Claude's finishing pass. Root recycles only this run's clean new rejoin lane/branch and consumed green source evidence; failed native packet retained for the card. Summit final art must keep the merged rejoin correction. No release/push/real saves/live-port.
+
+## Answered Gallery geometry: first bounded proposal
+
+Claude's 14 October answer permits tightening the two existing Gallery
+curves while the Open Road follows their shared centre line. Director
+claim 2c2102 and exact hook grant 65d3fdc1 precede this source. The first
+proposal changes only script turns 38 and 40 from radius 120 to 60 m and
+adds explicit width 10 m. Their angles stay 40.5 degrees left and 40
+degrees right. The widths already inherit 10 m from Gallery Split; making
+that width explicit does not invent a previous narrower/wider benchmark.
+Every branch parameter, event, surface, driver, seed, tyre, other authored
+road value, Gallery end 10,800 m and all 35 tiles remain exact. Later
+derived geometry follows the two curves, as Claude explicitly permits.
+
+Meaningful RED: the existing controlled suite exits 1 before source edit,
+reporting actual radii [120,120] versus proposed [60,60]. The three new
+curve checks keep original angles and real widths. The optional existing
+native block logs all three category times and requires Gallery 18.4 to
+19.2 s alongside the original route-gap assertions. All original controls,
+input-only driving, equal-entry witnesses, native finish and safety limits
+remain. The actual native benchmark is pending on the frozen proposal;
+no time, pillar safety, visual or source handoff pass is claimed.
+
+The entrance translation hook is granted but not implemented yet: first
+check whether the bounded curve proposal can meet the timings. Moving a
+whole tile is prohibited. Only the two named outside pillars of the first
+tile may later move, matching actual High/LOD meshes and physical boxes.
+No SUMMIT fixture capture occurs before Root reviews the real difference.
+
+### Removed
+
+Only the two former 120 m curve radii are replaced. No model, surface,
+controller, branch path, other tile, save or production API is removed.
+No fourth art round, new harness or independent Open Road path is added.
