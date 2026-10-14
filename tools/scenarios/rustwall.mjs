@@ -139,7 +139,7 @@ async function start(context,quality,seed) {
     if(window.__rustwallReview?.raf)window.requestAnimationFrame=window.__rustwallReview.raf;
     if(!Object.getOwnPropertyDescriptor(window,'localStorage')?.value||!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Private memory-only storage missing');
     const app=window.__qaApp;app.setGraphicsQuality(${JSON.stringify(quality)});
-    app.startCampaign({mode:'duel',startStage:0,seed:${seed},car:'falcone_f42',difficulty:'casual'});app.stop();
+    app.startCampaign({mode:'wasteland',startStage:0,seed:${seed},car:'falcone_f42',difficulty:'casual'});app.stop();
     Object.assign(app.duel.state,{status:'racing',countdown:0,paused:false,speedMph:0,traffic:[],opponents:[],rival:null});
     app.inspectionCamera=null;app.onFrame?.(app.duel.state);window.__render.renderFrame();
     document.querySelectorAll('details').forEach(panel=>panel.open=false);

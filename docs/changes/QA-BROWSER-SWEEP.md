@@ -68,3 +68,11 @@ Only the two existing hidden/visible timing blocks and Rustwall's timing-only RA
 Changed assertions: no gameplay predicate or tolerance changes. Only the normal first-person manifest default and the proven default Rustwall accepted-runtime checksum inputs change. Explicit historical/local checksum inputs remain exact.
 
 Removed: stale ordinary runtime pin selection and unconditional legacy timing execution. Assets, historical manifests and manual timing recipes are retained.
+
+## Rustwall real-entry correction
+
+The first default native run on 234493ef failed after 66879.272 ms: timed out waiting for loaded Rustwall course. The private memory-only packet had no browser errors, warnings or screenshots. No placement or timing acceptance was reached. First-person passed separately on that same source.
+
+The current hiddenRoadInRace contract permits the spur only in wasteland mode or a dedicated Hidden Road visit. The recipe requested duel, so Game passed hiddenRoad false to Course and world construction could not create the Rustwall group. The group name, ready/failed status, donor load errors and readiness guard are still current. Director grant 5c324501 changes only the recipe's start mode to wasteland, using the existing real Mad Max entry. Seed, car, difficulty, setup, cameras, pins, every predicate, timeout and timing option stay exact. The separate manual rustwall-frame recipe has the same stale entry but is outside this slice and remains untouched.
+
+Changed assertions: none. This corrects the native entry input, not the readiness guard. Corrected native, lane gate and build remain unrun pending Root clearance. Removed: the obsolete plain-Duel entry from this recipe.
