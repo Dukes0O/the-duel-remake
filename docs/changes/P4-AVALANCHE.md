@@ -116,7 +116,16 @@ then uses Object.freeze({...open,surface:'snow',gripKind:'snow'}) only for the
 existing historical positive snow-helper case. Its clone identity, reviewed
 tone, .94 roughness, unchanged source .6 roughness and disposal assertions are
 all retained. This historical descriptor is not a runtime course, placeholder
-or production mutation. The next corrected focused suite is UNRUN at freeze.
+or production mutation. The focused run on 754c3388 passed those earlier cases
+and reached the same retired snow assumption in the final material block at
+line 330. Root audited every remaining Open/snow helper call in the suite:
+only that last tone and no-tone fallback pair needed the same historical input.
+Both now use historicalSnowBranch, retaining the original authored tone,
+[.34,.38,.42] fallback, source-material and disposal checks. A separate identity
+check pins actual Open/winter to branchBase; the snow label now describes its
+historical helper case accurately. No other pole, light, RNG, terrain,
+collision or route assertion changes. Corrected focused acceptance is UNRUN
+at this final fixture freeze; no further blind source edits are authorized.
 
 The other failure is test-circuits:45, Harbour seed 1989 wall-right-1105 near
 2056 m/lateral -3.5. Root reproduced that exact failure on integration baseline

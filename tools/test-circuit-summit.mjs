@@ -326,10 +326,12 @@ if(process.argv.includes('--drive')){
   assert.ok(poses.every((p,i)=>i%2===0?poses[i+1].s===p.s&&poses[i+1].off===-p.off:true),'both sides have matching road guidance');
   assert.equal(JSON.stringify(course.features),before,'visual snow never writes physical features');
   assert.equal(course.rng.float(),seedControl.rng.float(),'snow visual controls never consume simulation RNG');
-  const branchBase=new THREE.MeshStandardMaterial({color:0xffffff}),branch=roadBranchMaterial(course,open,branchBase,true);
-  assert.equal(branch.color.getHex(),SUMMIT_RUN.snowWorld.branchTone,'Open Road actually draws the authored darker packed-snow tone');
+  const branchBase=new THREE.MeshStandardMaterial({color:0xffffff});
+  assert.equal(roadBranchMaterial(course,open,branchBase,true),branchBase,'actual clear Open retains the original material with winter on');
+  const branch=roadBranchMaterial(course,historicalSnowBranch,branchBase,true);
+  assert.equal(branch.color.getHex(),SUMMIT_RUN.snowWorld.branchTone,'historical snow branch retains the authored darker packed-snow tone');
   assert.equal(branchBase.color.getHex(),0xffffff,'branch look leaves shared road material unchanged');
-  const ordinary=roadBranchMaterial({def:{snowWorld:{} }},open,branchBase,true);
+  const ordinary=roadBranchMaterial({def:{snowWorld:{} }},historicalSnowBranch,branchBase,true);
   assert.deepEqual(ordinary.color.toArray(),[.34,.38,.42],'absent branch tone keeps legacy snow values');
   const lightGroup=new THREE.Group(),glows=addNightGlows(lightGroup,course);
   assert.equal(glows.groundLightRows.length,48,'town view owns its forty-eight actual grounded lights');
