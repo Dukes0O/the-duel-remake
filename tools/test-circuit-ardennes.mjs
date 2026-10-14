@@ -20,6 +20,7 @@ import {createTrackKits, normalizeKitPlacements, kitBaseHeight} from '../src/tra
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {ardennesPlayerCrashAccepted} from './scenarios/ardennes-views.mjs';
 
 // Ardennes Forest road layout (docs/CIRCUITS.md section 5.5, P4-ARDENNES-ROAD).
 // The original road acceptance remains intact beside the P4-ARDENNES source acceptance.
@@ -610,4 +611,47 @@ test('actual terrain gravel expands only on the approved outside band without ge
     assert.ok(changes > 0 && witness, 'actual outside gravel vertices at the crash corner now receive the wider trap');
     assert.equal(JSON.stringify(ARDENNES_FOREST), authoredBefore, 'terrain colouring cannot mutate course data');
   } finally {expanded.dispose(); original.dispose();}
+});
+
+
+function knownPlayerIncident() {
+  const placement = {...ARDENNES_FOREST.kitPlacements[1901]};
+  return {
+    setup: {id: 'ardennes-forest', seed: 1989, fieldSeed: 1000, car: 'stuttgart_959s',
+      cpuDifficulty: 'medium', lineSkill: .95, stock: true, placement},
+    final: {crashes: 1},
+    observer: {restored: true, playerEvents: [{completedLaps: 0, s: 3618.56873672659,
+      piece: {name: 'Long Left', s0: piece('Long Left').s0, s1: piece('Long Left').s1},
+      event: {crash: 'prop'}, propIdentityVerified: true,
+      contact: {verified: true, actualResolutionEnd: {x: -896.7851311862836, z: -944.4206584681774},
+        expectedResolutionEnd: {x: -896.7851311862836, z: -944.4206584681774}, selectedProp: {id: 'kit-solid-1901-armco', kind: 'prop',
+        kitSolid: true, barrier: true, halfX: 2, halfZ: .4, authoredPlacement: placement}}}]},
+  };
+}
+
+test('native player exception admits zero or only the verified first-lap Long Left stock-driver incident', () => {
+  const known = knownPlayerIncident();
+  assert.equal(ardennesPlayerCrashAccepted(known.setup, known.final, known.observer), true);
+  assert.equal(ardennesPlayerCrashAccepted(known.setup, {crashes: 0}, {restored: true, playerEvents: []}), true);
+  for (const mutate of [
+    row => {row.observer.playerEvents[0].propIdentityVerified = false;},
+    row => {row.observer.playerEvents[0].contact.verified = false;},
+    row => {row.observer.playerEvents[0].contact.actualResolutionEnd.x += .1;},
+    row => {row.observer.playerEvents[0].contact.selectedProp = null;},
+    row => {row.observer.playerEvents[0].contact.selectedProp.id = 'kit-solid-905-catch-fence';},
+    row => {row.observer.playerEvents[0].contact.selectedProp.authoredPlacement.lateral = -30;},
+    row => {row.observer.playerEvents[0].completedLaps = 1;},
+    row => {row.observer.playerEvents[0].piece.name = 'Riverside';},
+    row => {row.observer.playerEvents.push(structuredClone(row.observer.playerEvents[0])); row.final.crashes = 2;},
+    row => {row.observer.playerEvents.push(structuredClone(row.observer.playerEvents[0]));},
+    row => {row.setup.seed = 42;}, row => {row.setup.fieldSeed = 1001;},
+    row => {row.setup.car = 'falcone_f42';}, row => {row.setup.stock = false;},
+    row => {row.setup.lineSkill = .9;}, row => {row.setup.cpuDifficulty = 'hard';},
+    row => {row.observer.restored = false;},
+  ]) {
+    const row = structuredClone(known); mutate(row);
+    assert.equal(ardennesPlayerCrashAccepted(row.setup, row.final, row.observer), false);
+  }
+  assert.equal(ardennesPlayerCrashAccepted(known.setup, {crashes: 0}, known.observer), false);
+  assert.equal(ardennesPlayerCrashAccepted(known.setup, known.final, {restored: true, playerEvents: []}), false);
 });
