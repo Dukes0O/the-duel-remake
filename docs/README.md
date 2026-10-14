@@ -37,7 +37,7 @@ choose which one to read; they do not override the spec or current board.
 | Car weapons | [Arsenal](ARSENAL.md): the new weapons and their shared systems, settled for build |
 | Crew on foot | [Crew](CREW.md): signature gear, boarding and computer crews, settled for build |
 | Crashes and the Titan | [Crash physics](CRASH_PHYSICS.md), [Muddy Hollow](MUDDY_HOLLOW.md): the monster truck playground |
-| Career and vehicles | [Progression](PROGRESSION_V2.md), [unlocks](UNLOCK_VEHICLES.md), [classic vehicles](CLASSIC_VEHICLES.md), [drivers](DRIVERS.md), [ghosts](GHOSTS.md) |
+| Career and vehicles | [Progression](PROGRESSION_V2.md), [unlocks](UNLOCK_VEHICLES.md), [classic vehicles](CLASSIC_VEHICLES.md), [drivers](DRIVERS.md), [earned cars and medal sheets](EARNED_CARS.md), [ghosts](GHOSTS.md) |
 | Art and sound | [Wasteland art](WASTELAND_ART.md), [image prompts](IMAGE_PROMPTS.md), [coast showcase](COAST_SHOWCASE.md), [audio expansion](AUDIO_EXPANSION.md), [audio iteration](AUDIO_ITERATION.md) |
 
 ## Evidence and history

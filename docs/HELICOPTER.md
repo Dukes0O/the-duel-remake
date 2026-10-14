@@ -196,8 +196,8 @@ damped pendulum (no new library; it borrows the tether ideas in
   have, it takes what you have and forgives the rest. A save never goes
   below zero.
 - **Special cars travel only by air** (Kyle). In H1 the special car is the
-  Koenigsegg Jesko Absolut; earned cars from the medal sheets (Cockpit
-  T-013) join the list later. With the switch on, a special car races only
+  Koenigsegg Jesko Absolut; the three earned cars from the medal sheets
+  (`docs/EARNED_CARS.md`, each 1,500 kg or less) join the list as they land. With the switch on, a special car races only
   on the course where it was last set down, and it starts at the home pad.
   Existing saves keep the car; it simply starts at Tremblant Woods.
 
