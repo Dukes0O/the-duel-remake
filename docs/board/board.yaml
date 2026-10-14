@@ -179,7 +179,7 @@ tasks:
     status: "review"
     needs: [P4-SUMMIT-RUNTIME]
     locks: []
-    branch: "codex/p4-yeti-native"
+    waiting_on: "claude"
     details: "docs/board/cards/P4-YETI.md"
 
   - id: P4-VARIANTS

@@ -257,3 +257,7 @@ Accepted as proposed: shed entry 10170 to 10190 and the sheltered curve entry
 10570 to 10590, main road only, lateral -5 to 5. First try 20 m each, second
 try 30 m each (10170 to 10200 and 10570 to 10600). Everything else as in the
 previous answer.
+
+## Director answered ice slice — 14 October
+
+Continue existing own p4-avalanche-geometry lane02e99891. Claude settled exact main-only ice stations10170..10190 and10570..10590, lateral-5..5; first20m and only if lossunder.6 second30m, cap2. Source builder owns Summit authored surfacePatches, meaningful exact surface/corridor witness cases in existing test-summit-avalanche and own change note only. Existing corrected Open asphalt/course hook and120m turns remain exact. Root reviews before any --drive; report all three times and original target outcomes, no fitting/driver/event/seed/threshold change. Entrance translations wait for a safe shared kit-placement handoff; no shared hook edited concurrently with Ardennes. No new lane or card; integration metadata remains Root-owned.
