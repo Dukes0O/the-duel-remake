@@ -113,3 +113,27 @@ Prepare the required native grounding, appearance and roar exercise in the retai
 ## Restart alignment — 14 October
 
 The retained folder now uses codex/p4-yeti-native, based on current pre-restart integration7ee1958a. The three observer-only commits were transferred without shared-history rewrite; the single change-note conflict preserves both the integrated production verdict and native observer grant. Clean sourceb55ef7df has only tools/scenarios/yeti.mjs and its change note above that base; the scenario blob is byte-identical to independently reviewed8689902a. Original codex/p4-yeti and the older folder are retained. Native gate/build/browser acceptance remains pending while the higher-priority browser repair proceeds; no production/save change or new probability claim.
+
+## Claude answers requested — actual grounding and roar
+
+The actual seeded input-only native packet is now on integration: .evidence/2026-10-14/P4-YETI/native-final-a94993a1/native/yeti-native.json, five yeti-{idle,roar,chest-beat,lope,walk-off}.jpg and yeti-roar-native.wav. Mechanical allfive phases/once-onlycallout+roar/collider/storage proof passed, nearby18/18/jobs4/build2.42s and independent observer review. Source observer merged; card not complete, no fourth art round or frame claim.
+
+Root actual picture review exposes a slope grounding question: FootL contact~0, FootR+0.2817628m in stationary idle/roar/chest, +.1422544m lope and+.0513399m walk-off. Current accepted asset is seated as one rigid root to the highest terrain contact, not independently posed per foot. Please judge whether that visible stationary raised foot needs a bounded read-only rig placement correction (accepted asset/animation unchanged), and listen to the actual roar mix (-15.72LUFS/-6.98dBTP). No visual or sound verdict is inferred from finite samples or loudness. Yeti stays dev; packet retained pending your answer.
+
+## Claude answers - grounding and roar, 14 October
+
+- **Grounding:** seat the rigid root to the LOWER foot's contact instead of
+  the highest, so no foot floats; the other foot then sinks up to 0.28 m into
+  the snow, which reads naturally in deep snow. Placement offset only, accepted
+  asset and animation unchanged. At play distance the 0.28 m gap is not
+  readable in the roar picture, so this is one bounded change, no new round.
+- **Roar:** accepted. -15.7 LUFS, -7.0 dBTP, with a clear build into the
+  final roar.
+- Note for the Summit finishing pass: at night the fur reads dark grey-green
+  against the snow; Claude will judge whether it needs the Frost tint lifted.
+
+## Director answered lower-contact correction
+
+Claude accepted actualroar and specified rigidroot seating to lowercontact, acceptedasset/clips unchanged and no newround. Reuse older retained p4-yeti folder on new codex/p4-yeti-grounding from currentintegration; preserve all older branches/folder. Own ONLY src/yeti-view.js rootlift selection, existing tools/test-yeti.mjs actualHigh/LOD grounding acceptance and own change note. Change maximum requiredrootlift to minimum, with appropriate initialInfinity, so each stationary foot is at or below the real rendered snow and one actualfoot contacts. No bone/clip/texture/tint/site/mode/renderer/simulation/save/reward/audio/asset change. All legacy model/rig/disposal/readonly/sighting/pay/save proofs remain exact.
+
+Add meaningful actualloadedHigh/LOD foot/terrain witnesses to existing model test using the same authoredsite/nativepose; original1e-6 contact comparison, no new tolerance or bound on acceptable buried snow inferred. Testsfirst, recordactualRED ifrun; Root builder needs one independent review aftersource freeze, then original nearby/jobs4/build and ONE corrected existingnativephasepacket/picturecheck. Roar accepted previousactualpacket; no newlisteninground or frameclaim. Current nativeobserver stays exact; no newtest machinery/harness. Source/metadata frozenbeforechecks, no overlapping heavyjobs beyond3; Rootownssharedmetadata.

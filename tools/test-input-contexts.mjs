@@ -5,7 +5,7 @@ import { App } from '../src/app.js';
 
 globalThis.cancelAnimationFrame ??= () => {};
 
-assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'photo']);
+assert.deepEqual(Object.keys(INPUT_CONTEXTS), ['car', 'menu', 'foot', 'heli', 'photo']);
 assert.equal(keyboardAction('car', 'KeyC'), 'camera-cycle');
 assert.equal(keyboardAction('menu', 'KeyC'), 'camera-cycle');
 for (const code of ['KeyD', 'KeyB', 'KeyV', 'KeyX']) assert.equal(keyboardAction('car', code), null, `${code} is not a camera key`);

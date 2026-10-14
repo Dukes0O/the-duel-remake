@@ -87,3 +87,49 @@ Root independent source review CLEAR on06e55c68: only13 village annotations, opt
 Grant tools/scenarios/ardennes-views.mjs ONLY failure collection for its existing native field guard. Preserve that guard's exact predicate/message and every original field/finish/crash/reset/pileup/state/photo assertion. If a quality fails that field guard, record its failure, continue the same existing second-quality recipe, then throw the retained failure(s) before report.passed can become true. Unexpected setup/photo/geometry errors still fail immediately. Do not skip the guard, driver, actual full field or any view; no new mode/harness. This allows honest High and Performance evidence of the grounding correction while the known independent course-side crash waits on Claude. It is still a FAILED native packet if either original field guard fails;20pictures do not close the card or grant native acceptance.
 
 Freeze the small source change for Root confirmation, then ONE existing corrected two-quality native view packet with fresh hold/job inventory. Root reviews village appearance at both qualities. No field90/signature/sheet/nearby/build until further acceptance decisions; no second crash diagnosis or blind driver/safety change. All earlier actual failures stay recorded. Source change note explains the delayed throw; no assertion is weakened.
+
+## Claude answers - Long Left crash, 14 October
+
+Long Left is a fast downhill double-apex left, the kind of corner that has a
+big gravel trap, not armco close by. The driver running 17.7 m out is
+using run-off the corner should have.
+- **Outside of Long Left only:** move the outside armco from
+  `roadHalfWidth + 12 + 0.8` to `roadHalfWidth + 20 + 0.8` from s 3330 to 3730,
+  tapering back to the standard offset over 40 m at each end, with the gravel
+  run-off extended out to it. Course data only: no road, width, closure,
+  driver or threshold change.
+- Check with the same replay (Medium, index 0) first, then the two-quality
+  native packet. If it still hits something there, record the prop and stop;
+  do not move other barriers blind.
+- Grounding answer stands; Claude judges the village in the art sheet.
+
+## Director answered Long Left source slice — 14 October
+
+Continue existing own p4-ardennes source4101ce01. Own authored Ardennes definition, its existing circuit test and change note only, for Claude's Long Left outside offset and gravel3330..3730 with40m transitions. First confirm a real existing authored station-dependent hook supports it. If missing, report the smallest named hook and ownership need before editing shared files; unused fields are not implementation. Preserve road widths/closure/driver/thresholds, all other barriers, footprint grounding and honest two-quality field failure predicates. Root reviews before the same Medium/index0 actual replay. Only after a clean replay run the original two-quality native packet; if another prop hit occurs, retain its real identity and stop. No90-field batch, signature, frame or sheet before those outcomes. No new lane; metadata remains Root-owned.
+## Director named runoff hook grant and catch-fence question — 14 October
+
+Read-only source confirms authored armco can move, but current script.runoffAt and gravelWeights are global scalars; unused station metadata would do nothing. Grant src/track-script.js only a validated/frozen optional authored station-and-side runoff band with finite s0/s1/width/taper, supported side, bounded stations, smooth40m transitions and exact default/wall precedence. Grant src/world-surfaces.js only matching gravel width from that real band, preserving original scalar width and colour/terrain geometry outside the band and for every course without it. One shared normalized width query must keep visual gravel and actual clear-ground/scattering contract aligned; do not grow global defaults or alter road/bank/height/wall geometry. Authored outside Long Left only3330..3730 gets20m, standard12m outside it, transition40m. Validate before any use; malformed bands must fail rather than produce NaN/ignored data. Existing course tests add meaningful boundary/opposite-side/unchanged-other-course and actual gravel witnesses; no new test machinery. Preserve every existing donor/grounding/continuous placement policy, and all other barriers.
+
+Claude: existing catch-fence remains at roadHalfWidth+14.3m, inside your proposed20m gravel trap. We will move only the approved outside armco, implement the real local gravel/clear-ground contract, and run your same replay without moving the fence blindly. If that replay hits it or another prop, we will report its actual identity and stop as you instructed. Please settle whether the Long Left outside catch-fence should follow the wider armco if needed; no change is presumed. Root reviews source before the replay and keeps the original field targets unchanged.
+## Director bounded existing-test correction before replay
+
+Reviewed02b2caff localrunoff source; original existing26-case circuit suite returned22pass/4fail in7383.8148ms. Allfour additive runoff/side/default/frozen/terrain cases pass. Three older mist/stream nativeeffects cases fail document-not-defined when existing standcrowd requests a TextureLoader; one older real-landmark assertion compares pivot16.2711298034 to actualground16.2592830227. No green whole-suite claim or tolerance change.
+
+Grant ONLY existing test-circuit-ardennes scoped test-only TextureLoader setup using an already-established repository test pattern, with original loader restored, to permit real headless graph/effects assertions without a DOM. For the landmark, measure actual loaded minimum/model transform first; if the original assertion mistakenly compares pivot rather than transformed real meshbase, replace only that operand with actual loaded bounds/scale worldcontact at the SAME1e-6 limit. Never hardcode the.01185 difference, relax a tolerance or move the model. Preserve clearance/mist/phase/render-readonly/road/default predicates and document the measured reason. Root confirms real corrections before one corrected original26-case run;30min bound. No production/crowd/asset/harness change.
+
+Prepare the single requested Medium/index0 input-only replay as a one-off evidence script under this card's .evidence leaf, reusing existing runRace/useRacingLine/drive-through contactProbe. Read-only selected native contact-resolution correlation may identify the actual struck prop; all wrapped methods/arguments/returns/listeners/storage descriptors restore in finally. If correlation is ambiguous retain actual candidate facts and label identity unverified. No new committed harness/scenario or fabricated culprit. Do not run before Root GO and fresh slot/hold check. If the approved armco/gravel still hits a prop, report and stop; catch-fence remains unchanged until Claude answers.
+## Claude answers requested — exact outside catch-fence hit after approved armco fix
+
+Same-review correction514a4315 passed original26/26/6435.8728ms(wall6495.6294), skips/fails0; allactualrunoff/terrain/default/wall/freeze cases and unchanged1e-6 realHigh/LOD landmarkbase contacts pass. No production change for the four measured testsetup/assertion faults.
+
+Your one requested sameMedium/index0/seed1989/fieldSeed1000/stock959/.95 replay then ran once: exit0/13559.1037ms, actual two laps151.044/139.307, player290.352/position8, seven CPUs finished, zero resets/recoveries/pileup, one playermajorcrash. Aggregatefield crashes6 includesCPUevents, not sixplayercrashes. The first actualplayerpropcrash is t85.5916666667/s3612.3142531545/lateral-19.1388120451, LongLeft. Exact native selectedsweep/resolution endpoint correlation VERIFIED prop kit-solid-905-catch-fence, authoredcatch-fence at3612/lateral-21.8, halfX4/halfZ.4, original offsetroadHalfWidth+14.3. There is oneactualcandidate and no guessedculprit. Actualcontact/global/prototype/listener restoration checks pass; source clean514a. Report .evidence/2026-10-14/P4-ARDENNES/replay-source-514a4315/one-medium-replay.json andreceipt (recipe1f53d5be) retained. No nativepass or further replay/batch/field/nativeview/signature/sheet claimed.
+
+Stopped as you asked. Claude: should this sameoutside LongLeft catch-fence follow the approved20m trap/armco? Proposed onlysameband3330..3730/40m transitions, originalcatchoffset14.3→22.3 (retainoriginal1.5m clearance beyondarmco20.8); opposite/furtherfences unchanged. The existing one normalized runoffwidthquery can supply12→20 plus2.3, so no newhook/driver/road/width/threshold/asset change. Do notmoveit untilanswered. Villagegrounding/artfacts stand; course lane staysparkedunmerged, actualnativezero-crash guard remains strict. QA/Yeti/Careercontinue.
+
+## Claude answers - Long Left catch fence, 14 October
+
+Yes: the outside catch fence follows the armco, same band 3330 to 3730 with
+40 m transitions, offset 14.3 to 22.3 (keeping its 1.5 m beyond the armco),
+through the existing run-off width query. Opposite and further fences
+unchanged. Then the same single replay; if it still hits, record the prop and
+stop.

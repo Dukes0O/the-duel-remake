@@ -708,7 +708,7 @@ test('Rook exported palm and all five digits on each side form one welded deform
 });
 
 test('private review resolves only an existing ignored Rook hand GLB, never production or outside paths', async () => {
-  const scenario = await import('./scenarios/first-person-polish.mjs');
+  const scenario = await import('./first-person-review.mjs');
   assert.equal(typeof scenario.validateFirstPersonCandidatePath, 'function');
   const privateDir = join(root, 'art-build/first-person-p1/test-private-review');
   const privatePath = join(privateDir, 'rook.glb');
@@ -736,7 +736,7 @@ test('private review resolves only an existing ignored Rook hand GLB, never prod
 });
 
 test('private review recognizes only the exact same-origin Rook hands request', async () => {
-  const scenario = await import('./scenarios/first-person-polish.mjs');
+  const scenario = await import('./first-person-review.mjs');
   assert.equal(typeof scenario.rookAssetUrl, 'function');
   const origin = 'http://127.0.0.1:42371';
   const path = '/assets/models/wasteland/first-person/hands/rook.glb';
@@ -750,7 +750,7 @@ test('private review recognizes only the exact same-origin Rook hands request', 
 });
 
 test('private review verifies one real Rook substitution and all eight production hashes', async () => {
-  const scenario = await import('./scenarios/first-person-polish.mjs');
+  const scenario = await import('./first-person-review.mjs');
   assert.equal(typeof scenario.verifyCandidateSwap, 'function');
   const origin = 'http://127.0.0.1:42371';
   const requestedUrl = `${origin}/assets/models/wasteland/first-person/hands/rook.glb`;
@@ -773,7 +773,7 @@ test('private review verifies one real Rook substitution and all eight productio
 });
 
 test('the actual browser fetch wrapper substitutes Rook once only after private memory setup', async () => {
-  const scenario = await import('./scenarios/first-person-polish.mjs');
+  const scenario = await import('./first-person-review.mjs');
   assert.equal(typeof scenario.rookCandidateFetchInstallScript, 'function');
   const origin = 'http://127.0.0.1:42371';
   const bytes = Buffer.from([103, 108, 84, 70, 2, 0, 0, 0, 12, 0, 0, 0]);
@@ -1054,7 +1054,7 @@ test('R3 sleeves export localized diagonal cloth crests instead of circular ring
 });
 
 test('first-person frame gate compares visible production A1/B/A2 in both qualities', async () => {
-  const {assessFirstPersonP1FrameCost}=await import('./scenarios/first-person-polish.mjs');
+  const {assessFirstPersonP1FrameCost}=await import('./first-person-review.mjs');
   assert.equal(typeof assessFirstPersonP1FrameCost,'function',
     'frame review needs a pure, independently testable A1/B/A2 assessor');
   const productionSha='a'.repeat(64),candidateSha='b'.repeat(64);
@@ -1108,7 +1108,7 @@ test('first-person frame gate compares visible production A1/B/A2 in both qualit
 });
 
 test('frame sampling finds the visible baseline Rook hand without candidate-only extras', async () => {
-  const {findActiveFirstPersonHands}=await import('./scenarios/first-person-polish.mjs');
+  const {findActiveFirstPersonHands}=await import('./first-person-review.mjs');
   assert.equal(typeof findActiveFirstPersonHands,'function');
   const rig={visible:true,parent:null,children:[],traverse(visitor){
     const walk=node=>{visitor(node);for(const child of node.children||[])walk(child);};walk(this);

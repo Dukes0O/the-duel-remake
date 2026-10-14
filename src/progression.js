@@ -1,5 +1,6 @@
 import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
+import {normalizeHeli} from './heli/heli-save.js';
 import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
   normalizeGrandPrixPodiums, recordGrandPrixPodium} from './grand-prix-career.js';
@@ -159,6 +160,7 @@ export function normalizeProfile(value) {
   // A previously earned reward stays owned if the roster grows in a later update.
   profile = grantCompletionCars(profile);
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
+  if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'grandPrixPodiums'))
     profile.grandPrixPodiums = normalizeGrandPrixPodiums(value.grandPrixPodiums);
   profile.wasteland = normalizeWasteland(value.wasteland, value.weapons, value.history);
