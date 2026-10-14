@@ -14,6 +14,12 @@ These are the card's detailed design, acceptance and recorded decisions.
 - "Get rid of the camera angles that are useless, like the side and front
   views. You can't race with those views."
 
+## Kyle changed item 2 (13 October 2026, evening)
+
+Kyle, seeing the on-screen corner warning: "this is not what we want. I was thinking of little sign posts like what you've already got at Tremblant, just to make them a bit bigger, that's all. They're too small to really notice."
+
+The on-screen corner warning is removed completely (RELEASE-CONTROLS). Item 2 below now means only the trackside braking boards at double size and the turn chevrons at 1.5 times. Everything else on this card stands.
+
 ## Settled design (Claude)
 
 1. **Route map (bug).** On the circuits (track-script courses, from Tremblant

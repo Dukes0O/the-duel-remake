@@ -2,6 +2,17 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Steering and race screen release – 13 October 2026
+
+Gentler keyboard steering and throttle on road races: a tap turns the wheel
+less, holding the key reaches full lock more slowly, the keys steer less at
+high speed, and the throttle builds up instead of jumping. The Scrapdome and
+the other arenas keep their sharp steering. The course map in the bottom left
+now turns the right way on every course and is twice the size; the rear-view
+mirror is much bigger; the trackside braking boards and turn signs are larger;
+and the camera key cycles chase, hood, wide and back (the front and side views
+are gone).
+
 ## Laps, snowmen and fixes release – 13 October 2026
 
 Choose your race length: Rival Duel and Grand Prix races on the circuits now
