@@ -7,7 +7,7 @@ import {nativeBundle} from './p4-panorama.mjs';
 const names = ['La Fontaine', 'Red Water', 'The Wall', 'Kestrel Straight', 'Les Combes', 'Riverside', 'Stavelot', 'Bus Stop Exit'];
 
 export async function run(context) {
-  const report = {passed: false, qualities: [], captures: []};
+  const report = {passed: false, qualities: [], captures: [], failures: []};
   const persist = () => writeFile(join(context.outputDir, 'ardennes-views.json'), JSON.stringify(report, null, 2) + '\n');
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   const bundle = await nativeBundle();
@@ -99,9 +99,11 @@ export async function run(context) {
         if(result.allDone||!['racing','countdown'].includes(result.status))break;
       }
       const final = progress.at(-1); report.qualities.push({quality,...setup,witness,progress,final}); await persist();
-      if (!final?.allDone || final.laps !== 2 || final.finished !== 7 || final.crashes !== 0 || final.resets !== 0 || final.firstLapPileUp) throw Error('Native Ardennes field did not finish: '+JSON.stringify(final));
+      if (!final?.allDone || final.laps !== 2 || final.finished !== 7 || final.crashes !== 0 || final.resets !== 0 || final.firstLapPileUp)
+        report.failures.push({quality, error: 'Native Ardennes field did not finish: '+JSON.stringify(final)});
       if (targetIndex !== targets.length || !clear) throw Error('Native required art views were not reached');
     }
+    if (report.failures.length) throw Error(report.failures.map(failure => failure.error).join('\n'));
     report.passed = true;
   } finally {await persist();}
   console.log('Ardennes native field and actual High/Performance art views complete. No frame timing.');

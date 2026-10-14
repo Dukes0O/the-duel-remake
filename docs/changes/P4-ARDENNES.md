@@ -56,3 +56,12 @@ The one granted concrete measurement ran the two newly authored existing-test ca
 The earlier High field packet remains failed: one player prop crash at Long Left, reproduced by one memory-only Medium/index0 diagnostic at time 85.55 s, station 3610.814, lateral -17.668. Its exact 150.99/139.305 lap times matched native. All eight finished, with zero boundary resets. The crash question waits on Claude. No driver, road, safety or zero-crash acceptance changed, and Performance remains unrun. Both startup failures, the failed native field packet and the concrete grounding log remain in integration evidence.
 
 Removed: centre-only seating for the thirteen explicitly annotated village pieces. The shared default and original continuous-lining behavior are retained. No old assertion, donor model, terrain rule, replay fingerprint or signature changed.
+
+
+## Honest two-quality village evidence
+
+Root confirmed the footprint source at 06e55c68. The lane then merged current integration 727a55e8 normally without a conflict. Existing Ardennes source and assets stayed exact.
+
+Under grant 727a55e8, the existing native recipe records the exact original field predicate and failure message for each quality and continues its normal second-quality run. It throws every retained field failure before report.passed can become true. Setup, geometry, missing-view and state/photo errors still stop immediately. The driver, genuine field, all twenty views and every finish, crash, reset and pile-up guard are unchanged. A twenty-picture packet still fails native acceptance if either quality has the known player crash. This collects honest pictures for the independent village-grounding review while Claude settles that crash; it grants no native or art pass.
+
+Removed: the early field-failure throw that prevented the existing second-quality pictures from being collected. The same failure is retained and thrown before success. No assertion, tolerance, field rule, source pin or runtime value changed. The corrected two-quality packet remains unrun at this freeze.
