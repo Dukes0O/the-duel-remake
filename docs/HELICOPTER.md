@@ -120,6 +120,32 @@ height and heading, flies to the chosen destination's approach point at
 stops in a hover 20 m above the landing zone. You land or set down yourself
 in H1. Any control input beyond 30% hands control back to you.
 
+**Settled while building HELI-FLIGHT (14 October 2026).** These fill gaps
+the numbers above left open; `tools/test-heli-flight.mjs` checks each one.
+
+- Drag is sized so Assisted (20 degrees) tops out at 60 m/s with a full
+  tank and no load. Above 60 m/s drag climbs steeply (the retreating blade
+  stalls), so Real's 25 degrees reaches about 61 m/s, not 68.
+- Full collective with no load climbs at about 10 m/s; a hover burns about
+  0.52 kg/s, so a full tank hovers about 13 minutes.
+- Assisted slows its own descent near the ground: holding S lands at about
+  0.6 m/s.
+- Touchdown also counts tilt and sliding: tilt 10 to 20 degrees or a slide
+  of 3 to 8 m/s turns a good landing hard; more than 20 degrees or 8 m/s is
+  a crash.
+- Autorotation keeps the rotor's stored energy. Full collective gives lift
+  of 1.5 times the weight for about 2.5 seconds; with the lever down the
+  rushing air spins the rotor back up. Assisted flares for you while W is
+  held below 15 m and lands at under 1 m/s. In Real a flare started about
+  8 m up lands well; one started at 14 m runs out of rotor and crashes.
+- The autopilot keeps at least 30 m (plus the hanging load) above the
+  highest ground or obstacle on the next 10 seconds of its path, and slows
+  to 8 m/s when it is more than 10 m short of that height. It limits the
+  combined tilt to 10 degrees.
+- The rotor and the body strike trees, buildings, rocks and mountains at
+  any height; mountains count as cones. Landing on a roof is not part of
+  H1: coming down onto one is a crash.
+
 ## 4. Controls (one keyboard)
 
 | Key | Action |
