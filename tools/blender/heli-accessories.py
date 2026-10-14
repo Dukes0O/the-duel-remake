@@ -4,10 +4,15 @@ Source only until the Director grants an export slot. Future invocation:
 blender -b --factory-startup -t 4 --disable-autoexec --python-exit-code 1 \
   --python tools/blender/heli-accessories.py -- --root <integration lane>
 
-No donor, download, helicopter, renderer, cable line, .blend or render output.
+No donor, download, helicopter, runtime renderer, cable line or .blend output.
+--review-dir imports existing GLBs for six ignored review PNGs only; neither
+review mode rebuilds, exports or mutates a GLB.
+--sheet composes that manifest with workspace Pillow; it does not use Blender.
 Game coordinates are metres, +Y up and +Z front. Convert once for glTF.
 """
 import argparse
+import hashlib
+import io
 import json
 import math
 import sys
@@ -18,6 +23,9 @@ def arguments():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--paths-only", action="store_true")
+    review = parser.add_mutually_exclusive_group()
+    review.add_argument("--review-dir", type=Path, help="Import existing GLBs and render six review views only")
+    review.add_argument("--sheet", type=Path, help="Compose the existing six-view review manifest only")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:]
                              if "--" in sys.argv else sys.argv[1:])
     args.root = args.root.resolve()
@@ -284,6 +292,158 @@ def validate(identifier, settings, stats):
         raise ValueError("Missing authored accessory parts: " + ", ".join(sorted(missing)))
 
 
+def checksum(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def evidence_path(root, value):
+    path = (root / value).resolve()
+    allowed = [(root / name).resolve() for name in [".qa-dist", ".evidence"]]
+    if not any(path != base and path.is_relative_to(base) for base in allowed):
+        raise ValueError("Review evidence must be below this lane's .qa-dist or .evidence")
+    return path
+
+
+def review_views():
+    # All positions/targets are game metres: +Y up, +Z front.
+    return [
+        ("cargo-hook", "hook-front", "HOOK FRONT - TOP ATTACHMENT", (0, -.2, 1.05), (0, -.2, 0), 52),
+        ("cargo-hook", "hook-oblique", "HOOK OBLIQUE - LATCH AND EYE", (.65, .13, .85), (0, -.2, 0), 52),
+        ("helipad", "pad-top", "PAD TOP - H ALONG +Z", (0, 29, .01), (0, 0, 0), 42),
+        ("helipad", "pad-edge", "PAD EDGE - TOP ORIGIN", (10, 3.2, 14), (0, -.06, 0), 34),
+        ("fuel-pump", "pump-front", "PUMP FRONT +Z - METER AND NOZZLE", (0, 1.05, 4.4), (0, .93, 0), 48),
+        ("fuel-pump", "pump-side", "PUMP SIDE - HOSE AND BASE", (4.3, 1.65, 2), (0, .93, 0), 48),
+    ]
+
+
+def render_review(root, directory, config):
+    # Import the published bytes, never rebuild or export review substitutes.
+    directory = evidence_path(root, directory)
+    sources = {key: root / settings["path"] for key, settings in config["assets"].items()}
+    before = {key: checksum(path) for key, path in sources.items()}
+    views = review_views()
+    output_paths = [directory / (name + ".png") for _, name, *_ in views]
+    manifest_path = directory / "review-manifest.json"
+    if any(path.exists() for path in output_paths + [manifest_path]):
+        raise ValueError("Review captures already exist; do not overwrite a recorded round")
+    directory.mkdir(parents=True, exist_ok=True)
+    records = []
+    try:
+        for identifier, settings in config["assets"].items():
+            bpy.ops.wm.read_factory_settings(use_empty=True)
+            bpy.ops.import_scene.gltf(filepath=str(sources[identifier]))
+            parent = bpy.data.objects.get(settings["node"])
+            if parent is None:
+                raise ValueError("Imported GLB is missing its declared root: " + identifier)
+            stats = measured(parent)
+            validate(identifier, settings, stats)
+            scene = bpy.context.scene
+            world = bpy.data.worlds.new("sky")
+            scene.world = world
+            world.use_nodes = True
+            world.node_tree.nodes["Background"].inputs["Color"].default_value = (.42, .55, .72, 1)
+            world.node_tree.nodes["Background"].inputs["Strength"].default_value = .9
+            sun = bpy.data.lights.new("sun", "SUN")
+            sun.energy = 4.0
+            sun.angle = math.radians(2)
+            sun_object = bpy.data.objects.new("sun", sun)
+            scene.collection.objects.link(sun_object)
+            sun_object.rotation_euler = (math.radians(50), math.radians(10), math.radians(-35))
+            scene.render.engine = "CYCLES"
+            scene.cycles.samples = 48
+            scene.cycles.device = "CPU"
+            scene.cycles.use_denoising = True
+            scene.render.threads_mode = "FIXED"
+            scene.render.threads = 4
+            scene.render.resolution_x, scene.render.resolution_y = 960, 600
+            scene.render.resolution_percentage = 100
+            scene.render.image_settings.file_format = "PNG"
+            scene.view_settings.view_transform = "AgX"
+            camera_data = bpy.data.cameras.new("review_camera")
+            camera = bpy.data.objects.new("review_camera", camera_data)
+            scene.collection.objects.link(camera)
+            scene.camera = camera
+            camera_data.clip_start, camera_data.clip_end = .005, 1000
+            for asset, name, label, position, target, lens in views:
+                if asset != identifier:
+                    continue
+                camera.location = game_point(position)
+                direction = game_point(target) - camera.location
+                camera.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+                camera_data.lens = lens
+                output = directory / (name + ".png")
+                scene.render.filepath = str(output)
+                bpy.ops.render.render(write_still=True)
+                records.append({"asset": identifier, "view": name, "label": label,
+                                "image": str(output),
+                                "sha256": checksum(output), "assetSha256": before[identifier],
+                                "source": settings["path"], "origin": settings["origin"],
+                                "bounds": stats, "cameraGameMetres": {"position": position,
+                                "target": target, "lensMm": lens, "resolution": [960, 600]}})
+    finally:
+        after = {key: checksum(path) for key, path in sources.items()}
+        if after != before:
+            raise ValueError("A source GLB changed during accessory review")
+    manifest = {"card": "HELI-ART-SRC", "round": 1, "kind": "BLENDER IMPORTED GLB / NOT GAME",
+                "sourceSha256Before": before, "sourceSha256After": after, "views": records,
+                "render": {"engine": "CYCLES", "device": "CPU", "samples": 48, "threads": 4,
+                           "viewTransform": "AgX", "gameAxes": "+Y up, +Z front, metres"},
+                "artAccepted": False}
+    with manifest_path.open("x", encoding="utf-8", newline="\n") as output:
+        json.dump(manifest, output, indent=2)
+        output.write("\n")
+    print("Accessory imported-GLB review manifest: " + str(manifest_path))
+
+
+def compose_review(root, manifest_path, config):
+    # Pillow is supplied by the workspace Python runtime; no Blender import.
+    from PIL import Image, ImageDraw, ImageFont, ImageOps
+    manifest_path = evidence_path(root, manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected = [(asset, name) for asset, name, *_ in review_views()]
+    if (manifest.get("card") != "HELI-ART-SRC" or manifest.get("round") != 1 or
+            manifest.get("kind") != "BLENDER IMPORTED GLB / NOT GAME" or
+            [(row["asset"], row["view"]) for row in manifest["views"]] != expected):
+        raise ValueError("Sheet requires the six original accessory review views")
+    actual = {key: checksum(root / settings["path"]) for key, settings in config["assets"].items()}
+    if actual != manifest["sourceSha256Before"] or actual != manifest["sourceSha256After"]:
+        raise ValueError("Reviewed accessory GLBs differ from the current sources")
+    target = root / "docs/board/looks/heli-accessories/round-1.jpg"
+    if target.exists():
+        raise ValueError("Accessory round-one sheet already exists; do not overwrite it")
+    sheet = Image.new("RGB", (1600, 1720), (27, 31, 33))
+    draw = ImageDraw.Draw(sheet)
+    font = ImageFont.truetype("C:/Windows/Fonts/segoeui.ttf", 20)
+    title = ImageFont.truetype("C:/Windows/Fonts/segoeuib.ttf", 28)
+    draw.text((24, 12), "HELI ACCESSORIES | ROUND 1", font=title, fill=(240, 232, 210))
+    draw.text((24, 52), "BLENDER IMPORTED GLB / NOT GAME | actual source bytes, full frames", font=font,
+              fill=(220, 226, 225))
+    for index, row in enumerate(manifest["views"]):
+        source = evidence_path(root, Path(row["image"]))
+        if checksum(source) != row["sha256"] or row["assetSha256"] != actual[row["asset"]]:
+            raise ValueError("Review image or source hash changed")
+        x, y = 20 + (index % 2) * 790, 100 + (index // 2) * 535
+        draw.text((x, y), row["label"], font=font, fill=(240, 232, 210))
+        dimensions = " x ".join(f"{value:.3f}" for value in row["bounds"]["sizeM"])
+        draw.text((x, y + 28), "SIZE XYZ: " + dimensions + " m", font=font, fill=(190, 205, 205))
+        with Image.open(source) as original:
+            image = ImageOps.contain(original.convert("RGB"), (770, 470))
+            sheet.paste(image, (x + (770 - image.width) // 2, y + 57 + (470 - image.height) // 2))
+    encoded = None
+    for quality in [88, 80, 72, 64, 52, 40]:
+        buffer = io.BytesIO()
+        sheet.save(buffer, format="JPEG", quality=quality, optimize=True)
+        if buffer.tell() <= 500000:
+            encoded = buffer.getvalue()
+            break
+    if encoded is None:
+        raise ValueError("Accessory sheet exceeds 500000 bytes; no output was published")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("xb") as output:
+        output.write(encoded)
+    print("Accessory round-one sheet: " + str(target) + " (" + str(len(encoded)) + " bytes)")
+
+
 def main():
     args = arguments()
     config_path = args.root / "tools/art/heli-accessories.json"
@@ -295,6 +455,11 @@ def main():
             config["assets"][key]["path"] != path for key, path in paths.items()):
         raise ValueError("This recipe exports only the three settled accessory paths")
     outputs = [args.root / path for path in paths.values()]
+    if args.paths_only and (args.review_dir or args.sheet):
+        raise ValueError("--paths-only cannot be combined with review modes")
+    if args.sheet:
+        compose_review(args.root, args.sheet, config)
+        return
     if args.paths_only:
         print(json.dumps({"blend": [], "glb": [str(path) for path in outputs],
                           "inputs": [str(config_path)], "textures": []}))
@@ -302,6 +467,9 @@ def main():
     global bpy, Vector
     import bpy
     from mathutils import Vector
+    if args.review_dir:
+        render_review(args.root, args.review_dir, config)
+        return
     factories = {"cargo-hook": cargo_hook, "helipad": helipad, "fuel-pump": fuel_pump}
     reports = []
     for identifier, settings in config["assets"].items():

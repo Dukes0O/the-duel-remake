@@ -1,23 +1,40 @@
 # HELI-ART-SRC
 
-## Helicopter source remains pending
+## Helicopter source settled
 
-The candidate packet keeps the verified CC0/CC BY primary receipts, original
-pictures, checksums and actual access failures. Neither preferred helicopter
-binary is available locally. The CC0 source's published 17,460 triangles and
-R22's published 9,902 triangles are not measured mesh compliance. No helicopter
-geometry, stand-in, download, account, key or source adaptation is added here.
+Claude picked the original Kestrel One in tools/blender/kestrel-one.py and
+public/assets/heli/kestrel-one.glb; its three rounds are closed. The donor
+route is dropped: no retry, R22 download or fourth helicopter round. Retain
+licensed originals and their provenance. Codex owns the accessories only.
 
-Claude 3e034b28 permits exactly one retry of the preferred CC0 two-seat source
-after 18:00 PT on 14 October. If it remains unavailable, Claude has already
-asked Kyle to download the licensed Galih Pamungkas / Lopo3D R22. Only Kyle
-creates that account. This source slice performs no download or retry.
+## Accessory review design, settled before implementation
 
-The exact contract remains metres, +Y up, +Z nose, ground origin below the
-main mast, clean unbranded Kestrel One, separate rotors/skids, cockpit/panel,
-right-seat eye and cable attachment. The candidate packet retains all named
-nodes, dimensions, pivots, 20,000-triangle and 2K limits and unverified gaps.
-Original licensed cache files remain in the existing external library.
+The separate --review-dir mode imports the three exact existing GLBs without
+building or exporting geometry. It records SHA-256 before import and after all
+renders and fails if an asset changes. Six named views show hook front and
+oblique, pad top and edge, pump front and side. Camera positions and targets
+are authored in game metres (+Y up, +Z front), converted once for Blender.
+Views retain the original model origins; the manifest records bounds, origin,
+camera, labels, source path/hash and PNG paths. No reference or native-game
+appearance claim is made. Claude judges the accessory art separately from the
+closed Kestrel rounds, in looks/heli-accessories/round-1.
+
+Reuse Kestrel's CPU Cycles 48 samples, four threads, AgX, sky and sun pattern.
+Review output is restricted to a resolved descendant of this lane's ignored
+.qa-dist or .evidence folder. No .blend, public output, GLB mutation, dependency,
+generic harness, runtime loader or new test. Keep default export and
+--paths-only behavior exact. Root reviews the source freeze and schedules any
+render, original lane gate and build; none is authorized by this source edit.
+
+The separate --sheet mode uses bundled Pillow only to contain all six full PNG
+frames in two columns and three rows, without crop or retouch. Its caption
+states BLENDER IMPORTED GLB / NOT GAME and gives measured dimensions. It writes
+one immutable JPEG, at most 500000 bytes, to the canonical accessory round-1
+path. It neither renders nor changes any source or runtime asset.
+
+Current integration merged normally at 77033b64. The only merge conflict was
+two additive credit paragraphs; both accessory and Kenney fire-atlas credits
+were retained. No runtime or Kestrel source was changed by the resolution.
 
 ## Original accessory source
 
@@ -73,6 +90,16 @@ Render, comparison sheet, formal art round, native views, lane gate and build
 remain UNRUN. Numeric/source compliance is not Claude's art acceptance, which
 remains pending within the three-round cap. No release, push, live folder/port
 or real save access. Changed assertions: none.
+
+## Held source checkpoint
+
+The second lead reviewed this source and corrected two camera framings and the
+shared evidence-junction image path before freezing it. Existing GLBs remain
+unchanged. The packet's old helicopter download plan is historical and is
+superseded by Claude's original Kestrel pick. All recipe execution, renders,
+sheet composition, lane tests and build remain UNRUN. The first lead holds
+all six build slots and must release an ART slot before this lane resumes.
+No gate or art acceptance follows from this source review.
 
 ## Removed
 
