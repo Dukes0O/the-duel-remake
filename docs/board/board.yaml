@@ -430,7 +430,6 @@ tasks:
     status: "building"
     claimed_by: "claude-design-2026-10-14"
     branch: "claude/enzo-model"
-    waiting_on: "kyle"
     needs: [EARN-SCREEN]
     locks: [sound-bank]
     flag: "earned-cars"
