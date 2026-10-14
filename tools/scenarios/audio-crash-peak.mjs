@@ -1,7 +1,5 @@
 import {writeFile} from 'node:fs/promises';
-import {join, resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {build} from 'vite';
+import {join} from 'node:path';
 import {contactFixture} from './warlord-reward.mjs';
 
 // QA only: native AudioWorklet meters read the final runtime output. Float32
@@ -213,15 +211,13 @@ export async function run(context) {
   await context.waitFor("!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
     'memory-only native audio entry',30000);
   const result=await context.evaluate('('+captureNative.toString()+')('+JSON.stringify(contactFixture)+')');
-  // Preserve the real completed first stage if the later recorder probe fails.
-  await writeFile(join(context.outputDir,'capture.json'),JSON.stringify(result)+'\n');
   result.actualRecorder = await actualRecorderProbe(context);
   await writeFile(join(context.outputDir,'capture.json'),JSON.stringify(result)+'\n');
   console.log('Native final-output Float32 capture: '+result.rows.length+' cases, '+result.sampleRate+' Hz.');
 }
 
 
-// Bundle this existing QA-only entry without writing a private page. Importing
+// Build this QA-only entry in the test's ignored private directory. Importing
 // the real class and recorder together keeps the actual EngineAudio instance;
 // every observed runtime/native method still runs unchanged.
 export function nativeRecorderEntry() {
@@ -264,41 +260,11 @@ await import('/tools/audio-race-check.js');
 `;
 }
 
-async function nativeRecorderBundle() {
-  const root = resolve(fileURLToPath(new URL('../../', import.meta.url)));
-  const entry = join(root, '.qa-dist/audio-recorder.virtual.js').replaceAll('\\', '/');
-  const source = file => JSON.stringify(join(root, file).replaceAll('\\', '/'));
-  const result = await build({
-    root, configFile: false, logLevel: 'silent', define: {__DUEL_QA__: 'true'},
-    plugins: [{
-      name: 'actual-audio-recorder',
-      resolveId: id => id.replaceAll('\\', '/') === entry ? '\0audio-recorder' : null,
-      load: id => id === '\0audio-recorder' ? nativeRecorderEntry()
-        .replace("'/src/audio.js'", source('src/audio.js'))
-        .replace("'/tools/audio-race-check.js'", source('tools/audio-race-check.js')) : null,
-    }],
-    build: {write: false, emptyOutDir: false, minify: false,
-      lib: {entry, formats: ['es']}, rolldownOptions: {output: {codeSplitting: false}}},
-  });
-  const output = (Array.isArray(result) ? result[0] : result).output;
-  const chunk = output.find(item => item.type === 'chunk');
-  if (!chunk) throw Error('Actual recorder helper bundle missing.');
-  return chunk.code;
-}
-
 export async function actualRecorderProbe(context) {
-  const bundle = await nativeRecorderBundle();
-  await context.navigate('/tools/menu-check.html');
-  await context.waitFor("!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
-    'memory-only recorder page', 30000);
-  // Retire the page's idle menu App before the actual existing recorder owns
-  // its own App and AudioContext. The normal harness containment stays exact.
-  await context.evaluate('window.__qaApp.dispose();window.__qaApp=null;');
-  await context.evaluate(`(async () => {
-    const url = URL.createObjectURL(new Blob([${JSON.stringify(bundle)}], {type: 'text/javascript'}));
-    try { await import(url); }
-    finally { URL.revokeObjectURL(url); }
-  })()`);
+  const page=join(context.outputDir,'recorder-probe.html');
+  const relativePath=page.replaceAll('\\','/').split('/.evidence/')[1];
+  if(!relativePath)throw Error('Recorder QA page must be in the card evidence directory.');
+  await context.navigate('/.evidence/'+relativePath);
   await context.waitFor('!!window.__audioQaReady','actual existing native race recorder',30000);
   const started=await context.evaluate('window.__audioQaStart()');
   await new Promise(done=>setTimeout(done,350));
