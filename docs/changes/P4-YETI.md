@@ -44,3 +44,39 @@ The original unfiltered lane on cc5d5d19 completed 288/289 passed, one failed an
 ## Final integrated source verdict
 
 Final ace5cb5f source passed original nearby289/289, failures empty/notRun0/jobs4,1558086.503ms wall; build571ms/wall1128.7403ms, source and actual same Save Guardian confirmations CLEAR. Conflict-free integrationcb6aef9e needs no repeat. Native grounding/look/audio remain open, dev stays dev, core/save locks released, older retained lane preserved.
+## Native encounter recipe, source preparation only
+
+Director grant b858a349 permits only tools/scenarios/yeti.mjs and this note.
+The existing browser harness runs a private memory-only App and an actual
+purchased Summit Time Trial: F42, winter tyres, casual, Medium, base 1989,
+standard line driving at .95. The single fixed identity is yeti-run-0;
+its private hash is 3395618052, selecting the first authored ridge site.
+This identity comes from the already used controlled run-ID sample, not a
+natural race-frequency claim. The scenario restores crypto.randomUUID
+immediately after the actual App start and verifies its recorded input.
+
+Normal App RAF drives from the starting grid. No player pose, course seed,
+race time, phase, seenAt, collider, racing line, reward or save schema is
+assigned. Existing line-driver convention disables only the demo shoulder
+visit. Actual event delivery supplies the once-only YETI! callout and roar.
+The renderer loads the accepted high/LOD asset; the scenario reads its real
+skinned feet, both foot joints and rendered terrain during idle, roar,
+chest-beat, lope and walk-off. Pictures change only the inspection camera,
+restoring it immediately and checking state identity. Observed foot gaps
+and pictures need grounding/appearance review; no new tolerance is invented.
+
+The existing output PCM recipe records the actual encounter at its runtime
+mix, after decoding the existing roar before start. It records the actual
+once-only event, native phase ages, source hashes, foot positions, bone
+poses, unchanged obstacle bytes and recorded race input. The fixed fixture
+is separate from the accepted 89/300 controlled appearance sample. Native
+execution, pictures, actual grounding and human listening are UNRUN; no
+source preparation pass can grant those. No fourth art round is created.
+
+### Removed
+
+Nothing is replaced. No production source, model, sound, fingerprint or
+saved reward changes. This one card-specific scenario reuses the existing
+harness, line driver and PCM helpers; it adds no generic framework. The
+retained lane stays in place. Checks/build/browser execution wait for the
+release hold to clear and Root's ordered dispatch.
