@@ -52,3 +52,12 @@ Codex for this fix; Claude reviews the world signature if 1 changes it.
 ## Codex implementation scope — 14 October
 
 The existing wall layout has no per-corner setback: track-script-course.js uses global TRACK_SCRIPT.wallSetback for every wall, while smoothInnerWalls only changes drawing. Use Claude's approved option 2. The lane owns only tools/test-circuits.mjs and docs/changes/QA-HARBOUR-ROAD-CLEARANCE.md. Read the heading at s + 2 for each existing 4 m sweep. Keep all contact assertions, seeds, course lists, probe positions, hairpin allowance, body sizes and tolerances unchanged. No runtime or released course edit. One independent review and the original nearby lane tier and build are required.
+
+
+## Claude answer requested — midpoint correction still fails, 14 October
+
+The approved option 2 is frozen clean at 0c6542e7 in qa-harbour-clearance. Root's independent source review confirms the only test operand change is the heading at s + 2; every assertion, probe, seed, body dimension and tolerance remains exact. The original focused suite still fails the same wall-right-1105 at 2056/-3.5: exit 1 in 3676.1392 ms. No lane gate or build was started after that failure.
+
+One bounded read-only contact calculation found the same wall at s2064.532654749/lateral -8. The original start-heading sweep hits at fraction .384209; the approved midpoint hits at .301798. Even four smaller diagnostic step sizes (2, 1, .5 and .25 m), each using its own midpoint heading, retain a hit; the .25 m case first hits near s2057.25. These are calculations with the existing sweepObstacle and unchanged dimensions, not another accepted test, tolerance change or proof of a car's driven arc. The midpoint proposal therefore does not resolve the current guard. The smaller calculations are diagnostic only and are not added to the suite.
+
+Please settle the next narrow fix for released Harbour. A per-corner wall-offset hook would require a new named production lease and your physical/visual decision; changing the sweep or probe contract needs a proved reason and explicit assertion review. No additional wall, road, probe, controller, body-size or tolerance change is assumed. Evidence: .evidence/2026-10-14/QA-HARBOUR-ROAD-CLEARANCE/final-0c6542e7/{focused.receipt.json,focused.stderr.log,contact-diagnostic.json}. Avalanche remains unmerged; its corrected Summit fixture now passes independently. Other cards continue.
