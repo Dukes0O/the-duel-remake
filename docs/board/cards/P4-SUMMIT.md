@@ -140,3 +140,9 @@ The poles, gapped banks, rocks and Gallery lamps are in, but the snow half still
 4. Snow tone variation.
 
 Merge 22fd8cdf with its rejoin correction kept. Summit stays dev until that pass and Kyle's "go live". waiting_on is cleared.
+
+## Accepted round-three source merged — 14 October
+
+Final reviewed current union6b6831d1 passed the original unfiltered nearby103/103, failures/unrun0, jobs4; wall465624.9565ms. One build passed, Vite937ms/wall1761.6575ms. Independent review CLEAR. Only Summit's actual scene signature changes to4e30db187ac75a8feb0215365b665db53e664e4c5f0267e25ad4b461b194ebf4; all20 other scene rows/fixtures remain exact. The first wrong Ardennes opt-in capture failed coverage and is not claimed; corrected Summit-only invocation preserves that guard. Accepted final19-view sheet/visual source exact22fd8cdf; current controls and Gallery35 tiles/end10800 are preserved. No fourth art round or physical tuning.
+
+Conflict-free integration merge needs no rerun. P4-SUMMIT is completed as the accepted dev source; P4-FINISH-SUMMIT remains Claude's finishing pass and P4-AVALANCHE's answered timing/entrance correction is next. No native strategy, High frame or release pass is implied. The older retained Summit folder/branch is preserved under Kyle's ownership rule.

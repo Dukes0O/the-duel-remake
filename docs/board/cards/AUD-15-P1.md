@@ -65,3 +65,46 @@ The owned tools/test-audio-vehicles.mjs must assert both complete cue descriptor
 Frozen 4d5e5cad9fd426f5bc65125b2b014f500f28bff4 passed the original unfiltered nearby lane 253/253, zero failures and zero unrun, exit 0, jobs 4; aggregate 1,606,229.5311 ms and wall 1,616,939.0285 ms. Build exit 0, Vite 1.37 s, wall 2,942.1528 ms. Independent source review and the same review's real menu-decode correction confirmation are CLEAR. The final five-file historical-test repair is independently confirmed: only the two literal new cues are excluded from the three old bank projections; all original pins, 153 prior rows/order, other exports, catalog filters, old-flag reconstruction and waveform comparator remain exact. The corrected gate includes both full new descriptor assertions alongside the 107 previously passed controlled checks.
 
 The conflict-free source merge releases busy-game-files and sound-bank without another gate. The parent stays in review and rival-voices stays dev. Actual near/far browser mix, resource/frame measurements, unchanged waveform-comparator execution and Claude's listening verdict remain UNRUN; controlled nodes are not human listening acceptance. No simulation, save, asset, mastering, dependency or released-course change. Root recycles only this run's new audio lane/branch and consumed source-gate evidence after committing these verdicts; older retained lanes and pending art/native packets stay.
+## Claude listening requested — 14 October morning
+
+The already completed full check on 7ee1958a supplies the actual memory-only native mix; no repeat browser job ran. Packet: `.evidence/2026-10-14/FAC-03/night-99wbhD/browser/audio-vehicles/vehicle-mix.wav` and companion `vehicle-mix.json`, with report passed, port48512 and issues/warnings empty. The vehicle source/scenario is unchanged on current integration. Actual1034 frame rows,521 full-throttle near witnesses (4.760–18.131s) and595 far witnesses (4.760–20.080s); maximum5 resources against the7 cap, remaining0 after pause, memoryOnly:true. Both loaded rival and traffic donors are present. Loudness is -13.81LUFS and peak -5.64dBTP; the advisory loudness target reports false, which is disclosed rather than changed. No frame, isolated waveform comparator or human listening pass is claimed.
+
+Claude: please listen to this real full-throttle near/far recording and give the card's one-round mix verdict. HumanListeningPending remains true; waiting_on:claude is set. rival-voices stays dev. Source review/gate/build receipts remain the accepted source receipts above; no source change or release.
+
+## Claude answers - mix verdict round 1, 14 October
+
+Not accepted yet: one real fault. Judged from the 04:00 recording
+(`vehicle-mix.wav`, 20.5 s) and its 1,034 rows, measured in 0.5 s windows.
+
+- **Every rival and traffic voice follows the player's engine, not its own
+  car.** In every row, rival gain = 0.35 x `playerEngineLevel` and traffic gain
+  = 0.25 x `playerEngineLevel`. At 12.41 s (player off the throttle) rivals 41,
+  61 and 115 m away all read 0.07; at 12.96 s (player flat out) the same cars
+  read 0.29 to 0.30. When the player stopped at 13.1 s, every voice fell to
+  0.00 for about a second while rivals passed 13 to 25 m away; the recording
+  drops to -41 to -44 dB from 13.5 to 14.4 s. A rival should be loudest exactly
+  when it roars past a stopped or slow player.
+- **Fix:** each voice's level comes from its own car (its throttle or speed,
+  through the same 0.35 rival and 0.25 traffic ceilings) and its distance,
+  never from the player's engine level or throttle. If distance falloff is
+  done by a panner rather than in `gain`, say so in the change note; in these
+  rows a rival at 17 m and one at 92 m carry the same gain.
+- **Loudness:** -13.8 LUFS against the -16 advisory (2 LU tolerance) is just
+  outside. Report the same recording's loudness with rival-voices off; if the
+  voices add more than 1 LU, lower the two ceilings together until they add 1
+  LU or less.
+- Pass for round 2: one new recording of the same scenario, with a stop or
+  lift in it, showing the voices holding their level while the player is
+  quiet. Then Claude's verdict. rival-voices stays dev.
+
+## Director answered mix repair claim — 14 October
+
+Claude's real round-one verdict requires each rival/traffic voice to follow its own actor, never playerEngineLevel. Resume in own aud-15-p1-mix / codex/aud-15-p1-mix, taking busy-game-files and sound-bank. Own ONLY src/audio.js existing vehicle voice level/update/bind regions, tools/test-audio-vehicles.mjs relevant gain/resource regressions, tools/scenarios/audio-vehicles.mjs current capture/witness/paired-off acceptance and docs/changes/AUD-15-P1.md. No App/snapshot/schema/simulation/asset/donor/mastering/mixer/default-caller change. Existing snapshot already supplies each actor's speed; use finite absolute actor speed normalized to200mph, with a bounded idle floor0.2 and load0.8, clamped0.2–1.0, under the existing rival0.35/traffic0.25 ceilings. This is read-only own-car speed level, including late donor binding, never player throttle or engine gain. Existing inverse HRTF panner, reference15m/max250m/rolloff1 provides distance attenuation after the dry gain; record those actual values so equal dry gains never imply equal audible distance.
+
+Keep all original descriptor/cap7/pending/fading/identity/pitch/cleanup/off-state protections; replace only the obsolete player-level gain assertion with the exact own-speed formula and add actual player-muted/changed-player-gain independence, differing actor speeds and real late-bind-current-actor witnesses in that existing test. No new test machinery. Source freezes for one independent review before the original nearby/jobs4/build.
+
+Round2 uses the same existing memory-only/private audio-vehicles scenario, with an input-only deliberate brake/lift segment so passing voices can be witnessed while player input/engine are quiet. Do not set actor speed/pose/state or fake PCM. Extend the existing rows with actual own-car speed, selected own gain level and actual panner properties. Preserve near/far/loaded-both/resource/cleanup checks. Capture its matching voices-off recording with the same scenario/seed/driver/input schedule and current approved mastering; report both measured loudness values and added LU. At most one initial paired packet, no frame timing. If voices add more than1LU, lower both ceilings by the same factor only within Claude's answer, report the value and request precise sound-bank descriptor-test hooks before that edit. Actual listening remains Claude's, cap3 overall including failed round1; no final mix or release claim without it. Root owns shared metadata/merge/cleanup. Other teams' source stays exact.
+
+## Core lock parked for Kyle's camera priority
+
+Useful source preparation72ca2f33 is clean, four owned files only, UNTESTED/unreviewed. No gate/build/native ran. Stop all audio edits/jobs now and release busy-game-files to the actual Camera correction; sound-bank remains held. Resume audio review/checks after Camera releases core. No mix/acceptance claim.

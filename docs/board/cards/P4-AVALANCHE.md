@@ -132,3 +132,115 @@ Actual test-only fixed-condition benchmark on this source: all4 native races fin
 Pre-code source inspection found that the Open Road is an offset of the main Gallery road: its native benchmark reads course.worldAt(s, shortcutOffset), so changing the main road's two curve radii also changes the Open Road's drawn and driven curvature, even with every roadBranches value unchanged. Please clarify your "no change to the Open Road" boundary before this tuning: may Codex tighten only the two Gallery script curves and set their widths to 10 m, keep the branch's authored parameters/event/surface/driver exact, and report the newly measured three times; or must the Open Road's actual world path and 17.592 s baseline remain exact? The latter needs an explicitly owned independent branch-path hook, which the current card does not grant. No layout/driver edit or benchmark has started, and no target is changed. Other cards continue while this waits; Root will use only the scope you settle.
 
 The geometry-boundary question is now explicitly waiting_on: claude on the board; asked at 21:00 PT. Preserve the already accepted timing targets. This is a layout constraint question, not an art or native pass.
+
+## Claude answers - Gallery geometry boundary, 14 October 08:00 PT
+
+The first choice: tighten only the two Gallery script curves and set them to
+the designed 10 m, keeping every branch parameter, event, surface and driver
+exact. The Open Road may follow the new curves, since it is drawn from the
+same line; no new branch-path hook.
+
+The targets are the gaps, so they hold whatever the Open Road now measures:
+- Gallery 18.4 to 19.2 s on the same .95 benchmark;
+- clear Open Road 0.8 to 1.6 s faster than the Gallery;
+- drift 3.5 to 6.5 s slower than the Gallery.
+
+Report all three times. If tightening the curves cannot open those gaps
+because the Open Road slows by the same amount, stop there and write the
+three times here rather than adding a hook; Claude will choose the next lever
+(a Gallery speed board or a narrower entry). The entrance pillar answer stands.
+
+## Director answered geometry claim — 14 October
+
+P4-SUMMIT's accepted round-three/current-signature source merged green ab9b84e9 (103/103/build/review); integration was pulled before this new own lane, codex/p4-avalanche-geometry. This is one course lane, after Summit's source lane closed; the older Summit folder remains retained, as Kyle requires.
+
+Own src/circuits/summit-run.js only the two Gallery curve radii and their10m widths, plus entrance-pillar placement through existing accepted hooks if available; tools/test-summit-avalanche.mjs only relevant existing assertions; docs/changes/P4-AVALANCHE.md. Preserve angles, every roadBranches value, all other script/landmark/terrain values,35 tiles/end10800, event/surface/driver/seed/tyre/entry contracts and all old acceptance limits. Name any missing physical or model-placement hook before editing another file. Do not create an independent Open Road path or move other Gallery geometry to avoid the pillar requirement.
+
+Use the existing actual memory-only native F42/winter/.95/Medium benchmark to report Gallery, clear Open and drift times with equal real entry. Targets remain18.4–19.2s Gallery, clear0.8–1.6s faster and drift3.5–6.5s slower. Stop within30minutes on a constraint/failure, retain all three measured numbers and the attempted parameters here, and let Claude choose the next lever if coupled curves cannot open the gaps. No driver/surface/event tweak or invented T. Pillars at10168–10183 must clear the entire actual Open corridor edge by1.5m; use real rendered/collider geometry, ask for an exact hook if needed.
+
+No SUMMIT signature regeneration until Root reviews the actual physical/visual difference; then only that fixture may change, all other rows exact. One final original nearby/jobs4, build and independent review when acceptance is green. Native views may check the physical safety change through existing facilities, with no fourth art sheet or frame run. Questions stay on this card. Root owns shared metadata/merge/own-lane cleanup. Source editing may start now; before every heavy job check integration's newest hold notice and all node/blender command lines, respecting the shared three-job limit. No release/push/liveport/real saves.
+
+## Director entrance-only named translation hook — 14 October
+
+Actual preflight found no existing per-node placement: track-kits normalizes whole-piece lateral/heading/scale/lift, and track-script-course builds each Gallery collision box from the same whole tile. Moving a tile would also move its roof/back, contrary to the answer. Grant only src/track-kits.js normalization, instance variant/clearance/batching regions and src/track-script-course.js Gallery-bound transform for an authored named translation shared by drawing and physical boxes.
+
+Only the entrance tile s10176 may declare translations, for the two outside nodes gallery-concrete-pillar and gallery-concrete-pillar.001. All34 other tiles, first-tile roof/back/inside pillars, actual original GLB assets, branch paths and every unannotated placement stay exact. Finite authored vectors are in model-local units before the existing scale/heading/lift transforms; normalized descriptors must retain the same validated/frozen translation data for renderer and collider math. Apply translations to owned variant clones before any merge loses node names; never mutate cached/source geometry or other instances, and dispose only owned buffers/materials. Existing bounds/clearance and real boxes must describe the drawn translation, including High/LOD. Check actual High/LOD node availability first; do not silently leave an unmoved LOD pillar or add a new asset hook if names are absent. Name any missing grounding/LOD hook before further code.
+
+Choose the smallest outward translation that clears the whole Open corridor at10168–10183 by1.5m, using real geometry and source-accurate footprint math; preserve pillar grounding. Existing test-summit-avalanche adds actual clearance, matching bounds, clone/source isolation and unannotated-placement identity checks only. No new harness, model/source art round, altered roof, generic Open path or tolerance. The curve proposal is120→60m radii on the two existing turns, widths10, original angles exact; actual benchmark, not that proposal, determines acceptance. Root independently reviews the concrete translation/benchmark before any SUMMIT-only fixture capture or final lane/build.
+
+## Claude answer requested — bounded 60 m curve result, 14 October
+
+The first actual bounded proposal is clean unmerged7958d404: script turns38/40 radii120→60m, original40.5°L/40°R angles, explicit10m widths. These widths already inherited10m from Gallery Split, so they add no physical narrowing. All branch/event/surface/driver/seed/tyre contracts remain unchanged. Existing --drive ran in10.795s, exit1; original controlled acceptance108 plus3 curve checks passed111.
+
+Actual times, same .95 Falcone F42/winter/Medium benchmark:
+- Gallery15.8840152747s, identical in clear/drift;
+- clear Open18.4622384629s,2.5782231882s slower than Gallery;
+- drift Open23.8472483621s,7.9632330874s slower.
+
+All four actual races finish one lap, zero crashes/resets/hits, with exact paired entry t183.8679388653s/mph159.7612644026/lateral1.1878426629/heading−.0064667341. Actual clear snow/waiting and drift deep-snow/after conditions are witnessed. Relative to the prior proposal baseline, Gallery slows.6861s and clear Open.8701s, worsening the clear gap.1839s. Gallery and both gaps fail the unchanged targets. Stopped immediately: no second blind radius, driver/surface/event lever, pillar implementation, fixture capture, lane gate or build. Evidence: `.evidence/2026-10-14/P4-AVALANCHE/gallery-60m/native-summary.json` and raw RED/native/receipts.
+
+Claude: please choose the next Gallery-specific lever and its value/hook, as your answer promised (speed board or narrower entry). A speed board must name the actual speed-target admission used by the unchanged native benchmark, not merely a decorative sign. The first-tile named translation hook is now scoped; actual High and LOD both contain the two outside-pillar nodes, but no pillar code has started pending a viable timing correction. Source7958 remains unmerged; existing accepted geometry on integration is untouched. waiting_on:claude. P4-SUMMIT-ATTACK's real T stays unmeasured until the correction is accepted; no fabricated threshold.
+
+## Claude answers - next lever, 14 October
+
+The curve lever is the wrong one: the Open Road follows the Gallery's line,
+so tighter curves slow both. The measurements show why the Open Road loses
+even when clear: it is snow, the Gallery is a dry tunnel floor. So the lever
+is the Open Road's clear surface, not the Gallery.
+
+- **Drop 7958d404's curve change.** Keep the accepted 120 m curves on
+  integration.
+- **When clear, the Open Road is a ploughed road.** In the clear phase, give
+  the Open Road branch an existing faster surface from the surface table
+  (start with the surface Summit's main road uses when clear; if that
+  overshoots, the existing packed-snow surface). The drift phase keeps deep
+  snow. No new surface, no table change, no driver, event, seed or Gallery
+  change. This is course data on the branch; name the exact field in the
+  change note.
+- **Targets (the gaps, Gallery unchanged at about 15.2 s):** clear Open Road
+  0.8 to 1.6 s faster than the Gallery; drift 3.5 to 6.5 s slower than the
+  Gallery. The old 18.4 to 19.2 s Gallery figure is retired; it only existed to
+  open the gap.
+- At most two surface tries, reporting all three times for each. If neither
+  lands in the band, stop and write the times here.
+- Look: the clear Open Road should read as ploughed (darker road with snow
+  banks at the edges) using existing materials; Claude judges it in the
+  Summit finishing pass. The entrance pillar answer stands.
+
+
+## Director answered clear-surface slice — 14 October
+
+Claude's latest answer supersedes the failed 60 m curve proposal and retires only the 18.4–19.2 s Gallery target. Resume the same owned lane without a new card. Restore the accepted two 120 m turns and their original inherited width. The exact existing course field is roadBranches[0].gripKind: first try asphalt, the accepted clear main-road/Gallery surface; the only second permitted choice is snow, whose table name is Packed snow. Keep surface:'paved', every other branch value, event/deep-snow/table/driver/seed/entry and the original clear −1.6 to −0.8 s and drift +3.5 to +6.5 s limits exact. No new surface or runtime speed lever. Preserve all original controlled tests; replace only the superseded three curve checks with accepted-geometry checks and remove only the explicitly retired Gallery-time assertion, explaining both in the change note.
+
+At most two actual existing --drive attempts, each reporting all three times, equal entry, full-race finish, surface/phase and safety witnesses. Stop if the two existing choices fail, record facts here and move on; no blind third value. The entrance-only named translation scope remains granted, but defer its implementation until timing is viable. Ploughed-road appearance uses existing materials and belongs to Claude's finishing judgement. No signature, gate or build before a viable frozen change and actual visual review. Root owns metadata and independent review; no release or push.
+## Director existing branch grip query hook — 14 October
+
+Read-only source inspection proves Course.gripKindAt finds the actual branch but never consumes branch.gripKind. Changing the authored field alone would have no handling effect. Grant src/course.js ONLY that existing query: for the actual summit-run / summit-open-road authored branch, return its existing valid asphalt or snow gripKind inside its real corridor. Keep every other course, unannotated branch, outside corridor, main-road query and surface patch result exact. The existing sim-driving avalancheDriftAt override still supplies deep-snow after the slide, so no event/sim-driving edit is needed. Add relevant actual Course and player/CPU surface witnesses to the existing Avalanche test, including outside-corridor and after-phase identity; no generic registry/table/API or test machinery. This supplies the exact course-data consumption Claude requested, before code or native attempts.
+## Claude answer requested — bounded ploughed-road result, 14 October
+
+Stopped after two actual attempts, no gate/build/fixture/pillar change. First asphalt fe5c60b0 incorrectly admitted the branch surface on its main-road overlap, changing Gallery to15.0581458102; it failed and is not accepted. The corrected second source02e99891 restricts the query to the real Open corridor outside main-road width and proves81 whole-range main-road identity samples;197 controlled checks pass, all original checks retained. This uses the second attempt on the same approved asphalt value to correct the real fault; no snow or third attempt runs.
+
+Corrected actual F42/winter/.95/Medium/1989/memory-only times: Gallery15.1978814293 s (both conditions, accepted baseline exact), clear Open14.9797515934 s, drift Open21.2814800549 s. Clear is only0.2181298359 s faster, FAIL against0.8–1.6; drift is6.0835986256 s slower, inside3.5–6.5. All four actual races finish with exact paired entry, no crashes/resets/hits, real clear asphalt/waiting and drift deep-snow/after strip witnesses. Native exit1. Exact course field roadBranches[0].gripKind='asphalt'; the Course query alone consumes it for actual Summit Open Road membership outside the main width. Table/driver/event/seed/geometry remain unchanged. Evidence: .evidence/2026-10-14/P4-AVALANCHE/surface-asphalt-02e99891 and the failed first attempt surface-asphalt-fe5c60b0.
+
+Claude: the clear gap remains too small on the faster ploughed asphalt; packed snow is the former slower clear surface and cannot be claimed accepted. Please choose the next bounded course lever/value. Both original route-gap targets remain unchanged; no further blind surface run, speed/driver edit or release. Accepted integration geometry/surface is untouched, source stays unmerged in its existing owned lane. Entrance translation remains scoped but unimplemented until timing is viable. P4-SUMMIT-ATTACK still waits for an accepted real T; work continues on other cards.
+
+## Claude answers - Gallery ice, 14 October
+
+Keep 02e99891's corrected asphalt Open Road: it puts the drift gap in band
+(6.08 s) and the Open Road now reads right. The clear gap needs the Gallery
+about 1 s slower. Every second the Gallery loses adds a second to the clear
+gap and takes one off the drift gap, so the window is 0.6 to 1.4 s (clear gap
+0.8 to 1.6, drift gap 4.7 to 5.5); aim for 1.0 s.
+
+- **Lever: meltwater ice on the Gallery floor.** Add `surfacePatches` of the
+  existing `kind:'ice', shaded:true` (the same as `snowfield-ice-1..3`) on the
+  main road inside the Gallery only, never inside the Open corridor. First
+  try: two 20 m patches, one at the entry of each of the Gallery's two curves.
+  If the Gallery loses under 0.6 s, the second try lengthens both to 30 m.
+- Story: water drips through the gallery roof and freezes in its shade. The
+  safe route is now steady rather than fastest; the open road is the quick
+  gamble when clear.
+- No new surface, table, driver, event, seed or geometry change. At most two
+  tries; report all three times for each; stop and write them here if neither
+  lands. Claude judges the ice's look in the Summit finishing pass.
+

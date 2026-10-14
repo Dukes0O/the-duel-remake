@@ -11,8 +11,9 @@ async function nativeHelpers(){
       'export {applyArmorDamage} from '+JSON.stringify(resolve(root,'src/combat-armor.js'))+';',
       'export {convoyPoint,CONVOY_ROOF_PLATE} from '+JSON.stringify(resolve(root,'src/arena/convoy.js'))+';',
       'export {createFighter} from '+JSON.stringify(resolve(root,'src/onfoot.js'))+';',
+      'export {CONVOY_RULES} from '+JSON.stringify(resolve(root,'src/arena/modes/convoy-raid.js'))+';',
     ].join('\n'):null,
-  }],build:{write:false,minify:false,lib:{entry,name:'ConvoyNative',formats:['iife']}}});
+  }],build:{write:false,minify:false,lib:{entry,name:'ConvoyNative',formats:['es']}}});
   const output=Array.isArray(result)?result[0].output:result.output;
   return output.find(item=>item.type==='chunk').code;
 }
@@ -42,7 +43,11 @@ export async function run(context){
     await context.evaluate('window.name=""');
     await context.navigate('/tools/menu-check.html?flags=convoy-raid,salt-flats,crew-gear&harness=convoy-'+quality);
     await context.waitFor('!!window.__qaApp','Convoy memory menu',60000);
-    await context.evaluate(helpers+';window.__convoyNative=ConvoyNative;');
+    await context.evaluate(`(async () => {
+      const url = URL.createObjectURL(new Blob([${JSON.stringify(helpers)}], {type: 'text/javascript'}));
+      try { window.__convoyNative = await import(url); }
+      finally { URL.revokeObjectURL(url); }
+    })()`);
     await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.setGraphicsQuality(${JSON.stringify(quality)});
       if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
       document.head.insertAdjacentHTML('beforeend','<style>details{display:none!important}</style>');
@@ -84,8 +89,10 @@ export async function run(context){
         throw Error('Native boarding window or lit roof lamps missing');})()`);
     await context.screenshot(quality+'-convoy-lamps-on');
     await roofView(context,quality+'-convoy-roof-on');
-    await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=s.opponents[0],n=window.__convoyNative,p=n.CONVOY_ROOF_PLATE,
-      at=n.convoyPoint(a.duel,r,[p.x,p.y,p.z]),ground=a.duel.course.groundAt(r.s,r.lateral);
+    await context.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,r=s.opponents[0],n=window.__convoyNative;
+      for(let i=0;i<Math.round((n.CONVOY_RULES.stopSeconds+.05)*120);i++)a.duel.step(1/120);
+      if(r.speedMph!==0)throw Error('Native tanker did not stop before the roof crossing');
+      const p=n.CONVOY_ROOF_PLATE,at=n.convoyPoint(a.duel,r,[p.x,p.y,p.z]),ground=a.duel.course.groundAt(r.s,r.lateral);
       s.onFoot=true;s.fighter=n.createFighter(a.duel.course,s,{s:r.s,lateral:r.lateral});
       Object.assign(s.fighter,{x:at.x,z:at.z,y:at.y+.02,groundY:ground.y,airHeight:at.y-ground.y+.02,verticalSpeed:-3});
       a.duel.setFighterInput({fire:true});for(let i=0;i<372;i++)a.duel.step(1/120);

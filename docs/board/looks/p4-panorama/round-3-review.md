@@ -1,43 +1,55 @@
-# Panorama Ridge Sunset: round three, Claude's verdict
+# Panorama Ridge Sunset: round three and finishing pass
 
 Round three of three; the cap is reached, so there is no fourth art round.
+Sheet: `round-3.jpg`, six High views from the final lap of one native eight-car
+race (memory-only storage, private port) at dusk, light level 0.55. The matching
+Performance views came from the same run and read the same.
 
-Judged on the seven High golden views from the 12 October native retry at
-0a50336d (Pit Straight grid, Ridge Top, Skyline, Esses 1, Conrod, Murray
-Corner, chase). That run stalled on lap 2 at Hell Gate, so the two final-lap
-dusk views were never taken and no sheet was built.
+Scores (round two in brackets): lighting 4 (3), readability 4 (4),
+grounding 4 (3), consistency 4 (3.5). Verdict: art accepted. Ready for Kyle's
+play review, with the notes below.
 
-Scores (round two in brackets): lighting 3.5 (3), readability 4 (4),
-grounding 4 (3.5), consistency 4 (3.5).
+Checklist (docs/CIRCUITS.md sections 4 and 11), test driver on Falcone F42, seed
+1989, High quality:
 
-What check-in 7 asked for, and what the pictures show:
+- Signature moment every lap: met. Skyline is a blind crest with only sky ahead,
+  about 33 m in the air at 95 mph, then the Esses fall away. The new Skyline
+  picture shows the ridge road, the drop and the town.
+- Overtaking zone: met. Conrod Straight (1,120 m, 189 mph) into The Chase and
+  Murray Corner.
+- Commitment corner: met. The Chase takes 137 mph of 189.
+- Rhythm: met. Only the Esses 3 (50 mph) and Forrest Elbow (6 mph) are truly
+  slow in the run, with the Dipper between them; Hell Gate and The Cutting are
+  slow with a fast bend between.
+- Elevation you feel: partly met. Summit Park (45 m in the air at 123 mph) and
+  Skyline lift the car; The Cutting crest is a one-frame hop. Conrod Straight has
+  no crests, although section 5.1 asked for two small ones for air at top
+  speed. Adding them changes the road, which touches saved best times and
+  ghosts, so this is left for Kyle to decide.
+- Readable at speed: met. Braking boards, kerbs and the fence line show in the
+  corner frames; blind Skyline is announced by the mast and fence line.
+- Scenery frames the road: met in three layers (walls, fence and kerbs; trees,
+  town and stands; rock peaks and valley haze).
+- Lap time: met. 1:32.9 flying lap with the test driver; native laps 115.1 (with
+  the standing start), 89.4 and 87.5 s; the whole eight-car race took 6:05.
+- First view from the grid: good. The gantry, stands, scoreboard and the long
+  road up the hill make a clear invitation.
+- Nothing floating or clipping the road: met after this pass. Two marshal posts
+  that floated 1.4 to 1.6 m on the ridge slope were moved. The checker still
+  lists the catch fence as floating 1.4 to 1.5 m; the fence stands on top of the
+  1.15 m ridge wall by design.
 
-- Tall striped walls became plain concrete with catch fence; red and white
-  stays on the low kerbs only. Met on Ridge Top, the Esses, Conrod and the
-  chase view.
-- Sharp white ridge spikes became grey rocky outcrops. Met; the far peaks
-  are still pointed but read as rock, not snow.
-- The ridge drop reads clearly from Ridge Top and the Esses. Met.
-- The valley town shows along Conrod. Met.
-- Skyline must show the drop and the town. Not met: the inspection camera
-  sits inside the radio mast lattice and looks at a green bank.
-- Warm-to-violet final-lap dusk. Not shown yet (no lap 3).
+Not met: "town lights visible". The valley town windows do glow at dusk but they
+are small at that distance, so they read as a few orange points. Brighter or
+larger town lights need new code or art, so they are a proposed small card.
 
-Verdict: the art is accepted. What remains is camera framing and evidence,
-not art, so it uses no art round:
+Any later nit is a finishing note for Kyle's play review, not a new art round.
 
-1. Skyline inspection camera (tools/scenarios/p4-panorama.mjs): move the
-   camera position clear of the radio mast (at least 15 m from it, on the
-   valley side of the road) and keep the existing target on the town, so the
-   frame shows the road, the drop and the town below.
-2. The native retry on the Hell Gate wall fix supplies the final-lap dusk,
-   Skyline and Conrod frames. Build round-3.jpg (500 KB at most) from that
-   run, place it beside this note and remove round-2.jpg and
-   round-2-review.md in the same commit.
-3. Acceptance holds if the retry pictures match the golden views above and
-   the dusk frames read warm to violet with the town lights visible. If the
-   dusk frames are unreadable, raise ambient light on the existing palette
-   once; that is a tuning step, not a new round.
+## Claude verdict, 14 October 2026
 
-Any later nit becomes a finishing note for Kyle's play review, not a new
-art round.
+Accepted. Ridge Top, the Esses and Murray Corner are the postcards. Two weak
+spots, neither a reason to hold: the Skyline view shows the bank and the fence
+more than the road and the drop (review framing only), and the valley town
+reads as a grid of small boxes with a few orange points at dusk, which is
+toy-like next to the rest of the course. The town goes to PANORAMA-TOWN.
+
