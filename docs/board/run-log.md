@@ -1113,3 +1113,4 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 - 14 October merge P4-CAREER d37cfa3c: original194/194/jobs4/build897ms, actual181access+5coursefixture+10historicalsave shapes/321checks; ordinary/freshsave reviewsCLEAR. Future free derived podium variants, no save/pay/base change; clean merge no rerun, dev/no release/push.
 
 - 14 October merge QA admission02b26308: original19/19/jobs4/build1.14s/review; actualHarbour8+telemetry2High/Performance pictures/private-memory/errorswarnings0, strictHUD/actualdurabletelemetry guards pass, timingnot-run. Cleanmerge/no rerun; parentopen, no fullsweep/release/push.
+14 October: HELI-DISPATCH merged (three seeded jobs a play day at 300/450/600, +25% Real; take, drop and finish job in the save; several cars per course; heli-board.js; Race here offer; guard allows rng.js and course-access.js in rules files); lane 161/161 jobs4 653.23 s from PowerShell, build passed; review CLEAR; lane deleted.

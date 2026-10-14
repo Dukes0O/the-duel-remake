@@ -9,6 +9,7 @@ export const HELI_MONEY = Object.freeze({tankKg: 400, creditsPerKg: 1.5, hardLan
 export const HELI_LESSONS = Object.freeze(['liftoff', 'hover', 'landing', 'carry']);
 
 const MAX_COUNT = 1_000_000;
+const MAX_CREDITS = 1_000_000_000;
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PATTERN = /^[a-z0-9:_-]+$/;
 const NOT_AVAILABLE = 'The helicopter is not available yet.';
@@ -150,4 +151,43 @@ export function countFlight(profile, {enabled} = {}) {
   if (enabled !== true) return off(profile);
   const heli = heliOf(profile);
   return {ok: true, profile: withHeli(profile, {...heli, flights: Math.min(MAX_COUNT, heli.flights + 1)})};
+}
+
+// ---- dispatch board jobs -------------------------------------------------
+// heli.jobs is {day, taken, done}: the play day the board was last used, the
+// job in hand and the jobs finished that day. A job taken on an earlier play
+// day is out of date (the board has new jobs), so it does not block a new one.
+
+// Takes a job from today's board. One job at a time; a finished job is not
+// offered again the same day.
+export function takeJob(profile, jobId, day, {enabled} = {}) {
+  if (enabled !== true) return off(profile);
+  if (!validId(jobId) || !Number.isSafeInteger(day) || day < 0) return failure(profile, 'That job is not on the board.');
+  const heli = heliOf(profile), sameDay = heli.jobs.day === day;
+  const done = sameDay ? heli.jobs.done : [], taken = sameDay ? heli.jobs.taken : null;
+  if (done.includes(jobId)) return failure(profile, 'That job is done for today.');
+  if (taken === jobId) return {ok: true, already: true, profile};
+  if (taken) return failure(profile, 'Finish or drop the job you have first.');
+  return {ok: true, already: false, profile: withHeli(profile, {...heli, jobs: {day, taken: jobId, done: [...done]}})};
+}
+
+// Hands the job in hand back to the board; it can be taken again today.
+export function dropJob(profile, {enabled} = {}) {
+  if (enabled !== true) return off(profile);
+  const heli = heliOf(profile);
+  if (!heli.jobs.taken) return {ok: true, dropped: false, profile};
+  return {ok: true, dropped: true, profile: withHeli(profile, {...heli, jobs: {...heli.jobs, taken: null, done: [...heli.jobs.done]}})};
+}
+
+// Pays for the job in hand and marks it done for the day. Pay is income, so
+// unlike a repair it can only raise the credits (to the same cap as the rest
+// of the save).
+export function finishJob(profile, jobId, pay, {enabled} = {}) {
+  if (enabled !== true) return off(profile);
+  if (!Number.isSafeInteger(pay) || pay < 0) return failure(profile, 'Pay is a whole number of credits.');
+  const heli = heliOf(profile);
+  if (!validId(jobId) || heli.jobs.taken !== jobId) return failure(profile, 'That is not the job in hand.');
+  const wallet = credits(profile), total = Math.min(MAX_CREDITS, wallet + pay);
+  const jobs = {...heli.jobs, taken: null, done: [...new Set([...heli.jobs.done, jobId])].slice(-10)};
+  return {ok: true, profile: {...withHeli(profile, {...heli, jobs}), credits: total}, paid: total - wallet};
 }

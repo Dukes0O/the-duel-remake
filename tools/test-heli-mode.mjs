@@ -347,7 +347,9 @@ console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...
   for (const name of sim) {
     const source = readFileSync(join(root, 'src/heli', name), 'utf8');
     const imports = [...source.matchAll(/(?:from\s+|import\s*\(?\s*)['"`]([^'"`]+)['"`]/g)].map(m => m[1]);
-    ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js'].includes(spec)),
+    // HELI-DISPATCH: the seeded generator picks the day's jobs and the course
+    // access rule says which courses the player owns (Race here).
+    ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);
     ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|\bcrypto\b|import\s*\(/.test(source),
       `${name} uses no page, clock, storage or randomness`);
