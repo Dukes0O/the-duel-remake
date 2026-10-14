@@ -124,8 +124,7 @@ Both now use historicalSnowBranch, retaining the original authored tone,
 [.34,.38,.42] fallback, source-material and disposal checks. A separate identity
 check pins actual Open/winter to branchBase; the snow label now describes its
 historical helper case accurately. No other pole, light, RNG, terrain,
-collision or route assertion changes. Corrected focused acceptance is UNRUN
-at this final fixture freeze; no further blind source edits are authorized.
+collision or route assertion changes. Root independently reviewed the three fixture corrections: all historical snow-helper predicates remain, while actual Open asphalt gets its own identity checks. The corrected original focused suite passed on 79438609 in 2866.9094 ms, exit 0. Receipt: .evidence/2026-10-14/P4-AVALANCHE/summit-focused-79438609/receipt.json. No production bytes or tolerances changed.
 
 The other failure is test-circuits:45, Harbour seed 1989 wall-right-1105 near
 2056 m/lateral -3.5. Root reproduced that exact failure on integration baseline
