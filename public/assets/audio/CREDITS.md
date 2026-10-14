@@ -157,3 +157,29 @@ No author endorsement is implied.
 - [GASP_Chimes_Success_1.wav](https://freesound.org/people/Rob_Marion/sounds/541982/), by **Rob_Marion**: rising pearl shimmer.
 - [Diving with whales.wav](https://freesound.org/people/KEVOY/sounds/82325/), by **KEVOY**: distant whale song.
 - [Underwater Ambience](https://freesound.org/people/Fission9/sounds/504641/), by **Fission9**: low cave bed.
+
+## The helicopter
+
+The instructor's 27 radio lines are generated with
+[ElevenLabs](https://elevenlabs.io/), using its stock Brian voice, under the
+free-plan non-commercial and attribution terms recorded in the catalog. The
+runtime MP3s are exact copies of the kept takes in `audio-src/voices/`; the
+game plays them through the radio filter in `src/heli/heli-audio.js`. Copy them
+with `node tools/audio/build-heli.mjs --voices`. No author endorsement is implied.
+
+Seven sounds are selected public HQ previews, all
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The recipes in
+`tools/audio/build-heli.mjs` cut, filter, fade and loudness-match them; the
+rotor and wind are crossfaded mono Vorbis loops. The engine stop is the idle of
+a running helicopter read at a falling speed while it fades. The low-fuel
+chime, low-rotor horn, radio click and radio hiss are original tones and
+noise made in `src/heli/heli-audio.js`. Source and runtime hashes are in the
+audio catalog. No author endorsement is implied.
+
+- [Helicopter Rotor Loop.flac](https://freesound.org/people/qubodup/sounds/187681/), by **qubodup**: rotor loop.
+- [Helicopter engine starting (part 1).wav](https://freesound.org/people/Jadis0x/sounds/540801/), by **Jadis0x**: engine start.
+- [R03-07-Jet Helicopter In and Stop.wav](https://freesound.org/people/craigsmith/sounds/479514/), by **craigsmith**: engine stop.
+- [loop smooth muffled rushing air tone skyline traffic distant wind trees forest.flac](https://freesound.org/people/kyles/sounds/454072/), by **kyles**: wind loop.
+- [rope leathery creaking.wav](https://freesound.org/people/vestibule-door/sounds/664929/), by **vestibule-door**: cable creak.
+- [Karabiner_Click_03.wav](https://freesound.org/people/Rudmer_Rotteveel/sounds/457455/), by **Rudmer_Rotteveel**: hook release.
+- [Medium Thud 1](https://freesound.org/people/sgrowe/sounds/342535/), by **sgrowe**: set-down thud.

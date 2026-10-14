@@ -13,7 +13,7 @@ import {fireWeapon} from '../src/combat-weapons.js';
 // getter share presentation history without adding fields to the race state.
 const hash = value => createHash('sha256').update(value).digest('hex');
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url), 'utf8'));
-const records = catalog.sounds.filter(row => row.source === 'elevenlabs');
+const records = catalog.sounds.filter(row => row.source === 'elevenlabs' && !row.cue.startsWith('heli.'));
 const KEPT = records.filter(row => row.key !== 'gatekeeper.welcome');
 let checks = 0;
 const equal = (actual, expected, message) => { checks++; assert.deepEqual(actual, expected, message); };

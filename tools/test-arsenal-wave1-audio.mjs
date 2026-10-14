@@ -254,7 +254,7 @@ check('released sound-bank entries and other exports stay exact', () => {
 check('released catalog records and metadata stay exact', () => {
   assert.equal(hash({...catalog, sounds: catalog.sounds.filter(row =>
     !CUES.includes(row.cue) && !WAVE_TWO_CUES.includes(row.cue) &&
-    !WAVE_THREE_CUES.includes(row.cue) && !P4_CUES.includes(row.cue) && !DEEP_CUES.includes(row.cue) && row.cue !== 'arena.toll-gate' && row.cue !== 'warlord.nitroSpent')}),
+    !WAVE_THREE_CUES.includes(row.cue) && !P4_CUES.includes(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && row.cue !== 'arena.toll-gate' && row.cue !== 'warlord.nitroSpent')}),
     '48c3d4170b202ed4abf0c2dcaf268d6c1f2b98b162d62301702d94aa3da803d6',
     'all released source recipes and voice accounting remain exact');
 });
