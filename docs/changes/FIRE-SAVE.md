@@ -87,6 +87,11 @@ the pending H1 release, which waits on Kyle, is not a build dependency).
 - `tools/test-heli-mode.mjs`: the import guard lets helicopter rules files
   import `../course-closures.js` as well (the save prices a buyback from
   it; it imports nothing from the helicopter).
+- `tools/test-wasteland-beta.mjs`: its full list of switches gains
+  `'forest-fire': 'dev'`.
+- `start-preview.bat` (not a test, but outside the card's files): the
+  preview requests every development switch, so `forest-fire` joins its
+  flag list after `helicopter`, as H1 did. Nobody held `circuit-registry`.
 - `tools/test-feature-flags.mjs`: the switch count rises from 26 to 27 (the
   new `forest-fire` switch).
 - `tools/test-save-fixtures.mjs`, `tools/test-arena-settlement.mjs`,
