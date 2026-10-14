@@ -1099,3 +1099,5 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 14 October: AUD own-car mix c3a8ad3c merged;148/148/jobs4/build596ms/review clear, real on/off recordings green/add0.02LU/max5of7; round2 listening with Claude, dev/locks released.
 14Oct P4-YETI native observer a94993a1 merged:18/18/jobs4/build2.42s/review, realfivephases/once-roar/memory6860; grounding raisedfoot+.282m and listening waitClaude, dev, olderfolder retained.
+
+14Oct QA acceptedpins+realRustwallentry aa7c0f80 merged18/18/jobs4/build947ms/review; actualfirst-person56/Rustwall20pics and6routeplacements pass/memory, timingnot-run; ownlane consumed, remainingruntime/audioopen.
