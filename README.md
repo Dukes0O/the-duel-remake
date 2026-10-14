@@ -17,6 +17,12 @@ have. Assisted flying levels itself and holds height; Real leaves the
 controls where you put them. The Koenigsegg Jesko now travels only by
 air: it races where it was last set down, starting at Tremblant Woods.
 
+Also in this release: keyboard steering on road races turns a little less
+for a tap (55%, full lock after 300 ms, 30% at top speed); an easier Harbour
+road with neon and lamp light, and autumn pines and boards in the Woods
+(Harbour lap times start fresh); and at Panorama Ridge the marshal posts sit
+on the ground and the final lap is framed at dusk.
+
 ## Steering and race screen release – 13 October 2026
 
 Gentler keyboard steering and throttle on road races: a tap turns the wheel
