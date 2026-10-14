@@ -42,3 +42,9 @@ Ridge: "make that one a beauty!" Design: `docs/CIRCUITS.md` section 5.5.
   P4-FINISH-ARDENNES, before Kyle's "go live".
 - Price 2,000 credits. The course joins the end of the list after Summit Run,
   so saves, records and menu places stay put.
+
+## Road merged (Claude, 13 October 21:40 PT)
+
+P4-ARDENNES-ROAD merged at 85e47a3e: `src/circuits/ardennes-forest.js` (manifest: dev, 2,000 credits, release order 5, Grand Prix), reference lap 139.3 s, `tools/test-circuit-ardennes.mjs`. No safety kit yet: open run-off on both sides. Widths 15 / 16 on Kestrel / 15 from Les Combes / 13 through the Bus Stop.
+
+The layout test's Medium driver laps in 2:29.2, just under its 150 s cap. Codex should not make the lap slower without first raising that cap for this circuit's length, with a reason. P4-ARDENNES can start now.
